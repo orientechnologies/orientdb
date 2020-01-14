@@ -106,6 +106,7 @@ public class OAtomicOperationsManager implements OAtomicOperationsMangerMXBean {
     final long activeSegment;
 
     if (useWal) {
+      //transaction id and id of active segment should grow synchronously to maintain correct size of WAL
       synchronized (segmentLock) {
         unitId = idGen.nextId();
         activeSegment = writeAheadLog.activeSegment();
