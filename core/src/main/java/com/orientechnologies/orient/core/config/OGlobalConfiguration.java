@@ -387,6 +387,8 @@ public enum OGlobalConfiguration {// ENVIRONMENT
 
   DB_VALIDATION("db.validation", "Enables or disables validation of records", Boolean.class, true, true),
 
+  DB_CUSTOM_SUPPORT("db.custom.support", "Enables or disables use of custom types", Boolean.class, false, false),
+
   // SETTINGS OF NON-TRANSACTIONAL MODE
   @Deprecated NON_TX_RECORD_UPDATE_SYNCH("nonTX.recordUpdate.synch",
       "Executes a sync against the file-system for every record operation. This slows down record updates, "

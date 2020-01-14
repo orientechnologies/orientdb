@@ -20,6 +20,7 @@ package com.orientechnologies.lucene.test;
 
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.command.script.OCommandScript;
+import com.orientechnologies.orient.core.metadata.OMetadata;
 import com.orientechnologies.orient.core.metadata.OMetadataInternal;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import org.apache.lucene.analysis.standard.StandardAnalyzer;
@@ -49,7 +50,7 @@ public class LuceneDropClusterTest extends BaseLuceneTest {
         "create index Song.author on Song (author) FULLTEXT ENGINE LUCENE METADATA {\"default\":\"" + StandardAnalyzer.class
             .getName() + "\"}")).execute();
 
-    OMetadataInternal metadata = db.getMetadata();
+    OMetadata metadata = db.getMetadata();
 
     long initialIndexSize = metadata.getIndexManager().getIndex("Song.title").getSize();
 

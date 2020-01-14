@@ -1,36 +1,38 @@
 /**
  * Copyright 2010-2016 OrientDB LTD (http://orientdb.com)
  * <p>
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  * <p>
  * http://www.apache.org/licenses/LICENSE-2.0
  * <p>
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on an "AS IS"
+ * BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the specific language
+ * governing permissions and limitations under the License.
  * <p>
  * For more information: http://www.orientdb.com
  */
 package com.orientechnologies.spatial.functions;
 
 import com.orientechnologies.lucene.collections.OLuceneResultSet;
+import com.orientechnologies.lucene.collections.OLuceneResultSetEmpty;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.metadata.OMetadata;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.sql.executor.OResult;
+import com.orientechnologies.orient.core.sql.executor.OResultInternal;
 import com.orientechnologies.orient.core.sql.functions.OIndexableSQLFunction;
 import com.orientechnologies.orient.core.sql.parser.*;
 import com.orientechnologies.spatial.index.OLuceneSpatialIndex;
 import com.orientechnologies.spatial.shape.OShapeFactory;
 import com.orientechnologies.spatial.strategy.SpatialQueryBuilderAbstract;
 
+import java.text.CollationKey;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -53,15 +55,9 @@ public abstract class OSpatialFunctionAbstractIndexable extends OSpatialFunction
     String fieldName = args[0].toString();
 
     String className = identifier.getStringValue();
-    List<OLuceneSpatialIndex> indices = dbMetadata
-        .getSchema()
-        .getClass(className)
-        .getIndexes()
-        .stream()
-        .filter(idx -> idx instanceof OLuceneSpatialIndex)
-        .map(idx -> (OLuceneSpatialIndex) idx)
-        .filter(idx -> intersect(idx.getDefinition().getFields(), Arrays.asList(fieldName)))
-        .collect(Collectors.toList());
+    List<OLuceneSpatialIndex> indices = dbMetadata.getSchema().getClass(className).getIndexes().stream()
+        .filter(idx -> idx instanceof OLuceneSpatialIndex).map(idx -> (OLuceneSpatialIndex) idx)
+        .filter(idx -> intersect(idx.getDefinition().getFields(), Arrays.asList(fieldName))).collect(Collectors.toList());
 
     if (indices.size() > 1) {
       throw new IllegalArgumentException("too many indices matching given field name: " + String.join(",", fieldName));
@@ -109,6 +105,37 @@ public abstract class OSpatialFunctionAbstractIndexable extends OSpatialFunction
       shape = doc.toMap();
     } else {
       shape = args[1].execute((OIdentifiable) null, ctx);
+    }
+
+    if (shape instanceof Collection) {
+      int size = ((Collection) shape).size();
+
+      if (size == 0) {
+        return new OLuceneResultSetEmpty();
+      }
+      if (size == 1) {
+
+        Object next = ((Collection) shape).iterator().next();
+
+        if (next instanceof OResult) {
+          OResult inner = (OResult) next;
+          Set<String> propertyNames = inner.getPropertyNames();
+          if (propertyNames.size() == 1) {
+            Object property = inner.getProperty(propertyNames.iterator().next());
+            if (property instanceof OResult) {
+              shape = ((OResult) property).toElement();
+            }
+          } else {
+            return new OLuceneResultSetEmpty();
+          }
+        }
+      } else {
+        throw new OCommandExecutionException("The collection in input cannot be major than 1");
+      }
+    }
+
+    if (shape instanceof OResultInternal) {
+      shape = ((OResultInternal) shape).toElement();
     }
     queryParams.put(SpatialQueryBuilderAbstract.SHAPE, shape);
 

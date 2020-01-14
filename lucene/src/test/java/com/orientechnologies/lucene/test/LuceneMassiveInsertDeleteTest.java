@@ -13,7 +13,7 @@
  *  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  *  * See the License for the specific language governing permissions and
  *  * limitations under the License.
- *  
+ *
  */
 
 package com.orientechnologies.lucene.test;
@@ -65,7 +65,8 @@ public class LuceneMassiveInsertDeleteTest extends BaseLuceneTest {
     Assert.assertEquals(docs.size(), size);
 
     db.close();
-    db.open("admin", "admin");
+    db = openDatabase();
+
     docs = db.query(new OSQLSynchQuery<ODocument>(query));
     Assert.assertEquals(docs.size(), size);
 
@@ -75,7 +76,7 @@ public class LuceneMassiveInsertDeleteTest extends BaseLuceneTest {
     Assert.assertEquals(docs.size(), 0);
 
     db.close();
-    db.open("admin", "admin");
+    db = openDatabase();
     docs = db.query(new OSQLSynchQuery<ODocument>(query));
     Assert.assertEquals(docs.size(), 0);
 

@@ -17,6 +17,7 @@ package com.orientechnologies.orient.test.database.auto;
 
 import com.orientechnologies.common.serialization.types.OBinarySerializer;
 import com.orientechnologies.common.serialization.types.OBinaryTypeSerializer;
+import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.exception.OSerializationException;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.index.ORuntimeKeyIndexDefinition;
@@ -209,6 +210,8 @@ public class IndexCustomKeyTest extends DocumentDBBaseTest {
   }
 
   public void testUsage() {
+    boolean old = OGlobalConfiguration.DB_CUSTOM_SUPPORT.getValueAsBoolean();
+    OGlobalConfiguration.DB_CUSTOM_SUPPORT.setValue(true);
     OIndex<?> index = getIndex();
     ComparableBinary key1 = new ComparableBinary(new byte[] { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 1, 2,
         3, 4, 5, 6, 7, 8, 9, 0, 1 });
@@ -224,9 +227,12 @@ public class IndexCustomKeyTest extends DocumentDBBaseTest {
 
     Assert.assertEquals(index.get(key1), doc1);
     Assert.assertEquals(index.get(key2), doc2);
+    OGlobalConfiguration.DB_CUSTOM_SUPPORT.setValue(old);
   }
 
   public void testTransactionalUsageWorks() {
+    boolean old = OGlobalConfiguration.DB_CUSTOM_SUPPORT.getValueAsBoolean();
+    OGlobalConfiguration.DB_CUSTOM_SUPPORT.setValue(true);
     database.begin(OTransaction.TXTYPE.OPTIMISTIC);
     // OIndex<?> index = getManualIndex();
     ComparableBinary key3 = new ComparableBinary(new byte[] { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 1, 2,
@@ -247,10 +253,13 @@ public class IndexCustomKeyTest extends DocumentDBBaseTest {
 
     Assert.assertEquals(index.get(key3), doc1);
     Assert.assertEquals(index.get(key4), doc2);
+    OGlobalConfiguration.DB_CUSTOM_SUPPORT.setValue(old);
   }
 
   @Test(dependsOnMethods = { "testTransactionalUsageWorks" })
   public void testTransactionalUsageBreaks1() {
+    boolean old = OGlobalConfiguration.DB_CUSTOM_SUPPORT.getValueAsBoolean();
+    OGlobalConfiguration.DB_CUSTOM_SUPPORT.setValue(true);
     database.begin(OTransaction.TXTYPE.OPTIMISTIC);
     OIndex<?> index = getIndex();
     ComparableBinary key5 = new ComparableBinary(new byte[] { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 1, 2,
@@ -269,10 +278,13 @@ public class IndexCustomKeyTest extends DocumentDBBaseTest {
 
     Assert.assertEquals(index.get(key5), doc1);
     Assert.assertEquals(index.get(key6), doc2);
+    OGlobalConfiguration.DB_CUSTOM_SUPPORT.setValue(old);
   }
 
   @Test(dependsOnMethods = { "testTransactionalUsageWorks" })
   public void testTransactionalUsageBreaks2() {
+    boolean old = OGlobalConfiguration.DB_CUSTOM_SUPPORT.getValueAsBoolean();
+    OGlobalConfiguration.DB_CUSTOM_SUPPORT.setValue(true);
     OIndex<?> index = getIndex();
     database.begin(OTransaction.TXTYPE.OPTIMISTIC);
     ComparableBinary key7 = new ComparableBinary(new byte[] { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 1, 2,
@@ -291,6 +303,7 @@ public class IndexCustomKeyTest extends DocumentDBBaseTest {
 
     Assert.assertEquals(index.get(key7), doc1);
     Assert.assertEquals(index.get(key8), doc2);
+    OGlobalConfiguration.DB_CUSTOM_SUPPORT.setValue(old);
   }
 
   public void testUsage2() {
