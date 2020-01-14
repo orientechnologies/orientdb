@@ -57,6 +57,8 @@ public class OAtomicOperationsManager implements OAtomicOperationsMangerMXBean {
   private final OperationsFreezer atomicOperationsFreezer    = new OperationsFreezer();
   private final OperationsFreezer componentOperationsFreezer = new OperationsFreezer();
 
+  private final Object segmentLock = new Object();
+
   static {
     Orient.instance().registerListener(new OOrientListenerAbstract() {
       @Override
@@ -100,17 +102,20 @@ public class OAtomicOperationsManager implements OAtomicOperationsMangerMXBean {
     atomicOperationsFreezer.startOperation();
 
     final boolean useWal = useWal();
-    final long unitId = idGen.nextId();
-
+    final long unitId;
     final long activeSegment;
-    if (writeAheadLog != null) {
+
+    synchronized (segmentLock) {
+      unitId = idGen.nextId();
       activeSegment = writeAheadLog.activeSegment();
-    } else {
-      activeSegment = -1;
     }
-    final OLogSequenceNumber lsn = useWal ? writeAheadLog.logAtomicOperationStartRecord(true, unitId) : null;
-    if (activeSegment >= 0) {
+
+    final OLogSequenceNumber lsn;
+    if (useWal) {
+      lsn = writeAheadLog.logAtomicOperationStartRecord(true, unitId);
       atomicOperationsTable.startOperation(unitId, activeSegment);
+    } else {
+      lsn = null;
     }
 
     operation = new OAtomicOperation(lsn, unitId, readCache, writeCache, storage.getId());

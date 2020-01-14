@@ -28,6 +28,7 @@ public class LocalPaginatedClusterV1TestIT extends LocalPaginatedClusterAbstract
     databaseDocumentTx.create();
 
     storage = (OAbstractPaginatedStorage) databaseDocumentTx.getStorage();
+    atomicOperationsManager = storage.getAtomicOperationsManager();
 
     storage.getAtomicOperationsManager().executeInsideAtomicOperation((atomicOperation) -> {
       paginatedCluster = new OPaginatedClusterV1("paginatedClusterTest", storage);

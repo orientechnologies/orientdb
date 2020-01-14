@@ -1,7 +1,8 @@
 package com.orientechnologies.orient.core.storage.cluster;
 
+import com.orientechnologies.common.exception.OException;
+import com.orientechnologies.common.types.OModifiableInteger;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
-import com.orientechnologies.orient.core.exception.OPaginatedClusterException;
 import com.orientechnologies.orient.core.storage.OPhysicalPosition;
 import com.orientechnologies.orient.core.storage.ORawBuffer;
 import com.orientechnologies.orient.core.storage.cluster.v0.OPaginatedClusterV0;
@@ -21,7 +22,7 @@ public abstract class LocalPaginatedClusterAbstract {
   protected static OPaginatedCluster         paginatedCluster;
   public static    ODatabaseDocumentTx       databaseDocumentTx;
   protected static OAbstractPaginatedStorage storage;
-  protected        OAtomicOperationsManager  atomicOperationsManager;
+  protected static OAtomicOperationsManager  atomicOperationsManager;
 
   @AfterClass
   public static void afterClass() throws IOException {
@@ -444,313 +445,305 @@ public abstract class LocalPaginatedClusterAbstract {
 
   @Test
   public void testHideHalfBigRecords() throws IOException {
-    atomicOperationsManager.executeInsideAtomicOperation((atomicOperation) -> {
-      final int records = 5000;
-      long seed = System.currentTimeMillis();
-      Random mersenneTwisterFast = new Random(seed);
+    final int records = 5000;
+    long seed = System.currentTimeMillis();
+    Random mersenneTwisterFast = new Random(seed);
 
-      System.out.println("testHideHalfBigRecords seed : " + seed);
+    System.out.println("testHideHalfBigRecords seed : " + seed);
 
-      Map<Long, byte[]> positionRecordMap = new HashMap<>();
+    Map<Long, byte[]> positionRecordMap = new HashMap<>();
 
-      int recordVersion = 0;
-      recordVersion++;
-      recordVersion++;
-
-      for (int i = 0; i < records; i++) {
+    for (int i = 0; i < records; i++) {
+      atomicOperationsManager.executeInsideAtomicOperation((atomicOperation) -> {
         int recordSize = mersenneTwisterFast.nextInt(2 * OClusterPage.MAX_RECORD_SIZE) + OClusterPage.MAX_RECORD_SIZE + 1;
 
         byte[] bigRecord = new byte[recordSize];
         mersenneTwisterFast.nextBytes(bigRecord);
 
-        final OPhysicalPosition physicalPosition = paginatedCluster
-            .createRecord(atomicOperation, bigRecord, recordVersion, (byte) 2, null);
+        final OPhysicalPosition physicalPosition = paginatedCluster.createRecord(atomicOperation, bigRecord, 2, (byte) 2, null);
 
         positionRecordMap.put(physicalPosition.clusterPosition, bigRecord);
-      }
+      });
+    }
 
-      int hiddenRecords = 0;
-      Assert.assertEquals(records, paginatedCluster.getEntries());
-      Set<Long> hiddenPositions = new HashSet<>();
+    final OModifiableInteger hiddenRecords = new OModifiableInteger();
+    Assert.assertEquals(records, paginatedCluster.getEntries());
+    Set<Long> hiddenPositions = new HashSet<>();
 
-      Iterator<Long> positionIterator = positionRecordMap.keySet().iterator();
-      while (positionIterator.hasNext()) {
-        long clusterPosition = positionIterator.next();
-        if (mersenneTwisterFast.nextBoolean()) {
+    Iterator<Long> positionIterator = positionRecordMap.keySet().iterator();
+    while (positionIterator.hasNext()) {
+      long clusterPosition = positionIterator.next();
+      if (mersenneTwisterFast.nextBoolean()) {
+        atomicOperationsManager.executeInsideAtomicOperation((atomicOperation) -> {
           hiddenPositions.add(clusterPosition);
           Assert.assertTrue(paginatedCluster.hideRecord(atomicOperation, clusterPosition));
-          hiddenRecords++;
+          hiddenRecords.increment();
 
-          Assert.assertEquals(records - hiddenRecords, paginatedCluster.getEntries());
+          Assert.assertEquals(records - hiddenRecords.getValue(), paginatedCluster.getEntries());
 
           positionIterator.remove();
-        }
+        });
       }
+    }
 
-      Assert.assertEquals(paginatedCluster.getEntries(), records - hiddenRecords);
-      for (long hiddenPosition : hiddenPositions) {
+    Assert.assertEquals(paginatedCluster.getEntries(), records - hiddenRecords.getValue());
+    for (long hiddenPosition : hiddenPositions) {
+      atomicOperationsManager.executeInsideAtomicOperation((atomicOperation) -> {
         Assert.assertNull(paginatedCluster.readRecord(hiddenPosition, false));
         Assert.assertFalse(paginatedCluster.hideRecord(atomicOperation, hiddenPosition));
-      }
+      });
+    }
 
-      for (Map.Entry<Long, byte[]> entry : positionRecordMap.entrySet()) {
-        ORawBuffer rawBuffer = paginatedCluster.readRecord(entry.getKey(), false);
-        Assert.assertNotNull(rawBuffer);
+    for (Map.Entry<Long, byte[]> entry : positionRecordMap.entrySet()) {
+      ORawBuffer rawBuffer = paginatedCluster.readRecord(entry.getKey(), false);
+      Assert.assertNotNull(rawBuffer);
 
-        Assert.assertEquals(rawBuffer.version, recordVersion);
-        //      Assert.assertEquals(rawBuffer.buffer, entry.getValue());
-        Assertions.assertThat(rawBuffer.buffer).isEqualTo(entry.getValue());
-        Assert.assertEquals(rawBuffer.recordType, 2);
-      }
-    });
+      Assert.assertEquals(rawBuffer.version, 2);
+      //      Assert.assertEquals(rawBuffer.buffer, entry.getValue());
+      Assertions.assertThat(rawBuffer.buffer).isEqualTo(entry.getValue());
+      Assert.assertEquals(rawBuffer.recordType, 2);
+    }
   }
 
   @Test
   public void testRemoveHalfRecords() throws IOException {
-    atomicOperationsManager.executeInsideAtomicOperation((atomicOperation) -> {
-      final int records = 10000;
-      long seed = System.currentTimeMillis();
-      Random mersenneTwisterFast = new Random(seed);
+    final int records = 10000;
+    long seed = System.currentTimeMillis();
+    Random mersenneTwisterFast = new Random(seed);
 
-      System.out.println("testRemoveHalfRecords seed : " + seed);
+    System.out.println("testRemoveHalfRecords seed : " + seed);
 
-      Map<Long, byte[]> positionRecordMap = new HashMap<>();
+    Map<Long, byte[]> positionRecordMap = new HashMap<>();
 
-      int recordVersion = 0;
-      recordVersion++;
-      recordVersion++;
-
-      for (int i = 0; i < records; i++) {
+    for (int i = 0; i < records; i++) {
+      atomicOperationsManager.executeInsideAtomicOperation((atomicOperation) -> {
         int recordSize = mersenneTwisterFast.nextInt(3 * OClusterPage.MAX_RECORD_SIZE) + 1;
 
         byte[] bigRecord = new byte[recordSize];
         mersenneTwisterFast.nextBytes(bigRecord);
 
-        final OPhysicalPosition physicalPosition = paginatedCluster
-            .createRecord(atomicOperation, bigRecord, recordVersion, (byte) 2, null);
+        final OPhysicalPosition physicalPosition = paginatedCluster.createRecord(atomicOperation, bigRecord, 2, (byte) 2, null);
 
         positionRecordMap.put(physicalPosition.clusterPosition, bigRecord);
-      }
+      });
+    }
 
-      int deletedRecords = 0;
-      Assert.assertEquals(records, paginatedCluster.getEntries());
-      Set<Long> deletedPositions = new HashSet<>();
-      Iterator<Long> positionIterator = positionRecordMap.keySet().iterator();
-      while (positionIterator.hasNext()) {
-        long clusterPosition = positionIterator.next();
-        if (mersenneTwisterFast.nextBoolean()) {
+    OModifiableInteger deletedRecords = new OModifiableInteger();
+    Assert.assertEquals(records, paginatedCluster.getEntries());
+    Set<Long> deletedPositions = new HashSet<>();
+    Iterator<Long> positionIterator = positionRecordMap.keySet().iterator();
+    while (positionIterator.hasNext()) {
+      long clusterPosition = positionIterator.next();
+      if (mersenneTwisterFast.nextBoolean()) {
+        atomicOperationsManager.executeInsideAtomicOperation((atomicOperation) -> {
           deletedPositions.add(clusterPosition);
           Assert.assertTrue(paginatedCluster.deleteRecord(atomicOperation, clusterPosition));
-          deletedRecords++;
+          deletedRecords.increment();
 
-          Assert.assertEquals(records - deletedRecords, paginatedCluster.getEntries());
+          Assert.assertEquals(records - deletedRecords.getValue(), paginatedCluster.getEntries());
 
           positionIterator.remove();
-        }
+        });
       }
+    }
 
-      Assert.assertEquals(paginatedCluster.getEntries(), records - deletedRecords);
-      for (long deletedPosition : deletedPositions) {
+    Assert.assertEquals(paginatedCluster.getEntries(), records - deletedRecords.getValue());
+    for (long deletedPosition : deletedPositions) {
+      atomicOperationsManager.executeInsideAtomicOperation((atomicOperation) -> {
         Assert.assertNull(paginatedCluster.readRecord(deletedPosition, false));
         Assert.assertFalse(paginatedCluster.deleteRecord(atomicOperation, deletedPosition));
-      }
+      });
+    }
 
-      for (Map.Entry<Long, byte[]> entry : positionRecordMap.entrySet()) {
-        ORawBuffer rawBuffer = paginatedCluster.readRecord(entry.getKey(), false);
-        Assert.assertNotNull(rawBuffer);
+    for (Map.Entry<Long, byte[]> entry : positionRecordMap.entrySet()) {
+      ORawBuffer rawBuffer = paginatedCluster.readRecord(entry.getKey(), false);
+      Assert.assertNotNull(rawBuffer);
 
-        Assert.assertEquals(rawBuffer.version, recordVersion);
-        //      Assert.assertEquals(rawBuffer.buffer, entry.getValue());
-
-        Assertions.assertThat(rawBuffer.buffer).isEqualTo(entry.getValue());
-        Assert.assertEquals(rawBuffer.recordType, 2);
-      }
-    });
+      Assert.assertEquals(rawBuffer.version, 2);
+      Assertions.assertThat(rawBuffer.buffer).isEqualTo(entry.getValue());
+      Assert.assertEquals(rawBuffer.recordType, 2);
+    }
   }
 
   @Test
   public void testHideHalfRecords() throws IOException {
-    atomicOperationsManager.executeInsideAtomicOperation((atomicOperation) -> {
-      final int records = 10000;
-      long seed = System.currentTimeMillis();
-      Random mersenneTwisterFast = new Random(seed);
+    final int records = 10000;
+    long seed = System.currentTimeMillis();
+    Random mersenneTwisterFast = new Random(seed);
 
-      System.out.println("testHideHalfRecords seed : " + seed);
+    System.out.println("testHideHalfRecords seed : " + seed);
 
-      Map<Long, byte[]> positionRecordMap = new HashMap<>();
+    Map<Long, byte[]> positionRecordMap = new HashMap<>();
 
-      int recordVersion = 0;
-      recordVersion++;
-      recordVersion++;
-
-      for (int i = 0; i < records; i++) {
+    for (int i = 0; i < records; i++) {
+      atomicOperationsManager.executeInsideAtomicOperation((atomicOperation) -> {
         int recordSize = mersenneTwisterFast.nextInt(3 * OClusterPage.MAX_RECORD_SIZE) + 1;
 
         byte[] bigRecord = new byte[recordSize];
         mersenneTwisterFast.nextBytes(bigRecord);
 
-        final OPhysicalPosition physicalPosition = paginatedCluster
-            .createRecord(atomicOperation, bigRecord, recordVersion, (byte) 2, null);
+        final OPhysicalPosition physicalPosition = paginatedCluster.createRecord(atomicOperation, bigRecord, 2, (byte) 2, null);
 
         positionRecordMap.put(physicalPosition.clusterPosition, bigRecord);
-      }
+      });
+    }
 
-      int hiddenRecords = 0;
-      Assert.assertEquals(records, paginatedCluster.getEntries());
-      Set<Long> hiddenPositions = new HashSet<>();
-      Iterator<Long> positionIterator = positionRecordMap.keySet().iterator();
-      while (positionIterator.hasNext()) {
-        long clusterPosition = positionIterator.next();
-        if (mersenneTwisterFast.nextBoolean()) {
+    OModifiableInteger hiddenRecords = new OModifiableInteger();
+    Assert.assertEquals(records, paginatedCluster.getEntries());
+    Set<Long> hiddenPositions = new HashSet<>();
+    Iterator<Long> positionIterator = positionRecordMap.keySet().iterator();
+    while (positionIterator.hasNext()) {
+      long clusterPosition = positionIterator.next();
+      if (mersenneTwisterFast.nextBoolean()) {
+        atomicOperationsManager.executeInsideAtomicOperation((atomicOperation) -> {
           hiddenPositions.add(clusterPosition);
           Assert.assertTrue(paginatedCluster.hideRecord(atomicOperation, clusterPosition));
-          hiddenRecords++;
+          hiddenRecords.increment();
 
-          Assert.assertEquals(records - hiddenRecords, paginatedCluster.getEntries());
+          Assert.assertEquals(records - hiddenRecords.getValue(), paginatedCluster.getEntries());
 
           positionIterator.remove();
-        }
+        });
       }
+    }
 
-      Assert.assertEquals(paginatedCluster.getEntries(), records - hiddenRecords);
-      for (long deletedPosition : hiddenPositions) {
+    Assert.assertEquals(paginatedCluster.getEntries(), records - hiddenRecords.getValue());
+    for (long deletedPosition : hiddenPositions) {
+      atomicOperationsManager.executeInsideAtomicOperation((atomicOperation) -> {
         Assert.assertNull(paginatedCluster.readRecord(deletedPosition, false));
         Assert.assertFalse(paginatedCluster.hideRecord(atomicOperation, deletedPosition));
-      }
+      });
+    }
 
-      for (Map.Entry<Long, byte[]> entry : positionRecordMap.entrySet()) {
-        ORawBuffer rawBuffer = paginatedCluster.readRecord(entry.getKey(), false);
-        Assert.assertNotNull(rawBuffer);
+    for (Map.Entry<Long, byte[]> entry : positionRecordMap.entrySet()) {
+      ORawBuffer rawBuffer = paginatedCluster.readRecord(entry.getKey(), false);
+      Assert.assertNotNull(rawBuffer);
 
-        Assert.assertEquals(rawBuffer.version, recordVersion);
-        //      Assert.assertEquals(rawBuffer.buffer, entry.getValue());
+      Assert.assertEquals(rawBuffer.version, 2);
+      //      Assert.assertEquals(rawBuffer.buffer, entry.getValue());
 
-        Assertions.assertThat(rawBuffer.buffer).isEqualTo(entry.getValue());
-        Assert.assertEquals(rawBuffer.recordType, 2);
-      }
-    });
+      Assertions.assertThat(rawBuffer.buffer).isEqualTo(entry.getValue());
+      Assert.assertEquals(rawBuffer.recordType, 2);
+    }
   }
 
   @Test
   public void testRemoveHalfRecordsAndAddAnotherHalfAgain() throws IOException {
-    atomicOperationsManager.executeInsideAtomicOperation((atomicOperation) -> {
-      final int records = 10000;
-      long seed = System.currentTimeMillis();
-      Random mersenneTwisterFast = new Random(seed);
 
-      System.out.println("testRemoveHalfRecordsAndAddAnotherHalfAgain seed : " + seed);
+    final int records = 10000;
+    long seed = System.currentTimeMillis();
+    Random mersenneTwisterFast = new Random(seed);
 
-      Map<Long, byte[]> positionRecordMap = new HashMap<>();
+    System.out.println("testRemoveHalfRecordsAndAddAnotherHalfAgain seed : " + seed);
 
-      int recordVersion = 0;
-      recordVersion++;
-      recordVersion++;
+    Map<Long, byte[]> positionRecordMap = new HashMap<>();
 
-      for (int i = 0; i < records; i++) {
+    for (int i = 0; i < records; i++) {
+      atomicOperationsManager.executeInsideAtomicOperation((atomicOperation) -> {
         int recordSize = mersenneTwisterFast.nextInt(3 * OClusterPage.MAX_RECORD_SIZE) + 1;
 
         byte[] bigRecord = new byte[recordSize];
         mersenneTwisterFast.nextBytes(bigRecord);
 
-        final OPhysicalPosition physicalPosition = paginatedCluster
-            .createRecord(atomicOperation, bigRecord, recordVersion, (byte) 2, null);
+        final OPhysicalPosition physicalPosition = paginatedCluster.createRecord(atomicOperation, bigRecord, 2, (byte) 2, null);
 
         positionRecordMap.put(physicalPosition.clusterPosition, bigRecord);
-      }
+      });
+    }
 
-      int deletedRecords = 0;
-      Assert.assertEquals(records, paginatedCluster.getEntries());
+    OModifiableInteger deletedRecords = new OModifiableInteger();
+    Assert.assertEquals(records, paginatedCluster.getEntries());
 
-      Iterator<Long> positionIterator = positionRecordMap.keySet().iterator();
-      while (positionIterator.hasNext()) {
-        long clusterPosition = positionIterator.next();
-        if (mersenneTwisterFast.nextBoolean()) {
+    Iterator<Long> positionIterator = positionRecordMap.keySet().iterator();
+    while (positionIterator.hasNext()) {
+      long clusterPosition = positionIterator.next();
+      if (mersenneTwisterFast.nextBoolean()) {
+        atomicOperationsManager.executeInsideAtomicOperation((atomicOperation) -> {
           Assert.assertTrue(paginatedCluster.deleteRecord(atomicOperation, clusterPosition));
-          deletedRecords++;
+          deletedRecords.increment();
 
-          Assert.assertEquals(paginatedCluster.getEntries(), records - deletedRecords);
+          Assert.assertEquals(paginatedCluster.getEntries(), records - deletedRecords.getValue());
 
           positionIterator.remove();
-        }
+        });
       }
+    }
 
-      Assert.assertEquals(paginatedCluster.getEntries(), records - deletedRecords);
+    Assert.assertEquals(paginatedCluster.getEntries(), records - deletedRecords.getValue());
 
-      for (int i = 0; i < records / 2; i++) {
+    for (int i = 0; i < records / 2; i++) {
+      atomicOperationsManager.executeInsideAtomicOperation((atomicOperation) -> {
         int recordSize = mersenneTwisterFast.nextInt(3 * OClusterPage.MAX_RECORD_SIZE) + 1;
 
         byte[] bigRecord = new byte[recordSize];
         mersenneTwisterFast.nextBytes(bigRecord);
 
-        final OPhysicalPosition physicalPosition = paginatedCluster
-            .createRecord(atomicOperation, bigRecord, recordVersion, (byte) 2, null);
+        final OPhysicalPosition physicalPosition = paginatedCluster.createRecord(atomicOperation, bigRecord, 2, (byte) 2, null);
 
         positionRecordMap.put(physicalPosition.clusterPosition, bigRecord);
-      }
+      });
+    }
 
-      Assert.assertEquals(paginatedCluster.getEntries(), (long) (1.5 * records - deletedRecords));
-    });
+    Assert.assertEquals(paginatedCluster.getEntries(), (long) (1.5 * records - deletedRecords.getValue()));
   }
 
   @Test
   public void testHideHalfRecordsAndAddAnotherHalfAgain() throws IOException {
-    atomicOperationsManager.executeInsideAtomicOperation((atomicOperation) -> {
-      final int records = 10000;
-      long seed = System.currentTimeMillis();
-      Random mersenneTwisterFast = new Random(seed);
+    final int records = 10000;
+    long seed = System.currentTimeMillis();
+    Random mersenneTwisterFast = new Random(seed);
 
-      System.out.println("testHideHalfRecordsAndAddAnotherHalfAgain seed : " + seed);
+    System.out.println("testHideHalfRecordsAndAddAnotherHalfAgain seed : " + seed);
 
-      Map<Long, byte[]> positionRecordMap = new HashMap<>();
+    Map<Long, byte[]> positionRecordMap = new HashMap<>();
 
-      int recordVersion = 0;
-      recordVersion++;
-      recordVersion++;
-
-      for (int i = 0; i < records; i++) {
+    for (int i = 0; i < records; i++) {
+      atomicOperationsManager.executeInsideAtomicOperation((atomicOperation) -> {
         int recordSize = mersenneTwisterFast.nextInt(3 * OClusterPage.MAX_RECORD_SIZE) + 1;
 
         byte[] bigRecord = new byte[recordSize];
         mersenneTwisterFast.nextBytes(bigRecord);
 
-        final OPhysicalPosition physicalPosition = paginatedCluster
-            .createRecord(atomicOperation, bigRecord, recordVersion, (byte) 2, null);
+        final OPhysicalPosition physicalPosition = paginatedCluster.createRecord(atomicOperation, bigRecord, 2, (byte) 2, null);
 
         positionRecordMap.put(physicalPosition.clusterPosition, bigRecord);
-      }
+      });
+    }
 
-      int hiddenRecords = 0;
-      Assert.assertEquals(records, paginatedCluster.getEntries());
+    OModifiableInteger hiddenRecords = new OModifiableInteger();
+    Assert.assertEquals(records, paginatedCluster.getEntries());
 
-      Iterator<Long> positionIterator = positionRecordMap.keySet().iterator();
-      while (positionIterator.hasNext()) {
+    Iterator<Long> positionIterator = positionRecordMap.keySet().iterator();
+    while (positionIterator.hasNext()) {
+      atomicOperationsManager.executeInsideAtomicOperation((atomicOperation) -> {
         long clusterPosition = positionIterator.next();
         if (mersenneTwisterFast.nextBoolean()) {
           Assert.assertTrue(paginatedCluster.hideRecord(atomicOperation, clusterPosition));
-          hiddenRecords++;
+          hiddenRecords.increment();
 
-          Assert.assertEquals(paginatedCluster.getEntries(), records - hiddenRecords);
+          Assert.assertEquals(paginatedCluster.getEntries(), records - hiddenRecords.getValue());
 
           positionIterator.remove();
         }
-      }
+      });
+    }
 
-      Assert.assertEquals(paginatedCluster.getEntries(), records - hiddenRecords);
+    Assert.assertEquals(paginatedCluster.getEntries(), records - hiddenRecords.getValue());
 
-      for (int i = 0; i < records / 2; i++) {
+    for (int i = 0; i < records / 2; i++) {
+      atomicOperationsManager.executeInsideAtomicOperation((atomicOperation) -> {
         int recordSize = mersenneTwisterFast.nextInt(3 * OClusterPage.MAX_RECORD_SIZE) + 1;
 
         byte[] bigRecord = new byte[recordSize];
         mersenneTwisterFast.nextBytes(bigRecord);
 
-        final OPhysicalPosition physicalPosition = paginatedCluster
-            .createRecord(atomicOperation, bigRecord, recordVersion, (byte) 2, null);
+        final OPhysicalPosition physicalPosition = paginatedCluster.createRecord(atomicOperation, bigRecord, 2, (byte) 2, null);
 
         positionRecordMap.put(physicalPosition.clusterPosition, bigRecord);
-      }
+      });
+    }
 
-      Assert.assertEquals(paginatedCluster.getEntries(), (long) (1.5 * records - hiddenRecords));
-    });
+    Assert.assertEquals(paginatedCluster.getEntries(), (long) (1.5 * records - hiddenRecords.getValue()));
   }
 
   @Test
@@ -1241,26 +1234,25 @@ public abstract class LocalPaginatedClusterAbstract {
 
   @Test
   public void testResurrectRecord() throws IOException {
-    atomicOperationsManager.executeInsideAtomicOperation((atomicOperation) -> {
-      byte[] smallRecord = new byte[] { 1, 2, 3, 4, 5, 6, 7, 8, 9, 0 };
-      int recordVersion = 0;
-      recordVersion++;
-      recordVersion++;
+    OPhysicalPosition physicalPosition = atomicOperationsManager.calculateInsideAtomicOperation((atomicOperation) -> {
+      final byte[] smallRecord = new byte[] { 1, 2, 3, 4, 5, 6, 7, 8, 9, 0 };
+      return paginatedCluster.createRecord(atomicOperation, smallRecord, 2, (byte) 1, null);
+    });
+    Assert.assertEquals(physicalPosition.clusterPosition, 0);
 
-      OPhysicalPosition physicalPosition = paginatedCluster
-          .createRecord(atomicOperation, smallRecord, recordVersion, (byte) 1, null);
-      Assert.assertEquals(physicalPosition.clusterPosition, 0);
+    Assert.assertEquals(paginatedCluster.getRecordStatus(physicalPosition.clusterPosition),
+        OPaginatedClusterV0.RECORD_STATUS.PRESENT);
 
-      Assert.assertEquals(paginatedCluster.getRecordStatus(physicalPosition.clusterPosition),
-          OPaginatedClusterV0.RECORD_STATUS.PRESENT);
-
-      for (int i = 0; i < 1000; ++i) {
-        recordVersion++;
-        smallRecord = new byte[] { 2, 3, 4, 5, 6, 7, 8, 9, 0, 1, 2, 3 };
+    final OModifiableInteger recordVersion = new OModifiableInteger(2);
+    for (int i = 0; i < 1000; ++i) {
+      atomicOperationsManager.executeInsideAtomicOperation(atomicOperation -> {
+        recordVersion.increment();
+        final byte[] smallRecord = new byte[] { 2, 3, 4, 5, 6, 7, 8, 9, 0, 1, 2, 3 };
         try {
-          paginatedCluster.recycleRecord(atomicOperation, physicalPosition.clusterPosition, smallRecord, recordVersion, (byte) 2);
+          paginatedCluster
+              .recycleRecord(atomicOperation, physicalPosition.clusterPosition, smallRecord, recordVersion.getValue(), (byte) 2);
           Assert.fail("it must be not possible to resurrect a non deleted record");
-        } catch (OPaginatedClusterException e) {
+        } catch (OException e) {
           // OK
         }
 
@@ -1275,11 +1267,12 @@ public abstract class LocalPaginatedClusterAbstract {
         ORawBuffer rawBuffer = paginatedCluster.readRecord(physicalPosition.clusterPosition, false);
         Assert.assertNull(rawBuffer);
 
-        paginatedCluster.recycleRecord(atomicOperation, physicalPosition.clusterPosition, smallRecord, recordVersion, (byte) 2);
+        paginatedCluster
+            .recycleRecord(atomicOperation, physicalPosition.clusterPosition, smallRecord, recordVersion.getValue(), (byte) 2);
 
         rawBuffer = paginatedCluster.readRecord(physicalPosition.clusterPosition, false);
         Assert.assertNotNull(rawBuffer);
-        Assert.assertEquals(rawBuffer.version, recordVersion);
+        Assert.assertEquals(rawBuffer.version, recordVersion.value);
         //      Assert.assertEquals(rawBuffer.buffer, smallRecord);
         Assertions.assertThat(rawBuffer.buffer).isEqualTo(smallRecord);
 
@@ -1291,10 +1284,11 @@ public abstract class LocalPaginatedClusterAbstract {
           for (int j = 0; j < updatedRecord.length; ++j) {
             updatedRecord[j] = (byte) j;
           }
-          paginatedCluster.updateRecord(atomicOperation, physicalPosition.clusterPosition, updatedRecord, recordVersion, (byte) 4);
+          paginatedCluster
+              .updateRecord(atomicOperation, physicalPosition.clusterPosition, updatedRecord, recordVersion.getValue(), (byte) 4);
 
         }
-      }
-    });
+      });
+    }
   }
 }

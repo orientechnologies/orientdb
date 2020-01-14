@@ -925,8 +925,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
   public boolean isSystemCluster(int clusterId) {
     try {
       checkOpenness();
-      checkLowDiskSpaceRequestsAndReadOnlyConditions();
-
       stateLock.acquireReadLock();
       try {
         checkOpenness();
@@ -5122,25 +5120,26 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
         params = preCloseSteps();
 
-        atomicOperationsManager.executeInsideAtomicOperation((atomicOperation) -> {
-          // we close all files inside cache system so we only clear index metadata and close non core indexes
-          for (final OBaseIndexEngine engine : indexEngines) {
-            if (engine != null && !(engine instanceof OSBTreeIndexEngine || engine instanceof OHashTableIndexEngine
-                || engine instanceof OCellBTreeSingleValueIndexEngine || engine instanceof OCellBTreeMultiValueIndexEngine)) {
-              if (onDelete) {
-                engine.delete(atomicOperation);
-              } else {
+        if (!onDelete) {
+          atomicOperationsManager.executeInsideAtomicOperation((atomicOperation) -> {
+            // we close all files inside cache system so we only clear index metadata and close non core indexes
+            for (final OBaseIndexEngine engine : indexEngines) {
+              if (engine != null && !(engine instanceof OSBTreeIndexEngine || engine instanceof OHashTableIndexEngine
+                  || engine instanceof OCellBTreeSingleValueIndexEngine || engine instanceof OCellBTreeMultiValueIndexEngine)) {
                 engine.close();
               }
             }
-          }
-
-          if (configuration != null) {
-            if (!onDelete) {
-              ((OClusterBasedStorageConfiguration) configuration).close(atomicOperation);
+            ((OClusterBasedStorageConfiguration) configuration).close(atomicOperation);
+          });
+        } else {
+          for (final OBaseIndexEngine engine : indexEngines) {
+            if (engine != null && !(engine instanceof OSBTreeIndexEngine || engine instanceof OHashTableIndexEngine
+                || engine instanceof OCellBTreeSingleValueIndexEngine || engine instanceof OCellBTreeMultiValueIndexEngine)) {
+              //delete method is implemented only in non native indexes, so they do not use ODB atomic operation
+              engine.delete(null);
             }
           }
-        });
+        }
 
         sbTreeCollectionManager.close();
 
@@ -6383,8 +6382,13 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       checkOpenness();
 
       makeStorageDirty();
+
+      final OClusterBasedStorageConfiguration storageConfiguration = (OClusterBasedStorageConfiguration) configuration;
+      if (storageConfiguration.getMinimumClusters() == minimumClusters) {
+        return;
+      }
+
       atomicOperationsManager.executeInsideAtomicOperation((atomicOperation) -> {
-        final OClusterBasedStorageConfiguration storageConfiguration = (OClusterBasedStorageConfiguration) configuration;
         storageConfiguration.setMinimumClusters(minimumClusters);
       });
     } catch (final RuntimeException ee) {

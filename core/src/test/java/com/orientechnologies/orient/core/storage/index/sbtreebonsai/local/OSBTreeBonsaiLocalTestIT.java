@@ -38,7 +38,8 @@ public class OSBTreeBonsaiLocalTestIT {
     databaseDocumentTx.create();
 
     final OAbstractPaginatedStorage storage = (OAbstractPaginatedStorage) databaseDocumentTx.getStorage();
-    sbTree = new OSBTreeBonsaiLocal<Integer, OIdentifiable>("actualSBTreeBonsaiLocalTest", ".irs", storage);
+    atomicOperationsManager = storage.getAtomicOperationsManager();
+    sbTree = new OSBTreeBonsaiLocal<>("actualSBTreeBonsaiLocalTest", ".irs", storage);
 
     atomicOperationsManager.executeInsideAtomicOperation(
         (atomicOperation) -> sbTree.create(atomicOperation, OIntegerSerializer.INSTANCE, OLinkSerializer.INSTANCE));
