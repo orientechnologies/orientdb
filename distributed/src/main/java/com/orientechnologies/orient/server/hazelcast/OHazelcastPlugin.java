@@ -1046,44 +1046,48 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
    */
   @Override
   public void memberRemoved(final MembershipEvent iEvent) {
-    try {
-      updateLastClusterChange();
+    new Thread(() -> {
+      try {
+        updateLastClusterChange();
 
-      if (iEvent.getMember() == null)
-        return;
+        if (iEvent.getMember() == null)
+          return;
 
-      final String nodeLeftName = getNodeName(iEvent.getMember());
-      if (nodeLeftName == null)
-        return;
+        final String nodeLeftName = getNodeName(iEvent.getMember());
+        if (nodeLeftName == null)
+          return;
 
-      removeServer(nodeLeftName, true);
+        removeServer(nodeLeftName, true);
 
-    } catch (HazelcastInstanceNotActiveException | RetryableHazelcastException e) {
-      OLogManager.instance().error(this, "Hazelcast is not running", e);
-    } catch (Exception e) {
-      OLogManager.instance().error(this, "Error on removing the server '%s'", e, getNodeName(iEvent.getMember()));
-    }
+      } catch (HazelcastInstanceNotActiveException | RetryableHazelcastException e) {
+        OLogManager.instance().error(this, "Hazelcast is not running", e);
+      } catch (Exception e) {
+        OLogManager.instance().error(this, "Error on removing the server '%s'", e, getNodeName(iEvent.getMember()));
+      }
+    }).start();
   }
 
   @Override
   public void memberAdded(final MembershipEvent iEvent) {
-    if (hazelcastInstance == null || !hazelcastInstance.getLifecycleService().isRunning())
-      return;
+    new Thread(() -> {
+      if (hazelcastInstance == null || !hazelcastInstance.getLifecycleService().isRunning())
+        return;
 
-    try {
-      updateLastClusterChange();
-      final String addedNodeName = getNodeName(iEvent.getMember());
-      ODistributedServerLog
-          .info(this, nodeName, null, DIRECTION.NONE, "Added new node id=%s name=%s", iEvent.getMember(), addedNodeName);
+      try {
+        updateLastClusterChange();
+        final String addedNodeName = getNodeName(iEvent.getMember());
+        ODistributedServerLog
+            .info(this, nodeName, null, DIRECTION.NONE, "Added new node id=%s name=%s", iEvent.getMember(), addedNodeName);
 
-      registerNode(iEvent.getMember(), addedNodeName);
+        registerNode(iEvent.getMember(), addedNodeName);
 
-      // REMOVE THE NODE FROM AUTO REMOVAL
-      autoRemovalOfServers.remove(addedNodeName);
+        // REMOVE THE NODE FROM AUTO REMOVAL
+        autoRemovalOfServers.remove(addedNodeName);
 
-    } catch (HazelcastInstanceNotActiveException | RetryableHazelcastException e) {
-      OLogManager.instance().error(this, "Hazelcast is not running", e);
-    }
+      } catch (HazelcastInstanceNotActiveException | RetryableHazelcastException e) {
+        OLogManager.instance().error(this, "Hazelcast is not running", e);
+      }
+    }).start();
   }
 
   @Override
@@ -1115,6 +1119,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
       activeNodesUuidByName.put(nodeName, nodeUuid);
 
       publishLocalNodeConfiguration();
+      setNodeStatus(NODE_STATUS.ONLINE);
 
       // TEMPORARY PATCH TO FIX HAZELCAST'S BEHAVIOUR THAT ENQUEUES THE MERGING ITEM EVENT WITH THIS AND ACTIVE NODES MAP COULD BE STILL NOT FILLED
       Thread t = new Thread(new Runnable() {
@@ -1584,7 +1589,9 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
 
       for (String databaseName : getManagedDatabases()) {
         try {
-          reassignClustersOwnership(nodeName, databaseName, null, false);
+          if (getDatabaseConfiguration(databaseName).getServerRole(nodeName) == ODistributedConfiguration.ROLES.MASTER) {
+            reassignClustersOwnership(nodeName, databaseName, null, false);
+          }
         } catch (Exception e) {
           // IGNORE IT
           ODistributedServerLog.error(this, nodeName, null, DIRECTION.NONE,
