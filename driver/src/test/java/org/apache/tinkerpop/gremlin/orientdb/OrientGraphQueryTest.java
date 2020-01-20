@@ -208,6 +208,29 @@ public class OrientGraphQueryTest extends OrientGraphBaseTest {
 
   }
 
+  @Test
+  public void shouldWorkWithTwoLabels() {
+
+    OrientGraph graph = factory.getTx();
+
+    graph.createVertexClass("Person");
+
+    // Count on V
+    Long count = graph.traversal().V().count().toList().get(0);
+
+    Assert.assertEquals(new Long(0), count);
+
+    graph.addVertex(T.label, "Person", "name", "Jon");
+
+    count = graph.traversal().V().hasLabel("Person").has("name", "Jon").hasLabel("Person").has("name", "Jon").count().toList()
+        .get(0);
+
+    Assert.assertEquals(new Long(1), count);
+
+    graph.close();
+
+  }
+
   protected void initGraph(OrientGraph graph) {
 
     graph.createVertexClass("Person");

@@ -30,14 +30,20 @@ public class OrientGraphQueryBuilder {
     if (isLabelKey(condition.getKey())) {
       Object value = condition.getValue();
       if (value instanceof List) {
-        ((List) value).forEach(label -> classes.add((String) label));
+        ((List) value).forEach(label -> addClass((String) label));
       } else {
-        classes.add((String) value);
+        addClass((String) value);
       }
     } else {
       params.put(condition.getKey(), condition.getPredicate());
     }
     return this;
+  }
+
+  private void addClass(String classLabel) {
+    if (!classes.contains(classLabel)) {
+      classes.add(classLabel);
+    }
   }
 
   public Optional<OrientGraphBaseQuery> build(OGraph graph) {
