@@ -616,7 +616,7 @@ public class OSelectExecutionPlanner {
 
   private static boolean isCountOnly(QueryPlanningInfo info) {
     if (info.aggregateProjection == null || info.projection == null || info.aggregateProjection.getItems().size() != 1
-        || info.projection.getItems().size() != 1) {
+            || info.projection.getItems().stream().filter(x -> !x.getProjectionAliasAsString().startsWith("_$$$ORDER_BY_ALIAS$$$_")).count() != 1) {
       return false;
     }
     OProjectionItem item = info.aggregateProjection.getItems().get(0);
