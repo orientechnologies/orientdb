@@ -16,4 +16,10 @@ public interface ODatabasePoolInternal extends AutoCloseable {
   void release(ODatabaseDocumentInternal database);
 
   OrientDBConfig getConfig();
+
+  /**
+   * Check if database pool is closed
+   * @return true if pool is closed
+   */
+  boolean isClosed();
 }

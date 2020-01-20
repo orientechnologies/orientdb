@@ -42,11 +42,7 @@ public abstract class AbstractComparatorTest {
 
   protected OBinaryField field(final OType type, final Object value, OCollate collate) {
     BytesContainer bytes = new BytesContainer();
-    ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.instance().getIfDefined();
-    OImmutableSchema schema = null;
-    if (db != null)
-      schema = db.getMetadata().getImmutableSchemaSnapshot();
-    bytes.offset = serializer.serializeValue(bytes, value, type, null, schema, null);
+    bytes.offset = serializer.serializeValue(bytes, value, type, null, null, null);
     return new OBinaryField(null, type, bytes, collate);
   }
 }

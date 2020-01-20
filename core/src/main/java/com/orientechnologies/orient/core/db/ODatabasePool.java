@@ -4,6 +4,8 @@ import com.orientechnologies.orient.core.exception.OAcquireTimeoutException;
 import com.orientechnologies.orient.core.util.OURLConnection;
 import com.orientechnologies.orient.core.util.OURLHelper;
 
+import java.util.Objects;
+
 /**
  * A Pool of databases.
  * <p>
@@ -129,6 +131,12 @@ public class ODatabasePool implements AutoCloseable {
     internal = orientDb.openPool(database, user, password, configuration);
   }
 
+  ODatabasePool(OrientDB environment, ODatabasePoolInternal internal) {
+    this.orientDb = environment;
+    this.internal = internal;
+    autoclose = false;
+  }
+
   /**
    * Acquire a session from the pool, if no session are available will wait until a session is available or a timeout is reached
    *
@@ -145,5 +153,13 @@ public class ODatabasePool implements AutoCloseable {
     internal.close();
     if (autoclose)
       orientDb.close();
+  }
+
+  /**
+   * Check if database pool is closed
+   * @return true if database pool is closed
+   */
+  public boolean isClosed() {
+    return internal.isClosed();
   }
 }

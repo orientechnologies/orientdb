@@ -237,6 +237,10 @@ public interface OrientDBInternal extends AutoCloseable, OSchedulerInternal {
    */
   ODatabasePoolInternal openPool(String name, String user, String password, OrientDBConfig config);
 
+  ODatabasePoolInternal cachedPool(String database, String user, String password);
+
+  ODatabasePoolInternal cachedPool(String database, String user, String password, OrientDBConfig config);
+
   /**
    * Internal api for request to open a database with a pool
    */

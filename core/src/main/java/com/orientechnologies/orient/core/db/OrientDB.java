@@ -19,6 +19,8 @@
  */
 package com.orientechnologies.orient.core.db;
 
+import com.googlecode.concurrentlinkedhashmap.ConcurrentLinkedHashMap;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -77,6 +79,11 @@ import java.util.List;
  * Created by tglman on 08/02/17.
  */
 public class OrientDB implements AutoCloseable {
+
+  private final ConcurrentLinkedHashMap<ODatabasePoolInternal, ODatabasePool> cachedPools =
+          new ConcurrentLinkedHashMap.Builder<ODatabasePoolInternal, ODatabasePool>()
+                  .maximumWeightedCapacity(100)
+                  .build(); // cache for links to database pools. Avoid create database pool wrapper each time when it is requested
 
   protected OrientDBInternal internal;
   private   String           serverUser;
@@ -289,6 +296,7 @@ public class OrientDB implements AutoCloseable {
    */
   @Override
   public void close() {
+    this.cachedPools.clear();
     this.internal.close();
   }
 
@@ -304,6 +312,30 @@ public class OrientDB implements AutoCloseable {
 
   ODatabasePoolInternal openPool(String database, String user, String password, OrientDBConfig config) {
     return this.internal.openPool(database, user, password, config);
+  }
+
+  public ODatabasePool cachedPool(String database, String user, String password) {
+    return cachedPool(database, user, password, null);
+  }
+
+  /**
+   * Retrieve cached database pool with given username and password
+   * @param database database name
+   * @param user user name
+   * @param password user password
+   * @param config OrientDB config for pool if need create it (in case if there is no cached pool)
+   * @return cached {@link ODatabasePool}
+   */
+  public ODatabasePool cachedPool(String database, String user, String password, OrientDBConfig config) {
+    ODatabasePoolInternal internalPool = internal.cachedPool(database, user, password, config);
+
+    ODatabasePool pool = cachedPools.get(internalPool);
+
+    if (pool != null) {
+      return pool;
+    }
+
+    return cachedPools.computeIfAbsent(internalPool, key -> new ODatabasePool(this, internalPool));
   }
 
   OrientDBInternal getInternal() {
