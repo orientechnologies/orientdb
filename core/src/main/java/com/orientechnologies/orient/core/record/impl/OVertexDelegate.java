@@ -232,7 +232,7 @@ public class OVertexDelegate implements OVertex {
     } else if (edgeProp instanceof ORidBag) {
       ((ORidBag) edgeProp).remove(edgeId);
     } else if (edgeProp instanceof OIdentifiable && ((OIdentifiable) edgeProp).getIdentity() != null && ((OIdentifiable) edgeProp)
-        .getIdentity().equals(edgeId)) {
+        .getIdentity().equals(edgeId) || edge.isLightweight()) {
       vertex.removeProperty(edgeField);
     } else {
       OLogManager.instance().warn(vertex,
