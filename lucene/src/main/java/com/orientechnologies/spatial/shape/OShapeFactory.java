@@ -91,7 +91,7 @@ public class OShapeFactory extends OComplexShapeBuilder {
     if (obj instanceof ODocument) {
       return fromDoc((ODocument) obj);
     }
-    if(obj instanceof OResult) {
+    if (obj instanceof OResult) {
       OElement oElement = ((OResult) obj).toElement();
       return fromDoc((ODocument) oElement);
     }
