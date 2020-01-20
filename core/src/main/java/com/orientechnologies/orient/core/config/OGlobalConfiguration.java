@@ -264,8 +264,7 @@ public enum OGlobalConfiguration { // ENVIRONMENT
   /**
    * @deprecated WAL can not be disabled because that is very unsafe for consistency and durability
    */
-  @Deprecated
-  USE_WAL("storage.useWAL", "Whether WAL should be used in paginated storage", Boolean.class, true),
+  @Deprecated USE_WAL("storage.useWAL", "Whether WAL should be used in paginated storage", Boolean.class, true),
 
   @Deprecated USE_CHM_CACHE("storage.useCHMCache",
       "Whether to use new disk cache implementation based on CHM or old one based on cuncurrent queues", Boolean.class, true),
@@ -606,7 +605,7 @@ public enum OGlobalConfiguration { // ENVIRONMENT
 
   NETWORK_HTTP_USE_TOKEN("network.http.useToken", "Enable Token based sessions for http", Boolean.class, false),
 
-  NETWORK_TOKEN_SECRETKEY("network.token.secretKey", "Network token sercret key", String.class, ""),
+  NETWORK_TOKEN_SECRETKEY("network.token.secretKey", "Network token sercret key", String.class, "", false, true),
 
   NETWORK_TOKEN_ENCRYPTION_ALGORITHM("network.token.encryptionAlgorithm", "Network token algorithm", String.class, "HmacSHA256"),
 
@@ -767,11 +766,11 @@ public enum OGlobalConfiguration { // ENVIRONMENT
 
   CLIENT_SSL_KEYSTORE("client.ssl.keyStore", "Use SSL for client connections", String.class, null),
 
-  CLIENT_SSL_KEYSTORE_PASSWORD("client.ssl.keyStorePass", "Use SSL for client connections", String.class, null),
+  CLIENT_SSL_KEYSTORE_PASSWORD("client.ssl.keyStorePass", "Use SSL for client connections", String.class, null, false, true),
 
   CLIENT_SSL_TRUSTSTORE("client.ssl.trustStore", "Use SSL for client connections", String.class, null),
 
-  CLIENT_SSL_TRUSTSTORE_PASSWORD("client.ssl.trustStorePass", "Use SSL for client connections", String.class, null),
+  CLIENT_SSL_TRUSTSTORE_PASSWORD("client.ssl.trustStorePass", "Use SSL for client connections", String.class, null, false, true),
 
   // SERVER
   SERVER_OPEN_ALL_DATABASES_AT_STARTUP("server.openAllDatabasesAtStartup",
@@ -1016,7 +1015,7 @@ public enum OGlobalConfiguration { // ENVIRONMENT
       "The file path of the keystore used by the symmetric key credential interceptor", String.class, null),
 
   @OApi(maturity = OApi.MATURITY.NEW) CLIENT_CI_KEYSTORE_PASSWORD("client.ci.keystore.password",
-      "The password of the keystore used by the symmetric key credential interceptor", String.class, null),
+      "The password of the keystore used by the symmetric key credential interceptor", String.class, null, false, true),
 
   /**
    * @Since 2.2
@@ -1054,7 +1053,7 @@ public enum OGlobalConfiguration { // ENVIRONMENT
   @Deprecated DB_MAKE_FULL_CHECKPOINT_ON_SCHEMA_CHANGE("db.makeFullCheckpointOnSchemaChange",
       "When index schema is changed, a full checkpoint is performed", Boolean.class, true, true),
 
-  @Deprecated OAUTH2_SECRETKEY("oauth2.secretkey", "Http OAuth2 secret key", String.class, ""),
+  @Deprecated OAUTH2_SECRETKEY("oauth2.secretkey", "Http OAuth2 secret key", String.class, "", false, true),
 
   @Deprecated STORAGE_USE_CRC32_FOR_EACH_RECORD("storage.cluster.usecrc32",
       "Indicates whether crc32 should be used for each record to check record integrity", Boolean.class, false),
