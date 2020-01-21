@@ -103,10 +103,7 @@ import com.orientechnologies.orient.core.storage.impl.local.statistic.OPerforman
 import com.orientechnologies.orient.core.storage.impl.local.statistic.OSessionStoragePerformanceStatistic;
 import com.orientechnologies.orient.core.storage.index.engine.OHashTableIndexEngine;
 import com.orientechnologies.orient.core.storage.index.engine.OSBTreeIndexEngine;
-import com.orientechnologies.orient.core.storage.ridbag.sbtree.OIndexRIDContainerSBTree;
-import com.orientechnologies.orient.core.storage.ridbag.sbtree.OSBTreeCollectionManager;
-import com.orientechnologies.orient.core.storage.ridbag.sbtree.OSBTreeCollectionManagerAbstract;
-import com.orientechnologies.orient.core.storage.ridbag.sbtree.OSBTreeCollectionManagerShared;
+import com.orientechnologies.orient.core.storage.ridbag.sbtree.*;
 import com.orientechnologies.orient.core.tx.OTransactionAbstract;
 import com.orientechnologies.orient.core.tx.OTransactionIndexChanges;
 import com.orientechnologies.orient.core.tx.OTransactionInternal;
@@ -130,6 +127,8 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
+
+import static com.orientechnologies.orient.core.config.OGlobalConfiguration.RID_BAG_SBTREEBONSAI_DELETE_DALAY;
 
 /**
  * @author Andrey Lomakin (a.lomakin-at-orientdb.com)
@@ -1244,8 +1243,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
     // UPDATE CONFIGURATION
     makeStorageDirty();
-
-    boolean rollback = false;
 
     final OCluster newCluster;
     if (status == OStorageClusterConfiguration.STATUS.OFFLINE) {
@@ -3241,7 +3238,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
         checkLowDiskSpaceRequestsAndReadOnlyConditions();
 
-        boolean rollback = false;
         atomicOperationsManager
             .executeInsideAtomicOperation((atomicOperation) -> doPutIndexValue(atomicOperation, internalId, key, value));
       } finally {
@@ -4536,6 +4532,61 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     }
   }
 
+  public void tryToDeleteTreeRidBag(final OSBTreeRidBag ridBag) {
+    try {
+      checkOpenness();
+      checkLowDiskSpaceRequestsAndReadOnlyConditions();
+
+      stateLock.acquireWriteLock();
+      try {
+        checkOpenness();
+
+        final long delay = configuration.getContextConfiguration().getValueAsInteger(RID_BAG_SBTREEBONSAI_DELETE_DALAY);
+        final long schedule = delay / 3;
+
+        final OBonsaiCollectionPointer collectionPointer = ridBag.getCollectionPointer();
+        final Runnable deleteTask = new Runnable() {
+          @Override
+          public void run() {
+            checkOpenness();
+            checkLowDiskSpaceRequestsAndReadOnlyConditions();
+
+            stateLock.acquireWriteLock();
+            try {
+              checkOpenness();
+              try {
+
+                makeStorageDirty();
+                final OAtomicOperationsManager atomicOperationsManager = OAbstractPaginatedStorage.this.atomicOperationsManager;
+
+                atomicOperationsManager.executeInsideAtomicOperation((operation) -> {
+                  if (!sbTreeCollectionManager.tryDelete(operation, collectionPointer, delay)) {
+                    Orient.instance().scheduleTask(this, schedule, 0);
+                  }
+                });
+              } catch (final Exception e) {
+                OLogManager.instance().errorNoDb(this, "Error during deletion of rid bag", e);
+              }
+            } finally {
+              stateLock.releaseWriteLock();
+            }
+          }
+        };
+
+        Orient.instance().scheduleTask(deleteTask, schedule, 0);
+        ridBag.confirmDelete();
+      } finally {
+        stateLock.releaseWriteLock();
+      }
+    } catch (final RuntimeException ee) {
+      throw logAndPrepareForRethrow(ee);
+    } catch (final Error ee) {
+      throw logAndPrepareForRethrow(ee);
+    } catch (final Throwable t) {
+      throw logAndPrepareForRethrow(t);
+    }
+  }
+
   protected void makeFullCheckpoint() {
     final OSessionStoragePerformanceStatistic statistic = performanceStatisticManager.getSessionPerformanceStatistic();
     if (statistic != null) {
@@ -4875,7 +4926,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
     try {
       makeStorageDirty();
-      boolean rollback = false;
 
       cluster.recycleRecord(atomicOperation, rid.getClusterPosition(), content, version, recordType);
 
