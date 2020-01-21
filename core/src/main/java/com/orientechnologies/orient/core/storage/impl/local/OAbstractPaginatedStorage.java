@@ -4537,46 +4537,17 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       checkOpenness();
       checkLowDiskSpaceRequestsAndReadOnlyConditions();
 
-      stateLock.acquireWriteLock();
-      try {
-        checkOpenness();
+      if (transaction.get() == null) {
+        stateLock.acquireWriteLock();
+        try {
+          checkOpenness();
 
-        final long delay = configuration.getContextConfiguration().getValueAsInteger(RID_BAG_SBTREEBONSAI_DELETE_DALAY);
-        final long schedule = delay / 3;
-
-        final OBonsaiCollectionPointer collectionPointer = ridBag.getCollectionPointer();
-        final Runnable deleteTask = new Runnable() {
-          @Override
-          public void run() {
-            checkOpenness();
-            checkLowDiskSpaceRequestsAndReadOnlyConditions();
-
-            stateLock.acquireWriteLock();
-            try {
-              checkOpenness();
-              try {
-
-                makeStorageDirty();
-                final OAtomicOperationsManager atomicOperationsManager = OAbstractPaginatedStorage.this.atomicOperationsManager;
-
-                atomicOperationsManager.executeInsideAtomicOperation((operation) -> {
-                  if (!sbTreeCollectionManager.tryDelete(operation, collectionPointer, delay)) {
-                    Orient.instance().scheduleTask(this, schedule, 0);
-                  }
-                });
-              } catch (final Exception e) {
-                OLogManager.instance().errorNoDb(this, "Error during deletion of rid bag", e);
-              }
-            } finally {
-              stateLock.releaseWriteLock();
-            }
-          }
-        };
-
-        Orient.instance().scheduleTask(deleteTask, schedule, 0);
-        ridBag.confirmDelete();
-      } finally {
-        stateLock.releaseWriteLock();
+          doTryToDeleteTreeRidBag(ridBag);
+        } finally {
+          stateLock.releaseWriteLock();
+        }
+      } else {
+        doTryToDeleteTreeRidBag(ridBag);
       }
     } catch (final RuntimeException ee) {
       throw logAndPrepareForRethrow(ee);
@@ -4585,6 +4556,43 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     } catch (final Throwable t) {
       throw logAndPrepareForRethrow(t);
     }
+  }
+
+  private void doTryToDeleteTreeRidBag(OSBTreeRidBag ridBag) {
+    final long delay = configuration.getContextConfiguration().getValueAsInteger(RID_BAG_SBTREEBONSAI_DELETE_DALAY);
+    final long schedule = delay / 3;
+
+    final OBonsaiCollectionPointer collectionPointer = ridBag.getCollectionPointer();
+    final Runnable deleteTask = new Runnable() {
+      @Override
+      public void run() {
+        checkOpenness();
+        checkLowDiskSpaceRequestsAndReadOnlyConditions();
+
+        stateLock.acquireWriteLock();
+        try {
+          checkOpenness();
+          try {
+
+            makeStorageDirty();
+            final OAtomicOperationsManager atomicOperationsManager = OAbstractPaginatedStorage.this.atomicOperationsManager;
+
+            atomicOperationsManager.executeInsideAtomicOperation((operation) -> {
+              if (!sbTreeCollectionManager.tryDelete(operation, collectionPointer, delay)) {
+                Orient.instance().scheduleTask(this, schedule, 0);
+              }
+            });
+          } catch (final Exception e) {
+            OLogManager.instance().errorNoDb(this, "Error during deletion of rid bag", e);
+          }
+        } finally {
+          stateLock.releaseWriteLock();
+        }
+      }
+    };
+
+    Orient.instance().scheduleTask(deleteTask, schedule, 0);
+    ridBag.confirmDelete();
   }
 
   protected void makeFullCheckpoint() {
