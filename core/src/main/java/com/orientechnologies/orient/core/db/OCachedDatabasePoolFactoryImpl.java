@@ -8,17 +8,13 @@ import java.util.TimerTask;
 
 /**
  * Default implementation of {@link OCachedDatabasePoolFactory}
- *
+ * <p>
  * Used in {@link OrientDBEmbedded} by default
- *
+ * <p>
  * Works like LRU cache
- *
- * How it works:
- * 1. Pool cache capacity is 100
- * 2. We have 100 pools in cache
- * 3. We want get 101 pool
- * 4. First we will remove pool which used long time ago from pool cache
- * 5. Then we add new pool from point 3 to pool cache
+ * <p>
+ * How it works: 1. Pool cache capacity is 100 2. We have 100 pools in cache 3. We want get 101 pool 4. First we will remove pool
+ * which used long time ago from pool cache 5. Then we add new pool from point 3 to pool cache
  *
  * @author Vitalii Honchar (weaxme@gmail.com)
  */
@@ -28,26 +24,26 @@ public class OCachedDatabasePoolFactoryImpl implements OCachedDatabasePoolFactor
    */
   private volatile int maxPoolSize = 100;
 
-  private volatile boolean closed;
-  private final ConcurrentLinkedHashMap<String, ODatabasePoolInternal> poolCache;
-  private final OrientDBInternal orientDB;
-
+  private volatile boolean                                                closed;
+  private final    ConcurrentLinkedHashMap<String, ODatabasePoolInternal> poolCache;
+  private final    OrientDBInternal                                       orientDB;
+  private final    long                                                   timeout;
 
   /**
    * @param orientDB instance of {@link OrientDB} which will be used for create new database pools {@link ODatabasePoolInternal}
    * @param capacity capacity of pool cache, by default is 100
-   * @param timeout  timeout in milliseconds which means that every timeout will be executed task for clean up cache from closed pools
+   * @param timeout  timeout in milliseconds which means that every timeout will be executed task for clean up cache from closed
+   *                 pools
    */
   public OCachedDatabasePoolFactoryImpl(OrientDBInternal orientDB, int capacity, long timeout) {
-    poolCache = new ConcurrentLinkedHashMap.Builder<String, ODatabasePoolInternal>()
-            .maximumWeightedCapacity(capacity)
-            .listener((identity, databasePool) -> databasePool.close())
-            .build();
+    poolCache = new ConcurrentLinkedHashMap.Builder<String, ODatabasePoolInternal>().maximumWeightedCapacity(capacity)
+        .listener((identity, databasePool) -> databasePool.close()).build();
     this.orientDB = orientDB;
-    scheduleCleanUpCache(createCleanUpTask(), timeout);
+    this.timeout = timeout;
+    scheduleCleanUpCache(createCleanUpTask());
   }
 
-  protected void scheduleCleanUpCache(TimerTask task, long timeout) {
+  protected void scheduleCleanUpCache(TimerTask task) {
     orientDB.schedule(task, timeout, timeout);
   }
 
@@ -66,19 +62,22 @@ public class OCachedDatabasePoolFactoryImpl implements OCachedDatabasePoolFactor
 
   private void cleanUpCache() {
     synchronized (this) {
+      for (ODatabasePoolInternal pool : poolCache.values()) {
+        long delta = System.currentTimeMillis() - pool.getLastCloseTime();
+        if (pool.isUnused() && delta > timeout) {
+          pool.close();
+        }
+      }
       poolCache.values().removeIf(ODatabasePoolInternal::isClosed);
     }
   }
 
   /**
    * Get or create database pool instance for given user
-   *
-   * Get or create database pool:
-   * 1. Create string database + username + password
-   * 2. Create key by hashing this string using SHA-256
-   * 3. Try to get pool from cache
-   * 4. If pool is in cache and pool is not closed, so return this pool
-   * 5. If pool is not in cache or pool is closed, so create new pool and put it in cache
+   * <p>
+   * Get or create database pool: 1. Create string database + username + password 2. Create key by hashing this string using SHA-256
+   * 3. Try to get pool from cache 4. If pool is in cache and pool is not closed, so return this pool 5. If pool is not in cache or
+   * pool is closed, so create new pool and put it in cache
    *
    * @param database name of database
    * @param username name of user which need access to database
@@ -101,9 +100,7 @@ public class OCachedDatabasePoolFactoryImpl implements OCachedDatabasePoolFactor
       return db;
     }
 
-    OrientDBConfig config = OrientDBConfig.builder()
-            .addConfig(OGlobalConfiguration.DB_POOL_MAX, maxPoolSize)
-            .build();
+    OrientDBConfig config = OrientDBConfig.builder().addConfig(OGlobalConfiguration.DB_POOL_MAX, maxPoolSize).build();
 
     if (parentConfig != null) {
       config.setParent(parentConfig);
@@ -126,8 +123,8 @@ public class OCachedDatabasePoolFactoryImpl implements OCachedDatabasePoolFactor
   }
 
   /**
-   * Close all open pools and clear pool storage. Set flag closed to true, so this instance can't be used again.
-   * Need create new instance of {@link OCachedDatabasePoolFactory} after close one of factories.
+   * Close all open pools and clear pool storage. Set flag closed to true, so this instance can't be used again. Need create new
+   * instance of {@link OCachedDatabasePoolFactory} after close one of factories.
    */
   @Override
   public void close() {
@@ -164,8 +161,8 @@ public class OCachedDatabasePoolFactoryImpl implements OCachedDatabasePoolFactor
   }
 
   /**
-   * Tries to get database pool from cache by given key. If pool exists in cache, but pool is already closed - so remove
-   * closed pool and return null
+   * Tries to get database pool from cache by given key. If pool exists in cache, but pool is already closed - so remove closed pool
+   * and return null
    *
    * @param key key associated with pool
    * @return database pool or null

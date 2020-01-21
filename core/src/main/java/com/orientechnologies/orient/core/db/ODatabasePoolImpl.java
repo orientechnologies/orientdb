@@ -33,6 +33,7 @@ public class ODatabasePoolImpl implements ODatabasePoolInternal {
   private volatile OResourcePool<Void, ODatabaseDocumentInternal> pool;
   private final    OrientDBInternal                               factory;
   private final    OrientDBConfig                                 config;
+  private volatile long                                           lastCloseTime = System.currentTimeMillis();
 
   public ODatabasePoolImpl(OrientDBInternal factory, String database, String user, String password, OrientDBConfig config) {
     int max = config.getConfigurations().getValueAsInteger(DB_POOL_MAX);
@@ -98,6 +99,19 @@ public class ODatabasePoolImpl implements ODatabasePoolInternal {
     } else {
       throw new ODatabaseException("The pool is closed");
     }
+    lastCloseTime = System.currentTimeMillis();
+  }
+
+  public boolean isUnused() {
+    if (pool == null) {
+      return true;
+    } else {
+      return pool.getResourcesOutCount() == 0;
+    }
+  }
+
+  public long getLastCloseTime() {
+    return lastCloseTime;
   }
 
   public OrientDBConfig getConfig() {

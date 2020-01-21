@@ -37,17 +37,16 @@ import java.util.concurrent.atomic.AtomicInteger;
  *
  * @param <K> Resource's Key
  * @param <V> Resource Object
- *
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
  */
 public class OResourcePool<K, V> {
-  protected final Semaphore sem;
-  protected final Queue<V> resources    = new ConcurrentLinkedQueue<V>();
-  protected final Queue<V> resourcesOut = new ConcurrentLinkedQueue<V>();
+  protected final Semaphore                   sem;
+  protected final Queue<V>                    resources    = new ConcurrentLinkedQueue<V>();
+  protected final Queue<V>                    resourcesOut = new ConcurrentLinkedQueue<V>();
   protected final Collection<V>               unmodifiableresources;
   private final   int                         maxResources;
   protected       OResourcePoolListener<K, V> listener;
-  protected final AtomicInteger created = new AtomicInteger();
+  protected final AtomicInteger               created      = new AtomicInteger();
 
   public OResourcePool(final int max, final OResourcePoolListener<K, V> listener) {
     this(0, max, listener);
@@ -72,7 +71,8 @@ public class OResourcePool<K, V> {
     // First, get permission to take or create a resource
     try {
       if (!sem.tryAcquire(maxWaitMillis, TimeUnit.MILLISECONDS))
-        throw new OAcquireTimeoutException("No more resources available in pool (max=" + maxResources + "). Requested resource: " + key);
+        throw new OAcquireTimeoutException(
+            "No more resources available in pool (max=" + maxResources + "). Requested resource: " + key);
 
     } catch (InterruptedException e) {
       Thread.currentThread().interrupt();
@@ -172,4 +172,9 @@ public class OResourcePool<K, V> {
   public int getCreatedInstances() {
     return created.get();
   }
+
+  public int getResourcesOutCount() {
+    return resourcesOut.size();
+  }
+
 }

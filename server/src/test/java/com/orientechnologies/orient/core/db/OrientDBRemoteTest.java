@@ -27,8 +27,8 @@ import static org.junit.Assert.*;
  */
 public class OrientDBRemoteTest {
 
-  private static final String SERVER_DIRECTORY = "./target/dbfactory";
-  private OServer server;
+  private static final String  SERVER_DIRECTORY = "./target/dbfactory";
+  private              OServer server;
 
   private OrientDB factory;
 
@@ -41,10 +41,8 @@ public class OrientDBRemoteTest {
         getClass().getClassLoader().getResourceAsStream("com/orientechnologies/orient/server/network/orientdb-server-config.xml"));
     server.activate();
 
-    OrientDBConfig config = OrientDBConfig.builder()
-            .addConfig(OGlobalConfiguration.DB_CACHED_POOL_CAPACITY, 2)
-            .addConfig(OGlobalConfiguration.DB_CACHED_POOL_CLEAN_UP_TIMEOUT, 2_000)
-            .build();
+    OrientDBConfig config = OrientDBConfig.builder().addConfig(OGlobalConfiguration.DB_CACHED_POOL_CAPACITY, 2)
+        .addConfig(OGlobalConfiguration.DB_CACHED_POOL_CLEAN_UP_TIMEOUT, 2_000).build();
     factory = new OrientDB("remote:localhost", "root", "root", config);
   }
 
@@ -88,8 +86,8 @@ public class OrientDBRemoteTest {
 
   @Test
   public void testCachedPool() {
-    if (!factory.exists("test"))
-      factory.create("test", ODatabaseType.MEMORY);
+    if (!factory.exists("testdb"))
+      factory.create("testdb", ODatabaseType.MEMORY);
 
     ODatabasePool poolAdmin1 = factory.cachedPool("testdb", "admin", "admin");
     ODatabasePool poolAdmin2 = factory.cachedPool("testdb", "admin", "admin");
@@ -114,6 +112,9 @@ public class OrientDBRemoteTest {
 
   @Test
   public void testCachedPoolFactoryCleanUp() throws Exception {
+    if (!factory.exists("testdb"))
+      factory.create("testdb", ODatabaseType.MEMORY);
+
     ODatabasePool poolAdmin1 = factory.cachedPool("testdb", "admin", "admin");
     ODatabasePool poolAdmin2 = factory.cachedPool("testdb", "admin", "admin");
 
