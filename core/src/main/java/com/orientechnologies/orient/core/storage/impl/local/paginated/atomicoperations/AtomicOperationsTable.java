@@ -3,6 +3,8 @@ package com.orientechnologies.orient.core.storage.impl.local.paginated.atomicope
 import com.orientechnologies.common.concur.collection.CASObjectArray;
 import com.orientechnologies.common.concur.lock.ScalableRWLock;
 
+import java.util.concurrent.ConcurrentHashMap;
+
 public class AtomicOperationsTable {
   private static final OperationInformation ATOMIC_OPERATION_STATUS_PLACE_HOLDER = new OperationInformation(
       AtomicOperationStatus.NOT_STARTED, -1);
@@ -14,6 +16,8 @@ public class AtomicOperationsTable {
 
   private final    int     tableCompactionLimit;
   private volatile boolean scheduleTableCompaction;
+
+  private final ConcurrentHashMap<Long, StackTraceElement[]> idTxMap = new ConcurrentHashMap<>();
 
   public AtomicOperationsTable(final int tableCompactionLimit, final long idOffset) {
     this.tableCompactionLimit = tableCompactionLimit;
@@ -37,6 +41,7 @@ public class AtomicOperationsTable {
           ATOMIC_OPERATION_STATUS_PLACE_HOLDER);
 
       scheduleTableCompactionIfNeeded();
+      idTxMap.put(operationId, Thread.currentThread().getStackTrace());
     } finally {
       compactionLock.sharedUnlock();
     }
@@ -73,6 +78,8 @@ public class AtomicOperationsTable {
       }
 
       scheduleTableCompactionIfNeeded();
+
+      idTxMap.remove(operationId);
     } finally {
       compactionLock.sharedUnlock();
     }
@@ -101,6 +108,7 @@ public class AtomicOperationsTable {
       }
 
       scheduleTableCompactionIfNeeded();
+      idTxMap.remove(operationId);
     } finally {
       compactionLock.sharedUnlock();
     }
