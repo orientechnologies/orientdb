@@ -53,8 +53,14 @@ public class OIndexAbstractDelegate implements OIndexInternal {
     return delegate.create(name, indexDefinition, clusterIndexName, clustersToIndex, rebuild, progressListener);
   }
 
-  public Object get(final Object iKey) {
-    return delegate.get(iKey);
+  @Deprecated
+  public Object get(final Object key) {
+    return delegate.get(key);
+  }
+
+  @Override
+  public Stream<ORID> getRids(Object key) {
+    return delegate.getRids(key);
   }
 
   public OIndex put(final Object iKey, final OIdentifiable iValue) {

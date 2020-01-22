@@ -41,8 +41,9 @@ public class OIndexRemoteMultiValue extends OIndexRemote {
     super(iName, iWrappedType, algorithm, iRid, iIndexDefinition, iConfiguration, clustersToIndex, database);
   }
 
-  public Collection<OIdentifiable> get(final Object iKey) {
-    try (final OResultSet result = getDatabase().indexQuery(getName(), String.format(QUERY_GET, name), iKey)) {
+  @Deprecated
+  public Collection<OIdentifiable> get(final Object key) {
+    try (final OResultSet result = getDatabase().indexQuery(getName(), String.format(QUERY_GET, name), key)) {
       //noinspection resource
       return result.stream().map((res) -> res.getIdentity().orElse(null)).collect(Collectors.toSet());
     }

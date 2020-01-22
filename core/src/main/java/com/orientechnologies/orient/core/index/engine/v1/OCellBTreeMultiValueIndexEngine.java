@@ -6,6 +6,7 @@ import com.orientechnologies.common.serialization.types.OUTF8Serializer;
 import com.orientechnologies.common.util.ORawPair;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.encryption.OEncryption;
+import com.orientechnologies.orient.core.exception.OStorageException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.index.OCompositeKey;
@@ -26,7 +27,6 @@ import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 import java.util.Spliterators;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
@@ -125,7 +125,7 @@ public final class OCellBTreeMultiValueIndexEngine implements OMultiValueIndexEn
     }
   }
 
-  private void doClearMVTree() throws IOException {
+  private void doClearMVTree() {
     assert mvTree != null;
 
     final Object firstKey = mvTree.firstKey();
@@ -136,14 +136,19 @@ public final class OCellBTreeMultiValueIndexEngine implements OMultiValueIndexEn
         try {
           mvTree.remove(pair.first, pair.second);
         } catch (IOException e) {
-          throw OException.wrapException(new OIndexException("Error during index cleaning"), e);
+          throw OException.wrapException(new OIndexException("Error during cleaning of index " + name), e);
         }
       });
     }
 
-    final List<ORID> rids = mvTree.get(null);
-    for (final ORID rid : rids) {
-      mvTree.remove(null, rid);
+    try (final Stream<ORID> rids = mvTree.get(null)) {
+      rids.forEach((rid) -> {
+        try {
+          mvTree.remove(null, rid);
+        } catch (final IOException e) {
+          throw OException.wrapException(new OStorageException("Error during cleaning of index " + name), e);
+        }
+      });
     }
   }
 
@@ -247,14 +252,10 @@ public final class OCellBTreeMultiValueIndexEngine implements OMultiValueIndexEn
 
   @Override
   public void clear() {
-    try {
-      if (mvTree != null) {
-        doClearMVTree();
-      } else {
-        doClearSVTree();
-      }
-    } catch (IOException e) {
-      throw OException.wrapException(new OIndexException("Error during clearing of index " + name), e);
+    if (mvTree != null) {
+      doClearMVTree();
+    } else {
+      doClearSVTree();
     }
   }
 
@@ -272,7 +273,7 @@ public final class OCellBTreeMultiValueIndexEngine implements OMultiValueIndexEn
   }
 
   @Override
-  public List<ORID> get(Object key) {
+  public Stream<ORID> get(Object key) {
     if (mvTree != null) {
       return mvTree.get(key);
     } else if (key != null) {
@@ -282,13 +283,13 @@ public final class OCellBTreeMultiValueIndexEngine implements OMultiValueIndexEn
       final OCompositeKey lastKey = convertToCompositeKey(key);
 
       try (Stream<ORawPair<OCompositeKey, ORID>> stream = svTree.iterateEntriesBetween(firstKey, true, lastKey, true, true)) {
-        return stream.map((pair) -> pair.second).collect(Collectors.toList());
+        return stream.map((pair) -> pair.second);
       }
     } else {
       assert nullTree != null;
       try (final Stream<ORawPair<OIdentifiable, ORID>> stream = nullTree
           .iterateEntriesBetween(new ORecordId(0, 0), true, new ORecordId(Short.MAX_VALUE, Long.MAX_VALUE), true, true)) {
-        return stream.map((pair) -> pair.second).collect(Collectors.toList());
+        return stream.map((pair) -> pair.second);
       }
     }
   }
@@ -455,8 +456,10 @@ public final class OCellBTreeMultiValueIndexEngine implements OMultiValueIndexEn
 
       int counter = 0;
 
-      if (!mvTree.get(null).isEmpty()) {
-        counter++;
+      try (Stream<ORID> oridStream = mvTree.get(null)) {
+        if (oridStream.iterator().hasNext()) {
+          counter++;
+        }
       }
 
       if (firstKey != null && lastKey != null) {

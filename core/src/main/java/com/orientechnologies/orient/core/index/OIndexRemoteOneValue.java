@@ -39,8 +39,9 @@ public class OIndexRemoteOneValue extends OIndexRemote {
     super(iName, iWrappedType, algorithm, iRid, iIndexDefinition, iConfiguration, clustersToIndex, database);
   }
 
-  public OIdentifiable get(final Object iKey) {
-    try (final OResultSet result = getDatabase().indexQuery(getName(), String.format(QUERY_GET, name), iKey)) {
+  @Deprecated
+  public OIdentifiable get(final Object key) {
+    try (final OResultSet result = getDatabase().indexQuery(getName(), String.format(QUERY_GET, name), key)) {
       if (result != null && result.hasNext())
         return ((OIdentifiable) result.next().getProperty("rid"));
       return null;

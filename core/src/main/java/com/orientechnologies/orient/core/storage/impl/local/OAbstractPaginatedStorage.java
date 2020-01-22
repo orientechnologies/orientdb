@@ -2609,12 +2609,59 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
   }
 
   private Object doGetIndexValue(final int indexId, final Object key) throws OInvalidIndexEngineIdException {
+    final int engineAPIVersion = extractEngineAPIVersion(indexId);
+    if (engineAPIVersion != 0) {
+      throw new IllegalStateException("Unsupported version of index engine API. Required 0 but found " + engineAPIVersion);
+    }
+
     checkIndexId(indexId);
 
     final OBaseIndexEngine engine = indexEngines.get(indexId);
     assert indexId == engine.getId();
 
-    return engine.get(key);
+    return ((OIndexEngine) engine).get(key);
+  }
+
+  public Stream<ORID> getIndexValues(int indexId, final Object key) throws OInvalidIndexEngineIdException {
+    final int engineAPIVersion = extractEngineAPIVersion(indexId);
+    if (engineAPIVersion != 1) {
+      throw new IllegalStateException("Unsupported version of index engine API. Required 1 but found " + engineAPIVersion);
+    }
+
+    indexId = extractInternalId(indexId);
+
+    try {
+      if (transaction.get() != null) {
+        return doGetIndexValues(indexId, key);
+      }
+
+      checkOpenness();
+
+      stateLock.acquireReadLock();
+      try {
+        checkOpenness();
+        return doGetIndexValues(indexId, key);
+      } finally {
+        stateLock.releaseReadLock();
+      }
+    } catch (final OInvalidIndexEngineIdException ie) {
+      throw logAndPrepareForRethrow(ie);
+    } catch (final RuntimeException ee) {
+      throw logAndPrepareForRethrow(ee);
+    } catch (final Error ee) {
+      throw logAndPrepareForRethrow(ee);
+    } catch (final Throwable t) {
+      throw logAndPrepareForRethrow(t);
+    }
+  }
+
+  private Stream<ORID> doGetIndexValues(final int indexId, final Object key) throws OInvalidIndexEngineIdException {
+    checkIndexId(indexId);
+
+    final OBaseIndexEngine engine = indexEngines.get(indexId);
+    assert indexId == engine.getId();
+
+    return ((OV1IndexEngine) engine).get(key);
   }
 
   public OBaseIndexEngine getIndexEngine(int indexId) throws OInvalidIndexEngineIdException {

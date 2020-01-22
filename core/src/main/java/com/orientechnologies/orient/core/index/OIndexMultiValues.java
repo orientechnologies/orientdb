@@ -38,6 +38,7 @@ import com.orientechnologies.orient.core.storage.ridbag.sbtree.OMixedIndexRIDCon
 
 import java.util.*;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 /**
@@ -51,30 +52,47 @@ public abstract class OIndexMultiValues extends OIndexAbstract {
     super(name, type, algorithm, valueContainerAlgorithm, metadata, version, storage, binaryFormatVersion);
   }
 
+  @Deprecated
+  @Override
   public Collection<ORID> get(Object key) {
+    final Stream<ORID> stream = getRids(key);
+    final List<ORID> rids = stream.collect(Collectors.toList());
+    if (rids.isEmpty()) {
+      return null;
+    }
+    return rids;
+  }
+
+  @Override
+  public Stream<ORID> getRids(Object key) {
     key = getCollatingValue(key);
 
     acquireSharedLock();
     try {
-
-      Collection<ORID> values;
+      Stream<ORID> stream;
       while (true) {
         try {
-          //noinspection unchecked
-          values = (Collection<ORID>) storage.getIndexValue(indexId, key);
-          break;
+          if (apiVersion == 0) {
+            //noinspection unchecked
+            final Collection<ORID> values = (Collection<ORID>) storage.getIndexValue(indexId, key);
+            if (values != null) {
+              //noinspection resource
+              stream = values.stream();
+            } else {
+              //noinspection resource
+              stream = Stream.empty();
+            }
+          } else if (apiVersion == 1) {
+            //noinspection resource
+            stream = storage.getIndexValues(indexId, key);
+          } else {
+            throw new IllegalStateException("Invalid version of index API - " + apiVersion);
+          }
+          return IndexStreamSecurityDecorator.decorateRidStream(this, stream);
         } catch (OInvalidIndexEngineIdException ignore) {
           doReloadIndexEngine();
         }
       }
-
-      if (values == null) {
-        return Collections.emptyList();
-      }
-
-      //noinspection unchecked
-      return OIndexInternal.securityFilterOnRead(this, (Collection) values);
-
     } finally {
       releaseSharedLock();
     }

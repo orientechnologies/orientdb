@@ -151,6 +151,8 @@ public interface OIndexInternal extends OIndex {
    */
   long size();
 
+  Stream<ORID> getRids(final Object key);
+
   Stream<ORawPair<Object, ORID>> stream();
 
   Stream<ORawPair<Object, ORID>> descStream();

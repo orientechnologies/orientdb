@@ -191,14 +191,29 @@ public class OIndexTxAwareOneValue extends OIndexTxAware<OIdentifiable> {
     super(database, delegate);
   }
 
+  @Deprecated
   @Override
   public OIdentifiable get(Object key) {
+    final Iterator<ORID> iterator;
+    try (Stream<ORID> stream = getRids(key)) {
+      iterator = stream.iterator();
+      if (iterator.hasNext()) {
+        return iterator.next();
+      }
+    }
+
+    return null;
+  }
+
+  @Override
+  public Stream<ORID> getRids(Object key) {
     final OTransactionIndexChanges indexChanges = database.getMicroOrRegularTransaction()
         .getIndexChangesInternal(delegate.getName());
-    if (indexChanges == null)
-      return (OIdentifiable) super.get(key);
+    if (indexChanges == null) {
+      return super.getRids(key);
+    }
 
-    key = getCollatingValue(key);
+    final Object collatedKey = getCollatingValue(key);
 
     ORID result;
     if (!indexChanges.cleared) {
@@ -212,10 +227,10 @@ public class OIndexTxAwareOneValue extends OIndexTxAware<OIdentifiable> {
     // FILTER RESULT SET WITH TRANSACTIONAL CHANGES
     final ORawPair<Object, ORID> entry = calculateTxIndexEntry(key, result, indexChanges);
     if (entry == null) {
-      return null;
+      return Stream.empty();
     }
 
-    return OIndexInternal.securityFilterOnRead(this, entry.second);
+    return IndexStreamSecurityDecorator.decorateRidStream(this, Stream.of(entry.second));
   }
 
   @Override

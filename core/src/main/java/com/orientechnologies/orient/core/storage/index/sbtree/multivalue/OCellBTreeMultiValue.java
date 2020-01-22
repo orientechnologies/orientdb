@@ -7,13 +7,12 @@ import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 
 import java.io.IOException;
-import java.util.List;
 import java.util.stream.Stream;
 
 public interface OCellBTreeMultiValue<K> {
   void create(OBinarySerializer<K> keySerializer, OType[] keyTypes, int keySize, OEncryption encryption) throws IOException;
 
-  List<ORID> get(K key);
+  Stream<ORID> get(K key);
 
   void put(K key, ORID value) throws IOException;
 

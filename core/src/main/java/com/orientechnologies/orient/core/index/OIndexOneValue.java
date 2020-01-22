@@ -23,7 +23,6 @@ import com.orientechnologies.common.comparator.ODefaultComparator;
 import com.orientechnologies.common.listener.OProgressListener;
 import com.orientechnologies.common.serialization.types.OBinarySerializer;
 import com.orientechnologies.common.util.ORawPair;
-import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OInvalidIndexEngineIdException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -44,14 +43,39 @@ public abstract class OIndexOneValue extends OIndexAbstract {
     super(name, type, algorithm, valueContainerAlgorithm, metadata, version, storage, binaryFormatVersion);
   }
 
-  public OIdentifiable get(Object iKey) {
-    iKey = getCollatingValue(iKey);
+  @Deprecated
+  @Override
+  public Object get(Object key) {
+    final Iterator<ORID> iterator;
+    try (Stream<ORID> stream = getRids(key)) {
+      iterator = stream.iterator();
+      if (iterator.hasNext()) {
+        return iterator.next();
+      }
+    }
+
+    return null;
+  }
+
+  @Override
+  public Stream<ORID> getRids(Object key) {
+    key = getCollatingValue(key);
 
     acquireSharedLock();
     try {
       while (true)
         try {
-          return OIndexInternal.securityFilterOnRead(this, (OIdentifiable) storage.getIndexValue(indexId, iKey));
+          final Stream<ORID> stream;
+          if (apiVersion == 0) {
+            //noinspection resource
+            stream = Stream.of((ORID) storage.getIndexValue(indexId, key));
+          } else if (apiVersion == 1) {
+            //noinspection resource
+            stream = storage.getIndexValues(indexId, key);
+          } else {
+            throw new IllegalStateException("Unknown version of index API " + apiVersion);
+          }
+          return IndexStreamSecurityDecorator.decorateRidStream(this, stream);
         } catch (OInvalidIndexEngineIdException ignore) {
           doReloadIndexEngine();
         }

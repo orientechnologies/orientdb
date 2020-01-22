@@ -50,11 +50,12 @@ public interface OIndex extends Comparable<OIndex> {
   /**
    * Gets the set of records associated with the passed key.
    *
-   * @param iKey The key to search
+   * @param key The key to search
    *
    * @return The Record set if found, otherwise an empty Set
    */
-  Object get(Object iKey);
+  @Deprecated
+  Object get(Object key);
 
   /**
    * Inserts a new entry in the index. The behaviour depends by the index implementation.
@@ -93,7 +94,6 @@ public interface OIndex extends Comparable<OIndex> {
    */
   @Deprecated
   OIndex clear();
-
 
   /**
    * @return number of entries in the index.

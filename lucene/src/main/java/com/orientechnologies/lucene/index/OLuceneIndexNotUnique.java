@@ -44,6 +44,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public class OLuceneIndexNotUnique extends OIndexAbstract implements OLuceneIndex {
@@ -272,16 +273,25 @@ public class OLuceneIndexNotUnique extends OIndexAbstract implements OLuceneInde
         .create(indexDefinition, clusterIndexName, clustersToIndex, rebuild, progressListener, determineValueSerializer());
   }
 
+  @Deprecated
   @Override
   public Set<OIdentifiable> get(final Object key) {
+    try (Stream<ORID> stream = getRids(key)) {
+      return stream.collect(Collectors.toSet());
+    }
+  }
+
+  @Override
+  public Stream<ORID> getRids(Object key) {
     final OBasicTransaction transaction = getDatabase().getMicroOrRegularTransaction();
     if (transaction.isActive()) {
       while (true) {
         try {
+          //noinspection resource
           return storage.callIndexEngine(false, false, indexId, engine -> {
             OLuceneIndexEngine indexEngine = (OLuceneIndexEngine) engine;
             return indexEngine.getInTx(key, getTransactionChanges(transaction));
-          });
+          }).stream().map(OIdentifiable::getIdentity);
         } catch (OInvalidIndexEngineIdException e) {
           doReloadIndexEngine();
         }
@@ -292,7 +302,8 @@ public class OLuceneIndexNotUnique extends OIndexAbstract implements OLuceneInde
         try {
           @SuppressWarnings("unchecked")
           Set<OIdentifiable> result = (Set<OIdentifiable>) storage.getIndexValue(indexId, key);
-          return result;
+          //noinspection resource
+          return result.stream().map(OIdentifiable::getIdentity);
           // TODO filter these results based on security
 //          return new HashSet(OIndexInternal.securityFilterOnRead(this, result));
         } catch (OInvalidIndexEngineIdException e) {
