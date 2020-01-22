@@ -246,11 +246,12 @@ public class OIndexTxAwareMultiValue extends OIndexTxAware<Collection<OIdentifia
     }
 
     final Object collatedKey = getCollatingValue(key);
-    final Set<OIdentifiable> txChanges = calculateTxValue(collatedKey, indexChanges);
+    Set<OIdentifiable> txChanges = calculateTxValue(collatedKey, indexChanges);
 
+    @SuppressWarnings("resource")
     final Stream<ORID> backedStream = super.getRids(collatedKey);
     if (txChanges == null) {
-      return backedStream;
+      txChanges = Collections.emptySet();
     }
 
     //noinspection resource
