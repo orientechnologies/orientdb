@@ -20,6 +20,11 @@ public class OETLHandler {
   private ExecutorService pool       = new OThreadPoolExecutorWithLogging(1, 1, 0L, TimeUnit.MILLISECONDS,
       new LinkedBlockingQueue<>());
   private OETLJob         currentJob = null;
+  private OETLListener    listener;
+
+  public OETLHandler(OETLListener listener) {
+    this.listener = listener;
+  }
 
   public OETLHandler() {
   }
@@ -33,6 +38,9 @@ public class OETLHandler {
       @Override
       public void onEnd(OETLJob etlJob) {
         currentJob = null;
+        if (OETLHandler.this.listener != null) {
+          OETLHandler.this.listener.onEnd(etlJob);
+        }
       }
     });
 
