@@ -4571,19 +4571,19 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
         stateLock.acquireWriteLock();
         try {
-          checkOpenness();
-          try {
+          if (status == STATUS.OPEN) {
+            try {
+              makeStorageDirty();
+              final OAtomicOperationsManager atomicOperationsManager = OAbstractPaginatedStorage.this.atomicOperationsManager;
 
-            makeStorageDirty();
-            final OAtomicOperationsManager atomicOperationsManager = OAbstractPaginatedStorage.this.atomicOperationsManager;
-
-            atomicOperationsManager.executeInsideAtomicOperation((operation) -> {
-              if (!sbTreeCollectionManager.tryDelete(operation, collectionPointer, delay)) {
-                Orient.instance().scheduleTask(this, schedule, 0);
-              }
-            });
-          } catch (final Exception e) {
-            OLogManager.instance().errorNoDb(this, "Error during deletion of rid bag", e);
+              atomicOperationsManager.executeInsideAtomicOperation((operation) -> {
+                if (!sbTreeCollectionManager.tryDelete(operation, collectionPointer, delay)) {
+                  Orient.instance().scheduleTask(this, schedule, 0);
+                }
+              });
+            } catch (final Exception e) {
+              OLogManager.instance().errorNoDb(this, "Error during deletion of rid bag", e);
+            }
           }
         } finally {
           stateLock.releaseWriteLock();
@@ -5660,12 +5660,14 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
     long lastReportTime = 0;
 
+    OLogSequenceNumber currentLSN;
     try {
       List<OWriteableWALRecord> records = writeAheadLog.read(lsn, 1_000);
       while (!records.isEmpty()) {
         for (final OWriteableWALRecord walRecord : records) {
+          currentLSN = walRecord.getLsn();
           if (walRecord instanceof OOperationUnitRecord) {
-            logSequenceNumber = walRecord.getLsn();
+            logSequenceNumber = currentLSN;
 
             final OOperationUnitRecord<?> operationUnitRecord = (OOperationUnitRecord<?>) walRecord;
             if (walRecord instanceof OAtomicUnitEndRecord) {
@@ -5724,7 +5726,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
           if (reportBatchSize > 0 && recordsProcessed % reportBatchSize == 0
               || currentTime - lastReportTime > WAL_RESTORE_REPORT_INTERVAL) {
             OLogManager.instance()
-                .infoNoDb(this, "%d operations were processed, current LSN is %s last LSN is %s", recordsProcessed, lsn,
+                .infoNoDb(this, "%d operations were processed, current LSN is %s last LSN is %s", recordsProcessed, currentLSN,
                     writeAheadLog.end());
             lastReportTime = currentTime;
           }
