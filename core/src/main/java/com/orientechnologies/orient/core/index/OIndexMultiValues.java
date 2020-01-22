@@ -341,7 +341,7 @@ public abstract class OIndexMultiValues extends OIndexAbstract {
     sortedKeys.sort(comparator);
 
     //noinspection resource
-    return sortedKeys.stream().flatMap((key) -> {
+    return IndexStreamSecurityDecorator.decorateStream(this, sortedKeys.stream().flatMap((key) -> {
       key = getCollatingValue(key);
 
       final Object entryKey = key;
@@ -349,9 +349,16 @@ public abstract class OIndexMultiValues extends OIndexAbstract {
       try {
         while (true) {
           try {
-            //noinspection unchecked,resource
-            return Optional.ofNullable((Collection<ORID>) storage.getIndexValue(indexId, key))
-                .map((rids) -> rids.stream().map((rid) -> new ORawPair<>(entryKey, rid))).orElse(Stream.empty());
+            if (apiVersion == 0) {
+              //noinspection unchecked,resource
+              return Optional.ofNullable((Collection<ORID>) storage.getIndexValue(indexId, key))
+                  .map((rids) -> rids.stream().map((rid) -> new ORawPair<>(entryKey, rid))).orElse(Stream.empty());
+            } else if (apiVersion == 1) {
+              //noinspection resource
+              return storage.getIndexValues(indexId, key).map((rid) -> new ORawPair<>(entryKey, rid));
+            } else {
+              throw new IllegalStateException("Invalid version of index API - " + apiVersion);
+            }
           } catch (OInvalidIndexEngineIdException ignore) {
             doReloadIndexEngine();
           }
@@ -360,7 +367,7 @@ public abstract class OIndexMultiValues extends OIndexAbstract {
       } finally {
         releaseSharedLock();
       }
-    });
+    }));
   }
 
   public long size() {

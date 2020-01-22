@@ -103,15 +103,22 @@ public abstract class OIndexOneValue extends OIndexAbstract {
     sortedKeys.sort(comparator);
 
     //noinspection resource
-    return IndexStreamSecurityDecorator.decorateStream(this, sortedKeys.stream().map((key) -> {
+    return IndexStreamSecurityDecorator.decorateStream(this, sortedKeys.stream().flatMap((key) -> {
       final Object collatedKey = getCollatingValue(key);
 
       acquireSharedLock();
       try {
         while (true) {
           try {
-            return Optional.ofNullable((ORID) storage.getIndexValue(indexId, collatedKey))
-                .map((rid) -> new ORawPair<>(collatedKey, rid)).orElse(null);
+            if (apiVersion == 0) {
+              return Stream.of(Optional.ofNullable((ORID) storage.getIndexValue(indexId, collatedKey))
+                  .map((rid) -> new ORawPair<>(collatedKey, rid)).orElse(null));
+            } else if (apiVersion == 1) {
+              //noinspection resource
+              return storage.getIndexValues(indexId, collatedKey).map((rid) -> new ORawPair<>(collatedKey, rid));
+            } else {
+              throw new IllegalStateException("Invalid version of index API - " + apiVersion);
+            }
           } catch (OInvalidIndexEngineIdException ignore) {
             doReloadIndexEngine();
           }
