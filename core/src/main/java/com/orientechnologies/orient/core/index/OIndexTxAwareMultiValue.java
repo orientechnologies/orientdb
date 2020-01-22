@@ -230,10 +230,9 @@ public class OIndexTxAwareMultiValue extends OIndexTxAware<Collection<OIdentifia
   @Deprecated
   @Override
   public Collection<OIdentifiable> get(Object key) {
-    final Stream<ORID> stream = getRids(key);
-    final List<OIdentifiable> rids = stream.collect(Collectors.toList());
-    if (rids.isEmpty()) {
-      return null;
+    final List<OIdentifiable> rids;
+    try (Stream<ORID> stream = getRids(key)) {
+      rids = stream.collect(Collectors.toList());
     }
     return rids;
   }

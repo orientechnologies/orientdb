@@ -25,7 +25,6 @@ import com.orientechnologies.orient.core.config.OStorageConfiguration;
 import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
-import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.index.OIndex;
@@ -313,7 +312,7 @@ public class ODatabaseCompare extends ODatabaseImpExpAbstract {
     }
   }
 
-  @SuppressWarnings({ "unchecked", "rawtypes", "ObjectAllocationInLoop" })
+  @SuppressWarnings({ "rawtypes", "ObjectAllocationInLoop" })
   private void compareIndexes(ODocumentHelper.RIDMapper ridMapper) {
     listener.onMessage("\nStarting index comparison:");
 
@@ -459,37 +458,14 @@ public class ODatabaseCompare extends ODatabaseImpExpAbstract {
           while (makeDbCall(databaseOne, database -> indexKeyIteratorOne.hasNext())) {
             final Object indexKey = makeDbCall(databaseOne, database -> indexKeyIteratorOne.next());
 
-            Object indexOneValue = makeDbCall(databaseOne, database -> indexOne.get(indexKey));
-
-            final Object indexTwoValue = makeDbCall(databaseTwo, database -> indexTwo.get(indexKey));
-
-            if (indexTwoValue == null) {
-              ok = false;
-              listener.onMessage("\n- ERR: Entry with key " + indexKey + " is absent in index " + indexOne.getName() + " for DB2.");
-              ++differences;
-            } else if (indexOneValue instanceof Set && indexTwoValue instanceof Set) {
-              final Set<Object> indexOneValueSet = (Set<Object>) indexOneValue;
-              final Set<Object> indexTwoValueSet = (Set<Object>) indexTwoValue;
-
-              if (!ODocumentHelper.compareSets(databaseOne, indexOneValueSet, databaseTwo, indexTwoValueSet, ridMapper)) {
-                ok = false;
-                reportIndexDiff(indexOne, indexKey, indexOneValue, indexTwoValue);
+            //noinspection resource
+            try (Stream<ORID> indexOneStream = makeDbCall(databaseOne, database -> indexOne.getInternal().getRids(indexKey))) {
+              //noinspection resource
+              try (Stream<ORID> indexTwoValue = makeDbCall(databaseTwo, database -> indexTwo.getInternal().getRids(indexKey))) {
+                differences = compareIndexStreams(indexKey, indexOneStream, indexTwoValue, listener);
               }
-            } else if (indexOneValue instanceof ORID && indexTwoValue instanceof ORID) {
-              if (ridMapper != null && ((ORID) indexOneValue).isPersistent()) {
-                OIdentifiable identifiable = ridMapper.map((ORID) indexOneValue);
-
-                if (identifiable != null)
-                  indexOneValue = identifiable.getIdentity();
-              }
-              if (!indexOneValue.equals(indexTwoValue)) {
-                ok = false;
-                reportIndexDiff(indexOne, indexKey, indexOneValue, indexTwoValue);
-              }
-            } else if (!compareIndexValues((Collection<ORID>) indexOneValue, (Collection<ORID>) indexTwoValue, ridMapper)) {
-              ok = false;
-              reportIndexDiff(indexOne, indexKey, indexOneValue, indexTwoValue);
             }
+            ok = ok && differences > 0;
           }
         }
 
@@ -498,6 +474,55 @@ public class ODatabaseCompare extends ODatabaseImpExpAbstract {
 
     if (ok)
       listener.onMessage("OK");
+  }
+
+  private static int compareIndexStreams(final Object indexKey, final Stream<ORID> streamOne, final Stream<ORID> streamTwo,
+      final OCommandOutputListener listener) {
+    final Set<ORID> streamTwoSet = new HashSet<>();
+
+    final Iterator<ORID> streamOneIterator = streamOne.iterator();
+    final Iterator<ORID> streamTwoIterator = streamTwo.iterator();
+
+    int differences = 0;
+    while (streamOneIterator.hasNext()) {
+      final ORID rid = streamOneIterator.next();
+
+      if (!streamTwoSet.remove(rid)) {
+        if (!streamTwoIterator.hasNext()) {
+          listener.onMessage("\r\nEntry " + indexKey + ":" + rid + " is present in DB1 but absent in DB2");
+          break;
+        }
+
+        boolean found = false;
+        while (streamTwoIterator.hasNext()) {
+          final ORID streamRid = streamTwoIterator.next();
+          if (streamRid.equals(rid)) {
+            found = true;
+            break;
+          }
+
+          streamTwoSet.add(streamRid);
+        }
+
+        if (!found) {
+          listener.onMessage("\r\nEntry " + indexKey + ":" + rid + " is present in DB1 but absent in DB2");
+        }
+      }
+    }
+
+    while (streamTwoIterator.hasNext()) {
+      final ORID rid = streamTwoIterator.next();
+      listener.onMessage("\r\nEntry " + indexKey + ":" + rid + " is present in DB2 but absent in DB1");
+
+      differences++;
+    }
+
+    for (final ORID rid : streamTwoSet) {
+      listener.onMessage("\r\nEntry " + indexKey + ":" + rid + " is present in DB2 but absent in DB1");
+
+      differences++;
+    }
+    return differences;
   }
 
   private static boolean compareIndexValues(Collection<ORID> oneValue, Collection<ORID> secondValue,

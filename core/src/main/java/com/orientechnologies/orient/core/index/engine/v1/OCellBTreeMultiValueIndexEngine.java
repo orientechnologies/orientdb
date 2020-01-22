@@ -282,15 +282,14 @@ public final class OCellBTreeMultiValueIndexEngine implements OMultiValueIndexEn
       final OCompositeKey firstKey = convertToCompositeKey(key);
       final OCompositeKey lastKey = convertToCompositeKey(key);
 
-      try (Stream<ORawPair<OCompositeKey, ORID>> stream = svTree.iterateEntriesBetween(firstKey, true, lastKey, true, true)) {
-        return stream.map((pair) -> pair.second);
-      }
+      //noinspection resource
+      return svTree.iterateEntriesBetween(firstKey, true, lastKey, true, true).map((pair) -> pair.second);
     } else {
       assert nullTree != null;
-      try (final Stream<ORawPair<OIdentifiable, ORID>> stream = nullTree
-          .iterateEntriesBetween(new ORecordId(0, 0), true, new ORecordId(Short.MAX_VALUE, Long.MAX_VALUE), true, true)) {
-        return stream.map((pair) -> pair.second);
-      }
+
+      //noinspection resource
+      return nullTree.iterateEntriesBetween(new ORecordId(0, 0), true, new ORecordId(Short.MAX_VALUE, Long.MAX_VALUE), true, true)
+          .map((pair) -> pair.second);
     }
   }
 

@@ -55,10 +55,9 @@ public abstract class OIndexMultiValues extends OIndexAbstract {
   @Deprecated
   @Override
   public Collection<ORID> get(Object key) {
-    final Stream<ORID> stream = getRids(key);
-    final List<ORID> rids = stream.collect(Collectors.toList());
-    if (rids.isEmpty()) {
-      return null;
+    final List<ORID> rids;
+    try (Stream<ORID> stream = getRids(key)) {
+      rids = stream.collect(Collectors.toList());
     }
     return rids;
   }
