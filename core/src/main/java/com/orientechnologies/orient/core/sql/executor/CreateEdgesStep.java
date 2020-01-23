@@ -14,6 +14,7 @@ import com.orientechnologies.orient.core.sql.parser.OBatch;
 import com.orientechnologies.orient.core.sql.parser.OIdentifier;
 
 import java.util.*;
+import java.util.stream.Stream;
 
 /**
  * Created by luigidellaquila on 28/11/16.
@@ -22,29 +23,29 @@ public class CreateEdgesStep extends AbstractExecutionStep {
 
   private final OIdentifier targetClass;
   private final OIdentifier targetCluster;
-  private final String uniqueIndexName;
+  private final String      uniqueIndexName;
   private final OIdentifier fromAlias;
   private final OIdentifier toAlias;
-  private final Number wait;
-  private final Number retry;
-  private final OBatch batch;
+  private final Number      wait;
+  private final Number      retry;
+  private final OBatch      batch;
 
   //operation stuff
-  private Iterator  fromIter;
-  private Iterator  toIterator;
-  private OVertex   currentFrom;
-  private OVertex   currentTo;
-  private OEdge     edgeToUpdate;//for upsert
-  private boolean   finished = false;
-  private List   toList   = new ArrayList<>();
-  private OIndex uniqueIndex;
+  private Iterator fromIter;
+  private Iterator toIterator;
+  private OVertex  currentFrom;
+  private OVertex  currentTo;
+  private OEdge    edgeToUpdate;//for upsert
+  private boolean  finished = false;
+  private List     toList   = new ArrayList<>();
+  private OIndex   uniqueIndex;
 
   private boolean inited = false;
 
   private long cost = 0;
 
   public CreateEdgesStep(OIdentifier targetClass, OIdentifier targetClusterName, String uniqueIndex, OIdentifier fromAlias,
-                         OIdentifier toAlias, Number wait, Number retry, OBatch batch, OCommandContext ctx, boolean profilingEnabled) {
+      OIdentifier toAlias, Number wait, Number retry, OBatch batch, OCommandContext ctx, boolean profilingEnabled) {
     super(ctx, profilingEnabled);
     this.targetClass = targetClass;
     this.targetCluster = targetClusterName;
@@ -228,13 +229,15 @@ public class CreateEdgesStep extends AbstractExecutionStep {
 
   private OEdge getExistingEdge(OVertex currentFrom, OVertex currentTo) {
     Object key = uniqueIndex.getDefinition().createValue(currentFrom.getIdentity(), currentTo.getIdentity());
-    Object result = uniqueIndex.get(key);
-    if (result instanceof ORID) {
-      result = ((ORID) result).getRecord();
+
+    final Iterator<ORID> iterator;
+    try (Stream<ORID> stream = uniqueIndex.getInternal().getRids(key)) {
+      iterator = stream.iterator();
+      if (iterator.hasNext()) {
+        return iterator.next().getRecord();
+      }
     }
-    if (result instanceof OElement) {
-      return ((OElement) result).asEdge().get();
-    }
+
     return null;
   }
 
@@ -249,7 +252,7 @@ public class CreateEdgesStep extends AbstractExecutionStep {
     if (currentFrom instanceof OResult) {
       Object from = currentFrom;
       currentFrom = ((OResult) currentFrom).getVertex()
-              .orElseThrow(() -> new OCommandExecutionException("Invalid vertex for edge creation: " + from.toString()));
+          .orElseThrow(() -> new OCommandExecutionException("Invalid vertex for edge creation: " + from.toString()));
     }
     if (currentFrom instanceof OVertex) {
       return (OVertex) currentFrom;
@@ -257,7 +260,7 @@ public class CreateEdgesStep extends AbstractExecutionStep {
     if (currentFrom instanceof OElement) {
       Object from = currentFrom;
       return ((OElement) currentFrom).asVertex()
-              .orElseThrow(() -> new OCommandExecutionException("Invalid vertex for edge creation: " + from.toString()));
+          .orElseThrow(() -> new OCommandExecutionException("Invalid vertex for edge creation: " + from.toString()));
     }
     throw new OCommandExecutionException(
         "Invalid vertex for edge creation: " + (currentFrom == null ? "null" : currentFrom.toString()));
@@ -291,8 +294,8 @@ public class CreateEdgesStep extends AbstractExecutionStep {
   @Override
   public OExecutionStep copy(OCommandContext ctx) {
     return new CreateEdgesStep(targetClass == null ? null : targetClass.copy(), targetCluster == null ? null : targetCluster.copy(),
-            uniqueIndexName, fromAlias == null ? null : fromAlias.copy(), toAlias == null ? null : toAlias.copy(), wait, retry,
-            batch == null ? null : batch.copy(), ctx, profilingEnabled);
+        uniqueIndexName, fromAlias == null ? null : fromAlias.copy(), toAlias == null ? null : toAlias.copy(), wait, retry,
+        batch == null ? null : batch.copy(), ctx, profilingEnabled);
   }
 }
 

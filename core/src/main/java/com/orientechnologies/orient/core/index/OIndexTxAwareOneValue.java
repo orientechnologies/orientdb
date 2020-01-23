@@ -206,7 +206,7 @@ public class OIndexTxAwareOneValue extends OIndexTxAware<OIdentifiable> {
   }
 
   @Override
-  public Stream<ORID> getRids(Object key) {
+  public Stream<ORID> getRids(final Object key) {
     final OTransactionIndexChanges indexChanges = database.getMicroOrRegularTransaction()
         .getIndexChangesInternal(delegate.getName());
     if (indexChanges == null) {
@@ -215,22 +215,26 @@ public class OIndexTxAwareOneValue extends OIndexTxAware<OIdentifiable> {
 
     final Object collatedKey = getCollatingValue(key);
 
-    ORID result;
+    Stream<ORID> stream;
     if (!indexChanges.cleared) {
       // BEGIN FROM THE UNDERLYING RESULT SET
-      result = Optional.ofNullable((OIdentifiable) super.get(key)).map(OIdentifiable::getIdentity).orElse(null);
+      //noinspection resource
+      stream = super.getRids(key);
     } else {
       // BEGIN FROM EMPTY RESULT SET
-      result = null;
+      //noinspection resource
+      stream = Stream.empty();
     }
 
-    // FILTER RESULT SET WITH TRANSACTIONAL CHANGES
-    final ORawPair<Object, ORID> entry = calculateTxIndexEntry(key, result, indexChanges);
-    if (entry == null) {
-      return Stream.empty();
-    }
+    //noinspection resource
+    return IndexStreamSecurityDecorator.decorateRidStream(this, stream.map((rid) -> {
+      final ORawPair<Object, ORID> entry = calculateTxIndexEntry(key, rid, indexChanges);
+      if (entry == null) {
+        return null;
+      }
 
-    return IndexStreamSecurityDecorator.decorateRidStream(this, Stream.of(entry.second));
+      return entry.second;
+    })).filter(Objects::nonNull);
   }
 
   @Override

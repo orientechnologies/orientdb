@@ -21,6 +21,7 @@ import org.apache.lucene.index.memory.MemoryIndex;
 
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static com.orientechnologies.lucene.functions.OLuceneFunctionsUtils.getOrCreateMemoryIndex;
 
@@ -104,8 +105,11 @@ public class OLuceneSearchOnFieldsFunction extends OLuceneSearchFunctionTemplate
     if (index != null) {
 
       ODocument meta = getMetadata(args);
-      Set<OIdentifiable> luceneResultSet = index
-          .get(new OLuceneKeyAndMetadata(new OLuceneCompositeKey(Arrays.asList(query)).setContext(ctx), meta));
+      Set<OIdentifiable> luceneResultSet;
+      try (Stream<ORID> rids = index.getInternal()
+          .getRids(new OLuceneKeyAndMetadata(new OLuceneCompositeKey(Arrays.asList(query)).setContext(ctx), meta))) {
+        luceneResultSet = rids.collect(Collectors.toSet());
+      }
 
       return luceneResultSet;
     }

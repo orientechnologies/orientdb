@@ -15,7 +15,6 @@
 package com.orientechnologies.spatial.operator;
 
 import com.orientechnologies.common.util.ORawPair;
-import com.orientechnologies.lucene.collections.OLuceneResultSet;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
@@ -58,18 +57,8 @@ public class OLuceneOverlapOperator extends OLuceneSpatialOperator {
     queryParams.put(SpatialQueryBuilderAbstract.GEO_FILTER, SpatialQueryBuilderOverlap.NAME);
     queryParams.put(SpatialQueryBuilderAbstract.SHAPE, key);
 
-    long start = System.currentTimeMillis();
-    OLuceneResultSet indexResult = (OLuceneResultSet) index.get(queryParams);
-    if (indexResult != null)
-      indexResult.sendLookupTime(iContext, start);
-
-    if (indexResult == null) {
-      return Stream.empty();
-    }
-
-    return indexResult.stream()
-        .map((identifiable) -> new ORawPair<>(new OSpatialCompositeKey(keyParams), identifiable.getIdentity()));
-
+    //noinspection resource
+    return index.getInternal().getRids(queryParams).map((rid) -> new ORawPair<>(new OSpatialCompositeKey(keyParams), rid));
   }
 
   @Override

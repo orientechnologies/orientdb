@@ -14,7 +14,6 @@
  */
 package com.orientechnologies.spatial.functions;
 
-import com.orientechnologies.lucene.collections.OLuceneResultSet;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
@@ -65,7 +64,7 @@ public abstract class OSpatialFunctionAbstractIndexable extends OSpatialFunction
     return ODatabaseRecordThreadLocal.instance().get();
   }
 
-  protected OLuceneResultSet results(OFromClause target, OExpression[] args, OCommandContext ctx, Object rightValue) {
+  protected Iterable<OIdentifiable> results(OFromClause target, OExpression[] args, OCommandContext ctx, Object rightValue) {
     OIndex oIndex = searchForIndex(target, args);
 
     if (oIndex == null) {
@@ -92,7 +91,7 @@ public abstract class OSpatialFunctionAbstractIndexable extends OSpatialFunction
       ctx.setVariable("involvedIndexes", indexes);
     }
     indexes.add(oIndex.getName());
-    return (OLuceneResultSet) oIndex.get(queryParams);
+    return oIndex.getInternal().getRids(queryParams).collect(Collectors.toSet());
   }
 
   protected void onAfterParsing(Map<String, Object> params, OExpression[] args, OCommandContext ctx, Object rightValue) {

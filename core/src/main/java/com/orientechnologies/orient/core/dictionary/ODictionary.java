@@ -26,6 +26,7 @@ import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
 @SuppressWarnings("unchecked")
+@Deprecated
 public class ODictionary<T extends Object> {
   private OIndex index;
 

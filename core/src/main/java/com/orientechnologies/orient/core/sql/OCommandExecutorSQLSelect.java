@@ -27,6 +27,7 @@ import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.io.OIOUtils;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.profiler.OProfiler;
+import com.orientechnologies.common.stream.BreakingForEach;
 import com.orientechnologies.common.util.OPair;
 import com.orientechnologies.common.util.OPatternConst;
 import com.orientechnologies.common.util.ORawPair;
@@ -2347,13 +2348,9 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
           streams.add(stream);
 
         if (index.getMetadata() != null && !index.getDefinition().isNullValuesIgnored()) {
-          Object nullValue = index.get(null);
-          if (nullValue != null) {
-            if (nullValue instanceof Collection)
-              streams.add(((Collection<ORID>) nullValue).stream().map((rid) -> new ORawPair<>(null, rid)));
-            else
-              streams.add(Collections.singletonList((ORID) nullValue).stream().map((rid) -> new ORawPair<>(null, rid)));
-          }
+          @SuppressWarnings("resource")
+          final Stream<ORID> nullRids = index.getInternal().getRids(null);
+          streams.add(nullRids.map((rid) -> new ORawPair<>(null, rid)));
         }
 
         fullySortedByIndex = true;
@@ -2655,19 +2652,21 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
           return;
         }
 
-        final Object res;
+        final Stream<ORID> res;
         if (index.getDefinition().getParamCount() == 1) {
           // CONVERT BEFORE SEARCH IF NEEDED
           final OType type = index.getDefinition().getTypes()[0];
           keyValue = OType.convert(keyValue, type.getDefaultJavaType());
 
-          res = index.get(keyValue);
+          //noinspection resource
+          res = index.getInternal().getRids(keyValue);
         } else {
           final Object secondKey = getIndexKey(index.getDefinition(), right, context);
           if (keyValue instanceof OCompositeKey && secondKey instanceof OCompositeKey
               && ((OCompositeKey) keyValue).getKeys().size() == index.getDefinition().getParamCount()
               && ((OCompositeKey) secondKey).getKeys().size() == index.getDefinition().getParamCount()) {
-            res = index.get(keyValue);
+            //noinspection resource
+            res = index.getInternal().getRids(keyValue);
           } else {
             try (Stream<ORawPair<Object, ORID>> stream = index.getInternal()
                 .streamEntriesBetween(keyValue, true, secondKey, true, true)) {
@@ -2678,25 +2677,15 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
 
         }
 
-        if (res != null) {
-          if (res instanceof Collection<?>) {
-            // MULTI VALUES INDEX
-            for (final OIdentifiable r : (Collection<OIdentifiable>) res) {
-              final ODocument record = createIndexEntryAsDocument(keyValue, r.getIdentity());
-              applyGroupBy(record, context);
-              if (!handleResult(record, context))
-              // LIMIT REACHED
-              {
-                break;
-              }
-            }
-          } else {
-            // SINGLE VALUE INDEX
-            final ODocument record = createIndexEntryAsDocument(keyValue, ((OIdentifiable) res).getIdentity());
-            applyGroupBy(record, context);
-            handleResult(record, context);
+        final Object resultKey = keyValue;
+        BreakingForEach.forEach(res, (rid, breaker) -> {
+          final ODocument record = createIndexEntryAsDocument(resultKey, rid);
+          applyGroupBy(record, context);
+          if (!handleResult(record, context)) {
+            // LIMIT REACHED
+            breaker.stop();
           }
-        }
+        });
       }
 
     } else {
@@ -2742,37 +2731,21 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
     if (index.getDefinition().isNullValuesIgnored()) {
       return;
     }
-    Object values = index.get(null);
-    if (values instanceof OIdentifiable) {
-      values = Collections.singleton(values);
-    }
 
-    Iterator iterator = null;
-    if (values instanceof Iterable) {
-      iterator = ((Iterable) values).iterator();
-    } else if (values instanceof Iterator) {
-      iterator = (Iterator) values;
-    } else {
-      return;
-    }
-
-    while (iterator.hasNext()) {
-      Object item = iterator.next();
-      if (!(item instanceof OIdentifiable)) {
-        continue;
-      }
+    final Stream<ORID> rids = index.getInternal().getRids(null);
+    BreakingForEach.forEach(rids, (rid, breaker) -> {
       final ODocument doc = new ODocument().setOrdered(true);
       doc.field("key", (Object) null);
-      doc.field("rid", ((OIdentifiable) item).getIdentity());
+      doc.field("rid", rid);
       ORecordInternal.unsetDirty(doc);
 
       applyGroupBy(doc, context);
 
       if (!handleResult(doc, context)) {
         // LIMIT REACHED
-        break;
+        breaker.stop();
       }
-    }
+    });
   }
 
   private boolean isIndexSizeQuery() {

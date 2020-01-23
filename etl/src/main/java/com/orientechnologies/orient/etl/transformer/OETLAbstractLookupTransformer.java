@@ -33,6 +33,8 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Locale;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * Merges two records. Useful when a record needs to be updated rather than created.
@@ -83,7 +85,8 @@ public abstract class OETLAbstractLookupTransformer extends OETLAbstractTransfor
       if (index != null) {
         final OType idxFieldType = index.getDefinition().getTypes()[0];
         joinValue = OType.convert(joinValue, idxFieldType.getDefaultJavaType());
-        result = index.get(joinValue);
+        //noinspection resource
+        result = index.getInternal().getRids(joinValue);
       } else {
         if (sqlQuery instanceof OSQLSynchQuery)
           ((OSQLSynchQuery) sqlQuery).resetPagination();
@@ -91,6 +94,11 @@ public abstract class OETLAbstractLookupTransformer extends OETLAbstractTransfor
         result = db.query(sqlQuery, joinValue);
       }
 
+      if (result instanceof Stream) {
+        @SuppressWarnings("unchecked")
+        final Stream<ORID> stream = (Stream<ORID>) result;
+        return stream.collect(Collectors.toList());
+      }
       if (result != null && result instanceof Collection) {
         final Collection coll = (Collection) result;
 

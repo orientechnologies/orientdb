@@ -22,8 +22,6 @@ import com.orientechnologies.common.serialization.types.OBinarySerializer;
 import com.orientechnologies.common.util.ORawPair;
 import com.orientechnologies.lucene.OLuceneIndex;
 import com.orientechnologies.lucene.OLuceneTxOperations;
-import com.orientechnologies.lucene.collections.LuceneIndexTransformer;
-import com.orientechnologies.lucene.collections.OLuceneResultSet;
 import com.orientechnologies.lucene.engine.OLuceneIndexEngine;
 import com.orientechnologies.lucene.tx.OLuceneTxChanges;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
@@ -376,10 +374,7 @@ public class OLuceneIndexNotUnique extends OIndexAbstract implements OLuceneInde
     @SuppressWarnings("resource")
     String query = (String) keys.stream().findFirst().map(k -> (OCompositeKey) k).map(OCompositeKey::getKeys)
         .orElse(Collections.singletonList("q=*:*")).get(0);
-
-    OLuceneResultSet identifiables = (OLuceneResultSet) get(query);
-
-    return IndexStreamSecurityDecorator.decorateStream(this, LuceneIndexTransformer.transformToStream(identifiables, query));
+    return IndexStreamSecurityDecorator.decorateStream(this, getRids(query).map((rid) -> new ORawPair<>(query, rid)));
   }
 
   @Override

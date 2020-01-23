@@ -84,15 +84,10 @@ public class OLuceneTextOperator extends OQueryTargetOperator {
       return null;
     }
 
-    Set<OIdentifiable> indexResult = (Set<OIdentifiable>) index
-        .get(new OLuceneKeyAndMetadata(new OLuceneCompositeKey(keyParams).setContext(iContext), new ODocument()));
-
-    if (indexResult == null) {
-      return Stream.empty();
-    }
-
-    return indexResult.stream()
-        .map((identifiable) -> new ORawPair<>(new OLuceneCompositeKey(keyParams), identifiable.getIdentity()));
+    //noinspection resource
+    return index.getInternal()
+        .getRids(new OLuceneKeyAndMetadata(new OLuceneCompositeKey(keyParams).setContext(iContext), new ODocument()))
+        .map((rid) -> new ORawPair<>(new OLuceneCompositeKey(keyParams), rid));
   }
 
   @Override

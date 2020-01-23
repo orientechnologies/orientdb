@@ -36,6 +36,7 @@ import com.orientechnologies.orient.core.sql.filter.OSQLFilterItemField;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 /**
@@ -110,7 +111,9 @@ public class OQueryOperatorContainsText extends OQueryTargetOperator {
       return null;
     }
 
-    return (Collection<OIdentifiable>) fullTextIndex.get(fieldValue);
+    try (Stream<ORID> stream = fullTextIndex.getInternal().getRids(fieldValue)) {
+      return stream.collect(Collectors.toList());
+    }
   }
 
   public boolean isIgnoreCase() {
@@ -135,16 +138,7 @@ public class OQueryOperatorContainsText extends OQueryTargetOperator {
     Stream<ORawPair<Object, ORID>> stream;
     if (internalIndex instanceof OIndexFullText) {
       final Object key = indexDefinition.createValue(keyParams);
-      final Object indexResult = index.get(key);
-
-      if (indexResult == null) {
-        stream = Stream.empty();
-      } else if (indexResult instanceof OIdentifiable) {
-        stream = Stream.of(new ORawPair<>(key, ((OIdentifiable) indexResult).getIdentity()));
-      } else {
-        stream = ((Collection<OIdentifiable>) indexResult).stream()
-            .map((identifiable) -> new ORawPair<>(key, identifiable.getIdentity()));
-      }
+      stream = index.getInternal().getRids(key).map((rid) -> new ORawPair<>(key, rid));
     } else
       return null;
 

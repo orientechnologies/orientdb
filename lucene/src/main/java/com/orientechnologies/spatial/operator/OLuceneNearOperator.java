@@ -132,16 +132,8 @@ public class OLuceneNearOperator extends OQueryTargetOperator {
 
     iContext.setVariable("$luceneIndex", true);
 
-    Object indexResult = index.get(new OSpatialCompositeKey(keyParams).setMaxDistance(distance).setContext(iContext));
-    if (indexResult == null) {
-      Stream.empty();
-    }
-    if (indexResult instanceof OIdentifiable) {
-      return Stream.of(new ORawPair<>(new OSpatialCompositeKey(keyParams), ((OIdentifiable) indexResult).getIdentity()));
-    }
-
-    return ((Collection<OIdentifiable>) indexResult).stream()
-        .map((identifiable) -> new ORawPair<>(new OSpatialCompositeKey(keyParams), identifiable.getIdentity()));
+    return index.getInternal().getRids(new OSpatialCompositeKey(keyParams).setMaxDistance(distance).setContext(iContext))
+        .map((rid) -> new ORawPair<>(new OSpatialCompositeKey(keyParams), rid));
   }
 
   @Override

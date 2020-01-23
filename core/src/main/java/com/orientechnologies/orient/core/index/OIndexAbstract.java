@@ -603,13 +603,8 @@ public abstract class OIndexAbstract implements OIndexInternal {
           stream.forEach((pair) -> remove(pair.first, pair.second));
         }
 
-        final Object value = get(null);
-        if (value instanceof Collection) {
-          for (Object nullValue : (Collection) value) {
-            remove(null, (OIdentifiable) nullValue);
-          }
-        } else {
-          remove(null, (OIdentifiable) value);
+        try (Stream<ORID> stream = getRids(null)) {
+          stream.forEach((rid) -> remove(null, rid));
         }
         storage.deleteIndexEngine(indexId);
         break;
