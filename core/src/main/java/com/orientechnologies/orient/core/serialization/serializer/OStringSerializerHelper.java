@@ -217,9 +217,7 @@ public abstract class OStringSerializerHelper {
     final ArrayList<String> parts = new ArrayList<String>();
 
     if (iSource != null && !iSource.isEmpty()) {
-      final char[] source = iSource.toCharArray();
-
-      while ((beginIndex = parse(source, buffer, beginIndex, endIndex, iRecordSeparator, iStringSeparatorExtended, iConsiderBraces,
+      while ((beginIndex = parse(iSource, buffer, beginIndex, endIndex, iRecordSeparator, iStringSeparatorExtended, iConsiderBraces,
           iConsiderSets, -1, iConsiderBags, iUnicode, iPreserveQuotes, iJumpChars)) > -1) {
         parts.add(buffer.toString());
         buffer.setLength(0);
@@ -241,13 +239,12 @@ public abstract class OStringSerializerHelper {
 
     int startSeparatorAt = -1;
     if (iSource != null && !iSource.isEmpty()) {
-      final char[] source = iSource.toCharArray();
 
-      while ((beginIndex = parse(source, buffer, beginIndex, endIndex, iRecordSeparator, iStringSeparatorExtended, iConsiderBraces,
+      while ((beginIndex = parse(iSource, buffer, beginIndex, endIndex, iRecordSeparator, iStringSeparatorExtended, iConsiderBraces,
           iConsiderSets, startSeparatorAt, considerBags, true, iJumpChars)) > -1) {
 
         if (beginIndex > -1) {
-          final char lastSeparator = source[beginIndex - 1];
+          final char lastSeparator = iSource.charAt(beginIndex - 1);
           for (int i = 0; i < iRecordSeparator.length; ++i)
             if (iRecordSeparator[i] == lastSeparator) {
               if (iRecordSeparatorIncludeAsPrefix[i]) {
@@ -265,7 +262,7 @@ public abstract class OStringSerializerHelper {
         startSeparatorAt = beginIndex;
 
         if (beginIndex > -1) {
-          final char lastSeparator = source[beginIndex - 1];
+          final char lastSeparator = iSource.charAt(beginIndex - 1);
           for (int i = 0; i < iRecordSeparator.length; ++i)
             if (iRecordSeparator[i] == lastSeparator) {
               if (iRecordSeparatorIncludeAsPostfix[i]) {
@@ -287,26 +284,26 @@ public abstract class OStringSerializerHelper {
   public static int parse(final String iSource, final StringBuilder iBuffer, final int beginIndex, final int endIndex,
       final char[] iSeparator, final boolean iStringSeparatorExtended, final boolean iConsiderBraces, final boolean iConsiderSets,
       final int iMinPosSeparatorAreValid, boolean considerBags, final char... iJumpChars) {
-    return parse(iSource.toCharArray(), iBuffer, beginIndex, endIndex, iSeparator, iStringSeparatorExtended, iConsiderBraces,
+    return parse(iSource, iBuffer, beginIndex, endIndex, iSeparator, iStringSeparatorExtended, iConsiderBraces,
         iConsiderSets, iMinPosSeparatorAreValid, considerBags, true, false, iJumpChars);
   }
 
   public static int parse(final String iSource, final StringBuilder iBuffer, final int beginIndex, final int endIndex,
       final char[] iSeparator, final boolean iStringSeparatorExtended, final boolean iConsiderBraces, final boolean iConsiderSets,
       final int iMinPosSeparatorAreValid, boolean considerBags, boolean iPreserveQuotes, final char... iJumpChars) {
-    return parse(iSource.toCharArray(), iBuffer, beginIndex, endIndex, iSeparator, iStringSeparatorExtended, iConsiderBraces,
+    return parse(iSource, iBuffer, beginIndex, endIndex, iSeparator, iStringSeparatorExtended, iConsiderBraces,
         iConsiderSets, iMinPosSeparatorAreValid, considerBags, true, iPreserveQuotes, iJumpChars);
   }
 
-  public static int parse(final char[] iSource, final StringBuilder iBuffer, final int beginIndex, final int endIndex,
-      final char[] iSeparator, final boolean iStringSeparatorExtended, final boolean iConsiderBraces, final boolean iConsiderSets,
-      final int iMinPosSeparatorAreValid, boolean considerBags, final boolean iUnicode, final char... iJumpChars) {
-    return parse(iSource, iBuffer, beginIndex, endIndex, iSeparator, iStringSeparatorExtended, iConsiderBraces, iConsiderSets,
-        iMinPosSeparatorAreValid, considerBags, iUnicode, false, iJumpChars);
+//  public static int parse(final String iSource, final StringBuilder iBuffer, final int beginIndex, final int endIndex,
+//      final char[] iSeparator, final boolean iStringSeparatorExtended, final boolean iConsiderBraces, final boolean iConsiderSets,
+//      final int iMinPosSeparatorAreValid, boolean considerBags, final boolean iUnicode, final char... iJumpChars) {
+//    return parse(iSource, iBuffer, beginIndex, endIndex, iSeparator, iStringSeparatorExtended, iConsiderBraces, iConsiderSets,
+//        iMinPosSeparatorAreValid, considerBags, iUnicode, false, iJumpChars);
+//
+//  }
 
-  }
-
-  public static int parse(final char[] iSource, final StringBuilder iBuffer, final int beginIndex, final int endIndex,
+  public static int parse(final String iSource, final StringBuilder iBuffer, final int beginIndex, final int endIndex,
       final char[] iSeparator, final boolean iStringSeparatorExtended, final boolean iConsiderBraces, final boolean iConsiderSets,
       final int iMinPosSeparatorAreValid, boolean considerBags, final boolean iUnicode, boolean iPreserveQuotes,
       final char... iJumpChars) {
@@ -322,20 +319,20 @@ public abstract class OStringSerializerHelper {
     int insideLinkPart = 0;
     int insideBag = 0;
 
-    final int max = endIndex > -1 ? endIndex + 1 : iSource.length;
+    final int max = endIndex > -1 ? endIndex + 1 : iSource.length();
 
     iBuffer.ensureCapacity(max);
 
     // JUMP FIRST CHARS
     int i = beginIndex;
     for (; i < max; ++i) {
-      final char c = iSource[i];
+      final char c = iSource.charAt(i);
       if (!isCharPresent(c, iJumpChars))
         break;
     }
 
     for (; i < max; ++i) {
-      final char c = iSource[i];
+      final char c = iSource.charAt(i);
 
       if (stringBeginChar == ' ') {
         // OUTSIDE A STRING
@@ -439,7 +436,7 @@ public abstract class OStringSerializerHelper {
 
       if (c == '\\' && !encodeMode && !iPreserveQuotes) {
         // ESCAPE CHARS
-        final char nextChar = iSource[i + 1];
+        final char nextChar = iSource.charAt(i + 1);
         if (nextChar == 'u' && iUnicode) {
           i = OStringParser.readUnicode(iSource, i + 2, iBuffer);
           continue;
