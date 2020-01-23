@@ -490,22 +490,22 @@ public class ODatabaseCompare extends ODatabaseImpExpAbstract {
       if (!streamTwoSet.remove(rid)) {
         if (!streamTwoIterator.hasNext()) {
           listener.onMessage("\r\nEntry " + indexKey + ":" + rid + " is present in DB1 but absent in DB2");
-          break;
-        }
+          differences++;
+        } else {
+          boolean found = false;
+          while (streamTwoIterator.hasNext()) {
+            final ORID streamRid = streamTwoIterator.next();
+            if (streamRid.equals(rid)) {
+              found = true;
+              break;
+            }
 
-        boolean found = false;
-        while (streamTwoIterator.hasNext()) {
-          final ORID streamRid = streamTwoIterator.next();
-          if (streamRid.equals(rid)) {
-            found = true;
-            break;
+            streamTwoSet.add(streamRid);
           }
 
-          streamTwoSet.add(streamRid);
-        }
-
-        if (!found) {
-          listener.onMessage("\r\nEntry " + indexKey + ":" + rid + " is present in DB1 but absent in DB2");
+          if (!found) {
+            listener.onMessage("\r\nEntry " + indexKey + ":" + rid + " is present in DB1 but absent in DB2");
+          }
         }
       }
     }
