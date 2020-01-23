@@ -215,26 +215,21 @@ public class OIndexTxAwareOneValue extends OIndexTxAware<OIdentifiable> {
 
     final Object collatedKey = getCollatingValue(key);
 
-    Stream<ORID> stream;
+    ORID rid;
     if (!indexChanges.cleared) {
       // BEGIN FROM THE UNDERLYING RESULT SET
       //noinspection resource
-      stream = super.getRids(key);
+      rid = super.getRids(key).findFirst().orElse(null);
     } else {
-      // BEGIN FROM EMPTY RESULT SET
-      //noinspection resource
-      stream = Stream.empty();
+      rid = null;
     }
 
-    //noinspection resource
-    return IndexStreamSecurityDecorator.decorateRidStream(this, stream.map((rid) -> {
-      final ORawPair<Object, ORID> entry = calculateTxIndexEntry(key, rid, indexChanges);
-      if (entry == null) {
-        return null;
-      }
+    final ORawPair<Object, ORID> txIndexEntry = calculateTxIndexEntry(key, rid, indexChanges);
+    if (txIndexEntry == null) {
+      return Stream.empty();
+    }
 
-      return entry.second;
-    })).filter(Objects::nonNull);
+    return IndexStreamSecurityDecorator.decorateRidStream(this, Stream.of(txIndexEntry.second));
   }
 
   @Override

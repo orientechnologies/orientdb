@@ -485,11 +485,15 @@ public class ODatabaseCompare extends ODatabaseImpExpAbstract {
 
     int differences = 0;
     while (streamOneIterator.hasNext()) {
-      final ORID rid;
+      ORID rid;
       if (ridMapper == null) {
         rid = streamOneIterator.next();
       } else {
-        rid = ridMapper.map(streamOneIterator.next());
+        final ORID streamOneRid = streamOneIterator.next();
+        rid = ridMapper.map(streamOneRid);
+        if (rid == null) {
+          rid = streamOneRid;
+        }
       }
 
       if (!streamTwoSet.remove(rid)) {
