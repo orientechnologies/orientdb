@@ -462,7 +462,7 @@ public class ODatabaseCompare extends ODatabaseImpExpAbstract {
             try (Stream<ORID> indexOneStream = makeDbCall(databaseOne, database -> indexOne.getInternal().getRids(indexKey))) {
               //noinspection resource
               try (Stream<ORID> indexTwoValue = makeDbCall(databaseTwo, database -> indexTwo.getInternal().getRids(indexKey))) {
-                differences = compareIndexStreams(indexKey, indexOneStream, indexTwoValue, listener);
+                differences = compareIndexStreams(indexKey, indexOneStream, indexTwoValue, ridMapper, listener);
               }
             }
             ok = ok && differences > 0;
@@ -477,7 +477,7 @@ public class ODatabaseCompare extends ODatabaseImpExpAbstract {
   }
 
   private static int compareIndexStreams(final Object indexKey, final Stream<ORID> streamOne, final Stream<ORID> streamTwo,
-      final OCommandOutputListener listener) {
+      final ODocumentHelper.RIDMapper ridMapper, final OCommandOutputListener listener) {
     final Set<ORID> streamTwoSet = new HashSet<>();
 
     final Iterator<ORID> streamOneIterator = streamOne.iterator();
@@ -485,7 +485,12 @@ public class ODatabaseCompare extends ODatabaseImpExpAbstract {
 
     int differences = 0;
     while (streamOneIterator.hasNext()) {
-      final ORID rid = streamOneIterator.next();
+      final ORID rid;
+      if (ridMapper == null) {
+        rid = streamOneIterator.next();
+      } else {
+        rid = ridMapper.map(streamOneIterator.next());
+      }
 
       if (!streamTwoSet.remove(rid)) {
         if (!streamTwoIterator.hasNext()) {
