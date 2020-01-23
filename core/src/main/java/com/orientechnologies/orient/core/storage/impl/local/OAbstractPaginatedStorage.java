@@ -5911,7 +5911,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
         try {
           final ODurablePage durablePage = new ODurablePage(cacheEntry);
-          if (durablePage.getLsn().compareTo(walRecord.getLsn()) > 0) {
+          if (durablePage.getLsn().compareTo(walRecord.getLsn()) < 0) {
             durablePage.restoreChanges(updatePageRecord.getChanges());
             durablePage.setLsn(updatePageRecord.getLsn());
           }
