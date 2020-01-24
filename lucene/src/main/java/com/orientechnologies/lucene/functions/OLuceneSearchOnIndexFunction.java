@@ -16,7 +16,10 @@ import com.orientechnologies.orient.core.sql.parser.*;
 import org.apache.lucene.index.IndexableField;
 import org.apache.lucene.index.memory.MemoryIndex;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -109,15 +112,15 @@ public class OLuceneSearchOnIndexFunction extends OLuceneSearchFunctionTemplate 
 
       ODocument meta = getMetadata(index, query, args);
 
-      Set<OIdentifiable> luceneResultSet;
+      List<OIdentifiable> luceneResultSet;
       try (Stream<ORID> rids = index.getInternal()
           .getRids(new OLuceneKeyAndMetadata(new OLuceneCompositeKey(Arrays.asList(query)).setContext(ctx), meta))) {
-        luceneResultSet = rids.collect(Collectors.toSet());
+        luceneResultSet = rids.collect(Collectors.toList());
       }
 
       return luceneResultSet;
     }
-    return Collections.emptySet();
+    return Collections.emptyList();
   }
 
   private ODocument getMetadata(OLuceneFullTextIndex index, String query, OExpression[] args) {
