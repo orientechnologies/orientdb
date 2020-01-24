@@ -273,9 +273,9 @@ public class OLuceneIndexNotUnique extends OIndexAbstract implements OLuceneInde
 
   @Deprecated
   @Override
-  public Set<OIdentifiable> get(final Object key) {
+  public Collection<OIdentifiable> get(final Object key) {
     try (Stream<ORID> stream = getRids(key)) {
-      return stream.collect(Collectors.toSet());
+      return stream.collect(Collectors.toList());
     }
   }
 
