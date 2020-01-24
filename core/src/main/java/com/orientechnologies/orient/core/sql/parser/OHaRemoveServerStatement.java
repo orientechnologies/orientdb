@@ -4,13 +4,11 @@ package com.orientechnologies.orient.core.sql.parser;
 
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.ODatabase;
-import com.orientechnologies.orient.core.sql.OCommandSQL;
-import com.orientechnologies.orient.core.sql.executor.OIteratorResultSet;
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
+import com.orientechnologies.orient.core.sql.executor.OInternalResultSet;
+import com.orientechnologies.orient.core.sql.executor.OResultInternal;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
 
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 public class OHaRemoveServerStatement extends OStatement {
@@ -33,34 +31,24 @@ public class OHaRemoveServerStatement extends OStatement {
 
   @Override
   public OResultSet execute(ODatabase db, Object[] args, OCommandContext parentContext, boolean usePlanCache) {
-    StringBuilder builder = new StringBuilder();
-    Map<Object, Object> pars = new HashMap<>();
-    for (int i = 0; i < args.length; i++) {
-      pars.put(Integer.toString(i + 1), args[i]);
-    }
-    toString(pars, builder);
-    Object result = db.command(new OCommandSQL(builder.toString())).execute();
-    List listResult;
-    if (result instanceof List) {
-      listResult = (List) result;
-    } else {
-      listResult = Collections.singletonList(result);
-    }
-    return new OIteratorResultSet(listResult.iterator());
+    ODatabaseDocumentInternal internalDb = (ODatabaseDocumentInternal) db;
+    boolean res = internalDb.removeHaServer(serverName.getStringValue());
+    OResultInternal r = new OResultInternal();
+    r.setProperty("result", res);
+    OInternalResultSet rs = new OInternalResultSet();
+    rs.add(r);
+    return rs;
   }
 
   @Override
   public OResultSet execute(ODatabase db, Map args, OCommandContext parentContext, boolean usePlanCache) {
-    StringBuilder builder = new StringBuilder();
-    toString(args, builder);
-    Object result = db.command(new OCommandSQL(builder.toString())).execute();
-    List listResult;
-    if (result instanceof List) {
-      listResult = (List) result;
-    } else {
-      listResult = Collections.singletonList(result);
-    }
-    return new OIteratorResultSet(listResult.iterator());
+    ODatabaseDocumentInternal internalDb = (ODatabaseDocumentInternal) db;
+    boolean res = internalDb.removeHaServer(serverName.getStringValue());
+    OResultInternal r = new OResultInternal();
+    r.setProperty("result", res);
+    OInternalResultSet rs = new OInternalResultSet();
+    rs.add(r);
+    return rs;
   }
 }
 /* JavaCC - OriginalChecksum=9c136e8917527d69a67c88582d20ac8f (do not edit this line) */

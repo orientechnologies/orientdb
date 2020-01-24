@@ -2,10 +2,15 @@
 /* JavaCCOptions:MULTI=true,NODE_USES_PARSER=false,VISITOR=true,TRACK_TOKENS=true,NODE_PREFIX=O,NODE_EXTENDS=,NODE_FACTORY=,SUPPORT_CLASS_VISIBILITY_PUBLIC=true */
 package com.orientechnologies.orient.core.sql.parser;
 
+import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.ODatabase;
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
+import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
+import com.orientechnologies.orient.core.sql.executor.OInternalResultSet;
 import com.orientechnologies.orient.core.sql.executor.OIteratorResultSet;
+import com.orientechnologies.orient.core.sql.executor.OResultInternal;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
 
 import java.util.Collections;
@@ -35,34 +40,46 @@ public class OHaSyncClusterStatement extends OStatement {
 
   @Override
   public OResultSet execute(ODatabase db, Object[] args, OCommandContext parentContext, boolean usePlanCache) {
-    StringBuilder builder = new StringBuilder();
-    Map<Object, Object> pars = new HashMap<>();
-    for (int i = 0; i < args.length; i++) {
-      pars.put(Integer.toString(i + 1), args[i]);
+    if (modeMerge) {
+      throw new OCommandExecutionException("Cannot execute HA SYNC CLUSTER: mode MERGE not supported");
     }
-    toString(pars, builder);
-    Object result = db.command(new OCommandSQL(builder.toString())).execute();
-    List listResult;
-    if (result instanceof List) {
-      listResult = (List) result;
-    } else {
-      listResult = Collections.singletonList(result);
+    ODatabaseDocumentInternal database = (ODatabaseDocumentInternal) db;
+
+    try {
+      //TODO: Just give an error back
+      Map<String, Object> res =null;// database.syncCluster(clusterName.getStringValue());
+      OInternalResultSet rs = new OInternalResultSet();
+      if (res != null) {
+        OResultInternal row = new OResultInternal();
+        res.entrySet().forEach(x -> row.setProperty(x.getKey(), x.getValue()));
+        rs.add(row);
+      }
+      return rs;
+    } catch (Exception e) {
+      throw OException.wrapException(new OCommandExecutionException("Cannot execute HA SYNC CLUSTER"), e);
     }
-    return new OIteratorResultSet(listResult.iterator());
   }
 
   @Override
   public OResultSet execute(ODatabase db, Map args, OCommandContext parentContext, boolean usePlanCache) {
-    StringBuilder builder = new StringBuilder();
-    toString(args, builder);
-    Object result = db.command(new OCommandSQL(builder.toString())).execute();
-    List listResult;
-    if (result instanceof List) {
-      listResult = (List) result;
-    } else {
-      listResult = Collections.singletonList(result);
+    if (modeMerge) {
+      throw new OCommandExecutionException("Cannot execute HA SYNC CLUSTER: mode MERGE not supported");
     }
-    return new OIteratorResultSet(listResult.iterator());
+    ODatabaseDocumentInternal database = (ODatabaseDocumentInternal) db;
+
+    try {
+      //TODO: Just give an error back
+      Map<String, Object> res = null;//database.syncCluster(clusterName.getStringValue());
+      OInternalResultSet rs = new OInternalResultSet();
+      if (res != null) {
+        OResultInternal row = new OResultInternal();
+        res.entrySet().forEach(x -> row.setProperty(x.getKey(), x.getValue()));
+        rs.add(row);
+      }
+      return rs;
+    } catch (Exception e) {
+      throw OException.wrapException(new OCommandExecutionException("Cannot execute HA SYNC CLUSTER"), e);
+    }
   }
 }
 /* JavaCC - OriginalChecksum=fbf0df8004d889ebc80f39be85008720 (do not edit this line) */
