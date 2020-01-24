@@ -19,7 +19,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public class OHaStatusStatement extends OStatement {
+public class OHaStatusStatement extends OSimpleExecStatement {
 
   public boolean servers    = false;
   public boolean db         = false;
@@ -63,12 +63,11 @@ public class OHaStatusStatement extends OStatement {
   }
 
   @Override
-  public OResultSet execute(ODatabase db, Object[] args, OCommandContext parentContext, boolean usePlanCache) {
-
+  public OResultSet executeSimple(OCommandContext ctx) {
     if (outputText) {
       OLogManager.instance().info(this, "HA STATUS with text output is deprecated");
     }
-    final ODatabaseDocumentInternal database = (ODatabaseDocumentInternal) db;
+    final ODatabaseDocumentInternal database = (ODatabaseDocumentInternal) ctx.getDatabase();
 
     OInternalResultSet rs = new OInternalResultSet();
     try {
@@ -83,27 +82,5 @@ public class OHaStatusStatement extends OStatement {
       throw OException.wrapException(new OCommandExecutionException("Cannot execute HA STATUS"), x);
     }
   }
-
-  @Override
-  public OResultSet execute(ODatabase db, Map args, OCommandContext parentContext, boolean usePlanCache) {
-    if (outputText) {
-      OLogManager.instance().info(this, "HA STATUS with text output is deprecated");
-    }
-    final ODatabaseDocumentInternal database = (ODatabaseDocumentInternal) db;
-
-    OInternalResultSet rs = new OInternalResultSet();
-    try {
-      Map<String, Object> res = database.getHaStatus(servers, this.db, latency, messages);
-      if (res != null) {
-        OResultInternal row = new OResultInternal();
-        res.entrySet().forEach(x -> row.setProperty(x.getKey(), x.getValue()));
-        rs.add(row);
-      }
-      return rs;
-    } catch (Exception x) {
-      throw OException.wrapException(new OCommandExecutionException("Cannot execute HA STATUS"), x);
-    }
-  }
-
 }
 /* JavaCC - OriginalChecksum=c8ab1b0172e8cdbea2078efe2c629e6a (do not edit this line) */

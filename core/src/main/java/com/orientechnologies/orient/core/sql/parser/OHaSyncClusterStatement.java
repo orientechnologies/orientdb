@@ -18,11 +18,11 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public class OHaSyncClusterStatement extends OStatement {
+public class OHaSyncClusterStatement extends OSimpleExecStatement {
 
   public OIdentifier clusterName;
-  public boolean modeFull  = true;
-  public boolean modeMerge = false;
+  public boolean     modeFull  = true;
+  public boolean     modeMerge = false;
 
   public OHaSyncClusterStatement(int id) {
     super(id);
@@ -33,53 +33,14 @@ public class OHaSyncClusterStatement extends OStatement {
   }
 
   @Override
+  public OResultSet executeSimple(OCommandContext ctx) {
+    throw new OCommandExecutionException("Cannot execute HA SYNC CLUSTER, not supported anymore");
+  }
+
+  @Override
   public void toString(Map<Object, Object> params, StringBuilder builder) {
     builder.append("HA SYNC CLUSTER ");
     clusterName.toString(params, builder);
-  }
-
-  @Override
-  public OResultSet execute(ODatabase db, Object[] args, OCommandContext parentContext, boolean usePlanCache) {
-    if (modeMerge) {
-      throw new OCommandExecutionException("Cannot execute HA SYNC CLUSTER: mode MERGE not supported");
-    }
-    ODatabaseDocumentInternal database = (ODatabaseDocumentInternal) db;
-
-    try {
-      //TODO: Just give an error back
-      Map<String, Object> res =null;// database.syncCluster(clusterName.getStringValue());
-      OInternalResultSet rs = new OInternalResultSet();
-      if (res != null) {
-        OResultInternal row = new OResultInternal();
-        res.entrySet().forEach(x -> row.setProperty(x.getKey(), x.getValue()));
-        rs.add(row);
-      }
-      return rs;
-    } catch (Exception e) {
-      throw OException.wrapException(new OCommandExecutionException("Cannot execute HA SYNC CLUSTER"), e);
-    }
-  }
-
-  @Override
-  public OResultSet execute(ODatabase db, Map args, OCommandContext parentContext, boolean usePlanCache) {
-    if (modeMerge) {
-      throw new OCommandExecutionException("Cannot execute HA SYNC CLUSTER: mode MERGE not supported");
-    }
-    ODatabaseDocumentInternal database = (ODatabaseDocumentInternal) db;
-
-    try {
-      //TODO: Just give an error back
-      Map<String, Object> res = null;//database.syncCluster(clusterName.getStringValue());
-      OInternalResultSet rs = new OInternalResultSet();
-      if (res != null) {
-        OResultInternal row = new OResultInternal();
-        res.entrySet().forEach(x -> row.setProperty(x.getKey(), x.getValue()));
-        rs.add(row);
-      }
-      return rs;
-    } catch (Exception e) {
-      throw OException.wrapException(new OCommandExecutionException("Cannot execute HA SYNC CLUSTER"), e);
-    }
   }
 }
 /* JavaCC - OriginalChecksum=fbf0df8004d889ebc80f39be85008720 (do not edit this line) */
