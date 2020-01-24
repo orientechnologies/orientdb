@@ -97,7 +97,11 @@ public abstract class OETLAbstractLookupTransformer extends OETLAbstractTransfor
       if (result instanceof Stream) {
         @SuppressWarnings("unchecked")
         final Stream<ORID> stream = (Stream<ORID>) result;
-        return stream.collect(Collectors.toList());
+        final List<ORID> rids = stream.collect(Collectors.toList());
+        if (rids.isEmpty()) {
+          return null;
+        }
+        return rids;
       }
       if (result != null && result instanceof Collection) {
         final Collection coll = (Collection) result;
