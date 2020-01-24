@@ -21,7 +21,6 @@ import com.orientechnologies.orient.core.db.ODatabaseType;
 import com.orientechnologies.orient.core.db.OrientDB;
 import com.orientechnologies.orient.core.db.OrientDBConfig;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
-import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
@@ -41,6 +40,7 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.stream.Stream;
 
 import static org.junit.Assert.*;
 
@@ -362,10 +362,12 @@ public class MultipleDBAlignmentOnNodesJoiningIT extends AbstractScenarioTest {
     private void checkIndex(ODatabaseDocument database, final String key, final ORID rid) {
       final OIndex index = ((ODatabaseDocumentInternal) database).getMetadata().getIndexManagerInternal()
           .getIndex((ODatabaseDocumentInternal) database, "Person.name");
-      final OIdentifiable result = (OIdentifiable) index.get(key);
+
+      final ODocument result;
+      try (Stream<ORID> rids = index.getInternal().getRids(key)) {
+        result = (ODocument) rids.findFirst().map(ORID::getRecord).orElse(null);
+      }
       assertNotNull(result);
-      assertNotNull(result.getRecord());
-      assertEquals(result, rid);
     }
 
     private ODocument loadRecord(ODatabaseDocument database, int i) {

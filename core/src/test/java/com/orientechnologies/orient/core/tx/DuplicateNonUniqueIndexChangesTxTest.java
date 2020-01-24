@@ -21,6 +21,7 @@ package com.orientechnologies.orient.core.tx;
 
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OType;
@@ -30,6 +31,8 @@ import org.junit.*;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * @author Sergey Sitnikov
@@ -252,20 +255,21 @@ public class DuplicateNonUniqueIndexChangesTxTest {
     db.commit();
 
     // verify index state
-    final Iterable<OIdentifiable> rids = (Iterable<OIdentifiable>) index.get("Name");
-    for (OIdentifiable rid : rids) {
-      final ODocument document = db.load(rid.getIdentity());
-      unseen.remove(document.<Integer>field("serial"));
+    try (Stream<ORID> stream = index.getInternal().getRids("Name")) {
+      stream.forEach((rid) -> {
+        final ODocument document = db.load(rid);
+        unseen.remove(document.<Integer>field("serial"));
+      });
     }
     Assert.assertTrue(unseen.isEmpty());
   }
 
   @SuppressWarnings("unchecked")
   private void assertRids(String indexKey, OIdentifiable... rids) {
-    final Iterable<OIdentifiable> actualRids = (Iterable<OIdentifiable>) index.get(indexKey);
-    final Set<OIdentifiable> set = new HashSet<OIdentifiable>();
-    for (OIdentifiable i : actualRids)
-      set.add(i);
-    Assert.assertEquals(set, new HashSet<Object>(Arrays.asList(rids)));
+    final Set<ORID> actualRids;
+    try (Stream<ORID> stream = index.getInternal().getRids(indexKey)) {
+      actualRids = stream.collect(Collectors.toSet());
+    }
+    Assert.assertEquals(actualRids, new HashSet<Object>(Arrays.asList(rids)));
   }
 }

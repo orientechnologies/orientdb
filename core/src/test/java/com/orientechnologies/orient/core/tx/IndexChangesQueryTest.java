@@ -4,6 +4,7 @@ import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseType;
 import com.orientechnologies.orient.core.db.OrientDB;
 import com.orientechnologies.orient.core.db.OrientDBConfig;
+import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.index.OIndexTxAwareMultiValue;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
@@ -16,6 +17,8 @@ import org.junit.Before;
 import org.junit.Test;
 
 import java.util.Collection;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * Created by tglman on 28/05/17.
@@ -62,14 +65,20 @@ public class IndexChangesQueryTest {
     doc1.save();
     Assert.assertNotNull(database.getTransaction().getIndexChanges(INDEX_NAME));
 
-    Assert.assertFalse(((Collection) index.get(1)).isEmpty());
-    Assert.assertFalse(((Collection) index.get(2)).isEmpty());
+    Assert.assertFalse(fetchCollectionFromIndex(index, 1).isEmpty());
+    Assert.assertFalse((fetchCollectionFromIndex(index, 2)).isEmpty());
 
     database.commit();
 
     Assert.assertEquals(index.getInternal().size(), 2);
-    Assert.assertFalse(((Collection) index.get(1)).isEmpty());
-    Assert.assertFalse(((Collection) index.get(2)).isEmpty());
+    Assert.assertFalse((fetchCollectionFromIndex(index, 1)).isEmpty());
+    Assert.assertFalse((fetchCollectionFromIndex(index, 2)).isEmpty());
+  }
+
+  private static Collection<ORID> fetchCollectionFromIndex(OIndex index, int key) {
+    try (Stream<ORID> stream = index.getInternal().getRids(key)) {
+      return stream.collect(Collectors.toList());
+    }
   }
 
   @Test
@@ -94,8 +103,8 @@ public class IndexChangesQueryTest {
     database.commit();
 
     Assert.assertEquals(3, index.getInternal().size());
-    Assert.assertEquals(2, ((Collection) index.get(1)).size());
-    Assert.assertEquals(1, ((Collection) index.get(2)).size());
+    Assert.assertEquals(2, (fetchCollectionFromIndex(index, 1)).size());
+    Assert.assertEquals(1, (fetchCollectionFromIndex(index, 2)).size());
 
     database.begin();
 
@@ -111,15 +120,15 @@ public class IndexChangesQueryTest {
     doc.field(FIELD_NAME, 2);
     doc.save();
 
-    Assert.assertEquals(1, ((Collection) index.get(1)).size());
-    Assert.assertEquals(1, ((Collection) index.get(2)).size());
+    Assert.assertEquals(1, (fetchCollectionFromIndex(index, 1)).size());
+    Assert.assertEquals(1, (fetchCollectionFromIndex(index, 2)).size());
 
     database.rollback();
 
     Assert.assertNull(database.getTransaction().getIndexChanges(INDEX_NAME));
 
     Assert.assertEquals(3, index.getInternal().size());
-    Assert.assertEquals(2, ((Collection) index.get(1)).size());
-    Assert.assertEquals(1, ((Collection) index.get(2)).size());
+    Assert.assertEquals(2, (fetchCollectionFromIndex(index, 1)).size());
+    Assert.assertEquals(1, (fetchCollectionFromIndex(index, 2)).size());
   }
 }

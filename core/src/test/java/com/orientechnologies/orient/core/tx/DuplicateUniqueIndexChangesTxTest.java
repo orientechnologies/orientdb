@@ -20,12 +20,15 @@
 package com.orientechnologies.orient.core.tx;
 
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.ORecordDuplicatedException;
 import org.junit.*;
+
+import java.util.stream.Stream;
 
 /**
  * @author Sergey Sitnikov
@@ -72,10 +75,16 @@ public class DuplicateUniqueIndexChangesTxTest {
     db.commit();
 
     // verify index state
-    Assert.assertNull(index.get(null));
-    Assert.assertEquals(person1, index.get("Name1"));
-    Assert.assertEquals(person2, index.get("Name2"));
-    Assert.assertEquals(person3, index.get("Name3"));
+    Assert.assertNull(fetchDocumentFromIndex(null));
+    Assert.assertEquals(person1, fetchDocumentFromIndex("Name1"));
+    Assert.assertEquals(person2, fetchDocumentFromIndex("Name2"));
+    Assert.assertEquals(person3, fetchDocumentFromIndex("Name3"));
+  }
+
+  private ODocument fetchDocumentFromIndex(String o) {
+    try (Stream<ORID> stream = index.getInternal().getRids(o)) {
+      return (ODocument) stream.findFirst().map(ORID::getRecord).orElse(null);
+    }
   }
 
   @Test
@@ -87,10 +96,10 @@ public class DuplicateUniqueIndexChangesTxTest {
     db.commit();
 
     // verify index state
-    Assert.assertNull(index.get(null));
-    Assert.assertEquals(person1, index.get("Name1"));
-    Assert.assertEquals(person2, index.get("Name2"));
-    Assert.assertEquals(person3, index.get("Name3"));
+    Assert.assertNull(fetchDocumentFromIndex(null));
+    Assert.assertEquals(person1, fetchDocumentFromIndex("Name1"));
+    Assert.assertEquals(person2, fetchDocumentFromIndex("Name2"));
+    Assert.assertEquals(person3, fetchDocumentFromIndex("Name3"));
 
     db.begin();
 
@@ -112,10 +121,10 @@ public class DuplicateUniqueIndexChangesTxTest {
     db.commit();
 
     // verify index state
-    Assert.assertNull(index.get(null));
-    Assert.assertEquals(person1, index.get("Name1"));
-    Assert.assertEquals(person2, index.get("Name2"));
-    Assert.assertEquals(person3, index.get("Name3"));
+    Assert.assertNull(fetchDocumentFromIndex(null));
+    Assert.assertEquals(person1, fetchDocumentFromIndex("Name1"));
+    Assert.assertEquals(person2, fetchDocumentFromIndex("Name2"));
+    Assert.assertEquals(person3, fetchDocumentFromIndex("Name3"));
   }
 
   @Test
@@ -136,10 +145,10 @@ public class DuplicateUniqueIndexChangesTxTest {
     db.commit();
 
     // verify index state
-    Assert.assertNull(index.get("same"));
-    Assert.assertEquals(person1, index.get("Name1"));
-    Assert.assertEquals(person2, index.get("Name2"));
-    Assert.assertEquals(person3, index.get("Name3"));
+    Assert.assertNull(fetchDocumentFromIndex("same"));
+    Assert.assertEquals(person1, fetchDocumentFromIndex("Name1"));
+    Assert.assertEquals(person2, fetchDocumentFromIndex("Name2"));
+    Assert.assertEquals(person3, fetchDocumentFromIndex("Name3"));
   }
 
   @Test
@@ -151,9 +160,9 @@ public class DuplicateUniqueIndexChangesTxTest {
     db.commit();
 
     // verify index state
-    Assert.assertEquals(person1, index.get("Name1"));
-    Assert.assertEquals(person2, index.get("Name2"));
-    Assert.assertEquals(person3, index.get("Name3"));
+    Assert.assertEquals(person1, fetchDocumentFromIndex("Name1"));
+    Assert.assertEquals(person2, fetchDocumentFromIndex("Name2"));
+    Assert.assertEquals(person3, fetchDocumentFromIndex("Name3"));
 
     db.begin();
 
@@ -171,10 +180,10 @@ public class DuplicateUniqueIndexChangesTxTest {
     db.commit();
 
     // verify index state
-    Assert.assertNull(index.get("same"));
-    Assert.assertEquals(person1, index.get("Name1"));
-    Assert.assertEquals(person2, index.get("Name2"));
-    Assert.assertEquals(person3, index.get("Name3"));
+    Assert.assertNull(fetchDocumentFromIndex("same"));
+    Assert.assertEquals(person1, fetchDocumentFromIndex("Name1"));
+    Assert.assertEquals(person2, fetchDocumentFromIndex("Name2"));
+    Assert.assertEquals(person3, fetchDocumentFromIndex("Name3"));
   }
 
   @Test
@@ -195,8 +204,8 @@ public class DuplicateUniqueIndexChangesTxTest {
     db.commit();
 
     // verify index state
-    Assert.assertEquals(person2, index.get("Name2"));
-    Assert.assertEquals(person4, index.get("same"));
+    Assert.assertEquals(person2, fetchDocumentFromIndex("Name2"));
+    Assert.assertEquals(person4, fetchDocumentFromIndex("same"));
   }
 
   @Test
@@ -209,10 +218,10 @@ public class DuplicateUniqueIndexChangesTxTest {
     db.commit();
 
     // verify index state
-    Assert.assertEquals(person1, index.get("Name1"));
-    Assert.assertEquals(person2, index.get("Name2"));
-    Assert.assertEquals(person3, index.get("Name3"));
-    Assert.assertEquals(person4, index.get("Name4"));
+    Assert.assertEquals(person1, fetchDocumentFromIndex("Name1"));
+    Assert.assertEquals(person2, fetchDocumentFromIndex("Name2"));
+    Assert.assertEquals(person3, fetchDocumentFromIndex("Name3"));
+    Assert.assertEquals(person4, fetchDocumentFromIndex("Name4"));
 
     db.begin();
 
@@ -226,8 +235,8 @@ public class DuplicateUniqueIndexChangesTxTest {
     db.commit();
 
     // verify index state
-    Assert.assertEquals(person2, index.get("Name2"));
-    Assert.assertEquals(person4, index.get("same"));
+    Assert.assertEquals(person2, fetchDocumentFromIndex("Name2"));
+    Assert.assertEquals(person4, fetchDocumentFromIndex("same"));
 
     db.begin();
     person2.delete();
@@ -235,8 +244,8 @@ public class DuplicateUniqueIndexChangesTxTest {
     db.commit();
 
     // verify index state
-    Assert.assertNull(index.get("Name2"));
-    Assert.assertNull(index.get("same"));
+    Assert.assertNull(fetchDocumentFromIndex("Name2"));
+    Assert.assertNull(fetchDocumentFromIndex("same"));
   }
 
   @Test(expected = ORecordDuplicatedException.class)
@@ -266,10 +275,10 @@ public class DuplicateUniqueIndexChangesTxTest {
     db.commit();
 
     // verify index state
-    Assert.assertEquals(person1, index.get("Name1"));
-    Assert.assertEquals(person2, index.get("Name2"));
-    Assert.assertEquals(person3, index.get("Name3"));
-    Assert.assertEquals(person4, index.get("Name4"));
+    Assert.assertEquals(person1, fetchDocumentFromIndex("Name1"));
+    Assert.assertEquals(person2, fetchDocumentFromIndex("Name2"));
+    Assert.assertEquals(person3, fetchDocumentFromIndex("Name3"));
+    Assert.assertEquals(person4, fetchDocumentFromIndex("Name4"));
 
     db.begin();
     person1.field("name", "Name1").save();

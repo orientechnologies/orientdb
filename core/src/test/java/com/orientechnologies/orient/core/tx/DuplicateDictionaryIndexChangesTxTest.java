@@ -20,11 +20,14 @@
 package com.orientechnologies.orient.core.tx;
 
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import org.junit.*;
+
+import java.util.stream.Stream;
 
 /**
  * @author Sergey Sitnikov
@@ -70,8 +73,13 @@ public class DuplicateDictionaryIndexChangesTxTest {
     db.commit();
 
     // verify index state
-    Assert.assertEquals(person2, index.get("Name1"));
-    Assert.assertEquals(person3, index.get(null));
+    try (Stream<ORID> rids = index.getInternal().getRids("Name1")) {
+      Assert.assertEquals(person2, rids.findFirst().map(ORID::getRecord).orElse(null));
+    }
+
+    try (Stream<ORID> rids = index.getInternal().getRids(null)) {
+      Assert.assertEquals(person3, rids.findFirst().map(ORID::getRecord).orElse(null));
+    }
   }
 
   @Test
@@ -83,7 +91,9 @@ public class DuplicateDictionaryIndexChangesTxTest {
     db.commit();
 
     // verify index state
-    Assert.assertEquals(person3, index.get(null));
+    try (Stream<ORID> rids = index.getInternal().getRids(null)) {
+      Assert.assertEquals(person3, rids.findFirst().map(ORID::getRecord).orElse(null));
+    }
 
     db.begin();
 
@@ -100,8 +110,12 @@ public class DuplicateDictionaryIndexChangesTxTest {
     db.commit();
 
     // verify index state
-    Assert.assertEquals(person2, index.get("Name1"));
-    Assert.assertEquals(person3, index.get("Name3"));
+    try (Stream<ORID> rids = index.getInternal().getRids("Name1")) {
+      Assert.assertEquals(person2, rids.findFirst().map(ORID::getRecord).orElse(null));
+    }
+    try (Stream<ORID> rids = index.getInternal().getRids("Name3")) {
+      Assert.assertEquals(person3, rids.findFirst().map(ORID::getRecord).orElse(null));
+    }
   }
 
   @Test
@@ -122,9 +136,17 @@ public class DuplicateDictionaryIndexChangesTxTest {
     db.commit();
 
     // verify index state
-    Assert.assertNull(index.get("same"));
-    Assert.assertEquals(person2, index.get("Name2"));
-    Assert.assertEquals(person3, index.get("Name1"));
+    try (Stream<ORID> rids = index.getInternal().getRids("same")) {
+      Assert.assertNull(rids.findFirst().map(ORID::getRecord).orElse(null));
+    }
+
+    try (Stream<ORID> rids = index.getInternal().getRids("Name2")) {
+      Assert.assertEquals(person2, rids.findFirst().map(ORID::getRecord).orElse(null));
+    }
+
+    try (Stream<ORID> name1 = index.getInternal().getRids("Name1")) {
+      Assert.assertEquals(person3, name1.findFirst().map(ORID::getRecord).orElse(null));
+    }
   }
 
   @Test
@@ -136,9 +158,17 @@ public class DuplicateDictionaryIndexChangesTxTest {
     db.commit();
 
     // verify index state
-    Assert.assertEquals(person1, index.get("Name1"));
-    Assert.assertEquals(person2, index.get("Name2"));
-    Assert.assertEquals(person3, index.get("Name3"));
+    try (Stream<ORID> rids = index.getInternal().getRids("Name1")) {
+      Assert.assertEquals(person1, rids.findFirst().map(ORID::getRecord).orElse(null));
+    }
+
+    try (Stream<ORID> rids = index.getInternal().getRids("Name2")) {
+      Assert.assertEquals(person2, rids.findFirst().map(ORID::getRecord).orElse(null));
+    }
+
+    try (Stream<ORID> rids = index.getInternal().getRids("Name3")) {
+      Assert.assertEquals(person3, rids.findFirst().map(ORID::getRecord).orElse(null));
+    }
 
     db.begin();
 
@@ -156,10 +186,21 @@ public class DuplicateDictionaryIndexChangesTxTest {
     db.commit();
 
     // verify index state
-    Assert.assertNull(index.get("same"));
-    Assert.assertEquals(person1, index.get("Name1"));
-    Assert.assertEquals(person2, index.get("Name2"));
-    Assert.assertEquals(person3, index.get("Name3"));
+    try (Stream<ORID> rids = index.getInternal().getRids("same")) {
+      Assert.assertNull(rids.findFirst().map(ORID::getRecord).orElse(null));
+    }
+
+    try (Stream<ORID> rids = index.getInternal().getRids("Name1")) {
+      Assert.assertEquals(person1, rids.findFirst().map(ORID::getRecord).orElse(null));
+    }
+
+    try (Stream<ORID> rids = index.getInternal().getRids("Name2")) {
+      Assert.assertEquals(person2, rids.findFirst().map(ORID::getRecord).orElse(null));
+    }
+
+    try (Stream<ORID> rids = index.getInternal().getRids("Name3")) {
+      Assert.assertEquals(person3, rids.findFirst().map(ORID::getRecord).orElse(null));
+    }
   }
 
   @Test
@@ -182,8 +223,13 @@ public class DuplicateDictionaryIndexChangesTxTest {
     db.commit();
 
     // verify index state
-    Assert.assertNull(index.get("same"));
-    Assert.assertEquals(person2, index.get("Name2"));
+    try (Stream<ORID> rids = index.getInternal().getRids("same")) {
+      Assert.assertNull(rids.findFirst().map(ORID::getRecord).orElse(null));
+    }
+
+    try (Stream<ORID> rids = index.getInternal().getRids("Name2")) {
+      Assert.assertEquals(person2, rids.findFirst().map(ORID::getRecord).orElse(null));
+    }
   }
 
   @Test
@@ -196,10 +242,13 @@ public class DuplicateDictionaryIndexChangesTxTest {
     db.commit();
 
     // verify index state
-    Assert.assertEquals(person1, index.get("Name1"));
-    Assert.assertEquals(person2, index.get("Name2"));
-    Assert.assertEquals(person3, index.get("Name3"));
-    Assert.assertEquals(person4, index.get("Name4"));
+    try (Stream<ORID> rids = index.getInternal().getRids("Name1")) {
+      Assert.assertEquals(person1, rids.findFirst().map(ORID::getRecord).orElse(null));
+    }
+
+    Assert.assertEquals(person2, getDocumentByKey("Name2"));
+    Assert.assertEquals(person3, getDocumentByKey("Name3"));
+    Assert.assertEquals(person4, getDocumentByKey("Name4"));
 
     db.begin();
 
@@ -214,8 +263,8 @@ public class DuplicateDictionaryIndexChangesTxTest {
     db.commit();
 
     // verify index state
-    Assert.assertEquals(person4, index.get("Name2"));
-    Assert.assertNull(index.get("same"));
+    Assert.assertEquals(person4, getDocumentByKey("Name2"));
+    Assert.assertNull(getDocumentByKey("same"));
 
     db.begin();
     person2.delete();
@@ -223,8 +272,13 @@ public class DuplicateDictionaryIndexChangesTxTest {
     db.commit();
 
     // verify index state
-    Assert.assertNull(index.get("Name2"));
-    Assert.assertNull(index.get("same"));
+    Assert.assertNull(getDocumentByKey("Name2"));
+    Assert.assertNull(getDocumentByKey("same"));
   }
 
+  private ODocument getDocumentByKey(String key) {
+    try (Stream<ORID> rids = index.getInternal().getRids(key)) {
+      return (ODocument) rids.findFirst().map(ORID::getRecord).orElse(null);
+    }
+  }
 }

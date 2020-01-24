@@ -5,6 +5,7 @@ import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
+import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OType;
@@ -19,6 +20,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.stream.Stream;
 
 /**
  * Simple Multi-threads graph importer. Source file downloaded from http://snap.stanford.edu/data/amazon/productGraph/categoryFiles/ratings_Books.csv.
@@ -113,19 +115,17 @@ public class OGraphImporterMTAPITest {
 
             for (int localRetry = 0; localRetry < 100; ++localRetry) {
               try {
-                final Object k1 = userIndex.get(parts[0]);
-                OrientVertex v1;
-                if (k1 == null) {
-                  v1 = localGraph.addVertex("class:User", "uid", parts[0]);
-                } else
-                  v1 = localGraph.getVertex(k1);
+                final OrientVertex v1;
+                try (Stream<ORID> stream = userIndex.getInternal().getRids(parts[0])) {
+                  v1 = stream.findAny().map(localGraph::getVertex)
+                      .orElseGet(() -> localGraph.addVertex("class:User", "uid", parts[0]));
+                }
 
-                final Object k2 = productIndex.get(parts[1]);
-                OrientVertex v2;
-                if (k2 == null) {
-                  v2 = localGraph.addVertex("class:Product", "uid", parts[1]);
-                } else
-                  v2 = localGraph.getVertex(k2);
+                final OrientVertex v2;
+                try (Stream<ORID> stream = productIndex.getInternal().getRids(parts[1])) {
+                  v2 = stream.findAny().map(localGraph::getVertex)
+                      .orElseGet(() -> localGraph.addVertex("class:Product", "uid", parts[1]));
+                }
 
                 final OrientEdge edge = localGraph.addEdge(null, v1, v2, "Reviewed");
                 edge.setProperties(properties);

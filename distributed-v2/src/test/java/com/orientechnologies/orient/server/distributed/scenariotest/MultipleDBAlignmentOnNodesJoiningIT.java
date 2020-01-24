@@ -33,11 +33,16 @@ import org.junit.Assert;
 import org.junit.Test;
 
 import java.io.IOException;
-import java.util.*;
+import java.util.Date;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.UUID;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static org.junit.Assert.*;
 
@@ -358,14 +363,13 @@ public class MultipleDBAlignmentOnNodesJoiningIT extends AbstractScenarioTest {
 
     private void checkIndex(ODatabaseDocumentInternal database, final String key, final ORID rid) {
       final OIndex index = database.getSharedContext().getIndexManager().getIndex(database, "Person.name");
-      final Object value = index.get(key);
-      if (value instanceof Collection) {
-        final Collection result = (Collection) value;
-        Assert.assertEquals(1, result.size());
-        Assert.assertTrue(result.contains(rid));
-      } else {
-        Assert.assertEquals(rid, value);
+      final List<ORID> rids;
+      try (Stream<ORID> stream = index.getInternal().getRids(key)) {
+        rids = stream.collect(Collectors.toList());
       }
+
+      Assert.assertEquals(1, rids.size());
+      Assert.assertTrue(rids.contains(rid));
     }
 
     private ODocument loadRecord(ODatabaseDocument database, int i) {

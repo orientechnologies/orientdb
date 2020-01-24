@@ -26,8 +26,13 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import org.junit.Assert;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
+import java.util.UUID;
 import java.util.concurrent.*;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * Insert records concurrently against the cluster
@@ -111,14 +116,13 @@ public abstract class AbstractDistributedWriteTest extends AbstractServerCluster
 
     private void checkIndex(ODatabaseDocumentInternal database, final String key, final ORID rid) {
       final OIndex index = database.getSharedContext().getIndexManager().getIndex(database, "Person.name");
-      final Object value = index.get(key);
-      if (value instanceof Collection) {
-        final Collection result = (Collection) value;
-        Assert.assertEquals(1, result.size());
-        Assert.assertTrue(result.contains(rid));
-      } else {
-        Assert.assertEquals(rid, value);
+      final List<ORID> rids;
+      try (Stream<ORID> stream = index.getInternal().getRids(key)) {
+        rids = stream.collect(Collectors.toList());
       }
+
+      Assert.assertEquals(1, rids.size());
+      Assert.assertTrue(rids.contains(rid));
     }
 
     private ODocument loadRecord(ODatabaseDocument database, int i) {
