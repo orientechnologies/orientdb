@@ -49,4 +49,8 @@ public class ODDLQueryOperationRequest implements ONodeRequest {
   public int getRequestType() {
     return DDL_QUERY_NODE_REQUEST;
   }
+
+  public String getQuery() {
+    return query;
+  }
 }

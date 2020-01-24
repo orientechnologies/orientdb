@@ -37,7 +37,6 @@ import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OType;
-import com.orientechnologies.orient.core.record.ODirection;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
 import com.tinkerpop.blueprints.*;
@@ -1084,32 +1083,6 @@ public class OrientVertex extends OrientElement implements OrientExtendedVertex 
     if (toAdd != null)
       // ADD THE VERTEX
       iterable.add(toAdd);
-  }
-
-  private Direction decodeODirection(ODirection direction) {
-    if (direction == null) {
-      return null;
-    }
-    switch (direction) {
-    case OUT:
-      return Direction.OUT;
-    case IN:
-      return Direction.IN;
-    case BOTH:
-      return Direction.BOTH;
-    }
-    return null;
-  }
-
-  private String[] toClassNames(OClass[] type) {
-    if (type == null) {
-      return null;
-    }
-    String[] result = new String[type.length];
-    for (int i = 0; i < type.length; i++) {
-      result[i] = type[i].getName();
-    }
-    return result;
   }
 
 }

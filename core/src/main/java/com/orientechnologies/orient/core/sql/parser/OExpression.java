@@ -50,13 +50,6 @@ public class OExpression extends SimpleNode {
     mathExpression = new OBaseExpression(attr, modifier);
   }
 
-  /**
-   * Accept the visitor.
-   **/
-  public Object jjtAccept(OrientSqlVisitor visitor, Object data) {
-    return visitor.visit(this, data);
-  }
-
   public Object execute(OIdentifiable iCurrentRecord, OCommandContext ctx) {
     if (isNull) {
       return null;

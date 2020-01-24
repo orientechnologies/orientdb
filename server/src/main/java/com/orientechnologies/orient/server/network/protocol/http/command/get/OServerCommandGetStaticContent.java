@@ -113,8 +113,8 @@ public class OServerCommandGetStaticContent extends OServerCommandConfigurableAb
 
   @Override
   public boolean execute(final OHttpRequest iRequest, final OHttpResponse iResponse) throws Exception {
-    iRequest.data.commandInfo = "Get static content";
-    iRequest.data.commandDetail = iRequest.url;
+    iRequest.getData().commandInfo = "Get static content";
+    iRequest.getData().commandDetail = iRequest.getUrl();
 
     OStaticContent staticContent = null;
     try {
@@ -149,7 +149,7 @@ public class OServerCommandGetStaticContent extends OServerCommandConfigurableAb
       }
 
     } catch (IOException e) {
-      OLogManager.instance().error(this, "Error on loading resource %s", e, iRequest.url);
+      OLogManager.instance().error(this, "Error on loading resource %s", e, iRequest.getUrl());
 
     } finally {
       if (staticContent != null && staticContent.is != null)
@@ -172,27 +172,27 @@ public class OServerCommandGetStaticContent extends OServerCommandConfigurableAb
 
   protected String getResource(final OHttpRequest iRequest) {
     final String url;
-    if (OHttpUtils.URL_SEPARATOR.equals(iRequest.url))
+    if (OHttpUtils.URL_SEPARATOR.equals(iRequest.getUrl()))
       url = "/www/index.htm";
     else {
-      int pos = iRequest.url.indexOf('?');
+      int pos = iRequest.getUrl().indexOf('?');
       if (pos > -1)
-        url = iRequest.url.substring(0, pos);
+        url = iRequest.getUrl().substring(0, pos);
       else
-        url = iRequest.url;
+        url = iRequest.getUrl();
     }
     return url;
   }
 
   protected OStaticContent getVirtualFolderContent(final OHttpRequest iRequest) {
-    if (iRequest.url != null) {
-      final int beginPos = iRequest.url.startsWith("/") ? 1 : 0;
-      final int endPos = iRequest.url.indexOf("/", beginPos);
-      final String firstFolderName = endPos > -1 ? iRequest.url.substring(beginPos, endPos) : iRequest.url.substring(beginPos);
+    if (iRequest.getUrl() != null) {
+      final int beginPos = iRequest.getUrl().startsWith("/") ? 1 : 0;
+      final int endPos = iRequest.getUrl().indexOf("/", beginPos);
+      final String firstFolderName = endPos > -1 ? iRequest.getUrl().substring(beginPos, endPos) : iRequest.getUrl().substring(beginPos);
       final OCallable<Object, String> virtualFolderCallback = virtualFolders.get(firstFolderName);
       if (virtualFolderCallback != null) {
         // DELEGATE TO THE CALLBACK
-        final Object content = virtualFolderCallback.call(endPos > -1 ? iRequest.url.substring(endPos + 1) : "");
+        final Object content = virtualFolderCallback.call(endPos > -1 ? iRequest.getUrl().substring(endPos + 1) : "");
         if (content == null)
           return null;
 
@@ -214,7 +214,7 @@ public class OServerCommandGetStaticContent extends OServerCommandConfigurableAb
       throws UnsupportedEncodingException, IOException, FileNotFoundException {
     if (filePath == null && rootPath == null) {
       // GET GLOBAL CONFIG
-      rootPath = iRequest.configuration.getValueAsString("orientdb.www.path", "src/site");
+      rootPath = iRequest.getConfiguration().getValueAsString("orientdb.www.path", "src/site");
       if (rootPath == null) {
         OLogManager.instance()
             .warn(this, "No path configured. Specify the 'root.path', 'file.path' or the global 'orientdb.www.path' variable",

@@ -4,10 +4,10 @@ package com.orientechnologies.orient.core.sql.parser;
 
 import com.orientechnologies.orient.core.sql.operator.OQueryOperator;
 
-public
-class OScAndOperator extends SimpleNode implements OBinaryCompareOperator {
+public class OScAndOperator extends SimpleNode implements OBinaryCompareOperator {
 
-  OQueryOperator lowLevelOperator = null;
+  protected OQueryOperator lowLevelOperator = null;
+
   public OScAndOperator(int id) {
     super(id);
   }
@@ -16,18 +16,12 @@ class OScAndOperator extends SimpleNode implements OBinaryCompareOperator {
     super(p, id);
   }
 
-
-  /** Accept the visitor. **/
-  public Object jjtAccept(OrientSqlVisitor visitor, Object data) {
-    return visitor.visit(this, data);
-  }
-
   @Override
   public boolean execute(Object iLeft, Object iRight) {
-    if(lowLevelOperator==null) {
+    if (lowLevelOperator == null) {
       //TODO implement this!
     }
-    if(lowLevelOperator==null) {
+    if (lowLevelOperator == null) {
       throw new UnsupportedOperationException();
     }
     return false;
@@ -38,19 +32,23 @@ class OScAndOperator extends SimpleNode implements OBinaryCompareOperator {
     return "&&";
   }
 
-  @Override public boolean supportsBasicCalculation() {
+  @Override
+  public boolean supportsBasicCalculation() {
     return true;
   }
 
-  @Override public OScAndOperator copy() {
+  @Override
+  public OScAndOperator copy() {
     return this;
   }
 
-  @Override public boolean equals(Object obj) {
+  @Override
+  public boolean equals(Object obj) {
     return obj != null && obj.getClass().equals(this.getClass());
   }
 
-  @Override public int hashCode() {
+  @Override
+  public int hashCode() {
     return getClass().hashCode();
   }
 }

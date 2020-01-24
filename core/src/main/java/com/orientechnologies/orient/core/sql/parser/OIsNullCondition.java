@@ -23,13 +23,6 @@ public class OIsNullCondition extends OBooleanExpression {
     super(p, id);
   }
 
-  /**
-   * Accept the visitor.
-   **/
-  public Object jjtAccept(OrientSqlVisitor visitor, Object data) {
-    return visitor.visit(this, data);
-  }
-
   @Override
   public boolean evaluate(OIdentifiable currentRecord, OCommandContext ctx) {
     return expression.execute(currentRecord, ctx) == null;

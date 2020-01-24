@@ -11,34 +11,33 @@ public class OWithinOperator extends SimpleNode implements OBinaryCompareOperato
     super(p, id);
   }
 
-  /**
-   * Accept the visitor.
-   **/
-  public Object jjtAccept(OrientSqlVisitor visitor, Object data) {
-    return visitor.visit(this, data);
-  }
-
-  @Override public boolean execute(Object left, Object right) {
+  @Override
+  public boolean execute(Object left, Object right) {
     throw new UnsupportedOperationException(toString() + " operator cannot be evaluated in this context");
   }
 
-  @Override public String toString() {
+  @Override
+  public String toString() {
     return "WITHIN";
   }
 
-  @Override public boolean supportsBasicCalculation() {
+  @Override
+  public boolean supportsBasicCalculation() {
     return true;
   }
 
-  @Override public OWithinOperator copy() {
+  @Override
+  public OWithinOperator copy() {
     return this;
   }
 
-  @Override public boolean equals(Object obj) {
+  @Override
+  public boolean equals(Object obj) {
     return obj != null && obj.getClass().equals(this.getClass());
   }
 
-  @Override public int hashCode() {
+  @Override
+  public int hashCode() {
     return getClass().hashCode();
   }
 }

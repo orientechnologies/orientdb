@@ -26,7 +26,8 @@ import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
 import com.orientechnologies.orient.core.id.ORID;
-import com.orientechnologies.orient.core.id.ORecordId;
+import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.OStorageProxy;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
@@ -59,15 +60,19 @@ public abstract class OTransactionAbstract implements OTransaction {
     final OLocalRecordCache dbCache = database.getLocalCache();
 
     for (ORecordOperation txEntry : entries) {
-      if (!updateStrategy)
+      if (!updateStrategy) {
         // ALWAYS REMOVE THE RECORD FROM CACHE
         dbCache.deleteRecord(txEntry.getRecord().getIdentity());
-      else if (txEntry.type == ORecordOperation.DELETED)
+      } else if (txEntry.type == ORecordOperation.DELETED) {
         // DELETION
         dbCache.deleteRecord(txEntry.getRecord().getIdentity());
-      else if (txEntry.type == ORecordOperation.UPDATED || txEntry.type == ORecordOperation.CREATED)
+      } else if (txEntry.type == ORecordOperation.UPDATED || txEntry.type == ORecordOperation.CREATED) {
         // UDPATE OR CREATE
         dbCache.updateRecord(txEntry.getRecord());
+      }
+      if (txEntry.getRecord() instanceof ODocument) {
+        ODocumentInternal.clearTransactionTrackData((ODocument) txEntry.getRecord());
+      }
     }
   }
 

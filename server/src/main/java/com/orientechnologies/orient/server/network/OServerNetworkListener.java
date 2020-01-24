@@ -32,6 +32,7 @@ import com.orientechnologies.orient.server.config.OServerCommandConfiguration;
 import com.orientechnologies.orient.server.config.OServerParameterConfiguration;
 import com.orientechnologies.orient.server.network.protocol.OBeforeDatabaseOpenNetworkEventListener;
 import com.orientechnologies.orient.server.network.protocol.ONetworkProtocol;
+import com.orientechnologies.orient.server.network.protocol.http.OHttpNetworkCommandManager;
 import com.orientechnologies.orient.server.network.protocol.http.command.OServerCommand;
 
 import java.io.IOException;
@@ -376,4 +377,5 @@ public class OServerNetworkListener extends Thread {
 
     socketBufferSize = configuration.getValueAsInteger(OGlobalConfiguration.NETWORK_SOCKET_BUFFER_SIZE);
   }
+
 }

@@ -56,8 +56,8 @@ public abstract class OServerCommandAbstract implements OServerCommand {
   }
 
   protected String[] checkSyntax(final String iURL, final int iArgumentCount, final String iSyntax) {
-    final List<String> parts = OStringSerializerHelper.smartSplit(iURL, OHttpResponse.URL_SEPARATOR, 1, -1, true, true, false,
-        false);
+    final List<String> parts = OStringSerializerHelper
+        .smartSplit(iURL, OHttpResponse.URL_SEPARATOR, 1, -1, true, true, false, false);
     try {
       for (int i = 0; i < parts.size(); i++) {
         parts.set(i, URLDecoder.decode(parts.get(i), "UTF-8"));
@@ -82,10 +82,12 @@ public abstract class OServerCommandAbstract implements OServerCommand {
   protected void setNoCache(final OHttpResponse iResponse) {
     // DEFAULT = DON'T CACHE
     iResponse.setHeader("Cache-Control: no-cache, no-store, max-age=0, must-revalidate\r\nPragma: no-cache");
+    iResponse.addHeader("Cache-Control", "no-cache, no-store, max-age=0");
+    iResponse.addHeader("Pragma", "no-cache");
   }
 
   protected boolean isJsonResponse(OHttpResponse response) {
-    return response.jsonErrorResponse;
+    return response.isJsonErrorResponse();
 
   }
 

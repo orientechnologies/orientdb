@@ -26,6 +26,7 @@ import com.orientechnologies.orient.server.network.protocol.http.OHttpSession;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpUtils;
 
 import java.io.IOException;
+import java.util.Map;
 
 /**
  * Server based authenticated commands. Authenticates against the OrientDB server users found in configuration.
@@ -54,20 +55,20 @@ public abstract class OServerCommandAuthenticatedServerAbstract extends OServerC
   protected boolean authenticate(final OHttpRequest iRequest, final OHttpResponse iResponse, final boolean iAskForAuthentication, String resource) throws IOException {
     if (checkGuestAccess()) {
       // GUEST ACCESSES TO THE RESOURCE: OK ALSO WITHOUT AN AUTHENTICATION.
-      iResponse.sessionId = null;
+      iResponse.setSessionId(null);
       return true;
     }
 
     if (iAskForAuthentication)
-      if (iRequest.authorization == null || SESSIONID_LOGOUT.equals(iRequest.sessionId)) {
+      if (iRequest.getAuthorization() == null || SESSIONID_LOGOUT.equals(iRequest.getSessionId())) {
         // NO AUTHENTICATION AT ALL
         sendAuthorizationRequest(iRequest, iResponse);
         return false;
       }
 
-    if (iRequest.authorization != null) {
+    if (iRequest.getAuthorization() != null) {
       // GET CREDENTIALS
-      final String[] authParts = iRequest.authorization.split(":");
+      final String[] authParts = iRequest.getAuthorization().split(":");
       if (authParts.length != 2) {
         // NO USER : PASSWD
         sendAuthorizationRequest(iRequest, iResponse);
@@ -101,13 +102,16 @@ public abstract class OServerCommandAuthenticatedServerAbstract extends OServerC
 
   protected void sendAuthorizationRequest(final OHttpRequest iRequest, final OHttpResponse iResponse) throws IOException {
     // UNAUTHORIZED
-    iRequest.sessionId = SESSIONID_UNAUTHORIZED;
+    iRequest.setSessionId(SESSIONID_UNAUTHORIZED);
 
     String header = null;
     String xRequestedWithHeader = iRequest.getHeader("X-Requested-With");
     if (xRequestedWithHeader == null || !xRequestedWithHeader.equals("XMLHttpRequest")) {
       // Defaults to "WWW-Authenticate: Basic" if not an AJAX Request.
       header = server.getSecurity().getAuthenticationHeader(null);
+
+      Map<String, String> headers = server.getSecurity().getAuthenticationHeaders(null);
+      headers.entrySet().forEach(s -> iResponse.addHeader(s.getKey(), s.getValue()));
     }
 
     if (isJsonResponse(iResponse)) {
@@ -121,13 +125,13 @@ public abstract class OServerCommandAuthenticatedServerAbstract extends OServerC
   }
 
   public String getUser(final OHttpRequest iRequest) {
-    OHttpSession session = server.getHttpSessionManager().getSession(iRequest.sessionId);
+    OHttpSession session = server.getHttpSessionManager().getSession(iRequest.getSessionId());
     if (session != null) {
       return session.getUserName();
     }
-    if (iRequest.authorization != null) {
+    if (iRequest.getAuthorization() != null) {
       // GET CREDENTIALS
-      final String[] authParts = iRequest.authorization.split(":");
+      final String[] authParts = iRequest.getAuthorization().split(":");
       if (authParts.length == 2) {
         return authParts[0];
       }

@@ -13,12 +13,13 @@
  *  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  *  * See the License for the specific language governing permissions and
  *  * limitations under the License.
- *  
+ *
  */
 
 package com.orientechnologies.lucene.test;
 
 import com.orientechnologies.orient.core.command.script.OCommandScript;
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
@@ -61,7 +62,7 @@ public class LuceneCreateIndexTest extends BaseLuceneTest {
 
     db.close();
 
-    db.open("admin", "admin");
+    db = (ODatabaseDocumentInternal) openDatabase();
 
     assertQuery();
 

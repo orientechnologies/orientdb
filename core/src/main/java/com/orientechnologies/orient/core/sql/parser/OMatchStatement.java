@@ -182,13 +182,6 @@ public class OMatchStatement extends OStatement implements OCommandExecutor, OIt
     return result;
   }
 
-  /**
-   * Accept the visitor. *
-   */
-  public Object jjtAccept(OrientSqlVisitor visitor, Object data) {
-    return visitor.visit(this, data);
-  }
-
   // ------------------------------------------------------------------
   // query parsing and optimization
   // ------------------------------------------------------------------

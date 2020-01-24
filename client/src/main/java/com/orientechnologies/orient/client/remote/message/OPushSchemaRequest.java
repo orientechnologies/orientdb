@@ -3,6 +3,7 @@ package com.orientechnologies.orient.client.remote.message;
 import com.orientechnologies.orient.client.remote.ORemotePushHandler;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.record.binary.ORecordSerializerNetworkV37;
+import com.orientechnologies.orient.core.serialization.serializer.record.binary.ORecordSerializerNetworkV37Client;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelDataInput;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelDataOutput;
 
@@ -30,7 +31,7 @@ public class OPushSchemaRequest implements OBinaryPushRequest<OBinaryPushRespons
   @Override
   public void read(OChannelDataInput network) throws IOException {
     byte[] bytes = network.readBytes();
-    this.schema = (ODocument) ORecordSerializerNetworkV37.INSTANCE.fromStream(bytes, null);
+    this.schema = (ODocument) ORecordSerializerNetworkV37Client.INSTANCE.fromStream(bytes, null);
   }
 
   @Override

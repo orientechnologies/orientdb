@@ -13,11 +13,12 @@
  *  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  *  * See the License for the specific language governing permissions and
  *  * limitations under the License.
- *  
+ *
  */
 
 package com.orientechnologies.lucene.test;
 
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
@@ -65,7 +66,8 @@ public class LuceneMassiveInsertDeleteTest extends BaseLuceneTest {
     Assert.assertEquals(docs.size(), size);
 
     db.close();
-    db.open("admin", "admin");
+    db = (ODatabaseDocumentInternal) openDatabase();
+
     docs = db.query(new OSQLSynchQuery<ODocument>(query));
     Assert.assertEquals(docs.size(), size);
 
@@ -75,7 +77,7 @@ public class LuceneMassiveInsertDeleteTest extends BaseLuceneTest {
     Assert.assertEquals(docs.size(), 0);
 
     db.close();
-    db.open("admin", "admin");
+    db = (ODatabaseDocumentInternal) openDatabase();
     docs = db.query(new OSQLSynchQuery<ODocument>(query));
     Assert.assertEquals(docs.size(), 0);
 

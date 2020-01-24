@@ -40,13 +40,6 @@ public class OFunctionCall extends SimpleNode {
     return ODatabaseRecordThreadLocal.instance().get();
   }
 
-  /**
-   * Accept the visitor. *
-   */
-  public Object jjtAccept(OrientSqlVisitor visitor, Object data) {
-    return visitor.visit(this, data);
-  }
-
   public boolean isStar() {
 
     if (this.params.size() != 1) {

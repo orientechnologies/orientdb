@@ -41,10 +41,10 @@ public class OServerCommandPostInstallDatabase extends OServerCommandAuthenticat
 
   @Override
   public boolean execute(final OHttpRequest iRequest, OHttpResponse iResponse) throws Exception {
-    checkSyntax(iRequest.url, 1, "Syntax error: installDatabase");
-    iRequest.data.commandInfo = "Import database";
+    checkSyntax(iRequest.getUrl(), 1, "Syntax error: installDatabase");
+    iRequest.getData().commandInfo = "Import database";
     try {
-      final String url = iRequest.content;
+      final String url = iRequest.getContent();
       final String name = getDbName(url);
       if (name != null) {
 

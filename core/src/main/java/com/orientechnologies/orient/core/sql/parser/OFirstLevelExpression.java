@@ -11,13 +11,6 @@ public class OFirstLevelExpression extends OMathExpression {
     super(p, id);
   }
 
-  /**
-   * Accept the visitor.
-   **/
-  public Object jjtAccept(OrientSqlVisitor visitor, Object data) {
-    return visitor.visit(this, data);
-  }
-
   @Override protected boolean supportsBasicCalculation() {
     return super.supportsBasicCalculation();
   }
@@ -30,9 +23,5 @@ public class OFirstLevelExpression extends OMathExpression {
     return false;
   }
 
-  //never used, this class is never returned by the parser!
-  @Override public OMathExpression copy() {
-    return super.copy();
-  }
 }
 /* JavaCC - OriginalChecksum=30dc1016b686d4841bbd57d6e6c0bfbd (do not edit this line) */

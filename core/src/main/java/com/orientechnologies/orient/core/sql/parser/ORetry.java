@@ -11,13 +11,6 @@ public class ORetry extends SimpleNode {
     super(p, id);
   }
 
-  /**
-   * Accept the visitor.
-   **/
-  public Object jjtAccept(OrientSqlVisitor visitor, Object data) {
-    return visitor.visit(this, data);
-  }
-
   @Override public boolean equals(Object obj) {
     return obj != null && getClass().equals(obj.getClass());
   }

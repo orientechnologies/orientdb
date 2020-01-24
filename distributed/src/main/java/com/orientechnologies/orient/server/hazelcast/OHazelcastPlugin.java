@@ -128,10 +128,6 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
 
     Orient.instance().setRunningDistributed(true);
 
-    //FORCE TO NEVER CONVERT RIDBAG EMBEDDED TO TREE
-    OGlobalConfiguration.RID_BAG_EMBEDDED_TO_SBTREEBONSAI_THRESHOLD.setValue(Integer.MAX_VALUE);
-    //FORCE TO EVERYTIME CONVERT RIDBAG TREE TO EMBEDDED 
-    OGlobalConfiguration.RID_BAG_SBTREEBONSAI_TO_EMBEDDED_THRESHOLD.setValue(Integer.MAX_VALUE);
     OGlobalConfiguration.STORAGE_TRACK_CHANGED_RECORDS_IN_WAL.setValue(true);
 
     // REGISTER TEMPORARY USER FOR REPLICATION PURPOSE
@@ -1050,44 +1046,48 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
    */
   @Override
   public void memberRemoved(final MembershipEvent iEvent) {
-    try {
-      updateLastClusterChange();
+    new Thread(() -> {
+      try {
+        updateLastClusterChange();
 
-      if (iEvent.getMember() == null)
-        return;
+        if (iEvent.getMember() == null)
+          return;
 
-      final String nodeLeftName = getNodeName(iEvent.getMember());
-      if (nodeLeftName == null)
-        return;
+        final String nodeLeftName = getNodeName(iEvent.getMember());
+        if (nodeLeftName == null)
+          return;
 
-      removeServer(nodeLeftName, true);
+        removeServer(nodeLeftName, true);
 
-    } catch (HazelcastInstanceNotActiveException | RetryableHazelcastException e) {
-      OLogManager.instance().error(this, "Hazelcast is not running", e);
-    } catch (Exception e) {
-      OLogManager.instance().error(this, "Error on removing the server '%s'", e, getNodeName(iEvent.getMember()));
-    }
+      } catch (HazelcastInstanceNotActiveException | RetryableHazelcastException e) {
+        OLogManager.instance().error(this, "Hazelcast is not running", e);
+      } catch (Exception e) {
+        OLogManager.instance().error(this, "Error on removing the server '%s'", e, getNodeName(iEvent.getMember()));
+      }
+    }).start();
   }
 
   @Override
   public void memberAdded(final MembershipEvent iEvent) {
-    if (hazelcastInstance == null || !hazelcastInstance.getLifecycleService().isRunning())
-      return;
+    new Thread(() -> {
+      if (hazelcastInstance == null || !hazelcastInstance.getLifecycleService().isRunning())
+        return;
 
-    try {
-      updateLastClusterChange();
-      final String addedNodeName = getNodeName(iEvent.getMember());
-      ODistributedServerLog
-          .info(this, nodeName, null, DIRECTION.NONE, "Added new node id=%s name=%s", iEvent.getMember(), addedNodeName);
+      try {
+        updateLastClusterChange();
+        final String addedNodeName = getNodeName(iEvent.getMember());
+        ODistributedServerLog
+            .info(this, nodeName, null, DIRECTION.NONE, "Added new node id=%s name=%s", iEvent.getMember(), addedNodeName);
 
-      registerNode(iEvent.getMember(), addedNodeName);
+        registerNode(iEvent.getMember(), addedNodeName);
 
-      // REMOVE THE NODE FROM AUTO REMOVAL
-      autoRemovalOfServers.remove(addedNodeName);
+        // REMOVE THE NODE FROM AUTO REMOVAL
+        autoRemovalOfServers.remove(addedNodeName);
 
-    } catch (HazelcastInstanceNotActiveException | RetryableHazelcastException e) {
-      OLogManager.instance().error(this, "Hazelcast is not running", e);
-    }
+      } catch (HazelcastInstanceNotActiveException | RetryableHazelcastException e) {
+        OLogManager.instance().error(this, "Hazelcast is not running", e);
+      }
+    }).start();
   }
 
   @Override
@@ -1119,6 +1119,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
       activeNodesUuidByName.put(nodeName, nodeUuid);
 
       publishLocalNodeConfiguration();
+      setNodeStatus(NODE_STATUS.ONLINE);
 
       // TEMPORARY PATCH TO FIX HAZELCAST'S BEHAVIOUR THAT ENQUEUES THE MERGING ITEM EVENT WITH THIS AND ACTIVE NODES MAP COULD BE STILL NOT FILLED
       Thread t = new Thread(new Runnable() {
@@ -1588,7 +1589,9 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
 
       for (String databaseName : getManagedDatabases()) {
         try {
-          reassignClustersOwnership(nodeName, databaseName, null, false);
+          if (getDatabaseConfiguration(databaseName).getServerRole(nodeName) == ODistributedConfiguration.ROLES.MASTER) {
+            reassignClustersOwnership(nodeName, databaseName, null, false);
+          }
         } catch (Exception e) {
           // IGNORE IT
           ODistributedServerLog.error(this, nodeName, null, DIRECTION.NONE,
@@ -1788,5 +1791,58 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
 
   public boolean isRunning() {
     return enabled && running;
+  }
+
+  @Override
+  public void messageReceived(ODistributedRequest request) {
+
+    for (ODistributedLifecycleListener listener : listeners) {
+      listener.onMessageReceived(request);
+    }
+  }
+
+  @Override
+  public void messagePartitionCalculate(ODistributedRequest request, Set<Integer> involvedWorkerQueues) {
+
+    for (ODistributedLifecycleListener listener : listeners) {
+      listener.onMessagePartitionCalculated(request, involvedWorkerQueues);
+    }
+
+  }
+
+  @Override
+  public void messageBeforeOp(String op, ODistributedRequestId request) {
+
+    for (ODistributedLifecycleListener listener : listeners) {
+      listener.onMessageBeforeOp(op, request);
+    }
+  }
+
+  @Override
+  public void messageAfterOp(String op, ODistributedRequestId request) {
+    for (ODistributedLifecycleListener listener : listeners) {
+      listener.onMessageAfterOp(op, request);
+    }
+  }
+
+  @Override
+  public void messageCurrentPayload(ODistributedRequestId requestId, Object responsePayload) {
+    for (ODistributedLifecycleListener listener : listeners) {
+      listener.onMessageCurrentPayload(requestId, responsePayload);
+    }
+  }
+
+  @Override
+  public void messageProcessStart(ODistributedRequest message) {
+    for (ODistributedLifecycleListener listener : listeners) {
+      listener.onMessageProcessStart(message);
+    }
+  }
+
+  @Override
+  public void messageProcessEnd(ODistributedRequest iRequest, Object responsePayload) {
+    for (ODistributedLifecycleListener listener : listeners) {
+      listener.onMessageProcessEnd(iRequest, responsePayload);
+    }
   }
 }

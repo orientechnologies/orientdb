@@ -16,11 +16,7 @@ import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.executor.OResultInternal;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
 
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 public class OSuffixIdentifier extends SimpleNode {
 
@@ -42,13 +38,6 @@ public class OSuffixIdentifier extends SimpleNode {
 
   public OSuffixIdentifier(ORecordAttribute attr) {
     this.recordAttribute = attr;
-  }
-
-  /**
-   * Accept the visitor.
-   **/
-  public Object jjtAccept(OrientSqlVisitor visitor, Object data) {
-    return visitor.visit(this, data);
   }
 
   public void toString(Map<Object, Object> params, StringBuilder builder) {

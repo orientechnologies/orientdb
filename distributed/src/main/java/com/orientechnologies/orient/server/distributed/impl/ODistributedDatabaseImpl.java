@@ -40,48 +40,26 @@ import com.orientechnologies.orient.core.storage.ORawBuffer;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.OSystemDatabase;
-import com.orientechnologies.orient.server.distributed.ODistributedConfiguration;
-import com.orientechnologies.orient.server.distributed.ODistributedDatabase;
-import com.orientechnologies.orient.server.distributed.ODistributedDatabaseRepairer;
-import com.orientechnologies.orient.server.distributed.ODistributedException;
-import com.orientechnologies.orient.server.distributed.ODistributedMomentum;
-import com.orientechnologies.orient.server.distributed.ODistributedRequest;
-import com.orientechnologies.orient.server.distributed.ODistributedRequestId;
-import com.orientechnologies.orient.server.distributed.ODistributedResponse;
-import com.orientechnologies.orient.server.distributed.ODistributedResponseManager;
-import com.orientechnologies.orient.server.distributed.ODistributedResponseManagerImpl;
-import com.orientechnologies.orient.server.distributed.ODistributedServerLog;
+import com.orientechnologies.orient.server.distributed.*;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIRECTION;
-import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
-import com.orientechnologies.orient.server.distributed.ODistributedSyncConfiguration;
-import com.orientechnologies.orient.server.distributed.ODistributedTxContext;
-import com.orientechnologies.orient.server.distributed.OModifiableDistributedConfiguration;
-import com.orientechnologies.orient.server.distributed.ORemoteServerController;
 import com.orientechnologies.orient.server.distributed.impl.task.ODistributedLockTask;
 import com.orientechnologies.orient.server.distributed.impl.task.OUnreachableServerLocalTask;
-import com.orientechnologies.orient.server.distributed.impl.task.OWaitForTask;
 import com.orientechnologies.orient.server.distributed.task.OAbstractRemoteTask;
-import com.orientechnologies.orient.server.distributed.task.ODistributedOperationException;
 import com.orientechnologies.orient.server.distributed.task.ODistributedRecordLockedException;
 import com.orientechnologies.orient.server.distributed.task.ORemoteTask;
 import com.orientechnologies.orient.server.hazelcast.OHazelcastPlugin;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.TimerTask;
-import java.util.concurrent.*;
+import java.util.*;
+import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.stream.Collectors;
 
 import static com.orientechnologies.orient.core.config.OGlobalConfiguration.DISTRIBUTED_ATOMIC_LOCK_TIMEOUT;
 
@@ -261,6 +239,8 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
     }
 
     final ORemoteTask task = request.getTask();
+    task.received(request, this);
+    manager.messageReceived(request);
 
     if (waitForAcceptingRequests) {
       waitIsReady(task);
@@ -271,23 +251,6 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
     }
 
     totalReceivedRequests.incrementAndGet();
-
-    // final ODistributedMomentum lastMomentum = filterByMomentum.get();
-    // if (lastMomentum != null && task instanceof OAbstractReplicatedTask) {
-    // final OLogSequenceNumber taskLastLSN = ((OAbstractReplicatedTask) task).getLastLSN();
-    //
-    // final String sourceServer = manager.getNodeNameById(request.getId().getNodeId());
-    // final OLogSequenceNumber lastLSNFromMomentum = lastMomentum.getLSN(sourceServer);
-    //
-    // if (taskLastLSN != null && lastLSNFromMomentum != null && taskLastLSN.compareTo(lastLSNFromMomentum) < 0) {
-    // // SKIP REQUEST BECAUSE CONTAINS AN OLD LSN
-    // final String msg = String.format("Skipped request %s on database '%s' because %s < current %s", request, databaseName,
-    // taskLastLSN, lastLSNFromMomentum);
-    // ODistributedServerLog.info(this, localNodeName, null, DIRECTION.NONE, msg);
-    // ODistributedWorker.sendResponseBack(this, manager, request, new ODistributedException(msg));
-    // return;
-    // }
-    // }
 
     final int[] partitionKeys = task.getPartitionKey();
 
@@ -304,6 +267,8 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
       else
         // LOCK ALL THE QUEUES
         involvedWorkerQueues = ALL_QUEUES;
+
+      manager.messagePartitionCalculate(request, involvedWorkerQueues);
 
       // if (ODistributedServerLog.isDebugEnabled())
       ODistributedServerLog
@@ -410,6 +375,11 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
 
     final int partition = partitionKey % workerThreads.size();
 
+    Set<Integer> partitions = new HashSet<>();
+    partitions.add(partition);
+
+    manager.messagePartitionCalculate(request, partitions);
+
     ODistributedServerLog.debug(this, localNodeName, request.getTask().getNodeSource(), DIRECTION.IN,
         "Request %s on database '%s' dispatched to the worker %d", request, databaseName, partition);
 
@@ -467,8 +437,12 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
 
       final int expectedResponses = localResult != null ? availableNodes + 1 : availableNodes;
 
+      // all online masters
+      int onlineMasters = manager.getOnlineNodes(databaseName).stream()
+          .filter(f -> cfg.getServerRole(f) == ODistributedConfiguration.ROLES.MASTER).collect(Collectors.toSet()).size();
+
       final int quorum = calculateQuorum(task.getQuorumType(), iClusterNames, cfg, expectedResponses, nodesConcurToTheQuorum.size(),
-          checkNodesAreOnline, localNodeName);
+          onlineMasters, checkNodesAreOnline, localNodeName);
 
       final boolean groupByResponse = task.getResultStrategy() != OAbstractRemoteTask.RESULT_STRATEGY.UNION;
 
@@ -1053,8 +1027,8 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
   }
 
   protected int calculateQuorum(final OCommandDistributedReplicateRequest.QUORUM_TYPE quorumType, Collection<String> clusterNames,
-      final ODistributedConfiguration cfg, final int totalServers, final int totalMasterServers, final boolean checkNodesAreOnline,
-      final String localNodeName) {
+      final ODistributedConfiguration cfg, final int totalServers, final int totalMasterServers, int onlineMasters,
+      final boolean checkNodesAreOnline, final String localNodeName) {
 
     int quorum = 1;
 
@@ -1076,6 +1050,10 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
       case WRITE:
         clusterQuorum = cfg.getWriteQuorum(cluster, totalMasterServers, localNodeName);
         totalServerInQuorum = totalMasterServers;
+        break;
+      case WRITE_ALL_MASTERS:
+        int cfgQuorum = cfg.getWriteQuorum(cluster, totalMasterServers, localNodeName);
+        clusterQuorum = Math.max(cfgQuorum, onlineMasters);
         break;
       case ALL:
         clusterQuorum = totalServers;

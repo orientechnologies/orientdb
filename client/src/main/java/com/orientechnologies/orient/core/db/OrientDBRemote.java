@@ -54,8 +54,10 @@ public class OrientDBRemote implements OrientDBInternal {
   private final      String[]                    hosts;
   private final      OrientDBConfig              configurations;
   private final      Orient                      orient;
+  private final      OCachedDatabasePoolFactory  cachedPoolFactory;
   protected volatile ORemoteConnectionManager    connectionManager;
   private volatile   boolean                     open           = true;
+  private            Timer                       timer;
 
   public OrientDBRemote(String[] hosts, OrientDBConfig configurations, Orient orient) {
     super();
@@ -64,6 +66,14 @@ public class OrientDBRemote implements OrientDBInternal {
     this.configurations = configurations != null ? configurations : OrientDBConfig.defaultConfig();
     connectionManager = new ORemoteConnectionManager(this.configurations.getConfigurations().getValueAsLong(NETWORK_LOCK_TIMEOUT));
     orient.addOrientDB(this);
+    timer = new Timer();
+    cachedPoolFactory = createCachedDatabasePoolFactory(this.configurations);
+  }
+
+  protected OCachedDatabasePoolFactory createCachedDatabasePoolFactory(OrientDBConfig config) {
+    int capacity = config.getConfigurations().getValueAsInteger(OGlobalConfiguration.DB_CACHED_POOL_CAPACITY);
+    long timeout = config.getConfigurations().getValueAsInteger(OGlobalConfiguration.DB_CACHED_POOL_CLEAN_UP_TIMEOUT);
+    return new OCachedDatabasePoolFactoryImpl(this, capacity, timeout);
   }
 
   private String buildUrl(String name) {
@@ -254,6 +264,19 @@ public class OrientDBRemote implements OrientDBInternal {
     return pool;
   }
 
+  @Override
+  public ODatabasePoolInternal cachedPool(String database, String user, String password) {
+    return cachedPool(database, user, password, null);
+  }
+
+  @Override
+  public ODatabasePoolInternal cachedPool(String database, String user, String password, OrientDBConfig config) {
+    checkOpen();
+    ODatabasePoolInternal pool = cachedPoolFactory.get(database, user, password, solveConfig(config));
+    pools.add(pool);
+    return pool;
+  }
+
   public void removePool(ODatabasePoolInternal pool) {
     pools.remove(pool);
   }
@@ -262,6 +285,7 @@ public class OrientDBRemote implements OrientDBInternal {
   public void close() {
     if (!open)
       return;
+    timer.cancel();
     removeShutdownHook();
     internalClose();
   }
@@ -384,14 +408,12 @@ public class OrientDBRemote implements OrientDBInternal {
 
   }
 
-  @Override
   public void schedule(TimerTask task, long delay, long period) {
-    throw new UnsupportedOperationException("schedule not available in remote");
+    timer.schedule(task, delay, period);
   }
 
-  @Override
   public void scheduleOnce(TimerTask task, long delay) {
-    throw new UnsupportedOperationException("schedule not available in remote");
+    timer.schedule(task, delay);
   }
 
   @Override

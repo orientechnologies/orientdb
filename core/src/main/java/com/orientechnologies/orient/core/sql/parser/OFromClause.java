@@ -9,7 +9,7 @@ import java.util.Map;
 
 public class OFromClause extends SimpleNode {
 
-  OFromItem item;
+  protected OFromItem item;
 
   public OFromClause(int id) {
     super(id);
@@ -18,12 +18,7 @@ public class OFromClause extends SimpleNode {
   public OFromClause(OrientSql p, int id) {
     super(p, id);
   }
-
-  /** Accept the visitor. **/
-  public Object jjtAccept(OrientSqlVisitor visitor, Object data) {
-    return visitor.visit(this, data);
-  }
-
+  
   public void toString(Map<Object, Object> params, StringBuilder builder) {
     if (item != null) {
       item.toString(params, builder);

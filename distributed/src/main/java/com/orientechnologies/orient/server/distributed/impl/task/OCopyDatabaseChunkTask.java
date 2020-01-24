@@ -123,4 +123,20 @@ public class OCopyDatabaseChunkTask extends OAbstractReplicatedTask {
   public int getFactoryId() {
     return FACTORYID;
   }
+
+  public String getFileName() {
+    return fileName;
+  }
+
+  public int getChunkNum() {
+    return chunkNum;
+  }
+
+  public long getOffset() {
+    return offset;
+  }
+
+  public boolean isCompressed() {
+    return compressed;
+  }
 }

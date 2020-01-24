@@ -19,10 +19,6 @@
  */
 package com.orientechnologies.orient.server.distributed.impl.task;
 
-import java.io.DataInput;
-import java.io.DataOutput;
-import java.io.IOException;
-
 import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
@@ -31,6 +27,10 @@ import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.distributed.*;
 import com.orientechnologies.orient.server.distributed.task.OAbstractReplicatedTask;
+
+import java.io.DataInput;
+import java.io.DataOutput;
+import java.io.IOException;
 
 /**
  * Returns the range of positions for a cluster. This task is used by auto repairer.
@@ -111,5 +111,9 @@ public class OClusterRepairInfoTask extends OAbstractReplicatedTask {
   @Override
   public boolean isIdempotent() {
     return false;
+  }
+
+  public int getClusterId() {
+    return clusterId;
   }
 }

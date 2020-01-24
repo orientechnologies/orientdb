@@ -22,6 +22,7 @@ package com.orientechnologies.orient.server.network.protocol.http;
 import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.util.OCallable;
+import com.orientechnologies.orient.core.config.OContextConfiguration;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.record.OElement;
@@ -42,14 +43,7 @@ import java.io.Writer;
 import java.net.Socket;
 import java.nio.charset.Charset;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Date;
-import java.util.Iterator;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.TimeZone;
+import java.util.*;
 import java.util.zip.GZIPOutputStream;
 
 /**
@@ -57,114 +51,61 @@ import java.util.zip.GZIPOutputStream;
  *
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
  */
-public class OHttpResponse {
-  public static final  String  JSON_FORMAT   = "type,indent:-1,rid,version,attribSameRow,class,keepTypes,alwaysFetchEmbeddedDocuments";
-  public static final  char[]  URL_SEPARATOR = { '/' };
-  private static final Charset utf8          = Charset.forName("utf8");
+public abstract class OHttpResponse {
+  public static final    String  JSON_FORMAT   = "type,indent:-1,rid,version,attribSameRow,class,keepTypes,alwaysFetchEmbeddedDocuments";
+  public static final    char[]  URL_SEPARATOR = { '/' };
+  protected static final Charset utf8          = Charset.forName("utf8");
 
-  public final  String       httpVersion;
-  private final OutputStream out;
-  public        String       headers;
-  public        String[]     additionalHeaders;
-  public        String       characterSet;
-  public        String       contentType;
-  public        String       serverInfo;
+  private final String                httpVersion;
+  private final OutputStream          out;
+  private final OContextConfiguration contextConfiguration;
+  private       String                headers;
+  private       String[]              additionalHeaders;
+  private       String                characterSet;
+  private       String                contentType;
+  private       String                serverInfo;
 
-  public String sessionId;
-  public String callbackFunction;
-  public String contentEncoding;
-  public String staticEncoding;
-  public boolean sendStarted = false;
-  public String content;
-  public int    code;
-  public boolean keepAlive         = true;
-  public boolean jsonErrorResponse = true;
-  public OClientConnection connection;
-  private boolean streaming = OGlobalConfiguration.NETWORK_HTTP_STREAMING.getValueAsBoolean();
+  private Map<String, String> headersMap = new HashMap<>();
+
+  private String            sessionId;
+  private String            callbackFunction;
+  private String            contentEncoding;
+  private String            staticEncoding;
+  private boolean           sendStarted       = false;
+  private String            content;
+  private int               code;
+  private boolean           keepAlive         = true;
+  private boolean           jsonErrorResponse = true;
+  private OClientConnection connection;
+  private boolean           streaming         = OGlobalConfiguration.NETWORK_HTTP_STREAMING.getValueAsBoolean();
 
   public OHttpResponse(final OutputStream iOutStream, final String iHttpVersion, final String[] iAdditionalHeaders,
       final String iResponseCharSet, final String iServerInfo, final String iSessionId, final String iCallbackFunction,
-      final boolean iKeepAlive, OClientConnection connection) {
-    streaming = connection.getProtocol().getServer().getContextConfiguration()
-        .getValueAsBoolean(OGlobalConfiguration.NETWORK_HTTP_STREAMING);
+      final boolean iKeepAlive, OClientConnection connection, OContextConfiguration contextConfiguration) {
+    setStreaming(contextConfiguration.getValueAsBoolean(OGlobalConfiguration.NETWORK_HTTP_STREAMING));
     out = iOutStream;
     httpVersion = iHttpVersion;
-    additionalHeaders = iAdditionalHeaders;
-    characterSet = iResponseCharSet;
-    serverInfo = iServerInfo;
-    sessionId = iSessionId;
-    callbackFunction = iCallbackFunction;
-    keepAlive = iKeepAlive;
-    this.connection = connection;
+    setAdditionalHeaders(iAdditionalHeaders);
+    setCharacterSet(iResponseCharSet);
+    setServerInfo(iServerInfo);
+    setSessionId(iSessionId);
+    setCallbackFunction(iCallbackFunction);
+    setKeepAlive(iKeepAlive);
+    this.setConnection(connection);
+    this.contextConfiguration = contextConfiguration;
   }
 
-  public void send(final int iCode, final String iReason, final String iContentType, final Object iContent, final String iHeaders)
-      throws IOException {
-    if (sendStarted) {
-      // AVOID TO SEND RESPONSE TWICE
-      return;
-    }
-    sendStarted = true;
+  public abstract void send(int iCode, String iReason, String iContentType, Object iContent, String iHeaders) throws IOException;
 
-    if (callbackFunction != null) {
-      content = callbackFunction + "(" + iContent + ")";
-      contentType = "text/javascript";
-    } else {
-      if (content == null || content.length() == 0) {
-        content = iContent != null ? iContent.toString() : null;
-      }
-      if (contentType == null || contentType.length() == 0) {
-        contentType = iContentType;
-      }
-    }
-
-    final boolean empty = content == null || content.length() == 0;
-
-    if (this.code > 0) {
-      writeStatus(this.code, iReason);
-    } else {
-      writeStatus(empty && iCode == 200 ? 204 : iCode, iReason);
-    }
-    writeHeaders(contentType, keepAlive);
-
-    if (iHeaders != null) {
-      writeLine(iHeaders);
-    }
-
-    if (sessionId != null)
-      writeLine("Set-Cookie: " + OHttpUtils.OSESSIONID + "=" + sessionId + "; Path=/; HttpOnly");
-
-    byte[] binaryContent = null;
-    if (!empty) {
-      if (contentEncoding != null && contentEncoding.equals(OHttpUtils.CONTENT_ACCEPT_GZIP_ENCODED)) {
-        binaryContent = compress(content);
-      } else {
-        binaryContent = content.getBytes(utf8);
-      }
-    }
-
-    writeLine(OHttpUtils.HEADER_CONTENT_LENGTH + (empty ? 0 : binaryContent.length));
-
-    writeLine(null);
-
-    if (binaryContent != null) {
-      out.write(binaryContent);
-    }
-
-    flush();
-  }
-
-  public void writeStatus(final int iStatus, final String iReason) throws IOException {
-    writeLine(httpVersion + " " + iStatus + " " + iReason);
-  }
+  public abstract void writeStatus(int iStatus, String iReason) throws IOException;
 
   public void writeHeaders(final String iContentType) throws IOException {
     writeHeaders(iContentType, true);
   }
 
   public void writeHeaders(final String iContentType, final boolean iKeepAlive) throws IOException {
-    if (headers != null) {
-      writeLine(headers);
+    if (getHeaders() != null) {
+      writeLine(getHeaders());
     }
 
     // Set up a date formatter that prints the date in the Http-date format as
@@ -173,18 +114,18 @@ public class OHttpResponse {
     sdf.setTimeZone(TimeZone.getTimeZone("UTC"));
 
     writeLine("Date: " + sdf.format(new Date()));
-    writeLine("Content-Type: " + iContentType + "; charset=" + characterSet);
-    writeLine("Server: " + serverInfo);
+    writeLine("Content-Type: " + iContentType + "; charset=" + getCharacterSet());
+    writeLine("Server: " + getServerInfo());
     writeLine("Connection: " + (iKeepAlive ? "Keep-Alive" : "close"));
 
     // SET CONTENT ENCDOING
-    if (contentEncoding != null && contentEncoding.length() > 0) {
-      writeLine("Content-Encoding: " + contentEncoding);
+    if (getContentEncoding() != null && getContentEncoding().length() > 0) {
+      writeLine("Content-Encoding: " + getContentEncoding());
     }
 
     // INCLUDE COMMON CUSTOM HEADERS
-    if (additionalHeaders != null) {
-      for (String h : additionalHeaders) {
+    if (getAdditionalHeaders() != null) {
+      for (String h : getAdditionalHeaders()) {
         writeLine(h);
       }
     }
@@ -192,12 +133,12 @@ public class OHttpResponse {
 
   public void writeLine(final String iContent) throws IOException {
     writeContent(iContent);
-    out.write(OHttpUtils.EOL);
+    getOut().write(OHttpUtils.EOL);
   }
 
   public void writeContent(final String iContent) throws IOException {
     if (iContent != null) {
-      out.write(iContent.getBytes(utf8));
+      getOut().write(iContent.getBytes(utf8));
     }
   }
 
@@ -361,7 +302,7 @@ public class OHttpResponse {
         iFormat = JSON_FORMAT + "," + iFormat;
 
       final String sendFormat = iFormat;
-      if (streaming) {
+      if (isStreaming()) {
         sendStream(OHttpUtils.STATUS_OK_CODE, OHttpUtils.STATUS_OK_DESCRIPTION, OHttpUtils.CONTENT_JSON, null, iArgument -> {
           try {
             OutputStreamWriter writer = new OutputStreamWriter(iArgument);
@@ -412,17 +353,7 @@ public class OHttpResponse {
     json.endObject();
   }
 
-  private void checkConnection() throws IOException {
-    final Socket socket;
-    if (connection.getProtocol() == null || connection.getProtocol().getChannel() == null)
-      socket = null;
-    else
-      socket = connection.getProtocol().getChannel().socket;
-    if (socket == null || socket.isClosed() || socket.isInputShutdown()) {
-      OLogManager.instance().debug(this, "[OHttpResponse] found and removed pending closed channel %d (%s)", connection, socket);
-      throw new IOException("Connection is closed");
-    }
-  }
+  protected abstract void checkConnection() throws IOException;
 
   public void formatMultiValue(final Iterator<?> iIterator, final Writer buffer, final String format) throws IOException {
     if (iIterator != null) {
@@ -479,79 +410,17 @@ public class OHttpResponse {
     }
   }
 
-  public void sendStream(final int iCode, final String iReason, final String iContentType, InputStream iContent, long iSize)
-      throws IOException {
-    sendStream(iCode, iReason, iContentType, iContent, iSize, null, null);
-  }
+  public abstract void sendStream(int iCode, String iReason, String iContentType, InputStream iContent, long iSize)
+      throws IOException;
 
-  public void sendStream(final int iCode, final String iReason, final String iContentType, InputStream iContent, long iSize,
-      final String iFileName) throws IOException {
-    sendStream(iCode, iReason, iContentType, iContent, iSize, iFileName, null);
-  }
+  public abstract void sendStream(int iCode, String iReason, String iContentType, InputStream iContent, long iSize,
+      String iFileName) throws IOException;
 
-  public void sendStream(final int iCode, final String iReason, final String iContentType, InputStream iContent, long iSize,
-      final String iFileName, Map<String, String> additionalHeaders) throws IOException {
-    writeStatus(iCode, iReason);
-    writeHeaders(iContentType);
-    writeLine("Content-Transfer-Encoding: binary");
+  public abstract void sendStream(int iCode, String iReason, String iContentType, InputStream iContent, long iSize,
+      String iFileName, Map<String, String> additionalHeaders) throws IOException;
 
-    if (iFileName != null) {
-      writeLine("Content-Disposition: attachment; filename=\"" + iFileName + "\"");
-    }
-
-    if (additionalHeaders != null) {
-      for (Map.Entry<String, String> entry : additionalHeaders.entrySet()) {
-        writeLine(String.format("%s: %s", entry.getKey(), entry.getValue()));
-      }
-    }
-    if (iSize < 0) {
-      // SIZE UNKNOWN: USE A MEMORY BUFFER
-      final ByteArrayOutputStream o = new ByteArrayOutputStream();
-      if (iContent != null) {
-        int b;
-        while ((b = iContent.read()) > -1) {
-          o.write(b);
-        }
-      }
-
-      byte[] content = o.toByteArray();
-
-      iContent = new ByteArrayInputStream(content);
-      iSize = content.length;
-    }
-
-    writeLine(OHttpUtils.HEADER_CONTENT_LENGTH + (iSize));
-    writeLine(null);
-
-    if (iContent != null) {
-      int b;
-      while ((b = iContent.read()) > -1) {
-        out.write(b);
-      }
-    }
-
-    flush();
-  }
-
-  public void sendStream(final int iCode, final String iReason, final String iContentType, final String iFileName,
-      final OCallable<Void, OChunkedResponse> iWriter) throws IOException {
-    writeStatus(iCode, iReason);
-    writeHeaders(iContentType);
-    writeLine("Content-Transfer-Encoding: binary");
-    writeLine("Transfer-Encoding: chunked");
-
-    if (iFileName != null) {
-      writeLine("Content-Disposition: attachment; filename=\"" + iFileName + "\"");
-    }
-
-    writeLine(null);
-
-    final OChunkedResponse chunkedOutput = new OChunkedResponse(this);
-    iWriter.call(chunkedOutput);
-    chunkedOutput.close();
-
-    flush();
-  }
+  public abstract void sendStream(int iCode, String iReason, String iContentType, String iFileName,
+      OCallable<Void, OChunkedResponse> iWriter) throws IOException;
 
   // Compress content string
   public byte[] compress(String jsonStr) {
@@ -586,18 +455,20 @@ public class OHttpResponse {
   /**
    * Stores additional headers to send
    */
+
+  @Deprecated
   public void setHeader(final String iHeader) {
-    headers = iHeader;
+    setHeaders(iHeader);
   }
 
   public OutputStream getOutputStream() {
-    return out;
+    return getOut();
   }
 
   public void flush() throws IOException {
-    out.flush();
-    if (!keepAlive) {
-      out.close();
+    getOut().flush();
+    if (!isKeepAlive()) {
+      getOut().close();
     }
   }
 
@@ -656,4 +527,103 @@ public class OHttpResponse {
     this.streaming = streaming;
   }
 
+  public String getHttpVersion() {
+    return httpVersion;
+  }
+
+  public OutputStream getOut() {
+    return out;
+  }
+
+  public String getHeaders() {
+    return headers;
+  }
+
+  public void setHeaders(String headers) {
+    this.headers = headers;
+  }
+
+  public String[] getAdditionalHeaders() {
+    return additionalHeaders;
+  }
+
+  public void setAdditionalHeaders(String[] additionalHeaders) {
+    this.additionalHeaders = additionalHeaders;
+  }
+
+  public String getCharacterSet() {
+    return characterSet;
+  }
+
+  public void setCharacterSet(String characterSet) {
+    this.characterSet = characterSet;
+  }
+
+  public String getServerInfo() {
+    return serverInfo;
+  }
+
+  public void setServerInfo(String serverInfo) {
+    this.serverInfo = serverInfo;
+  }
+
+  public String getSessionId() {
+    return sessionId;
+  }
+
+  public String getCallbackFunction() {
+    return callbackFunction;
+  }
+
+  public void setCallbackFunction(String callbackFunction) {
+    this.callbackFunction = callbackFunction;
+  }
+
+  public String getStaticEncoding() {
+    return staticEncoding;
+  }
+
+  public boolean isSendStarted() {
+    return sendStarted;
+  }
+
+  public void setSendStarted(boolean sendStarted) {
+    this.sendStarted = sendStarted;
+  }
+
+  public boolean isKeepAlive() {
+    return keepAlive;
+  }
+
+  public void setKeepAlive(boolean keepAlive) {
+    this.keepAlive = keepAlive;
+  }
+
+  public boolean isJsonErrorResponse() {
+    return jsonErrorResponse;
+  }
+
+  public OClientConnection getConnection() {
+    return connection;
+  }
+
+  public void setConnection(OClientConnection connection) {
+    this.connection = connection;
+  }
+
+  public boolean isStreaming() {
+    return streaming;
+  }
+
+  public OContextConfiguration getContextConfiguration() {
+    return contextConfiguration;
+  }
+
+  public void addHeader(String name, String value) {
+    headersMap.put(name, value);
+  }
+
+  public Map<String, String> getHeadersMap() {
+    return Collections.unmodifiableMap(headersMap);
+  }
 }

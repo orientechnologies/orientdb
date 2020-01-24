@@ -28,9 +28,9 @@ public class OServerCommandPatchDocument
   @Override
   public boolean execute(final com.orientechnologies.orient.server.network.protocol.http.OHttpRequest iRequest,
       com.orientechnologies.orient.server.network.protocol.http.OHttpResponse iResponse) throws Exception {
-    final String[] urlParts = checkSyntax(iRequest.url, 2, "Syntax error: document/<database>[/<record-id>]");
+    final String[] urlParts = checkSyntax(iRequest.getUrl(), 2, "Syntax error: document/<database>[/<record-id>]");
 
-    iRequest.data.commandInfo = "Edit Document";
+    iRequest.getData().commandInfo = "Edit Document";
 
     com.orientechnologies.orient.core.db.document.ODatabaseDocument db = null;
     com.orientechnologies.orient.core.id.ORecordId recordId;
@@ -52,11 +52,11 @@ public class OServerCommandPatchDocument
 
       // UNMARSHALL DOCUMENT WITH REQUEST CONTENT
       doc = new com.orientechnologies.orient.core.record.impl.ODocument();
-      doc.fromJSON(iRequest.content);
+      doc.fromJSON(iRequest.getContent());
 
-      if (iRequest.ifMatch != null)
+      if (iRequest.getIfMatch() != null)
         // USE THE IF-MATCH HTTP HEADER AS VERSION
-        ORecordInternal.setVersion(doc, Integer.parseInt(iRequest.ifMatch));
+        ORecordInternal.setVersion(doc, Integer.parseInt(iRequest.getIfMatch()));
 
       if (!recordId.isValid())
         recordId = (com.orientechnologies.orient.core.id.ORecordId) doc.getIdentity();

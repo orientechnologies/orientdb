@@ -13,11 +13,12 @@
  *  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  *  * See the License for the specific language governing permissions and
  *  * limitations under the License.
- *  
+ *
  */
 
 package com.orientechnologies.lucene.test;
 
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
@@ -54,7 +55,7 @@ public class LuceneInsertUpdateSingleDocumentTransactionTest extends BaseLuceneT
   public void testInsertUpdateTransactionWithIndex() throws Exception {
 
     db.close();
-    db.open("admin", "admin");
+    db = (ODatabaseDocumentInternal) openDatabase();
     OSchema schema = db.getMetadata().getSchema();
     schema.reload();
     db.begin();

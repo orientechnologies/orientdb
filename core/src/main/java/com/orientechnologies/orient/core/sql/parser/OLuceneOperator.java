@@ -11,11 +11,6 @@ public class OLuceneOperator extends SimpleNode implements OBinaryCompareOperato
     super(p, id);
   }
 
-  /** Accept the visitor. **/
-  public Object jjtAccept(OrientSqlVisitor visitor, Object data) {
-    return visitor.visit(this, data);
-  }
-
   @Override
   public boolean execute(Object left, Object right) {
     throw new UnsupportedOperationException(toString() + " operator cannot be evaluated in this context");

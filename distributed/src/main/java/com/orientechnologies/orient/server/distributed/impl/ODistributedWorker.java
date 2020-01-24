@@ -25,7 +25,6 @@ import com.orientechnologies.common.concur.OTimeoutException;
 import com.orientechnologies.common.concur.lock.OModificationOperationProhibitedException;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
-import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
@@ -117,7 +116,10 @@ public class ODistributedWorker extends Thread {
 
         currentExecuting = message;
 
+
+
         if (message != null) {
+          manager.messageProcessStart(message);
           message.getId();
           reqId = message.getId();
           onMessage(message);
@@ -390,6 +392,8 @@ public class ODistributedWorker extends Thread {
         handleError(iRequest, responsePayload);
       }
     }
+
+    manager.messageProcessEnd(iRequest, responsePayload);
   }
 
   protected void handleError(final ODistributedRequest iRequest, final Object responsePayload) {
@@ -403,7 +407,7 @@ public class ODistributedWorker extends Thread {
     return sendResponseBack(this, manager, iRequest, responsePayload);
   }
 
-  static boolean sendResponseBack(final Object current, final ODistributedServerManager manager, final ODistributedRequest iRequest,
+  public static boolean sendResponseBack(final Object current, final ODistributedServerManager manager, final ODistributedRequest iRequest,
       Object responsePayload) {
     if (iRequest.getId().getMessageId() < 0)
       // INTERNAL MSG

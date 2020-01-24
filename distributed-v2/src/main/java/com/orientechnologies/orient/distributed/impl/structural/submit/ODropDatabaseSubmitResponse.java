@@ -21,13 +21,18 @@ public class ODropDatabaseSubmitResponse implements OStructuralSubmitResponse {
 
   public void serialize(DataOutput output) throws IOException {
     output.writeBoolean(success);
-    output.writeUTF(error);
+    output.writeBoolean(error != null);
+    if (error != null) {
+      output.writeUTF(error);
+    }
   }
 
   @Override
   public void deserialize(DataInput input) throws IOException {
     this.success = input.readBoolean();
-    this.error = input.readUTF();
+    if (input.readBoolean()) {
+      this.error = input.readUTF();
+    }
   }
 
   @Override

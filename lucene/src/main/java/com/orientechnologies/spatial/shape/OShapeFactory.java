@@ -15,7 +15,9 @@
 package com.orientechnologies.spatial.shape;
 
 import com.orientechnologies.orient.core.db.ODatabaseInternal;
+import com.orientechnologies.orient.core.record.OElement;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.sql.executor.OResult;
 import org.locationtech.jts.geom.Geometry;
 import org.locationtech.spatial4j.shape.Point;
 import org.locationtech.spatial4j.shape.Rectangle;
@@ -88,6 +90,10 @@ public class OShapeFactory extends OComplexShapeBuilder {
     }
     if (obj instanceof ODocument) {
       return fromDoc((ODocument) obj);
+    }
+    if (obj instanceof OResult) {
+      OElement oElement = ((OResult) obj).toElement();
+      return fromDoc((ODocument) oElement);
     }
     if (obj instanceof Map) {
       Map map = (Map) ((Map) obj).get("shape");

@@ -26,6 +26,9 @@ import javax.security.auth.Subject;
 //import com.orientechnologies.orient.server.config.OServerConfigurationManager;
 import com.orientechnologies.orient.server.config.OServerUserConfiguration;
 
+import java.util.HashMap;
+import java.util.Map;
+
 /**
  * Provides an interface for creating security authenticators.
  *
@@ -37,6 +40,10 @@ public interface OSecurityAuthenticator extends OSecurityComponent {
   String authenticate(final String username, final String password);
 
   String getAuthenticationHeader(final String databaseName);
+
+  default Map<String, String> getAuthenticationHeaders(String databaseName) {
+    return new HashMap<>();
+  }
 
   Subject getClientSubject();
 

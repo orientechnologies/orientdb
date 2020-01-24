@@ -15,11 +15,6 @@ public class OBothPathItem extends OMatchPathItem {
     super(p, id);
   }
 
-  /** Accept the visitor. **/
-  public Object jjtAccept(OrientSqlVisitor visitor, Object data) {
-    return visitor.visit(this, data);
-  }
-
   @Override
   public void toString(Map<Object, Object> params, StringBuilder builder) {
     builder.append("-");

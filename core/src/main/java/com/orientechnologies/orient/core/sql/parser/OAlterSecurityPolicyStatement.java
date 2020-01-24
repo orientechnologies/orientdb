@@ -235,12 +235,5 @@ public class OAlterSecurityPolicyStatement extends OSimpleExecStatement {
     }
   }
 
-
-  /**
-   * Accept the visitor.
-   **/
-  public Object jjtAccept(OrientSqlVisitor visitor, Object data) {
-    return visitor.visit(this, data);
-  }
 }
 /* JavaCC - OriginalChecksum=849f284b6e4057d1f554daf024534423 (do not edit this line) */

@@ -8,11 +8,7 @@ import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.executor.OResultInternal;
 
 import java.lang.reflect.Array;
-import java.util.Iterator;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 public class OArraySelector extends SimpleNode {
 
@@ -27,13 +23,6 @@ public class OArraySelector extends SimpleNode {
 
   public OArraySelector(OrientSql p, int id) {
     super(p, id);
-  }
-
-  /**
-   * Accept the visitor.
-   **/
-  public Object jjtAccept(OrientSqlVisitor visitor, Object data) {
-    return visitor.visit(this, data);
   }
 
   public void toString(Map<Object, Object> params, StringBuilder builder) {

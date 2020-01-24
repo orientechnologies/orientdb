@@ -31,7 +31,6 @@ import com.tinkerpop.blueprints.impls.orient.OrientGraphFactory;
 import com.tinkerpop.blueprints.impls.orient.OrientGraphNoTx;
 
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
@@ -48,16 +47,7 @@ public class OGraphCommandExecutorSQLFactory implements OCommandExecutorSQLFacto
   private static final Map<String, Class<? extends OCommandExecutorSQLAbstract>> COMMANDS;
 
   static {
-    // COMMANDS
-    final Map<String, Class<? extends OCommandExecutorSQLAbstract>> commands = new HashMap<String, Class<? extends OCommandExecutorSQLAbstract>>();
-
-//    commands.put(OCommandExecutorSQLCreateEdge.NAME, OCommandExecutorSQLCreateEdge.class);
-//    commands.put(OCommandExecutorSQLDeleteEdge.NAME, OCommandExecutorSQLDeleteEdge.class);
-//    commands.put(OCommandExecutorSQLCreateVertex.NAME, OCommandExecutorSQLCreateVertex.class);
-//    commands.put(OCommandExecutorSQLDeleteVertex.NAME, OCommandExecutorSQLDeleteVertex.class);
-//    commands.put(OCommandExecutorSQLMoveVertex.NAME, OCommandExecutorSQLMoveVertex.class);
-
-    COMMANDS = Collections.unmodifiableMap(commands);
+    COMMANDS = Collections.EMPTY_MAP;
   }
 
   public interface GraphCallBack<T> {

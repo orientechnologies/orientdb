@@ -20,7 +20,6 @@ import com.orientechnologies.orient.server.config.OServerCommandConfiguration;
 import com.orientechnologies.orient.server.config.OServerEntryConfiguration;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpRequest;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpResponse;
-import com.orientechnologies.orient.server.network.protocol.http.OHttpSessionManager;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpUtils;
 
 import java.util.Arrays;
@@ -59,15 +58,15 @@ public class OServerCommandAuthProxy extends OServerCommandPatternAbstract {
 
   @Override
   public boolean execute(final OHttpRequest iRequest, OHttpResponse iResponse) throws Exception {
-    iRequest.authorization = authentication;
-    checkSyntax(iRequest.url, 3, "Syntax error: " + Arrays.toString(getNames()) + "/<nextCommand>/");
-    iRequest.url = OHttpUtils.nextChainUrl(iRequest.url);
+    iRequest.setAuthorization(authentication);
+    checkSyntax(iRequest.getUrl(), 3, "Syntax error: " + Arrays.toString(getNames()) + "/<nextCommand>/");
+    iRequest.setUrl(OHttpUtils.nextChainUrl(iRequest.getUrl()));
 
     // CHECK THE SESSION VALIDITY
-    if (iRequest.sessionId == null || OServerCommandAuthenticatedDbAbstract.SESSIONID_LOGOUT.equals(iRequest.sessionId)
-        || iRequest.sessionId.length() > 1 && server.getHttpSessionManager().getSession(iRequest.sessionId) == null)
+    if (iRequest.getSessionId() == null || OServerCommandAuthenticatedDbAbstract.SESSIONID_LOGOUT.equals(iRequest.getSessionId())
+        || iRequest.getSessionId().length() > 1 && server.getHttpSessionManager().getSession(iRequest.getSessionId()) == null)
       // AUTHENTICATED: CREATE THE SESSION
-      iRequest.sessionId = server.getHttpSessionManager().createSession(databaseName, userName, userPassword);
+      iRequest.setSessionId(server.getHttpSessionManager().createSession(databaseName, userName, userPassword));
 
     return true;
   }

@@ -27,8 +27,8 @@ import static org.junit.Assert.*;
  */
 public class OrientDBRemoteTest {
 
-  private static final String SERVER_DIRECTORY = "./target/dbfactory";
-  private OServer server;
+  private static final String  SERVER_DIRECTORY = "./target/dbfactory";
+  private              OServer server;
 
   private OrientDB factory;
 
@@ -41,7 +41,9 @@ public class OrientDBRemoteTest {
         getClass().getClassLoader().getResourceAsStream("com/orientechnologies/orient/server/network/orientdb-server-config.xml"));
     server.activate();
 
-    factory = new OrientDB("remote:localhost", "root", "root", OrientDBConfig.defaultConfig());
+    OrientDBConfig config = OrientDBConfig.builder().addConfig(OGlobalConfiguration.DB_CACHED_POOL_CAPACITY, 2)
+        .addConfig(OGlobalConfiguration.DB_CACHED_POOL_CLEAN_UP_TIMEOUT, 2_000).build();
+    factory = new OrientDB("remote:localhost", "root", "root", config);
   }
 
   @Test
@@ -80,6 +82,56 @@ public class OrientDBRemoteTest {
     db.save(new ODocument(), db.getClusterNameById(db.getDefaultClusterId()));
     db.close();
     pool.close();
+  }
+
+  @Test
+  public void testCachedPool() {
+    if (!factory.exists("testdb"))
+      factory.create("testdb", ODatabaseType.MEMORY);
+
+    ODatabasePool poolAdmin1 = factory.cachedPool("testdb", "admin", "admin");
+    ODatabasePool poolAdmin2 = factory.cachedPool("testdb", "admin", "admin");
+    ODatabasePool poolReader1 = factory.cachedPool("testdb", "reader", "reader");
+    ODatabasePool poolReader2 = factory.cachedPool("testdb", "reader", "reader");
+
+    assertEquals(poolAdmin1, poolAdmin2);
+    assertEquals(poolReader1, poolReader2);
+    assertNotEquals(poolAdmin1, poolReader1);
+
+    ODatabasePool poolWriter1 = factory.cachedPool("testdb", "writer", "writer");
+    ODatabasePool poolWriter2 = factory.cachedPool("testdb", "writer", "writer");
+    assertEquals(poolWriter1, poolWriter2);
+
+    ODatabasePool poolAdmin3 = factory.cachedPool("testdb", "admin", "admin");
+    assertNotEquals(poolAdmin1, poolAdmin3);
+
+    poolAdmin1.close();
+    poolReader1.close();
+    poolWriter1.close();
+  }
+
+  @Test
+  public void testCachedPoolFactoryCleanUp() throws Exception {
+    if (!factory.exists("testdb"))
+      factory.create("testdb", ODatabaseType.MEMORY);
+
+    ODatabasePool poolAdmin1 = factory.cachedPool("testdb", "admin", "admin");
+    ODatabasePool poolAdmin2 = factory.cachedPool("testdb", "admin", "admin");
+
+    assertFalse(poolAdmin1.isClosed());
+    assertEquals(poolAdmin1, poolAdmin2);
+
+    poolAdmin1.close();
+
+    assertTrue(poolAdmin1.isClosed());
+
+    Thread.sleep(5_000);
+
+    ODatabasePool poolAdmin3 = factory.cachedPool("testdb", "admin", "admin");
+    assertNotEquals(poolAdmin1, poolAdmin3);
+    assertFalse(poolAdmin3.isClosed());
+
+    poolAdmin3.close();
   }
 
   @Test

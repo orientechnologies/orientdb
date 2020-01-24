@@ -318,6 +318,41 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
     return iRecord;
   }
 
+  public void toString(final ORecord iRecord, final OJSONWriter json, final String iFormat, boolean autoDetectCollectionType) {
+    try {
+      final FormatSettings settings = new FormatSettings(iFormat);
+
+      json.beginObject();
+
+      OJSONFetchContext context = new OJSONFetchContext(json, settings);
+      context.writeSignature(json, iRecord);
+
+      if (iRecord instanceof ODocument) {
+        final OFetchPlan fp = OFetchHelper.buildFetchPlan(settings.fetchPlan);
+
+        OFetchHelper.fetch(iRecord, null, fp, new OJSONFetchListener(), context, iFormat);
+      } else if (iRecord instanceof ORecordStringable) {
+
+        // STRINGABLE
+        final ORecordStringable record = (ORecordStringable) iRecord;
+        json.writeAttribute(settings.indentLevel, true, "value", record.value());
+
+      } else if (iRecord instanceof OBlob) {
+        // BYTES
+        final OBlob record = (OBlob) iRecord;
+        json.writeAttribute(settings.indentLevel, true, "value", Base64.getEncoder().encodeToString(record.toStream()));
+      } else
+
+        throw new OSerializationException(
+                "Error on marshalling record of type '" + iRecord.getClass() + "' to JSON. The record type cannot be exported to JSON");
+
+      json.endObject(settings.indentLevel, true);
+    } catch (IOException e) {
+      throw OException.wrapException(new OSerializationException("Error on marshalling of record to JSON"), e);
+    }
+  }
+
+
   @Override
   public StringBuilder toString(final ORecord iRecord, final StringBuilder iOutput, final String iFormat, boolean autoDetectCollectionType) {
     try {
@@ -633,7 +668,7 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
     if (iType == OType.LINKBAG) {
       final ORidBag bag = new ORidBag();
 
-      parseCollection(iRecord, iFieldValue, iType, OType.LINK, iFieldTypes, iNoMap, iOptions, new CollectionItemVisitor() {
+      parseRidbag(iRecord, iFieldValue, iType, OType.LINK, iFieldTypes, iNoMap, iOptions, new CollectionItemVisitor() {
         @Override
         public void visitItem(Object item) {
           bag.add((OIdentifiable) item);
@@ -680,6 +715,31 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
     });
 
     return collection;
+  }
+
+  private void parseRidbag(ODocument iRecord, String iFieldValue, OType iType, OType iLinkedType,
+                           Map<String, Character> iFieldTypes, boolean iNoMap, String iOptions, CollectionItemVisitor visitor) {
+    if (!iFieldValue.isEmpty()) {
+      int lastCommaPosition = -1;
+      for (int i = 1; i < iFieldValue.length(); i++) {
+        if (iFieldValue.charAt(i) == ',' || i == iFieldValue.length() - 1) {
+          String item = (i == iFieldValue.length() - 1) ? iFieldValue.substring(lastCommaPosition + 1) : iFieldValue.substring(lastCommaPosition + 1, i);
+          lastCommaPosition = i;
+          final String itemValue = item.trim();
+          if (itemValue.length() == 0)
+            continue;
+
+          final Object collectionItem = getValue(iRecord, null, itemValue, OIOUtils.getStringContent(itemValue), iLinkedType, null,
+                  iFieldTypes, iNoMap, iOptions);
+
+          // TODO redundant in some cases, owner is already added by getValue in some cases
+          if (shouldBeDeserializedAsEmbedded(collectionItem, iType))
+            ODocumentInternal.addOwner((ODocument) collectionItem, iRecord);
+
+          visitor.visitItem(collectionItem);
+        }
+      }
+    }
   }
 
   private void parseCollection(ODocument iRecord, String iFieldValue, OType iType, OType iLinkedType,

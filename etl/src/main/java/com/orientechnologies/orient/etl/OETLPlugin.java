@@ -22,10 +22,8 @@ package com.orientechnologies.orient.etl;
 
 import com.orientechnologies.orient.core.OConstants;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
-import com.orientechnologies.orient.etl.context.OETLContext;
 import com.orientechnologies.orient.etl.context.OETLContextWrapper;
 import com.orientechnologies.orient.etl.http.OServerCommandETL;
-import com.orientechnologies.orient.etl.util.OMigrationConfigManager;
 import com.orientechnologies.orient.output.OPluginMessageHandler;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.config.OServerParameterConfiguration;
@@ -55,13 +53,18 @@ public class OETLPlugin extends OServerPluginAbstract {
       String[] args = { outDBConfigPath };
       final OETLProcessor processor = new OETLProcessorConfigurator().parseConfigAndParameters(args);
 
-      // overriding default message handler if the chosen verbosity level is different from the default one
-      if (messageHandler.getOutputManagerLevel() != OETLContextWrapper.getInstance().getMessageHandler().getOutputManagerLevel()) {
-        OETLContextWrapper.getInstance().setMessageHandler(messageHandler);
-      }
+      try {
+        // overriding default message handler if the chosen verbosity level is different from the default one
+        if (messageHandler.getOutputManagerLevel() != OETLContextWrapper.getInstance().getMessageHandler()
+            .getOutputManagerLevel()) {
+          OETLContextWrapper.getInstance().setMessageHandler(messageHandler);
+        }
 
-      // execute the job
-      processor.execute();
+        // execute the job
+        processor.execute();
+      } finally {
+        processor.close();
+      }
     }
   }
 

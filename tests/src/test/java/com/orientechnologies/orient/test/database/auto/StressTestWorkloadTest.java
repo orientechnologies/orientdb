@@ -19,10 +19,10 @@
  */
 package com.orientechnologies.orient.test.database.auto;
 
-import org.junit.Test;
-
 import com.orientechnologies.orient.stresstest.OStressTester;
 import com.orientechnologies.orient.stresstest.OStressTesterCommandLineParser;
+import org.testng.Assert;
+import org.testng.annotations.Test;
 
 /**
  * INtegration Tests for stress test workloads.
@@ -36,6 +36,7 @@ public class StressTestWorkloadTest {
     final OStressTester stressTester = OStressTesterCommandLineParser
         .getStressTester(new String[] { "-m", "plocal", "-c", "8", "-tx", "3", "-w", "crud:C10R10U10D10" });
     stressTester.execute();
+
   }
 
   @Test

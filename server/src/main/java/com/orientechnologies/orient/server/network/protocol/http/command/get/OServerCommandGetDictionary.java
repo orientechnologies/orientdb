@@ -20,7 +20,6 @@
 package com.orientechnologies.orient.server.network.protocol.http.command.get;
 
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpRequest;
@@ -32,9 +31,9 @@ public class OServerCommandGetDictionary extends OServerCommandAuthenticatedDbAb
 
   @Override
   public boolean execute(final OHttpRequest iRequest, OHttpResponse iResponse) throws Exception {
-    iRequest.data.commandInfo = "Dictionary lookup";
+    iRequest.getData().commandInfo = "Dictionary lookup";
 
-    String[] urlParts = checkSyntax(iRequest.url, 3, "Syntax error: dictionary/<database>/<key>");
+    String[] urlParts = checkSyntax(iRequest.getUrl(), 3, "Syntax error: dictionary/<database>/<key>");
 
     ODatabaseDocument db = null;
 

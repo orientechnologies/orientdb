@@ -37,7 +37,7 @@ public class OServerCommandGetExportDatabase extends OServerCommandAuthenticated
 
   @Override
   public boolean execute(final OHttpRequest iRequest, final OHttpResponse iResponse) throws Exception {
-    String[] urlParts = checkSyntax(iRequest.url, 2, "Syntax error: export/<database>/[<name>][?params*]");
+    String[] urlParts = checkSyntax(iRequest.getUrl(), 2, "Syntax error: export/<database>/[<name>][?params*]");
 
     if (urlParts.length <= 2) {
       exportStandard(iRequest, iResponse);
@@ -47,7 +47,7 @@ public class OServerCommandGetExportDatabase extends OServerCommandAuthenticated
 
   protected void exportStandard(final OHttpRequest iRequest, final OHttpResponse iResponse) throws InterruptedException,
       IOException {
-    iRequest.data.commandInfo = "Database export";
+    iRequest.getData().commandInfo = "Database export";
     final ODatabaseDocumentInternal database = getProfiledDatabaseInstance(iRequest);
     try {
       iResponse.writeStatus(OHttpUtils.STATUS_OK_CODE, OHttpUtils.STATUS_OK_DESCRIPTION);

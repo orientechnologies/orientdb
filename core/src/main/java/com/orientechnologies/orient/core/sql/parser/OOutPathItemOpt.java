@@ -11,9 +11,5 @@ public class OOutPathItemOpt extends OOutPathItem {
     super(p, id);
   }
 
-  /** Accept the visitor. **/
-  public Object jjtAccept(OrientSqlVisitor visitor, Object data) {
-    return visitor.visit(this, data);
-  }
 }
 /* JavaCC - OriginalChecksum=03ffaa23b3d039235588ad2fb032c273 (do not edit this line) */

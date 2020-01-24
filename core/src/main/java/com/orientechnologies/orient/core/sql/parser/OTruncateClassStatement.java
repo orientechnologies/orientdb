@@ -114,13 +114,6 @@ public class OTruncateClassStatement extends ODDLStatement {
     }
   }
 
-  /**
-   * Accept the visitor.
-   **/
-  public Object jjtAccept(OrientSqlVisitor visitor, Object data) {
-    return visitor.visit(this, data);
-  }
-
   @Override public void toString(Map<Object, Object> params, StringBuilder builder) {
     builder.append("TRUNCATE CLASS " + className.toString());
     if (polymorphic) {

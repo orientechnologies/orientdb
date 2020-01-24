@@ -34,9 +34,9 @@ public class OServerCommandPostDocument extends OServerCommandDocumentAbstract {
 
   @Override
   public boolean execute(final OHttpRequest iRequest, OHttpResponse iResponse) throws Exception {
-    checkSyntax(iRequest.url, 2, "Syntax error: document/<database>");
+    checkSyntax(iRequest.getUrl(), 2, "Syntax error: document/<database>");
 
-    iRequest.data.commandInfo = "Create document";
+    iRequest.getData().commandInfo = "Create document";
 
     ODatabaseDocument db = null;
 
@@ -45,7 +45,7 @@ public class OServerCommandPostDocument extends OServerCommandDocumentAbstract {
     try {
       db = getProfiledDatabaseInstance(iRequest);
 
-      doc = new ODocument().fromJSON(iRequest.content);
+      doc = new ODocument().fromJSON(iRequest.getContent());
       ORecordInternal.setVersion(doc, 0);
 
       // ASSURE TO MAKE THE RECORD ID INVALID

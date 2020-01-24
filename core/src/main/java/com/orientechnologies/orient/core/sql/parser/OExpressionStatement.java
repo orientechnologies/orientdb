@@ -69,9 +69,5 @@ class OExpressionStatement extends OSimpleExecStatement {
     return Objects.hash(expression);
   }
 
-  /** Accept the visitor. **/
-  public Object jjtAccept(OrientSqlVisitor visitor, Object data) {
-    return visitor.visit(this, data);
-  }
 }
 /* JavaCC - OriginalChecksum=c3eda193cdcf863b4ced490ef1f37734 (do not edit this line) */

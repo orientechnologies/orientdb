@@ -32,13 +32,6 @@ public class OFromItem extends SimpleNode {
     super(p, id);
   }
 
-  /**
-   * Accept the visitor.
-   **/
-  public Object jjtAccept(OrientSqlVisitor visitor, Object data) {
-    return visitor.visit(this, data);
-  }
-
   public void toString(Map<Object, Object> params, StringBuilder builder) {
     if (rids != null && rids.size() > 0) {
       if (rids.size() == 1) {

@@ -958,6 +958,12 @@ public final class OConnectionBinaryExecutor implements OBinaryRequestExecutor {
     connection.getData().protocolVersion = request.getProtocolVersion();
     connection.getData().clientId = request.getClientId();
     connection.getData().setSerializationImpl(request.getRecordFormat());
+    if (!request.isUseToken()) {
+      OLogManager.instance()
+          .warn(this, "Session open with token flag false is not supported anymore please use token based sessions");
+      throw new OConfigurationException(
+          "Session open with token flag false is not supported anymore please use token based sessions");
+    }
     connection.setTokenBased(request.isUseToken());
     connection.getData().supportsLegacyPushMessages = request.isSupportsPush();
     connection.getData().collectStats = request.isCollectStats();

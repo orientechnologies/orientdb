@@ -26,13 +26,15 @@ import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.ODatabaseSession;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
-import com.orientechnologies.orient.core.db.record.*;
+import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.db.record.ORecordElement;
+import com.orientechnologies.orient.core.db.record.ORecordLazyList;
+import com.orientechnologies.orient.core.db.record.ORecordLazyMultiValue;
 import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
 import com.orientechnologies.orient.core.exception.OSerializationException;
 import com.orientechnologies.orient.core.id.ORID;
-import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
@@ -232,7 +234,7 @@ public class OVertexDelegate implements OVertex {
     } else if (edgeProp instanceof ORidBag) {
       ((ORidBag) edgeProp).remove(edgeId);
     } else if (edgeProp instanceof OIdentifiable && ((OIdentifiable) edgeProp).getIdentity() != null && ((OIdentifiable) edgeProp)
-        .getIdentity().equals(edgeId)) {
+        .getIdentity().equals(edgeId) || edge.isLightweight()) {
       vertex.removeProperty(edgeField);
     } else {
       OLogManager.instance().warn(vertex,

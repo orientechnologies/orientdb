@@ -73,6 +73,7 @@ public class OrientDBEmbedded implements OrientDBInternal {
   protected final  OEngine                                memory;
   protected final  OEngine                                disk;
   protected final  Orient                                 orient;
+  protected final  OCachedDatabasePoolFactory             cachedPoolFactory;
   private volatile boolean                                open           = true;
   private          ExecutorService                        executor;
   private          Timer                                  timer;
@@ -130,12 +131,20 @@ public class OrientDBEmbedded implements OrientDBInternal {
         new LinkedBlockingQueue<>());
     timer = new Timer();
 
+    cachedPoolFactory = createCachedDatabasePoolFactory(this.configurations);
+
     boolean autoClose = this.configurations.getConfigurations().getValueAsBoolean(OGlobalConfiguration.AUTO_CLOSE_AFTER_DELAY);
     if (autoClose) {
       int autoCloseDelay = this.configurations.getConfigurations().getValueAsInteger(OGlobalConfiguration.AUTO_CLOSE_DELAY);
       final long delay = autoCloseDelay * 60 * 1000;
       initAutoClose(delay);
     }
+  }
+
+  protected OCachedDatabasePoolFactory createCachedDatabasePoolFactory(OrientDBConfig config) {
+    int capacity = config.getConfigurations().getValueAsInteger(OGlobalConfiguration.DB_CACHED_POOL_CAPACITY);
+    long timeout = config.getConfigurations().getValueAsInteger(OGlobalConfiguration.DB_CACHED_POOL_CLEAN_UP_TIMEOUT);
+    return new OCachedDatabasePoolFactoryImpl(this, capacity, timeout);
   }
 
   public void initAutoClose(long delay) {
@@ -674,6 +683,19 @@ public class OrientDBEmbedded implements OrientDBInternal {
   public ODatabasePoolInternal openPool(String name, String user, String password, OrientDBConfig config) {
     checkOpen();
     ODatabasePoolImpl pool = new ODatabasePoolImpl(this, name, user, password, solveConfig(config));
+    pools.add(pool);
+    return pool;
+  }
+
+  @Override
+  public ODatabasePoolInternal cachedPool(String database, String user, String password) {
+    return cachedPool(database, user, password, null);
+  }
+
+  @Override
+  public ODatabasePoolInternal cachedPool(String database, String user, String password, OrientDBConfig config) {
+    checkOpen();
+    ODatabasePoolInternal pool = cachedPoolFactory.get(database, user, password, solveConfig(config));
     pools.add(pool);
     return pool;
   }

@@ -9,12 +9,7 @@ import com.orientechnologies.orient.core.record.impl.ODocumentHelper;
 import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.executor.OResultInternal;
 
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 public class OJson extends SimpleNode {
@@ -27,13 +22,6 @@ public class OJson extends SimpleNode {
 
   public OJson(OrientSql p, int id) {
     super(p, id);
-  }
-
-  /**
-   * Accept the visitor. *
-   */
-  public Object jjtAccept(OrientSqlVisitor visitor, Object data) {
-    return visitor.visit(this, data);
   }
 
   public void toString(Map<Object, Object> params, StringBuilder builder) {

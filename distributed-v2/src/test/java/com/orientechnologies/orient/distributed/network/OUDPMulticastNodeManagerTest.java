@@ -288,7 +288,7 @@ public class OUDPMulticastNodeManagerTest {
     OUDPMulticastNodeManager manager2 = new OUDPMulticastNodeManager(config2, internalConfiguration2, discoveryListener2, scheduler, new MockOperationLog(10));
     manager2.start();
     assertTrue(discoveryListener2.connects.await(2, TimeUnit.SECONDS));
-    Thread.sleep(15000);
+    Thread.sleep(5000);
     Assert.assertEquals(2, discoveryListener1.totalNodes);
 //    if (discoveryListener2.totalNodes < 2) {
 //      System.out.println(discoveryListener2.totalNodes);
@@ -329,7 +329,7 @@ public class OUDPMulticastNodeManagerTest {
     OUDPMulticastNodeManager manager2 = new OUDPMulticastNodeManager(config2, internalConfiguration2, discoveryListener2, scheduler, new MockOperationLog(0));
     manager2.start();
     assertTrue(discoveryListener2.connects.await(2, TimeUnit.SECONDS));
-    Thread.sleep(15000);
+    Thread.sleep(5000);
     Assert.assertEquals(2, discoveryListener1.totalNodes);
 //    if (discoveryListener2.totalNodes < 2) {
 //      System.out.println(discoveryListener2.totalNodes);

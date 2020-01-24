@@ -27,12 +27,9 @@ import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.graph.gremlin.OGremlinHelper;
 import com.orientechnologies.orient.graph.script.OScriptGraphOrientWrapper;
-import com.orientechnologies.orient.graph.server.command.OServerCommandPostCommandGraph;
 import com.orientechnologies.orient.server.OClientConnection;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.config.OServerParameterConfiguration;
-import com.orientechnologies.orient.server.network.OServerNetworkListener;
-import com.orientechnologies.orient.server.network.protocol.http.ONetworkProtocolHttpAbstract;
 import com.orientechnologies.orient.server.plugin.OServerPluginAbstract;
 import com.tinkerpop.blueprints.impls.orient.OrientBaseGraph;
 
@@ -75,9 +72,6 @@ public class OGraphServerHandler extends OServerPluginAbstract implements OScrip
 
   @Override
   public void startup() {
-    final OServerNetworkListener listener = server.getListenerByProtocol(ONetworkProtocolHttpAbstract.class);
-    if (listener != null)
-      listener.registerStatelessCommand(new OServerCommandPostCommandGraph());
 
     if (!enabled)
       return;

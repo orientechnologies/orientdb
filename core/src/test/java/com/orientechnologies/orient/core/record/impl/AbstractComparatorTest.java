@@ -1,9 +1,6 @@
 package com.orientechnologies.orient.core.record.impl;
 
 import com.orientechnologies.orient.core.collate.OCollate;
-import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
-import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
-import com.orientechnologies.orient.core.metadata.schema.OImmutableSchema;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.serialization.serializer.record.binary.*;
 import org.junit.Assert;
@@ -42,11 +39,7 @@ public abstract class AbstractComparatorTest {
 
   protected OBinaryField field(final OType type, final Object value, OCollate collate) {
     BytesContainer bytes = new BytesContainer();
-    ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.instance().getIfDefined();
-    OImmutableSchema schema = null;
-    if (db != null)
-      schema = db.getMetadata().getImmutableSchemaSnapshot();
-    bytes.offset = serializer.serializeValue(bytes, value, type, null, schema, null);
+    bytes.offset = serializer.serializeValue(bytes, value, type, null, null, null);
     return new OBinaryField(null, type, bytes, collate);
   }
 }

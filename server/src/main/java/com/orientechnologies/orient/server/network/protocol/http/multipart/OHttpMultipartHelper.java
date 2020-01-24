@@ -35,26 +35,26 @@ public class OHttpMultipartHelper {
   }
 
   public static boolean isEndRequest(final OHttpRequest iRequest) throws IOException {
-    int in = iRequest.multipartStream.read();
+    int in = iRequest.getMultipartStream().read();
     if (((char) in) == '-') {
-      in = iRequest.multipartStream.read();
+      in = iRequest.getMultipartStream().read();
       if (((char) in) == '-') {
-        in = iRequest.multipartStream.read();
+        in = iRequest.getMultipartStream().read();
         if (((char) in) == '\r') {
-          in = iRequest.multipartStream.read();
+          in = iRequest.getMultipartStream().read();
           if (((char) in) == '\n') {
             return true;
           } else {
-            iRequest.multipartStream.setSkipInput(in);
+            iRequest.getMultipartStream().setSkipInput(in);
           }
         } else {
-          iRequest.multipartStream.setSkipInput(in);
+          iRequest.getMultipartStream().setSkipInput(in);
         }
       } else {
-        iRequest.multipartStream.setSkipInput(in);
+        iRequest.getMultipartStream().setSkipInput(in);
       }
     } else {
-      iRequest.multipartStream.setSkipInput(in);
+      iRequest.getMultipartStream().setSkipInput(in);
     }
     return false;
   }

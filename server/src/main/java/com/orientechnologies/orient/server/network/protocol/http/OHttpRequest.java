@@ -39,33 +39,16 @@ import java.util.Set;
  *
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
  */
-public class OHttpRequest {
-  public final OContextConfiguration         configuration;
-  public final InputStream                   in;
-  public final ONetworkProtocolData          data;
-  public final ONetworkProtocolHttpAbstract  executor;
-  public       String                        authorization;
-  public       String                        sessionId;
-  public       String                        url;
-  public       Map<String, String>           parameters;
-  public       String                        httpMethod;
-  public       String                        httpVersion;
-  public       String                        contentType;
-  public       String                        contentEncoding;
-  public       String                        content;
-  public       OHttpMultipartBaseInputStream multipartStream;
-  public       String                        boundary;
-  public       String                        databaseName;
-  public       boolean                       isMultipart;
-  public       String                        ifMatch;
-  public       String                        authentication;
-  public       boolean                       keepAlive = true;
-  protected    Map<String, String>           headers;
+public abstract class OHttpRequest {
+  private final OContextConfiguration configuration;
+  private final InputStream           in;
+  private final ONetworkProtocolData  data;
+  private final ONetworkHttpExecutor  executor;
+  private       String                sessionId;
+  protected     String                authorization;
+  private       String                databaseName;
 
-  public String bearerTokenRaw;
-  public OToken bearerToken;
-
-  public OHttpRequest(final ONetworkProtocolHttpAbstract iExecutor, final InputStream iInStream, final ONetworkProtocolData iData,
+  public OHttpRequest(final ONetworkHttpExecutor iExecutor, final InputStream iInStream, final ONetworkProtocolData iData,
       final OContextConfiguration iConfiguration) {
     executor = iExecutor;
     in = iInStream;
@@ -74,40 +57,38 @@ public class OHttpRequest {
   }
 
   public String getUser() {
-    return authorization != null ? authorization.substring(0, authorization.indexOf(":")) : null;
+    return getAuthorization() != null ? getAuthorization().substring(0, getAuthorization().indexOf(":")) : null;
   }
 
   public InputStream getInputStream() {
-    return in;
+    return getIn();
   }
 
   public String getParameter(final String iName) {
-    return parameters != null ? parameters.get(iName) : null;
+    return getParameters() != null ? getParameters().get(iName) : null;
   }
 
-  public Map<String, String> getParameters() {
-    return parameters;
-  }
+  public abstract Map<String, String> getParameters();
 
   public void addHeader(final String h) {
-    if (headers == null)
-      headers = new HashMap<String, String>();
+    if (getHeaders() == null)
+      setHeaders(new HashMap<String, String>());
 
     final int pos = h.indexOf(':');
     if (pos > -1) {
-      headers.put(h.substring(0, pos).trim().toLowerCase(Locale.ENGLISH), h.substring(pos + 1).trim());
+      getHeaders().put(h.substring(0, pos).trim().toLowerCase(Locale.ENGLISH), h.substring(pos + 1).trim());
     }
   }
 
   public Map<String, String> getUrlEncodedContent() {
-    if (content == null || content.length() < 1) {
+    if (getContent() == null || getContent().length() < 1) {
       return null;
     }
     HashMap<String, String> retMap = new HashMap<String, String>();
     String key;
     String value;
     try {
-      String[] pairs = content.split("\\&");
+      String[] pairs = getContent().split("\\&");
       for (int i = 0; i < pairs.length; i++) {
         String[] fields = pairs[i].split("=");
         if (fields.length == 2) {
@@ -123,20 +104,114 @@ public class OHttpRequest {
   }
 
   public String getHeader(final String iName) {
-    return headers.get(iName.toLowerCase(Locale.ENGLISH));
+    return getHeaders().get(iName.toLowerCase(Locale.ENGLISH));
   }
 
-  public Set<Entry<String, String>> getHeaders() {
-    return headers.entrySet();
-  }
+  public abstract Map<String, String> getHeaders();
 
   public String getRemoteAddress() {
-    if (data.caller != null)
-      return data.caller;
-    return ((InetSocketAddress) executor.channel.socket.getRemoteSocketAddress()).getAddress().getHostAddress();
+    if (getData().caller != null)
+      return getData().caller;
+    return getExecutor().getRemoteAddress();
   }
 
-  public String getUrl() {
-    return url;
+  public abstract String getUrl();
+
+  public abstract String getContent();
+
+  public abstract void setContent(String content);
+
+  public OContextConfiguration getConfiguration() {
+    return configuration;
   }
+
+  public InputStream getIn() {
+    return in;
+  }
+
+  public ONetworkProtocolData getData() {
+    return data;
+  }
+
+  public ONetworkHttpExecutor getExecutor() {
+    return executor;
+  }
+
+  public String getAuthorization() {
+    return authorization;
+  }
+
+  public void setAuthorization(String authorization) {
+    this.authorization = authorization;
+  }
+
+  public String getSessionId() {
+    return sessionId;
+  }
+
+  public void setSessionId(String sessionId) {
+    this.sessionId = sessionId;
+  }
+
+  public abstract void setUrl(String url);
+
+  public abstract void setParameters(Map<String, String> parameters);
+
+  public abstract String getHttpMethod();
+
+  public abstract void setHttpMethod(String httpMethod);
+
+  public abstract String getHttpVersion();
+
+  public abstract void setHttpVersion(String httpVersion);
+
+  public abstract String getContentType();
+
+  public abstract void setContentType(String contentType);
+
+  public abstract String getContentEncoding();
+
+  public abstract void setContentEncoding(String contentEncoding);
+
+  public abstract OHttpMultipartBaseInputStream getMultipartStream();
+
+  public abstract void setMultipartStream(OHttpMultipartBaseInputStream multipartStream);
+
+  public abstract String getBoundary();
+
+  public abstract void setBoundary(String boundary);
+
+  public String getDatabaseName() {
+    return databaseName;
+  }
+
+  public void setDatabaseName(String databaseName) {
+    this.databaseName = databaseName;
+  }
+
+  public abstract boolean isMultipart();
+
+  public abstract void setMultipart(boolean multipart);
+
+  public abstract String getIfMatch();
+
+  public abstract void setIfMatch(String ifMatch);
+
+  public abstract String getAuthentication();
+
+  public abstract void setAuthentication(String authentication);
+
+  public abstract boolean isKeepAlive();
+
+  public abstract void setKeepAlive(boolean keepAlive);
+
+  public abstract void setHeaders(Map<String, String> headers);
+
+  public abstract String getBearerTokenRaw();
+
+  public abstract void setBearerTokenRaw(String bearerTokenRaw);
+
+  public abstract OToken getBearerToken();
+
+  public abstract void setBearerToken(OToken bearerToken);
 }

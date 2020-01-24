@@ -51,13 +51,6 @@ public class OIdentifier extends SimpleNode {
   }
 
   /**
-   * Accept the visitor.
-   **/
-  public Object jjtAccept(OrientSqlVisitor visitor, Object data) {
-    return visitor.visit(this, data);
-  }
-
-  /**
    * returns the value as is, with back-ticks quoted with backslash
    *
    * @return

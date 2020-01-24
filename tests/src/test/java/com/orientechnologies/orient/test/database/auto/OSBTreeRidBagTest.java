@@ -107,7 +107,7 @@ public class OSBTreeRidBagTest extends ORidBagTest {
     ORidBag ridBagClusterOne = new ORidBag();
     docClusterOne.field("ridBag", ridBagClusterOne);
     docClusterOne.save("clusterOne");
-    
+
     final String directory = database.getStorage().getConfiguration().getDirectory();
 
     final OWOWCache wowCache = (OWOWCache) ((OLocalPaginatedStorage) (database.getStorage())).getWriteCache();
@@ -120,7 +120,8 @@ public class OSBTreeRidBagTest extends ORidBagTest {
   public void testIteratorOverAfterRemove() {
     ODocument scuti = new ODocument().field("name", "UY Scuti").save(database.getClusterNameById(database.getDefaultClusterId()));
     ODocument cygni = new ODocument().field("name", "NML Cygni").save(database.getClusterNameById(database.getDefaultClusterId()));
-    ODocument scorpii = new ODocument().field("name", "AH Scorpii").save(database.getClusterNameById(database.getDefaultClusterId()));
+    ODocument scorpii = new ODocument().field("name", "AH Scorpii")
+        .save(database.getClusterNameById(database.getDefaultClusterId()));
 
     HashSet<ODocument> expectedResult = new HashSet<ODocument>();
     expectedResult.addAll(Arrays.asList(scuti, scorpii));
@@ -271,6 +272,6 @@ public class OSBTreeRidBagTest extends ORidBagTest {
 
   @Override
   protected void assertEmbedded(boolean isEmbedded) {
-    Assert.assertTrue(!isEmbedded);
+    Assert.assertTrue((!isEmbedded || ODatabaseRecordThreadLocal.instance().get().isRemote()));
   }
 }

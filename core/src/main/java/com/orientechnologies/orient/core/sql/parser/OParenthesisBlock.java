@@ -12,7 +12,7 @@ import java.util.Set;
 
 public class OParenthesisBlock extends OBooleanExpression {
 
-  OBooleanExpression subElement;
+  protected OBooleanExpression subElement;
 
   public OParenthesisBlock(int id) {
     super(id);
@@ -20,13 +20,6 @@ public class OParenthesisBlock extends OBooleanExpression {
 
   public OParenthesisBlock(OrientSql p, int id) {
     super(p, id);
-  }
-
-  /**
-   * Accept the visitor.
-   **/
-  public Object jjtAccept(OrientSqlVisitor visitor, Object data) {
-    return visitor.visit(this, data);
   }
 
   @Override

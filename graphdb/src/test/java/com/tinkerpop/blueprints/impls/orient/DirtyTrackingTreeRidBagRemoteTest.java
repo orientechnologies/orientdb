@@ -5,15 +5,10 @@ import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.intent.OIntentMassiveInsert;
-import com.orientechnologies.orient.graph.GraphNonBlockingQueryRemoteTest;
 import com.orientechnologies.orient.server.OServer;
 import com.tinkerpop.blueprints.Vertex;
 import com.tinkerpop.gremlin.java.GremlinPipeline;
-import org.junit.After;
-import org.junit.AfterClass;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.*;
 
 import javax.management.InstanceAlreadyExistsException;
 import javax.management.MBeanRegistrationException;
@@ -39,9 +34,10 @@ public class DirtyTrackingTreeRidBagRemoteTest {
   private String  oldOrientDBHome;
 
   @Before
-  public void before() throws ClassNotFoundException, MalformedObjectNameException, InstanceAlreadyExistsException,
-      NotCompliantMBeanException, MBeanRegistrationException, InvocationTargetException, NoSuchMethodException,
-      InstantiationException, IOException, IllegalAccessException {
+  public void before()
+      throws ClassNotFoundException, MalformedObjectNameException, InstanceAlreadyExistsException, NotCompliantMBeanException,
+      MBeanRegistrationException, InvocationTargetException, NoSuchMethodException, InstantiationException, IOException,
+      IllegalAccessException {
     final String buildDirectory = System.getProperty("buildDirectory", ".");
     serverHome = buildDirectory + "/" + DirtyTrackingTreeRidBagRemoteTest.class.getSimpleName();
 
@@ -75,7 +71,8 @@ public class DirtyTrackingTreeRidBagRemoteTest {
 
   @Test
   public void test() {
-    OGlobalConfiguration.RID_BAG_EMBEDDED_TO_SBTREEBONSAI_THRESHOLD.setValue(OGlobalConfiguration.RID_BAG_EMBEDDED_TO_SBTREEBONSAI_THRESHOLD.getDefValue());
+    OGlobalConfiguration.RID_BAG_EMBEDDED_TO_SBTREEBONSAI_THRESHOLD
+        .setValue(OGlobalConfiguration.RID_BAG_EMBEDDED_TO_SBTREEBONSAI_THRESHOLD.getDefValue());
     final int max = OGlobalConfiguration.RID_BAG_EMBEDDED_TO_SBTREEBONSAI_THRESHOLD.getValueAsInteger() * 2;
     OrientGraph graph = new OrientGraph("remote:localhost:3064/" + DirtyTrackingTreeRidBagRemoteTest.class.getSimpleName(), "root",
         "root");

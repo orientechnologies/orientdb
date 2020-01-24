@@ -2,14 +2,12 @@ package com.orientechnologies.orient.core.sql.executor;
 
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
 import com.orientechnologies.orient.core.sql.parser.OInteger;
 import com.orientechnologies.orient.core.sql.parser.OTraverseProjectionItem;
 import com.orientechnologies.orient.core.sql.parser.OWhereClause;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Iterator;
-import java.util.List;
+import java.util.*;
 
 /**
  * Created by luigidellaquila on 26/10/16.
@@ -57,7 +55,7 @@ public class DepthFirstTraverseStep extends AbstractTraverseStep {
     OTraverseResult res = null;
     if (item instanceof OTraverseResult) {
       res = (OTraverseResult) item;
-    } else if (item.isElement() && item.getElement().get().getIdentity().isPersistent()) {
+    } else if (item.isElement() && item.getElement().get().getIdentity().isValid()) {
       res = new OTraverseResult();
       res.setElement(item.getElement().get());
       res.depth = 0;
@@ -72,7 +70,7 @@ public class DepthFirstTraverseStep extends AbstractTraverseStep {
     } else {
       res = new OTraverseResult();
       for (String key : item.getPropertyNames()) {
-        res.setProperty(key, item.getProperty(key));
+        res.setProperty(key, convert(item.getProperty(key)));
       }
       for (String md : item.getMetadataKeys()) {
         res.setMetadata(md, item.getMetadata(md));
@@ -80,6 +78,15 @@ public class DepthFirstTraverseStep extends AbstractTraverseStep {
     }
 
     return res;
+  }
+
+  public Object convert(Object value) {
+    if (value instanceof ORidBag) {
+      List result = new ArrayList();
+      ((ORidBag) value).forEach(x -> result.add(x));
+      return result;
+    }
+    return value;
   }
 
   @Override
@@ -103,6 +110,8 @@ public class DepthFirstTraverseStep extends AbstractTraverseStep {
       addNextEntryPoint(((OIdentifiable) nextStep), depth, path, stack, ctx);
     } else if (nextStep instanceof Iterable) {
       addNextEntryPoints(((Iterable) nextStep).iterator(), depth, path, stack, ctx);
+    } else if (nextStep instanceof Map) {
+      addNextEntryPoints(((Map) nextStep).values().iterator(), depth, path, stack, ctx);
     } else if (nextStep instanceof OResult) {
       addNextEntryPoint(((OResult) nextStep), depth, path, stack, ctx);
     }

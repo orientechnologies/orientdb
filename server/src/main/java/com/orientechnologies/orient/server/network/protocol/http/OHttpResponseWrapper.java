@@ -53,7 +53,7 @@ public class OHttpResponseWrapper {
    * @return The additional headers in form of String
    */
   public String getHeader() {
-    return response.headers;
+    return response.getHeaders();
   }
 
   /**
@@ -74,7 +74,7 @@ public class OHttpResponseWrapper {
    * @return The character set in form of String
    */
   public String getCharacterSet() {
-    return response.characterSet;
+    return response.getCharacterSet();
   }
 
   /**
@@ -85,16 +85,16 @@ public class OHttpResponseWrapper {
    * @return The object itself for fluent chained calls
    */
   public OHttpResponseWrapper setCharacterSet(final String iCharacterSet) {
-    response.characterSet = iCharacterSet;
+    response.setCharacterSet(iCharacterSet);
     return this;
   }
 
   public String getHttpVersion() {
-    return response.httpVersion;
+    return response.getHttpVersion();
   }
 
   public String[] getAdditionalResponseHeaders() {
-    return response.additionalHeaders;
+    return response.getAdditionalHeaders();
   }
 
   public OutputStream getOutputStream() {

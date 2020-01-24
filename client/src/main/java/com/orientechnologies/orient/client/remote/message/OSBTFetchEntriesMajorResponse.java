@@ -19,20 +19,20 @@
  */
 package com.orientechnologies.orient.client.remote.message;
 
+import com.orientechnologies.common.serialization.types.OBinarySerializer;
+import com.orientechnologies.common.serialization.types.OIntegerSerializer;
+import com.orientechnologies.orient.client.remote.OBinaryResponse;
+import com.orientechnologies.orient.client.remote.OStorageRemoteSession;
+import com.orientechnologies.orient.client.remote.TreeEntry;
+import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializer;
+import com.orientechnologies.orient.enterprise.channel.binary.OChannelDataInput;
+import com.orientechnologies.orient.enterprise.channel.binary.OChannelDataOutput;
+
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-
-import com.orientechnologies.common.serialization.types.OBinarySerializer;
-import com.orientechnologies.common.serialization.types.OIntegerSerializer;
-import com.orientechnologies.orient.client.remote.OBinaryResponse;
-import com.orientechnologies.orient.client.remote.OSBTreeBonsaiRemote;
-import com.orientechnologies.orient.client.remote.OStorageRemoteSession;
-import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializer;
-import com.orientechnologies.orient.enterprise.channel.binary.OChannelDataInput;
-import com.orientechnologies.orient.enterprise.channel.binary.OChannelDataOutput;
 
 public class OSBTFetchEntriesMajorResponse<K, V> implements OBinaryResponse {
   private final OBinarySerializer<K> keySerializer;
@@ -63,7 +63,7 @@ public class OSBTFetchEntriesMajorResponse<K, V> implements OBinaryResponse {
       offset += keySerializer.getObjectSize(stream, offset);
       final V resultValue = valueSerializer.deserialize(stream, offset);
       offset += valueSerializer.getObjectSize(stream, offset);
-      list.add(new OSBTreeBonsaiRemote.TreeEntry<K, V>(resultKey, resultValue));
+      list.add(new TreeEntry<K, V>(resultKey, resultValue));
     }
   }
 

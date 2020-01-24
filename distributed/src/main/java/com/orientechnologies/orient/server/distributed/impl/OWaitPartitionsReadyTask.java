@@ -8,8 +8,6 @@ import com.orientechnologies.orient.server.distributed.ODistributedServerManager
 import com.orientechnologies.orient.server.distributed.task.OAbstractRemoteTask;
 import com.orientechnologies.orient.server.distributed.task.ORemoteTask;
 
-import java.util.concurrent.CountDownLatch;
-
 public class OWaitPartitionsReadyTask extends OAbstractRemoteTask {
   private volatile boolean      hasResponse = false;
   private final    OExecuteOnce execute;
@@ -58,4 +56,7 @@ public class OWaitPartitionsReadyTask extends OAbstractRemoteTask {
     return execute.getToRun().isUsingDatabase();
   }
 
+  public ORemoteTask getInternal() {
+    return execute.getToRun();
+  }
 }

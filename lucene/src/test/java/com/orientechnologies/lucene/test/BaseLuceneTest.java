@@ -19,8 +19,7 @@
 package com.orientechnologies.lucene.test;
 
 import com.orientechnologies.common.io.OIOUtils;
-import com.orientechnologies.orient.core.db.ODatabase;
-import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
+import com.orientechnologies.orient.core.db.*;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import org.junit.After;
 import org.junit.Before;
@@ -39,31 +38,54 @@ public abstract class BaseLuceneTest {
   public TestName name = new TestName();
 
   protected ODatabaseDocumentInternal db;
+  protected OrientDB                  context;
+
+  protected ODatabaseType type;
 
   @Before
   public void setupDatabase() throws Throwable {
 
     String config = System.getProperty("orientdb.test.env", "memory");
 
+    String path;
+
     if ("ci".equals(config) || "release".equals(config)) {
-      db = new ODatabaseDocumentTx("plocal:./target/databases/" + name.getMethodName());
+
+      type = ODatabaseType.PLOCAL;
+
+      path = "embedded:./target/databases";
+
     } else {
-      db = new ODatabaseDocumentTx("memory:" + name.getMethodName());
+      type = ODatabaseType.MEMORY;
+      path = "embedded:.";
+
+    }
+    context = new OrientDB(path, OrientDBConfig.defaultConfig());
+
+    if (context.exists(name.getMethodName())) {
+      context.drop(name.getMethodName());
     }
 
-    if (db.exists()) {
-      db.drop();
-    }
+    context.create(name.getMethodName(), type);
 
+    db = (ODatabaseDocumentInternal) context.open(name.getMethodName(), "admin", "admin");
     db.set(ODatabase.ATTRIBUTES.MINIMUMCLUSTERS, 8);
 
-    db.create();
+  }
+
+  public ODatabaseSession openDatabase() {
+    return context.open(name.getMethodName(), "admin", "admin");
+  }
+
+  public void createDatabase() {
+    context.create(name.getMethodName(), type);
   }
 
   @After
   public void dropDatabase() {
     db.activateOnCurrentThread();
-    db.drop();
+
+    context.drop(name.getMethodName());
   }
 
   protected ODatabaseDocumentTx dropOrCreate(String url, boolean drop) {

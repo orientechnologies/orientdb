@@ -48,13 +48,6 @@ public class OProjectionItem extends SimpleNode {
     super(p, id);
   }
 
-  /**
-   * Accept the visitor.
-   **/
-  public Object jjtAccept(OrientSqlVisitor visitor, Object data) {
-    return visitor.visit(this, data);
-  }
-
   public boolean isAll() {
     if (all) {
       return true;
@@ -120,7 +113,7 @@ public class OProjectionItem extends SimpleNode {
   public Object convert(Object value) {
     if (value instanceof ORidBag) {
       List result = new ArrayList();
-      ((ORidBag) value).forEach(x -> result.add(x));
+      ((ORidBag) value).rawIterator().forEachRemaining(x -> result.add(x));
       return result;
     }
     if (value instanceof OEdgeToVertexIterable) {

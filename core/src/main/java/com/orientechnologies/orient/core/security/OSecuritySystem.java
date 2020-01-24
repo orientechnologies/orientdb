@@ -22,11 +22,13 @@ package com.orientechnologies.orient.core.security;
 import com.orientechnologies.orient.core.metadata.security.OUser;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
+import java.util.HashMap;
+import java.util.Map;
+
 /**
  * Provides a basic interface for a modular security system.
- * 
+ *
  * @author S. Colin Leister
- * 
  */
 public interface OSecuritySystem {
   void shutdown();
@@ -41,6 +43,10 @@ public interface OSecuritySystem {
 
   // Used for generating the appropriate HTTP authentication mechanism. The chain of authenticators is used for this.
   String getAuthenticationHeader(final String databaseName);
+
+  default Map<String, String> getAuthenticationHeaders(final String databaseName) {
+    return new HashMap<>();
+  }
 
   ODocument getConfig();
 
@@ -65,11 +71,9 @@ public interface OSecuritySystem {
 
   /**
    * Logs to the auditing service, if installed.
-   * 
-   * @param dbName
-   *          May be null or empty.
-   * @param username
-   *          May be null or empty.
+   *
+   * @param dbName   May be null or empty.
+   * @param username May be null or empty.
    */
   void log(final OAuditingOperation operation, final String dbName, final String username, final String message);
 

@@ -49,7 +49,7 @@ public class OServerCommandIsEnterprise extends OServerCommandAuthenticatedServe
 
     final String[] parts = checkSyntax(iRequest.getUrl(), 1, "Syntax error: isEE");
 
-    if ("GET".equalsIgnoreCase(iRequest.httpMethod)) {
+    if ("GET".equalsIgnoreCase(iRequest.getHttpMethod())) {
       doGet(iRequest, iResponse, parts);
     }
 

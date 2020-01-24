@@ -12,24 +12,19 @@ import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.executor.OResultInternal;
 
 import java.lang.reflect.Array;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 public class OModifier extends SimpleNode {
 
-  boolean                    squareBrackets = false;
-  OArrayRangeSelector        arrayRange;
-  OOrBlock                   condition;
-  OArraySingleValuesSelector arraySingleValues;
-  ORightBinaryCondition      rightBinaryCondition;
-  OMethodCall                methodCall;
-  OSuffixIdentifier          suffix;
+  protected boolean                    squareBrackets = false;
+  protected OArrayRangeSelector        arrayRange;
+  protected OOrBlock                   condition;
+  protected OArraySingleValuesSelector arraySingleValues;
+  protected ORightBinaryCondition      rightBinaryCondition;
+  protected OMethodCall                methodCall;
+  protected OSuffixIdentifier          suffix;
 
-  OModifier next;
+  protected OModifier next;
 
   public OModifier(int id) {
     super(id);
@@ -37,13 +32,6 @@ public class OModifier extends SimpleNode {
 
   public OModifier(OrientSql p, int id) {
     super(p, id);
-  }
-
-  /**
-   * Accept the visitor.
-   **/
-  public Object jjtAccept(OrientSqlVisitor visitor, Object data) {
-    return visitor.visit(this, data);
   }
 
   public void toString(Map<Object, Object> params, StringBuilder builder) {

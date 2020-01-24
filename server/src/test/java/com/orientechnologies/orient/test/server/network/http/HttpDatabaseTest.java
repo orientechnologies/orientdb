@@ -1,11 +1,16 @@
 package com.orientechnologies.orient.test.server.network.http;
 
+import com.orientechnologies.orient.core.OConstants;
+import com.orientechnologies.orient.core.record.impl.ODocument;
+import org.apache.http.HttpResponse;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
+import java.io.IOException;
 import java.net.URLEncoder;
+import java.util.Map;
 
 /**
  * Tests HTTP "database" command.
@@ -25,6 +30,24 @@ public class HttpDatabaseTest extends BaseHttpTest {
     Assert.assertEquals(
         setUserName("root").setUserPassword("wrongPasswod").post("database/wrongpasswd").getResponse().getStatusLine()
             .getStatusCode(), 401);
+  }
+
+  @Test
+  public void testCreateAndGetDatabase() throws IOException {
+
+    Assert.assertEquals(
+        setUserName("root").setUserPassword("root").post("database/" + getDatabaseName() + "/memory").getResponse().getStatusLine()
+            .getStatusCode(), 200);
+
+    HttpResponse response = setUserName("admin").setUserPassword("admin").get("database/" + getDatabaseName()).getResponse();
+
+    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+
+    final ODocument payload = new ODocument().fromJSON(getResponse().getEntity().getContent());
+
+    Map<String, Object> server = payload.field("server");
+    Assert.assertEquals(OConstants.getRawVersion(), server.get("version"));
+
   }
 
   @Test
@@ -60,7 +83,7 @@ public class HttpDatabaseTest extends BaseHttpTest {
   }
 
   @After
-  public  void stopServer() throws Exception {
+  public void stopServer() throws Exception {
     super.stopServer();
   }
 }

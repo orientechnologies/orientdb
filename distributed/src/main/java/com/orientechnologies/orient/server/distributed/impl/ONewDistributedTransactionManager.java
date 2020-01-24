@@ -46,7 +46,7 @@ import com.orientechnologies.orient.server.distributed.task.ODistributedRecordLo
 import java.io.IOException;
 import java.util.*;
 
-import static com.orientechnologies.orient.core.config.OGlobalConfiguration.*;
+import static com.orientechnologies.orient.core.config.OGlobalConfiguration.DISTRIBUTED_ATOMIC_LOCK_TIMEOUT;
 
 /**
  * Distributed transaction manager.
@@ -329,8 +329,9 @@ public class ONewDistributedTransactionManager {
       sendPhase2Task(involvedClusters, nodes, new OTransactionPhase2Task(requestId, false, involvedClustersIds, getLsn()));
       localKo(requestId, database);
 
-      ODistributedOperationException ex = new ODistributedOperationException(
-          String.format("quorum of '%d' not reached, responses: [%s]", responseManager.getQuorum(), String.join(",", messages)));
+      ODistributedOperationException ex = new ODistributedOperationException(String
+          .format("Request `%s` didn't reach the quorum of '%d', responses: [%s]", requestId, responseManager.getQuorum(),
+              String.join(",", messages)));
       for (Exception e : exceptions) {
         ex.addSuppressed(e);
       }

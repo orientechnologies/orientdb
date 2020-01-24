@@ -1,6 +1,5 @@
 package com.orientechnologies.orient.distributed.impl.log;
 
-import java.util.Iterator;
 import java.util.Optional;
 
 public interface OOperationLog extends AutoCloseable {
@@ -25,9 +24,9 @@ public interface OOperationLog extends AutoCloseable {
    * @param to   last entry to get (included).
    * @return
    */
-  Iterator<OOperationLogEntry> iterate(long from, long to);
+  OOplogIterator iterate(long from, long to);
 
-  Optional<Iterator<OOperationLogEntry>> searchFrom(OLogId from);
+  Optional<OOplogIterator> searchFrom(OLogId from);
 
   @Override
   void close();

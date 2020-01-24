@@ -6,22 +6,22 @@ import com.orientechnologies.orient.distributed.impl.coordinator.transaction.OSe
 import com.orientechnologies.orient.distributed.impl.log.OLogId;
 import com.orientechnologies.orient.distributed.impl.log.OOperationLog;
 import com.orientechnologies.orient.distributed.impl.log.OOperationLogEntry;
+import com.orientechnologies.orient.distributed.impl.log.OOplogIterator;
 import com.orientechnologies.orient.distributed.network.ODistributedNetwork;
 
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
 public class OStructuralFollower implements AutoCloseable {
-  private final ODistributedNetwork         network;
-  private       OOperationLog               operationLog;
-  private       ExecutorService             executor;
-  private       OrientDBDistributed         orientDB;
-  private       Map<OLogId, ORaftOperation> pending = new HashMap<>();
-  private       OSessionOperationIdWaiter   waiter  = new OSessionOperationIdWaiter();
+  private final ODistributedNetwork network;
+  private OOperationLog operationLog;
+  private ExecutorService executor;
+  private OrientDBDistributed orientDB;
+  private Map<OLogId, ORaftOperation> pending = new HashMap<>();
+  private OSessionOperationIdWaiter waiter = new OSessionOperationIdWaiter();
 
   public OStructuralFollower(OOperationLog operationLog, ODistributedNetwork network, OrientDBDistributed orientDB) {
     this.operationLog = operationLog;
@@ -62,13 +62,17 @@ public class OStructuralFollower implements AutoCloseable {
   }
 
   private void enqueueFrom(OLogId lastStateId, OLogId confirmedId) {
-    Iterator<OOperationLogEntry> res = operationLog.iterate(lastStateId.getId(), confirmedId.getId());
-    while (res.hasNext()) {
-      OOperationLogEntry entry = res.next();
-      if (!pending.containsKey(entry.getLogId())) {
-        pending.put(entry.getLogId(), (ORaftOperation) entry.getRequest());
+    OOplogIterator res = operationLog.iterate(lastStateId.getId(), confirmedId.getId());
+    try {
+      while (res.hasNext()) {
+        OOperationLogEntry entry = res.next();
+        if (!pending.containsKey(entry.getLogId())) {
+          pending.put(entry.getLogId(), (ORaftOperation) entry.getRequest());
+        }
+        confirm(confirmedId);
       }
-      confirm(confirmedId);
+    } finally {
+      res.close();
     }
   }
 

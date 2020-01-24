@@ -50,11 +50,11 @@ public class OServerCommandPostStudio extends OServerCommandAuthenticatedDbAbstr
     ODatabaseDocumentInternal db = null;
 
     try {
-      final String[] urlParts = checkSyntax(iRequest.url, 3, "Syntax error: studio/<database>/<context>");
+      final String[] urlParts = checkSyntax(iRequest.getUrl(), 3, "Syntax error: studio/<database>/<context>");
 
       db = getProfiledDatabaseInstance(iRequest);
 
-      final String req = iRequest.content;
+      final String req = iRequest.getContent();
 
       // PARSE PARAMETERS
       String operation = null;
@@ -115,7 +115,7 @@ public class OServerCommandPostStudio extends OServerCommandAuthenticatedDbAbstr
     }
 
     if ("add".equals(operation)) {
-      iRequest.data.commandInfo = "Studio add property";
+      iRequest.getData().commandInfo = "Studio add property";
 
       try {
         OType type = OType.valueOf(fields.get("type"));
@@ -148,7 +148,7 @@ public class OServerCommandPostStudio extends OServerCommandAuthenticatedDbAbstr
             OHttpUtils.CONTENT_TEXT_PLAIN, "Error on creating a new property in class " + rid + ": " + e, null);
       }
     } else if ("del".equals(operation)) {
-      iRequest.data.commandInfo = "Studio delete property";
+      iRequest.getData().commandInfo = "Studio delete property";
 
       cls.dropProperty(className);
 
@@ -160,7 +160,7 @@ public class OServerCommandPostStudio extends OServerCommandAuthenticatedDbAbstr
   private void executeClasses(final OHttpRequest iRequest, final OHttpResponse iResponse, final ODatabaseDocument db,
       final String operation, final String rid, final String className, final Map<String, String> fields) throws IOException {
     if ("add".equals(operation)) {
-      iRequest.data.commandInfo = "Studio add class";
+      iRequest.getData().commandInfo = "Studio add class";
 
       // int defCluster = fields.get("defaultCluster") != null ? Integer.parseInt(fields.get("defaultCluster")) : db
       // .getDefaultClusterId();
@@ -187,7 +187,7 @@ public class OServerCommandPostStudio extends OServerCommandAuthenticatedDbAbstr
             OHttpUtils.CONTENT_TEXT_PLAIN, "Error on creating the new class '" + rid + "': " + e, null);
       }
     } else if ("del".equals(operation)) {
-      iRequest.data.commandInfo = "Studio delete class";
+      iRequest.getData().commandInfo = "Studio delete class";
 
       db.getMetadata().getSchema().dropClass(rid);
 
@@ -199,7 +199,7 @@ public class OServerCommandPostStudio extends OServerCommandAuthenticatedDbAbstr
   private void executeClusters(final OHttpRequest iRequest, final OHttpResponse iResponse, final ODatabaseDocument db,
       final String operation, final String rid, final String iClusterName, final Map<String, String> fields) throws IOException {
     if ("add".equals(operation)) {
-      iRequest.data.commandInfo = "Studio add cluster";
+      iRequest.getData().commandInfo = "Studio add cluster";
 
       int clusterId = db.addCluster(fields.get("name"));
 
@@ -207,7 +207,7 @@ public class OServerCommandPostStudio extends OServerCommandAuthenticatedDbAbstr
           "Cluster " + fields.get("name") + "' created successfully with id=" + clusterId, null);
 
     } else if ("del".equals(operation)) {
-      iRequest.data.commandInfo = "Studio delete cluster";
+      iRequest.getData().commandInfo = "Studio delete cluster";
 
       db.dropCluster(rid);
 
@@ -219,7 +219,7 @@ public class OServerCommandPostStudio extends OServerCommandAuthenticatedDbAbstr
   private void executeDocument(final OHttpRequest iRequest, final OHttpResponse iResponse, final ODatabaseDocument db,
       final String operation, final String rid, final String className, final Map<String, String> fields) throws IOException {
     if ("edit".equals(operation)) {
-      iRequest.data.commandInfo = "Studio edit document";
+      iRequest.getData().commandInfo = "Studio edit document";
 
       if (rid == null)
         throw new IllegalArgumentException("Record ID not found in request");
@@ -260,7 +260,7 @@ public class OServerCommandPostStudio extends OServerCommandAuthenticatedDbAbstr
       iResponse.send(OHttpUtils.STATUS_OK_CODE, OHttpUtils.STATUS_OK_DESCRIPTION, OHttpUtils.CONTENT_TEXT_PLAIN,
           "Record " + rid + " updated successfully.", null);
     } else if ("add".equals(operation)) {
-      iRequest.data.commandInfo = "Studio create document";
+      iRequest.getData().commandInfo = "Studio create document";
 
       final ODocument doc = new ODocument(className);
 
@@ -272,7 +272,7 @@ public class OServerCommandPostStudio extends OServerCommandAuthenticatedDbAbstr
       iResponse.send(201, "OK", OHttpUtils.CONTENT_TEXT_PLAIN, "Record " + doc.getIdentity() + " updated successfully.", null);
 
     } else if ("del".equals(operation)) {
-      iRequest.data.commandInfo = "Studio delete document";
+      iRequest.getData().commandInfo = "Studio delete document";
 
       if (rid == null)
         throw new IllegalArgumentException("Record ID not found in request");
@@ -298,7 +298,7 @@ public class OServerCommandPostStudio extends OServerCommandAuthenticatedDbAbstr
     }
 
     if ("add".equals(operation)) {
-      iRequest.data.commandInfo = "Studio add index";
+      iRequest.getData().commandInfo = "Studio add index";
 
       try {
         final String[] fieldNames = OPatternConst.PATTERN_COMMA_SEPARATED.split(fields.get("fields").trim());
@@ -314,7 +314,7 @@ public class OServerCommandPostStudio extends OServerCommandAuthenticatedDbAbstr
             OHttpUtils.CONTENT_TEXT_PLAIN, "Error on creating a new index for class " + rid + ": " + e, null);
       }
     } else if ("del".equals(operation)) {
-      iRequest.data.commandInfo = "Studio delete index";
+      iRequest.getData().commandInfo = "Studio delete index";
 
       try {
         final OIndex index = cls.getClassIndex(className);

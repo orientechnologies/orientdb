@@ -9,9 +9,9 @@ import java.util.Map;
 
 public class OLetItem extends SimpleNode {
 
-  OIdentifier varName;
-  OExpression expression;
-  OStatement  query;
+  protected OIdentifier varName;
+  protected OExpression expression;
+  protected OStatement query;
 
   public OLetItem(int id) {
     super(id);
@@ -19,13 +19,6 @@ public class OLetItem extends SimpleNode {
 
   public OLetItem(OrientSql p, int id) {
     super(p, id);
-  }
-
-  /**
-   * Accept the visitor.
-   **/
-  public Object jjtAccept(OrientSqlVisitor visitor, Object data) {
-    return visitor.visit(this, data);
   }
 
   public void toString(Map<Object, Object> params, StringBuilder builder) {

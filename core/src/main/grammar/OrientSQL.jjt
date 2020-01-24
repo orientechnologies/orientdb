@@ -1094,9 +1094,6 @@ OStatement StatementInternal():
                 LOOKAHEAD(CreateVertexStatement())
                 result = CreateVertexStatement()
                 |
-                LOOKAHEAD(CreateVertexStatementEmpty())
-                result = CreateVertexStatementEmpty()
-                |
                 LOOKAHEAD(CreateVertexStatementEmptyNoTarget())
                 result = CreateVertexStatementEmptyNoTarget()
                 |
@@ -1761,18 +1758,6 @@ OUpdatePutItem UpdatePutItem():
     { return jjtThis; }
 }
 
-
-OUpdateAddItem UpdateAddItem():
-{}
-{
-    (
-    	jjtThis.left = Identifier() <EQ>
-    	jjtThis.right = Expression()
-    )
-    { return jjtThis; }
-}
-
-
 OInsertStatement InsertStatement():
 {}
 {
@@ -1909,21 +1894,6 @@ OCreateVertexStatementEmptyNoTarget CreateVertexStatementEmptyNoTarget():
 	<VERTEX>
 	{return jjtThis;}
 }
-
-OCreateVertexStatementEmpty CreateVertexStatementEmpty():
-{}
-{
-
-	<CREATE>
-	<VERTEX>
-	jjtThis.targetClass = Identifier()
-    [
-        <CLUSTER>
-        jjtThis.targetClusterName = Identifier()
-    ]
-    {return jjtThis;}
-}
-
 
 OCreateVertexStatement CreateVertexStatement():
 {}
@@ -2858,10 +2828,7 @@ OBooleanExpression ConditionBlock():
 	LOOKAHEAD( MatchesCondition() )
 	result = MatchesCondition()
 	|
-	LOOKAHEAD( IndexMatchCondition() )
-	result = IndexMatchCondition()
-	|
-    LOOKAHEAD( InstanceofCondition() )
+	LOOKAHEAD( InstanceofCondition() )
     result = InstanceofCondition()
     |
     <TRUE> { result = OBooleanExpression.TRUE;}
@@ -3066,50 +3033,6 @@ OBooleanExpression InstanceofCondition():
 		   |
 		   token = <CHARACTER_LITERAL> { jjtThis.rightString = token.image; }
 		)
-    )
-    {return jjtThis;}
-}
-
-OBooleanExpression IndexMatchCondition():
-{
-    Token token;
-    jjtThis.leftExpressions = new ArrayList();
-    OExpression lastExpression;
-}
-{
-    (
-     	<KEY>
-     	(
-     	    (
-                jjtThis.operator = CompareOperator() <LBRACKET>
-                [
-                    lastExpression = Expression() { jjtThis.leftExpressions.add(lastExpression); }
-                    ( <COMMA>
-                        lastExpression = Expression() { jjtThis.leftExpressions.add(lastExpression); }
-                    )*
-                ]
-                <RBRACKET>
-     	    )
-     	    |
-     	    (
-                <BETWEEN> {jjtThis.between = true;} <LBRACKET>
-                [
-                    lastExpression = Expression() { jjtThis.leftExpressions.add(lastExpression); }
-                    (
-                        <COMMA>
-                        lastExpression = Expression() { jjtThis.leftExpressions.add(lastExpression); }
-                    )*
-                ]
-                <RBRACKET> <AND> <LBRACKET>
-                [
-                    lastExpression = Expression() { jjtThis.rightExpressions.add(lastExpression); }
-                    (
-                        <COMMA>
-                        lastExpression = Expression() { jjtThis.rightExpressions.add(lastExpression); }
-                    )*
-                ] <RBRACKET>
-            )
-     	)
     )
     {return jjtThis;}
 }

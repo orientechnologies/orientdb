@@ -21,14 +21,8 @@
 package com.orientechnologies.orient.client.remote;
 
 import com.orientechnologies.common.log.OLogManager;
-import com.orientechnologies.common.serialization.types.OBinarySerializer;
-import com.orientechnologies.common.serialization.types.OIntegerSerializer;
-import com.orientechnologies.orient.client.remote.message.OSBTCreateTreeRequest;
-import com.orientechnologies.orient.client.remote.message.OSBTCreateTreeResponse;
-import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
-import com.orientechnologies.orient.core.serialization.serializer.binary.impl.OLinkSerializer;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.index.sbtreebonsai.local.OSBTreeBonsai;
 import com.orientechnologies.orient.core.storage.ridbag.sbtree.OBonsaiCollectionPointer;
@@ -44,20 +38,10 @@ import java.util.UUID;
  */
 public class OSBTreeCollectionManagerRemote extends OSBTreeCollectionManagerAbstract {
 
-  private final OCollectionNetworkSerializer networkSerializer;
-  private boolean remoteCreationAllowed = false;
-
   private volatile ThreadLocal<Map<UUID, WeakReference<ORidBag>>> pendingCollections = new PendingCollectionsThreadLocal();
 
   public OSBTreeCollectionManagerRemote(OStorage storage) {
     super(storage);
-    networkSerializer = new OCollectionNetworkSerializer();
-  }
-
-  // for testing purposes
-  /* internal */ OSBTreeCollectionManagerRemote(OStorage storage, OCollectionNetworkSerializer networkSerializer) {
-    super(storage);
-    this.networkSerializer = networkSerializer;
   }
 
   @Override
@@ -74,29 +58,13 @@ public class OSBTreeCollectionManagerRemote extends OSBTreeCollectionManagerAbst
   }
 
   @Override
-  protected OSBTreeBonsaiRemote<OIdentifiable, Integer> createEdgeTree(final int clusterId) {
-    if (remoteCreationAllowed) {
-      final OStorageRemote storage = (OStorageRemote) ODatabaseRecordThreadLocal.instance().get().getStorage().getUnderlying();
-      OSBTCreateTreeRequest request = new OSBTCreateTreeRequest(clusterId);
-      OSBTCreateTreeResponse response = storage.networkOperationNoRetry(request, "Cannot create sb-tree bonsai");
-
-      OBonsaiCollectionPointer pointer = response.getCollenctionPointer();
-
-      OBinarySerializer<OIdentifiable> keySerializer = OLinkSerializer.INSTANCE;
-      OBinarySerializer<Integer> valueSerializer = OIntegerSerializer.INSTANCE;
-
-      return new OSBTreeBonsaiRemote<OIdentifiable, Integer>(pointer, keySerializer, valueSerializer);
-    } else {
-      throw new UnsupportedOperationException("Creation of SB-Tree from remote storage is not allowed");
-    }
+  protected OSBTreeBonsai<OIdentifiable, Integer> createEdgeTree(final int clusterId) {
+    throw new UnsupportedOperationException("Creation of SB-Tree from remote storage is not allowed");
   }
 
   @Override
   protected OSBTreeBonsai<OIdentifiable, Integer> loadTree(OBonsaiCollectionPointer collectionPointer) {
-    OBinarySerializer<OIdentifiable> keySerializer = OLinkSerializer.INSTANCE;
-    OBinarySerializer<Integer> valueSerializer = OIntegerSerializer.INSTANCE;
-
-    return new OSBTreeBonsaiRemote<OIdentifiable, Integer>(collectionPointer, keySerializer, valueSerializer);
+    throw new UnsupportedOperationException();
   }
 
   @Override

@@ -64,13 +64,6 @@ public class OBaseExpression extends OMathExpression {
     }
   }
 
-  /**
-   * Accept the visitor.
-   **/
-  public Object jjtAccept(OrientSqlVisitor visitor, Object data) {
-    return visitor.visit(this, data);
-  }
-
   @Override
   public String toString() {
     return super.toString();

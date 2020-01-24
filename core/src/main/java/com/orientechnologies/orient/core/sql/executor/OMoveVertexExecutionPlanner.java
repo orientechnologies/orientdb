@@ -3,7 +3,6 @@ package com.orientechnologies.orient.core.sql.executor;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.sql.parser.*;
-import com.orientechnologies.orient.core.storage.OStorage;
 
 /**
  * Created by luigidellaquila on 08/08/16.
@@ -55,64 +54,8 @@ public class OMoveVertexExecutionPlanner {
     plan.chain(new ConvertToUpdatableResultStep(ctx, profilingEnabled));
   }
 
-  private void handleResultForReturnCount(OUpdateExecutionPlan result, OCommandContext ctx, boolean returnCount, boolean profilingEnabled) {
-    if (returnCount) {
-      result.chain(new CountStep(ctx, profilingEnabled));
-    }
-  }
-
-  private void handleResultForReturnAfter(OUpdateExecutionPlan result, OCommandContext ctx, boolean returnAfter,
-      OProjection returnProjection, boolean profilingEnabled) {
-    if (returnAfter) {
-      //re-convert to normal step
-      result.chain(new ConvertToResultInternalStep(ctx, profilingEnabled));
-      if (returnProjection != null) {
-        result.chain(new ProjectionCalculationStep(returnProjection, ctx, profilingEnabled));
-      }
-    }
-  }
-
-  private void handleResultForReturnBefore(OUpdateExecutionPlan result, OCommandContext ctx, boolean returnBefore,
-      OProjection returnProjection, boolean profilingEnabled) {
-    if (returnBefore) {
-      result.chain(new UnwrapPreviousValueStep(ctx, profilingEnabled));
-      if (returnProjection != null) {
-        result.chain(new ProjectionCalculationStep(returnProjection, ctx, profilingEnabled));
-      }
-    }
-  }
-
   private void handleSave(OUpdateExecutionPlan result, OCommandContext ctx, boolean profilingEnabled) {
     result.chain(new SaveElementStep(ctx, profilingEnabled));
-  }
-
-  private void handleTimeout(OUpdateExecutionPlan result, OCommandContext ctx, OTimeout timeout, boolean profilingEnabled) {
-    if (timeout != null && timeout.getVal().longValue() > 0) {
-      result.chain(new TimeoutStep(timeout, ctx, profilingEnabled));
-    }
-  }
-
-  private void handleReturnBefore(OUpdateExecutionPlan result, OCommandContext ctx, boolean returnBefore, boolean profilingEnabled) {
-    if (returnBefore) {
-      result.chain(new CopyRecordContentBeforeUpdateStep(ctx, profilingEnabled));
-    }
-  }
-
-  private void handleLock(OUpdateExecutionPlan result, OCommandContext ctx, OStorage.LOCKING_STRATEGY lockRecord) {
-
-  }
-
-  private void handleLimit(OUpdateExecutionPlan plan, OCommandContext ctx, OLimit limit, boolean profilingEnabled) {
-    if (limit != null) {
-      plan.chain(new LimitExecutionStep(limit, ctx, profilingEnabled));
-    }
-  }
-
-  private void handleUpsert(OUpdateExecutionPlan plan, OCommandContext ctx, OFromClause target, OWhereClause where,
-      boolean upsert, boolean profilingEnabled) {
-    if (upsert) {
-      plan.chain(new UpsertStep(target, where, ctx, profilingEnabled));
-    }
   }
 
   private void handleOperations(OUpdateExecutionPlan plan, OCommandContext ctx, OUpdateOperations op, boolean profilingEnabled) {

@@ -14,8 +14,8 @@ import java.util.stream.Collectors;
 
 public class OUpdateRemoveItem extends SimpleNode {
 
-  OExpression left;
-  OExpression right;
+  protected OExpression left;
+  protected OExpression right;
 
   public OUpdateRemoveItem(int id) {
     super(id);
@@ -23,13 +23,6 @@ public class OUpdateRemoveItem extends SimpleNode {
 
   public OUpdateRemoveItem(OrientSql p, int id) {
     super(p, id);
-  }
-
-  /**
-   * Accept the visitor.
-   **/
-  public Object jjtAccept(OrientSqlVisitor visitor, Object data) {
-    return visitor.visit(this, data);
   }
 
   public void toString(Map<Object, Object> params, StringBuilder builder) {

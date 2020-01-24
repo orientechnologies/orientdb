@@ -5,6 +5,7 @@ import com.orientechnologies.orient.distributed.impl.coordinator.transaction.OSe
 import com.orientechnologies.orient.distributed.impl.log.OLogId;
 import com.orientechnologies.orient.distributed.impl.log.OOperationLog;
 import com.orientechnologies.orient.distributed.impl.log.OOperationLogEntry;
+import com.orientechnologies.orient.distributed.impl.log.OOplogIterator;
 import com.orientechnologies.orient.distributed.network.ODistributedNetwork;
 
 import java.util.*;
@@ -109,7 +110,7 @@ public class ODistributedCoordinator implements AutoCloseable {
 
   public boolean requestSync(ONodeIdentity requester, Optional<OLogId> opId) {
     if (opId.isPresent()) {
-      Optional<Iterator<OOperationLogEntry>> res = operationLog.searchFrom(opId.get());
+      Optional<OOplogIterator> res = operationLog.searchFrom(opId.get());
       if (res.isPresent()) {
         Iterator<OOperationLogEntry> iter = res.get();
         requestExecutor.execute(() -> {

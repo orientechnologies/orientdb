@@ -194,6 +194,21 @@ public class OConsoleDatabaseAppTest {
   }
 
   @Test
+  public void testHelpCommand() {
+    ConsoleTest c = new ConsoleTest();
+    try {
+      c.console().help("select");
+      String resultString = c.getConsoleOutput();
+      Assert.assertTrue(resultString.contains("COMMAND: select"));
+
+    } catch (Exception e) {
+      Assert.fail();
+    } finally {
+      c.shutdown();
+    }
+  }
+
+  @Test
   public void testDeclareIntent() {
     ConsoleTest c = new ConsoleTest();
     try {

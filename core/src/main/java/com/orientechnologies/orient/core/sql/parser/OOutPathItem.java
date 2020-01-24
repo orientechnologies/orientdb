@@ -6,20 +6,13 @@ import com.orientechnologies.orient.core.sql.executor.OResult;
 
 import java.util.Map;
 
-public
-class OOutPathItem extends OMatchPathItem {
+public class OOutPathItem extends OMatchPathItem {
   public OOutPathItem(int id) {
     super(id);
   }
 
   public OOutPathItem(OrientSql p, int id) {
     super(p, id);
-  }
-
-
-  /** Accept the visitor. **/
-  public Object jjtAccept(OrientSqlVisitor visitor, Object data) {
-    return visitor.visit(this, data);
   }
 
   @Override

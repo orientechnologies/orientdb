@@ -6,25 +6,28 @@ import com.orientechnologies.orient.server.distributed.impl.task.OTransactionPha
 import com.orientechnologies.orient.server.distributed.impl.task.OTransactionPhase1TaskResult;
 import com.orientechnologies.orient.server.distributed.impl.task.transaction.OTransactionResultPayload;
 import com.orientechnologies.orient.server.distributed.impl.task.transaction.OTxException;
+import com.orientechnologies.orient.server.distributed.impl.task.transaction.OTxStillRunning;
 
 import java.util.*;
 
 public class ONewDistributedResponseManager implements ODistributedResponseManager {
 
-  private final    OTransactionPhase1Task                        iRequest;
-  private final    Collection<String>                            iNodes;
-  private final    Set<String>                                   nodesConcurToTheQuorum;
-  private final    int                                           availableNodes;
-  private final    int                                           expectedResponses;
-  private final    int                                           quorum;
-  private final    long                                          timeout;
-  private volatile int                                           responseCount;
-  private final    List<String>                                  debugNodeReplied = new ArrayList<>();
-  private volatile Map<Integer, List<OTransactionResultPayload>> resultsByType    = new HashMap<>();
-  private volatile IdentityHashMap<OTransactionResultPayload, String> payloadToNode = new IdentityHashMap<>();
-  private volatile boolean                                       finished         = false;
-  private volatile boolean                                       quorumReached    = false;
-  private volatile Object                                        finalResult;
+  private final    OTransactionPhase1Task                             iRequest;
+  private final    Collection<String>                                 iNodes;
+  private final    Set<String>                                        nodesConcurToTheQuorum;
+  private final    int                                                availableNodes;
+  private final    int                                                expectedResponses;
+  private final    int                                                quorum;
+  private volatile long                                               timeout;
+  private volatile int                                                responseCount;
+  private final    List<String>                                       debugNodeReplied   = new ArrayList<>();
+  private volatile Map<Integer, List<OTransactionResultPayload>>      resultsByType      = new HashMap<>();
+  private volatile IdentityHashMap<OTransactionResultPayload, String> payloadToNode      = new IdentityHashMap<>();
+  private volatile boolean                                            finished           = false;
+  private volatile boolean                                            quorumReached      = false;
+  private volatile Object                                             finalResult;
+  private volatile int                                                stillRunning       = 0;
+  private volatile int                                                stillRunningWaited = 0;
 
   public ONewDistributedResponseManager(OTransactionPhase1Task iRequest, Collection<String> iNodes,
       Set<String> nodesConcurToTheQuorum, int availableNodes, int expectedResponses, int quorum) {
@@ -61,20 +64,27 @@ public class ONewDistributedResponseManager implements ODistributedResponseManag
   @Override
   public synchronized boolean waitForSynchronousResponses() throws InterruptedException {
     boolean interrupted = false;
-    while (true) {
+    while (!interrupted) {
       try {
         if (!quorumReached) {
           wait(timeout);
         }
-        if (interrupted) {
-          Thread.currentThread().interrupt();
+        if (quorumReached || finished) {
+          return quorumReached;
+        } else if (stillRunning - stillRunningWaited > 0) {
+          stillRunningWaited++;
+          // This put the timeout to just the timeout of one node.
+          this.timeout = iRequest.getDistributedTimeout();
+        } else {
+          return quorumReached;
         }
-        return quorumReached;
       } catch (InterruptedException e) {
         //Let the operation finish anyway
+        Thread.currentThread().interrupt();
         interrupted = true;
       }
     }
+    return quorumReached  ;
   }
 
   @Override
@@ -122,20 +132,28 @@ public class ONewDistributedResponseManager implements ODistributedResponseManag
   }
 
   public synchronized boolean collectResponse(OTransactionPhase1TaskResult response, String senderNodeName) {
+    if (response.getResultPayload() instanceof OTxStillRunning) {
+      stillRunning++;
+      return false;
+    }
     debugNodeReplied.add(senderNodeName);
     return addResult(senderNodeName, response.getResultPayload());
   }
 
   private boolean addResult(String senderNodeName, OTransactionResultPayload result) {
-    List<OTransactionResultPayload> results = resultsByType.get(result.getResponseType());
-    if (results == null) {
-      results = new ArrayList<>();
-      results.add(result);
-      resultsByType.put(result.getResponseType(), results);
-    } else {
-      results.add(result);
+    List<OTransactionResultPayload> results = new ArrayList<>();
+
+    if (nodesConcurToTheQuorum.contains(senderNodeName)) {
+      results = resultsByType.get(result.getResponseType());
+      if (results == null) {
+        results = new ArrayList<>();
+        results.add(result);
+        resultsByType.put(result.getResponseType(), results);
+      } else {
+        results.add(result);
+      }
+      payloadToNode.put(result, senderNodeName);
     }
-    payloadToNode.put(result, senderNodeName);
     responseCount += 1;
     checkFinished(results);
     return this.finished;

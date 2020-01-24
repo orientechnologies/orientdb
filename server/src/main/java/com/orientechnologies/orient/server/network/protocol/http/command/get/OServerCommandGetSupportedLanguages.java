@@ -17,19 +17,15 @@
  */
 package com.orientechnologies.orient.server.network.protocol.http.command.get;
 
-import java.io.StringWriter;
 import java.util.HashSet;
 import java.util.Set;
 
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.script.OScriptManager;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.serialization.serializer.OJSONWriter;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpRequest;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpResponse;
-import com.orientechnologies.orient.server.network.protocol.http.OHttpUtils;
 import com.orientechnologies.orient.server.network.protocol.http.command.OServerCommandAuthenticatedDbAbstract;
 
 public class OServerCommandGetSupportedLanguages extends OServerCommandAuthenticatedDbAbstract {
@@ -37,9 +33,9 @@ public class OServerCommandGetSupportedLanguages extends OServerCommandAuthentic
 
   @Override
   public boolean execute(final OHttpRequest iRequest, OHttpResponse iResponse) throws Exception {
-    String[] urlParts = checkSyntax(iRequest.url, 2, "Syntax error: supportedLanguages/<database>");
+    String[] urlParts = checkSyntax(iRequest.getUrl(), 2, "Syntax error: supportedLanguages/<database>");
 
-    iRequest.data.commandInfo = "Returns the supported languages";
+    iRequest.getData().commandInfo = "Returns the supported languages";
 
     ODatabaseDocument db = null;
 

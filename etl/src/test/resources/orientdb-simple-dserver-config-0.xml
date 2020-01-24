@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<orient-server>
+    <handlers>
+
+        <handler
+                class="com.orientechnologies.orient.server.handler.OServerSideScriptInterpreter">
+            <parameters>
+                <parameter value="false" name="enabled"/>
+            </parameters>
+        </handler>
+    </handlers>
+    <network>
+        <protocols>
+            <protocol
+                    implementation="com.orientechnologies.orient.server.network.protocol.binary.ONetworkProtocolBinary"
+                    name="binary"/>
+        </protocols>
+        <listeners>
+            <listener protocol="binary" port-range="2424"
+                      ip-address="0.0.0.0"/>
+        </listeners>
+    </network>
+    <storages>
+    </storages>
+    <users>
+        <user resources="*" password="test" name="root"/>
+        <user resources="connect,server.listDatabases" password="guest"
+              name="guest"/>
+        <user resources="database.passthrough"
+              password="79498491C4D4F1360816D003E2004BC04606AA1C31B1A0E3BCF091A30EFDAB7D"
+              name="replicator"/>
+    </users>
+    <properties>
+        <entry name="server.database.path" value="target/server0/"/>
+    </properties>
+    <isAfterFirstTime>true</isAfterFirstTime>
+</orient-server>

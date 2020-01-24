@@ -2008,6 +2008,7 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
   public List<String> backup(final OutputStream out, final Map<String, Object> options, final Callable<Object> callable,
       final OCommandOutputListener iListener, final int compressionLevel, final int bufferSize) throws IOException {
     checkOpenness();
+    checkSecurity(ORule.ResourceGeneric.DATABASE, "backup", ORole.PERMISSION_EXECUTE);
     return getStorage().backup(out, options, callable, iListener, compressionLevel, bufferSize);
   }
 
@@ -2066,6 +2067,7 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
   public String incrementalBackup(final String path) throws UnsupportedOperationException {
     checkOpenness();
     checkIfActive();
+    checkSecurity(ORule.ResourceGeneric.DATABASE, "backup", ORole.PERMISSION_EXECUTE);
 
     return getStorage().incrementalBackup(path, null);
   }

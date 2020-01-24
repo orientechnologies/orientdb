@@ -5,7 +5,6 @@ import com.orientechnologies.common.serialization.types.ODecimalSerializer;
 import com.orientechnologies.common.serialization.types.OIntegerSerializer;
 import com.orientechnologies.common.serialization.types.OLongSerializer;
 import com.orientechnologies.common.serialization.types.OUUIDSerializer;
-import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.*;
@@ -36,7 +35,6 @@ import java.math.BigDecimal;
 import java.util.*;
 
 import static com.orientechnologies.orient.core.serialization.serializer.record.binary.HelperClasses.*;
-import static com.orientechnologies.orient.core.serialization.serializer.record.binary.HelperClasses.writeType;
 
 public class ODocumentSerializerDelta {
   private static final byte CREATED           = 1;
@@ -603,7 +601,7 @@ public class ODocumentSerializerDelta {
     OUUIDSerializer.INSTANCE.serialize(uuid, bytes.bytes, uuidPos);
 
     OMultiValueChangeTimeLine<OIdentifiable, OIdentifiable> timeline = value.getTransactionTimeLine();
-    assert timeline != null : "Collection timeline required for link types serialization";
+    assert timeline != null : "Cx ollection timeline required for link types serialization";
     OVarIntSerializer.write(bytes, timeline.getMultiValueChangeEvents().size());
     for (OMultiValueChangeEvent<OIdentifiable, OIdentifiable> event : timeline.getMultiValueChangeEvents()) {
       switch (event.getChangeType()) {
@@ -1362,7 +1360,7 @@ public class ODocumentSerializerDelta {
       uuid = new UUID(-1, -1);
     int uuidPos = bytes.alloc(OUUIDSerializer.UUID_SIZE);
     OUUIDSerializer.INSTANCE.serialize(uuid, bytes.bytes, uuidPos);
-    if (bag.isEmbedded() || OGlobalConfiguration.RID_BAG_SBTREEBONSAI_TO_EMBEDDED_THRESHOLD.getValueAsInteger() >= bag.size()) {
+    if (bag.isToSerializeEmbedded()) {
       int pos = bytes.alloc(1);
       bytes.bytes[pos] = 1;
       OVarIntSerializer.write(bytes, bag.size());

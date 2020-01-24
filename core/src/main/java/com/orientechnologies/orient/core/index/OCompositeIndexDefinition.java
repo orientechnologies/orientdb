@@ -22,7 +22,6 @@ package com.orientechnologies.orient.core.index;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.orient.core.collate.OCollate;
 import com.orientechnologies.orient.core.db.record.OMultiValueChangeEvent;
-import com.orientechnologies.orient.core.db.record.ORecordElement;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandExecutorSQLCreateIndex;
@@ -35,6 +34,7 @@ import java.util.*;
  */
 
 public class OCompositeIndexDefinition extends OAbstractIndexDefinition {
+
   private static final long                   serialVersionUID          = -885861736290603016L;
   private final        List<OIndexDefinition> indexDefinitions;
   private              String                 className;
@@ -251,7 +251,7 @@ public class OCompositeIndexDefinition extends OAbstractIndexDefinition {
   }
 
   private static boolean addKey(OCompositeKey firstKey, List<OCompositeKey> compositeKeys, boolean containsCollection,
-      Object keyValue) {
+                                Object keyValue) {
     //in case of collection we split single composite key on several composite keys
     //each of those composite keys contain single collection item.
     //we can not contain more than single collection item in index
@@ -310,16 +310,16 @@ public class OCompositeIndexDefinition extends OAbstractIndexDefinition {
   }
 
   public void processChangeEvent(OMultiValueChangeEvent<?, ?> changeEvent, Map<OCompositeKey, Integer> keysToAdd,
-      Map<OCompositeKey, Integer> keysToRemove, Object... params) {
+                                 Map<OCompositeKey, Integer> keysToRemove, Object... params) {
 
     final OIndexDefinitionMultiValue indexDefinitionMultiValue = (OIndexDefinitionMultiValue) indexDefinitions
-        .get(multiValueDefinitionIndex);
+            .get(multiValueDefinitionIndex);
 
     final CompositeWrapperMap compositeWrapperKeysToAdd = new CompositeWrapperMap(keysToAdd, indexDefinitions, params,
-        multiValueDefinitionIndex);
+            multiValueDefinitionIndex);
 
     final CompositeWrapperMap compositeWrapperKeysToRemove = new CompositeWrapperMap(keysToRemove, indexDefinitions, params,
-        multiValueDefinitionIndex);
+            multiValueDefinitionIndex);
 
     indexDefinitionMultiValue.processChangeEvent(changeEvent, compositeWrapperKeysToAdd, compositeWrapperKeysToRemove);
   }
@@ -411,9 +411,9 @@ public class OCompositeIndexDefinition extends OAbstractIndexDefinition {
 
     final Iterator<String> fieldIterator = getFieldsToIndex().iterator();
     if (fieldIterator.hasNext()) {
-      ddl.append(fieldIterator.next());
+      ddl.append(quoteFieldName(fieldIterator.next()));
       while (fieldIterator.hasNext()) {
-        ddl.append(", ").append(fieldIterator.next());
+        ddl.append(", ").append(quoteFieldName(fieldIterator.next()));
       }
     }
     ddl.append(" ) ").append(indexType).append(' ');
@@ -434,6 +434,21 @@ public class OCompositeIndexDefinition extends OAbstractIndexDefinition {
     }
 
     return ddl.toString();
+  }
+
+  private String quoteFieldName(String next) {
+    if (next == null) {
+      return null;
+    }
+    next = next.trim();
+    if (next.startsWith("`")) {
+      return next;
+    }
+    if (next.toLowerCase(Locale.ENGLISH).endsWith("collate ci")) {
+      next = next.substring(0, next.length() - "collate ci".length());
+      return "`" + next.trim() + "` collate ci";
+    }
+    return "`" + next + "`";
   }
 
   /**
@@ -498,12 +513,12 @@ public class OCompositeIndexDefinition extends OAbstractIndexDefinition {
 
   private static final class CompositeWrapperMap implements Map<Object, Integer> {
     private final Map<OCompositeKey, Integer> underlying;
-    private final Object[]                    params;
-    private final List<OIndexDefinition>      indexDefinitions;
-    private final int                         multiValueIndex;
+    private final Object[] params;
+    private final List<OIndexDefinition> indexDefinitions;
+    private final int multiValueIndex;
 
     private CompositeWrapperMap(Map<OCompositeKey, Integer> underlying, List<OIndexDefinition> indexDefinitions, Object[] params,
-        int multiValueIndex) {
+                                int multiValueIndex) {
       this.underlying = underlying;
       this.params = params;
       this.multiValueIndex = multiValueIndex;

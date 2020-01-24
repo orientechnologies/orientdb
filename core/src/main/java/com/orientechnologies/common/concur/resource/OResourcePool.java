@@ -19,21 +19,17 @@
  */
 package com.orientechnologies.common.concur.resource;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
-import java.util.Queue;
-import java.util.concurrent.ConcurrentLinkedQueue;
-import java.util.concurrent.Semaphore;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicInteger;
-
 import com.orientechnologies.common.concur.lock.OInterruptedException;
 import com.orientechnologies.common.concur.lock.OLockException;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.exception.OAcquireTimeoutException;
+
+import java.util.*;
+import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.Semaphore;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * Generic non reentrant implementation about pool of resources. It pre-allocates a semaphore of maxResources. Resources are lazily
@@ -41,33 +37,42 @@ import com.orientechnologies.orient.core.exception.OAcquireTimeoutException;
  *
  * @param <K> Resource's Key
  * @param <V> Resource Object
- *
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
  */
 public class OResourcePool<K, V> {
-  protected final Semaphore sem;
-  protected final Queue<V> resources    = new ConcurrentLinkedQueue<V>();
-  protected final Queue<V> resourcesOut = new ConcurrentLinkedQueue<V>();
+  protected final Semaphore                   sem;
+  protected final Queue<V>                    resources    = new ConcurrentLinkedQueue<V>();
+  protected final Queue<V>                    resourcesOut = new ConcurrentLinkedQueue<V>();
   protected final Collection<V>               unmodifiableresources;
   private final   int                         maxResources;
   protected       OResourcePoolListener<K, V> listener;
-  protected final AtomicInteger created = new AtomicInteger();
+  protected final AtomicInteger               created      = new AtomicInteger();
 
-  public OResourcePool(final int iMaxResources, final OResourcePoolListener<K, V> listener) {
-    maxResources = iMaxResources;
+  public OResourcePool(final int max, final OResourcePoolListener<K, V> listener) {
+    this(0, max, listener);
+  }
+
+  public OResourcePool(int min, int max, OResourcePoolListener<K, V> listener) {
+    maxResources = max;
     if (maxResources < 1)
       throw new IllegalArgumentException("iMaxResource must be major than 0");
 
     this.listener = listener;
     sem = new Semaphore(maxResources, true);
     unmodifiableresources = Collections.unmodifiableCollection(resources);
+    for (int i = 0; i < min; i++) {
+      V res = listener.createNewResource(null, null);
+      created.incrementAndGet();
+      resources.add(res);
+    }
   }
 
   public V getResource(K key, final long maxWaitMillis, Object... additionalArgs) throws OAcquireTimeoutException {
     // First, get permission to take or create a resource
     try {
       if (!sem.tryAcquire(maxWaitMillis, TimeUnit.MILLISECONDS))
-        throw new OAcquireTimeoutException("No more resources available in pool (max=" + maxResources + "). Requested resource: " + key);
+        throw new OAcquireTimeoutException(
+            "No more resources available in pool (max=" + maxResources + "). Requested resource: " + key);
 
     } catch (InterruptedException e) {
       Thread.currentThread().interrupt();
@@ -167,4 +172,9 @@ public class OResourcePool<K, V> {
   public int getCreatedInstances() {
     return created.get();
   }
+
+  public int getResourcesOutCount() {
+    return resourcesOut.size();
+  }
+
 }

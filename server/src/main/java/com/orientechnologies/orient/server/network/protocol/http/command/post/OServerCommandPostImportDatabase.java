@@ -23,7 +23,6 @@ import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.util.OCommonConst;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.tool.ODatabaseImport;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpRequest;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpResponse;
@@ -45,10 +44,10 @@ public class OServerCommandPostImportDatabase extends OHttpMultipartRequestComma
 
   @Override
   public boolean execute(final OHttpRequest iRequest, OHttpResponse iResponse) throws Exception {
-    if (!iRequest.isMultipart) {
+    if (!iRequest.isMultipart()) {
       database = getProfiledDatabaseInstance(iRequest);
       try {
-        ODatabaseImport importer = new ODatabaseImport(database, new ByteArrayInputStream(iRequest.content.getBytes("UTF8")),
+        ODatabaseImport importer = new ODatabaseImport(database, new ByteArrayInputStream(iRequest.getContent().getBytes("UTF8")),
             this);
         for (Map.Entry<String, String> option : iRequest.getParameters().entrySet())
           importer.setOption(option.getKey(), option.getValue());
@@ -66,7 +65,7 @@ public class OServerCommandPostImportDatabase extends OHttpMultipartRequestComma
           database.close();
         database = null;
       }
-    } else if (iRequest.multipartStream == null || iRequest.multipartStream.available() <= 0) {
+    } else if (iRequest.getMultipartStream() == null || iRequest.getMultipartStream().available() <= 0) {
       iResponse.send(OHttpUtils.STATUS_INVALIDMETHOD_CODE, "Content stream is null or empty", OHttpUtils.CONTENT_TEXT_PLAIN,
           "Content stream is null or empty", null);
     } else {

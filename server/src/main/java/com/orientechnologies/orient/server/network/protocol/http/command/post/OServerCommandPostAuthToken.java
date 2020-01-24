@@ -4,7 +4,6 @@ import com.orientechnologies.common.concur.lock.OLockException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
-import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.exception.OSecurityAccessException;
 import com.orientechnologies.orient.core.metadata.security.OSecurityUser;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -24,9 +23,9 @@ import java.util.Map;
  * @author Emrul Islam <emrul@emrul.com> Copyright 2014 Emrul Islam
  */
 public class OServerCommandPostAuthToken extends OServerCommandAbstract {
-  private static final String[] NAMES           = { "POST|token/*" };
-  private static final String   RESPONSE_FORMAT = "indent:-1,attribSameRow";
-  private volatile OTokenHandler tokenHandler;
+  private static final String[]      NAMES           = { "POST|token/*" };
+  private static final String        RESPONSE_FORMAT = "indent:-1,attribSameRow";
+  private volatile     OTokenHandler tokenHandler;
 
   @Override
   public String[] getNames() {
@@ -43,10 +42,10 @@ public class OServerCommandPostAuthToken extends OServerCommandAbstract {
   @Override
   public boolean execute(OHttpRequest iRequest, OHttpResponse iResponse) throws Exception {
     init();
-    String[] urlParts = checkSyntax(iRequest.url, 2, "Syntax error: token/<database>");
-    iRequest.databaseName = urlParts[1];
+    String[] urlParts = checkSyntax(iRequest.getUrl(), 2, "Syntax error: token/<database>");
+    iRequest.setDatabaseName(urlParts[1]);
 
-    iRequest.data.commandInfo = "Generate authentication token";
+    iRequest.getData().commandInfo = "Generate authentication token";
 
     // Parameter names consistent with 4.3.2 (Access Token Request) of RFC 6749
     Map<String, String> content = iRequest.getUrlEncodedContent();
@@ -64,16 +63,16 @@ public class OServerCommandPostAuthToken extends OServerCommandAbstract {
     ODocument result;
 
     if (grantType.equals("password")) {
-      authenticatedRid = authenticate(username, password, iRequest.databaseName);
+      authenticatedRid = authenticate(username, password, iRequest.getDatabaseName());
       if (authenticatedRid == null) {
-        sendAuthorizationRequest(iRequest, iResponse, iRequest.databaseName);
+        sendAuthorizationRequest(iRequest, iResponse, iRequest.getDatabaseName());
       } else if (tokenHandler != null) {
         // Generate and return a JWT access token
 
         ODatabaseDocument db = null;
         OSecurityUser user = null;
         try {
-          db = (ODatabaseDocument) server.openDatabase(iRequest.databaseName, username, password);
+          db = (ODatabaseDocument) server.openDatabase(iRequest.getDatabaseName(), username, password);
           user = db.getUser();
 
           if (user != null) {
@@ -86,7 +85,7 @@ public class OServerCommandPostAuthToken extends OServerCommandAbstract {
         } catch (OSecurityAccessException e) {
           // WRONG USER/PASSWD
         } catch (OLockException e) {
-          OLogManager.instance().error(this, "Cannot access to the database '" + iRequest.databaseName + "'", e);
+          OLogManager.instance().error(this, "Cannot access to the database '" + iRequest.getDatabaseName() + "'", e);
         } finally {
           if (db != null) {
             db.close();
@@ -144,6 +143,9 @@ public class OServerCommandPostAuthToken extends OServerCommandAbstract {
     if (xRequestedWithHeader == null || !xRequestedWithHeader.equals("XMLHttpRequest")) {
       // Defaults to "WWW-Authenticate: Basic" if not an AJAX Request.
       header = server.getSecurity().getAuthenticationHeader(iDatabaseName);
+
+      Map<String, String> headers = server.getSecurity().getAuthenticationHeaders(iDatabaseName);
+      headers.entrySet().forEach(s -> iResponse.addHeader(s.getKey(), s.getValue()));
     }
 
     if (isJsonResponse(iResponse)) {

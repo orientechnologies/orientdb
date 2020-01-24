@@ -357,21 +357,20 @@ public abstract class OLuceneIndexEngineAbstract extends OSharedResourceAdaptive
     String indexPath = directory.getPath();
     if (indexPath != null) {
       File indexDir = new File(indexPath);
-      try (final FileSystem fileSystem = FileSystems.getDefault()) {
-        while (true) {
-          if (Files.isSameFile(fileSystem.getPath(baseStoragePath.getCanonicalPath()),
-              fileSystem.getPath(indexDir.getCanonicalPath()))) {
-            break;
-          }
-          //delete only if dir is empty, otherwise stop deleting process
-          //last index will remove all upper dirs
-          final File[] indexDirFiles = indexDir.listFiles();
-          if (indexDirFiles != null && indexDirFiles.length == 0) {
-            OFileUtils.deleteRecursively(indexDir, true);
-            indexDir = indexDir.getParentFile();
-          } else {
-            break;
-          }
+      final FileSystem fileSystem = FileSystems.getDefault();
+      while (true) {
+        if (Files.isSameFile(fileSystem.getPath(baseStoragePath.getCanonicalPath()),
+                fileSystem.getPath(indexDir.getCanonicalPath()))) {
+          break;
+        }
+        //delete only if dir is empty, otherwise stop deleting process
+        //last index will remove all upper dirs
+        final File[] indexDirFiles = indexDir.listFiles();
+        if (indexDirFiles != null && indexDirFiles.length == 0) {
+          OFileUtils.deleteRecursively(indexDir, true);
+          indexDir = indexDir.getParentFile();
+        } else {
+          break;
         }
       }
     }

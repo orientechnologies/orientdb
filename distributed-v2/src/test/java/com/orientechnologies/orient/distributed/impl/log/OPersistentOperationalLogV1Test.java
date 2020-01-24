@@ -10,7 +10,6 @@ import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -88,13 +87,16 @@ public class OPersistentOperationalLogV1Test {
       }
 
       long nextEntry = 100;
-      Iterator<OOperationLogEntry> iteartor = log.iterate(nextEntry, totLogEntries - 1);
-      while (nextEntry < totLogEntries) {
-        OOperationLogEntry item = iteartor.next();
-        Assert.assertEquals(nextEntry++, item.getLogId().getId());
+      OOplogIterator iteartor = log.iterate(nextEntry, totLogEntries - 1);
+      try {
+        while (nextEntry < totLogEntries) {
+          OOperationLogEntry item = iteartor.next();
+          Assert.assertEquals(nextEntry++, item.getLogId().getId());
+        }
+        Assert.assertFalse(iteartor.hasNext());
+      } finally {
+        iteartor.close();
       }
-      Assert.assertFalse(iteartor.hasNext());
-
     } finally {
       for (File file1 : file.toFile().listFiles()) {
         file1.delete();
@@ -117,12 +119,13 @@ public class OPersistentOperationalLogV1Test {
         log.log(item);
       }
 
-      Iterator<OOperationLogEntry> iteartor = log.iterate(100, 400 - 1);
+      OOplogIterator iteartor = log.iterate(100, 400 - 1);
       for (int i = 100; i < 400; i++) {
         OOperationLogEntry item = iteartor.next();
         Assert.assertEquals(i, item.getLogId().getId());
       }
       Assert.assertFalse(iteartor.hasNext());
+      iteartor.close();
 
     } finally {
       for (File file1 : file.toFile().listFiles()) {
@@ -149,12 +152,13 @@ public class OPersistentOperationalLogV1Test {
 
       Assert.assertEquals(OOperationLog.LogIdStatus.PRESENT, status);
 
-      Iterator<OOperationLogEntry> iteartor = log.iterate(0, 100);
+      OOplogIterator iteartor = log.iterate(0, 100);
       for (int i = 0; i <= 10; i++) {
         OOperationLogEntry item = iteartor.next();
         Assert.assertEquals(i, item.getLogId().getId());
       }
       Assert.assertFalse(iteartor.hasNext());
+      iteartor.close();
 
       for (int i = 0; i < 5; i++) {
         OPhase1Tx item = new OPhase1Tx();
@@ -168,6 +172,7 @@ public class OPersistentOperationalLogV1Test {
       }
       Assert.assertFalse(iteartor.hasNext());
 
+      iteartor.close();
 
     } finally {
       for (File file1 : file.toFile().listFiles()) {
@@ -193,12 +198,13 @@ public class OPersistentOperationalLogV1Test {
 
       Assert.assertEquals(OOperationLog.LogIdStatus.FUTURE, status);
 
-      Iterator<OOperationLogEntry> iteartor = log.iterate(0, 100);
+      OOplogIterator iteartor = log.iterate(0, 100);
       for (int i = 0; i < 100; i++) {
         OOperationLogEntry item = iteartor.next();
         Assert.assertEquals(i, item.getLogId().getId());
       }
       Assert.assertFalse(iteartor.hasNext());
+      iteartor.close();
 
     } finally {
       for (File file1 : file.toFile().listFiles()) {
@@ -226,9 +232,10 @@ public class OPersistentOperationalLogV1Test {
 
       Assert.assertEquals(OOperationLog.LogIdStatus.TOO_OLD, status);
 
-      Iterator<OOperationLogEntry> iteartor = log.iterate(0, 100);
+      OOplogIterator iteartor = log.iterate(0, 100);
 
       Assert.assertFalse(iteartor.hasNext());
+      iteartor.close();
 
     } finally {
       for (File file1 : file.toFile().listFiles()) {
@@ -261,12 +268,16 @@ public class OPersistentOperationalLogV1Test {
 
       Assert.assertEquals(OOperationLog.LogIdStatus.INVALID, status);
 
-      Iterator<OOperationLogEntry> iteartor = log.iterate(0, 100);
-      for (int i = 0; i < 100; i++) {
-        OOperationLogEntry item = iteartor.next();
-        Assert.assertEquals(i, item.getLogId().getId());
+      OOplogIterator iteartor = log.iterate(0, 100);
+      try {
+        for (int i = 0; i < 100; i++) {
+          OOperationLogEntry item = iteartor.next();
+          Assert.assertEquals(i, item.getLogId().getId());
+        }
+        Assert.assertFalse(iteartor.hasNext());
+      } finally {
+        iteartor.close();
       }
-      Assert.assertFalse(iteartor.hasNext());
 
     } finally {
       for (File file1 : file.toFile().listFiles()) {
@@ -380,7 +391,6 @@ public class OPersistentOperationalLogV1Test {
     Assert.assertTrue(log.logReceived(new OLogId(0, 0, 0), new OPhase1Tx()));
     Assert.assertFalse(log.logReceived(new OLogId(0, 0, 0), new OPhase1Tx()));
     Assert.assertTrue(log.logReceived(new OLogId(1, 0, 0), new OPhase1Tx()));
-    Assert.assertFalse(log.logReceived(new OLogId(1, 1, 0), new OPhase1Tx()));
     Assert.assertTrue(log.logReceived(new OLogId(1, 1, 0), new OPhase1Tx()));
     Assert.assertTrue(log.logReceived(new OLogId(2, 1, 1), new OPhase1Tx()));
     Assert.assertFalse(log.logReceived(new OLogId(3, 1, 0), new OPhase1Tx()));
@@ -439,13 +449,13 @@ public class OPersistentOperationalLogV1Test {
     log.log(new OPhase1Tx());//7
 
     log.setLeader(false, 4);
-    Assert.assertFalse(log.logReceived(new OLogId(6, 4, 3), new OPhase1Tx()));
+    Assert.assertTrue(log.logReceived(new OLogId(6, 4, 3), new OPhase1Tx()));
 
 
     OLogId last = log.lastPersistentLog();
-    Assert.assertEquals(5L, last.getId());
-    Assert.assertEquals(3L, last.getTerm());
-    Assert.assertEquals(2L, last.getPreviousIdTerm());
+    Assert.assertEquals(6L, last.getId());
+    Assert.assertEquals(4L, last.getTerm());
+    Assert.assertEquals(3L, last.getPreviousIdTerm());
   }
 
   @Test
@@ -497,8 +507,94 @@ public class OPersistentOperationalLogV1Test {
     log = new OPersistentOperationalLogV1(file.toString(), (id) -> new OPhase1Tx());
     log.setLeader(true, 0);
     Assert.assertEquals(lastLogId, log.lastPersistentLog());
+  }
 
+  @Test
+  public void testSearchFrom() throws IOException {
+    Path file = Files.createTempDirectory(".");
+    OPersistentOperationalLogV1 master = new OPersistentOperationalLogV1(file.toString(), (id) -> new OPhase1Tx());
+    master.setLeader(true, 0);
+    master.log(new OPhase1Tx());
+    master.log(new OPhase1Tx());
+    master.log(new OPhase1Tx());
+    master.log(new OPhase1Tx());//4
+    master.setLeader(true, 1);
+    master.log(new OPhase1Tx());
+    master.log(new OPhase1Tx());
+    master.log(new OPhase1Tx());
+    master.log(new OPhase1Tx());
+    master.log(new OPhase1Tx());
+    master.log(new OPhase1Tx());
+    master.log(new OPhase1Tx());
+    master.log(new OPhase1Tx());
+    master.log(new OPhase1Tx());
+    master.log(new OPhase1Tx());
+    master.log(new OPhase1Tx());
+    master.log(new OPhase1Tx());
+    master.setLeader(true, 2);
+    master.log(new OPhase1Tx());
+    master.log(new OPhase1Tx());
+    master.log(new OPhase1Tx());
+    master.log(new OPhase1Tx());
+    master.log(new OPhase1Tx());
+    master.log(new OPhase1Tx());
+    master.log(new OPhase1Tx());
+    master.log(new OPhase1Tx());
+    master.log(new OPhase1Tx());
+    master.log(new OPhase1Tx());
+    master.log(new OPhase1Tx());
+    master.log(new OPhase1Tx());
+
+
+    Path file2 = Files.createTempDirectory(".");
+    OPersistentOperationalLogV1 follower = new OPersistentOperationalLogV1(file2.toString(), (id) -> new OPhase1Tx());
+    follower.setLeader(true, 0);
+    follower.log(new OPhase1Tx());
+    follower.log(new OPhase1Tx());
+    follower.log(new OPhase1Tx());
+    follower.log(new OPhase1Tx());
+    follower.log(new OPhase1Tx());
+    follower.log(new OPhase1Tx());
+    follower.log(new OPhase1Tx());
+    follower.log(new OPhase1Tx());
+    follower.log(new OPhase1Tx());
+    follower.log(new OPhase1Tx());
+
+    OOplogIterator data = master.searchFrom(follower.lastPersistentLog()).get();
+
+    follower.setLeader(false, 1);
+    while (data.hasNext()) {
+      OOperationLogEntry item = data.next();
+      boolean result = follower.logReceived(item.getLogId(), item.getRequest());
+    }
+    data.close();
+
+
+    OOplogIterator masterIterator = master.iterate(0, 100);
+    OOplogIterator followerIterator = follower.iterate(0, 100);
+    while (masterIterator.hasNext()) {
+      Assert.assertTrue(followerIterator.hasNext());
+      Assert.assertEquals(masterIterator.next().getLogId(), followerIterator.next().getLogId());
+    }
+    Assert.assertFalse(followerIterator.hasNext());
+    masterIterator.close();
+    followerIterator.close();
+    master.close();
+    follower.close();
+  }
+
+
+  @Test
+  public void testSearchFromEmpty() throws IOException {
+    Path file = Files.createTempDirectory(".");
+    OPersistentOperationalLogV1 master = new OPersistentOperationalLogV1(file.toString(), (id) -> new OPhase1Tx());
+    master.setLeader(true, 0);
+
+    Assert.assertFalse(master.searchFrom(new OLogId(0, 10, 0)).isPresent());
+    master.close();
 
   }
+
+
 }
 

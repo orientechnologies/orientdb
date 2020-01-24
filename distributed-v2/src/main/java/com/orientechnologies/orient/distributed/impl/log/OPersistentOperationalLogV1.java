@@ -16,11 +16,11 @@ import java.util.concurrent.atomic.AtomicLong;
 public class OPersistentOperationalLogV1 implements OOperationLog {
 
   private OLogRequestFactory factory;
-  private boolean            leader;
-  private long               term;
-  private AtomicLong         lastFlushed     = new AtomicLong(-1);
-  private AtomicLong         lastWritten     = new AtomicLong(-1);
-  private AtomicLong         paralledThreads = new AtomicLong(0);
+  private boolean leader;
+  private long term;
+  private AtomicLong lastFlushed = new AtomicLong(-1);
+  private AtomicLong lastWritten = new AtomicLong(-1);
+  private AtomicLong paralledThreads = new AtomicLong(0);
 
   private OLogId lastId;
 
@@ -29,8 +29,8 @@ public class OPersistentOperationalLogV1 implements OOperationLog {
   }
 
   private static class OpLogInfo {
-    private int  currentFileNum;
-    private int  firstFileNum;
+    private int currentFileNum;
+    private int firstFileNum;
     private long keepUntil;
 
     void fromStream(InputStream stream) {
@@ -61,13 +61,13 @@ public class OPersistentOperationalLogV1 implements OOperationLog {
     }
   }
 
-  protected static final long   MAGIC                = 6148914691236517205L; //101010101010101010101010101010101010101010101010101010101010101
-  protected static final String OPLOG_INFO_FILE      = "oplog.opl";
-  protected static final String OPLOG_FILE           = "oplog_$NUM$.opl";
-  protected static final int    LOG_ENTRIES_PER_FILE = 16 * 1024;
+  protected static final long MAGIC = 6148914691236517205L; //101010101010101010101010101010101010101010101010101010101010101
+  protected static final String OPLOG_INFO_FILE = "oplog.opl";
+  protected static final String OPLOG_FILE = "oplog_$NUM$.opl";
+  protected static final int LOG_ENTRIES_PER_FILE = 16 * 1024;
 
-  private final String    storagePath;
-  private       OpLogInfo info;
+  private final String storagePath;
+  private OpLogInfo info;
 
   private FileOutputStream fileOutput;
   private DataOutputStream stream;
@@ -328,9 +328,7 @@ public class OPersistentOperationalLogV1 implements OOperationLog {
         if (logId.getId() > lastPersistentLog().getId() + 1) {
           return false;
         }
-        if (tryTruncateLogHead(logId)) {
-          return false;
-        }
+        tryTruncateLogHead(logId);
         if (logId.getId() < lastPersistentLog().getId()) {
           // already received, not truncated, so it's just a duplicate
           return true;
@@ -373,35 +371,49 @@ public class OPersistentOperationalLogV1 implements OOperationLog {
     OLogId logHead = lastPersistentLog();
     if (logHead.getId() == logId.getId() - 1) {
       if (logId.getPreviousIdTerm() != -1 && logHead.getTerm() < logId.getPreviousIdTerm()) {
-        Iterator<OOperationLogEntry> iterator = iterate(logHead.getId() - 1, logHead.getId() - 1);
-        if (iterator.hasNext()) {
-          removeAfter(iterator.next().getLogId());
-        } else {
-          removeAfter(new OLogId(logHead.getId() - 1, 0, 0));
+        OOplogIterator iterator = iterate(logHead.getId() - 1, logHead.getId() - 1);
+        try {
+          if (iterator.hasNext()) {
+            removeAfter(iterator.next().getLogId());
+          } else {
+            removeAfter(new OLogId(logHead.getId() - 1, 0, 0));
+          }
+        } finally {
+          iterator.close();
         }
       }
       return false;
     }
-    Iterator<OOperationLogEntry> iterator = iterate(logId.getId(), logHead.getId());
-    if (!iterator.hasNext()) {
-      return false;
-    }
+    OOplogIterator iterator = iterate(logId.getId(), logHead.getId());
+    try {
+      if (!iterator.hasNext()) {
+        return false;
+      }
 
-    OLogId samePositionLog = iterator.next().getLogId();
-    if (samePositionLog.getId() > logId.getId()) {
-      //I cannot check this log, it's too old
-      return false;
-    }
-    if (samePositionLog.getTerm() == logId.getTerm()) {
-      return false;
+      OLogId samePositionLog = iterator.next().getLogId();
+      if (samePositionLog.getId() > logId.getId()) {
+        //I cannot check this log, it's too old
+        return false;
+      }
+      if (samePositionLog.getTerm() == logId.getTerm()) {
+        return false;
+      }
+
+    } finally {
+      iterator.close();
     }
 
     iterator = iterate(logId.getId() - 1, logHead.getId());
-    if (iterator.hasNext()) {
-      removeAfter(iterator.next().getLogId());
-    } else {
-      removeAfter(new OLogId(logId.getId() - 1, 0, 0));
+    try {
+      if (iterator.hasNext()) {
+        removeAfter(iterator.next().getLogId());
+      } else {
+        removeAfter(new OLogId(logId.getId() - 1, 0, 0));
+      }
+    } finally {
+      iterator.close();
     }
+
 
     return true;
   }
@@ -476,13 +488,49 @@ public class OPersistentOperationalLogV1 implements OOperationLog {
   }
 
   @Override
-  public Optional<Iterator<OOperationLogEntry>> searchFrom(OLogId from) {
-    // TODO: Implement a better search algorithm that take in consideration il term
-    return Optional.of(iterate(from.getId(), lastPersistentLog().getId()));
+  public Optional<OOplogIterator> searchFrom(OLogId from) {
+
+    long smallest = from.getId();
+
+
+    while (true) {
+      OOplogIterator iterator = iterate(smallest, smallest + 11);
+      try {
+        if (!iterator.hasNext()) {
+          return Optional.empty();
+        }
+        boolean first = true;
+        while (iterator.hasNext()) {
+          OLogId found = iterator.next().getLogId();
+          if (first && found.getId() > from.getId()) {
+            return Optional.empty();
+          }
+          first = false;
+          if (found.getId() > from.getId()) {
+            return Optional.empty();
+          }
+          if (found.getId() == from.getId() && found.getTerm() == from.getTerm()) {
+            return Optional.of(iterate(found.getId(), Long.MAX_VALUE));
+          }
+          while (found.getTerm() <= from.getTerm() && iterator.hasNext()) {
+            OLogId newFound = iterator.next().getLogId();
+            if (newFound.getTerm() > from.getTerm()) {
+              return Optional.of(iterate(found.getId(), Long.MAX_VALUE));
+            }
+          }
+          if (found.getTerm() > from.getTerm()) {
+            break;
+          }
+        }
+      } finally {
+        iterator.close();
+      }
+      smallest -= 10;
+    }
   }
 
   @Override
-  public Iterator<OOperationLogEntry> iterate(long from, long to) {
+  public OOplogIterator iterate(long from, long to) {
     return new OPersistentOperationalLogIterator(this, from, to);
   }
 
@@ -646,22 +694,30 @@ public class OPersistentOperationalLogV1 implements OOperationLog {
     if (oldestId == null || oldestId.getId() > logId.getId()) {
       return LogIdStatus.TOO_OLD;
     }
-    Iterator<OOperationLogEntry> iterator = iterate(logId.getId(), logId.getId());
-    if (!iterator.hasNext()) {
-      return LogIdStatus.INVALID;
-    } else {
-      OOperationLogEntry loaded = iterator.next();
-      if (loaded.getLogId().equals(logId)) {
-        return LogIdStatus.PRESENT;
-      } else {
+    OOplogIterator iterator = iterate(logId.getId(), logId.getId());
+    try {
+      if (!iterator.hasNext()) {
         return LogIdStatus.INVALID;
+      } else {
+        OOperationLogEntry loaded = iterator.next();
+        if (loaded.getLogId().equals(logId)) {
+          return LogIdStatus.PRESENT;
+        } else {
+          return LogIdStatus.INVALID;
+        }
       }
+    } finally {
+      iterator.close();
     }
   }
 
   protected OLogId getOldestId() {
-    Iterator<OOperationLogEntry> iterator = iterate(0, lastPersistentLog().getId());
-    return iterator.hasNext() ? iterator.next().getLogId() : null;
+    OOplogIterator iterator = iterate(0, lastPersistentLog().getId());
+    try {
+      return iterator.hasNext() ? iterator.next().getLogId() : null;
+    } finally {
+      iterator.close();
+    }
   }
 
   @Override
