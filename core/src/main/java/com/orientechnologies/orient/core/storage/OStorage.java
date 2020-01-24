@@ -94,6 +94,10 @@ public interface OStorage extends OBackupable, OSharedContainer {
 
   boolean cleanOutRecord(ORecordId recordId, int recordVersion, int iMode, ORecordCallback<Boolean> callback);
 
+  default void begin(OTransactionMetadata metadata) {
+    throw new UnsupportedOperationException();
+  }
+
   // TX OPERATIONS
   List<ORecordOperation> commit(OTransactionInternal iTx);
 
@@ -136,7 +140,6 @@ public interface OStorage extends OBackupable, OSharedContainer {
    * Drops a cluster.
    *
    * @param iId id of the cluster to delete
-   *
    * @return true if has been removed, otherwise false
    */
   boolean dropCluster(int iId);
@@ -281,4 +284,5 @@ public interface OStorage extends OBackupable, OSharedContainer {
   void setRecordSerializer(String recordSerializer, int version);
 
   void clearProperties();
+
 }
