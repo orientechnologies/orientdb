@@ -27,6 +27,8 @@ import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
+import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.stream.Stream;
 
@@ -145,15 +147,26 @@ public class OCheckIndexTool extends ODatabaseTool {
     for (int i = 0; i < vals.length; i++) {
       vals[i] = doc.field(fields.get(i));
     }
+
     Object indexKey = index.getDefinition().createValue(vals);
     if (indexKey == null) {
       return;
     }
 
-    try (final Stream<ORID> stream = index.getInternal().getRids(indexKey)) {
-      if (stream.noneMatch((rid) -> rid.equals(docId))) {
-        totalErrors++;
-        message("\rERROR: Index " + index.getName() + " - record not found: " + doc.getIdentity() + "\n");
+    final Collection<Object> indexKeys;
+    if (!(indexKey instanceof Collection)) {
+      indexKeys = Collections.singletonList(indexKey);
+    } else {
+      //noinspection unchecked
+      indexKeys = (Collection<Object>) indexKey;
+    }
+
+    for (final Object key : indexKeys) {
+      try (final Stream<ORID> stream = index.getInternal().getRids(key)) {
+        if (stream.noneMatch((rid) -> rid.equals(docId))) {
+          totalErrors++;
+          message("\rERROR: Index " + index.getName() + " - record not found: " + doc.getIdentity() + "\n");
+        }
       }
     }
   }
