@@ -59,4 +59,9 @@ public class OWaitPartitionsReadyTask extends OAbstractRemoteTask {
   public ORemoteTask getInternal() {
     return execute.getToRun();
   }
+
+  @Override
+  public void finished() {
+    execute.finished();
+  }
 }
