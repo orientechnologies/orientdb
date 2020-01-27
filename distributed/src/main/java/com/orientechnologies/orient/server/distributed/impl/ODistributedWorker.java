@@ -117,16 +117,12 @@ public class ODistributedWorker extends Thread {
 
         currentExecuting = message;
 
-
-
         if (message != null) {
           manager.messageProcessStart(message);
           message.getId();
           reqId = message.getId();
           onMessage(message);
         }
-
-        currentExecuting = null;
 
       } catch (InterruptedException e) {
         // EXIT CURRENT THREAD
@@ -150,6 +146,10 @@ public class ODistributedWorker extends Thread {
           ODistributedServerLog.error(this, localNodeName, "?", ODistributedServerLog.DIRECTION.IN,
               "Error on executing distributed request %s: (%s) worker=%d", e, message != null ? message.getId() : -1,
               message != null ? message.getTask() : "-", id);
+        }
+      } finally {
+        if (currentExecuting != null) {
+          currentExecuting.getTask().finished();
         }
       }
     }
@@ -408,8 +408,8 @@ public class ODistributedWorker extends Thread {
     return sendResponseBack(this, manager, iRequest, responsePayload);
   }
 
-  public static boolean sendResponseBack(final Object current, final ODistributedServerManager manager, final ODistributedRequest iRequest,
-      Object responsePayload) {
+  public static boolean sendResponseBack(final Object current, final ODistributedServerManager manager,
+      final ODistributedRequest iRequest, Object responsePayload) {
     if (iRequest.getId().getMessageId() < 0)
       // INTERNAL MSG
       return true;
@@ -478,11 +478,16 @@ public class ODistributedWorker extends Thread {
 
   public void reset() {
     localQueue.clear();
+    ODistributedRequest process = currentExecuting;
+    if (process != null) {
+      process.getTask().finished();
+    }
     if (database != null) {
       database.activateOnCurrentThread();
       database.close();
       database = null;
     }
+
   }
 
   public void sendShutdown() {
