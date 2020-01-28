@@ -155,6 +155,8 @@ public class AtomicOperationsTable {
 
       this.table = newTable;
       this.idOffset = newIdOffset;
+
+      scheduleTableCompaction = false;
     } finally {
       compactionLock.exclusiveUnlock();
     }
