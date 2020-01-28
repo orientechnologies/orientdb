@@ -94,6 +94,9 @@ public interface OStorage extends OBackupable, OSharedContainer {
 
   boolean cleanOutRecord(ORecordId recordId, int recordVersion, int iMode, ORecordCallback<Boolean> callback);
 
+  default void begin(byte[] metadata) {
+    throw new UnsupportedOperationException();
+  }
   // TX OPERATIONS
   List<ORecordOperation> commit(OTransactionInternal iTx);
 
