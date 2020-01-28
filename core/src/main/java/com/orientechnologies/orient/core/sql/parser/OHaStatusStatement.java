@@ -2,10 +2,16 @@
 /* JavaCCOptions:MULTI=true,NODE_USES_PARSER=false,VISITOR=true,TRACK_TOKENS=true,NODE_PREFIX=O,NODE_EXTENDS=,NODE_FACTORY=,SUPPORT_CLASS_VISIBILITY_PUBLIC=true */
 package com.orientechnologies.orient.core.sql.parser;
 
+import com.orientechnologies.common.exception.OException;
+import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.ODatabase;
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
+import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
+import com.orientechnologies.orient.core.sql.executor.OInternalResultSet;
 import com.orientechnologies.orient.core.sql.executor.OIteratorResultSet;
+import com.orientechnologies.orient.core.sql.executor.OResultInternal;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
 
 import java.util.Collections;
@@ -13,7 +19,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public class OHaStatusStatement extends OStatement {
+public class OHaStatusStatement extends OSimpleExecStatement {
 
   public boolean servers    = false;
   public boolean db         = false;
@@ -57,38 +63,24 @@ public class OHaStatusStatement extends OStatement {
   }
 
   @Override
-  public OResultSet execute(ODatabase db, Object[] args, OCommandContext parentContext, boolean usePlanCache) {
-    StringBuilder builder = new StringBuilder();
-    Map<Object, Object> pars = new HashMap<>();
-    if (args != null) {
-      for (int i = 0; i < args.length; i++) {
-        pars.put(Integer.toString(i + 1), args[i]);
+  public OResultSet executeSimple(OCommandContext ctx) {
+    if (outputText) {
+      OLogManager.instance().info(this, "HA STATUS with text output is deprecated");
+    }
+    final ODatabaseDocumentInternal database = (ODatabaseDocumentInternal) ctx.getDatabase();
+
+    OInternalResultSet rs = new OInternalResultSet();
+    try {
+      Map<String, Object> res = database.getHaStatus(servers, this.db, latency, messages);
+      if (res != null) {
+        OResultInternal row = new OResultInternal();
+        res.entrySet().forEach(x -> row.setProperty(x.getKey(), x.getValue()));
+        rs.add(row);
       }
+      return rs;
+    } catch (Exception x) {
+      throw OException.wrapException(new OCommandExecutionException("Cannot execute HA STATUS"), x);
     }
-    toString(pars, builder);
-    Object result = db.command(new OCommandSQL(builder.toString())).execute();
-    List listResult;
-    if (result instanceof List) {
-      listResult = (List) result;
-    } else {
-      listResult = Collections.singletonList(result);
-    }
-    return new OIteratorResultSet(listResult.iterator());
   }
-
-  @Override
-  public OResultSet execute(ODatabase db, Map args, OCommandContext parentContext, boolean usePlanCache) {
-    StringBuilder builder = new StringBuilder();
-    toString(args, builder);
-    Object result = db.command(new OCommandSQL(builder.toString())).execute();
-    List listResult;
-    if (result instanceof List) {
-      listResult = (List) result;
-    } else {
-      listResult = Collections.singletonList(result);
-    }
-    return new OIteratorResultSet(listResult.iterator());
-  }
-
 }
 /* JavaCC - OriginalChecksum=c8ab1b0172e8cdbea2078efe2c629e6a (do not edit this line) */
