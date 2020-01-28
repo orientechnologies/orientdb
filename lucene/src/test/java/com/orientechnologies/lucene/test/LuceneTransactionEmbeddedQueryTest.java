@@ -20,6 +20,7 @@ package com.orientechnologies.lucene.test;
 
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
@@ -32,6 +33,8 @@ import org.junit.Test;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * Created by Enrico Risa on 10/08/15.
@@ -109,7 +112,10 @@ public class LuceneTransactionEmbeddedQueryTest {
       query = "select from C1 where p1 lucene \"abc\" ";
       vertices = db.command(new OSQLSynchQuery<ODocument>(query)).execute();
 
-      Collection coll = (Collection) index.get("abc");
+      Collection coll;
+      try (Stream<ORID> stream = index.getInternal().getRids("abc")) {
+        coll = stream.collect(Collectors.toList());
+      }
 
       Assert.assertEquals(vertices.size(), 0);
       Assert.assertEquals(coll.size(), 0);
@@ -167,7 +173,10 @@ public class LuceneTransactionEmbeddedQueryTest {
       query = "select from C1 where p1 lucene \"update\" ";
       vertices = db.command(new OSQLSynchQuery<ODocument>(query)).execute();
 
-      Collection coll = (Collection) index.get("update");
+      Collection coll;
+      try (final Stream<ORID> stream = index.getInternal().getRids("update")) {
+        coll = stream.collect(Collectors.toList());
+      }
 
       Assert.assertEquals(1, vertices.size());
       Assert.assertEquals(2, coll.size());
@@ -183,7 +192,9 @@ public class LuceneTransactionEmbeddedQueryTest {
 
       query = "select from C1 where p1 lucene \"update\" ";
       vertices = db.command(new OSQLSynchQuery<ODocument>(query)).execute();
-      coll = (Collection) index.get("update");
+      try (Stream<ORID> stream = index.getInternal().getRids("update")) {
+        coll = stream.collect(Collectors.toList());
+      }
 
       Assert.assertEquals(vertices.size(), 1);
       Assert.assertEquals(coll.size(), 1);
@@ -201,7 +212,9 @@ public class LuceneTransactionEmbeddedQueryTest {
       query = "select from C1 where p1 lucene \"update\"";
       vertices = db.command(new OSQLSynchQuery<ODocument>(query)).execute();
 
-      coll = (Collection) index.get("update");
+      try (Stream<ORID> stream = index.getInternal().getRids("update")) {
+        coll = stream.collect(Collectors.toList());
+      }
       Assert.assertEquals(coll.size(), 1);
 
       Assert.assertEquals(vertices.size(), 1);
@@ -251,7 +264,10 @@ public class LuceneTransactionEmbeddedQueryTest {
 
       String query = "select from C1 where p1 lucene \"abc\"";
       List<ODocument> vertices = db.command(new OSQLSynchQuery<ODocument>(query)).execute();
-      Collection coll = (Collection) index.get("abc");
+      Collection coll;
+      try (Stream<ORID> stream = index.getInternal().getRids("abc")) {
+        coll = stream.collect(Collectors.toList());
+      }
 
       Assert.assertEquals(1, vertices.size());
       Assert.assertEquals(1, coll.size());
@@ -270,7 +286,9 @@ public class LuceneTransactionEmbeddedQueryTest {
 
       query = "select from C1 where p1 lucene \"removed\" ";
       vertices = db.command(new OSQLSynchQuery<ODocument>(query)).execute();
-      coll = (Collection) index.get("removed");
+      try (Stream<ORID> stream = index.getInternal().getRids("removed")) {
+        coll = stream.collect(Collectors.toList());
+      }
 
       Assert.assertEquals(1, vertices.size());
       Assert.assertEquals(1, coll.size());

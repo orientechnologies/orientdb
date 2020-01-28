@@ -13,12 +13,13 @@
  *  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  *  * See the License for the specific language governing permissions and
  *  * limitations under the License.
- *  
+ *
  */
 
 package com.orientechnologies.lucene.tests;
 
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
@@ -30,6 +31,8 @@ import org.junit.Before;
 import org.junit.Test;
 
 import java.util.Collection;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * Created by enricorisa on 28/06/14.
@@ -57,7 +60,10 @@ public class OLuceneInsertUpdateTest extends OLuceneBaseTest {
 
     db.save(doc);
     OIndex idx = schema.getClass("City").getClassIndex("City.name");
-    Collection<?> coll = (Collection<?>) idx.get("Rome");
+    Collection<?> coll;
+    try (Stream<ORID> stream = idx.getInternal().getRids("Rome")) {
+      coll = stream.collect(Collectors.toList());
+    }
     Assert.assertEquals(coll.size(), 1);
 
     OIdentifiable next = (OIdentifiable) coll.iterator().next();
@@ -67,9 +73,13 @@ public class OLuceneInsertUpdateTest extends OLuceneBaseTest {
     doc.field("name", "London");
     db.save(doc);
 
-    coll = (Collection<?>) idx.get("Rome");
+    try (Stream<ORID> stream = idx.getInternal().getRids("Rome")) {
+      coll = stream.collect(Collectors.toList());
+    }
     Assert.assertEquals(coll.size(), 0);
-    coll = (Collection<?>) idx.get("London");
+    try (Stream<ORID> stream = idx.getInternal().getRids("London")) {
+      coll = stream.collect(Collectors.toList());
+    }
     Assert.assertEquals(coll.size(), 1);
 
     next = (OIdentifiable) coll.iterator().next();
@@ -79,11 +89,18 @@ public class OLuceneInsertUpdateTest extends OLuceneBaseTest {
     doc.field("name", "Berlin");
     db.save(doc);
 
-    coll = (Collection<?>) idx.get("Rome");
+    try (Stream<ORID> stream = idx.getInternal().getRids("Rome")) {
+      coll = stream.collect(Collectors.toList());
+    }
     Assert.assertEquals(coll.size(), 0);
-    coll = (Collection<?>) idx.get("London");
+    try (Stream<ORID> stream = idx.getInternal().getRids("London")) {
+      coll = stream.collect(Collectors.toList());
+    }
+
     Assert.assertEquals(coll.size(), 0);
-    coll = (Collection<?>) idx.get("Berlin");
+    try (Stream<ORID> stream = idx.getInternal().getRids("Berlin")) {
+      coll = stream.collect(Collectors.toList());
+    }
     Assert.assertEquals(coll.size(), 1);
 
   }

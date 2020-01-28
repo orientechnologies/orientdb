@@ -25,6 +25,7 @@ import com.orientechnologies.orient.core.db.OrientDBConfig;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.engine.local.OEngineLocalPaginated;
 import com.orientechnologies.orient.core.engine.memory.OEngineMemory;
+import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.intent.OIntentMassiveInsert;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
@@ -33,6 +34,9 @@ import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import org.assertj.core.api.Assertions;
 import org.junit.Test;
+
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * Created by enricorisa on 28/06/14.
@@ -158,7 +162,9 @@ public class LuceneInsertMultithreadTest {
       OIndex idx = schema.getClass("City").getClassIndex("City.name");
 
       for (int i = 0; i < cycle; i++) {
-        idx.get("Rome");
+        try (Stream<ORID> stream = idx.getInternal().getRids("Rome")) {
+          stream.collect(Collectors.toList());
+        }
       }
 
     }

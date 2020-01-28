@@ -1,6 +1,7 @@
 package com.orientechnologies.lucene.tests;
 
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
+import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
@@ -12,8 +13,8 @@ import org.junit.Before;
 import org.junit.Test;
 
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.List;
+import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -143,10 +144,18 @@ public class OLuceneRangeTest extends OLuceneBaseTest {
         .getIndex((ODatabaseDocumentInternal) db, "Person.composite");
 
     //name and age range
-    assertThat((Collection) index.get("name:luke  age:[5 TO 6]")).hasSize(2);
-    assertThat((Collection) index.get("date:[" + fiveDaysAgo + " TO " + today + "]")).hasSize(5);
-    assertThat((Collection) index.get("+age:[4 TO 7]  +date:[" + fiveDaysAgo + " TO " + today + "]")).hasSize(2);
-    assertThat((Collection) index.get("*:*")).hasSize(11);
+    try (Stream<ORID> stream = index.getInternal().getRids("name:luke  age:[5 TO 6]")) {
+      assertThat(stream.count()).isEqualTo(2);
+    }
+    try (Stream<ORID> stream = index.getInternal().getRids("date:[" + fiveDaysAgo + " TO " + today + "]")) {
+      assertThat(stream.count()).isEqualTo(5);
+    }
+    try (Stream<ORID> stream = index.getInternal().getRids("+age:[4 TO 7]  +date:[" + fiveDaysAgo + " TO " + today + "]")) {
+      assertThat(stream.count()).isEqualTo(2);
+    }
+    try (Stream<ORID> stream = index.getInternal().getRids("*:*")) {
+      assertThat(stream.count()).isEqualTo(11);
+    }
   }
 
 }

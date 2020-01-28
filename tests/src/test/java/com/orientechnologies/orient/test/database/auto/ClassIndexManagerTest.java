@@ -1,6 +1,7 @@
 package com.orientechnologies.orient.test.database.auto;
 
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
+import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.index.OCompositeKey;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.index.OIndexDefinition;
@@ -16,6 +17,7 @@ import org.testng.annotations.Optional;
 import org.testng.annotations.*;
 
 import java.util.*;
+import java.util.stream.Stream;
 
 @Test(groups = { "index" })
 public class ClassIndexManagerTest extends DocumentDBBaseTest {
@@ -98,9 +100,11 @@ public class ClassIndexManagerTest extends DocumentDBBaseTest {
 
     if (!((ODatabaseDocumentInternal) database).getStorage().isRemote()) {
       Assert.assertEquals(
-          database.getMetadata().getIndexManagerInternal().getIndex(database, "classIndexManagerTestClass.prop1").getInternal().size(), 0);
+          database.getMetadata().getIndexManagerInternal().getIndex(database, "classIndexManagerTestClass.prop1").getInternal()
+              .size(), 0);
       Assert.assertEquals(
-          database.getMetadata().getIndexManagerInternal().getIndex(database, "classIndexManagerTestClass.prop2").getInternal().size(), 0);
+          database.getMetadata().getIndexManagerInternal().getIndex(database, "classIndexManagerTestClass.prop2").getInternal()
+              .size(), 0);
     }
 
     super.afterMethod();
@@ -321,17 +325,23 @@ public class ClassIndexManagerTest extends DocumentDBBaseTest {
     final OClass oSuperClass = schema.getClass("classIndexManagerTestSuperClass");
 
     final OIndex propOneIndex = oClass.getClassIndex("classIndexManagerTestClass.prop1");
-    Assert.assertNotNull(propOneIndex.get("a"));
+    try (Stream<ORID> stream = propOneIndex.getInternal().getRids("a")) {
+      Assert.assertTrue(stream.findFirst().isPresent());
+    }
     Assert.assertEquals(propOneIndex.getInternal().size(), 1);
 
     final OIndex compositeIndex = oClass.getClassIndex("classIndexManagerComposite");
 
     final OIndexDefinition compositeIndexDefinition = compositeIndex.getDefinition();
-    Assert.assertNotNull(compositeIndex.get(compositeIndexDefinition.createValue("a", 1)));
+    try (Stream<ORID> rids = compositeIndex.getInternal().getRids(compositeIndexDefinition.createValue("a", 1))) {
+      Assert.assertTrue(rids.findFirst().isPresent());
+    }
     Assert.assertEquals(compositeIndex.getInternal().size(), 1);
 
     final OIndex propZeroIndex = oSuperClass.getClassIndex("classIndexManagerTestSuperClass.prop0");
-    Assert.assertNotNull(propZeroIndex.get("x"));
+    try (Stream<ORID> stream = propZeroIndex.getInternal().getRids("x")) {
+      Assert.assertTrue(stream.findFirst().isPresent());
+    }
     Assert.assertEquals(propZeroIndex.getInternal().size(), 1);
   }
 
@@ -429,9 +439,13 @@ public class ClassIndexManagerTest extends DocumentDBBaseTest {
     Assert.assertEquals(compositeIndex.getInternal().size(), 1);
     Assert.assertEquals(propZeroIndex.getInternal().size(), 1);
 
-    Assert.assertNotNull(propZeroIndex.get("y"));
-    Assert.assertNotNull(propOneIndex.get("a"));
-    Assert.assertNotNull(compositeIndex.get(compositeIndexDefinition.createValue("a", 2)));
+    try (Stream<ORID> stream = propZeroIndex.getInternal().getRids("y")) {
+      Assert.assertTrue(stream.findFirst().isPresent());
+    }
+    try (Stream<ORID> stream = propOneIndex.getInternal().getRids("a")) {
+      Assert.assertTrue(stream.findAny().isPresent());
+    }
+    Assert.assertTrue(compositeIndex.getInternal().getRids(compositeIndexDefinition.createValue("a", 2)).findAny().isPresent());
   }
 
   public void testUpdateDocumentIndexRecordUpdatedFromNullField() {
@@ -459,8 +473,12 @@ public class ClassIndexManagerTest extends DocumentDBBaseTest {
     Assert.assertEquals(propOneIndex.getInternal().size(), 1);
     Assert.assertEquals(compositeIndex.getInternal().size(), 1);
 
-    Assert.assertNotNull(propOneIndex.get("a"));
-    Assert.assertNotNull(compositeIndex.get(compositeIndexDefinition.createValue("a", 2)));
+    try (Stream<ORID> stream = propOneIndex.getInternal().getRids("a")) {
+      Assert.assertTrue(stream.findAny().isPresent());
+    }
+    try (Stream<ORID> stream = compositeIndex.getInternal().getRids(compositeIndexDefinition.createValue("a", 2))) {
+      Assert.assertNotNull(stream.findFirst().isPresent());
+    }
   }
 
   public void testListUpdate() {
@@ -483,8 +501,12 @@ public class ClassIndexManagerTest extends DocumentDBBaseTest {
     doc.save();
 
     Assert.assertEquals(propFourIndex.getInternal().size(), 2);
-    Assert.assertNotNull(propFourIndex.get("value1"));
-    Assert.assertNotNull(propFourIndex.get("value2"));
+    try (Stream<ORID> stream = propFourIndex.getInternal().getRids("value1")) {
+      Assert.assertTrue(stream.findFirst().isPresent());
+    }
+    try (Stream<ORID> stream = propFourIndex.getInternal().getRids("value2")) {
+      Assert.assertTrue(stream.findAny().isPresent());
+    }
 
     List<String> trackedList = doc.field("prop4");
     trackedList.set(0, "value3");
@@ -499,9 +521,16 @@ public class ClassIndexManagerTest extends DocumentDBBaseTest {
     doc.save();
 
     Assert.assertEquals(propFourIndex.getInternal().size(), 3);
-    Assert.assertNotNull(propFourIndex.get("value3"));
-    Assert.assertNotNull(propFourIndex.get("value4"));
-    Assert.assertNotNull(propFourIndex.get("value5"));
+    try (Stream<ORID> stream = propFourIndex.getInternal().getRids("value3")) {
+      Assert.assertTrue(stream.findAny().isPresent());
+    }
+    try (Stream<ORID> stream = propFourIndex.getInternal().getRids("value4")) {
+      Assert.assertTrue(stream.findAny().isPresent());
+    }
+
+    try (Stream<ORID> stream = propFourIndex.getInternal().getRids("value5")) {
+      Assert.assertTrue(stream.findAny().isPresent());
+    }
   }
 
   public void testMapUpdate() {
@@ -525,8 +554,12 @@ public class ClassIndexManagerTest extends DocumentDBBaseTest {
     doc.save();
 
     Assert.assertEquals(propFiveIndexKey.getInternal().size(), 2);
-    Assert.assertNotNull(propFiveIndexKey.get("key1"));
-    Assert.assertNotNull(propFiveIndexKey.get("key2"));
+    try (Stream<ORID> stream = propFiveIndexKey.getInternal().getRids("key1")) {
+      Assert.assertTrue(stream.findAny().isPresent());
+    }
+    try (Stream<ORID> stream = propFiveIndexKey.getInternal().getRids("key2")) {
+      Assert.assertTrue(stream.findAny().isPresent());
+    }
 
     Map<String, String> trackedMap = doc.field("prop5");
     trackedMap.put("key3", "value3");
@@ -544,17 +577,35 @@ public class ClassIndexManagerTest extends DocumentDBBaseTest {
     doc.save();
 
     Assert.assertEquals(propFiveIndexKey.getInternal().size(), 5);
-    Assert.assertNotNull(propFiveIndexKey.get("key1"));
-    Assert.assertNotNull(propFiveIndexKey.get("key3"));
-    Assert.assertNotNull(propFiveIndexKey.get("key4"));
-    Assert.assertNotNull(propFiveIndexKey.get("key6"));
-    Assert.assertNotNull(propFiveIndexKey.get("key7"));
+    try (Stream<ORID> stream = propFiveIndexKey.getInternal().getRids("key1")) {
+      Assert.assertTrue(stream.findAny().isPresent());
+    }
+    try (Stream<ORID> stream = propFiveIndexKey.getInternal().getRids("key3")) {
+      Assert.assertTrue(stream.findAny().isPresent());
+    }
+    try (Stream<ORID> stream = propFiveIndexKey.getInternal().getRids("key4")) {
+      Assert.assertTrue(stream.findAny().isPresent());
+    }
+    try (Stream<ORID> stream = propFiveIndexKey.getInternal().getRids("key6")) {
+      Assert.assertTrue(stream.findAny().isPresent());
+    }
+    try (Stream<ORID> stream = propFiveIndexKey.getInternal().getRids("key7")) {
+      Assert.assertTrue(stream.findAny().isPresent());
+    }
 
     Assert.assertEquals(propFiveIndexValue.getInternal().size(), 4);
-    Assert.assertNotNull(propFiveIndexValue.get("value5"));
-    Assert.assertNotNull(propFiveIndexValue.get("value3"));
-    Assert.assertNotNull(propFiveIndexValue.get("value7"));
-    Assert.assertNotNull(propFiveIndexValue.get("value6"));
+    try (Stream<ORID> stream = propFiveIndexValue.getInternal().getRids("value5")) {
+      Assert.assertTrue(stream.findAny().isPresent());
+    }
+    try (Stream<ORID> stream = propFiveIndexValue.getInternal().getRids("value3")) {
+      Assert.assertTrue(stream.findAny().isPresent());
+    }
+    try (Stream<ORID> stream = propFiveIndexValue.getInternal().getRids("value7")) {
+      Assert.assertTrue(stream.findAny().isPresent());
+    }
+    try (Stream<ORID> stream = propFiveIndexValue.getInternal().getRids("value6")) {
+      Assert.assertTrue(stream.findAny().isPresent());
+    }
 
   }
 
@@ -578,8 +629,12 @@ public class ClassIndexManagerTest extends DocumentDBBaseTest {
     doc.save();
 
     Assert.assertEquals(propSixIndex.getInternal().size(), 2);
-    Assert.assertNotNull(propSixIndex.get("value1"));
-    Assert.assertNotNull(propSixIndex.get("value2"));
+    try (Stream<ORID> stream = propSixIndex.getInternal().getRids("value1")) {
+      Assert.assertTrue(stream.findAny().isPresent());
+    }
+    try (Stream<ORID> stream = propSixIndex.getInternal().getRids("value2")) {
+      Assert.assertTrue(stream.findAny().isPresent());
+    }
 
     Set<String> trackedSet = doc.field("prop6");
 
@@ -593,8 +648,12 @@ public class ClassIndexManagerTest extends DocumentDBBaseTest {
     doc.save();
 
     Assert.assertEquals(propSixIndex.getInternal().size(), 2);
-    Assert.assertNotNull(propSixIndex.get("value1"));
-    Assert.assertNotNull(propSixIndex.get("value5"));
+    try (Stream<ORID> stream = propSixIndex.getInternal().getRids("value1")) {
+      Assert.assertTrue(stream.findAny().isPresent());
+    }
+    try (Stream<ORID> stream = propSixIndex.getInternal().getRids("value5")) {
+      Assert.assertTrue(stream.findAny().isPresent());
+    }
   }
 
   public void testListDelete() {
@@ -617,8 +676,12 @@ public class ClassIndexManagerTest extends DocumentDBBaseTest {
     doc.save();
 
     Assert.assertEquals(propFourIndex.getInternal().size(), 2);
-    Assert.assertNotNull(propFourIndex.get("value1"));
-    Assert.assertNotNull(propFourIndex.get("value2"));
+    try (Stream<ORID> stream = propFourIndex.getInternal().getRids("value1")) {
+      Assert.assertTrue(stream.findAny().isPresent());
+    }
+    try (Stream<ORID> stream = propFourIndex.getInternal().getRids("value2")) {
+      Assert.assertTrue(stream.findAny().isPresent());
+    }
 
     List<String> trackedList = doc.field("prop4");
     trackedList.set(0, "value3");
@@ -633,9 +696,15 @@ public class ClassIndexManagerTest extends DocumentDBBaseTest {
     doc.save();
 
     Assert.assertEquals(propFourIndex.getInternal().size(), 3);
-    Assert.assertNotNull(propFourIndex.get("value3"));
-    Assert.assertNotNull(propFourIndex.get("value4"));
-    Assert.assertNotNull(propFourIndex.get("value5"));
+    try (Stream<ORID> stream = propFourIndex.getInternal().getRids("value3")) {
+      Assert.assertTrue(stream.findAny().isPresent());
+    }
+    try (Stream<ORID> stream = propFourIndex.getInternal().getRids("value4")) {
+      Assert.assertTrue(stream.findAny().isPresent());
+    }
+    try (Stream<ORID> stream = propFourIndex.getInternal().getRids("value5")) {
+      Assert.assertTrue(stream.findAny().isPresent());
+    }
 
     trackedList = doc.field("prop4");
     trackedList.remove("value3");
@@ -668,8 +737,12 @@ public class ClassIndexManagerTest extends DocumentDBBaseTest {
     doc.save();
 
     Assert.assertEquals(propFiveIndexKey.getInternal().size(), 2);
-    Assert.assertNotNull(propFiveIndexKey.get("key1"));
-    Assert.assertNotNull(propFiveIndexKey.get("key2"));
+    try (Stream<ORID> stream = propFiveIndexKey.getInternal().getRids("key1")) {
+      Assert.assertTrue(stream.findAny().isPresent());
+    }
+    try (Stream<ORID> stream = propFiveIndexKey.getInternal().getRids("key2")) {
+      Assert.assertTrue(stream.findAny().isPresent());
+    }
 
     Map<String, String> trackedMap = doc.field("prop5");
     trackedMap.put("key3", "value3");
@@ -687,17 +760,35 @@ public class ClassIndexManagerTest extends DocumentDBBaseTest {
     doc.save();
 
     Assert.assertEquals(propFiveIndexKey.getInternal().size(), 5);
-    Assert.assertNotNull(propFiveIndexKey.get("key1"));
-    Assert.assertNotNull(propFiveIndexKey.get("key3"));
-    Assert.assertNotNull(propFiveIndexKey.get("key4"));
-    Assert.assertNotNull(propFiveIndexKey.get("key6"));
-    Assert.assertNotNull(propFiveIndexKey.get("key7"));
+    try (Stream<ORID> stream = propFiveIndexKey.getInternal().getRids("key1")) {
+      Assert.assertTrue(stream.findAny().isPresent());
+    }
+    try (Stream<ORID> stream = propFiveIndexKey.getInternal().getRids("key3")) {
+      Assert.assertTrue(stream.findAny().isPresent());
+    }
+    try (Stream<ORID> stream = propFiveIndexKey.getInternal().getRids("key4")) {
+      Assert.assertTrue(stream.findAny().isPresent());
+    }
+    try (Stream<ORID> stream = propFiveIndexKey.getInternal().getRids("key6")) {
+      Assert.assertTrue(stream.findAny().isPresent());
+    }
+    try (Stream<ORID> stream = propFiveIndexKey.getInternal().getRids("key7")) {
+      Assert.assertTrue(stream.findAny().isPresent());
+    }
 
     Assert.assertEquals(propFiveIndexValue.getInternal().size(), 4);
-    Assert.assertNotNull(propFiveIndexValue.get("value5"));
-    Assert.assertNotNull(propFiveIndexValue.get("value3"));
-    Assert.assertNotNull(propFiveIndexValue.get("value7"));
-    Assert.assertNotNull(propFiveIndexValue.get("value6"));
+    try (Stream<ORID> stream = propFiveIndexValue.getInternal().getRids("value5")) {
+      Assert.assertTrue(stream.findAny().isPresent());
+    }
+    try (Stream<ORID> stream = propFiveIndexValue.getInternal().getRids("value3")) {
+      Assert.assertTrue(stream.findAny().isPresent());
+    }
+    try (Stream<ORID> stream = propFiveIndexValue.getInternal().getRids("value7")) {
+      Assert.assertTrue(stream.findAny().isPresent());
+    }
+    try (Stream<ORID> stream = propFiveIndexValue.getInternal().getRids("value6")) {
+      Assert.assertTrue(stream.findAny().isPresent());
+    }
 
     trackedMap = doc.field("prop5");
 
@@ -733,8 +824,12 @@ public class ClassIndexManagerTest extends DocumentDBBaseTest {
     doc.save();
 
     Assert.assertEquals(propSixIndex.getInternal().size(), 2);
-    Assert.assertNotNull(propSixIndex.get("value1"));
-    Assert.assertNotNull(propSixIndex.get("value2"));
+    try (Stream<ORID> stream = propSixIndex.getInternal().getRids("value1")) {
+      Assert.assertTrue(stream.findAny().isPresent());
+    }
+    try (Stream<ORID> stream = propSixIndex.getInternal().getRids("value2")) {
+      Assert.assertTrue(stream.findAny().isPresent());
+    }
 
     Set<String> trackedSet = doc.field("prop6");
 
@@ -748,8 +843,12 @@ public class ClassIndexManagerTest extends DocumentDBBaseTest {
     doc.save();
 
     Assert.assertEquals(propSixIndex.getInternal().size(), 2);
-    Assert.assertNotNull(propSixIndex.get("value1"));
-    Assert.assertNotNull(propSixIndex.get("value5"));
+    try (Stream<ORID> stream = propSixIndex.getInternal().getRids("value1")) {
+      Assert.assertTrue(stream.findAny().isPresent());
+    }
+    try (Stream<ORID> stream = propSixIndex.getInternal().getRids("value5")) {
+      Assert.assertTrue(stream.findAny().isPresent());
+    }
 
     trackedSet = doc.field("prop6");
     trackedSet.remove("value1");
@@ -912,8 +1011,12 @@ public class ClassIndexManagerTest extends DocumentDBBaseTest {
         .getIndex(database, "classIndexManagerTestIndexValueAndCollection");
     Assert.assertEquals(index.getInternal().size(), 2);
 
-    Assert.assertEquals(index.get(new OCompositeKey("test1", 1)), doc.getIdentity());
-    Assert.assertEquals(index.get(new OCompositeKey("test1", 2)), doc.getIdentity());
+    try (Stream<ORID> stream = index.getInternal().getRids(new OCompositeKey("test1", 1))) {
+      Assert.assertEquals(stream.findAny().orElse(null), doc.getIdentity());
+    }
+    try (Stream<ORID> stream = index.getInternal().getRids(new OCompositeKey("test1", 2))) {
+      Assert.assertEquals(stream.findAny().orElse(null), doc.getIdentity());
+    }
 
     doc.delete();
 
@@ -972,8 +1075,12 @@ public class ClassIndexManagerTest extends DocumentDBBaseTest {
 
     doc.save();
 
-    Assert.assertEquals(index.get(new OCompositeKey("test2", 1)), doc.getIdentity());
-    Assert.assertEquals(index.get(new OCompositeKey("test2", 2)), doc.getIdentity());
+    try (Stream<ORID> stream = index.getInternal().getRids(new OCompositeKey("test2", 1))) {
+      Assert.assertEquals(stream.findAny().orElse(null), doc.getIdentity());
+    }
+    try (Stream<ORID> stream = index.getInternal().getRids(new OCompositeKey("test2", 2))) {
+      Assert.assertEquals(stream.findAny().orElse(null), doc.getIdentity());
+    }
 
     Assert.assertEquals(index.getInternal().size(), 2);
 
@@ -1000,8 +1107,12 @@ public class ClassIndexManagerTest extends DocumentDBBaseTest {
 
     doc.save();
 
-    Assert.assertEquals(index.get(new OCompositeKey("test1", 1)), doc.getIdentity());
-    Assert.assertEquals(index.get(new OCompositeKey("test1", 3)), doc.getIdentity());
+    try (Stream<ORID> stream = index.getInternal().getRids(new OCompositeKey("test1", 1))) {
+      Assert.assertEquals(stream.findAny().orElse(null), doc.getIdentity());
+    }
+    try (Stream<ORID> stream = index.getInternal().getRids(new OCompositeKey("test1", 3))) {
+      Assert.assertEquals(stream.findAny().orElse(null), doc.getIdentity());
+    }
 
     Assert.assertEquals(index.getInternal().size(), 2);
 
@@ -1033,10 +1144,18 @@ public class ClassIndexManagerTest extends DocumentDBBaseTest {
 
     doc.save();
 
-    Assert.assertEquals(index.get(new OCompositeKey("test1", 2)), doc.getIdentity());
-    Assert.assertEquals(index.get(new OCompositeKey("test1", 3)), doc.getIdentity());
-    Assert.assertEquals(index.get(new OCompositeKey("test1", 4)), doc.getIdentity());
-    Assert.assertEquals(index.get(new OCompositeKey("test1", 5)), doc.getIdentity());
+    try (Stream<ORID> stream = index.getInternal().getRids(new OCompositeKey("test1", 2))) {
+      Assert.assertEquals(stream.findAny().orElse(null), doc.getIdentity());
+    }
+    try (Stream<ORID> stream = index.getInternal().getRids(new OCompositeKey("test1", 3))) {
+      Assert.assertEquals(stream.findAny().orElse(null), doc.getIdentity());
+    }
+    try (Stream<ORID> stream = index.getInternal().getRids(new OCompositeKey("test1", 4))) {
+      Assert.assertEquals(stream.findAny().orElse(null), doc.getIdentity());
+    }
+    try (Stream<ORID> stream = index.getInternal().getRids(new OCompositeKey("test1", 5))) {
+      Assert.assertEquals(stream.findAny().orElse(null), doc.getIdentity());
+    }
 
     Assert.assertEquals(index.getInternal().size(), 4);
 
@@ -1072,10 +1191,18 @@ public class ClassIndexManagerTest extends DocumentDBBaseTest {
 
     Assert.assertEquals(index.getInternal().size(), 4);
 
-    Assert.assertEquals(index.get(new OCompositeKey("test2", 2)), doc.getIdentity());
-    Assert.assertEquals(index.get(new OCompositeKey("test2", 3)), doc.getIdentity());
-    Assert.assertEquals(index.get(new OCompositeKey("test2", 4)), doc.getIdentity());
-    Assert.assertEquals(index.get(new OCompositeKey("test2", 5)), doc.getIdentity());
+    try (Stream<ORID> stream = index.getInternal().getRids(new OCompositeKey("test2", 2))) {
+      Assert.assertEquals(stream.findAny().orElse(null), doc.getIdentity());
+    }
+    try (Stream<ORID> stream = index.getInternal().getRids(new OCompositeKey("test2", 3))) {
+      Assert.assertEquals(stream.findAny().orElse(null), doc.getIdentity());
+    }
+    try (Stream<ORID> stream = index.getInternal().getRids(new OCompositeKey("test2", 4))) {
+      Assert.assertEquals(stream.findAny().orElse(null), doc.getIdentity());
+    }
+    try (Stream<ORID> stream = index.getInternal().getRids(new OCompositeKey("test2", 5))) {
+      Assert.assertEquals(stream.findAny().orElse(null), doc.getIdentity());
+    }
 
     doc.delete();
 

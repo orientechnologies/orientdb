@@ -19,6 +19,7 @@
 package com.orientechnologies.lucene.test;
 
 import com.orientechnologies.orient.core.command.script.OCommandScript;
+import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
@@ -32,6 +33,7 @@ import org.junit.Test;
 
 import java.io.InputStream;
 import java.util.List;
+import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -141,6 +143,8 @@ public class LuceneMultiFieldTest extends BaseLuceneTest {
 
     //nidex api
     final OIndex index = db.getMetadata().getIndexManagerInternal().getIndex(db, "Item.i_lucene");
-    assertThat(index.get("\"(Title:test )\"")).isNotNull();
+    try (Stream<ORID> stream = index.getInternal().getRids("\"(Title:test )\"")) {
+      assertThat(stream.findAny().isPresent()).isTrue();
+    }
   }
 }

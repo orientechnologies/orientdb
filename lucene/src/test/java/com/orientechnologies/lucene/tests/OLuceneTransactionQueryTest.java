@@ -18,6 +18,7 @@
 
 package com.orientechnologies.lucene.tests;
 
+import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
@@ -35,6 +36,7 @@ import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -106,7 +108,10 @@ public class OLuceneTransactionQueryTest extends OLuceneBaseTest {
 
     vertices = db.query(query);
 
-    Collection coll = (Collection) index.get("abc");
+    Collection coll;
+    try (Stream<ORID> stream = index.getInternal().getRids("abc")) {
+      coll = stream.collect(Collectors.toList());
+    }
 
     assertThat(coll).hasSize(0);
     assertThat(vertices).hasSize(0);
@@ -162,9 +167,15 @@ public class OLuceneTransactionQueryTest extends OLuceneBaseTest {
 
     vertices = db.command(query);
 
-    List<OResult> results = vertices.stream().collect(Collectors.toList());
+    List<OResult> results;
+    try (Stream<OResult> resultStream = vertices.stream()) {
+      results = resultStream.collect(Collectors.toList());
+    }
 
-    Collection coll = (Collection) index.get("update");
+    Collection coll;
+    try (Stream<ORID> stream = index.getInternal().getRids("update")) {
+      coll = stream.collect(Collectors.toList());
+    }
 
     assertThat(results).hasSize(1);
     assertThat(coll).hasSize(1);
@@ -184,7 +195,9 @@ public class OLuceneTransactionQueryTest extends OLuceneBaseTest {
 
     query = "select from C1 where search_fields(['p1'], \"removed\")=true ";
     vertices = db.command(query);
-    coll = (Collection) index.get("removed");
+    try (Stream<ORID> stream = index.getInternal().getRids("removed")) {
+      coll = stream.collect(Collectors.toList());
+    }
 
     assertThat(vertices).hasSize(1);
 
@@ -195,7 +208,9 @@ public class OLuceneTransactionQueryTest extends OLuceneBaseTest {
     query = "select from C1 where search_fields(['p1'], \"update\")=true ";
     vertices = db.command(query);
 
-    coll = (Collection) index.get("update");
+    try (Stream<ORID> stream = index.getInternal().getRids("update")) {
+      coll = stream.collect(Collectors.toList());
+    }
 
     assertThat(vertices).hasSize(1);
     assertThat(coll).hasSize(1);
@@ -236,7 +251,10 @@ public class OLuceneTransactionQueryTest extends OLuceneBaseTest {
 
     String query = "select from C1 where search_fields(['p1'], \"abc\")=true ";
     OResultSet vertices = db.command(query);
-    Collection coll = (Collection) index.get("abc");
+    Collection coll;
+    try (Stream<ORID> stream = index.getInternal().getRids("abc")) {
+      coll = stream.collect(Collectors.toList());
+    }
 
     assertThat(vertices).hasSize(1);
     Assert.assertEquals(1, coll.size());
@@ -255,7 +273,9 @@ public class OLuceneTransactionQueryTest extends OLuceneBaseTest {
 
     query = "select from C1 where search_fields(['p1'], \"removed\")=true ";
     vertices = db.command(query);
-    coll = (Collection) index.get("removed");
+    try (Stream<ORID> stream = index.getInternal().getRids("removed")) {
+      coll = stream.collect(Collectors.toList());
+    }
 
     assertThat(vertices).hasSize(1);
     Assert.assertEquals(coll.size(), 1);

@@ -13,7 +13,7 @@
  *  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  *  * See the License for the specific language governing permissions and
  *  * limitations under the License.
- *  
+ *
  */
 
 package com.orientechnologies.lucene.tests;
@@ -32,6 +32,8 @@ import org.junit.Test;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -70,9 +72,11 @@ public class OLuceneListIndexingTest extends OLuceneBaseTest {
 
     db.save(doc);
 
-    OIndex tagsIndex = schema.getClass("City")
-        .getClassIndex("City.tags");
-    Collection<?> coll = (Collection<?>) tagsIndex.get("Sunny");
+    OIndex tagsIndex = schema.getClass("City").getClassIndex("City.tags");
+    Collection<?> coll;
+    try (Stream<ORID> stream = tagsIndex.getInternal().getRids("Sunny")) {
+      coll = stream.collect(Collectors.toList());
+    }
     assertThat(coll).hasSize(1);
 
     doc = db.load((ORID) coll.iterator().next());
@@ -85,7 +89,9 @@ public class OLuceneListIndexingTest extends OLuceneBaseTest {
     doc.field("tags", Arrays.asList("Beautiful", "Touristic", "Sunny"));
     db.save(doc);
 
-    coll = (Collection<?>) tagsIndex.get("Sunny");
+    try (Stream<ORID> stream = tagsIndex.getInternal().getRids("Sunny")) {
+      coll = stream.collect(Collectors.toList());
+    }
     assertThat(coll).hasSize(2);
 
     //modify london: it is rainy
@@ -95,13 +101,19 @@ public class OLuceneListIndexingTest extends OLuceneBaseTest {
 
     db.save(doc);
 
-    coll = (Collection<?>) tagsIndex.get("Rainy");
+    try (Stream<ORID> stream = tagsIndex.getInternal().getRids("Rainy")) {
+      coll = stream.collect(Collectors.toList());
+    }
     assertThat(coll).hasSize(1);
 
-    coll = (Collection<?>) tagsIndex.get("Beautiful");
+    try (Stream<ORID> stream = tagsIndex.getInternal().getRids("Beautiful")) {
+      coll = stream.collect(Collectors.toList());
+    }
     assertThat(coll).hasSize(2);
 
-    coll = (Collection<?>) tagsIndex.get("Sunny");
+    try (Stream<ORID> stream = tagsIndex.getInternal().getRids("Sunny")) {
+      coll = stream.collect(Collectors.toList());
+    }
     assertThat(coll).hasSize(1);
 
     OResultSet query = db.query("select from City where search_class('Beautiful') =true ");
@@ -122,7 +134,10 @@ public class OLuceneListIndexingTest extends OLuceneBaseTest {
 
     db.save(doc);
     OIndex idx = schema.getClass("Person").getClassIndex("Person.name_tags");
-    Collection<?> coll = (Collection<?>) idx.get("Enrico");
+    Collection<?> coll;
+    try (Stream<ORID> stream = idx.getInternal().getRids("Enrico")) {
+      coll = stream.collect(Collectors.toList());
+    }
 
     assertThat(coll).hasSize(3);
 
@@ -132,7 +147,9 @@ public class OLuceneListIndexingTest extends OLuceneBaseTest {
 
     db.save(doc);
 
-    coll = (Collection<?>) idx.get("Jared");
+    try (Stream<ORID> stream = idx.getInternal().getRids("Jared")) {
+      coll = stream.collect(Collectors.toList());
+    }
 
     assertThat(coll).hasSize(2);
 
@@ -143,10 +160,14 @@ public class OLuceneListIndexingTest extends OLuceneBaseTest {
 
     db.save(doc);
 
-    coll = (Collection<?>) idx.get("Funny");
+    try (Stream<ORID> stream = idx.getInternal().getRids("Funny")) {
+      coll = stream.collect(Collectors.toList());
+    }
     assertThat(coll).hasSize(1);
 
-    coll = (Collection<?>) idx.get("Geek");
+    try (Stream<ORID> stream = idx.getInternal().getRids("Geek")) {
+      coll = stream.collect(Collectors.toList());
+    }
     assertThat(coll).hasSize(2);
 
     OResultSet query = db.query("select from Person where search_class('name:Enrico') =true ");

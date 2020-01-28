@@ -15,6 +15,7 @@
 package com.orientechnologies.spatial;
 
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OType;
@@ -29,6 +30,8 @@ import org.junit.Test;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * Created by Enrico Risa on 07/10/15.
@@ -113,7 +116,10 @@ public class LuceneSpatialMemoryTest {
       }).setOperation(SpatialOperation.IsWithin);
       OIndex index = db.getMetadata().getIndexManagerInternal().getIndex(db, "Point.ll");
 
-      Collection coll = (Collection) index.get(oSpatialCompositeKey);
+      Collection coll;
+      try (Stream<ORID> stream = index.getInternal().getRids(oSpatialCompositeKey)) {
+        coll = stream.collect(Collectors.toList());
+      }
       Assert.assertEquals(1, coll.size());
       db.rollback();
 
@@ -177,7 +183,10 @@ public class LuceneSpatialMemoryTest {
 
       OIndex index = db.getMetadata().getIndexManagerInternal().getIndex(db, "Point.ll");
 
-      Collection coll = (Collection) index.get(oSpatialCompositeKey);
+      Collection coll;
+      try (Stream<ORID> stream = index.getInternal().getRids(oSpatialCompositeKey)) {
+        coll = stream.collect(Collectors.toList());
+      }
       Assert.assertEquals(1, coll.size());
 
       db.begin();
@@ -189,7 +198,9 @@ public class LuceneSpatialMemoryTest {
 
       Assert.assertEquals(0, query.size());
 
-      coll = (Collection) index.get(oSpatialCompositeKey);
+      try (Stream<ORID> stream = index.getInternal().getRids(oSpatialCompositeKey)) {
+        coll = stream.collect(Collectors.toList());
+      }
 
       Assert.assertEquals(0, coll.size());
 

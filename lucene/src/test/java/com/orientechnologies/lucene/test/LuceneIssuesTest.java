@@ -1,6 +1,7 @@
 package com.orientechnologies.lucene.test;
 
 import com.orientechnologies.orient.core.command.script.OCommandScript;
+import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
@@ -9,8 +10,8 @@ import org.assertj.core.api.Assertions;
 import org.junit.Test;
 
 import java.io.InputStream;
-import java.util.Collection;
 import java.util.List;
+import java.util.stream.Stream;
 
 /**
  * Created by frank on 27/04/2017.
@@ -25,7 +26,9 @@ public class LuceneIssuesTest extends BaseLuceneTest {
     db.command(new OCommandScript("sql", getScriptFromStream(stream))).execute();
 
     final OIndex index = db.getMetadata().getIndexManagerInternal().getIndex(db, "class_7382_multi");
-    Assertions.assertThat((Collection) index.get("server:206012226875414 AND date:[201703120000 TO  201703120001]")).hasSize(1);
+    try (Stream<ORID> rids = index.getInternal().getRids("server:206012226875414 AND date:[201703120000 TO  201703120001]")) {
+      Assertions.assertThat(rids.count()).isEqualTo(1);
+    }
   }
 
   @Test
@@ -54,7 +57,9 @@ public class LuceneIssuesTest extends BaseLuceneTest {
     db.command(new OCommandScript("sql", getScriptFromStream(stream))).execute();
 
     OIndex index = db.getMetadata().getIndexManagerInternal().getIndex(db, "Item.content");
-    Assertions.assertThat(((Collection) index.get("'Харько~0.2")).size() >= 3).isTrue();
+    try (Stream<ORID> rids = index.getInternal().getRids("'Харько~0.2")) {
+      Assertions.assertThat(rids.count() >= 3).isTrue();
+    }
   }
 
   @Test

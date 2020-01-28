@@ -19,7 +19,7 @@
 package com.orientechnologies.lucene.tests;
 
 import com.orientechnologies.orient.core.command.script.OCommandScript;
-import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
+import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
@@ -29,7 +29,7 @@ import org.junit.Before;
 import org.junit.Test;
 
 import java.io.InputStream;
-import java.util.Collection;
+import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -125,9 +125,10 @@ public class OLuceneMultiFieldTest extends OLuceneBaseTest {
     assertThat(docs).hasSize(1);
     docs.close();
     //index
-    OIndex index = ((ODatabaseDocumentInternal) db).getMetadata().getIndexManagerInternal()
-        .getIndex((ODatabaseDocumentInternal) db, "Item.fulltext");
-    assertThat((Collection) index.get("title:test")).hasSize(1);
+    OIndex index = db.getMetadata().getIndexManagerInternal().getIndex(db, "Item.fulltext");
+    try (Stream<ORID> stream = index.getInternal().getRids("title:test")) {
+      assertThat(stream.count()).isEqualTo(1);
+    }
     docs.close();
   }
 

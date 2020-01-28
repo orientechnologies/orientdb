@@ -18,6 +18,7 @@
 
 package com.orientechnologies.lucene.tests;
 
+import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
@@ -33,6 +34,8 @@ import org.junit.Test;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -98,7 +101,10 @@ public class OLuceneTransactionEmbeddedQueryTest extends OLuceneBaseTest {
 
     vertices = db.command(query);
 
-    Collection coll = (Collection) index.get("abc");
+    Collection coll;
+    try (Stream<ORID> stream = index.getInternal().getRids("abc")) {
+      coll = stream.collect(Collectors.toList());
+    }
 
     assertThat(vertices).hasSize(0);
     Assert.assertEquals(coll.size(), 0);
@@ -147,7 +153,10 @@ public class OLuceneTransactionEmbeddedQueryTest extends OLuceneBaseTest {
 
     vertices = db.command(query);
 
-    Collection coll = (Collection) index.get("update");
+    Collection coll;
+    try (Stream<ORID> stream = index.getInternal().getRids("update")) {
+      coll = stream.collect(Collectors.toList());
+    }
 
     assertThat(vertices).hasSize(1);
     Assert.assertEquals(coll.size(), 2);
@@ -162,7 +171,9 @@ public class OLuceneTransactionEmbeddedQueryTest extends OLuceneBaseTest {
     db.save(doc);
 
     vertices = db.command(query);
-    coll = (Collection) index.get("update");
+    try (Stream<ORID> stream = index.getInternal().getRids("update")) {
+      coll = stream.collect(Collectors.toList());
+    }
 
     assertThat(vertices).hasSize(1);
     Assert.assertEquals(coll.size(), 1);
@@ -170,7 +181,9 @@ public class OLuceneTransactionEmbeddedQueryTest extends OLuceneBaseTest {
 
     vertices = db.command(query);
 
-    coll = (Collection) index.get("update");
+    try (Stream<ORID> stream = index.getInternal().getRids("update")) {
+      coll = stream.collect(Collectors.toList());
+    }
     Assert.assertEquals(coll.size(), 1);
     assertThat(vertices).hasSize(1);
 
@@ -211,7 +224,10 @@ public class OLuceneTransactionEmbeddedQueryTest extends OLuceneBaseTest {
 
     String query = "select from C1 where p1 lucene \"abc\"";
     List<ODocument> vertices = db.command(new OSQLSynchQuery<ODocument>(query)).execute();
-    Collection coll = (Collection) index.get("abc");
+    Collection coll;
+    try (Stream<ORID> stream = index.getInternal().getRids("abc")) {
+      coll = stream.collect(Collectors.toList());
+    }
 
     Assert.assertEquals(vertices.size(), 1);
     Assert.assertEquals(coll.size(), 1);
@@ -230,7 +246,9 @@ public class OLuceneTransactionEmbeddedQueryTest extends OLuceneBaseTest {
 
     query = "select from C1 where p1 lucene \"removed\" ";
     vertices = db.command(new OSQLSynchQuery<ODocument>(query)).execute();
-    coll = (Collection) index.get("removed");
+    try (Stream<ORID> stream = index.getInternal().getRids("removed")) {
+      coll = stream.collect(Collectors.toList());
+    }
 
     Assert.assertEquals(vertices.size(), 1);
     Assert.assertEquals(coll.size(), 1);

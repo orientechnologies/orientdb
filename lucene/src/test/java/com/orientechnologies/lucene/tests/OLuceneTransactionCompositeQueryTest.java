@@ -18,6 +18,7 @@
 
 package com.orientechnologies.lucene.tests;
 
+import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
@@ -31,6 +32,8 @@ import org.junit.Test;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.Iterator;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -93,7 +96,10 @@ public class OLuceneTransactionCompositeQueryTest extends OLuceneBaseTest {
     String query = "select from Foo where name = 'Test' and  SEARCH_CLASS(\"abc\") = true ";
     OResultSet vertices = db.command(query);
 
-    Collection coll = (Collection) index.get("abc");
+    Collection coll;
+    try (Stream<ORID> stream = index.getInternal().getRids("abc")) {
+      coll = stream.collect(Collectors.toList());
+    }
 
     assertThat(vertices).hasSize(0);
 
@@ -142,7 +148,10 @@ public class OLuceneTransactionCompositeQueryTest extends OLuceneBaseTest {
 
     String query = "select from Foo where name = 'Test' and SEARCH_CLASS(\"abc\") =true";
     OResultSet vertices = db.query(query);
-    Collection coll = (Collection) index.get("abc");
+    Collection coll;
+    try (Stream<ORID> stream = index.getInternal().getRids("abc")) {
+      coll = stream.collect(Collectors.toList());
+    }
 
     assertThat(vertices).hasSize(0);
     Assert.assertEquals(coll.size(), 0);
@@ -160,7 +169,10 @@ public class OLuceneTransactionCompositeQueryTest extends OLuceneBaseTest {
     vertices.close();
     query = "select from Foo where name = 'Test' and SEARCH_CLASS(\"removed\")=true ";
     vertices = db.query(query);
-    coll = (Collection) index.get("removed");
+
+    try (Stream<ORID> stream = index.getInternal().getRids("removed")) {
+      coll = stream.collect(Collectors.toList());
+    }
 
     assertThat(vertices).hasSize(1);
     Assert.assertEquals(coll.size(), 1);
@@ -213,7 +225,10 @@ public class OLuceneTransactionCompositeQueryTest extends OLuceneBaseTest {
 
     String query = "select from Foo where name = 'Test' and SEARCH_CLASS(\"abc\")=true ";
     OResultSet vertices = db.query(query);
-    Collection coll = (Collection) index.get("abc");
+    Collection coll;
+    try (Stream<ORID> stream = index.getInternal().getRids("abc")) {
+      coll = stream.collect(Collectors.toList());
+    }
 
     assertThat(vertices).hasSize(1);
     Assert.assertEquals(1, coll.size());
@@ -232,7 +247,9 @@ public class OLuceneTransactionCompositeQueryTest extends OLuceneBaseTest {
     vertices.close();
     query = "select from Foo where name = 'Test' and SEARCH_CLASS(\"removed\" )=true";
     vertices = db.query(query);
-    coll = (Collection) index.get("removed");
+    try (Stream<ORID> stream = index.getInternal().getRids("removed")) {
+      coll = stream.collect(Collectors.toList());
+    }
 
     assertThat(vertices).hasSize(1);
 
