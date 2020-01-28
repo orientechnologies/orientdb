@@ -1792,7 +1792,7 @@ public class OMatchStatementExecutionNewTest {
     db.command(new OCommandSQL("CREATE VERTEX " + clazz + " SET name = 'ccc'")).execute();
     db.command(new OCommandSQL("CREATE VERTEX " + clazz + " SET name = 'ddd'")).execute();
 
-    String query = "MATCH { class: " + clazz + ", as:a} RETURN a.name as name skip 1 limit 2";
+    String query = "MATCH { class: " + clazz + ", as:a} RETURN a.name as name ORDER BY name ASC skip 1 limit 2";
 
     OResultSet result = db.query(query);
 
@@ -2059,7 +2059,6 @@ public class OMatchStatementExecutionNewTest {
     result.close();
   }
 
-
   @Test
   public void testPathTraversal() {
     String clazz = "testPathTraversal";
@@ -2095,7 +2094,6 @@ public class OMatchStatementExecutionNewTest {
     Assert.assertFalse(result.hasNext());
 
     result.close();
-
 
     query = "MATCH { class:" + clazz + ", as:a, where:(name ='a')}.next{as:b}";
     query += " RETURN a.name as a, b.name as b";
