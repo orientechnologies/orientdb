@@ -89,15 +89,10 @@ public class OCachedDatabasePoolFactoryImpl implements OCachedDatabasePoolFactor
     checkForClose();
 
     String key = OSecurityManager.instance().createSHA256(database + username + password);
-    ODatabasePoolInternal pool = getByKey(key);
 
-    if (pool != null) {
+    ODatabasePoolInternal pool = poolCache.get(key);
+    if (pool != null && !pool.isClosed()) {
       return pool;
-    }
-
-    ODatabasePoolInternal db = poolCache.get(key);
-    if (db != null && !db.isClosed()) {
-      return db;
     }
 
     OrientDBConfig config = OrientDBConfig.builder().addConfig(OGlobalConfiguration.DB_POOL_MAX, maxPoolSize).build();
@@ -105,11 +100,11 @@ public class OCachedDatabasePoolFactoryImpl implements OCachedDatabasePoolFactor
     if (parentConfig != null) {
       config.setParent(parentConfig);
     }
-    db = new ODatabasePoolImpl(orientDB, database, username, password, config);
+    pool = new ODatabasePoolImpl(orientDB, database, username, password, config);
 
-    poolCache.put(key, db);
+    poolCache.put(key, pool);
 
-    return db;
+    return pool;
   }
 
   /**
@@ -160,20 +155,6 @@ public class OCachedDatabasePoolFactoryImpl implements OCachedDatabasePoolFactor
     return this;
   }
 
-  /**
-   * Tries to get database pool from cache by given key. If pool exists in cache, but pool is already closed - so remove closed pool
-   * and return null
-   *
-   * @param key key associated with pool
-   * @return database pool or null
-   */
-  private ODatabasePoolInternal getByKey(String key) {
-    ODatabasePoolInternal pool = poolCache.get(key);
-    if (pool != null && pool.isClosed()) {
-      poolCache.remove(key);
-    }
-    return pool;
-  }
 
   /**
    * @throws IllegalStateException if pool factory is closed
