@@ -3,10 +3,7 @@ package com.orientechnologies.orient.core.db;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
+import org.junit.*;
 import org.junit.rules.TestName;
 
 import java.util.List;
@@ -91,6 +88,7 @@ public class OPartitionedDatabasePoolTest {
   @Test
   public void testMultiThread() {
 
+    Assume.assumeTrue(Runtime.getRuntime().availableProcessors() > 1);
     //do a query and assert on other thread
     Runnable acquirer = () -> {
 
@@ -119,7 +117,6 @@ public class OPartitionedDatabasePoolTest {
 
   @Test
   public void shouldUseEncryption() throws Exception {
-
 
     pool.setProperty(STORAGE_ENCRYPTION_METHOD.getKey(), "aes");
     pool.setProperty(STORAGE_ENCRYPTION_KEY.getKey(), "T1JJRU5UREJfSVNfQ09PTA==");
