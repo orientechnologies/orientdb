@@ -107,7 +107,7 @@ public class ODistributedLockManagerRequester implements ODistributedLockManager
             // THE LOCK MANAGER SERVER WENT DOWN DURING THE REQUEST, RETRY WITH ANOTHER LOCK MANAGER SERVER
             ODistributedServerLog.warn(this, manager.getLocalNodeName(), server, ODistributedServerLog.DIRECTION.OUT,
                 "Lock Manager server '%s' went down during the request of locking resource '%s'. Waiting for the election of a new Lock Manager...",
-                server, resource);
+                result, server, resource);
 
             try {
               Thread.sleep(1000);
