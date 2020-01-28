@@ -2,7 +2,9 @@ package com.orientechnologies.common.concur.lock;
 
 import com.orientechnologies.common.exception.OException;
 
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Condition;
@@ -14,6 +16,7 @@ public class OSimpleLockManagerImpl<T> implements OSimpleLockManager<T> {
   private final Lock              lock = new ReentrantLock();
   private final Map<T, Condition> map  = new ConcurrentHashMap<>();
   private final long              timeout;
+  private       Set<T>            resetted;
 
   public OSimpleLockManagerImpl(long timeout) {
     this.timeout = timeout;
@@ -60,8 +63,13 @@ public class OSimpleLockManagerImpl<T> implements OSimpleLockManager<T> {
     lock.lock();
     try {
       Condition c = map.remove(key);
-      assert c != null;
-      c.signalAll();
+      if (c == null) {
+        if (!resetted.remove(key)) {
+          assert c != null;
+        }
+      } else {
+        c.signalAll();
+      }
     } finally {
       lock.unlock();
     }
@@ -71,6 +79,7 @@ public class OSimpleLockManagerImpl<T> implements OSimpleLockManager<T> {
   public void reset() {
     lock.lock();
     try {
+      resetted = new HashSet<>(map.keySet());
       map.entrySet().removeIf((c) -> {
         c.getValue().signalAll();
         return true;
