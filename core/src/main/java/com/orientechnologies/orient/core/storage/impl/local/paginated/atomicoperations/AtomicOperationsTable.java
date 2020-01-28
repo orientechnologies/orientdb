@@ -17,8 +17,6 @@ public class AtomicOperationsTable {
   private final    int     tableCompactionLimit;
   private volatile boolean scheduleTableCompaction;
 
-  private final ConcurrentHashMap<Long, StackTraceElement[]> idTxMap = new ConcurrentHashMap<>();
-
   public AtomicOperationsTable(final int tableCompactionLimit, final long idOffset) {
     this.tableCompactionLimit = tableCompactionLimit;
     this.idOffset = idOffset;
@@ -41,7 +39,6 @@ public class AtomicOperationsTable {
           ATOMIC_OPERATION_STATUS_PLACE_HOLDER);
 
       scheduleTableCompactionIfNeeded();
-      idTxMap.put(operationId, Thread.currentThread().getStackTrace());
     } finally {
       compactionLock.sharedUnlock();
     }
@@ -78,8 +75,6 @@ public class AtomicOperationsTable {
       }
 
       scheduleTableCompactionIfNeeded();
-
-      idTxMap.remove(operationId);
     } finally {
       compactionLock.sharedUnlock();
     }
@@ -108,7 +103,6 @@ public class AtomicOperationsTable {
       }
 
       scheduleTableCompactionIfNeeded();
-      idTxMap.remove(operationId);
     } finally {
       compactionLock.sharedUnlock();
     }
