@@ -313,8 +313,11 @@ public class OAtomicOperationsManager implements OAtomicOperationsMangerMXBean {
         final boolean useWal = useWal();
         if (!operation.isRollback()) {
           if (useWal) {
-            operation.commitChanges(writeAheadLog);
-            atomicOperationsTable.commitOperation(operation.getOperationUnitId());
+            final OLogSequenceNumber endLSN = operation.commitChanges(writeAheadLog);
+            final long operationId = operation.getOperationUnitId();
+            atomicOperationsTable.commitOperation(operationId);
+
+            writeAheadLog.addEventAt(endLSN, () -> atomicOperationsTable.persistOperation(operationId));
           } else {
             operation.commitChanges(null);
           }

@@ -307,7 +307,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
         }
 
         atomicOperationsTable = new AtomicOperationsTable(
-            contextConfiguration.getValueAsInteger(OGlobalConfiguration.STORAGE_ATOMIC_OPERATIONS_TABLE_COMPACTION_LIMIT),
+            contextConfiguration.getValueAsInteger(OGlobalConfiguration.STORAGE_ATOMIC_OPERATIONS_TABLE_COMPACTION_INTERVAL),
             idGen.getLastId() + 1);
         atomicOperationsManager = new OAtomicOperationsManager(this, atomicOperationsTable);
         recoverIfNeeded();
@@ -528,7 +528,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
         initWalAndDiskCache(contextConfiguration);
         atomicOperationsTable = new AtomicOperationsTable(
-            contextConfiguration.getValueAsInteger(OGlobalConfiguration.STORAGE_ATOMIC_OPERATIONS_TABLE_COMPACTION_LIMIT),
+            contextConfiguration.getValueAsInteger(OGlobalConfiguration.STORAGE_ATOMIC_OPERATIONS_TABLE_COMPACTION_INTERVAL),
             idGen.getLastId() + 1);
         atomicOperationsManager = new OAtomicOperationsManager(this, atomicOperationsTable);
         transaction = new ThreadLocal<>();
@@ -1463,19 +1463,19 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
               if (endLsn.compareTo(recordLSN) >= 0) {
                 if (record instanceof OFileCreatedWALRecord) {
-                  throw new ODatabaseException(
-                      "Cannot execute delta-sync because a new file has been added. Filename: '" + ((OFileCreatedWALRecord) record)
-                          .getFileName() + "' (id=" + ((OFileCreatedWALRecord) record).getFileId() + ")");
+                  throw new ODatabaseException("Cannot execute delta-sync because a new file has been added. Filename: '"
+                      + ((OFileCreatedWALRecord<?>) record).getFileName() + "' (id=" + ((OFileCreatedWALRecord<?>) record)
+                      .getFileId() + ")");
                 }
 
                 if (record instanceof OFileDeletedWALRecord) {
                   throw new ODatabaseException(
-                      "Cannot execute delta-sync because a file has been deleted. File id: " + ((OFileDeletedWALRecord) record)
+                      "Cannot execute delta-sync because a file has been deleted. File id: " + ((OFileDeletedWALRecord<?>) record)
                           .getFileId());
                 }
 
                 if (record instanceof OAtomicUnitEndRecord) {
-                  final OAtomicUnitEndRecord atomicUnitEndRecord = (OAtomicUnitEndRecord) record;
+                  final OAtomicUnitEndRecord<?> atomicUnitEndRecord = (OAtomicUnitEndRecord<?>) record;
                   if (atomicUnitEndRecord.getAtomicOperationMetadata().containsKey(ORecordOperationMetadata.RID_METADATA_KEY)) {
                     final ORecordOperationMetadata recordOperationMetadata = (ORecordOperationMetadata) atomicUnitEndRecord
                         .getAtomicOperationMetadata().get(ORecordOperationMetadata.RID_METADATA_KEY);
@@ -1632,18 +1632,18 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
           }
 
           // KEEP LAST MAX-ENTRIES TRANSACTIONS' LSN
-          final List<OAtomicUnitEndRecord> lastTx = new ArrayList<>(1024);
+          final List<OAtomicUnitEndRecord<?>> lastTx = new ArrayList<>(1024);
           readLoop:
           while (!walRecords.isEmpty()) {
             for (final OWriteableWALRecord walRecord : walRecords) {
               final OLogSequenceNumber recordLSN = walRecord.getLsn();
               if (endLsn.compareTo(recordLSN) >= 0) {
-                if (walRecord instanceof OAtomicUnitEndRecord) {
+                if (walRecord instanceof OAtomicUnitEndRecord<?>) {
                   if (lastTx.size() >= maxEntries) {
                     lastTx.remove(0);
                   }
 
-                  lastTx.add((OAtomicUnitEndRecord) walRecord);
+                  lastTx.add((OAtomicUnitEndRecord<?>) walRecord);
                 }
               } else {
                 break readLoop;
@@ -1654,7 +1654,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
           }
 
           // COLLECT ALL THE MODIFIED RECORDS
-          for (final OAtomicUnitEndRecord atomicUnitEndRecord : lastTx) {
+          for (final OAtomicUnitEndRecord<?> atomicUnitEndRecord : lastTx) {
             if (atomicUnitEndRecord.getAtomicOperationMetadata().containsKey(ORecordOperationMetadata.RID_METADATA_KEY)) {
               final ORecordOperationMetadata recordOperationMetadata = (ORecordOperationMetadata) atomicUnitEndRecord
                   .getAtomicOperationMetadata().get(ORecordOperationMetadata.RID_METADATA_KEY);
@@ -2206,7 +2206,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
         checkOpenness();
 
         makeStorageDirty();
-        boolean rollback = false;
         atomicOperationsManager.executeInsideAtomicOperation((atomicOperation) -> {
           lockClusters(clustersToLock);
 
@@ -2445,7 +2444,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
             checkReadOnlyConditions();
 
-            commitIndexes(indexOperations, atomicOperation);
+            commitIndexes(indexOperations);
           } catch (final IOException | RuntimeException e) {
             rollback = true;
             if (e instanceof RuntimeException) {
@@ -2500,9 +2499,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     }
   }
 
-  private static void commitIndexes(final Map<String, OTransactionIndexChanges> indexesToCommit,
-      final OAtomicOperation atomicOperation) {
-    final Map<OIndex, OIndexAbstract.IndexTxSnapshot> snapshots = new IdentityHashMap<>(8);
+  private static void commitIndexes(final Map<String, OTransactionIndexChanges> indexesToCommit) {
+    final Map<OIndex<?>, OIndexAbstract.IndexTxSnapshot> snapshots = new IdentityHashMap<>(8);
 
     for (final OTransactionIndexChanges changes : indexesToCommit.values()) {
       final OIndexInternal<?> index = changes.getAssociatedIndex();
@@ -2566,7 +2564,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
   }
 
   public int loadExternalIndexEngine(final String engineName, final String algorithm, final String indexType,
-      final OIndexDefinition indexDefinition, final OBinarySerializer valueSerializer, final boolean isAutomatic,
+      final OIndexDefinition indexDefinition, final OBinarySerializer<?> valueSerializer, final boolean isAutomatic,
       final Boolean durableInNonTxMode, final int version, final int apiVersion, final boolean multivalue,
       final Map<String, String> engineProperties) {
     try {
@@ -2589,7 +2587,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
         makeStorageDirty();
 
-        final OBinarySerializer keySerializer = determineKeySerializer(indexDefinition);
+        final OBinarySerializer<?> keySerializer = determineKeySerializer(indexDefinition);
         final int keySize = determineKeySize(indexDefinition);
         final OType[] keyTypes = Optional.ofNullable(indexDefinition).map(OIndexDefinition::getTypes).orElse(null);
         final boolean nullValuesSupport = indexDefinition != null && !indexDefinition.isNullValuesIgnored();
@@ -2632,7 +2630,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
   }
 
   public int addIndexEngine(final String engineName, final String algorithm, final String indexType,
-      final OIndexDefinition indexDefinition, final OBinarySerializer valueSerializer, final boolean isAutomatic,
+      final OIndexDefinition indexDefinition, final OBinarySerializer<?> valueSerializer, final boolean isAutomatic,
       final Boolean durableInNonTxMode, final int version, final int apiVersion, final boolean multivalue,
       final Map<String, String> engineProperties, final Set<String> clustersToIndex, final ODocument metadata) {
     try {
@@ -2659,7 +2657,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
             }
           }
 
-          final OBinarySerializer keySerializer = determineKeySerializer(indexDefinition);
+          final OBinarySerializer<?> keySerializer = determineKeySerializer(indexDefinition);
           final int keySize = determineKeySize(indexDefinition);
           final OType[] keyTypes = Optional.ofNullable(indexDefinition).map(OIndexDefinition::getTypes).orElse(null);
           final boolean nullValuesSupport = indexDefinition != null && !indexDefinition.isNullValuesIgnored();
@@ -2741,11 +2739,11 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     }
   }
 
-  private OBinarySerializer determineKeySerializer(final OIndexDefinition indexDefinition) {
-    final OBinarySerializer keySerializer;
+  private OBinarySerializer<?> determineKeySerializer(final OIndexDefinition indexDefinition) {
+    final OBinarySerializer<?> keySerializer;
     if (indexDefinition != null) {
-      if (indexDefinition instanceof ORuntimeKeyIndexDefinition) {
-        keySerializer = ((ORuntimeKeyIndexDefinition) indexDefinition).getSerializer();
+      if (indexDefinition instanceof ORuntimeKeyIndexDefinition<?>) {
+        keySerializer = ((ORuntimeKeyIndexDefinition<?>) indexDefinition).getSerializer();
       } else {
         if (indexDefinition.getTypes().length > 1) {
           keySerializer = OCompositeKeySerializer.INSTANCE;
@@ -2765,6 +2763,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
         }
       }
     } else {
+      //noinspection rawtypes
       keySerializer = new OSimpleKeySerializer();
     }
     return keySerializer;
@@ -3026,7 +3025,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
         checkOpenness();
         checkLowDiskSpaceRequestsAndReadOnlyConditions();
 
-        boolean rollback = false;
         atomicOperationsManager
             .executeInsideAtomicOperation((atomicOperation) -> doUpdateIndexEntry(atomicOperation, internalId, key, valueCreator));
       } finally {
@@ -3098,7 +3096,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
   private void doUpdateIndexEntry(final OAtomicOperation atomicOperation, final int indexId, final Object key,
       final OIndexKeyUpdater<Object> valueCreator) throws OInvalidIndexEngineIdException, IOException {
-    boolean rollback = false;
     checkIndexId(indexId);
 
     final OBaseIndexEngine engine = indexEngines.get(indexId);
@@ -4119,7 +4116,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
         } catch (final ORetryQueryException ignore) {
 
           if (iCommand instanceof OQueryAbstract) {
-            final OQueryAbstract query = (OQueryAbstract) iCommand;
+            final OQueryAbstract<?> query = (OQueryAbstract<?>) iCommand;
             query.reset();
           }
 
@@ -4164,8 +4161,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
             if (iCommand.getResultListener() != null) {
               // INVOKE THE LISTENER IF ANY
-              if (result instanceof Collection) {
-                for (final Object o : (Collection) result) {
+              if (result instanceof Collection<?>) {
+                for (final Object o : (Collection<?>) result) {
                   iCommand.getResultListener().result(o);
                 }
               } else {
@@ -4505,7 +4502,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       }
 
       atomicOperationsTable.compactTable();
-      final long minAtomicOperationSegment = atomicOperationsTable.getSegmentEarliestOperationInProgress();
+      final long minAtomicOperationSegment = atomicOperationsTable.getSegmentEarliestNotPersistedOperation();
       if (minAtomicOperationSegment >= 0 && fuzzySegment > minAtomicOperationSegment) {
         fuzzySegment = minAtomicOperationSegment;
       }
@@ -5868,19 +5865,19 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     assert atomicUnit.get(atomicUnit.size() - 1) instanceof OAtomicUnitEndRecord;
 
     for (final OWALRecord walRecord : atomicUnit) {
-      if (walRecord instanceof OFileDeletedWALRecord) {
-        final OFileDeletedWALRecord fileDeletedWALRecord = (OFileDeletedWALRecord) walRecord;
+      if (walRecord instanceof OFileDeletedWALRecord<?>) {
+        final OFileDeletedWALRecord<?> fileDeletedWALRecord = (OFileDeletedWALRecord<?>) walRecord;
         if (writeCache.exists(fileDeletedWALRecord.getFileId())) {
           readCache.deleteFile(fileDeletedWALRecord.getFileId(), writeCache);
         }
-      } else if (walRecord instanceof OFileCreatedWALRecord) {
-        final OFileCreatedWALRecord fileCreatedCreatedWALRecord = (OFileCreatedWALRecord) walRecord;
+      } else if (walRecord instanceof OFileCreatedWALRecord<?>) {
+        final OFileCreatedWALRecord<?> fileCreatedCreatedWALRecord = (OFileCreatedWALRecord<?>) walRecord;
 
         if (!writeCache.exists(fileCreatedCreatedWALRecord.getFileName())) {
           readCache.addFile(fileCreatedCreatedWALRecord.getFileName(), fileCreatedCreatedWALRecord.getFileId(), writeCache);
         }
-      } else if (walRecord instanceof OUpdatePageRecord) {
-        final OUpdatePageRecord updatePageRecord = (OUpdatePageRecord) walRecord;
+      } else if (walRecord instanceof OUpdatePageRecord<?>) {
+        final OUpdatePageRecord<?> updatePageRecord = (OUpdatePageRecord<?>) walRecord;
 
         long fileId = updatePageRecord.getFileId();
         if (!writeCache.exists(fileId)) {
@@ -6451,9 +6448,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
         return;
       }
 
-      atomicOperationsManager.executeInsideAtomicOperation((atomicOperation) -> {
-        storageConfiguration.setMinimumClusters(minimumClusters);
-      });
+      atomicOperationsManager
+          .executeInsideAtomicOperation((atomicOperation) -> storageConfiguration.setMinimumClusters(minimumClusters));
     } catch (final RuntimeException ee) {
       throw logAndPrepareForRethrow(ee);
     } catch (final Error ee) {
@@ -6633,19 +6629,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
           flushTillSegmentId = (nonActiveSegments[0] + nonActiveSegments[nonActiveSegments.length - 1]) / 2;
         }
 
-        atomicOperationsTable.compactTable();
-        final long operationSegment = atomicOperationsTable.getSegmentEarliestOperationInProgress();
-
-        if (operationSegment >= nonActiveSegments[0]) {
-          //atomic operations in progress prevent to remove at least single segment of WAL, we need to try later once operation
-          //completes
-          return;
-        }
-
-        if (flushTillSegmentId > operationSegment) {
-          flushTillSegmentId = operationSegment;
-        }
-
         long minDirtySegment;
         do {
           writeCache.flushTillSegment(flushTillSegmentId);
@@ -6662,8 +6645,17 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
           }
         } while (minDirtySegment < flushTillSegmentId);
 
-        writeCache.makeFuzzyCheckpoint(minDirtySegment);
+        atomicOperationsTable.compactTable();
+        final long operationSegment = atomicOperationsTable.getSegmentEarliestNotPersistedOperation();
+        if (operationSegment >= 0 && minDirtySegment > operationSegment) {
+          minDirtySegment = operationSegment;
+        }
 
+        if (minDirtySegment <= nonActiveSegments[0]) {
+          return;
+        }
+
+        writeCache.makeFuzzyCheckpoint(minDirtySegment);
       } catch (final Exception e) {
         dataFlushException = e;
         OLogManager.instance().error(this, "Error during flushing of data for fuzzy checkpoint", e);

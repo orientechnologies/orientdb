@@ -99,14 +99,12 @@ public final class OAtomicOperation {
             return pageChangesContainer;
           }
         } else {
-          if (pageChangesContainer.isNew) {
-            return pageChangesContainer;
-          } else {
+          if (!pageChangesContainer.isNew) {
             // Need to load the page again from cache for locking reasons
             pageChangesContainer.delegate = readCache
                 .loadForRead(fileId, pageIndex, checkPinnedPages, writeCache, pageCount, verifyChecksum);
-            return pageChangesContainer;
           }
+          return pageChangesContainer;
         }
       }
     }
@@ -141,13 +139,11 @@ public final class OAtomicOperation {
         if (pageChangesContainer == null) {
           return readCache.loadForRead(fileId, pageIndex, checkPinnedPages, writeCache, pageCount, true);
         } else {
-          if (pageChangesContainer.isNew) {
-            return pageChangesContainer;
-          } else {
+          if (!pageChangesContainer.isNew) {
             // Need to load the page again from cache for locking reasons
             pageChangesContainer.delegate = readCache.loadForRead(fileId, pageIndex, checkPinnedPages, writeCache, pageCount, true);
-            return pageChangesContainer;
           }
+          return pageChangesContainer;
         }
       }
     }
@@ -389,7 +385,7 @@ public final class OAtomicOperation {
     fileChanges.truncate = true;
   }
 
-  void commitChanges(final OWriteAheadLog writeAheadLog) throws IOException {
+  OLogSequenceNumber commitChanges(final OWriteAheadLog writeAheadLog) throws IOException {
     OLogSequenceNumber txEndLsn;
     if (writeAheadLog != null) {
       final OLogSequenceNumber startLSN = writeAheadLog.end();
@@ -488,6 +484,8 @@ public final class OAtomicOperation {
           }
         }
       }
+
+      return txEndLsn;
     } else {
       for (final long deletedFileId : deletedFiles) {
         readCache.deleteFile(deletedFileId, writeCache);
@@ -535,8 +533,9 @@ public final class OAtomicOperation {
           }
         }
       }
-    }
 
+      return null;
+    }
   }
 
   void rollback() {
