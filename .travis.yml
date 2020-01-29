@@ -10,3 +10,6 @@ branches:
   - develop
 jdk:
   - openjdk9
+
+after_success:
+  - bash <(curl -s https://codecov.io/bash)
