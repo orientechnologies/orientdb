@@ -13,7 +13,7 @@
  *  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  *  * See the License for the specific language governing permissions and
  *  * limitations under the License.
- *  
+ *
  */
 
 package com.orientechnologies.lucene.tests;
@@ -51,11 +51,13 @@ public class OLuceneInsertDeleteTest extends OLuceneBaseTest {
     OClass oClass = schema.createClass("City");
 
     oClass.createProperty("name", OType.STRING);
-    db.command("create index City.name on City (name) FULLTEXT ENGINE LUCENE");
+    //noinspection EmptyTryBlock
+    try (OResultSet resultSet = db.command("create index City.name on City (name) FULLTEXT ENGINE LUCENE")) {
+    }
   }
 
   @Test
-  public void testInsertUpdateWithIndex() throws Exception {
+  public void testInsertUpdateWithIndex() {
 
     db.getMetadata().reload();
     OSchema schema = db.getMetadata().getSchema();
@@ -89,24 +91,31 @@ public class OLuceneInsertDeleteTest extends OLuceneBaseTest {
   @Test
   public void testDeleteWithQueryOnClosedIndex() throws Exception {
 
-    InputStream stream = ClassLoader.getSystemResourceAsStream("testLuceneIndex.sql");
+    try (InputStream stream = ClassLoader.getSystemResourceAsStream("testLuceneIndex.sql")) {
+      //noinspection EmptyTryBlock
+      try (OResultSet resultSet = db.execute("sql", getScriptFromStream(stream))) {
+      }
+    }
 
-    db.execute("sql", getScriptFromStream(stream));
+    //noinspection EmptyTryBlock
+    try (OResultSet resultSet = db.command(
+        "create index Song.title on Song (title) FULLTEXT ENGINE LUCENE metadata {'closeAfterInterval':1000 , 'firstFlushAfter':1000 }")) {
+    }
 
-    db.command(
-        "create index Song.title on Song (title) FULLTEXT ENGINE LUCENE metadata {'closeAfterInterval':1000 , 'firstFlushAfter':1000 }");
+    try (OResultSet docs = db.query("select from Song where title lucene 'mountain'")) {
 
-    OResultSet docs = db.query("select from Song where title lucene 'mountain'");
+      assertThat(docs).hasSize(4);
+      TimeUnit.SECONDS.sleep(5);
+      docs.close();
 
-    assertThat(docs).hasSize(4);
-    TimeUnit.SECONDS.sleep(5);
-    docs.close();
+      //noinspection EmptyTryBlock
+      try (OResultSet command = db.command("delete vertex from Song where title lucene 'mountain'")) {
+      }
 
-    db.command("delete vertex from Song where title lucene 'mountain'");
-
-    docs = db.query("select from Song where  title lucene 'mountain'");
-    assertThat(docs).hasSize(0);
-    docs.close();
+      try (OResultSet resultSet = db.query("select from Song where  title lucene 'mountain'")) {
+        assertThat(resultSet).hasSize(0);
+      }
+    }
   }
 
 }

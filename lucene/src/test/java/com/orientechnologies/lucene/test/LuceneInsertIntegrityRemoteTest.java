@@ -47,6 +47,7 @@ public class LuceneInsertIntegrityRemoteTest extends BaseLuceneTest {
     OClass oClass = schema.createClass("City");
 
     oClass.createProperty("name", OType.STRING);
+    //noinspection deprecation
     db.command(new OCommandSQL("create index City.name on City (name) FULLTEXT ENGINE LUCENE")).execute();
   }
 

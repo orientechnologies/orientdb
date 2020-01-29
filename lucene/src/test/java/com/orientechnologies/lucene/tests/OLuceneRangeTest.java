@@ -1,6 +1,5 @@
 package com.orientechnologies.lucene.tests;
 
-import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
@@ -44,47 +43,53 @@ public class OLuceneRangeTest extends OLuceneBaseTest {
   }
 
   @Test
-  public void shouldUseRangeQueryOnSingleFloatField() throws Exception {
+  public void shouldUseRangeQueryOnSingleFloatField() {
 
-    db.command("create index Person.weight on Person(weight) FULLTEXT ENGINE LUCENE");
+    //noinspection EmptyTryBlock
+    try (final OResultSet command = db.command("create index Person.weight on Person(weight) FULLTEXT ENGINE LUCENE")) {
+    }
 
     assertThat(db.getMetadata().getIndexManagerInternal().getIndex(db, "Person.weight").getInternal().size()).isEqualTo(10);
 
     //range
-    OResultSet results = db.command("SELECT FROM Person WHERE search_class('weight:[0.0 TO 1.1]') = true");
-
-    assertThat(results).hasSize(2);
+    try (final OResultSet results = db.command("SELECT FROM Person WHERE search_class('weight:[0.0 TO 1.1]') = true")) {
+      assertThat(results).hasSize(2);
+    }
 
     //single value
-    results = db.command("SELECT FROM Person WHERE search_class('weight:7.1') = true");
-
-    assertThat(results).hasSize(1);
-
+    try (final OResultSet results = db.command("SELECT FROM Person WHERE search_class('weight:7.1') = true")) {
+      assertThat(results).hasSize(1);
+    }
   }
 
   @Test
   public void shouldUseRangeQueryOnSingleIntegerField() {
 
-    db.command("create index Person.age on Person(age) FULLTEXT ENGINE LUCENE");
+    //noinspection EmptyTryBlock
+    try (OResultSet command = db.command("create index Person.age on Person(age) FULLTEXT ENGINE LUCENE")) {
+    }
 
     assertThat(db.getMetadata().getIndexManagerInternal().getIndex(db, "Person.age").getInternal().size()).isEqualTo(10);
 
     //range
-    OResultSet results = db.command("SELECT FROM Person WHERE search_class('age:[5 TO 6]') = true");
+    try (OResultSet results = db.command("SELECT FROM Person WHERE search_class('age:[5 TO 6]') = true")) {
 
-    assertThat(results).hasSize(2);
+      assertThat(results).hasSize(2);
+    }
 
     //single value
-    results = db.command("SELECT FROM Person WHERE search_class('age:5') = true");
-
-    assertThat(results).hasSize(1);
+    try (OResultSet results = db.command("SELECT FROM Person WHERE search_class('age:5') = true")) {
+      assertThat(results).hasSize(1);
+    }
   }
 
   @Test
-  public void shouldUseRangeQueryOnSingleDateField() throws Exception {
+  public void shouldUseRangeQueryOnSingleDateField() {
 
     db.commit();
-    db.command("create index Person.date on Person(date) FULLTEXT ENGINE LUCENE");
+    //noinspection EmptyTryBlock
+    try (OResultSet command = db.command("create index Person.date on Person(date) FULLTEXT ENGINE LUCENE")) {
+    }
     db.commit();
 
     assertThat(db.getMetadata().getIndexManagerInternal().getIndex(db, "Person.date").getInternal().size()).isEqualTo(10);
@@ -93,16 +98,18 @@ public class OLuceneRangeTest extends OLuceneBaseTest {
     String fiveDaysAgo = DateTools.timeToString(System.currentTimeMillis() - (5 * 3600 * 24 * 1000), DateTools.Resolution.MINUTE);
 
     //range
-    OResultSet results = db.command("SELECT FROM Person WHERE search_class('date:[" + fiveDaysAgo + " TO " + today + "]')=true");
-
-    assertThat(results).hasSize(5);
-
+    try (final OResultSet results = db
+        .command("SELECT FROM Person WHERE search_class('date:[" + fiveDaysAgo + " TO " + today + "]')=true")) {
+      assertThat(results).hasSize(5);
+    }
   }
 
   @Test
-  public void shouldUseRangeQueryMultipleField() throws Exception {
+  public void shouldUseRangeQueryMultipleField() {
 
-    db.command("create index Person.composite on Person(name,surname,date,age) FULLTEXT ENGINE LUCENE");
+    //noinspection EmptyTryBlock
+    try (OResultSet command = db.command("create index Person.composite on Person(name,surname,date,age) FULLTEXT ENGINE LUCENE")) {
+    }
 
     assertThat(db.getMetadata().getIndexManagerInternal().getIndex(db, "Person.composite").getInternal().size()).isEqualTo(10);
 
@@ -112,26 +119,30 @@ public class OLuceneRangeTest extends OLuceneBaseTest {
     String fiveDaysAgo = DateTools.timeToString(System.currentTimeMillis() - (5 * 3600 * 24 * 1000), DateTools.Resolution.MINUTE);
 
     //name and age range
-    OResultSet results = db.command("SELECT * FROM Person WHERE search_class('age:[5 TO 6] name:robert  ')=true");
+    try (OResultSet results = db.command("SELECT * FROM Person WHERE search_class('age:[5 TO 6] name:robert  ')=true")) {
 
-    assertThat(results).hasSize(3);
+      assertThat(results).hasSize(3);
+    }
 
     //date range
-    results = db.command("SELECT FROM Person WHERE search_class('date:[" + fiveDaysAgo + " TO " + today + "]')=true");
+    try (OResultSet results = db
+        .command("SELECT FROM Person WHERE search_class('date:[" + fiveDaysAgo + " TO " + today + "]')=true")) {
 
-    assertThat(results).hasSize(5);
+      assertThat(results).hasSize(5);
+    }
 
     //age and date range with MUST
-    results = db
-        .command("SELECT FROM Person WHERE search_class('+age:[4 TO 7]  +date:[" + fiveDaysAgo + " TO " + today + "]')=true");
-
-    assertThat(results).hasSize(2);
-
+    try (OResultSet results = db
+        .command("SELECT FROM Person WHERE search_class('+age:[4 TO 7]  +date:[" + fiveDaysAgo + " TO " + today + "]')=true")) {
+      assertThat(results).hasSize(2);
+    }
   }
 
   @Test
   public void shouldUseRangeQueryMultipleFieldWithDirectIndexAccess() {
-    db.command("create index Person.composite on Person(name,surname,date,age) FULLTEXT ENGINE LUCENE");
+    //noinspection EmptyTryBlock
+    try (OResultSet command = db.command("create index Person.composite on Person(name,surname,date,age) FULLTEXT ENGINE LUCENE")) {
+    }
 
     assertThat(db.getMetadata().getIndexManagerInternal().getIndex(db, "Person.composite").getInternal().size()).isEqualTo(10);
 
@@ -140,8 +151,7 @@ public class OLuceneRangeTest extends OLuceneBaseTest {
     String today = DateTools.timeToString(System.currentTimeMillis(), DateTools.Resolution.MINUTE);
     String fiveDaysAgo = DateTools.timeToString(System.currentTimeMillis() - (5 * 3600 * 24 * 1000), DateTools.Resolution.MINUTE);
 
-    OIndex index = ((ODatabaseDocumentInternal) db).getMetadata().getIndexManagerInternal()
-        .getIndex((ODatabaseDocumentInternal) db, "Person.composite");
+    OIndex index = db.getMetadata().getIndexManagerInternal().getIndex(db, "Person.composite");
 
     //name and age range
     try (Stream<ORID> stream = index.getInternal().getRids("name:luke  age:[5 TO 6]")) {
@@ -157,5 +167,4 @@ public class OLuceneRangeTest extends OLuceneBaseTest {
       assertThat(stream.count()).isEqualTo(11);
     }
   }
-
 }

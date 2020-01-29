@@ -1,6 +1,5 @@
 package com.orientechnologies.orient.test.database.auto;
 
-import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.index.OCompositeKey;
 import com.orientechnologies.orient.core.index.OIndex;
@@ -94,11 +93,14 @@ public class ClassIndexManagerTest extends DocumentDBBaseTest {
 
   @AfterMethod
   public void afterMethod() throws Exception {
+    //noinspection deprecation
     database.command(new OCommandSQL("delete from classIndexManagerTestClass")).execute();
+    //noinspection deprecation
     database.command(new OCommandSQL("delete from classIndexManagerTestClassTwo")).execute();
+    //noinspection deprecation
     database.command(new OCommandSQL("delete from classIndexManagerTestSuperClass")).execute();
 
-    if (!((ODatabaseDocumentInternal) database).getStorage().isRemote()) {
+    if (!database.getStorage().isRemote()) {
       Assert.assertEquals(
           database.getMetadata().getIndexManagerInternal().getIndex(database, "classIndexManagerTestClass.prop1").getInternal()
               .size(), 0);
@@ -240,7 +242,7 @@ public class ClassIndexManagerTest extends DocumentDBBaseTest {
     checkEmbeddedDB();
 
     final Collection<? extends OIndex> beforeIndexes = database.getMetadata().getIndexManagerInternal().getIndexes(database);
-    final Map<String, Long> indexSizeMap = new HashMap<String, Long>();
+    final Map<String, Long> indexSizeMap = new HashMap<>();
 
     for (final OIndex index : beforeIndexes)
       indexSizeMap.put(index.getName(), index.getInternal().size());
@@ -445,7 +447,9 @@ public class ClassIndexManagerTest extends DocumentDBBaseTest {
     try (Stream<ORID> stream = propOneIndex.getInternal().getRids("a")) {
       Assert.assertTrue(stream.findAny().isPresent());
     }
-    Assert.assertTrue(compositeIndex.getInternal().getRids(compositeIndexDefinition.createValue("a", 2)).findAny().isPresent());
+    try (Stream<ORID> stream = compositeIndex.getInternal().getRids(compositeIndexDefinition.createValue("a", 2))) {
+      Assert.assertTrue(stream.findAny().isPresent());
+    }
   }
 
   public void testUpdateDocumentIndexRecordUpdatedFromNullField() {
@@ -477,7 +481,7 @@ public class ClassIndexManagerTest extends DocumentDBBaseTest {
       Assert.assertTrue(stream.findAny().isPresent());
     }
     try (Stream<ORID> stream = compositeIndex.getInternal().getRids(compositeIndexDefinition.createValue("a", 2))) {
-      Assert.assertNotNull(stream.findFirst().isPresent());
+      Assert.assertTrue(stream.findFirst().isPresent());
     }
   }
 
@@ -493,7 +497,7 @@ public class ClassIndexManagerTest extends DocumentDBBaseTest {
 
     final ODocument doc = new ODocument("classIndexManagerTestClass");
 
-    final List<String> listProperty = new ArrayList<String>();
+    final List<String> listProperty = new ArrayList<>();
     listProperty.add("value1");
     listProperty.add("value2");
 
@@ -546,7 +550,7 @@ public class ClassIndexManagerTest extends DocumentDBBaseTest {
 
     final ODocument doc = new ODocument("classIndexManagerTestClass");
 
-    final Map<String, String> mapProperty = new HashMap<String, String>();
+    final Map<String, String> mapProperty = new HashMap<>();
     mapProperty.put("key1", "value1");
     mapProperty.put("key2", "value2");
 
@@ -621,7 +625,7 @@ public class ClassIndexManagerTest extends DocumentDBBaseTest {
 
     final ODocument doc = new ODocument("classIndexManagerTestClass");
 
-    final Set<String> setProperty = new HashSet<String>();
+    final Set<String> setProperty = new HashSet<>();
     setProperty.add("value1");
     setProperty.add("value2");
 
@@ -638,8 +642,11 @@ public class ClassIndexManagerTest extends DocumentDBBaseTest {
 
     Set<String> trackedSet = doc.field("prop6");
 
+    //noinspection OverwrittenKey
     trackedSet.add("value4");
+    //noinspection OverwrittenKey
     trackedSet.add("value4");
+    //noinspection OverwrittenKey
     trackedSet.add("value4");
     trackedSet.remove("value4");
     trackedSet.remove("value2");
@@ -668,7 +675,7 @@ public class ClassIndexManagerTest extends DocumentDBBaseTest {
 
     final ODocument doc = new ODocument("classIndexManagerTestClass");
 
-    final List<String> listProperty = new ArrayList<String>();
+    final List<String> listProperty = new ArrayList<>();
     listProperty.add("value1");
     listProperty.add("value2");
 
@@ -729,7 +736,7 @@ public class ClassIndexManagerTest extends DocumentDBBaseTest {
 
     final ODocument doc = new ODocument("classIndexManagerTestClass");
 
-    final Map<String, String> mapProperty = new HashMap<String, String>();
+    final Map<String, String> mapProperty = new HashMap<>();
     mapProperty.put("key1", "value1");
     mapProperty.put("key2", "value2");
 
@@ -816,7 +823,7 @@ public class ClassIndexManagerTest extends DocumentDBBaseTest {
 
     final ODocument doc = new ODocument("classIndexManagerTestClass");
 
-    final Set<String> setProperty = new HashSet<String>();
+    final Set<String> setProperty = new HashSet<>();
     setProperty.add("value1");
     setProperty.add("value2");
 
@@ -833,8 +840,11 @@ public class ClassIndexManagerTest extends DocumentDBBaseTest {
 
     Set<String> trackedSet = doc.field("prop6");
 
+    //noinspection OverwrittenKey
     trackedSet.add("value4");
+    //noinspection OverwrittenKey
     trackedSet.add("value4");
+    //noinspection OverwrittenKey
     trackedSet.add("value4");
     trackedSet.remove("value4");
     trackedSet.remove("value2");

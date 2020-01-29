@@ -62,17 +62,16 @@ public class OLuceneTransactionCompositeQueryTest extends OLuceneBaseTest {
     db.save(doc);
 
     String query = "select from Foo where name = 'Test' and SEARCH_CLASS(\"abc\") =true ";
-    OResultSet vertices = db.command(query);
+    try (OResultSet vertices = db.command(query)) {
 
-    assertThat(vertices).hasSize(1);
-    vertices.close();
+      assertThat(vertices).hasSize(1);
+    }
     db.rollback();
 
     query = "select from Foo where name = 'Test' and SEARCH_CLASS(\"abc\") = true ";
-    vertices = db.command(query);
-    assertThat(vertices).hasSize(0);
-    vertices.close();
-
+    try (OResultSet vertices = db.command(query)) {
+      assertThat(vertices).hasSize(0);
+    }
   }
 
   @Test
@@ -94,28 +93,28 @@ public class OLuceneTransactionCompositeQueryTest extends OLuceneBaseTest {
     db.delete(doc);
 
     String query = "select from Foo where name = 'Test' and  SEARCH_CLASS(\"abc\") = true ";
-    OResultSet vertices = db.command(query);
+    try (OResultSet vertices = db.command(query)) {
 
-    Collection coll;
-    try (Stream<ORID> stream = index.getInternal().getRids("abc")) {
-      coll = stream.collect(Collectors.toList());
+      Collection coll;
+      try (Stream<ORID> stream = index.getInternal().getRids("abc")) {
+        coll = stream.collect(Collectors.toList());
+      }
+
+      assertThat(vertices).hasSize(0);
+
+      Assert.assertEquals(coll.size(), 0);
+
+      Assert.assertEquals(index.getInternal().size(), 0);
     }
-
-    assertThat(vertices).hasSize(0);
-
-    Assert.assertEquals(coll.size(), 0);
-
-    Assert.assertEquals(index.getInternal().size(), 0);
-    vertices.close();
     db.rollback();
 
     query = "select from Foo where name = 'Test' and SEARCH_CLASS(\"abc\") = true ";
-    vertices = db.command(query);
+    try (OResultSet vertices = db.command(query)) {
 
-    assertThat(vertices).hasSize(1);
+      assertThat(vertices).hasSize(1);
 
-    Assert.assertEquals(index.getInternal().size(), 1);
-    vertices.close();
+      Assert.assertEquals(index.getInternal().size(), 1);
+    }
   }
 
   @Test
@@ -147,52 +146,48 @@ public class OLuceneTransactionCompositeQueryTest extends OLuceneBaseTest {
     db.save(doc);
 
     String query = "select from Foo where name = 'Test' and SEARCH_CLASS(\"abc\") =true";
-    OResultSet vertices = db.query(query);
     Collection coll;
-    try (Stream<ORID> stream = index.getInternal().getRids("abc")) {
-      coll = stream.collect(Collectors.toList());
+    try (OResultSet vertices = db.query(query)) {
+      try (Stream<ORID> stream = index.getInternal().getRids("abc")) {
+        coll = stream.collect(Collectors.toList());
+      }
+
+      assertThat(vertices).hasSize(0);
+      Assert.assertEquals(coll.size(), 0);
+
+      Iterator iterator = coll.iterator();
+      int i = 0;
+      while (iterator.hasNext()) {
+        iterator.next();
+        i++;
+      }
+      Assert.assertEquals(i, 0);
+
+      Assert.assertEquals(index.getInternal().size(), 1);
     }
-
-    assertThat(vertices).hasSize(0);
-    Assert.assertEquals(coll.size(), 0);
-
-    Iterator iterator = coll.iterator();
-    int i = 0;
-    while (iterator.hasNext()) {
-      iterator.next();
-      i++;
-    }
-    Assert.assertEquals(i, 0);
-
-    Assert.assertEquals(index.getInternal().size(), 1);
-
-    vertices.close();
     query = "select from Foo where name = 'Test' and SEARCH_CLASS(\"removed\")=true ";
-    vertices = db.query(query);
+    try (OResultSet vertices = db.query(query)) {
+      try (Stream<ORID> stream = index.getInternal().getRids("removed")) {
+        coll = stream.collect(Collectors.toList());
+      }
 
-    try (Stream<ORID> stream = index.getInternal().getRids("removed")) {
-      coll = stream.collect(Collectors.toList());
+      assertThat(vertices).hasSize(1);
+      Assert.assertEquals(coll.size(), 1);
     }
 
-    assertThat(vertices).hasSize(1);
-    Assert.assertEquals(coll.size(), 1);
-
-    vertices.close();
     db.rollback();
 
     query = "select from Foo where name = 'Test' and SEARCH_CLASS (\"abc\")=true ";
-    vertices = db.command(query);
+    try (OResultSet vertices = db.command(query)) {
 
-    assertThat(vertices).hasSize(1);
+      assertThat(vertices).hasSize(1);
 
-    Assert.assertEquals(index.getInternal().size(), 1);
-    vertices.close();
-
+      Assert.assertEquals(index.getInternal().size(), 1);
+    }
   }
 
   @Test
   public void txUpdateTestComplex() {
-
     OIndex index = db.getMetadata().getIndexManagerInternal().getIndex(db, "Foo.bar");
     OClass c1 = db.getMetadata().getSchema().getClass("Foo");
     try {
@@ -224,46 +219,45 @@ public class OLuceneTransactionCompositeQueryTest extends OLuceneBaseTest {
     db.save(doc);
 
     String query = "select from Foo where name = 'Test' and SEARCH_CLASS(\"abc\")=true ";
-    OResultSet vertices = db.query(query);
     Collection coll;
-    try (Stream<ORID> stream = index.getInternal().getRids("abc")) {
-      coll = stream.collect(Collectors.toList());
+    try (OResultSet vertices = db.query(query)) {
+      try (Stream<ORID> stream = index.getInternal().getRids("abc")) {
+        coll = stream.collect(Collectors.toList());
+      }
+
+      assertThat(vertices).hasSize(1);
+      Assert.assertEquals(1, coll.size());
+
+      Iterator iterator = coll.iterator();
+      int i = 0;
+      ORecordId rid = null;
+      while (iterator.hasNext()) {
+        rid = (ORecordId) iterator.next();
+        i++;
+      }
+
+      Assert.assertEquals(1, i);
+      Assert.assertNotNull(rid);
+      Assert.assertEquals(rid.getIdentity().toString(), doc1.getIdentity().toString());
+      Assert.assertEquals(2, index.getInternal().size());
     }
 
-    assertThat(vertices).hasSize(1);
-    Assert.assertEquals(1, coll.size());
-
-    Iterator iterator = coll.iterator();
-    int i = 0;
-    ORecordId rid = null;
-    while (iterator.hasNext()) {
-      rid = (ORecordId) iterator.next();
-      i++;
-    }
-
-    Assert.assertEquals(1, i);
-    Assert.assertEquals(rid.getIdentity().toString(), doc1.getIdentity().toString());
-    Assert.assertEquals(2, index.getInternal().size());
-    vertices.close();
     query = "select from Foo where name = 'Test' and SEARCH_CLASS(\"removed\" )=true";
-    vertices = db.query(query);
-    try (Stream<ORID> stream = index.getInternal().getRids("removed")) {
-      coll = stream.collect(Collectors.toList());
+    try (OResultSet vertices = db.query(query)) {
+      try (Stream<ORID> stream = index.getInternal().getRids("removed")) {
+        coll = stream.collect(Collectors.toList());
+      }
+
+      assertThat(vertices).hasSize(1);
+
+      Assert.assertEquals(1, coll.size());
     }
-
-    assertThat(vertices).hasSize(1);
-
-    Assert.assertEquals(1, coll.size());
-    vertices.close();
     db.rollback();
 
     query = "select from Foo where name = 'Test' and SEARCH_CLASS(\"abc\")=true ";
-    vertices = db.query(query);
-
-    assertThat(vertices).hasSize(2);
-
-    Assert.assertEquals(2, index.getInternal().size());
-    vertices.close();
+    try (OResultSet vertices = db.query(query)) {
+      assertThat(vertices).hasSize(2);
+      Assert.assertEquals(2, index.getInternal().size());
+    }
   }
-
 }

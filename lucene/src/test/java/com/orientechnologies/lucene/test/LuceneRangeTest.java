@@ -43,27 +43,30 @@ public class LuceneRangeTest extends BaseLuceneTest {
   }
 
   @Test
-  public void shouldUseRangeQueryOnSingleIntegerField() throws Exception {
-
+  public void shouldUseRangeQueryOnSingleIntegerField() {
+    //noinspection deprecation
     db.command(new OCommandSQL("create index Person.age on Person(age) FULLTEXT ENGINE LUCENE")).execute();
 
     assertThat(db.getMetadata().getIndexManagerInternal().getIndex(db, "Person.age").getInternal().size()).isEqualTo(10);
 
     //range
+    @SuppressWarnings("deprecation")
     Collection<ODocument> results = db.command(new OCommandSQL("SELECT FROM Person WHERE age LUCENE 'age:[5 TO 6]'")).execute();
 
     assertThat(results).hasSize(2);
 
     //single value
+    //noinspection deprecation
     results = db.command(new OCommandSQL("SELECT FROM Person WHERE age LUCENE 'age:5'")).execute();
 
     assertThat(results).hasSize(1);
   }
 
   @Test
-  public void shouldUseRangeQueryOnSingleDateField() throws Exception {
+  public void shouldUseRangeQueryOnSingleDateField() {
 
     db.commit();
+    //noinspection deprecation
     db.command(new OCommandSQL("create index Person.date on Person(date) FULLTEXT ENGINE LUCENE")).execute();
     db.commit();
 
@@ -73,16 +76,16 @@ public class LuceneRangeTest extends BaseLuceneTest {
     String fiveDaysAgo = DateTools.timeToString(System.currentTimeMillis() - (5 * 3600 * 24 * 1000), DateTools.Resolution.MINUTE);
 
     //range
+    @SuppressWarnings("deprecation")
     Collection<ODocument> results = db
         .command(new OCommandSQL("SELECT FROM Person WHERE date LUCENE 'date:[" + fiveDaysAgo + " TO " + today + "]'")).execute();
 
     assertThat(results).hasSize(5);
-
   }
 
   @Test
-  public void shouldUseRangeQueryMultipleField() throws Exception {
-
+  public void shouldUseRangeQueryMultipleField() {
+    //noinspection deprecation
     db.command(new OCommandSQL("create index Person.composite on Person(name,surname,date,age) FULLTEXT ENGINE LUCENE")).execute();
 
     assertThat(db.getMetadata().getIndexManagerInternal().getIndex(db, "Person.composite").getInternal().size()).isEqualTo(10);
@@ -93,6 +96,7 @@ public class LuceneRangeTest extends BaseLuceneTest {
     String fiveDaysAgo = DateTools.timeToString(System.currentTimeMillis() - (5 * 3600 * 24 * 1000), DateTools.Resolution.MINUTE);
 
     //name and age range
+    @SuppressWarnings("deprecation")
     Collection<ODocument> results = db
         .command(new OCommandSQL("SELECT * FROM Person WHERE [name,surname,date,age] LUCENE 'age:[5 TO 6] name:robert  '"))
         .execute();
@@ -100,6 +104,7 @@ public class LuceneRangeTest extends BaseLuceneTest {
     assertThat(results).hasSize(3);
 
     //date range
+    //noinspection deprecation
     results = db.command(
         new OCommandSQL("SELECT FROM Person WHERE [name,surname,date,age] LUCENE 'date:[" + fiveDaysAgo + " TO " + today + "]'"))
         .execute();
@@ -107,16 +112,17 @@ public class LuceneRangeTest extends BaseLuceneTest {
     assertThat(results).hasSize(5);
 
     //age and date range with MUST
+    //noinspection deprecation
     results = db.command(new OCommandSQL(
         "SELECT FROM Person WHERE [name,surname,date,age] LUCENE '+age:[4 TO 7]  +date:[" + fiveDaysAgo + " TO " + today + "]'"))
         .execute();
 
     assertThat(results).hasSize(2);
-
   }
 
   @Test
-  public void shouldUseRangeQueryMultipleFieldWithDirectIndexAccess() throws Exception {
+  public void shouldUseRangeQueryMultipleFieldWithDirectIndexAccess() {
+    //noinspection deprecation
     db.command(new OCommandSQL("create index Person.composite on Person(name,surname,date,age) FULLTEXT ENGINE LUCENE")).execute();
 
     assertThat(db.getMetadata().getIndexManagerInternal().getIndex(db, "Person.composite").getInternal().size()).isEqualTo(10);
@@ -144,8 +150,8 @@ public class LuceneRangeTest extends BaseLuceneTest {
   }
 
   @Test
-  public void shouldFetchOnlyFromACluster() throws Exception {
-
+  public void shouldFetchOnlyFromACluster() {
+    //noinspection deprecation
     db.command(new OCommandSQL("create index Person.name on Person(name) FULLTEXT ENGINE LUCENE")).execute();
 
     assertThat(db.getMetadata().getIndexManagerInternal().getIndex(db, "Person.name").getInternal().size()).isEqualTo(10);
@@ -153,11 +159,11 @@ public class LuceneRangeTest extends BaseLuceneTest {
     int cluster = db.getMetadata().getSchema().getClass("Person").getClusterIds()[1];
     db.commit();
 
+    @SuppressWarnings("deprecation")
     Collection<ODocument> results = db.command(new OCommandSQL("SELECT FROM Person WHERE name LUCENE '+_CLUSTER:" + cluster + "'"))
         .execute();
 
     assertThat(results).hasSize(2);
-
   }
 
 }

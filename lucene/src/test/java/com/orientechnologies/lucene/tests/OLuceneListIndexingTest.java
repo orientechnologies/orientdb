@@ -51,17 +51,21 @@ public class OLuceneListIndexingTest extends OLuceneBaseTest {
     OClass person = schema.createClass("Person");
     person.createProperty("name", OType.STRING);
     person.createProperty("tags", OType.EMBEDDEDLIST, OType.STRING);
-    db.command("create index Person.name_tags on Person (name,tags) FULLTEXT ENGINE LUCENE");
+    //noinspection EmptyTryBlock
+    try (OResultSet command = db.command("create index Person.name_tags on Person (name,tags) FULLTEXT ENGINE LUCENE")) {
+    }
 
     OClass city = schema.createClass("City");
     city.createProperty("name", OType.STRING);
     city.createProperty("tags", OType.EMBEDDEDLIST, OType.STRING);
-    db.command("create index City.tags on City (tags) FULLTEXT ENGINE LUCENE");
+    //noinspection EmptyTryBlock
+    try (OResultSet command = db.command("create index City.tags on City (tags) FULLTEXT ENGINE LUCENE")) {
+    }
 
   }
 
   @Test
-  public void testIndexingList() throws Exception {
+  public void testIndexingList() {
 
     OSchema schema = db.getMetadata().getSchema();
 
@@ -116,10 +120,10 @@ public class OLuceneListIndexingTest extends OLuceneBaseTest {
     }
     assertThat(coll).hasSize(1);
 
-    OResultSet query = db.query("select from City where search_class('Beautiful') =true ");
+    try (OResultSet query = db.query("select from City where search_class('Beautiful') =true ")) {
 
-    assertThat(query).hasSize(2);
-    query.close();
+      assertThat(query).hasSize(2);
+    }
   }
 
   @Test
@@ -170,32 +174,27 @@ public class OLuceneListIndexingTest extends OLuceneBaseTest {
     }
     assertThat(coll).hasSize(2);
 
-    OResultSet query = db.query("select from Person where search_class('name:Enrico') =true ");
+    try (OResultSet query = db.query("select from Person where search_class('name:Enrico') =true ")) {
+      assertThat(query).hasSize(1);
+      try (OResultSet queryTwo = db.query("select from (select from Person search_class('name:Enrico')=true)")) {
 
-    assertThat(query).hasSize(1);
+        assertThat(queryTwo).hasSize(1);
+        try (OResultSet queryThree = db.query("select from Person where search_class('Jared')=true")) {
 
-    query.close();
+          assertThat(queryThree).hasSize(1);
+          try (OResultSet queryFour = db.query("select from Person where search_class('Funny') =true")) {
 
-    query = db.query("select from (select from Person search_class('name:Enrico')=true)");
+            assertThat(queryFour).hasSize(1);
+            try (OResultSet queryFive = db.query("select from Person where search_class('Geek')=true")) {
 
-    assertThat(query).hasSize(1);
-    query.close();
-    query = db.query("select from Person where search_class('Jared')=true");
-
-    assertThat(query).hasSize(1);
-    query.close();
-    query = db.query("select from Person where search_class('Funny') =true");
-
-    assertThat(query).hasSize(1);
-    query.close();
-    query = db.query("select from Person where search_class('Geek')=true");
-
-    assertThat(query).hasSize(2);
-    query.close();
-    query = db.query("select from Person where search_class('(name:Enrico AND tags:Geek) ')=true");
-
-    assertThat(query).hasSize(1);
-    query.close();
+              assertThat(queryFive).hasSize(2);
+              try (OResultSet querySix = db.query("select from Person where search_class('(name:Enrico AND tags:Geek) ')=true")) {
+                assertThat(querySix).hasSize(1);
+              }
+            }
+          }
+        }
+      }
+    }
   }
-
 }

@@ -26,6 +26,7 @@ import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -47,11 +48,13 @@ public class OLuceneInsertUpdateTest extends OLuceneBaseTest {
     OClass oClass = schema.createClass("City");
 
     oClass.createProperty("name", OType.STRING);
-    db.command("create index City.name on City (name) FULLTEXT ENGINE LUCENE");
+    //noinspection EmptyTryBlock
+    try (OResultSet command = db.command("create index City.name on City (name) FULLTEXT ENGINE LUCENE")) {
+    }
   }
 
   @Test
-  public void testInsertUpdateWithIndex() throws Exception {
+  public void testInsertUpdateWithIndex() {
 
     OSchema schema = db.getMetadata().getSchema();
 

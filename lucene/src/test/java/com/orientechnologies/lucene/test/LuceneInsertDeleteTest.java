@@ -54,11 +54,12 @@ public class LuceneInsertDeleteTest extends BaseLuceneTest {
     OClass oClass = schema.createClass("City");
 
     oClass.createProperty("name", OType.STRING);
+    //noinspection deprecation
     db.command(new OCommandSQL("create index City.name on City (name) FULLTEXT ENGINE LUCENE")).execute();
   }
 
   @Test
-  public void testInsertUpdateWithIndex() throws Exception {
+  public void testInsertUpdateWithIndex() {
 
     db.getMetadata().reload();
     OSchema schema = db.getMetadata().getSchema();
@@ -92,22 +93,27 @@ public class LuceneInsertDeleteTest extends BaseLuceneTest {
   @Test
   public void testDeleteWithQueryOnClosedIndex() throws Exception {
 
-    InputStream stream = ClassLoader.getSystemResourceAsStream("testLuceneIndex.sql");
+    try (InputStream stream = ClassLoader.getSystemResourceAsStream("testLuceneIndex.sql")) {
+      //noinspection deprecation
+      db.command(new OCommandScript("sql", getScriptFromStream(stream))).execute();
+    }
 
-    db.command(new OCommandScript("sql", getScriptFromStream(stream))).execute();
-
+    //noinspection deprecation
     db.command(new OCommandSQL(
         "create index Song.title on Song (title) FULLTEXT ENGINE LUCENE metadata {'closeAfterInterval':1000 , 'firstFlushAfter':1000 }"))
         .execute();
 
-    List<ODocument> docs = db.query(new OSQLSynchQuery<Object>("select from Song where title lucene 'mountain'"));
+    @SuppressWarnings("deprecation")
+    List<ODocument> docs = db.query(new OSQLSynchQuery<>("select from Song where title lucene 'mountain'"));
 
     assertThat(docs).hasSize(4);
     TimeUnit.SECONDS.sleep(5);
 
+    //noinspection deprecation
     db.command(new OCommandSQL("delete vertex from Song where title lucene 'mountain'")).execute();
 
-    docs = db.query(new OSQLSynchQuery<Object>("select from Song where  title lucene 'mountain'"));
+    //noinspection deprecation
+    docs = db.query(new OSQLSynchQuery<>("select from Song where  title lucene 'mountain'"));
     assertThat(docs).hasSize(0);
   }
 }

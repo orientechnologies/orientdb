@@ -47,13 +47,13 @@ public class OLuceneInsertIntegrityRemoteTest extends OLuceneBaseTest {
     OClass oClass = schema.createClass("City");
 
     oClass.createProperty("name", OType.STRING);
+    //noinspection deprecation
     db.command(new OCommandSQL("create index City.name on City (name) FULLTEXT ENGINE LUCENE")).execute();
   }
 
   @Test
   @Ignore
   public void testInsertUpdateWithIndex() throws Exception {
-
     db.getMetadata().reload();
     OSchema schema = db.getMetadata().getSchema();
 
@@ -115,9 +115,6 @@ public class OLuceneInsertIntegrityRemoteTest extends OLuceneBaseTest {
 
     Thread.sleep(1000);
 
-    //FIXME
-//    initDB();
-//
     doc = db.load(doc.getIdentity(), null, true);
 
     Assert.assertEquals(doc.field("name"), "Berlin");

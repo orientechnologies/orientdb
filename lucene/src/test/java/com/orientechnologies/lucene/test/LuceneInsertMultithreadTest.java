@@ -84,89 +84,91 @@ public class LuceneInsertMultithreadTest {
     }
 
     orientDB.create(dbName, databaseType);
-    ODatabaseDocument databaseDocumentTx = orientDB.open(dbName, "admin", "admin");
+    OSchema schema;
+    try (ODatabaseDocument databaseDocumentTx = orientDB.open(dbName, "admin", "admin")) {
+      schema = databaseDocumentTx.getMetadata().getSchema();
 
-    OSchema schema = databaseDocumentTx.getMetadata().getSchema();
-    if (schema.getClass("City") == null) {
-      OClass oClass = schema.createClass("City");
+      if (schema.getClass("City") == null) {
+        OClass oClass = schema.createClass("City");
 
-      oClass.createProperty("name", OType.STRING);
-      oClass.createIndex("City.name", "FULLTEXT", null, null, "LUCENE", new String[] { "name" });
+        oClass.createProperty("name", OType.STRING);
+        oClass.createIndex("City.name", "FULLTEXT", null, null, "LUCENE", new String[] { "name" });
+      }
+
+      Thread[] threads = new Thread[THREADS + RTHREADS];
+      for (int i = 0; i < THREADS; ++i)
+        threads[i] = new Thread(new LuceneInsertThread(CYCLE), "ConcurrentWriteTest" + i);
+
+      for (int i = THREADS; i < THREADS + RTHREADS; ++i)
+        threads[i] = new Thread(new LuceneReadThread(CYCLE), "ConcurrentReadTest" + i);
+
+      for (int i = 0; i < THREADS + RTHREADS; ++i)
+        threads[i].start();
+
+      for (int i = 0; i < THREADS + RTHREADS; ++i)
+        threads[i].join();
+
+      OIndex idx = schema.getClass("City").getClassIndex("City.name");
+
+      Assertions.assertThat(idx.getInternal().size()).isEqualTo(THREADS * CYCLE);
     }
-
-    Thread[] threads = new Thread[THREADS + RTHREADS];
-    for (int i = 0; i < THREADS; ++i)
-      threads[i] = new Thread(new LuceneInsertThread(CYCLE), "ConcurrentWriteTest" + i);
-
-    for (int i = THREADS; i < THREADS + RTHREADS; ++i)
-      threads[i] = new Thread(new LuceneReadThread(CYCLE), "ConcurrentReadTest" + i);
-
-    for (int i = 0; i < THREADS + RTHREADS; ++i)
-      threads[i].start();
-
-    for (int i = 0; i < THREADS + RTHREADS; ++i)
-      threads[i].join();
-
-    OIndex idx = schema.getClass("City").getClassIndex("City.name");
-
-    Assertions.assertThat(idx.getInternal().size()).isEqualTo(THREADS * CYCLE);
     orientDB.drop(dbName);
   }
 
   public static class LuceneInsertThread implements Runnable {
 
-    private       ODatabaseSession db;
-    private final int              cycle;
-    private final int              commitBuf = 500;
+    private final int cycle;
 
-    LuceneInsertThread(int cycle) {
+    private LuceneInsertThread(int cycle) {
       this.cycle = cycle;
     }
 
     @Override
     public void run() {
 
-      db = orientDB.open(dbName, "admin", "admin");
-      db.declareIntent(new OIntentMassiveInsert());
-      db.begin();
-      for (int i = 0; i < cycle; i++) {
-        ODocument doc = new ODocument("City");
+      try (ODatabaseSession db = orientDB.open(dbName, "admin", "admin")) {
+        db.declareIntent(new OIntentMassiveInsert());
+        db.begin();
+        for (int i = 0; i < cycle; i++) {
+          ODocument doc = new ODocument("City");
 
-        doc.field("name", "Rome");
+          doc.field("name", "Rome");
 
-        db.save(doc);
-        if (i % commitBuf == 0) {
-          db.commit();
-          db.begin();
+          db.save(doc);
+          int commitBuf = 500;
+          if (i % commitBuf == 0) {
+            db.commit();
+            db.begin();
+          }
+
         }
-
+        db.commit();
       }
-      db.commit();
-
-      db.close();
     }
   }
 
-  public class LuceneReadThread implements Runnable {
-    private final int               cycle;
-    private       ODatabaseDocument databaseDocumentTx;
+  public static class LuceneReadThread implements Runnable {
+    private final int cycle;
 
-    LuceneReadThread(int cycle) {
+    private LuceneReadThread(int cycle) {
       this.cycle = cycle;
     }
 
     @Override
     public void run() {
-      databaseDocumentTx = orientDB.open(dbName, "admin", "admin");
-      OSchema schema = databaseDocumentTx.getMetadata().getSchema();
-      OIndex idx = schema.getClass("City").getClassIndex("City.name");
+      OSchema schema;
+      try (ODatabaseDocument databaseDocumentTx = orientDB.open(dbName, "admin", "admin")) {
+        schema = databaseDocumentTx.getMetadata().getSchema();
 
-      for (int i = 0; i < cycle; i++) {
-        try (Stream<ORID> stream = idx.getInternal().getRids("Rome")) {
-          stream.collect(Collectors.toList());
+        OIndex idx = schema.getClass("City").getClassIndex("City.name");
+
+        for (int i = 0; i < cycle; i++) {
+          try (Stream<ORID> stream = idx.getInternal().getRids("Rome")) {
+            //noinspection ResultOfMethodCallIgnored
+            stream.collect(Collectors.toList());
+          }
         }
       }
-
     }
   }
 }
