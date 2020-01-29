@@ -176,7 +176,7 @@ public final class CellBTreeMultiValueV2<K> extends ODurableComponent implements
 
   }
 
-  public List<ORID> get(K key) {
+  public Stream<ORID> get(K key) {
     atomicOperationsManager.acquireReadLock(this);
     try {
       acquireSharedLock();
@@ -188,7 +188,7 @@ public final class CellBTreeMultiValueV2<K> extends ODurableComponent implements
 
           final BucketSearchResult bucketSearchResult = findBucket(key, atomicOperation);
           if (bucketSearchResult.itemIndex < 0) {
-            return Collections.emptyList();
+            return Stream.empty();
           }
 
           final long pageIndex = bucketSearchResult.pageIndex;
@@ -267,7 +267,7 @@ public final class CellBTreeMultiValueV2<K> extends ODurableComponent implements
             }
           }
 
-          return result;
+          return result.stream();
         } else {
           final OCacheEntry nullCacheEntry = loadPageForRead(atomicOperation, nullBucketFileId, 0, false);
           try {
@@ -280,14 +280,13 @@ public final class CellBTreeMultiValueV2<K> extends ODurableComponent implements
               try (final Stream<ORawPair<MultiValueEntry, Byte>> stream = multiContainer
                   .iterateEntriesBetween(new MultiValueEntry(mId, 0, 0), true,
                       new MultiValueEntry(mId, Integer.MAX_VALUE, Long.MAX_VALUE), true, true)) {
-                //noinspection resource
                 values.addAll(stream.map((pair) -> {
                   final MultiValueEntry entry = pair.first;
                   return new ORecordId(entry.clusterId, entry.clusterPosition);
                 }).collect(Collectors.toList()));
               }
             }
-            return values;
+            return values.stream();
           } finally {
             releasePageFromRead(atomicOperation, nullCacheEntry);
           }
@@ -311,7 +310,6 @@ public final class CellBTreeMultiValueV2<K> extends ODurableComponent implements
           .iterateEntriesBetween(new MultiValueEntry(entry.mId, 0, 0), true,
               new MultiValueEntry(entry.mId, Integer.MAX_VALUE, Long.MAX_VALUE), true, true)) {
 
-        //noinspection resource
         result.addAll(stream.map((pair) -> {
           final MultiValueEntry multiValueEntry = pair.first;
           return new ORecordId(multiValueEntry.clusterId, multiValueEntry.clusterPosition);
@@ -336,7 +334,6 @@ public final class CellBTreeMultiValueV2<K> extends ODurableComponent implements
           .iterateEntriesBetween(new MultiValueEntry(entry.mId, 0, 0), true,
               new MultiValueEntry(entry.mId, Integer.MAX_VALUE, Long.MAX_VALUE), true, true)) {
 
-        //noinspection resource
         result.addAll(stream.map((pair) -> {
           final MultiValueEntry multiValueEntry = pair.first;
           return new ORawPair<K, ORID>(key, new ORecordId(multiValueEntry.clusterId, multiValueEntry.clusterPosition));

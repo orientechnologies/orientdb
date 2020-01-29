@@ -55,6 +55,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.ExecutionException;
+import java.util.stream.Stream;
 
 import static com.orientechnologies.orient.core.config.OGlobalConfiguration.*;
 import static com.orientechnologies.orient.server.distributed.impl.ONewDistributedTxContextImpl.Status.*;
@@ -670,7 +671,10 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
           .equals(index.getType())) {
         OTransactionIndexChangesPerKey nullKeyChanges = change.getValue().nullKeyChanges;
         if (!nullKeyChanges.entries.isEmpty()) {
-          OIdentifiable old = (OIdentifiable) index.get(null);
+          OIdentifiable old;
+          try (Stream<ORID> stream = index.getInternal().getRids(null)) {
+            old = stream.findFirst().orElse(null);
+          }
           Object newValue = nullKeyChanges.entries.get(nullKeyChanges.entries.size() - 1).value;
           if (old != null && !old.equals(newValue)) {
             boolean oldValueRemoved = false;
@@ -689,7 +693,10 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
         }
 
         for (OTransactionIndexChangesPerKey changesPerKey : change.getValue().changesPerKey.values()) {
-          OIdentifiable old = (OIdentifiable) index.get(changesPerKey.key);
+          OIdentifiable old;
+          try (Stream<ORID> rids = index.getInternal().getRids(changesPerKey.key)) {
+            old = rids.findFirst().orElse(null);
+          }
           if (!changesPerKey.entries.isEmpty()) {
             Object newValue = changesPerKey.entries.get(changesPerKey.entries.size() - 1).value;
             if (old != null && !old.equals(newValue)) {

@@ -278,8 +278,9 @@ public class OChainedIndexProxy<T> implements OIndexInternal {
    * {@inheritDoc}
    */
   @Override
-  public T get(Object iKey) {
-    final Object lastIndexResult = lastIndex.get(iKey);
+  @Deprecated
+  public T get(Object key) {
+    final Object lastIndexResult = lastIndex.get(key);
 
     final Set<OIdentifiable> result = new HashSet<>();
 
@@ -287,6 +288,20 @@ public class OChainedIndexProxy<T> implements OIndexInternal {
       result.addAll(applyTailIndexes(lastIndexResult));
 
     return (T) result;
+  }
+
+  @Override
+  public Stream<ORID> getRids(Object key) {
+    final Object lastIndexResult = lastIndex.get(key);
+
+    final Set<OIdentifiable> result = new HashSet<>();
+
+    if (lastIndexResult != null) {
+      result.addAll(applyTailIndexes(lastIndexResult));
+    }
+
+    //noinspection resource
+    return result.stream().map(OIdentifiable::getIdentity);
   }
 
   /**

@@ -1,7 +1,6 @@
 package com.orientechnologies.orient.distributed.impl.log;
 
 import java.io.*;
-import java.util.Iterator;
 import java.util.NoSuchElementException;
 
 public class OPersistentOperationalLogIterator implements OOplogIterator {

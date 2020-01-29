@@ -4,17 +4,18 @@ import com.orientechnologies.common.collection.OMultiCollectionIterator;
 import com.orientechnologies.common.util.OSizeable;
 import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.index.OCompositeKey;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.record.ODirection;
-import com.orientechnologies.orient.core.record.OEdge;
 import com.orientechnologies.orient.core.record.OVertex;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * Created by luigidellaquila on 03/01/17.
@@ -77,16 +78,10 @@ public class OSQLFunctionOut extends OSQLFunctionMoveFiltered {
 
     OMultiCollectionIterator<OVertex> result = new OMultiCollectionIterator<OVertex>();
     for (OIdentifiable to : iTo) {
-      OCompositeKey key = new OCompositeKey(iFrom, to);
-      Object indexResult = index.get(key);
-      if (indexResult instanceof OIdentifiable) {
-        indexResult = Collections.singleton(indexResult);
+      final OCompositeKey key = new OCompositeKey(iFrom, to);
+      try (Stream<ORID> stream = index.getInternal().getRids(key)) {
+        result.add(stream.map((rid) -> ((ODocument) rid.getRecord()).rawField("in")).collect(Collectors.toSet()));
       }
-      Set<OIdentifiable> identities = new HashSet<OIdentifiable>();
-      for (OIdentifiable edge : ((Iterable<OEdge>) indexResult)) {
-        identities.add((OIdentifiable) ((ODocument) edge.getRecord()).rawField("in"));
-      }
-      result.add(identities);
     }
 
     return result;

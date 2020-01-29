@@ -59,8 +59,8 @@ public class OETLMergeTransformer extends OETLAbstractLookupTransformer {
         return result;
 
       } else if (OMultiValue.isMultiValue(result) && OMultiValue.getSize(result) == 1) {
-        final Object firstValue = OMultiValue.getFirstValue(result);
-        ((ODocument) firstValue).merge((ODocument) ((OIdentifiable) input).getRecord(), true, false);
+        final ODocument firstValue = (ODocument) ((OIdentifiable) OMultiValue.getFirstValue(result)).getRecord();
+        firstValue.merge((ODocument) ((OIdentifiable) input).getRecord(), true, false);
         log(Level.FINE, "%s: merged record %s with found record=%s", getName(), firstValue, input);
         return firstValue;
       } else if (OMultiValue.isMultiValue(result) && OMultiValue.getSize(result) > 1) {

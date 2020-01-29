@@ -19,7 +19,7 @@
 package com.orientechnologies.orient.graph.blueprints;
 
 import com.orientechnologies.orient.core.db.ODatabaseInternal;
-import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.index.OCompositeKey;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.index.OIndexException;
@@ -35,6 +35,7 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 import java.util.*;
+import java.util.stream.Stream;
 
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.fail;
@@ -397,7 +398,9 @@ public class GraphTest {
 
         final OIndex index = graph.getRawGraph().getMetadata().getIndexManagerInternal()
             .getIndex(graph.getRawGraph(), "account.composite");
-        Assert.assertEquals(vertex.getIdentity(), ((OIdentifiable) index.get(new OCompositeKey("foo", "baz"))).getIdentity());
+        try (Stream<ORID> rids = index.getInternal().getRids(new OCompositeKey("foo", "baz"))) {
+          Assert.assertEquals(vertex.getIdentity(), rids.findAny().orElse(null));
+        }
       }
     } finally {
       graph.drop();

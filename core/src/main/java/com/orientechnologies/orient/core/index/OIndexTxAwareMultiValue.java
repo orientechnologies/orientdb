@@ -30,10 +30,10 @@ import com.orientechnologies.orient.core.tx.OTransactionIndexChanges;
 import com.orientechnologies.orient.core.tx.OTransactionIndexChanges.OPERATION;
 import com.orientechnologies.orient.core.tx.OTransactionIndexChangesPerKey;
 import com.orientechnologies.orient.core.tx.OTransactionIndexChangesPerKey.OTransactionIndexEntry;
-import com.orientechnologies.orient.core.tx.OTransactionOptimistic;
 
 import java.util.*;
 import java.util.function.Consumer;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
@@ -227,51 +227,37 @@ public class OIndexTxAwareMultiValue extends OIndexTxAware<Collection<OIdentifia
     super(database, delegate);
   }
 
+  @Deprecated
   @Override
   public Collection<OIdentifiable> get(Object key) {
+    final List<OIdentifiable> rids;
+    try (Stream<ORID> stream = getRids(key)) {
+      rids = stream.collect(Collectors.toList());
+    }
+    return rids;
+  }
+
+  @Override
+  public Stream<ORID> getRids(final Object key) {
     final OTransactionIndexChanges indexChanges = database.getMicroOrRegularTransaction()
         .getIndexChangesInternal(delegate.getName());
     if (indexChanges == null) {
-      @SuppressWarnings("unchecked")
-      Collection<OIdentifiable> res = (Collection<OIdentifiable>) super.get(key);
-      //In case of active transaction we use to return null instead of empty list, make check to be backward compatible
-      if (database.getTransaction().isActive()
-          && ((OTransactionOptimistic) database.getTransaction()).getIndexOperations().size() != 0 && res.isEmpty())
-        return null;
-      //noinspection unchecked
-      return OIndexInternal.securityFilterOnRead(this, res);
+      return super.getRids(key);
     }
 
-    key = getCollatingValue(key);
+    final Object collatedKey = getCollatingValue(key);
+    Set<OIdentifiable> txChanges = calculateTxValue(collatedKey, indexChanges);
 
-    final Set<OIdentifiable> result = new HashSet<>();
-    if (!indexChanges.cleared) {
-      // BEGIN FROM THE UNDERLYING RESULT SET
-      @SuppressWarnings("unchecked")
-      final Collection<OIdentifiable> subResult = (Collection<OIdentifiable>) super.get(key);
-      if (subResult != null) {
-        result.addAll(subResult);
-      }
+    @SuppressWarnings("resource")
+    final Stream<ORID> backedStream = super.getRids(collatedKey);
+    if (txChanges == null) {
+      txChanges = Collections.emptySet();
     }
 
-    final Set<OIdentifiable> processed = new HashSet<>();
-    for (OIdentifiable identifiable : result) {
-      ORawPair<Object, ORID> entry = calculateTxIndexEntry(key, identifiable.getIdentity(), indexChanges);
-      if (entry != null) {
-        processed.add(entry.second);
-      }
-    }
-
-    Set<OIdentifiable> txChanges = calculateTxValue(key, indexChanges);
-    if (txChanges != null)
-      processed.addAll(txChanges);
-
-    if (!processed.isEmpty()) {
-      //noinspection unchecked
-      return OIndexInternal.securityFilterOnRead(this, processed);
-    }
-
-    return null;
+    //noinspection resource
+    return IndexStreamSecurityDecorator.decorateRidStream(this, Stream.concat(
+        backedStream.map((rid) -> calculateTxIndexEntry(collatedKey, rid, indexChanges)).filter(Objects::nonNull)
+            .map((pair) -> pair.second), txChanges.stream().map(OIdentifiable::getIdentity)));
   }
 
   @Override
@@ -497,6 +483,7 @@ public class OIndexTxAwareMultiValue extends OIndexTxAware<Collection<OIdentifia
       } else
         result.add(entry.value);
     }
+
     if (result.isEmpty())
       return null;
 

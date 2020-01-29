@@ -1,7 +1,5 @@
 package com.orientechnologies.orient.distributed.impl.coordinator.network;
 
-import com.orientechnologies.orient.distributed.impl.coordinator.ONodeResponse;
-import com.orientechnologies.orient.distributed.impl.coordinator.ddl.ODDLQueryOperationResponse;
 import com.orientechnologies.orient.distributed.impl.log.OLogId;
 import org.junit.Assert;
 import org.junit.Test;

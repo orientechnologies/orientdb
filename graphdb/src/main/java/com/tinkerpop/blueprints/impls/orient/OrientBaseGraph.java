@@ -68,6 +68,8 @@ import java.net.URLDecoder;
 import java.net.URLEncoder;
 import java.util.*;
 import java.util.logging.Level;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * A Blueprints implementation of the graph database OrientDB (http://orientdb.com)
@@ -834,11 +836,9 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
 
     if (idx != null) {
       iValue = convertKey(idx, iValue);
-      Object indexValue = idx.get(iValue);
-      if (indexValue != null && !(indexValue instanceof Iterable<?>))
-        indexValue = Arrays.asList(indexValue);
-
-      return new OrientElementIterable<Vertex>(this, (Iterable<?>) indexValue);
+      try (Stream<ORID> indexValue = idx.getInternal().getRids(iValue)) {
+        return new OrientElementIterable<Vertex>(this, indexValue.collect(Collectors.toList()));
+      }
     } else {
       // NO INDEX: EXECUTE A QUERY
       OrientGraphQuery query = (OrientGraphQuery) query();
@@ -874,10 +874,9 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
     if (idx != null) {
       iValue = convertKey(idx, iValue);
 
-      Object v = idx.get(iValue);
-      if (v != null)
-        return getVertex(v);
-      return null;
+      try (Stream<ORID> rids = idx.getInternal().getRids(iValue)) {
+        return rids.findFirst().map(this::getVertex).orElse(null);
+      }
     } else
       throw new IllegalArgumentException("Index '" + indexName + "' not found");
   }
@@ -919,10 +918,9 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
           } else {
             key = new OCompositeKey(keys);
           }
-          Object indexValue = idx.get(key);
-          if (indexValue != null && !(indexValue instanceof Iterable<?>))
-            indexValue = Arrays.asList(indexValue);
-          return new OrientClassVertexIterable(this, (Iterable<?>) indexValue, label);
+          try (final Stream<ORID> stream = idx.getInternal().getRids(key)) {
+            return new OrientClassVertexIterable(this, stream.collect(Collectors.toList()), label);
+          }
         }
       }
     }
@@ -998,16 +996,16 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
    * "Jay");
    * </code>
    *
-   * @param iKey   Field name
-   * @param iValue Field value
+   * @param iKey  Field name
+   * @param value Field value
    *
    * @return Edges as Iterable
    */
-  public Iterable<Edge> getEdges(final String iKey, Object iValue) {
+  public Iterable<Edge> getEdges(final String iKey, Object value) {
     makeActive();
 
     if (iKey.equals("@class"))
-      return getEdgesOfClass(iValue.toString());
+      return getEdgesOfClass(value.toString());
 
     final String indexName;
     final String key;
@@ -1023,17 +1021,15 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
     final ODatabaseDocumentInternal database = getDatabase();
     final OIndex idx = database.getMetadata().getIndexManagerInternal().getIndex(database, indexName);
     if (idx != null) {
-      iValue = convertKey(idx, iValue);
+      value = convertKey(idx, value);
 
-      Object indexValue = idx.get(iValue);
-      if (indexValue != null && !(indexValue instanceof Iterable<?>))
-        indexValue = Arrays.asList(indexValue);
-
-      return new OrientElementIterable<Edge>(this, (Iterable<?>) indexValue);
+      try (final Stream<ORID> stream = idx.getInternal().getRids(value)) {
+        return new OrientElementIterable<Edge>(this, stream.collect(Collectors.toList()));
+      }
     }
 
     // NO INDEX: EXECUTE A QUERY
-    return query().has(key, iValue).edges();
+    return query().has(key, value).edges();
   }
 
   /**

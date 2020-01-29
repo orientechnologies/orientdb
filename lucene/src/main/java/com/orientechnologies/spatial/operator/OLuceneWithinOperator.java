@@ -77,21 +77,10 @@ public class OLuceneWithinOperator extends OQueryTargetOperator {
   @Override
   public Stream<ORawPair<Object, ORID>> executeIndexQuery(OCommandContext iContext, OIndex index, List<Object> keyParams,
       boolean ascSortOrder) {
-
-    Object indexResult = index.get(new OSpatialCompositeKey(keyParams).setOperation(SpatialOperation.IsWithin));
-
     iContext.setVariable("$luceneIndex", true);
-
-    if (indexResult == null) {
-      return Stream.empty();
-    }
-    if (indexResult instanceof OIdentifiable) {
-      return Stream.of(new ORawPair<>(new OSpatialCompositeKey(keyParams), ((OIdentifiable) indexResult).getIdentity()));
-    }
-
-    //noinspection unchecked
-    return ((Collection<OIdentifiable>) indexResult).stream()
-        .map((identifiable) -> new ORawPair<>(new OSpatialCompositeKey(keyParams), identifiable.getIdentity()));
+    //noinspection resource
+    return index.getInternal().getRids(new OSpatialCompositeKey(keyParams).setOperation(SpatialOperation.IsWithin))
+        .map((rid) -> new ORawPair<>(new OSpatialCompositeKey(keyParams), rid));
   }
 
   @Override

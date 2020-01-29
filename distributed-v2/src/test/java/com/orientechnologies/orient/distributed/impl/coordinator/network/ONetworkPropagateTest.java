@@ -2,13 +2,11 @@ package com.orientechnologies.orient.distributed.impl.coordinator.network;
 
 import com.orientechnologies.orient.core.db.config.ONodeIdentity;
 import com.orientechnologies.orient.distributed.impl.log.OLogId;
-import com.orientechnologies.orient.distributed.impl.structural.operations.ODatabaseLeaderElected;
 import com.orientechnologies.orient.distributed.impl.structural.raft.ONodeJoin;
 import org.junit.Assert;
 import org.junit.Test;
 
 import java.io.*;
-import java.util.Optional;
 
 public class ONetworkPropagateTest {
 

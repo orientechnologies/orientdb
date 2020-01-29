@@ -7,6 +7,7 @@ import com.orientechnologies.lucene.query.OLuceneKeyAndMetadata;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.record.OElement;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -15,8 +16,12 @@ import com.orientechnologies.orient.core.sql.parser.*;
 import org.apache.lucene.index.IndexableField;
 import org.apache.lucene.index.memory.MemoryIndex;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * Created by frank on 15/01/2017.
@@ -107,12 +112,15 @@ public class OLuceneSearchOnIndexFunction extends OLuceneSearchFunctionTemplate 
 
       ODocument meta = getMetadata(index, query, args);
 
-      Set<OIdentifiable> luceneResultSet = index
-          .get(new OLuceneKeyAndMetadata(new OLuceneCompositeKey(Arrays.asList(query)).setContext(ctx), meta));
+      List<OIdentifiable> luceneResultSet;
+      try (Stream<ORID> rids = index.getInternal()
+          .getRids(new OLuceneKeyAndMetadata(new OLuceneCompositeKey(Arrays.asList(query)).setContext(ctx), meta))) {
+        luceneResultSet = rids.collect(Collectors.toList());
+      }
 
       return luceneResultSet;
     }
-    return Collections.emptySet();
+    return Collections.emptyList();
   }
 
   private ODocument getMetadata(OLuceneFullTextIndex index, String query, OExpression[] args) {

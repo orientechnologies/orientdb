@@ -30,10 +30,8 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.exception.OQueryParsingException;
-import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.index.OIndexAbstract;
-import com.orientechnologies.orient.core.index.OIndexMultiValues;
 import com.orientechnologies.orient.core.metadata.OMetadataInternal;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.record.OElement;
@@ -220,15 +218,7 @@ public class OCommandExecutorSQLInsert extends OCommandExecutorSQLSetAware
       for (Map<String, Object> candidate : newRecords) {
         Object indexKey = getIndexKeyValue(commandParameters, candidate);
         OIdentifiable indexValue = getIndexValue(commandParameters, candidate);
-
-        if (index instanceof OIndexMultiValues) {
-          final Collection<ORID> rids = ((OIndexMultiValues) index).get(indexKey);
-          if (!rids.contains(indexValue.getIdentity())) {
-            index.put(indexKey, indexValue);
-          }
-        } else {
-          index.put(indexKey, indexValue);
-        }
+        index.put(indexKey, indexValue);
 
         result.put(KEYWORD_KEY, indexKey);
         result.put(KEYWORD_RID, indexValue);

@@ -2,6 +2,7 @@ package com.orientechnologies.orient.core.metadata.security;
 
 import com.orientechnologies.orient.core.db.*;
 import com.orientechnologies.orient.core.exception.OSecurityException;
+import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OType;
@@ -10,7 +11,7 @@ import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import org.junit.*;
 
-import java.util.Collection;
+import java.util.stream.Stream;
 
 public class PredicateSecurityTest {
 
@@ -451,12 +452,13 @@ public class PredicateSecurityTest {
     this.db = orient.open(DB_NAME, "reader", "reader");
 
     OIndex index = db.getMetadata().getIndexManager().getIndex("Person.name");
-    Object item = index.get("bar");
-    Assert.assertTrue(((Collection) item).isEmpty());
 
-    item = index.get("foo");
-    Assert.assertEquals(1, ((Collection) item).size());
+    try (Stream<ORID> rids = index.getInternal().getRids("bar")) {
+      Assert.assertEquals(0, rids.count());
+    }
 
+    try (Stream<ORID> rids = index.getInternal().getRids("foo")) {
+      Assert.assertEquals(1, rids.count());
+    }
   }
-
 }

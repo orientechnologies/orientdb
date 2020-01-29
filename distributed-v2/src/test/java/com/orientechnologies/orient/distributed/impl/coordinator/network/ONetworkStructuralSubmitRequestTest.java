@@ -1,7 +1,5 @@
 package com.orientechnologies.orient.distributed.impl.coordinator.network;
 
-import com.orientechnologies.orient.distributed.impl.coordinator.OSubmitRequest;
-import com.orientechnologies.orient.distributed.impl.coordinator.ddl.ODDLQuerySubmitRequest;
 import com.orientechnologies.orient.distributed.impl.coordinator.transaction.OSessionOperationId;
 import com.orientechnologies.orient.distributed.impl.structural.submit.ODropDatabaseSubmitRequest;
 import org.junit.Assert;

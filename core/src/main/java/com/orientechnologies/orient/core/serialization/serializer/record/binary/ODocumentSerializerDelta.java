@@ -5,7 +5,6 @@ import com.orientechnologies.common.serialization.types.ODecimalSerializer;
 import com.orientechnologies.common.serialization.types.OIntegerSerializer;
 import com.orientechnologies.common.serialization.types.OLongSerializer;
 import com.orientechnologies.common.serialization.types.OUUIDSerializer;
-import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.*;
@@ -36,7 +35,6 @@ import java.math.BigDecimal;
 import java.util.*;
 
 import static com.orientechnologies.orient.core.serialization.serializer.record.binary.HelperClasses.*;
-import static com.orientechnologies.orient.core.serialization.serializer.record.binary.HelperClasses.writeType;
 
 public class ODocumentSerializerDelta {
   private static final byte CREATED           = 1;

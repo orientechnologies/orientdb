@@ -23,7 +23,6 @@ import com.orientechnologies.orient.core.metadata.security.OUser;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 /**

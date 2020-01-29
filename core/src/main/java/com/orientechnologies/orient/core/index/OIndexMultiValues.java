@@ -38,6 +38,7 @@ import com.orientechnologies.orient.core.storage.ridbag.sbtree.OMixedIndexRIDCon
 
 import java.util.*;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 /**
@@ -51,30 +52,46 @@ public abstract class OIndexMultiValues extends OIndexAbstract {
     super(name, type, algorithm, valueContainerAlgorithm, metadata, version, storage, binaryFormatVersion);
   }
 
+  @Deprecated
+  @Override
   public Collection<ORID> get(Object key) {
+    final List<ORID> rids;
+    try (Stream<ORID> stream = getRids(key)) {
+      rids = stream.collect(Collectors.toList());
+    }
+    return rids;
+  }
+
+  @Override
+  public Stream<ORID> getRids(Object key) {
     key = getCollatingValue(key);
 
     acquireSharedLock();
     try {
-
-      Collection<ORID> values;
+      Stream<ORID> stream;
       while (true) {
         try {
-          //noinspection unchecked
-          values = (Collection<ORID>) storage.getIndexValue(indexId, key);
-          break;
+          if (apiVersion == 0) {
+            //noinspection unchecked
+            final Collection<ORID> values = (Collection<ORID>) storage.getIndexValue(indexId, key);
+            if (values != null) {
+              //noinspection resource
+              stream = values.stream();
+            } else {
+              //noinspection resource
+              stream = Stream.empty();
+            }
+          } else if (apiVersion == 1) {
+            //noinspection resource
+            stream = storage.getIndexValues(indexId, key);
+          } else {
+            throw new IllegalStateException("Invalid version of index API - " + apiVersion);
+          }
+          return IndexStreamSecurityDecorator.decorateRidStream(this, stream);
         } catch (OInvalidIndexEngineIdException ignore) {
           doReloadIndexEngine();
         }
       }
-
-      if (values == null) {
-        return Collections.emptyList();
-      }
-
-      //noinspection unchecked
-      return OIndexInternal.securityFilterOnRead(this, (Collection) values);
-
     } finally {
       releaseSharedLock();
     }
@@ -324,7 +341,7 @@ public abstract class OIndexMultiValues extends OIndexAbstract {
     sortedKeys.sort(comparator);
 
     //noinspection resource
-    return sortedKeys.stream().flatMap((key) -> {
+    return IndexStreamSecurityDecorator.decorateStream(this, sortedKeys.stream().flatMap((key) -> {
       key = getCollatingValue(key);
 
       final Object entryKey = key;
@@ -332,9 +349,16 @@ public abstract class OIndexMultiValues extends OIndexAbstract {
       try {
         while (true) {
           try {
-            //noinspection unchecked,resource
-            return Optional.ofNullable((Collection<ORID>) storage.getIndexValue(indexId, key))
-                .map((rids) -> rids.stream().map((rid) -> new ORawPair<>(entryKey, rid))).orElse(Stream.empty());
+            if (apiVersion == 0) {
+              //noinspection unchecked,resource
+              return Optional.ofNullable((Collection<ORID>) storage.getIndexValue(indexId, key))
+                  .map((rids) -> rids.stream().map((rid) -> new ORawPair<>(entryKey, rid))).orElse(Stream.empty());
+            } else if (apiVersion == 1) {
+              //noinspection resource
+              return storage.getIndexValues(indexId, key).map((rid) -> new ORawPair<>(entryKey, rid));
+            } else {
+              throw new IllegalStateException("Invalid version of index API - " + apiVersion);
+            }
           } catch (OInvalidIndexEngineIdException ignore) {
             doReloadIndexEngine();
           }
@@ -343,7 +367,7 @@ public abstract class OIndexMultiValues extends OIndexAbstract {
       } finally {
         releaseSharedLock();
       }
-    });
+    }));
   }
 
   public long size() {

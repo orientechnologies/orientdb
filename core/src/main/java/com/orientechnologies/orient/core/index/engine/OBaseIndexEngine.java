@@ -30,8 +30,6 @@ public interface OBaseIndexEngine {
 
   void close();
 
-  Object get(Object key);
-
   Stream<ORawPair<Object, ORID>> iterateEntriesBetween(Object rangeFrom, boolean fromInclusive, Object rangeTo, boolean toInclusive,
       boolean ascSortOrder, ValuesTransformer transformer);
 

@@ -30,7 +30,6 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilterCondition;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilterItemField;
 
-import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -158,18 +157,7 @@ public class OQueryOperatorContains extends OQueryOperatorEqualityNotNulls {
       if (key == null)
         return null;
 
-      final Object indexResult;
-
-      indexResult = index.get(key);
-
-      if (indexResult == null) {
-        stream = Stream.empty();
-      } else if (indexResult instanceof OIdentifiable) {
-        stream = Stream.of(new ORawPair<>(key, ((OIdentifiable) indexResult).getIdentity()));
-      } else {
-        stream = ((Collection<OIdentifiable>) indexResult).stream()
-            .map((identifiable) -> new ORawPair<>(key, identifiable.getIdentity()));
-      }
+      stream = index.getInternal().getRids(key).map((rid) -> new ORawPair<>(key, rid));
     } else {
       // in case of composite keys several items can be returned in case of we perform search
       // using part of composite key stored in index.
@@ -187,17 +175,7 @@ public class OQueryOperatorContains extends OQueryOperatorEqualityNotNulls {
       } else {
         int indexParamCount = indexDefinition.getParamCount();
         if (indexParamCount == keyParams.size()) {
-          final Object indexResult;
-          indexResult = index.get(keyOne);
-
-          if (indexResult == null) {
-            stream = Stream.empty();
-          } else if (indexResult instanceof OIdentifiable) {
-            stream = Stream.of(new ORawPair<>(keyOne, ((OIdentifiable) indexResult).getIdentity()));
-          } else {
-            stream = ((Collection<OIdentifiable>) indexResult).stream()
-                .map((identifiable) -> new ORawPair<>(keyOne, identifiable.getIdentity()));
-          }
+          stream = index.getInternal().getRids(keyOne).map((rid) -> new ORawPair<>(keyOne, rid));
         } else
           return null;
       }

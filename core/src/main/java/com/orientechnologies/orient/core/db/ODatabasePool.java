@@ -4,8 +4,6 @@ import com.orientechnologies.orient.core.exception.OAcquireTimeoutException;
 import com.orientechnologies.orient.core.util.OURLConnection;
 import com.orientechnologies.orient.core.util.OURLHelper;
 
-import java.util.Objects;
-
 /**
  * A Pool of databases.
  * <p>

@@ -23,7 +23,6 @@ import com.orientechnologies.orient.core.sql.parser.*;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-import java.util.stream.StreamSupport;
 
 /**
  * Created by luigidellaquila on 23/07/16.
@@ -50,7 +49,8 @@ public class FetchFromIndexStep extends AbstractExecutionStep {
   private Iterator                                                   nullKeyIterator;
   private ORawPair<Object, ORID>                                     nextEntry = null;
 
-  private final Set<Stream<ORawPair<Object, ORID>>> acquiredStreams = Collections.newSetFromMap(new IdentityHashMap<>());
+  private final Set<Stream<ORawPair<Object, ORID>>> acquiredStreams    = Collections.newSetFromMap(new IdentityHashMap<>());
+  private final Set<Stream<ORID>>                   acquiredRidStreams = new HashSet<>();
 
   public FetchFromIndexStep(OIndex index, OBooleanExpression condition, OBinaryCondition additionalRangeCondition,
       OCommandContext ctx, boolean profilingEnabled) {
@@ -356,16 +356,11 @@ public class FetchFromIndexStep extends AbstractExecutionStep {
       nullKeyIterator = Collections.emptyIterator();
       return;
     }
-    Object nullIter = index.get(null);
-    if (nullIter instanceof OIdentifiable) {
-      nullKeyIterator = Collections.singleton(nullIter).iterator();
-    } else if (nullIter instanceof Iterable) {
-      nullKeyIterator = ((Iterable) nullIter).iterator();
-    } else if (nullIter instanceof Iterator) {
-      nullKeyIterator = (Iterator) nullIter;
-    } else {
-      nullKeyIterator = Collections.emptyIterator();
-    }
+
+    final Stream<ORID> stream = index.getRids(null);
+    acquiredRidStreams.add(stream);
+
+    nullKeyIterator = stream.iterator();
   }
 
   private void init(OCollection fromKey, boolean fromKeyIncluded, OCollection toKey, boolean toKeyIncluded) {
@@ -447,19 +442,10 @@ public class FetchFromIndexStep extends AbstractExecutionStep {
   }
 
   private Stream<ORawPair<Object, ORID>> getStreamForNullKey() {
-    Object result = index.get(null);
+    final Stream<ORID> stream = index.getRids(null);
+    acquiredRidStreams.add(stream);
 
-    if (result == null) {
-      return StreamSupport.stream(Spliterators.emptySpliterator(), false);
-    }
-
-    if (result instanceof Collection) {
-      //noinspection resource,unchecked
-      return ((Collection<ORID>) result).stream().map((rid) -> new ORawPair<>(null, rid));
-    }
-
-    //noinspection resource
-    return Stream.of((ORID) result).map((rid) -> new ORawPair<>(null, rid));
+    return stream.map((rid) -> new ORawPair<>(null, rid));
   }
 
   /**
@@ -904,6 +890,12 @@ public class FetchFromIndexStep extends AbstractExecutionStep {
     }
 
     acquiredStreams.clear();
+
+    for (final Stream<ORID> stream : acquiredRidStreams) {
+      stream.close();
+    }
+
+    acquiredRidStreams.clear();
   }
 
   @Override

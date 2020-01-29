@@ -1,10 +1,8 @@
 package com.orientechnologies.orient.distributed.impl.coordinator.network;
 
 import com.orientechnologies.orient.core.db.config.ONodeIdentity;
-import com.orientechnologies.orient.distributed.impl.database.operations.ODatabaseSyncRequest;
 import com.orientechnologies.orient.distributed.impl.log.OLogId;
 import com.orientechnologies.orient.distributed.impl.structural.operations.ODatabaseLeaderElected;
-import com.orientechnologies.orient.distributed.impl.structural.operations.OOperation;
 import org.junit.Assert;
 import org.junit.Test;
 

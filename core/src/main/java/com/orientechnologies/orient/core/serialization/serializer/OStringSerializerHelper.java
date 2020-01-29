@@ -321,7 +321,7 @@ public abstract class OStringSerializerHelper {
 
     final int max = endIndex > -1 ? endIndex + 1 : iSource.length();
 
-    iBuffer.ensureCapacity(max);
+//    iBuffer.ensureCapacity(max);
 
     // JUMP FIRST CHARS
     int i = beginIndex;

@@ -22,10 +22,8 @@ package com.orientechnologies.orient.etl;
 
 import com.orientechnologies.orient.core.OConstants;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
-import com.orientechnologies.orient.etl.context.OETLContext;
 import com.orientechnologies.orient.etl.context.OETLContextWrapper;
 import com.orientechnologies.orient.etl.http.OServerCommandETL;
-import com.orientechnologies.orient.etl.util.OMigrationConfigManager;
 import com.orientechnologies.orient.output.OPluginMessageHandler;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.config.OServerParameterConfiguration;

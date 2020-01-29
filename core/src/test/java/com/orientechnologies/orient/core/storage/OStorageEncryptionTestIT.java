@@ -3,8 +3,6 @@ package com.orientechnologies.orient.core.storage;
 import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.*;
-import com.orientechnologies.orient.core.exception.ODatabaseException;
-import com.orientechnologies.orient.core.exception.OSecurityException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.index.OIndexManagerAbstract;
@@ -21,6 +19,7 @@ import org.junit.Test;
 import java.io.File;
 import java.util.Random;
 import java.util.concurrent.ThreadLocalRandom;
+import java.util.stream.Stream;
 
 import static org.junit.Assert.assertTrue;
 
@@ -105,8 +104,14 @@ public class OStorageEncryptionTestIT {
 
         for (final ODocument document : session.browseClass("EncryptedData")) {
           final int id = document.getProperty("id");
-          final ORID treeRid = (ORID) treeIndex.get(id);
-          final ORID hashRid = (ORID) hashIndex.get(id);
+          final ORID treeRid;
+          try (Stream<ORID> rids = treeIndex.getInternal().getRids(id)) {
+            treeRid = rids.findFirst().orElse(null);
+          }
+          final ORID hashRid;
+          try (Stream<ORID> rids = hashIndex.getInternal().getRids(id)) {
+            hashRid = rids.findFirst().orElse(null);
+          }
 
           Assert.assertEquals(document.getIdentity(), treeRid);
           Assert.assertEquals(document.getIdentity(), hashRid);

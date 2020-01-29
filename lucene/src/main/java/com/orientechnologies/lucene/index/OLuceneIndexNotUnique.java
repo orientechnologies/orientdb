@@ -22,8 +22,6 @@ import com.orientechnologies.common.serialization.types.OBinarySerializer;
 import com.orientechnologies.common.util.ORawPair;
 import com.orientechnologies.lucene.OLuceneIndex;
 import com.orientechnologies.lucene.OLuceneTxOperations;
-import com.orientechnologies.lucene.collections.LuceneIndexTransformer;
-import com.orientechnologies.lucene.collections.OLuceneResultSet;
 import com.orientechnologies.lucene.engine.OLuceneIndexEngine;
 import com.orientechnologies.lucene.tx.OLuceneTxChanges;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
@@ -44,6 +42,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public class OLuceneIndexNotUnique extends OIndexAbstract implements OLuceneIndex {
@@ -272,16 +271,25 @@ public class OLuceneIndexNotUnique extends OIndexAbstract implements OLuceneInde
         .create(indexDefinition, clusterIndexName, clustersToIndex, rebuild, progressListener, determineValueSerializer());
   }
 
+  @Deprecated
   @Override
-  public Set<OIdentifiable> get(final Object key) {
+  public Collection<OIdentifiable> get(final Object key) {
+    try (Stream<ORID> stream = getRids(key)) {
+      return stream.collect(Collectors.toList());
+    }
+  }
+
+  @Override
+  public Stream<ORID> getRids(Object key) {
     final OBasicTransaction transaction = getDatabase().getMicroOrRegularTransaction();
     if (transaction.isActive()) {
       while (true) {
         try {
+          //noinspection resource
           return storage.callIndexEngine(false, false, indexId, engine -> {
             OLuceneIndexEngine indexEngine = (OLuceneIndexEngine) engine;
             return indexEngine.getInTx(key, getTransactionChanges(transaction));
-          });
+          }).stream().map(OIdentifiable::getIdentity);
         } catch (OInvalidIndexEngineIdException e) {
           doReloadIndexEngine();
         }
@@ -292,7 +300,8 @@ public class OLuceneIndexNotUnique extends OIndexAbstract implements OLuceneInde
         try {
           @SuppressWarnings("unchecked")
           Set<OIdentifiable> result = (Set<OIdentifiable>) storage.getIndexValue(indexId, key);
-          return result;
+          //noinspection resource
+          return result.stream().map(OIdentifiable::getIdentity);
           // TODO filter these results based on security
 //          return new HashSet(OIndexInternal.securityFilterOnRead(this, result));
         } catch (OInvalidIndexEngineIdException e) {
@@ -365,10 +374,7 @@ public class OLuceneIndexNotUnique extends OIndexAbstract implements OLuceneInde
     @SuppressWarnings("resource")
     String query = (String) keys.stream().findFirst().map(k -> (OCompositeKey) k).map(OCompositeKey::getKeys)
         .orElse(Collections.singletonList("q=*:*")).get(0);
-
-    OLuceneResultSet identifiables = (OLuceneResultSet) get(query);
-
-    return IndexStreamSecurityDecorator.decorateStream(this, LuceneIndexTransformer.transformToStream(identifiables, query));
+    return IndexStreamSecurityDecorator.decorateStream(this, getRids(query).map((rid) -> new ORawPair<>(query, rid)));
   }
 
   @Override

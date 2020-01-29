@@ -4,7 +4,6 @@ package com.orientechnologies.orient.core.sql.parser;
 
 import com.orientechnologies.common.collection.OMultiCollectionIterator;
 import com.orientechnologies.common.util.ORawPair;
-import com.orientechnologies.common.util.OSizeable;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
@@ -138,9 +137,10 @@ public class OWhereClause extends SimpleNode {
       }
     }
     if (key != null) {
-      Object result = null;
       if (conditions.size() == definitionFields.size()) {
-        result = index.get(key);
+        try (Stream<ORID> rids = index.getInternal().getRids(key)) {
+          return rids.count();
+        }
       } else if (index.supportsOrderedIterations()) {
         final Spliterator<ORawPair<Object, ORID>> spliterator;
 
@@ -149,26 +149,7 @@ public class OWhereClause extends SimpleNode {
           return spliterator.estimateSize();
         }
       }
-      if (result instanceof OIdentifiable) {
-        return 1;
-      }
-      if (result instanceof Collection) {
-        return ((Collection) result).size();
-      }
-      if (result instanceof OSizeable) {
-        return ((OSizeable) result).size();
-      }
-      if (result instanceof Iterable) {
-        result = ((Iterable) result).iterator();
-      }
-      if (result instanceof Iterator) {
-        int i = 0;
-        while (((Iterator) result).hasNext()) {
-          ((Iterator) result).next();
-          i++;
-        }
-        return i;
-      }
+
     }
     return Long.MAX_VALUE;
   }
@@ -241,17 +222,8 @@ public class OWhereClause extends SimpleNode {
       }
     }
     if (key != null) {
-      final Object result = index.get(key);
-      if (result == null) {
-        return Collections.EMPTY_LIST;
-      }
-      if (result instanceof Iterable) {
-        return (Iterable) result;
-      }
-      if (result instanceof Iterator) {
-        return () -> (Iterator) result;
-      }
-      return Collections.singleton(result);
+      final Object iteratorKey = key;
+      return () -> index.getInternal().getRids(iteratorKey).iterator();
     }
     return null;
   }
@@ -305,12 +277,11 @@ public class OWhereClause extends SimpleNode {
   public OWhereClause copy() {
     OWhereClause result = new OWhereClause(-1);
     result.baseExpression = baseExpression.copy();
-    result.flattened = Optional.ofNullable(flattened)
-        .map(oAndBlocks -> {
-          try (Stream<OAndBlock> stream = oAndBlocks.stream()) {
-            return stream.map(OAndBlock::copy).collect(Collectors.toList());
-          }
-        }).orElse(null);
+    result.flattened = Optional.ofNullable(flattened).map(oAndBlocks -> {
+      try (Stream<OAndBlock> stream = oAndBlocks.stream()) {
+        return stream.map(OAndBlock::copy).collect(Collectors.toList());
+      }
+    }).orElse(null);
     return result;
   }
 

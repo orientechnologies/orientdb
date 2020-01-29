@@ -191,31 +191,45 @@ public class OIndexTxAwareOneValue extends OIndexTxAware<OIdentifiable> {
     super(database, delegate);
   }
 
+  @Deprecated
   @Override
   public OIdentifiable get(Object key) {
+    final Iterator<ORID> iterator;
+    try (Stream<ORID> stream = getRids(key)) {
+      iterator = stream.iterator();
+      if (iterator.hasNext()) {
+        return iterator.next();
+      }
+    }
+
+    return null;
+  }
+
+  @Override
+  public Stream<ORID> getRids(final Object key) {
     final OTransactionIndexChanges indexChanges = database.getMicroOrRegularTransaction()
         .getIndexChangesInternal(delegate.getName());
-    if (indexChanges == null)
-      return (OIdentifiable) super.get(key);
+    if (indexChanges == null) {
+      return super.getRids(key);
+    }
 
-    key = getCollatingValue(key);
+    final Object collatedKey = getCollatingValue(key);
 
-    ORID result;
+    ORID rid;
     if (!indexChanges.cleared) {
       // BEGIN FROM THE UNDERLYING RESULT SET
-      result = Optional.ofNullable((OIdentifiable) super.get(key)).map(OIdentifiable::getIdentity).orElse(null);
+      //noinspection resource
+      rid = super.getRids(key).findFirst().orElse(null);
     } else {
-      // BEGIN FROM EMPTY RESULT SET
-      result = null;
+      rid = null;
     }
 
-    // FILTER RESULT SET WITH TRANSACTIONAL CHANGES
-    final ORawPair<Object, ORID> entry = calculateTxIndexEntry(key, result, indexChanges);
-    if (entry == null) {
-      return null;
+    final ORawPair<Object, ORID> txIndexEntry = calculateTxIndexEntry(key, rid, indexChanges);
+    if (txIndexEntry == null) {
+      return Stream.empty();
     }
 
-    return OIndexInternal.securityFilterOnRead(this, entry.second);
+    return IndexStreamSecurityDecorator.decorateRidStream(this, Stream.of(txIndexEntry.second));
   }
 
   @Override

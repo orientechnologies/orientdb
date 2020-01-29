@@ -1,6 +1,5 @@
 package com.orientechnologies.orient.distributed.impl.log;
 
-import java.util.Iterator;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicLong;
 

@@ -10,7 +10,6 @@ import com.orientechnologies.orient.distributed.impl.log.OOplogIterator;
 import com.orientechnologies.orient.distributed.network.ODistributedNetwork;
 
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;

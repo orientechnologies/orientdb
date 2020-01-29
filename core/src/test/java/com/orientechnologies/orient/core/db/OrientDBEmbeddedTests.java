@@ -8,7 +8,6 @@ import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedSt
 import org.junit.Test;
 
 import java.util.List;
-import java.util.Timer;
 import java.util.TimerTask;
 import java.util.UUID;
 import java.util.concurrent.*;

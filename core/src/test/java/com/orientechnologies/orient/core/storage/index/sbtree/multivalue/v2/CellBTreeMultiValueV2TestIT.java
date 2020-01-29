@@ -18,6 +18,7 @@ import org.junit.Test;
 import java.io.File;
 import java.io.IOException;
 import java.util.*;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public class CellBTreeMultiValueV2TestIT {
@@ -59,7 +60,10 @@ public class CellBTreeMultiValueV2TestIT {
 
     doInRollbackLoop(0, itemsCount, 100, (value, rollback) -> multiValueTree.put(null, new ORecordId(value % 32000, value)));
 
-    final List<ORID> result = multiValueTree.get(null);
+    final List<ORID> result;
+    try (Stream<ORID> stream = multiValueTree.get(null)) {
+      result = stream.collect(Collectors.toList());
+    }
 
     Assert.assertEquals(itemsCount, result.size());
     Set<ORID> resultSet = new HashSet<>(result);
@@ -78,7 +82,10 @@ public class CellBTreeMultiValueV2TestIT {
     doInRollbackLoop(0, itemsCount / 3, 100,
         (value, rollback) -> multiValueTree.remove(null, new ORecordId(3 * value % 32_000, 3 * value)));
 
-    final List<ORID> result = multiValueTree.get(null);
+    final List<ORID> result;
+    try (Stream<ORID> stream = multiValueTree.get(null)) {
+      result = stream.collect(Collectors.toList());
+    }
 
     Assert.assertEquals(itemsCount - itemsCount / 3, result.size());
     Set<ORID> resultSet = new HashSet<>(result);
@@ -106,7 +113,10 @@ public class CellBTreeMultiValueV2TestIT {
       }
     }));
 
-    final List<ORID> result = multiValueTree.get(null);
+    final List<ORID> result;
+    try (Stream<ORID> stream = multiValueTree.get(null)) {
+      result = stream.collect(Collectors.toList());
+    }
 
     Assert.assertEquals(itemsCount - removed.value, result.size());
     Set<ORID> resultSet = new HashSet<>(result);
@@ -145,7 +155,10 @@ public class CellBTreeMultiValueV2TestIT {
       }
     }
 
-    final List<ORID> result = multiValueTree.get(null);
+    final List<ORID> result;
+    try (Stream<ORID> stream = multiValueTree.get(null)) {
+      result = stream.collect(Collectors.toList());
+    }
 
     Assert.assertEquals(itemsCount - removed.value, result.size());
     Set<ORID> resultSet = new HashSet<>(result);
@@ -168,7 +181,10 @@ public class CellBTreeMultiValueV2TestIT {
 
     doInRollbackLoop(start, end, 100, (value, rollback) -> multiValueTree.remove(null, new ORecordId(value % 32_000, value)));
 
-    final List<ORID> result = multiValueTree.get(null);
+    final List<ORID> result;
+    try (Stream<ORID> stream = multiValueTree.get(null)) {
+      result = stream.collect(Collectors.toList());
+    }
 
     Assert.assertEquals(itemsCount - (end - start), result.size());
     Set<ORID> resultSet = new HashSet<>(result);
@@ -194,7 +210,10 @@ public class CellBTreeMultiValueV2TestIT {
     doInRollbackLoop(start, end, 100, (value, rollback) -> multiValueTree.remove(null, new ORecordId(value % 32_000, value)));
     doInRollbackLoop(start, end, 100, (value, rollback) -> multiValueTree.put(null, new ORecordId(value % 32_000, value)));
 
-    final List<ORID> result = multiValueTree.get(null);
+    final List<ORID> result;
+    try (Stream<ORID> stream = multiValueTree.get(null)) {
+      result = stream.collect(Collectors.toList());
+    }
 
     Assert.assertEquals(itemsCount, result.size());
     Set<ORID> resultSet = new HashSet<>(result);
@@ -218,7 +237,10 @@ public class CellBTreeMultiValueV2TestIT {
         (value, rollback) -> multiValueTree.remove(null, new ORecordId(value % 32_000, value)));
     doInRollbackLoop(end, itemsCount, 100, (value, rollback) -> multiValueTree.remove(null, new ORecordId(value % 32_000, value)));
 
-    final List<ORID> result = multiValueTree.get(null);
+    final List<ORID> result;
+    try (Stream<ORID> stream = multiValueTree.get(null)) {
+      result = stream.collect(Collectors.toList());
+    }
 
     Assert.assertEquals(itemsCount - (start + (itemsCount - end)), result.size());
     Set<ORID> resultSet = new HashSet<>(result);
@@ -246,7 +268,10 @@ public class CellBTreeMultiValueV2TestIT {
     doInRollbackLoop(0, start, 100, (value, rollback) -> multiValueTree.put(null, new ORecordId(value % 32_000, value)));
     doInRollbackLoop(end, itemsCount, 100, (value, rollback) -> multiValueTree.put(null, new ORecordId(value % 32_000, value)));
 
-    final List<ORID> result = multiValueTree.get(null);
+    final List<ORID> result;
+    try (Stream<ORID> stream = multiValueTree.get(null)) {
+      result = stream.collect(Collectors.toList());
+    }
 
     Assert.assertEquals(itemsCount, result.size());
     Set<ORID> resultSet = new HashSet<>(result);
@@ -270,7 +295,10 @@ public class CellBTreeMultiValueV2TestIT {
     doInRollbackLoop(end, itemsCount, 100, (value, rollback) -> multiValueTree.remove(null, new ORecordId(value % 32_000, value)));
     doInRollbackLoop(end, itemsCount, 100, (value, rollback) -> multiValueTree.put(null, new ORecordId(value % 32_000, value)));
 
-    final List<ORID> result = multiValueTree.get(null);
+    final List<ORID> result;
+    try (Stream<ORID> stream = multiValueTree.get(null)) {
+      result = stream.collect(Collectors.toList());
+    }
 
     Assert.assertEquals(itemsCount, result.size());
     Set<ORID> resultSet = new HashSet<>(result);
@@ -287,7 +315,10 @@ public class CellBTreeMultiValueV2TestIT {
 
     doInRollbackLoop(0, itemsCount, 100, (value, rollback) -> multiValueTree.put(key, new ORecordId(value % 32000, value)));
 
-    final List<ORID> result = multiValueTree.get(key);
+    final List<ORID> result;
+    try (Stream<ORID> stream = multiValueTree.get(key)) {
+      result = stream.collect(Collectors.toList());
+    }
 
     Assert.assertEquals(itemsCount, result.size());
     Set<ORID> resultSet = new HashSet<>(result);
@@ -309,7 +340,10 @@ public class CellBTreeMultiValueV2TestIT {
       multiValueTree.remove(key, new ORecordId(val % 32_000, val));
     });
 
-    final List<ORID> result = multiValueTree.get(key);
+    final List<ORID> result;
+    try (Stream<ORID> stream = multiValueTree.get(key)) {
+      result = stream.collect(Collectors.toList());
+    }
 
     Assert.assertEquals(itemsCount - itemsCount / 3, result.size());
     Set<ORID> resultSet = new HashSet<>(result);
@@ -332,7 +366,10 @@ public class CellBTreeMultiValueV2TestIT {
       multiValueTree.put(keyTwo, new ORecordId(value % 32000, value));
     });
 
-    List<ORID> result = multiValueTree.get(keyOne);
+    List<ORID> result;
+    try (Stream<ORID> stream = multiValueTree.get(keyOne)) {
+      result = stream.collect(Collectors.toList());
+    }
 
     Assert.assertEquals(itemsCount, result.size());
     Set<ORID> resultSet = new HashSet<>(result);
@@ -341,7 +378,9 @@ public class CellBTreeMultiValueV2TestIT {
       Assert.assertTrue(resultSet.contains(new ORecordId(i % 32000, i)));
     }
 
-    result = multiValueTree.get(keyTwo);
+    try (Stream<ORID> stream = multiValueTree.get(keyTwo)) {
+      result = stream.collect(Collectors.toList());
+    }
 
     Assert.assertEquals(itemsCount, result.size());
     resultSet = new HashSet<>(result);
@@ -369,7 +408,10 @@ public class CellBTreeMultiValueV2TestIT {
     });
 
     {
-      final List<ORID> result = multiValueTree.get(keyOne);
+      final List<ORID> result;
+      try (Stream<ORID> stream = multiValueTree.get(keyOne)) {
+        result = stream.collect(Collectors.toList());
+      }
 
       Assert.assertEquals(itemsCount - itemsCount / 3, result.size());
       Set<ORID> resultSet = new HashSet<>(result);
@@ -382,7 +424,10 @@ public class CellBTreeMultiValueV2TestIT {
     }
 
     {
-      final List<ORID> result = multiValueTree.get(keyTwo);
+      final List<ORID> result;
+      try (Stream<ORID> stream = multiValueTree.get(keyTwo)) {
+        result = stream.collect(Collectors.toList());
+      }
 
       Assert.assertEquals(itemsCount - itemsCount / 3, result.size());
       Set<ORID> resultSet = new HashSet<>(result);
@@ -411,7 +456,10 @@ public class CellBTreeMultiValueV2TestIT {
     });
 
     for (String key : keys) {
-      List<ORID> result = multiValueTree.get(key);
+      List<ORID> result;
+      try (Stream<ORID> stream = multiValueTree.get(key)) {
+        result = stream.collect(Collectors.toList());
+      }
 
       Assert.assertEquals(itemsCount, result.size());
       Set<ORID> resultSet = new HashSet<>(result);
@@ -439,7 +487,10 @@ public class CellBTreeMultiValueV2TestIT {
     });
 
     for (String key : keys) {
-      List<ORID> result = multiValueTree.get(key);
+      List<ORID> result;
+      try (Stream<ORID> stream = multiValueTree.get(key)) {
+        result = stream.collect(Collectors.toList());
+      }
 
       Assert.assertEquals(itemsCount, result.size());
       Set<ORID> resultSet = new HashSet<>(result);
@@ -474,7 +525,10 @@ public class CellBTreeMultiValueV2TestIT {
     });
 
     for (String key : keys) {
-      final List<ORID> result = multiValueTree.get(key);
+      final List<ORID> result;
+      try (Stream<ORID> stream = multiValueTree.get(key)) {
+        result = stream.collect(Collectors.toList());
+      }
 
       Assert.assertEquals(itemsCount - itemsCount / 3, result.size());
       Set<ORID> resultSet = new HashSet<>(result);
@@ -506,7 +560,10 @@ public class CellBTreeMultiValueV2TestIT {
     });
 
     for (String key : keys) {
-      List<ORID> result = multiValueTree.get(key);
+      List<ORID> result;
+      try (Stream<ORID> stream = multiValueTree.get(key)) {
+        result = stream.collect(Collectors.toList());
+      }
 
       Assert.assertEquals(itemsCount, result.size());
       Set<ORID> resultSet = new HashSet<>(result);
@@ -541,7 +598,10 @@ public class CellBTreeMultiValueV2TestIT {
     });
 
     for (String key : keys) {
-      final List<ORID> result = multiValueTree.get(key);
+      final List<ORID> result;
+      try (Stream<ORID> stream = multiValueTree.get(key)) {
+        result = stream.collect(Collectors.toList());
+      }
 
       Assert.assertEquals(itemsCount - itemsCount / 3, result.size());
       Set<ORID> resultSet = new HashSet<>(result);
@@ -581,7 +641,10 @@ public class CellBTreeMultiValueV2TestIT {
     });
 
     for (int i = 0; i < keysCount; i++) {
-      final List<ORID> result = multiValueTree.get(Integer.toString(i));
+      final List<ORID> result;
+      try (Stream<ORID> stream = multiValueTree.get(Integer.toString(i))) {
+        result = stream.collect(Collectors.toList());
+      }
       Assert.assertEquals(1, result.size());
 
       Assert.assertTrue(i + " key is absent", result.contains(new ORecordId(i % 32000, i)));
@@ -591,7 +654,9 @@ public class CellBTreeMultiValueV2TestIT {
     }
 
     for (int i = keysCount; i < 2 * keysCount; i++) {
-      Assert.assertTrue(multiValueTree.get(Integer.toString(i)).isEmpty());
+      try (Stream<ORID> stream = multiValueTree.get(Integer.toString(i))) {
+        Assert.assertFalse(stream.iterator().hasNext());
+      }
     }
   }
 
@@ -622,7 +687,11 @@ public class CellBTreeMultiValueV2TestIT {
         return v + 1;
       });
 
-      final List<ORID> result = multiValueTree.get(key);
+      final List<ORID> result;
+      try (Stream<ORID> stream = multiValueTree.get(key)) {
+        result = stream.collect(Collectors.toList());
+      }
+
       Assert.assertEquals(keys.get(key).longValue(), result.size());
       final ORID expected = new ORecordId(val % 32000, val);
 
@@ -636,7 +705,10 @@ public class CellBTreeMultiValueV2TestIT {
 
     for (Map.Entry<String, Integer> entry : keys.entrySet()) {
       final int val = Integer.parseInt(entry.getKey());
-      List<ORID> result = multiValueTree.get(entry.getKey());
+      List<ORID> result;
+      try (Stream<ORID> stream = multiValueTree.get(entry.getKey())) {
+        result = stream.collect(Collectors.toList());
+      }
 
       Assert.assertEquals(entry.getValue().longValue(), result.size());
       final ORID expected = new ORecordId(val % 32000, val);
@@ -698,9 +770,14 @@ public class CellBTreeMultiValueV2TestIT {
       final String key = String.valueOf(i);
 
       if (i % 3 == 0) {
-        Assert.assertTrue(multiValueTree.get(key).isEmpty());
+        try (Stream<ORID> stream = multiValueTree.get(key)) {
+          Assert.assertFalse(stream.iterator().hasNext());
+        }
       } else {
-        List<ORID> result = multiValueTree.get(key);
+        List<ORID> result;
+        try (Stream<ORID> stream = multiValueTree.get(key)) {
+          result = stream.collect(Collectors.toList());
+        }
 
         Assert.assertEquals(1, result.size());
         final ORID expected = new ORecordId(i % 32000, i);
@@ -732,16 +809,24 @@ public class CellBTreeMultiValueV2TestIT {
 
     for (int i = 0; i < keysCount; i++) {
       if (i % 3 == 0) {
-        Assert.assertTrue(multiValueTree.get(Integer.toString(i)).isEmpty());
+        try (Stream<ORID> stream = multiValueTree.get(Integer.toString(i))) {
+          Assert.assertFalse(stream.iterator().hasNext());
+        }
       } else {
-        List<ORID> result = multiValueTree.get(Integer.toString(i));
+        List<ORID> result;
+        try (Stream<ORID> stream = multiValueTree.get(Integer.toString(i))) {
+          result = stream.collect(Collectors.toList());
+        }
 
         Assert.assertEquals(1, result.size());
         Assert.assertTrue(result.contains(new ORecordId(i % 32000, i)));
       }
 
       if (i % 2 == 0) {
-        List<ORID> result = multiValueTree.get(Integer.toString(keysCount + i));
+        List<ORID> result;
+        try (Stream<ORID> stream = multiValueTree.get(Integer.toString(keysCount + i))) {
+          result = stream.collect(Collectors.toList());
+        }
 
         Assert.assertEquals(1, result.size());
         Assert.assertTrue(result.contains(new ORecordId((keysCount + i) % 32000, keysCount + i)));

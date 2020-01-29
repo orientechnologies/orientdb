@@ -1,7 +1,5 @@
 package com.orientechnologies.orient.server.distributed.impl.task;
 
-import com.orientechnologies.orient.core.id.ORecordId;
-import com.orientechnologies.orient.server.distributed.ODistributedRequestId;
 import org.junit.Assert;
 import org.junit.Test;
 

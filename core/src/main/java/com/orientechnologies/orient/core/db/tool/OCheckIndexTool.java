@@ -19,7 +19,6 @@
  */
 package com.orientechnologies.orient.core.db.tool;
 
-import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.index.OIndexDefinition;
@@ -30,8 +29,8 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 
 import java.util.Collection;
 import java.util.Collections;
-import java.util.Iterator;
 import java.util.List;
+import java.util.stream.Stream;
 
 /**
  * @author Luigi Dell'Aquila (l.dellaquila -at- orientdb.com)
@@ -148,45 +147,26 @@ public class OCheckIndexTool extends ODatabaseTool {
     for (int i = 0; i < vals.length; i++) {
       vals[i] = doc.field(fields.get(i));
     }
+
     Object indexKey = index.getDefinition().createValue(vals);
     if (indexKey == null) {
       return;
     }
 
-    if (index.getDefinition().getFields().size() == 1 && indexKey instanceof Collection) {
-      for (Object key : ((Collection) indexKey)) {
-        Object values = index.get(key);
-        checkSingleRecord(doc, index, docId, values);
-      }
+    final Collection<Object> indexKeys;
+    if (!(indexKey instanceof Collection)) {
+      indexKeys = Collections.singletonList(indexKey);
     } else {
-      Object values = index.get(indexKey);
-      checkSingleRecord(doc, index, docId, values);
+      //noinspection unchecked
+      indexKeys = (Collection<Object>) indexKey;
     }
-  }
 
-  private void checkSingleRecord(ODocument doc, OIndex index, ORID docId, Object values) {
-    if (values instanceof OIdentifiable) {
-      //single value
-      ORID indexRid = ((OIdentifiable) values).getIdentity();
-      if (!indexRid.equals(docId)) {
-//        errors.add(new Error(docId, index.getName(), true, false));
-        totalErrors++;
-        message("\rERROR: Index " + index.getName() + " - record not found: " + doc.getIdentity() + "\n");
-      }
-    } else if (values instanceof Iterable) {
-      Iterator<OIdentifiable> valuesOnIndex = ((Iterable) values).iterator();
-      boolean found = false;
-      while (valuesOnIndex.hasNext()) {
-        ORID indexRid = valuesOnIndex.next().getIdentity();
-        if (docId.equals(indexRid)) {
-          found = true;
-          break;
+    for (final Object key : indexKeys) {
+      try (final Stream<ORID> stream = index.getInternal().getRids(key)) {
+        if (stream.noneMatch((rid) -> rid.equals(docId))) {
+          totalErrors++;
+          message("\rERROR: Index " + index.getName() + " - record not found: " + doc.getIdentity() + "\n");
         }
-      }
-      if (!found) {
-//        errors.add(new Error(docId, index.getName(), true, false));
-        totalErrors++;
-        message("\rERROR: Index " + index.getName() + " - record not found: " + doc.getIdentity() + "\n");
       }
     }
   }

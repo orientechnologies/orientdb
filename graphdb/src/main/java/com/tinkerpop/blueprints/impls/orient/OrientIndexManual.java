@@ -22,6 +22,7 @@ package com.tinkerpop.blueprints.impls.orient;
 
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.index.*;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OType;
@@ -37,6 +38,8 @@ import com.tinkerpop.blueprints.util.WrappingCloseableIterable;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * @author Luca Garulli (l.garulli--(at)--orientdb.com) (http://orientdb.com)
@@ -104,7 +107,10 @@ public class OrientIndexManual<T extends OrientElement> implements OrientIndex<T
   @SuppressWarnings("rawtypes")
   public CloseableIterable<T> get(final String key, final Object iValue) {
     final String keyTemp = key + SEPARATOR + iValue;
-    Collection<OIdentifiable> records = (Collection<OIdentifiable>) underlying.get(keyTemp);
+    Collection<OIdentifiable> records;
+    try (Stream<ORID> rids = underlying.getInternal().getRids(keyTemp)) {
+      records = rids.collect(Collectors.toList());
+    }
 
     if (records == null || records.isEmpty())
       return new WrappingCloseableIterable(Collections.emptySet());
@@ -118,10 +124,9 @@ public class OrientIndexManual<T extends OrientElement> implements OrientIndex<T
 
   public long count(final String key, final Object value) {
     final String keyTemp = key + SEPARATOR + value;
-    final Collection<OIdentifiable> records = (Collection<OIdentifiable>) underlying.get(keyTemp);
-    if (records == null)
-      return 0;
-    return records.size();
+    try (Stream<ORID> rids = underlying.getInternal().getRids(keyTemp)) {
+      return rids.count();
+    }
   }
 
   public void remove(final String key, final Object value, final T element) {

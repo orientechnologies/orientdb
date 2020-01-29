@@ -7,6 +7,7 @@ import com.orientechnologies.lucene.index.OLuceneFullTextIndex;
 import com.orientechnologies.lucene.query.OLuceneKeyAndMetadata;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.OMetadata;
 import com.orientechnologies.orient.core.record.OElement;
@@ -32,6 +33,7 @@ import java.io.IOException;
 import java.io.StringReader;
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * Created by frank on 15/01/2017.
@@ -94,8 +96,11 @@ public class OLuceneSearchMoreLikeThisFunction extends OSQLFunctionAbstract impl
 
     Query mltQuery = queryBuilder.build();
 
-    Set<OIdentifiable> luceneResultSet = index
-        .get(new OLuceneKeyAndMetadata(new OLuceneCompositeKey(Arrays.asList(mltQuery.toString())).setContext(ctx), metadata));
+    Set<OIdentifiable> luceneResultSet;
+    try (Stream<ORID> rids = index.getInternal().getRids(
+        new OLuceneKeyAndMetadata(new OLuceneCompositeKey(Arrays.asList(mltQuery.toString())).setContext(ctx), metadata))) {
+      luceneResultSet = rids.collect(Collectors.toSet());
+    }
 
     return luceneResultSet;
 
@@ -190,7 +195,6 @@ public class OLuceneSearchMoreLikeThisFunction extends OSQLFunctionAbstract impl
   private void addLikeQueries(List<ORecord> others, MoreLikeThis mlt, Builder queryBuilder) {
     others.stream().map(or -> or.<OElement>load()).forEach(element -> Arrays.stream(mlt.getFieldNames()).forEach(fieldName -> {
       String property = element.getProperty(fieldName);
-
       try {
         Query fieldQuery = mlt.like(fieldName, new StringReader(property));
         if (!fieldQuery.toString().isEmpty())
@@ -199,10 +203,7 @@ public class OLuceneSearchMoreLikeThisFunction extends OSQLFunctionAbstract impl
         //FIXME handle me!
         OLogManager.instance().error(this, "Error during Lucene query generation", e);
       }
-
-    })
-
-    );
+    }));
   }
 
   private void excludeOtherFromResults(List<String> ridsAsString, Builder queryBuilder) {

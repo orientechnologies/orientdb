@@ -20,14 +20,15 @@
 package com.orientechnologies.orient.server.network.protocol.http.command.get;
 
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
-import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpRequest;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpResponse;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpUtils;
 import com.orientechnologies.orient.server.network.protocol.http.command.OServerCommandDocumentAbstract;
 
-import java.util.Collection;
+import java.util.Iterator;
+import java.util.stream.Stream;
 
 public class OServerCommandGetIndex extends OServerCommandDocumentAbstract {
   private static final String[] NAMES = { "GET|index/*" };
@@ -48,39 +49,38 @@ public class OServerCommandGetIndex extends OServerCommandDocumentAbstract {
       if (index == null)
         throw new IllegalArgumentException("Index name '" + urlParts[2] + "' not found");
 
-      final Object content = index.get(urlParts[3]);
+      try (final Stream<ORID> stream = index.getInternal().getRids(urlParts[3])) {
+        final Iterator<ORID> iterator = stream.iterator();
 
-      if (content == null)
-        iResponse.send(OHttpUtils.STATUS_NOTFOUND_CODE, OHttpUtils.STATUS_NOTFOUND_DESCRIPTION, OHttpUtils.CONTENT_TEXT_PLAIN, null,
-            null);
-      else {
-        final StringBuilder buffer = new StringBuilder(128);
-        buffer.append('[');
+        if (!iterator.hasNext())
+          iResponse
+              .send(OHttpUtils.STATUS_NOTFOUND_CODE, OHttpUtils.STATUS_NOTFOUND_DESCRIPTION, OHttpUtils.CONTENT_TEXT_PLAIN, null,
+                  null);
+        else {
+          final StringBuilder buffer = new StringBuilder(128);
+          buffer.append('[');
 
-        if (content instanceof Collection<?>) {
-          Collection<OIdentifiable> collection = (Collection<OIdentifiable>) content;
           int count = 0;
-          for (OIdentifiable item : collection) {
+          while (iterator.hasNext()) {
+            final ORID item = iterator.next();
             if (count > 0) {
               buffer.append(", ");
             }
             buffer.append(item.getRecord().toJSON());
             count++;
           }
-        } else
-          buffer.append(((OIdentifiable) content).getRecord().toJSON());
 
-        buffer.append(']');
+          buffer.append(']');
 
-        if (isJsonResponse(iResponse)) {
-          iResponse
-              .send(OHttpUtils.STATUS_OK_CODE, OHttpUtils.STATUS_OK_DESCRIPTION, OHttpUtils.CONTENT_JSON, buffer.toString(), null);
-        } else {
-          iResponse
-              .send(OHttpUtils.STATUS_OK_CODE, OHttpUtils.STATUS_OK_DESCRIPTION, OHttpUtils.CONTENT_TEXT_PLAIN, buffer.toString(),
-                  null);
+          if (isJsonResponse(iResponse)) {
+            iResponse.send(OHttpUtils.STATUS_OK_CODE, OHttpUtils.STATUS_OK_DESCRIPTION, OHttpUtils.CONTENT_JSON, buffer.toString(),
+                null);
+          } else {
+            iResponse
+                .send(OHttpUtils.STATUS_OK_CODE, OHttpUtils.STATUS_OK_DESCRIPTION, OHttpUtils.CONTENT_TEXT_PLAIN, buffer.toString(),
+                    null);
+          }
         }
-
       }
     } finally {
       if (db != null)

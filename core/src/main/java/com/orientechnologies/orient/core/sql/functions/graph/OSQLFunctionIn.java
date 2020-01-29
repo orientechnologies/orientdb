@@ -4,17 +4,18 @@ import com.orientechnologies.common.collection.OMultiCollectionIterator;
 import com.orientechnologies.common.util.OSizeable;
 import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.index.OCompositeKey;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.record.ODirection;
-import com.orientechnologies.orient.core.record.OEdge;
 import com.orientechnologies.orient.core.record.OVertex;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * Created by luigidellaquila on 03/01/17.
@@ -56,7 +57,7 @@ public class OSQLFunctionIn extends OSQLFunctionMoveFiltered {
     return v2v(graph, iRecord, ODirection.IN, iLabels);
   }
 
-  private Object fetchFromIndex(ODatabase graph, OIdentifiable iFrom, Iterable<OIdentifiable> iTo, String[] iEdgeTypes) {
+  private Object fetchFromIndex(ODatabase graph, OIdentifiable iFrom, Iterable<OIdentifiable> to, String[] iEdgeTypes) {
     String edgeClassName = null;
     if (iEdgeTypes == null) {
       edgeClassName = "E";
@@ -76,17 +77,11 @@ public class OSQLFunctionIn extends OSQLFunctionMoveFiltered {
     OIndex index = indexes.iterator().next();
 
     OMultiCollectionIterator<OVertex> result = new OMultiCollectionIterator<OVertex>();
-    for (OIdentifiable to : iTo) {
-      OCompositeKey key = new OCompositeKey(iFrom, to);
-      Object indexResult = index.get(key);
-      if (indexResult instanceof OIdentifiable) {
-        indexResult = Collections.singleton(indexResult);
+    for (OIdentifiable identifiable : to) {
+      OCompositeKey key = new OCompositeKey(iFrom, identifiable);
+      try (Stream<ORID> stream = index.getInternal().getRids(key)) {
+        result.add(stream.map((edge) -> ((ODocument) edge.getRecord()).rawField("out")).collect(Collectors.toSet()));
       }
-      Set<OIdentifiable> identities = new HashSet<OIdentifiable>();
-      for (OIdentifiable edge : ((Iterable<OEdge>) indexResult)) {
-        identities.add((OIdentifiable) ((ODocument) edge.getRecord()).rawField("out"));
-      }
-      result.add(identities);
     }
 
     return result;

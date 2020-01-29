@@ -46,7 +46,7 @@ import com.orientechnologies.orient.server.distributed.task.ODistributedRecordLo
 import java.io.IOException;
 import java.util.*;
 
-import static com.orientechnologies.orient.core.config.OGlobalConfiguration.*;
+import static com.orientechnologies.orient.core.config.OGlobalConfiguration.DISTRIBUTED_ATOMIC_LOCK_TIMEOUT;
 
 /**
  * Distributed transaction manager.

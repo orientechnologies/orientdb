@@ -127,8 +127,8 @@ public final class OCellBTreeSingleValueIndexEngine implements OSingleValueIndex
   }
 
   @Override
-  public ORID get(Object key) {
-    return sbTree.get(key);
+  public Stream<ORID> get(Object key) {
+    return Stream.of(sbTree.get(key));
   }
 
   @Override

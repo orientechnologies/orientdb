@@ -22,28 +22,26 @@ package com.orientechnologies.orient.graph.sql.functions;
 import com.orientechnologies.common.collection.OMultiCollectionIterator;
 import com.orientechnologies.common.util.OSizeable;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.index.OCompositeKey;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
-import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.tinkerpop.blueprints.Direction;
 import com.tinkerpop.blueprints.impls.orient.OrientBaseGraph;
-import com.tinkerpop.blueprints.impls.orient.OrientEdge;
 import com.tinkerpop.blueprints.impls.orient.OrientVertex;
 
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * Gets the outgoing Vertices of current Vertex.
- * 
+ *
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
- * 
  */
 public class OSQLFunctionOut extends OSQLFunctionMoveFiltered {
-  public static final String NAME               = "out";
-
+  public static final String NAME = "out";
 
   public OSQLFunctionOut() {
     super(NAME, 0, -1);
@@ -101,15 +99,9 @@ public class OSQLFunctionOut extends OSQLFunctionMoveFiltered {
     OMultiCollectionIterator<OrientVertex> result = new OMultiCollectionIterator<OrientVertex>();
     for (OIdentifiable to : iTo) {
       OCompositeKey key = new OCompositeKey(iFrom, to);
-      Object indexResult = index.get(key);
-      if (indexResult instanceof OIdentifiable) {
-        indexResult = Collections.singleton(indexResult);
+      try (Stream<ORID> indexResult = index.getInternal().getRids(key)) {
+        result.add(indexResult.collect(Collectors.toSet()));
       }
-      Set<OIdentifiable> identities = new HashSet<OIdentifiable>();
-      for (OIdentifiable edge : ((Iterable<OrientEdge>) indexResult)) {
-        identities.add((OIdentifiable) ((ODocument) edge.getRecord()).rawField("in"));
-      }
-      result.add(identities);
     }
 
     return result;

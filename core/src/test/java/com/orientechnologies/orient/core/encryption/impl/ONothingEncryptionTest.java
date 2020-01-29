@@ -1,6 +1,5 @@
 package com.orientechnologies.orient.core.encryption.impl;
 
-import com.orientechnologies.orient.core.exception.OSecurityException;
 import org.junit.Assert;
 import org.junit.Test;
 

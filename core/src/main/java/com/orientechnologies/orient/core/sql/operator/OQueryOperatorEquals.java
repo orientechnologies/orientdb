@@ -39,7 +39,6 @@ import com.orientechnologies.orient.core.sql.filter.OSQLFilterItemField;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilterItemParameter;
 
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Stream;
@@ -189,17 +188,7 @@ public class OQueryOperatorEquals extends OQueryOperatorEqualityNotNulls {
       if (key == null)
         return null;
 
-      final Object indexResult;
-      indexResult = index.get(key);
-
-      if (indexResult == null) {
-        stream = Stream.empty();
-      } else if (indexResult instanceof OIdentifiable) {
-        stream = Stream.of(new ORawPair<>(key, ((OIdentifiable) indexResult).getIdentity()));
-      } else {
-        stream = ((Collection<OIdentifiable>) indexResult).stream()
-            .map((identifiable) -> new ORawPair<>(key, identifiable.getIdentity()));
-      }
+      stream = index.getInternal().getRids(key).map((rid) -> new ORawPair<>(key, rid));
     } else {
       // in case of composite keys several items can be returned in case of we perform search
       // using part of composite key stored in index.
@@ -217,17 +206,7 @@ public class OQueryOperatorEquals extends OQueryOperatorEqualityNotNulls {
         stream = index.getInternal().streamEntriesBetween(keyOne, true, keyTwo, true, ascSortOrder);
       } else {
         if (indexDefinition.getParamCount() == keyParams.size()) {
-          final Object indexResult;
-          indexResult = index.get(keyOne);
-
-          if (indexResult == null) {
-            stream = Stream.empty();
-          } else if (indexResult instanceof OIdentifiable) {
-            stream = Stream.of(new ORawPair<>(keyOne, ((OIdentifiable) indexResult).getIdentity()));
-          } else {
-            stream = ((Collection<OIdentifiable>) indexResult).stream()
-                .map((identifiable) -> new ORawPair<>(keyOne, identifiable.getIdentity()));
-          }
+          stream = index.getInternal().getRids(keyOne).map((rid) -> new ORawPair<>(keyOne, rid));
         } else
           return null;
       }
