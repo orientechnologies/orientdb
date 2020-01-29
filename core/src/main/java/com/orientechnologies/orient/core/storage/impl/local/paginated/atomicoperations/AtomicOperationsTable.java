@@ -28,11 +28,11 @@ public class AtomicOperationsTable {
   }
 
   public void startOperation(final long operationId, final long segment) {
-    changeOperationStatus(operationId, AtomicOperationStatus.IN_PROGRESS, null, segment);
+    changeOperationStatus(operationId, null, AtomicOperationStatus.IN_PROGRESS, segment);
   }
 
   public void commitOperation(final long operationId) {
-    changeOperationStatus(operationId, AtomicOperationStatus.COMMITTED, AtomicOperationStatus.IN_PROGRESS, -1);
+    changeOperationStatus(operationId, AtomicOperationStatus.IN_PROGRESS, AtomicOperationStatus.COMMITTED, -1);
   }
 
   public void rollbackOperation(final long operationId) {
@@ -82,8 +82,8 @@ public class AtomicOperationsTable {
     return -1;
   }
 
-  private void changeOperationStatus(final long operationId, final AtomicOperationStatus newStatus,
-      final AtomicOperationStatus expectedStatus, final long segment) {
+  private void changeOperationStatus(final long operationId, final AtomicOperationStatus expectedStatus,
+      final AtomicOperationStatus newStatus, final long segment) {
     if (operationsStarted.get() > lastCompactionOperation + tableCompactionInterval) {
       compactTable();
     }
@@ -103,13 +103,13 @@ public class AtomicOperationsTable {
       long nextOffset = idOffsets.length > 1 ? idOffsets[1] : Long.MAX_VALUE;
 
       while (true) {
-        if (currentOffset >= operationId && currentOffset < nextOffset) {
+        if (currentOffset <= operationId && operationId < nextOffset) {
           final int itemIndex = (int) (operationId - currentOffset);
           if (itemIndex < 0) {
             throw new IllegalStateException("Invalid state of table of atomic operations");
           }
 
-          final CASObjectArray<OperationInformation> table = tables[itemIndex];
+          final CASObjectArray<OperationInformation> table = tables[currentIndex];
           if (newStatus == AtomicOperationStatus.IN_PROGRESS) {
             table.set(itemIndex, new OperationInformation(AtomicOperationStatus.IN_PROGRESS, segment),
                 ATOMIC_OPERATION_STATUS_PLACE_HOLDER);
