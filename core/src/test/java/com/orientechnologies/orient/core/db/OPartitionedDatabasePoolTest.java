@@ -88,7 +88,7 @@ public class OPartitionedDatabasePoolTest {
   @Test
   public void testMultiThread() {
 
-    Assume.assumeTrue(Runtime.getRuntime().availableProcessors() > 1);
+    Assume.assumeTrue(Runtime.getRuntime().availableProcessors() > 2);
     //do a query and assert on other thread
     Runnable acquirer = () -> {
 
