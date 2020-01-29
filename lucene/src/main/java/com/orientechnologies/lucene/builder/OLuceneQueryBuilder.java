@@ -33,6 +33,7 @@ import org.apache.lucene.search.Query;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 /**
  * Created by Enrico Risa on 02/09/15.
@@ -105,7 +106,8 @@ public class OLuceneQueryBuilder {
   private Query getQuery(OIndexDefinition index, String query, ODocument metadata, Analyzer queryAnalyzer, String[] fields,
       Map<String, OType> types) throws ParseException {
 
-    Map<String, Float> boost = Optional.ofNullable(metadata.<Map<String, Float>>getProperty("boost")).orElse(new HashMap<>());
+    Map<String, Float> boost = Optional.ofNullable(metadata.<Map<String, Number>>getProperty("boost")).orElse(new HashMap<>())
+        .entrySet().stream().collect(Collectors.toMap(e -> e.getKey(), e -> e.getValue().floatValue()));
 
     Analyzer analyzer = Optional.ofNullable(metadata.<Boolean>getProperty("customAnalysis")).filter(b -> b == true)
         .map(b -> analyzerFactory.createAnalyzer(index, OLuceneAnalyzerFactory.AnalyzerKind.QUERY, metadata)).orElse(queryAnalyzer);
@@ -115,8 +117,8 @@ public class OLuceneQueryBuilder {
     queryParser.setAllowLeadingWildcard(
         Optional.ofNullable(metadata.<Boolean>getProperty("allowLeadingWildcard")).orElse(allowLeadingWildcard));
 
-    queryParser.setSplitOnWhitespace(
-        Optional.ofNullable(metadata.<Boolean>getProperty("splitOnWhitespace")).orElse(splitOnWhitespace));
+    queryParser
+        .setSplitOnWhitespace(Optional.ofNullable(metadata.<Boolean>getProperty("splitOnWhitespace")).orElse(splitOnWhitespace));
     //  TODO   REMOVED
     //    queryParser.setLowercaseExpandedTerms(
     //        Optional.ofNullable(metadata.<Boolean>getProperty("lowercaseExpandedTerms"))
