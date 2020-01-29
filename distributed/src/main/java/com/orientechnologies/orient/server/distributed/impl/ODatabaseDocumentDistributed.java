@@ -2,12 +2,19 @@ package com.orientechnologies.orient.server.distributed.impl;
 
 import com.hazelcast.core.HazelcastException;
 import com.hazelcast.core.HazelcastInstanceNotActiveException;
+import com.orientechnologies.common.concur.ONeedRetryException;
 import com.orientechnologies.common.concur.OOfflineNodeException;
 import com.orientechnologies.common.concur.lock.OInterruptedException;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.util.OCallable;
 import com.orientechnologies.orient.core.Orient;
+import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
+import com.orientechnologies.orient.core.command.OCommandExecutor;
+import com.orientechnologies.orient.core.command.OCommandManager;
+import com.orientechnologies.orient.core.command.ODistributedCommand;
+import com.orientechnologies.orient.core.command.script.OCommandScript;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.OScenarioThreadLocal;
 import com.orientechnologies.orient.core.db.OSharedContext;
@@ -31,6 +38,8 @@ import com.orientechnologies.orient.core.query.live.OLiveQueryHook;
 import com.orientechnologies.orient.core.query.live.OLiveQueryHookV2;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.sql.OCommandExecutorSQLDelegate;
+import com.orientechnologies.orient.core.sql.OCommandExecutorSQLSelect;
 import com.orientechnologies.orient.core.sql.executor.OExecutionPlan;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import com.orientechnologies.orient.core.storage.ORecordDuplicatedException;
@@ -45,10 +54,11 @@ import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.distributed.*;
 import com.orientechnologies.orient.server.distributed.impl.metadata.OClassDistributed;
 import com.orientechnologies.orient.server.distributed.impl.metadata.OSharedContextDistributed;
+import com.orientechnologies.orient.server.distributed.impl.task.ONewSQLCommandTask;
 import com.orientechnologies.orient.server.distributed.impl.task.ORunQueryExecutionPlanTask;
-import com.orientechnologies.orient.server.distributed.task.ODistributedKeyLockedException;
-import com.orientechnologies.orient.server.distributed.task.ODistributedRecordLockedException;
-import com.orientechnologies.orient.server.distributed.task.ORemoteTask;
+import com.orientechnologies.orient.server.distributed.impl.task.OSQLCommandTask;
+import com.orientechnologies.orient.server.distributed.impl.task.OScriptTask;
+import com.orientechnologies.orient.server.distributed.task.*;
 import com.orientechnologies.orient.server.hazelcast.OHazelcastPlugin;
 
 import java.io.FileOutputStream;
@@ -514,7 +524,6 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
 
   /**
    * @param transactionId
-   *
    * @return null returned means that commit failed
    */
   public boolean commit2pc(ODistributedRequestId transactionId, boolean local, ODistributedRequestId requestId) {
@@ -771,4 +780,28 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
     return getStorageDistributed().getDistributedConfiguration();
   }
 
+  public void sendDDLCommand(String command) {
+    if (getStorageDistributed().isLocalEnv()) {
+      // ALREADY DISTRIBUTED
+      super.command(command, new Object[] {}).close();
+      return;
+    }
+    getStorageDistributed().resetLastValidBackup();
+
+    getStorageDistributed().checkNodeIsMaster(getLocalNodeName(), getDistributedConfiguration(), "Command '" + command + "'");
+
+    ONewSQLCommandTask task = new ONewSQLCommandTask(command);
+    ODistributedServerManager dManager = getDistributedManager();
+    try {
+      Set<String> nodes = dManager.getAvailableNodeNames(getName());
+      nodes.remove(getLocalNodeName());
+
+      final ODistributedResponse response = dManager.sendRequest(getName(), null, nodes, task, dManager.getNextMessageIdCounter(),
+          ODistributedRequest.EXECUTION_MODE.RESPONSE, null, null, null);
+
+    } catch (Exception e) {
+      ODistributedServerLog.debug(this, dManager.getLocalNodeName(), getLocalNodeName(), ODistributedServerLog.DIRECTION.OUT,
+          "Error on execution of command '%s' against server '%s', database '%s'", command, getLocalNodeName(), getName());
+    }
+  }
 }
