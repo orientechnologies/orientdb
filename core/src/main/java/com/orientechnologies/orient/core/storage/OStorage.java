@@ -97,6 +97,7 @@ public interface OStorage extends OBackupable, OSharedContainer {
   default void begin(byte[] metadata) {
     throw new UnsupportedOperationException();
   }
+  
   // TX OPERATIONS
   List<ORecordOperation> commit(OTransactionInternal iTx);
 
