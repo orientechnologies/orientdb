@@ -360,7 +360,7 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
   }
 
   @Override
-  public boolean dropCluster(String clusterName) {
+  protected boolean dropClusterInternal(String clusterName) {
     if (isRunLocal()) {
       final String cmd = "drop cluster `" + clusterName + "`";
       sendDDLCommand(cmd);
@@ -371,10 +371,9 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
   }
 
   @Override
-  public boolean dropCluster(int clusterId) {
+  protected boolean dropClusterInternal(int clusterId) {
     if (isRunLocal()) {
       final String cmd = "drop cluster " + clusterId + "";
-      sendDDLCommand(cmd);
       sendDDLCommand(cmd);
       return true;
     } else {

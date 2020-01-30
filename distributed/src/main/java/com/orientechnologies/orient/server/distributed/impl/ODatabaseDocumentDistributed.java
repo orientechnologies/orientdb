@@ -795,4 +795,55 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
           "Error on execution of command '%s' against server '%s', database '%s'", command, getLocalNodeName(), getName());
     }
   }
+
+  @Override
+  public int addCluster(String iClusterName, Object... iParameters) {
+    if (!getStorageDistributed().isLocalEnv()) {
+      final StringBuilder cmd = new StringBuilder("create cluster `");
+      cmd.append(iClusterName);
+      cmd.append("`");
+      sendDDLCommand(cmd.toString(), false);
+      return getClusterIdByName(iClusterName);
+    } else {
+      return super.addCluster(iClusterName, iParameters);
+    }
+  }
+
+  @Override
+  public int addCluster(String iClusterName, int iRequestedId) {
+    if (!getStorageDistributed().isLocalEnv()) {
+      final StringBuilder cmd = new StringBuilder("create cluster `");
+      cmd.append(iClusterName);
+      cmd.append("`");
+      cmd.append(" ID ");
+      cmd.append(iRequestedId);
+      sendDDLCommand(cmd.toString(), false);
+      return iRequestedId;
+    } else {
+      return super.addCluster(iClusterName, iRequestedId);
+    }
+  }
+
+  @Override
+  protected boolean dropClusterInternal(String clusterName) {
+    if (getStorageDistributed().isLocalEnv()) {
+      final String cmd = "drop cluster `" + clusterName + "`";
+      sendDDLCommand(cmd, false);
+      return true;
+    } else {
+      return super.dropCluster(clusterName);
+    }
+  }
+
+  @Override
+  protected boolean dropClusterInternal(int clusterId) {
+    if (getStorageDistributed().isLocalEnv()) {
+      final String cmd = "drop cluster " + clusterId + "";
+      sendDDLCommand(cmd, false);
+      return true;
+    } else {
+      return super.dropCluster(clusterId);
+    }
+  }
+
 }
