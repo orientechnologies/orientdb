@@ -972,13 +972,7 @@ public abstract class OSchemaShared implements OCloseable {
   }
 
   public void sendCommand(ODatabaseDocumentInternal database, String command) {
-    final OStorage storage = database.getStorage();
-    final OAutoshardedStorage autoshardedStorage = (OAutoshardedStorage) storage;
-    OCommandSQL commandSQL = new OCommandSQL(command);
-    commandSQL.addExcludedNode(autoshardedStorage.getNodeId());
-
-    database.command(commandSQL).execute();
-
+    throw  new UnsupportedOperationException();
   }
 
 }

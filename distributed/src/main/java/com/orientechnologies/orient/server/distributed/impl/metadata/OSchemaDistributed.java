@@ -219,7 +219,7 @@ public class OSchemaDistributed extends OSchemaEmbedded {
 
   @Override
   public void sendCommand(ODatabaseDocumentInternal database, String command) {
-    ((ODatabaseDocumentDistributed) database).sendDDLCommand(command);
+    ((ODatabaseDocumentDistributed) database).sendDDLCommand(command, true);
   }
 
 }
