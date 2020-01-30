@@ -1094,7 +1094,7 @@ public final class OCASDiskWriteAheadLog implements OWriteAheadLog {
       }
     }
 
-    if (walSizeLimit > -1 && size > walSizeLimit && segments.size() > 1) {
+    if (walSizeLimit > -1 && size > walSizeLimit || segments.size() > 1) {
       for (final OCheckpointRequestListener listener : fullCheckpointListeners) {
         listener.requestCheckpoint();
       }
