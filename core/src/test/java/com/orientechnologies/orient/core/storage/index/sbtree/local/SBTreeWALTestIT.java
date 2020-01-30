@@ -77,7 +77,7 @@ public class SBTreeWALTestIT extends SBTreeTestIT {
     orientDB.create(ACTUAL_DB_NAME, ODatabaseType.PLOCAL);
 
     databaseDocumentTx = orientDB.open(ACTUAL_DB_NAME, "admin", "admin");
-    actualStorage = (OLocalPaginatedStorage) ((ODatabaseInternal) databaseDocumentTx).getStorage();
+    actualStorage = (OLocalPaginatedStorage) ((ODatabaseInternal<?>) databaseDocumentTx).getStorage();
     actualStorageDir = actualStorage.getStoragePath().toString();
     OCASDiskWriteAheadLog writeAheadLog = (OCASDiskWriteAheadLog) actualStorage.getWALInstance();
 
@@ -97,7 +97,7 @@ public class SBTreeWALTestIT extends SBTreeTestIT {
     orientDB.create(EXPECTED_DB_NAME, ODatabaseType.PLOCAL);
 
     expectedDatabaseDocumentTx = orientDB.open(EXPECTED_DB_NAME, "admin", "admin");
-    expectedStorage = (OLocalPaginatedStorage) ((ODatabaseInternal) expectedDatabaseDocumentTx).getStorage();
+    expectedStorage = (OLocalPaginatedStorage) ((ODatabaseInternal<?>) expectedDatabaseDocumentTx).getStorage();
     expectedReadCache = expectedStorage.getReadCache();
     expectedWriteCache = expectedStorage.getWriteCache();
 
@@ -234,8 +234,8 @@ public class SBTreeWALTestIT extends SBTreeTestIT {
 
   private void restoreDataFromWAL() throws IOException {
     OCASDiskWriteAheadLog log = new OCASDiskWriteAheadLog(ACTUAL_DB_NAME, Paths.get(actualStorageDir), Paths.get(actualStorageDir),
-        10_000, 128, 30 * 60 * 1_000_000_000L, 100 * 1024 * 1024, 1000, false, Locale.ENGLISH, -1, -1, 1_000, false, true, false,
-        0);
+        10_000, 128, 30 * 60 * 1_000_000_000L, 100 * 1024 * 1024, 1000, false, Locale.ENGLISH, -1, -1, 1_000, false, false, true,
+        false, 0);
     OLogSequenceNumber lsn = log.begin();
 
     List<OWALRecord> atomicUnit = new ArrayList<>();
@@ -262,14 +262,14 @@ public class SBTreeWALTestIT extends SBTreeTestIT {
             }
 
             if (restoreRecord instanceof OFileCreatedWALRecord) {
-              final OFileCreatedWALRecord fileCreatedCreatedRecord = (OFileCreatedWALRecord) restoreRecord;
+              final OFileCreatedWALRecord<?> fileCreatedCreatedRecord = (OFileCreatedWALRecord<?>) restoreRecord;
               final String fileName = fileCreatedCreatedRecord.getFileName().replace("actualSBTree", "expectedSBTree");
 
               if (!expectedWriteCache.exists(fileName)) {
                 expectedReadCache.addFile(fileName, fileCreatedCreatedRecord.getFileId(), expectedWriteCache);
               }
             } else {
-              final OUpdatePageRecord updatePageRecord = (OUpdatePageRecord) restoreRecord;
+              final OUpdatePageRecord<?> updatePageRecord = (OUpdatePageRecord<?>) restoreRecord;
 
               final long fileId = updatePageRecord.getFileId();
               final long pageIndex = updatePageRecord.getPageIndex();

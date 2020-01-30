@@ -123,7 +123,7 @@ public class WOWCacheTestIT {
     Files.createDirectories(storagePath);
 
     writeAheadLog = new OCASDiskWriteAheadLog(storageName, storagePath, storagePath, 12_000, 128, Integer.MAX_VALUE,
-        Integer.MAX_VALUE, 25, true, Locale.US, -1, 1024L * 1024 * 1024, 1000, true, false, true, 10);
+        Integer.MAX_VALUE, 25, true, Locale.US, -1, 1024L * 1024 * 1024, 1000, true, false, false, true, 10);
     wowCache = new OWOWCache(pageSize, bufferPool, writeAheadLog, 10, 10, 100, storagePath, storageName, OStringSerializer.INSTANCE,
         files, 1, OChecksumMode.StoreAndVerify, false, true, 10);
 
@@ -150,6 +150,7 @@ public class WOWCacheTestIT {
       cachePointer.acquireExclusiveLock();
 
       ByteBuffer buffer = cachePointer.getBufferDuplicate();
+      assert buffer != null;
       buffer.position(systemOffset);
       buffer.put(data);
       cachePointer.releaseExclusiveLock();
@@ -164,6 +165,7 @@ public class WOWCacheTestIT {
       OCachePointer cachePointer = wowCache.load(fileId, i, 1, new OModifiableBoolean(), true)[0];
       byte[] dataTwo = new byte[8];
       ByteBuffer buffer = cachePointer.getBufferDuplicate();
+      assert buffer != null;
       buffer.position(systemOffset);
       buffer.get(dataTwo);
       cachePointer.decrementReadersReferrer();
@@ -202,6 +204,7 @@ public class WOWCacheTestIT {
       final OCachePointer cachePointer = wowCache.load(fileId, pageIndex, 1, new OModifiableBoolean(), false)[0];
       cachePointer.acquireExclusiveLock();
       ByteBuffer buffer = cachePointer.getBufferDuplicate();
+      assert buffer != null;
       buffer.position(systemOffset);
       buffer.put(data);
       cachePointer.releaseExclusiveLock();
@@ -217,6 +220,7 @@ public class WOWCacheTestIT {
       OCachePointer cachePointer = wowCache.load(fileId, pageIndex, 1, new OModifiableBoolean(), true)[0];
       byte[] dataTwo = new byte[8];
       ByteBuffer buffer = cachePointer.getBufferDuplicate();
+      assert buffer != null;
       buffer.position(systemOffset);
       buffer.get(dataTwo);
 
@@ -239,6 +243,7 @@ public class WOWCacheTestIT {
 
       cachePointer.acquireExclusiveLock();
       ByteBuffer buffer = cachePointer.getBufferDuplicate();
+      assert buffer != null;
       buffer.position(systemOffset);
       buffer.put(data);
       cachePointer.releaseExclusiveLock();
@@ -253,6 +258,7 @@ public class WOWCacheTestIT {
       OCachePointer cachePointer = wowCache.load(fileId, pageIndex, 1, new OModifiableBoolean(), true)[0];
       byte[] dataTwo = new byte[8];
       ByteBuffer buffer = cachePointer.getBufferDuplicate();
+      assert buffer != null;
       buffer.position(systemOffset);
       buffer.get(dataTwo);
       cachePointer.decrementReadersReferrer();
@@ -276,8 +282,9 @@ public class WOWCacheTestIT {
     final String removedNativeFileName = wowCache.nativeFileNameById(fileId);
 
     wowCache.deleteFile(fileId);
+    assert removedNativeFileName != null;
     File deletedFile = storagePath.resolve(removedNativeFileName).toFile();
-    Assert.assertTrue(!deletedFile.exists());
+    Assert.assertFalse(deletedFile.exists());
 
     String fileName = wowCache.restoreFileById(fileId);
     Assert.assertEquals(fileName, "removedFile.del");
@@ -290,7 +297,7 @@ public class WOWCacheTestIT {
     Assert.assertNull(fileName);
 
     wowCache.deleteFile(fileId);
-    Assert.assertTrue(!deletedFile.exists());
+    Assert.assertFalse(deletedFile.exists());
   }
 
   @Test
@@ -301,9 +308,10 @@ public class WOWCacheTestIT {
     final String removedNativeFileName = wowCache.nativeFileNameById(fileId);
 
     wowCache.deleteFile(fileId);
+    assert removedNativeFileName != null;
     File deletedFile = storagePath.resolve(removedNativeFileName).toFile();
 
-    Assert.assertTrue(!deletedFile.exists());
+    Assert.assertFalse(deletedFile.exists());
 
     wowCache.close();
     writeAheadLog.close();
@@ -321,7 +329,7 @@ public class WOWCacheTestIT {
     Assert.assertNull(fileName);
 
     wowCache.deleteFile(fileId);
-    Assert.assertTrue(!deletedFile.exists());
+    Assert.assertFalse(deletedFile.exists());
   }
 
   @Test
@@ -334,6 +342,7 @@ public class WOWCacheTestIT {
 
     cachePointer.acquireExclusiveLock();
     final ByteBuffer buffer = cachePointer.getBufferDuplicate();
+    assert buffer != null;
     buffer.position(systemOffset);
     buffer.put(new byte[buffer.remaining()]);
     cachePointer.releaseExclusiveLock();
@@ -343,7 +352,9 @@ public class WOWCacheTestIT {
 
     wowCache.flush();
 
-    final Path path = storagePath.resolve(wowCache.nativeFileNameById(fileId));
+    final String nativeFileName = wowCache.nativeFileNameById(fileId);
+    assert nativeFileName != null;
+    final Path path = storagePath.resolve(nativeFileName);
     final OFileClassic file = new OFileClassic(path);
     file.open();
     file.writeByte(systemOffset, (byte) 1);
@@ -367,6 +378,7 @@ public class WOWCacheTestIT {
 
     cachePointer.acquireExclusiveLock();
     final ByteBuffer buffer = cachePointer.getBufferDuplicate();
+    assert buffer != null;
     buffer.position(systemOffset);
     buffer.put(new byte[buffer.remaining()]);
     cachePointer.releaseExclusiveLock();
@@ -376,7 +388,9 @@ public class WOWCacheTestIT {
 
     wowCache.flush();
 
-    final Path path = storagePath.resolve(wowCache.nativeFileNameById(fileId));
+    final String nativeFileName = wowCache.nativeFileNameById(fileId);
+    assert nativeFileName != null;
+    final Path path = storagePath.resolve(nativeFileName);
     final OFileClassic file = new OFileClassic(path);
     file.open();
     file.writeByte(0, (byte) 1);
@@ -400,6 +414,7 @@ public class WOWCacheTestIT {
 
     cachePointer.acquireExclusiveLock();
     final ByteBuffer buffer = cachePointer.getBufferDuplicate();
+    assert buffer != null;
     buffer.position(systemOffset);
     buffer.put(new byte[buffer.remaining()]);
     cachePointer.releaseExclusiveLock();
@@ -409,7 +424,9 @@ public class WOWCacheTestIT {
 
     wowCache.flush();
 
-    final Path path = storagePath.resolve(wowCache.nativeFileNameById(fileId));
+    final String nativeFileName = wowCache.nativeFileNameById(fileId);
+    assert nativeFileName != null;
+    final Path path = storagePath.resolve(nativeFileName);
     final OFileClassic file = new OFileClassic(path);
     file.open();
     file.writeByte(systemOffset, (byte) 1);
@@ -428,6 +445,7 @@ public class WOWCacheTestIT {
 
     cachePointer.acquireExclusiveLock();
     final ByteBuffer buffer = cachePointer.getBufferDuplicate();
+    assert buffer != null;
     buffer.position(systemOffset);
     buffer.put(new byte[buffer.remaining()]);
     cachePointer.releaseExclusiveLock();
@@ -437,7 +455,9 @@ public class WOWCacheTestIT {
 
     wowCache.flush();
 
-    final Path path = storagePath.resolve(wowCache.nativeFileNameById(fileId));
+    final String nativeFileName = wowCache.nativeFileNameById(fileId);
+    assert nativeFileName != null;
+    final Path path = storagePath.resolve(nativeFileName);
     final OFileClassic file = new OFileClassic(path);
     file.open();
     file.writeByte(systemOffset, (byte) 1);
@@ -456,6 +476,7 @@ public class WOWCacheTestIT {
 
     cachePointer.acquireExclusiveLock();
     final ByteBuffer buffer = cachePointer.getBufferDuplicate();
+    assert buffer != null;
     buffer.position(systemOffset);
     buffer.put(new byte[buffer.remaining()]);
     cachePointer.releaseExclusiveLock();
@@ -465,7 +486,9 @@ public class WOWCacheTestIT {
 
     wowCache.flush();
 
-    final Path path = storagePath.resolve(wowCache.nativeFileNameById(fileId));
+    final String nativeFileName = wowCache.nativeFileNameById(fileId);
+    assert nativeFileName != null;
+    final Path path = storagePath.resolve(nativeFileName);
     final OFileClassic file = new OFileClassic(path);
     file.open();
     file.writeByte(systemOffset, (byte) 1);
@@ -484,6 +507,7 @@ public class WOWCacheTestIT {
 
     cachePointer.acquireExclusiveLock();
     final ByteBuffer buffer = cachePointer.getBufferDuplicate();
+    assert buffer != null;
     buffer.position(systemOffset);
     buffer.put(new byte[buffer.remaining()]);
     cachePointer.releaseExclusiveLock();
@@ -493,7 +517,9 @@ public class WOWCacheTestIT {
 
     wowCache.flush();
 
-    final Path path = storagePath.resolve(wowCache.nativeFileNameById(fileId));
+    final String nativeFileName = wowCache.nativeFileNameById(fileId);
+    assert nativeFileName != null;
+    final Path path = storagePath.resolve(nativeFileName);
     final OFileClassic file = new OFileClassic(path);
     file.open();
     file.writeByte(systemOffset, (byte) 1);

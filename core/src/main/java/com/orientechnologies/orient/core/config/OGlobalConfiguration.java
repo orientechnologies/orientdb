@@ -280,6 +280,9 @@ public enum OGlobalConfiguration {// ENVIRONMENT
 
   WAL_MAX_SIZE("storage.wal.maxSize", "Maximum size of WAL on disk (in megabytes)", Integer.class, -1),
 
+  WAL_KEEP_SINGLE_SEGMENT("storage.wal.keepSingleSegment",
+      "Database will provide the best efforts to keep only single WAL inside the storage", Boolean.class, false),
+
   WAL_ALLOW_DIRECT_IO("storage.wal.allowDirectIO",
       "Allows usage of direct IO API on Linux OS to avoid keeping of WAL data in " + "OS buffer", Boolean.class, true),
 
