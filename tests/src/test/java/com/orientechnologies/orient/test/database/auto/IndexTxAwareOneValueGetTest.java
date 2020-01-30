@@ -1,6 +1,6 @@
 package com.orientechnologies.orient.test.database.auto;
 
-import com.orientechnologies.orient.core.db.ODatabaseInternal;
+import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.index.OIndexTxAwareOneValue;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
@@ -9,6 +9,8 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import org.testng.Assert;
 import org.testng.SkipException;
 import org.testng.annotations.*;
+
+import java.util.stream.Stream;
 
 @Test
 public class IndexTxAwareOneValueGetTest extends DocumentDBBaseTest {
@@ -40,7 +42,7 @@ public class IndexTxAwareOneValueGetTest extends DocumentDBBaseTest {
 
   @Test
   public void testPut() {
-    if (((ODatabaseInternal) database).getStorage().isRemote()) {
+    if (database.getStorage().isRemote()) {
       throw new SkipException("Test is enabled only for embedded database");
     }
 
@@ -54,27 +56,39 @@ public class IndexTxAwareOneValueGetTest extends DocumentDBBaseTest {
     database.commit();
 
     Assert.assertNull(database.getTransaction().getIndexChanges(INDEX));
-    Assert.assertNotNull(index.get(1));
-    Assert.assertNotNull(index.get(2));
+    try (Stream<ORID> stream = index.getInternal().getRids(1)) {
+      Assert.assertTrue(stream.findAny().isPresent());
+    }
+    try (Stream<ORID> stream = index.getInternal().getRids(2)) {
+      Assert.assertTrue(stream.findAny().isPresent());
+    }
 
     database.begin();
 
     new ODocument(CLASS_NAME).field(PROPERTY_NAME, 3).save();
 
     Assert.assertNotNull(database.getTransaction().getIndexChanges(INDEX));
-    Assert.assertNotNull(index.get(3));
+    try (Stream<ORID> stream = index.getInternal().getRids(3)) {
+      Assert.assertTrue(stream.findAny().isPresent());
+    }
 
     database.rollback();
 
     Assert.assertNull(database.getTransaction().getIndexChanges(INDEX));
-    Assert.assertNotNull(index.get(1));
-    Assert.assertNotNull(index.get(2));
-    Assert.assertNull(index.get(3));
+    try (Stream<ORID> stream = index.getInternal().getRids(1)) {
+      Assert.assertTrue(stream.findAny().isPresent());
+    }
+    try (Stream<ORID> stream = index.getInternal().getRids(2)) {
+      Assert.assertTrue(stream.findAny().isPresent());
+    }
+    try (Stream<ORID> stream = index.getInternal().getRids(3)) {
+      Assert.assertFalse(stream.findAny().isPresent());
+    }
   }
 
   @Test
   public void testRemove() {
-    if (((ODatabaseInternal) database).getStorage().isRemote()) {
+    if (database.getStorage().isRemote()) {
       throw new SkipException("Test is enabled only for embedded database");
     }
 
@@ -88,27 +102,39 @@ public class IndexTxAwareOneValueGetTest extends DocumentDBBaseTest {
     database.commit();
 
     Assert.assertNull(database.getTransaction().getIndexChanges(INDEX));
-    Assert.assertNotNull(index.get(1));
-    Assert.assertNotNull(index.get(2));
+    try (Stream<ORID> stream = index.getInternal().getRids(1)) {
+      Assert.assertTrue(stream.findAny().isPresent());
+    }
+    try (Stream<ORID> stream = index.getInternal().getRids(2)) {
+      Assert.assertTrue(stream.findAny().isPresent());
+    }
 
     database.begin();
 
     document.delete();
 
     Assert.assertNotNull(database.getTransaction().getIndexChanges(INDEX));
-    Assert.assertNull(index.get(1));
-    Assert.assertNotNull(index.get(2));
+    try (Stream<ORID> stream = index.getInternal().getRids(1)) {
+      Assert.assertFalse(stream.findAny().isPresent());
+    }
+    try (Stream<ORID> stream = index.getInternal().getRids(2)) {
+      Assert.assertTrue(stream.findAny().isPresent());
+    }
 
     database.rollback();
 
     Assert.assertNull(database.getTransaction().getIndexChanges(INDEX));
-    Assert.assertNotNull(index.get(1));
-    Assert.assertNotNull(index.get(2));
+    try (Stream<ORID> stream = index.getInternal().getRids(1)) {
+      Assert.assertTrue(stream.findAny().isPresent());
+    }
+    try (Stream<ORID> stream = index.getInternal().getRids(2)) {
+      Assert.assertTrue(stream.findAny().isPresent());
+    }
   }
 
   @Test
   public void testRemoveAndPut() {
-    if (((ODatabaseInternal) database).getStorage().isRemote()) {
+    if (database.getStorage().isRemote()) {
       throw new SkipException("Test is enabled only for embedded database");
     }
 
@@ -122,8 +148,12 @@ public class IndexTxAwareOneValueGetTest extends DocumentDBBaseTest {
     database.commit();
 
     Assert.assertNull(database.getTransaction().getIndexChanges(INDEX));
-    Assert.assertNotNull(index.get(1));
-    Assert.assertNotNull(index.get(2));
+    try (Stream<ORID> stream = index.getInternal().getRids(1)) {
+      Assert.assertTrue(stream.findAny().isPresent());
+    }
+    try (Stream<ORID> stream = index.getInternal().getRids(2)) {
+      Assert.assertTrue(stream.findAny().isPresent());
+    }
 
     database.begin();
 
@@ -134,15 +164,19 @@ public class IndexTxAwareOneValueGetTest extends DocumentDBBaseTest {
     document.save();
 
     Assert.assertNotNull(database.getTransaction().getIndexChanges(INDEX));
-    Assert.assertNotNull(index.get(1));
-    Assert.assertNotNull(index.get(2));
+    try (Stream<ORID> stream = index.getInternal().getRids(1)) {
+      Assert.assertTrue(stream.findAny().isPresent());
+    }
+    try (Stream<ORID> stream = index.getInternal().getRids(2)) {
+      Assert.assertTrue(stream.findAny().isPresent());
+    }
 
     database.rollback();
   }
 
   @Test
   public void testMultiPut() {
-    if (((ODatabaseInternal) database).getStorage().isRemote()) {
+    if (database.getStorage().isRemote()) {
       throw new SkipException("Test is enabled only for embedded database");
     }
 
@@ -157,15 +191,19 @@ public class IndexTxAwareOneValueGetTest extends DocumentDBBaseTest {
     document.save();
 
     Assert.assertNotNull(database.getTransaction().getIndexChanges(INDEX));
-    Assert.assertNotNull(((OIndexTxAwareOneValue) index).get(1));
+    try (Stream<ORID> stream = index.getInternal().getRids(1)) {
+      Assert.assertTrue(stream.findAny().isPresent());
+    }
     database.commit();
 
-    Assert.assertNotNull(((OIndexTxAwareOneValue) index).get(1));
+    try (Stream<ORID> stream = index.getInternal().getRids(1)) {
+      Assert.assertTrue(stream.findAny().isPresent());
+    }
   }
 
   @Test
   public void testPutAfterTransaction() {
-    if (((ODatabaseInternal) database).getStorage().isRemote()) {
+    if (database.getStorage().isRemote()) {
       throw new SkipException("Test is enabled only for embedded database");
     }
 
@@ -177,17 +215,21 @@ public class IndexTxAwareOneValueGetTest extends DocumentDBBaseTest {
     new ODocument(CLASS_NAME).field(PROPERTY_NAME, 1).save();
 
     Assert.assertNotNull(database.getTransaction().getIndexChanges(INDEX));
-    Assert.assertNotNull(index.get(1));
+    try (Stream<ORID> stream = index.getInternal().getRids(1)) {
+      Assert.assertTrue(stream.findAny().isPresent());
+    }
     database.commit();
 
     new ODocument(CLASS_NAME).field(PROPERTY_NAME, 2).save();
 
-    Assert.assertNotNull(index.get(2));
+    try (Stream<ORID> stream = index.getInternal().getRids(2)) {
+      Assert.assertTrue(stream.findAny().isPresent());
+    }
   }
 
   @Test
   public void testRemoveOneWithinTransaction() {
-    if (((ODatabaseInternal) database).getStorage().isRemote()) {
+    if (database.getStorage().isRemote()) {
       throw new SkipException("Test is enabled only for embedded database");
     }
 
@@ -200,16 +242,20 @@ public class IndexTxAwareOneValueGetTest extends DocumentDBBaseTest {
     document.delete();
 
     Assert.assertNotNull(database.getTransaction().getIndexChanges(INDEX));
-    Assert.assertNull(index.get(1));
+    try (Stream<ORID> stream = index.getInternal().getRids(1)) {
+      Assert.assertFalse(stream.findAny().isPresent());
+    }
 
     database.commit();
 
-    Assert.assertNull(index.get(1));
+    try (Stream<ORID> stream = index.getInternal().getRids(1)) {
+      Assert.assertFalse(stream.findAny().isPresent());
+    }
   }
 
   @Test
   public void testPutAfterRemove() {
-    if (((ODatabaseInternal) database).getStorage().isRemote()) {
+    if (database.getStorage().isRemote()) {
       throw new SkipException("Test is enabled only for embedded database");
     }
 
@@ -226,10 +272,14 @@ public class IndexTxAwareOneValueGetTest extends DocumentDBBaseTest {
     document.field(PROPERTY_NAME, 1).save();
 
     Assert.assertNotNull(database.getTransaction().getIndexChanges(INDEX));
-    Assert.assertNotNull(index.get(1));
+    try (Stream<ORID> stream = index.getInternal().getRids(1)) {
+      Assert.assertTrue(stream.findAny().isPresent());
+    }
 
     database.commit();
 
-    Assert.assertNotNull(index.get(1));
+    try (Stream<ORID> stream = index.getInternal().getRids(1)) {
+      Assert.assertTrue(stream.findAny().isPresent());
+    }
   }
 }

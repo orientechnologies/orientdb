@@ -530,7 +530,7 @@ public abstract class OIndexAbstract implements OIndexInternal {
     return documentIndexed;
   }
 
-  public boolean remove(Object key, final OIdentifiable value) {
+  public boolean remove(Object key, final OIdentifiable rid) {
     return remove(key);
   }
 

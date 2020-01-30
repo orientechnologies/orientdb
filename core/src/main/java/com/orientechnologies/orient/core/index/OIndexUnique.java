@@ -62,14 +62,14 @@ public class OIndexUnique extends OIndexOneValue {
   }
 
   @Override
-  public OIndexOneValue put(Object key, final OIdentifiable iSingleValue) {
+  public OIndexOneValue put(Object key, final OIdentifiable value) {
     key = getCollatingValue(key);
 
     acquireSharedLock();
     try {
       while (true) {
         try {
-          storage.validatedPutIndexValue(indexId, key, iSingleValue.getIdentity(), uniqueValidator);
+          storage.validatedPutIndexValue(indexId, key, value.getIdentity(), uniqueValidator);
           break;
         } catch (OInvalidIndexEngineIdException ignore) {
           doReloadIndexEngine();

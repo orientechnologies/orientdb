@@ -81,21 +81,21 @@ public abstract class OIndexTxAware<T> extends OIndexAbstractDelegate {
   }
 
   @Override
-  public OIndexTxAware<T> put(Object iKey, final OIdentifiable iValue) {
-    checkForKeyType(iKey);
-    final ORID rid = iValue.getIdentity();
+  public OIndexTxAware<T> put(Object key, final OIdentifiable value) {
+    checkForKeyType(key);
+    final ORID rid = value.getIdentity();
 
     if (!rid.isValid())
-      if (iValue instanceof ORecord) {
+      if (value instanceof ORecord) {
         // EARLY SAVE IT
-        ((ORecord) iValue).save();
+        ((ORecord) value).save();
       } else {
-        throw new IllegalArgumentException("Cannot store non persistent RID as index value for key '" + iKey + "'");
+        throw new IllegalArgumentException("Cannot store non persistent RID as index value for key '" + key + "'");
       }
 
-    iKey = getCollatingValue(iKey);
+    key = getCollatingValue(key);
 
-    database.getMicroOrRegularTransaction().addIndexEntry(delegate, super.getName(), OPERATION.PUT, iKey, iValue);
+    database.getMicroOrRegularTransaction().addIndexEntry(delegate, super.getName(), OPERATION.PUT, key, value);
     return this;
   }
 
@@ -107,9 +107,9 @@ public abstract class OIndexTxAware<T> extends OIndexAbstractDelegate {
   }
 
   @Override
-  public boolean remove(Object iKey, final OIdentifiable iRID) {
-    iKey = getCollatingValue(iKey);
-    database.getMicroOrRegularTransaction().addIndexEntry(delegate, super.getName(), OPERATION.REMOVE, iKey, iRID);
+  public boolean remove(Object key, final OIdentifiable rid) {
+    key = getCollatingValue(key);
+    database.getMicroOrRegularTransaction().addIndexEntry(delegate, super.getName(), OPERATION.REMOVE, key, rid);
     return true;
   }
 

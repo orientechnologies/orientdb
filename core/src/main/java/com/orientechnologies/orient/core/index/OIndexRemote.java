@@ -150,16 +150,16 @@ public abstract class OIndexRemote implements OIndex {
     }
   }
 
-  public OIndexRemote put(final Object iKey, final OIdentifiable iValue) {
-    if (iValue instanceof ORecord && !iValue.getIdentity().isValid())
+  public OIndexRemote put(final Object key, final OIdentifiable value) {
+    if (value instanceof ORecord && !value.getIdentity().isValid())
       // SAVE IT BEFORE TO PUT
-      ((ORecord) iValue).save();
+      ((ORecord) value).save();
 
-    if (iValue.getIdentity().isNew())
+    if (value.getIdentity().isNew())
       throw new OIndexException(
           "Cannot insert values in manual indexes against remote protocol during a transaction. Temporary RID cannot be managed at server side");
 
-    getDatabase().command(String.format(QUERY_PUT, name), iKey, iValue.getIdentity()).close();
+    getDatabase().command(String.format(QUERY_PUT, name), key, value.getIdentity()).close();
     return this;
   }
 
@@ -172,22 +172,22 @@ public abstract class OIndexRemote implements OIndex {
     }
   }
 
-  public boolean remove(final Object iKey, final OIdentifiable iRID) {
+  public boolean remove(final Object key, final OIdentifiable rid) {
     final long deleted;
-    if (iRID != null) {
+    if (rid != null) {
 
-      if (iRID.getIdentity().isNew())
+      if (rid.getIdentity().isNew())
         throw new OIndexException(
             "Cannot remove values in manual indexes against remote protocol during a transaction. Temporary RID cannot be managed at server side");
 
-      OResultSet result = getDatabase().command(String.format(QUERY_REMOVE2, name), iKey, iRID);
+      OResultSet result = getDatabase().command(String.format(QUERY_REMOVE2, name), key, rid);
       if (!result.hasNext()) {
         deleted = 0;
       } else
         deleted = result.next().getProperty("count");
       result.close();
     } else {
-      OResultSet result = getDatabase().command(String.format(QUERY_REMOVE, name), iKey);
+      OResultSet result = getDatabase().command(String.format(QUERY_REMOVE, name), key);
       if (!result.hasNext()) {
         deleted = 0;
       } else

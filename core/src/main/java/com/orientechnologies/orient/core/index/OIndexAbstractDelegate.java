@@ -63,9 +63,9 @@ public class OIndexAbstractDelegate implements OIndexInternal {
     return delegate.getRids(key);
   }
 
-  public OIndex put(final Object iKey, final OIdentifiable iValue) {
-    checkForKeyType(iKey);
-    return delegate.put(iKey, iValue);
+  public OIndex put(final Object key, final OIdentifiable value) {
+    checkForKeyType(key);
+    return delegate.put(key, value);
   }
 
   @Override
@@ -77,8 +77,8 @@ public class OIndexAbstractDelegate implements OIndexInternal {
     return delegate.remove(key);
   }
 
-  public boolean remove(final Object iKey, final OIdentifiable iRID) {
-    return delegate.remove(iKey, iRID);
+  public boolean remove(final Object key, final OIdentifiable rid) {
+    return delegate.remove(key, rid);
   }
 
   /**
