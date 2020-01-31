@@ -7,6 +7,7 @@ import com.orientechnologies.orient.core.db.OSharedContext;
 import com.orientechnologies.orient.core.metadata.schema.*;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.OAutoshardedStorage;
+import com.orientechnologies.orient.server.distributed.impl.ODatabaseDocumentDistributed;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -215,4 +216,10 @@ public class OSchemaDistributed extends OSchemaEmbedded {
   protected boolean isRunLocal(ODatabaseDocumentInternal database) {
     return isDistributeVersionTwo(database) && executeThroughDistributedStorage(database);
   }
+
+  @Override
+  public void sendCommand(ODatabaseDocumentInternal database, String command) {
+    ((ODatabaseDocumentDistributed) database).sendDDLCommand(command, true);
+  }
+
 }

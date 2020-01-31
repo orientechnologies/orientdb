@@ -1453,17 +1453,23 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
   }
 
   private void replaceStorageInSessions(final OStorage storage) {
-    for (OClientConnection conn : serverInstance.getClientConnectionManager().getConnections()) {
-      final ODatabaseDocumentInternal connDb = conn.getDatabase();
-      if (connDb != null && connDb.getName().equals(storage.getName())) {
-        conn.acquire();
-        try {
-          conn.getDatabase().replaceStorage(storage);
-          conn.getDatabase().getMetadata().reload();
-        } finally {
-          conn.release();
+    ODatabaseDocumentInternal current = ODatabaseRecordThreadLocal.instance().getIfDefined();
+    try {
+      for (OClientConnection conn : serverInstance.getClientConnectionManager().getConnections()) {
+        final ODatabaseDocumentInternal connDb = conn.getDatabase();
+        if (connDb != null && connDb.getName().equals(storage.getName())) {
+          conn.acquire();
+          try {
+            connDb.activateOnCurrentThread();
+            connDb.replaceStorage(storage);
+            connDb.getMetadata().reload();
+          } finally {
+            conn.release();
+          }
         }
       }
+    } finally {
+      ODatabaseRecordThreadLocal.instance().set(current);
     }
   }
 

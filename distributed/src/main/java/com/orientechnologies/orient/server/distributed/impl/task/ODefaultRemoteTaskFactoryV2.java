@@ -123,8 +123,6 @@ public class ODefaultRemoteTaskFactoryV2 extends ODefaultRemoteTaskFactoryV1 {
     case OEnterpriseStatsTask.FACTORYID: // 29
       return new OEnterpriseStatsTask();
 
-
-
     //--- here starts V2 ----
 
     case ORunQueryExecutionPlanTask.FACTORYID: // 40
@@ -144,6 +142,9 @@ public class ODefaultRemoteTaskFactoryV2 extends ODefaultRemoteTaskFactoryV1 {
 
     case NodeOperationTask.FACTORYID: //55
       return new NodeOperationTask();
+
+    case ONewSQLCommandTask.FACTORYID: //56
+      return new ONewSQLCommandTask();
     }
 
     throw new IllegalArgumentException("Task with code " + code + " is not supported");
