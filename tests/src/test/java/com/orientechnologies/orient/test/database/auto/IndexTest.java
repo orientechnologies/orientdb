@@ -1041,7 +1041,7 @@ public class IndexTest extends ObjectDBBaseTest {
     OIndex nickIndex = idxManager.getIndex(database.getUnderlying(), "Profile.nick");
 
     try (Stream<ORID> stream = nickIndex.getInternal().getRids("NonProxiedObjectToDelete")) {
-      Assert.assertFalse(stream.findAny().isPresent());
+      Assert.assertTrue(stream.findAny().isPresent());
     }
 
     final Profile loadedProfile = database.load(new ORecordId(profile.getId()));
