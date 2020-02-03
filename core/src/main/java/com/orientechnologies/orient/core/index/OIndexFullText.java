@@ -78,7 +78,7 @@ public class OIndexFullText extends OIndexMultiValues {
    * the caller.
    */
   @Override
-  public OIndexFullText put(Object key, final OIdentifiable singleValue) {
+  public OIndexFullText put(Object key, final OIdentifiable value) {
     if (key == null) {
       return this;
     }
@@ -92,9 +92,9 @@ public class OIndexFullText extends OIndexMultiValues {
       acquireSharedLock();
       try {
         if (apiVersion == 0) {
-          doPutV0(singleValue, word);
+          doPutV0(value, word);
         } else if (apiVersion == 1) {
-          doPutV1(singleValue, word);
+          doPutV1(value, word);
         } else {
           throw new IllegalStateException("Invalid API version, " + apiVersion);
         }
@@ -171,12 +171,12 @@ public class OIndexFullText extends OIndexMultiValues {
    * passed in value.
    *
    * @param key   Key to remove.
-   * @param value Value to remove.
+   * @param rid Value to remove.
    *
    * @return <code>true</code> if at least one record is removed.
    */
   @Override
-  public boolean remove(Object key, final OIdentifiable value) {
+  public boolean remove(Object key, final OIdentifiable rid) {
     if (key == null) {
       return false;
     }
@@ -190,9 +190,9 @@ public class OIndexFullText extends OIndexMultiValues {
       acquireSharedLock();
       try {
         if (apiVersion == 0) {
-          removeV0(value, removed, word);
+          removeV0(rid, removed, word);
         } else if (apiVersion == 1) {
-          removeV1(value, removed, word);
+          removeV1(rid, removed, word);
         } else {
           throw new IllegalStateException("Invalid API version, " + apiVersion);
         }

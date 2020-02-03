@@ -19,7 +19,7 @@
 package com.orientechnologies.lucene.tests;
 
 import com.orientechnologies.orient.core.command.script.OCommandScript;
-import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
+import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
@@ -29,7 +29,7 @@ import org.junit.Before;
 import org.junit.Test;
 
 import java.io.InputStream;
-import java.util.Collection;
+import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -39,12 +39,13 @@ import static org.assertj.core.api.Assertions.assertThat;
 public class OLuceneMultiFieldTest extends OLuceneBaseTest {
 
   @Before
-  public void init() {
+  public void init() throws Exception {
+    try (InputStream stream = ClassLoader.getSystemResourceAsStream("testLuceneIndex.sql")) {
+      //noinspection deprecation
+      db.command(new OCommandScript("sql", getScriptFromStream(stream))).execute();
+    }
 
-    InputStream stream = ClassLoader.getSystemResourceAsStream("testLuceneIndex.sql");
-
-    db.command(new OCommandScript("sql", getScriptFromStream(stream))).execute();
-
+    //noinspection resource
     db.command("create index Song.title_author on Song (title,author) FULLTEXT ENGINE LUCENE METADATA {" + "\"title_index\":\""
         + EnglishAnalyzer.class.getName() + "\" , " + "\"title_query\":\"" + EnglishAnalyzer.class.getName() + "\" , "
         + "\"author_index\":\"" + StandardAnalyzer.class.getName() + "\"}");
@@ -58,45 +59,37 @@ public class OLuceneMultiFieldTest extends OLuceneBaseTest {
 
   @Test
   public void testSelectSingleDocumentWithAndOperator() {
+    try (OResultSet docs = db
+        .query("select * from Song where  search_fields(['title','author'] ,'title:mountain AND author:Fabbio')=true")) {
 
-    OResultSet docs = db
-        .query("select * from Song where  search_fields(['title','author'] ,'title:mountain AND author:Fabbio')=true");
-
-    assertThat(docs).hasSize(1);
-    docs.close();
-
+      assertThat(docs).hasSize(1);
+    }
   }
 
   @Test
   public void testSelectMultipleDocumentsWithOrOperator() {
+    try (OResultSet docs = db
+        .query("select * from Song where  search_fields(['title','author'] ,'title:mountain OR author:Fabbio')=true")) {
 
-    OResultSet docs = db
-        .query("select * from Song where  search_fields(['title','author'] ,'title:mountain OR author:Fabbio')=true");
-
-    assertThat(docs).hasSize(91);
-    docs.close();
+      assertThat(docs).hasSize(91);
+    }
   }
 
   @Test
   public void testSelectOnTitleAndAuthorWithMatchOnTitle() {
-
-    OResultSet docs = db.query("select * from  Song where search_fields(['title','author'] ,'title:mountain')=true");
-
-    assertThat(docs).hasSize(5);
-    docs.close();
+    try (OResultSet docs = db.query("select * from  Song where search_fields(['title','author'] ,'title:mountain')=true")) {
+      assertThat(docs).hasSize(5);
+    }
   }
 
   @Test
   public void testSelectOnTitleAndAuthorWithMatchOnAuthor() {
-
-    OResultSet docs = db.query("select * from Song where search_class('author:fabbio')=true");
-
-    assertThat(docs).hasSize(87);
-    docs.close();
-    docs = db.query("select * from Song where search_class('fabbio')=true");
-
-    assertThat(docs).hasSize(87);
-    docs.close();
+    try (OResultSet docs = db.query("select * from Song where search_class('author:fabbio')=true")) {
+      assertThat(docs).hasSize(87);
+    }
+    try (OResultSet docs = db.query("select * from Song where search_class('fabbio')=true")) {
+      assertThat(docs).hasSize(87);
+    }
   }
 
   @Test
@@ -110,25 +103,22 @@ public class OLuceneMultiFieldTest extends OLuceneBaseTest {
 
     db.execute("sql", script).close();
 
-    OResultSet docs;
+    try (OResultSet resultSet = db.query("select * from Item where search_class('te*')=true")) {
+      assertThat(resultSet).hasSize(1);
+    }
 
-    docs = db.query("select * from Item where search_class('te*')=true");
+    try (OResultSet docs = db.query("select * from Item where search_class('test')=true")) {
+      assertThat(docs).hasSize(1);
+    }
 
-    assertThat(docs).hasSize(1);
-    docs.close();
-    docs = db.query("select * from Item where search_class('test')=true");
+    try (OResultSet docs = db.query("select * from Item where search_class('title:test')=true")) {
+      assertThat(docs).hasSize(1);
+    }
 
-    assertThat(docs).hasSize(1);
-    docs.close();
-    docs = db.query("select * from Item where search_class('title:test')=true");
-
-    assertThat(docs).hasSize(1);
-    docs.close();
     //index
-    OIndex index = ((ODatabaseDocumentInternal) db).getMetadata().getIndexManagerInternal()
-        .getIndex((ODatabaseDocumentInternal) db, "Item.fulltext");
-    assertThat((Collection) index.get("title:test")).hasSize(1);
-    docs.close();
+    OIndex index = db.getMetadata().getIndexManagerInternal().getIndex(db, "Item.fulltext");
+    try (Stream<ORID> stream = index.getInternal().getRids("title:test")) {
+      assertThat(stream.count()).isEqualTo(1);
+    }
   }
-
 }

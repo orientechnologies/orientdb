@@ -1,6 +1,6 @@
 package com.orientechnologies.orient.test.database.auto;
 
-import com.orientechnologies.orient.core.db.ODatabaseInternal;
+import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.index.OIndexTxAwareMultiValue;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
@@ -10,7 +10,7 @@ import org.testng.Assert;
 import org.testng.SkipException;
 import org.testng.annotations.*;
 
-import java.util.Collection;
+import java.util.stream.Stream;
 
 @Test
 public class IndexTxAwareMultiValueGetTest extends DocumentDBBaseTest {
@@ -42,7 +42,7 @@ public class IndexTxAwareMultiValueGetTest extends DocumentDBBaseTest {
 
   @Test
   public void testPut() {
-    if (((ODatabaseInternal) database).getStorage().isRemote()) {
+    if (database.getStorage().isRemote()) {
       throw new SkipException("Test is enabled only for embedded database");
     }
 
@@ -58,26 +58,36 @@ public class IndexTxAwareMultiValueGetTest extends DocumentDBBaseTest {
     database.commit();
 
     Assert.assertNull(database.getTransaction().getIndexChanges(INDEX_NAME));
-    Assert.assertEquals(((OIndexTxAwareMultiValue) index).get(1).size(), 2);
-    Assert.assertEquals(((OIndexTxAwareMultiValue) index).get(2).size(), 1);
+    try (Stream<ORID> stream = index.getInternal().getRids(1)) {
+      Assert.assertEquals(stream.count(), 2);
+    }
+    try (Stream<ORID> stream = index.getInternal().getRids(2)) {
+      Assert.assertEquals(stream.count(), 1);
+    }
 
     database.begin();
 
     new ODocument(CLASS_NAME).field(FIELD_NAME, 2).save();
 
     Assert.assertNotNull(database.getTransaction().getIndexChanges(INDEX_NAME));
-    Assert.assertEquals(((OIndexTxAwareMultiValue) index).get(2).size(), 2);
+    try (Stream<ORID> stream = index.getInternal().getRids(2)) {
+      Assert.assertEquals(stream.count(), 2);
+    }
 
     database.rollback();
 
     Assert.assertNull(database.getTransaction().getIndexChanges(INDEX_NAME));
-    Assert.assertEquals(((OIndexTxAwareMultiValue) index).get(1).size(), 2);
-    Assert.assertEquals(((OIndexTxAwareMultiValue) index).get(2).size(), 1);
+    try (Stream<ORID> stream = index.getInternal().getRids(1)) {
+      Assert.assertEquals(stream.count(), 2);
+    }
+    try (Stream<ORID> stream = index.getInternal().getRids(2)) {
+      Assert.assertEquals(stream.count(), 1);
+    }
   }
 
   @Test
   public void testRemove() {
-    if (((ODatabaseInternal) database).getStorage().isRemote()) {
+    if (database.getStorage().isRemote()) {
       throw new SkipException("Test is enabled only for embedded database");
     }
 
@@ -93,8 +103,12 @@ public class IndexTxAwareMultiValueGetTest extends DocumentDBBaseTest {
     database.commit();
 
     Assert.assertNull(database.getTransaction().getIndexChanges(INDEX_NAME));
-    Assert.assertEquals(((OIndexTxAwareMultiValue) index).get(1).size(), 2);
-    Assert.assertEquals(((OIndexTxAwareMultiValue) index).get(2).size(), 1);
+    try (Stream<ORID> stream = index.getInternal().getRids(1)) {
+      Assert.assertEquals(stream.count(), 2);
+    }
+    try (Stream<ORID> stream = index.getInternal().getRids(2)) {
+      Assert.assertEquals(stream.count(), 1);
+    }
 
     database.begin();
 
@@ -102,19 +116,27 @@ public class IndexTxAwareMultiValueGetTest extends DocumentDBBaseTest {
     docTwo.delete();
 
     Assert.assertNotNull(database.getTransaction().getIndexChanges(INDEX_NAME));
-    Assert.assertTrue(((OIndexTxAwareMultiValue) index).get(1).isEmpty());
-    Assert.assertEquals(((OIndexTxAwareMultiValue) index).get(2).size(), 1);
+    try (Stream<ORID> stream = index.getInternal().getRids(1)) {
+      Assert.assertFalse(stream.findAny().isPresent());
+    }
+    try (Stream<ORID> stream = index.getInternal().getRids(2)) {
+      Assert.assertEquals(stream.count(), 1);
+    }
 
     database.rollback();
 
     Assert.assertNull(database.getTransaction().getIndexChanges(INDEX_NAME));
-    Assert.assertEquals(((OIndexTxAwareMultiValue) index).get(1).size(), 2);
-    Assert.assertEquals(((OIndexTxAwareMultiValue) index).get(2).size(), 1);
+    try (Stream<ORID> stream = index.getInternal().getRids(1)) {
+      Assert.assertEquals(stream.count(), 2);
+    }
+    try (Stream<ORID> stream = index.getInternal().getRids(2)) {
+      Assert.assertEquals(stream.count(), 1);
+    }
   }
 
   @Test
   public void testRemoveOne() {
-    if (((ODatabaseInternal) database).getStorage().isRemote()) {
+    if (database.getStorage().isRemote()) {
       throw new SkipException("Test is enabled only for embedded database");
     }
 
@@ -130,22 +152,34 @@ public class IndexTxAwareMultiValueGetTest extends DocumentDBBaseTest {
     database.commit();
 
     Assert.assertNull(database.getTransaction().getIndexChanges(INDEX_NAME));
-    Assert.assertEquals(((OIndexTxAwareMultiValue) index).get(1).size(), 2);
-    Assert.assertEquals(((OIndexTxAwareMultiValue) index).get(2).size(), 1);
+    try (Stream<ORID> stream = index.getInternal().getRids(1)) {
+      Assert.assertEquals(stream.count(), 2);
+    }
+    try (Stream<ORID> stream = index.getInternal().getRids(2)) {
+      Assert.assertEquals(stream.count(), 1);
+    }
 
     database.begin();
 
     document.delete();
 
     Assert.assertNotNull(database.getTransaction().getIndexChanges(INDEX_NAME));
-    Assert.assertEquals(((OIndexTxAwareMultiValue) index).get(1).size(), 1);
-    Assert.assertEquals(((OIndexTxAwareMultiValue) index).get(2).size(), 1);
+    try (Stream<ORID> stream = index.getInternal().getRids(1)) {
+      Assert.assertEquals(stream.count(), 1);
+    }
+    try (Stream<ORID> stream = index.getInternal().getRids(2)) {
+      Assert.assertEquals(stream.count(), 1);
+    }
 
     database.rollback();
 
     Assert.assertNull(database.getTransaction().getIndexChanges(INDEX_NAME));
-    Assert.assertEquals(((OIndexTxAwareMultiValue) index).get(1).size(), 2);
-    Assert.assertEquals(((OIndexTxAwareMultiValue) index).get(2).size(), 1);
+    try (Stream<ORID> stream = index.getInternal().getRids(1)) {
+      Assert.assertEquals(stream.count(), 2);
+    }
+    try (Stream<ORID> stream = index.getInternal().getRids(2)) {
+      Assert.assertEquals(stream.count(), 1);
+    }
   }
 
   @Test
@@ -160,22 +194,28 @@ public class IndexTxAwareMultiValueGetTest extends DocumentDBBaseTest {
     Assert.assertTrue(index instanceof OIndexTxAwareMultiValue);
 
     final ODocument document = new ODocument(CLASS_NAME).field(FIELD_NAME, 1).save();
-    Assert.assertEquals(((OIndexTxAwareMultiValue) index).get(1).size(), 1);
+    try (Stream<ORID> stream = index.getInternal().getRids(1)) {
+      Assert.assertEquals(stream.count(), 1);
+    }
 
     document.field(FIELD_NAME, 0);
     document.field(FIELD_NAME, 1);
     document.save();
 
     Assert.assertNotNull(database.getTransaction().getIndexChanges(INDEX_NAME));
-    Assert.assertEquals(((OIndexTxAwareMultiValue) index).get(1).size(), 1);
+    try (Stream<ORID> stream = index.getInternal().getRids(1)) {
+      Assert.assertEquals(stream.count(), 1);
+    }
     database.commit();
 
-    Assert.assertEquals(((OIndexTxAwareMultiValue) index).get(1).size(), 1);
+    try (Stream<ORID> stream = index.getInternal().getRids(1)) {
+      Assert.assertEquals(stream.count(), 1);
+    }
   }
 
   @Test
   public void testPutAfterTransaction() {
-    if (((ODatabaseInternal) database).getStorage().isRemote()) {
+    if (database.getStorage().isRemote()) {
       throw new SkipException("Test is enabled only for embedded database");
     }
 
@@ -187,19 +227,21 @@ public class IndexTxAwareMultiValueGetTest extends DocumentDBBaseTest {
     new ODocument(CLASS_NAME).field(FIELD_NAME, 1).save();
 
     Assert.assertNotNull(database.getTransaction().getIndexChanges(INDEX_NAME));
-    Collection<?> resultOne = ((OIndexTxAwareMultiValue) index).get(1);
-    Assert.assertEquals(resultOne.size(), 1);
+    try (Stream<ORID> stream = index.getInternal().getRids(1)) {
+      Assert.assertEquals(stream.count(), 1);
+    }
     database.commit();
 
     new ODocument(CLASS_NAME).field(FIELD_NAME, 1).save();
 
-    resultOne = ((OIndexTxAwareMultiValue) index).get(1);
-    Assert.assertEquals(resultOne.size(), 2);
+    try (Stream<ORID> stream = index.getInternal().getRids(1)) {
+      Assert.assertEquals(stream.count(), 2);
+    }
   }
 
   @Test
   public void testRemoveOneWithinTransaction() {
-    if (((ODatabaseInternal) database).getStorage().isRemote()) {
+    if (database.getStorage().isRemote()) {
       throw new SkipException("Test is enabled only for embedded database");
     }
 
@@ -212,18 +254,20 @@ public class IndexTxAwareMultiValueGetTest extends DocumentDBBaseTest {
     document.delete();
 
     Assert.assertNotNull(database.getTransaction().getIndexChanges(INDEX_NAME));
-    Collection<?> result = ((OIndexTxAwareMultiValue) index).get(1);
-    Assert.assertTrue(result.isEmpty());
+    try (Stream<ORID> stream = index.getInternal().getRids(1)) {
+      Assert.assertFalse(stream.findAny().isPresent());
+    }
 
     database.commit();
 
-    result = ((OIndexTxAwareMultiValue) index).get(1);
-    Assert.assertEquals(result.size(), 0);
+    try (Stream<ORID> stream = index.getInternal().getRids(1)) {
+      Assert.assertEquals(stream.count(), 0);
+    }
   }
 
   @Test
   public void testPutAfterRemove() {
-    if (((ODatabaseInternal) database).getStorage().isRemote()) {
+    if (database.getStorage().isRemote()) {
       throw new SkipException("Test is enabled only for embedded database");
     }
 
@@ -237,14 +281,14 @@ public class IndexTxAwareMultiValueGetTest extends DocumentDBBaseTest {
     document.save();
 
     document.field(FIELD_NAME, 1).save();
-
-    Assert.assertNotNull(database.getTransaction().getIndexChanges(INDEX_NAME));
-    Collection<?> result = ((OIndexTxAwareMultiValue) index).get(1);
-    Assert.assertEquals(result.size(), 1);
+    try (Stream<ORID> stream = index.getInternal().getRids(1)) {
+      Assert.assertEquals(stream.count(), 1);
+    }
 
     database.commit();
 
-    result = ((OIndexTxAwareMultiValue) index).get(1);
-    Assert.assertEquals(result.size(), 1);
+    try (Stream<ORID> stream = index.getInternal().getRids(1)) {
+      Assert.assertEquals(stream.count(), 1);
+    }
   }
 }

@@ -13,23 +13,26 @@
  *  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  *  * See the License for the specific language governing permissions and
  *  * limitations under the License.
- *  
+ *
  */
 
 package com.orientechnologies.lucene.tests;
 
+import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.metadata.security.OUser;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.sql.OCommandSQL;
+import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
 import java.util.Collection;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * Created by enricorisa on 28/06/14.
@@ -37,19 +40,21 @@ import java.util.Collection;
 
 public class OLuceneInsertUpdateTransactionTest extends OLuceneBaseTest {
 
-
   @Before
   public void init() {
     OSchema schema = db.getMetadata().getSchema();
 
     OClass oClass = schema.createClass("City");
     oClass.createProperty("name", OType.STRING);
-    db.command("create index City.name on City (name) FULLTEXT ENGINE LUCENE");
+    //noinspection EmptyTryBlock
+    try (OResultSet command = db
+        .command("create index City.name on City (name) FULLTEXT ENGINE LUCENE")) {
+    }
 
   }
 
   @Test
-  public void testInsertUpdateTransactionWithIndex() throws Exception {
+  public void testInsertUpdateTransactionWithIndex() {
 
     OSchema schema = db.getMetadata().getSchema();
     schema.reload();
@@ -60,10 +65,15 @@ public class OLuceneInsertUpdateTransactionTest extends OLuceneBaseTest {
 
     OIndex idx = schema.getClass("City").getClassIndex("City.name");
     Assert.assertNotNull(idx);
-    Collection<?> coll = (Collection<?>) idx.get("Rome");
+    Collection<?> coll;
+    try (Stream<ORID> stream = idx.getInternal().getRids("Rome")) {
+      coll = stream.collect(Collectors.toList());
+    }
     Assert.assertEquals(coll.size(), 1);
     db.rollback();
-    coll = (Collection<?>) idx.get("Rome");
+    try (Stream<ORID> stream = idx.getInternal().getRids("Rome")) {
+      coll = stream.collect(Collectors.toList());
+    }
     Assert.assertEquals(coll.size(), 0);
     db.begin();
     doc = new ODocument("City");
@@ -74,7 +84,9 @@ public class OLuceneInsertUpdateTransactionTest extends OLuceneBaseTest {
     db.save(user.getDocument());
 
     db.commit();
-    coll = (Collection<?>) idx.get("Rome");
+    try (Stream<ORID> stream = idx.getInternal().getRids("Rome")) {
+      coll = stream.collect(Collectors.toList());
+    }
     Assert.assertEquals(coll.size(), 1);
   }
 }

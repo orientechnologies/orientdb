@@ -13,7 +13,7 @@
  *  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  *  * See the License for the specific language governing permissions and
  *  * limitations under the License.
- *  
+ *
  */
 
 package com.orientechnologies.lucene.test;
@@ -33,6 +33,8 @@ import org.junit.Test;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -48,24 +50,23 @@ public class LuceneListIndexingTest extends BaseLuceneTest {
 
   @Before
   public void init() {
-    //    System.¢setProperty("orientdb.test.env","ci");
-
     OSchema schema = db.getMetadata().getSchema();
 
     OClass person = schema.createClass("Person");
     person.createProperty("name", OType.STRING);
     person.createProperty("tags", OType.EMBEDDEDLIST, OType.STRING);
+    //noinspection deprecation
     db.command(new OCommandSQL("create index Person.name_tags on Person (name,tags) FULLTEXT ENGINE LUCENE")).execute();
 
     OClass city = schema.createClass("City");
     city.createProperty("name", OType.STRING);
     city.createProperty("tags", OType.EMBEDDEDLIST, OType.STRING);
+    //noinspection deprecation
     db.command(new OCommandSQL("create index City.tags on City (tags) FULLTEXT ENGINE LUCENE")).execute();
-
   }
 
   @Test
-  public void testIndexingList() throws Exception {
+  public void testIndexingList() {
 
     OSchema schema = db.getMetadata().getSchema();
 
@@ -83,7 +84,10 @@ public class LuceneListIndexingTest extends BaseLuceneTest {
     db.save(doc);
 
     OIndex tagsIndex = schema.getClass("City").getClassIndex("City.tags");
-    Collection<?> coll = (Collection<?>) tagsIndex.get("Sunny");
+    Collection<?> coll;
+    try (Stream<ORID> stream = tagsIndex.getInternal().getRids("Sunny")) {
+      coll = stream.collect(Collectors.toList());
+    }
     assertThat(coll).hasSize(1);
 
     doc = db.load((ORID) coll.iterator().next());
@@ -102,7 +106,9 @@ public class LuceneListIndexingTest extends BaseLuceneTest {
     });
     db.save(doc);
 
-    coll = (Collection<?>) tagsIndex.get("Sunny");
+    try (Stream<ORID> stream = tagsIndex.getInternal().getRids("Sunny")) {
+      coll = stream.collect(Collectors.toList());
+    }
     assertThat(coll).hasSize(2);
 
     //modify london: it is rainy
@@ -112,13 +118,19 @@ public class LuceneListIndexingTest extends BaseLuceneTest {
 
     db.save(doc);
 
-    coll = (Collection<?>) tagsIndex.get("Rainy");
+    try (Stream<ORID> stream = tagsIndex.getInternal().getRids("Rainy")) {
+      coll = stream.collect(Collectors.toList());
+    }
     assertThat(coll).hasSize(1);
 
-    coll = (Collection<?>) tagsIndex.get("Beautiful");
+    try (Stream<ORID> stream = tagsIndex.getInternal().getRids("Beautiful")) {
+      coll = stream.collect(Collectors.toList());
+    }
     assertThat(coll).hasSize(2);
 
-    coll = (Collection<?>) tagsIndex.get("Sunny");
+    try (Stream<ORID> stream = tagsIndex.getInternal().getRids("Sunny")) {
+      coll = stream.collect(Collectors.toList());
+    }
     assertThat(coll).hasSize(1);
 
   }
@@ -140,7 +152,10 @@ public class LuceneListIndexingTest extends BaseLuceneTest {
 
     db.save(doc);
     OIndex idx = schema.getClass("Person").getClassIndex("Person.name_tags");
-    Collection<?> coll = (Collection<?>) idx.get("Enrico");
+    Collection<?> coll;
+    try (Stream<ORID> stream = idx.getInternal().getRids("Enrico")) {
+      coll = stream.collect(Collectors.toList());
+    }
 
     assertThat(coll).hasSize(3);
 
@@ -154,7 +169,9 @@ public class LuceneListIndexingTest extends BaseLuceneTest {
     });
     db.save(doc);
 
-    coll = (Collection<?>) idx.get("Jared");
+    try (Stream<ORID> stream = idx.getInternal().getRids("Jared")) {
+      coll = stream.collect(Collectors.toList());
+    }
 
     assertThat(coll).hasSize(2);
 
@@ -165,40 +182,49 @@ public class LuceneListIndexingTest extends BaseLuceneTest {
 
     db.save(doc);
 
-    coll = (Collection<?>) idx.get("Funny");
+    try (Stream<ORID> stream = idx.getInternal().getRids("Funny")) {
+      coll = stream.collect(Collectors.toList());
+    }
     assertThat(coll).hasSize(1);
 
-    coll = (Collection<?>) idx.get("Geek");
+    try (Stream<ORID> stream = idx.getInternal().getRids("Geek")) {
+      coll = stream.collect(Collectors.toList());
+    }
     assertThat(coll).hasSize(2);
 
-    List<?> query = db.query(new OSQLSynchQuery<Object>("select from Person where [name,tags] lucene 'Enrico'"));
+    @SuppressWarnings("deprecation")
+    List<?> query = db.query(new OSQLSynchQuery<>("select from Person where [name,tags] lucene 'Enrico'"));
 
     assertThat(query).hasSize(1);
 
-    query = db.query(new OSQLSynchQuery<Object>("select from (select from Person where [name,tags] lucene 'Enrico')"));
+    //noinspection deprecation
+    query = db.query(new OSQLSynchQuery<>("select from (select from Person where [name,tags] lucene 'Enrico')"));
 
     assertThat(query).hasSize(1);
 
-    query = db.query(new OSQLSynchQuery<Object>("select from Person where [name,tags] lucene 'Jared'"));
+    //noinspection deprecation
+    query = db.query(new OSQLSynchQuery<>("select from Person where [name,tags] lucene 'Jared'"));
 
     assertThat(query).hasSize(1);
 
-    query = db.query(new OSQLSynchQuery<Object>("select from Person where [name,tags] lucene 'Funny'"));
+    //noinspection deprecation
+    query = db.query(new OSQLSynchQuery<>("select from Person where [name,tags] lucene 'Funny'"));
 
     assertThat(query).hasSize(1);
 
-    query = db.query(new OSQLSynchQuery<Object>("select from Person where [name,tags] lucene 'Geek'"));
+    //noinspection deprecation
+    query = db.query(new OSQLSynchQuery<>("select from Person where [name,tags] lucene 'Geek'"));
 
     assertThat(query).hasSize(2);
 
-    query = db.query(new OSQLSynchQuery<Object>("select from Person where [name,tags] lucene '(name:Enrico AND tags:Geek)'"));
+    //noinspection deprecation
+    query = db.query(new OSQLSynchQuery<>("select from Person where [name,tags] lucene '(name:Enrico AND tags:Geek)'"));
 
     assertThat(query).hasSize(1);
   }
 
   @Test
-  public void rname() throws Exception {
-
+  public void rname() {
     final OClass c1 = db.createVertexClass("C1");
     c1.createProperty("p1", OType.STRING);
 
@@ -212,9 +238,9 @@ public class LuceneListIndexingTest extends BaseLuceneTest {
     db.save(vertex);
     db.commit();
 
+    @SuppressWarnings("deprecation")
     final List<ODocument> search = db.query(new OSQLSynchQuery<ODocument>("SELECT from C1 WHERE p1 LUCENE \"tested\""));
 
     assertThat(search).hasSize(1);
-
   }
 }

@@ -80,8 +80,12 @@ public class IndexTxTest extends DocumentDBBaseTest {
         String key = (String) keyIterator.next();
 
         final ORID expectedValue = expectedResult.get(key);
-        final ORID value = (ORID) index.get(key);
+        final ORID value;
+        try (Stream<ORID> stream = index.getInternal().getRids(key)) {
+          value = stream.findAny().orElse(null);
+        }
 
+        Assert.assertNotNull(value);
         Assert.assertTrue(value.isPersistent());
         Assert.assertEquals(value, expectedValue);
       }

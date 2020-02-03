@@ -28,8 +28,10 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 /**
  * Wrapper of dictionary instance that convert values in records.
  */
+@SuppressWarnings("DeprecatedIsStillUsed")
+@Deprecated
 public class ODictionaryWrapper extends ODictionary<Object> {
-  private ODatabaseObject database;
+  private final ODatabaseObject database;
 
   public ODictionaryWrapper(final ODatabaseObject iDatabase, OIndex index) {
     super(index);
@@ -37,9 +39,9 @@ public class ODictionaryWrapper extends ODictionary<Object> {
   }
 
   @SuppressWarnings("unchecked")
-  public <RET extends Object> RET get(final String iKey, final String iFetchPlan) {
+  public <RET> RET get(final String iKey, final String fetchPlan) {
     final ORecord record = super.get(iKey);
-    return (RET) database.getUserObjectByRecord(record, iFetchPlan);
+    return (RET) database.getUserObjectByRecord(record, fetchPlan);
   }
 
   public void put(final String iKey, final Object iValue) {

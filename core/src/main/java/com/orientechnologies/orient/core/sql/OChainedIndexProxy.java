@@ -280,25 +280,23 @@ public class OChainedIndexProxy<T> implements OIndexInternal {
   @Override
   @Deprecated
   public T get(Object key) {
-    final Object lastIndexResult = lastIndex.get(key);
+    final List<ORID> lastIndexResult;
+    try (Stream<ORID> stream = lastIndex.getInternal().getRids(key)) {
+      lastIndexResult = stream.collect(Collectors.toList());
+    }
 
-    final Set<OIdentifiable> result = new HashSet<>();
-
-    if (lastIndexResult != null)
-      result.addAll(applyTailIndexes(lastIndexResult));
-
+    final Set<OIdentifiable> result = new HashSet<>(applyTailIndexes(lastIndexResult));
     return (T) result;
   }
 
   @Override
   public Stream<ORID> getRids(Object key) {
-    final Object lastIndexResult = lastIndex.get(key);
-
-    final Set<OIdentifiable> result = new HashSet<>();
-
-    if (lastIndexResult != null) {
-      result.addAll(applyTailIndexes(lastIndexResult));
+    final List<ORID> lastIndexResult;
+    try (Stream<ORID> stream = lastIndex.getInternal().getRids(key)) {
+      lastIndexResult = stream.collect(Collectors.toList());
     }
+
+    final Set<OIdentifiable> result = new HashSet<>(applyTailIndexes(lastIndexResult));
 
     //noinspection resource
     return result.stream().map(OIdentifiable::getIdentity);
@@ -436,7 +434,7 @@ public class OChainedIndexProxy<T> implements OIndexInternal {
     throw new UnsupportedOperationException("Not allowed operation");
   }
 
-  public OIndex put(Object iKey, OIdentifiable iValue) {
+  public OIndex put(Object key, OIdentifiable value) {
     throw new UnsupportedOperationException("Not allowed operation");
   }
 
@@ -444,7 +442,7 @@ public class OChainedIndexProxy<T> implements OIndexInternal {
     throw new UnsupportedOperationException("Not allowed operation");
   }
 
-  public boolean remove(Object iKey, OIdentifiable iRID) {
+  public boolean remove(Object key, OIdentifiable rid) {
     throw new UnsupportedOperationException("Not allowed operation");
   }
 

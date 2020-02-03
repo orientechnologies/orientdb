@@ -8,9 +8,9 @@ import com.orientechnologies.orient.core.index.*;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandExecutorSQLCreateIndex;
-import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.storage.OAutoshardedStorage;
 import com.orientechnologies.orient.core.storage.OStorage;
+import com.orientechnologies.orient.server.distributed.impl.ODatabaseDocumentDistributed;
 
 /**
  * Created by tglman on 23/06/17.
@@ -105,7 +105,7 @@ public class OIndexManagerDistributed extends OIndexManagerShared {
   }
 
   public void sendCommand(ODatabaseDocumentInternal database, String query) {
-    database.command(new OCommandSQL(query)).execute();
+    ((ODatabaseDocumentDistributed) database).sendDDLCommand(query, false);
   }
 
 }

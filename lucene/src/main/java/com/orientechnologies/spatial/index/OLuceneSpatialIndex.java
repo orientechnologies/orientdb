@@ -42,11 +42,11 @@ public class OLuceneSpatialIndex extends OLuceneIndexNotUnique {
   }
 
   @Override
-  public OLuceneIndexNotUnique put(Object key, OIdentifiable singleValue) {
+  public OLuceneIndexNotUnique put(Object key, OIdentifiable value) {
     if (key == null) {
       return this;
     }
-    return super.put(key, singleValue);
+    return super.put(key, value);
   }
 
   @Override

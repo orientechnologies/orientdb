@@ -43,17 +43,17 @@ import org.testng.annotations.Optional;
 import org.testng.annotations.Parameters;
 import org.testng.annotations.Test;
 
-import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Stream;
 
-@Test(groups = { "crud", "record-vobject" }, sequential = true)
+@SuppressWarnings("groupsTestNG")
+@Test(groups = { "crud", "record-vobject" }, singleThreaded = true)
 public class CRUDDocumentPhysicalTest extends DocumentDBBaseTest {
-  protected static final int TOT_RECORDS         = 100;
-  protected static final int TOT_RECORDS_COMPANY = 10;
+  private static final int TOT_RECORDS         = 100;
+  private static final int TOT_RECORDS_COMPANY = 10;
 
-  protected long startRecordNumber;
-  String base64;
+  private long      startRecordNumber;
   private ODocument record;
 
   @Parameters(value = "url")
@@ -62,15 +62,18 @@ public class CRUDDocumentPhysicalTest extends DocumentDBBaseTest {
   }
 
   @Test
-  public void testPool() throws IOException {
+  public void testPool() {
     OPartitionedDatabasePool pool = new OPartitionedDatabasePool(url, "admin", "admin");
+    @SuppressWarnings("deprecation")
     final ODatabaseDocumentTx[] dbs = new ODatabaseDocumentTx[pool.getMaxPartitonSize()];
 
     for (int i = 0; i < 10; ++i) {
       for (int db = 0; db < dbs.length; ++db)
+        //noinspection resource
         dbs[db] = pool.acquire();
-      for (int db = 0; db < dbs.length; ++db)
-        dbs[db].close();
+      //noinspection deprecation
+      for (ODatabaseDocumentTx oDatabaseDocumentTx : dbs)
+        oDatabaseDocumentTx.close();
     }
 
     pool.close();
@@ -81,7 +84,7 @@ public class CRUDDocumentPhysicalTest extends DocumentDBBaseTest {
     record = database.newInstance();
 
     if (!database.existsCluster("Account"))
-      database.getMetadata().getSchema().createClass("Account", 1, null);
+      database.getMetadata().getSchema().createClass("Account", 1, (OClass[]) null);
 
     startRecordNumber = database.countClusterElements("Account");
 
@@ -94,7 +97,7 @@ public class CRUDDocumentPhysicalTest extends DocumentDBBaseTest {
     Assert.assertEquals(database.countClusterElements("Account"), 0);
 
     if (!database.existsCluster("Company"))
-      database.getMetadata().getSchema().createClass("Company", 1, null);
+      database.getMetadata().getSchema().createClass("Company", 1, (OClass[]) null);
   }
 
   @Test(dependsOnMethods = "cleanAll")
@@ -105,7 +108,7 @@ public class CRUDDocumentPhysicalTest extends DocumentDBBaseTest {
     for (int b = 0; b < binary.length; ++b)
       binary[b] = (byte) b;
 
-    base64 = Base64.getEncoder().encodeToString(binary);
+    String base64 = Base64.getEncoder().encodeToString(binary);
 
     final int accountClusterId = database.getClusterIdByName("Account");
 
@@ -149,7 +152,7 @@ public class CRUDDocumentPhysicalTest extends DocumentDBBaseTest {
     // BROWSE IN THE OPPOSITE ORDER
     byte[] binary;
 
-    Set<Integer> ids = new HashSet<Integer>();
+    Set<Integer> ids = new HashSet<>();
 
     for (int i = 0; i < TOT_RECORDS; i++)
       ids.add(i);
@@ -223,19 +226,23 @@ public class CRUDDocumentPhysicalTest extends DocumentDBBaseTest {
     vDoc.field("nick", "JayM3");
     vDoc.save();
 
+    @SuppressWarnings("deprecation")
     Set<OIndex> indexes = database.getMetadata().getSchema().getClass("Profile").getProperty("nick").getIndexes();
 
     Assert.assertEquals(indexes.size(), 1);
 
     OIndex indexDefinition = indexes.iterator().next();
-    OIdentifiable vOldName = (OIdentifiable) indexDefinition.get("JayM1");
-    Assert.assertNull(vOldName);
+    try (final Stream<ORID> stream = indexDefinition.getInternal().getRids("JayM1")) {
+      Assert.assertFalse(stream.findAny().isPresent());
+    }
 
-    OIdentifiable vIntermediateName = (OIdentifiable) indexDefinition.get("JayM2");
-    Assert.assertNull(vIntermediateName);
+    try (final Stream<ORID> stream = indexDefinition.getInternal().getRids("JayM2")) {
+      Assert.assertFalse(stream.findAny().isPresent());
+    }
 
-    OIdentifiable vNewName = (OIdentifiable) indexDefinition.get("JayM3");
-    Assert.assertNotNull(vNewName);
+    try (Stream<ORID> stream = indexDefinition.getInternal().getRids("JayM3")) {
+      Assert.assertTrue(stream.findAny().isPresent());
+    }
   }
 
   @Test(dependsOnMethods = "testDoubleChanges")
@@ -251,20 +258,23 @@ public class CRUDDocumentPhysicalTest extends DocumentDBBaseTest {
     vDoc.field("nick", "Jack").field("name", "Jack").field("surname", "Bauer");
     vDoc.save();
 
+    @SuppressWarnings("deprecation")
     Collection<OIndex> indexes = database.getMetadata().getSchema().getClass("Profile").getProperty("name").getIndexes();
     Assert.assertEquals(indexes.size(), 1);
 
     OIndex indexName = indexes.iterator().next();
     // We must get 2 records for "nameA".
-    Collection<OIdentifiable> vName1 = (Collection<OIdentifiable>) indexName.get("Jack");
-    Assert.assertEquals(vName1.size(), 2);
+    try (Stream<ORID> stream = indexName.getInternal().getRids("Jack")) {
+      Assert.assertEquals(stream.count(), 2);
+    }
 
     // Remove this last record.
     database.delete(vDoc);
 
     // We must get 1 record for "nameA".
-    vName1 = (Collection<OIdentifiable>) indexName.get("Jack");
-    Assert.assertEquals(vName1.size(), 1);
+    try (Stream<ORID> stream = indexName.getInternal().getRids("Jack")) {
+      Assert.assertEquals(stream.count(), 1);
+    }
   }
 
   @Test(dependsOnMethods = "testMultiValues")
@@ -275,6 +285,7 @@ public class CRUDDocumentPhysicalTest extends DocumentDBBaseTest {
         .field("tag_list", new String[] { "actor", "myth" });
     vDoc.save();
 
+    @SuppressWarnings("deprecation")
     List<ODocument> result = database
         .command(new OSQLSynchQuery<ODocument>("select from Profile where name = 'Kiefer' and tag_list.size() > 0 ")).execute();
 
@@ -304,13 +315,14 @@ public class CRUDDocumentPhysicalTest extends DocumentDBBaseTest {
     ODocument vDoc = database.newInstance();
     vDoc.setClassName("Profile");
 
-    Set<String> tags = new HashSet<String>();
+    Set<String> tags = new HashSet<>();
     tags.add("test");
     tags.add("yeah");
 
     vDoc.field("nick", "Dexter").field("name", "Michael").field("surname", "Hall").field("tag_list", tags);
     vDoc.save();
 
+    @SuppressWarnings("deprecation")
     List<ODocument> result = database.command(new OSQLSynchQuery<ODocument>("select from Profile where name = 'Michael'"))
         .execute();
 
@@ -321,6 +333,7 @@ public class CRUDDocumentPhysicalTest extends DocumentDBBaseTest {
     dexter.setDirty();
     dexter.save();
 
+    //noinspection deprecation
     result = database
         .command(new OSQLSynchQuery<ODocument>("select from Profile where tag_list contains 'actor' and tag_list contains 'test'"))
         .execute();
@@ -346,13 +359,13 @@ public class CRUDDocumentPhysicalTest extends DocumentDBBaseTest {
   public void testNestedEmbeddedMap() {
     ODocument newDoc = new ODocument();
 
-    final Map<String, HashMap<?, ?>> map1 = new HashMap<String, HashMap<?, ?>>();
+    final Map<String, HashMap<?, ?>> map1 = new HashMap<>();
     newDoc.field("map1", map1, OType.EMBEDDEDMAP);
 
-    final Map<String, HashMap<?, ?>> map2 = new HashMap<String, HashMap<?, ?>>();
+    final Map<String, HashMap<?, ?>> map2 = new HashMap<>();
     map1.put("map2", (HashMap<?, ?>) map2);
 
-    final Map<String, HashMap<?, ?>> map3 = new HashMap<String, HashMap<?, ?>>();
+    final Map<String, HashMap<?, ?>> map3 = new HashMap<>();
     map2.put("map3", (HashMap<?, ?>) map3);
 
     final ORecordId rid = (ORecordId) newDoc.save(database.getClusterNameById(database.getDefaultClusterId())).getIdentity();
@@ -379,7 +392,8 @@ public class CRUDDocumentPhysicalTest extends DocumentDBBaseTest {
 
   @Test
   public void commandWithPositionalParameters() {
-    final OSQLSynchQuery<ODocument> query = new OSQLSynchQuery<ODocument>("select from Profile where name = ? and surname = ?");
+    final OSQLSynchQuery<ODocument> query = new OSQLSynchQuery<>("select from Profile where name = ? and surname = ?");
+    @SuppressWarnings("deprecation")
     List<ODocument> result = database.command(query).execute("Barack", "Obama");
 
     Assert.assertTrue(result.size() != 0);
@@ -387,7 +401,8 @@ public class CRUDDocumentPhysicalTest extends DocumentDBBaseTest {
 
   @Test
   public void queryWithPositionalParameters() {
-    final OSQLSynchQuery<ODocument> query = new OSQLSynchQuery<ODocument>("select from Profile where name = ? and surname = ?");
+    final OSQLSynchQuery<ODocument> query = new OSQLSynchQuery<>("select from Profile where name = ? and surname = ?");
+    @SuppressWarnings("deprecation")
     List<ODocument> result = database.query(query, "Barack", "Obama");
 
     Assert.assertTrue(result.size() != 0);
@@ -395,15 +410,14 @@ public class CRUDDocumentPhysicalTest extends DocumentDBBaseTest {
 
   @Test
   public void commandWithNamedParameters() {
-    final OSQLSynchQuery<ODocument> query = new OSQLSynchQuery<ODocument>(
-        "select from Profile where name = :name and surname = :surname");
+    final OSQLSynchQuery<ODocument> query = new OSQLSynchQuery<>("select from Profile where name = :name and surname = :surname");
 
-    HashMap<String, String> params = new HashMap<String, String>();
+    HashMap<String, String> params = new HashMap<>();
     params.put("name", "Barack");
     params.put("surname", "Obama");
 
+    @SuppressWarnings("deprecation")
     List<ODocument> result = database.command(query).execute(params);
-
     Assert.assertTrue(result.size() != 0);
   }
 
@@ -413,14 +427,14 @@ public class CRUDDocumentPhysicalTest extends DocumentDBBaseTest {
 
     try {
       doc.field("a:b", 10);
-      Assert.assertFalse(true);
+      Assert.fail();
     } catch (IllegalArgumentException e) {
       Assert.assertTrue(true);
     }
 
     try {
       doc.field("a,b", 10);
-      Assert.assertFalse(true);
+      Assert.fail();
     } catch (IllegalArgumentException e) {
       Assert.assertTrue(true);
     }
@@ -428,13 +442,13 @@ public class CRUDDocumentPhysicalTest extends DocumentDBBaseTest {
 
   @Test
   public void queryWithNamedParameters() {
-    final OSQLSynchQuery<ODocument> query = new OSQLSynchQuery<ODocument>(
-        "select from Profile where name = :name and surname = :surname");
+    final OSQLSynchQuery<ODocument> query = new OSQLSynchQuery<>("select from Profile where name = :name and surname = :surname");
 
-    HashMap<String, String> params = new HashMap<String, String>();
+    HashMap<String, String> params = new HashMap<>();
     params.put("name", "Barack");
     params.put("surname", "Obama");
 
+    @SuppressWarnings("deprecation")
     List<ODocument> result = database.query(query, params);
 
     Assert.assertTrue(result.size() != 0);
@@ -522,6 +536,7 @@ public class CRUDDocumentPhysicalTest extends DocumentDBBaseTest {
       database.close();
     }
 
+    //noinspection deprecation
     database.open("admin", "admin");
 
     doc = testInvalidFetchPlanClearL1Cache(doc, docRid);
@@ -535,7 +550,7 @@ public class CRUDDocumentPhysicalTest extends DocumentDBBaseTest {
     doc = testInvalidFetchPlanClearL1Cache(doc, new ORecordId(3, 1));
     doc = testInvalidFetchPlanClearL1Cache(doc, new ORecordId(3, 2));
     doc = testInvalidFetchPlanClearL1Cache(doc, new ORecordId(4, 0));
-    doc = testInvalidFetchPlanClearL1Cache(doc, new ORecordId(4, 1));
+    testInvalidFetchPlanClearL1Cache(doc, new ORecordId(4, 1));
     doc = database.load(docRid);
     doc.delete();
   }
@@ -555,7 +570,9 @@ public class CRUDDocumentPhysicalTest extends DocumentDBBaseTest {
   public void polymorphicQuery() {
     final ORecordAbstract newAccount = new ODocument("Account").field("name", "testInheritanceName").save();
 
+    @SuppressWarnings("deprecation")
     List<ODocument> superClassResult = database.query(new OSQLSynchQuery<ODocument>("select from Account"));
+    @SuppressWarnings("deprecation")
     List<ODocument> subClassResult = database.query(new OSQLSynchQuery<ODocument>("select from Company"));
 
     Assert.assertTrue(superClassResult.size() != 0);
@@ -568,7 +585,7 @@ public class CRUDDocumentPhysicalTest extends DocumentDBBaseTest {
       Assert.assertTrue(superClassResult.contains(d));
     }
 
-    HashSet<ODocument> browsed = new HashSet<ODocument>();
+    HashSet<ODocument> browsed = new HashSet<>();
     for (ODocument d : database.browseClass("Account")) {
       Assert.assertFalse(browsed.contains(d));
       browsed.add(d);
@@ -580,13 +597,16 @@ public class CRUDDocumentPhysicalTest extends DocumentDBBaseTest {
   @Test(dependsOnMethods = "testCreate")
   public void testBrowseClassHasNextTwice() {
     ODocument doc1 = null;
+    //noinspection LoopStatementThatDoesntLoop
     for (Iterator<ODocument> itDoc = database.browseClass("Account"); itDoc.hasNext(); ) {
       doc1 = itDoc.next();
       break;
     }
 
     ODocument doc2 = null;
+    //noinspection LoopStatementThatDoesntLoop
     for (Iterator<ODocument> itDoc = database.browseClass("Account"); itDoc.hasNext(); ) {
+      //noinspection ResultOfMethodCallIgnored
       itDoc.hasNext();
       doc2 = itDoc.next();
       break;
@@ -599,9 +619,12 @@ public class CRUDDocumentPhysicalTest extends DocumentDBBaseTest {
   public void nonPolymorphicQuery() {
     final ORecordAbstract newAccount = new ODocument("Account").field("name", "testInheritanceName").save();
 
+    @SuppressWarnings("deprecation")
     List<ODocument> allResult = database.query(new OSQLSynchQuery<ODocument>("select from Account"));
+    @SuppressWarnings("deprecation")
     List<ODocument> superClassResult = database
         .query(new OSQLSynchQuery<ODocument>("select from Account where @class = 'Account'"));
+    @SuppressWarnings("deprecation")
     List<ODocument> subClassResult = database.query(new OSQLSynchQuery<ODocument>("select from Company where @class = 'Company'"));
 
     Assert.assertTrue(allResult.size() != 0);
@@ -613,7 +636,7 @@ public class CRUDDocumentPhysicalTest extends DocumentDBBaseTest {
       Assert.assertFalse(superClassResult.contains(d));
     }
 
-    HashSet<ODocument> browsed = new HashSet<ODocument>();
+    HashSet<ODocument> browsed = new HashSet<>();
     for (ODocument d : database.browseClass("Account")) {
       Assert.assertFalse(browsed.contains(d));
       browsed.add(d);
@@ -637,19 +660,14 @@ public class CRUDDocumentPhysicalTest extends DocumentDBBaseTest {
       record.field("location", "Italy");
       record.field("salary", (i + 300));
 
-      database.save(record, OPERATION_MODE.ASYNCHRONOUS, false, new ORecordCallback<Long>() {
-
-        @Override
-        public void call(ORecordId iRID, Long iParameter) {
-          callBackCalled.incrementAndGet();
-        }
-      }, null);
+      database.save(record, OPERATION_MODE.ASYNCHRONOUS, false,
+          (ORecordCallback<Long>) (iRID, iParameter) -> callBackCalled.incrementAndGet(), null);
     }
 
     while (callBackCalled.intValue() < total) {
       try {
         Thread.sleep(100);
-      } catch (InterruptedException e) {
+      } catch (InterruptedException ignored) {
       }
     }
 
@@ -657,27 +675,25 @@ public class CRUDDocumentPhysicalTest extends DocumentDBBaseTest {
 
     // WAIT UNTIL ALL RECORD ARE INSERTED. USE A NEW DATABASE CONNECTION
     // TO AVOID TO ENQUEUE THE COUNT ITSELF
-    final Thread t = new Thread(new Runnable() {
-      @Override
-      public void run() {
-        final ODatabaseDocumentTx db = new ODatabaseDocumentTx(url).open("admin", "admin");
+    final Thread t = new Thread(() -> {
+      //noinspection deprecation
+      try (final ODatabaseDocumentTx db = new ODatabaseDocumentTx(url).open("admin", "admin")) {
         long tot;
-        while ((tot = db.countClusterElements("Account")) < startRecordNumber + TOT_RECORDS) {
+        while (db.countClusterElements("Account") < startRecordNumber + TOT_RECORDS) {
           // System.out.println("Asynchronous insertion: found " + tot + " records but waiting till " + (startRecordNumber +
           // TOT_RECORDS)
           // + " is reached");
           try {
             Thread.sleep(100);
-          } catch (InterruptedException e) {
+          } catch (InterruptedException ignored) {
           }
         }
-        db.close();
       }
     });
     t.start();
     try {
       t.join();
-    } catch (InterruptedException e) {
+    } catch (InterruptedException ignored) {
     }
 
     if (database.countClusterElements("Account") > 0)
@@ -701,6 +717,7 @@ public class CRUDDocumentPhysicalTest extends DocumentDBBaseTest {
     database.commit();
 
     database.close();
+    //noinspection deprecation
     database.open("admin", "admin");
 
     bank.reload();
@@ -734,6 +751,7 @@ public class CRUDDocumentPhysicalTest extends DocumentDBBaseTest {
     bank.save();
 
     database.close();
+    //noinspection deprecation
     database.open("admin", "admin");
 
     bank.reload();
@@ -758,20 +776,21 @@ public class CRUDDocumentPhysicalTest extends DocumentDBBaseTest {
 
     try {
       bank.field("linkeds.total", 400);
-      Assert.assertTrue(false);
-    } catch (IllegalArgumentException e) {
-      // MUST THROW AN EXCEPTION
-      Assert.assertTrue(true);
+      Assert.fail();
+    } catch (IllegalArgumentException ignored) {
     }
 
     ((ODocument) bank.field("linked")).delete();
+    //noinspection unchecked
     for (ODocument l : (Collection<ODocument>) bank.field("linkeds"))
       l.delete();
     bank.delete();
   }
 
   public void testSerialization() {
+    @SuppressWarnings("deprecation")
     ORecordSerializer current = ODatabaseDocumentTx.getDefaultSerializer();
+    //noinspection deprecation
     ODatabaseDocumentTx.setDefaultSerializer(ORecordSerializerSchemaAware2CSV.INSTANCE);
     ODatabaseDocumentInternal oldDb = ODatabaseRecordThreadLocal.instance().get();
     ORecordSerializer dbser = oldDb.getSerializer();
@@ -782,11 +801,13 @@ public class CRUDDocumentPhysicalTest extends DocumentDBBaseTest {
     doc.field("out");
     final byte[] streamDest = ORecordSerializerSchemaAware2CSV.INSTANCE.toStream(doc);
     Assert.assertEquals(streamOrigin, streamDest);
+    //noinspection deprecation
     ODatabaseDocumentTx.setDefaultSerializer(current);
     oldDb.setSerializer(dbser);
   }
 
   public void testUpdateNoVersionCheck() {
+    @SuppressWarnings("deprecation")
     List<ODocument> result = database.query(new OSQLSynchQuery<ODocument>("select from Account"));
     ODocument doc = result.get(0);
     doc.field("name", "modified");
@@ -831,7 +852,7 @@ public class CRUDDocumentPhysicalTest extends DocumentDBBaseTest {
   public void testRemoveAllLinkList() {
     final ODocument doc = new ODocument();
 
-    final List<ODocument> allDocs = new ArrayList<ODocument>();
+    final List<ODocument> allDocs = new ArrayList<>();
 
     for (int i = 0; i < 10; i++) {
       final ODocument linkDoc = new ODocument();
@@ -845,9 +866,10 @@ public class CRUDDocumentPhysicalTest extends DocumentDBBaseTest {
 
     doc.reload();
 
-    final List<ODocument> docsToRemove = new ArrayList<ODocument>(allDocs.size() / 2);
-    for (int i = 0; i < 5; i++)
+    final List<ODocument> docsToRemove = new ArrayList<>(allDocs.size() / 2);
+    for (int i = 0; i < 5; i++) {
       docsToRemove.add(allDocs.get(i));
+    }
 
     List<OIdentifiable> linkList = doc.field("linkList");
     linkList.removeAll(docsToRemove);
@@ -907,7 +929,7 @@ public class CRUDDocumentPhysicalTest extends DocumentDBBaseTest {
       // LOAD DOCUMENT, CHECK BEFORE GETTING IT FROM L1 CACHE
       doc = database.load(docRid, "invalid");
       Assert.fail("Should throw IllegalArgumentException");
-    } catch (Exception e) {
+    } catch (Exception ignored) {
     }
     // INVALIDATE L1 CACHE TO CHECK THE L2 CACHE
     database.getLocalCache().invalidate();
@@ -915,14 +937,14 @@ public class CRUDDocumentPhysicalTest extends DocumentDBBaseTest {
       // LOAD DOCUMENT, CHECK BEFORE GETTING IT FROM L2 CACHE
       doc = database.load(docRid, "invalid");
       Assert.fail("Should throw IllegalArgumentException");
-    } catch (Exception e) {
+    } catch (Exception ignored) {
     }
     // CLEAR THE L2 CACHE TO CHECK THE RAW READ
     try {
       // LOAD DOCUMENT NOT IN ANY CACHE
       doc = database.load(docRid, "invalid");
       Assert.fail("Should throw IllegalArgumentException");
-    } catch (Exception e) {
+    } catch (Exception ignored) {
     }
     return doc;
   }
@@ -932,18 +954,18 @@ public class CRUDDocumentPhysicalTest extends DocumentDBBaseTest {
       // LOAD DOCUMENT NOT IN ANY CACHE
       doc = database.load(docRid, "invalid");
       Assert.fail("Should throw IllegalArgumentException");
-    } catch (Exception e) {
+    } catch (Exception ignored) {
     }
     // LOAD DOCUMENT, THIS WILL PUT IT IN L1 CACHE
     try {
       database.load(docRid);
-    } catch (Exception e) {
+    } catch (Exception ignored) {
     }
     try {
       // LOAD DOCUMENT, CHECK BEFORE GETTING IT FROM L1 CACHE
       doc = database.load(docRid, "invalid");
       Assert.fail("Should throw IllegalArgumentException");
-    } catch (Exception e) {
+    } catch (Exception ignored) {
     }
     // CLEAR L1 CACHE, THIS WILL PUT IT IN L2 CACHE
     database.getLocalCache().clear();
@@ -951,34 +973,42 @@ public class CRUDDocumentPhysicalTest extends DocumentDBBaseTest {
       // LOAD DOCUMENT, CHECK BEFORE GETTING IT FROM L2 CACHE
       doc = database.load(docRid, "invalid");
       Assert.fail("Should throw IllegalArgumentException");
-    } catch (Exception e) {
+    } catch (Exception ignored) {
     }
 
     try {
       // LOAD DOCUMENT NOT IN ANY CACHE
       doc = database.load(docRid, "invalid");
       Assert.fail("Should throw IllegalArgumentException");
-    } catch (Exception e) {
+    } catch (Exception ignored) {
     }
     return doc;
   }
 
   @Test
   public void testAny() {
+    //noinspection deprecation
     database.command(new OCommandSQL("create class TestExport")).execute();
+    //noinspection deprecation
     database.command(new OCommandSQL("create property TestExport.anything ANY")).execute();
+    //noinspection deprecation
     database.command(new OCommandSQL("insert into TestExport set anything = 3")).execute();
+    //noinspection deprecation
     database.command(new OCommandSQL("insert into TestExport set anything = 'Jay'")).execute();
+    //noinspection deprecation
     database.command(new OCommandSQL("insert into TestExport set anything = 2.3")).execute();
 
+    @SuppressWarnings("deprecation")
     List<ODocument> result = database.command(new OCommandSQL("select count(*) from TestExport where anything = 3")).execute();
     Assert.assertNotNull(result);
     Assert.assertEquals(result.size(), 1);
 
+    //noinspection deprecation
     result = database.command(new OCommandSQL("select count(*) from TestExport where anything = 'Jay'")).execute();
     Assert.assertNotNull(result);
     Assert.assertEquals(result.size(), 1);
 
+    //noinspection deprecation
     result = database.command(new OCommandSQL("select count(*) from TestExport where anything = 2.3")).execute();
     Assert.assertNotNull(result);
     Assert.assertEquals(result.size(), 1);

@@ -97,17 +97,17 @@ public abstract class OIndexMultiValues extends OIndexAbstract {
     }
   }
 
-  public OIndexMultiValues put(Object key, final OIdentifiable singleValue) {
+  public OIndexMultiValues put(Object key, final OIdentifiable value) {
     key = getCollatingValue(key);
 
     acquireSharedLock();
 
     try {
-      if (!singleValue.getIdentity().isValid()) {
-        (singleValue.getRecord()).save();
+      if (!value.getIdentity().isValid()) {
+        (value.getRecord()).save();
       }
 
-      final ORID identity = singleValue.getIdentity();
+      final ORID identity = value.getIdentity();
 
       if (apiVersion == 0) {
         doPutV0(key, identity);
@@ -191,17 +191,17 @@ public abstract class OIndexMultiValues extends OIndexAbstract {
   }
 
   @Override
-  public boolean remove(Object key, final OIdentifiable value) {
+  public boolean remove(Object key, final OIdentifiable rid) {
     key = getCollatingValue(key);
 
     acquireSharedLock();
     try {
       if (apiVersion == 0) {
-        return doRemoveV0(key, value);
+        return doRemoveV0(key, rid);
       }
 
       if (apiVersion == 1) {
-        return doRemoveV1(key, value);
+        return doRemoveV1(key, rid);
       }
 
       throw new IllegalStateException("Invalid API version, " + apiVersion);

@@ -1,6 +1,6 @@
 package com.orientechnologies.orient.test.database.auto;
 
-import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.index.OCompositeKey;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
@@ -16,6 +16,7 @@ import org.testng.annotations.Test;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.stream.Stream;
 
 /**
  * @author Andrey Lomakin (a.lomakin-at-orientdb.com)
@@ -78,7 +79,7 @@ public class DateIndexTest extends DocumentDBBaseTest {
     dateDoc.field("dateField", dateOne);
     dateDoc.field("dateTimeField", dateTwo);
 
-    final List<Date> dateList = new ArrayList<Date>();
+    final List<Date> dateList = new ArrayList<>();
 
     final Date dateThree = new Date(dateOne.getTime() + 100);
     final Date dateFour = new Date(dateThree.getTime() + 24 * 60 * 60 * 1000 + 100);
@@ -86,7 +87,7 @@ public class DateIndexTest extends DocumentDBBaseTest {
     dateList.add(new Date(dateThree.getTime()));
     dateList.add(new Date(dateFour.getTime()));
 
-    final List<Date> dateTimeList = new ArrayList<Date>();
+    final List<Date> dateTimeList = new ArrayList<>();
 
     dateTimeList.add(new Date(dateThree.getTime()));
     dateTimeList.add(new Date(dateFour.getTime()));
@@ -100,78 +101,112 @@ public class DateIndexTest extends DocumentDBBaseTest {
 
     final OIndex dateIndexTestDateIndex = database.getMetadata().getIndexManagerInternal()
         .getIndex(database, "DateIndexTestDateIndex");
-    Assert.assertEquals(((OIdentifiable) dateIndexTestDateIndex.get(dateOne)).getIdentity(), dateDoc.getIdentity());
-    Assert.assertNull(dateIndexTestDateIndex.get(dateTwo));
+    try (Stream<ORID> stream = dateIndexTestDateIndex.getInternal().getRids(dateOne)) {
+      Assert.assertEquals(stream.findAny().orElse(null), dateDoc.getIdentity());
+    }
+    try (Stream<ORID> stream = dateIndexTestDateIndex.getInternal().getRids(dateTwo)) {
+      Assert.assertFalse(stream.findAny().isPresent());
+    }
 
     final OIndex dateIndexTestDateTimeIndex = database.getMetadata().getIndexManagerInternal()
         .getIndex(database, "DateIndexTestDateTimeIndex");
-    Assert.assertEquals(((OIdentifiable) dateIndexTestDateTimeIndex.get(dateTwo)).getIdentity(), dateDoc.getIdentity());
-    Assert.assertNull(dateIndexTestDateTimeIndex.get(dateOne));
+    try (Stream<ORID> stream = dateIndexTestDateTimeIndex.getInternal().getRids(dateTwo)) {
+      Assert.assertEquals(stream.findAny().orElse(null), dateDoc.getIdentity());
+    }
+    try (Stream<ORID> stream = dateIndexTestDateTimeIndex.getInternal().getRids(dateOne)) {
+      Assert.assertFalse(stream.findAny().isPresent());
+    }
 
     final OIndex dateIndexTestValueDateIndex = database.getMetadata().getIndexManagerInternal()
         .getIndex(database, "DateIndexTestValueDateIndex");
-    Assert.assertEquals(((OIdentifiable) dateIndexTestValueDateIndex.get(new OCompositeKey("v1", dateOne))).getIdentity(),
-        dateDoc.getIdentity());
-    Assert.assertNull(dateIndexTestValueDateIndex.get(new OCompositeKey("v1", dateTwo)));
+    try (Stream<ORID> stream = dateIndexTestValueDateIndex.getInternal().getRids(new OCompositeKey("v1", dateOne))) {
+      Assert.assertEquals((stream.findAny().orElse(null)), dateDoc.getIdentity());
+    }
+    try (Stream<ORID> stream = dateIndexTestValueDateIndex.getInternal().getRids(new OCompositeKey("v1", dateTwo))) {
+      Assert.assertFalse(stream.findAny().isPresent());
+    }
 
     final OIndex dateIndexTestValueDateTimeIndex = database.getMetadata().getIndexManagerInternal()
         .getIndex(database, "DateIndexTestValueDateTimeIndex");
-    Assert.assertEquals(((OIdentifiable) dateIndexTestValueDateTimeIndex.get(new OCompositeKey("v1", dateTwo))).getIdentity(),
-        dateDoc.getIdentity());
-    Assert.assertNull(dateIndexTestValueDateTimeIndex.get(new OCompositeKey("v1", dateOne)));
+    try (Stream<ORID> stream = dateIndexTestValueDateTimeIndex.getInternal().getRids(new OCompositeKey("v1", dateTwo))) {
+      Assert.assertEquals(stream.findAny().orElse(null), dateDoc.getIdentity());
+    }
+    try (Stream<ORID> stream = dateIndexTestValueDateTimeIndex.getInternal().getRids(new OCompositeKey("v1", dateOne))) {
+      Assert.assertFalse(stream.findAny().isPresent());
+    }
 
     final OIndex dateIndexTestValueDateListIndex = database.getMetadata().getIndexManagerInternal()
         .getIndex(database, "DateIndexTestValueDateListIndex");
 
-    Assert.assertEquals(((OIdentifiable) dateIndexTestValueDateListIndex.get(new OCompositeKey("v1", dateThree))).getIdentity(),
-        dateDoc.getIdentity());
-    Assert.assertEquals(((OIdentifiable) dateIndexTestValueDateListIndex.get(new OCompositeKey("v1", dateFour))).getIdentity(),
-        dateDoc.getIdentity());
+    try (Stream<ORID> stream = dateIndexTestValueDateListIndex.getInternal().getRids(new OCompositeKey("v1", dateThree))) {
+      Assert.assertEquals(stream.findAny().orElse(null), dateDoc.getIdentity());
+    }
+    try (Stream<ORID> stream = dateIndexTestValueDateListIndex.getInternal().getRids(new OCompositeKey("v1", dateFour))) {
+      Assert.assertEquals(stream.findAny().orElse(null), dateDoc.getIdentity());
+    }
 
     final OIndex dateIndexTestValueDateTimeListIndex = database.getMetadata().getIndexManagerInternal()
         .getIndex(database, "DateIndexTestValueDateListIndex");
-    Assert.assertEquals(((OIdentifiable) dateIndexTestValueDateTimeListIndex.get(new OCompositeKey("v1", dateThree))).getIdentity(),
-        dateDoc.getIdentity());
-    Assert.assertEquals(((OIdentifiable) dateIndexTestValueDateTimeListIndex.get(new OCompositeKey("v1", dateFour))).getIdentity(),
-        dateDoc.getIdentity());
+    try (Stream<ORID> stream = dateIndexTestValueDateTimeListIndex.getInternal().getRids(new OCompositeKey("v1", dateThree))) {
+      Assert.assertEquals(stream.findAny().orElse(null), dateDoc.getIdentity());
+    }
+    try (Stream<ORID> stream = dateIndexTestValueDateTimeListIndex.getInternal().getRids(new OCompositeKey("v1", dateFour))) {
+      Assert.assertEquals(stream.findAny().orElse(null), dateDoc.getIdentity());
+    }
 
     final OIndex dateIndexTestDateHashIndexIndex = database.getMetadata().getIndexManagerInternal()
         .getIndex(database, "DateIndexTestDateHashIndex");
-    Assert.assertEquals(((OIdentifiable) dateIndexTestDateHashIndexIndex.get(dateOne)).getIdentity(), dateDoc.getIdentity());
-    Assert.assertNull(dateIndexTestDateHashIndexIndex.get(dateTwo));
+    try (Stream<ORID> stream = dateIndexTestDateHashIndexIndex.getInternal().getRids(dateOne)) {
+      Assert.assertEquals(stream.findAny().orElse(null), dateDoc.getIdentity());
+    }
+    try (Stream<ORID> stream = dateIndexTestDateHashIndexIndex.getInternal().getRids(dateTwo)) {
+      Assert.assertFalse(stream.findAny().isPresent());
+    }
 
     final OIndex dateIndexTestDateTimeHashIndex = database.getMetadata().getIndexManagerInternal()
         .getIndex(database, "DateIndexTestDateTimeHashIndex");
-    Assert.assertEquals(((OIdentifiable) dateIndexTestDateTimeHashIndex.get(dateTwo)).getIdentity(), dateDoc.getIdentity());
-    Assert.assertNull(dateIndexTestDateTimeHashIndex.get(dateOne));
+    try (Stream<ORID> stream = dateIndexTestDateTimeHashIndex.getInternal().getRids(dateTwo)) {
+      Assert.assertEquals(stream.findAny().orElse(null), dateDoc.getIdentity());
+    }
+    try (Stream<ORID> stream = dateIndexTestDateTimeHashIndex.getInternal().getRids(dateOne)) {
+      Assert.assertFalse(stream.findAny().isPresent());
+    }
 
     final OIndex dateIndexTestValueDateHashIndex = database.getMetadata().getIndexManagerInternal()
         .getIndex(database, "DateIndexTestValueDateHashIndex");
-    Assert.assertEquals(((OIdentifiable) dateIndexTestValueDateHashIndex.get(new OCompositeKey("v1", dateOne))).getIdentity(),
-        dateDoc.getIdentity());
-    Assert.assertNull(dateIndexTestValueDateHashIndex.get(new OCompositeKey("v1", dateTwo)));
+    try (Stream<ORID> stream = dateIndexTestValueDateHashIndex.getInternal().getRids(new OCompositeKey("v1", dateOne))) {
+      Assert.assertEquals(stream.findAny().orElse(null), dateDoc.getIdentity());
+    }
+    try (Stream<ORID> stream = dateIndexTestValueDateHashIndex.getInternal().getRids(new OCompositeKey("v1", dateTwo))) {
+      Assert.assertFalse(stream.findAny().isPresent());
+    }
 
     final OIndex dateIndexTestValueDateTimeHashIndex = database.getMetadata().getIndexManagerInternal()
         .getIndex(database, "DateIndexTestValueDateTimeHashIndex");
-    Assert.assertEquals(((OIdentifiable) dateIndexTestValueDateTimeHashIndex.get(new OCompositeKey("v1", dateTwo))).getIdentity(),
-        dateDoc.getIdentity());
-    Assert.assertNull(dateIndexTestValueDateTimeHashIndex.get(new OCompositeKey("v1", dateOne)));
+    try (Stream<ORID> stream = dateIndexTestValueDateTimeHashIndex.getInternal().getRids(new OCompositeKey("v1", dateTwo))) {
+      Assert.assertEquals(stream.findAny().orElse(null), dateDoc.getIdentity());
+    }
+    try (Stream<ORID> stream = dateIndexTestValueDateTimeHashIndex.getInternal().getRids(new OCompositeKey("v1", dateOne))) {
+      Assert.assertFalse(stream.findAny().isPresent());
+    }
 
     final OIndex dateIndexTestValueDateListHashIndex = database.getMetadata().getIndexManagerInternal()
         .getIndex(database, "DateIndexTestValueDateListHashIndex");
 
-    Assert.assertEquals(((OIdentifiable) dateIndexTestValueDateListHashIndex.get(new OCompositeKey("v1", dateThree))).getIdentity(),
-        dateDoc.getIdentity());
-    Assert.assertEquals(((OIdentifiable) dateIndexTestValueDateListHashIndex.get(new OCompositeKey("v1", dateFour))).getIdentity(),
-        dateDoc.getIdentity());
+    try (Stream<ORID> stream = dateIndexTestValueDateListHashIndex.getInternal().getRids(new OCompositeKey("v1", dateThree))) {
+      Assert.assertEquals(stream.findAny().orElse(null), dateDoc.getIdentity());
+    }
+    try (Stream<ORID> stream = dateIndexTestValueDateListHashIndex.getInternal().getRids(new OCompositeKey("v1", dateFour))) {
+      Assert.assertEquals(stream.findAny().orElse(null), dateDoc.getIdentity());
+    }
 
     final OIndex dateIndexTestValueDateTimeListHashIndex = database.getMetadata().getIndexManagerInternal()
         .getIndex(database, "DateIndexTestValueDateListHashIndex");
-    Assert.assertEquals(
-        ((OIdentifiable) dateIndexTestValueDateTimeListHashIndex.get(new OCompositeKey("v1", dateThree))).getIdentity(),
-        dateDoc.getIdentity());
-    Assert.assertEquals(
-        ((OIdentifiable) dateIndexTestValueDateTimeListHashIndex.get(new OCompositeKey("v1", dateFour))).getIdentity(),
-        dateDoc.getIdentity());
+    try (Stream<ORID> stream = dateIndexTestValueDateTimeListHashIndex.getInternal().getRids(new OCompositeKey("v1", dateThree))) {
+      Assert.assertEquals(stream.findAny().orElse(null), dateDoc.getIdentity());
+    }
+    try (Stream<ORID> stream = dateIndexTestValueDateTimeListHashIndex.getInternal().getRids(new OCompositeKey("v1", dateFour))) {
+      Assert.assertEquals(stream.findAny().orElse(null), dateDoc.getIdentity());
+    }
   }
 }

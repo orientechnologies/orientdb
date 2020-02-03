@@ -55,6 +55,7 @@ import org.testng.annotations.Parameters;
 import org.testng.annotations.Test;
 
 import java.util.*;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static com.orientechnologies.DatabaseAbstractTest.getEnvironment;
@@ -174,14 +175,17 @@ public class IndexTest extends ObjectDBBaseTest {
     int profileSize = result.size();
 
     database.getMetadata().getIndexManagerInternal().reload();
-    Assert.assertEquals(database.getMetadata().getIndexManagerInternal().getIndex(database.getUnderlying(), "Profile.nick").getInternal().size(),
+    Assert.assertEquals(
+        database.getMetadata().getIndexManagerInternal().getIndex(database.getUnderlying(), "Profile.nick").getInternal().size(),
         profileSize);
     for (int i = 0; i < 10; i++) {
       Profile profile = new Profile("Yay-" + i, "Jay", "Miner", null);
       database.save(profile);
       profileSize++;
-      Assert.assertNotNull(
-          database.getMetadata().getIndexManagerInternal().getIndex(database.getUnderlying(), "Profile.nick").get("Yay-" + i));
+      try (Stream<ORID> stream = database.getMetadata().getIndexManagerInternal().getIndex(database.getUnderlying(), "Profile.nick")
+          .getInternal().getRids("Yay-" + i)) {
+        Assert.assertTrue(stream.findAny().isPresent());
+      }
     }
   }
 
@@ -692,7 +696,8 @@ public class IndexTest extends ObjectDBBaseTest {
         db.commit();
 
         expectedIndexSize += chunkSize;
-        Assert.assertEquals(db.getMetadata().getIndexManagerInternal().getClassIndex(db, "MyFruit", "MyFruit.color").getInternal().size(),
+        Assert.assertEquals(
+            db.getMetadata().getIndexManagerInternal().getClassIndex(db, "MyFruit", "MyFruit.color").getInternal().size(),
             expectedIndexSize, "After add");
 
         // do delete
@@ -703,7 +708,8 @@ public class IndexTest extends ObjectDBBaseTest {
         db.commit();
 
         expectedIndexSize -= recordsToDelete.size();
-        Assert.assertEquals(db.getMetadata().getIndexManagerInternal().getClassIndex(db, "MyFruit", "MyFruit.color").getInternal().size(),
+        Assert.assertEquals(
+            db.getMetadata().getIndexManagerInternal().getClassIndex(db, "MyFruit", "MyFruit.color").getInternal().size(),
             expectedIndexSize, "After delete");
       }
     }
@@ -729,7 +735,9 @@ public class IndexTest extends ObjectDBBaseTest {
       doc.field("label", "42");
       doc.save();
 
-      result = (ORecordId) db.getMetadata().getIndexManagerInternal().getIndex(db, "idxTerm").get("42");
+      try (Stream<ORID> stream = db.getMetadata().getIndexManagerInternal().getIndex(db, "idxTerm").getInternal().getRids("42")) {
+        result = (ORecordId) stream.findAny().orElse(null);
+      }
     }
     Assert.assertNotNull(result);
     Assert.assertEquals(result.getIdentity(), doc.getIdentity());
@@ -898,7 +906,9 @@ public class IndexTest extends ObjectDBBaseTest {
       pair.second.getRecord().delete();
     }
 
-    Assert.assertNull(index.get(key));
+    try (Stream<ORID> stream = index.getInternal().getRids(key)) {
+      Assert.assertFalse(stream.findAny().isPresent());
+    }
   }
 
   public void createInheritanceIndex() {
@@ -1008,12 +1018,16 @@ public class IndexTest extends ObjectDBBaseTest {
     OIndexManagerAbstract idxManager = database.getMetadata().getIndexManagerInternal();
     OIndex nickIndex = idxManager.getIndex(database.getUnderlying(), "Profile.nick");
 
-    Assert.assertNotNull(nickIndex.get("NonProxiedObjectToDelete"));
+    try (Stream<ORID> stream = nickIndex.getInternal().getRids("NonProxiedObjectToDelete")) {
+      Assert.assertTrue(stream.findAny().isPresent());
+    }
 
     final Profile loadedProfile = database.load(new ORecordId(profile.getId()));
     database.delete(database.<Object>detach(loadedProfile, true));
 
-    Assert.assertNull(nickIndex.get("NonProxiedObjectToDelete"));
+    try (Stream<ORID> stream = nickIndex.getInternal().getRids("NonProxiedObjectToDelete")) {
+      Assert.assertFalse(stream.findAny().isPresent());
+    }
   }
 
   @Test(dependsOnMethods = "testIndexRebuildDuringNonProxiedObjectDelete")
@@ -1026,12 +1040,16 @@ public class IndexTest extends ObjectDBBaseTest {
     OIndexManagerAbstract idxManager = database.getMetadata().getIndexManagerInternal();
     OIndex nickIndex = idxManager.getIndex(database.getUnderlying(), "Profile.nick");
 
-    Assert.assertNotNull(nickIndex.get("NonProxiedObjectToDelete"));
+    try (Stream<ORID> stream = nickIndex.getInternal().getRids("NonProxiedObjectToDelete")) {
+      Assert.assertTrue(stream.findAny().isPresent());
+    }
 
     final Profile loadedProfile = database.load(new ORecordId(profile.getId()));
     database.delete(database.<Object>detachAll(loadedProfile, true));
 
-    Assert.assertNull(nickIndex.get("NonProxiedObjectToDelete"));
+    try (Stream<ORID> stream = nickIndex.getInternal().getRids("NonProxiedObjectToDelete")) {
+      Assert.assertFalse(stream.findAny().isPresent());
+    }
   }
 
   @Test(dependsOnMethods = "testIndexRebuildDuringDetachAllNonProxiedObjectDelete")
@@ -1371,8 +1389,11 @@ public class IndexTest extends ObjectDBBaseTest {
       OIndex index = fieldClass.getClassIndex("nameParentIndex");
       OCompositeKey key = new OCompositeKey(parent.getId(), "pokus");
 
-      Collection<ORecordId> h = (Collection<ORecordId>) index.get(key);
-      for (ORecordId o : h) {
+      Collection<ORID> h;
+      try (Stream<ORID> stream = index.getInternal().getRids(key)) {
+        h = stream.collect(Collectors.toList());
+      }
+      for (ORID o : h) {
         Assert.assertNotNull(graph.getVertex(o));
       }
     }
@@ -1382,8 +1403,11 @@ public class IndexTest extends ObjectDBBaseTest {
       OIndex index = fieldClass.getClassIndex("nameParentIndex");
       OCompositeKey key = new OCompositeKey(parent2.getId(), "pokus2");
 
-      Collection<ORecordId> h = (Collection<ORecordId>) index.get(key);
-      for (ORecordId o : h) {
+      Collection<ORID> h;
+      try (Stream<ORID> stream = index.getInternal().getRids(key)) {
+        h = stream.collect(Collectors.toList());
+      }
+      for (ORID o : h) {
         Assert.assertNotNull(graph.getVertex(o));
       }
     }
@@ -1413,11 +1437,19 @@ public class IndexTest extends ObjectDBBaseTest {
     document.field("prop", "keyTwo");
     document.save();
 
-    Assert.assertTrue(((Collection) notUniqueIndex.get("RandomKeyOne")).isEmpty());
-    Assert.assertFalse(((Collection) notUniqueIndex.get("keyOne")).isEmpty());
+    try (Stream<ORID> stream = notUniqueIndex.getInternal().getRids("RandomKeyOne")) {
+      Assert.assertFalse(stream.findAny().isPresent());
+    }
+    try (Stream<ORID> stream = notUniqueIndex.getInternal().getRids("keyOne")) {
+      Assert.assertTrue(stream.findAny().isPresent());
+    }
 
-    Assert.assertTrue(((Collection) notUniqueIndex.get("RandomKeyTwo")).isEmpty());
-    Assert.assertFalse(((Collection) notUniqueIndex.get("keyTwo")).isEmpty());
+    try (Stream<ORID> stream = notUniqueIndex.getInternal().getRids("RandomKeyTwo")) {
+      Assert.assertFalse(stream.findAny().isPresent());
+    }
+    try (Stream<ORID> stream = notUniqueIndex.getInternal().getRids("keyTwo")) {
+      Assert.assertTrue(stream.findAny().isPresent());
+    }
   }
 
   public void testNullIteration() {
@@ -1773,9 +1805,9 @@ public class IndexTest extends ObjectDBBaseTest {
     OIndex index = db.getMetadata().getIndexManagerInternal().getIndex(db, "NullValuesCountSBTreeUniqueIndex");
     Assert.assertEquals(index.getInternal().size(), 2);
     try (Stream<ORawPair<Object, ORID>> stream = index.getInternal().stream()) {
-      Assert.assertEquals(
-          stream.map((pair) -> pair.first).distinct().count() + java.util.Optional.ofNullable(index.get(null)).map((entry) -> 1)
-              .orElse(0), 2);
+      try (Stream<ORID> nullStream = index.getInternal().getRids(null)) {
+        Assert.assertEquals(stream.map((pair) -> pair.first).distinct().count() + nullStream.count(), 2);
+      }
     }
   }
 
@@ -1799,8 +1831,9 @@ public class IndexTest extends ObjectDBBaseTest {
     OIndex index = db.getMetadata().getIndexManagerInternal().getIndex(db, "NullValuesCountSBTreeNotUniqueOneIndex");
     Assert.assertEquals(index.getInternal().size(), 2);
     try (Stream<ORawPair<Object, ORID>> stream = index.getInternal().stream()) {
-      Assert.assertEquals(stream.map((pair) -> pair.first).distinct().count() + java.util.Optional.ofNullable(index.get(null))
-          .map((entry) -> ((Collection) entry).isEmpty() ? 0 : 1).orElse(0), 2);
+      try (Stream<ORID> nullStream = index.getInternal().getRids(null)) {
+        Assert.assertEquals(stream.map((pair) -> pair.first).distinct().count() + nullStream.count(), 2);
+      }
     }
   }
 
@@ -1823,8 +1856,9 @@ public class IndexTest extends ObjectDBBaseTest {
 
     OIndex index = db.getMetadata().getIndexManagerInternal().getIndex(db, "NullValuesCountSBTreeNotUniqueTwoIndex");
     try (Stream<ORawPair<Object, ORID>> stream = index.getInternal().stream()) {
-      Assert.assertEquals(stream.map((pair) -> pair.first).distinct().count() + java.util.Optional.ofNullable(index.get(null))
-          .map((entry) -> ((Collection) entry).isEmpty() ? 0 : 1).orElse(0), 1);
+      try (Stream<ORID> nullStream = index.getInternal().getRids(null)) {
+        Assert.assertEquals(stream.map((pair) -> pair.first).distinct().count() + nullStream.findAny().map(v -> 1).orElse(0), 1);
+      }
     }
     Assert.assertEquals(index.getInternal().size(), 2);
   }
@@ -1849,9 +1883,9 @@ public class IndexTest extends ObjectDBBaseTest {
     OIndex index = db.getMetadata().getIndexManagerInternal().getIndex(db, "NullValuesCountHashUniqueIndex");
     Assert.assertEquals(index.getInternal().size(), 2);
     try (Stream<ORawPair<Object, ORID>> stream = index.getInternal().stream()) {
-      Assert.assertEquals(
-          stream.map((pair) -> pair.first).distinct().count() + java.util.Optional.ofNullable(index.get(null)).map((entry) -> 1)
-              .orElse(0), 2);
+      try (Stream<ORID> nullStream = index.getInternal().getRids(null)) {
+        Assert.assertEquals(stream.map((pair) -> pair.first).distinct().count() + nullStream.count(), 2);
+      }
     }
   }
 
@@ -1875,8 +1909,9 @@ public class IndexTest extends ObjectDBBaseTest {
     OIndex index = db.getMetadata().getIndexManagerInternal().getIndex(db, "NullValuesCountHashNotUniqueOneIndex");
     Assert.assertEquals(index.getInternal().size(), 2);
     try (Stream<ORawPair<Object, ORID>> stream = index.getInternal().stream()) {
-      Assert.assertEquals(stream.map((pair) -> pair.first).distinct().count() + java.util.Optional.ofNullable(index.get(null))
-          .map((entry) -> ((Collection) entry).isEmpty() ? 0 : 1).orElse(0), 2);
+      try (Stream<ORID> nullStream = index.getInternal().getRids(null)) {
+        Assert.assertEquals(stream.map((pair) -> pair.first).distinct().count() + nullStream.count(), 2);
+      }
     }
   }
 
@@ -1899,8 +1934,9 @@ public class IndexTest extends ObjectDBBaseTest {
 
     OIndex index = db.getMetadata().getIndexManagerInternal().getIndex(db, "NullValuesCountHashNotUniqueTwoIndex");
     try (Stream<ORawPair<Object, ORID>> stream = index.getInternal().stream()) {
-      Assert.assertEquals(stream.map((pair) -> pair.first).distinct().count() + java.util.Optional.ofNullable(index.get(null))
-          .map((entry) -> ((Collection) entry).isEmpty() ? 0 : 1).orElse(0), 1);
+      try (Stream<ORID> nullStream = index.getInternal().getRids(null)) {
+        Assert.assertEquals(stream.map(pair -> pair.first).distinct().count() + nullStream.findAny().map(v -> 1).orElse(0), 1);
+      }
     }
     Assert.assertEquals(index.getInternal().size(), 2);
   }

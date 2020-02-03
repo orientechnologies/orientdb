@@ -81,4 +81,8 @@ public interface ORemoteTask {
   void toStream(DataOutput out) throws IOException;
 
   void fromStream(DataInput in, ORemoteTaskFactory factory) throws IOException;
+
+  default void finished() {
+
+  }
 }

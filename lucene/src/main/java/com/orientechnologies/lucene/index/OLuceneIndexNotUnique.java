@@ -58,22 +58,22 @@ public class OLuceneIndexNotUnique extends OIndexAbstract implements OLuceneInde
   }
 
   @Override
-  public boolean remove(final Object key, final OIdentifiable value) {
+  public boolean remove(final Object key, final OIdentifiable rid) {
 
     if (key != null) {
       OBasicTransaction transaction = getDatabase().getMicroOrRegularTransaction();
       if (transaction.isActive()) {
 
-        transaction.addIndexEntry(this, super.getName(), OTransactionIndexChanges.OPERATION.REMOVE, encodeKey(key), value);
+        transaction.addIndexEntry(this, super.getName(), OTransactionIndexChanges.OPERATION.REMOVE, encodeKey(key), rid);
         OLuceneTxChanges transactionChanges = getTransactionChanges(transaction);
-        transactionChanges.remove(key, value);
+        transactionChanges.remove(key, rid);
         return true;
       } else {
         while (true) {
           try {
             return storage.callIndexEngine(false, false, indexId, engine -> {
               OLuceneIndexEngine indexEngine = (OLuceneIndexEngine) engine;
-              return indexEngine.remove(key, value);
+              return indexEngine.remove(key, rid);
             });
           } catch (OInvalidIndexEngineIdException e) {
             doReloadIndexEngine();
@@ -312,21 +312,21 @@ public class OLuceneIndexNotUnique extends OIndexAbstract implements OLuceneInde
   }
 
   @Override
-  public OLuceneIndexNotUnique put(final Object key, final OIdentifiable singleValue) {
+  public OLuceneIndexNotUnique put(final Object key, final OIdentifiable value) {
 
     if (key != null) {
       OBasicTransaction transaction = getDatabase().getMicroOrRegularTransaction();
 
       if (transaction.isActive()) {
         OLuceneTxChanges transactionChanges = getTransactionChanges(transaction);
-        transaction.addIndexEntry(this, super.getName(), OTransactionIndexChanges.OPERATION.PUT, encodeKey(key), singleValue);
+        transaction.addIndexEntry(this, super.getName(), OTransactionIndexChanges.OPERATION.PUT, encodeKey(key), value);
 
         Document luceneDoc;
         while (true) {
           try {
             luceneDoc = storage.callIndexEngine(false, false, indexId, engine -> {
               OLuceneIndexEngine oIndexEngine = (OLuceneIndexEngine) engine;
-              return oIndexEngine.buildDocument(key, singleValue);
+              return oIndexEngine.buildDocument(key, value);
             });
             break;
           } catch (OInvalidIndexEngineIdException e) {
@@ -334,12 +334,12 @@ public class OLuceneIndexNotUnique extends OIndexAbstract implements OLuceneInde
           }
         }
 
-        transactionChanges.put(key, singleValue, luceneDoc);
+        transactionChanges.put(key, value, luceneDoc);
 
       } else {
         while (true) {
           try {
-            storage.putIndexValue(indexId, key, Collections.singletonList(singleValue));
+            storage.putIndexValue(indexId, key, Collections.singletonList(value));
             break;
           } catch (OInvalidIndexEngineIdException e) {
             doReloadIndexEngine();

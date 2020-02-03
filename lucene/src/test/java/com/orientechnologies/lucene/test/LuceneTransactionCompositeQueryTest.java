@@ -18,6 +18,7 @@
 
 package com.orientechnologies.lucene.test;
 
+import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
@@ -32,6 +33,8 @@ import java.io.IOException;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -60,12 +63,14 @@ public class LuceneTransactionCompositeQueryTest extends BaseLuceneTest {
     db.save(doc);
 
     String query = "select from Foo where name = 'Test' and bar lucene \"abc\" ";
+    @SuppressWarnings("deprecation")
     List<ODocument> vertices = db.command(new OSQLSynchQuery<ODocument>(query)).execute();
 
     assertThat(vertices).hasSize(1);
     db.rollback();
 
     query = "select from Foo where name = 'Test' and bar lucene \"abc\" ";
+    //noinspection deprecation
     vertices = db.command(new OSQLSynchQuery<ODocument>(query)).execute();
     assertThat(vertices).hasSize(0);
 
@@ -90,9 +95,13 @@ public class LuceneTransactionCompositeQueryTest extends BaseLuceneTest {
     db.delete(doc);
 
     String query = "select from Foo where name = 'Test' and bar lucene \"abc\" ";
+    @SuppressWarnings("deprecation")
     List<ODocument> vertices = db.command(new OSQLSynchQuery<ODocument>(query)).execute();
 
-    Collection coll = (Collection) index.get("abc");
+    Collection coll;
+    try (Stream<ORID> stream = index.getInternal().getRids("abc")) {
+      coll = stream.collect(Collectors.toList());
+    }
 
     assertThat(vertices).hasSize(0);
 
@@ -103,6 +112,7 @@ public class LuceneTransactionCompositeQueryTest extends BaseLuceneTest {
     db.rollback();
 
     query = "select from Foo where name = 'Test' and bar lucene \"abc\" ";
+    //noinspection deprecation
     vertices = db.command(new OSQLSynchQuery<ODocument>(query)).execute();
 
     assertThat(vertices).hasSize(1);
@@ -140,8 +150,12 @@ public class LuceneTransactionCompositeQueryTest extends BaseLuceneTest {
     db.save(doc);
 
     String query = "select from Foo where name = 'Test' and bar lucene \"abc\" ";
+    @SuppressWarnings("deprecation")
     List<ODocument> vertices = db.command(new OSQLSynchQuery<ODocument>(query)).execute();
-    Collection coll = (Collection) index.get("abc");
+    Collection coll;
+    try (Stream<ORID> stream = index.getInternal().getRids("abc")) {
+      coll = stream.collect(Collectors.toList());
+    }
 
     assertThat(vertices).hasSize(0);
     Assert.assertEquals(coll.size(), 0);
@@ -157,8 +171,11 @@ public class LuceneTransactionCompositeQueryTest extends BaseLuceneTest {
     Assert.assertEquals(index.getInternal().size(), 1);
 
     query = "select from Foo where name = 'Test' and bar lucene \"removed\" ";
+    //noinspection deprecation
     vertices = db.command(new OSQLSynchQuery<ODocument>(query)).execute();
-    coll = (Collection) index.get("removed");
+    try (Stream<ORID> stream = index.getInternal().getRids("removed")) {
+      coll = stream.collect(Collectors.toList());
+    }
 
     assertThat(vertices).hasSize(1);
     Assert.assertEquals(coll.size(), 1);
@@ -166,6 +183,7 @@ public class LuceneTransactionCompositeQueryTest extends BaseLuceneTest {
     db.rollback();
 
     query = "select from Foo where name = 'Test' and bar lucene \"abc\" ";
+    //noinspection deprecation
     vertices = db.command(new OSQLSynchQuery<ODocument>(query)).execute();
 
     assertThat(vertices).hasSize(1);
@@ -208,8 +226,12 @@ public class LuceneTransactionCompositeQueryTest extends BaseLuceneTest {
     db.save(doc);
 
     String query = "select from Foo where name = 'Test' and bar lucene \"abc\" ";
+    @SuppressWarnings("deprecation")
     List<ODocument> vertices = db.command(new OSQLSynchQuery<ODocument>(query)).execute();
-    Collection coll = (Collection) index.get("abc");
+    Collection coll;
+    try (Stream<ORID> stream = index.getInternal().getRids("abc")) {
+      coll = stream.collect(Collectors.toList());
+    }
 
     assertThat(vertices).hasSize(1);
     Assert.assertEquals(1, coll.size());
@@ -223,12 +245,17 @@ public class LuceneTransactionCompositeQueryTest extends BaseLuceneTest {
     }
 
     Assert.assertEquals(1, i);
+    Assert.assertNotNull(rid);
+    Assert.assertNotNull(doc1);
     Assert.assertEquals(rid.getIdentity().toString(), doc1.getIdentity().toString());
     Assert.assertEquals(2, index.getInternal().size());
 
     query = "select from Foo where name = 'Test' and bar lucene \"removed\" ";
+    //noinspection deprecation
     vertices = db.command(new OSQLSynchQuery<ODocument>(query)).execute();
-    coll = (Collection) index.get("removed");
+    try (Stream<ORID> stream = index.getInternal().getRids("removed")) {
+      coll = stream.collect(Collectors.toList());
+    }
 
     assertThat(vertices).hasSize(1);
 
@@ -237,6 +264,7 @@ public class LuceneTransactionCompositeQueryTest extends BaseLuceneTest {
     db.rollback();
 
     query = "select from Foo where name = 'Test' and bar lucene \"abc\" ";
+    //noinspection deprecation
     vertices = db.command(new OSQLSynchQuery<ODocument>(query)).execute();
 
     assertThat(vertices).hasSize(2);

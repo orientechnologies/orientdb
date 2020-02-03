@@ -19,6 +19,7 @@
 package com.orientechnologies.lucene.test;
 
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
+import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
@@ -30,6 +31,8 @@ import org.junit.Before;
 import org.junit.Test;
 
 import java.util.Collection;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * Created by enricorisa on 28/06/14.
@@ -47,13 +50,13 @@ public class LuceneInsertUpdateSingleDocumentNoTxTest extends BaseLuceneTest {
 
     OClass oClass = schema.createClass("City");
     oClass.createProperty("name", OType.STRING);
+    //noinspection deprecation
     db.command(new OCommandSQL("create index City.name on City (name) FULLTEXT ENGINE LUCENE")).execute();
 
   }
 
   @Test
-  public void testInsertUpdateTransactionWithIndex() throws Exception {
-
+  public void testInsertUpdateTransactionWithIndex() {
     db.close();
     db = (ODatabaseDocumentInternal) openDatabase();
     OSchema schema = db.getMetadata().getSchema();
@@ -72,7 +75,10 @@ public class LuceneInsertUpdateSingleDocumentNoTxTest extends BaseLuceneTest {
     db.save(doc);
     db.save(doc1);
     OIndex idx = schema.getClass("City").getClassIndex("City.name");
-    Collection<?> coll = (Collection<?>) idx.get("Rome");
+    Collection<?> coll;
+    try (Stream<ORID> stream = idx.getInternal().getRids("Rome")) {
+      coll = stream.collect(Collectors.toList());
+    }
     Assert.assertEquals(2, coll.size());
     Assert.assertEquals(2, idx.getInternal().size());
   }

@@ -3,6 +3,7 @@ package com.orientechnologies.orient.test.database.auto;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.index.OCompositeKey;
 import com.orientechnologies.orient.core.index.OIndex;
@@ -18,10 +19,10 @@ import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
-import java.util.Collection;
 import java.util.Date;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Stream;
 
 import static org.testng.AssertJUnit.*;
 
@@ -36,17 +37,20 @@ public class DefaultValuesTrivialTest {
 
   @BeforeMethod
   public void before() {
+    //noinspection deprecation
     database = new ODatabaseDocumentTx("memory:" + DefaultValuesTrivialTest.class.getSimpleName());
+    //noinspection deprecation
     database.create();
   }
 
   @AfterMethod
   public void after() {
+    //noinspection deprecation
     database.drop();
   }
 
   @Test
-  public void test() throws Exception {
+  public void test() {
 
     // create example schema
     OSchema schema = database.getMetadata().getSchema();
@@ -83,12 +87,13 @@ public class DefaultValuesTrivialTest {
         Assert.assertTrue(active);
       } catch (Exception ex) {
         ex.printStackTrace();
-        Assert.assertTrue(false);
+        Assert.fail();
       }
     }
   }
 
-  public Date getDatabaseSysdate(ODatabaseDocument database) {
+  private static Date getDatabaseSysdate(ODatabaseDocument database) {
+    @SuppressWarnings("deprecation")
     List<ODocument> dates = database.query(new OSQLSynchQuery<Date>("SELECT sysdate()"));
     return dates.get(0).field("sysdate");
   }
@@ -108,7 +113,7 @@ public class DefaultValuesTrivialTest {
   }
 
   @Test
-  public void testPrepopulation() throws Exception {
+  public void testPrepopulation() {
     // create example schema
     OSchema schema = database.getMetadata().getSchema();
     OClass classA = schema.createClass("ClassA");
@@ -121,7 +126,7 @@ public class DefaultValuesTrivialTest {
       ODocument doc = new ODocument(classA);
       assertEquals("default name", doc.field("name"));
       assertNotNull(doc.field("date"));
-      assertEquals((Boolean)true, doc.field("active"));
+      assertEquals((Boolean) true, doc.field("active"));
     }
 
     {
@@ -132,7 +137,7 @@ public class DefaultValuesTrivialTest {
       doc.setClassName(classA.getName());
       assertEquals("default name", doc.field("name"));
       assertNotNull(doc.field("date"));
-      assertEquals((Boolean)true, doc.field("active"));
+      assertEquals((Boolean) true, doc.field("active"));
     }
 
     {
@@ -143,13 +148,13 @@ public class DefaultValuesTrivialTest {
       doc.setClassNameIfExists(classA.getName());
       assertEquals("default name", doc.field("name"));
       assertNotNull(doc.field("date"));
-      assertEquals((Boolean)true, doc.field("active"));
+      assertEquals((Boolean) true, doc.field("active"));
     }
 
   }
 
   @Test
-  public void testPrepopulationIndex() throws Exception {
+  public void testPrepopulationIndex() {
     // create example schema
     OSchema schema = database.getMetadata().getSchema();
     OClass classA = schema.createClass("ClassA");
@@ -162,13 +167,15 @@ public class DefaultValuesTrivialTest {
       ODocument doc = new ODocument(classA);
       assertEquals("default name", doc.field("name"));
       database.save(doc);
-      assertEquals(1, ((Collection) index.get("default name")).size());
+      try (Stream<ORID> stream = index.getInternal().getRids("default name")) {
+        assertEquals(1, stream.count());
+      }
     }
 
   }
 
   @Test
-  public void testPrepopulationIndexTx() throws Exception {
+  public void testPrepopulationIndexTx() {
 
     // create example schema
     OSchema schema = database.getMetadata().getSchema();
@@ -183,14 +190,18 @@ public class DefaultValuesTrivialTest {
       ODocument doc = new ODocument(classA);
       assertEquals("default name", doc.field("name"));
       database.save(doc);
-      assertEquals(1, ((Collection) index.get("default name")).size());
+      try (Stream<ORID> stream = index.getInternal().getRids("default name")) {
+        assertEquals(1, stream.count());
+      }
       database.commit();
-      assertEquals(1, ((Collection) index.get("default name")).size());
+      try (Stream<ORID> stream = index.getInternal().getRids("default name")) {
+        assertEquals(1, stream.count());
+      }
     }
   }
 
   @Test
-  public void testPrepopulationMultivalueIndex() throws Exception {
+  public void testPrepopulationMultivalueIndex() {
 
     // create example schema
     OSchema schema = database.getMetadata().getSchema();
@@ -206,16 +217,22 @@ public class DefaultValuesTrivialTest {
       assertEquals("default name", doc.field("name"));
       doc.field("value", "1");
       database.save(doc);
-      assertEquals(1, ((Collection) index.get(new OCompositeKey("1"))).size());
+      try (Stream<ORID> stream = index.getInternal().getRids(new OCompositeKey("1"))) {
+        assertEquals(1, stream.count());
+      }
     }
     {
       ODocument doc = new ODocument(classA);
       assertEquals("default name", doc.field("name"));
       doc.field("value", "2");
       database.save(doc);
-      assertEquals(1, ((Collection) index.get(new OCompositeKey("2"))).size());
+      try (Stream<ORID> stream = index.getInternal().getRids(new OCompositeKey("2"))) {
+        assertEquals(1, stream.count());
+      }
     }
-    assertEquals(0, ((Collection) index.get(new OCompositeKey("3"))).size());
+    try (Stream<ORID> stream = index.getInternal().getRids(new OCompositeKey("3"))) {
+      assertEquals(0, stream.count());
+    }
   }
 
 }
