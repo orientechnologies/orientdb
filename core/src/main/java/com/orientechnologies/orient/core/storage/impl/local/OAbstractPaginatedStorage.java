@@ -74,7 +74,6 @@ import com.orientechnologies.orient.core.record.impl.OBlob;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
 import com.orientechnologies.orient.core.serialization.serializer.binary.impl.index.OCompositeKeySerializer;
-import com.orientechnologies.orient.core.serialization.serializer.binary.impl.index.OSimpleKeySerializer;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializer;
 import com.orientechnologies.orient.core.sharding.auto.OAutoShardingIndexEngine;
 import com.orientechnologies.orient.core.storage.*;
@@ -2359,49 +2358,36 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
   }
 
   private OBinarySerializer determineKeySerializer(final OIndexDefinition indexDefinition, final ODocument metadata) {
-    if (metadata != null && metadata.containsField("keySerializer")) {
-      int serializerId = -1;
-      try {
-        serializerId = Integer.parseInt(String.valueOf((Object) metadata.field("keySerializer")));
-      } catch (NumberFormatException e) {
-        //ignore
-      }
-      if (serializerId >= 0) {
-        final OCurrentStorageComponentsFactory currentStorageComponentsFactory = componentsFactory;
-        if (currentStorageComponentsFactory != null) {
-          OBinarySerializer keySerializer = currentStorageComponentsFactory.binarySerializerFactory
-              .getObjectSerializer((byte) serializerId);
-          if (keySerializer != null) {
-            return keySerializer;
-          }
-        }
-      }
+    if (indexDefinition == null) {
+      throw new OStorageException("Index definition has to be provided");
+    }
+
+    final OType[] keyTypes = indexDefinition.getTypes();
+    if (keyTypes == null || keyTypes.length == 0) {
+      throw new OStorageException("Types of index keys has to be defined");
+    }
+    if (keyTypes.length != indexDefinition.getFields().size()) {
+      throw new OStorageException(
+          "Types are provided only for " + keyTypes.length + " fields. But index definition has " + indexDefinition.getFields()
+              .size() + " fields.");
     }
 
     final OBinarySerializer keySerializer;
-    if (indexDefinition != null) {
-      if (indexDefinition instanceof ORuntimeKeyIndexDefinition) {
-        keySerializer = ((ORuntimeKeyIndexDefinition) indexDefinition).getSerializer();
-      } else {
-        if (indexDefinition.getTypes().length > 1) {
-          keySerializer = OCompositeKeySerializer.INSTANCE;
-        } else {
-          final OType keyType = indexDefinition.getTypes()[0];
-
-          if (keyType == OType.STRING && configuration.getBinaryFormatVersion() >= 13) {
-            return OUTF8Serializer.INSTANCE;
-          }
-
-          final OCurrentStorageComponentsFactory currentStorageComponentsFactory = componentsFactory;
-          if (currentStorageComponentsFactory != null) {
-            keySerializer = currentStorageComponentsFactory.binarySerializerFactory.getObjectSerializer(keyType);
-          } else {
-            throw new IllegalStateException("Cannot load binary serializer, storage is not properly initialized");
-          }
-        }
-      }
+    if (indexDefinition.getTypes().length > 1) {
+      keySerializer = OCompositeKeySerializer.INSTANCE;
     } else {
-      keySerializer = new OSimpleKeySerializer();
+      final OType keyType = indexDefinition.getTypes()[0];
+
+      if (keyType == OType.STRING && configuration.getBinaryFormatVersion() >= 13) {
+        return OUTF8Serializer.INSTANCE;
+      }
+
+      final OCurrentStorageComponentsFactory currentStorageComponentsFactory = componentsFactory;
+      if (currentStorageComponentsFactory != null) {
+        keySerializer = currentStorageComponentsFactory.binarySerializerFactory.getObjectSerializer(keyType);
+      } else {
+        throw new IllegalStateException("Cannot load binary serializer, storage is not properly initialized");
+      }
     }
 
     return keySerializer;

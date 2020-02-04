@@ -2,7 +2,6 @@ package com.orientechnologies.orient.core.index.engine.v1;
 
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.serialization.types.OBinarySerializer;
-import com.orientechnologies.common.serialization.types.OUTF8Serializer;
 import com.orientechnologies.common.util.ORawPair;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.encryption.OEncryption;
@@ -16,7 +15,7 @@ import com.orientechnologies.orient.core.index.engine.OMultiValueIndexEngine;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.binary.impl.OCompactedLinkSerializer;
-import com.orientechnologies.orient.core.serialization.serializer.binary.impl.index.StatefulCompositeKeySerializer;
+import com.orientechnologies.orient.core.serialization.serializer.binary.impl.index.CompositeKeySerializer;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.storage.index.sbtree.multivalue.OCellBTreeMultiValue;
 import com.orientechnologies.orient.core.storage.index.sbtree.multivalue.v2.CellBTreeMultiValueV2;
@@ -98,7 +97,7 @@ public final class OCellBTreeMultiValueIndexEngine implements OMultiValueIndexEn
         assert svTree != null;
         assert nullTree != null;
 
-        svTree.create(defineKeySerializer(), sbTypes, keySize + 1, encryption);
+        svTree.create(new CompositeKeySerializer(), sbTypes, keySize + 1, encryption);
         nullTree.create(OCompactedLinkSerializer.INSTANCE, new OType[] { OType.LINK }, 1, null);
       }
     } catch (IOException e) {
@@ -201,17 +200,9 @@ public final class OCellBTreeMultiValueIndexEngine implements OMultiValueIndexEn
 
       final OType[] sbTypes = calculateTypes(keyTypes);
 
-      svTree.load(name, keySize + 1, sbTypes, defineKeySerializer(), null);
+      svTree.load(name, keySize + 1, sbTypes, new CompositeKeySerializer(), null);
       nullTree.load(nullTreeName, 1, new OType[] { OType.LINK }, OCompactedLinkSerializer.INSTANCE, null);
     }
-  }
-
-  private static StatefulCompositeKeySerializer defineKeySerializer() {
-    final StatefulCompositeKeySerializer serializer = new StatefulCompositeKeySerializer();
-    serializer.defineSerializer(OType.LINK, OCompactedLinkSerializer.INSTANCE);
-    serializer.defineSerializer(OType.STRING, OUTF8Serializer.INSTANCE);
-
-    return serializer;
   }
 
   @Override
