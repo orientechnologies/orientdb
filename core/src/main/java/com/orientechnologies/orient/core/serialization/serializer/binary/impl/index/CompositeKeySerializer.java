@@ -288,9 +288,13 @@ public final class CompositeKeySerializer implements OBinarySerializer<OComposit
     }
 
     final OType[] types = (OType[]) hints;
+    final List<Object> keys = value.getKeys();
+
     boolean preprocess = false;
-    for (final OType type : types) {
-      if (type == OType.DATE || type == OType.LINK) {
+    for (int i = 0; i < keys.size(); i++) {
+      final OType type = types[i];
+
+      if (type == OType.DATE || (type == OType.LINK && !(keys.get(i) instanceof ORID))) {
         preprocess = true;
         break;
       }
@@ -300,7 +304,6 @@ public final class CompositeKeySerializer implements OBinarySerializer<OComposit
       return value;
     }
 
-    final List<Object> keys = value.getKeys();
     final OCompositeKey compositeKey = new OCompositeKey();
 
     for (int i = 0; i < keys.size(); i++) {
@@ -318,9 +321,11 @@ public final class CompositeKeySerializer implements OBinarySerializer<OComposit
           compositeKey.addKey(calendar.getTime());
         } else if (type == OType.LINK) {
           compositeKey.addKey(((OIdentifiable) key).getIdentity());
+        } else {
+          compositeKey.addKey(key);
         }
       } else {
-        compositeKey.addKey(key);
+        compositeKey.addKey(null);
       }
     }
 
