@@ -15,7 +15,7 @@ public abstract class OAbstractScriptExecutor implements OScriptExecutor {
     this.language = language;
   }
 
-  List<OScriptInterceptor> interceptors = new ArrayList<>();
+  private List<OScriptInterceptor> interceptors = new ArrayList<>();
 
   @Override
   public void registerInterceptor(OScriptInterceptor interceptor) {
