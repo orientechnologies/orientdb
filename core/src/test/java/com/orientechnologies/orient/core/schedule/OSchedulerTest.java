@@ -1,10 +1,10 @@
 package com.orientechnologies.orient.core.schedule;
 
-import com.orientechnologies.orient.core.db.ODatabaseSession;
-import com.orientechnologies.orient.core.db.ODatabaseType;
-import com.orientechnologies.orient.core.db.OrientDB;
-import com.orientechnologies.orient.core.db.OrientDBConfig;
+import com.orientechnologies.orient.core.config.OGlobalConfiguration;
+import com.orientechnologies.orient.core.db.*;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.metadata.function.OFunction;
+import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.executor.OResult;
 import org.junit.Assert;
 import org.junit.Test;
@@ -15,6 +15,7 @@ import java.util.List;
 import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.Assert.assertEquals;
 
 /**
  * Tests cases for the Scheduler component.
@@ -113,6 +114,24 @@ public class OSchedulerTest {
       db2.close();
       context.close();
     }
+  }
+
+  @Test
+  public void testScheduleEventWithMultipleActiveDatabaseConnections() {
+    OrientDB orientDb = new OrientDB("embedded:", OrientDBConfig.builder().addConfig(OGlobalConfiguration.DB_POOL_MAX, 1).build());
+
+    if (!orientDb.exists("test")) {
+      orientDb.create("test", ODatabaseType.MEMORY);
+    }
+
+    ODatabasePool pool = orientDb.cachedPool("test", "admin", "admin");
+    ODatabaseSession db = pool.acquire();
+
+    assertEquals(db, ODatabaseRecordThreadLocal.instance().getIfDefined());
+    createLogEvent(db);
+    assertEquals(db, ODatabaseRecordThreadLocal.instance().getIfDefined());
+
+    orientDb.close();
   }
 
   @Test
