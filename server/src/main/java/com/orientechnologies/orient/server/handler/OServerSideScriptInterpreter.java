@@ -1,22 +1,22 @@
 /*
-  *
-  *  *  Copyright 2010-2016 OrientDB LTD (http://orientdb.com)
-  *  *
-  *  *  Licensed under the Apache License, Version 2.0 (the "License");
-  *  *  you may not use this file except in compliance with the License.
-  *  *  You may obtain a copy of the License at
-  *  *
-  *  *       http://www.apache.org/licenses/LICENSE-2.0
-  *  *
-  *  *  Unless required by applicable law or agreed to in writing, software
-  *  *  distributed under the License is distributed on an "AS IS" BASIS,
-  *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-  *  *  See the License for the specific language governing permissions and
-  *  *  limitations under the License.
-  *  *
-  *  * For more information: http://orientdb.com
-  *
-  */
+ *
+ *  *  Copyright 2010-2016 OrientDB LTD (http://orientdb.com)
+ *  *
+ *  *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  *  you may not use this file except in compliance with the License.
+ *  *  You may obtain a copy of the License at
+ *  *
+ *  *       http://www.apache.org/licenses/LICENSE-2.0
+ *  *
+ *  *  Unless required by applicable law or agreed to in writing, software
+ *  *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  *  See the License for the specific language governing permissions and
+ *  *  limitations under the License.
+ *  *
+ *  * For more information: http://orientdb.com
+ *
+ */
 package com.orientechnologies.orient.server.handler;
 
 import com.orientechnologies.common.log.OLogManager;
@@ -38,9 +38,8 @@ import java.util.Set;
 /**
  * Allow the execution of server-side scripting. This could be a security hole in your configuration if users have access to the
  * database and can execute any kind of code.
- * 
+ *
  * @author Luca
- * 
  */
 public class OServerSideScriptInterpreter extends OServerPluginAbstract {
   protected boolean     enabled          = false;
@@ -71,8 +70,8 @@ public class OServerSideScriptInterpreter extends OServerPluginAbstract {
     if (!enabled)
       return;
 
-    OCommandManager.instance().registerExecutor(OCommandScript.class, OCommandExecutorScript.class,
-        new OCallable<Void, OCommandRequest>() {
+    OCommandManager.instance()
+        .registerExecutor(OCommandScript.class, OCommandExecutorScript.class, new OCallable<Void, OCommandRequest>() {
           @Override
           public Void call(OCommandRequest iArgument) {
             final String language = ((OCommandScript) iArgument).getLanguage().toLowerCase(Locale.ENGLISH);
@@ -84,6 +83,11 @@ public class OServerSideScriptInterpreter extends OServerPluginAbstract {
           }
         });
 
+    OCommandManager.instance().getScriptExecutors().entrySet()
+        .forEach(e -> e.getValue().registerInterceptor((db, language, script, params) -> {
+          if (!allowedLanguages.contains(language))
+            throw new OSecurityException("Language '" + language + "' is not allowed to be executed");
+        }));
     OLogManager.instance().warn(this,
         "Authenticated clients can execute any kind of code into the server by using the following allowed languages: "
             + allowedLanguages);

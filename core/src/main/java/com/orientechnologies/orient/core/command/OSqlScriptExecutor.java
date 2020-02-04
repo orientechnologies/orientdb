@@ -1,5 +1,6 @@
 package com.orientechnologies.orient.core.command;
 
+import com.orientechnologies.orient.core.command.traverse.OAbstractScriptExecutor;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.sql.OCommandSQLParsingException;
@@ -16,7 +17,11 @@ import java.util.stream.Collectors;
 /**
  * Created by tglman on 25/01/17.
  */
-public class OSqlScriptExecutor implements OScriptExecutor {
+public class OSqlScriptExecutor extends OAbstractScriptExecutor {
+
+  public OSqlScriptExecutor() {
+    super("SQL");
+  }
 
   @Override
   public OResultSet execute(ODatabaseDocumentInternal database, String script, Object... args)

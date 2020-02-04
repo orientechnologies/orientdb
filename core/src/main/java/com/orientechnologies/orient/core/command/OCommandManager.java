@@ -103,6 +103,10 @@ public class OCommandManager {
     this.scriptExecutors.put(language, executor);
   }
 
+  public Map<String, OScriptExecutor> getScriptExecutors() {
+    return scriptExecutors;
+  }
+
   public OCommandManager registerExecutor(final Class<? extends OCommandRequest> iRequest,
       final Class<? extends OCommandExecutor> iExecutor) {
     commandReqExecMap.put(iRequest, iExecutor);
