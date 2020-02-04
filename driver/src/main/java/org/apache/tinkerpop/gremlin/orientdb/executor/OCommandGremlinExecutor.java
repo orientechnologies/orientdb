@@ -27,6 +27,7 @@ import com.orientechnologies.orient.core.command.script.OScriptManager;
 import com.orientechnologies.orient.core.command.script.OScriptResultHandler;
 import com.orientechnologies.orient.core.command.script.formatter.OGroovyScriptFormatter;
 import com.orientechnologies.orient.core.command.script.transformer.OScriptTransformer;
+import com.orientechnologies.orient.core.command.traverse.OAbstractScriptExecutor;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
@@ -56,7 +57,7 @@ import java.util.Map;
  *
  * @author Enrico Risa (e.risa-(at)--orientdb.com)
  */
-public class OCommandGremlinExecutor implements OScriptExecutor, OScriptInjection, OScriptResultHandler {
+public class OCommandGremlinExecutor extends OAbstractScriptExecutor implements OScriptInjection, OScriptResultHandler {
 
     public static final String GREMLIN_GROOVY = "gremlin-groovy";
     private final OScriptManager scriptManager;
@@ -65,7 +66,7 @@ public class OCommandGremlinExecutor implements OScriptExecutor, OScriptInjectio
     private OScriptTransformer transformer;
 
     public OCommandGremlinExecutor(OScriptManager scriptManager,OScriptTransformer transformer) {
-
+        super("gremlin");
         factory = new GremlinGroovyScriptEngineFactory();
         factory.setCustomizerManager(new CachedGremlinScriptEngineManager());
         this.scriptManager = scriptManager;
@@ -92,6 +93,7 @@ public class OCommandGremlinExecutor implements OScriptExecutor, OScriptInjectio
 
     @Override
     public OResultSet execute(ODatabaseDocumentInternal database, String script, Object... params) {
+        preExecute(database, script, params);
         Map<Object, Object> mapParams = new HashMap<>();
         if (params != null) {
             for (int i = 0; i < params.length; i++) {
@@ -103,7 +105,7 @@ public class OCommandGremlinExecutor implements OScriptExecutor, OScriptInjectio
 
     @Override
     public OResultSet execute(final ODatabaseDocumentInternal iDatabase, final String iText, final Map params) {
-
+        preExecute(iDatabase, iText, params);
         OPartitionedObjectPool.PoolEntry<ScriptEngine> entry = null;
         try {
             entry = acquireGremlinEngine(acquireGraph(iDatabase));
