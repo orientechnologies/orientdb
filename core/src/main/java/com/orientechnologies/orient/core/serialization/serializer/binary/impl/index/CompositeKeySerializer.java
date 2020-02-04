@@ -1,6 +1,7 @@
 package com.orientechnologies.orient.core.serialization.serializer.binary.impl.index;
 
 import com.orientechnologies.common.serialization.types.*;
+import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.index.OCompositeKey;
 import com.orientechnologies.orient.core.index.OIndexException;
@@ -289,7 +290,7 @@ public final class CompositeKeySerializer implements OBinarySerializer<OComposit
     final OType[] types = (OType[]) hints;
     boolean preprocess = false;
     for (final OType type : types) {
-      if (type == OType.DATE) {
+      if (type == OType.DATE || type == OType.LINK) {
         preprocess = true;
         break;
       }
@@ -305,15 +306,19 @@ public final class CompositeKeySerializer implements OBinarySerializer<OComposit
     for (int i = 0; i < keys.size(); i++) {
       final Object key = keys.get(i);
       final OType type = types[i];
-      if (key != null && type == OType.DATE) {
-        final Calendar calendar = Calendar.getInstance();
-        calendar.setTime((Date) key);
-        calendar.set(Calendar.HOUR_OF_DAY, 0);
-        calendar.set(Calendar.MINUTE, 0);
-        calendar.set(Calendar.SECOND, 0);
-        calendar.set(Calendar.MILLISECOND, 0);
+      if (key != null) {
+        if (type == OType.DATE) {
+          final Calendar calendar = Calendar.getInstance();
+          calendar.setTime((Date) key);
+          calendar.set(Calendar.HOUR_OF_DAY, 0);
+          calendar.set(Calendar.MINUTE, 0);
+          calendar.set(Calendar.SECOND, 0);
+          calendar.set(Calendar.MILLISECOND, 0);
 
-        compositeKey.addKey(calendar.getTime());
+          compositeKey.addKey(calendar.getTime());
+        } else if (type == OType.LINK) {
+          compositeKey.addKey(((OIdentifiable) key).getIdentity());
+        }
       } else {
         compositeKey.addKey(key);
       }
