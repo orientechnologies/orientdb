@@ -27,6 +27,7 @@ import com.orientechnologies.orient.core.command.OCommandManager;
 import com.orientechnologies.orient.core.command.OScriptExecutor;
 import com.orientechnologies.orient.core.command.OScriptExecutorRegister;
 import com.orientechnologies.orient.core.command.script.formatter.*;
+import com.orientechnologies.orient.core.command.script.js.OLazyScriptEngineFactory;
 import com.orientechnologies.orient.core.command.script.transformer.OScriptTransformerImpl;
 import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
@@ -52,17 +53,18 @@ import static com.orientechnologies.common.util.OClassLoaderHelper.lookupProvide
  * @see OCommandScript
  */
 public class OScriptManager {
-  protected static final Object[] EMPTY_PARAMS       = new Object[] {};
-  protected static final int      LINES_AROUND_ERROR = 5;
-  protected static final String   DEF_LANGUAGE       = "javascript";
-  protected              String   defaultLanguage    = DEF_LANGUAGE;
-  protected ScriptEngineManager scriptEngineManager;
-  protected Map<String, ScriptEngineFactory>                  engines            = new HashMap<String, ScriptEngineFactory>();
-  protected Map<String, OScriptFormatter>                     formatters         = new HashMap<String, OScriptFormatter>();
-  protected List<OScriptInjection>                            injections         = new ArrayList<OScriptInjection>();
-  protected ConcurrentHashMap<String, ODatabaseScriptManager> dbManagers         = new ConcurrentHashMap<String, ODatabaseScriptManager>();
-  protected Map<String, OScriptResultHandler>                 handlers           = new HashMap<String, OScriptResultHandler>();
-  protected Map<String, Function<String, OScriptExecutor>>    executorsFactories = new HashMap<>();
+  
+  protected static final Object[]                                          EMPTY_PARAMS       = new Object[] {};
+  protected static final int                                               LINES_AROUND_ERROR = 5;
+  protected static final String                                            DEF_LANGUAGE       = "javascript";
+  protected              String                                            defaultLanguage    = DEF_LANGUAGE;
+  protected              ScriptEngineManager                               scriptEngineManager;
+  protected              Map<String, ScriptEngineFactory>                  engines            = new HashMap<String, ScriptEngineFactory>();
+  protected              Map<String, OScriptFormatter>                     formatters         = new HashMap<String, OScriptFormatter>();
+  protected              List<OScriptInjection>                            injections         = new ArrayList<OScriptInjection>();
+  protected              ConcurrentHashMap<String, ODatabaseScriptManager> dbManagers         = new ConcurrentHashMap<String, ODatabaseScriptManager>();
+  protected              Map<String, OScriptResultHandler>                 handlers           = new HashMap<String, OScriptResultHandler>();
+  protected              Map<String, Function<String, OScriptExecutor>>    executorsFactories = new HashMap<>();
 
   public OScriptManager() {
     scriptEngineManager = new ScriptEngineManager();
@@ -133,6 +135,7 @@ public class OScriptManager {
    *
    * @param db        Current database instance
    * @param iLanguage Language as filter
+   *
    * @return String containing all the functions
    */
   public String getLibrary(final ODatabase<?> db, final String iLanguage) {
@@ -189,7 +192,9 @@ public class OScriptManager {
    *
    * @param databaseName Database name
    * @param language     Script language
+   *
    * @return ScriptEngine instance with the function library already parsed
+   *
    * @see #releaseDatabaseEngine(String, String, OPartitionedObjectPool.PoolEntry)
    */
   public OPartitionedObjectPool.PoolEntry<ScriptEngine> acquireDatabaseEngine(final String databaseName, final String language) {
@@ -215,6 +220,7 @@ public class OScriptManager {
    * @param iLanguage     Script language
    * @param iDatabaseName Database name
    * @param poolEntry     Pool entry to free
+   *
    * @see #acquireDatabaseEngine(String, String)
    */
   public void releaseDatabaseEngine(final String iLanguage, final String iDatabaseName,
@@ -402,7 +408,7 @@ public class OScriptManager {
   }
 
   public OScriptManager registerEngine(final String iLanguage, final ScriptEngineFactory iEngine) {
-    engines.put(iLanguage, iEngine);
+    engines.put(iLanguage, OLazyScriptEngineFactory.maybeWrap(iEngine));
     return this;
   }
 

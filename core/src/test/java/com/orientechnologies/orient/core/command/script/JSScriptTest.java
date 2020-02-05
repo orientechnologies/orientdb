@@ -113,4 +113,20 @@ public class JSScriptTest {
     }
     orientDB.close();
   }
+
+  @Test(expected = ClassNotFoundException.class)
+  public void jsSandboxTest() {
+
+    OrientDB orientDB = new OrientDB("embedded:", OrientDBConfig.defaultConfig());
+    orientDB.create("jsSandboxTest", ODatabaseType.MEMORY);
+    ODatabaseDocument db = orientDB.open("jsSandboxTest", "admin", "admin");
+    try {
+
+      db.execute("javascript", "var File = java.io.File;");
+
+    } finally {
+      orientDB.drop("jsSandboxTest");
+    }
+    orientDB.close();
+  }
 }
