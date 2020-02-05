@@ -692,7 +692,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
           listener.onMessage(
               "Check of storage completed in " + (System.currentTimeMillis() - start) + "ms. " + (pageErrors.length > 0 ?
-                  pageErrors.length + " with errors." : " without errors."));
+                  pageErrors.length + " with errors." :
+                  " without errors."));
 
           return pageErrors.length == 0;
         } finally {
@@ -1342,8 +1343,9 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       try {
         checkOpenness();
 
-        return clusters.get(iClusterId) != null ? new long[] { clusters.get(iClusterId).getFirstPosition(),
-            clusters.get(iClusterId).getLastPosition() } : OCommonConst.EMPTY_LONG_ARRAY;
+        return clusters.get(iClusterId) != null ?
+            new long[] { clusters.get(iClusterId).getFirstPosition(), clusters.get(iClusterId).getLastPosition() } :
+            OCommonConst.EMPTY_LONG_ARRAY;
 
       } catch (final IOException ioe) {
         throw OException.wrapException(new OStorageException("Cannot retrieve information about data range"), ioe);
@@ -1396,10 +1398,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
    * not deleted - length of content is provided in above entity</li> </ol>
    *
    * @param lsn LSN from which we should find changed records
-   *
    * @return Last LSN processed during examination of changed records, or <code>null</code> if it was impossible to find changed
    * records: write ahead log is absent, record with start LSN was not found in WAL, etc.
-   *
    * @see OGlobalConfiguration#STORAGE_TRACK_CHANGED_RECORDS_IN_WAL
    */
   public OBackgroundDelta recordsChangedAfterLSN(final OLogSequenceNumber lsn, final OCommandOutputListener outputListener) {
@@ -1578,9 +1578,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
    * This method finds all the records changed in the last X transactions.
    *
    * @param maxEntries Maximum number of entries to check back from last log.
-   *
    * @return A set of record ids of the changed records
-   *
    * @see OGlobalConfiguration#STORAGE_TRACK_CHANGED_RECORDS_IN_WAL
    */
   public Set<ORecordId> recordsChangedRecently(final int maxEntries) {
@@ -2262,7 +2260,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
    * Traditional commit that support already temporary rid and already assigned rids
    *
    * @param clientTx the transaction to commit
-   *
    * @return The list of operations applied by the transaction
    */
   @Override
@@ -2274,7 +2271,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
    * Commit a transaction where the rid where pre-allocated in a previous phase
    *
    * @param clientTx the pre-allocated transaction to commit
-   *
    * @return The list of operations applied by the transaction
    */
   @SuppressWarnings("UnusedReturnValue")
@@ -2293,7 +2289,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
    *
    * @param transaction the transaction to commit
    * @param allocated   true if the operation is pre-allocated commit
-   *
    * @return The list of operations applied by the transaction
    */
   private List<ORecordOperation> commit(final OTransactionInternal transaction, final boolean allocated) {
@@ -3273,9 +3268,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
    * @param key       the key to put the value under.
    * @param value     the value to put.
    * @param validator the operation validator.
-   *
    * @return {@code true} if the validator allowed the put, {@code false} otherwise.
-   *
    * @see OBaseIndexEngine.Validator#validate(Object, Object, Object)
    */
   @SuppressWarnings("UnusedReturnValue")
@@ -5085,7 +5078,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
    * Register the cluster internally.
    *
    * @param cluster OCluster implementation
-   *
    * @return The id (physical position into the array) of the new cluster just created. First is 0.
    */
   private int registerCluster(final OCluster cluster) {
@@ -5277,23 +5269,32 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
   }
 
   @SuppressWarnings("unused")
-  protected void closeIndexes(OAtomicOperation atomicOperation, final boolean onDelete) {
-    for (final OBaseIndexEngine engine : indexEngines) {
-      if (engine != null) {
-        if (onDelete) {
-          try {
-            engine.delete(atomicOperation);
-          } catch (final IOException e) {
-            OLogManager.instance().error(this, "Can not delete index engine " + engine.getName(), e);
+  protected void closeIndexes(final boolean onDelete) throws IOException {
+    OAtomicOperation atomicOperation = atomicOperationsManager.startAtomicOperation();
+    boolean rollback = false;
+    try {
+      for (final OBaseIndexEngine engine : indexEngines) {
+        if (engine != null) {
+          if (onDelete) {
+            try {
+              engine.delete(atomicOperation);
+            } catch (final IOException e) {
+              OLogManager.instance().error(this, "Can not delete index engine " + engine.getName(), e);
+            }
+          } else {
+            engine.close();
           }
-        } else {
-          engine.close();
         }
       }
-    }
 
-    indexEngines.clear();
-    indexEngineNameMap.clear();
+      indexEngines.clear();
+      indexEngineNameMap.clear();
+    } catch (RuntimeException e) {
+      rollback = true;
+      throw e;
+    } finally {
+      atomicOperationsManager.endAtomicOperation(rollback);
+    }
   }
 
   private byte[] checkAndIncrementVersion(final OCluster iCluster, final ORecordId rid, final AtomicInteger version,
