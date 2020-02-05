@@ -161,6 +161,10 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
   }
 
   public ORecord fromString(String iSource, ORecord iRecord, final String[] iFields, final String iOptions, boolean needReload) {
+    return fromString(iSource, iRecord, iFields, iOptions, needReload, -1, new HashSet<>());
+  }
+
+  public ORecord fromString(String iSource, ORecord iRecord, final String[] iFields, final String iOptions, boolean needReload, int maxRidbagSizeBeforeSkip, Set<Integer> skippedPartsIndexes) {
     iSource = unwrapSource(iSource);
 
     String className = null;
@@ -177,7 +181,7 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
       iRecord.clear();
 
     final List<String> fields = OStringSerializerHelper.smartSplit(iSource, PARAMETER_SEPARATOR, 0, -1, true, true, false, false,
-        ' ', '\n', '\r', '\t');
+            maxRidbagSizeBeforeSkip, skippedPartsIndexes, ' ', '\n', '\r', '\t');
 
     if (fields.size() % 2 != 0)
       throw new OSerializationException(
@@ -221,6 +225,7 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
           final String fieldValue = fields.get(i + 1);
           final String fieldValueAsString = OIOUtils.getStringContent(fieldValue);
 
+
           // RECORD ATTRIBUTES
           if (fieldName.equals(ODocumentHelper.ATTRIBUTE_RID))
             ORecordInternal.setIdentity(iRecord, new ORecordId(fieldValueAsString));
@@ -249,7 +254,7 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
             // DETERMINE THE TYPE FROM THE SCHEMA
             OType type = determineType(doc, fieldName);
 
-            final Object v = getValue(doc, fieldName, fieldValue, fieldValueAsString, type, null, fieldTypes, noMap, iOptions);
+            final Object v = OStringSerializerHelper.SKIPPED_VALUE.equals(fieldValue) ? new ORidBag() : getValue(doc, fieldName, fieldValue, fieldValueAsString, type, null, fieldTypes, noMap, iOptions);
 
             if (v != null)
               if (v instanceof Collection<?> && !((Collection<?>) v).isEmpty()) {
