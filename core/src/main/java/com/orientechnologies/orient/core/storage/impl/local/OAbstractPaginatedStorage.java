@@ -334,7 +334,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
           final String cs = configuration.getConflictStrategy();
           if (cs != null) {
             // SET THE CONFLICT STORAGE STRATEGY FROM THE LOADED CONFIGURATION
-            setConflictStrategy(Orient.instance().getRecordConflictStrategy().getStrategy(cs));
+            doSetConflictStrategy(Orient.instance().getRecordConflictStrategy().getStrategy(cs), atomicOperation);
           }
 
           readCache.loadCacheState(writeCache);
@@ -4407,16 +4407,23 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     try {
       checkOpenness();
 
-      makeStorageDirty();
-      atomicOperationsManager.executeInsideAtomicOperation((atomicOperation) -> {
-        this.recordConflictStrategy = conflictResolver;
-        ((OClusterBasedStorageConfiguration) configuration).setConflictStrategy(atomicOperation, conflictResolver.getName());
-      });
+      atomicOperationsManager.executeInsideAtomicOperation((atomicOperation) -> doSetConflictStrategy(conflictResolver, atomicOperation));
     } catch (final Exception e) {
       throw OException.wrapException(new OStorageException(
           "Exception during setting of conflict strategy " + conflictResolver.getName() + " for storage " + name), e);
     } finally {
       stateLock.releaseWriteLock();
+    }
+  }
+
+  private void doSetConflictStrategy(ORecordConflictStrategy conflictResolver, OAtomicOperation atomicOperation)
+      throws IOException {
+
+    if (recordConflictStrategy == null || !recordConflictStrategy.getName().equals(conflictResolver.getName())) {
+      makeStorageDirty();
+
+      this.recordConflictStrategy = conflictResolver;
+      ((OClusterBasedStorageConfiguration) configuration).setConflictStrategy(atomicOperation, conflictResolver.getName());
     }
   }
 
