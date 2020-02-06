@@ -26,4 +26,9 @@ public abstract class OAbstractScriptExecutor implements OScriptExecutor {
 
     interceptors.forEach(i -> i.preExecute(database, language, script, params));
   }
+
+  @Override
+  public void unregisterInterceptor(OScriptInterceptor interceptor) {
+    interceptors.remove(interceptor);
+  }
 }
