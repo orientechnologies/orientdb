@@ -21,6 +21,7 @@ package com.orientechnologies.orient.server.handler;
 
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.util.OCallable;
+import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.OCommandManager;
 import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.command.script.OCommandExecutorScript;
@@ -53,7 +54,9 @@ public class OServerSideScriptInterpreter extends OServerPluginAbstract {
           // ENABLE IT
           enabled = true;
       } else if (param.name.equalsIgnoreCase("allowedLanguages")) {
-        allowedLanguages = new HashSet<String>(Arrays.asList(param.value.toLowerCase(Locale.ENGLISH).split(",")));
+        allowedLanguages = new HashSet<>(Arrays.asList(param.value.toLowerCase(Locale.ENGLISH).split(",")));
+      } else if (param.name.equalsIgnoreCase("allowedPackages")) {
+        Orient.instance().getScriptManager().addAllowedPackages(new HashSet<>(Arrays.asList(param.value.split(","))));
       }
     }
   }
