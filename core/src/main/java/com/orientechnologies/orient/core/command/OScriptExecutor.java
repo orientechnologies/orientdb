@@ -15,4 +15,6 @@ public interface OScriptExecutor {
 
   OResultSet execute(ODatabaseDocumentInternal database, String script, Map params);
 
+  void registerInterceptor(OScriptInterceptor interceptor);
+
 }

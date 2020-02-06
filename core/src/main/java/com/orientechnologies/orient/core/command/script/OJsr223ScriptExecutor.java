@@ -5,6 +5,7 @@ import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.OScriptExecutor;
 import com.orientechnologies.orient.core.command.script.transformer.OScriptTransformer;
+import com.orientechnologies.orient.core.command.traverse.OAbstractScriptExecutor;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
@@ -16,17 +17,21 @@ import java.util.Map;
 /**
  * Created by tglman on 25/01/17.
  */
-public class OJsr223ScriptExecutor implements OScriptExecutor {
+public class OJsr223ScriptExecutor extends OAbstractScriptExecutor {
   private final OScriptTransformer transformer;
   private       String             language;
 
   public OJsr223ScriptExecutor(String language, OScriptTransformer scriptTransformer) {
+    super(language);
     this.language = language;
     this.transformer = scriptTransformer;
   }
 
   @Override
   public OResultSet execute(ODatabaseDocumentInternal database, String script, Object... params) {
+
+    preExecute(database, script, params);
+
     Map<Integer, Object> par = new HashMap<>();
 
     for (int i = 0; i < params.length; i++) {
@@ -37,6 +42,8 @@ public class OJsr223ScriptExecutor implements OScriptExecutor {
 
   @Override
   public OResultSet execute(ODatabaseDocumentInternal database, String script, Map params) {
+
+    preExecute(database, script, params);
 
     final OScriptManager scriptManager = Orient.instance().getScriptManager();
     CompiledScript compiledScript = null;
