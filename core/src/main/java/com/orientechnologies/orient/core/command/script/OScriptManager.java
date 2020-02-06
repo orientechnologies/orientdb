@@ -27,7 +27,7 @@ import com.orientechnologies.orient.core.command.OCommandManager;
 import com.orientechnologies.orient.core.command.OScriptExecutor;
 import com.orientechnologies.orient.core.command.OScriptExecutorRegister;
 import com.orientechnologies.orient.core.command.script.formatter.*;
-import com.orientechnologies.orient.core.command.script.js.OLazyScriptEngineFactory;
+import com.orientechnologies.orient.core.command.script.js.OJSScriptEngineFactory;
 import com.orientechnologies.orient.core.command.script.transformer.OScriptTransformerImpl;
 import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
@@ -425,7 +425,7 @@ public class OScriptManager {
   }
 
   public OScriptManager registerEngine(final String iLanguage, final ScriptEngineFactory iEngine) {
-    engines.put(iLanguage, OLazyScriptEngineFactory.maybeWrap(iEngine));
+    engines.put(iLanguage, OJSScriptEngineFactory.maybeWrap(iEngine));
     return this;
   }
 
