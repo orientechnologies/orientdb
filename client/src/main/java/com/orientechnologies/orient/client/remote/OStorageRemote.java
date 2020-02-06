@@ -331,6 +331,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
         // Remove the current url because the node is offline
         synchronized (serverURLs) {
           serverURLs.remove(serverUrl);
+          this.nextServerToConnect = 0;
         }
         for (OStorageRemoteSession activeSession : sessions) {
           // Not thread Safe ...
@@ -1300,6 +1301,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
   public void removeSessions(final String url) {
     synchronized (serverURLs) {
       serverURLs.remove(url);
+      this.nextServerToConnect = 0;
     }
 
     for (OStorageRemoteSession session : sessions) {
@@ -1607,6 +1609,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
     synchronized (serverURLs) {
       // REMOVE INVALID URL
       serverURLs.remove(url);
+      this.nextServerToConnect = 0;
       for (OStorageRemoteSession activeSession : sessions) {
         // Not thread Safe ...
         activeSession.removeServerSession(url + "/" + getName());
@@ -1659,6 +1662,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
         List<String> toAdd = fetchHostsFromDns(lastHost);
         if (toAdd.size() > 0) {
           serverURLs.clear();
+          this.nextServerToConnect = 0;
           for (String host : toAdd)
             addHost(host);
         }
@@ -1807,6 +1811,9 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
           throw new OStorageException("Cannot create a connection to remote server because url list is empty");
       }
 
+      if (serverURLs.size() <= this.nextServerToConnect) {
+        this.nextServerToConnect = 0;
+      }
       final String serverURL = serverURLs.get(this.nextServerToConnect) + "/" + getName();
       if (session != null)
         session.serverURLIndex = this.nextServerToConnect;
