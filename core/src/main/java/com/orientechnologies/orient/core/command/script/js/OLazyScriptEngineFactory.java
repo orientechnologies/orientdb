@@ -1,12 +1,14 @@
 package com.orientechnologies.orient.core.command.script.js;
 
+import com.orientechnologies.orient.core.command.script.OSecuredScriptFactory;
+
 import javax.script.ScriptEngine;
 import javax.script.ScriptEngineFactory;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
 
-public class OLazyScriptEngineFactory implements ScriptEngineFactory {
+public class OLazyScriptEngineFactory extends OSecuredScriptFactory {
 
   private ScriptEngineFactory engineFactory;
 
@@ -77,7 +79,7 @@ public class OLazyScriptEngineFactory implements ScriptEngineFactory {
     if (!engineFactory.getClass().getName()
         .equalsIgnoreCase("com.orientechnologies.orient.core.command.script.js.ONashornScriptEngineFactory") && engineFactory
         .getClass().getName().equalsIgnoreCase("jdk.nashorn.api.scripting.NashornScriptEngineFactory")) {
-      engineFactory = new ONashornScriptEngineFactory(engineFactory);
+      engineFactory = new ONashornScriptEngineFactory(engineFactory, this);
     }
     return engineFactory.getScriptEngine();
   }

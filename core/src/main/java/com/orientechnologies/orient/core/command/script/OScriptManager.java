@@ -398,6 +398,23 @@ public class OScriptManager {
       injections.add(iInj);
   }
 
+  public void addAllowedPackages(Set<String> packages) {
+
+    this.engines.entrySet().forEach(e -> {
+      if (e.getValue() instanceof OSecuredScriptFactory) {
+        ((OSecuredScriptFactory) e.getValue()).addAllowedPackages(packages);
+      }
+    });
+  }
+
+  public void removeAllowedPackages(Set<String> packages) {
+    this.engines.entrySet().forEach(e -> {
+      if (e.getValue() instanceof OSecuredScriptFactory) {
+        ((OSecuredScriptFactory) e.getValue()).removeAllowedPackages(packages);
+      }
+    });
+  }
+
   public void unregisterInjection(final OScriptInjection iInj) {
     injections.remove(iInj);
   }
