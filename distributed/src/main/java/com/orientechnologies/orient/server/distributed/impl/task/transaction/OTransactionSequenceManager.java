@@ -1,12 +1,10 @@
 package com.orientechnologies.orient.server.distributed.impl.task.transaction;
 
 import com.orientechnologies.common.log.OLogManager;
+import jdk.nashorn.internal.runtime.options.Option;
 
 import java.io.*;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Random;
+import java.util.*;
 
 public class OTransactionSequenceManager {
 
@@ -49,12 +47,17 @@ public class OTransactionSequenceManager {
     return buffer.toByteArray();
   }
 
-  public synchronized OTransactionId next() {
+  public synchronized Optional<OTransactionId> next() {
     int pos;
+    int retry = 0;
     do {
       pos = new Random().nextInt(1000);
+      if (retry > 1000) {
+        return Optional.empty();
+      }
+      retry++;
     } while (this.promisedSequential[pos] != null);
-    return nextAt(pos);
+    return Optional.of(nextAt(pos));
   }
 
   /**
@@ -94,7 +97,7 @@ public class OTransactionSequenceManager {
         return missing;
       }
     }
-    return null;
+    return Collections.emptyList();
   }
 
   public synchronized boolean validateTransactionId(OTransactionId transactionId) {
@@ -106,7 +109,7 @@ public class OTransactionSequenceManager {
     }
   }
 
-  public synchronized List<OTransactionId> otherStatus(long[] status) {
+  public synchronized List<OTransactionId> checkStatus(long[] status) {
     List<OTransactionId> missing = null;
     for (int i = 0; i < status.length; i++) {
       if (this.sequentials[i] < status[i]) {
@@ -126,6 +129,9 @@ public class OTransactionSequenceManager {
           }
         }
       }
+    }
+    if (missing == null) {
+      missing = Collections.emptyList();
     }
     return missing;
   }
