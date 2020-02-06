@@ -1,6 +1,7 @@
 package com.orientechnologies.orient.core.command.script;
 
 import com.orientechnologies.common.io.OIOUtils;
+import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.ODatabaseType;
 import com.orientechnologies.orient.core.db.OrientDB;
 import com.orientechnologies.orient.core.db.OrientDBConfig;
@@ -8,11 +9,15 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import org.junit.Assert;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.TestName;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Arrays;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -20,6 +25,9 @@ import java.util.stream.Collectors;
  * Created by Enrico Risa on 27/01/17.
  */
 public class JSScriptTest {
+
+  @Rule
+  public TestName name = new TestName();
 
   @Test
   public void jsSimpleTest() {
@@ -114,19 +122,102 @@ public class JSScriptTest {
     orientDB.close();
   }
 
-  @Test(expected = ClassNotFoundException.class)
-  public void jsSandboxTest() {
+  @Test
+  public void jsSandboxTestWithJavaType() {
 
     OrientDB orientDB = new OrientDB("embedded:", OrientDBConfig.defaultConfig());
-    orientDB.create("jsSandboxTest", ODatabaseType.MEMORY);
-    ODatabaseDocument db = orientDB.open("jsSandboxTest", "admin", "admin");
+    orientDB.create(name.getMethodName(), ODatabaseType.MEMORY);
+    ODatabaseDocument db = orientDB.open(name.getMethodName(), "admin", "admin");
     try {
 
-      db.execute("javascript", "var File = java.io.File;");
+      db.execute("javascript", "var File = Java.type(\"java.io.File\");\n  File.pathSeparator;");
 
+      Assert.fail("It should receive a class not found exception");
+    } catch (RuntimeException e) {
+      Assert.assertEquals(e.getCause().getClass(), ClassNotFoundException.class);
     } finally {
-      orientDB.drop("jsSandboxTest");
+      orientDB.drop(name.getMethodName());
     }
     orientDB.close();
+  }
+
+  @Test
+  public void jsSandboxWithNativeTest() {
+
+    OrientDB orientDB = new OrientDB("embedded:", OrientDBConfig.defaultConfig());
+    orientDB.create(name.getMethodName(), ODatabaseType.MEMORY);
+    ODatabaseDocument db = orientDB.open(name.getMethodName(), "admin", "admin");
+    try {
+
+      OResultSet resultSet = db.execute("javascript", "var File = java.io.File; File.pathSeparator;");
+      Assert.assertEquals(0, resultSet.stream().count());
+    } finally {
+      orientDB.drop(name.getMethodName());
+      orientDB.close();
+    }
+
+  }
+
+  @Test
+  public void jsSandboxWithMathTest() {
+
+    OrientDB orientDB = new OrientDB("embedded:", OrientDBConfig.defaultConfig());
+    orientDB.create(name.getMethodName(), ODatabaseType.MEMORY);
+    ODatabaseDocument db = orientDB.open(name.getMethodName(), "admin", "admin");
+    try {
+
+      OResultSet resultSet = db.execute("javascript", "Math.random()");
+      Assert.assertEquals(1, resultSet.stream().count());
+    } finally {
+      orientDB.drop(name.getMethodName());
+      orientDB.close();
+    }
+
+  }
+
+  @Test
+  public void jsSandboxWithDB() {
+
+    OrientDB orientDB = new OrientDB("embedded:", OrientDBConfig.defaultConfig());
+    orientDB.create(name.getMethodName(), ODatabaseType.MEMORY);
+    ODatabaseDocument db = orientDB.open(name.getMethodName(), "admin", "admin");
+    try {
+
+      OResultSet resultSet = db.execute("javascript",
+          "var elem = db.query(\"select from OUser\").stream().findFirst().get(); elem.getProperty(\"name\")");
+      Assert.assertEquals(1, resultSet.stream().count());
+    } finally {
+      orientDB.drop(name.getMethodName());
+      orientDB.close();
+    }
+
+  }
+
+  @Test
+  public void jsSandboxWithBigDecimal() {
+
+    OrientDB orientDB = new OrientDB("embedded:", OrientDBConfig.defaultConfig());
+    orientDB.create(name.getMethodName(), ODatabaseType.MEMORY);
+    try (ODatabaseDocument db = orientDB.open(name.getMethodName(), "admin", "admin")) {
+
+      Orient.instance().getScriptManager().addAllowedPackages(new HashSet<>(Arrays.asList("java.math.BigDecimal")));
+
+      try (OResultSet resultSet = db.execute("javascript", "new java.math.BigDecimal(1.0);")) {
+        Assert.assertEquals(1, resultSet.stream().count());
+      }
+
+      Orient.instance().getScriptManager().removeAllowedPackages(new HashSet<>(Arrays.asList("java.math.BigDecimal")));
+
+      try {
+        db.execute("javascript", "new java.math.BigDecimal(1.0);");
+        Assert.fail("It should receive a class not found exception");
+      } catch (RuntimeException e) {
+        Assert.assertEquals(e.getCause().getClass(), ClassNotFoundException.class);
+      }
+    } finally {
+      Orient.instance().getScriptManager().removeAllowedPackages(new HashSet<>(Arrays.asList("java.math.BigDecimal")));
+      orientDB.drop(name.getMethodName());
+      orientDB.close();
+    }
   }
 }
