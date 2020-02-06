@@ -811,6 +811,8 @@ public final class OPaginatedClusterV0 extends OPaginatedCluster {
               nextEntryPointer = localPage.getRecordLongValue(nextRecordPosition, currentEntrySize - OLongSerializer.LONG_SIZE);
 
               if (currentEntrySize == entrySize) {
+                localPage.replaceRecord(nextRecordPosition, updateEntry, recordVersion);
+
                 updatedEntryPosition = nextRecordPosition;
               } else {
                 final byte[] oldRecord = localPage.deleteRecord(nextRecordPosition, true);
