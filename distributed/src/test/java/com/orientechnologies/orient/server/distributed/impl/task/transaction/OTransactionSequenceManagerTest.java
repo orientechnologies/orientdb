@@ -5,79 +5,158 @@ import org.junit.Test;
 
 import java.util.List;
 
+import static org.junit.Assert.*;
+
 public class OTransactionSequenceManagerTest {
 
   @Test
   public void simpleSequenceGeneration() {
     OTransactionSequenceManager sequenceManager = new OTransactionSequenceManager();
-    OTransactionId one = sequenceManager.next();
-    OTransactionId two = sequenceManager.next();
+    OTransactionId one = sequenceManager.next().get();
+    OTransactionId two = sequenceManager.next().get();
 
     OTransactionSequenceManager sequenceManagerRecv = new OTransactionSequenceManager();
-    Assert.assertTrue(sequenceManagerRecv.validateTransactionId(one));
-    Assert.assertTrue(sequenceManagerRecv.validateTransactionId(two));
+    assertTrue(sequenceManagerRecv.validateTransactionId(one));
+    assertTrue(sequenceManagerRecv.validateTransactionId(two));
 
-    Assert.assertNull(sequenceManager.notifySuccess(one));
-    Assert.assertNull(sequenceManager.notifySuccess(two));
+    Assert.assertTrue(sequenceManager.notifySuccess(one).isEmpty());
+    Assert.assertTrue(sequenceManager.notifySuccess(two).isEmpty());
 
-    Assert.assertNull(sequenceManagerRecv.notifySuccess(one));
-    Assert.assertNull(sequenceManagerRecv.notifySuccess(two));
+    Assert.assertTrue(sequenceManagerRecv.notifySuccess(one).isEmpty());
+    Assert.assertTrue(sequenceManagerRecv.notifySuccess(two).isEmpty());
   }
 
   @Test
   public void sequenceMissing() {
     OTransactionSequenceManager sequenceManager = new OTransactionSequenceManager();
-    OTransactionId one = sequenceManager.next();
-    OTransactionId two = sequenceManager.next();
-    OTransactionId three = sequenceManager.next();
+    OTransactionId one = sequenceManager.next().get();
+    OTransactionId two = sequenceManager.next().get();
+    OTransactionId three = sequenceManager.next().get();
 
     OTransactionSequenceManager sequenceManagerRecv = new OTransactionSequenceManager();
-    Assert.assertTrue(sequenceManagerRecv.validateTransactionId(one));
-    Assert.assertTrue(sequenceManagerRecv.validateTransactionId(three));
+    assertTrue(sequenceManagerRecv.validateTransactionId(one));
+    assertTrue(sequenceManagerRecv.validateTransactionId(three));
 
-    Assert.assertNull(sequenceManager.notifySuccess(one));
-    Assert.assertNull(sequenceManager.notifySuccess(two));
-    Assert.assertNull(sequenceManager.notifySuccess(three));
+    Assert.assertTrue(sequenceManager.notifySuccess(one).isEmpty());
+    Assert.assertTrue(sequenceManager.notifySuccess(two).isEmpty());
+    Assert.assertTrue(sequenceManager.notifySuccess(three).isEmpty());
 
-    Assert.assertNull(sequenceManagerRecv.notifySuccess(one));
-    Assert.assertNull(sequenceManagerRecv.notifySuccess(three));
+    Assert.assertTrue(sequenceManagerRecv.notifySuccess(one).isEmpty());
+    Assert.assertTrue(sequenceManagerRecv.notifySuccess(three).isEmpty());
 
     long[] status = sequenceManager.currentStatus();
 
-    List<OTransactionId> list = sequenceManagerRecv.otherStatus(status);
+    List<OTransactionId> list = sequenceManagerRecv.checkStatus(status);
     Assert.assertNotNull(list);
-    Assert.assertTrue(list.contains(two));
+    assertTrue(list.contains(two));
+  }
 
+  @Test
+  public void sequenceMissingPromised() {
+    OTransactionSequenceManager sequenceManager = new OTransactionSequenceManager();
+    OTransactionId one = sequenceManager.next().get();
+    OTransactionId two = sequenceManager.next().get();
+    OTransactionId three = sequenceManager.next().get();
+
+    OTransactionSequenceManager sequenceManagerRecv = new OTransactionSequenceManager();
+    assertTrue(sequenceManagerRecv.validateTransactionId(one));
+    assertTrue(sequenceManagerRecv.validateTransactionId(three));
+
+    Assert.assertTrue(sequenceManager.notifySuccess(one).isEmpty());
+    Assert.assertTrue(sequenceManager.notifySuccess(two).isEmpty());
+    Assert.assertTrue(sequenceManager.notifySuccess(three).isEmpty());
+
+    Assert.assertTrue(sequenceManagerRecv.notifySuccess(one).isEmpty());
+
+    long[] status = sequenceManager.currentStatus();
+
+    List<OTransactionId> list = sequenceManagerRecv.checkStatus(status);
+    Assert.assertNotNull(list);
+    assertTrue(list.contains(two));
+    assertEquals(list.size(), 1);
   }
 
   @Test
   public void sequenceMissingSameSpot() {
     OTransactionSequenceManager sequenceManager = new OTransactionSequenceManager();
     OTransactionId one = sequenceManager.nextAt(1);
-    Assert.assertNull(sequenceManager.notifySuccess(one));
+    Assert.assertTrue(sequenceManager.notifySuccess(one).isEmpty());
     OTransactionId two = sequenceManager.nextAt(1);
-    Assert.assertNull(sequenceManager.notifySuccess(two));
+    Assert.assertTrue(sequenceManager.notifySuccess(two).isEmpty());
     OTransactionId three = sequenceManager.nextAt(1);
-    Assert.assertNull(sequenceManager.notifySuccess(three));
+    Assert.assertTrue(sequenceManager.notifySuccess(three).isEmpty());
 
     OTransactionSequenceManager sequenceManagerRecv = new OTransactionSequenceManager();
-    Assert.assertTrue(sequenceManagerRecv.validateTransactionId(one));
-    Assert.assertFalse(sequenceManagerRecv.validateTransactionId(three));
+    assertTrue(sequenceManagerRecv.validateTransactionId(one));
+    assertFalse(sequenceManagerRecv.validateTransactionId(three));
 
-    Assert.assertNull(sequenceManagerRecv.notifySuccess(one));
+    Assert.assertTrue(sequenceManagerRecv.notifySuccess(one).isEmpty());
     // This may fail in some cases as early detection
     List<OTransactionId> res = sequenceManagerRecv.notifySuccess(three);
     Assert.assertNotNull(res);
-    Assert.assertTrue(res.contains(two));
+    assertTrue(res.contains(two));
 
     long[] status = sequenceManager.currentStatus();
 
     // this will for sure contain two, it may even cantain three
-    List<OTransactionId> list = sequenceManagerRecv.otherStatus(status);
+    List<OTransactionId> list = sequenceManagerRecv.checkStatus(status);
     Assert.assertNotNull(list);
-    Assert.assertTrue(list.contains(two));
-    Assert.assertTrue(list.contains(three));
+    assertTrue(list.contains(two));
+    assertTrue(list.contains(three));
 
+  }
+
+  @Test
+  public void sequenceMissingSameSpotMissing() {
+    OTransactionSequenceManager sequenceManager = new OTransactionSequenceManager();
+    OTransactionId one = sequenceManager.nextAt(1);
+    Assert.assertTrue(sequenceManager.notifySuccess(one).isEmpty());
+    OTransactionId two = sequenceManager.nextAt(1);
+    Assert.assertTrue(sequenceManager.notifySuccess(two).isEmpty());
+    OTransactionId three = sequenceManager.nextAt(1);
+    Assert.assertTrue(sequenceManager.notifySuccess(three).isEmpty());
+
+    OTransactionSequenceManager sequenceManagerRecv = new OTransactionSequenceManager();
+    assertTrue(sequenceManagerRecv.validateTransactionId(one));
+    Assert.assertTrue(sequenceManagerRecv.notifySuccess(one).isEmpty());
+    assertTrue(sequenceManagerRecv.validateTransactionId(two));
+    // This may fail in some cases as early detection
+    List<OTransactionId> res = sequenceManagerRecv.notifySuccess(three);
+    Assert.assertNotNull(res);
+    assertTrue(res.contains(three));
+
+    long[] status = sequenceManager.currentStatus();
+
+    // this will for sure contain two, it may even cantain three
+    List<OTransactionId> list = sequenceManagerRecv.checkStatus(status);
+    Assert.assertNotNull(list);
+    //assertTrue(list.contains(two));
+    assertTrue(list.contains(three));
+
+  }
+
+  @Test
+  public void simpleStoreRestore() {
+    OTransactionSequenceManager sequenceManager = new OTransactionSequenceManager();
+    OTransactionId one = sequenceManager.next().get();
+    OTransactionId two = sequenceManager.next().get();
+    Assert.assertTrue(sequenceManager.notifySuccess(one).isEmpty());
+    Assert.assertTrue(sequenceManager.notifySuccess(two).isEmpty());
+    byte[] bytes = sequenceManager.store();
+    OTransactionSequenceManager readSequenceManager = new OTransactionSequenceManager();
+    readSequenceManager.fill(bytes);
+
+    assertArrayEquals(sequenceManager.currentStatus(), readSequenceManager.currentStatus());
+
+  }
+
+  @Test
+  public void testAllBusy() {
+    OTransactionSequenceManager sequenceManager = new OTransactionSequenceManager();
+    for (int i = 0; i < 1000; i++) {
+      sequenceManager.nextAt(i);
+    }
+    assertFalse(sequenceManager.next().isPresent());
   }
 
 }
