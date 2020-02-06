@@ -13,6 +13,7 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TestName;
 
+import javax.script.ScriptException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Arrays;
@@ -214,8 +215,50 @@ public class JSScriptTest {
       } catch (RuntimeException e) {
         Assert.assertEquals(e.getCause().getClass(), ClassNotFoundException.class);
       }
+
+      Orient.instance().getScriptManager().addAllowedPackages(new HashSet<>(Arrays.asList("java.math.*")));
+
+      try (OResultSet resultSet = db.execute("javascript", "new java.math.BigDecimal(1.0);")) {
+        Assert.assertEquals(1, resultSet.stream().count());
+      }
+
     } finally {
-      Orient.instance().getScriptManager().removeAllowedPackages(new HashSet<>(Arrays.asList("java.math.BigDecimal")));
+      Orient.instance().getScriptManager()
+          .removeAllowedPackages(new HashSet<>(Arrays.asList("java.math.BigDecimal", "java.math.*")));
+      orientDB.drop(name.getMethodName());
+      orientDB.close();
+    }
+  }
+
+  @Test
+  public void jsSandboxWithOrient() {
+
+    OrientDB orientDB = new OrientDB("embedded:", OrientDBConfig.defaultConfig());
+    orientDB.create(name.getMethodName(), ODatabaseType.MEMORY);
+    try (ODatabaseDocument db = orientDB.open(name.getMethodName(), "admin", "admin")) {
+
+      try (OResultSet resultSet = db.execute("javascript", "Orient.instance().getScriptManager().addAllowedPackages([])")) {
+        Assert.assertEquals(1, resultSet.stream().count());
+      } catch (Exception e) {
+        Assert.assertEquals(e.getCause().getClass(), ScriptException.class);
+      }
+
+      try (OResultSet resultSet = db
+          .execute("javascript", "com.orientechnologies.orient.core.Orient.instance().getScriptManager().addAllowedPackages([])")) {
+        Assert.assertEquals(1, resultSet.stream().count());
+      } catch (Exception e) {
+        Assert.assertEquals(e.getCause().getClass(), ClassNotFoundException.class);
+      }
+
+      try (OResultSet resultSet = db.execute("javascript",
+          "Java.type('com.orientechnologies.orient.core.Orient').instance().getScriptManager().addAllowedPackages([])")) {
+        Assert.assertEquals(1, resultSet.stream().count());
+      } catch (Exception e) {
+        Assert.assertEquals(e.getCause().getClass(), ClassNotFoundException.class);
+      }
+
+    } finally {
+
       orientDB.drop(name.getMethodName());
       orientDB.close();
     }
