@@ -1,13 +1,11 @@
 package com.orientechnologies.orient.core.command.script.js;
 
 import com.orientechnologies.orient.core.command.script.OSecuredScriptFactory;
-import jdk.nashorn.api.scripting.NashornScriptEngine;
 import jdk.nashorn.api.scripting.NashornScriptEngineFactory;
 
 import javax.script.ScriptEngine;
 import javax.script.ScriptEngineFactory;
 import java.util.List;
-import java.util.Set;
 
 public class ONashornScriptEngineFactory extends OSecuredScriptFactory {
 
