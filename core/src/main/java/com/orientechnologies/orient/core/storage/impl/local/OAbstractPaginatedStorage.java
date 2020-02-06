@@ -2366,7 +2366,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     if (keyTypes == null || keyTypes.length == 0) {
       throw new OStorageException("Types of index keys has to be defined");
     }
-    if (keyTypes.length != indexDefinition.getFields().size()) {
+    if (keyTypes.length < indexDefinition.getFields().size()) {
       throw new OStorageException(
           "Types are provided only for " + keyTypes.length + " fields. But index definition has " + indexDefinition.getFields()
               .size() + " fields.");
