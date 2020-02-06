@@ -19,7 +19,7 @@ public class JSScriptServerTest {
   @Before
   public void before() throws Exception {
 
-    server = OServer.startFromStreamConfig(getClass().getResourceAsStream("orientdb-server-config.xml"));
+      server = OServer.startFromStreamConfig(getClass().getResourceAsStream("orientdb-server-javascript-config.xml"));
   }
 
   @Test

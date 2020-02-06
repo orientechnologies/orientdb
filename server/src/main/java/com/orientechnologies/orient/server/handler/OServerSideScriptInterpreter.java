@@ -24,6 +24,7 @@ import com.orientechnologies.common.util.OCallable;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.OCommandManager;
 import com.orientechnologies.orient.core.command.OCommandRequest;
+import com.orientechnologies.orient.core.command.OScriptInterceptor;
 import com.orientechnologies.orient.core.command.script.OCommandExecutorScript;
 import com.orientechnologies.orient.core.command.script.OCommandScript;
 import com.orientechnologies.orient.core.exception.OSecurityException;
@@ -45,6 +46,8 @@ import java.util.Set;
 public class OServerSideScriptInterpreter extends OServerPluginAbstract {
   protected boolean     enabled          = false;
   protected Set<String> allowedLanguages = new HashSet<String>();
+
+  protected OScriptInterceptor interceptor;
 
   @Override
   public void config(final OServer iServer, OServerParameterConfiguration[] iParams) {
@@ -86,11 +89,12 @@ public class OServerSideScriptInterpreter extends OServerPluginAbstract {
           }
         });
 
-    OCommandManager.instance().getScriptExecutors().entrySet()
-        .forEach(e -> e.getValue().registerInterceptor((db, language, script, params) -> {
-          if (!allowedLanguages.contains(language))
-            throw new OSecurityException("Language '" + language + "' is not allowed to be executed");
-        }));
+    interceptor = (db, language, script, params) -> {
+      if (!allowedLanguages.contains(language))
+        throw new OSecurityException("Language '" + language + "' is not allowed to be executed");
+    };
+
+    OCommandManager.instance().getScriptExecutors().entrySet().forEach(e -> e.getValue().registerInterceptor(interceptor));
     OLogManager.instance().warn(this,
         "Authenticated clients can execute any kind of code into the server by using the following allowed languages: "
             + allowedLanguages);
@@ -100,6 +104,10 @@ public class OServerSideScriptInterpreter extends OServerPluginAbstract {
   public void shutdown() {
     if (!enabled)
       return;
+
+    if (interceptor != null) {
+      OCommandManager.instance().getScriptExecutors().entrySet().forEach(e -> e.getValue().unregisterInterceptor(interceptor));
+    }
 
     OCommandManager.instance().unregisterExecutor(OCommandScript.class);
   }
