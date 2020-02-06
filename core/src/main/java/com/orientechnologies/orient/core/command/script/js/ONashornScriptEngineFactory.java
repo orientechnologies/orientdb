@@ -9,14 +9,12 @@ import javax.script.ScriptEngineFactory;
 import java.util.List;
 import java.util.Set;
 
-public class ONashornScriptEngineFactory implements ScriptEngineFactory {
+public class ONashornScriptEngineFactory extends OSecuredScriptFactory {
 
   private NashornScriptEngineFactory engineFactory;
-  private OSecuredScriptFactory      parent;
 
-  public ONashornScriptEngineFactory(ScriptEngineFactory engineFactory, OSecuredScriptFactory parent) {
+  public ONashornScriptEngineFactory(ScriptEngineFactory engineFactory) {
     this.engineFactory = (NashornScriptEngineFactory) engineFactory;
-    this.parent = parent;
   }
 
   @Override
@@ -76,7 +74,7 @@ public class ONashornScriptEngineFactory implements ScriptEngineFactory {
 
   @Override
   public ScriptEngine getScriptEngine() {
-    return engineFactory.getScriptEngine(new ONashornClassFilter(parent));
+    return engineFactory.getScriptEngine(new ONashornClassFilter(this));
   }
 
 }
