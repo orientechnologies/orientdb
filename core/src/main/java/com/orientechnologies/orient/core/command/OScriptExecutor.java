@@ -17,4 +17,6 @@ public interface OScriptExecutor {
 
   void registerInterceptor(OScriptInterceptor interceptor);
 
+  void unregisterInterceptor(OScriptInterceptor interceptor);
+
 }
