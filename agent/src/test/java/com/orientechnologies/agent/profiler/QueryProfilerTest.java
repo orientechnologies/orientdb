@@ -6,6 +6,7 @@ import com.orientechnologies.orient.core.db.ODatabaseSession;
 import com.orientechnologies.orient.core.db.ODatabaseType;
 import com.orientechnologies.orient.core.db.OrientDB;
 import com.orientechnologies.orient.core.db.OrientDBConfig;
+import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import com.orientechnologies.orient.server.OServer;
 import org.junit.After;
@@ -14,6 +15,8 @@ import org.junit.Before;
 import org.junit.Test;
 
 import java.util.Collection;
+import java.util.HashMap;
+import java.util.List;
 import java.util.concurrent.CountDownLatch;
 
 public class QueryProfilerTest {
@@ -70,6 +73,51 @@ public class QueryProfilerTest {
     startLatch.countDown();
 
     Assert.assertEquals(2, queries.size());
+  }
+
+  @Test
+  public void testListAndKillSessions() {
+
+    OrientDB context = new OrientDB("remote:localhost", OrientDBConfig.defaultConfig());
+
+    ODatabaseSession local = context.open(QueryProfilerTest.class.getSimpleName(), "admin", "admin");
+
+    Integer sessionId = -1;
+
+    try (OResultSet resultSet = local.command("select listSessions() as sessions")) {
+
+      List<OResult> sessions = (List<OResult>) resultSet.stream().findFirst().map((r) -> r.getProperty("sessions")).get();
+
+      Assert.assertEquals(1, sessions.size());
+
+      sessionId = sessions.get(0).getProperty("connectionId");
+    }
+
+    local = context.open(QueryProfilerTest.class.getSimpleName(), "admin", "admin");
+
+    try (OResultSet resultSet = local.command("select killSession(?) as sessions", sessionId)) {
+
+    } catch (Exception e) {
+      e.printStackTrace();
+    }
+
+    local.close();
+
+    context.close();
+
+    context = new OrientDB("remote:localhost", OrientDBConfig.defaultConfig());
+
+    local = context.open(QueryProfilerTest.class.getSimpleName(), "admin", "admin");
+
+    try (OResultSet resultSet = local.command("select listSessions() as sessions")) {
+
+      Collection sessions = (Collection) resultSet.stream().findFirst().map((r) -> r.getProperty("sessions")).get();
+
+      // one is not connected
+      Assert.assertEquals(2, sessions.size());
+    }
+
+    local.close();
   }
 
   @After

@@ -2,6 +2,8 @@ package com.orientechnologies.agent.functions;
 
 import com.orientechnologies.enterprise.server.OEnterpriseServer;
 import com.orientechnologies.orient.core.command.OCommandContext;
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
+import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.metadata.security.ORule;
 import com.orientechnologies.orient.core.sql.executor.OResultInternal;
@@ -24,7 +26,11 @@ public class KillSessionFunction extends OSQLEnterpriseFunction {
       OCommandContext iContext) {
     if (iParams[0] instanceof Number) {
       Number connectionId = (Number) iParams[0];
+      ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.instance().getIfDefined();
       server.interruptConnection(connectionId.intValue());
+      if (db != null) {
+        db.activateOnCurrentThread();
+      }
       OResultInternal internal = new OResultInternal();
       internal.setProperty("message", String.format("Connection %s interrupted", connectionId));
       return internal;
