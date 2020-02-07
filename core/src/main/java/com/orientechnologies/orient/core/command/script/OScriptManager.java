@@ -469,6 +469,10 @@ public class OScriptManager {
       dbPool.close();
   }
 
+  public void closeAll() {
+    dbManagers.entrySet().forEach(e -> e.getValue().close());
+  }
+
   public OCommandManager getCommandManager() {
     return commandManager;
   }
