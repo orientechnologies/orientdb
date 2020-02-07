@@ -1,4 +1,4 @@
-package com.orientechnologies.orient.server.distributed.impl.task.transaction;
+package com.orientechnologies.orient.server.distributed;
 
 import java.io.DataInput;
 import java.io.DataOutput;

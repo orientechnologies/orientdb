@@ -25,10 +25,12 @@ import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.storage.ORawBuffer;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
+import com.orientechnologies.orient.core.tx.OTransaction;
 import com.orientechnologies.orient.server.distributed.task.ORemoteTask;
 
 import java.io.IOException;
 import java.util.Collection;
+import java.util.Optional;
 
 /**
  * Generic Distributed Database interface.
@@ -49,7 +51,6 @@ public interface ODistributedDatabase {
    * Returns the locked record for read-only purpose. This avoid to have dirty reads until the transaction is fully committed.
    *
    * @param iRecord record to load.
-   *
    * @return The record if it is locked, otherwise null.
    */
   ORawBuffer getRecordIfLocked(ORID iRecord);
@@ -69,7 +70,6 @@ public interface ODistributedDatabase {
    * @param record    Record to lock
    * @param requestId Request id
    * @param timeout   Timeout in ms to wait for the lock
-   *
    * @throws com.orientechnologies.orient.server.distributed.task.ODistributedRecordLockedException if the record wasn't locked
    * @see #unlockRecord(OIdentifiable, ODistributedRequestId)
    */
@@ -80,7 +80,6 @@ public interface ODistributedDatabase {
    *
    * @param record    Record to unlock
    * @param requestId Request id
-   *
    * @see #lockRecord(ORID, ODistributedRequestId, long)
    */
   void unlockRecord(OIdentifiable record, ODistributedRequestId requestId);
@@ -116,7 +115,8 @@ public interface ODistributedDatabase {
 
   ODistributedTxContext registerTxContext(ODistributedRequestId reqId);
 
-  ODistributedTxContext registerTxContext(final ODistributedRequestId reqId, Object id, ODistributedTxContext ctx);
+  ODistributedTxContext registerTxContext(final ODistributedRequestId reqId, Optional<OTransactionId> id,
+      ODistributedTxContext ctx);
 
   ODistributedTxContext popTxContext(ODistributedRequestId requestId);
 
@@ -136,5 +136,5 @@ public interface ODistributedDatabase {
 
   ODistributedDatabaseRepairer getDatabaseRepairer();
 
-  Object nextId();
+  Optional<OTransactionId> nextId();
 }

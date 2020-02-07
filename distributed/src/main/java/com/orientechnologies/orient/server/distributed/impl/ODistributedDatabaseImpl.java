@@ -58,7 +58,7 @@ import com.orientechnologies.orient.server.distributed.OModifiableDistributedCon
 import com.orientechnologies.orient.server.distributed.ORemoteServerController;
 import com.orientechnologies.orient.server.distributed.impl.task.ODistributedLockTask;
 import com.orientechnologies.orient.server.distributed.impl.task.OUnreachableServerLocalTask;
-import com.orientechnologies.orient.server.distributed.impl.task.transaction.OTransactionId;
+import com.orientechnologies.orient.server.distributed.OTransactionId;
 import com.orientechnologies.orient.server.distributed.impl.task.transaction.OTransactionSequenceManager;
 import com.orientechnologies.orient.server.distributed.task.OAbstractRemoteTask;
 import com.orientechnologies.orient.server.distributed.task.ODistributedRecordLockedException;
@@ -839,11 +839,11 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
   }
 
   @Override
-  public ODistributedTxContext registerTxContext(final ODistributedRequestId reqId, Object id, ODistributedTxContext ctx) {
-    OTransactionId intId = (OTransactionId) id;
-    if (intId != null) {
+  public ODistributedTxContext registerTxContext(final ODistributedRequestId reqId, Optional<OTransactionId> id,
+      ODistributedTxContext ctx) {
+    if (id.isPresent()) {
       // this check shoud happen only of destination nodes
-      if (!sequenceManager.validateTransactionId(intId)) {
+      if (!sequenceManager.validateTransactionId(id.get())) {
         // Throw an earror
       }
     }
@@ -855,7 +855,7 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
   }
 
   @Override
-  public Object nextId() {
+  public Optional<OTransactionId> nextId() {
     return sequenceManager.next();
   }
 

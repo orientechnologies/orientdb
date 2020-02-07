@@ -1,5 +1,6 @@
 package com.orientechnologies.orient.server.distributed.impl.task.transaction;
 
+import com.orientechnologies.orient.server.distributed.OTransactionId;
 import org.junit.Assert;
 import org.junit.Test;
 
