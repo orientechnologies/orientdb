@@ -18,6 +18,11 @@
                 <parameter value="false" name="enabled"/>
             </parameters>
         </handler>
+        <handler
+                class="com.orientechnologies.agent.OEnterpriseAgent">
+            <parameters>
+            </parameters>
+        </handler>
     </handlers>
     <network>
         <protocols>
@@ -33,7 +38,7 @@
     <storages>
     </storages>
     <users>
-        <user resources="*" password="test" name="root"/>
+        <user resources="*" password="root" name="root"/>
         <user resources="connect,server.listDatabases" password="guest"
               name="guest"/>
         <user resources="database.passthrough"

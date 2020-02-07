@@ -18,6 +18,11 @@
                 <parameter value="false" name="enabled"/>
             </parameters>
         </handler>
+        <handler
+                class="com.orientechnologies.agent.OEnterpriseAgent">
+            <parameters>
+            </parameters>
+        </handler>
     </handlers>
     <network>
         <protocols>
@@ -32,8 +37,8 @@
     </network>
     <storages>
     </storages>
-    <users>/home/tglman/projects/orient/orientdb-enterprise/agent/src/test/resources/orientdb-simple-dserver-config-3.xml
-        <user resources="*" password="test" name="root"/>
+    <users>
+        <user resources="*" password="root" name="root"/>
         <user resources="connect,server.listDatabases" password="guest"
               name="guest"/>
         <user resources="database.passthrough"
