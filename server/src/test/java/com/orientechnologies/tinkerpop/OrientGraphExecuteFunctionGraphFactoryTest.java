@@ -23,6 +23,8 @@ import java.util.stream.Collectors;
 public class OrientGraphExecuteFunctionGraphFactoryTest extends AbstractRemoteGraphFactoryTest {
 
   @Test
+  // not valid after script manager refactor
+  @Ignore
   public void testExecuteGremlinSimpleFunctionTest() {
 
     OrientGraph noTx = factory.getNoTx();
@@ -45,6 +47,8 @@ public class OrientGraphExecuteFunctionGraphFactoryTest extends AbstractRemoteGr
   }
 
   @Test
+  // not valid after script manager refactor
+  @Ignore
   public void testExecuteGremlinFunctionCountQueryTest() {
 
     OrientGraph noTx = factory.getNoTx();
