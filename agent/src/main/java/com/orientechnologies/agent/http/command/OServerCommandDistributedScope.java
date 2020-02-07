@@ -22,7 +22,7 @@ import java.util.List;
  */
 public abstract class OServerCommandDistributedScope extends OServerCommandDistributedAuthenticated {
 
-  private final OEnterpriseServer enterpriseServer;
+  protected final OEnterpriseServer enterpriseServer;
 
   protected OServerCommandDistributedScope(String iRequiredResource, OEnterpriseServer enterpriseServer) {
     super(iRequiredResource);

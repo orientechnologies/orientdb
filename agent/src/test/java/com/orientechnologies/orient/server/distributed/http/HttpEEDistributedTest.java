@@ -7,6 +7,7 @@ import com.orientechnologies.orient.server.distributed.ServerRun;
 import com.orientechnologies.orient.server.network.OServerNetworkListener;
 import com.orientechnologies.orient.server.network.protocol.http.ONetworkProtocolHttpAbstract;
 import org.junit.Assert;
+import org.junit.Test;
 
 /**
  * Created by Enrico Risa on 04/08/16.
@@ -18,7 +19,7 @@ public class HttpEEDistributedTest extends AbstractServerClusterTest {
     return "httpTest";
   }
 
-//  @Test
+  @Test
   public void testChangeConfig() throws Exception {
 
     init(2);
@@ -36,6 +37,8 @@ public class HttpEEDistributedTest extends AbstractServerClusterTest {
     OServerCommandDistributedManager distributedManager = (OServerCommandDistributedManager) listener
         .getCommand(OServerCommandDistributedManager.class);
 
+    OServerCommandDistributedManager first = distributedManager;
+
     ODocument document = distributedManager.doGetDatabaseInfo(s.getServerInstance(), getDatabaseName());
 
     document.field("writeQuorum", "all");
@@ -51,6 +54,17 @@ public class HttpEEDistributedTest extends AbstractServerClusterTest {
       document = distributedManager.doGetDatabaseInfo(s.getServerInstance(), getDatabaseName());
       Assert.assertEquals("all", document.field("writeQuorum"));
     }
+
+
+    first.configure(s.getServerInstance());
+    
+    ODocument config = first.doGetNodeConfig(s.getServerInstance().getDistributedManager());
+
+    Assert.assertNotNull(config);
+
+    config = first.doGetNodeConfig(null);
+
+    Assert.assertNotNull(config);
 
   }
 

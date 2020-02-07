@@ -16,7 +16,7 @@ public class TestFullSyncIT {
     OServer server0 = OServer.startFromClasspathConfig("orientdb-simple-dserver-config-0.xml");
     OServer server1 = OServer.startFromClasspathConfig("orientdb-simple-dserver-config-1.xml");
     OServer server2 = OServer.startFromClasspathConfig("orientdb-simple-dserver-config-2.xml");
-    OrientDB remote = new OrientDB("remote:localhost", "root", "test", OrientDBConfig.defaultConfig());
+    OrientDB remote = new OrientDB("remote:localhost", "root", "root", OrientDBConfig.defaultConfig());
     remote.create(TestFullSyncIT.class.getSimpleName(), ODatabaseType.PLOCAL);
     ODatabaseSession session = remote.open(TestFullSyncIT.class.getSimpleName(), "admin", "admin");
     session.createClass("test");

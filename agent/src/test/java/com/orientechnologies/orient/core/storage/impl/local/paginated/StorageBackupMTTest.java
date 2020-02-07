@@ -31,7 +31,7 @@ public class StorageBackupMTTest {
   private OrientDB orientDB;
   private String   dbName;
 
-  @Test
+//  @Test
   public void testParallelBackup() throws Exception {
     final String buildDirectory = System.getProperty("buildDirectory", ".");
     dbName = StorageBackupMTTest.class.getSimpleName();
@@ -130,7 +130,7 @@ public class StorageBackupMTTest {
     }
   }
 
-  @Test
+//  @Test
   public void testParallelBackupEncryption() throws Exception {
     final String buildDirectory = System.getProperty("buildDirectory", ".");
     final String backupDbName = StorageBackupMTTest.class.getSimpleName() + "BackUp";
