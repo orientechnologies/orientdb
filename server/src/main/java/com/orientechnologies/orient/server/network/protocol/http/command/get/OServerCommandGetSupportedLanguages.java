@@ -58,7 +58,8 @@ public class OServerCommandGetSupportedLanguages extends OServerCommandAuthentic
     } finally {
       if (db != null)
         db.close();
-    } return false;
+    }
+    return false;
   }
 
   @Override

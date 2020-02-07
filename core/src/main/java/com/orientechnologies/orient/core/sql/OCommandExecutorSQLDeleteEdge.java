@@ -418,8 +418,8 @@ public class OCommandExecutorSQLDeleteEdge extends OCommandExecutorSQLSetAware
       }
     } else if (query != null) {
 
-      final OCommandExecutor executor = getDatabase().getSharedContext().getOrientDB().getScriptManager().getCommandManager().
-          getExecutor((OCommandRequestInternal) query);
+      final OCommandExecutor executor = getDatabase().getSharedContext().getOrientDB().getScriptManager().getCommandManager()
+          .getExecutor((OCommandRequestInternal) query);
       // COPY THE CONTEXT FROM THE REQUEST
       executor.setContext(context);
       executor.parse(query);
