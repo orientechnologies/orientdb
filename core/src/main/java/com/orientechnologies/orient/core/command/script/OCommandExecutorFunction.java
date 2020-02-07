@@ -68,7 +68,7 @@ public class OCommandExecutorFunction extends OCommandExecutorAbstract {
 
     db.checkSecurity(ORule.ResourceGeneric.FUNCTION, ORole.PERMISSION_READ, f.getName());
 
-    final OScriptManager scriptManager = Orient.instance().getScriptManager();
+    final OScriptManager scriptManager = db.getSharedContext().getOrientDB().getScriptManager();
 
     final OPartitionedObjectPool.PoolEntry<ScriptEngine> entry = scriptManager.acquireDatabaseEngine(db.getName(), f.getLanguage());
     final ScriptEngine scriptEngine = entry.object;

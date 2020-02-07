@@ -156,7 +156,8 @@ public class ODistributedStorage implements OStorage, OFreezableStorageComponent
       // DON'T REPLICATE
       return wrapped.command(iCommand);
 
-    final OCommandExecutor executor = OCommandManager.instance().getExecutor(iCommand);
+    final OCommandExecutor executor = getLocalDistributedDatabase().getDatabaseInstance().getSharedContext().getOrientDB()
+        .getScriptManager().getCommandManager().getExecutor(iCommand);
 
     executor.setProgressListener(iCommand.getProgressListener());
     executor.parse(iCommand);
@@ -372,22 +373,21 @@ public class ODistributedStorage implements OStorage, OFreezableStorageComponent
 
   protected void undoCommandOnLocalServer(final OCommandRequestText iCommand) {
     // UNDO LOCALLY
-    OScenarioThreadLocal.executeAsDistributed(new Callable() {
-      @Override
-      public Object call() throws Exception {
-        final OCommandExecutor executor = OCommandManager.instance().getExecutor(iCommand);
+    OScenarioThreadLocal.executeAsDistributed((Callable) () -> {
 
-        // COPY THE CONTEXT FROM THE REQUEST
-        executor.setContext(iCommand.getContext());
-        executor.setProgressListener(iCommand.getProgressListener());
-        executor.parse(iCommand);
+      final OCommandExecutor executor = localDistributedDatabase.getDatabaseInstance().getSharedContext().getOrientDB()
+          .getScriptManager().getCommandManager().getExecutor(iCommand);
 
-        final String undoCommand = ((OCommandDistributedReplicateRequest) executor).getUndoCommand();
-        if (undoCommand != null) {
-          wrapped.command(new OCommandSQL(undoCommand));
-        }
-        return null;
+      // COPY THE CONTEXT FROM THE REQUEST
+      executor.setContext(iCommand.getContext());
+      executor.setProgressListener(iCommand.getProgressListener());
+      executor.parse(iCommand);
+
+      final String undoCommand = ((OCommandDistributedReplicateRequest) executor).getUndoCommand();
+      if (undoCommand != null) {
+        wrapped.command(new OCommandSQL(undoCommand));
       }
+      return null;
     });
   }
 

@@ -45,7 +45,7 @@ public class OJsr223ScriptExecutor extends OAbstractScriptExecutor {
 
     preExecute(database, script, params);
 
-    final OScriptManager scriptManager = Orient.instance().getScriptManager();
+    final OScriptManager scriptManager = database.getSharedContext().getOrientDB().getScriptManager();
     CompiledScript compiledScript = null;
 
     final OPartitionedObjectPool.PoolEntry<ScriptEngine> entry = scriptManager.acquireDatabaseEngine(database.getName(), language);

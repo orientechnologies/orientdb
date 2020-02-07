@@ -13,7 +13,7 @@
  *  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  *  * See the License for the specific language governing permissions and
  *  * limitations under the License.
- *  
+ *
  */
 package com.orientechnologies.orient.server.network.protocol.http.command.get;
 
@@ -22,6 +22,7 @@ import java.util.Set;
 
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.script.OScriptManager;
+import com.orientechnologies.orient.core.db.OrientDBInternal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpRequest;
@@ -45,7 +46,7 @@ public class OServerCommandGetSupportedLanguages extends OServerCommandAuthentic
       ODocument result = new ODocument();
       Set<String> languages = new HashSet<String>();
 
-      OScriptManager scriptManager = Orient.instance().getScriptManager();
+      OScriptManager scriptManager = OrientDBInternal.extract(server.getContext()).getScriptManager();
       for (String language : scriptManager.getSupportedLanguages()) {
         if (scriptManager.getFormatters() != null && scriptManager.getFormatters().get(language) != null) {
           languages.add(language);
@@ -57,8 +58,7 @@ public class OServerCommandGetSupportedLanguages extends OServerCommandAuthentic
     } finally {
       if (db != null)
         db.close();
-    }
-    return false;
+    } return false;
   }
 
   @Override

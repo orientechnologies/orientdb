@@ -21,7 +21,9 @@ package com.orientechnologies.orient.core.command;
 
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.util.OCallable;
+import com.orientechnologies.orient.core.command.script.OCommandExecutorFunction;
 import com.orientechnologies.orient.core.command.script.OCommandExecutorScript;
+import com.orientechnologies.orient.core.command.script.OCommandFunction;
 import com.orientechnologies.orient.core.command.script.OCommandScript;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.sql.*;
@@ -35,13 +37,12 @@ import java.util.Locale;
 import java.util.Map;
 
 public class OCommandManager {
-  private static OCommandManager                                                          instance          = new OCommandManager();
-  private        Map<String, Class<? extends OCommandRequest>>                            commandRequesters = new HashMap<String, Class<? extends OCommandRequest>>();
-  private        Map<Class<? extends OCommandRequest>, OCallable<Void, OCommandRequest>>  configCallbacks   = new HashMap<Class<? extends OCommandRequest>, OCallable<Void, OCommandRequest>>();
-  private        Map<Class<? extends OCommandRequest>, Class<? extends OCommandExecutor>> commandReqExecMap = new HashMap<Class<? extends OCommandRequest>, Class<? extends OCommandExecutor>>();
-  private        Map<String, OScriptExecutor>                                             scriptExecutors   = new HashMap<>();
+  private Map<String, Class<? extends OCommandRequest>>                            commandRequesters = new HashMap<String, Class<? extends OCommandRequest>>();
+  private Map<Class<? extends OCommandRequest>, OCallable<Void, OCommandRequest>>  configCallbacks   = new HashMap<Class<? extends OCommandRequest>, OCallable<Void, OCommandRequest>>();
+  private Map<Class<? extends OCommandRequest>, Class<? extends OCommandExecutor>> commandReqExecMap = new HashMap<Class<? extends OCommandRequest>, Class<? extends OCommandExecutor>>();
+  private Map<String, OScriptExecutor>                                             scriptExecutors   = new HashMap<>();
 
-  protected OCommandManager() {
+  public OCommandManager() {
     registerScriptExecutor("sql", new OSqlScriptExecutor());
     registerScriptExecutor("script", new OSqlScriptExecutor());
     registerRequester("sql", OCommandSQL.class);
@@ -54,10 +55,8 @@ public class OCommandManager {
     registerExecutor(OCommandSQL.class, OCommandExecutorSQLDelegate.class);
     registerExecutor(OCommandSQLResultset.class, OCommandExecutorSQLResultsetDelegate.class);
     registerExecutor(OCommandScript.class, OCommandExecutorScript.class);
-  }
+    registerExecutor(OCommandFunction.class, OCommandExecutorFunction.class);
 
-  public static OCommandManager instance() {
-    return instance;
   }
 
   public OCommandManager registerRequester(final String iType, final Class<? extends OCommandRequest> iRequest) {

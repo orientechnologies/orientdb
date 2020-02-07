@@ -15,7 +15,7 @@
  *  *  limitations under the License.
  *  *
  *  * For more information: http://orientdb.com
- *  
+ *
  */
 
 package com.orientechnologies.orient.graph.sql;
@@ -54,7 +54,6 @@ public class SQLGraphBatchTest extends GraphNoTxAbstractTest {
 
   @BeforeClass
   public static void init() {
-    OCommandManager.instance().registerExecutor(OCommandScript.class, OCommandExecutorScript.class);
     init(SQLGraphBatchTest.class.getSimpleName());
   }
 }

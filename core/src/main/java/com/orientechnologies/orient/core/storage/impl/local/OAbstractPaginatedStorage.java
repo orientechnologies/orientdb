@@ -3813,10 +3813,13 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
   @Override
   public final Object command(final OCommandRequestText iCommand) {
     try {
+
+      final ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.instance().get();
+
       while (true) {
         try {
-          final OCommandExecutor executor = OCommandManager.instance().getExecutor(iCommand);
-
+          final OCommandExecutor executor = db.getSharedContext().getOrientDB().getScriptManager().getCommandManager()
+              .getExecutor(iCommand);
           // COPY THE CONTEXT FROM THE REQUEST
           executor.setContext(iCommand.getContext());
 

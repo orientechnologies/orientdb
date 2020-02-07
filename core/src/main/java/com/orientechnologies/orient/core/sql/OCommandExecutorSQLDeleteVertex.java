@@ -48,17 +48,17 @@ import java.util.*;
  */
 public class OCommandExecutorSQLDeleteVertex extends OCommandExecutorSQLAbstract
     implements OCommandDistributedReplicateRequest, OCommandResultListener {
-  public static final  String             NAME          = "DELETE VERTEX";
-  private static final String             KEYWORD_BATCH = "BATCH";
-  private              ORecordId          rid;
-  private              int                removed       = 0;
-  private              ODatabaseDocument  database;
-  private              OCommandRequest    query;
-  private              String             returning     = "COUNT";
-  private              List<ORecord>      allDeletedRecords;
-  private              OModifiableBoolean shutdownFlag  = new OModifiableBoolean();
-  private              boolean            txAlreadyBegun;
-  private              int                batch         = 100;
+  public static final  String                    NAME          = "DELETE VERTEX";
+  private static final String                    KEYWORD_BATCH = "BATCH";
+  private              ORecordId                 rid;
+  private              int                       removed       = 0;
+  private              ODatabaseDocumentInternal database;
+  private              OCommandRequest           query;
+  private              String                    returning     = "COUNT";
+  private              List<ORecord>             allDeletedRecords;
+  private              OModifiableBoolean        shutdownFlag  = new OModifiableBoolean();
+  private              boolean                   txAlreadyBegun;
+  private              int                       batch         = 100;
 
   @SuppressWarnings("unchecked")
   public OCommandExecutorSQLDeleteVertex parse(final OCommandRequest iRequest) {
@@ -286,7 +286,8 @@ public class OCommandExecutorSQLDeleteVertex extends OCommandExecutorSQLAbstract
     if (rid != null)
       result.add(database.getClusterNameById(rid.getClusterId()));
     else if (query != null) {
-      final OCommandExecutor executor = OCommandManager.instance().getExecutor((OCommandRequestInternal) query);
+      final OCommandExecutor executor = database.getSharedContext().getOrientDB().getScriptManager().getCommandManager()
+          .getExecutor((OCommandRequestInternal) query);
       // COPY THE CONTEXT FROM THE REQUEST
       executor.setContext(context);
       executor.parse(query);

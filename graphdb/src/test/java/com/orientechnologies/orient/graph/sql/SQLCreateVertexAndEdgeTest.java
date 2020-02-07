@@ -54,8 +54,7 @@ public class SQLCreateVertexAndEdgeTest {
   }
 
   @Before
-  public void before(){
-    OCommandManager.instance().registerExecutor(OCommandScript.class, OCommandExecutorScript.class);
+  public void before() {
   }
 
   @After
@@ -104,8 +103,8 @@ public class SQLCreateVertexAndEdgeTest {
     edges = database.command(new OCommandSQL("create edge E1 from " + v1.getIdentity() + " to " + v3.getIdentity())).execute();
     Assert.assertFalse(edges.isEmpty());
 
-    edges = database.command(
-        new OCommandSQL("create edge from " + v1.getIdentity() + " to " + v4.getIdentity() + " set weight = 3")).execute();
+    edges = database
+        .command(new OCommandSQL("create edge from " + v1.getIdentity() + " to " + v4.getIdentity() + " set weight = 3")).execute();
     Assert.assertFalse(edges.isEmpty());
     ODocument e3 = ((OIdentifiable) edges.get(0)).getRecord();
     Assert.assertEquals(e3.getClassName(), OrientEdgeType.CLASS_NAME);
@@ -113,8 +112,9 @@ public class SQLCreateVertexAndEdgeTest {
     Assert.assertEquals(e3.field("in"), v4);
     Assert.assertEquals(e3.<Object>field("weight"), 3);
 
-    edges = database.command(
-        new OCommandSQL("create edge E1 from " + v2.getIdentity() + " to " + v3.getIdentity() + " set weight = 10")).execute();
+    edges = database
+        .command(new OCommandSQL("create edge E1 from " + v2.getIdentity() + " to " + v3.getIdentity() + " set weight = 10"))
+        .execute();
     Assert.assertFalse(edges.isEmpty());
     ODocument e4 = ((OIdentifiable) edges.get(0)).getRecord();
     Assert.assertEquals(e4.getClassName(), "E1");
@@ -122,10 +122,8 @@ public class SQLCreateVertexAndEdgeTest {
     Assert.assertEquals(e4.field("in"), v3);
     Assert.assertEquals(e4.<Object>field("weight"), 10);
 
-    edges = database
-        .command(
-            new OCommandSQL("create edge e1 cluster edefault from " + v3.getIdentity() + " to " + v5.getIdentity()
-                + " set weight = 17")).execute();
+    edges = database.command(new OCommandSQL(
+        "create edge e1 cluster edefault from " + v3.getIdentity() + " to " + v5.getIdentity() + " set weight = 17")).execute();
     Assert.assertFalse(edges.isEmpty());
     ODocument e5 = ((OIdentifiable) edges.get(0)).getRecord();
     Assert.assertEquals(e5.getClassName(), "E1");
@@ -207,10 +205,8 @@ public class SQLCreateVertexAndEdgeTest {
 
     database.command(new OCommandSQL("create vertex V set name = 'testSqlScriptThatDeletesEdge1'")).execute();
     database.command(new OCommandSQL("create vertex V set name = 'testSqlScriptThatDeletesEdge2'")).execute();
-    database
-        .command(
-            new OCommandSQL(
-                "create edge E from (select from V where name = 'testSqlScriptThatDeletesEdge1') to (select from V where name = 'testSqlScriptThatDeletesEdge2') set name = 'testSqlScriptThatDeletesEdge'"))
+    database.command(new OCommandSQL(
+        "create edge E from (select from V where name = 'testSqlScriptThatDeletesEdge1') to (select from V where name = 'testSqlScriptThatDeletesEdge2') set name = 'testSqlScriptThatDeletesEdge'"))
         .execute();
 
     try {

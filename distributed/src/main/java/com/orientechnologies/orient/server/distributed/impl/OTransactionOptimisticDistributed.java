@@ -55,7 +55,7 @@ public class OTransactionOptimisticDistributed extends OTransactionOptimistic {
         }
         if (clazz.isFunction()) {
           database.getSharedContext().getFunctionLibrary().createdFunction(doc);
-          Orient.instance().getScriptManager().close(database.getName());
+          database.getSharedContext().getOrientDB().getScriptManager().close(database.getName());
         }
         if (clazz.isSequence()) {
           ((OSequenceLibraryProxy) database.getMetadata().getSequenceLibrary()).getDelegate().onSequenceCreated(database, doc);
@@ -82,7 +82,7 @@ public class OTransactionOptimisticDistributed extends OTransactionOptimistic {
           }
           if (clazz.isFunction()) {
             database.getSharedContext().getFunctionLibrary().updatedFunction(updateDoc);
-            Orient.instance().getScriptManager().close(database.getName());
+            database.getSharedContext().getOrientDB().getScriptManager().close(database.getName());
           }
           if (clazz.isSequence()) {
             ((OSequenceLibraryProxy) database.getMetadata().getSequenceLibrary()).getDelegate()
@@ -102,7 +102,7 @@ public class OTransactionOptimisticDistributed extends OTransactionOptimistic {
         }
         if (clazz.isFunction()) {
           database.getSharedContext().getFunctionLibrary().droppedFunction(doc);
-          Orient.instance().getScriptManager().close(database.getName());
+          database.getSharedContext().getOrientDB().getScriptManager().close(database.getName());
         }
         if (clazz.isSequence()) {
           ((OSequenceLibraryProxy) database.getMetadata().getSequenceLibrary()).getDelegate().onSequenceDropped(database, doc);
