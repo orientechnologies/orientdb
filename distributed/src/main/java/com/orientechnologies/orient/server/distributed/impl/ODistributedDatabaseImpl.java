@@ -100,7 +100,7 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
   private final OSimpleLockManager<ORID>    recordLockManager;
   private final OSimpleLockManager<Object>  indexKeyLockManager;
   private       AtomicLong                  operationsRunnig = new AtomicLong(0);
-  private       OTransactionSequenceManager sequenceManager  = new OTransactionSequenceManager();
+  private       OTransactionSequenceManager sequenceManager;
 
   public OSimpleLockManager<ORID> getRecordLockManager() {
     return recordLockManager;
@@ -205,6 +205,7 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
     long timeout = manager.getServerInstance().getContextConfiguration().getValueAsLong(DISTRIBUTED_ATOMIC_LOCK_TIMEOUT);
     recordLockManager = new OSimpleLockManagerImpl<>(timeout);
     indexKeyLockManager = new OSimpleLockManagerImpl<>(timeout);
+    sequenceManager = new OTransactionSequenceManager(localNodeName);
   }
 
   public OLogSequenceNumber getLastLSN(final String server) {
