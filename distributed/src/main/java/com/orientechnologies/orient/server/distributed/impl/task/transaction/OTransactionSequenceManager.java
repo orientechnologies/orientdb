@@ -1,7 +1,7 @@
 package com.orientechnologies.orient.server.distributed.impl.task.transaction;
 
 import com.orientechnologies.common.log.OLogManager;
-import jdk.nashorn.internal.runtime.options.Option;
+import com.orientechnologies.orient.server.distributed.OTransactionId;
 
 import java.io.*;
 import java.util.*;
