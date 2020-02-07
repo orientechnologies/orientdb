@@ -1,5 +1,8 @@
 package com.orientechnologies.orient.server.distributed.impl.task.transaction;
 
+import java.io.DataInput;
+import java.io.DataOutput;
+import java.io.IOException;
 import java.util.Objects;
 
 public class OTransactionId {
@@ -32,5 +35,16 @@ public class OTransactionId {
   @Override
   public int hashCode() {
     return Objects.hash(position, sequence);
+  }
+
+  public static OTransactionId read(DataInput input) throws IOException {
+    int position = input.readInt();
+    long sequence = input.readLong();
+    return new OTransactionId(position, sequence);
+  }
+
+  public void write(DataOutput out) throws IOException {
+    out.writeInt(position);
+    out.writeLong(sequence);
   }
 }

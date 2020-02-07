@@ -58,6 +58,8 @@ import com.orientechnologies.orient.server.distributed.OModifiableDistributedCon
 import com.orientechnologies.orient.server.distributed.ORemoteServerController;
 import com.orientechnologies.orient.server.distributed.impl.task.ODistributedLockTask;
 import com.orientechnologies.orient.server.distributed.impl.task.OUnreachableServerLocalTask;
+import com.orientechnologies.orient.server.distributed.impl.task.transaction.OTransactionId;
+import com.orientechnologies.orient.server.distributed.impl.task.transaction.OTransactionSequenceManager;
 import com.orientechnologies.orient.server.distributed.task.OAbstractRemoteTask;
 import com.orientechnologies.orient.server.distributed.task.ODistributedRecordLockedException;
 import com.orientechnologies.orient.server.distributed.task.ORemoteTask;
@@ -114,10 +116,11 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
   private          AtomicBoolean                         parsing               = new AtomicBoolean(true);
   private final    AtomicReference<ODistributedMomentum> filterByMomentum      = new AtomicReference<ODistributedMomentum>();
 
-  private String                     localNodeName;
-  private OSimpleLockManager<ORID>   recordLockManager;
-  private OSimpleLockManager<Object> indexKeyLockManager;
-  private AtomicLong                 operationsRunnig = new AtomicLong(0);
+  private String                      localNodeName;
+  private OSimpleLockManager<ORID>    recordLockManager;
+  private OSimpleLockManager<Object>  indexKeyLockManager;
+  private AtomicLong                  operationsRunnig = new AtomicLong(0);
+  private OTransactionSequenceManager sequenceManager  = new OTransactionSequenceManager();
 
   public OSimpleLockManager<ORID> getRecordLockManager() {
     return recordLockManager;
@@ -831,16 +834,28 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
 
   @Override
   public ODistributedTxContext registerTxContext(final ODistributedRequestId reqId) {
-    return registerTxContext(reqId, new ODistributedTxContextImpl(this, reqId));
+    return registerTxContext(reqId, null, new ODistributedTxContextImpl(this, reqId));
   }
 
   @Override
-  public ODistributedTxContext registerTxContext(final ODistributedRequestId reqId, ODistributedTxContext ctx) {
+  public ODistributedTxContext registerTxContext(final ODistributedRequestId reqId, Object id, ODistributedTxContext ctx) {
+    OTransactionId intId = (OTransactionId) id;
+    if (intId != null) {
+      // this check shoud happen only of destination nodes
+      if (!sequenceManager.validateTransactionId(intId)) {
+        // Throw an earror
+      }
+    }
     final ODistributedTxContext prevCtx = activeTxContexts.put(reqId, ctx);
     if (prevCtx != ctx && prevCtx != null) {
       prevCtx.destroy();
     }
     return ctx;
+  }
+
+  @Override
+  public Object nextId() {
+    return sequenceManager.next();
   }
 
   @Override

@@ -42,6 +42,7 @@ import com.orientechnologies.orient.server.distributed.*;
 import com.orientechnologies.orient.server.distributed.impl.metadata.OClassDistributed;
 import com.orientechnologies.orient.server.distributed.impl.metadata.OSharedContextDistributed;
 import com.orientechnologies.orient.server.distributed.impl.task.ORunQueryExecutionPlanTask;
+import com.orientechnologies.orient.server.distributed.impl.task.transaction.OTransactionId;
 import com.orientechnologies.orient.server.distributed.task.ODistributedKeyLockedException;
 import com.orientechnologies.orient.server.distributed.task.ODistributedRecordLockedException;
 import com.orientechnologies.orient.server.distributed.task.ORemoteTask;
@@ -395,14 +396,20 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
 
   }
 
-  public boolean beginDistributedTx(ODistributedRequestId requestId, OTransactionInternal tx, boolean local, int retryCount) {
+  public boolean beginDistributedTx(ODistributedRequestId requestId, OTransactionId id, OTransactionInternal tx, boolean local,
+      int retryCount) {
     ODistributedDatabase localDistributedDatabase = getStorageDistributed().getLocalDistributedDatabase();
     ONewDistributedTxContextImpl txContext = new ONewDistributedTxContextImpl((ODistributedDatabaseImpl) localDistributedDatabase,
         requestId, tx);
     try {
       internalBegin2pc(txContext, local);
       txContext.setStatus(SUCCESS);
-      getStorageDistributed().getLocalDistributedDatabase().registerTxContext(requestId, txContext);
+      if (local) {
+        // No need to check the ID
+        localDistributedDatabase.registerTxContext(requestId, null, txContext);
+      } else {
+        localDistributedDatabase.registerTxContext(requestId, id, txContext);
+      }
     } catch (OConcurrentCreateException ex) {
       if (retryCount >= 0 && retryCount < getConfiguration().getValueAsInteger(DISTRIBUTED_CONCURRENT_TX_MAX_AUTORETRY)) {
         if (ex.getExpectedRid().getClusterPosition() > ex.getActualRid().getClusterPosition()) {
@@ -414,7 +421,7 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
         }
       }
       txContext.setStatus(FAILED);
-      getStorageDistributed().getLocalDistributedDatabase().registerTxContext(requestId, txContext);
+      localDistributedDatabase.registerTxContext(requestId, id, txContext);
       throw ex;
     } catch (OConcurrentModificationException ex) {
       if (retryCount >= 0 && retryCount < getConfiguration().getValueAsInteger(DISTRIBUTED_CONCURRENT_TX_MAX_AUTORETRY)) {
@@ -427,7 +434,7 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
         }
       }
       txContext.setStatus(FAILED);
-      getStorageDistributed().getLocalDistributedDatabase().registerTxContext(requestId, txContext);
+      localDistributedDatabase.registerTxContext(requestId, id, txContext);
       throw ex;
     } catch (ORecordNotFoundException e) {
       // This error can happen only in deserialization before locks happen, no need to unlock
@@ -435,16 +442,16 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
         return false;
       }
       txContext.setStatus(FAILED);
-      getStorageDistributed().getLocalDistributedDatabase().registerTxContext(requestId, txContext);
+      localDistributedDatabase.registerTxContext(requestId, id, txContext);
       throw e;
     } catch (ODistributedRecordLockedException | ODistributedKeyLockedException ex) {
       /// ?? do i've to save this state as well ?
       txContext.setStatus(TIMEDOUT);
-      getStorageDistributed().getLocalDistributedDatabase().registerTxContext(requestId, txContext);
+      getStorageDistributed().getLocalDistributedDatabase().registerTxContext(requestId, id, txContext);
       throw ex;
     } catch (ORecordDuplicatedException ex) {
       txContext.setStatus(FAILED);
-      getStorageDistributed().getLocalDistributedDatabase().registerTxContext(requestId, txContext);
+      localDistributedDatabase.registerTxContext(requestId, id, txContext);
       throw ex;
     } catch (OLowDiskSpaceException ex) {
       getStorageDistributed().getDistributedManager()

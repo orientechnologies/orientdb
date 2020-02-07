@@ -112,6 +112,11 @@ public class ONewDistributedTransactionManager {
 
   public List<ORecordOperation> retriedCommit(final ODatabaseDocumentDistributed database, final OTransactionInternal iTx,
       final ODistributedRequestId requestId) {
+    Optional<OTransactionId> genId = (Optional<OTransactionId>) dManager.getMessageService().getDatabase(database.getName()).nextId();
+    if (!genId.isPresent()) {
+      //TODO retry
+    }
+    OTransactionId txId = genId.get();
     final String localNodeName = dManager.getLocalNodeName();
 
     iTx.setStatus(OTransaction.TXSTATUS.BEGUN);
@@ -123,7 +128,7 @@ public class ONewDistributedTransactionManager {
     OTransactionResultPayload localResult;
 
     //This retry happen only the first time i try to lock on local server
-    localResult = OTransactionPhase1Task.executeTransaction(requestId, database, iTx, true, -1);
+    localResult = OTransactionPhase1Task.executeTransaction(requestId, txId, database, iTx, true, -1);
     if (localResult.getResponseType() == OTxRecordLockTimeout.ID) {
       dManager.getMessageService().getDatabase(database.getName()).popTxContext(requestId).destroy();
       int timeout = database.getConfiguration().getValueAsInteger(DISTRIBUTED_ATOMIC_LOCK_TIMEOUT);
@@ -136,7 +141,7 @@ public class ONewDistributedTransactionManager {
       throw new ODistributedKeyLockedException(dManager.getLocalNodeName(), ((OTxKeyLockTimeout) localResult).getKey(), timeout);
     }
 
-    final OTransactionPhase1Task txTask = !nodes.isEmpty() ? createTxTask(iTx, nodes) : null;
+    final OTransactionPhase1Task txTask = !nodes.isEmpty() ? createTxTask(txId, iTx, nodes) : null;
     try {
       localDistributedDatabase.getSyncConfiguration()
           .setLastLSN(localNodeName, ((OLocalPaginatedStorage) storage.getUnderlying()).getLSN(), true);
@@ -379,10 +384,11 @@ public class ONewDistributedTransactionManager {
     return involvedClusters;
   }
 
-  protected OTransactionPhase1Task createTxTask(final OTransactionInternal transaction, final Set<String> nodes) {
+  protected OTransactionPhase1Task createTxTask(OTransactionId id, final OTransactionInternal transaction,
+      final Set<String> nodes) {
     final OTransactionPhase1Task txTask = (OTransactionPhase1Task) dManager.getTaskFactoryManager().getFactoryByServerNames(nodes)
         .createTask(OTransactionPhase1Task.FACTORYID);
-    txTask.init(transaction);
+    txTask.init(id, transaction);
     return txTask;
   }
 
