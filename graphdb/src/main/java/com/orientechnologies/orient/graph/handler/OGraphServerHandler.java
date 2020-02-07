@@ -22,9 +22,13 @@ package com.orientechnologies.orient.graph.handler;
 
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.Orient;
+import com.orientechnologies.orient.core.command.OCommandManager;
 import com.orientechnologies.orient.core.command.script.OScriptInjection;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
+import com.orientechnologies.orient.core.db.OrientDBInternal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
+import com.orientechnologies.orient.graph.gremlin.OCommandGremlin;
+import com.orientechnologies.orient.graph.gremlin.OCommandGremlinExecutor;
 import com.orientechnologies.orient.graph.gremlin.OGremlinHelper;
 import com.orientechnologies.orient.graph.script.OScriptGraphOrientWrapper;
 import com.orientechnologies.orient.server.OClientConnection;
@@ -58,7 +62,12 @@ public class OGraphServerHandler extends OServerPluginAbstract implements OScrip
       OLogManager.instance()
           .info(this, "Installed GREMLIN language v.%s - graph.pool.max=%d", OGremlinHelper.getEngineVersion(), graphPoolMax);
 
-      Orient.instance().getScriptManager().registerInjection(this);
+      OrientDBInternal.extract(server.getContext()).getScriptManager().registerInjection(this);
+
+      OrientDBInternal.extract(server.getContext()).getScriptManager().getCommandManager()
+          .registerRequester("gremlin", OCommandGremlin.class);
+      OrientDBInternal.extract(server.getContext()).getScriptManager().getCommandManager()
+          .registerExecutor(OCommandGremlin.class, OCommandGremlinExecutor.class);
     } else
       enabled = false;
 
@@ -98,7 +107,6 @@ public class OGraphServerHandler extends OServerPluginAbstract implements OScrip
   public void unbind(ScriptEngine engine, Bindings binding) {
     binding.put("orient", null);
   }
-
 
   @Override
   public void onAfterClientRequest(OClientConnection connection, byte requestType) {

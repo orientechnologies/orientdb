@@ -52,13 +52,9 @@ import java.util.regex.Pattern;
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
  */
 public class OFunctionLibraryImpl {
-  public static final String CLASSNAME = "OFunction";
-  protected final Map<String, OFunction> functions = new ConcurrentHashMap<String, OFunction>();
-  private AtomicBoolean needReload = new AtomicBoolean(false);
-
-  static {
-    OCommandManager.instance().registerExecutor(OCommandFunction.class, OCommandExecutorFunction.class);
-  }
+  public static final String                 CLASSNAME  = "OFunction";
+  protected final     Map<String, OFunction> functions  = new ConcurrentHashMap<String, OFunction>();
+  private             AtomicBoolean          needReload = new AtomicBoolean(false);
 
   public OFunctionLibraryImpl() {
   }

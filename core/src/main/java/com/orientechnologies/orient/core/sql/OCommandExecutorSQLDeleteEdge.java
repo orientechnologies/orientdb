@@ -45,19 +45,19 @@ import java.util.*;
  */
 public class OCommandExecutorSQLDeleteEdge extends OCommandExecutorSQLSetAware
     implements OCommandDistributedReplicateRequest, OCommandResultListener {
-  public static final  String NAME          = "DELETE EDGE";
-  private static final String KEYWORD_BATCH = "BATCH";
-  private List<ORecordId> rids;
-  private String          fromExpr;
-  private String          toExpr;
-  private int removed = 0;
-  private OCommandRequest query;
-  private OSQLFilter      compiledFilter;
+  public static final  String             NAME          = "DELETE EDGE";
+  private static final String             KEYWORD_BATCH = "BATCH";
+  private              List<ORecordId>    rids;
+  private              String             fromExpr;
+  private              String             toExpr;
+  private              int                removed       = 0;
+  private              OCommandRequest    query;
+  private              OSQLFilter         compiledFilter;
   //  private AtomicReference<OrientBaseGraph> currentGraph  = new AtomicReference<OrientBaseGraph>();
-  private String          label;
-  private OModifiableBoolean shutdownFlag = new OModifiableBoolean();
-  private boolean txAlreadyBegun;
-  private int batch = 100;
+  private              String             label;
+  private              OModifiableBoolean shutdownFlag  = new OModifiableBoolean();
+  private              boolean            txAlreadyBegun;
+  private              int                batch         = 100;
 
   @SuppressWarnings("unchecked")
   public OCommandExecutorSQLDeleteEdge parse(final OCommandRequest iRequest) {
@@ -342,12 +342,14 @@ public class OCommandExecutorSQLDeleteEdge extends OCommandExecutorSQLSetAware
   private OEdge toEdge(OIdentifiable item) {
     if (item != null && item instanceof OElement) {
       final OIdentifiable a = item;
-      return ((OElement) item).asEdge().orElseThrow(() -> new OCommandExecutionException("" + (a.getIdentity()) + " is not an edge"));
+      return ((OElement) item).asEdge()
+          .orElseThrow(() -> new OCommandExecutionException("" + (a.getIdentity()) + " is not an edge"));
     } else {
       item = getDatabase().load(item.getIdentity());
       if (item != null && item instanceof OElement) {
         final OIdentifiable a = item;
-        return ((OElement) item).asEdge().orElseThrow(() -> new OCommandExecutionException("" + (a.getIdentity()) + " is not an edge"));
+        return ((OElement) item).asEdge()
+            .orElseThrow(() -> new OCommandExecutionException("" + (a.getIdentity()) + " is not an edge"));
       }
     }
     return null;
@@ -415,7 +417,9 @@ public class OCommandExecutorSQLDeleteEdge extends OCommandExecutorSQLSetAware
         result.add(database.getClusterNameById(rid.getClusterId()));
       }
     } else if (query != null) {
-      final OCommandExecutor executor = OCommandManager.instance().getExecutor((OCommandRequestInternal) query);
+
+      final OCommandExecutor executor = getDatabase().getSharedContext().getOrientDB().getScriptManager().getCommandManager().
+          getExecutor((OCommandRequestInternal) query);
       // COPY THE CONTEXT FROM THE REQUEST
       executor.setContext(context);
       executor.parse(query);

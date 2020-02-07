@@ -27,6 +27,7 @@ import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.command.OScriptInterceptor;
 import com.orientechnologies.orient.core.command.script.OCommandExecutorScript;
 import com.orientechnologies.orient.core.command.script.OCommandScript;
+import com.orientechnologies.orient.core.db.OrientDBInternal;
 import com.orientechnologies.orient.core.exception.OSecurityException;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.config.OServerParameterConfiguration;
@@ -48,9 +49,12 @@ public class OServerSideScriptInterpreter extends OServerPluginAbstract {
   protected Set<String> allowedLanguages = new HashSet<String>();
 
   protected OScriptInterceptor interceptor;
+  private   OServer            server;
 
   @Override
   public void config(final OServer iServer, OServerParameterConfiguration[] iParams) {
+
+    this.server = iServer;
     for (OServerParameterConfiguration param : iParams) {
       if (param.name.equalsIgnoreCase("enabled")) {
         if (Boolean.parseBoolean(param.value))
@@ -59,7 +63,8 @@ public class OServerSideScriptInterpreter extends OServerPluginAbstract {
       } else if (param.name.equalsIgnoreCase("allowedLanguages")) {
         allowedLanguages = new HashSet<>(Arrays.asList(param.value.toLowerCase(Locale.ENGLISH).split(",")));
       } else if (param.name.equalsIgnoreCase("allowedPackages")) {
-        Orient.instance().getScriptManager().addAllowedPackages(new HashSet<>(Arrays.asList(param.value.split(","))));
+        OrientDBInternal.extract(iServer.getContext()).getScriptManager()
+            .addAllowedPackages(new HashSet<>(Arrays.asList(param.value.split(","))));
       }
     }
   }
@@ -71,22 +76,18 @@ public class OServerSideScriptInterpreter extends OServerPluginAbstract {
 
   @Override
   public void startup() {
-    OCommandManager.instance().unregisterExecutor(OCommandScript.class);
 
     if (!enabled)
       return;
 
-    OCommandManager.instance()
-        .registerExecutor(OCommandScript.class, OCommandExecutorScript.class, new OCallable<Void, OCommandRequest>() {
-          @Override
-          public Void call(OCommandRequest iArgument) {
-            final String language = ((OCommandScript) iArgument).getLanguage().toLowerCase(Locale.ENGLISH);
+    OrientDBInternal.extract(server.getContext()).getScriptManager().getCommandManager()
+        .registerExecutor(OCommandScript.class, OCommandExecutorScript.class, iArgument -> {
+          final String language = ((OCommandScript) iArgument).getLanguage().toLowerCase(Locale.ENGLISH);
 
-            if (!allowedLanguages.contains(language))
-              throw new OSecurityException("Language '" + language + "' is not allowed to be executed");
+          if (!allowedLanguages.contains(language))
+            throw new OSecurityException("Language '" + language + "' is not allowed to be executed");
 
-            return null;
-          }
+          return null;
         });
 
     interceptor = (db, language, script, params) -> {
@@ -94,7 +95,8 @@ public class OServerSideScriptInterpreter extends OServerPluginAbstract {
         throw new OSecurityException("Language '" + language + "' is not allowed to be executed");
     };
 
-    OCommandManager.instance().getScriptExecutors().entrySet().forEach(e -> e.getValue().registerInterceptor(interceptor));
+    OrientDBInternal.extract(server.getContext()).getScriptManager().getCommandManager().getScriptExecutors().entrySet()
+        .forEach(e -> e.getValue().registerInterceptor(interceptor));
     OLogManager.instance().warn(this,
         "Authenticated clients can execute any kind of code into the server by using the following allowed languages: "
             + allowedLanguages);
@@ -106,9 +108,10 @@ public class OServerSideScriptInterpreter extends OServerPluginAbstract {
       return;
 
     if (interceptor != null) {
-      OCommandManager.instance().getScriptExecutors().entrySet().forEach(e -> e.getValue().unregisterInterceptor(interceptor));
+      OrientDBInternal.extract(server.getContext()).getScriptManager().getCommandManager().getScriptExecutors().entrySet()
+          .forEach(e -> e.getValue().unregisterInterceptor(interceptor));
     }
 
-    OCommandManager.instance().unregisterExecutor(OCommandScript.class);
+    OrientDBInternal.extract(server.getContext()).getScriptManager().getCommandManager().unregisterExecutor(OCommandScript.class);
   }
 }

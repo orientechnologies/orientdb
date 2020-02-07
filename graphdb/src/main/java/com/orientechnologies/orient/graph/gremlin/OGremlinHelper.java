@@ -46,9 +46,9 @@ import java.util.*;
 import java.util.Map.Entry;
 
 public class OGremlinHelper {
-  private static final String PARAM_OUTPUT = "output";
-  private static GremlinGroovyScriptEngineFactory factory;
-  private static OGremlinHelper instance = new OGremlinHelper();
+  private static final String                           PARAM_OUTPUT = "output";
+  private static       GremlinGroovyScriptEngineFactory factory;
+  private static       OGremlinHelper                   instance     = new OGremlinHelper();
 
   private int maxPool = 50;
 
@@ -62,8 +62,6 @@ public class OGremlinHelper {
     } catch (java.lang.NoClassDefFoundError e) {
       OLogManager.instance().warn(this, "GREMLIN language not available (not in classpath)");
     }
-    OCommandManager.instance().registerRequester("gremlin", OCommandGremlin.class);
-    OCommandManager.instance().registerExecutor(OCommandGremlin.class, OCommandGremlinExecutor.class);
   }
 
   public static boolean isGremlinAvailable() {

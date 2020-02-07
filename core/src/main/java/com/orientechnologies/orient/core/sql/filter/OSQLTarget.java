@@ -23,6 +23,7 @@ import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.parser.OBaseParser;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.command.OCommandManager;
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
@@ -36,23 +37,22 @@ import java.util.*;
 
 /**
  * Target parser.
- * 
+ *
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
- * 
  */
 public class OSQLTarget extends OBaseParser {
-  protected final boolean                     empty;
-  protected final OCommandContext             context;
-  protected String                            targetVariable;
-  protected String                            targetQuery;
-  protected Iterable<? extends OIdentifiable> targetRecords;
-  protected Map<String, String>               targetClusters;
-  protected Map<String, String>               targetClasses;
+  protected final boolean                           empty;
+  protected final OCommandContext                   context;
+  protected       String                            targetVariable;
+  protected       String                            targetQuery;
+  protected       Iterable<? extends OIdentifiable> targetRecords;
+  protected       Map<String, String>               targetClusters;
+  protected       Map<String, String>               targetClasses;
 
-  protected String                            targetIndex;
+  protected String targetIndex;
 
-  protected String                            targetIndexValues;
-  protected boolean                           targetIndexValuesAsc;
+  protected String  targetIndexValues;
+  protected boolean targetIndexValuesAsc;
 
   public OSQLTarget(final String iText, final OCommandContext iContext) {
     super();
@@ -66,14 +66,15 @@ public class OSQLTarget extends OBaseParser {
     } catch (OQueryParsingException e) {
       if (e.getText() == null)
         // QUERY EXCEPTION BUT WITHOUT TEXT: NEST IT
-        throw OException.wrapException(
-            new OQueryParsingException("Error on parsing query", parserText, parserGetCurrentPosition()), e);
+        throw OException
+            .wrapException(new OQueryParsingException("Error on parsing query", parserText, parserGetCurrentPosition()), e);
 
       throw e;
     } catch (OCommandExecutionException ex) {
       throw ex;
     } catch (Exception e) {
-      throw OException.wrapException(new OQueryParsingException("Error on parsing query", parserText, parserGetCurrentPosition()), e);
+      throw OException
+          .wrapException(new OQueryParsingException("Error on parsing query", parserText, parserGetCurrentPosition()), e);
     }
   }
 
@@ -170,8 +171,9 @@ public class OSQLTarget extends OBaseParser {
       parserSetCurrentPosition(OStringSerializerHelper.getEmbedded(parserText, parserGetCurrentPosition(), -1, subText) + 1);
       final OCommandSQL subCommand = new OCommandSQLResultset(subText.toString());
 
-      final OCommandExecutorSQLResultsetDelegate executor = (OCommandExecutorSQLResultsetDelegate) OCommandManager.instance()
-          .getExecutor(subCommand);
+      ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.instance().get();
+      final OCommandExecutorSQLResultsetDelegate executor = (OCommandExecutorSQLResultsetDelegate) db.getSharedContext()
+          .getOrientDB().getScriptManager().getCommandManager().getExecutor(subCommand);
       executor.setProgressListener(subCommand.getProgressListener());
       executor.parse(subCommand);
       OCommandContext childContext = executor.getContext();
@@ -180,8 +182,8 @@ public class OSQLTarget extends OBaseParser {
       }
 
       if (!(executor instanceof Iterable<?>))
-        throw new OCommandSQLParsingException("Sub-query cannot be iterated because doesn't implement the Iterable interface: "
-            + subCommand);
+        throw new OCommandSQLParsingException(
+            "Sub-query cannot be iterated because doesn't implement the Iterable interface: " + subCommand);
 
       targetQuery = subText.toString();
       targetRecords = executor;
@@ -198,8 +200,8 @@ public class OSQLTarget extends OBaseParser {
       parserMoveCurrentPosition(1);
     } else {
 
-      while (!parserIsEnded()
-          && (targetClasses == null && targetClusters == null && targetIndex == null && targetIndexValues == null && targetRecords == null)) {
+      while (!parserIsEnded() && (targetClasses == null && targetClusters == null && targetIndex == null
+          && targetIndexValues == null && targetRecords == null)) {
         String originalSubjectName = parserRequiredWord(false, "Target not found");
         String subjectName = originalSubjectName.toUpperCase(Locale.ENGLISH);
 
@@ -233,11 +235,11 @@ public class OSQLTarget extends OBaseParser {
           targetRecords = new ArrayList<OIdentifiable>();
 
           if (metadataTarget.equals(OCommandExecutorSQLAbstract.METADATA_SCHEMA)) {
-            ((ArrayList<OIdentifiable>) targetRecords).add(new ORecordId(ODatabaseRecordThreadLocal.instance().get().getStorage()
-                .getConfiguration().getSchemaRecordId()));
+            ((ArrayList<OIdentifiable>) targetRecords).add(
+                new ORecordId(ODatabaseRecordThreadLocal.instance().get().getStorage().getConfiguration().getSchemaRecordId()));
           } else if (metadataTarget.equals(OCommandExecutorSQLAbstract.METADATA_INDEXMGR)) {
-            ((ArrayList<OIdentifiable>) targetRecords).add(new ORecordId(ODatabaseRecordThreadLocal.instance().get().getStorage()
-                .getConfiguration().getIndexMgrRecordId()));
+            ((ArrayList<OIdentifiable>) targetRecords).add(
+                new ORecordId(ODatabaseRecordThreadLocal.instance().get().getStorage().getConfiguration().getIndexMgrRecordId()));
           } else
             throw new OQueryParsingException("Metadata element not supported: " + metadataTarget);
 
@@ -268,10 +270,12 @@ public class OSQLTarget extends OBaseParser {
           if (targetClasses == null)
             targetClasses = new HashMap<String, String>();
 
-          final OClass cls = ODatabaseRecordThreadLocal.instance().get().getMetadata().getImmutableSchemaSnapshot().getClass(subjectName);
+          final OClass cls = ODatabaseRecordThreadLocal.instance().get().getMetadata().getImmutableSchemaSnapshot()
+              .getClass(subjectName);
           if (cls == null)
-            throw new OCommandExecutionException("Class '" + subjectName + "' was not found in database '"
-                + ODatabaseRecordThreadLocal.instance().get().getName() + "'");
+            throw new OCommandExecutionException(
+                "Class '" + subjectName + "' was not found in database '" + ODatabaseRecordThreadLocal.instance().get().getName()
+                    + "'");
 
           targetClasses.put(cls.getName(), alias);
         }

@@ -23,6 +23,7 @@ package com.orientechnologies.orient.core.db;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
+import com.orientechnologies.orient.core.command.script.OScriptManager;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.storage.OStorage;
 
@@ -296,6 +297,10 @@ public interface OrientDBInternal extends AutoCloseable, OSchedulerInternal {
   <X> Future<X> executeNoAuthorization(String database, ODatabaseTask<X> task);
 
   default OStorage fullSync(String dbName, InputStream backupStream, OrientDBConfig config) {
+    throw new UnsupportedOperationException();
+  }
+
+  default OScriptManager getScriptManager() {
     throw new UnsupportedOperationException();
   }
 }

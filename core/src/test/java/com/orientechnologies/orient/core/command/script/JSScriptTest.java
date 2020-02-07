@@ -5,6 +5,7 @@ import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.ODatabaseType;
 import com.orientechnologies.orient.core.db.OrientDB;
 import com.orientechnologies.orient.core.db.OrientDBConfig;
+import com.orientechnologies.orient.core.db.OrientDBInternal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
@@ -199,15 +200,17 @@ public class JSScriptTest {
 
     OrientDB orientDB = new OrientDB("embedded:", OrientDBConfig.defaultConfig());
     orientDB.create(name.getMethodName(), ODatabaseType.MEMORY);
+
+    OScriptManager scriptManager = OrientDBInternal.extract(orientDB).getScriptManager();
     try (ODatabaseDocument db = orientDB.open(name.getMethodName(), "admin", "admin")) {
 
-      Orient.instance().getScriptManager().addAllowedPackages(new HashSet<>(Arrays.asList("java.math.BigDecimal")));
+      scriptManager.addAllowedPackages(new HashSet<>(Arrays.asList("java.math.BigDecimal")));
 
       try (OResultSet resultSet = db.execute("javascript", "new java.math.BigDecimal(1.0);")) {
         Assert.assertEquals(1, resultSet.stream().count());
       }
 
-      Orient.instance().getScriptManager().removeAllowedPackages(new HashSet<>(Arrays.asList("java.math.BigDecimal")));
+      scriptManager.removeAllowedPackages(new HashSet<>(Arrays.asList("java.math.BigDecimal")));
 
       try {
         db.execute("javascript", "new java.math.BigDecimal(1.0);");
@@ -216,15 +219,14 @@ public class JSScriptTest {
         Assert.assertEquals(e.getCause().getClass(), ClassNotFoundException.class);
       }
 
-      Orient.instance().getScriptManager().addAllowedPackages(new HashSet<>(Arrays.asList("java.math.*")));
+      scriptManager.addAllowedPackages(new HashSet<>(Arrays.asList("java.math.*")));
 
       try (OResultSet resultSet = db.execute("javascript", "new java.math.BigDecimal(1.0);")) {
         Assert.assertEquals(1, resultSet.stream().count());
       }
 
     } finally {
-      Orient.instance().getScriptManager()
-          .removeAllowedPackages(new HashSet<>(Arrays.asList("java.math.BigDecimal", "java.math.*")));
+      scriptManager.removeAllowedPackages(new HashSet<>(Arrays.asList("java.math.BigDecimal", "java.math.*")));
       orientDB.drop(name.getMethodName());
       orientDB.close();
     }

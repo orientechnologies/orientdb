@@ -24,6 +24,7 @@ import com.orientechnologies.common.io.OIOUtils;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
+import com.orientechnologies.orient.core.command.script.OScriptManager;
 import com.orientechnologies.orient.core.config.OContextConfiguration;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentEmbedded;
@@ -78,6 +79,7 @@ public class OrientDBEmbedded implements OrientDBInternal {
   private          ExecutorService                        executor;
   private          Timer                                  timer;
   private          TimerTask                              autoCloseTimer = null;
+  private final    OScriptManager                         scriptManager  = new OScriptManager();
 
   protected final long maxWALSegmentSize;
   protected final long doubleWriteLogMaxSegSize;
@@ -881,6 +883,10 @@ public class OrientDBEmbedded implements OrientDBInternal {
 
   public <X> Future<X> executeNoDb(Callable<X> callable) {
     return executor.submit(callable);
+  }
+
+  public OScriptManager getScriptManager() {
+    return scriptManager;
   }
 
 }

@@ -245,7 +245,7 @@ public class OClassTrigger {
     if (func == null)
       return ORecordHook.RESULT.RECORD_NOT_CHANGED;
 
-    final OScriptManager scriptManager = Orient.instance().getScriptManager();
+    final OScriptManager scriptManager = database.getSharedContext().getOrientDB().getScriptManager();
 
     final OPartitionedObjectPool.PoolEntry<ScriptEngine> entry = scriptManager
         .acquireDatabaseEngine(database.getName(), func.getLanguage());

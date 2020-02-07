@@ -66,7 +66,6 @@ public class Orient extends OListenerManger<OOrientListener> {
   private final ConcurrentMap<String, OEngine> engines = new ConcurrentHashMap<String, OEngine>();
 
   private final Map<ODatabaseLifecycleListener, ODatabaseLifecycleListener.PRIORITY> dbLifecycleListeners          = new LinkedHashMap<ODatabaseLifecycleListener, ODatabaseLifecycleListener.PRIORITY>();
-  private final OScriptManager                                                       scriptManager                 = new OScriptManager();
   private final ThreadGroup                                                          threadGroup;
   private final ReadWriteLock                                                        engineLock                    = new ReentrantReadWriteLock();
   private final ORecordConflictStrategyFactory                                       recordConflictStrategy        = new ORecordConflictStrategyFactory();
@@ -680,10 +679,6 @@ public class Orient extends OListenerManger<OOrientListener> {
 
   public void registerThreadDatabaseFactory(final ODatabaseThreadLocalFactory iDatabaseFactory) {
     databaseThreadFactory = iDatabaseFactory;
-  }
-
-  public OScriptManager getScriptManager() {
-    return scriptManager;
   }
 
   @Override

@@ -53,7 +53,7 @@ import static com.orientechnologies.common.util.OClassLoaderHelper.lookupProvide
  * @see OCommandScript
  */
 public class OScriptManager {
-  
+
   protected static final Object[]                                          EMPTY_PARAMS       = new Object[] {};
   protected static final int                                               LINES_AROUND_ERROR = 5;
   protected static final String                                            DEF_LANGUAGE       = "javascript";
@@ -65,6 +65,7 @@ public class OScriptManager {
   protected              ConcurrentHashMap<String, ODatabaseScriptManager> dbManagers         = new ConcurrentHashMap<String, ODatabaseScriptManager>();
   protected              Map<String, OScriptResultHandler>                 handlers           = new HashMap<String, OScriptResultHandler>();
   protected              Map<String, Function<String, OScriptExecutor>>    executorsFactories = new HashMap<>();
+  protected              OCommandManager                                   commandManager     = new OCommandManager();
 
   public OScriptManager() {
     scriptEngineManager = new ScriptEngineManager();
@@ -102,7 +103,7 @@ public class OScriptManager {
       } else {
         executor = new OJsr223ScriptExecutor(lang, new OScriptTransformerImpl());
       }
-      OCommandManager.instance().registerScriptExecutor(lang, executor);
+      commandManager.registerScriptExecutor(lang, executor);
     }
 
     // Registring sql script engine after for not fight with the basic engine
@@ -110,7 +111,7 @@ public class OScriptManager {
 
     Iterator<OScriptExecutorRegister> customExecutors = lookupProviderWithOrientClassLoader(OScriptExecutorRegister.class);
 
-    customExecutors.forEachRemaining(e -> e.registerExecutor(this, OCommandManager.instance()));
+    customExecutors.forEachRemaining(e -> e.registerExecutor(this, commandManager));
 
   }
 
@@ -468,4 +469,7 @@ public class OScriptManager {
       dbPool.close();
   }
 
+  public OCommandManager getCommandManager() {
+    return commandManager;
+  }
 }

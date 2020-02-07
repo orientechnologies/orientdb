@@ -22,6 +22,7 @@ package com.orientechnologies.orient.server.plugin.mail;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.script.OScriptInjection;
+import com.orientechnologies.orient.core.db.OrientDBInternal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.server.OServer;
@@ -38,24 +39,23 @@ import java.util.Map;
 import java.util.Set;
 
 public class OMailPlugin extends OServerPluginAbstract implements OScriptInjection, OServerPluginConfigurable {
-  private static final String       CONFIG_PROFILE_PREFIX = "profile.";
-  private static final String       CONFIG_MAIL_PREFIX    = "mail.";
+  private static final String CONFIG_PROFILE_PREFIX = "profile.";
+  private static final String CONFIG_MAIL_PREFIX    = "mail.";
 
-  private ODocument                 configuration;
+  private ODocument configuration;
 
-  private Map<String, OMailProfile> profiles              = new HashMap<String, OMailProfile>();
+  private Map<String, OMailProfile> profiles = new HashMap<String, OMailProfile>();
 
-  private String                    configFile            = "${ORIENTDB_HOME}/config/mail.json";
+  private String configFile = "${ORIENTDB_HOME}/config/mail.json";
 
   public OMailPlugin() {
-    Orient.instance().getScriptManager().registerInjection(this);
   }
 
   @Override
   public void config(final OServer oServer, final OServerParameterConfiguration[] iParams) {
 
+    OrientDBInternal.extract(oServer.getContext()).getScriptManager().registerInjection(this);
   }
-
 
   public void writeConfiguration() throws IOException {
 
@@ -64,8 +64,8 @@ public class OMailPlugin extends OServerPluginAbstract implements OScriptInjecti
   /**
    * Sends an email. Supports the following configuration: subject, message, to, cc, bcc, date, attachments
    *
-   * @param iMessage
-   *          Configuration as Map<String,Object>
+   * @param iMessage Configuration as Map<String,Object>
+   *
    * @throws ParseException
    */
   public void send(final Map<String, Object> iMessage) {
@@ -81,7 +81,6 @@ public class OMailPlugin extends OServerPluginAbstract implements OScriptInjecti
   public void unbind(ScriptEngine engine, Bindings binding) {
     binding.put("mail", null);
   }
-
 
   @Override
   public String getName() {
@@ -100,7 +99,6 @@ public class OMailPlugin extends OServerPluginAbstract implements OScriptInjecti
     return this;
   }
 
-
   @Override
   public ODocument getConfig() {
     return configuration;
@@ -108,7 +106,6 @@ public class OMailPlugin extends OServerPluginAbstract implements OScriptInjecti
 
   @Override
   public void changeConfig(ODocument document) {
-
 
   }
 }

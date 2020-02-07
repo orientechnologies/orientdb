@@ -72,7 +72,10 @@ public class OSQLCommandTask extends OAbstractCommandTask {
     text = iCommand.getText();
     params = iCommand.getParameters();
 
-    final OCommandExecutor executor = OCommandManager.instance().getExecutor(iCommand);
+    ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.instance().get();
+
+    final OCommandExecutor executor = db.getSharedContext().getOrientDB().getScriptManager().getCommandManager()
+        .getExecutor(iCommand);
     executor.parse(iCommand);
 
     quorumType = ((OCommandDistributedReplicateRequest) executor).getQuorumType();
@@ -94,7 +97,8 @@ public class OSQLCommandTask extends OAbstractCommandTask {
       try {
         final OCommandRequest cmd = database.command(new OCommandSQL(text));
 
-        OCommandExecutor executor = OCommandManager.instance().getExecutor((OCommandRequestInternal) cmd);
+        OCommandExecutor executor = database.getSharedContext().getOrientDB().getScriptManager().getCommandManager()
+            .getExecutor((OCommandRequestInternal) cmd);
         executor.parse(cmd);
 
         final OCommandExecutor exec;
@@ -183,8 +187,10 @@ public class OSQLCommandTask extends OAbstractCommandTask {
 
   @Override
   public ORemoteTask getUndoTask(ODistributedServerManager dManager, final ODistributedRequestId reqId, List<String> servers) {
-    final OCommandRequest cmd = ODatabaseRecordThreadLocal.instance().get().command(new OCommandSQL(text));
-    OCommandExecutor executor = OCommandManager.instance().getExecutor((OCommandRequestInternal) cmd);
+    ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.instance().get();
+    final OCommandRequest cmd = db.command(new OCommandSQL(text));
+    OCommandExecutor executor = db.getSharedContext().getOrientDB().getScriptManager().getCommandManager()
+        .getExecutor((OCommandRequestInternal) cmd);
     executor.parse(cmd);
 
     if (executor instanceof OCommandExecutorSQLDelegate)

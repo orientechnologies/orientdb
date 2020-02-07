@@ -179,7 +179,7 @@ public class OCommandExecutorScript extends OCommandExecutorAbstract
   protected Object executeJsr223Script(final String language, final OCommandContext iContext, final Map<Object, Object> iArgs) {
     ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.instance().get();
 
-    final OScriptManager scriptManager = Orient.instance().getScriptManager();
+    final OScriptManager scriptManager = db.getSharedContext().getOrientDB().getScriptManager();
     CompiledScript compiledScript = request.getCompiledScript();
 
     final OPartitionedObjectPool.PoolEntry<ScriptEngine> entry = scriptManager.acquireDatabaseEngine(db.getName(), language);
