@@ -1,13 +1,16 @@
 package com.orientechnologies.agent.profiler;
 
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.orient.client.remote.message.ORemoteResultSet;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseSession;
 import com.orientechnologies.orient.core.db.ODatabaseType;
 import com.orientechnologies.orient.core.db.OrientDB;
 import com.orientechnologies.orient.core.db.OrientDBConfig;
 import com.orientechnologies.orient.core.sql.executor.OResult;
+import com.orientechnologies.orient.core.sql.executor.OResultInternal;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
+import com.orientechnologies.orient.core.sql.parser.OLocalResultSet;
 import com.orientechnologies.orient.server.OServer;
 import org.junit.After;
 import org.junit.Assert;
@@ -18,6 +21,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.atomic.AtomicReference;
 
 public class QueryProfilerTest {
 
@@ -33,7 +37,7 @@ public class QueryProfilerTest {
   }
 
   @Test
-  public void testListQueries() throws Exception {
+  public void testListAndKillQueries() throws Exception {
 
     pageSize = OGlobalConfiguration.QUERY_REMOTE_RESULTSET_PAGE_SIZE.getValue();
 
@@ -41,13 +45,35 @@ public class QueryProfilerTest {
 
     OrientDB context = new OrientDB("remote:localhost", OrientDBConfig.defaultConfig());
 
-    CountDownLatch startLatch = new CountDownLatch(1);
+    CountDownLatch startLatch = new CountDownLatch(2);
     CountDownLatch endLatch = new CountDownLatch(1);
+
+    AtomicReference<String> queryId = new AtomicReference<>();
 
     new Thread(() -> {
       ODatabaseSession local = context.open(QueryProfilerTest.class.getSimpleName(), "admin", "admin");
 
       OResultSet result = local.query("select from OUser");
+
+      startLatch.countDown();
+
+      try {
+        endLatch.await();
+        result.close();
+      } catch (InterruptedException e) {
+        OLogManager.instance().warn(this, "Thread interrupted: " + e.getMessage(), e);
+      }
+
+    }).start();
+
+    new Thread(() -> {
+      ODatabaseSession local = context.open(QueryProfilerTest.class.getSimpleName(), "admin", "admin");
+
+      OResultSet result = local.query("select from OUser");
+
+      ORemoteResultSet remote = (ORemoteResultSet) result;
+
+      queryId.set(remote.getQueryId());
 
       startLatch.countDown();
 
@@ -66,13 +92,23 @@ public class QueryProfilerTest {
 
     OResultSet resultSet = db.command("select listQueries() as queries");
 
-    Collection queries = (Collection) resultSet.stream().findFirst().map((r) -> r.getProperty("queries")).get();
+    Collection<OResult> queries = (Collection) resultSet.stream().findFirst().map((r) -> r.getProperty("queries")).get();
 
     resultSet.close();
 
-    startLatch.countDown();
+    Assert.assertEquals(3, queries.size());
+
+    db.command("select killQuery(?) as queries", queryId.get()).close();
+
+    resultSet = db.command("select listQueries() as queries");
+
+    queries = (Collection) resultSet.stream().findFirst().map((r) -> r.getProperty("queries")).get();
+
+    resultSet.close();
 
     Assert.assertEquals(2, queries.size());
+
+    endLatch.countDown();
   }
 
   @Test
