@@ -116,11 +116,11 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
   private          AtomicBoolean                         parsing               = new AtomicBoolean(true);
   private final    AtomicReference<ODistributedMomentum> filterByMomentum      = new AtomicReference<ODistributedMomentum>();
 
-  private String                      localNodeName;
-  private OSimpleLockManager<ORID>    recordLockManager;
-  private OSimpleLockManager<Object>  indexKeyLockManager;
-  private AtomicLong                  operationsRunnig = new AtomicLong(0);
-  private OTransactionSequenceManager sequenceManager  = new OTransactionSequenceManager();
+  private final String                      localNodeName;
+  private final OSimpleLockManager<ORID>    recordLockManager;
+  private final OSimpleLockManager<Object>  indexKeyLockManager;
+  private       AtomicLong                  operationsRunnig = new AtomicLong(0);
+  private       OTransactionSequenceManager sequenceManager;
 
   public OSimpleLockManager<ORID> getRecordLockManager() {
     return recordLockManager;
@@ -166,10 +166,14 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
       prev.shutdown();
     }
 
-    startAcceptingRequests();
+    long timeout = manager.getServerInstance().getContextConfiguration().getValueAsLong(DISTRIBUTED_ATOMIC_LOCK_TIMEOUT);
+    recordLockManager = new OSimpleLockManagerImpl<>(timeout);
+    indexKeyLockManager = new OSimpleLockManagerImpl<>(timeout);
+    sequenceManager = new OTransactionSequenceManager(localNodeName);
 
-    if (iDatabaseName.equals(OSystemDatabase.SYSTEM_DB_NAME))
+    if (iDatabaseName.equals(OSystemDatabase.SYSTEM_DB_NAME)) {
       return;
+    }
 
     startTxTimeoutTimerTask();
 
@@ -219,9 +223,6 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
           }
         }, "distributed.db.*.recordLocks");
 
-    long timeout = manager.getServerInstance().getContextConfiguration().getValueAsLong(DISTRIBUTED_ATOMIC_LOCK_TIMEOUT);
-    recordLockManager = new OSimpleLockManagerImpl<>(timeout);
-    indexKeyLockManager = new OSimpleLockManagerImpl<>(timeout);
   }
 
   public OLogSequenceNumber getLastLSN(final String server) {
