@@ -23,6 +23,7 @@ package com.orientechnologies.tinkerpop.handler;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.command.OCommandManager;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
+import com.orientechnologies.orient.core.db.OrientDBInternal;
 import com.orientechnologies.orient.server.OClientConnection;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.config.OServerParameterConfiguration;
@@ -32,7 +33,7 @@ import com.orientechnologies.orient.server.plugin.OServerPluginAbstract;
 import com.orientechnologies.tinkerpop.command.OServerCommandPostCommandGremlin;
 import org.apache.tinkerpop.gremlin.orientdb.executor.OCommandGremlinExecutor;
 
-public class OGraphServerHandler extends OServerPluginAbstract  {
+public class OGraphServerHandler extends OServerPluginAbstract {
   private boolean enabled = true;
   private int     graphPoolMax;
   private OServer server;
@@ -49,11 +50,11 @@ public class OGraphServerHandler extends OServerPluginAbstract  {
         graphPoolMax = Integer.parseInt(param.value);
     }
 
-    OCommandGremlinExecutor executor = (OCommandGremlinExecutor) OCommandManager.instance().getScriptExecutor("gremlin");
+    OCommandGremlinExecutor executor = (OCommandGremlinExecutor) OrientDBInternal.extract(server.getContext()).getScriptManager()
+        .getCommandManager().getScriptExecutor("gremlin");
     enabled = true;
     OLogManager.instance()
         .info(this, "Installed GREMLIN language v.%s - graph.pool.max=%d", executor.getEngineVersion(), graphPoolMax);
-
 
     this.server = server;
   }
@@ -80,8 +81,6 @@ public class OGraphServerHandler extends OServerPluginAbstract  {
       return;
 
   }
-
-
 
   @Override
   public void onAfterClientRequest(OClientConnection connection, byte requestType) {
