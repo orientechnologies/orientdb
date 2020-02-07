@@ -717,6 +717,7 @@ public class OrientDBEmbedded implements OrientDBInternal {
       Thread.currentThread().interrupt();
     }
     synchronized (this) {
+      scriptManager.closeAll();
       removeShutdownHook();
       internalClose();
       currentStorageIds.clear();
