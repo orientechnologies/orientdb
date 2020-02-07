@@ -21,21 +21,21 @@ public class OrientDBMetricsSettings {
 
   }
 
-  class ServerMetricsSettings {
+  public class ServerMetricsSettings {
     public Boolean enabled = false;
 
     public ServerMetricsSettings() {
     }
   }
 
-  class DatabaseMetricsSettings {
+  public class DatabaseMetricsSettings {
     public Boolean enabled = false;
 
     public DatabaseMetricsSettings() {
     }
   }
 
-  class ClusterMetricsSettings {
+  public class ClusterMetricsSettings {
     public Boolean enabled = false;
 
     public ClusterMetricsSettings() {

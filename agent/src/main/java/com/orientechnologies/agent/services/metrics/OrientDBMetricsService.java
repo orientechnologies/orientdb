@@ -183,4 +183,8 @@ public class OrientDBMetricsService implements OEnterpriseService {
     }
     return null;
   }
+
+  public OMetricsRegistry getRegistry() {
+    return registry;
+  }
 }
