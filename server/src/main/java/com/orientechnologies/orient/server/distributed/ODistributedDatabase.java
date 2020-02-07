@@ -116,7 +116,7 @@ public interface ODistributedDatabase {
 
   ODistributedTxContext registerTxContext(ODistributedRequestId reqId);
 
-  ODistributedTxContext registerTxContext(final ODistributedRequestId reqId, ODistributedTxContext ctx);
+  ODistributedTxContext registerTxContext(final ODistributedRequestId reqId, Object id, ODistributedTxContext ctx);
 
   ODistributedTxContext popTxContext(ODistributedRequestId requestId);
 
@@ -135,4 +135,6 @@ public interface ODistributedDatabase {
   void setLSN(String sourceNodeName, OLogSequenceNumber taskLastLSN, boolean writeLastOperation) throws IOException;
 
   ODistributedDatabaseRepairer getDatabaseRepairer();
+
+  Object nextId();
 }
