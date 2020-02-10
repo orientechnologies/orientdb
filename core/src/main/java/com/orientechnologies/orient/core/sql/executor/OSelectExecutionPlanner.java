@@ -1462,12 +1462,14 @@ public class OSelectExecutionPlanner {
     if (info.globalLetClause != null) {
       List<OLetItem> items = info.globalLetClause.getItems();
       items = sortLet(items, this.statement.getLetClause());
+      List<String> scriptVars = new ArrayList<>();
       for (OLetItem item : items) {
         if (item.getExpression() != null) {
           result.chain(new GlobalLetExpressionStep(item.getVarName(), item.getExpression(), ctx, profilingEnabled));
         } else {
-          result.chain(new GlobalLetQueryStep(item.getVarName(), item.getQuery(), ctx, profilingEnabled));
+          result.chain(new GlobalLetQueryStep(item.getVarName(), item.getQuery(), ctx, profilingEnabled, scriptVars));
         }
+        scriptVars.add(item.getVarName().getStringValue());
         info.globalLetPresent = true;
       }
     }

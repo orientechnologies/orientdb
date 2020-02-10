@@ -21,11 +21,14 @@ public class GlobalLetQueryStep extends AbstractExecutionStep {
 
   private boolean executed = false;
 
-  public GlobalLetQueryStep(OIdentifier varName, OStatement query, OCommandContext ctx, boolean profilingEnabled) {
+  public GlobalLetQueryStep(OIdentifier varName, OStatement query, OCommandContext ctx, boolean profilingEnabled, List<String> scriptVars) {
     super(ctx, profilingEnabled);
     this.varName = varName;
 
     OBasicCommandContext subCtx = new OBasicCommandContext();
+    if (scriptVars != null) {
+      scriptVars.forEach(x -> subCtx.declareScriptVariable(x));
+    }
     subCtx.setDatabase(ctx.getDatabase());
     subCtx.setParent(ctx);
     if (query.toString().contains("?")) {
