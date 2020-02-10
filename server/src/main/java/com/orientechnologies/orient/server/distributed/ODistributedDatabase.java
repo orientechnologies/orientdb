@@ -25,7 +25,6 @@ import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.storage.ORawBuffer;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
-import com.orientechnologies.orient.core.tx.OTransaction;
 import com.orientechnologies.orient.server.distributed.task.ORemoteTask;
 
 import java.io.IOException;
@@ -113,10 +112,11 @@ public interface ODistributedDatabase {
 
   void processRequest(ODistributedRequest request, boolean waitForAcceptingRequests);
 
+  Optional<OTransactionId> validate(OTransactionId id);
+
   ODistributedTxContext registerTxContext(ODistributedRequestId reqId);
 
-  ODistributedTxContext registerTxContext(final ODistributedRequestId reqId, Optional<OTransactionId> id,
-      ODistributedTxContext ctx);
+  ODistributedTxContext registerTxContext(final ODistributedRequestId reqId, ODistributedTxContext ctx);
 
   ODistributedTxContext popTxContext(ODistributedRequestId requestId);
 

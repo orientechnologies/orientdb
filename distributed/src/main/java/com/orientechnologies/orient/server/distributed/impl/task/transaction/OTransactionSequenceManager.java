@@ -103,12 +103,14 @@ public class OTransactionSequenceManager {
     return Collections.emptyList();
   }
 
-  public synchronized boolean validateTransactionId(OTransactionId transactionId) {
-    if (this.promisedSequential[transactionId.getPosition()] == null) {
+  public synchronized Optional<OTransactionId> validateTransactionId(OTransactionId transactionId) {
+    if (this.promisedSequential[transactionId.getPosition()] == null
+        && this.sequentials[transactionId.getPosition()] + 1 == transactionId.getSequence()) {
       this.promisedSequential[transactionId.getPosition()] = transactionId;
-      return true;
+      return Optional.empty();
     } else {
-      return false;
+      return Optional
+          .of(new OTransactionId(Optional.empty(), transactionId.getPosition(), this.sequentials[transactionId.getPosition()]));
     }
   }
 

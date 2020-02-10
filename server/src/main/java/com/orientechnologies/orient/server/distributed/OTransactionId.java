@@ -67,4 +67,9 @@ public class OTransactionId {
     out.writeInt(position);
     out.writeLong(sequence);
   }
+
+  @Override
+  public String toString() {
+    return "" + position + ":" + sequence + " owner:" + nodeOwner;
+  }
 }

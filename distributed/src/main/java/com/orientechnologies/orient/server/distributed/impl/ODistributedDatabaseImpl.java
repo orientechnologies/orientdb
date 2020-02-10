@@ -814,18 +814,16 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
 
   @Override
   public ODistributedTxContext registerTxContext(final ODistributedRequestId reqId) {
-    return registerTxContext(reqId, null, new ODistributedTxContextImpl(this, reqId));
+    return registerTxContext(reqId, new ODistributedTxContextImpl(this, reqId));
+  }
+
+  public Optional<OTransactionId> validate(OTransactionId id) {
+    // this check should happen only of destination nodes
+    return sequenceManager.validateTransactionId(id);
   }
 
   @Override
-  public ODistributedTxContext registerTxContext(final ODistributedRequestId reqId, Optional<OTransactionId> id,
-      ODistributedTxContext ctx) {
-    if (id.isPresent()) {
-      // this check shoud happen only of destination nodes
-      if (!sequenceManager.validateTransactionId(id.get())) {
-        // Throw an earror
-      }
-    }
+  public ODistributedTxContext registerTxContext(final ODistributedRequestId reqId, ODistributedTxContext ctx) {
     final ODistributedTxContext prevCtx = activeTxContexts.put(reqId, ctx);
     if (prevCtx != ctx && prevCtx != null) {
       prevCtx.destroy();
