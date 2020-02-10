@@ -11,27 +11,21 @@ import java.util.List;
 
 /**
  * Test HTTP "function" command.
- * 
+ *
  * @author Luca Garulli (l.garulli--(at)--orientdb.com) (l.garulli--at-orientdb.com)
  */
 public class HttpFunctionTest extends BaseHttpDatabaseTest {
-
-  @Before
-  public void beforeMethod() {
-    getServer().getPlugin("script-interpreter").startup();
-  }
 
   @Test
   public void callFunction() throws IOException {
     // CREATE FUNCTION FIRST
     Assert.assertEquals(post("command/" + getDatabaseName() + "/sql/")
-        .payload("CREATE FUNCTION hello \"return 'Hello ' + name + ' ' + surname;\" PARAMETERS [name,surname] LANGUAGE javascript", CONTENT.TEXT).getResponse()
-        .getStatusLine().getStatusCode(), 200);
+        .payload("CREATE FUNCTION hello \"return 'Hello ' + name + ' ' + surname;\" PARAMETERS [name,surname] LANGUAGE javascript",
+            CONTENT.TEXT).getResponse().getStatusLine().getStatusCode(), 200);
 
     Assert.assertEquals(
         post("function/" + getDatabaseName() + "/hello").payload("{\"name\": \"Jay\", \"surname\": \"Miner\"}", CONTENT.TEXT)
-            .setUserName("admin").setUserPassword("admin").getResponse().getStatusLine().getStatusCode(),
-        200);
+            .setUserName("admin").setUserPassword("admin").getResponse().getStatusLine().getStatusCode(), 200);
 
     String response = EntityUtils.toString(getResponse().getEntity());
 
