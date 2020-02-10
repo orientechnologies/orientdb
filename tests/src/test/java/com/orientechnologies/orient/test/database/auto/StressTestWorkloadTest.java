@@ -34,7 +34,7 @@ public class StressTestWorkloadTest {
   @Test
   public void testCRUD() throws Exception {
     final OStressTester stressTester = OStressTesterCommandLineParser
-        .getStressTester(new String[] { "-m", "plocal", "-c", "8", "-tx", "3", "-w", "crud:C10R10U10D10" });
+        .getStressTester(new String[] { "-m", "memory", "-c", "8", "-tx", "3", "-w", "crud:C10R10U10D10" });
     stressTester.execute();
 
   }
@@ -42,28 +42,28 @@ public class StressTestWorkloadTest {
   @Test
   public void testGraphInsert() throws Exception {
     final OStressTester stressTester = OStressTesterCommandLineParser
-        .getStressTester(new String[] { "-m", "plocal", "-c", "8", "-tx", "3", "-w", "GINSERT:V100F3" });
+        .getStressTester(new String[] { "-m", "memory", "-c", "8", "-tx", "3", "-w", "GINSERT:V100F3" });
     stressTester.execute();
   }
 
   @Test
   public void testGraphInsertRandomStrategy() throws Exception {
     final OStressTester stressTester = OStressTesterCommandLineParser
-        .getStressTester(new String[] { "-m", "plocal", "-c", "8", "-tx", "3", "-w", "GINSERT:V100F3Srandom" });
+        .getStressTester(new String[] { "-m", "memory", "-c", "8", "-tx", "3", "-w", "GINSERT:V100F3Srandom" });
     stressTester.execute();
   }
 
   @Test
   public void testGraphInsertSuperNodeStrategy() throws Exception {
     final OStressTester stressTester = OStressTesterCommandLineParser
-        .getStressTester(new String[] { "-m", "plocal", "-c", "8", "-tx", "3", "-w", "GINSERT:V100F3Ssupernode" });
+        .getStressTester(new String[] { "-m", "memory", "-c", "8", "-tx", "3", "-w", "GINSERT:V100F3Ssupernode" });
     stressTester.execute();
   }
 
   @Test
   public void testGraphShortestPath() throws Exception {
     final OStressTester stressTester = OStressTesterCommandLineParser.getStressTester(
-        new String[] { "-m", "plocal", "-c", "8", "-tx", "3", "-lb", "ROUND_ROBIN_CONNECT", "-w", "GINSERT:V100F3,GSP:L3" });
+        new String[] { "-m", "memory", "-c", "8", "-tx", "3", "-lb", "ROUND_ROBIN_CONNECT", "-w", "GINSERT:V100F3,GSP:L3" });
     stressTester.execute();
   }
 }
