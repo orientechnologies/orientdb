@@ -15,7 +15,7 @@
         <surefire.version>2.19.1</surefire.version>
         <metrics.version>4.0.0</metrics.version>
         <exclude.kerberos.tests>%regex[com.orientechnologies.security.kerberos.*Test.*]</exclude.kerberos.tests>
-	    <project.rootdir>${project.basedir}/../</project.rootdir>
+        <project.rootdir>${project.basedir}/../</project.rootdir>
     </properties>
 
     <name>agent</name>
@@ -119,20 +119,6 @@
                     </execution>
                 </executions>
             </plugin>
-            <plugin>
-                <groupId>org.jacoco</groupId>
-                <artifactId>jacoco-maven-plugin</artifactId>
-                <version>0.8.5</version>
-                <executions>
-                    <execution>
-                        <goals>
-                            <goal>prepare-agent</goal>
-                            <goal>report</goal>
-                        </goals>
-                    </execution>
-                </executions>
-            </plugin>
-
         </plugins>
     </build>
     <dependencies>
