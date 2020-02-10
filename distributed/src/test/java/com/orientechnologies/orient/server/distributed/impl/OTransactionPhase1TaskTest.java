@@ -13,6 +13,7 @@ import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.distributed.ODistributedRequestId;
+import com.orientechnologies.orient.server.distributed.OTransactionId;
 import com.orientechnologies.orient.server.distributed.impl.task.OTransactionPhase1Task;
 import com.orientechnologies.orient.server.distributed.impl.task.OTransactionPhase1TaskResult;
 import com.orientechnologies.orient.server.distributed.impl.task.transaction.OTxConcurrentModification;
@@ -30,6 +31,7 @@ import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 import static junit.framework.TestCase.assertTrue;
 import static org.junit.Assert.assertEquals;
@@ -82,7 +84,7 @@ public class OTransactionPhase1TaskTest {
     operations.add(new ORecordOperation(id1.getIdentity(), ORecordOperation.DELETED));
     operations.add(new ORecordOperation(rec2, ORecordOperation.CREATED));
 
-    OTransactionPhase1Task task = new OTransactionPhase1Task(operations);
+    OTransactionPhase1Task task = new OTransactionPhase1Task(operations, new OTransactionId(Optional.empty(), 0, 1));
     OTransactionPhase1TaskResult res = (OTransactionPhase1TaskResult) task
         .execute(new ODistributedRequestId(10, 20), server, null, (ODatabaseDocumentInternal) session);
 
@@ -103,8 +105,7 @@ public class OTransactionPhase1TaskTest {
     old.field("first", "three");
     List<ORecordOperation> operations = new ArrayList<>();
     operations.add(new ORecordOperation(old, ORecordOperation.UPDATED));
-
-    OTransactionPhase1Task task = new OTransactionPhase1Task(operations);
+    OTransactionPhase1Task task = new OTransactionPhase1Task(operations, new OTransactionId(Optional.empty(), 0, 1));
     OTransactionPhase1TaskResult res = (OTransactionPhase1TaskResult) task
         .execute(new ODistributedRequestId(10, 20), server, null, (ODatabaseDocumentInternal) session);
 
@@ -126,7 +127,7 @@ public class OTransactionPhase1TaskTest {
     List<ORecordOperation> operations = new ArrayList<>();
     operations.add(new ORecordOperation(old, ORecordOperation.DELETED));
 
-    OTransactionPhase1Task task = new OTransactionPhase1Task(operations);
+    OTransactionPhase1Task task = new OTransactionPhase1Task(operations, new OTransactionId(Optional.empty(), 0, 1));
     OTransactionPhase1TaskResult res = (OTransactionPhase1TaskResult) task
         .execute(new ODistributedRequestId(10, 20), server, null, (ODatabaseDocumentInternal) session);
 
@@ -147,7 +148,7 @@ public class OTransactionPhase1TaskTest {
     List<ORecordOperation> operations = new ArrayList<>();
     operations.add(new ORecordOperation(doc1, ORecordOperation.CREATED));
 
-    OTransactionPhase1Task task = new OTransactionPhase1Task(operations);
+    OTransactionPhase1Task task = new OTransactionPhase1Task(operations, new OTransactionId(Optional.empty(), 0, 1));
     OTransactionPhase1TaskResult res = (OTransactionPhase1TaskResult) task
         .execute(new ODistributedRequestId(10, 20), server, null, (ODatabaseDocumentInternal) session);
 

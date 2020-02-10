@@ -30,10 +30,7 @@ import com.orientechnologies.orient.server.distributed.task.ODistributedRecordLo
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.TimerTask;
+import java.util.*;
 
 /**
  * @author Luigi Dell'Aquila (l.dellaquila - at - orientdb.com)
@@ -56,9 +53,10 @@ public class OTransactionPhase1Task extends OAbstractReplicatedTask {
     operations = new ArrayList<>();
   }
 
-  public OTransactionPhase1Task(List<ORecordOperation> ops) {
+  public OTransactionPhase1Task(List<ORecordOperation> ops, OTransactionId transactionId) {
     this.ops = ops;
     operations = new ArrayList<>();
+    this.transactionId = transactionId;
     genOps(ops);
   }
 
@@ -144,6 +142,13 @@ public class OTransactionPhase1Task extends OAbstractReplicatedTask {
       ODatabaseDocumentDistributed database, OTransactionInternal tx, boolean local, int retryCount) {
     OTransactionResultPayload payload;
     try {
+      if (!local) {
+        ODistributedDatabase localDistributedDatabase = database.getStorageDistributed().getLocalDistributedDatabase();
+        Optional<OTransactionId> result = localDistributedDatabase.validate(id);
+        if (result.isPresent()) {
+          return new OTxInvalidSequential(result.get());
+        }
+      }
       if (database.beginDistributedTx(requestId, id, tx, local, retryCount)) {
         payload = new OTxSuccess();
       } else {

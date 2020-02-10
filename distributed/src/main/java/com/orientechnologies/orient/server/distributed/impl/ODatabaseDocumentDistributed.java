@@ -458,12 +458,7 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
 
   private void register(ODistributedRequestId requestId, OTransactionId id, boolean local,
       ODistributedDatabase localDistributedDatabase, ONewDistributedTxContextImpl txContext) {
-    if (local) {
-      // No need to check the ID
-      localDistributedDatabase.registerTxContext(requestId, Optional.empty(), txContext);
-    } else {
-      localDistributedDatabase.registerTxContext(requestId, Optional.of(id), txContext);
-    }
+    localDistributedDatabase.registerTxContext(requestId, txContext);
   }
 
   /**
