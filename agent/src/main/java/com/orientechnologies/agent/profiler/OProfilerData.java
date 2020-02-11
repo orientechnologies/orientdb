@@ -51,7 +51,9 @@ public class OProfilerData {
       .maximumWeightedCapacity(OGlobalConfiguration.PROFILER_MAXVALUES.getValueAsInteger()).build();
   private final ConcurrentLinkedHashMap<String, Long>              tipsTimestamp = new ConcurrentLinkedHashMap.Builder()
       .maximumWeightedCapacity(OGlobalConfiguration.PROFILER_MAXVALUES.getValueAsInteger()).build();
-  private final Map<String, OAbstractProfiler.OProfilerHookStatic> hooks         = new WeakHashMap<String, OAbstractProfiler.OProfilerHookStatic>();
+  private final ConcurrentLinkedHashMap<String, OAbstractProfiler.OProfilerHookStatic> hooks         = new ConcurrentLinkedHashMap.Builder()
+      .maximumWeightedCapacity(OGlobalConfiguration.PROFILER_MAXVALUES.getValueAsInteger()).build();
+
   private long                                                     recordingFrom = 0;
   private long                                                     recordingTo   = Long.MAX_VALUE;
 
