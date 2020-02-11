@@ -6,15 +6,13 @@ import com.orientechnologies.orient.server.distributed.task.ODistributedOperatio
 public class OInvalidSequentialException extends ODistributedOperationException {
 
   private OTransactionId expected;
-  private OTransactionId received;
 
   public OInvalidSequentialException(ODistributedOperationException exception) {
     super(exception);
   }
 
-  public OInvalidSequentialException(OTransactionId expected, OTransactionId received) {
-    super("requested validation for:" + received + " current status:" + expected);
+  public OInvalidSequentialException(OTransactionId expected) {
+    super("invalid sequential current status:" + expected);
     this.expected = expected;
-    this.received = received;
   }
 }

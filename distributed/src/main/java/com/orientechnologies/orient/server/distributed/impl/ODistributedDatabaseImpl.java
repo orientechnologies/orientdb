@@ -823,6 +823,16 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
   }
 
   @Override
+  public void commit(OTransactionId id) {
+    sequenceManager.notifySuccess(id);
+  }
+
+  @Override
+  public void rollback(OTransactionId id) {
+    sequenceManager.notifyFailure(id);
+  }
+
+  @Override
   public ODistributedTxContext registerTxContext(final ODistributedRequestId reqId, ODistributedTxContext ctx) {
     final ODistributedTxContext prevCtx = activeTxContexts.put(reqId, ctx);
     if (prevCtx != ctx && prevCtx != null) {

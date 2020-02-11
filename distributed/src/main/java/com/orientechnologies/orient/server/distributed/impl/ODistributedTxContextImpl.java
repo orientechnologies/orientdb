@@ -42,10 +42,10 @@ import java.util.concurrent.atomic.AtomicBoolean;
 public class ODistributedTxContextImpl implements ODistributedTxContext {
   private final ODistributedDatabase  db;
   private final ODistributedRequestId reqId;
-  private final List<ORemoteTask> undoTasks     = new ArrayList<ORemoteTask>();
-  private final List<ORID>        acquiredLocks = new ArrayList<ORID>();
-  private final long              startedOn     = System.currentTimeMillis();
-  private final AtomicBoolean     canceled      = new AtomicBoolean(false);
+  private final List<ORemoteTask>     undoTasks     = new ArrayList<ORemoteTask>();
+  private final List<ORID>            acquiredLocks = new ArrayList<ORID>();
+  private final long                  startedOn     = System.currentTimeMillis();
+  private final AtomicBoolean         canceled      = new AtomicBoolean(false);
 
   public ODistributedTxContextImpl(final ODistributedDatabase iDatabase, final ODistributedRequestId iRequestId) {
     db = iDatabase;
@@ -217,6 +217,11 @@ public class ODistributedTxContextImpl implements ODistributedTxContext {
 
   @Override
   public void begin(ODatabaseDocumentInternal distributed, boolean local) {
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
+  public OTransactionId getTransactionId() {
     throw new UnsupportedOperationException();
   }
 }

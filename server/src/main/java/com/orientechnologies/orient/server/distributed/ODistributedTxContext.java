@@ -64,5 +64,7 @@ public interface ODistributedTxContext {
 
   OTransactionInternal getTransaction();
 
+  OTransactionId getTransactionId();
+
   void begin(ODatabaseDocumentInternal distributed, boolean local);
 }
