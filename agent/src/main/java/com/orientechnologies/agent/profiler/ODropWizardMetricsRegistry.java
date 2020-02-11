@@ -1,7 +1,6 @@
 package com.orientechnologies.agent.profiler;
 
 import com.codahale.metrics.*;
-import com.codahale.metrics.graphite.GraphiteReporter;
 import com.codahale.metrics.jmx.JmxReporter;
 import com.codahale.metrics.json.MetricsModule;
 import com.codahale.metrics.jvm.CachedThreadStatesGaugeSet;
@@ -45,7 +44,6 @@ public class ODropWizardMetricsRegistry implements OMetricsRegistry {
   private       CsvReporter                                             csvReporter      = null;
   private       JmxReporter                                             jmxReporter      = null;
   private       CSVAggregateReporter                                    csvAggregates    = null;
-  private       GraphiteReporter                                        graphiteReporter = null;
   private       OEnterpriseServer                                       server;
   private       OrientDBMetricsSettings                                 settings;
   private       Map<Class<? extends OMetric>, Function<String, Metric>> metricFactory    = new HashMap<>();

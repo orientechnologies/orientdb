@@ -154,16 +154,12 @@
             <artifactId>metrics-jvm</artifactId>
             <version>${metrics.version}</version>
         </dependency>
-        <dependency>
-            <groupId>io.dropwizard.metrics</groupId>
-            <artifactId>metrics-graphite</artifactId>
-            <version>${metrics.version}</version>
-        </dependency>
+        
 
         <!-- upload -->
         <dependency>
             <groupId>com.opencsv</groupId>
-                <artifactId>opencsv</artifactId>
+            <artifactId>opencsv</artifactId>
             <version>5.1</version>
         </dependency>
         <dependency>
@@ -221,9 +217,6 @@
         </dependency>
 
         <!-- utils -->
-
-
-
 
 
         <!-- test -->
