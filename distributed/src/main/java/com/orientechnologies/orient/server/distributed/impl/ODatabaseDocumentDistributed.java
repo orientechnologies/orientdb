@@ -404,7 +404,7 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
     try {
       internalBegin2pc(txContext, local);
       txContext.setStatus(SUCCESS);
-      register(requestId, id, local, localDistributedDatabase, txContext);
+      register(requestId, localDistributedDatabase, txContext);
     } catch (OConcurrentCreateException ex) {
       if (retryCount >= 0 && retryCount < getConfiguration().getValueAsInteger(DISTRIBUTED_CONCURRENT_TX_MAX_AUTORETRY)) {
         if (ex.getExpectedRid().getClusterPosition() > ex.getActualRid().getClusterPosition()) {
@@ -416,7 +416,7 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
         }
       }
       txContext.setStatus(FAILED);
-      register(requestId, id, local, localDistributedDatabase, txContext);
+      register(requestId, localDistributedDatabase, txContext);
       throw ex;
     } catch (OConcurrentModificationException ex) {
       if (retryCount >= 0 && retryCount < getConfiguration().getValueAsInteger(DISTRIBUTED_CONCURRENT_TX_MAX_AUTORETRY)) {
@@ -429,7 +429,7 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
         }
       }
       txContext.setStatus(FAILED);
-      register(requestId, id, local, localDistributedDatabase, txContext);
+      register(requestId, localDistributedDatabase, txContext);
       throw ex;
     } catch (ORecordNotFoundException e) {
       // This error can happen only in deserialization before locks happen, no need to unlock
@@ -437,16 +437,16 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
         return false;
       }
       txContext.setStatus(FAILED);
-      register(requestId, id, local, localDistributedDatabase, txContext);
+      register(requestId, localDistributedDatabase, txContext);
       throw e;
     } catch (ODistributedRecordLockedException | ODistributedKeyLockedException ex) {
       /// ?? do i've to save this state as well ?
       txContext.setStatus(TIMEDOUT);
-      register(requestId, id, local, localDistributedDatabase, txContext);
+      register(requestId, localDistributedDatabase, txContext);
       throw ex;
     } catch (ORecordDuplicatedException ex) {
       txContext.setStatus(FAILED);
-      register(requestId, id, local, localDistributedDatabase, txContext);
+      register(requestId, localDistributedDatabase, txContext);
       throw ex;
     } catch (OLowDiskSpaceException ex) {
       getStorageDistributed().getDistributedManager()
@@ -456,8 +456,8 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
     return true;
   }
 
-  private void register(ODistributedRequestId requestId, OTransactionId id, boolean local,
-      ODistributedDatabase localDistributedDatabase, ONewDistributedTxContextImpl txContext) {
+  public void register(ODistributedRequestId requestId, ODistributedDatabase localDistributedDatabase,
+      ONewDistributedTxContextImpl txContext) {
     localDistributedDatabase.registerTxContext(requestId, txContext);
   }
 
@@ -508,9 +508,11 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
                 OException.wrapException(new OInterruptedException(e.getMessage()), e);
               }
             }
-            internalBegin2pc(txContext, local);
-            txContext.setStatus(SUCCESS);
-            break;
+            if (!localDistributedDatabase.validate(txContext.getTransactionId()).isPresent()) {
+              internalBegin2pc(txContext, local);
+              txContext.setStatus(SUCCESS);
+              break;
+            }
           } catch (ODistributedRecordLockedException | ODistributedKeyLockedException ex) {
             // Just retry
           } catch (Exception ex) {

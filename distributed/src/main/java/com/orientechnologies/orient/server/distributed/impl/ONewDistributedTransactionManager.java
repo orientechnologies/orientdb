@@ -214,7 +214,7 @@ public class ONewDistributedTransactionManager {
               return responseManager;
             }));
 
-    handleResponse(requestId, responseManager, involvedClusters, sentNodes, database, iTx);
+    handleResponse(requestId, txId, responseManager, involvedClusters, sentNodes, database, iTx);
 
     // OK, DISTRIBUTED COMMIT SUCCEED
     //TODO:Get the list of result from local ok, if is needed otherwise remove the ruturn
@@ -226,8 +226,9 @@ public class ONewDistributedTransactionManager {
     return ((OAbstractPaginatedStorage) storage.getUnderlying()).getLSN();
   }
 
-  private void handleResponse(ODistributedRequestId requestId, ONewDistributedResponseManager responseManager,
-      Set<String> involvedClusters, Set<String> nodes, ODatabaseDocumentDistributed database, OTransactionInternal iTx) {
+  private void handleResponse(ODistributedRequestId requestId, OTransactionId transactionId,
+      ONewDistributedResponseManager responseManager, Set<String> involvedClusters, Set<String> nodes,
+      ODatabaseDocumentDistributed database, OTransactionInternal iTx) {
     int timeout = database.getConfiguration().getValueAsInteger(DISTRIBUTED_ATOMIC_LOCK_TIMEOUT);
     int[] involvedClustersIds = new int[involvedClusters.size()];
     int i = 0;
@@ -336,8 +337,7 @@ public class ONewDistributedTransactionManager {
           break;
         case OTxInvalidSequential.ID:
           messages.add(String.format("\"invalid sequential (node " + node + ") current status:'%s' requested:'%s'",
-              ((OTxInvalidSequential) result).getCurrent(),
-              ((OTransactionPhase1Task) responseManager.getRequest().getTask()).getTransactionId()));
+              ((OTxInvalidSequential) result).getCurrent(), transactionId));
           break;
 
         }

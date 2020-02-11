@@ -19,9 +19,7 @@ import com.orientechnologies.orient.core.tx.OTransactionIndexChanges;
 import com.orientechnologies.orient.core.tx.OTransactionInternal;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.distributed.*;
-import com.orientechnologies.orient.server.distributed.impl.ODatabaseDocumentDistributed;
-import com.orientechnologies.orient.server.distributed.impl.ODistributedWorker;
-import com.orientechnologies.orient.server.distributed.impl.OTransactionOptimisticDistributed;
+import com.orientechnologies.orient.server.distributed.impl.*;
 import com.orientechnologies.orient.server.distributed.impl.task.transaction.*;
 import com.orientechnologies.orient.server.distributed.task.OAbstractReplicatedTask;
 import com.orientechnologies.orient.server.distributed.task.ODistributedKeyLockedException;
@@ -31,6 +29,8 @@ import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
 import java.util.*;
+
+import static com.orientechnologies.orient.server.distributed.impl.ONewDistributedTxContextImpl.Status.TIMEDOUT;
 
 /**
  * @author Luigi Dell'Aquila (l.dellaquila - at - orientdb.com)
@@ -146,6 +146,10 @@ public class OTransactionPhase1Task extends OAbstractReplicatedTask {
         ODistributedDatabase localDistributedDatabase = database.getStorageDistributed().getLocalDistributedDatabase();
         Optional<OTransactionId> result = localDistributedDatabase.validate(id);
         if (result.isPresent()) {
+          ONewDistributedTxContextImpl txContext = new ONewDistributedTxContextImpl(
+              (ODistributedDatabaseImpl) localDistributedDatabase, requestId, tx, id);
+          txContext.setStatus(TIMEDOUT);
+          database.register(requestId, localDistributedDatabase, txContext);
           return new OTxInvalidSequential(result.get());
         }
       }
