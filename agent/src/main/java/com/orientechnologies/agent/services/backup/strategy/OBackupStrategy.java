@@ -378,12 +378,4 @@ public abstract class OBackupStrategy {
 
   }
 
-  public ODocument mergeSecret(ODocument newCfg, ODocument oldCfg) {
-
-    if (uploader.isPresent()) {
-      return uploader.get().mergeSecret(newCfg, oldCfg);
-    }
-    return newCfg;
-  }
-
 }

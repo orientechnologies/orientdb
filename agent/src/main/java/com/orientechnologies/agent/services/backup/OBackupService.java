@@ -89,7 +89,7 @@ public class OBackupService implements OEnterpriseService {
   public void changeBackup(String uuid, ODocument doc) {
 
     OBackupTask oBackupTask = tasks.get(uuid);
-    config.changeBackup(uuid, doc, oBackupTask::mergeSecret);
+    config.changeBackup(uuid, doc);
     oBackupTask.changeConfig(config, doc);
   }
 

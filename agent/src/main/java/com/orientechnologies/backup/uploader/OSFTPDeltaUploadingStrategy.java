@@ -32,7 +32,8 @@ import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
- * This strategy performs an upload to a SFTP server. The upload of the delta between the local backup directory and the remote one is performed.
+ * This strategy performs an upload to a SFTP server. The upload of the delta between the local backup directory and the remote one
+ * is performed.
  */
 
 public class OSFTPDeltaUploadingStrategy implements OUploadingStrategy {
@@ -55,6 +56,7 @@ public class OSFTPDeltaUploadingStrategy implements OUploadingStrategy {
    * @param sourceBackupDirectory
    * @param destinationDirectoryPath
    * @param accessParameters         (String host, String port, String username, String password)
+   *
    * @return success
    */
   public boolean executeUpload(String sourceBackupDirectory, String destinationDirectoryPath, String... accessParameters) {
@@ -212,9 +214,10 @@ public class OSFTPDeltaUploadingStrategy implements OUploadingStrategy {
     host = cfg.field("host");
     port = cfg.field("port");
     username = cfg.field("username");
-    password = cfg.field("password");
+    password = System.getenv("BACKUP_SFTP_PASSWORD");
     path = cfg.field("path");
-    key = cfg.field("key");
+    key = System.getenv("BACKUP_SFTP_KEY");
+
   }
 
   @Override
@@ -265,26 +268,4 @@ public class OSFTPDeltaUploadingStrategy implements OUploadingStrategy {
     return null;
   }
 
-  @Override
-  public ODocument mergeSecret(ODocument newCfg, ODocument oldCfg) {
-
-    ODocument newUploader = newCfg.field("upload");
-    ODocument oldUploader = oldCfg.field("upload");
-
-    if (newUploader != null && oldUploader != null) {
-
-      String strategy = newUploader.field("strategy");
-      if (strategy.equalsIgnoreCase("sftp")) {
-        String newPassword = newUploader.field("password");
-
-        String oldPassword = oldUploader.field("password");
-
-        if (newPassword == null) {
-          newUploader.field("password", oldPassword);
-        }
-      }
-    }
-
-    return newCfg;
-  }
 }

@@ -43,20 +43,20 @@ import java.util.function.BiFunction;
  */
 public class OBackupConfig {
 
-  public static final String     BACKUPS        = "backups";
-  private ODocument              configuration;
-  private Map<String, ODocument> configs        = new HashMap<String, ODocument>();
+  public static final String                 BACKUPS = "backups";
+  private             ODocument              configuration;
+  private             Map<String, ODocument> configs = new HashMap<String, ODocument>();
 
-  public static final String     DBNAME         = "dbName";
-  public static final String     RETENTION_DAYS = "retentionDays";
-  public static final String     ENABLED        = "enabled";
-  public static final String     WHEN           = "when";
-  public static final String     DIRECTORY      = "directory";
-  public static final String     MODES          = "modes";
-  public static final String     ID             = "uuid";
+  public static final String DBNAME         = "dbName";
+  public static final String RETENTION_DAYS = "retentionDays";
+  public static final String ENABLED        = "enabled";
+  public static final String WHEN           = "when";
+  public static final String DIRECTORY      = "directory";
+  public static final String MODES          = "modes";
+  public static final String ID             = "uuid";
 
-  private static final String    configFile     = "${ORIENTDB_HOME}/config/backups.json";
-  private String                 filePath       = null;
+  private static final String configFile = "${ORIENTDB_HOME}/config/backups.json";
+  private              String filePath   = null;
 
   public OBackupConfig() {
     this.configuration = new ODocument();
@@ -65,7 +65,7 @@ public class OBackupConfig {
 
   public OBackupConfig load() {
 
-    filePath = OSystemVariableResolver.resolveSystemVariables(configFile,"..");
+    filePath = OSystemVariableResolver.resolveSystemVariables(configFile, "..");
     final File f = new File(filePath);
 
     if (f.exists()) {
@@ -176,12 +176,10 @@ public class OBackupConfig {
 
   }
 
-  public ODocument changeBackup(String uuid, ODocument doc, BiFunction<ODocument,ODocument,ODocument> obscurer) {
+  public ODocument changeBackup(String uuid, ODocument doc) {
     validateBackup(doc);
-    ODocument oldConfig = removeBackup(uuid);
-
-
-    pushBackup(obscurer.apply(doc,oldConfig));
+    removeBackup(uuid);
+    pushBackup(doc);
     return doc;
   }
 
@@ -225,8 +223,8 @@ public class OBackupConfig {
       final File f = new File(filePath);
       OIOUtils.writeFile(f, configuration.toJSON("prettyPrint"));
     } catch (IOException e) {
-      throw OException.wrapException(new OConfigurationException("Cannot save Backup configuration file '" + configFile + "'. "),
-          e);
+      throw OException
+          .wrapException(new OConfigurationException("Cannot save Backup configuration file '" + configFile + "'. "), e);
     }
   }
 

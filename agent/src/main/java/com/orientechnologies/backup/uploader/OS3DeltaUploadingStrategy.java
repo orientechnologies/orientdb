@@ -200,10 +200,10 @@ public class OS3DeltaUploadingStrategy implements OUploadingStrategy {
   public void config(ODocument cfg) {
 
     this.bucketName = cfg.field("bucketName");
-    this.accessKey = cfg.field("accessKey");
-    this.secretKey = cfg.field("secretKey");
+    this.accessKey = System.getenv("BACKUP_AWS_ACCESS_KEY");
+    this.secretKey = System.getenv("BACKUP_AWS_SECRET_KEY");
 
-    if (this.accessKey == null || this.accessKey == null || this.accessKey == null) {
+    if (this.bucketName == null || this.accessKey == null || this.secretKey == null) {
       throw new IllegalArgumentException("Cannot configure the backup in s3. Parameters are missing");
     }
   }
@@ -258,32 +258,4 @@ public class OS3DeltaUploadingStrategy implements OUploadingStrategy {
     return null;
   }
 
-  @Override
-  public ODocument mergeSecret(ODocument newCfg, ODocument oldCfg) {
-
-    ODocument newUploader = newCfg.field("upload");
-    ODocument oldUploader = oldCfg.field("upload");
-
-    if (newUploader != null && oldUploader != null) {
-
-      String strategy = newUploader.field("strategy");
-
-      if (strategy.equalsIgnoreCase("s3")) {
-        String newAccessKey = newUploader.field("accessKey");
-        String newSecretKey = newUploader.field("secretKey");
-
-        String oldAccessKey = oldUploader.field("accessKey");
-        String oldSecretKey = oldUploader.field("secretKey");
-
-        if (newAccessKey == null) {
-          newUploader.field("accessKey", oldAccessKey);
-        }
-        if (newSecretKey == null) {
-          newUploader.field("secretKey", oldSecretKey);
-        }
-      }
-    }
-
-    return newCfg;
-  }
 }

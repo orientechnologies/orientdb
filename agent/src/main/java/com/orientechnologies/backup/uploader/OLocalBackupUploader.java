@@ -75,7 +75,4 @@ public class OLocalBackupUploader {
     return this.uploadingStrategy.executeDownload(upload);
   }
 
-  public ODocument mergeSecret(ODocument newCfg, ODocument oldCfg) {
-    return this.uploadingStrategy.mergeSecret(newCfg, oldCfg);
-  }
 }

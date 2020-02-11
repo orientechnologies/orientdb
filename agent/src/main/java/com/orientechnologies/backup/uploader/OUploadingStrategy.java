@@ -34,5 +34,4 @@ public interface OUploadingStrategy {
 
   String executeDownload(OBackupUploadFinishedLog upload);
 
-  ODocument mergeSecret(ODocument newCfg, ODocument oldCfg);
 }
