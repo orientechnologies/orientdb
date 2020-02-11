@@ -153,12 +153,12 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
   protected          File                                       defaultDatabaseConfigFile;
   protected final    ConcurrentMap<String, ODistributedStorage> storages                          = new ConcurrentHashMap<String, ODistributedStorage>();
   protected volatile NODE_STATUS                                status                            = NODE_STATUS.OFFLINE;
-  protected long                                lastClusterChangeOn;
-  protected List<ODistributedLifecycleListener> listeners                         = new ArrayList<ODistributedLifecycleListener>();
-  protected ORemoteServerManager                remoteServerManager;
-  protected TimerTask                           publishLocalNodeConfigurationTask = null;
-  protected TimerTask                           haStatsTask                       = null;
-  protected TimerTask                           healthCheckerTask                 = null;
+  protected          long                                       lastClusterChangeOn;
+  protected          List<ODistributedLifecycleListener>        listeners                         = new ArrayList<ODistributedLifecycleListener>();
+  protected          ORemoteServerManager                       remoteServerManager;
+  protected          TimerTask                                  publishLocalNodeConfigurationTask = null;
+  protected          TimerTask                                  haStatsTask                       = null;
+  protected          TimerTask                                  healthCheckerTask                 = null;
 
   // LOCAL MSG COUNTER
   protected AtomicLong                          localMessageIdCounter     = new AtomicLong();
@@ -243,7 +243,7 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
 
       @Override
       public void nodeDisconnected(String node) {
-        ODistributedAbstractPlugin.this.removeServer(node,true);
+        ODistributedAbstractPlugin.this.removeServer(node, true);
       }
     });
   }

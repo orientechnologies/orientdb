@@ -341,7 +341,7 @@ public class OTransactionPhase1Task extends OAbstractReplicatedTask {
       notYetFinishedTask.cancel();
     }
   }
-  
+
   public OTransactionId getTransactionId() {
     return transactionId;
   }
