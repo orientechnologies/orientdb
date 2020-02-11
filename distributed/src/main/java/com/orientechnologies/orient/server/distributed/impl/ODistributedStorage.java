@@ -33,6 +33,8 @@ import com.orientechnologies.orient.core.config.OContextConfiguration;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.config.OStorageConfiguration;
 import com.orientechnologies.orient.core.conflict.ORecordConflictStrategy;
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
+import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.OScenarioThreadLocal;
 import com.orientechnologies.orient.core.db.OScenarioThreadLocal.RUN_MODE;
 import com.orientechnologies.orient.core.db.record.OCurrentStorageComponentsFactory;
@@ -156,8 +158,10 @@ public class ODistributedStorage implements OStorage, OFreezableStorageComponent
       // DON'T REPLICATE
       return wrapped.command(iCommand);
 
-    final OCommandExecutor executor = getLocalDistributedDatabase().getDatabaseInstance().getSharedContext().getOrientDB()
-        .getScriptManager().getCommandManager().getExecutor(iCommand);
+    final ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.instance().getIfDefined();
+
+    final OCommandExecutor executor = db.getSharedContext().getOrientDB().getScriptManager().getCommandManager()
+        .getExecutor(iCommand);
 
     executor.setProgressListener(iCommand.getProgressListener());
     executor.parse(iCommand);
