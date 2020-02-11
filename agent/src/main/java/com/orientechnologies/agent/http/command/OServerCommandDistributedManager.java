@@ -18,7 +18,6 @@
 package com.orientechnologies.agent.http.command;
 
 import com.orientechnologies.agent.EnterprisePermissions;
-import com.orientechnologies.agent.ha.sql.OCommandExecutorSQLHAStartReplication;
 import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.enterprise.server.OEnterpriseServer;
@@ -128,53 +127,8 @@ public class OServerCommandDistributedManager extends OServerCommandDistributedS
       synchCluster(iResponse, parts);
     } else if (command.equalsIgnoreCase("syncDatabase")) {
       syncDatabase(iResponse, parts);
-    } else if (command.equalsIgnoreCase("stopReplication")) {
-      if (parts.length < 3)
-        throw new IllegalArgumentException("Cannot stop replication : missing database  name ");
-
-      if (server.getDistributedManager() == null)
-        throw new OConfigurationException("Cannot stop replication: local server is not distributed");
-
-      String database = parts[2];
-      String cluster = parts[3];
-
-      final ODatabaseDocumentInternal db = server.openDatabase(database, "", "", null, true);
-      try {
-        String localNodeName = server.getDistributedManager().getLocalNodeName();
-
-        Object result = db.command(new OCommandSQL(String.format("ha stop replication %s ", localNodeName))).execute();
-        ODocument document = new ODocument().field("result", result);
-        iResponse.send(OHttpUtils.STATUS_OK_CODE, "OK", OHttpUtils.CONTENT_JSON, document.toJSON(""), null);
-      } finally {
-        db.close();
-      }
-
-    } else if (command.equalsIgnoreCase("startReplication")) {
-      if (parts.length < 3)
-        throw new IllegalArgumentException("Cannot start replication : missing database name ");
-
-      if (server.getDistributedManager() == null)
-        throw new OConfigurationException("Cannot start replication: local server is not distributed");
-
-      final String database = parts[2];
-
-      final String localNodeName = server.getDistributedManager().getLocalNodeName();
-
-      ODatabaseDocumentInternal db = server.openDatabase(database, "", "", null, true);
-
-      try {
-        Object result = OCommandExecutorSQLHAStartReplication.startReplication(db, new ArrayList<String>() {
-          {
-            add(localNodeName);
-          }
-
-        }, OCommandExecutorSQLHAStartReplication.MODE.FULL);
-
-        ODocument document = new ODocument().field("result", result);
-        iResponse.send(OHttpUtils.STATUS_OK_CODE, "OK", OHttpUtils.CONTENT_JSON, document.toJSON(""), null);
-      } finally {
-        db.close();
-      }
+    } else {
+      throw new IllegalArgumentException(String.format("Command %s not supported", command));
     }
 
   }
