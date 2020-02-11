@@ -247,10 +247,7 @@ public class OEnterpriseAgent extends OServerPluginAbstract
 
     listener.registerStatelessCommand(new OServerCommandGetProfiler());
     listener.registerStatelessCommand(new OServerCommandDistributedManager(enterpriseServer));
-    listener.registerStatelessCommand(new OServerCommandGetLog(enterpriseServer));
     listener.registerStatelessCommand(new OServerCommandConfiguration(enterpriseServer));
-    listener.registerStatelessCommand(new OServerCommandGetDeployDb());
-
     listener.registerStatelessCommand(new OServerCommandGetNode(enterpriseServer));
   }
 
@@ -261,9 +258,7 @@ public class OEnterpriseAgent extends OServerPluginAbstract
     }
     listener.unregisterStatelessCommand(OServerCommandGetProfiler.class);
     listener.unregisterStatelessCommand(OServerCommandDistributedManager.class);
-    listener.unregisterStatelessCommand(OServerCommandGetLog.class);
     listener.unregisterStatelessCommand(OServerCommandConfiguration.class);
-    listener.unregisterStatelessCommand(OServerCommandGetDeployDb.class);
     listener.unregisterStatelessCommand(OServerCommandGetNode.class);
   }
 

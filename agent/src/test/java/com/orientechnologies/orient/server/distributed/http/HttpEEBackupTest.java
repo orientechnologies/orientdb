@@ -4,7 +4,7 @@ import org.apache.http.HttpResponse;
 import org.junit.Assert;
 import org.junit.Test;
 
-public class HttpEEEndpointsTest extends EEBaseHttpTest {
+public class HttpEEBackupTest extends EEBaseHttpTest {
 
   @Test
   public void getBackupManager() throws Exception {
