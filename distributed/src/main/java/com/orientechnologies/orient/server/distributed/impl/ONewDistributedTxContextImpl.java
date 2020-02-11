@@ -6,9 +6,7 @@ import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.tx.OTransactionInternal;
-import com.orientechnologies.orient.server.distributed.ODistributedRequestId;
-import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
-import com.orientechnologies.orient.server.distributed.ODistributedTxContext;
+import com.orientechnologies.orient.server.distributed.*;
 import com.orientechnologies.orient.server.distributed.task.ODistributedKeyLockedException;
 import com.orientechnologies.orient.server.distributed.task.ODistributedRecordLockedException;
 import com.orientechnologies.orient.server.distributed.task.ORemoteTask;
@@ -31,13 +29,15 @@ public class ONewDistributedTxContextImpl implements ODistributedTxContext {
   private final List<ORID>               lockedRids = new ArrayList<>();
   private final List<Object>             lockedKeys = new ArrayList<>();
   private       Status                   status;
+  private final OTransactionId           transactionId;
 
-  public ONewDistributedTxContextImpl(ODistributedDatabaseImpl shared, ODistributedRequestId reqId, OTransactionInternal tx) {
+  public ONewDistributedTxContextImpl(ODistributedDatabaseImpl shared, ODistributedRequestId reqId, OTransactionInternal tx,
+      OTransactionId id) {
     this.shared = shared;
     this.id = reqId;
     this.tx = tx;
     this.startedOn = System.currentTimeMillis();
-
+    transactionId = id;
   }
 
   @Override
@@ -94,6 +94,9 @@ public class ONewDistributedTxContextImpl implements ODistributedTxContext {
 
   @Override
   public synchronized void commit(ODatabaseDocumentInternal database) {
+    ODistributedDatabase localDistributedDatabase = ((ODatabaseDocumentDistributed) database).getStorageDistributed()
+        .getLocalDistributedDatabase();
+    localDistributedDatabase.commit(getTransactionId());
     ((ODatabaseDocumentDistributed) database).internalCommit2pc(this);
   }
 
@@ -161,8 +164,9 @@ public class ONewDistributedTxContextImpl implements ODistributedTxContext {
   public List<ORID> getLockedRids() {
     return lockedRids;
   }
-
-  public List<Object> getLockedKeys() {
-    return lockedKeys;
+  
+  @Override
+  public OTransactionId getTransactionId() {
+    return transactionId;
   }
 }

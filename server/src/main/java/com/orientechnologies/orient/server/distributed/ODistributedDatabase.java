@@ -114,6 +114,10 @@ public interface ODistributedDatabase {
 
   Optional<OTransactionId> validate(OTransactionId id);
 
+  void rollback(OTransactionId id);
+
+  void commit(OTransactionId id);
+
   ODistributedTxContext registerTxContext(ODistributedRequestId reqId);
 
   ODistributedTxContext registerTxContext(final ODistributedRequestId reqId, ODistributedTxContext ctx);

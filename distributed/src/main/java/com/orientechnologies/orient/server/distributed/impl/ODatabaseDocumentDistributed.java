@@ -400,7 +400,7 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
       int retryCount) {
     ODistributedDatabase localDistributedDatabase = getStorageDistributed().getLocalDistributedDatabase();
     ONewDistributedTxContextImpl txContext = new ONewDistributedTxContextImpl((ODistributedDatabaseImpl) localDistributedDatabase,
-        requestId, tx);
+        requestId, tx, id);
     try {
       internalBegin2pc(txContext, local);
       txContext.setStatus(SUCCESS);
@@ -560,6 +560,7 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
     ODistributedDatabase localDistributedDatabase = getStorageDistributed().getLocalDistributedDatabase();
     ODistributedTxContext txContext = localDistributedDatabase.popTxContext(transactionId);
     if (txContext != null) {
+      localDistributedDatabase.rollback(txContext.getTransactionId());
       txContext.destroy();
       OLiveQueryHook.removePendingDatabaseOps(this);
       OLiveQueryHookV2.removePendingDatabaseOps(this);
