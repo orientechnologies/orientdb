@@ -19,6 +19,7 @@
 package com.orientechnologies.agent.profiler;
 
 import com.orientechnologies.agent.OEnterpriseAgent;
+import com.orientechnologies.agent.profiler.metrics.OGauge;
 import com.orientechnologies.agent.profiler.metrics.OMeter;
 import com.orientechnologies.agent.profiler.metrics.OMetric;
 import com.orientechnologies.agent.services.backup.OBackupService;
@@ -130,6 +131,35 @@ public class OMetricServiceTest {
 
     OMeter deleteMetrics = (OMeter) metrics.get(delete);
     Assert.assertEquals(1, deleteMetrics.getCount());
+  }
+
+  @Test
+  public void resourceTest() {
+
+    Map<String, OMetric> metrics = metricsService.getRegistry().getMetrics();
+
+    OGauge createMetrics = (OGauge) metrics.get(OGlobalMetrics.SERVER_RUNTIME_CPU.name);
+    Assert.assertNotNull(createMetrics.getValue());
+
+    OGauge diskCacheTotal = (OGauge) metrics.get(OGlobalMetrics.SERVER_RUNTIME_DISK_CACHE.name + ".total");
+
+    OGauge diskCacheUsed = (OGauge) metrics.get(OGlobalMetrics.SERVER_RUNTIME_DISK_CACHE.name + ".used");
+
+    Assert.assertNotNull(diskCacheTotal.getValue());
+
+    Assert.assertNotNull(diskCacheUsed.getValue());
+
+    OGauge diskTotal = (OGauge) metrics.get(OGlobalMetrics.SERVER_DISK_SPACE.name + ".totalSpace");
+
+    OGauge diskFree = (OGauge) metrics.get(OGlobalMetrics.SERVER_DISK_SPACE.name + ".freeSpace");
+
+    OGauge diskUsable = (OGauge) metrics.get(OGlobalMetrics.SERVER_DISK_SPACE.name + ".usableSpace");
+
+    Assert.assertNotNull(diskTotal.getValue());
+
+    Assert.assertNotNull(diskFree.getValue());
+
+    Assert.assertNotNull(diskUsable.getValue());
   }
 
   @After
