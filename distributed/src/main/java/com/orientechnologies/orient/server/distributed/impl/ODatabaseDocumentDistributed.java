@@ -508,11 +508,13 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
                 OException.wrapException(new OInterruptedException(e.getMessage()), e);
               }
             }
-            if (!localDistributedDatabase.validate(txContext.getTransactionId()).isPresent()) {
-              internalBegin2pc(txContext, local);
-              txContext.setStatus(SUCCESS);
-              break;
+            if (localDistributedDatabase.validate(txContext.getTransactionId()).isPresent()) {
+              return false;
             }
+            internalBegin2pc(txContext, local);
+            txContext.setStatus(SUCCESS);
+            break;
+
           } catch (ODistributedRecordLockedException | ODistributedKeyLockedException ex) {
             // Just retry
           } catch (Exception ex) {

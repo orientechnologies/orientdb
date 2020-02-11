@@ -164,7 +164,7 @@ public class ONewDistributedTxContextImpl implements ODistributedTxContext {
   public List<ORID> getLockedRids() {
     return lockedRids;
   }
-  
+
   @Override
   public OTransactionId getTransactionId() {
     return transactionId;
