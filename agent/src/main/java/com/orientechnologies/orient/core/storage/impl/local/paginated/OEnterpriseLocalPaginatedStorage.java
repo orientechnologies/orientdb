@@ -68,6 +68,7 @@ import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 import java.text.SimpleDateFormat;
 import java.util.*;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
@@ -88,7 +89,7 @@ public class OEnterpriseLocalPaginatedStorage extends OLocalPaginatedStorage {
 
   private static final String ENCRYPTION_IV = "encryption.iv";
 
-  private List<OEnterpriseStorageOperationListener> listeners = Collections.synchronizedList(new ArrayList<>());
+  private List<OEnterpriseStorageOperationListener> listeners = new CopyOnWriteArrayList();
 
   public OEnterpriseLocalPaginatedStorage(String name, String filePath, String mode, int id, OReadCache readCache,
       OClosableLinkedContainer<Long, OFile> files, long walMaxSize, long doubleWriteLogMaxSize) {
