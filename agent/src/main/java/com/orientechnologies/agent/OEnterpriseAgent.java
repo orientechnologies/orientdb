@@ -475,4 +475,8 @@ public class OEnterpriseAgent extends OServerPluginAbstract
     newCfg.setServerOwner(clusterName, owner);
     dManager.updateCachedDatabaseConfiguration(databaseName, newCfg, true);
   }
+
+  public OEnterpriseServer getEnterpriseServer() {
+    return enterpriseServer;
+  }
 }

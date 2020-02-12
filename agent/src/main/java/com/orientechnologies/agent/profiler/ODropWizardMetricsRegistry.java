@@ -289,4 +289,8 @@ public class ODropWizardMetricsRegistry implements OMetricsRegistry {
 
     writer.writeValue(outputStream, registry);
   }
+
+  public MetricRegistry getInternal() {
+    return registry;
+  }
 }

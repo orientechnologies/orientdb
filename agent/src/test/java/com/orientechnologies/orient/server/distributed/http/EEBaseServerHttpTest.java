@@ -34,18 +34,17 @@ public abstract class EEBaseServerHttpTest {
   @Rule
   public TestName name = new TestName();
 
-  private OServer server;
+  protected OServer server;
 
   private String  realm        = "OrientDB-";
   private String  userName     = "root";
   private String  userPassword = "root";
   private Boolean keepAlive    = null;
 
-  private HttpRequestBase    request;
-  private AbstractHttpEntity payload;
-  private HttpResponse       response;
-  private int                retry = 1;
-  private OrientDB           remote;
+  private   HttpRequestBase    request;
+  private   AbstractHttpEntity payload;
+  private   HttpResponse       response;
+  protected OrientDB           remote;
 
   @Before
 
@@ -54,7 +53,10 @@ public abstract class EEBaseServerHttpTest {
     server = OServer.startFromClasspathConfig("orientdb-server-config.xml");
 
     remote = new OrientDB("remote:localhost", "root", "root", OrientDBConfig.defaultConfig());
-    remote.create(name.getMethodName(), ODatabaseType.PLOCAL);
+
+    if (shouldCreateDatabase()) {
+      remote.create(name.getMethodName(), ODatabaseType.PLOCAL);
+    }
   }
 
   @After
@@ -180,11 +182,6 @@ public abstract class EEBaseServerHttpTest {
     return this;
   }
 
-  public EEBaseServerHttpTest setRetry(final int iRetry) {
-    retry = iRetry;
-    return this;
-  }
-
   protected String getUserPassword() {
     return userPassword;
   }
@@ -219,4 +216,7 @@ public abstract class EEBaseServerHttpTest {
     return this;
   }
 
+  protected boolean shouldCreateDatabase() {
+    return true;
+  }
 }

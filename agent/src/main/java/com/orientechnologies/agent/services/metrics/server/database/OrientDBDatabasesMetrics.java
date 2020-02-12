@@ -21,7 +21,6 @@ public class OrientDBDatabasesMetrics implements OrientDBMetric, OEnterpriseStor
 
   private final Map<String, OrientDBSingleDatabaseMetrics> storages = new ConcurrentHashMap<>();
   private final Map<String, OrientDBDatabaseQueryMetrics>  queries  = new ConcurrentHashMap<>();
-  OrientDBDatabaseQueryMetrics queryMetrics;
 
   public OrientDBDatabasesMetrics(OEnterpriseServer server, OMetricsRegistry registry) {
     this.server = server;
