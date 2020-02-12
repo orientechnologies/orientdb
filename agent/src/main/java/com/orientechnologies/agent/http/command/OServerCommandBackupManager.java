@@ -133,8 +133,7 @@ public class OServerCommandBackupManager extends OServerCommandDistributedScope 
       String uuid = parts[1];
       backupManager.removeAndStopBackup(uuid);
       iResponse.send(OHttpUtils.STATUS_OK_CODE, "OK", OHttpUtils.CONTENT_JSON, null, null);
-    }
-    if (parts.length >= 3) {
+    } else if (parts.length >= 3) {
 
       String uuid = parts[1];
       String command = parts[2];

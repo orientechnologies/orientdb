@@ -28,11 +28,12 @@ import com.orientechnologies.orient.server.network.protocol.http.OHttpUtils;
 
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 
 public class OServerCommandConfiguration extends OServerCommandDistributedScope {
 
-  private static final String[] NAMES = {"GET|configuration"};
+  private static final String[] NAMES = { "GET|configuration" };
 
   public OServerCommandConfiguration(OEnterpriseServer server) {
     super(EnterprisePermissions.SERVER_CONFIGURATION.toString(), server);
@@ -63,6 +64,8 @@ public class OServerCommandConfiguration extends OServerCommandDistributedScope 
 
         config = OSystemVariableResolver.resolveSystemVariables(config);
 
+        server.getConfiguration();
+
         File file2 = new File(config);
 
         FileInputStream input = new FileInputStream(file2);
@@ -75,22 +78,14 @@ public class OServerCommandConfiguration extends OServerCommandDistributedScope 
             OLogManager.instance().info(this, "Failed to close input stream for " + file2);
           }
         }
+      } catch (FileNotFoundException e) {
+        iResponse
+            .send(OHttpUtils.STATUS_NOTFOUND_CODE, OHttpUtils.STATUS_NOTFOUND_DESCRIPTION, OHttpUtils.CONTENT_TEXT_PLAIN, e, null);
       } catch (Exception e) {
         iResponse.send(OHttpUtils.STATUS_BADREQ_CODE, OHttpUtils.STATUS_BADREQ_DESCRIPTION, OHttpUtils.CONTENT_TEXT_PLAIN, e, null);
       }
     } else {
-//      proxyRequest(iRequest, iResponse, new HttpProxyListener() {
-//        @Override
-//        public void onProxySuccess(OHttpRequest request, OHttpResponse response, InputStream is) throws IOException {
-//          response.sendStream(OHttpUtils.STATUS_OK_CODE, OHttpUtils.STATUS_OK_DESCRIPTION, "text/xml", is, -1);
-//        }
-//
-//        @Override
-//        public void onProxyError(OHttpRequest request, OHttpResponse iResponse, InputStream is, int code, Exception e)
-//            throws IOException {
-//          iResponse.send(code, OHttpUtils.STATUS_BADREQ_DESCRIPTION, OHttpUtils.CONTENT_JSON, e, null);
-//        }
-//      });
+
     }
 
     return false;
