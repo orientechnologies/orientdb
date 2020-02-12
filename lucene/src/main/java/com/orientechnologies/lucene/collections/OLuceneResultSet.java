@@ -250,7 +250,7 @@ public class OLuceneResultSet implements Set<OIdentifiable> {
 
         for (String field : highlighted) {
           String text = doc.get(field);
-          if(text !=null) {
+          if (text != null) {
             TokenStream tokenStream = TokenSources.getAnyTokenStream(indexReader, score.doc, field, doc, engine.indexAnalyzer());
             TextFragment[] frag = highlighter.getBestTextFragments(tokenStream, text, true, maxNumFragments);
             queryContext.addHighlightFragment(field, frag);
