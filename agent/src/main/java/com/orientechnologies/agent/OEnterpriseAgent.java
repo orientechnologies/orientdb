@@ -75,12 +75,10 @@ public class OEnterpriseAgent extends OServerPluginAbstract
   private static final String  PLUGIN_NAME            = "enterprise-agent";
   private static final String  PATH_TO_EE_AGENT_PROPS = "/com/orientechnologies/agent.properties";
   private static final String  EE_VERSION             = "version";
-  private static final String  LICENSE                = "license";
   private static final boolean PLUGIN_ENABLED_DEFAULT = false;
 
   private String     enterpriseVersion = "";
   public  OServer    server;
-  private String     license;
   private Properties properties        = new Properties();
 
   private List<OEnterpriseService> services = new ArrayList<>();
@@ -98,11 +96,7 @@ public class OEnterpriseAgent extends OServerPluginAbstract
     server = oServer;
 
     enterpriseServer = new OEnterpriseServerImpl(server, this);
-    for (final OServerParameterConfiguration paramConfig : iParams) {
-      if (paramConfig.name.equals(LICENSE)) {
-        license = paramConfig.value;
-      }
-    }
+
     if (oServer.getPluginManager() != null) {
       oServer.getPluginManager().registerLifecycleListener(this);
     }
@@ -244,8 +238,7 @@ public class OEnterpriseAgent extends OServerPluginAbstract
       throw new OConfigurationException("HTTP listener not found");
 
     listener.registerStatelessCommand(new OServerCommandDistributedManager(enterpriseServer));
-    listener.registerStatelessCommand(new OServerCommandConfiguration(enterpriseServer));
-    listener.registerStatelessCommand(new OServerCommandGetNode(enterpriseServer));
+
   }
 
   private void uninstallCommands() {
@@ -253,10 +246,7 @@ public class OEnterpriseAgent extends OServerPluginAbstract
     if (listener == null) {
       throw new OConfigurationException("HTTP listener not found");
     }
-    listener.unregisterStatelessCommand(OServerCommandGetProfiler.class);
     listener.unregisterStatelessCommand(OServerCommandDistributedManager.class);
-    listener.unregisterStatelessCommand(OServerCommandConfiguration.class);
-    listener.unregisterStatelessCommand(OServerCommandGetNode.class);
   }
 
   private boolean checkLicense() {
