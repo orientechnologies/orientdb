@@ -24,31 +24,13 @@ import com.orientechnologies.orient.core.tx.OTransactionInternal;
  */
 public class OStorageTransaction {
   private final OTransactionInternal clientTx;
-  private final OMicroTransaction    microTransaction;
 
   public OStorageTransaction(OTransactionInternal clientTx) {
     this.clientTx = clientTx;
-    this.microTransaction = null;
-  }
-
-  /**
-   * Instantiates a new storage transaction for the given micro-transaction.
-   *
-   * @param microTransaction the micro-transaction.
-   */
-  public OStorageTransaction(OMicroTransaction microTransaction) {
-    this.microTransaction = microTransaction;
-    this.clientTx = null;
   }
 
   public OTransactionInternal getClientTx() {
     return clientTx;
   }
 
-  /**
-   * @return the micro-transaction associated with this storage transaction or {@code null} if there are no such transaction.
-   */
-  public OMicroTransaction getMicroTransaction() {
-    return microTransaction;
-  }
 }
