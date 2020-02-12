@@ -1,0 +1,13 @@
+{
+  "module": "auditing",
+  "config": {
+    "class": "com.orientechnologies.security.auditing.ODefaultAuditing",
+    "enabled": true,
+    "distributed": {
+      "onNodeJoinedEnabled": false,
+      "onNodeJoinedMessage": "Node ${node} has joined...",
+      "onNodeLeftEnabled": false,
+      "onNodeLeftMessage": "Node ${node} has left..."
+    }
+  }
+}
