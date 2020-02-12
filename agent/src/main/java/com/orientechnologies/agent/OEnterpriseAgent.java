@@ -25,6 +25,7 @@ import com.orientechnologies.agent.profiler.OEnterpriseProfiler;
 import com.orientechnologies.agent.profiler.OEnterpriseProfilerListener;
 import com.orientechnologies.agent.services.OEnterpriseService;
 import com.orientechnologies.agent.services.backup.OBackupService;
+import com.orientechnologies.agent.services.distributed.ODistributedService;
 import com.orientechnologies.agent.services.metrics.OrientDBMetricsService;
 import com.orientechnologies.agent.services.security.OSecurityService;
 import com.orientechnologies.agent.services.studio.StudioService;
@@ -85,8 +86,6 @@ public class OEnterpriseAgent extends OServerPluginAbstract
 
   private OEnterpriseServer enterpriseServer;
 
-  private NodesManager nodesManager;
-
   public OEnterpriseAgent() {
   }
 
@@ -109,6 +108,8 @@ public class OEnterpriseAgent extends OServerPluginAbstract
     this.services.add(new OAgentProfilerService());
     this.services.add(new OBackupService());
     this.services.add(new OSecurityService());
+    this.services.add(new ODistributedService());
+
     this.services.forEach((s) -> s.init(this.enterpriseServer));
   }
 
@@ -124,39 +125,6 @@ public class OEnterpriseAgent extends OServerPluginAbstract
       if (checkLicense() && checkVersion()) {
         server.registerLifecycleListener(this);
         enabled = true;
-        final Thread installer = new Thread(() -> {
-          int retry = 0;
-          while (true) {
-            final ODistributedServerManager manager = server.getDistributedManager();
-            if (manager == null) {
-              if (retry == 5) {
-                break;
-              }
-              try {
-                Thread.sleep(2000);
-              } catch (InterruptedException e) {
-                OLogManager.instance().error(this, "Thread interrupted: " + e.getMessage(), e);
-              }
-              retry++;
-              continue;
-            } else {
-              final OHazelcastPlugin plugin = (OHazelcastPlugin) manager;
-              nodesManager = new NodesManager(plugin);
-              try {
-                plugin.waitUntilNodeOnline();
-              } catch (InterruptedException e) {
-                OLogManager.instance().error(this, "Thread interrupted " + e.getMessage(), e);
-              }
-              // TODO
-
-              getServiceByClass(OAgentProfilerService.class).ifPresent((e) -> manager.registerLifecycleListener(e.getProfiler()));
-              installDistributedCommands();
-              break;
-            }
-          }
-        });
-        installer.setDaemon(true);
-        installer.start();
         Orient.instance().addDbLifecycleListener(this);
       }
     } catch (final Exception e) {
@@ -173,10 +141,6 @@ public class OEnterpriseAgent extends OServerPluginAbstract
       }
       Orient.instance().removeDbLifecycleListener(this);
     }
-  }
-
-  public NodesManager getNodesManager() {
-    return nodesManager;
   }
 
   @Override
@@ -236,8 +200,6 @@ public class OEnterpriseAgent extends OServerPluginAbstract
     final OServerNetworkListener listener = server.getListenerByProtocol(ONetworkProtocolHttpAbstract.class);
     if (listener == null)
       throw new OConfigurationException("HTTP listener not found");
-
-    listener.registerStatelessCommand(new OServerCommandDistributedManager(enterpriseServer));
 
   }
 

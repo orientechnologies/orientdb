@@ -2,6 +2,7 @@ package com.orientechnologies.enterprise.server;
 
 import com.orientechnologies.agent.OEnterpriseAgent;
 import com.orientechnologies.agent.operation.NodesManager;
+import com.orientechnologies.agent.services.OEnterpriseService;
 import com.orientechnologies.agent.services.metrics.server.database.QueryInfo;
 import com.orientechnologies.enterprise.server.listener.OEnterpriseConnectionListener;
 import com.orientechnologies.enterprise.server.listener.OEnterpriseStorageListener;
@@ -19,8 +20,10 @@ import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.OEnterpriseLocalPaginatedStorage;
 import com.orientechnologies.orient.server.OClientConnection;
 import com.orientechnologies.orient.server.OServer;
+import com.orientechnologies.orient.server.OServerLifecycleListener;
 import com.orientechnologies.orient.server.OSystemDatabase;
 import com.orientechnologies.orient.server.config.OServerParameterConfiguration;
+import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
 import com.orientechnologies.orient.server.network.OServerNetworkListener;
 import com.orientechnologies.orient.server.network.protocol.ONetworkProtocol;
 import com.orientechnologies.orient.server.network.protocol.http.ONetworkProtocolHttpAbstract;
@@ -37,9 +40,12 @@ import java.util.stream.Collectors;
 /**
  * Created by Enrico Risa on 16/07/2018.
  */
-public class OEnterpriseServerImpl implements OEnterpriseServer, OServerPlugin, ODatabaseLifecycleListener, ODatabaseListener {
+public class OEnterpriseServerImpl
+    implements OEnterpriseServer, OServerPlugin, ODatabaseLifecycleListener, ODatabaseListener, OServerLifecycleListener {
   private final OEnterpriseAgent agent;
   private       OServer          server;
+
+  private NodesManager nodesManager;
 
   private List<OEnterpriseConnectionListener> listeners = new ArrayList<>();
 
@@ -47,13 +53,13 @@ public class OEnterpriseServerImpl implements OEnterpriseServer, OServerPlugin, 
 
   private Map<String, OEnterpriseLocalPaginatedStorage> storages = new ConcurrentHashMap<>();
 
-  // private Map<Class<OResultSet>, Function<OResultSet, QueryInfo>> queryInfo = new HashMap<>();
-
   public OEnterpriseServerImpl(final OServer server, final OEnterpriseAgent agent) {
     this.server = server;
     this.agent = agent;
     server.getPluginManager().registerPlugin(new OServerPluginInfo("Enterprise Server", null, null, null, this, null, 0, null));
     Orient.instance().addDbLifecycleListener(this);
+
+    this.server.registerLifecycleListener(this);
   }
 
   @Override
@@ -128,7 +134,12 @@ public class OEnterpriseServerImpl implements OEnterpriseServer, OServerPlugin, 
   }
 
   public NodesManager getNodesManager() {
-    return agent.getNodesManager();
+    return nodesManager;
+  }
+
+  @Override
+  public ODistributedServerManager getDistributedManager() {
+    return server.getDistributedManager();
   }
 
   @Override
@@ -173,6 +184,19 @@ public class OEnterpriseServerImpl implements OEnterpriseServer, OServerPlugin, 
   @Override
   public Object getContent(String s) {
     return null;
+  }
+
+  @Override
+  public PRIORITY getPriority() {
+    return PRIORITY.LAST;
+  }
+
+  @Override
+  public void onAfterActivate() {
+
+    if (server.getDistributedManager() != null) {
+      nodesManager = new NodesManager(server.getDistributedManager());
+    }
   }
 
   @Override
@@ -362,7 +386,7 @@ public class OEnterpriseServerImpl implements OEnterpriseServer, OServerPlugin, 
 
   @Override
   public Optional<QueryInfo> getQueryInfo(final OResultSet resultSet) {
-     Optional<QueryInfo> info = Optional.empty();
+    Optional<QueryInfo> info = Optional.empty();
     if (resultSet instanceof OLocalResultSetLifecycleDecorator) {
       OResultSet oResultSet = ((OLocalResultSetLifecycleDecorator) resultSet).getInternal();
       if (oResultSet instanceof OLocalResultSet) {
@@ -387,5 +411,10 @@ public class OEnterpriseServerImpl implements OEnterpriseServer, OServerPlugin, 
       }
     }
     return info;
+  }
+
+  @Override
+  public <T extends OEnterpriseService> Optional<T> getServiceByClass(Class<T> klass) {
+    return agent.getServiceByClass(klass);
   }
 }

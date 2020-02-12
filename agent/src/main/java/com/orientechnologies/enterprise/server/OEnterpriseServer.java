@@ -1,6 +1,7 @@
 package com.orientechnologies.enterprise.server;
 
 import com.orientechnologies.agent.operation.NodesManager;
+import com.orientechnologies.agent.services.OEnterpriseService;
 import com.orientechnologies.agent.services.metrics.server.database.QueryInfo;
 import com.orientechnologies.enterprise.server.listener.OEnterpriseConnectionListener;
 import com.orientechnologies.enterprise.server.listener.OEnterpriseStorageListener;
@@ -10,6 +11,7 @@ import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import com.orientechnologies.orient.core.sql.functions.OSQLFunction;
 import com.orientechnologies.orient.server.OClientConnection;
 import com.orientechnologies.orient.server.OSystemDatabase;
+import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
 import com.orientechnologies.orient.server.network.protocol.http.command.OServerCommand;
 import com.orientechnologies.orient.server.security.OServerSecurity;
 
@@ -55,6 +57,8 @@ public interface OEnterpriseServer {
 
   NodesManager getNodesManager();
 
+  ODistributedServerManager getDistributedManager();
+
   boolean existsDatabase(String databaseName);
 
   void restore(String databaseName, String path);
@@ -64,4 +68,6 @@ public interface OEnterpriseServer {
   List<OResult> listQueries(Optional<Function<OClientConnection, Boolean>> filter);
 
   Optional<QueryInfo> getQueryInfo(OResultSet resultSet);
+
+  <T extends OEnterpriseService> Optional<T> getServiceByClass(Class<T> klass);
 }
