@@ -1,11 +1,8 @@
 package com.orientechnologies.orient.server.distributed.http;
 
-import com.orientechnologies.common.io.OFileUtils;
-import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.ODatabaseType;
 import com.orientechnologies.orient.core.db.OrientDB;
 import com.orientechnologies.orient.core.db.OrientDBConfig;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.server.OServer;
 import org.apache.http.Consts;
 import org.apache.http.Header;
@@ -30,10 +27,9 @@ import org.junit.Before;
 import org.junit.Rule;
 import org.junit.rules.TestName;
 
-import java.io.File;
 import java.io.IOException;
 
-public abstract class EEBaseHttpTest {
+public abstract class EEBaseDistributedHttpTest {
 
   @Rule
   public TestName name = new TestName();
@@ -81,7 +77,7 @@ public abstract class EEBaseHttpTest {
     TEXT, JSON
   }
 
-  public EEBaseHttpTest payload(final String s, final CONTENT iContent) {
+  public EEBaseDistributedHttpTest payload(final String s, final CONTENT iContent) {
     payload = new StringEntity(s, ContentType.create(iContent == CONTENT.JSON ? "application/json" : "plain/text", Consts.UTF_8));
     return this;
   }
@@ -91,7 +87,7 @@ public abstract class EEBaseHttpTest {
     return env == null || env.equals("dev");
   }
 
-  protected EEBaseHttpTest exec() {
+  protected EEBaseDistributedHttpTest exec() {
     final HttpHost targetHost = new HttpHost(getHost(), getPort(), getProtocol());
 
     CredentialsProvider credsProvider = new BasicCredentialsProvider();
@@ -128,7 +124,7 @@ public abstract class EEBaseHttpTest {
     return this;
   }
 
-  protected EEBaseHttpTest get(final String url, Header[] headers) {
+  protected EEBaseDistributedHttpTest get(final String url, Header[] headers) {
     request = new HttpGet(getBaseURL() + "/" + url);
     request.setHeaders(headers);
 
@@ -136,31 +132,31 @@ public abstract class EEBaseHttpTest {
     return this;
   }
 
-  protected EEBaseHttpTest get(final String url) {
+  protected EEBaseDistributedHttpTest get(final String url) {
     request = new HttpGet(getBaseURL() + "/" + url);
     response = null;
     return this;
   }
 
-  protected EEBaseHttpTest post(final String url) {
+  protected EEBaseDistributedHttpTest post(final String url) {
     request = new HttpPost(getBaseURL() + "/" + url);
     response = null;
     return this;
   }
 
-  protected EEBaseHttpTest put(final String url) {
+  protected EEBaseDistributedHttpTest put(final String url) {
     request = new HttpPut(getBaseURL() + "/" + url);
     response = null;
     return this;
   }
 
-  protected EEBaseHttpTest delete(final String url) {
+  protected EEBaseDistributedHttpTest delete(final String url) {
     request = new HttpDelete(getBaseURL() + "/" + url);
     response = null;
     return this;
   }
 
-  protected EEBaseHttpTest patch(final String url) {
+  protected EEBaseDistributedHttpTest patch(final String url) {
     request = new HttpPatch(getBaseURL() + "/" + url);
     response = null;
     return this;
@@ -173,7 +169,7 @@ public abstract class EEBaseHttpTest {
     return response;
   }
 
-  protected EEBaseHttpTest setKeepAlive(final boolean iValue) {
+  protected EEBaseDistributedHttpTest setKeepAlive(final boolean iValue) {
     keepAlive = iValue;
     return this;
   }
@@ -186,12 +182,12 @@ public abstract class EEBaseHttpTest {
     return userName;
   }
 
-  protected EEBaseHttpTest setUserName(final String userName) {
+  protected EEBaseDistributedHttpTest setUserName(final String userName) {
     this.userName = userName;
     return this;
   }
 
-  public EEBaseHttpTest setRetry(final int iRetry) {
+  public EEBaseDistributedHttpTest setRetry(final int iRetry) {
     retry = iRetry;
     return this;
   }
@@ -200,7 +196,7 @@ public abstract class EEBaseHttpTest {
     return userPassword;
   }
 
-  protected EEBaseHttpTest setUserPassword(final String userPassword) {
+  protected EEBaseDistributedHttpTest setUserPassword(final String userPassword) {
     this.userPassword = userPassword;
     return this;
   }
@@ -225,7 +221,7 @@ public abstract class EEBaseHttpTest {
     return realm;
   }
 
-  protected EEBaseHttpTest setRealm(String realm) {
+  protected EEBaseDistributedHttpTest setRealm(String realm) {
     this.realm = realm;
     return this;
   }

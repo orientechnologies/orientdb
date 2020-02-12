@@ -8,7 +8,7 @@ import org.junit.Test;
 
 import java.util.Map;
 
-public class HttpMetricsTest extends EEBaseHttpTest {
+public class HttpMetricsTest extends EEBaseDistributedHttpTest {
 
   @Test
   public void getMetrics() throws Exception {
