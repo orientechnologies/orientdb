@@ -160,7 +160,7 @@
         <repository>
             <id>maven2-repository.dev.java.net</id>
             <name>Java.net repository</name>
-            <url>http://download.java.net/maven/2</url>
+            <url>https://download.java.net/maven/2</url>
         </repository>
     </repositories>
 
