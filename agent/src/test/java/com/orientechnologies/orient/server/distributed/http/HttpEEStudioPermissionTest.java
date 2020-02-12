@@ -13,7 +13,7 @@ public class HttpEEStudioPermissionTest extends EEBaseServerHttpTest {
 
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
 
-    response = get("/permissions  /mine").getResponse();
+    response = get("/permissions/mine").getResponse();
 
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
 
