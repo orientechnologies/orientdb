@@ -67,10 +67,7 @@ import com.orientechnologies.orient.core.sql.executor.*;
 import com.orientechnologies.orient.core.sql.parser.OLocalResultSet;
 import com.orientechnologies.orient.core.sql.parser.OLocalResultSetLifecycleDecorator;
 import com.orientechnologies.orient.core.sql.parser.OStatement;
-import com.orientechnologies.orient.core.storage.OBasicTransaction;
-import com.orientechnologies.orient.core.storage.ORawBuffer;
-import com.orientechnologies.orient.core.storage.ORecordCallback;
-import com.orientechnologies.orient.core.storage.OStorage;
+import com.orientechnologies.orient.core.storage.*;
 import com.orientechnologies.orient.core.storage.cluster.OOfflineClusterException;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.OMicroTransaction;
@@ -135,13 +132,13 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract impleme
         return;
 
       ORecordSerializerFactory serializerFactory = ORecordSerializerFactory.instance();
-      String serializeName = getStorage().getConfiguration().getRecordSerializer();
+      String serializeName = getStorageInfo().getConfiguration().getRecordSerializer();
       if (serializeName == null)
         throw new ODatabaseException("Impossible to open database from version before 2.x use export import instead");
       serializer = serializerFactory.getFormat(serializeName);
       if (serializer == null)
         throw new ODatabaseException("RecordSerializer with name '" + serializeName + "' not found ");
-      if (getStorage().getConfiguration().getRecordSerializerVersion() > serializer.getMinSupportedVersion())
+      if (getStorageInfo().getConfiguration().getRecordSerializerVersion() > serializer.getMinSupportedVersion())
         throw new ODatabaseException("Persistent record serializer version is not support by the current implementation");
 
       localCache.startup();
@@ -499,6 +496,11 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract impleme
 
   @Override
   public OStorage getStorage() {
+    return storage;
+  }
+
+  @Override
+  public OStorageInfo getStorageInfo() {
     return storage;
   }
 

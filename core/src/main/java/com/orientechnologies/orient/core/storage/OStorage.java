@@ -50,7 +50,7 @@ import java.util.concurrent.Callable;
  * @see com.orientechnologies.orient.core.storage.memory.ODirectMemoryStorage
  */
 
-public interface OStorage extends OBackupable, OSharedContainer {
+public interface OStorage extends OBackupable, OSharedContainer, OStorageInfo {
   String CLUSTER_DEFAULT_NAME = "default";
 
   enum STATUS {
@@ -103,11 +103,6 @@ public interface OStorage extends OBackupable, OSharedContainer {
 
   // TX OPERATIONS
   void rollback(OTransactionInternal iTx);
-
-  // MISC
-  OStorageConfiguration getConfiguration();
-
-  int getClusters();
 
   Set<String> getClusterNames();
 
@@ -163,7 +158,6 @@ public interface OStorage extends OBackupable, OSharedContainer {
    */
   long countRecords();
 
-  int getDefaultClusterId();
 
   void setDefaultClusterId(final int defaultClusterId);
 
@@ -174,8 +168,6 @@ public interface OStorage extends OBackupable, OSharedContainer {
   boolean checkForRecordValidity(OPhysicalPosition ppos);
 
   String getName();
-
-  String getURL();
 
   long getVersion();
 

@@ -58,6 +58,7 @@ import com.orientechnologies.orient.core.sql.OCommandSQLParsingException;
 import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import com.orientechnologies.orient.core.storage.ORecordCallback;
+import com.orientechnologies.orient.core.storage.OStorageInfo;
 import com.orientechnologies.orient.core.tx.OTransaction;
 import com.orientechnologies.orient.core.tx.OTransactionNoTx;
 import com.orientechnologies.orient.object.dictionary.ODictionaryWrapper;
@@ -1332,5 +1333,10 @@ public class OObjectDatabaseTx extends ODatabaseWrapperAbstract<ODatabaseDocumen
   public <T> T executeWithRetry(int nRetries, Function<ODatabaseSession, T> function)
       throws IllegalStateException, IllegalArgumentException, ONeedRetryException, UnsupportedOperationException {
     return underlying.executeWithRetry(nRetries, function);
+  }
+
+  @Override
+  public OStorageInfo getStorageInfo() {
+    return getStorage();
   }
 }

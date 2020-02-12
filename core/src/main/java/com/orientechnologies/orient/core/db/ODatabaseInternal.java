@@ -25,6 +25,7 @@ import com.orientechnologies.orient.core.metadata.security.OSecurityUser;
 import com.orientechnologies.orient.core.metadata.security.OToken;
 import com.orientechnologies.orient.core.storage.OBasicTransaction;
 import com.orientechnologies.orient.core.storage.OStorage;
+import com.orientechnologies.orient.core.storage.OStorageInfo;
 
 import java.util.HashMap;
 import java.util.HashSet;
@@ -38,10 +39,11 @@ public interface ODatabaseInternal<T> extends ODatabase<T> {
    * Returns the underlying storage implementation.
    *
    * @return The underlying storage implementation
-   *
    * @see OStorage
    */
   OStorage getStorage();
+  
+  OStorageInfo getStorageInfo();
 
   /**
    * Set user for current database instance.
@@ -87,7 +89,6 @@ public interface ODatabaseInternal<T> extends ODatabase<T> {
    * Opens a database using an authentication token received as an argument.
    *
    * @param iToken Authentication token
-   *
    * @return The Database instance itself giving a "fluent interface". Useful to call multiple methods in chain.
    */
   @Deprecated
@@ -148,7 +149,6 @@ public interface ODatabaseInternal<T> extends ODatabase<T> {
   }
 
   /**
-   *
    * @return an endpoint for Enterprise features. Null in Community Edition
    */
   default OEnterpriseEndpoint getEnterpriseEndpoint() {

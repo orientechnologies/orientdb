@@ -1014,6 +1014,7 @@ public interface ODatabase<T> extends OBackupable, Closeable {
   /**
    * Returns the current record conflict strategy.
    */
+  @Deprecated
   ORecordConflictStrategy getConflictStrategy();
 
   /**
@@ -1023,6 +1024,7 @@ public interface ODatabase<T> extends OBackupable, Closeable {
    *
    * @return The Database instance itself giving a "fluent interface". Useful to call multiple methods in chain.
    */
+  @Deprecated
   <DB extends ODatabase<?>> DB setConflictStrategy(String iStrategyName);
 
   /**
@@ -1032,6 +1034,7 @@ public interface ODatabase<T> extends OBackupable, Closeable {
    *
    * @return The Database instance itself giving a "fluent interface". Useful to call multiple methods in chain.
    */
+  @Deprecated
   <DB extends ODatabase<?>> DB setConflictStrategy(ORecordConflictStrategy iResolver);
 
   /**
