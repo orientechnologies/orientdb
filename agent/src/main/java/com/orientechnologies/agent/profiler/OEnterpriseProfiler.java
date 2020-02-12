@@ -23,6 +23,7 @@
   import com.orientechnologies.common.profiler.OAbstractProfiler;
   import com.orientechnologies.common.profiler.OProfilerEntry;
   import com.orientechnologies.common.profiler.OProfilerListener;
+  import com.orientechnologies.enterprise.server.OEnterpriseServer;
   import com.orientechnologies.orient.core.config.OGlobalConfiguration;
   import com.orientechnologies.orient.core.record.impl.ODocument;
   import com.orientechnologies.orient.core.storage.OStorage;
@@ -60,14 +61,13 @@
     protected static final int                            BUFFER_SIZE             = 2048;
     public static final    int                            KEEP_ALIVE              = 60 * 1000;
     protected final        int                            metricProcessors        = Runtime.getRuntime().availableProcessors();
-    private                OEnterpriseAgent               agent;
     protected              Date                           lastReset               = new Date();
     protected              OProfilerData                  realTime                = new OProfilerData();
     protected final        AtomicReference<OProfilerData> lastSnapshot            = new AtomicReference<OProfilerData>();
     protected              int                            elapsedToCreateSnapshot = 0;
     protected              TimerTask                      archiverTask;
     protected              TimerTask                      autoPause;
-    protected              OServer                        server;
+    protected              OEnterpriseServer              server;
     protected              AtomicBoolean                  paused                  = new AtomicBoolean(false);
     protected              AtomicLong                     timestamp               = new AtomicLong(System.currentTimeMillis());
 
@@ -78,12 +78,11 @@
       init();
     }
 
-    public OEnterpriseProfiler(final int iElapsedToCreateSnapshot, final OAbstractProfiler iParentProfiler, OServer server,
-        OEnterpriseAgent agent) {
+    public OEnterpriseProfiler(final int iElapsedToCreateSnapshot, final OAbstractProfiler iParentProfiler,
+        OEnterpriseServer server) {
       super(iParentProfiler);
       elapsedToCreateSnapshot = iElapsedToCreateSnapshot;
       this.server = server;
-      this.agent = agent;
       init();
     }
 

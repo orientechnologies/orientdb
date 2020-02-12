@@ -1,9 +1,6 @@
 package com.orientechnologies.orient.server.distributed;
 
-import com.orientechnologies.agent.OEnterpriseAgent;
-import com.orientechnologies.agent.OEnterpriseAgentMock;
 import com.orientechnologies.agent.http.command.OServerCommandDistributedManager;
-import com.orientechnologies.agent.profiler.OEnterpriseProfilerListener;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.network.OServerNetworkListener;
@@ -13,7 +10,6 @@ import org.junit.Ignore;
 import org.junit.Test;
 
 import java.util.Set;
-import java.util.concurrent.CountDownLatch;
 
 /**
  * Tests Enterprise Profiler Stats
@@ -60,26 +56,6 @@ public class EnterpriseProfilerTest extends AbstractServerClusterTest {
       checkStatsOnServer(sr, new String[] { name });
     }
 
-  }
-
-  private void waitAllServersForPush() throws InterruptedException {
-
-    final CountDownLatch latch = new CountDownLatch(serverInstance.size());
-
-    for (ServerRun serverRun : serverInstance) {
-
-      final OEnterpriseAgent agent = serverRun.getServerInstance().getPluginByClass(OEnterpriseAgentMock.class);
-
-      OEnterpriseProfilerListener listener = new OEnterpriseProfilerListener() {
-        @Override
-        public void onStatsPublished(String statsAsJson) {
-          latch.countDown();
-          agent.unregisterListener(this);
-        }
-      };
-      agent.registerListener(listener);
-    }
-    latch.await();
   }
 
   private void checkStatsOnServer(ServerRun s) {

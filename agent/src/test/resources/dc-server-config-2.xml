@@ -31,7 +31,7 @@
             </parameters>
         </handler>
         <handler
-                class="com.orientechnologies.agent.OEnterpriseAgentMock">
+                class="com.orientechnologies.agent.OEnterpriseAgent">
             <parameters>
             </parameters>
         </handler>
