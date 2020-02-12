@@ -19,27 +19,18 @@ import java.util.stream.Collectors;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-//import com.orientechnologies.orient.core.exception.OConfigurationException;
-
 /**
  * @author sdipro
- * @since 02/06/16
-<<<<<<< HEAD
- *
- * Launches a new OServer (using the security.json resource).
- * Creates a test database.
- * Creates a new class called 'TestClass'.
- * Queries the system database auditing log for 'TestClass'.
- * Asserts that the "created class" event is there.
- * Drops the 'TestClass' class.
- * Queries the system database auditing log for 'TestClass'.
- * Asserts that the "dropped class" event is there.
-=======
+ * @since 02/06/16 <<<<<<< HEAD
  * <p>
  * Launches a new OServer (using the security.json resource). Creates a test database. Creates a new class called 'TestClass'.
  * Queries the system database auditing log for 'TestClass'. Asserts that the "created class" event is there. Drops the 'TestClass'
- * class. Queries the system database auditing log for 'TestClass'. Asserts that the "dropped class" event is there.
->>>>>>> 064809e... Add a sleep on auditing test (after class create) to give auditing mechanisms time to execute
+ * class. Queries the system database auditing log for 'TestClass'. Asserts that the "dropped class" event is there. =======
+ * <p>
+ * Launches a new OServer (using the security.json resource). Creates a test database. Creates a new class called 'TestClass'.
+ * Queries the system database auditing log for 'TestClass'. Asserts that the "created class" event is there. Drops the 'TestClass'
+ * class. Queries the system database auditing log for 'TestClass'. Asserts that the "dropped class" event is there. >>>>>>>
+ * 064809e... Add a sleep on auditing test (after class create) to give auditing mechanisms time to execute
  */
 public class SystemDbAuditingTest extends AbstractSecurityTest {
 
@@ -57,14 +48,12 @@ public class SystemDbAuditingTest extends AbstractSecurityTest {
     createFile(SERVER_DIRECTORY + "/config/security.json",
         SystemDbAuditingTest.class.getResourceAsStream("/com/orientechnologies/security/auditing/security.json"));
 
-
     server = new OServer(false);
     server.setServerRootDirectory(SERVER_DIRECTORY);
 
     server.startup(new File(SERVER_DIRECTORY + "/config/orientdb-server-config.xml"));
 
     server.activate();
-
 
     createDirectory(SERVER_DIRECTORY + "/databases/" + TESTDB);
     createFile(SERVER_DIRECTORY + "/databases/" + TESTDB + "/auditing-config.json",
@@ -95,7 +84,6 @@ public class SystemDbAuditingTest extends AbstractSecurityTest {
 
     db.command(new OCommandSQL("create class TestClass")).execute();
 
-
     try {
       Thread.sleep(1000);//let auditing log happen (remove this and make auditing more reliable!!!)
     } catch (InterruptedException e) {
@@ -112,13 +100,14 @@ public class SystemDbAuditingTest extends AbstractSecurityTest {
 
     // Drop Class Test
     db.command(new OCommandSQL("drop class TestClass")).execute();
-    
+
     try {
       Thread.sleep(1000);//let auditing log happen (remove this and make auditing more reliable!!!)
     } catch (InterruptedException e) {
       OLogManager.instance().warn(this, "Thread interrupted", e);
     }
-    result = (List<OResult>) server.getSystemDatabase().execute((res) -> res.stream().collect(Collectors.toList()), query, TESTDB, "I dropped a class: TestClass");
+    result = (List<OResult>) server.getSystemDatabase()
+        .execute((res) -> res.stream().collect(Collectors.toList()), query, TESTDB, "I dropped a class: TestClass");
 
     assertThat(result).isNotNull();
 
