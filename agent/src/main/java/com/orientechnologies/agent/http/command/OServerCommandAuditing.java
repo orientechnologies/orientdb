@@ -21,6 +21,8 @@ import com.orientechnologies.agent.EnterprisePermissions;
 import com.orientechnologies.enterprise.server.OEnterpriseServer;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.sql.executor.OResult;
+import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpRequest;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpResponse;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpUtils;
@@ -29,6 +31,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class OServerCommandAuditing extends OServerCommandDistributedScope {
   private static final String[] NAMES = { "GET|auditing/*", "POST|auditing/*" };
@@ -75,11 +78,13 @@ public class OServerCommandAuditing extends OServerCommandDistributedScope {
 
     ODocument params = new ODocument().fromJSON(iRequest.getContent());
 
-    Collection<ODocument> documents = new ArrayList<ODocument>();
-
     String query = buildQuery(params);
 
-    documents = (Collection<ODocument>) server.getSystemDatabase().execute(null, query, params.toMap());
+    Collection<OResult> documents = server.getSystemDatabase().executeWithDB((session) -> {
+      try (OResultSet results = session.query(query, params.toMap())) {
+        return results.stream().collect(Collectors.toList());
+      }
+    });
 
     iResponse.writeResult(documents);
   }

@@ -27,5 +27,15 @@ public class HttpEEAuditingTest extends EEBaseServerHttpTest {
 
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
 
+    response = get("/auditing/" + getDatabaseName() + "/config").getResponse();
+
+    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+
+    ODocument query = new ODocument().field("db", getDatabaseName()).field("limit", 1);
+
+    response = post("/auditing/" + getDatabaseName() + "/query").payload(query.toJSON(), CONTENT.JSON).getResponse();
+
+    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+
   }
 }
