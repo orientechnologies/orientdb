@@ -297,4 +297,10 @@ public class OTransactionPhase1Task extends OAbstractReplicatedTask {
     }
   }
 
+  @Override
+  public void finished() {
+    if (notYetFinishedTask != null) {
+      notYetFinishedTask.cancel();
+    }
+  }
 }
