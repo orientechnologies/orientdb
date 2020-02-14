@@ -42,6 +42,7 @@ public class ONewDistributedResponseManager implements ODistributedResponseManag
 
   @Override
   public synchronized boolean setLocalResult(String localNodeName, Object localResult) {
+    debugNodeReplied.add(localNodeName);
     return addResult(localNodeName, (OTransactionResultPayload) localResult);
   }
 
