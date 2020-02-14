@@ -50,6 +50,7 @@ public class OExecuteOnce {
 
   public synchronized void finished() {
     this.finished = true;
+    toRun.finished();
   }
 
 }

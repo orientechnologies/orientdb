@@ -476,7 +476,13 @@ public class ODistributedWorker extends Thread {
   }
 
   public void reset() {
-    localQueue.clear();
+    ODistributedRequest el;
+    do {
+      el = localQueue.poll();
+      if (el != null && el.getTask() != null) {
+        el.getTask().finished();
+      }
+    } while (el != null);
     ODistributedRequest process = currentExecuting;
     if (process != null) {
       process.getTask().finished();
