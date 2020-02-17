@@ -194,14 +194,10 @@ public class OScheduledEvent extends ODocumentWrapper {
 
     @Override
     public void run() {
-      orientDB.execute(
-              database,
-              user,
-              db -> {
-                runTask(db);
-                return null;
-              }
-      );
+      orientDB.execute(database, user, db -> {
+        runTask(db);
+        return null;
+      });
     }
 
     private void runTask(ODatabaseSession db) {
