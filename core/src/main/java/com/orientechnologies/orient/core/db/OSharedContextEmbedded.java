@@ -39,7 +39,7 @@ public class OSharedContextEmbedded extends OSharedContext {
     security = OSecurityManager.instance().newSecurity();
     indexManager = new OIndexManagerShared(storage);
     functionLibrary = new OFunctionLibraryImpl();
-    scheduler = new OSchedulerImpl();
+    scheduler = new OSchedulerImpl(orientDB);
     sequenceLibrary = new OSequenceLibraryImpl();
     liveQueryOps = new OLiveQueryHook.OLiveQueryOps();
     liveQueryOpsV2 = new OLiveQueryHookV2.OLiveQueryOps();

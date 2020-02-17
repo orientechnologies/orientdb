@@ -20,8 +20,7 @@ import com.orientechnologies.common.concur.ONeedRetryException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.script.OCommandScriptException;
-import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
-import com.orientechnologies.orient.core.db.ODatabaseSession;
+import com.orientechnologies.orient.core.db.*;
 import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.function.OFunction;
@@ -122,19 +121,14 @@ public class OScheduledEvent extends ODocumentWrapper {
     return this.running.get();
   }
 
-  public OScheduledEvent schedule() {
+  public OScheduledEvent schedule(String database, String user, OrientDBInternal orientDB) {
     if (isRunning()) {
       interrupt();
     }
-    internalSchedule(new ScheduledTimerTask(this));
+    ScheduledTimerTask task = new ScheduledTimerTask(this, database, user, orientDB);
+    task.schedule();
+    timer = task;
     return this;
-  }
-
-  private void internalSchedule(ScheduledTimerTask timerTask) {
-    synchronized (this) {
-      nextExecutionId.incrementAndGet();
-      timer = Orient.instance().scheduleTask(timerTask, cron.getNextValidTimeAfter(new Date()), 0);
-    }
   }
 
   @Override
@@ -174,22 +168,43 @@ public class OScheduledEvent extends ODocumentWrapper {
     return function;
   }
 
-  private static class ScheduledTimerTask implements Runnable {
+  private static class ScheduledTimerTask extends TimerTask {
 
     private final OScheduledEvent event;
+    private final String database;
+    private final String user;
+    private final OrientDBInternal orientDB;
 
-    private ScheduledTimerTask(OScheduledEvent event) {
+    private ScheduledTimerTask(OScheduledEvent event, String database, String user, OrientDBInternal orientDB) {
       this.event = event;
+      this.database = database;
+      this.user = user;
+      this.orientDB = orientDB;
+    }
+
+    public void schedule() {
+      synchronized (this) {
+        event.nextExecutionId.incrementAndGet();
+        Date now = new Date();
+        long time = event.cron.getNextValidTimeAfter(now).getTime();
+        long delay = time - now.getTime();
+        orientDB.scheduleOnce(this, delay);
+      }
     }
 
     @Override
     public void run() {
-      try (ODatabaseSession db = ODatabaseRecordThreadLocal.instance().get()) {
-        runTask();
-      }
+      orientDB.execute(
+              database,
+              user,
+              db -> {
+                runTask(db);
+                return null;
+              }
+      );
     }
 
-    private void runTask() {
+    private void runTask(ODatabaseSession db) {
       event.reload();
 
       if (event.running.get()) {
@@ -222,7 +237,7 @@ public class OScheduledEvent extends ODocumentWrapper {
       } finally {
         if (event.timer != null) {
           // RE-SCHEDULE THE NEXT EVENT
-          event.internalSchedule(this);
+          event.schedule(database, user, orientDB);
         }
       }
     }
