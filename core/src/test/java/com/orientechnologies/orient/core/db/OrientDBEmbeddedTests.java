@@ -287,6 +287,23 @@ public class OrientDBEmbeddedTests {
   }
 
   @Test
+  public void testInvalidatePoolCache() {
+    OrientDBConfig config = OrientDBConfig.builder().addConfig(OGlobalConfiguration.DB_CACHED_POOL_CAPACITY, 2).build();
+    OrientDB orientDB = new OrientDB("embedded:testdb", config);
+    orientDB.createIfNotExists("testdb", ODatabaseType.MEMORY);
+
+    ODatabasePool poolAdmin1 = orientDB.cachedPool("testdb", "admin", "admin");
+    ODatabasePool poolAdmin2 = orientDB.cachedPool("testdb", "admin", "admin");
+
+    assertEquals(poolAdmin1, poolAdmin2);
+
+    orientDB.invalidateCachedPools();
+
+    poolAdmin1 = orientDB.cachedPool("testdb", "admin", "admin");
+    assertNotEquals(poolAdmin2, poolAdmin1);
+  }
+
+  @Test
   public void testOpenKeepClean() {
     OrientDB orientDb = new OrientDB("embedded:./", OrientDBConfig.defaultConfig());
     try {

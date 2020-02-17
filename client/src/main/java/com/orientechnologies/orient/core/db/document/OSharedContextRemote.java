@@ -24,7 +24,7 @@ public class OSharedContextRemote extends OSharedContext {
     security = new OSecurityRemote(OSecurityManager.instance().newSecurity());
     indexManager = new OIndexManagerRemote(storage);
     functionLibrary = new OFunctionLibraryImpl();
-    scheduler = new OSchedulerImpl();
+    scheduler = new OSchedulerImpl(orientDB);
     sequenceLibrary = new OSequenceLibraryImpl();
   }
 
