@@ -25,7 +25,7 @@ import java.util.concurrent.*;
  * @author Andrey Lomakin <lomakin.andrey@gmail.com>.
  * @since 9/17/2015
  */
-public class StorageBackupMTTest {
+public class StorageBackupMTIT {
   private final    CountDownLatch latch = new CountDownLatch(1);
   private volatile boolean        stop  = false;
   private OrientDB orientDB;
@@ -34,10 +34,10 @@ public class StorageBackupMTTest {
   @Test
   public void testParallelBackup() throws Exception {
     final String buildDirectory = System.getProperty("buildDirectory", ".");
-    dbName = StorageBackupMTTest.class.getSimpleName();
+    dbName = StorageBackupMTIT.class.getSimpleName();
     final String dbDirectory = buildDirectory + File.separator + dbName;
     final File backupDir = new File(buildDirectory, "backupDir");
-    final String backupDbName = StorageBackupMTTest.class.getSimpleName() + "BackUp";
+    final String backupDbName = StorageBackupMTIT.class.getSimpleName() + "BackUp";
 
     OFileUtils.deleteRecursively(new File(dbDirectory));
 
@@ -72,7 +72,7 @@ public class StorageBackupMTTest {
 
       latch.countDown();
 
-      TimeUnit.MINUTES.sleep(3);
+      TimeUnit.MINUTES.sleep(15);
 
       stop = true;
 
@@ -133,11 +133,11 @@ public class StorageBackupMTTest {
   @Test
   public void testParallelBackupEncryption() throws Exception {
     final String buildDirectory = System.getProperty("buildDirectory", ".");
-    final String backupDbName = StorageBackupMTTest.class.getSimpleName() + "BackUp";
+    final String backupDbName = StorageBackupMTIT.class.getSimpleName() + "BackUp";
     final String backedUpDbDirectory = buildDirectory + File.separator + backupDbName;
     final File backupDir = new File(buildDirectory, "backupDir");
 
-    dbName = StorageBackupMTTest.class.getSimpleName();
+    dbName = StorageBackupMTIT.class.getSimpleName();
     String dbDirectory = buildDirectory + File.separator + dbName;
 
     final OrientDBConfig config = OrientDBConfig.builder()
@@ -176,7 +176,7 @@ public class StorageBackupMTTest {
 
       latch.countDown();
 
-      TimeUnit.MINUTES.sleep(2);
+      TimeUnit.MINUTES.sleep(5);
 
       stop = true;
 

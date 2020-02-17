@@ -8,7 +8,7 @@ import com.orientechnologies.orient.core.db.OrientDBConfig;
 import com.orientechnologies.orient.server.OServer;
 import org.junit.Test;
 
-public class TestFullSyncIT {
+public class FullSyncIT {
 
   @Test
   public void test() throws Exception {
@@ -17,11 +17,11 @@ public class TestFullSyncIT {
     OServer server1 = OServer.startFromClasspathConfig("orientdb-simple-dserver-config-1.xml");
     OServer server2 = OServer.startFromClasspathConfig("orientdb-simple-dserver-config-2.xml");
     OrientDB remote = new OrientDB("remote:localhost", "root", "root", OrientDBConfig.defaultConfig());
-    remote.create(TestFullSyncIT.class.getSimpleName(), ODatabaseType.PLOCAL);
-    ODatabaseSession session = remote.open(TestFullSyncIT.class.getSimpleName(), "admin", "admin");
+    remote.create(FullSyncIT.class.getSimpleName(), ODatabaseType.PLOCAL);
+    ODatabaseSession session = remote.open(FullSyncIT.class.getSimpleName(), "admin", "admin");
     session.createClass("test");
     session.close();
-    remote.drop(TestFullSyncIT.class.getSimpleName());
+    remote.drop(FullSyncIT.class.getSimpleName());
     remote.close();
     server0.shutdown();
     server1.shutdown();
