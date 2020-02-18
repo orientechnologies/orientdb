@@ -54,6 +54,12 @@ public class OMemoryWriteAheadLog extends OAbstractWriteAheadLog {
     return log(new OAtomicUnitStartRecordV2(isRollbackSupported, unitId));
   }
 
+  public OLogSequenceNumber logAtomicOperationStartRecord(final boolean isRollbackSupported, final long unitId,
+      byte[] metadata) throws IOException {
+    final OAtomicUnitStartMetadataRecord record = new OAtomicUnitStartMetadataRecord(isRollbackSupported, unitId, metadata);
+    return log(record);
+  }
+
   @Override
   public OLogSequenceNumber logAtomicOperationEndRecord(long operationUnitId, boolean rollback,
       OLogSequenceNumber startLsn, Map<String, OAtomicOperationMetadata<?>> atomicOperationMetadata) throws IOException {

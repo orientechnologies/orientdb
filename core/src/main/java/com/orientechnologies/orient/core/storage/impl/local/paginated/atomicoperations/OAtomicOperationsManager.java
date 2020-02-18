@@ -46,6 +46,7 @@ import com.orientechnologies.orient.core.tx.OTransactionInternal;
 import java.io.IOException;
 import java.util.Iterator;
 import java.util.Objects;
+import java.util.Optional;
 
 /**
  * @author Andrey Lomakin (a.lomakin-at-orientdb.com)
@@ -94,6 +95,11 @@ public class OAtomicOperationsManager implements OAtomicOperationsMangerMXBean {
   }
 
   public OAtomicOperation startAtomicOperation() throws IOException {
+    return startAtomicOperation(Optional.empty());
+  }
+
+
+  public OAtomicOperation startAtomicOperation(Optional<byte[]> metadata) throws IOException {
     OAtomicOperation operation = currentOperation.get();
     if (operation != null) {
       throw new OStorageExistsException("Atomic operation already started");
@@ -119,7 +125,11 @@ public class OAtomicOperationsManager implements OAtomicOperationsMangerMXBean {
     final OLogSequenceNumber lsn;
     if (useWal) {
       atomicOperationsTable.startOperation(unitId, activeSegment);
-      lsn = writeAheadLog.logAtomicOperationStartRecord(true, unitId);
+      if (metadata.isPresent()) {
+        lsn = writeAheadLog.logAtomicOperationStartRecord(true, unitId, metadata.get());
+      } else {
+        lsn = writeAheadLog.logAtomicOperationStartRecord(true, unitId);
+      }
     } else {
       lsn = null;
     }
@@ -295,6 +305,7 @@ public class OAtomicOperationsManager implements OAtomicOperationsMangerMXBean {
    * Ends the current atomic operation on this manager.
    *
    * @param rollback {@code true} to indicate a rollback, {@code false} for successful commit.
+   * @return the LSN produced by committing the current operation or {@code null} if no commit was done.
    */
   public void endAtomicOperation(boolean rollback) throws IOException {
     final OAtomicOperation operation = currentOperation.get();

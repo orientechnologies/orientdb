@@ -24,7 +24,7 @@ package com.orientechnologies.orient.core.storage.impl.local.paginated.wal;
  * @author Andrey Lomakin (a.lomakin-at-orientdb.com)
  * @since 24.05.13
  */
-public final class OAtomicUnitStartRecordV2 extends OAtomicUnitStartRecord<Long> implements LongOperationId {
+public class OAtomicUnitStartRecordV2 extends OAtomicUnitStartRecord<Long> implements LongOperationId {
   public OAtomicUnitStartRecordV2() {
   }
 

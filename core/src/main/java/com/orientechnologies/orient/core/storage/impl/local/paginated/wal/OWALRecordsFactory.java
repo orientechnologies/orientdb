@@ -117,6 +117,9 @@ public final class OWALRecordsFactory {
     case ATOMIC_UNIT_START_RECORD_V2:
       walRecord = new OAtomicUnitStartRecordV2();
       break;
+    case ATOMIC_UNIT_START_METADATA_RECORD:
+      walRecord = new OAtomicUnitStartMetadataRecord();
+      break;
     case ATOMIC_UNIT_END_RECORD:
       walRecord = new OAtomicUnitEndRecordV1();
       break;

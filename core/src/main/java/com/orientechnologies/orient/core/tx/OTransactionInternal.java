@@ -22,10 +22,15 @@ package com.orientechnologies.orient.core.tx;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
 import com.orientechnologies.orient.core.id.ORID;
+import com.orientechnologies.orient.core.metadata.schema.OClass;
+import com.orientechnologies.orient.core.metadata.sequence.OSequence;
+import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.OBasicTransaction;
 
 import java.util.Collection;
 import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
 
 /**
  * Expose the api for extract the internal details needed by the storage for perform the transaction commit
@@ -80,10 +85,30 @@ public interface OTransactionInternal extends OBasicTransaction {
    * Extract a single change from a specified record id.
    *
    * @param currentRid the record id for the change.
-   *
    * @return the change or null if there is no change for the specified rid
    */
   ORecordOperation getRecordEntry(ORID currentRid);
 
   void setDatabase(ODatabaseDocumentInternal database);
+
+  default boolean isSequenceTransaction() {
+    for (ORecordOperation txEntry : getRecordOperations()) {
+      if (txEntry.record != null && txEntry.record.getRecord() instanceof ODocument) {
+        ODocument doc = txEntry.record.getRecord();
+        OClass docClass = doc.getSchemaClass();
+        if (docClass != null && (!docClass.isSubClassOf(OSequence.CLASS_NAME))) {
+          return false;
+        }
+      }
+    }
+    return true;
+  }
+
+  default Optional<byte[]> getMetadata() {
+    return Optional.empty();
+  }
+
+  default void storageBegun() {
+
+  }
 }
