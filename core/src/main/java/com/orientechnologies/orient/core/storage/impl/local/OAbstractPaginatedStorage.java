@@ -207,6 +207,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
   private final List<OBaseIndexEngine>        indexEngines       = new ArrayList<>();
   private final AtomicOperationIdGen          idGen              = new AtomicOperationIdGen();
   private       boolean                       wereDataRestoredAfterOpen;
+  private       UUID                          uuid;
+  private       Optional<byte[]>              lastMetadata;
 
   private final LongAdder fullCheckpointCount = new LongAdder();
 
@@ -696,7 +698,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
           listener.onMessage(
               "Check of storage completed in " + (System.currentTimeMillis() - start) + "ms. " + (pageErrors.length > 0 ?
-                  pageErrors.length + " with errors." : " without errors."));
+                  pageErrors.length + " with errors." :
+                  " without errors."));
 
           return pageErrors.length == 0;
         } finally {
@@ -1346,8 +1349,9 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       try {
         checkOpenness();
 
-        return clusters.get(iClusterId) != null ? new long[] { clusters.get(iClusterId).getFirstPosition(),
-            clusters.get(iClusterId).getLastPosition() } : OCommonConst.EMPTY_LONG_ARRAY;
+        return clusters.get(iClusterId) != null ?
+            new long[] { clusters.get(iClusterId).getFirstPosition(), clusters.get(iClusterId).getLastPosition() } :
+            OCommonConst.EMPTY_LONG_ARRAY;
 
       } catch (final IOException ioe) {
         throw OException.wrapException(new OStorageException("Cannot retrieve information about data range"), ioe);
@@ -1400,10 +1404,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
    * not deleted - length of content is provided in above entity</li> </ol>
    *
    * @param lsn LSN from which we should find changed records
-   *
    * @return Last LSN processed during examination of changed records, or <code>null</code> if it was impossible to find changed
    * records: write ahead log is absent, record with start LSN was not found in WAL, etc.
-   *
    * @see OGlobalConfiguration#STORAGE_TRACK_CHANGED_RECORDS_IN_WAL
    */
   public OBackgroundDelta recordsChangedAfterLSN(final OLogSequenceNumber lsn, final OCommandOutputListener outputListener) {
@@ -4787,6 +4789,9 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     transaction.set(new OStorageTransaction(clientTx));
     try {
       OAtomicOperation operation = atomicOperationsManager.startAtomicOperation(clientTx.getMetadata());
+      if (clientTx.getMetadata().isPresent()) {
+        this.lastMetadata = clientTx.getMetadata();
+      }
       clientTx.storageBegun();
       return operation;
     } catch (final RuntimeException e) {
@@ -5681,6 +5686,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     long recordsProcessed = 0;
 
     final int reportBatchSize = OGlobalConfiguration.WAL_REPORT_AFTER_OPERATIONS_DURING_RESTORE.getValueAsInteger();
+    final Map<Long, byte[]> operationMetadata = new LinkedHashMap<>(1024);
 
     final Map<OOperationUnitId, List<OWALRecord>> operationUnitsByOperationId = new HashMap<>(1024);
     final Map<Long, List<OWALRecord>> operationUnitsByLongId = new HashMap<>(1024);
@@ -5712,7 +5718,17 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
                 atomicUnit.add(walRecord);
                 restoreAtomicUnit(atomicUnit, atLeastOnePageUpdate);
               }
+              byte[] metadata = operationMetadata.remove(operationUnitRecord.getOperationUnitId());
+              if (metadata != null) {
+                this.lastMetadata = Optional.of(metadata);
+              }
+
             } else if (walRecord instanceof OAtomicUnitStartRecord) {
+              if (walRecord instanceof OAtomicUnitStartMetadataRecord) {
+                byte[] metadata = ((OAtomicUnitStartMetadataRecord) walRecord).getMetadata();
+                operationMetadata.put(((OAtomicUnitStartMetadataRecord) walRecord).getOperationUnitId(), metadata);
+              }
+
               final List<OWALRecord> operationList;
 
               if (operationUnitRecord instanceof OperationUnitOperationId) {
