@@ -96,6 +96,8 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
   private Set<String>         indexesToRebuild    = new HashSet<>();
   private Map<String, String> convertedClassNames = new HashMap<>();
 
+  private int maxRidbagStringSizeBeforeLazyImport = 500_000_000;
+
   public ODatabaseImport(final ODatabaseDocumentInternal database, final String iFileName, final OCommandOutputListener iListener)
           throws IOException {
     super(database, iFileName, iListener);
@@ -1123,12 +1125,12 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
     //big ridbags (ie. supernodes) sometimes send the system OOM, so they have to be discarded at this stage
     //and processed later. The following collects the positions ("value" inside the string) of skipped fields.
     Set<Integer> skippedPartsIndexes = new HashSet<>();
-    int maxRidbagSizeBeforeSkip = 500_000_000;
+
 
     try {
 
       try {
-        record = ORecordSerializerJSON.INSTANCE.fromString(value, record, null, null, false, maxRidbagSizeBeforeSkip, skippedPartsIndexes);
+        record = ORecordSerializerJSON.INSTANCE.fromString(value, record, null, null, false, maxRidbagStringSizeBeforeLazyImport, skippedPartsIndexes);
       } catch (OSerializationException e) {
         if (e.getCause() instanceof OSchemaException) {
           // EXTRACT CLASS NAME If ANY
@@ -1143,7 +1145,7 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
 
             value = value1 + newClassName + value2;
             // OVERWRITE CLASS NAME WITH NEW NAME
-            record = ORecordSerializerJSON.INSTANCE.fromString(value, record, null, null, false, maxRidbagSizeBeforeSkip, skippedPartsIndexes);
+            record = ORecordSerializerJSON.INSTANCE.fromString(value, record, null, null, false, maxRidbagStringSizeBeforeLazyImport, skippedPartsIndexes);
           }
         } else
           throw OException.wrapException(new ODatabaseImportException("Error on importing record"), e);
@@ -1265,7 +1267,7 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
 
     StringBuilder builder = new StringBuilder();
 
-    int nextIndex = OStringSerializerHelper.parse(value, builder, skippedPartsIndex + 1, -1, ORecordSerializerJSON.PARAMETER_SEPARATOR, true, true, false,
+    int nextIndex = OStringSerializerHelper.parse(value, builder, skippedPartsIndex, -1, ORecordSerializerJSON.PARAMETER_SEPARATOR, true, true, false,
             -1, false, ' ', '\n', '\r', '\t');
 
     String fieldName = OIOUtils.getStringContent(builder.toString());
@@ -1523,4 +1525,11 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
     documentFieldWalker.walkDocument(document, rewriter);
   }
 
+  public int getMaxRidbagStringSizeBeforeLazyImport() {
+    return maxRidbagStringSizeBeforeLazyImport;
+  }
+
+  public void setMaxRidbagStringSizeBeforeLazyImport(int maxRidbagStringSizeBeforeLazyImport) {
+    this.maxRidbagStringSizeBeforeLazyImport = maxRidbagStringSizeBeforeLazyImport;
+  }
 }
