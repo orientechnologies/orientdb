@@ -29,6 +29,7 @@ import com.orientechnologies.orient.core.storage.OBasicTransaction;
 
 import java.util.Collection;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 
 /**
@@ -83,7 +84,6 @@ public interface OTransactionInternal extends OBasicTransaction {
    * Extract a single change from a specified record id.
    *
    * @param currentRid the record id for the change.
-   *
    * @return the change or null if there is no change for the specified rid
    */
   ORecordOperation getRecordEntry(ORID currentRid);
@@ -103,5 +103,13 @@ public interface OTransactionInternal extends OBasicTransaction {
       }
     }
     return true;
+  }
+
+  default Optional<byte[]> getMetadata() {
+    return Optional.empty();
+  }
+
+  default void storageBegun() {
+
   }
 }

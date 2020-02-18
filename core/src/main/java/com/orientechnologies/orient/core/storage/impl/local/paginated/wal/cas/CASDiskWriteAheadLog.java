@@ -999,6 +999,12 @@ public final class CASDiskWriteAheadLog implements OWriteAheadLog {
     return log(record);
   }
 
+  public OLogSequenceNumber logAtomicOperationStartRecord(final boolean isRollbackSupported, final OOperationUnitId unitId,
+      byte[] metadata) {
+    final OAtomicUnitStartMetadataRecord record = new OAtomicUnitStartMetadataRecord(isRollbackSupported, unitId, metadata);
+    return log(record);
+  }
+
   public OLogSequenceNumber logAtomicOperationEndRecord(final OOperationUnitId operationUnitId, final boolean rollback,
       final OLogSequenceNumber startLsn, final Map<String, OAtomicOperationMetadata<?>> atomicOperationMetadata) {
     final OAtomicUnitEndRecord record = new OAtomicUnitEndRecord(operationUnitId, rollback, atomicOperationMetadata);

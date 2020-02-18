@@ -43,6 +43,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.CountDownLatch;
@@ -135,10 +136,14 @@ public class OAtomicOperationsManager {
    *                             During storage restore procedure this record is monitored and if given record is present then
    *                             rebuild of all indexes is performed.
    * @param lockName             Name of lock (usually name of component) which is going participate in atomic operation.
-   *
    * @return Instance of active atomic operation.
    */
   public OAtomicOperation startAtomicOperation(String lockName, boolean trackNonTxOperations) throws IOException {
+    return startAtomicOperation(lockName, trackNonTxOperations, Optional.empty());
+  }
+
+  public OAtomicOperation startAtomicOperation(String lockName, boolean trackNonTxOperations, Optional<byte[]> metadata)
+      throws IOException {
     OAtomicOperation operation = currentOperation.get();
     if (operation != null) {
       operation.incrementCounter();
@@ -173,7 +178,12 @@ public class OAtomicOperationsManager {
     assert freezeRequests.get() >= 0;
 
     final OOperationUnitId unitId = OOperationUnitId.generateId();
-    final OLogSequenceNumber lsn = writeAheadLog.logAtomicOperationStartRecord(true, unitId);
+    final OLogSequenceNumber lsn;
+    if (metadata.isPresent()) {
+      lsn = writeAheadLog.logAtomicOperationStartRecord(true, unitId, metadata.get());
+    } else {
+      lsn = writeAheadLog.logAtomicOperationStartRecord(true, unitId);
+    }
 
     if (!trackPageOperations) {
       operation = new OAtomicOperationBinaryTracking(lsn, unitId, readCache, writeCache, storage.getId());
@@ -355,7 +365,6 @@ public class OAtomicOperationsManager {
    * Ends the current atomic operation on this manager.
    *
    * @param rollback {@code true} to indicate a rollback, {@code false} for successful commit.
-   *
    * @return the LSN produced by committing the current operation or {@code null} if no commit was done.
    */
   public OLogSequenceNumber endAtomicOperation(boolean rollback) throws IOException {

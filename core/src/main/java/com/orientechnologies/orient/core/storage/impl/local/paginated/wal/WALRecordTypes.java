@@ -13,6 +13,7 @@ public final class WALRecordTypes {
   public static final int FILE_DELETED_WAL_RECORD               = 12;
   public static final int FILE_TRUNCATED_WAL_RECORD             = 13;
   public static final int EMPTY_WAL_RECORD                      = 14;
+  public static final int ATOMIC_UNIT_START_METADATA_RECORD     = 15;
 
   public static final int CLUSTER_POSITION_MAP_INIT_PO                = 35;
   public static final int CLUSTER_POSITION_MAP_ADD_PO                 = 36;
