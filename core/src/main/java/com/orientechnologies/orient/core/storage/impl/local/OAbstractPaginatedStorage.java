@@ -3331,7 +3331,9 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
         try {
           checkOpenness();
 
-          assert transaction.get() != null;
+          if (transaction.get() == null) {
+            return;
+          }
 
           if (transaction.get().getClientTx().getId() != clientTx.getId()) {
             throw new OStorageException(
@@ -3347,53 +3349,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
         } catch (final IOException e) {
           throw OException.wrapException(new OStorageException("Error during transaction rollback"), e);
-        } finally {
-          transaction.set(null);
-        }
-      } finally {
-        stateLock.releaseReadLock();
-      }
-    } catch (final RuntimeException ee) {
-      throw logAndPrepareForRethrow(ee);
-    } catch (final Error ee) {
-      throw logAndPrepareForRethrow(ee);
-    } catch (final Throwable t) {
-      throw logAndPrepareForRethrow(t);
-    }
-  }
-
-  /**
-   * Rollbacks the given micro-transaction.
-   *
-   * @param microTransaction the micro-transaction to rollback.
-   */
-  public void rollback(final OMicroTransaction microTransaction) {
-    try {
-      checkOpenness();
-      stateLock.acquireReadLock();
-      try {
-        try {
-          checkOpenness();
-
-          if (transaction.get() == null) {
-            return;
-          }
-
-          if (transaction.get().getMicroTransaction().getId() != microTransaction.getId()) {
-            throw new OStorageException(
-                "Passed in and active micro-transaction are different micro-transactions. Passed in micro-transaction cannot be "
-                    + "rolled back.");
-          }
-
-          makeStorageDirty();
-          rollbackStorageTx();
-
-          microTransaction.updateRecordCacheAfterRollback();
-
-          txRollback.increment();
-
-        } catch (final IOException e) {
-          throw OException.wrapException(new OStorageException("Error during micro-transaction rollback"), e);
         } finally {
           transaction.set(null);
         }
@@ -6279,4 +6234,5 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
   public long getLastCloseTime() {
     return lastCloseTime.get();
   }
+
 }
