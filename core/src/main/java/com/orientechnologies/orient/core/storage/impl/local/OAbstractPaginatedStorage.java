@@ -196,6 +196,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
   private final List<OBaseIndexEngine>        indexEngines       = new ArrayList<>();
   private       boolean                       wereDataRestoredAfterOpen;
   private       UUID                          uuid;
+  private       Optional<byte[]>              lastMetadata;
 
   private long fullCheckpointCount = 0;
 
@@ -4396,6 +4397,9 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     transaction.set(new OStorageTransaction(clientTx));
     try {
       atomicOperationsManager.startAtomicOperation((String) null, true, clientTx.getMetadata());
+      if (clientTx.getMetadata().isPresent()) {
+        this.lastMetadata = clientTx.getMetadata();
+      }
       clientTx.storageBegun();
     } catch (final RuntimeException e) {
       transaction.set(null);
@@ -5325,6 +5329,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
       final int reportBatchSize = OGlobalConfiguration.WAL_REPORT_AFTER_OPERATIONS_DURING_RESTORE.getValueAsInteger();
       final Map<OOperationUnitId, List<OWALRecord>> operationUnits = new HashMap<>(1024);
+      final Map<OOperationUnitId, byte[]> operationMetadata = new LinkedHashMap<>(1024);
+      final Map<OOperationUnitId, byte[]> pendingMetadata = new HashMap<>(1024);
 
       long lastReportTime = 0;
 
@@ -5343,8 +5349,29 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
                 atomicUnit.add(walRecord);
                 restoreAtomicUnit(atomicUnit, atLeastOnePageUpdate);
               }
+              if (operationMetadata.containsKey(atomicUnitEndRecord.getOperationUnitId())) {
+                byte[] metadata = operationMetadata.get(atomicUnitEndRecord.getOperationUnitId());
+                this.lastMetadata = Optional.of(metadata);
+                Iterator<Map.Entry<OOperationUnitId, byte[]>> values = operationMetadata.entrySet().iterator();
+                while (values.hasNext()) {
+                  Map.Entry<OOperationUnitId, byte[]> value = values.next();
+                  if (value.getValue().equals(metadata)) {
+                    values.remove();
+                    break;
+                  } else {
+                    pendingMetadata.put(value.getKey(), value.getValue());
+                    values.remove();
+                  }
+                }
+              }
+              pendingMetadata.remove(atomicUnitEndRecord.getAtomicOperationMetadata());
 
             } else if (walRecord instanceof OAtomicUnitStartRecord) {
+              if (walRecord instanceof OAtomicUnitStartMetadataRecord) {
+                byte[] metadata = ((OAtomicUnitStartMetadataRecord) walRecord).getMetadata();
+                operationMetadata.put(((OAtomicUnitStartRecord) walRecord).getOperationUnitId(), metadata);
+              }
+
               final List<OWALRecord> operationList = new ArrayList<>(1024);
 
               assert !operationUnits.containsKey(((OAtomicUnitStartRecord) walRecord).getOperationUnitId());
