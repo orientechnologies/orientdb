@@ -1294,15 +1294,13 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
     String fieldName = OIOUtils.getStringContent(builder.toString());
     ORidBag bag = doc.getProperty(fieldName);
 
-    value = value.substring(nextIndex).trim();
-
-    if (!(value.startsWith("["))) {
+    if (!(value.charAt(nextIndex) == '[')) {
       throw new ODatabaseImportException("Cannot import field: " + fieldName + " (too big)");
     }
 
     StringBuilder ridBuffer = new StringBuilder();
 
-    for (int i = 1; i < value.length() + 2; i++) {
+    for (int i = nextIndex + 1; i < value.length() + 2; i++) {
       if (value.charAt(i) == ',' || value.charAt(i) == ']') {
         String ridString = OIOUtils.getStringContent(ridBuffer.toString().trim());
         if (ridString.length() > 0) {
