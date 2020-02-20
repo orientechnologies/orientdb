@@ -179,7 +179,7 @@ public class OAtomicOperationsManager {
 
     final OOperationUnitId unitId = OOperationUnitId.generateId();
     final OLogSequenceNumber lsn;
-    if (metadata.isPresent()) {
+    if (metadata != null && metadata.isPresent()) {
       lsn = writeAheadLog.logAtomicOperationStartRecord(true, unitId, metadata.get());
     } else {
       lsn = writeAheadLog.logAtomicOperationStartRecord(true, unitId);

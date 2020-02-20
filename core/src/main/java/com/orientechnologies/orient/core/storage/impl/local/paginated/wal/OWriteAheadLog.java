@@ -29,6 +29,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 /**
  * @author Andrey Lomakin (a.lomakin-at-orientdb.com)
@@ -38,11 +39,11 @@ public interface OWriteAheadLog {
   String MASTER_RECORD_EXTENSION = ".wmr";
   String WAL_SEGMENT_EXTENSION   = ".wal";
 
-  OLogSequenceNumber logFuzzyCheckPointStart(OLogSequenceNumber flushedLsn) throws IOException;
+  OLogSequenceNumber logFuzzyCheckPointStart(OLogSequenceNumber flushedLsn, Optional<byte[]> lastMetadata) throws IOException;
 
   OLogSequenceNumber logFuzzyCheckPointEnd() throws IOException;
 
-  OLogSequenceNumber logFullCheckpointStart() throws IOException;
+  OLogSequenceNumber logFullCheckpointStart(Optional<byte[]> lastMetadata) throws IOException;
 
   @SuppressWarnings("UnusedReturnValue")
   OLogSequenceNumber logFullCheckpointEnd() throws IOException;
