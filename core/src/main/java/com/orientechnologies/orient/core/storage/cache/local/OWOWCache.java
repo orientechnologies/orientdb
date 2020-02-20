@@ -68,18 +68,7 @@ import java.nio.file.FileStore;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Random;
-import java.util.Set;
-import java.util.TreeMap;
-import java.util.TreeSet;
+import java.util.*;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.ConcurrentHashMap;
@@ -921,7 +910,7 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
   }
 
   @Override
-  public void makeFuzzyCheckpoint(final long segmentId) throws IOException {
+  public void makeFuzzyCheckpoint(final long segmentId, Optional<byte[]> lastMetadata) throws IOException {
     if (writeAheadLog != null) {
       filesLock.acquireReadLock();
       try {
@@ -930,7 +919,7 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
           return;
         }
 
-        writeAheadLog.logFuzzyCheckPointStart(startLSN);
+        writeAheadLog.logFuzzyCheckPointStart(startLSN, lastMetadata);
 
         for (final Integer intId : nameIdMap.values()) {
           if (intId < 0) {

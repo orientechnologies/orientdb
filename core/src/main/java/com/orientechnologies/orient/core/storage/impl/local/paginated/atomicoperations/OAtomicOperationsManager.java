@@ -305,7 +305,6 @@ public class OAtomicOperationsManager implements OAtomicOperationsMangerMXBean {
    * Ends the current atomic operation on this manager.
    *
    * @param rollback {@code true} to indicate a rollback, {@code false} for successful commit.
-   * @return the LSN produced by committing the current operation or {@code null} if no commit was done.
    */
   public void endAtomicOperation(boolean rollback) throws IOException {
     final OAtomicOperation operation = currentOperation.get();

@@ -108,6 +108,9 @@ public final class OWALRecordsFactory {
     case FULL_CHECKPOINT_START_RECORD:
       walRecord = new OFullCheckpointStartRecord();
       break;
+    case FULL_CHECKPOINT_START_METADATA_RECORD:
+      walRecord = new OFullCheckpointStartMetadataRecord();
+      break;
     case CHECKPOINT_END_RECORD:
       walRecord = new OCheckpointEndRecord();
       break;

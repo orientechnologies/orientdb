@@ -48,6 +48,7 @@ import com.orientechnologies.orient.core.storage.ORecordCallback;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.OStorageProxy;
 
+import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -579,4 +580,5 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
   public boolean getSentToServer() {
     return sentToServer;
   }
+
 }

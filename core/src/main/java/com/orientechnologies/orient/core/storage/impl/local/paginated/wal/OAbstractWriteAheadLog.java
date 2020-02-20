@@ -23,6 +23,7 @@ package com.orientechnologies.orient.core.storage.impl.local.paginated.wal;
 import com.orientechnologies.orient.core.exception.OStorageException;
 
 import java.io.IOException;
+import java.util.Optional;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -37,7 +38,7 @@ public abstract class OAbstractWriteAheadLog implements OWriteAheadLog {
   private       OLogSequenceNumber lastCheckpoint;
 
   @Override
-  public OLogSequenceNumber logFuzzyCheckPointStart(OLogSequenceNumber flushedLsn) throws IOException {
+  public OLogSequenceNumber logFuzzyCheckPointStart(OLogSequenceNumber flushedLsn, Optional<byte[]> lastMetadata) throws IOException {
     syncObject.lock();
     try {
       checkForClose();
@@ -65,7 +66,7 @@ public abstract class OAbstractWriteAheadLog implements OWriteAheadLog {
   }
 
   @Override
-  public OLogSequenceNumber logFullCheckpointStart() throws IOException {
+  public OLogSequenceNumber logFullCheckpointStart(Optional<byte[]> lastMetadata) throws IOException {
     return log(new OFullCheckpointStartRecord(lastCheckpoint));
   }
 

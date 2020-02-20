@@ -47,9 +47,10 @@ public abstract class OTransactionRealAbstract extends OTransactionAbstract impl
   protected Map<ORID, ORecordOperation>                       allEntries            = new LinkedHashMap<ORID, ORecordOperation>();
   protected Map<String, OTransactionIndexChanges>             indexEntries          = new LinkedHashMap<String, OTransactionIndexChanges>();
   protected Map<ORID, List<OTransactionRecordIndexOperation>> recordIndexOperations = new HashMap<ORID, List<OTransactionRecordIndexOperation>>();
-  protected int                                               id;
-  protected int                                               newObjectCounter      = -2;
-  protected Map<String, Object>                               userData              = new HashMap<String, Object>();
+  protected int id;
+  protected int                 newObjectCounter = -2;
+  protected Map<String, Object> userData         = new HashMap<String, Object>();
+  private         Optional<byte[]>                                  metadata              = Optional.empty();
 
   /**
    * This set is used to track which documents are changed during tx, if documents are changed but not saved all changes are made
@@ -564,6 +565,16 @@ public abstract class OTransactionRealAbstract extends OTransactionAbstract impl
 
   public int getNewObjectCounter() {
     return newObjectCounter;
+  }
+
+  @Override
+  public Optional<byte[]> getMetadata() {
+    return metadata;
+  }
+
+  @Override
+  public void setMetadata(Optional<byte[]> metadata) {
+    this.metadata = metadata;
   }
 
   @Override

@@ -343,7 +343,7 @@ public class AsyncReadCacheTestIT {
     }
 
     @Override
-    public void makeFuzzyCheckpoint(final long segmentId) {
+    public void makeFuzzyCheckpoint(final long segmentId, Optional<byte[]> lastMetadata) {
     }
 
     @Override

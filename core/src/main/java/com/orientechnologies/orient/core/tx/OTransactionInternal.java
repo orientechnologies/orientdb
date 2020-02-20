@@ -108,6 +108,8 @@ public interface OTransactionInternal extends OBasicTransaction {
     return Optional.empty();
   }
 
+  void setMetadata(Optional<byte[]> metadata);
+
   default void storageBegun() {
 
   }
