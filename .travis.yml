@@ -5,8 +5,8 @@ cache:
   - $HOME/.m2
 install: true
 script:
-  - mvn clean test -Dmaven.test.redirectTestOutputToFile=true
-  - mvn jacoco:report
+  - mvn clean test -Dmaven.test.redirectTestOutputToFile=true -P travis
+  - mvn jacoco:report -P travis
 branches:
   only:
   - develop

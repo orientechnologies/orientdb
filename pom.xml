@@ -633,6 +633,39 @@
         </profile>
 
         <profile>
+            <id>travis</id>
+
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.jacoco</groupId>
+                        <artifactId>jacoco-maven-plugin</artifactId>
+                        <version>0.8.5</version>
+                        <configuration>
+                            <destFile>${project.basedir}/../target/jacoco.exec</destFile>
+                            <dataFile>${project.basedir}/../target/jacoco.exec</dataFile>
+                            <excludes>
+                                <exclude>
+                                    **/*OrientSqlTokenManager*
+                                </exclude>
+                            </excludes>
+                        </configuration>
+                        <executions>
+                            <execution>
+                                <goals>
+                                    <goal>prepare-agent</goal>
+                                    <goal>report</goal>
+                                </goals>
+                                <configuration>
+                                    <dataFile>${project.basedir}/../target/jacoco.exec</dataFile>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+        <profile>
             <id>java8</id>
             <activation>
                 <jdk>1.8</jdk>
