@@ -1,6 +1,7 @@
 package com.orientechnologies.orient.core.db;
 
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
@@ -208,15 +209,20 @@ public class OrientDBEmbeddedTests {
 
     orientDb.close();
 
-    try {
+    ODatabasePool pool = new ODatabasePool("embedded:./target/some", "admin", "admin");
+    pool.close();
 
-      ODatabasePool pool = new ODatabasePool("embedded:./target/some", "admin", "admin");
-      pool.close();
+  }
 
-    } finally {
-
-    }
-
+  @Test
+  public void testDropTL() {
+    OrientDB orientDb = new OrientDB("embedded:", OrientDBConfig.defaultConfig());
+    orientDb.createIfNotExists("some", ODatabaseType.MEMORY);
+    orientDb.createIfNotExists("some1", ODatabaseType.MEMORY);
+    ODatabaseDocument db = orientDb.open("some", "admin", "admin");
+    orientDb.drop("some1");
+    db.close();
+    orientDb.close();
   }
 
   @Test
