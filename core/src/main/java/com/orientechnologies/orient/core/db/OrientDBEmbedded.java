@@ -543,6 +543,7 @@ public class OrientDBEmbedded implements OrientDBInternal {
   }
 
   public void restore(String name, String user, String password, ODatabaseType type, String path, OrientDBConfig config) {
+    config = solveConfig(config);
     final ODatabaseDocumentEmbedded embedded;
     OAbstractPaginatedStorage storage;
     synchronized (this) {
