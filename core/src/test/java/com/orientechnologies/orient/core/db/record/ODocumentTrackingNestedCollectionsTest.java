@@ -4,7 +4,6 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.record.impl.ONestedMultiValueChangeEvent;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
