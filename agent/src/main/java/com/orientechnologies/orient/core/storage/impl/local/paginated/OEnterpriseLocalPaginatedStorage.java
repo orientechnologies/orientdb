@@ -843,12 +843,6 @@ public class OEnterpriseLocalPaginatedStorage extends OLocalPaginatedStorage {
     listeners.forEach(OEnterpriseStorageOperationListener::onRollback);
   }
 
-  @Override
-  public void rollback(OMicroTransaction microTransaction) {
-    super.rollback(microTransaction);
-    listeners.forEach(OEnterpriseStorageOperationListener::onRollback);
-  }
-
   private void replaceConfiguration(ZipInputStream zipInputStream) throws IOException {
     byte[] buffer = new byte[1024];
 
