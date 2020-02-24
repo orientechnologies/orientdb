@@ -1,17 +1,4 @@
-import {
-  Component,
-  Input,
-  ElementRef,
-  NgZone,
-  OnDestroy,
-  ViewChild,
-  OnInit,
-  ViewContainerRef,
-  OnChanges,
-  SimpleChanges,
-  SimpleChange
-} from "@angular/core";
-import { downgradeComponent } from "@angular/upgrade/static";
+import { Component, ElementRef, Input, OnChanges, OnInit, SimpleChanges } from "@angular/core";
 
 declare const c3: any;
 
@@ -93,3 +80,4 @@ class ChartComponent implements OnInit, OnChanges {
 }
 
 export { ChartComponent };
+

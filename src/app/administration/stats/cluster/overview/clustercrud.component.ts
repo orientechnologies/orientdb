@@ -28,12 +28,12 @@ class ClusterCrudComponent implements OnInit, OnChanges {
   chart: any;
 
   private metrics = [
-    { name: "db.*.readOps", regex: /db.*readOps/g },
-    { name: "db.*.createOps", regex: /db.*createOps/g },
-    { name: "db.*.updateOps", regex: /db.*updateOps/g },
-    { name: "db.*.deleteOps", regex: /db.*deleteOps/g },
-    { name: "db.*.commitOps", regex: /db.*commitOps/g },
-    { name: "db.*.rollbackOps", regex: /db.*rollbackOps/g }
+    { name: "db.*.readOps", label: "Read", regex: /db.*readOps/g },
+    { name: "db.*.createOps", label: "Create", regex: /db.*createOps/g },
+    { name: "db.*.updateOps", label: "Update", regex: /db.*updateOps/g },
+    { name: "db.*.deleteOps", label: "Delete", regex: /db.*deleteOps/g },
+    { name: "db.*.commitOps", label: "Commit", regex: /db.*commitOps/g },
+    { name: "db.*.rollbackOps", label: "Rollback", regex: /db.*rollbackOps/g }
   ];
 
   aggregator: MetersAggregator;
@@ -49,6 +49,8 @@ class ClusterCrudComponent implements OnInit, OnChanges {
       let aggregates = this.createAggregates();
 
       this.columns = this.aggregator.next(aggregates);
+
+      console.log(this.columns);
     }
   }
 
@@ -59,14 +61,24 @@ class ClusterCrudComponent implements OnInit, OnChanges {
         return this.stats.clusterStats[s]["meters"];
       })
       .reduce((prev, current) => {
-        if (!prev) {
-          return current;
+        if (Object.keys(prev).length == 0) {
+          return {
+            ...current
+          };
         } else {
-          return Object.keys(prev).reduce((p, c) => {
-            return prev[p].count + current[c].count;
-          }, 0);
+          Object.keys(current).forEach(k => {
+            if (!prev[k]) {
+              prev[k] = {
+                ...current[k]
+              };
+            } else {
+              prev[k].count += current[k].count;
+            }
+          });
+          return prev;
         }
-      }, null);
+      }, {});
+
     return aggregates;
   }
 
