@@ -692,8 +692,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
           listener.onMessage(
               "Check of storage completed in " + (System.currentTimeMillis() - start) + "ms. " + (pageErrors.length > 0 ?
-                  pageErrors.length + " with errors." :
-                  " without errors."));
+                  pageErrors.length + " with errors." : " without errors."));
 
           return pageErrors.length == 0;
         } finally {
@@ -1343,9 +1342,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       try {
         checkOpenness();
 
-        return clusters.get(iClusterId) != null ?
-            new long[] { clusters.get(iClusterId).getFirstPosition(), clusters.get(iClusterId).getLastPosition() } :
-            OCommonConst.EMPTY_LONG_ARRAY;
+        return clusters.get(iClusterId) != null ? new long[] { clusters.get(iClusterId).getFirstPosition(),
+            clusters.get(iClusterId).getLastPosition() } : OCommonConst.EMPTY_LONG_ARRAY;
 
       } catch (final IOException ioe) {
         throw OException.wrapException(new OStorageException("Cannot retrieve information about data range"), ioe);
@@ -1398,8 +1396,10 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
    * not deleted - length of content is provided in above entity</li> </ol>
    *
    * @param lsn LSN from which we should find changed records
+   *
    * @return Last LSN processed during examination of changed records, or <code>null</code> if it was impossible to find changed
    * records: write ahead log is absent, record with start LSN was not found in WAL, etc.
+   *
    * @see OGlobalConfiguration#STORAGE_TRACK_CHANGED_RECORDS_IN_WAL
    */
   public OBackgroundDelta recordsChangedAfterLSN(final OLogSequenceNumber lsn, final OCommandOutputListener outputListener) {
@@ -1578,7 +1578,9 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
    * This method finds all the records changed in the last X transactions.
    *
    * @param maxEntries Maximum number of entries to check back from last log.
+   *
    * @return A set of record ids of the changed records
+   *
    * @see OGlobalConfiguration#STORAGE_TRACK_CHANGED_RECORDS_IN_WAL
    */
   public Set<ORecordId> recordsChangedRecently(final int maxEntries) {
@@ -2260,6 +2262,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
    * Traditional commit that support already temporary rid and already assigned rids
    *
    * @param clientTx the transaction to commit
+   *
    * @return The list of operations applied by the transaction
    */
   @Override
@@ -2271,6 +2274,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
    * Commit a transaction where the rid where pre-allocated in a previous phase
    *
    * @param clientTx the pre-allocated transaction to commit
+   *
    * @return The list of operations applied by the transaction
    */
   @SuppressWarnings("UnusedReturnValue")
@@ -2289,6 +2293,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
    *
    * @param transaction the transaction to commit
    * @param allocated   true if the operation is pre-allocated commit
+   *
    * @return The list of operations applied by the transaction
    */
   private List<ORecordOperation> commit(final OTransactionInternal transaction, final boolean allocated) {
@@ -2377,6 +2382,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
           makeStorageDirty();
 
+          List<OIndexInternal<?>> lockedIndexes = null;
           boolean rollback = false;
           final OAtomicOperation atomicOperation = startStorageTx(transaction);
           try {
@@ -2435,7 +2441,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
               result.add(recordOperation);
             }
 
-            lockIndexes(indexOperations);
+            lockedIndexes = lockIndexes(indexOperations);
 
             checkReadOnlyConditions();
 
@@ -2454,6 +2460,9 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
               endStorageTx(transaction, recordOperations);
             }
 
+            if (lockedIndexes != null) {
+              releaseIndexes(lockedIndexes);
+            }
             this.transaction.set(null);
           }
         } finally {
@@ -3268,7 +3277,9 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
    * @param key       the key to put the value under.
    * @param value     the value to put.
    * @param validator the operation validator.
+   *
    * @return {@code true} if the validator allowed the put, {@code false} otherwise.
+   *
    * @see OBaseIndexEngine.Validator#validate(Object, Object, Object)
    */
   @SuppressWarnings("UnusedReturnValue")
@@ -4400,7 +4411,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     try {
       checkOpenness();
 
-      atomicOperationsManager.executeInsideAtomicOperation((atomicOperation) -> doSetConflictStrategy(conflictResolver, atomicOperation));
+      atomicOperationsManager
+          .executeInsideAtomicOperation((atomicOperation) -> doSetConflictStrategy(conflictResolver, atomicOperation));
     } catch (final Exception e) {
       throw OException.wrapException(new OStorageException(
           "Exception during setting of conflict strategy " + conflictResolver.getName() + " for storage " + name), e);
@@ -5085,6 +5097,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
    * Register the cluster internally.
    *
    * @param cluster OCluster implementation
+   *
    * @return The id (physical position into the array) of the new cluster just created. First is 0.
    */
   private int registerCluster(final OCluster cluster) {
@@ -6088,7 +6101,19 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     return ridsPerCluster;
   }
 
-  private static void lockIndexes(final TreeMap<String, OTransactionIndexChanges> indexes) {
+  private static List<OIndexInternal<?>> lockIndexes(final TreeMap<String, OTransactionIndexChanges> indexes) {
+    final List<OIndexInternal<?>> result = new ArrayList<>();
+
+    for (final OTransactionIndexChanges changes : indexes.values()) {
+      final OIndexInternal<?> index = changes.getAssociatedIndex();
+      result.add(index);
+    }
+
+    result.sort(Comparator.comparing(OIndex::getName));
+    for (OIndexInternal<?> index : result) {
+      index.acquireExclusiveLock();
+    }
+
     for (final OTransactionIndexChanges changes : indexes.values()) {
       assert changes.changesPerKey instanceof TreeMap;
 
@@ -6113,6 +6138,14 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       if (!fullyLocked && !changes.nullKeyChanges.entries.isEmpty()) {
         index.acquireAtomicExclusiveLock(null);
       }
+    }
+
+    return result;
+  }
+
+  private static void releaseIndexes(final List<OIndexInternal<?>> indexes) {
+    for (OIndexInternal<?> index : indexes) {
+      index.releaseExclusiveLock();
     }
   }
 

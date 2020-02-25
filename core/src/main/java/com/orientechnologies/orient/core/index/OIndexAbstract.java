@@ -52,14 +52,7 @@ import com.orientechnologies.orient.core.tx.OTransactionIndexChangesPerKey;
 
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Locale;
-import java.util.Map;
-import java.util.NoSuchElementException;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicLong;
 
 /**
@@ -948,11 +941,11 @@ public abstract class OIndexAbstract<T> implements OIndexInternal<T> {
     return new long[] { documentNum, documentIndexed };
   }
 
-  protected void releaseExclusiveLock() {
+  public void releaseExclusiveLock() {
     rwLock.releaseWriteLock();
   }
 
-  protected void acquireExclusiveLock() {
+  public void acquireExclusiveLock() {
     rwLock.acquireWriteLock();
   }
 

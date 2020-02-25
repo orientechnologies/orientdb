@@ -23,9 +23,6 @@ import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.tx.OTransactionIndexChanges;
 
-import java.util.Collection;
-import java.util.concurrent.locks.Lock;
-
 /**
  * Interface to handle index.
  *
@@ -81,11 +78,11 @@ public interface OIndexInternal<T> extends OIndex<T> {
   OIndex<T> removeCluster(final String iClusterName);
 
   /**
-   * Indicates whether given index can be used to calculate result of
-   * {@link com.orientechnologies.orient.core.sql.operator.OQueryOperatorEquality} operators.
+   * Indicates whether given index can be used to calculate result of {@link com.orientechnologies.orient.core.sql.operator.OQueryOperatorEquality}
+   * operators.
    *
-   * @return {@code true} if given index can be used to calculate result of
-   * {@link com.orientechnologies.orient.core.sql.operator.OQueryOperatorEquality} operators.
+   * @return {@code true} if given index can be used to calculate result of {@link com.orientechnologies.orient.core.sql.operator.OQueryOperatorEquality}
+   * operators.
    */
   boolean canBeUsedInEqualityOperators();
 
@@ -132,4 +129,8 @@ public interface OIndexInternal<T> extends OIndex<T> {
    * key} and only some subset of this index was locked.
    */
   boolean acquireAtomicExclusiveLock(Object key);
+
+  void acquireExclusiveLock();
+
+  void releaseExclusiveLock();
 }
