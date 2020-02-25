@@ -22,7 +22,6 @@ import static org.junit.Assert.*;
 public class OTokenHandlerImplTest {
 
   @Test
-  @Ignore
   public void testWebTokenCreationValidation() throws InvalidKeyException, NoSuchAlgorithmException, IOException {
     ODatabaseDocumentTx db = new ODatabaseDocumentTx("memory:" + OTokenHandlerImplTest.class.getSimpleName());
     db.create();
@@ -101,6 +100,7 @@ public class OTokenHandlerImplTest {
     assertEquals(payload.getIssuer(), des.getIssuer());
     assertEquals(payload.getNotBefore(), des.getNotBefore());
     assertEquals(payload.getTokenId(), des.getTokenId());
+    assertEquals(payload.getUserName(), des.getUserName());
 
   }
 

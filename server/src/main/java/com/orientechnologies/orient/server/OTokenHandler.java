@@ -4,6 +4,7 @@ import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.metadata.security.OSecurityUser;
 import com.orientechnologies.orient.core.metadata.security.OToken;
+import com.orientechnologies.orient.server.config.OServerUserConfiguration;
 import com.orientechnologies.orient.server.network.protocol.ONetworkProtocolData;
 
 import java.io.IOException;
@@ -35,6 +36,14 @@ public interface OTokenHandler {
 
   // Return a byte array representing a signed token
   byte[] getSignedWebToken(ODatabaseDocument db, OSecurityUser user);
+
+  default byte[] getSignedWebTokenServerUser(OServerUserConfiguration user) {
+    throw new UnsupportedOperationException();
+  }
+
+  default boolean validateServerUserToken(OToken token, String command, String database) {
+    throw new UnsupportedOperationException();
+  }
 
   byte[] getSignedBinaryToken(ODatabaseDocumentInternal db, OSecurityUser user, ONetworkProtocolData data);
 
