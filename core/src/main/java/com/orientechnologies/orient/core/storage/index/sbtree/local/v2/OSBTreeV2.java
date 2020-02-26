@@ -1663,10 +1663,8 @@ public class OSBTreeV2<K, V> extends ODurableComponent implements OSBTree<K, V> 
           while (true) {
             final int bucketSize = bucket.size();
             if (itemIndex == Integer.MIN_VALUE) {
-              itemIndex = bucketSize;
-            } else if (itemIndex == -1) {
-              return true;
-            } else if (itemIndex < 0) {
+              itemIndex = bucketSize - 1;
+            } else if (itemIndex < -1) {
               throw new IllegalStateException("Invalid value of item index");
             }
 

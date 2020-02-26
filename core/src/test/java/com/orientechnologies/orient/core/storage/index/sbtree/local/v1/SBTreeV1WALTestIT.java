@@ -31,6 +31,7 @@ import java.util.Locale;
  * @author Andrey Lomakin (a.lomakin-at-orientdb.com)
  * @since 8/27/13
  */
+@Ignore
 public class SBTreeV1WALTestIT extends SBTreeV1TestIT {
   static {
     OGlobalConfiguration.FILE_LOCK.setValue(false);
