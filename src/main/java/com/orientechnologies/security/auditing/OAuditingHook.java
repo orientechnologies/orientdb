@@ -1,18 +1,15 @@
 /**
  * Copyright 2010-2016 OrientDB LTD (http://orientdb.com)
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
+ * <p>
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
- * 	http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- *
+ * <p>
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * <p>
+ * Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on an "AS IS"
+ * BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the specific language
+ * governing permissions and limitations under the License.
+ * <p>
  * For more information: http://www.orientdb.com
  */
 package com.orientechnologies.security.auditing;
@@ -28,10 +25,12 @@ import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.hook.ORecordHookAbstract;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
+import com.orientechnologies.orient.core.metadata.schema.OImmutableClass;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.metadata.security.OSecurityUser;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
 import com.orientechnologies.orient.core.security.OAuditingOperation;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.OSystemDatabase;
@@ -46,19 +45,19 @@ import java.util.concurrent.LinkedBlockingQueue;
  * @author Luca Garulli
  */
 public class OAuditingHook extends ORecordHookAbstract implements ODatabaseListener {
-  private final Map<String, OAuditingClassConfig> classes                    = new HashMap<String, OAuditingClassConfig>(20);
+  private final Map<String, OAuditingClassConfig> classes = new HashMap<String, OAuditingClassConfig>(20);
   private final OAuditingLoggingThread            auditingThread;
 
-  private Map<ODatabaseDocument, List<ODocument>> operations                 = new ConcurrentHashMap<ODatabaseDocument, List<ODocument>>();
-  private volatile LinkedBlockingQueue<ODocument> auditingQueue;
-  private Set<OAuditingCommandConfig>             commands                   = new HashSet<OAuditingCommandConfig>();
-  private boolean                                 onGlobalCreate;
-  private boolean                                 onGlobalRead;
-  private boolean                                 onGlobalUpdate;
-  private boolean                                 onGlobalDelete;
-  private OAuditingClassConfig                    defaultConfig              = new OAuditingClassConfig();
-  private OAuditingSchemaConfig                   schemaConfig;
-  private ODocument                               iConfiguration;
+  private          Map<ODatabaseDocument, List<ODocument>> operations    = new ConcurrentHashMap<ODatabaseDocument, List<ODocument>>();
+  private volatile LinkedBlockingQueue<ODocument>          auditingQueue;
+  private          Set<OAuditingCommandConfig>             commands      = new HashSet<OAuditingCommandConfig>();
+  private          boolean                                 onGlobalCreate;
+  private          boolean                                 onGlobalRead;
+  private          boolean                                 onGlobalUpdate;
+  private          boolean                                 onGlobalDelete;
+  private          OAuditingClassConfig                    defaultConfig = new OAuditingClassConfig();
+  private          OAuditingSchemaConfig                   schemaConfig;
+  private          ODocument                               iConfiguration;
 
   private static class OAuditingCommandConfig {
     public String regex;
@@ -71,15 +70,15 @@ public class OAuditingHook extends ORecordHookAbstract implements ODatabaseListe
   }
 
   private static class OAuditingClassConfig {
-    public boolean polymorphic          = true;
-    public boolean onCreateEnabled      = false;
+    public boolean polymorphic     = true;
+    public boolean onCreateEnabled = false;
     public String  onCreateMessage;
-    public boolean onReadEnabled        = false;
+    public boolean onReadEnabled   = false;
     public String  onReadMessage;
-    public boolean onUpdateEnabled      = false;
+    public boolean onUpdateEnabled = false;
     public String  onUpdateMessage;
-    public boolean onUpdateChanges      = true;
-    public boolean onDeleteEnabled      = false;
+    public boolean onUpdateChanges = true;
+    public boolean onDeleteEnabled = false;
     public String  onDeleteMessage;
 
     public OAuditingClassConfig() {
@@ -120,48 +119,45 @@ public class OAuditingHook extends ORecordHookAbstract implements ODatabaseListe
   // Handles the auditing-config "schema" configuration.
   private class OAuditingSchemaConfig extends OAuditingConfig {
     private boolean onCreateClassEnabled = false;
-    private String onCreateClassMessage;
+    private String  onCreateClassMessage;
 
     private boolean onDropClassEnabled = false;
-    private String onDropClassMessage;
+    private String  onDropClassMessage;
 
     public OAuditingSchemaConfig(final ODocument cfg) {
       if (cfg.containsField("onCreateClassEnabled"))
         onCreateClassEnabled = cfg.field("onCreateClassEnabled");
-        
+
       onCreateClassMessage = cfg.field("onCreateClassMessage");
-      
+
       if (cfg.containsField("onDropClassEnabled"))
         onDropClassEnabled = cfg.field("onDropClassEnabled");
-        
+
       onDropClassMessage = cfg.field("onDropClassMessage");
     }
-    
+
     @Override
     public String formatMessage(final OAuditingOperation op, final String subject) {
       if (op == OAuditingOperation.CREATEDCLASS) {
-      	return resolveMessage(onCreateClassMessage, "class", subject);
-      } else
-      if (op == OAuditingOperation.DROPPEDCLASS) {
-      	return resolveMessage(onDropClassMessage, "class", subject);
+        return resolveMessage(onCreateClassMessage, "class", subject);
+      } else if (op == OAuditingOperation.DROPPEDCLASS) {
+        return resolveMessage(onDropClassMessage, "class", subject);
       }
-      
+
       return subject;
     }
 
     @Override
     public boolean isEnabled(OAuditingOperation op) {
       if (op == OAuditingOperation.CREATEDCLASS) {
-      	return onCreateClassEnabled;
-      } else
-      if (op == OAuditingOperation.DROPPEDCLASS) {
-      	return onDropClassEnabled;
+        return onCreateClassEnabled;
+      } else if (op == OAuditingOperation.DROPPEDCLASS) {
+        return onDropClassEnabled;
       }
 
-    	return false;
-    }    
+      return false;
+    }
   }
-
 
   //// OAuditingHook
   public OAuditingHook(final String iConfiguration) {
@@ -211,8 +207,8 @@ public class OAuditingHook extends ORecordHookAbstract implements ODatabaseListe
     }
 
     final ODocument schemaCfgDoc = iConfiguration.field("schema");
-    if (schemaCfgDoc != null) {    	
-    	schemaConfig = new OAuditingSchemaConfig(schemaCfgDoc);
+    if (schemaCfgDoc != null) {
+      schemaConfig = new OAuditingSchemaConfig(schemaCfgDoc);
     }
 
     auditingQueue = new LinkedBlockingQueue<ODocument>();
@@ -316,6 +312,18 @@ public class OAuditingHook extends ORecordHookAbstract implements ODatabaseListe
 
   @Override
   public void onRecordAfterUpdate(final ORecord iRecord) {
+
+    if (iRecord instanceof ODocument) {
+      ODocument doc = (ODocument) iRecord;
+      ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.instance().get();
+      OImmutableClass clazz = ODocumentInternal.getImmutableSchemaClass(db, doc);
+
+      if (clazz.isOuser() && Arrays.asList(doc.getDirtyFields()).contains("password")) {
+        String name = doc.getProperty("name");
+        String message = String.format("The password for user '%s' has been changed", name);
+        log(OAuditingOperation.CHANGED_PWD, db.getName(), db.getUser().getName(), message);
+      }
+    }
     if (!onGlobalUpdate)
       return;
 
@@ -336,19 +344,21 @@ public class OAuditingHook extends ORecordHookAbstract implements ODatabaseListe
   }
 
   protected void logCommand(final String command) {
-    if(auditingQueue == null) return;
+    if (auditingQueue == null)
+      return;
 
     for (OAuditingCommandConfig cfg : commands) {
       if (command.matches(cfg.regex)) {
         final ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.instance().get();
-        
+
         String username = null;
 
         final OSecurityUser user = db.getUser();
         if (user != null)
           username = user.getName();
-        
-        final ODocument doc = createLogDocument(OAuditingOperation.COMMAND, db.getName(), username, formatCommandNote(command, cfg.message));
+
+        final ODocument doc = createLogDocument(OAuditingOperation.COMMAND, db.getName(), username,
+            formatCommandNote(command, cfg.message));
         auditingQueue.offer(doc);
       }
     }
@@ -509,37 +519,37 @@ public class OAuditingHook extends ORecordHookAbstract implements ODatabaseListe
     }
   }
 
-/*
-  private OAuditingClassConfig getAuditConfiguration(OClass cls) {
-    OAuditingClassConfig cfg = null;
+  /*
+    private OAuditingClassConfig getAuditConfiguration(OClass cls) {
+      OAuditingClassConfig cfg = null;
 
-    if (cls != null) {
+      if (cls != null) {
 
-      cfg = classes.get(cls.getName());
+        cfg = classes.get(cls.getName());
 
-      // BROWSE SUPER CLASSES UP TO ROOT
-      while (cfg == null && cls != null) {
-        cls = cls.getSuperClass();
+        // BROWSE SUPER CLASSES UP TO ROOT
+        while (cfg == null && cls != null) {
+          cls = cls.getSuperClass();
 
-        if (cls != null) {
-          cfg = classes.get(cls.getName());
+          if (cls != null) {
+            cfg = classes.get(cls.getName());
 
-          if (cfg != null && !cfg.polymorphic) {
-            // NOT POLYMORPHIC: IGNORE IT AND EXIT FROM THE LOOP
-            cfg = null;
-            break;
+            if (cfg != null && !cfg.polymorphic) {
+              // NOT POLYMORPHIC: IGNORE IT AND EXIT FROM THE LOOP
+              cfg = null;
+              break;
+            }
           }
         }
       }
+
+      if (cfg == null)
+        // ASSIGN DEFAULT CFG (*)
+        cfg = defaultConfig;
+
+      return cfg;
     }
-
-    if (cfg == null)
-      // ASSIGN DEFAULT CFG (*)
-      cfg = defaultConfig;
-
-    return cfg;
-  }
-*/
+  */
   private String formatClassNote(final OClass cls, final String note) {
     if (note == null || note.isEmpty())
       return cls.getName();
@@ -547,7 +557,7 @@ public class OAuditingHook extends ORecordHookAbstract implements ODatabaseListe
     return (String) OVariableParser.resolveVariables(note, "${", "}", new OVariableParserListener() {
       @Override
       public Object resolve(final String iVariable) {
-      	
+
         if (iVariable.equalsIgnoreCase("class")) {
           return cls.getName();
         }
@@ -573,7 +583,7 @@ public class OAuditingHook extends ORecordHookAbstract implements ODatabaseListe
 
   protected void logClass(final OAuditingOperation operation, final OClass cls) {
     if (schemaConfig != null && schemaConfig.isEnabled(operation)) {
-    	logClass(operation, schemaConfig.formatMessage(operation, cls.getName()));
+      logClass(operation, schemaConfig.formatMessage(operation, cls.getName()));
     }
   }
 
@@ -586,23 +596,24 @@ public class OAuditingHook extends ORecordHookAbstract implements ODatabaseListe
   }
 
   public void log(final OAuditingOperation operation, final String dbName, final String username, final String message) {
-    if(auditingQueue != null)
+    if (auditingQueue != null)
       auditingQueue.offer(createLogDocument(operation, dbName, username, message));
   }
 
-  private ODocument createLogDocument(final OAuditingOperation operation, final String dbName, final String username, final String message) {
+  private ODocument createLogDocument(final OAuditingOperation operation, final String dbName, final String username,
+      final String message) {
     ODocument doc = null;
 
     doc = new ODocument();
     doc.field("date", System.currentTimeMillis());
     doc.field("operation", operation.getByte());
-    
+
     if (username != null)
       doc.field("user", username);
-      
+
     if (message != null)
       doc.field("note", message);
-      
+
     if (dbName != null)
       doc.field("database", dbName);
 
