@@ -19,6 +19,7 @@ package com.orientechnologies.orient.core.schedule;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.util.OCallable;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
+import com.orientechnologies.orient.core.db.OrientDBInternal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentAbstract;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
@@ -45,7 +46,10 @@ import java.util.concurrent.ConcurrentHashMap;
 public class OSchedulerImpl {
   private ConcurrentHashMap<String, OScheduledEvent> events = new ConcurrentHashMap<String, OScheduledEvent>();
 
-  public OSchedulerImpl() {
+  private final OrientDBInternal orientDB;
+
+  public OSchedulerImpl(OrientDBInternal orientDB) {
+    this.orientDB = orientDB;
   }
 
   public void scheduleEvent(final OScheduledEvent event) {
@@ -53,8 +57,10 @@ public class OSchedulerImpl {
       // FIST TIME: SAVE IT
       event.save();
 
-    if (events.putIfAbsent(event.getName(), event) == null)
-      event.schedule();
+    if (events.putIfAbsent(event.getName(), event) == null) {
+      String database = event.getDocument().getDatabase().getName();
+      event.schedule(database, "admin", orientDB);
+    }
   }
 
   public OScheduledEvent removeEventInternal(final String eventName) {

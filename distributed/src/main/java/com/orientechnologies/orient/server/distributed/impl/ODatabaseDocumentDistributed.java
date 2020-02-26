@@ -49,6 +49,7 @@ import com.orientechnologies.orient.server.distributed.impl.task.ONewSQLCommandT
 import com.orientechnologies.orient.server.distributed.impl.task.ORunQueryExecutionPlanTask;
 import com.orientechnologies.orient.server.distributed.task.*;
 import com.orientechnologies.orient.server.hazelcast.OHazelcastPlugin;
+import com.orientechnologies.orient.server.plugin.OServerPluginInfo;
 
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -513,6 +514,7 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
 
   /**
    * @param transactionId
+   *
    * @return null returned means that commit failed
    */
   public boolean commit2pc(ODistributedRequestId transactionId, boolean local, ODistributedRequestId requestId) {
@@ -757,8 +759,8 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
 
   public OEnterpriseEndpoint getEnterpriseEndpoint() {
     OServer server = distributedManager.getServerInstance();
-    return server.getPlugins().stream().filter(OEnterpriseEndpoint.class::isInstance).findFirst()
-        .map(OEnterpriseEndpoint.class::cast).orElse(null);
+    return server.getPlugins().stream().map(OServerPluginInfo::getInstance).filter(OEnterpriseEndpoint.class::isInstance)
+        .findFirst().map(OEnterpriseEndpoint.class::cast).orElse(null);
   }
 
   public ODistributedServerManager getDistributedManager() {

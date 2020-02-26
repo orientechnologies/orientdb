@@ -626,11 +626,16 @@ public class OrientDBEmbedded implements OrientDBInternal {
     synchronized (this) {
       checkOpen();
     }
-    ODatabaseDocumentInternal db = openNoAuthenticate(name, user);
-    for (Iterator<ODatabaseLifecycleListener> it = orient.getDbLifecycleListeners(); it.hasNext(); ) {
-      it.next().onDrop(db);
+    ODatabaseDocumentInternal current = ODatabaseRecordThreadLocal.instance().getIfDefined();
+    try {
+      ODatabaseDocumentInternal db = openNoAuthenticate(name, user);
+      for (Iterator<ODatabaseLifecycleListener> it = orient.getDbLifecycleListeners(); it.hasNext(); ) {
+        it.next().onDrop(db);
+      }
+      db.close();
+    } finally {
+      ODatabaseRecordThreadLocal.instance().set(current);
     }
-    db.close();
     synchronized (this) {
       if (exists(name, user, password)) {
         OAbstractPaginatedStorage storage = getOrInitStorage(name);

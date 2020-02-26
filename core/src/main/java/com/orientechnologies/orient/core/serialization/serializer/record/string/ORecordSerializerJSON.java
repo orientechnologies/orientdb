@@ -165,7 +165,8 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
   }
 
   public ORecord fromString(String iSource, ORecord iRecord, final String[] iFields, final String iOptions, boolean needReload, int maxRidbagSizeBeforeSkip, Set<Integer> skippedPartsIndexes) {
-    iSource = unwrapSource(iSource);
+    iSource = iSource.trim();
+    boolean brackets = iSource.startsWith("{") && iSource.endsWith("}");
 
     String className = null;
     boolean noMap = false;
@@ -180,7 +181,7 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
       // RESET ALL THE FIELDS
       iRecord.clear();
 
-    final List<String> fields = OStringSerializerHelper.smartSplit(iSource, PARAMETER_SEPARATOR, 0, -1, true, true, false, false,
+    final List<String> fields = OStringSerializerHelper.smartSplit(iSource, PARAMETER_SEPARATOR, brackets ? 1 : 0, brackets ? (iSource.length() - 2) : -1  , true, true, false, false,
             maxRidbagSizeBeforeSkip, skippedPartsIndexes, ' ', '\n', '\r', '\t');
 
     if (fields.size() % 2 != 0)

@@ -59,10 +59,7 @@ import com.orientechnologies.orient.core.serialization.serializer.record.ORecord
 import com.orientechnologies.orient.core.serialization.serializer.record.binary.ORecordSerializerNetworkV37Client;
 import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
-import com.orientechnologies.orient.core.storage.OBasicTransaction;
-import com.orientechnologies.orient.core.storage.ORawBuffer;
-import com.orientechnologies.orient.core.storage.ORecordCallback;
-import com.orientechnologies.orient.core.storage.OStorage;
+import com.orientechnologies.orient.core.storage.*;
 import com.orientechnologies.orient.core.storage.cluster.OOfflineClusterException;
 import com.orientechnologies.orient.core.storage.impl.local.OMicroTransaction;
 import com.orientechnologies.orient.core.tx.OTransaction;
@@ -326,6 +323,11 @@ public class ODatabaseDocumentRemote extends ODatabaseDocumentAbstract {
 
   @Override
   public OStorageRemote getStorage() {
+    return storage;
+  }
+
+  @Override
+  public OStorageInfo getStorageInfo() {
     return storage;
   }
 

@@ -644,8 +644,8 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
   @Override
   public OContextConfiguration getConfiguration() {
     checkIfActive();
-    if (getStorage() != null)
-      return getStorage().getConfiguration().getContextConfiguration();
+    if (getStorageInfo() != null)
+      return getStorageInfo().getConfiguration().getContextConfiguration();
     return null;
   }
 
@@ -741,31 +741,31 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
 
   @Override
   public String getURL() {
-    return url != null ? url : getStorage().getURL();
+    return url != null ? url : getStorageInfo().getURL();
   }
 
   @Override
   public int getDefaultClusterId() {
     checkIfActive();
-    return getStorage().getDefaultClusterId();
+    return getStorageInfo().getDefaultClusterId();
   }
 
   @Override
   public int getClusters() {
     checkIfActive();
-    return getStorage().getClusters();
+    return getStorageInfo().getClusters();
   }
 
   @Override
   public boolean existsCluster(final String iClusterName) {
     checkIfActive();
-    return getStorage().getClusterNames().contains(iClusterName.toLowerCase(Locale.ENGLISH));
+    return getStorageInfo().getClusterNames().contains(iClusterName.toLowerCase(Locale.ENGLISH));
   }
 
   @Override
   public Collection<String> getClusterNames() {
     checkIfActive();
-    return getStorage().getClusterNames();
+    return getStorageInfo().getClusterNames();
   }
 
   @Override
@@ -916,7 +916,7 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
 
     if (iAttribute == null)
       throw new IllegalArgumentException("attribute is null");
-    final OStorage storage = getStorage();
+    final OStorageInfo storage = getStorageInfo();
     switch (iAttribute) {
     case STATUS:
       return getStatus();
@@ -1146,7 +1146,7 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
     }
     OClass schemaClass = null;
     // if cluster id is not set yet try to find it out
-    if (rid.getClusterId() <= ORID.CLUSTER_ID_INVALID && getStorage().isAssigningClusterIds()) {
+    if (rid.getClusterId() <= ORID.CLUSTER_ID_INVALID && getStorageInfo().isAssigningClusterIds()) {
       if (record instanceof ODocument) {
         schemaClass = ODocumentInternal.getImmutableSchemaClass(this, ((ODocument) record));
         if (schemaClass != null) {

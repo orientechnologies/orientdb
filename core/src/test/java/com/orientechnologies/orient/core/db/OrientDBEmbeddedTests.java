@@ -1,6 +1,7 @@
 package com.orientechnologies.orient.core.db;
 
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
@@ -208,15 +209,20 @@ public class OrientDBEmbeddedTests {
 
     orientDb.close();
 
-    try {
+    ODatabasePool pool = new ODatabasePool("embedded:./target/some", "admin", "admin");
+    pool.close();
 
-      ODatabasePool pool = new ODatabasePool("embedded:./target/some", "admin", "admin");
-      pool.close();
+  }
 
-    } finally {
-
-    }
-
+  @Test
+  public void testDropTL() {
+    OrientDB orientDb = new OrientDB("embedded:", OrientDBConfig.defaultConfig());
+    orientDb.createIfNotExists("some", ODatabaseType.MEMORY);
+    orientDb.createIfNotExists("some1", ODatabaseType.MEMORY);
+    ODatabaseDocument db = orientDb.open("some", "admin", "admin");
+    orientDb.drop("some1");
+    db.close();
+    orientDb.close();
   }
 
   @Test
@@ -284,6 +290,23 @@ public class OrientDBEmbeddedTests {
     assertTrue(poolNotUsed.isClosed());
 
     orientDB.close();
+  }
+
+  @Test
+  public void testInvalidatePoolCache() {
+    OrientDBConfig config = OrientDBConfig.builder().addConfig(OGlobalConfiguration.DB_CACHED_POOL_CAPACITY, 2).build();
+    OrientDB orientDB = new OrientDB("embedded:testdb", config);
+    orientDB.createIfNotExists("testdb", ODatabaseType.MEMORY);
+
+    ODatabasePool poolAdmin1 = orientDB.cachedPool("testdb", "admin", "admin");
+    ODatabasePool poolAdmin2 = orientDB.cachedPool("testdb", "admin", "admin");
+
+    assertEquals(poolAdmin1, poolAdmin2);
+
+    orientDB.invalidateCachedPools();
+
+    poolAdmin1 = orientDB.cachedPool("testdb", "admin", "admin");
+    assertNotEquals(poolAdmin2, poolAdmin1);
   }
 
   @Test

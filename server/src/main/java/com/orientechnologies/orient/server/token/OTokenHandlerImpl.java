@@ -15,12 +15,14 @@ import com.orientechnologies.orient.core.metadata.security.OTokenException;
 import com.orientechnologies.orient.core.metadata.security.jwt.OJwtHeader;
 import com.orientechnologies.orient.core.metadata.security.jwt.OJwtPayload;
 import com.orientechnologies.orient.core.metadata.security.jwt.OKeyProvider;
+import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.security.OSecurityManager;
 import com.orientechnologies.orient.server.OClientConnection;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.OTokenHandler;
 import com.orientechnologies.orient.server.binary.impl.OBinaryToken;
+import com.orientechnologies.orient.server.config.OServerUserConfiguration;
 import com.orientechnologies.orient.server.network.protocol.ONetworkProtocolData;
 
 import javax.crypto.Mac;
@@ -189,6 +191,46 @@ public class OTokenHandlerImpl implements OTokenHandler {
     }
 
     return tokenByteOS.toByteArray();
+  }
+
+  public byte[] getSignedWebTokenServerUser(final OServerUserConfiguration user) {
+    final ByteArrayOutputStream tokenByteOS = new ByteArrayOutputStream(1024);
+    final OrientJwtHeader header = new OrientJwtHeader();
+    header.setAlgorithm("HS256");
+    header.setKeyId("");
+
+    final OJwtPayload payload = createPayloadServerUser(user);
+    header.setType(getPayloadType(payload));
+    try {
+      byte[] bytes = serializeWebHeader(header);
+      tokenByteOS.write(Base64.getUrlEncoder().encode(ByteBuffer.wrap(bytes, 0, bytes.length)).array());
+      tokenByteOS.write(JWT_DELIMITER);
+      bytes = serializeWebPayload(payload);
+      tokenByteOS.write(Base64.getUrlEncoder().encode(ByteBuffer.wrap(bytes, 0, bytes.length)).array());
+      byte[] unsignedToken = tokenByteOS.toByteArray();
+      tokenByteOS.write(JWT_DELIMITER);
+
+      bytes = signToken(header, unsignedToken);
+      tokenByteOS.write(Base64.getUrlEncoder().encode(ByteBuffer.wrap(bytes, 0, bytes.length)).array());
+    } catch (Exception ex) {
+      throw OException.wrapException(new OSystemException("Error on token parsing"), ex);
+    }
+
+    return tokenByteOS.toByteArray();
+  }
+
+  @Override
+  public boolean validateServerUserToken(OToken token, String command, String database) {
+    boolean valid = false;
+    if (!(token instanceof JsonWebToken)) {
+      return false;
+    }
+    final OrientJwtPayload payload = (OrientJwtPayload) ((JsonWebToken) token).getPayload();
+    if (token.isNowValid()) {
+      valid = true;
+    }
+    token.setIsValid(valid);
+    return valid;
   }
 
   @Override
@@ -360,6 +402,7 @@ public class OTokenHandlerImpl implements OTokenHandler {
       throw OException.wrapException(new OSystemException("Payload encoding format differs from UTF-8"), e);
     }
     final OrientJwtPayload payload = new OrientJwtPayload();
+    payload.setUserName((String) doc.field("username"));
     payload.setIssuer((String) doc.field("iss"));
     payload.setExpiry((Long) doc.field("exp"));
     payload.setIssuedAt((Long) doc.field("iat"));
@@ -390,6 +433,7 @@ public class OTokenHandlerImpl implements OTokenHandler {
       throw new IllegalArgumentException("Token payload is null");
 
     final ODocument doc = new ODocument();
+    doc.field("username", payload.getUserName());
     doc.field("iss", payload.getIssuer());
     doc.field("exp", payload.getExpiry());
     doc.field("iat", payload.getIssuedAt());
@@ -401,6 +445,25 @@ public class OTokenHandlerImpl implements OTokenHandler {
     doc.field("uidp", ((OrientJwtPayload) payload).getUserRid().getClusterPosition());
     doc.field("bdtyp", ((OrientJwtPayload) payload).getDatabaseType());
     return doc.toJSON().getBytes("UTF-8");
+  }
+
+  protected OJwtPayload createPayloadServerUser(OServerUserConfiguration serverUser) {
+    if (serverUser == null)
+      throw new IllegalArgumentException("User is null");
+
+    final OrientJwtPayload payload = new OrientJwtPayload();
+    payload.setAudience("OrientDBServer");
+    payload.setDatabase("-");
+    payload.setUserRid(ORecordId.EMPTY_RECORD_ID);
+
+    final long expiryMinutes = sessionInMills;
+    final long currTime = System.currentTimeMillis();
+    payload.setIssuedAt(currTime);
+    payload.setNotBefore(currTime);
+    payload.setUserName(serverUser.name);
+    payload.setTokenId(UUID.randomUUID().toString());
+    payload.setExpiry(currTime + expiryMinutes);
+    return payload;
   }
 
   protected OJwtPayload createPayload(final ODatabaseDocument db, final OSecurityUser user) {

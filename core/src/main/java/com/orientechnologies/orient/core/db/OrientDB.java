@@ -338,6 +338,13 @@ public class OrientDB implements AutoCloseable {
     return cachedPools.computeIfAbsent(internalPool, key -> new ODatabasePool(this, internalPool));
   }
 
+  public void invalidateCachedPools() {
+    synchronized (this) {
+      cachedPools.forEach((internalPool, pool) -> pool.close());
+      cachedPools.clear();
+    }
+  }
+
   OrientDBInternal getInternal() {
     return internal;
   }

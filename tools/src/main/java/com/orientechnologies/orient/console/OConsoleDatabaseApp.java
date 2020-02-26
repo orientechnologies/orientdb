@@ -386,7 +386,7 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
   @ConsoleCommand(splitInWords = false, description = "Create a new cluster in the current database. The cluster can be physical or memory")
   public void createCluster(
       @ConsoleParameter(name = "command-text", description = "The command text to execute") String iCommandText) {
-    sqlCommand("create", iCommandText, "\nCluster created correctly with id #%d\n", true);
+    sqlCommand("create", iCommandText, "\nCluster created correctly in %.2f seconds\n", false);
     updateDatabaseInfo();
   }
 
