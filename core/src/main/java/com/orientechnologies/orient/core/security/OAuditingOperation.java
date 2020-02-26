@@ -23,30 +23,21 @@ import com.orientechnologies.orient.core.db.record.ORecordOperation;
 
 /**
  * Enumerates the available auditing OAuditingOperation types.
- * 
+ *
  * @author S. Colin Leister
- * 
  */
 public enum OAuditingOperation {
-  UNSPECIFIED((byte)-1, "unspecified"), 
-  CREATED(ORecordOperation.CREATED, "created"), 
-  LOADED(ORecordOperation.LOADED, "loaded"),
-  UPDATED(ORecordOperation.UPDATED, "updated"), 
-  DELETED(ORecordOperation.DELETED, "deleted"), 
-  COMMAND((byte)4, "command"),
-  CREATEDCLASS((byte)5, "createdClass"), 
-  DROPPEDCLASS((byte)6, "droppedClass"), 
-  CHANGEDCONFIG((byte)7, "changedConfig"),
-  NODEJOINED((byte)8, "nodeJoined"), 
-  NODELEFT((byte)9, "nodeLeft"),
-  SECURITY((byte)10, "security"),
-  RELOADEDSECURITY((byte)11, "reloadedSecurity");
+  UNSPECIFIED((byte) -1, "unspecified"), CREATED(ORecordOperation.CREATED, "created"), LOADED(ORecordOperation.LOADED,
+      "loaded"), UPDATED(ORecordOperation.UPDATED, "updated"), DELETED(ORecordOperation.DELETED, "deleted"), COMMAND((byte) 4,
+      "command"), CREATEDCLASS((byte) 5, "createdClass"), DROPPEDCLASS((byte) 6, "droppedClass"), CHANGEDCONFIG((byte) 7,
+      "changedConfig"), NODEJOINED((byte) 8, "nodeJoined"), NODELEFT((byte) 9, "nodeLeft"), SECURITY((byte) 10,
+      "security"), RELOADEDSECURITY((byte) 11, "reloadedSecurity"), CHANGED_PWD((byte) 12, "changedPassword");
 
-  private byte    byteOp   = -1; // -1: unspecified;
-  private String  stringOp = "unspecified";
+  private byte   byteOp   = -1; // -1: unspecified;
+  private String stringOp = "unspecified";
 
   private OAuditingOperation(byte byteOp, String stringOp) {
-    this.byteOp   = byteOp;
+    this.byteOp = byteOp;
     this.stringOp = stringOp;
   }
 
@@ -60,10 +51,12 @@ public enum OAuditingOperation {
   }
 
   public static OAuditingOperation getByString(String value) {
-    if (value == null || value.isEmpty()) return UNSPECIFIED;
+    if (value == null || value.isEmpty())
+      return UNSPECIFIED;
 
     for (OAuditingOperation op : values()) {
-      if (op.toString().equalsIgnoreCase(value)) return op;
+      if (op.toString().equalsIgnoreCase(value))
+        return op;
     }
 
     return UNSPECIFIED;
@@ -71,7 +64,8 @@ public enum OAuditingOperation {
 
   public static OAuditingOperation getByByte(byte value) {
     for (OAuditingOperation op : values()) {
-      if (op.getByte() == value) return op;
+      if (op.getByte() == value)
+        return op;
     }
 
     return UNSPECIFIED;
