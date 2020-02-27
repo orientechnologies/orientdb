@@ -261,10 +261,9 @@ public class OAtomicOperationsManager implements OAtomicOperationsMangerMXBean {
   }
 
   private void startComponentOperation(final OAtomicOperation atomicOperation, final String lockName) {
-    acquireExclusiveLockTillOperationComplete(atomicOperation, lockName);
     checkReadOnlyConditions(atomicOperation);
-
     componentOperationsFreezer.startOperation();
+    acquireExclusiveLockTillOperationComplete(atomicOperation, lockName);
   }
 
   private void endComponentOperation() {
@@ -280,14 +279,15 @@ public class OAtomicOperationsManager implements OAtomicOperationsMangerMXBean {
   }
 
   private boolean tryStartComponentOperation(final OAtomicOperation atomicOperation, final String lockName) {
+    checkReadOnlyConditions(atomicOperation);
+    componentOperationsFreezer.startOperation();
+
     final boolean result = tryAcquireExclusiveLockTillOperationComplete(atomicOperation, lockName);
     if (!result) {
+      componentOperationsFreezer.endOperation();
       return false;
     }
 
-    checkReadOnlyConditions(atomicOperation);
-
-    componentOperationsFreezer.startOperation();
     return true;
   }
 
