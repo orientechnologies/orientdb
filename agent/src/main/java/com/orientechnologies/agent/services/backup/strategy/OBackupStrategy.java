@@ -185,6 +185,8 @@ public abstract class OBackupStrategy {
           finished.getMode());
       logger.log(restoreStartedLog);
 
+      listener.onEvent(cfg, restoreStartedLog);
+
       if (finished.getUpload() != null) {
         OBackupUploadFinishedLog upload = finished.getUpload();
         ORestoreStartedLog finalRestoreStartedLog = restoreStartedLog;

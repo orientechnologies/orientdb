@@ -23,7 +23,9 @@ import com.orientechnologies.agent.services.backup.OBackupService;
 import com.orientechnologies.agent.services.backup.OBackupTask;
 import com.orientechnologies.agent.services.backup.log.OBackupLogType;
 import com.orientechnologies.common.io.OFileUtils;
+import com.orientechnologies.common.io.OIOUtils;
 import com.orientechnologies.orient.core.Orient;
+import com.orientechnologies.orient.core.db.ODatabaseSession;
 import com.orientechnologies.orient.core.db.ODatabaseType;
 import com.orientechnologies.orient.core.db.OrientDB;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -31,11 +33,13 @@ import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.OServerMain;
 import org.junit.After;
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
 import java.io.File;
 import java.io.InputStream;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
@@ -55,23 +59,31 @@ public class OBackupServiceTest {
 
   private OServer server;
 
-  private final String         DB_NAME     = "backupDBTest";
-  private final String         BACKUP_PATH =
+  private final String DB_NAME          = "backupDBTest";
+  private final String DB_NAME_RESTORED = "backupDBTestRestored";
+  private final String BACKUP_PATH      =
       System.getProperty("buildDirectory", "target") + File.separator + "databases" + File.separator + DB_NAME;
 
-  private       OBackupService manager;
+  private final String BACKUP_CONF =
+      System.getProperty("buildDirectory", "target") + File.separator + "config" + File.separator + "backups.json";
 
-
+  private OBackupService manager;
+  private OrientDB       orientDB;
 
   @Before
   public void bootOrientDB() throws Exception {
     OFileUtils.deleteRecursively(new File(BACKUP_PATH));
+    OFileUtils.delete(new File(BACKUP_CONF));
+
+    ODocument cfg = new ODocument();
+    cfg.field("backups", new ArrayList<ODocument>());
+    OIOUtils.writeFile(new File(BACKUP_CONF), cfg.toJSON("prettyPrint"));
 
     InputStream stream = ClassLoader.getSystemResourceAsStream("orientdb-server-config.xml");
     server = OServerMain.create(false);
     server.startup(stream);
 
-    OrientDB orientDB = server.getContext();
+    orientDB = server.getContext();
     orientDB.create(DB_NAME, ODatabaseType.PLOCAL);
 
     server.activate();
@@ -85,6 +97,11 @@ public class OBackupServiceTest {
     OEnterpriseAgent agent = server.getPluginByClass(OEnterpriseAgent.class);
 
     manager = agent.getServiceByClass(OBackupService.class).get();
+
+    ODocument configuration = manager.getConfiguration();
+
+    configuration.field("backups", new ArrayList<>());
+
   }
 
   @After
@@ -92,6 +109,9 @@ public class OBackupServiceTest {
     OrientDB orientDB = server.getContext();
     if (orientDB.exists(DB_NAME))
       orientDB.drop(DB_NAME);
+
+    if (orientDB.exists(DB_NAME_RESTORED))
+      orientDB.drop(DB_NAME_RESTORED);
 
     if (server != null)
       server.shutdown();
@@ -296,6 +316,79 @@ public class OBackupServiceTest {
       deleteAndCheck(uuid, list, 5, 0);
 
       checkEmptyPaths(list);
+    } finally {
+      manager.removeBackup(uuid);
+    }
+  }
+
+  @Test
+  public void backupRestoreIncrementalTest() throws InterruptedException {
+
+    checkExpected(0, null);
+    ODocument modes = new ODocument();
+
+    ODocument mode = new ODocument();
+    modes.field("INCREMENTAL_BACKUP", mode);
+    mode.field("when", "0/5 * * * * ?");
+
+    ODocument backup = new ODocument();
+    backup.field("dbName", DB_NAME);
+    backup.field("directory", BACKUP_PATH);
+    backup.field("modes", modes);
+    backup.field("enabled", true);
+    backup.field("retentionDays", 30);
+
+    ODocument cfg = manager.addBackup(backup);
+
+    String uuid = cfg.field("uuid");
+
+    try {
+      OBackupTask task = manager.getTask(uuid);
+
+      final CountDownLatch latch = new CountDownLatch(5);
+      task.registerListener((cfg1, log) -> {
+        latch.countDown();
+        return latch.getCount() > 0;
+
+      });
+      latch.await();
+      task.stop();
+
+      ODocument logs = manager.logs(uuid, 1, 50, new HashMap<>());
+      assertNotNull(logs);
+      assertNotNull(logs.field("logs"));
+
+      List<ODocument> list = logs.field("logs");
+      assertEquals(6, list.size());
+
+      checkNoOp(list, OBackupLogType.BACKUP_ERROR.toString());
+
+      checkSameUnitUids(list);
+
+      CountDownLatch restoreLatch = new CountDownLatch(2);
+
+      task.registerListener((cfg1, log) -> {
+        restoreLatch.countDown();
+        return true;
+      });
+
+      long unitId = list.get(0).field("unitId");
+
+      ODocument restoreCfg = new ODocument().field("target", DB_NAME_RESTORED).field("unitId", unitId);
+
+      task.restore(restoreCfg);
+
+      restoreLatch.await();
+
+      deleteAndCheck(uuid, list, 5, 0);
+
+      checkEmptyPaths(list);
+
+      try (ODatabaseSession open = orientDB.open(DB_NAME_RESTORED, "admin", "admin")) {
+        long oUser = open.countClass("OUser");
+        Assert.assertEquals(3, oUser);
+      }
+
     } finally {
       manager.removeBackup(uuid);
     }
