@@ -44,6 +44,7 @@ public abstract class OHttpRequest {
   private final InputStream           in;
   private final ONetworkProtocolData  data;
   private final ONetworkHttpExecutor  executor;
+  protected     String                content;
   private       String                sessionId;
   protected     String                authorization;
   private       String                databaseName;
@@ -115,11 +116,15 @@ public abstract class OHttpRequest {
     return getExecutor().getRemoteAddress();
   }
 
+  public String getContent() {
+    return content;
+  }
+
+  public void setContent(String content) {
+    this.content = content;
+  }
+
   public abstract String getUrl();
-
-  public abstract String getContent();
-
-  public abstract void setContent(String content);
 
   public OContextConfiguration getConfiguration() {
     return configuration;

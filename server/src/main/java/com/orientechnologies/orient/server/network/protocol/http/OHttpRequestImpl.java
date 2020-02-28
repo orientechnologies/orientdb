@@ -10,7 +10,6 @@ import java.util.Map;
 
 public class OHttpRequestImpl extends OHttpRequest {
 
-  private String                        content;
   private String                        url;
   private Map<String, String>           parameters;
   private String                        httpMethod;
@@ -31,18 +30,6 @@ public class OHttpRequestImpl extends OHttpRequest {
       OContextConfiguration iConfiguration) {
     super(iExecutor, iInStream, iData, iConfiguration);
   }
-
-  public String getContent() {
-    return content;
-  }
-
-  public void setContent(String content) {
-    this.content = content;
-  }
-
-
-
-
 
   @Override
   public void setUrl(String url) {
