@@ -11,7 +11,6 @@ import java.util.Map;
 public class OHttpRequestImpl extends OHttpRequest {
 
   private String                        url;
-  private Map<String, String>           parameters;
   private String                        httpMethod;
   private String                        httpVersion;
   private String                        contentType;
@@ -34,11 +33,6 @@ public class OHttpRequestImpl extends OHttpRequest {
   @Override
   public void setUrl(String url) {
     this.url = url;
-  }
-
-  @Override
-  public void setParameters(Map<String, String> parameters) {
-    this.parameters = parameters;
   }
 
   @Override
@@ -164,11 +158,6 @@ public class OHttpRequestImpl extends OHttpRequest {
   @Override
   public void setBearerToken(OToken bearerToken) {
     this.bearerToken = bearerToken;
-  }
-
-  @Override
-  public Map<String, String> getParameters() {
-    return parameters;
   }
 
   @Override
