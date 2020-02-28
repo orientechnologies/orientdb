@@ -32,17 +32,17 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 
-@Test(groups = { "db", "import-export" })
+@Test(groups = {"db", "import-export"})
 public class DbImportExportRidbagTest extends DocumentDBBaseTest implements OCommandOutputListener {
   public static final String EXPORT_FILE_PATH = "target/db.export-ridbag.gz";
-  public static final String NEW_DB_PATH      = "target/test-import-ridbag";
-  public static final String NEW_DB_URL       = "target/test-import-ridbag";
+  public static final String NEW_DB_PATH = "target/test-import-ridbag";
+  public static final String NEW_DB_URL = "target/test-import-ridbag";
 
-  private String             testPath;
-  private String             exportFilePath;
-  private boolean            dumpMode         = false;
+  private String testPath;
+  private String exportFilePath;
+  private boolean dumpMode = false;
 
-  @Parameters(value = { "url", "testPath" })
+  @Parameters(value = {"url", "testPath"})
   public DbImportExportRidbagTest(@Optional String url, String testPath) {
     super(url);
     this.testPath = testPath;
@@ -56,10 +56,9 @@ public class DbImportExportRidbagTest extends DocumentDBBaseTest implements OCom
     database.open("admin", "admin");
 
     database.command("insert into V set name ='a'");
-    database.command("insert into V set name ='b'");
-    database.command("insert into V set name ='c'");
-    database.command("insert into V set name ='d'");
-    database.command("insert into V set name ='e'");
+    for (int i = 0; i < 100; i++) {
+      database.command("insert into V set name ='b" + i + "'");
+    }
 
     database.command("create edge E from (select from V where name ='a') to (select from V where name != 'a')");
 
@@ -86,7 +85,7 @@ public class DbImportExportRidbagTest extends DocumentDBBaseTest implements OCom
     database.create();
 
     ODatabaseImport dbImport = new ODatabaseImport(database, testPath + "/" + exportFilePath, this);
-    dbImport.setMaxRidbagStringSizeBeforeLazyImport(1);
+    dbImport.setMaxRidbagStringSizeBeforeLazyImport(50);
 
     // UNREGISTER ALL THE HOOKS
     for (ORecordHook hook : new ArrayList<ORecordHook>(database.getHooks().keySet())) {
@@ -114,7 +113,7 @@ public class DbImportExportRidbagTest extends DocumentDBBaseTest implements OCom
     String urlPrefix = getStorageType() + ":";
 
     final ODatabaseCompare databaseCompare = new ODatabaseCompare(url, urlPrefix + testPath + "/" + DbImportExportRidbagTest.NEW_DB_URL,
-        "admin", "admin", this);
+            "admin", "admin", this);
     databaseCompare.setCompareEntriesForAutomaticIndexes(true);
     databaseCompare.setCompareIndexMetadata(true);
     Assert.assertTrue(databaseCompare.compare());
