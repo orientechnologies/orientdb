@@ -338,6 +338,7 @@ public class OEnterpriseLocalPaginatedStorage extends OLocalPaginatedStorage {
             } finally {
               atomicOperationsManager.releaseAtomicOperations(newSegmentFreezeId);
             }
+            makeFullCheckpoint();
 
             try {
               backupIv(zipOutputStream);
