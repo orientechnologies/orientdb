@@ -3840,7 +3840,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
                   indexEngine.flush();
                 }
               } catch (final Throwable t) {
-                OLogManager.instance().error(this, "Error while flushing index via index emakeFullCheckpointngine of class %s.", t,
+                OLogManager.instance().error(this, "Error while flushing index via index engine of class %s.", t,
                     indexEngine.getClass().getSimpleName());
               }
             }
@@ -5795,7 +5795,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
                 throw new IllegalStateException("Invalid type of operation id interface");
               }
 
-              operationList.add(operationUnitRecord);
+
             }
           } else if (walRecord instanceof ONonTxOperationPerformedWALRecord) {
             if (!wereNonTxOperationsPerformedInPreviousOpen) {
@@ -5803,6 +5803,10 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
                   .warnNoDb(this, "Non tx operation was used during data modification we will need index rebuild.");
               wereNonTxOperationsPerformedInPreviousOpen = true;
             }
+          } else if (walRecord instanceof OFuzzyCheckpointStartMetadataRecord) {
+            this.lastMetadata = ((OFuzzyCheckpointStartMetadataRecord) walRecord).getMetadata();
+          } else if (walRecord instanceof OFullCheckpointStartMetadataRecord) {
+            this.lastMetadata = ((OFullCheckpointStartMetadataRecord) walRecord).getMetadata();
           } else {
             OLogManager.instance().warnNoDb(this, "Record %s will be skipped during data restore", walRecord);
           }
