@@ -61,6 +61,8 @@
             <parameters>
                 <parameter name="enabled" value="true"/>
                 <parameter name="allowedLanguages" value="SQL"/>
+                <!--  Comma separated packages  allowed in JS scripts eg. java.math.*, java.util.ArrayList -->
+                <parameter name="allowedPackages" value=""/>
             </parameters>
         </handler>
         <!-- CUSTOM SQL FUNCTIONS -->
