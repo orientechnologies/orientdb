@@ -55,40 +55,63 @@ public class IndexChangesInterpretationTest {
       // 1st column is changes sequence, 2nd is expected sequence for unique index, 3rd for dictionary, 4th for non-unique.
 
       { "", "", "", "" },
-
-      { "p1", "p1", "p1", "p1" }, { "r1", "r", "r", "r1" }, { "d", "d", "d", "d" },
-
-      { "p1 p2", "{p1 p2}", "p2", "{p1 p2}" }, { "p1 r1", "", "", "" }, { "p1 r2", "r p1", "p1", "{p1 r2}" },
-      { "r1 r2", "r", "r", "{r1 r2}" }, { "r1 p1", "r p1", "p1", "p1" },
+      { "p1", "p1", "p1", "p1" },
+      { "r1", "r", "r", "r1" },
+      { "d", "d", "d", "d" },
+      { "p1 p2", "{p1 p2}", "p2", "{p1 p2}" },
+      { "p1 r1", "p1 r1", "p1 r1", "p1 r1" },
+      { "p1 r2", "r p1", "p1", "{p1 r2}" },
+      { "r1 r2", "r", "r", "{r1 r2}" },
+      { "r1 p1", "r1 p1", "r1 p1", "r1 p1" },
       // in theory, maybe optimized to an empty sequence, but it's not safe, can't touch this
       { "r2 p1", "r p1", "p1", "{p1 r2}" },
-
-      { "r1 p1 p2", "r {p1 p2}", "p2", "{p1 p2}" }, { "r1 p2 p1", "r {p1 p2}", "p1", "{p1 p2}" },
+      { "r1 p1 p2", "r {p1 p2}", "p2", "{p1 p2}" },
+      { "r1 p2 p1", "r {p1 p2}", "p1", "{p1 p2}" },
       { "p2 r1 p1", "r {p1 p2}", "p1", "{p1, p2}" },
 
       { "r1 r2 p2 p1", "r {p1 p2}", "p1", "{p1 p2}" }, // actually, invalid input, but we must support things like that
-      { "r1 r2 p1 p2", "r {p1 p2}", "p2", "{p1 p2}" }, { "r1 p1 r2 p2", "r {p1 p2}", "p2", "{p1 p2}" },
+      { "r1 r2 p1 p2", "r {p1 p2}", "p2", "{p1 p2}" },
+      { "r1 p1 r2 p2", "r {p1 p2}", "p2", "{p1 p2}" },
 
-      { "p1 p2 r2", "p1", "p1", "p1" }, { "p1 p2 r1", "p2", "p2", "p2" }, { "p1 r1 p2", "p2", "p2", "p2" },
+      { "p1 p2 r2", "p1", "p1", "p1" },
+      { "p1 p2 r1", "p2", "p2", "p2" },
+      { "p1 r1 p2", "p2", "p2", "p2" },
 
-      { "p1 p2 p3", "{2 p1 p2 p3}", "p3", "{p1 p2 p3}" }, { "p1 p2 p3 p4", "{2 p1 p2 p3 p4}", "p4", "{p1 p2 p3 p4}" },
+      { "p1 p2 p3", "{2 p1 p2 p3}", "p3", "{p1 p2 p3}" },
+      { "p1 p2 p3 p4", "{2 p1 p2 p3 p4}", "p4", "{p1 p2 p3 p4}" },
 
-      { "p1 r1", "", "", "" }, { "p1 p2 r1 r2", "", "", "" }, { "p1 p2 r2 r1", "", "", "" }, { "p1 r1 p2 r2", "", "", "" },
+      { "p1 r1", "p1 r1", "p1 r1", "p1 r1" },
+      { "p1 p2 r1 r2", "", "", "" },
+      { "p1 p2 r2 r1", "", "", "" },
+      { "p1 r1 p2 r2", "", "", "" },
       { "p1 r1 p2 r2 r3", "r3", "r3", "r3" },
 
-      { "p1 p1", "p1", "p1", "p1" }, { "r1 r1", "r", "r", "r1" }, { "p1 p1 p1", "p1", "p1", "p1" }, { "r1 r1 r1", "r", "r", "r1" },
+      { "p1 p1", "p1", "p1", "p1" },
+      { "r1 r1", "r", "r", "r1" },
+      { "p1 p1 p1", "p1", "p1", "p1" },
+      { "r1 r1 r1", "r", "r", "r1" },
 
-      { "p1 p1 p2", "{p1 p2}", "p2", "{p1 p2}" }, { "p1 p1 p2 p1 p1", "{p1 p2}", "p1", "{p1 p2}" },
+      { "p1 p1 p2", "{p1 p2}", "p2", "{p1 p2}" },
+      { "p1 p1 p2 p1 p1", "{p1 p2}", "p1", "{p1 p2}" },
       { "r1 r1 r2 r1 r1", "r", "r", "{r1 r2}" },
 
-      { "p1 d", "r", "r", "d" }, { "d p1", "r p1", "p1", "d p1" }, { "r1 d", "r", "r", "d" }, { "d r1", "r", "r", "d" },
+      { "p1 d", "r", "r", "d" },
+      { "d p1", "r p1", "p1", "d p1" },
+      { "r1 d", "r", "r", "d" },
+      { "d r1", "r", "r", "d" },
       { "d d", "r", "r", "d" },
 
-      { "p1 d p1", "r p1", "p1", "d p1" }, { "p2 d p1", "r p1", "p1", "d p1" }, { "d p1 p2", "r {p1 p2}", "p2", "d {p1 p2}" },
-      { "d p1 p2 r2", "r p1", "p1", "d p1" }, { "r1 d r2", "r", "r", "d" }, { "r1 d r2 d", "r", "r", "d" },
-      { "d r1 r2", "r", "r", "d" }, { "d d d", "r", "r", "d" },
+      { "p1 d p1", "r p1", "p1", "d p1" },
+      { "p2 d p1", "r p1", "p1", "d p1" },
+      { "d p1 p2", "r {p1 p2}", "p2", "d {p1 p2}" },
+      { "d p1 p2 r2", "r p1", "p1", "d p1" },
+      { "r1 d r2", "r", "r", "d" },
+      { "r1 d r2 d", "r", "r", "d" },
+      { "d r1 r2", "r", "r", "d" },
+      { "d d d", "r", "r", "d" },
 
-      { "p1 p2 p3 p4 p5 d p1", "r p1", "p1", "d p1" }, { "p1 p2 p3 p4 p5 d p1 p10", "r {p1 p10}", "p10", "d {p1 p10}" },
+      { "p1 p2 p3 p4 p5 d p1", "r p1", "p1", "d p1" },
+      { "p1 p2 p3 p4 p5 d p1 p10", "r {p1 p10}", "p10", "d {p1 p10}" },
       { "p1 p2 p3 p4 p5 d p1 p10 d", "r", "r", "d" },
 
       { "r1 p1 p2 p3 r1 r3 d r10 p100 p200", "r {p100 p200}", "p200", "d {p100 p200}" },
@@ -96,13 +119,17 @@ public class IndexChangesInterpretationTest {
       { "r1 p1 p2 p3 r1 r3 d r10 p100 p200 r100 d", "r", "r", "d" },
       { "r1 p1 p2 p3 r1 r3 d r10 p100 p200 r100 d r1 p1 p2 p3 r2 r100", "r {p1 p3}", "p3", "d {p1 p3}" },
 
-      { "p1 p2 p3 r2 r3 p4", "{p1 p4}", "p4", "{p1 p4}" }, { "p1 p2 p3 r2 p4 r3", "{p1 p4}", "p4", "{p1 p4}" },
-      { "p1 p2 p3 p4 r2 r3", "{p1 p4}", "p4", "{p1 p4}" }, { "p1 p2 p4 p3 r2 r3", "{p1 p4}", "p4", "{p1 p4}" },
-      { "p1 p2 p4 p3 r3 r2", "{p1 p4}", "p4", "{p1 p4}" }, { "p1 p4 p2 p3 r3 r2", "{p1 p4}", "p4", "{p1 p4}" },
+      { "p1 p2 p3 r2 r3 p4", "{p1 p4}", "p4", "{p1 p4}" },
+      { "p1 p2 p3 r2 p4 r3", "{p1 p4}", "p4", "{p1 p4}" },
+      { "p1 p2 p3 p4 r2 r3", "{p1 p4}", "p4", "{p1 p4}" },
+      { "p1 p2 p4 p3 r2 r3", "{p1 p4}", "p4", "{p1 p4}" },
+      { "p1 p2 p4 p3 r3 r2", "{p1 p4}", "p4", "{p1 p4}" },
+      { "p1 p4 p2 p3 r3 r2", "{p1 p4}", "p4", "{p1 p4}" },
       { "p4 p1 p2 p3 r2 r3", "{p1 p4}", "p1", "{p1 p4}" },
 
       { "p1 p2 p3 d p1 p2 p3", "r {2 p1 p2 p3}", "p3", "d {p1 p2 p3}" },
-      { "p1 p2 p3 d p1 d p2 p3", "r {2 p2 p3}", "p3", "d {p2 p3}" }, { "p1 p2 p3 d p1 p2 d p3", "r p3", "p3", "d p3" } };
+      { "p1 p2 p3 d p1 d p2 p3", "r {2 p2 p3}", "p3", "d {p2 p3}" },
+      { "p1 p2 p3 d p1 p2 d p3", "r p3", "p3", "d p3" } };
   // @formatter:on
 
   private static final Pattern INPUT_GRAMMAR        = Pattern.compile("\\s*([pr]\\d+|d)\\s*", Pattern.CASE_INSENSITIVE);
