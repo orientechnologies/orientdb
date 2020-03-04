@@ -19,7 +19,6 @@
  */
 package com.orientechnologies.orient.core.metadata.security;
 
-import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
@@ -30,6 +29,7 @@ import java.util.List;
  */
 public class OSystemUser extends OUser {
   private String databaseName;
+  private String userType;
 
   protected String getDatabaseName() {
     return databaseName;
@@ -47,6 +47,11 @@ public class OSystemUser extends OUser {
 
   public OSystemUser(String iUserName, final String iUserPassword) {
     super(iUserName, iUserPassword);
+  }
+
+  public OSystemUser(String iUserName, final String iUserPassword, String userType) {
+    super(iUserName, iUserPassword);
+    this.userType = userType;
   }
 
   /**
@@ -105,5 +110,10 @@ public class OSystemUser extends OUser {
     }
 
     return role;
+  }
+
+  @Override
+  public String getUserType() {
+    return userType;
   }
 }

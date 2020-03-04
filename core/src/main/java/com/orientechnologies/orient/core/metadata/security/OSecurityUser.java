@@ -57,4 +57,6 @@ public interface OSecurityUser extends Serializable {
   OIdentifiable getIdentity();
 
   ODocument getDocument();
+
+  String getUserType();
 }
