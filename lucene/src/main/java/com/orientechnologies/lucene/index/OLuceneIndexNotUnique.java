@@ -27,6 +27,7 @@ import com.orientechnologies.lucene.engine.OLuceneIndexEngine;
 import com.orientechnologies.lucene.tx.OLuceneTxChanges;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OInvalidIndexEngineIdException;
+import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.index.*;
 import com.orientechnologies.orient.core.index.engine.OBaseIndexEngine;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -85,6 +86,16 @@ public class OLuceneIndexNotUnique extends OIndexAbstract<Set<OIdentifiable>> im
   }
 
   @Override
+  public boolean isNativeTxSupported() {
+    return false;
+  }
+
+  @Override
+  public void doPut(OAbstractPaginatedStorage storage, Object key, ORID rid) throws OInvalidIndexEngineIdException {
+    //do nothing
+  }
+
+  @Override
   public boolean remove(Object key) {
     return super.remove(key);
   }
@@ -110,7 +121,7 @@ public class OLuceneIndexNotUnique extends OIndexAbstract<Set<OIdentifiable>> im
   }
 
   @Override
-  protected Iterable<OTransactionIndexChangesPerKey.OTransactionIndexEntry> interpretTxKeyChanges(
+  public Iterable<OTransactionIndexChangesPerKey.OTransactionIndexEntry> interpretTxKeyChanges(
       OTransactionIndexChangesPerKey changes) {
     return changes.interpret(OTransactionIndexChangesPerKey.Interpretation.NonUnique);
   }

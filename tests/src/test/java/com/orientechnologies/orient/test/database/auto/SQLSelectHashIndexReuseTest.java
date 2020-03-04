@@ -1,25 +1,16 @@
 package com.orientechnologies.orient.test.database.auto;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-
-import org.testng.Assert;
-import org.testng.annotations.AfterClass;
-import org.testng.annotations.BeforeClass;
-import org.testng.annotations.Optional;
-import org.testng.annotations.Parameters;
-import org.testng.annotations.Test;
-
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
+import org.testng.Assert;
+import org.testng.annotations.Optional;
+import org.testng.annotations.*;
+
+import java.util.*;
 
 /**
  * @author LomakiA <a href="mailto:Andrey.Lomakin@exigenservices.com">Andrey Lomakin</a>
@@ -69,7 +60,6 @@ public class SQLSelectHashIndexReuseTest extends AbstractIndexReuseTest {
     oClass.createIndex("indexthree", OClass.INDEX_TYPE.NOTUNIQUE_HASH_INDEX, "prop1", "prop2", "prop4");
     oClass.createIndex("indexfour", OClass.INDEX_TYPE.NOTUNIQUE_HASH_INDEX, "prop4", "prop1", "prop3");
     oClass.createIndex("indexfive", OClass.INDEX_TYPE.NOTUNIQUE_HASH_INDEX, "prop6", "prop1", "prop3");
-    oClass.createIndex("indexsix", OClass.INDEX_TYPE.FULLTEXT_HASH_INDEX, "prop7");
 
     oClass.createIndex("sqlSelectHashIndexReuseTestEmbeddedMapByKey", OClass.INDEX_TYPE.NOTUNIQUE_HASH_INDEX, "fEmbeddedMap");
     oClass.createIndex("sqlSelectHashIndexReuseTestEmbeddedMapByValue", OClass.INDEX_TYPE.NOTUNIQUE_HASH_INDEX,

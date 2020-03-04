@@ -19,32 +19,22 @@
  */
 package com.orientechnologies.orient.core.sql.operator;
 
-import java.util.Collection;
-import java.util.List;
-
 import com.orientechnologies.orient.core.command.OCommandContext;
-import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.index.OIndexCursor;
-import com.orientechnologies.orient.core.index.OIndexCursorCollectionValue;
-import com.orientechnologies.orient.core.index.OIndexCursorSingleValue;
-import com.orientechnologies.orient.core.index.OIndexDefinition;
-import com.orientechnologies.orient.core.index.OIndexFullText;
-import com.orientechnologies.orient.core.metadata.OMetadataInternal;
-import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.record.binary.ODocumentSerializer;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilterCondition;
-import com.orientechnologies.orient.core.sql.filter.OSQLFilterItemField;
+
+import java.util.List;
 
 /**
  * CONTAINSTEXT operator. Look if a text is contained in a property. This is usually used with the FULLTEXT-INDEX for fast lookup at
  * piece of text.
- * 
+ *
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
- * 
  */
 public class OQueryOperatorContainsText extends OQueryTargetOperator {
   private boolean ignoreCase = true;
@@ -75,46 +65,6 @@ public class OQueryOperatorContainsText extends OQueryTargetOperator {
     return iLeft.toString().indexOf(iRight.toString()) > -1;
   }
 
-  @SuppressWarnings({ "unchecked", "deprecation" })
-  @Override
-  public Collection<OIdentifiable> filterRecords(final ODatabase<?> iDatabase, final List<String> iTargetClasses,
-      final OSQLFilterCondition iCondition, final Object iLeft, final Object iRight) {
-
-    final String fieldName;
-    if (iCondition.getLeft() instanceof OSQLFilterItemField)
-      fieldName = iCondition.getLeft().toString();
-    else
-      fieldName = iCondition.getRight().toString();
-
-    final String fieldValue;
-    if (iCondition.getLeft() instanceof OSQLFilterItemField)
-      fieldValue = iCondition.getRight().toString();
-    else
-      fieldValue = iCondition.getLeft().toString();
-
-    final String className = iTargetClasses.get(0);
-
-    final OProperty prop = ((OMetadataInternal) iDatabase.getMetadata()).getImmutableSchemaSnapshot().getClass(className)
-        .getProperty(fieldName);
-    if (prop == null)
-      // NO PROPERTY DEFINED
-      return null;
-
-    OIndex<?> fullTextIndex = null;
-    for (final OIndex<?> indexDefinition : prop.getIndexes()) {
-      if (indexDefinition instanceof OIndexFullText) {
-        fullTextIndex = indexDefinition;
-        break;
-      }
-    }
-
-    if (fullTextIndex == null) {
-      return null;
-    }
-
-    return (Collection<OIdentifiable>) fullTextIndex.get(fieldValue);
-  }
-
   public boolean isIgnoreCase() {
     return ignoreCase;
   }
@@ -126,28 +76,7 @@ public class OQueryOperatorContainsText extends OQueryTargetOperator {
 
   @Override
   public OIndexCursor executeIndexQuery(OCommandContext iContext, OIndex<?> index, List<Object> keyParams, boolean ascSortOrder) {
-
-    final OIndexDefinition indexDefinition = index.getDefinition();
-    if (indexDefinition.getParamCount() > 1)
-      return null;
-
-    final OIndex<?> internalIndex = index.getInternal();
-
-    OIndexCursor cursor;
-    if (internalIndex instanceof OIndexFullText) {
-      final Object key = indexDefinition.createValue(keyParams);
-      final Object indexResult = index.get(key);
-
-      if (indexResult == null || indexResult instanceof OIdentifiable)
-        cursor = new OIndexCursorSingleValue((OIdentifiable) indexResult, key);
-      else
-        cursor = new OIndexCursorCollectionValue((Collection<OIdentifiable>) indexResult, key);
-    } else
-      return null;
-
-    updateProfiler(iContext, internalIndex, keyParams, indexDefinition);
-
-    return cursor;
+    return null;
   }
 
   @Override

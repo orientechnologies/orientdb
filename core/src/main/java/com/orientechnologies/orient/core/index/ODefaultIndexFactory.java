@@ -33,8 +33,7 @@ import java.util.Map;
 import java.util.Set;
 
 /**
- * Default OrientDB index factory for indexes based on SBTree.<br>
- * Supports index types:
+ * Default OrientDB index factory for indexes based on SBTree.<br> Supports index types:
  * <ul>
  * <li>UNIQUE</li>
  * <li>NOTUNIQUE</li>
@@ -56,7 +55,6 @@ public class ODefaultIndexFactory implements OIndexFactory {
     final Set<String> types = new HashSet<>();
     types.add(OClass.INDEX_TYPE.UNIQUE.toString());
     types.add(OClass.INDEX_TYPE.NOTUNIQUE.toString());
-    types.add(OClass.INDEX_TYPE.FULLTEXT.toString());
     types.add(OClass.INDEX_TYPE.DICTIONARY.toString());
     TYPES = Collections.unmodifiableSet(types);
   }
@@ -121,9 +119,6 @@ public class ODefaultIndexFactory implements OIndexFactory {
       return new OIndexUnique(name, indexType, algorithm, version, storage, valueContainerAlgorithm, metadata, binaryFormatVersion);
     } else if (OClass.INDEX_TYPE.NOTUNIQUE.toString().equals(indexType)) {
       return new OIndexNotUnique(name, indexType, algorithm, version, storage, valueContainerAlgorithm, metadata,
-          binaryFormatVersion);
-    } else if (OClass.INDEX_TYPE.FULLTEXT.toString().equals(indexType)) {
-      return new OIndexFullText(name, indexType, algorithm, version, storage, valueContainerAlgorithm, metadata,
           binaryFormatVersion);
     } else if (OClass.INDEX_TYPE.DICTIONARY.toString().equals(indexType)) {
       return new OIndexDictionary(name, indexType, algorithm, version, storage, valueContainerAlgorithm, metadata,

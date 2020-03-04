@@ -1,17 +1,16 @@
 package com.orientechnologies.orient.test.database.auto;
 
-import java.util.*;
-
-import org.testng.Assert;
-import org.testng.annotations.*;
-import org.testng.annotations.Optional;
-
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
+import org.testng.Assert;
+import org.testng.annotations.Optional;
+import org.testng.annotations.*;
+
+import java.util.*;
 
 @Test(groups = { "index" })
 public class SQLSelectIndexReuseTest extends AbstractIndexReuseTest {
@@ -58,7 +57,6 @@ public class SQLSelectIndexReuseTest extends AbstractIndexReuseTest {
     oClass.createIndex("indexthree", OClass.INDEX_TYPE.NOTUNIQUE, "prop1", "prop2", "prop4");
     oClass.createIndex("indexfour", OClass.INDEX_TYPE.NOTUNIQUE, "prop4", "prop1", "prop3");
     oClass.createIndex("indexfive", OClass.INDEX_TYPE.NOTUNIQUE, "prop6", "prop1", "prop3");
-    oClass.createIndex("indexsix", OClass.INDEX_TYPE.FULLTEXT, "prop7");
 
     oClass.createIndex("sqlSelectIndexReuseTestEmbeddedMapByKey", OClass.INDEX_TYPE.NOTUNIQUE, "fEmbeddedMap");
     oClass.createIndex("sqlSelectIndexReuseTestEmbeddedMapByValue", OClass.INDEX_TYPE.NOTUNIQUE, "fEmbeddedMap by value");

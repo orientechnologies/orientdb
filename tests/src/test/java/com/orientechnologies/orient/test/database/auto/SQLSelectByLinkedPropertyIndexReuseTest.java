@@ -444,7 +444,6 @@ public class SQLSelectByLinkedPropertyIndexReuseTest extends AbstractIndexReuseT
 
       final OClass diplomaClass = schema.createClass("lpirtDiploma");
       diplomaClass.createProperty("GPA", OType.DOUBLE).createIndex(OClass.INDEX_TYPE.NOTUNIQUE);
-      diplomaClass.createProperty("thesis", OType.STRING).createIndex(OClass.INDEX_TYPE.FULLTEXT);
       diplomaClass.createProperty("name", OType.STRING)
           .createIndex(OClass.INDEX_TYPE.UNIQUE, new ODocument().field("ignoreNullValues", true));
       diplomaClass.createIndex("diplomaThesisUnique", OClass.INDEX_TYPE.UNIQUE.name(), null,

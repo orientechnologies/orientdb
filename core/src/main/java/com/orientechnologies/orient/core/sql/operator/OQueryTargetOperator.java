@@ -19,11 +19,7 @@
   */
 package com.orientechnologies.orient.core.sql.operator;
 
-import java.util.Collection;
-import java.util.List;
-
 import com.orientechnologies.orient.core.command.OCommandContext;
-import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.record.binary.ODocumentSerializer;
@@ -39,9 +35,6 @@ public abstract class OQueryTargetOperator extends OQueryOperator {
   protected OQueryTargetOperator(final String iKeyword, final int iPrecedence, final boolean iLogical) {
     super(iKeyword, iPrecedence, false);
   }
-
-  public abstract Collection<OIdentifiable> filterRecords(final ODatabase<?> iRecord, final List<String> iTargetClasses,
-      final OSQLFilterCondition iCondition, final Object iLeft, final Object iRight);
 
   /**
    * At run-time the evaluation per record must return always true since the recordset are filtered at the beginning unless an

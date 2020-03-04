@@ -155,9 +155,8 @@ public interface OIndex<T> extends Comparable<OIndex<T>> {
   public String getAlgorithm();
 
   /**
-   * Returns binary format version for this index.
-   * Index format changes during system development but old formats are supported for binary compatibility.
-   * This method may be used to detect version of binary format which is used by current index and upgrade
+   * Returns binary format version for this index. Index format changes during system development but old formats are supported for
+   * binary compatibility. This method may be used to detect version of binary format which is used by current index and upgrade
    * index to new one.
    *
    * @return Returns binary format version for this index if possible, otherwise -1.
@@ -269,9 +268,8 @@ public interface OIndex<T> extends Comparable<OIndex<T>> {
    * <p>
    * It is used to support so called "live index rebuild" feature.
    * <p>
-   * Value of this version is increased every time when index is going to be rebuild.
-   * So if two sequential calls of this method return different numbers it means that index at least started to rebuild
-   * itself.
+   * Value of this version is increased every time when index is going to be rebuild. So if two sequential calls of this method
+   * return different numbers it means that index at least started to rebuild itself.
    * <p>
    * If you use indexes to increase speed of fetching data from database you should follow following workflow:
    * <ol>
@@ -306,9 +304,6 @@ public interface OIndex<T> extends Comparable<OIndex<T>> {
    *
    * @return amount of times  when index was rebuilt since the start of the storage.
    *
-   * @see com.orientechnologies.orient.core.sql.OCommandExecutorSQLSelect#searchForIndexes(com.orientechnologies.orient.core.metadata.schema.OClass)
-   * @see com.orientechnologies.orient.core.sql.OCommandExecutorSQLSelect#getIndexCursors(com.orientechnologies.orient.core.metadata.schema.OClass)
-   * @see com.orientechnologies.orient.core.sql.OCommandExecutorSQLSelect#getOptimizedSortCursor(com.orientechnologies.orient.core.metadata.schema.OClass)
    * @see com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage#command(com.orientechnologies.orient.core.command.OCommandRequestText)
    * @see OIndexChangesWrapper
    * @see com.orientechnologies.orient.core.exception.OIndexIsRebuildingException

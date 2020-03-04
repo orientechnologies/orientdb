@@ -7,24 +7,13 @@ import com.orientechnologies.common.util.OSizeable;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
-import com.orientechnologies.orient.core.index.OCompositeIndexDefinition;
-import com.orientechnologies.orient.core.index.OCompositeKey;
-import com.orientechnologies.orient.core.index.OIndex;
-import com.orientechnologies.orient.core.index.OIndexDefinition;
-import com.orientechnologies.orient.core.index.OPropertyIndexDefinition;
+import com.orientechnologies.orient.core.index.*;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.executor.OResultInternal;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 public class OWhereClause extends SimpleNode {
@@ -110,8 +99,7 @@ public class OWhereClause extends SimpleNode {
         Map<String, Object> conditions = getEqualityOperations(condition, ctx);
 
         for (OIndex index : indexes) {
-          if (index.getType().equals(OClass.INDEX_TYPE.FULLTEXT.name()) || index.getType()
-              .equals(OClass.INDEX_TYPE.FULLTEXT_HASH_INDEX.name())) {
+          if (index.getType().equals(OClass.INDEX_TYPE.FULLTEXT.name())) {
             continue;
           }
           List<String> indexedFields = index.getDefinition().getFields();

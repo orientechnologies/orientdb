@@ -34,6 +34,7 @@ import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.exception.OInvalidIndexEngineIdException;
 import com.orientechnologies.orient.core.exception.OTooBigIndexKeyException;
+import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.index.engine.OBaseIndexEngine;
 import com.orientechnologies.orient.core.intent.OIntentMassiveInsert;
 import com.orientechnologies.orient.core.metadata.schema.OType;
@@ -75,17 +76,17 @@ public abstract class OIndexAbstract<T> implements OIndexInternal<T> {
   private final          AtomicLong                rebuildVersion  = new AtomicLong();
   private final          int                       version;
   volatile               IndexConfiguration        configuration;
-  String valueContainerAlgorithm;
+  protected volatile     String                    valueContainerAlgorithm;
 
-  protected int indexId    = -1;
-  protected int apiVersion = -1;
+  protected volatile int indexId    = -1;
+  protected volatile int apiVersion = -1;
 
   protected        Set<String>         clustersToIndex  = new HashSet<>();
   private          String              algorithm;
   private volatile OIndexDefinition    indexDefinition;
   private volatile boolean             rebuilding       = false;
   private          Map<String, String> engineProperties = new HashMap<>();
-  final            int                 binaryFormatVersion;
+  protected final  int                 binaryFormatVersion;
 
   public OIndexAbstract(String name, final String type, final String algorithm, final String valueContainerAlgorithm,
       final ODocument metadata, final int version, final OStorage storage, int binaryFormatVersion) {
@@ -503,6 +504,11 @@ public abstract class OIndexAbstract<T> implements OIndexInternal<T> {
     return remove(key);
   }
 
+  @Override
+  public boolean doRemove(OAbstractPaginatedStorage storage, Object key, ORID rid) throws OInvalidIndexEngineIdException {
+    return doRemove(storage, key);
+  }
+
   public boolean remove(Object key) {
     key = getCollatingValue(key);
 
@@ -510,13 +516,18 @@ public abstract class OIndexAbstract<T> implements OIndexInternal<T> {
     try {
       while (true)
         try {
-          return storage.removeKeyFromIndex(indexId, key);
+          return doRemove(storage, key);
         } catch (OInvalidIndexEngineIdException ignore) {
           doReloadIndexEngine();
         }
     } finally {
       releaseSharedLock();
     }
+  }
+
+  @Override
+  public boolean doRemove(OAbstractPaginatedStorage storage, Object key) throws OInvalidIndexEngineIdException {
+    return storage.removeKeyFromIndex(indexId, key);
   }
 
   public OIndex<T> clear() {
@@ -668,13 +679,14 @@ public abstract class OIndexAbstract<T> implements OIndexInternal<T> {
    * Interprets transaction index changes for a certain key. Override it to customize index behaviour on interpreting index changes.
    * This may be viewed as an optimization, but in some cases this is a requirement. For example, if you put multiple values under
    * the same key during the transaction for single-valued/unique index, but remove all of them except one before commit, there is
-   * no point in throwing {@link com.orientechnologies.orient.core.storage.ORecordDuplicatedException} while applying index changes.
+   * no point in throwing {@link com.orientechnologies.orient.core.storage.ORecordDuplicatedException} while applying index
+   * changes.
    *
    * @param changes the changes to interpret.
    *
    * @return the interpreted index key changes.
    */
-  protected Iterable<OTransactionIndexChangesPerKey.OTransactionIndexEntry> interpretTxKeyChanges(
+  public Iterable<OTransactionIndexChangesPerKey.OTransactionIndexEntry> interpretTxKeyChanges(
       OTransactionIndexChangesPerKey changes) {
     return changes.entries;
   }
@@ -708,9 +720,6 @@ public abstract class OIndexAbstract<T> implements OIndexInternal<T> {
     } finally {
       releaseSharedLock();
     }
-  }
-
-  public void preCommit(IndexTxSnapshot snapshots) {
   }
 
   public void postCommit(IndexTxSnapshot snapshots) {

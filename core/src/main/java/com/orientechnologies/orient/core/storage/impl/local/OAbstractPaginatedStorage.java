@@ -106,6 +106,7 @@ import com.orientechnologies.orient.core.storage.index.engine.OSBTreeIndexEngine
 import com.orientechnologies.orient.core.storage.ridbag.sbtree.*;
 import com.orientechnologies.orient.core.tx.OTransactionAbstract;
 import com.orientechnologies.orient.core.tx.OTransactionIndexChanges;
+import com.orientechnologies.orient.core.tx.OTransactionIndexChangesPerKey;
 import com.orientechnologies.orient.core.tx.OTransactionInternal;
 
 import java.io.*;
@@ -2441,7 +2442,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
               result.add(recordOperation);
             }
 
-            lockedIndexes = lockIndexes(indexOperations);
+            lockIndexes(indexOperations);
 
             checkReadOnlyConditions();
 
@@ -2460,9 +2461,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
               endStorageTx(transaction, recordOperations);
             }
 
-            if (lockedIndexes != null) {
-              releaseIndexes(lockedIndexes);
-            }
             this.transaction.set(null);
           }
         } finally {
@@ -2503,37 +2501,50 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     }
   }
 
-  private static void commitIndexes(final Map<String, OTransactionIndexChanges> indexesToCommit) {
-    final Map<OIndex<?>, OIndexAbstract.IndexTxSnapshot> snapshots = new IdentityHashMap<>(8);
-
+  private void commitIndexes(final Map<String, OTransactionIndexChanges> indexesToCommit) {
     for (final OTransactionIndexChanges changes : indexesToCommit.values()) {
       final OIndexInternal<?> index = changes.getAssociatedIndex();
-      final OIndexAbstract.IndexTxSnapshot snapshot = new OIndexAbstract.IndexTxSnapshot();
-      snapshots.put(index, snapshot);
-
-      index.preCommit(snapshot);
-    }
-
-    for (final OTransactionIndexChanges changes : indexesToCommit.values()) {
-      final OIndexInternal<?> index = changes.getAssociatedIndex();
-      final OIndexAbstract.IndexTxSnapshot snapshot = snapshots.get(index);
-
-      index.addTxOperation(snapshot, changes);
-    }
-
-    try {
-      for (final OTransactionIndexChanges changes : indexesToCommit.values()) {
-        final OIndexInternal<?> index = changes.getAssociatedIndex();
-        final OIndexAbstract.IndexTxSnapshot snapshot = snapshots.get(index);
-
+      if (!index.isNativeTxSupported()) {
+        final OIndexAbstract.IndexTxSnapshot snapshot = new OIndexAbstract.IndexTxSnapshot();
+        index.addTxOperation(snapshot, changes);
         index.commit(snapshot);
-      }
-    } finally {
-      for (final OTransactionIndexChanges changes : indexesToCommit.values()) {
-        final OIndexInternal<?> index = changes.getAssociatedIndex();
-        final OIndexAbstract.IndexTxSnapshot snapshot = snapshots.get(index);
+      } else {
+        try {
+          final int indexId = index.getIndexId();
+          if (changes.cleared) {
+            clearIndex(indexId);
+          }
 
-        index.postCommit(snapshot);
+          for (final OTransactionIndexChangesPerKey changesPerKey : changes.changesPerKey.values()) {
+            applyTxChanges(changesPerKey, index);
+          }
+          applyTxChanges(changes.nullKeyChanges, index);
+        } catch (OInvalidIndexEngineIdException e) {
+          throw OException.wrapException(new OStorageException("Error during index commit"), e);
+        }
+
+      }
+    }
+
+  }
+
+  private void applyTxChanges(OTransactionIndexChangesPerKey changes, OIndexInternal<?> index)
+      throws OInvalidIndexEngineIdException {
+
+    for (OTransactionIndexChangesPerKey.OTransactionIndexEntry op : index.interpretTxKeyChanges(changes)) {
+      switch (op.operation) {
+      case PUT:
+        index.doPut(this, changes.key, op.value.getIdentity());
+        break;
+      case REMOVE:
+        if (op.value != null)
+          index.doRemove(this, changes.key, op.value.getIdentity());
+        else
+          index.doRemove(this, changes.key);
+        break;
+      case CLEAR:
+        // SHOULD NEVER BE THE CASE HANDLE BY cleared FLAG
+        break;
       }
     }
   }
@@ -6101,19 +6112,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     return ridsPerCluster;
   }
 
-  private static List<OIndexInternal<?>> lockIndexes(final TreeMap<String, OTransactionIndexChanges> indexes) {
-    final List<OIndexInternal<?>> result = new ArrayList<>();
-
-    for (final OTransactionIndexChanges changes : indexes.values()) {
-      final OIndexInternal<?> index = changes.getAssociatedIndex();
-      result.add(index);
-    }
-
-    result.sort(Comparator.comparing(OIndex::getName));
-    for (OIndexInternal<?> index : result) {
-      index.acquireExclusiveLock();
-    }
-
+  private static void lockIndexes(final TreeMap<String, OTransactionIndexChanges> indexes) {
     for (final OTransactionIndexChanges changes : indexes.values()) {
       assert changes.changesPerKey instanceof TreeMap;
 
@@ -6138,14 +6137,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       if (!fullyLocked && !changes.nullKeyChanges.entries.isEmpty()) {
         index.acquireAtomicExclusiveLock(null);
       }
-    }
-
-    return result;
-  }
-
-  private static void releaseIndexes(final List<OIndexInternal<?>> indexes) {
-    for (OIndexInternal<?> index : indexes) {
-      index.releaseExclusiveLock();
     }
   }
 

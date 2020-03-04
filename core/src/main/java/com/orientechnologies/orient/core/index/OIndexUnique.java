@@ -62,14 +62,14 @@ public class OIndexUnique extends OIndexOneValue {
   }
 
   @Override
-  public OIndexOneValue put(Object key, final OIdentifiable iSingleValue) {
+  public OIndexOneValue put(Object key, final OIdentifiable value) {
     key = getCollatingValue(key);
 
     acquireSharedLock();
     try {
       while (true) {
         try {
-          storage.validatedPutIndexValue(indexId, key, iSingleValue.getIdentity(), UNIQUE_VALIDATOR);
+          doPut(storage, key, value.getIdentity());
           break;
         } catch (OInvalidIndexEngineIdException ignore) {
           doReloadIndexEngine();
@@ -79,6 +79,16 @@ public class OIndexUnique extends OIndexOneValue {
     } finally {
       releaseSharedLock();
     }
+  }
+
+  @Override
+  public boolean isNativeTxSupported() {
+    return true;
+  }
+
+  @Override
+  public void doPut(OAbstractPaginatedStorage storage, Object key, ORID rid) throws OInvalidIndexEngineIdException {
+    storage.validatedPutIndexValue(indexId, key, rid, UNIQUE_VALIDATOR);
   }
 
   @Override
@@ -98,7 +108,7 @@ public class OIndexUnique extends OIndexOneValue {
   }
 
   @Override
-  protected Iterable<OTransactionIndexChangesPerKey.OTransactionIndexEntry> interpretTxKeyChanges(
+  public Iterable<OTransactionIndexChangesPerKey.OTransactionIndexEntry> interpretTxKeyChanges(
       OTransactionIndexChangesPerKey changes) {
     return changes.interpret(OTransactionIndexChangesPerKey.Interpretation.Unique);
   }

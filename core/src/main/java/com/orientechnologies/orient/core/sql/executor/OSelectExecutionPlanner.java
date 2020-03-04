@@ -615,8 +615,9 @@ public class OSelectExecutionPlanner {
   }
 
   private static boolean isCountOnly(QueryPlanningInfo info) {
-    if (info.aggregateProjection == null || info.projection == null || info.aggregateProjection.getItems().size() != 1
-            || info.projection.getItems().stream().filter(x -> !x.getProjectionAliasAsString().startsWith("_$$$ORDER_BY_ALIAS$$$_")).count() != 1) {
+    if (info.aggregateProjection == null || info.projection == null || info.aggregateProjection.getItems().size() != 1 ||
+        info.projection.getItems().stream().filter(x -> !x.getProjectionAliasAsString().startsWith("_$$$ORDER_BY_ALIAS$$$_"))
+            .count() != 1) {
       return false;
     }
     OProjectionItem item = info.aggregateProjection.getItems().get(0);
@@ -706,8 +707,8 @@ public class OSelectExecutionPlanner {
       Iterator<OLetItem> iterator = info.perRecordLetClause.getItems().iterator();
       while (iterator.hasNext()) {
         OLetItem item = iterator.next();
-        if (item.getExpression() != null &&
-                (item.getExpression().isEarlyCalculated(ctx) || isUnionAllOfQueries(info, item.getVarName(), item.getExpression()))) {
+        if (item.getExpression() != null && (item.getExpression().isEarlyCalculated(ctx) || isUnionAllOfQueries(info,
+            item.getVarName(), item.getExpression()))) {
           iterator.remove();
           addGlobalLet(info, item.getVarName(), item.getExpression());
         } else if (item.getQuery() != null && !item.getQuery().refersToParent()) {
@@ -722,11 +723,11 @@ public class OSelectExecutionPlanner {
     if (expression.getMathExpression() instanceof OBaseExpression) {
       OBaseExpression exp = (OBaseExpression) expression.getMathExpression();
       if (exp.getIdentifier() != null && exp.getModifier() == null && exp.getIdentifier().getLevelZero() != null
-              && exp.getIdentifier().getLevelZero().getFunctionCall() != null) {
+          && exp.getIdentifier().getLevelZero().getFunctionCall() != null) {
         OFunctionCall fc = exp.getIdentifier().getLevelZero().getFunctionCall();
         if (fc.getName().getStringValue().equalsIgnoreCase("unionall")) {
           for (OExpression param : fc.getParams()) {
-            if(param.toString().startsWith("$")){
+            if (param.toString().startsWith("$")) {
               return true;
             }
           }
@@ -1064,9 +1065,9 @@ public class OSelectExecutionPlanner {
         handleNoTarget(shardedPlan.getValue(), ctx, profilingEnabled);
       } else if (target.getIdentifier() != null) {
         String className = target.getIdentifier().getStringValue();
-        if(className.startsWith("$") && !ctx.getDatabase().getMetadata().getSchema().existsClass(className)){
+        if (className.startsWith("$") && !ctx.getDatabase().getMetadata().getSchema().existsClass(className)) {
           handleVariableAsTarget(shardedPlan.getValue(), info, ctx, profilingEnabled);
-        }else {
+        } else {
           Set<String> filterClusters = info.serverToClusters.get(shardedPlan.getKey());
 
           OAndBlock ridRangeConditions = extractRidRanges(info.flattenedWhereClause, ctx);
@@ -1824,10 +1825,8 @@ public class OSelectExecutionPlanner {
       return false;
 
     }
-    return info.projection.getItems().stream()
-        .filter(proj -> proj.getExpression().toString().equals(indexField))
-        .filter(proj -> proj.getAlias()!=null)
-        .anyMatch(proj -> proj.getAlias().getStringValue().equals(alias));
+    return info.projection.getItems().stream().filter(proj -> proj.getExpression().toString().equals(indexField))
+        .filter(proj -> proj.getAlias() != null).anyMatch(proj -> proj.getAlias().getStringValue().equals(alias));
   }
 
   private boolean handleClassAsTargetWithIndex(OSelectExecutionPlan plan, OIdentifier targetClass, Set<String> filterClusters,
@@ -2147,13 +2146,12 @@ public class OSelectExecutionPlanner {
         .filter(x -> x.keyCondition != null).filter(x -> x.keyCondition.getSubBlocks().size() > 0).collect(Collectors.toList());
 
     List<IndexSearchDescriptor> fullTextIndexDescriptors = indexes.stream()
-        .filter(idx->idx.getType().equalsIgnoreCase("FULLTEXT") || idx.getType().equalsIgnoreCase(OClass.INDEX_TYPE.FULLTEXT_HASH_INDEX.name()) )
+        .filter(idx->idx.getType().equalsIgnoreCase("FULLTEXT"))
         .filter(idx->!idx.getAlgorithm().equalsIgnoreCase("LUCENE"))
         .map(idx -> buildIndexSearchDescriptorForFulltext(ctx, idx, block, clazz)).filter(Objects::nonNull)
         .filter(x -> x.keyCondition != null).filter(x -> x.keyCondition.getSubBlocks().size() > 0).collect(Collectors.toList());
 
     descriptors.addAll(fullTextIndexDescriptors);
-
 
     //remove the redundant descriptors (eg. if I have one on [a] and one on [a, b], the first one is redundant, just discard it)
     descriptors = removePrefixIndexes(descriptors);
@@ -2163,9 +2161,9 @@ public class OSelectExecutionPlanner {
         .map(x -> (OPair<Integer, IndexSearchDescriptor>) new OPair(x.cost(ctx), x)).sorted().collect(Collectors.toList());
 
     //get only the descriptors with the lowest cost
-    descriptors = sortedDescriptors.isEmpty() ?
-        Collections.emptyList() :
-        sortedDescriptors.stream().filter(x -> x.key.equals(sortedDescriptors.get(0).key)).map(x -> x.value)
+    descriptors = sortedDescriptors.isEmpty()
+        ? Collections.emptyList()
+        : sortedDescriptors.stream().filter(x -> x.key.equals(sortedDescriptors.get(0).key)).map(x -> x.value)
             .collect(Collectors.toList());
 
     //sort remaining by the number of indexed fields
@@ -2416,10 +2414,9 @@ public class OSelectExecutionPlanner {
     return null;
   }
 
-
   /**
-   * given a full text index and a flat AND block, returns a descriptor on how to process it with an index (index, index key and additional
-   * filters to apply after index fetch
+   * given a full text index and a flat AND block, returns a descriptor on how to process it with an index (index, index key and
+   * additional filters to apply after index fetch
    *
    * @param ctx
    * @param index
@@ -2428,7 +2425,8 @@ public class OSelectExecutionPlanner {
    *
    * @return
    */
-  private IndexSearchDescriptor buildIndexSearchDescriptorForFulltext(OCommandContext ctx, OIndex<?> index, OAndBlock block, OClass clazz) {
+  private IndexSearchDescriptor buildIndexSearchDescriptorForFulltext(OCommandContext ctx, OIndex<?> index, OAndBlock block,
+      OClass clazz) {
     List<String> indexFields = index.getDefinition().getFields();
     OBinaryCondition keyCondition = new OBinaryCondition(-1);
     OIdentifier key = new OIdentifier("key");

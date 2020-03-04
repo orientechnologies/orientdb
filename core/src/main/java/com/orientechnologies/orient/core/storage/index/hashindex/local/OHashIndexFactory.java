@@ -20,14 +20,7 @@
 package com.orientechnologies.orient.core.storage.index.hashindex.local;
 
 import com.orientechnologies.orient.core.exception.OConfigurationException;
-import com.orientechnologies.orient.core.index.ODefaultIndexFactory;
-import com.orientechnologies.orient.core.index.OIndexDictionary;
-import com.orientechnologies.orient.core.index.OIndexException;
-import com.orientechnologies.orient.core.index.OIndexFactory;
-import com.orientechnologies.orient.core.index.OIndexFullText;
-import com.orientechnologies.orient.core.index.OIndexInternal;
-import com.orientechnologies.orient.core.index.OIndexNotUnique;
-import com.orientechnologies.orient.core.index.OIndexUnique;
+import com.orientechnologies.orient.core.index.*;
 import com.orientechnologies.orient.core.index.engine.OBaseIndexEngine;
 import com.orientechnologies.orient.core.index.engine.OIndexEngine;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
@@ -55,7 +48,6 @@ public class OHashIndexFactory implements OIndexFactory {
     final Set<String> types = new HashSet<String>();
     types.add(OClass.INDEX_TYPE.UNIQUE_HASH_INDEX.toString());
     types.add(OClass.INDEX_TYPE.NOTUNIQUE_HASH_INDEX.toString());
-    types.add(OClass.INDEX_TYPE.FULLTEXT_HASH_INDEX.toString());
     types.add(OClass.INDEX_TYPE.DICTIONARY_HASH_INDEX.toString());
     TYPES = Collections.unmodifiableSet(types);
   }
@@ -100,9 +92,6 @@ public class OHashIndexFactory implements OIndexFactory {
           valueContainerAlgorithm, metadata, binaryFormatVersion);
     else if (OClass.INDEX_TYPE.NOTUNIQUE_HASH_INDEX.toString().equals(indexType))
       return new OIndexNotUnique(name, indexType, algorithm, version, (OAbstractPaginatedStorage) storage.getUnderlying(),
-          valueContainerAlgorithm, metadata, binaryFormatVersion);
-    else if (OClass.INDEX_TYPE.FULLTEXT_HASH_INDEX.toString().equals(indexType))
-      return new OIndexFullText(name, indexType, algorithm, version, (OAbstractPaginatedStorage) storage.getUnderlying(),
           valueContainerAlgorithm, metadata, binaryFormatVersion);
     else if (OClass.INDEX_TYPE.DICTIONARY_HASH_INDEX.toString().equals(indexType))
       return new OIndexDictionary(name, indexType, algorithm, version, (OAbstractPaginatedStorage) storage.getUnderlying(),

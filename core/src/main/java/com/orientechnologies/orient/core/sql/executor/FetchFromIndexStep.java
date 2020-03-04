@@ -12,7 +12,6 @@ import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.exception.OCommandInterruptedException;
 import com.orientechnologies.orient.core.index.*;
-import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.sql.parser.*;
 
@@ -406,7 +405,7 @@ public class FetchFromIndexStep extends AbstractExecutionStep {
   }
 
   private boolean isFullTextHashIndex(OIndex index) {
-    return index.getType().equalsIgnoreCase(OClass.INDEX_TYPE.FULLTEXT_HASH_INDEX.name()) && !index.getAlgorithm().equalsIgnoreCase("LUCENE");
+    return !index.getAlgorithm().equalsIgnoreCase("LUCENE");
   }
 
   private OIndexCursor getCursorForNullKey() {

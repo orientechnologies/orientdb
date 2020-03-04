@@ -25,28 +25,14 @@ import com.orientechnologies.common.profiler.OProfilerStub;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORID;
-import com.orientechnologies.orient.core.index.OIndex;
-import com.orientechnologies.orient.core.index.OIndexAbstractCursor;
-import com.orientechnologies.orient.core.index.OIndexCursor;
-import com.orientechnologies.orient.core.index.OIndexDefinition;
-import com.orientechnologies.orient.core.index.OIndexInternal;
-import com.orientechnologies.orient.core.index.OIndexKeyCursor;
+import com.orientechnologies.orient.core.index.*;
 import com.orientechnologies.orient.core.iterator.OEmptyIterator;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilterItemField;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.TreeSet;
+import java.util.*;
 
 /**
  * <p>
@@ -168,8 +154,7 @@ public class OChainedIndexProxy<T> implements OIndex<T> {
   }
 
   /**
-   * Finds the index that fits better as a base index in chain.
-   * Requirements to the base index:
+   * Finds the index that fits better as a base index in chain. Requirements to the base index:
    * <ul>
    * <li>Should be unique or not unique. Other types cannot be used to get all documents with required links.</li>
    * <li>Should not be composite hash index. As soon as hash index does not support partial match search.</li>
@@ -223,7 +208,6 @@ public class OChainedIndexProxy<T> implements OIndex<T> {
     case PROXY:
     case FULLTEXT:
     case DICTIONARY:
-    case FULLTEXT_HASH_INDEX:
     case DICTIONARY_HASH_INDEX:
     case SPATIAL:
       return -1;
@@ -233,8 +217,7 @@ public class OChainedIndexProxy<T> implements OIndex<T> {
   }
 
   /**
-   * Checks if index can be used as base index.
-   * Requirements to the base index:
+   * Checks if index can be used as base index. Requirements to the base index:
    * <ul>
    * <li>Should be unique or not unique. Other types cannot be used to get all documents with required links.</li>
    * <li>Should not be composite hash index. As soon as hash index does not support partial match search.</li>

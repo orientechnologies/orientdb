@@ -1,14 +1,7 @@
 package com.orientechnologies.orient.test.database.auto;
 
 import com.orientechnologies.common.listener.OProgressListener;
-import com.orientechnologies.orient.core.index.OCompositeIndexDefinition;
-import com.orientechnologies.orient.core.index.OIndex;
-import com.orientechnologies.orient.core.index.OIndexDefinition;
-import com.orientechnologies.orient.core.index.OIndexException;
-import com.orientechnologies.orient.core.index.OPropertyIndexDefinition;
-import com.orientechnologies.orient.core.index.OPropertyListIndexDefinition;
-import com.orientechnologies.orient.core.index.OPropertyMapIndexDefinition;
-import com.orientechnologies.orient.core.index.OPropertyRidBagIndexDefinition;
+import com.orientechnologies.orient.core.index.*;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OType;
@@ -26,11 +19,7 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertFalse;
-import static org.testng.Assert.assertNull;
-import static org.testng.Assert.assertTrue;
-import static org.testng.Assert.fail;
+import static org.testng.Assert.*;
 
 @Test(groups = { "index" })
 public class ClassIndexTest extends DocumentDBBaseTest {
@@ -1225,25 +1214,6 @@ public class ClassIndexTest extends DocumentDBBaseTest {
     } catch (OIndexException e) {
       Assert.assertTrue(true);
     }
-  }
-
-  @Test(dependsOnMethods = "testAreIndexedDoesNotContainProperty")
-  public void testCreateFullTextIndexTwoProperties() {
-    try {
-      oClass.createIndex("ClassIndexTestFulltextIndex", OClass.INDEX_TYPE.FULLTEXT, "fSix", "fSeven");
-      Assert.fail();
-    } catch (OIndexException e) {
-      Assert.assertTrue(true);
-    }
-  }
-
-  @Test(dependsOnMethods = "testAreIndexedDoesNotContainProperty")
-  public void testCreateFullTextIndexOneProperty() {
-    final OIndex<?> result = oClass.createIndex("ClassIndexTestFulltextIndex", OClass.INDEX_TYPE.FULLTEXT, "fSix");
-
-    assertEquals(result.getName(), "ClassIndexTestFulltextIndex");
-    assertEquals(oClass.getClassIndex("ClassIndexTestFulltextIndex").getName(), result.getName());
-    assertEquals(result.getType(), OClass.INDEX_TYPE.FULLTEXT.toString());
   }
 
   @Test(dependsOnMethods = "testGetInvolvedIndexesOnePropertyArrayParams")

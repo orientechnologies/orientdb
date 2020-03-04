@@ -19,9 +19,13 @@
  */
 package com.orientechnologies.orient.core.index;
 
+import com.orientechnologies.orient.core.exception.OInvalidIndexEngineIdException;
+import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.tx.OTransactionIndexChanges;
+import com.orientechnologies.orient.core.tx.OTransactionIndexChangesPerKey;
 
 /**
  * Interface to handle index.
@@ -94,8 +98,6 @@ public interface OIndexInternal<T> extends OIndex<T> {
 
   void close();
 
-  void preCommit(OIndexAbstract.IndexTxSnapshot snapshots);
-
   void addTxOperation(OIndexAbstract.IndexTxSnapshot snapshots, final OTransactionIndexChanges changes);
 
   void commit(OIndexAbstract.IndexTxSnapshot snapshots);
@@ -130,7 +132,13 @@ public interface OIndexInternal<T> extends OIndex<T> {
    */
   boolean acquireAtomicExclusiveLock(Object key);
 
-  void acquireExclusiveLock();
+  boolean isNativeTxSupported();
 
-  void releaseExclusiveLock();
+  Iterable<OTransactionIndexChangesPerKey.OTransactionIndexEntry> interpretTxKeyChanges(OTransactionIndexChangesPerKey changes);
+
+  void doPut(OAbstractPaginatedStorage storage, Object key, ORID rid) throws OInvalidIndexEngineIdException;
+
+  boolean doRemove(OAbstractPaginatedStorage storage, Object key, ORID rid) throws OInvalidIndexEngineIdException;
+
+  boolean doRemove(OAbstractPaginatedStorage storage, Object key) throws OInvalidIndexEngineIdException;
 }

@@ -207,8 +207,7 @@ public class OIndexManagerShared extends OIndexManagerAbstract {
 
   private static String chooseContainerAlgorithm(String type) {
     final String valueContainerAlgorithm;
-    if (OClass.INDEX_TYPE.NOTUNIQUE.toString().equals(type) || OClass.INDEX_TYPE.NOTUNIQUE_HASH_INDEX.toString().equals(type)
-        || OClass.INDEX_TYPE.FULLTEXT_HASH_INDEX.toString().equals(type) || OClass.INDEX_TYPE.FULLTEXT.toString().equals(type)) {
+    if (OClass.INDEX_TYPE.NOTUNIQUE.toString().equals(type) || OClass.INDEX_TYPE.NOTUNIQUE_HASH_INDEX.toString().equals(type)) {
       valueContainerAlgorithm = ODefaultIndexFactory.SBTREE_BONSAI_VALUE_CONTAINER;
     } else {
       valueContainerAlgorithm = ODefaultIndexFactory.NONE_VALUE_CONTAINER;
