@@ -474,10 +474,10 @@ public class ODefaultServerSecurity implements OSecurityFactory, OServerLifecycl
   }
 
   // OSecuritySystem
-  public void log(final OAuditingOperation operation, final String dbName, final String username, final String message) {
+  public void log(final OAuditingOperation operation, final String dbName, OSecurityUser user, final String message) {
     synchronized (auditingSynch) {
       if (auditingService != null)
-        auditingService.log(operation, dbName, username, message);
+        auditingService.log(operation, dbName, user, message);
     }
   }
 
@@ -1052,7 +1052,7 @@ public class ODefaultServerSecurity implements OSecurityFactory, OServerLifecycl
    * OSecurityFactory Interface
    ***/
   public OSecurityInternal newSecurity() {
-    return new OSecurityExternal();
+    return new OSecurityServerExternal(server);
   }
 
   private void registerRESTCommands() {
