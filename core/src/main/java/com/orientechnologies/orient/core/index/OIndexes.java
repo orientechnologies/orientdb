@@ -188,7 +188,10 @@ public final class OIndexes {
     } else if (OClass.INDEX_TYPE.DICTIONARY_HASH_INDEX.name().equalsIgnoreCase(type) || OClass.INDEX_TYPE.NOTUNIQUE_HASH_INDEX
         .name().equalsIgnoreCase(type) || OClass.INDEX_TYPE.UNIQUE_HASH_INDEX.name().equalsIgnoreCase(type)) {
       algorithm = OHashIndexFactory.HASH_INDEX_ALGORITHM;
+    } else if (OClass.INDEX_TYPE.FULLTEXT.name().equalsIgnoreCase(type)) {
+      algorithm = "LUCENE";
     }
+
     return algorithm;
   }
 

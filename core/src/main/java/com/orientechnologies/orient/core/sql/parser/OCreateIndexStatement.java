@@ -7,13 +7,7 @@ import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
-import com.orientechnologies.orient.core.index.OIndex;
-import com.orientechnologies.orient.core.index.OIndexDefinition;
-import com.orientechnologies.orient.core.index.OIndexDefinitionFactory;
-import com.orientechnologies.orient.core.index.OIndexException;
-import com.orientechnologies.orient.core.index.OIndexFactory;
-import com.orientechnologies.orient.core.index.OIndexes;
-import com.orientechnologies.orient.core.index.OSimpleKeyIndexDefinition;
+import com.orientechnologies.orient.core.index.*;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OClassImpl;
 import com.orientechnologies.orient.core.metadata.schema.OType;
@@ -23,11 +17,7 @@ import com.orientechnologies.orient.core.sql.executor.OInternalResultSet;
 import com.orientechnologies.orient.core.sql.executor.OResultInternal;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 public class OCreateIndexStatement extends ODDLStatement {
@@ -84,8 +74,9 @@ public class OCreateIndexStatement extends ODDLStatement {
       OType[] keyTypes = calculateKeyTypes(ctx);
 
       if (keyTypes != null && keyTypes.length > 0) {
-        idx = database.getMetadata().getIndexManager().createIndex(name.getValue(), type.getStringValue(),
-            new OSimpleKeyIndexDefinition(keyTypes, collatesList), null, null, metadataDoc, engine);
+        idx = database.getMetadata().getIndexManager()
+            .createIndex(name.getValue(), type.getStringValue(), new OSimpleKeyIndexDefinition(keyTypes, collatesList), null, null,
+                metadataDoc, engine);
       } else if (keyTypes != null && keyTypes.length == 0 && "LUCENE_CROSS_CLASS".equalsIgnoreCase(engine)) {
         //handle special case of cross class  Lucene index: awful but works
         OIndexDefinition keyDef = new OSimpleKeyIndexDefinition(new OType[] { OType.STRING }, collatesList);
@@ -142,10 +133,12 @@ public class OCreateIndexStatement extends ODDLStatement {
         }
         fieldTypeList = ((OClassImpl) oClass).extractFieldTypes(fields);
       } else
+        //noinspection resource
         fieldTypeList = keyTypes.stream().map(x -> OType.valueOf(x.getStringValue())).collect(Collectors.toList());
 
       final OIndexDefinition idxDef = OIndexDefinitionFactory
-          .createIndexDefinition(oClass, Arrays.asList(fields), fieldTypeList, collatesList, type.getStringValue(), null);
+          .createIndexDefinition(oClass, Arrays.asList(fields), fieldTypeList, collatesList, type.getStringValue(),
+              Optional.ofNullable(engine).map(String::toString).orElse(null));
 
       idx = database.getMetadata().getIndexManager()
           .createIndex(name.getValue(), type.getStringValue(), idxDef, oClass.getPolymorphicClusterIds(), null, metadataDoc,
