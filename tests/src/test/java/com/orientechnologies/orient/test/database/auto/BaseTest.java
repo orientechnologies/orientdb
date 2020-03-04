@@ -217,6 +217,7 @@ public abstract class BaseTest<T extends ODatabase> {
     OClass whiz = database.getMetadata().getSchema().createClass("Whiz", 1, null);
     whiz.createProperty("id", OType.INTEGER);
     whiz.createProperty("account", OType.LINK, account);
+    whiz.createProperty("text", OType.STRING).setMandatory(true).setMin("1").setMax("140");
     whiz.createProperty("date", OType.DATE).setMin("2010-01-01");
     whiz.createProperty("replyTo", OType.LINK, account);
 
