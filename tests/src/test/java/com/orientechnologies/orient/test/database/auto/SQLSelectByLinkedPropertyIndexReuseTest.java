@@ -260,37 +260,6 @@ public class SQLSelectByLinkedPropertyIndexReuseTest extends AbstractIndexReuseT
     assertEquals(profiler.getCounter("db.demo.query.indexUsed"), oldIndexUsage + 3);
   }
 
-  @Test
-  public void testUniqueFulltextContainsTextUsing() throws Exception {
-
-    long oldIndexUsage = indexUsages();
-
-    List<ODocument> result = database
-        .query(new OSQLSynchQuery<ODocument>("select from lpirtStudent where diploma.thesis CONTAINSTEXT 'student'"));
-    assertEquals(result.size(), 3);
-    assertEquals(containsDocumentWithFieldValue(result, "name", "John Smith"), 1);
-    assertEquals(containsDocumentWithFieldValue(result, "name", "James Bell"), 1);
-    assertEquals(containsDocumentWithFieldValue(result, "name", "William James"), 1);
-
-    assertEquals(profiler.getCounter("db.demo.query.indexUsed"), oldIndexUsage + 2);
-  }
-
-  @Test
-  public void testUniqueFulltextContainsTextLimitUsing() throws Exception {
-
-    long oldIndexUsage = indexUsages();
-
-    List<ODocument> result = database
-        .query(new OSQLSynchQuery<ODocument>("select from lpirtStudent where diploma.thesis CONTAINSTEXT 'student' limit 1"));
-    assertEquals(result.size(), 1);
-    final List<String> expectedNames = Arrays.asList("John Smith", "James Bell", "William James");
-    for (ODocument aResult : result) {
-      assertTrue(expectedNames.contains(aResult.field("name")));
-    }
-
-    assertEquals(profiler.getCounter("db.demo.query.indexUsed"), oldIndexUsage + 2);
-  }
-
   /**
    * When some unique composite index in the chain is queried by partial result, the final result become not unique.
    */
