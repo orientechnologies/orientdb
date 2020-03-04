@@ -25,6 +25,7 @@ import com.orientechnologies.common.listener.OProgressListener;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.parser.OStringParser;
 import com.orientechnologies.common.serialization.types.OBinarySerializer;
+import com.orientechnologies.common.util.OPair;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabase.STATUS;
@@ -69,6 +70,7 @@ import com.orientechnologies.orient.core.serialization.serializer.OJSONReader;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 import com.orientechnologies.orient.core.serialization.serializer.binary.impl.OLinkSerializer;
 import com.orientechnologies.orient.core.serialization.serializer.record.string.ORecordSerializerJSON;
+import com.orientechnologies.orient.core.sql.executor.ORidSet;
 import com.orientechnologies.orient.core.storage.OPhysicalPosition;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.index.hashindex.local.OHashIndexFactory;
@@ -1142,7 +1144,8 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
   }
 
   private ORID importRecord() throws Exception {
-    String value = jsonReader.readString(OJSONReader.NEXT_IN_ARRAY).trim();
+    OPair<String, Map<String, ORidSet>> recordParse = jsonReader.readRecordString(this.maxRidbagStringSizeBeforeLazyImport);
+    String value = recordParse.getKey().trim();
 
     if (value.isEmpty()) {
       return null;
@@ -1158,7 +1161,6 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
     //big ridbags (ie. supernodes) sometimes send the system OOM, so they have to be discarded at this stage
     //and processed later. The following collects the positions ("value" inside the string) of skipped fields.
     Set<Integer> skippedPartsIndexes = new HashSet<>();
-
 
 
     try {
@@ -1265,6 +1267,10 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
         }
       }
 
+      if (recordParse.value.size() > 0) {
+        importSkippedRidbag(record, recordParse.getValue());
+      }
+
     } catch (Exception t) {
       if (record != null)
         OLogManager.instance().error(this,
@@ -1281,6 +1287,20 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
     }
 
     return record.getIdentity();
+  }
+
+  private void importSkippedRidbag(ORecord record, Map<String, ORidSet> bags) {
+    if (bags == null) {
+      return;
+    }
+    OElement doc = (OElement) record;
+    bags.forEach((field, ridset) -> {
+      ORidBag ridbag = ((OElement) record).getProperty(field);
+      ridset.forEach(rid -> {
+        ridbag.add(rid);
+        doc.save();
+      });
+    });
   }
 
   private void importSkippedRidbag(ORecord record, String value, Integer skippedPartsIndex) {
