@@ -12,25 +12,21 @@ import org.junit.Test;
 import java.util.List;
 import java.util.stream.Collectors;
 
-public class AuditingChangePasswordTest extends EEBaseServerHttpTest {
+public class AuditingRootLogTest extends EEBaseServerHttpTest {
 
   @Test
-  public void changePasswordTest() throws Exception {
-
+  public void changePasswordWitRootTest() throws Exception {
 
     String security = OIOUtils
         .readStreamAsString(Thread.currentThread().getContextClassLoader().getResourceAsStream("security.json"));
     server.getSecurity().reload(new ODocument().fromJSON(security, "noMap"));
-
 
     server.getSystemDatabase().executeWithDB((db) -> {
       db.command("delete from OAuditingLog");
       return null;
     });
 
-
-
-    ODatabaseSession session = remote.open(name.getMethodName(), "admin", "admin");
+    ODatabaseSession session = remote.open(name.getMethodName(), "root", "root");
 
     session.command("update OUser set password = ? where name = ?", new Object[] { "foo", "reader" }).close();
 
@@ -45,8 +41,8 @@ public class AuditingChangePasswordTest extends EEBaseServerHttpTest {
 
     OResult result = results.get(0);
 
-    Assert.assertEquals("admin", result.getProperty("user"));
-    Assert.assertEquals("Database", result.getProperty("userType"));
+    Assert.assertEquals("root", result.getProperty("user"));
+    Assert.assertEquals("Server", result.getProperty("userType"));
     Assert.assertEquals("The password for user 'reader' has been changed", result.getProperty("note"));
   }
 

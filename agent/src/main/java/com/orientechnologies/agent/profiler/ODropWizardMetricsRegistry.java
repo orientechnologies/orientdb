@@ -23,13 +23,11 @@ import io.prometheus.client.dropwizard.DropwizardExports;
 import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Locale;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.TimeUnit;
+import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
@@ -38,15 +36,15 @@ import java.util.function.Supplier;
  */
 public class ODropWizardMetricsRegistry implements OMetricsRegistry {
 
-  private final MetricRegistry                                          registry         = new MetricRegistry();
-  private       ConcurrentMap<String, OMetric>                          metrics          = new ConcurrentHashMap<>();
-  private       ConsoleReporter                                         consoleReporter  = null;
-  private       CsvReporter                                             csvReporter      = null;
-  private       JmxReporter                                             jmxReporter      = null;
-  private       CSVAggregateReporter                                    csvAggregates    = null;
+  private final MetricRegistry                                          registry        = new MetricRegistry();
+  private       ConcurrentMap<String, OMetric>                          metrics         = new ConcurrentHashMap<>();
+  private       ConsoleReporter                                         consoleReporter = null;
+  private       CsvReporter                                             csvReporter     = null;
+  private       JmxReporter                                             jmxReporter     = null;
+  private       CSVAggregateReporter                                    csvAggregates   = null;
   private       OEnterpriseServer                                       server;
   private       OrientDBMetricsSettings                                 settings;
-  private       Map<Class<? extends OMetric>, Function<String, Metric>> metricFactory    = new HashMap<>();
+  private       Map<Class<? extends OMetric>, Function<String, Metric>> metricFactory   = new HashMap<>();
 
   private transient ObjectMapper mapper;
 
@@ -142,10 +140,10 @@ public class ODropWizardMetricsRegistry implements OMetricsRegistry {
         }
       }
 
-      builder.filter((name, metric) -> !name.matches("db.*.query.*"));
+      builder.filter((name, metric) -> !name.matches("(?s)db.*.query.*\""));
 
       csvReporter = builder.build(outputDir);
-      csvReporter.start(interval.longValue(), TimeUnit.MILLISECONDS);
+      csvReporter.start(interval.longValue(), TimeUnit.MILLISECONDS);   
     }
     return csvReporter;
 
@@ -180,48 +178,59 @@ public class ODropWizardMetricsRegistry implements OMetricsRegistry {
     return MetricRegistry.name(name, names);
   }
 
-  @Override public String name(Class<?> klass, String... names) {
+  @Override
+  public String name(Class<?> klass, String... names) {
     return MetricRegistry.name(klass, names);
   }
 
-  @Override public OCounter counter(String name, String description) {
+  @Override
+  public OCounter counter(String name, String description) {
     return registerOrGetMetric(name, (key) -> new DropWizardCounter(registry.counter(key), key, description));
   }
 
-  @Override public OMeter meter(String name, String description) {
+  @Override
+  public OMeter meter(String name, String description) {
     return meter(name, description, ":");
   }
 
-  @Override public OMeter meter(String name, String description, String unitOfMeasure) {
+  @Override
+  public OMeter meter(String name, String description, String unitOfMeasure) {
     return registerOrGetMetric(name, (k) -> new DropWizardMeter(registry.meter(k), k, description, unitOfMeasure));
   }
 
-  @Override public <T> OGauge<T> gauge(String name, String description, Supplier<T> valueFunction) {
+  @Override
+  public <T> OGauge<T> gauge(String name, String description, Supplier<T> valueFunction) {
     return gauge(name, description, "", valueFunction);
   }
 
-  @Override public <T> OGauge<T> gauge(String name, String description, String unitOfMeasure, Supplier<T> valueFunction) {
+  @Override
+  public <T> OGauge<T> gauge(String name, String description, String unitOfMeasure, Supplier<T> valueFunction) {
     return registerOrGetMetric(name,
         (k) -> new DropWizardGauge<T>(registry.register(k, () -> valueFunction.get()), k, description, unitOfMeasure));
   }
 
-  @Override public <T> OGauge<T> newGauge(String name, String description, Supplier<T> valueFunction) {
+  @Override
+  public <T> OGauge<T> newGauge(String name, String description, Supplier<T> valueFunction) {
     return new DropWizardGauge<T>(valueFunction::get, name, description);
   }
 
-  @Override public <T> OGauge<T> newGauge(String name, String description, String unitOfMeasure, Supplier<T> valueFunction) {
+  @Override
+  public <T> OGauge<T> newGauge(String name, String description, String unitOfMeasure, Supplier<T> valueFunction) {
     return new DropWizardGauge<T>(valueFunction::get, name, description, unitOfMeasure);
   }
 
-  @Override public OHistogram histogram(String name, String description) {
+  @Override
+  public OHistogram histogram(String name, String description) {
     return registerOrGetMetric(name, (k) -> new DropWizardHistogram(registry.histogram(k), k, description));
   }
 
-  @Override public OTimer timer(String name, String description) {
+  @Override
+  public OTimer timer(String name, String description) {
     return registerOrGetMetric(name, (k) -> new DropWizardTimer(registry.timer(k), k, description));
   }
 
-  @Override public Map<String, OMetric> getMetrics() {
+  @Override
+  public Map<String, OMetric> getMetrics() {
     return Collections.unmodifiableMap(metrics);
   }
 
@@ -229,7 +238,8 @@ public class ODropWizardMetricsRegistry implements OMetricsRegistry {
     return (T) metrics.computeIfAbsent(name, metric);
   }
 
-  @Override public <T extends OMetric> T register(String name, String description, Class<T> klass) {
+  @Override
+  public <T extends OMetric> T register(String name, String description, Class<T> klass) {
     return registerOrGetMetric(name, (k) -> {
 
       Function<String, Metric> function = metricFactory.get(klass);
@@ -246,7 +256,8 @@ public class ODropWizardMetricsRegistry implements OMetricsRegistry {
     });
   }
 
-  @Override public <T extends OMetric> T register(String name, T metric) {
+  @Override
+  public <T extends OMetric> T register(String name, T metric) {
 
     if (metric instanceof DropWizardGeneric) {
       Metric m = ((DropWizardGeneric) metric).getMetric();
@@ -255,11 +266,13 @@ public class ODropWizardMetricsRegistry implements OMetricsRegistry {
     return registerOrGetMetric(name, (k) -> metric);
   }
 
-  @Override public void registerAll(OMetricSet metricSet) {
+  @Override
+  public void registerAll(OMetricSet metricSet) {
     registerAll(null, metricSet);
   }
 
-  @Override public void registerAll(String prefix, OMetricSet metricSet) {
+  @Override
+  public void registerAll(String prefix, OMetricSet metricSet) {
 
     for (Map.Entry<String, OMetric> entry : metricSet.getMetrics().entrySet()) {
       if (entry.getValue() instanceof OMetricSet) {
@@ -283,7 +296,23 @@ public class ODropWizardMetricsRegistry implements OMetricsRegistry {
     return registry.remove(name);
   }
 
-  @Override public void toJSON(OutputStream outputStream) throws IOException {
+  @Override
+  public SortedMap<String, OHistogram> getHistograms(BiFunction<String, OMetric, Boolean> filter) {
+    return getMetrics(OHistogram.class, filter);
+  }
+
+  private <T extends OMetric> SortedMap<String, T> getMetrics(Class<T> klass, BiFunction<String, OMetric, Boolean> filter) {
+    final TreeMap<String, T> timers = new TreeMap<>();
+    for (Map.Entry<String, OMetric> entry : metrics.entrySet()) {
+      if (klass.isInstance(entry.getValue()) && filter.apply(entry.getKey(), entry.getValue())) {
+        timers.put(entry.getKey(), (T) entry.getValue());
+      }
+    }
+    return Collections.unmodifiableSortedMap(timers);
+  }
+
+  @Override
+  public void toJSON(OutputStream outputStream) throws IOException {
 
     ObjectWriter writer = mapper.writer();
 

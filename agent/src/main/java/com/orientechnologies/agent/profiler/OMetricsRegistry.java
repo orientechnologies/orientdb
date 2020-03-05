@@ -5,6 +5,8 @@ import com.orientechnologies.agent.profiler.metrics.*;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.util.Map;
+import java.util.SortedMap;
+import java.util.function.BiFunction;
 import java.util.function.Supplier;
 
 /**
@@ -47,6 +49,8 @@ public interface OMetricsRegistry {
   void registerAll(OMetricSet metricSet);
 
   void registerAll(String prefix, OMetricSet metricSet);
+
+  SortedMap<String,OHistogram> getHistograms(BiFunction<String,OMetric,Boolean> filter);
 
   boolean remove(String name);
 
