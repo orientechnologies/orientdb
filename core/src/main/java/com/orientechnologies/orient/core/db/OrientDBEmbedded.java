@@ -400,6 +400,7 @@ public class OrientDBEmbedded implements OrientDBInternal {
 
   @Override
   public ODatabaseDocumentInternal open(String name, String user, String password, OrientDBConfig config) {
+    checkDefaultPassword(name, user, password);
     try {
       final ODatabaseDocumentEmbedded embedded;
       synchronized (this) {
@@ -430,6 +431,13 @@ public class OrientDBEmbedded implements OrientDBInternal {
       return embedded;
     } catch (Exception e) {
       throw OException.wrapException(new ODatabaseException("Cannot open database '" + name + "'"), e);
+    }
+  }
+
+  private void checkDefaultPassword(String database, String user, String password) {
+    if (("admin".equals(user) && "admin".equals(password)) || ("reader".equals(user) && "reader".equals(password)) || (
+        "writer".equals(user) && "writer".equals(password))) {
+      OLogManager.instance().warnNoDb(this, String.format("IMPORTANT! Using default password is unsafe, please change password for user '%s' on database '%s'", user, database));
     }
   }
 
