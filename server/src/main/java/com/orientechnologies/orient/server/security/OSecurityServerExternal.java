@@ -1,6 +1,5 @@
 package com.orientechnologies.orient.server.security;
 
-import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseSession;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.metadata.security.*;
@@ -35,24 +34,43 @@ public class OSecurityServerExternal extends OSecurityExternal {
 
   public ORole createRole(OServerUserConfiguration serverUser) {
 
-    final ORole adminRole = new ORole(serverUser.name, null, OSecurityRole.ALLOW_MODES.ALLOW_ALL_BUT);
+    final ORole role = new ORole(serverUser.name, null, OSecurityRole.ALLOW_MODES.ALLOW_ALL_BUT);
 
-    adminRole.addRule(ORule.ResourceGeneric.BYPASS_RESTRICTED, null, ORole.PERMISSION_ALL);
-    adminRole.addRule(ORule.ResourceGeneric.ALL, null, ORole.PERMISSION_ALL);
-//      adminRole.addRule(ORule.ResourceGeneric.ALL_CLASSES, null, ORole.PERMISSION_ALL).save();
-    adminRole.addRule(ORule.ResourceGeneric.CLASS, null, ORole.PERMISSION_ALL);
-//      adminRole.addRule(ORule.ResourceGeneric.ALL_CLUSTERS, null, ORole.PERMISSION_ALL).save();
-    adminRole.addRule(ORule.ResourceGeneric.CLUSTER, null, ORole.PERMISSION_ALL);
-    adminRole.addRule(ORule.ResourceGeneric.SYSTEM_CLUSTERS, null, ORole.PERMISSION_ALL);
-    adminRole.addRule(ORule.ResourceGeneric.DATABASE, null, ORole.PERMISSION_ALL);
-    adminRole.addRule(ORule.ResourceGeneric.SCHEMA, null, ORole.PERMISSION_ALL);
-    adminRole.addRule(ORule.ResourceGeneric.COMMAND, null, ORole.PERMISSION_ALL);
-    adminRole.addRule(ORule.ResourceGeneric.COMMAND_GREMLIN, null, ORole.PERMISSION_ALL);
-    adminRole.addRule(ORule.ResourceGeneric.FUNCTION, null, ORole.PERMISSION_ALL);
+    if (serverUser.resources.equalsIgnoreCase("*")) {
+      createRoot(role);
+    } else {
+      mapPermission(role, serverUser);
+    }
 
-    createSecurityPolicyWithBitmask(adminRole, "*", ORole.PERMISSION_ALL);
+    return role;
+  }
 
-    return adminRole;
+  private void mapPermission(ORole role, OServerUserConfiguration user) {
+
+    String[] strings = user.resources.split(",");
+
+    for (String string : strings) {
+      ORule.ResourceGeneric generic = ORule.mapLegacyResourceToGenericResource(string);
+      if (generic != null) {
+        role.addRule(generic, null, ORole.PERMISSION_ALL);
+      }
+    }
+  }
+
+  private void createRoot(ORole role) {
+    role.addRule(ORule.ResourceGeneric.BYPASS_RESTRICTED, null, ORole.PERMISSION_ALL);
+    role.addRule(ORule.ResourceGeneric.ALL, null, ORole.PERMISSION_ALL);
+//      role.addRule(ORule.ResourceGeneric.ALL_CLASSES, null, ORole.PERMISSION_ALL).save();
+    role.addRule(ORule.ResourceGeneric.CLASS, null, ORole.PERMISSION_ALL);
+//      role.addRule(ORule.ResourceGeneric.ALL_CLUSTERS, null, ORole.PERMISSION_ALL).save();
+    role.addRule(ORule.ResourceGeneric.CLUSTER, null, ORole.PERMISSION_ALL);
+    role.addRule(ORule.ResourceGeneric.SYSTEM_CLUSTERS, null, ORole.PERMISSION_ALL);
+    role.addRule(ORule.ResourceGeneric.DATABASE, null, ORole.PERMISSION_ALL);
+    role.addRule(ORule.ResourceGeneric.SCHEMA, null, ORole.PERMISSION_ALL);
+    role.addRule(ORule.ResourceGeneric.COMMAND, null, ORole.PERMISSION_ALL);
+    role.addRule(ORule.ResourceGeneric.COMMAND_GREMLIN, null, ORole.PERMISSION_ALL);
+    role.addRule(ORule.ResourceGeneric.FUNCTION, null, ORole.PERMISSION_ALL);
+    createSecurityPolicyWithBitmask(role, "*", ORole.PERMISSION_ALL);
   }
 
   public void createSecurityPolicyWithBitmask(OSecurityRole role, String resource, int legacyPolicy) {
