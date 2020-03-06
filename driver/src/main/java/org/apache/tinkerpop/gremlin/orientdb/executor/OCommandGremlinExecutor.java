@@ -21,7 +21,6 @@ package org.apache.tinkerpop.gremlin.orientdb.executor;
 
 import com.orientechnologies.common.concur.resource.OPartitionedObjectPool;
 import com.orientechnologies.common.exception.OException;
-import com.orientechnologies.orient.core.command.OScriptExecutor;
 import com.orientechnologies.orient.core.command.script.OScriptInjection;
 import com.orientechnologies.orient.core.command.script.OScriptManager;
 import com.orientechnologies.orient.core.command.script.OScriptResultHandler;
@@ -45,10 +44,12 @@ import org.apache.tinkerpop.gremlin.orientdb.executor.transformer.OrientProperty
 import org.apache.tinkerpop.gremlin.process.traversal.Traversal;
 import org.apache.tinkerpop.gremlin.process.traversal.util.DefaultTraversalMetrics;
 import org.apache.tinkerpop.gremlin.process.traversal.util.TraversalExplanation;
+import org.codehaus.groovy.control.MultipleCompilationErrorsException;
 
 import javax.script.Bindings;
 import javax.script.ScriptContext;
 import javax.script.ScriptEngine;
+import javax.script.ScriptException;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -134,7 +135,13 @@ public class OCommandGremlinExecutor extends OAbstractScriptExecutor implements 
                 return resultSet;
             }
 
-        } catch (Exception e) {
+        }catch (ScriptException e) {
+          if(e.getCause() instanceof MultipleCompilationErrorsException) {
+            throw new OCommandExecutionException(e.getMessage());
+          }else {
+            throw OException.wrapException(new OCommandExecutionException("Error on execution of the GREMLIN script"), e);
+          }
+        }catch (Exception e) {
             throw OException.wrapException(new OCommandExecutionException("Error on execution of the GREMLIN script"), e);
         } finally {
             if (entry != null) {

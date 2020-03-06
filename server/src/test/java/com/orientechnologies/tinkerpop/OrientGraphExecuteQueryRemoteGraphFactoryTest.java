@@ -1,5 +1,6 @@
 package com.orientechnologies.tinkerpop;
 
+import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.id.ORecordId;
 import org.apache.tinkerpop.gremlin.orientdb.OrientEdge;
 import org.apache.tinkerpop.gremlin.orientdb.OrientGraph;
@@ -122,6 +123,17 @@ public class OrientGraphExecuteQueryRemoteGraphFactoryTest extends AbstractRemot
     Object john = friends.iterator().next();
 
     Assert.assertTrue(john instanceof ORecordId);
+
+  }
+
+  @Test(expected = OCommandExecutionException.class)
+  public void testExecuteGremlinWithError() {
+
+    OrientGraph noTx = factory.getNoTx();
+
+    try (OGremlinResultSet gremlin = noTx.execute("gremlin", "g.V().", null)) {
+
+    }
 
   }
 }
