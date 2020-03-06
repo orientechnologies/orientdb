@@ -1028,7 +1028,8 @@ public enum OGlobalConfiguration { // ENVIRONMENT
    */
   @OApi(maturity = OApi.MATURITY.NEW) CREATE_DEFAULT_USERS("security.createDefaultUsers",
       "Indicates whether default database users should be created", Boolean.class, true),
-
+  WARNING_DEFAULT_USERS("security.warningDefaultUsers",
+      "Indicates whether access with default users should show a warning", Boolean.class, true),
   /**
    * @Since 2.2
    */

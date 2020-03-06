@@ -50,8 +50,7 @@ import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
-import static com.orientechnologies.orient.core.config.OGlobalConfiguration.FILE_DELETE_DELAY;
-import static com.orientechnologies.orient.core.config.OGlobalConfiguration.FILE_DELETE_RETRY;
+import static com.orientechnologies.orient.core.config.OGlobalConfiguration.*;
 
 /**
  * Created by tglman on 08/04/16.
@@ -400,6 +399,7 @@ public class OrientDBEmbedded implements OrientDBInternal {
 
   @Override
   public ODatabaseDocumentInternal open(String name, String user, String password, OrientDBConfig config) {
+    checkDefaultPassword(name, user, password);
     try {
       final ODatabaseDocumentEmbedded embedded;
       synchronized (this) {
@@ -430,6 +430,13 @@ public class OrientDBEmbedded implements OrientDBInternal {
       return embedded;
     } catch (Exception e) {
       throw OException.wrapException(new ODatabaseException("Cannot open database '" + name + "'"), e);
+    }
+  }
+
+  private void checkDefaultPassword(String database, String user, String password) {
+    if (("admin".equals(user) && "admin".equals(password)) || ("reader".equals(user) && "reader".equals(password)) || (
+        "writer".equals(user) && "writer".equals(password)) && WARNING_DEFAULT_USERS.getValueAsBoolean()) {
+      OLogManager.instance().warnNoDb(this, String.format("IMPORTANT! Using default password is unsafe, please change password for user '%s' on database '%s'", user, database));
     }
   }
 

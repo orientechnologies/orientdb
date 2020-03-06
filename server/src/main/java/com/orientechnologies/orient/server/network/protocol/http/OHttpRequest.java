@@ -44,6 +44,8 @@ public abstract class OHttpRequest {
   private final InputStream           in;
   private final ONetworkProtocolData  data;
   private final ONetworkHttpExecutor  executor;
+  protected     String                content;
+  protected     Map<String, String>   parameters;
   private       String                sessionId;
   protected     String                authorization;
   private       String                databaseName;
@@ -67,8 +69,6 @@ public abstract class OHttpRequest {
   public String getParameter(final String iName) {
     return getParameters() != null ? getParameters().get(iName) : null;
   }
-
-  public abstract Map<String, String> getParameters();
 
   public void addHeader(final String h) {
     if (getHeaders() == null)
@@ -103,6 +103,14 @@ public abstract class OHttpRequest {
     return retMap;
   }
 
+  public void setParameters(Map<String, String> parameters) {
+    this.parameters = parameters;
+  }
+
+  public Map<String, String> getParameters() {
+    return parameters;
+  }
+
   public String getHeader(final String iName) {
     return getHeaders().get(iName.toLowerCase(Locale.ENGLISH));
   }
@@ -115,11 +123,15 @@ public abstract class OHttpRequest {
     return getExecutor().getRemoteAddress();
   }
 
+  public String getContent() {
+    return content;
+  }
+
+  public void setContent(String content) {
+    this.content = content;
+  }
+
   public abstract String getUrl();
-
-  public abstract String getContent();
-
-  public abstract void setContent(String content);
 
   public OContextConfiguration getConfiguration() {
     return configuration;
@@ -154,8 +166,6 @@ public abstract class OHttpRequest {
   }
 
   public abstract void setUrl(String url);
-
-  public abstract void setParameters(Map<String, String> parameters);
 
   public abstract String getHttpMethod();
 

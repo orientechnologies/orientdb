@@ -180,6 +180,13 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
     return p.exitValue();
   }
 
+  private void checkDefaultPassword(String database, String user, String password) {
+    if (("admin".equals(user) && "admin".equals(password)) || ("reader".equals(user) && "reader".equals(password)) || (
+        "writer".equals(user) && "writer".equals(password))) {
+      message(String.format("IMPORTANT! Using default password is unsafe, please change password for user '%s' on database '%s'", user, database));
+    }
+  }
+
   @ConsoleCommand(aliases = {
       "use database" }, description = "Connect to a database or a remote Server instance", onlineHelp = "Console-Command-Connect")
   public void connect(
@@ -199,6 +206,9 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
     currentDatabaseUserName = iUserName;
     currentDatabaseUserPassword = iUserPassword;
     urlConnection = OURLHelper.parseNew(iURL);
+    if (urlConnection.getDbName() != null && !"".equals(urlConnection.getDbName())) {
+      checkDefaultPassword(urlConnection.getDbName(),currentDatabaseUserName, currentDatabaseUserPassword);
+    }
     orientDB = new OrientDB(urlConnection.getType() + ":" + urlConnection.getPath(), iUserName, iUserPassword,
         OrientDBConfig.defaultConfig());
 

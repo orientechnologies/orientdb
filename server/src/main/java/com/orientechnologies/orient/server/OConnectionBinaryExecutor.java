@@ -898,11 +898,17 @@ public final class OConnectionBinaryExecutor implements OBinaryRequestExecutor {
     connection.getData().supportsLegacyPushMessages = request.isSupportPush();
     connection.getData().collectStats = request.isCollectStats();
 
+    if (!request.isTokenBased()) {
+      OLogManager.instance()
+          .warn(this, "Session open with token flag false is not supported anymore please use token based sessions");
+      throw new OConfigurationException(
+          "Session open with token flag false is not supported anymore please use token based sessions");
+    }
+
     connection.setServerUser(server.serverLogin(request.getUsername(), request.getPassword(), "server.connect"));
 
     if (connection.getServerUser() == null)
       throw new OSecurityAccessException("Wrong user/password to [connect] to the remote OrientDB Server instance");
-
     byte[] token = null;
     if (connection.getData().protocolVersion > OChannelBinaryProtocol.PROTOCOL_VERSION_26) {
       connection.getData().serverUsername = connection.getServerUser().name;

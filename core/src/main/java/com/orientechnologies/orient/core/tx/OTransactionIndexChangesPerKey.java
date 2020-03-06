@@ -95,7 +95,6 @@ public class OTransactionIndexChangesPerKey {
    * Interprets this key changes using the given {@link Interpretation interpretation}.
    *
    * @param interpretation the interpretation to use.
-   *
    * @return the interpreted changes.
    */
   public Iterable<OTransactionIndexEntry> interpret(Interpretation interpretation) {
@@ -155,9 +154,6 @@ public class OTransactionIndexChangesPerKey {
       if (ridA != null && ridA.equals(ridB)) {
         if (entryA.operation == entryB.operation) // both operations do the same on the same RID
           return Collections.singletonList(entryA);
-
-        if (entryB.operation == OPERATION.REMOVE) // remove operation cancels put
-          return Collections.emptyList();
 
         return new ArrayList<OTransactionIndexEntry>(entries); // don't optimize remove-put on the same RID for safety
       }
@@ -246,10 +242,7 @@ public class OTransactionIndexChangesPerKey {
         if (entryA.operation == entryB.operation) // both operations do the same on the same RID
           return Collections.singletonList(entryA);
 
-        if (entryB.operation == OPERATION.REMOVE) // remove operation cancels put
-          return Collections.emptyList();
-
-        return Collections.singletonList(entryB); // put wins
+        return new ArrayList<OTransactionIndexEntry>(entries);
       }
 
       if (entryB.operation == OPERATION.REMOVE && entryB.value == null)
@@ -357,10 +350,7 @@ public class OTransactionIndexChangesPerKey {
         if (entryA.operation == entryB.operation) // both operations do the same on the same RID
           return Collections.singletonList(entryA);
 
-        if (entryB.operation == OPERATION.REMOVE) // remove operation cancels put
-          return Collections.emptyList();
-
-        return Collections.singletonList(entryB); // put wins
+        return new ArrayList<OTransactionIndexEntry>(entries);
       }
 
       return new ArrayList<OTransactionIndexEntry>(entries); // it's put-put on different RIDs

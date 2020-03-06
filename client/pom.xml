@@ -48,6 +48,7 @@
             -Dstorage.diskCache.checksumMode=storeAndThrow
             -Dstorage.diskCache.bufferSize=4096
             -Dindex.allowManualIndexes=false
+            -Dsecurity.warningDefaultUsers=false
         </argLine>
         <project.rootdir>${project.basedir}/../</project.rootdir>
     </properties>

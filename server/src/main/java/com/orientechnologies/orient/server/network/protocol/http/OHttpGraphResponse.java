@@ -46,10 +46,14 @@ import java.util.Set;
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
  */
 public class OHttpGraphResponse extends OHttpResponse {
+
+  private OHttpResponse iWrapped;
+
   public OHttpGraphResponse(final OHttpResponse iWrapped) {
     super(iWrapped.getOutputStream(), iWrapped.getHttpVersion(), iWrapped.getAdditionalHeaders(), iWrapped.getCharacterSet(),
         iWrapped.getServerInfo(), iWrapped.getSessionId(), iWrapped.getCallbackFunction(), iWrapped.isKeepAlive(),
-        iWrapped.getConnection(),iWrapped.getContextConfiguration());
+        iWrapped.getConnection(), iWrapped.getContextConfiguration());
+    this.iWrapped = iWrapped;
   }
 
   public void writeRecords(final Object iRecords, final String iFetchPlan, String iFormat, final String accept,
@@ -222,58 +226,7 @@ public class OHttpGraphResponse extends OHttpResponse {
   @Override
   public void send(final int iCode, final String iReason, final String iContentType, final Object iContent, final String iHeaders)
       throws IOException {
-    if (isSendStarted()) {
-      // AVOID TO SEND RESPONSE TWICE
-      return;
-    }
-    setSendStarted(true);
-
-    if (getCallbackFunction() != null) {
-      setContent(getCallbackFunction() + "(" + iContent + ")");
-      setContentType("text/javascript");
-    } else {
-      if (getContent() == null || getContent().length() == 0) {
-        setContent(iContent != null ? iContent.toString() : null);
-      }
-      if (getContentType() == null || getContentType().length() == 0) {
-        setContentType(iContentType);
-      }
-    }
-
-    final boolean empty = getContent() == null || getContent().length() == 0;
-
-    if (this.getCode() > 0) {
-      writeStatus(this.getCode(), iReason);
-    } else {
-      writeStatus(empty && iCode == 200 ? 204 : iCode, iReason);
-    }
-    writeHeaders(getContentType(), isKeepAlive());
-
-    if (iHeaders != null) {
-      writeLine(iHeaders);
-    }
-
-    if (getSessionId() != null)
-      writeLine("Set-Cookie: " + OHttpUtils.OSESSIONID + "=" + getSessionId() + "; Path=/; HttpOnly");
-
-    byte[] binaryContent = null;
-    if (!empty) {
-      if (getContentEncoding() != null && getContentEncoding().equals(OHttpUtils.CONTENT_ACCEPT_GZIP_ENCODED)) {
-        binaryContent = compress(getContent());
-      } else {
-        binaryContent = getContent().getBytes(utf8);
-      }
-    }
-
-    writeLine(OHttpUtils.HEADER_CONTENT_LENGTH + (empty ? 0 : binaryContent.length));
-
-    writeLine(null);
-
-    if (binaryContent != null) {
-      getOut().write(binaryContent);
-    }
-
-    flush();
+    iWrapped.send(iCode, iReason, iContentType, iContent, iHeaders);
   }
 
   @Override
@@ -361,15 +314,6 @@ public class OHttpGraphResponse extends OHttpResponse {
 
   @Override
   protected void checkConnection() throws IOException {
-    final Socket socket;
-    if (getConnection().getProtocol() == null || getConnection().getProtocol().getChannel() == null)
-      socket = null;
-    else
-      socket = getConnection().getProtocol().getChannel().socket;
-    if (socket == null || socket.isClosed() || socket.isInputShutdown()) {
-      OLogManager.instance()
-          .debug(this, "[OHttpResponse] found and removed pending closed channel %d (%s)", getConnection(), socket);
-      throw new IOException("Connection is closed");
-    }
+    iWrapped.checkConnection();
   }
 }
