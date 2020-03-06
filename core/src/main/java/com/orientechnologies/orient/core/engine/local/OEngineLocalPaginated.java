@@ -20,6 +20,7 @@
 
 package com.orientechnologies.orient.core.engine.local;
 
+import com.kenai.jffi.Platform;
 import com.orientechnologies.common.collection.closabledictionary.OClosableLinkedContainer;
 import com.orientechnologies.common.directmemory.OByteBufferPool;
 import com.orientechnologies.common.directmemory.OPointer;
@@ -36,6 +37,7 @@ import com.orientechnologies.orient.core.storage.cache.OReadCache;
 import com.orientechnologies.orient.core.storage.cache.chm.AsyncReadCache;
 import com.orientechnologies.orient.core.storage.disk.OLocalPaginatedStorage;
 import com.orientechnologies.orient.core.storage.fs.OFile;
+import jnr.posix.POSIXFactory;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -72,6 +74,10 @@ public class OEngineLocalPaginated extends OEngineAbstract {
   public void startup() {
     final String userName = System.getProperty("user.name", "unknown");
     OLogManager.instance().infoNoDb(this, "System is started under an effective user : `%s`", userName);
+    if (Platform.getPlatform().getOS() == Platform.OS.LINUX && POSIXFactory.getPOSIX().getegid() == 0) {
+      OLogManager.instance().warnNoDb(this, "You are running under the \"root\" user privileges that introduces security risks. "
+          + "Please consider to run under a user dedicated to be used to run current server instance.");
+    }
 
     OMemoryAndLocalPaginatedEnginesInitializer.INSTANCE.initialize();
     super.startup();
@@ -121,8 +127,8 @@ public class OEngineLocalPaginated extends OEngineAbstract {
       long doubleWriteLogMaxSegSize, int storageId) {
     try {
 
-      return new OLocalPaginatedStorage(dbName, dbName, getMode(configuration), storageId, readCache, files,
-          maxWalSegSize, doubleWriteLogMaxSegSize);
+      return new OLocalPaginatedStorage(dbName, dbName, getMode(configuration), storageId, readCache, files, maxWalSegSize,
+          doubleWriteLogMaxSegSize);
     } catch (Exception e) {
       final String message =
           "Error on opening database: " + dbName + ". Current location is: " + new java.io.File(".").getAbsolutePath();
