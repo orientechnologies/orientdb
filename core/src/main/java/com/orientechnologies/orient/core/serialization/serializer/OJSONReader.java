@@ -411,7 +411,7 @@ public class OJSONReader {
       ridbagSet.add(rid);
       i++;
     }
-    lastCollection = new StringBuilder();
+    lastCollection.setLength(0);
     for (int j = i; j < split.length; j++) {
       if (j != i) {
         lastCollection.append(",");
