@@ -140,10 +140,10 @@ public class ODropWizardMetricsRegistry implements OMetricsRegistry {
         }
       }
 
-      builder.filter((name, metric) -> !name.matches("(?s)db.*.query.*\""));
+      builder.filter((name, metric) -> !name.matches("(?s)db.*.query.*"));
 
       csvReporter = builder.build(outputDir);
-      csvReporter.start(interval.longValue(), TimeUnit.MILLISECONDS);   
+      csvReporter.start(interval.longValue(), TimeUnit.MILLISECONDS);
     }
     return csvReporter;
 

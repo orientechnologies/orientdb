@@ -123,7 +123,7 @@ public class CSVAggregateReporter {
 
   public void report() {
 
-    SortedMap<String, Histogram> histograms = registry.getHistograms((name, metric) -> name.matches("(?s)db.*.query.*\""));
+    SortedMap<String, Histogram> histograms = registry.getHistograms((name, metric) -> name.matches("(?s)db.*.query.*"));
 
     final long timestamp = TimeUnit.MILLISECONDS.toSeconds(clock.getTime());
 
