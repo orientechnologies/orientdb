@@ -128,7 +128,7 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
   private Set<String> indexesToRebuild = new HashSet<>();
   private Map<String, String> convertedClassNames = new HashMap<>();
 
-  private int maxRidbagStringSizeBeforeLazyImport = 500_000_000;
+  private int maxRidbagStringSizeBeforeLazyImport = 100_000_000;
 
   public ODatabaseImport(final ODatabaseDocumentInternal database, final String iFileName, final OCommandOutputListener iListener)
           throws IOException {
