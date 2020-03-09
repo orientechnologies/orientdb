@@ -71,8 +71,7 @@ public class AuditingRootLogTest extends EEBaseServerHttpTest {
   }
 
   @Test(expected = OSecurityAccessException.class)
-  public void loginGuest() throws Exception {
-    HttpEESecurityTest.java
+  public void loginGuest() throws Exception {     
     String security = OIOUtils
         .readStreamAsString(Thread.currentThread().getContextClassLoader().getResourceAsStream("security.json"));
     server.getSecurity().reload(new ODocument().fromJSON(security, "noMap"));
