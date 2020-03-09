@@ -34,7 +34,7 @@ import com.orientechnologies.orient.server.distributed.ODistributedServerManager
 import com.orientechnologies.orient.server.security.OAuditingService;
 
 import java.io.*;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
@@ -43,12 +43,16 @@ import java.util.concurrent.ConcurrentHashMap;
 public class ODefaultAuditing implements OAuditingService, ODatabaseLifecycleListener, ODistributedLifecycleListener {
   public static final String AUDITING_LOG_CLASSNAME = "OAuditingLog";
 
-  private boolean enabled = true;
+  private boolean enabled             = true;
+  private Integer globalRetentionDays = -1;
   private OServer server;
 
+  private Timer         timer = new Timer();
   private OAuditingHook globalHook;
 
   private Map<String, OAuditingHook> hooks;
+
+  private TimerTask retainTask;
 
   protected static final String DEFAULT_FILE_AUDITING_DB_CONFIG = "default-auditing-config.json";
   protected static final String FILE_AUDITING_DB_CONFIG         = "auditing-config.json";
@@ -318,7 +322,7 @@ public class ODefaultAuditing implements OAuditingService, ODatabaseLifecycleLis
 
   //////
   // OAuditingService
-  public void changeConfig(final String iDatabaseName, final ODocument cfg) throws IOException {
+  public void changeConfig(final OSecurityUser user, final String iDatabaseName, final ODocument cfg) throws IOException {
 
     // This should never happen, but just in case...
     // Don't audit system database events.
@@ -328,6 +332,9 @@ public class ODefaultAuditing implements OAuditingService, ODatabaseLifecycleLis
     hooks.put(iDatabaseName, new OAuditingHook(cfg, server));
 
     updateConfigOnDisk(iDatabaseName, cfg);
+
+    log(OAuditingOperation.CHANGEDCONFIG, user,
+        String.format("The auditing configuration for the database '%s' has been changed", iDatabaseName));
   }
 
   public ODocument getConfig(final String iDatabaseName) {
@@ -415,6 +422,17 @@ public class ODefaultAuditing implements OAuditingService, ODatabaseLifecycleLis
 
     globalHook = new OAuditingHook(server);
 
+    retainTask = new TimerTask() {
+      public void run() {
+        retainLogs();
+      }
+    };
+
+    long delay = 1000L;
+    long period = 1000L * 60L * 60L * 24L;
+
+    timer.scheduleAtFixedRate(retainTask, delay, period);
+
     Orient.instance().addDbLifecycleListener(this);
 
     if (server.getDistributedManager() != null) {
@@ -426,12 +444,34 @@ public class ODefaultAuditing implements OAuditingService, ODatabaseLifecycleLis
     }
   }
 
+  public void retainLogs() {
+
+    if (globalRetentionDays > 0) {
+      Calendar c = Calendar.getInstance();
+      c.setTime(new Date());
+      c.add(Calendar.DATE, (-1) * globalRetentionDays);
+      retainLogs(c.getTime());
+    }
+  }
+
+  public void retainLogs(Date date) {
+    long time = date.getTime();
+    server.getSystemDatabase().executeWithDB((db -> {
+      db.command("delete from OAuditingLog where date < ?", time).close();
+      return null;
+    }));
+  }
+
   public void config(final OServer oServer, final OServerConfigurationManager serverCfg, final ODocument jsonConfig) {
     server = oServer;
 
     try {
       if (jsonConfig.containsField("enabled")) {
         enabled = jsonConfig.field("enabled");
+      }
+
+      if (jsonConfig.containsField("retentionDays")) {
+        globalRetentionDays = jsonConfig.field("retentionDays");
       }
 
       if (jsonConfig.containsField("distributed")) {
@@ -464,6 +504,14 @@ public class ODefaultAuditing implements OAuditingService, ODatabaseLifecycleLis
     if (globalHook != null) {
       globalHook.shutdown(false);
       globalHook = null;
+    }
+
+    if (retainTask != null) {
+      retainTask.cancel();
+    }
+
+    if (timer != null) {
+      timer.cancel();
     }
   }
 
