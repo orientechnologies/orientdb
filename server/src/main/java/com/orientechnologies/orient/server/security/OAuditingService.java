@@ -32,7 +32,7 @@ import java.io.IOException;
  * @author S. Colin Leister
  */
 public interface OAuditingService extends OSecurityComponent {
-  void changeConfig(final String databaseName, final ODocument cfg) throws IOException;
+  void changeConfig(OSecurityUser user, final String databaseName, final ODocument cfg) throws IOException;
 
   ODocument getConfig(final String databaseName);
 
