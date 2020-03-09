@@ -71,7 +71,7 @@ public class AuditingRootLogTest extends EEBaseServerHttpTest {
   }
 
   @Test(expected = OSecurityAccessException.class)
-  public void loginGuest() throws Exception {     
+  public void loginGuest() throws Exception {
     String security = OIOUtils
         .readStreamAsString(Thread.currentThread().getContextClassLoader().getResourceAsStream("security.json"));
     server.getSecurity().reload(new ODocument().fromJSON(security, "noMap"));
@@ -146,6 +146,46 @@ public class AuditingRootLogTest extends EEBaseServerHttpTest {
     Assert.assertEquals("root", result.getProperty("user"));
     Assert.assertEquals("Server", result.getProperty("userType"));
     Assert.assertEquals("The security configuration file has been reloaded", result.getProperty("note"));
+
+  }
+
+  @Test
+  public void postSecurityAndAuditingConfig() throws IOException {
+
+    server.getSystemDatabase().executeWithDB((db) -> {
+      db.command("delete from OAuditingLog");
+      return null;
+    });
+
+    String security = OIOUtils
+        .readStreamAsString(Thread.currentThread().getContextClassLoader().getResourceAsStream("security.json"));
+
+    server.getSecurity().reload(new ODocument().fromJSON(security, "noMap"));
+
+    String auditing = OIOUtils
+        .readStreamAsString(Thread.currentThread().getContextClassLoader().getResourceAsStream("auditing-config.json"));
+
+    ODocument config = new ODocument().fromJSON(auditing, "noMap");
+
+    HttpResponse response = post("/auditing/" + name.getMethodName() + "/config").payload(config.toJSON(), CONTENT.JSON)
+        .getResponse();
+
+    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+
+    List<OResult> results = server.getSystemDatabase().executeWithDB((db) -> {
+      try (OResultSet resultSet = db.query("select from OAuditingLog where operation = 7")) {
+        return resultSet.stream().collect(Collectors.toList());
+      }
+    });
+
+    Assert.assertEquals(1, results.size());
+
+    OResult result = results.get(0);
+
+    Assert.assertEquals("root", result.getProperty("user"));
+    Assert.assertEquals("Server", result.getProperty("userType"));
+    Assert.assertEquals(String.format("The auditing configuration for the database '%s' has been changed", name.getMethodName()),
+        result.getProperty("note"));
 
   }
 

@@ -172,7 +172,7 @@ public class OServerCommandAuditing extends OServerCommandDistributedScope {
       dbDoc = getProfiledDatabaseInstance(iRequest);
 
       if (server.getSecurity().getAuditing() != null)
-        server.getSecurity().getAuditing().changeConfig(db, config);
+        server.getSecurity().getAuditing().changeConfig(dbDoc.getUser(), db, config);
 
       iResponse.send(OHttpUtils.STATUS_OK_CODE, "OK", OHttpUtils.CONTENT_JSON, config.toJSON("prettyPrint"), null);
     } finally {
