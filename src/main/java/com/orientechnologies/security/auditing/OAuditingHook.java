@@ -321,7 +321,7 @@ public class OAuditingHook extends ORecordHookAbstract implements ODatabaseListe
       if (clazz.isOuser() && Arrays.asList(doc.getDirtyFields()).contains("password")) {
         String name = doc.getProperty("name");
         String message = String.format("The password for user '%s' has been changed", name);
-        log(OAuditingOperation.CHANGED_PWD, db.getName(), db.getUser().getName(), message);
+        log(OAuditingOperation.CHANGED_PWD, db.getName(), db.getUser(), message);
       }
     }
     if (!onGlobalUpdate)
@@ -351,13 +351,7 @@ public class OAuditingHook extends ORecordHookAbstract implements ODatabaseListe
       if (command.matches(cfg.regex)) {
         final ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.instance().get();
 
-        String username = null;
-
-        final OSecurityUser user = db.getUser();
-        if (user != null)
-          username = user.getName();
-
-        final ODocument doc = createLogDocument(OAuditingOperation.COMMAND, db.getName(), username,
+        final ODocument doc = createLogDocument(OAuditingOperation.COMMAND, db.getName(), db.getUser(),
             formatCommandNote(command, cfg.message));
         auditingQueue.offer(doc);
       }
@@ -433,13 +427,7 @@ public class OAuditingHook extends ORecordHookAbstract implements ODatabaseListe
 
     final ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.instance().get();
 
-    String username = null;
-
-    final OSecurityUser user = db.getUser();
-    if (user != null)
-      username = user.getName();
-
-    final ODocument doc = createLogDocument(operation, db.getName(), username, formatNote(iRecord, note));
+    final ODocument doc = createLogDocument(operation, db.getName(), db.getUser(), formatNote(iRecord, note));
     doc.field("record", iRecord.getIdentity());
     if (changes != null)
       doc.field("changes", changes, OType.EMBEDDED);
@@ -570,13 +558,9 @@ public class OAuditingHook extends ORecordHookAbstract implements ODatabaseListe
   protected void logClass(final OAuditingOperation operation, final String note) {
     final ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.instance().get();
 
-    String username = null;
-
     final OSecurityUser user = db.getUser();
-    if (user != null)
-      username = user.getName();
 
-    final ODocument doc = createLogDocument(operation, db.getName(), username, note);
+    final ODocument doc = createLogDocument(operation, db.getName(), user, note);
 
     auditingQueue.offer(doc);
   }
@@ -595,12 +579,12 @@ public class OAuditingHook extends ORecordHookAbstract implements ODatabaseListe
     logClass(OAuditingOperation.DROPPEDCLASS, iClass);
   }
 
-  public void log(final OAuditingOperation operation, final String dbName, final String username, final String message) {
+  public void log(final OAuditingOperation operation, final String dbName, OSecurityUser user, final String message) {
     if (auditingQueue != null)
-      auditingQueue.offer(createLogDocument(operation, dbName, username, message));
+      auditingQueue.offer(createLogDocument(operation, dbName, user, message));
   }
 
-  private ODocument createLogDocument(final OAuditingOperation operation, final String dbName, final String username,
+  private ODocument createLogDocument(final OAuditingOperation operation, final String dbName, OSecurityUser user,
       final String message) {
     ODocument doc = null;
 
@@ -608,8 +592,10 @@ public class OAuditingHook extends ORecordHookAbstract implements ODatabaseListe
     doc.field("date", System.currentTimeMillis());
     doc.field("operation", operation.getByte());
 
-    if (username != null)
-      doc.field("user", username);
+    if (user != null) {
+      doc.field("user", user.getName());
+      doc.field("userType", user.getUserType());
+    }
 
     if (message != null)
       doc.field("note", message);

@@ -23,6 +23,7 @@ import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OType;
+import com.orientechnologies.orient.core.metadata.security.OSecurityUser;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.security.OAuditingOperation;
 import com.orientechnologies.orient.server.OServer;
@@ -343,31 +344,31 @@ public class ODefaultAuditing implements OAuditingService, ODatabaseLifecycleLis
   /**
    * Primarily used for global logging events (e.g., NODEJOINED, NODELEFT).
    */
-  public void log(final OAuditingOperation operation, final String username, final String message) {
-    log(operation, null, username, message);
+  public void log(final OAuditingOperation operation, OSecurityUser user, final String message) {
+    log(operation, null, user, message);
   }
 
   /**
    * Primarily used for global logging events (e.g., NODEJOINED, NODELEFT).
    */
-  public void log(final OAuditingOperation operation, final String dbName, final String username, final String message) {
+  public void log(final OAuditingOperation operation, final String dbName, OSecurityUser user, final String message) {
     // If dbName is null, then we submit the log message to the global auditing hook.
     // Otherwise, we submit it to the hook associated with dbName.
     if (dbName != null) {
       final OAuditingHook oAuditingHook = hooks.get(dbName);
 
       if (oAuditingHook != null) {
-        oAuditingHook.log(operation, dbName, username, message);
+        oAuditingHook.log(operation, dbName, user, message);
       } else { // Use the global hook.
-        globalHook.log(operation, dbName, username, message);
+        globalHook.log(operation, dbName, user, message);
       }
     } else { // Use the global hook.
       if (globalHook == null)
         OLogManager.instance()
             .error(this, "Default Auditing is disabled, cannot log: op=%s db='%s' user=%s message='%s'", null, operation, dbName,
-                username, message);
+                user.getName(), message);
       else
-        globalHook.log(operation, dbName, username, message);
+        globalHook.log(operation, dbName, user, message);
     }
   }
 
