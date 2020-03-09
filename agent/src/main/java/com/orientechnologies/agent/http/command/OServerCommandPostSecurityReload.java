@@ -1,18 +1,18 @@
 /*
  * Copyright 2010-2016 OrientDB LTD
  * All Rights Reserved. Commercial License.
- * 
+ *
  * NOTICE:  All information contained herein is, and remains the property of
  * Orient Technologies LTD and its suppliers, if any.  The intellectual and
  * technical concepts contained herein are proprietary to
  * Orient Technologies LTD and its suppliers and may be covered by United
  * Kingdom and Foreign Patents, patents in process, and are protected by trade
  * secret or copyright law.
- * 
+ *
  * Dissemination of this information or reproduction of this material
  * is strictly forbidden unless prior written permission is obtained
  * from Orient Technologies LTD.
- * 
+ *
  * For more information: http://www.orientdb.com
  */
 package com.orientechnologies.agent.http.command;
@@ -20,6 +20,7 @@ package com.orientechnologies.agent.http.command;
 import com.orientechnologies.agent.EnterprisePermissions;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.parser.OSystemVariableResolver;
+import com.orientechnologies.orient.core.metadata.security.OSystemUser;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpRequest;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpResponse;
@@ -81,7 +82,8 @@ public class OServerCommandPostSecurityReload extends OServerCommandAuthenticate
 
           serverSecurity.reloadComponent(compName, jsonDoc);
         } else {
-          serverSecurity.reload(jsonDoc);
+          OSystemUser user = new OSystemUser(iRequest.getUser(), null, "Server");
+          serverSecurity.reload(user, jsonDoc);
         }
       } else {
         writeError(iResponse, "OServerCommandPostSecurityReload.execute()", "/security/reload keyword is missing");

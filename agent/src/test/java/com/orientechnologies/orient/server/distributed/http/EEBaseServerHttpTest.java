@@ -50,7 +50,7 @@ public abstract class EEBaseServerHttpTest {
 
   public void init() throws Exception {
 
-    server = OServer.startFromClasspathConfig("orientdb-server-config.xml");
+    server = OServer.startFromClasspathConfig("orientdb-server-simple-config.xml");
 
     remote = new OrientDB("remote:localhost", "root", "root", OrientDBConfig.defaultConfig());
 
@@ -157,7 +157,7 @@ public abstract class EEBaseServerHttpTest {
     return this;
   }
 
-  protected HttpResponse getResponse() {
+  public HttpResponse getResponse() {
     if (response == null) {
       exec();
     }
