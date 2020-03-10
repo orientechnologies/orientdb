@@ -65,6 +65,8 @@ public class OServerCommandPostSecurityReload extends OServerCommandAuthenticate
 
     try {
       // Convert the JSON content to an ODocument to make parsing it easier.
+
+      OSystemUser user = new OSystemUser(iRequest.getUser(), null, "Server");
       final ODocument jsonParams = new ODocument().fromJSON(iRequest.getContent(), "noMap");
 
       // "configFile" and "config"/"module" are mutually exclusive properties.
@@ -73,16 +75,15 @@ public class OServerCommandPostSecurityReload extends OServerCommandAuthenticate
 
         OLogManager.instance().info(this, "OServerCommandPostSecurityReload.execute() configName = %s", configName);
 
-        serverSecurity.reload(configName);
+        serverSecurity.reload(user, configName);
       } else if (jsonParams.containsField("config")) {
         final ODocument jsonDoc = jsonParams.field("config");
 
         if (jsonParams.containsField("module")) {
           final String compName = jsonParams.field("module");
 
-          serverSecurity.reloadComponent(compName, jsonDoc);
+          serverSecurity.reloadComponent(user, compName, jsonDoc);
         } else {
-          OSystemUser user = new OSystemUser(iRequest.getUser(), null, "Server");
           serverSecurity.reload(user, jsonDoc);
         }
       } else {
