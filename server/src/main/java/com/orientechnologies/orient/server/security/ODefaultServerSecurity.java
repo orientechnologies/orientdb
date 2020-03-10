@@ -516,7 +516,12 @@ public class ODefaultServerSecurity implements OSecurityFactory, OServerLifecycl
 
   // OSecuritySystem
   public void reload(final String cfgPath) {
-    reload(loadConfig(cfgPath));
+    reload(null, cfgPath);
+  }
+
+  @Override
+  public void reload(OSecurityUser user, String cfgPath) {
+    reload(user, loadConfig(cfgPath));
   }
 
   // OSecuritySystem
@@ -540,7 +545,7 @@ public class ODefaultServerSecurity implements OSecurityFactory, OServerLifecycl
     }
   }
 
-  public void reloadComponent(final String name, final ODocument jsonConfig) {
+  public void reloadComponent(OSecurityUser user, final String name, final ODocument jsonConfig) {
     if (name == null || name.isEmpty())
       throw new OSecuritySystemException("ODefaultServerSecurity.reloadComponent() name is null or empty");
     if (jsonConfig == null)
@@ -566,7 +571,7 @@ public class ODefaultServerSecurity implements OSecurityFactory, OServerLifecycl
     }
     setSection(name, jsonConfig);
 
-    log(OAuditingOperation.RELOADEDSECURITY, null, null, String.format("The %s security component has been reloaded", name));
+    log(OAuditingOperation.RELOADEDSECURITY, null, user, String.format("The %s security component has been reloaded", name));
   }
 
   /**

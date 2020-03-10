@@ -89,7 +89,11 @@ public interface OSecuritySystem {
     reload(jsonConfig);
   }
 
-  void reloadComponent(final String name, final ODocument jsonConfig);
+  default void reload(OSecurityUser user, final String jsonConfig) {
+    reload(jsonConfig);
+  }
+
+  void reloadComponent(OSecurityUser user, final String name, final ODocument jsonConfig);
 
   /**
    * Called each time one of the security classes (OUser, ORole, OServerRole) is modified.
