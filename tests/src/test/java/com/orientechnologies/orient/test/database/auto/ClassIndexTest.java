@@ -1223,25 +1223,6 @@ public class ClassIndexTest extends DocumentDBBaseTest {
     }
   }
 
-  @Test(dependsOnMethods = "testAreIndexedDoesNotContainProperty")
-  public void testCreateFullTextIndexTwoProperties() {
-    try {
-      oClass.createIndex("ClassIndexTestFulltextIndex", OClass.INDEX_TYPE.FULLTEXT, "fSix", "fSeven");
-      Assert.fail();
-    } catch (OIndexException e) {
-      Assert.assertTrue(true);
-    }
-  }
-
-  @Test(dependsOnMethods = "testAreIndexedDoesNotContainProperty")
-  public void testCreateFullTextIndexOneProperty() {
-    final OIndex result = oClass.createIndex("ClassIndexTestFulltextIndex", OClass.INDEX_TYPE.FULLTEXT, "fSix");
-
-    assertEquals(result.getName(), "ClassIndexTestFulltextIndex");
-    assertEquals(oClass.getClassIndex("ClassIndexTestFulltextIndex").getName(), result.getName());
-    assertEquals(result.getType(), OClass.INDEX_TYPE.FULLTEXT.toString());
-  }
-
   @Test(dependsOnMethods = "testGetInvolvedIndexesOnePropertyArrayParams")
   public void testCreateDictionaryIndex() {
     final OIndex result = oClass.createIndex("ClassIndexTestDictionaryIndex", OClass.INDEX_TYPE.DICTIONARY, "fOne");

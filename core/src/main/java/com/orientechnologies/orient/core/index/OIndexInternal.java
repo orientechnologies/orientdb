@@ -23,6 +23,7 @@ import com.orientechnologies.common.util.ORawPair;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.exception.OInvalidIndexEngineIdException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OType;
@@ -32,7 +33,9 @@ import com.orientechnologies.orient.core.metadata.security.OSecurityResourceProp
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
+import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.tx.OTransactionIndexChanges;
+import com.orientechnologies.orient.core.tx.OTransactionIndexChangesPerKey;
 
 import java.util.Collection;
 import java.util.HashSet;
@@ -316,4 +319,13 @@ public interface OIndexInternal extends OIndex {
     return items;
   }
 
+  boolean isNativeTxSupported();
+
+  Iterable<OTransactionIndexChangesPerKey.OTransactionIndexEntry> interpretTxKeyChanges(OTransactionIndexChangesPerKey changes);
+
+  void doPut(OAbstractPaginatedStorage storage, Object key, ORID rid) throws OInvalidIndexEngineIdException;
+
+  boolean doRemove(OAbstractPaginatedStorage storage, Object key, ORID rid) throws OInvalidIndexEngineIdException;
+
+  boolean doRemove(OAbstractPaginatedStorage storage, Object key) throws OInvalidIndexEngineIdException;
 }

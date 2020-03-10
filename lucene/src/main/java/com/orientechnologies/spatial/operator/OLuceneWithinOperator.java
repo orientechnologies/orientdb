@@ -17,7 +17,6 @@ package com.orientechnologies.spatial.operator;
 import com.orientechnologies.common.util.ORawPair;
 import com.orientechnologies.lucene.operator.OLuceneOperatorUtil;
 import com.orientechnologies.orient.core.command.OCommandContext;
-import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.index.OIndex;
@@ -36,7 +35,6 @@ import org.locationtech.spatial4j.context.SpatialContext;
 import org.locationtech.spatial4j.shape.Shape;
 import org.locationtech.spatial4j.shape.SpatialRelation;
 
-import java.util.Collection;
 import java.util.List;
 import java.util.stream.Stream;
 
@@ -46,12 +44,6 @@ public class OLuceneWithinOperator extends OQueryTargetOperator {
 
   public OLuceneWithinOperator() {
     super("WITHIN", 5, false);
-  }
-
-  @Override
-  public Collection<OIdentifiable> filterRecords(ODatabase<?> iRecord, List<String> iTargetClasses, OSQLFilterCondition iCondition,
-      Object iLeft, Object iRight) {
-    return null;
   }
 
   @Override

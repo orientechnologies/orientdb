@@ -55,7 +55,6 @@ public class ODefaultIndexFactory implements OIndexFactory {
     final Set<String> types = new HashSet<>();
     types.add(OClass.INDEX_TYPE.UNIQUE.toString());
     types.add(OClass.INDEX_TYPE.NOTUNIQUE.toString());
-    types.add(OClass.INDEX_TYPE.FULLTEXT.toString());
     types.add(OClass.INDEX_TYPE.DICTIONARY.toString());
     TYPES = Collections.unmodifiableSet(types);
   }
@@ -111,8 +110,8 @@ public class ODefaultIndexFactory implements OIndexFactory {
         (OAbstractPaginatedStorage) storage.getUnderlying(), version, algorithm);
   }
 
-  private static OIndexInternal createSBTreeIndex(String name, String indexType, String valueContainerAlgorithm,
-      ODocument metadata, OAbstractPaginatedStorage storage, int version, String algorithm) {
+  private static OIndexInternal createSBTreeIndex(String name, String indexType, String valueContainerAlgorithm, ODocument metadata,
+      OAbstractPaginatedStorage storage, int version, String algorithm) {
 
     final int binaryFormatVersion = storage.getConfiguration().getBinaryFormatVersion();
 
@@ -120,9 +119,6 @@ public class ODefaultIndexFactory implements OIndexFactory {
       return new OIndexUnique(name, indexType, algorithm, version, storage, valueContainerAlgorithm, metadata, binaryFormatVersion);
     } else if (OClass.INDEX_TYPE.NOTUNIQUE.toString().equals(indexType)) {
       return new OIndexNotUnique(name, indexType, algorithm, version, storage, valueContainerAlgorithm, metadata,
-          binaryFormatVersion);
-    } else if (OClass.INDEX_TYPE.FULLTEXT.toString().equals(indexType)) {
-      return new OIndexFullText(name, indexType, algorithm, version, storage, valueContainerAlgorithm, metadata,
           binaryFormatVersion);
     } else if (OClass.INDEX_TYPE.DICTIONARY.toString().equals(indexType)) {
       return new OIndexDictionary(name, indexType, algorithm, version, storage, valueContainerAlgorithm, metadata,

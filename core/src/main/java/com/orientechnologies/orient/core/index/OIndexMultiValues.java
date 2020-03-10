@@ -97,42 +97,58 @@ public abstract class OIndexMultiValues extends OIndexAbstract {
     }
   }
 
-  public OIndexMultiValues put(Object key, final OIdentifiable value) {
+  public OIndexMultiValues put(Object key, final OIdentifiable singleValue) {
     key = getCollatingValue(key);
 
     acquireSharedLock();
 
     try {
-      if (!value.getIdentity().isValid()) {
-        (value.getRecord()).save();
+      if (!singleValue.getIdentity().isValid()) {
+        (singleValue.getRecord()).save();
       }
 
-      final ORID identity = value.getIdentity();
+      final ORID identity = singleValue.getIdentity();
 
-      if (apiVersion == 0) {
-        doPutV0(key, identity);
-      } else if (apiVersion == 1) {
-        doPutV1(key, identity);
-      } else {
-        throw new IllegalStateException("Invalid API version, " + apiVersion);
+      while (true) {
+        try {
+          doPut(storage, key, identity);
+          return this;
+        } catch (OInvalidIndexEngineIdException e) {
+          doReloadIndexEngine();
+        }
       }
-
-      return this;
     } finally {
       releaseSharedLock();
     }
   }
 
-  private void doPutV0(Object key, ORID identity) {
+  @Override
+  public void doPut(OAbstractPaginatedStorage storage, Object key, ORID rid) throws OInvalidIndexEngineIdException {
+    if (apiVersion == 0) {
+      doPutV0(indexId, storage, binaryFormatVersion, valueContainerAlgorithm, getName(), key, rid);
+    } else if (apiVersion == 1) {
+      doPutV1(storage, indexId, key, rid);
+    } else {
+      throw new IllegalStateException("Invalid API version, " + apiVersion);
+    }
+  }
+
+  @Override
+  public boolean isNativeTxSupported() {
+    return true;
+  }
+
+  private static void doPutV0(final int indexId, final OAbstractPaginatedStorage storage, final int binaryFormatVersion,
+      String valueContainerAlgorithm, String indexName, Object key, ORID identity) throws OInvalidIndexEngineIdException {
     final OIndexKeyUpdater<Object> creator = (oldValue, bonsayFileId) -> {
       @SuppressWarnings("unchecked")
       Set<OIdentifiable> toUpdate = (Set<OIdentifiable>) oldValue;
       if (toUpdate == null) {
         if (ODefaultIndexFactory.SBTREE_BONSAI_VALUE_CONTAINER.equals(valueContainerAlgorithm)) {
           if (binaryFormatVersion >= 13) {
-            toUpdate = new OMixedIndexRIDContainer(getName(), bonsayFileId);
+            toUpdate = new OMixedIndexRIDContainer(indexName, bonsayFileId);
           } else {
-            toUpdate = new OIndexRIDContainer(getName(), true, bonsayFileId);
+            toUpdate = new OIndexRIDContainer(indexName, true, bonsayFileId);
           }
         } else {
           throw new IllegalStateException("MVRBTree is not supported any more");
@@ -169,58 +185,50 @@ public abstract class OIndexMultiValues extends OIndexAbstract {
 
     };
 
-    while (true) {
-      try {
-        storage.updateIndexEntry(indexId, key, creator);
-        break;
-      } catch (OInvalidIndexEngineIdException ignore) {
-        doReloadIndexEngine();
-      }
-    }
+    storage.updateIndexEntry(indexId, key, creator);
   }
 
-  private void doPutV1(Object key, ORID identity) {
-    while (true) {
-      try {
-        storage.putRidIndexEntry(indexId, key, identity);
-        break;
-      } catch (OInvalidIndexEngineIdException ignore) {
-        doReloadIndexEngine();
-      }
-    }
+  private static void doPutV1(OAbstractPaginatedStorage storage, int indexId, Object key, ORID identity)
+      throws OInvalidIndexEngineIdException {
+    storage.putRidIndexEntry(indexId, key, identity);
   }
 
   @Override
-  public boolean remove(Object key, final OIdentifiable rid) {
+  public boolean remove(Object key, final OIdentifiable value) {
     key = getCollatingValue(key);
 
     acquireSharedLock();
     try {
-      if (apiVersion == 0) {
-        return doRemoveV0(key, rid);
+      while (true) {
+        try {
+          return doRemove(storage, key, value.getIdentity());
+        } catch (OInvalidIndexEngineIdException e) {
+          doReloadIndexEngine();
+        }
       }
-
-      if (apiVersion == 1) {
-        return doRemoveV1(key, rid);
-      }
-
-      throw new IllegalStateException("Invalid API version, " + apiVersion);
     } finally {
       releaseSharedLock();
     }
   }
 
-  private boolean doRemoveV0(Object key, OIdentifiable value) {
-    Set<OIdentifiable> values;
-    while (true) {
-      try {
-        //noinspection unchecked
-        values = (Set<OIdentifiable>) storage.getIndexValue(indexId, key);
-        break;
-      } catch (OInvalidIndexEngineIdException ignore) {
-        doReloadIndexEngine();
-      }
+  @Override
+  public boolean doRemove(OAbstractPaginatedStorage storage, Object key, ORID rid) throws OInvalidIndexEngineIdException {
+    if (apiVersion == 0) {
+      return doRemoveV0(indexId, storage, key, rid);
     }
+
+    if (apiVersion == 1) {
+      return doRemoveV1(indexId, storage, key, rid);
+    }
+
+    throw new IllegalStateException("Invalid API version, " + apiVersion);
+  }
+
+  private static boolean doRemoveV0(int indexId, OAbstractPaginatedStorage storage, Object key, OIdentifiable value)
+      throws OInvalidIndexEngineIdException {
+    Set<OIdentifiable> values;
+    //noinspection unchecked
+    values = (Set<OIdentifiable>) storage.getIndexValue(indexId, key);
 
     if (values == null) {
       return false;
@@ -230,27 +238,14 @@ public abstract class OIndexMultiValues extends OIndexAbstract {
 
     final OIndexKeyUpdater<Object> creator = new EntityRemover(value, removed);
 
-    while (true) {
-      try {
-        storage.updateIndexEntry(indexId, key, creator);
-        break;
-      } catch (OInvalidIndexEngineIdException ignore) {
-        doReloadIndexEngine();
-      }
-    }
+    storage.updateIndexEntry(indexId, key, creator);
 
     return removed.getValue();
   }
 
-  private boolean doRemoveV1(Object key, OIdentifiable value) {
-    while (true) {
-      try {
-        return storage.removeRidIndexEntry(indexId, key, value.getIdentity());
-      } catch (OInvalidIndexEngineIdException ignore) {
-        doReloadIndexEngine();
-      }
-    }
-
+  private static boolean doRemoveV1(int indexId, OAbstractPaginatedStorage storage, Object key, OIdentifiable value)
+      throws OInvalidIndexEngineIdException {
+    return storage.removeRidIndexEntry(indexId, key, value.getIdentity());
   }
 
   public OIndexMultiValues create(final String name, final OIndexDefinition indexDefinition, final String clusterIndexName,

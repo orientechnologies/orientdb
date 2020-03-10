@@ -23,10 +23,13 @@ import com.orientechnologies.common.listener.OProgressListener;
 import com.orientechnologies.common.util.ORawPair;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.exception.OInvalidIndexEngineIdException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.tx.OTransactionIndexChanges;
+import com.orientechnologies.orient.core.tx.OTransactionIndexChangesPerKey;
 
 import java.util.Collection;
 import java.util.Set;
@@ -409,5 +412,31 @@ public class OIndexAbstractDelegate implements OIndexInternal {
   @Override
   public Stream<ORawPair<Object, ORID>> streamEntriesMinor(Object toKey, boolean toInclusive, boolean ascOrder) {
     return delegate.streamEntriesMinor(toKey, toInclusive, ascOrder);
+  }
+
+  @Override
+  public boolean isNativeTxSupported() {
+    return delegate.isNativeTxSupported();
+  }
+
+  @Override
+  public Iterable<OTransactionIndexChangesPerKey.OTransactionIndexEntry> interpretTxKeyChanges(
+      OTransactionIndexChangesPerKey changes) {
+    return delegate.interpretTxKeyChanges(changes);
+  }
+
+  @Override
+  public void doPut(OAbstractPaginatedStorage storage, Object key, ORID rid) throws OInvalidIndexEngineIdException {
+    delegate.doPut(storage, key, rid);
+  }
+
+  @Override
+  public boolean doRemove(OAbstractPaginatedStorage storage, Object key, ORID rid) throws OInvalidIndexEngineIdException {
+    return delegate.doRemove(storage, key, rid);
+  }
+
+  @Override
+  public boolean doRemove(OAbstractPaginatedStorage storage, Object key) throws OInvalidIndexEngineIdException {
+    return delegate.doRemove(storage, key);
   }
 }

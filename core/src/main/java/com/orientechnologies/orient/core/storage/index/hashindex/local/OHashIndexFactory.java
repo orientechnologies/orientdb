@@ -48,7 +48,6 @@ public final class OHashIndexFactory implements OIndexFactory {
     final Set<String> types = new HashSet<>(4);
     types.add(OClass.INDEX_TYPE.UNIQUE_HASH_INDEX.toString());
     types.add(OClass.INDEX_TYPE.NOTUNIQUE_HASH_INDEX.toString());
-    types.add(OClass.INDEX_TYPE.FULLTEXT_HASH_INDEX.toString());
     types.add(OClass.INDEX_TYPE.DICTIONARY_HASH_INDEX.toString());
     TYPES = Collections.unmodifiableSet(types);
   }
@@ -77,9 +76,8 @@ public final class OHashIndexFactory implements OIndexFactory {
     return ALGORITHMS;
   }
 
-  public final OIndexInternal createIndex(final String name, final OStorage storage, final String indexType,
-      final String algorithm, String valueContainerAlgorithm, final ODocument metadata, int version)
-      throws OConfigurationException {
+  public final OIndexInternal createIndex(final String name, final OStorage storage, final String indexType, final String algorithm,
+      String valueContainerAlgorithm, final ODocument metadata, int version) throws OConfigurationException {
 
     if (version < 0) {
       version = getLastVersion(algorithm);
@@ -95,9 +93,6 @@ public final class OHashIndexFactory implements OIndexFactory {
           valueContainerAlgorithm, metadata, binaryFormatVersion);
     else if (OClass.INDEX_TYPE.NOTUNIQUE_HASH_INDEX.toString().equals(indexType))
       return new OIndexNotUnique(name, indexType, algorithm, version, (OAbstractPaginatedStorage) storage.getUnderlying(),
-          valueContainerAlgorithm, metadata, binaryFormatVersion);
-    else if (OClass.INDEX_TYPE.FULLTEXT_HASH_INDEX.toString().equals(indexType))
-      return new OIndexFullText(name, indexType, algorithm, version, (OAbstractPaginatedStorage) storage.getUnderlying(),
           valueContainerAlgorithm, metadata, binaryFormatVersion);
     else if (OClass.INDEX_TYPE.DICTIONARY_HASH_INDEX.toString().equals(indexType))
       return new OIndexDictionary(name, indexType, algorithm, version, (OAbstractPaginatedStorage) storage.getUnderlying(),

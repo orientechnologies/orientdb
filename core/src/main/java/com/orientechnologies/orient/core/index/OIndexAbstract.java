@@ -530,6 +530,11 @@ public abstract class OIndexAbstract implements OIndexInternal {
     return documentIndexed;
   }
 
+  @Override
+  public boolean doRemove(OAbstractPaginatedStorage storage, Object key, ORID rid) throws OInvalidIndexEngineIdException {
+    return doRemove(storage, key);
+  }
+
   public boolean remove(Object key, final OIdentifiable rid) {
     return remove(key);
   }
@@ -541,13 +546,18 @@ public abstract class OIndexAbstract implements OIndexInternal {
     try {
       while (true)
         try {
-          return storage.removeKeyFromIndex(indexId, key);
+          return doRemove(storage, key);
         } catch (OInvalidIndexEngineIdException ignore) {
           doReloadIndexEngine();
         }
     } finally {
       releaseSharedLock();
     }
+  }
+
+  @Override
+  public boolean doRemove(OAbstractPaginatedStorage storage, Object key) throws OInvalidIndexEngineIdException {
+    return storage.removeKeyFromIndex(indexId, key);
   }
 
   /**
@@ -731,7 +741,7 @@ public abstract class OIndexAbstract implements OIndexInternal {
    *
    * @return the interpreted index key changes.
    */
-  protected Iterable<OTransactionIndexChangesPerKey.OTransactionIndexEntry> interpretTxKeyChanges(
+  public Iterable<OTransactionIndexChangesPerKey.OTransactionIndexEntry> interpretTxKeyChanges(
       OTransactionIndexChangesPerKey changes) {
     return changes.entries;
   }

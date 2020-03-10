@@ -21,6 +21,7 @@ package com.orientechnologies.orient.core.index;
 
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OInvalidIndexEngineIdException;
+import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.tx.OTransactionIndexChangesPerKey;
@@ -44,40 +45,43 @@ public class OIndexDictionary extends OIndexOneValue {
 
     acquireSharedLock();
     try {
-      if (apiVersion == 0) {
-        putV0(key, value);
-      } else if (apiVersion == 1) {
-        putV1(key, value.getIdentity());
-      } else {
-        throw new IllegalStateException("Invalid API version, " + apiVersion);
+      while (true) {
+        try {
+          doPut(storage, key, value.getIdentity());
+          return this;
+        } catch (OInvalidIndexEngineIdException e) {
+          doReloadIndexEngine();
+        }
       }
-
-      return this;
     } finally {
       releaseSharedLock();
     }
   }
 
-  private void putV0(Object key, OIdentifiable value) {
-    while (true) {
-      try {
-        storage.putIndexValue(indexId, key, value);
-        break;
-      } catch (OInvalidIndexEngineIdException ignore) {
-        doReloadIndexEngine();
-      }
+  @Override
+  public void doPut(OAbstractPaginatedStorage storage, Object key, ORID rid) throws OInvalidIndexEngineIdException {
+    if (apiVersion == 0) {
+      putV0(storage, indexId, key, rid);
+    } else if (apiVersion == 1) {
+      putV1(storage, indexId, key, rid);
+    } else {
+      throw new IllegalStateException("Invalid API version, " + apiVersion);
     }
   }
 
-  private void putV1(Object key, OIdentifiable value) {
-    while (true) {
-      try {
-        storage.putRidIndexEntry(indexId, key, value.getIdentity());
-        break;
-      } catch (OInvalidIndexEngineIdException ignore) {
-        doReloadIndexEngine();
-      }
-    }
+  @Override
+  public boolean isNativeTxSupported() {
+    return true;
+  }
+
+  private static void putV0(final OAbstractPaginatedStorage storage, int indexId, Object key, OIdentifiable value)
+      throws OInvalidIndexEngineIdException {
+    storage.putIndexValue(indexId, key, value);
+  }
+
+  private static void putV1(final OAbstractPaginatedStorage storage, int indexId, Object key, OIdentifiable value)
+      throws OInvalidIndexEngineIdException {
+    storage.putRidIndexEntry(indexId, key, value.getIdentity());
   }
 
   public boolean canBeUsedInEqualityOperators() {
@@ -89,7 +93,7 @@ public class OIndexDictionary extends OIndexOneValue {
   }
 
   @Override
-  protected Iterable<OTransactionIndexChangesPerKey.OTransactionIndexEntry> interpretTxKeyChanges(
+  public Iterable<OTransactionIndexChangesPerKey.OTransactionIndexEntry> interpretTxKeyChanges(
       OTransactionIndexChangesPerKey changes) {
     return changes.interpret(OTransactionIndexChangesPerKey.Interpretation.Dictionary);
   }

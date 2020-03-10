@@ -16,7 +16,6 @@ import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.exception.OCommandInterruptedException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.index.*;
-import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.sql.parser.*;
 
@@ -407,7 +406,7 @@ public class FetchFromIndexStep extends AbstractExecutionStep {
       } else if (additionalRangeCondition == null && allEqualities((OAndBlock) condition)) {
         stream = index.streamEntries(toIndexKey(indexDef, secondValue), isOrderAsc());
         storeAcquiredStream(stream);
-      } else if (isFullTextIndex(index) || isFullTextHashIndex(index)) {
+      } else if (isFullTextIndex(index)) {
         stream = index.streamEntries(toIndexKey(indexDef, secondValue), isOrderAsc());
         storeAcquiredStream(stream);
       } else {
@@ -434,11 +433,6 @@ public class FetchFromIndexStep extends AbstractExecutionStep {
 
   private static boolean isFullTextIndex(OIndex index) {
     return index.getType().equalsIgnoreCase("FULLTEXT") && !index.getAlgorithm().equalsIgnoreCase("LUCENE");
-  }
-
-  private static boolean isFullTextHashIndex(OIndex index) {
-    return index.getType().equalsIgnoreCase(OClass.INDEX_TYPE.FULLTEXT_HASH_INDEX.name()) && !index.getAlgorithm()
-        .equalsIgnoreCase("LUCENE");
   }
 
   private Stream<ORawPair<Object, ORID>> getStreamForNullKey() {

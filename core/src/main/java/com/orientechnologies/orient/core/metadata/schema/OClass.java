@@ -56,7 +56,6 @@ public interface OClass extends Comparable<OClass> {
     PROXY(true),
     UNIQUE_HASH_INDEX(true),
     NOTUNIQUE_HASH_INDEX(true),
-    FULLTEXT_HASH_INDEX(true),
     DICTIONARY_HASH_INDEX(false),
     SPATIAL(true);
 

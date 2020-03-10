@@ -60,7 +60,6 @@ public class SQLSelectHashIndexReuseTest extends AbstractIndexReuseTest {
     oClass.createIndex("indexthree", OClass.INDEX_TYPE.NOTUNIQUE_HASH_INDEX, "prop1", "prop2", "prop4");
     oClass.createIndex("indexfour", OClass.INDEX_TYPE.NOTUNIQUE_HASH_INDEX, "prop4", "prop1", "prop3");
     oClass.createIndex("indexfive", OClass.INDEX_TYPE.NOTUNIQUE_HASH_INDEX, "prop6", "prop1", "prop3");
-    oClass.createIndex("indexsix", OClass.INDEX_TYPE.FULLTEXT_HASH_INDEX, "prop7");
 
     oClass.createIndex("sqlSelectHashIndexReuseTestEmbeddedMapByKey", OClass.INDEX_TYPE.NOTUNIQUE_HASH_INDEX, "fEmbeddedMap");
     oClass.createIndex("sqlSelectHashIndexReuseTestEmbeddedMapByValue", OClass.INDEX_TYPE.NOTUNIQUE_HASH_INDEX,

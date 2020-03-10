@@ -16,7 +16,6 @@ package com.orientechnologies.spatial.operator;
 
 import com.orientechnologies.common.util.ORawPair;
 import com.orientechnologies.orient.core.command.OCommandContext;
-import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.index.OIndex;
@@ -39,12 +38,6 @@ public class OLuceneOverlapOperator extends OLuceneSpatialOperator {
 
   public OLuceneOverlapOperator() {
     super("&&", 5, false);
-  }
-
-  @Override
-  public Collection<OIdentifiable> filterRecords(ODatabase<?> iRecord, List<String> iTargetClasses, OSQLFilterCondition iCondition,
-      Object iLeft, Object iRight) {
-    return null;
   }
 
   @Override

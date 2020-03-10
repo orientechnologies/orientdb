@@ -111,9 +111,14 @@ public class OLuceneIndexNotUnique extends OIndexAbstract implements OLuceneInde
   }
 
   @Override
-  protected Iterable<OTransactionIndexChangesPerKey.OTransactionIndexEntry> interpretTxKeyChanges(
+  public Iterable<OTransactionIndexChangesPerKey.OTransactionIndexEntry> interpretTxKeyChanges(
       OTransactionIndexChangesPerKey changes) {
     return changes.interpret(OTransactionIndexChangesPerKey.Interpretation.NonUnique);
+  }
+
+  @Override
+  public void doPut(OAbstractPaginatedStorage storage, Object key, ORID rid) throws OInvalidIndexEngineIdException {
+      //do nothing
   }
 
   @Override
@@ -413,6 +418,11 @@ public class OLuceneIndexNotUnique extends OIndexAbstract implements OLuceneInde
         doReloadIndexEngine();
       }
     }
+  }
+
+  @Override
+  public boolean isNativeTxSupported() {
+    return false;
   }
 
   @Override

@@ -57,7 +57,6 @@ public class SQLSelectIndexReuseTest extends AbstractIndexReuseTest {
     oClass.createIndex("indexthree", OClass.INDEX_TYPE.NOTUNIQUE, "prop1", "prop2", "prop4");
     oClass.createIndex("indexfour", OClass.INDEX_TYPE.NOTUNIQUE, "prop4", "prop1", "prop3");
     oClass.createIndex("indexfive", OClass.INDEX_TYPE.NOTUNIQUE, "prop6", "prop1", "prop3");
-    oClass.createIndex("indexsix", OClass.INDEX_TYPE.FULLTEXT, "prop7");
 
     oClass.createIndex("sqlSelectIndexReuseTestEmbeddedMapByKey", OClass.INDEX_TYPE.NOTUNIQUE, "fEmbeddedMap");
     oClass.createIndex("sqlSelectIndexReuseTestEmbeddedMapByValue", OClass.INDEX_TYPE.NOTUNIQUE, "fEmbeddedMap by value");

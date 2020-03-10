@@ -38,7 +38,6 @@ import com.orientechnologies.common.util.*;
 import com.orientechnologies.orient.core.OConstants;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.OCommandExecutor;
-import com.orientechnologies.orient.core.command.OCommandManager;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
 import com.orientechnologies.orient.core.config.*;
@@ -105,6 +104,7 @@ import com.orientechnologies.orient.core.storage.ridbag.sbtree.OSBTreeCollection
 import com.orientechnologies.orient.core.storage.ridbag.sbtree.OSBTreeCollectionManagerShared;
 import com.orientechnologies.orient.core.tx.OTransactionAbstract;
 import com.orientechnologies.orient.core.tx.OTransactionIndexChanges;
+import com.orientechnologies.orient.core.tx.OTransactionIndexChangesPerKey;
 import com.orientechnologies.orient.core.tx.OTransactionInternal;
 
 import java.io.*;
@@ -1992,7 +1992,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
             checkReadOnlyConditions();
 
-            commitIndexes(indexOperations, atomicOperation);
+            commitIndexes(indexOperations);
           } catch (final IOException | RuntimeException e) {
             rollback = true;
             if (e instanceof RuntimeException) {
@@ -2055,46 +2055,49 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     }
   }
 
-  private static void commitIndexes(final Map<String, OTransactionIndexChanges> indexesToCommit,
-      final OAtomicOperation atomicOperation) {
-    final Map<OIndex, OIndexAbstract.IndexTxSnapshot> snapshots = new IdentityHashMap<>(8);
-
+  private void commitIndexes(final Map<String, OTransactionIndexChanges> indexesToCommit) {
     for (final OTransactionIndexChanges changes : indexesToCommit.values()) {
       final OIndexInternal index = changes.getAssociatedIndex();
-      final OIndexAbstract.IndexTxSnapshot snapshot = new OIndexAbstract.IndexTxSnapshot();
-      snapshots.put(index, snapshot);
-
-      assert atomicOperation.getCounter() == 1;
-      index.preCommit(snapshot);
-      assert atomicOperation.getCounter() == 1;
-    }
-
-    for (final OTransactionIndexChanges changes : indexesToCommit.values()) {
-      final OIndexInternal index = changes.getAssociatedIndex();
-      final OIndexAbstract.IndexTxSnapshot snapshot = snapshots.get(index);
-
-      assert atomicOperation.getCounter() == 1;
-      index.addTxOperation(snapshot, changes);
-      assert atomicOperation.getCounter() == 1;
-    }
-
-    try {
-      for (final OTransactionIndexChanges changes : indexesToCommit.values()) {
-        final OIndexInternal index = changes.getAssociatedIndex();
-        final OIndexAbstract.IndexTxSnapshot snapshot = snapshots.get(index);
-
-        assert atomicOperation.getCounter() == 1;
+      if (!index.isNativeTxSupported()) {
+        final OIndexAbstract.IndexTxSnapshot snapshot = new OIndexAbstract.IndexTxSnapshot();
+        index.addTxOperation(snapshot, changes);
         index.commit(snapshot);
-        assert atomicOperation.getCounter() == 1;
-      }
-    } finally {
-      for (final OTransactionIndexChanges changes : indexesToCommit.values()) {
-        final OIndexInternal index = changes.getAssociatedIndex();
-        final OIndexAbstract.IndexTxSnapshot snapshot = snapshots.get(index);
+      } else {
+        try {
+          final int indexId = index.getIndexId();
+          if (changes.cleared) {
+            clearIndex(indexId);
+          }
 
-        assert atomicOperation.getCounter() == 1;
-        index.postCommit(snapshot);
-        assert atomicOperation.getCounter() == 1;
+          for (final OTransactionIndexChangesPerKey changesPerKey : changes.changesPerKey.values()) {
+            applyTxChanges(changesPerKey, index);
+          }
+          applyTxChanges(changes.nullKeyChanges, index);
+        } catch (OInvalidIndexEngineIdException e) {
+          throw OException.wrapException(new OStorageException("Error during index commit"), e);
+        }
+
+      }
+    }
+
+  }
+
+  private void applyTxChanges(OTransactionIndexChangesPerKey changes, OIndexInternal index) throws OInvalidIndexEngineIdException {
+
+    for (OTransactionIndexChangesPerKey.OTransactionIndexEntry op : index.interpretTxKeyChanges(changes)) {
+      switch (op.operation) {
+      case PUT:
+        index.doPut(this, changes.key, op.value.getIdentity());
+        break;
+      case REMOVE:
+        if (op.value != null)
+          index.doRemove(this, changes.key, op.value.getIdentity());
+        else
+          index.doRemove(this, changes.key);
+        break;
+      case CLEAR:
+        // SHOULD NEVER BE THE CASE HANDLE BY cleared FLAG
+        break;
       }
     }
   }
