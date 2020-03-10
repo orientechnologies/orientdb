@@ -754,4 +754,9 @@ public final class OMicroTransaction implements OBasicTransaction, OTransactionI
     this.database = database;
   }
 
+
+  @Override
+  public void setMetadata(Optional<byte[]> metadata) {
+    throw new UnsupportedOperationException();
+  }
 }

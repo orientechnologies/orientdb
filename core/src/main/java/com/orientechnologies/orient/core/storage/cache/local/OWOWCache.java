@@ -893,7 +893,7 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
   }
 
   @Override
-  public void makeFuzzyCheckpoint(final long segmentId) throws IOException {
+  public void makeFuzzyCheckpoint(final long segmentId, Optional<byte[]> lastMetadata) throws IOException {
     filesLock.acquireReadLock();
     try {
       doubleWriteLog.startCheckpoint();
@@ -903,7 +903,7 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
           return;
         }
 
-        writeAheadLog.logFuzzyCheckPointStart(startLSN);
+        writeAheadLog.logFuzzyCheckPointStart(startLSN, lastMetadata);
 
         for (final Integer intId : nameIdMap.values()) {
           if (intId < 0) {
@@ -2133,9 +2133,11 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
       long updateCounter = magicNumber >>> 8;
       updateCounter++;
 
-      magicNumber = (updateCounter << 8) | ((checksumMode == OChecksumMode.Off
-          ? MAGIC_NUMBER_WITHOUT_CHECKSUM_ENCRYPTED
-          : MAGIC_NUMBER_WITH_CHECKSUM_ENCRYPTED));
+      if (checksumMode == OChecksumMode.Off) {
+        magicNumber = (updateCounter << 8) | MAGIC_NUMBER_WITHOUT_CHECKSUM_ENCRYPTED;
+      } else {
+        magicNumber = (updateCounter << 8) | MAGIC_NUMBER_WITH_CHECKSUM_ENCRYPTED;
+      }
 
       buffer.putLong(MAGIC_NUMBER_OFFSET, magicNumber);
       doEncryptionDecryption(intId, pageIndex, Cipher.ENCRYPT_MODE, buffer, updateCounter);
