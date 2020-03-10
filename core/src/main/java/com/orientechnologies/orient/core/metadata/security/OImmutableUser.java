@@ -197,4 +197,8 @@ public class OImmutableUser implements OSecurityUser {
     return user.getDocument();
   }
 
+  @Override
+  public String getUserType() {
+    return user.getUserType();
+  }
 }

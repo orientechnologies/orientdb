@@ -20,14 +20,14 @@
 package com.orientechnologies.orient.server.security;
 
 import com.orientechnologies.orient.core.db.ODatabase;
+import com.orientechnologies.orient.core.metadata.security.OSecurityUser;
 import com.orientechnologies.orient.core.security.OSecuritySystem;
 import com.orientechnologies.orient.server.config.OServerUserConfiguration;
 
 /**
  * Provides an interface for the server-specific security features. Extends OSecuritySystem.
- * 
+ *
  * @author S. Colin Leister
- * 
  */
 public interface OServerSecurity extends OSecuritySystem {
   OAuditingService getAuditing();
@@ -50,6 +50,10 @@ public interface OServerSecurity extends OSecuritySystem {
   OServerUserConfiguration getUser(final String username);
 
   ODatabase<?> openDatabase(final String dbName);
-  
+
   void onAfterDynamicPlugins();
+
+  default void onAfterDynamicPlugins(OSecurityUser user) {
+    onAfterDynamicPlugins();
+  }
 }

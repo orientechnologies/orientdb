@@ -105,7 +105,7 @@ public class OUser extends OIdentity implements OSecurityUser {
   @Override
   public void fromStream(final ODocument iSource) {
     if (document != null)
-      return;
+      return; 
 
     document = iSource;
 
@@ -341,5 +341,10 @@ public class OUser extends OIdentity implements OSecurityUser {
   @Override
   public OIdentifiable getIdentity() {
     return document;
+  }
+
+  @Override
+  public String getUserType() {
+    return "Database";
   }
 }

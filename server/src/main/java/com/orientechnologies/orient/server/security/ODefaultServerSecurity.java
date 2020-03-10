@@ -474,10 +474,10 @@ public class ODefaultServerSecurity implements OSecurityFactory, OServerLifecycl
   }
 
   // OSecuritySystem
-  public void log(final OAuditingOperation operation, final String dbName, final String username, final String message) {
+  public void log(final OAuditingOperation operation, final String dbName, OSecurityUser user, final String message) {
     synchronized (auditingSynch) {
       if (auditingService != null)
-        auditingService.log(operation, dbName, username, message);
+        auditingService.log(operation, dbName, user, message);
     }
   }
 
@@ -516,26 +516,36 @@ public class ODefaultServerSecurity implements OSecurityFactory, OServerLifecycl
 
   // OSecuritySystem
   public void reload(final String cfgPath) {
-    reload(loadConfig(cfgPath));
+    reload(null, cfgPath);
+  }
+
+  @Override
+  public void reload(OSecurityUser user, String cfgPath) {
+    reload(user, loadConfig(cfgPath));
   }
 
   // OSecuritySystem
   public void reload(final ODocument configDoc) {
+    reload(null, configDoc);
+  }
+
+  @Override
+  public void reload(OSecurityUser user, ODocument configDoc) {
     if (configDoc != null) {
       onBeforeDeactivate();
 
       this.configDoc = configDoc;
 
-      onAfterDynamicPlugins();
+      onAfterDynamicPlugins(user);
 
-      log(OAuditingOperation.RELOADEDSECURITY, null, null, "The security configuration file has been reloaded");
+      log(OAuditingOperation.RELOADEDSECURITY, null, user, "The security configuration file has been reloaded");
     } else {
       OLogManager.instance().warn(this, "ODefaultServerSecurity.reload(ODocument) The provided configuration document is null");
       throw new OSecuritySystemException("ODefaultServerSecurity.reload(ODocument) The provided configuration document is null");
     }
   }
 
-  public void reloadComponent(final String name, final ODocument jsonConfig) {
+  public void reloadComponent(OSecurityUser user, final String name, final ODocument jsonConfig) {
     if (name == null || name.isEmpty())
       throw new OSecuritySystemException("ODefaultServerSecurity.reloadComponent() name is null or empty");
     if (jsonConfig == null)
@@ -561,7 +571,7 @@ public class ODefaultServerSecurity implements OSecurityFactory, OServerLifecycl
     }
     setSection(name, jsonConfig);
 
-    log(OAuditingOperation.RELOADEDSECURITY, null, null, String.format("The %s security component has been reloaded", name));
+    log(OAuditingOperation.RELOADEDSECURITY, null, user, String.format("The %s security component has been reloaded", name));
   }
 
   /**
@@ -707,13 +717,18 @@ public class ODefaultServerSecurity implements OSecurityFactory, OServerLifecycl
 
   // OServerSecurity
   public void onAfterDynamicPlugins() {
+    onAfterDynamicPlugins(null);
+  }
+
+  @Override
+  public void onAfterDynamicPlugins(OSecurityUser user) {
     if (configDoc != null) {
       loadComponents();
 
       if (isEnabled()) {
         registerRESTCommands();
 
-        log(OAuditingOperation.SECURITY, null, null, "The security module is now loaded");
+        log(OAuditingOperation.SECURITY, null, user, "The security module is now loaded");
       }
     } else {
       OLogManager.instance().warn(this, "onAfterDynamicPlugins() Configuration document is empty");
@@ -1052,7 +1067,7 @@ public class ODefaultServerSecurity implements OSecurityFactory, OServerLifecycl
    * OSecurityFactory Interface
    ***/
   public OSecurityInternal newSecurity() {
-    return new OSecurityExternal();
+    return new OSecurityServerExternal(server);
   }
 
   private void registerRESTCommands() {

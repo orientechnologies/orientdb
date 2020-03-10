@@ -19,6 +19,8 @@
  */
 package com.orientechnologies.orient.core.security;
 
+import com.orientechnologies.orient.core.metadata.security.OSecurityUser;
+import com.orientechnologies.orient.core.metadata.security.OSystemUser;
 import com.orientechnologies.orient.core.metadata.security.OUser;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
@@ -72,10 +74,10 @@ public interface OSecuritySystem {
   /**
    * Logs to the auditing service, if installed.
    *
-   * @param dbName   May be null or empty.
-   * @param username May be null or empty.
+   * @param dbName May be null or empty.
+   * @param user   May be null or empty.
    */
-  void log(final OAuditingOperation operation, final String dbName, final String username, final String message);
+  void log(final OAuditingOperation operation, final String dbName, OSecurityUser user, final String message);
 
   void registerSecurityClass(final Class<?> cls);
 
@@ -83,7 +85,15 @@ public interface OSecuritySystem {
 
   void reload(final ODocument jsonConfig);
 
-  void reloadComponent(final String name, final ODocument jsonConfig);
+  default void reload(OSecurityUser user, final ODocument jsonConfig) {
+    reload(jsonConfig);
+  }
+
+  default void reload(OSecurityUser user, final String jsonConfig) {
+    reload(jsonConfig);
+  }
+
+  void reloadComponent(OSecurityUser user, final String name, final ODocument jsonConfig);
 
   /**
    * Called each time one of the security classes (OUser, ORole, OServerRole) is modified.

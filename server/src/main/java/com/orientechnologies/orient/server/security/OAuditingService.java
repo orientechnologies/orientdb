@@ -19,6 +19,8 @@
  */
 package com.orientechnologies.orient.server.security;
 
+import com.orientechnologies.orient.core.metadata.security.OSecurityUser;
+import com.orientechnologies.orient.core.metadata.security.OUser;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.security.OAuditingOperation;
 
@@ -30,13 +32,13 @@ import java.io.IOException;
  * @author S. Colin Leister
  */
 public interface OAuditingService extends OSecurityComponent {
-  void changeConfig(final String databaseName, final ODocument cfg) throws IOException;
+  void changeConfig(OSecurityUser user, final String databaseName, final ODocument cfg) throws IOException;
 
   ODocument getConfig(final String databaseName);
 
   void log(final OAuditingOperation operation, final String message);
 
-  void log(final OAuditingOperation operation, final String username, final String message);
+  void log(final OAuditingOperation operation, OSecurityUser user, final String message);
 
-  void log(final OAuditingOperation operation, final String dbName, final String username, final String message);
+  void log(final OAuditingOperation operation, final String dbName, OSecurityUser user, final String message);
 }
