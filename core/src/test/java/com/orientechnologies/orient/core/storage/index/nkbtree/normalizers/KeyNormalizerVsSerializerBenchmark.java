@@ -10,6 +10,11 @@ import org.openjdk.jmh.runner.options.Options;
 import org.openjdk.jmh.runner.options.OptionsBuilder;
 
 import java.nio.ByteOrder;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.util.Calendar;
+import java.util.Date;
+import java.util.GregorianCalendar;
 import java.util.concurrent.TimeUnit;
 
 import static com.orientechnologies.common.serialization.types.OLongSerializer.LONG_SIZE;
@@ -42,7 +47,7 @@ public class KeyNormalizerVsSerializerBenchmark {
     byteOrder = ByteOrder.nativeOrder();
   }
 
-  /*@Benchmark
+  @Benchmark
   public void booleanSerializer() throws Exception {
     final OBooleanSerializer serializer = new OBooleanSerializer();
     serializer.serialize(true, new byte[1], 0);
@@ -118,7 +123,7 @@ public class KeyNormalizerVsSerializerBenchmark {
   public void longSerializer() throws Exception {
     final OLongSerializer serializer = new OLongSerializer();
     serializer.serialize(5L, new byte[LONG_SIZE], 0);
-  }*/
+  }
 
   @Benchmark
   public void longNormalizer() throws Exception {
@@ -126,7 +131,7 @@ public class KeyNormalizerVsSerializerBenchmark {
     normalizer.execute(5L, byteOrder, 0);
   }
 
-  /*@Benchmark
+  @Benchmark
   public void stringSerializer() throws Exception {
     final OStringSerializer serializer = new OStringSerializer();
     serializer.serialize("abcd", new byte[16], 0);
@@ -142,5 +147,49 @@ public class KeyNormalizerVsSerializerBenchmark {
   public void stringNormalizer() throws Exception {
     final StringKeyNormalizer normalizer = new StringKeyNormalizer();
     normalizer.execute("abcd", byteOrder, Collator.NO_DECOMPOSITION);
-  }*/
+  }
+
+  @Benchmark
+  public void binarySerializer() throws Exception {
+    final OBinaryTypeSerializer serializer = new OBinaryTypeSerializer();
+    final byte[] binary = new byte[] { 1, 2, 3, 4, 5, 6 };
+    serializer.serialize(binary, new byte[binary.length + OIntegerSerializer.INT_SIZE], 0);
+  }
+
+  @Benchmark
+  public void binaryNormalizer() throws Exception {
+    final BinaryKeyNormalizer normalizer = new BinaryKeyNormalizer();
+    final byte[] binary = new byte[] { 1, 2, 3, 4, 5, 6 };
+    normalizer.execute(binary, byteOrder, 0);
+  }
+
+  @Benchmark
+  public void dateSerializer() throws Exception {
+    final ODateSerializer serializer = new ODateSerializer();
+    final Date date = new GregorianCalendar(2013, Calendar.NOVEMBER, 5).getTime();
+    serializer.serialize(date, new byte[LONG_SIZE], 0);
+  }
+
+  @Benchmark
+  public void dateNormalizer() throws Exception {
+    final DateKeyNormalizer normalizer = new DateKeyNormalizer();
+    final Date date = new GregorianCalendar(2013, Calendar.NOVEMBER, 5).getTime();
+    normalizer.execute(date, byteOrder, 0);
+  }
+
+  @Benchmark
+  public void dateTimeSerializer() throws Exception {
+    final ODateTimeSerializer serializer = new ODateTimeSerializer();
+    final LocalDateTime ldt = LocalDateTime.of(2013, 11, 5, 3, 3, 3);
+    final Date date = Date.from( ldt.atZone( ZoneId.systemDefault()).toInstant());
+    serializer.serialize(date, new byte[LONG_SIZE], 0);
+  }
+
+  @Benchmark
+  public void dateTimeNormalizer() throws Exception {
+    final DateKeyNormalizer normalizer = new DateKeyNormalizer();
+    final LocalDateTime ldt = LocalDateTime.of(2013, 11, 5, 3, 3, 3);
+    final Date date = Date.from( ldt.atZone( ZoneId.systemDefault()).toInstant());
+    normalizer.execute(date, byteOrder, 0);
+  }
 }
