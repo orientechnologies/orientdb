@@ -8,7 +8,7 @@ import java.nio.ByteOrder;
 
 public class DecimalKeyNormalizer implements KeyNormalizers {
   @Override
-  public byte[] execute(Object key, ByteOrder byteOrder, int decompositon) throws IOException {
+  public byte[] execute(Object key, final ByteOrder byteOrder, int decompositon) throws IOException {
     final BigDecimal matKey = (BigDecimal) key;
     final byte[] unscaledValue = matKey.unscaledValue().toByteArray();
 

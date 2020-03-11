@@ -42,7 +42,7 @@ public class KeyNormalizerVsSerializerBenchmark {
     byteOrder = ByteOrder.nativeOrder();
   }
 
-  @Benchmark
+  /*@Benchmark
   public void booleanSerializer() throws Exception {
     final OBooleanSerializer serializer = new OBooleanSerializer();
     serializer.serialize(true, new byte[1], 0);
@@ -118,15 +118,15 @@ public class KeyNormalizerVsSerializerBenchmark {
   public void longSerializer() throws Exception {
     final OLongSerializer serializer = new OLongSerializer();
     serializer.serialize(5L, new byte[LONG_SIZE], 0);
-  }
+  }*/
 
   @Benchmark
   public void longNormalizer() throws Exception {
     final LongKeyNormalizer normalizer = new LongKeyNormalizer();
-    normalizer.execute(5L, byteOrder,0);
+    normalizer.execute(5L, byteOrder, 0);
   }
 
-  @Benchmark
+  /*@Benchmark
   public void stringSerializer() throws Exception {
     final OStringSerializer serializer = new OStringSerializer();
     serializer.serialize("abcd", new byte[16], 0);
@@ -142,5 +142,5 @@ public class KeyNormalizerVsSerializerBenchmark {
   public void stringNormalizer() throws Exception {
     final StringKeyNormalizer normalizer = new StringKeyNormalizer();
     normalizer.execute("abcd", byteOrder, Collator.NO_DECOMPOSITION);
-  }
+  }*/
 }

@@ -6,9 +6,8 @@ import java.nio.ByteOrder;
 
 public class NullKeyNormalizer implements KeyNormalizers {
   @Override
-  public byte[] execute(final Object key, ByteOrder byteOrder, int decompositon) throws IOException {
+  public byte[] execute(final Object key, final ByteOrder byteOrder, int decompositon) throws IOException {
     final ByteBuffer bb = ByteBuffer.allocate(1);
-    bb.order(byteOrder);
     bb.put((byte) 1);
     return bb.array();
   }

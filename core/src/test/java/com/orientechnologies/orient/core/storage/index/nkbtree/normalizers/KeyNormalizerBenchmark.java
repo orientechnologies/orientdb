@@ -4,7 +4,6 @@ import com.ibm.icu.text.Collator;
 import com.orientechnologies.orient.core.index.OCompositeKey;
 
 import com.orientechnologies.orient.core.metadata.schema.OType;
-import org.junit.Assert;
 import org.openjdk.jmh.annotations.*;
 import org.openjdk.jmh.profile.StackProfiler;
 import org.openjdk.jmh.runner.Runner;
@@ -14,6 +13,11 @@ import org.openjdk.jmh.runner.options.OptionsBuilder;
 
 import java.io.ByteArrayOutputStream;
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.util.Calendar;
+import java.util.Date;
+import java.util.GregorianCalendar;
 import java.util.concurrent.TimeUnit;
 
 @State(Scope.Thread)
@@ -24,6 +28,15 @@ import java.util.concurrent.TimeUnit;
 @Fork(1)
 public class KeyNormalizerBenchmark {
     KeyNormalizer keyNormalizer;
+
+    OCompositeKey binaryCompositeKey;
+    OType[] binaryTypes;
+
+    OCompositeKey dateCompositeKey;
+    OType[] dateTypes;
+
+    OCompositeKey dateTimeCompositeKey;
+    OType[] dateTimeTypes;
 
     public static void main(String[] args) throws RunnerException {
         final Options opt = new OptionsBuilder()
@@ -39,7 +52,35 @@ public class KeyNormalizerBenchmark {
 
     @Setup(Level.Iteration)
     public void setup() {
+        binaryFixture();
+        dateFixture();
+        dateTimeFixture();
+    }
+
+    private void binaryFixture() {
         keyNormalizer = new KeyNormalizer();
+        final byte[] binaryKey = new byte[] { 1, 2, 3, 4, 5, 6 };
+        binaryCompositeKey = new OCompositeKey();
+        binaryCompositeKey.addKey(binaryKey);
+        binaryTypes = new OType[1];
+        binaryTypes[0] = OType.BINARY;
+    }
+
+    private void dateFixture() {
+        final Date key = new GregorianCalendar(2013, Calendar.NOVEMBER, 5).getTime();
+        dateCompositeKey = new OCompositeKey();
+        dateCompositeKey.addKey(key);
+        dateTypes = new OType[1];
+        dateTypes[0] = OType.DATE;
+    }
+
+    private void dateTimeFixture() {
+        final LocalDateTime ldt = LocalDateTime.of(2013, 11, 5, 3, 3, 3);
+        final Date key = Date.from( ldt.atZone( ZoneId.systemDefault()).toInstant());
+        dateTimeCompositeKey = new OCompositeKey();
+        dateTimeCompositeKey.addKey(key);
+        dateTimeTypes = new OType[1];
+        dateTimeTypes[0] = OType.DATETIME;
     }
 
     final ByteArrayOutputStream bos = new ByteArrayOutputStream();
@@ -162,12 +203,6 @@ public class KeyNormalizerBenchmark {
         final byte[] bytes = keyNormalizer.normalize(compositeKey, types, Collator.NO_DECOMPOSITION);
     }
 
-    /*@Benchmark
-    public void normalizeComposite_char() throws Exception {
-        compositeKey.addKey('a');
-        final byte[] bytes = keyNormalizer.normalize(compositeKey, types, Collator.NO_DECOMPOSITION);
-    }*/
-
     @Benchmark
     public void normalizeComposite_string() throws Exception {
         final OCompositeKey compositeKey = new OCompositeKey();
@@ -185,11 +220,25 @@ public class KeyNormalizerBenchmark {
         compositeKey.addKey(key);
         final String secondKey = "test";
         compositeKey.addKey(secondKey);
-        Assert.assertEquals(2, compositeKey.getKeys().size());
 
         final OType[] types = new OType[2];
         types[0] = OType.STRING;
         types[1] = OType.STRING;
         final byte[] bytes = keyNormalizer.normalize(compositeKey, types, Collator.NO_DECOMPOSITION);
+    }
+
+    @Benchmark
+    public void normalizeComposite_date() {
+        final byte[] bytes = keyNormalizer.normalize(dateTimeCompositeKey, dateTimeTypes, Collator.NO_DECOMPOSITION);
+    }
+
+    @Benchmark
+    public void normalizeComposite_dateTime() {
+        final byte[] bytes = keyNormalizer.normalize(dateCompositeKey, dateTypes, Collator.NO_DECOMPOSITION);
+    }
+
+    @Benchmark
+    public void normalizeComposite_binary() {
+        final byte[] bytes = keyNormalizer.normalize(binaryCompositeKey, binaryTypes, Collator.NO_DECOMPOSITION);
     }
 }

@@ -12,8 +12,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 
 public class KeyNormalizer {
-  private final ByteOrder byteOrder;
   private final Map<OType, KeyNormalizers> normalizers = new HashMap<>();
+  private final ByteOrder byteOrder;
 
   public KeyNormalizer() {
     byteOrder = ByteOrder.nativeOrder();
@@ -27,11 +27,10 @@ public class KeyNormalizer {
     normalizers.put(OType.BYTE, new ByteKeyNormalizer());
     normalizers.put(OType.LONG, new LongKeyNormalizer());
     normalizers.put(OType.STRING, new StringKeyNormalizer());
-    // TODO: not in OType: char
-    //normalizers.put(OType.DECIMAL, new DecimalKeyNormalizer());
-    //normalizers.put(OType.DATE, null);
-    //normalizers.put(OType.DATETIME, null);
-    //normalizers.put(OType.BINARY, null);
+    normalizers.put(OType.DECIMAL, new DecimalKeyNormalizer());
+    normalizers.put(OType.DATE, new DateKeyNormalizer());
+    normalizers.put(OType.DATETIME, new DateTimeKeyNormalizer());
+    normalizers.put(OType.BINARY, new BinaryKeyNormalizer());
   }
 
   public byte[] normalize(final OCompositeKey keys, final OType[] keyTypes, final int decompositon) {

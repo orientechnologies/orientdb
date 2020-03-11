@@ -7,9 +7,7 @@ import java.nio.ByteOrder;
 public class BooleanKeyNormalizer implements KeyNormalizers {
   @Override
   public byte[] execute(final Object key, final ByteOrder byteOrder, final int decompositon) throws IOException {
-    final ByteBuffer bb = ByteBuffer.allocate(2);
-    bb.order(byteOrder);
-    bb.put((byte) 0);
+    final ByteBuffer bb = ByteBuffer.allocate(1);
     bb.put((Boolean) key ? (byte) 1 : (byte) 0);
     return bb.array();
   }

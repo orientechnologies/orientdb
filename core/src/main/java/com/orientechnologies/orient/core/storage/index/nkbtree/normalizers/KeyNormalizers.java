@@ -4,5 +4,5 @@ import java.io.IOException;
 import java.nio.ByteOrder;
 
 public interface KeyNormalizers {
-  byte[] execute(Object key, ByteOrder byteOrder, int decompositon) throws IOException;
+  byte[] execute(Object key, ByteOrder byteOrder, int decomposition) throws IOException;
 }
