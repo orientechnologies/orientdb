@@ -70,6 +70,9 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
+import static com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWriteAheadLog.MASTER_RECORD_EXTENSION;
+import static com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWriteAheadLog.WAL_SEGMENT_EXTENSION;
+
 /**
  * @author Andrey Lomakin (a.lomakin-at-orientdb.com)
  * @since 28.03.13
@@ -288,6 +291,22 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage {
         }
 
         OZIPCompressionUtil.uncompressDirectory(in, storagePath.toString(), iListener);
+
+        final java.io.File[] newStorageFiles = dbDir.listFiles();
+        if (newStorageFiles != null) {
+          // TRY TO DELETE ALL THE FILES
+          for (final java.io.File f : newStorageFiles) {
+            if (f.getPath().endsWith(MASTER_RECORD_EXTENSION)) {
+              f.renameTo(new File(f.getParent(), getName() + MASTER_RECORD_EXTENSION));
+            }
+            if (f.getPath().endsWith(WAL_SEGMENT_EXTENSION)) {
+              String walName = f.getName();
+              final int segmentIndex = walName.lastIndexOf(".", walName.length() - WAL_SEGMENT_EXTENSION.length() - 1);
+              String ending = walName.substring(segmentIndex);
+              f.renameTo(new File(f.getParent(), getName() + ending));
+            }
+          }
+        }
 
         if (callable != null)
           try {

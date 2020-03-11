@@ -51,6 +51,7 @@ public abstract class OTransactionRealAbstract extends OTransactionAbstract impl
   protected       int                                               newObjectCounter      = -2;
   protected       Map<String, Object>                               userData              = new HashMap<String, Object>();
   private         Map<ORID, LockedRecordMetadata>                   noTxLocks;
+  private         Optional<byte[]>                                  metadata              = Optional.empty();
   /**
    * This set is used to track which documents are changed during tx, if documents are changed but not saved all changes are made
    * during tx will be undone.
@@ -565,5 +566,15 @@ public abstract class OTransactionRealAbstract extends OTransactionAbstract impl
 
   public Map<ORID, LockedRecordMetadata> getNoTxLocks() {
     return noTxLocks;
+  }
+
+  @Override
+  public Optional<byte[]> getMetadata() {
+    return metadata;
+  }
+
+  @Override
+  public void setMetadata(Optional<byte[]> metadata) {
+    this.metadata = metadata;
   }
 }

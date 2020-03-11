@@ -913,7 +913,7 @@ public final class AppendOnlyCompressedWriteCache extends OAbstractWriteCache
   }
 
   @Override
-  public void makeFuzzyCheckpoint(final long segmentId) throws IOException {
+  public void makeFuzzyCheckpoint(final long segmentId, Optional<byte[]> lastMetadata) throws IOException {
 //    if (writeAheadLog != null) {
 //      filesLock.acquireReadLock();
 //      try {
