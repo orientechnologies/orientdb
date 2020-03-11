@@ -30,7 +30,7 @@ public class TransactionMetadataTest {
   public void test() {
     db.begin();
     byte[] metadata = new byte[] { 1, 2, 4 };
-    ((OTransactionInternal) db.getTransaction()).setMetadata(Optional.of(metadata));
+    ((OTransactionInternal) db.getTransaction()).setMetadataHolder(Optional.of(new TestMetadataHolder(metadata)));
     OVertex v = db.newVertex("V");
     v.setProperty("name", "Foo");
     db.save(v);
@@ -48,7 +48,7 @@ public class TransactionMetadataTest {
   public void testBackupRestore() throws IOException {
     db.begin();
     byte[] metadata = new byte[] { 1, 2, 4 };
-    ((OTransactionInternal) db.getTransaction()).setMetadata(Optional.of(metadata));
+    ((OTransactionInternal) db.getTransaction()).setMetadataHolder(Optional.of(new TestMetadataHolder(metadata)));
     OVertex v = db.newVertex("V");
     v.setProperty("name", "Foo");
     db.save(v);
@@ -76,4 +76,21 @@ public class TransactionMetadataTest {
     orientDB.close();
   }
 
+  private static class TestMetadataHolder implements OTxMetadataHolder {
+    private final byte[] metadata;
+
+    public TestMetadataHolder(byte[] metadata) {
+      this.metadata = metadata;
+    }
+
+    @Override
+    public byte[] metadata() {
+      return metadata;
+    }
+
+    @Override
+    public void notifyMetadataRead() {
+
+    }
+  }
 }

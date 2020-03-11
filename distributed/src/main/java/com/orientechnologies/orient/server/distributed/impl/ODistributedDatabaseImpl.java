@@ -38,6 +38,7 @@ import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.storage.ORawBuffer;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
+import com.orientechnologies.orient.core.tx.OTxMetadataHolder;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.OSystemDatabase;
 import com.orientechnologies.orient.server.distributed.*;
@@ -45,7 +46,6 @@ import com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIR
 import com.orientechnologies.orient.server.distributed.impl.task.ODistributedLockTask;
 import com.orientechnologies.orient.server.distributed.impl.task.OUnreachableServerLocalTask;
 import com.orientechnologies.orient.server.distributed.OTransactionId;
-import com.orientechnologies.orient.server.distributed.impl.task.transaction.OTransactionSequenceManager;
 import com.orientechnologies.orient.server.distributed.task.OAbstractRemoteTask;
 import com.orientechnologies.orient.server.distributed.task.ODistributedRecordLockedException;
 import com.orientechnologies.orient.server.distributed.task.ORemoteTask;
@@ -96,11 +96,11 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
   private          AtomicBoolean                         parsing               = new AtomicBoolean(true);
   private final    AtomicReference<ODistributedMomentum> filterByMomentum      = new AtomicReference<ODistributedMomentum>();
 
-  private final String                      localNodeName;
-  private final OSimpleLockManager<ORID>    recordLockManager;
-  private final OSimpleLockManager<Object>  indexKeyLockManager;
-  private       AtomicLong                  operationsRunnig = new AtomicLong(0);
-  private       OTransactionSequenceManager sequenceManager;
+  private final String                           localNodeName;
+  private final OSimpleLockManager<ORID>         recordLockManager;
+  private final OSimpleLockManager<Object>       indexKeyLockManager;
+  private       AtomicLong                       operationsRunnig = new AtomicLong(0);
+  private       ODistributedSynchronizedSequence sequenceManager;
 
   public OSimpleLockManager<ORID> getRecordLockManager() {
     return recordLockManager;
@@ -205,7 +205,7 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
     long timeout = manager.getServerInstance().getContextConfiguration().getValueAsLong(DISTRIBUTED_ATOMIC_LOCK_TIMEOUT);
     recordLockManager = new OSimpleLockManagerImpl<>(timeout);
     indexKeyLockManager = new OSimpleLockManagerImpl<>(timeout);
-    sequenceManager = new OTransactionSequenceManager(localNodeName);
+    sequenceManager = new ODistributedSynchronizedSequence(localNodeName);
   }
 
   public OLogSequenceNumber getLastLSN(final String server) {
@@ -823,8 +823,8 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
   }
 
   @Override
-  public void commit(OTransactionId id) {
-    sequenceManager.notifySuccess(id);
+  public OTxMetadataHolder commit(OTransactionId id) {
+    return sequenceManager.notifySuccess(id);
   }
 
   @Override

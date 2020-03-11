@@ -114,4 +114,5 @@ public class OTransactionOptimisticDistributed extends OTransactionOptimistic {
   public void setDatabase(ODatabaseDocumentInternal database) {
     this.database = database;
   }
+
 }

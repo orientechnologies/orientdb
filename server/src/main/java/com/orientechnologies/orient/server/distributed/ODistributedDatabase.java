@@ -25,6 +25,7 @@ import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.storage.ORawBuffer;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
+import com.orientechnologies.orient.core.tx.OTxMetadataHolder;
 import com.orientechnologies.orient.server.distributed.task.ORemoteTask;
 
 import java.io.IOException;
@@ -116,7 +117,7 @@ public interface ODistributedDatabase {
 
   void rollback(OTransactionId id);
 
-  void commit(OTransactionId id);
+  OTxMetadataHolder commit(OTransactionId id);
 
   ODistributedTxContext registerTxContext(ODistributedRequestId reqId);
 
