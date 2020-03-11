@@ -170,9 +170,9 @@ public class OScheduledEvent extends ODocumentWrapper {
 
   private static class ScheduledTimerTask extends TimerTask {
 
-    private final OScheduledEvent event;
-    private final String database;
-    private final String user;
+    private final OScheduledEvent  event;
+    private final String           database;
+    private final String           user;
     private final OrientDBInternal orientDB;
 
     private ScheduledTimerTask(OScheduledEvent event, String database, String user, OrientDBInternal orientDB) {
@@ -217,11 +217,13 @@ public class OScheduledEvent extends ODocumentWrapper {
         event.setRunning(true);
 
         OLogManager.instance()
-                .info(this, "Checking for the execution of the scheduled event '%s' executionId=%d...", event.getName(), event.nextExecutionId.get());
+            .info(this, "Checking for the execution of the scheduled event '%s' executionId=%d...", event.getName(),
+                event.nextExecutionId.get());
         try {
           boolean executeEvent = executeEvent();
           if (executeEvent) {
-            OLogManager.instance().info(this, "Executing scheduled event '%s' executionId=%d...", event.getName(), event.nextExecutionId.get());
+            OLogManager.instance()
+                .info(this, "Executing scheduled event '%s' executionId=%d...", event.getName(), event.nextExecutionId.get());
             executeEventFunction();
           }
 
@@ -244,44 +246,34 @@ public class OScheduledEvent extends ODocumentWrapper {
           if (isEventAlreadyExecuted())
             break;
 
-          try {
-            event.document.field(PROP_STATUS, STATUS.RUNNING);
-            event.document.field(PROP_STARTTIME, System.currentTimeMillis());
-            event.document.field(PROP_EXEC_ID, event.nextExecutionId.get());
+          event.document.field(PROP_STATUS, STATUS.RUNNING);
+          event.document.field(PROP_STARTTIME, System.currentTimeMillis());
+          event.document.field(PROP_EXEC_ID, event.nextExecutionId.get());
 
-            event.document.save();
-
-          } catch (Exception e) {
-            OLogManager.instance().error(this, "Error on saving status for event '%s'", e, event.getName());
-            if (!event.running.get()) {
-              // EVENT CANCELED
-              return false;
-            }
-          }
+          event.document.save();
 
           // OK
           return true;
         } catch (ONeedRetryException e) {
-
+          event.document.reload(null, true);
           // CONCURRENT UPDATE, PROBABLY EXECUTED BY ANOTHER SERVER
           if (isEventAlreadyExecuted())
             break;
 
           OLogManager.instance()
-                  .info(this, "Cannot change the status of the scheduled event '%s' executionId=%d, retry %d", e, event.getName(),
-                          event.nextExecutionId.get(), retry);
+              .info(this, "Cannot change the status of the scheduled event '%s' executionId=%d, retry %d", e, event.getName(),
+                  event.nextExecutionId.get(), retry);
 
         } catch (ORecordNotFoundException e) {
           OLogManager.instance()
-                  .info(this, "Scheduled event '%s' executionId=%d not found on database, removing event", e, event.getName(),
-                          event.nextExecutionId.get());
+              .info(this, "Scheduled event '%s' executionId=%d not found on database, removing event", e, event.getName(),
+                  event.nextExecutionId.get());
           event.interrupt();
           break;
         } catch (Exception e) {
           // SUSPEND EXECUTION
-          OLogManager.instance()
-                  .error(this, "Error during starting of scheduled event '%s' executionId=%d", e, event.getName(),
-                          event.nextExecutionId.get());
+          OLogManager.instance().error(this, "Error during starting of scheduled event '%s' executionId=%d", e, event.getName(),
+              event.nextExecutionId.get());
 
           event.interrupt();
           break;
@@ -295,15 +287,17 @@ public class OScheduledEvent extends ODocumentWrapper {
       try {
         result = event.function.execute(event.getArguments());
       } finally {
-        OLogManager.instance()
-                .info(this, "Scheduled event '%s' executionId=%d completed with result: %s", event.getName(),
-                        event.nextExecutionId.get(), result);
-
-        try {
-          event.document.field(PROP_STATUS, STATUS.WAITING);
-          event.document.save();
-        } catch (Exception e) {
-          OLogManager.instance().error(this, "Error on saving status for event '%s'", e, event.getName());
+        OLogManager.instance().info(this, "Scheduled event '%s' executionId=%d completed with result: %s", event.getName(),
+            event.nextExecutionId.get(), result);
+        for (int retry = 0; retry < 10; ++retry) {
+          try {
+            event.document.field(PROP_STATUS, STATUS.WAITING);
+            event.document.save();
+          } catch (ONeedRetryException e) {
+            event.document.reload(null, true);
+          } catch (Exception e) {
+            OLogManager.instance().error(this, "Error on saving status for event '%s'", e, event.getName());
+          }
         }
       }
     }
@@ -321,9 +315,8 @@ public class OScheduledEvent extends ODocumentWrapper {
         return false;
 
       if (currentExecutionId >= event.nextExecutionId.get()) {
-        OLogManager.instance()
-                .info(this, "Scheduled event '%s' with id %d is already running (current id=%d)",
-                        event.getName(), event.nextExecutionId.get(), currentExecutionId);
+        OLogManager.instance().info(this, "Scheduled event '%s' with id %d is already running (current id=%d)", event.getName(),
+            event.nextExecutionId.get(), currentExecutionId);
         // ALREADY RUNNING
         return true;
       }
