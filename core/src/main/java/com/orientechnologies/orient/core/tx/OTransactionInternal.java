@@ -105,7 +105,7 @@ public interface OTransactionInternal extends OBasicTransaction {
     return Optional.empty();
   }
 
-  void setMetadata(Optional<byte[]> metadata);
+  void setMetadataHolder(Optional<OTxMetadataHolder> metadata);
 
   default void storageBegun() {
 

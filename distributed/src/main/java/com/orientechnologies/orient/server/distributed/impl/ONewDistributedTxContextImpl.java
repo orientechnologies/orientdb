@@ -5,16 +5,14 @@ import com.orientechnologies.common.concur.lock.OSimpleLockManager;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
+import com.orientechnologies.orient.core.tx.OTxMetadataHolder;
 import com.orientechnologies.orient.core.tx.OTransactionInternal;
 import com.orientechnologies.orient.server.distributed.*;
 import com.orientechnologies.orient.server.distributed.task.ODistributedKeyLockedException;
 import com.orientechnologies.orient.server.distributed.task.ODistributedRecordLockedException;
 import com.orientechnologies.orient.server.distributed.task.ORemoteTask;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 public class ONewDistributedTxContextImpl implements ODistributedTxContext {
 
@@ -96,8 +94,13 @@ public class ONewDistributedTxContextImpl implements ODistributedTxContext {
   public synchronized void commit(ODatabaseDocumentInternal database) {
     ODistributedDatabase localDistributedDatabase = ((ODatabaseDocumentDistributed) database).getStorageDistributed()
         .getLocalDistributedDatabase();
-    localDistributedDatabase.commit(getTransactionId());
-    ((ODatabaseDocumentDistributed) database).internalCommit2pc(this);
+    OTxMetadataHolder metadataHolder = localDistributedDatabase.commit(getTransactionId());
+    try {
+      tx.setMetadataHolder(Optional.of(metadataHolder));
+      ((ODatabaseDocumentDistributed) database).internalCommit2pc(this);
+    } finally {
+      metadataHolder.notifyMetadataRead();
+    }
   }
 
   @Override
