@@ -15,6 +15,7 @@
                                     <label>User</label>
                                     <input type="text" class="form-control" name="user" [(ngModel)]="query.user">
                                 </div>
+                                
                                 <div class="col-md-3">
                                     <label>Operation</label>
                                     <select class="form-control" name="operation" [(ngModel)]="query.operation">
@@ -120,6 +121,9 @@
                             User
                         </th>
                         <th>
+                            UserType
+                        </th>
+                        <th>
                             Date
                         </th>
                         <th>
@@ -144,6 +148,9 @@
                     <tr *ngFor="let log of logs">
                         <td>
                             {{log.username}}
+                        </td>
+                        <td>
+                            {{log.userType}}
                         </td>
                         <td>
                             {{log.date | date : 'medium'}}
