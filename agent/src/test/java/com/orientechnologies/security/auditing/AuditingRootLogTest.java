@@ -2,6 +2,7 @@ package com.orientechnologies.security.auditing;
 
 import com.orientechnologies.common.io.OIOUtils;
 import com.orientechnologies.orient.core.db.ODatabaseSession;
+import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.exception.OSecurityAccessException;
 import com.orientechnologies.orient.core.metadata.security.OSystemUser;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -88,13 +89,14 @@ public class AuditingRootLogTest extends EEBaseServerHttpTest {
   @Test
   public void reloadSecurityTest() throws Exception {
 
+    String security = OIOUtils
+        .readStreamAsString(Thread.currentThread().getContextClassLoader().getResourceAsStream("security.json"));
+
     server.getSystemDatabase().executeWithDB((db) -> {
       db.command("delete from OAuditingLog");
       return null;
     });
 
-    String security = OIOUtils
-        .readStreamAsString(Thread.currentThread().getContextClassLoader().getResourceAsStream("security.json"));
     server.getSecurity().reload(new OSystemUser("root", null, "Server"), new ODocument().fromJSON(security, "noMap"));
 
     Thread.sleep(2000);
@@ -117,13 +119,17 @@ public class AuditingRootLogTest extends EEBaseServerHttpTest {
   @Test
   public void postSecurity() throws IOException {
 
-    server.getSystemDatabase().executeWithDB((db) -> {
-      db.command("delete from OAuditingLog");
-      return null;
-    });
-
     String security = OIOUtils
         .readStreamAsString(Thread.currentThread().getContextClassLoader().getResourceAsStream("security.json"));
+
+    try {
+      server.getSystemDatabase().executeWithDB((db) -> {
+        db.command("delete from OAuditingLog");
+        return null;
+      });
+    } catch (OCommandExecutionException e) {
+
+    }
 
     ODocument config = new ODocument().fromJSON(security, "noMap");
 
