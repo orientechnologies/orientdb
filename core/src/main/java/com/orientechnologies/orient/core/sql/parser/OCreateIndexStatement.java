@@ -75,8 +75,8 @@ public class OCreateIndexStatement extends ODDLStatement {
 
       if (keyTypes != null && keyTypes.length > 0) {
         idx = database.getMetadata().getIndexManagerInternal()
-            .createIndex(database, name.getValue(), type.getStringValue(), new OSimpleKeyIndexDefinition(keyTypes, collatesList), null, null,
-                metadataDoc, engine);
+            .createIndex(database, name.getValue(), type.getStringValue(), new OSimpleKeyIndexDefinition(keyTypes, collatesList),
+                null, null, metadataDoc, engine);
       } else if (keyTypes != null && keyTypes.length == 0 && "LUCENE_CROSS_CLASS".equalsIgnoreCase(engine)) {
         //handle special case of cross class  Lucene index: awful but works
         OIndexDefinition keyDef = new OSimpleKeyIndexDefinition(new OType[] { OType.STRING }, collatesList);
@@ -116,8 +116,8 @@ public class OCreateIndexStatement extends ODDLStatement {
     return null;
   }
 
-  private OIndex getoIndex(OClass oClass, String[] fields, String engine, ODatabaseDocumentInternal database, List<OCollate> collatesList,
-      ODocument metadataDoc) {
+  private OIndex getoIndex(OClass oClass, String[] fields, String engine, ODatabaseDocumentInternal database,
+      List<OCollate> collatesList, ODocument metadataDoc) {
     OIndex idx;
     if ((keyTypes == null || keyTypes.size() == 0) && collatesList == null) {
 
@@ -136,11 +136,11 @@ public class OCreateIndexStatement extends ODDLStatement {
         fieldTypeList = keyTypes.stream().map(x -> OType.valueOf(x.getStringValue())).collect(Collectors.toList());
 
       final OIndexDefinition idxDef = OIndexDefinitionFactory
-          .createIndexDefinition(oClass, Arrays.asList(fields), fieldTypeList, collatesList, type.getStringValue(), null);
+          .createIndexDefinition(oClass, Arrays.asList(fields), fieldTypeList, collatesList, type.getStringValue(), engine);
 
       idx = database.getMetadata().getIndexManagerInternal()
-          .createIndex(database, name.getValue(), type.getStringValue(), idxDef, oClass.getPolymorphicClusterIds(), null, metadataDoc,
-              engine);
+          .createIndex(database, name.getValue(), type.getStringValue(), idxDef, oClass.getPolymorphicClusterIds(), null,
+              metadataDoc, engine);
     }
     return idx;
   }
