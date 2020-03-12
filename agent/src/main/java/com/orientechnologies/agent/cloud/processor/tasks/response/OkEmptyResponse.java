@@ -1,4 +1,4 @@
-package com.orientechnologies.agent.cloud.processor.tasks;
+package com.orientechnologies.agent.cloud.processor.tasks.response;
 
 import com.orientechnologies.orient.server.distributed.operation.NodeOperationResponse;
 

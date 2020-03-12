@@ -41,11 +41,6 @@ public class OServerCommandGetNode extends OServerCommandDistributedScope {
   }
 
   @Override
-  void proxyRequest(OHttpRequest iRequest, OHttpResponse iResponse) {
-    throw new UnsupportedOperationException();
-  }
-
-  @Override
   public boolean execute(OHttpRequest iRequest, OHttpResponse iResponse) throws Exception {
     final String[] parts = checkSyntax(iRequest.getUrl(), 2, "Syntax error: node/<command>/[<id>]");
 
@@ -59,7 +54,7 @@ public class OServerCommandGetNode extends OServerCommandDistributedScope {
       }
 
     } else {
-      proxyRequest(iRequest, iResponse);
+      proxyRequest(iRequest, null);
     }
     return false;
   }

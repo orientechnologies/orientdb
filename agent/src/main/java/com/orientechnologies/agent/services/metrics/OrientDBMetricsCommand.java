@@ -2,8 +2,8 @@ package com.orientechnologies.agent.services.metrics;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.orientechnologies.agent.EnterprisePermissions;
-import com.orientechnologies.agent.cloud.processor.tasks.EnterpriseStatsResponse;
-import com.orientechnologies.agent.cloud.processor.tasks.NewEnterpriseStatsTask;
+import com.orientechnologies.agent.cloud.processor.tasks.response.EnterpriseStatsResponse;
+import com.orientechnologies.agent.cloud.processor.tasks.request.NewEnterpriseStatsTask;
 import com.orientechnologies.agent.operation.NodeResponse;
 import com.orientechnologies.agent.operation.OperationResponseFromNode;
 import com.orientechnologies.agent.operation.ResponseOk;

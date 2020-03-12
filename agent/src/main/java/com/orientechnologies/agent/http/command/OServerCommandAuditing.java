@@ -18,6 +18,7 @@
 package com.orientechnologies.agent.http.command;
 
 import com.orientechnologies.agent.EnterprisePermissions;
+import com.orientechnologies.agent.operation.OperationResponseFromNode;
 import com.orientechnologies.enterprise.server.OEnterpriseServer;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -38,11 +39,6 @@ public class OServerCommandAuditing extends OServerCommandDistributedScope {
 
   public OServerCommandAuditing(OEnterpriseServer server) {
     super(EnterprisePermissions.SERVER_SECURITY.toString(), server);
-  }
-
-  @Override
-  void proxyRequest(OHttpRequest iRequest, OHttpResponse iResponse) {
-    throw new UnsupportedOperationException();
   }
 
   @Override
@@ -69,7 +65,7 @@ public class OServerCommandAuditing extends OServerCommandDistributedScope {
         }
       }
     } else {
-      proxyRequest(iRequest, iResponse);
+      proxyRequest(iRequest, null);
     }
     return false;
   }

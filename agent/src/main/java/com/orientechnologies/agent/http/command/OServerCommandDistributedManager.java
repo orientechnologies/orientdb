@@ -53,11 +53,6 @@ public class OServerCommandDistributedManager extends OServerCommandDistributedS
   }
 
   @Override
-  void proxyRequest(OHttpRequest iRequest, OHttpResponse iResponse) {
-    throw new UnsupportedOperationException();
-  }
-
-  @Override
   public boolean execute(final OHttpRequest iRequest, OHttpResponse iResponse) throws Exception {
     iRequest.getData().commandInfo = "Distributed information";
     return super.execute(iRequest, iResponse);

@@ -67,6 +67,8 @@ public interface OEnterpriseServer {
 
   List<OResult> listQueries(Optional<Function<OClientConnection, Boolean>> filter);
 
+  List<OResult> getQueryStats(Optional<String> database);
+
   Optional<QueryInfo> getQueryInfo(OResultSet resultSet);
 
   <T extends OEnterpriseService> Optional<T> getServiceByClass(Class<T> klass);

@@ -1,6 +1,7 @@
-package com.orientechnologies.agent.cloud.processor.tasks;
+package com.orientechnologies.agent.cloud.processor.tasks.request;
 
 import com.orientechnologies.agent.OEnterpriseAgent;
+import com.orientechnologies.agent.cloud.processor.tasks.response.EnterpriseStatsResponse;
 import com.orientechnologies.agent.services.metrics.OrientDBMetricsService;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;

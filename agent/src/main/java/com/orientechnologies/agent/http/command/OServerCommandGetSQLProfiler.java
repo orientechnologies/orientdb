@@ -19,14 +19,11 @@ package com.orientechnologies.agent.http.command;
 
 import com.orientechnologies.agent.EnterprisePermissions;
 import com.orientechnologies.enterprise.server.OEnterpriseServer;
-import com.orientechnologies.orient.core.Orient;
-import com.orientechnologies.orient.core.serialization.serializer.OJSONWriter;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpRequest;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpResponse;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpUtils;
 
 import java.io.IOException;
-import java.io.StringWriter;
 import java.util.Optional;
 
 public class OServerCommandGetSQLProfiler extends OServerCommandDistributedScope {
@@ -37,11 +34,6 @@ public class OServerCommandGetSQLProfiler extends OServerCommandDistributedScope
     super(EnterprisePermissions.SERVER_METRICS.toString(), server);
 
     this.eeServer = server;
-  }
-
-  @Override
-  void proxyRequest(OHttpRequest iRequest, OHttpResponse iResponse) {
-    throw new UnsupportedOperationException();
   }
 
   @Override
@@ -58,7 +50,7 @@ public class OServerCommandGetSQLProfiler extends OServerCommandDistributedScope
           doGet(iRequest, iResponse, parts, db);
         }
       } else {
-        proxyRequest(iRequest, iResponse);
+        proxyRequest(iRequest, null);
       }
 
     } catch (Exception e) {
@@ -81,11 +73,8 @@ public class OServerCommandGetSQLProfiler extends OServerCommandDistributedScope
 
       break;
     case "stats":
-
-      final StringWriter jsonBuffer = new StringWriter();
-      final OJSONWriter json = new OJSONWriter(jsonBuffer);
-      json.append(Orient.instance().getProfiler().toJSON("realtime", "db." + db + ".command"));
-      iResponse.send(OHttpUtils.STATUS_OK_CODE, "OK", OHttpUtils.CONTENT_JSON, jsonBuffer.toString(), null);
+      Optional database = Optional.ofNullable(db);
+      iResponse.writeResult(eeServer.getQueryStats(database));
       break;
     default:
       throw new UnsupportedOperationException();

@@ -30,7 +30,7 @@ public abstract class OServerCommandDistributedScope extends OServerCommandDistr
 
   }
 
-  public List<OperationResponseFromNode> sendTask(OHttpRequest iRequest, NodeOperation op) {
+  private List<OperationResponseFromNode> sendTask(OHttpRequest iRequest, NodeOperation op) {
 
     String node = iRequest.getParameter("node");
     if ("_all".equalsIgnoreCase(node)) {
@@ -41,7 +41,12 @@ public abstract class OServerCommandDistributedScope extends OServerCommandDistr
 
   }
 
-  abstract void proxyRequest(OHttpRequest iRequest, OHttpResponse iResponse);
+  List<OperationResponseFromNode> proxyRequest(OHttpRequest iRequest, NodeOperation op) {
+    if (op == null) {
+      throw new UnsupportedOperationException();
+    }
+    return sendTask(iRequest, op);
+  }
 
   protected ODatabaseDocumentInternal getProfiledDatabaseInstance(final OHttpRequest iRequest) throws InterruptedException {
     // after authentication, if current login user is different compare with current DB user, reset DB user to login user
@@ -81,7 +86,7 @@ public abstract class OServerCommandDistributedScope extends OServerCommandDistr
           doDelete(iRequest, iResponse);
         }
       } else {
-        proxyRequest(iRequest, iResponse);
+        proxyRequest(iRequest, null);
       }
     } catch (Exception e) {
       iResponse.send(OHttpUtils.STATUS_BADREQ_CODE, OHttpUtils.STATUS_BADREQ_DESCRIPTION, OHttpUtils.CONTENT_TEXT_PLAIN, e, null);

@@ -1,8 +1,14 @@
 package com.orientechnologies.enterprise.server;
 
+import com.codahale.metrics.Histogram;
+import com.codahale.metrics.Snapshot;
 import com.orientechnologies.agent.OEnterpriseAgent;
 import com.orientechnologies.agent.operation.NodesManager;
+import com.orientechnologies.agent.profiler.metrics.OHistogram;
+import com.orientechnologies.agent.profiler.metrics.OSnapshot;
 import com.orientechnologies.agent.services.OEnterpriseService;
+import com.orientechnologies.agent.services.metrics.OrientDBMetricsService;
+import com.orientechnologies.agent.services.metrics.server.OrientDBServerMetrics;
 import com.orientechnologies.agent.services.metrics.server.database.QueryInfo;
 import com.orientechnologies.enterprise.server.listener.OEnterpriseConnectionListener;
 import com.orientechnologies.enterprise.server.listener.OEnterpriseStorageListener;
@@ -60,6 +66,7 @@ public class OEnterpriseServerImpl
     Orient.instance().addDbLifecycleListener(this);
 
     this.server.registerLifecycleListener(this);
+
   }
 
   @Override
@@ -197,6 +204,7 @@ public class OEnterpriseServerImpl
     if (server.getDistributedManager() != null) {
       nodesManager = new NodesManager(server.getDistributedManager());
     }
+
   }
 
   @Override
@@ -317,6 +325,40 @@ public class OEnterpriseServerImpl
 
           return internal;
         })).collect(Collectors.toList());
+  }
+
+  @Override
+  public List<OResult> getQueryStats(Optional<String> database) {
+
+    return agent.getServiceByClass(OrientDBMetricsService.class).map((service) -> {
+      SortedMap<String, OHistogram> histograms = service.getRegistry()
+          .getHistograms((name, metric) -> name.matches("(?s)db.*.query.*"));
+      return histograms.entrySet().stream().sorted((v1, v2) -> {
+        OSnapshot snapshot1 = v1.getValue().getSnapshot();
+        OSnapshot snapshot2 = v2.getValue().getSnapshot();
+        return Double.compare(snapshot2.getMean(), snapshot1.getMean());
+      }).map((e) -> {
+          OResultInternal result = new OResultInternal();
+        String key = e.getKey();
+        OHistogram h = e.getValue();
+        OSnapshot snapshot = h.getSnapshot();
+        String statement = key.substring(key.indexOf(".query.") + 7);
+        String language = statement.substring(0, statement.indexOf("."));
+        String query = statement.substring(statement.indexOf(".") + 1);
+        String db = key.substring(key.indexOf("db.") + 3, key.indexOf(".query."));
+
+        result.setProperty("database", db);
+        result.setProperty("language", language);
+        result.setProperty("query", query);
+
+        result.setProperty("count", h.getCount());
+        result.setProperty("max", snapshot.getMax());
+        result.setProperty("min", snapshot.getMin());
+        result.setProperty("mean", snapshot.getMean());
+        return (OResult) result;
+      }).filter(f -> database.map(e -> e.equalsIgnoreCase(f.getProperty("database"))).orElse(true)).collect(Collectors.toList());
+
+    }).orElse(new ArrayList());
   }
 
   @Override
