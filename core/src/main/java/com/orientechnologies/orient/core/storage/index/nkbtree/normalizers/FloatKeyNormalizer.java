@@ -8,7 +8,8 @@ public class FloatKeyNormalizer implements KeyNormalizers {
   @Override
   public byte[] execute(final Object key, final ByteOrder byteOrder, int decompositon) throws IOException {
     final ByteBuffer bb = ByteBuffer.allocate(5);
-    bb.order(byteOrder);
+    // IEEE 754 (endian sensitive)
+    bb.order(ByteOrder.BIG_ENDIAN);
     bb.put((byte) 0);
     bb.putFloat((Float) key);
     return bb.array();

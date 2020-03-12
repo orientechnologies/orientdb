@@ -6,11 +6,11 @@ import java.nio.ByteOrder;
 
 public class ByteKeyNormalizer implements KeyNormalizers {
   @Override
-  public byte[] execute(Object key, final ByteOrder byteOrder, int decompositon) throws IOException {
+  public byte[] execute(final Object key, final ByteOrder byteOrder, final int decompositon) throws IOException {
     final ByteBuffer bb = ByteBuffer.allocate(2);
-    bb.order(byteOrder);
+    bb.order(ByteOrder.BIG_ENDIAN);
     bb.put((byte) 0);
-    bb.put((Byte) key);
+    bb.put((byte)((byte) key + Byte.MAX_VALUE + 1));
     return bb.array();
   }
 }

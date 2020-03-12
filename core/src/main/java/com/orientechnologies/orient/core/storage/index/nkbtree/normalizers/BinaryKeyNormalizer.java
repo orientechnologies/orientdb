@@ -9,7 +9,6 @@ public class BinaryKeyNormalizer implements KeyNormalizers {
   public byte[] execute(Object key, ByteOrder byteOrder, int decomposition) throws IOException {
     final byte[] matKey = (byte[]) key;
     final ByteBuffer bb = ByteBuffer.allocate(1 + matKey.length);
-    bb.order(byteOrder);
     bb.put((byte) 0);
     bb.put(matKey);
     return bb.array();

@@ -8,12 +8,9 @@ public class LongKeyNormalizer implements KeyNormalizers {
   @Override
   public byte[] execute(Object key, final ByteOrder byteOrder, int decompositon) throws IOException {
     final ByteBuffer bb = ByteBuffer.allocate(9);
-    // final ByteBuffer bb = ByteBuffer.allocate(8);
-    bb.order(byteOrder);
+    bb.order(ByteOrder.BIG_ENDIAN);
     bb.put((byte) 0);
-    // long matKey = (long) key;
-    // bb.putLong(matKey |= Long.MIN_VALUE);
-    bb.putLong((long) key);
+    bb.putLong(((long) key) + Long.MAX_VALUE + 1);
     return bb.array();
   }
 }
