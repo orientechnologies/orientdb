@@ -34,11 +34,9 @@ export class RunningQueryProfilerComponent
 
   fetchQueries() {
     if (this.server) {
-      this.profiler
-        .runningQueries({ server: this.server, db: this.database })
-        .then(response => {
-          this.queries = response.result;
-        });
+      this.profiler.runningQueries({ db: this.database }).then(response => {
+        this.queries = response.result;
+      });
     }
   }
   ngOnChanges(simpleChange: SimpleChanges) {

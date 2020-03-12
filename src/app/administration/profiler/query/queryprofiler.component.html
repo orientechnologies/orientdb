@@ -11,12 +11,6 @@
         <div class="col-md-12">
             <form class="form-inline studio-well">
                 <div class="form-group">
-                    <label>Server </label>
-                    <select id="serverOnline" name="server" [(ngModel)]="server" class="form-control " data-placeholder="Pick a Server">
-                        <option *ngFor="let server of servers" [value]="server">{{server}}</option>
-                    </select>
-                </div>
-                <div class="form-group">
                     <label>Database </label>
                     <select id="databasesOnline" name="db" [(ngModel)]="database" class="form-control" data-placeholder="Pick a Server">
                         <option *ngFor="let db of databases" [value]="db">{{db}}</option>

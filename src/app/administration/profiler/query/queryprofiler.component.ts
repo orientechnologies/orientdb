@@ -21,7 +21,7 @@ export class QueryProfilerComponent implements OnInit {
       response => {
         this.databases = response[0].databases;
         this.servers = Object.keys(response[1].clusterStats);
-        this.server = this.servers[0];
+        this.server = response[1].nodeName;
       }
     );
   }
