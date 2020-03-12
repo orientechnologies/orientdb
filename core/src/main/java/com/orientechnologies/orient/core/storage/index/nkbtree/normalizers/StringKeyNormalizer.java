@@ -6,14 +6,13 @@ import org.apache.commons.lang.ArrayUtils;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
 
 public class StringKeyNormalizer implements KeyNormalizers {
   final Collator instance = Collator.getInstance();
 
   @Override
-  public byte[] execute(final Object key, final ByteOrder byteOrder, final int decompositon) throws IOException {
-    instance.setDecomposition(decompositon);
+  public byte[] execute(Object key, int decomposition) throws IOException {
+    instance.setDecomposition(decomposition);
     final CollationKey collationKey = instance.getCollationKey((String) key);
     final ByteBuffer bb = ByteBuffer.allocate(1);
     bb.put((byte)0);

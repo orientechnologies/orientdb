@@ -6,7 +6,7 @@ import java.nio.ByteOrder;
 
 public class DoubleKeyNormalizer implements KeyNormalizers {
   @Override
-  public byte[] execute(Object key, final ByteOrder byteOrder, int decompositon) throws IOException {
+  public byte[] execute(Object key, int decomposition) throws IOException {
     final ByteBuffer bb = ByteBuffer.allocate(9);
     // IEEE 754 (endian sensitive)
     bb.order(ByteOrder.BIG_ENDIAN);

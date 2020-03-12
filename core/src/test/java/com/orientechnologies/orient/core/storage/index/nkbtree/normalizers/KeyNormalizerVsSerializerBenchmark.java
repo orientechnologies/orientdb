@@ -56,7 +56,7 @@ public class KeyNormalizerVsSerializerBenchmark {
   @Benchmark
   public void booleanNormalizer() throws Exception {
     final BooleanKeyNormalizer normalizer = new BooleanKeyNormalizer();
-    normalizer.execute(true, byteOrder,0);
+    normalizer.execute(true,0);
   }
 
   @Benchmark
@@ -68,7 +68,7 @@ public class KeyNormalizerVsSerializerBenchmark {
   @Benchmark
   public void byteNormalizer() throws Exception {
     final ByteKeyNormalizer normalizer = new ByteKeyNormalizer();
-    normalizer.execute((byte) 3, byteOrder,0);
+    normalizer.execute((byte) 3,0);
   }
 
   @Benchmark
@@ -80,7 +80,7 @@ public class KeyNormalizerVsSerializerBenchmark {
   @Benchmark
   public void integerNormalizer() throws Exception {
     final IntegerKeyNormalizer normalizer = new IntegerKeyNormalizer();
-    normalizer.execute(5, byteOrder,0);
+    normalizer.execute(5,0);
   }
 
   @Benchmark
@@ -92,7 +92,7 @@ public class KeyNormalizerVsSerializerBenchmark {
   @Benchmark
   public void floatNormalizer() throws Exception {
     final FloatKeyNormalizer normalizer = new FloatKeyNormalizer();
-    normalizer.execute(1.5f, byteOrder,0);
+    normalizer.execute(1.5f,0);
   }
 
   @Benchmark
@@ -104,7 +104,7 @@ public class KeyNormalizerVsSerializerBenchmark {
   @Benchmark
   public void doubleNormalizer() throws Exception {
     final DoubleKeyNormalizer normalizer = new DoubleKeyNormalizer();
-    normalizer.execute(1.5d, byteOrder,0);
+    normalizer.execute(1.5d,0);
   }
 
   @Benchmark
@@ -116,7 +116,7 @@ public class KeyNormalizerVsSerializerBenchmark {
   @Benchmark
   public void shortNormalizer() throws Exception {
     final ShortKeyNormalizer normalizer = new ShortKeyNormalizer();
-    normalizer.execute((short) 3, byteOrder,0);
+    normalizer.execute((short) 3,0);
   }
 
   @Benchmark
@@ -128,7 +128,7 @@ public class KeyNormalizerVsSerializerBenchmark {
   @Benchmark
   public void longNormalizer() throws Exception {
     final LongKeyNormalizer normalizer = new LongKeyNormalizer();
-    normalizer.execute(5L, byteOrder, 0);
+    normalizer.execute(5L, 0);
   }
 
   @Benchmark
@@ -146,7 +146,7 @@ public class KeyNormalizerVsSerializerBenchmark {
   @Benchmark
   public void stringNormalizer() throws Exception {
     final StringKeyNormalizer normalizer = new StringKeyNormalizer();
-    normalizer.execute("abcd", byteOrder, Collator.NO_DECOMPOSITION);
+    normalizer.execute("abcd", Collator.NO_DECOMPOSITION);
   }
 
   @Benchmark
@@ -160,7 +160,7 @@ public class KeyNormalizerVsSerializerBenchmark {
   public void binaryNormalizer() throws Exception {
     final BinaryKeyNormalizer normalizer = new BinaryKeyNormalizer();
     final byte[] binary = new byte[] { 1, 2, 3, 4, 5, 6 };
-    normalizer.execute(binary, byteOrder, 0);
+    normalizer.execute(binary, 0);
   }
 
   @Benchmark
@@ -174,7 +174,7 @@ public class KeyNormalizerVsSerializerBenchmark {
   public void dateNormalizer() throws Exception {
     final DateKeyNormalizer normalizer = new DateKeyNormalizer();
     final Date date = new GregorianCalendar(2013, Calendar.NOVEMBER, 5).getTime();
-    normalizer.execute(date, byteOrder, 0);
+    normalizer.execute(date, 0);
   }
 
   @Benchmark
@@ -190,6 +190,6 @@ public class KeyNormalizerVsSerializerBenchmark {
     final DateKeyNormalizer normalizer = new DateKeyNormalizer();
     final LocalDateTime ldt = LocalDateTime.of(2013, 11, 5, 3, 3, 3);
     final Date date = Date.from( ldt.atZone( ZoneId.systemDefault()).toInstant());
-    normalizer.execute(date, byteOrder, 0);
+    normalizer.execute(date, 0);
   }
 }

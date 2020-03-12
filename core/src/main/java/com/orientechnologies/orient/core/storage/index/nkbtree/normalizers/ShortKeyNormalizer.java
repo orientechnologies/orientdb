@@ -6,8 +6,7 @@ import java.nio.ByteOrder;
 
 public class ShortKeyNormalizer implements KeyNormalizers {
   @Override
-  public byte[] execute(Object key, final ByteOrder byteOrder, int decompositon) throws IOException {
-
+  public byte[] execute(Object key, int decomposition) throws IOException {
     final ByteBuffer bb = ByteBuffer.allocate(3);
     bb.order(ByteOrder.BIG_ENDIAN);
     bb.put((byte) 0);

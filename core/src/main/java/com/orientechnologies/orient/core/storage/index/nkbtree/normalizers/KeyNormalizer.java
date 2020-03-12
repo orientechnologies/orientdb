@@ -4,7 +4,6 @@ import com.orientechnologies.orient.core.index.OCompositeKey;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.nio.ByteOrder;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -13,11 +12,8 @@ import com.orientechnologies.orient.core.metadata.schema.OType;
 
 public class KeyNormalizer {
   private final Map<OType, KeyNormalizers> normalizers = new HashMap<>();
-  private final ByteOrder byteOrder;
 
   public KeyNormalizer() {
-    byteOrder = ByteOrder.nativeOrder();
-
     normalizers.put(null, new NullKeyNormalizer());
     normalizers.put(OType.INTEGER, new IntegerKeyNormalizer());
     normalizers.put(OType.FLOAT, new FloatKeyNormalizer());
@@ -54,7 +50,7 @@ public class KeyNormalizer {
       if (keyNormalizer == null) {
         throw new UnsupportedOperationException("Type " + key.getClass().getTypeName() + " is currently not supported");
       }
-      normalizedKeyStream.write(keyNormalizer.execute(key, byteOrder, decompositon));
+      normalizedKeyStream.write(keyNormalizer.execute(key, decompositon));
     } catch (final IOException e) {
       e.printStackTrace();
     }
