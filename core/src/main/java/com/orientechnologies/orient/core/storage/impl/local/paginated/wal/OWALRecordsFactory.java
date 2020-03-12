@@ -23,6 +23,7 @@ package com.orientechnologies.orient.core.storage.impl.local.paginated.wal;
 import com.orientechnologies.common.serialization.types.OIntegerSerializer;
 import com.orientechnologies.common.util.OPair;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.cas.OEmptyWALRecord;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.cas.OFuzzyCheckpointStartMetadataRecord;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.cas.OWriteableWALRecord;
 import net.jpountz.lz4.LZ4Compressor;
 import net.jpountz.lz4.LZ4Factory;
@@ -110,6 +111,9 @@ public final class OWALRecordsFactory {
       break;
     case FULL_CHECKPOINT_START_METADATA_RECORD:
       walRecord = new OFullCheckpointStartMetadataRecord();
+      break;
+    case FUZZY_CHECKPOINT_START_METADATA_RECORD:
+      walRecord = new OFuzzyCheckpointStartMetadataRecord();
       break;
     case CHECKPOINT_END_RECORD:
       walRecord = new OCheckpointEndRecord();
