@@ -16,6 +16,7 @@ public final class WALRecordTypes {
   public static final int ATOMIC_UNIT_START_METADATA_RECORD      = 15;
   public static final int FULL_CHECKPOINT_START_METADATA_RECORD  = 16;
   public static final int FUZZY_CHECKPOINT_START_METADATA_RECORD = 17;
+  public static final int HIGH_LEVEL_TRANSACTION_CHANGE_RECORD   = 18;
 
   public static final int CLUSTER_POSITION_MAP_INIT_PO                = 35;
   public static final int CLUSTER_POSITION_MAP_ADD_PO                 = 36;

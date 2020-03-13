@@ -66,4 +66,5 @@ public interface OAtomicOperation {
   void addDeletedRecordPosition(final int clusterId, final int pageIndex, final int recordPosition);
 
   Set<Integer> getBookedRecordPositions(final int clusterId, final int pageIndex);
+
 }
