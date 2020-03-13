@@ -75,10 +75,10 @@ public abstract class OIndexAbstract implements OIndexInternal {
   private final          AtomicLong                rebuildVersion  = new AtomicLong();
   private final          int                       version;
   protected volatile     IndexConfiguration        configuration;
-  protected              String                    valueContainerAlgorithm;
+  protected volatile     String                    valueContainerAlgorithm;
 
-  protected int indexId    = -1;
-  protected int apiVersion = -1;
+  protected volatile int indexId    = -1;
+  protected volatile int apiVersion = -1;
 
   protected        Set<String>         clustersToIndex  = new HashSet<>();
   private          String              algorithm;

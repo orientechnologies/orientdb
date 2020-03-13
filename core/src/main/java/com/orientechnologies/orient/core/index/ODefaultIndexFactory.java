@@ -15,6 +15,7 @@
  */
 package com.orientechnologies.orient.core.index;
 
+import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.index.engine.OBaseIndexEngine;
 import com.orientechnologies.orient.core.index.engine.v1.OCellBTreeIndexEngine;
@@ -55,6 +56,7 @@ public class ODefaultIndexFactory implements OIndexFactory {
     final Set<String> types = new HashSet<>();
     types.add(OClass.INDEX_TYPE.UNIQUE.toString());
     types.add(OClass.INDEX_TYPE.NOTUNIQUE.toString());
+    types.add(OClass.INDEX_TYPE.FULLTEXT.toString());
     types.add(OClass.INDEX_TYPE.DICTIONARY.toString());
     TYPES = Collections.unmodifiableSet(types);
   }
@@ -119,6 +121,11 @@ public class ODefaultIndexFactory implements OIndexFactory {
       return new OIndexUnique(name, indexType, algorithm, version, storage, valueContainerAlgorithm, metadata, binaryFormatVersion);
     } else if (OClass.INDEX_TYPE.NOTUNIQUE.toString().equals(indexType)) {
       return new OIndexNotUnique(name, indexType, algorithm, version, storage, valueContainerAlgorithm, metadata,
+          binaryFormatVersion);
+    } else if (OClass.INDEX_TYPE.FULLTEXT.toString().equals(indexType)) {
+      OLogManager.instance().warnNoDb(ODefaultIndexFactory.class, "You are creating native full text index instance. "
+          + "That is unsafe because this type of index is deprecated and will be removed in future.");
+      return new OIndexFullText(name, indexType, algorithm, version, storage, valueContainerAlgorithm, metadata,
           binaryFormatVersion);
     } else if (OClass.INDEX_TYPE.DICTIONARY.toString().equals(indexType)) {
       return new OIndexDictionary(name, indexType, algorithm, version, storage, valueContainerAlgorithm, metadata,
