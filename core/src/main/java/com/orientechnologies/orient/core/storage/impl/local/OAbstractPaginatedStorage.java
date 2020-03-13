@@ -1521,6 +1521,76 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     }
   }
 
+  private List<OTransactionData> extractTransactionsFromWal(Set<byte[]> transactionsMetadata) {
+    List<OTransactionData> finished = new ArrayList<>();
+    stateLock.acquireReadLock();
+    try {
+      Set<byte[]> transactionsToRead = new HashSet<>(transactionsMetadata);
+      // we iterate till the last record is contained in wal at the moment when we call this method
+      OLogSequenceNumber beginLsn = writeAheadLog.end();
+      Map<Long, OTransactionData> units = new HashMap<>();
+
+      writeAheadLog.addCutTillLimit(beginLsn);
+      OLogSequenceNumber lsn = beginLsn;
+      try {
+        List<OWriteableWALRecord> records = writeAheadLog.next(lsn, 1_000);
+        // all information about changed records is contained in atomic operation metadata
+        while (!records.isEmpty()) {
+          for (final OWALRecord record : records) {
+
+            if (record instanceof OFileCreatedWALRecord) {
+              throw new ODatabaseException(
+                  "Cannot execute delta-sync because a new file has been added. Filename: '" + ((OFileCreatedWALRecord) record)
+                      .getFileName() + "' (id=" + ((OFileCreatedWALRecord) record).getFileId() + ")");
+            }
+
+            if (record instanceof OFileDeletedWALRecord) {
+              throw new ODatabaseException(
+                  "Cannot execute delta-sync because a file has been deleted. File id: " + ((OFileDeletedWALRecord) record)
+                      .getFileId());
+            }
+
+            if (record instanceof OAtomicUnitStartMetadataRecord) {
+              byte[] meta = ((OAtomicUnitStartMetadataRecord) record).getMetadata();
+              //TODO: This will not be a byte to byte compare, but should compare only the tx id not all status
+              if (transactionsToRead.contains(meta)) {
+                long unitId = ((OAtomicUnitStartMetadataRecord) record).getOperationUnitId();
+                units.put(unitId, new OTransactionData(meta));
+              }
+              transactionsToRead.remove(meta);
+            }
+            if (record instanceof OAtomicUnitEndRecordV2) {
+              long opId = ((OAtomicUnitEndRecordV2) record).getOperationUnitId();
+              OTransactionData opes = units.remove(opId);
+              finished.add(opes);
+            }
+            if (record instanceof OHighLevelTransactionChangeRecord) {
+              byte[] data = ((OHighLevelTransactionChangeRecord) record).getData();
+              long unitId = ((OHighLevelTransactionChangeRecord) record).getOperationUnitId();
+              OTransactionData tx = units.get(unitId);
+              tx.addRecord(data);
+            }
+            if (transactionsToRead.isEmpty() && units.isEmpty()) {
+              //all read stop scanning and return the transactions
+              return finished;
+            }
+          }
+
+          records = writeAheadLog.next(records.get(records.size() - 1).getLsn(), 1_000);
+        }
+      } finally {
+        writeAheadLog.removeCutTillLimit(beginLsn);
+      }
+
+    } catch (final IOException e) {
+      throw OException.wrapException(new OStorageException("Error of reading of records from  WAL"), e);
+    } finally {
+      stateLock.releaseReadLock();
+    }
+
+    return finished;
+  }
+
   protected void serializeDeltaContent(OutputStream stream, OCommandOutputListener outputListener, SortedSet<ORID> sortedRids,
       OLogSequenceNumber lsn) {
     try {
@@ -4792,6 +4862,11 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
         this.lastMetadata = clientTx.getMetadata();
       }
       clientTx.storageBegun();
+      Iterator<byte[]> ops = clientTx.getSerializedOperations();
+      while (ops.hasNext()) {
+        byte[] next = ops.next();
+        writeAheadLog.log(new OHighLevelTransactionChangeRecord(operation.getOperationUnitId(), next));
+      }
       return operation;
     } catch (final RuntimeException e) {
       transaction.set(null);

@@ -115,6 +115,9 @@ public final class OWALRecordsFactory {
     case FUZZY_CHECKPOINT_START_METADATA_RECORD:
       walRecord = new OFuzzyCheckpointStartMetadataRecord();
       break;
+    case HIGH_LEVEL_TRANSACTION_CHANGE_RECORD:
+      walRecord = new OHighLevelTransactionChangeRecord();
+      break;
     case CHECKPOINT_END_RECORD:
       walRecord = new OCheckpointEndRecord();
       break;

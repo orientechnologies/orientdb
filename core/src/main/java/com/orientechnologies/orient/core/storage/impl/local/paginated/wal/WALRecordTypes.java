@@ -81,5 +81,6 @@ public final class WALRecordTypes {
   public static final int ATOMIC_UNIT_START_METADATA_RECORD      = 72;
   public static final int FULL_CHECKPOINT_START_METADATA_RECORD  = 73;
   public static final int FUZZY_CHECKPOINT_START_METADATA_RECORD = 74;
+  public static final int HIGH_LEVEL_TRANSACTION_CHANGE_RECORD   = 75;
 
 }

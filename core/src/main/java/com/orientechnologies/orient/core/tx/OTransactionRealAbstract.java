@@ -581,4 +581,8 @@ public abstract class OTransactionRealAbstract extends OTransactionAbstract impl
   public void setDatabase(ODatabaseDocumentInternal database) {
     this.database = database;
   }
+
+  public Iterator<byte[]> getSerializedOperations() {
+    return Collections.emptyIterator();
+  }
 }
