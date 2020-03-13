@@ -2146,8 +2146,7 @@ public class OSelectExecutionPlanner {
         .filter(x -> x.keyCondition != null).filter(x -> x.keyCondition.getSubBlocks().size() > 0).collect(Collectors.toList());
 
     List<IndexSearchDescriptor> fullTextIndexDescriptors = indexes.stream()
-        .filter(idx->idx.getType().equalsIgnoreCase("FULLTEXT"))
-        .filter(idx->!idx.getAlgorithm().equalsIgnoreCase("LUCENE"))
+        .filter(idx -> idx.getType().equalsIgnoreCase("FULLTEXT")).filter(idx -> !idx.getAlgorithm().equalsIgnoreCase("LUCENE"))
         .map(idx -> buildIndexSearchDescriptorForFulltext(ctx, idx, block, clazz)).filter(Objects::nonNull)
         .filter(x -> x.keyCondition != null).filter(x -> x.keyCondition.getSubBlocks().size() > 0).collect(Collectors.toList());
 

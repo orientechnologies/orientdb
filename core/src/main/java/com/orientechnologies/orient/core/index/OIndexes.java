@@ -182,16 +182,13 @@ public final class OIndexes {
   public static String chooseDefaultIndexAlgorithm(String type) {
     String algorithm = null;
 
-    if (OClass.INDEX_TYPE.DICTIONARY.name().equalsIgnoreCase(type) || OClass.INDEX_TYPE.NOTUNIQUE.name().equalsIgnoreCase(type)
-        || OClass.INDEX_TYPE.UNIQUE.name().equalsIgnoreCase(type)) {
+    if (OClass.INDEX_TYPE.DICTIONARY.name().equalsIgnoreCase(type) || OClass.INDEX_TYPE.FULLTEXT.name().equalsIgnoreCase(type)
+        || OClass.INDEX_TYPE.NOTUNIQUE.name().equalsIgnoreCase(type) || OClass.INDEX_TYPE.UNIQUE.name().equalsIgnoreCase(type)) {
       algorithm = ODefaultIndexFactory.CELL_BTREE_ALGORITHM;
     } else if (OClass.INDEX_TYPE.DICTIONARY_HASH_INDEX.name().equalsIgnoreCase(type) || OClass.INDEX_TYPE.NOTUNIQUE_HASH_INDEX
         .name().equalsIgnoreCase(type) || OClass.INDEX_TYPE.UNIQUE_HASH_INDEX.name().equalsIgnoreCase(type)) {
       algorithm = OHashIndexFactory.HASH_INDEX_ALGORITHM;
-    } else if (OClass.INDEX_TYPE.FULLTEXT.name().equalsIgnoreCase(type)) {
-      algorithm = "LUCENE";
     }
-
     return algorithm;
   }
 
