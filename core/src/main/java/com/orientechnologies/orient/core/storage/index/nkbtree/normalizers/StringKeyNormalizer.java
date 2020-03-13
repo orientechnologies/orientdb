@@ -8,7 +8,7 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 
 public class StringKeyNormalizer implements KeyNormalizers {
-  final Collator instance = Collator.getInstance();
+  private final Collator instance = Collator.getInstance();
 
   @Override
   public byte[] execute(Object key, int decomposition) throws IOException {
