@@ -69,7 +69,7 @@ public class OCreateIndexStatement extends ODDLStatement {
     ODocument metadataDoc = calculateMetadata(ctx);
 
     if (propertyList == null || propertyList.size() == 0) {
-      OIndexFactory factory = OIndexes.getFactory(type.getStringValue(), null);
+      OIndexFactory factory = OIndexes.getFactory(type.getStringValue(), engine);
 
       OType[] keyTypes = calculateKeyTypes(ctx);
 
