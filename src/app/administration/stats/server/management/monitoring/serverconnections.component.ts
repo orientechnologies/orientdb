@@ -43,7 +43,7 @@ class ServerConnectionsComponent implements OnInit, OnChanges {
   }
 
   fetchConnections() {
-    this.metrics.getInfo(this.agentService.active, this.name).then(data => {
+    this.metrics.getInfo(this.agentService.active).then(data => {
       this.connections = data.connections;
     });
   }

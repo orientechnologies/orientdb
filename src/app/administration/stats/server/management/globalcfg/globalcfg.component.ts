@@ -36,7 +36,7 @@ class GlobalCFGComponent implements OnInit, OnChanges {
   ngOnInit() {}
 
   fetchProperties() {
-    this.metrics.getInfo(this.agentService.active, this.name).then(data => {
+    this.metrics.getInfo(this.agentService.active).then(data => {
       this.properties = data.properties;
       this.globalProperties = data.globalProperties;
     });

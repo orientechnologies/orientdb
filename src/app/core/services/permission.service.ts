@@ -86,7 +86,7 @@ class PermissionService {
     if (this.isAllow("server.metrics")) {
       menus.push({
         name: "general",
-        title: "Servers Management",
+        title: "Server Management",
         template: "general",
         icon: "fa-desktop",
         wiki: "Studio-Server-Management.html"

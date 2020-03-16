@@ -60,7 +60,7 @@ class ServerManagementComponent implements OnInit, OnChanges {
   fetchMetrics() {
     this.metrics.getMetrics().then(data => {
       this.servers = Object.keys(data.clusterStats);
-      this.selectedServer = this.servers[0];
+      this.selectedServer = data.nodeName;
       this.clusterStats = data.clusterStats;
       let gauges = data.clusterStats[this.selectedServer].gauges;
       this.currentStats = data.clusterStats[this.selectedServer];

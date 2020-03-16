@@ -59,8 +59,8 @@ class MetricService {
     };
   }
 
-  getInfo(agent, name) {
-    let url = API + (agent ? `/node/info?${name}` : "server");
+  getInfo(agent) {
+    let url = API + (agent ? "/node/info" : "server");
     return this.http
       .get(url, this.getOptions())
       .toPromise()
@@ -78,8 +78,8 @@ class MetricService {
         return data.json();
       });
   }
-  threadDumps(name) {
-    let url = API + `/node/threadDump?${name}`;
+  threadDumps() {
+    let url = API + `/node/threadDump`;
     return this.http
       .get(url, this.getOptions())
       .toPromise()

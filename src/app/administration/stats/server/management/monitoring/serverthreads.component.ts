@@ -45,7 +45,7 @@ class ServerThreadDumpComponent implements OnInit, OnChanges {
 
   fetchDump() {
     if (this.ee) {
-      this.metrics.threadDumps(this.name).then(data => {
+      this.metrics.threadDumps().then(data => {
         this.dumpDate = new Date();
         this.threadDump = data.threadDump;
       });

@@ -1,10 +1,11 @@
 <div class="container-fluid">
   <div class="row studio-well">
     <div class="col-md-2">
-      <label>Server </label>
-      <select class="form-control" id="serverOnline" required>
-        <option *ngFor="let server of servers" [value]="selectedServer">{{server}}</option>
-      </select>
+
+      <div class="row">
+        <i class="icon-angle-right"></i> Server: <b>{{selectedServer}}</b>
+      </div>
+
     </div>
 
     <div class="col-md-10">
@@ -48,15 +49,20 @@
   <div class="row row-space">
     <div>
       <ul class="nav nav-tabs">
-        <li [ngClass]="{'active' : tab === 'overview'}" (click)="tab = 'overview'"><a href="javascript:void(0)"><span>Overview</span></a></li>
-        <li [ngClass]="{'active' : tab === 'monitoring'}" (click)="tab = 'monitoring'"><a href="javascript:void(0)"><span>Monitoring</span></a></li>
-        <li [ngClass]="{'active' : tab === 'globalCfg'}" (click)="tab = 'globalCfg'"><a href="javascript:void(0)"><span>Global
+        <li [ngClass]="{'active' : tab === 'overview'}" (click)="tab = 'overview'"><a
+            href="javascript:void(0)"><span>Overview</span></a></li>
+        <li [ngClass]="{'active' : tab === 'monitoring'}" (click)="tab = 'monitoring'"><a
+            href="javascript:void(0)"><span>Monitoring</span></a></li>
+        <li [ngClass]="{'active' : tab === 'globalCfg'}" (click)="tab = 'globalCfg'"><a
+            href="javascript:void(0)"><span>Global
               CFG
             </span></a></li>
       </ul>
       <div class="tab-content row">
-        <server-management-overview *ngIf="tab === 'overview'" [name]="selectedServer" [stats]="currentStats"></server-management-overview>
-        <server-management-monitoring *ngIf="tab === 'monitoring'" [name]="selectedServer"></server-management-monitoring>
+        <server-management-overview *ngIf="tab === 'overview'" [name]="selectedServer" [stats]="currentStats">
+        </server-management-overview>
+        <server-management-monitoring *ngIf="tab === 'monitoring'" [name]="selectedServer">
+        </server-management-monitoring>
         <global-configuration *ngIf="tab === 'globalCfg'" [name]="selectedServer"></global-configuration>
       </div>
     </div>
