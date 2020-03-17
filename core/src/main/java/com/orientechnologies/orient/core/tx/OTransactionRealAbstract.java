@@ -577,4 +577,8 @@ public abstract class OTransactionRealAbstract extends OTransactionAbstract impl
   public void setMetadata(Optional<byte[]> metadata) {
     this.metadata = metadata;
   }
+
+  public Iterator<byte[]> getSerializedOperations() {
+    return Collections.emptyIterator();
+  }
 }

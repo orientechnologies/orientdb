@@ -759,4 +759,9 @@ public final class OMicroTransaction implements OBasicTransaction, OTransactionI
   public void setMetadata(Optional<byte[]> metadata) {
     throw new UnsupportedOperationException();
   }
+
+  public Iterator<byte[]> getSerializedOperations() {
+    return Collections.emptyIterator();
+  }
+
 }
