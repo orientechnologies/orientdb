@@ -51,6 +51,7 @@ import {
   QueryProfilerComponent,
   RunningQueryProfilerComponent,
   ClusterCrudComponent,
+  ClusterDatabaseComponent,
   QueryStatsComponent,
   PermissionSettingsComponent
 } from "./administration";
@@ -122,6 +123,7 @@ export const APP_DECLARATIONS = [
   QueryProfilerComponent,
   RunningQueryProfilerComponent,
   ClusterCrudComponent,
+  ClusterDatabaseComponent,
   QueryStatsComponent,
   PermissionSettingsComponent
 ];

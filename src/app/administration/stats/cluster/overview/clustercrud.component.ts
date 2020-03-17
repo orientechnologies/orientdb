@@ -49,8 +49,6 @@ class ClusterCrudComponent implements OnInit, OnChanges {
       let aggregates = this.createAggregates();
 
       this.columns = this.aggregator.next(aggregates);
-
-      console.log(this.columns);
     }
   }
 

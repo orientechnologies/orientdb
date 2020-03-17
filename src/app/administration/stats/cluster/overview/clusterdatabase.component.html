@@ -1,0 +1,192 @@
+<div class="col-md-12">
+  <div class="row row-space">
+    <div class="col-md-6">
+      <form class="form-horizontal">
+
+        <div class="form-group">
+          <label class="control-label col-md-2">
+            <b>Database</b>
+          </label>
+          <div class="col-md-6">
+
+            <select name="db" [(ngModel)]="database" class="form-control" data-placeholder="Pick a Database">
+              <option *ngFor="let db of databases" [value]="db">{{db}}</option>
+            </select>
+
+          </div>
+          <div class="col-md-4">
+
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+  <div class="row row-space">
+    <div class="col-md-12">
+      <div id="menu" class="panel panel-default list-group">
+        <div class="panel-heading">
+          <b> Configuration</b>
+          <a href="{{ wikiConfiguration }}" class="btn btn-trasparent btn-help" data-placement="right" data-title="Help"
+            target="_blank" data-trigger="hover" data-animation="am-flip-x" bs-tooltip>
+            <i class="fa fa-question-circle"></i>
+          </a>
+          <div class="panel-node-actions">
+            <div class="btn-toolbar">
+              <div class="btn-group pull-right">
+                <button class="btn btn-sm btn-primary" (click)="saveConfiguration()"><i class="fa fa-save"></i> Save
+                  Config
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="panel-body" *ngIf="databaseConfig">
+
+          <div class="col-md-6">
+            <form class="form-horizontal">
+              <div class="form-group">
+                <label class="control-label col-md-3">Write Quorum
+                  <a href="javascript:void(0)" tabindex="1" data-trigger="focus" data-placement="right"
+                    data-container="body" bs-popover>
+                    <i class="fa fa-question-circle"></i>
+                  </a>
+                </label>
+                <div class="col-md-9">
+                  <select name="quorum" [(ngModel)]="databaseConfig.writeQuorum" class="form-control"
+                    data-placeholder="Pick a Database">
+                    <option *ngFor="let q of quorum" [value]="q">{{q}}</option>
+                  </select>
+                </div>
+              </div>
+              <div class="form-group">
+                <label class="control-label col-md-3">Read Quorum
+                  <a href="javascript:void(0)" tabindex="1" data-trigger="focus" data-placement="right"
+                    data-container="body" bs-popover>
+                    <i class="fa fa-question-circle"></i>
+                  </a>
+                </label>
+
+                <div class="col-md-9">
+                  <input name="readQuorum" type="number" class="form-control" [(ngModel)]="databaseConfig.readQuorum">
+                </div>
+              </div>
+              <div class="form-group">
+                <div class="col-md-9 col-md-offset-3">
+                  <div class="checkbox">
+                    <label>
+                      <input name="autoDeploy" type="checkbox" [(ngModel)]="databaseConfig.autoDeploy"> Auto Deploy
+                      <a href="javascript:void(0)" tabindex="1" data-trigger="focus" data-placement="right"
+                        data-container="body" bs-popover>
+                        <i class="fa fa-question-circle"></i>
+                      </a>
+                    </label>
+                  </div>
+                </div>
+              </div>
+              <div class="form-group">
+                <div class="col-md-9 col-md-offset-3">
+                  <div class="checkbox">
+                    <label>
+                      <input name="readYourWrites" type="checkbox" [(ngModel)]="databaseConfig.readYourWrites">
+                      Read Your Writes
+                      <a href="javascript:void(0)" tabindex="1" data-trigger="focus" data-placement="right"
+                        data-container="body" bs-popover>
+                        <i class="fa fa-question-circle"></i>
+                      </a>
+
+                    </label>
+                  </div>
+                </div>
+              </div>
+
+            </form>
+          </div>
+
+          <div class="col-md-6">
+            <form class="form-horizontal">
+              <div class="form-group">
+
+                <div class="panel panel-default">
+                  <div class="panel-heading">
+                    <b>Servers</b>
+                  </div>
+                  <div class="panel-body">
+                  </div>
+
+                  <table class="table table-striped table-hover table-condensed ">
+                    <thead>
+                      <tr>
+                        <th>Server</th>
+                        <th>Status</th>
+                        <th>Role
+                          <a href="javascript:void(0)" tabindex="1" data-trigger="focus" data-placement="right"
+                            data-container="body" bs-popover>
+                            <i class="fa fa-question-circle"></i>
+                          </a>
+                        </th>
+                      </tr>
+
+                    </thead>
+                    <tbody>
+                      <tr *ngFor="let s of singleDBServers">
+                        <td>
+                          <b>{{s.name}}</b>
+                        </td>
+                        <th>{{s.status}}</th>
+                        <td>
+                          <select class="form-control">
+                            <option *ngFor="let r of roles" [value]="s.status">{{r}}</option>
+                          </select>
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="row" *ngIf="databaseConfig">
+    <div class="col-md-12">
+      <div class="panel panel-default list-group">
+        <div class="panel-heading">
+          <b> Clusters Distribution
+            <a href="javascript:void(0)" tabindex="1" data-trigger="focus" data-placement="right" data-container="body"
+              bs-popover>
+              <i class="fa fa-question-circle"></i>
+            </a>
+          </b> <span class="pull-right"> <b>LEGEND: </b> X = Owner, o = Copy </span>
+        </div>
+        <table class="table table-striped  table-hover table-condensed ">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Static Owner</th>
+              <th *ngFor="let s of singleDBServers">
+                {{s.name}}
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let key of databaseConfig.clusters | keys">
+              <td>
+                {{key}}
+              </td>
+              <td>
+                {{databaseConfig.clusters[key].owner}}
+              </td>
+              <td *ngFor="let s of singleDBServers">
+                <div class="col-md-4">
+                  <span> {{ getOwnership(key,s.name) }}</span>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>

@@ -12,6 +12,8 @@ class ObjectKeysPipe {
     for (let key in input) {
       keys.push(key);
     }
+
+    console.log(keys);
     return keys;
   }
 }

@@ -1,4 +1,4 @@
-import {
+  import {
   Component,
   Input,
   ElementRef,
@@ -8,7 +8,6 @@ import {
   OnInit,
   ViewContainerRef
 } from "@angular/core";
-import { downgradeComponent } from "@angular/upgrade/static";
 import { MetricService, AgentService } from "../../../core/services";
 
 declare const angular: any;

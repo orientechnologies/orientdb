@@ -13,17 +13,14 @@
             <ul class="nav nav-tabs">
                 <li [ngClass]="{'active' : tab === 'overview'}" (click)="tab = 'overview'"><a
                         href="javascript:void(0)"><span>Overview</span></a></li>
-                <li [ngClass]="{'active' : tab === 'datacenters'}" (click)="tab = 'datacenters'"><a
-                        href="javascript:void(0)"><span>Data
-                            Centers
-                        </span></a></li>
                 <li [ngClass]="{'active' : tab === 'databaseCfg'}" (click)="tab = 'databaseCfg'"><a
                         href="javascript:void(0)"><span>Database
                             Cfg
                         </span></a></li>
-            </ul>
+            </ul>   
             <div class="tab-content row">
                 <cluster-management-overview *ngIf="tab === 'overview'"></cluster-management-overview>
+                <cluster-management-database *ngIf="tab === 'databaseCfg'"></cluster-management-database>
             </div>
         </div>
     </div>
