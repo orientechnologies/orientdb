@@ -32,6 +32,8 @@ class ClusterDatabaseComponent implements OnInit, OnChanges {
 
   private servers = [];
 
+  private writeQuorum = "majority";
+
   private roles = ["MASTER", "REPLICA"];
 
   private quorum = ["majority", "all"];
@@ -63,10 +65,29 @@ class ClusterDatabaseComponent implements OnInit, OnChanges {
     clearInterval(this.handle);
   }
 
+  changeDatabase() {
+    this.fetchDatabaseConfig(this.database);
+  }
+  changeQuorum() {
+    try {
+      let parsed = parseInt(this.writeQuorum);
+      if (isNaN(parsed)) {
+        this.databaseConfig.writeQuorum = this.writeQuorum;
+      } else {
+        this.databaseConfig.writeQuorum = parsed;
+      }
+    } catch (e) {
+      this.databaseConfig.writeQuorum = this.writeQuorum;
+    }
+  }
+
   fetchDatabaseConfig(name) {
     this.distributed.getDatabaseConfig(name).then(data => {
       this.databaseConfig = data;
 
+      this.writeQuorum = this.databaseConfig.writeQuorum
+        ? this.databaseConfig.writeQuorum.toString()
+        : this.writeQuorum;
       let { quorums, servers } = this.calculateQuorumWitServers(
         name,
         this.serverDatabases[name] || [],

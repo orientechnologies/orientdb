@@ -9,7 +9,8 @@
           </label>
           <div class="col-md-6">
 
-            <select name="db" [(ngModel)]="database" class="form-control" data-placeholder="Pick a Database">
+            <select name="db" [(ngModel)]="database" class="form-control" (change)="changeDatabase()"
+              data-placeholder="Pick a Database">
               <option *ngFor="let db of databases" [value]="db">{{db}}</option>
             </select>
 
@@ -52,9 +53,9 @@
                   </a>
                 </label>
                 <div class="col-md-9">
-                  <select name="quorum" [(ngModel)]="databaseConfig.writeQuorum" class="form-control"
+                  <select name="quorum" [(ngModel)]="writeQuorum" (change)="changeQuorum()" class="form-control"
                     data-placeholder="Pick a Database">
-                    <option *ngFor="let q of quorum" [value]="q">{{q}}</option>
+                    <option *ngFor="let q of quorum" [ngValue]="q">{{q}}</option>
                   </select>
                 </div>
               </div>
@@ -134,8 +135,9 @@
                         </td>
                         <th>{{s.status}}</th>
                         <td>
-                          <select class="form-control">
-                            <option *ngFor="let r of roles" [value]="s.status">{{r}}</option>
+                          <select name="{{ 'roles' + s.name }}" class="form-control"
+                            [(ngModel)]="databaseConfig.servers[s.name]">
+                            <option *ngFor="let r of roles" [ngValue]="r">{{r}}</option>
                           </select>
                         </td>
                       </tr>
