@@ -9,9 +9,117 @@
   </div>
   <div class="row">
     <div class="col-md-6">
+      <div class="panel panel-default">
+        <div class="panel-heading">
+          <b> Replication Latency Average</b>
+        </div>
+        <div class="panel-body">
+          <table class="table">
+            <thead>
+              <tr>
+                <th><b>Servers (From / To)</b></th>
+                <th *ngFor="let server of members">{{server.name}}</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let s1 of members">
+                <td>
+                  {{s1.name}}
+                </td>
+                <td *ngFor="let s of members">
+                  <span *ngIf="s.name !== s1.name">
+                    {{(s1.latencies[s.name].average / 1000000).toFixed(2)}}
+                  </span></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
 
     </div>
     <div class="col-md-6">
+      <div class="panel panel-default">
+        <div class="panel-heading">
+          <b> Replication Message Counters
+          </b>
+        </div>
+        <div class="panel-body">
+          <table class="table">
+            <thead>
+              <tr>
+                <th><b>Servers (From / To)</b></th>
+                <th *ngFor="let server of members">{{server.name}}</th>
+                <th><b>Total</b></th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let s1 of members">
+                <td>
+                  {{s1.name}}
+                </td>
+                <td *ngFor="let s of members">
+                  <span *ngIf="s.name !== s1.name">
+                    {{(s1.latencies[s.name].entries )}}
+                  </span></td>
+                <td class="active">
+                  {{(latenciesTotal[s1.name].out)}}
+                </td>
+              </tr>
+              <tr class="active">
+                <td><b>Total</b></td>
+                <td *ngFor="let s of members">
+                  <span>
+                    {{(latenciesTotal[s.name].in)}}
+                  </span></td>
+                <td>{{totalLatency}}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-12">
+      <div class="panel panel-default">
+        <div class="panel-heading">
+          <b> Replication Message Coordinator Stats
+          </b>
+        </div>
+        <div class="panel-body">
+          <table class="table ">
+            <thead>
+              <tr>
+                <th>Servers</th>
+                <th *ngFor="let m of messages">{{m}}</th>
+                <th><b>Total</b></th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let s1 of members">
+                <td>
+                  {{s1.name}}
+                </td>
+                <td *ngFor="let m of messages">
+                  <span>
+                    {{(s1.messages[m])}}
+                  </span></td>
+
+                <td class="active">
+                  {{(totalMessagesServer[s1.name])}}
+                </td>
+              </tr>
+
+              <tr class="active">
+                <td><b>Total</b></td>
+                <td *ngFor="let m of messages">
+                  <span>
+                    {{(totalMessages[m])}}
+                  </span></td>
+                <td>{{total}}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
     </div>
   </div>
 </div>
