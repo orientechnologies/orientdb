@@ -607,6 +607,9 @@ public enum OGlobalConfiguration {// ENVIRONMENT
   PROFILER_TX_TRACK_INTERVAL("profiler.tx.track.interval",
       "Interval in ms. which will be used by profiler to take thread dump of transaction under the monitoring", Integer.class, 3),
 
+  PROFILER_TX_STACK_TRACE_MAP_THRESHOLD("profiler.tx.stackTraceMap.threshold",
+      "Maximum size of the stack trace map, after which it will be " + "flushed to the file", Integer.class, 1_000),
+
   PROFILER_ENABLED("profiler.enabled", "Enables the recording of statistics and counters", Boolean.class, false,
       new OConfigurationChangeCallback() {
         public void change(final Object iCurrentValue, final Object iNewValue) {

@@ -149,6 +149,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
   private int txProfilerTrigger;
   private int txProfilerInterval;
+  private int txProfilerStackTraceMapThreshold;
 
   static {
     fuzzyCheckpointExecutor = new OScheduledThreadPoolExecutorWithLogging(1, new FuzzyCheckpointThreadFactory());
@@ -385,6 +386,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
   private void initTxProfiler(OContextConfiguration contextConfiguration) {
     txProfilerTrigger = contextConfiguration.getValueAsInteger(OGlobalConfiguration.PROFILER_TX_TRIGGER_INTERVAL);
     txProfilerInterval = contextConfiguration.getValueAsInteger(OGlobalConfiguration.PROFILER_TX_TRACK_INTERVAL);
+    txProfilerStackTraceMapThreshold = contextConfiguration
+        .getValueAsInteger(OGlobalConfiguration.PROFILER_TX_STACK_TRACE_MAP_THRESHOLD);
   }
 
   /**
@@ -2313,7 +2316,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
       if (txProfilerTrigger > 0) {
         final TransactionProfiler transactionProfiler = new TransactionProfiler(txProfilerTrigger, txIsCompleted,
-            Thread.currentThread());
+            Thread.currentThread(), txProfilerStackTraceMapThreshold);
+
         transactionProfiler.future = storageProfilerExecutor
             .scheduleWithFixedDelay(transactionProfiler, txProfilerTrigger, txProfilerInterval, TimeUnit.MILLISECONDS);
       }
@@ -6723,15 +6727,23 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     private final Path                 filePath;
     private final Map<String, Integer> stackMap = new HashMap<>();
 
+    private final int stackTraceMapThreshold;
+
     private boolean firstTime = true;
 
     private volatile Future<?> future;
     private final    long      startTxTimeStamp;
 
-    private TransactionProfiler(int profilingDelay, AtomicBoolean txIsCompleted, Thread txThread) {
+    private long zipEntryCounter;
+
+    private OutputStream    fileStream;
+    private ZipOutputStream zipStream;
+
+    private TransactionProfiler(int profilingDelay, AtomicBoolean txIsCompleted, Thread txThread, int stackTraceMapThreshold) {
       this.profilingDelay = profilingDelay;
       this.txIsCompleted = txIsCompleted;
       this.txThread = txThread;
+      this.stackTraceMapThreshold = stackTraceMapThreshold;
 
       this.startTxTimeStamp = System.nanoTime();
       filePath = Paths.get(startTxTimeStamp + ".sprof").toAbsolutePath();
@@ -6744,6 +6756,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
           OLogManager.instance().infoNoDb(this, "Transaction processing is taking too much time more than " + profilingDelay
               + " milliseconds, profiling of the transaction is automatically started. File with name " + filePath
               + " will be created to keep profiling data.");
+
           firstTime = false;
         }
 
@@ -6763,42 +6776,87 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
             return value + 1;
           });
         }
-      } else {
-        final long endTxTimeStamp = System.nanoTime();
-        if (!stackMap.isEmpty()) {
-          try (final OutputStream fileStream = Files
-              .newOutputStream(filePath, StandardOpenOption.CREATE, StandardOpenOption.WRITE)) {
-            try (final ZipOutputStream zipStream = new ZipOutputStream(fileStream)) {
-              zipStream.putNextEntry(new ZipEntry("profile.dat"));
 
-              @SuppressWarnings("resource")
-              final OutputStreamWriter writer = new OutputStreamWriter(zipStream);
-              for (Map.Entry<String, Integer> entry : stackMap.entrySet()) {
-                writer.write(entry.getKey() + " " + entry.getValue() + "\n");
-              }
-              writer.flush();
-
-              zipStream.closeEntry();
-
-              zipStream.putNextEntry(new ZipEntry("stat.dat"));
-              final byte[] duration = new byte[8];
-              zipStream.write(ByteBuffer.wrap(duration).putLong(endTxTimeStamp - startTxTimeStamp).array());
-              zipStream.closeEntry();
-            }
+        if (stackMap.size() > stackTraceMapThreshold) {
+          try {
+            flushStackMap(-1);
           } catch (IOException e) {
             OLogManager.instance().errorNoDb(this, "Can not create file" + filePath, e);
             if (future != null) {
               future.cancel(false);
+
+              closeStreams();
             }
           }
-
-          stackMap.clear();
+        }
+      } else {
+        final long endTxTimeStamp = System.nanoTime();
+        try {
+          flushStackMap(endTxTimeStamp);
+        } catch (IOException e) {
+          OLogManager.instance().errorNoDb(this, "Can not write file" + filePath, e);
         }
 
         if (future != null) {
           future.cancel(false);
         }
+        closeStreams();
+      }
+    }
+
+    private void closeStreams() {
+      if (zipStream != null) {
+        try {
+          zipStream.close();
+          zipStream = null;
+        } catch (IOException ex) {
+          OLogManager.instance().errorNoDb(this, "Can not close file" + filePath, ex);
+        }
+      }
+      if (fileStream != null) {
+        try {
+          fileStream.close();
+          fileStream = null;
+        } catch (IOException ex) {
+          OLogManager.instance().errorNoDb(this, "Can not close file" + filePath, ex);
+        }
+      }
+    }
+
+    private void initZipStream() throws IOException {
+      if (zipStream == null) {
+        fileStream = Files.newOutputStream(filePath, StandardOpenOption.CREATE, StandardOpenOption.WRITE);
+        zipStream = new ZipOutputStream(fileStream);
+      }
+    }
+
+    private void flushStackMap(long endTxTimeStamp) throws IOException {
+      if (!stackMap.isEmpty()) {
+        zipEntryCounter++;
+
+        initZipStream();
+
+        zipStream.putNextEntry(new ZipEntry("profile" + zipEntryCounter + ".dat"));
+
+        @SuppressWarnings("resource")
+        final OutputStreamWriter writer = new OutputStreamWriter(zipStream);
+        for (Map.Entry<String, Integer> entry : stackMap.entrySet()) {
+          writer.write(entry.getKey() + " " + entry.getValue() + "\n");
+        }
+        writer.flush();
+
+        zipStream.closeEntry();
+
+        if (endTxTimeStamp > 0) {
+          zipStream.putNextEntry(new ZipEntry("stat.dat"));
+          final byte[] duration = new byte[8];
+          zipStream.write(ByteBuffer.wrap(duration).putLong(endTxTimeStamp - startTxTimeStamp).array());
+          zipStream.closeEntry();
+        }
+
+        stackMap.clear();
       }
     }
   }
 }
+

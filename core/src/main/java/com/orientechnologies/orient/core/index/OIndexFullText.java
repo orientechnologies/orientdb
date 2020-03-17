@@ -41,7 +41,6 @@ import java.util.concurrent.atomic.AtomicLong;
  *
  * @author Luca Garulli
  */
-@Deprecated
 public class OIndexFullText extends OIndexMultiValues {
 
   private static final String  CONFIG_STOP_WORDS      = "stopWords";
