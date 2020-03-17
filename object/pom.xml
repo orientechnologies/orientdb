@@ -167,11 +167,4 @@
             -Dstorage.diskCache.checksumMode=storeAndThrow
         </argLine>
     </properties>
-    <repositories>
-        <repository>
-            <id>jboss-releases-repository</id>
-            <name>JBoss Releases Repository</name>
-            <url>https://repository.jboss.org/nexus/service/local/staging/deploy/maven2/</url>
-        </repository>
-    </repositories>
 </project>

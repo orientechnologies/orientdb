@@ -48,7 +48,7 @@ node {
                 try{
                   build job: "orientdb-gremlin-multibranch/${env.BRANCH_NAME}", wait: false
                   build job: "orientdb-security-multibranch/${env.BRANCH_NAME}", wait: false
-                  build job: "orientdb-enterprise-multibranch/${env.BRANCH_NAME}", wait: false
+                  build job: "orientdb-sap-enterprise-multibranch/${env.BRANCH_NAME}", wait: false
                 }catch(ex){
                     slackSend(color: '#FFFF99', channel: '#jenkins-failures', message: "WARN: not running downstream builds for Job '${env.JOB_NAME} [${env.BUILD_NUMBER}]' (${env.BUILD_URL})\n${e}")
                 }
