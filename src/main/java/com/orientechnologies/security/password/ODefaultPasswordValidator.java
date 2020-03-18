@@ -87,7 +87,7 @@ public class ODefaultPasswordValidator implements OPasswordValidator {
   }
 
   // OPasswordValidator
-  public void validatePassword(final String password) throws OInvalidPasswordException {
+  public void validatePassword(final String username, final String password) throws OInvalidPasswordException {
     if (!enabled)
       return;
 
