@@ -390,7 +390,11 @@ public class ODefaultServerSecurity implements OSecurityFactory, OServerLifecycl
 
   public void replacePasswordValidator(OPasswordValidator validator) {
     synchronized (passwordValidatorSynch) {
-      passwordValidator = validator;
+
+      if (passwordValidator == null || !passwordValidator.isEnabled()) {
+        passwordValidator = validator;
+      }
+
     }
   }
 
@@ -978,12 +982,14 @@ public class ODefaultServerSecurity implements OSecurityFactory, OServerLifecycl
   private void reloadPasswordValidator() {
     try {
       synchronized (passwordValidatorSynch) {
-        if (passwordValidator != null) {
-          passwordValidator.dispose();
-          passwordValidator = null;
-        }
 
         if (passwdValDoc != null && isEnabled(passwdValDoc)) {
+
+          if (passwordValidator != null) {
+            passwordValidator.dispose();
+            passwordValidator = null;
+          }
+
           Class<?> cls = getClass(passwdValDoc);
 
           if (cls != null) {
