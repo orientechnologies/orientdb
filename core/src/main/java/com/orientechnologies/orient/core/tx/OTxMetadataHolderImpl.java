@@ -4,11 +4,11 @@ import java.io.*;
 import java.util.concurrent.CountDownLatch;
 
 public class OTxMetadataHolderImpl implements OTxMetadataHolder {
-  private final CountDownLatch request;
-  private final byte[]         status;
-  private final OTransactionId id;
+  private final CountDownLatch             request;
+  private final OTransactionSequenceStatus status;
+  private final OTransactionId             id;
 
-  public OTxMetadataHolderImpl(CountDownLatch request, OTransactionId id, byte[] status) {
+  public OTxMetadataHolderImpl(CountDownLatch request, OTransactionId id, OTransactionSequenceStatus status) {
     this.request = request;
     this.id = id;
     this.status = status;
@@ -20,6 +20,7 @@ public class OTxMetadataHolderImpl implements OTxMetadataHolder {
     DataOutput output = new DataOutputStream(outputStream);
     try {
       id.write(output);
+      byte[] status = this.status.store();
       output.writeInt(status.length);
       output.write(status, 0, status.length);
     } catch (IOException e) {
@@ -35,9 +36,9 @@ public class OTxMetadataHolderImpl implements OTxMetadataHolder {
     try {
       txId = OTransactionId.read(input);
       int size = input.readInt();
-      byte[] stauts = new byte[size];
-      input.readFully(stauts);
-      return new OTxMetadataHolderImpl(new CountDownLatch(0), txId, stauts);
+      byte[] status = new byte[size];
+      input.readFully(status);
+      return new OTxMetadataHolderImpl(new CountDownLatch(0), txId, OTransactionSequenceStatus.read(status));
     } catch (IOException e) {
       e.printStackTrace();
     }
@@ -52,5 +53,10 @@ public class OTxMetadataHolderImpl implements OTxMetadataHolder {
 
   public OTransactionId getId() {
     return id;
+  }
+
+  @Override
+  public OTransactionSequenceStatus getStatus() {
+    return status;
   }
 }

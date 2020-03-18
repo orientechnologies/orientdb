@@ -2,6 +2,7 @@ package com.orientechnologies.orient.server.distributed.impl.task.transaction;
 
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.tx.OTransactionId;
+import com.orientechnologies.orient.core.tx.OTransactionSequenceStatus;
 
 import java.io.*;
 import java.util.*;
@@ -13,45 +14,14 @@ public class OTransactionSequenceManager {
   private final    String           node;
 
   public OTransactionSequenceManager(String node) {
-    //TODO: make configurable
+    //TODO: make size configurable
     this.sequentials = new long[1000];
     this.promisedSequential = new OTransactionId[1000];
     this.node = node;
   }
 
-  public void fill(byte[] data) {
-    this.sequentials = read(data);
-  }
-
-  public static long[] read(byte[] data) {
-    DataInput dataInput = new DataInputStream(new ByteArrayInputStream(data));
-    int len = 0;
-    try {
-      len = dataInput.readInt();
-
-      long[] newSequential = new long[len];
-      for (int i = 0; i < len; i++) {
-        newSequential[i] = dataInput.readLong();
-      }
-      return newSequential;
-    } catch (IOException e) {
-      OLogManager.instance().error(OTransactionSequenceManager.class, "Error in deserialization", e);
-    }
-    return null;
-  }
-
-  public synchronized byte[] store() {
-    ByteArrayOutputStream buffer = new ByteArrayOutputStream();
-    DataOutput dataOutput = new DataOutputStream(buffer);
-    try {
-      dataOutput.writeInt(this.sequentials.length);
-      for (int i = 0; i < this.sequentials.length; i++) {
-        dataOutput.writeLong(this.sequentials[i]);
-      }
-    } catch (IOException e) {
-      OLogManager.instance().error(this, "Error in serialization", e);
-    }
-    return buffer.toByteArray();
+  public synchronized void fill(OTransactionSequenceStatus data) {
+    this.sequentials = data.getStatus();
   }
 
   public synchronized Optional<OTransactionId> next() {
@@ -119,7 +89,8 @@ public class OTransactionSequenceManager {
     }
   }
 
-  public synchronized List<OTransactionId> checkStatus(long[] status) {
+  public synchronized List<OTransactionId> checkStatus(OTransactionSequenceStatus sequenceStatus) {
+    long[] status = sequenceStatus.getStatus();
     List<OTransactionId> missing = null;
     for (int i = 0; i < status.length; i++) {
       if (this.sequentials[i] < status[i]) {
@@ -146,10 +117,6 @@ public class OTransactionSequenceManager {
     return missing;
   }
 
-  public synchronized long[] currentStatus() {
-    return Arrays.copyOf(this.sequentials, this.sequentials.length);
-  }
-
   public synchronized boolean notifyFailure(OTransactionId id) {
     OTransactionId promised = this.promisedSequential[id.getPosition()];
     if (promised != null) {
@@ -160,4 +127,9 @@ public class OTransactionSequenceManager {
     }
     return false;
   }
+
+  public synchronized OTransactionSequenceStatus currentStatus() {
+    return new OTransactionSequenceStatus(Arrays.copyOf(this.sequentials, this.sequentials.length));
+  }
+
 }

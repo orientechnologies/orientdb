@@ -97,5 +97,11 @@ public class TransactionMetadataTest {
     public OTransactionId getId() {
       return null;
     }
+
+    @Override
+    public OTransactionSequenceStatus getStatus() {
+      return null;
+    }
+
   }
 }

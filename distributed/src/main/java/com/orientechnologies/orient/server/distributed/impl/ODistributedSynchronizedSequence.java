@@ -3,6 +3,7 @@ package com.orientechnologies.orient.server.distributed.impl;
 import com.orientechnologies.orient.core.tx.OTransactionId;
 import com.orientechnologies.orient.core.tx.OTxMetadataHolderImpl;
 import com.orientechnologies.orient.server.distributed.impl.task.transaction.OTransactionSequenceManager;
+import com.orientechnologies.orient.core.tx.OTransactionSequenceStatus;
 
 import java.util.List;
 import java.util.Optional;
@@ -39,16 +40,14 @@ public class ODistributedSynchronizedSequence {
     List<OTransactionId> data = sequenceManager.notifySuccess(id);
     if (data.isEmpty()) {
       request = new CountDownLatch(1);
-      byte[] status = sequenceManager.store();
-      return new OTxMetadataHolderImpl(request, id, status);
+      return new OTxMetadataHolderImpl(request, id, sequenceManager.currentStatus());
     } else {
       throw new RuntimeException("");
     }
   }
 
-  public List<OTransactionId> missingTransactions(byte[] lastState) {
-    long[] read = OTransactionSequenceManager.read(lastState);
-    List<OTransactionId> value = sequenceManager.checkStatus(read);
+  public List<OTransactionId> missingTransactions(OTransactionSequenceStatus lastState) {
+    List<OTransactionId> value = sequenceManager.checkStatus(lastState);
     return value;
   }
 }

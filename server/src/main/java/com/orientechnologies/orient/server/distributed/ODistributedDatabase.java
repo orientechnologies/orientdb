@@ -26,6 +26,7 @@ import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.storage.ORawBuffer;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
 import com.orientechnologies.orient.core.tx.OTransactionId;
+import com.orientechnologies.orient.core.tx.OTransactionSequenceStatus;
 import com.orientechnologies.orient.core.tx.OTxMetadataHolder;
 import com.orientechnologies.orient.server.distributed.task.ORemoteTask;
 
@@ -145,5 +146,5 @@ public interface ODistributedDatabase {
 
   Optional<OTransactionId> nextId();
 
-  List<OTransactionId> missingTransactions(byte[] lastState);
+  List<OTransactionId> missingTransactions(OTransactionSequenceStatus lastState);
 }
