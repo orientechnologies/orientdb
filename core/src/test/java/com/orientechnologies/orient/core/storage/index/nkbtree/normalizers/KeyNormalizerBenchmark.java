@@ -13,6 +13,7 @@ import org.openjdk.jmh.runner.options.OptionsBuilder;
 
 import java.io.ByteArrayOutputStream;
 import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.Calendar;
@@ -240,5 +241,15 @@ public class KeyNormalizerBenchmark {
     @Benchmark
     public void normalizeComposite_binary() {
         final byte[] bytes = keyNormalizer.normalize(binaryCompositeKey, binaryTypes, Collator.NO_DECOMPOSITION);
+    }
+
+    @Benchmark
+    public void decimalNormalizer() throws Exception {
+        final OCompositeKey compositeKey = new OCompositeKey();
+        compositeKey.addKey(new BigDecimal(new BigInteger("20"), 2));
+
+        final OType[] types = new OType[1];
+        types[0] = OType.DECIMAL;
+        final byte[] bytes = keyNormalizer.normalize(compositeKey, types, Collator.NO_DECOMPOSITION);
     }
 }

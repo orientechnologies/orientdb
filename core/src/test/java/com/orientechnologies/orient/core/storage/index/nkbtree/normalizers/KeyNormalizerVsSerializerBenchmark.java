@@ -9,6 +9,8 @@ import org.openjdk.jmh.runner.RunnerException;
 import org.openjdk.jmh.runner.options.Options;
 import org.openjdk.jmh.runner.options.OptionsBuilder;
 
+import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.nio.ByteOrder;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
@@ -48,7 +50,7 @@ public class KeyNormalizerVsSerializerBenchmark {
   }
 
   @Benchmark
-  public void booleanSerializer() throws Exception {
+  public void booleanSerializer() {
     final OBooleanSerializer serializer = new OBooleanSerializer();
     serializer.serialize(true, new byte[1], 0);
   }
@@ -60,7 +62,7 @@ public class KeyNormalizerVsSerializerBenchmark {
   }
 
   @Benchmark
-  public void byteSerializer() throws Exception {
+  public void byteSerializer() {
     final OByteSerializer serializer = new OByteSerializer();
     serializer.serialize((byte) 3, new byte[1], 0);
   }
@@ -72,7 +74,7 @@ public class KeyNormalizerVsSerializerBenchmark {
   }
 
   @Benchmark
-  public void integerSerializer() throws Exception {
+  public void integerSerializer() {
     final OIntegerSerializer serializer = new OIntegerSerializer();
     serializer.serialize(5, new byte[4], 0);
   }
@@ -84,7 +86,7 @@ public class KeyNormalizerVsSerializerBenchmark {
   }
 
   @Benchmark
-  public void floatSerializer() throws Exception {
+  public void floatSerializer() {
     final OFloatSerializer serializer = new OFloatSerializer();
     serializer.serialize(1.5f, new byte[4], 0);
   }
@@ -96,7 +98,7 @@ public class KeyNormalizerVsSerializerBenchmark {
   }
 
   @Benchmark
-  public void doubleSerializer() throws Exception {
+  public void doubleSerializer() {
     final ODoubleSerializer serializer = new ODoubleSerializer();
     serializer.serialize(1.5d, new byte[8], 0);
   }
@@ -108,7 +110,7 @@ public class KeyNormalizerVsSerializerBenchmark {
   }
 
   @Benchmark
-  public void shortSerializer() throws Exception {
+  public void shortSerializer() {
     final OShortSerializer serializer = new OShortSerializer();
     serializer.serialize((short) 3, new byte[2], 0);
   }
@@ -120,7 +122,7 @@ public class KeyNormalizerVsSerializerBenchmark {
   }
 
   @Benchmark
-  public void longSerializer() throws Exception {
+  public void longSerializer() {
     final OLongSerializer serializer = new OLongSerializer();
     serializer.serialize(5L, new byte[LONG_SIZE], 0);
   }
@@ -132,13 +134,13 @@ public class KeyNormalizerVsSerializerBenchmark {
   }
 
   @Benchmark
-  public void stringSerializer() throws Exception {
+  public void stringSerializer() {
     final OStringSerializer serializer = new OStringSerializer();
     serializer.serialize("abcd", new byte[16], 0);
   }
 
   @Benchmark
-  public void stringUtf8Serializer() throws Exception {
+  public void stringUtf8Serializer() {
     final OUTF8Serializer serializer = new OUTF8Serializer();
     serializer.serialize("abcd", new byte[16], 0);
   }
@@ -150,7 +152,7 @@ public class KeyNormalizerVsSerializerBenchmark {
   }
 
   @Benchmark
-  public void binarySerializer() throws Exception {
+  public void binarySerializer() {
     final OBinaryTypeSerializer serializer = new OBinaryTypeSerializer();
     final byte[] binary = new byte[] { 1, 2, 3, 4, 5, 6 };
     serializer.serialize(binary, new byte[binary.length + OIntegerSerializer.INT_SIZE], 0);
@@ -164,7 +166,7 @@ public class KeyNormalizerVsSerializerBenchmark {
   }
 
   @Benchmark
-  public void dateSerializer() throws Exception {
+  public void dateSerializer() {
     final ODateSerializer serializer = new ODateSerializer();
     final Date date = new GregorianCalendar(2013, Calendar.NOVEMBER, 5).getTime();
     serializer.serialize(date, new byte[LONG_SIZE], 0);
@@ -178,7 +180,7 @@ public class KeyNormalizerVsSerializerBenchmark {
   }
 
   @Benchmark
-  public void dateTimeSerializer() throws Exception {
+  public void dateTimeSerializer() {
     final ODateTimeSerializer serializer = new ODateTimeSerializer();
     final LocalDateTime ldt = LocalDateTime.of(2013, 11, 5, 3, 3, 3);
     final Date date = Date.from( ldt.atZone( ZoneId.systemDefault()).toInstant());
@@ -191,5 +193,17 @@ public class KeyNormalizerVsSerializerBenchmark {
     final LocalDateTime ldt = LocalDateTime.of(2013, 11, 5, 3, 3, 3);
     final Date date = Date.from( ldt.atZone( ZoneId.systemDefault()).toInstant());
     normalizer.execute(date, 0);
+  }
+
+  @Benchmark
+  public void decimalSerializer() {
+    final ODecimalSerializer serializer = new ODecimalSerializer();
+    serializer.serialize(new BigDecimal(new BigInteger("20"), 2), new byte[9], 0);
+  }
+
+  @Benchmark
+  public void decimalNormalizer() throws Exception {
+    final DecimalKeyNormalizer normalizer = new DecimalKeyNormalizer();
+    normalizer.execute(new BigDecimal(new BigInteger("20"), 2), 0);
   }
 }
