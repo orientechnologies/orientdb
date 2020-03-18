@@ -110,7 +110,7 @@ public interface ODistributedDatabase {
   void waitForOnline();
 
   void reEnqueue(final int senderNodeId, final long msgSequence, final String databaseName, final ORemoteTask payload,
-      int retryCount);
+      int retryCount, int autoRetryDelay);
 
   void processRequest(ODistributedRequest request, boolean waitForAcceptingRequests);
 
