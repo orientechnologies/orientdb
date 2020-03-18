@@ -1,11 +1,14 @@
 package com.orientechnologies.agent.services.security;
 
+import com.orientechnologies.agent.EnterprisePasswordValidator;
 import com.orientechnologies.agent.http.command.OServerCommandAuditing;
 import com.orientechnologies.agent.http.command.OServerCommandGetSecurityConfig;
 import com.orientechnologies.agent.http.command.OServerCommandPostSecurityReload;
 import com.orientechnologies.agent.services.OEnterpriseService;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.enterprise.server.OEnterpriseServer;
+import com.orientechnologies.orient.server.security.ODefaultServerSecurity;
+import com.orientechnologies.orient.server.security.OServerSecurity;
 
 /**
  * Created by Enrico Risa on 18/09/2018.
@@ -43,6 +46,13 @@ public class OSecurityService implements OEnterpriseService {
             .registerSecurityClass(com.orientechnologies.agent.security.authenticator.OSecuritySymmetricKeyAuth.class);
         server.getSecurity()
             .registerSecurityClass(com.orientechnologies.agent.security.authenticator.OSystemSymmetricKeyAuth.class);
+
+        OServerSecurity security = server.getSecurity();
+
+        if (security instanceof ODefaultServerSecurity) {
+          ((ODefaultServerSecurity) security).replacePasswordValidator(new EnterprisePasswordValidator());
+        }
+
       }
     } catch (Throwable th) {
       OLogManager.instance().error(this, "registerSecurityComponents()", th);
