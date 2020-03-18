@@ -7,6 +7,7 @@ import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedSt
 import com.orientechnologies.orient.core.storage.impl.local.OBackgroundNewDelta;
 import com.orientechnologies.orient.core.storage.impl.local.OTransactionData;
 import com.orientechnologies.orient.core.tx.OTransactionId;
+import com.orientechnologies.orient.core.tx.OTransactionSequenceStatus;
 import com.orientechnologies.orient.core.tx.OTxMetadataHolder;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.distributed.*;
@@ -23,11 +24,11 @@ import java.util.Optional;
 public class OSyncDatabaseNewDeltaTask extends OAbstractReplicatedTask {
   public static final int CHUNK_MAX_SIZE = 8388608;    // 8MB
 
-  public static final int    FACTORYID = 29;
-  private             byte[] lastState;
+  public static final int                        FACTORYID = 29;
+  private             OTransactionSequenceStatus lastState;
 
-  public OSyncDatabaseNewDeltaTask(OTxMetadataHolder metadata) {
-    lastState = metadata.metadata();
+  public OSyncDatabaseNewDeltaTask(OTransactionSequenceStatus lastState) {
+    this.lastState = lastState;
   }
 
   public OSyncDatabaseNewDeltaTask() {
@@ -61,18 +62,15 @@ public class OSyncDatabaseNewDeltaTask extends OAbstractReplicatedTask {
 
   @Override
   public void toStream(DataOutput out) throws IOException {
-    out.writeInt(lastState.length);
-    out.write(lastState, 0, lastState.length);
+    lastState.writeNetwork(out);
   }
 
   @Override
   public void fromStream(DataInput in, ORemoteTaskFactory factory) throws IOException {
-    int size = in.readInt();
-    lastState = new byte[size];
-    in.readFully(lastState);
+    lastState = OTransactionSequenceStatus.readNetwork(in);
   }
 
-  public byte[] getLastState() {
+  public OTransactionSequenceStatus getLastState() {
     return lastState;
   }
 

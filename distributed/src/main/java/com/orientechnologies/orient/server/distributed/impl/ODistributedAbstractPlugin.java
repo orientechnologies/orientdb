@@ -1097,7 +1097,7 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
           return false;
         }
       }
-      final OSyncDatabaseNewDeltaTask deployTask = new OSyncDatabaseNewDeltaTask(metadata);
+      final OSyncDatabaseNewDeltaTask deployTask = new OSyncDatabaseNewDeltaTask(metadata.getStatus());
 
       final List<String> targetNodes = new ArrayList<String>(1);
       targetNodes.add(targetNode);

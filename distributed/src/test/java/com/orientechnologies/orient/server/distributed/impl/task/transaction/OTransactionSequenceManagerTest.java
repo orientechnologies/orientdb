@@ -1,8 +1,10 @@
 package com.orientechnologies.orient.server.distributed.impl.task.transaction;
 
 import com.orientechnologies.orient.core.tx.OTransactionId;
+import com.orientechnologies.orient.core.tx.OTransactionSequenceStatus;
 import org.junit.Test;
 
+import java.io.IOException;
 import java.util.List;
 import java.util.Optional;
 
@@ -45,7 +47,7 @@ public class OTransactionSequenceManagerTest {
     assertTrue(sequenceManagerRecv.notifySuccess(one).isEmpty());
     assertTrue(sequenceManagerRecv.notifySuccess(three).isEmpty());
 
-    long[] status = sequenceManager.currentStatus();
+    OTransactionSequenceStatus status = sequenceManager.currentStatus();
 
     List<OTransactionId> list = sequenceManagerRecv.checkStatus(status);
     assertNotNull(list);
@@ -69,7 +71,7 @@ public class OTransactionSequenceManagerTest {
 
     assertTrue(sequenceManagerRecv.notifySuccess(one).isEmpty());
 
-    long[] status = sequenceManager.currentStatus();
+    OTransactionSequenceStatus status = sequenceManager.currentStatus();
 
     List<OTransactionId> list = sequenceManagerRecv.checkStatus(status);
     assertNotNull(list);
@@ -97,7 +99,7 @@ public class OTransactionSequenceManagerTest {
     assertNotNull(res);
     assertTrue(res.contains(new OTransactionId(Optional.empty(), two.getPosition(), two.getSequence())));
 
-    long[] status = sequenceManager.currentStatus();
+    OTransactionSequenceStatus status = sequenceManager.currentStatus();
 
     // this will for sure contain two, it may even cantain three
     List<OTransactionId> list = sequenceManagerRecv.checkStatus(status);
@@ -134,7 +136,6 @@ public class OTransactionSequenceManagerTest {
     OTransactionId otherOne = sequenceManagerOther.nextAt(1);
     assertTrue(sequenceManager.notifySuccess(one).isEmpty());
 
-
     OTransactionSequenceManager sequenceManagerRecv = new OTransactionSequenceManager("two");
     assertTrue(!sequenceManagerRecv.validateTransactionId(one).isPresent());
     assertTrue(sequenceManagerRecv.notifySuccess(one).isEmpty());
@@ -163,7 +164,7 @@ public class OTransactionSequenceManagerTest {
     assertNotNull(res);
     assertTrue(res.contains(new OTransactionId(Optional.empty(), three.getPosition(), three.getSequence())));
 
-    long[] status = sequenceManager.currentStatus();
+    OTransactionSequenceStatus status = sequenceManager.currentStatus();
 
     // this will for sure contain two, it may even cantain three
     List<OTransactionId> list = sequenceManagerRecv.checkStatus(status);
@@ -174,17 +175,17 @@ public class OTransactionSequenceManagerTest {
   }
 
   @Test
-  public void simpleStoreRestore() {
+  public void simpleStoreRestore() throws IOException {
     OTransactionSequenceManager sequenceManager = new OTransactionSequenceManager("one");
     OTransactionId one = sequenceManager.next().get();
     OTransactionId two = sequenceManager.next().get();
     assertTrue(sequenceManager.notifySuccess(one).isEmpty());
     assertTrue(sequenceManager.notifySuccess(two).isEmpty());
-    byte[] bytes = sequenceManager.store();
+    byte[] bytes = sequenceManager.currentStatus().store();
     OTransactionSequenceManager readSequenceManager = new OTransactionSequenceManager("two");
-    readSequenceManager.fill(bytes);
+    readSequenceManager.fill(OTransactionSequenceStatus.read(bytes));
 
-    assertArrayEquals(sequenceManager.currentStatus(), readSequenceManager.currentStatus());
+    assertEquals(sequenceManager.currentStatus(), readSequenceManager.currentStatus());
 
   }
 
