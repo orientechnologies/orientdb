@@ -45,7 +45,7 @@ import com.orientechnologies.orient.server.distributed.*;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIRECTION;
 import com.orientechnologies.orient.server.distributed.impl.task.ODistributedLockTask;
 import com.orientechnologies.orient.server.distributed.impl.task.OUnreachableServerLocalTask;
-import com.orientechnologies.orient.server.distributed.OTransactionId;
+import com.orientechnologies.orient.core.tx.OTransactionId;
 import com.orientechnologies.orient.server.distributed.task.OAbstractRemoteTask;
 import com.orientechnologies.orient.server.distributed.task.ODistributedRecordLockedException;
 import com.orientechnologies.orient.server.distributed.task.ORemoteTask;
@@ -844,6 +844,11 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
   @Override
   public Optional<OTransactionId> nextId() {
     return sequenceManager.next();
+  }
+
+  @Override
+  public List<OTransactionId> missingTransactions(byte[] lastState) {
+    return sequenceManager.missingTransactions(lastState);
   }
 
   @Override

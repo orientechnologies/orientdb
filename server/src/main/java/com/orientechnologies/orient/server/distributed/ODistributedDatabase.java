@@ -25,11 +25,13 @@ import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.storage.ORawBuffer;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
+import com.orientechnologies.orient.core.tx.OTransactionId;
 import com.orientechnologies.orient.core.tx.OTxMetadataHolder;
 import com.orientechnologies.orient.server.distributed.task.ORemoteTask;
 
 import java.io.IOException;
 import java.util.Collection;
+import java.util.List;
 import java.util.Optional;
 
 /**
@@ -142,4 +144,6 @@ public interface ODistributedDatabase {
   ODistributedDatabaseRepairer getDatabaseRepairer();
 
   Optional<OTransactionId> nextId();
+
+  List<OTransactionId> missingTransactions(byte[] lastState);
 }

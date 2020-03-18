@@ -6,4 +6,6 @@ public interface OTxMetadataHolder {
 
   void notifyMetadataRead();
 
+  OTransactionId getId();
+
 }

@@ -92,5 +92,10 @@ public class TransactionMetadataTest {
     public void notifyMetadataRead() {
 
     }
+
+    @Override
+    public OTransactionId getId() {
+      return null;
+    }
   }
 }
