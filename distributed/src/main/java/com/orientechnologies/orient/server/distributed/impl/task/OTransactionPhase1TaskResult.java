@@ -24,7 +24,7 @@ import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.serialization.OStreamable;
 import com.orientechnologies.orient.core.serialization.OStreamableHelper;
 import com.orientechnologies.orient.core.serialization.serializer.record.binary.ORecordSerializerNetworkV37;
-import com.orientechnologies.orient.server.distributed.OTransactionId;
+import com.orientechnologies.orient.core.tx.OTransactionId;
 import com.orientechnologies.orient.server.distributed.impl.task.transaction.*;
 
 import java.io.DataInput;

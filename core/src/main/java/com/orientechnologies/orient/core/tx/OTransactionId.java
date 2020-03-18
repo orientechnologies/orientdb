@@ -1,4 +1,4 @@
-package com.orientechnologies.orient.server.distributed;
+package com.orientechnologies.orient.core.tx;
 
 import java.io.DataInput;
 import java.io.DataOutput;

@@ -1,6 +1,6 @@
 package com.orientechnologies.orient.server.distributed.impl.task.transaction;
 
-import com.orientechnologies.orient.server.distributed.OTransactionId;
+import com.orientechnologies.orient.core.tx.OTransactionId;
 
 public class OTxInvalidSequential implements OTransactionResultPayload {
 

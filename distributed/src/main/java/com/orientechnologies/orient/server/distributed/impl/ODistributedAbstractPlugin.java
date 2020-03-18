@@ -61,6 +61,8 @@ import com.orientechnologies.orient.core.storage.cluster.OPaginatedCluster;
 import com.orientechnologies.orient.core.storage.disk.OLocalPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
+import com.orientechnologies.orient.core.tx.OTxMetadataHolder;
+import com.orientechnologies.orient.core.tx.OTxMetadataHolderImpl;
 import com.orientechnologies.orient.server.OClientConnection;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.OSystemDatabase;
@@ -86,12 +88,7 @@ import com.orientechnologies.orient.server.distributed.OModifiableDistributedCon
 import com.orientechnologies.orient.server.distributed.ORemoteServerController;
 import com.orientechnologies.orient.server.distributed.ORemoteTaskFactoryManager;
 import com.orientechnologies.orient.server.distributed.conflict.ODistributedConflictResolverFactory;
-import com.orientechnologies.orient.server.distributed.impl.task.ORemoteTaskFactoryManagerImpl;
-import com.orientechnologies.orient.server.distributed.impl.task.ORestartServerTask;
-import com.orientechnologies.orient.server.distributed.impl.task.OStopServerTask;
-import com.orientechnologies.orient.server.distributed.impl.task.OSyncDatabaseDeltaTask;
-import com.orientechnologies.orient.server.distributed.impl.task.OSyncDatabaseTask;
-import com.orientechnologies.orient.server.distributed.impl.task.OUpdateDatabaseStatusTask;
+import com.orientechnologies.orient.server.distributed.impl.task.*;
 import com.orientechnologies.orient.server.distributed.sql.OCommandExecutorSQLHASyncCluster;
 import com.orientechnologies.orient.server.distributed.task.OAbstractReplicatedTask;
 import com.orientechnologies.orient.server.distributed.task.ODatabaseIsOldException;
@@ -108,17 +105,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.TimerTask;
+import java.util.*;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -1002,6 +989,7 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
 
                       // TRY WITH DELTA SYNC
                       databaseInstalled = requestDatabaseDelta(distrDatabase, databaseName, cfg);
+                      //databaseInstalled = requestNewDatabaseDelta(distrDatabase, databaseName, cfg);
 
                     } catch (ODistributedDatabaseDeltaSyncException e) {
                       if (deploy == null || !deploy) {
@@ -1063,6 +1051,69 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
     } finally {
       installingDatabases.remove(databaseName);
     }
+  }
+
+  private boolean requestNewDatabaseDelta(ODistributedDatabaseImpl distrDatabase, String databaseName,
+      OModifiableDistributedConfiguration cfg) {
+    // GET ALL THE OTHER SERVERS
+    final Collection<String> nodes = cfg.getServers(null, nodeName);
+    getAvailableNodes(nodes, databaseName);
+    if (nodes.size() == 0)
+      return false;
+
+    ODistributedServerLog
+        .warn(this, nodeName, nodes.toString(), DIRECTION.OUT, "requesting delta database sync for '%s' on local server...",
+            databaseName);
+
+    boolean databaseInstalledCorrectly = false;
+
+    for (String targetNode : nodes) {
+
+      if (!isNodeOnline(targetNode, databaseName)) {
+        continue;
+      }
+      OTxMetadataHolder metadata;
+      try (ODatabaseDocumentInternal inst = distrDatabase.getDatabaseInstance()) {
+        Optional<byte[]> read = ((OAbstractPaginatedStorage) inst.getStorage()).getLastMetadata();
+        if (read.isPresent()) {
+          metadata = OTxMetadataHolderImpl.read(read.get());
+        } else {
+          return false;
+        }
+      }
+      final OSyncDatabaseNewDeltaTask deployTask = new OSyncDatabaseNewDeltaTask(metadata);
+
+      final List<String> targetNodes = new ArrayList<String>(1);
+      targetNodes.add(targetNode);
+      try {
+        final ODistributedResponse response = sendRequest(databaseName, null, targetNodes, deployTask, getNextMessageIdCounter(),
+            ODistributedRequest.EXECUTION_MODE.RESPONSE, null, null, null);
+
+        if (response == null)
+          throw new ODistributedDatabaseDeltaSyncException((OLogSequenceNumber) null);
+
+        databaseInstalledCorrectly = installResponseNewDeltaSync(distrDatabase, databaseName, cfg, targetNode,
+            response.getPayload());
+
+      } catch (ODistributedDatabaseDeltaSyncException e) {
+        // RE-THROW IT
+        throw e;
+      } catch (Exception e) {
+        ODistributedServerLog
+            .error(this, nodeName, targetNode, DIRECTION.OUT, "Error on asking delta backup of database '%s' (err=%s)",
+                databaseName, e.getMessage());
+        //TODO: remove lsn from this exception
+        throw OException.wrapException(new ODistributedDatabaseDeltaSyncException(null, e.toString()), e);
+      }
+
+    }
+
+    if (databaseInstalledCorrectly) {
+      distrDatabase.resume();
+      return true;
+    }
+
+    throw new ODistributedDatabaseDeltaSyncException("Requested database delta sync error");
   }
 
   private void notifyLsnAfterInstall(ODatabaseDocumentInternal db, Collection<String> nodes) {
@@ -1279,6 +1330,11 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
       }
     }
     return databaseInstalledCorrectly;
+  }
+
+  private boolean installResponseNewDeltaSync(ODistributedDatabaseImpl distrDatabase, String databaseName,
+      OModifiableDistributedConfiguration cfg, String targetNode, Object results) {
+    throw new UnsupportedOperationException("not yet implemented");
   }
 
   protected void checkIntegrityOfLastTransactions(final ODistributedDatabaseImpl distrDatabase) {

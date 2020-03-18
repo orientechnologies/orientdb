@@ -1,18 +1,27 @@
 package com.orientechnologies.orient.core.storage.impl.local;
 
+import com.orientechnologies.orient.core.tx.OTransactionId;
+
 import java.util.ArrayList;
 import java.util.List;
 
 public class OTransactionData {
-  private byte[]       transactionId;
-  private List<byte[]> records = new ArrayList<>();
+  private OTransactionId transactionId;
+  private List<byte[]>   changes = new ArrayList<>();
 
-  public OTransactionData(byte[] transactionId) {
+  public OTransactionData(OTransactionId transactionId) {
     this.transactionId = transactionId;
   }
 
   public void addRecord(byte[] record) {
-    records.add(record);
+    changes.add(record);
   }
 
+  public OTransactionId getTransactionId() {
+    return transactionId;
+  }
+
+  public List<byte[]> getChanges() {
+    return changes;
+  }
 }

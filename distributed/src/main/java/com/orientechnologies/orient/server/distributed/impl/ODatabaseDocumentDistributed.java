@@ -45,7 +45,7 @@ import com.orientechnologies.orient.server.distributed.impl.task.ORunQueryExecut
 import com.orientechnologies.orient.server.distributed.task.ODistributedKeyLockedException;
 import com.orientechnologies.orient.server.distributed.task.ODistributedRecordLockedException;
 import com.orientechnologies.orient.server.distributed.task.ORemoteTask;
-import com.orientechnologies.orient.server.distributed.OTransactionId;
+import com.orientechnologies.orient.core.tx.OTransactionId;
 import com.orientechnologies.orient.server.hazelcast.OHazelcastPlugin;
 
 import java.util.*;

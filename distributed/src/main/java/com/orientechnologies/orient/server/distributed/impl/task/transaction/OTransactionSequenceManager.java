@@ -1,7 +1,7 @@
 package com.orientechnologies.orient.server.distributed.impl.task.transaction;
 
 import com.orientechnologies.common.log.OLogManager;
-import com.orientechnologies.orient.server.distributed.OTransactionId;
+import com.orientechnologies.orient.core.tx.OTransactionId;
 
 import java.io.*;
 import java.util.*;
@@ -20,6 +20,10 @@ public class OTransactionSequenceManager {
   }
 
   public void fill(byte[] data) {
+    this.sequentials = read(data);
+  }
+
+  public static long[] read(byte[] data) {
     DataInput dataInput = new DataInputStream(new ByteArrayInputStream(data));
     int len = 0;
     try {
@@ -29,10 +33,11 @@ public class OTransactionSequenceManager {
       for (int i = 0; i < len; i++) {
         newSequential[i] = dataInput.readLong();
       }
-      this.sequentials = newSequential;
+      return newSequential;
     } catch (IOException e) {
-      OLogManager.instance().error(this, "Error in deserialization", e);
+      OLogManager.instance().error(OTransactionSequenceManager.class, "Error in deserialization", e);
     }
+    return null;
   }
 
   public synchronized byte[] store() {
