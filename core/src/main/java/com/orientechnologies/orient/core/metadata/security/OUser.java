@@ -82,7 +82,8 @@ public class OUser extends OIdentity implements OSecurityUser {
   }
 
   public static boolean encodePassword(final ODocument iDocument) {
-    if (iDocument.field("name") == null)
+    final String name = iDocument.field("name");
+    if (name == null)
       throw new OSecurityException("User name not found");
 
     final String password = (String) iDocument.field("password");
@@ -91,7 +92,7 @@ public class OUser extends OIdentity implements OSecurityUser {
       throw new OSecurityException("User '" + iDocument.field("name") + "' has no password");
 
     if (Orient.instance().getSecurity() != null) {
-      Orient.instance().getSecurity().validatePassword(password);
+      Orient.instance().getSecurity().validatePassword(name, password);
     }
 
     if (!password.startsWith("{")) {
@@ -105,7 +106,7 @@ public class OUser extends OIdentity implements OSecurityUser {
   @Override
   public void fromStream(final ODocument iSource) {
     if (document != null)
-      return; 
+      return;
 
     document = iSource;
 

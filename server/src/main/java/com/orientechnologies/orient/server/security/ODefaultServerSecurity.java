@@ -378,13 +378,19 @@ public class ODefaultServerSecurity implements OSecurityFactory, OServerLifecycl
   }
 
   // OSecuritySystem (via OServerSecurity)
-  public void validatePassword(final String password) throws OInvalidPasswordException {
+  public void validatePassword(final String username, final String password) throws OInvalidPasswordException {
     if (isEnabled()) {
       synchronized (passwordValidatorSynch) {
         if (passwordValidator != null) {
-          passwordValidator.validatePassword(password);
+          passwordValidator.validatePassword(username, password);
         }
       }
+    }
+  }
+
+  public void replacePasswordValidator(OPasswordValidator validator) {
+    synchronized (passwordValidatorSynch) {
+      passwordValidator = validator;
     }
   }
 
