@@ -1,5 +1,8 @@
 package com.orientechnologies.orient.core.storage.impl.local.paginated.wal;
 
+import com.orientechnologies.common.serialization.types.OIntegerSerializer;
+import com.orientechnologies.orient.core.sql.parser.OInteger;
+
 import java.nio.ByteBuffer;
 
 import static com.orientechnologies.orient.core.storage.impl.local.paginated.wal.WALRecordTypes.HIGH_LEVEL_TRANSACTION_CHANGE_RECORD;
@@ -27,6 +30,11 @@ public class OHighLevelTransactionChangeRecord extends OOperationUnitRecord {
     int size = buffer.getInt();
     data = new byte[size];
     buffer.get(data, 0, size);
+  }
+
+  @Override
+  public int serializedSize() {
+    return super.serializedSize() + OIntegerSerializer.INT_SIZE + data.length;
   }
 
   @Override
