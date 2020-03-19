@@ -39,6 +39,7 @@ import com.orientechnologies.orient.core.sql.executor.OExecutionPlan;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import com.orientechnologies.orient.core.storage.ORecordCallback;
 import com.orientechnologies.orient.core.storage.OStorage;
+import com.orientechnologies.orient.core.storage.impl.local.OTransactionData;
 import com.orientechnologies.orient.core.storage.ridbag.sbtree.OBonsaiCollectionPointer;
 import com.orientechnologies.orient.core.storage.ridbag.sbtree.OSBTreeCollectionManager;
 import com.orientechnologies.orient.core.tx.OTransaction;
@@ -86,7 +87,6 @@ public interface ODatabaseDocumentInternal extends ODatabaseSession, ODatabaseIn
 
   /**
    * @param identifiable
-   *
    * @return true if the record should be skipped
    */
   boolean beforeReadOperations(final OIdentifiable identifiable);
@@ -94,7 +94,6 @@ public interface ODatabaseDocumentInternal extends ODatabaseSession, ODatabaseIn
   /**
    * @param id
    * @param iClusterName
-   *
    * @return null if nothing changed the instance if has been modified or replaced
    */
   OIdentifiable beforeCreateOperations(final OIdentifiable id, String iClusterName);
@@ -102,7 +101,6 @@ public interface ODatabaseDocumentInternal extends ODatabaseSession, ODatabaseIn
   /**
    * @param id
    * @param iClusterName
-   *
    * @return null if nothing changed the instance if has been modified or replaced
    */
   OIdentifiable beforeUpdateOperations(final OIdentifiable id, String iClusterName);
@@ -202,7 +200,6 @@ public interface ODatabaseDocumentInternal extends ODatabaseSession, ODatabaseIn
    * @param nodeName        the node name
    * @param executionPlan   the execution plan
    * @param inputParameters the input parameters for execution
-   *
    * @return an OResultSet to fetch the results of the query execution
    */
   default OResultSet queryOnNode(String nodeName, OExecutionPlan executionPlan, Map<Object, Object> inputParameters) {
@@ -254,4 +251,8 @@ public interface ODatabaseDocumentInternal extends ODatabaseSession, ODatabaseIn
   }
 
   Map<UUID, OBonsaiCollectionPointer> getCollectionsChanges();
+
+  default void syncCommit(OTransactionData db) {
+    throw new UnsupportedOperationException();
+  }
 }

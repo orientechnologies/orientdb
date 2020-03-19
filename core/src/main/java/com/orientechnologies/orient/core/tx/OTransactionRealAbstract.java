@@ -36,9 +36,14 @@ import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
 import com.orientechnologies.orient.core.storage.OBasicTransaction;
+import com.orientechnologies.orient.core.storage.impl.local.OTransactionDataChange;
 import com.orientechnologies.orient.core.tx.OTransactionIndexChanges.OPERATION;
 import com.orientechnologies.orient.core.tx.OTransactionIndexChangesPerKey.OTransactionIndexEntry;
 
+import java.io.ByteArrayOutputStream;
+import java.io.DataOutput;
+import java.io.DataOutputStream;
+import java.io.IOException;
 import java.util.*;
 import java.util.Map.Entry;
 
@@ -57,6 +62,7 @@ public abstract class OTransactionRealAbstract extends OTransactionAbstract impl
    * made during tx will be undone.
    */
   protected final Set<ODocument>                                    changedDocuments      = new HashSet<ODocument>();
+  private         Optional<List<byte[]>>                            serializedOperations  = Optional.empty();
 
   protected OTransactionRealAbstract(ODatabaseDocumentInternal database, int id) {
     super(database);
@@ -585,7 +591,23 @@ public abstract class OTransactionRealAbstract extends OTransactionAbstract impl
     this.metadata = metadata;
   }
 
+  @Override
+  public void prepareSerializedOperations() throws IOException {
+    List<byte[]> operations = new ArrayList<>();
+    for (ORecordOperation value : allEntries.values()) {
+      OTransactionDataChange change = new OTransactionDataChange(value);
+      ByteArrayOutputStream out = new ByteArrayOutputStream();
+      change.serialize(new DataOutputStream(out));
+      operations.add(out.toByteArray());
+    }
+    this.serializedOperations = Optional.of(operations);
+  }
+
   public Iterator<byte[]> getSerializedOperations() {
-    return Collections.emptyIterator();
+    if (serializedOperations.isPresent()) {
+      return serializedOperations.get().iterator();
+    } else {
+      return Collections.emptyIterator();
+    }
   }
 }
