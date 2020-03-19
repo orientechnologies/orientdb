@@ -3,6 +3,7 @@ package com.orientechnologies.orient.server.distributed.impl;
 import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.io.OFileUtils;
+import com.orientechnologies.common.util.OUncaughtExceptionHandler;
 import com.orientechnologies.orient.server.distributed.ODistributedException;
 import com.orientechnologies.orient.server.distributed.ODistributedMomentum;
 import com.orientechnologies.orient.server.distributed.ODistributedRequest;
@@ -36,13 +37,27 @@ public class OSyncReceiver implements Runnable {
     this.dbPath = dbPath;
   }
 
+  public void spawnReceiverThread() {
+    try {
+      Thread t = new Thread(this);
+      t.setUncaughtExceptionHandler(new OUncaughtExceptionHandler());
+      t.start();
+    } catch (Exception e) {
+      ODistributedServerLog
+          .error(this, iNode, null, ODistributedServerLog.DIRECTION.NONE, "Error on transferring database '%s' ", e, databaseName);
+      throw OException.wrapException(new ODistributedException("Error on transferring database"), e);
+    }
+  }
+
   @Override
   public void run() {
     try {
       Thread.currentThread().setName("OrientDB installDatabase node=" + distributed.nodeName + " db=" + databaseName);
       ODistributedDatabaseChunk chunk = firstChunk;
 
-      momentum.set(chunk.getMomentum());
+      if (momentum != null) {
+        momentum.set(chunk.getMomentum());
+      }
 
       output = new PipedOutputStream();
       inputStream = new PipedInputStream(output);

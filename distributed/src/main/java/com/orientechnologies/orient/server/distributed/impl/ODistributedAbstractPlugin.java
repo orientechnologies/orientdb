@@ -1093,7 +1093,7 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
           throw new ODistributedDatabaseDeltaSyncException((OLogSequenceNumber) null);
 
         databaseInstalledCorrectly = installResponseNewDeltaSync(distrDatabase, databaseName, cfg, targetNode,
-            response.getPayload());
+            (ONewDeltaTaskResponse) response.getPayload());
 
       } catch (ODistributedDatabaseDeltaSyncException e) {
         // RE-THROW IT
@@ -1333,8 +1333,59 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
   }
 
   private boolean installResponseNewDeltaSync(ODistributedDatabaseImpl distrDatabase, String databaseName,
-      OModifiableDistributedConfiguration cfg, String targetNode, Object results) {
-    throw new UnsupportedOperationException("not yet implemented");
+      OModifiableDistributedConfiguration cfg, String targetNode, ONewDeltaTaskResponse results) {
+    final String dbPath = serverInstance.getDatabaseDirectory() + databaseName;
+    boolean databaseInstalledCorrectly = false;
+    // EXTRACT THE REAL RESULT
+    if (results.getResponseType() == ONewDeltaTaskResponse.ResponseType.CHUNK) {
+      final File uniqueClustersBackupDirectory = getClusterOwnedExclusivelyByCurrentNode(dbPath, databaseName);
+      ODistributedDatabaseChunk firstChunk = results.getChunk().get();
+      try {
+
+        OSyncReceiver receiver = new OSyncReceiver(this, databaseName, firstChunk, null, targetNode, dbPath);
+        receiver.spawnReceiverThread();
+        receiver.getStarted().await();
+
+        executeInDistributedDatabaseLock(databaseName, 20000, cfg, (OCallable<Void, OModifiableDistributedConfiguration>) cfg1 -> {
+          try (InputStream in = receiver.getInputStream()) {
+            new ONewDeltaSyncImporter().importDelta(serverInstance, databaseName, in, targetNode);
+          } catch (IOException e) {
+            throw OException.wrapException(new OIOException("Error on distributed sync of database"), e);
+          }
+          return null;
+        });
+        ODatabaseDocumentInternal db = serverInstance.openDatabase(databaseName);
+
+        if (db == null)
+          return false;
+
+        try {
+          distrDatabase.setOnline();
+        } finally {
+          db.activateOnCurrentThread();
+          db.close();
+        }
+
+        try {
+          rebalanceClusterOwnership(nodeName, db, cfg, false);
+        } catch (Exception e) {
+          // HANDLE IT AS WARNING
+          ODistributedServerLog
+              .warn(this, nodeName, null, DIRECTION.NONE, "Error on re-balancing the cluster for database '%s'", e, databaseName);
+          // NOT CRITICAL, CONTINUE
+        }
+
+        ODistributedServerLog.info(this, nodeName, targetNode, DIRECTION.IN, "Installed delta of database '%s'", databaseName);
+
+        // DATABASE INSTALLED CORRECTLY
+        databaseInstalledCorrectly = true;
+      } catch (OException | InterruptedException e) {
+        OLogManager.instance().error(this, "Error installing database from network", e);
+        databaseInstalledCorrectly = false;
+      }
+
+    }
+    return databaseInstalledCorrectly;
   }
 
   protected void checkIntegrityOfLastTransactions(final ODistributedDatabaseImpl distrDatabase) {
@@ -1646,15 +1697,7 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
     final AtomicReference<ODistributedMomentum> momentum = new AtomicReference<ODistributedMomentum>();
 
     OSyncReceiver receiver = new OSyncReceiver(this, databaseName, firstChunk, momentum, iNode, dbPath);
-    try {
-      Thread t = new Thread(receiver);
-      t.setUncaughtExceptionHandler(new OUncaughtExceptionHandler());
-      t.start();
-
-    } catch (Exception e) {
-      ODistributedServerLog.error(this, nodeName, null, DIRECTION.NONE, "Error on transferring database '%s' ", e, databaseName);
-      throw OException.wrapException(new ODistributedException("Error on transferring database"), e);
-    }
+    receiver.spawnReceiverThread();
 
     final ODatabaseDocumentInternal db = installDatabaseOnLocalNode(databaseName, dbPath, iNode, delta,
         uniqueClustersBackupDirectory, cfg, firstChunk.incremental, receiver);

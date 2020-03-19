@@ -33,6 +33,7 @@ import com.orientechnologies.orient.core.storage.ORecordDuplicatedException;
 import com.orientechnologies.orient.core.storage.ORecordMetadata;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
+import com.orientechnologies.orient.core.storage.impl.local.OTransactionData;
 import com.orientechnologies.orient.core.tx.OTransactionIndexChanges;
 import com.orientechnologies.orient.core.tx.OTransactionIndexChangesPerKey;
 import com.orientechnologies.orient.core.tx.OTransactionInternal;
@@ -687,5 +688,10 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
     OServer server = ((ODistributedStorage) getStorage()).getDistributedManager().getServerInstance();
     return server.getPlugins().stream().map(x -> x.getInstance()).filter(OEnterpriseEndpoint.class::isInstance).findFirst()
         .map(OEnterpriseEndpoint.class::cast).orElse(null);
+  }
+
+  @Override
+  public void syncCommit(OTransactionData db) {
+    throw  new UnsupportedOperationException();
   }
 }

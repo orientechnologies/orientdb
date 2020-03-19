@@ -24,13 +24,11 @@ public class OBackgroundNewDelta implements Runnable, OSyncSource {
     try {
       DataOutput output = new DataOutputStream(outputStream);
       for (OTransactionData transaction : transactions) {
-        transaction.getTransactionId().write(output);
-        output.writeInt(transaction.getChanges().size());
-        for (byte[] change : transaction.getChanges()) {
-          output.writeInt(change.length);
-          output.write(change, 0, change.length);
-        }
+        output.writeBoolean(true);
+        transaction.write(output);
       }
+      output.writeBoolean(false);
+      outputStream.close();
     } catch (IOException e) {
       e.printStackTrace();
     } finally {

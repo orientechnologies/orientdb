@@ -36,26 +36,32 @@ import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
 import com.orientechnologies.orient.core.storage.OBasicTransaction;
+import com.orientechnologies.orient.core.storage.impl.local.OTransactionDataChange;
 import com.orientechnologies.orient.core.tx.OTransactionIndexChanges.OPERATION;
 import com.orientechnologies.orient.core.tx.OTransactionIndexChangesPerKey.OTransactionIndexEntry;
 
+import java.io.ByteArrayOutputStream;
+import java.io.DataOutput;
+import java.io.DataOutputStream;
+import java.io.IOException;
 import java.util.*;
 import java.util.Map.Entry;
 
 public abstract class OTransactionRealAbstract extends OTransactionAbstract implements OTransactionInternal {
-    protected Map<ORID, ORID>                                   updatedRids           = new HashMap<ORID, ORID>();
-  protected Map<ORID, ORecordOperation>                       allEntries            = new LinkedHashMap<ORID, ORecordOperation>();
-  protected Map<String, OTransactionIndexChanges>             indexEntries          = new LinkedHashMap<String, OTransactionIndexChanges>();
-  protected Map<ORID, List<OTransactionRecordIndexOperation>> recordIndexOperations = new HashMap<ORID, List<OTransactionRecordIndexOperation>>();
-  protected int id;
-  protected int                 newObjectCounter = -2;
-  protected Map<String, Object> userData         = new HashMap<String, Object>();
+  protected       Map<ORID, ORID>                                   updatedRids           = new HashMap<ORID, ORID>();
+  protected       Map<ORID, ORecordOperation>                       allEntries            = new LinkedHashMap<ORID, ORecordOperation>();
+  protected       Map<String, OTransactionIndexChanges>             indexEntries          = new LinkedHashMap<String, OTransactionIndexChanges>();
+  protected       Map<ORID, List<OTransactionRecordIndexOperation>> recordIndexOperations = new HashMap<ORID, List<OTransactionRecordIndexOperation>>();
+  protected       int                                               id;
+  protected       int                                               newObjectCounter      = -2;
+  protected       Map<String, Object>                               userData              = new HashMap<String, Object>();
   private         Optional<OTxMetadataHolder>                       metadata              = Optional.empty();
   /**
    * token This set is used to track which documents are changed during tx, if documents are changed but not saved all changes are
    * made during tx will be undone.
    */
-  protected final Set<ODocument> changedDocuments = new HashSet<ODocument>();
+  protected final Set<ODocument>                                    changedDocuments      = new HashSet<ODocument>();
+  private         Optional<List<byte[]>>                            serializedOperations  = Optional.empty();
 
   protected OTransactionRealAbstract(ODatabaseDocumentInternal database, int id) {
     super(database);
@@ -588,7 +594,23 @@ public abstract class OTransactionRealAbstract extends OTransactionAbstract impl
     this.database = database;
   }
 
+  @Override
+  public void prepareSerializedOperations() throws IOException {
+    List<byte[]> operations = new ArrayList<>();
+    for (ORecordOperation value : allEntries.values()) {
+      OTransactionDataChange change = new OTransactionDataChange(value);
+      ByteArrayOutputStream out = new ByteArrayOutputStream();
+      change.serialize(new DataOutputStream(out));
+      operations.add(out.toByteArray());
+    }
+    this.serializedOperations = Optional.of(operations);
+  }
+
   public Iterator<byte[]> getSerializedOperations() {
-    return Collections.emptyIterator();
+    if (serializedOperations.isPresent()) {
+      return serializedOperations.get().iterator();
+    } else {
+      return Collections.emptyIterator();
+    }
   }
 }

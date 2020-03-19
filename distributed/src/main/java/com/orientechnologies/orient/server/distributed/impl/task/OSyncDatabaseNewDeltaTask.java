@@ -57,7 +57,7 @@ public class OSyncDatabaseNewDeltaTask extends OAbstractReplicatedTask {
       // NO MORE CHUNKS: SET THE NODE ONLINE (SYNCHRONIZING ENDED)
       iManager.setDatabaseStatus(iManager.getLocalNodeName(), database.getName(), ODistributedServerManager.DB_STATUS.ONLINE);
     ((ODistributedStorage) database.getStorage()).setLastValidBackup(delta);
-    return chunk;
+    return new ONewDeltaTaskResponse(chunk);
   }
 
   @Override

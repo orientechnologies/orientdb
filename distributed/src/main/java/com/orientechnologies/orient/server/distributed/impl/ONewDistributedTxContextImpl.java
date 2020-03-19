@@ -2,6 +2,7 @@ package com.orientechnologies.orient.server.distributed.impl;
 
 import com.orientechnologies.common.concur.lock.OLockException;
 import com.orientechnologies.common.concur.lock.OSimpleLockManager;
+import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
@@ -13,6 +14,7 @@ import com.orientechnologies.orient.server.distributed.task.ODistributedKeyLocke
 import com.orientechnologies.orient.server.distributed.task.ODistributedRecordLockedException;
 import com.orientechnologies.orient.server.distributed.task.ORemoteTask;
 
+import java.io.IOException;
 import java.util.*;
 
 public class ONewDistributedTxContextImpl implements ODistributedTxContext {
@@ -98,7 +100,10 @@ public class ONewDistributedTxContextImpl implements ODistributedTxContext {
     OTxMetadataHolder metadataHolder = localDistributedDatabase.commit(getTransactionId());
     try {
       tx.setMetadataHolder(Optional.of(metadataHolder));
+      tx.prepareSerializedOperations();
       ((ODatabaseDocumentDistributed) database).internalCommit2pc(this);
+    } catch (IOException e) {
+      throw OException.wrapException(new ODistributedException("Error on preparation of log serialized operations"), e);
     } finally {
       metadataHolder.notifyMetadataRead();
     }
