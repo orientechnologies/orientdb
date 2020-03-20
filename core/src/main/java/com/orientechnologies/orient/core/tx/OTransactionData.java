@@ -1,7 +1,16 @@
 package com.orientechnologies.orient.core.tx;
 
 import com.orientechnologies.common.exception.OException;
+import com.orientechnologies.orient.core.Orient;
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
+import com.orientechnologies.orient.core.db.record.ORecordOperation;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
+import com.orientechnologies.orient.core.id.ORecordId;
+import com.orientechnologies.orient.core.record.ORecord;
+import com.orientechnologies.orient.core.record.ORecordInternal;
+import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.serialization.serializer.record.binary.ODocumentSerializerDelta;
+import com.orientechnologies.orient.core.serialization.serializer.record.binary.ORecordSerializerNetworkDistributed;
 
 import java.io.*;
 import java.util.ArrayList;
@@ -52,5 +61,47 @@ public class OTransactionData {
       change.serialize(output);
     }
 
+  }
+
+  public void fill(OTransactionInternal transaction, ODatabaseDocumentInternal database) {
+    transaction.fill(changes.stream().map((x) -> {
+      ORecordOperation operation = new ORecordOperation(x.getId(), x.getType());
+      // TODO: Handle dirty no changed
+      ORecord record = null;
+      switch (x.getType()) {
+      case ORecordOperation.CREATED: {
+        record = ORecordSerializerNetworkDistributed.INSTANCE.fromStream(x.getRecord().get(), null, null);
+        ORecordInternal.setRecordSerializer(record, database.getSerializer());
+        break;
+      }
+      case ORecordOperation.UPDATED: {
+        if (x.getRecordType() == ODocument.RECORD_TYPE) {
+          record = database.load(x.getId());
+          if (record == null) {
+            record = new ODocument();
+          }
+          ODocumentSerializerDelta.instance().deserializeDelta(x.getRecord().get(), (ODocument) record);
+          /// Got record with empty deltas, at this level we mark the record dirty anyway.
+          record.setDirty();
+        } else {
+          record = ORecordSerializerNetworkDistributed.INSTANCE.fromStream(x.getRecord().get(), null, null);
+          ORecordInternal.setRecordSerializer(record, database.getSerializer());
+        }
+        break;
+      }
+      case ORecordOperation.DELETED: {
+        record = database.load(x.getId());
+        if (record == null) {
+          record = Orient.instance().getRecordFactoryManager().newInstance(x.getRecordType(), x.getId().getClusterId(), database);
+        }
+        break;
+      }
+      }
+      ORecordInternal.setIdentity(record, (ORecordId) x.getId());
+      ORecordInternal.setVersion(record, x.getVersion());
+      operation.setRecord(record);
+
+      return operation;
+    }).iterator());
   }
 }

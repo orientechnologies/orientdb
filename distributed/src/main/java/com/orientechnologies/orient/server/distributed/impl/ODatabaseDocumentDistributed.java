@@ -690,8 +690,4 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
         .map(OEnterpriseEndpoint.class::cast).orElse(null);
   }
 
-  @Override
-  public void syncCommit(OTransactionData db) {
-    throw  new UnsupportedOperationException();
-  }
 }

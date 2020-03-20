@@ -29,17 +29,7 @@ import com.orientechnologies.orient.core.command.OBasicCommandContext;
 import com.orientechnologies.orient.core.command.OCommandManager;
 import com.orientechnologies.orient.core.command.OScriptExecutor;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
-import com.orientechnologies.orient.core.db.ODatabase;
-import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
-import com.orientechnologies.orient.core.db.ODatabaseLifecycleListener;
-import com.orientechnologies.orient.core.db.ODatabaseListener;
-import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
-import com.orientechnologies.orient.core.db.OHookReplacedRecordThreadLocal;
-import com.orientechnologies.orient.core.db.OLiveQueryMonitor;
-import com.orientechnologies.orient.core.db.OLiveQueryResultListener;
-import com.orientechnologies.orient.core.db.OSharedContext;
-import com.orientechnologies.orient.core.db.OSharedContextEmbedded;
-import com.orientechnologies.orient.core.db.OrientDBConfig;
+import com.orientechnologies.orient.core.db.*;
 import com.orientechnologies.orient.core.db.record.OClassTrigger;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
@@ -86,6 +76,11 @@ import com.orientechnologies.orient.core.storage.ORecordCallback;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.OMicroTransaction;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.ORecordSerializationContext;
+import com.orientechnologies.orient.core.tx.OTransactionAbstract;
+import com.orientechnologies.orient.core.tx.OTransactionData;
+import com.orientechnologies.orient.core.tx.OTransactionInternal;
+import com.orientechnologies.orient.core.tx.OTransactionOptimistic;
 
 import java.text.SimpleDateFormat;
 import java.util.Collections;
@@ -222,7 +217,6 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract impleme
    * Opens a database using an authentication token received as an argument.
    *
    * @param iToken Authentication token
-   *
    * @return The Database instance itself giving a "fluent interface". Useful to call multiple methods in chain.
    */
   @Deprecated
@@ -1112,5 +1106,16 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract impleme
     super.afterRollbackOperations();
     OLiveQueryHook.removePendingDatabaseOps(this);
     OLiveQueryHookV2.removePendingDatabaseOps(this);
+  }
+  @Override
+  public void syncCommit(OTransactionData data) {
+    OScenarioThreadLocal.executeAsDistributed(() -> {
+      assert !this.getTransaction().isActive();
+      OTransactionOptimistic tx = new OTransactionOptimistic(this);
+      data.fill(tx, this);
+      this.rawBegin(tx);
+      this.commit();
+      return null;
+    });
   }
 }

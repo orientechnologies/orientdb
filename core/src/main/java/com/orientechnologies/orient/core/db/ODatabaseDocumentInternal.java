@@ -239,7 +239,7 @@ public interface ODatabaseDocumentInternal extends ODatabaseSession, ODatabaseIn
 
   Map<UUID, OBonsaiCollectionPointer> getCollectionsChanges();
 
-  default void syncCommit(OTransactionData db) {
+  default void syncCommit(OTransactionData data) {
     throw new UnsupportedOperationException();
   }
 }
