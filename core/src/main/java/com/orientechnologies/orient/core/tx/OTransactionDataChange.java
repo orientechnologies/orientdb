@@ -1,4 +1,4 @@
-package com.orientechnologies.orient.core.storage.impl.local;
+package com.orientechnologies.orient.core.tx;
 
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
 import com.orientechnologies.orient.core.id.ORID;
@@ -50,6 +50,15 @@ public class OTransactionDataChange {
 
   }
 
+  public OTransactionDataChange(byte type, byte recordType, ORID id, Optional<byte[]> record, int version, boolean contentChanged) {
+    this.type = type;
+    this.recordType = recordType;
+    this.id = id;
+    this.record = record;
+    this.version = version;
+    this.contentChanged = contentChanged;
+  }
+
   public void serialize(DataOutput output) throws IOException {
     output.writeByte(type);
     output.writeByte(recordType);
@@ -86,4 +95,29 @@ public class OTransactionDataChange {
     change.contentChanged = input.readBoolean();
     return change;
   }
+
+  public byte getRecordType() {
+    return recordType;
+  }
+
+  public byte getType() {
+    return type;
+  }
+
+  public int getVersion() {
+    return version;
+  }
+
+  public Optional<byte[]> getRecord() {
+    return record;
+  }
+
+  public boolean isContentChanged() {
+    return contentChanged;
+  }
+
+  public ORID getId() {
+    return id;
+  }
+
 }

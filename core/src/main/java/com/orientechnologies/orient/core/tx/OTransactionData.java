@@ -1,8 +1,7 @@
-package com.orientechnologies.orient.core.storage.impl.local;
+package com.orientechnologies.orient.core.tx;
 
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
-import com.orientechnologies.orient.core.tx.OTransactionId;
 
 import java.io.*;
 import java.util.ArrayList;
@@ -32,6 +31,10 @@ public class OTransactionData {
     } catch (IOException e) {
       throw OException.wrapException(new ODatabaseException("error reading transaction data change record"), e);
     }
+  }
+
+  public void addChange(OTransactionDataChange change) {
+    this.changes.add(change);
   }
 
   public OTransactionId getTransactionId() {
