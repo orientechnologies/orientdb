@@ -26,7 +26,8 @@ public final class OrientGraphStepStrategy
       Step current = traversal.getStartStep();
       do {
         current  = replaceStrategy(traversal, current).getNextStep();
-      } while (current !=null && !(current instanceof EmptyStep));
+      }
+      while (current !=null && !(current instanceof EmptyStep));
     }
 
     private Step replaceStrategy(Traversal.Admin<?, ?> traversal, Step<?, ?> step) {
