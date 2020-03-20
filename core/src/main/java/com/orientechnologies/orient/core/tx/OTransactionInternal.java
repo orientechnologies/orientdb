@@ -116,4 +116,8 @@ public interface OTransactionInternal extends OBasicTransaction {
   void prepareSerializedOperations() throws IOException;
 
   Iterator<byte[]> getSerializedOperations();
+
+  default void fill(Iterator<ORecordOperation> operations) {
+    throw new UnsupportedOperationException();
+  }
 }

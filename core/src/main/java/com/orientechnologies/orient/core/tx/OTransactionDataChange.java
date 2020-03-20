@@ -42,6 +42,7 @@ public class OTransactionDataChange {
       this.contentChanged = ORecordInternal.isContentChanged(rec);
       break;
     case ORecordOperation.DELETED:
+      record = Optional.empty();
       break;
     }
   }

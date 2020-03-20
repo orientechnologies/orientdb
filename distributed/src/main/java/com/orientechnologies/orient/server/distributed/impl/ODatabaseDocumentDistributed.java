@@ -861,8 +861,4 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
     }
   }
 
-  @Override
-  public void syncCommit(OTransactionData db) {
-    throw  new UnsupportedOperationException();
-  }
 }
