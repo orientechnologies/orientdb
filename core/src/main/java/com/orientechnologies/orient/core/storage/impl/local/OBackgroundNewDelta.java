@@ -1,5 +1,7 @@
 package com.orientechnologies.orient.core.storage.impl.local;
 
+import com.orientechnologies.orient.core.tx.OTransactionData;
+
 import java.io.*;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;

@@ -1,14 +1,11 @@
 package com.orientechnologies.orient.server.distributed.impl.task;
 
-import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.OBackgroundNewDelta;
-import com.orientechnologies.orient.core.storage.impl.local.OTransactionData;
 import com.orientechnologies.orient.core.tx.OTransactionId;
 import com.orientechnologies.orient.core.tx.OTransactionSequenceStatus;
-import com.orientechnologies.orient.core.tx.OTxMetadataHolder;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.distributed.*;
 import com.orientechnologies.orient.server.distributed.impl.ODistributedDatabaseChunk;
@@ -19,7 +16,6 @@ import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
 import java.util.List;
-import java.util.Optional;
 
 public class OSyncDatabaseNewDeltaTask extends OAbstractReplicatedTask {
   public static final int CHUNK_MAX_SIZE = 8388608;    // 8MB
