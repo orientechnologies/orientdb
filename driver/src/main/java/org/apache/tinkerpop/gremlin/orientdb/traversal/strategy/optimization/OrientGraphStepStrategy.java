@@ -23,17 +23,10 @@ public final class OrientGraphStepStrategy
 
     @Override
     public void apply(final Traversal.Admin<?, ?> traversal) {
-
-//        final Step<?, ?> startStep = traversal.getStartStep();
-        // only apply once
-
       Step current = traversal.getStartStep();
-
-
       do {
         current  = replaceStrategy(traversal, current).getNextStep();
       } while (current !=null && !(current instanceof EmptyStep));
-
     }
 
     private Step replaceStrategy(Traversal.Admin<?, ?> traversal, Step<?, ?> step) {
