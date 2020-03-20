@@ -9,6 +9,7 @@ import org.apache.commons.configuration.Configuration;
 import org.apache.tinkerpop.gremlin.orientdb.traversal.step.sideeffect.OrientGraphStep;
 import org.apache.tinkerpop.gremlin.orientdb.traversal.strategy.optimization.OrientGraphStepStrategy;
 import org.apache.tinkerpop.gremlin.process.traversal.P;
+import org.apache.tinkerpop.gremlin.process.traversal.Step;
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversal;
 import org.apache.tinkerpop.gremlin.structure.Edge;
 import org.apache.tinkerpop.gremlin.structure.Vertex;
@@ -100,12 +101,40 @@ public class OrientGraphIndexTest {
     Assert.assertEquals(1, usedIndexes(graph, traversal));
 
     OIndex index = findUsedIndex(traversal).iterator().next().index;
-    Assert.assertEquals(1, index.getInternal().size());
+    Assert.assertEquals(1, index.getSize());
     Assert.assertEquals(v1.id(), index.get(value));
 
     List<Vertex> result = traversal.toList();
     Assert.assertEquals(1, result.size());
     Assert.assertEquals(v1.id(), result.get(0).id());
+  }
+
+  @Test
+  public void vertexUniqueIndexLookupWithValueInMidTraversal() {
+    OrientGraph graph = newGraph();
+    createVertexIndexLabel(graph, vertexLabel1);
+    createVertexIndexLabel(graph, vertexLabel2);
+    String value = "value1";
+
+    // verify index created
+    Assert.assertEquals(graph.getIndexedKeys(Vertex.class, vertexLabel1), new HashSet<>(Collections.singletonList(key)));
+    Assert.assertEquals(graph.getIndexedKeys(Vertex.class, vertexLabel2), new HashSet<>(Collections.singletonList(key))             );
+    Assert.assertEquals(graph.getIndexedKeys(Edge.class, vertexLabel1), new HashSet<>(Collections.emptyList()));
+
+    Vertex v1 = graph.addVertex(label, vertexLabel1, key, value);
+    Vertex v2 = graph.addVertex(label, vertexLabel2, key, value);
+
+    // looking deep into the internals here - I can't find a nicer way to
+    // auto verify that an index is actually used
+    GraphTraversal<Vertex, Edge> traversal = graph.traversal().V().has(label, P.eq(vertexLabel1)).has(key, P.eq(value)).as("first")
+        .V().has(label, P.eq(vertexLabel2)).has(key, P.eq(value)).as("second").addE(edgeLabel1);
+
+    Assert.assertEquals(2, usedIndexes(graph, traversal));
+
+    List<Edge> result = traversal.toList();
+    Assert.assertEquals(1, result.size());
+
+    Assert.assertEquals(edgeLabel1, result.get(0).label());
   }
 
   @Test
@@ -176,7 +205,7 @@ public class OrientGraphIndexTest {
     Assert.assertEquals(1, usedIndexes(graph, traversal));
 
     OIndex index = findUsedIndex(traversal).iterator().next().index;
-    Assert.assertEquals(3, index.getInternal().size());
+    Assert.assertEquals(3, index.getSize());
     Assert.assertEquals(v1.id(), index.get(value1));
     Assert.assertEquals(v2.id(), index.get(value2));
 
@@ -213,7 +242,7 @@ public class OrientGraphIndexTest {
 
       orientIndexQueries.forEach(orientIndexQuery -> {
         OIndex index = orientIndexQuery.index;
-        Assert.assertEquals(1, index.getInternal().size());
+        Assert.assertEquals(1, index.getSize());
         Assert.assertEquals(e1.id(), index.get(value));
 
         List<Edge> result1 = traversal1.toList();
@@ -287,10 +316,21 @@ public class OrientGraphIndexTest {
 
   private int usedIndexes(OrientGraph graph, GraphTraversal<?, ?> traversal) {
     OrientGraphStepStrategy.instance().apply(traversal.asAdmin());
-    OrientGraphStep orientGraphStep = (OrientGraphStep) traversal.asAdmin().getStartStep();
-    Optional<OrientGraphQuery> optional = orientGraphStep.buildQuery();
-    Optional<Integer> index = optional.map(query -> query.usedIndexes(graph));
-    return index.isPresent() ? index.get() : 0;
+
+    List<Step> steps = traversal.asAdmin().getSteps();
+
+    int idx = 0;
+    for (Step step : steps) {
+
+      if (step instanceof OrientGraphStep) {
+        OrientGraphStep orientGraphStep = (OrientGraphStep) step;
+        Optional<OrientGraphQuery> optional = orientGraphStep.buildQuery();
+        Optional<Integer> index = optional.map(query -> query.usedIndexes(graph));
+        idx += index.isPresent() ? index.get() : 0;
+      }
+    }
+
+    return idx;
   }
 
   private void createVertexIndexLabel(OrientGraph graph, String vertexLabel) {

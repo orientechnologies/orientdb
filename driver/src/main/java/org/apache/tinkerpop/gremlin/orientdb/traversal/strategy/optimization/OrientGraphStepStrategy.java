@@ -6,8 +6,11 @@ import org.apache.tinkerpop.gremlin.process.traversal.Traversal;
 import org.apache.tinkerpop.gremlin.process.traversal.TraversalStrategy;
 import org.apache.tinkerpop.gremlin.process.traversal.step.HasContainerHolder;
 import org.apache.tinkerpop.gremlin.process.traversal.step.map.GraphStep;
+import org.apache.tinkerpop.gremlin.process.traversal.step.util.EmptyStep;
 import org.apache.tinkerpop.gremlin.process.traversal.strategy.AbstractTraversalStrategy;
 import org.apache.tinkerpop.gremlin.process.traversal.util.TraversalHelper;
+
+import java.util.List;
 
 public final class OrientGraphStepStrategy
         extends AbstractTraversalStrategy<TraversalStrategy.ProviderOptimizationStrategy>
@@ -21,12 +24,23 @@ public final class OrientGraphStepStrategy
     @Override
     public void apply(final Traversal.Admin<?, ?> traversal) {
 
-        final Step<?, ?> startStep = traversal.getStartStep();
+//        final Step<?, ?> startStep = traversal.getStartStep();
         // only apply once
-        if (startStep instanceof GraphStep && !(startStep instanceof OrientGraphStep)) {
-            final GraphStep<?, ?> originalGraphStep = (GraphStep) startStep;
+
+      Step current = traversal.getStartStep();
+
+
+      do {
+        current  = replaceStrategy(traversal, current).getNextStep();
+      } while (current !=null && !(current instanceof EmptyStep));
+
+    }
+
+    private Step replaceStrategy(Traversal.Admin<?, ?> traversal, Step<?, ?> step) {
+        if (step instanceof GraphStep && !(step instanceof OrientGraphStep)) {
+            final GraphStep<?, ?> originalGraphStep = (GraphStep) step;
             final OrientGraphStep<?, ?> orientGraphStep = new OrientGraphStep<>(originalGraphStep);
-            TraversalHelper.replaceStep(startStep, (Step) orientGraphStep, traversal);
+            TraversalHelper.replaceStep(step, (Step) orientGraphStep, traversal);
 
             Step<?, ?> currentStep = orientGraphStep.getNextStep();
             while (currentStep instanceof HasContainerHolder) {
@@ -35,6 +49,9 @@ public final class OrientGraphStepStrategy
                 traversal.removeStep(currentStep);
                 currentStep = currentStep.getNextStep();
             }
+            return  orientGraphStep;
+        }else {
+          return step;
         }
     }
 
