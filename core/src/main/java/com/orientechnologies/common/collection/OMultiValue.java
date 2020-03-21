@@ -198,7 +198,7 @@ public class OMultiValue {
     if (!isMultiValue(iObject))
       return null;
 
-    if (iIndex > getSize(iObject))
+    if (iIndex >= getSize(iObject))
       return null;
 
     try {
