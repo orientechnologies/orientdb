@@ -49,9 +49,11 @@ public class OSecurityService implements OEnterpriseService {
 
         OServerSecurity security = server.getSecurity();
 
-        if (security instanceof ODefaultServerSecurity) {
-          ((ODefaultServerSecurity) security).replacePasswordValidator(new EnterprisePasswordValidator());
-        }
+
+        // Disabled for now
+//        if (security instanceof ODefaultServerSecurity) {
+//          ((ODefaultServerSecurity) security).replacePasswordValidator(new EnterprisePasswordValidator());
+//        }
 
       }
     } catch (Throwable th) {
