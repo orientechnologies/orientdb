@@ -10,7 +10,7 @@ public class ByteKeyNormalizer implements KeyNormalizers {
     final ByteBuffer bb = ByteBuffer.allocate(2);
     bb.order(ByteOrder.BIG_ENDIAN);
     bb.put((byte) 0);
-    bb.put((byte)((byte) key + Byte.MAX_VALUE + 1));
+    bb.put((byte) ((byte) key + Byte.MAX_VALUE + 1));
     return bb.array();
   }
 }

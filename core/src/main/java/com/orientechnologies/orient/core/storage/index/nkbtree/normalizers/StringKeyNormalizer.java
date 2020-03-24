@@ -15,7 +15,7 @@ public class StringKeyNormalizer implements KeyNormalizers {
     instance.setDecomposition(decomposition);
     final CollationKey collationKey = instance.getCollationKey((String) key);
     final ByteBuffer bb = ByteBuffer.allocate(1);
-    bb.put((byte)0);
+    bb.put((byte) 0);
     return ArrayUtils.addAll(bb.array(), collationKey.toByteArray());
   }
 }

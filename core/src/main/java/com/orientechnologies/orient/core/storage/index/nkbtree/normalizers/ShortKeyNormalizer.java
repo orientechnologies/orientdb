@@ -10,7 +10,7 @@ public class ShortKeyNormalizer implements KeyNormalizers {
     final ByteBuffer bb = ByteBuffer.allocate(3);
     bb.order(ByteOrder.BIG_ENDIAN);
     bb.put((byte) 0);
-    bb.putShort((short)((short) key + Short.MAX_VALUE + 1));
+    bb.putShort((short) ((short) key + Short.MAX_VALUE + 1));
     return bb.array();
   }
 }

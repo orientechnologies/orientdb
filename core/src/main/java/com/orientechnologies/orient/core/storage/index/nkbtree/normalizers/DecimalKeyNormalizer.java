@@ -1,8 +1,5 @@
 package com.orientechnologies.orient.core.storage.index.nkbtree.normalizers;
 
-import com.orientechnologies.common.serialization.types.OBinaryTypeSerializer;
-import com.orientechnologies.common.serialization.types.OIntegerSerializer;
-
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.math.BigInteger;
@@ -32,11 +29,5 @@ public class DecimalKeyNormalizer implements KeyNormalizers {
   BigInteger unsigned(long value) {
     return BigInteger.valueOf(value >>> 1).shiftLeft(1) // the upper 63 bits
         .or(BigInteger.valueOf(value & 1L)); // plus the lowest bit
-  }
-
-  public void serialize(final byte[] object, final byte[] stream, final int startPosition) {
-    int len = object.length;
-    OIntegerSerializer.INSTANCE.serializeLiteral(len, stream, startPosition);
-    // System.arraycopy(object, 0, stream, startPosition + OIntegerSerializer.INT_SIZE, len);
   }
 }

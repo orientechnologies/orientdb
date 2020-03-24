@@ -28,17 +28,16 @@ import static com.orientechnologies.common.serialization.types.OLongSerializer.L
 @Warmup(iterations = 1, batchSize = 1)
 @Fork(1)
 public class KeyNormalizerVsSerializerBenchmark {
-  KeyNormalizer keyNormalizer;
-  ByteOrder byteOrder;
+  private KeyNormalizer keyNormalizer;
+  private ByteOrder     byteOrder;
 
   public static void main(String[] args) throws RunnerException {
-    final Options opt = new OptionsBuilder()
-        .include("KeyNormalizerVsSerializerBenchmark.*")
+    final Options opt = new OptionsBuilder().include("KeyNormalizerVsSerializerBenchmark.*")
         .addProfiler(StackProfiler.class, "detailLine=true;excludePackages=true;period=1")
         .jvmArgs("-server", "-XX:+UseConcMarkSweepGC", "-Xmx4G", "-Xms1G")
-        //.result("target" + "/" + "results.csv")
-        //.param("offHeapMessages", "true""
-        //.resultFormat(ResultFormatType.CSV)
+        // .result("target" + "/" + "results.csv")
+        // .param("offHeapMessages", "true""
+        // .resultFormat(ResultFormatType.CSV)
         .build();
     new Runner(opt).run();
   }
@@ -58,7 +57,7 @@ public class KeyNormalizerVsSerializerBenchmark {
   @Benchmark
   public void booleanNormalizer() throws Exception {
     final BooleanKeyNormalizer normalizer = new BooleanKeyNormalizer();
-    normalizer.execute(true,0);
+    normalizer.execute(true, 0);
   }
 
   @Benchmark
@@ -70,7 +69,7 @@ public class KeyNormalizerVsSerializerBenchmark {
   @Benchmark
   public void byteNormalizer() throws Exception {
     final ByteKeyNormalizer normalizer = new ByteKeyNormalizer();
-    normalizer.execute((byte) 3,0);
+    normalizer.execute((byte) 3, 0);
   }
 
   @Benchmark
@@ -82,7 +81,7 @@ public class KeyNormalizerVsSerializerBenchmark {
   @Benchmark
   public void integerNormalizer() throws Exception {
     final IntegerKeyNormalizer normalizer = new IntegerKeyNormalizer();
-    normalizer.execute(5,0);
+    normalizer.execute(5, 0);
   }
 
   @Benchmark
@@ -94,7 +93,7 @@ public class KeyNormalizerVsSerializerBenchmark {
   @Benchmark
   public void floatNormalizer() throws Exception {
     final FloatKeyNormalizer normalizer = new FloatKeyNormalizer();
-    normalizer.execute(1.5f,0);
+    normalizer.execute(1.5f, 0);
   }
 
   @Benchmark
@@ -106,7 +105,7 @@ public class KeyNormalizerVsSerializerBenchmark {
   @Benchmark
   public void doubleNormalizer() throws Exception {
     final DoubleKeyNormalizer normalizer = new DoubleKeyNormalizer();
-    normalizer.execute(1.5d,0);
+    normalizer.execute(1.5d, 0);
   }
 
   @Benchmark
@@ -118,7 +117,7 @@ public class KeyNormalizerVsSerializerBenchmark {
   @Benchmark
   public void shortNormalizer() throws Exception {
     final ShortKeyNormalizer normalizer = new ShortKeyNormalizer();
-    normalizer.execute((short) 3,0);
+    normalizer.execute((short) 3, 0);
   }
 
   @Benchmark
@@ -183,7 +182,7 @@ public class KeyNormalizerVsSerializerBenchmark {
   public void dateTimeSerializer() {
     final ODateTimeSerializer serializer = new ODateTimeSerializer();
     final LocalDateTime ldt = LocalDateTime.of(2013, 11, 5, 3, 3, 3);
-    final Date date = Date.from( ldt.atZone( ZoneId.systemDefault()).toInstant());
+    final Date date = Date.from(ldt.atZone(ZoneId.systemDefault()).toInstant());
     serializer.serialize(date, new byte[LONG_SIZE], 0);
   }
 
@@ -191,7 +190,7 @@ public class KeyNormalizerVsSerializerBenchmark {
   public void dateTimeNormalizer() throws Exception {
     final DateKeyNormalizer normalizer = new DateKeyNormalizer();
     final LocalDateTime ldt = LocalDateTime.of(2013, 11, 5, 3, 3, 3);
-    final Date date = Date.from( ldt.atZone( ZoneId.systemDefault()).toInstant());
+    final Date date = Date.from(ldt.atZone(ZoneId.systemDefault()).toInstant());
     normalizer.execute(date, 0);
   }
 

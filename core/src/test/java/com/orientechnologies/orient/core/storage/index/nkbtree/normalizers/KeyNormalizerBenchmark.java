@@ -11,7 +11,6 @@ import org.openjdk.jmh.runner.RunnerException;
 import org.openjdk.jmh.runner.options.Options;
 import org.openjdk.jmh.runner.options.OptionsBuilder;
 
-import java.io.ByteArrayOutputStream;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.time.LocalDateTime;
@@ -28,228 +27,227 @@ import java.util.concurrent.TimeUnit;
 @Warmup(iterations = 1, batchSize = 1)
 @Fork(1)
 public class KeyNormalizerBenchmark {
-    KeyNormalizer keyNormalizer;
+  private KeyNormalizer keyNormalizer;
 
-    OCompositeKey binaryCompositeKey;
-    OType[] binaryTypes;
+  private OCompositeKey binaryCompositeKey;
+  private OType[]       binaryTypes;
 
-    OCompositeKey dateCompositeKey;
-    OType[] dateTypes;
+  private OCompositeKey dateCompositeKey;
+  private OType[]       dateTypes;
 
-    OCompositeKey dateTimeCompositeKey;
-    OType[] dateTimeTypes;
+  private OCompositeKey dateTimeCompositeKey;
+  private OType[]       dateTimeTypes;
 
-    public static void main(String[] args) throws RunnerException {
-        final Options opt = new OptionsBuilder()
-                .include("KeyNormalizerBenchmark.*")
-                .addProfiler(StackProfiler.class, "detailLine=true;excludePackages=true;period=1")
-                .jvmArgs("-server", "-XX:+UseConcMarkSweepGC", "-Xmx4G", "-Xms1G")
-                //.result("target" + "/" + "results.csv")
-                //.param("offHeapMessages", "true""
-                //.resultFormat(ResultFormatType.CSV)
-                .build();
-        new Runner(opt).run();
-    }
+  public static void main(String[] args) throws RunnerException {
+    final Options opt = new OptionsBuilder().include("KeyNormalizerBenchmark.*")
+        .addProfiler(StackProfiler.class, "detailLine=true;excludePackages=true;period=1")
+        .jvmArgs("-server", "-XX:+UseConcMarkSweepGC", "-Xmx4G", "-Xms1G")
+        // .result("target" + "/" + "results.csv")
+        // .param("offHeapMessages", "true""
+        // .resultFormat(ResultFormatType.CSV)
+        .build();
+    new Runner(opt).run();
+  }
 
-    @Setup(Level.Iteration)
-    public void setup() {
-        binaryFixture();
-        dateFixture();
-        dateTimeFixture();
-    }
+  @Setup(Level.Iteration)
+  public void setup() {
+    binaryFixture();
+    dateFixture();
+    dateTimeFixture();
+  }
 
-    private void binaryFixture() {
-        keyNormalizer = new KeyNormalizer();
-        final byte[] binaryKey = new byte[] { 1, 2, 3, 4, 5, 6 };
-        binaryCompositeKey = new OCompositeKey();
-        binaryCompositeKey.addKey(binaryKey);
-        binaryTypes = new OType[1];
-        binaryTypes[0] = OType.BINARY;
-    }
+  private void binaryFixture() {
+    keyNormalizer = new KeyNormalizer();
+    final byte[] binaryKey = new byte[] { 1, 2, 3, 4, 5, 6 };
+    binaryCompositeKey = new OCompositeKey();
+    binaryCompositeKey.addKey(binaryKey);
+    binaryTypes = new OType[1];
+    binaryTypes[0] = OType.BINARY;
+  }
 
-    private void dateFixture() {
-        final Date key = new GregorianCalendar(2013, Calendar.NOVEMBER, 5).getTime();
-        dateCompositeKey = new OCompositeKey();
-        dateCompositeKey.addKey(key);
-        dateTypes = new OType[1];
-        dateTypes[0] = OType.DATE;
-    }
+  private void dateFixture() {
+    final Date key = new GregorianCalendar(2013, Calendar.NOVEMBER, 5).getTime();
+    dateCompositeKey = new OCompositeKey();
+    dateCompositeKey.addKey(key);
+    dateTypes = new OType[1];
+    dateTypes[0] = OType.DATE;
+  }
 
-    private void dateTimeFixture() {
-        final LocalDateTime ldt = LocalDateTime.of(2013, 11, 5, 3, 3, 3);
-        final Date key = Date.from( ldt.atZone( ZoneId.systemDefault()).toInstant());
-        dateTimeCompositeKey = new OCompositeKey();
-        dateTimeCompositeKey.addKey(key);
-        dateTimeTypes = new OType[1];
-        dateTimeTypes[0] = OType.DATETIME;
-    }
+  private void dateTimeFixture() {
+    final LocalDateTime ldt = LocalDateTime.of(2013, 11, 5, 3, 3, 3);
+    final Date key = Date.from(ldt.atZone(ZoneId.systemDefault()).toInstant());
+    dateTimeCompositeKey = new OCompositeKey();
+    dateTimeCompositeKey.addKey(key);
+    dateTimeTypes = new OType[1];
+    dateTimeTypes[0] = OType.DATETIME;
+  }
 
-    final ByteArrayOutputStream bos = new ByteArrayOutputStream();
+  // final ByteArrayOutputStream bos = new ByteArrayOutputStream();
 
-    @Benchmark
-    public void normalizeComposite_null() throws Exception {
-        final OCompositeKey compositeKey = new OCompositeKey();
-        compositeKey.addKey(null);
+  @Benchmark
+  public void normalizeComposite_null() {
+    final OCompositeKey compositeKey = new OCompositeKey();
+    compositeKey.addKey(null);
 
-        final OType[] types = new OType[1];
-        types[0] = null;
+    final OType[] types = new OType[1];
+    types[0] = null;
 
-        final byte[] bytes = keyNormalizer.normalize(compositeKey, types, Collator.NO_DECOMPOSITION);
-    }
+    keyNormalizer.normalize(compositeKey, types, Collator.NO_DECOMPOSITION);
+  }
 
-    @Benchmark
-    public void normalizeComposite_addKey_null() throws Exception {
-        final OCompositeKey compositeKey = new OCompositeKey();
-        compositeKey.addKey(null);
-    }
+  @Benchmark
+  public void normalizeComposite_addKey_null() {
+    final OCompositeKey compositeKey = new OCompositeKey();
+    compositeKey.addKey(null);
+  }
 
-    @Benchmark
-    public void normalizeComposite_null_int() throws Exception {
-        final OCompositeKey compositeKey = new OCompositeKey();
-        compositeKey.addKey(null);
-        compositeKey.addKey(5);
+  @Benchmark
+  public void normalizeComposite_null_int() {
+    final OCompositeKey compositeKey = new OCompositeKey();
+    compositeKey.addKey(null);
+    compositeKey.addKey(5);
 
-        final OType[] types = new OType[2];
-        types[0] = null;
-        types[1] = OType.INTEGER;
+    final OType[] types = new OType[2];
+    types[0] = null;
+    types[1] = OType.INTEGER;
 
-        final byte[] bytes = keyNormalizer.normalize(compositeKey, types, Collator.NO_DECOMPOSITION);
-    }
+    keyNormalizer.normalize(compositeKey, types, Collator.NO_DECOMPOSITION);
+  }
 
-    @Benchmark
-    public void normalizeComposite_int() throws Exception {
-        final OCompositeKey compositeKey = new OCompositeKey();
-        compositeKey.addKey(5);
+  @Benchmark
+  public void normalizeComposite_int() {
+    final OCompositeKey compositeKey = new OCompositeKey();
+    compositeKey.addKey(5);
 
-        final OType[] types = new OType[1];
-        types[0] = OType.INTEGER;
+    final OType[] types = new OType[1];
+    types[0] = OType.INTEGER;
 
-        final byte[] bytes = keyNormalizer.normalize(compositeKey, types, Collator.NO_DECOMPOSITION);
-    }
+    keyNormalizer.normalize(compositeKey, types, Collator.NO_DECOMPOSITION);
+  }
 
-    @Benchmark
-    public void normalizeComposite_float() throws Exception {
-        final OCompositeKey compositeKey = new OCompositeKey();
-        compositeKey.addKey(1.5f);
+  @Benchmark
+  public void normalizeComposite_float() {
+    final OCompositeKey compositeKey = new OCompositeKey();
+    compositeKey.addKey(1.5f);
 
-        final OType[] types = new OType[1];
-        types[0] = OType.FLOAT;
+    final OType[] types = new OType[1];
+    types[0] = OType.FLOAT;
 
-        final byte[] bytes = keyNormalizer.normalize(compositeKey, types, Collator.NO_DECOMPOSITION);
-    }
+    keyNormalizer.normalize(compositeKey, types, Collator.NO_DECOMPOSITION);
+  }
 
-    @Benchmark
-    public void normalizeComposite_double() throws Exception {
-        final OCompositeKey compositeKey = new OCompositeKey();
-        compositeKey.addKey(1.5d);
+  @Benchmark
+  public void normalizeComposite_double() {
+    final OCompositeKey compositeKey = new OCompositeKey();
+    compositeKey.addKey(1.5d);
 
-        final OType[] types = new OType[1];
-        types[0] = OType.DOUBLE;
+    final OType[] types = new OType[1];
+    types[0] = OType.DOUBLE;
 
-        final byte[] bytes = keyNormalizer.normalize(compositeKey, types, Collator.NO_DECOMPOSITION);
-    }
+    keyNormalizer.normalize(compositeKey, types, Collator.NO_DECOMPOSITION);
+  }
 
-    @Benchmark
-    public void normalizeComposite_Boolean() throws Exception {
-        final OCompositeKey compositeKey = new OCompositeKey();
-        compositeKey.addKey(true);
+  @Benchmark
+  public void normalizeComposite_Boolean() {
+    final OCompositeKey compositeKey = new OCompositeKey();
+    compositeKey.addKey(true);
 
-        final OType[] types = new OType[1];
-        types[0] = OType.BOOLEAN;
+    final OType[] types = new OType[1];
+    types[0] = OType.BOOLEAN;
 
-        final byte[] bytes = keyNormalizer.normalize(compositeKey, types, Collator.NO_DECOMPOSITION);
-    }
+    keyNormalizer.normalize(compositeKey, types, Collator.NO_DECOMPOSITION);
+  }
 
-    @Benchmark
-    public void normalizeComposite_long() throws Exception {
-        final OCompositeKey compositeKey = new OCompositeKey();
-        compositeKey.addKey(5L);
+  @Benchmark
+  public void normalizeComposite_long() {
+    final OCompositeKey compositeKey = new OCompositeKey();
+    compositeKey.addKey(5L);
 
-        final OType[] types = new OType[1];
-        types[0] = OType.LONG;
+    final OType[] types = new OType[1];
+    types[0] = OType.LONG;
 
-        final byte[] bytes = keyNormalizer.normalize(compositeKey, types, Collator.NO_DECOMPOSITION);
-    }
+    keyNormalizer.normalize(compositeKey, types, Collator.NO_DECOMPOSITION);
+  }
 
-    @Benchmark
-    public void normalizeComposite_byte() throws Exception {
-        final OCompositeKey compositeKey = new OCompositeKey();
-        compositeKey.addKey((byte) 3);
+  @Benchmark
+  public void normalizeComposite_byte() {
+    final OCompositeKey compositeKey = new OCompositeKey();
+    compositeKey.addKey((byte) 3);
 
-        final OType[] types = new OType[1];
-        types[0] = OType.BYTE;
+    final OType[] types = new OType[1];
+    types[0] = OType.BYTE;
 
-        final byte[] bytes = keyNormalizer.normalize(compositeKey, types, Collator.NO_DECOMPOSITION);
-    }
+    keyNormalizer.normalize(compositeKey, types, Collator.NO_DECOMPOSITION);
+  }
 
-    @Benchmark
-    public void normalizeComposite_short() throws Exception {
-        final OCompositeKey compositeKey = new OCompositeKey();
-        compositeKey.addKey((short) 3);
+  @Benchmark
+  public void normalizeComposite_short() {
+    final OCompositeKey compositeKey = new OCompositeKey();
+    compositeKey.addKey((short) 3);
 
-        final OType[] types = new OType[1];
-        types[0] = OType.SHORT;
+    final OType[] types = new OType[1];
+    types[0] = OType.SHORT;
 
-        final byte[] bytes = keyNormalizer.normalize(compositeKey, types, Collator.NO_DECOMPOSITION);
-    }
+    keyNormalizer.normalize(compositeKey, types, Collator.NO_DECOMPOSITION);
+  }
 
-    @Benchmark
-    public void normalizeComposite_decimal() throws Exception {
-        final OCompositeKey compositeKey = new OCompositeKey();
-        compositeKey.addKey(new BigDecimal(3.14159265359));
+  @Benchmark
+  public void normalizeComposite_decimal() {
+    final OCompositeKey compositeKey = new OCompositeKey();
+    compositeKey.addKey(new BigDecimal(3.14159265359));
 
-        final OType[] types = new OType[1];
-        types[0] = OType.DECIMAL;
+    final OType[] types = new OType[1];
+    types[0] = OType.DECIMAL;
 
-        final byte[] bytes = keyNormalizer.normalize(compositeKey, types, Collator.NO_DECOMPOSITION);
-    }
+    keyNormalizer.normalize(compositeKey, types, Collator.NO_DECOMPOSITION);
+  }
 
-    @Benchmark
-    public void normalizeComposite_string() throws Exception {
-        final OCompositeKey compositeKey = new OCompositeKey();
-        compositeKey.addKey("abcd");
+  @Benchmark
+  public void normalizeComposite_string() {
+    final OCompositeKey compositeKey = new OCompositeKey();
+    compositeKey.addKey("abcd");
 
-        final OType[] types = new OType[1];
-        types[0] = OType.STRING;
-        final byte[] bytes = keyNormalizer.normalize(compositeKey, types, Collator.NO_DECOMPOSITION);
-    }
+    final OType[] types = new OType[1];
+    types[0] = OType.STRING;
+    keyNormalizer.normalize(compositeKey, types, Collator.NO_DECOMPOSITION);
+  }
 
-    @Benchmark
-    public void normalizeComposite_two_strings() throws Exception {
-        final OCompositeKey compositeKey = new OCompositeKey();
-        final String key = "abcd";
-        compositeKey.addKey(key);
-        final String secondKey = "test";
-        compositeKey.addKey(secondKey);
+  @Benchmark
+  public void normalizeComposite_two_strings() {
+    final OCompositeKey compositeKey = new OCompositeKey();
+    final String key = "abcd";
+    compositeKey.addKey(key);
+    final String secondKey = "test";
+    compositeKey.addKey(secondKey);
 
-        final OType[] types = new OType[2];
-        types[0] = OType.STRING;
-        types[1] = OType.STRING;
-        final byte[] bytes = keyNormalizer.normalize(compositeKey, types, Collator.NO_DECOMPOSITION);
-    }
+    final OType[] types = new OType[2];
+    types[0] = OType.STRING;
+    types[1] = OType.STRING;
+    keyNormalizer.normalize(compositeKey, types, Collator.NO_DECOMPOSITION);
+  }
 
-    @Benchmark
-    public void normalizeComposite_date() {
-        final byte[] bytes = keyNormalizer.normalize(dateTimeCompositeKey, dateTimeTypes, Collator.NO_DECOMPOSITION);
-    }
+  @Benchmark
+  public void normalizeComposite_date() {
+    keyNormalizer.normalize(dateTimeCompositeKey, dateTimeTypes, Collator.NO_DECOMPOSITION);
+  }
 
-    @Benchmark
-    public void normalizeComposite_dateTime() {
-        final byte[] bytes = keyNormalizer.normalize(dateCompositeKey, dateTypes, Collator.NO_DECOMPOSITION);
-    }
+  @Benchmark
+  public void normalizeComposite_dateTime() {
+    keyNormalizer.normalize(dateCompositeKey, dateTypes, Collator.NO_DECOMPOSITION);
+  }
 
-    @Benchmark
-    public void normalizeComposite_binary() {
-        final byte[] bytes = keyNormalizer.normalize(binaryCompositeKey, binaryTypes, Collator.NO_DECOMPOSITION);
-    }
+  @Benchmark
+  public void normalizeComposite_binary() {
+    keyNormalizer.normalize(binaryCompositeKey, binaryTypes, Collator.NO_DECOMPOSITION);
+  }
 
-    @Benchmark
-    public void decimalNormalizer() throws Exception {
-        final OCompositeKey compositeKey = new OCompositeKey();
-        compositeKey.addKey(new BigDecimal(new BigInteger("20"), 2));
+  @Benchmark
+  public void decimalNormalizer() {
+    final OCompositeKey compositeKey = new OCompositeKey();
+    compositeKey.addKey(new BigDecimal(new BigInteger("20"), 2));
 
-        final OType[] types = new OType[1];
-        types[0] = OType.DECIMAL;
-        final byte[] bytes = keyNormalizer.normalize(compositeKey, types, Collator.NO_DECOMPOSITION);
-    }
+    final OType[] types = new OType[1];
+    types[0] = OType.DECIMAL;
+    keyNormalizer.normalize(compositeKey, types, Collator.NO_DECOMPOSITION);
+  }
 }

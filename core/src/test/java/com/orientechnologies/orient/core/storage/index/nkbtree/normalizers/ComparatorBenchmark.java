@@ -22,74 +22,73 @@ import java.util.concurrent.TimeUnit;
 @Warmup(iterations = 1, batchSize = 1)
 @Fork(1)
 public class ComparatorBenchmark {
-    KeyNormalizer keyNormalizer;
+  KeyNormalizer keyNormalizer;
 
-    public static void main(String[] args) throws RunnerException {
-        final Options opt = new OptionsBuilder()
-                .include("ComparatorBenchmark.*")
-                .addProfiler(StackProfiler.class, "detailLine=true;excludePackages=true;period=1")
-                .jvmArgs("-server", "-XX:+UseConcMarkSweepGC", "-Xmx4G", "-Xms1G")
-                //.result("target" + "/" + "results.csv")
-                //.param("offHeapMessages", "true""
-                //.resultFormat(ResultFormatType.CSV)
-                .build();
-        new Runner(opt).run();
-    }
+  public static void main(String[] args) throws RunnerException {
+    final Options opt = new OptionsBuilder().include("ComparatorBenchmark.*")
+        .addProfiler(StackProfiler.class, "detailLine=true;excludePackages=true;period=1")
+        .jvmArgs("-server", "-XX:+UseConcMarkSweepGC", "-Xmx4G", "-Xms1G")
+        // .result("target" + "/" + "results.csv")
+        // .param("offHeapMessages", "true""
+        // .resultFormat(ResultFormatType.CSV)
+        .build();
+    new Runner(opt).run();
+  }
 
-    final OByteArrayComparator arrayComparator = new OByteArrayComparator();
-    final OUnsafeByteArrayComparator byteArrayComparator = new OUnsafeByteArrayComparator();
+  final OByteArrayComparator       arrayComparator     = new OByteArrayComparator();
+  final OUnsafeByteArrayComparator byteArrayComparator = new OUnsafeByteArrayComparator();
 
-    byte[] negative;
-    byte[] zero;
-    byte[] positive;
+  byte[]                           negative;
+  byte[]                           zero;
+  byte[]                           positive;
 
-    @Setup(Level.Iteration)
-    public void setup() {
-        keyNormalizer = new KeyNormalizer();
+  @Setup(Level.Iteration)
+  public void setup() {
+    keyNormalizer = new KeyNormalizer();
 
-        negative = getNormalizedKeySingle(-62, OType.INTEGER);
-        zero     = getNormalizedKeySingle(0, OType.INTEGER);
-        positive = getNormalizedKeySingle(5, OType.INTEGER);
-    }
+    negative = getNormalizedKeySingle(-62, OType.INTEGER);
+    zero = getNormalizedKeySingle(0, OType.INTEGER);
+    positive = getNormalizedKeySingle(5, OType.INTEGER);
+  }
 
-    @Benchmark
-    public void comparator_byteArrayNegative() throws Exception {
-        byteArrayComparator.compare(negative, zero);
-    }
+  @Benchmark
+  public void comparator_byteArrayNegative() throws Exception {
+    byteArrayComparator.compare(negative, zero);
+  }
 
-    @Benchmark
-    public void comparator_byteArrayPositive() throws Exception {
-        byteArrayComparator.compare(positive, zero);
-    }
+  @Benchmark
+  public void comparator_byteArrayPositive() throws Exception {
+    byteArrayComparator.compare(positive, zero);
+  }
 
-    @Benchmark
-    public void comparator_byteArrayEqual() throws Exception {
-        byteArrayComparator.compare(zero, zero);
-    }
+  @Benchmark
+  public void comparator_byteArrayEqual() throws Exception {
+    byteArrayComparator.compare(zero, zero);
+  }
 
-    @Benchmark
-    public void comparator_unsafeByteArrayNegative() throws Exception {
-        arrayComparator.compare(negative, zero);
-    }
+  @Benchmark
+  public void comparator_unsafeByteArrayNegative() throws Exception {
+    arrayComparator.compare(negative, zero);
+  }
 
-    @Benchmark
-    public void comparator_unsafeByteArrayPositive() throws Exception {
-        arrayComparator.compare(positive, zero);
-    }
+  @Benchmark
+  public void comparator_unsafeByteArrayPositive() throws Exception {
+    arrayComparator.compare(positive, zero);
+  }
 
-    @Benchmark
-    public void comparator_unsafeByteArrayEqual() throws Exception {
-        arrayComparator.compare(zero, zero);
-    }
+  @Benchmark
+  public void comparator_unsafeByteArrayEqual() throws Exception {
+    arrayComparator.compare(zero, zero);
+  }
 
-    private byte[] getNormalizedKeySingle(final int keyValue, final OType type) {
-        final OCompositeKey compositeKey = new OCompositeKey();
-        compositeKey.addKey(keyValue);
-        Assert.assertEquals(1, compositeKey.getKeys().size());
+  private byte[] getNormalizedKeySingle(final int keyValue, final OType type) {
+    final OCompositeKey compositeKey = new OCompositeKey();
+    compositeKey.addKey(keyValue);
+    Assert.assertEquals(1, compositeKey.getKeys().size());
 
-        final OType[] types = new OType[1];
-        types[0] = type;
+    final OType[] types = new OType[1];
+    types[0] = type;
 
-        return keyNormalizer.normalize(compositeKey, types, Collator.NO_DECOMPOSITION);
-    }
+    return keyNormalizer.normalize(compositeKey, types, Collator.NO_DECOMPOSITION);
+  }
 }

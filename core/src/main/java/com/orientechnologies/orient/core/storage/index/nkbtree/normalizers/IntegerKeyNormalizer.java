@@ -5,9 +5,8 @@ import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 
 /**
- * special treatment for `twos complement integer`
- * encode as big endian unsigned integer and add UINT_MAX + 1
- * (byteswap if little endian)
+ * special treatment for `twos complement integer` encode as big endian unsigned integer and add INT_MAX + 1 (byteswap if little
+ * endian)
  */
 public class IntegerKeyNormalizer implements KeyNormalizers {
   @Override
