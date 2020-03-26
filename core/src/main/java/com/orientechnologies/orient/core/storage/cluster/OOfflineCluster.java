@@ -28,6 +28,7 @@ import com.orientechnologies.orient.core.storage.ORawBuffer;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.OClusterBrowsePage;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperation;
 
 import java.io.IOException;
 
@@ -61,7 +62,7 @@ public class OOfflineCluster implements OCluster {
   }
 
   @Override
-  public void create() throws IOException {
+  public void create(OAtomicOperation atomicOperation) throws IOException {
   }
 
   @Override
@@ -78,9 +79,8 @@ public class OOfflineCluster implements OCluster {
   }
 
   @Override
-  public void delete() throws IOException {
+  public void delete(OAtomicOperation atomicOperation) throws IOException {
   }
-
 
   @Override
   public void setClusterName(final String name) {
@@ -108,28 +108,29 @@ public class OOfflineCluster implements OCluster {
   }
 
   @Override
-  public OPhysicalPosition allocatePosition(byte recordType) throws IOException {
+  public OPhysicalPosition allocatePosition(byte recordType, OAtomicOperation atomicOperation) throws IOException {
     throw new OOfflineClusterException("Cannot allocate a new position on offline cluster '" + name + "'");
   }
 
   @Override
-  public OPhysicalPosition createRecord(byte[] content, int recordVersion, byte recordType, OPhysicalPosition allocatedPosition)
-      throws IOException {
+  public OPhysicalPosition createRecord(byte[] content, int recordVersion, byte recordType, OPhysicalPosition allocatedPosition,
+      OAtomicOperation atomicOperation) {
     throw new OOfflineClusterException("Cannot create a new record on offline cluster '" + name + "'");
   }
 
   @Override
-  public boolean deleteRecord(long clusterPosition) throws IOException {
+  public boolean deleteRecord(OAtomicOperation atomicOperation, long clusterPosition) {
     throw new OOfflineClusterException("Cannot delete a record on offline cluster '" + name + "'");
   }
 
   @Override
-  public void updateRecord(long clusterPosition, byte[] content, int recordVersion, byte recordType) throws IOException {
+  public void updateRecord(long clusterPosition, byte[] content, int recordVersion, byte recordType,
+      OAtomicOperation atomicOperation) {
     throw new OOfflineClusterException("Cannot update a record on offline cluster '" + name + "'");
   }
 
   @Override
-  public ORawBuffer readRecord(long clusterPosition, boolean prefetchRecords) throws IOException {
+  public ORawBuffer readRecord(long clusterPosition, boolean prefetchRecords) {
     throw OException.wrapException(new ORecordNotFoundException(new ORecordId(id, clusterPosition),
             "Record with rid #" + id + ":" + clusterPosition + " was not found in database"),
         new OOfflineClusterException("Cannot read a record from the offline cluster '" + name + "'"));

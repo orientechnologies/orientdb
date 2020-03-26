@@ -344,7 +344,8 @@ public class AsyncReadCacheTestIT {
     }
 
     @Override
-    public void makeFuzzyCheckpoint(final long segmentId, Optional<byte[]> lastMetadata) {
+    public void makeFuzzyCheckpoint(long segmentId, byte[] lastMetadata) throws IOException {
+
     }
 
     @Override

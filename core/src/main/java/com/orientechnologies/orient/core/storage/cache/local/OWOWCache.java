@@ -893,7 +893,7 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
   }
 
   @Override
-  public void makeFuzzyCheckpoint(final long segmentId, Optional<byte[]> lastMetadata) throws IOException {
+  public void makeFuzzyCheckpoint(final long segmentId, final byte[] lastMetadata) throws IOException {
     filesLock.acquireReadLock();
     try {
       doubleWriteLog.startCheckpoint();

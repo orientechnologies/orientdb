@@ -40,9 +40,8 @@ final class OAtomicOperationBinaryTracking implements OAtomicOperation {
 
   private final int                storageId;
   private final OLogSequenceNumber startLSN;
-  private final OOperationUnitId   operationUnitId;
+  private final long               operationUnitId;
 
-  private int     startCounter;
   private boolean rollback;
 
   private final Set<String>            lockedObjects        = new HashSet<>();
@@ -56,6 +55,8 @@ final class OAtomicOperationBinaryTracking implements OAtomicOperation {
 
   private final Map<String, OAtomicOperationMetadata<?>> metadata = new LinkedHashMap<>();
 
+  private int componentOperationsCount;
+
   /**
    * Pointers to ridbags deleted during current transaction. We can not reuse pointers if we delete ridbag and then  create new one
    * inside of the same transaction.
@@ -64,19 +65,18 @@ final class OAtomicOperationBinaryTracking implements OAtomicOperation {
 
   private final Map<ORawPair<Integer, Integer>, Set<Integer>> deletedRecordPositions = new HashMap<>();
 
-  OAtomicOperationBinaryTracking(final OLogSequenceNumber startLSN, final OOperationUnitId operationUnitId,
-      final OReadCache readCache, final OWriteCache writeCache, final int storageId) {
+  OAtomicOperationBinaryTracking(final OLogSequenceNumber startLSN, final long operationUnitId, final OReadCache readCache,
+      final OWriteCache writeCache, final int storageId) {
     this.storageId = storageId;
     this.startLSN = startLSN;
     this.operationUnitId = operationUnitId;
 
-    startCounter = 1;
     this.readCache = readCache;
     this.writeCache = writeCache;
   }
 
   @Override
-  public OOperationUnitId getOperationUnitId() {
+  public long getOperationUnitId() {
     return operationUnitId;
   }
 
@@ -229,7 +229,7 @@ final class OAtomicOperationBinaryTracking implements OAtomicOperation {
     changesContainer.pageChangesMap.put(filledUpTo, pageChangesContainer);
     changesContainer.maxNewPageIndex = filledUpTo;
     pageChangesContainer.delegate = new OCacheEntryImpl(fileId, (int) filledUpTo,
-        new OCachePointer(null, null, fileId, (int)filledUpTo));
+        new OCachePointer(null, null, fileId, (int) filledUpTo));
     return pageChangesContainer;
   }
 
@@ -445,7 +445,7 @@ final class OAtomicOperationBinaryTracking implements OAtomicOperation {
         }
       }
 
-      txEndLsn = writeAheadLog.logAtomicOperationEndRecord(getOperationUnitId(), rollback, this.startLSN, getMetadata());
+      txEndLsn = writeAheadLog.logAtomicOperationEndRecord(operationUnitId, rollback, this.startLSN, getMetadata());
 
       for (final long deletedFileId : deletedFiles) {
         readCache.deleteFile(deletedFileId, writeCache);
@@ -547,19 +547,6 @@ final class OAtomicOperationBinaryTracking implements OAtomicOperation {
     return txEndLsn;
   }
 
-  public void incrementCounter() {
-    startCounter++;
-  }
-
-  public void decrementCounter() {
-    startCounter--;
-  }
-
-  @Override
-  public int getCounter() {
-    return startCounter;
-  }
-
   public void rollbackInProgress() {
     rollback = true;
   }
@@ -591,12 +578,12 @@ final class OAtomicOperationBinaryTracking implements OAtomicOperation {
 
     final OAtomicOperationBinaryTracking operation = (OAtomicOperationBinaryTracking) o;
 
-    return operationUnitId.equals(operation.operationUnitId);
+    return operationUnitId == operation.operationUnitId;
   }
 
   @Override
   public int hashCode() {
-    return operationUnitId.hashCode();
+    return Long.hashCode(operationUnitId);
   }
 
   private static final class FileChanges {
@@ -638,5 +625,20 @@ final class OAtomicOperationBinaryTracking implements OAtomicOperation {
   @Override
   public Set<Integer> getBookedRecordPositions(int clusterId, int pageIndex) {
     return deletedRecordPositions.getOrDefault(new ORawPair<>(clusterId, pageIndex), Collections.emptySet());
+  }
+
+  @Override
+  public void incrementComponentOperations() {
+    componentOperationsCount++;
+  }
+
+  @Override
+  public void decrementComponentOperations() {
+    componentOperationsCount--;
+  }
+
+  @Override
+  public int getComponentOperations() {
+    return componentOperationsCount;
   }
 }

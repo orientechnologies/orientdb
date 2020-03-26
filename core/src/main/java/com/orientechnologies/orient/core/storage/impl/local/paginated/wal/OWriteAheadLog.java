@@ -29,7 +29,6 @@ import java.io.File;
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 
 /**
  * @author Andrey Lomakin (a.lomakin-at-orientdb.com)
@@ -39,11 +38,11 @@ public interface OWriteAheadLog {
   String MASTER_RECORD_EXTENSION = ".wmr";
   String WAL_SEGMENT_EXTENSION   = ".wal";
 
-  OLogSequenceNumber logFuzzyCheckPointStart(OLogSequenceNumber flushedLsn, Optional<byte[]> lastMetadata) throws IOException;
+  OLogSequenceNumber logFuzzyCheckPointStart(OLogSequenceNumber flushedLsn, byte[] lastMetadata) throws IOException;
 
   OLogSequenceNumber logFuzzyCheckPointEnd() throws IOException;
 
-  OLogSequenceNumber logFullCheckpointStart(Optional<byte[]> lastMetadata) throws IOException;
+  OLogSequenceNumber logFullCheckpointStart(byte[] lastMetadata) throws IOException;
 
   @SuppressWarnings("UnusedReturnValue")
   OLogSequenceNumber logFullCheckpointEnd() throws IOException;
@@ -58,12 +57,11 @@ public interface OWriteAheadLog {
 
   void flush();
 
-  OLogSequenceNumber logAtomicOperationStartRecord(final boolean isRollbackSupported, final OOperationUnitId unitId,
-      byte[] metadata);
+  OLogSequenceNumber logAtomicOperationStartRecord(final boolean isRollbackSupported, final long unitId, byte[] metadata);
 
-  OLogSequenceNumber logAtomicOperationStartRecord(boolean isRollbackSupported, OOperationUnitId unitId) throws IOException;
+  OLogSequenceNumber logAtomicOperationStartRecord(boolean isRollbackSupported, long unitId) throws IOException;
 
-  OLogSequenceNumber logAtomicOperationEndRecord(OOperationUnitId operationUnitId, boolean rollback, OLogSequenceNumber startLsn,
+  OLogSequenceNumber logAtomicOperationEndRecord(long operationUnitId, boolean rollback, OLogSequenceNumber startLsn,
       Map<String, OAtomicOperationMetadata<?>> atomicOperationMetadata) throws IOException;
 
   OLogSequenceNumber log(WriteableWALRecord record) throws IOException;
@@ -86,6 +84,7 @@ public interface OWriteAheadLog {
    * sure.
    *
    * @param lsn Maximum value of LSN till WAL will be cut.
+   *
    * @return <code>true</code> if some portion of WAL will be cut and <code>false</code> if WAL left untouched.
    */
   boolean cutTill(OLogSequenceNumber lsn) throws IOException;
@@ -111,6 +110,7 @@ public interface OWriteAheadLog {
    * to limit value of LSN after which WAL may be cut.
    *
    * @param lsn LSN after which cut of the WAL is not allowed.
+   *
    * @see #removeCutTillLimit(OLogSequenceNumber)
    * @see #cutTill(OLogSequenceNumber)
    */
@@ -121,6 +121,7 @@ public interface OWriteAheadLog {
    * used to limit value of LSN after which WAL may be cut.
    *
    * @param lsn LSN after which cut of the WAL is not allowed.
+   *
    * @see #removeCutTillLimit(OLogSequenceNumber)
    * @see #cutTill(OLogSequenceNumber)
    */

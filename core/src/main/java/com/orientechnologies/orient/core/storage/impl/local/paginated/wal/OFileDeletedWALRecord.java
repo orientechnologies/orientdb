@@ -10,7 +10,7 @@ public class OFileDeletedWALRecord extends OOperationUnitBodyRecord {
   public OFileDeletedWALRecord() {
   }
 
-  public OFileDeletedWALRecord(OOperationUnitId operationUnitId, long fileId) {
+  public OFileDeletedWALRecord(long operationUnitId, long fileId) {
     super(operationUnitId);
     this.fileId = fileId;
   }

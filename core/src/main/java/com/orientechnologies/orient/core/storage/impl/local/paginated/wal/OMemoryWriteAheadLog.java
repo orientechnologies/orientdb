@@ -53,19 +53,18 @@ public class OMemoryWriteAheadLog extends OAbstractWriteAheadLog {
   }
 
   @Override
-  public OLogSequenceNumber logAtomicOperationStartRecord(boolean isRollbackSupported, OOperationUnitId unitId) throws IOException {
+  public OLogSequenceNumber logAtomicOperationStartRecord(boolean isRollbackSupported, long unitId) {
     return log(new OAtomicUnitStartRecord(isRollbackSupported, unitId));
   }
 
-  public OLogSequenceNumber logAtomicOperationStartRecord(final boolean isRollbackSupported, final OOperationUnitId unitId,
-      byte[] metadata) {
+  public OLogSequenceNumber logAtomicOperationStartRecord(final boolean isRollbackSupported, final long unitId, byte[] metadata) {
     final OAtomicUnitStartMetadataRecord record = new OAtomicUnitStartMetadataRecord(isRollbackSupported, unitId, metadata);
     return log(record);
   }
 
   @Override
-  public OLogSequenceNumber logAtomicOperationEndRecord(OOperationUnitId operationUnitId, boolean rollback,
-      OLogSequenceNumber startLsn, Map<String, OAtomicOperationMetadata<?>> atomicOperationMetadata) throws IOException {
+  public OLogSequenceNumber logAtomicOperationEndRecord(long operationUnitId, boolean rollback, OLogSequenceNumber startLsn,
+      Map<String, OAtomicOperationMetadata<?>> atomicOperationMetadata) {
     return log(new OAtomicUnitEndRecord(operationUnitId, rollback, atomicOperationMetadata));
   }
 
@@ -92,7 +91,7 @@ public class OMemoryWriteAheadLog extends OAbstractWriteAheadLog {
   }
 
   @Override
-  public List<WriteableWALRecord> next(OLogSequenceNumber lsn, int limit) throws IOException {
+  public List<WriteableWALRecord> next(OLogSequenceNumber lsn, int limit) {
     throw new UnsupportedOperationException("Operation not supported for in memory storage.");
   }
 
@@ -102,7 +101,7 @@ public class OMemoryWriteAheadLog extends OAbstractWriteAheadLog {
   }
 
   @Override
-  public boolean cutTill(OLogSequenceNumber lsn) throws IOException {
+  public boolean cutTill(OLogSequenceNumber lsn) {
     return false;
   }
 

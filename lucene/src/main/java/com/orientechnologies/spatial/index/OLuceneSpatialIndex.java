@@ -54,7 +54,7 @@ public class OLuceneSpatialIndex extends OLuceneIndexNotUnique {
       final OTransactionIndexChangesPerKey changes) {
 
     try {
-      return storage.callIndexEngine(false, false, indexId, engine -> {
+      return storage.callIndexEngine(false, indexId, engine -> {
         if (((OLuceneSpatialIndexContainer) engine).isLegacy()) {
           return OLuceneSpatialIndex.super.interpretTxKeyChanges(changes);
         } else {

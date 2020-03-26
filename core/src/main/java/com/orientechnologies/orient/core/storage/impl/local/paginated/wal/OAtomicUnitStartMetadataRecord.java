@@ -11,7 +11,7 @@ public class OAtomicUnitStartMetadataRecord extends OAtomicUnitStartRecord {
   public OAtomicUnitStartMetadataRecord() {
   }
 
-  public OAtomicUnitStartMetadataRecord(final boolean isRollbackSupported, final OOperationUnitId unitId, byte[] metadata) {
+  public OAtomicUnitStartMetadataRecord(final boolean isRollbackSupported, final long unitId, byte[] metadata) {
     super(isRollbackSupported, unitId);
     this.metadata = metadata;
   }

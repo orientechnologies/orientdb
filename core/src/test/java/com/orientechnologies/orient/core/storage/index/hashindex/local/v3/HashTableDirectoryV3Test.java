@@ -60,7 +60,7 @@ public class HashTableDirectoryV3Test {
     OAbstractPaginatedStorage storage = (OAbstractPaginatedStorage) databaseDocumentTx.getStorage();
     OAtomicOperationsManager manager = storage.getAtomicOperationsManager();
     Assert.assertNull(OAtomicOperationsManager.getCurrentOperation());
-    return manager.startAtomicOperation((String) null, false);
+    return manager.startAtomicOperation(null);
   }
 
   private static void rollbackTx() throws IOException {

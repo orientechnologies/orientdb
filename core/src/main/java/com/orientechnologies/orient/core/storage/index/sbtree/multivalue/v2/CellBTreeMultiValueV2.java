@@ -114,16 +114,14 @@ public final class CellBTreeMultiValueV2<K> extends ODurableComponent implements
   }
 
   public void create(final OBinarySerializer<K> keySerializer, final OType[] keyTypes, final int keySize,
-      final OEncryption encryption) throws IOException {
+      final OEncryption encryption, OAtomicOperation atomicOperation) {
     assert keySerializer != null;
 
-    boolean rollback = false;
-    final OAtomicOperation atomicOperation = startAtomicOperation(false);
-    try {
+    executeInsideComponentOperation(atomicOperation, operation -> {
       acquireExclusiveLock();
       try {
-
         this.keySize = keySize;
+
         if (keyTypes != null) {
           this.keyTypes = Arrays.copyOf(keyTypes, keyTypes.length);
         } else {
@@ -163,17 +161,11 @@ public final class CellBTreeMultiValueV2<K> extends ODurableComponent implements
         }
 
         multiContainer = new OSBTreeV2<>(getName(), containerExtension, null, storage);
-        multiContainer.create(MultiValueEntrySerializer.INSTANCE, OByteSerializer.INSTANCE, null, 1, false, null);
+        multiContainer.create(atomicOperation, MultiValueEntrySerializer.INSTANCE, OByteSerializer.INSTANCE, null, 1, false, null);
       } finally {
         releaseExclusiveLock();
       }
-    } catch (final Exception e) {
-      rollback = true;
-      throw e;
-    } finally {
-      endAtomicOperation(rollback);
-    }
-
+    });
   }
 
   public Stream<ORID> get(K key) {
@@ -342,12 +334,12 @@ public final class CellBTreeMultiValueV2<K> extends ODurableComponent implements
     }
   }
 
-  public void put(K key, final ORID value) throws IOException {
-    boolean rollback = false;
-    final OAtomicOperation atomicOperation = startAtomicOperation(true);
-    try {
+  public void put(final OAtomicOperation atomicOperation, final K pk, final ORID value) {
+    executeInsideComponentOperation(atomicOperation, operation -> {
       acquireExclusiveLock();
       try {
+        K key = pk;
+
         if (key != null) {
 
           //noinspection RedundantCast
@@ -407,7 +399,7 @@ public final class CellBTreeMultiValueV2<K> extends ODurableComponent implements
             final CellBTreeMultiValueV2NullBucket nullBucket = new CellBTreeMultiValueV2NullBucket(nullCacheEntry);
             final long result = nullBucket.addValue(value);
             if (result >= 0) {
-              multiContainer.validatedPut(new MultiValueEntry(result, value.getClusterId(), value.getClusterPosition()), (byte) 1,
+              multiContainer.validatedPut(atomicOperation, new MultiValueEntry(result, value.getClusterId(), value.getClusterPosition()), (byte) 1,
                   (k, ov, v) -> {
                     if (ov != null) {
                       return OBaseIndexEngine.Validator.IGNORE;
@@ -426,12 +418,7 @@ public final class CellBTreeMultiValueV2<K> extends ODurableComponent implements
       } finally {
         releaseExclusiveLock();
       }
-    } catch (final RuntimeException | IOException e) {
-      rollback = true;
-      throw e;
-    } finally {
-      endAtomicOperation(rollback);
-    }
+    });
   }
 
   private boolean addEntry(final CellBTreeMultiValueV2Bucket<K> bucketMultiValue, final int index, final boolean isNew,
@@ -445,7 +432,7 @@ public final class CellBTreeMultiValueV2<K> extends ODurableComponent implements
     final long result = bucketMultiValue.appendNewLeafEntry(index, value);
     if (result >= 0) {
       multiContainer
-          .validatedPut(new MultiValueEntry(result, value.getClusterId(), value.getClusterPosition()), (byte) 1, (k, ov, v) -> {
+          .validatedPut(atomicOperation, new MultiValueEntry(result, value.getClusterId(), value.getClusterPosition()), (byte) 1, (k, ov, v) -> {
             if (ov != null) {
               return OBaseIndexEngine.Validator.IGNORE;
             }
@@ -488,10 +475,8 @@ public final class CellBTreeMultiValueV2<K> extends ODurableComponent implements
     }
   }
 
-  public void delete() throws IOException {
-    boolean rollback = false;
-    final OAtomicOperation atomicOperation = startAtomicOperation(false);
-    try {
+  public void delete(final OAtomicOperation atomicOperation) {
+    executeInsideComponentOperation(atomicOperation, operation -> {
       acquireExclusiveLock();
       try {
         final long size = size();
@@ -502,16 +487,11 @@ public final class CellBTreeMultiValueV2<K> extends ODurableComponent implements
         deleteFile(atomicOperation, fileId);
         deleteFile(atomicOperation, nullBucketFileId);
 
-        multiContainer.delete();
+        multiContainer.delete(atomicOperation);
       } finally {
         releaseExclusiveLock();
       }
-    } catch (final Exception e) {
-      rollback = true;
-      throw e;
-    } finally {
-      endAtomicOperation(rollback);
-    }
+    });
   }
 
   public void load(final String name, final int keySize, final OType[] keyTypes, final OBinarySerializer<K> keySerializer,
@@ -571,11 +551,9 @@ public final class CellBTreeMultiValueV2<K> extends ODurableComponent implements
     }
   }
 
-  public boolean remove(K key, final ORID value) throws IOException {
-    boolean rollback = false;
-    final OAtomicOperation atomicOperation = startAtomicOperation(true);
-
-    try {
+  public boolean remove(final OAtomicOperation atomicOperation, final K k, final ORID value) {
+    return calculateInsideComponentOperation(atomicOperation, operation -> {
+      K key = k;
       boolean removed;
       acquireExclusiveLock();
       try {
@@ -600,7 +578,7 @@ public final class CellBTreeMultiValueV2<K> extends ODurableComponent implements
           try {
             final CellBTreeMultiValueV2Bucket<K> bucket = new CellBTreeMultiValueV2Bucket<>(cacheEntry);
 
-            removed = removeEntry(itemIndex, serializeKeySize, value, bucket);
+            removed = removeEntry(atomicOperation, itemIndex, serializeKeySize, value, bucket);
             if (!removed) {
               if (itemIndex == 0) {
                 leftSibling = bucket.getLeftSibling();
@@ -621,7 +599,7 @@ public final class CellBTreeMultiValueV2<K> extends ODurableComponent implements
               final int size = bucket.size();
 
               if (size > 0) {
-                removed = removeEntry(size - 1, keySize, value, bucket);
+                removed = removeEntry(atomicOperation, size - 1, keySize, value, bucket);
 
                 if (!removed) {
                   if (size <= 1) {
@@ -645,7 +623,7 @@ public final class CellBTreeMultiValueV2<K> extends ODurableComponent implements
               final int size = bucket.size();
 
               if (size > 0) {
-                removed = removeEntry(0, serializeKeySize, value, bucket);
+                removed = removeEntry(atomicOperation, 0, serializeKeySize, value, bucket);
 
                 if (!removed) {
                   if (size <= 1) {
@@ -672,7 +650,7 @@ public final class CellBTreeMultiValueV2<K> extends ODurableComponent implements
             final int result = nullBucket.removeValue(value);
             if (result == 0) {
               removed =
-                  multiContainer.remove(new MultiValueEntry(nullBucket.getMid(), value.getClusterId(), value.getClusterPosition()))
+                  multiContainer.remove(atomicOperation, new MultiValueEntry(nullBucket.getMid(), value.getClusterId(), value.getClusterPosition()))
                       != null;
               if (removed) {
                 nullBucket.decrementSize();
@@ -693,17 +671,10 @@ public final class CellBTreeMultiValueV2<K> extends ODurableComponent implements
       }
 
       return removed;
-    } catch (final RuntimeException | IOException e) {
-      rollback = true;
-      throw e;
-    } finally {
-      endAtomicOperation(rollback);
-    }
-
+    });
   }
 
-  private boolean removeEntry(final int itemIndex, final int keySize, final ORID value, final CellBTreeMultiValueV2Bucket<K> bucket)
-      throws IOException {
+  private boolean removeEntry(final OAtomicOperation atomicOperation, final int itemIndex, final int keySize, final ORID value, final CellBTreeMultiValueV2Bucket<K> bucket) {
     final int entriesCount = bucket.removeLeafEntry(itemIndex, value);
     if (entriesCount == 0) {
       bucket.removeMainLeafEntry(itemIndex, keySize);
@@ -712,7 +683,7 @@ public final class CellBTreeMultiValueV2<K> extends ODurableComponent implements
     boolean removed = entriesCount >= 0;
     if (!removed && bucket.hasExternalEntries(itemIndex)) {
       final long mId = bucket.getMid(itemIndex);
-      removed = multiContainer.remove(new MultiValueEntry(mId, value.getClusterId(), value.getClusterPosition())) != null;
+      removed = multiContainer.remove(atomicOperation, new MultiValueEntry(mId, value.getClusterId(), value.getClusterPosition())) != null;
       if (removed) {
         if (bucket.decrementEntriesCount(itemIndex)) {
           bucket.removeMainLeafEntry(itemIndex, keySize);
@@ -1171,7 +1142,6 @@ public final class CellBTreeMultiValueV2<K> extends ODurableComponent implements
     final List<CellBTreeMultiValueV2Bucket.Entry> rightEntries = new ArrayList<>(indexToSplit);
 
     final int startRightIndex = splitLeaf ? indexToSplit : indexToSplit + 1;
-
     if (splitLeaf) {
       for (int i = startRightIndex; i < bucketSize; i++) {
         rightEntries.add(bucketToSplit.getLeafEntry(i, keySerializer, encryption != null));

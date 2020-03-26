@@ -103,12 +103,10 @@ public final class CellBTreeSingleValueV1<K> extends ODurableComponent implement
   }
 
   @Override
-  public void create(final OBinarySerializer<K> keySerializer, final OType[] keyTypes, final int keySize,
-      final OEncryption encryption) throws IOException {
+  public void create(OAtomicOperation atomicOperation, final OBinarySerializer<K> keySerializer, final OType[] keyTypes,
+      final int keySize, final OEncryption encryption) {
     assert keySerializer != null;
-    boolean rollback = false;
-    final OAtomicOperation atomicOperation = startAtomicOperation(false);
-    try {
+    executeInsideComponentOperation(atomicOperation, operation -> {
       acquireExclusiveLock();
       try {
 
@@ -154,13 +152,7 @@ public final class CellBTreeSingleValueV1<K> extends ODurableComponent implement
       } finally {
         releaseExclusiveLock();
       }
-    } catch (final Exception e) {
-      rollback = true;
-      throw e;
-    } finally {
-      endAtomicOperation(rollback);
-    }
-
+    });
   }
 
   @Override
@@ -209,22 +201,23 @@ public final class CellBTreeSingleValueV1<K> extends ODurableComponent implement
   }
 
   @Override
-  public void put(final K key, final ORID value) throws IOException {
-    update(key, value, null);
+  public void put(OAtomicOperation atomicOperation, final K key, final ORID value) {
+    update(atomicOperation, key, value, null);
   }
 
   @Override
-  public boolean validatedPut(final K key, final ORID value, final OBaseIndexEngine.Validator<K, ORID> validator)
-      throws IOException {
-    return update(key, value, validator);
+  public boolean validatedPut(OAtomicOperation atomicOperation, final K key, final ORID value,
+      final OBaseIndexEngine.Validator<K, ORID> validator) {
+    return update(atomicOperation, key, value, validator);
   }
 
-  private boolean update(K key, ORID value, final OBaseIndexEngine.Validator<K, ORID> validator) throws IOException {
-    boolean rollback = false;
-    final OAtomicOperation atomicOperation = startAtomicOperation(true);
-    try {
+  private boolean update(final OAtomicOperation atomicOperation, K k, ORID rid,
+      final OBaseIndexEngine.Validator<K, ORID> validator) {
+    return calculateInsideComponentOperation(atomicOperation, operation -> {
       acquireExclusiveLock();
       try {
+        K key = k;
+        ORID value = rid;
         if (key != null) {
 
           //noinspection RedundantCast
@@ -357,12 +350,7 @@ public final class CellBTreeSingleValueV1<K> extends ODurableComponent implement
       } finally {
         releaseExclusiveLock();
       }
-    } catch (final Exception e) {
-      rollback = true;
-      throw e;
-    } finally {
-      endAtomicOperation(rollback);
-    }
+    });
   }
 
   @Override
@@ -377,11 +365,8 @@ public final class CellBTreeSingleValueV1<K> extends ODurableComponent implement
   }
 
   @Override
-  public void delete() throws IOException {
-    boolean rollback = false;
-    final OAtomicOperation atomicOperation = startAtomicOperation(false);
-
-    try {
+  public void delete(OAtomicOperation atomicOperation) {
+    executeInsideComponentOperation(atomicOperation, operation -> {
       acquireExclusiveLock();
       try {
         final long size = size();
@@ -395,12 +380,7 @@ public final class CellBTreeSingleValueV1<K> extends ODurableComponent implement
       } finally {
         releaseExclusiveLock();
       }
-    } catch (final Exception e) {
-      rollback = true;
-      throw e;
-    } finally {
-      endAtomicOperation(rollback);
-    }
+    });
   }
 
   @Override
@@ -451,14 +431,13 @@ public final class CellBTreeSingleValueV1<K> extends ODurableComponent implement
   }
 
   @Override
-  public ORID remove(K key) throws IOException {
-    boolean rollback = false;
-    final OAtomicOperation atomicOperation = startAtomicOperation(true);
-    try {
+  public ORID remove(OAtomicOperation atomicOperation, K k) {
+    return calculateInsideComponentOperation(atomicOperation, operation -> {
       acquireExclusiveLock();
       try {
         final ORID removedValue;
 
+        K key = k;
         if (key != null) {
           //noinspection RedundantCast
           key = keySerializer.preprocess(key, (Object[]) keyTypes);
@@ -496,12 +475,7 @@ public final class CellBTreeSingleValueV1<K> extends ODurableComponent implement
       } finally {
         releaseExclusiveLock();
       }
-    } catch (final Exception e) {
-      rollback = true;
-      throw e;
-    } finally {
-      endAtomicOperation(rollback);
-    }
+    });
   }
 
   private ORID removeNullBucket(final OAtomicOperation atomicOperation) throws IOException {

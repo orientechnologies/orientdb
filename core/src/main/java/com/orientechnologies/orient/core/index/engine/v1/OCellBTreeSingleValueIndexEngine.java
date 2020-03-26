@@ -11,6 +11,7 @@ import com.orientechnologies.orient.core.index.engine.OSingleValueIndexEngine;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperation;
 import com.orientechnologies.orient.core.storage.index.sbtree.singlevalue.OCellBTreeSingleValue;
 import com.orientechnologies.orient.core.storage.index.sbtree.singlevalue.v1.CellBTreeSingleValueV1;
 import com.orientechnologies.orient.core.storage.index.sbtree.singlevalue.v3.CellBTreeSingleValueV3;
@@ -61,39 +62,39 @@ public final class OCellBTreeSingleValueIndexEngine implements OSingleValueIndex
   }
 
   @Override
-  public void create(OBinarySerializer valueSerializer, boolean isAutomatic, OType[] keyTypes, boolean nullPointerSupport,
+  public void create(OAtomicOperation atomicOperation, OBinarySerializer valueSerializer, boolean isAutomatic, OType[] keyTypes, boolean nullPointerSupport,
       OBinarySerializer keySerializer, int keySize, Map<String, String> engineProperties, OEncryption encryption) {
     try {
       //noinspection unchecked
-      sbTree.create(keySerializer, keyTypes, keySize, encryption);
+      sbTree.create(atomicOperation, keySerializer, keyTypes, keySize, encryption);
     } catch (IOException e) {
       throw OException.wrapException(new OIndexException("Error of creation of index " + name), e);
     }
   }
 
   @Override
-  public void delete() {
+  public void delete(OAtomicOperation atomicOperation) {
     try {
-      doClearTree();
+      doClearTree(atomicOperation);
 
-      sbTree.delete();
+      sbTree.delete(atomicOperation);
     } catch (IOException e) {
       throw OException.wrapException(new OIndexException("Error during deletion of index " + name), e);
     }
   }
 
-  private void doClearTree() throws IOException {
+  private void doClearTree(OAtomicOperation atomicOperation) throws IOException {
     try (Stream<Object> stream = sbTree.keyStream()) {
       stream.forEach((key) -> {
         try {
-          sbTree.remove(key);
+          sbTree.remove(atomicOperation, key);
         } catch (IOException e) {
           throw OException.wrapException(new OIndexException("Can not clear index"), e);
         }
       });
     }
 
-    sbTree.remove(null);
+    sbTree.remove(atomicOperation, null);
   }
 
   @Override
@@ -104,18 +105,18 @@ public final class OCellBTreeSingleValueIndexEngine implements OSingleValueIndex
   }
 
   @Override
-  public boolean remove(Object key) {
+  public boolean remove(OAtomicOperation atomicOperation, Object key) {
     try {
-      return sbTree.remove(key) != null;
+      return sbTree.remove(atomicOperation, key) != null;
     } catch (IOException e) {
       throw OException.wrapException(new OIndexException("Error during removal of key " + key + " from index " + name), e);
     }
   }
 
   @Override
-  public void clear() {
+  public void clear(OAtomicOperation atomicOperation) {
     try {
-      doClearTree();
+      doClearTree(atomicOperation);
     } catch (IOException e) {
       throw OException.wrapException(new OIndexException("Error during clear of index " + name), e);
     }
@@ -161,18 +162,18 @@ public final class OCellBTreeSingleValueIndexEngine implements OSingleValueIndex
   }
 
   @Override
-  public void put(Object key, ORID value) {
+  public void put(OAtomicOperation atomicOperation, Object key, ORID value) {
     try {
-      sbTree.put(key, value);
+      sbTree.put(atomicOperation, key, value);
     } catch (IOException e) {
       throw OException.wrapException(new OIndexException("Error during insertion of key " + key + " into index " + name), e);
     }
   }
 
   @Override
-  public boolean validatedPut(Object key, ORID value, Validator<Object, ORID> validator) {
+  public boolean validatedPut(OAtomicOperation atomicOperation, Object key, ORID value, Validator<Object, ORID> validator) {
     try {
-      return sbTree.validatedPut(key, value, validator);
+      return sbTree.validatedPut(atomicOperation, key, value, validator);
     } catch (IOException e) {
       throw OException.wrapException(new OIndexException("Error during insertion of key " + key + " into index " + name), e);
     }

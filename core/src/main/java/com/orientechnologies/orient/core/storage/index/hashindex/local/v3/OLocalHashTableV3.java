@@ -114,11 +114,11 @@ public class OLocalHashTableV3<K, V> extends ODurableComponent implements OHashT
   }
 
   @Override
-  public void create(final OBinarySerializer<K> keySerializer, final OBinarySerializer<V> valueSerializer, final OType[] keyTypes,
-      final OEncryption encryption, final OHashFunction<K> keyHashFunction, final boolean nullKeyIsSupported) throws IOException {
-    boolean rollback = false;
-    final OAtomicOperation atomicOperation = startAtomicOperation(false);
-    try {
+  public void create(OAtomicOperation atomicOperation, final OBinarySerializer<K> keySerializer,
+      final OBinarySerializer<V> valueSerializer, final OType[] keyTypes, final OEncryption encryption,
+      final OHashFunction<K> keyHashFunction, final boolean nullKeyIsSupported) throws IOException {
+
+    executeInsideComponentOperation(atomicOperation, operation -> {
       acquireExclusiveLock();
       try {
         this.keyHashFunction = keyHashFunction;
@@ -158,12 +158,7 @@ public class OLocalHashTableV3<K, V> extends ODurableComponent implements OHashT
       } finally {
         releaseExclusiveLock();
       }
-    } catch (final Exception e) {
-      rollback = true;
-      throw e;
-    } finally {
-      endAtomicOperation(rollback);
-    }
+    });
   }
 
   public V get(K key) {
@@ -240,23 +235,22 @@ public class OLocalHashTableV3<K, V> extends ODurableComponent implements OHashT
   }
 
   @Override
-  public void put(final K key, final V value) throws IOException {
-    put(key, value, null);
+  public void put(OAtomicOperation atomicOperation, final K key, final V value) {
+    put(atomicOperation, key, value, null);
   }
 
   @Override
-  public boolean validatedPut(final K key, final V value, final OBaseIndexEngine.Validator<K, V> validator) throws IOException {
-    return put(key, value, validator);
+  public boolean validatedPut(OAtomicOperation atomicOperation, final K key, final V value,
+      final OBaseIndexEngine.Validator<K, V> validator) {
+    return put(atomicOperation, key, value, validator);
   }
 
   @Override
-  public V remove(K key) throws IOException {
-    boolean rollback = false;
-    final OAtomicOperation atomicOperation = startAtomicOperation(true);
-    try {
+  public V remove(OAtomicOperation atomicOperation, K k) {
+    return calculateInsideComponentOperation(atomicOperation, operation -> {
       acquireExclusiveLock();
       try {
-
+        K key = k;
         int sizeDiff = 0;
         if (key != null) {
           //noinspection RedundantCast
@@ -334,13 +328,7 @@ public class OLocalHashTableV3<K, V> extends ODurableComponent implements OHashT
       } finally {
         releaseExclusiveLock();
       }
-
-    } catch (final Exception e) {
-      rollback = true;
-      throw e;
-    } finally {
-      endAtomicOperation(rollback);
-    }
+    });
   }
 
   private void changeSize(final int sizeDiff, final OAtomicOperation atomicOperation) throws IOException {
@@ -1021,10 +1009,8 @@ public class OLocalHashTableV3<K, V> extends ODurableComponent implements OHashT
   }
 
   @Override
-  public void delete() throws IOException {
-    boolean rollback = false;
-    final OAtomicOperation atomicOperation = startAtomicOperation(false);
-    try {
+  public void delete(OAtomicOperation atomicOperation) throws IOException {
+    executeInsideComponentOperation(atomicOperation, operation -> {
       acquireExclusiveLock();
       try {
         final long size = size();
@@ -1041,12 +1027,7 @@ public class OLocalHashTableV3<K, V> extends ODurableComponent implements OHashT
       } finally {
         releaseExclusiveLock();
       }
-    } catch (final Exception e) {
-      rollback = true;
-      throw e;
-    } finally {
-      endAtomicOperation(rollback);
-    }
+    });
   }
 
   private void mergeNodeToParent(final BucketPath nodePath, final OAtomicOperation atomicOperation) throws IOException {
@@ -1095,10 +1076,9 @@ public class OLocalHashTableV3<K, V> extends ODurableComponent implements OHashT
     atomicOperationsManager.acquireExclusiveLockTillOperationComplete(this);
   }
 
-  private boolean put(K key, final V value, final OBaseIndexEngine.Validator<K, V> validator) throws IOException {
-    boolean rollback = false;
-    final OAtomicOperation atomicOperation = startAtomicOperation(true);
-    try {
+  private boolean put(OAtomicOperation atomicOperation, K k, final V value, final OBaseIndexEngine.Validator<K, V> validator) {
+    return calculateInsideComponentOperation(atomicOperation, operation -> {
+      K key = k;
       acquireExclusiveLock();
       try {
         if (key != null) {
@@ -1118,12 +1098,7 @@ public class OLocalHashTableV3<K, V> extends ODurableComponent implements OHashT
       } finally {
         releaseExclusiveLock();
       }
-    } catch (final Exception e) {
-      rollback = true;
-      throw e;
-    } finally {
-      endAtomicOperation(rollback);
-    }
+    });
   }
 
   @SuppressWarnings("unchecked")

@@ -48,6 +48,7 @@ public class OPaginatedStorageDirtyFlag {
   private       FileLock    fileLock;
 
   private volatile boolean dirtyFlag;
+  private volatile long    lastTxId;
 
   private final Lock lock = new ReentrantLock();
 
@@ -74,14 +75,17 @@ public class OPaginatedStorageDirtyFlag {
         Files.delete(dirtyFilePath);
       }
 
-      channel = FileChannel.open(dirtyFilePath, StandardOpenOption.READ, StandardOpenOption.CREATE, StandardOpenOption.WRITE);
+      channel = FileChannel.open(dirtyFilePath, StandardOpenOption.READ, StandardOpenOption.CREATE, StandardOpenOption.WRITE,
+          StandardOpenOption.SYNC);
       if (OGlobalConfiguration.FILE_LOCK.getValueAsBoolean()) {
         lockFile();
       }
 
-      final ByteBuffer buffer = ByteBuffer.allocate(1);
+      final ByteBuffer buffer = ByteBuffer.allocate(1 + 8);
       buffer.put((byte) 1);
-      buffer.position(0);
+      buffer.putLong(-1);
+
+      buffer.rewind();
 
       OIOUtils.writeByteBuffer(buffer, channel, 0);
 
@@ -115,23 +119,46 @@ public class OPaginatedStorageDirtyFlag {
     lock.lock();
     try {
       if (!Files.exists(dirtyFilePath)) {
-        channel = FileChannel.open(dirtyFilePath, StandardOpenOption.WRITE, StandardOpenOption.READ, StandardOpenOption.CREATE);
+        channel = FileChannel.open(dirtyFilePath, StandardOpenOption.SYNC, StandardOpenOption.WRITE, StandardOpenOption.READ,
+            StandardOpenOption.CREATE);
 
-        ByteBuffer buffer = ByteBuffer.allocate(1);
+        final ByteBuffer buffer = ByteBuffer.allocate(8 + 1);
+        buffer.put((byte) 0);
+        buffer.putLong(-1);
+
+        buffer.rewind();
         OIOUtils.writeByteBuffer(buffer, channel, 0);
+        dirtyFlag = true;
+        lastTxId = -1;
       } else {
-        channel = FileChannel.open(dirtyFilePath, StandardOpenOption.WRITE, StandardOpenOption.READ, StandardOpenOption.CREATE);
+        channel = FileChannel.open(dirtyFilePath, StandardOpenOption.SYNC, StandardOpenOption.WRITE, StandardOpenOption.READ,
+            StandardOpenOption.CREATE);
+
+        final long size = channel.size();
+
+        if (size == 1) {
+          ByteBuffer buffer = ByteBuffer.allocate(1);
+          OIOUtils.readByteBuffer(buffer, channel, 0, true);
+
+          buffer.position(0);
+          dirtyFlag = buffer.get() > 0;
+        } else if (size == 9) {
+          ByteBuffer buffer = ByteBuffer.allocate(8 + 1);
+          OIOUtils.readByteBuffer(buffer, channel, 0, true);
+
+          buffer.position(0);
+          dirtyFlag = buffer.get() > 0;
+          lastTxId = buffer.getLong();
+        } else {
+          dirtyFlag = true;
+          lastTxId = -1;
+        }
       }
 
       if (OGlobalConfiguration.FILE_LOCK.getValueAsBoolean()) {
         lockFile();
       }
 
-      ByteBuffer buffer = ByteBuffer.allocate(1);
-      OIOUtils.readByteBuffer(buffer, channel, 0, true);
-
-      buffer.position(0);
-      dirtyFlag = buffer.get() > 0;
     } finally {
       lock.unlock();
     }
@@ -222,6 +249,23 @@ public class OPaginatedStorageDirtyFlag {
 
   public boolean isDirty() {
     return dirtyFlag;
+  }
+
+  public long getLastTxId() {
+    return lastTxId;
+  }
+
+  public void setLastTxId(long lastTxId) throws IOException {
+    lock.lock();
+    try {
+      final ByteBuffer buffer = ByteBuffer.allocate(8);
+      buffer.putLong(lastTxId);
+      buffer.rewind();
+
+      OIOUtils.writeByteBuffer(buffer, channel, 1);
+    } finally {
+      lock.unlock();
+    }
   }
 
 }

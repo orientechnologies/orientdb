@@ -20,19 +20,11 @@
 
 package com.orientechnologies.orient.core.storage.index.sbtree;
 
-import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
-import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.storage.ridbag.sbtree.OIndexRIDContainer;
 import com.orientechnologies.orient.core.storage.ridbag.sbtree.OMixedIndexRIDContainer;
 
-import java.io.IOException;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.LinkedList;
-import java.util.Map;
-import java.util.NoSuchElementException;
+import java.util.*;
 
 /**
  * @author Artem Orobets (enisher-at-gmail.com)
@@ -41,7 +33,6 @@ public class OSBTreeMapEntryIterator<K, V> implements Iterator<Map.Entry<K, V>> 
   private       LinkedList<Map.Entry<K, V>> preFetchedValues;
   private final OTreeInternal<K, V>         sbTree;
   private       K                           firstKey;
-  private       Map.Entry<K, V>             currentEntry;
 
   private final int prefetchSize;
 
@@ -118,18 +109,11 @@ public class OSBTreeMapEntryIterator<K, V> implements Iterator<Map.Entry<K, V>> 
       prefetchData(false);
     }
 
-    currentEntry = entry;
-
     return entry;
   }
 
   @Override
   public void remove() {
-    try {
-      sbTree.remove(currentEntry.getKey());
-    } catch (IOException e) {
-      throw OException.wrapException(new ODatabaseException("Error during removal of element of tree"), e);
-    }
-    currentEntry = null;
+    throw new UnsupportedOperationException();
   }
 }

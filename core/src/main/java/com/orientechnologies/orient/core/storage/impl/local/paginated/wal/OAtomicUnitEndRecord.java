@@ -46,13 +46,11 @@ public class OAtomicUnitEndRecord extends OOperationUnitBodyRecord {
   public OAtomicUnitEndRecord() {
   }
 
-  public OAtomicUnitEndRecord(final OOperationUnitId operationUnitId, final boolean rollback,
+  public OAtomicUnitEndRecord(final long operationUnitId, final boolean rollback,
       final Map<String, OAtomicOperationMetadata<?>> atomicOperationMetadataMap) {
     super(operationUnitId);
 
     this.rollback = rollback;
-
-    assert operationUnitId != null;
 
     if (atomicOperationMetadataMap != null && atomicOperationMetadataMap.size() > 0) {
       this.atomicOperationMetadataMap = atomicOperationMetadataMap;

@@ -40,9 +40,9 @@ public class LocalHashTableV2EncryptionTestIT extends LocalHashTableV2Base {
 
     localHashTable = new LocalHashTableV2<>("localHashTableEncryptionTest", ".imc", ".tsc", ".obf", ".nbh", storage);
 
-    localHashTable
-        .create(OIntegerSerializer.INSTANCE, OBinarySerializerFactory.getInstance().getObjectSerializer(OType.STRING), null,
-            encryption, SHA256HashFunction, true);
+    storage.getAtomicOperationsManager().executeInsideAtomicOperation(null, atomicOperation -> localHashTable
+        .create(atomicOperation, OIntegerSerializer.INSTANCE,
+            OBinarySerializerFactory.getInstance().getObjectSerializer(OType.STRING), null, encryption, SHA256HashFunction, true));
 
   }
 

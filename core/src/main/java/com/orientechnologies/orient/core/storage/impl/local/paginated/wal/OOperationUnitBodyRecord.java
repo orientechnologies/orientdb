@@ -8,7 +8,7 @@ public abstract class OOperationUnitBodyRecord extends OOperationUnitRecord {
   protected OOperationUnitBodyRecord() {
   }
 
-  protected OOperationUnitBodyRecord(OOperationUnitId operationUnitId) {
+  protected OOperationUnitBodyRecord(long operationUnitId) {
     super(operationUnitId);
   }
 }

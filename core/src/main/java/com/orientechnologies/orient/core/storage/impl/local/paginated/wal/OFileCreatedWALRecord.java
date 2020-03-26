@@ -36,7 +36,7 @@ public class OFileCreatedWALRecord extends OOperationUnitBodyRecord {
   public OFileCreatedWALRecord() {
   }
 
-  public OFileCreatedWALRecord(OOperationUnitId operationUnitId, String fileName, long fileId) {
+  public OFileCreatedWALRecord(long operationUnitId, String fileName, long fileId) {
     super(operationUnitId);
     this.fileName = fileName;
     this.fileId = fileId;

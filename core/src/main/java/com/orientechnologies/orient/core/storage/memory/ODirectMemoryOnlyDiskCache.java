@@ -34,12 +34,10 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSe
 import com.orientechnologies.orient.core.storage.impl.local.statistic.OPerformanceStatisticManager;
 import com.orientechnologies.orient.core.storage.impl.local.statistic.OSessionStoragePerformanceStatistic;
 
-import java.io.IOException;
 import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.NoSuchElementException;
-import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ConcurrentSkipListMap;
@@ -651,7 +649,7 @@ public final class ODirectMemoryOnlyDiskCache extends OAbstractWriteCache implem
   }
 
   @Override
-  public final void makeFuzzyCheckpoint(final long segmentId, Optional<byte[]> lastMetadata) {
+  public final void makeFuzzyCheckpoint(final long segmentId, byte[] lastMetadata) {
   }
 
   @Override
@@ -668,12 +666,12 @@ public final class ODirectMemoryOnlyDiskCache extends OAbstractWriteCache implem
   }
 
   @Override
-  public void create() throws IOException {
+  public void create() {
 
   }
 
   @Override
-  public void open() throws IOException {
+  public void open() {
 
   }
 

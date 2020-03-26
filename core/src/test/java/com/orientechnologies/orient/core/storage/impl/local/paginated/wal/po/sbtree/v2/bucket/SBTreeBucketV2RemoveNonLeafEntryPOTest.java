@@ -8,7 +8,6 @@ import com.orientechnologies.orient.core.serialization.serializer.binary.impl.OL
 import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
 import com.orientechnologies.orient.core.storage.cache.OCacheEntryImpl;
 import com.orientechnologies.orient.core.storage.cache.OCachePointer;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OOperationUnitId;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.PageOperationRecord;
 import com.orientechnologies.orient.core.storage.index.sbtree.local.v2.OSBTreeBucketV2;
 import org.junit.Assert;
@@ -140,13 +139,11 @@ public class SBTreeBucketV2RemoveNonLeafEntryPOTest {
 
   @Test
   public void testSerialization() {
-    OOperationUnitId operationUnitId = OOperationUnitId.generateId();
-
     SBTreeBucketV2RemoveNonLeafEntryPO operation = new SBTreeBucketV2RemoveNonLeafEntryPO(12, 21, new byte[] { 4, 2 }, 42, 24);
 
     operation.setFileId(42);
     operation.setPageIndex(24);
-    operation.setOperationUnitId(operationUnitId);
+    operation.setOperationUnitId(1);
 
     final int serializedSize = operation.serializedSize();
     final byte[] stream = new byte[serializedSize + 1];
@@ -159,7 +156,7 @@ public class SBTreeBucketV2RemoveNonLeafEntryPOTest {
 
     Assert.assertEquals(42, restoredOperation.getFileId());
     Assert.assertEquals(24, restoredOperation.getPageIndex());
-    Assert.assertEquals(operationUnitId, restoredOperation.getOperationUnitId());
+    Assert.assertEquals(1, restoredOperation.getOperationUnitId());
 
     Assert.assertEquals(12, restoredOperation.getIndex());
     Assert.assertEquals(21, restoredOperation.getPrevChild());

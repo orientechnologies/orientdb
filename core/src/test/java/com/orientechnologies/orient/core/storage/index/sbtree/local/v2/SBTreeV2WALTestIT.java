@@ -85,9 +85,11 @@ public class SBTreeV2WALTestIT extends SBTreeV2TestIT {
     writeAheadLog.addCutTillLimit(writeAheadLog.getFlushedLsn());
 
     actualWriteCache = actualStorage.getWriteCache();
+    atomicOperationsManager = actualStorage.getAtomicOperationsManager();
 
     sbTree = new OSBTreeV2<>("actualSBTree", ".sbt", ".nbt", actualStorage);
-    sbTree.create(OIntegerSerializer.INSTANCE, OLinkSerializer.INSTANCE, null, 1, false, null);
+    atomicOperationsManager.executeInsideAtomicOperation(null, atomicOperation -> sbTree
+        .create(atomicOperation, OIntegerSerializer.INSTANCE, OLinkSerializer.INSTANCE, null, 1, false, null));
   }
 
   private void createExpectedSBTree() {

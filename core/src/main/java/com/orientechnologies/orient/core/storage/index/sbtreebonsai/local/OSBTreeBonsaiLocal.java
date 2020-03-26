@@ -73,10 +73,8 @@ public class OSBTreeBonsaiLocal<K, V> extends ODurableComponent implements OSBTr
     super(storage, name, dataFileExtension, name + dataFileExtension);
   }
 
-  public long createComponent() throws IOException {
-    boolean rollback = false;
-    final OAtomicOperation atomicOperation = startAtomicOperation(false);
-    try {
+  public long createComponent(OAtomicOperation atomicOperation) {
+    return calculateInsideComponentOperation(atomicOperation, operation -> {
       if (isFileExists(atomicOperation, getFullName())) {
         throw new OStorageException("Ridbag component with name " + getFullName() + " already exists");
       } else {
@@ -86,18 +84,13 @@ public class OSBTreeBonsaiLocal<K, V> extends ODurableComponent implements OSBTr
       initSysBucket(atomicOperation);
 
       return fileId;
-    } catch (final Exception e) {
-      rollback = true;
-      throw e;
-    } finally {
-      endAtomicOperation(rollback);
-    }
+    });
   }
 
-  public void create(final OBinarySerializer<K> keySerializer, final OBinarySerializer<V> valueSerializer) throws IOException {
-    boolean rollback = false;
-    final OAtomicOperation atomicOperation = startAtomicOperation(false);
-    try {
+  public void create(final OAtomicOperation atomicOperation, final OBinarySerializer<K> keySerializer,
+      final OBinarySerializer<V> valueSerializer) throws IOException {
+
+    executeInsideComponentOperation(atomicOperation, operation -> {
       final Lock lock = FILE_LOCK_MANAGER.acquireExclusiveLock(-1L);
       try {
         this.keySerializer = keySerializer;
@@ -113,19 +106,12 @@ public class OSBTreeBonsaiLocal<K, V> extends ODurableComponent implements OSBTr
       } finally {
         lock.unlock();
       }
-    } catch (final Exception e) {
-      rollback = true;
-      throw e;
-    } finally {
-      endAtomicOperation(rollback);
-    }
+    });
   }
 
-  public void create(final OBinarySerializer<K> keySerializer, final OBinarySerializer<V> valueSerializer, final int pageIndex,
-      final int pageOffset) throws IOException {
-    boolean rollback = false;
-    final OAtomicOperation atomicOperation = startAtomicOperation(false);
-    try {
+  public void create(final OAtomicOperation atomicOperation, final OBinarySerializer<K> keySerializer,
+      final OBinarySerializer<V> valueSerializer, final int pageIndex, final int pageOffset) throws IOException {
+    executeInsideComponentOperation(atomicOperation, operation -> {
       final Lock lock = FILE_LOCK_MANAGER.acquireExclusiveLock(-1L);
       try {
         this.keySerializer = keySerializer;
@@ -141,12 +127,7 @@ public class OSBTreeBonsaiLocal<K, V> extends ODurableComponent implements OSBTr
       } finally {
         lock.unlock();
       }
-    } catch (final Exception e) {
-      rollback = true;
-      throw e;
-    } finally {
-      endAtomicOperation(rollback);
-    }
+    });
   }
 
   private void initAfterCreate(final OAtomicOperation atomicOperation, final int pageIndex, final int pageOffset,
@@ -243,10 +224,8 @@ public class OSBTreeBonsaiLocal<K, V> extends ODurableComponent implements OSBTr
   }
 
   @Override
-  public boolean put(final K key, final V value) throws IOException {
-    boolean rollback = false;
-    final OAtomicOperation atomicOperation = startAtomicOperation(true);
-    try {
+  public boolean put(final OAtomicOperation atomicOperation, final K key, final V value) {
+    return calculateInsideComponentOperation(atomicOperation, operation -> {
       final Lock lock = FILE_LOCK_MANAGER.acquireExclusiveLock(fileId);
       try {
         BucketSearchResult bucketSearchResult = findBucket(key, atomicOperation);
@@ -292,12 +271,7 @@ public class OSBTreeBonsaiLocal<K, V> extends ODurableComponent implements OSBTr
       } finally {
         lock.unlock();
       }
-    } catch (final Exception e) {
-      rollback = true;
-      throw e;
-    } finally {
-      endAtomicOperation(rollback);
-    }
+    });
   }
 
   public void close(final boolean flush) {
@@ -317,10 +291,8 @@ public class OSBTreeBonsaiLocal<K, V> extends ODurableComponent implements OSBTr
    * Removes all entries from bonsai tree. Put all but the root page to free list for further reuse.
    */
   @Override
-  public void clear() throws IOException {
-    boolean rollback = false;
-    final OAtomicOperation atomicOperation = startAtomicOperation(true);
-    try {
+  public void clear(final OAtomicOperation atomicOperation) {
+    executeInsideComponentOperation(atomicOperation, operation -> {
       final Lock lock = FILE_LOCK_MANAGER.acquireExclusiveLock(fileId);
       try {
         final Queue<OBonsaiBucketPointer> subTreesToDelete = new LinkedList<>();
@@ -345,12 +317,7 @@ public class OSBTreeBonsaiLocal<K, V> extends ODurableComponent implements OSBTr
       } finally {
         lock.unlock();
       }
-    } catch (final Exception e) {
-      rollback = true;
-      throw e;
-    } finally {
-      endAtomicOperation(rollback);
-    }
+    });
   }
 
   private void addChildrenToQueue(final Queue<OBonsaiBucketPointer> subTreesToDelete, final OSBTreeBonsaiBucket<K, V> rootBucket) {
@@ -424,10 +391,8 @@ public class OSBTreeBonsaiLocal<K, V> extends ODurableComponent implements OSBTr
    * Deletes a whole tree. Puts all its pages to free list for further reusage.
    */
   @Override
-  public void delete() throws IOException {
-    boolean rollback = false;
-    final OAtomicOperation atomicOperation = startAtomicOperation(false);
-    try {
+  public void delete(OAtomicOperation atomicOperation) {
+    executeInsideComponentOperation(atomicOperation, operation -> {
       final Lock lock = FILE_LOCK_MANAGER.acquireExclusiveLock(fileId);
       try {
         final long size = size();
@@ -453,18 +418,11 @@ public class OSBTreeBonsaiLocal<K, V> extends ODurableComponent implements OSBTr
       }
 
       atomicOperation.addDeletedRidBag(rootBucketPointer);
-    } catch (final Exception e) {
-      rollback = true;
-      throw e;
-    } finally {
-      endAtomicOperation(rollback);
-    }
+    });
   }
 
-  public void deleteComponent() throws IOException {
-    boolean rollback = false;
-    final OAtomicOperation atomicOperation = startAtomicOperation(true);
-    try {
+  public void deleteComponent(final OAtomicOperation atomicOperation) {
+    executeInsideComponentOperation(atomicOperation, operation -> {
       this.fileId = openFile(atomicOperation, getFullName());
 
       final Lock lock = FILE_LOCK_MANAGER.acquireExclusiveLock(fileId);
@@ -489,13 +447,7 @@ public class OSBTreeBonsaiLocal<K, V> extends ODurableComponent implements OSBTr
       } finally {
         lock.unlock();
       }
-    } catch (Exception e) {
-      rollback = true;
-      throw e;
-    } finally {
-      endAtomicOperation(rollback);
-    }
-
+    });
   }
 
   public boolean load(final OBonsaiBucketPointer rootBucketPointer) {
@@ -571,10 +523,8 @@ public class OSBTreeBonsaiLocal<K, V> extends ODurableComponent implements OSBTr
   }
 
   @Override
-  public V remove(final K key) throws IOException {
-    boolean rollback = false;
-    final OAtomicOperation atomicOperation = startAtomicOperation(true);
-    try {
+  public V remove(final OAtomicOperation atomicOperation, final K key) {
+    return calculateInsideComponentOperation(atomicOperation, operation -> {
       final Lock lock = FILE_LOCK_MANAGER.acquireExclusiveLock(fileId);
       try {
         final BucketSearchResult bucketSearchResult = findBucket(key, atomicOperation);
@@ -603,12 +553,7 @@ public class OSBTreeBonsaiLocal<K, V> extends ODurableComponent implements OSBTr
       } finally {
         lock.unlock();
       }
-    } catch (final Exception e) {
-      rollback = true;
-      throw e;
-    } finally {
-      endAtomicOperation(rollback);
-    }
+    });
   }
 
   @Override
@@ -1447,7 +1392,7 @@ public class OSBTreeBonsaiLocal<K, V> extends ODurableComponent implements OSBTr
       this.path = path;
     }
 
-    OBonsaiBucketPointer getLastPathItem() {
+    private OBonsaiBucketPointer getLastPathItem() {
       return path.get(path.size() - 1);
     }
   }
@@ -1532,10 +1477,8 @@ public class OSBTreeBonsaiLocal<K, V> extends ODurableComponent implements OSBTr
   }
 
   @Override
-  public void markToDelete() throws IOException {
-    boolean rollback = false;
-    final OAtomicOperation atomicOperation = startAtomicOperation(true);
-    try {
+  public void markToDelete(final OAtomicOperation atomicOperation) {
+    executeInsideComponentOperation(atomicOperation, operation -> {
       final Lock lock = FILE_LOCK_MANAGER.acquireExclusiveLock(fileId);
       try {
         final OCacheEntry cacheEntry = loadPageForWrite(atomicOperation, fileId, rootBucketPointer.getPageIndex(), false, true);
@@ -1549,12 +1492,6 @@ public class OSBTreeBonsaiLocal<K, V> extends ODurableComponent implements OSBTr
       } finally {
         lock.unlock();
       }
-    } catch (final Exception e) {
-      rollback = true;
-      throw e;
-    } finally {
-      endAtomicOperation(rollback);
-    }
-
+    });
   }
 }

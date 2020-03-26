@@ -23,20 +23,20 @@ import java.nio.ByteOrder;
  * @since 30.05.13
  */
 public abstract class OOperationUnitRecord extends OAbstractWALRecord {
-  private OOperationUnitId operationUnitId;
+  private long operationUnitId;
 
   protected OOperationUnitRecord() {
   }
 
-  protected OOperationUnitRecord(OOperationUnitId operationUnitId) {
+  protected OOperationUnitRecord(long operationUnitId) {
     this.operationUnitId = operationUnitId;
   }
 
-  public OOperationUnitId getOperationUnitId() {
+  public long getOperationUnitId() {
     return operationUnitId;
   }
 
-  public void setOperationUnitId(final OOperationUnitId operationUnitId) {
+  public void setOperationUnitId(final long operationUnitId) {
     this.operationUnitId = operationUnitId;
   }
 
@@ -45,7 +45,7 @@ public abstract class OOperationUnitRecord extends OAbstractWALRecord {
     final ByteBuffer buffer = ByteBuffer.wrap(content).order(ByteOrder.nativeOrder());
     buffer.position(offset);
 
-    operationUnitId.toStream(buffer);
+    buffer.putLong(operationUnitId);
 
     serializeToByteBuffer(buffer);
 
@@ -54,7 +54,7 @@ public abstract class OOperationUnitRecord extends OAbstractWALRecord {
 
   @Override
   public final void toStream(ByteBuffer buffer) {
-    operationUnitId.toStream(buffer);
+    operationUnitId = buffer.getLong();
 
     serializeToByteBuffer(buffer);
   }
@@ -64,8 +64,7 @@ public abstract class OOperationUnitRecord extends OAbstractWALRecord {
     final ByteBuffer buffer = ByteBuffer.wrap(content).order(ByteOrder.nativeOrder());
     buffer.position(offset);
 
-    operationUnitId = new OOperationUnitId();
-    operationUnitId.fromStream(buffer);
+    operationUnitId = buffer.getLong();
 
     deserializeFromByteBuffer(buffer);
 
@@ -90,15 +89,12 @@ public abstract class OOperationUnitRecord extends OAbstractWALRecord {
 
     final OOperationUnitRecord that = (OOperationUnitRecord) o;
 
-    if (!operationUnitId.equals(that.operationUnitId))
-      return false;
-
-    return true;
+    return operationUnitId == that.operationUnitId;
   }
 
   @Override
   public int hashCode() {
-    return operationUnitId.hashCode();
+    return Long.hashCode(operationUnitId);
   }
 
   @Override

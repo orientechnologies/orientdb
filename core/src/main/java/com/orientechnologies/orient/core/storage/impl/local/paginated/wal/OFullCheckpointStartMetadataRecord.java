@@ -21,9 +21,9 @@ package com.orientechnologies.orient.core.storage.impl.local.paginated.wal;
 
 import com.orientechnologies.common.serialization.types.OBooleanSerializer;
 import com.orientechnologies.common.serialization.types.OIntegerSerializer;
-import com.orientechnologies.orient.core.sql.parser.OInteger;
 
 import java.nio.ByteBuffer;
+import java.util.Arrays;
 import java.util.Optional;
 
 /**
@@ -32,12 +32,12 @@ import java.util.Optional;
  */
 public class OFullCheckpointStartMetadataRecord extends OFullCheckpointStartRecord {
 
-  private Optional<byte[]> metadata = Optional.empty();
+  private byte[] metadata;
 
   public OFullCheckpointStartMetadataRecord() {
   }
 
-  public OFullCheckpointStartMetadataRecord(final OLogSequenceNumber previousCheckpoint, Optional<byte[]> metadata) {
+  public OFullCheckpointStartMetadataRecord(final OLogSequenceNumber previousCheckpoint, byte[] metadata) {
     super(previousCheckpoint);
     this.metadata = metadata;
   }
@@ -45,12 +45,12 @@ public class OFullCheckpointStartMetadataRecord extends OFullCheckpointStartReco
   @Override
   public int toStream(byte[] content, int offset) {
     offset = super.toStream(content, offset);
-    if (metadata.isPresent()) {
+    if (metadata != null) {
       OBooleanSerializer.INSTANCE.serializeNative(true, content, offset);
       offset += OBooleanSerializer.BOOLEAN_SIZE;
-      OIntegerSerializer.INSTANCE.serializeNative(metadata.get().length, content, offset);
+      OIntegerSerializer.INSTANCE.serializeNative(metadata.length, content, offset);
       offset += OIntegerSerializer.INT_SIZE;
-      System.arraycopy(metadata.get(), 0, content, offset, metadata.get().length);
+      System.arraycopy(metadata, 0, content, offset, metadata.length);
     } else {
       OBooleanSerializer.INSTANCE.serializeNative(false, content, offset);
       offset += OBooleanSerializer.BOOLEAN_SIZE;
@@ -61,10 +61,10 @@ public class OFullCheckpointStartMetadataRecord extends OFullCheckpointStartReco
   @Override
   public void toStream(ByteBuffer buffer) {
     super.toStream(buffer);
-    if (metadata.isPresent()) {
+    if (metadata != null) {
       buffer.put((byte) 1);
-      buffer.putInt(metadata.get().length);
-      buffer.put(metadata.get());
+      buffer.putInt(metadata.length);
+      buffer.put(metadata);
     } else {
       buffer.put((byte) 0);
     }
@@ -80,10 +80,10 @@ public class OFullCheckpointStartMetadataRecord extends OFullCheckpointStartReco
       offset += OIntegerSerializer.INT_SIZE;
       byte[] meta = new byte[size];
       System.arraycopy(content, offset, meta, 0, size);
-      this.metadata = Optional.of(meta);
+      this.metadata = meta;
       offset += size;
     } else {
-      this.metadata = Optional.empty();
+      this.metadata = null;
     }
 
     return offset;
@@ -93,9 +93,9 @@ public class OFullCheckpointStartMetadataRecord extends OFullCheckpointStartReco
   public int serializedSize() {
     int size = super.serializedSize();
     size += OBooleanSerializer.BOOLEAN_SIZE;
-    if (metadata.isPresent()) {
+    if (metadata != null) {
       size += OIntegerSerializer.INT_SIZE;
-      size += metadata.get().length;
+      size += metadata.length;
     }
     return size;
   }
@@ -107,10 +107,10 @@ public class OFullCheckpointStartMetadataRecord extends OFullCheckpointStartReco
 
   @Override
   public String toString() {
-    return "OFullCheckpointStartMetadataRecord{" + "metadata=" + metadata + ", lsn=" + lsn + '}';
+    return "OFullCheckpointStartMetadataRecord{" + "metadata=" + Arrays.toString(metadata) + ", lsn=" + lsn + '}';
   }
 
   public Optional<byte[]> getMetadata() {
-    return metadata;
+    return Optional.ofNullable(metadata);
   }
 }

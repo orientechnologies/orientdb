@@ -35,7 +35,7 @@ public class OUpdatePageRecord extends OAbstractPageWALRecord {
   public OUpdatePageRecord() {
   }
 
-  public OUpdatePageRecord(final long pageIndex, final long fileId, final OOperationUnitId operationUnitId,
+  public OUpdatePageRecord(final long pageIndex, final long fileId, final long operationUnitId,
       final OWALChanges changes) {
     super(pageIndex, fileId, operationUnitId);
     this.changes = changes;

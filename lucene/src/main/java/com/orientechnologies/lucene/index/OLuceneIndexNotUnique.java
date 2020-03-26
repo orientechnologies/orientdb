@@ -32,6 +32,8 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializerSBTreeIndexRIDContainer;
 import com.orientechnologies.orient.core.storage.OBasicTransaction;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperation;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperationsManager;
 import com.orientechnologies.orient.core.tx.OTransactionIndexChanges;
 import com.orientechnologies.orient.core.tx.OTransactionIndexChangesPerKey;
 import org.apache.lucene.document.Document;
@@ -71,7 +73,7 @@ public class OLuceneIndexNotUnique extends OIndexAbstract implements OLuceneInde
       } else {
         while (true) {
           try {
-            return storage.callIndexEngine(false, false, indexId, engine -> {
+            return storage.callIndexEngine(false, indexId, engine -> {
               OLuceneIndexEngine indexEngine = (OLuceneIndexEngine) engine;
               return indexEngine.remove(key, rid);
             });
@@ -117,8 +119,8 @@ public class OLuceneIndexNotUnique extends OIndexAbstract implements OLuceneInde
   }
 
   @Override
-  public void doPut(OAbstractPaginatedStorage storage, Object key, ORID rid) throws OInvalidIndexEngineIdException {
-      //do nothing
+  public void doPut(OAbstractPaginatedStorage storage, Object key, ORID rid) {
+    //do nothing
   }
 
   @Override
@@ -130,7 +132,7 @@ public class OLuceneIndexNotUnique extends OIndexAbstract implements OLuceneInde
   protected void commitSnapshot(final Map<Object, Object> snapshot) {
     while (true)
       try {
-        storage.callIndexEngine(false, false, indexId, engine -> {
+        storage.callIndexEngine(false, indexId, engine -> {
           OLuceneIndexEngine indexEngine = (OLuceneIndexEngine) engine;
 
           for (Map.Entry<Object, Object> snapshotEntry : snapshot.entrySet()) {
@@ -147,7 +149,8 @@ public class OLuceneIndexNotUnique extends OIndexAbstract implements OLuceneInde
               Object key = snapshotEntry.getKey();
               OLuceneTxOperations operations = (OLuceneTxOperations) snapshotEntry.getValue();
 
-              indexEngine.put(decodeKey(key), operations.added);
+              OAtomicOperation atomicOperation = OAtomicOperationsManager.getCurrentOperation();
+              indexEngine.put(atomicOperation, decodeKey(key), operations.added);
 
             }
             OBasicTransaction transaction = getDatabase().getMicroOrRegularTransaction();
@@ -230,7 +233,7 @@ public class OLuceneIndexNotUnique extends OIndexAbstract implements OLuceneInde
   protected void onIndexEngineChange(int indexId) {
     while (true)
       try {
-        storage.callIndexEngine(false, false, indexId, engine -> {
+        storage.callIndexEngine(false, indexId, engine -> {
           OLuceneIndexEngine oIndexEngine = (OLuceneIndexEngine) engine;
           oIndexEngine.init(getName(), getType(), getDefinition(), isAutomatic(), getMetadata());
           return null;
@@ -251,7 +254,7 @@ public class OLuceneIndexNotUnique extends OIndexAbstract implements OLuceneInde
     if (changes == null) {
       while (true)
         try {
-          changes = storage.callIndexEngine(false, false, indexId, engine -> {
+          changes = storage.callIndexEngine(false, indexId, engine -> {
             OLuceneIndexEngine indexEngine = (OLuceneIndexEngine) engine;
             try {
               return indexEngine.buildTxChanges();
@@ -291,7 +294,7 @@ public class OLuceneIndexNotUnique extends OIndexAbstract implements OLuceneInde
       while (true) {
         try {
           //noinspection resource
-          return storage.callIndexEngine(false, false, indexId, engine -> {
+          return storage.callIndexEngine(false, indexId, engine -> {
             OLuceneIndexEngine indexEngine = (OLuceneIndexEngine) engine;
             return indexEngine.getInTx(key, getTransactionChanges(transaction));
           }).stream().map(OIdentifiable::getIdentity);
@@ -329,7 +332,7 @@ public class OLuceneIndexNotUnique extends OIndexAbstract implements OLuceneInde
         Document luceneDoc;
         while (true) {
           try {
-            luceneDoc = storage.callIndexEngine(false, false, indexId, engine -> {
+            luceneDoc = storage.callIndexEngine(false, indexId, engine -> {
               OLuceneIndexEngine oIndexEngine = (OLuceneIndexEngine) engine;
               return oIndexEngine.buildDocument(key, value);
             });
@@ -361,7 +364,7 @@ public class OLuceneIndexNotUnique extends OIndexAbstract implements OLuceneInde
     while (true) {
       try {
         // TODO apply current TX
-        return storage.callIndexEngine(false, false, indexId, engine -> {
+        return storage.callIndexEngine(false, indexId, engine -> {
           OBasicTransaction transaction = getDatabase().getMicroOrRegularTransaction();
           OLuceneIndexEngine indexEngine = (OLuceneIndexEngine) engine;
           return indexEngine.sizeInTx(getTransactionChanges(transaction));
@@ -457,7 +460,7 @@ public class OLuceneIndexNotUnique extends OIndexAbstract implements OLuceneInde
   public IndexSearcher searcher() {
     while (true) {
       try {
-        return storage.callIndexEngine(false, false, indexId, engine -> {
+        return storage.callIndexEngine(false, indexId, engine -> {
           OLuceneIndexEngine indexEngine = (OLuceneIndexEngine) engine;
           return indexEngine.searcher();
         });

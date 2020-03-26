@@ -74,6 +74,8 @@ public class OLocalHashTableV3WALTestIT extends OLocalHashTableV3Base {
     expectedStorage = ((OLocalPaginatedStorage) ((ODatabaseInternal) expectedDatabaseDocumentTx).getStorage());
     actualStorage = (OLocalPaginatedStorage) ((ODatabaseInternal) databaseDocumentTx).getStorage();
 
+    atomicOperationsManager = actualStorage.getAtomicOperationsManager();
+
     actualStorageDir = actualStorage.getStoragePath().toString();
     expectedStorageDir = expectedStorage.getStoragePath().toString();
 
@@ -100,9 +102,9 @@ public class OLocalHashTableV3WALTestIT extends OLocalHashTableV3Base {
 
     localHashTable = new OLocalHashTableV3<>("actualLocalHashTable", ".imc", ".tsc", ".obf", ".nbh",
         (OAbstractPaginatedStorage) ((ODatabaseInternal) databaseDocumentTx).getStorage());
-    localHashTable
-        .create(OIntegerSerializer.INSTANCE, OBinarySerializerFactory.getInstance().getObjectSerializer(OType.STRING), null, null,
-            murmurHash3HashFunction, true);
+    atomicOperationsManager.executeInsideAtomicOperation(null, atomicOperation -> localHashTable
+        .create(atomicOperation, OIntegerSerializer.INSTANCE,
+            OBinarySerializerFactory.getInstance().getObjectSerializer(OType.STRING), null, null, murmurHash3HashFunction, true));
   }
 
   @Override
@@ -317,7 +319,7 @@ public class OLocalHashTableV3WALTestIT extends OLocalHashTableV3Base {
         new java.io.File(actualStorageDir, actualOBFFile).getAbsolutePath());
   }
 
-  private void assertFileContentIsTheSame(String expectedBTreeFileName, String actualBTreeFileName) throws IOException {
+  private static void assertFileContentIsTheSame(String expectedBTreeFileName, String actualBTreeFileName) throws IOException {
     java.io.File expectedFile = new java.io.File(expectedBTreeFileName);
     try (RandomAccessFile fileOne = new RandomAccessFile(expectedFile, "r")) {
       try (RandomAccessFile fileTwo = new RandomAccessFile(new java.io.File(actualBTreeFileName), "r")) {

@@ -101,13 +101,11 @@ public class OSBTreeV2<K, V> extends ODurableComponent implements OSBTree<K, V> 
   }
 
   @Override
-  public void create(final OBinarySerializer<K> keySerializer, final OBinarySerializer<V> valueSerializer, final OType[] keyTypes,
-      final int keySize, final boolean nullPointerSupport, final OEncryption encryption) throws IOException {
+  public void create(final OAtomicOperation atomicOperation, final OBinarySerializer<K> keySerializer,
+      final OBinarySerializer<V> valueSerializer, final OType[] keyTypes, final int keySize, final boolean nullPointerSupport,
+      final OEncryption encryption) throws IOException {
     assert keySerializer != null;
-
-    boolean rollback = false;
-    final OAtomicOperation atomicOperation = startAtomicOperation(false);
-    try {
+    executeInsideComponentOperation(atomicOperation, operation -> {
       acquireExclusiveLock();
       try {
         this.keySize = keySize;
@@ -140,12 +138,7 @@ public class OSBTreeV2<K, V> extends ODurableComponent implements OSBTree<K, V> 
       } finally {
         releaseExclusiveLock();
       }
-    } catch (final Exception e) {
-      rollback = true;
-      throw e;
-    } finally {
-      endAtomicOperation(rollback);
-    }
+    });
   }
 
   @Override
@@ -216,28 +209,29 @@ public class OSBTreeV2<K, V> extends ODurableComponent implements OSBTree<K, V> 
   }
 
   @Override
-  public void put(final K key, final V value) throws IOException {
-    put(key, value, null);
+  public void put(final OAtomicOperation atomicOperation, final K key, final V value) {
+    put(atomicOperation, key, value, null);
   }
 
   @Override
-  public boolean validatedPut(final K key, final V value, final OBaseIndexEngine.Validator<K, V> validator) throws IOException {
-    return put(key, value, validator);
+  public boolean validatedPut(final OAtomicOperation atomicOperation, final K key, final V value,
+      final OBaseIndexEngine.Validator<K, V> validator) {
+    return put(atomicOperation, key, value, validator);
   }
 
-  private boolean put(final K key, final V value, final OBaseIndexEngine.Validator<K, V> validator) throws IOException {
-    return update(key, (x, bonsayFileId) -> OIndexUpdateAction.changed(value), validator);
+  private boolean put(final OAtomicOperation atomicOperation, final K key, final V value,
+      final OBaseIndexEngine.Validator<K, V> validator) {
+    return update(atomicOperation, key, (x, bonsayFileId) -> OIndexUpdateAction.changed(value), validator);
   }
 
   @Override
   @SuppressWarnings("unchecked")
-  public boolean update(K key, final OIndexKeyUpdater<V> updater, final OBaseIndexEngine.Validator<K, V> validator)
-      throws IOException {
-    boolean rollback = false;
-    final OAtomicOperation atomicOperation = startAtomicOperation(true);
-    try {
+  public boolean update(OAtomicOperation atomicOperation, final K k, final OIndexKeyUpdater<V> updater,
+      final OBaseIndexEngine.Validator<K, V> validator) {
+    return calculateInsideComponentOperation(atomicOperation, operation -> {
       acquireExclusiveLock();
       try {
+        K key = k;
         checkNullSupport(key);
 
         if (key != null) {
@@ -401,12 +395,7 @@ public class OSBTreeV2<K, V> extends ODurableComponent implements OSBTree<K, V> 
       } finally {
         releaseExclusiveLock();
       }
-    } catch (final Exception e) {
-      rollback = true;
-      throw e;
-    } finally {
-      endAtomicOperation(rollback);
-    }
+    });
   }
 
   @Override
@@ -430,10 +419,8 @@ public class OSBTreeV2<K, V> extends ODurableComponent implements OSBTree<K, V> 
   }
 
   @Override
-  public void delete() throws IOException {
-    boolean rollback = false;
-    final OAtomicOperation atomicOperation = startAtomicOperation(false);
-    try {
+  public void delete(final OAtomicOperation atomicOperation) throws IOException {
+    executeInsideComponentOperation(atomicOperation, operation -> {
       acquireExclusiveLock();
       try {
         final long size = size();
@@ -449,12 +436,7 @@ public class OSBTreeV2<K, V> extends ODurableComponent implements OSBTree<K, V> 
       } finally {
         releaseExclusiveLock();
       }
-    } catch (final Exception e) {
-      rollback = true;
-      throw e;
-    } finally {
-      endAtomicOperation(rollback);
-    }
+    });
   }
 
   @Override
@@ -513,14 +495,12 @@ public class OSBTreeV2<K, V> extends ODurableComponent implements OSBTree<K, V> 
   }
 
   @Override
-  public V remove(K key) throws IOException {
-    boolean rollback = false;
-    final OAtomicOperation atomicOperation = startAtomicOperation(true);
-    try {
+  public V remove(OAtomicOperation atomicOperation, final K k) {
+    return calculateInsideComponentOperation(atomicOperation, operation -> {
       acquireExclusiveLock();
       try {
         final V removedValue;
-
+        K key = k;
         if (key != null) {
           //noinspection RedundantCast
           key = keySerializer.preprocess(key, (Object[]) keyTypes);
@@ -544,12 +524,7 @@ public class OSBTreeV2<K, V> extends ODurableComponent implements OSBTree<K, V> 
       } finally {
         releaseExclusiveLock();
       }
-    } catch (final Exception e) {
-      rollback = true;
-      throw e;
-    } finally {
-      endAtomicOperation(rollback);
-    }
+    });
   }
 
   private V removeNullBucket(final OAtomicOperation atomicOperation) throws IOException {
@@ -679,6 +654,7 @@ public class OSBTreeV2<K, V> extends ODurableComponent implements OSBTree<K, V> 
     try {
       acquireSharedLock();
       try {
+        //noinspection resource
         return StreamSupport.stream(new SpliteratorForward(null, null, false, false), false).map((entry) -> entry.first);
       } finally {
         releaseSharedLock();

@@ -41,7 +41,9 @@ public class LocalPaginatedClusterV0TestIT extends LocalPaginatedClusterAbstract
 
     paginatedCluster = new OPaginatedClusterV0("paginatedClusterTest", storage);
     paginatedCluster.configure(42, "paginatedClusterTest");
-    paginatedCluster.create();
+
+    storage.getAtomicOperationsManager()
+        .executeInsideAtomicOperation(null, atomicOperation -> paginatedCluster.create(atomicOperation));
   }
 
 }

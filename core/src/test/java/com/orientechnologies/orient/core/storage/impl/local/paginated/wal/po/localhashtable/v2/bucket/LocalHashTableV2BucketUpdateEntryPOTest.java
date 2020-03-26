@@ -6,7 +6,6 @@ import com.orientechnologies.common.serialization.types.OByteSerializer;
 import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
 import com.orientechnologies.orient.core.storage.cache.OCacheEntryImpl;
 import com.orientechnologies.orient.core.storage.cache.OCachePointer;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OOperationUnitId;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.PageOperationRecord;
 import com.orientechnologies.orient.core.storage.index.hashindex.local.v2.HashIndexBucketV2;
 import org.junit.Assert;
@@ -120,14 +119,12 @@ public class LocalHashTableV2BucketUpdateEntryPOTest {
 
   @Test
   public void testSerialization() {
-    OOperationUnitId operationUnitId = OOperationUnitId.generateId();
-
     LocalHashTableV2BucketUpdateEntryPO operation = new LocalHashTableV2BucketUpdateEntryPO(1, new byte[] { 1, 2 },
         new byte[] { 3, 4 }, 12);
 
     operation.setFileId(42);
     operation.setPageIndex(24);
-    operation.setOperationUnitId(operationUnitId);
+    operation.setOperationUnitId(1);
 
     final int serializedSize = operation.serializedSize();
     final byte[] stream = new byte[serializedSize + 1];
@@ -140,7 +137,7 @@ public class LocalHashTableV2BucketUpdateEntryPOTest {
 
     Assert.assertEquals(42, restoredOperation.getFileId());
     Assert.assertEquals(24, restoredOperation.getPageIndex());
-    Assert.assertEquals(operationUnitId, restoredOperation.getOperationUnitId());
+    Assert.assertEquals(1, restoredOperation.getOperationUnitId());
 
     Assert.assertEquals(1, restoredOperation.getIndex());
     Assert.assertArrayEquals(new byte[] { 3, 4 }, restoredOperation.getOldValue());

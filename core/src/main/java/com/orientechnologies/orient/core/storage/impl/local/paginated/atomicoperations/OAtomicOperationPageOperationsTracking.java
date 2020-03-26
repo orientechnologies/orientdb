@@ -6,7 +6,6 @@ import com.orientechnologies.orient.core.storage.cache.OReadCache;
 import com.orientechnologies.orient.core.storage.cache.OWriteCache;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurablePage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OOperationUnitId;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWriteAheadLog;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.common.WriteableWALRecord;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.PageOperationRecord;
@@ -22,17 +21,17 @@ final class OAtomicOperationPageOperationsTracking implements OAtomicOperation {
   private final OWriteCache    writeCache;
   private final OWriteAheadLog writeAheadLog;
 
-  private final OOperationUnitId operationUnitId;
+  private final long operationUnitId;
 
-  private int startCounter = 1;
+  private int componentOperationsCounter;
 
   private final Set<String> lockedObjects = new HashSet<>();
 
   private boolean rollbackInProgress;
 
-  private List<OLogSequenceNumber>  pageOperationRefs        = new ArrayList<>();
-  private List<PageOperationRecord> pageOperationCache       = new ArrayList<>();
-  private long                      sizeSerializedOperations = 0;
+  private final List<OLogSequenceNumber>  pageOperationRefs        = new ArrayList<>();
+  private final List<PageOperationRecord> pageOperationCache       = new ArrayList<>();
+  private       long                      sizeSerializedOperations = 0;
 
   private final int operationsCacheLimit;
 
@@ -47,7 +46,7 @@ final class OAtomicOperationPageOperationsTracking implements OAtomicOperation {
   private final Map<ORawPair<Integer, Integer>, Set<Integer>> deletedRecordPositions = new HashMap<>();
 
   OAtomicOperationPageOperationsTracking(OReadCache readCache, OWriteCache writeCache, OWriteAheadLog writeAheadLog,
-      OOperationUnitId operationUnitId, int operationsCacheLimit, OLogSequenceNumber startLSN) {
+      long operationUnitId, int operationsCacheLimit, OLogSequenceNumber startLSN) {
     this.readCache = readCache;
     this.writeCache = writeCache;
     this.operationUnitId = operationUnitId;
@@ -145,21 +144,6 @@ final class OAtomicOperationPageOperationsTracking implements OAtomicOperation {
   }
 
   @Override
-  public int getCounter() {
-    return startCounter;
-  }
-
-  @Override
-  public void incrementCounter() {
-    startCounter++;
-  }
-
-  @Override
-  public void decrementCounter() {
-    startCounter--;
-  }
-
-  @Override
   public void addDeletedRidBag(OBonsaiBucketPointer rootPointer) {
     deletedBonsaiPointers.add(rootPointer);
   }
@@ -195,7 +179,7 @@ final class OAtomicOperationPageOperationsTracking implements OAtomicOperation {
   }
 
   @Override
-  public OOperationUnitId getOperationUnitId() {
+  public long getOperationUnitId() {
     return operationUnitId;
   }
 
@@ -265,7 +249,7 @@ final class OAtomicOperationPageOperationsTracking implements OAtomicOperation {
       }
     }
 
-    return writeAheadLog.logAtomicOperationEndRecord(getOperationUnitId(), rollbackInProgress, this.startLSN, getMetadata());
+    return writeAheadLog.logAtomicOperationEndRecord(operationUnitId, rollbackInProgress, this.startLSN, getMetadata());
   }
 
   private void revertPageOperation(PageOperationRecord pageOperationRecord) throws IOException {
@@ -334,5 +318,20 @@ final class OAtomicOperationPageOperationsTracking implements OAtomicOperation {
   @Override
   public Set<Integer> getBookedRecordPositions(int clusterId, int pageIndex) {
     return deletedRecordPositions.getOrDefault(new ORawPair<>(clusterId, pageIndex), Collections.emptySet());
+  }
+
+  @Override
+  public void incrementComponentOperations() {
+    componentOperationsCounter++;
+  }
+
+  @Override
+  public void decrementComponentOperations() {
+    componentOperationsCounter--;
+  }
+
+  @Override
+  public int getComponentOperations() {
+    return componentOperationsCounter;
   }
 }

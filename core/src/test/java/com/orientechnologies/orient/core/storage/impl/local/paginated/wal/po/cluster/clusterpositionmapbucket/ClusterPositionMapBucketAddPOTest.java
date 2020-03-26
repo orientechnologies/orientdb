@@ -6,7 +6,6 @@ import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
 import com.orientechnologies.orient.core.storage.cache.OCacheEntryImpl;
 import com.orientechnologies.orient.core.storage.cache.OCachePointer;
 import com.orientechnologies.orient.core.storage.cluster.OClusterPositionMapBucket;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OOperationUnitId;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.PageOperationRecord;
 import org.junit.Assert;
 import org.junit.Test;
@@ -124,12 +123,11 @@ public class ClusterPositionMapBucketAddPOTest {
 
   @Test
   public void testSerialization() {
-    OOperationUnitId operationUnitId = OOperationUnitId.generateId();
     ClusterPositionMapBucketAddPO operation = new ClusterPositionMapBucketAddPO(123, 45, OClusterPositionMapBucket.FILLED);
 
     operation.setFileId(42);
     operation.setPageIndex(24);
-    operation.setOperationUnitId(operationUnitId);
+    operation.setOperationUnitId(1);
 
     final int serializedSize = operation.serializedSize();
     final byte[] stream = new byte[serializedSize + 1];
@@ -142,7 +140,7 @@ public class ClusterPositionMapBucketAddPOTest {
 
     Assert.assertEquals(42, restoredOperation.getFileId());
     Assert.assertEquals(24, restoredOperation.getPageIndex());
-    Assert.assertEquals(operationUnitId, restoredOperation.getOperationUnitId());
+    Assert.assertEquals(1, restoredOperation.getOperationUnitId());
 
     Assert.assertEquals(123, restoredOperation.getRecordPageIndex());
     Assert.assertEquals(45, restoredOperation.getRecordPosition());

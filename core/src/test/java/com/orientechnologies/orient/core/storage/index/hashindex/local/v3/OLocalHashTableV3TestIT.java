@@ -37,9 +37,11 @@ public class OLocalHashTableV3TestIT extends OLocalHashTableV3Base {
     localHashTable = new OLocalHashTableV3<>("localHashTableTest", ".imc", ".tsc", ".obf", ".nbh",
         (OAbstractPaginatedStorage) ((ODatabaseInternal) databaseDocumentTx).getStorage());
 
-    localHashTable
-        .create(OIntegerSerializer.INSTANCE, OBinarySerializerFactory.getInstance().getObjectSerializer(OType.STRING), null, null,
-            murmurHash3HashFunction, true);
+    atomicOperationsManager = ((OAbstractPaginatedStorage) ((ODatabaseInternal) databaseDocumentTx).getStorage())
+        .getAtomicOperationsManager();
+    atomicOperationsManager.executeInsideAtomicOperation(null, atomicOperation -> localHashTable
+        .create(atomicOperation, OIntegerSerializer.INSTANCE,
+            OBinarySerializerFactory.getInstance().getObjectSerializer(OType.STRING), null, null, murmurHash3HashFunction, true));
 
   }
 

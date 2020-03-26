@@ -9,6 +9,7 @@ import com.orientechnologies.orient.core.db.*;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperation;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperationsManager;
 import org.junit.After;
 import org.junit.Assert;
@@ -25,6 +26,7 @@ public class CellBTreeMultiValueV2TestIT {
   private CellBTreeMultiValueV2<String> multiValueTree;
   private OrientDB                      orientDB;
   private OAbstractPaginatedStorage     storage;
+  private OAtomicOperationsManager      atomicOperationsManager;
 
   private static final String DB_NAME = "localMultiBTreeTest";
 
@@ -44,8 +46,12 @@ public class CellBTreeMultiValueV2TestIT {
     try (ODatabaseSession databaseDocumentTx = orientDB.open(DB_NAME, "admin", "admin")) {
       storage = (OAbstractPaginatedStorage) ((ODatabaseInternal) databaseDocumentTx).getStorage();
     }
+
+    atomicOperationsManager = storage.getAtomicOperationsManager();
     multiValueTree = new CellBTreeMultiValueV2<>("multiBTree", ".sbt", ".nbt", ".mdt", storage);
-    multiValueTree.create(OUTF8Serializer.INSTANCE, null, 1, null);
+
+    atomicOperationsManager.executeInsideAtomicOperation(null,
+        atomicOperation -> multiValueTree.create(OUTF8Serializer.INSTANCE, null, 1, null, atomicOperation));
   }
 
   @After
@@ -58,7 +64,8 @@ public class CellBTreeMultiValueV2TestIT {
   public void testPutNullKey() throws Exception {
     final int itemsCount = 64_000;
 
-    doInRollbackLoop(0, itemsCount, 100, (value, rollback) -> multiValueTree.put(null, new ORecordId(value % 32000, value)));
+    doInRollbackLoop(0, itemsCount, 100,
+        (value, rollback, atomicOperation) -> multiValueTree.put(atomicOperation, null, new ORecordId(value % 32000, value)));
 
     final List<ORID> result;
     try (Stream<ORID> stream = multiValueTree.get(null)) {
@@ -77,10 +84,11 @@ public class CellBTreeMultiValueV2TestIT {
   public void testKeyPutRemoveNullKey() throws IOException {
     final int itemsCount = 69_000;
 
-    doInRollbackLoop(0, itemsCount, 100, (value, rollback) -> multiValueTree.put(null, new ORecordId(value % 32000, value)));
+    doInRollbackLoop(0, itemsCount, 100,
+        (value, rollback, atomicOperation) -> multiValueTree.put(atomicOperation, null, new ORecordId(value % 32000, value)));
 
-    doInRollbackLoop(0, itemsCount / 3, 100,
-        (value, rollback) -> multiValueTree.remove(null, new ORecordId(3 * value % 32_000, 3 * value)));
+    doInRollbackLoop(0, itemsCount / 3, 100, (value, rollback, atomicOperation) -> multiValueTree
+        .remove(atomicOperation, null, new ORecordId(3 * value % 32_000, 3 * value)));
 
     final List<ORID> result;
     try (Stream<ORID> stream = multiValueTree.get(null)) {
@@ -102,11 +110,11 @@ public class CellBTreeMultiValueV2TestIT {
     final int itemsCount = 69_000;
     final OModifiableInteger removed = new OModifiableInteger();
 
-    doInRollbackLoop(0, itemsCount, 100, ((value, rollback) -> {
-      multiValueTree.put(null, new ORecordId(value % 32_000, value));
+    doInRollbackLoop(0, itemsCount, 100, ((value, rollback, atomicOperation) -> {
+      multiValueTree.put(atomicOperation, null, new ORecordId(value % 32_000, value));
 
       if (value % 3 == 0) {
-        multiValueTree.remove(null, new ORecordId(value % 32_000, value));
+        multiValueTree.remove(atomicOperation, null, new ORecordId(value % 32_000, value));
         if (!rollback) {
           removed.increment();
         }
@@ -133,13 +141,13 @@ public class CellBTreeMultiValueV2TestIT {
     final int itemsCount = 63_000;
     final OModifiableInteger removed = new OModifiableInteger();
 
-    doInRollbackLoop(0, itemsCount, 100, ((value, rollback) -> {
-      multiValueTree.put(null, new ORecordId(value % 32000, value));
+    doInRollbackLoop(0, itemsCount, 100, ((value, rollback, atomicOperation) -> {
+      multiValueTree.put(atomicOperation, null, new ORecordId(value % 32000, value));
 
       if (value > 0 && value % 9 == 0) {
-        multiValueTree.remove(null, new ORecordId((value - 3) % 32_000, value - 3));
-        multiValueTree.remove(null, new ORecordId((value - 6) % 32_000, value - 6));
-        multiValueTree.remove(null, new ORecordId((value - 9) % 32_000, value - 9));
+        multiValueTree.remove(atomicOperation, null, new ORecordId((value - 3) % 32_000, value - 3));
+        multiValueTree.remove(atomicOperation, null, new ORecordId((value - 6) % 32_000, value - 6));
+        multiValueTree.remove(atomicOperation, null, new ORecordId((value - 9) % 32_000, value - 9));
 
         if (!rollback) {
           removed.increment(3);
@@ -149,7 +157,9 @@ public class CellBTreeMultiValueV2TestIT {
 
     final int roundedItems = ((itemsCount + 8) / 9) * 9;
     for (int n = 3; n < 10; n += 3) {
-      multiValueTree.remove(null, new ORecordId((roundedItems - n) % 32_000, roundedItems - n));
+      final int counter = n;
+      atomicOperationsManager.executeInsideAtomicOperation(null, atomicOperation -> multiValueTree
+          .remove(atomicOperation, null, new ORecordId((roundedItems - counter) % 32_000, roundedItems - counter)));
       if (roundedItems - n < itemsCount) {
         removed.increment();
       }
@@ -174,12 +184,14 @@ public class CellBTreeMultiValueV2TestIT {
   public void testKeyPutRemoveSliceNullKey() throws IOException {
     final int itemsCount = 64_000;
 
-    doInRollbackLoop(0, itemsCount, 100, (value, rollback) -> multiValueTree.put(null, new ORecordId(value % 32000, value)));
+    doInRollbackLoop(0, itemsCount, 100,
+        (value, rollback, atomicOperation) -> multiValueTree.put(atomicOperation, null, new ORecordId(value % 32000, value)));
 
     final int start = itemsCount / 3;
     final int end = 2 * itemsCount / 3;
 
-    doInRollbackLoop(start, end, 100, (value, rollback) -> multiValueTree.remove(null, new ORecordId(value % 32_000, value)));
+    doInRollbackLoop(start, end, 100,
+        (value, rollback, atomicOperation) -> multiValueTree.remove(atomicOperation, null, new ORecordId(value % 32_000, value)));
 
     final List<ORID> result;
     try (Stream<ORID> stream = multiValueTree.get(null)) {
@@ -202,13 +214,16 @@ public class CellBTreeMultiValueV2TestIT {
   public void testKeyPutRemoveSliceAndAddBackNullKey() throws IOException {
     final int itemsCount = 64_000;
 
-    doInRollbackLoop(0, itemsCount, 100, ((value, rollback) -> multiValueTree.put(null, new ORecordId(value % 32000, value))));
+    doInRollbackLoop(0, itemsCount, 100,
+        ((value, rollback, atomicOperation) -> multiValueTree.put(atomicOperation, null, new ORecordId(value % 32000, value))));
 
     final int start = itemsCount / 3;
     final int end = 2 * itemsCount / 3;
 
-    doInRollbackLoop(start, end, 100, (value, rollback) -> multiValueTree.remove(null, new ORecordId(value % 32_000, value)));
-    doInRollbackLoop(start, end, 100, (value, rollback) -> multiValueTree.put(null, new ORecordId(value % 32_000, value)));
+    doInRollbackLoop(start, end, 100,
+        (value, rollback, atomicOperation) -> multiValueTree.remove(atomicOperation, null, new ORecordId(value % 32_000, value)));
+    doInRollbackLoop(start, end, 100,
+        (value, rollback, atomicOperation) -> multiValueTree.put(atomicOperation, null, new ORecordId(value % 32_000, value)));
 
     final List<ORID> result;
     try (Stream<ORID> stream = multiValueTree.get(null)) {
@@ -227,15 +242,17 @@ public class CellBTreeMultiValueV2TestIT {
   public void testKeyPutRemoveSliceBeginEndNullKey() throws IOException {
     final int itemsCount = 64_000;
 
-    doInRollbackLoop(0, itemsCount, 100, (value, rollback) -> multiValueTree.put(null, new ORecordId(value % 32000, value)));
+    doInRollbackLoop(0, itemsCount, 100,
+        (value, rollback, atomicOperation) -> multiValueTree.put(atomicOperation, null, new ORecordId(value % 32000, value)));
 
     final int rollbackSlice = 100;
     final int start = itemsCount / 3;
     final int end = 2 * itemsCount / 3;
 
     doInRollbackLoop(0, start, rollbackSlice,
-        (value, rollback) -> multiValueTree.remove(null, new ORecordId(value % 32_000, value)));
-    doInRollbackLoop(end, itemsCount, 100, (value, rollback) -> multiValueTree.remove(null, new ORecordId(value % 32_000, value)));
+        (value, rollback, atomicOperation) -> multiValueTree.remove(atomicOperation, null, new ORecordId(value % 32_000, value)));
+    doInRollbackLoop(end, itemsCount, 100,
+        (value, rollback, atomicOperation) -> multiValueTree.remove(atomicOperation, null, new ORecordId(value % 32_000, value)));
 
     final List<ORID> result;
     try (Stream<ORID> stream = multiValueTree.get(null)) {
@@ -258,15 +275,20 @@ public class CellBTreeMultiValueV2TestIT {
   public void testKeyPutRemoveSliceBeginEndAddBackOneNullKey() throws IOException {
     final int itemsCount = 64_000;
 
-    doInRollbackLoop(0, itemsCount, 100, (value, rollback) -> multiValueTree.put(null, new ORecordId(value % 32000, value)));
+    doInRollbackLoop(0, itemsCount, 100,
+        (value, rollback, atomicOperation) -> multiValueTree.put(atomicOperation, null, new ORecordId(value % 32000, value)));
 
     final int start = itemsCount / 3;
     final int end = 2 * itemsCount / 3;
 
-    doInRollbackLoop(0, start, 100, (value, rollback) -> multiValueTree.remove(null, new ORecordId(value % 32_000, value)));
-    doInRollbackLoop(end, itemsCount, 100, (value, rollback) -> multiValueTree.remove(null, new ORecordId(value % 32_000, value)));
-    doInRollbackLoop(0, start, 100, (value, rollback) -> multiValueTree.put(null, new ORecordId(value % 32_000, value)));
-    doInRollbackLoop(end, itemsCount, 100, (value, rollback) -> multiValueTree.put(null, new ORecordId(value % 32_000, value)));
+    doInRollbackLoop(0, start, 100,
+        (value, rollback, atomicOperation) -> multiValueTree.remove(atomicOperation, null, new ORecordId(value % 32_000, value)));
+    doInRollbackLoop(end, itemsCount, 100,
+        (value, rollback, atomicOperation) -> multiValueTree.remove(atomicOperation, null, new ORecordId(value % 32_000, value)));
+    doInRollbackLoop(0, start, 100,
+        (value, rollback, atomicOperation) -> multiValueTree.put(atomicOperation, null, new ORecordId(value % 32_000, value)));
+    doInRollbackLoop(end, itemsCount, 100,
+        (value, rollback, atomicOperation) -> multiValueTree.put(atomicOperation, null, new ORecordId(value % 32_000, value)));
 
     final List<ORID> result;
     try (Stream<ORID> stream = multiValueTree.get(null)) {
@@ -285,15 +307,20 @@ public class CellBTreeMultiValueV2TestIT {
   public void testKeyPutRemoveSliceBeginEndAddBackTwoNullKey() throws IOException {
     final int itemsCount = 64_000;
 
-    doInRollbackLoop(0, itemsCount, 100, (value, rollback) -> multiValueTree.put(null, new ORecordId(value % 32000, value)));
+    doInRollbackLoop(0, itemsCount, 100,
+        (value, rollback, atomicOperation) -> multiValueTree.put(atomicOperation, null, new ORecordId(value % 32000, value)));
 
     final int start = itemsCount / 3;
     final int end = 2 * itemsCount / 3;
 
-    doInRollbackLoop(0, start, 100, (value, rollback) -> multiValueTree.remove(null, new ORecordId(value % 32_000, value)));
-    doInRollbackLoop(0, start, 100, (value, rollback) -> multiValueTree.put(null, new ORecordId(value % 32_000, value)));
-    doInRollbackLoop(end, itemsCount, 100, (value, rollback) -> multiValueTree.remove(null, new ORecordId(value % 32_000, value)));
-    doInRollbackLoop(end, itemsCount, 100, (value, rollback) -> multiValueTree.put(null, new ORecordId(value % 32_000, value)));
+    doInRollbackLoop(0, start, 100,
+        (value, rollback, atomicOperation) -> multiValueTree.remove(atomicOperation, null, new ORecordId(value % 32_000, value)));
+    doInRollbackLoop(0, start, 100,
+        (value, rollback, atomicOperation) -> multiValueTree.put(atomicOperation, null, new ORecordId(value % 32_000, value)));
+    doInRollbackLoop(end, itemsCount, 100,
+        (value, rollback, atomicOperation) -> multiValueTree.remove(atomicOperation, null, new ORecordId(value % 32_000, value)));
+    doInRollbackLoop(end, itemsCount, 100,
+        (value, rollback, atomicOperation) -> multiValueTree.put(atomicOperation, null, new ORecordId(value % 32_000, value)));
 
     final List<ORID> result;
     try (Stream<ORID> stream = multiValueTree.get(null)) {
@@ -313,7 +340,8 @@ public class CellBTreeMultiValueV2TestIT {
     final int itemsCount = 1_000_000;
     final String key = "test_key";
 
-    doInRollbackLoop(0, itemsCount, 100, (value, rollback) -> multiValueTree.put(key, new ORecordId(value % 32000, value)));
+    doInRollbackLoop(0, itemsCount, 100,
+        (value, rollback, atomicOperation) -> multiValueTree.put(atomicOperation, key, new ORecordId(value % 32000, value)));
 
     final List<ORID> result;
     try (Stream<ORID> stream = multiValueTree.get(key)) {
@@ -333,11 +361,12 @@ public class CellBTreeMultiValueV2TestIT {
     final int itemsCount = 256_000;
     final String key = "test_key";
 
-    doInRollbackLoop(0, itemsCount, 100, (value, rollback) -> multiValueTree.put(key, new ORecordId(value % 32000, value)));
+    doInRollbackLoop(0, itemsCount, 100,
+        (value, rollback, atomicOperation) -> multiValueTree.put(atomicOperation, key, new ORecordId(value % 32000, value)));
 
-    doInRollbackLoop(0, itemsCount / 3, 100, (value, rollback) -> {
+    doInRollbackLoop(0, itemsCount / 3, 100, (value, rollback, atomicOperation) -> {
       final int val = 3 * value;
-      multiValueTree.remove(key, new ORecordId(val % 32_000, val));
+      multiValueTree.remove(atomicOperation, key, new ORecordId(val % 32_000, val));
     });
 
     final List<ORID> result;
@@ -361,9 +390,9 @@ public class CellBTreeMultiValueV2TestIT {
     final String keyOne = "test_key_one";
     final String keyTwo = "test_key_two";
 
-    doInRollbackLoop(0, itemsCount, 100, (value, rollback) -> {
-      multiValueTree.put(keyOne, new ORecordId(value % 32000, value));
-      multiValueTree.put(keyTwo, new ORecordId(value % 32000, value));
+    doInRollbackLoop(0, itemsCount, 100, (value, rollback, atomicOperation) -> {
+      multiValueTree.put(atomicOperation, keyOne, new ORecordId(value % 32000, value));
+      multiValueTree.put(atomicOperation, keyTwo, new ORecordId(value % 32000, value));
     });
 
     List<ORID> result;
@@ -396,15 +425,15 @@ public class CellBTreeMultiValueV2TestIT {
     final String keyOne = "test_key_1";
     final String keyTwo = "test_key_2";
 
-    doInRollbackLoop(0, itemsCount, 100, (value, rollback) -> {
-      multiValueTree.put(keyOne, new ORecordId(value % 32000, value));
-      multiValueTree.put(keyTwo, new ORecordId(value % 32000, value));
+    doInRollbackLoop(0, itemsCount, 100, (value, rollback, atomicOperation) -> {
+      multiValueTree.put(atomicOperation, keyOne, new ORecordId(value % 32000, value));
+      multiValueTree.put(atomicOperation, keyTwo, new ORecordId(value % 32000, value));
     });
 
-    doInRollbackLoop(0, itemsCount / 3, 100, (value, rollback) -> {
+    doInRollbackLoop(0, itemsCount / 3, 100, (value, rollback, atomicOperation) -> {
       final int val = 3 * value;
-      multiValueTree.remove(keyOne, new ORecordId(val % 32_000, val));
-      multiValueTree.remove(keyTwo, new ORecordId(val % 32_000, val));
+      multiValueTree.remove(atomicOperation, keyOne, new ORecordId(val % 32_000, val));
+      multiValueTree.remove(atomicOperation, keyTwo, new ORecordId(val % 32_000, val));
     });
 
     {
@@ -449,9 +478,9 @@ public class CellBTreeMultiValueV2TestIT {
       keys[i] = "test_key_" + i;
     }
 
-    doInRollbackLoop(0, itemsCount, 100, (value, rollback) -> {
+    doInRollbackLoop(0, itemsCount, 100, (value, rollback, atomicOperation) -> {
       for (String key : keys) {
-        multiValueTree.put(key, new ORecordId(value % 32000, value));
+        multiValueTree.put(atomicOperation, key, new ORecordId(value % 32000, value));
       }
     });
 
@@ -480,9 +509,9 @@ public class CellBTreeMultiValueV2TestIT {
       keys[i] = "test_key_" + (9 - i);
     }
 
-    doInRollbackLoop(0, itemsCount, 100, (value, rollback) -> {
+    doInRollbackLoop(0, itemsCount, 100, (value, rollback, atomicOperation) -> {
       for (String key : keys) {
-        multiValueTree.put(key, new ORecordId(value % 32000, value));
+        multiValueTree.put(atomicOperation, key, new ORecordId(value % 32000, value));
       }
     });
 
@@ -510,17 +539,17 @@ public class CellBTreeMultiValueV2TestIT {
       keys[i] = "test_key_" + i;
     }
 
-    doInRollbackLoop(0, itemsCount, 100, (value, rollback) -> {
+    doInRollbackLoop(0, itemsCount, 100, (value, rollback, atomicOperation) -> {
       for (String key : keys) {
-        multiValueTree.put(key, new ORecordId(value % 32000, value));
+        multiValueTree.put(atomicOperation, key, new ORecordId(value % 32000, value));
       }
     });
 
-    doInRollbackLoop(0, itemsCount / 3, 100, (value, rollback) -> {
+    doInRollbackLoop(0, itemsCount / 3, 100, (value, rollback, atomicOperation) -> {
       final int val = 3 * value;
 
       for (String key : keys) {
-        multiValueTree.remove(key, new ORecordId(val % 32_000, val));
+        multiValueTree.remove(atomicOperation, key, new ORecordId(val % 32_000, val));
       }
     });
 
@@ -550,9 +579,9 @@ public class CellBTreeMultiValueV2TestIT {
       keys[i] = "test_key_" + i;
     }
 
-    doInRollbackLoop(0, itemsCount, 100, (value, rollback) -> {
+    doInRollbackLoop(0, itemsCount, 100, (value, rollback, atomicOperation) -> {
       for (String key : keys) {
-        multiValueTree.put(key, new ORecordId(value % 32000, value));
+        multiValueTree.put(atomicOperation, key, new ORecordId(value % 32000, value));
       }
       if (!rollback && value % 100 == 0) {
         System.out.printf("%d entries were inserted out of %d %n", value, itemsCount);
@@ -583,17 +612,17 @@ public class CellBTreeMultiValueV2TestIT {
       keys[i] = "test_key_" + i;
     }
 
-    doInRollbackLoop(0, itemsCount, 100, (value, rollback) -> {
+    doInRollbackLoop(0, itemsCount, 100, (value, rollback, atomicOperation) -> {
       for (String key : keys) {
-        multiValueTree.put(key, new ORecordId(value % 32000, value));
+        multiValueTree.put(atomicOperation, key, new ORecordId(value % 32000, value));
       }
     });
 
-    doInRollbackLoop(0, itemsCount / 3, 100, (value, rollback) -> {
+    doInRollbackLoop(0, itemsCount / 3, 100, (value, rollback, atomicOperation) -> {
       final int val = 3 * value;
 
       for (String key : keys) {
-        multiValueTree.remove(key, new ORecordId(val % 32_000, val));
+        multiValueTree.remove(atomicOperation, key, new ORecordId(val % 32_000, val));
       }
     });
 
@@ -620,9 +649,9 @@ public class CellBTreeMultiValueV2TestIT {
 
     final String[] lastKey = new String[1];
 
-    doInRollbackLoop(0, keysCount, 100, (value, rollback) -> {
+    doInRollbackLoop(0, keysCount, 100, (value, rollback, atomicOperation) -> {
       final String key = Integer.toString(value);
-      multiValueTree.put(key, new ORecordId(value % 32000, value));
+      multiValueTree.put(atomicOperation, key, new ORecordId(value % 32000, value));
 
       if (!rollback) {
         if (value % 100_000 == 0) {
@@ -668,15 +697,18 @@ public class CellBTreeMultiValueV2TestIT {
     final Random random = new Random(seed);
     final int keysCount = 1_000_000;
 
-    final OAtomicOperationsManager atomicOperationsManager = storage.getAtomicOperationsManager();
     while (keys.size() < keysCount) {
       int val = random.nextInt(Integer.MAX_VALUE);
       String key = Integer.toString(val);
 
       for (int k = 0; k < 2; k++) {
-        atomicOperationsManager.startAtomicOperation((String) null, false);
-        multiValueTree.put(key, new ORecordId(val % 32000, val));
-        atomicOperationsManager.endAtomicOperation(k == 0);
+        final int rollbackCounter = k;
+        atomicOperationsManager.executeInsideAtomicOperation(null, atomicOperation -> {
+          multiValueTree.put(atomicOperation, key, new ORecordId(val % 32000, val));
+          if (rollbackCounter == 0) {
+            throw new RuntimeException();
+          }
+        });
       }
 
       keys.compute(key, (k, v) -> {
@@ -724,12 +756,10 @@ public class CellBTreeMultiValueV2TestIT {
     final int keysCount = 1_000_000;
 
     NavigableMap<String, Integer> keys = new TreeMap<>();
-    final OAtomicOperationsManager atomicOperationsManager = storage.getAtomicOperationsManager();
-
-    doInRollbackLoop(0, keysCount, 100, (value, rollback) -> {
+    doInRollbackLoop(0, keysCount, 100, (value, rollback, atomicOperation) -> {
       String key = Integer.toString(value);
 
-      multiValueTree.put(key, new ORecordId(value % 32000, value));
+      multiValueTree.put(atomicOperation, key, new ORecordId(value % 32000, value));
 
       if (!rollback) {
         keys.compute(key, (k, v) -> {
@@ -750,9 +780,13 @@ public class CellBTreeMultiValueV2TestIT {
 
       if (val % 3 == 0) {
         for (int k = 0; k < 2; k++) {
-          atomicOperationsManager.startAtomicOperation((String) null, false);
-          multiValueTree.remove(key, new ORecordId(val % 32000, val));
-          atomicOperationsManager.endAtomicOperation(k == 0);
+          final int rollbackCounter = k;
+          atomicOperationsManager.executeInsideAtomicOperation(null, atomicOperation -> {
+            multiValueTree.remove(atomicOperation, key, new ORecordId(val % 32000, val));
+            if (rollbackCounter == 0) {
+              throw new RuntimeException();
+            }
+          });
         }
         if (entry.getValue() == 1) {
           iterator.remove();
@@ -794,16 +828,17 @@ public class CellBTreeMultiValueV2TestIT {
   public void testKeyAddDelete() throws Exception {
     final int keysCount = 1_000_000;
 
-    doInRollbackLoop(0, keysCount, 100,
-        (value, rollback) -> multiValueTree.put(Integer.toString(value), new ORecordId(value % 32000, value)));
+    doInRollbackLoop(0, keysCount, 100, (value, rollback, atomicOperation) -> multiValueTree
+        .put(atomicOperation, Integer.toString(value), new ORecordId(value % 32000, value)));
 
-    doInRollbackLoop(0, keysCount, 100, (value, rollback) -> {
+    doInRollbackLoop(0, keysCount, 100, (value, rollback, atomicOperation) -> {
       if (value % 3 == 0) {
-        Assert.assertTrue(multiValueTree.remove(Integer.toString(value), new ORecordId(value % 32000, value)));
+        Assert.assertTrue(multiValueTree.remove(atomicOperation, Integer.toString(value), new ORecordId(value % 32000, value)));
       }
 
       if (value % 2 == 0) {
-        multiValueTree.put(Integer.toString(keysCount + value), new ORecordId((keysCount + value) % 32000, keysCount + value));
+        multiValueTree.put(atomicOperation, Integer.toString(keysCount + value),
+            new ORecordId((keysCount + value) % 32000, keysCount + value));
       }
     });
 
@@ -844,15 +879,18 @@ public class CellBTreeMultiValueV2TestIT {
     System.out.println("testKeyCursor: " + seed);
     Random random = new Random(seed);
 
-    final OAtomicOperationsManager atomicOperationsManager = storage.getAtomicOperationsManager();
     while (keyValues.size() < keysCount) {
       int val = random.nextInt(Integer.MAX_VALUE);
       String key = Integer.toString(val);
 
       for (int k = 0; k < 2; k++) {
-        atomicOperationsManager.startAtomicOperation((String) null, false);
-        multiValueTree.put(key, new ORecordId(val % 32000, val));
-        atomicOperationsManager.endAtomicOperation(k == 0);
+        final int rollbackCounter = k;
+        atomicOperationsManager.executeInsideAtomicOperation(null, atomicOperation -> {
+          multiValueTree.put(atomicOperation, key, new ORecordId(val % 32000, val));
+          if (rollbackCounter == 0) {
+            throw new RuntimeException();
+          }
+        });
       }
 
       keyValues.put(key, new ORecordId(val % 32000, val));
@@ -880,15 +918,18 @@ public class CellBTreeMultiValueV2TestIT {
     System.out.println("testIterateEntriesMajor: " + seed);
     Random random = new Random(seed);
 
-    final OAtomicOperationsManager atomicOperationsManager = storage.getAtomicOperationsManager();
     while (keyValues.size() < keysCount) {
       int val = random.nextInt(Integer.MAX_VALUE);
       String key = Integer.toString(val);
 
       for (int k = 0; k < 2; k++) {
-        atomicOperationsManager.startAtomicOperation((String) null, false);
-        multiValueTree.put(key, new ORecordId(val % 32000, val));
-        atomicOperationsManager.endAtomicOperation(k == 0);
+        final int rollbackCounter = k;
+        atomicOperationsManager.executeInsideAtomicOperation(null, atomicOperation -> {
+          multiValueTree.put(atomicOperation, key, new ORecordId(val % 32000, val));
+          if (rollbackCounter == 0) {
+            throw new RuntimeException();
+          }
+        });
       }
 
       keyValues.compute(key, (k, v) -> {
@@ -920,15 +961,19 @@ public class CellBTreeMultiValueV2TestIT {
     System.out.println("testIterateEntriesMinor: " + seed);
     Random random = new Random(seed);
 
-    final OAtomicOperationsManager atomicOperationsManager = storage.getAtomicOperationsManager();
     while (keyValues.size() < keysCount) {
       int val = random.nextInt(Integer.MAX_VALUE);
       String key = Integer.toString(val);
 
       for (int k = 0; k < 2; k++) {
-        atomicOperationsManager.startAtomicOperation((String) null, false);
-        multiValueTree.put(key, new ORecordId(val % 32000, val));
-        atomicOperationsManager.endAtomicOperation(k == 0);
+        final int rollbackCounter = k;
+
+        atomicOperationsManager.executeInsideAtomicOperation(null, atomicOperation -> {
+          multiValueTree.put(atomicOperation, key, new ORecordId(val % 32000, val));
+          if (rollbackCounter == 0) {
+            throw new RuntimeException();
+          }
+        });
       }
 
       keyValues.compute(key, (k, v) -> {
@@ -956,16 +1001,18 @@ public class CellBTreeMultiValueV2TestIT {
     NavigableMap<String, Integer> keyValues = new TreeMap<>();
     Random random = new Random();
 
-    final OAtomicOperationsManager atomicOperationsManager = storage.getAtomicOperationsManager();
-
     while (keyValues.size() < keysCount) {
       int val = random.nextInt(Integer.MAX_VALUE);
       String key = Integer.toString(val);
 
       for (int k = 0; k < 2; k++) {
-        atomicOperationsManager.startAtomicOperation((String) null, false);
-        multiValueTree.put(key, new ORecordId(val % 32000, val));
-        atomicOperationsManager.endAtomicOperation(k == 0);
+        final int rollbackCounter = k;
+        atomicOperationsManager.executeInsideAtomicOperation(null, atomicOperation -> {
+          multiValueTree.put(atomicOperation, key, new ORecordId(val % 32000, val));
+          if (rollbackCounter == 0) {
+            throw new RuntimeException();
+          }
+        });
       }
 
       keyValues.compute(key, (k, v) -> {
@@ -1176,22 +1223,26 @@ public class CellBTreeMultiValueV2TestIT {
     final OAtomicOperationsManager atomicOperationsManager = storage.getAtomicOperationsManager();
 
     for (int i = start; i < end; i += rollbackSlice) {
+      final int iterationCounter = i;
       for (int k = 0; k < 2; k++) {
-        atomicOperationsManager.startAtomicOperation((String) null, false);
+        final int rollbackCounter = k;
+        atomicOperationsManager.executeInsideAtomicOperation(null, atomicOperation -> {
 
-        int counter = 0;
-        while (counter < rollbackSlice && i + counter < end) {
-          code.execute(i + counter, k == 0);
+          int counter = 0;
+          while (counter < rollbackSlice && iterationCounter + counter < end) {
+            code.execute(iterationCounter + counter, rollbackCounter == 0, atomicOperation);
 
-          counter++;
-        }
-
-        atomicOperationsManager.endAtomicOperation(k == 0);
+            counter++;
+          }
+          if (rollbackCounter == 0) {
+            throw new RuntimeException();
+          }
+        });
       }
     }
   }
 
   private interface TxCode {
-    void execute(int value, boolean rollback) throws IOException;
+    void execute(int value, boolean rollback, OAtomicOperation atomicOperation) throws IOException;
   }
 }

@@ -2,6 +2,7 @@ package com.orientechnologies.orient.core.storage.index.sbtree.local.v2;
 
 import com.orientechnologies.DatabaseAbstractTest;
 import com.orientechnologies.common.util.ORawPair;
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
@@ -9,6 +10,7 @@ import com.orientechnologies.orient.core.index.OCompositeKey;
 import com.orientechnologies.orient.core.serialization.serializer.binary.impl.OLinkSerializer;
 import com.orientechnologies.orient.core.serialization.serializer.binary.impl.index.OCompositeKeySerializer;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperationsManager;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -29,40 +31,46 @@ import static org.junit.Assert.assertTrue;
 public class SBTreeV2CompositeKeyTest extends DatabaseAbstractTest {
 
   private OSBTreeV2<OCompositeKey, OIdentifiable> localSBTree;
+  private OAtomicOperationsManager                atomicOperationsManager;
 
   @Before
   public void beforeMethod() throws Exception {
+    atomicOperationsManager = ((OAbstractPaginatedStorage) ((ODatabaseDocumentInternal) database).getStorage())
+        .getAtomicOperationsManager();
     //noinspection deprecation
     localSBTree = new OSBTreeV2<>("localSBTreeCompositeKeyTest", ".sbt", ".nbt",
         (OAbstractPaginatedStorage) database.getStorage().getUnderlying());
-    localSBTree.create(OCompositeKeySerializer.INSTANCE, OLinkSerializer.INSTANCE, null, 2, false, null);
+    atomicOperationsManager.executeInsideAtomicOperation(null, atomicOperation -> localSBTree
+        .create(atomicOperation, OCompositeKeySerializer.INSTANCE, OLinkSerializer.INSTANCE, null, 2, false, null));
 
     for (double i = 1; i < 4; i++) {
       for (double j = 1; j < 10; j++) {
         final OCompositeKey compositeKey = new OCompositeKey();
         compositeKey.addKey(i);
         compositeKey.addKey(j);
-        localSBTree.put(compositeKey, new ORecordId((int) i, (long) j));
+        atomicOperationsManager.executeInsideAtomicOperation(null, atomicOperation -> localSBTree.put(atomicOperation, compositeKey,
+            new ORecordId((int) compositeKey.getKeys().get(0), (long) compositeKey.getKeys().get(1))));
       }
     }
   }
 
   @After
   public void afterClass() throws Exception {
-    final Stream<OCompositeKey> keyStream = localSBTree.keyStream();
-    keyStream.forEach((key) -> {
-      try {
-        localSBTree.remove(key);
-      } catch (IOException e) {
-        throw new IllegalStateException(e);
-      }
-    });
-
-    if (localSBTree.isNullPointerSupport()) {
-      localSBTree.remove(null);
+    try (Stream<OCompositeKey> keyStream = localSBTree.keyStream()) {
+      keyStream.forEach((key) -> {
+        try {
+          atomicOperationsManager.executeInsideAtomicOperation(null, atomicOperation -> localSBTree.remove(atomicOperation, key));
+        } catch (IOException e) {
+          throw new IllegalStateException(e);
+        }
+      });
     }
 
-    localSBTree.delete();
+    if (localSBTree.isNullPointerSupport()) {
+      atomicOperationsManager.executeInsideAtomicOperation(null, atomicOperation -> localSBTree.remove(atomicOperation, null));
+    }
+
+    atomicOperationsManager.executeInsideAtomicOperation(null, atomicOperation -> localSBTree.delete(atomicOperation));
 
   }
 
@@ -317,8 +325,7 @@ public class SBTreeV2CompositeKeyTest extends DatabaseAbstractTest {
 
   @Test
   public void testIterateValuesMajorInclusive() {
-    Stream<ORawPair<OCompositeKey, OIdentifiable>> stream = localSBTree
-        .iterateEntriesMajor(compositeKey(2.0, 3.0), true, true);
+    Stream<ORawPair<OCompositeKey, OIdentifiable>> stream = localSBTree.iterateEntriesMajor(compositeKey(2.0, 3.0), true, true);
     Set<ORID> orids = extractRids(stream);
     assertEquals(orids.size(), 16);
 
@@ -344,8 +351,7 @@ public class SBTreeV2CompositeKeyTest extends DatabaseAbstractTest {
 
   @Test
   public void testIterateValuesMajorNonInclusive() {
-    Stream<ORawPair<OCompositeKey, OIdentifiable>> stream = localSBTree
-        .iterateEntriesMajor(compositeKey(2.0, 3.0), false, true);
+    Stream<ORawPair<OCompositeKey, OIdentifiable>> stream = localSBTree.iterateEntriesMajor(compositeKey(2.0, 3.0), false, true);
     Set<ORID> orids = extractRids(stream);
     assertEquals(orids.size(), 15);
 
@@ -416,8 +422,7 @@ public class SBTreeV2CompositeKeyTest extends DatabaseAbstractTest {
 
   @Test
   public void testIterateValuesMinorInclusive() {
-    Stream<ORawPair<OCompositeKey, OIdentifiable>> stream = localSBTree
-        .iterateEntriesMinor(compositeKey(3.0, 2.0), true, true);
+    Stream<ORawPair<OCompositeKey, OIdentifiable>> stream = localSBTree.iterateEntriesMinor(compositeKey(3.0, 2.0), true, true);
     Set<ORID> orids = extractRids(stream);
     assertEquals(orids.size(), 20);
 
@@ -445,8 +450,7 @@ public class SBTreeV2CompositeKeyTest extends DatabaseAbstractTest {
 
   @Test
   public void testIterateValuesMinorNonInclusive() {
-    Stream<ORawPair<OCompositeKey, OIdentifiable>> stream = localSBTree
-        .iterateEntriesMinor(compositeKey(3.0, 2.0), false, true);
+    Stream<ORawPair<OCompositeKey, OIdentifiable>> stream = localSBTree.iterateEntriesMinor(compositeKey(3.0, 2.0), false, true);
     Set<ORID> orids = extractRids(stream);
 
     assertEquals(orids.size(), 19);

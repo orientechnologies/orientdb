@@ -21,20 +21,24 @@
 package com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations;
 
 import com.orientechnologies.common.concur.lock.OInterruptedException;
+import com.orientechnologies.common.concur.lock.OLockException;
 import com.orientechnologies.common.concur.lock.OOneEntryPerKeyLockManager;
 import com.orientechnologies.common.exception.OException;
+import com.orientechnologies.common.function.TxConsumer;
+import com.orientechnologies.common.function.TxFunction;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.OOrientListenerAbstract;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
+import com.orientechnologies.orient.core.exception.OStorageException;
+import com.orientechnologies.orient.core.exception.OStorageExistsException;
 import com.orientechnologies.orient.core.storage.cache.OReadCache;
 import com.orientechnologies.orient.core.storage.cache.OWriteCache;
+import com.orientechnologies.orient.core.storage.impl.local.AtomicOperationIdGen;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurableComponent;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.ONonTxOperationPerformedWALRecord;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OOperationUnitId;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWriteAheadLog;
 
 import java.io.IOException;
@@ -43,7 +47,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
-import java.util.Optional;
+import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.CountDownLatch;
@@ -96,6 +100,8 @@ public class OAtomicOperationsManager {
   private final OReadCache                         readCache;
   private final OWriteCache                        writeCache;
 
+  private final AtomicOperationIdGen idGen;
+
   public OAtomicOperationsManager(OAbstractPaginatedStorage storage, boolean trackPageOperations, int operationsCacheLimit) {
     this.storage = storage;
     this.writeAheadLog = storage.getWALInstance();
@@ -104,55 +110,13 @@ public class OAtomicOperationsManager {
 
     this.trackPageOperations = trackPageOperations;
     this.operationsCacheLimit = operationsCacheLimit;
+    this.idGen = storage.getIdGen();
   }
 
-  /**
-   * @see #startAtomicOperation(String, boolean)
-   */
-  public OAtomicOperation startAtomicOperation(ODurableComponent durableComponent, boolean trackNonTxOperations)
-      throws IOException {
-    if (durableComponent != null) {
-      return startAtomicOperation(durableComponent.getLockName(), trackNonTxOperations);
-    }
-
-    return startAtomicOperation((String) null, trackNonTxOperations);
-  }
-
-  /**
-   * Starts atomic operation inside of current thread. If atomic operation has been already started, current atomic operation
-   * instance will be returned. All durable components have to call this method at the beginning of any data modification
-   * operation.
-   * <p>In current implementation of atomic operation, each component which is participated in atomic operation is hold under
-   * exclusive lock till atomic operation will not be completed (committed or rolled back).
-   * <p>If other thread is going to read data from component it has to acquire read lock inside of atomic operation manager {@link
-   * #acquireReadLock(ODurableComponent)}, otherwise data consistency will be compromised.
-   * <p>Atomic operation may be delayed if start of atomic operations is prohibited by call of {@link
-   * #freezeAtomicOperations(Class, String)} method. If mentioned above method is called then execution of current method will be
-   * stopped till call of {@link #releaseAtomicOperations(long)} method or exception will be thrown. Concrete behaviour depends on
-   * real values of parameters of {@link #freezeAtomicOperations(Class, String)} method.
-   *
-   * @param trackNonTxOperations If this flag set to <code>true</code> then special record {@link ONonTxOperationPerformedWALRecord}
-   *                             will be added to WAL in case of atomic operation is started outside of active storage transaction.
-   *                             During storage restore procedure this record is monitored and if given record is present then
-   *                             rebuild of all indexes is performed.
-   * @param lockName             Name of lock (usually name of component) which is going participate in atomic operation.
-   * @return Instance of active atomic operation.
-   */
-  public OAtomicOperation startAtomicOperation(String lockName, boolean trackNonTxOperations) throws IOException {
-    return startAtomicOperation(lockName, trackNonTxOperations, Optional.empty());
-  }
-
-  public OAtomicOperation startAtomicOperation(String lockName, boolean trackNonTxOperations, Optional<byte[]> metadata)
-      throws IOException {
+  public OAtomicOperation startAtomicOperation(final byte[] metadata) throws IOException {
     OAtomicOperation operation = currentOperation.get();
     if (operation != null) {
-      operation.incrementCounter();
-
-      if (lockName != null) {
-        acquireExclusiveLockTillOperationComplete(operation, lockName);
-      }
-
-      return operation;
+      throw new OStorageExistsException("Atomic operation already started");
     }
 
     atomicOperationsCount.increment();
@@ -177,10 +141,11 @@ public class OAtomicOperationsManager {
 
     assert freezeRequests.get() >= 0;
 
-    final OOperationUnitId unitId = OOperationUnitId.generateId();
     final OLogSequenceNumber lsn;
-    if (metadata != null && metadata.isPresent()) {
-      lsn = writeAheadLog.logAtomicOperationStartRecord(true, unitId, metadata.get());
+
+    final long unitId = idGen.nextId();
+    if (metadata != null) {
+      lsn = writeAheadLog.logAtomicOperationStartRecord(true, unitId, metadata);
     } else {
       lsn = writeAheadLog.logAtomicOperationStartRecord(true, unitId);
     }
@@ -194,14 +159,12 @@ public class OAtomicOperationsManager {
 
     currentOperation.set(operation);
 
-    if (trackNonTxOperations && storage.getStorageTransaction() == null) {
-      writeAheadLog.log(new ONonTxOperationPerformedWALRecord());
-    }
+    checkReadOnlyConditions(operation);
 
-    if (lockName != null) {
-      acquireExclusiveLockTillOperationComplete(operation, lockName);
-    }
+    return operation;
+  }
 
+  private void checkReadOnlyConditions(OAtomicOperation operation) {
     try {
       storage.checkReadOnlyConditions();
     } catch (RuntimeException | Error e) {
@@ -216,8 +179,132 @@ public class OAtomicOperationsManager {
 
       throw e;
     }
+  }
 
-    return operation;
+  public <T> T calculateInsideAtomicOperation( final byte[] metadata, final TxFunction<T> function) throws IOException {
+    boolean rollback = false;
+    final OAtomicOperation atomicOperation = startAtomicOperation(metadata);
+    try {
+      return function.accept(atomicOperation);
+    } catch (Exception e) {
+      rollback = true;
+      throw OException.wrapException(
+          new OStorageException("Exception during execution of atomic operation inside of storage " + storage.getName()), e);
+    } finally {
+      endAtomicOperation(rollback);
+    }
+  }
+
+  public void executeInsideAtomicOperation(final byte[] metadata, final TxConsumer consumer) throws IOException {
+    boolean rollback = false;
+    final OAtomicOperation atomicOperation = startAtomicOperation(metadata);
+    try {
+      consumer.accept(atomicOperation);
+    } catch (Exception e) {
+      rollback = true;
+      throw OException.wrapException(
+          new OStorageException("Exception during execution of atomic operation inside of storage " + storage.getName()), e);
+    } finally {
+      endAtomicOperation(rollback);
+    }
+  }
+
+  public void executeInsideComponentOperation(final OAtomicOperation atomicOperation, final ODurableComponent component,
+      final TxConsumer consumer) {
+    executeInsideComponentOperation(atomicOperation, component.getLockName(), consumer);
+  }
+
+  public void executeInsideComponentOperation(final OAtomicOperation atomicOperation, final String lockName,
+      final TxConsumer consumer) {
+    Objects.requireNonNull(atomicOperation);
+    startComponentOperation(atomicOperation, lockName);
+    try {
+      consumer.accept(atomicOperation);
+    } catch (Exception e) {
+      throw OException.wrapException(
+          new OStorageException("Exception during execution of component operation inside of storage " + storage.getName()), e);
+    } finally {
+      endComponentOperation(atomicOperation);
+    }
+  }
+
+  public boolean tryExecuteInsideComponentOperation(final OAtomicOperation atomicOperation, final ODurableComponent component,
+      final TxConsumer consumer) {
+    return tryExecuteInsideComponentOperation(atomicOperation, component.getLockName(), consumer);
+  }
+
+  private boolean tryExecuteInsideComponentOperation(final OAtomicOperation atomicOperation, final String lockName,
+      final TxConsumer consumer) {
+    Objects.requireNonNull(atomicOperation);
+    final boolean result = tryStartComponentOperation(atomicOperation, lockName);
+    if (!result) {
+      return false;
+    }
+
+    try {
+      consumer.accept(atomicOperation);
+    } catch (Exception e) {
+      throw OException.wrapException(
+          new OStorageException("Exception during execution of component operation inside of storage " + storage.getName()), e);
+    } finally {
+      endComponentOperation(atomicOperation);
+    }
+
+    return true;
+  }
+
+  public <T> T calculateInsideComponentOperation(final OAtomicOperation atomicOperation, final ODurableComponent component,
+      final TxFunction<T> function) {
+    return calculateInsideComponentOperation(atomicOperation, component.getLockName(), function);
+  }
+
+  public <T> T calculateInsideComponentOperation(final OAtomicOperation atomicOperation, final String lockName,
+      final TxFunction<T> function) {
+    Objects.requireNonNull(atomicOperation);
+    startComponentOperation(atomicOperation, lockName);
+    try {
+      return function.accept(atomicOperation);
+    } catch (Exception e) {
+      throw OException.wrapException(
+          new OStorageException("Exception during execution of component operation inside of storage " + storage.getName()), e);
+    } finally {
+      endComponentOperation(atomicOperation);
+    }
+  }
+
+  private void startComponentOperation(final OAtomicOperation atomicOperation, final String lockName) {
+    acquireExclusiveLockTillOperationComplete(atomicOperation, lockName);
+    checkReadOnlyConditions(atomicOperation);
+    atomicOperation.incrementComponentOperations();
+  }
+
+  private static void endComponentOperation(final OAtomicOperation atomicOperation) {
+    atomicOperation.decrementComponentOperations();
+  }
+
+  private boolean tryStartComponentOperation(final OAtomicOperation atomicOperation, final String lockName) {
+    final boolean result = tryAcquireExclusiveLockTillOperationComplete(atomicOperation, lockName);
+    if (!result) {
+      return false;
+    }
+
+    checkReadOnlyConditions(atomicOperation);
+    atomicOperation.incrementComponentOperations();
+    return true;
+  }
+
+  private boolean tryAcquireExclusiveLockTillOperationComplete(OAtomicOperation operation, String lockName) {
+    if (operation.containsInLockedObjects(lockName)) {
+      return true;
+    }
+
+    try {
+      lockManager.acquireLock(lockName, OOneEntryPerKeyLockManager.LOCK.EXCLUSIVE, 1);
+    } catch (OLockException e) {
+      return false;
+    }
+    operation.addLockedObject(lockName);
+    return true;
   }
 
   public static void alarmClearOfAtomicOperation() {
@@ -365,6 +452,7 @@ public class OAtomicOperationsManager {
    * Ends the current atomic operation on this manager.
    *
    * @param rollback {@code true} to indicate a rollback, {@code false} for successful commit.
+   *
    * @return the LSN produced by committing the current operation or {@code null} if no commit was done.
    */
   public OLogSequenceNumber endAtomicOperation(boolean rollback) throws IOException {
@@ -375,53 +463,42 @@ public class OAtomicOperationsManager {
       throw new ODatabaseException("There is no atomic operation active");
     }
 
-    int counter = operation.getCounter();
-    operation.decrementCounter();
-
-    assert counter > 0;
-
     final OLogSequenceNumber lsn;
     try {
       if (rollback) {
         operation.rollbackInProgress();
       }
 
-      if (counter == 1) {
-        try {
-          if (trackPageOperations) {
-            lsn = operation.commitChanges(writeAheadLog);
-          } else if (!operation.isRollbackInProgress()) {
-            lsn = operation.commitChanges(writeAheadLog);
-          } else {
-            lsn = null;
-          }
-        } finally {
-          final Iterator<String> lockedObjectIterator = operation.lockedObjects().iterator();
-
-          while (lockedObjectIterator.hasNext()) {
-            final String lockedObject = lockedObjectIterator.next();
-            lockedObjectIterator.remove();
-
-            lockManager.releaseLock(this, lockedObject, OOneEntryPerKeyLockManager.LOCK.EXCLUSIVE);
-          }
-
-          currentOperation.set(null);
+      try {
+        if (trackPageOperations) {
+          lsn = operation.commitChanges(writeAheadLog);
+        } else if (!operation.isRollbackInProgress()) {
+          lsn = operation.commitChanges(writeAheadLog);
+        } else {
+          lsn = null;
         }
-      } else {
-        lsn = null;
+      } finally {
+        final Iterator<String> lockedObjectIterator = operation.lockedObjects().iterator();
+
+        while (lockedObjectIterator.hasNext()) {
+          final String lockedObject = lockedObjectIterator.next();
+          lockedObjectIterator.remove();
+
+          lockManager.releaseLock(this, lockedObject, OOneEntryPerKeyLockManager.LOCK.EXCLUSIVE);
+        }
+
+        currentOperation.set(null);
       }
+
     } catch (Error e) {
       final OAbstractPaginatedStorage st = storage;
       if (st != null) {
         st.handleJVMError(e);
       }
 
-      counter = 1;
       throw e;
     } finally {
-      if (counter == 1) {
-        atomicOperationsCount.decrement();
-      }
+      atomicOperationsCount.decrement();
     }
 
     return lsn;

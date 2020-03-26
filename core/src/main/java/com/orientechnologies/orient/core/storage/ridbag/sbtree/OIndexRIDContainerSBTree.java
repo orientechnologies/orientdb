@@ -34,10 +34,7 @@ import com.orientechnologies.orient.core.storage.index.sbtreebonsai.local.OBonsa
 import com.orientechnologies.orient.core.storage.index.sbtreebonsai.local.OSBTreeBonsaiLocal;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Iterator;
-import java.util.Set;
+import java.util.*;
 
 /**
  * Persistent Set<OIdentifiable> implementation that uses the SBTree to handle entries in persistent way.
@@ -74,7 +71,7 @@ public class OIndexRIDContainerSBTree implements Set<OIdentifiable> {
         storage);
 
     try {
-      tree.create(OCompactedLinkSerializer.INSTANCE, OBooleanSerializer.INSTANCE);
+      tree.create(atomicOperation, OCompactedLinkSerializer.INSTANCE, OBooleanSerializer.INSTANCE);
     } catch (IOException e) {
       throw OException.wrapException(new ODatabaseException("Error during creation of index container "), e);
     }
@@ -144,11 +141,10 @@ public class OIndexRIDContainerSBTree implements Set<OIdentifiable> {
 
   @Override
   public boolean add(OIdentifiable oIdentifiable) {
-    try {
-      return this.tree.put(oIdentifiable, Boolean.TRUE);
-    } catch (IOException e) {
-      throw OException.wrapException(new ODatabaseException("Error during addition of element in index container"), e);
-    }
+    final OAtomicOperation atomicOperation = OAtomicOperationsManager.getCurrentOperation();
+    Objects.requireNonNull(atomicOperation);
+
+    return this.tree.put(atomicOperation, oIdentifiable, Boolean.TRUE);
   }
 
   @Override
@@ -157,11 +153,10 @@ public class OIndexRIDContainerSBTree implements Set<OIdentifiable> {
   }
 
   public boolean remove(OIdentifiable o) {
-    try {
-      return tree.remove(o) != null;
-    } catch (IOException e) {
-      throw OException.wrapException(new ODatabaseException("Error during removal of element from index container"), e);
-    }
+    final OAtomicOperation atomicOperation = OAtomicOperationsManager.getCurrentOperation();
+    Objects.requireNonNull(atomicOperation);
+
+    return tree.remove(atomicOperation, o) != null;
   }
 
   @Override
@@ -210,19 +205,16 @@ public class OIndexRIDContainerSBTree implements Set<OIdentifiable> {
 
   @Override
   public void clear() {
-    try {
-      tree.clear();
-    } catch (java.io.IOException e) {
-      e.printStackTrace();
-    }
+    final OAtomicOperation atomicOperation = OAtomicOperationsManager.getCurrentOperation();
+    Objects.requireNonNull(atomicOperation);
+    tree.clear(atomicOperation);
   }
 
   public void delete() {
-    try {
-      tree.delete();
-    } catch (IOException e) {
-      throw OException.wrapException(new ODatabaseException("Error during deletion index container"), e);
-    }
+    final OAtomicOperation atomicOperation = OAtomicOperationsManager.getCurrentOperation();
+    Objects.requireNonNull(atomicOperation);
+
+    tree.delete(atomicOperation);
   }
 
   public String getName() {
@@ -233,7 +225,7 @@ public class OIndexRIDContainerSBTree implements Set<OIdentifiable> {
     private final boolean                                         autoConvertToRecord;
     private final OSBTreeMapEntryIterator<OIdentifiable, Boolean> entryIterator;
 
-    TreeKeyIterator(OTreeInternal<OIdentifiable, Boolean> tree, boolean autoConvertToRecord) {
+    private TreeKeyIterator(OTreeInternal<OIdentifiable, Boolean> tree, boolean autoConvertToRecord) {
       entryIterator = new OSBTreeMapEntryIterator<>(tree);
       this.autoConvertToRecord = autoConvertToRecord;
     }

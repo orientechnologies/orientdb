@@ -17,6 +17,7 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.binary.impl.OCompactedLinkSerializer;
 import com.orientechnologies.orient.core.serialization.serializer.binary.impl.index.CompositeKeySerializer;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperation;
 import com.orientechnologies.orient.core.storage.index.sbtree.multivalue.OCellBTreeMultiValue;
 import com.orientechnologies.orient.core.storage.index.sbtree.multivalue.v2.CellBTreeMultiValueV2;
 import com.orientechnologies.orient.core.storage.index.sbtree.singlevalue.OCellBTreeSingleValue;
@@ -86,19 +87,20 @@ public final class OCellBTreeMultiValueIndexEngine implements OMultiValueIndexEn
   }
 
   @Override
-  public void create(OBinarySerializer valueSerializer, boolean isAutomatic, OType[] keyTypes, boolean nullPointerSupport,
-      OBinarySerializer keySerializer, int keySize, Map<String, String> engineProperties, OEncryption encryption) {
+  public void create(OAtomicOperation atomicOperation, OBinarySerializer valueSerializer, boolean isAutomatic, OType[] keyTypes,
+      boolean nullPointerSupport, OBinarySerializer keySerializer, int keySize, Map<String, String> engineProperties,
+      OEncryption encryption) {
     try {
       if (mvTree != null) {
         //noinspection unchecked
-        mvTree.create(keySerializer, keyTypes, keySize, encryption);
+        mvTree.create(keySerializer, keyTypes, keySize, encryption, atomicOperation);
       } else {
         final OType[] sbTypes = calculateTypes(keyTypes);
         assert svTree != null;
         assert nullTree != null;
 
-        svTree.create(new CompositeKeySerializer(), sbTypes, keySize + 1, encryption);
-        nullTree.create(OCompactedLinkSerializer.INSTANCE, new OType[] { OType.LINK }, 1, null);
+        svTree.create(atomicOperation, new CompositeKeySerializer(), sbTypes, keySize + 1, encryption);
+        nullTree.create(atomicOperation, OCompactedLinkSerializer.INSTANCE, new OType[] { OType.LINK }, 1, null);
       }
     } catch (IOException e) {
       throw OException.wrapException(new OIndexException("Error during creation of index " + name), e);
@@ -106,25 +108,25 @@ public final class OCellBTreeMultiValueIndexEngine implements OMultiValueIndexEn
   }
 
   @Override
-  public void delete() {
+  public void delete(OAtomicOperation atomicOperation) {
     try {
       if (mvTree != null) {
-        doClearMVTree();
-        mvTree.delete();
+        doClearMVTree(atomicOperation);
+        mvTree.delete(atomicOperation);
       } else {
         assert svTree != null;
         assert nullTree != null;
 
-        doClearSVTree();
-        svTree.delete();
-        nullTree.delete();
+        doClearSVTree(atomicOperation);
+        svTree.delete(atomicOperation);
+        nullTree.delete(atomicOperation);
       }
     } catch (IOException e) {
       throw OException.wrapException(new OIndexException("Error during deletion of index " + name), e);
     }
   }
 
-  private void doClearMVTree() {
+  private void doClearMVTree(final OAtomicOperation atomicOperation) {
     assert mvTree != null;
 
     final Object firstKey = mvTree.firstKey();
@@ -133,7 +135,7 @@ public final class OCellBTreeMultiValueIndexEngine implements OMultiValueIndexEn
     try (Stream<ORawPair<Object, ORID>> stream = mvTree.iterateEntriesBetween(firstKey, true, lastKey, true, true)) {
       stream.forEach((pair) -> {
         try {
-          mvTree.remove(pair.first, pair.second);
+          mvTree.remove(atomicOperation, pair.first, pair.second);
         } catch (IOException e) {
           throw OException.wrapException(new OIndexException("Error during cleaning of index " + name), e);
         }
@@ -143,7 +145,7 @@ public final class OCellBTreeMultiValueIndexEngine implements OMultiValueIndexEn
     try (final Stream<ORID> rids = mvTree.get(null)) {
       rids.forEach((rid) -> {
         try {
-          mvTree.remove(null, rid);
+          mvTree.remove(atomicOperation, null, rid);
         } catch (final IOException e) {
           throw OException.wrapException(new OStorageException("Error during cleaning of index " + name), e);
         }
@@ -151,7 +153,7 @@ public final class OCellBTreeMultiValueIndexEngine implements OMultiValueIndexEn
     }
   }
 
-  private void doClearSVTree() {
+  private void doClearSVTree(final OAtomicOperation atomicOperation) {
     assert svTree != null;
     assert nullTree != null;
 
@@ -162,7 +164,7 @@ public final class OCellBTreeMultiValueIndexEngine implements OMultiValueIndexEn
       try (Stream<ORawPair<OCompositeKey, ORID>> stream = svTree.iterateEntriesBetween(firstKey, true, lastKey, true, true)) {
         stream.forEach((pair) -> {
           try {
-            svTree.remove(pair.first);
+            svTree.remove(atomicOperation, pair.first);
           } catch (IOException e) {
             throw OException.wrapException(new OIndexException("Error during index cleaning"), e);
           }
@@ -178,7 +180,7 @@ public final class OCellBTreeMultiValueIndexEngine implements OMultiValueIndexEn
         try (Stream<ORawPair<OIdentifiable, ORID>> stream = nullTree.iterateEntriesBetween(firstKey, true, lastKey, true, true)) {
           stream.forEach((pair) -> {
             try {
-              nullTree.remove(pair.first);
+              nullTree.remove(atomicOperation, pair.first);
             } catch (IOException e) {
               throw OException.wrapException(new OIndexException("Error during index cleaning"), e);
             }
@@ -206,10 +208,10 @@ public final class OCellBTreeMultiValueIndexEngine implements OMultiValueIndexEn
   }
 
   @Override
-  public boolean remove(Object key, ORID value) {
+  public boolean remove(final OAtomicOperation atomicOperation, Object key, ORID value) {
     try {
       if (mvTree != null) {
-        return mvTree.remove(key, value);
+        return mvTree.remove(atomicOperation, key, value);
       } else {
         if (key != null) {
           assert svTree != null;
@@ -221,7 +223,7 @@ public final class OCellBTreeMultiValueIndexEngine implements OMultiValueIndexEn
               .iterateEntriesBetween(compositeKey, true, compositeKey, true, true)) {
             stream.forEach((pair) -> {
               try {
-                final boolean result = svTree.remove(pair.first) != null;
+                final boolean result = svTree.remove(atomicOperation, pair.first) != null;
                 removed[0] = result || removed[0];
               } catch (final IOException e) {
                 throw OException.wrapException(new OIndexException("Error during remove of entry (" + key + ", " + value + ")"), e);
@@ -232,7 +234,7 @@ public final class OCellBTreeMultiValueIndexEngine implements OMultiValueIndexEn
           return removed[0];
         } else {
           assert nullTree != null;
-          return nullTree.remove(value) != null;
+          return nullTree.remove(atomicOperation, value) != null;
         }
       }
     } catch (IOException e) {
@@ -242,11 +244,11 @@ public final class OCellBTreeMultiValueIndexEngine implements OMultiValueIndexEn
   }
 
   @Override
-  public void clear() {
+  public void clear(OAtomicOperation atomicOperation) {
     if (mvTree != null) {
-      doClearMVTree();
+      doClearMVTree(atomicOperation);
     } else {
-      doClearSVTree();
+      doClearSVTree(atomicOperation);
     }
   }
 
@@ -346,10 +348,10 @@ public final class OCellBTreeMultiValueIndexEngine implements OMultiValueIndexEn
   }
 
   @Override
-  public void put(Object key, ORID value) {
+  public void put(OAtomicOperation atomicOperation, Object key, ORID value) {
     if (mvTree != null) {
       try {
-        mvTree.put(key, value);
+        mvTree.put(atomicOperation, key, value);
       } catch (IOException e) {
         throw OException
             .wrapException(new OIndexException("Error during insertion of key " + key + " and RID " + value + " to index " + name),
@@ -358,7 +360,7 @@ public final class OCellBTreeMultiValueIndexEngine implements OMultiValueIndexEn
     } else if (key != null) {
       assert svTree != null;
       try {
-        svTree.put(createCompositeKey(key, value), value);
+        svTree.put(atomicOperation, createCompositeKey(key, value), value);
       } catch (IOException e) {
         throw OException
             .wrapException(new OIndexException("Error during insertion of key " + key + " and RID " + value + " to index " + name),
@@ -367,7 +369,7 @@ public final class OCellBTreeMultiValueIndexEngine implements OMultiValueIndexEn
     } else {
       assert nullTree != null;
       try {
-        nullTree.put(value, value);
+        nullTree.put(atomicOperation, value, value);
       } catch (IOException e) {
         throw OException
             .wrapException(new OIndexException("Error during insertion of null key and RID " + value + " to index " + name), e);

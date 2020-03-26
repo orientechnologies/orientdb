@@ -47,6 +47,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Optional;
 
 import static com.orientechnologies.orient.core.config.OGlobalConfiguration.DISK_CACHE_PAGE_SIZE;
 import static com.orientechnologies.orient.core.config.OGlobalConfiguration.PAGINATED_STORAGE_LOWEST_FREELIST_BOUNDARY;
@@ -80,7 +81,7 @@ public final class OPaginatedClusterV2 extends OPaginatedCluster {
     private final int recordVersion;
     private final int recordsSizeDiff;
 
-    AddEntryResult(final long pageIndex, final int pagePosition, final int recordVersion, final int recordsSizeDiff) {
+    private AddEntryResult(final long pageIndex, final int pagePosition, final int recordVersion, final int recordsSizeDiff) {
       this.pageIndex = pageIndex;
       this.pagePosition = pagePosition;
       this.recordVersion = recordVersion;
@@ -150,7 +151,7 @@ public final class OPaginatedClusterV2 extends OPaginatedCluster {
     try {
       return new OStoragePaginatedClusterConfiguration(id, getName(), null, true,
           OStoragePaginatedClusterConfiguration.DEFAULT_GROW_FACTOR, OStoragePaginatedClusterConfiguration.DEFAULT_GROW_FACTOR,
-          null, null, null, recordConflictStrategy != null ? recordConflictStrategy.getName() : null,
+          null, null, null, Optional.ofNullable(recordConflictStrategy).map(ORecordConflictStrategy::getName).orElse(null),
           OStorageClusterConfiguration.STATUS.ONLINE, BINARY_VERSION);
 
     } finally {
@@ -169,10 +170,8 @@ public final class OPaginatedClusterV2 extends OPaginatedCluster {
   }
 
   @Override
-  public void create() throws IOException {
-    boolean rollback = false;
-    final OAtomicOperation atomicOperation = startAtomicOperation(false);
-    try {
+  public void create(OAtomicOperation atomicOperation) {
+    executeInsideComponentOperation(atomicOperation, operation -> {
       acquireExclusiveLock();
       try {
         fileId = addFile(atomicOperation, getFullName());
@@ -183,12 +182,7 @@ public final class OPaginatedClusterV2 extends OPaginatedCluster {
       } finally {
         releaseExclusiveLock();
       }
-    } catch (final Exception e) {
-      rollback = true;
-      throw e;
-    } finally {
-      endAtomicOperation(rollback);
-    }
+    });
   }
 
   @Override
@@ -224,11 +218,8 @@ public final class OPaginatedClusterV2 extends OPaginatedCluster {
   }
 
   @Override
-  public void delete() throws IOException {
-    boolean rollback = false;
-    final OAtomicOperation atomicOperation = startAtomicOperation(false);
-
-    try {
+  public void delete(OAtomicOperation atomicOperation) {
+    executeInsideComponentOperation(atomicOperation, operation -> {
       acquireExclusiveLock();
       try {
         final long entries = getEntries();
@@ -243,12 +234,7 @@ public final class OPaginatedClusterV2 extends OPaginatedCluster {
       } finally {
         releaseExclusiveLock();
       }
-    } catch (final Exception e) {
-      rollback = true;
-      throw e;
-    } finally {
-      endAtomicOperation(rollback);
-    }
+    });
   }
 
   @Override
@@ -277,10 +263,8 @@ public final class OPaginatedClusterV2 extends OPaginatedCluster {
   }
 
   @Override
-  public OPhysicalPosition allocatePosition(final byte recordType) throws IOException {
-    boolean rollback = false;
-    final OAtomicOperation atomicOperation = startAtomicOperation(true);
-    try {
+  public OPhysicalPosition allocatePosition(final byte recordType, OAtomicOperation atomicOperation) {
+    return calculateInsideComponentOperation(atomicOperation, operation -> {
       acquireExclusiveLock();
       try {
         final OPhysicalPosition pos = createPhysicalPosition(recordType, clusterPositionMap.allocate(atomicOperation), -1);
@@ -289,20 +273,13 @@ public final class OPaginatedClusterV2 extends OPaginatedCluster {
       } finally {
         releaseExclusiveLock();
       }
-    } catch (final Exception e) {
-      rollback = true;
-      throw e;
-    } finally {
-      endAtomicOperation(rollback);
-    }
+    });
   }
 
   @Override
-  public OPhysicalPosition createRecord(byte[] content, final int recordVersion, final byte recordType,
-      final OPhysicalPosition allocatedPosition) throws IOException {
-    boolean rollback = false;
-    final OAtomicOperation atomicOperation = startAtomicOperation(true);
-    try {
+  public OPhysicalPosition createRecord(final byte[] content, final int recordVersion, final byte recordType,
+      final OPhysicalPosition allocatedPosition, final OAtomicOperation atomicOperation) {
+    return calculateInsideComponentOperation(atomicOperation, operation -> {
       acquireExclusiveLock();
       try {
         final int entryContentLength = getEntryContentLength(content.length);
@@ -427,12 +404,7 @@ public final class OPaginatedClusterV2 extends OPaginatedCluster {
       } finally {
         releaseExclusiveLock();
       }
-    } catch (final Exception e) {
-      rollback = true;
-      throw e;
-    } finally {
-      endAtomicOperation(rollback);
-    }
+    });
   }
 
   private void addAtomicOperationMetadata(final ORID rid, final OAtomicOperation atomicOperation) {
@@ -580,10 +552,8 @@ public final class OPaginatedClusterV2 extends OPaginatedCluster {
   }
 
   @Override
-  public boolean deleteRecord(final long clusterPosition) throws IOException {
-    boolean rollback = false;
-    final OAtomicOperation atomicOperation = startAtomicOperation(true);
-    try {
+  public boolean deleteRecord(OAtomicOperation atomicOperation, final long clusterPosition) {
+    return calculateInsideComponentOperation(atomicOperation, operation -> {
       acquireExclusiveLock();
       try {
         final OClusterPositionMapBucket.PositionEntry positionEntry = clusterPositionMap.get(clusterPosition, 1, atomicOperation);
@@ -652,20 +622,13 @@ public final class OPaginatedClusterV2 extends OPaginatedCluster {
       } finally {
         releaseExclusiveLock();
       }
-    } catch (final Exception e) {
-      rollback = true;
-      throw e;
-    } finally {
-      endAtomicOperation(rollback);
-    }
+    });
   }
 
   @Override
-  public void updateRecord(final long clusterPosition, byte[] content, final int recordVersion, final byte recordType)
-      throws IOException {
-    boolean rollback = false;
-    final OAtomicOperation atomicOperation = startAtomicOperation(true);
-    try {
+  public void updateRecord(final long clusterPosition, byte[] content, final int recordVersion, final byte recordType,
+      OAtomicOperation atomicOperation) {
+    executeInsideComponentOperation(atomicOperation, operation -> {
       acquireExclusiveLock();
       try {
         final OClusterPositionMapBucket.PositionEntry positionEntry = clusterPositionMap.get(clusterPosition, 1, atomicOperation);
@@ -902,13 +865,7 @@ public final class OPaginatedClusterV2 extends OPaginatedCluster {
       } finally {
         releaseExclusiveLock();
       }
-    } catch (final Exception e) {
-      rollback = true;
-      throw e;
-    } finally {
-      endAtomicOperation(rollback);
-    }
-
+    });
   }
 
   @Override

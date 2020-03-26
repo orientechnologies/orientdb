@@ -7,6 +7,7 @@ import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.index.OIndexDefinition;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperation;
 
 import java.io.IOException;
 import java.util.Collection;
@@ -20,13 +21,13 @@ public interface OBaseIndexEngine {
 
   void flush();
 
-  void create(OBinarySerializer valueSerializer, boolean isAutomatic, OType[] keyTypes, boolean nullPointerSupport,
+  void create(OAtomicOperation atomicOperation, OBinarySerializer valueSerializer, boolean isAutomatic, OType[] keyTypes, boolean nullPointerSupport,
       OBinarySerializer keySerializer, int keySize, Map<String, String> engineProperties, OEncryption encryption)
       throws IOException;
 
-  void delete() throws IOException;
+  void delete(OAtomicOperation atomicOperation) throws IOException;
 
-  void clear() throws IOException;
+  void clear(OAtomicOperation atomicOperation) throws IOException;
 
   void close();
 

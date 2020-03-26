@@ -28,6 +28,7 @@ import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.storage.OStorage;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperation;
 import com.orientechnologies.orient.core.storage.index.sbtreebonsai.local.OSBTreeBonsai;
 
 import java.io.IOException;
@@ -149,13 +150,13 @@ public abstract class OSBTreeCollectionManagerAbstract
   }
 
   @Override
-  public OSBTreeBonsai<OIdentifiable, Integer> createAndLoadTree(int clusterId) throws IOException {
-    return loadSBTree(createSBTree(clusterId, null));
+  public OSBTreeBonsai<OIdentifiable, Integer> createAndLoadTree(OAtomicOperation atomicOperation, int clusterId) throws IOException {
+    return loadSBTree(createSBTree(clusterId, atomicOperation, null));
   }
 
   @Override
-  public OBonsaiCollectionPointer createSBTree(int clusterId, UUID ownerUUID) throws IOException {
-    OSBTreeBonsai<OIdentifiable, Integer> tree = createEdgeTree(clusterId);
+  public OBonsaiCollectionPointer createSBTree(int clusterId, OAtomicOperation atomicOperation, UUID ownerUUID) throws IOException {
+    OSBTreeBonsai<OIdentifiable, Integer> tree = createEdgeTree(atomicOperation, clusterId);
     return tree.getCollectionPointer();
   }
 
@@ -269,7 +270,7 @@ public abstract class OSBTreeCollectionManagerAbstract
     });
   }
 
-  protected abstract OSBTreeBonsai<OIdentifiable, Integer> createEdgeTree(int clusterId) throws IOException;
+  protected abstract OSBTreeBonsai<OIdentifiable, Integer> createEdgeTree(OAtomicOperation atomicOperation, int clusterId) throws IOException;
 
   protected abstract OSBTreeBonsai<OIdentifiable, Integer> loadTree(OBonsaiCollectionPointer collectionPointer);
 

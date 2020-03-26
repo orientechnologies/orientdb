@@ -32,6 +32,7 @@ import com.orientechnologies.orient.core.record.impl.OBlob;
 import com.orientechnologies.orient.core.serialization.OSerializableStream;
 import com.orientechnologies.orient.core.storage.disk.OLocalPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperation;
 
 import java.io.IOException;
 import java.nio.charset.Charset;
@@ -1346,7 +1347,7 @@ public class OStorageConfigurationImpl implements OSerializableStream, OStorageC
   }
 
   @Override
-  public void setUuid(String uuid) {
+  public void setUuid(OAtomicOperation atomicOperation, String uuid) {
     throw new UnsupportedOperationException();
   }
 }

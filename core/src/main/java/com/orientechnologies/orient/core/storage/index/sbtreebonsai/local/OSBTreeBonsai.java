@@ -22,6 +22,7 @@ package com.orientechnologies.orient.core.storage.index.sbtreebonsai.local;
 
 import com.orientechnologies.common.serialization.types.OBinarySerializer;
 import com.orientechnologies.orient.core.storage.cache.OReadCache;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperation;
 import com.orientechnologies.orient.core.storage.index.sbtree.OTreeInternal;
 import com.orientechnologies.orient.core.storage.index.sbtree.local.v1.OSBTreeV1;
 import com.orientechnologies.orient.core.storage.ridbag.sbtree.Change;
@@ -76,21 +77,23 @@ public interface OSBTreeBonsai<K, V> extends OTreeInternal<K, V> {
    */
   V get(K key);
 
-  boolean put(K key, V value) throws IOException;
+  boolean put(OAtomicOperation atomicOperation, K key, V value) throws IOException;
 
   /**
    * Deletes all entries from tree.
+   * @param atomicOperation
    */
-  void clear() throws IOException;
+  void clear(OAtomicOperation atomicOperation) throws IOException;
 
   /**
    * Deletes whole tree. After this operation tree is no longer usable.
+   * @param atomicOperation
    */
-  void delete() throws IOException;
+  void delete(OAtomicOperation atomicOperation);
 
   long size();
 
-  V remove(K key) throws IOException;
+  V remove(OAtomicOperation atomicOperation, K key) throws IOException;
 
   Collection<V> getValuesMinor(K key, boolean inclusive, int maxValuesToFetch);
 
@@ -123,5 +126,5 @@ public interface OSBTreeBonsai<K, V> extends OTreeInternal<K, V> {
 
   OBinarySerializer<V> getValueSerializer();
 
-  void markToDelete() throws IOException;
+  void markToDelete(OAtomicOperation atomicOperation) throws IOException;
 }

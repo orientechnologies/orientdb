@@ -994,25 +994,25 @@ public final class CASDiskWriteAheadLog implements OWriteAheadLog {
     }
   }
 
-  public OLogSequenceNumber logAtomicOperationStartRecord(final boolean isRollbackSupported, final OOperationUnitId unitId) {
+  public OLogSequenceNumber logAtomicOperationStartRecord(final boolean isRollbackSupported, final long unitId) {
     final OAtomicUnitStartRecord record = new OAtomicUnitStartRecord(isRollbackSupported, unitId);
     return log(record);
   }
 
-  public OLogSequenceNumber logAtomicOperationStartRecord(final boolean isRollbackSupported, final OOperationUnitId unitId,
+  public OLogSequenceNumber logAtomicOperationStartRecord(final boolean isRollbackSupported, final long unitId,
       byte[] metadata) {
     final OAtomicUnitStartMetadataRecord record = new OAtomicUnitStartMetadataRecord(isRollbackSupported, unitId, metadata);
     return log(record);
   }
 
-  public OLogSequenceNumber logAtomicOperationEndRecord(final OOperationUnitId operationUnitId, final boolean rollback,
+  public OLogSequenceNumber logAtomicOperationEndRecord(final long operationUnitId, final boolean rollback,
       final OLogSequenceNumber startLsn, final Map<String, OAtomicOperationMetadata<?>> atomicOperationMetadata) {
     final OAtomicUnitEndRecord record = new OAtomicUnitEndRecord(operationUnitId, rollback, atomicOperationMetadata);
     return log(record);
   }
 
   @Override
-  public OLogSequenceNumber logFuzzyCheckPointStart(final OLogSequenceNumber flushedLsn, Optional<byte[]> lastMetadata) {
+  public OLogSequenceNumber logFuzzyCheckPointStart(final OLogSequenceNumber flushedLsn, byte[] lastMetadata) {
     final OFuzzyCheckpointStartMetadataRecord record = new OFuzzyCheckpointStartMetadataRecord(lastCheckpoint, lastMetadata,
         flushedLsn);
     log(record);
@@ -1027,7 +1027,7 @@ public final class CASDiskWriteAheadLog implements OWriteAheadLog {
   }
 
   @Override
-  public OLogSequenceNumber logFullCheckpointStart(Optional<byte[]> lastMetadata) {
+  public OLogSequenceNumber logFullCheckpointStart(byte[] lastMetadata) {
     return log(new OFullCheckpointStartMetadataRecord(lastCheckpoint, lastMetadata));
   }
 
@@ -2039,7 +2039,6 @@ public final class CASDiskWriteAheadLog implements OWriteAheadLog {
                   while (counter < cqSize) {
                     final OPair<Long, OWALFile> pair = fileCloseQueue.poll();
                     if (pair != null) {
-                      @SuppressWarnings("resource")
                       final OWALFile file = pair.value;
 
                       assert file.position() % pageSize == 0;

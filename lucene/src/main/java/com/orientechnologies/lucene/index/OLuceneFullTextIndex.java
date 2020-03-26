@@ -35,7 +35,7 @@ public class OLuceneFullTextIndex extends OLuceneIndexNotUnique {
 
     while (true)
       try {
-        return storage.callIndexEngine(false, false, indexId, engine -> {
+        return storage.callIndexEngine(false, indexId, engine -> {
           OLuceneIndexEngine indexEngine = (OLuceneIndexEngine) engine;
           return indexEngine.buildDocument(key, null);
         });
@@ -47,7 +47,7 @@ public class OLuceneFullTextIndex extends OLuceneIndexNotUnique {
   public Query buildQuery(final Object query) {
     while (true)
       try {
-        return storage.callIndexEngine(false, false, indexId, engine -> {
+        return storage.callIndexEngine(false, indexId, engine -> {
           OLuceneIndexEngine indexEngine = (OLuceneIndexEngine) engine;
           return indexEngine.buildQuery(query);
         });
@@ -60,7 +60,7 @@ public class OLuceneFullTextIndex extends OLuceneIndexNotUnique {
   public Analyzer queryAnalyzer() {
     while (true)
       try {
-        return storage.callIndexEngine(false, false, indexId, engine -> {
+        return storage.callIndexEngine(false, indexId, engine -> {
           OLuceneIndexEngine indexEngine = (OLuceneIndexEngine) engine;
           return indexEngine.queryAnalyzer();
         });
@@ -72,7 +72,7 @@ public class OLuceneFullTextIndex extends OLuceneIndexNotUnique {
   public boolean isCollectionIndex() {
     while (true) {
       try {
-        return storage.callIndexEngine(false, false, indexId, engine -> {
+        return storage.callIndexEngine(false, indexId, engine -> {
           OLuceneIndexEngine indexEngine = (OLuceneIndexEngine) engine;
           return indexEngine.isCollectionIndex();
         });
@@ -85,7 +85,7 @@ public class OLuceneFullTextIndex extends OLuceneIndexNotUnique {
   public Analyzer indexAnalyzer() {
     while (true) {
       try {
-        return storage.callIndexEngine(false, false, indexId, engine -> {
+        return storage.callIndexEngine(false, indexId, engine -> {
           OLuceneIndexEngine indexEngine = (OLuceneIndexEngine) engine;
           return indexEngine.indexAnalyzer();
         });

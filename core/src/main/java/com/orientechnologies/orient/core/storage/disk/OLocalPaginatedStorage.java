@@ -48,6 +48,7 @@ import com.orientechnologies.orient.core.storage.fs.OFile;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.OStorageConfigurationSegment;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.OPaginatedStorageDirtyFlag;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperation;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWriteAheadLog;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.cas.CASDiskWriteAheadLog;
@@ -78,6 +79,7 @@ import static com.orientechnologies.orient.core.storage.impl.local.paginated.wal
  * @since 28.03.13
  */
 public class OLocalPaginatedStorage extends OAbstractPaginatedStorage {
+  @SuppressWarnings("WeakerAccess")
   protected static final long   IV_SEED = 234120934;
   private static final   String IV_EXT  = ".iv";
 
@@ -297,13 +299,15 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage {
           // TRY TO DELETE ALL THE FILES
           for (final java.io.File f : newStorageFiles) {
             if (f.getPath().endsWith(MASTER_RECORD_EXTENSION)) {
-              f.renameTo(new File(f.getParent(), getName() + MASTER_RECORD_EXTENSION));
+              final boolean renamed = f.renameTo(new File(f.getParent(), getName() + MASTER_RECORD_EXTENSION));
+              assert renamed;
             }
             if (f.getPath().endsWith(WAL_SEGMENT_EXTENSION)) {
               String walName = f.getName();
               final int segmentIndex = walName.lastIndexOf(".", walName.length() - WAL_SEGMENT_EXTENSION.length() - 1);
               String ending = walName.substring(segmentIndex);
-              f.renameTo(new File(f.getParent(), getName() + ending));
+              final boolean renamed = f.renameTo(new File(f.getParent(), getName() + ending));
+              assert renamed;
             }
           }
         }
@@ -409,7 +413,7 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage {
   protected OWriteAheadLog createWalFromIBUFiles(final java.io.File directory, final OContextConfiguration contextConfiguration,
       final Locale locale, byte[] iv) throws IOException {
     final String aesKeyEncoded = contextConfiguration.getValueAsString(OGlobalConfiguration.STORAGE_ENCRYPTION_KEY);
-    final byte[] aesKey = aesKeyEncoded == null ? null : Base64.getDecoder().decode(aesKeyEncoded);
+    final byte[] aesKey = Optional.ofNullable(aesKeyEncoded).map(keyEncoded -> Base64.getDecoder().decode(keyEncoded)).orElse(null);
 
     return new CASDiskWriteAheadLog(name, storagePath, directory.toPath(),
         contextConfiguration.getValueAsInteger(OGlobalConfiguration.WAL_CACHE_SIZE),
@@ -426,23 +430,26 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage {
   }
 
   @Override
-  protected void checkIfStorageDirty() throws IOException {
+  protected long checkIfStorageDirty() throws IOException {
     if (dirtyFlag.exists())
       dirtyFlag.open();
     else {
       dirtyFlag.create();
       dirtyFlag.makeDirty();
     }
+
+    return dirtyFlag.getLastTxId();
   }
 
   @Override
-  protected void initConfiguration(final OContextConfiguration contextConfiguration) throws IOException {
+  protected void initConfiguration(OAtomicOperation atomicOperation, final OContextConfiguration contextConfiguration)
+      throws IOException {
     if (!OClusterBasedStorageConfiguration.exists(writeCache) && Files.exists(storagePath.resolve("database.ocf"))) {
       final OStorageConfigurationSegment oldConfig = new OStorageConfigurationSegment(this);
       oldConfig.load(contextConfiguration);
 
       final OClusterBasedStorageConfiguration atomicConfiguration = new OClusterBasedStorageConfiguration(this);
-      atomicConfiguration.create(contextConfiguration, oldConfig);
+      atomicConfiguration.create(atomicOperation, contextConfiguration, oldConfig);
       configuration = atomicConfiguration;
 
       oldConfig.close();
@@ -477,11 +484,12 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage {
   }
 
   @Override
-  protected void postCloseSteps(final boolean onDelete, final boolean jvmError) throws IOException {
+  protected void postCloseSteps(final boolean onDelete, final boolean jvmError, final long lastTxId) throws IOException {
     if (onDelete) {
       dirtyFlag.delete();
     } else {
       if (!jvmError) {
+        dirtyFlag.setLastTxId(lastTxId);
         dirtyFlag.clearDirty();
       }
       dirtyFlag.close();
@@ -615,7 +623,7 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage {
   @Override
   protected void initWalAndDiskCache(final OContextConfiguration contextConfiguration) throws IOException, InterruptedException {
     final String aesKeyEncoded = contextConfiguration.getValueAsString(OGlobalConfiguration.STORAGE_ENCRYPTION_KEY);
-    final byte[] aesKey = aesKeyEncoded == null ? null : Base64.getDecoder().decode(aesKeyEncoded);
+    final byte[] aesKey = Optional.ofNullable(aesKeyEncoded).map(keyEncoded -> Base64.getDecoder().decode(keyEncoded)).orElse(null);
 
     fuzzyCheckpointTask = fuzzyCheckpointExecutor.scheduleWithFixedDelay(new PeriodicFuzzyCheckpoint(),
         contextConfiguration.getValueAsInteger(OGlobalConfiguration.WAL_FUZZY_CHECKPOINT_INTERVAL),
@@ -726,7 +734,7 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage {
     private final long                 segment;
     private final CASDiskWriteAheadLog wal;
 
-    SegmentAdder(final long segment, final CASDiskWriteAheadLog wal) {
+    private SegmentAdder(final long segment, final CASDiskWriteAheadLog wal) {
       this.segment = segment;
       this.wal = wal;
     }
@@ -764,7 +772,7 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage {
   }
 
   private static final class SegmentAppenderFactory implements ThreadFactory {
-    SegmentAppenderFactory() {
+    private SegmentAppenderFactory() {
     }
 
     @Override

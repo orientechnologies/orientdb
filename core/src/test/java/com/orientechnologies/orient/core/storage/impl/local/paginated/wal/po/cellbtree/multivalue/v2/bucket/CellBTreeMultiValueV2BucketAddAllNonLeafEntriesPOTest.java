@@ -6,7 +6,6 @@ import com.orientechnologies.common.serialization.types.OByteSerializer;
 import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
 import com.orientechnologies.orient.core.storage.cache.OCacheEntryImpl;
 import com.orientechnologies.orient.core.storage.cache.OCachePointer;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OOperationUnitId;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.PageOperationRecord;
 import com.orientechnologies.orient.core.storage.index.sbtree.multivalue.v2.CellBTreeMultiValueV2Bucket;
 import org.junit.Assert;
@@ -189,8 +188,6 @@ public class CellBTreeMultiValueV2BucketAddAllNonLeafEntriesPOTest {
 
   @Test
   public void testSerialization() {
-    OOperationUnitId operationUnitId = OOperationUnitId.generateId();
-
     final List<CellBTreeMultiValueV2Bucket.NonLeafEntry> nonLeafEntries = new ArrayList<>(3);
 
     final CellBTreeMultiValueV2Bucket.NonLeafEntry nonLeafEntryOne = new CellBTreeMultiValueV2Bucket.NonLeafEntry(new byte[] { 2 },
@@ -206,7 +203,7 @@ public class CellBTreeMultiValueV2BucketAddAllNonLeafEntriesPOTest {
 
     operation.setFileId(42);
     operation.setPageIndex(24);
-    operation.setOperationUnitId(operationUnitId);
+    operation.setOperationUnitId(1);
 
     final int serializedSize = operation.serializedSize();
     final byte[] stream = new byte[serializedSize + 1];
@@ -219,7 +216,7 @@ public class CellBTreeMultiValueV2BucketAddAllNonLeafEntriesPOTest {
 
     Assert.assertEquals(42, restoredOperation.getFileId());
     Assert.assertEquals(24, restoredOperation.getPageIndex());
-    Assert.assertEquals(operationUnitId, restoredOperation.getOperationUnitId());
+    Assert.assertEquals(1, restoredOperation.getOperationUnitId());
 
     Assert.assertEquals(12, restoredOperation.getPrevSize());
     Assert.assertSame(OByteSerializer.INSTANCE, restoredOperation.getKeySerializer());

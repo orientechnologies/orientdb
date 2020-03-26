@@ -39,9 +39,9 @@ public class LocalHashTableV2TestIT extends LocalHashTableV2Base {
 
     localHashTable = new LocalHashTableV2<>("localHashTableTest", ".imc", ".tsc", ".obf", ".nbh", storage);
 
-    localHashTable
-        .create(OIntegerSerializer.INSTANCE, OBinarySerializerFactory.getInstance().getObjectSerializer(OType.STRING), null, null,
-            murmurHash3HashFunction, true);
+    storage.getAtomicOperationsManager().executeInsideAtomicOperation(null, atomicOperation -> localHashTable
+        .create(atomicOperation, OIntegerSerializer.INSTANCE,
+            OBinarySerializerFactory.getInstance().getObjectSerializer(OType.STRING), null, null, murmurHash3HashFunction, true));
 
   }
 

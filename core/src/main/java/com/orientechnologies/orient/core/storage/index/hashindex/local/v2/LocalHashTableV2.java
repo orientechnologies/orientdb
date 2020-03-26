@@ -23,10 +23,7 @@ import com.orientechnologies.orient.core.storage.index.hashindex.local.OHashFunc
 import com.orientechnologies.orient.core.storage.index.hashindex.local.OHashTable;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Iterator;
-import java.util.List;
+import java.util.*;
 
 /**
  * Implementation of hash index which is based on <a href="http://en.wikipedia.org/wiki/Extendible_hashing">extendible hashing
@@ -119,11 +116,10 @@ public class LocalHashTableV2<K, V> extends ODurableComponent implements OHashTa
   }
 
   @Override
-  public void create(final OBinarySerializer<K> keySerializer, final OBinarySerializer<V> valueSerializer, final OType[] keyTypes,
-      final OEncryption encryption, final OHashFunction<K> keyHashFunction, final boolean nullKeyIsSupported) throws IOException {
-    boolean rollback = false;
-    final OAtomicOperation atomicOperation = startAtomicOperation(false);
-    try {
+  public void create(final OAtomicOperation atomicOperation, final OBinarySerializer<K> keySerializer,
+      final OBinarySerializer<V> valueSerializer, final OType[] keyTypes, final OEncryption encryption,
+      final OHashFunction<K> keyHashFunction, final boolean nullKeyIsSupported) throws IOException {
+    executeInsideComponentOperation(atomicOperation, operation -> {
       acquireExclusiveLock();
       try {
         this.keyHashFunction = keyHashFunction;
@@ -169,12 +165,7 @@ public class LocalHashTableV2<K, V> extends ODurableComponent implements OHashTa
       } finally {
         releaseExclusiveLock();
       }
-    } catch (final Exception e) {
-      rollback = true;
-      throw e;
-    } finally {
-      endAtomicOperation(rollback);
-    }
+    });
   }
 
   public V get(K key) {
@@ -252,22 +243,22 @@ public class LocalHashTableV2<K, V> extends ODurableComponent implements OHashTa
   }
 
   @Override
-  public void put(final K key, final V value) throws IOException {
-    put(key, value, null);
+  public void put(final OAtomicOperation atomicOperation, final K key, final V value) {
+    put(atomicOperation, key, value, null);
   }
 
   @Override
-  public boolean validatedPut(final K key, final V value, final OBaseIndexEngine.Validator<K, V> validator) throws IOException {
-    return put(key, value, validator);
+  public boolean validatedPut(final OAtomicOperation atomicOperation, final K key, final V value,
+      final OBaseIndexEngine.Validator<K, V> validator) {
+    return put(atomicOperation, key, value, validator);
   }
 
   @Override
-  public V remove(K key) throws IOException {
-    boolean rollback = false;
-    final OAtomicOperation atomicOperation = startAtomicOperation(true);
-    try {
+  public V remove(final OAtomicOperation atomicOperation, final K k) {
+    return calculateInsideComponentOperation(atomicOperation, operation -> {
       acquireExclusiveLock();
       try {
+        K key = k;
         checkNullSupport(key);
 
         int sizeDiff = 0;
@@ -354,13 +345,7 @@ public class LocalHashTableV2<K, V> extends ODurableComponent implements OHashTa
       } finally {
         releaseExclusiveLock();
       }
-
-    } catch (final Exception e) {
-      rollback = true;
-      throw e;
-    } finally {
-      endAtomicOperation(rollback);
-    }
+    });
   }
 
   private byte[] serializeKey(K key) {
@@ -1070,10 +1055,8 @@ public class LocalHashTableV2<K, V> extends ODurableComponent implements OHashTa
   }
 
   @Override
-  public void delete() throws IOException {
-    boolean rollback = false;
-    final OAtomicOperation atomicOperation = startAtomicOperation(false);
-    try {
+  public void delete(OAtomicOperation atomicOperation) throws IOException {
+    executeInsideComponentOperation(atomicOperation, operation -> {
       acquireExclusiveLock();
       try {
         final long size = size();
@@ -1092,12 +1075,7 @@ public class LocalHashTableV2<K, V> extends ODurableComponent implements OHashTa
       } finally {
         releaseExclusiveLock();
       }
-    } catch (final Exception e) {
-      rollback = true;
-      throw e;
-    } finally {
-      endAtomicOperation(rollback);
-    }
+    });
   }
 
   private void mergeNodeToParent(final OHashTable.BucketPath nodePath, final OAtomicOperation atomicOperation) throws IOException {
@@ -1148,10 +1126,10 @@ public class LocalHashTableV2<K, V> extends ODurableComponent implements OHashTa
     atomicOperationsManager.acquireExclusiveLockTillOperationComplete(this);
   }
 
-  private boolean put(K key, final V value, final OBaseIndexEngine.Validator<K, V> validator) throws IOException {
-    boolean rollback = false;
-    final OAtomicOperation atomicOperation = startAtomicOperation(true);
-    try {
+  private boolean put(final OAtomicOperation atomicOperation, K k, final V value,
+      final OBaseIndexEngine.Validator<K, V> validator) {
+    return calculateInsideComponentOperation(atomicOperation, operation -> {
+      K key = k;
       acquireExclusiveLock();
       try {
         checkNullSupport(key);
@@ -1172,12 +1150,7 @@ public class LocalHashTableV2<K, V> extends ODurableComponent implements OHashTa
       } finally {
         releaseExclusiveLock();
       }
-    } catch (final Exception e) {
-      rollback = true;
-      throw e;
-    } finally {
-      endAtomicOperation(rollback);
-    }
+    });
   }
 
   @SuppressWarnings("unchecked")
@@ -1204,7 +1177,7 @@ public class LocalHashTableV2<K, V> extends ODurableComponent implements OHashTa
         }
 
         final byte[] oldRawValue = nullBucket.getRawValue(valueSerializer);
-        oldValue = oldRawValue == null ? null : valueSerializer.deserializeNativeObject(oldRawValue, 0);
+        oldValue = Optional.ofNullable(oldRawValue).map(bytes -> valueSerializer.deserializeNativeObject(bytes, 0)).orElse(null);
 
         if (validator != null) {
           final Object result = validator.validate(null, oldValue, value);
@@ -1249,7 +1222,8 @@ public class LocalHashTableV2<K, V> extends ODurableComponent implements OHashTa
         final int index = bucket.getIndex(hashCode, key, encryption, keySerializer);
 
         final byte[] oldRawValue = index > -1 ? bucket.getRawValue(index, rawKey.length, valueSerializer) : null;
-        final V oldValue = oldRawValue == null ? null : valueSerializer.deserializeNativeObject(oldRawValue, 0);
+        final V oldValue = Optional.ofNullable(oldRawValue).map(bytes -> valueSerializer.deserializeNativeObject(bytes, 0))
+            .orElse(null);
 
         if (validator != null) {
           final Object result = validator.validate(key, oldValue, value);

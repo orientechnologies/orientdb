@@ -27,6 +27,7 @@ import com.orientechnologies.orient.core.storage.OPhysicalPosition;
 import com.orientechnologies.orient.core.storage.ORawBuffer;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.impl.local.OClusterBrowsePage;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperation;
 
 import java.io.IOException;
 
@@ -66,7 +67,7 @@ public class OClusterRemote implements OCluster {
    *
    * @see com.orientechnologies.orient.core.storage.OCluster#create(int)
    */
-  public void create() throws IOException {
+  public void create(OAtomicOperation atomicOperation) throws IOException {
 
   }
 
@@ -86,23 +87,24 @@ public class OClusterRemote implements OCluster {
   }
 
   @Override
-  public OPhysicalPosition allocatePosition(byte recordType) throws IOException {
+  public OPhysicalPosition allocatePosition(byte recordType, OAtomicOperation atomicOperation) throws IOException {
     throw new UnsupportedOperationException("allocatePosition");
   }
 
   @Override
-  public OPhysicalPosition createRecord(byte[] content, int recordVersion, byte recordType, OPhysicalPosition allocatedPosition)
-      throws IOException {
+  public OPhysicalPosition createRecord(byte[] content, int recordVersion, byte recordType, OPhysicalPosition allocatedPosition,
+      OAtomicOperation atomicOperation) {
     throw new UnsupportedOperationException("createRecord");
   }
 
   @Override
-  public boolean deleteRecord(long clusterPosition) throws IOException {
+  public boolean deleteRecord(OAtomicOperation atomicOperation, long clusterPosition) {
     throw new UnsupportedOperationException("deleteRecord");
   }
 
   @Override
-  public void updateRecord(long clusterPosition, byte[] content, int recordVersion, byte recordType) throws IOException {
+  public void updateRecord(long clusterPosition, byte[] content, int recordVersion, byte recordType,
+      OAtomicOperation atomicOperation) {
     throw new UnsupportedOperationException("updateRecord");
   }
 
@@ -137,7 +139,7 @@ public class OClusterRemote implements OCluster {
     throw new UnsupportedOperationException("exists");
   }
 
-  public void delete() throws IOException {
+  public void delete(OAtomicOperation atomicOperation) throws IOException {
   }
 
   public Object set(ATTRIBUTES iAttribute, Object iValue) throws IOException {

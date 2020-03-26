@@ -1052,7 +1052,7 @@ public abstract class OIndexAbstract implements OIndexInternal {
   protected void onIndexEngineChange(final int indexId) {
     while (true)
       try {
-        storage.callIndexEngine(false, false, indexId, engine -> {
+        storage.callIndexEngine(false, indexId, engine -> {
           engine.init(name, type, indexDefinition, isAutomatic(), metadata);
           return null;
         });

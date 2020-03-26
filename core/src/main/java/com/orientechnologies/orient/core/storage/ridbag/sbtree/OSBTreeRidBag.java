@@ -39,27 +39,16 @@ import com.orientechnologies.orient.core.storage.OStorageProxy;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.ORecordSerializationContext;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.ORidBagDeleteSerializationOperation;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.ORidBagUpdateSerializationOperation;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperation;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperationsManager;
 import com.orientechnologies.orient.core.storage.index.sbtreebonsai.local.OBonsaiBucketPointer;
 import com.orientechnologies.orient.core.storage.index.sbtreebonsai.local.OSBTreeBonsai;
 import com.orientechnologies.orient.core.storage.index.sbtreebonsai.local.OSBTreeBonsaiLocal;
 
 import java.io.IOException;
 import java.io.PrintStream;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.IdentityHashMap;
-import java.util.Iterator;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.ListIterator;
-import java.util.Map;
+import java.util.*;
 import java.util.Map.Entry;
-import java.util.NavigableMap;
-import java.util.NoSuchElementException;
-import java.util.Set;
-import java.util.TreeMap;
-import java.util.UUID;
 import java.util.concurrent.ConcurrentSkipListMap;
 
 /**
@@ -726,8 +715,10 @@ public class OSBTreeRidBag implements ORidBagDelegate {
         final int clusterId = getHighLevelDocClusterId();
         assert clusterId > -1;
         try {
+          final OAtomicOperation atomicOperation = OAtomicOperationsManager.getCurrentOperation();
+          assert atomicOperation != null;
           collectionPointer = ODatabaseRecordThreadLocal.instance().get().getSbTreeCollectionManager()
-              .createSBTree(clusterId, ownerUuid);
+              .createSBTree(clusterId, atomicOperation, ownerUuid);
         } catch (IOException e) {
           throw OException.wrapException(new ODatabaseException("Error during ridbag creation"), e);
         }

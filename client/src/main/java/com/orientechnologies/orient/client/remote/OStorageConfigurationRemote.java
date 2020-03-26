@@ -5,6 +5,7 @@ import com.orientechnologies.orient.core.config.OContextConfiguration;
 import com.orientechnologies.orient.core.config.OStorageClusterConfiguration;
 import com.orientechnologies.orient.core.config.OStorageConfiguration;
 import com.orientechnologies.orient.core.config.OStorageEntryConfiguration;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperation;
 
 import java.text.SimpleDateFormat;
 import java.util.*;
@@ -243,7 +244,7 @@ public class OStorageConfigurationRemote implements OStorageConfiguration {
   }
 
   @Override
-  public void setUuid(String uuid) {
+  public void setUuid(OAtomicOperation atomicOperation, String uuid) {
     throw new UnsupportedOperationException("Current version of the binary protocol do not support uuid");
   }
 }

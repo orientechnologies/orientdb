@@ -36,6 +36,7 @@ import com.orientechnologies.orient.core.iterator.OEmptyIterator;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperation;
 import com.orientechnologies.orient.core.storage.index.hashindex.local.OHashFunction;
 import com.orientechnologies.orient.core.storage.index.hashindex.local.OHashTable;
 import com.orientechnologies.orient.core.storage.index.hashindex.local.OMurmurHash3HashFunction;
@@ -90,8 +91,8 @@ public final class OAutoShardingIndexEngine implements OIndexEngine {
   }
 
   @Override
-  public void create(final OBinarySerializer valueSerializer, final boolean isAutomatic, final OType[] keyTypes,
-      final boolean nullPointerSupport, final OBinarySerializer keySerializer, final int keySize,
+  public void create(OAtomicOperation atomicOperation, final OBinarySerializer valueSerializer, final boolean isAutomatic,
+      final OType[] keyTypes, final boolean nullPointerSupport, final OBinarySerializer keySerializer, final int keySize,
       final Map<String, String> engineProperties, OEncryption encryption) {
 
     this.strategy = new OAutoShardingMurmurStrategy(keySerializer);
@@ -122,7 +123,7 @@ public final class OAutoShardingIndexEngine implements OIndexEngine {
     try {
       for (OHashTable<Object, Object> p : partitions) {
         //noinspection unchecked
-        p.create(keySerializer, valueSerializer, keyTypes, encryption, hashFunction, nullPointerSupport);
+        p.create(atomicOperation, keySerializer, valueSerializer, keyTypes, encryption, hashFunction, nullPointerSupport);
       }
     } catch (IOException e) {
       throw OException.wrapException(new OIndexException("Error during creation of index with name " + name), e);
@@ -171,13 +172,13 @@ public final class OAutoShardingIndexEngine implements OIndexEngine {
   }
 
   @Override
-  public void delete() {
+  public void delete(OAtomicOperation atomicOperation) {
     try {
       if (partitions != null) {
-        doClearPartitions();
+        doClearPartitions(atomicOperation);
 
         for (OHashTable<Object, Object> p : partitions) {
-          p.delete();
+          p.delete(atomicOperation);
         }
       }
 
@@ -186,7 +187,7 @@ public final class OAutoShardingIndexEngine implements OIndexEngine {
     }
   }
 
-  private void doClearPartitions() throws IOException {
+  private void doClearPartitions(final OAtomicOperation atomicOperation) throws IOException {
     for (OHashTable<Object, Object> p : partitions) {
       final OHashTable.Entry<Object, Object> firstEntry = p.firstEntry();
 
@@ -194,7 +195,7 @@ public final class OAutoShardingIndexEngine implements OIndexEngine {
         OHashTable.Entry<Object, Object>[] entries = p.ceilingEntries(firstEntry.key);
         while (entries.length > 0) {
           for (final OHashTable.Entry<Object, Object> entry : entries) {
-            p.remove(entry.key);
+            p.remove(atomicOperation, entry.key);
           }
 
           entries = p.higherEntries(entries[entries.length - 1].key);
@@ -202,7 +203,7 @@ public final class OAutoShardingIndexEngine implements OIndexEngine {
       }
 
       if (p.isNullKeyIsSupported()) {
-        p.remove(null);
+        p.remove(atomicOperation, null);
       }
     }
   }
@@ -224,19 +225,19 @@ public final class OAutoShardingIndexEngine implements OIndexEngine {
   }
 
   @Override
-  public boolean remove(final Object key) {
+  public boolean remove(OAtomicOperation atomicOperation, final Object key) {
     try {
-      return getPartition(key).remove(key) != null;
+      return getPartition(key).remove(atomicOperation, key) != null;
     } catch (IOException e) {
       throw OException.wrapException(new OIndexException("Error during deletion of key " + key + " of index with name " + name), e);
     }
   }
 
   @Override
-  public void clear() {
+  public void clear(OAtomicOperation atomicOperation) {
     try {
       if (partitions != null) {
-        doClearPartitions();
+        doClearPartitions(atomicOperation);
       }
     } catch (IOException e) {
       throw OException.wrapException(new OIndexException("Error during clear of index with name " + name), e);
@@ -256,9 +257,9 @@ public final class OAutoShardingIndexEngine implements OIndexEngine {
   }
 
   @Override
-  public void put(final Object key, final Object value) {
+  public void put(OAtomicOperation atomicOperation, final Object key, final Object value) {
     try {
-      getPartition(key).put(key, value);
+      getPartition(key).put(atomicOperation, key, value);
     } catch (IOException e) {
       throw OException
           .wrapException(new OIndexException("Error during insertion of key " + key + " of index with name " + name), e);
@@ -266,13 +267,13 @@ public final class OAutoShardingIndexEngine implements OIndexEngine {
   }
 
   @Override
-  public void update(Object key, OIndexKeyUpdater<Object> updater) {
+  public void update(OAtomicOperation atomicOperation, Object key, OIndexKeyUpdater<Object> updater) {
     Object value = get(key);
     OIndexUpdateAction<Object> updated = updater.update(value, bonsayFileId);
     if (updated.isChange())
-      put(key, updated.getValue());
+      put(atomicOperation, key, updated.getValue());
     else if (updated.isRemove()) {
-      remove(key);
+      remove(atomicOperation, key);
     } else //noinspection StatementWithEmptyBody
       if (updated.isNothing()) {
         //Do Nothing
@@ -281,9 +282,9 @@ public final class OAutoShardingIndexEngine implements OIndexEngine {
 
   @SuppressWarnings("unchecked")
   @Override
-  public boolean validatedPut(Object key, ORID value, Validator<Object, ORID> validator) {
+  public boolean validatedPut(OAtomicOperation atomicOperation, Object key, ORID value, Validator<Object, ORID> validator) {
     try {
-      return getPartition(key).validatedPut(key, value, (Validator) validator);
+      return getPartition(key).validatedPut(atomicOperation, key, value, (Validator) validator);
     } catch (IOException e) {
       throw OException
           .wrapException(new OIndexException("Error during insertion of key " + key + " of index with name " + name), e);

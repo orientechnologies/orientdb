@@ -1,6 +1,7 @@
 package com.orientechnologies.orient.core.config;
 
 import com.orientechnologies.orient.core.metadata.schema.OType;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperation;
 
 import java.text.SimpleDateFormat;
 import java.util.*;
@@ -76,7 +77,7 @@ public interface OStorageConfiguration {
 
   int getMaxKeySize();
 
-  void setUuid(final String uuid);
+  void setUuid(OAtomicOperation atomicOperation, final String uuid);
 
   String getUuid();
 

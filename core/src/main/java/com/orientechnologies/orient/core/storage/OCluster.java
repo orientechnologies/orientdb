@@ -23,6 +23,7 @@ import com.orientechnologies.orient.core.config.OStorageClusterConfiguration;
 import com.orientechnologies.orient.core.conflict.ORecordConflictStrategy;
 import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
 import com.orientechnologies.orient.core.storage.impl.local.OClusterBrowsePage;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperation;
 
 import java.io.IOException;
 
@@ -36,7 +37,7 @@ public interface OCluster {
 
   void configure(OStorage iStorage, OStorageClusterConfiguration iConfig) throws IOException;
 
-  void create() throws IOException;
+  void create(OAtomicOperation atomicOperation) throws IOException;
 
   void open() throws IOException;
 
@@ -44,7 +45,7 @@ public interface OCluster {
 
   void close(boolean flush) throws IOException;
 
-  void delete() throws IOException;
+  void delete(OAtomicOperation atomicOperation) throws IOException;
 
   void setClusterName(String name);
 
@@ -59,11 +60,12 @@ public interface OCluster {
   /**
    * Allocates a physical position pointer on the storage for generate an id without a content.
    *
-   * @param recordType the type of record of which allocate the position.
+   * @param recordType      the type of record of which allocate the position.
+   * @param atomicOperation
    *
    * @return the allocated position.
    */
-  OPhysicalPosition allocatePosition(byte recordType) throws IOException;
+  OPhysicalPosition allocatePosition(byte recordType, OAtomicOperation atomicOperation) throws IOException;
 
   /**
    * Creates a new record in the cluster.
@@ -72,15 +74,16 @@ public interface OCluster {
    * @param recordVersion     the current version
    * @param recordType        the type of the record
    * @param allocatedPosition the eventual allocated position or null if there is no allocated position.
+   * @param atomicOperation
    *
    * @return the position where the record si created.
    */
-  OPhysicalPosition createRecord(byte[] content, int recordVersion, byte recordType, OPhysicalPosition allocatedPosition)
-      throws IOException;
+  OPhysicalPosition createRecord(byte[] content, int recordVersion, byte recordType, OPhysicalPosition allocatedPosition,
+      OAtomicOperation atomicOperation);
 
-  boolean deleteRecord(long clusterPosition) throws IOException;
+  boolean deleteRecord(OAtomicOperation atomicOperation, long clusterPosition);
 
-  void updateRecord(long clusterPosition, byte[] content, int recordVersion, byte recordType) throws IOException;
+  void updateRecord(long clusterPosition, byte[] content, int recordVersion, byte recordType, OAtomicOperation atomicOperation);
 
   ORawBuffer readRecord(long clusterPosition, boolean prefetchRecords) throws IOException;
 
@@ -94,8 +97,7 @@ public interface OCluster {
   OPhysicalPosition getPhysicalPosition(OPhysicalPosition iPPosition) throws IOException;
 
   /**
-   * Check if a rid is existent and deleted or not existent
-   * return true only if delete flag is set.
+   * Check if a rid is existent and deleted or not existent return true only if delete flag is set.
    */
   boolean isDeleted(OPhysicalPosition iPPosition) throws IOException;
 

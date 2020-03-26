@@ -30,7 +30,6 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSe
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.Map;
-import java.util.Optional;
 
 public interface OWriteCache {
   /**
@@ -82,7 +81,7 @@ public interface OWriteCache {
 
   boolean checkLowDiskSpace() throws IOException;
 
-  void makeFuzzyCheckpoint(long segmentId, Optional<byte[]> lastMetadata) throws IOException;
+  void makeFuzzyCheckpoint(long segmentId, byte[] lastMetadata) throws IOException;
 
   void flushTillSegment(long segmentId);
 
