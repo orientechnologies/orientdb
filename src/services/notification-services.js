@@ -28,9 +28,9 @@ notification.factory('Notification', ["$timeout", "$rootScope", function ($timeo
         }
         n = noty({text: _.escape(notification.content), layout: 'bottom', type: 'error', theme: 'relax'});
       } else if (notification.warning) {
-        n = noty({text: notification.content, layout: 'bottom', type: 'warning', theme: 'relax'});
+        n = noty({text: _.escape(notification.content.toString()), layout: 'bottom', type: 'warning', theme: 'relax'});
       } else {
-        n = noty({text: notification.content, layout: 'bottom', type: 'success', theme: 'relax'});
+        n = noty({text: _.escape(notification.content.toString()), layout: 'bottom', type: 'success', theme: 'relax'});
       }
       this.current = n;
       $timeout(function () {
