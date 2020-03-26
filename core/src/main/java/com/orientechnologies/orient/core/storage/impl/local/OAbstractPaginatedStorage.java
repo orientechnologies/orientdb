@@ -2544,7 +2544,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     try {
       if (transaction.get() != null) {
         final OAtomicOperation atomicOperation = OAtomicOperationsManager.getCurrentOperation();
-        return removeKeyFromIndexInternal(atomicOperation, indexId, key);
+        return removeKeyFromIndexInternal(atomicOperation, internalIndexId, key);
       }
 
       checkOpenness();
@@ -2556,7 +2556,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
         checkLowDiskSpaceRequestsAndReadOnlyConditions();
 
         return atomicOperationsManager
-            .calculateInsideAtomicOperation(null, atomicOperation -> removeKeyFromIndexInternal(atomicOperation, indexId, key));
+            .calculateInsideAtomicOperation(null, atomicOperation -> removeKeyFromIndexInternal(atomicOperation, internalIndexId, key));
       } finally {
         stateLock.releaseReadLock();
       }
@@ -2902,7 +2902,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       if (transaction.get() != null) {
         final OAtomicOperation atomicOperation = OAtomicOperationsManager.getCurrentOperation();
         assert atomicOperation != null;
-        return removeRidIndexEntryInternal(atomicOperation, indexId, key, value);
+        return removeRidIndexEntryInternal(atomicOperation, internalIndexId, key, value);
       }
 
       checkOpenness();
