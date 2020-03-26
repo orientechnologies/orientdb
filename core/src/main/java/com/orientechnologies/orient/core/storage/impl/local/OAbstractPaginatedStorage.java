@@ -2555,8 +2555,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
         checkLowDiskSpaceRequestsAndReadOnlyConditions();
 
-        return atomicOperationsManager
-            .calculateInsideAtomicOperation(null, atomicOperation -> removeKeyFromIndexInternal(atomicOperation, internalIndexId, key));
+        return atomicOperationsManager.calculateInsideAtomicOperation(null,
+            atomicOperation -> removeKeyFromIndexInternal(atomicOperation, internalIndexId, key));
       } finally {
         stateLock.releaseReadLock();
       }
@@ -2788,8 +2788,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     indexId = extractInternalId(indexId);
 
     try {
-      assert transaction.get() == null;
-
       checkOpenness();
 
       stateLock.acquireReadLock();
