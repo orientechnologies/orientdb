@@ -28,13 +28,12 @@ import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.metadata.schema.OType;
-import com.orientechnologies.orient.core.metadata.security.*;
+import com.orientechnologies.orient.core.metadata.security.OSecurityInternal;
+import com.orientechnologies.orient.core.metadata.security.OSecurityUser;
+import com.orientechnologies.orient.core.metadata.security.OSystemUser;
+import com.orientechnologies.orient.core.metadata.security.OUser;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.security.OAuditingOperation;
-import com.orientechnologies.orient.core.security.OInvalidPasswordException;
-import com.orientechnologies.orient.core.security.OSecurityFactory;
-import com.orientechnologies.orient.core.security.OSecurityManager;
-import com.orientechnologies.orient.core.security.OSecuritySystemException;
+import com.orientechnologies.orient.core.security.*;
 import com.orientechnologies.orient.server.OClientConnection;
 import com.orientechnologies.orient.server.OClientConnectionManager;
 import com.orientechnologies.orient.server.OServer;
@@ -378,13 +377,23 @@ public class ODefaultServerSecurity implements OSecurityFactory, OServerLifecycl
   }
 
   // OSecuritySystem (via OServerSecurity)
-  public void validatePassword(final String password) throws OInvalidPasswordException {
+  public void validatePassword(final String username, final String password) throws OInvalidPasswordException {
     if (isEnabled()) {
       synchronized (passwordValidatorSynch) {
         if (passwordValidator != null) {
-          passwordValidator.validatePassword(password);
+          passwordValidator.validatePassword(username, password);
         }
       }
+    }
+  }
+
+  public void replacePasswordValidator(OPasswordValidator validator) {
+    synchronized (passwordValidatorSynch) {
+
+      if (passwordValidator == null || !passwordValidator.isEnabled()) {
+        passwordValidator = validator;
+      }
+
     }
   }
 
@@ -972,12 +981,14 @@ public class ODefaultServerSecurity implements OSecurityFactory, OServerLifecycl
   private void reloadPasswordValidator() {
     try {
       synchronized (passwordValidatorSynch) {
-        if (passwordValidator != null) {
-          passwordValidator.dispose();
-          passwordValidator = null;
-        }
 
         if (passwdValDoc != null && isEnabled(passwdValDoc)) {
+
+          if (passwordValidator != null) {
+            passwordValidator.dispose();
+            passwordValidator = null;
+          }
+
           Class<?> cls = getClass(passwdValDoc);
 
           if (cls != null) {

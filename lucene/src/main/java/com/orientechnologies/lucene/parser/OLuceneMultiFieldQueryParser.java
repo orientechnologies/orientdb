@@ -10,6 +10,7 @@ import org.apache.lucene.document.IntPoint;
 import org.apache.lucene.document.LongPoint;
 import org.apache.lucene.queryparser.classic.MultiFieldQueryParser;
 import org.apache.lucene.queryparser.classic.ParseException;
+import org.apache.lucene.search.BoostQuery;
 import org.apache.lucene.search.Query;
 
 import java.util.Map;
@@ -34,7 +35,7 @@ public class OLuceneMultiFieldQueryParser extends MultiFieldQueryParser {
   protected Query getFieldQuery(String field, String queryText, int slop) throws ParseException {
     Optional<Query> query = getQuery(field, queryText, queryText, true, true);
 
-    return query.orElse(super.getFieldQuery(field, queryText, slop));
+    return handleBoost(field, query.orElse(super.getFieldQuery(field, queryText, slop)));
   }
 
   @Override
@@ -42,7 +43,16 @@ public class OLuceneMultiFieldQueryParser extends MultiFieldQueryParser {
 
     Optional<Query> query = getQuery(field, queryText, queryText, true, true);
 
-    return query.orElse(super.getFieldQuery(field, queryText, quoted));
+    Query q = query.orElse(super.getFieldQuery(field, queryText, quoted));
+
+    return handleBoost(field, q);
+  }
+
+  private Query handleBoost(String field, Query q) {
+    if (field != null && boosts.containsKey(field)) {
+      return new BoostQuery(q, boosts.get(field));
+    }
+    return q;
   }
 
   @Override
