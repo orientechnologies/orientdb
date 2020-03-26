@@ -49,7 +49,8 @@ public class SBTreeV2CompositeKeyTest extends DatabaseAbstractTest {
         compositeKey.addKey(i);
         compositeKey.addKey(j);
         atomicOperationsManager.executeInsideAtomicOperation(null, atomicOperation -> localSBTree.put(atomicOperation, compositeKey,
-            new ORecordId((int) compositeKey.getKeys().get(0), (long) compositeKey.getKeys().get(1))));
+            new ORecordId(((Double) compositeKey.getKeys().get(0)).intValue(),
+                ((Double) compositeKey.getKeys().get(1)).longValue())));
       }
     }
   }
