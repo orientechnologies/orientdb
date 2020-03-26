@@ -586,7 +586,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
           postCreateSteps();
 
           //binary compatibility with previous version, this record contained configuration of storage
-          createRecord(new ORecordId(0, -1), new byte[] { 0, 0, 0, 0 }, 0, OBlob.RECORD_TYPE, null);
+          doCreateRecord(atomicOperation, new ORecordId(0, -1), new byte[] { 0, 0, 0, 0 }, 0, OBlob.RECORD_TYPE, null,
+              getClusterById(0), null);
         });
 
       } catch (final InterruptedException e) {
@@ -2845,7 +2846,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       if (transaction.get() != null) {
         final OAtomicOperation atomicOperation = OAtomicOperationsManager.getCurrentOperation();
         assert atomicOperation != null;
-        putRidIndexEntryInternal(atomicOperation, indexId, key, value);
+        putRidIndexEntryInternal(atomicOperation, internalIndexId, key, value);
         return;
       }
 
@@ -3022,7 +3023,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       if (transaction.get() != null) {
         final OAtomicOperation atomicOperation = OAtomicOperationsManager.getCurrentOperation();
         assert atomicOperation != null;
-        return doValidatedPutIndexValue(atomicOperation, indexId, key, value, validator);
+        return doValidatedPutIndexValue(atomicOperation, internalIndexId, key, value, validator);
       }
 
       checkOpenness();
