@@ -15,6 +15,8 @@
  */
 package com.orientechnologies.orient.core.storage.impl.local.paginated.wal;
 
+import com.orientechnologies.common.serialization.types.OLongSerializer;
+
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 
@@ -73,7 +75,7 @@ public abstract class OOperationUnitRecord extends OAbstractWALRecord {
 
   @Override
   public int serializedSize() {
-    return OOperationUnitId.SERIALIZED_SIZE;
+    return OLongSerializer.LONG_SIZE;
   }
 
   protected abstract void serializeToByteBuffer(final ByteBuffer buffer);

@@ -24,7 +24,6 @@ import com.orientechnologies.common.serialization.types.*;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
 import com.orientechnologies.orient.core.storage.cache.OCachePointer;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperationsManager;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALChanges;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.PageOperationRecord;
@@ -203,8 +202,6 @@ public class ODurablePage {
 
   @SuppressWarnings("SameReturnValue")
   protected final int setIntValue(final int pageOffset, final int value) {
-    assert OAtomicOperationsManager.getCurrentOperation() != null;
-
     final ByteBuffer buffer = pointer.getBuffer();
     if (changes != null) {
       changes.setIntValue(buffer, value, pageOffset);
@@ -217,8 +214,6 @@ public class ODurablePage {
   }
 
   protected final int setShortValue(final int pageOffset, final short value) {
-    assert OAtomicOperationsManager.getCurrentOperation() != null;
-
     final ByteBuffer buffer = pointer.getBuffer();
     if (changes != null) {
       changes.setIntValue(buffer, value, pageOffset);
@@ -232,8 +227,6 @@ public class ODurablePage {
 
   @SuppressWarnings("SameReturnValue")
   protected final int setByteValue(final int pageOffset, final byte value) {
-    assert OAtomicOperationsManager.getCurrentOperation() != null;
-
     final ByteBuffer buffer = pointer.getBuffer();
     if (changes != null) {
       changes.setByteValue(buffer, value, pageOffset);
@@ -247,8 +240,6 @@ public class ODurablePage {
 
   @SuppressWarnings("SameReturnValue")
   protected final int setLongValue(final int pageOffset, final long value) {
-    assert OAtomicOperationsManager.getCurrentOperation() != null;
-
     final ByteBuffer buffer = pointer.getBuffer();
     if (changes != null) {
       changes.setLongValue(buffer, value, pageOffset);
@@ -261,8 +252,6 @@ public class ODurablePage {
   }
 
   protected final int setBinaryValue(final int pageOffset, final byte[] value) {
-    assert OAtomicOperationsManager.getCurrentOperation() != null;
-
     if (value.length == 0) {
       return 0;
     }
@@ -280,8 +269,6 @@ public class ODurablePage {
   }
 
   protected final void moveData(final int from, final int to, final int len) {
-    assert OAtomicOperationsManager.getCurrentOperation() != null;
-
     if (len == 0) {
       return;
     }

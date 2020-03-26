@@ -110,9 +110,6 @@ public abstract class ODurableComponent extends OSharedResourceAdaptive {
 
   protected static OCacheEntry loadPageForWrite(final OAtomicOperation atomicOperation, final long fileId, final long pageIndex,
       final boolean checkPinnedPages, final boolean verifyCheckSum) throws IOException {
-    assert atomicOperation != null;
-    assert atomicOperation.getComponentOperations() > 0;
-
     return atomicOperation.loadPageForWrite(fileId, pageIndex, checkPinnedPages, 1, verifyCheckSum);
   }
 
