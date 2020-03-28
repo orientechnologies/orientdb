@@ -1,7 +1,6 @@
 package com.orientechnologies.orient.core.sql.functions.graph;
 
 import com.orientechnologies.common.collection.OMultiCollectionIterator;
-import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.common.util.ORawPair;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.command.OCommandExecutorAbstract;
@@ -12,7 +11,6 @@ import com.orientechnologies.orient.core.record.*;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.OEdgeToVertexIterable;
 import com.orientechnologies.orient.core.sql.OSQLHelper;
-import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.functions.math.OSQLFunctionMathAbstract;
 
 import java.util.*;
@@ -67,13 +65,9 @@ public class OSQLFunctionShortestPath extends OSQLFunctionMathAbstract {
     final OShortestPathContext ctx = new OShortestPathContext();
 
     Object source = iParams[0];
-    if (OMultiValue.isMultiValue(source)) {
-      if (OMultiValue.getSize(source) > 1)
-        throw new IllegalArgumentException("Only one sourceVertex is allowed");
-      source = OMultiValue.getFirstValue(source);
-      if (source instanceof OResult && ((OResult) source).isElement()) {
-        source = ((OResult) source).getElement().get();
-      }
+    source = getSingleItem(source);
+    if (source == null) {
+      throw new IllegalArgumentException("Only one sourceVertex is allowed");
     }
     source = OSQLHelper.getValue(source, record, iContext);
     if (source instanceof OIdentifiable) {
@@ -87,13 +81,9 @@ public class OSQLFunctionShortestPath extends OSQLFunctionMathAbstract {
     }
 
     Object dest = iParams[1];
-    if (OMultiValue.isMultiValue(dest)) {
-      if (OMultiValue.getSize(dest) > 1)
-        throw new IllegalArgumentException("Only one destinationVertex is allowed");
-      dest = OMultiValue.getFirstValue(dest);
-      if (dest instanceof OResult && ((OResult) dest).isElement()) {
-        dest = ((OResult) dest).getElement().get();
-      }
+    dest = getSingleItem(dest);
+    if (dest == null) {
+      throw new IllegalArgumentException("Only one destinationVertex is allowed");
     }
     dest = OSQLHelper.getValue(dest, record, iContext);
     if (dest instanceof OIdentifiable) {

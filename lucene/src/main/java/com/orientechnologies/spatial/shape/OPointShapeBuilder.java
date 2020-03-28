@@ -49,7 +49,7 @@ public class OPointShapeBuilder extends OShapeBuilder<Point> {
     OClass point = schema.createAbstractClass(getName(), superClass(db));
     OProperty coordinates = point.createProperty(COORDINATES, OType.EMBEDDEDLIST, OType.DOUBLE);
     coordinates.setMin("2");
-    coordinates.setMin("2");
+    coordinates.setMax("2");
   }
 
   @Override
