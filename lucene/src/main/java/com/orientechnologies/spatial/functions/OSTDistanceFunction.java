@@ -23,7 +23,7 @@ import org.locationtech.spatial4j.shape.Shape;
 /**
  * Created by Enrico Risa on 25/09/15.
  */
-public class OSTDistanceFunction extends OSQLFunctionAbstract {
+public class OSTDistanceFunction extends OSpatialFunctionAbstract {
 
   public static final String        NAME    = "st_distance";
   private             OShapeFactory factory = OShapeFactory.INSTANCE;
@@ -35,9 +35,9 @@ public class OSTDistanceFunction extends OSQLFunctionAbstract {
   @Override
   public Object execute(Object iThis, OIdentifiable iCurrentRecord, Object iCurrentResult, Object[] iParams,
       OCommandContext iContext) {
-    Shape shape = factory.fromObject(iParams[0]);
 
-    Shape shape1 = factory.fromObject(iParams[1]);
+    Shape shape = toShape(iParams[0]);
+    Shape shape1 = toShape(iParams[1]);
 
     return factory.operation().distance(shape, shape1);
   }
