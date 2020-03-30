@@ -99,7 +99,7 @@ public class AuditingRootLogTest extends EEBaseServerHttpTest {
 
     server.getSecurity().reload(new OSystemUser("root", null, "Server"), new ODocument().fromJSON(security, "noMap"));
 
-    Thread.sleep(2000);
+    Thread.sleep(1000);
 
     List<OResult> results = server.getSystemDatabase().executeWithDB((db) -> {
       try (OResultSet resultSet = db.query("select from OAuditingLog where operation = 11")) {
@@ -117,7 +117,7 @@ public class AuditingRootLogTest extends EEBaseServerHttpTest {
   }
 
   @Test
-  public void postSecurity() throws IOException {
+  public void postSecurity() throws IOException, InterruptedException {
 
     String security = OIOUtils
         .readStreamAsString(Thread.currentThread().getContextClassLoader().getResourceAsStream("security.json"));
@@ -139,11 +139,17 @@ public class AuditingRootLogTest extends EEBaseServerHttpTest {
 
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
 
+
+    Thread.sleep(1000);
+
+
     List<OResult> results = server.getSystemDatabase().executeWithDB((db) -> {
       try (OResultSet resultSet = db.query("select from OAuditingLog where operation = 11")) {
         return resultSet.stream().collect(Collectors.toList());
       }
     });
+
+
 
     Assert.assertEquals(1, results.size());
 
