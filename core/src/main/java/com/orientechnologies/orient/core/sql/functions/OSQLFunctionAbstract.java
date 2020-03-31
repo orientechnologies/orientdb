@@ -135,18 +135,20 @@ public abstract class OSQLFunctionAbstract implements OSQLFunction {
    * Attempts to identify the source as a map-like object with single property and return it.
    *
    * @param source The object to check
+   * @param requireSingleProperty True if the method should return null when source doesn't have a single property.
+   *                              Otherwise, the object will be returned.
    * @return If source is a map-like object with single property, that property will be returned
-   *         If source is a map-like object with multiple properties, null is returned, indicating an error
+   *         If source is a map-like object with multiple properties and requireSingleProperty is true, null is returned indicating an error
    *         If source is not a map-like object, it is returned
    */
-  protected Object getSingleProperty(Object source) {
+  protected Object getSingleProperty(Object source, boolean requireSingleProperty) {
     if (source instanceof OResult) {
       final OResult result = (OResult)source;
       // TODO we might want to add .size() and iterator with .next() to OResult. The current implementation is
       // quite heavy compared to the result we actually want (the single first property).
       final Set<String> propertyNames = result.getPropertyNames();
       if (propertyNames.size() != 1) {
-        return null;
+        return requireSingleProperty ? null : source;
       }
       return result.getProperty(propertyNames.iterator().next());
     }

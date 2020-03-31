@@ -44,7 +44,7 @@ public abstract class OSpatialFunctionAbstract extends OSQLFunctionAbstract {
   protected Shape toShape(Object param) {
     final Object singleItem = getSingleItem(param);
     if (singleItem != null) {
-      final Object singleProp = getSingleProperty(singleItem);
+      final Object singleProp = getSingleProperty(singleItem, false);
       if (singleProp != null) {
         return factory.fromObject(singleProp);
       }
