@@ -13,6 +13,7 @@ import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
 import com.orientechnologies.orient.core.serialization.serializer.record.binary.ODocumentSerializerDelta;
 import com.orientechnologies.orient.core.serialization.serializer.record.binary.ORecordSerializerNetworkDistributed;
 import com.orientechnologies.orient.core.storage.ORecordDuplicatedException;
@@ -219,6 +220,8 @@ public class OTransactionPhase1Task extends OAbstractReplicatedTask {
           if (record == null) {
             record = new ODocument();
           }
+          ((ODocument) record).deserializeFields();
+          ODocumentInternal.clearTransactionTrackData((ODocument) record);
           ODocumentSerializerDelta.instance().deserializeDelta(req.getRecord(), (ODocument) record);
           /// Got record with empty deltas, at this level we mark the record dirty anyway.
           record.setDirty();
