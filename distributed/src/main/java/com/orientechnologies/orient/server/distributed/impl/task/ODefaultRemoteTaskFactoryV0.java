@@ -118,8 +118,6 @@ public class ODefaultRemoteTaskFactoryV0 implements ORemoteTaskFactory {
     case OUnreachableServerLocalTask.FACTORYID: // 28
       throw new IllegalArgumentException("Task with code " + code + " is not supported in remote configuration");
 
-    case OSyncDatabaseNewDeltaTask.FACTORYID: // 29
-      return new OSyncDatabaseNewDeltaTask();
     }
 
     throw new IllegalArgumentException("Task with code " + code + " is not supported");

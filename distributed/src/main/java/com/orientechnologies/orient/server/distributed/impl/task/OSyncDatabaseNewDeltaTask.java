@@ -16,11 +16,12 @@ import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
 import java.util.List;
+import java.util.Optional;
 
 public class OSyncDatabaseNewDeltaTask extends OAbstractReplicatedTask {
   public static final int CHUNK_MAX_SIZE = 8388608;    // 8MB
 
-  public static final int                        FACTORYID = 29;
+  public static final int                        FACTORYID = 57;
   private             OTransactionSequenceStatus lastState;
 
   public OSyncDatabaseNewDeltaTask(OTransactionSequenceStatus lastState) {
@@ -32,7 +33,7 @@ public class OSyncDatabaseNewDeltaTask extends OAbstractReplicatedTask {
 
   @Override
   public String getName() {
-    return "TransactionId Delta Sync Database";
+    return "transaction_id_delta_sync_database";
   }
 
   @Override
@@ -45,15 +46,20 @@ public class OSyncDatabaseNewDeltaTask extends OAbstractReplicatedTask {
       ODatabaseDocumentInternal database) throws Exception {
     ODistributedDatabase db = iManager.getMessageService().getDatabase(database.getName());
     List<OTransactionId> missing = db.missingTransactions(lastState);
-    OBackgroundNewDelta delta = ((OAbstractPaginatedStorage) database.getStorage().getUnderlying())
+    Optional<OBackgroundNewDelta> delta = ((OAbstractPaginatedStorage) database.getStorage().getUnderlying())
         .extractTransactionsFromWal(missing);
-    final ODistributedDatabaseChunk chunk = new ODistributedDatabaseChunk(delta, CHUNK_MAX_SIZE, null);
+    if (delta.isPresent()) {
+      OBackgroundNewDelta deltaBackup = delta.get();
+      final ODistributedDatabaseChunk chunk = new ODistributedDatabaseChunk(deltaBackup, CHUNK_MAX_SIZE, null);
 
-    if (chunk.last)
-      // NO MORE CHUNKS: SET THE NODE ONLINE (SYNCHRONIZING ENDED)
-      iManager.setDatabaseStatus(iManager.getLocalNodeName(), database.getName(), ODistributedServerManager.DB_STATUS.ONLINE);
-    ((ODistributedStorage) database.getStorage()).setLastValidBackup(delta);
-    return new ONewDeltaTaskResponse(chunk);
+      if (chunk.last)
+        // NO MORE CHUNKS: SET THE NODE ONLINE (SYNCHRONIZING ENDED)
+        iManager.setDatabaseStatus(iManager.getLocalNodeName(), database.getName(), ODistributedServerManager.DB_STATUS.ONLINE);
+      ((ODistributedStorage) database.getStorage()).setLastValidBackup(deltaBackup);
+      return new ONewDeltaTaskResponse(chunk);
+    } else {
+      return new ONewDeltaTaskResponse(ONewDeltaTaskResponse.ResponseType.FULL_SYNK);
+    }
   }
 
   @Override

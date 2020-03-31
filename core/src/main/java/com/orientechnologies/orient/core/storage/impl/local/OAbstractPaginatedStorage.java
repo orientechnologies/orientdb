@@ -1524,7 +1524,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     }
   }
 
-  public OBackgroundNewDelta extractTransactionsFromWal(List<OTransactionId> transactionsMetadata) {
+  public Optional<OBackgroundNewDelta> extractTransactionsFromWal(List<OTransactionId> transactionsMetadata) {
     List<OTransactionData> finished = new ArrayList<>();
     stateLock.acquireReadLock();
     try {
@@ -1576,7 +1576,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
             }
             if (transactionsToRead.isEmpty() && units.isEmpty()) {
               //all read stop scanning and return the transactions
-              return new OBackgroundNewDelta(finished);
+              return Optional.of(new OBackgroundNewDelta(finished));
             }
           }
 
@@ -1585,7 +1585,11 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       } finally {
         writeAheadLog.removeCutTillLimit(beginLsn);
       }
-      return new OBackgroundNewDelta(finished);
+      if (transactionsToRead.isEmpty()) {
+        return Optional.of(new OBackgroundNewDelta(finished));
+      } else {
+        return Optional.empty();
+      }
     } catch (final IOException e) {
       throw OException.wrapException(new OStorageException("Error of reading of records from  WAL"), e);
     } finally {

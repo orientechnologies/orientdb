@@ -49,7 +49,7 @@ public class OTransactionSequenceManagerTest {
 
     OTransactionSequenceStatus status = sequenceManager.currentStatus();
 
-    List<OTransactionId> list = sequenceManagerRecv.checkStatus(status);
+    List<OTransactionId> list = sequenceManagerRecv.checkSelfStatus(status);
     assertNotNull(list);
     assertTrue(list.contains(new OTransactionId(Optional.empty(), two.getPosition(), two.getSequence())));
   }
@@ -73,7 +73,7 @@ public class OTransactionSequenceManagerTest {
 
     OTransactionSequenceStatus status = sequenceManager.currentStatus();
 
-    List<OTransactionId> list = sequenceManagerRecv.checkStatus(status);
+    List<OTransactionId> list = sequenceManagerRecv.checkSelfStatus(status);
     assertNotNull(list);
     assertTrue(list.contains(new OTransactionId(Optional.empty(), two.getPosition(), two.getSequence())));
     assertEquals(list.size(), 1);
@@ -102,7 +102,7 @@ public class OTransactionSequenceManagerTest {
     OTransactionSequenceStatus status = sequenceManager.currentStatus();
 
     // this will for sure contain two, it may even cantain three
-    List<OTransactionId> list = sequenceManagerRecv.checkStatus(status);
+    List<OTransactionId> list = sequenceManagerRecv.checkSelfStatus(status);
     assertNotNull(list);
     assertTrue(list.contains(new OTransactionId(Optional.empty(), two.getPosition(), two.getSequence())));
     assertTrue(list.contains(new OTransactionId(Optional.empty(), three.getPosition(), three.getSequence())));
@@ -167,7 +167,7 @@ public class OTransactionSequenceManagerTest {
     OTransactionSequenceStatus status = sequenceManager.currentStatus();
 
     // this will for sure contain two, it may even cantain three
-    List<OTransactionId> list = sequenceManagerRecv.checkStatus(status);
+    List<OTransactionId> list = sequenceManagerRecv.checkSelfStatus(status);
     assertNotNull(list);
     //assertTrue(list.contains(two));
     assertTrue(list.contains(new OTransactionId(Optional.empty(), three.getPosition(), three.getSequence())));
