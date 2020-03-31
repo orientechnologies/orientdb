@@ -26,7 +26,7 @@ import org.locationtech.spatial4j.shape.Shape;
  */
 public abstract class OSpatialFunctionAbstract extends OSQLFunctionAbstract {
 
-  OShapeFactory factory = OShapeFactory.INSTANCE;
+  protected OShapeFactory factory = OShapeFactory.INSTANCE;
 
   public OSpatialFunctionAbstract(String iName, int iMinParams, int iMaxParams) {
     super(iName, iMinParams, iMaxParams);
