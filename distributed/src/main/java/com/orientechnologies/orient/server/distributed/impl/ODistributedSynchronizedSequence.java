@@ -47,7 +47,7 @@ public class ODistributedSynchronizedSequence {
   }
 
   public List<OTransactionId> missingTransactions(OTransactionSequenceStatus lastState) {
-    List<OTransactionId> value = sequenceManager.checkStatus(lastState);
+    List<OTransactionId> value = sequenceManager.checkOtherStatus(lastState);
     return value;
   }
 }

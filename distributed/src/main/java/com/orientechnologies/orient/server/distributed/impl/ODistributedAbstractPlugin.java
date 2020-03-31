@@ -1004,8 +1004,8 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
                     try {
 
                       // TRY WITH DELTA SYNC
-                      databaseInstalled = requestDatabaseDelta(distrDatabase, databaseName, cfg);
-                      //databaseInstalled = requestNewDatabaseDelta(distrDatabase, databaseName, cfg);
+                      //databaseInstalled = requestDatabaseDelta(distrDatabase, databaseName, cfg);
+                      databaseInstalled = requestNewDatabaseDelta(distrDatabase, databaseName, cfg);
 
                     } catch (ODistributedDatabaseDeltaSyncException e) {
                       if (deploy == null || !deploy) {
@@ -1090,7 +1090,7 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
       }
       OTxMetadataHolder metadata;
       try (ODatabaseDocumentInternal inst = distrDatabase.getDatabaseInstance()) {
-        Optional<byte[]> read = ((OAbstractPaginatedStorage) inst.getStorage()).getLastMetadata();
+        Optional<byte[]> read = ((OAbstractPaginatedStorage) inst.getStorage().getUnderlying()).getLastMetadata();
         if (read.isPresent()) {
           metadata = OTxMetadataHolderImpl.read(read.get());
         } else {
@@ -1122,11 +1122,10 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
         throw OException.wrapException(new ODistributedDatabaseDeltaSyncException(null, e.toString()), e);
       }
 
-    }
-
-    if (databaseInstalledCorrectly) {
-      distrDatabase.resume();
-      return true;
+      if (databaseInstalledCorrectly) {
+        distrDatabase.resume();
+        return true;
+      }
     }
 
     throw new ODistributedDatabaseDeltaSyncException("Requested database delta sync error");
@@ -1354,7 +1353,6 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
     boolean databaseInstalledCorrectly = false;
     // EXTRACT THE REAL RESULT
     if (results.getResponseType() == ONewDeltaTaskResponse.ResponseType.CHUNK) {
-      final File uniqueClustersBackupDirectory = getClusterOwnedExclusivelyByCurrentNode(dbPath, databaseName);
       ODistributedDatabaseChunk firstChunk = results.getChunk().get();
       try {
 

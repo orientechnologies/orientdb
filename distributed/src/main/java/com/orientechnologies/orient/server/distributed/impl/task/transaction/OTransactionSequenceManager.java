@@ -89,7 +89,7 @@ public class OTransactionSequenceManager {
     }
   }
 
-  public synchronized List<OTransactionId> checkStatus(OTransactionSequenceStatus sequenceStatus) {
+  public synchronized List<OTransactionId> checkSelfStatus(OTransactionSequenceStatus sequenceStatus) {
     long[] status = sequenceStatus.getStatus();
     List<OTransactionId> missing = null;
     for (int i = 0; i < status.length; i++) {
@@ -108,6 +108,25 @@ public class OTransactionSequenceManager {
           for (long x = this.promisedSequential[i].getPosition() + 1; x <= status[i]; x++) {
             missing.add(new OTransactionId(Optional.empty(), i, x));
           }
+        }
+      }
+    }
+    if (missing == null) {
+      missing = Collections.emptyList();
+    }
+    return missing;
+  }
+
+  public synchronized List<OTransactionId> checkOtherStatus(OTransactionSequenceStatus sequenceStatus) {
+    long[] status = sequenceStatus.getStatus();
+    List<OTransactionId> missing = null;
+    for (int i = 0; i < status.length; i++) {
+      if (this.sequentials[i] > status[i]) {
+        if (missing == null) {
+          missing = new ArrayList<>();
+        }
+        for (long x = status[i] + 1; x <= this.sequentials[i]; x++) {
+          missing.add(new OTransactionId(Optional.empty(), i, x));
         }
       }
     }

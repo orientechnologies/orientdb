@@ -10,6 +10,13 @@ import java.util.Optional;
 
 public class ONewDeltaTaskResponse implements OStreamable {
 
+  public ONewDeltaTaskResponse() {
+  }
+
+  public ONewDeltaTaskResponse(ResponseType responseType) {
+    this.responseType = responseType;
+  }
+
   public ONewDeltaTaskResponse(ODistributedDatabaseChunk chunk) {
     this.responseType = ResponseType.CHUNK;
     this.chunk = Optional.of(chunk);
