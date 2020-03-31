@@ -22,6 +22,7 @@ public class OTransactionSequenceManager {
 
   public synchronized void fill(OTransactionSequenceStatus data) {
     this.sequentials = data.getStatus();
+    this.promisedSequential = new OTransactionId[this.sequentials.length];
   }
 
   public synchronized Optional<OTransactionId> next() {
@@ -84,8 +85,13 @@ public class OTransactionSequenceManager {
       this.promisedSequential[transactionId.getPosition()] = transactionId;
       return Optional.empty();
     } else {
-      return Optional
-          .of(new OTransactionId(Optional.empty(), transactionId.getPosition(), this.sequentials[transactionId.getPosition()]));
+      Optional<String> owner;
+      if (this.promisedSequential[transactionId.getPosition()] != null) {
+        owner = this.promisedSequential[transactionId.getPosition()].getNodeOwner();
+      } else {
+        owner = Optional.empty();
+      }
+      return Optional.of(new OTransactionId(owner, transactionId.getPosition(), this.sequentials[transactionId.getPosition()]));
     }
   }
 
