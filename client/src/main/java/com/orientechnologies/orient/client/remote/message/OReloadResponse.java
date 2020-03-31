@@ -19,37 +19,44 @@
  */
 package com.orientechnologies.orient.client.remote.message;
 
-import java.io.IOException;
-
+import com.orientechnologies.common.util.ORawPair;
 import com.orientechnologies.orient.client.remote.OBinaryResponse;
 import com.orientechnologies.orient.client.remote.OStorageRemoteSession;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializer;
-import com.orientechnologies.orient.core.storage.OCluster;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelDataInput;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelDataOutput;
 
+import java.io.IOException;
+
 public class OReloadResponse implements OBinaryResponse {
 
-  private OCluster[] clusters;
+  private String[] clusterNames;
+  private int[]    clusterIds;
 
   public OReloadResponse() {
   }
 
-  public OReloadResponse(OCluster[] clusters) {
-    this.clusters = clusters;
+  public OReloadResponse(String[] clusterNames, int[] clusterIds) {
+    this.clusterNames = clusterNames;
+    this.clusterIds = clusterIds;
   }
 
   @Override
   public void read(OChannelDataInput network, OStorageRemoteSession session) throws IOException {
-    this.clusters = OMessageHelper.readClustersArray(network);
+    final ORawPair<String[], int[]> clusters = OMessageHelper.readClustersArray(network);
+    clusterNames = clusters.first;
+    clusterIds = clusters.second;
   }
 
   public void write(OChannelDataOutput channel, int protocolVersion, ORecordSerializer serializer) throws IOException {
-    OMessageHelper.writeClustersArray(channel, clusters, protocolVersion);
+    OMessageHelper.writeClustersArray(channel, new ORawPair<>(clusterNames, clusterIds), protocolVersion);
   }
 
-  public OCluster[] getClusters() {
-    return clusters;
+  public String[] getClusterNames() {
+    return clusterNames;
   }
 
+  public int[] getClusterIds() {
+    return clusterIds;
+  }
 }

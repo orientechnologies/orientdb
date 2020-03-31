@@ -51,7 +51,7 @@ public class FetchFromStorageMetadataStep extends AbstractExecutionStep {
               result.setProperty("totalClusters", storage.getClusters());
               result.setProperty("configuration", toResult(storage.getConfiguration()));
               result.setProperty("conflictStrategy",
-                  storage.getConflictStrategy() == null ? null : storage.getConflictStrategy().getName());
+                  storage.getRecordConflictStrategy() == null ? null : storage.getRecordConflictStrategy().getName());
               result.setProperty("name", storage.getName());
               result.setProperty("size", storage.getSize());
               result.setProperty("type", storage.getType());

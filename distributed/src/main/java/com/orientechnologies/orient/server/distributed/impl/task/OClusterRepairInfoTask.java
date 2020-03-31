@@ -69,7 +69,7 @@ public class OClusterRepairInfoTask extends OAbstractReplicatedTask {
     reqContext.lock(new ORecordId(clusterId, -1), OGlobalConfiguration.DISTRIBUTED_ATOMIC_LOCK_TIMEOUT.getValueAsLong() * 3);
 
     // SEND BACK LAST RECORD POSITION
-    final long nextPosition = database.getStorage().getUnderlying().getClusterById(clusterId).getNextPosition();
+    final long nextPosition = database.getStorage().getUnderlying().getClusterNextPosition(clusterId);
     return nextPosition - 1;
   }
 

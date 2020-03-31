@@ -20,6 +20,7 @@
 package com.orientechnologies.orient.core.sql;
 
 import com.orientechnologies.common.exception.OException;
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
@@ -31,7 +32,7 @@ import com.orientechnologies.orient.core.sql.query.OLegacyResultSet;
 import com.orientechnologies.orient.core.sql.query.OLiveQuery;
 import com.orientechnologies.orient.core.sql.query.OLiveResultListener;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
-import com.orientechnologies.orient.core.storage.OCluster;
+import com.orientechnologies.orient.core.storage.OStorage;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -123,13 +124,13 @@ public class OLiveQueryTest {
       OClass clazz = db.getMetadata().getSchema().createClass("test");
 
       int defaultCluster = clazz.getDefaultClusterId();
-      OCluster cluster = db.getStorage().getClusterById(defaultCluster);
+      final OStorage storage = ((ODatabaseDocumentInternal)db).getStorage();
 
       MyLiveQueryListener listener = new MyLiveQueryListener(new CountDownLatch(1));
 
-      db.query(new OLiveQuery<ODocument>("live select from cluster:" + cluster.getName(), listener));
+      db.query(new OLiveQuery<ODocument>("live select from cluster:" + storage.getClusterNameById(defaultCluster), listener));
 
-      db.command(new OCommandSQL("insert into cluster:" + cluster.getName() + " set name = 'foo', surname = 'bar'")).execute();
+      db.command(new OCommandSQL("insert into cluster:" + storage.getClusterNameById(defaultCluster) + " set name = 'foo', surname = 'bar'")).execute();
 
       try {
         Assert.assertTrue(listener.latch.await(1, TimeUnit.MINUTES));

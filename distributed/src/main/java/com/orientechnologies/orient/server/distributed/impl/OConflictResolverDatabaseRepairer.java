@@ -34,37 +34,13 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.ORawBuffer;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.OStorageOperationResult;
-import com.orientechnologies.orient.server.distributed.ODistributedConfiguration;
-import com.orientechnologies.orient.server.distributed.ODistributedDatabase;
-import com.orientechnologies.orient.server.distributed.ODistributedDatabaseRepairer;
-import com.orientechnologies.orient.server.distributed.ODistributedRequest;
-import com.orientechnologies.orient.server.distributed.ODistributedRequestId;
-import com.orientechnologies.orient.server.distributed.ODistributedResponse;
-import com.orientechnologies.orient.server.distributed.ODistributedServerLog;
-import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
-import com.orientechnologies.orient.server.distributed.ODistributedTxContext;
+import com.orientechnologies.orient.server.distributed.*;
 import com.orientechnologies.orient.server.distributed.conflict.OAbstractDistributedConflictResolver;
 import com.orientechnologies.orient.server.distributed.conflict.ODistributedConflictResolver;
-import com.orientechnologies.orient.server.distributed.impl.task.OClusterRepairInfoTask;
-import com.orientechnologies.orient.server.distributed.impl.task.OCompleted2pcTask;
-import com.orientechnologies.orient.server.distributed.impl.task.OCreateRecordTask;
-import com.orientechnologies.orient.server.distributed.impl.task.OFixCreateRecordTask;
-import com.orientechnologies.orient.server.distributed.impl.task.OFixUpdateRecordTask;
-import com.orientechnologies.orient.server.distributed.impl.task.OReadRecordTask;
-import com.orientechnologies.orient.server.distributed.impl.task.ORepairClusterTask;
-import com.orientechnologies.orient.server.distributed.impl.task.ORepairRecordsTask;
-import com.orientechnologies.orient.server.distributed.impl.task.OTxTaskResult;
+import com.orientechnologies.orient.server.distributed.impl.task.*;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.TimerTask;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicLong;
@@ -353,7 +329,7 @@ public class OConflictResolverDatabaseRepairer implements ODistributedDatabaseRe
   private int repairClusterAtBlocks(final ODatabaseDocumentInternal db, final List<String> clusterNames, final int clusterId,
       final Map<String, Object> repairInfoResult) throws IOException {
     final OStorage storage = db.getStorage().getUnderlying();
-    final long localEnd = storage.getClusterById(clusterId).getNextPosition() - 1;
+    final long localEnd = storage.getClusterNextPosition(clusterId) - 1;
 
     final int batchMax = OGlobalConfiguration.DISTRIBUTED_CONFLICT_RESOLVER_REPAIRER_BATCH.getValueAsInteger();
 

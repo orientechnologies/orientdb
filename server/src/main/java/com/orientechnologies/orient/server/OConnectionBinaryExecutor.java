@@ -54,9 +54,9 @@ import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import com.orientechnologies.orient.core.sql.parser.OLocalResultSetLifecycleDecorator;
 import com.orientechnologies.orient.core.sql.query.OSQLAsynchQuery;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
-import com.orientechnologies.orient.core.storage.OCluster;
 import com.orientechnologies.orient.core.storage.OPhysicalPosition;
 import com.orientechnologies.orient.core.storage.ORecordMetadata;
+import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.OStorageProxy;
 import com.orientechnologies.orient.core.storage.cluster.OOfflineClusterException;
 import com.orientechnologies.orient.core.storage.config.OClusterBasedStorageConfiguration;
@@ -81,7 +81,7 @@ import com.orientechnologies.orient.server.tx.OTransactionOptimisticServer;
 
 import java.io.File;
 import java.io.IOException;
-import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.Map.Entry;
 import java.util.concurrent.TimeUnit;
@@ -127,8 +127,28 @@ public final class OConnectionBinaryExecutor implements OBinaryRequestExecutor {
 
   @Override
   public OBinaryResponse executeDBReload(OReloadRequest request) {
-    final Collection<? extends OCluster> clusters = connection.getDatabase().getStorage().getClusterInstances();
-    return new OReloadResponse(clusters.toArray(new OCluster[clusters.size()]));
+    final OStorage storage = connection.getDatabase().getStorage();
+    final Set<String> clusters = storage.getClusterNames();
+
+    String[] clusterNames = new String[clusters.size()];
+    int[] clusterIds = new int[clusterNames.length];
+
+    int counter = 0;
+    for (final String name : clusters) {
+      final int clusterId = storage.getClusterIdByName(name);
+      if (clusterId >= 0) {
+        clusterNames[counter] = name;
+        clusterIds[counter] = clusterId;
+        counter++;
+      }
+    }
+
+    if (counter < clusters.size()) {
+      clusterNames = Arrays.copyOf(clusterNames, counter);
+      clusterIds = Arrays.copyOf(clusterIds, counter);
+    }
+
+    return new OReloadResponse(clusterNames, clusterIds);
   }
 
   @Override
@@ -265,9 +285,8 @@ public final class OConnectionBinaryExecutor implements OBinaryRequestExecutor {
       // SEND THE DB CONFIGURATION INSTEAD SINCE IT WAS ON RECORD 0:0
       OFetchHelper.checkFetchPlanValid(fetchPlanString);
 
-      final byte[] record = connection.getDatabase().getStorage().callInLock(
-          () -> ((OClusterBasedStorageConfiguration) connection.getDatabase().getStorage().getConfiguration())
-              .toStream(connection.getData().protocolVersion, Charset.forName("UTF-8")), false);
+      final byte[] record = ((OClusterBasedStorageConfiguration) connection.getDatabase().getStorage().getConfiguration())
+          .toStream(connection.getData().protocolVersion, StandardCharsets.UTF_8);
 
       response = new OReadRecordResponse(OBlob.RECORD_TYPE, 0, record, new HashSet<>());
 
@@ -321,9 +340,8 @@ public final class OConnectionBinaryExecutor implements OBinaryRequestExecutor {
       // SEND THE DB CONFIGURATION INSTEAD SINCE IT WAS ON RECORD 0:0
       OFetchHelper.checkFetchPlanValid(fetchPlanString);
 
-      final byte[] record = connection.getDatabase().getStorage().callInLock(
-          () -> ((OClusterBasedStorageConfiguration) connection.getDatabase().getStorage().getConfiguration())
-              .toStream(connection.getData().protocolVersion, Charset.forName("UTF-8")), false);
+      final byte[] record = ((OClusterBasedStorageConfiguration) connection.getDatabase().getStorage().getConfiguration())
+          .toStream(connection.getData().protocolVersion, StandardCharsets.UTF_8);
 
       response = new OReadRecordIfVersionIsNotLatestResponse(OBlob.RECORD_TYPE, 0, record, new HashSet<>());
 
@@ -1002,7 +1020,8 @@ public final class OConnectionBinaryExecutor implements OBinaryRequestExecutor {
       connection.getDatabase().getMetadata().getSecurity().authenticate(request.getUserName(), request.getUserPassword());
     }
 
-    final Collection<? extends OCluster> clusters = connection.getDatabase().getStorage().getClusterInstances();
+    final OStorage storage = connection.getDatabase().getStorage();
+    final Set<String> clusters = storage.getClusterNames();
     final byte[] tokenToSend;
     if (Boolean.TRUE.equals(connection.getTokenBased())) {
       tokenToSend = token;
@@ -1011,8 +1030,8 @@ public final class OConnectionBinaryExecutor implements OBinaryRequestExecutor {
 
     final OServerPlugin plugin = server.getPlugin("cluster");
     byte[] distriConf = null;
-    ODocument distributedCfg = null;
-    if (plugin != null && plugin instanceof ODistributedServerManager) {
+    ODocument distributedCfg;
+    if (plugin instanceof ODistributedServerManager) {
       distributedCfg = ((ODistributedServerManager) plugin).getClusterConfiguration();
 
       final ODistributedConfiguration dbCfg = ((ODistributedServerManager) plugin)
@@ -1024,8 +1043,25 @@ public final class OConnectionBinaryExecutor implements OBinaryRequestExecutor {
       distriConf = getRecordBytes(connection, distributedCfg);
     }
 
-    return new OOpenResponse(connection.getId(), tokenToSend, clusters, distriConf, OConstants.getVersion());
+    String[] clusterNames = new String[clusters.size()];
+    int[] clusterIds = new int[clusters.size()];
 
+    int counter = 0;
+    for (String name : clusters) {
+      final int clusterId = storage.getClusterIdByName(name);
+      if (clusterId >= 0) {
+        clusterNames[counter] = name;
+        clusterIds[counter] = clusterId;
+        counter++;
+      }
+    }
+
+    if (counter < clusters.size()) {
+      clusterNames = Arrays.copyOf(clusterNames, counter);
+      clusterIds = Arrays.copyOf(clusterIds, counter);
+    }
+
+    return new OOpenResponse(connection.getId(), tokenToSend, clusterIds, clusterNames, distriConf, OConstants.getVersion());
   }
 
   @Override

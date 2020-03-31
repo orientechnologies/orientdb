@@ -32,6 +32,7 @@ import com.orientechnologies.orient.core.exception.OInvalidDatabaseNameException
 import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
+import com.orientechnologies.orient.core.storage.cluster.OPaginatedCluster;
 import com.orientechnologies.orient.core.storage.ridbag.sbtree.OSBTreeCollectionManager;
 import com.orientechnologies.orient.core.tx.OTransactionInternal;
 import org.junit.Assert;
@@ -195,11 +196,6 @@ public class StorageNamingTests {
     }
 
     @Override
-    public OCluster getClusterById(int iId) {
-      return null;
-    }
-
-    @Override
     public Collection<? extends OCluster> getClusterInstances() {
       return null;
     }
@@ -217,6 +213,56 @@ public class StorageNamingTests {
     @Override
     public boolean dropCluster(int iId) {
       return false;
+    }
+
+    @Override
+    public String getClusterNameById(int clusterId) {
+      return null;
+    }
+
+    @Override
+    public long getClusterRecordsSizeById(int clusterId) {
+      return 0;
+    }
+
+    @Override
+    public long getClusterRecordsSizeByName(String clusterName) {
+      return 0;
+    }
+
+    @Override
+    public boolean setClusterAttribute(String clusterName, OCluster.ATTRIBUTES attribute, Object value) {
+      return false;
+    }
+
+    @Override
+    public String getClusterRecordConflictStrategy(int clusterId) {
+      return null;
+    }
+
+    @Override
+    public String getClusterEncryption(int clusterId) {
+      return null;
+    }
+
+    @Override
+    public boolean isSystemCluster(int clusterId) {
+      return false;
+    }
+
+    @Override
+    public long getLastClusterPosition(int clusterId) {
+      return 0;
+    }
+
+    @Override
+    public long getClusterNextPosition(int clusterId) {
+      return 0;
+    }
+
+    @Override
+    public OPaginatedCluster.RECORD_STATUS getRecordStatus(ORID rid) {
+      return null;
     }
 
     @Override
@@ -320,12 +366,7 @@ public class StorageNamingTests {
     }
 
     @Override
-    public OCluster getClusterByName(String iClusterName) {
-      return null;
-    }
-
-    @Override
-    public ORecordConflictStrategy getConflictStrategy() {
+    public ORecordConflictStrategy getRecordConflictStrategy() {
       return null;
     }
 

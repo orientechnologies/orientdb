@@ -404,11 +404,6 @@ public class ODatabaseDocumentTx implements ODatabaseDocumentInternal {
   }
 
   @Override
-  public <V> V callInLock(Callable<V> iCallable, boolean iExclusiveLock) {
-    return internal.callInLock(iCallable, iExclusiveLock);
-  }
-
-  @Override
   public void resetInitialization() {
     if (internal != null)
       internal.resetInitialization();

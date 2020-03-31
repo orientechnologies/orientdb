@@ -108,9 +108,7 @@ public class OIncrementalServerSync {
 
                 totalRecords++;
 
-                final OPaginatedCluster cluster = (OPaginatedCluster) db.getStorage().getUnderlying()
-                    .getClusterById(rid.getClusterId());
-                final OPaginatedCluster.RECORD_STATUS recordStatus = cluster.getRecordStatus(rid.getClusterPosition());
+                final OPaginatedCluster.RECORD_STATUS recordStatus = db.getStorage().getUnderlying().getRecordStatus(rid);
 
                 ORecord newRecord = null;
 

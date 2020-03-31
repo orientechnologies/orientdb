@@ -95,7 +95,7 @@ public class OGraphBatchInsertBasic {
         final String outField = OrientEdgeType.CLASS_NAME.equals(edgeClass) ? "out_" : ("out_" + edgeClass);
         final String inField = OrientEdgeType.CLASS_NAME.equals(edgeClass) ? "in_" : ("in_" + edgeClass);
 
-        String clusterName = db.getStorage().getClusterById(clusterId).getName();
+        String clusterName = db.getStorage().getClusterNameById(clusterId);
         // long firstAvailableClusterPosition = lastClusterPositions[mod] + 1;
 
         for (long i = mod; i <= last; i += parallel) {
@@ -195,7 +195,7 @@ public class OGraphBatchInsertBasic {
     for (int i = 0; i < clusterIds.length; i++) {
       int clusterId = clusterIds[i];
       try {
-        lastClusterPositions[i] = db.getStorage().getClusterById(clusterId).getLastPosition();
+        lastClusterPositions[i] = db.getStorage().getLastClusterPosition(clusterId);
       } catch (Exception e) {
         throw new RuntimeException(e);
       }

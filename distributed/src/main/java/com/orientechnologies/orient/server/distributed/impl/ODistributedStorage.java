@@ -51,6 +51,7 @@ import com.orientechnologies.orient.core.sql.OCommandExecutorSQLSelect;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.functions.OSQLFunctionRuntime;
 import com.orientechnologies.orient.core.storage.*;
+import com.orientechnologies.orient.core.storage.cluster.OPaginatedCluster;
 import com.orientechnologies.orient.core.storage.disk.OLocalPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.OFreezableStorageComponent;
@@ -72,8 +73,6 @@ import com.orientechnologies.orient.server.hazelcast.OHazelcastPlugin;
 import java.io.*;
 import java.util.*;
 import java.util.concurrent.Callable;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * Distributed storage implementation that routes to the owner node the request.
@@ -712,10 +711,6 @@ public class ODistributedStorage implements OStorage, OFreezableStorageComponent
     return wrapped.existsResource(iName);
   }
 
-  public OCluster getClusterByName(final String iName) {
-    return wrapped.getClusterByName(iName);
-  }
-
   @Override
   public String getClusterName(final int clusterId) {
     return wrapped.getClusterName(clusterId);
@@ -727,8 +722,8 @@ public class ODistributedStorage implements OStorage, OFreezableStorageComponent
   }
 
   @Override
-  public ORecordConflictStrategy getConflictStrategy() {
-    return getUnderlying().getConflictStrategy();
+  public ORecordConflictStrategy getRecordConflictStrategy() {
+    return getUnderlying().getRecordConflictStrategy();
   }
 
   @Override
@@ -863,11 +858,6 @@ public class ODistributedStorage implements OStorage, OFreezableStorageComponent
   }
 
   @Override
-  public OCluster getClusterById(int iId) {
-    return wrapped.getClusterById(iId);
-  }
-
-  @Override
   public Collection<? extends OCluster> getClusterInstances() {
     return wrapped.getClusterInstances();
   }
@@ -891,6 +881,56 @@ public class ODistributedStorage implements OStorage, OFreezableStorageComponent
   public boolean dropCluster(final int iId) {
     resetLastValidBackup();
     return wrapped.dropCluster(iId);
+  }
+
+  @Override
+  public String getClusterNameById(int clusterId) {
+    return wrapped.getClusterNameById(clusterId);
+  }
+
+  @Override
+  public long getClusterRecordsSizeById(int clusterId) {
+    return wrapped.getClusterRecordsSizeById(clusterId);
+  }
+
+  @Override
+  public long getClusterRecordsSizeByName(String clusterName) {
+    return wrapped.getClusterRecordsSizeByName(clusterName);
+  }
+
+  @Override
+  public boolean setClusterAttribute(String clusterName, OCluster.ATTRIBUTES attribute, Object value) {
+    return wrapped.setClusterAttribute(clusterName, attribute, value);
+  }
+
+  @Override
+  public String getClusterRecordConflictStrategy(int clusterId) {
+    return wrapped.getClusterRecordConflictStrategy(clusterId);
+  }
+
+  @Override
+  public String getClusterEncryption(int clusterId) {
+    return wrapped.getClusterEncryption(clusterId);
+  }
+
+  @Override
+  public boolean isSystemCluster(int clusterId) {
+    return wrapped.isSystemCluster(clusterId);
+  }
+
+  @Override
+  public long getLastClusterPosition(int clusterId) {
+    return wrapped.getLastClusterPosition(clusterId);
+  }
+
+  @Override
+  public long getClusterNextPosition(int clusterId) {
+    return wrapped.getClusterNextPosition(clusterId);
+  }
+
+  @Override
+  public OPaginatedCluster.RECORD_STATUS getRecordStatus(ORID rid) {
+    return wrapped.getRecordStatus(rid);
   }
 
   @Override
@@ -971,11 +1011,6 @@ public class ODistributedStorage implements OStorage, OFreezableStorageComponent
   @Override
   public long[] getClusterDataRange(final int currentClusterId) {
     return wrapped.getClusterDataRange(currentClusterId);
-  }
-
-  @Override
-  public <V> V callInLock(final Callable<V> iCallable, final boolean iExclusiveLock) {
-    return wrapped.callInLock(iCallable, iExclusiveLock);
   }
 
   public STATUS getStatus() {
@@ -1159,8 +1194,7 @@ public class ODistributedStorage implements OStorage, OFreezableStorageComponent
   }
 
   public String getClusterNameByRID(final ORecordId iRid) {
-    final OCluster cluster = getClusterById(iRid.getClusterId());
-    return cluster != null ? cluster.getName() : "*";
+    return wrapped.getClusterNameById(iRid.getClusterId());
   }
 
   @Override

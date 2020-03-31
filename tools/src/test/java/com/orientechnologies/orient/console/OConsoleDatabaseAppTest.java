@@ -1,7 +1,5 @@
 package com.orientechnologies.orient.console;
 
-import com.orientechnologies.common.log.OLogManager;
-import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -84,66 +82,6 @@ public class OConsoleDatabaseAppTest {
 
   }
 
-  @Test
-  public void testDisplayRawRecord() {
-    String dbUrl = "memory:OConsoleDatabaseAppTestDisplayRawRecord";
-
-    // builder.append("display raw record " + rid);
-
-    // OConsoleDatabaseApp console = new OConsoleDatabaseApp(new String[] { builder.toString() });
-    OConsoleDatabaseApp console = new OConsoleDatabaseApp(null);
-
-    ByteArrayOutputStream out = new ByteArrayOutputStream();
-    PrintStream stream = new PrintStream(out);
-    console.setOutput(stream);
-    try {
-      console.createDatabase(dbUrl, null, null, null, null, null);
-      console.createClass("class foo");
-      console.insert("into foo set name = 'barbar'");
-
-      byte[] result = out.toByteArray();
-      out.close();
-      stream.close();
-      out = new ByteArrayOutputStream();
-      stream = new PrintStream(out);
-      console.setOutput(stream);
-      String resultString = new String(result);
-
-      String rid = resultString.substring(resultString.indexOf("#"), resultString.indexOf("{") ).trim();
-
-      console.set("maxBinaryDisplay", "10000");
-      try {
-        console.displayRawRecord(rid);
-      } catch (Exception e) {
-        OLogManager.instance().error(this, "testDisplayRawRecord - Result from console: " + resultString, e);
-        throw e;
-      }
-      result = out.toByteArray();
-      resultString = new String(result);
-
-//      System.out.println("RAW REC: " + resultString);
-      Assert.assertTrue(resultString.contains("Raw record content."));
-      if ("ORecordSerializerBinary".equals(((ODatabaseDocumentInternal) console.getCurrentDatabase()).getSerializer().toString())) {
-//        Assert.assertTrue(resultString.contains("class name: foo"));
-        Assert.assertTrue(resultString.contains("property value: barbar"));
-      }
-    } catch (IOException e) {
-      Assert.fail();
-    } finally {
-      try {
-        out.close();
-      } catch (Exception e) {
-        e.printStackTrace();
-      }
-      try {
-        stream.close();
-      } catch (Exception e) {
-        e.printStackTrace();
-      }
-      console.close();
-    }
-
-  }
 
   @Test
   public void testDumpRecordDetails() {

@@ -144,7 +144,7 @@ public class OCommandExecutorSQLAlterCluster extends OCommandExecutorSQLAbstract
 
     for (final int clusterId : getClusters()) {
       if (this.clusterId > -1 && clusterName.equals(String.valueOf(this.clusterId))) {
-        clusterName = storage.getClusterById(clusterId).getName();
+        clusterName = storage.getClusterNameById(clusterId);
       } else {
         this.clusterId = clusterId;
       }

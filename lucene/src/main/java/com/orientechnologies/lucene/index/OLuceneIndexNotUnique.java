@@ -98,7 +98,7 @@ public class OLuceneIndexNotUnique extends OIndexAbstract implements OLuceneInde
     try {
       if (clustersToIndex.remove(iClusterName)) {
         updateConfiguration();
-        remove("_CLUSTER:" + storage.getClusterByName(iClusterName).getId());
+        remove("_CLUSTER:" + storage.getClusterIdByName(iClusterName));
       }
 
       return this;

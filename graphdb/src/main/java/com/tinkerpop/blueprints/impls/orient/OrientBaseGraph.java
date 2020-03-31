@@ -513,7 +513,7 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
   public ORecordConflictStrategy getConflictStrategy() {
     makeActive();
 
-    return getDatabase().getStorage().getConflictStrategy();
+    return getDatabase().getStorage().getRecordConflictStrategy();
   }
 
   public OrientBaseGraph setConflictStrategy(final String iStrategyName) {

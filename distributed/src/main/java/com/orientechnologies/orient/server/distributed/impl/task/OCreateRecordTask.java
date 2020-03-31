@@ -51,11 +51,11 @@ import java.util.List;
  * @author Luca Garulli (l.garulli--at--orientdb.com)
  */
 public class OCreateRecordTask extends OAbstractRecordReplicatedTask {
-  public static final int FACTORYID = 0;
-  protected byte[] content;
-  protected byte   recordType;
-  protected int clusterId = -1;
-  private transient ORecord record;
+  public static final int     FACTORYID = 0;
+  protected           byte[]  content;
+  protected           byte    recordType;
+  protected           int     clusterId = -1;
+  private transient   ORecord record;
 
   public OCreateRecordTask() {
   }
@@ -111,9 +111,8 @@ public class OCreateRecordTask extends OAbstractRecordReplicatedTask {
     if (!rid.isPersistent())
       throw new ODistributedException("Record " + rid + " has not been saved on owner node first (temporary rid)");
 
-    final OPaginatedCluster cluster = (OPaginatedCluster) ODatabaseRecordThreadLocal.instance().get().getStorage()
-        .getClusterById(rid.getClusterId());
-    final OPaginatedCluster.RECORD_STATUS recordStatus = cluster.getRecordStatus(rid.getClusterPosition());
+    final OPaginatedCluster.RECORD_STATUS recordStatus = ODatabaseRecordThreadLocal.instance().get().getStorage()
+        .getRecordStatus(rid);
 
     if (ODistributedServerLog.isDebugEnabled())
       ODistributedServerLog

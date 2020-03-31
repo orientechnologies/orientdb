@@ -38,7 +38,7 @@ import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.metadata.security.OUser;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.OJSONWriter;
-import com.orientechnologies.orient.core.storage.OCluster;
+import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpRequest;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpResponse;
@@ -223,23 +223,19 @@ public class OServerCommandGetDatabase extends OServerCommandGetConnect {
 
       if (db.getClusterNames() != null) {
         json.beginCollection("clusters");
-        OCluster cluster;
+        final OStorage storage = db.getStorage();
         for (String clusterName : db.getClusterNames()) {
-          try {
-            cluster = db.getStorage().getClusterById(db.getClusterIdByName(clusterName));
-          } catch (IllegalArgumentException e) {
-            OLogManager.instance().error(this, "Cluster '%s' does not exist in database", e, clusterName);
+          final int clusterId = storage.getClusterIdByName(clusterName);
+          if (clusterId < 0) {
             continue;
           }
-
           try {
-            final String conflictStrategy =
-                cluster.getRecordConflictStrategy() != null ? cluster.getRecordConflictStrategy().getName() : null;
+            final String conflictStrategy = storage.getClusterRecordConflictStrategy(clusterId);
 
             json.beginObject();
-            json.writeAttribute("id", cluster.getId());
+            json.writeAttribute("id", clusterId);
             json.writeAttribute("name", clusterName);
-            json.writeAttribute("records", cluster.getEntries() - cluster.getTombstonesCount());
+            json.writeAttribute("records", storage.count(clusterId));
             json.writeAttribute("conflictStrategy", conflictStrategy);
             json.writeAttribute("size", "-");
             json.writeAttribute("filled", "-");

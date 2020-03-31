@@ -1,31 +1,33 @@
 package com.orientechnologies.orient.client.remote.message;
 
-import java.io.IOException;
-import java.util.Collection;
-
+import com.orientechnologies.common.util.ORawPair;
 import com.orientechnologies.orient.client.remote.OBinaryResponse;
 import com.orientechnologies.orient.client.remote.OStorageRemoteSession;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializer;
-import com.orientechnologies.orient.core.storage.OCluster;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelDataInput;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelDataOutput;
 
+import java.io.IOException;
+
 public class OOpenResponse implements OBinaryResponse {
-  private int        sessionId;
-  private byte[]     sessionToken;
-  private OCluster[] clusterIds;
-  private byte[]     distributedConfiguration;
-  private String     serverVersion;
+  private int      sessionId;
+  private byte[]   sessionToken;
+  private int[]    clusterIds;
+  private String[] clusterNames;
+
+  private byte[] distributedConfiguration;
+  private String serverVersion;
 
   public OOpenResponse() {
   }
 
-  public OOpenResponse(int sessionId, byte[] sessionToken, Collection<? extends OCluster> clusters, byte[] distriConf,
+  public OOpenResponse(int sessionId, byte[] sessionToken, int[] clusterIds, String[] clusterNames, byte[] distriConf,
       String version) {
     this.sessionId = sessionId;
     this.sessionToken = sessionToken;
-    this.clusterIds = clusters.toArray(new OCluster[clusters.size()]);
+    this.clusterIds = clusterIds;
+    this.clusterNames = clusterNames;
     this.distributedConfiguration = distriConf;
     this.serverVersion = version;
   }
@@ -36,7 +38,7 @@ public class OOpenResponse implements OBinaryResponse {
     if (protocolVersion > OChannelBinaryProtocol.PROTOCOL_VERSION_26)
       channel.writeBytes(sessionToken);
 
-    OMessageHelper.writeClustersArray(channel, clusterIds, protocolVersion);
+    OMessageHelper.writeClustersArray(channel, new ORawPair<>(clusterNames, clusterIds), protocolVersion);
     channel.writeBytes(distributedConfiguration);
     channel.writeString(serverVersion);
   }
@@ -45,7 +47,7 @@ public class OOpenResponse implements OBinaryResponse {
   public void read(OChannelDataInput network, OStorageRemoteSession session) throws IOException {
     sessionId = network.readInt();
     sessionToken = network.readBytes();
-    clusterIds = OMessageHelper.readClustersArray(network);
+    final ORawPair<String[], int[]> clusters = OMessageHelper.readClustersArray(network);
     distributedConfiguration = network.readBytes();
     serverVersion = network.readString();
   }
@@ -58,8 +60,12 @@ public class OOpenResponse implements OBinaryResponse {
     return sessionToken;
   }
 
-  public OCluster[] getClusterIds() {
+  public int[] getClusterIds() {
     return clusterIds;
+  }
+
+  public String[] getClusterNames() {
+    return clusterNames;
   }
 
   public byte[] getDistributedConfiguration() {
