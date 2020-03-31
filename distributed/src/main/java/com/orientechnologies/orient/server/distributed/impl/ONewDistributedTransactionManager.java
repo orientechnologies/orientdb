@@ -337,10 +337,9 @@ public class ONewDistributedTransactionManager {
               ((OTxUniqueIndex) result).getIndex(), ((OTxUniqueIndex) result).getKey(), ((OTxUniqueIndex) result).getRecordId()));
           break;
         case OTxInvalidSequential.ID:
-          messages.add(String.format("\"invalid sequential (node " + node + ") current status:'%s' requested:'%s'",
-              ((OTxInvalidSequential) result).getCurrent(), transactionId));
-          break;
-
+          sendPhase2Task(involvedClusters, nodes, new OTransactionPhase2Task(requestId, false, involvedClustersIds, getLsn()));
+          localKo(requestId, database);
+          throw new OInvalidSequentialException(((OTxInvalidSequential) result).getCurrent());
         }
       }
       sendPhase2Task(involvedClusters, nodes, new OTransactionPhase2Task(requestId, false, involvedClustersIds, getLsn()));
