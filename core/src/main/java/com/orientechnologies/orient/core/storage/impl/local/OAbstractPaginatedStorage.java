@@ -303,7 +303,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
           idGen.setStartId(0);
         }
 
-        checkIfStorageDirty();
         recoverIfNeeded();
 
         atomicOperationsManager.executeInsideAtomicOperation(null, (atomicOperation) -> {
