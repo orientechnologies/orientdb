@@ -45,11 +45,18 @@ public class ODistributedSynchronizedSequence {
   }
 
   public List<OTransactionId> missingTransactions(OTransactionSequenceStatus lastState) {
-    List<OTransactionId> value = sequenceManager.checkOtherStatus(lastState);
-    return value;
+    return sequenceManager.checkOtherStatus(lastState);
   }
 
   public void fill(Optional<byte[]> lastMetadata) {
     lastMetadata.ifPresent((data) -> sequenceManager.fill(OTxMetadataHolderImpl.read(data).getStatus()));
+  }
+
+  public OTransactionSequenceStatus currentStatus() {
+    return sequenceManager.currentStatus();
+  }
+
+  public List<OTransactionId> checkSelfStatus(OTransactionSequenceStatus status) {
+    return sequenceManager.checkSelfStatus(status);
   }
 }

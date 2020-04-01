@@ -147,6 +147,9 @@ public class ODefaultRemoteTaskFactoryV2 extends ODefaultRemoteTaskFactoryV1 {
 
     case OSyncDatabaseNewDeltaTask.FACTORYID: // 57
       return new OSyncDatabaseNewDeltaTask();
+
+    case OUpdateDatabaseSequenceStatusTask.FACTORYID: // 58
+      return new OUpdateDatabaseSequenceStatusTask();
     }
 
     throw new IllegalArgumentException("Task with code " + code + " is not supported");
