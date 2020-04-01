@@ -289,6 +289,8 @@ public class ONewDistributedTransactionManager {
         throw new ODistributedKeyLockedException(((OTxKeyLockTimeout) resultPayload).getNode(),
             ((OTxKeyLockTimeout) resultPayload).getKey(), timeout);
       case OTxInvalidSequential.ID:
+        sendPhase2Task(involvedClusters, nodes, new OTransactionPhase2Task(requestId, false, involvedClustersIds, getLsn()));
+        localKo(requestId, database);
         throw new OInvalidSequentialException(((OTxInvalidSequential) resultPayload).getCurrent());
       }
 
