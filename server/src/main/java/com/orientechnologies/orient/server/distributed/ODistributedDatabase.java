@@ -118,6 +118,8 @@ public interface ODistributedDatabase {
 
   Optional<OTransactionId> validate(OTransactionId id);
 
+  Optional<OTransactionSequenceStatus> status();
+
   void rollback(OTransactionId id);
 
   OTxMetadataHolder commit(OTransactionId id);
@@ -147,4 +149,6 @@ public interface ODistributedDatabase {
   Optional<OTransactionId> nextId();
 
   List<OTransactionId> missingTransactions(OTransactionSequenceStatus lastState);
+
+  void validateStatus(OTransactionSequenceStatus status);
 }

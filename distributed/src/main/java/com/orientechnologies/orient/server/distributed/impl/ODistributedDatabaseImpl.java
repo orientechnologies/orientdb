@@ -39,6 +39,7 @@ import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.storage.ORawBuffer;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
+import com.orientechnologies.orient.core.tx.OTransactionId;
 import com.orientechnologies.orient.core.tx.OTransactionSequenceStatus;
 import com.orientechnologies.orient.core.tx.OTxMetadataHolder;
 import com.orientechnologies.orient.server.OServer;
@@ -47,7 +48,6 @@ import com.orientechnologies.orient.server.distributed.*;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIRECTION;
 import com.orientechnologies.orient.server.distributed.impl.task.ODistributedLockTask;
 import com.orientechnologies.orient.server.distributed.impl.task.OUnreachableServerLocalTask;
-import com.orientechnologies.orient.core.tx.OTransactionId;
 import com.orientechnologies.orient.server.distributed.task.OAbstractRemoteTask;
 import com.orientechnologies.orient.server.distributed.task.ODistributedRecordLockedException;
 import com.orientechnologies.orient.server.distributed.task.ORemoteTask;
@@ -1390,4 +1390,20 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
     return activeTxContexts;
   }
 
+  @Override
+  public void validateStatus(OTransactionSequenceStatus status) {
+    List<OTransactionId> res = sequenceManager.checkSelfStatus(status);
+    if (!res.isEmpty()) {
+      manager.installDatabase(false, databaseName, false, true);
+    }
+  }
+
+  @Override
+  public Optional<OTransactionSequenceStatus> status() {
+    if (sequenceManager == null) {
+      return Optional.empty();
+    } else {
+      return Optional.of(sequenceManager.currentStatus());
+    }
+  }
 }
