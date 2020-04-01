@@ -18,11 +18,15 @@
 package com.orientechnologies.spatial.functions;
 
 import com.orientechnologies.orient.core.sql.functions.OSQLFunctionAbstract;
+import com.orientechnologies.spatial.shape.OShapeFactory;
+import org.locationtech.spatial4j.shape.Shape;
 
 /**
  * Created by Enrico Risa on 22/07/16.
  */
 public abstract class OSpatialFunctionAbstract extends OSQLFunctionAbstract {
+
+  protected OShapeFactory factory = OShapeFactory.INSTANCE;
 
   public OSpatialFunctionAbstract(String iName, int iMinParams, int iMaxParams) {
     super(iName, iMinParams, iMaxParams);
@@ -35,5 +39,16 @@ public abstract class OSpatialFunctionAbstract extends OSQLFunctionAbstract {
     }
 
     return false;
+  }
+
+  protected Shape toShape(Object param) {
+    final Object singleItem = getSingleItem(param);
+    if (singleItem != null) {
+      final Object singleProp = getSingleProperty(singleItem, false);
+      if (singleProp != null) {
+        return factory.fromObject(singleProp);
+      }
+    }
+    return null;
   }
 }

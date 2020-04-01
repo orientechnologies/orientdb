@@ -5754,7 +5754,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       final int reportBatchSize = OGlobalConfiguration.WAL_REPORT_AFTER_OPERATIONS_DURING_RESTORE.getValueAsInteger();
       final Map<Long, List<OWALRecord>> operationUnits = new HashMap<>(1024);
       final Map<Long, byte[]> operationMetadata = new LinkedHashMap<>(1024);
-      final Map<Long, byte[]> pendingMetadata = new HashMap<>(1024);
 
       long lastReportTime = 0;
 
@@ -5773,23 +5772,10 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
                 atomicUnit.add(walRecord);
                 restoreAtomicUnit(atomicUnit, atLeastOnePageUpdate);
               }
-              if (operationMetadata.containsKey(atomicUnitEndRecord.getOperationUnitId())) {
-                byte[] metadata = operationMetadata.get(atomicUnitEndRecord.getOperationUnitId());
+              byte[] metadata = operationMetadata.remove(atomicUnitEndRecord.getOperationUnitId());
+              if (metadata != null) {
                 this.lastMetadata = metadata;
-                Iterator<Map.Entry<Long, byte[]>> values = operationMetadata.entrySet().iterator();
-                while (values.hasNext()) {
-                  Map.Entry<Long, byte[]> value = values.next();
-                  if (value.getValue().equals(metadata)) {
-                    values.remove();
-                    break;
-                  } else {
-                    pendingMetadata.put(value.getKey(), value.getValue());
-                    values.remove();
-                  }
-                }
               }
-              pendingMetadata.remove(atomicUnitEndRecord.getAtomicOperationMetadata());
-
             } else if (walRecord instanceof OAtomicUnitStartRecord) {
               if (walRecord instanceof OAtomicUnitStartMetadataRecord) {
                 byte[] metadata = ((OAtomicUnitStartMetadataRecord) walRecord).getMetadata();
