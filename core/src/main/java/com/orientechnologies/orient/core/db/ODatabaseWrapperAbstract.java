@@ -362,11 +362,6 @@ public abstract class ODatabaseWrapperAbstract<DB extends ODatabaseInternal, T> 
   }
 
   @Override
-  public boolean isFrozen() {
-    return underlying.isFrozen();
-  }
-
-  @Override
   public void release() {
     underlying.release();
   }

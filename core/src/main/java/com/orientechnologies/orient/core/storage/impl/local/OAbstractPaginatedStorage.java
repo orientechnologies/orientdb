@@ -3894,19 +3894,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
   }
 
   @Override
-  public final boolean isFrozen() {
-    try {
-      return atomicOperationsManager.isFrozen();
-    } catch (final RuntimeException ee) {
-      throw logAndPrepareForRethrow(ee);
-    } catch (final Error ee) {
-      throw logAndPrepareForRethrow(ee);
-    } catch (final Throwable t) {
-      throw logAndPrepareForRethrow(t);
-    }
-  }
-
-  @Override
   public final void freeze(final boolean throwException) {
     try {
       checkOpenness();

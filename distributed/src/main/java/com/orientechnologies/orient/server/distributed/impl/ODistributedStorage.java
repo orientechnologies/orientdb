@@ -1137,11 +1137,6 @@ public class ODistributedStorage implements OStorage, OFreezableStorageComponent
   }
 
   @Override
-  public boolean isFrozen() {
-    return getFreezableStorage().isFrozen();
-  }
-
-  @Override
   public void release() {
     if (prevStatus == ODistributedServerManager.DB_STATUS.ONLINE) {
       // RESTORE PREVIOUS STATUS
