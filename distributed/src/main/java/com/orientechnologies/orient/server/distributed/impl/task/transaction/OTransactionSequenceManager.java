@@ -13,10 +13,10 @@ public class OTransactionSequenceManager {
   private volatile OTransactionId[] promisedSequential;
   private final    String           node;
 
-  public OTransactionSequenceManager(String node) {
+  public OTransactionSequenceManager(String node, int size) {
     //TODO: make size configurable
-    this.sequentials = new long[1000];
-    this.promisedSequential = new OTransactionId[1000];
+    this.sequentials = new long[size];
+    this.promisedSequential = new OTransactionId[size];
     this.node = node;
   }
 
