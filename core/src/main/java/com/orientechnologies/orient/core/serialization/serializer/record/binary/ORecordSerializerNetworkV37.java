@@ -364,7 +364,7 @@ public class ORecordSerializerNetworkV37 implements ORecordSerializer {
       OVarIntSerializer.write(bytes, pointer.getFileId());
       OVarIntSerializer.write(bytes, pointer.getRootPointer().getPageIndex());
       OVarIntSerializer.write(bytes, pointer.getRootPointer().getPageOffset());
-      OVarIntSerializer.write(bytes, bag.size());
+      OVarIntSerializer.write(bytes, -1);
       NavigableMap<OIdentifiable, Change> changes = bag.getChanges();
       if (changes != null) {
         OVarIntSerializer.write(bytes, changes.size());
