@@ -204,11 +204,11 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
   private final int id;
 
-  private final Map<String, OBaseIndexEngine> indexEngineNameMap = new HashMap<>();
-  private final List<OBaseIndexEngine>        indexEngines       = new ArrayList<>();
-  private final AtomicOperationIdGen          idGen              = new AtomicOperationIdGen();
-  private       boolean                       wereDataRestoredAfterOpen;
-  private volatile Optional<byte[]>           lastMetadata       = Optional.empty();
+  private final    Map<String, OBaseIndexEngine> indexEngineNameMap = new HashMap<>();
+  private final    List<OBaseIndexEngine>        indexEngines       = new ArrayList<>();
+  private final    AtomicOperationIdGen          idGen              = new AtomicOperationIdGen();
+  private          boolean                       wereDataRestoredAfterOpen;
+  private volatile Optional<byte[]>              lastMetadata       = Optional.empty();
 
   private final LongAdder fullCheckpointCount = new LongAdder();
 
@@ -344,6 +344,11 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
           readCache.loadCacheState(writeCache);
 
           initTxProfiler(contextConfiguration);
+
+          if (!lastMetadata.isPresent()) {
+            lastMetadata = Optional.ofNullable(((OClusterBasedStorageConfiguration) configuration).getLastMetadata());
+          }
+
         });
       } catch (final RuntimeException e) {
         try {
@@ -698,7 +703,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
           listener.onMessage(
               "Check of storage completed in " + (System.currentTimeMillis() - start) + "ms. " + (pageErrors.length > 0 ?
-                  pageErrors.length + " with errors." : " without errors."));
+                  pageErrors.length + " with errors." :
+                  " without errors."));
 
           return pageErrors.length == 0;
         } finally {
@@ -4898,37 +4904,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       }
 
       OLogManager.instance().info(this, "Storage data recover was completed");
-    } else {
-      lastMetadata = readMetadataFromWal();
     }
-  }
-
-  protected Optional<byte[]> readMetadataFromWal() throws IOException {
-    OLogSequenceNumber lastCheckPoint;
-    try {
-      lastCheckPoint = writeAheadLog.getLastCheckpoint();
-    } catch (final OWALPageBrokenException ignore) {
-      lastCheckPoint = null;
-    }
-
-    if (lastCheckPoint == null) {
-      return Optional.empty();
-    }
-    List<OWriteableWALRecord> checkPointRecord;
-    try {
-      checkPointRecord = writeAheadLog.read(lastCheckPoint, 1);
-    } catch (final OWALPageBrokenException ignore) {
-      checkPointRecord = Collections.emptyList();
-    }
-    if (checkPointRecord.isEmpty()) {
-      return Optional.empty();
-    }
-    if (checkPointRecord.get(0) instanceof OFuzzyCheckpointStartMetadataRecord) {
-      return ((OFuzzyCheckpointStartMetadataRecord) checkPointRecord.get(0)).getMetadata();
-    } else if (checkPointRecord.get(0) instanceof OFullCheckpointStartMetadataRecord) {
-      return ((OFullCheckpointStartMetadataRecord) checkPointRecord.get(0)).getMetadata();
-    }
-    return Optional.empty();
   }
 
   private OStorageOperationResult<OPhysicalPosition> doCreateRecord(final OAtomicOperation atomicOperation, final ORecordId rid,
@@ -5216,7 +5192,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
    * Register the cluster internally.
    *
    * @param cluster OCluster implementation
-   *
    * @return The id (physical position into the array) of the new cluster just created. First is 0.
    */
   private int registerCluster(final OCluster cluster) {
@@ -5279,6 +5254,14 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     return createdClusterId;
   }
 
+  private final void storeLastMetadata() throws IOException {
+    if (lastMetadata.isPresent()) {
+      final OClusterBasedStorageConfiguration storageConfiguration = (OClusterBasedStorageConfiguration) configuration;
+      atomicOperationsManager.executeInsideAtomicOperation(
+          (atomicOperation -> storageConfiguration.setLastMetadata(atomicOperation, lastMetadata.get())));
+    }
+  }
+
   private void doClose(final boolean force, final boolean onDelete) {
     if (!force && !onDelete) {
       decOnClose();
@@ -5299,6 +5282,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       }
 
       status = STATUS.CLOSING;
+      storeLastMetadata();
 
       if (jvmError.get() == null) {
         if (!onDelete && jvmError.get() == null) {
@@ -5869,7 +5853,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
               } else {
                 throw new IllegalStateException("Invalid type of operation id interface");
               }
-
 
             }
           } else if (walRecord instanceof ONonTxOperationPerformedWALRecord) {

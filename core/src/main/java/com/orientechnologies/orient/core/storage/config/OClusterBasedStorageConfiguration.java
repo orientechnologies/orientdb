@@ -60,6 +60,7 @@ public final class OClusterBasedStorageConfiguration implements OStorageConfigur
   private static final String PAGE_SIZE_PROPERTY                 = "pageSize";
   private static final String FREE_LIST_BOUNDARY_PROPERTY        = "freeListBoundary";
   private static final String MAX_KEY_SIZE_PROPERTY              = "maxKeySize";
+  private static final String LAST_METADATA_PROPERTY             = "lastMetadata";
 
   private static final String CLUSTERS_PREFIX_PROPERTY = "cluster_";
   private static final String PROPERTY_PREFIX_PROPERTY = "property_";
@@ -1759,4 +1760,23 @@ public final class OClusterBasedStorageConfiguration implements OStorageConfigur
     private boolean notificationsPaused;
     private long    pendingChanges;
   }
+
+  public void setLastMetadata(OAtomicOperation atomicOperation, byte[] lastMetadata) {
+    lock.acquireWriteLock();
+    try {
+      storeProperty(atomicOperation, LAST_METADATA_PROPERTY, lastMetadata);
+    } finally {
+      lock.releaseWriteLock();
+    }
+  }
+
+  public byte[] getLastMetadata() {
+    lock.acquireReadLock();
+    try {
+      return readProperty(LAST_METADATA_PROPERTY);
+    } finally {
+      lock.releaseReadLock();
+    }
+  }
+
 }
