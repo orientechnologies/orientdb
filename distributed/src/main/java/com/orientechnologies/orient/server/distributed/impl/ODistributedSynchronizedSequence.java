@@ -11,8 +11,8 @@ public class ODistributedSynchronizedSequence {
   private final OTransactionSequenceManager sequenceManager;
   private       CountDownLatch              request;
 
-  public ODistributedSynchronizedSequence(String node) {
-    sequenceManager = new OTransactionSequenceManager(node);
+  public ODistributedSynchronizedSequence(String node, int size) {
+    sequenceManager = new OTransactionSequenceManager(node, size);
     request = new CountDownLatch(1);
     request.countDown();
   }

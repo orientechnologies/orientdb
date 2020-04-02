@@ -977,6 +977,11 @@ public enum OGlobalConfiguration { // ENVIRONMENT
       "Delay (in ms) between attempts on executing a distributed transaction, which had failed because of locked records. (0=no delay)",
       Integer.class, 1000, true),
 
+
+  DISTRIBUTED_TRANSACTION_SEQUENCE_SET_SIZE("distributed.transactionSequenceSetSize",
+      "Size of the set of sequences used by distributed transactions, correspond to the amount of transactions commits that can be active at the same time",
+      Integer.class, 1000, false),
+
   DB_DOCUMENT_SERIALIZER("db.document.serializer", "The default record serializer used by the document database", String.class,
       ORecordSerializerBinary.NAME),
 

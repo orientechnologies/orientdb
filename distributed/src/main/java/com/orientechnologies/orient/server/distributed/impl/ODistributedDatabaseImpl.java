@@ -66,6 +66,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
 import static com.orientechnologies.orient.core.config.OGlobalConfiguration.DISTRIBUTED_ATOMIC_LOCK_TIMEOUT;
+import static com.orientechnologies.orient.core.config.OGlobalConfiguration.DISTRIBUTED_TRANSACTION_SEQUENCE_SET_SIZE;
 
 /**
  * Distributed database implementation. There is one instance per database. Each node creates own instance to talk with each
@@ -205,9 +206,11 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
         }, "distributed.db.*.recordLocks");
 
     long timeout = manager.getServerInstance().getContextConfiguration().getValueAsLong(DISTRIBUTED_ATOMIC_LOCK_TIMEOUT);
+    int sequenceSize = manager.getServerInstance().getContextConfiguration()
+        .getValueAsInteger(DISTRIBUTED_TRANSACTION_SEQUENCE_SET_SIZE);
     recordLockManager = new OSimpleLockManagerImpl<>(timeout);
     indexKeyLockManager = new OSimpleLockManagerImpl<>(timeout);
-    sequenceManager = new ODistributedSynchronizedSequence(localNodeName);
+    sequenceManager = new ODistributedSynchronizedSequence(localNodeName, sequenceSize);
   }
 
   public OLogSequenceNumber getLastLSN(final String server) {
