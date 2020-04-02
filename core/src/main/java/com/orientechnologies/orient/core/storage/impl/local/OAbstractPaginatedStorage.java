@@ -335,6 +335,9 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
             // SET THE CONFLICT STORAGE STRATEGY FROM THE LOADED CONFIGURATION
             setConflictStrategy(Orient.instance().getRecordConflictStrategy().getStrategy(cs));
           }
+          if (lastMetadata == null) {
+            lastMetadata = ((OClusterBasedStorageConfiguration) configuration).getLastMetadata();
+          }
         });
       } catch (final RuntimeException e) {
         try {
@@ -1277,7 +1280,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
    * not deleted - length of content is provided in above entity</li> </ol>
    *
    * @param lsn LSN from which we should find changed records
-   *
    * @see OGlobalConfiguration#STORAGE_TRACK_CHANGED_RECORDS_IN_WAL
    */
   public OBackgroundDelta recordsChangedAfterLSN(final OLogSequenceNumber lsn, final OCommandOutputListener outputListener) {
@@ -1521,9 +1523,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
    * This method finds all the records changed in the last X transactions.
    *
    * @param maxEntries Maximum number of entries to check back from last log.
-   *
    * @return A set of record ids of the changed records
-   *
    * @see OGlobalConfiguration#STORAGE_TRACK_CHANGED_RECORDS_IN_WAL
    */
   public Set<ORecordId> recordsChangedRecently(final int maxEntries) {
@@ -2146,7 +2146,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
    * Traditional commit that support already temporary rid and already assigned rids
    *
    * @param clientTx the transaction to commit
-   *
    * @return The list of operations applied by the transaction
    */
   @Override
@@ -2158,7 +2157,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
    * Commit a transaction where the rid where pre-allocated in a previous phase
    *
    * @param clientTx the pre-allocated transaction to commit
-   *
    * @return The list of operations applied by the transaction
    */
   @SuppressWarnings("UnusedReturnValue")
@@ -2177,7 +2175,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
    *
    * @param transaction the transaction to commit
    * @param allocated   true if the operation is pre-allocated commit
-   *
    * @return The list of operations applied by the transaction
    */
   private List<ORecordOperation> commit(final OTransactionInternal transaction, final boolean allocated) {
@@ -3261,9 +3258,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
    * @param key       the key to put the value under.
    * @param value     the value to put.
    * @param validator the operation validator.
-   *
    * @return {@code true} if the validator allowed the put, {@code false} otherwise.
-   *
    * @see OBaseIndexEngine.Validator#validate(Object, Object, Object)
    */
   @SuppressWarnings("UnusedReturnValue")
@@ -4778,38 +4773,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       }
 
       OLogManager.instance().info(this, "Storage data recover was completed");
-    } else {
-      lastMetadata = readMetadataFromWal().orElse(null);
     }
-  }
-
-  @SuppressWarnings("WeakerAccess")
-  protected Optional<byte[]> readMetadataFromWal() throws IOException {
-    OLogSequenceNumber lastCheckPoint;
-    try {
-      lastCheckPoint = writeAheadLog.getLastCheckpoint();
-    } catch (final OWALPageBrokenException ignore) {
-      lastCheckPoint = null;
-    }
-
-    if (lastCheckPoint == null) {
-      return Optional.empty();
-    }
-    List<WriteableWALRecord> checkPointRecord;
-    try {
-      checkPointRecord = writeAheadLog.read(lastCheckPoint, 1);
-    } catch (final OWALPageBrokenException ignore) {
-      checkPointRecord = Collections.emptyList();
-    }
-    if (checkPointRecord.isEmpty()) {
-      return Optional.empty();
-    }
-    if (checkPointRecord.get(0) instanceof OFuzzyCheckpointStartMetadataRecord) {
-      return ((OFuzzyCheckpointStartMetadataRecord) checkPointRecord.get(0)).getMetadata();
-    } else if (checkPointRecord.get(0) instanceof OFullCheckpointStartMetadataRecord) {
-      return ((OFullCheckpointStartMetadataRecord) checkPointRecord.get(0)).getMetadata();
-    }
-    return Optional.empty();
   }
 
   private OStorageOperationResult<OPhysicalPosition> doCreateRecord(final OAtomicOperation atomicOperation, final ORecordId rid,
@@ -5046,7 +5010,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
    * Register the cluster internally.
    *
    * @param cluster OCluster implementation
-   *
    * @return The id (physical position into the array) of the new cluster just created. First is 0.
    */
   private int registerCluster(final OCluster cluster) {
@@ -5225,6 +5188,14 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     return false;
   }
 
+  private final void storeLastMetadata() throws IOException {
+    if (lastMetadata != null) {
+      final OClusterBasedStorageConfiguration storageConfiguration = (OClusterBasedStorageConfiguration) configuration;
+      atomicOperationsManager.executeInsideAtomicOperation(null,
+          atomicOperation -> storageConfiguration.setLastMetadata(atomicOperation, lastMetadata));
+    }
+  }
+
   private void doClose(final boolean force, final boolean onDelete) {
     if (!force && !onDelete) {
       decOnClose();
@@ -5245,6 +5216,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       }
 
       status = STATUS.CLOSING;
+      storeLastMetadata();
 
       if (jvmError.get() == null) {
         if (!onDelete && jvmError.get() == null) {
