@@ -1,5 +1,7 @@
 package com.orientechnologies.orient.core.tx;
 
+import com.orientechnologies.orient.core.serialization.serializer.record.binary.OVarIntSerializer;
+
 import java.io.*;
 import java.util.Arrays;
 
@@ -13,35 +15,35 @@ public class OTransactionSequenceStatus {
   public byte[] store() throws IOException {
     ByteArrayOutputStream buffer = new ByteArrayOutputStream();
     DataOutput dataOutput = new DataOutputStream(buffer);
-    dataOutput.writeInt(this.status.length);
+    OVarIntSerializer.write(dataOutput, this.status.length);
     for (int i = 0; i < this.status.length; i++) {
-      dataOutput.writeLong(this.status[i]);
+      OVarIntSerializer.write(dataOutput, this.status[i]);
     }
     return buffer.toByteArray();
   }
 
   public static OTransactionSequenceStatus read(byte[] data) throws IOException {
     DataInput dataInput = new DataInputStream(new ByteArrayInputStream(data));
-    int len = dataInput.readInt();
+    int len = OVarIntSerializer.readAsInt(dataInput);
     long[] newSequential = new long[len];
     for (int i = 0; i < len; i++) {
-      newSequential[i] = dataInput.readLong();
+      newSequential[i] = OVarIntSerializer.readAsLong(dataInput);
     }
     return new OTransactionSequenceStatus(newSequential);
   }
 
   public void writeNetwork(DataOutput dataOutput) throws IOException {
-    dataOutput.writeInt(this.status.length);
+    OVarIntSerializer.write(dataOutput, this.status.length);
     for (int i = 0; i < this.status.length; i++) {
-      dataOutput.writeLong(this.status[i]);
+      OVarIntSerializer.write(dataOutput, this.status[i]);
     }
   }
 
   public static OTransactionSequenceStatus readNetwork(DataInput dataInput) throws IOException {
-    int len = dataInput.readInt();
+    int len = OVarIntSerializer.readAsInt(dataInput);
     long[] newSequential = new long[len];
     for (int i = 0; i < len; i++) {
-      newSequential[i] = dataInput.readLong();
+      newSequential[i] = OVarIntSerializer.readAsLong(dataInput);
     }
     return new OTransactionSequenceStatus(newSequential);
   }
