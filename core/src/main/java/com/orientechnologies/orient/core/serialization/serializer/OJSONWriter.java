@@ -81,6 +81,8 @@ public class OJSONWriter {
 
       if (iValue instanceof Double && !Double.isFinite((Double) iValue)) {
         buffer.append("null");
+      } else if ((iValue instanceof Float && !Float.isFinite((Float) iValue))) {
+        buffer.append("null");
       } else {
         buffer.append(iValue.toString());
       }
