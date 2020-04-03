@@ -229,7 +229,7 @@ public class OLiveQueryHookV2 {
     result.setProperty("@class", iDocument.getClassName());
     result.setProperty("@version", iDocument.getVersion());
     for (String prop : iDocument.getDirtyFields()) {
-      result.setProperty(prop, iDocument.getOriginalValue(prop));
+      result.setProperty(prop, unboxRidbags(iDocument.getOriginalValue(prop)));
     }
     return result;
   }
