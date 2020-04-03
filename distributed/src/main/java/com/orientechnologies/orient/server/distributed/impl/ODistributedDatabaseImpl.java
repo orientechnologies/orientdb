@@ -168,6 +168,8 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
     indexKeyLockManager = new OSimpleLockManagerImpl<>(timeout);
     sequenceManager = new ODistributedSynchronizedSequence(localNodeName, sequenceSize);
 
+    startAcceptingRequests();
+
     if (iDatabaseName.equals(OSystemDatabase.SYSTEM_DB_NAME)) {
       return;
     }
