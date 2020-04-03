@@ -70,6 +70,8 @@ public final class CASDiskWriteAheadLog implements OWriteAheadLog {
   private static final int MASTER_RECORD_SIZE = 20;
   private static final int BATCH_READ_SIZE    = 4 * 1024;
 
+  protected static final int DEFAULT_MAX_CACHE_SIZE = Integer.MAX_VALUE;
+
   private static final OScheduledThreadPoolExecutorWithLogging commitExecutor;
   private static final OThreadPoolExecutorWithLogging          writeExecutor;
 
@@ -271,7 +273,7 @@ public final class CASDiskWriteAheadLog implements OWriteAheadLog {
 
     OLogManager.instance().infoNoDb(this, "Page size for WAL located in %s is set to %d bytes.", walLocation.toString(), pageSize);
 
-    this.maxCacheSize = maxPagesCacheSize * pageSize;
+    this.maxCacheSize = multiplyIntsWithOverflowDefault(maxPagesCacheSize, pageSize, DEFAULT_MAX_CACHE_SIZE);
 
     masterRecordPath = walLocation.resolve(storageName + MASTER_RECORD_EXTENSION);
     masterRecordLSNHolder = FileChannel
@@ -305,8 +307,6 @@ public final class CASDiskWriteAheadLog implements OWriteAheadLog {
 
     writtenUpTo.set(new WrittenUpTo(new OLogSequenceNumber(currentSegment, 0), 0));
 
-    log(new EmptyWALRecord());
-
     this.commitDelay = commitDelay;
 
     writeBufferPointerOne = allocator.allocate(bufferSize1, blockSize, false);
@@ -317,6 +317,8 @@ public final class CASDiskWriteAheadLog implements OWriteAheadLog {
     writeBufferTwo = writeBufferPointerTwo.getNativeByteBuffer().order(ByteOrder.nativeOrder());
     assert writeBufferTwo.position() == 0;
 
+    log(new EmptyWALRecord());
+
     this.recordsWriterFuture = commitExecutor.schedule(new RecordsWriter(false, false, true), commitDelay, TimeUnit.MILLISECONDS);
 
     flush();
@@ -324,6 +326,18 @@ public final class CASDiskWriteAheadLog implements OWriteAheadLog {
 
   public int pageSize() {
     return pageSize;
+  }
+
+  protected int maxCacheSize() {
+    return maxCacheSize;
+  }
+
+  private int multiplyIntsWithOverflowDefault(final int maxPagesCacheSize, final int pageSize, final int defaultValue) {
+    long maxCacheSize = (long)maxPagesCacheSize * (long)pageSize;
+    if ((int)maxCacheSize != maxCacheSize) {
+      return defaultValue;
+    }
+    return (int)maxCacheSize;
   }
 
   private void readLastCheckpointInfo() throws IOException {
