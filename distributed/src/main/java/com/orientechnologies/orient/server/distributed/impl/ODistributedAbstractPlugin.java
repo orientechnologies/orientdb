@@ -1030,7 +1030,18 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
                     }
                   }
                 } else {
-                  setDatabaseStatus(getLocalNodeName(), databaseName, DB_STATUS.NOT_AVAILABLE);
+                  if (deploy == null || !deploy) {
+                    // NO AUTO DEPLOY
+                    ODistributedServerLog.debug(this, nodeName, null, DIRECTION.NONE,
+                        "Skipping download of the entire database '%s' from the cluster because autoDeploy=false",
+                        databaseName);
+
+                    distrDatabase.setOnline();
+                    distrDatabase.resume();
+                    return false;
+                  }
+
+                  databaseInstalled = requestFullDatabase(distrDatabase, databaseName, iStartup, cfg);
                 }
 
               } catch (ODatabaseIsOldException e) {
