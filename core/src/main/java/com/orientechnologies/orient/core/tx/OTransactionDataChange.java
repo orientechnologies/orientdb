@@ -5,8 +5,6 @@ import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
-import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.serialization.serializer.record.binary.ODocumentSerializerDelta;
 import com.orientechnologies.orient.core.serialization.serializer.record.binary.ORecordSerializerNetworkDistributed;
 
 import java.io.DataInput;
@@ -30,15 +28,8 @@ public class OTransactionDataChange {
     this.version = rec.getVersion();
     switch (operation.type) {
     case ORecordOperation.CREATED:
-      this.record = Optional.of(ORecordSerializerNetworkDistributed.INSTANCE.toStream(rec));
-      this.contentChanged = ORecordInternal.isContentChanged(rec);
-      break;
     case ORecordOperation.UPDATED:
-      if (recordType == ODocument.RECORD_TYPE) {
-        record = Optional.of(ODocumentSerializerDelta.instance().serializeDelta((ODocument) rec));
-      } else {
-        record = Optional.of(ORecordSerializerNetworkDistributed.INSTANCE.toStream(rec));
-      }
+      this.record = Optional.of(ORecordSerializerNetworkDistributed.INSTANCE.toStream(rec, false));
       this.contentChanged = ORecordInternal.isContentChanged(rec);
       break;
     case ORecordOperation.DELETED:
