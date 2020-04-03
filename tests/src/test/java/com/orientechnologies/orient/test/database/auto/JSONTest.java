@@ -77,6 +77,23 @@ public class JSONTest extends DocumentDBBaseTest {
   }
 
   @Test
+  public void testNan() {
+    ODocument newDoc = new ODocument();
+
+
+    String input = "{\"@type\":\"d\",\"@version\":0,\"nan\":null,\"p_infinity\":null,\"n_infinity\":null,\"@fieldTypes\":\"nan=d,p_infinity=d,n_infinity=d\"}";
+
+    newDoc.field("nan", Double.NaN);
+    newDoc.field("p_infinity", Double.POSITIVE_INFINITY);
+    newDoc.field("n_infinity", Double.NEGATIVE_INFINITY);
+
+
+    String json = newDoc.toJSON();
+
+    Assert.assertEquals(input, json);
+  }
+
+  @Test
   public void testEmbeddedList() {
     ODocument newDoc = new ODocument();
 
@@ -1145,12 +1162,12 @@ public class JSONTest extends DocumentDBBaseTest {
   public void testOtherJson(){
     new ODocument().fromJSON("{\"Salary\":1500.0,\"Type\":\"Person\",\"Address\":[{\"Zip\":\"JX2 MSX\",\"Type\":\"Home\",\"Street1\":\"13 Marge Street\",\"Country\":\"Holland\",\"Id\":\"Address-28813211\",\"City\":\"Amsterdam\",\"From\":\"1996-02-01\",\"To\":\"1998-01-01\"},{\"Zip\":\"90210\",\"Type\":\"Work\",\"Street1\":\"100 Hollywood Drive\",\"Country\":\"USA\",\"Id\":\"Address-11595040\",\"City\":\"Los Angeles\",\"From\":\"2009-09-01\"}],\"Id\":\"Person-7464251\",\"Name\":\"Stan\"}");
   }
-  
+
   @Test
   public void testScientificNotation() {
     ODocument doc = new ODocument();
     doc.fromJSON("{'number1': -9.2741500e-31, 'number2': 741800E+290}");
-   	  
+
     double number1 = doc.field("number1");
     Assert.assertEquals(number1, -9.27415E-31);
     double number2 = doc.field("number2");
