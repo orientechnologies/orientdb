@@ -56,6 +56,8 @@ public final class OCASDiskWriteAheadLog implements OWriteAheadLog {
   private static final int MASTER_RECORD_SIZE = 20;
   private static final int BATCH_READ_SIZE    = 320;
 
+  protected static final int DEFAULT_MAX_CACHE_SIZE = Integer.MAX_VALUE;
+
   private static final OScheduledThreadPoolExecutorWithLogging commitExecutor;
   private static final OThreadPoolExecutorWithLogging          writeExecutor;
 
@@ -246,7 +248,7 @@ public final class OCASDiskWriteAheadLog implements OWriteAheadLog {
 
     OLogManager.instance().infoNoDb(this, "Page size for WAL located in %s is set to %d bytes.", walLocation.toString(), pageSize);
 
-    this.maxCacheSize = maxPagesCacheSize * pageSize;
+    this.maxCacheSize = multiplyIntsWithOverflowDefault(maxPagesCacheSize, pageSize, DEFAULT_MAX_CACHE_SIZE);
 
     masterRecordPath = walLocation.resolve(storageName + MASTER_RECORD_EXTENSION);
     masterRecordLSNHolder = FileChannel
@@ -280,8 +282,6 @@ public final class OCASDiskWriteAheadLog implements OWriteAheadLog {
 
     writtenUpTo.set(new WrittenUpTo(new OLogSequenceNumber(currentSegment, 0), 0));
 
-    log(new OEmptyWALRecord());
-
     this.commitDelay = commitDelay;
 
     writeBufferPointerOne = allocator.allocate(bufferSize1, blockSize);
@@ -290,13 +290,26 @@ public final class OCASDiskWriteAheadLog implements OWriteAheadLog {
     writeBufferPointerTwo = allocator.allocate(bufferSize1, blockSize);
     writeBufferTwo = writeBufferPointerTwo.getNativeByteBuffer().order(ByteOrder.nativeOrder());
 
-    this.recordsWriterFuture = commitExecutor.schedule(new RecordsWriter(false, false, true), commitDelay, TimeUnit.MILLISECONDS);
+    log(new OEmptyWALRecord());
 
+    this.recordsWriterFuture = commitExecutor.schedule(new RecordsWriter(false, false, true), commitDelay, TimeUnit.MILLISECONDS);
     flush();
+  }
+
+  private int multiplyIntsWithOverflowDefault(final int maxPagesCacheSize, final int pageSize, final int defaultValue) {
+    long maxCacheSize = (long)maxPagesCacheSize * (long)pageSize;
+    if ((int)maxCacheSize != maxCacheSize) {
+      return defaultValue;
+    }
+    return (int)maxCacheSize;
   }
 
   public int pageSize() {
     return pageSize;
+  }
+
+  protected int maxCacheSize() {
+    return maxCacheSize;
   }
 
   private static int calculateBlockSize(String path) {
