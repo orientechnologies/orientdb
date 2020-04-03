@@ -77,10 +77,15 @@ public class OJSONWriter {
     } else
       oldAutoConvertSettings = false;
 
-    if (iValue instanceof Boolean || iValue instanceof Number)
-      buffer.append(iValue.toString());
+    if (iValue instanceof Boolean || iValue instanceof Number) {
 
-    else if (iValue instanceof OIdentifiable) {
+      if (iValue instanceof Double && !Double.isFinite((Double) iValue)) {
+        buffer.append("null");
+      } else {
+        buffer.append(iValue.toString());
+      }
+  
+    } else if (iValue instanceof OIdentifiable) {
       final OIdentifiable linked = (OIdentifiable) iValue;
       if (linked.getIdentity().isValid()) {
         buffer.append('\"');
