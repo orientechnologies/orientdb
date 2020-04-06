@@ -180,8 +180,8 @@ public class ONewDistributedTransactionManager {
         localKo(requestId, database);
         ORID id = ((OTxConcurrentModification) localResult).getRecordId();
         int version = ((OTxConcurrentModification) localResult).getVersion();
-        //TODO include all paramenter in response
-        throw new OConcurrentModificationException(id, version, 0, 0);
+        throw new OConcurrentModificationException(id, version, iTx.getRecordEntry(id).getRecord().getVersion(),
+            iTx.getRecordEntry(id).getType());
       }
       case OTxRecordLockTimeout.ID: {
         int timeout = database.getConfiguration().getValueAsInteger(DISTRIBUTED_ATOMIC_LOCK_TIMEOUT);
@@ -327,12 +327,11 @@ public class ONewDistributedTransactionManager {
           messages.add("node: " + node + " success");
           break;
         case OTxConcurrentModification.ID:
+          sendPhase2Task(involvedClusters, nodes, new OTransactionPhase2Task(requestId, false, involvedClustersIds, getLsn()));
+          localKo(requestId, database);
           ORecordId recordId = ((OTxConcurrentModification) result).getRecordId();
-          messages.add(String
-              .format("concurrent modification record (node " + node + "): %s database version: %d transaction version: %d",
-                  recordId.toString(), ((OTxConcurrentModification) result).getVersion(),
-                  iTx.getRecordEntry(recordId).getRecord().getVersion()));
-          break;
+          throw new OConcurrentModificationException(recordId, iTx.getRecordEntry(recordId).getRecord().getVersion(),
+              ((OTxConcurrentModification) result).getVersion(), iTx.getRecordEntry(recordId).getType());
         case OTxException.ID:
           exceptions.add(((OTxException) result).getException());
           OLogManager.instance().debug(this, "distributed exception", ((OTxException) result).getException());
