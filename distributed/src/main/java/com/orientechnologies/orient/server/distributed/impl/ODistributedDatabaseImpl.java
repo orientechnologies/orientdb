@@ -116,6 +116,7 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
   private final OSimpleLockManager<Object>       indexKeyLockManager;
   private       AtomicLong                       operationsRunnig = new AtomicLong(0);
   private       ODistributedSynchronizedSequence sequenceManager;
+  private final AtomicLong                       pending          = new AtomicLong();
 
   public OSimpleLockManager<ORID> getRecordLockManager() {
     return recordLockManager;
@@ -242,10 +243,11 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
 
   public void reEnqueue(final int senderNodeId, final long msgSequence, final String databaseName, final ORemoteTask payload,
       int retryCount, int autoRetryDelay) {
-
-    Orient.instance().scheduleTask(
-        () -> processRequest(new ODistributedRequest(getManager(), senderNodeId, msgSequence, databaseName, payload), false),
-        autoRetryDelay * retryCount, 0);
+    pending.incrementAndGet();
+    Orient.instance().scheduleTask(() -> {
+      processRequest(new ODistributedRequest(getManager(), senderNodeId, msgSequence, databaseName, payload), false);
+      pending.decrementAndGet();
+    }, autoRetryDelay * retryCount, 0);
   }
 
   /**
@@ -964,6 +966,7 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
   }
 
   public void shutdown() {
+    waitPending();
     running = false;
 
     try {
@@ -1043,6 +1046,17 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
         }
       }
 
+    }
+  }
+
+  private void waitPending() {
+    while (pending.get() > 0) {
+      try {
+        Thread.sleep(100);
+      } catch (InterruptedException e) {
+        Thread.currentThread().interrupt();
+        return;
+      }
     }
   }
 
