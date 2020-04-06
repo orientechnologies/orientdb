@@ -362,8 +362,4 @@ public class OLuceneCrossClassIndexEngine implements OLuceneIndexEngine {
 
   }
 
-  @Override
-  public boolean isFrozen() {
-    return false;
-  }
 }
