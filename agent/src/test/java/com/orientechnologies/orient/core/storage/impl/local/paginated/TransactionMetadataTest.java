@@ -4,7 +4,10 @@ import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.orient.core.db.*;
 import com.orientechnologies.orient.core.record.OVertex;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
+import com.orientechnologies.orient.core.tx.OTransactionId;
 import com.orientechnologies.orient.core.tx.OTransactionInternal;
+import com.orientechnologies.orient.core.tx.OTransactionSequenceStatus;
+import com.orientechnologies.orient.core.tx.OTxMetadataHolder;
 import org.junit.*;
 
 import java.io.ByteArrayOutputStream;
@@ -32,7 +35,7 @@ public class TransactionMetadataTest {
   public void testBackupRestore() throws IOException {
     db.begin();
     byte[] metadata = new byte[] { 1, 2, 4 };
-    ((OTransactionInternal) db.getTransaction()).setMetadata(Optional.of(metadata));
+    ((OTransactionInternal) db.getTransaction()).setMetadataHolder(Optional.of(new TestMetadataHolder(metadata)));
     OVertex v = db.newVertex("V");
     v.setProperty("name", "Foo");
     db.save(v);
@@ -40,7 +43,8 @@ public class TransactionMetadataTest {
     ByteArrayOutputStream out = new ByteArrayOutputStream();
     db.incrementalBackup("target/backup_metadata");
     db.close();
-    OrientDBInternal.extract(orientDB).restore(DB_NAME + "_re",null,null,ODatabaseType.PLOCAL,"target/backup_metadata",OrientDBConfig.defaultConfig());
+    OrientDBInternal.extract(orientDB)
+        .restore(DB_NAME + "_re", null, null, ODatabaseType.PLOCAL, "target/backup_metadata", OrientDBConfig.defaultConfig());
     ODatabaseSession db1 = orientDB.open(DB_NAME + "_re", "admin", "admin");
     Optional<byte[]> fromStorage = ((OAbstractPaginatedStorage) ((ODatabaseDocumentInternal) db1).getStorage()).getLastMetadata();
     assertTrue(fromStorage.isPresent());
@@ -56,6 +60,34 @@ public class TransactionMetadataTest {
       orientDB.drop(DB_NAME + "_re");
     }
     orientDB.close();
+  }
+
+  private static class TestMetadataHolder implements OTxMetadataHolder {
+    private final byte[] metadata;
+
+    public TestMetadataHolder(byte[] metadata) {
+      this.metadata = metadata;
+    }
+
+    @Override
+    public byte[] metadata() {
+      return metadata;
+    }
+
+    @Override
+    public void notifyMetadataRead() {
+
+    }
+
+    @Override
+    public OTransactionId getId() {
+      return null;
+    }
+
+    @Override
+    public OTransactionSequenceStatus getStatus() {
+      return null;
+    }
   }
 
 }
