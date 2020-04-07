@@ -23,7 +23,7 @@ public class ONewDeltaTaskResponse implements OStreamable {
   }
 
   public enum ResponseType {
-    CHUNK((byte) 1), FULL_SYNK((byte) 2), PARTIAL_CHUNK((byte) 3);
+    CHUNK((byte) 1), FULL_SYNC((byte) 2), PARTIAL_CHUNK((byte) 3), NO_CHANGES((byte) 4);
     private byte value;
 
     ResponseType(byte b) {
@@ -39,9 +39,11 @@ public class ONewDeltaTaskResponse implements OStreamable {
       case 1:
         return ResponseType.CHUNK;
       case 2:
-        return ResponseType.FULL_SYNK;
+        return ResponseType.FULL_SYNC;
       case 3:
         return ResponseType.PARTIAL_CHUNK;
+      case 4:
+        return ResponseType.NO_CHANGES;
       }
       return null;
     }

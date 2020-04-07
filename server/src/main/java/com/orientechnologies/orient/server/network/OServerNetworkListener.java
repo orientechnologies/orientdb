@@ -41,18 +41,18 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class OServerNetworkListener extends Thread {
-  private OServerSocketFactory                          socketFactory;
-  private ServerSocket                                  serverSocket;
-  private InetSocketAddress                             inboundAddr;
-  private Class<? extends ONetworkProtocol>             protocolType;
-  private volatile boolean                              active            = true;
-  private List<OServerCommandConfiguration>             statefulCommands  = new ArrayList<OServerCommandConfiguration>();
-  private List<OServerCommand>                          statelessCommands = new ArrayList<OServerCommand>();
-  private int                                           socketBufferSize;
-  private OContextConfiguration                         configuration;
-  private OServer                                       server;
-  private int                                           protocolVersion = -1;
-  private List<OBeforeDatabaseOpenNetworkEventListener> beforeDatabaseOpenNetworkEventListener = new ArrayList<OBeforeDatabaseOpenNetworkEventListener>();
+  private          OServerSocketFactory                          socketFactory;
+  private          ServerSocket                                  serverSocket;
+  private          InetSocketAddress                             inboundAddr;
+  private          Class<? extends ONetworkProtocol>             protocolType;
+  private volatile boolean                                       active                                 = true;
+  private          List<OServerCommandConfiguration>             statefulCommands                       = new ArrayList<OServerCommandConfiguration>();
+  private          List<OServerCommand>                          statelessCommands                      = new ArrayList<OServerCommand>();
+  private          int                                           socketBufferSize;
+  private          OContextConfiguration                         configuration;
+  private          OServer                                       server;
+  private          int                                           protocolVersion                        = -1;
+  private          List<OBeforeDatabaseOpenNetworkEventListener> beforeDatabaseOpenNetworkEventListener = new ArrayList<OBeforeDatabaseOpenNetworkEventListener>();
 
   public OServerNetworkListener(final OServer iServer, final OServerSocketFactory iSocketFactory, final String iHostName,
       final String iHostPortRange, final String iProtocolName, final Class<? extends ONetworkProtocol> iProtocol,
@@ -356,7 +356,8 @@ public class OServerNetworkListener extends Thread {
     OLogManager.instance()
         .error(this, "Unable to listen for connections using the configured ports '%s' on host '%s'", null, iHostPortRange,
             iHostName);
-    throw new OSystemException("Unable to listen for connections using the configured ports '%s' on host '%s'");
+    throw new OSystemException(
+        String.format("Unable to listen for connections using the configured ports '%s' on host '%s'", iHostPortRange, iHostName));
   }
 
   /**

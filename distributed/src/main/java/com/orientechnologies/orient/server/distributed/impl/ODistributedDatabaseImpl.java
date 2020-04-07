@@ -1436,4 +1436,14 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
       return Optional.of(sequenceManager.currentStatus());
     }
   }
+
+  @Override
+  public void checkReverseSync(OTransactionSequenceStatus lastState) {
+    List<OTransactionId> res = sequenceManager.checkSelfStatus(lastState);
+    if (!res.isEmpty()) {
+      new Thread(() -> {
+        manager.installDatabase(false, databaseName, true, true);
+      }).start();
+    }
+  }
 }

@@ -35,7 +35,6 @@ import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.parser.OSystemVariableResolver;
 import com.orientechnologies.common.util.OArrays;
 import com.orientechnologies.common.util.OCallable;
-import com.orientechnologies.common.util.OUncaughtExceptionHandler;
 import com.orientechnologies.orient.core.OConstants;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
@@ -100,7 +99,6 @@ import com.orientechnologies.orient.server.plugin.OServerPluginAbstract;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -113,7 +111,6 @@ import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
-import java.util.stream.Collectors;
 
 import static com.orientechnologies.orient.core.config.OGlobalConfiguration.DISTRIBUTED_CHECKINTEGRITY_LAST_TX;
 import static com.orientechnologies.orient.core.config.OGlobalConfiguration.DISTRIBUTED_MAX_STARTUP_DELAY;
@@ -923,10 +920,6 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
       // DON'T REPLICATE SYSTEM BECAUSE IS DIFFERENT AND PER SERVER
       return false;
 
-    if (installingDatabases.contains(databaseName)) {
-      return false;
-    }
-
     final ODistributedDatabaseImpl distrDatabase = messageService.registerDatabase(databaseName, null);
 
     try {
@@ -1029,19 +1022,6 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
                       current.activateOnCurrentThread();
                     }
                   }
-                } else {
-                  if (deploy == null || !deploy) {
-                    // NO AUTO DEPLOY
-                    ODistributedServerLog.debug(this, nodeName, null, DIRECTION.NONE,
-                        "Skipping download of the entire database '%s' from the cluster because autoDeploy=false",
-                        databaseName);
-
-                    distrDatabase.setOnline();
-                    distrDatabase.resume();
-                    return false;
-                  }
-
-                  databaseInstalled = requestFullDatabase(distrDatabase, databaseName, iStartup, cfg);
                 }
 
               } catch (ODatabaseIsOldException e) {
@@ -1069,8 +1049,9 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
     // GET ALL THE OTHER SERVERS
     final Collection<String> nodes = cfg.getServers(null, nodeName);
     getAvailableNodes(nodes, databaseName);
-    if (nodes.size() == 0)
+    if (nodes.size() == 0) {
       return false;
+    }
 
     ODistributedServerLog
         .warn(this, nodeName, nodes.toString(), DIRECTION.OUT, "requesting delta database sync for '%s' on local server...",
@@ -1089,7 +1070,7 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
         if (read.isPresent()) {
           metadata = OTxMetadataHolderImpl.read(read.get());
         } else {
-          return false;
+          throw new ODistributedDatabaseDeltaSyncException("Trigger full sync");
         }
       }
       final OSyncDatabaseNewDeltaTask deployTask = new OSyncDatabaseNewDeltaTask(metadata.getStatus());
@@ -1392,7 +1373,8 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
         OLogManager.instance().error(this, "Error installing database from network", e);
         databaseInstalledCorrectly = false;
       }
-
+    } else if (results.getResponseType() == ONewDeltaTaskResponse.ResponseType.FULL_SYNC) {
+      throw new ODistributedDatabaseDeltaSyncException("Full sync required");
     }
     return databaseInstalledCorrectly;
   }
