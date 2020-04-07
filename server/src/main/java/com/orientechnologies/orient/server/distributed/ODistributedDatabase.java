@@ -151,4 +151,6 @@ public interface ODistributedDatabase {
   List<OTransactionId> missingTransactions(OTransactionSequenceStatus lastState);
 
   void validateStatus(OTransactionSequenceStatus status);
+
+  void checkReverseSync(OTransactionSequenceStatus lastState);
 }

@@ -62,6 +62,9 @@ public class OCopyDatabaseChunkTask extends OAbstractReplicatedTask {
   public Object execute(ODistributedRequestId requestId, final OServer iServer, ODistributedServerManager iManager,
       final ODatabaseDocumentInternal database) throws Exception {
 
+    if (database == null) {
+      throw new ODistributedException("database not available anymore during sync");
+    }
     ODistributedStorage storage = (ODistributedStorage) database.getStorage();
     if (storage == null) {
       throw new ODistributedException("database not available anymore during sync");

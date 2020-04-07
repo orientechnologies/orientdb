@@ -45,20 +45,25 @@ public class OSyncDatabaseNewDeltaTask extends OAbstractReplicatedTask {
   public Object execute(ODistributedRequestId requestId, OServer iServer, ODistributedServerManager iManager,
       ODatabaseDocumentInternal database) throws Exception {
     ODistributedDatabase db = iManager.getMessageService().getDatabase(database.getName());
+    db.checkReverseSync(lastState);
     List<OTransactionId> missing = db.missingTransactions(lastState);
-    Optional<OBackgroundNewDelta> delta = ((OAbstractPaginatedStorage) database.getStorage().getUnderlying())
-        .extractTransactionsFromWal(missing);
-    if (delta.isPresent()) {
-      OBackgroundNewDelta deltaBackup = delta.get();
-      final ODistributedDatabaseChunk chunk = new ODistributedDatabaseChunk(deltaBackup, CHUNK_MAX_SIZE, null);
+    if (!missing.isEmpty()) {
+      Optional<OBackgroundNewDelta> delta = ((OAbstractPaginatedStorage) database.getStorage().getUnderlying())
+          .extractTransactionsFromWal(missing);
+      if (delta.isPresent()) {
+        OBackgroundNewDelta deltaBackup = delta.get();
+        final ODistributedDatabaseChunk chunk = new ODistributedDatabaseChunk(deltaBackup, CHUNK_MAX_SIZE, null);
 
-      if (chunk.last)
-        // NO MORE CHUNKS: SET THE NODE ONLINE (SYNCHRONIZING ENDED)
-        iManager.setDatabaseStatus(iManager.getLocalNodeName(), database.getName(), ODistributedServerManager.DB_STATUS.ONLINE);
-      ((ODistributedStorage) database.getStorage()).setLastValidBackup(deltaBackup);
-      return new ONewDeltaTaskResponse(chunk);
+        if (chunk.last)
+          // NO MORE CHUNKS: SET THE NODE ONLINE (SYNCHRONIZING ENDED)
+          iManager.setDatabaseStatus(iManager.getLocalNodeName(), database.getName(), ODistributedServerManager.DB_STATUS.ONLINE);
+        ((ODistributedStorage) database.getStorage()).setLastValidBackup(deltaBackup);
+        return new ONewDeltaTaskResponse(chunk);
+      } else {
+        return new ONewDeltaTaskResponse(ONewDeltaTaskResponse.ResponseType.FULL_SYNC);
+      }
     } else {
-      return new ONewDeltaTaskResponse(ONewDeltaTaskResponse.ResponseType.FULL_SYNK);
+      return new ONewDeltaTaskResponse(ONewDeltaTaskResponse.ResponseType.NO_CHANGES);
     }
   }
 
