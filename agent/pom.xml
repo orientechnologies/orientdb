@@ -13,7 +13,7 @@
 
     <properties>
         <surefire.version>2.19.1</surefire.version>
-        <metrics.version>4.1.2</metrics.version>
+        <metrics.version>4.1.5</metrics.version>
         <exclude.kerberos.tests>%regex[com.orientechnologies.security.kerberos.*Test.*]</exclude.kerberos.tests>
         <project.rootdir>${project.basedir}/../</project.rootdir>
     </properties>
