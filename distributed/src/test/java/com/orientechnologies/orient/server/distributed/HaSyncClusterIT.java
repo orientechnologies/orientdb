@@ -44,7 +44,6 @@ import java.util.concurrent.Future;
  *
  * @author Enrico Risa
  */
-@Ignore
 public class HaSyncClusterIT extends AbstractServerClusterTest {
   private final static int SERVERS     = 2;
   public static final  int NUM_RECORDS = 1000;

@@ -13,7 +13,6 @@ import org.junit.Ignore;
  *
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
  */
-@Ignore
 public class HARemoteGraphIT extends HALocalGraphIT {
   @Override
   protected String getDatabaseURL(final ServerRun server) {
