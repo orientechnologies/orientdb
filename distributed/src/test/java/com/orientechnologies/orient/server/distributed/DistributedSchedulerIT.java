@@ -28,6 +28,7 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.schedule.OScheduledEventBuilder;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import org.junit.Assert;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.util.ArrayList;
@@ -40,6 +41,7 @@ public class DistributedSchedulerIT extends AbstractServerClusterTest {
   private final static int SERVERS = 2;
 
   @Test
+  @Ignore
   public void test() throws Exception {
     init(SERVERS);
     prepare(false);
