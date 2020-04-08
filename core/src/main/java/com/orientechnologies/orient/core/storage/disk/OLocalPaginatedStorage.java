@@ -424,6 +424,7 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage {
         OGlobalConfiguration.DISK_CACHE_FREE_SPACE_LIMIT.getValueAsLong() * 1024 * 1024,
         contextConfiguration.getValueAsInteger(OGlobalConfiguration.WAL_COMMIT_TIMEOUT),
         contextConfiguration.getValueAsBoolean(OGlobalConfiguration.WAL_ALLOW_DIRECT_IO),
+        contextConfiguration.getValueAsBoolean(OGlobalConfiguration.WAL_KEEP_SINGLE_SEGMENT),
         contextConfiguration.getValueAsBoolean(OGlobalConfiguration.STORAGE_CALL_FSYNC),
         contextConfiguration.getValueAsBoolean(OGlobalConfiguration.STORAGE_PRINT_WAL_PERFORMANCE_STATISTICS),
         contextConfiguration.getValueAsInteger(OGlobalConfiguration.STORAGE_PRINT_WAL_PERFORMANCE_INTERVAL));
@@ -645,6 +646,7 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage {
         contextConfiguration.getValueAsLong(OGlobalConfiguration.DISK_CACHE_FREE_SPACE_LIMIT) * 1024 * 1024,
         contextConfiguration.getValueAsInteger(OGlobalConfiguration.WAL_COMMIT_TIMEOUT),
         contextConfiguration.getValueAsBoolean(OGlobalConfiguration.WAL_ALLOW_DIRECT_IO),
+        contextConfiguration.getValueAsBoolean(OGlobalConfiguration.WAL_KEEP_SINGLE_SEGMENT),
         contextConfiguration.getValueAsBoolean(OGlobalConfiguration.STORAGE_CALL_FSYNC),
         contextConfiguration.getValueAsBoolean(OGlobalConfiguration.STORAGE_PRINT_WAL_PERFORMANCE_STATISTICS),
         contextConfiguration.getValueAsInteger(OGlobalConfiguration.STORAGE_PRINT_WAL_PERFORMANCE_INTERVAL));
@@ -752,12 +754,14 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage {
             return null;
           }
 
-          final long freezeId = atomicOperationsManager.freezeAtomicOperations(null, null);
+          final long freezeId = atomicOperationsManager.freezeComponentOperations();
           try {
             wal.appendSegment(segment + 1);
           } finally {
-            atomicOperationsManager.releaseAtomicOperations(freezeId);
+            atomicOperationsManager.releaseComponentOperations(freezeId);
           }
+
+          atomicOperationsTable.compactTable();
         } finally {
           stateLock.releaseReadLock();
         }

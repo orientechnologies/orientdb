@@ -234,7 +234,7 @@ public class SBTreeV2WALTestIT extends SBTreeV2TestIT {
   private void restoreDataFromWAL() throws IOException {
     CASDiskWriteAheadLog log = new CASDiskWriteAheadLog(ACTUAL_DB_NAME, Paths.get(actualStorageDir), Paths.get(actualStorageDir),
         10_000, 128, null, null, 30 * 60 * 1_000_000_000L, 100 * 1024 * 1024, 1000, false, Locale.ENGLISH, -1, -1, 1_000, false,
-        true, false, 0);
+        false, true, false, 0);
     OLogSequenceNumber lsn = log.begin();
 
     List<OWALRecord> atomicUnit = new ArrayList<>();

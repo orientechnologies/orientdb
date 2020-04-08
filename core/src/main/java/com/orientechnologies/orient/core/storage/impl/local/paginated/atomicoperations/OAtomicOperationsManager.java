@@ -52,13 +52,7 @@ import java.util.concurrent.CountDownLatch;
  * @since 12/3/13
  */
 public class OAtomicOperationsManager {
-  private final OperationsFreezer atomicOperationsFreezer    = new OperationsFreezer();
-  private final OperationsFreezer componentOperationsFreezer = new OperationsFreezer();
-
   private static volatile ThreadLocal<OAtomicOperation> currentOperation = new ThreadLocal<>();
-
-  private final boolean trackPageOperations;
-  private final int     operationsCacheLimit;
 
   static {
     Orient.instance().registerListener(new OOrientListenerAbstract() {
@@ -83,9 +77,18 @@ public class OAtomicOperationsManager {
   private final OReadCache                         readCache;
   private final OWriteCache                        writeCache;
 
+  private final Object               segmentLock = new Object();
   private final AtomicOperationIdGen idGen;
 
-  public OAtomicOperationsManager(OAbstractPaginatedStorage storage, boolean trackPageOperations, int operationsCacheLimit) {
+  private final boolean trackPageOperations;
+  private final int     operationsCacheLimit;
+
+  private final OperationsFreezer     atomicOperationsFreezer    = new OperationsFreezer();
+  private final OperationsFreezer     componentOperationsFreezer = new OperationsFreezer();
+  private final AtomicOperationsTable atomicOperationsTable;
+
+  public OAtomicOperationsManager(OAbstractPaginatedStorage storage, boolean trackPageOperations, int operationsCacheLimit,
+      AtomicOperationsTable atomicOperationsTable) {
     this.storage = storage;
     this.writeAheadLog = storage.getWALInstance();
     this.readCache = storage.getReadCache();
@@ -94,6 +97,7 @@ public class OAtomicOperationsManager {
     this.trackPageOperations = trackPageOperations;
     this.operationsCacheLimit = operationsCacheLimit;
     this.idGen = storage.getIdGen();
+    this.atomicOperationsTable = atomicOperationsTable;
   }
 
   public OAtomicOperation startAtomicOperation(final byte[] metadata) throws IOException {
@@ -106,7 +110,16 @@ public class OAtomicOperationsManager {
 
     final OLogSequenceNumber lsn;
 
-    final long unitId = idGen.nextId();
+    final long activeSegment;
+    final long unitId;
+
+    //transaction id and id of active segment should grow synchronously to maintain correct size of WAL
+    synchronized (segmentLock) {
+      unitId = idGen.nextId();
+      activeSegment = writeAheadLog.activeSegment();
+    }
+
+    atomicOperationsTable.startOperation(unitId, activeSegment);
     if (metadata != null) {
       lsn = writeAheadLog.logAtomicOperationStartRecord(true, unitId, metadata);
     } else {
@@ -309,10 +322,8 @@ public class OAtomicOperationsManager {
    * Ends the current atomic operation on this manager.
    *
    * @param rollback {@code true} to indicate a rollback, {@code false} for successful commit.
-   *
-   * @return the LSN produced by committing the current operation or {@code null} if no commit was done.
    */
-  public OLogSequenceNumber endAtomicOperation(boolean rollback) throws IOException {
+  public void endAtomicOperation(boolean rollback) throws IOException {
     final OAtomicOperation operation = currentOperation.get();
 
     if (operation == null) {
@@ -320,19 +331,30 @@ public class OAtomicOperationsManager {
       throw new ODatabaseException("There is no atomic operation active");
     }
 
-    final OLogSequenceNumber lsn;
     try {
       if (rollback) {
         operation.rollbackInProgress();
       }
 
       try {
+        final OLogSequenceNumber lsn;
         if (trackPageOperations) {
           lsn = operation.commitChanges(writeAheadLog);
         } else if (!operation.isRollbackInProgress()) {
           lsn = operation.commitChanges(writeAheadLog);
         } else {
           lsn = null;
+        }
+
+        final long operationId = operation.getOperationUnitId();
+        if (rollback) {
+          atomicOperationsTable.rollbackOperation(operationId);
+        } else {
+          atomicOperationsTable.commitOperation(operationId);
+        }
+
+        if (lsn != null) {
+          writeAheadLog.addEventAt(lsn, () -> atomicOperationsTable.persistOperation(operationId));
         }
       } finally {
         final Iterator<String> lockedObjectIterator = operation.lockedObjects().iterator();
@@ -358,7 +380,6 @@ public class OAtomicOperationsManager {
       atomicOperationsFreezer.endOperation();
     }
 
-    return lsn;
   }
 
   public void ensureThatComponentsUnlocked() {

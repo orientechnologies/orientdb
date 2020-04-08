@@ -53,7 +53,7 @@ public class CASDiskWriteAheadLogIT {
         final Random random = new Random(seed);
 
         CASDiskWriteAheadLog wal = new CASDiskWriteAheadLog("walTest", testDirectory, testDirectory, 100, 64, null, null,
-            Integer.MAX_VALUE, Integer.MAX_VALUE, 20, true, Locale.US, -1, -1, 1000, false, false, true, 10);
+            Integer.MAX_VALUE, Integer.MAX_VALUE, 20, true, Locale.US, -1, -1, 1000, false, false, false, true, 10);
 
         Assert.assertEquals(wal.begin(), new OLogSequenceNumber(1, CASWALPage.RECORDS_OFFSET));
         Assert.assertEquals(wal.end(), new OLogSequenceNumber(1, CASWALPage.RECORDS_OFFSET));
@@ -73,7 +73,7 @@ public class CASDiskWriteAheadLogIT {
         wal.close();
 
         wal = new CASDiskWriteAheadLog("walTest", testDirectory, testDirectory, 100, 64, null, null, Integer.MAX_VALUE,
-            Integer.MAX_VALUE, 20, true, Locale.US, -1, -1, 1000, false, false, true, 10);
+            Integer.MAX_VALUE, 20, true, Locale.US, -1, -1, 1000, false, false, false, true, 10);
 
         Assert.assertEquals(wal.begin(), new OLogSequenceNumber(1, CASWALPage.RECORDS_OFFSET));
         Assert.assertEquals(wal.end(), new OLogSequenceNumber(2, CASWALPage.RECORDS_OFFSET));
@@ -123,7 +123,7 @@ public class CASDiskWriteAheadLogIT {
         final Random random = new Random(seed);
 
         CASDiskWriteAheadLog wal = new CASDiskWriteAheadLog("walTest", testDirectory, testDirectory, 100, 64, aesKey, iv,
-            Integer.MAX_VALUE, Integer.MAX_VALUE, 20, true, Locale.US, -1, -1, 1000, false, false, true, 10);
+            Integer.MAX_VALUE, Integer.MAX_VALUE, 20, true, Locale.US, -1, -1, 1000, false, false, false, true, 10);
 
         Assert.assertEquals(wal.begin(), new OLogSequenceNumber(1, CASWALPage.RECORDS_OFFSET));
         Assert.assertEquals(wal.end(), new OLogSequenceNumber(1, CASWALPage.RECORDS_OFFSET));
@@ -143,7 +143,7 @@ public class CASDiskWriteAheadLogIT {
         wal.close();
 
         wal = new CASDiskWriteAheadLog("walTest", testDirectory, testDirectory, 100, 64, aesKey, iv, Integer.MAX_VALUE,
-            Integer.MAX_VALUE, 20, true, Locale.US, -1, -1, 1000, false, false, true, 10);
+            Integer.MAX_VALUE, 20, true, Locale.US, -1, -1, 1000, false, false, false, true, 10);
 
         Assert.assertEquals(wal.begin(), new OLogSequenceNumber(1, CASWALPage.RECORDS_OFFSET));
         Assert.assertEquals(wal.end(), new OLogSequenceNumber(2, CASWALPage.RECORDS_OFFSET));
@@ -193,7 +193,7 @@ public class CASDiskWriteAheadLogIT {
         final Random random = new Random(seed);
 
         CASDiskWriteAheadLog wal = new CASDiskWriteAheadLog("walTest", testDirectory, testDirectory, 100, 64, aesKey, iv,
-            Integer.MAX_VALUE, Integer.MAX_VALUE, 20, true, Locale.US, -1, -1, 1000, false, false, true, 10);
+            Integer.MAX_VALUE, Integer.MAX_VALUE, 20, true, Locale.US, -1, -1, 1000, false, false, false, true, 10);
 
         Assert.assertEquals(wal.begin(), new OLogSequenceNumber(1, CASWALPage.RECORDS_OFFSET));
         Assert.assertEquals(wal.end(), new OLogSequenceNumber(1, CASWALPage.RECORDS_OFFSET));
@@ -213,7 +213,7 @@ public class CASDiskWriteAheadLogIT {
         wal.close();
 
         wal = new CASDiskWriteAheadLog("walTest", testDirectory, testDirectory, 100, 64, null, null, Integer.MAX_VALUE,
-            Integer.MAX_VALUE, 20, true, Locale.US, -1, -1, 1000, false, false, true, 10);
+            Integer.MAX_VALUE, 20, true, Locale.US, -1, -1, 1000, false, false, false, true, 10);
 
         Assert.assertEquals(wal.begin(), new OLogSequenceNumber(1, CASWALPage.RECORDS_OFFSET));
         Assert.assertEquals(wal.end(), new OLogSequenceNumber(2, CASWALPage.RECORDS_OFFSET));
@@ -261,7 +261,7 @@ public class CASDiskWriteAheadLogIT {
         final Random random = new Random(seed);
 
         CASDiskWriteAheadLog wal = new CASDiskWriteAheadLog("walTest", testDirectory, testDirectory, 100, 64, aesKey, iv,
-            Integer.MAX_VALUE, Integer.MAX_VALUE, 20, true, Locale.US, -1, -1, 1000, false, false, true, 10);
+            Integer.MAX_VALUE, Integer.MAX_VALUE, 20, true, Locale.US, -1, -1, 1000, false, false, false, true, 10);
 
         Assert.assertEquals(wal.begin(), new OLogSequenceNumber(1, CASWALPage.RECORDS_OFFSET));
         Assert.assertEquals(wal.end(), new OLogSequenceNumber(1, CASWALPage.RECORDS_OFFSET));
@@ -284,7 +284,7 @@ public class CASDiskWriteAheadLogIT {
         final byte[] otherAesKey = Base64.getDecoder().decode(otherAesKeyEncoded);
 
         wal = new CASDiskWriteAheadLog("walTest", testDirectory, testDirectory, 100, 64, otherAesKey, iv, Integer.MAX_VALUE,
-            Integer.MAX_VALUE, 20, true, Locale.US, -1, -1, 1000, false, false, true, 10);
+            Integer.MAX_VALUE, 20, true, Locale.US, -1, -1, 1000, false, false, false, true, 10);
 
         Assert.assertEquals(wal.begin(), new OLogSequenceNumber(1, CASWALPage.RECORDS_OFFSET));
         Assert.assertEquals(wal.end(), new OLogSequenceNumber(2, CASWALPage.RECORDS_OFFSET));
@@ -323,7 +323,7 @@ public class CASDiskWriteAheadLogIT {
         final Random random = new Random(seed);
 
         CASDiskWriteAheadLog wal = new CASDiskWriteAheadLog("walTest", testDirectory, testDirectory, 100, 64, null, null,
-            Integer.MAX_VALUE, Integer.MAX_VALUE, 20, true, Locale.US, -1, -1, 1000, false, false, true, 10);
+            Integer.MAX_VALUE, Integer.MAX_VALUE, 20, true, Locale.US, -1, -1, 1000, false, false, false, true, 10);
 
         Assert.assertEquals(wal.begin(), new OLogSequenceNumber(1, CASWALPage.RECORDS_OFFSET));
         Assert.assertEquals(wal.end(), new OLogSequenceNumber(1, CASWALPage.RECORDS_OFFSET));
@@ -343,7 +343,7 @@ public class CASDiskWriteAheadLogIT {
         wal.close();
 
         wal = new CASDiskWriteAheadLog("walTest", testDirectory, testDirectory, 100, 64, null, null, Integer.MAX_VALUE,
-            Integer.MAX_VALUE, 20, true, Locale.US, -1, -1, 1000, false, false, true, 10);
+            Integer.MAX_VALUE, 20, true, Locale.US, -1, -1, 1000, false, false, false, true, 10);
 
         Assert.assertEquals(wal.begin(), new OLogSequenceNumber(1, CASWALPage.RECORDS_OFFSET));
         Assert.assertEquals(wal.end(), new OLogSequenceNumber(2, CASWALPage.RECORDS_OFFSET));
@@ -393,7 +393,7 @@ public class CASDiskWriteAheadLogIT {
         final Random random = new Random(seed);
 
         CASDiskWriteAheadLog wal = new CASDiskWriteAheadLog("walTest", testDirectory, testDirectory, 100, 64, aesKey, iv,
-            Integer.MAX_VALUE, Integer.MAX_VALUE, 20, true, Locale.US, -1, -1, 1000, false, false, true, 10);
+            Integer.MAX_VALUE, Integer.MAX_VALUE, 20, true, Locale.US, -1, -1, 1000, false, false, false, true, 10);
 
         Assert.assertEquals(wal.begin(), new OLogSequenceNumber(1, CASWALPage.RECORDS_OFFSET));
         Assert.assertEquals(wal.end(), new OLogSequenceNumber(1, CASWALPage.RECORDS_OFFSET));
@@ -413,7 +413,7 @@ public class CASDiskWriteAheadLogIT {
         wal.close();
 
         wal = new CASDiskWriteAheadLog("walTest", testDirectory, testDirectory, 100, 64, aesKey, iv, Integer.MAX_VALUE,
-            Integer.MAX_VALUE, 20, true, Locale.US, -1, -1, 1000, false, false, true, 10);
+            Integer.MAX_VALUE, 20, true, Locale.US, -1, -1, 1000, false, false, false, true, 10);
 
         Assert.assertEquals(wal.begin(), new OLogSequenceNumber(1, CASWALPage.RECORDS_OFFSET));
         Assert.assertEquals(wal.end(), new OLogSequenceNumber(2, CASWALPage.RECORDS_OFFSET));
@@ -459,7 +459,7 @@ public class CASDiskWriteAheadLogIT {
         final Random random = new Random(seed);
 
         CASDiskWriteAheadLog wal = new CASDiskWriteAheadLog("walTest", testDirectory, testDirectory, 100, 64, null, null,
-            Integer.MAX_VALUE, Integer.MAX_VALUE, 20, true, Locale.US, -1, -1, 1000, false, false, true, 10);
+            Integer.MAX_VALUE, Integer.MAX_VALUE, 20, true, Locale.US, -1, -1, 1000, false, false, false, true, 10);
 
         Assert.assertEquals(wal.begin(), new OLogSequenceNumber(1, CASWALPage.RECORDS_OFFSET));
         Assert.assertEquals(wal.end(), new OLogSequenceNumber(1, CASWALPage.RECORDS_OFFSET));
@@ -497,7 +497,7 @@ public class CASDiskWriteAheadLogIT {
         wal.close();
 
         wal = new CASDiskWriteAheadLog("walTest", testDirectory, testDirectory, 100, 64, null, null, Integer.MAX_VALUE,
-            Integer.MAX_VALUE, 20, true, Locale.US, -1, -1, 1000, false, false, true, 10);
+            Integer.MAX_VALUE, 20, true, Locale.US, -1, -1, 1000, false, false, false, true, 10);
 
         Assert.assertEquals(wal.begin(), new OLogSequenceNumber(1, CASWALPage.RECORDS_OFFSET));
         Assert.assertEquals(wal.end(), new OLogSequenceNumber(2, CASWALPage.RECORDS_OFFSET));
@@ -553,7 +553,7 @@ public class CASDiskWriteAheadLogIT {
         final Random random = new Random(seed);
 
         CASDiskWriteAheadLog wal = new CASDiskWriteAheadLog("walTest", testDirectory, testDirectory, 100, 64, aesKey, iv,
-            Integer.MAX_VALUE, Integer.MAX_VALUE, 20, true, Locale.US, -1, -1, 1000, false, false, true, 10);
+            Integer.MAX_VALUE, Integer.MAX_VALUE, 20, true, Locale.US, -1, -1, 1000, false, false, false, true, 10);
 
         Assert.assertEquals(wal.begin(), new OLogSequenceNumber(1, CASWALPage.RECORDS_OFFSET));
         Assert.assertEquals(wal.end(), new OLogSequenceNumber(1, CASWALPage.RECORDS_OFFSET));
@@ -591,7 +591,7 @@ public class CASDiskWriteAheadLogIT {
         wal.close();
 
         wal = new CASDiskWriteAheadLog("walTest", testDirectory, testDirectory, 100, 64, aesKey, iv, Integer.MAX_VALUE,
-            Integer.MAX_VALUE, 20, true, Locale.US, -1, -1, 1000, false, false, true, 10);
+            Integer.MAX_VALUE, 20, true, Locale.US, -1, -1, 1000, false, false, false, true, 10);
 
         Assert.assertEquals(wal.begin(), new OLogSequenceNumber(1, CASWALPage.RECORDS_OFFSET));
         Assert.assertEquals(wal.end(), new OLogSequenceNumber(2, CASWALPage.RECORDS_OFFSET));
@@ -644,7 +644,7 @@ public class CASDiskWriteAheadLogIT {
         final Random random = new Random(seed);
 
         CASDiskWriteAheadLog wal = new CASDiskWriteAheadLog("walTest", testDirectory, testDirectory, 100, 64, null, null,
-            Integer.MAX_VALUE, Integer.MAX_VALUE, 20, true, Locale.US, -1, -1, 1000, false, false, true, 10);
+            Integer.MAX_VALUE, Integer.MAX_VALUE, 20, true, Locale.US, -1, -1, 1000, false, false, false, true, 10);
 
         Assert.assertEquals(wal.begin(), new OLogSequenceNumber(1, CASWALPage.RECORDS_OFFSET));
         Assert.assertEquals(wal.end(), new OLogSequenceNumber(1, CASWALPage.RECORDS_OFFSET));
@@ -683,7 +683,7 @@ public class CASDiskWriteAheadLogIT {
         wal.close();
 
         wal = new CASDiskWriteAheadLog("walTest", testDirectory, testDirectory, 100, 64, null, null, Integer.MAX_VALUE,
-            Integer.MAX_VALUE, 20, true, Locale.US, -1, -1, 1000, false, false, true, 10);
+            Integer.MAX_VALUE, 20, true, Locale.US, -1, -1, 1000, false, false, false, true, 10);
 
         Assert.assertEquals(wal.begin(), new OLogSequenceNumber(1, CASWALPage.RECORDS_OFFSET));
         Assert.assertEquals(wal.end(), new OLogSequenceNumber(2, CASWALPage.RECORDS_OFFSET));
@@ -746,7 +746,7 @@ public class CASDiskWriteAheadLogIT {
         final Random random = new Random(seed);
 
         CASDiskWriteAheadLog wal = new CASDiskWriteAheadLog("walTest", testDirectory, testDirectory, 100, 64, aesKey, iv,
-            Integer.MAX_VALUE, Integer.MAX_VALUE, 20, true, Locale.US, -1, -1, 1000, false, false, true, 10);
+            Integer.MAX_VALUE, Integer.MAX_VALUE, 20, true, Locale.US, -1, -1, 1000, false, false, false, true, 10);
 
         Assert.assertEquals(wal.begin(), new OLogSequenceNumber(1, CASWALPage.RECORDS_OFFSET));
         Assert.assertEquals(wal.end(), new OLogSequenceNumber(1, CASWALPage.RECORDS_OFFSET));
@@ -785,7 +785,7 @@ public class CASDiskWriteAheadLogIT {
         wal.close();
 
         wal = new CASDiskWriteAheadLog("walTest", testDirectory, testDirectory, 100, 64, aesKey, iv, Integer.MAX_VALUE,
-            Integer.MAX_VALUE, 20, true, Locale.US, -1, -1, 1000, false, false, true, 10);
+            Integer.MAX_VALUE, 20, true, Locale.US, -1, -1, 1000, false, false, false, true, 10);
 
         Assert.assertEquals(wal.begin(), new OLogSequenceNumber(1, CASWALPage.RECORDS_OFFSET));
         Assert.assertEquals(wal.end(), new OLogSequenceNumber(2, CASWALPage.RECORDS_OFFSET));
@@ -844,7 +844,7 @@ public class CASDiskWriteAheadLogIT {
         final Random random = new Random(seed);
 
         CASDiskWriteAheadLog wal = new CASDiskWriteAheadLog("walTest", testDirectory, testDirectory, 100, 64, null, null,
-            Integer.MAX_VALUE, Integer.MAX_VALUE, 20, true, Locale.US, -1, -1, 1000, false, false, true, 10);
+            Integer.MAX_VALUE, Integer.MAX_VALUE, 20, true, Locale.US, -1, -1, 1000, false, false, false, true, 10);
 
         Assert.assertEquals(wal.begin(), new OLogSequenceNumber(1, CASWALPage.RECORDS_OFFSET));
         Assert.assertEquals(wal.end(), new OLogSequenceNumber(1, CASWALPage.RECORDS_OFFSET));
@@ -881,7 +881,7 @@ public class CASDiskWriteAheadLogIT {
         wal.close();
 
         wal = new CASDiskWriteAheadLog("walTest", testDirectory, testDirectory, 100, 64, null, null, Integer.MAX_VALUE,
-            Integer.MAX_VALUE, 20, true, Locale.US, -1, -1, 1000, false, false, true, 10);
+            Integer.MAX_VALUE, 20, true, Locale.US, -1, -1, 1000, false, false, false, true, 10);
 
         Assert.assertEquals(wal.begin(), new OLogSequenceNumber(1, CASWALPage.RECORDS_OFFSET));
         Assert.assertEquals(wal.end(), new OLogSequenceNumber(2, CASWALPage.RECORDS_OFFSET));
@@ -937,7 +937,7 @@ public class CASDiskWriteAheadLogIT {
         final Random random = new Random(seed);
 
         CASDiskWriteAheadLog wal = new CASDiskWriteAheadLog("walTest", testDirectory, testDirectory, 100, 64, aesKey, iv,
-            Integer.MAX_VALUE, Integer.MAX_VALUE, 20, true, Locale.US, -1, -1, 1000, false, false, true, 10);
+            Integer.MAX_VALUE, Integer.MAX_VALUE, 20, true, Locale.US, -1, -1, 1000, false, false, false, true, 10);
 
         Assert.assertEquals(wal.begin(), new OLogSequenceNumber(1, CASWALPage.RECORDS_OFFSET));
         Assert.assertEquals(wal.end(), new OLogSequenceNumber(1, CASWALPage.RECORDS_OFFSET));
@@ -974,7 +974,7 @@ public class CASDiskWriteAheadLogIT {
         wal.close();
 
         wal = new CASDiskWriteAheadLog("walTest", testDirectory, testDirectory, 100, 64, aesKey, iv, Integer.MAX_VALUE,
-            Integer.MAX_VALUE, 20, true, Locale.US, -1, -1, 1000, false, false, true, 10);
+            Integer.MAX_VALUE, 20, true, Locale.US, -1, -1, 1000, false, false, false, true, 10);
 
         Assert.assertEquals(wal.begin(), new OLogSequenceNumber(1, CASWALPage.RECORDS_OFFSET));
         Assert.assertEquals(wal.end(), new OLogSequenceNumber(2, CASWALPage.RECORDS_OFFSET));
@@ -1026,7 +1026,7 @@ public class CASDiskWriteAheadLogIT {
         final Random random = new Random(seed);
 
         CASDiskWriteAheadLog wal = new CASDiskWriteAheadLog("walTest", testDirectory, testDirectory, 100, 64, null, null,
-            Integer.MAX_VALUE, Integer.MAX_VALUE, 20, true, Locale.US, -1, -1, 1000, false, false, true, 10);
+            Integer.MAX_VALUE, Integer.MAX_VALUE, 20, true, Locale.US, -1, -1, 1000, false, false, false, true, 10);
 
         Assert.assertEquals(wal.begin(), new OLogSequenceNumber(1, CASWALPage.RECORDS_OFFSET));
         Assert.assertEquals(wal.end(), new OLogSequenceNumber(1, CASWALPage.RECORDS_OFFSET));
@@ -1064,7 +1064,7 @@ public class CASDiskWriteAheadLogIT {
         wal.close();
 
         wal = new CASDiskWriteAheadLog("walTest", testDirectory, testDirectory, 100, 64, null, null, Integer.MAX_VALUE,
-            Integer.MAX_VALUE, 20, true, Locale.US, -1, -1, 1000, false, false, true, 10);
+            Integer.MAX_VALUE, 20, true, Locale.US, -1, -1, 1000, false, false, false, true, 10);
 
         Assert.assertEquals(wal.begin(), new OLogSequenceNumber(1, CASWALPage.RECORDS_OFFSET));
         Assert.assertEquals(wal.end(), new OLogSequenceNumber(2, CASWALPage.RECORDS_OFFSET));
@@ -1127,7 +1127,7 @@ public class CASDiskWriteAheadLogIT {
         final Random random = new Random(seed);
 
         CASDiskWriteAheadLog wal = new CASDiskWriteAheadLog("walTest", testDirectory, testDirectory, 100, 64, aesKey, iv,
-            Integer.MAX_VALUE, Integer.MAX_VALUE, 20, true, Locale.US, -1, -1, 1000, false, false, true, 10);
+            Integer.MAX_VALUE, Integer.MAX_VALUE, 20, true, Locale.US, -1, -1, 1000, false, false, false, true, 10);
 
         Assert.assertEquals(wal.begin(), new OLogSequenceNumber(1, CASWALPage.RECORDS_OFFSET));
         Assert.assertEquals(wal.end(), new OLogSequenceNumber(1, CASWALPage.RECORDS_OFFSET));
@@ -1165,7 +1165,7 @@ public class CASDiskWriteAheadLogIT {
         wal.close();
 
         wal = new CASDiskWriteAheadLog("walTest", testDirectory, testDirectory, 100, 64, aesKey, iv, Integer.MAX_VALUE,
-            Integer.MAX_VALUE, 20, true, Locale.US, -1, -1, 1000, false, false, true, 10);
+            Integer.MAX_VALUE, 20, true, Locale.US, -1, -1, 1000, false, false, false, true, 10);
 
         Assert.assertEquals(wal.begin(), new OLogSequenceNumber(1, CASWALPage.RECORDS_OFFSET));
         Assert.assertEquals(wal.end(), new OLogSequenceNumber(2, CASWALPage.RECORDS_OFFSET));
@@ -1224,7 +1224,7 @@ public class CASDiskWriteAheadLogIT {
         final Random random = new Random(seed);
 
         CASDiskWriteAheadLog wal = new CASDiskWriteAheadLog("walTest", testDirectory, testDirectory, 100, 64, null, null,
-            Integer.MAX_VALUE, Integer.MAX_VALUE, 20, true, Locale.US, -1, -1, 1000, false, false, true, 10);
+            Integer.MAX_VALUE, Integer.MAX_VALUE, 20, true, Locale.US, -1, -1, 1000, false, false, false, true, 10);
 
         Assert.assertEquals(wal.begin(), new OLogSequenceNumber(1, CASWALPage.RECORDS_OFFSET));
         Assert.assertEquals(wal.end(), new OLogSequenceNumber(1, CASWALPage.RECORDS_OFFSET));
@@ -1268,7 +1268,7 @@ public class CASDiskWriteAheadLogIT {
         wal.close();
 
         wal = new CASDiskWriteAheadLog("walTest", testDirectory, testDirectory, 100, 64, null, null, Integer.MAX_VALUE,
-            Integer.MAX_VALUE, 20, true, Locale.US, -1, -1, 1000, false, false, true, 10);
+            Integer.MAX_VALUE, 20, true, Locale.US, -1, -1, 1000, false, false, false, true, 10);
 
         Assert.assertEquals(wal.begin(), new OLogSequenceNumber(1, CASWALPage.RECORDS_OFFSET));
         Assert.assertEquals(wal.end(), new OLogSequenceNumber(2, CASWALPage.RECORDS_OFFSET));
@@ -1322,7 +1322,7 @@ public class CASDiskWriteAheadLogIT {
         final Random random = new Random(seed);
 
         CASDiskWriteAheadLog wal = new CASDiskWriteAheadLog("walTest", testDirectory, testDirectory, 100, 64, aesKey, iv,
-            Integer.MAX_VALUE, Integer.MAX_VALUE, 20, true, Locale.US, -1, -1, 1000, false, false, true, 10);
+            Integer.MAX_VALUE, Integer.MAX_VALUE, 20, true, Locale.US, -1, -1, 1000, false, false, false, true, 10);
 
         Assert.assertEquals(wal.begin(), new OLogSequenceNumber(1, CASWALPage.RECORDS_OFFSET));
         Assert.assertEquals(wal.end(), new OLogSequenceNumber(1, CASWALPage.RECORDS_OFFSET));
@@ -1366,7 +1366,7 @@ public class CASDiskWriteAheadLogIT {
         wal.close();
 
         wal = new CASDiskWriteAheadLog("walTest", testDirectory, testDirectory, 100, 64, aesKey, iv, Integer.MAX_VALUE,
-            Integer.MAX_VALUE, 20, true, Locale.US, -1, -1, 1000, false, false, true, 10);
+            Integer.MAX_VALUE, 20, true, Locale.US, -1, -1, 1000, false, false, false, true, 10);
 
         Assert.assertEquals(wal.begin(), new OLogSequenceNumber(1, CASWALPage.RECORDS_OFFSET));
         Assert.assertEquals(wal.end(), new OLogSequenceNumber(2, CASWALPage.RECORDS_OFFSET));
@@ -1416,7 +1416,7 @@ public class CASDiskWriteAheadLogIT {
         final Random random = new Random(seed);
 
         CASDiskWriteAheadLog wal = new CASDiskWriteAheadLog("walTest", testDirectory, testDirectory, 100, 64, null, null,
-            Integer.MAX_VALUE, Integer.MAX_VALUE, 20, true, Locale.US, -1, -1, 1000, false, false, true, 10);
+            Integer.MAX_VALUE, Integer.MAX_VALUE, 20, true, Locale.US, -1, -1, 1000, false, false, false, true, 10);
 
         Assert.assertEquals(wal.begin(), new OLogSequenceNumber(1, CASWALPage.RECORDS_OFFSET));
         Assert.assertEquals(wal.end(), new OLogSequenceNumber(1, CASWALPage.RECORDS_OFFSET));
@@ -1457,7 +1457,7 @@ public class CASDiskWriteAheadLogIT {
         wal.close();
 
         wal = new CASDiskWriteAheadLog("walTest", testDirectory, testDirectory, 100, 64, null, null, Integer.MAX_VALUE,
-            Integer.MAX_VALUE, 20, true, Locale.US, -1, -1, 1000, false, false, true, 10);
+            Integer.MAX_VALUE, 20, true, Locale.US, -1, -1, 1000, false, false, false, true, 10);
 
         Assert.assertEquals(wal.begin(), new OLogSequenceNumber(1, CASWALPage.RECORDS_OFFSET));
         Assert.assertEquals(wal.end(), new OLogSequenceNumber(2, CASWALPage.RECORDS_OFFSET));
@@ -1512,7 +1512,7 @@ public class CASDiskWriteAheadLogIT {
         final Random random = new Random(seed);
 
         CASDiskWriteAheadLog wal = new CASDiskWriteAheadLog("walTest", testDirectory, testDirectory, 100, 64, aesKey, iv,
-            Integer.MAX_VALUE, Integer.MAX_VALUE, 20, true, Locale.US, -1, -1, 1000, false, false, true, 10);
+            Integer.MAX_VALUE, Integer.MAX_VALUE, 20, true, Locale.US, -1, -1, 1000, false, false, false, true, 10);
 
         Assert.assertEquals(wal.begin(), new OLogSequenceNumber(1, CASWALPage.RECORDS_OFFSET));
         Assert.assertEquals(wal.end(), new OLogSequenceNumber(1, CASWALPage.RECORDS_OFFSET));
@@ -1553,7 +1553,7 @@ public class CASDiskWriteAheadLogIT {
         wal.close();
 
         wal = new CASDiskWriteAheadLog("walTest", testDirectory, testDirectory, 100, 64, aesKey, iv, Integer.MAX_VALUE,
-            Integer.MAX_VALUE, 20, true, Locale.US, -1, -1, 1000, false, false, true, 10);
+            Integer.MAX_VALUE, 20, true, Locale.US, -1, -1, 1000, false, false, false, true, 10);
 
         Assert.assertEquals(wal.begin(), new OLogSequenceNumber(1, CASWALPage.RECORDS_OFFSET));
         Assert.assertEquals(wal.end(), new OLogSequenceNumber(2, CASWALPage.RECORDS_OFFSET));
@@ -1605,7 +1605,7 @@ public class CASDiskWriteAheadLogIT {
         final int numberOfSegmentsToAdd = random.nextInt(4) + 3;
 
         CASDiskWriteAheadLog wal = new CASDiskWriteAheadLog("walTest", testDirectory, testDirectory, 100, 64, null, null,
-            Integer.MAX_VALUE, Integer.MAX_VALUE, 20, true, Locale.US, -1, -1, 1000, false, false, true, 10);
+            Integer.MAX_VALUE, Integer.MAX_VALUE, 20, true, Locale.US, -1, -1, 1000, false, false, false, true, 10);
 
         Assert.assertEquals(wal.begin(), new OLogSequenceNumber(1, CASWALPage.RECORDS_OFFSET));
         Assert.assertEquals(wal.end(), new OLogSequenceNumber(1, CASWALPage.RECORDS_OFFSET));
@@ -1669,7 +1669,7 @@ public class CASDiskWriteAheadLogIT {
         Assert.assertEquals(calculatedWalSize, walSize);
 
         wal = new CASDiskWriteAheadLog("walTest", testDirectory, testDirectory, 100, 64, null, null, Integer.MAX_VALUE,
-            Integer.MAX_VALUE, 20, true, Locale.US, -1, -1, 1000, false, false, true, 10);
+            Integer.MAX_VALUE, 20, true, Locale.US, -1, -1, 1000, false, false, false, true, 10);
 
         Assert.assertEquals(wal.begin(), new OLogSequenceNumber(1, CASWALPage.RECORDS_OFFSET));
         Assert.assertEquals(wal.end(), new OLogSequenceNumber(numberOfSegmentsToAdd + 2, CASWALPage.RECORDS_OFFSET));
@@ -1765,7 +1765,7 @@ public class CASDiskWriteAheadLogIT {
         final int numberOfSegmentsToAdd = random.nextInt(4) + 3;
 
         CASDiskWriteAheadLog wal = new CASDiskWriteAheadLog("walTest", testDirectory, testDirectory, 100, 64, aesKey, iv,
-            Integer.MAX_VALUE, Integer.MAX_VALUE, 20, true, Locale.US, -1, -1, 1000, false, false, true, 10);
+            Integer.MAX_VALUE, Integer.MAX_VALUE, 20, true, Locale.US, -1, -1, 1000, false, false, false, true, 10);
 
         Assert.assertEquals(wal.begin(), new OLogSequenceNumber(1, CASWALPage.RECORDS_OFFSET));
         Assert.assertEquals(wal.end(), new OLogSequenceNumber(1, CASWALPage.RECORDS_OFFSET));
@@ -1829,7 +1829,7 @@ public class CASDiskWriteAheadLogIT {
         Assert.assertEquals(calculatedWalSize, walSize);
 
         wal = new CASDiskWriteAheadLog("walTest", testDirectory, testDirectory, 100, 64, aesKey, iv, Integer.MAX_VALUE,
-            Integer.MAX_VALUE, 20, true, Locale.US, -1, -1, 1000, false, false, true, 10);
+            Integer.MAX_VALUE, 20, true, Locale.US, -1, -1, 1000, false, false, false, true, 10);
 
         Assert.assertEquals(wal.begin(), new OLogSequenceNumber(1, CASWALPage.RECORDS_OFFSET));
         Assert.assertEquals(wal.end(), new OLogSequenceNumber(numberOfSegmentsToAdd + 2, CASWALPage.RECORDS_OFFSET));
@@ -1921,7 +1921,7 @@ public class CASDiskWriteAheadLogIT {
         final Random random = new Random(seed);
 
         CASDiskWriteAheadLog wal = new CASDiskWriteAheadLog("walTest", testDirectory, testDirectory, 100, 64, null, null,
-            Integer.MAX_VALUE, Integer.MAX_VALUE, 20, true, Locale.US, -1, -1, 1000, false, false, true, 10);
+            Integer.MAX_VALUE, Integer.MAX_VALUE, 20, true, Locale.US, -1, -1, 1000, false, false, false, true, 10);
 
         Assert.assertEquals(wal.begin(), new OLogSequenceNumber(1, CASWALPage.RECORDS_OFFSET));
         Assert.assertEquals(wal.end(), new OLogSequenceNumber(1, CASWALPage.RECORDS_OFFSET));
@@ -1960,7 +1960,7 @@ public class CASDiskWriteAheadLogIT {
         wal.close();
 
         wal = new CASDiskWriteAheadLog("walTest", testDirectory, testDirectory, 100, 64, null, null, Integer.MAX_VALUE,
-            Integer.MAX_VALUE, 20, true, Locale.US, -1, -1, 1000, false, false, true, 10);
+            Integer.MAX_VALUE, 20, true, Locale.US, -1, -1, 1000, false, false, false, true, 10);
 
         Assert.assertEquals(wal.begin(), new OLogSequenceNumber(1, CASWALPage.RECORDS_OFFSET));
         Assert.assertEquals(wal.end(), new OLogSequenceNumber(2, CASWALPage.RECORDS_OFFSET));
@@ -2009,7 +2009,7 @@ public class CASDiskWriteAheadLogIT {
         final Random random = new Random(seed);
 
         CASDiskWriteAheadLog wal = new CASDiskWriteAheadLog("walTest", testDirectory, testDirectory, 100, 64, aesKey, iv,
-            Integer.MAX_VALUE, Integer.MAX_VALUE, 20, true, Locale.US, -1, -1, 1000, false, false, true, 10);
+            Integer.MAX_VALUE, Integer.MAX_VALUE, 20, true, Locale.US, -1, -1, 1000, false, false, false, true, 10);
 
         Assert.assertEquals(wal.begin(), new OLogSequenceNumber(1, CASWALPage.RECORDS_OFFSET));
         Assert.assertEquals(wal.end(), new OLogSequenceNumber(1, CASWALPage.RECORDS_OFFSET));
@@ -2048,7 +2048,7 @@ public class CASDiskWriteAheadLogIT {
         wal.close();
 
         wal = new CASDiskWriteAheadLog("walTest", testDirectory, testDirectory, 100, 64, aesKey, iv, Integer.MAX_VALUE,
-            Integer.MAX_VALUE, 20, true, Locale.US, -1, -1, 1000, false, false, true, 10);
+            Integer.MAX_VALUE, 20, true, Locale.US, -1, -1, 1000, false, false, false, true, 10);
 
         Assert.assertEquals(wal.begin(), new OLogSequenceNumber(1, CASWALPage.RECORDS_OFFSET));
         Assert.assertEquals(wal.end(), new OLogSequenceNumber(2, CASWALPage.RECORDS_OFFSET));
@@ -2093,7 +2093,7 @@ public class CASDiskWriteAheadLogIT {
         final Random random = new Random(seed);
 
         CASDiskWriteAheadLog wal = new CASDiskWriteAheadLog("walTest", testDirectory, testDirectory, 100, 64, null, null,
-            Integer.MAX_VALUE, Integer.MAX_VALUE, 20, true, Locale.US, -1, -1, 1000, false, false, true, 10);
+            Integer.MAX_VALUE, Integer.MAX_VALUE, 20, true, Locale.US, -1, -1, 1000, false, false, false, true, 10);
 
         Assert.assertEquals(wal.begin(), new OLogSequenceNumber(1, CASWALPage.RECORDS_OFFSET));
         Assert.assertEquals(wal.end(), new OLogSequenceNumber(1, CASWALPage.RECORDS_OFFSET));
@@ -2134,7 +2134,7 @@ public class CASDiskWriteAheadLogIT {
         wal.close();
 
         wal = new CASDiskWriteAheadLog("walTest", testDirectory, testDirectory, 100, 64, null, null, Integer.MAX_VALUE,
-            Integer.MAX_VALUE, 20, true, Locale.US, -1, -1, 1000, false, false, true, 10);
+            Integer.MAX_VALUE, 20, true, Locale.US, -1, -1, 1000, false, false, false, true, 10);
 
         Assert.assertEquals(wal.begin(), new OLogSequenceNumber(1, CASWALPage.RECORDS_OFFSET));
         Assert.assertEquals(wal.end(), new OLogSequenceNumber(2, CASWALPage.RECORDS_OFFSET));
@@ -2189,7 +2189,7 @@ public class CASDiskWriteAheadLogIT {
         final Random random = new Random(seed);
 
         CASDiskWriteAheadLog wal = new CASDiskWriteAheadLog("walTest", testDirectory, testDirectory, 100, 64, aesKey, iv,
-            Integer.MAX_VALUE, Integer.MAX_VALUE, 20, true, Locale.US, -1, -1, 1000, false, false, true, 10);
+            Integer.MAX_VALUE, Integer.MAX_VALUE, 20, true, Locale.US, -1, -1, 1000, false, false, false, true, 10);
 
         Assert.assertEquals(wal.begin(), new OLogSequenceNumber(1, CASWALPage.RECORDS_OFFSET));
         Assert.assertEquals(wal.end(), new OLogSequenceNumber(1, CASWALPage.RECORDS_OFFSET));
@@ -2230,7 +2230,7 @@ public class CASDiskWriteAheadLogIT {
         wal.close();
 
         wal = new CASDiskWriteAheadLog("walTest", testDirectory, testDirectory, 100, 64, aesKey, iv, Integer.MAX_VALUE,
-            Integer.MAX_VALUE, 20, true, Locale.US, -1, -1, 1000, false, false, true, 10);
+            Integer.MAX_VALUE, 20, true, Locale.US, -1, -1, 1000, false, false, false, true, 10);
 
         Assert.assertEquals(wal.begin(), new OLogSequenceNumber(1, CASWALPage.RECORDS_OFFSET));
         Assert.assertEquals(wal.end(), new OLogSequenceNumber(2, CASWALPage.RECORDS_OFFSET));
@@ -2280,7 +2280,7 @@ public class CASDiskWriteAheadLogIT {
         final Random random = new Random(seed);
 
         CASDiskWriteAheadLog wal = new CASDiskWriteAheadLog("walTest", testDirectory, testDirectory, 100, 64, null, null,
-            Integer.MAX_VALUE, Integer.MAX_VALUE, 20, true, Locale.US, -1, -1, 1000, false, false, true, 10);
+            Integer.MAX_VALUE, Integer.MAX_VALUE, 20, true, Locale.US, -1, -1, 1000, false, false, false, true, 10);
 
         Assert.assertEquals(wal.begin(), new OLogSequenceNumber(1, CASWALPage.RECORDS_OFFSET));
         Assert.assertEquals(wal.end(), new OLogSequenceNumber(1, CASWALPage.RECORDS_OFFSET));
@@ -2319,7 +2319,7 @@ public class CASDiskWriteAheadLogIT {
         wal.close();
 
         wal = new CASDiskWriteAheadLog("walTest", testDirectory, testDirectory, 100, 64, null, null, Integer.MAX_VALUE,
-            Integer.MAX_VALUE, 20, true, Locale.US, -1, -1, 1000, false, false, true, 10);
+            Integer.MAX_VALUE, 20, true, Locale.US, -1, -1, 1000, false, false, false, true, 10);
 
         Assert.assertEquals(wal.begin(), new OLogSequenceNumber(1, CASWALPage.RECORDS_OFFSET));
         Assert.assertEquals(wal.end(), new OLogSequenceNumber(2, CASWALPage.RECORDS_OFFSET));
@@ -2366,7 +2366,7 @@ public class CASDiskWriteAheadLogIT {
         final Random random = new Random(seed);
 
         CASDiskWriteAheadLog wal = new CASDiskWriteAheadLog("walTest", testDirectory, testDirectory, 100, 64, aesKey, iv,
-            Integer.MAX_VALUE, Integer.MAX_VALUE, 20, true, Locale.US, -1, -1, 1000, false, false, true, 10);
+            Integer.MAX_VALUE, Integer.MAX_VALUE, 20, true, Locale.US, -1, -1, 1000, false, false, false, true, 10);
 
         Assert.assertEquals(wal.begin(), new OLogSequenceNumber(1, CASWALPage.RECORDS_OFFSET));
         Assert.assertEquals(wal.end(), new OLogSequenceNumber(1, CASWALPage.RECORDS_OFFSET));
@@ -2405,7 +2405,7 @@ public class CASDiskWriteAheadLogIT {
         wal.close();
 
         wal = new CASDiskWriteAheadLog("walTest", testDirectory, testDirectory, 100, 64, aesKey, iv, Integer.MAX_VALUE,
-            Integer.MAX_VALUE, 20, true, Locale.US, -1, -1, 1000, false, false, true, 10);
+            Integer.MAX_VALUE, 20, true, Locale.US, -1, -1, 1000, false, false, false, true, 10);
 
         Assert.assertEquals(wal.begin(), new OLogSequenceNumber(1, CASWALPage.RECORDS_OFFSET));
         Assert.assertEquals(wal.end(), new OLogSequenceNumber(2, CASWALPage.RECORDS_OFFSET));
@@ -2448,7 +2448,7 @@ public class CASDiskWriteAheadLogIT {
         final Random random = new Random(seed);
 
         CASDiskWriteAheadLog wal = new CASDiskWriteAheadLog("walTest", testDirectory, testDirectory, 100, 64, null, null,
-            Integer.MAX_VALUE, Integer.MAX_VALUE, 20, true, Locale.US, -1, -1, 1000, false, false, true, 10);
+            Integer.MAX_VALUE, Integer.MAX_VALUE, 20, true, Locale.US, -1, -1, 1000, false, false, false, true, 10);
         Assert.assertEquals(wal.begin(), new OLogSequenceNumber(1, CASWALPage.RECORDS_OFFSET));
         Assert.assertEquals(wal.end(), new OLogSequenceNumber(1, CASWALPage.RECORDS_OFFSET));
 
@@ -2488,7 +2488,7 @@ public class CASDiskWriteAheadLogIT {
         wal.close();
 
         wal = new CASDiskWriteAheadLog("walTest", testDirectory, testDirectory, 100, 64, null, null, Integer.MAX_VALUE,
-            Integer.MAX_VALUE, 20, true, Locale.US, -1, -1, 1000, false, false, true, 10);
+            Integer.MAX_VALUE, 20, true, Locale.US, -1, -1, 1000, false, false, false, true, 10);
 
         Assert.assertEquals(wal.begin(), new OLogSequenceNumber(1, CASWALPage.RECORDS_OFFSET));
         Assert.assertEquals(wal.end(), new OLogSequenceNumber(2, CASWALPage.RECORDS_OFFSET));
@@ -2542,7 +2542,7 @@ public class CASDiskWriteAheadLogIT {
         final Random random = new Random(seed);
 
         CASDiskWriteAheadLog wal = new CASDiskWriteAheadLog("walTest", testDirectory, testDirectory, 100, 64, aesKey, iv,
-            Integer.MAX_VALUE, Integer.MAX_VALUE, 20, true, Locale.US, -1, -1, 1000, false, false, true, 10);
+            Integer.MAX_VALUE, Integer.MAX_VALUE, 20, true, Locale.US, -1, -1, 1000, false, false, false, true, 10);
 
         Assert.assertEquals(wal.begin(), new OLogSequenceNumber(1, CASWALPage.RECORDS_OFFSET));
         Assert.assertEquals(wal.end(), new OLogSequenceNumber(1, CASWALPage.RECORDS_OFFSET));
@@ -2583,7 +2583,7 @@ public class CASDiskWriteAheadLogIT {
         wal.close();
 
         wal = new CASDiskWriteAheadLog("walTest", testDirectory, testDirectory, 100, 64, aesKey, iv, Integer.MAX_VALUE,
-            Integer.MAX_VALUE, 20, true, Locale.US, -1, -1, 1000, false, false, true, 10);
+            Integer.MAX_VALUE, 20, true, Locale.US, -1, -1, 1000, false, false, false, true, 10);
 
         Assert.assertEquals(wal.begin(), new OLogSequenceNumber(1, CASWALPage.RECORDS_OFFSET));
         Assert.assertEquals(wal.end(), new OLogSequenceNumber(2, CASWALPage.RECORDS_OFFSET));
@@ -2634,7 +2634,7 @@ public class CASDiskWriteAheadLogIT {
         final int recordsCount = random.nextInt(10_000) + 100;
 
         CASDiskWriteAheadLog wal = new CASDiskWriteAheadLog("walTest", testDirectory, testDirectory, 100, 64, null, null,
-            Integer.MAX_VALUE, Integer.MAX_VALUE, 20, true, Locale.US, -1, -1, 1000, false, false, true, 10);
+            Integer.MAX_VALUE, Integer.MAX_VALUE, 20, true, Locale.US, -1, -1, 1000, false, false, false, true, 10);
         for (int i = 0; i < recordsCount; i++) {
 
           final TestRecord testRecord = new TestRecord(random, 4 * wal.pageSize(), 1);
@@ -2673,7 +2673,7 @@ public class CASDiskWriteAheadLogIT {
       OFileUtils.deleteRecursively(testDirectory.toFile());
 
       CASDiskWriteAheadLog wal = new CASDiskWriteAheadLog("walTest", testDirectory, testDirectory, 100, 64, null, null,
-          Integer.MAX_VALUE, 10 * 1024 * 1024, 20, true, Locale.US, 10 * 1024 * 1024 * 1024L, -1, 1000, false, false, true, 10);
+          Integer.MAX_VALUE, 10 * 1024 * 1024, 20, true, Locale.US, 10 * 1024 * 1024 * 1024L, -1, 1000, false, false, false, true, 10);
 
       Assert.assertEquals(wal.begin(), new OLogSequenceNumber(1, CASWALPage.RECORDS_OFFSET));
       Assert.assertEquals(wal.end(), new OLogSequenceNumber(1, CASWALPage.RECORDS_OFFSET));
@@ -2735,7 +2735,7 @@ public class CASDiskWriteAheadLogIT {
       wal.close();
 
       CASDiskWriteAheadLog loadedWAL = new CASDiskWriteAheadLog("walTest", testDirectory, testDirectory, 100, 64, null, null,
-          Integer.MAX_VALUE, 10 * 1024 * 1024, 20, true, Locale.US, 3 * 1024 * 1024 * 1024L, -1, 1000, false, false, true, 10);
+          Integer.MAX_VALUE, 10 * 1024 * 1024, 20, true, Locale.US, 3 * 1024 * 1024 * 1024L, -1, 1000, false, false, false, true, 10);
 
       System.out.println("Assert WAL content 2");
       assertMTWALInsertion(loadedWAL, addedRecords);
@@ -2757,7 +2757,7 @@ public class CASDiskWriteAheadLogIT {
       OFileUtils.deleteRecursively(testDirectory.toFile());
 
       CASDiskWriteAheadLog wal = new CASDiskWriteAheadLog("walTest", testDirectory, testDirectory, 100, 64, null, null,
-          Integer.MAX_VALUE, 10 * 1024 * 1024, 20, true, Locale.US, 10 * 1024 * 1024 * 1024L, -1, 1000, false, false, true, 10);
+          Integer.MAX_VALUE, 10 * 1024 * 1024, 20, true, Locale.US, 10 * 1024 * 1024 * 1024L, -1, 1000, false, false, false, true, 10);
 
       Assert.assertEquals(wal.begin(), new OLogSequenceNumber(1, CASWALPage.RECORDS_OFFSET));
       Assert.assertEquals(wal.end(), new OLogSequenceNumber(1, CASWALPage.RECORDS_OFFSET));
@@ -2817,7 +2817,7 @@ public class CASDiskWriteAheadLogIT {
       wal.close();
 
       CASDiskWriteAheadLog loadedWAL = new CASDiskWriteAheadLog("walTest", testDirectory, testDirectory, 100, 64, null, null,
-          Integer.MAX_VALUE, 10 * 1024 * 1024, 20, true, Locale.US, 3 * 1024 * 1024 * 1024L, -1, 1000, false, false, true, 10);
+          Integer.MAX_VALUE, 10 * 1024 * 1024, 20, true, Locale.US, 3 * 1024 * 1024 * 1024L, -1, 1000, false, false, false, true, 10);
 
       System.out.println("Assert WAL content 2");
       assertMTWALInsertion(loadedWAL, addedRecords);
@@ -2840,7 +2840,7 @@ public class CASDiskWriteAheadLogIT {
       OFileUtils.deleteRecursively(testDirectory.toFile());
 
       CASDiskWriteAheadLog wal = new CASDiskWriteAheadLog("walTest", testDirectory, testDirectory, 48_000, 64, null, null,
-          Integer.MAX_VALUE, 10 * 1024 * 1024, 20, true, Locale.US, 10 * 1024 * 1024 * 1024L, -1, 1000, false, false, true, 10);
+          Integer.MAX_VALUE, 10 * 1024 * 1024, 20, true, Locale.US, 10 * 1024 * 1024 * 1024L, -1, 1000, false, false, false, true, 10);
 
       Assert.assertEquals(wal.begin(), new OLogSequenceNumber(1, CASWALPage.RECORDS_OFFSET));
       Assert.assertEquals(wal.end(), new OLogSequenceNumber(1, CASWALPage.RECORDS_OFFSET));
@@ -2899,7 +2899,7 @@ public class CASDiskWriteAheadLogIT {
       wal.close();
 
       CASDiskWriteAheadLog loadedWAL = new CASDiskWriteAheadLog("walTest", testDirectory, testDirectory, 48_000, 64, null, null,
-          Integer.MAX_VALUE, 10 * 1024 * 1024, 20, true, Locale.US, 3 * 1024 * 1024 * 1024L, -1, 1000, false, false, true, 10);
+          Integer.MAX_VALUE, 10 * 1024 * 1024, 20, true, Locale.US, 3 * 1024 * 1024 * 1024L, -1, 1000, false, false, false, true, 10);
 
       System.out.println("Assert WAL content 2");
       assertMTWALInsertion(loadedWAL, addedRecords);
@@ -2922,7 +2922,7 @@ public class CASDiskWriteAheadLogIT {
       OFileUtils.deleteRecursively(testDirectory.toFile());
 
       CASDiskWriteAheadLog wal = new CASDiskWriteAheadLog("walTest", testDirectory, testDirectory, 48_000, 64, null, null,
-          Integer.MAX_VALUE, 10 * 1024 * 1024, 20, true, Locale.US, 10 * 1024 * 1024 * 1024L, -1, 1000, false, false, true, 10);
+          Integer.MAX_VALUE, 10 * 1024 * 1024, 20, true, Locale.US, 10 * 1024 * 1024 * 1024L, -1, 1000, false, false, false, true, 10);
 
       Assert.assertEquals(wal.begin(), new OLogSequenceNumber(1, CASWALPage.RECORDS_OFFSET));
       Assert.assertEquals(wal.end(), new OLogSequenceNumber(1, CASWALPage.RECORDS_OFFSET));
@@ -2982,7 +2982,7 @@ public class CASDiskWriteAheadLogIT {
       wal.close();
 
       CASDiskWriteAheadLog loadedWAL = new CASDiskWriteAheadLog("walTest", testDirectory, testDirectory, 48_000, 64, null, null,
-          Integer.MAX_VALUE, 10 * 1024 * 1024, 20, true, Locale.US, 3 * 1024 * 1024 * 1024L, -1, 1000, false, false, true, 10);
+          Integer.MAX_VALUE, 10 * 1024 * 1024, 20, true, Locale.US, 3 * 1024 * 1024 * 1024L, -1, 1000, false, false, false, true, 10);
 
       System.out.println("Assert WAL content 2");
       assertMTWALInsertion(loadedWAL, addedRecords);
@@ -3005,7 +3005,7 @@ public class CASDiskWriteAheadLogIT {
       OFileUtils.deleteRecursively(testDirectory.toFile());
 
       CASDiskWriteAheadLog wal = new CASDiskWriteAheadLog("walTest", testDirectory, testDirectory, 100, 64, null, null,
-          Integer.MAX_VALUE, 256 * 1024 * 1024, 20, true, Locale.US, 10 * 1024 * 1024 * 1024L, -1, 1000, false, false, true, 10);
+          Integer.MAX_VALUE, 256 * 1024 * 1024, 20, true, Locale.US, 10 * 1024 * 1024 * 1024L, -1, 1000, false, false, false, true, 10);
 
       Assert.assertEquals(wal.begin(), new OLogSequenceNumber(1, CASWALPage.RECORDS_OFFSET));
       Assert.assertEquals(wal.end(), new OLogSequenceNumber(1, CASWALPage.RECORDS_OFFSET));
@@ -3065,7 +3065,7 @@ public class CASDiskWriteAheadLogIT {
       wal.close();
 
       CASDiskWriteAheadLog loadedWAL = new CASDiskWriteAheadLog("walTest", testDirectory, testDirectory, 100, 64, null, null,
-          Integer.MAX_VALUE, 10 * 1024 * 1024, 20, true, Locale.US, 3 * 1024 * 1024 * 1024L, -1, 1000, false, false, true, 10);
+          Integer.MAX_VALUE, 10 * 1024 * 1024, 20, true, Locale.US, 3 * 1024 * 1024 * 1024L, -1, 1000, false, false, false, true, 10);
 
       System.out.println("Assert WAL content 2");
       assertMTWALInsertion(loadedWAL, addedRecords);
@@ -3088,7 +3088,7 @@ public class CASDiskWriteAheadLogIT {
       OFileUtils.deleteRecursively(testDirectory.toFile());
 
       CASDiskWriteAheadLog wal = new CASDiskWriteAheadLog("walTest", testDirectory, testDirectory, 100, 64, null, null,
-          Integer.MAX_VALUE, 256 * 1024 * 1024, 20, true, Locale.US, 10 * 1024 * 1024 * 1024L, -1, 1000, false, false, true, 10);
+          Integer.MAX_VALUE, 256 * 1024 * 1024, 20, true, Locale.US, 10 * 1024 * 1024 * 1024L, -1, 1000, false, false, false, true, 10);
 
       Assert.assertEquals(wal.begin(), new OLogSequenceNumber(1, CASWALPage.RECORDS_OFFSET));
       Assert.assertEquals(wal.end(), new OLogSequenceNumber(1, CASWALPage.RECORDS_OFFSET));
@@ -3148,7 +3148,7 @@ public class CASDiskWriteAheadLogIT {
       wal.close();
 
       CASDiskWriteAheadLog loadedWAL = new CASDiskWriteAheadLog("walTest", testDirectory, testDirectory, 100, 64, null, null,
-          Integer.MAX_VALUE, 10 * 1024 * 1024, 20, true, Locale.US, 3 * 1024 * 1024 * 1024L, -1, 1000, false, false, true, 10);
+          Integer.MAX_VALUE, 10 * 1024 * 1024, 20, true, Locale.US, 3 * 1024 * 1024 * 1024L, -1, 1000, false, false, false, true, 10);
 
       System.out.println("Assert WAL content 2");
       assertMTWALInsertion(loadedWAL, addedRecords);
@@ -3171,7 +3171,7 @@ public class CASDiskWriteAheadLogIT {
       OFileUtils.deleteRecursively(testDirectory.toFile());
 
       CASDiskWriteAheadLog wal = new CASDiskWriteAheadLog("walTest", testDirectory, testDirectory, 48_000, 64, null, null,
-          Integer.MAX_VALUE, 256 * 1024 * 1024, 20, true, Locale.US, 10 * 1024 * 1024 * 1024L, -1, 1000, false, false, true, 10);
+          Integer.MAX_VALUE, 256 * 1024 * 1024, 20, true, Locale.US, 10 * 1024 * 1024 * 1024L, -1, 1000, false, false, false, true, 10);
 
       Assert.assertEquals(wal.begin(), new OLogSequenceNumber(1, CASWALPage.RECORDS_OFFSET));
       Assert.assertEquals(wal.end(), new OLogSequenceNumber(1, CASWALPage.RECORDS_OFFSET));
@@ -3231,7 +3231,7 @@ public class CASDiskWriteAheadLogIT {
       wal.close();
 
       CASDiskWriteAheadLog loadedWAL = new CASDiskWriteAheadLog("walTest", testDirectory, testDirectory, 48_000, 64, null, null,
-          Integer.MAX_VALUE, 10 * 1024 * 1024, 20, true, Locale.US, 3 * 1024 * 1024 * 1024L, -1, 1000, false, false, true, 10);
+          Integer.MAX_VALUE, 10 * 1024 * 1024, 20, true, Locale.US, 3 * 1024 * 1024 * 1024L, -1, 1000, false, false, false, true, 10);
 
       System.out.println("Assert WAL content 2");
       assertMTWALInsertion(loadedWAL, addedRecords);
@@ -3254,7 +3254,7 @@ public class CASDiskWriteAheadLogIT {
       OFileUtils.deleteRecursively(testDirectory.toFile());
 
       CASDiskWriteAheadLog wal = new CASDiskWriteAheadLog("walTest", testDirectory, testDirectory, 48_000, 64, null, null,
-          Integer.MAX_VALUE, 256 * 1024 * 1024, 20, true, Locale.US, 10 * 1024 * 1024 * 1024L, -1, 1000, false, false, true, 10);
+          Integer.MAX_VALUE, 256 * 1024 * 1024, 20, true, Locale.US, 10 * 1024 * 1024 * 1024L, -1, 1000, false, false, false, true, 10);
 
       Assert.assertEquals(wal.begin(), new OLogSequenceNumber(1, CASWALPage.RECORDS_OFFSET));
       Assert.assertEquals(wal.end(), new OLogSequenceNumber(1, CASWALPage.RECORDS_OFFSET));
@@ -3314,7 +3314,7 @@ public class CASDiskWriteAheadLogIT {
       wal.close();
 
       CASDiskWriteAheadLog loadedWAL = new CASDiskWriteAheadLog("walTest", testDirectory, testDirectory, 48_000, 64, null, null,
-          Integer.MAX_VALUE, 10 * 1024 * 1024, 20, true, Locale.US, 3 * 1024 * 1024 * 1024L, -1, 1000, false, false, true, 10);
+          Integer.MAX_VALUE, 10 * 1024 * 1024, 20, true, Locale.US, 3 * 1024 * 1024 * 1024L, -1, 1000, false, false, false, true, 10);
 
       System.out.println("Assert WAL content 2");
       assertMTWALInsertion(loadedWAL, addedRecords);
@@ -3337,7 +3337,7 @@ public class CASDiskWriteAheadLogIT {
       OFileUtils.deleteRecursively(testDirectory.toFile());
 
       CASDiskWriteAheadLog wal = new CASDiskWriteAheadLog("walTest", testDirectory, testDirectory, 48_000, 64, null, null,
-          Integer.MAX_VALUE, 256 * 1024 * 1024, 20, true, Locale.US, 10 * 1024 * 1024 * 1024L, -1, 1000, false, false, true, 10);
+          Integer.MAX_VALUE, 256 * 1024 * 1024, 20, true, Locale.US, 10 * 1024 * 1024 * 1024L, -1, 1000, false, false, false, true, 10);
 
       ThreadLocalRandom random = ThreadLocalRandom.current();
 
@@ -3364,7 +3364,7 @@ public class CASDiskWriteAheadLogIT {
       wal.close();
 
       CASDiskWriteAheadLog loadedWAL = new CASDiskWriteAheadLog("walTest", testDirectory, testDirectory, 48_000, 64, null, null,
-          Integer.MAX_VALUE, 256 * 1024 * 1024, 20, true, Locale.US, 10 * 1024 * 1024 * 1024L, -1, 1000, false, false, true, 10);
+          Integer.MAX_VALUE, 256 * 1024 * 1024, 20, true, Locale.US, 10 * 1024 * 1024 * 1024L, -1, 1000, false, false, false, true, 10);
 
       Assert.assertEquals(masterLSN, loadedWAL.lastCheckpoint());
 
@@ -3378,7 +3378,7 @@ public class CASDiskWriteAheadLogIT {
       OFileUtils.deleteRecursively(testDirectory.toFile());
 
       CASDiskWriteAheadLog wal = new CASDiskWriteAheadLog("walTest", testDirectory, testDirectory, 48_000, 64, null, null,
-          Integer.MAX_VALUE, 256 * 1024 * 1024, 20, true, Locale.US, 10 * 1024 * 1024 * 1024L, -1, 1000, false, false, true, 10);
+          Integer.MAX_VALUE, 256 * 1024 * 1024, 20, true, Locale.US, 10 * 1024 * 1024 * 1024L, -1, 1000, false, false, false, true, 10);
 
       long seed = System.nanoTime();
       Random random = new Random(seed);
@@ -3423,7 +3423,7 @@ public class CASDiskWriteAheadLogIT {
       wal.close();
 
       CASDiskWriteAheadLog loadedWAL = new CASDiskWriteAheadLog("walTest", testDirectory, testDirectory, 48_000, 64, null, null,
-          Integer.MAX_VALUE, 256 * 1024 * 1024, 20, true, Locale.US, 10 * 1024 * 1024 * 1024L, -1, 1000, false, false, true, 10);
+          Integer.MAX_VALUE, 256 * 1024 * 1024, 20, true, Locale.US, 10 * 1024 * 1024 * 1024L, -1, 1000, false, false, false, true, 10);
       Assert.assertEquals(masterRecords.last(), wal.lastCheckpoint());
 
       loadedWAL.close();
@@ -3438,7 +3438,7 @@ public class CASDiskWriteAheadLogIT {
       OFileUtils.deleteRecursively(testDirectory.toFile());
 
       CASDiskWriteAheadLog wal = new CASDiskWriteAheadLog("walTest", testDirectory, testDirectory, 48_000, 64, null, null,
-          Integer.MAX_VALUE, 256 * 1024 * 1024, 20, true, Locale.US, 10 * 1024 * 1024 * 1024L, -1, 1000, false, false, true, 10);
+          Integer.MAX_VALUE, 256 * 1024 * 1024, 20, true, Locale.US, 10 * 1024 * 1024 * 1024L, -1, 1000, false, false, false, true, 10);
 
       long seed = System.nanoTime();
       Random random = new Random(seed);
@@ -3465,7 +3465,7 @@ public class CASDiskWriteAheadLogIT {
       wal.close();
 
       CASDiskWriteAheadLog loadedWAL = new CASDiskWriteAheadLog("walTest", testDirectory, testDirectory, 48_000, 64, null, null,
-          Integer.MAX_VALUE, 256 * 1024 * 1024, 20, true, Locale.US, 10 * 1024 * 1024 * 1024L, -1, 1000, false, false, true, 10);
+          Integer.MAX_VALUE, 256 * 1024 * 1024, 20, true, Locale.US, 10 * 1024 * 1024 * 1024L, -1, 1000, false, false, false, true, 10);
 
       Assert.assertNotNull(loadedWAL.getFlushedLsn());
       Assert.assertEquals(loadedWAL.end(), loadedWAL.getFlushedLsn());
@@ -3489,7 +3489,7 @@ public class CASDiskWriteAheadLogIT {
       TreeMap<OLogSequenceNumber, TestRecord> records = new TreeMap<>();
 
       CASDiskWriteAheadLog wal = new CASDiskWriteAheadLog("walTest", testDirectory, testDirectory, 48_000, 64, null, null,
-          Integer.MAX_VALUE, 10 * 1024 * 1024, 20, true, Locale.US, 10 * 1024 * 1024L, -1, 1000, false, false, true, 10);
+          Integer.MAX_VALUE, 10 * 1024 * 1024, 20, true, Locale.US, 10 * 1024 * 1024L, -1, 1000, false, false, false, true, 10);
 
       ExecutorService executorService = Executors.newCachedThreadPool();
       AtomicReference<Future<Void>> segmentAppender = new AtomicReference<>();
@@ -3572,7 +3572,7 @@ public class CASDiskWriteAheadLogIT {
       wal.close();
 
       CASDiskWriteAheadLog loadedWAL = new CASDiskWriteAheadLog("walTest", testDirectory, testDirectory, 48_000, 64, null, null,
-          Integer.MAX_VALUE, 10 * 1024 * 1024, 20, true, Locale.US, 10 * 1024 * 1024L, -1, 1000, false, false, true, 10);
+          Integer.MAX_VALUE, 10 * 1024 * 1024, 20, true, Locale.US, 10 * 1024 * 1024L, -1, 1000, false, false, false, true, 10);
 
       long minSegment = begin.getSegment();
       long maxSegment = end.getSegment();
@@ -3620,7 +3620,7 @@ public class CASDiskWriteAheadLogIT {
     final TreeMap<OLogSequenceNumber, TestRecord> records = new TreeMap<>();
 
     CASDiskWriteAheadLog wal = new CASDiskWriteAheadLog("walTest", testDirectory, testDirectory, 48_000, 64, null, null,
-        Integer.MAX_VALUE, 10 * 1024 * 1024, 20, true, Locale.US, 10 * 1024 * 1024L, -1, 1000, false, false, true, 10);
+        Integer.MAX_VALUE, 10 * 1024 * 1024, 20, true, Locale.US, 10 * 1024 * 1024L, -1, 1000, false, false, false, true, 10);
 
     AtomicReference<Future<Void>> segmentAppender = new AtomicReference<>();
     ExecutorService executorService = Executors.newCachedThreadPool();
@@ -3724,7 +3724,7 @@ public class CASDiskWriteAheadLogIT {
   @Ignore
   public void testCutTillMT() throws Exception {
     CASDiskWriteAheadLog wal = new CASDiskWriteAheadLog("walTest", testDirectory, testDirectory, 48_000, 64, null, null,
-        Integer.MAX_VALUE, 10 * 1024 * 1024, 20, true, Locale.US, 10 * 1024 * 1024 * 1024L, -1, 1000, false, false, true, 10);
+        Integer.MAX_VALUE, 10 * 1024 * 1024, 20, true, Locale.US, 10 * 1024 * 1024 * 1024L, -1, 1000, false, false, false, true, 10);
 
     AtomicReference<Future<Void>> segmentAppender = new AtomicReference<>();
     ExecutorService executorService = Executors.newCachedThreadPool();
@@ -3804,7 +3804,7 @@ public class CASDiskWriteAheadLogIT {
 
       try {
         CASDiskWriteAheadLog wal = new CASDiskWriteAheadLog("walTest", testDirectory, testDirectory, 48_000, 64, null, null,
-            Integer.MAX_VALUE, 10 * 1024 * 1024, 20, true, Locale.US, 10 * 1024 * 1024 * 1024L, -1, 1000, false, false, true, 10);
+            Integer.MAX_VALUE, 10 * 1024 * 1024, 20, true, Locale.US, 10 * 1024 * 1024 * 1024L, -1, 1000, false, false, false, true, 10);
 
         List<TestRecord> records = new ArrayList<>();
 
@@ -3850,7 +3850,7 @@ public class CASDiskWriteAheadLogIT {
 
         System.out.println("Second check");
         wal = new CASDiskWriteAheadLog("walTest", testDirectory, testDirectory, 100, 64, null, null, Integer.MAX_VALUE,
-            Integer.MAX_VALUE, 20, true, Locale.US, -1, -1, 1000, false, false, true, 10);
+            Integer.MAX_VALUE, 20, true, Locale.US, -1, -1, 1000, false, false, false, true, 10);
 
         Assert.assertEquals(wal.begin(), new OLogSequenceNumber(1, CASWALPage.RECORDS_OFFSET));
         Assert.assertEquals(wal.end(),
@@ -3894,7 +3894,7 @@ public class CASDiskWriteAheadLogIT {
 
       try {
         CASDiskWriteAheadLog wal = new CASDiskWriteAheadLog("walTest", testDirectory, testDirectory, 48_000, 64, null, null,
-            Integer.MAX_VALUE, 10 * 1024 * 1024, 20, true, Locale.US, 10 * 1024 * 1024 * 1024L, -1, 1000, false, false, true, 10);
+            Integer.MAX_VALUE, 10 * 1024 * 1024, 20, true, Locale.US, 10 * 1024 * 1024 * 1024L, -1, 1000, false, false, false, true, 10);
 
         List<TestRecord> records = new ArrayList<>();
 
@@ -3942,7 +3942,7 @@ public class CASDiskWriteAheadLogIT {
 
         System.out.println("Second check");
         wal = new CASDiskWriteAheadLog("walTest", testDirectory, testDirectory, 100, 64, null, null, Integer.MAX_VALUE,
-            Integer.MAX_VALUE, 20, true, Locale.US, -1, -1, 1000, false, false, true, 10);
+            Integer.MAX_VALUE, 20, true, Locale.US, -1, -1, 1000, false, false, false, true, 10);
 
         Assert.assertEquals(wal.begin(), new OLogSequenceNumber(1, CASWALPage.RECORDS_OFFSET));
         Assert.assertEquals(wal.end(),
@@ -3984,7 +3984,7 @@ public class CASDiskWriteAheadLogIT {
   @Test
   public void testDelete() throws Exception {
     CASDiskWriteAheadLog wal = new CASDiskWriteAheadLog("walTest", testDirectory, testDirectory, 48_000, 64, null, null,
-        Integer.MAX_VALUE, 10 * 1024 * 1024, 20, true, Locale.US, 10 * 1024 * 1024 * 1024L, -1, 1000, false, false, true, 10);
+        Integer.MAX_VALUE, 10 * 1024 * 1024, 20, true, Locale.US, 10 * 1024 * 1024 * 1024L, -1, 1000, false, false, false, true, 10);
 
     final long seed = System.nanoTime();
     final Random random = new Random(seed);
@@ -4027,7 +4027,7 @@ public class CASDiskWriteAheadLogIT {
       try {
         final long walSizeLimit = 2 * 1024 * 1024 * 1024L;
         CASDiskWriteAheadLog wal = new CASDiskWriteAheadLog("walTest", testDirectory, testDirectory, 48_000, 64, null, null,
-            Integer.MAX_VALUE, 10 * 1024 * 1024, 20, true, Locale.US, walSizeLimit, -1, 1000, false, false, true, 10);
+            Integer.MAX_VALUE, 10 * 1024 * 1024, 20, true, Locale.US, walSizeLimit, -1, 1000, false, false, false, true, 10);
 
         AtomicBoolean walIsFull = new AtomicBoolean();
 
@@ -4127,7 +4127,7 @@ public class CASDiskWriteAheadLogIT {
       try {
         final long walSizeLimit = 2 * 1024 * 1024 * 1024L;
         CASDiskWriteAheadLog wal = new CASDiskWriteAheadLog("walTest", testDirectory, testDirectory, 48_000, 64, null, null,
-            Integer.MAX_VALUE, 512 * 1024 * 1024, 20, true, Locale.US, walSizeLimit, -1, 1000, false, false, true, 10);
+            Integer.MAX_VALUE, 512 * 1024 * 1024, 20, true, Locale.US, walSizeLimit, -1, 1000, false, false, false, true, 10);
 
         AtomicBoolean walIsFull = new AtomicBoolean();
 
@@ -4227,7 +4227,7 @@ public class CASDiskWriteAheadLogIT {
       try {
         final long walSizeLimit = 10 * 1024 * 1024 * 1024L;
         CASDiskWriteAheadLog wal = new CASDiskWriteAheadLog("walTest", testDirectory, testDirectory, 48_000, 64, null, null,
-            Integer.MAX_VALUE, 10 * 1024 * 1024, 20, true, Locale.US, walSizeLimit, -1, 1000, false, false, true, 10);
+            Integer.MAX_VALUE, 10 * 1024 * 1024, 20, true, Locale.US, walSizeLimit, -1, 1000, false, false, false, true, 10);
 
         AtomicBoolean walIsFull = new AtomicBoolean();
 
@@ -4327,7 +4327,7 @@ public class CASDiskWriteAheadLogIT {
       try {
         final long walSizeLimit = 10 * 1024 * 1024 * 1024L;
         CASDiskWriteAheadLog wal = new CASDiskWriteAheadLog("walTest", testDirectory, testDirectory, 48_000, 64, null, null,
-            Integer.MAX_VALUE, 512 * 1024 * 1024, 20, true, Locale.US, walSizeLimit, -1, 1000, false, false, true, 10);
+            Integer.MAX_VALUE, 512 * 1024 * 1024, 20, true, Locale.US, walSizeLimit, -1, 1000, false, false, false, true, 10);
 
         AtomicBoolean walIsFull = new AtomicBoolean();
 
@@ -4427,7 +4427,7 @@ public class CASDiskWriteAheadLogIT {
       try {
         final long walSizeLimit = 5 * 1024 * 1024 * 1024L;
         CASDiskWriteAheadLog wal = new CASDiskWriteAheadLog("walTest", testDirectory, testDirectory, 48_000, 64, null, null,
-            Integer.MAX_VALUE, 10 * 1024 * 1024, 20, true, Locale.US, walSizeLimit, -1, 1000, false, false, true, 10);
+            Integer.MAX_VALUE, 10 * 1024 * 1024, 20, true, Locale.US, walSizeLimit, -1, 1000, false, false, false, true, 10);
 
         AtomicBoolean walIsFull = new AtomicBoolean();
 
@@ -4532,7 +4532,7 @@ public class CASDiskWriteAheadLogIT {
       try {
         final long walSizeLimit = 5 * 1024 * 1024 * 1024L;
         CASDiskWriteAheadLog wal = new CASDiskWriteAheadLog("walTest", testDirectory, testDirectory, 48_000, 64, null, null,
-            Integer.MAX_VALUE, 512 * 1024 * 1024, 20, true, Locale.US, walSizeLimit, -1, 1000, false, false, true, 10);
+            Integer.MAX_VALUE, 512 * 1024 * 1024, 20, true, Locale.US, walSizeLimit, -1, 1000, false, false, false, true, 10);
 
         AtomicBoolean walIsFull = new AtomicBoolean();
 
@@ -4637,7 +4637,7 @@ public class CASDiskWriteAheadLogIT {
       try {
         final long walSizeLimit = 10 * 1024 * 1024 * 1024L;
         CASDiskWriteAheadLog wal = new CASDiskWriteAheadLog("walTest", testDirectory, testDirectory, 48_000, 64, null, null,
-            Integer.MAX_VALUE, 10 * 1024 * 1024, 20, true, Locale.US, walSizeLimit, -1, 1000, false, false, true, 10);
+            Integer.MAX_VALUE, 10 * 1024 * 1024, 20, true, Locale.US, walSizeLimit, -1, 1000, false, false, false, true, 10);
 
         AtomicBoolean walIsFull = new AtomicBoolean();
 
@@ -4746,7 +4746,7 @@ public class CASDiskWriteAheadLogIT {
       try {
         final long walSizeLimit = 10 * 1024 * 1024 * 1024L;
         CASDiskWriteAheadLog wal = new CASDiskWriteAheadLog("walTest", testDirectory, testDirectory, 48_000, 64, null, null,
-            Integer.MAX_VALUE, 512 * 1024 * 1024, 20, true, Locale.US, walSizeLimit, -1, 1000, false, false, true, 10);
+            Integer.MAX_VALUE, 512 * 1024 * 1024, 20, true, Locale.US, walSizeLimit, -1, 1000, false, false, false, true, 10);
 
         AtomicBoolean walIsFull = new AtomicBoolean();
 
@@ -4856,7 +4856,7 @@ public class CASDiskWriteAheadLogIT {
 
       try {
         CASDiskWriteAheadLog wal = new CASDiskWriteAheadLog("walTest", testDirectory, testDirectory, 48_000, 64, null, null,
-            Integer.MAX_VALUE, 10 * 1024 * 1024, 20, true, Locale.US, 10 * 1024 * 1024 * 1024L, -1, 1000, false, false, true, 10);
+            Integer.MAX_VALUE, 10 * 1024 * 1024, 20, true, Locale.US, 10 * 1024 * 1024 * 1024L, -1, 1000, false, false, false, true, 10);
 
         ExecutorService executorService = Executors.newCachedThreadPool();
 
@@ -4912,7 +4912,7 @@ public class CASDiskWriteAheadLogIT {
         }
 
         CASDiskWriteAheadLog loadedWAL = new CASDiskWriteAheadLog("walTest", testDirectory, testDirectory, 48_000, 64, null, null,
-            Integer.MAX_VALUE, 10 * 1024 * 1024, 20, true, Locale.US, 10 * 1024 * 1024 * 1024L, -1, 1000, false, false, true, 10);
+            Integer.MAX_VALUE, 10 * 1024 * 1024, 20, true, Locale.US, 10 * 1024 * 1024 * 1024L, -1, 1000, false, false, false, true, 10);
 
         Iterator<TestRecord> recordIterator = records.iterator();
         List<WriteableWALRecord> walRecords = loadedWAL.read(records.get(0).getLsn(), 100);
@@ -4966,7 +4966,7 @@ public class CASDiskWriteAheadLogIT {
   @Test
   public void testMasterRecordCrashTwoRecords() throws Exception {
     CASDiskWriteAheadLog wal = new CASDiskWriteAheadLog("walTest", testDirectory, testDirectory, 48_000, 64, null, null,
-        Integer.MAX_VALUE, 10 * 1024 * 1024, 20, true, Locale.US, 10 * 1024 * 1024 * 1024L, -1, 1000, false, false, true, 10);
+        Integer.MAX_VALUE, 10 * 1024 * 1024, 20, true, Locale.US, 10 * 1024 * 1024 * 1024L, -1, 1000, false, false, false, true, 10);
 
     OLogSequenceNumber masterLSNOne = wal.log(new OFullCheckpointStartRecord());
     wal.flush();
@@ -4992,7 +4992,7 @@ public class CASDiskWriteAheadLogIT {
     }
 
     wal = new CASDiskWriteAheadLog("walTest", testDirectory, testDirectory, 48_000, 64, null, null, Integer.MAX_VALUE,
-        10 * 1024 * 1024, 20, true, Locale.US, 10 * 1024 * 1024 * 1024L, -1, 1000, false, false, true, 10);
+        10 * 1024 * 1024, 20, true, Locale.US, 10 * 1024 * 1024 * 1024L, -1, 1000, false, false, false, true, 10);
 
     Assert.assertEquals(masterLSNOne, wal.lastCheckpoint());
 
@@ -5002,7 +5002,7 @@ public class CASDiskWriteAheadLogIT {
   @Test
   public void testMasterRecordCrashThreeRecordsFirstDamage() throws Exception {
     CASDiskWriteAheadLog wal = new CASDiskWriteAheadLog("walTest", testDirectory, testDirectory, 48_000, 64, null, null,
-        Integer.MAX_VALUE, 10 * 1024 * 1024, 20, true, Locale.US, 10 * 1024 * 1024 * 1024L, -1, 1000, false, false, true, 10);
+        Integer.MAX_VALUE, 10 * 1024 * 1024, 20, true, Locale.US, 10 * 1024 * 1024 * 1024L, -1, 1000, false, false, false, true, 10);
 
     wal.log(new OFullCheckpointStartRecord());
     wal.flush();
@@ -5031,7 +5031,7 @@ public class CASDiskWriteAheadLogIT {
     }
 
     wal = new CASDiskWriteAheadLog("walTest", testDirectory, testDirectory, 48_000, 64, null, null, Integer.MAX_VALUE,
-        10 * 1024 * 1024, 20, true, Locale.US, 10 * 1024 * 1024 * 1024L, -1, 1000, false, false, true, 10);
+        10 * 1024 * 1024, 20, true, Locale.US, 10 * 1024 * 1024 * 1024L, -1, 1000, false, false, false, true, 10);
 
     Assert.assertEquals(masterLSNOne, wal.lastCheckpoint());
 
@@ -5041,7 +5041,7 @@ public class CASDiskWriteAheadLogIT {
   @Test
   public void testMasterRecordCrashThreeRecordsSecondDamage() throws Exception {
     CASDiskWriteAheadLog wal = new CASDiskWriteAheadLog("walTest", testDirectory, testDirectory, 48_000, 64, null, null,
-        Integer.MAX_VALUE, 10 * 1024 * 1024, 20, true, Locale.US, 10 * 1024 * 1024 * 1024L, -1, 1000, false, false, true, 10);
+        Integer.MAX_VALUE, 10 * 1024 * 1024, 20, true, Locale.US, 10 * 1024 * 1024 * 1024L, -1, 1000, false, false, false, true, 10);
 
     wal.log(new OFullCheckpointStartRecord());
     wal.flush();
@@ -5070,7 +5070,7 @@ public class CASDiskWriteAheadLogIT {
     }
 
     wal = new CASDiskWriteAheadLog("walTest", testDirectory, testDirectory, 48_000, 64, null, null, Integer.MAX_VALUE,
-        10 * 1024 * 1024, 20, true, Locale.US, 10 * 1024 * 1024 * 1024L, -1, 1000, false, false, true, 10);
+        10 * 1024 * 1024, 20, true, Locale.US, 10 * 1024 * 1024 * 1024L, -1, 1000, false, false, false, true, 10);
 
     Assert.assertEquals(masterLSNTwo, wal.lastCheckpoint());
 

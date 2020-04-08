@@ -316,6 +316,17 @@ public class ODurablePage {
     buffer.putLong(lsn.getPosition());
   }
 
+  public OLogSequenceNumber getLsn() {
+    final ByteBuffer buffer = pointer.getBuffer();
+    assert buffer != null;
+    buffer.position(WAL_SEGMENT_OFFSET);
+
+    final long segment = buffer.getLong();
+    final long position = buffer.getLong();
+
+    return new OLogSequenceNumber(segment, position);
+  }
+
   public static void setPageLSN(final OLogSequenceNumber lsn, final OCacheEntry cacheEntry) {
     final ByteBuffer buffer = cacheEntry.getCachePointer().getBufferDuplicate();
     assert buffer.order() == ByteOrder.nativeOrder();

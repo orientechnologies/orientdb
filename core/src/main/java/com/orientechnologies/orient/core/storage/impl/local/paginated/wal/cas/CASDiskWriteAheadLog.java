@@ -51,8 +51,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.atomic.LongAdder;
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReentrantLock;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Stream;
@@ -92,6 +90,8 @@ public final class CASDiskWriteAheadLog implements OWriteAheadLog {
 
     commitExecutor.setMaximumPoolSize(1);
   }
+
+  private final boolean keepSingleWALSegment;
 
   private final long walSizeHardLimit;
 
@@ -153,7 +153,7 @@ public final class CASDiskWriteAheadLog implements OWriteAheadLog {
   private final ScalableRWLock segmentLock = new ScalableRWLock();
 
   private final TreeMap<OLogSequenceNumber, Integer> cutTillLimits = new TreeMap<>();
-  private final Lock                                 cuttingLock   = new ReentrantLock();
+  private final ScalableRWLock                       cuttingLock   = new ScalableRWLock();
 
   private final ConcurrentLinkedQueue<OPair<Long, OWALFile>> fileCloseQueue     = new ConcurrentLinkedQueue<>();
   private final AtomicInteger                                fileCloseQueueSize = new AtomicInteger();
@@ -210,8 +210,8 @@ public final class CASDiskWriteAheadLog implements OWriteAheadLog {
   public CASDiskWriteAheadLog(final String storageName, final Path storagePath, final Path walPath, final int maxPagesCacheSize,
       final int bufferSize, byte[] aesKey, byte[] iv, long segmentsInterval, final long maxSegmentSize, final int commitDelay,
       final boolean filterWALFiles, final Locale locale, final long walSizeHardLimit, final long freeSpaceLimit,
-      final int fsyncInterval, boolean allowDirectIO, boolean callFsync, boolean printPerformanceStatistic,
-      int statisticPrintInterval) throws IOException {
+      final int fsyncInterval, boolean allowDirectIO, boolean keepSingleWALSegment, boolean callFsync,
+      boolean printPerformanceStatistic, int statisticPrintInterval) throws IOException {
 
     if (aesKey != null && aesKey.length != 16 && aesKey.length != 24 && aesKey.length != 32) {
       throw new OInvalidStorageEncryptionKeyException("Invalid length of the encryption key, provided size is " + aesKey.length);
@@ -221,6 +221,7 @@ public final class CASDiskWriteAheadLog implements OWriteAheadLog {
       throw new OInvalidStorageEncryptionKeyException("IV can not be null");
     }
 
+    this.keepSingleWALSegment = keepSingleWALSegment;
     this.aesKey = aesKey;
     this.iv = iv;
 
@@ -964,11 +965,11 @@ public final class CASDiskWriteAheadLog implements OWriteAheadLog {
     if (lsn == null)
       throw new NullPointerException();
 
-    cuttingLock.lock();
+    cuttingLock.sharedLock();
     try {
       cutTillLimits.merge(lsn, 1, Integer::sum);
     } finally {
-      cuttingLock.unlock();
+      cuttingLock.sharedUnlock();
     }
   }
 
@@ -976,21 +977,22 @@ public final class CASDiskWriteAheadLog implements OWriteAheadLog {
     if (lsn == null)
       throw new NullPointerException();
 
-    cuttingLock.lock();
+    cuttingLock.sharedLock();
     try {
-      final Integer oldCounter = cutTillLimits.get(lsn);
+      cutTillLimits.compute(lsn, (key, oldCounter) -> {
+        if (oldCounter == null) {
+          throw new IllegalArgumentException(String.format("Limit %s is going to be removed but it was not added", lsn));
+        }
 
-      if (oldCounter == null)
-        throw new IllegalArgumentException(String.format("Limit %s is going to be removed but it was not added", lsn));
+        final int newCounter = oldCounter - 1;
+        if (newCounter == 0) {
+          return null;
+        }
 
-      final int newCounter = oldCounter - 1;
-      if (newCounter == 0) {
-        cutTillLimits.remove(lsn);
-      } else {
-        cutTillLimits.put(lsn, newCounter);
-      }
+        return newCounter;
+      });
     } finally {
-      cuttingLock.unlock();
+      cuttingLock.sharedUnlock();
     }
   }
 
@@ -999,8 +1001,7 @@ public final class CASDiskWriteAheadLog implements OWriteAheadLog {
     return log(record);
   }
 
-  public OLogSequenceNumber logAtomicOperationStartRecord(final boolean isRollbackSupported, final long unitId,
-      byte[] metadata) {
+  public OLogSequenceNumber logAtomicOperationStartRecord(final boolean isRollbackSupported, final long unitId, byte[] metadata) {
     final OAtomicUnitStartMetadataRecord record = new OAtomicUnitStartMetadataRecord(isRollbackSupported, unitId, metadata);
     return log(record);
   }
@@ -1095,7 +1096,11 @@ public final class CASDiskWriteAheadLog implements OWriteAheadLog {
       }
     }
 
-    if (walSizeLimit > -1 && size > walSizeLimit && segments.size() > 1) {
+    if (keepSingleWALSegment && segments.size() > 1) {
+      for (final OCheckpointRequestListener listener : fullCheckpointListeners) {
+        listener.requestCheckpoint();
+      }
+    } else if (walSizeLimit > -1 && size > walSizeLimit && segments.size() > 1) {
       for (final OCheckpointRequestListener listener : fullCheckpointListeners) {
         listener.requestCheckpoint();
       }
@@ -1124,7 +1129,7 @@ public final class CASDiskWriteAheadLog implements OWriteAheadLog {
   }
 
   public boolean cutAllSegmentsSmallerThan(long segmentId) throws IOException {
-    cuttingLock.lock();
+    cuttingLock.exclusiveLock();
     try {
       segmentLock.sharedLock();
       try {
@@ -1193,7 +1198,7 @@ public final class CASDiskWriteAheadLog implements OWriteAheadLog {
         segmentLock.sharedUnlock();
       }
     } finally {
-      cuttingLock.unlock();
+      cuttingLock.exclusiveUnlock();
     }
   }
 

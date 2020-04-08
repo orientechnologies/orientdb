@@ -213,6 +213,9 @@ public enum OGlobalConfiguration { // ENVIRONMENT
       "Indicates whether a full checkpoint should be performed, if storage was opened. It is needed so fuzzy checkpoints can work properly",
       Boolean.class, true),
 
+  STORAGE_ATOMIC_OPERATIONS_TABLE_COMPACTION_LIMIT("storage.atomicOperationsTable.compactionLimit",
+      "Limit of size of atomic operations table after which compaction will be triggered on", Integer.class, 10_000),
+
   STORAGE_MAKE_FULL_CHECKPOINT_AFTER_CLUSTER_CREATE("storage.makeFullCheckpointAfterClusterCreate",
       "Indicates whether a full checkpoint should be performed, if storage was opened", Boolean.class, true),
 
@@ -297,6 +300,9 @@ public enum OGlobalConfiguration { // ENVIRONMENT
   WAL_MIN_SEG_SIZE("storage.wal.minSegSize", "Minimal value of maximum WAL segment size in MB", Integer.class, 6 * 1024),
 
   WAL_MAX_SIZE("storage.wal.maxSize", "Maximum size of WAL on disk (in megabytes)", Integer.class, -1),
+
+  WAL_KEEP_SINGLE_SEGMENT("storage.wal.keepSingleSegment",
+      "Database will provide the best efforts to keep only single WAL inside the storage", Boolean.class, false),
 
   WAL_ALLOW_DIRECT_IO("storage.wal.allowDirectIO",
       "Allows usage of direct IO API on Linux OS to avoid keeping of WAL data in OS buffer", Boolean.class, false),
@@ -389,15 +395,14 @@ public enum OGlobalConfiguration { // ENVIRONMENT
 
   DB_CACHED_POOL_CAPACITY("db.cached.pool.capacity", "Default database cached pools capacity", Integer.class, 100),
 
-  DB_CACHED_POOL_CLEAN_UP_TIMEOUT("db.cached.pool.cleanUpTimeout", "Default timeout for clean up cache from unused or closed database pools, value in milliseconds", Long.class, 600_000),
+  DB_CACHED_POOL_CLEAN_UP_TIMEOUT("db.cached.pool.cleanUpTimeout",
+      "Default timeout for clean up cache from unused or closed database pools, value in milliseconds", Long.class, 600_000),
 
   DB_POOL_ACQUIRE_TIMEOUT("db.pool.acquireTimeout", "Default database pool timeout in milliseconds", Integer.class, 60000),
 
-  @Deprecated
-  DB_POOL_IDLE_TIMEOUT("db.pool.idleTimeout", "Timeout for checking for free databases in the pool", Integer.class, 0),
+  @Deprecated DB_POOL_IDLE_TIMEOUT("db.pool.idleTimeout", "Timeout for checking for free databases in the pool", Integer.class, 0),
 
-  @Deprecated
-  DB_POOL_IDLE_CHECK_DELAY("db.pool.idleCheckDelay", "Delay time on checking for idle databases", Integer.class, 0),
+  @Deprecated DB_POOL_IDLE_CHECK_DELAY("db.pool.idleCheckDelay", "Delay time on checking for idle databases", Integer.class, 0),
 
   DB_MVCC_THROWFAST("db.mvcc.throwfast",
       "Use fast-thrown exceptions for MVCC OConcurrentModificationExceptions. No context information will be available. "
@@ -1027,9 +1032,8 @@ public enum OGlobalConfiguration { // ENVIRONMENT
    * @Since 2.2
    */
   @OApi(maturity = OApi.MATURITY.NEW) CREATE_DEFAULT_USERS("security.createDefaultUsers",
-      "Indicates whether default database users should be created", Boolean.class, true),
-  WARNING_DEFAULT_USERS("security.warningDefaultUsers",
-      "Indicates whether access with default users should show a warning", Boolean.class, true),
+      "Indicates whether default database users should be created", Boolean.class, true), WARNING_DEFAULT_USERS(
+      "security.warningDefaultUsers", "Indicates whether access with default users should show a warning", Boolean.class, true),
   /**
    * @Since 2.2
    */
@@ -1188,6 +1192,7 @@ public enum OGlobalConfiguration { // ENVIRONMENT
    * Find the OGlobalConfiguration instance by the key. Key is case insensitive.
    *
    * @param iKey Key to find. It's case insensitive.
+   *
    * @return OGlobalConfiguration instance if found, otherwise null
    */
   public static OGlobalConfiguration findByKey(final String iKey) {
