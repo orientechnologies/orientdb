@@ -434,8 +434,8 @@ public class OrientDBEmbedded implements OrientDBInternal {
   }
 
   private void checkDefaultPassword(String database, String user, String password) {
-    if (("admin".equals(user) && "admin".equals(password)) || ("reader".equals(user) && "reader".equals(password)) || (
-        "writer".equals(user) && "writer".equals(password)) && WARNING_DEFAULT_USERS.getValueAsBoolean()) {
+    if ((("admin".equals(user) && "admin".equals(password)) || ("reader".equals(user) && "reader".equals(password)) || (
+        "writer".equals(user) && "writer".equals(password))) && WARNING_DEFAULT_USERS.getValueAsBoolean()) {
       OLogManager.instance().warnNoDb(this, String.format("IMPORTANT! Using default password is unsafe, please change password for user '%s' on database '%s'", user, database));
     }
   }
