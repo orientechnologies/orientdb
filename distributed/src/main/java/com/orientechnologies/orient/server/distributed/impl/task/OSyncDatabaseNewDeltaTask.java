@@ -51,14 +51,7 @@ public class OSyncDatabaseNewDeltaTask extends OAbstractReplicatedTask {
       Optional<OBackgroundNewDelta> delta = ((OAbstractPaginatedStorage) database.getStorage().getUnderlying())
           .extractTransactionsFromWal(missing);
       if (delta.isPresent()) {
-        OBackgroundNewDelta deltaBackup = delta.get();
-        final ODistributedDatabaseChunk chunk = new ODistributedDatabaseChunk(deltaBackup, CHUNK_MAX_SIZE, null);
-
-        if (chunk.last)
-          // NO MORE CHUNKS: SET THE NODE ONLINE (SYNCHRONIZING ENDED)
-          iManager.setDatabaseStatus(iManager.getLocalNodeName(), database.getName(), ODistributedServerManager.DB_STATUS.ONLINE);
-        ((ODistributedStorage) database.getStorage()).setLastValidBackup(deltaBackup);
-        return new ONewDeltaTaskResponse(chunk);
+        return new ONewDeltaTaskResponse(new ODistributedDatabaseChunk(delta.get(), CHUNK_MAX_SIZE, null));
       } else {
         return new ONewDeltaTaskResponse(ONewDeltaTaskResponse.ResponseType.FULL_SYNC);
       }

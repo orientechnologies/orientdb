@@ -496,7 +496,7 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
           OLiveQueryHookV2.removePendingDatabaseOps(this);
         }
         return true;
-      } else if (TIMEDOUT.equals(txContext.getStatus())) {
+      } else {
         int nretry = getConfiguration().getValueAsInteger(DISTRIBUTED_CONCURRENT_TX_MAX_AUTORETRY);
         int delay = getConfiguration().getValueAsInteger(DISTRIBUTED_CONCURRENT_TX_AUTORETRY_DELAY);
 
@@ -545,17 +545,6 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
           OLiveQueryHook.removePendingDatabaseOps(this);
           OLiveQueryHookV2.removePendingDatabaseOps(this);
         }
-
-      } else {
-        txContext.destroy();
-        localDistributedDatabase.popTxContext(transactionId);
-        Orient.instance().submit(() -> {
-          OLogManager.instance()
-              .warn(ODatabaseDocumentDistributed.this, "Reached limit of retry for commit tx:%s forcing database re-install",
-                  transactionId);
-          manager.installDatabase(false, ODatabaseDocumentDistributed.this.getName(), true, true);
-        });
-        return true;
       }
     }
     return false;
