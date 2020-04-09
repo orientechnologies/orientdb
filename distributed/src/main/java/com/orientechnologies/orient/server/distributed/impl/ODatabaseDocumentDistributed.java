@@ -522,7 +522,6 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
 
   /**
    * @param transactionId
-   *
    * @return null returned means that commit failed
    */
   public boolean commit2pc(ODistributedRequestId transactionId, boolean local, ODistributedRequestId requestId) {
@@ -569,13 +568,16 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
                 OException.wrapException(new OInterruptedException(e.getMessage()), e);
               }
             }
-            if (localDistributedDatabase.validate(txContext.getTransactionId()).isPresent()) {
-              return false;
+            boolean valid = true;
+            Optional<OTransactionId> validateResult = localDistributedDatabase.validate(txContext.getTransactionId());
+            if (validateResult.isPresent()) {
+              valid = validateResult.get().getNodeOwner().isPresent();
             }
-            internalBegin2pc(txContext, local);
-            txContext.setStatus(SUCCESS);
-            break;
-
+            if (valid) {
+              internalBegin2pc(txContext, local);
+              txContext.setStatus(SUCCESS);
+              break;
+            }
           } catch (ODistributedRecordLockedException | ODistributedKeyLockedException ex) {
             // Just retry
           } catch (Exception ex) {
@@ -584,7 +586,23 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
             break;
           }
         }
-        if (!SUCCESS.equals(txContext.getStatus())) {
+        if (SUCCESS.equals(txContext.getStatus())) {
+          try {
+            txContext.commit(this);
+            localDistributedDatabase.popTxContext(transactionId);
+            OLiveQueryHook.notifyForTxChanges(this);
+            OLiveQueryHookV2.notifyForTxChanges(this);
+            return true;
+          } catch (RuntimeException | Error e) {
+            Orient.instance().submit(() -> {
+              getDistributedManager().installDatabase(false, getName(), true, true);
+            });
+            throw e;
+          } finally {
+            OLiveQueryHook.removePendingDatabaseOps(this);
+            OLiveQueryHookV2.removePendingDatabaseOps(this);
+          }
+        } else {
           txContext.destroy();
           localDistributedDatabase.popTxContext(transactionId);
           Orient.instance().submit(() -> {
@@ -595,22 +613,6 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
           });
           return true;
         }
-        try {
-          txContext.commit(this);
-          localDistributedDatabase.popTxContext(transactionId);
-          OLiveQueryHook.notifyForTxChanges(this);
-          OLiveQueryHookV2.notifyForTxChanges(this);
-          return true;
-        } catch (RuntimeException | Error e) {
-          Orient.instance().submit(() -> {
-            getDistributedManager().installDatabase(false, getName(), true, true);
-          });
-          throw e;
-        } finally {
-          OLiveQueryHook.removePendingDatabaseOps(this);
-          OLiveQueryHookV2.removePendingDatabaseOps(this);
-        }
-
       }
     }
     return false;
