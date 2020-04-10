@@ -19,52 +19,36 @@
  */
 package com.orientechnologies.orient.core.query;
 
+import java.util.Locale;
+
 public class OQueryHelper {
   protected static final String WILDCARD_ANYCHAR = "?";
   protected static final String WILDCARD_ANY     = "%";
 
-  public static boolean like(final String currentValue, String iValue) {
+  public static boolean like(String currentValue, String iValue) {
     if (currentValue == null || currentValue.length() == 0 || iValue == null || iValue.length() == 0)
       // EMPTY/NULL PARAMETERS
       return false;
 
-    final int anyPos = iValue.indexOf(WILDCARD_ANY);
-    final int charAnyPos = iValue.indexOf(WILDCARD_ANYCHAR);
+    iValue = iValue.toLowerCase(Locale.ENGLISH);
+    currentValue = currentValue.toLowerCase(Locale.ENGLISH);
 
-    if (anyPos == -1 && charAnyPos == -1)
-      // NO WILDCARDS: DO EQUALS
-      return currentValue.equals(iValue);
+    iValue = iValue.replace("\\", "\\\\");
+    iValue = iValue.replace("[", "\\[");
+    iValue = iValue.replace("]", "\\]");
+    iValue = iValue.replace("{", "\\{");
+    iValue = iValue.replace("}", "\\}");
+    iValue = iValue.replace("(", "\\(");
+    iValue = iValue.replace(")", "\\)");
+    iValue = iValue.replace("|", "\\|");
+    iValue = iValue.replace("*", "\\*");
+    iValue = iValue.replace("+", "\\+");
+    iValue = iValue.replace("$", "\\$");
+    iValue = iValue.replace("^", "\\^");
+    iValue = iValue.replace(".", "\\.");
+    iValue = iValue.replace(WILDCARD_ANY, ".*");
+    iValue = iValue.replace(WILDCARD_ANYCHAR, ".");
 
-    final String value = currentValue.toString();
-    if (value == null || value.length() == 0)
-      // NOTHING TO MATCH
-      return false;
-
-    if (iValue.equals(WILDCARD_ANY)) {
-      return true;
-    } else if (iValue.startsWith(WILDCARD_ANY) && iValue.endsWith(WILDCARD_ANY)) {
-      // %XXXXX%
-      iValue = iValue.substring(WILDCARD_ANY.length(), iValue.length() - WILDCARD_ANY.length());
-      return currentValue.indexOf(iValue) > -1;
-
-    } else if (iValue.startsWith(WILDCARD_ANY)) {
-      // %XXXXX
-      iValue = iValue.substring(WILDCARD_ANY.length());
-      return value.endsWith(iValue);
-
-    } else if (iValue.endsWith(WILDCARD_ANY)) {
-      // XXXXX%
-      iValue = iValue.substring(0, iValue.length() - WILDCARD_ANY.length());
-      return value.startsWith(iValue);
-
-    } else {
-      final int pos = iValue.indexOf(WILDCARD_ANY);
-      if (pos > -1) {
-        // XX%XXX
-        return value.startsWith(iValue.substring(0, pos)) && value.endsWith(iValue.substring(pos + 1));
-      }
-    }
-
-    return false;
+    return currentValue.matches(iValue);
   }
 }

@@ -3149,6 +3149,7 @@ public class OSelectStatementExecutionTest {
     Assert.assertFalse(result.hasNext());
     result.close();
   }
+
   @Test
   public void testRidPagination1() {
     String className = "testRidPagination1";
@@ -3714,5 +3715,51 @@ public class OSelectStatementExecutionTest {
       Assert.assertEquals(11, (int) item.getProperty("foo"));
       Assert.assertFalse(result.hasNext());
     }
+  }
+
+  @Test
+  public void testLike() {
+    String className = "testLike";
+
+    db.createClassIfNotExist(className);
+
+    db.command("INSERT INTO " + className + " content {\"name\": \"foobarbaz\"}").close();
+    db.command("INSERT INTO " + className + " content {\"name\": \"test[]{}()|*^.test\"}").close();
+
+
+    try (OResultSet result = db.query("select from " + className + " where name LIKE 'foo%'")) {
+      Assert.assertTrue(result.hasNext());
+      result.next();
+      Assert.assertFalse(result.hasNext());
+    }
+    try (OResultSet result = db.query("select from " + className + " where name LIKE '%foo%baz%'")) {
+      Assert.assertTrue(result.hasNext());
+      result.next();
+      Assert.assertFalse(result.hasNext());
+    }
+    try (OResultSet result = db.query("select from " + className + " where name LIKE '%bar%'")) {
+      Assert.assertTrue(result.hasNext());
+      result.next();
+      Assert.assertFalse(result.hasNext());
+    }
+
+    try (OResultSet result = db.query("select from " + className + " where name LIKE 'bar%'")) {
+      Assert.assertFalse(result.hasNext());
+    }
+
+    try (OResultSet result = db.query("select from " + className + " where name LIKE '%bar'")) {
+      Assert.assertFalse(result.hasNext());
+    }
+
+
+    String specialChars = "[]{}()|*^.";
+    for (char c : specialChars.toCharArray()) {
+      try (OResultSet result = db.query("select from " + className + " where name LIKE '%" + c + "%'")) {
+        Assert.assertTrue(result.hasNext());
+        result.next();
+        Assert.assertFalse(result.hasNext());
+      }
+    }
+
   }
 }
