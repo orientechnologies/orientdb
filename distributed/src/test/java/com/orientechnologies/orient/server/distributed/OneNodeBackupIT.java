@@ -39,6 +39,7 @@ public class OneNodeBackupIT extends AbstractServerClusterTxTest {
   final AtomicInteger nodeLefts        = new AtomicInteger();
 
   @Test
+  @Ignore
   public void test() throws Exception {
     startupNodesInSequence = true;
     count = 100;
