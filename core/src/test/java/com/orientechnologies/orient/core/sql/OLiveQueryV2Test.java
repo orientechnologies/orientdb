@@ -20,16 +20,17 @@
 package com.orientechnologies.orient.core.sql;
 
 import com.orientechnologies.common.exception.OException;
-import com.orientechnologies.orient.core.db.OLiveQueryMonitor;
-import com.orientechnologies.orient.core.db.OLiveQueryResultListener;
+import com.orientechnologies.orient.core.db.*;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.db.record.ORecordOperation;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.executor.OResult;
+import com.orientechnologies.orient.core.sql.query.OLiveQuery;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import org.junit.Assert;
 import org.junit.Test;
@@ -122,6 +123,74 @@ public class OLiveQueryV2Test {
       }
     } finally {
       db.drop();
+    }
+  }
+
+  @Test
+  public void testLiveInsertOnCluster() {
+
+    OrientDB context = new OrientDB("embedded:", OrientDBConfig.defaultConfig());
+
+    context.create("testLiveInsertOnCluster", ODatabaseType.MEMORY);
+    try (ODatabaseDocumentInternal db = (ODatabaseDocumentInternal) context.open("testLiveInsertOnCluster", "admin", "admin")) {
+
+      OClass clazz = db.getMetadata().getSchema().createClass("test");
+
+      int defaultCluster = clazz.getDefaultClusterId();
+      String clusterName = db.getStorage().getClusterNameById(defaultCluster);
+
+      OLiveQueryV2Test.MyLiveQueryListener listener = new OLiveQueryV2Test.MyLiveQueryListener(new CountDownLatch(1));
+
+      db.live(" select from cluster:" + clusterName, listener);
+
+      db.command("insert into cluster:" + clusterName + " set name = 'foo', surname = 'bar'");
+
+      try {
+        Assert.assertTrue(listener.latch.await(1, TimeUnit.MINUTES));
+      } catch (InterruptedException e) {
+        e.printStackTrace();
+      }
+      Assert.assertEquals(listener.ops.size(), 1);
+      for (OResult doc : listener.ops) {
+        Assert.assertEquals(doc.getProperty("name"), "foo");
+        ORID rid = doc.getProperty("@rid");
+        Assert.assertTrue(rid.isPersistent());
+        Assert.assertNotNull(rid);
+      }
+    }
+  }
+
+  @Test
+  public void testLiveWithWhereCondition() {
+
+    OrientDB context = new OrientDB("embedded:", OrientDBConfig.defaultConfig());
+
+    context.create("testLiveWithWhereCondition", ODatabaseType.MEMORY);
+    try (ODatabaseDocumentInternal db = (ODatabaseDocumentInternal) context.open("testLiveWithWhereCondition", "admin", "admin")) {
+
+      OClass clazz = db.getMetadata().getSchema().createClass("test");
+
+      int defaultCluster = clazz.getDefaultClusterId();
+      String clusterName = db.getStorage().getClusterNameById(defaultCluster);
+
+      OLiveQueryV2Test.MyLiveQueryListener listener = new OLiveQueryV2Test.MyLiveQueryListener(new CountDownLatch(1));
+
+      db.live("select from V where id = 1", listener);
+
+      db.command("insert into V set id = 1");
+
+      try {
+        Assert.assertTrue(listener.latch.await(1, TimeUnit.MINUTES));
+      } catch (InterruptedException e) {
+        e.printStackTrace();
+      }
+      Assert.assertEquals(listener.ops.size(), 1);
+      for (OResult doc : listener.ops) {
+        Assert.assertEquals(doc.getProperty("id"), new Integer(1));
+        ORID rid = doc.getProperty("@rid");
+        Assert.assertTrue(rid.isPersistent());
+        Assert.assertNotNull(rid);
+      }
     }
   }
 
