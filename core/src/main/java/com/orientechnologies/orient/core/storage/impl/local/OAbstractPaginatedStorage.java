@@ -1572,7 +1572,9 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
               byte[] data = ((OHighLevelTransactionChangeRecord) record).getData();
               long unitId = ((OHighLevelTransactionChangeRecord) record).getOperationUnitId();
               OTransactionData tx = units.get(unitId);
-              tx.addRecord(data);
+              if (tx != null) {
+                tx.addRecord(data);
+              }
             }
             if (transactionsToRead.isEmpty() && units.isEmpty()) {
               //all read stop scanning and return the transactions
@@ -5359,6 +5361,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
         postCloseSteps(onDelete, jvmError.get() != null, idGen.getLastId());
         transaction = null;
+        lastMetadata = Optional.empty();
       } else {
         OLogManager.instance()
             .errorNoDb(this, "Because of JVM error happened inside of storage it can not be properly closed", null);

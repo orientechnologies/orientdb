@@ -76,10 +76,6 @@ public class OCopyDatabaseChunkTask extends OAbstractReplicatedTask {
     ODistributedServerLog.info(this, iManager.getLocalNodeName(), getNodeSource(), ODistributedServerLog.DIRECTION.OUT,
         "- transferring chunk #%d offset=%d size=%s...", chunkNum, result.offset, OFileUtils.getSizeAsNumber(result.buffer.length));
 
-    if (result.last) {
-      iManager.getMessageService().getDatabase(database.getName()).setOnline();
-    }
-
     return result;
   }
 

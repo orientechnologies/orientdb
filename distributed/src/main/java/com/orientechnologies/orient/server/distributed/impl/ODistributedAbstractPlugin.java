@@ -920,6 +920,10 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
       // DON'T REPLICATE SYSTEM BECAUSE IS DIFFERENT AND PER SERVER
       return false;
 
+    if (installingDatabases.contains(databaseName)) {
+      return false;
+    }
+
     final ODistributedDatabaseImpl distrDatabase = messageService.registerDatabase(databaseName, null);
 
     try {
@@ -1022,6 +1026,8 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
                       current.activateOnCurrentThread();
                     }
                   }
+                } else {
+                  setDatabaseStatus(getLocalNodeName(), databaseName, DB_STATUS.NOT_AVAILABLE);
                 }
 
               } catch (ODatabaseIsOldException e) {
@@ -1375,6 +1381,9 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
       }
     } else if (results.getResponseType() == ONewDeltaTaskResponse.ResponseType.FULL_SYNC) {
       throw new ODistributedDatabaseDeltaSyncException("Full sync required");
+    } else if (results.getResponseType() == ONewDeltaTaskResponse.ResponseType.NO_CHANGES) {
+      distrDatabase.setOnline();
+      return true;
     }
     return databaseInstalledCorrectly;
   }
@@ -1698,6 +1707,7 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
 
     // OVERWRITE THE MOMENTUM FROM THE ORIGINAL SERVER AND ADD LAST LOCAL LSN
     try {
+      distrDatabase.setOnline();
       distrDatabase.getSyncConfiguration().load();
       distrDatabase.getSyncConfiguration()
           .setLastLSN(localNodeName, ((OLocalPaginatedStorage) db.getStorage().getUnderlying()).getLSN(), false);
@@ -1705,10 +1715,6 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
     } catch (IOException e) {
       ODistributedServerLog.error(this, nodeName, null, DIRECTION.NONE, "Error on loading %s file for database '%s'", e,
           DISTRIBUTED_SYNC_JSON_FILENAME, databaseName);
-    }
-
-    try {
-      distrDatabase.setOnline();
     } finally {
       db.activateOnCurrentThread();
       db.close();
@@ -2115,7 +2121,7 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
         }
       }
     });
-
+    getMessageService().getDatabase(databaseName).setOnline();
     ODatabaseDocumentInternal database = serverInstance.openDatabase(databaseName);
 
     ODistributedServerLog.info(this, nodeName, null, DIRECTION.NONE, "Installed database '%s' (LSN=%s)", databaseName,
