@@ -255,11 +255,6 @@ public interface ODistributedServerManager {
    */
   ORemoteTaskFactoryManager getTaskFactoryManager();
 
-  /**
-   * Elects a new Lock Manager.
-   */
-  String electNewLockManager();
-
   Set<String> getActiveServers();
 
   ODistributedConflictResolverFactory getConflictResolverFactory();

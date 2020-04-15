@@ -74,6 +74,7 @@ import com.orientechnologies.orient.server.distributed.task.OAbstractReplicatedT
 import com.orientechnologies.orient.server.distributed.task.ODatabaseIsOldException;
 import com.orientechnologies.orient.server.distributed.task.ODistributedDatabaseDeltaSyncException;
 import com.orientechnologies.orient.server.distributed.task.ORemoteTask;
+import com.orientechnologies.orient.server.hazelcast.OHazelcastLockManager;
 import com.orientechnologies.orient.server.network.OServerNetworkListener;
 import com.orientechnologies.orient.server.plugin.OServerPluginAbstract;
 
@@ -137,8 +138,8 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
   private volatile String                              lastServerDump          = "";
   protected        CountDownLatch                      serverStarted           = new CountDownLatch(1);
   private          ODistributedConflictResolverFactory conflictResolverFactory = new ODistributedConflictResolverFactory();
-  private final    ODistributedLockManagerRequester    lockManagerRequester    = new ODistributedLockManagerRequester(this);
-  private          ODistributedLockManagerExecutor     lockManagerExecutor;
+  //private final    ODistributedLockManagerRequester    lockManagerRequester    = new ODistributedLockManagerRequester(this);
+  //private          ODistributedLockManagerExecutor     lockManagerExecutor;
 
   protected ODistributedAbstractPlugin() {
   }
@@ -179,8 +180,6 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
       }
     }
 
-    lockManagerExecutor = new ODistributedLockManagerExecutor(this);
-
     if (serverInstance.getUser("replicator") == null)
       // DROP THE REPLICATOR USER. THIS USER WAS NEEDED BEFORE 2.2, BUT IT'S NOT REQUIRED ANYMORE
       OLogManager.instance().config(this,
@@ -208,11 +207,6 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
   @Deprecated
   public String getCoordinatorServer() {
     return getLockManagerServer();
-  }
-
-  @Override
-  public String getLockManagerServer() {
-    return lockManagerRequester.getServer();
   }
 
   public File getDefaultDatabaseConfigFile() {
@@ -269,12 +263,6 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
     activeNodesNamesByUuid.clear();
     activeNodesUuidByName.clear();
 
-    if (lockManagerExecutor != null)
-      lockManagerExecutor.shutdown();
-
-    if (lockManagerRequester != null)
-      lockManagerRequester.shutdown();
-
     setNodeStatus(NODE_STATUS.OFFLINE);
 
     Orient.instance().removeDbLifecycleListener(this);
@@ -286,16 +274,6 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
       } catch (Exception e) {
       }
     storages.clear();
-  }
-
-  @Override
-  public ODistributedLockManagerRequester getLockManagerRequester() {
-    return lockManagerRequester;
-  }
-
-  @Override
-  public ODistributedLockManagerExecutor getLockManagerExecutor() {
-    return lockManagerExecutor;
   }
 
   /**
@@ -1576,7 +1554,7 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
 
     boolean updated;
     T result;
-    lockManagerRequester.acquireExclusiveLock(databaseName, nodeName, timeoutLocking);
+    getLockManagerExecutor().acquireExclusiveLock(databaseName, nodeName, timeoutLocking);
     try {
 
       if (lastCfg == null)
@@ -1609,7 +1587,7 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
       throw new RuntimeException(e);
 
     } finally {
-      lockManagerRequester.releaseExclusiveLock(databaseName, nodeName);
+      getLockManagerRequester().releaseExclusiveLock(databaseName, nodeName);
     }
     if (updated) {
       // SEND NEW CFG TO ALL THE CONNECTED CLIENTS
@@ -1740,9 +1718,9 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
     }
   }
 
-  protected void installDatabaseOnLocalNode(final String databaseName, final String dbPath, final String iNode,
-      final boolean delta, final File uniqueClustersBackupDirectory, final OModifiableDistributedConfiguration cfg,
-      boolean incremental, OSyncReceiver receiver) {
+  protected void installDatabaseOnLocalNode(final String databaseName, final String dbPath, final String iNode, final boolean delta,
+      final File uniqueClustersBackupDirectory, final OModifiableDistributedConfiguration cfg, boolean incremental,
+      OSyncReceiver receiver) {
     ODistributedServerLog.info(this, nodeName, iNode, DIRECTION.IN, "Installing database '%s' to: %s...", databaseName, dbPath);
 
     new File(dbPath).mkdirs();
