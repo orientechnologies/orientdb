@@ -61,8 +61,6 @@ import com.orientechnologies.orient.core.tx.OTransactionInternal;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.distributed.*;
 import com.orientechnologies.orient.server.distributed.ODistributedRequest.EXECUTION_MODE;
-import com.orientechnologies.orient.server.distributed.impl.task.OReadRecordIfNotLatestTask;
-import com.orientechnologies.orient.server.distributed.impl.task.OReadRecordTask;
 import com.orientechnologies.orient.server.distributed.impl.task.OSQLCommandTask;
 import com.orientechnologies.orient.server.distributed.impl.task.OScriptTask;
 import com.orientechnologies.orient.server.distributed.task.OAbstractCommandTask;
@@ -305,7 +303,6 @@ public class ODistributedStorage implements OStorage, OFreezableStorageComponent
       return result;
 
     } catch (OConcurrentModificationException e) {
-      localDistributedDatabase.getDatabaseRepairer().enqueueRepairRecord((ORecordId) e.getRid());
       throw e;
     } catch (ONeedRetryException e) {
       // PASS THROUGH
@@ -553,131 +550,14 @@ public class ODistributedStorage implements OStorage, OFreezableStorageComponent
 
   public OStorageOperationResult<ORawBuffer> readRecord(final ORecordId iRecordId, final String iFetchPlan,
       final boolean iIgnoreCache, final boolean prefetchRecords, final ORecordCallback<ORawBuffer> iCallback) {
-
-    if (isLocalEnv()) {
-      // ALREADY DISTRIBUTED
-      return wrapped.readRecord(iRecordId, iFetchPlan, iIgnoreCache, prefetchRecords, iCallback);
-    }
-
-    final ORawBuffer memCopy = localDistributedDatabase.getRecordIfLocked(iRecordId);
-    if (memCopy != null)
-      return new OStorageOperationResult<ORawBuffer>(memCopy);
-
-    try {
-      final String clusterName = getClusterNameByRID(iRecordId);
-
-      final ODistributedConfiguration dbCfg = distributedConfiguration;
-      final List<String> nodes = dbCfg.getServers(clusterName, null);
-      final int availableNodes = nodes.size();
-
-      // CHECK IF LOCAL NODE OWNS THE DATA AND READ-QUORUM = 1: GET IT LOCALLY BECAUSE IT'S FASTER
-      final String localNodeName = dManager.getLocalNodeName();
-
-      if (nodes.isEmpty()
-          || nodes.contains(dManager.getLocalNodeName()) && dbCfg.getReadQuorum(clusterName, availableNodes, localNodeName) <= 1) {
-        // DON'T REPLICATE
-        return (OStorageOperationResult<ORawBuffer>) OScenarioThreadLocal.executeAsDistributed(new Callable() {
-          @Override
-          public Object call() throws Exception {
-            return wrapped.readRecord(iRecordId, iFetchPlan, iIgnoreCache, prefetchRecords, iCallback);
-          }
-        });
-      }
-
-      final OReadRecordTask task = ((OReadRecordTask) dManager.getTaskFactoryManager().getFactoryByServerNames(nodes)
-          .createTask(OReadRecordTask.FACTORYID)).init(iRecordId);
-
-      // DISTRIBUTE IT
-      final ODistributedResponse response = dManager
-          .sendRequest(getName(), Collections.singleton(clusterName), nodes, task, dManager.getNextMessageIdCounter(),
-              EXECUTION_MODE.RESPONSE, null, null, null);
-      final Object dResult = response != null ? response.getPayload() : null;
-
-      if (dResult instanceof ONeedRetryException)
-        throw (ONeedRetryException) dResult;
-      else if (dResult instanceof Exception)
-        throw OException
-            .wrapException(new ODistributedException("Error on execution distributed read record"), (Exception) dResult);
-
-      return new OStorageOperationResult<ORawBuffer>((ORawBuffer) dResult);
-
-    } catch (ONeedRetryException e) {
-      // PASS THROUGH
-      throw e;
-    } catch (HazelcastInstanceNotActiveException e) {
-      throw OException.wrapException(new OOfflineNodeException("Hazelcast instance is not available"), e);
-
-    } catch (HazelcastException e) {
-      throw OException.wrapException(new OOfflineNodeException("Hazelcast instance is not available"), e);
-
-    } catch (Exception e) {
-      handleDistributedException("Cannot route read record operation for %s to the distributed node", e, iRecordId);
-      // UNREACHABLE
-      return null;
-    }
+    // ALREADY DISTRIBUTED
+    return wrapped.readRecord(iRecordId, iFetchPlan, iIgnoreCache, prefetchRecords, iCallback);
   }
 
   @Override
   public OStorageOperationResult<ORawBuffer> readRecordIfVersionIsNotLatest(final ORecordId rid, final String fetchPlan,
       final boolean ignoreCache, final int recordVersion) throws ORecordNotFoundException {
-    if (isLocalEnv()) {
-      return wrapped.readRecordIfVersionIsNotLatest(rid, fetchPlan, ignoreCache, recordVersion);
-    }
-    final ORawBuffer memCopy = localDistributedDatabase.getRecordIfLocked(rid);
-    if (memCopy != null)
-      return new OStorageOperationResult<ORawBuffer>(memCopy);
-
-    try {
-      final String clusterName = getClusterNameByRID(rid);
-
-      final ODistributedConfiguration dbCfg = distributedConfiguration;
-      final List<String> nodes = dbCfg.getServers(clusterName, null);
-      final int availableNodes = nodes.size();
-
-      // CHECK IF LOCAL NODE OWNS THE DATA AND READ-QUORUM = 1: GET IT LOCALLY BECAUSE IT'S FASTER
-      final String localNodeName = dManager.getLocalNodeName();
-
-      if (nodes.isEmpty()
-          || nodes.contains(dManager.getLocalNodeName()) && dbCfg.getReadQuorum(clusterName, availableNodes, localNodeName) <= 1) {
-        // DON'T REPLICATE
-        return (OStorageOperationResult<ORawBuffer>) OScenarioThreadLocal.executeAsDistributed(new Callable() {
-          @Override
-          public Object call() throws Exception {
-            return wrapped.readRecordIfVersionIsNotLatest(rid, fetchPlan, ignoreCache, recordVersion);
-          }
-        });
-      }
-
-      final OReadRecordIfNotLatestTask task = (OReadRecordIfNotLatestTask) dManager.getTaskFactoryManager()
-          .getFactoryByServerNames(nodes).createTask(OReadRecordIfNotLatestTask.FACTORYID);
-      task.init(rid, recordVersion);
-
-      // DISTRIBUTE IT
-      final Object result = dManager
-          .sendRequest(getName(), Collections.singleton(clusterName), nodes, task, dManager.getNextMessageIdCounter(),
-              EXECUTION_MODE.RESPONSE, null, null, null).getPayload();
-
-      if (result instanceof ONeedRetryException)
-        throw (ONeedRetryException) result;
-      else if (result instanceof Exception)
-        throw OException.wrapException(new ODistributedException("Error on execution distributed read record"), (Exception) result);
-
-      return new OStorageOperationResult<ORawBuffer>((ORawBuffer) result);
-
-    } catch (ONeedRetryException e) {
-      // PASS THROUGH
-      throw e;
-    } catch (HazelcastInstanceNotActiveException e) {
-      throw OException.wrapException(new OOfflineNodeException("Hazelcast instance is not available"), e);
-
-    } catch (HazelcastException e) {
-      throw OException.wrapException(new OOfflineNodeException("Hazelcast instance is not available"), e);
-
-    } catch (Exception e) {
-      handleDistributedException("Cannot route read record operation for %s to the distributed node", e, rid);
-      // UNREACHABLE
-      return null;
-    }
+    return wrapped.readRecordIfVersionIsNotLatest(rid, fetchPlan, ignoreCache, recordVersion);
   }
 
   @Override

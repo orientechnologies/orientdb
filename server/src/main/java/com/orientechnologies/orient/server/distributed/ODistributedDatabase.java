@@ -144,8 +144,6 @@ public interface ODistributedDatabase {
 
   void setLSN(String sourceNodeName, OLogSequenceNumber taskLastLSN, boolean writeLastOperation) throws IOException;
 
-  ODistributedDatabaseRepairer getDatabaseRepairer();
-
   Optional<OTransactionId> nextId();
 
   List<OTransactionId> missingTransactions(OTransactionSequenceStatus lastState);

@@ -80,7 +80,6 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
   protected final      ODistributedAbstractPlugin                manager;
   protected final      ODistributedMessageServiceImpl            msgService;
   protected final      String                                    databaseName;
-  protected            ODistributedDatabaseRepairer              repairer;
   protected            ODistributedSyncConfiguration             syncConfiguration;
   protected            ConcurrentHashMap<ORID, ODistributedLock> lockManager                    = new ConcurrentHashMap<ORID, ODistributedLock>(
       256);
@@ -159,8 +158,6 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
     }
 
     startTxTimeoutTimerTask();
-
-    repairer = new OConflictResolverDatabaseRepairer(manager, databaseName);
 
     Orient.instance().getProfiler()
         .registerHookValue("distributed.db." + databaseName + ".msgSent", "Number of replication messages sent from current node",
@@ -819,7 +816,6 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
         recordLocks, databaseName, serverName);
 
     // REPAIR RECORDS OF TRANSACTION.
-    getDatabaseRepairer().enqueueRepairRecords(rids2Repair);
   }
 
   @Override
@@ -958,9 +954,6 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
     try {
       if (txTimeoutTask != null)
         txTimeoutTask.cancel();
-
-      if (repairer != null)
-        repairer.shutdown();
 
       // SEND THE SHUTDOWN TO ALL THE WORKER THREADS
       if (lockThread != null)
@@ -1216,11 +1209,6 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
     cfg.setLastLSN(sourceNodeName, taskLastLSN, updateLastOperationTimestamp);
   }
 
-  @Override
-  public ODistributedDatabaseRepairer getDatabaseRepairer() {
-    return repairer;
-  }
-
   private void startTxTimeoutTimerTask() {
     txTimeoutTask = new TimerTask() {
       @Override
@@ -1287,8 +1275,6 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
               }
             }
           }
-
-          getDatabaseRepairer().enqueueRepairRecords(rids2Repair);
 
         } catch (Exception t) {
           // CATCH EVERYTHING TO AVOID THE TIMER IS CANCELED
