@@ -37,7 +37,11 @@ import com.orientechnologies.orient.core.exception.OSecurityAccessException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.storage.ORawBuffer;
+import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
+import com.orientechnologies.orient.core.tx.OTransactionId;
+import com.orientechnologies.orient.core.tx.OTransactionSequenceStatus;
+import com.orientechnologies.orient.core.tx.OTxMetadataHolder;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.OSystemDatabase;
 import com.orientechnologies.orient.server.distributed.*;
@@ -62,6 +66,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
 import static com.orientechnologies.orient.core.config.OGlobalConfiguration.DISTRIBUTED_ATOMIC_LOCK_TIMEOUT;
+import static com.orientechnologies.orient.core.config.OGlobalConfiguration.DISTRIBUTED_TRANSACTION_SEQUENCE_SET_SIZE;
 
 /**
  * Distributed database implementation. There is one instance per database. Each node creates own instance to talk with each
@@ -94,10 +99,12 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
   private          AtomicBoolean                         parsing               = new AtomicBoolean(true);
   private final    AtomicReference<ODistributedMomentum> filterByMomentum      = new AtomicReference<ODistributedMomentum>();
 
-  private final String                     localNodeName;
-  private final OSimpleLockManager<ORID>   recordLockManager;
-  private final OSimpleLockManager<Object> indexKeyLockManager;
-  private       AtomicLong                 operationsRunnig = new AtomicLong(0);
+  private final String                           localNodeName;
+  private final OSimpleLockManager<ORID>         recordLockManager;
+  private final OSimpleLockManager<Object>       indexKeyLockManager;
+  private       AtomicLong                       operationsRunnig = new AtomicLong(0);
+  private       ODistributedSynchronizedSequence sequenceManager;
+  private final AtomicLong                       pending          = new AtomicLong();
 
   public OSimpleLockManager<ORID> getRecordLockManager() {
     return recordLockManager;
@@ -200,8 +207,11 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
         }, "distributed.db.*.recordLocks");
 
     long timeout = manager.getServerInstance().getContextConfiguration().getValueAsLong(DISTRIBUTED_ATOMIC_LOCK_TIMEOUT);
+    int sequenceSize = manager.getServerInstance().getContextConfiguration()
+        .getValueAsInteger(DISTRIBUTED_TRANSACTION_SEQUENCE_SET_SIZE);
     recordLockManager = new OSimpleLockManagerImpl<>(timeout);
     indexKeyLockManager = new OSimpleLockManagerImpl<>(timeout);
+    sequenceManager = new ODistributedSynchronizedSequence(localNodeName, sequenceSize);
   }
 
   public OLogSequenceNumber getLastLSN(final String server) {
@@ -223,10 +233,11 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
 
   public void reEnqueue(final int senderNodeId, final long msgSequence, final String databaseName, final ORemoteTask payload,
       int retryCount, int autoRetryDelay) {
-
-    Orient.instance().scheduleTask(
-        () -> processRequest(new ODistributedRequest(getManager(), senderNodeId, msgSequence, databaseName, payload), false),
-        autoRetryDelay * retryCount, 0);
+    pending.incrementAndGet();
+    Orient.instance().scheduleTask(() -> {
+      processRequest(new ODistributedRequest(getManager(), senderNodeId, msgSequence, databaseName, payload), false);
+      pending.decrementAndGet();
+    }, autoRetryDelay * retryCount, 0);
   }
 
   /**
@@ -536,7 +547,8 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
     } catch (Exception e) {
       String names = iClusterNames != null ? "." + iClusterNames : "";
       throw OException.wrapException(new ODistributedException(
-          "Error on executing distributed request (" + iRequest + ") against database '" + databaseName + names + "' to nodes " + iNodes), e);
+          "Error on executing distributed request (" + iRequest + ") against database '" + databaseName + names + "' to nodes "
+              + iNodes), e);
     } finally {
       if (iAfterSentCallback != null && !afterSendCallBackCalled)
         iAfterSentCallback.call(iRequest.getId());
@@ -571,13 +583,16 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
 
   @Override
   public void setOnline() {
+    OAbstractPaginatedStorage storage = ((OAbstractPaginatedStorage) manager.getStorage(databaseName).getUnderlying());
+    if (storage != null) {
+      sequenceManager.fill(storage.getLastMetadata());
+    }
     ODistributedServerLog
         .info(this, localNodeName, null, DIRECTION.NONE, "Publishing ONLINE status for database %s.%s...", localNodeName,
             databaseName);
 
     // SET THE NODE.DB AS ONLINE
     manager.setDatabaseStatus(localNodeName, databaseName, ODistributedServerManager.DB_STATUS.ONLINE);
-
     waitForOnline.countDown();
   }
 
@@ -812,6 +827,21 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
     return registerTxContext(reqId, new ODistributedTxContextImpl(this, reqId));
   }
 
+  public Optional<OTransactionId> validate(OTransactionId id) {
+    // this check should happen only of destination nodes
+    return sequenceManager.validateTransactionId(id);
+  }
+
+  @Override
+  public OTxMetadataHolder commit(OTransactionId id) {
+    return sequenceManager.notifySuccess(id);
+  }
+
+  @Override
+  public void rollback(OTransactionId id) {
+    sequenceManager.notifyFailure(id);
+  }
+
   @Override
   public ODistributedTxContext registerTxContext(final ODistributedRequestId reqId, ODistributedTxContext ctx) {
     final ODistributedTxContext prevCtx = activeTxContexts.put(reqId, ctx);
@@ -819,6 +849,16 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
       prevCtx.destroy();
     }
     return ctx;
+  }
+
+  @Override
+  public Optional<OTransactionId> nextId() {
+    return sequenceManager.next();
+  }
+
+  @Override
+  public List<OTransactionId> missingTransactions(OTransactionSequenceStatus lastState) {
+    return sequenceManager.missingTransactions(lastState);
   }
 
   @Override
@@ -912,6 +952,7 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
   }
 
   public void shutdown() {
+    waitPending();
     running = false;
 
     try {
@@ -992,6 +1033,17 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
         }
       }
 
+    }
+  }
+
+  private void waitPending() {
+    while (pending.get() > 0) {
+      try {
+        Thread.sleep(100);
+      } catch (InterruptedException e) {
+        Thread.currentThread().interrupt();
+        return;
+      }
     }
   }
 
@@ -1355,4 +1407,30 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
     return activeTxContexts;
   }
 
+  @Override
+  public void validateStatus(OTransactionSequenceStatus status) {
+    List<OTransactionId> res = sequenceManager.checkSelfStatus(status);
+    if (!res.isEmpty()) {
+      manager.installDatabase(false, databaseName, false, true);
+    }
+  }
+
+  @Override
+  public Optional<OTransactionSequenceStatus> status() {
+    if (sequenceManager == null) {
+      return Optional.empty();
+    } else {
+      return Optional.of(sequenceManager.currentStatus());
+    }
+  }
+
+  @Override
+  public void checkReverseSync(OTransactionSequenceStatus lastState) {
+    List<OTransactionId> res = sequenceManager.checkSelfStatus(lastState);
+    if (!res.isEmpty()) {
+      new Thread(() -> {
+        manager.installDatabase(false, databaseName, true, true);
+      }).start();
+    }
+  }
 }

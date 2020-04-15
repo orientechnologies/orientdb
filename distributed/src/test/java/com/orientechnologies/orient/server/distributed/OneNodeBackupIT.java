@@ -42,7 +42,7 @@ public class OneNodeBackupIT extends AbstractServerClusterTxTest {
   @Ignore
   public void test() throws Exception {
     startupNodesInSequence = true;
-    count = 1000;
+    count = 100;
     maxRetries = 10;
     init(SERVERS);
     prepare(false);

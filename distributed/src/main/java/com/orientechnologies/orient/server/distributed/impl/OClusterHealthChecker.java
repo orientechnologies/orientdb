@@ -24,27 +24,19 @@ import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
+import com.orientechnologies.orient.core.tx.OTransactionSequenceStatus;
 import com.orientechnologies.orient.server.OSystemDatabase;
-import com.orientechnologies.orient.server.distributed.ODistributedConfiguration;
-import com.orientechnologies.orient.server.distributed.ODistributedDatabase;
-import com.orientechnologies.orient.server.distributed.ODistributedException;
-import com.orientechnologies.orient.server.distributed.ODistributedRequest;
-import com.orientechnologies.orient.server.distributed.ODistributedResponse;
-import com.orientechnologies.orient.server.distributed.ODistributedServerLog;
-import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
-import com.orientechnologies.orient.server.distributed.OModifiableDistributedConfiguration;
+import com.orientechnologies.orient.server.distributed.*;
 import com.orientechnologies.orient.server.distributed.impl.task.OGossipTask;
 import com.orientechnologies.orient.server.distributed.impl.task.ORequestDatabaseConfigurationTask;
+import com.orientechnologies.orient.server.distributed.impl.task.OUpdateDatabaseSequenceStatusTask;
 import com.orientechnologies.orient.server.distributed.impl.task.OUpdateDatabaseStatusTask;
 import com.orientechnologies.orient.server.distributed.task.ODistributedOperationException;
 import com.orientechnologies.orient.server.distributed.task.ORemoteTask;
 import com.orientechnologies.orient.server.hazelcast.OHazelcastPlugin;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
@@ -76,6 +68,7 @@ public class OClusterHealthChecker implements Runnable {
         checkServerInStall();
         checkServerList();
         notifyCommittedLsn();
+        notifyDatabaseSequenceStatus();
 
       } catch (HazelcastInstanceNotActiveException e) {
         // IGNORE IT
@@ -330,6 +323,51 @@ public class OClusterHealthChecker implements Runnable {
         ORemoteTask task = new OUpdateDatabaseStatusTask(dbName, "", updatedLsn);
         final ODistributedResponse response = manager.sendRequest(dbName, null, servers, task, manager.getNextMessageIdCounter(),
             ODistributedRequest.EXECUTION_MODE.RESPONSE, null, null, null);
+      } catch (ODistributedException e) {
+        // NO SERVER RESPONDED, THE SERVER COULD BE ISOLATED: SET ALL THE SERVER AS OFFLINE
+        ODistributedServerLog.debug(this, manager.getLocalNodeName(), null, ODistributedServerLog.DIRECTION.NONE,
+            "Error on sending request for cluster health check", e);
+      } catch (ODistributedOperationException e) {
+        // NO SERVER RESPONDED, THE SERVER COULD BE ISOLATED: SET ALL THE SERVER AS OFFLINE
+        ODistributedServerLog.debug(this, manager.getLocalNodeName(), null, ODistributedServerLog.DIRECTION.NONE,
+            "Error on sending request for cluster health check", e);
+      }
+
+    }
+
+  }
+
+  private void notifyDatabaseSequenceStatus() {
+    if (manager.getNodeStatus() != ODistributedServerManager.NODE_STATUS.ONLINE)
+      // ONLY ONLINE NODE CAN TRY TO RECOVER FOR SINGLE DB STATUS
+      return;
+
+    if (!manager.getServerInstance().isActive())
+      return;
+
+    for (String dbName : manager.getMessageService().getDatabases()) {
+      final ODistributedServerManager.DB_STATUS localNodeStatus = manager.getDatabaseStatus(manager.getLocalNodeName(), dbName);
+      if (localNodeStatus != ODistributedServerManager.DB_STATUS.ONLINE)
+        // ONLY NOT_AVAILABLE NODE/DB CAN BE RECOVERED
+        continue;
+      if (OSystemDatabase.SYSTEM_DB_NAME.equalsIgnoreCase(dbName))
+        // SKIP SYSTEM DATABASE FROM HEALTH CHECK
+        continue;
+
+      final List<String> servers = manager.getOnlineNodes(dbName);
+      servers.remove(manager.getLocalNodeName());
+
+      if (servers.isEmpty())
+        continue;
+
+      try {
+        ODistributedDatabase sharedDb = manager.getMessageService().getDatabase(dbName);
+        Optional<OTransactionSequenceStatus> status = sharedDb.status();
+        if (status.isPresent()) {
+          ORemoteTask task = new OUpdateDatabaseSequenceStatusTask(dbName, status.get());
+          final ODistributedResponse response = manager.sendRequest(dbName, null, servers, task, manager.getNextMessageIdCounter(),
+              ODistributedRequest.EXECUTION_MODE.RESPONSE, null, null, null);
+        }
       } catch (ODistributedException e) {
         // NO SERVER RESPONDED, THE SERVER COULD BE ISOLATED: SET ALL THE SERVER AS OFFLINE
         ODistributedServerLog.debug(this, manager.getLocalNodeName(), null, ODistributedServerLog.DIRECTION.NONE,

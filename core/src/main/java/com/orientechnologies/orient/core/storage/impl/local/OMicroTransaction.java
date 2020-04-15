@@ -46,6 +46,9 @@ import com.orientechnologies.orient.core.storage.OBasicTransaction;
 import com.orientechnologies.orient.core.storage.ORecordCallback;
 import com.orientechnologies.orient.core.tx.*;
 
+import java.io.ByteArrayOutputStream;
+import java.io.DataOutputStream;
+import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -90,6 +93,9 @@ public final class OMicroTransaction implements OBasicTransaction, OTransactionI
   private int     recordSerial = -2;
 
   private Map<ORID, OTransactionAbstract.LockedRecordMetadata> noTxLocks;
+
+  private Optional<OTxMetadataHolder> metadata             = Optional.empty();
+  private Optional<List<byte[]>>      serializedOperations = Optional.empty();
 
   /**
    * Instantiates a new micro-transaction.
@@ -754,14 +760,41 @@ public final class OMicroTransaction implements OBasicTransaction, OTransactionI
     this.database = database;
   }
 
+  @Override
+  public Optional<byte[]> getMetadata() {
+    return metadata.map((h) -> h.metadata());
+  }
 
   @Override
-  public void setMetadata(Optional<byte[]> metadata) {
-    throw new UnsupportedOperationException();
+  public void storageBegun() {
+    if (metadata.isPresent()) {
+      metadata.get().notifyMetadataRead();
+    }
+  }
+
+  @Override
+  public void setMetadataHolder(Optional<OTxMetadataHolder> metadata) {
+    this.metadata = metadata;
+  }
+
+  @Override
+  public void prepareSerializedOperations() throws IOException {
+    List<byte[]> operations = new ArrayList<>();
+    for (ORecordOperation value : recordOperations.values()) {
+      OTransactionDataChange change = new OTransactionDataChange(value);
+      ByteArrayOutputStream out = new ByteArrayOutputStream();
+      change.serialize(new DataOutputStream(out));
+      operations.add(out.toByteArray());
+    }
+    this.serializedOperations = Optional.of(operations);
   }
 
   public Iterator<byte[]> getSerializedOperations() {
-    return Collections.emptyIterator();
+    if (serializedOperations.isPresent()) {
+      return serializedOperations.get().iterator();
+    } else {
+      return Collections.emptyIterator();
+    }
   }
 
 }

@@ -37,6 +37,7 @@ import com.orientechnologies.orient.core.storage.ORecordDuplicatedException;
 import com.orientechnologies.orient.core.storage.ORecordMetadata;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
+import com.orientechnologies.orient.core.tx.OTransactionData;
 import com.orientechnologies.orient.core.tx.OTransactionIndexChanges;
 import com.orientechnologies.orient.core.tx.OTransactionIndexChangesPerKey;
 import com.orientechnologies.orient.core.tx.OTransactionInternal;
@@ -47,6 +48,7 @@ import com.orientechnologies.orient.server.distributed.impl.metadata.OClassDistr
 import com.orientechnologies.orient.server.distributed.impl.metadata.OSharedContextDistributed;
 import com.orientechnologies.orient.server.distributed.impl.task.ONewSQLCommandTask;
 import com.orientechnologies.orient.server.distributed.impl.task.ORunQueryExecutionPlanTask;
+import com.orientechnologies.orient.core.tx.OTransactionId;
 import com.orientechnologies.orient.server.distributed.task.*;
 import com.orientechnologies.orient.server.hazelcast.OHazelcastPlugin;
 import com.orientechnologies.orient.server.plugin.OServerPluginInfo;
@@ -445,14 +447,15 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
 
   }
 
-  public boolean beginDistributedTx(ODistributedRequestId requestId, OTransactionInternal tx, boolean local, int retryCount) {
+  public boolean beginDistributedTx(ODistributedRequestId requestId, OTransactionId id, OTransactionInternal tx, boolean local,
+      int retryCount) {
     ODistributedDatabase localDistributedDatabase = getStorageDistributed().getLocalDistributedDatabase();
     ONewDistributedTxContextImpl txContext = new ONewDistributedTxContextImpl((ODistributedDatabaseImpl) localDistributedDatabase,
-        requestId, tx);
+        requestId, tx, id);
     try {
       internalBegin2pc(txContext, local);
       txContext.setStatus(SUCCESS);
-      localDistributedDatabase.registerTxContext(requestId, txContext);
+      register(requestId, localDistributedDatabase, txContext);
     } catch (OConcurrentCreateException ex) {
       if (retryCount >= 0 && retryCount < getConfiguration().getValueAsInteger(DISTRIBUTED_CONCURRENT_TX_MAX_AUTORETRY)) {
         if (ex.getExpectedRid().getClusterPosition() > ex.getActualRid().getClusterPosition()) {
@@ -464,7 +467,7 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
         }
       }
       txContext.setStatus(FAILED);
-      localDistributedDatabase.registerTxContext(requestId, txContext);
+      register(requestId, localDistributedDatabase, txContext);
       throw ex;
     } catch (OConcurrentModificationException ex) {
       if (retryCount >= 0 && retryCount < getConfiguration().getValueAsInteger(DISTRIBUTED_CONCURRENT_TX_MAX_AUTORETRY)) {
@@ -477,7 +480,7 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
         }
       }
       txContext.setStatus(FAILED);
-      localDistributedDatabase.registerTxContext(requestId, txContext);
+      register(requestId, localDistributedDatabase, txContext);
       throw ex;
     } catch (ORecordNotFoundException e) {
       // This error can happen only in deserialization before locks happen, no need to unlock
@@ -485,22 +488,27 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
         return false;
       }
       txContext.setStatus(FAILED);
-      localDistributedDatabase.registerTxContext(requestId, txContext);
+      register(requestId, localDistributedDatabase, txContext);
       throw e;
     } catch (ODistributedRecordLockedException | ODistributedKeyLockedException ex) {
       /// ?? do i've to save this state as well ?
       txContext.setStatus(TIMEDOUT);
-      getStorageDistributed().getLocalDistributedDatabase().registerTxContext(requestId, txContext);
+      register(requestId, localDistributedDatabase, txContext);
       throw ex;
     } catch (ORecordDuplicatedException ex) {
       txContext.setStatus(FAILED);
-      localDistributedDatabase.registerTxContext(requestId, txContext);
+      register(requestId, localDistributedDatabase, txContext);
       throw ex;
     } catch (OLowDiskSpaceException ex) {
       distributedManager.setDatabaseStatus(getLocalNodeName(), getName(), ODistributedServerManager.DB_STATUS.OFFLINE);
       throw ex;
     }
     return true;
+  }
+
+  public void register(ODistributedRequestId requestId, ODistributedDatabase localDistributedDatabase,
+      ONewDistributedTxContextImpl txContext) {
+    localDistributedDatabase.registerTxContext(requestId, txContext);
   }
 
   /**
@@ -514,7 +522,6 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
 
   /**
    * @param transactionId
-   *
    * @return null returned means that commit failed
    */
   public boolean commit2pc(ODistributedRequestId transactionId, boolean local, ODistributedRequestId requestId) {
@@ -548,7 +555,7 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
           OLiveQueryHookV2.removePendingDatabaseOps(this);
         }
         return true;
-      } else if (TIMEDOUT.equals(txContext.getStatus())) {
+      } else {
         int nretry = getConfiguration().getValueAsInteger(DISTRIBUTED_CONCURRENT_TX_MAX_AUTORETRY);
         int delay = getConfiguration().getValueAsInteger(DISTRIBUTED_CONCURRENT_TX_AUTORETRY_DELAY);
 
@@ -561,9 +568,16 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
                 OException.wrapException(new OInterruptedException(e.getMessage()), e);
               }
             }
-            internalBegin2pc(txContext, local);
-            txContext.setStatus(SUCCESS);
-            break;
+            boolean valid = true;
+            Optional<OTransactionId> validateResult = localDistributedDatabase.validate(txContext.getTransactionId());
+            if (validateResult.isPresent()) {
+              valid = validateResult.get().getNodeOwner().isPresent();
+            }
+            if (valid) {
+              internalBegin2pc(txContext, local);
+              txContext.setStatus(SUCCESS);
+              break;
+            }
           } catch (ODistributedRecordLockedException | ODistributedKeyLockedException ex) {
             // Just retry
           } catch (Exception ex) {
@@ -572,7 +586,23 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
             break;
           }
         }
-        if (!SUCCESS.equals(txContext.getStatus())) {
+        if (SUCCESS.equals(txContext.getStatus())) {
+          try {
+            txContext.commit(this);
+            localDistributedDatabase.popTxContext(transactionId);
+            OLiveQueryHook.notifyForTxChanges(this);
+            OLiveQueryHookV2.notifyForTxChanges(this);
+            return true;
+          } catch (RuntimeException | Error e) {
+            Orient.instance().submit(() -> {
+              getDistributedManager().installDatabase(false, getName(), true, true);
+            });
+            throw e;
+          } finally {
+            OLiveQueryHook.removePendingDatabaseOps(this);
+            OLiveQueryHookV2.removePendingDatabaseOps(this);
+          }
+        } else {
           txContext.destroy();
           localDistributedDatabase.popTxContext(transactionId);
           Orient.instance().submit(() -> {
@@ -583,32 +613,6 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
           });
           return true;
         }
-        try {
-          txContext.commit(this);
-          localDistributedDatabase.popTxContext(transactionId);
-          OLiveQueryHook.notifyForTxChanges(this);
-          OLiveQueryHookV2.notifyForTxChanges(this);
-          return true;
-        } catch (RuntimeException | Error e) {
-          Orient.instance().submit(() -> {
-            getDistributedManager().installDatabase(false, getName(), true, true);
-          });
-          throw e;
-        } finally {
-          OLiveQueryHook.removePendingDatabaseOps(this);
-          OLiveQueryHookV2.removePendingDatabaseOps(this);
-        }
-
-      } else {
-        txContext.destroy();
-        localDistributedDatabase.popTxContext(transactionId);
-        Orient.instance().submit(() -> {
-          OLogManager.instance()
-              .warn(ODatabaseDocumentDistributed.this, "Reached limit of retry for commit tx:%s forcing database re-install",
-                  transactionId);
-          distributedManager.installDatabase(false, ODatabaseDocumentDistributed.this.getName(), true, true);
-        });
-        return true;
       }
     }
     return false;
@@ -618,6 +622,7 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
     ODistributedDatabase localDistributedDatabase = getStorageDistributed().getLocalDistributedDatabase();
     ODistributedTxContext txContext = localDistributedDatabase.popTxContext(transactionId);
     if (txContext != null) {
+      localDistributedDatabase.rollback(txContext.getTransactionId());
       txContext.destroy();
       OLiveQueryHook.removePendingDatabaseOps(this);
       OLiveQueryHookV2.removePendingDatabaseOps(this);

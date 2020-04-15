@@ -62,6 +62,9 @@ public class OCopyDatabaseChunkTask extends OAbstractReplicatedTask {
   public Object execute(ODistributedRequestId requestId, final OServer iServer, ODistributedServerManager iManager,
       final ODatabaseDocumentInternal database) throws Exception {
 
+    if (database == null) {
+      throw new ODistributedException("database not available anymore during sync");
+    }
     ODistributedStorage storage = (ODistributedStorage) database.getStorage();
     if (storage == null) {
       throw new ODistributedException("database not available anymore during sync");
@@ -72,10 +75,6 @@ public class OCopyDatabaseChunkTask extends OAbstractReplicatedTask {
 
     ODistributedServerLog.info(this, iManager.getLocalNodeName(), getNodeSource(), ODistributedServerLog.DIRECTION.OUT,
         "- transferring chunk #%d offset=%d size=%s...", chunkNum, result.offset, OFileUtils.getSizeAsNumber(result.buffer.length));
-
-    if (result.last) {
-      iManager.getMessageService().getDatabase(database.getName()).setOnline();
-    }
 
     return result;
   }

@@ -98,6 +98,8 @@ public class OTransactionOptimisticServer extends OTransactionOptimistic {
             if (updated == null) {
               updated = new ODocument();
             }
+            ((ODocument) updated).deserializeFields();
+            ODocumentInternal.clearTransactionTrackData((ODocument) updated);
             ODocumentSerializerDelta delta = ODocumentSerializerDelta.instance();
             delta.deserializeDelta(operation.getRecord(), (ODocument) updated);
             entry = new ORecordOperation(updated, ORecordOperation.UPDATED);

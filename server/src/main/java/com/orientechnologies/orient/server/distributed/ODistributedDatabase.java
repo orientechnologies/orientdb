@@ -25,10 +25,15 @@ import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.storage.ORawBuffer;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
+import com.orientechnologies.orient.core.tx.OTransactionId;
+import com.orientechnologies.orient.core.tx.OTransactionSequenceStatus;
+import com.orientechnologies.orient.core.tx.OTxMetadataHolder;
 import com.orientechnologies.orient.server.distributed.task.ORemoteTask;
 
 import java.io.IOException;
 import java.util.Collection;
+import java.util.List;
+import java.util.Optional;
 
 /**
  * Generic Distributed Database interface.
@@ -49,7 +54,6 @@ public interface ODistributedDatabase {
    * Returns the locked record for read-only purpose. This avoid to have dirty reads until the transaction is fully committed.
    *
    * @param iRecord record to load.
-   *
    * @return The record if it is locked, otherwise null.
    */
   ORawBuffer getRecordIfLocked(ORID iRecord);
@@ -69,7 +73,6 @@ public interface ODistributedDatabase {
    * @param record    Record to lock
    * @param requestId Request id
    * @param timeout   Timeout in ms to wait for the lock
-   *
    * @throws com.orientechnologies.orient.server.distributed.task.ODistributedRecordLockedException if the record wasn't locked
    * @see #unlockRecord(OIdentifiable, ODistributedRequestId)
    */
@@ -80,7 +83,6 @@ public interface ODistributedDatabase {
    *
    * @param record    Record to unlock
    * @param requestId Request id
-   *
    * @see #lockRecord(ORID, ODistributedRequestId, long)
    */
   void unlockRecord(OIdentifiable record, ODistributedRequestId requestId);
@@ -114,6 +116,14 @@ public interface ODistributedDatabase {
 
   void processRequest(ODistributedRequest request, boolean waitForAcceptingRequests);
 
+  Optional<OTransactionId> validate(OTransactionId id);
+
+  Optional<OTransactionSequenceStatus> status();
+
+  void rollback(OTransactionId id);
+
+  OTxMetadataHolder commit(OTransactionId id);
+
   ODistributedTxContext registerTxContext(ODistributedRequestId reqId);
 
   ODistributedTxContext registerTxContext(final ODistributedRequestId reqId, ODistributedTxContext ctx);
@@ -135,4 +145,12 @@ public interface ODistributedDatabase {
   void setLSN(String sourceNodeName, OLogSequenceNumber taskLastLSN, boolean writeLastOperation) throws IOException;
 
   ODistributedDatabaseRepairer getDatabaseRepairer();
+
+  Optional<OTransactionId> nextId();
+
+  List<OTransactionId> missingTransactions(OTransactionSequenceStatus lastState);
+
+  void validateStatus(OTransactionSequenceStatus status);
+
+  void checkReverseSync(OTransactionSequenceStatus lastState);
 }

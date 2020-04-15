@@ -73,6 +73,9 @@ import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedSt
 import com.orientechnologies.orient.core.storage.impl.local.OMicroTransaction;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.ORecordSerializationContext;
 import com.orientechnologies.orient.core.tx.OTransactionAbstract;
+import com.orientechnologies.orient.core.tx.OTransactionData;
+import com.orientechnologies.orient.core.tx.OTransactionInternal;
+import com.orientechnologies.orient.core.tx.OTransactionOptimistic;
 
 import java.text.SimpleDateFormat;
 import java.util.*;
@@ -207,7 +210,6 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract impleme
    * Opens a database using an authentication token received as an argument.
    *
    * @param iToken Authentication token
-   *
    * @return The Database instance itself giving a "fluent interface". Useful to call multiple methods in chain.
    */
   @Deprecated
@@ -898,9 +900,7 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract impleme
    * OConcurrentModificationException} exception is thrown.
    *
    * @param record record to delete
-   *
    * @return The Database instance itself giving a "fluent interface". Useful to call multiple methods in chain.
-   *
    * @see #setMVCC(boolean), {@link #isMVCC()}
    */
   public ODatabaseDocumentAbstract delete(ORecord record) {
@@ -1460,6 +1460,17 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract impleme
     return checkSecurity(resourceGeneric, iOperation, iResourcesSpecific);
   }
 
+  @Override
+  public void syncCommit(OTransactionData data) {
+    OScenarioThreadLocal.executeAsDistributed(() -> {
+      assert !this.getTransaction().isActive();
+      OTransactionOptimistic tx = new OTransactionOptimistic(this);
+      data.fill(tx, this);
+      this.rawBegin(tx);
+      this.commit();
+      return null;
+    });
+  }
 }
 
 

@@ -35,7 +35,6 @@ import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.parser.OSystemVariableResolver;
 import com.orientechnologies.common.util.OArrays;
 import com.orientechnologies.common.util.OCallable;
-import com.orientechnologies.common.util.OUncaughtExceptionHandler;
 import com.orientechnologies.orient.core.OConstants;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
@@ -62,6 +61,8 @@ import com.orientechnologies.orient.core.storage.cluster.OPaginatedCluster;
 import com.orientechnologies.orient.core.storage.disk.OLocalPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
+import com.orientechnologies.orient.core.tx.OTxMetadataHolder;
+import com.orientechnologies.orient.core.tx.OTxMetadataHolderImpl;
 import com.orientechnologies.orient.server.OClientConnection;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.OSystemDatabase;
@@ -88,12 +89,7 @@ import com.orientechnologies.orient.server.distributed.ORemoteServerAvailability
 import com.orientechnologies.orient.server.distributed.ORemoteServerManager;
 import com.orientechnologies.orient.server.distributed.ORemoteTaskFactoryManager;
 import com.orientechnologies.orient.server.distributed.conflict.ODistributedConflictResolverFactory;
-import com.orientechnologies.orient.server.distributed.impl.task.ORemoteTaskFactoryManagerImpl;
-import com.orientechnologies.orient.server.distributed.impl.task.ORestartServerTask;
-import com.orientechnologies.orient.server.distributed.impl.task.OStopServerTask;
-import com.orientechnologies.orient.server.distributed.impl.task.OSyncDatabaseDeltaTask;
-import com.orientechnologies.orient.server.distributed.impl.task.OSyncDatabaseTask;
-import com.orientechnologies.orient.server.distributed.impl.task.OUpdateDatabaseStatusTask;
+import com.orientechnologies.orient.server.distributed.impl.task.*;
 import com.orientechnologies.orient.server.distributed.sql.OCommandExecutorSQLHASyncCluster;
 import com.orientechnologies.orient.server.distributed.task.OAbstractReplicatedTask;
 import com.orientechnologies.orient.server.distributed.task.ODatabaseIsOldException;
@@ -105,22 +101,11 @@ import com.orientechnologies.orient.server.plugin.OServerPluginAbstract;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.TimerTask;
+import java.util.*;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -128,7 +113,6 @@ import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
-import java.util.stream.Collectors;
 
 import static com.orientechnologies.orient.core.config.OGlobalConfiguration.DISTRIBUTED_CHECKINTEGRITY_LAST_TX;
 import static com.orientechnologies.orient.core.config.OGlobalConfiguration.DISTRIBUTED_MAX_STARTUP_DELAY;
@@ -153,12 +137,12 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
   protected          File                                       defaultDatabaseConfigFile;
   protected final    ConcurrentMap<String, ODistributedStorage> storages                          = new ConcurrentHashMap<String, ODistributedStorage>();
   protected volatile NODE_STATUS                                status                            = NODE_STATUS.OFFLINE;
-  protected long                                lastClusterChangeOn;
-  protected List<ODistributedLifecycleListener> listeners                         = new ArrayList<ODistributedLifecycleListener>();
-  protected ORemoteServerManager                remoteServerManager;
-  protected TimerTask                           publishLocalNodeConfigurationTask = null;
-  protected TimerTask                           haStatsTask                       = null;
-  protected TimerTask                           healthCheckerTask                 = null;
+  protected          long                                       lastClusterChangeOn;
+  protected          List<ODistributedLifecycleListener>        listeners                         = new ArrayList<ODistributedLifecycleListener>();
+  protected          ORemoteServerManager                       remoteServerManager;
+  protected          TimerTask                                  publishLocalNodeConfigurationTask = null;
+  protected          TimerTask                                  haStatsTask                       = null;
+  protected          TimerTask                                  healthCheckerTask                 = null;
 
   // LOCAL MSG COUNTER
   protected AtomicLong                          localMessageIdCounter     = new AtomicLong();
@@ -243,7 +227,7 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
 
       @Override
       public void nodeDisconnected(String node) {
-        ODistributedAbstractPlugin.this.removeServer(node,true);
+        ODistributedAbstractPlugin.this.removeServer(node, true);
       }
     });
   }
@@ -1017,7 +1001,8 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
                     try {
 
                       // TRY WITH DELTA SYNC
-                      databaseInstalled = requestDatabaseDelta(distrDatabase, databaseName, cfg);
+                      //databaseInstalled = requestDatabaseDelta(distrDatabase, databaseName, cfg);
+                      databaseInstalled = requestNewDatabaseDelta(distrDatabase, databaseName, cfg);
 
                     } catch (ODistributedDatabaseDeltaSyncException e) {
                       if (deploy == null || !deploy) {
@@ -1079,6 +1064,69 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
     } finally {
       installingDatabases.remove(databaseName);
     }
+  }
+
+  private boolean requestNewDatabaseDelta(ODistributedDatabaseImpl distrDatabase, String databaseName,
+      OModifiableDistributedConfiguration cfg) {
+    // GET ALL THE OTHER SERVERS
+    final Collection<String> nodes = cfg.getServers(null, nodeName);
+    getAvailableNodes(nodes, databaseName);
+    if (nodes.size() == 0) {
+      return false;
+    }
+
+    ODistributedServerLog
+        .warn(this, nodeName, nodes.toString(), DIRECTION.OUT, "requesting delta database sync for '%s' on local server...",
+            databaseName);
+
+    boolean databaseInstalledCorrectly = false;
+
+    for (String targetNode : nodes) {
+
+      if (!isNodeOnline(targetNode, databaseName)) {
+        continue;
+      }
+      OTxMetadataHolder metadata;
+      try (ODatabaseDocumentInternal inst = distrDatabase.getDatabaseInstance()) {
+        Optional<byte[]> read = ((OAbstractPaginatedStorage) inst.getStorage().getUnderlying()).getLastMetadata();
+        if (read.isPresent()) {
+          metadata = OTxMetadataHolderImpl.read(read.get());
+        } else {
+          throw new ODistributedDatabaseDeltaSyncException("Trigger full sync");
+        }
+      }
+      final OSyncDatabaseNewDeltaTask deployTask = new OSyncDatabaseNewDeltaTask(metadata.getStatus());
+
+      final List<String> targetNodes = new ArrayList<String>(1);
+      targetNodes.add(targetNode);
+      try {
+        final ODistributedResponse response = sendRequest(databaseName, null, targetNodes, deployTask, getNextMessageIdCounter(),
+            ODistributedRequest.EXECUTION_MODE.RESPONSE, null, null, null);
+
+        if (response == null)
+          throw new ODistributedDatabaseDeltaSyncException((OLogSequenceNumber) null);
+
+        databaseInstalledCorrectly = installResponseNewDeltaSync(distrDatabase, databaseName, cfg, targetNode,
+            (ONewDeltaTaskResponse) response.getPayload());
+
+      } catch (ODistributedDatabaseDeltaSyncException e) {
+        // RE-THROW IT
+        throw e;
+      } catch (Exception e) {
+        ODistributedServerLog
+            .error(this, nodeName, targetNode, DIRECTION.OUT, "Error on asking delta backup of database '%s' (err=%s)",
+                databaseName, e.getMessage());
+        //TODO: remove lsn from this exception
+        throw OException.wrapException(new ODistributedDatabaseDeltaSyncException(null, e.toString()), e);
+      }
+
+      if (databaseInstalledCorrectly) {
+        distrDatabase.resume();
+        return true;
+      }
+    }
+
+    throw new ODistributedDatabaseDeltaSyncException("Requested database delta sync error");
   }
 
   private void notifyLsnAfterInstall(ODatabaseDocumentInternal db, Collection<String> nodes) {
@@ -1293,6 +1341,65 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
         } else
           throw new IllegalArgumentException("Type " + value + " not supported");
       }
+    }
+    return databaseInstalledCorrectly;
+  }
+
+  private boolean installResponseNewDeltaSync(ODistributedDatabaseImpl distrDatabase, String databaseName,
+      OModifiableDistributedConfiguration cfg, String targetNode, ONewDeltaTaskResponse results) {
+    final String dbPath = serverInstance.getDatabaseDirectory() + databaseName;
+    boolean databaseInstalledCorrectly = false;
+    // EXTRACT THE REAL RESULT
+    if (results.getResponseType() == ONewDeltaTaskResponse.ResponseType.CHUNK) {
+      ODistributedDatabaseChunk firstChunk = results.getChunk().get();
+      try {
+
+        OSyncReceiver receiver = new OSyncReceiver(this, databaseName, firstChunk, null, targetNode, dbPath);
+        receiver.spawnReceiverThread();
+        receiver.getStarted().await();
+
+        executeInDistributedDatabaseLock(databaseName, 20000, cfg, (OCallable<Void, OModifiableDistributedConfiguration>) cfg1 -> {
+          try (InputStream in = receiver.getInputStream()) {
+            new ONewDeltaSyncImporter().importDelta(serverInstance, databaseName, in, targetNode);
+          } catch (IOException e) {
+            throw OException.wrapException(new OIOException("Error on distributed sync of database"), e);
+          }
+          return null;
+        });
+        ODatabaseDocumentInternal db = serverInstance.openDatabase(databaseName);
+
+        if (db == null)
+          return false;
+
+        try {
+          distrDatabase.setOnline();
+        } finally {
+          db.activateOnCurrentThread();
+          db.close();
+        }
+
+        try {
+          rebalanceClusterOwnership(nodeName, db, cfg, false);
+        } catch (Exception e) {
+          // HANDLE IT AS WARNING
+          ODistributedServerLog
+              .warn(this, nodeName, null, DIRECTION.NONE, "Error on re-balancing the cluster for database '%s'", e, databaseName);
+          // NOT CRITICAL, CONTINUE
+        }
+
+        ODistributedServerLog.info(this, nodeName, targetNode, DIRECTION.IN, "Installed delta of database '%s'", databaseName);
+
+        // DATABASE INSTALLED CORRECTLY
+        databaseInstalledCorrectly = true;
+      } catch (OException | InterruptedException e) {
+        OLogManager.instance().error(this, "Error installing database from network", e);
+        databaseInstalledCorrectly = false;
+      }
+    } else if (results.getResponseType() == ONewDeltaTaskResponse.ResponseType.FULL_SYNC) {
+      throw new ODistributedDatabaseDeltaSyncException("Full sync required");
+    } else if (results.getResponseType() == ONewDeltaTaskResponse.ResponseType.NO_CHANGES) {
+      distrDatabase.setOnline();
+      return true;
     }
     return databaseInstalledCorrectly;
   }
@@ -1606,15 +1713,7 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
     final AtomicReference<ODistributedMomentum> momentum = new AtomicReference<ODistributedMomentum>();
 
     OSyncReceiver receiver = new OSyncReceiver(this, databaseName, firstChunk, momentum, iNode, dbPath);
-    try {
-      Thread t = new Thread(receiver);
-      t.setUncaughtExceptionHandler(new OUncaughtExceptionHandler());
-      t.start();
-
-    } catch (Exception e) {
-      ODistributedServerLog.error(this, nodeName, null, DIRECTION.NONE, "Error on transferring database '%s' ", e, databaseName);
-      throw OException.wrapException(new ODistributedException("Error on transferring database"), e);
-    }
+    receiver.spawnReceiverThread();
 
     final ODatabaseDocumentInternal db = installDatabaseOnLocalNode(databaseName, dbPath, iNode, delta,
         uniqueClustersBackupDirectory, cfg, firstChunk.incremental, receiver);
@@ -1624,6 +1723,7 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
 
     // OVERWRITE THE MOMENTUM FROM THE ORIGINAL SERVER AND ADD LAST LOCAL LSN
     try {
+      distrDatabase.setOnline();
       distrDatabase.getSyncConfiguration().load();
       distrDatabase.getSyncConfiguration()
           .setLastLSN(localNodeName, ((OLocalPaginatedStorage) db.getStorage().getUnderlying()).getLSN(), false);
@@ -1631,10 +1731,6 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
     } catch (IOException e) {
       ODistributedServerLog.error(this, nodeName, null, DIRECTION.NONE, "Error on loading %s file for database '%s'", e,
           DISTRIBUTED_SYNC_JSON_FILENAME, databaseName);
-    }
-
-    try {
-      distrDatabase.setOnline();
     } finally {
       db.activateOnCurrentThread();
       db.close();
@@ -2041,7 +2137,7 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
         }
       }
     });
-
+    getMessageService().getDatabase(databaseName).setOnline();
     ODatabaseDocumentInternal database = serverInstance.openDatabase(databaseName);
 
     ODistributedServerLog.info(this, nodeName, null, DIRECTION.NONE, "Installed database '%s' (LSN=%s)", databaseName,
