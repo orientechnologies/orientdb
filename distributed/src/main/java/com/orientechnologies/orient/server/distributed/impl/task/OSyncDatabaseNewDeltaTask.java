@@ -9,7 +9,6 @@ import com.orientechnologies.orient.core.tx.OTransactionSequenceStatus;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.distributed.*;
 import com.orientechnologies.orient.server.distributed.impl.ODistributedDatabaseChunk;
-import com.orientechnologies.orient.server.distributed.impl.ODistributedStorage;
 import com.orientechnologies.orient.server.distributed.task.OAbstractReplicatedTask;
 
 import java.io.DataInput;
@@ -51,7 +50,7 @@ public class OSyncDatabaseNewDeltaTask extends OAbstractReplicatedTask {
       Optional<OBackgroundNewDelta> delta = ((OAbstractPaginatedStorage) database.getStorage().getUnderlying())
           .extractTransactionsFromWal(missing);
       if (delta.isPresent()) {
-        return new ONewDeltaTaskResponse(new ODistributedDatabaseChunk(delta.get(), CHUNK_MAX_SIZE, null));
+        return new ONewDeltaTaskResponse(new ODistributedDatabaseChunk(delta.get(), CHUNK_MAX_SIZE));
       } else {
         return new ONewDeltaTaskResponse(ONewDeltaTaskResponse.ResponseType.FULL_SYNC);
       }

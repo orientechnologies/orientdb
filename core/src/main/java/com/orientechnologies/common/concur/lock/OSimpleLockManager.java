@@ -11,4 +11,6 @@ public interface OSimpleLockManager<T> {
   void reset();
 
   long getTimeout();
+
+  long size();
 }

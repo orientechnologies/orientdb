@@ -79,11 +79,6 @@ public class ONewDistributedTxContextImpl implements ODistributedTxContext {
   }
 
   @Override
-  public void addUndoTask(ORemoteTask undoTask) {
-    throw new UnsupportedOperationException();
-  }
-
-  @Override
   public ODistributedRequestId getReqId() {
     return id;
   }
@@ -107,11 +102,6 @@ public class ONewDistributedTxContextImpl implements ODistributedTxContext {
     } finally {
       metadataHolder.notifyMetadataRead();
     }
-  }
-
-  @Override
-  public void fix(ODatabaseDocumentInternal database, List<ORemoteTask> fixTasks) {
-    throw new UnsupportedOperationException();
   }
 
   @Override
@@ -150,11 +140,6 @@ public class ONewDistributedTxContextImpl implements ODistributedTxContext {
   public Set<ORecordId> cancel(ODistributedServerManager current, ODatabaseDocumentInternal database) {
     destroy();
     return null;
-  }
-
-  @Override
-  public boolean isCanceled() {
-    return false;
   }
 
   @Override

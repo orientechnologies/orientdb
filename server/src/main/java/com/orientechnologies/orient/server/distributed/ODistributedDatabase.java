@@ -50,52 +50,6 @@ public interface ODistributedDatabase {
 
   void setOnline();
 
-  /**
-   * Returns the locked record for read-only purpose. This avoid to have dirty reads until the transaction is fully committed.
-   *
-   * @param iRecord record to load.
-   * @return The record if it is locked, otherwise null.
-   */
-  ORawBuffer getRecordIfLocked(ORID iRecord);
-
-  /**
-   * Replace the record content if it is locked.
-   *
-   * @param rid   Record ID of the record to find
-   * @param bytes Content as byte[] of the record to replace
-   */
-  void replaceRecordContentIfLocked(ORID rid, byte[] bytes);
-
-  /**
-   * Locks the record to be sure distributed transactions never work concurrently against the same records in the meanwhile the
-   * transaction is executed and the OCompleteTxTask is not arrived.
-   *
-   * @param record    Record to lock
-   * @param requestId Request id
-   * @param timeout   Timeout in ms to wait for the lock
-   * @throws com.orientechnologies.orient.server.distributed.task.ODistributedRecordLockedException if the record wasn't locked
-   * @see #unlockRecord(OIdentifiable, ODistributedRequestId)
-   */
-  boolean lockRecord(ORID record, ODistributedRequestId requestId, long timeout);
-
-  /**
-   * Unlocks the record previously locked through #lockRecord method.
-   *
-   * @param record    Record to unlock
-   * @param requestId Request id
-   * @see #lockRecord(ORID, ODistributedRequestId, long)
-   */
-  void unlockRecord(OIdentifiable record, ODistributedRequestId requestId);
-
-  /**
-   * Force the locking of a record. If the record was previously locked by a transaction (context), then that transaction is
-   * canceled.
-   *
-   * @param record    Record to lock
-   * @param requestId Request id
-   */
-  boolean forceLockRecord(ORID record, ODistributedRequestId requestId);
-
   String dump();
 
   void unlockResourcesOfServer(ODatabaseDocumentInternal database, String serverName);
@@ -123,8 +77,6 @@ public interface ODistributedDatabase {
   void rollback(OTransactionId id);
 
   OTxMetadataHolder commit(OTransactionId id);
-
-  ODistributedTxContext registerTxContext(ODistributedRequestId reqId);
 
   ODistributedTxContext registerTxContext(final ODistributedRequestId reqId, ODistributedTxContext ctx);
 

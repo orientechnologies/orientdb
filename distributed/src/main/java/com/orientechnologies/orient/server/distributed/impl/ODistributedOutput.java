@@ -655,52 +655,6 @@ public class ODistributedOutput {
     return fromServer + (manager.getLocalNodeName().equals(fromServer) ? "*" : "");
   }
 
-  public static Object formatRecordLocks(final ODistributedAbstractPlugin manager, final String db) {
-    final ConcurrentHashMap<ORID, ODistributedDatabaseImpl.ODistributedLock> lockManager = manager.getMessageService()
-        .getDatabase(db).lockManager;
-
-    final StringBuilder buffer = new StringBuilder();
-    buffer.append("HA RECORD LOCKS FOR DATABASE '" + db + "'");
-    final OTableFormatter table = new OTableFormatter(new OTableFormatter.OTableOutput() {
-      @Override
-      public void onMessage(final String text, final Object... args) {
-        buffer.append(String.format(text, args));
-      }
-    });
-    table.setColumnHidden("#");
-
-    final List<OIdentifiable> rows = new ArrayList<OIdentifiable>();
-
-    if (lockManager != null) {
-      // BUILD A SORTED RID LIST
-      final List<ORID> orderedRIDs = new ArrayList<ORID>(lockManager.size());
-      for (ORID rid : lockManager.keySet())
-        orderedRIDs.add(rid);
-      Collections.sort(orderedRIDs);
-
-      SimpleDateFormat dateFormat = new SimpleDateFormat(ODateHelper.DEF_DATETIME_FORMAT);
-
-      for (ORID rid : orderedRIDs) {
-        final ODistributedDatabaseImpl.ODistributedLock lock = lockManager.get(rid);
-        if (lock == null)
-          continue;
-
-        final ODocument row = new ODocument();
-        rows.add(row);
-
-        row.field("rid", rid);
-        row.field("server", manager.getNodeNameById(lock.reqId.getNodeId()));
-        row.field("acquiredOn", dateFormat.format(new Date(lock.acquiredOn)));
-        row.field("reqId", lock.reqId);
-        row.field("threadCount", lock.lock.getCount());
-      }
-    }
-
-    table.writeRecords(rows, -1);
-    buffer.append("\n");
-    return buffer.toString();
-  }
-
   public static Object formatNewRecordLocks(final ODistributedAbstractPlugin manager, final String db) {
     final List<ODocument> rows = getRequestsStatus(manager, db);
 

@@ -41,13 +41,9 @@ public interface ODistributedTxContext {
 
   void lockIndexKey(Object rid);
 
-  void addUndoTask(ORemoteTask undoTask);
-
   ODistributedRequestId getReqId();
 
   void commit(ODatabaseDocumentInternal database);
-
-  void fix(ODatabaseDocumentInternal database, List<ORemoteTask> fixTasks);
 
   Set<ORecordId> rollback(ODatabaseDocumentInternal database);
 
@@ -60,8 +56,6 @@ public interface ODistributedTxContext {
   long getStartedOn();
 
   Set<ORecordId> cancel(ODistributedServerManager current, ODatabaseDocumentInternal database);
-
-  boolean isCanceled();
 
   OTransactionInternal getTransaction();
 

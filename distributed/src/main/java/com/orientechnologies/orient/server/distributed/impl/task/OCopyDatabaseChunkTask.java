@@ -71,7 +71,7 @@ public class OCopyDatabaseChunkTask extends OAbstractReplicatedTask {
     }
     OSyncSource b = storage.getLastValidBackup();
 
-    final ODistributedDatabaseChunk result = new ODistributedDatabaseChunk(b, OSyncDatabaseTask.CHUNK_MAX_SIZE, null);
+    final ODistributedDatabaseChunk result = new ODistributedDatabaseChunk(b, OSyncDatabaseTask.CHUNK_MAX_SIZE);
 
     ODistributedServerLog.info(this, iManager.getLocalNodeName(), getNodeSource(), ODistributedServerLog.DIRECTION.OUT,
         "- transferring chunk #%d offset=%d size=%s...", chunkNum, result.offset, OFileUtils.getSizeAsNumber(result.buffer.length));
