@@ -609,47 +609,6 @@ public class ODistributedOutput {
     return buffer.toString();
   }
 
-  public static String formatClasses(final ODistributedConfiguration cfg, final ODatabaseDocument db) {
-    final StringBuilder buffer = new StringBuilder();
-
-    final OTableFormatter table = new OTableFormatter(new OTableFormatter.OTableOutput() {
-      @Override
-      public void onMessage(final String text, final Object... args) {
-        buffer.append(String.format(text, args));
-      }
-    });
-
-    final Set<String> allServers = cfg.getAllConfiguredServers();
-
-    final List<OIdentifiable> rows = new ArrayList<OIdentifiable>();
-
-    for (OClass cls : db.getMetadata().getSchema().getClasses()) {
-      final ODocument row = new ODocument();
-      rows.add(row);
-
-      row.field("CLASS", cls.getName());
-
-      final StringBuilder serverBuffer = new StringBuilder();
-
-      for (String server : allServers) {
-        final Set<String> clustersOnServer = cfg.getClustersOnServer(server);
-
-        for (String clusterName : clustersOnServer) {
-          if (serverBuffer.length() > 0)
-            serverBuffer.append(',');
-
-          serverBuffer.append(clusterName);
-          serverBuffer.append('(');
-          serverBuffer.append(db.getClusterIdByName(clusterName));
-          serverBuffer.append(')');
-        }
-        row.field(server, serverBuffer.toString());
-      }
-    }
-    table.writeRecords(rows, -1);
-
-    return buffer.toString();
-  }
 
   protected static String formatServerName(final ODistributedAbstractPlugin manager, final String fromServer) {
     return fromServer + (manager.getLocalNodeName().equals(fromServer) ? "*" : "");

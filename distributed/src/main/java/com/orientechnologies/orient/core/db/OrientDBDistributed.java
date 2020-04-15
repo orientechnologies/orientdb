@@ -31,8 +31,6 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
 
   private          OServer          server;
   private volatile OHazelcastPlugin plugin;
-  private volatile boolean          coordinator = false;
-  private volatile String           coordinatorName;
 
   public OrientDBDistributed(String directoryPath, OrientDBConfig config, Orient instance) {
     super(directoryPath, config, instance);

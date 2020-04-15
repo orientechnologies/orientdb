@@ -257,17 +257,6 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
     return distributedManager.removeNodeFromConfiguration(serverName, databaseName, false, true);
   }
 
-  protected static long writeDatabaseChunk(final String iNodeName, final int iChunkId, final ODistributedDatabaseChunk chunk,
-      final FileOutputStream out) throws IOException {
-
-    ODistributedServerLog
-        .warn(null, iNodeName, null, ODistributedServerLog.DIRECTION.NONE, "- writing chunk #%d offset=%d size=%s", iChunkId,
-            chunk.offset, OFileUtils.getSizeAsString(chunk.buffer.length));
-    out.write(chunk.buffer);
-
-    return chunk.buffer.length;
-  }
-
   @Override
   public OResultSet queryOnNode(String nodeName, OExecutionPlan executionPlan, Map<Object, Object> inputParameters) {
     ORunQueryExecutionPlanTask task = new ORunQueryExecutionPlanTask(executionPlan, inputParameters, nodeName);
