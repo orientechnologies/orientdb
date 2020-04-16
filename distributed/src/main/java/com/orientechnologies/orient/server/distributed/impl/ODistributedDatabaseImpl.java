@@ -44,7 +44,6 @@ import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.OSystemDatabase;
 import com.orientechnologies.orient.server.distributed.*;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIRECTION;
-import com.orientechnologies.orient.server.distributed.impl.task.ODistributedLockTask;
 import com.orientechnologies.orient.server.distributed.impl.task.OUnreachableServerLocalTask;
 import com.orientechnologies.orient.server.distributed.task.OAbstractRemoteTask;
 import com.orientechnologies.orient.server.distributed.task.ORemoteTask;
@@ -938,13 +937,7 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
         totalWorkers = 1;
     }
 
-    lockThread = new ODistributedWorker(this, databaseName, -3, false) {
-      protected void handleError(final ODistributedRequest iRequest, final Object responsePayload) {
-        // CANNOT SEND MSG BACK, UNLOCK IT
-        final ODistributedLockTask task = (ODistributedLockTask) iRequest.getTask();
-        task.undo(manager);
-      }
-    };
+    lockThread = new ODistributedWorker(this, databaseName, -3, false);
     lockThread.start();
 
     nowaitThread = new ODistributedWorker(this, databaseName, -4, true);

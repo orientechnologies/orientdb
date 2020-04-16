@@ -138,8 +138,6 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
   private volatile String                              lastServerDump          = "";
   protected        CountDownLatch                      serverStarted           = new CountDownLatch(1);
   private          ODistributedConflictResolverFactory conflictResolverFactory = new ODistributedConflictResolverFactory();
-  //private final    ODistributedLockManagerRequester    lockManagerRequester    = new ODistributedLockManagerRequester(this);
-  //private          ODistributedLockManagerExecutor     lockManagerExecutor;
 
   protected ODistributedAbstractPlugin() {
   }
