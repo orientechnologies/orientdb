@@ -68,6 +68,7 @@ public class ODistributedWorker extends Thread {
 
   private static final long                MAX_SHUTDOWN_TIMEOUT = 5000l;
   private volatile     ODistributedRequest currentExecuting;
+  private volatile     boolean             executingMessage;
 
   public ODistributedWorker(final ODistributedDatabaseImpl iDistributed, final String iDatabaseName, final int i,
       final boolean acceptsWhileNotOnline) {
@@ -115,13 +116,19 @@ public class ODistributedWorker extends Thread {
       try {
         message = readRequest();
 
-        currentExecuting = message;
-
+        synchronized (this) {
+          executingMessage = true;
+          currentExecuting = message;
+        }
         if (message != null) {
           manager.messageProcessStart(message);
           message.getId();
           reqId = message.getId();
           onMessage(message);
+        }
+        synchronized (this) {
+          executingMessage = false;
+          this.notify();
         }
 
       } catch (InterruptedException e) {
@@ -480,21 +487,31 @@ public class ODistributedWorker extends Thread {
   }
 
   public void reset() {
-    ODistributedRequest el;
-    do {
-      el = localQueue.poll();
-      if (el != null && el.getTask() != null) {
-        el.getTask().finished();
+    synchronized (this) {
+      ODistributedRequest el;
+      do {
+        el = localQueue.poll();
+        if (el != null && el.getTask() != null) {
+          el.getTask().finished();
+        }
+      } while (el != null);
+
+      if (executingMessage) {
+        try {
+          this.wait(MAX_SHUTDOWN_TIMEOUT);
+        } catch (InterruptedException e) {
+          Thread.currentThread().interrupt();
+        }
       }
-    } while (el != null);
-    ODistributedRequest process = currentExecuting;
-    if (process != null) {
-      process.getTask().finished();
-    }
-    if (database != null) {
-      database.activateOnCurrentThread();
-      database.close();
-      database = null;
+      ODistributedRequest process = currentExecuting;
+      if (process != null) {
+        process.getTask().finished();
+      }
+      if (database != null) {
+        database.activateOnCurrentThread();
+        database.close();
+        database = null;
+      }
     }
 
   }
