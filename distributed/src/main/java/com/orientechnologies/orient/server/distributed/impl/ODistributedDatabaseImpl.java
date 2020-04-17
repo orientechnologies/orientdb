@@ -1424,7 +1424,7 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
   public void validateStatus(OTransactionSequenceStatus status) {
     List<OTransactionId> res = sequenceManager.checkSelfStatus(status);
     if (!res.isEmpty()) {
-      manager.installDatabase(false, databaseName, false, true);
+      manager.installDatabase(false, databaseName, true, true);
     }
   }
 
