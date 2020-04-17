@@ -121,6 +121,7 @@ public class ONewDistributedTxContextImpl implements ODistributedTxContext {
 
   @Override
   public void unlock() {
+    shared.rollback(this.transactionId);
     for (ORID lockedRid : lockedRids) {
       shared.getRecordLockManager().unlock(lockedRid);
     }

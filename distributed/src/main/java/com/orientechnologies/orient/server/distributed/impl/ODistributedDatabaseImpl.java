@@ -571,9 +571,6 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
   public void unlockResourcesOfServer(final ODatabaseDocumentInternal database, final String serverName) {
     final int nodeLeftId = manager.getNodeIdByName(serverName);
 
-    final Set<ORecordId> rids2Repair = new HashSet<ORecordId>();
-
-    int rollbacks = 0;
     final Iterator<ODistributedTxContext> pendingReqIterator = activeTxContexts.values().iterator();
     while (pendingReqIterator.hasNext()) {
       final ODistributedTxContext pReq = pendingReqIterator.next();
@@ -583,8 +580,7 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
             "Distributed transaction: rolling back transaction (req=%s)", pReq.getReqId());
 
         try {
-          rids2Repair.addAll(pReq.rollback(database));
-          rollbacks++;
+          pReq.rollback(database);
         } catch (Exception t) {
           // IGNORE IT
           ODistributedServerLog.error(this, manager.getLocalNodeName(), null, DIRECTION.NONE,
@@ -1138,7 +1134,7 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
   public void validateStatus(OTransactionSequenceStatus status) {
     List<OTransactionId> res = sequenceManager.checkSelfStatus(status);
     if (!res.isEmpty()) {
-      manager.installDatabase(false, databaseName, false, true);
+      manager.installDatabase(false, databaseName, true, true);
     }
   }
 
