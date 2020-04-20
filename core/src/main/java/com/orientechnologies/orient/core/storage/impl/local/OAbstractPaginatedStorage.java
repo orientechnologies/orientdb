@@ -1406,15 +1406,11 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
           for (final OWALRecord record : records) {
 
             if (record instanceof OFileCreatedWALRecord) {
-              throw new ODatabaseException(
-                  "Cannot execute delta-sync because a new file has been added. Filename: '" + ((OFileCreatedWALRecord) record)
-                      .getFileName() + "' (id=" + ((OFileCreatedWALRecord) record).getFileId() + ")");
+              return Optional.empty();
             }
 
             if (record instanceof OFileDeletedWALRecord) {
-              throw new ODatabaseException(
-                  "Cannot execute delta-sync because a file has been deleted. File id: " + ((OFileDeletedWALRecord) record)
-                      .getFileId());
+              return Optional.empty();
             }
 
             if (record instanceof OAtomicUnitStartMetadataRecord) {
