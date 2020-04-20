@@ -10,7 +10,7 @@ node {
         sh "cp /var/jenkins_home/uploadedContent/settings.xml ."
 
         executeDocker(
-                dockerImage:'ldellaquila/maven-gradle-node-zulu-openjdk8:1.0.0',
+                dockerImage:'ldellaquila/maven-gradle-node-zulu-openjdk8:1.1.0',
                 dockerWorkspace: '/orientdb-gremlin-${env.BRANCH_NAME}'
         ) {
 
