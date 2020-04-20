@@ -38,7 +38,6 @@ import java.io.IOException;
 public abstract class OAbstractRemoteTask implements ORemoteTask {
   public static final int[] ALL = new int[] {-1};
   protected static final int[] ANY = new int[] {-2};
-  protected static final int[] LOCK = new int[] {-3};
   protected static final int[] FAST_NOLOCK = new int[] {-4};
 
   protected transient String nodeSource;
