@@ -97,7 +97,6 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
   protected ConcurrentHashMap<ODistributedRequestId, ODistributedTxContext> activeTxContexts =
       new ConcurrentHashMap<ODistributedRequestId, ODistributedTxContext>(64);
   protected final List<ODistributedWorker> workerThreads = new ArrayList<ODistributedWorker>();
-  protected ODistributedWorker lockThread;
   protected ODistributedWorker nowaitThread;
 
   private AtomicLong totalSentRequests = new AtomicLong();
@@ -401,19 +400,6 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
         if (!found)
           // EXEC ON THE FIRST QUEUE
           workerThreads.get(0).processRequest(request);
-
-      } else if (partitionKeys.length == 1 && partitionKeys[0] == -3) {
-        // SERVICE - LOCK
-        ODistributedServerLog.debug(
-            this,
-            localNodeName,
-            request.getTask().getNodeSource(),
-            DIRECTION.IN,
-            "Request %s on database '%s' dispatched to the lock worker",
-            request,
-            databaseName);
-
-        lockThread.processRequest(request);
 
       } else if (partitionKeys.length == 1 && partitionKeys[0] == -4) {
         // SERVICE - FAST_NOLOCK
@@ -940,9 +926,9 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
   public long getProcessedRequests() {
     long total = 0;
 
-    if (lockThread != null) total += lockThread.getProcessedRequests();
-
-    if (nowaitThread != null) total += nowaitThread.getProcessedRequests();
+    if (nowaitThread != null) {
+      total += nowaitThread.getProcessedRequests();
+    }
 
     for (ODistributedWorker workerThread : workerThreads) {
       if (workerThread != null) total += workerThread.getProcessedRequests();
@@ -959,18 +945,12 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
       if (txTimeoutTask != null) txTimeoutTask.cancel();
 
       // SEND THE SHUTDOWN TO ALL THE WORKER THREADS
-      if (lockThread != null) lockThread.sendShutdown();
-      if (nowaitThread != null) nowaitThread.sendShutdown();
+      if (nowaitThread != null) {
+        nowaitThread.sendShutdown();
+      }
       for (ODistributedWorker workerThread : workerThreads) {
         if (workerThread != null) workerThread.sendShutdown();
       }
-
-      // WAIT A BIT FOR PROPER SHUTDOWN
-      if (lockThread != null)
-        try {
-          lockThread.join(2000);
-        } catch (InterruptedException e) {
-        }
 
       if (nowaitThread != null)
         try {
@@ -986,7 +966,6 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
           }
         }
       }
-      lockThread = null;
       nowaitThread = null;
       workerThreads.clear();
 
@@ -1231,9 +1210,6 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
       if (totalWorkers == 0) totalWorkers = 1;
     }
 
-    lockThread = new ODistributedWorker(this, databaseName, -3, false);
-    lockThread.start();
-
     nowaitThread = new ODistributedWorker(this, databaseName, -4, true);
     nowaitThread.start();
 
@@ -1347,8 +1323,9 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
     boolean parsing = this.parsing.get();
     if (parsing) {
       // RESET THE DATABASE
-      if (lockThread != null) lockThread.reset();
-      if (nowaitThread != null) nowaitThread.reset();
+      if (nowaitThread != null) {
+        nowaitThread.reset();
+      }
       for (ODistributedWorker w : workerThreads) {
         if (w != null) w.reset();
       }
@@ -1382,19 +1359,6 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
 
     buffer.append("\n- MESSAGES IN QUEUES");
     buffer.append(" (" + (workerThreads != null ? workerThreads.size() : 0) + " WORKERS):");
-
-    if (lockThread != null) {
-      final ODistributedRequest processing = lockThread.getProcessing();
-      final ArrayBlockingQueue<ODistributedRequest> queue = lockThread.localQueue;
-
-      if (processing != null || !queue.isEmpty()) {
-        buffer.append("\n - QUEUE LOCK EXECUTING: " + processing);
-        int i = 0;
-        for (ODistributedRequest m : queue) {
-          if (m != null) buffer.append("\n  - " + i + " = " + m.toString());
-        }
-      }
-    }
 
     if (nowaitThread != null) {
       final ODistributedRequest processing = nowaitThread.getProcessing();
