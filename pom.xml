@@ -203,6 +203,13 @@
             </configuration>
           </execution>
         </executions>
+        <configuration>
+          <executable>npm</executable>
+          <arguments>
+            <argument>-version</argument>
+          </arguments>
+          <workingDirectory>.</workingDirectory>
+        </configuration>
       </plugin>
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
