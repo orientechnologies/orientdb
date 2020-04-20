@@ -203,15 +203,6 @@
             </configuration>
           </execution>
         </executions>
-        <configuration>
-          <executable>npm</executable>
-          <arguments>
-            <argument>install</argument>
-            <argument>-g</argument>
-            <argument>yarn</argument>
-          </arguments>
-          <workingDirectory>.</workingDirectory>
-        </configuration>
       </plugin>
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
