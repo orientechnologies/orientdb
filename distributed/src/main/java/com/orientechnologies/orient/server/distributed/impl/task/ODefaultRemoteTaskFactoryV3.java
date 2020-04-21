@@ -19,21 +19,21 @@
  */
 package com.orientechnologies.orient.server.distributed.impl.task;
 
+import com.orientechnologies.orient.server.distributed.ORemoteTaskFactory;
 import com.orientechnologies.orient.server.distributed.operation.NodeOperationTask;
 import com.orientechnologies.orient.server.distributed.task.ORemoteTask;
 
 /**
  * Factory of remote tasks.
  * <p>
- * <ul> <li>V1 (16/08/2017) - includes partitionKeys in OCompleted2pcTaskV1</li> </ul>
+ * <ul> <li>V2 (11/09/2017) </li> </ul>
  *
- * @author Luca Garulli (l.garulli--at--orientechnologies.com)
+ * @author Luigi Dell'Aquila (l.dellaquila--at--orientdb.com)
  */
-public class ODefaultRemoteTaskFactoryV1 extends ODefaultRemoteTaskFactoryV0 {
+public class ODefaultRemoteTaskFactoryV3 implements ORemoteTaskFactory {
   @Override
   public ORemoteTask createTask(final int code) {
     switch (code) {
-
     case OSQLCommandTask.FACTORYID: // 5
       return new OSQLCommandTask();
 
@@ -70,20 +70,40 @@ public class ODefaultRemoteTaskFactoryV1 extends ODefaultRemoteTaskFactoryV0 {
     case ORequestDatabaseConfigurationTask.FACTORYID: // 27
       return new ORequestDatabaseConfigurationTask();
 
-    case OTransactionPhase1Task.FACTORYID:
-      return new OTransactionPhase1Task();
-
-    case OTransactionPhase2Task.FACTORYID:
-      return new OTransactionPhase2Task();
-
     case OUnreachableServerLocalTask.FACTORYID: // 28
       throw new IllegalArgumentException("Task with code " + code + " is not supported in remote configuration");
 
     case OEnterpriseStatsTask.FACTORYID: // 29
       return new OEnterpriseStatsTask();
 
+    //--- here starts V2 ----
+
+    case ORunQueryExecutionPlanTask.FACTORYID: // 40
+      return new ORunQueryExecutionPlanTask();
+
+    case OFetchQueryPageTask.FACTORYID: // 41
+      return new OFetchQueryPageTask();
+
+    case OCloseQueryTask.FACTORYID: // 42
+      return new OCloseQueryTask();
+
+    case OTransactionPhase1Task.FACTORYID: // 43
+      return new OTransactionPhase1Task();
+
+    case OTransactionPhase2Task.FACTORYID: // 44
+      return new OTransactionPhase2Task();
+
     case NodeOperationTask.FACTORYID: //55
       return new NodeOperationTask();
+
+    case ONewSQLCommandTask.FACTORYID: //56
+      return new ONewSQLCommandTask();
+
+    case OSyncDatabaseNewDeltaTask.FACTORYID: // 57
+      return new OSyncDatabaseNewDeltaTask();
+
+    case OUpdateDatabaseSequenceStatusTask.FACTORYID: // 58
+      return new OUpdateDatabaseSequenceStatusTask();
     }
 
     throw new IllegalArgumentException("Task with code " + code + " is not supported");
@@ -91,6 +111,6 @@ public class ODefaultRemoteTaskFactoryV1 extends ODefaultRemoteTaskFactoryV0 {
 
   @Override
   public int getProtocolVersion() {
-    return 1;
+    return 3;
   }
 }
