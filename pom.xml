@@ -521,9 +521,6 @@
                 <artifactId>jacoco-maven-plugin</artifactId>
                 <version>0.8.5</version>
                 <configuration>
-                    <excludes>
-                        **/*OrientSqlTokenManager*
-                    </excludes>
                 </configuration>
                 <executions>
                     <execution>
