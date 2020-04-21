@@ -26,16 +26,8 @@ import com.orientechnologies.orient.core.db.*;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.id.ORID;
-import com.orientechnologies.orient.core.id.ORecordId;
-import com.orientechnologies.orient.core.record.ORecord;
-import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.OVertex;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.storage.ORawBuffer;
-import com.orientechnologies.orient.server.distributed.impl.task.OCreateRecordTask;
-import com.orientechnologies.orient.server.distributed.impl.task.OFixCreateRecordTask;
-import com.orientechnologies.orient.server.distributed.impl.task.OFixUpdateRecordTask;
-import com.orientechnologies.orient.server.distributed.impl.task.OReadRecordTask;
 import org.junit.Assert;
 
 import java.util.*;
@@ -466,56 +458,6 @@ public abstract class AbstractServerClusterTest {
 
   protected String getDatabaseURL(ServerRun server) {
     return null;
-  }
-
-  protected ODocument readRemoteRecord(final int serverId, final ORecordId rid, final String[] servers) {
-    final ODistributedServerManager dManager = serverInstance.get(serverId).getServerInstance().getDistributedManager();
-
-    final Collection<String> clusterNames = new ArrayList<String>(1);
-    clusterNames.add(ODatabaseRecordThreadLocal.instance().get().getClusterNameById(rid.getClusterId()));
-
-    ODistributedResponse response = dManager
-        .sendRequest(getDatabaseName(), clusterNames, Arrays.asList(servers), new OReadRecordTask().init(rid),
-            dManager.getNextMessageIdCounter(), ODistributedRequest.EXECUTION_MODE.RESPONSE, null, null, null);
-
-    if (response != null) {
-      final ORawBuffer buffer = (ORawBuffer) response.getPayload();
-      return new ODocument().fromStream(buffer.getBuffer());
-    }
-
-    return null;
-  }
-
-  protected ODistributedResponse createRemoteRecord(final int serverId, final ORecord record, final String[] servers) {
-    final ODistributedServerManager dManager = serverInstance.get(serverId).getServerInstance().getDistributedManager();
-
-    final Collection<String> clusterNames = new ArrayList<String>(1);
-    clusterNames.add(ODatabaseRecordThreadLocal.instance().get().getClusterNameById(record.getIdentity().getClusterId()));
-
-    return dManager.sendRequest(getDatabaseName(), clusterNames, Arrays.asList(servers), new OCreateRecordTask()
-            .init((ORecordId) record.getIdentity(), record.toStream(), record.getVersion(), ORecordInternal.getRecordType(record)),
-        dManager.getNextMessageIdCounter(), ODistributedRequest.EXECUTION_MODE.RESPONSE, null, null, null);
-  }
-
-  protected ODistributedResponse updateRemoteRecord(final int serverId, final ORecord record, final String[] servers) {
-    final ODistributedServerManager dManager = serverInstance.get(serverId).getServerInstance().getDistributedManager();
-
-    final Collection<String> clusterNames = new ArrayList<String>(1);
-    clusterNames.add(ODatabaseRecordThreadLocal.instance().get().getClusterNameById(record.getIdentity().getClusterId()));
-
-    return dManager.sendRequest(getDatabaseName(), clusterNames, Arrays.asList(servers), new OFixUpdateRecordTask()
-            .init((ORecordId) record.getIdentity(), record.toStream(), record.getVersion(), ORecordInternal.getRecordType(record)),
-        dManager.getNextMessageIdCounter(), ODistributedRequest.EXECUTION_MODE.RESPONSE, null, null, null);
-  }
-
-  protected ODistributedResponse deleteRemoteRecord(final int serverId, final ORecordId rid, final String[] servers) {
-    final ODistributedServerManager dManager = serverInstance.get(serverId).getServerInstance().getDistributedManager();
-
-    final Collection<String> clusterNames = new ArrayList<String>(1);
-    clusterNames.add(ODatabaseRecordThreadLocal.instance().get().getClusterNameById(rid.getClusterId()));
-
-    return dManager.sendRequest(getDatabaseName(), clusterNames, Arrays.asList(servers), new OFixCreateRecordTask().init(rid, -1),
-        dManager.getNextMessageIdCounter(), ODistributedRequest.EXECUTION_MODE.RESPONSE, null, null, null);
   }
 
   protected List<ServerRun> createServerList(final int... serverIds) {

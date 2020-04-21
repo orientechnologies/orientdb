@@ -89,6 +89,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
   protected        OHazelcastDistributedMap       configurationMap;
   private          OSignalHandler.OSignalListener signalListener;
   private volatile boolean                        running = false;
+  private          ODistributedLockManager        distributedLockManager;
 
   public OHazelcastPlugin() {
   }
@@ -151,6 +152,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
 
     try {
       hazelcastInstance = configureHazelcast();
+      distributedLockManager = new OHazelcastLockManager(this.hazelcastInstance);
 
       nodeUuid = hazelcastInstance.getCluster().getLocalMember().getUuid();
 
@@ -228,8 +230,6 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
       }
 
       messageService = new ODistributedMessageServiceImpl(this);
-
-      assignLockManagerFromCluster();
 
       initSystemDatabase();
 
@@ -450,6 +450,11 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
     return member != null && hazelcastInstance.getCluster().getMembers().contains(member);
   }
 
+  @Override
+  public String getLockManagerServer() {
+    return "";
+  }
+
   protected void waitStartupIsCompleted() throws InterruptedException {
     long totalReceivedRequests = getMessageService().getReceivedRequests();
     long totalProcessedRequests = getMessageService().getProcessedRequests();
@@ -487,7 +492,6 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
       buffer.append(ODistributedOutput.formatMessages(this, clusterCfg));
 
       OLogManager.instance().flush();
-      buffer.append("\n" + getLockManagerExecutor().dumpLocks());
       for (String db : dbs) {
         buffer.append(messageService.getDatabase(db).dump());
       }
@@ -525,6 +529,16 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
     } catch (HazelcastInstanceNotActiveException e) {
       return -1;
     }
+  }
+
+  @Override
+  public ODistributedLockManager getLockManagerRequester() {
+    return distributedLockManager;
+  }
+
+  @Override
+  public ODistributedLockManager getLockManagerExecutor() {
+    return distributedLockManager;
   }
 
   @Override
@@ -964,9 +978,6 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
         ODistributedServerLog.info(this, nodeName, eventNodeName, DIRECTION.IN, "Received updated about registered nodes");
         reloadRegisteredNodes((String) iEvent.getValue());
 
-      } else if (key.startsWith(CONFIG_LOCKMANAGER)) {
-        String lockManager = (String) iEvent.getValue();
-        getLockManagerRequester().setServer(lockManager);
       }
 
     } catch (HazelcastInstanceNotActiveException | RetryableHazelcastException e) {
@@ -1096,9 +1107,6 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
     if (state == LifecycleEvent.LifecycleState.MERGING)
       setNodeStatus(NODE_STATUS.MERGING);
     else if (state == LifecycleEvent.LifecycleState.MERGED) {
-      String lockManager = (String) configurationMap.getHazelcastMap().get(CONFIG_LOCKMANAGER);
-      getLockManagerRequester().setServer(lockManager);
-
       ODistributedServerLog
           .info(this, nodeName, null, DIRECTION.NONE, "Server merged the existent cluster, lock=%s, merging databases...",
               getLockManagerServer());
@@ -1505,23 +1513,6 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
         .debug(this, nodeName, nodeLeftName, DIRECTION.NONE, "Distributed server '%s' is unreachable", nodeLeftName);
 
     try {
-      if (nodeLeftName.equals(getLockManagerRequester().getServer()))
-        electNewLockManager();
-
-      getLockManagerExecutor().handleUnreachableServer(nodeLeftName);
-      getLockManagerRequester().handleUnreachableServer(nodeLeftName);
-
-    } catch (Exception e) {
-      // IGNORE IT
-      ODistributedServerLog.debug(this, nodeName, nodeLeftName, DIRECTION.NONE, "Error on electing new lock", e);
-    }
-
-    if (nodeLeftName.equals(getLockManagerRequester().getServer())) {
-      // IF AFTER RE-ELECTION THE DISTRIBUTED LOCK MANAGER IS STILL THE REMOVED SERVER ABORT REMOVE.
-      return;
-    }
-
-    try {
       // REMOVE INTRA SERVER CONNECTION
       closeRemoteServer(nodeLeftName);
 
@@ -1612,82 +1603,6 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
     }
   }
 
-  /**
-   * Elects a new server as coordinator. The election browse the ordered server list.
-   */
-  @Override
-  public String electNewLockManager() {
-    if (hazelcastInstance == null)
-      throw new HazelcastInstanceNotActiveException();
-
-    final ILock lock = hazelcastInstance.getLock("orientdb.lockManagerElection");
-    lock.lock();
-    try {
-
-      // TRY ALL THE SERVERS IN ORDER (ALL THE SERVERS HAVE THE SAME LIST)
-      String lockManagerServer = getLockManagerRequester().getServer();
-
-      // PROTECT FROM DOUBLE LOCK MANAGER ELECTION IN CASE OF REMOVE OF LOCK MANAGER
-      if (lockManagerServer != null && getActiveServers().contains(lockManagerServer))
-        return lockManagerServer;
-
-      final String originalLockManager = lockManagerServer;
-
-      ODistributedServerLog
-          .debug(this, nodeName, originalLockManager, DIRECTION.OUT, "lock '%s' is unreachable, electing a new lock...",
-              originalLockManager);
-
-      int lockManagerServerId = -1;
-      if (lockManagerServer != null && registeredNodeByName.containsKey(lockManagerServer))
-        lockManagerServerId = registeredNodeByName.get(lockManagerServer);
-
-      String newServer = null;
-
-      int currIndex = lockManagerServerId;
-      for (int i = 0; i < registeredNodeById.size(); ++i) {
-        currIndex++;
-        if (currIndex >= registeredNodeById.size())
-          // RESTART FROM THE FIRST
-          currIndex = 0;
-
-        newServer = registeredNodeById.get(currIndex);
-        if (newServer == null)
-          throw new OConfigurationException("Found null server at index " + currIndex + " of server list " + registeredNodeById);
-
-        if (newServer.equalsIgnoreCase(getLocalNodeName()) || activeNodes.containsKey(newServer)) {
-          // TODO: IMPROVE ELECTION BY CHECKING AL THE NODES AGREE ON IT
-
-          ODistributedServerLog
-              .debug(this, nodeName, newServer, DIRECTION.OUT, "Trying to elected server '%s' as new lock (old=%s)...", newServer,
-                  originalLockManager);
-
-          try {
-            getLockManagerRequester().setServer(newServer);
-
-            configurationMap.put(CONFIG_LOCKMANAGER, getLockManagerRequester().getServer());
-
-            ODistributedServerLog
-                .info(this, nodeName, newServer, DIRECTION.OUT, "Elected server '%s' as new lock (old=%s)", newServer,
-                    originalLockManager);
-
-            break;
-
-          } catch (Exception e) {
-            // NO SERVER RESPONDED, THE SERVER COULD BE ISOLATED, GO AHEAD WITH THE NEXT IN THE LIST
-            ODistributedServerLog
-                .info(this, nodeName, newServer, DIRECTION.OUT, "Error on electing server '%s' as new lock (error: %s)", newServer,
-                    e);
-          }
-        }
-      }
-
-      return newServer;
-
-    } finally {
-      lock.unlock();
-    }
-  }
-
   @Override
   public Set<String> getActiveServers() {
     return activeNodes.keySet();
@@ -1749,44 +1664,6 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
       }
       dumpServersStatus();
     }
-  }
-
-  /**
-   * ASSIGN THE LOCK MANAGER AT STARTUP
-   */
-  private void assignLockManagerFromCluster() {
-    String lockManagerServer = null;
-    while (lockManagerServer == null) {
-      if (activeNodes.size() == 1) {
-        // ONLY CURRENT NODE ONLINE, SET IT AS INITIAL LOCK MANAGER
-        lockManagerServer = nodeName;
-        if (configurationMap.putIfAbsent(CONFIG_LOCKMANAGER, lockManagerServer) == null)
-          break;
-      } else {
-        lockManagerServer = (String) configurationMap.get(CONFIG_LOCKMANAGER);
-
-        if (lockManagerServer != null && lockManagerServer.equals(nodeName)) {
-          // LAST LOCK MANAGER WAS CURRENT NODE? TRY TO FORCE A NEW ELECTION
-          OLogManager.instance().info(this, "Found lock as current node, even if it was offline. Forcing a new election...");
-          getLockManagerRequester().setServer(lockManagerServer);
-          lockManagerServer = electNewLockManager();
-          break;
-        }
-
-        if (lockManagerServer != null)
-          break;
-      }
-
-      try {
-        Thread.sleep(100);
-      } catch (InterruptedException e) {
-        break;
-      }
-    }
-
-    getLockManagerRequester().setServer(lockManagerServer);
-
-    OLogManager.instance().info(this, "Distributed Lock Manager server is '%s'", lockManagerServer);
   }
 
   public boolean isRunning() {

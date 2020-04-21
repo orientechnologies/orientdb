@@ -32,7 +32,6 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSe
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.distributed.ODistributedDatabase;
 import com.orientechnologies.orient.server.distributed.ODistributedException;
-import com.orientechnologies.orient.server.distributed.ODistributedMomentum;
 import com.orientechnologies.orient.server.distributed.ODistributedRequestId;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIRECTION;
@@ -46,7 +45,6 @@ import java.io.DataOutput;
 import java.io.File;
 import java.io.IOException;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * Ask for synchronization of database from a remote node.
@@ -92,8 +90,6 @@ public class OSyncDatabaseTask extends OAbstractSyncDatabaseTask {
         ODistributedServerLog
             .info(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.OUT, "Deploying database %s...", databaseName);
 
-        final AtomicReference<ODistributedMomentum> momentum = new AtomicReference<ODistributedMomentum>();
-
         OBackgroundBackup backup = null;
         OSyncSource last = ((ODistributedStorage) database.getStorage()).getLastValidBackup();
         if (last instanceof OBackgroundBackup) {
@@ -126,7 +122,7 @@ public class OSyncDatabaseTask extends OAbstractSyncDatabaseTask {
               "Creating backup of database '%s' (compressionRate=%d) in directory: %s...", databaseName, compressionRate,
               backupPath);
 
-          backup = new OBackgroundBackup(this, iManager, database, resultedBackupFile, backupPath, null, momentum, dDatabase,
+          backup = new OBackgroundBackup(this, iManager, database, resultedBackupFile, backupPath, null, dDatabase,
               requestId, completedFile);
           Thread t = new Thread(backup);
           t.setUncaughtExceptionHandler(new OUncaughtExceptionHandler());
@@ -135,25 +131,20 @@ public class OSyncDatabaseTask extends OAbstractSyncDatabaseTask {
           // RECORD LAST BACKUP TO BE REUSED IN CASE ANOTHER NODE ASK FOR THE SAME IN SHORT TIME WHILE THE DB IS NOT UPDATED
           ((ODistributedStorage) database.getStorage()).setLastValidBackup(backup);
         } else {
-          momentum.set(dDatabase.getSyncConfiguration().getMomentum().copy());
           backup.makeStreamFromFile();
           ODistributedServerLog.info(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.OUT,
               "Reusing last backup of database '%s' in directory: %s...", databaseName,
               backup.getResultedBackupFile().getAbsolutePath());
         }
 
-        for (int retry = 0; momentum.get() == null && retry < 10; ++retry)
-          Thread.sleep(300);
-
         while (!backup.getStarted().await(1, TimeUnit.MINUTES)) {
           OLogManager.instance().info(this, "Another backup running on database '%s' waiting it to finish", databaseName);
         }
 
-        final ODistributedDatabaseChunk chunk = new ODistributedDatabaseChunk(backup, CHUNK_MAX_SIZE, momentum.get());
+        final ODistributedDatabaseChunk chunk = new ODistributedDatabaseChunk(backup, CHUNK_MAX_SIZE);
 
         ODistributedServerLog.info(this, iManager.getLocalNodeName(), getNodeSource(), ODistributedServerLog.DIRECTION.OUT,
-            "- transferring chunk #%d offset=%d size=%s lsn=%s...", 1, 0, OFileUtils.getSizeAsNumber(chunk.buffer.length),
-            momentum.get());
+            "- transferring chunk #%d offset=%d size=%s...", 1, 0, OFileUtils.getSizeAsNumber(chunk.buffer.length));
 
         if (chunk.last) {
           // NO MORE CHUNKS: SET THE NODE ONLINE (SYNCHRONIZING ENDED)

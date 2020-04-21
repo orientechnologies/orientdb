@@ -43,7 +43,6 @@ public class OBackgroundDelta implements Runnable, OSyncSource {
     } finally {
       finished.countDown();
     }
-
   }
 
   @Override

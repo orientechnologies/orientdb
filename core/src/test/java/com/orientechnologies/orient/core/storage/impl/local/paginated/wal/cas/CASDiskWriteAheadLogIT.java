@@ -5077,6 +5077,32 @@ public class CASDiskWriteAheadLogIT {
     wal.close();
   }
 
+  @Test
+  public void testIntegerOverflowNoException() throws Exception {
+    final CASDiskWriteAheadLog wal = new CASDiskWriteAheadLog("walTest", testDirectory, testDirectory, Integer.MAX_VALUE, 64, null, null,
+        Integer.MAX_VALUE, Integer.MAX_VALUE, 20, true, Locale.US, -1, -1, 1000, false, false, true, 10);
+    wal.close();
+    Assert.assertEquals("Integer.MAX overflow must be reset to Integer.MAX.",
+        CASDiskWriteAheadLog.DEFAULT_MAX_CACHE_SIZE, wal.maxCacheSize());
+  }
+
+  @Test
+  public void testIntegerNegativeNoException() throws Exception {
+    final CASDiskWriteAheadLog wal = new CASDiskWriteAheadLog("walTest", testDirectory, testDirectory, -27, 64, null, null,
+        Integer.MAX_VALUE, Integer.MAX_VALUE, 20, true, Locale.US, -1, -1, 1000, false, false, true, 10);
+    wal.close();
+    Assert.assertTrue("Negative int must not produce exception in `doFlush`", 0 > wal.maxCacheSize());
+  }
+
+  @Test
+  public void testIntegerNegativeOverflowNoException() throws Exception {
+    final CASDiskWriteAheadLog wal = new CASDiskWriteAheadLog("walTest", testDirectory, testDirectory, Integer.MIN_VALUE, 64, null, null,
+        Integer.MAX_VALUE, Integer.MAX_VALUE, 20, true, Locale.US, -1, -1, 1000, false, false, true, 10);
+    wal.close();
+    Assert.assertEquals("Integer.MIN overflow must be reset to Integer.MAX.",
+        CASDiskWriteAheadLog.DEFAULT_MAX_CACHE_SIZE, wal.maxCacheSize());
+  }
+
   private void checkThatSegmentsBellowAreRemoved(CASDiskWriteAheadLog wal) {
     final OLogSequenceNumber begin = wal.begin();
 

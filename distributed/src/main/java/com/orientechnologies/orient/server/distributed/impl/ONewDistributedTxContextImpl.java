@@ -2,21 +2,20 @@ package com.orientechnologies.orient.server.distributed.impl;
 
 import com.orientechnologies.common.concur.lock.OLockException;
 import com.orientechnologies.common.concur.lock.OSimpleLockManager;
+import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
+import com.orientechnologies.orient.core.tx.OTransactionId;
+import com.orientechnologies.orient.core.tx.OTxMetadataHolder;
 import com.orientechnologies.orient.core.tx.OTransactionInternal;
-import com.orientechnologies.orient.server.distributed.ODistributedRequestId;
-import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
-import com.orientechnologies.orient.server.distributed.ODistributedTxContext;
+import com.orientechnologies.orient.server.distributed.*;
 import com.orientechnologies.orient.server.distributed.task.ODistributedKeyLockedException;
 import com.orientechnologies.orient.server.distributed.task.ODistributedRecordLockedException;
 import com.orientechnologies.orient.server.distributed.task.ORemoteTask;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.io.IOException;
+import java.util.*;
 
 public class ONewDistributedTxContextImpl implements ODistributedTxContext {
 
@@ -31,13 +30,15 @@ public class ONewDistributedTxContextImpl implements ODistributedTxContext {
   private final List<ORID>               lockedRids = new ArrayList<>();
   private final List<Object>             lockedKeys = new ArrayList<>();
   private       Status                   status;
+  private final OTransactionId           transactionId;
 
-  public ONewDistributedTxContextImpl(ODistributedDatabaseImpl shared, ODistributedRequestId reqId, OTransactionInternal tx) {
+  public ONewDistributedTxContextImpl(ODistributedDatabaseImpl shared, ODistributedRequestId reqId, OTransactionInternal tx,
+      OTransactionId id) {
     this.shared = shared;
     this.id = reqId;
     this.tx = tx;
     this.startedOn = System.currentTimeMillis();
-
+    transactionId = id;
   }
 
   @Override
@@ -78,11 +79,6 @@ public class ONewDistributedTxContextImpl implements ODistributedTxContext {
   }
 
   @Override
-  public void addUndoTask(ORemoteTask undoTask) {
-    throw new UnsupportedOperationException();
-  }
-
-  @Override
   public ODistributedRequestId getReqId() {
     return id;
   }
@@ -94,12 +90,18 @@ public class ONewDistributedTxContextImpl implements ODistributedTxContext {
 
   @Override
   public synchronized void commit(ODatabaseDocumentInternal database) {
-    ((ODatabaseDocumentDistributed) database).internalCommit2pc(this);
-  }
-
-  @Override
-  public void fix(ODatabaseDocumentInternal database, List<ORemoteTask> fixTasks) {
-    throw new UnsupportedOperationException();
+    ODistributedDatabase localDistributedDatabase = ((ODatabaseDocumentDistributed) database).getStorageDistributed()
+        .getLocalDistributedDatabase();
+    OTxMetadataHolder metadataHolder = localDistributedDatabase.commit(getTransactionId());
+    try {
+      tx.setMetadataHolder(Optional.of(metadataHolder));
+      tx.prepareSerializedOperations();
+      ((ODatabaseDocumentDistributed) database).internalCommit2pc(this);
+    } catch (IOException e) {
+      throw OException.wrapException(new ODistributedException("Error on preparation of log serialized operations"), e);
+    } finally {
+      metadataHolder.notifyMetadataRead();
+    }
   }
 
   @Override
@@ -119,6 +121,7 @@ public class ONewDistributedTxContextImpl implements ODistributedTxContext {
 
   @Override
   public void unlock() {
+    shared.rollback(this.transactionId);
     for (ORID lockedRid : lockedRids) {
       shared.getRecordLockManager().unlock(lockedRid);
     }
@@ -141,11 +144,6 @@ public class ONewDistributedTxContextImpl implements ODistributedTxContext {
   }
 
   @Override
-  public boolean isCanceled() {
-    return false;
-  }
-
-  @Override
   public OTransactionInternal getTransaction() {
     return tx;
   }
@@ -162,4 +160,8 @@ public class ONewDistributedTxContextImpl implements ODistributedTxContext {
     return lockedRids;
   }
 
+  @Override
+  public OTransactionId getTransactionId() {
+    return transactionId;
+  }
 }

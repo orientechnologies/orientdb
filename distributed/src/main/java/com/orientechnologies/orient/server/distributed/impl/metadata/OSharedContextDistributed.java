@@ -87,6 +87,7 @@ public class OSharedContextDistributed extends OSharedContextEmbedded {
     executionPlanCache.invalidate();
     liveQueryOps.close();
     liveQueryOpsV2.close();
+    loaded = false;
   }
 
   public synchronized void reload(ODatabaseDocumentInternal database) {

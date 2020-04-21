@@ -48,7 +48,6 @@ public interface OrientDBInternal extends AutoCloseable, OSchedulerInternal {
    *
    * @param url           the url for the specific factory.
    * @param configuration configuration for the specific factory for the list of option {@see OGlobalConfiguration}.
-   *
    * @return the new Orient Factory.
    */
   static OrientDBInternal fromUrl(String url, OrientDBConfig configuration) {
@@ -69,7 +68,6 @@ public interface OrientDBInternal extends AutoCloseable, OSchedulerInternal {
    *
    * @param hosts         array of hosts
    * @param configuration configuration for the specific factory for the list of option {@see OGlobalConfiguration}.
-   *
    * @return a new remote databases factory
    */
   static OrientDBInternal remote(String[] hosts, OrientDBConfig configuration) {
@@ -100,7 +98,6 @@ public interface OrientDBInternal extends AutoCloseable, OSchedulerInternal {
    *
    * @param directoryPath base path where the database are hosted
    * @param config        configuration for the specific factory for the list of option {@see OGlobalConfiguration}
-   *
    * @return a new embedded databases factory
    */
   static OrientDBInternal embedded(String directoryPath, OrientDBConfig config) {
@@ -142,7 +139,6 @@ public interface OrientDBInternal extends AutoCloseable, OSchedulerInternal {
    * @param name     of the database to open
    * @param user     the username allowed to open the database
    * @param password related to the specified username
-   *
    * @return the opened database
    */
   ODatabaseDocumentInternal open(String name, String user, String password);
@@ -154,7 +150,6 @@ public interface OrientDBInternal extends AutoCloseable, OSchedulerInternal {
    * @param user     the username allowed to open the database
    * @param password related to the specified username
    * @param config   database specific configuration that override the factory global settings where needed.
-   *
    * @return the opened database
    */
   ODatabaseDocumentInternal open(String name, String user, String password, OrientDBConfig config);
@@ -189,7 +184,6 @@ public interface OrientDBInternal extends AutoCloseable, OSchedulerInternal {
    * @param user     the username of a user allowed to check the database existence, in case of remote is a server user for embedded
    *                 it can be left empty.
    * @param password the password relative to the user
-   *
    * @return boolean true if exist false otherwise.
    */
   boolean exists(String name, String user, String password);
@@ -210,7 +204,6 @@ public interface OrientDBInternal extends AutoCloseable, OSchedulerInternal {
    * @param user     the username of a user allowed to list databases, in case of remote is a server user for embedded it can be
    *                 left empty
    * @param password the password relative to the user
-   *
    * @return a set of databases names.
    */
   Set<String> listDatabases(String user, String password);
@@ -221,7 +214,6 @@ public interface OrientDBInternal extends AutoCloseable, OSchedulerInternal {
    * @param name     database name
    * @param user     the username allowed to open the database
    * @param password the password relative to the user
-   *
    * @return a new pool of databases.
    */
   ODatabasePoolInternal openPool(String name, String user, String password);
@@ -233,7 +225,6 @@ public interface OrientDBInternal extends AutoCloseable, OSchedulerInternal {
    * @param user     the username allowed to open the database
    * @param password the password relative to the user
    * @param config   database specific configuration that override the factory global settings where needed.
-   *
    * @return a new pool of databases.
    */
   ODatabasePoolInternal openPool(String name, String user, String password, OrientDBConfig config);
@@ -301,6 +292,10 @@ public interface OrientDBInternal extends AutoCloseable, OSchedulerInternal {
   }
 
   default OScriptManager getScriptManager() {
+    throw new UnsupportedOperationException();
+  }
+
+  default void networkRestore(String databaseName, InputStream in, Callable<Object> callback) {
     throw new UnsupportedOperationException();
   }
 }

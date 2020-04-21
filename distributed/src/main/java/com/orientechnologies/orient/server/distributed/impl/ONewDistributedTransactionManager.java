@@ -33,6 +33,7 @@ import com.orientechnologies.orient.core.storage.ORecordDuplicatedException;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
 import com.orientechnologies.orient.core.tx.OTransaction;
+import com.orientechnologies.orient.core.tx.OTransactionId;
 import com.orientechnologies.orient.core.tx.OTransactionInternal;
 import com.orientechnologies.orient.server.distributed.*;
 import com.orientechnologies.orient.server.distributed.ODistributedRequest.EXECUTION_MODE;
@@ -80,9 +81,19 @@ public class ONewDistributedTransactionManager {
           dManager.getNextMessageIdCounter());
       distributedDatabase.startOperation();
       try {
-        retriedCommit(database, iTx, requestId);
-        return;
-      } catch (OConcurrentCreateException | ODistributedRecordLockedException | ODistributedKeyLockedException ex) {
+        Optional<OTransactionId> genId = dManager.getMessageService().getDatabase(database.getName()).nextId();
+        if (genId.isPresent()) {
+          OTransactionId txId = genId.get();
+          retriedCommit(database, iTx, txId, requestId);
+          return;
+        } else {
+          try {
+            Thread.sleep(new Random().nextInt(delay));
+          } catch (InterruptedException e) {
+            OException.wrapException(new OInterruptedException(e.getMessage()), e);
+          }
+        }
+      } catch (OConcurrentCreateException | ODistributedRecordLockedException | ODistributedKeyLockedException | OInvalidSequentialException ex) {
         // Nothing just retry
         if (count > nretry) {
           ODistributedTxContext context = localDistributedDatabase.getTxContext(requestId);
@@ -110,7 +121,7 @@ public class ONewDistributedTransactionManager {
     } while (true);
   }
 
-  public void retriedCommit(final ODatabaseDocumentDistributed database, final OTransactionInternal iTx,
+  public void retriedCommit(final ODatabaseDocumentDistributed database, final OTransactionInternal iTx, OTransactionId txId,
       final ODistributedRequestId requestId) {
     final String localNodeName = dManager.getLocalNodeName();
 
@@ -123,7 +134,7 @@ public class ONewDistributedTransactionManager {
     OTransactionResultPayload localResult;
 
     //This retry happen only the first time i try to lock on local server
-    localResult = OTransactionPhase1Task.executeTransaction(requestId, database, iTx, true, -1);
+    localResult = OTransactionPhase1Task.executeTransaction(requestId, txId, database, iTx, true, -1);
     if (localResult.getResponseType() == OTxRecordLockTimeout.ID) {
       dManager.getMessageService().getDatabase(database.getName()).popTxContext(requestId).destroy();
       int timeout = database.getConfiguration().getValueAsInteger(DISTRIBUTED_ATOMIC_LOCK_TIMEOUT);
@@ -136,7 +147,7 @@ public class ONewDistributedTransactionManager {
       throw new ODistributedKeyLockedException(dManager.getLocalNodeName(), ((OTxKeyLockTimeout) localResult).getKey(), timeout);
     }
 
-    final OTransactionPhase1Task txTask = !nodes.isEmpty() ? createTxTask(iTx, nodes) : null;
+    final OTransactionPhase1Task txTask = !nodes.isEmpty() ? createTxTask(txId, iTx, nodes) : null;
     try {
       localDistributedDatabase.getSyncConfiguration()
           .setLastLSN(localNodeName, ((OAbstractPaginatedStorage) storage.getUnderlying()).getLSN(), true);
@@ -169,8 +180,8 @@ public class ONewDistributedTransactionManager {
         localKo(requestId, database);
         ORID id = ((OTxConcurrentModification) localResult).getRecordId();
         int version = ((OTxConcurrentModification) localResult).getVersion();
-        //TODO include all paramenter in response
-        throw new OConcurrentModificationException(id, version, 0, 0);
+        throw new OConcurrentModificationException(id, version, iTx.getRecordEntry(id).getRecord().getVersion(),
+            iTx.getRecordEntry(id).getType());
       }
       case OTxRecordLockTimeout.ID: {
         int timeout = database.getConfiguration().getValueAsInteger(DISTRIBUTED_ATOMIC_LOCK_TIMEOUT);
@@ -181,6 +192,9 @@ public class ONewDistributedTransactionManager {
         int timeout = database.getConfiguration().getValueAsInteger(DISTRIBUTED_ATOMIC_LOCK_TIMEOUT);
         throw new ODistributedKeyLockedException(dManager.getLocalNodeName(), ((OTxKeyLockTimeout) localResult).getKey(), timeout);
       }
+      case OTxInvalidSequential.ID:
+        //This never happen in local only, keep the management anyway
+        throw new OInvalidSequentialException(((OTxInvalidSequential) localResult).getCurrent());
 
       }
       return;
@@ -201,7 +215,7 @@ public class ONewDistributedTransactionManager {
               return responseManager;
             }));
 
-    handleResponse(requestId, responseManager, involvedClusters, sentNodes, database, iTx);
+    handleResponse(requestId, txId, responseManager, involvedClusters, sentNodes, database, iTx);
 
     // OK, DISTRIBUTED COMMIT SUCCEED
     return;
@@ -212,8 +226,9 @@ public class ONewDistributedTransactionManager {
     return ((OAbstractPaginatedStorage) storage.getUnderlying()).getLSN();
   }
 
-  private void handleResponse(ODistributedRequestId requestId, ONewDistributedResponseManager responseManager,
-      Set<String> involvedClusters, Set<String> nodes, ODatabaseDocumentDistributed database, OTransactionInternal iTx) {
+  private void handleResponse(ODistributedRequestId requestId, OTransactionId transactionId,
+      ONewDistributedResponseManager responseManager, Set<String> involvedClusters, Set<String> nodes,
+      ODatabaseDocumentDistributed database, OTransactionInternal iTx) {
     int timeout = database.getConfiguration().getValueAsInteger(DISTRIBUTED_ATOMIC_LOCK_TIMEOUT);
     int[] involvedClustersIds = new int[involvedClusters.size()];
     int i = 0;
@@ -272,6 +287,10 @@ public class ONewDistributedTransactionManager {
         localKo(requestId, database);
         throw new ODistributedKeyLockedException(((OTxKeyLockTimeout) resultPayload).getNode(),
             ((OTxKeyLockTimeout) resultPayload).getKey(), timeout);
+      case OTxInvalidSequential.ID:
+        sendPhase2Task(involvedClusters, nodes, new OTransactionPhase2Task(requestId, false, involvedClustersIds, getLsn()));
+        localKo(requestId, database);
+        throw new OInvalidSequentialException(((OTxInvalidSequential) resultPayload).getCurrent());
       }
 
       for (OTransactionResultPayload result : responseManager.getAllResponses()) {
@@ -308,12 +327,11 @@ public class ONewDistributedTransactionManager {
           messages.add("node: " + node + " success");
           break;
         case OTxConcurrentModification.ID:
+          sendPhase2Task(involvedClusters, nodes, new OTransactionPhase2Task(requestId, false, involvedClustersIds, getLsn()));
+          localKo(requestId, database);
           ORecordId recordId = ((OTxConcurrentModification) result).getRecordId();
-          messages.add(String
-              .format("concurrent modification record (node " + node + "): %s database version: %d transaction version: %d",
-                  recordId.toString(), ((OTxConcurrentModification) result).getVersion(),
-                  iTx.getRecordEntry(recordId).getRecord().getVersion()));
-          break;
+          throw new OConcurrentModificationException(recordId, iTx.getRecordEntry(recordId).getRecord().getVersion(),
+              ((OTxConcurrentModification) result).getVersion(), iTx.getRecordEntry(recordId).getType());
         case OTxException.ID:
           exceptions.add(((OTxException) result).getException());
           OLogManager.instance().debug(this, "distributed exception", ((OTxException) result).getException());
@@ -323,7 +341,10 @@ public class ONewDistributedTransactionManager {
           messages.add(String.format("unique index violation on index (node " + node + "):'%s' with key:'%s' and rid:'%s'",
               ((OTxUniqueIndex) result).getIndex(), ((OTxUniqueIndex) result).getKey(), ((OTxUniqueIndex) result).getRecordId()));
           break;
-
+        case OTxInvalidSequential.ID:
+          sendPhase2Task(involvedClusters, nodes, new OTransactionPhase2Task(requestId, false, involvedClustersIds, getLsn()));
+          localKo(requestId, database);
+          throw new OInvalidSequentialException(((OTxInvalidSequential) result).getCurrent());
         }
       }
       sendPhase2Task(involvedClusters, nodes, new OTransactionPhase2Task(requestId, false, involvedClustersIds, getLsn()));
@@ -383,10 +404,11 @@ public class ONewDistributedTransactionManager {
     return involvedClusters;
   }
 
-  protected OTransactionPhase1Task createTxTask(final OTransactionInternal transaction, final Set<String> nodes) {
+  protected OTransactionPhase1Task createTxTask(OTransactionId id, final OTransactionInternal transaction,
+      final Set<String> nodes) {
     final OTransactionPhase1Task txTask = (OTransactionPhase1Task) dManager.getTaskFactoryManager().getFactoryByServerNames(nodes)
         .createTask(OTransactionPhase1Task.FACTORYID);
-    txTask.init(transaction);
+    txTask.init(id, transaction);
     return txTask;
   }
 

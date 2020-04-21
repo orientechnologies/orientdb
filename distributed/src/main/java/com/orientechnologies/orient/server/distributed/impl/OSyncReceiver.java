@@ -3,8 +3,8 @@ package com.orientechnologies.orient.server.distributed.impl;
 import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.io.OFileUtils;
+import com.orientechnologies.common.util.OUncaughtExceptionHandler;
 import com.orientechnologies.orient.server.distributed.ODistributedException;
-import com.orientechnologies.orient.server.distributed.ODistributedMomentum;
 import com.orientechnologies.orient.server.distributed.ODistributedRequest;
 import com.orientechnologies.orient.server.distributed.ODistributedResponse;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog;
@@ -12,13 +12,11 @@ import com.orientechnologies.orient.server.distributed.impl.task.OCopyDatabaseCh
 
 import java.io.*;
 import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.atomic.AtomicReference;
 
 public class OSyncReceiver implements Runnable {
   private       ODistributedAbstractPlugin            distributed;
   private final String                                databaseName;
   private final ODistributedDatabaseChunk             firstChunk;
-  private final AtomicReference<ODistributedMomentum> momentum;
   private final String                                iNode;
   private final String                                dbPath;
   private final CountDownLatch                        done    = new CountDownLatch(1);
@@ -26,14 +24,24 @@ public class OSyncReceiver implements Runnable {
   private       PipedOutputStream                     output;
   private       PipedInputStream                      inputStream;
 
-  public OSyncReceiver(ODistributedAbstractPlugin distributed, String databaseName, ODistributedDatabaseChunk firstChunk,
-      AtomicReference<ODistributedMomentum> momentum, String iNode, String dbPath) {
+  public OSyncReceiver(ODistributedAbstractPlugin distributed, String databaseName, ODistributedDatabaseChunk firstChunk, String iNode, String dbPath) {
     this.distributed = distributed;
     this.databaseName = databaseName;
     this.firstChunk = firstChunk;
-    this.momentum = momentum;
     this.iNode = iNode;
     this.dbPath = dbPath;
+  }
+
+  public void spawnReceiverThread() {
+    try {
+      Thread t = new Thread(this);
+      t.setUncaughtExceptionHandler(new OUncaughtExceptionHandler());
+      t.start();
+    } catch (Exception e) {
+      ODistributedServerLog
+          .error(this, iNode, null, ODistributedServerLog.DIRECTION.NONE, "Error on transferring database '%s' ", e, databaseName);
+      throw OException.wrapException(new ODistributedException("Error on transferring database"), e);
+    }
   }
 
   @Override
@@ -41,8 +49,6 @@ public class OSyncReceiver implements Runnable {
     try {
       Thread.currentThread().setName("OrientDB installDatabase node=" + distributed.nodeName + " db=" + databaseName);
       ODistributedDatabaseChunk chunk = firstChunk;
-
-      momentum.set(chunk.getMomentum());
 
       output = new PipedOutputStream();
       inputStream = new PipedInputStream(output);

@@ -16,7 +16,6 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicReference;
 
 public class OBackgroundBackup implements Runnable, OSyncSource {
   private          OSyncDatabaseTask                     oSyncDatabaseTask;
@@ -25,7 +24,6 @@ public class OBackgroundBackup implements Runnable, OSyncSource {
   private final    File                                  resultedBackupFile;
   private final    String                                finalBackupPath;
   private final    AtomicBoolean                         incremental = new AtomicBoolean(false);
-  private final    AtomicReference<ODistributedMomentum> momentum;
   private final    ODistributedDatabase                  dDatabase;
   private final    ODistributedRequestId                 requestId;
   private final    CountDownLatch                        started     = new CountDownLatch(1);
@@ -35,14 +33,12 @@ public class OBackgroundBackup implements Runnable, OSyncSource {
 
   public OBackgroundBackup(OSyncDatabaseTask oSyncDatabaseTask, ODistributedServerManager iManager,
       ODatabaseDocumentInternal database, File resultedBackupFile, String finalBackupPath, OModifiableBoolean incremental,
-      AtomicReference<ODistributedMomentum> momentum, ODistributedDatabase dDatabase, ODistributedRequestId requestId,
-      File completedFile) {
+      ODistributedDatabase dDatabase, ODistributedRequestId requestId, File completedFile) {
     this.oSyncDatabaseTask = oSyncDatabaseTask;
     this.iManager = iManager;
     this.database = database;
     this.resultedBackupFile = resultedBackupFile;
     this.finalBackupPath = finalBackupPath;
-    this.momentum = momentum;
     this.dDatabase = dDatabase;
     this.requestId = requestId;
   }
@@ -108,7 +104,6 @@ public class OBackgroundBackup implements Runnable, OSyncSource {
               };
             }
             database.backup(dest, null, () -> {
-              momentum.set(dDatabase.getSyncConfiguration().getMomentum().copy());
               incremental.set(false);
               started.countDown();
               return null;

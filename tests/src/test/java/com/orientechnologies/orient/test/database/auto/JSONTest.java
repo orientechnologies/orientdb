@@ -78,6 +78,39 @@ public class JSONTest extends DocumentDBBaseTest {
   }
 
   @Test
+  public void testNan() {
+    ODocument newDoc = new ODocument();
+
+
+    String input = "{\"@type\":\"d\",\"@version\":0,\"nan\":null,\"p_infinity\":null,\"n_infinity\":null,\"@fieldTypes\":\"nan=d,p_infinity=d,n_infinity=d\"}";
+
+    newDoc.field("nan", Double.NaN);
+    newDoc.field("p_infinity", Double.POSITIVE_INFINITY);
+    newDoc.field("n_infinity", Double.NEGATIVE_INFINITY);
+
+
+    String json = newDoc.toJSON();
+
+    Assert.assertEquals(input, json);
+
+
+
+    newDoc = new ODocument();
+
+
+    input = "{\"@type\":\"d\",\"@version\":0,\"nan\":null,\"p_infinity\":null,\"n_infinity\":null,\"@fieldTypes\":\"nan=f,p_infinity=f,n_infinity=f\"}";
+
+    newDoc.field("nan", Float.NaN);
+    newDoc.field("p_infinity", Float.POSITIVE_INFINITY);
+    newDoc.field("n_infinity", Float.NEGATIVE_INFINITY);
+
+
+    json = newDoc.toJSON();
+
+    Assert.assertEquals(input, json);
+  }
+
+  @Test
   public void testEmbeddedList() {
     ODocument newDoc = new ODocument();
 

@@ -31,20 +31,6 @@ public class ODefaultRemoteTaskFactoryV0 implements ORemoteTaskFactory {
   @Override
   public ORemoteTask createTask(final int code) {
     switch (code) {
-    case OCreateRecordTask.FACTORYID: // 0
-      return new OCreateRecordTask();
-
-    case OReadRecordTask.FACTORYID: // 1
-      return new OReadRecordTask();
-
-    case OReadRecordIfNotLatestTask.FACTORYID: // 2
-      return new OReadRecordIfNotLatestTask();
-
-    case OUpdateRecordTask.FACTORYID: // 3
-      return new OUpdateRecordTask();
-
-    case ODeleteRecordTask.FACTORYID: // 4
-      return new ODeleteRecordTask();
 
     case OSQLCommandTask.FACTORYID: // 5
       return new OSQLCommandTask();
@@ -52,26 +38,14 @@ public class ODefaultRemoteTaskFactoryV0 implements ORemoteTaskFactory {
     case OScriptTask.FACTORYID: // 6
       return new OScriptTask();
 
-    case OTxTask.FACTORYID: // 7
-      return new OTxTask();
-
-    case OCompleted2pcTask.FACTORYID: // 8
-      return new OCompleted2pcTask();
-
     case OStopServerTask.FACTORYID: // 9
       return new OStopServerTask();
 
     case ORestartServerTask.FACTORYID: // 10
       return new ORestartServerTask();
 
-    case OResurrectRecordTask.FACTORYID: // 11
-      return new OResurrectRecordTask();
-
     case OSyncClusterTask.FACTORYID: // 12
       return new OSyncClusterTask();
-
-    case OSyncDatabaseDeltaTask.FACTORYID: // 13
-      return new OSyncDatabaseDeltaTask();
 
     case OSyncDatabaseTask.FACTORYID: // 14
       return new OSyncDatabaseTask();
@@ -82,24 +56,6 @@ public class ODefaultRemoteTaskFactoryV0 implements ORemoteTaskFactory {
     case OGossipTask.FACTORYID: // 16
       return new OGossipTask();
 
-    case ORepairRecordsTask.FACTORYID: // 17
-      return new ORepairRecordsTask();
-
-    case ORepairClusterTask.FACTORYID: // 18
-      return new ORepairClusterTask();
-
-    case OClusterRepairInfoTask.FACTORYID: // 19
-      return new OClusterRepairInfoTask();
-
-    case OFixCreateRecordTask.FACTORYID: // 20
-      return new OFixCreateRecordTask();
-
-    case OFixUpdateRecordTask.FACTORYID: // 21
-      return new OFixUpdateRecordTask();
-
-    case OStartReplicationTask.FACTORYID: // 22
-      return new OStartReplicationTask();
-
     case ODropDatabaseTask.FACTORYID: // 23
       return new ODropDatabaseTask();
 
@@ -108,9 +64,6 @@ public class ODefaultRemoteTaskFactoryV0 implements ORemoteTaskFactory {
 
     case OUpdateDatabaseStatusTask.FACTORYID: // 25
       return new OUpdateDatabaseStatusTask();
-
-    case ODistributedLockTask.FACTORYID: // 26
-      return new ODistributedLockTask();
 
     case ORequestDatabaseConfigurationTask.FACTORYID: // 27
       return new ORequestDatabaseConfigurationTask();

@@ -38,11 +38,11 @@ import java.util.Map.Entry;
 
 @SuppressWarnings("unchecked")
 public class OJSONWriter {
-  private static final String DEF_FORMAT = "rid,type,version,class,attribSameRow,indent:2,dateAsLong";
-  private final String format;
-  private       Writer out;
-  private boolean prettyPrint    = false;
-  private boolean firstAttribute = true;
+  private static final String  DEF_FORMAT     = "rid,type,version,class,attribSameRow,indent:2,dateAsLong";
+  private final        String  format;
+  private              Writer  out;
+  private              boolean prettyPrint    = false;
+  private              boolean firstAttribute = true;
 
   public OJSONWriter(final Writer out) {
     this(out, DEF_FORMAT);
@@ -77,10 +77,17 @@ public class OJSONWriter {
     } else
       oldAutoConvertSettings = false;
 
-    if (iValue instanceof Boolean || iValue instanceof Number)
-      buffer.append(iValue.toString());
+    if (iValue instanceof Boolean || iValue instanceof Number) {
 
-    else if (iValue instanceof OIdentifiable) {
+      if (iValue instanceof Double && !Double.isFinite((Double) iValue)) {
+        buffer.append("null");
+      } else if ((iValue instanceof Float && !Float.isFinite((Float) iValue))) {
+        buffer.append("null");
+      } else {
+        buffer.append(iValue.toString());
+      }
+
+    } else if (iValue instanceof OIdentifiable) {
       final OIdentifiable linked = (OIdentifiable) iValue;
       if (linked.getIdentity().isValid()) {
         buffer.append('\"');
@@ -92,7 +99,8 @@ public class OJSONWriter {
         else {
           final ORecord rec = linked.getRecord();
           if (rec != null) {
-            final String embeddedFormat = iFormat != null && iFormat.isEmpty() ? "indent:" + iIndentLevel : iFormat + ",indent:" + iIndentLevel;
+            final String embeddedFormat =
+                iFormat != null && iFormat.isEmpty() ? "indent:" + iIndentLevel : iFormat + ",indent:" + iIndentLevel;
             buffer.append(rec.toJSON(embeddedFormat));
           } else
             buffer.append("null");
@@ -311,7 +319,8 @@ public class OJSONWriter {
     return this;
   }
 
-  public OJSONWriter writeRecord(final int iIdentLevel, final boolean iNewLine, final Object iName, final ORecord iRecord) throws IOException {
+  public OJSONWriter writeRecord(final int iIdentLevel, final boolean iNewLine, final Object iName, final ORecord iRecord)
+      throws IOException {
     if (!firstAttribute)
       out.append(",");
 
@@ -394,7 +403,6 @@ public class OJSONWriter {
     return this;
   }
 
-
   public OJSONWriter writeAttribute(final String iName, final Object iValue) throws IOException {
     return writeAttribute(-1, false, iName, iValue, format);
   }
@@ -410,7 +418,7 @@ public class OJSONWriter {
   }
 
   public OJSONWriter writeAttribute(final int iIdentLevel, final boolean iNewLine, final String iName, final Object iValue,
-      final String iFormat,OType valueType) throws IOException {
+      final String iFormat, OType valueType) throws IOException {
     if (!firstAttribute)
       out.append(",");
 
@@ -423,7 +431,8 @@ public class OJSONWriter {
         out.append(' ');
     }
 
-    if (iFormat != null && iFormat.contains("graph") && iName != null && (iName.startsWith("in_") || iName.startsWith("out_")) && (iValue == null || iValue instanceof OIdentifiable)) {
+    if (iFormat != null && iFormat.contains("graph") && iName != null && (iName.startsWith("in_") || iName.startsWith("out_")) && (
+        iValue == null || iValue instanceof OIdentifiable)) {
       // FORCE THE OUTPUT AS COLLECTION
       out.append('[');
       if (iValue instanceof OIdentifiable) {

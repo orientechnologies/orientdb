@@ -86,6 +86,8 @@ import java.util.Map.Entry;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
+import static com.orientechnologies.orient.core.config.OGlobalConfiguration.WARNING_DEFAULT_USERS;
+
 public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutputListener, OProgressListener {
   protected ODatabaseDocumentInternal currentDatabase;
   protected String                    currentDatabaseName;
@@ -171,8 +173,8 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
   }
 
   private void checkDefaultPassword(String database, String user, String password) {
-    if (("admin".equals(user) && "admin".equals(password)) || ("reader".equals(user) && "reader".equals(password)) || (
-        "writer".equals(user) && "writer".equals(password))) {
+    if ((("admin".equals(user) && "admin".equals(password)) || ("reader".equals(user) && "reader".equals(password)) || (
+        "writer".equals(user) && "writer".equals(password))) && WARNING_DEFAULT_USERS.getValueAsBoolean()) {
       message(String.format("IMPORTANT! Using default password is unsafe, please change password for user '%s' on database '%s'", user, database));
     }
   }

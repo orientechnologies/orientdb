@@ -13,17 +13,17 @@ import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
 import com.orientechnologies.orient.core.serialization.serializer.record.binary.ODocumentSerializerDelta;
 import com.orientechnologies.orient.core.serialization.serializer.record.binary.ORecordSerializerNetworkDistributed;
 import com.orientechnologies.orient.core.storage.ORecordDuplicatedException;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
+import com.orientechnologies.orient.core.tx.OTransactionId;
 import com.orientechnologies.orient.core.tx.OTransactionIndexChanges;
 import com.orientechnologies.orient.core.tx.OTransactionInternal;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.distributed.*;
-import com.orientechnologies.orient.server.distributed.impl.ODatabaseDocumentDistributed;
-import com.orientechnologies.orient.server.distributed.impl.ODistributedWorker;
-import com.orientechnologies.orient.server.distributed.impl.OTransactionOptimisticDistributed;
+import com.orientechnologies.orient.server.distributed.impl.*;
 import com.orientechnologies.orient.server.distributed.impl.task.transaction.*;
 import com.orientechnologies.orient.server.distributed.task.OAbstractReplicatedTask;
 import com.orientechnologies.orient.server.distributed.task.ODistributedKeyLockedException;
@@ -32,10 +32,9 @@ import com.orientechnologies.orient.server.distributed.task.ODistributedRecordLo
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.TimerTask;
+import java.util.*;
+
+import static com.orientechnologies.orient.server.distributed.impl.ONewDistributedTxContextImpl.Status.TIMEDOUT;
 
 /**
  * @author Luigi Dell'Aquila (l.dellaquila - at - orientdb.com)
@@ -51,15 +50,17 @@ public class OTransactionPhase1Task extends OAbstractReplicatedTask {
   private transient int                                             retryCount = 0;
   private volatile  boolean                                         finished;
   private           TimerTask                                       notYetFinishedTask;
+  private           OTransactionId                                  transactionId;
 
   public OTransactionPhase1Task() {
     ops = new ArrayList<>();
     operations = new ArrayList<>();
   }
 
-  public OTransactionPhase1Task(List<ORecordOperation> ops) {
+  public OTransactionPhase1Task(List<ORecordOperation> ops, OTransactionId transactionId) {
     this.ops = ops;
     operations = new ArrayList<>();
+    this.transactionId = transactionId;
     genOps(ops);
   }
 
@@ -118,7 +119,7 @@ public class OTransactionPhase1Task extends OAbstractReplicatedTask {
     //No need to increase the lock timeout here with the retry because this retries are not deadlock retries
     OTransactionResultPayload res1;
     try {
-      res1 = executeTransaction(requestId, (ODatabaseDocumentDistributed) database, tx, false, retryCount);
+      res1 = executeTransaction(requestId, transactionId, (ODatabaseDocumentDistributed) database, tx, false, retryCount);
     } catch (Exception e) {
       this.finished = true;
       if (this.notYetFinishedTask != null) {
@@ -148,11 +149,22 @@ public class OTransactionPhase1Task extends OAbstractReplicatedTask {
     return hasResponse;
   }
 
-  public static OTransactionResultPayload executeTransaction(ODistributedRequestId requestId, ODatabaseDocumentDistributed database,
-      OTransactionInternal tx, boolean local, int retryCount) {
+  public static OTransactionResultPayload executeTransaction(ODistributedRequestId requestId, OTransactionId id,
+      ODatabaseDocumentDistributed database, OTransactionInternal tx, boolean local, int retryCount) {
     OTransactionResultPayload payload;
     try {
-      if (database.beginDistributedTx(requestId, tx, local, retryCount)) {
+      if (!local) {
+        ODistributedDatabase localDistributedDatabase = database.getStorageDistributed().getLocalDistributedDatabase();
+        Optional<OTransactionId> result = localDistributedDatabase.validate(id);
+        if (result.isPresent()) {
+          ONewDistributedTxContextImpl txContext = new ONewDistributedTxContextImpl(
+              (ODistributedDatabaseImpl) localDistributedDatabase, requestId, tx, id);
+          txContext.setStatus(TIMEDOUT);
+          database.register(requestId, localDistributedDatabase, txContext);
+          return new OTxInvalidSequential(result.get());
+        }
+      }
+      if (database.beginDistributedTx(requestId, id, tx, local, retryCount)) {
         payload = new OTxSuccess();
       } else {
         return null;
@@ -175,7 +187,7 @@ public class OTransactionPhase1Task extends OAbstractReplicatedTask {
 
   @Override
   public void fromStream(DataInput in, ORemoteTaskFactory factory) throws IOException {
-
+    this.transactionId = OTransactionId.read(in);
     int size = in.readInt();
     for (int i = 0; i < size; i++) {
       ORecordOperationRequest req = OMessageHelper.readTransactionEntry(in);
@@ -208,6 +220,8 @@ public class OTransactionPhase1Task extends OAbstractReplicatedTask {
           if (record == null) {
             record = new ODocument();
           }
+          ((ODocument) record).deserializeFields();
+          ODocumentInternal.clearTransactionTrackData((ODocument) record);
           ODocumentSerializerDelta.instance().deserializeDelta(req.getRecord(), (ODocument) record);
           /// Got record with empty deltas, at this level we mark the record dirty anyway.
           record.setDirty();
@@ -236,6 +250,7 @@ public class OTransactionPhase1Task extends OAbstractReplicatedTask {
 
   @Override
   public void toStream(DataOutput out) throws IOException {
+    transactionId.write(out);
     out.writeInt(operations.size());
 
     for (ORecordOperationRequest operation : operations) {
@@ -253,7 +268,8 @@ public class OTransactionPhase1Task extends OAbstractReplicatedTask {
     return FACTORYID;
   }
 
-  public void init(OTransactionInternal operations) {
+  public void init(OTransactionId transactionId, OTransactionInternal operations) {
+    this.transactionId = transactionId;
     for (Map.Entry<String, OTransactionIndexChanges> indexOp : operations.getIndexOperations().entrySet()) {
       final ODatabaseDocumentInternal database = operations.getDatabase();
       if (indexOp.getValue().resolveAssociatedIndex(indexOp.getKey(), database.getMetadata().getIndexManagerInternal(), database)
@@ -328,5 +344,9 @@ public class OTransactionPhase1Task extends OAbstractReplicatedTask {
     if (notYetFinishedTask != null) {
       notYetFinishedTask.cancel();
     }
+  }
+
+  public OTransactionId getTransactionId() {
+    return transactionId;
   }
 }

@@ -27,6 +27,7 @@ import com.orientechnologies.orient.core.metadata.sequence.OSequence;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.OBasicTransaction;
 
+import java.io.IOException;
 import java.util.*;
 
 /**
@@ -106,11 +107,17 @@ public interface OTransactionInternal extends OBasicTransaction {
     return Optional.empty();
   }
 
-  void setMetadata(Optional<byte[]> metadata);
+  void setMetadataHolder(Optional<OTxMetadataHolder> metadata);
 
   default void storageBegun() {
 
   }
 
+  void prepareSerializedOperations() throws IOException;
+
   Iterator<byte[]> getSerializedOperations();
+
+  default void fill(Iterator<ORecordOperation> operations) {
+    throw new UnsupportedOperationException();
+  }
 }

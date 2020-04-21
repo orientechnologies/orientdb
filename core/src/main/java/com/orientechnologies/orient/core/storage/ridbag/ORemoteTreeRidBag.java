@@ -237,11 +237,7 @@ public class ORemoteTreeRidBag implements ORidBagDelegate {
 
   @Override
   public int size() {
-//    if (size >= 0) {
-//      return size;
-//    } else {
     return updateSize();
-//    }
   }
 
   @Override

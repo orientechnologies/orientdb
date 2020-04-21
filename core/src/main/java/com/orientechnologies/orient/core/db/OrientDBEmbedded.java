@@ -434,9 +434,11 @@ public class OrientDBEmbedded implements OrientDBInternal {
   }
 
   private void checkDefaultPassword(String database, String user, String password) {
-    if (("admin".equals(user) && "admin".equals(password)) || ("reader".equals(user) && "reader".equals(password)) || (
-        "writer".equals(user) && "writer".equals(password)) && WARNING_DEFAULT_USERS.getValueAsBoolean()) {
-      OLogManager.instance().warnNoDb(this, String.format("IMPORTANT! Using default password is unsafe, please change password for user '%s' on database '%s'", user, database));
+    if ((("admin".equals(user) && "admin".equals(password)) || ("reader".equals(user) && "reader".equals(password)) || (
+        "writer".equals(user) && "writer".equals(password))) && WARNING_DEFAULT_USERS.getValueAsBoolean()) {
+      OLogManager.instance().warnNoDb(this, String
+          .format("IMPORTANT! Using default password is unsafe, please change password for user '%s' on database '%s'", user,
+              database));
     }
   }
 
@@ -540,6 +542,29 @@ public class OrientDBEmbedded implements OrientDBInternal {
     }
     embedded.callOnCreateListeners();
     ODatabaseRecordThreadLocal.instance().remove();
+  }
+
+  @Override
+  public void networkRestore(String name, InputStream in, Callable<Object> callable) {
+    try {
+      OAbstractPaginatedStorage storage;
+      OSharedContext context;
+      synchronized (this) {
+        context = sharedContexts.get(name);
+        if (context != null) {
+          context.close();
+        }
+        storage = getOrInitStorage(name);
+        storages.put(name, storage);
+      }
+      storage.restore(in, null, callable, null);
+    } catch (Exception e) {
+      OContextConfiguration configs = getConfigurations().getConfigurations();
+      OLocalPaginatedStorage
+          .deleteFilesFromDisc(name, configs.getValueAsInteger(FILE_DELETE_RETRY), configs.getValueAsInteger(FILE_DELETE_DELAY),
+              buildName(name));
+      throw OException.wrapException(new ODatabaseException("Cannot create database '" + name + "'"), e);
+    }
   }
 
   public void restore(String name, String user, String password, ODatabaseType type, String path, OrientDBConfig config) {

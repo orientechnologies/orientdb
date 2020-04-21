@@ -93,4 +93,14 @@ public class OSimpleLockManagerImpl<T> implements OSimpleLockManager<T> {
   public long getTimeout() {
     return timeout;
   }
+
+  @Override
+  public long size() {
+    lock.lock();
+    try {
+      return map.size();
+    } finally {
+      lock.unlock();
+    }
+  }
 }

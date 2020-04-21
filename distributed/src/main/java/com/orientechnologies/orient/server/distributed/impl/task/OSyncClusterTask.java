@@ -173,7 +173,7 @@ public class OSyncClusterTask extends OAbstractReplicatedTask {
               "Sending the compressed cluster '%s.%s' over the NETWORK to node '%s', size=%s...", databaseName, clusterName,
               getNodeSource(), OFileUtils.getSizeAsString(fileSize));
 
-          final ODistributedDatabaseChunk chunk = new ODistributedDatabaseChunk(backupFile, 0, CHUNK_MAX_SIZE, null, false, false);
+          final ODistributedDatabaseChunk chunk = new ODistributedDatabaseChunk(backupFile, 0, CHUNK_MAX_SIZE, false, false);
 
           ODistributedServerLog.info(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.OUT,
               "- transferring chunk #%d offset=%d size=%s...", 1, 0, OFileUtils.getSizeAsNumber(chunk.buffer.length));

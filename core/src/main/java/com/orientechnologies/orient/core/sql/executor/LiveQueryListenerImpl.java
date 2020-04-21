@@ -170,7 +170,7 @@ public class LiveQueryListenerImpl implements OLiveQueryListenerV2 {
         }
       }
     }
-    if (rids != null) {
+    if (rids != null && rids.size() > 0) {
       boolean found = false;
       for (ORecordId rid : rids) {
         if (rid.equals(record.getIdentity().orElse(null))) {

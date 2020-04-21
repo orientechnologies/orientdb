@@ -312,11 +312,13 @@ public class OJSONReader {
           openSquare++;
         } else if (c == ']' && openSquare == 1) {
           if (lastFieldName != null && ridbagSet != null && ridbagSet.size() > 0) {
-            stringToRidbag(lastCollection, ridbagSet, ridPattern);
+            boolean ridbagAdderd = stringToRidbag(lastCollection, ridbagSet, ridPattern);
             result.put(lastFieldName, ridbagSet);
             lastFieldName = null;
             ridbagSet = null;
-            buffer.append("]");
+            if (ridbagAdderd) {
+              buffer.append("]");
+            }
           }
           openSquare--;
         }
@@ -368,9 +370,8 @@ public class OJSONReader {
               //preprocess RIDs
               if (!stringToRidbag(lastCollection, ridbagSet, ridPattern)) {
                 lastFieldName = null;
-                openBrackets = 0;
+//                openBrackets = 0;
               }
-              ;
             }
           } else {
             buffer.append(c);
@@ -395,7 +396,17 @@ public class OJSONReader {
 
 
   private boolean stringToRidbag(StringBuilder lastCollection, ORidSet ridbagSet, Pattern ridPattern) {
-    String[] split = lastCollection.toString().split(",");
+    String collectionString = lastCollection.toString();
+
+    if (collectionString.startsWith(",") && collectionString.endsWith("]")) {
+      collectionString = collectionString.substring(1, collectionString.length() - 1);
+    } else if (collectionString.endsWith("]")) {
+      collectionString = collectionString.substring(0, collectionString.length() - 1);
+    } else if (collectionString.startsWith(",")) {
+      collectionString = collectionString.substring(1);
+    }
+    String[] split = collectionString.split(",");
+
     int i = 0;
     while (i < split.length) {
       Matcher matcher = ridPattern.matcher(split[i]);
@@ -413,10 +424,13 @@ public class OJSONReader {
     }
     lastCollection.setLength(0);
     for (int j = i; j < split.length; j++) {
-      if (j != i) {
+      if (j != i || lastCollection.toString().startsWith(",")) {
         lastCollection.append(",");
       }
       lastCollection.append(split[j]);
+    }
+    if (collectionString.endsWith(",") && !lastCollection.toString().endsWith(",")) {
+      lastCollection.append(",");
     }
     return true;
   }

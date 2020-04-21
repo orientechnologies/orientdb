@@ -43,7 +43,11 @@ public class OEnterpriseStatsTask extends OAbstractRemoteTask {
   @Override
   public Object execute(final ODistributedRequestId msgId, final OServer iServer, ODistributedServerManager iManager,
       final ODatabaseDocumentInternal database) throws Exception {
-    return new ODocument().fromJSON(Orient.instance().getProfiler().getStatsAsJson());
+    if (Orient.instance().getProfiler().getStatsAsJson() != null) {
+      return new ODocument().fromJSON(Orient.instance().getProfiler().getStatsAsJson());
+    } else {
+      return new ODocument();
+    }
   }
 
   /**
