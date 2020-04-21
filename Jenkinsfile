@@ -1,3 +1,4 @@
+
 @Library(['piper-lib', 'piper-lib-os']) _
 
 properties([[$class: 'BuildDiscarderProperty', strategy: [$class: 'LogRotator', numToKeepStr: '4']]]);
@@ -10,7 +11,7 @@ node {
         sh "cp /var/jenkins_home/uploadedContent/settings.xml ."
 
         executeDocker(
-                dockerImage:'ldellaquila/maven-gradle-node-zulu-openjdk8:1.0.0',
+                dockerImage:'ldellaquila/maven-gradle-node-zulu-openjdk8:1.1.0',
                 dockerWorkspace: '/orientdb-${env.BRANCH_NAME}'
         ) {
 
