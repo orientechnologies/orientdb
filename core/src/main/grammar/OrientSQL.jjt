@@ -1019,9 +1019,9 @@ OServerStatement ServerStatement():
     OServerStatement result = null;
 }
 {
-    /*(
+    (
         result = CreateDatabaseStatement()
-    )*/
+    )
 	{
 	    return result;
 	}
@@ -5409,5 +5409,18 @@ OAlterSecurityPolicyStatement AlterSecurityPolicyStatement():
       )
     )+
 
+  ) {return jjtThis; }
+}
+
+
+OCreateDatabaseStatement CreateDatabaseStatement():
+{}
+{
+  (
+    <CREATE> <DATABASE>
+    jjtThis.name = Identifier()
+    jjtThis.type = Identifier()
+    [ <IF> <NOT> <EXISTS> { jjtThis.ifNotExists = true; } ]
+    [ jjtThis.config = Json() ]
   ) {return jjtThis; }
 }

@@ -1,3 +1,8 @@
 package com.orientechnologies.orient.core.command;
 
-public interface OServerCommandContext extends OCommandContext {}
+import com.orientechnologies.orient.core.db.OrientDBInternal;
+
+public interface OServerCommandContext extends OCommandContext {
+
+  OrientDBInternal getServer();
+}

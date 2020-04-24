@@ -12,6 +12,8 @@ import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.sql.executor.OResult;
+import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import java.util.List;
@@ -24,6 +26,7 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
+import org.junit.Assert;
 import org.junit.Test;
 
 /** Created by tglman on 08/04/16. */
@@ -488,5 +491,20 @@ public class OrientDBEmbeddedTests {
     session1.close();
     orientDb1.drop("testPersistentUUID");
     orientDb1.close();
+  }
+
+  @Test
+  public void testCreateDatabaseViaSQL() {
+    String dbName = "testCreateDatabaseViaSQL";
+    OrientDB orientDb = new OrientDB("embedded:./target/", OrientDBConfig.defaultConfig());
+    try (OResultSet result = orientDb.execute("create database " + dbName + " plocal")) {
+      Assert.assertTrue(result.hasNext());
+      OResult item = result.next();
+      Assert.assertEquals(true, item.getProperty("created"));
+    }
+    Assert.assertTrue(orientDb.exists(dbName));
+
+    orientDb.drop(dbName);
+    orientDb.close();
   }
 }

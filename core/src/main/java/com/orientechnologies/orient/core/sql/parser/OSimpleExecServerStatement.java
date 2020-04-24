@@ -1,9 +1,8 @@
 package com.orientechnologies.orient.core.sql.parser;
 
 import com.orientechnologies.orient.core.command.OBasicServerCommandContext;
-import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.command.OServerCommandContext;
-import com.orientechnologies.orient.core.db.OrientDB;
+import com.orientechnologies.orient.core.db.OrientDBInternal;
 import com.orientechnologies.orient.core.sql.executor.OInternalExecutionPlan;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import com.orientechnologies.orient.core.sql.executor.OSingleOpServerExecutionPlan;
@@ -16,7 +15,7 @@ import java.util.Map;
  *
  * @author Luigi Dell'Aquila (l.dellaquila-(at)-orientdb.com)
  */
-public abstract class OSimpleExecServerStatement extends OStatement {
+public abstract class OSimpleExecServerStatement extends OServerStatement {
 
   public OSimpleExecServerStatement(int id) {
     super(id);
@@ -26,10 +25,13 @@ public abstract class OSimpleExecServerStatement extends OStatement {
     super(p, id);
   }
 
-  public abstract OResultSet executeSimple(OCommandContext ctx);
+  public abstract OResultSet executeSimple(OServerCommandContext ctx);
 
   public OResultSet execute(
-      OrientDB db, Object[] args, OServerCommandContext parentContext, boolean usePlanCache) {
+      OrientDBInternal db,
+      Object[] args,
+      OServerCommandContext parentContext,
+      boolean usePlanCache) {
     OBasicServerCommandContext ctx = new OBasicServerCommandContext();
     if (parentContext != null) {
       ctx.setParentWithoutOverridingChild(parentContext);
@@ -48,7 +50,7 @@ public abstract class OSimpleExecServerStatement extends OStatement {
   }
 
   public OResultSet execute(
-      OrientDB db, Map params, OServerCommandContext parentContext, boolean usePlanCache) {
+      OrientDBInternal db, Map params, OServerCommandContext parentContext, boolean usePlanCache) {
     OBasicServerCommandContext ctx = new OBasicServerCommandContext();
     if (parentContext != null) {
       ctx.setParentWithoutOverridingChild(parentContext);
