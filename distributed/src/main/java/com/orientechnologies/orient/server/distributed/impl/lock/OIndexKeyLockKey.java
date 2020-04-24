@@ -1,7 +1,6 @@
 package com.orientechnologies.orient.server.distributed.impl.lock;
 
 import com.orientechnologies.common.util.OPair;
-
 import java.util.Objects;
 
 class OIndexKeyLockKey implements OLockKey {
@@ -15,10 +14,8 @@ class OIndexKeyLockKey implements OLockKey {
 
   @Override
   public boolean equals(Object o) {
-    if (this == o)
-      return true;
-    if (o == null || getClass() != o.getClass())
-      return false;
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
     OIndexKeyLockKey that = (OIndexKeyLockKey) o;
     return Objects.equals(index, that.index) && Objects.equals(key, that.key);
   }
