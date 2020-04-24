@@ -4,6 +4,7 @@ import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
+import com.orientechnologies.orient.core.db.OrientDBInternal;
 import com.orientechnologies.orient.core.sql.OCommandSQLParsingException;
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
@@ -65,6 +66,19 @@ public class OStatementCache {
     return resource.get(statement);
   }
 
+  /**
+   * returns an already parsed server-level SQL executor, taking it from the cache if it exists or
+   * creating a new one (parsing and then putting it into the cache) if it doesn't
+   *
+   * @param statement the SQL statement
+   * @param db the current OrientDB instance. If null, cache is ignored and a new executor is
+   *     created through statement parsing
+   * @return a statement executor from the cache
+   */
+  public static OServerStatement getServerStatement(String statement, OrientDBInternal db) {
+    // TODO create a global cache!
+    return parseServerStatement(statement);
+  }
   /**
    * @param statement an SQL statement
    * @return the corresponding executor, taking it from the internal cache, if it exists
@@ -141,6 +155,67 @@ public class OStatementCache {
       }
       OStatement result = osql.parse();
       result.originalStatement = statement;
+
+      return result;
+    } catch (ParseException e) {
+      throwParsingException(e, statement);
+    } catch (TokenMgrError e2) {
+      throwParsingException(e2, statement);
+    }
+    return null;
+  }
+
+  /**
+   * parses an SQL statement and returns the corresponding executor
+   *
+   * @param statement the SQL statement
+   * @return the corresponding executor
+   * @throws OCommandSQLParsingException if the input parameter is not a valid SQL statement
+   */
+  protected static OServerStatement parseServerStatement(String statement)
+      throws OCommandSQLParsingException {
+    try {
+      ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.instance().getIfDefined();
+      InputStream is;
+
+      if (db == null) {
+        is = new ByteArrayInputStream(statement.getBytes());
+      } else {
+        try {
+          is =
+              new ByteArrayInputStream(
+                  statement.getBytes(db.getStorage().getConfiguration().getCharset()));
+        } catch (UnsupportedEncodingException e2) {
+          OLogManager.instance()
+              .warn(
+                  null,
+                  "Unsupported charset for database "
+                      + db
+                      + " "
+                      + db.getStorage().getConfiguration().getCharset());
+          is = new ByteArrayInputStream(statement.getBytes());
+        }
+      }
+
+      OrientSql osql = null;
+      if (db == null) {
+        osql = new OrientSql(is);
+      } else {
+        try {
+          osql = new OrientSql(is, db.getStorage().getConfiguration().getCharset());
+        } catch (UnsupportedEncodingException e2) {
+          OLogManager.instance()
+              .warn(
+                  null,
+                  "Unsupported charset for database "
+                      + db
+                      + " "
+                      + db.getStorage().getConfiguration().getCharset());
+          osql = new OrientSql(is);
+        }
+      }
+      OServerStatement result = osql.parseServerStatement();
+      //      result.originalStatement = statement;
 
       return result;
     } catch (ParseException e) {

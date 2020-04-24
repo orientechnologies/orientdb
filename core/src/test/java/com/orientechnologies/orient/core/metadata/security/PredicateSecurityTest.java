@@ -237,15 +237,13 @@ public class PredicateSecurityTest {
 
     db.close();
 
-    if(!doTestBeforeUpdateSQL()){
+    if (!doTestBeforeUpdateSQL()) {
       db.close();
       Thread.sleep(500);
-      if(!doTestBeforeUpdateSQL()){
+      if (!doTestBeforeUpdateSQL()) {
         Assert.fail();
       }
     }
-
-
   }
 
   private boolean doTestBeforeUpdateSQL() {
@@ -262,7 +260,7 @@ public class PredicateSecurityTest {
 
     elem = elem.reload(null, true, true);
     Assert.assertEquals("foo", elem.getProperty("name"));
-    return  true;
+    return true;
   }
 
   @Test

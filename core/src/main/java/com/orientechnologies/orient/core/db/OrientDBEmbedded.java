@@ -38,6 +38,11 @@ import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.exception.OStorageException;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializer;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializerFactory;
+import com.orientechnologies.orient.core.sql.OSQLEngine;
+import com.orientechnologies.orient.core.sql.executor.OInternalResultSet;
+import com.orientechnologies.orient.core.sql.executor.OResultSet;
+import com.orientechnologies.orient.core.sql.parser.OLocalResultSetLifecycleDecorator;
+import com.orientechnologies.orient.core.sql.parser.OServerStatement;
 import com.orientechnologies.orient.core.sql.parser.OStatement;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.config.OClusterBasedStorageConfiguration;
@@ -75,6 +80,7 @@ import java.util.stream.Collectors;
 
 /** Created by tglman on 08/04/16. */
 public class OrientDBEmbedded implements OrientDBInternal {
+
   /** Keeps track of next possible storage id. */
   private static final AtomicInteger nextStorageId = new AtomicInteger();
   /** Storage IDs current assigned to the storage. */
@@ -1072,5 +1078,45 @@ public class OrientDBEmbedded implements OrientDBInternal {
 
   public OScriptManager getScriptManager() {
     return scriptManager;
+  }
+
+  public OResultSet executeServerStatement(String script, Map<String, Object> args) {
+    OServerStatement statement = OSQLEngine.parseServerStatement(script, this);
+    OResultSet original = statement.execute(this, args, true);
+    OLocalResultSetLifecycleDecorator result;
+    //    if (!statement.isIdempotent()) {
+    // fetch all, close and detach
+    // TODO pagination!
+    OInternalResultSet prefetched = new OInternalResultSet();
+    original.forEachRemaining(x -> prefetched.add(x));
+    original.close();
+    result = new OLocalResultSetLifecycleDecorator(prefetched);
+    //    } else {
+    // stream, keep open and attach to the current DB
+    //      result = new OLocalResultSetLifecycleDecorator(original);
+    //      this.queryStarted(result.getQueryId(), result);
+    //      result.addLifecycleListener(this);
+    //    }
+    return result;
+  }
+
+  public OResultSet executeServerStatement(String script, Object... args) {
+    OServerStatement statement = OSQLEngine.parseServerStatement(script, this);
+    OResultSet original = statement.execute(this, args, true);
+    OLocalResultSetLifecycleDecorator result;
+    //    if (!statement.isIdempotent()) {
+    // fetch all, close and detach
+    // TODO pagination!
+    OInternalResultSet prefetched = new OInternalResultSet();
+    original.forEachRemaining(x -> prefetched.add(x));
+    original.close();
+    result = new OLocalResultSetLifecycleDecorator(prefetched);
+    //    } else {
+    // stream, keep open and attach to the current DB
+    //      result = new OLocalResultSetLifecycleDecorator(original);
+    //      this.queryStarted(result.getQueryId(), result);
+    //      result.addLifecycleListener(this);
+    //    }
+    return result;
   }
 }
