@@ -1,5 +1,6 @@
 package com.orientechnologies.orient.server.distributed.impl.task;
 
+import com.orientechnologies.common.util.OPair;
 import com.orientechnologies.orient.client.remote.message.OMessageHelper;
 import com.orientechnologies.orient.client.remote.message.tx.ORecordOperationRequest;
 import com.orientechnologies.orient.core.Orient;
@@ -9,6 +10,7 @@ import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
 import com.orientechnologies.orient.core.exception.OConcurrentCreateException;
 import com.orientechnologies.orient.core.exception.OConcurrentModificationException;
+import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
@@ -33,13 +35,14 @@ import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
 import java.util.*;
+import java.util.stream.Collectors;
 
 import static com.orientechnologies.orient.server.distributed.impl.ONewDistributedTxContextImpl.Status.TIMEDOUT;
 
 /**
- * @author Luigi Dell'Aquila (l.dellaquila - at - orientdb.com)
+ * @author luigi dell'aquila (l.dellaquila - at - orientdb.com)
  */
-public class OTransactionPhase1Task extends OAbstractReplicatedTask {
+public class OTransactionPhase1Task extends OAbstractReplicatedTask implements OLockKeySource {
   public static final int FACTORYID = 43;
 
   private volatile  boolean                                         hasResponse;
@@ -334,7 +337,7 @@ public class OTransactionPhase1Task extends OAbstractReplicatedTask {
         public void run() {
           Orient.instance().submit(() -> {
             if (!finished) {
-              ODistributedWorker.sendResponseBack(this, distributedDatabase.getManager(), request,
+              ODistributedDatabaseImpl.sendResponseBack(this, distributedDatabase.getManager(), request.getId(),
                   new OTransactionPhase1TaskResult(new OTxStillRunning()));
             }
           });
@@ -352,5 +355,21 @@ public class OTransactionPhase1Task extends OAbstractReplicatedTask {
 
   public OTransactionId getTransactionId() {
     return transactionId;
+  }
+
+  @Override
+  public SortedSet<ORID> getRids() {
+    Set<ORID> set;
+    if (operations.size() > 0) {
+      set = operations.stream().map((x) -> x.getId()).collect(Collectors.toSet());
+    } else {
+      set = ops.stream().map((x) -> x.getRID()).collect(Collectors.toSet());
+    }
+    return new TreeSet<ORID>(set);
+  }
+
+  @Override
+  public SortedSet<OPair<String, String>> getUniqueKeys() {
+    return null;
   }
 }

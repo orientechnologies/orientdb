@@ -6,7 +6,7 @@ import com.orientechnologies.orient.core.id.ORID;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
-public class ODistributedLockManagerImpl implements ODistributedLockManager {
+public class OLockManagerImpl implements OLockManager {
 
   private Map<OLockKey, Queue<OWaitingTracker>> locks = new ConcurrentHashMap<>();
 

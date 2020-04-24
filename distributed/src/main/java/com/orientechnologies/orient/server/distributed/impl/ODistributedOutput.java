@@ -636,7 +636,7 @@ public class ODistributedOutput {
   public static List<ODocument> getRequestsStatus(final ODistributedAbstractPlugin manager, final String db) {
     final List<ODocument> rows = new ArrayList<ODocument>();
 
-    ConcurrentHashMap<ODistributedRequestId, ODistributedTxContext> activeTxContexts = manager.getMessageService().getDatabase(db)
+    Map<ODistributedRequestId, ODistributedTxContext> activeTxContexts = manager.getMessageService().getDatabase(db)
         .getActiveTxContexts();
 
     if (activeTxContexts != null) {

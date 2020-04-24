@@ -412,41 +412,7 @@ public class ODistributedWorker extends Thread {
   }
 
   private boolean sendResponseBack(final ODistributedRequest iRequest, final Object responsePayload) {
-    return sendResponseBack(this, manager, iRequest, responsePayload);
-  }
-
-  public static boolean sendResponseBack(final Object current, final ODistributedServerManager manager,
-      final ODistributedRequest iRequest, Object responsePayload) {
-    if (iRequest.getId().getMessageId() < 0)
-      // INTERNAL MSG
-      return true;
-
-    final String localNodeName = manager.getLocalNodeName();
-
-    final String senderNodeName = manager.getNodeNameById(iRequest.getId().getNodeId());
-
-    final ODistributedResponse response = new ODistributedResponse(null, iRequest.getId(), localNodeName, senderNodeName,
-        responsePayload);
-
-    // TODO: check if using remote channel for local node still makes sense
-    //    if (!senderNodeName.equalsIgnoreCase(manager.getLocalNodeName()))
-    try {
-      // GET THE SENDER'S RESPONSE QUEUE
-      final ORemoteServerController remoteSenderServer = manager.getRemoteServer(senderNodeName);
-
-      ODistributedServerLog
-          .debug(current, localNodeName, senderNodeName, ODistributedServerLog.DIRECTION.OUT, "Sending response %s back (reqId=%s)",
-              response, iRequest);
-
-      remoteSenderServer.sendResponse(response);
-
-    } catch (Exception e) {
-      ODistributedServerLog.debug(current, localNodeName, senderNodeName, ODistributedServerLog.DIRECTION.OUT,
-          "Error on sending response '%s' back (reqId=%s err=%s)", response, iRequest.getId(), e.toString());
-      return false;
-    }
-
-    return true;
+    return ODistributedDatabaseImpl.sendResponseBack(this, manager, iRequest.getId(), responsePayload);
   }
 
   private void waitNodeIsOnline() throws OTimeoutException {

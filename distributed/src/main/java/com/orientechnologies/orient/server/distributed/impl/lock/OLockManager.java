@@ -6,7 +6,7 @@ import com.orientechnologies.orient.core.id.ORID;
 import java.util.List;
 import java.util.SortedSet;
 
-public interface ODistributedLockManager {
+public interface OLockManager {
 
   void lock(SortedSet<ORID> rids, SortedSet<OPair<String, String>> indexKeys, OnLocksAcquired acquired);
 
