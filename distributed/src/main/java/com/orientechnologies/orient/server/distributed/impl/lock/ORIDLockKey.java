@@ -1,7 +1,6 @@
 package com.orientechnologies.orient.server.distributed.impl.lock;
 
 import com.orientechnologies.orient.core.id.ORID;
-
 import java.util.Objects;
 
 class ORIDLockKey implements OLockKey {
@@ -13,10 +12,8 @@ class ORIDLockKey implements OLockKey {
 
   @Override
   public boolean equals(Object o) {
-    if (this == o)
-      return true;
-    if (o == null || getClass() != o.getClass())
-      return false;
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
     ORIDLockKey that = (ORIDLockKey) o;
     return Objects.equals(rid, that.rid);
   }

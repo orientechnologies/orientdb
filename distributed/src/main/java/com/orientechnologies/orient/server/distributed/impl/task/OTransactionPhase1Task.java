@@ -2,6 +2,7 @@ package com.orientechnologies.orient.server.distributed.impl.task;
 
 import static com.orientechnologies.orient.server.distributed.impl.ONewDistributedTxContextImpl.Status.TIMEDOUT;
 
+import com.orientechnologies.common.util.OPair;
 import com.orientechnologies.orient.client.remote.message.OMessageHelper;
 import com.orientechnologies.orient.client.remote.message.tx.ORecordOperationRequest;
 import com.orientechnologies.orient.core.Orient;
@@ -11,6 +12,7 @@ import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
 import com.orientechnologies.orient.core.exception.OConcurrentCreateException;
 import com.orientechnologies.orient.core.exception.OConcurrentModificationException;
+import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
@@ -31,7 +33,6 @@ import com.orientechnologies.orient.server.distributed.ODistributedServerManager
 import com.orientechnologies.orient.server.distributed.ORemoteTaskFactory;
 import com.orientechnologies.orient.server.distributed.impl.ODatabaseDocumentDistributed;
 import com.orientechnologies.orient.server.distributed.impl.ODistributedDatabaseImpl;
-import com.orientechnologies.orient.server.distributed.impl.ODistributedWorker;
 import com.orientechnologies.orient.server.distributed.impl.ONewDistributedTxContextImpl;
 import com.orientechnologies.orient.server.distributed.impl.OTransactionOptimisticDistributed;
 import com.orientechnologies.orient.server.distributed.impl.task.transaction.OTransactionResultPayload;
@@ -50,14 +51,11 @@ import com.orientechnologies.orient.server.distributed.task.ODistributedRecordLo
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.TimerTask;
+import java.util.*;
+import java.util.stream.Collectors;
 
-/** @author Luigi Dell'Aquila (l.dellaquila - at - orientdb.com) */
-public class OTransactionPhase1Task extends OAbstractReplicatedTask {
+/** @author luigi dell'aquila (l.dellaquila - at - orientdb.com) */
+public class OTransactionPhase1Task extends OAbstractReplicatedTask implements OLockKeySource {
   public static final int FACTORYID = 43;
 
   private volatile boolean hasResponse;
@@ -400,10 +398,10 @@ public class OTransactionPhase1Task extends OAbstractReplicatedTask {
                           .submit(
                               () -> {
                                 if (!finished) {
-                                  ODistributedWorker.sendResponseBack(
+                                  ODistributedDatabaseImpl.sendResponseBack(
                                       this,
                                       distributedDatabase.getManager(),
-                                      request,
+                                      request.getId(),
                                       new OTransactionPhase1TaskResult(new OTxStillRunning()));
                                 }
                               });
@@ -423,5 +421,21 @@ public class OTransactionPhase1Task extends OAbstractReplicatedTask {
 
   public OTransactionId getTransactionId() {
     return transactionId;
+  }
+
+  @Override
+  public SortedSet<ORID> getRids() {
+    Set<ORID> set;
+    if (operations.size() > 0) {
+      set = operations.stream().map((x) -> x.getId()).collect(Collectors.toSet());
+    } else {
+      set = ops.stream().map((x) -> x.getRID()).collect(Collectors.toSet());
+    }
+    return new TreeSet<ORID>(set);
+  }
+
+  @Override
+  public SortedSet<OPair<String, String>> getUniqueKeys() {
+    return null;
   }
 }
