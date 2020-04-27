@@ -6,7 +6,9 @@ import com.orientechnologies.orient.core.db.ODatabaseType;
 import com.orientechnologies.orient.core.db.OrientDB;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
+import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.sql.parser.ORid;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.distributed.ODistributedRequestId;
@@ -26,6 +28,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.TreeSet;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
@@ -57,11 +60,13 @@ public class OTransactionPhase2TaskTest {
     rec1.setClassName("TestClass");
     rec1.field("one", "two");
 
+    TreeSet<ORID> ids = new TreeSet<ORID>();
+    ids.add(rec1.getIdentity());
     operations.add(new ORecordOperation(rec1, ORecordOperation.UPDATED));
     OTransactionPhase1Task task = new OTransactionPhase1Task(operations, new OTransactionId(Optional.empty(), 0, 1));
     task.execute(new ODistributedRequestId(10, 20), server, null, (ODatabaseDocumentInternal) session);
-    OTransactionPhase2Task task2 = new OTransactionPhase2Task(new ODistributedRequestId(10, 20), true,
-        new int[] { rec1.getIdentity().getClusterId() }, new OLogSequenceNumber(0, 1));
+    OTransactionPhase2Task task2 = new OTransactionPhase2Task(new ODistributedRequestId(10, 20), true, ids,
+        new OLogSequenceNumber(0, 1));
     task2.execute(new ODistributedRequestId(10, 21), server, null, (ODatabaseDocumentInternal) session);
 
     assertEquals(2, session.load(id.getIdentity()).getVersion());

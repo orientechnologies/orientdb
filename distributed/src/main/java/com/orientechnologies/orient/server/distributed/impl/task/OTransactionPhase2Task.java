@@ -1,10 +1,14 @@
 package com.orientechnologies.orient.server.distributed.impl.task;
 
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.util.OPair;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
+import com.orientechnologies.orient.core.id.ORID;
+import com.orientechnologies.orient.core.id.ORecordId;
+import com.orientechnologies.orient.core.sql.parser.ORid;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.distributed.ODistributedRequestId;
@@ -16,26 +20,28 @@ import com.orientechnologies.orient.server.distributed.task.OAbstractReplicatedT
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
+import java.util.SortedSet;
+import java.util.TreeSet;
 
 import static com.orientechnologies.orient.core.config.OGlobalConfiguration.DISTRIBUTED_CONCURRENT_TX_MAX_AUTORETRY;
 
 /**
  * @author Luigi Dell'Aquila (l.dellaquila - at - orientdb.com)
  */
-public class OTransactionPhase2Task extends OAbstractReplicatedTask {
+public class OTransactionPhase2Task extends OAbstractReplicatedTask implements OLockKeySource {
   public static final int FACTORYID = 44;
 
   private          ODistributedRequestId transactionId;
   private          boolean               success;
-  private          int[]                 involvedClusters;
+  private          SortedSet<ORID>       involvedRids;
   private          boolean               hasResponse = false;
   private volatile int                   retryCount  = 0;
 
-  public OTransactionPhase2Task(ODistributedRequestId transactionId, boolean success, int[] involvedClusters,
+  public OTransactionPhase2Task(ODistributedRequestId transactionId, boolean success, SortedSet<ORID> rids,
       OLogSequenceNumber lsn) {
     this.transactionId = transactionId;
     this.success = success;
-    this.involvedClusters = involvedClusters;
+    this.involvedRids = rids;
     this.lastLSN = lsn;
   }
 
@@ -60,9 +66,9 @@ public class OTransactionPhase2Task extends OAbstractReplicatedTask {
     this.transactionId = new ODistributedRequestId(nodeId, messageId);
 
     int length = in.readInt();
-    this.involvedClusters = new int[length];
+    this.involvedRids = new TreeSet<ORID>();
     for (int i = 0; i < length; i++) {
-      this.involvedClusters[i] = in.readInt();
+      involvedRids.add(ORecordId.deserialize(in));
     }
     this.success = in.readBoolean();
     this.lastLSN = new OLogSequenceNumber(in);
@@ -75,9 +81,9 @@ public class OTransactionPhase2Task extends OAbstractReplicatedTask {
   public void toStream(DataOutput out) throws IOException {
     out.writeInt(transactionId.getNodeId());
     out.writeLong(transactionId.getMessageId());
-    out.writeInt(involvedClusters.length);
-    for (int involvedCluster : involvedClusters) {
-      out.writeInt(involvedCluster);
+    out.writeInt(involvedRids.size());
+    for (ORID id : involvedRids) {
+      ORecordId.serialize(id, out);
     }
     out.writeBoolean(success);
     if (lastLSN == null) {
@@ -166,6 +172,16 @@ public class OTransactionPhase2Task extends OAbstractReplicatedTask {
 
   @Override
   public int[] getPartitionKey() {
-    return involvedClusters;
+    return null;
+  }
+
+  @Override
+  public SortedSet<ORID> getRids() {
+    return involvedRids;
+  }
+
+  @Override
+  public SortedSet<OPair<String, String>> getUniqueKeys() {
+    return new TreeSet<>();
   }
 }
