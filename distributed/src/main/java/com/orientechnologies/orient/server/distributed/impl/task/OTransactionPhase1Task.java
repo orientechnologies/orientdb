@@ -436,6 +436,6 @@ public class OTransactionPhase1Task extends OAbstractReplicatedTask implements O
 
   @Override
   public SortedSet<OPair<String, String>> getUniqueKeys() {
-    return null;
+    return new TreeSet<>();
   }
 }
