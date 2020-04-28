@@ -111,7 +111,7 @@ public class CASDiskWriteAheadLogIT {
   public void testAddSingleOnePageRecordEncrypted() throws Exception {
     final String aesKeyEncoded = "T1JJRU5UREJfSVNfQ09PTA==";
     final byte[] aesKey = Base64.getDecoder().decode(aesKeyEncoded);
-    final byte[] iv = new byte[] { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16 };
+    final byte[] iv = new byte[] {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16};
 
     final int iterations = 10;
 
@@ -181,7 +181,7 @@ public class CASDiskWriteAheadLogIT {
   public void testAddSingleOnePageRecordNonEncrypted() throws Exception {
     final String aesKeyEncoded = "T1JJRU5UREJfSVNfQ09PTA==";
     final byte[] aesKey = Base64.getDecoder().decode(aesKeyEncoded);
-    final byte[] iv = new byte[] { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16 };
+    final byte[] iv = new byte[] {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16};
 
     final int iterations = 10;
 
@@ -249,7 +249,7 @@ public class CASDiskWriteAheadLogIT {
   public void testAddSingleOnePageRecordWrongEncryption() throws Exception {
     final String aesKeyEncoded = "T1JJRU5UREJfSVNfQ09PTA==";
     final byte[] aesKey = Base64.getDecoder().decode(aesKeyEncoded);
-    final byte[] iv = new byte[] { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16 };
+    final byte[] iv = new byte[] {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16};
 
     final int iterations = 10;
 
@@ -382,7 +382,7 @@ public class CASDiskWriteAheadLogIT {
   public void testAddSingleRecordSeveralPagesEncrypted() throws Exception {
     final String aesKeyEncoded = "T1JJRU5UREJfSVNfQ09PTA==";
     final byte[] aesKey = Base64.getDecoder().decode(aesKeyEncoded);
-    final byte[] iv = new byte[] { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16 };
+    final byte[] iv = new byte[] {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16};
 
     final int iterations = 10;
     for (int i = 0; i < iterations; i++) {
@@ -542,7 +542,7 @@ public class CASDiskWriteAheadLogIT {
   public void testAddFewSmallRecordsEncrypted() throws Exception {
     final String aesKeyEncoded = "T1JJRU5UREJfSVNfQ09PTA==";
     final byte[] aesKey = Base64.getDecoder().decode(aesKeyEncoded);
-    final byte[] iv = new byte[] { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16 };
+    final byte[] iv = new byte[] {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16};
 
     final int iterations = 10;
     for (int n = 0; n < iterations; n++) {
@@ -734,7 +734,7 @@ public class CASDiskWriteAheadLogIT {
   public void testNextAddFewSmallRecordsEncrypted() throws Exception {
     final String aesKeyEncoded = "T1JJRU5UREJfSVNfQ09PTA==";
     final byte[] aesKey = Base64.getDecoder().decode(aesKeyEncoded);
-    final byte[] iv = new byte[] { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16 };
+    final byte[] iv = new byte[] {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16};
 
     final int iterations = 10;
 
@@ -925,7 +925,7 @@ public class CASDiskWriteAheadLogIT {
   public void testAddFewBigRecordsEncrypted() throws Exception {
     final String aesKeyEncoded = "T1JJRU5UREJfSVNfQ09PTA==";
     final byte[] aesKey = Base64.getDecoder().decode(aesKeyEncoded);
-    final byte[] iv = new byte[] { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16 };
+    final byte[] iv = new byte[] {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16};
 
     final int iterations = 10;
 
@@ -1115,7 +1115,7 @@ public class CASDiskWriteAheadLogIT {
   public void testNextAddFewBigRecordsEncrypted() throws Exception {
     final String aesKeyEncoded = "T1JJRU5UREJfSVNfQ09PTA==";
     final byte[] aesKey = Base64.getDecoder().decode(aesKeyEncoded);
-    final byte[] iv = new byte[] { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16 };
+    final byte[] iv = new byte[] {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16};
 
     final int iterations = 10;
 
@@ -1310,7 +1310,7 @@ public class CASDiskWriteAheadLogIT {
   public void testAddNSmallRecordsEncrypted() throws Exception {
     final String aesKeyEncoded = "T1JJRU5UREJfSVNfQ09PTA==";
     final byte[] aesKey = Base64.getDecoder().decode(aesKeyEncoded);
-    final byte[] iv = new byte[] { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16 };
+    final byte[] iv = new byte[] {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16};
 
     final int iterations = 1;
 
@@ -1500,7 +1500,7 @@ public class CASDiskWriteAheadLogIT {
   public void testNextAddNSmallRecordsEncrypted() throws Exception {
     final String aesKeyEncoded = "T1JJRU5UREJfSVNfQ09PTA==";
     final byte[] aesKey = Base64.getDecoder().decode(aesKeyEncoded);
-    final byte[] iv = new byte[] { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16 };
+    final byte[] iv = new byte[] {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16};
 
     final int iterations = 1;
 
@@ -1752,7 +1752,7 @@ public class CASDiskWriteAheadLogIT {
   public void testAddNSegmentsEncrypted() throws Exception {
     final String aesKeyEncoded = "T1JJRU5UREJfSVNfQ09PTA==";
     final byte[] aesKey = Base64.getDecoder().decode(aesKeyEncoded);
-    final byte[] iv = new byte[] { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16 };
+    final byte[] iv = new byte[] {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16};
 
     int iterations = 1;
 
@@ -1996,7 +1996,7 @@ public class CASDiskWriteAheadLogIT {
   public void testAddNBigRecordsEncrypted() throws Exception {
     final String aesKeyEncoded = "T1JJRU5UREJfSVNfQ09PTA==";
     final byte[] aesKey = Base64.getDecoder().decode(aesKeyEncoded);
-    final byte[] iv = new byte[] { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16 };
+    final byte[] iv = new byte[] {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16};
 
     final int iterations = 1;
 
@@ -2176,7 +2176,7 @@ public class CASDiskWriteAheadLogIT {
   public void testNextAddNBigRecordsEncrypted() throws Exception {
     final String aesKeyEncoded = "T1JJRU5UREJfSVNfQ09PTA==";
     final byte[] aesKey = Base64.getDecoder().decode(aesKeyEncoded);
-    final byte[] iv = new byte[] { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16 };
+    final byte[] iv = new byte[] {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16};
 
     final int iterations = 1;
 
@@ -2354,7 +2354,7 @@ public class CASDiskWriteAheadLogIT {
   public void testAddRecordsMixEncrypted() throws Exception {
     final String aesKeyEncoded = "T1JJRU5UREJfSVNfQ09PTA==";
     final byte[] aesKey = Base64.getDecoder().decode(aesKeyEncoded);
-    final byte[] iv = new byte[] { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16 };
+    final byte[] iv = new byte[] {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16};
 
     final int iterations = 1;
     for (int n = 0; n < iterations; n++) {
@@ -2530,7 +2530,7 @@ public class CASDiskWriteAheadLogIT {
   public void testNextAddRecordsMixEncryption() throws Exception {
     final String aesKeyEncoded = "T1JJRU5UREJfSVNfQ09PTA==";
     final byte[] aesKey = Base64.getDecoder().decode(aesKeyEncoded);
-    final byte[] iv = new byte[] { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16 };
+    final byte[] iv = new byte[] {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16};
 
     final int iterations = 1;
     for (int n = 0; n < iterations; n++) {
@@ -5080,7 +5080,7 @@ public class CASDiskWriteAheadLogIT {
   @Test
   public void testIntegerOverflowNoException() throws Exception {
     final CASDiskWriteAheadLog wal = new CASDiskWriteAheadLog("walTest", testDirectory, testDirectory, Integer.MAX_VALUE, 64, null, null,
-        Integer.MAX_VALUE, Integer.MAX_VALUE, 20, true, Locale.US, -1, -1, 1000, false, false, true, 10);
+        Integer.MAX_VALUE, Integer.MAX_VALUE, 20, true, Locale.US, -1, -1, 1000, false, false, false, true, 10);
     wal.close();
     Assert.assertEquals("Integer.MAX overflow must be reset to Integer.MAX.",
         CASDiskWriteAheadLog.DEFAULT_MAX_CACHE_SIZE, wal.maxCacheSize());
@@ -5089,7 +5089,7 @@ public class CASDiskWriteAheadLogIT {
   @Test
   public void testIntegerNegativeNoException() throws Exception {
     final CASDiskWriteAheadLog wal = new CASDiskWriteAheadLog("walTest", testDirectory, testDirectory, -27, 64, null, null,
-        Integer.MAX_VALUE, Integer.MAX_VALUE, 20, true, Locale.US, -1, -1, 1000, false, false, true, 10);
+        Integer.MAX_VALUE, Integer.MAX_VALUE, 20, true, Locale.US, -1, -1, 1000, false, false, false, true, 10);
     wal.close();
     Assert.assertTrue("Negative int must not produce exception in `doFlush`", 0 > wal.maxCacheSize());
   }
@@ -5097,7 +5097,7 @@ public class CASDiskWriteAheadLogIT {
   @Test
   public void testIntegerNegativeOverflowNoException() throws Exception {
     final CASDiskWriteAheadLog wal = new CASDiskWriteAheadLog("walTest", testDirectory, testDirectory, Integer.MIN_VALUE, 64, null, null,
-        Integer.MAX_VALUE, Integer.MAX_VALUE, 20, true, Locale.US, -1, -1, 1000, false, false, true, 10);
+        Integer.MAX_VALUE, Integer.MAX_VALUE, 20, true, Locale.US, -1, -1, 1000, false, false, false, true, 10);
     wal.close();
     Assert.assertEquals("Integer.MIN overflow must be reset to Integer.MAX.",
         CASDiskWriteAheadLog.DEFAULT_MAX_CACHE_SIZE, wal.maxCacheSize());
@@ -5141,7 +5141,7 @@ public class CASDiskWriteAheadLogIT {
   }
 
   private static OLogSequenceNumber chooseRandomRecord(Random random,
-      NavigableMap<OLogSequenceNumber, ? extends WriteableWALRecord> records) {
+                                                       NavigableMap<OLogSequenceNumber, ? extends WriteableWALRecord> records) {
     if (records.isEmpty()) {
       return null;
     }
@@ -5168,7 +5168,7 @@ public class CASDiskWriteAheadLogIT {
   }
 
   private void assertMTWALInsertion(CASDiskWriteAheadLog wal,
-      SortedMap<OLogSequenceNumber, ? extends WriteableWALRecord> addedRecords) throws IOException {
+                                    SortedMap<OLogSequenceNumber, ? extends WriteableWALRecord> addedRecords) throws IOException {
     final Iterator<? extends WriteableWALRecord> recordsIterator = addedRecords.values().iterator();
 
     WriteableWALRecord record = recordsIterator.next();
@@ -5235,7 +5235,7 @@ public class CASDiskWriteAheadLogIT {
   }
 
   private static final class SegmentAdder implements Callable<Void> {
-    private final long                 segment;
+    private final long segment;
     private final CASDiskWriteAheadLog wal;
 
     SegmentAdder(long segment, CASDiskWriteAheadLog wal) {
@@ -5321,8 +5321,8 @@ public class CASDiskWriteAheadLogIT {
 
   static final class RecordsAdder implements Callable<List<TestRecord>> {
     private final CASDiskWriteAheadLog wal;
-    private final AtomicBoolean        walIsFull;
-    private final List<TestRecord>     addedRecords = new ArrayList<>();
+    private final AtomicBoolean walIsFull;
+    private final List<TestRecord> addedRecords = new ArrayList<>();
 
     RecordsAdder(CASDiskWriteAheadLog wal, AtomicBoolean walIsFull) {
       this.wal = wal;
@@ -5412,8 +5412,8 @@ public class CASDiskWriteAheadLogIT {
 
   static final class RecordsAdderBackwardIteration implements Callable<List<TestRecord>> {
     private final CASDiskWriteAheadLog wal;
-    private final AtomicBoolean        walIsFull;
-    private final List<TestRecord>     addedRecords = new ArrayList<>();
+    private final AtomicBoolean walIsFull;
+    private final List<TestRecord> addedRecords = new ArrayList<>();
 
     RecordsAdderBackwardIteration(CASDiskWriteAheadLog wal, AtomicBoolean walIsFull) {
       this.wal = wal;
@@ -5503,11 +5503,11 @@ public class CASDiskWriteAheadLogIT {
 
   private static final class CutTillTester implements Callable<TreeMap<OLogSequenceNumber, WriteableWALRecord>> {
     private final CASDiskWriteAheadLog wal;
-    private final AtomicBoolean        walIsFull;
+    private final AtomicBoolean walIsFull;
 
     private final TreeMap<OLogSequenceNumber, WriteableWALRecord> addedRecords = new TreeMap<>();
-    private final TreeMap<OLogSequenceNumber, Integer>            limits       = new TreeMap<>();
-    private final AtomicBoolean                                   sendReport;
+    private final TreeMap<OLogSequenceNumber, Integer> limits = new TreeMap<>();
+    private final AtomicBoolean sendReport;
 
     private OLogSequenceNumber cutLimit;
 

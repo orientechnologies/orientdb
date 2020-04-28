@@ -28,8 +28,8 @@ public class SBTreeV1TestEncryptionTestIT extends SBTreeV1TestIT {
     databaseDocumentTx = orientDB.open(dbName, "admin", "admin");
 
     sbTree = new OSBTreeV1<>("sbTreeEncrypted", ".sbt", ".nbt",
-        (OAbstractPaginatedStorage) ((ODatabaseInternal) databaseDocumentTx).getStorage());
-    storage = (OAbstractPaginatedStorage) ((ODatabaseInternal) databaseDocumentTx).getStorage();
+        (OAbstractPaginatedStorage) ((ODatabaseInternal<?>) databaseDocumentTx).getStorage());
+    storage = (OAbstractPaginatedStorage) ((ODatabaseInternal<?>) databaseDocumentTx).getStorage();
     atomicOperationsManager = storage.getAtomicOperationsManager();
     final OEncryption encryption = OEncryptionFactory.INSTANCE.getEncryption("aes/gcm", "T1JJRU5UREJfSVNfQ09PTA==");
     atomicOperationsManager.executeInsideAtomicOperation(null, atomicOperation -> sbTree

@@ -2,6 +2,7 @@ package com.orientechnologies.orient.core.storage.impl.local.paginated.atomicope
 
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.types.OModifiableInteger;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
@@ -23,32 +24,48 @@ public final class OperationsFreezer {
   private final AtomicLong                            freezeIdGen           = new AtomicLong();
   private final ConcurrentMap<Long, FreezeParameters> freezeParametersIdMap = new ConcurrentHashMap<>();
 
+  private final ThreadLocal<OModifiableInteger> operationDepth = ThreadLocal.withInitial(OModifiableInteger::new);
+
   public void startOperation() {
-    operationsCount.increment();
-
-    while (freezeRequests.get() > 0) {
-      assert freezeRequests.get() >= 0;
-
-      operationsCount.decrement();
-
-      throwFreezeExceptionIfNeeded();
-
-      final Thread thread = Thread.currentThread();
-
-      operationsWaitingList.addThreadInWaitingList(thread);
-
-      if (freezeRequests.get() > 0) {
-        LockSupport.park(this);
-      }
-
+    final OModifiableInteger operationDepth = this.operationDepth.get();
+    if (operationDepth.value == 0) {
       operationsCount.increment();
+
+      while (freezeRequests.get() > 0) {
+        assert freezeRequests.get() >= 0;
+
+        operationsCount.decrement();
+
+        throwFreezeExceptionIfNeeded();
+
+        final Thread thread = Thread.currentThread();
+
+        operationsWaitingList.addThreadInWaitingList(thread);
+
+        if (freezeRequests.get() > 0) {
+          LockSupport.park(this);
+        }
+
+        operationsCount.increment();
+      }
     }
 
     assert freezeRequests.get() >= 0;
+
+    operationDepth.increment();
   }
 
   public void endOperation() {
-    operationsCount.decrement();
+    final OModifiableInteger operationDepth = this.operationDepth.get();
+    if (operationDepth.value <= 0) {
+      throw new IllegalStateException("Invalid operation depth " + operationDepth.value);
+    } else {
+      operationDepth.value--;
+    }
+
+    if (operationDepth.value == 0) {
+      operationsCount.decrement();
+    }
   }
 
   public long freezeOperations(final Class<? extends OException> exceptionClass, final String message) {
@@ -110,6 +127,7 @@ public final class OperationsFreezer {
 
   private void throwFreezeExceptionWithoutMessage(FreezeParameters freezeParameters) {
     try {
+      //noinspection deprecation
       throw freezeParameters.exceptionClass.newInstance();
     } catch (InstantiationException | IllegalAccessException ie) {
       OLogManager.instance().error(this, "Can not create instance of exception " + freezeParameters.exceptionClass
