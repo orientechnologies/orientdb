@@ -54,6 +54,7 @@ import com.orientechnologies.orient.core.exception.OStorageException;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.security.OCredentialInterceptor;
 import com.orientechnologies.orient.core.security.OSecurityManager;
+import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.util.OURLConnection;
 import com.orientechnologies.orient.core.util.OURLHelper;
@@ -500,5 +501,9 @@ public class OServerAdmin {
       storage.close(true, false);
       throw OException.wrapException(new OStorageException(errorMessage), e);
     }
+  }
+
+  public OResultSet executeServerStatement(String statement, Object... params) {
+    return storage.serverCommand(statement, params).getResult();
   }
 }

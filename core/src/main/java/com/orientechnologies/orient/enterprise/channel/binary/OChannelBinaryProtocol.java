@@ -59,6 +59,7 @@ public class OChannelBinaryProtocol {
 
   public static final byte REQUEST_COUNT = 40; // DEPRECATED: USE
   // REQUEST_CLUSTER_COUNT
+
   public static final byte REQUEST_COMMAND = 41;
   public static final byte REQUEST_POSITIONS_CEILING = 42; // since 1.3.0
   public static final byte REQUEST_RECORD_HIDE = 43; // since 1.7
@@ -67,10 +68,13 @@ public class OChannelBinaryProtocol {
   public static final byte REQUEST_CLOSE_QUERY = 46; // since 3.0
   public static final byte REQUEST_QUERY_NEXT_PAGE = 47; // since 3.0
 
+  public static final byte REQUEST_SERVER_QUERY = 50; // since 3.2
+
   public static final byte REQUEST_TX_COMMIT = 60;
   public static final byte REQUEST_TX_BEGIN = 61;
   public static final byte REQUEST_TX_REBEGIN = 62;
   public static final byte REQUEST_TX_FETCH = 63;
+
   public static final byte REQUEST_TX_ROLLBACK = 64;
 
   public static final byte REQUEST_CONFIG_GET = 70;

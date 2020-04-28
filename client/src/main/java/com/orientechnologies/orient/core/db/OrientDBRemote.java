@@ -25,9 +25,7 @@ import static com.orientechnologies.orient.core.config.OGlobalConfiguration.NETW
 
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
-import com.orientechnologies.orient.client.remote.ORemoteConnectionManager;
-import com.orientechnologies.orient.client.remote.OServerAdmin;
-import com.orientechnologies.orient.client.remote.OStorageRemote;
+import com.orientechnologies.orient.client.remote.*;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
@@ -35,6 +33,7 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocumentRemote;
 import com.orientechnologies.orient.core.db.document.OSharedContextRemote;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import com.orientechnologies.orient.core.storage.OStorage;
 import java.io.IOException;
 import java.io.InputStream;
@@ -496,5 +495,12 @@ public class OrientDBRemote implements OrientDBInternal {
   @Override
   public <X> Future<X> execute(String database, String user, ODatabaseTask<X> task) {
     throw new UnsupportedOperationException("execute with no session not available in remote");
+  }
+
+  @Override
+  public OResultSet executeServerStatement(
+      String statement, String user, String pw, Object... params) {
+    return connectEndExecute(
+        "", user, pw, admin -> admin.executeServerStatement(statement, params));
   }
 }

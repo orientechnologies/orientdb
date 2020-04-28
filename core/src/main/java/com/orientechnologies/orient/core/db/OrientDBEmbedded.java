@@ -1080,7 +1080,8 @@ public class OrientDBEmbedded implements OrientDBInternal {
     return scriptManager;
   }
 
-  public OResultSet executeServerStatement(String script, Map<String, Object> args) {
+  public OResultSet executeServerStatement(
+      String script, String username, String pw, Map<String, Object> args) {
     OServerStatement statement = OSQLEngine.parseServerStatement(script, this);
     OResultSet original = statement.execute(this, args, true);
     OLocalResultSetLifecycleDecorator result;
@@ -1100,7 +1101,8 @@ public class OrientDBEmbedded implements OrientDBInternal {
     return result;
   }
 
-  public OResultSet executeServerStatement(String script, Object... args) {
+  public OResultSet executeServerStatement(
+      String script, String username, String pw, Object... args) {
     OServerStatement statement = OSQLEngine.parseServerStatement(script, this);
     OResultSet original = statement.execute(this, args, true);
     OLocalResultSetLifecycleDecorator result;

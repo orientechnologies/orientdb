@@ -33,9 +33,11 @@ public class ORemoteResultSet implements OResultSet {
     this.executionPlan = executionPlan;
     this.queryStats = queryStats;
     this.hasNextPage = hasNextPage;
-    db.queryStarted(queryId, this);
-    for (OResultInternal result : currentPage) {
-      result.bindToCache(db);
+    if (db != null) {
+      db.queryStarted(queryId, this);
+      for (OResultInternal result : currentPage) {
+        result.bindToCache(db);
+      }
     }
   }
 
@@ -52,7 +54,9 @@ public class ORemoteResultSet implements OResultSet {
   }
 
   private void fetchNextPage() {
-    db.fetchNextPage(this);
+    if (db != null) {
+      db.fetchNextPage(this);
+    }
   }
 
   @Override
@@ -68,7 +72,7 @@ public class ORemoteResultSet implements OResultSet {
     }
     OResultInternal internal = currentPage.remove(0);
 
-    if (internal.isRecord() && db.getTransaction().isActive()) {
+    if (internal.isRecord() && db != null && db.getTransaction().isActive()) {
       ORecord record = db.getTransaction().getRecord(internal.getRecord().get().getIdentity());
       if (record != null) {
         internal = new OResultInternal(record);
@@ -79,7 +83,7 @@ public class ORemoteResultSet implements OResultSet {
 
   @Override
   public void close() {
-    if (hasNextPage) {
+    if (hasNextPage && db != null) {
       // CLOSES THE QUERY SERVER SIDE ONLY IF THERE IS ANOTHER PAGE. THE SERVER ALREADY
       // AUTOMATICALLY CLOSES THE QUERY AFTER SENDING THE LAST PAGE
       db.closeQuery(queryId);
