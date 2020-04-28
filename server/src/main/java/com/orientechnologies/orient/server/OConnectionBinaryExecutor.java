@@ -1494,12 +1494,18 @@ public final class OConnectionBinaryExecutor implements OBinaryRequestExecutor {
     connection.getData().supportsLegacyPushMessages = false;
     connection.getData().collectStats = false;
     int chosenProtocolVersion = Math.min(request.getDistributedProtocolVersion(), ORemoteServerController.CURRENT_PROTOCOL_VERSION);
-    connection.setServerUser(serverUser);
-    connection.getData().serverUsername = serverUser.name;
-    connection.getData().serverUser = true;
-    byte[] token = server.getTokenHandler().getDistributedToken(connection.getData());
+    if (chosenProtocolVersion < ORemoteServerController.MIN_SUPPORTED_PROTOCOL_VERSION) {
+      OLogManager.instance()
+          .error(this, "Rejected distributed connection from '%s' too old not supported", null, connection.getRemoteAddress());
+      throw new ODatabaseException("protocol version too old rejected connection");
+    } else {
+      connection.setServerUser(serverUser);
+      connection.getData().serverUsername = serverUser.name;
+      connection.getData().serverUser = true;
+      byte[] token = server.getTokenHandler().getDistributedToken(connection.getData());
 
-    return new ODistributedConnectResponse(connection.getId(), token, chosenProtocolVersion);
+      return new ODistributedConnectResponse(connection.getId(), token, chosenProtocolVersion);
+    }
   }
 
   @Override

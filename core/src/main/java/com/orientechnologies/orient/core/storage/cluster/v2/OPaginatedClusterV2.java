@@ -39,7 +39,6 @@ import com.orientechnologies.orient.core.storage.cluster.*;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.OClusterBrowseEntry;
 import com.orientechnologies.orient.core.storage.impl.local.OClusterBrowsePage;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.ORecordOperationMetadata;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperation;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperationsManager;
 
@@ -268,7 +267,6 @@ public final class OPaginatedClusterV2 extends OPaginatedCluster {
       acquireExclusiveLock();
       try {
         final OPhysicalPosition pos = createPhysicalPosition(recordType, clusterPositionMap.allocate(atomicOperation), -1);
-        addAtomicOperationMetadata(new ORecordId(id, pos.clusterPosition), atomicOperation);
         return pos;
       } finally {
         releaseExclusiveLock();
@@ -316,7 +314,6 @@ public final class OPaginatedClusterV2 extends OPaginatedCluster {
             clusterPosition = clusterPositionMap.add(addEntryResult.pageIndex, addEntryResult.pagePosition, atomicOperation);
           }
 
-          addAtomicOperationMetadata(new ORecordId(id, clusterPosition), atomicOperation);
           return createPhysicalPosition(recordType, clusterPosition, addEntryResult.recordVersion);
         } else {
           final int entrySize = content.length + OIntegerSerializer.INT_SIZE + OByteSerializer.BYTE_SIZE;
@@ -397,34 +394,12 @@ public final class OPaginatedClusterV2 extends OPaginatedCluster {
             clusterPosition = clusterPositionMap.add(firstPageIndex, firstPagePosition, atomicOperation);
           }
 
-          addAtomicOperationMetadata(new ORecordId(id, clusterPosition), atomicOperation);
-
           return createPhysicalPosition(recordType, clusterPosition, version);
         }
       } finally {
         releaseExclusiveLock();
       }
     });
-  }
-
-  private void addAtomicOperationMetadata(final ORID rid, final OAtomicOperation atomicOperation) {
-    if (!addRidMetadata) {
-      return;
-    }
-
-    if (atomicOperation == null) {
-      return;
-    }
-
-    ORecordOperationMetadata recordOperationMetadata = (ORecordOperationMetadata) atomicOperation
-        .getMetadata(ORecordOperationMetadata.RID_METADATA_KEY);
-
-    if (recordOperationMetadata == null) {
-      recordOperationMetadata = new ORecordOperationMetadata();
-      atomicOperation.addMetadata(recordOperationMetadata);
-    }
-
-    recordOperationMetadata.addRid(rid);
   }
 
   private static int getEntryContentLength(final int grownContentSize) {
@@ -617,7 +592,6 @@ public final class OPaginatedClusterV2 extends OPaginatedCluster {
         updateClusterState(-1, -removedContentSize, atomicOperation);
 
         clusterPositionMap.remove(clusterPosition, atomicOperation);
-        addAtomicOperationMetadata(new ORecordId(id, clusterPosition), atomicOperation);
         return true;
       } finally {
         releaseExclusiveLock();
@@ -861,7 +835,6 @@ public final class OPaginatedClusterV2 extends OPaginatedCluster {
 
         updateClusterState(0, sizeDiff, atomicOperation);
 
-        addAtomicOperationMetadata(new ORecordId(id, clusterPosition), atomicOperation);
       } finally {
         releaseExclusiveLock();
       }

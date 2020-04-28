@@ -15,7 +15,7 @@ public abstract class AbstractRemoteTaskTest {
     baos.close();
     ByteArrayInputStream bais = new ByteArrayInputStream(serialized);
     DataInputStream in = new DataInputStream(bais);
-    to.fromStream(in, new ODefaultRemoteTaskFactoryV2());
+    to.fromStream(in, new ODefaultRemoteTaskFactoryV3());
   }
 
 }

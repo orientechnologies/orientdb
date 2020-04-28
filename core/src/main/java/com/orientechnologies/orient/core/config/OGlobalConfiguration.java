@@ -253,6 +253,7 @@ public enum OGlobalConfiguration { // ENVIRONMENT
   STORAGE_PRINT_WAL_PERFORMANCE_INTERVAL("storage.walPerformanceStatisticsInterval",
       "Interval in seconds between consequent reports of WAL performance statistics", Integer.class, 10),
 
+  @Deprecated
   STORAGE_TRACK_CHANGED_RECORDS_IN_WAL("storage.trackChangedRecordsInWAL",
       "If this flag is set metadata which contains rids of changed records is added at the end of each atomic operation",
       Boolean.class, false),

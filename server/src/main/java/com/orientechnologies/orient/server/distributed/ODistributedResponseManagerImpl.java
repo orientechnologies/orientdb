@@ -688,9 +688,6 @@ public class ODistributedResponseManagerImpl implements ODistributedResponseMana
         // TODO: CALL THE RECORD CONFLICT PIPELINE
         return null;
 
-      if (fixNodesInConflict(bestResponsesGroup, conflicts, false))
-        // FIX SUCCEED
-        return null;
     }
 
     // QUORUM HASN'T BEEN REACHED
@@ -818,73 +815,6 @@ public class ODistributedResponseManagerImpl implements ODistributedResponseMana
     return true;
   }
 
-  protected boolean fixNodesInConflict(final List<ODistributedResponse> bestResponsesGroup, final int conflicts,
-      final boolean cannotFixRecordLockException) {
-    // NO FIFTY/FIFTY CASE: FIX THE CONFLICTED NODES BY OVERWRITING THE RECORD WITH THE WINNER'S RESULT
-    final ODistributedResponse goodResponse = bestResponsesGroup.get(0);
-
-    if (goodResponse.getPayload() instanceof Throwable)
-      return false;
-
-    ODistributedServerLog.debug(this, dManager.getLocalNodeName(), null, DIRECTION.NONE,
-        "Detected %d conflicts, but the quorum (%d) has been reached. Checking responses and in case fixing remote records (reqId=%s)",
-        conflicts, quorum, request.getId());
-
-    for (List<ODistributedResponse> responseGroup : responseGroups) {
-      if (responseGroup != bestResponsesGroup) {
-        // CONFLICT GROUP: FIX THEM ONE BY ONE
-        for (ODistributedResponse r : responseGroup) {
-          if (cannotFixRecordLockException && r.getPayload() instanceof ODistributedRecordLockedException) {
-            // NO FIX, THE RECORD WAS LOCKED
-            if (ODistributedServerLog.isDebugEnabled())
-              ODistributedServerLog.debug(this, dManager.getLocalNodeName(), null, DIRECTION.NONE,
-                  "Node '%s' responded with a record lock exception: cannot fix the operation, undo the entire operation (reqId=%s)",
-                  r.getExecutorNodeName(), request);
-            return false;
-          }
-
-          final ORemoteTask fixTask = ((OAbstractReplicatedTask) request.getTask())
-              .getFixTask(request, request.getTask(), r.getPayload(), goodResponse.getPayload(), r.getExecutorNodeName(), dManager);
-
-          if (fixTask == null) {
-            // FIX NOT AVAILABLE: UNDO THE ENTIRE OPERATION
-            ODistributedServerLog.debug(this, dManager.getLocalNodeName(), null, DIRECTION.NONE,
-                "No fix operation available: cannot fix the operation, undo the entire operation (reqId=%s)", request);
-            return false;
-          }
-
-          executeFix(r.getExecutorNodeName(), fixTask, r.getPayload(), goodResponse);
-        }
-      }
-    }
-    return true;
-  }
-
-  private void executeFix(final String server, final ORemoteTask fixTask, final Object r, final Object goodResponse) {
-    if (server.equals(dManager.getLocalNodeName())) {
-      ODistributedServerLog.debug(this, dManager.getLocalNodeName(), server, DIRECTION.OUT,
-          "Executing the fix locally (%s) for response (%s) on request (%s) to be: %s", fixTask, r, request, goodResponse);
-
-      ODatabaseDocumentInternal oldDb = ODatabaseRecordThreadLocal.instance().getIfDefined();
-      final ODatabaseDocumentInternal database = dManager.getMessageService().getDatabase(getDatabaseName()).getDatabaseInstance();
-      try {
-        database.activateOnCurrentThread();
-        dManager
-            .executeOnLocalNode(new ODistributedRequestId(dManager.getLocalNodeId(), dManager.getNextMessageIdCounter()), fixTask,
-                database);
-      } finally {
-        database.close();
-        ODatabaseRecordThreadLocal.instance().set(oldDb);
-      }
-    } else {
-      ODistributedServerLog.debug(this, dManager.getLocalNodeName(), server, DIRECTION.OUT,
-          "Sending fix message (%s) for response (%s) on request (%s) to be: %s", fixTask, r, request, goodResponse);
-
-      dManager.sendRequest(request.getDatabaseName(), null, OMultiValue.getSingletonList(server), fixTask,
-          dManager.getNextMessageIdCounter(), ODistributedRequest.EXECUTION_MODE.NO_RESPONSE, null, null, null);
-    }
-  }
-
   protected boolean checkNoWinnerCase(final List<ODistributedResponse> bestResponsesGroup) {
     // CHECK IF THERE ARE 2 PARTITIONS EQUAL IN SIZE
     final int maxCoherentResponses = bestResponsesGroup.size();
@@ -934,48 +864,5 @@ public class ODistributedResponseManagerImpl implements ODistributedResponseMana
     if (endCallback != null)
       // CUSTOM CALLBACK
       endCallback.call(this);
-    else {
-      // DEFAULT CALLBACK
-      if (groupResponsesByResult) {
-        final String localNodeName = dManager.getLocalNodeName();
-
-        final Set<String> serversToFollowup = getServersWithoutFollowup();
-        serversToFollowup.remove(localNodeName);
-
-        if (!serversToFollowup.isEmpty()) {
-          ODistributedServerLog.debug(this, localNodeName, serversToFollowup.toString(), ODistributedServerLog.DIRECTION.OUT,
-              "Distributed response (reqId=%s quorum=%d result=%s), checking for any fix needed...", request.getId(), quorum,
-              quorumResponse);
-
-          for (String s : serversToFollowup) {
-            Object response = responses.get(s);
-            if (response == NO_RESPONSE)
-              response = null;
-
-            if (quorumResponse != null && !quorumResponse.equals(response)) {
-              // SEND FIX
-              final Object payload;
-              if (response instanceof ODistributedResponse) {
-                payload = ((ODistributedResponse) response).getPayload();
-              } else {
-                payload = null;
-              }
-
-              final ORemoteTask fixTask = ((OAbstractReplicatedTask) request.getTask())
-                  .getFixTask(request, request.getTask(), payload, quorumResponse.getPayload(), s, dManager);
-
-              if (fixTask == null) {
-                // FIX NOT AVAILABLE: UNDO THE ENTIRE OPERATION
-                ODistributedServerLog.debug(this, localNodeName, null, DIRECTION.NONE,
-                    "No fix operation available: cannot fix the operation, undo the entire operation (reqId=%s)", request);
-                continue;
-              }
-
-              executeFix(s, fixTask, response, quorumResponse.getPayload());
-            }
-          }
-        }
-      }
-    }
   }
 }

@@ -46,7 +46,6 @@ import com.orientechnologies.orient.core.storage.cluster.*;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.OClusterBrowseEntry;
 import com.orientechnologies.orient.core.storage.impl.local.OClusterBrowsePage;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.ORecordOperationMetadata;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperation;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperationsManager;
 
@@ -293,7 +292,6 @@ public final class OPaginatedClusterV1 extends OPaginatedCluster {
       acquireExclusiveLock();
       try {
         final OPhysicalPosition pos = createPhysicalPosition(recordType, clusterPositionMap.allocate(operation), -1);
-        addAtomicOperationMetadata(new ORecordId(id, pos.clusterPosition), operation);
         return pos;
       } finally {
         releaseExclusiveLock();
@@ -343,8 +341,6 @@ public final class OPaginatedClusterV1 extends OPaginatedCluster {
           } else {
             clusterPosition = clusterPositionMap.add(addEntryResult.pageIndex, addEntryResult.pagePosition, atomicOperation);
           }
-
-          addAtomicOperationMetadata(new ORecordId(id, clusterPosition), atomicOperation);
 
           return createPhysicalPosition(recordType, clusterPosition, addEntryResult.recordVersion);
         } else {
@@ -426,8 +422,6 @@ public final class OPaginatedClusterV1 extends OPaginatedCluster {
             clusterPosition = clusterPositionMap.add(firstPageIndex, firstPagePosition, atomicOperation);
           }
 
-          addAtomicOperationMetadata(new ORecordId(id, clusterPosition), atomicOperation);
-
           return createPhysicalPosition(recordType, clusterPosition, version);
 
         }
@@ -438,25 +432,6 @@ public final class OPaginatedClusterV1 extends OPaginatedCluster {
 
   }
 
-  private void addAtomicOperationMetadata(final ORID rid, final OAtomicOperation atomicOperation) {
-    if (!addRidMetadata) {
-      return;
-    }
-
-    if (atomicOperation == null) {
-      return;
-    }
-
-    ORecordOperationMetadata recordOperationMetadata = (ORecordOperationMetadata) atomicOperation
-        .getMetadata(ORecordOperationMetadata.RID_METADATA_KEY);
-
-    if (recordOperationMetadata == null) {
-      recordOperationMetadata = new ORecordOperationMetadata();
-      atomicOperation.addMetadata(recordOperationMetadata);
-    }
-
-    recordOperationMetadata.addRid(rid);
-  }
 
   private static int getEntryContentLength(final int grownContentSize) {
 
@@ -651,8 +626,6 @@ public final class OPaginatedClusterV1 extends OPaginatedCluster {
         updateClusterState(-1, -removedContentSize, operation);
 
         clusterPositionMap.remove(clusterPosition, operation);
-        addAtomicOperationMetadata(new ORecordId(id, clusterPosition), operation);
-
         return true;
       } finally {
         releaseExclusiveLock();
@@ -900,7 +873,6 @@ public final class OPaginatedClusterV1 extends OPaginatedCluster {
 
         updateClusterState(0, sizeDiff, atomicOperation);
 
-        addAtomicOperationMetadata(new ORecordId(id, clusterPosition), atomicOperation);
       } finally {
         releaseExclusiveLock();
       }

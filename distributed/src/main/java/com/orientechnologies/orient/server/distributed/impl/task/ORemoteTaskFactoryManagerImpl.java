@@ -19,8 +19,6 @@
  */
 package com.orientechnologies.orient.server.distributed.impl.task;
 
-import com.orientechnologies.common.exception.OException;
-import com.orientechnologies.common.io.OIOException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.server.distributed.*;
 
@@ -34,13 +32,11 @@ import java.util.Collection;
  */
 public class ORemoteTaskFactoryManagerImpl implements ORemoteTaskFactoryManager {
   private final ODistributedServerManager dManager;
-  private       ORemoteTaskFactory[]      factories = new ODefaultRemoteTaskFactoryV0[3];
+  private       ORemoteTaskFactory[]      factories = new ORemoteTaskFactory[1];
 
   public ORemoteTaskFactoryManagerImpl(final ODistributedServerManager dManager) {
     this.dManager = dManager;
-    factories[0] = new ODefaultRemoteTaskFactoryV0();
-    factories[1] = new ODefaultRemoteTaskFactoryV1();
-    factories[2] = new ODefaultRemoteTaskFactoryV2();
+    factories[0] = new ODefaultRemoteTaskFactoryV3();
   }
 
   @Override
@@ -93,9 +89,10 @@ public class ORemoteTaskFactoryManagerImpl implements ORemoteTaskFactoryManager 
 
   @Override
   public ORemoteTaskFactory getFactoryByVersion(final int version) {
-    if (version < 0 || version >= factories.length)
+    int minSupported = ORemoteServerController.MIN_SUPPORTED_PROTOCOL_VERSION;
+    if (version < 0 || version >= (factories.length + minSupported))
       throw new IllegalArgumentException("Invalid remote task factory version " + version);
 
-    return factories[version];
+    return factories[version - minSupported];
   }
 }
