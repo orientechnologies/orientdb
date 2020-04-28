@@ -13,7 +13,8 @@
 
     <properties>
         <surefire.version>2.19.1</surefire.version>
-        <metrics.version>4.1.5</metrics.version>
+        <metrics.version>4.1.6</metrics.version>
+        <jackson.version>2.10.3</jackson.version>
         <exclude.kerberos.tests>%regex[com.orientechnologies.security.kerberos.*Test.*]</exclude.kerberos.tests>
         <project.rootdir>${project.basedir}/../</project.rootdir>
     </properties>
@@ -141,7 +142,7 @@
         </dependency>
         <dependency>
             <groupId>io.dropwizard.metrics</groupId>
-            <artifactId>metrics-servlets</artifactId>
+            <artifactId>metrics-json</artifactId>
             <version>${metrics.version}</version>
         </dependency>
         <dependency>
@@ -154,7 +155,13 @@
             <artifactId>metrics-jvm</artifactId>
             <version>${metrics.version}</version>
         </dependency>
-        
+
+        <dependency>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-databind</artifactId>
+            <version>${jackson.version}</version>
+        </dependency>
+
 
         <!-- upload -->
         <dependency>
