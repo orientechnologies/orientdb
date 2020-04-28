@@ -1,5 +1,6 @@
 package com.orientechnologies.orient.server;
 
+import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.client.remote.message.*;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OStorageConfiguration;
@@ -13,6 +14,7 @@ import com.orientechnologies.orient.server.network.protocol.binary.ONetworkProto
 import java.io.IOException;
 import java.lang.ref.WeakReference;
 import java.util.*;
+import java.util.concurrent.*;
 
 public class OPushManager implements OMetadataUpdateListener {
 
@@ -23,6 +25,11 @@ public class OPushManager implements OMetadataUpdateListener {
   protected final Map<String, Set<WeakReference<ONetworkProtocolBinary>>> functions             = new HashMap<>();
   protected final Map<String, Set<WeakReference<ONetworkProtocolBinary>>> sequences             = new HashMap<>();
   private         Set<String>                                             registerDatabase      = new HashSet<>();
+  private final   ExecutorService                                         executor;
+
+  public OPushManager() {
+    executor = new ThreadPoolExecutor(0, 5, 1, TimeUnit.MINUTES, new SynchronousQueue<Runnable>(), new PushThreadFactory());
+  }
 
   public synchronized void pushDistributedConfig(String database, List<String> hosts) {
     Iterator<WeakReference<ONetworkProtocolBinary>> iter = distributedConfigPush.iterator();
@@ -73,7 +80,7 @@ public class OPushManager implements OMetadataUpdateListener {
   }
 
   public void shutdown() {
-
+    executor.shutdownNow();
   }
 
   private void genericSubscribe(Map<String, Set<WeakReference<ONetworkProtocolBinary>>> context, ODatabaseDocumentInternal database,
@@ -142,36 +149,48 @@ public class OPushManager implements OMetadataUpdateListener {
 
   private void genericNotify(Map<String, Set<WeakReference<ONetworkProtocolBinary>>> context, String database,
       OBinaryPushRequest<?> request) {
-    Orient.instance().submit(() -> {
-      Set<WeakReference<ONetworkProtocolBinary>> clients = null;
-      synchronized (OPushManager.this) {
-        Set<WeakReference<ONetworkProtocolBinary>> cl = context.get(database);
-        if (cl != null) {
-          clients = new HashSet<>(cl);
+    try {
+      executor.submit(() -> {
+        Set<WeakReference<ONetworkProtocolBinary>> clients = null;
+        synchronized (OPushManager.this) {
+          Set<WeakReference<ONetworkProtocolBinary>> cl = context.get(database);
+          if (cl != null) {
+            clients = new HashSet<>(cl);
+          }
         }
-      }
-      if (clients != null) {
-        Iterator<WeakReference<ONetworkProtocolBinary>> iter = clients.iterator();
-        while (iter.hasNext()) {
-          WeakReference<ONetworkProtocolBinary> ref = iter.next();
-          ONetworkProtocolBinary protocolBinary = ref.get();
-          if (protocolBinary != null) {
-            try {
-              OBinaryPushResponse response = protocolBinary.push(request);
-            } catch (IOException e) {
+        if (clients != null) {
+          Iterator<WeakReference<ONetworkProtocolBinary>> iter = clients.iterator();
+          while (iter.hasNext()) {
+            WeakReference<ONetworkProtocolBinary> ref = iter.next();
+            ONetworkProtocolBinary protocolBinary = ref.get();
+            if (protocolBinary != null) {
+              try {
+                OBinaryPushResponse response = protocolBinary.push(request);
+              } catch (IOException e) {
+                synchronized (OPushManager.this) {
+                  context.get(database).remove(ref);
+                }
+              }
+            } else {
               synchronized (OPushManager.this) {
                 context.get(database).remove(ref);
               }
             }
-          } else {
-            synchronized (OPushManager.this) {
-              context.get(database).remove(ref);
-            }
           }
         }
-      }
 
-    });
+      });
+    } catch (RejectedExecutionException e) {
+      OLogManager.instance().info(this, "Cannot send push request to client for database '%s'", database);
+    }
   }
 
+  private static class PushThreadFactory implements ThreadFactory {
+    @Override
+    public Thread newThread(Runnable r) {
+      Thread th = new Thread();
+      th.setName("Push Requests");
+      return th;
+    }
+  }
 }
