@@ -12,9 +12,7 @@ import org.apache.tinkerpop.gremlin.structure.Vertex;
 import org.junit.Assert;
 import org.junit.Test;
 
-import java.util.Date;
-import java.util.Iterator;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -131,9 +129,25 @@ public class OrientGraphExecuteQueryRemoteGraphFactoryTest extends AbstractRemot
 
     OrientGraph noTx = factory.getNoTx();
 
-    try (OGremlinResultSet gremlin = noTx.execute("gremlin", "g.V().", null)) {
+    try (OGremlinResultSet gremlin = noTx.execute("gremlin",
+        "g.V().hasLabel('Person').has('name','Luke').as('luke').branch{it.get().label()}.option('Person',__.in('HasFriend').aggregate('friends')).select('luke','friends').",
+        null)) {
 
     }
 
   }
+
+  @Test(expected = OCommandExecutionException.class)
+  public void testExecuteGremlinWithError2() {
+
+    OrientGraph noTx = factory.getNoTx();
+
+    Map<String, String> params = new HashMap<>();
+
+    try (OGremlinResultSet gremlin = noTx.execute("gremlin", "g.V().select($test)", params)) {
+
+    }
+
+  }
+
 }
