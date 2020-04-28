@@ -93,6 +93,11 @@ public class OUnreachableServerLocalTask extends OAbstractRemoteTask {
   }
 
   @Override
+  public boolean isNodeOnlineRequired() {
+    return false;
+  }
+
+  @Override
   public String toString() {
     return getName() + " server: " + unreachableServer;
   }
