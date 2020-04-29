@@ -250,8 +250,7 @@ public enum OGlobalConfiguration { // ENVIRONMENT
   STORAGE_PRINT_WAL_PERFORMANCE_INTERVAL("storage.walPerformanceStatisticsInterval",
       "Interval in seconds between consequent reports of WAL performance statistics", Integer.class, 10),
 
-  @Deprecated
-  STORAGE_TRACK_CHANGED_RECORDS_IN_WAL("storage.trackChangedRecordsInWAL",
+  @Deprecated STORAGE_TRACK_CHANGED_RECORDS_IN_WAL("storage.trackChangedRecordsInWAL",
       "If this flag is set metadata which contains rids of changed records is added at the end of each atomic operation",
       Boolean.class, false),
 
@@ -390,15 +389,14 @@ public enum OGlobalConfiguration { // ENVIRONMENT
 
   DB_CACHED_POOL_CAPACITY("db.cached.pool.capacity", "Default database cached pools capacity", Integer.class, 100),
 
-  DB_CACHED_POOL_CLEAN_UP_TIMEOUT("db.cached.pool.cleanUpTimeout", "Default timeout for clean up cache from unused or closed database pools, value in milliseconds", Long.class, 600_000),
+  DB_CACHED_POOL_CLEAN_UP_TIMEOUT("db.cached.pool.cleanUpTimeout",
+      "Default timeout for clean up cache from unused or closed database pools, value in milliseconds", Long.class, 600_000),
 
   DB_POOL_ACQUIRE_TIMEOUT("db.pool.acquireTimeout", "Default database pool timeout in milliseconds", Integer.class, 60000),
 
-  @Deprecated
-  DB_POOL_IDLE_TIMEOUT("db.pool.idleTimeout", "Timeout for checking for free databases in the pool", Integer.class, 0),
+  @Deprecated DB_POOL_IDLE_TIMEOUT("db.pool.idleTimeout", "Timeout for checking for free databases in the pool", Integer.class, 0),
 
-  @Deprecated
-  DB_POOL_IDLE_CHECK_DELAY("db.pool.idleCheckDelay", "Delay time on checking for idle databases", Integer.class, 0),
+  @Deprecated DB_POOL_IDLE_CHECK_DELAY("db.pool.idleCheckDelay", "Delay time on checking for idle databases", Integer.class, 0),
 
   DB_MVCC_THROWFAST("db.mvcc.throwfast",
       "Use fast-thrown exceptions for MVCC OConcurrentModificationExceptions. No context information will be available. "
@@ -609,6 +607,9 @@ public enum OGlobalConfiguration { // ENVIRONMENT
 
   NETWORK_HTTP_SESSION_EXPIRE_TIMEOUT("network.http.sessionExpireTimeout",
       "Timeout, after which an http session is considered to have expired (in seconds)", Integer.class, 900),
+
+  NETWORK_HTTP_SESSION_COOKIE_SAME_SITE("network.http.session.cookie.sameSite", "Activate the same site cookie session",
+      Boolean.class, true),
 
   NETWORK_HTTP_USE_TOKEN("network.http.useToken", "Enable Token based sessions for http", Boolean.class, false),
 
@@ -978,7 +979,6 @@ public enum OGlobalConfiguration { // ENVIRONMENT
       "Delay (in ms) between attempts on executing a distributed transaction, which had failed because of locked records. (0=no delay)",
       Integer.class, 1000, true),
 
-
   DISTRIBUTED_TRANSACTION_SEQUENCE_SET_SIZE("distributed.transactionSequenceSetSize",
       "Size of the set of sequences used by distributed transactions, correspond to the amount of transactions commits that can be active at the same time",
       Integer.class, 1000, false),
@@ -1033,9 +1033,8 @@ public enum OGlobalConfiguration { // ENVIRONMENT
    * @Since 2.2
    */
   @OApi(maturity = OApi.MATURITY.NEW) CREATE_DEFAULT_USERS("security.createDefaultUsers",
-      "Indicates whether default database users should be created", Boolean.class, true),
-  WARNING_DEFAULT_USERS("security.warningDefaultUsers",
-      "Indicates whether access with default users should show a warning", Boolean.class, true),
+      "Indicates whether default database users should be created", Boolean.class, true), WARNING_DEFAULT_USERS(
+      "security.warningDefaultUsers", "Indicates whether access with default users should show a warning", Boolean.class, true),
   /**
    * @Since 2.2
    */
@@ -1194,6 +1193,7 @@ public enum OGlobalConfiguration { // ENVIRONMENT
    * Find the OGlobalConfiguration instance by the key. Key is case insensitive.
    *
    * @param iKey Key to find. It's case insensitive.
+   *
    * @return OGlobalConfiguration instance if found, otherwise null
    */
   public static OGlobalConfiguration findByKey(final String iKey) {
