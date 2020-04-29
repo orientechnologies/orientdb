@@ -245,8 +245,11 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
       int retryCount, int autoRetryDelay) {
     pending.incrementAndGet();
     Orient.instance().scheduleTask(() -> {
-      processRequest(new ODistributedRequest(getManager(), senderNodeId, msgSequence, databaseName, payload), false);
-      pending.decrementAndGet();
+      try {
+        processRequest(new ODistributedRequest(getManager(), senderNodeId, msgSequence, databaseName, payload), false);
+      } finally {
+        pending.decrementAndGet();
+      }
     }, autoRetryDelay * retryCount, 0);
   }
 
