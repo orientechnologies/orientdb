@@ -111,6 +111,7 @@
                         will be taken -->
                     <parameter name="network.http.charset" value="utf-8"/>
                     <parameter value="true" name="network.http.jsonResponseError"/>
+                    <parameter value="Content-Security-Policy: frame-ancestors 'none'" name="network.http.additionalResponseHeaders"></parameter>
                     <!-- Define additional HTTP headers to always send as response -->
                     <!-- Allow cross-site scripting -->
                     <!-- parameter name="network.http.additionalResponseHeaders" value="Access-Control-Allow-Origin:
