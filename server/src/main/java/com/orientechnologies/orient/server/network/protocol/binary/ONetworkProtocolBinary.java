@@ -287,6 +287,13 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
           OLogManager.instance().debug(this, "I/O Error on client clientId=%d reqType=%d", clientTxId, requestType, e);
           sendShutdown();
           return;
+        } catch (Exception | Error e) {
+          if (connection != null) {
+            connection.endOperation();
+          }
+          OLogManager.instance().error(this, "Error reading request", e);
+          sendShutdown();
+          return;
         }
         if (connection == null && requestType == OChannelBinaryProtocol.REQUEST_DB_CLOSE) {
           //Backward compatible with old clients
@@ -317,7 +324,7 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
             }
             exception = t;
           } catch (Error err) {
-            if(connection!=null) {
+            if (connection != null) {
               connection.release();
             }
             throw err;
@@ -348,7 +355,7 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
           } catch (IOException e) {
             OLogManager.instance().debug(this, "I/O Error on client clientId=%d reqType=%d", clientTxId, requestType, e);
             sendShutdown();
-          } catch (Exception e) {
+          } catch (Exception|Error e) {
             OLogManager.instance().error(this, "Error while binary response serialization", e);
             sendShutdown();
             throw e;
@@ -623,7 +630,7 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
         byte[] renewedToken = null;
         if (connection != null && connection.getToken() != null) {
           renewedToken = server.getTokenHandler().renewIfNeeded(connection.getToken());
-          if(renewedToken.length > 0) {
+          if (renewedToken.length > 0) {
             connection.setTokenBytes(renewedToken);
           }
         }
@@ -739,7 +746,7 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
       byte[] renewedToken = null;
       if (connection != null && connection.getToken() != null) {
         renewedToken = server.getTokenHandler().renewIfNeeded(connection.getToken());
-        if(renewedToken.length > 0) {
+        if (renewedToken.length > 0) {
           connection.setTokenBytes(renewedToken);
         }
       }
