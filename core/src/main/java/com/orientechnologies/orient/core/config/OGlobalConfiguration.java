@@ -585,6 +585,9 @@ public enum OGlobalConfiguration {// ENVIRONMENT
   NETWORK_HTTP_SESSION_EXPIRE_TIMEOUT("network.http.sessionExpireTimeout",
       "Timeout, after which an http session is considered to have expired (in seconds)", Integer.class, 900),
 
+  NETWORK_HTTP_SESSION_COOKIE_SAME_SITE("network.http.session.cookie.sameSite", "Activate the same site cookie session",
+      Boolean.class, true),
+
   NETWORK_HTTP_USE_TOKEN("network.http.useToken", "Enable Token based sessions for http", Boolean.class, false),
 
   NETWORK_TOKEN_SECRETKEY("network.token.secretKey", "Network token sercret key", String.class, "", false, true),

@@ -47,6 +47,7 @@ public class OHttpGraphResponse extends OHttpResponse {
   public OHttpGraphResponse(final OHttpResponse iWrapped) {
     super(iWrapped.getOutputStream(), iWrapped.httpVersion, iWrapped.additionalHeaders, iWrapped.characterSet, iWrapped.serverInfo,
         iWrapped.sessionId, iWrapped.callbackFunction, iWrapped.keepAlive, iWrapped.connection);
+    setSameSiteCookie(iWrapped.isSameSiteCookie());
   }
 
   public void writeRecords(final Object iRecords, final String iFetchPlan, String iFormat, final String accept,

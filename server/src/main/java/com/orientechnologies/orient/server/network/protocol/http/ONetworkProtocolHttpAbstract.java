@@ -126,6 +126,7 @@ public abstract class ONetworkProtocolHttpAbstract extends ONetworkProtocol {
   protected            OHttpNetworkCommandManager cmdManager;
   private              String                     responseCharSet;
   private              boolean                    jsonResponseError;
+  private              boolean                    sameSiteCookie;
   private              String[]                   additionalResponseHeaders;
   private              String                     listeningAddress  = "?";
   private              OContextConfiguration      configuration;
@@ -158,6 +159,8 @@ public abstract class ONetworkProtocolHttpAbstract extends ONetworkProtocol {
 
     jsonResponseError = iConfiguration.getValueAsBoolean(OGlobalConfiguration.NETWORK_HTTP_JSON_RESPONSE_ERROR);
 
+    sameSiteCookie = iConfiguration.getValueAsBoolean(OGlobalConfiguration.NETWORK_HTTP_SESSION_COOKIE_SAME_SITE);
+
     channel = new OChannelTextServer(iSocket, iConfiguration);
     channel.connected();
 
@@ -165,9 +168,7 @@ public abstract class ONetworkProtocolHttpAbstract extends ONetworkProtocol {
 
     listeningAddress = getListeningAddress();
 
-
-
-    OServerPluginHelper.invokeHandlerCallbackOnSocketAccepted(server,this);
+    OServerPluginHelper.invokeHandlerCallbackOnSocketAccepted(server, this);
 
     start();
   }
@@ -187,6 +188,7 @@ public abstract class ONetworkProtocolHttpAbstract extends ONetworkProtocol {
     response = new OHttpResponse(channel.outStream, request.httpVersion, additionalResponseHeaders, responseCharSet,
         connection.getData().serverInfo, request.sessionId, callbackF, request.keepAlive, connection);
     response.setJsonErrorResponse(jsonResponseError);
+    response.setSameSiteCookie(sameSiteCookie);
     if (request.contentEncoding != null && request.contentEncoding.equals(OHttpUtils.CONTENT_ACCEPT_GZIP_ENCODED)) {
       response.setContentEncoding(OHttpUtils.CONTENT_ACCEPT_GZIP_ENCODED);
     }

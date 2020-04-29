@@ -70,17 +70,18 @@ public class OHttpResponse {
   public        String       contentType;
   public        String       serverInfo;
 
-  public String sessionId;
-  public String callbackFunction;
-  public String contentEncoding;
-  public String staticEncoding;
-  public boolean sendStarted = false;
-  public String content;
-  public int    code;
-  public boolean keepAlive         = true;
-  public boolean jsonErrorResponse = true;
-  public OClientConnection connection;
-  private boolean streaming = OGlobalConfiguration.NETWORK_HTTP_STREAMING.getValueAsBoolean();
+  public  String            sessionId;
+  public  String            callbackFunction;
+  public  String            contentEncoding;
+  public  String            staticEncoding;
+  public  boolean           sendStarted       = false;
+  public  String            content;
+  public  int               code;
+  public  boolean           keepAlive         = true;
+  public  boolean           jsonErrorResponse = true;
+  private boolean           sameSiteCookie    = true;
+  public  OClientConnection connection;
+  private boolean           streaming         = OGlobalConfiguration.NETWORK_HTTP_STREAMING.getValueAsBoolean();
 
   public OHttpResponse(final OutputStream iOutStream, final String iHttpVersion, final String[] iAdditionalHeaders,
       final String iResponseCharSet, final String iServerInfo, final String iSessionId, final String iCallbackFunction,
@@ -132,7 +133,9 @@ public class OHttpResponse {
     }
 
     if (sessionId != null)
-      writeLine("Set-Cookie: " + OHttpUtils.OSESSIONID + "=" + sessionId + "; Path=/; HttpOnly");
+      writeLine("Set-Cookie: " + OHttpUtils.OSESSIONID + "=" + sessionId + "; Path=/; HttpOnly;" + (sameSiteCookie ?
+          "SameSite=Strict;" :
+          ""));
 
     byte[] binaryContent = null;
     if (!empty) {
@@ -643,6 +646,14 @@ public class OHttpResponse {
 
   public void setJsonErrorResponse(boolean jsonErrorResponse) {
     this.jsonErrorResponse = jsonErrorResponse;
+  }
+
+  public void setSameSiteCookie(boolean sameSiteCookie) {
+    this.sameSiteCookie = sameSiteCookie;
+  }
+
+  public boolean isSameSiteCookie() {
+    return sameSiteCookie;
   }
 
   private String keyFromMapObject(Object key) {
