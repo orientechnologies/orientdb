@@ -63,7 +63,7 @@ public class OHttpGraphResponse extends OHttpResponse {
 
     if (!mode.equalsIgnoreCase("graph")) {
       super.writeRecords(iRecords, iFetchPlan, iFormat, accept, iAdditionalProperties, mode);
-      return; 
+      return;
     }
 
     if (accept != null && accept.contains("text/csv"))
