@@ -330,7 +330,7 @@ public class OModifier extends SimpleNode {
       } else if (OMultiValue.isMultiValue(target)) {
         List<Object> result = new ArrayList<>();
         for (Object o : OMultiValue.getMultiValueIterable(target)) {
-          if (condition.evaluate(target, ctx)) {
+          if (condition.evaluate(o, ctx)) {
             result.add(o);
           }
         }
