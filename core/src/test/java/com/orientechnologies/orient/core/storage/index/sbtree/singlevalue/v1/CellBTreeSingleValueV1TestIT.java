@@ -11,21 +11,19 @@ import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperationsManager;
-import com.orientechnologies.orient.core.storage.index.sbtree.local.v1.SBTreeV1TestIT;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
 import java.io.File;
-import java.io.IOException;
 import java.util.*;
 import java.util.stream.Stream;
 
 public class CellBTreeSingleValueV1TestIT {
-  private OAtomicOperationsManager atomicOperationsManager;
+  private OAtomicOperationsManager       atomicOperationsManager;
   private CellBTreeSingleValueV1<String> singleValueTree;
-  private OrientDB orientDB;
+  private OrientDB                       orientDB;
 
   private String dbName;
 
@@ -339,7 +337,8 @@ public class CellBTreeSingleValueV1TestIT {
             for (int j = 0; j < rollbackInterval; j++) {
               final int key = iterationCounter * rollbackInterval + j;
               if (key % 3 == 0) {
-                Assert.assertEquals(singleValueTree.remove(atomicOperation, Integer.toString(key)), new ORecordId(key % 32000, key));
+                Assert
+                    .assertEquals(singleValueTree.remove(atomicOperation, Integer.toString(key)), new ORecordId(key % 32000, key));
               }
             }
             if (rollbackCounter == 0) {
@@ -385,7 +384,8 @@ public class CellBTreeSingleValueV1TestIT {
               final int key = iterationCounter * rollbackInterval + j;
 
               if (key % 3 == 0) {
-                Assert.assertEquals(singleValueTree.remove(atomicOperation, Integer.toString(key)), new ORecordId(key % 32000, key));
+                Assert
+                    .assertEquals(singleValueTree.remove(atomicOperation, Integer.toString(key)), new ORecordId(key % 32000, key));
               }
 
               if (key % 2 == 0) {
@@ -613,23 +613,24 @@ public class CellBTreeSingleValueV1TestIT {
         }
       }
 
-      assertIterateBetweenEntries(keyValues, random, true, true, true);
-      assertIterateBetweenEntries(keyValues, random, true, false, true);
-      assertIterateBetweenEntries(keyValues, random, false, true, true);
-      assertIterateBetweenEntries(keyValues, random, false, false, true);
-
-      assertIterateBetweenEntries(keyValues, random, true, true, false);
-      assertIterateBetweenEntries(keyValues, random, true, false, false);
-      assertIterateBetweenEntries(keyValues, random, false, true, false);
-      assertIterateBetweenEntries(keyValues, random, false, false, false);
-
-      Assert.assertEquals(singleValueTree.firstKey(), keyValues.firstKey());
-      Assert.assertEquals(singleValueTree.lastKey(), keyValues.lastKey());
     }
+
+    assertIterateBetweenEntries(keyValues, random, true, true, true);
+    assertIterateBetweenEntries(keyValues, random, true, false, true);
+    assertIterateBetweenEntries(keyValues, random, false, true, true);
+    assertIterateBetweenEntries(keyValues, random, false, false, true);
+
+    assertIterateBetweenEntries(keyValues, random, true, true, false);
+    assertIterateBetweenEntries(keyValues, random, true, false, false);
+    assertIterateBetweenEntries(keyValues, random, false, true, false);
+    assertIterateBetweenEntries(keyValues, random, false, false, false);
+
+    Assert.assertEquals(singleValueTree.firstKey(), keyValues.firstKey());
+    Assert.assertEquals(singleValueTree.lastKey(), keyValues.lastKey());
   }
 
   private void assertIterateMajorEntries(NavigableMap<String, ORID> keyValues, Random random, boolean keyInclusive,
-                                         boolean ascSortOrder) {
+      boolean ascSortOrder) {
     String[] keys = new String[keyValues.size()];
     int index = 0;
 
@@ -673,7 +674,7 @@ public class CellBTreeSingleValueV1TestIT {
   }
 
   private void assertIterateMinorEntries(NavigableMap<String, ORID> keyValues, Random random, boolean keyInclusive,
-                                         boolean ascSortOrder) {
+      boolean ascSortOrder) {
     String[] keys = new String[keyValues.size()];
     int index = 0;
 
@@ -716,7 +717,7 @@ public class CellBTreeSingleValueV1TestIT {
   }
 
   private void assertIterateBetweenEntries(NavigableMap<String, ORID> keyValues, Random random, boolean fromInclusive,
-                                           boolean toInclusive, boolean ascSortOrder) {
+      boolean toInclusive, boolean ascSortOrder) {
     String[] keys = new String[keyValues.size()];
     int index = 0;
 
