@@ -2,7 +2,6 @@ package com.orientechnologies.orient.server;
 
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.client.remote.message.*;
-import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OStorageConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.OMetadataUpdateListener;
@@ -18,14 +17,14 @@ import java.util.concurrent.*;
 
 public class OPushManager implements OMetadataUpdateListener {
 
-  protected final Set<WeakReference<ONetworkProtocolBinary>>              distributedConfigPush = new HashSet<>();
-  protected final Map<String, Set<WeakReference<ONetworkProtocolBinary>>> storageConfigurations = new HashMap<>();
-  protected final Map<String, Set<WeakReference<ONetworkProtocolBinary>>> schema                = new HashMap<>();
-  protected final Map<String, Set<WeakReference<ONetworkProtocolBinary>>> indexManager          = new HashMap<>();
-  protected final Map<String, Set<WeakReference<ONetworkProtocolBinary>>> functions             = new HashMap<>();
-  protected final Map<String, Set<WeakReference<ONetworkProtocolBinary>>> sequences             = new HashMap<>();
-  private         Set<String>                                             registerDatabase      = new HashSet<>();
-  private final   ExecutorService                                         executor;
+  protected final Set<WeakReference<ONetworkProtocolBinary>> distributedConfigPush = new HashSet<>();
+  protected final OPushEventType                             storageConfigurations = new OPushEventType();
+  protected final OPushEventType                             schema                = new OPushEventType();
+  protected final OPushEventType                             indexManager          = new OPushEventType();
+  protected final OPushEventType                             functions             = new OPushEventType();
+  protected final OPushEventType                             sequences             = new OPushEventType();
+  private         Set<String>                                registerDatabase      = new HashSet<>();
+  private final   ExecutorService                            executor;
 
   public OPushManager() {
     executor = new ThreadPoolExecutor(0, 5, 1, TimeUnit.MINUTES, new SynchronousQueue<Runnable>(), new PushThreadFactory());
@@ -61,11 +60,11 @@ public class OPushManager implements OMetadataUpdateListener {
         iter.remove();
       }
     }
-    cleanListeners(storageConfigurations);
-    cleanListeners(schema);
-    cleanListeners(indexManager);
-    cleanListeners(functions);
-    cleanListeners(sequences);
+    storageConfigurations.cleanListeners();
+    schema.cleanListeners();
+    indexManager.cleanListeners();
+    functions.cleanListeners();
+    sequences.cleanListeners();
   }
 
   private void cleanListeners(Map<String, Set<WeakReference<ONetworkProtocolBinary>>> toClean) {
@@ -83,18 +82,12 @@ public class OPushManager implements OMetadataUpdateListener {
     executor.shutdownNow();
   }
 
-  private void genericSubscribe(Map<String, Set<WeakReference<ONetworkProtocolBinary>>> context, ODatabaseDocumentInternal database,
-      ONetworkProtocolBinary protocol) {
+  private void genericSubscribe(OPushEventType context, ODatabaseDocumentInternal database, ONetworkProtocolBinary protocol) {
     if (!registerDatabase.contains(database.getName())) {
       database.getSharedContext().registerListener(this);
       registerDatabase.add(database.getName());
     }
-    Set<WeakReference<ONetworkProtocolBinary>> pushSockets = context.get(database.getName());
-    if (pushSockets == null) {
-      pushSockets = new HashSet<>();
-      context.put(database.getName(), pushSockets);
-    }
-    pushSockets.add(new WeakReference<>(protocol));
+    context.subscribe(database.getName(), protocol);
   }
 
   public synchronized void subscribeStorageConfiguration(ODatabaseDocumentInternal database, ONetworkProtocolBinary protocol) {
@@ -120,35 +113,34 @@ public class OPushManager implements OMetadataUpdateListener {
   @Override
   public void onSchemaUpdate(String database, OSchemaShared schema) {
     OPushSchemaRequest request = new OPushSchemaRequest(schema.toNetworkStream());
-    genericNotify(this.schema, database, request);
+    this.schema.send(database, request, this);
   }
 
   @Override
   public void onIndexManagerUpdate(String database, OIndexManagerAbstract indexManager) {
     OPushIndexManagerRequest request = new OPushIndexManagerRequest(((OIndexManagerShared) indexManager).toNetworkStream());
-    genericNotify(this.indexManager, database, request);
+    this.indexManager.send(database, request, this);
   }
 
   @Override
   public void onFunctionLibraryUpdate(String database) {
     OPushFunctionsRequest request = new OPushFunctionsRequest();
-    genericNotify(this.functions, database, request);
+    this.functions.send(database, request, this);
   }
 
   @Override
   public void onSequenceLibraryUpdate(String database) {
     OPushSequencesRequest request = new OPushSequencesRequest();
-    genericNotify(this.functions, database, request);
+    this.sequences.send(database, request, this);
   }
 
   @Override
   public void onStorageConfigurationUpdate(String database, OStorageConfiguration update) {
     OPushStorageConfigurationRequest request = new OPushStorageConfigurationRequest(update);
-    genericNotify(storageConfigurations, database, request);
+    storageConfigurations.send(database, request, this);
   }
 
-  private void genericNotify(Map<String, Set<WeakReference<ONetworkProtocolBinary>>> context, String database,
-      OBinaryPushRequest<?> request) {
+  public void genericNotify(Map<String, Set<WeakReference<ONetworkProtocolBinary>>> context, String database, OPushEventType pack) {
     try {
       executor.submit(() -> {
         Set<WeakReference<ONetworkProtocolBinary>> clients = null;
@@ -165,6 +157,7 @@ public class OPushManager implements OMetadataUpdateListener {
             ONetworkProtocolBinary protocolBinary = ref.get();
             if (protocolBinary != null) {
               try {
+                OBinaryPushRequest<?> request = pack.getRequest(database);
                 OBinaryPushResponse response = protocolBinary.push(request);
               } catch (IOException e) {
                 synchronized (OPushManager.this) {
