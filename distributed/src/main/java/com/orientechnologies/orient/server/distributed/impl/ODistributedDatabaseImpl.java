@@ -673,6 +673,9 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
 
   @Override
   public void handleUnreachableNode(final String nodeName) {
+    if (!running) {
+      return;
+    }
     ODistributedServerLog.debug(this, manager.getLocalNodeName(), nodeName, DIRECTION.IN,
         "Distributed transaction: rolling back all the pending transactions coordinated by the unreachable server '%s'", nodeName);
 
