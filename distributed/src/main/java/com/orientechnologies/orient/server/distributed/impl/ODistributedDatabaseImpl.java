@@ -26,6 +26,7 @@ import com.orientechnologies.common.concur.OOfflineNodeException;
 import com.orientechnologies.common.concur.lock.OSimpleLockManager;
 import com.orientechnologies.common.concur.lock.OSimpleLockManagerImpl;
 import com.orientechnologies.common.exception.OException;
+import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.profiler.OAbstractProfiler;
 import com.orientechnologies.common.profiler.OProfiler;
 import com.orientechnologies.common.util.OCallable;
@@ -374,20 +375,24 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
             (guards) -> {
               this.requestExecutor.submit(
                   () -> {
-                    execute(request, task);
-                    this.lockManager.unlock(guards);
+                    try {
+                      execute(request);
+                    } finally {
+                      this.lockManager.unlock(guards);
+                    }
                   });
             });
       } else {
         this.requestExecutor.submit(
             () -> {
-              execute(request, task);
+              execute(request);
             });
       }
     }
   }
 
-  private void execute(ODistributedRequest request, ORemoteTask task) {
+  private void execute(ODistributedRequest request) {
+    ORemoteTask task = request.getTask();
     try {
       manager.messageProcessStart(request);
       waitIsReady(task);
@@ -1215,7 +1220,32 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
       ALL_QUEUES.add(i);
     }
     synchronized (this) {
-      this.requestExecutor = Executors.newFixedThreadPool(totalWorkers);
+      this.requestExecutor =
+          new ThreadPoolExecutor(
+              0,
+              totalWorkers,
+              1,
+              TimeUnit.HOURS,
+              new SynchronousQueue<Runnable>(),
+              new ThreadFactory() {
+                @Override
+                public Thread newThread(Runnable r) {
+                  Thread thread = new Thread();
+                  thread.setName(
+                      "OrientDB DistributedWorker node="
+                          + getLocalNodeName()
+                          + " db="
+                          + databaseName);
+                  thread.setUncaughtExceptionHandler(
+                      new Thread.UncaughtExceptionHandler() {
+                        @Override
+                        public void uncaughtException(Thread t, Throwable e) {
+                          OLogManager.instance().error(t, "Exception in distributed executor", e);
+                        }
+                      });
+                  return thread;
+                }
+              });
     }
   }
 
