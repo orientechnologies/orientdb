@@ -31,6 +31,10 @@ import javax.naming.directory.SearchResult;
 import javax.naming.NamingEnumeration;
 import javax.security.auth.Subject;
 
+import com.orientechnologies.orient.server.OServer;
+import com.orientechnologies.orient.server.security.OSecurityAuthenticator;
+
+import com.orientechnologies.security.kerberos.OKerberosAuthenticator;
 
 import com.orientechnologies.common.log.OLogManager;
 
@@ -42,6 +46,108 @@ import com.orientechnologies.common.log.OLogManager;
  */
 public class OLDAPLibrary
 {
+	public static DirContext openContext(final OServer oServer, final String authentication, final List<OLDAPServer> ldapServers, final boolean debug)
+	{
+		DirContext dc = null;
+
+		// Set up environment for creating initial context
+		Hashtable<String, String> env = new Hashtable<String, String>();
+		env.put(Context.INITIAL_CONTEXT_FACTORY, "com.sun.jndi.ldap.LdapCtxFactory");
+		env.put("com.sun.jndi.ldap.connect.timeout", "30000"); // in milliseconds
+
+		for(OLDAPServer ldap : ldapServers)
+		{
+			try
+			{
+				String url = ldap.getURL();
+			
+				// If the LDAPServer info is marked as an alias, then the real hostname needs to be acquired.
+				if(ldap.isAlias()) url = getRealURL(ldap, debug);
+			
+				// Must use fully qualified hostname
+				env.put(Context.PROVIDER_URL, url);
+
+				if(debug) OLogManager.instance().info(null, "OLDAPLibrary.openContext() Trying ProviderURL: " + url);
+
+				if(authentication.equalsIgnoreCase("GSSAPI") || authentication.equalsIgnoreCase("Kerberos"))
+				{
+					dc = openKerberosContext(oServer, env);
+				}
+				else
+				if(authentication.equalsIgnoreCase("Simple"))
+				{
+					dc = openSimpleContext(env, ldap);
+				}
+
+				if(dc != null) break;
+			}
+			catch(Exception ex)
+			{
+				OLogManager.instance().error(null, "OLDAPLibrary.openContext() Exception: ", ex);			
+			}
+		}
+
+		return dc;
+	}
+
+	private static DirContext openSimpleContext(Hashtable<String, String> env, OLDAPServer ldap)
+	{
+		env.put(Context.SECURITY_AUTHENTICATION, "simple");
+		env.put(Context.SECURITY_PRINCIPAL, ldap.getPrincipal());
+		env.put(Context.SECURITY_CREDENTIALS, ldap.getCredentials());
+
+		try
+		{
+			return new InitialDirContext(env);
+		}
+		catch(Exception ex)
+		{
+			OLogManager.instance().error(null, "OLDAPLibrary.openSimpleContext() Exception: ", ex);
+		}
+
+		return null;
+	}
+
+	private static DirContext openKerberosContext(OServer oServer, Hashtable<String, String> env)
+	{
+		// Request the use of the "GSSAPI" SASL mechanism
+		// Authenticate by using already established Kerberos credentials
+		env.put(Context.SECURITY_AUTHENTICATION, "GSSAPI");
+
+		OSecurityAuthenticator authMethod = oServer.getSecurity().getAuthenticator("Kerberos");
+  
+		if(authMethod != null && authMethod instanceof OKerberosAuthenticator)
+		{
+			OKerberosAuthenticator ka = (OKerberosAuthenticator)authMethod;
+
+			Subject subject = ka.getClientSubject();
+   
+			return Subject.doAs(subject, new PrivilegedAction<DirContext>()
+			{
+				public DirContext run()
+				{
+					try
+					{
+						// Create initial context
+						return new InitialDirContext(env);
+					}
+					catch(Exception ex)
+					{
+						OLogManager.instance().error(null, "OLDAPLibrary.openKerberosContext() Exception: ", ex);
+					}
+
+					return null;
+				}
+			});
+		}
+		else
+		{
+			OLogManager.instance().error(null, "OLDAPLibrary.openKerberosContext() Invalid OSecurityAuthenticator", null);
+		}
+
+		return null;
+	}
+	/*
 	public static DirContext openContext(final Subject subject, final List<OLDAPServer> ldapServers, final boolean debug)
 	{
 		return Subject.doAs(subject, new PrivilegedAction<DirContext>()
@@ -79,7 +185,7 @@ public class OLDAPLibrary
 					}
 					catch(Exception ex)
 					{
-						OLogManager.instance().error(null, "OLDAPLibrary.openContext() Exception: ", ex);			
+						OLogManager.instance().error(null, "OLDAPLibrary.openContext() Exception: ", ex);
 					}
 				}
 
@@ -87,7 +193,7 @@ public class OLDAPLibrary
 			}
 		});
 	}
-
+*/
 	// If the LDAPServer's isAlias() returns true, then the specified hostname is an alias, requiring a reverse
 	// look-up of its IP address to resolve the real hostname to use.  This is often used with DNS round-robin.
 	private static String getRealURL(OLDAPServer ldap, final boolean debug) throws UnknownHostException

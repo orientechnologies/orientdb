@@ -134,11 +134,16 @@ public class OLDAPImporter implements OSecurityComponent {
                 if (dbDomainDoc.containsField("domain")) {
                   domain = dbDomainDoc.field("domain");
 
-                  // If authenticator is null, it defaults to OLDAPImporter's primary OSecurityAuthenticator.
-                  String authenticator = null;
+                  // If authentication is null, it defaults to "GSSAPI" (Kerberos).
+                  String authentication = null;
 
+                  // We check this for backwards compatibility as we renamed the property to "authentication".
                   if (dbDomainDoc.containsField("authenticator")) {
-                    authenticator = dbDomainDoc.field("authenticator");
+                    authentication = dbDomainDoc.field("authenticator");
+                  }
+
+                  if (dbDomainDoc.containsField("authentication")) {
+                    authentication = dbDomainDoc.field("authentication");
                   }
 
                   if (dbDomainDoc.containsField("servers")) {
@@ -154,7 +159,17 @@ public class OLDAPImporter implements OSecurityComponent {
                       if (ldapServerDoc.containsField("isAlias"))
                         isAlias = ldapServerDoc.field("isAlias");
 
-                      OLDAPServer server = OLDAPServer.validateURL(url, isAlias);
+                      String principal = "";
+
+                      if (ldapServerDoc.containsField("principal"))
+                        principal = ldapServerDoc.field("principal");
+
+                      String credentials = "";
+
+                      if (ldapServerDoc.containsField("credentials"))
+                        credentials = ldapServerDoc.field("credentials");
+
+                      OLDAPServer server = OLDAPServer.validateURL(url, isAlias, principal, credentials);
 
                       if (server != null) {
                         ldapServerList.add(server);
@@ -199,7 +214,7 @@ public class OLDAPImporter implements OSecurityComponent {
                       }
                     }
 
-                    DatabaseDomain dbd = new DatabaseDomain(domain, ldapServerList, userList, authenticator);
+                    DatabaseDomain dbd = new DatabaseDomain(domain, ldapServerList, userList, authentication);
 
                     dbDomainsList.add(dbd);
                   } else {
@@ -312,12 +327,12 @@ public class OLDAPImporter implements OSecurityComponent {
       return _Domain;
     }
 
-    private String            _Authenticator;
+    private String            _Authentication = "GSSAPI"; // Default to Kerberos
     private List<OLDAPServer> _LDAPServers;
     private List<User>        _Users;
 
-    public String getAuthenticator() {
-      return _Authenticator;
+    public String getAuthentication() {
+      return _Authentication;
     }
 
     public List<OLDAPServer> getLDAPServers() {
@@ -328,12 +343,11 @@ public class OLDAPImporter implements OSecurityComponent {
       return _Users;
     }
 
-    public DatabaseDomain(final String domain, final List<OLDAPServer> ldapServers, final List<User> userList,
-        String authenticator) {
+    public DatabaseDomain(final String domain, final List<OLDAPServer> ldapServers, final List<User> userList, String authentication) {
       _Domain = domain;
       _LDAPServers = ldapServers;
       _Users = userList;
-      _Authenticator = authenticator;
+      _Authentication = authentication;
     }
   }
 
@@ -391,6 +405,7 @@ public class OLDAPImporter implements OSecurityComponent {
   }
 
   // OSecuritySystemAccess
+  /*
   public Subject getLDAPSubject(final String authName) {
     Subject subject = null;
 
@@ -407,7 +422,7 @@ public class OLDAPImporter implements OSecurityComponent {
 
     return subject;
   }
-
+*/
   /***
    * LDAP Import
    ***/
@@ -444,70 +459,68 @@ public class OLDAPImporter implements OSecurityComponent {
 
           for (DatabaseDomain dd : db.getDatabaseDomains()) {
             try {
-              Subject ldapSubject = getLDAPSubject(dd.getAuthenticator());
+//            Subject ldapSubject = getLDAPSubject(dd.getAuthenticator());
 
-              if (ldapSubject != null) {
-                DirContext dc = OLDAPLibrary.openContext(ldapSubject, dd.getLDAPServers(), _Debug);
+//            if (ldapSubject != null) {
+//              DirContext dc = OLDAPLibrary.openContext(ldapSubject, dd.getLDAPServers(), _Debug);
+              DirContext dc = OLDAPLibrary.openContext(_Server, dd.getAuthentication(), dd.getLDAPServers(), _Debug);
 
-                if (dc != null) {
-                  deleteUsers = true;
+              if (dc != null) {
+                deleteUsers = true;
 
-                  try {
-                    // Combine the "users" from security.json's "ldapImporter" and the class OLDAPUserClass.
-                    List<User> userList = new ArrayList<User>();
-                    userList.addAll(dd.getUsers());
+                try {
+                  // Combine the "users" from security.json's "ldapImporter" and the class OLDAPUserClass.
+                  List<User> userList = new ArrayList<User>();
+                  userList.addAll(dd.getUsers());
 
-                    retrieveLDAPUsers(odb, dd.getDomain(), userList);
+                  retrieveLDAPUsers(odb, dd.getDomain(), userList);
 
-                    for (User user : userList) {
-                      List<String> usersRetrieved = new ArrayList<String>();
+                  for (User user : userList) {
+                    List<String> usersRetrieved = new ArrayList<String>();
 
-                      OLogManager.instance()
-                          .info(this, "OLDAPImporter.importLDAP() Calling retrieveUsers for Database: %s, Filter: %s", db.getName(),
-                              user.getFilter());
+                    OLogManager.instance()
+                      .info(this, "OLDAPImporter.importLDAP() Calling retrieveUsers for Database: %s, Filter: %s", db.getName(), user.getFilter());
 
-                      OLDAPLibrary.retrieveUsers(dc, user.getBaseDN(), user.getFilter(), usersRetrieved, _Debug);
+                    OLDAPLibrary.retrieveUsers(dc, user.getBaseDN(), user.getFilter(), usersRetrieved, _Debug);
 
-                      if (!usersRetrieved.isEmpty()) {
-                        for (String upn : usersRetrieved) {
-                          if (usersToBeDeleted.contains(upn))
-                            usersToBeDeleted.remove(upn);
+                    if (!usersRetrieved.isEmpty()) {
+                      for (String upn : usersRetrieved) {
+                        if (usersToBeDeleted.contains(upn))
+                          usersToBeDeleted.remove(upn);
 
-                          OLogManager.instance()
-                              .info(this, "OLDAPImporter.importLDAP() Database: %s, Filter: %s, UPN: %s", db.getName(),
-                                  user.getFilter(), upn);
-
-                          DatabaseUser dbUser = null;
-
-                          if (usersMap.containsKey(upn))
-                            dbUser = usersMap.get(upn);
-                          else {
-                            dbUser = new DatabaseUser(upn);
-                            usersMap.put(upn, dbUser);
-                          }
-
-                          if (dbUser != null) {
-                            dbUser.addRoles(user.getRoles());
-                          }
-                        }
-                      } else {
                         OLogManager.instance()
-                            .info(this, "OLDAPImporter.importLDAP() No users found at BaseDN: %s, Filter: %s, for Database: %s",
-                                user.getBaseDN(), user.getFilter(), db.getName());
+                          .info(this, "OLDAPImporter.importLDAP() Database: %s, Filter: %s, UPN: %s", db.getName(), user.getFilter(), upn);
+
+                        DatabaseUser dbUser = null;
+
+                        if (usersMap.containsKey(upn))
+                          dbUser = usersMap.get(upn);
+                        else {
+                          dbUser = new DatabaseUser(upn);
+                          usersMap.put(upn, dbUser);
+                        }
+
+                        if (dbUser != null) {
+                          dbUser.addRoles(user.getRoles());
+                        }
                       }
+                    } else {
+                      OLogManager.instance()
+                        .info(this, "OLDAPImporter.importLDAP() No users found at BaseDN: %s, Filter: %s, for Database: %s", user.getBaseDN(), user.getFilter(), db.getName());
                     }
-                  } finally {
-                    dc.close();
                   }
-                } else {
-                  OLogManager.instance()
-                      .error(this, "OLDAPImporter.importLDAP() Could not obtain an LDAP DirContext for Database %s", null,
-                          db.getName());
+                } finally {
+                  dc.close();
                 }
               } else {
                 OLogManager.instance()
-                    .error(this, "OLDAPImporter.importLDAP() Could not obtain an LDAP Subject for Database %s", null, db.getName());
+                  .error(this, "OLDAPImporter.importLDAP() Could not obtain an LDAP DirContext for Database %s", null, db.getName());
               }
+/*              
+            } else {
+              OLogManager.instance()
+                .error(this, "OLDAPImporter.importLDAP() Could not obtain an LDAP Subject for Database %s", null, db.getName());
+            }*/
             } catch (Exception ex) {
               OLogManager.instance().error(this, "OLDAPImporter.importLDAP() Database: %s", ex, db.getName());
             }

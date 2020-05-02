@@ -25,6 +25,8 @@ public class OLDAPServer
 	private String _Scheme, _Host;
 	private int _Port;
 	private boolean _IsAlias;
+	private String _Principal;
+	private String _Credentials;
 	
 	public String getHostname() { return _Host; }
 
@@ -41,15 +43,20 @@ public class OLDAPServer
 
 	public boolean isAlias() { return _IsAlias; }
 
-	public OLDAPServer(final String scheme, final String host, int port, boolean isAlias)
+	public String getPrincipal() { return _Principal; }
+	public String getCredentials() { return _Credentials; }
+
+	public OLDAPServer(final String scheme, final String host, int port, boolean isAlias, final String principal, final String credentials)
 	{
 		_Scheme = scheme;
 		_Host = host;
 		_Port = port;
 		_IsAlias = isAlias;
+		_Principal = principal;
+		_Credentials = credentials;
 	}
 	
-	public static OLDAPServer validateURL(final String url, boolean isAlias)
+	public static OLDAPServer validateURL(final String url, boolean isAlias, final String principal, final String credentials)
 	{
 		OLDAPServer server = null;
 		
@@ -62,7 +69,7 @@ public class OLDAPServer
 			int port 		= uri.getPort();
 			if(port == -1) port = 389; // Default to standard LDAP port.
 			
-			server = new OLDAPServer(scheme, host, port, isAlias);
+			server = new OLDAPServer(scheme, host, port, isAlias, principal, credentials);
 		}
 		catch(URISyntaxException se)
 		{
