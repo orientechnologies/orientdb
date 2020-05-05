@@ -1006,7 +1006,7 @@ public class OSecurityShared implements OSecurityInternal {
   private static Object convert(Object originalValue) {
     if (originalValue instanceof ORidBag) {
       Set result = new LinkedHashSet<>();
-      ((ORidBag) originalValue).forEach(x -> result.add(x));
+      ((ORidBag) originalValue).rawIterator().forEachRemaining(x -> result.add(x));
       return result;
     }
     return originalValue;
