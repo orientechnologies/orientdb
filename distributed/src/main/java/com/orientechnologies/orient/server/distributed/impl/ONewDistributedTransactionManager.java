@@ -330,8 +330,8 @@ public class ONewDistributedTransactionManager {
           sendPhase2Task(involvedClusters, nodes, new OTransactionPhase2Task(requestId, false, involvedClustersIds, getLsn()));
           localKo(requestId, database);
           ORecordId recordId = ((OTxConcurrentModification) result).getRecordId();
-          throw new OConcurrentModificationException(recordId, iTx.getRecordEntry(recordId).getRecord().getVersion(),
-              ((OTxConcurrentModification) result).getVersion(), iTx.getRecordEntry(recordId).getType());
+          throw new OConcurrentModificationException(recordId, ((OTxConcurrentModification) result).getVersion(),
+              iTx.getRecordEntry(recordId).getRecord().getVersion(), iTx.getRecordEntry(recordId).getType());
         case OTxException.ID:
           exceptions.add(((OTxException) result).getException());
           OLogManager.instance().debug(this, "distributed exception", ((OTxException) result).getException());
