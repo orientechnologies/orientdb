@@ -28,6 +28,7 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.record.OClassTrigger;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ORecordLazySet;
+import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
 import com.orientechnologies.orient.core.exception.OSecurityAccessException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.index.OIndex;
@@ -909,7 +910,7 @@ public class OSecurityShared implements OSecurityInternal {
       }
 
       OBooleanExpression beforePredicate = OSecurityEngine.getPredicateForSecurityResource(session, this, "database.class.`" + clazz.getName() + "`.`" + propertyName + "`", OSecurityPolicy.Scope.BEFORE_UPDATE);
-      OResultInternal originalRecord = calculateOriginalValue(document);
+      OResultInternal originalRecord = calculateOriginalValue(document, session);
       if (!OSecurityEngine.evaluateSecuirtyPolicyPredicate(session, beforePredicate, originalRecord)) {
         return false;
       }
@@ -968,7 +969,10 @@ public class OSecurityShared implements OSecurityInternal {
     if (record instanceof OElement) {
       OBooleanExpression beforePredicate = ((OElement) record).getSchemaType()
               .map(x -> OSecurityEngine.getPredicateForSecurityResource(session, this, "database.class.`" + x.getName() + "`", OSecurityPolicy.Scope.BEFORE_UPDATE)).orElse(null);
-      OResultInternal originalRecord = calculateOriginalValue(record);
+
+      //TODO avoid calculating original valueif not needed!!!
+
+      OResultInternal originalRecord = calculateOriginalValue(record, session);
       if (!OSecurityEngine.evaluateSecuirtyPolicyPredicate(session, beforePredicate, originalRecord)) {
         return false;
       }
@@ -980,8 +984,46 @@ public class OSecurityShared implements OSecurityInternal {
     return true;
   }
 
-  private OResultInternal calculateOriginalValue(ORecord record) {
-    return OLiveQueryHookV2.calculateBefore(record.getRecord());
+  private OResultInternal calculateOriginalValue(ORecord record, ODatabaseSession db) {
+    return calculateBefore(record.getRecord(), db);
+  }
+
+  public static OResultInternal calculateBefore(ODocument iDocument, ODatabaseSession db) {
+    //iDocument = db.load(iDocument.getIdentity(), null, true);
+    OResultInternal result = new OResultInternal();
+    for (String prop : iDocument.getPropertyNames()) {
+      result.setProperty(prop, unboxRidbags(iDocument.getProperty(prop)));
+    }
+    result.setProperty("@rid", iDocument.getIdentity());
+    result.setProperty("@class", iDocument.getClassName());
+    result.setProperty("@version", iDocument.getVersion());
+    for (String prop : iDocument.getDirtyFields()) {
+      result.setProperty(prop, convert(iDocument.getOriginalValue(prop)));
+    }
+    return result;
+  }
+
+  private static Object convert(Object originalValue) {
+    if (originalValue instanceof ORidBag) {
+      Set result = new LinkedHashSet<>();
+      ((ORidBag) originalValue).forEach(x -> result.add(x));
+      return result;
+    }
+    return originalValue;
+  }
+
+  public static Object unboxRidbags(Object value) {
+    //TODO move it to some helper class
+    if (value instanceof ORidBag) {
+      List<OIdentifiable> result = new ArrayList<>(((ORidBag) value).size());
+      Iterator<OIdentifiable> iter = ((ORidBag) value).rawIterator();
+      while (iter.hasNext()) {
+        result.add(iter.next());
+      }
+
+      return result;
+    }
+    return value;
   }
 
   @Override
