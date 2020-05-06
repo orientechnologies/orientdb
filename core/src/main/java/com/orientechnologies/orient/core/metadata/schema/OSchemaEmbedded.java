@@ -22,7 +22,6 @@ public class OSchemaEmbedded extends OSchemaShared {
 
   public OSchemaEmbedded(OSharedContext sharedContext) {
     super();
-    sharedContext.registerListener(new SchemaSnapshotOnIndexesUpdateListener(this));
   }
 
   public OClass createClass(ODatabaseDocumentInternal database, final String className, int[] clusterIds, OClass... superClasses) {

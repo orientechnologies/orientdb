@@ -412,6 +412,7 @@ public abstract class OIndexManagerAbstract extends ODocumentWrapperNoClass impl
 
   protected void releaseExclusiveLock() {
     int val = writeLockNesting.decrementAndGet();
+    getDatabase().getSharedContext().getSchema().forceSnapshot(ODatabaseRecordThreadLocal.instance().get());
     internalReleaseExclusiveLock();
     if (val == 0) {
       ODatabaseDocumentInternal database = getDatabase();
