@@ -622,7 +622,7 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
   public void internalCommit2pc(ONewDistributedTxContextImpl txContext) {
     try {
       OTransactionInternal tx = txContext.getTransaction();
-
+      tx.setDatabase(this);
       ((OAbstractPaginatedStorage) this.getStorage().getUnderlying()).commitPreAllocated(tx);
     } catch (OLowDiskSpaceException ex) {
       distributedManager.setDatabaseStatus(getLocalNodeName(), getName(), ODistributedServerManager.DB_STATUS.OFFLINE);

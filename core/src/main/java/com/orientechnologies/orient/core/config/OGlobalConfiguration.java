@@ -253,8 +253,7 @@ public enum OGlobalConfiguration { // ENVIRONMENT
   STORAGE_PRINT_WAL_PERFORMANCE_INTERVAL("storage.walPerformanceStatisticsInterval",
       "Interval in seconds between consequent reports of WAL performance statistics", Integer.class, 10),
 
-  @Deprecated
-  STORAGE_TRACK_CHANGED_RECORDS_IN_WAL("storage.trackChangedRecordsInWAL",
+  @Deprecated STORAGE_TRACK_CHANGED_RECORDS_IN_WAL("storage.trackChangedRecordsInWAL",
       "If this flag is set metadata which contains rids of changed records is added at the end of each atomic operation",
       Boolean.class, false),
 
@@ -614,6 +613,9 @@ public enum OGlobalConfiguration { // ENVIRONMENT
 
   NETWORK_HTTP_SESSION_EXPIRE_TIMEOUT("network.http.sessionExpireTimeout",
       "Timeout, after which an http session is considered to have expired (in seconds)", Integer.class, 900),
+
+  NETWORK_HTTP_SESSION_COOKIE_SAME_SITE("network.http.session.cookie.sameSite", "Activate the same site cookie session",
+      Boolean.class, true),
 
   NETWORK_HTTP_USE_TOKEN("network.http.useToken", "Enable Token based sessions for http", Boolean.class, false),
 
@@ -982,7 +984,6 @@ public enum OGlobalConfiguration { // ENVIRONMENT
   @OApi(maturity = OApi.MATURITY.NEW) DISTRIBUTED_CONCURRENT_TX_AUTORETRY_DELAY("distributed.concurrentTxAutoRetryDelay",
       "Delay (in ms) between attempts on executing a distributed transaction, which had failed because of locked records. (0=no delay)",
       Integer.class, 1000, true),
-
 
   DISTRIBUTED_TRANSACTION_SEQUENCE_SET_SIZE("distributed.transactionSequenceSetSize",
       "Size of the set of sequences used by distributed transactions, correspond to the amount of transactions commits that can be active at the same time",

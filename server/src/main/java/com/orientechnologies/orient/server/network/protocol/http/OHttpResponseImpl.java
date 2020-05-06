@@ -52,8 +52,10 @@ public class OHttpResponseImpl extends OHttpResponse {
       writeLine(iHeaders);
     }
 
-    if (getSessionId() != null)
-      writeLine("Set-Cookie: " + OHttpUtils.OSESSIONID + "=" + getSessionId() + "; Path=/; HttpOnly");
+    if (getSessionId() != null) {
+      String sameSite = (isSameSiteCookie() ? "SameSite=Strict;" : "");
+      writeLine("Set-Cookie: " + OHttpUtils.OSESSIONID + "=" + getSessionId() + "; Path=/; HttpOnly;" + sameSite);
+    }
 
     byte[] binaryContent = null;
     if (!empty) {

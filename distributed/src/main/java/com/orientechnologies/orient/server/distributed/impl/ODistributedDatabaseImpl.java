@@ -83,12 +83,12 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
   protected       ODistributedWorker                                              lockThread;
   protected       ODistributedWorker                                              nowaitThread;
 
-  private          AtomicLong                            totalSentRequests     = new AtomicLong();
-  private          AtomicLong                            totalReceivedRequests = new AtomicLong();
-  private          TimerTask                             txTimeoutTask         = null;
-  private          CountDownLatch                        waitForOnline         = new CountDownLatch(1);
-  private volatile boolean                               running               = true;
-  private          AtomicBoolean                         parsing               = new AtomicBoolean(true);
+  private          AtomicLong     totalSentRequests     = new AtomicLong();
+  private          AtomicLong     totalReceivedRequests = new AtomicLong();
+  private          TimerTask      txTimeoutTask         = null;
+  private          CountDownLatch waitForOnline         = new CountDownLatch(1);
+  private volatile boolean        running               = true;
+  private          AtomicBoolean  parsing               = new AtomicBoolean(true);
 
   private final String                           localNodeName;
   private final OSimpleLockManager<ORID>         recordLockManager;
@@ -205,8 +205,11 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
       int retryCount, int autoRetryDelay) {
     pending.incrementAndGet();
     Orient.instance().scheduleTask(() -> {
-      processRequest(new ODistributedRequest(getManager(), senderNodeId, msgSequence, databaseName, payload), false);
-      pending.decrementAndGet();
+      try {
+        processRequest(new ODistributedRequest(getManager(), senderNodeId, msgSequence, databaseName, payload), false);
+      } finally {
+        pending.decrementAndGet();
+      }
     }, autoRetryDelay * retryCount, 0);
   }
 
@@ -214,15 +217,12 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
    * Distributed requests against the available workers by using one queue per worker. This guarantee the sequence of the operations
    * against the same record cluster.
    */
-  public synchronized void processRequest(final ODistributedRequest request, final boolean waitForAcceptingRequests) {
+  public void processRequest(final ODistributedRequest request, final boolean waitForAcceptingRequests) {
     if (!running) {
       throw new ODistributedException("Server is going down or is removing the database:'" + getDatabaseName() + "' discarding");
     }
 
     final ORemoteTask task = request.getTask();
-    task.received(request, this);
-    manager.messageReceived(request);
-
     if (waitForAcceptingRequests) {
       waitIsReady(task);
 
@@ -230,96 +230,100 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
         throw new ODistributedException("Server is going down or is removing the database:'" + getDatabaseName() + "' discarding");
       }
     }
+    synchronized (this) {
+      task.received(request, this);
+      manager.messageReceived(request);
 
-    totalReceivedRequests.incrementAndGet();
+      totalReceivedRequests.incrementAndGet();
 
-    final int[] partitionKeys = task.getPartitionKey();
+      final int[] partitionKeys = task.getPartitionKey();
 
-    if (ODistributedServerLog.isDebugEnabled())
-      ODistributedServerLog
-          .debug(this, localNodeName, task.getNodeSource(), DIRECTION.IN, "Request %s on database '%s' partitionKeys=%s task=%s",
-              request, databaseName, Arrays.toString(partitionKeys), task);
+      if (ODistributedServerLog.isDebugEnabled())
+        ODistributedServerLog
+            .debug(this, localNodeName, task.getNodeSource(), DIRECTION.IN, "Request %s on database '%s' partitionKeys=%s task=%s",
+                request, databaseName, Arrays.toString(partitionKeys), task);
 
-    if (partitionKeys.length > 1 || partitionKeys[0] == -1) {
+      if (partitionKeys.length > 1 || partitionKeys[0] == -1) {
 
-      final Set<Integer> involvedWorkerQueues;
-      if (partitionKeys.length > 1)
-        involvedWorkerQueues = getInvolvedQueuesByPartitionKeys(partitionKeys);
-      else
-        // LOCK ALL THE QUEUES
-        involvedWorkerQueues = ALL_QUEUES;
+        final Set<Integer> involvedWorkerQueues;
+        if (partitionKeys.length > 1)
+          involvedWorkerQueues = getInvolvedQueuesByPartitionKeys(partitionKeys);
+        else
+          // LOCK ALL THE QUEUES
+          involvedWorkerQueues = ALL_QUEUES;
 
-      manager.messagePartitionCalculate(request, involvedWorkerQueues);
-
-      // if (ODistributedServerLog.isDebugEnabled())
-      ODistributedServerLog
-          .debug(this, localNodeName, null, DIRECTION.NONE, "Request %s on database '%s' involvedQueues=%s", request, databaseName,
-              involvedWorkerQueues);
-
-      if (involvedWorkerQueues.size() == 1)
-        // JUST ONE QUEUE INVOLVED: PROCESS IT IMMEDIATELY
-        processRequest(involvedWorkerQueues.iterator().next(), request);
-      else {
-        // INVOLVING MULTIPLE QUEUES
+        manager.messagePartitionCalculate(request, involvedWorkerQueues);
 
         // if (ODistributedServerLog.isDebugEnabled())
-        ODistributedServerLog.debug(this, localNodeName, null, DIRECTION.NONE,
-            "Request %s on database '%s' waiting for all the previous requests to be completed", request, databaseName);
-        CountDownLatch started = new CountDownLatch(involvedWorkerQueues.size());
-        OExecuteOnce once = new OExecuteOnce(started, task);
-        // WAIT ALL THE INVOLVED QUEUES ARE FREE AND SYNCHRONIZED
-        for (int queue : involvedWorkerQueues) {
-          ODistributedWorker worker = workerThreads.get(queue);
-          OWaitPartitionsReadyTask waitRequest = new OWaitPartitionsReadyTask(once);
+        ODistributedServerLog
+            .debug(this, localNodeName, null, DIRECTION.NONE, "Request %s on database '%s' involvedQueues=%s", request,
+                databaseName, involvedWorkerQueues);
 
-          final ODistributedRequest syncRequest = new ODistributedRequest(null, request.getId().getNodeId(),
-              request.getId().getMessageId(), databaseName, waitRequest);
-          worker.processRequest(syncRequest);
+        if (involvedWorkerQueues.size() == 1)
+          // JUST ONE QUEUE INVOLVED: PROCESS IT IMMEDIATELY
+          processRequest(involvedWorkerQueues.iterator().next(), request);
+        else {
+          // INVOLVING MULTIPLE QUEUES
+
+          // if (ODistributedServerLog.isDebugEnabled())
+          ODistributedServerLog.debug(this, localNodeName, null, DIRECTION.NONE,
+              "Request %s on database '%s' waiting for all the previous requests to be completed", request, databaseName);
+          CountDownLatch started = new CountDownLatch(involvedWorkerQueues.size());
+          OExecuteOnce once = new OExecuteOnce(started, task);
+          // WAIT ALL THE INVOLVED QUEUES ARE FREE AND SYNCHRONIZED
+          for (int queue : involvedWorkerQueues) {
+            ODistributedWorker worker = workerThreads.get(queue);
+            OWaitPartitionsReadyTask waitRequest = new OWaitPartitionsReadyTask(once);
+
+            final ODistributedRequest syncRequest = new ODistributedRequest(null, request.getId().getNodeId(),
+                request.getId().getMessageId(), databaseName, waitRequest);
+            worker.processRequest(syncRequest);
+          }
+
         }
+      } else if (partitionKeys.length == 1 && partitionKeys[0] == -2) {
+        // ANY PARTITION: USE THE FIRST EMPTY IF ANY, OTHERWISE THE FIRST IN THE LIST
+        boolean found = false;
 
-      }
-    } else if (partitionKeys.length == 1 && partitionKeys[0] == -2) {
-      // ANY PARTITION: USE THE FIRST EMPTY IF ANY, OTHERWISE THE FIRST IN THE LIST
-      boolean found = false;
-
-      for (ODistributedWorker q : workerThreads) {
-        if (q.isWaitingForNextRequest() && q.localQueue.isEmpty()) {
-          q.processRequest(request);
-          found = true;
-          break;
-        }
-      }
-
-      if (!found)
-        // ALL THE THREADS ARE BUSY, SELECT THE FIRST EMPTY ONE
         for (ODistributedWorker q : workerThreads) {
-          if (q.localQueue.isEmpty()) {
+          if (q.isWaitingForNextRequest() && q.localQueue.isEmpty()) {
             q.processRequest(request);
             found = true;
             break;
           }
         }
 
-      if (!found)
-        // EXEC ON THE FIRST QUEUE
-        workerThreads.get(0).processRequest(request);
+        if (!found)
+          // ALL THE THREADS ARE BUSY, SELECT THE FIRST EMPTY ONE
+          for (ODistributedWorker q : workerThreads) {
+            if (q.localQueue.isEmpty()) {
+              q.processRequest(request);
+              found = true;
+              break;
+            }
+          }
 
-    } else if (partitionKeys.length == 1 && partitionKeys[0] == -3) {
-      // SERVICE - LOCK
-      ODistributedServerLog.debug(this, localNodeName, request.getTask().getNodeSource(), DIRECTION.IN,
-          "Request %s on database '%s' dispatched to the lock worker", request, databaseName);
+        if (!found)
+          // EXEC ON THE FIRST QUEUE
+          workerThreads.get(0).processRequest(request);
 
-      lockThread.processRequest(request);
+      } else if (partitionKeys.length == 1 && partitionKeys[0] == -3) {
+        // SERVICE - LOCK
+        ODistributedServerLog.debug(this, localNodeName, request.getTask().getNodeSource(), DIRECTION.IN,
+            "Request %s on database '%s' dispatched to the lock worker", request, databaseName);
 
-    } else if (partitionKeys.length == 1 && partitionKeys[0] == -4) {
-      // SERVICE - FAST_NOLOCK
-      ODistributedServerLog.debug(this, localNodeName, request.getTask().getNodeSource(), DIRECTION.IN,
-          "Request %s on database '%s' dispatched to the nowait worker", request, databaseName);
+        lockThread.processRequest(request);
 
-      nowaitThread.processRequest(request);
+      } else if (partitionKeys.length == 1 && partitionKeys[0] == -4) {
+        // SERVICE - FAST_NOLOCK
+        ODistributedServerLog.debug(this, localNodeName, request.getTask().getNodeSource(), DIRECTION.IN,
+            "Request %s on database '%s' dispatched to the nowait worker", request, databaseName);
 
-    } else {
-      processRequest(partitionKeys[0], request);
+        nowaitThread.processRequest(request);
+
+      } else {
+        processRequest(partitionKeys[0], request);
+      }
     }
   }
 
@@ -331,7 +335,7 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
   public void waitDistributedIsReady() {
     if (!parsing.get()) {
       // WAIT FOR PARSING REQUESTS
-      while (!parsing.get()) {
+      while (!parsing.get() && running) {
         try {
           Thread.sleep(300);
         } catch (InterruptedException e) {
@@ -669,6 +673,9 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
 
   @Override
   public void handleUnreachableNode(final String nodeName) {
+    if (!running) {
+      return;
+    }
     ODistributedServerLog.debug(this, manager.getLocalNodeName(), nodeName, DIRECTION.IN,
         "Distributed transaction: rolling back all the pending transactions coordinated by the unreachable server '%s'", nodeName);
 

@@ -235,6 +235,9 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
           network.endRequest();
         }
       } catch (IOException e) {
+        if (network.isConnected()) {
+          OLogManager.instance().warn(this, "Error Writing request on the network", e);
+        }
         throw new ONotSendRequestException("Cannot send request on this channel");
       }
 

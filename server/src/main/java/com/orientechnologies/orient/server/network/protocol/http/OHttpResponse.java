@@ -76,6 +76,7 @@ public abstract class OHttpResponse {
   private int               code;
   private boolean           keepAlive         = true;
   private boolean           jsonErrorResponse = true;
+  private boolean           sameSiteCookie    = true;
   private OClientConnection connection;
   private boolean           streaming         = OGlobalConfiguration.NETWORK_HTTP_STREAMING.getValueAsBoolean();
 
@@ -613,6 +614,14 @@ public abstract class OHttpResponse {
 
   public boolean isStreaming() {
     return streaming;
+  }
+
+  public void setSameSiteCookie(boolean sameSiteCookie) {
+    this.sameSiteCookie = sameSiteCookie;
+  }
+
+  public boolean isSameSiteCookie() {
+    return sameSiteCookie;
   }
 
   public OContextConfiguration getContextConfiguration() {

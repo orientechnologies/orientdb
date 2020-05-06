@@ -287,6 +287,13 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
           OLogManager.instance().debug(this, "I/O Error on client clientId=%d reqType=%d", clientTxId, requestType, e);
           sendShutdown();
           return;
+        } catch (Exception | Error e) {
+          if (connection != null) {
+            connection.endOperation();
+          }
+          OLogManager.instance().error(this, "Error reading request", e);
+          sendShutdown();
+          return;
         }
         if (connection == null && requestType == OChannelBinaryProtocol.REQUEST_DB_CLOSE) {
           //Backward compatible with old clients
@@ -348,7 +355,7 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
           } catch (IOException e) {
             OLogManager.instance().debug(this, "I/O Error on client clientId=%d reqType=%d", clientTxId, requestType, e);
             sendShutdown();
-          } catch (Exception e) {
+          } catch (Exception | Error e) {
             OLogManager.instance().error(this, "Error while binary response serialization", e);
             sendShutdown();
             throw e;
