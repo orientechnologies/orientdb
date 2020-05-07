@@ -14,7 +14,7 @@ import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
-import com.orientechnologies.orient.core.serialization.serializer.record.binary.ODocumentSerializerDelta;
+import com.orientechnologies.orient.core.serialization.serializer.record.binary.ODocumentSerializerDeltaDistributed;
 import com.orientechnologies.orient.core.serialization.serializer.record.binary.ORecordSerializerNetworkDistributed;
 import com.orientechnologies.orient.core.storage.ORecordDuplicatedException;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
@@ -80,7 +80,7 @@ public class OTransactionPhase1Task extends OAbstractReplicatedTask {
         break;
       case ORecordOperation.UPDATED:
         if (request.getRecordType() == ODocument.RECORD_TYPE) {
-          request.setRecord(ODocumentSerializerDelta.instance().serializeDelta((ODocument) txEntry.getRecord()));
+          request.setRecord(ODocumentSerializerDeltaDistributed.instance().serializeDelta((ODocument) txEntry.getRecord()));
         } else {
           request.setRecord(ORecordSerializerNetworkDistributed.INSTANCE.toStream(txEntry.getRecord()));
         }
@@ -222,7 +222,7 @@ public class OTransactionPhase1Task extends OAbstractReplicatedTask {
           }
           ((ODocument) record).deserializeFields();
           ODocumentInternal.clearTransactionTrackData((ODocument) record);
-          ODocumentSerializerDelta.instance().deserializeDelta(req.getRecord(), (ODocument) record);
+          ODocumentSerializerDeltaDistributed.instance().deserializeDelta(req.getRecord(), (ODocument) record);
           /// Got record with empty deltas, at this level we mark the record dirty anyway.
           if (!req.isContentChanged()) {
             record.setDirtyNoChanged();

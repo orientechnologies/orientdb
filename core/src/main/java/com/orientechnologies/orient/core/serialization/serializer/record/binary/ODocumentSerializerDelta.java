@@ -37,11 +37,11 @@ import java.util.*;
 import static com.orientechnologies.orient.core.serialization.serializer.record.binary.HelperClasses.*;
 
 public class ODocumentSerializerDelta {
-  private static final byte CREATED           = 1;
-  private static final byte REPLACED          = 2;
-  private static final byte CHANGED           = 3;
-  private static final byte REMOVED           = 4;
-  public static final  byte DELTA_RECORD_TYPE = 10;
+  protected static final byte CREATED           = 1;
+  protected static final byte REPLACED          = 2;
+  protected static final byte CHANGED           = 3;
+  protected static final byte REMOVED           = 4;
+  public static final    byte DELTA_RECORD_TYPE = 10;
 
   private static ODocumentSerializerDelta INSTANCE = new ODocumentSerializerDelta();
 
@@ -243,7 +243,7 @@ public class ODocumentSerializerDelta {
     }
   }
 
-  private void deserializeDeltaLinkBag(BytesContainer bytes, ORidBag toUpdate) {
+  protected void deserializeDeltaLinkBag(BytesContainer bytes, ORidBag toUpdate) {
     UUID uuid = OUUIDSerializer.INSTANCE.deserialize(bytes.bytes, bytes.offset);
     bytes.skip(OUUIDSerializer.UUID_SIZE);
     if (toUpdate != null) {
@@ -587,7 +587,7 @@ public class ODocumentSerializerDelta {
     }
   }
 
-  private void serializeDeltaLinkBag(BytesContainer bytes, ORidBag value) {
+  protected void serializeDeltaLinkBag(BytesContainer bytes, ORidBag value) {
     UUID uuid = null;
     ODatabaseDocumentInternal instance = ODatabaseRecordThreadLocal.instance().getIfDefined();
     if (instance != null) {
@@ -905,13 +905,13 @@ public class ODocumentSerializerDelta {
     }
   }
 
-  private byte deserializeByte(BytesContainer bytes) {
+  protected byte deserializeByte(BytesContainer bytes) {
     int pos = bytes.offset;
     bytes.skip(1);
     return bytes.bytes[pos];
   }
 
-  private void serializeByte(BytesContainer bytes, byte value) {
+  protected void serializeByte(BytesContainer bytes, byte value) {
     int pointer = bytes.alloc(1);
     bytes.bytes[pointer] = value;
   }

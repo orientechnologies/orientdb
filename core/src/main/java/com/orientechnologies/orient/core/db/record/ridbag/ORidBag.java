@@ -274,54 +274,62 @@ public class ORidBag implements OStringBuilderSerializable, Iterable<OIdentifiab
     if (database != null && !database.getStorage().isRemote()) {
       if (isEmbedded() && ODatabaseRecordThreadLocal.instance().get().getSbTreeCollectionManager() != null
           && delegate.size() >= topThreshold) {
-        ORidBagDelegate oldDelegate = delegate;
-        boolean isTransactionModified = oldDelegate.isTransactionModified();
-        delegate = new OSBTreeRidBag();
-        boolean oldAutoConvert = oldDelegate.isAutoConvertToRecord();
-        oldDelegate.setAutoConvertToRecord(false);
-
-        final ORecordElement owner = oldDelegate.getOwner();
-        delegate.disableTracking(owner);
-        for (OIdentifiable identifiable : oldDelegate) {
-          delegate.add(identifiable);
-        }
-
-        delegate.setOwner(owner);
-
-        delegate.setTracker(oldDelegate.getTracker());
-        oldDelegate.disableTracking(owner);
-        delegate.setDirty();
-        delegate.setTransactionModified(isTransactionModified);
-        delegate.enableTracking(owner);
-
-        oldDelegate.setAutoConvertToRecord(oldAutoConvert);
-        oldDelegate.requestDelete();
+        convertToTree();
       } else if (bottomThreshold >= 0 && !isEmbedded() && delegate.size() <= bottomThreshold) {
-        ORidBagDelegate oldDelegate = delegate;
-        boolean isTransactionModified = oldDelegate.isTransactionModified();
-        boolean oldAutoConvert = oldDelegate.isAutoConvertToRecord();
-        oldDelegate.setAutoConvertToRecord(false);
-        delegate = new OEmbeddedRidBag();
-
-        final ORecordElement owner = oldDelegate.getOwner();
-        delegate.disableTracking(owner);
-        for (OIdentifiable identifiable : oldDelegate) {
-          delegate.add(identifiable);
-        }
-
-        delegate.setOwner(owner);
-
-        delegate.setTracker(oldDelegate.getTracker());
-        oldDelegate.disableTracking(owner);
-
-        delegate.setDirty();
-        delegate.setTransactionModified(isTransactionModified);
-        delegate.enableTracking(owner);
-
-        oldDelegate.setAutoConvertToRecord(oldAutoConvert);
-        oldDelegate.requestDelete();
+        convertToEmbedded();
       }
     }
+  }
+
+  private void convertToEmbedded() {
+    ORidBagDelegate oldDelegate = delegate;
+    boolean isTransactionModified = oldDelegate.isTransactionModified();
+    boolean oldAutoConvert = oldDelegate.isAutoConvertToRecord();
+    oldDelegate.setAutoConvertToRecord(false);
+    delegate = new OEmbeddedRidBag();
+
+    final ORecordElement owner = oldDelegate.getOwner();
+    delegate.disableTracking(owner);
+    for (OIdentifiable identifiable : oldDelegate) {
+      delegate.add(identifiable);
+    }
+
+    delegate.setOwner(owner);
+
+    delegate.setTracker(oldDelegate.getTracker());
+    oldDelegate.disableTracking(owner);
+
+    delegate.setDirty();
+    delegate.setTransactionModified(isTransactionModified);
+    delegate.enableTracking(owner);
+
+    oldDelegate.setAutoConvertToRecord(oldAutoConvert);
+    oldDelegate.requestDelete();
+  }
+
+  private void convertToTree() {
+    ORidBagDelegate oldDelegate = delegate;
+    boolean isTransactionModified = oldDelegate.isTransactionModified();
+    delegate = new OSBTreeRidBag();
+    boolean oldAutoConvert = oldDelegate.isAutoConvertToRecord();
+    oldDelegate.setAutoConvertToRecord(false);
+
+    final ORecordElement owner = oldDelegate.getOwner();
+    delegate.disableTracking(owner);
+    for (OIdentifiable identifiable : oldDelegate) {
+      delegate.add(identifiable);
+    }
+
+    delegate.setOwner(owner);
+
+    delegate.setTracker(oldDelegate.getTracker());
+    oldDelegate.disableTracking(owner);
+    delegate.setDirty();
+    delegate.setTransactionModified(isTransactionModified);
+    delegate.enableTracking(owner);
+
+    oldDelegate.setAutoConvertToRecord(oldAutoConvert);
+    oldDelegate.requestDelete();
   }
 
   @Override
@@ -605,4 +613,15 @@ public class ORidBag implements OStringBuilderSerializable, Iterable<OIdentifiab
     this.fieldName = fieldName;
   }
 
+  public void makeTree() {
+    if (isEmbedded()) {
+      convertToTree();
+    }
+  }
+
+  public void makeEmbedded() {
+    if (!isEmbedded()) {
+      convertToEmbedded();
+    }
+  }
 }
