@@ -175,7 +175,7 @@ public class KeyNormalizationTest {
   }
 
   @Test
-  public void test() {
+  public void testBigDecimal() {
     final BigDecimal matKey = new BigDecimal(87866787879879879768767554645.434);
     final ByteBuffer bb = ByteBuffer.allocate(1 + 8); // bytes.length);
     bb.order(ByteOrder.BIG_ENDIAN);
