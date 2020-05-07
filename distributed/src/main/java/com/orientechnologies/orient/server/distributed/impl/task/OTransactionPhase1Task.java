@@ -224,7 +224,11 @@ public class OTransactionPhase1Task extends OAbstractReplicatedTask {
           ODocumentInternal.clearTransactionTrackData((ODocument) record);
           ODocumentSerializerDelta.instance().deserializeDelta(req.getRecord(), (ODocument) record);
           /// Got record with empty deltas, at this level we mark the record dirty anyway.
-          record.setDirty();
+          if (!req.isContentChanged()) {
+            record.setDirtyNoChanged();
+          } else {
+            record.setDirty();
+          }
         } else {
           record = ORecordSerializerNetworkDistributed.INSTANCE.fromStream(req.getRecord(), null);
           ORecordInternal.setRecordSerializer(record, database.getSerializer());
