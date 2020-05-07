@@ -17,9 +17,12 @@ import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
+import java.time.ZoneOffset;
+import java.time.ZonedDateTime;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.GregorianCalendar;
+import java.util.TimeZone;
 import java.util.function.Consumer;
 
 public class KeyNormalizationTest {
@@ -471,8 +474,12 @@ public class KeyNormalizationTest {
 
   @Test
   public void normalizeComposite_date() {
-    final Date key = new GregorianCalendar(2013, Calendar.NOVEMBER, 5).getTime();
+    final GregorianCalendar calendar = getGregorianCalendarUTC(2013, Calendar.NOVEMBER, 5);
+    final Date key = calendar.getTime();
+    System.out.println("Date-key: " + key);
     final byte[] bytes = getNormalizedKeySingle(key, OType.DATE);
+
+    print(bytes);
 
     // 1383606000000 := Tue Nov 05 2013 00:00:00
     Assert.assertEquals((new byte[] { (byte) 0x0 })[0], bytes[0]);
@@ -481,20 +488,32 @@ public class KeyNormalizationTest {
     Assert.assertEquals((new byte[] { (byte) 0x1 })[0], bytes[3]);
     Assert.assertEquals((new byte[] { (byte) 0x42 })[0], bytes[4]);
     Assert.assertEquals((new byte[] { (byte) 0x25 })[0], bytes[5]);
-    Assert.assertEquals((new byte[] { (byte) 0x58 })[0], bytes[6]);
-    Assert.assertEquals((new byte[] { (byte) 0x19 })[0], bytes[7]);
-    Assert.assertEquals((new byte[] { (byte) 0x80 })[0], bytes[8]);
+    Assert.assertEquals((new byte[] { (byte) 0x8f })[0], bytes[6]);
+    Assert.assertEquals((new byte[] { (byte) 0x8 })[0], bytes[7]);
+    Assert.assertEquals((new byte[] { (byte) 0x0 })[0], bytes[8]);
+  }
+
+  private GregorianCalendar getGregorianCalendarUTC(final int year, final int month, final int dayOfMonth) {
+    final GregorianCalendar calendar = new GregorianCalendar(year, month, dayOfMonth);
+    calendar.setTimeZone(TimeZone.getTimeZone("UTC"));
+    return calendar;
   }
 
   @Test
   public void normalizeComposite_date_compare() {
-    Date key = new GregorianCalendar(2013, Calendar.AUGUST, 5).getTime();
+    GregorianCalendar calendar = getGregorianCalendarUTC(2013, Calendar.AUGUST, 5);
+    calendar.setTimeZone(TimeZone.getTimeZone("UTC"));
+    Date key = calendar.getTime();
     final byte[] smallest = getNormalizedKeySingle(key, OType.DATE);
 
-    key = new GregorianCalendar(2013, Calendar.NOVEMBER, 5).getTime();
+    calendar = getGregorianCalendarUTC(2013, Calendar.NOVEMBER, 5);
+    calendar.setTimeZone(TimeZone.getTimeZone("UTC"));
+    key = calendar.getTime();
     final byte[] middle = getNormalizedKeySingle(key, OType.DATETIME);
 
-    key = new GregorianCalendar(2013, Calendar.NOVEMBER, 6).getTime();
+    calendar = getGregorianCalendarUTC(2013, Calendar.NOVEMBER, 6);
+    calendar.setTimeZone(TimeZone.getTimeZone("UTC"));
+    key = calendar.getTime();
     final byte[] largest = getNormalizedKeySingle(key, OType.DATETIME);
     compareWithUnsafeByteArrayComparator(smallest, middle, largest);
     compareWithByteArrayComparator(smallest, middle, largest);
@@ -502,8 +521,9 @@ public class KeyNormalizationTest {
 
   @Test
   public void normalizeComposite_dateTime() {
-    final LocalDateTime ldt = LocalDateTime.of(2013, 11, 5, 3, 3, 3);
-    final Date key = Date.from(ldt.atZone(ZoneId.systemDefault()).toInstant());
+    final ZonedDateTime zdt = LocalDateTime.of(2013, 11, 5, 3, 3, 3)
+        .atZone(ZoneId.systemDefault()).withZoneSameInstant(ZoneOffset.UTC);
+    final Date key = Date.from(zdt.toInstant());
     final byte[] bytes = getNormalizedKeySingle(key, OType.DATETIME);
 
     // 1383616983000 := Tue Nov 05 2013 03:03:03
@@ -520,16 +540,19 @@ public class KeyNormalizationTest {
 
   @Test
   public void normalizeComposite_dateTime_compare() {
-    LocalDateTime ldt = LocalDateTime.of(2013, 11, 5, 3, 3, 3);
-    Date key = Date.from(ldt.atZone(ZoneId.systemDefault()).toInstant());
+    ZonedDateTime zdt = LocalDateTime.of(2013, 11, 5, 3, 3, 3)
+        .atZone(ZoneId.systemDefault()).withZoneSameInstant(ZoneOffset.UTC);
+    Date key = Date.from(zdt.toInstant());
     final byte[] smallest = getNormalizedKeySingle(key, OType.DATETIME);
 
-    ldt = LocalDateTime.of(2013, 11, 5, 5, 3, 3);
-    key = Date.from(ldt.atZone(ZoneId.systemDefault()).toInstant());
+    zdt = LocalDateTime.of(2013, 11, 5, 5, 3, 3)
+        .atZone(ZoneId.systemDefault()).withZoneSameInstant(ZoneOffset.UTC);
+    key = Date.from(zdt.toInstant());
     final byte[] middle = getNormalizedKeySingle(key, OType.DATETIME);
 
-    ldt = LocalDateTime.of(2013, 11, 5, 5, 5, 5);
-    key = Date.from(ldt.atZone(ZoneId.systemDefault()).toInstant());
+    zdt = LocalDateTime.of(2013, 11, 5, 5, 5, 5)
+        .atZone(ZoneId.systemDefault()).withZoneSameInstant(ZoneOffset.UTC);
+    key = Date.from(zdt.toInstant());
     final byte[] largest = getNormalizedKeySingle(key, OType.DATETIME);
     compareWithUnsafeByteArrayComparator(smallest, middle, largest);
     compareWithByteArrayComparator(smallest, middle, largest);

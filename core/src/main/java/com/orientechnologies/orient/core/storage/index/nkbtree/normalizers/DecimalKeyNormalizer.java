@@ -9,9 +9,9 @@ import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 
 public class DecimalKeyNormalizer implements KeyNormalizers {
-  private static final BigInteger BIG_INT_TEN = new BigInteger("10");
-  private static final BigInteger BIG_INT_ONE = new BigInteger("1");
-  private static final BigInteger BIG_INT_ZERO = new BigInteger("0");
+  private static final BigInteger BIG_INT_TEN   = new BigInteger("10");
+  private static final BigInteger BIG_INT_ONE   = new BigInteger("1");
+  private static final BigInteger BIG_INT_ZERO  = new BigInteger("0");
 
   private static final BigInteger TWO_COMPL_REF = BigInteger.ONE.shiftLeft(64);
 
@@ -43,7 +43,7 @@ public class DecimalKeyNormalizer implements KeyNormalizers {
 
   private BigDecimal scaleToDecimal128(final BigDecimal rawValue) {
     final BigDecimal value = clampAndRound(rawValue);
-    long exponent = (long)(-value.scale());
+    long exponent = (long) (-value.scale());
     if (exponent >= -6176L && exponent <= 6111L) {
       if (value.unscaledValue().bitLength() > 113) {
         throw new AssertionError("Unscaled roundedValue is out of range for Decimal128 encoding:" + value.unscaledValue());
@@ -87,7 +87,7 @@ public class DecimalKeyNormalizer implements KeyNormalizers {
     final String significand = value.unscaledValue().abs().toString();
     final int undiscardedPrecision = Math.max(0, significand.length() - extraPrecision);
 
-    for(int i = undiscardedPrecision; i < significand.length(); ++i) {
+    for (int i = undiscardedPrecision; i < significand.length(); ++i) {
       if (significand.charAt(i) != '0') {
         throw new NumberFormatException("Conversion to Decimal128 would require inexact rounding of " + value);
       }

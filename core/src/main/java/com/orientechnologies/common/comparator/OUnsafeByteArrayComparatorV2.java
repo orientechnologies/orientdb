@@ -30,9 +30,9 @@ import java.util.Comparator;
 
 /**
  * Comparator for fast byte arrays comparison using {@link Unsafe} class. Bytes are compared like unsigned not like signed bytes.
- * 
- * 
+ *
  * @author Andrey Lomakin (a.lomakin-at-orientdb.com)
+ * @author Daniel Ritter
  * @since 08.07.12
  */
 @SuppressWarnings("restriction")
