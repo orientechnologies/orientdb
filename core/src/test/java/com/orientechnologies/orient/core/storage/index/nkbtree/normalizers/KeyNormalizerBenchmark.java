@@ -85,7 +85,7 @@ public class KeyNormalizerBenchmark {
   // final ByteArrayOutputStream bos = new ByteArrayOutputStream();
 
   @Benchmark
-  public void normalizeComposite_null() {
+  public void normalizeCompositeNull() {
     final OCompositeKey compositeKey = new OCompositeKey();
     compositeKey.addKey(null);
 
@@ -96,13 +96,13 @@ public class KeyNormalizerBenchmark {
   }
 
   @Benchmark
-  public void normalizeComposite_addKey_null() {
+  public void normalizeCompositeAddKeyNull() {
     final OCompositeKey compositeKey = new OCompositeKey();
     compositeKey.addKey(null);
   }
 
   @Benchmark
-  public void normalizeComposite_null_int() {
+  public void normalizeCompositeNullInt() {
     final OCompositeKey compositeKey = new OCompositeKey();
     compositeKey.addKey(null);
     compositeKey.addKey(5);
@@ -115,7 +115,7 @@ public class KeyNormalizerBenchmark {
   }
 
   @Benchmark
-  public void normalizeComposite_int() {
+  public void normalizeCompositeInt() {
     final OCompositeKey compositeKey = new OCompositeKey();
     compositeKey.addKey(5);
 
@@ -126,7 +126,7 @@ public class KeyNormalizerBenchmark {
   }
 
   @Benchmark
-  public void normalizeComposite_float() {
+  public void normalizeCompositeFloat() {
     final OCompositeKey compositeKey = new OCompositeKey();
     compositeKey.addKey(1.5f);
 
@@ -137,7 +137,7 @@ public class KeyNormalizerBenchmark {
   }
 
   @Benchmark
-  public void normalizeComposite_double() {
+  public void normalizeCompositeDouble() {
     final OCompositeKey compositeKey = new OCompositeKey();
     compositeKey.addKey(1.5d);
 
@@ -148,7 +148,7 @@ public class KeyNormalizerBenchmark {
   }
 
   @Benchmark
-  public void normalizeComposite_Boolean() {
+  public void normalizeCompositeBoolean() {
     final OCompositeKey compositeKey = new OCompositeKey();
     compositeKey.addKey(true);
 
@@ -159,7 +159,7 @@ public class KeyNormalizerBenchmark {
   }
 
   @Benchmark
-  public void normalizeComposite_long() {
+  public void normalizeCompositeLong() {
     final OCompositeKey compositeKey = new OCompositeKey();
     compositeKey.addKey(5L);
 
@@ -170,7 +170,7 @@ public class KeyNormalizerBenchmark {
   }
 
   @Benchmark
-  public void normalizeComposite_byte() {
+  public void normalizeCompositeByte() {
     final OCompositeKey compositeKey = new OCompositeKey();
     compositeKey.addKey((byte) 3);
 
@@ -181,7 +181,7 @@ public class KeyNormalizerBenchmark {
   }
 
   @Benchmark
-  public void normalizeComposite_short() {
+  public void normalizeCompositeShort() {
     final OCompositeKey compositeKey = new OCompositeKey();
     compositeKey.addKey((short) 3);
 
@@ -192,7 +192,7 @@ public class KeyNormalizerBenchmark {
   }
 
   @Benchmark
-  public void normalizeComposite_decimal() {
+  public void normalizeCompositeDecimal() {
     final OCompositeKey compositeKey = new OCompositeKey();
     compositeKey.addKey(new BigDecimal(3.14159265359));
 
@@ -203,7 +203,7 @@ public class KeyNormalizerBenchmark {
   }
 
   @Benchmark
-  public void normalizeComposite_string() {
+  public void normalizeCompositeString() {
     final OCompositeKey compositeKey = new OCompositeKey();
     compositeKey.addKey("abcd");
 
@@ -213,7 +213,7 @@ public class KeyNormalizerBenchmark {
   }
 
   @Benchmark
-  public void normalizeComposite_two_strings() {
+  public void normalizeCompositeTwoStrings() {
     final OCompositeKey compositeKey = new OCompositeKey();
     final String key = "abcd";
     compositeKey.addKey(key);
@@ -227,17 +227,17 @@ public class KeyNormalizerBenchmark {
   }
 
   @Benchmark
-  public void normalizeComposite_date() {
+  public void normalizeCompositeDate() {
     keyNormalizer.normalize(dateTimeCompositeKey, dateTimeTypes, Collator.NO_DECOMPOSITION);
   }
 
   @Benchmark
-  public void normalizeComposite_dateTime() {
+  public void normalizeCompositeDateTime() {
     keyNormalizer.normalize(dateCompositeKey, dateTypes, Collator.NO_DECOMPOSITION);
   }
 
   @Benchmark
-  public void normalizeComposite_binary() {
+  public void normalizeCompositeBinary() {
     keyNormalizer.normalize(binaryCompositeKey, binaryTypes, Collator.NO_DECOMPOSITION);
   }
 

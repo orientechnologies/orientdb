@@ -52,32 +52,32 @@ public class ComparatorBenchmark {
   }
 
   @Benchmark
-  public void comparator_byteArrayNegative() throws Exception {
+  public void comparatorByteArrayNegative() throws Exception {
     byteArrayComparator.compare(negative, zero);
   }
 
   @Benchmark
-  public void comparator_byteArrayPositive() throws Exception {
+  public void comparatorByteArrayPositive() throws Exception {
     byteArrayComparator.compare(positive, zero);
   }
 
   @Benchmark
-  public void comparator_byteArrayEqual() throws Exception {
+  public void comparatorByteArrayEqual() throws Exception {
     byteArrayComparator.compare(zero, zero);
   }
 
   @Benchmark
-  public void comparator_unsafeByteArrayNegative() throws Exception {
+  public void comparatorUnsafeByteArrayNegative() throws Exception {
     arrayComparator.compare(negative, zero);
   }
 
   @Benchmark
-  public void comparator_unsafeByteArrayPositive() throws Exception {
+  public void comparatorUnsafeByteArrayPositive() throws Exception {
     arrayComparator.compare(positive, zero);
   }
 
   @Benchmark
-  public void comparator_unsafeByteArrayEqual() throws Exception {
+  public void comparatorUnsafeByteArrayEqual() throws Exception {
     arrayComparator.compare(zero, zero);
   }
 
