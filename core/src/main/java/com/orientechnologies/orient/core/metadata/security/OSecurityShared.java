@@ -318,10 +318,10 @@ public class OSecurityShared implements OSecurityInternal {
     if (iRoleName == null)
       return null;
 
-    final OResultSet result = session.query("select from ORole where name = ? limit 1", iRoleName);
-
-    if (result.hasNext())
-      return new ORole((ODocument) result.next().getElement().get());
+    try (final OResultSet result = session.query("select from ORole where name = ? limit 1", iRoleName)) {
+      if (result.hasNext())
+        return new ORole((ODocument) result.next().getElement().get());
+    }
 
     return null;
   }
@@ -330,11 +330,11 @@ public class OSecurityShared implements OSecurityInternal {
     if (iRoleName == null)
       return null;
 
-    final OResultSet result = session.query("select @rid as rid from ORole where name = ? limit 1", iRoleName);
+    try (final OResultSet result = session.query("select @rid as rid from ORole where name = ? limit 1", iRoleName)) {
 
-    if (result.hasNext())
-      return result.next().getProperty("rid");
-
+      if (result.hasNext())
+        return result.next().getProperty("rid");
+    }
     return null;
   }
 
@@ -355,11 +355,15 @@ public class OSecurityShared implements OSecurityInternal {
   }
 
   public List<ODocument> getAllUsers(final ODatabaseSession session) {
-    return session.query("select from OUser").stream().map((e) -> (ODocument) e.getElement().get()).collect(Collectors.toList());
+    try (OResultSet rs = session.query("select from OUser")) {
+      return rs.stream().map((e) -> (ODocument) e.getElement().get()).collect(Collectors.toList());
+    }
   }
 
   public List<ODocument> getAllRoles(final ODatabaseSession session) {
-    return session.query("select from ORole").stream().map((e) -> (ODocument) e.getElement().get()).collect(Collectors.toList());
+    try (OResultSet rs = session.query("select from ORole")) {
+      return rs.stream().map((e) -> (ODocument) e.getElement().get()).collect(Collectors.toList());
+    }
   }
 
   @Override
