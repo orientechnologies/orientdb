@@ -44,33 +44,25 @@ public abstract class BaseLuceneTest {
 
   @Before
   public void setupDatabase() throws Throwable {
-
-    String config = System.getProperty("orientdb.test.env", "memory");
-
+    final String config = System.getProperty("orientdb.test.env", "memory");
     String path;
 
     if ("ci".equals(config) || "release".equals(config)) {
-
       type = ODatabaseType.PLOCAL;
-
       path = "embedded:./target/databases";
-
     } else {
       type = ODatabaseType.MEMORY;
       path = "embedded:.";
-
     }
     context = new OrientDB(path, OrientDBConfig.defaultConfig());
 
     if (context.exists(name.getMethodName())) {
       context.drop(name.getMethodName());
     }
-
     context.create(name.getMethodName(), type);
 
     db = (ODatabaseDocumentInternal) context.open(name.getMethodName(), "admin", "admin");
     db.set(ODatabase.ATTRIBUTES.MINIMUMCLUSTERS, 8);
-
   }
 
   public ODatabaseSession openDatabase() {
@@ -84,38 +76,41 @@ public abstract class BaseLuceneTest {
   @After
   public void dropDatabase() {
     db.activateOnCurrentThread();
-
     context.drop(name.getMethodName());
   }
 
-  protected ODatabaseDocumentTx dropOrCreate(String url, boolean drop) {
+  protected ODatabaseDocumentTx dropOrCreate(final String url, final boolean drop) {
     ODatabaseDocumentTx db = new ODatabaseDocumentTx(url);
     if (db.exists()) {
       db.open("admin", "admin");
       if (drop) {
-        // DROP AND RE-CREATE IT
-        db.drop();
-        db = new ODatabaseDocumentTx(url);
-        db.create();
+        db = dropAndCreateDocumentDatabase(url, db);
       }
     } else {
-      // CREATE IT
-      db = new ODatabaseDocumentTx(url);
-      db.create();
-
+      db = createDocumentDatabase(url);
     }
-
     db.activateOnCurrentThread();
-
     return db;
   }
 
-  protected String getScriptFromStream(InputStream in) {
-    try {
-      return OIOUtils.readStreamAsString(in);
-    } catch (IOException e) {
-      throw new RuntimeException(e);
-    }
+  private ODatabaseDocumentTx dropAndCreateDocumentDatabase(final String url, ODatabaseDocumentTx db) {
+    db.drop();
+    db = createDocumentDatabase(url);
+    return db;
   }
 
+  private ODatabaseDocumentTx createDocumentDatabase(final String url) {
+    ODatabaseDocumentTx db;
+    db = new ODatabaseDocumentTx(url);
+    db.create();
+    return db;
+  }
+
+  protected String getScriptFromStream(final InputStream scriptStream) {
+    try {
+      return OIOUtils.readStreamAsString(scriptStream);
+    } catch (final IOException e) {
+      throw new RuntimeException("Could not read script stream.", e);
+    }
+  }
 }
