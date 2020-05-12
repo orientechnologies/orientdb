@@ -1289,4 +1289,22 @@ public class OSecurityShared implements OSecurityInternal {
     rs.close();
     return result;
   }
+
+  public boolean couldHaveActivePredicateSecurityRoles(ODatabaseSession session, String className) {
+    if (roleHasPredicateSecurityForClass != null) {
+      for (OSecurityRole role : session.getUser().getRoles()) {
+        Map<String, Boolean> roleMap = roleHasPredicateSecurityForClass.get(role.getName());
+        if (roleMap == null) {
+          return false;//TODO hierarchy...?
+        }
+        Boolean val = roleMap.get(className);
+        if (Boolean.FALSE.equals(val)) {
+          return false;//TODO hierarchy...?
+        }
+      }
+
+    }
+    return true;
+
+  }
 }
