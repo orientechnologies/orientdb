@@ -796,12 +796,12 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
         try {
           rids2Repair.addAll(pReq.rollback(database));
           rollbacks++;
-        } catch (Exception t) {
+          pReq.destroy();
+        } catch (Exception | Error t) {
           // IGNORE IT
           ODistributedServerLog.error(this, manager.getLocalNodeName(), null, DIRECTION.NONE,
               "Distributed transaction: error on rolling back transaction (req=%s)", pReq.getReqId());
         }
-        pReq.destroy();
         pendingReqIterator.remove();
       }
     }
