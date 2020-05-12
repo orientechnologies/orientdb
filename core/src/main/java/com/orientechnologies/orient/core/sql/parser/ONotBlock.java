@@ -175,5 +175,12 @@ public class ONotBlock extends OBooleanExpression {
     return this;
   }
 
+  @Override
+  public boolean isAlwaysTrue() {
+    if (negate) {
+      return false;
+    }
+    return sub.isAlwaysTrue();
+  }
 }
 /* JavaCC - OriginalChecksum=1926313b3f854235aaa20811c22d583b (do not edit this line) */

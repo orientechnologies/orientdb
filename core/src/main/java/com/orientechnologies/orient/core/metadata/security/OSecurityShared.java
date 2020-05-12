@@ -68,6 +68,12 @@ public class OSecurityShared implements OSecurityInternal {
   public static final String RESTRICTED_CLASSNAME = "ORestricted";
   public static final String IDENTITY_CLASSNAME = "OIdentity";
 
+
+  /**
+   * role name -> class name -> true: has some rules, ie. it's not all allowed
+   */
+  protected Map<String, Map<String, Boolean>> roleHasPredicateSecurityForClass;
+
   protected Map<String, Map<String, OBooleanExpression>> securityPredicateCache = new ConcurrentHashMap<>();
 
   /**
@@ -598,6 +604,9 @@ public class OSecurityShared implements OSecurityInternal {
     if (createDefUsers)
       createUser(session, "writer", "writer", new String[]{writerRole.getName()});
 
+
+    initPredicateSecurityOptimizations(session);
+
     return adminUser;
   }
 
@@ -814,6 +823,8 @@ public class OSecurityShared implements OSecurityInternal {
       //TODO create OSecurityPolicy
       //TODO migrate ORole to use security policies
     }
+
+    initPredicateSecurityOptimizations(session);
   }
 
   public void createClassTrigger(ODatabaseSession session) {
@@ -860,6 +871,98 @@ public class OSecurityShared implements OSecurityInternal {
     version.incrementAndGet();
     securityPredicateCache.clear();
     updateAllFilteredProperties((ODatabaseDocumentInternal) session);
+    initPredicateSecurityOptimizations(session);
+  }
+
+  protected void initPredicateSecurityOptimizations(ODatabaseSession session) {
+    try {
+      if (session.getUser() == null) {
+        initPredicateSecurityOptimizationsInternal(session);
+      } else {
+        ((ODatabaseDocumentInternal) session).getSharedContext().getOrientDB()
+                .executeNoAuthorization(session.getName(), (db -> {
+                  initPredicateSecurityOptimizationsInternal(db);
+                  return null;
+                }));
+      }
+    } catch (Exception e) {
+      e.printStackTrace();
+    }
+  }
+
+  private void initPredicateSecurityOptimizationsInternal(ODatabaseSession session) {
+    if (this.roleHasPredicateSecurityForClass == null) {
+      this.roleHasPredicateSecurityForClass = new HashMap<>();
+    }
+    synchronized (this.roleHasPredicateSecurityForClass) {
+      this.roleHasPredicateSecurityForClass.clear();
+
+      Collection<OClass> allClasses = session.getMetadata().getSchema().getClasses();
+
+      Set<OSecurityResourceProperty> result = new HashSet<>();
+      if (session.getClass("ORole") == null) {
+        return;
+      }
+      OResultSet rs = session.query("select name, policies from ORole");
+      while (rs.hasNext()) {
+        OResult item = rs.next();
+        String roleName = item.getProperty("name");
+
+        Map<String, OIdentifiable> policies = item.getProperty("policies");
+        for (Map.Entry<String, OIdentifiable> policyEntry : policies.entrySet()) {
+          try {
+            OSecurityResource res = OSecurityResource.getInstance(policyEntry.getKey());
+
+
+            for (OClass clazz : allClasses) {
+              if (isClassInvolved(clazz, res) && !isAllAllowed(session, new OSecurityPolicy(policyEntry.getValue().getRecord()))) {
+                Map<String, Boolean> roleMap = this.roleHasPredicateSecurityForClass.get(roleName);
+                if (roleMap == null) {
+                  roleMap = new HashMap<>();
+                  roleHasPredicateSecurityForClass.put(roleName, roleMap);
+                }
+                roleMap.put(clazz.getName(), false);
+              }
+
+            }
+          } catch (Exception e) {
+          }
+        }
+        rs.close();
+      }
+      return;
+    }
+
+  }
+
+  private boolean isAllAllowed(ODatabaseSession db, OSecurityPolicy policy) {
+    for (OSecurityPolicy.Scope scope : OSecurityPolicy.Scope.values()) {
+      String predicateString = policy.get(scope);
+      OBooleanExpression predicate = OSecurityEngine.parsePredicate(db, predicateString);
+      if (!predicate.isAlwaysTrue()) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  private boolean isClassInvolved(OClass clazz, OSecurityResource res) {
+
+    if (res instanceof OSecurityResourceAll || res.equals(OSecurityResourceClass.ALL_CLASSES) || res.equals(OSecurityResourceProperty.ALL_PROPERTIES)) {
+      return true;
+    }
+    if (res instanceof OSecurityResourceClass) {
+      String resourceClass = ((OSecurityResourceClass) res).getClassName();
+      if (clazz.isSubClassOf(resourceClass)) {
+        return true;
+      }
+    } else if (res instanceof OSecurityResourceProperty) {
+      String resourceClass = ((OSecurityResourceProperty) res).getClassName();
+      if (clazz.isSubClassOf(resourceClass)) {
+        return true;
+      }
+    }
+    return false;
   }
 
   @Override
@@ -872,6 +975,19 @@ public class OSecurityShared implements OSecurityInternal {
     }
     if (document.getClassName() == null) {
       return Collections.emptySet();
+    }
+    if (roleHasPredicateSecurityForClass != null) {
+      for (OSecurityRole role : session.getUser().getRoles()) {
+        Map<String, Boolean> roleMap = roleHasPredicateSecurityForClass.get(role.getName());
+        if (roleMap == null) {
+          return Collections.emptySet();//TODO hierarchy...?
+        }
+        Boolean val = roleMap.get(document.getClassName());
+        if (Boolean.FALSE.equals(val)) {
+          return Collections.emptySet();//TODO hierarchy...?
+        }
+      }
+
     }
     Set<String> props = document.getPropertyNames();
     Set<String> result = new HashSet<>();

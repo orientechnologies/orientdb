@@ -114,5 +114,10 @@ public class OParenthesisBlock extends OBooleanExpression {
   public boolean isCacheable() {
     return subElement.isCacheable();
   }
+
+  @Override
+  public boolean isAlwaysTrue() {
+    return subElement.isAlwaysTrue();
+  }
 }
 /* JavaCC - OriginalChecksum=9a16b6cf7d051382acb94c45067631a9 (do not edit this line) */

@@ -249,5 +249,17 @@ public class OOrBlock extends OBooleanExpression {
     return this;
   }
 
+  @Override
+  public boolean isAlwaysTrue() {
+    if (subBlocks.isEmpty()) {
+      return true;
+    }
+    for (OBooleanExpression exp : subBlocks) {
+      if (exp.isAlwaysTrue()) {
+        return true;
+      }
+    }
+    return false;
+  }
 }
 /* JavaCC - OriginalChecksum=98d3077303a598705894dbb7bd4e1573 (do not edit this line) */

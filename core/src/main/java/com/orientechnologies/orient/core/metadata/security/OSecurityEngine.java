@@ -313,7 +313,7 @@ public class OSecurityEngine {
     return OBooleanExpression.TRUE;
   }
 
-  private static OBooleanExpression parsePredicate(ODatabaseSession session, String predicateString) {
+  public static OBooleanExpression parsePredicate(ODatabaseSession session, String predicateString) {
     if ("true".equalsIgnoreCase(predicateString)) {
       return OBooleanExpression.TRUE;
     }

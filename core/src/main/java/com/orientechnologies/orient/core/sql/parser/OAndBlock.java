@@ -258,5 +258,18 @@ public class OAndBlock extends OBooleanExpression {
     }
     return this;
   }
+
+  @Override
+  public boolean isAlwaysTrue() {
+    if (subBlocks.isEmpty()) {
+      return true;
+    }
+    for (OBooleanExpression exp : subBlocks) {
+      if (!exp.isAlwaysTrue()) {
+        return false;
+      }
+    }
+    return true;
+  }
 }
 /* JavaCC - OriginalChecksum=cf1f66cc86cfc93d357f9fcdfa4a4604 (do not edit this line) */
