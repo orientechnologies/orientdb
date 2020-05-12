@@ -30,13 +30,13 @@ public class LuceneCreateIndexIntegrationTest {
     server0 = OServer.startFromClasspathConfig("com/orientechnologies/lucene/integration/orientdb-simple-server-config.xml");
     remote = new OrientDB("remote:localhost", "root", "test", OrientDBConfig.defaultConfig());
     remote.create("LuceneCreateIndexIntegrationTest", ODatabaseType.PLOCAL);
-    ODatabaseSession session = remote.open("LuceneCreateIndexIntegrationTest", "admin", "admin");
+    final ODatabaseSession session = remote.open("LuceneCreateIndexIntegrationTest", "admin", "admin");
 
     session.command("create class Person");
     session.command("create property Person.name STRING");
     session.command("create property Person.surname STRING");
 
-    OElement doc = session.newElement("Person");
+    final OElement doc = session.newElement("Person");
     doc.setProperty("name", "Jon");
     doc.setProperty("surname", "Snow");
     session.save(doc);
@@ -44,23 +44,16 @@ public class LuceneCreateIndexIntegrationTest {
   }
 
   @Test
-  public void testCreateIndexJavaAPI() throws IOException {
-
-    ODatabaseSession session = remote.open("LuceneCreateIndexIntegrationTest", "admin", "admin");
-
-    OClass person = session.getMetadata().getSchema().getClass("Person");
-
+  public void testCreateIndexJavaAPI() {
+    final ODatabaseSession session = remote.open("LuceneCreateIndexIntegrationTest", "admin", "admin");
+    final OClass person = session.getMetadata().getSchema().getClass("Person");
     person.createIndex("Person.firstName_lastName", "FULLTEXT", null, null, "LUCENE", new String[] { "name", "surname" });
-
     Assert.assertTrue(session.getMetadata().getSchema().getClass("Person").areIndexed("name", "surname"));
   }
 
   @After
   public void after() {
-
     remote.drop("LuceneCreateIndexIntegrationTest");
-
     server0.shutdown();
   }
-
 }

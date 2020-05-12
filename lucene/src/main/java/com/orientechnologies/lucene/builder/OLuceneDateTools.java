@@ -17,7 +17,6 @@ import java.util.Locale;
  * @author frank
  */
 public class OLuceneDateTools {
-
   //indexed by format length
   private static final Resolution[] RESOLUTIONS;
 
@@ -26,7 +25,6 @@ public class OLuceneDateTools {
     for (Resolution resolution : Resolution.values()) {
       RESOLUTIONS[resolution.formatLen] = resolution;
     }
-
   }
 
   // cannot create, the class has static methods only
@@ -65,7 +63,6 @@ public class OLuceneDateTools {
       return format.parse(dateString);
     } catch (Exception e) {
       OLogManager.instance().error(OLuceneDateTools.class, "Exception is suppressed, original exception is ", e);
-
       //noinspection ThrowInsideCatchBlockWhichIgnoresCaughtException
       throw new ParseException("Input is not a valid date string: " + dateString, 0);
     }
@@ -75,7 +72,6 @@ public class OLuceneDateTools {
    * Specifies the time granularity.
    */
   public enum Resolution {
-
     /**
      * Limit a date's resolution to year granularity.
      */
@@ -129,7 +125,5 @@ public class OLuceneDateTools {
     public String toString() {
       return super.toString().toLowerCase(Locale.ROOT);
     }
-
   }
-
 }

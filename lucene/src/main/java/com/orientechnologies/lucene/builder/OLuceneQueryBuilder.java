@@ -39,100 +39,85 @@ import java.util.stream.Collectors;
  * Created by Enrico Risa on 02/09/15.
  */
 public class OLuceneQueryBuilder {
-
   public static final ODocument EMPTY_METADATA = new ODocument();
 
   private final boolean                allowLeadingWildcard;
-  private final boolean                lowercaseExpandedTerms;
+  // private final boolean                lowercaseExpandedTerms;
   private final boolean                splitOnWhitespace;
   private final OLuceneAnalyzerFactory analyzerFactory;
 
-  public OLuceneQueryBuilder(ODocument metadata) {
+  public OLuceneQueryBuilder(final ODocument metadata) {
     this(Optional.ofNullable(metadata.<Boolean>field("allowLeadingWildcard")).orElse(false),
         Optional.ofNullable(metadata.<Boolean>field("lowercaseExpandedTerms")).orElse(true),
         Optional.ofNullable(metadata.<Boolean>field("splitOnWhitespace")).orElse(true));
-
   }
 
-  public OLuceneQueryBuilder(boolean allowLeadingWildcard, boolean lowercaseExpandedTerms, boolean splitOnWhitespace) {
+  public OLuceneQueryBuilder(final boolean allowLeadingWildcard, final boolean lowercaseExpandedTerms, final boolean splitOnWhitespace) {
     this.allowLeadingWildcard = allowLeadingWildcard;
-    this.lowercaseExpandedTerms = lowercaseExpandedTerms;
+    // this.lowercaseExpandedTerms = lowercaseExpandedTerms;
     this.splitOnWhitespace = splitOnWhitespace;
     analyzerFactory = new OLuceneAnalyzerFactory();
   }
 
-  public Query query(OIndexDefinition index, Object key, ODocument metadata, Analyzer analyzer) throws ParseException {
-
-    String query;
-    if (key instanceof OCompositeKey) {
-      Object params = ((OCompositeKey) key).getKeys().get(0);
-      query = params.toString();
-
-    } else {
-
-      query = key.toString();
-    }
-
-    if (query.isEmpty())
+  public Query query(final OIndexDefinition index, final Object key, final ODocument metadata, final Analyzer analyzer)
+      throws ParseException {
+    final String query = constructQueryString(key);
+    if (query.isEmpty()) {
       return new MatchNoDocsQuery();
+    }
     return buildQuery(index, query, metadata, analyzer);
   }
 
-  protected Query buildQuery(OIndexDefinition index, String query, ODocument metadata, Analyzer queryAnalyzer)
-      throws ParseException {
+  private String constructQueryString(final Object key) {
+    if (key instanceof OCompositeKey) {
+      final Object params = ((OCompositeKey) key).getKeys().get(0);
+      return params.toString();
+    } else {
+      return key.toString();
+    }
+  }
 
+  protected Query buildQuery(final OIndexDefinition index, final String query, final ODocument metadata, final Analyzer queryAnalyzer)
+      throws ParseException {
     String[] fields;
     if (index.isAutomatic()) {
       fields = index.getFields().toArray(new String[index.getFields().size()]);
     } else {
-      int length = index.getTypes().length;
-
+      final int length = index.getTypes().length;
       fields = new String[length];
       for (int i = 0; i < length; i++) {
         fields[i] = "k" + i;
       }
     }
-
-    Map<String, OType> types = new HashMap<>();
+    final Map<String, OType> types = new HashMap<>();
     for (int i = 0; i < fields.length; i++) {
-      String field = fields[i];
+      final String field = fields[i];
       types.put(field, index.getTypes()[i]);
     }
-
     return getQuery(index, query, metadata, queryAnalyzer, fields, types);
-
   }
 
-  private Query getQuery(OIndexDefinition index, String query, ODocument metadata, Analyzer queryAnalyzer, String[] fields,
-      Map<String, OType> types) throws ParseException {
-
-    Map<String, Float> boost = Optional.ofNullable(metadata.<Map<String, Number>>getProperty("boost")).orElse(new HashMap<>())
+  private Query getQuery(final OIndexDefinition index, final String query, final ODocument metadata, final Analyzer queryAnalyzer,
+      final String[] fields, final Map<String, OType> types) throws ParseException {
+    final Map<String, Float> boost = Optional.ofNullable(metadata.<Map<String, Number>>getProperty("boost")).orElse(new HashMap<>())
         .entrySet().stream().collect(Collectors.toMap(e -> e.getKey(), e -> e.getValue().floatValue()));
-
-    Analyzer analyzer = Optional.ofNullable(metadata.<Boolean>getProperty("customAnalysis")).filter(b -> b == true)
+    final Analyzer analyzer = Optional.ofNullable(metadata.<Boolean>getProperty("customAnalysis")).filter(b -> b == true)
         .map(b -> analyzerFactory.createAnalyzer(index, OLuceneAnalyzerFactory.AnalyzerKind.QUERY, metadata)).orElse(queryAnalyzer);
-
     final OLuceneMultiFieldQueryParser queryParser = new OLuceneMultiFieldQueryParser(types, fields, analyzer, boost);
-
     queryParser.setAllowLeadingWildcard(
         Optional.ofNullable(metadata.<Boolean>getProperty("allowLeadingWildcard")).orElse(allowLeadingWildcard));
-
     queryParser
         .setSplitOnWhitespace(Optional.ofNullable(metadata.<Boolean>getProperty("splitOnWhitespace")).orElse(splitOnWhitespace));
     //  TODO   REMOVED
     //    queryParser.setLowercaseExpandedTerms(
     //        Optional.ofNullable(metadata.<Boolean>getProperty("lowercaseExpandedTerms"))
     //            .orElse(lowercaseExpandedTerms));
-
     try {
       return queryParser.parse(query);
-
-    } catch (org.apache.lucene.queryparser.classic.ParseException e) {
+    } catch (final org.apache.lucene.queryparser.classic.ParseException e) {
       OLogManager.instance().error(this, "Exception is suppressed, original exception is ", e);
-
       //noinspection ThrowInsideCatchBlockWhichIgnoresCaughtException
       throw new ParseException(e.getMessage());
     }
   }
-
 }

@@ -11,9 +11,13 @@ import static com.orientechnologies.lucene.engine.OLuceneIndexEngineAbstract.RID
 
 /**
  * Created by frank on 10/12/15.
+ *
+ * Doesn't allow to wrap components or readers. Thread local resources can be delegated to the delegate analyzer,
+ * but not allocated on this analyzer (limit memory consumption).
+ * Uses a per field reuse strategy.
  */
 public class OLucenePerFieldAnalyzerWrapper extends DelegatingAnalyzerWrapper {
-  private final Analyzer              defaultAnalyzer;
+  private final Analyzer              defaultDelegateAnalyzer;
   private final Map<String, Analyzer> fieldAnalyzers;
 
   /**
@@ -21,7 +25,7 @@ public class OLucenePerFieldAnalyzerWrapper extends DelegatingAnalyzerWrapper {
    *
    * @param defaultAnalyzer Any fields not specifically defined to use a different analyzer will use the one provided here.
    */
-  public OLucenePerFieldAnalyzerWrapper(Analyzer defaultAnalyzer) {
+  public OLucenePerFieldAnalyzerWrapper(final Analyzer defaultAnalyzer) {
     this(defaultAnalyzer, new HashMap<>());
   }
 
@@ -31,9 +35,9 @@ public class OLucenePerFieldAnalyzerWrapper extends DelegatingAnalyzerWrapper {
    * @param defaultAnalyzer Any fields not specifically defined to use a different analyzer will use the one provided here.
    * @param fieldAnalyzers  a Map (String field name to the Analyzer) to be used for those fields
    */
-  public OLucenePerFieldAnalyzerWrapper(Analyzer defaultAnalyzer, Map<String, Analyzer> fieldAnalyzers) {
+  public OLucenePerFieldAnalyzerWrapper(final Analyzer defaultAnalyzer, final Map<String, Analyzer> fieldAnalyzers) {
     super(PER_FIELD_REUSE_STRATEGY);
-    this.defaultAnalyzer = defaultAnalyzer;
+    this.defaultDelegateAnalyzer = defaultAnalyzer;
     this.fieldAnalyzers = new HashMap<>();
 
     this.fieldAnalyzers.putAll(fieldAnalyzers);
@@ -45,32 +49,32 @@ public class OLucenePerFieldAnalyzerWrapper extends DelegatingAnalyzerWrapper {
   }
 
   @Override
-  protected Analyzer getWrappedAnalyzer(String fieldName) {
-    Analyzer analyzer = fieldAnalyzers.get(fieldName);
-    return (analyzer != null) ? analyzer : defaultAnalyzer;
+  protected Analyzer getWrappedAnalyzer(final String fieldName) {
+    final Analyzer analyzer = fieldAnalyzers.get(fieldName);
+    return (analyzer != null) ? analyzer : defaultDelegateAnalyzer;
   }
 
   @Override
   public String toString() {
-    return "PerFieldAnalyzerWrapper(" + fieldAnalyzers + ", default=" + defaultAnalyzer + ")";
+    return "PerFieldAnalyzerWrapper(" + fieldAnalyzers + ", default=" + defaultDelegateAnalyzer + ")";
   }
 
-  public OLucenePerFieldAnalyzerWrapper add(String field, Analyzer analyzer) {
+  public OLucenePerFieldAnalyzerWrapper add(final String field, final Analyzer analyzer) {
     fieldAnalyzers.put(field, analyzer);
     return this;
   }
 
-  public OLucenePerFieldAnalyzerWrapper add(OLucenePerFieldAnalyzerWrapper analyzer) {
+  public OLucenePerFieldAnalyzerWrapper add(final OLucenePerFieldAnalyzerWrapper analyzer) {
     fieldAnalyzers.putAll(analyzer.getAnalyzers());
+    return this;
+  }
+
+  public OLucenePerFieldAnalyzerWrapper remove(final String field) {
+    fieldAnalyzers.remove(field);
     return this;
   }
 
   protected Map<String, Analyzer> getAnalyzers() {
     return fieldAnalyzers;
-  }
-
-  public OLucenePerFieldAnalyzerWrapper remove(String field) {
-    fieldAnalyzers.remove(field);
-    return this;
   }
 }
