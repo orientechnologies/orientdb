@@ -79,10 +79,8 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.SortedSet;
 import java.util.TimerTask;
-import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.ExecutorService;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.ThreadFactory;
@@ -108,8 +106,6 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
 
   protected Map<ODistributedRequestId, ODistributedTxContext> activeTxContexts =
       new ConcurrentHashMap<ODistributedRequestId, ODistributedTxContext>(64);
-  protected final List<ODistributedWorker> workerThreads = new ArrayList<ODistributedWorker>();
-  protected ODistributedWorker nowaitThread;
 
   private AtomicLong totalSentRequests = new AtomicLong();
   private AtomicLong totalReceivedRequests = new AtomicLong();
@@ -124,7 +120,7 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
   private AtomicLong operationsRunnig = new AtomicLong(0);
   private ODistributedSynchronizedSequence sequenceManager;
   private final AtomicLong pending = new AtomicLong();
-  private ExecutorService requestExecutor;
+  private ThreadPoolExecutor requestExecutor;
   private OLockManager lockManager = new OLockManagerImpl();
 
   public static boolean sendResponseBack(
@@ -132,6 +128,7 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
       final ODistributedServerManager manager,
       final ODistributedRequestId iRequestId,
       Object responsePayload) {
+
     if (iRequestId.getMessageId() < 0)
       // INTERNAL MSG
       return true;
@@ -272,7 +269,7 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
             new OAbstractProfiler.OProfilerHookValue() {
               @Override
               public Object getValue() {
-                return (long) workerThreads.size();
+                return (long) requestExecutor.getPoolSize();
               }
             },
             "distributed.db.*.workerThreads");
@@ -443,38 +440,6 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
         }
       }
     }
-  }
-
-  protected Set<Integer> getInvolvedQueuesByPartitionKeys(final int[] partitionKeys) {
-    final Set<Integer> involvedWorkerQueues = new HashSet<Integer>(partitionKeys.length);
-    for (int pk : partitionKeys) {
-      if (pk >= 0) involvedWorkerQueues.add(pk % workerThreads.size());
-    }
-    return involvedWorkerQueues;
-  }
-
-  protected void processRequest(final int partitionKey, final ODistributedRequest request) {
-    if (workerThreads.isEmpty())
-      throw new ODistributedException("There are no worker threads to process request " + request);
-
-    final int partition = partitionKey % workerThreads.size();
-
-    Set<Integer> partitions = new HashSet<>();
-    partitions.add(partition);
-
-    manager.messagePartitionCalculate(request, partitions);
-
-    ODistributedServerLog.debug(
-        this,
-        localNodeName,
-        request.getTask().getNodeSource(),
-        DIRECTION.IN,
-        "Request %s on database '%s' dispatched to the worker %d",
-        request,
-        databaseName,
-        partition);
-
-    workerThreads.get(partition).processRequest(request);
   }
 
   @Override
@@ -932,17 +897,7 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
 
   @Override
   public long getProcessedRequests() {
-    long total = 0;
-
-    if (nowaitThread != null) {
-      total += nowaitThread.getProcessedRequests();
-    }
-
-    for (ODistributedWorker workerThread : workerThreads) {
-      if (workerThread != null) total += workerThread.getProcessedRequests();
-    }
-
-    return total;
+    return requestExecutor.getCompletedTaskCount();
   }
 
   public void onDropShutdown() {
@@ -960,31 +915,6 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
 
     try {
       if (txTimeoutTask != null) txTimeoutTask.cancel();
-
-      // SEND THE SHUTDOWN TO ALL THE WORKER THREADS
-      if (nowaitThread != null) {
-        nowaitThread.sendShutdown();
-      }
-      for (ODistributedWorker workerThread : workerThreads) {
-        if (workerThread != null) workerThread.sendShutdown();
-      }
-
-      if (nowaitThread != null)
-        try {
-          nowaitThread.join(2000);
-        } catch (InterruptedException e) {
-        }
-
-      for (ODistributedWorker workerThread : workerThreads) {
-        if (workerThread != null) {
-          try {
-            workerThread.join(2000);
-          } catch (InterruptedException e) {
-          }
-        }
-      }
-      nowaitThread = null;
-      workerThreads.clear();
       requestExecutor.shutdown();
       if (wait) {
         try {
@@ -1234,16 +1164,6 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
       if (totalWorkers == 0) totalWorkers = 1;
     }
 
-    nowaitThread = new ODistributedWorker(this, databaseName, -4, true);
-    nowaitThread.start();
-
-    for (int i = 0; i < totalWorkers; ++i) {
-      final ODistributedWorker workerThread = new ODistributedWorker(this, databaseName, i, true);
-      workerThreads.add(workerThread);
-      workerThread.start();
-
-      ALL_QUEUES.add(i);
-    }
     synchronized (this) {
       this.requestExecutor =
           new ThreadPoolExecutor(
@@ -1373,16 +1293,6 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
 
   public void suspend() {
     boolean parsing = this.parsing.get();
-    if (parsing) {
-      // RESET THE DATABASE
-      if (nowaitThread != null) {
-        nowaitThread.reset();
-      }
-      for (ODistributedWorker w : workerThreads) {
-        if (w != null) w.reset();
-      }
-    }
-
     this.parsing.set(false);
     if (parsing) {
       while (operationsRunnig.get() != 0) {
@@ -1410,35 +1320,7 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
         "\n\nDATABASE '" + databaseName + "' ON SERVER '" + manager.getLocalNodeName() + "'");
 
     buffer.append("\n- MESSAGES IN QUEUES");
-    buffer.append(" (" + (workerThreads != null ? workerThreads.size() : 0) + " WORKERS):");
-
-    if (nowaitThread != null) {
-      final ODistributedRequest processing = nowaitThread.getProcessing();
-      final ArrayBlockingQueue<ODistributedRequest> queue = nowaitThread.localQueue;
-
-      if (processing != null || !queue.isEmpty()) {
-        buffer.append("\n - QUEUE UNLOCK EXECUTING: " + processing);
-        int i = 0;
-        for (ODistributedRequest m : queue) {
-          if (m != null) buffer.append("\n  - " + i + " = " + m.toString());
-        }
-      }
-    }
-
-    if (workerThreads != null) {
-      for (ODistributedWorker t : workerThreads) {
-        final ODistributedRequest processing = t.getProcessing();
-        final ArrayBlockingQueue<ODistributedRequest> queue = t.localQueue;
-
-        if (processing != null || !queue.isEmpty()) {
-          buffer.append("\n  - QUEUE " + t.id + " EXECUTING: " + processing);
-          int i = 0;
-          for (ODistributedRequest m : queue) {
-            if (m != null) buffer.append("\n   - " + (i++) + " = " + m.toString());
-          }
-        }
-      }
-    }
+    buffer.append(" (" + (requestExecutor.getPoolSize()) + " WORKERS):");
 
     return buffer.toString();
   }
