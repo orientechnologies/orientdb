@@ -14,8 +14,6 @@
                 <include>com.spatial4j:*</include>
                 <include>com.vividsolutions:*</include>
             </includes>
-
         </dependencySet>
     </dependencySets>
-
 </assembly>
