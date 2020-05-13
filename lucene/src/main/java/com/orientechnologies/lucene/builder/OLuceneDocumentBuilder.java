@@ -41,31 +41,22 @@ import static com.orientechnologies.lucene.engine.OLuceneIndexEngineAbstract.RID
  * Created by Enrico Risa on 02/09/15.
  */
 public class OLuceneDocumentBuilder {
-
   public Document newBuild(OIndexDefinition indexDefinition, Object key, OIdentifiable oid) {
-
     if (oid != null) {
       ORecord record = oid.getRecord();
-
       OElement element = record.load();
-
     }
-
     return null;
   }
 
   public Document build(OIndexDefinition definition, Object key, OIdentifiable value, Map<String, Boolean> fieldsToStore,
       ODocument metadata) {
-
     Document doc = new Document();
-
     if (value != null) {
       doc.add(createField(RID, value.getIdentity().toString(), Field.Store.YES));
       doc.add(createField("_CLUSTER", "" + value.getIdentity().getClusterId(), Field.Store.YES));
       doc.add(createField("_CLASS", definition.getClassName(), Field.Store.YES));
-
     }
-
     List<Object> formattedKey = formatKeys(definition, key);
 
     int i = 0;
@@ -74,22 +65,17 @@ public class OLuceneDocumentBuilder {
       i++;
       if (val != null) {
 //        doc.add(createField(field, val, Field.Store.YES));
-
         Boolean sorted = isSorted(field, metadata);
         createFields(field, val, Field.Store.YES, sorted).forEach(f -> doc.add(f));
-
         //for cross class index
         createFields(definition.getClassName() + "." + field, val, Field.Store.YES, sorted).forEach(f -> doc.add(f));
-
       }
     }
-
     return doc;
   }
 
   private List<Object> formatKeys(OIndexDefinition definition, Object key) {
     List<Object> keys;
-
     if (key instanceof OCompositeKey) {
       keys = ((OCompositeKey) key).getKeys();
     } else if (key instanceof List) {
@@ -98,7 +84,6 @@ public class OLuceneDocumentBuilder {
       keys = new ArrayList<Object>();
       keys.add(key);
     }
-
     // a sort of padding
     for (int i = keys.size(); i < definition.getFields().size(); i++) {
       keys.add("");
@@ -111,15 +96,11 @@ public class OLuceneDocumentBuilder {
   }
 
   protected Boolean isSorted(String field, ODocument metadata) {
-
     if (metadata == null)
       return true;
-
     Boolean sorted = true;
     try {
-
       Boolean localSorted = metadata.field("*_index_sorted");
-
       if (localSorted == null) {
         localSorted = metadata.field(field + "_index_sorted");
       }
@@ -127,10 +108,7 @@ public class OLuceneDocumentBuilder {
         sorted = localSorted;
       }
     } catch (Exception e) {
-
     }
-
     return sorted;
-
   }
 }

@@ -11,7 +11,7 @@ import org.junit.Test;
 
 public class Foo {
 
-//  @Test
+  @Test
   public void test() {
     OrientDB orientDB = new OrientDB("embedded:", OrientDBConfig.defaultConfig());
     orientDB.createIfNotExists("TestGraphOperations", ODatabaseType.MEMORY);
