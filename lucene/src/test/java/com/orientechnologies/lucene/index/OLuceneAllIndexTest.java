@@ -53,16 +53,13 @@ public class OLuceneAllIndexTest extends BaseLuceneTest {
     db.command(new OCommandSQL(
         "create index Song.lyrics on Song (lyrics) FULLTEXT ENGINE LUCENE METADATA {\"index_analyzer\":\"" + EnglishAnalyzer.class
             .getName() + "\"}")).execute();
-
   }
 
   @Test
-  @Ignore
-  public void testLuceneFunction() throws Exception {
+  @Ignore // FIXME: No function with name 'lucene_match'
+  public void testLuceneFunction() {
     List<ODocument> docs = db
         .query(new OSQLSynchQuery<ODocument>("select from Song where lucene_match( \"Song.author:Fabbio\" ) = true "));
-
     assertThat(docs).hasSize(87);
-
   }
 }

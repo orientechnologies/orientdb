@@ -13,39 +13,54 @@ import org.apache.lucene.analysis.standard.StandardAnalyzer;
 import java.lang.reflect.Constructor;
 import java.util.Collection;
 import java.util.Locale;
+import java.util.Optional;
 
 /**
  * Created by frank on 30/10/2015.
  */
 public class OLuceneAnalyzerFactory {
-
-  public Analyzer createAnalyzer(OIndexDefinition index, AnalyzerKind kind, ODocument metadata) {
+  public Analyzer createAnalyzer(final OIndexDefinition index, final AnalyzerKind kind, final ODocument metadata) {
+    if (index == null) {
+      throw new IllegalArgumentException("Index must not be null");
+    }
+    if (kind == null) {
+      throw new IllegalArgumentException("Analyzer kind must not be null");
+    }
+    if (metadata == null) {
+      throw new IllegalArgumentException("Metadata must not be null");
+    }
     final String defaultAnalyzerFQN = metadata.field("default");
-
     final String prefix = index.getClassName() + ".";
 
-    //preset default analyzer for all fields
-    OLucenePerFieldAnalyzerWrapper analyzer;
-    if (defaultAnalyzerFQN == null) {
-      analyzer = new OLucenePerFieldAnalyzerWrapper(new StandardAnalyzer());
-    } else {
-      analyzer = new OLucenePerFieldAnalyzerWrapper(buildAnalyzer(defaultAnalyzerFQN));
-    }
+    final OLucenePerFieldAnalyzerWrapper analyzer = geLucenePerFieldPresetAnalyzerWrapperForAllFields(defaultAnalyzerFQN);
+    setDefaultAnalyzerForRequestedKind(index, kind, metadata, prefix, analyzer);
+    setSpecializedAnalyzersForEachField(index, kind, metadata, prefix, analyzer);
+    return analyzer;
+  }
 
-    //default analyzer for requested kind
+  private OLucenePerFieldAnalyzerWrapper geLucenePerFieldPresetAnalyzerWrapperForAllFields(final String defaultAnalyzerFQN) {
+    if (defaultAnalyzerFQN == null) {
+      return new OLucenePerFieldAnalyzerWrapper(new StandardAnalyzer());
+    } else {
+      return new OLucenePerFieldAnalyzerWrapper(buildAnalyzer(defaultAnalyzerFQN));
+    }
+  }
+
+  private void setDefaultAnalyzerForRequestedKind(final OIndexDefinition index, final AnalyzerKind kind, final ODocument metadata,
+                                                  final String prefix, final OLucenePerFieldAnalyzerWrapper analyzer) {
     final String specializedAnalyzerFQN = metadata.field(kind.toString());
     if (specializedAnalyzerFQN != null) {
-      for (String field : index.getFields()) {
+      for (final String field : index.getFields()) {
         analyzer.add(field, buildAnalyzer(specializedAnalyzerFQN));
         analyzer.add(prefix + field, buildAnalyzer(specializedAnalyzerFQN));
       }
     }
+  }
 
-    //specialized for each field
-    for (String field : index.getFields()) {
-
+  private void setSpecializedAnalyzersForEachField(final OIndexDefinition index, final AnalyzerKind kind, final ODocument metadata,
+                                                   final String prefix, final OLucenePerFieldAnalyzerWrapper analyzer) {
+    for (final String field : index.getFields()) {
       final String analyzerName = field + "_" + kind.toString();
-
       final String analyzerStopwords = analyzerName + "_stopwords";
 
       if (metadata.containsField(analyzerName) && metadata.containsField(analyzerStopwords)) {
@@ -57,57 +72,44 @@ public class OLuceneAnalyzerFactory {
         analyzer.add(prefix + field, buildAnalyzer(metadata.field(analyzerName)));
       }
     }
-
-    return analyzer;
-
   }
 
-  private Analyzer buildAnalyzer(String analyzerFQN) {
-
+  private Analyzer buildAnalyzer(final String analyzerFQN) {
     try {
-
       final Class classAnalyzer = Class.forName(analyzerFQN);
       final Constructor constructor = classAnalyzer.getConstructor();
-
       return (Analyzer) constructor.newInstance();
-    } catch (ClassNotFoundException e) {
+    } catch (final ClassNotFoundException e) {
       throw OException.wrapException(new OIndexException("Analyzer: " + analyzerFQN + " not found"), e);
-    } catch (NoSuchMethodException e) {
+    } catch (final NoSuchMethodException e) {
       Class classAnalyzer = null;
       try {
         classAnalyzer = Class.forName(analyzerFQN);
         return (Analyzer) classAnalyzer.newInstance();
-
       } catch (Exception e1) {
         OLogManager.instance().error(this, "Exception is suppressed, original exception is ", e);
-
         //noinspection ThrowInsideCatchBlockWhichIgnoresCaughtException
         throw OException.wrapException(new OIndexException("Couldn't instantiate analyzer:  public constructor  not found"), e1);
       }
-
     } catch (Exception e) {
-      OLogManager.instance().error(this, "Error on getting analyzer for Lucene index", e);
+      OLogManager.instance().error(this, "Error on getting analyzer for Lucene index (continuing with StandardAnalyzer)", e);
+      return new StandardAnalyzer();
     }
-    return new StandardAnalyzer();
   }
 
-  private Analyzer buildAnalyzer(String analyzerFQN, Collection<String> stopwords) {
-
+  private Analyzer buildAnalyzer(final String analyzerFQN, final Collection<String> stopwords) {
     try {
-
       final Class classAnalyzer = Class.forName(analyzerFQN);
       final Constructor constructor = classAnalyzer.getDeclaredConstructor(CharArraySet.class);
-
       return (Analyzer) constructor.newInstance(new CharArraySet(stopwords, true));
-    } catch (ClassNotFoundException e) {
+    } catch (final ClassNotFoundException e) {
       throw OException.wrapException(new OIndexException("Analyzer: " + analyzerFQN + " not found"), e);
-    } catch (NoSuchMethodException e) {
-      throw OException.wrapException(new OIndexException("Couldn't instantiate analyzer:  public constructor  not found"), e);
-
-    } catch (Exception e) {
-      OLogManager.instance().error(this, "Error on getting analyzer for Lucene index", e);
+    } catch (final NoSuchMethodException e) {
+      throw OException.wrapException(new OIndexException("Couldn't instantiate analyzer: public constructor not found"), e);
+    } catch (final Exception e) {
+      OLogManager.instance().error(this, "Error on getting analyzer for Lucene index (continuing with StandardAnalyzer)", e);
+      return new StandardAnalyzer();
     }
-    return new StandardAnalyzer();
   }
 
   public enum AnalyzerKind {
@@ -118,5 +120,4 @@ public class OLuceneAnalyzerFactory {
       return name().toLowerCase(Locale.ENGLISH);
     }
   }
-
 }

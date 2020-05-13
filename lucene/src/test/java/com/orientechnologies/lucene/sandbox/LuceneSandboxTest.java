@@ -18,17 +18,14 @@ public class LuceneSandboxTest extends OLuceneBaseTest {
 
   @Before
   public void setUp() throws Exception {
-
     db.command("CREATE CLASS CDR");
     db.command("CREATE PROPERTY  CDR.filename STRING");
     db.command("INSERT into cdr(filename) values('MDCA10MCR201612291808.276388.eno.RRC.20161229183002.PROD_R4.eno.data') ");
     db.command("INSERT into cdr(filename) values('MDCA20MCR201612291911.277904.eno.RRC.20161229193002.PROD_R4.eno.data') ");
-
   }
 
   @Test
   public void shouldFetchOneDocumentWithExactMatchOnLuceneIndexStandardAnalyzer() throws Exception {
-
     db.command("CREATE INDEX cdr.filename ON cdr(filename) FULLTEXT ENGINE LUCENE ");
     //partial match
     OResultSet res = db.query("select from cdr WHERE filename LUCENE ' RRC.20161229193002.PROD_R4.eno.data '");

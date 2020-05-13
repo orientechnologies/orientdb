@@ -22,58 +22,53 @@ import java.util.Optional;
 public class OLuceneMultiFieldQueryParser extends MultiFieldQueryParser {
   private final Map<String, OType> types;
 
-  public OLuceneMultiFieldQueryParser(Map<String, OType> types, String[] fields, Analyzer analyzer) {
+  public OLuceneMultiFieldQueryParser(final Map<String, OType> types, final String[] fields, final Analyzer analyzer) {
     this(types, fields, analyzer, null);
   }
 
-  public OLuceneMultiFieldQueryParser(Map<String, OType> types, String[] fields, Analyzer analyzer, Map<String, Float> boosts) {
+  public OLuceneMultiFieldQueryParser(final Map<String, OType> types, final String[] fields, final Analyzer analyzer,
+                                      final Map<String, Float> boosts) {
     super(fields, analyzer, boosts);
     this.types = types;
   }
 
   @Override
-  protected Query getFieldQuery(String field, String queryText, int slop) throws ParseException {
-    Optional<Query> query = getQuery(field, queryText, queryText, true, true);
-
+  protected Query getFieldQuery(final String field, final String queryText, final int slop) throws ParseException {
+    final Optional<Query> query = getQuery(field, queryText, queryText, true, true);
     return handleBoost(field, query.orElse(super.getFieldQuery(field, queryText, slop)));
   }
 
   @Override
-  protected Query getFieldQuery(String field, String queryText, boolean quoted) throws ParseException {
-
-    Optional<Query> query = getQuery(field, queryText, queryText, true, true);
-
-    Query q = query.orElse(super.getFieldQuery(field, queryText, quoted));
-
+  protected Query getFieldQuery(final String field, final String queryText, final boolean quoted) throws ParseException {
+    final Optional<Query> query = getQuery(field, queryText, queryText, true, true);
+    final Query q = query.orElse(super.getFieldQuery(field, queryText, quoted));
     return handleBoost(field, q);
   }
 
-  private Query handleBoost(String field, Query q) {
+  private Query handleBoost(final String field, final Query query) {
     if (field != null && boosts.containsKey(field)) {
-      return new BoostQuery(q, boosts.get(field));
+      return new BoostQuery(query, boosts.get(field));
     }
-    return q;
+    return query;
   }
 
   @Override
-  protected Query getRangeQuery(String field, String part1, String part2, boolean startInclusive, boolean endInclusive)
-      throws ParseException {
-
-    Optional<Query> query = getQuery(field, part1, part2, startInclusive, endInclusive);
-
+  protected Query getRangeQuery(final String field, final String part1, final String part2, final boolean startInclusive,
+                                final boolean endInclusive) throws ParseException {
+    final Optional<Query> query = getQuery(field, part1, part2, startInclusive, endInclusive);
     return query.orElse(super.getRangeQuery(field, part1, part2, startInclusive, endInclusive));
   }
 
-  private Optional<Query> getQuery(String field, String part1, String part2, boolean startInclusive, boolean endInclusive)
-      throws ParseException {
-
+  private Optional<Query> getQuery(final String field, final String part1, final String part2, final boolean startInclusive,
+                                   final boolean endInclusive) throws ParseException {
     int start = 0;
     int end = 0;
-    if (!startInclusive)
+    if (!startInclusive) {
       start = 1;
-
-    if (!endInclusive)
+    }
+    if (!endInclusive) {
       end = -1;
+    }
 
     if (types.containsKey(field)) {
       switch (types.get(field)) {
@@ -93,7 +88,7 @@ public class OLuceneMultiFieldQueryParser extends MultiFieldQueryParser {
           return Optional.of(LongPoint.newRangeQuery(field, Math.addExact(OLuceneDateTools.stringToTime(part1), start),
               Math.addExact(OLuceneDateTools.stringToTime(part2), end)));
 
-        } catch (java.text.ParseException e) {
+        } catch (final java.text.ParseException e) {
           OLogManager.instance().error(this, "Exception is suppressed, original exception exception is ", e);
           //noinspection ThrowInsideCatchBlockWhichIgnoresCaughtException
           throw new ParseException(e.getMessage());
@@ -102,5 +97,4 @@ public class OLuceneMultiFieldQueryParser extends MultiFieldQueryParser {
     }
     return Optional.empty();
   }
-
 }
