@@ -117,6 +117,11 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
   protected          TimerTask                                  haStatsTask                       = null;
   protected          TimerTask                                  healthCheckerTask                 = null;
 
+  // Listeners
+  protected List<ODistributedNodeLifecycleListener>        nodeLifecycleListeners        = new ArrayList<ODistributedNodeLifecycleListener>();
+  protected List<ODistributedDatabaseStatusChangeListener> databaseStatusChangeListeners = new ArrayList<ODistributedDatabaseStatusChangeListener>();
+  protected List<ODistributedMessageListener>              distributedMessageListeners   = new ArrayList<ODistributedMessageListener>();
+
   // LOCAL MSG COUNTER
   protected AtomicLong                          localMessageIdCounter     = new AtomicLong();
   protected OClusterOwnershipAssignmentStrategy clusterAssignmentStrategy = new ODefaultClusterOwnershipAssignmentStrategy(this);
