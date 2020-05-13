@@ -1334,11 +1334,12 @@ public class OSecurityShared implements OSecurityInternal {
           return false;//TODO hierarchy...?
         }
         Boolean val = roleMap.get(className);
-        if (!(Boolean.TRUE.equals(val))) {
-          return false;//TODO hierarchy...?
+        if (Boolean.TRUE.equals(val)) {
+          return true;//TODO hierarchy...?
         }
       }
 
+      return false;
     }
     return true;
 
