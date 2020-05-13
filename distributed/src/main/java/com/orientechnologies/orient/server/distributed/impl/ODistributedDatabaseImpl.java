@@ -916,7 +916,7 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
           new ThreadFactory() {
             @Override
             public Thread newThread(Runnable r) {
-              Thread thread = new Thread();
+              Thread thread = new Thread(r);
               thread.setName("OrientDB DistributedWorker node=" + getLocalNodeName() + " db=" + databaseName);
               thread.setUncaughtExceptionHandler(new Thread.UncaughtExceptionHandler() {
                 @Override
