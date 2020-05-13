@@ -462,7 +462,7 @@ public class ColumnSecurityTest {
 
   @Test
   public void testReadHiddenColumn() {
-
+    db.command("CREATE CLASS Person");
     db.command("CREATE SECURITY POLICY testPolicy SET read = (name = 'bar')");
     db.command("ALTER ROLE reader SET POLICY testPolicy ON database.class.Person.name");
 
@@ -483,6 +483,7 @@ public class ColumnSecurityTest {
   @Test
   public void testUpdateHiddenColumn() {
 
+    db.command("CREATE CLASS Person");
     db.command("CREATE SECURITY POLICY testPolicy SET read = (name = 'bar')");
     db.command("ALTER ROLE reader SET POLICY testPolicy ON database.class.Person.name");
 

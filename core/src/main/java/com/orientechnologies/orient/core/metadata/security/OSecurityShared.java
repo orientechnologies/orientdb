@@ -444,6 +444,7 @@ public class OSecurityShared implements OSecurityInternal {
       ((ORole) role).reload();
     }
     updateAllFilteredProperties((ODatabaseDocumentInternal) session);
+    initPredicateSecurityOptimizations(session);
   }
 
   private void validatePolicyWithIndexes(ODatabaseSession session, String resource) throws IllegalArgumentException {
@@ -514,6 +515,7 @@ public class OSecurityShared implements OSecurityInternal {
     roleDoc.save();
     role.reload();
     updateAllFilteredProperties((ODatabaseDocumentInternal) session);
+    initPredicateSecurityOptimizations(session);
   }
 
   private String normalizeSecurityResource(ODatabaseSession session, String resource) {
@@ -882,7 +884,7 @@ public class OSecurityShared implements OSecurityInternal {
   }
 
   protected void initPredicateSecurityOptimizations(ODatabaseSession session) {
-    if (true) {
+    if (skipRoleHasPredicateSecurityForClassUpdate) {
       return;
     }
     try {
@@ -908,41 +910,46 @@ public class OSecurityShared implements OSecurityInternal {
     if (session.getClass("ORole") == null) {
       return;
     }
-    OResultSet rs = session.query("select name, policies from ORole");
-    while (rs.hasNext()) {
-      OResult item = rs.next();
-      String roleName = item.getProperty("name");
+    synchronized (this) {
+      OResultSet rs = session.query("select name, policies from ORole");
+      while (rs.hasNext()) {
+        OResult item = rs.next();
+        String roleName = item.getProperty("name");
 
-      Map<String, OIdentifiable> policies = item.getProperty("policies");
-      if (policies != null) {
-        for (Map.Entry<String, OIdentifiable> policyEntry : policies.entrySet()) {
-          try {
-            OSecurityResource res = OSecurityResource.getInstance(policyEntry.getKey());
+        Map<String, OIdentifiable> policies = item.getProperty("policies");
+        if (policies != null) {
+          for (Map.Entry<String, OIdentifiable> policyEntry : policies.entrySet()) {
+            try {
+              OSecurityResource res = OSecurityResource.getInstance(policyEntry.getKey());
 
 
-            for (OClass clazz : allClasses) {
-              if (isClassInvolved(clazz, res) && !isAllAllowed(session, new OSecurityPolicy(policyEntry.getValue().getRecord()))) {
-                Map<String, Boolean> roleMap = result.get(roleName);
-                if (roleMap == null) {
-                  roleMap = new HashMap<>();
-                  result.put(roleName, roleMap);
+              for (OClass clazz : allClasses) {
+                if (isClassInvolved(clazz, res) && !isAllAllowed(session, new OSecurityPolicy(policyEntry.getValue().getRecord()))) {
+                  Map<String, Boolean> roleMap = result.get(roleName);
+                  if (roleMap == null) {
+                    roleMap = new HashMap<>();
+                    result.put(roleName, roleMap);
+                  }
+                  roleMap.put(clazz.getName(), true);
                 }
-                roleMap.put(clazz.getName(), false);
-              }
 
+              }
+            } catch (Exception e) {
             }
-          } catch (Exception e) {
           }
+          rs.close();
         }
-        rs.close();
       }
+      this.roleHasPredicateSecurityForClass = result;
     }
-    this.roleHasPredicateSecurityForClass = result;
   }
 
   private boolean isAllAllowed(ODatabaseSession db, OSecurityPolicy policy) {
     for (OSecurityPolicy.Scope scope : OSecurityPolicy.Scope.values()) {
       String predicateString = policy.get(scope);
+      if (predicateString == null) {
+        continue;
+      }
       OBooleanExpression predicate = OSecurityEngine.parsePredicate(db, predicateString);
       if (!predicate.isAlwaysTrue()) {
         return false;
@@ -983,12 +990,13 @@ public class OSecurityShared implements OSecurityInternal {
     }
     if (roleHasPredicateSecurityForClass != null) {
       for (OSecurityRole role : session.getUser().getRoles()) {
+
         Map<String, Boolean> roleMap = roleHasPredicateSecurityForClass.get(role.getName());
         if (roleMap == null) {
           return Collections.emptySet();//TODO hierarchy...?
         }
         Boolean val = roleMap.get(document.getClassName());
-        if (Boolean.FALSE.equals(val)) {
+        if (!(Boolean.TRUE.equals(val))) {
           return Collections.emptySet();//TODO hierarchy...?
         }
       }
@@ -1063,7 +1071,7 @@ public class OSecurityShared implements OSecurityInternal {
             return true;//TODO hierarchy...?
           }
           Boolean val = roleMap.get(className);
-          if (Boolean.FALSE.equals(val)) {
+          if (!(Boolean.TRUE.equals(val))) {
             return true;//TODO hierarchy...?
           }
         }
@@ -1098,7 +1106,7 @@ public class OSecurityShared implements OSecurityInternal {
             return true;//TODO hierarchy...?
           }
           Boolean val = roleMap.get(((ODocument) record).getClassName());
-          if (Boolean.FALSE.equals(val)) {
+          if (!(Boolean.TRUE.equals(val))) {
             return true;//TODO hierarchy...?
           }
         }
@@ -1129,7 +1137,7 @@ public class OSecurityShared implements OSecurityInternal {
             return true;//TODO hierarchy...?
           }
           Boolean val = roleMap.get(className);
-          if (Boolean.FALSE.equals(val)) {
+          if (!(Boolean.TRUE.equals(val))) {
             return true;//TODO hierarchy...?
           }
         }
@@ -1326,7 +1334,7 @@ public class OSecurityShared implements OSecurityInternal {
           return false;//TODO hierarchy...?
         }
         Boolean val = roleMap.get(className);
-        if (Boolean.FALSE.equals(val)) {
+        if (!(Boolean.TRUE.equals(val))) {
           return false;//TODO hierarchy...?
         }
       }
