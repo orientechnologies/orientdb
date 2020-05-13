@@ -67,12 +67,20 @@ public class OLuceneDirectoryFactoryTest extends BaseLuceneTest {
   }
 
   @Test
-  public void shouldCreateRamDirectoryOnMemoryDatabase() throws Exception {
+  public void shouldCreateRamDirectoryOnMemoryDatabase() {
     meta.field(DIRECTORY_TYPE, DIRECTORY_RAM);
     final ODatabaseDocumentTx db = dropOrCreate(ODatabaseType.MEMORY.name().toLowerCase() + ":" + name.getMethodName(), true);
     final Directory directory = fc.createDirectory(db, "index.name", meta).getDirectory();
-    // 'memory:' determines RAMDirectory and not DIRECTORY_MMAP or DIRECTORY_RAM.
-    // In fact, they lead to the same result regarding this test
+    // 'ODatabaseType.MEMORY' and 'DIRECTORY_RAM' determines the RAMDirectory.
+    assertThat(directory).isInstanceOf(RAMDirectory.class);
+  }
+
+  @Test
+  public void shouldCreateRamDirectoryOnMemoryFromMmapDatabase() {
+    meta.field(DIRECTORY_TYPE, DIRECTORY_MMAP);
+    final ODatabaseDocumentTx db = dropOrCreate(ODatabaseType.MEMORY.name().toLowerCase() + ":" + name.getMethodName(), true);
+    final Directory directory = fc.createDirectory(db, "index.name", meta).getDirectory();
+    // 'ODatabaseType.MEMORY' plus 'DIRECTORY_MMAP' leads to the same result as just 'DIRECTORY_RAM'.
     assertThat(directory).isInstanceOf(RAMDirectory.class);
   }
 }

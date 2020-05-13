@@ -52,10 +52,7 @@ import org.apache.lucene.search.highlight.TextFragment;
 import org.apache.lucene.store.Directory;
 
 import java.io.IOException;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Stream;
 
@@ -90,68 +87,58 @@ public class OLuceneFullTextIndexEngine extends OLuceneIndexEngineAbstract {
   }
 
   @Override
-  public void onRecordAddedToResultSet(OLuceneQueryContext queryContext, OContextualRecordId recordId, Document ret,
-      final ScoreDoc score) {
-
+  public void onRecordAddedToResultSet(final OLuceneQueryContext queryContext, final OContextualRecordId recordId,
+                                       final Document ret, final ScoreDoc score) {
     recordId.setContext(new HashMap<String, Object>() {
       {
-
-        HashMap<String, TextFragment[]> frag = queryContext.getFragments();
-
+        final Map<String, TextFragment[]> frag = queryContext.getFragments();
         frag.forEach((key, fragments) -> {
-          StringBuilder hlField = new StringBuilder();
-          for (TextFragment fragment : fragments) {
+          final StringBuilder hlField = new StringBuilder();
+          for (final TextFragment fragment : fragments) {
             if ((fragment != null) && (fragment.getScore() > 0)) {
               hlField.append(fragment.toString());
             }
           }
           put("$" + key + "_hl", hlField.toString());
         });
-
         put("$score", score.score);
       }
     });
   }
 
   @Override
-  public boolean remove(OAtomicOperation atomicOperation, Object key) {
+  public boolean remove(final OAtomicOperation atomicOperation, final Object key) {
     updateLastAccess();
     openIfClosed();
     try {
-      Query query = new QueryParser("", queryAnalyzer()).parse((String) key);
+      final Query query = new QueryParser("", queryAnalyzer()).parse((String) key);
       deleteDocument(query);
       return true;
     } catch (org.apache.lucene.queryparser.classic.ParseException e) {
       OLogManager.instance().error(this, "Lucene parsing exception", e);
-
     }
     return false;
   }
 
   @Override
-  public Object get(Object key) {
+  public Object get(final Object key) {
     return getInTx(key, null);
   }
 
   @Override
-  public void update(OAtomicOperation atomicOperation, Object key, OIndexKeyUpdater<Object> updater) {
+  public void update(final OAtomicOperation atomicOperation, final Object key, final OIndexKeyUpdater<Object> updater) {
     put(atomicOperation, key, updater.update(null, bonsayFileId).getValue());
   }
 
   @Override
-  public void put(OAtomicOperation atomicOperation, Object key, Object value) {
-
+  public void put(final OAtomicOperation atomicOperation, final Object key, final Object value) {
     updateLastAccess();
     openIfClosed();
     @SuppressWarnings("unchecked")
-    Collection<OIdentifiable> container = (Collection<OIdentifiable>) value;
-
-    for (OIdentifiable oIdentifiable : container) {
-
-      Document doc = buildDocument(key, oIdentifiable);
-
+    final Collection<OIdentifiable> container = (Collection<OIdentifiable>) value;
+    for (final OIdentifiable oIdentifiable : container) {
+      final Document doc = buildDocument(key, oIdentifiable);
       addDocument(doc);
-
     }
   }
 
