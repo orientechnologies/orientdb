@@ -181,7 +181,7 @@ public class OPushManager implements OMetadataUpdateListener {
   private static class PushThreadFactory implements ThreadFactory {
     @Override
     public Thread newThread(Runnable r) {
-      Thread th = new Thread();
+      Thread th = new Thread(r);
       th.setName("Push Requests");
       return th;
     }
