@@ -16,27 +16,19 @@ import static org.assertj.core.api.Assertions.assertThat;
  * Created by frank on 15/01/2017.
  */
 public class OLuceneSearchOnFieldsFunctionTest extends BaseLuceneTest {
-
   @Before
   public void setUp() throws Exception {
-    InputStream stream = ClassLoader.getSystemResourceAsStream("testLuceneIndex.sql");
-
+    final InputStream stream = ClassLoader.getSystemResourceAsStream("testLuceneIndex.sql");
     db.execute("sql", getScriptFromStream(stream));
-
     db.command("create index Song.title on Song (title) FULLTEXT ENGINE LUCENE ");
     db.command("create index Song.author on Song (author) FULLTEXT ENGINE LUCENE ");
-
     db.command("create index Song.lyrics_description on Song (lyrics,description) FULLTEXT ENGINE LUCENE ");
-
   }
 
   @Test
   public void shouldSearchOnSingleField() throws Exception {
-
-    OResultSet resultSet = db.query("SELECT from Song where SEARCH_FIELDS(['title'], 'BELIEVE') = true");
-
+    final OResultSet resultSet = db.query("SELECT from Song where SEARCH_FIELDS(['title'], 'BELIEVE') = true");
     assertThat(resultSet).hasSize(2);
-
     resultSet.close();
   }
 

@@ -33,7 +33,6 @@ import java.io.InputStream;
  * Created by enricorisa on 19/09/14.
  */
 public abstract class BaseLuceneTest {
-
   @Rule
   public TestName name = new TestName();
 
