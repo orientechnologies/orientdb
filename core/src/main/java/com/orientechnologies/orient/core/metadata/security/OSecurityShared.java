@@ -1062,6 +1062,21 @@ public class OSecurityShared implements OSecurityInternal {
 
     if (record instanceof OElement) {
       String className = record instanceof ODocument ? ((ODocument) record).getClassName() : ((OElement) record).getSchemaType().map(x -> x.getName()).orElse(null);
+
+      if (roleHasPredicateSecurityForClass != null) {
+        for (OSecurityRole role : session.getUser().getRoles()) {
+          Map<String, Boolean> roleMap = roleHasPredicateSecurityForClass.get(role.getName());
+          if (roleMap == null) {
+            return true;//TODO hierarchy...?
+          }
+          Boolean val = roleMap.get(className);
+          if (Boolean.FALSE.equals(val)) {
+            return true;//TODO hierarchy...?
+          }
+        }
+
+      }
+
       OBooleanExpression predicate = className == null ? null : OSecurityEngine.getPredicateForSecurityResource(session, this, "database.class.`" + className + "`", OSecurityPolicy.Scope.CREATE);
       return OSecurityEngine.evaluateSecuirtyPolicyPredicate(session, predicate, record);
     }
@@ -1111,6 +1126,23 @@ public class OSecurityShared implements OSecurityInternal {
       return true;
     }
     if (record instanceof OElement) {
+
+      String className = ((OElement) record).getSchemaType().map(x -> x.getName()).orElse(null);
+
+      if (className != null && roleHasPredicateSecurityForClass != null) {
+        for (OSecurityRole role : session.getUser().getRoles()) {
+          Map<String, Boolean> roleMap = roleHasPredicateSecurityForClass.get(role.getName());
+          if (roleMap == null) {
+            return true;//TODO hierarchy...?
+          }
+          Boolean val = roleMap.get(className);
+          if (Boolean.FALSE.equals(val)) {
+            return true;//TODO hierarchy...?
+          }
+        }
+
+      }
+
       OBooleanExpression beforePredicate = ((OElement) record).getSchemaType()
               .map(x -> OSecurityEngine.getPredicateForSecurityResource(session, this, "database.class.`" + x.getName() + "`", OSecurityPolicy.Scope.BEFORE_UPDATE)).orElse(null);
 
