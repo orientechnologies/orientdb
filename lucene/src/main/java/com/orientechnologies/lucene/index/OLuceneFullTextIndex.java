@@ -64,7 +64,7 @@ public class OLuceneFullTextIndex extends OLuceneIndexNotUnique {
           OLuceneIndexEngine indexEngine = (OLuceneIndexEngine) engine;
           return indexEngine.queryAnalyzer();
         });
-      } catch (OInvalidIndexEngineIdException e) {
+      } catch (final OInvalidIndexEngineIdException e) {
         doReloadIndexEngine();
       }
   }

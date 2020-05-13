@@ -35,8 +35,8 @@
 
     <properties>
         <orientdb.version>${project.version}</orientdb.version>
-        <lucene.version>7.3.0</lucene.version>
-        <geotools.version>13.2</geotools.version>
+        <lucene.version>7.3.0</lucene.version> <!-- latest version 8.5.1+ -->
+        <!--<geotools.version>13.2</geotools.version>-->
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <argLine>-ea
             -Xmx${heapSize}
