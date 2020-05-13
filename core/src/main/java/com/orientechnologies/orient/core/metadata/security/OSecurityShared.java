@@ -882,6 +882,9 @@ public class OSecurityShared implements OSecurityInternal {
   }
 
   protected void initPredicateSecurityOptimizations(ODatabaseSession session) {
+    if (true) {
+      return;
+    }
     try {
       if (session.getUser() == null) {
         initPredicateSecurityOptimizationsInternal(session);
