@@ -2,6 +2,7 @@ package com.orientechnologies.lucene.engine;
 
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
+import com.orientechnologies.orient.core.db.ODatabaseType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.MMapDirectory;
@@ -29,7 +30,7 @@ public class OLuceneDirectoryFactory {
 
   public OLuceneDirectory createDirectory(final ODatabaseDocumentInternal database, final String indexName, final ODocument metadata) {
     final String luceneType = metadata.containsField(DIRECTORY_TYPE) ? metadata.<String>field(DIRECTORY_TYPE) : DIRECTORY_MMAP;
-    if (database.getStorage().getType().equals("memory") || DIRECTORY_RAM.equals(luceneType)) {
+    if (database.getStorage().getType().equals(ODatabaseType.MEMORY.name().toLowerCase()) || DIRECTORY_RAM.equals(luceneType)) {
       final Directory dir = new RAMDirectory();
       return new OLuceneDirectory(dir, null);
     }

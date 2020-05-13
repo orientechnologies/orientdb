@@ -43,11 +43,8 @@ public abstract class OLuceneBaseTest {
 
   @Before
   public void setupDatabase() {
-
-    String config = System.getProperty("orientdb.test.env", "memory");
-
+    final String config = System.getProperty("orientdb.test.env", ODatabaseType.MEMORY.name().toLowerCase());
     setupDatabase(config);
-
   }
 
   protected void setupDatabase(String config) {
