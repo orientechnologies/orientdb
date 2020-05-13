@@ -20,7 +20,6 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 public class LuceneDropIndexIntegrationTest {
-
   private OServer server0;
   private OServer server1;
 
@@ -28,7 +27,7 @@ public class LuceneDropIndexIntegrationTest {
   public void before() throws Exception {
     server0 = OServer.startFromClasspathConfig("com/orientechnologies/lucene/integration/orientdb-simple-dserver-config-0.xml");
     server1 = OServer.startFromClasspathConfig("com/orientechnologies/lucene/integration/orientdb-simple-dserver-config-1.xml");
-    OrientDB remote = new OrientDB("remote:localhost", "root", "test", OrientDBConfig.defaultConfig());
+    final OrientDB remote = new OrientDB("remote:localhost", "root", "test", OrientDBConfig.defaultConfig());
     remote.create("LuceneDropIndexIntegrationTest", ODatabaseType.PLOCAL);
     ODatabaseSession session = remote.open("LuceneDropIndexIntegrationTest", "admin", "admin");
 

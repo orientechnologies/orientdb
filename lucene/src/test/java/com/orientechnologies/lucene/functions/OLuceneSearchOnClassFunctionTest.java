@@ -17,12 +17,9 @@ public class OLuceneSearchOnClassFunctionTest extends OLuceneBaseTest {
 
   @Before
   public void setUp() throws Exception {
-    InputStream stream = ClassLoader.getSystemResourceAsStream("testLuceneIndex.sql");
-
+    final InputStream stream = ClassLoader.getSystemResourceAsStream("testLuceneIndex.sql");
     db.execute("sql", getScriptFromStream(stream));
-
     db.command("create index Song.title on Song (title) FULLTEXT ENGINE LUCENE ");
-
   }
 
   @Test
