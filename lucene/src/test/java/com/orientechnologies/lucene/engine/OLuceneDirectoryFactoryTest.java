@@ -1,6 +1,7 @@
 package com.orientechnologies.lucene.engine;
 
 import com.orientechnologies.lucene.test.BaseLuceneTest;
+import com.orientechnologies.orient.core.db.ODatabaseType;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.index.OIndexDefinition;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -68,7 +69,7 @@ public class OLuceneDirectoryFactoryTest extends BaseLuceneTest {
   @Test
   public void shouldCreateRamDirectoryOnMemoryDatabase() throws Exception {
     meta.field(DIRECTORY_TYPE, DIRECTORY_RAM);
-    final ODatabaseDocumentTx db = dropOrCreate("memory:" + name.getMethodName(), true);
+    final ODatabaseDocumentTx db = dropOrCreate(ODatabaseType.MEMORY.name().toLowerCase() + ":" + name.getMethodName(), true);
     final Directory directory = fc.createDirectory(db, "index.name", meta).getDirectory();
     // 'memory:' determines RAMDirectory and not DIRECTORY_MMAP or DIRECTORY_RAM.
     // In fact, they lead to the same result regarding this test
