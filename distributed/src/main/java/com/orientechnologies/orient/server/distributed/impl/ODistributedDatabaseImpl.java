@@ -83,7 +83,9 @@ import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
+import java.util.concurrent.SynchronousQueue;
+import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
@@ -1230,7 +1232,7 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
               new ThreadFactory() {
                 @Override
                 public Thread newThread(Runnable r) {
-                  Thread thread = new Thread();
+                  Thread thread = new Thread(r);
                   thread.setName(
                       "OrientDB DistributedWorker node="
                           + getLocalNodeName()
