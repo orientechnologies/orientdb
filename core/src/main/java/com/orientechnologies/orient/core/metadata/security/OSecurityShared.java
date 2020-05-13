@@ -833,7 +833,9 @@ public class OSecurityShared implements OSecurityInternal {
       //TODO migrate ORole to use security policies
     }
 
-    initPredicateSecurityOptimizations(session);
+    if (!((ODatabaseDocumentInternal) session).getStorage().isRemote()) {
+      initPredicateSecurityOptimizations(session);
+    }
   }
 
   public void createClassTrigger(ODatabaseSession session) {
@@ -935,6 +937,7 @@ public class OSecurityShared implements OSecurityInternal {
 
               }
             } catch (Exception e) {
+              e.printStackTrace();
             }
           }
           rs.close();
