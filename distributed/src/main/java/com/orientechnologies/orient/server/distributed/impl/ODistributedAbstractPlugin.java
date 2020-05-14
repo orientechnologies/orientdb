@@ -69,12 +69,14 @@ import com.orientechnologies.orient.server.distributed.*;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIRECTION;
 import com.orientechnologies.orient.server.distributed.conflict.ODistributedConflictResolverFactory;
 import com.orientechnologies.orient.server.distributed.impl.task.*;
+import com.orientechnologies.orient.server.distributed.listener.ODistributedDatabaseStatusChangeListener;
+import com.orientechnologies.orient.server.distributed.listener.ODistributedMessageListener;
+import com.orientechnologies.orient.server.distributed.listener.ODistributedNodeLifecycleListener;
 import com.orientechnologies.orient.server.distributed.sql.OCommandExecutorSQLHASyncCluster;
 import com.orientechnologies.orient.server.distributed.task.OAbstractReplicatedTask;
 import com.orientechnologies.orient.server.distributed.task.ODatabaseIsOldException;
 import com.orientechnologies.orient.server.distributed.task.ODistributedDatabaseDeltaSyncException;
 import com.orientechnologies.orient.server.distributed.task.ORemoteTask;
-import com.orientechnologies.orient.server.hazelcast.OHazelcastLockManager;
 import com.orientechnologies.orient.server.network.OServerNetworkListener;
 import com.orientechnologies.orient.server.plugin.OServerPluginAbstract;
 
@@ -111,11 +113,15 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
   protected final    ConcurrentMap<String, ODistributedStorage> storages                          = new ConcurrentHashMap<String, ODistributedStorage>();
   protected volatile NODE_STATUS                                status                            = NODE_STATUS.OFFLINE;
   protected          long                                       lastClusterChangeOn;
-  protected          List<ODistributedLifecycleListener>        listeners                         = new ArrayList<ODistributedLifecycleListener>();
   protected          ORemoteServerManager                       remoteServerManager;
   protected          TimerTask                                  publishLocalNodeConfigurationTask = null;
   protected          TimerTask                                  haStatsTask                       = null;
   protected          TimerTask                                  healthCheckerTask                 = null;
+
+  // Listeners
+  protected List<ODistributedNodeLifecycleListener>        nodeLifecycleListeners        = new ArrayList<ODistributedNodeLifecycleListener>();
+  protected List<ODistributedDatabaseStatusChangeListener> databaseStatusChangeListeners = new ArrayList<ODistributedDatabaseStatusChangeListener>();
+  protected List<ODistributedMessageListener>              distributedMessageListeners   = new ArrayList<ODistributedMessageListener>();
 
   // LOCAL MSG COUNTER
   protected AtomicLong                          localMessageIdCounter     = new AtomicLong();
@@ -226,14 +232,39 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
   }
 
   @Override
-  public ODistributedAbstractPlugin registerLifecycleListener(final ODistributedLifecycleListener iListener) {
-    listeners.add(iListener);
+  public ODistributedAbstractPlugin registerDistributedMessageListener(ODistributedMessageListener iListener) {
+    distributedMessageListeners.add(iListener);
     return this;
   }
 
   @Override
-  public ODistributedAbstractPlugin unregisterLifecycleListener(final ODistributedLifecycleListener iListener) {
-    listeners.remove(iListener);
+  public ODistributedAbstractPlugin unregisterDistributedMessageListener(ODistributedMessageListener iListener) {
+    distributedMessageListeners.remove(iListener);
+    return this;
+  }
+
+  @Override
+  public ODistributedAbstractPlugin registerDistributedNodeLifecycleListener(ODistributedNodeLifecycleListener iListener) {
+    nodeLifecycleListeners.add(iListener);
+    return this;
+  }
+
+  @Override
+  public ODistributedAbstractPlugin unregisterDistributedNodeLifecycleListener(ODistributedNodeLifecycleListener iListener) {
+    nodeLifecycleListeners.remove(iListener);
+    return this;
+  }
+
+  @Override
+  public ODistributedAbstractPlugin registerDistributedDatabaseStatusChangeListener(ODistributedDatabaseStatusChangeListener iListener) {
+    databaseStatusChangeListeners.add(iListener);
+    return this;
+  }
+
+  @Override
+  public ODistributedAbstractPlugin unregisterDistributedDatabaseStatusChangeListener(
+      ODistributedDatabaseStatusChangeListener iListener) {
+    databaseStatusChangeListeners.remove(iListener);
     return this;
   }
 

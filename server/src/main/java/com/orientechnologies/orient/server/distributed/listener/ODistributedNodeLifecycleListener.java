@@ -17,16 +17,14 @@
  *  * For more information: http://orientdb.com
  *
  */
-package com.orientechnologies.orient.server.distributed;
-
-import java.util.Set;
+package com.orientechnologies.orient.server.distributed.listener;
 
 /**
  * Distributed lifecycle interface to catch event from the distributed cluster.
  *
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
  */
-public interface ODistributedLifecycleListener {
+public interface ODistributedNodeLifecycleListener {
 
   /**
    * Called when a node is joining the cluster. Return false to deny the join.
@@ -50,44 +48,4 @@ public interface ODistributedLifecycleListener {
    * @param iNode Node name that left
    */
   void onNodeLeft(String iNode);
-
-  /**
-   * Called upon change of database status on a node. Available statuses are defined in ODistributedServerManager.DB_STATUS.
-   *
-   * @param iNode         The node name
-   * @param iDatabaseName Database name
-   * @param iNewStatus    The new status
-   *
-   * @since 2.2.0
-   */
-  void onDatabaseChangeStatus(String iNode, String iDatabaseName, ODistributedServerManager.DB_STATUS iNewStatus);
-
-  default void onMessageReceived(ODistributedRequest request) {
-
-  }
-
-  default void onMessagePartitionCalculated(ODistributedRequest request, Set<Integer> involvedWorkerQueues) {
-
-  }
-
-  default void onMessageBeforeOp(String op, ODistributedRequestId requestId) {
-
-  }
-
-  default void onMessageAfterOp(String op, ODistributedRequestId requestId) {
-
-  }
-
-  default void onMessageProcessStart(ODistributedRequest message) {
-
-  }
-
-  default void onMessageCurrentPayload(ODistributedRequestId requestId, Object responsePayload) {
-
-  }
-
-  default void onMessageProcessEnd(ODistributedRequest iRequest, Object responsePayload) {
-
-  }
-
 }

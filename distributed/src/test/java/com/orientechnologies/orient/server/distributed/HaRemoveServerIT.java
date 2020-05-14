@@ -2,6 +2,7 @@ package com.orientechnologies.orient.server.distributed;
 
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
+import com.orientechnologies.orient.server.distributed.listener.ODistributedDatabaseStatusChangeListener;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -62,22 +63,7 @@ public class HaRemoveServerIT extends AbstractServerClusterTest {
 
       // 3 events for failing test (NOT_AVAILABLE,SYNCHRONIZING,ONLINE)
       final CountDownLatch latch = new CountDownLatch(3);
-      distributedManager.registerLifecycleListener(new ODistributedLifecycleListener() {
-        @Override
-        public boolean onNodeJoining(String iNode) {
-          return false;
-        }
-
-        @Override
-        public void onNodeJoined(String iNode) {
-
-        }
-
-        @Override
-        public void onNodeLeft(String iNode) {
-
-        }
-
+      distributedManager.registerDistributedDatabaseStatusChangeListener(new ODistributedDatabaseStatusChangeListener() {
         @Override
         public void onDatabaseChangeStatus(String iNode, String iDatabaseName, ODistributedServerManager.DB_STATUS iNewStatus) {
 

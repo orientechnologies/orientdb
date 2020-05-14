@@ -21,14 +21,14 @@ package com.orientechnologies.orient.server.distributed;
 
 import com.orientechnologies.common.util.OCallable;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
-import com.orientechnologies.orient.core.db.ODatabaseInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.OStorage;
-import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinary;
-import com.orientechnologies.orient.server.OClientConnection;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.distributed.ODistributedRequest.EXECUTION_MODE;
 import com.orientechnologies.orient.server.distributed.conflict.ODistributedConflictResolverFactory;
+import com.orientechnologies.orient.server.distributed.listener.ODistributedDatabaseStatusChangeListener;
+import com.orientechnologies.orient.server.distributed.listener.ODistributedMessageListener;
+import com.orientechnologies.orient.server.distributed.listener.ODistributedNodeLifecycleListener;
 import com.orientechnologies.orient.server.distributed.task.ORemoteTask;
 
 import java.io.File;
@@ -141,9 +141,17 @@ public interface ODistributedServerManager {
 
   boolean isEnabled();
 
-  ODistributedServerManager registerLifecycleListener(ODistributedLifecycleListener iListener);
+  ODistributedServerManager registerDistributedMessageListener(ODistributedMessageListener iListener);
 
-  ODistributedServerManager unregisterLifecycleListener(ODistributedLifecycleListener iListener);
+  ODistributedServerManager unregisterDistributedMessageListener(ODistributedMessageListener iListener);
+
+  ODistributedServerManager registerDistributedNodeLifecycleListener(ODistributedNodeLifecycleListener iListener);
+
+  ODistributedServerManager unregisterDistributedNodeLifecycleListener(ODistributedNodeLifecycleListener iListener);
+
+  ODistributedServerManager registerDistributedDatabaseStatusChangeListener(ODistributedDatabaseStatusChangeListener iListener);
+
+  ODistributedServerManager unregisterDistributedDatabaseStatusChangeListener(ODistributedDatabaseStatusChangeListener iListener);
 
   Object executeOnLocalNode(ODistributedRequestId reqId, ORemoteTask task, ODatabaseDocumentInternal database);
 
