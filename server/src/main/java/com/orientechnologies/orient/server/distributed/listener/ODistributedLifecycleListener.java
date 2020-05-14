@@ -17,35 +17,13 @@
  *  * For more information: http://orientdb.com
  *
  */
-package com.orientechnologies.orient.server.distributed;
+package com.orientechnologies.orient.server.distributed.listener;
 
 /**
  * Distributed lifecycle interface to catch event from the distributed cluster.
  *
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
  */
-public interface ODistributedNodeLifecycleListener {
-
-  /**
-   * Called when a node is joining the cluster. Return false to deny the join.
-   *
-   * @param iNode Node name that is joining
-   *
-   * @return true to allow the join, otherwise false
-   */
-  boolean onNodeJoining(String iNode);
-
-  /**
-   * Called right after a node joined the cluster.
-   *
-   * @param iNode Node name that is joining
-   */
-  void onNodeJoined(String iNode);
-
-  /**
-   * Called right after a node left the cluster.
-   *
-   * @param iNode Node name that left
-   */
-  void onNodeLeft(String iNode);
+public interface ODistributedLifecycleListener
+    extends ODistributedNodeLifecycleListener, ODistributedDatabaseStatusChangeListener, ODistributedMessageListener {
 }

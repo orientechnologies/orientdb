@@ -17,7 +17,9 @@
  *  * For more information: http://orientdb.com
  *
  */
-package com.orientechnologies.orient.server.distributed;
+package com.orientechnologies.orient.server.distributed.listener;
+
+import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
 
 public interface ODistributedDatabaseStatusChangeListener {
   /**
