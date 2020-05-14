@@ -62,28 +62,27 @@ public class OLuceneResultSet implements Set<OIdentifiable> {
   private boolean closed = false;
 
   protected OLuceneResultSet() {
-
   }
 
-  public OLuceneResultSet(OLuceneIndexEngine engine, OLuceneQueryContext queryContext, ODocument metadata) {
+  public OLuceneResultSet(final OLuceneIndexEngine engine, final OLuceneQueryContext queryContext, final ODocument metadata) {
     this.engine = engine;
     this.queryContext = queryContext;
     this.query = queryContext.getQuery();
+    this.indexName = engine.indexName();
 
-    indexName = engine.indexName();
     fetchFirstBatch();
     deletedMatchCount = calculateDeletedMatch();
 
-    Map<String, Object> highlight = Optional.ofNullable(metadata.<Map>getProperty("highlight")).orElse(Collections.emptyMap());
+    final Map<String, Object> highlight = Optional.ofNullable(metadata.<Map>getProperty("highlight")).orElse(Collections.emptyMap());
 
     highlighted = Optional.ofNullable((List<String>) highlight.get("fields")).orElse(Collections.emptyList());
 
-    String startElement = (String) Optional.ofNullable(highlight.get("start")).orElse("<B>");
+    final String startElement = (String) Optional.ofNullable(highlight.get("start")).orElse("<B>");
 
-    String endElement = (String) Optional.ofNullable(highlight.get("end")).orElse("</B>");
+    final String endElement = (String) Optional.ofNullable(highlight.get("end")).orElse("</B>");
 
-    Scorer scorer = new QueryTermScorer(queryContext.getQuery());
-    Formatter formatter = new SimpleHTMLFormatter(startElement, endElement);
+    final Scorer scorer = new QueryTermScorer(queryContext.getQuery());
+    final Formatter formatter = new SimpleHTMLFormatter(startElement, endElement);
     highlighter = new Highlighter(formatter, scorer);
 
     maxNumFragments = (int) Optional.ofNullable(highlight.get("maxNumFragments")).orElse(2);
@@ -91,15 +90,13 @@ public class OLuceneResultSet implements Set<OIdentifiable> {
 
   protected void fetchFirstBatch() {
     try {
-
-      IndexSearcher searcher = queryContext.getSearcher();
-
-      if (queryContext.getSort() == null)
+      final IndexSearcher searcher = queryContext.getSearcher();
+      if (queryContext.getSort() == null) {
         topDocs = searcher.search(query, PAGE_SIZE);
-
-      else
+      } else {
         topDocs = searcher.search(query, PAGE_SIZE, queryContext.getSort());
-    } catch (IOException e) {
+      }
+    } catch (final IOException e) {
       OLogManager.instance().error(this, "Error on fetching document by query '%s' to Lucene index", e, query);
     }
   }
@@ -229,34 +226,29 @@ public class OLuceneResultSet implements Set<OIdentifiable> {
       return score;
     }
 
-    private Document toDocument(ScoreDoc score) {
-      Document ret = null;
-
+    private Document toDocument(final ScoreDoc score) {
       try {
-        ret = queryContext.getSearcher().doc(score.doc);
-
-      } catch (IOException e) {
+        return queryContext.getSearcher().doc(score.doc);
+      } catch (final IOException e) {
         OLogManager.instance().error(this, "Error during conversion to document", e);
+        return null;
       }
-      return ret;
     }
 
-    private OContextualRecordId toRecordId(Document doc, ScoreDoc score) {
-      String rId = doc.get(OLuceneIndexEngineAbstract.RID);
-      OContextualRecordId res = new OContextualRecordId(rId);
+    private OContextualRecordId toRecordId(final Document doc, final ScoreDoc score) {
+      final String rId = doc.get(OLuceneIndexEngineAbstract.RID);
+      final OContextualRecordId res = new OContextualRecordId(rId);
 
-      IndexReader indexReader = queryContext.getSearcher().getIndexReader();
+      final IndexReader indexReader = queryContext.getSearcher().getIndexReader();
       try {
-
-        for (String field : highlighted) {
-          String text = doc.get(field);
+        for (final String field : highlighted) {
+          final String text = doc.get(field);
           if (text != null) {
             TokenStream tokenStream = TokenSources.getAnyTokenStream(indexReader, score.doc, field, doc, engine.indexAnalyzer());
             TextFragment[] frag = highlighter.getBestTextFragments(tokenStream, text, true, maxNumFragments);
             queryContext.addHighlightFragment(field, frag);
           }
         }
-
         engine.onRecordAddedToResultSet(queryContext, res, doc, score);
         return res;
       } catch (IOException | InvalidTokenOffsetsException e) {
@@ -265,28 +257,23 @@ public class OLuceneResultSet implements Set<OIdentifiable> {
 
     }
 
-    private boolean isToSkip(OContextualRecordId res, Document doc) {
-      return isDeleted(res, doc) || isUpdatedDiskMatch(res, doc);
+    private boolean isToSkip(final OContextualRecordId recordId, final Document doc) {
+      return isDeleted(recordId, doc) || isUpdatedDiskMatch(recordId, doc);
     }
 
     private void fetchMoreResult() {
-
       TopDocs topDocs = null;
       try {
-
-        IndexSearcher searcher = queryContext.getSearcher();
-
-        if (queryContext.getSort() == null)
+        final IndexSearcher searcher = queryContext.getSearcher();
+        if (queryContext.getSort() == null) {
           topDocs = searcher.searchAfter(scoreDocs[scoreDocs.length - 1], query, PAGE_SIZE);
-        else
+        } else {
           topDocs = searcher.searchAfter(scoreDocs[scoreDocs.length - 1], query, PAGE_SIZE, queryContext.getSort());
-
+        }
         scoreDocs = topDocs.scoreDocs;
-
-      } catch (IOException e) {
+      } catch (final IOException e) {
         OLogManager.instance().error(this, "Error on fetching document by query '%s' to Lucene index", e, query);
       }
-
     }
 
     private boolean isDeleted(OIdentifiable value, Document doc) {
@@ -307,8 +294,7 @@ public class OLuceneResultSet implements Set<OIdentifiable> {
 
     @Override
     public void remove() {
-
+      // TODO: something to be done here?
     }
-
   }
 }

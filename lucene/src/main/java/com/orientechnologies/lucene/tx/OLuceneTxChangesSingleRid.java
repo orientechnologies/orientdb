@@ -35,16 +35,15 @@ import java.util.Set;
  * Created by Enrico Risa on 15/09/15.
  */
 public class OLuceneTxChangesSingleRid extends OLuceneTxChangesAbstract {
-
   private final Set<String>   deleted     = new HashSet<String>();
   private final Set<String>   updated     = new HashSet<String>();
   private final Set<Document> deletedDocs = new HashSet<Document>();
 
-  public OLuceneTxChangesSingleRid(OLuceneIndexEngine engine, IndexWriter writer, IndexWriter deletedIdx) {
+  public OLuceneTxChangesSingleRid(final OLuceneIndexEngine engine, final IndexWriter writer, final IndexWriter deletedIdx) {
     super(engine, writer, deletedIdx);
   }
 
-  public void put(Object key, OIdentifiable value, Document doc) {
+  public void put(final Object key, final OIdentifiable value, final Document doc) {
     if (deleted.remove(value.getIdentity().toString())) {
       doc.add(OLuceneIndexType.createField(TMP, value.getIdentity().toString(), Field.Store.YES));
       updated.add(value.getIdentity().toString());
@@ -56,8 +55,7 @@ public class OLuceneTxChangesSingleRid extends OLuceneTxChangesAbstract {
     }
   }
 
-  public void remove(Object key, OIdentifiable value) {
-
+  public void remove(final Object key, final OIdentifiable value) {
     try {
       if (value.getIdentity().isTemporary()) {
         writer.deleteDocuments(engine.deleteQuery(key, value));
@@ -66,9 +64,8 @@ public class OLuceneTxChangesSingleRid extends OLuceneTxChangesAbstract {
         Document doc = engine.buildDocument(key, value);
         deletedDocs.add(doc);
         deletedIdx.addDocument(doc);
-
       }
-    } catch (IOException e) {
+    } catch (final IOException e) {
       throw OException
           .wrapException(new OLuceneIndexException("Error while deleting documents in transaction from lucene index"), e);
     }
@@ -89,5 +86,4 @@ public class OLuceneTxChangesSingleRid extends OLuceneTxChangesAbstract {
   public boolean isUpdated(Document document, Object key, OIdentifiable value) {
     return updated.contains(value.getIdentity().toString());
   }
-
 }

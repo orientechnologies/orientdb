@@ -461,10 +461,10 @@ public class OLuceneIndexNotUnique extends OIndexAbstract implements OLuceneInde
     while (true) {
       try {
         return storage.callIndexEngine(false, indexId, engine -> {
-          OLuceneIndexEngine indexEngine = (OLuceneIndexEngine) engine;
+          final OLuceneIndexEngine indexEngine = (OLuceneIndexEngine) engine;
           return indexEngine.searcher();
         });
-      } catch (OInvalidIndexEngineIdException e) {
+      } catch (final OInvalidIndexEngineIdException e) {
         doReloadIndexEngine();
       }
     }
@@ -474,5 +474,4 @@ public class OLuceneIndexNotUnique extends OIndexAbstract implements OLuceneInde
   public boolean canBeUsedInEqualityOperators() {
     return false;
   }
-
 }

@@ -39,11 +39,11 @@ public class OLuceneTxChangesMultiRid extends OLuceneTxChangesAbstract {
   private final Map<String, List<String>> deleted     = new HashMap<String, List<String>>();
   private final Set<Document>             deletedDocs = new HashSet<Document>();
 
-  public OLuceneTxChangesMultiRid(OLuceneIndexEngine engine, IndexWriter writer, IndexWriter deletedIdx) {
+  public OLuceneTxChangesMultiRid(final OLuceneIndexEngine engine, final IndexWriter writer, final IndexWriter deletedIdx) {
     super(engine, writer, deletedIdx);
   }
 
-  public void put(Object key, OIdentifiable value, Document doc) {
+  public void put(final Object key, final OIdentifiable value, final Document doc) {
     try {
       writer.addDocument(doc);
     } catch (IOException e) {
@@ -51,21 +51,19 @@ public class OLuceneTxChangesMultiRid extends OLuceneTxChangesAbstract {
     }
   }
 
-  public void remove(Object key, OIdentifiable value) {
-
+  public void remove(final Object key, final OIdentifiable value) {
     try {
       if (value.getIdentity().isTemporary()) {
         writer.deleteDocuments(engine.deleteQuery(key, value));
       } else {
-
         deleted.putIfAbsent(value.getIdentity().toString(), new ArrayList<>());
         deleted.get(value.getIdentity().toString()).add(key.toString());
 
-        Document doc = engine.buildDocument(key, value);
+        final Document doc = engine.buildDocument(key, value);
         deletedDocs.add(doc);
         deletedIdx.addDocument(doc);
       }
-    } catch (IOException e) {
+    } catch (final IOException e) {
       throw OException
           .wrapException(new OLuceneIndexException("Error while deleting documents in transaction from lucene index"), e);
     }
@@ -79,15 +77,15 @@ public class OLuceneTxChangesMultiRid extends OLuceneTxChangesAbstract {
     return deletedDocs;
   }
 
-  public boolean isDeleted(Document document, Object key, OIdentifiable value) {
+  public boolean isDeleted(final Document document, final Object key, final OIdentifiable value) {
     boolean match = false;
-    List<String> strings = deleted.get(value.getIdentity().toString());
+    final List<String> strings = deleted.get(value.getIdentity().toString());
     if (strings != null) {
-      MemoryIndex memoryIndex = new MemoryIndex();
-      for (String string : strings) {
-        Query q = engine.deleteQuery(string, value);
+      final MemoryIndex memoryIndex = new MemoryIndex();
+      for (final String string : strings) {
+        final Query q = engine.deleteQuery(string, value);
         memoryIndex.reset();
-        for (IndexableField field : document.getFields()) {
+        for (final IndexableField field : document.getFields()) {
           memoryIndex.addField(field.name(), field.stringValue(), new KeywordAnalyzer());
         }
         match = match || (memoryIndex.search(q) > 0.0f);
@@ -98,8 +96,7 @@ public class OLuceneTxChangesMultiRid extends OLuceneTxChangesAbstract {
   }
 
   // TODO is this valid?
-  public boolean isUpdated(Document document, Object key, OIdentifiable value) {
+  public boolean isUpdated(final Document document, final Object key, final OIdentifiable value) {
     return false;
   }
-
 }

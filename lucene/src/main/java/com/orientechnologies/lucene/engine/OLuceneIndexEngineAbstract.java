@@ -201,14 +201,12 @@ public abstract class OLuceneIndexEngineAbstract extends OSharedResourceAdaptive
   }
 
   private void reOpen() throws IOException {
-
     //noinspection resource
     if (indexWriter != null && indexWriter.isOpen() && directory.getDirectory() instanceof RAMDirectory) {
       // don't waste time reopening an in memory index
       return;
     }
     open();
-
   }
 
   protected static ODatabaseDocumentInternal getDatabase() {
@@ -433,9 +431,8 @@ public abstract class OLuceneIndexEngineAbstract extends OSharedResourceAdaptive
     if (closed.get()) {
       try {
         reOpen();
-      } catch (IOException e) {
+      } catch (final IOException e) {
         OLogManager.instance().error(this, "error while opening closed index:: " + indexName(), e);
-
       }
     }
   }
