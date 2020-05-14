@@ -1,4 +1,4 @@
-package org.apache.tinkerpop.gremlin.orientdb.io.gryo;
+package org.apache.tinkerpop.gremlin.orientdb.io.kryo;
 
 import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
 import com.orientechnologies.orient.core.id.ORecordId;

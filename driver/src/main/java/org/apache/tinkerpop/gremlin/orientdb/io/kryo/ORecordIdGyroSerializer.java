@@ -1,4 +1,4 @@
-package org.apache.tinkerpop.gremlin.orientdb.io.gryo;
+package org.apache.tinkerpop.gremlin.orientdb.io.kryo;
 
 import com.orientechnologies.orient.core.id.ORecordId;
 import org.apache.tinkerpop.shaded.kryo.Kryo;
@@ -10,7 +10,6 @@ import org.apache.tinkerpop.shaded.kryo.io.Output;
  * Created by Enrico Risa on 06/09/2017.
  */
 public class ORecordIdGyroSerializer extends Serializer<ORecordId> {
-
     @Override
     public ORecordId read(final Kryo kryo, final Input input, final Class<ORecordId> tinkerGraphClass) {
         return new ORecordId(input.readString());
@@ -20,5 +19,4 @@ public class ORecordIdGyroSerializer extends Serializer<ORecordId> {
     public void write(final Kryo kryo, final Output output, final ORecordId rid) {
         output.writeString(rid.toString());
     }
-
 }
