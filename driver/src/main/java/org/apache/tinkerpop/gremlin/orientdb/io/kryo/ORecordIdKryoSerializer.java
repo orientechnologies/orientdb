@@ -9,7 +9,7 @@ import org.apache.tinkerpop.shaded.kryo.io.Output;
 /**
  * Created by Enrico Risa on 06/09/2017.
  */
-public class ORecordIdGyroSerializer extends Serializer<ORecordId> {
+public class ORecordIdKryoSerializer extends Serializer<ORecordId> {
     @Override
     public ORecordId read(final Kryo kryo, final Input input, final Class<ORecordId> tinkerGraphClass) {
         return new ORecordId(input.readString());

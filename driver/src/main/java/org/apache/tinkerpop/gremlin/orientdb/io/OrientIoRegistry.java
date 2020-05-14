@@ -3,8 +3,8 @@ package org.apache.tinkerpop.gremlin.orientdb.io;
 import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
 import com.orientechnologies.orient.core.id.ORecordId;
 import org.apache.tinkerpop.gremlin.orientdb.io.graphson.OrientGraphSONV3;
-import org.apache.tinkerpop.gremlin.orientdb.io.kryo.ORecordIdGyroSerializer;
-import org.apache.tinkerpop.gremlin.orientdb.io.kryo.ORidBagGyroSerializer;
+import org.apache.tinkerpop.gremlin.orientdb.io.kryo.ORecordIdKryoSerializer;
+import org.apache.tinkerpop.gremlin.orientdb.io.kryo.ORidBagKryoSerializer;
 import org.apache.tinkerpop.gremlin.structure.io.AbstractIoRegistry;
 import org.apache.tinkerpop.gremlin.structure.io.graphson.GraphSONIo;
 import org.apache.tinkerpop.gremlin.structure.io.gryo.GryoIo;
@@ -20,8 +20,8 @@ public class OrientIoRegistry extends AbstractIoRegistry {
   private static final OrientIoRegistry INSTANCE = new OrientIoRegistry();
 
   private OrientIoRegistry() {
-    register(GryoIo.class, ORecordId.class, new ORecordIdGyroSerializer());
-    register(GryoIo.class, ORidBag.class, new ORidBagGyroSerializer());
+    register(GryoIo.class, ORecordId.class, new ORecordIdKryoSerializer());
+    register(GryoIo.class, ORidBag.class, new ORidBagKryoSerializer());
 
     register(GraphSONIo.class, ORecordId.class, OrientGraphSONV3.INSTANCE);
   }
