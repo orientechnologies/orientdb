@@ -7,7 +7,6 @@
         <version>3.1.0-SNAPSHOT</version>
         <relativePath>../</relativePath>
     </parent>
-
     <groupId>com.orientechnologies</groupId>
     <artifactId>orientdb-gremlin</artifactId>
 
@@ -52,6 +51,14 @@
         <url>https://github.com/orientechnologies/orientdb-gremlin</url>
     </scm>
     <dependencies>
+        <!-- orientdb -->
+        <dependency>
+            <groupId>com.orientechnologies</groupId>
+            <artifactId>orientdb-client</artifactId>
+            <version>${project.parent.version}</version>
+        </dependency>
+
+        <!-- gremlin -->
         <dependency>
             <groupId>org.apache.tinkerpop</groupId>
             <artifactId>gremlin-core</artifactId>
@@ -68,11 +75,33 @@
                 </exclusion>
             </exclusions>
         </dependency>
+
         <dependency>
-            <groupId>com.orientechnologies</groupId>
-            <artifactId>orientdb-client</artifactId>
-            <version>${project.parent.version}</version>
+            <groupId>com.google.guava</groupId>
+            <artifactId>guava</artifactId>
+            <version>18.0</version>
         </dependency>
+
+        <!-- tests -->
+        <dependency>
+            <groupId>org.apache.tinkerpop</groupId>
+            <artifactId>gremlin-test</artifactId>
+            <version>${gremlin.version}</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>junit</groupId>
+            <artifactId>junit</artifactId>
+            <version>4.12</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.mockito</groupId>
+            <artifactId>mockito-all</artifactId>
+            <version>1.10.19</version>
+            <scope>test</scope>
+        </dependency>
+
         <dependency>
             <groupId>com.orientechnologies</groupId>
             <artifactId>orientdb-test-commons</artifactId>
@@ -86,69 +115,11 @@
             <type>test-jar</type>
             <scope>test</scope>
         </dependency>
-
-        <!-- TESTING -->
-        <dependency>
-            <groupId>org.apache.tinkerpop</groupId>
-            <artifactId>gremlin-test</artifactId>
-            <version>${gremlin.version}</version>
-            <scope>test</scope>
-        </dependency>
-        <!--<dependency>-->
-            <!--<groupId>org.apache.tinkerpop</groupId>-->
-            <!--<artifactId>gremlin-groovy-test</artifactId>-->
-            <!--<version>${gremlin.version}</version>-->
-            <!--<scope>test</scope>-->
-        <!--</dependency>-->
-        <dependency>
-            <groupId>junit</groupId>
-            <artifactId>junit</artifactId>
-            <version>4.12</version>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.mockito</groupId>
-            <artifactId>mockito-all</artifactId>
-            <version>1.10.19</version>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>com.google.guava</groupId>
-            <artifactId>guava</artifactId>
-            <version>18.0</version>
-        </dependency>
-
     </dependencies>
-    <!--<distributionManagement>-->
-    <!--<repository>-->
-    <!--<id>sonatype-nexus-staging</id>-->
-    <!--<name>OrientDB Maven2 Repository</name>-->
-    <!--<url>https://oss.sonatype.org/service/local/staging/deploy/maven2</url>-->
-    <!--</repository>-->
-    <!--<snapshotRepository>-->
-    <!--<id>sonatype-nexus-snapshots</id>-->
-    <!--<name>OrientDB Maven2 Snapshot Repository</name>-->
-    <!--<url>https://oss.sonatype.org/content/repositories/snapshots</url>-->
-    <!--<uniqueVersion>false</uniqueVersion>-->
-    <!--</snapshotRepository>-->
-    <!--</distributionManagement>-->
-    <!--<repositories>-->
-    <!--<repository>-->
-    <!--<id>sonatype-nexus-snapshots</id>-->
-    <!--<name>Sonatype Nexus Snapshots</name>-->
-    <!--<url>https://oss.sonatype.org/content/repositories/snapshots</url>-->
-    <!--<releases>-->
-    <!--<enabled>false</enabled>-->
-    <!--</releases>-->
-    <!--<snapshots>-->
-    <!--<enabled>true</enabled>-->
-    <!--</snapshots>-->
-    <!--</repository>-->
-    <!--</repositories>-->
+
     <build>
         <directory>${basedir}/target</directory>
         <finalName>${project.artifactId}-${project.version}</finalName>
-
         <plugins>
             <plugin>
                 <groupId>org.jacoco</groupId>
@@ -198,7 +169,6 @@
                 <artifactId>maven-jar-plugin</artifactId>
                 <version>2.6</version>
             </plugin>
-
         </plugins>
         <pluginManagement>
             <plugins>
@@ -211,19 +181,6 @@
                         <target>1.8</target>
                     </configuration>
                 </plugin>
-                <!--<plugin>
-                    <groupId>org.apache.maven.plugins</groupId>
-                    <artifactId>maven-javadoc-plugin</artifactId>
-                    <version>2.9.1</version>
-                    <executions>
-                        <execution>
-                            <id>attach-javadocs</id>
-                            <goals>
-                                <goal>jar</goal>
-                            </goals>
-                        </execution>
-                    </executions>
-                </plugin>-->
             </plugins>
         </pluginManagement>
     </build>
