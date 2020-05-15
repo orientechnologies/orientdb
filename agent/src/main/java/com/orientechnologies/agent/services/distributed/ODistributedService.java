@@ -20,10 +20,7 @@ public class ODistributedService implements OEnterpriseService {
 
     server.getServiceByClass(OAgentProfilerService.class).ifPresent((e) -> {
       if (this.server.getDistributedManager() != null) {
-        this.server.getDistributedManager()
-            .registerDistributedNodeLifecycleListener(e.getProfiler())
-            .registerDistributedMessageListener(e.getProfiler())
-            .registerDistributedDatabaseStatusChangeListener(e.getProfiler());
+        this.server.getDistributedManager().registerLifecycleListener(e.getProfiler());
       }
     });
   }
