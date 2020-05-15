@@ -158,7 +158,9 @@ public class OPushManager implements OMetadataUpdateListener {
             if (protocolBinary != null) {
               try {
                 OBinaryPushRequest<?> request = pack.getRequest(database);
-                OBinaryPushResponse response = protocolBinary.push(request);
+                if (request != null) {
+                  OBinaryPushResponse response = protocolBinary.push(request);
+                }
               } catch (IOException e) {
                 synchronized (OPushManager.this) {
                   context.get(database).remove(ref);
