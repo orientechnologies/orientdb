@@ -15,30 +15,25 @@
  *  *  limitations under the License.
  *  *
  *  * For more information: http://orientdb.com
- *
+ *  
  */
 
 package com.orientechnologies.orient.server.distributed;
+
+import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.util.OPair;
+import org.junit.Assert;
+import org.junit.Test;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicLong;
 
-import org.junit.Assert;
-import org.junit.Test;
-
-import com.orientechnologies.common.log.OLogManager;
-import com.orientechnologies.common.util.OPair;
-import com.orientechnologies.orient.server.distributed.listener.ODistributedDatabaseStatusChangeListener;
-import com.orientechnologies.orient.server.distributed.listener.ODistributedNodeLifecycleListener;
-
 /**
  * Tests the behavior of hooks in distributed configuration.
  */
-public class DistributedLifecycleListenerIT extends AbstractServerClusterTest
-    implements ODistributedNodeLifecycleListener, ODistributedDatabaseStatusChangeListener {
-
+public class DistributedLifecycleListenerIT extends AbstractServerClusterTest implements ODistributedLifecycleListener {
   private final static int                                               SERVERS        = 2;
 
   private final AtomicLong                                               beforeNodeJoin = new AtomicLong();
@@ -84,9 +79,7 @@ public class DistributedLifecycleListenerIT extends AbstractServerClusterTest
 
   @Override
   protected void onServerStarted(ServerRun server) {
-    server.getServerInstance().getDistributedManager()
-        .registerDistributedNodeLifecycleListener(this)
-        .registerDistributedDatabaseStatusChangeListener(this);
+    server.getServerInstance().getDistributedManager().registerLifecycleListener(this);
   }
 
   @Override

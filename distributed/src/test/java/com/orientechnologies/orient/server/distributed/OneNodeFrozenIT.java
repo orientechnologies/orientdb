@@ -17,7 +17,6 @@ package com.orientechnologies.orient.server.distributed;
 
 import com.orientechnologies.orient.client.remote.OServerAdmin;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
-import com.orientechnologies.orient.server.distributed.listener.ODistributedNodeLifecycleListener;
 import org.junit.Assert;
 import org.junit.Ignore;
 import org.junit.Test;
@@ -62,7 +61,7 @@ public class OneNodeFrozenIT extends AbstractServerClusterTxTest {
 
     if (serverStarted == 0) {
       // INSTALL ON FIRST SERVER ONLY THE SERVER MONITOR TO CHECK IF HAS BEEN RESTARTED
-      server.server.getDistributedManager().registerDistributedNodeLifecycleListener(new ODistributedNodeLifecycleListener() {
+      server.server.getDistributedManager().registerLifecycleListener(new ODistributedLifecycleListener() {
         @Override
         public boolean onNodeJoining(String iNode) {
           return true;
@@ -75,6 +74,9 @@ public class OneNodeFrozenIT extends AbstractServerClusterTxTest {
         @Override
         public void onNodeLeft(String iNode) {
           nodeLefts.incrementAndGet();
+        }
+
+        public void onDatabaseChangeStatus(String iNode, String iDatabaseName, ODistributedServerManager.DB_STATUS iNewStatus) {
         }
       });
     }
