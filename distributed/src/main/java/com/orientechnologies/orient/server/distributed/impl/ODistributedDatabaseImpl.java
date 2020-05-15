@@ -459,6 +459,12 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
       final int quorum = calculateQuorum(task.getQuorumType(), iClusterNames, cfg, expectedResponses, nodesConcurToTheQuorum.size(),
           onlineMasters, checkNodesAreOnline, localNodeName);
 
+      if (checkNodesAreOnline && quorum > expectedResponses)
+        throw new ODistributedException(
+            "Quorum (" + quorum + ") cannot be reached on server '" + localNodeName + "' database '" + databaseName
+                + "' because it is major than available nodes (" + availableNodes + ")");
+
+
       final boolean groupByResponse = task.getResultStrategy() != OAbstractRemoteTask.RESULT_STRATEGY.UNION;
 
       final boolean waitLocalNode = waitForLocalNode(cfg, iClusterNames, iNodes);
