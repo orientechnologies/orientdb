@@ -18,7 +18,6 @@ package com.orientechnologies.orient.server.distributed;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.util.OCallable;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
-import com.orientechnologies.orient.server.distributed.listener.ODistributedNodeLifecycleListener;
 import com.orientechnologies.orient.server.hazelcast.OHazelcastPlugin;
 import org.junit.Assert;
 import org.junit.Ignore;
@@ -69,7 +68,7 @@ public class StopNodeIT extends AbstractServerClusterTxTest {
 
     if (serverStarted == 0) {
       // INSTALL ON FIRST SERVER ONLY THE SERVER MONITOR TO CHECK IF HAS BEEN RESTARTED
-      server.server.getDistributedManager().registerDistributedNodeLifecycleListener(new ODistributedNodeLifecycleListener() {
+      server.server.getDistributedManager().registerLifecycleListener(new ODistributedLifecycleListener() {
         @Override
         public boolean onNodeJoining(String iNode) {
           return true;
@@ -85,6 +84,10 @@ public class StopNodeIT extends AbstractServerClusterTxTest {
           nodeReJoined.clear();
           nodeLefts.incrementAndGet();
           OLogManager.instance().info(this, "NODE LEFT %s = %d", iNode, nodeLefts.get());
+        }
+
+        @Override
+        public void onDatabaseChangeStatus(String iNode, String iDatabaseName, ODistributedServerManager.DB_STATUS iNewStatus) {
         }
       });
     }

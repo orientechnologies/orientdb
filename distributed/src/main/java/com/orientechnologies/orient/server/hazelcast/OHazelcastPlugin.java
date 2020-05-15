@@ -55,7 +55,6 @@ import com.orientechnologies.orient.server.distributed.impl.*;
 import com.orientechnologies.orient.server.distributed.impl.task.OAbstractSyncDatabaseTask;
 import com.orientechnologies.orient.server.distributed.impl.task.ODropDatabaseTask;
 import com.orientechnologies.orient.server.distributed.impl.task.OUpdateDatabaseConfigurationTask;
-import com.orientechnologies.orient.server.distributed.listener.*;
 import com.orientechnologies.orient.server.network.OServerNetworkListener;
 import com.orientechnologies.orient.server.network.protocol.OBeforeDatabaseOpenNetworkEventListener;
 import sun.misc.Signal;
@@ -1371,7 +1370,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
 
   private void invokeOnDatabaseStatusChange(final String iNode, final String iDatabaseName, final DB_STATUS iStatus) {
     // NOTIFY DB/NODE IS CHANGING STATUS
-    for (ODistributedDatabaseStatusChangeListener l : databaseStatusChangeListeners) {
+    for (ODistributedLifecycleListener l : listeners) {
       try {
         l.onDatabaseChangeStatus(iNode, iDatabaseName, iStatus);
       } catch (Exception e) {
@@ -1518,7 +1517,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
       closeRemoteServer(nodeLeftName);
 
       // NOTIFY ABOUT THE NODE HAS LEFT
-      for (ODistributedNodeLifecycleListener l : nodeLifecycleListeners)
+      for (ODistributedLifecycleListener l : listeners)
         try {
           l.onNodeLeft(nodeLeftName);
         } catch (Exception e) {
@@ -1627,7 +1626,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
 
     if (activeNodes.putIfAbsent(joinedNodeName, member) == null) {
       // NOTIFY NODE IS GOING TO BE ADDED. IS EVERYBODY OK?
-      for (ODistributedNodeLifecycleListener l : nodeLifecycleListeners) {
+      for (ODistributedLifecycleListener l : listeners) {
         if (!l.onNodeJoining(joinedNodeName)) {
           // DENY JOIN
           ODistributedServerLog
@@ -1654,7 +1653,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
           "Added node configuration id=%s name=%s, now %d nodes are configured", member, getNodeName(member), activeNodes.size());
 
       // NOTIFY NODE WAS ADDED SUCCESSFULLY
-      for (ODistributedNodeLifecycleListener l : nodeLifecycleListeners)
+      for (ODistributedLifecycleListener l : listeners)
         l.onNodeJoined(joinedNodeName);
 
       // FORCE THE ALIGNMENT FOR ALL THE ONLINE DATABASES AFTER THE JOIN ONLY IF AUTO-DEPLOY IS SET
@@ -1674,7 +1673,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
   @Override
   public void messageReceived(ODistributedRequest request) {
 
-    for (ODistributedMessageListener listener : distributedMessageListeners) {
+    for (ODistributedLifecycleListener listener : listeners) {
       listener.onMessageReceived(request);
     }
   }
@@ -1682,7 +1681,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
   @Override
   public void messagePartitionCalculate(ODistributedRequest request, Set<Integer> involvedWorkerQueues) {
 
-    for (ODistributedMessageListener listener : distributedMessageListeners) {
+    for (ODistributedLifecycleListener listener : listeners) {
       listener.onMessagePartitionCalculated(request, involvedWorkerQueues);
     }
 
@@ -1691,35 +1690,35 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
   @Override
   public void messageBeforeOp(String op, ODistributedRequestId request) {
 
-    for (ODistributedMessageListener listener : distributedMessageListeners) {
+    for (ODistributedLifecycleListener listener : listeners) {
       listener.onMessageBeforeOp(op, request);
     }
   }
 
   @Override
   public void messageAfterOp(String op, ODistributedRequestId request) {
-    for (ODistributedMessageListener listener : distributedMessageListeners) {
+    for (ODistributedLifecycleListener listener : listeners) {
       listener.onMessageAfterOp(op, request);
     }
   }
 
   @Override
   public void messageCurrentPayload(ODistributedRequestId requestId, Object responsePayload) {
-    for (ODistributedMessageListener listener : distributedMessageListeners) {
+    for (ODistributedLifecycleListener listener : listeners) {
       listener.onMessageCurrentPayload(requestId, responsePayload);
     }
   }
 
   @Override
   public void messageProcessStart(ODistributedRequest message) {
-    for (ODistributedMessageListener listener : distributedMessageListeners) {
+    for (ODistributedLifecycleListener listener : listeners) {
       listener.onMessageProcessStart(message);
     }
   }
 
   @Override
   public void messageProcessEnd(ODistributedRequest iRequest, Object responsePayload) {
-    for (ODistributedMessageListener listener : distributedMessageListeners) {
+    for (ODistributedLifecycleListener listener : listeners) {
       listener.onMessageProcessEnd(iRequest, responsePayload);
     }
   }
