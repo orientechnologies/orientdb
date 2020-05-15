@@ -29,7 +29,7 @@ import com.orientechnologies.orient.core.security.OAuditingOperation;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.OSystemDatabase;
 import com.orientechnologies.orient.server.config.OServerConfigurationManager;
-import com.orientechnologies.orient.server.distributed.listener.ODistributedNodeLifecycleListener;
+import com.orientechnologies.orient.server.distributed.ODistributedLifecycleListener;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
 import com.orientechnologies.orient.server.security.OAuditingService;
 
@@ -40,7 +40,7 @@ import java.util.concurrent.ConcurrentHashMap;
 /**
  * Created by Enrico Risa on 10/04/15.
  */
-public class ODefaultAuditing implements OAuditingService, ODatabaseLifecycleListener, ODistributedNodeLifecycleListener {
+public class ODefaultAuditing implements OAuditingService, ODatabaseLifecycleListener, ODistributedLifecycleListener {
   public static final String AUDITING_LOG_CLASSNAME = "OAuditingLog";
 
   private boolean enabled             = true;
@@ -292,7 +292,7 @@ public class ODefaultAuditing implements OAuditingService, ODatabaseLifecycleLis
   }
 
   //////
-  // ODistributedNodeLifecycleListener
+  // ODistributedLifecycleListener
   public boolean onNodeJoining(String iNode) {
     return true;
   }
@@ -305,6 +305,10 @@ public class ODefaultAuditing implements OAuditingService, ODatabaseLifecycleLis
   public void onNodeLeft(String iNode) {
     if (distribConfig != null && distribConfig.isEnabled(OAuditingOperation.NODELEFT))
       log(OAuditingOperation.NODELEFT, distribConfig.formatMessage(OAuditingOperation.NODELEFT, iNode));
+  }
+
+  public void onDatabaseChangeStatus(String iNode, String iDatabaseName, ODistributedServerManager.DB_STATUS iNewStatus) {
+
   }
 
   @Deprecated
@@ -432,7 +436,7 @@ public class ODefaultAuditing implements OAuditingService, ODatabaseLifecycleLis
     Orient.instance().addDbLifecycleListener(this);
 
     if (server.getDistributedManager() != null) {
-      server.getDistributedManager().registerDistributedNodeLifecycleListener(this);
+      server.getDistributedManager().registerLifecycleListener(this);
     }
 
     if (systemDbImporter != null && systemDbImporter.isEnabled()) {
@@ -492,7 +496,7 @@ public class ODefaultAuditing implements OAuditingService, ODatabaseLifecycleLis
     }
 
     if (server.getDistributedManager() != null) {
-      server.getDistributedManager().unregisterDistributedNodeLifecycleListener(this);
+      server.getDistributedManager().unregisterLifecycleListener(this);
     }
 
     Orient.instance().removeDbLifecycleListener(this);
