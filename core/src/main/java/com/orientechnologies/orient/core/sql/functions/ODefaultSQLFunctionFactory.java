@@ -58,6 +58,7 @@ public final class ODefaultSQLFunctionFactory extends OSQLFunctionFactoryTemplat
     register(OSQLFunctionMap.NAME, OSQLFunctionMap.class);
     register(OSQLFunctionMax.NAME, OSQLFunctionMax.class);
     register(OSQLFunctionMin.NAME, OSQLFunctionMin.class);
+    register(OSQLFunctionInterval.NAME, OSQLFunctionInterval.class);
     register(OSQLFunctionSet.NAME, OSQLFunctionSet.class);
     register(OSQLFunctionSysdate.NAME, OSQLFunctionSysdate.class);
     register(OSQLFunctionSum.NAME, OSQLFunctionSum.class);
