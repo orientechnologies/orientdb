@@ -13,7 +13,7 @@ import java.util.List;
  * The returned index starts from the 2nd argument. That is, interval(23, 5, 50) = 1
  * <p>
  * Few examples:
- * interval(43, 35, 5, 15, 50) = 1
+ * interval(43, 35, 5, 15, 50) = 3
  * interval(54, 25, 35, 45) = -1
  * interval(null, 5, 50) = -1
  * interval(6, 6) = -1
