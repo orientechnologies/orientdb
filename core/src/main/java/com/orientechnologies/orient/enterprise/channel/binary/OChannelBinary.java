@@ -48,6 +48,7 @@ public abstract class OChannelBinary extends OChannel implements OChannelDataInp
   public               DataInputStream  in;
   public               DataOutputStream out;
   private              int              responseTimeout;
+  private              int              networkTimeout;
 
   public OChannelBinary(final Socket iSocket, final OContextConfiguration iConfig) throws IOException {
     super(iSocket, iConfig);
@@ -55,6 +56,7 @@ public abstract class OChannelBinary extends OChannel implements OChannelDataInp
     maxChunkSize = iConfig.getValueAsInteger(OGlobalConfiguration.NETWORK_BINARY_MAX_CONTENT_LENGTH) * 1024;
     debug = iConfig.getValueAsBoolean(OGlobalConfiguration.NETWORK_BINARY_DEBUG);
     responseTimeout = iConfig.getValueAsInteger(OGlobalConfiguration.NETWORK_REQUEST_TIMEOUT);
+    networkTimeout = iConfig.getValueAsInteger(OGlobalConfiguration.NETWORK_SOCKET_TIMEOUT);
 
     if (debug)
       OLogManager.instance().info(this, "%s - Connected", socket.getRemoteSocketAddress());
@@ -369,5 +371,17 @@ public abstract class OChannelBinary extends OChannel implements OChannelDataInp
     final Socket s = socket;
     if (s != null)
       s.setSoTimeout(responseTimeout);
+  }
+
+  public void setWaitRequestTimeout() throws SocketException {
+    final Socket s = socket;
+    if (s != null)
+      s.setSoTimeout(0);
+  }
+
+  public void setReadRequestTimeout() throws SocketException {
+    final Socket s = socket;
+    if (s != null)
+      s.setSoTimeout(networkTimeout);
   }
 }
