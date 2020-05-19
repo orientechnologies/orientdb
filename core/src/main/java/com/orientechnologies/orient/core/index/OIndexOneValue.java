@@ -67,8 +67,12 @@ public abstract class OIndexOneValue extends OIndexAbstract {
         try {
           final Stream<ORID> stream;
           if (apiVersion == 0) {
+            final ORID rid = (ORID) storage.getIndexValue(indexId, key);
+            if (rid == null) {
+              return Stream.empty();
+            }
             //noinspection resource
-            stream = Stream.of((ORID) storage.getIndexValue(indexId, key));
+            stream = Stream.of(rid);
           } else if (apiVersion == 1) {
             //noinspection resource
             stream = storage.getIndexValues(indexId, key);
@@ -111,8 +115,11 @@ public abstract class OIndexOneValue extends OIndexAbstract {
         while (true) {
           try {
             if (apiVersion == 0) {
-              return Stream.of(Optional.ofNullable((ORID) storage.getIndexValue(indexId, collatedKey))
-                  .map((rid) -> new ORawPair<>(collatedKey, rid)).orElse(null));
+              final ORID rid = (ORID) storage.getIndexValue(indexId, collatedKey);
+              if (rid == null) {
+                return Stream.empty();
+              }
+              return Stream.of(new ORawPair<>(collatedKey, rid));
             } else if (apiVersion == 1) {
               //noinspection resource
               return storage.getIndexValues(indexId, collatedKey).map((rid) -> new ORawPair<>(collatedKey, rid));

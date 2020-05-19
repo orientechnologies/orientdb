@@ -22,7 +22,7 @@ public class IndexStreamSecurityDecorator {
     }
     OSecurityInternal security = db.getSharedContext().getSecurity();
     if (security instanceof OSecurityShared && !((OSecurityShared) security).couldHaveActivePredicateSecurityRoles(db, indexClass)) {
-      return stream.filter(x -> x.second != null);
+      return stream;
     }
 
 
@@ -41,7 +41,7 @@ public class IndexStreamSecurityDecorator {
     }
     OSecurityInternal security = db.getSharedContext().getSecurity();
     if (security instanceof OSecurityShared && !((OSecurityShared) security).couldHaveActivePredicateSecurityRoles(db, indexClass)) {
-      return stream.filter(x -> x != null);
+      return stream;
     }
 
 

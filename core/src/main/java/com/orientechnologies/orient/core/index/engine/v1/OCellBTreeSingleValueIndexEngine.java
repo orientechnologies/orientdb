@@ -18,9 +18,7 @@ import com.orientechnologies.orient.core.storage.index.sbtree.singlevalue.v3.Cel
 
 import java.io.IOException;
 import java.util.Map;
-import java.util.Spliterators;
 import java.util.stream.Stream;
-import java.util.stream.StreamSupport;
 
 public final class OCellBTreeSingleValueIndexEngine implements OSingleValueIndexEngine, OCellBTreeIndexEngine {
   private static final String DATA_FILE_EXTENSION        = ".cbt";
@@ -62,8 +60,9 @@ public final class OCellBTreeSingleValueIndexEngine implements OSingleValueIndex
   }
 
   @Override
-  public void create(OAtomicOperation atomicOperation, OBinarySerializer valueSerializer, boolean isAutomatic, OType[] keyTypes, boolean nullPointerSupport,
-      OBinarySerializer keySerializer, int keySize, Map<String, String> engineProperties, OEncryption encryption) {
+  public void create(OAtomicOperation atomicOperation, OBinarySerializer valueSerializer, boolean isAutomatic, OType[] keyTypes,
+      boolean nullPointerSupport, OBinarySerializer keySerializer, int keySize, Map<String, String> engineProperties,
+      OEncryption encryption) {
     try {
       //noinspection unchecked
       sbTree.create(atomicOperation, keySerializer, keyTypes, keySize, encryption);
@@ -129,28 +128,29 @@ public final class OCellBTreeSingleValueIndexEngine implements OSingleValueIndex
 
   @Override
   public Stream<ORID> get(Object key) {
-    return Stream.of(sbTree.get(key));
+    final ORID rid = sbTree.get(key);
+    if (rid == null) {
+      return Stream.empty();
+    }
+
+    return Stream.of(rid);
   }
 
   @Override
   public Stream<ORawPair<Object, ORID>> stream(ValuesTransformer valuesTransformer) {
     final Object firstKey = sbTree.firstKey();
     if (firstKey == null) {
-      return emptyStream();
+      return Stream.empty();
     }
 
     return sbTree.iterateEntriesMajor(firstKey, true, true);
-  }
-
-  private static Stream<ORawPair<Object, ORID>> emptyStream() {
-    return StreamSupport.stream(Spliterators.emptySpliterator(), false);
   }
 
   @Override
   public Stream<ORawPair<Object, ORID>> descStream(ValuesTransformer valuesTransformer) {
     final Object lastKey = sbTree.lastKey();
     if (lastKey == null) {
-      return emptyStream();
+      return Stream.empty();
     }
 
     return sbTree.iterateEntriesMinor(lastKey, true, false);
