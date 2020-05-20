@@ -34,7 +34,9 @@ public class OUpdateDatabaseSequenceStatusTask extends OAbstractRemoteTask {
       final ODatabaseDocumentInternal database) throws Exception {
 
     ODistributedDatabase database1 = iManager.getMessageService().getDatabase(databaseName);
-    database1.validateStatus(status);
+    if (database1 != null) {
+      database1.validateStatus(status);
+    }
     return null;
   }
 
