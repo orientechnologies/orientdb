@@ -90,6 +90,7 @@ public class OCommit38Request implements OBinaryRequest<OCommit37Response> {
     network.writeBoolean(usingLog);
     if (hasContent) {
       for (ORecordOperationRequest txEntry : operations) {
+        network.writeByte((byte) 1);
         OMessageHelper.writeTransactionEntry(network, txEntry, serializer);
       }
 

@@ -201,7 +201,6 @@ public class OMessageHelper {
 
   static void writeTransactionEntry(final OChannelDataOutput iNetwork, final ORecordOperationRequest txEntry,
       ORecordSerializer serializer) throws IOException {
-    iNetwork.writeByte((byte) 1);
     iNetwork.writeByte(txEntry.getType());
     iNetwork.writeRID(txEntry.getId());
     iNetwork.writeByte(txEntry.getRecordType());

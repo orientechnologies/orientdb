@@ -77,6 +77,7 @@ public class OBatchOperationsRequest implements OBinaryRequest<OBatchOperationsR
 
     network.writeInt(txId);
     for (ORecordOperationRequest txEntry : operations) {
+      network.writeByte((byte) 1);
       OMessageHelper.writeTransactionEntry(network, txEntry, serializer);
     }
 
