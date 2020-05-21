@@ -76,6 +76,7 @@ public class OBeginTransactionRequest implements OBinaryRequest<OBeginTransactio
     network.writeBoolean(usingLog);
     if (hasContent) {
       for (ORecordOperationRequest txEntry : operations) {
+        network.writeByte((byte) 1);
         OMessageHelper.writeTransactionEntry(network, txEntry, serializer);
       }
 
