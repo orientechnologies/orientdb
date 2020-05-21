@@ -15,6 +15,7 @@ import com.orientechnologies.orient.core.serialization.OSerializableStream;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializer;
 import com.orientechnologies.orient.core.serialization.serializer.record.binary.ORecordSerializerBinary;
 import com.orientechnologies.orient.core.serialization.serializer.record.binary.ORecordSerializerNetwork;
+import com.orientechnologies.orient.core.serialization.serializer.record.binary.ORecordSerializerNetworkDistributed;
 import com.orientechnologies.orient.core.serialization.serializer.record.binary.ORecordSerializerNetworkV37;
 import org.assertj.core.api.Assertions;
 import org.junit.Before;
@@ -36,8 +37,8 @@ public class ODocumentSchemalessBinarySerializationTest {
     List<Object[]> params = new ArrayList<Object[]>();
     //first we want to run tests for all registreted serializers, and then for two network serializers
     //testig for each serializer type has its own index
-    for (byte i = 0; i < ORecordSerializerBinary.INSTANCE.getNumberOfSupportedVersions() + 2; i++) {
-      params.add(new Object[] { i });
+    for (byte i = 0; i < ORecordSerializerBinary.INSTANCE.getNumberOfSupportedVersions() + 3; i++) {
+      params.add(new Object[]{i});
     }
     return params;
   }
@@ -54,6 +55,8 @@ public class ODocumentSchemalessBinarySerializationTest {
       serializer = new ORecordSerializerNetwork();
     } else if (serializerVersion == numOfRegistretedSerializers + 1) {
       serializer = new ORecordSerializerNetworkV37();
+    } else if (serializerVersion == numOfRegistretedSerializers + 2) {
+      serializer = new ORecordSerializerNetworkDistributed();
     }
 
     this.serializerVersion = serializerVersion;
