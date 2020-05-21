@@ -333,12 +333,13 @@ public final class CASDiskWriteAheadLog implements OWriteAheadLog {
     return maxCacheSize;
   }
 
-  private int multiplyIntsWithOverflowDefault(final int maxPagesCacheSize, final int pageSize, final int defaultValue) {
-    long maxCacheSize = (long)maxPagesCacheSize * (long)pageSize;
-    if ((int)maxCacheSize != maxCacheSize) {
+  private static int multiplyIntsWithOverflowDefault(final int maxPagesCacheSize, final int pageSize,
+      @SuppressWarnings("SameParameterValue") final int defaultValue) {
+    long maxCacheSize = (long) maxPagesCacheSize * (long) pageSize;
+    if ((int) maxCacheSize != maxCacheSize) {
       return defaultValue;
     }
-    return (int)maxCacheSize;
+    return (int) maxCacheSize;
   }
 
   private void readLastCheckpointInfo() throws IOException {
@@ -397,7 +398,7 @@ public final class CASDiskWriteAheadLog implements OWriteAheadLog {
     final byte[] serializedLSN = new byte[2 * OLongSerializer.LONG_SIZE];
     OLongSerializer.INSTANCE.serializeLiteral(masterRecord.getSegment(), serializedLSN, 0);
     OLongSerializer.INSTANCE.serializeLiteral(masterRecord.getPosition(), serializedLSN, OLongSerializer.LONG_SIZE);
-    crc32.update(serializedLSN);
+    crc32.update(serializedLSN, 0, serializedLSN.length);
 
     final ByteBuffer buffer = ByteBuffer.allocate(MASTER_RECORD_SIZE);
 
@@ -431,7 +432,7 @@ public final class CASDiskWriteAheadLog implements OWriteAheadLog {
       final byte[] serializedLSN = new byte[2 * OLongSerializer.LONG_SIZE];
       OLongSerializer.INSTANCE.serializeLiteral(segment, serializedLSN, 0);
       OLongSerializer.INSTANCE.serializeLiteral(position, serializedLSN, OLongSerializer.LONG_SIZE);
-      crc32.update(serializedLSN);
+      crc32.update(serializedLSN, 0, serializedLSN.length);
 
       if (firstCRC != ((int) crc32.getValue())) {
         OLogManager.instance()
@@ -1027,9 +1028,8 @@ public final class CASDiskWriteAheadLog implements OWriteAheadLog {
   }
 
   @Override
-  public OLogSequenceNumber logFuzzyCheckPointStart(final OLogSequenceNumber flushedLsn, byte[] lastMetadata) {
-    final OFuzzyCheckpointStartMetadataRecord record = new OFuzzyCheckpointStartMetadataRecord(lastCheckpoint, lastMetadata,
-        flushedLsn);
+  public OLogSequenceNumber logFuzzyCheckPointStart(final OLogSequenceNumber flushedLsn) {
+    final OFuzzyCheckpointStartRecord record = new OFuzzyCheckpointStartRecord(lastCheckpoint, flushedLsn);
     log(record);
     return record.getLsn();
   }
@@ -1042,8 +1042,8 @@ public final class CASDiskWriteAheadLog implements OWriteAheadLog {
   }
 
   @Override
-  public OLogSequenceNumber logFullCheckpointStart(byte[] lastMetadata) {
-    return log(new OFullCheckpointStartMetadataRecord(lastCheckpoint, lastMetadata));
+  public OLogSequenceNumber logFullCheckpointStart() {
+    return log(new OFullCheckpointStartRecord(lastCheckpoint));
   }
 
   @Override

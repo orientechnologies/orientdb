@@ -91,7 +91,6 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoper
 import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperationsManager;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurablePage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.*;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.cas.OFuzzyCheckpointStartMetadataRecord;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.common.WriteableWALRecord;
 import com.orientechnologies.orient.core.storage.impl.local.statistic.OPerformanceStatisticManager;
 import com.orientechnologies.orient.core.storage.impl.local.statistic.OSessionStoragePerformanceStatistic;
@@ -4358,7 +4357,11 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
         //so we will be able to cut almost all the log
         writeAheadLog.appendNewSegment();
 
-        final OLogSequenceNumber lastLSN = writeAheadLog.logFullCheckpointStart(lastMetadata);
+        final OLogSequenceNumber lastLSN = writeAheadLog.logFullCheckpointStart();
+        if (lastMetadata != null) {
+          writeAheadLog.log(new MetaDataRecord(lastMetadata));
+        }
+
         writeCache.flush();
 
         atomicOperationsTable.compactTable();
@@ -5323,9 +5326,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
           OFuzzyCheckpointStartRecord checkpointStartRecord = (OFuzzyCheckpointStartRecord) checkPointRecord.get(0);
           final OLogSequenceNumber previousCheckpoint = checkpointStartRecord.getPreviousCheckpoint();
-          if (checkpointStartRecord instanceof OFuzzyCheckpointStartMetadataRecord) {
-            this.lastMetadata = ((OFuzzyCheckpointStartMetadataRecord) checkpointStartRecord).getMetadata().orElse(null);
-          }
           checkPointRecord = Collections.emptyList();
 
           if (previousCheckpoint != null) {
@@ -5353,9 +5353,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
           OFullCheckpointStartRecord checkpointStartRecord = (OFullCheckpointStartRecord) checkPointRecord.get(0);
           final OLogSequenceNumber previousCheckpoint = checkpointStartRecord.getPreviousCheckpoint();
-          if (checkpointStartRecord instanceof OFullCheckpointStartMetadataRecord) {
-            this.lastMetadata = ((OFullCheckpointStartMetadataRecord) checkpointStartRecord).getMetadata().orElse(null);
-          }
 
           checkPointRecord = Collections.emptyList();
           if (previousCheckpoint != null) {
@@ -5464,9 +5461,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     OLogManager.instance().info(this, "Data restore procedure from full checkpoint is started. Restore is performed from LSN %s",
         checkPointRecord.getLsn());
 
-    if (checkPointRecord instanceof OFullCheckpointStartMetadataRecord) {
-      this.lastMetadata = ((OFullCheckpointStartMetadataRecord) checkPointRecord).getMetadata().orElse(null);
-    }
     final OLogSequenceNumber lsn = writeAheadLog.next(checkPointRecord.getLsn(), 1).get(0).getLsn();
     return restoreFrom(lsn, writeAheadLog, true);
   }
@@ -5474,10 +5468,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
   private OLogSequenceNumber restoreFromFuzzyCheckPoint(final OFuzzyCheckpointStartRecord checkPointRecord) throws IOException {
     OLogManager.instance().infoNoDb(this, "Data restore procedure from FUZZY checkpoint is started.");
     OLogSequenceNumber flushedLsn = checkPointRecord.getFlushedLsn();
-
-    if (checkPointRecord instanceof OFuzzyCheckpointStartMetadataRecord) {
-      this.lastMetadata = ((OFuzzyCheckpointStartMetadataRecord) checkPointRecord).getMetadata().orElse(null);
-    }
 
     if (flushedLsn.compareTo(writeAheadLog.begin()) < 0) {
       OLogManager.instance().errorNoDb(this,
@@ -5565,10 +5555,9 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
                     .warnNoDb(this, "Non tx operation was used during data modification we will need index rebuild.");
                 wereNonTxOperationsPerformedInPreviousOpen = true;
               }
-            } else if (walRecord instanceof OFuzzyCheckpointStartMetadataRecord) {
-              this.lastMetadata = ((OFuzzyCheckpointStartMetadataRecord) walRecord).getMetadata().orElse(null);
-            } else if (walRecord instanceof OFullCheckpointStartMetadataRecord) {
-              this.lastMetadata = ((OFullCheckpointStartMetadataRecord) walRecord).getMetadata().orElse(null);
+            } else if (walRecord instanceof MetaDataRecord) {
+              final MetaDataRecord metaDataRecord = (MetaDataRecord) walRecord;
+              this.lastMetadata = metaDataRecord.getMetadata();
             } else {
               OLogManager.instance().warnNoDb(this, "Record %s will be skipped during data restore", walRecord);
             }

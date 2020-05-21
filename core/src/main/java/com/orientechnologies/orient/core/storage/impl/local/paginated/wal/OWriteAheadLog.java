@@ -38,11 +38,11 @@ public interface OWriteAheadLog {
   String MASTER_RECORD_EXTENSION = ".wmr";
   String WAL_SEGMENT_EXTENSION   = ".wal";
 
-  OLogSequenceNumber logFuzzyCheckPointStart(OLogSequenceNumber flushedLsn, byte[] lastMetadata) throws IOException;
+  OLogSequenceNumber logFuzzyCheckPointStart(OLogSequenceNumber flushedLsn) throws IOException;
 
   OLogSequenceNumber logFuzzyCheckPointEnd() throws IOException;
 
-  OLogSequenceNumber logFullCheckpointStart(byte[] lastMetadata) throws IOException;
+  OLogSequenceNumber logFullCheckpointStart() throws IOException;
 
   @SuppressWarnings("UnusedReturnValue")
   OLogSequenceNumber logFullCheckpointEnd() throws IOException;

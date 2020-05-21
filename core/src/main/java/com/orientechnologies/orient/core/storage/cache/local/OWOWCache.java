@@ -57,6 +57,7 @@ import com.orientechnologies.orient.core.storage.fs.OFileClassic;
 import com.orientechnologies.orient.core.storage.impl.local.OLowDiskSpaceInformation;
 import com.orientechnologies.orient.core.storage.impl.local.OLowDiskSpaceListener;
 import com.orientechnologies.orient.core.storage.impl.local.OPageIsBrokenListener;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.MetaDataRecord;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWriteAheadLog;
 
@@ -903,7 +904,10 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
           return;
         }
 
-        writeAheadLog.logFuzzyCheckPointStart(startLSN, lastMetadata);
+        writeAheadLog.logFuzzyCheckPointStart(startLSN);
+        if (lastMetadata != null) {
+          writeAheadLog.log(new MetaDataRecord(lastMetadata));
+        }
 
         for (final Integer intId : nameIdMap.values()) {
           if (intId < 0) {

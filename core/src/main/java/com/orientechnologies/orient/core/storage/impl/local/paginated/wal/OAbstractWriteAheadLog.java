@@ -36,7 +36,7 @@ public abstract class OAbstractWriteAheadLog implements OWriteAheadLog {
   private       OLogSequenceNumber lastCheckpoint;
 
   @Override
-  public OLogSequenceNumber logFuzzyCheckPointStart(OLogSequenceNumber flushedLsn, byte[] lastMetadata) throws IOException {
+  public OLogSequenceNumber logFuzzyCheckPointStart(OLogSequenceNumber flushedLsn) throws IOException {
     syncObject.lock();
     try {
       checkForClose();
@@ -64,7 +64,7 @@ public abstract class OAbstractWriteAheadLog implements OWriteAheadLog {
   }
 
   @Override
-  public OLogSequenceNumber logFullCheckpointStart(byte[] lastMetadata) throws IOException {
+  public OLogSequenceNumber logFullCheckpointStart() throws IOException {
     return log(new OFullCheckpointStartRecord(lastCheckpoint));
   }
 

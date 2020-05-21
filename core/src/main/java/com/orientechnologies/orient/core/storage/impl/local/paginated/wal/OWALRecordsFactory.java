@@ -23,7 +23,6 @@ package com.orientechnologies.orient.core.storage.impl.local.paginated.wal;
 import com.orientechnologies.common.serialization.types.OIntegerSerializer;
 import com.orientechnologies.common.serialization.types.OShortSerializer;
 import com.orientechnologies.common.util.OPair;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.cas.OFuzzyCheckpointStartMetadataRecord;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.common.EmptyWALRecord;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.common.WriteableWALRecord;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.cellbtree.multivalue.v2.bucket.*;
@@ -173,12 +172,6 @@ public final class OWALRecordsFactory {
       break;
     case FULL_CHECKPOINT_START_RECORD:
       walRecord = new OFullCheckpointStartRecord();
-      break;
-    case FULL_CHECKPOINT_START_METADATA_RECORD:
-      walRecord = new OFullCheckpointStartMetadataRecord();
-      break;
-    case FUZZY_CHECKPOINT_START_METADATA_RECORD:
-      walRecord = new OFuzzyCheckpointStartMetadataRecord();
       break;
     case HIGH_LEVEL_TRANSACTION_CHANGE_RECORD:
       walRecord = new OHighLevelTransactionChangeRecord();
@@ -605,6 +598,9 @@ public final class OWALRecordsFactory {
       break;
     case LOCAL_HASH_TABLE_V2_DIRECTORY_FIRST_PAGE_SET_POINTER_PO:
       walRecord = new LocalHashTableV2DirectoryFirstPageSetPointerPO();
+      break;
+    case TX_METADATA:
+      walRecord = new MetaDataRecord();
       break;
     default:
       if (idToTypeMap.containsKey(recordId))
