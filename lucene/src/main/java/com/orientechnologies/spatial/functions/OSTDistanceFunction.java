@@ -36,8 +36,16 @@ public class OSTDistanceFunction extends OSpatialFunctionAbstract {
   public Object execute(Object iThis, OIdentifiable iCurrentRecord, Object iCurrentResult, Object[] iParams,
       OCommandContext iContext) {
 
+    if (containsNull(iParams)) {
+      return null;
+    }
+
     Shape shape = toShape(iParams[0]);
     Shape shape1 = toShape(iParams[1]);
+
+    if (shape == null || shape1 == null) {
+      return null;
+    }
 
     return factory.operation().distance(shape, shape1);
   }
