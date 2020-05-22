@@ -290,9 +290,14 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
           }
         });
       } else {
-        this.requestExecutor.submit(() -> {
-          execute(request);
-        });
+        try {
+          this.requestExecutor.submit(() -> {
+            execute(request);
+          });
+        } catch (RejectedExecutionException e) {
+          task.finished();
+          throw e;
+        }
       }
     }
   }
@@ -686,7 +691,16 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
     return total;
   }
 
+  public void onDropShutdown() {
+    // Drop is often called directly from the exeutor so it cannot wait itself to finish
+    shutdown(false);
+  }
+
   public void shutdown() {
+    shutdown(true);
+  }
+
+  public void shutdown(boolean wait) {
     waitPending();
     running = false;
 
@@ -719,9 +733,11 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
       nowaitThread = null;
       workerThreads.clear();
       requestExecutor.shutdown();
-      try {
-        requestExecutor.awaitTermination(1, TimeUnit.MINUTES);
-      } catch (InterruptedException e) {
+      if (wait) {
+        try {
+          requestExecutor.awaitTermination(1, TimeUnit.MINUTES);
+        } catch (InterruptedException e) {
+        }
       }
 
       // SAVE SYNC CONFIGURATION

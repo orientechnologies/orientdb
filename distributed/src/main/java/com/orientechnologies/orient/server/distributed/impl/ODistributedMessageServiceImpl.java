@@ -159,7 +159,7 @@ public class ODistributedMessageServiceImpl implements ODistributedMessageServic
 
     final ODistributedDatabaseImpl db = databases.remove(iDatabaseName);
     if (db != null) {
-      db.shutdown();
+      db.onDropShutdown();
     }
     return db;
   }
