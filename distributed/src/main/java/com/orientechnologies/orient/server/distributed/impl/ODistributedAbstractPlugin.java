@@ -2169,7 +2169,6 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
 
                   uniqueClustersBackupDirectory.delete();
                 }
-
                 ODistributedDatabaseImpl distrDatabase = messageService.getDatabase(databaseName);
 
                 try (ODatabaseDocumentInternal inst = distrDatabase.getDatabaseInstance()) {
@@ -2202,12 +2201,10 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
                         (ONewDeltaTaskResponse) response.getPayload());
                   }
                 }
-
               } else if (delta) {
                 try (InputStream in = receiver.getInputStream()) {
                   new OIncrementalServerSync().importDelta(serverInstance, databaseName, in, iNode);
                 }
-
               } else {
 
                 // USES A CUSTOM WRAPPER OF IS TO WAIT FOR FILE IS WRITTEN (ASYNCH)
