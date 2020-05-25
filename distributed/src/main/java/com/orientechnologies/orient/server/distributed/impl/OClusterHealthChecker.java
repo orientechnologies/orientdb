@@ -127,8 +127,6 @@ public class OClusterHealthChecker implements Runnable {
                     new ORequestDatabaseConfigurationTask(databaseName),
                     manager.getNextMessageIdCounter(),
                     ODistributedRequest.EXECUTION_MODE.RESPONSE,
-                    null,
-                    null,
                     null);
 
             final Object payload = response != null ? response.getPayload() : null;
@@ -331,8 +329,6 @@ public class OClusterHealthChecker implements Runnable {
                 new OGossipTask(manager.getLockManagerServer()),
                 manager.getNextMessageIdCounter(),
                 ODistributedRequest.EXECUTION_MODE.RESPONSE,
-                null,
-                null,
                 null);
 
         final Object payload = response != null ? response.getPayload() : null;
@@ -426,9 +422,8 @@ public class OClusterHealthChecker implements Runnable {
                 task,
                 manager.getNextMessageIdCounter(),
                 ODistributedRequest.EXECUTION_MODE.RESPONSE,
-                null,
-                null,
                 null);
+
       } catch (ODistributedException e) {
         // NO SERVER RESPONDED, THE SERVER COULD BE ISOLATED: SET ALL THE SERVER AS OFFLINE
         ODistributedServerLog.debug(
@@ -478,6 +473,7 @@ public class OClusterHealthChecker implements Runnable {
         Optional<OTransactionSequenceStatus> status = sharedDb.status();
         if (status.isPresent()) {
           ORemoteTask task = new OUpdateDatabaseSequenceStatusTask(dbName, status.get());
+
           final ODistributedResponse response =
               manager.sendRequest(
                   dbName,
@@ -486,8 +482,6 @@ public class OClusterHealthChecker implements Runnable {
                   task,
                   manager.getNextMessageIdCounter(),
                   ODistributedRequest.EXECUTION_MODE.RESPONSE,
-                  null,
-                  null,
                   null);
         }
       } catch (ODistributedException e) {

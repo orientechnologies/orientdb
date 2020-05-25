@@ -19,7 +19,6 @@
  */
 package com.orientechnologies.orient.server.distributed;
 
-import com.orientechnologies.common.util.OCallable;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
 import com.orientechnologies.orient.core.tx.OTransactionId;
@@ -45,9 +44,7 @@ public interface ODistributedDatabase {
       Collection<String> iClusterNames,
       Collection<String> iNodes,
       ODistributedRequest.EXECUTION_MODE iExecutionMode,
-      Object localResult,
-      OCallable<Void, ODistributedRequestId> iAfterSentCallback,
-      OCallable<Void, ODistributedResponseManager> endCallback);
+      Object localResult);
 
   void setOnline();
 

@@ -80,7 +80,6 @@ import com.orientechnologies.orient.server.distributed.ODistributedMessageServic
 import com.orientechnologies.orient.server.distributed.ODistributedRequest;
 import com.orientechnologies.orient.server.distributed.ODistributedRequestId;
 import com.orientechnologies.orient.server.distributed.ODistributedResponse;
-import com.orientechnologies.orient.server.distributed.ODistributedResponseManager;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIRECTION;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
@@ -584,9 +583,7 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
       final ORemoteTask iTask,
       final long reqId,
       final ODistributedRequest.EXECUTION_MODE iExecutionMode,
-      final Object localResult,
-      final OCallable<Void, ODistributedRequestId> iAfterSentCallback,
-      final OCallable<Void, ODistributedResponseManager> endCallback) {
+      final Object localResult) {
     return sendRequest(
         iDatabaseName,
         iClusterNames,
@@ -595,8 +592,6 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
         reqId,
         iExecutionMode,
         localResult,
-        iAfterSentCallback,
-        endCallback,
         null);
   }
 
@@ -608,8 +603,6 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
       final long reqId,
       final ODistributedRequest.EXECUTION_MODE iExecutionMode,
       final Object localResult,
-      final OCallable<Void, ODistributedRequestId> iAfterSentCallback,
-      final OCallable<Void, ODistributedResponseManager> endCallback,
       ODistributedResponseManagerFactory responseManagerFactory) {
 
     final ODistributedRequest req =
@@ -658,23 +651,9 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
     messageService.updateMessageStats(iTask.getName());
     if (responseManagerFactory != null) {
       return db.send2Nodes(
-          req,
-          iClusterNames,
-          iTargetNodes,
-          iExecutionMode,
-          localResult,
-          iAfterSentCallback,
-          endCallback,
-          responseManagerFactory);
+          req, iClusterNames, iTargetNodes, iExecutionMode, localResult, responseManagerFactory);
     } else {
-      return db.send2Nodes(
-          req,
-          iClusterNames,
-          iTargetNodes,
-          iExecutionMode,
-          localResult,
-          iAfterSentCallback,
-          endCallback);
+      return db.send2Nodes(req, iClusterNames, iTargetNodes, iExecutionMode, localResult);
     }
   }
 
@@ -1233,8 +1212,6 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
                 deployTask,
                 getNextMessageIdCounter(),
                 ODistributedRequest.EXECUTION_MODE.RESPONSE,
-                null,
-                null,
                 null);
 
         if (response == null)
@@ -1458,8 +1435,6 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
                       deployTask,
                       getNextMessageIdCounter(),
                       ODistributedRequest.EXECUTION_MODE.RESPONSE,
-                      null,
-                      null,
                       null)
                   .getPayload();
 
@@ -2216,10 +2191,7 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
                             deployTask,
                             getNextMessageIdCounter(),
                             ODistributedRequest.EXECUTION_MODE.RESPONSE,
-                            null,
-                            null,
                             null);
-
                     if (response == null)
                       throw new ODistributedDatabaseDeltaSyncException((OLogSequenceNumber) null);
                     installResponseNewDeltaSync(

@@ -74,6 +74,7 @@ import com.orientechnologies.orient.server.distributed.task.ODistributedRecordLo
 import com.orientechnologies.orient.server.distributed.task.ORemoteTask;
 import com.orientechnologies.orient.server.hazelcast.OHazelcastPlugin;
 import com.orientechnologies.orient.server.plugin.OServerPluginInfo;
+import java.util.*;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
@@ -314,8 +315,6 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
         task,
         distributedManager.getNextMessageIdCounter(),
         ODistributedRequest.EXECUTION_MODE.RESPONSE,
-        null,
-        null,
         null);
   }
 
@@ -943,8 +942,6 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
               task,
               dManager.getNextMessageIdCounter(),
               ODistributedRequest.EXECUTION_MODE.RESPONSE,
-              null,
-              null,
               null);
 
     } catch (Exception e) {
