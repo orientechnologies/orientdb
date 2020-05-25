@@ -374,17 +374,6 @@ public class ONewDistributedTransactionManager {
             "OK");
   }
 
-  protected void checkForClusterIds(final OTransactionInternal iTx) {
-    for (ORecordOperation op : iTx.getRecordOperations()) {
-      final ORecordId rid = (ORecordId) op.getRecord().getIdentity();
-      switch (op.type) {
-      case ORecordOperation.CREATED:
-        assert rid.isPersistent();
-        break;
-      }
-    }
-  }
-
   protected Set<String> getAvailableNodesButLocal(ODistributedConfiguration dbCfg, Set<String> involvedClusters,
       String localNodeName) {
     final Set<String> nodes = dbCfg.getServers(involvedClusters);

@@ -512,14 +512,6 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
     }
   }
 
-  public ODistributedResponseManager newResponseManager(ODistributedRequest iRequest, Collection<String> iNodes,
-      OCallable<Void, ODistributedResponseManager> endCallback, ORemoteTask task, Set<String> nodesConcurToTheQuorum,
-      int availableNodes, int expectedResponses, int quorum, boolean groupByResponse, boolean waitLocalNode) {
-    return new ODistributedResponseManagerImpl(manager, iRequest, iNodes, nodesConcurToTheQuorum, expectedResponses, quorum,
-        waitLocalNode, adjustTimeoutWithLatency(iNodes, task.getSynchronousTimeout(expectedResponses), iRequest.getId()),
-        adjustTimeoutWithLatency(iNodes, task.getTotalTimeout(availableNodes), iRequest.getId()), groupByResponse);
-  }
-
   private long adjustTimeoutWithLatency(final Collection<String> iNodes, final long timeout,
       final ODistributedRequestId requestId) {
     long delta = 0;
