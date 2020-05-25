@@ -556,10 +556,6 @@ public class ODistributedResponseManagerImpl implements ODistributedResponseMana
     }
   }
 
-  public boolean isCanceled() {
-    return canceled.get();
-  }
-
   public void cancel() {
     this.canceled.set(true);
 
@@ -639,14 +635,6 @@ public class ODistributedResponseManagerImpl implements ODistributedResponseMana
 
   public synchronized boolean isFinished() {
     return getExpectedResponses() - receivedResponses == 0;
-  }
-
-  protected int getReceivedResponsesCount() {
-    return receivedResponses;
-  }
-
-  protected long getTotalTimeout() {
-    return totalTimeout;
   }
 
   /**
