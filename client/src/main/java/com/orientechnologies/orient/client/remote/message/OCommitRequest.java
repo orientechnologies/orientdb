@@ -55,6 +55,7 @@ public final class OCommitRequest implements OBinaryRequest<OCommitResponse> {
     network.writeBoolean(usingLong);
 
     for (ORecordOperationRequest txEntry : operations) {
+      network.writeByte((byte) 1);
       OMessageHelper.writeTransactionEntry(network, txEntry, serializer);
     }
 

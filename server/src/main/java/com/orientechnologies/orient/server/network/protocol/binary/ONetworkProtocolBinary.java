@@ -172,7 +172,9 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
     clientTxId = 0;
     okSent = false;
     try {
+      channel.setWaitRequestTimeout();
       requestType = channel.readByte();
+      channel.setReadRequestTimeout();
 
       if (server.rejectRequests()) {
         // MAKE SURE THAT IF THE SERVER IS GOING DOWN THE CONNECTIONS ARE TERMINATED BEFORE HANDLE ANY OPERATIONS
@@ -324,6 +326,7 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
             }
             exception = t;
           } catch (Error err) {
+            sendShutdown();
             if (connection != null) {
               connection.release();
             }
