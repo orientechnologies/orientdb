@@ -83,6 +83,7 @@ import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.SynchronousQueue;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.ThreadPoolExecutor;
@@ -375,14 +376,20 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
             rids,
             uniqueKeys,
             (guards) -> {
-              this.requestExecutor.submit(
-                  () -> {
-                    try {
-                      execute(request);
-                    } finally {
-                      this.lockManager.unlock(guards);
-                    }
-                  });
+              try {
+                this.requestExecutor.submit(
+                    () -> {
+                      try {
+                        execute(request);
+                      } finally {
+                        this.lockManager.unlock(guards);
+                      }
+                    });
+              } catch (RejectedExecutionException e) {
+                task.finished();
+                this.lockManager.unlock(guards);
+                throw e;
+              }
             });
       } else {
         this.requestExecutor.submit(
