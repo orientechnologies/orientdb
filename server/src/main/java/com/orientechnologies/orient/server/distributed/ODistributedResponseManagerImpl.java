@@ -24,8 +24,6 @@ import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.util.OCallable;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
-import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
-import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.exception.OConcurrentCreateException;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIRECTION;
@@ -59,7 +57,6 @@ public class ODistributedResponseManagerImpl implements ODistributedResponseMana
   private final        HashMap<String, Object>                      responses                        = new HashMap<String, Object>();
   private final        boolean                                      groupResponsesByResult;
   private final        List<List<ODistributedResponse>>             responseGroups                   = new ArrayList<List<ODistributedResponse>>();
-  private final        OCallable<Void, ODistributedResponseManager> endCallback;
   private              int                                          totalExpectedResponses;
   private final        long                                         synchTimeout;
   private final        long                                         totalTimeout;
@@ -77,7 +74,7 @@ public class ODistributedResponseManagerImpl implements ODistributedResponseMana
   public ODistributedResponseManagerImpl(final ODistributedServerManager iManager, final ODistributedRequest iRequest,
       final Collection<String> expectedResponses, final Set<String> iNodesConcurInQuorum, final int iTotalExpectedResponses,
       final int iQuorum, final boolean iWaitForLocalNode, final long iSynchTimeout, final long iTotalTimeout,
-      final boolean iGroupResponsesByResult, final OCallable<Void, ODistributedResponseManager> endCallback) {
+      final boolean iGroupResponsesByResult) {
     this.dManager = iManager;
     this.request = iRequest;
     this.sentOn = System.nanoTime();
@@ -88,7 +85,6 @@ public class ODistributedResponseManagerImpl implements ODistributedResponseMana
     this.totalTimeout = iTotalTimeout;
     this.groupResponsesByResult = iGroupResponsesByResult;
     this.nodesConcurInQuorum = iNodesConcurInQuorum;
-    this.endCallback = endCallback;
 
     for (String node : expectedResponses)
       responses.put(node, NO_RESPONSE);
@@ -194,10 +190,6 @@ public class ODistributedResponseManagerImpl implements ODistributedResponseMana
 
   private boolean checkForCompletion() {
     final boolean completed = getExpectedResponses() == receivedResponses;
-
-    if (completed)
-      // FINALIZE THE REQUEST
-      end();
 
     if (completed || isMinimumQuorumReached(false)) {
       // NOTIFY TO THE WAITER THE RESPONSE IS COMPLETE NOW
@@ -458,8 +450,6 @@ public class ODistributedResponseManagerImpl implements ODistributedResponseMana
   public void timeout() {
     synchronousResponsesLock.lock();
     try {
-
-      end();
 
       // NOTIFY TO THE WAITER THE RESPONSE IS COMPLETE NOW
       synchronousResponsesArrived.countDown();
@@ -805,7 +795,7 @@ public class ODistributedResponseManagerImpl implements ODistributedResponseMana
 
           final ODistributedResponse result = dManager
               .sendRequest(request.getDatabaseName(), null, servers, undoTask, dManager.getNextMessageIdCounter(),
-                  ODistributedRequest.EXECUTION_MODE.RESPONSE, null, null, null);
+                  ODistributedRequest.EXECUTION_MODE.RESPONSE, null);
 
           ODistributedServerLog.debug(this, dManager.getLocalNodeName(), targetNode, DIRECTION.OUT,
               "Received response from undo message (%s) for request (%s) to server %s: %s", undoTask, request, targetNode, result);
@@ -860,9 +850,4 @@ public class ODistributedResponseManagerImpl implements ODistributedResponseMana
             quorumResponse, request);
   }
 
-  private void end() {
-    if (endCallback != null)
-      // CUSTOM CALLBACK
-      endCallback.call(this);
-  }
 }

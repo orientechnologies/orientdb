@@ -5,7 +5,6 @@ import com.hazelcast.core.HazelcastInstanceNotActiveException;
 import com.orientechnologies.common.concur.OOfflineNodeException;
 import com.orientechnologies.common.concur.lock.OInterruptedException;
 import com.orientechnologies.common.exception.OException;
-import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
@@ -37,7 +36,6 @@ import com.orientechnologies.orient.core.storage.ORecordDuplicatedException;
 import com.orientechnologies.orient.core.storage.ORecordMetadata;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
-import com.orientechnologies.orient.core.tx.OTransactionData;
 import com.orientechnologies.orient.core.tx.OTransactionIndexChanges;
 import com.orientechnologies.orient.core.tx.OTransactionIndexChangesPerKey;
 import com.orientechnologies.orient.core.tx.OTransactionInternal;
@@ -53,8 +51,6 @@ import com.orientechnologies.orient.server.distributed.task.*;
 import com.orientechnologies.orient.server.hazelcast.OHazelcastPlugin;
 import com.orientechnologies.orient.server.plugin.OServerPluginInfo;
 
-import java.io.FileOutputStream;
-import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.ExecutionException;
 import java.util.stream.Stream;
@@ -273,7 +269,7 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
 
     return distributedManager
         .sendRequest(databaseName, null, Collections.singletonList(nodeName), task, distributedManager.getNextMessageIdCounter(),
-            ODistributedRequest.EXECUTION_MODE.RESPONSE, null, null, null);
+            ODistributedRequest.EXECUTION_MODE.RESPONSE, null);
   }
 
   @Override
@@ -783,7 +779,7 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
       }
 
       final ODistributedResponse response = dManager.sendRequest(getName(), null, nodes, task, dManager.getNextMessageIdCounter(),
-          ODistributedRequest.EXECUTION_MODE.RESPONSE, null, null, null);
+          ODistributedRequest.EXECUTION_MODE.RESPONSE, null);
 
     } catch (Exception e) {
       ODistributedServerLog.debug(this, dManager.getLocalNodeName(), getLocalNodeName(), ODistributedServerLog.DIRECTION.OUT,

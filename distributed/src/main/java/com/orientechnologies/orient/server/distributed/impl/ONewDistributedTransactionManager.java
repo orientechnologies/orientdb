@@ -208,8 +208,7 @@ public class ONewDistributedTransactionManager {
     // SYNCHRONOUS CALL: REPLICATE IT
     ((ODistributedAbstractPlugin) dManager)
         .sendRequest(storage.getName(), involvedClusters, nodes, txTask, requestId.getMessageId(), EXECUTION_MODE.RESPONSE,
-            localResult, null, null,
-            ((iRequest, iNodes, endCallback, task, nodesConcurToTheQuorum, availableNodes, expectedResponses, quorum, groupByResponse, waitLocalNode) -> {
+            localResult, ((iRequest, iNodes, task, nodesConcurToTheQuorum, availableNodes, expectedResponses, quorum, groupByResponse, waitLocalNode) -> {
               responseManager = new ONewDistributedResponseManager(txTask, iNodes, nodesConcurToTheQuorum, availableNodes,
                   expectedResponses, quorum);
               return responseManager;
@@ -372,7 +371,7 @@ public class ONewDistributedTransactionManager {
   private void sendPhase2Task(Set<String> involvedClusters, Set<String> nodes, OTransactionPhase2Task task) {
     dManager
         .sendRequest(storage.getName(), involvedClusters, nodes, task, dManager.getNextMessageIdCounter(), EXECUTION_MODE.RESPONSE,
-            "OK", null, null);
+            "OK");
   }
 
   protected void checkForClusterIds(final OTransactionInternal iTx) {

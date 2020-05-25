@@ -74,7 +74,6 @@ import com.orientechnologies.orient.server.distributed.task.OAbstractReplicatedT
 import com.orientechnologies.orient.server.distributed.task.ODatabaseIsOldException;
 import com.orientechnologies.orient.server.distributed.task.ODistributedDatabaseDeltaSyncException;
 import com.orientechnologies.orient.server.distributed.task.ORemoteTask;
-import com.orientechnologies.orient.server.hazelcast.OHazelcastLockManager;
 import com.orientechnologies.orient.server.network.OServerNetworkListener;
 import com.orientechnologies.orient.server.plugin.OServerPluginAbstract;
 
@@ -529,18 +528,13 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
   @Override
   public ODistributedResponse sendRequest(final String iDatabaseName, final Collection<String> iClusterNames,
       final Collection<String> iTargetNodes, final ORemoteTask iTask, final long reqId,
-      final ODistributedRequest.EXECUTION_MODE iExecutionMode, final Object localResult,
-      final OCallable<Void, ODistributedRequestId> iAfterSentCallback,
-      final OCallable<Void, ODistributedResponseManager> endCallback) {
-    return sendRequest(iDatabaseName, iClusterNames, iTargetNodes, iTask, reqId, iExecutionMode, localResult, iAfterSentCallback,
-        endCallback, null);
+      final ODistributedRequest.EXECUTION_MODE iExecutionMode, final Object localResult) {
+    return sendRequest(iDatabaseName, iClusterNames, iTargetNodes, iTask, reqId, iExecutionMode, localResult, null);
   }
 
   public ODistributedResponse sendRequest(final String iDatabaseName, final Collection<String> iClusterNames,
       final Collection<String> iTargetNodes, final ORemoteTask iTask, final long reqId,
-      final ODistributedRequest.EXECUTION_MODE iExecutionMode, final Object localResult,
-      final OCallable<Void, ODistributedRequestId> iAfterSentCallback,
-      final OCallable<Void, ODistributedResponseManager> endCallback, ODistributedResponseManagerFactory responseManagerFactory) {
+      final ODistributedRequest.EXECUTION_MODE iExecutionMode, final Object localResult, ODistributedResponseManagerFactory responseManagerFactory) {
 
     final ODistributedRequest req = new ODistributedRequest(this, nodeId, reqId, iDatabaseName, iTask);
 
@@ -567,10 +561,9 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
 
     messageService.updateMessageStats(iTask.getName());
     if (responseManagerFactory != null) {
-      return db.send2Nodes(req, iClusterNames, iTargetNodes, iExecutionMode, localResult, iAfterSentCallback, endCallback,
-          responseManagerFactory);
+      return db.send2Nodes(req, iClusterNames, iTargetNodes, iExecutionMode, localResult, responseManagerFactory);
     } else {
-      return db.send2Nodes(req, iClusterNames, iTargetNodes, iExecutionMode, localResult, iAfterSentCallback, endCallback);
+      return db.send2Nodes(req, iClusterNames, iTargetNodes, iExecutionMode, localResult);
     }
   }
 
@@ -1039,7 +1032,7 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
       targetNodes.add(targetNode);
       try {
         final ODistributedResponse response = sendRequest(databaseName, null, targetNodes, deployTask, getNextMessageIdCounter(),
-            ODistributedRequest.EXECUTION_MODE.RESPONSE, null, null, null);
+            ODistributedRequest.EXECUTION_MODE.RESPONSE, null);
 
         if (response == null)
           throw new ODistributedDatabaseDeltaSyncException((OLogSequenceNumber) null);
@@ -1193,7 +1186,7 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
       List<String> singleNode = new ArrayList<>();
       singleNode.add(noteToSend);
       final Map<String, Object> results = (Map<String, Object>) sendRequest(databaseName, null, singleNode, deployTask,
-          getNextMessageIdCounter(), ODistributedRequest.EXECUTION_MODE.RESPONSE, null, null, null).getPayload();
+          getNextMessageIdCounter(), ODistributedRequest.EXECUTION_MODE.RESPONSE, null).getPayload();
 
       if (results == null) {
         ODistributedServerLog.error(this, nodeName, selectedNodes.toString(), DIRECTION.IN,
@@ -1773,7 +1766,7 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
             targetNodes.add(iNode);
             try {
               final ODistributedResponse response = sendRequest(databaseName, null, targetNodes, deployTask,
-                  getNextMessageIdCounter(), ODistributedRequest.EXECUTION_MODE.RESPONSE, null, null, null);
+                  getNextMessageIdCounter(), ODistributedRequest.EXECUTION_MODE.RESPONSE, null);
 
               if (response == null)
                 throw new ODistributedDatabaseDeltaSyncException((OLogSequenceNumber) null);

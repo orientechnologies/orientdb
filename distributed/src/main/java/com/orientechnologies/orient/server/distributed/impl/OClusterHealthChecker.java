@@ -106,7 +106,7 @@ public class OClusterHealthChecker implements Runnable {
           try {
             final ODistributedResponse response = manager
                 .sendRequest(databaseName, null, nodes, new ORequestDatabaseConfigurationTask(databaseName),
-                    manager.getNextMessageIdCounter(), ODistributedRequest.EXECUTION_MODE.RESPONSE, null, null, null);
+                    manager.getNextMessageIdCounter(), ODistributedRequest.EXECUTION_MODE.RESPONSE, null);
 
             final Object payload = response != null ? response.getPayload() : null;
             if (payload instanceof Map) {
@@ -251,7 +251,7 @@ public class OClusterHealthChecker implements Runnable {
       try {
         final ODistributedResponse response = manager
             .sendRequest(dbName, null, servers, new OGossipTask(manager.getLockManagerServer()), manager.getNextMessageIdCounter(),
-                ODistributedRequest.EXECUTION_MODE.RESPONSE, null, null, null);
+                ODistributedRequest.EXECUTION_MODE.RESPONSE, null);
 
         final Object payload = response != null ? response.getPayload() : null;
         if (payload instanceof Map) {
@@ -322,7 +322,7 @@ public class OClusterHealthChecker implements Runnable {
         sentLsn.put(dbName, updatedLsn);
         ORemoteTask task = new OUpdateDatabaseStatusTask(dbName, "", updatedLsn);
         final ODistributedResponse response = manager.sendRequest(dbName, null, servers, task, manager.getNextMessageIdCounter(),
-            ODistributedRequest.EXECUTION_MODE.RESPONSE, null, null, null);
+            ODistributedRequest.EXECUTION_MODE.RESPONSE, null);
       } catch (ODistributedException e) {
         // NO SERVER RESPONDED, THE SERVER COULD BE ISOLATED: SET ALL THE SERVER AS OFFLINE
         ODistributedServerLog.debug(this, manager.getLocalNodeName(), null, ODistributedServerLog.DIRECTION.NONE,
@@ -366,7 +366,7 @@ public class OClusterHealthChecker implements Runnable {
         if (status.isPresent()) {
           ORemoteTask task = new OUpdateDatabaseSequenceStatusTask(dbName, status.get());
           final ODistributedResponse response = manager.sendRequest(dbName, null, servers, task, manager.getNextMessageIdCounter(),
-              ODistributedRequest.EXECUTION_MODE.RESPONSE, null, null, null);
+              ODistributedRequest.EXECUTION_MODE.RESPONSE, null);
         }
       } catch (ODistributedException e) {
         // NO SERVER RESPONDED, THE SERVER COULD BE ISOLATED: SET ALL THE SERVER AS OFFLINE

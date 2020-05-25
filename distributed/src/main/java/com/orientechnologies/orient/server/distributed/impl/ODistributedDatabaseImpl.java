@@ -23,7 +23,6 @@ import com.orientechnologies.common.concur.OOfflineNodeException;
 import com.orientechnologies.common.concur.lock.OSimpleLockManager;
 import com.orientechnologies.common.concur.lock.OSimpleLockManagerImpl;
 import com.orientechnologies.common.exception.OException;
-import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.profiler.OAbstractProfiler;
 import com.orientechnologies.common.profiler.OProfiler;
 import com.orientechnologies.common.util.OCallable;
@@ -33,8 +32,6 @@ import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.exception.OSecurityAccessException;
 import com.orientechnologies.orient.core.id.ORID;
-import com.orientechnologies.orient.core.id.ORecordId;
-import com.orientechnologies.orient.core.storage.ORawBuffer;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
 import com.orientechnologies.orient.core.tx.OTransactionId;
@@ -57,7 +54,6 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
-import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
 import static com.orientechnologies.orient.core.config.OGlobalConfiguration.DISTRIBUTED_ATOMIC_LOCK_TIMEOUT;
@@ -373,23 +369,18 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
 
   @Override
   public ODistributedResponse send2Nodes(final ODistributedRequest iRequest, final Collection<String> iClusterNames,
-      Collection<String> iNodes, final ODistributedRequest.EXECUTION_MODE iExecutionMode, final Object localResult,
-      final OCallable<Void, ODistributedRequestId> iAfterSentCallback,
-      final OCallable<Void, ODistributedResponseManager> endCallback) {
-    return send2Nodes(iRequest, iClusterNames, iNodes, iExecutionMode, localResult, iAfterSentCallback, endCallback,
-        (iRequest1, iNodes1, endCallback1, task, nodesConcurToTheQuorum, availableNodes, expectedResponses, quorum, groupByResponse, waitLocalNode) -> {
+      Collection<String> iNodes, final ODistributedRequest.EXECUTION_MODE iExecutionMode, final Object localResult) {
+    return send2Nodes(iRequest, iClusterNames, iNodes, iExecutionMode, localResult,
+        (iRequest1, iNodes1, task, nodesConcurToTheQuorum, availableNodes, expectedResponses, quorum, groupByResponse, waitLocalNode) -> {
           return new ODistributedResponseManagerImpl(manager, iRequest, iNodes, nodesConcurToTheQuorum, expectedResponses, quorum,
               waitLocalNode, adjustTimeoutWithLatency(iNodes, task.getSynchronousTimeout(expectedResponses), iRequest.getId()),
-              adjustTimeoutWithLatency(iNodes, task.getTotalTimeout(availableNodes), iRequest.getId()), groupByResponse,
-              endCallback);
+              adjustTimeoutWithLatency(iNodes, task.getTotalTimeout(availableNodes), iRequest.getId()), groupByResponse);
         });
   }
 
   public ODistributedResponse send2Nodes(final ODistributedRequest iRequest, final Collection<String> iClusterNames,
       Collection<String> iNodes, final ODistributedRequest.EXECUTION_MODE iExecutionMode, final Object localResult,
-      final OCallable<Void, ODistributedRequestId> iAfterSentCallback,
-      final OCallable<Void, ODistributedResponseManager> endCallback, ODistributedResponseManagerFactory responseManagerFactory) {
-    boolean afterSendCallBackCalled = false;
+      ODistributedResponseManagerFactory responseManagerFactory) {
     try {
       checkForServerOnline(iRequest);
 
@@ -435,8 +426,8 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
 
       // CREATE THE RESPONSE MANAGER
       final ODistributedResponseManager currentResponseMgr = responseManagerFactory
-          .newResponseManager(iRequest, iNodes, endCallback, task, nodesConcurToTheQuorum, availableNodes, expectedResponses,
-              quorum, groupByResponse, waitLocalNode);
+          .newResponseManager(iRequest, iNodes, task, nodesConcurToTheQuorum, availableNodes, expectedResponses, quorum,
+              groupByResponse, waitLocalNode);
 
       if (localResult != null && currentResponseMgr.setLocalResult(localNodeName, localResult)) {
         // COLLECT LOCAL RESULT ONLY
@@ -506,11 +497,6 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
 
       totalSentRequests.incrementAndGet();
 
-      afterSendCallBackCalled = true;
-
-      if (iAfterSentCallback != null)
-        iAfterSentCallback.call(iRequest.getId());
-
       if (iExecutionMode == ODistributedRequest.EXECUTION_MODE.RESPONSE)
         return waitForResponse(iRequest, currentResponseMgr);
 
@@ -523,9 +509,6 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
       throw OException.wrapException(new ODistributedException(
           "Error on executing distributed request (" + iRequest + ") against database '" + databaseName + names + "' to nodes "
               + iNodes), e);
-    } finally {
-      if (iAfterSentCallback != null && !afterSendCallBackCalled)
-        iAfterSentCallback.call(iRequest.getId());
     }
   }
 
@@ -534,7 +517,7 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
       int availableNodes, int expectedResponses, int quorum, boolean groupByResponse, boolean waitLocalNode) {
     return new ODistributedResponseManagerImpl(manager, iRequest, iNodes, nodesConcurToTheQuorum, expectedResponses, quorum,
         waitLocalNode, adjustTimeoutWithLatency(iNodes, task.getSynchronousTimeout(expectedResponses), iRequest.getId()),
-        adjustTimeoutWithLatency(iNodes, task.getTotalTimeout(availableNodes), iRequest.getId()), groupByResponse, endCallback);
+        adjustTimeoutWithLatency(iNodes, task.getTotalTimeout(availableNodes), iRequest.getId()), groupByResponse);
   }
 
   private long adjustTimeoutWithLatency(final Collection<String> iNodes, final long timeout,

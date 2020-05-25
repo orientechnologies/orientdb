@@ -21,11 +21,8 @@ package com.orientechnologies.orient.server.distributed;
 
 import com.orientechnologies.common.util.OCallable;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
-import com.orientechnologies.orient.core.db.ODatabaseInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.OStorage;
-import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinary;
-import com.orientechnologies.orient.server.OClientConnection;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.distributed.ODistributedRequest.EXECUTION_MODE;
 import com.orientechnologies.orient.server.distributed.conflict.ODistributedConflictResolverFactory;
@@ -233,14 +230,10 @@ public interface ODistributedServerManager {
    * @param messageId          Message Id as long
    * @param iExecutionMode
    * @param localResult        It's the result of the request executed locally
-   * @param iAfterSentCallback
-   * @param endCallback
-   *
    * @return
    */
   ODistributedResponse sendRequest(String iDatabaseName, Collection<String> iClusterNames, Collection<String> iTargetNodeNames,
-      ORemoteTask iTask, long messageId, EXECUTION_MODE iExecutionMode, Object localResult,
-      OCallable<Void, ODistributedRequestId> iAfterSentCallback, OCallable<Void, ODistributedResponseManager> endCallback);
+      ORemoteTask iTask, long messageId, EXECUTION_MODE iExecutionMode, Object localResult);
 
   ODocument getStats();
 

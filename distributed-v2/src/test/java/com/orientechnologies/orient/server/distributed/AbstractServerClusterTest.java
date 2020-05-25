@@ -471,7 +471,7 @@ public abstract class AbstractServerClusterTest {
 
     ODistributedResponse response = dManager
         .sendRequest(getDatabaseName(), clusterNames, Arrays.asList(servers), null, dManager.getNextMessageIdCounter(),
-            ODistributedRequest.EXECUTION_MODE.RESPONSE, null, null, null);
+            ODistributedRequest.EXECUTION_MODE.RESPONSE, null);
 
     if (response != null) {
       final ORawBuffer buffer = (ORawBuffer) response.getPayload();
@@ -488,7 +488,7 @@ public abstract class AbstractServerClusterTest {
     clusterNames.add(ODatabaseRecordThreadLocal.instance().get().getClusterNameById(record.getIdentity().getClusterId()));
 
     return dManager.sendRequest(getDatabaseName(), clusterNames, Arrays.asList(servers), null, dManager.getNextMessageIdCounter(),
-        ODistributedRequest.EXECUTION_MODE.RESPONSE, null, null, null);
+        ODistributedRequest.EXECUTION_MODE.RESPONSE, null);
   }
 
   protected ODistributedResponse updateRemoteRecord(final int serverId, final ORecord record, final String[] servers) {
@@ -499,7 +499,7 @@ public abstract class AbstractServerClusterTest {
 
     return dManager.sendRequest(getDatabaseName(), clusterNames, Arrays.asList(servers),
         null,
-        dManager.getNextMessageIdCounter(), ODistributedRequest.EXECUTION_MODE.RESPONSE, null, null, null);
+        dManager.getNextMessageIdCounter(), ODistributedRequest.EXECUTION_MODE.RESPONSE, null);
   }
 
   protected List<ServerRun> createServerList(final int... serverIds) {

@@ -59,7 +59,7 @@ public class OSyncReceiver implements Runnable {
         for (int chunkNum = 2; !chunk.last; chunkNum++) {
           final ODistributedResponse response = distributed.sendRequest(databaseName, null, OMultiValue.getSingletonList(iNode),
               new OCopyDatabaseChunkTask(chunk.filePath, chunkNum, chunk.offset + chunk.buffer.length, false),
-              distributed.getNextMessageIdCounter(), ODistributedRequest.EXECUTION_MODE.RESPONSE, null, null, null);
+              distributed.getNextMessageIdCounter(), ODistributedRequest.EXECUTION_MODE.RESPONSE, null);
 
           if (response == null) {
             output.close();

@@ -822,7 +822,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
         if (!servers.isEmpty() && messageService.getDatabase(databaseName) != null) {
           final ODistributedResponse dResponse = sendRequest(databaseName, null, servers,
               new OUpdateDatabaseConfigurationTask(databaseName, document), getNextMessageIdCounter(),
-              ODistributedRequest.EXECUTION_MODE.NO_RESPONSE, null, null, null);
+              ODistributedRequest.EXECUTION_MODE.NO_RESPONSE, null);
         }
 
       } else
@@ -1289,7 +1289,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
 
       if (!servers.isEmpty() && messageService.getDatabase(dbName) != null)
         sendRequest(dbName, null, servers, new ODropDatabaseTask(), getNextMessageIdCounter(),
-            ODistributedRequest.EXECUTION_MODE.RESPONSE, null, null, null);
+            ODistributedRequest.EXECUTION_MODE.RESPONSE, null);
     }
 
     super.onDrop(iDatabase);
