@@ -15,7 +15,7 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
-import static com.orientechnologies.orient.core.config.OGlobalConfiguration.RID_BAG_SBTREEBONSAI_DELETE_DALAY;
+import static com.orientechnologies.orient.core.config.OGlobalConfiguration.RID_BAG_SBTREEBONSAI_DELETE_DELAY;
 import static org.junit.Assert.assertNull;
 
 /**
@@ -29,7 +29,7 @@ public class SBTreeBagDeleteTest {
   public void before() {
     db = new ODatabaseDocumentTx("memory:" + SBTreeBagDeleteTest.class.getSimpleName());
     db.create();
-    db.getConfiguration().setValue(RID_BAG_SBTREEBONSAI_DELETE_DALAY, 50);
+    db.getConfiguration().setValue(RID_BAG_SBTREEBONSAI_DELETE_DELAY, 50);
   }
 
   @After

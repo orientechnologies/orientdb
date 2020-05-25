@@ -47,7 +47,7 @@ import com.orientechnologies.orient.core.storage.config.OClusterBasedStorageConf
 import com.orientechnologies.orient.core.storage.fs.OFile;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.OStorageConfigurationSegment;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.OPaginatedStorageDirtyFlag;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.StorageStartupMetadata;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperation;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWriteAheadLog;
@@ -110,7 +110,7 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage {
   private final int deleteMaxRetries;
   private final int deleteWaitTime;
 
-  private final OPaginatedStorageDirtyFlag dirtyFlag;
+  private final StorageStartupMetadata startupMetadata;
 
   private final Path                                  storagePath;
   private final OClosableLinkedContainer<Long, OFile> files;
@@ -141,7 +141,7 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage {
     deleteMaxRetries = OGlobalConfiguration.FILE_DELETE_RETRY.getValueAsInteger();
     deleteWaitTime = OGlobalConfiguration.FILE_DELETE_DELAY.getValueAsInteger();
 
-    dirtyFlag = new OPaginatedStorageDirtyFlag(storagePath.resolve("dirty.fl"));
+    startupMetadata = new StorageStartupMetadata(storagePath.resolve("dirty.fl"));
   }
 
   @SuppressWarnings("CanBeFinal")
@@ -230,6 +230,7 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage {
           writeAheadLog.addCutTillLimit(freezeLSN);
         }
 
+        startupMetadata.setTxMetadata(getLastMetadata().orElse(null));
         try {
           final OutputStream bo = bufferSize > 0 ? new BufferedOutputStream(out, bufferSize) : out;
           try {
@@ -240,7 +241,7 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage {
               final List<String> names = OZIPCompressionUtil
                   .compressDirectory(storagePath.toString(), zos, new String[] { ".fl", ".lock", DoubleWriteLogGL.EXTENSION },
                       iOutput);
-              OPaginatedStorageDirtyFlag.addFileToArchive(zos, "dirty.fl");
+              startupMetadata.addFileToArchive(zos, "dirty.fl");
               names.add("dirty.fl");
               return names;
             }
@@ -431,15 +432,15 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage {
   }
 
   @Override
-  protected long checkIfStorageDirty() throws IOException {
-    if (dirtyFlag.exists())
-      dirtyFlag.open();
+  protected StartupMetadata checkIfStorageDirty() throws IOException {
+    if (startupMetadata.exists())
+      startupMetadata.open();
     else {
-      dirtyFlag.create();
-      dirtyFlag.makeDirty();
+      startupMetadata.create();
+      startupMetadata.makeDirty();
     }
 
-    return dirtyFlag.getLastTxId();
+    return new StartupMetadata(startupMetadata.getLastTxId(), startupMetadata.getTxMetadata());
   }
 
   @Override
@@ -481,19 +482,21 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage {
 
   @Override
   protected void preCreateSteps() throws IOException {
-    dirtyFlag.create();
+    startupMetadata.create();
   }
 
   @Override
   protected void postCloseSteps(final boolean onDelete, final boolean jvmError, final long lastTxId) throws IOException {
     if (onDelete) {
-      dirtyFlag.delete();
+      startupMetadata.delete();
     } else {
       if (!jvmError) {
-        dirtyFlag.setLastTxId(lastTxId);
-        dirtyFlag.clearDirty();
+        startupMetadata.setLastTxId(lastTxId);
+        startupMetadata.setTxMetadata(getLastMetadata().orElse(null));
+
+        startupMetadata.clearDirty();
       }
-      dirtyFlag.close();
+      startupMetadata.close();
     }
   }
 
@@ -551,17 +554,17 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage {
 
   @Override
   protected void makeStorageDirty() throws IOException {
-    dirtyFlag.makeDirty();
+    startupMetadata.makeDirty();
   }
 
   @Override
   protected void clearStorageDirty() throws IOException {
-    dirtyFlag.clearDirty();
+    startupMetadata.clearDirty();
   }
 
   @Override
   protected boolean isDirty() {
-    return dirtyFlag.isDirty();
+    return startupMetadata.isDirty();
   }
 
   @Override

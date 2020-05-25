@@ -114,7 +114,7 @@ import java.util.regex.Pattern;
 import java.util.stream.Stream;
 import java.util.zip.ZipOutputStream;
 
-import static com.orientechnologies.orient.core.config.OGlobalConfiguration.RID_BAG_SBTREEBONSAI_DELETE_DALAY;
+import static com.orientechnologies.orient.core.config.OGlobalConfiguration.RID_BAG_SBTREEBONSAI_DELETE_DELAY;
 
 /**
  * @author Andrey Lomakin (a.lomakin-at-orientdb.com)
@@ -286,7 +286,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
         initWalAndDiskCache(contextConfiguration);
         transaction = new ThreadLocal<>();
 
-        final long lastTxId = checkIfStorageDirty();
+        final StartupMetadata startupMetadata = checkIfStorageDirty();
+        final long lastTxId = startupMetadata.lastTxId;
         if (lastTxId > 0) {
           idGen.setStartId(lastTxId + 1);
         } else {
@@ -335,7 +336,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
             setConflictStrategy(Orient.instance().getRecordConflictStrategy().getStrategy(cs));
           }
           if (lastMetadata == null) {
-            lastMetadata = ((OClusterBasedStorageConfiguration) configuration).getLastMetadata();
+            lastMetadata = startupMetadata.txMetadata;
           }
         });
       } catch (final RuntimeException e) {
@@ -4308,7 +4309,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
   }
 
   private void doTryToDeleteTreeRidBag(OSBTreeRidBag ridBag) {
-    final long delay = configuration.getContextConfiguration().getValueAsInteger(RID_BAG_SBTREEBONSAI_DELETE_DALAY);
+    final long delay = configuration.getContextConfiguration().getValueAsInteger(RID_BAG_SBTREEBONSAI_DELETE_DELAY);
     final long schedule = delay / 3;
 
     final OBonsaiCollectionPointer collectionPointer = ridBag.getCollectionPointer();
@@ -4395,8 +4396,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     return fullCheckpointCount;
   }
 
-  protected long checkIfStorageDirty() throws IOException {
-    return -1;
+  protected StartupMetadata checkIfStorageDirty() throws IOException {
+    return new StartupMetadata(-1, null);
   }
 
   protected void initConfiguration(OAtomicOperation atomicOperation, final OContextConfiguration contextConfiguration)
@@ -4987,14 +4988,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     return false;
   }
 
-  private void storeLastMetadata() throws IOException {
-    if (lastMetadata != null) {
-      final OClusterBasedStorageConfiguration storageConfiguration = (OClusterBasedStorageConfiguration) configuration;
-      atomicOperationsManager.executeInsideAtomicOperation(null,
-          atomicOperation -> storageConfiguration.setLastMetadata(atomicOperation, lastMetadata));
-    }
-  }
-
   private void doClose(final boolean force, final boolean onDelete) {
     if (!force && !onDelete) {
       decOnClose();
@@ -5015,7 +5008,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       }
 
       status = STATUS.CLOSING;
-      storeLastMetadata();
 
       if (jvmError.get() == null) {
         if (!onDelete && jvmError.get() == null) {
@@ -6367,4 +6359,13 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     return lastCloseTime.get();
   }
 
+  protected static final class StartupMetadata {
+    private final long   lastTxId;
+    private final byte[] txMetadata;
+
+    public StartupMetadata(long lastTxId, byte[] txMetadata) {
+      this.lastTxId = lastTxId;
+      this.txMetadata = txMetadata;
+    }
+  }
 }
