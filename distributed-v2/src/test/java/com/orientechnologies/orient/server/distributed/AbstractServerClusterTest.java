@@ -530,8 +530,6 @@ public abstract class AbstractServerClusterTest {
             null,
             dManager.getNextMessageIdCounter(),
             ODistributedRequest.EXECUTION_MODE.RESPONSE,
-            null,
-            null,
             null);
 
     if (response != null) {
@@ -560,8 +558,6 @@ public abstract class AbstractServerClusterTest {
         null,
         dManager.getNextMessageIdCounter(),
         ODistributedRequest.EXECUTION_MODE.RESPONSE,
-        null,
-        null,
         null);
   }
 
@@ -583,8 +579,6 @@ public abstract class AbstractServerClusterTest {
         null,
         dManager.getNextMessageIdCounter(),
         ODistributedRequest.EXECUTION_MODE.RESPONSE,
-        null,
-        null,
         null);
   }
 

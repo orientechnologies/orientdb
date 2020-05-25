@@ -280,11 +280,8 @@ public class ONewDistributedTransactionManager {
             requestId.getMessageId(),
             EXECUTION_MODE.RESPONSE,
             localResult,
-            null,
-            null,
             ((iRequest,
                 iNodes,
-                endCallback,
                 task,
                 nodesConcurToTheQuorum,
                 availableNodes,
@@ -551,9 +548,7 @@ public class ONewDistributedTransactionManager {
         task,
         dManager.getNextMessageIdCounter(),
         EXECUTION_MODE.RESPONSE,
-        "OK",
-        null,
-        null);
+        "OK");
   }
 
   protected void checkForClusterIds(final OTransactionInternal iTx) {

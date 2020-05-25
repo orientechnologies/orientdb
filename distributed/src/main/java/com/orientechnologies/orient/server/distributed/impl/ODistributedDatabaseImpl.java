@@ -489,20 +489,15 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
       final Collection<String> iClusterNames,
       Collection<String> iNodes,
       final ODistributedRequest.EXECUTION_MODE iExecutionMode,
-      final Object localResult,
-      final OCallable<Void, ODistributedRequestId> iAfterSentCallback,
-      final OCallable<Void, ODistributedResponseManager> endCallback) {
+      final Object localResult) {
     return send2Nodes(
         iRequest,
         iClusterNames,
         iNodes,
         iExecutionMode,
         localResult,
-        iAfterSentCallback,
-        endCallback,
         (iRequest1,
             iNodes1,
-            endCallback1,
             task,
             nodesConcurToTheQuorum,
             availableNodes,
@@ -522,8 +517,7 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
                   iNodes, task.getSynchronousTimeout(expectedResponses), iRequest.getId()),
               adjustTimeoutWithLatency(
                   iNodes, task.getTotalTimeout(availableNodes), iRequest.getId()),
-              groupByResponse,
-              endCallback);
+              groupByResponse);
         });
   }
 
@@ -533,10 +527,7 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
       Collection<String> iNodes,
       final ODistributedRequest.EXECUTION_MODE iExecutionMode,
       final Object localResult,
-      final OCallable<Void, ODistributedRequestId> iAfterSentCallback,
-      final OCallable<Void, ODistributedResponseManager> endCallback,
       ODistributedResponseManagerFactory responseManagerFactory) {
-    boolean afterSendCallBackCalled = false;
     try {
       checkForServerOnline(iRequest);
 
@@ -611,7 +602,6 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
           responseManagerFactory.newResponseManager(
               iRequest,
               iNodes,
-              endCallback,
               task,
               nodesConcurToTheQuorum,
               availableNodes,
@@ -710,10 +700,6 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
 
       totalSentRequests.incrementAndGet();
 
-      afterSendCallBackCalled = true;
-
-      if (iAfterSentCallback != null) iAfterSentCallback.call(iRequest.getId());
-
       if (iExecutionMode == ODistributedRequest.EXECUTION_MODE.RESPONSE)
         return waitForResponse(iRequest, currentResponseMgr);
 
@@ -733,9 +719,6 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
                   + "' to nodes "
                   + iNodes),
           e);
-    } finally {
-      if (iAfterSentCallback != null && !afterSendCallBackCalled)
-        iAfterSentCallback.call(iRequest.getId());
     }
   }
 
@@ -761,8 +744,7 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
         adjustTimeoutWithLatency(
             iNodes, task.getSynchronousTimeout(expectedResponses), iRequest.getId()),
         adjustTimeoutWithLatency(iNodes, task.getTotalTimeout(availableNodes), iRequest.getId()),
-        groupByResponse,
-        endCallback);
+        groupByResponse);
   }
 
   private long adjustTimeoutWithLatency(
