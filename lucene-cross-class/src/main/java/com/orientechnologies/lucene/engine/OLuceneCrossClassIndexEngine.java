@@ -272,7 +272,7 @@ public class OLuceneCrossClassIndexEngine implements OLuceneIndexEngine {
 
     recordId.setContext(new HashMap<String, Object>() {
       {
-        HashMap<String, TextFragment[]> frag = queryContext.getFragments();
+        Map<String, TextFragment[]> frag = queryContext.getFragments();
 
         frag.entrySet().stream().forEach(f -> {
 
