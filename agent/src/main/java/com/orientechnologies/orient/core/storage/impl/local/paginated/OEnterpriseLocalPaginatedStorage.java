@@ -48,6 +48,7 @@ import com.orientechnologies.orient.core.storage.disk.OLocalPaginatedStorage;
 import com.orientechnologies.orient.core.storage.fs.OFile;
 import com.orientechnologies.orient.core.storage.impl.local.OStorageConfigurationSegment;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurablePage;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.MetaDataRecord;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWriteAheadLog;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.cas.CASDiskWriteAheadLog;
@@ -343,6 +344,14 @@ public class OEnterpriseLocalPaginatedStorage extends OLocalPaginatedStorage {
 
               writeAheadLog.appendNewSegment();
               startSegment = writeAheadLog.activeSegment();
+
+              getLastMetadata().ifPresent(metadata -> {
+                  try {
+                      writeAheadLog.log(new MetaDataRecord(metadata));
+                  } catch (final IOException e) {
+                      throw new IllegalStateException("Error during write of metadata", e);
+                  }
+              });
             } finally {
               atomicOperationsManager.releaseAtomicOperations(newSegmentFreezeId);
             }
