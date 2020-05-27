@@ -96,6 +96,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.zip.GZIPInputStream;
 
 /**
@@ -773,7 +774,7 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
         for (String s : entry.getValue()) {
           OClass superClass = database.getMetadata().getSchema().getClass(s);
 
-          if (!entry.getKey().getSuperClasses().contains(superClass))
+          if (superClass != null && !entry.getKey().getSuperClasses().contains(superClass))
             entry.getKey().addSuperClass(superClass);
         }
 
@@ -1081,11 +1082,11 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
     long total = 0;
 
     database.getMetadata().getIndexManager().dropIndex(EXPORT_IMPORT_MAP_NAME);
-    OIndexFactory factory = OIndexes
-            .getFactory(OClass.INDEX_TYPE.DICTIONARY_HASH_INDEX.toString(), OHashIndexFactory.HASH_INDEX_ALGORITHM);
+//    OIndexFactory factory = OIndexes
+//            .getFactory(OClass.INDEX_TYPE.DICTIONARY.toString(), "CELL_BTREE");
 
     exportImportHashTable = (OIndex<OIdentifiable>) database.getMetadata().getIndexManager()
-            .createIndex(EXPORT_IMPORT_MAP_NAME, OClass.INDEX_TYPE.DICTIONARY_HASH_INDEX.toString(),
+            .createIndex(EXPORT_IMPORT_MAP_NAME, OClass.INDEX_TYPE.DICTIONARY.toString(),
                     new OSimpleKeyIndexDefinition(OType.LINK), null, null, null);
 
     jsonReader.readNext(OJSONReader.BEGIN_COLLECTION);
@@ -1294,13 +1295,18 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
       return;
     }
     OElement doc = (OElement) record;
+    AtomicLong counter = new AtomicLong(0);
     bags.forEach((field, ridset) -> {
       ORidBag ridbag = ((OElement) record).getProperty(field);
       ridset.forEach(rid -> {
         ridbag.add(rid);
-        doc.save();
+        long val = counter.incrementAndGet();
+        if (val % 500 == 0) {
+          doc.save();
+        }
       });
     });
+    doc.save();
   }
 
   private void importSkippedRidbag(ORecord record, String value, Integer skippedPartsIndex) {
