@@ -351,7 +351,7 @@ public class StorageStartupMetadata {
       buffer.put(txMetadata);
     }
 
-    final long xxHash = XX_HASH_64.hash(buffer, XX_HASH_OFFSET, buffer.capacity() - XX_HASH_OFFSET, XX_HASH_SEED);
+    final long xxHash = XX_HASH_64.hash(buffer, 8, buffer.capacity() - 8, XX_HASH_SEED);
     buffer.putLong(0, xxHash);
 
     buffer.rewind();
