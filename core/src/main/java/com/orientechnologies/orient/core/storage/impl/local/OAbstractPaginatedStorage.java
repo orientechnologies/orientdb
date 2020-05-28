@@ -333,7 +333,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
           final String cs = configuration.getConflictStrategy();
           if (cs != null) {
             // SET THE CONFLICT STORAGE STRATEGY FROM THE LOADED CONFIGURATION
-            setConflictStrategy(Orient.instance().getRecordConflictStrategy().getStrategy(cs));
+            doSetConflictStrategy(Orient.instance().getRecordConflictStrategy().getStrategy(cs), atomicOperation);
           }
           if (lastMetadata == null) {
             lastMetadata = startupMetadata.txMetadata;

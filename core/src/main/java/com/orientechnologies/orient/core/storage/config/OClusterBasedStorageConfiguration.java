@@ -1407,7 +1407,12 @@ public final class OClusterBasedStorageConfiguration implements OStorageConfigur
 
     final int indexId;
     if (getVersion() >= 23) {
-      indexId = OIntegerSerializer.INSTANCE.deserializeNative(property, pos);
+      final int iid = OIntegerSerializer.INSTANCE.deserializeNative(property, pos);
+      if (iid == Integer.MIN_VALUE) {
+        indexId = defaultIndexId;
+      } else {
+        indexId = iid;
+      }
       pos += OIntegerSerializer.INT_SIZE;
     } else {
       indexId = defaultIndexId;
@@ -1708,9 +1713,6 @@ public final class OClusterBasedStorageConfiguration implements OStorageConfigur
   }
 
   private void copy(OAtomicOperation atomicOperation, final OStorageConfiguration storageConfiguration) {
-    updateVersion(atomicOperation, storageConfiguration.getVersion());
-    updateBinaryFormatVersion(atomicOperation, storageConfiguration.getBinaryFormatVersion());
-
     setCharset(atomicOperation, storageConfiguration.getCharset());
     setSchemaRecordId(atomicOperation, storageConfiguration.getSchemaRecordId());
     setIndexMgrRecordId(atomicOperation, storageConfiguration.getIndexMgrRecordId());
