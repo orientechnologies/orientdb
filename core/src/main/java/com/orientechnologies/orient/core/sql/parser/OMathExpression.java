@@ -873,9 +873,9 @@ public class OMathExpression extends SimpleNode {
     return null;
   }
 
-  public boolean isEarlyCalculated(OCommandContext ctx) {
+  public boolean isEarlyCalculated(OIdentifier varName, OCommandContext ctx) {
     for (OMathExpression exp : childExpressions) {
-      if (!exp.isEarlyCalculated(ctx)) {
+      if (!exp.isEarlyCalculated(varName, ctx)) {
         return false;
       }
     }
@@ -930,7 +930,7 @@ public class OMathExpression extends SimpleNode {
         SimpleNode splitResult = expr.splitForAggregation(aggregateProj, ctx);
         if (splitResult instanceof OMathExpression) {
           OMathExpression res = (OMathExpression) splitResult;
-          if (res.isEarlyCalculated(ctx) || res.isAggregate()) {
+          if (res.isEarlyCalculated(null, ctx) || res.isAggregate()) {
             result.childExpressions.add(res);
           } else {
             throw new OCommandExecutionException("Cannot mix aggregate and single record attribute values in the same projection");

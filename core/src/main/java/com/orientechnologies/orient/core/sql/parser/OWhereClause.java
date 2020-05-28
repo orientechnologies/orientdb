@@ -237,7 +237,7 @@ public class OWhereClause extends SimpleNode {
       if (expression instanceof OBinaryCondition) {
         OBinaryCondition b = (OBinaryCondition) expression;
         if (b.operator instanceof OEqualsCompareOperator) {
-          if (b.left.isBaseIdentifier() && b.right.isEarlyCalculated(ctx)) {
+          if (b.left.isBaseIdentifier() && b.right.isEarlyCalculated(null, ctx)) {
             result.put(b.left.toString(), b.right.execute((OResult) null, ctx));
           }
         }

@@ -726,7 +726,7 @@ public class OSelectExecutionPlanner {
       Iterator<OLetItem> iterator = info.perRecordLetClause.getItems().iterator();
       while (iterator.hasNext()) {
         OLetItem item = iterator.next();
-        if (item.getExpression() != null && (item.getExpression().isEarlyCalculated(ctx) || isUnionAllOfQueries(info,
+        if (item.getExpression() != null && (item.getExpression().isEarlyCalculated(item.getVarName(), ctx) || isUnionAllOfQueries(info,
             item.getVarName(), item.getExpression()))) {
           iterator.remove();
           addGlobalLet(info, item.getVarName(), item.getExpression());
@@ -2332,7 +2332,7 @@ public class OSelectExecutionPlanner {
             String fieldName = left.getDefaultAlias().getStringValue();
             if (indexField.equals(fieldName)) {
               OBinaryCompareOperator operator = ((OBinaryCondition) singleExp).getOperator();
-              if (!((OBinaryCondition) singleExp).getRight().isEarlyCalculated(ctx)) {
+              if (!((OBinaryCondition) singleExp).getRight().isEarlyCalculated(null, ctx)) {
                 continue; //this cannot be used because the value depends on single record
               }
               if (operator instanceof OEqualsCompareOperator) {
@@ -2400,7 +2400,7 @@ public class OSelectExecutionPlanner {
           if (left.isBaseIdentifier()) {
             String fieldName = left.getDefaultAlias().getStringValue();
             if (indexField.equals(fieldName)) {
-              if (!((OContainsAnyCondition) singleExp).getRight().isEarlyCalculated(ctx)) {
+              if (!((OContainsAnyCondition) singleExp).getRight().isEarlyCalculated(null, ctx)) {
                 continue; //this cannot be used because the value depends on single record
               }
               found = true;
@@ -2420,7 +2420,7 @@ public class OSelectExecutionPlanner {
             if (indexField.equals(fieldName)) {
               if (((OInCondition) singleExp).getRightMathExpression() != null) {
 
-                if (!((OInCondition) singleExp).getRightMathExpression().isEarlyCalculated(ctx)) {
+                if (!((OInCondition) singleExp).getRightMathExpression().isEarlyCalculated(null, ctx)) {
                   continue; //this cannot be used because the value depends on single record
                 }
                 found = true;

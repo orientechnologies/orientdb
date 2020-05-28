@@ -184,14 +184,14 @@ public class OLevelZeroIdentifier extends SimpleNode {
     return functionCall != null && functionCall.name.getStringValue().equalsIgnoreCase("count");
   }
 
-  public boolean isEarlyCalculated(OCommandContext ctx) {
-    if (functionCall != null && functionCall.isEarlyCalculated(ctx)) {
+  public boolean isEarlyCalculated(OIdentifier varName, OCommandContext ctx) {
+    if (functionCall != null && functionCall.isEarlyCalculated(varName, ctx)) {
       return true;
     }
     if (Boolean.TRUE.equals(self)) {
       return false;
     }
-    if (collection != null && collection.isEarlyCalculated(ctx)) {
+    if (collection != null && collection.isEarlyCalculated(varName, ctx)) {
       return true;
     }
     return false;

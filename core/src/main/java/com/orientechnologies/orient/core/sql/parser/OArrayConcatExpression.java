@@ -93,9 +93,9 @@ public class OArrayConcatExpression extends SimpleNode {
     return result;
   }
 
-  public boolean isEarlyCalculated(OCommandContext ctx) {
+  public boolean isEarlyCalculated(OIdentifier varName, OCommandContext ctx) {
     for (OArrayConcatExpressionElement element : childExpressions) {
-      if (!element.isEarlyCalculated(ctx)) {
+      if (!element.isEarlyCalculated(varName, ctx)) {
         return false;
       }
     }

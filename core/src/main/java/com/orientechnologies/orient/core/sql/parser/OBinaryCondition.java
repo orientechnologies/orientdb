@@ -397,7 +397,7 @@ public class OBinaryCondition extends OBooleanExpression {
 
   @Override
   public OBooleanExpression rewriteIndexChainsAsSubqueries(OCommandContext ctx, OClass clazz) {
-    if (operator instanceof OEqualsCompareOperator && right.isEarlyCalculated(ctx) && left.isIndexChain(ctx, clazz)) {
+    if (operator instanceof OEqualsCompareOperator && right.isEarlyCalculated(null, ctx) && left.isIndexChain(ctx, clazz)) {
       OInCondition result = new OInCondition(-1);
 
       result.left = new OExpression(-1);

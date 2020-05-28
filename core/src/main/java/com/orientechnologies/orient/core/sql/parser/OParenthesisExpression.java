@@ -91,9 +91,9 @@ public class OParenthesisExpression extends OMathExpression {
   }
 
   @Override
-  public boolean isEarlyCalculated(OCommandContext ctx) {
+  public boolean isEarlyCalculated(OIdentifier varName, OCommandContext ctx) {
     // TODO implement query execution and early calculation;
-    return expression != null && expression.isEarlyCalculated(ctx);
+    return expression != null && expression.isEarlyCalculated(varName, ctx);
   }
 
   public boolean needsAliases(Set<String> aliases) {

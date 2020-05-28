@@ -88,7 +88,7 @@ public class OCollection extends SimpleNode {
     if (isAggregate()) {
       OCollection result = new OCollection(-1);
       for (OExpression exp : this.expressions) {
-        if (exp.isAggregate() || exp.isEarlyCalculated(ctx)) {
+        if (exp.isAggregate() || exp.isEarlyCalculated(null, ctx)) {
           result.expressions.add(exp.splitForAggregation(aggregateProj, ctx));
         } else {
           throw new OCommandExecutionException("Cannot mix aggregate and non-aggregate operations in a collection: " + toString());
@@ -100,9 +100,9 @@ public class OCollection extends SimpleNode {
     }
   }
 
-  public boolean isEarlyCalculated(OCommandContext ctx) {
+  public boolean isEarlyCalculated(OIdentifier varName, OCommandContext ctx) {
     for (OExpression exp : expressions) {
-      if (!exp.isEarlyCalculated(ctx)) {
+      if (!exp.isEarlyCalculated(varName, ctx)) {
         return false;
       }
     }

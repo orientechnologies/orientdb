@@ -223,11 +223,11 @@ public class OBaseExpression extends OMathExpression {
     return identifier != null && modifier == null ? identifier.getCollate(currentRecord, ctx) : null;
   }
 
-  public boolean isEarlyCalculated(OCommandContext ctx) {
+  public boolean isEarlyCalculated(OIdentifier varName, OCommandContext ctx) {
     if (number != null || inputParam != null || string != null) {
       return true;
     }
-    if (identifier != null && identifier.isEarlyCalculated(ctx)) {
+    if (identifier != null && identifier.isEarlyCalculated(varName, ctx)) {
       return true;
     }
     return false;

@@ -261,8 +261,8 @@ public class OSuffixIdentifier extends SimpleNode {
     return this;
   }
 
-  public boolean isEarlyCalculated(OCommandContext ctx) {
-    if (identifier != null && identifier.isEarlyCalculated(ctx)) {
+  public boolean isEarlyCalculated(OIdentifier varName, OCommandContext ctx) {
+    if (identifier != null && identifier.isEarlyCalculated(varName, ctx)) {
       return true;
     }
     return false;

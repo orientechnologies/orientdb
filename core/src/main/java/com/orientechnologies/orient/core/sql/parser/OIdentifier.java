@@ -166,7 +166,7 @@ public class OIdentifier extends SimpleNode {
     return result;
   }
 
-  public boolean isEarlyCalculated(OCommandContext ctx) {
+  public boolean isEarlyCalculated(OIdentifier varName, OCommandContext ctx) {
     if (internalAlias) {
       return true;
     }

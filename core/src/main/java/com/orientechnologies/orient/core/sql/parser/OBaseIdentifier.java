@@ -200,11 +200,11 @@ public class OBaseIdentifier extends SimpleNode {
     return false;
   }
 
-  public boolean isEarlyCalculated(OCommandContext ctx) {
-    if (levelZero != null && levelZero.isEarlyCalculated(ctx)) {
+  public boolean isEarlyCalculated(OIdentifier varName, OCommandContext ctx) {
+    if (levelZero != null && levelZero.isEarlyCalculated(varName, ctx)) {
       return true;
     }
-    if (suffix != null && suffix.isEarlyCalculated(ctx)) {
+    if (suffix != null && suffix.isEarlyCalculated(varName, ctx)) {
       return true;
     }
     return false;

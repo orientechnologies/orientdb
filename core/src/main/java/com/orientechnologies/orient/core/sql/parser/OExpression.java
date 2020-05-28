@@ -145,12 +145,12 @@ public class OExpression extends SimpleNode {
     return false;
   }
 
-  public boolean isEarlyCalculated(OCommandContext ctx) {
+  public boolean isEarlyCalculated(OIdentifier varName, OCommandContext ctx) {
     if (this.mathExpression != null) {
-      return this.mathExpression.isEarlyCalculated(ctx);
+      return this.mathExpression.isEarlyCalculated(varName, ctx);
     }
     if (this.arrayConcatExpression != null) {
-      return this.arrayConcatExpression.isEarlyCalculated(ctx);
+      return this.arrayConcatExpression.isEarlyCalculated(varName, ctx);
     }
 
     if (booleanValue != null) {
@@ -166,7 +166,7 @@ public class OExpression extends SimpleNode {
       return true;
     }
     if (value instanceof OMathExpression) {
-      return ((OMathExpression) value).isEarlyCalculated(ctx);
+      return ((OMathExpression) value).isEarlyCalculated(varName, ctx);
     }
 
     return false;

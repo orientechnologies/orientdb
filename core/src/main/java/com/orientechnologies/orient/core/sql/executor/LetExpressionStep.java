@@ -40,6 +40,7 @@ public class LetExpressionStep extends AbstractExecutionStep {
       public OResult next() {
         OResultInternal result = (OResultInternal) source.next();
         Object value = expression.execute(result, ctx);
+        ctx.setVariable(varname.getStringValue(), value);
         result.setMetadata(varname.getStringValue(), value);
         return result;
       }

@@ -15,6 +15,7 @@ import com.orientechnologies.orient.core.sql.executor.OResultInternal;
 import com.orientechnologies.orient.core.sql.functions.OIndexableSQLFunction;
 import com.orientechnologies.orient.core.sql.functions.OSQLFunction;
 import com.orientechnologies.orient.core.sql.functions.graph.OSQLFunctionMove;
+import com.orientechnologies.orient.core.sql.functions.math.OSQLFunctionEval;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -335,18 +336,34 @@ public class OFunctionCall extends SimpleNode {
     return item;
   }
 
-  public boolean isEarlyCalculated(OCommandContext ctx) {
+  public boolean isEarlyCalculated(OIdentifier varName, OCommandContext ctx) {
 
     if (isTraverseFunction())
       return false;
 
+    if (varName != null && isEvalFunction()) {
+      // check if we use the varName variable inside the function (first and only string param)
+      final OExpression param = params.get(0);
+      if (params.toString().contains(varName.getValue())) {
+        return false;
+      }
+    }
+
     for (OExpression param : params) {
-      if (!param.isEarlyCalculated(ctx)) {
+      if (!param.isEarlyCalculated(varName, ctx)) {
         return false;
       }
     }
 
     return true;
+  }
+
+  private boolean isEvalFunction() {
+    if (name == null) {
+      return false;
+    }
+    final OSQLFunction function = OSQLEngine.getInstance().getFunction(name.value);
+    return function instanceof OSQLFunctionEval;
   }
 
   private boolean isTraverseFunction() {
