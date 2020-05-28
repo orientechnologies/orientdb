@@ -761,6 +761,7 @@ public interface OrientSqlConstants {
     "\"*\"",
     "\"/\"",
     "\"&\"",
+    "\"??\"",
     "\"|\"",
     "\"^\"",
     "\"%\"",

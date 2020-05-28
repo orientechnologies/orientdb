@@ -6660,6 +6660,10 @@ Token token;
           jj_consume_token(BIT_AND);
                                 jjtn000.operators.add(OMathExpression.Operator.BIT_AND);
           break;
+        case NULL_COALESCING:
+          jj_consume_token(NULL_COALESCING);
+                                        jjtn000.operators.add(OMathExpression.Operator.NULL_COALESCING);
+          break;
         case BIT_OR:
           jj_consume_token(BIT_OR);
                                jjtn000.operators.add(OMathExpression.Operator.BIT_OR);
