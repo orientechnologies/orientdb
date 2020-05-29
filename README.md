@@ -17,3 +17,5 @@ Create ADB request for final assembly: https://adbweb.wdf.sap.corp/  >  Patch As
 Note: if you do not have permissions to create the request, ask NAAS (Tobias Schreck).
 
 Put JAR file into folder: \\\\mediaserver.wdf.sap.corp\UPLINBOX\ORIENTDB_30_EE and inform NAAS (Tobias Schreck).
+
+Note for 3.1: https://launchpad.support.sap.com/#/notes/2915917
