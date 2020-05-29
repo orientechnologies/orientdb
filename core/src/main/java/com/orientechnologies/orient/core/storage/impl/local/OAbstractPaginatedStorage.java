@@ -427,6 +427,15 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
     final Set<String> indexNames = configuration.indexEngines();
     int counter = 0;
+
+    //avoid duplication of index engine ids
+    for (final String indexName : indexNames) {
+      final OStorageConfiguration.IndexEngineData engineData = configuration.getIndexEngine(indexName, -1);
+      if (counter <= engineData.getIndexId()) {
+        counter = engineData.getIndexId() + 1;
+      }
+    }
+
     for (final String indexName : indexNames) {
       final OStorageConfiguration.IndexEngineData engineData = configuration.getIndexEngine(indexName, counter);
       final OBaseIndexEngine engine = OIndexes
