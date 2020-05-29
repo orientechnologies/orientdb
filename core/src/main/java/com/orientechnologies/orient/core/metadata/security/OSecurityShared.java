@@ -895,14 +895,7 @@ public class OSecurityShared implements OSecurityInternal {
         setSecurityPolicyWithBitmask(session, readerRole, ORule.ResourceGeneric.SYSTEM_CLUSTERS.getLegacyName(), ORole.PERMISSION_NONE);
 
       }
-
-      // This will return the global value if a local storage context configuration value does not exist.
-      boolean createDefUsers = ((ODatabaseDocumentInternal) session).getStorage().getConfiguration().getContextConfiguration()
-              .getValueAsBoolean(OGlobalConfiguration.CREATE_DEFAULT_USERS);
-
-      if (createDefUsers)
-        createUser(session, "reader", "reader", new String[]{readerRole.getName()});
-
+      
       ORole writerRole = getRole(session, "writer");
       if (writerRole != null) {
 
