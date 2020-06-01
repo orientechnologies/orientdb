@@ -31,7 +31,6 @@ import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.exception.OStorageException;
-import com.orientechnologies.orient.core.exception.OStorageExistsException;
 import com.orientechnologies.orient.core.storage.cache.OReadCache;
 import com.orientechnologies.orient.core.storage.cache.OWriteCache;
 import com.orientechnologies.orient.core.storage.impl.local.AtomicOperationIdGen;
@@ -68,25 +67,25 @@ public class OAtomicOperationsManager {
     });
   }
 
-  private final OAbstractPaginatedStorage storage;
-  private final OWriteAheadLog writeAheadLog;
+  private final OAbstractPaginatedStorage          storage;
+  private final OWriteAheadLog                     writeAheadLog;
   private final OOneEntryPerKeyLockManager<String> lockManager = new OOneEntryPerKeyLockManager<>(true, -1,
       OGlobalConfiguration.COMPONENTS_LOCK_CACHE.getValueAsInteger());
-  private final OReadCache readCache;
-  private final OWriteCache writeCache;
+  private final OReadCache                         readCache;
+  private final OWriteCache                        writeCache;
 
-  private final Object segmentLock = new Object();
+  private final Object               segmentLock = new Object();
   private final AtomicOperationIdGen idGen;
 
   private final boolean trackPageOperations;
-  private final int operationsCacheLimit;
+  private final int     operationsCacheLimit;
 
-  private final OperationsFreezer atomicOperationsFreezer = new OperationsFreezer();
-  private final OperationsFreezer componentOperationsFreezer = new OperationsFreezer();
+  private final OperationsFreezer     atomicOperationsFreezer    = new OperationsFreezer();
+  private final OperationsFreezer     componentOperationsFreezer = new OperationsFreezer();
   private final AtomicOperationsTable atomicOperationsTable;
 
   public OAtomicOperationsManager(OAbstractPaginatedStorage storage, boolean trackPageOperations, int operationsCacheLimit,
-                                  AtomicOperationsTable atomicOperationsTable) {
+      AtomicOperationsTable atomicOperationsTable) {
     this.storage = storage;
     this.writeAheadLog = storage.getWALInstance();
     this.readCache = storage.getReadCache();
@@ -101,7 +100,7 @@ public class OAtomicOperationsManager {
   public OAtomicOperation startAtomicOperation(final byte[] metadata) throws IOException {
     OAtomicOperation operation = currentOperation.get();
     if (operation != null) {
-      throw new OStorageExistsException("Atomic operation already started");
+      throw new OStorageException("Atomic operation already started");
     }
 
     atomicOperationsFreezer.startOperation();
@@ -184,12 +183,12 @@ public class OAtomicOperationsManager {
   }
 
   public void executeInsideComponentOperation(final OAtomicOperation atomicOperation, final ODurableComponent component,
-                                              final TxConsumer consumer) {
+      final TxConsumer consumer) {
     executeInsideComponentOperation(atomicOperation, component.getLockName(), consumer);
   }
 
   public void executeInsideComponentOperation(final OAtomicOperation atomicOperation, final String lockName,
-                                              final TxConsumer consumer) {
+      final TxConsumer consumer) {
     Objects.requireNonNull(atomicOperation);
     startComponentOperation(atomicOperation, lockName);
     try {
@@ -203,12 +202,12 @@ public class OAtomicOperationsManager {
   }
 
   public boolean tryExecuteInsideComponentOperation(final OAtomicOperation atomicOperation, final ODurableComponent component,
-                                                    final TxConsumer consumer) {
+      final TxConsumer consumer) {
     return tryExecuteInsideComponentOperation(atomicOperation, component.getLockName(), consumer);
   }
 
   private boolean tryExecuteInsideComponentOperation(final OAtomicOperation atomicOperation, final String lockName,
-                                                     final TxConsumer consumer) {
+      final TxConsumer consumer) {
     Objects.requireNonNull(atomicOperation);
     final boolean result = tryStartComponentOperation(atomicOperation, lockName);
     if (!result) {
@@ -228,12 +227,12 @@ public class OAtomicOperationsManager {
   }
 
   public <T> T calculateInsideComponentOperation(final OAtomicOperation atomicOperation, final ODurableComponent component,
-                                                 final TxFunction<T> function) {
+      final TxFunction<T> function) {
     return calculateInsideComponentOperation(atomicOperation, component.getLockName(), function);
   }
 
   public <T> T calculateInsideComponentOperation(final OAtomicOperation atomicOperation, final String lockName,
-                                                 final TxFunction<T> function) {
+      final TxFunction<T> function) {
     Objects.requireNonNull(atomicOperation);
     startComponentOperation(atomicOperation, lockName);
     try {

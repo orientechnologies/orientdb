@@ -1758,29 +1758,22 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
             }
 
             ODistributedDatabaseImpl distrDatabase = messageService.getDatabase(databaseName);
-            OTxMetadataHolder metadata;
+
             try (ODatabaseDocumentInternal inst = distrDatabase.getDatabaseInstance()) {
               Optional<byte[]> read = ((OAbstractPaginatedStorage) inst.getStorage().getUnderlying()).getLastMetadata();
               if (read.isPresent()) {
-                metadata = OTxMetadataHolderImpl.read(read.get());
-              } else {
-                throw new ODistributedDatabaseDeltaSyncException("Trigger full sync");
+                OTxMetadataHolder metadata = OTxMetadataHolderImpl.read(read.get());
+                final OSyncDatabaseNewDeltaTask deployTask = new OSyncDatabaseNewDeltaTask(metadata.getStatus());
+
+                final List<String> targetNodes = new ArrayList<String>(1);
+                targetNodes.add(iNode);
+                final ODistributedResponse response = sendRequest(databaseName, null, targetNodes, deployTask,
+                    getNextMessageIdCounter(), ODistributedRequest.EXECUTION_MODE.RESPONSE, null, null, null);
+
+                if (response == null)
+                  throw new ODistributedDatabaseDeltaSyncException((OLogSequenceNumber) null);
+                installResponseNewDeltaSync(distrDatabase, databaseName, cfg, iNode, (ONewDeltaTaskResponse) response.getPayload());
               }
-            }
-            final OSyncDatabaseNewDeltaTask deployTask = new OSyncDatabaseNewDeltaTask(metadata.getStatus());
-
-            final List<String> targetNodes = new ArrayList<String>(1);
-            targetNodes.add(iNode);
-            try {
-              final ODistributedResponse response = sendRequest(databaseName, null, targetNodes, deployTask,
-                  getNextMessageIdCounter(), ODistributedRequest.EXECUTION_MODE.RESPONSE, null, null, null);
-
-              if (response == null)
-                throw new ODistributedDatabaseDeltaSyncException((OLogSequenceNumber) null);
-              installResponseNewDeltaSync(distrDatabase, databaseName, cfg, iNode, (ONewDeltaTaskResponse) response.getPayload());
-
-            } catch (Exception e) {
-              e.printStackTrace();//TODO
             }
 
           } else if (delta) {

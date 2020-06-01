@@ -160,7 +160,7 @@ public class StorageStartupMetadata {
 
         final long size = channel.size();
 
-        if (size == 1) {
+        if (size < 9) {
           ByteBuffer buffer = ByteBuffer.allocate(1);
           OIOUtils.readByteBuffer(buffer, channel, 0, true);
 
