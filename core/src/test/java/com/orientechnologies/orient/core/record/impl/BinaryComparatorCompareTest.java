@@ -69,7 +69,7 @@ public class BinaryComparatorCompareTest extends AbstractComparatorTest {
     final byte[] b2 = new byte[] { 0, 1, 2, 4 };
     final byte[] b3 = new byte[] { 1, 1, 2, 4 };
 
-    Assert.assertTrue(comparator.compare(field(OType.BINARY, b1), field(OType.BINARY, b1)) == 0);
+    Assert.assertTrue("For values " + field(OType.BINARY, b1) + " and " + field(OType.BINARY, b1),comparator.compare(field(OType.BINARY, b1), field(OType.BINARY, b1)) == 0);
     Assert.assertFalse(comparator.compare(field(OType.BINARY, b1), field(OType.BINARY, b2)) > 1);
     Assert.assertFalse(comparator.compare(field(OType.BINARY, b1), field(OType.BINARY, b3)) > 1);
   }

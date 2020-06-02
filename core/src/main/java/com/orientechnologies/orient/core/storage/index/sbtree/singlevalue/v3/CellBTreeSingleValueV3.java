@@ -216,18 +216,15 @@ public final class CellBTreeSingleValueV3<K> extends ODurableComponent implement
         ORID value = rid;
 
         if (key != null) {
-
           //noinspection RedundantCast
           key = keySerializer.preprocess(key, (Object[]) keyTypes);
           //noinspection RedundantCast
           final byte[] serializedKey = keySerializer.serializeNativeAsWhole(key, (Object[]) keyTypes);
-
           if (keySize > MAX_KEY_SIZE) {
             throw new OTooBigIndexKeyException(
                 "Key size is more than allowed, operation was canceled. Current key size " + keySize + ", allowed  " + MAX_KEY_SIZE,
                 getName());
           }
-
           UpdateBucketSearchResult bucketSearchResult = findBucketForUpdate(key, atomicOperation);
 
           OCacheEntry keyBucketCacheEntry = loadPageForWrite(atomicOperation, fileId, bucketSearchResult.getLastPathItem(), false,
@@ -330,13 +327,10 @@ public final class CellBTreeSingleValueV3<K> extends ODurableComponent implement
             if (oldValue != null) {
               sizeDiff = -1;
             }
-
             nullBucket.setValue(value);
-
           } finally {
             releasePageFromWrite(atomicOperation, cacheEntry);
           }
-
           sizeDiff++;
           updateSize(sizeDiff, atomicOperation);
         }
@@ -484,7 +478,6 @@ public final class CellBTreeSingleValueV3<K> extends ODurableComponent implement
     if (removedValue != null) {
       updateSize(-1, atomicOperation);
     }
-
     return removedValue;
   }
 
@@ -514,7 +507,6 @@ public final class CellBTreeSingleValueV3<K> extends ODurableComponent implement
         if (ascSortOrder) {
           return StreamSupport.stream(iterateEntriesMajorAsc(key, inclusive), false);
         }
-
         return StreamSupport.stream(iterateEntriesMajorDesc(key, inclusive), false);
       } finally {
         releaseSharedLock();
