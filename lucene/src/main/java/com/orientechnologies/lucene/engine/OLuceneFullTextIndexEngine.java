@@ -153,18 +153,13 @@ public class OLuceneFullTextIndexEngine extends OLuceneIndexEngineAbstract {
     return LuceneIndexTransformer.transformToStream((OLuceneResultSet) get(rangeFrom), rangeFrom);
   }
 
-  private Set<OIdentifiable> getResults(Query query, OCommandContext context, OLuceneTxChanges changes, ODocument metadata) {
-
+  private Set<OIdentifiable> getResults(final Query query, final OCommandContext context, final OLuceneTxChanges changes,
+                                        final ODocument metadata) {
     //sort
-
     final List<SortField> fields = OLuceneIndexEngineUtils.buildSortFields(metadata);
-
-    IndexSearcher searcher = searcher();
-
-    OLuceneQueryContext queryContext = new OLuceneQueryContext(context, searcher, query, fields).withChanges(changes);
-
+    final IndexSearcher luceneSearcher = searcher();
+    final OLuceneQueryContext queryContext = new OLuceneQueryContext(context, luceneSearcher, query, fields).withChanges(changes);
     return new OLuceneResultSet(this, queryContext, metadata);
-
   }
 
   @Override

@@ -111,7 +111,6 @@ public class OIndexDefinitionFactory {
       compositeIndex
           .addIndex(createSingleFieldIndexDefinition(oClass, fieldsToIndex.get(i), types.get(i), collate, indexKind, algorithm));
     }
-
     return compositeIndex;
   }
 
@@ -132,9 +131,14 @@ public class OIndexDefinitionFactory {
     }
   }
 
-  private static OIndexDefinition createSingleFieldIndexDefinition(OClass oClass, final String field, final OType type,
-      OCollate collate, String indexKind, String algorithm) {
-
+  private static OIndexDefinition createSingleFieldIndexDefinition(final OClass oClass, final String field, final OType type,
+      OCollate collate, final String indexKind, final String algorithm) {
+    // TODO: let index implementations name their preferences
+    if (type.equals(OType.EMBEDDEDMAP) || type.equals(OType.EMBEDDED)) {
+      if (indexKind.equals("FULLTEXT")) {
+        throw new UnsupportedOperationException("Fulltext index does not support embedded types: " + type);
+      }
+    }
     final String fieldName = OClassImpl.decodeClassName(adjustFieldName(oClass, extractFieldName(field)));
     final OIndexDefinition indexDefinition;
 
@@ -142,7 +146,6 @@ public class OIndexDefinitionFactory {
     final OType indexType;
     if (type == OType.EMBEDDEDMAP || type == OType.LINKMAP) {
       final OPropertyMapIndexDefinition.INDEX_BY indexBy = extractMapIndexSpecifier(field);
-
       if (indexBy.equals(OPropertyMapIndexDefinition.INDEX_BY.KEY))
         indexType = OType.STRING;
       else {
@@ -154,9 +157,7 @@ public class OIndexDefinitionFactory {
             throw new OIndexException("Linked type was not provided."
                 + " You should provide linked type for embedded collections that are going to be indexed.");
         }
-
       }
-
       indexDefinition = new OPropertyMapIndexDefinition(oClass.getName(), fieldName, indexType, indexBy);
     } else if (type.equals(OType.EMBEDDEDLIST) || type.equals(OType.EMBEDDEDSET) || type.equals(OType.LINKLIST) || type
         .equals(OType.LINKSET)) {
@@ -170,25 +171,26 @@ public class OIndexDefinitionFactory {
           throw new OIndexException("Linked type was not provided."
               + " You should provide linked type for embedded collections that are going to be indexed.");
       }
-
       indexDefinition = new OPropertyListIndexDefinition(oClass.getName(), fieldName, indexType);
     } else if (type.equals(OType.LINKBAG)) {
       indexDefinition = new OPropertyRidBagIndexDefinition(oClass.getName(), fieldName);
-    } else
+    } else {
       indexDefinition = new OPropertyIndexDefinition(oClass.getName(), fieldName, type);
+    }
 
-    if (collate == null && propertyToIndex != null)
+    if (collate == null && propertyToIndex != null) {
       collate = propertyToIndex.getCollate();
+    }
 
-    if (collate != null)
+    if (collate != null) {
       indexDefinition.setCollate(collate);
+    }
 
     return indexDefinition;
   }
 
   private static OPropertyMapIndexDefinition.INDEX_BY extractMapIndexSpecifier(final String fieldName) {
-
-    String[] fieldNameParts = FILED_NAME_PATTERN.split(fieldName);
+    final String[] fieldNameParts = FILED_NAME_PATTERN.split(fieldName);
     if (fieldNameParts.length == 1)
       return OPropertyMapIndexDefinition.INDEX_BY.KEY;
 

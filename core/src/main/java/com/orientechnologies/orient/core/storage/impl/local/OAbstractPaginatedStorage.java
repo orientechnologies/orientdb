@@ -2713,12 +2713,9 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     if (engineAPIVersion != 0) {
       throw new IllegalStateException("Unsupported version of index engine API. Required 0 but found " + engineAPIVersion);
     }
-
     checkIndexId(indexId);
-
     final OBaseIndexEngine engine = indexEngines.get(indexId);
     assert indexId == engine.getId();
-
     return ((OIndexEngine) engine).get(key);
   }
 
