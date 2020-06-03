@@ -2536,15 +2536,21 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       throws OInvalidIndexEngineIdException {
 
     for (OTransactionIndexChangesPerKey.OTransactionIndexEntry op : index.interpretTxKeyChanges(changes)) {
+      if (op.value != null && !op.value.getIdentity().isPersistent()) {
+        //skip records which were removed in transaction
+        continue;
+      }
       switch (op.operation) {
       case PUT:
+        assert op.value != null;
         index.doPut(this, changes.key, op.value.getIdentity());
         break;
       case REMOVE:
-        if (op.value != null)
+        if (op.value != null) {
           index.doRemove(this, changes.key, op.value.getIdentity());
-        else
+        } else {
           index.doRemove(this, changes.key);
+        }
         break;
       case CLEAR:
         // SHOULD NEVER BE THE CASE HANDLE BY cleared FLAG
