@@ -8,7 +8,7 @@ branches:
   - develop
   
 jdk:
-  - openjdk9
+  - openjdk8
 
 before_script:
   - echo "MAVEN_OPTS='-Xmx3g'" > ~/.mavenrc
