@@ -23,14 +23,9 @@ import com.orientechnologies.orient.server.distributed.impl.task.transaction.OTx
 import com.orientechnologies.orient.server.distributed.impl.task.transaction.OTxSuccess;
 import com.orientechnologies.orient.server.distributed.impl.task.transaction.OTxUniqueIndex;
 import java.io.IOException;
-import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-import javax.management.InstanceAlreadyExistsException;
-import javax.management.MBeanRegistrationException;
-import javax.management.MalformedObjectNameException;
-import javax.management.NotCompliantMBeanException;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -42,9 +37,7 @@ public class OTransactionPhase1TaskTest {
 
   @Before
   public void before()
-      throws ClassNotFoundException, MalformedObjectNameException, InstanceAlreadyExistsException,
-          NotCompliantMBeanException, MBeanRegistrationException, InvocationTargetException,
-          NoSuchMethodException, InstantiationException, IOException, IllegalAccessException {
+      throws ClassNotFoundException, InstantiationException, IOException, IllegalAccessException {
     server = new OServer(false);
     server.startup(getClass().getClassLoader().getResourceAsStream("orientdb-server-config.xml"));
     server.activate();
