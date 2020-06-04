@@ -24,6 +24,7 @@ Vertices and Edges are stored as classes based on their label. In order to allow
 You might want to use [orientdb-migrations](https://github.com/springnz/orientdb-migrations) to create a schema with indexes etc. 
 
 ## Release
+```
 * upgrade version: remove SNAPSHOT (driver/pom.xml and tests-scala/build.sbt)
 * commit on branch, push, create PR on github
 * await green light from travis
@@ -34,3 +35,4 @@ You might want to use [orientdb-migrations](https://github.com/springnz/orientdb
 * bump versions to next SNAPSHOT (pom.xml, build.sbt)
 * git push
 * git push --tags
+```
