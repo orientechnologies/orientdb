@@ -110,6 +110,15 @@ public class LuceneCreateJavaApiTest extends BaseLuceneTest {
     Assert.assertEquals(0, count);
   }
 
+  @Test (expected = UnsupportedOperationException.class)
+  public void testCreateIndexWithUnsupportedEmbedded() {
+    final OSchema schema = db.getMetadata().getSchema();
+    final OClass song = schema.getClass(SONG_CLASS);
+    song.createIndex(SONG_CLASS + "." + OType.EMBEDDED.getName(), OClass.INDEX_TYPE.FULLTEXT.toString(),
+        null, null, "LUCENE", new String[] {"description", OType.EMBEDDED.getName()});
+    Assert.assertEquals(1, song.getIndexes().size());
+  }
+
   /*@Test // (expected = UnsupportedOperationException.class)
   public void testCreateIndexWithUnsupportedEmbeddedMapActualApi() {
     final OSchema schema = db.getMetadata().getSchema();

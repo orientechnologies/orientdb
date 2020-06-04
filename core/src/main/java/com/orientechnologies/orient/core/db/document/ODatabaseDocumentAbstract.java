@@ -77,7 +77,6 @@ import java.util.concurrent.Callable;
  */
 @SuppressWarnings("unchecked")
 public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabaseListener> implements ODatabaseDocumentInternal {
-
   protected final Map<String, Object>                         properties    = new HashMap<String, Object>();
   protected       Map<ORecordHook, ORecordHook.HOOK_POSITION> unmodifiableHooks;
   protected final Set<OIdentifiable>                          inHook        = new HashSet<OIdentifiable>();
@@ -128,17 +127,8 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
   }
 
   public void callOnOpenListeners() {
-    // WAKE UP DB LIFECYCLE LISTENER
-    for (Iterator<ODatabaseLifecycleListener> it = Orient.instance().getDbLifecycleListeners(); it.hasNext(); )
-      it.next().onOpen(getDatabaseOwner());
-
-    // WAKE UP LISTENERS
-    for (ODatabaseListener listener : getListenersCopy())
-      try {
-        listener.onOpen(getDatabaseOwner());
-      } catch (Exception e) {
-        OLogManager.instance().error(this, "Error during call of database listener", e);
-      }
+    wakeupOnOpenDbLifecycleListeners();
+    wakeupOnOpenListeners();
   }
 
   protected abstract void loadMetadata();
@@ -146,29 +136,55 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
   protected abstract void loadMetadata(OSharedContext ctx);
 
   public void callOnCloseListeners() {
-    // WAKE UP DB LIFECYCLE LISTENER
-    for (Iterator<ODatabaseLifecycleListener> it = Orient.instance().getDbLifecycleListeners(); it.hasNext(); )
-      it.next().onClose(getDatabaseOwner());
+    wakeupOnCloseDbLifecycleListeners();
+    wakeupOnCloseListeners();
+  }
 
-    // WAKE UP LISTENERS
-    for (ODatabaseListener listener : getListenersCopy())
+  private void wakeupOnOpenDbLifecycleListeners() {
+    for (Iterator<ODatabaseLifecycleListener> it = Orient.instance().getDbLifecycleListeners(); it.hasNext(); ) {
+      it.next().onOpen(getDatabaseOwner());
+    }
+  }
+
+  private void wakeupOnOpenListeners() {
+    for (ODatabaseListener listener : getListenersCopy()) {
+      try {
+        listener.onOpen(getDatabaseOwner());
+      } catch (Exception e) {
+        OLogManager.instance().error(this, "Error during call of database listener", e);
+      }
+    }
+  }
+
+  private void wakeupOnCloseDbLifecycleListeners() {
+    for (Iterator<ODatabaseLifecycleListener> it = Orient.instance().getDbLifecycleListeners(); it.hasNext(); ) {
+      it.next().onClose(getDatabaseOwner());
+    }
+  }
+
+  private void wakeupOnCloseListeners() {
+    for (ODatabaseListener listener : getListenersCopy()) {
       try {
         listener.onClose(getDatabaseOwner());
       } catch (Exception e) {
         OLogManager.instance().error(this, "Error during call of database listener", e);
       }
+    }
   }
 
   public void callOnDropListeners() {
+    wakeupOnDropListeners();
+  }
 
-    // WAKE UP LISTENERS
-    for (ODatabaseListener listener : getListenersCopy())
+  private void wakeupOnDropListeners() {
+    for (ODatabaseListener listener : getListenersCopy()) {
       try {
         activateOnCurrentThread();
         listener.onDelete(getDatabaseOwner());
       } catch (Exception e) {
         OLogManager.instance().error(this, "Error during call of database listener", e);
       }
+    }
   }
 
   /**
@@ -184,9 +200,9 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
   public void reload() {
     checkIfActive();
 
-    if (this.isClosed())
+    if (this.isClosed()) {
       throw new ODatabaseException("Cannot reload a closed db");
-
+    }
     metadata.reload();
     getStorage().reload();
   }
@@ -203,7 +219,7 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
    * Deletes the record checking the version.
    */
   public ODatabase<ORecord> delete(final ORID iRecord, final int iVersion) {
-    ORecord record = load(iRecord);
+    final ORecord record = load(iRecord);
     ORecordInternal.setVersion(record, iVersion);
     delete(record);
     return this;
@@ -231,9 +247,7 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
       final long startClusterPosition, final long endClusterPosition, final boolean loadTombstones) {
     checkSecurity(ORule.ResourceGeneric.CLUSTER, ORole.PERMISSION_READ, iClusterName);
     checkIfActive();
-
     final int clusterId = getClusterIdByName(iClusterName);
-
     return new ORecordIteratorCluster<REC>(this, clusterId, startClusterPosition, endClusterPosition,
         OStorage.LOCKING_STRATEGY.DEFAULT);
   }
@@ -243,9 +257,7 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
       long startClusterPosition, long endClusterPosition) {
     checkSecurity(ORule.ResourceGeneric.CLUSTER, ORole.PERMISSION_READ, iClusterName);
     checkIfActive();
-
     final int clusterId = getClusterIdByName(iClusterName);
-
     return new ORecordIteratorCluster<REC>(this, clusterId, startClusterPosition, endClusterPosition);
   }
 
@@ -255,13 +267,10 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
   public OCommandRequest command(final OCommandRequest iCommand) {
     checkSecurity(ORule.ResourceGeneric.COMMAND, ORole.PERMISSION_READ);
     checkIfActive();
-
     final OCommandRequestInternal command = (OCommandRequestInternal) iCommand;
-
     try {
       command.reset();
       return command;
-
     } catch (Exception e) {
       throw OException.wrapException(new ODatabaseException("Error on command execution"), e);
     }
@@ -313,12 +322,11 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
   @Override
   public long countClusterElements(int iClusterId, boolean countTombstones) {
     final String name = getClusterNameById(iClusterId);
-    if (name == null)
+    if (name == null) {
       return 0;
-
+    }
     checkSecurity(ORule.ResourceGeneric.CLUSTER, ORole.PERMISSION_READ, name);
     checkIfActive();
-
     return getStorage().count(iClusterId, countTombstones);
   }
 
@@ -333,7 +341,6 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
       name = getClusterNameById(iClusterId);
       checkSecurity(ORule.ResourceGeneric.CLUSTER, ORole.PERMISSION_READ, name);
     }
-
     return getStorage().count(iClusterIds, countTombstones);
   }
 
@@ -365,10 +372,9 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
   @Override
   public ODatabaseInternal<?> getDatabaseOwner() {
     ODatabaseInternal<?> current = databaseOwner;
-
-    while (current != null && current != this && current.getDatabaseOwner() != current)
+    while (current != null && current != this && current.getDatabaseOwner() != current) {
       current = current.getDatabaseOwner();
-
+    }
     return current;
   }
 
@@ -438,7 +444,7 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
   public void setUser(final OSecurityUser user) {
     checkIfActive();
     if (user instanceof OUser) {
-      OMetadata metadata = getMetadata();
+      final OMetadata metadata = getMetadata();
       if (metadata != null) {
         final OSecurityInternal security = sharedContext.getSecurity();
         this.user = new OImmutableUser(security.getVersion(this), (OUser) user);
@@ -453,17 +459,18 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
       activateOnCurrentThread();
       if (user.checkIfAllowed(ORule.ResourceGeneric.CLASS, OUser.CLASS_NAME, ORole.PERMISSION_READ) != null) {
         OMetadata metadata = getMetadata();
-
         if (metadata != null) {
           final OSecurityInternal security = sharedContext.getSecurity();
-          OUser secGetUser = security.getUser(this, user.getName());
+          final OUser secGetUser = security.getUser(this, user.getName());
 
-          if (secGetUser != null)
+          if (secGetUser != null) {
             user = new OImmutableUser(security.getVersion(this), secGetUser);
-          else
+          } else {
             user = new OImmutableUser(-1, new OUser());
-        } else
+          }
+        } else {
           user = new OImmutableUser(-1, new OUser());
+        }
       }
     }
   }
@@ -507,9 +514,7 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
           hooks.put(e.getKey(), e.getValue());
       }
     }
-
     compileHooks();
-
     return (DB) this;
   }
 
@@ -530,7 +535,6 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
       hooks.remove(iHookImpl);
       compileHooks();
     }
-
     return (DB) this;
   }
 
@@ -602,9 +606,7 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
         else if (res == ORecordHook.RESULT.RECORD_REPLACED)
           return res;
       }
-
       return recordChanged ? ORecordHook.RESULT.RECORD_CHANGED : ORecordHook.RESULT.RECORD_NOT_CHANGED;
-
     } finally {
       popInHook(identity);
     }

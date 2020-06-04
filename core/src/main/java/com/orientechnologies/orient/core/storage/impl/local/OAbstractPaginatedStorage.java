@@ -3806,27 +3806,21 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
   @Override
   public final Object command(final OCommandRequestText iCommand) {
     try {
-
       final ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.instance().get();
-
       while (true) {
         try {
           final OCommandExecutor executor = db.getSharedContext().getOrientDB().getScriptManager().getCommandManager()
               .getExecutor(iCommand);
           // COPY THE CONTEXT FROM THE REQUEST
           executor.setContext(iCommand.getContext());
-
           executor.setProgressListener(iCommand.getProgressListener());
           executor.parse(iCommand);
-
           return executeCommand(iCommand, executor);
         } catch (final ORetryQueryException ignore) {
-
           if (iCommand instanceof OQueryAbstract) {
             final OQueryAbstract query = (OQueryAbstract) iCommand;
             query.reset();
           }
-
         }
       }
     } catch (final RuntimeException ee) {
@@ -3844,19 +3838,14 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       if (iCommand.isIdempotent() && !executor.isIdempotent()) {
         throw new OCommandExecutionException("Cannot execute non idempotent command");
       }
-
       final long beginTime = Orient.instance().getProfiler().startChrono();
-
       try {
-
         final ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.instance().get();
-
         // CALL BEFORE COMMAND
         final Iterable<ODatabaseListener> listeners = db.getListeners();
         for (final ODatabaseListener oDatabaseListener : listeners) {
           oDatabaseListener.onBeforeCommand(iCommand, executor);
         }
-
         boolean foundInCache = false;
         Object result = null;
         if (iCommand.isCacheableResult() && executor.isCacheable() && iCommand.getParameters() == null) {
