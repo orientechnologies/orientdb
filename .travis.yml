@@ -4,7 +4,7 @@ os:
   - linux
 
 jdk:
-  - openjdk8
+  - openjdk9
 
 before_script:
   - echo "MAVEN_OPTS='-Xmx3g'" > ~/.mavenrc
