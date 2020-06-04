@@ -3,6 +3,10 @@ language: java
 os:
   - linux
 
+branches:
+  only:
+  - develop
+  
 jdk:
   - openjdk9
 
