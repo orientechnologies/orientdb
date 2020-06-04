@@ -28,7 +28,7 @@ You might want to use [orientdb-migrations](https://github.com/springnz/orientdb
 * commit on branch, push, create PR on github
 * await green light from travis
 * merge PR on github
-* then
+* then execute
 ```
 * mvn pull
 * mvn clean deploy -Prelease
