@@ -6,6 +6,8 @@ import com.orientechnologies.orient.core.index.OIndexTxAwareOneValue;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.sql.executor.OResult;
+import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import org.testng.Assert;
 import org.testng.SkipException;
 import org.testng.annotations.*;
@@ -280,6 +282,23 @@ public class IndexTxAwareOneValueGetTest extends DocumentDBBaseTest {
 
     try (Stream<ORID> stream = index.getInternal().getRids(1)) {
       Assert.assertTrue(stream.findAny().isPresent());
+    }
+  }
+
+  public void testInsertionDeletionInsideTx() {
+    final String className = "_" + IndexTxAwareOneValueGetTest.class.getSimpleName();
+    database.command("create class " + className + " extends V").close();
+    database.command("create property " + className + ".name STRING").close();
+    database.command("CREATE INDEX " + className + ".name UNIQUE").close();
+
+    database.execute("SQL",
+        "begin;\n" + "insert into " + className + "(name) values ('c');\n" + "let top = (select from " + className
+            + " where name='c');\n" + "delete vertex $top;\n" + "commit;\n" + "return $top").close();
+
+    try (final OResultSet resultSet = database.query("select * from " + className)) {
+      try (Stream<OResult> stream = resultSet.stream()) {
+        Assert.assertEquals(stream.count(), 0);
+      }
     }
   }
 }

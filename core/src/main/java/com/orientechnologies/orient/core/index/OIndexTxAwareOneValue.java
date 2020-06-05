@@ -88,7 +88,7 @@ public class OIndexTxAwareOneValue extends OIndexTxAware<OIdentifiable> {
 
       } while (result == null && nextKey != null);
 
-      if (nextKey == null) {
+      if (result == null) {
         return false;
       }
 
@@ -158,7 +158,7 @@ public class OIndexTxAwareOneValue extends OIndexTxAware<OIdentifiable> {
           nextKey = null;
       } while (result == null && nextKey != null);
 
-      if (nextKey == null) {
+      if (result == null) {
         return false;
       }
 
