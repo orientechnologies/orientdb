@@ -153,18 +153,13 @@ public class OLuceneFullTextIndexEngine extends OLuceneIndexEngineAbstract {
     return LuceneIndexTransformer.transformToStream((OLuceneResultSet) get(rangeFrom), rangeFrom);
   }
 
-  private Set<OIdentifiable> getResults(Query query, OCommandContext context, OLuceneTxChanges changes, ODocument metadata) {
-
+  private Set<OIdentifiable> getResults(final Query query, final OCommandContext context, final OLuceneTxChanges changes,
+                                        final ODocument metadata) {
     //sort
-
     final List<SortField> fields = OLuceneIndexEngineUtils.buildSortFields(metadata);
-
-    IndexSearcher searcher = searcher();
-
-    OLuceneQueryContext queryContext = new OLuceneQueryContext(context, searcher, query, fields).withChanges(changes);
-
+    final IndexSearcher luceneSearcher = searcher();
+    final OLuceneQueryContext queryContext = new OLuceneQueryContext(context, luceneSearcher, query, fields).withChanges(changes);
     return new OLuceneResultSet(this, queryContext, metadata);
-
   }
 
   @Override
@@ -224,17 +219,15 @@ public class OLuceneFullTextIndexEngine extends OLuceneIndexEngineAbstract {
   }
 
   @Override
-  public Query buildQuery(Object maybeQuery) {
+  public Query buildQuery(final Object maybeQuery) {
     try {
       if (maybeQuery instanceof String) {
         return queryBuilder.query(indexDefinition, maybeQuery, EMPTY_METADATA, queryAnalyzer());
       } else {
         OLuceneKeyAndMetadata q = (OLuceneKeyAndMetadata) maybeQuery;
         return queryBuilder.query(indexDefinition, q.key, q.metadata, queryAnalyzer());
-
       }
-    } catch (ParseException e) {
-
+    } catch (final ParseException e) {
       throw OException.wrapException(new OIndexEngineException("Error parsing query"), e);
     }
   }
@@ -264,5 +257,4 @@ public class OLuceneFullTextIndexEngine extends OLuceneIndexEngineAbstract {
       throw OException.wrapException(new OIndexEngineException("Error parsing lucene query"), e);
     }
   }
-
 }

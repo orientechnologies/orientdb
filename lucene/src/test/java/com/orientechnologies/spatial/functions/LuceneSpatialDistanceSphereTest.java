@@ -115,4 +115,24 @@ public class LuceneSpatialDistanceSphereTest extends BaseSpatialLuceneTest {
 
   }
 
+  @Test
+  public void testNullObject() {
+    List<ODocument> execute = db.command(new OCommandSQL(
+            "select ST_Distance({ locationCoordinates: null },ST_GEOMFROMTEXT('POINT(12.4664632 41.8904382)')) as distanceMeter"))
+            .execute();
+
+    Assert.assertEquals(1, execute.size());
+    ODocument next = execute.iterator().next();
+    Assert.assertTrue(next.isEmpty());
+  }
+  @Test
+  public void testSphereNullObject() {
+    List<ODocument> execute = db.command(new OCommandSQL(
+            "select ST_Distance_Sphere({ locationCoordinates: null },ST_GEOMFROMTEXT('POINT(12.4664632 41.8904382)')) as distanceMeter"))
+            .execute();
+
+    Assert.assertEquals(1, execute.size());
+    ODocument next = execute.iterator().next();
+    Assert.assertTrue(next.isEmpty());
+  }
 }

@@ -6,30 +6,37 @@ import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
+import com.orientechnologies.orient.core.storage.impl.local.OSyncSource;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWriteAheadLog;
-import com.orientechnologies.orient.server.distributed.*;
-import com.orientechnologies.orient.core.storage.impl.local.OSyncSource;
+import com.orientechnologies.orient.server.distributed.ODistributedDatabase;
+import com.orientechnologies.orient.server.distributed.ODistributedRequestId;
+import com.orientechnologies.orient.server.distributed.ODistributedServerLog;
+import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
 
 import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.util.TimerTask;
+import java.util.concurrent.Callable;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 public class OBackgroundBackup implements Runnable, OSyncSource {
-  private          OSyncDatabaseTask                     oSyncDatabaseTask;
-  private final    ODistributedServerManager             iManager;
-  private final    ODatabaseDocumentInternal             database;
-  private final    File                                  resultedBackupFile;
-  private final    String                                finalBackupPath;
-  private final    AtomicBoolean                         incremental = new AtomicBoolean(false);
-  private final    ODistributedDatabase                  dDatabase;
-  private final    ODistributedRequestId                 requestId;
-  private final    CountDownLatch                        started     = new CountDownLatch(1);
-  private final    CountDownLatch                        finished    = new CountDownLatch(1);
-  private volatile InputStream                           inputStream;
-  public volatile  boolean                               valid       = true;
+  private          OSyncDatabaseTask         oSyncDatabaseTask;
+  private final    ODistributedServerManager iManager;
+  private final    ODatabaseDocumentInternal database;
+  private final    File                      resultedBackupFile;
+  private final    String                    finalBackupPath;
+  private final    AtomicBoolean             incremental = new AtomicBoolean(false);
+  private final    ODistributedDatabase      dDatabase;
+  private final    ODistributedRequestId     requestId;
+  private final    CountDownLatch            started     = new CountDownLatch(1);
+  private final    CountDownLatch            finished    = new CountDownLatch(1);
+  private volatile InputStream               inputStream;
+  public volatile  boolean                   valid       = true;
+  private          TimerTask                 timerTask;
+  private volatile long                      lastRead;
 
   public OBackgroundBackup(OSyncDatabaseTask oSyncDatabaseTask, ODistributedServerManager iManager,
       ODatabaseDocumentInternal database, File resultedBackupFile, String finalBackupPath, OModifiableBoolean incremental,
@@ -41,15 +48,16 @@ public class OBackgroundBackup implements Runnable, OSyncSource {
     this.finalBackupPath = finalBackupPath;
     this.dDatabase = dDatabase;
     this.requestId = requestId;
+
   }
 
   @Override
   public void run() {
     Thread.currentThread().setName("OrientDB SyncDatabase node=" + iManager.getLocalNodeName() + " db=" + database.getName());
-
+    database.activateOnCurrentThread();
+    startExpireTask();
     try {
       try {
-        database.activateOnCurrentThread();
 
         ODistributedServerLog
             .info(this, iManager.getLocalNodeName(), oSyncDatabaseTask.getNodeSource(), ODistributedServerLog.DIRECTION.OUT,
@@ -103,12 +111,13 @@ public class OBackgroundBackup implements Runnable, OSyncSource {
                 }
               };
             }
-            database.backup(dest, null, () -> {
+            int compression = OGlobalConfiguration.DISTRIBUTED_DEPLOYDB_TASK_COMPRESSION.getValueAsInteger();
+            Callable<Object> startListener = () -> {
               incremental.set(false);
               started.countDown();
               return null;
-            }, listener, OGlobalConfiguration.DISTRIBUTED_DEPLOYDB_TASK_COMPRESSION.getValueAsInteger(),
-                OAbstractSyncDatabaseTask.CHUNK_MAX_SIZE);
+            };
+            database.backup(dest, null, startListener, listener, compression, OAbstractSyncDatabaseTask.CHUNK_MAX_SIZE);
           } finally {
             try {
               dest.close();
@@ -116,6 +125,7 @@ public class OBackgroundBackup implements Runnable, OSyncSource {
               OLogManager.instance().debug(this, "Error performing backup ", e2);
             }
             finished.countDown();
+            this.timerTask.cancel();
           }
         }
 
@@ -128,6 +138,7 @@ public class OBackgroundBackup implements Runnable, OSyncSource {
         throw e;
       } finally {
         finished.countDown();
+        this.timerTask.cancel();
       }
     } catch (Exception e) {
       OLogManager.instance().errorNoDb(this, "Error during backup processing, file %s will be deleted\n", e, resultedBackupFile);
@@ -138,6 +149,25 @@ public class OBackgroundBackup implements Runnable, OSyncSource {
       }
     }
 
+  }
+
+  private void startExpireTask() {
+    lastRead = System.currentTimeMillis();
+    long timeout = database.getConfiguration().getValueAsLong(OGlobalConfiguration.DISTRIBUTED_DEPLOYCHUNK_TASK_SYNCH_TIMEOUT);
+    timerTask = new TimerTask() {
+      @Override
+      public void run() {
+        if (System.currentTimeMillis() - lastRead > timeout * 3) {
+          try {
+            inputStream.close();
+            this.cancel();
+          } catch (IOException e) {
+            e.printStackTrace();
+          }
+        }
+      }
+    };
+    database.getSharedContext().getOrientDB().schedule(timerTask, timeout, timeout);
   }
 
   public void makeStreamFromFile() throws IOException, InterruptedException {
@@ -166,6 +196,7 @@ public class OBackgroundBackup implements Runnable, OSyncSource {
   }
 
   public InputStream getInputStream() {
+    this.lastRead = System.currentTimeMillis();
     return inputStream;
   }
 
