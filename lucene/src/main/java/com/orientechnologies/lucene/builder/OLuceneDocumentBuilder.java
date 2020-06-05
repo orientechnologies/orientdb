@@ -49,29 +49,33 @@ public class OLuceneDocumentBuilder {
     return null;
   }
 
-  public Document build(OIndexDefinition definition, Object key, OIdentifiable value, Map<String, Boolean> fieldsToStore,
-      ODocument metadata) {
-    Document doc = new Document();
-    if (value != null) {
-      doc.add(createField(RID, value.getIdentity().toString(), Field.Store.YES));
-      doc.add(createField("_CLUSTER", "" + value.getIdentity().getClusterId(), Field.Store.YES));
-      doc.add(createField("_CLASS", definition.getClassName(), Field.Store.YES));
-    }
-    List<Object> formattedKey = formatKeys(definition, key);
+  public Document build(final OIndexDefinition definition, final Object key, final OIdentifiable value,
+                        final Map<String, Boolean> fieldsToStore, final ODocument metadata) {
+    final Document doc = new Document();
+    this.addDefaultFieldsToDocument(definition, value, doc);
 
-    int i = 0;
-    for (String field : definition.getFields()) {
-      Object val = formattedKey.get(i);
-      i++;
+    final List<Object> formattedKey = formatKeys(definition, key);
+    int counter = 0;
+    for (final String field : definition.getFields()) {
+      final Object val = formattedKey.get(counter);
+      counter++;
       if (val != null) {
-//        doc.add(createField(field, val, Field.Store.YES));
-        Boolean sorted = isSorted(field, metadata);
+        // doc.add(createField(field, val, Field.Store.YES));
+        final Boolean sorted = isSorted(field, metadata);
         createFields(field, val, Field.Store.YES, sorted).forEach(f -> doc.add(f));
         //for cross class index
         createFields(definition.getClassName() + "." + field, val, Field.Store.YES, sorted).forEach(f -> doc.add(f));
       }
     }
     return doc;
+  }
+
+  private void addDefaultFieldsToDocument(OIndexDefinition definition, OIdentifiable value, Document doc) {
+    if (value != null) {
+      doc.add(createField(RID, value.getIdentity().toString(), Field.Store.YES));
+      doc.add(createField("_CLUSTER", "" + value.getIdentity().getClusterId(), Field.Store.YES));
+      doc.add(createField("_CLASS", definition.getClassName(), Field.Store.YES));
+    }
   }
 
   private List<Object> formatKeys(OIndexDefinition definition, Object key) {

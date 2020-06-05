@@ -17,6 +17,7 @@ import org.testng.SkipException;
 import org.testng.annotations.*;
 
 import java.io.IOException;
+import java.util.Collection;
 
 @SuppressWarnings("deprecation")
 @Test
@@ -285,4 +286,14 @@ public abstract class BaseTest<T extends ODatabase> {
     return (OIndex) (db.getMetadata()).getIndexManagerInternal().getIndex(db, indexName);
   }
 
+  protected Collection<? extends OIndex> getIndexes() {
+    final ODatabaseDocumentInternal db;
+    if (database instanceof ODatabaseWrapperAbstract) {
+      db = (ODatabaseDocumentInternal) ((ODatabaseWrapperAbstract) database).getUnderlying();
+    } else {
+      db = (ODatabaseDocumentInternal) database;
+    }
+    //noinspection unchecked
+    return db.getMetadata().getIndexManagerInternal().getIndexes(db);
+  }
 }
