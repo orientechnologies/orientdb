@@ -160,7 +160,7 @@ public class MatchEdgeTraverser {
           public void fetchNext() {
             Object previousMatch = iCommandContext.getVariable("$currentMatch");
             OResultInternal matched = (OResultInternal) iCommandContext.getVariable("matched");
-            if(matched != null ) {
+            if (matched != null) {
               matched.setProperty(getStartingPointAlias(), sourceRecord.getProperty(getStartingPointAlias()));
             }
             while (iter.hasNext()) {
