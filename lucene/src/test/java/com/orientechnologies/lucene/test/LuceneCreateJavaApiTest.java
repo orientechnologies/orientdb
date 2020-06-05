@@ -18,6 +18,7 @@
 
 package com.orientechnologies.lucene.test;
 
+import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
@@ -30,6 +31,7 @@ import org.junit.Before;
 import org.junit.Test;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -49,9 +51,6 @@ public class LuceneCreateJavaApiTest extends BaseLuceneTest {
     song.createProperty("title", OType.STRING);
     song.createProperty("author", OType.STRING);
     song.createProperty("description", OType.STRING);
-
-    song.createProperty(OType.EMBEDDEDMAP.getName(), OType.EMBEDDEDMAP, OType.STRING);
-    song.createProperty(OType.EMBEDDED.getName(), OType.EMBEDDED);
   }
 
   @Test
@@ -82,64 +81,82 @@ public class LuceneCreateJavaApiTest extends BaseLuceneTest {
   }
 
   @Test (expected = UnsupportedOperationException.class)
-  public void testCreateIndexWithUnsupportedEmbeddedMap() {
-    db.save(new ODocument(SONG_CLASS).fromJSON("{\n" +
-        "    \"description\": \"Capital\",\n" +
-        "    \"" + OType.EMBEDDEDMAP.getName() + "\": {\n" +
-        "    \"text\": \"Hello Rome how are you today?\",\n" +
-        "    \"text2\": \"Hello Rome how are you today?\",\n" +
-        "    }\n" +
-        "}"));
-    final OSchema schema = db.getMetadata().getSchema();
-    final OClass song = schema.getClass(SONG_CLASS);
-    song.createIndex(SONG_CLASS + "." + OType.EMBEDDEDMAP.getName(), OClass.INDEX_TYPE.FULLTEXT.toString(),
-        null, null, "LUCENE", new String[] {"description", OType.EMBEDDEDMAP.getName()});
-    Assert.assertEquals(1, song.getIndexes().size());
-    /*long count = db.query(new OSQLSynchQuery<ODocument>("select from " + SONG_CLASS +
-        " where SEARCH_CLASS('capital', {\n" +
-        "    \"allowLeadingWildcard\": true ,\n" +
-        "    \"lowercaseExpandedTerms\": true\n" +
-        "}) = true")).stream().count();
-    Assert.assertEquals(1, count);*/
-
-    long count = db.query(new OSQLSynchQuery<ODocument>("select from " + SONG_CLASS +
-        " where SEARCH_CLASS('Rome', {\n" +
-        "    \"allowLeadingWildcard\": true ,\n" +
-        "    \"lowercaseExpandedTerms\": true\n" +
-        "}) = true")).stream().count();
-    Assert.assertEquals(0, count);
-  }
-
-  @Test (expected = UnsupportedOperationException.class)
   public void testCreateIndexWithUnsupportedEmbedded() {
     final OSchema schema = db.getMetadata().getSchema();
     final OClass song = schema.getClass(SONG_CLASS);
+    song.createProperty(OType.EMBEDDED.getName(), OType.EMBEDDED);
     song.createIndex(SONG_CLASS + "." + OType.EMBEDDED.getName(), OClass.INDEX_TYPE.FULLTEXT.toString(),
         null, null, "LUCENE", new String[] {"description", OType.EMBEDDED.getName()});
     Assert.assertEquals(1, song.getIndexes().size());
   }
 
-  /*@Test // (expected = UnsupportedOperationException.class)
-  public void testCreateIndexWithUnsupportedEmbeddedMapActualApi() {
-    final OSchema schema = db.getMetadata().getSchema();
-    final OClass song = schema.getClass(SONG_CLASS);
-    song.createIndex(SONG_CLASS + "." + OType.EMBEDDEDMAP.getName(), OClass.INDEX_TYPE.FULLTEXT.toString(),
-        null, null, "LUCENE", new String[] {"description", OType.EMBEDDEDMAP.getName()});
-    Assert.assertEquals(1, song.getIndexes().size());
+  @Test
+  public void testCreateIndexEmbeddedMapJSON() {
+    db.save(new ODocument(SONG_CLASS).fromJSON("{\n" +
+        "    \"description\": \"Capital\",\n" +
+        "    \"String" + OType.EMBEDDEDMAP.getName() + "\": {\n" +
+        "    \"text\": \"Hello Rome how are you today?\",\n" +
+        "    \"text2\": \"Hello Bolzano how are you today?\",\n" +
+        "    }\n" +
+        "}"));
+    final OClass song = createEmbeddedMapIndex();
+    checkCreatedEmbeddedMapIndex(song);
 
+    final List<?> result = queryIndexEmbeddedMapClass();
+    result.stream().forEach(entry -> {
+      final OIdentifiable oid = (OIdentifiable) entry;
+      System.out.println(oid.toString());
+    });
+  }
+
+  @Test
+  public void testCreateIndexEmbeddedMapApi() {
     final Map<String, String> entries = new HashMap<String, String>();
     entries.put("text","Hello Rome how are you today?");
-    entries.put("text2","Hello Rome how are you today?");
+    entries.put("text2","Hello Bolzano how are you today?");
 
-    ODocument doc = new ODocument(SONG_CLASS);
-    doc.field(OType.EMBEDDEDMAP.getName(), entries, OType.EMBEDDEDMAP);
-    doc.save();
+    final ODocument doc = new ODocument(SONG_CLASS);
+    doc.field("description", "Capital", OType.STRING);
+    doc.field("String" + OType.EMBEDDEDMAP.getName(), entries, OType.EMBEDDEDMAP, OType.STRING);
+    db.save(doc);
 
-    long count = db.query(new OSQLSynchQuery<ODocument>("select from " + SONG_CLASS +
-        " where SEARCH_CLASS('Rome', {\n" +
+    final OClass song = createEmbeddedMapIndex();
+    checkCreatedEmbeddedMapIndex(song);
+
+    final List<?> result = queryIndexEmbeddedMapClass();
+    result.stream().forEach(entry -> {
+      final OIdentifiable oid = (OIdentifiable) entry;
+      System.out.println(oid.toString());
+    });
+  }
+
+  private List<?> queryIndexEmbeddedMapClass() {
+    final List<?> result = db.query(new OSQLSynchQuery<ODocument>("select from " + SONG_CLASS +
+        " where SEARCH_CLASS('Bolzano', {\n" +
         "    \"allowLeadingWildcard\": true ,\n" +
         "    \"lowercaseExpandedTerms\": true\n" +
-        "}) = true")).stream().count();
-    Assert.assertEquals(0, count);
-  }*/
+        "}) = true"));
+    Assert.assertEquals(1, result.stream().count());
+    return result;
+  }
+
+  private void checkCreatedEmbeddedMapIndex(OClass song) {
+    final OIndex index = song.getIndexes().iterator().next();
+    System.out.println(index.getIndexId() + "-" + index.getName());
+    Assert.assertEquals("index type", "FULLTEXT", index.getType());
+    Assert.assertEquals("Key type", OType.STRING, index.getKeyTypes()[0]);
+    Assert.assertEquals("Definition field", "StringEmbeddedMap", index.getDefinition().getFields().get(0));
+    Assert.assertEquals("Definition field to index", "StringEmbeddedMap by value", index.getDefinition().getFieldsToIndex().get(0));
+    Assert.assertEquals("Definition type", OType.STRING, index.getDefinition().getTypes()[0]);
+  }
+
+  private OClass createEmbeddedMapIndex() {
+    final OSchema schema = db.getMetadata().getSchema();
+    final OClass song = schema.getClass(SONG_CLASS);
+    song.createProperty("String" + OType.EMBEDDEDMAP.getName(), OType.EMBEDDEDMAP, OType.STRING);
+    song.createIndex(SONG_CLASS + "." + OType.EMBEDDEDMAP.getName(), OClass.INDEX_TYPE.FULLTEXT.toString(),
+        null, null, "LUCENE", new String[]{"String" + OType.EMBEDDEDMAP.getName() + " by value"});
+    Assert.assertEquals(1, song.getIndexes().size());
+    return song;
+  }
 }

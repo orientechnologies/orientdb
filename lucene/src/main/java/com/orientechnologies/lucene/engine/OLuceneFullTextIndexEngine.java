@@ -219,17 +219,15 @@ public class OLuceneFullTextIndexEngine extends OLuceneIndexEngineAbstract {
   }
 
   @Override
-  public Query buildQuery(Object maybeQuery) {
+  public Query buildQuery(final Object maybeQuery) {
     try {
       if (maybeQuery instanceof String) {
         return queryBuilder.query(indexDefinition, maybeQuery, EMPTY_METADATA, queryAnalyzer());
       } else {
         OLuceneKeyAndMetadata q = (OLuceneKeyAndMetadata) maybeQuery;
         return queryBuilder.query(indexDefinition, q.key, q.metadata, queryAnalyzer());
-
       }
-    } catch (ParseException e) {
-
+    } catch (final ParseException e) {
       throw OException.wrapException(new OIndexEngineException("Error parsing query"), e);
     }
   }
@@ -259,5 +257,4 @@ public class OLuceneFullTextIndexEngine extends OLuceneIndexEngineAbstract {
       throw OException.wrapException(new OIndexEngineException("Error parsing lucene query"), e);
     }
   }
-
 }

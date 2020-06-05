@@ -135,7 +135,7 @@ public class OIndexDefinitionFactory {
   private static OIndexDefinition createSingleFieldIndexDefinition(final OClass oClass, final String field, final OType type,
       OCollate collate, final String indexKind, final String algorithm) {
     // TODO: let index implementations name their preferences_
-    if (type.equals(OType.EMBEDDEDMAP) || type.equals(OType.EMBEDDED)) {
+    if (type.equals(OType.EMBEDDED)) {
       if (indexKind.equals("FULLTEXT")) {
         throw new UnsupportedOperationException("Fulltext index does not support embedded types: " + type);
       }

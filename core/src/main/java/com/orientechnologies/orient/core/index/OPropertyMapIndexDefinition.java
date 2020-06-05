@@ -87,11 +87,9 @@ public class OPropertyMapIndexDefinition extends OAbstractIndexDefinitionMultiVa
       Object val = createSingleValue(mapParam);
       result.add(val);
     }
-
     if (getFieldsToIndex().size() == 1 && result.size() == 1) {
       return result.get(0);
     }
-
     return result;
   }
 
@@ -114,7 +112,6 @@ public class OPropertyMapIndexDefinition extends OAbstractIndexDefinitionMultiVa
   private Collection<?> extractMapParams(Map<?, ?> map) {
     if (indexBy == INDEX_BY.KEY)
       return map.keySet();
-
     return map.values();
   }
 

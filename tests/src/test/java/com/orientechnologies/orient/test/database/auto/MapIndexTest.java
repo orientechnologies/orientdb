@@ -9,11 +9,9 @@ import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.orientechnologies.orient.test.domain.whiz.Mapper;
 import org.testng.Assert;
 import org.testng.annotations.*;
+import org.testng.annotations.Optional;
 
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Stream;
 
 /**
