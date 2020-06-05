@@ -100,9 +100,9 @@ public class LuceneCreateJavaApiTest extends BaseLuceneTest {
         "    }\n" +
         "}"));
     final OClass song = createEmbeddedMapIndex();
-    checkCreatedEmbeddedMapIndex(song);
+    checkCreatedEmbeddedMapIndex(song, "LUCENE");
 
-    final List<?> result = queryIndexEmbeddedMapClass();
+    final List<?> result = queryIndexEmbeddedMapClass("Bolzano",1);
     result.stream().forEach(entry -> {
       final OIdentifiable oid = (OIdentifiable) entry;
       System.out.println(oid.toString());
@@ -111,38 +111,72 @@ public class LuceneCreateJavaApiTest extends BaseLuceneTest {
 
   @Test
   public void testCreateIndexEmbeddedMapApi() {
-    final Map<String, String> entries = new HashMap<String, String>();
-    entries.put("text","Hello Rome how are you today?");
-    entries.put("text2","Hello Bolzano how are you today?");
-
-    final ODocument doc = new ODocument(SONG_CLASS);
-    doc.field("description", "Capital", OType.STRING);
-    doc.field("String" + OType.EMBEDDEDMAP.getName(), entries, OType.EMBEDDEDMAP, OType.STRING);
-    db.save(doc);
+    addDocumentViaAPI();
 
     final OClass song = createEmbeddedMapIndex();
-    checkCreatedEmbeddedMapIndex(song);
+    checkCreatedEmbeddedMapIndex(song, "LUCENE");
 
-    final List<?> result = queryIndexEmbeddedMapClass();
+    final List<?> result = queryIndexEmbeddedMapClass("Bolzano",1);
     result.stream().forEach(entry -> {
       final OIdentifiable oid = (OIdentifiable) entry;
       System.out.println(oid.toString());
     });
   }
 
-  private List<?> queryIndexEmbeddedMapClass() {
+  @Test
+  public void testCreateIndexEmbeddedMapApiSimpleTree() {
+    addDocumentViaAPI();
+
+    final OClass song = createEmbeddedMapIndexSimple();
+    checkCreatedEmbeddedMapIndex(song, "CELL_BTREE");
+
+    final List<?> result = queryIndexEmbeddedMapClass("Hello Bolzano how are you today?", 0);
+    result.stream().forEach(entry -> {
+      final OIdentifiable oid = (OIdentifiable) entry;
+      System.out.println("result: " + oid.toString());
+    });
+  }
+
+  private void addDocumentViaAPI() {
+    final Map<String, String> entries = new HashMap<>();
+    entries.put("text", "Hello Rome how are you today?");
+    entries.put("text2", "Hello Bolzano how are you today?");
+
+    final ODocument doc = new ODocument(SONG_CLASS);
+    doc.field("description", "Capital", OType.STRING);
+    doc.field("String" + OType.EMBEDDEDMAP.getName(), entries, OType.EMBEDDEDMAP, OType.STRING);
+    db.save(doc);
+  }
+
+  @Test
+  public void testCreateIndexEmbeddedMapApiSimpleDoesNotReturnResult() {
+    addDocumentViaAPI();
+
+    final OClass song = createEmbeddedMapIndexSimple();
+    checkCreatedEmbeddedMapIndex(song, "CELL_BTREE");
+
+    final List<?> result = queryIndexEmbeddedMapClass("Bolzano",0);
+    result.stream().forEach(entry -> {
+      final OIdentifiable oid = (OIdentifiable) entry;
+      System.out.println("result: " + oid.toString());
+    });
+  }
+
+  private List<?> queryIndexEmbeddedMapClass(final String searchTerm, final int expectedCount) {
     final List<?> result = db.query(new OSQLSynchQuery<ODocument>("select from " + SONG_CLASS +
-        " where SEARCH_CLASS('Bolzano', {\n" +
+        " where SEARCH_CLASS('" + searchTerm + "', {\n" +
         "    \"allowLeadingWildcard\": true ,\n" +
         "    \"lowercaseExpandedTerms\": true\n" +
         "}) = true"));
-    Assert.assertEquals(1, result.stream().count());
+    Assert.assertEquals(expectedCount, result.stream().count());
     return result;
   }
 
-  private void checkCreatedEmbeddedMapIndex(OClass song) {
-    final OIndex index = song.getIndexes().iterator().next();
-    System.out.println(index.getIndexId() + "-" + index.getName());
+  private void checkCreatedEmbeddedMapIndex(final OClass clazz, final String expectedAlgorithm) {
+    final OIndex index = clazz.getIndexes().iterator().next();
+    System.out.println("key-name: " + index.getIndexId() + "-" + index.getName());
+
+    Assert.assertEquals("index algorithm", expectedAlgorithm, index.getAlgorithm());
     Assert.assertEquals("index type", "FULLTEXT", index.getType());
     Assert.assertEquals("Key type", OType.STRING, index.getKeyTypes()[0]);
     Assert.assertEquals("Definition field", "StringEmbeddedMap", index.getDefinition().getFields().get(0));
@@ -156,6 +190,16 @@ public class LuceneCreateJavaApiTest extends BaseLuceneTest {
     song.createProperty("String" + OType.EMBEDDEDMAP.getName(), OType.EMBEDDEDMAP, OType.STRING);
     song.createIndex(SONG_CLASS + "." + OType.EMBEDDEDMAP.getName(), OClass.INDEX_TYPE.FULLTEXT.toString(),
         null, null, "LUCENE", new String[]{"String" + OType.EMBEDDEDMAP.getName() + " by value"});
+    Assert.assertEquals(1, song.getIndexes().size());
+    return song;
+  }
+
+  private OClass createEmbeddedMapIndexSimple() {
+    final OSchema schema = db.getMetadata().getSchema();
+    final OClass song = schema.getClass(SONG_CLASS);
+    song.createProperty("String" + OType.EMBEDDEDMAP.getName(), OType.EMBEDDEDMAP, OType.STRING);
+    song.createIndex(SONG_CLASS + "." + OType.EMBEDDEDMAP.getName(), OClass.INDEX_TYPE.FULLTEXT.toString(),
+        new String[]{"String" + OType.EMBEDDEDMAP.getName() + " by value"});
     Assert.assertEquals(1, song.getIndexes().size());
     return song;
   }
