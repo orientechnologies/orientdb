@@ -36,6 +36,8 @@ import com.hazelcast.core.Member;
 import com.hazelcast.core.MemberAttributeEvent;
 import com.hazelcast.core.MembershipEvent;
 import com.hazelcast.core.MembershipListener;
+import com.hazelcast.config.JoinConfig;
+import com.hazelcast.config.NetworkConfig;
 import com.hazelcast.spi.exception.RetryableHazelcastException;
 import com.orientechnologies.common.concur.OOfflineNodeException;
 import com.orientechnologies.common.concur.lock.OInterruptedException;
@@ -844,7 +846,27 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
         .setMergePolicy(OHazelcastMergeStrategy.class.getName());
     // Disabled the shudown hook of hazelcast, shutdown is managed by orient hook
     hazelcastConfig.setProperty("hazelcast.shutdownhook.enabled", "false");
-
+    boolean enableKubernetesDiscoveryEnvVar = false;
+    String enableKubernetesDiscoveryEnvVarStr = System.getenv("ENABLE_KUBERNETES_DISCOVERY");
+    if (enableKubernetesDiscoveryEnvVarStr != null) {
+      enableKubernetesDiscoveryEnvVar = enableKubernetesDiscoveryEnvVarStr.equalsIgnoreCase("true");
+    }
+    if (enableKubernetesDiscoveryEnvVar) {
+      JoinConfig joinConfig = hazelcastConfig.getNetworkConfig().getJoin();
+      if (joinConfig.getKubernetesConfig() == null) {
+        ODistributedServerLog.warn(this, nodeName, null, DIRECTION.NONE,
+                "No Kubernetes join config found in %s. Ignore enabling Hazelcast Kubernetes discovery.",
+                hazelcastConfigFile);
+      } else {
+        ODistributedServerLog.info(this, nodeName, null, DIRECTION.NONE,
+                "Enabling Hazelcast Kubernetes discovery. Setting Hazelcast port to %d.",
+                NetworkConfig.DEFAULT_PORT);
+        joinConfig.getMulticastConfig().setEnabled(false);
+        joinConfig.getKubernetesConfig().setEnabled(true);
+        // use default port in kubernetes. Hazelcast's pod-label-based discovery allows only default port!
+        hazelcastConfig.getNetworkConfig().setPort(NetworkConfig.DEFAULT_PORT);
+      }
+    }
     return Hazelcast.newHazelcastInstance(hazelcastConfig);
   }
 
