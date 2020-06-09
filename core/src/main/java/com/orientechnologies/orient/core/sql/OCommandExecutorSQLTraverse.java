@@ -39,13 +39,13 @@ import java.util.*;
  * <p>
  * In the command context you've access to the variable $depth containing the depth level from the root node. This is useful to
  * limit the traverse up to a level. For example to consider from the first depth level (0 is root node) to the third use:
- * <code>TRAVERSE children FROM #5:23 WHERE $depth BETWEEN 1 AND 3</code>. To filter traversed records use it combined with a SELECT
- * statement:
+ * <code>TRAVERSE children FROM #5:23 WHERE $depth BETWEEN 1 AND 3</code>. To filter traversed records use it combined with a
+ * SELECT statement:
  * </p>
  * <p>
  * <code>SELECT FROM (TRAVERSE children FROM #5:23 WHERE $depth BETWEEN 1 AND 3) WHERE city.name = 'Rome'</code>
  * </p>
- * 
+ *
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
  */
 @SuppressWarnings("unchecked")
@@ -56,7 +56,7 @@ public class OCommandExecutorSQLTraverse extends OCommandExecutorSQLResultsetAbs
   public static final String KEYWORD_MAXDEPTH = "MAXDEPTH";
 
   // HANDLES ITERATION IN LAZY WAY
-  private OTraverse          traverse         = new OTraverse();
+  private OTraverse traverse = new OTraverse();
 
   /**
    * Compile the filter conditions only the first time.
@@ -94,13 +94,18 @@ public class OCommandExecutorSQLTraverse extends OCommandExecutorSQLResultsetAbs
 
         if (parserGetLastWord().equalsIgnoreCase(KEYWORD_WHERE) || parserGetLastWord().equalsIgnoreCase(KEYWORD_WHILE)) {
 
-          compiledFilter = OSQLEngine.getInstance().parseCondition(parserText.substring(parserGetCurrentPosition(), endPosition),
-              getContext(), KEYWORD_WHILE);
+          compiledFilter = OSQLEngine.getInstance()
+              .parseCondition(parserText.substring(parserGetCurrentPosition(), endPosition), getContext(), KEYWORD_WHILE);
 
           traverse.predicate(compiledFilter);
           optimize();
-          parserSetCurrentPosition(compiledFilter.parserIsEnded() ? endPosition
-              : compiledFilter.parserGetCurrentPosition() + parserGetCurrentPosition());
+          int position;
+          if (compiledFilter.parserIsEnded()) {
+            position = endPosition;
+          } else {
+            position = compiledFilter.parserGetCurrentPosition() + parserGetCurrentPosition();
+          }
+          parserSetCurrentPosition(position);
         } else
           parserGoBack();
       }
@@ -145,8 +150,9 @@ public class OCommandExecutorSQLTraverse extends OCommandExecutorSQLResultsetAbs
     try {
       traverse.setMaxDepth(Integer.parseInt(word));
     } catch (Exception ignore) {
-      throwParsingException("Invalid " + KEYWORD_MAXDEPTH + " value set to '" + word + "' but it should be a valid long. Example: "
-          + KEYWORD_MAXDEPTH + " 3000");
+      throwParsingException(
+          "Invalid " + KEYWORD_MAXDEPTH + " value set to '" + word + "' but it should be a valid long. Example: " + KEYWORD_MAXDEPTH
+              + " 3000");
     }
 
     if (traverse.getMaxDepth() < 0)

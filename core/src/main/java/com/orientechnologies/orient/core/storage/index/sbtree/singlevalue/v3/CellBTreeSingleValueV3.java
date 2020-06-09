@@ -230,8 +230,12 @@ public final class CellBTreeSingleValueV3<K> extends ODurableComponent implement
           OCacheEntry keyBucketCacheEntry = loadPageForWrite(atomicOperation, fileId, bucketSearchResult.getLastPathItem(), false,
               true);
           CellBTreeSingleValueBucketV3<K> keyBucket = new CellBTreeSingleValueBucketV3<>(keyBucketCacheEntry);
-          final byte[] oldRawValue =
-              bucketSearchResult.itemIndex > -1 ? keyBucket.getRawValue(bucketSearchResult.itemIndex, keySerializer) : null;
+          final byte[] oldRawValue;
+          if (bucketSearchResult.itemIndex > -1) {
+            oldRawValue = keyBucket.getRawValue(bucketSearchResult.itemIndex, keySerializer);
+          } else {
+            oldRawValue = null;
+          }
           final ORID oldValue;
           if (oldRawValue == null) {
             oldValue = null;
@@ -1468,10 +1472,14 @@ public final class CellBTreeSingleValueV3<K> extends ODurableComponent implement
               @SuppressWarnings("ObjectAllocationInLoop")
               CellBTreeSingleValueBucketV3.CellBTreeEntry<K> entry = bucket.getEntry(itemIndex, keySerializer);
 
-              if (toKey != null && (toKeyInclusive
-                  ? comparator.compare(entry.key, toKey) > 0
-                  : comparator.compare(entry.key, toKey) >= 0)) {
-                return true;
+              if (toKey != null) {
+                if (toKeyInclusive) {
+                  if (comparator.compare(entry.key, toKey) > 0) {
+                    return true;
+                  }
+                } else if (comparator.compare(entry.key, toKey) >= 0) {
+                  return true;
+                }
               }
 
               //noinspection ObjectAllocationInLoop
@@ -1662,10 +1670,14 @@ public final class CellBTreeSingleValueV3<K> extends ODurableComponent implement
               @SuppressWarnings("ObjectAllocationInLoop")
               CellBTreeSingleValueBucketV3.CellBTreeEntry<K> entry = bucket.getEntry(itemIndex, keySerializer);
 
-              if (fromKey != null && (fromKeyInclusive
-                  ? comparator.compare(entry.key, fromKey) < 0
-                  : comparator.compare(entry.key, fromKey) <= 0)) {
-                return true;
+              if (fromKey != null) {
+                if (fromKeyInclusive) {
+                  if (comparator.compare(entry.key, fromKey) < 0) {
+                    return true;
+                  }
+                } else if (comparator.compare(entry.key, fromKey) <= 0) {
+                  return true;
+                }
               }
 
               //noinspection ObjectAllocationInLoop

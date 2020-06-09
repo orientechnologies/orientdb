@@ -215,11 +215,13 @@ public final class OSBTreeV1<K, V> extends ODurableComponent
   }
 
   @Override
-  public boolean validatedPut(OAtomicOperation atomicOperation, final K key, final V value, final OBaseIndexEngine.Validator<K, V> validator) {
+  public boolean validatedPut(OAtomicOperation atomicOperation, final K key, final V value,
+      final OBaseIndexEngine.Validator<K, V> validator) {
     return put(atomicOperation, key, value, validator);
   }
 
-  private boolean put(final OAtomicOperation atomicOperation, final K key, final V value, final OBaseIndexEngine.Validator<K, V> validator) {
+  private boolean put(final OAtomicOperation atomicOperation, final K key, final V value,
+      final OBaseIndexEngine.Validator<K, V> validator) {
     return update(atomicOperation, key, (x, bonsayFileId) -> OIndexUpdateAction.changed(value), validator);
   }
 
@@ -249,8 +251,12 @@ public final class OSBTreeV1<K, V> extends ODurableComponent
               true);
           OSBTreeBucketV1<K, V> keyBucket = new OSBTreeBucketV1<>(keyBucketCacheEntry);
 
-          final byte[] oldRawValue = bucketSearchResult.itemIndex > -1 ? keyBucket
-              .getRawValue(bucketSearchResult.itemIndex, encryption != null, keySerializer, valueSerializer) : null;
+          final byte[] oldRawValue;
+          if (bucketSearchResult.itemIndex > -1) {
+            oldRawValue = keyBucket.getRawValue(bucketSearchResult.itemIndex, encryption != null, keySerializer, valueSerializer);
+          } else {
+            oldRawValue = null;
+          }
           final V oldValue;
           if (oldRawValue == null) {
             oldValue = null;
@@ -1547,16 +1553,24 @@ public final class OSBTreeV1<K, V> extends ODurableComponent
                   bucket.getEntry(itemIndex, encryption, keySerializer, valueSerializer));
               itemIndex++;
 
-              if (fromKey != null && (fromKeyInclusive
-                  ? comparator.compare(entry.first, fromKey) < 0
-                  : comparator.compare(entry.first, fromKey) <= 0)) {
-                continue;
+              if (fromKey != null) {
+                if (fromKeyInclusive) {
+                  if (comparator.compare(entry.first, fromKey) < 0) {
+                    continue;
+                  }
+                } else if (comparator.compare(entry.first, fromKey) <= 0) {
+                  continue;
+                }
               }
 
-              if (toKey != null && (toKeyInclusive
-                  ? comparator.compare(entry.first, toKey) > 0
-                  : comparator.compare(entry.first, toKey) >= 0)) {
-                break;
+              if (toKey != null) {
+                if (toKeyInclusive) {
+                  if (comparator.compare(entry.first, toKey) > 0) {
+                    break;
+                  }
+                } else if (comparator.compare(entry.first, toKey) >= 0) {
+                  break;
+                }
               }
 
               dataCache.add(entry);
@@ -1703,16 +1717,25 @@ public final class OSBTreeV1<K, V> extends ODurableComponent
                   bucket.getEntry(itemIndex, encryption, keySerializer, valueSerializer));
               itemIndex--;
 
-              if (toKey != null && (toKeyInclusive
-                  ? comparator.compare(entry.first, toKey) > 0
-                  : comparator.compare(entry.first, toKey) >= 0)) {
-                continue;
+              if (toKey != null) {
+                if (toKeyInclusive) {
+                  if (comparator.compare(entry.first, toKey) > 0) {
+                    continue;
+                  }
+                } else if (comparator.compare(entry.first, toKey) >= 0) {
+                  continue;
+                }
               }
 
-              if (fromKey != null && (fromKeyInclusive
-                  ? comparator.compare(entry.first, fromKey) < 0
-                  : comparator.compare(entry.first, fromKey) <= 0)) {
-                break;
+              if (fromKey != null) {
+                if (fromKeyInclusive) {
+                  if (comparator.compare(entry.first, fromKey) < 0) {
+                    break;
+                  }
+                } else if (comparator.compare(entry.first, fromKey) <= 0) {
+                  break;
+                }
+
               }
 
               dataCache.add(entry);

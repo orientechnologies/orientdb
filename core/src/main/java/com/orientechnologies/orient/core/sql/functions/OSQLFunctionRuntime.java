@@ -43,9 +43,8 @@ import java.util.List;
 
 /**
  * Wraps function managing the binding of parameters.
- * 
+ *
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
- * 
  */
 public class OSQLFunctionRuntime extends OSQLFilterItemAbstract {
 
@@ -71,11 +70,9 @@ public class OSQLFunctionRuntime extends OSQLFilterItemAbstract {
 
   /**
    * Execute a function.
-   * 
-   * @param iCurrentRecord
-   *          Current record
-   * @param iCurrentResult
-   *          TODO
+   *
+   * @param iCurrentRecord Current record
+   * @param iCurrentResult TODO
    * @param iContext
    * @return
    */
@@ -88,8 +85,8 @@ public class OSQLFunctionRuntime extends OSQLFilterItemAbstract {
       if (configuredParameters[i] instanceof OSQLFilterItemField) {
         runtimeParameters[i] = ((OSQLFilterItemField) configuredParameters[i]).getValue(iCurrentRecord, iCurrentResult, iContext);
       } else if (configuredParameters[i] instanceof OSQLFunctionRuntime)
-        runtimeParameters[i] = ((OSQLFunctionRuntime) configuredParameters[i]).execute(iThis, iCurrentRecord, iCurrentResult,
-            iContext);
+        runtimeParameters[i] = ((OSQLFunctionRuntime) configuredParameters[i])
+            .execute(iThis, iCurrentRecord, iCurrentResult, iContext);
       else if (configuredParameters[i] instanceof OSQLFilterItemVariable) {
         runtimeParameters[i] = ((OSQLFilterItemVariable) configuredParameters[i])
             .getValue(iCurrentRecord, iCurrentResult, iContext);
@@ -100,15 +97,16 @@ public class OSQLFunctionRuntime extends OSQLFilterItemAbstract {
           // TRY WITH SIMPLE CONDITION
           final String text = ((OCommandSQL) configuredParameters[i]).getText();
           final OSQLPredicate pred = new OSQLPredicate(text);
-          runtimeParameters[i] = pred.evaluate(iCurrentRecord instanceof ORecord ? (ORecord) iCurrentRecord : null,
-              (ODocument) iCurrentResult, iContext);
+          runtimeParameters[i] = pred
+              .evaluate(iCurrentRecord instanceof ORecord ? (ORecord) iCurrentRecord : null, (ODocument) iCurrentResult, iContext);
           // REPLACE ORIGINAL PARAM
           configuredParameters[i] = pred;
 
         }
       } else if (configuredParameters[i] instanceof OSQLPredicate)
-        runtimeParameters[i] = ((OSQLPredicate) configuredParameters[i]).evaluate(iCurrentRecord.getRecord(),
-            (iCurrentRecord instanceof ODocument ? (ODocument) iCurrentResult : null), iContext);
+        runtimeParameters[i] = ((OSQLPredicate) configuredParameters[i])
+            .evaluate(iCurrentRecord.getRecord(), (iCurrentRecord instanceof ODocument ? (ODocument) iCurrentResult : null),
+                iContext);
       else if (configuredParameters[i] instanceof String) {
         if (configuredParameters[i].toString().startsWith("\"") || configuredParameters[i].toString().startsWith("'"))
           runtimeParameters[i] = OIOUtils.getStringContent(configuredParameters[i]);
@@ -116,13 +114,18 @@ public class OSQLFunctionRuntime extends OSQLFilterItemAbstract {
     }
 
     if (function.getMaxParams() == -1 || function.getMaxParams() > 0) {
-      if (runtimeParameters.length < function.getMinParams()
-          || (function.getMaxParams() > -1 && runtimeParameters.length > function.getMaxParams()))
-        throw new OCommandExecutionException("Syntax error: function '"
-            + function.getName()
-            + "' needs "
-            + (function.getMinParams() == function.getMaxParams() ? function.getMinParams() : function.getMinParams() + "-"
-                + function.getMaxParams()) + " argument(s) while has been received " + runtimeParameters.length);
+      if (runtimeParameters.length < function.getMinParams() || (function.getMaxParams() > -1 && runtimeParameters.length > function
+          .getMaxParams())) {
+        String params;
+        if (function.getMinParams() == function.getMaxParams()) {
+          params = "" + function.getMinParams();
+        } else {
+          params = function.getMinParams() + "-" + function.getMaxParams();
+        }
+        throw new OCommandExecutionException(
+            "Syntax error: function '" + function.getName() + "' needs " + params + " argument(s) while has been received "
+                + runtimeParameters.length);
+      }
     }
 
     final Object functionResult = function.execute(iThis, iCurrentRecord, iCurrentResult, runtimeParameters, iContext);
@@ -162,8 +165,8 @@ public class OSQLFunctionRuntime extends OSQLFilterItemAbstract {
         if (iParameters[i] != null) {
           if (iParameters[i] instanceof String) {
             final Object v = OSQLHelper.parseValue(null, null, iParameters[i].toString(), null);
-            if (v == OSQLHelper.VALUE_NOT_PARSED
-                || (v != null && OMultiValue.isMultiValue(v) && OMultiValue.getFirstValue(v) == OSQLHelper.VALUE_NOT_PARSED))
+            if (v == OSQLHelper.VALUE_NOT_PARSED || (v != null && OMultiValue.isMultiValue(v)
+                && OMultiValue.getFirstValue(v) == OSQLHelper.VALUE_NOT_PARSED))
               continue;
 
             configuredParameters[i] = v;

@@ -41,8 +41,6 @@ public class ORecordFactoryManager {
   protected final Class<? extends ORecord>[] recordTypes     = new Class[Byte.MAX_VALUE];
   protected final ORecordFactory[]           recordFactories = new ORecordFactory[Byte.MAX_VALUE];
 
-  private enum RecType { RECORD, VERTEX, EDGE }
-
   public interface ORecordFactory {
     ORecord newRecord(int cluster, ODatabaseDocumentInternal database);
   }

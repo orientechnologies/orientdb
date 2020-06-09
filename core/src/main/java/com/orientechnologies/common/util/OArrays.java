@@ -1,22 +1,22 @@
 /*
-  *
-  *  *  Copyright 2010-2016 OrientDB LTD (http://orientdb.com)
-  *  *
-  *  *  Licensed under the Apache License, Version 2.0 (the "License");
-  *  *  you may not use this file except in compliance with the License.
-  *  *  You may obtain a copy of the License at
-  *  *
-  *  *       http://www.apache.org/licenses/LICENSE-2.0
-  *  *
-  *  *  Unless required by applicable law or agreed to in writing, software
-  *  *  distributed under the License is distributed on an "AS IS" BASIS,
-  *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-  *  *  See the License for the specific language governing permissions and
-  *  *  limitations under the License.
-  *  *
-  *  * For more information: http://orientdb.com
-  *
-  */
+ *
+ *  *  Copyright 2010-2016 OrientDB LTD (http://orientdb.com)
+ *  *
+ *  *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  *  you may not use this file except in compliance with the License.
+ *  *  You may obtain a copy of the License at
+ *  *
+ *  *       http://www.apache.org/licenses/LICENSE-2.0
+ *  *
+ *  *  Unless required by applicable law or agreed to in writing, software
+ *  *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  *  See the License for the specific language governing permissions and
+ *  *  limitations under the License.
+ *  *
+ *  * For more information: http://orientdb.com
+ *
+ */
 
 package com.orientechnologies.common.util;
 
@@ -31,8 +31,12 @@ public class OArrays {
   }
 
   public static <T, U> T[] copyOf(final U[] iSource, final int iNewSize, final Class<? extends T[]> iNewType) {
-    final T[] copy = ((Object) iNewType == (Object) Object[].class) ? (T[]) new Object[iNewSize] : (T[]) Array.newInstance(
-        iNewType.getComponentType(), iNewSize);
+    final T[] copy;
+    if ((Object) iNewType == (Object) Object[].class) {
+      copy = (T[]) new Object[iNewSize];
+    } else {
+      copy = (T[]) Array.newInstance(iNewType.getComponentType(), iNewSize);
+    }
     System.arraycopy(iSource, 0, copy, 0, Math.min(iSource.length, iNewSize));
     return copy;
   }
@@ -45,8 +49,13 @@ public class OArrays {
     final int newLength = iEnd - iBegin;
     if (newLength < 0)
       throw new IllegalArgumentException(iBegin + " > " + iEnd);
-    final D[] copy = ((Object) iClass == (Object) Object[].class) ? (D[]) new Object[newLength] : (D[]) Array.newInstance(
-        iClass.getComponentType(), newLength);
+
+    final D[] copy;
+    if ((Object) iClass == (Object) Object[].class) {
+      copy = (D[]) new Object[newLength];
+    } else {
+      copy = (D[]) Array.newInstance(iClass.getComponentType(), newLength);
+    }
     System.arraycopy(iSource, iBegin, copy, 0, Math.min(iSource.length - iBegin, newLength));
     return copy;
   }
