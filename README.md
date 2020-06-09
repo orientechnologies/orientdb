@@ -19,3 +19,8 @@ Note: if you do not have permissions to create the request, ask NAAS (Tobias Sch
 Put JAR file into folder: \\\\mediaserver.wdf.sap.corp\UPLINBOX\ORIENTDB_30_EE and inform NAAS (Tobias Schreck).
 
 Note for 3.1: https://launchpad.support.sap.com/#/notes/2915917
+
+### CWB process
+
+When creating a pull request in https://github.wdf.sap.corp/final-assembly/orientdb-enterprise (e.g. 3.1.x -> fa/rel-3.1), a `CR-Id: unique technical ID` is required. This can be created following the `New CR` link in the PR.
+Note that when fixing the build, select `No Bug Report` as `Type` and check `Not Patch Relevant`!
