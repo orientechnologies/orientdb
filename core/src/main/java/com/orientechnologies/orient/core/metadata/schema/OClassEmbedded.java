@@ -31,7 +31,7 @@ public class OClassEmbedded extends OClassImpl {
   }
 
   public OProperty addProperty(final String propertyName, final OType type, final OType linkedType, final OClass linkedClass,
-      final boolean unsafe) {
+                               final boolean unsafe) {
     if (type == null)
       throw new OSchemaException("Property type not defined.");
 
@@ -214,7 +214,7 @@ public class OClassEmbedded extends OClassImpl {
 
         if (superClasses.contains(superClass)) {
           throw new OSchemaException(
-              "Class: '" + this.getName() + "' already has the class '" + superClass.getName() + "' as superclass");
+                  "Class: '" + this.getName() + "' already has the class '" + superClass.getName() + "' as superclass");
         }
 
         cls.addBaseClass(this);
@@ -304,7 +304,7 @@ public class OClassEmbedded extends OClassImpl {
     }
     if (wrongCharacter != null)
       throw new OSchemaException(
-          "Invalid class name found. Character '" + wrongCharacter + "' cannot be used in class name '" + name + "'");
+              "Invalid class name found. Character '" + wrongCharacter + "' cannot be used in class name '" + name + "'");
     acquireSchemaWriteLock();
     try {
       setNameInternal(database, name);
@@ -411,7 +411,7 @@ public class OClassEmbedded extends OClassImpl {
   }
 
   public OPropertyImpl addPropertyInternal(final String name, final OType type, final OType linkedType, final OClass linkedClass,
-      final boolean unsafe) {
+                                           final boolean unsafe) {
     if (name == null || name.length() == 0)
       throw new OSchemaException("Found property name null");
 
@@ -550,10 +550,14 @@ public class OClassEmbedded extends OClassImpl {
   }
 
   public OClass removeClusterId(final int clusterId) {
+    return removeClusterId(clusterId, false);
+  }
+
+  public OClass removeClusterId(final int clusterId, boolean force) {
     final ODatabaseDocumentInternal database = getDatabase();
     database.checkSecurity(ORule.ResourceGeneric.SCHEMA, ORole.PERMISSION_UPDATE);
 
-    if (clusterIds.length == 1 && clusterId == clusterIds[0])
+    if (!force && clusterIds.length == 1 && clusterId == clusterIds[0])
       throw new ODatabaseException(" Impossible to remove the last cluster of class '" + getName() + "' drop the class instead");
 
     acquireSchemaWriteLock();
@@ -744,7 +748,7 @@ public class OClassEmbedded extends OClassImpl {
             ((OSchemaEmbedded) owner).removeClusterForClass(database, clusterId, this);
           }
 
-          setClusterIds(new int[] { NOT_EXISTENT_CLUSTER_ID });
+          setClusterIds(new int[]{NOT_EXISTENT_CLUSTER_ID});
 
           defaultClusterId = NOT_EXISTENT_CLUSTER_ID;
         }

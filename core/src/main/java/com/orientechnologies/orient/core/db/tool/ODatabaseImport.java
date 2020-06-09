@@ -186,7 +186,6 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
           importManualIndexes();
         else if (tag.equals("brokenRids")) {
           processBrokenRids();
-          continue;
         } else
           throw new ODatabaseImportException("Invalid format. Found unsupported tag '" + tag + "'");
       }
@@ -433,7 +432,7 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
     for (OClass dbClass : classes) {
       String className = dbClass.getName();
 
-      if (!dbClass.isSuperClassOf(orole) && !dbClass.isSuperClassOf(ouser) && !dbClass.isSuperClassOf(oidentity ) && !dbClass.isSuperClassOf(oSecurityPolicy)) {
+      if (!dbClass.isSuperClassOf(orole) && !dbClass.isSuperClassOf(ouser) && !dbClass.isSuperClassOf(oidentity ) /*&& !dbClass.isSuperClassOf(oSecurityPolicy)*/) {
         classesToDrop.put(className, dbClass);
         for (OIndex index : dbClass.getIndexes()) {
           indexes.add(index.getName());
@@ -979,6 +978,11 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
                             + ". To continue the import drop the cluster '" + database.getClusterNameById(clusterId - 1) + "' that has "
                             + database.countClusterElements(clusterId - 1) + " records");
         } else {
+
+          final OClass clazz = database.getMetadata().getSchema().getClassByClusterId(clusterId);
+          if (clazz != null && clazz instanceof OClassEmbedded)
+            ((OClassEmbedded)clazz).removeClusterId(clusterId, true);
+
           database.dropCluster(clusterId);
           database.addCluster(name, id, null);
         }
@@ -1214,7 +1218,7 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
       if ((clusterId != manualIndexCluster && clusterId != internalCluster && clusterId != indexCluster)) {
         final ORecord loadedRecord = database.getRecord(rid);
         if (loadedRecord != null) {
-          if (record.getClass() != loadedRecord.getClass()) {
+          if (!record.getClass().isAssignableFrom(loadedRecord.getClass())) {
             throw new IllegalStateException(
                     "Imported record and record stored in database under id " + rid.toString() + " have different types. "
                             + "Stored record class is : " + record.getClass() + " and imported " + loadedRecord.getClass() + " .");
