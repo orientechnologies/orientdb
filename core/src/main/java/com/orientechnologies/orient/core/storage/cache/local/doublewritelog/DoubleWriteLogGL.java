@@ -199,7 +199,8 @@ public class DoubleWriteLogGL implements DoubleWriteLog {
 
             containerBuffer.put(compressedBuffer);
             containerBuffer.putLong(xxHashPosition, XX_HASH
-                .hash(containerBuffer, xxHashPosition + XX_HASH_LEN, containerBuffer.position() - XX_HASH_LEN, XX_HASH_SEED));
+                .hash(containerBuffer, xxHashPosition + XX_HASH_LEN, containerBuffer.position() - xxHashPosition - XX_HASH_LEN,
+                    XX_HASH_SEED));
           } finally {
             ALLOCATOR.deallocate(compressedPointer);
           }
