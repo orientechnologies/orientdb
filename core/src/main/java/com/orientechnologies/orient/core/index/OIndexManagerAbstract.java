@@ -103,6 +103,7 @@ public abstract class OIndexManagerAbstract extends ODocumentWrapperNoClass impl
   public OIndexManagerAbstract reload() {
     acquireExclusiveLock();
     try {
+      ((ORecordId) document.getIdentity()).fromString(getStorage().getConfiguration().getIndexMgrRecordId());
       return super.reload();
     } finally {
       releaseExclusiveLock();
