@@ -1042,7 +1042,7 @@ public class OSecurityShared implements OSecurityInternal {
 
               }
             } catch (Exception e) {
-              //e.printStackTrace();
+              e.printStackTrace();
             }
           }
           rs.close();
