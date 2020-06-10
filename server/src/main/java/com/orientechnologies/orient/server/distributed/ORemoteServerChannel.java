@@ -120,27 +120,32 @@ public class ORemoteServerChannel {
     T execute() throws IOException;
   }
 
-  public void sendRequest(final ODistributedRequest request) {
+  private <T> void executeNetworkOperation(final byte operationId, final OStorageRemoteOperation<T> operation,
+      final String errorMessage, final int maxRetry, final boolean autoReconnect) {
     executor.execute(() -> {
-      networkOperation(OChannelBinaryProtocol.DISTRIBUTED_REQUEST, () -> {
-        request.toStream(channel.getDataOutput());
-        channel.flush();
-        return null;
-      }, "Cannot send distributed request " + request.getClass(), MAX_RETRY, true);
+      networkOperation(OChannelBinaryProtocol.DISTRIBUTED_REQUEST, operation, errorMessage, maxRetry, autoReconnect);
     });
+  }
+
+  public void sendRequest(final ODistributedRequest request) {
+    executeNetworkOperation(OChannelBinaryProtocol.DISTRIBUTED_REQUEST, () -> {
+      request.toStream(channel.getDataOutput());
+      channel.flush();
+      return null;
+    }, "Cannot send distributed request " + request.getClass(), MAX_RETRY, true);
     this.prevRequest = request;
 
   }
 
   public void sendResponse(final ODistributedResponse response) {
-    executor.execute(() -> {
-      networkOperation(OChannelBinaryProtocol.DISTRIBUTED_RESPONSE, () -> {
-        response.toStream(channel.getDataOutput());
-        channel.flush();
-        return null;
-      }, "Cannot send response back to the sender node '" + response.getSenderNodeName() + "' " + response.getClass(), MAX_RETRY,
-          true);
-    });
+    OStorageRemoteOperation<Object> remoteOperation = () -> {
+      response.toStream(channel.getDataOutput());
+      channel.flush();
+      return null;
+    };
+    networkOperation(OChannelBinaryProtocol.DISTRIBUTED_RESPONSE, remoteOperation,
+        "Cannot send response back to the sender node '" + response.getSenderNodeName() + "' " + response.getClass(), MAX_RETRY,
+        true);
     this.prevResponse = response;
   }
 
