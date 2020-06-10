@@ -19,6 +19,7 @@
  */
 package com.orientechnologies.orient.core.metadata.security;
 
+import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
@@ -30,6 +31,7 @@ import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ORecordLazySet;
 import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
 import com.orientechnologies.orient.core.exception.OSecurityAccessException;
+import com.orientechnologies.orient.core.exception.OSecurityException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.index.ONullOutputListener;
@@ -54,6 +56,7 @@ import com.orientechnologies.orient.core.storage.OStorageProxy;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Collectors;
 
@@ -1028,17 +1031,14 @@ public class OSecurityShared implements OSecurityInternal {
     if (skipRoleHasPredicateSecurityForClassUpdate) {
       return;
     }
-    try {
-      if (session.getUser() == null) {
-        initPredicateSecurityOptimizationsInternal(session);
-      } else {
-        ((ODatabaseDocumentInternal) session).getSharedContext().getOrientDB().executeNoAuthorization(session.getName(), (db -> {
-          initPredicateSecurityOptimizationsInternal(db);
-          return null;
-        }));
-      }
-    } catch (Exception e) {
-      e.printStackTrace();
+
+    if (session.getUser() == null) {
+      initPredicateSecurityOptimizationsInternal(session);
+    } else {
+      ((ODatabaseDocumentInternal) session).getSharedContext().getOrientDB().executeNoAuthorization(session.getName(), (db -> {
+        initPredicateSecurityOptimizationsInternal(db);
+        return null;
+      }));
     }
   }
 
@@ -1058,23 +1058,18 @@ public class OSecurityShared implements OSecurityInternal {
         Map<String, OIdentifiable> policies = item.getProperty("policies");
         if (policies != null) {
           for (Map.Entry<String, OIdentifiable> policyEntry : policies.entrySet()) {
-            try {
-              OSecurityResource res = OSecurityResource.getInstance(policyEntry.getKey());
+            OSecurityResource res = OSecurityResource.getInstance(policyEntry.getKey());
 
-              for (OClass clazz : allClasses) {
-                if (isClassInvolved(clazz, res) && !isAllAllowed(session,
-                    new OSecurityPolicy(policyEntry.getValue().getRecord()))) {
-                  Map<String, Boolean> roleMap = result.get(roleName);
-                  if (roleMap == null) {
-                    roleMap = new HashMap<>();
-                    result.put(roleName, roleMap);
-                  }
-                  roleMap.put(clazz.getName(), true);
+            for (OClass clazz : allClasses) {
+              if (isClassInvolved(clazz, res) && !isAllAllowed(session,
+                      new OSecurityPolicy(policyEntry.getValue().getRecord()))) {
+                Map<String, Boolean> roleMap = result.get(roleName);
+                if (roleMap == null) {
+                  roleMap = new HashMap<>();
+                  result.put(roleName, roleMap);
                 }
-
+                roleMap.put(clazz.getName(), true);
               }
-            } catch (Exception e) {
-              e.printStackTrace();
             }
           }
           rs.close();
@@ -1455,8 +1450,10 @@ public class OSecurityShared implements OSecurityInternal {
       synchronized (this) {
         filteredProperties = result;
       }
-    } catch (Exception e) {
-      e.printStackTrace();
+    } catch (InterruptedException e) {
+      throw OException.wrapException(new OSecurityException("Error loading security filters"), e);
+    } catch (ExecutionException e) {
+      throw OException.wrapException(new OSecurityException("Error loading security filters"), e);
     }
   }
 
