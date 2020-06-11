@@ -3910,4 +3910,25 @@ public class OSelectStatementExecutionTest {
       OGlobalConfiguration.QUERY_MAX_HEAP_ELEMENTS_ALLOWED_PER_OP.setValue(oldValue);
     }
   }
+
+  @Test
+  public void testCountGroupBy() {
+    // issue #9288
+    String className = "testCountGroupBy";
+    db.getMetadata().getSchema().createClass(className);
+    for (int i = 0; i < 10; i++) {
+      ODocument doc = db.newInstance(className);
+      doc.setProperty("type", i % 2 == 0 ? "even" : "odd");
+      doc.setProperty("val", i);
+      doc.save();
+    }
+    OResultSet result = db.query("select count(val) as count from " + className + " limit 3");
+    printExecutionPlan(result);
+
+    Assert.assertTrue(result.hasNext());
+    OResult item = result.next();
+    Assert.assertEquals(10L, (long) item.getProperty("count"));
+    Assert.assertFalse(result.hasNext());
+    result.close();
+  }
 }

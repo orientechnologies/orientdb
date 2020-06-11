@@ -133,7 +133,7 @@ public class OSelectExecutionPlanner {
       }
     } else {
       handleOrderBy(result, info, ctx, enableProfiling);
-      if (info.distinct || info.groupBy != null) {
+      if (info.distinct || info.groupBy != null || info.aggregateProjection != null) {
         handleProjections(result, info, ctx, enableProfiling);
         handleDistinct(result, info, ctx, enableProfiling);
         if (info.skip != null) {
