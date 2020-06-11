@@ -1087,7 +1087,12 @@ public enum OGlobalConfiguration {// ENVIRONMENT
   AUTO_CLOSE_AFTER_DELAY("storage.autoCloseAfterDelay",
       "Enable auto close of storage after a specified delay if no session are active", Boolean.class, false),
 
-  AUTO_CLOSE_DELAY("storage.autoCloseDelay", "Storage auto close delay time in minutes", Integer.class, 20);
+  AUTO_CLOSE_DELAY("storage.autoCloseDelay", "Storage auto close delay time in minutes", Integer.class, 20),
+
+  CLIENT_CHANNEL_IDLE_CLOSE("client.channel.idleAutoClose", "Enable the automatic close of idle sockets after a specific timeout",
+      Boolean.class, false),
+
+  CLIENT_CHANNEL_IDLE_TIMEOUT("client.channel.idleTimeout", "sockets maximum time idle in seconds", Integer.class, 900);
 
   static {
     readConfiguration();
@@ -1164,7 +1169,6 @@ public enum OGlobalConfiguration {// ENVIRONMENT
    * Find the OGlobalConfiguration instance by the key. Key is case insensitive.
    *
    * @param iKey Key to find. It's case insensitive.
-   *
    * @return OGlobalConfiguration instance if found, otherwise null
    */
   public static OGlobalConfiguration findByKey(final String iKey) {

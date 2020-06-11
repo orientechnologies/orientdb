@@ -53,13 +53,15 @@ public class OrientDBRemote implements OrientDBInternal {
   private final      Orient                      orient;
   protected volatile ORemoteConnectionManager    connectionManager;
   private volatile   boolean                     open     = true;
+  private            Timer                       timer;
 
   public OrientDBRemote(String[] hosts, OrientDBConfig configurations, Orient orient) {
     super();
+    timer = new Timer();
     this.hosts = hosts;
     this.orient = orient;
     this.configurations = configurations != null ? configurations : OrientDBConfig.defaultConfig();
-    connectionManager = new ORemoteConnectionManager(this.configurations.getConfigurations().getValueAsLong(NETWORK_LOCK_TIMEOUT));
+    connectionManager = new ORemoteConnectionManager(this.configurations.getConfigurations(), timer);
     orient.addOrientDB(this);
   }
 
