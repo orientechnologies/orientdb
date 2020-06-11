@@ -212,7 +212,6 @@ public abstract class OrientElement implements Element, OSerializableStream, Ext
    * Removes a Property.
    *
    * @param key Property name
-   *
    * @return Old value if any
    */
   @Override
@@ -235,7 +234,6 @@ public abstract class OrientElement implements Element, OSerializableStream, Ext
    * Returns a Property value.
    *
    * @param key Property name
-   *
    * @return Property value if any, otherwise NULL.
    */
   @Override
@@ -360,7 +358,6 @@ public abstract class OrientElement implements Element, OSerializableStream, Ext
    * can be freed by calling @unlock or when the current transaction is closed (committed or rollbacked).
    *
    * @param iExclusive True = Exclusive Lock, False = Shared Lock
-   *
    * @see #lock(boolean)
    */
   @Override
@@ -440,7 +437,6 @@ public abstract class OrientElement implements Element, OSerializableStream, Ext
    * automatically, and currently active graph connection will be used as graph elements owner.
    *
    * @return Current object to allow chained calls.
-   *
    * @see #attach(OrientBaseGraph), #isDetached
    */
   public OrientElement detach() {
@@ -481,9 +477,7 @@ public abstract class OrientElement implements Element, OSerializableStream, Ext
    * To set "classic detach/attach mode" please set custom database parameter <code>classicDetachMode</code> to <code>true</code>.
    *
    * @param iNewGraph The new Graph instance to use.
-   *
    * @return Current object to allow chained calls.
-   *
    * @see #detach(), #isDetached
    */
   public OrientElement attach(final OrientBaseGraph iNewGraph) {
@@ -507,7 +501,6 @@ public abstract class OrientElement implements Element, OSerializableStream, Ext
    * To set "classic detach/attach mode" please set custom database parameter <code>classicDetachMode</code> to <code>true</code>.
    *
    * @return True if detached, otherwise false
-   *
    * @see #attach(OrientBaseGraph), #detach
    */
   public boolean isDetached() {
@@ -622,12 +615,14 @@ public abstract class OrientElement implements Element, OSerializableStream, Ext
     if (!schema.existsClass(className)) {
       // CREATE A NEW CLASS AT THE FLY
       try {
-        graph.executeOutsideTx(new OCallable<OClass, OrientBaseGraph>() {
-            @Override
-            public OClass call(final OrientBaseGraph g) {
-              return schema.createClass(className, schema.getClass(getBaseClassName()));
-            }
-          }, "Committing the active transaction to create the new type '", className, "' as subclass of '", getBaseClassName(),
+        OCallable<OClass, OrientBaseGraph> outsideTx = new OCallable<OClass, OrientBaseGraph>() {
+          @Override
+          public OClass call(final OrientBaseGraph g) {
+            return schema.createClass(className, schema.getClass(getBaseClassName()));
+          }
+        };
+        graph.executeOutsideTx(outsideTx, "Committing the active transaction to create the new type '", className,
+            "' as subclass of '", getBaseClassName(),
             "'. The transaction will be reopen right after that. To avoid this behavior create the classes outside the transaction");
 
       } catch (OSchemaException e) {

@@ -24,7 +24,6 @@ import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import java.text.Normalizer;
 
 /**
- *
  * @author Johann Sorel (Geomatys)
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
  */
@@ -40,8 +39,12 @@ public class OSQLMethodNormalize extends OAbstractSQLMethod {
   public Object execute(Object iThis, OIdentifiable iCurrentRecord, OCommandContext iContext, Object ioResult, Object[] iParams) {
 
     if (ioResult != null) {
-      final Normalizer.Form form = iParams != null && iParams.length > 0 ? Normalizer.Form.valueOf(OIOUtils
-          .getStringContent(iParams[0].toString())) : Normalizer.Form.NFD;
+      final Normalizer.Form form;
+      if (iParams != null && iParams.length > 0) {
+        form = Normalizer.Form.valueOf(OIOUtils.getStringContent(iParams[0].toString()));
+      } else {
+        form = Normalizer.Form.NFD;
+      }
 
       String normalized = Normalizer.normalize(ioResult.toString(), form);
       if (iParams != null && iParams.length > 1) {

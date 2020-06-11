@@ -30,8 +30,7 @@ import java.util.Map.Entry;
 import java.util.Set;
 
 /**
- * Contains the user settings about security and permissions roles.<br>
- * Allowed operation are the classic CRUD, namely:
+ * Contains the user settings about security and permissions roles.<br> Allowed operation are the classic CRUD, namely:
  * <ul>
  * <li>CREATE</li>
  * <li>READ</li>
@@ -42,25 +41,25 @@ import java.util.Set;
  */
 @SuppressWarnings("unchecked")
 public class ORole extends OIdentity implements OSecurityRole {
-  public static final String                ADMIN              = "admin";
-  public static final String                CLASS_NAME         = "ORole";
-  public static final int                   PERMISSION_NONE    = 0;
-  public static final int                   PERMISSION_CREATE  = registerPermissionBit(0, "Create");
-  public static final int                   PERMISSION_READ    = registerPermissionBit(1, "Read");
-  public static final int                   PERMISSION_UPDATE  = registerPermissionBit(2, "Update");
-  public static final int                   PERMISSION_DELETE  = registerPermissionBit(3, "Delete");
-  public static final int                   PERMISSION_EXECUTE = registerPermissionBit(4, "Execute");
-  public static final int                   PERMISSION_ALL     = PERMISSION_CREATE + PERMISSION_READ + PERMISSION_UPDATE
-                                                                  + PERMISSION_DELETE + PERMISSION_EXECUTE;
-  protected static final byte               STREAM_DENY        = 0;
-  protected static final byte               STREAM_ALLOW       = 1;
-  private static final long                 serialVersionUID   = 1L;
+  public static final    String               ADMIN              = "admin";
+  public static final    String               CLASS_NAME         = "ORole";
+  public static final    int                  PERMISSION_NONE    = 0;
+  public static final    int                  PERMISSION_CREATE  = registerPermissionBit(0, "Create");
+  public static final    int                  PERMISSION_READ    = registerPermissionBit(1, "Read");
+  public static final    int                  PERMISSION_UPDATE  = registerPermissionBit(2, "Update");
+  public static final    int                  PERMISSION_DELETE  = registerPermissionBit(3, "Delete");
+  public static final    int                  PERMISSION_EXECUTE = registerPermissionBit(4, "Execute");
+  public static final    int                  PERMISSION_ALL     =
+      PERMISSION_CREATE + PERMISSION_READ + PERMISSION_UPDATE + PERMISSION_DELETE + PERMISSION_EXECUTE;
+  protected static final byte                 STREAM_DENY        = 0;
+  protected static final byte                 STREAM_ALLOW       = 1;
+  private static final   long                 serialVersionUID   = 1L;
   // CRUD OPERATIONS
-  private static Map<Integer, String>       PERMISSION_BIT_NAMES;
-  protected ALLOW_MODES                     mode               = ALLOW_MODES.DENY_ALL_BUT;
-  protected ORole                           parentRole;
+  private static         Map<Integer, String> PERMISSION_BIT_NAMES;
+  protected              ALLOW_MODES          mode               = ALLOW_MODES.DENY_ALL_BUT;
+  protected              ORole                parentRole;
 
-  private Map<ORule.ResourceGeneric, ORule> rules              = new HashMap<ORule.ResourceGeneric, ORule>();
+  private Map<ORule.ResourceGeneric, ORule> rules = new HashMap<ORule.ResourceGeneric, ORule>();
 
   /**
    * Constructor used in unmarshalling.
@@ -88,9 +87,8 @@ public class ORole extends OIdentity implements OSecurityRole {
 
   /**
    * Convert the permission code to a readable string.
-   * 
-   * @param iPermission
-   *          Permission to convert
+   *
+   * @param iPermission Permission to convert
    * @return String representation of the permission
    */
   public static String permissionToString(final int iPermission) {
@@ -138,8 +136,14 @@ public class ORole extends OIdentity implements OSecurityRole {
 
     try {
       final Number modeField = document.field("mode");
-      mode = modeField == null ? ALLOW_MODES.DENY_ALL_BUT : modeField.byteValue() == STREAM_ALLOW ? ALLOW_MODES.ALLOW_ALL_BUT
-          : ALLOW_MODES.DENY_ALL_BUT;
+      if (modeField == null) {
+        mode = ALLOW_MODES.DENY_ALL_BUT;
+      } else if (modeField.byteValue() == STREAM_ALLOW) {
+        mode = ALLOW_MODES.ALLOW_ALL_BUT;
+      } else {
+        mode = ALLOW_MODES.DENY_ALL_BUT;
+      }
+
     } catch (Exception ex) {
       OLogManager.instance().error(this, "illegal mode " + ex.getMessage(), ex);
       mode = ALLOW_MODES.DENY_ALL_BUT;
@@ -288,7 +292,7 @@ public class ORole extends OIdentity implements OSecurityRole {
 
   /**
    * Grant a permission to the resource.
-   * 
+   *
    * @return
    */
   public ORole grant(final ORule.ResourceGeneric resourceGeneric, String resourceSpecific, final int iOperation) {

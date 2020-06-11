@@ -235,9 +235,12 @@ public final class CellBTreeSingleValueV1<K> extends ODurableComponent implement
               true);
           CellBTreeBucketSingleValueV1<K> keyBucket = new CellBTreeBucketSingleValueV1<>(keyBucketCacheEntry);
 
-          final byte[] oldRawValue = bucketSearchResult.itemIndex > -1
-              ? keyBucket.getRawValue(bucketSearchResult.itemIndex, encryption, keySerializer)
-              : null;
+          final byte[] oldRawValue;
+          if (bucketSearchResult.itemIndex > -1) {
+            oldRawValue = keyBucket.getRawValue(bucketSearchResult.itemIndex, encryption, keySerializer);
+          } else {
+            oldRawValue = null;
+          }
           final ORID oldValue;
           if (oldRawValue == null) {
             oldValue = null;
@@ -1580,16 +1583,25 @@ public final class CellBTreeSingleValueV1<K> extends ODurableComponent implement
                 final ORawPair<K, ORID> entry = convertToMapEntry(bucket.getEntry(itemIndex, encryption, keySerializer));
                 itemIndex++;
 
-                if (fromKey != null && (fromKeyInclusive
-                    ? comparator.compare(entry.first, fromKey) < 0
-                    : comparator.compare(entry.first, fromKey) <= 0)) {
-                  continue;
+                if (fromKey != null) {
+                  if (fromKeyInclusive) {
+                    if (comparator.compare(entry.first, fromKey) < 0) {
+                      continue;
+                    }
+                  } else if (comparator.compare(entry.first, fromKey) <= 0) {
+                    continue;
+                  }
                 }
 
-                if (toKey != null && (toKeyInclusive
-                    ? comparator.compare(entry.first, toKey) > 0
-                    : comparator.compare(entry.first, toKey) >= 0)) {
-                  break mainCycle;
+                if (toKey != null) {
+                  if (toKeyInclusive) {
+                    if (comparator.compare(entry.first, toKey) > 0) {
+                      break mainCycle;
+                    }
+                  } else if (comparator.compare(entry.first, toKey) >= 0) {
+                    break mainCycle;
+                  }
+
                 }
 
                 dataCache.add(entry);
@@ -1741,16 +1753,25 @@ public final class CellBTreeSingleValueV1<K> extends ODurableComponent implement
                 final ORawPair<K, ORID> entry = convertToMapEntry(bucket.getEntry(itemIndex, encryption, keySerializer));
                 itemIndex--;
 
-                if (toKey != null && (toKeyInclusive
-                    ? comparator.compare(entry.first, toKey) > 0
-                    : comparator.compare(entry.first, toKey) >= 0)) {
-                  continue;
+                if (toKey != null) {
+                  if (toKeyInclusive) {
+                    if (comparator.compare(entry.first, toKey) > 0) {
+                      continue;
+                    }
+                  } else if (comparator.compare(entry.first, toKey) >= 0) {
+                    continue;
+                  }
                 }
 
-                if (fromKey != null && (fromKeyInclusive
-                    ? comparator.compare(entry.first, fromKey) < 0
-                    : comparator.compare(entry.first, fromKey) <= 0)) {
-                  break mainCycle;
+                if (fromKey != null) {
+                  if (fromKeyInclusive) {
+                    if (comparator.compare(entry.first, fromKey) < 0) {
+                      break mainCycle;
+                    }
+                  } else if (comparator.compare(entry.first, fromKey) <= 0) {
+                    break mainCycle;
+                  }
+
                 }
 
                 dataCache.add(entry);

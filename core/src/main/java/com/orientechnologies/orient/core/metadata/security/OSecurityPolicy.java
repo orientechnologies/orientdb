@@ -6,8 +6,9 @@ import com.orientechnologies.orient.core.sql.OSQLEngine;
 
 public class OSecurityPolicy {
 
-
-  public enum Scope { CREATE, READ, BEFORE_UPDATE, AFTER_UPDATE, DELETE, EXECUTE }
+  public enum Scope {
+    CREATE, READ, BEFORE_UPDATE, AFTER_UPDATE, DELETE, EXECUTE
+  }
 
   private OElement element;
 
@@ -39,7 +40,6 @@ public class OSecurityPolicy {
     this.element.setProperty("active", active);
   }
 
-
   public String getCreateRule() {
     return element.getProperty("create");
   }
@@ -48,7 +48,6 @@ public class OSecurityPolicy {
     validatePredicate(rule);
     element.setProperty("create", rule);
   }
-
 
   public String getReadRule() {
     return element.getProperty("read");
@@ -97,16 +96,22 @@ public class OSecurityPolicy {
 
   public String get(Scope scope) {
     switch (scope) {
-    case CREATE: return getCreateRule();
-    case READ: return getReadRule();
-    case BEFORE_UPDATE: return getBeforeUpdateRule();
-    case AFTER_UPDATE: return getAfterUpdateRule();
-    case DELETE: return getDeleteRule();
-    case EXECUTE: return getExecuteRule();
-    default: throw new IllegalArgumentException();
+    case CREATE:
+      return getCreateRule();
+    case READ:
+      return getReadRule();
+    case BEFORE_UPDATE:
+      return getBeforeUpdateRule();
+    case AFTER_UPDATE:
+      return getAfterUpdateRule();
+    case DELETE:
+      return getDeleteRule();
+    case EXECUTE:
+      return getExecuteRule();
+    default:
+      throw new IllegalArgumentException();
     }
   }
-
 
   protected void validatePredicate(String predicate) throws IllegalArgumentException {
     if (predicate == null || predicate.trim().length() == 0) {

@@ -29,7 +29,7 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 
 /**
  * Transforms current value in a Set.
- * 
+ *
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
  */
 public class OSQLMethodAsSet extends OAbstractSQLMethod {
@@ -62,8 +62,12 @@ public class OSQLMethodAsSet extends OAbstractSQLMethod {
     }
 
     if (ioResult instanceof Iterator<?>) {
-      final Set<Object> set = ioResult instanceof OSizeable ? new HashSet<Object>(((OSizeable) ioResult).size())
-          : new HashSet<Object>();
+      final Set<Object> set;
+      if (ioResult instanceof OSizeable) {
+        set = new HashSet<Object>(((OSizeable) ioResult).size());
+      } else {
+        set = new HashSet<Object>();
+      }
 
       for (Iterator<Object> iter = (Iterator<Object>) ioResult; iter.hasNext(); ) {
         set.add(iter.next());

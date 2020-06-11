@@ -309,9 +309,13 @@ public class OIndexTxAwareOneValue extends OIndexTxAware<OIdentifiable> {
       Stream<ORawPair<Object, ORID>> txStream, Stream<ORawPair<Object, ORID>> backedStream, boolean ascSortOrder) {
     return Streams.mergeSortedSpliterators(txStream,
         backedStream.map((entry) -> calculateTxIndexEntry(getCollatingValue(entry.first), entry.second, indexChanges))
-            .filter(Objects::nonNull), (entryOne, entryTwo) -> ascSortOrder
-            ? ODefaultComparator.INSTANCE.compare(entryOne.first, entryTwo.first)
-            : -ODefaultComparator.INSTANCE.compare(entryOne.first, entryTwo.first));
+            .filter(Objects::nonNull), (entryOne, entryTwo) -> {
+          if (ascSortOrder) {
+            return ODefaultComparator.INSTANCE.compare(entryOne.first, entryTwo.first);
+          } else {
+            return -ODefaultComparator.INSTANCE.compare(entryOne.first, entryTwo.first);
+          }
+        });
   }
 
   @Override
@@ -390,10 +394,14 @@ public class OIndexTxAwareOneValue extends OIndexTxAware<OIdentifiable> {
 
     @SuppressWarnings("resource")
     final Stream<ORawPair<Object, ORID>> txStream = keys.stream()
-        .map((key) -> calculateTxIndexEntry(getCollatingValue(key), null, indexChanges)).filter(Objects::nonNull).sorted(
-            (entryOne, entryTwo) -> ascSortOrder
-                ? ODefaultComparator.INSTANCE.compare(entryOne.first, entryTwo.first)
-                : -ODefaultComparator.INSTANCE.compare(entryOne.first, entryTwo.first));
+        .map((key) -> calculateTxIndexEntry(getCollatingValue(key), null, indexChanges)).filter(Objects::nonNull)
+        .sorted((entryOne, entryTwo) -> {
+          if (ascSortOrder) {
+            return ODefaultComparator.INSTANCE.compare(entryOne.first, entryTwo.first);
+          } else {
+            return -ODefaultComparator.INSTANCE.compare(entryOne.first, entryTwo.first);
+          }
+        });
 
     if (indexChanges.cleared) {
       return IndexStreamSecurityDecorator.decorateStream(this, txStream);

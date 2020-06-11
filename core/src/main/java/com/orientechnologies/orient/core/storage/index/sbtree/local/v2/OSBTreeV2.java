@@ -251,9 +251,12 @@ public class OSBTreeV2<K, V> extends ODurableComponent implements OSBTree<K, V> 
           OCacheEntry keyBucketCacheEntry = loadPageForWrite(atomicOperation, fileId, bucketSearchResult.getLastPathItem(), false,
               true);
           OSBTreeBucketV2<K, V> keyBucket = new OSBTreeBucketV2<>(keyBucketCacheEntry);
-
-          final byte[] oldRawValue = bucketSearchResult.itemIndex > -1 ? keyBucket
-              .getRawValue(bucketSearchResult.itemIndex, keySerializer, valueSerializer) : null;
+          final byte[] oldRawValue;
+          if (bucketSearchResult.itemIndex > -1) {
+            oldRawValue = keyBucket.getRawValue(bucketSearchResult.itemIndex, keySerializer, valueSerializer);
+          } else {
+            oldRawValue = null;
+          }
           final V oldValue;
           if (oldRawValue == null) {
             oldValue = null;
@@ -1451,10 +1454,15 @@ public class OSBTreeV2<K, V> extends ODurableComponent implements OSBTree<K, V> 
               @SuppressWarnings("ObjectAllocationInLoop")
               OSBTreeBucketV2.SBTreeEntry<K, V> entry = bucket.getEntry(itemIndex, keySerializer, valueSerializer);
 
-              if (toKey != null && (toKeyInclusive
-                  ? comparator.compare(entry.key, toKey) > 0
-                  : comparator.compare(entry.key, toKey) >= 0)) {
-                return true;
+              if (toKey != null) {
+                if (toKeyInclusive) {
+                  if (comparator.compare(entry.key, toKey) > 0) {
+                    return true;
+                  }
+                } else if (comparator.compare(entry.key, toKey) >= 0) {
+                  return true;
+                }
+
               }
 
               //noinspection ObjectAllocationInLoop
@@ -1650,10 +1658,14 @@ public class OSBTreeV2<K, V> extends ODurableComponent implements OSBTree<K, V> 
               @SuppressWarnings("ObjectAllocationInLoop")
               OSBTreeBucketV2.SBTreeEntry<K, V> entry = bucket.getEntry(itemIndex, keySerializer, valueSerializer);
 
-              if (fromKey != null && (fromKeyInclusive
-                  ? comparator.compare(entry.key, fromKey) < 0
-                  : comparator.compare(entry.key, fromKey) <= 0)) {
-                return true;
+              if (fromKey != null) {
+                if (fromKeyInclusive) {
+                  if (comparator.compare(entry.key, fromKey) < 0) {
+                    return true;
+                  }
+                } else if (comparator.compare(entry.key, fromKey) <= 0) {
+                  return true;
+                }
               }
 
               //noinspection ObjectAllocationInLoop

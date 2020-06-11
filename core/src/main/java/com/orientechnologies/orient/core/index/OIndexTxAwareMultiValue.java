@@ -340,9 +340,13 @@ public class OIndexTxAwareMultiValue extends OIndexTxAware<Collection<OIdentifia
       Stream<ORawPair<Object, ORID>> txStream, Stream<ORawPair<Object, ORID>> backedStream, boolean ascOrder) {
     return Streams.mergeSortedSpliterators(txStream,
         backedStream.map((entry) -> calculateTxIndexEntry(entry.first, entry.second, indexChanges)).filter(Objects::nonNull),
-        (entryOne, entryTwo) -> ascOrder
-            ? ODefaultComparator.INSTANCE.compare(getCollatingValue(entryOne.first), getCollatingValue(entryTwo.first))
-            : -ODefaultComparator.INSTANCE.compare(getCollatingValue(entryOne.first), getCollatingValue(entryTwo.first)));
+        (entryOne, entryTwo) -> {
+          if (ascOrder) {
+            return ODefaultComparator.INSTANCE.compare(getCollatingValue(entryOne.first), getCollatingValue(entryTwo.first));
+          } else {
+            return -ODefaultComparator.INSTANCE.compare(getCollatingValue(entryOne.first), getCollatingValue(entryTwo.first));
+          }
+        });
   }
 
   @Override
@@ -427,9 +431,13 @@ public class OIndexTxAwareMultiValue extends OIndexTxAware<Collection<OIdentifia
         return result.stream().map((rid) -> new ORawPair<>(getCollatingValue(key), rid.getIdentity()));
       }
       return null;
-    }).filter(Objects::nonNull).sorted((entryOne, entryTwo) -> ascSortOrder
-        ? ODefaultComparator.INSTANCE.compare(getCollatingValue(entryOne.first), getCollatingValue(entryTwo.first))
-        : -ODefaultComparator.INSTANCE.compare(getCollatingValue(entryOne.first), getCollatingValue(entryTwo.first)));
+    }).filter(Objects::nonNull).sorted((entryOne, entryTwo) -> {
+      if (ascSortOrder) {
+        return ODefaultComparator.INSTANCE.compare(getCollatingValue(entryOne.first), getCollatingValue(entryTwo.first));
+      } else {
+        return -ODefaultComparator.INSTANCE.compare(getCollatingValue(entryOne.first), getCollatingValue(entryTwo.first));
+      }
+    });
 
     if (indexChanges.cleared) {
       return IndexStreamSecurityDecorator.decorateStream(this, txStream);

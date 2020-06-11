@@ -43,9 +43,8 @@ import java.util.Locale;
 
 /**
  * Represents an object field as value in the query condition.
- * 
+ *
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
- * 
  */
 public abstract class OSQLFilterItemAbstract implements OSQLFilterItem {
 
@@ -55,8 +54,9 @@ public abstract class OSQLFilterItemAbstract implements OSQLFilterItem {
   }
 
   public OSQLFilterItemAbstract(final OBaseParser iQueryToParse, final String iText) {
-    final List<String> parts = OStringSerializerHelper.smartSplit(iText, new char[] { '.', '[', ']' }, new boolean[] { false,
-        false, true }, new boolean[] { false, true, false }, 0, -1, false, true, false, false, OCommonConst.EMPTY_CHAR_ARRAY);
+    final List<String> parts = OStringSerializerHelper
+        .smartSplit(iText, new char[] { '.', '[', ']' }, new boolean[] { false, false, true }, new boolean[] { false, true, false },
+            0, -1, false, true, false, false, OCommonConst.EMPTY_CHAR_ARRAY);
 
     setRoot(iQueryToParse, parts.get(0));
 
@@ -69,8 +69,9 @@ public abstract class OSQLFilterItemAbstract implements OSQLFilterItem {
 
         final int pindex = part.indexOf('(');
         if (part.charAt(0) == '[')
-          operationsChain.add(new OPair<OSQLMethodRuntime, Object[]>(new OSQLMethodRuntime(OSQLEngine
-              .getMethod(OSQLMethodMultiValue.NAME)), new Object[] { part }));
+          operationsChain.add(
+              new OPair<OSQLMethodRuntime, Object[]>(new OSQLMethodRuntime(OSQLEngine.getMethod(OSQLMethodMultiValue.NAME)),
+                  new Object[] { part }));
         else if (pindex > -1) {
           final String methodName = part.substring(0, pindex).trim().toLowerCase(Locale.ENGLISH);
 
@@ -79,13 +80,18 @@ public abstract class OSQLFilterItemAbstract implements OSQLFilterItem {
           if (method != null) {
             if (method.getMaxParams() == -1 || method.getMaxParams() > 0) {
               arguments = OStringSerializerHelper.getParameters(part).toArray();
-              if (arguments.length < method.getMinParams()
-                  || (method.getMaxParams() > -1 && arguments.length > method.getMaxParams()))
-                throw new OQueryParsingException(iQueryToParse.parserText, "Syntax error: field operator '"
-                    + method.getName()
-                    + "' needs "
-                    + (method.getMinParams() == method.getMaxParams() ? method.getMinParams() : method.getMinParams() + "-"
-                        + method.getMaxParams()) + " argument(s) while has been received " + arguments.length, 0);
+              if (arguments.length < method.getMinParams() || (method.getMaxParams() > -1 && arguments.length > method
+                  .getMaxParams())) {
+                String params;
+                if (method.getMinParams() == method.getMaxParams()) {
+                  params = "" + method.getMinParams();
+                } else {
+                  params = method.getMinParams() + "-" + method.getMaxParams();
+                }
+                throw new OQueryParsingException(iQueryToParse.parserText,
+                    "Syntax error: field operator '" + method.getName() + "' needs " + params
+                        + " argument(s) while has been received " + arguments.length, 0);
+              }
             } else
               arguments = null;
 
@@ -96,15 +102,22 @@ public abstract class OSQLFilterItemAbstract implements OSQLFilterItem {
             if (f == null)
               // ERROR: METHOD/FUNCTION NOT FOUND OR MISPELLED
               throw new OQueryParsingException(iQueryToParse.parserText,
-                  "Syntax error: function or field operator not recognized between the supported ones: "
-                      + OSQLEngine.getMethodNames(), 0);
+                  "Syntax error: function or field operator not recognized between the supported ones: " + OSQLEngine
+                      .getMethodNames(), 0);
 
             if (f.getMaxParams() == -1 || f.getMaxParams() > 0) {
               arguments = OStringSerializerHelper.getParameters(part).toArray();
-              if (arguments.length + 1 < f.getMinParams() || (f.getMaxParams() > -1 && arguments.length + 1 > f.getMaxParams()))
-                throw new OQueryParsingException(iQueryToParse.parserText, "Syntax error: function '" + f.getName() + "' needs "
-                    + (f.getMinParams() == f.getMaxParams() ? f.getMinParams() : f.getMinParams() + "-" + f.getMaxParams())
-                    + " argument(s) while has been received " + arguments.length, 0);
+              if (arguments.length + 1 < f.getMinParams() || (f.getMaxParams() > -1 && arguments.length + 1 > f.getMaxParams())) {
+                String params;
+                if (f.getMinParams() == f.getMaxParams()) {
+                  params = "" + f.getMinParams();
+                } else {
+                  params = f.getMinParams() + "-" + f.getMaxParams();
+                }
+                throw new OQueryParsingException(iQueryToParse.parserText,
+                    "Syntax error: function '" + f.getName() + "' needs " + params + " argument(s) while has been received "
+                        + arguments.length, 0);
+              }
             } else
               arguments = null;
 
@@ -117,8 +130,9 @@ public abstract class OSQLFilterItemAbstract implements OSQLFilterItem {
           operationsChain.add(new OPair<OSQLMethodRuntime, Object[]>(runtimeMethod, arguments));
 
         } else {
-          operationsChain.add(new OPair<OSQLMethodRuntime, Object[]>(new OSQLMethodRuntime(OSQLEngine
-              .getMethod(OSQLMethodField.NAME)), new Object[] { part }));
+          operationsChain.add(
+              new OPair<OSQLMethodRuntime, Object[]>(new OSQLMethodRuntime(OSQLEngine.getMethod(OSQLMethodField.NAME)),
+                  new Object[] { part }));
         }
       }
     }

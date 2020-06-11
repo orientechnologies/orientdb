@@ -28,7 +28,8 @@ public class OLuceneDirectoryFactory {
 
   public static final String DIRECTORY_PATH = "directory_path";
 
-  public OLuceneDirectory createDirectory(final ODatabaseDocumentInternal database, final String indexName, final ODocument metadata) {
+  public OLuceneDirectory createDirectory(final ODatabaseDocumentInternal database, final String indexName,
+      final ODocument metadata) {
     final String luceneType = metadata.containsField(DIRECTORY_TYPE) ? metadata.<String>field(DIRECTORY_TYPE) : DIRECTORY_MMAP;
     if (database.getStorage().getType().equals(ODatabaseType.MEMORY.name().toLowerCase()) || DIRECTORY_RAM.equals(luceneType)) {
       final Directory dir = new RAMDirectory();
@@ -37,9 +38,14 @@ public class OLuceneDirectoryFactory {
     return createDirectory(database, indexName, metadata, luceneType);
   }
 
-  private OLuceneDirectory createDirectory(final ODatabaseDocumentInternal database, final String indexName, final ODocument metadata,
-      final String luceneType) {
-    final String luceneBasePath = metadata.containsField(DIRECTORY_PATH) ? metadata.<String>field(DIRECTORY_PATH) : OLUCENE_BASE_DIR;
+  private OLuceneDirectory createDirectory(final ODatabaseDocumentInternal database, final String indexName,
+      final ODocument metadata, final String luceneType) {
+    final String luceneBasePath;
+    if (metadata.containsField(DIRECTORY_PATH)) {
+      luceneBasePath = metadata.<String>field(DIRECTORY_PATH);
+    } else {
+      luceneBasePath = OLUCENE_BASE_DIR;
+    }
     final Path luceneIndexPath = Paths.get(database.getStorage().getConfiguration().getDirectory(), luceneBasePath, indexName);
     try {
       Directory dir = null;
