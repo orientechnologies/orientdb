@@ -24,12 +24,12 @@ import com.orientechnologies.orient.client.binary.OChannelBinaryAsynchClient;
 import com.orientechnologies.orient.core.config.OContextConfiguration;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.TimeUnit;
+
+import static com.orientechnologies.orient.core.config.OGlobalConfiguration.*;
 
 /**
  * Manages network connections against OrientDB servers. All the connection pools are managed in a Map<url,pool>, but in the future
@@ -42,10 +42,25 @@ public class ORemoteConnectionManager {
 
   protected final ConcurrentMap<String, ORemoteConnectionPool> connections;
   protected final long                                         timeout;
+  protected final long                                         idleTimeout;
+  private final   TimerTask                                    idleTask;
 
-  public ORemoteConnectionManager(final long iTimeout) {
+  public ORemoteConnectionManager(final OContextConfiguration clientConfiguration, Timer timer) {
     connections = new ConcurrentHashMap<String, ORemoteConnectionPool>();
-    timeout = iTimeout;
+    timeout = clientConfiguration.getValueAsLong(NETWORK_LOCK_TIMEOUT);
+    int idleSecs = clientConfiguration.getValueAsInteger(CLIENT_CHANNEL_IDLE_TIMEOUT);
+    this.idleTimeout = TimeUnit.MILLISECONDS.convert(idleSecs, TimeUnit.SECONDS);
+    if (clientConfiguration.getValueAsBoolean(CLIENT_CHANNEL_IDLE_CLOSE)) {
+      idleTask = new TimerTask() {
+        @Override
+        public void run() {
+          checkIdle();
+        }
+      };
+      timer.schedule(this.idleTask, this.idleTimeout / 3);
+    } else {
+      idleTask = null;
+    }
   }
 
   public void close() {
@@ -54,6 +69,9 @@ public class ORemoteConnectionManager {
     }
 
     connections.clear();
+    if (idleTask != null) {
+      idleTask.cancel();
+    }
   }
 
   public OChannelBinaryAsynchClient acquire(String iServerURL, final OContextConfiguration clientConfiguration,
@@ -82,7 +100,7 @@ public class ORemoteConnectionManager {
         if (max != null)
           maxPool = Integer.parseInt(max.toString());
 
-        final Object netLockTimeout = clientConfiguration.getValue(OGlobalConfiguration.NETWORK_LOCK_TIMEOUT);
+        final Object netLockTimeout = clientConfiguration.getValue(NETWORK_LOCK_TIMEOUT);
         if (netLockTimeout != null)
           localTimeout = Integer.parseInt(netLockTimeout.toString());
       }
@@ -99,6 +117,7 @@ public class ORemoteConnectionManager {
     try {
       // RETURN THE RESOURCE
       OChannelBinaryAsynchClient ret = pool.acquire(iServerURL, localTimeout, clientConfiguration, iConfiguration, iListener);
+      ret.markInUse();
       return ret;
 
     } catch (RuntimeException e) {
@@ -115,6 +134,7 @@ public class ORemoteConnectionManager {
     if (conn == null)
       return;
 
+    conn.markReturned();
     final ORemoteConnectionPool pool = connections.get(conn.getServerURL());
     if (pool != null) {
       if (!conn.isConnected()) {
@@ -211,6 +231,12 @@ public class ORemoteConnectionManager {
 
   public ORemoteConnectionPool getPool(String url) {
     return connections.get(url);
+  }
+
+  public void checkIdle() {
+    for (Map.Entry<String, ORemoteConnectionPool> entry : connections.entrySet()) {
+      entry.getValue().checkIdle(idleTimeout);
+    }
   }
 
 }

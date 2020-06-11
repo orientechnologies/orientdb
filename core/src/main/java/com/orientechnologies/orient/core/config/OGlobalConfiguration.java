@@ -948,7 +948,12 @@ public enum OGlobalConfiguration {
 
   // DEPRECATED IN 2.0, LEVEL1 CACHE CANNOT BE DISABLED ANYMORE
   @Deprecated CACHE_LOCAL_ENABLED("cache.local.enabled", "Deprecated, Level1 cache cannot be disabled anymore", Boolean.class,
-      true);
+      true),
+
+  CLIENT_CHANNEL_IDLE_CLOSE("client.channel.idleAutoClose", "Enable the automatic close of idle sockets after a specific timeout",
+      Boolean.class, false),
+
+  CLIENT_CHANNEL_IDLE_TIMEOUT("client.channel.idleTimeout", "sockets maximum time idle in seconds", Integer.class, 900);
 
   private final String   key;
   private final Object   defValue;
@@ -1019,7 +1024,6 @@ public enum OGlobalConfiguration {
    * Find the OGlobalConfiguration instance by the key. Key is case insensitive.
    *
    * @param iKey Key to find. It's case insensitive.
-   *
    * @return OGlobalConfiguration instance if found, otherwise null
    */
   public static OGlobalConfiguration findByKey(final String iKey) {
