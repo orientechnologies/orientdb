@@ -21,6 +21,7 @@ package com.orientechnologies.orient.core.command.script;
 
 import com.orientechnologies.common.concur.resource.OPartitionedObjectPool;
 import com.orientechnologies.common.exception.OException;
+import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.util.OCommonConst;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.OCommandContext;
@@ -38,10 +39,9 @@ import java.util.Map.Entry;
 
 /**
  * Executes Script Commands.
- * 
- * @see OCommandScript
+ *
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
- * 
+ * @see OCommandScript
  */
 public class OCommandExecutorFunction extends OCommandExecutorAbstract {
   protected OCommandFunction request;
@@ -73,10 +73,11 @@ public class OCommandExecutorFunction extends OCommandExecutorAbstract {
     final OPartitionedObjectPool.PoolEntry<ScriptEngine> entry = scriptManager.acquireDatabaseEngine(db.getName(), f.getLanguage());
     final ScriptEngine scriptEngine = entry.object;
     try {
-      final Bindings binding = scriptManager.bind(scriptEngine,scriptEngine.getBindings(ScriptContext.ENGINE_SCOPE), db, iContext, iArgs);
+      final Bindings binding = scriptManager.bind(scriptEngine, scriptEngine.getBindings(ScriptContext.ENGINE_SCOPE), db, iContext, iArgs);
 
+      Object result = null;
+      Object finalResult = null;
       try {
-        final Object result;
 
         if (scriptEngine instanceof Invocable) {
           // INVOKE AS FUNCTION. PARAMS ARE PASSED BY POSITION
@@ -97,19 +98,24 @@ public class OCommandExecutorFunction extends OCommandExecutorAbstract {
           final Object[] args = iArgs == null ? null : iArgs.values().toArray();
           result = scriptEngine.eval(scriptManager.getFunctionInvoke(f, args), binding);
         }
-        return OCommandExecutorUtility.transformResult(scriptManager.handleResult(f.getLanguage(),result,scriptEngine,binding,db));
+        finalResult= scriptManager.handleResult(f.getLanguage(), result, scriptEngine, binding, db);
+        return OCommandExecutorUtility.transformResult(finalResult);
 
       } catch (ScriptException e) {
         throw OException.wrapException(
-            new OCommandScriptException("Error on execution of the script", request.getText(), e.getColumnNumber()), e);
+                new OCommandScriptException("Error on execution of the script", request.getText(), e.getColumnNumber()), e);
       } catch (NoSuchMethodException e) {
+        throw OException.wrapException(new OCommandScriptException("Error on execution of the script", request.getText(), 0), e);
+      } catch (IllegalArgumentException e) {
+        OLogManager.instance().error(this, "Error on execution of " + f.getLanguage() + " script." +
+                " Result is " + (result == null ? "null" : result.getClass().getName()) + " " +
+                " Handled result is " + (finalResult == null ? "null" : finalResult.getClass().getName()), e);
         throw OException.wrapException(new OCommandScriptException("Error on execution of the script", request.getText(), 0), e);
       } catch (OCommandScriptException e) {
         // PASS THROUGH
         throw e;
-
       } finally {
-        scriptManager.unbind(scriptEngine,binding, iContext, iArgs);
+        scriptManager.unbind(scriptEngine, binding, iContext, iArgs);
       }
     } finally {
       scriptManager.releaseDatabaseEngine(f.getLanguage(), db.getName(), entry);
