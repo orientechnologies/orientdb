@@ -92,8 +92,6 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoper
 import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurablePage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.*;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.common.WriteableWALRecord;
-import com.orientechnologies.orient.core.storage.impl.local.statistic.OPerformanceStatisticManager;
-import com.orientechnologies.orient.core.storage.impl.local.statistic.OSessionStoragePerformanceStatistic;
 import com.orientechnologies.orient.core.storage.index.engine.OHashTableIndexEngine;
 import com.orientechnologies.orient.core.storage.index.engine.OSBTreeIndexEngine;
 import com.orientechnologies.orient.core.storage.index.sbtreebonsai.local.OSBTreeBonsaiLocal;
@@ -154,10 +152,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
   /**
    * Error which happened inside of storage or during data processing related to this storage.
    */
-  private final AtomicReference<Error>       jvmError                    = new AtomicReference<>();
-  private final OPerformanceStatisticManager performanceStatisticManager = new OPerformanceStatisticManager(this,
-      OGlobalConfiguration.STORAGE_PROFILER_SNAPSHOT_INTERVAL.getValueAsInteger() * 1000000L,
-      OGlobalConfiguration.STORAGE_PROFILER_CLEANUP_INTERVAL.getValueAsInteger() * 1000000L);
+  private final AtomicReference<Error> jvmError = new AtomicReference<>();
 
   protected volatile OWriteAheadLog          writeAheadLog;
   private            OStorageRecoverListener recoverListener;
@@ -1735,47 +1730,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       } finally {
         stateLock.releaseReadLock();
       }
-    } catch (final RuntimeException ee) {
-      throw logAndPrepareForRethrow(ee);
-    } catch (final Error ee) {
-      throw logAndPrepareForRethrow(ee);
-    } catch (final Throwable t) {
-      throw logAndPrepareForRethrow(t);
-    }
-  }
-
-  protected OPerformanceStatisticManager getPerformanceStatisticManager() {
-    return performanceStatisticManager;
-  }
-
-  /**
-   * Starts to gather information about storage performance for current thread. Details which performance characteristics are
-   * gathered can be found at {@link OSessionStoragePerformanceStatistic}.
-   *
-   * @see #completeGatheringPerformanceStatisticForCurrentThread()
-   */
-  public void startGatheringPerformanceStatisticForCurrentThread() {
-    try {
-      performanceStatisticManager.startThreadMonitoring();
-    } catch (final RuntimeException ee) {
-      throw logAndPrepareForRethrow(ee);
-    } catch (final Error ee) {
-      throw logAndPrepareForRethrow(ee);
-    } catch (final Throwable t) {
-      throw logAndPrepareForRethrow(t);
-    }
-  }
-
-  /**
-   * Completes gathering performance characteristics for current thread initiated by call of {@link
-   * #startGatheringPerformanceStatisticForCurrentThread()}
-   *
-   * @return Performance statistic gathered after call of {@link #startGatheringPerformanceStatisticForCurrentThread()} or
-   * <code>null</code> if profiling of storage was not started.
-   */
-  public OSessionStoragePerformanceStatistic completeGatheringPerformanceStatisticForCurrentThread() {
-    try {
-      return performanceStatisticManager.stopThreadMonitoring();
     } catch (final RuntimeException ee) {
       throw logAndPrepareForRethrow(ee);
     } catch (final Error ee) {
@@ -4341,50 +4295,41 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
   }
 
   protected void makeFullCheckpoint() {
-    final OSessionStoragePerformanceStatistic statistic = performanceStatisticManager.getSessionPerformanceStatistic();
-    if (statistic != null) {
-      statistic.startFullCheckpointTimer();
-    }
     try {
-      try {
 
-        writeAheadLog.flush();
+      writeAheadLog.flush();
 
-        //so we will be able to cut almost all the log
-        writeAheadLog.appendNewSegment();
+      //so we will be able to cut almost all the log
+      writeAheadLog.appendNewSegment();
 
-        final OLogSequenceNumber lastLSN = writeAheadLog.logFullCheckpointStart();
-        if (lastMetadata != null) {
-          writeAheadLog.log(new MetaDataRecord(lastMetadata));
-        }
-
-        writeCache.flush();
-
-        atomicOperationsTable.compactTable();
-        final long operationSegment = atomicOperationsTable.getSegmentEarliestOperationInProgress();
-        if (operationSegment >= 0) {
-          throw new IllegalStateException("Can not perform full checkpoint if some of atomic operations in progress");
-        }
-
-        writeAheadLog.logFullCheckpointEnd();
-        writeAheadLog.flush();
-
-        writeAheadLog.cutTill(lastLSN);
-
-        if (jvmError.get() == null) {
-          clearStorageDirty();
-        }
-
-      } catch (final IOException ioe) {
-        throw OException.wrapException(new OStorageException("Error during checkpoint creation for storage " + name), ioe);
+      final OLogSequenceNumber lastLSN = writeAheadLog.logFullCheckpointStart();
+      if (lastMetadata != null) {
+        writeAheadLog.log(new MetaDataRecord(lastMetadata));
       }
 
-      fullCheckpointCount++;
-    } finally {
-      if (statistic != null) {
-        statistic.stopFullCheckpointTimer();
+      writeCache.flush();
+
+      atomicOperationsTable.compactTable();
+      final long operationSegment = atomicOperationsTable.getSegmentEarliestOperationInProgress();
+      if (operationSegment >= 0) {
+        throw new IllegalStateException("Can not perform full checkpoint if some of atomic operations in progress");
       }
+
+      writeAheadLog.logFullCheckpointEnd();
+      writeAheadLog.flush();
+
+      writeAheadLog.cutTill(lastLSN);
+
+      if (jvmError.get() == null) {
+        clearStorageDirty();
+      }
+
+    } catch (final IOException ioe) {
+      throw OException.wrapException(new OStorageException("Error during checkpoint creation for storage " + name), ioe);
     }
+
+    fullCheckpointCount++;
+
   }
 
   public long getFullCheckpointCount() {
@@ -5065,12 +5010,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
           writeAheadLog.delete();
         } else {
           writeAheadLog.close();
-        }
-
-        try {
-          performanceStatisticManager.unregisterMBean(name, id);
-        } catch (final Exception e) {
-          OLogManager.instance().error(this, "MBean for write cache cannot be unregistered", e);
         }
 
         postCloseSteps(onDelete, jvmError.get() != null, idGen.getLastId());

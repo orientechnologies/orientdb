@@ -57,8 +57,7 @@ public class ODirectMemoryStorage extends OAbstractPaginatedStorage {
     }
 
     final ODirectMemoryOnlyDiskCache diskCache = new ODirectMemoryOnlyDiskCache(
-        contextConfiguration.getValueAsInteger(OGlobalConfiguration.DISK_CACHE_PAGE_SIZE) * ONE_KB, 1,
-        getPerformanceStatisticManager());
+        contextConfiguration.getValueAsInteger(OGlobalConfiguration.DISK_CACHE_PAGE_SIZE) * ONE_KB, 1);
 
     if (readCache == null) {
       readCache = diskCache;

@@ -31,8 +31,6 @@ import com.orientechnologies.orient.core.storage.cache.local.OBackgroundExceptio
 import com.orientechnologies.orient.core.storage.impl.local.OLowDiskSpaceListener;
 import com.orientechnologies.orient.core.storage.impl.local.OPageIsBrokenListener;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
-import com.orientechnologies.orient.core.storage.impl.local.statistic.OPerformanceStatisticManager;
-import com.orientechnologies.orient.core.storage.impl.local.statistic.OSessionStoragePerformanceStatistic;
 
 import java.nio.file.Path;
 import java.util.HashMap;
@@ -60,14 +58,12 @@ public final class ODirectMemoryOnlyDiskCache extends OAbstractWriteCache implem
 
   private int counter;
 
-  private final int                          pageSize;
-  private final int                          id;
-  private final OPerformanceStatisticManager performanceStatisticManager;
+  private final int pageSize;
+  private final int id;
 
-  ODirectMemoryOnlyDiskCache(final int pageSize, final int id, final OPerformanceStatisticManager performanceStatisticManager) {
+  ODirectMemoryOnlyDiskCache(final int pageSize, final int id) {
     this.pageSize = pageSize;
     this.id = id;
-    this.performanceStatisticManager = performanceStatisticManager;
   }
 
   /**
@@ -206,62 +202,36 @@ public final class ODirectMemoryOnlyDiskCache extends OAbstractWriteCache implem
   }
 
   private OCacheEntry doLoad(final long fileId, final long pageIndex) {
-    final OSessionStoragePerformanceStatistic sessionStoragePerformanceStatistic = performanceStatisticManager
-        .getSessionPerformanceStatistic();
+    final int intId = extractFileId(fileId);
 
-    if (sessionStoragePerformanceStatistic != null) {
-      sessionStoragePerformanceStatistic.startPageReadFromCacheTimer();
+    final MemoryFile memoryFile = getFile(intId);
+    final OCacheEntry cacheEntry = memoryFile.loadPage(pageIndex);
+    if (cacheEntry == null) {
+      return null;
     }
 
-    try {
-      final int intId = extractFileId(fileId);
-
-      final MemoryFile memoryFile = getFile(intId);
-      final OCacheEntry cacheEntry = memoryFile.loadPage(pageIndex);
-      if (cacheEntry == null) {
-        return null;
-      }
-
-      //noinspection SynchronizationOnLocalVariableOrMethodParameter
-      synchronized (cacheEntry) {
-        cacheEntry.incrementUsages();
-      }
-
-      return cacheEntry;
-    } finally {
-      if (sessionStoragePerformanceStatistic != null) {
-        sessionStoragePerformanceStatistic.stopPageReadFromCacheTimer();
-      }
+    //noinspection SynchronizationOnLocalVariableOrMethodParameter
+    synchronized (cacheEntry) {
+      cacheEntry.incrementUsages();
     }
+
+    return cacheEntry;
   }
 
   @Override
   public final OCacheEntry allocateNewPage(final long fileId, final OWriteCache writeCache, final OLogSequenceNumber startLSN) {
-    final OSessionStoragePerformanceStatistic sessionStoragePerformanceStatistic = performanceStatisticManager
-        .getSessionPerformanceStatistic();
+    final int intId = extractFileId(fileId);
 
-    if (sessionStoragePerformanceStatistic != null) {
-      sessionStoragePerformanceStatistic.startPageReadFromCacheTimer();
+    final MemoryFile memoryFile = getFile(intId);
+    final OCacheEntry cacheEntry = memoryFile.addNewPage();
+
+    //noinspection SynchronizationOnLocalVariableOrMethodParameter
+    synchronized (cacheEntry) {
+      cacheEntry.incrementUsages();
     }
 
-    try {
-      final int intId = extractFileId(fileId);
-
-      final MemoryFile memoryFile = getFile(intId);
-      final OCacheEntry cacheEntry = memoryFile.addNewPage();
-
-      //noinspection SynchronizationOnLocalVariableOrMethodParameter
-      synchronized (cacheEntry) {
-        cacheEntry.incrementUsages();
-      }
-
-      cacheEntry.acquireExclusiveLock();
-      return cacheEntry;
-    } finally {
-      if (sessionStoragePerformanceStatistic != null) {
-        sessionStoragePerformanceStatistic.stopPageReadFromCacheTimer();
-      }
-    }
+    cacheEntry.acquireExclusiveLock();
+    return cacheEntry;
   }
 
   @Override
