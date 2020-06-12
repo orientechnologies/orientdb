@@ -97,7 +97,6 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoper
 import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperationsManager;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurablePage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.*;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.cas.OCASDiskWriteAheadLog;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.cas.OWriteableWALRecord;
 import com.orientechnologies.orient.core.storage.impl.local.statistic.OPerformanceStatisticManager;
 import com.orientechnologies.orient.core.storage.impl.local.statistic.OSessionStoragePerformanceStatistic;
@@ -111,12 +110,10 @@ import com.orientechnologies.orient.core.tx.OTransactionInternal;
 
 import java.io.*;
 import java.nio.ByteBuffer;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
-import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Future;
@@ -5777,12 +5774,11 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       OLogManager.instance()
           .errorNoDb(this, "Data restore was paused because broken WAL page was found. The rest of changes will be rolled back.",
               e);
+      throw e;
     } catch (final RuntimeException e) {
-      OLogManager.instance().errorNoDb(this,
-          "Data restore was paused because of exception. The rest of changes will be rolled back and WAL files will be backed up."
-              + " Please report issue about this exception to bug tracker and provide WAL files which are backed up in 'wal_backup' directory.",
-          e);
-      backUpWAL(e);
+      OLogManager.instance()
+          .errorNoDb(this, "Data restore was paused because of exception. The rest of changes will be rolled back.", e);
+      throw e;
     }
 
     if (atLeastOnePageUpdate.getValue()) {
@@ -5826,59 +5822,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     operationUnitsById.put(operationUnitId, operationList);
 
     return operationList;
-  }
-
-  private void backUpWAL(final Exception e) {
-    try {
-      final File rootDir = new File(configuration.getDirectory());
-      final File backUpDir = new File(rootDir, "wal_backup");
-      if (!backUpDir.exists()) {
-        final boolean created = backUpDir.mkdir();
-        if (!created) {
-          OLogManager.instance().error(this, "Cannot create directory for backup files " + backUpDir.getAbsolutePath(), null);
-          return;
-        }
-      }
-
-      final Date date = new Date();
-      final SimpleDateFormat dateFormat = new SimpleDateFormat("dd_MM_yy_HH_mm_ss");
-      final String strDate = dateFormat.format(date);
-      final String archiveName = "wal_backup_" + strDate + ".zip";
-      final String metadataName = "wal_metadata_" + strDate + ".txt";
-
-      final File archiveFile = new File(backUpDir, archiveName);
-      if (!archiveFile.createNewFile()) {
-        OLogManager.instance().error(this, "Cannot create backup file " + archiveFile.getAbsolutePath(), null);
-        return;
-      }
-
-      try (final FileOutputStream archiveOutputStream = new FileOutputStream(archiveFile)) {
-        try (final ZipOutputStream archiveZipOutputStream = new ZipOutputStream(new BufferedOutputStream(archiveOutputStream))) {
-
-          final ZipEntry metadataEntry = new ZipEntry(metadataName);
-
-          archiveZipOutputStream.putNextEntry(metadataEntry);
-
-          final PrintWriter metadataFileWriter = new PrintWriter(
-              new OutputStreamWriter(archiveZipOutputStream, StandardCharsets.UTF_8));
-          metadataFileWriter.append("Storage name : ").append(getName()).append("\r\n");
-          metadataFileWriter.append("Date : ").append(strDate).append("\r\n");
-          metadataFileWriter.append("Stacktrace : \r\n");
-          e.printStackTrace(metadataFileWriter);
-          metadataFileWriter.flush();
-          archiveZipOutputStream.closeEntry();
-
-          final List<String> walPaths = ((OCASDiskWriteAheadLog) writeAheadLog).getWalFiles();
-          for (final String walSegment : walPaths) {
-            archiveEntry(archiveZipOutputStream, walSegment);
-          }
-
-          archiveEntry(archiveZipOutputStream, ((OCASDiskWriteAheadLog) writeAheadLog).getWMRFile().toString());
-        }
-      }
-    } catch (final IOException ioe) {
-      OLogManager.instance().error(this, "Error during WAL backup", ioe);
-    }
   }
 
   private static void archiveEntry(final ZipOutputStream archiveZipOutputStream, final String walSegment) throws IOException {
