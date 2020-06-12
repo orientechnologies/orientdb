@@ -41,9 +41,7 @@ import com.orientechnologies.orient.core.metadata.schema.clusterselection.OClust
 import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.metadata.security.ORule;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.storage.OAutoshardedStorage;
-import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.OStorageProxy;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 
@@ -327,6 +325,8 @@ public abstract class OSchemaShared implements OCloseable {
   public void reload(ODatabaseDocumentInternal database) {
     rwSpinLock.acquireWriteLock();
     try {
+      ((ORecordId) document.getIdentity()).fromString(database.getStorage().getConfiguration().getSchemaRecordId());
+      //noinspection NonAtomicOperationOnVolatileField
       this.document = database.reload(this.document, null, true, true);
       fromStream();
       forceSnapshot(database);
@@ -972,7 +972,7 @@ public abstract class OSchemaShared implements OCloseable {
   }
 
   public void sendCommand(ODatabaseDocumentInternal database, String command) {
-    throw  new UnsupportedOperationException();
+    throw new UnsupportedOperationException();
   }
 
 }

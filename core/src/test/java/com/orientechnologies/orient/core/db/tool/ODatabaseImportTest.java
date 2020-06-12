@@ -49,7 +49,7 @@ public class ODatabaseImportTest {
 
   @Test
   public void exportImportExcludeClusters() throws IOException {
-    ODatabaseDocument db = new ODatabaseDocumentTx("memory:" + ODatabaseImportTest.class.getSimpleName()+"_excludeclusters");
+    ODatabaseDocument db = new ODatabaseDocumentTx("memory:" + ODatabaseImportTest.class.getSimpleName() + "_excludeclusters");
     db.create();
     db.getMetadata().getSchema().createClass("SimpleClass");
     ByteArrayOutputStream output = new ByteArrayOutputStream();

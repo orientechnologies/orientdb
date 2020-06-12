@@ -16,6 +16,7 @@
 package com.orientechnologies.orient.test.database.auto;
 
 import com.orientechnologies.orient.client.db.ODatabaseHelper;
+import com.orientechnologies.orient.client.remote.ODatabaseImportRemote;
 import com.orientechnologies.orient.client.remote.OEngineRemote;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
@@ -102,20 +103,39 @@ public class CRUDObjectInheritanceTestSchemaFull extends ObjectDBBaseTest {
       } else {
         importDatabase.open("admin", "admin");
       }
-      ODatabaseImport impor = new ODatabaseImport(importDatabase, EXPORT_DIR, listener);
 
-      // UNREGISTER ALL THE HOOKS
-      for (ORecordHook hook : new ArrayList<ORecordHook>(importDatabase.getHooks().keySet())) {
-        importDatabase.unregisterHook(hook);
+      if (importDatabase.isRemote()) {
+        ODatabaseImportRemote impor = new ODatabaseImportRemote(importDatabase, EXPORT_DIR, listener);
+
+        // UNREGISTER ALL THE HOOKS
+        for (ORecordHook hook : new ArrayList<ORecordHook>(importDatabase.getHooks().keySet())) {
+          importDatabase.unregisterHook(hook);
+        }
+
+        impor.importDatabase();
+        impor.close();
+
+        importDatabase.close();
+        final File importDir = new File(EXPORT_DIR);
+        importDir.delete();
+      } else {
+
+
+        ODatabaseImport impor = new ODatabaseImport(importDatabase, EXPORT_DIR, listener);
+
+        // UNREGISTER ALL THE HOOKS
+        for (ORecordHook hook : new ArrayList<ORecordHook>(importDatabase.getHooks().keySet())) {
+          importDatabase.unregisterHook(hook);
+        }
+
+        impor.setDeleteRIDMapping(true);
+        impor.importDatabase();
+        impor.close();
+
+        importDatabase.close();
+        final File importDir = new File(EXPORT_DIR);
+        importDir.delete();
       }
-
-      impor.setDeleteRIDMapping(true);
-      impor.importDatabase();
-      impor.close();
-
-      importDatabase.close();
-      final File importDir = new File(EXPORT_DIR);
-      importDir.delete();
     } catch (IOException e) {
       Assert.fail("Export import didn't go as expected", e);
     }

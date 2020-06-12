@@ -41,7 +41,7 @@ public class OSecurityPolicy {
   }
 
   public String getCreateRule() {
-    return element.getProperty("create");
+    return element == null ? null : element.getProperty("create");
   }
 
   public void setCreateRule(String rule) throws IllegalArgumentException {
@@ -50,7 +50,7 @@ public class OSecurityPolicy {
   }
 
   public String getReadRule() {
-    return element.getProperty("read");
+    return element == null ? null : element.getProperty("read");
   }
 
   public void setReadRule(String rule) throws IllegalArgumentException {
@@ -59,7 +59,7 @@ public class OSecurityPolicy {
   }
 
   public String getBeforeUpdateRule() {
-    return element.getProperty("beforeUpdate");
+    return element == null ? null : element.getProperty("beforeUpdate");
   }
 
   public void setBeforeUpdateRule(String rule) throws IllegalArgumentException {
@@ -68,7 +68,7 @@ public class OSecurityPolicy {
   }
 
   public String getAfterUpdateRule() {
-    return element.getProperty("afterUpdate");
+    return element == null ? null : element.getProperty("afterUpdate");
   }
 
   public void setAfterUpdateRule(String rule) throws IllegalArgumentException {
@@ -77,7 +77,7 @@ public class OSecurityPolicy {
   }
 
   public String getDeleteRule() {
-    return element.getProperty("delete");
+    return element == null ? null : element.getProperty("delete");
   }
 
   public void setDeleteRule(String rule) throws IllegalArgumentException {
@@ -86,7 +86,7 @@ public class OSecurityPolicy {
   }
 
   public String getExecuteRule() {
-    return element.getProperty("execute");
+    return element == null ? null : element.getProperty("execute");
   }
 
   public void setExecuteRule(String rule) throws IllegalArgumentException {
