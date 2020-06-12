@@ -38,7 +38,7 @@ import java.util.concurrent.locks.ReentrantLock;
 
 public class ONative {
   private static volatile OCLibrary C_LIBRARY;
-  private static final    String    DEFAULT_MEMORY_CGROUP_PATH = "/sys/fs/memory";
+  private static final    String    DEFAULT_MEMORY_CGROUP_PATH = "/sys/fs/cgroup/memory";
 
   private static volatile ONative instance = null;
   private static final    Lock    initLock = new ReentrantLock();
@@ -475,7 +475,7 @@ public class ONative {
               continue;
             }
 
-            final String fsType = fsParts[0];
+            final String fsType = fsParts[2];
             //all cgroup controllers have "cgroup" as file system type
             if (fsType.equals("cgroup")) {
               //get mounting path of cgroup
