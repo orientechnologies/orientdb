@@ -1029,9 +1029,6 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract impleme
           this.getSharedContext().getFunctionLibrary().droppedFunction(doc);
           sharedContext.getOrientDB().getScriptManager().close(this.getName());
         }
-        if (clazz.isOuser() || clazz.isOrole() || clazz.isSubClassOf(OSecurityPolicy.class.getSimpleName())) {
-          sharedContext.getSecurity().incrementVersion(this);
-        }
         if (clazz.isSequence()) {
           ((OSequenceLibraryProxy) getMetadata().getSequenceLibrary()).getDelegate().onSequenceDropped(this, doc);
         }
