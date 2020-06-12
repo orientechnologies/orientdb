@@ -21,25 +21,11 @@ package com.orientechnologies.common.jna;
 
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.util.OMemory;
-import com.sun.jna.LastErrorException;
-import com.sun.jna.Native;
-import com.sun.jna.NativeLong;
-import com.sun.jna.Platform;
-import com.sun.jna.Pointer;
+import com.sun.jna.*;
 import com.sun.jna.ptr.PointerByReference;
 
-import javax.management.AttributeNotFoundException;
-import javax.management.InstanceNotFoundException;
-import javax.management.MBeanException;
-import javax.management.MBeanServer;
-import javax.management.MalformedObjectNameException;
-import javax.management.ObjectName;
-import javax.management.ReflectionException;
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileReader;
-import java.io.IOException;
+import javax.management.*;
+import java.io.*;
 import java.lang.management.ManagementFactory;
 import java.nio.ByteBuffer;
 import java.util.concurrent.locks.Lock;
@@ -47,7 +33,7 @@ import java.util.concurrent.locks.ReentrantLock;
 
 public class ONative {
   private static volatile OCLibrary C_LIBRARY;
-  private static final    String    DEFAULT_MEMORY_CGROUP_PATH = "/sys/fs/memory";
+  private static final    String    DEFAULT_MEMORY_CGROUP_PATH = "/sys/fs/cgroup/memory";
 
   private static volatile ONative instance = null;
   private static final    Lock    initLock = new ReentrantLock();
@@ -455,7 +441,7 @@ public class ONative {
               continue;
             }
 
-            final String fsType = fsParts[0];
+            final String fsType = fsParts[2];
             //all cgroup controllers have "cgroup" as file system type
             if (fsType.equals("cgroup")) {
               //get mounting path of cgroup
