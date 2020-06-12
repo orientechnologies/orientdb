@@ -39,24 +39,24 @@ public class OGraphSONUtility {
   private static final JsonFactory     jsonFactory     = new MappingJsonFactory();
   private static final String          EMPTY_STRING    = "";
 
-  private static final ObjectMapper    mapper          = new ObjectMapper();
+  private static final ObjectMapper mapper = new ObjectMapper();
 
-  private final GraphSONMode           mode;
-  private final List<String>           vertexPropertyKeys;
-  private final List<String>           edgePropertyKeys;
-  private final ElementFactory         factory;
-  private final boolean                hasEmbeddedTypes;
-  private final ElementPropertiesRule  vertexPropertiesRule;
-  private final ElementPropertiesRule  edgePropertiesRule;
-  private final boolean                normalized;
+  private final GraphSONMode          mode;
+  private final List<String>          vertexPropertyKeys;
+  private final List<String>          edgePropertyKeys;
+  private final ElementFactory        factory;
+  private final boolean               hasEmbeddedTypes;
+  private final ElementPropertiesRule vertexPropertiesRule;
+  private final ElementPropertiesRule edgePropertiesRule;
+  private final boolean               normalized;
 
-  private final boolean                includeReservedVertexId;
-  private final boolean                includeReservedEdgeId;
-  private final boolean                includeReservedVertexType;
-  private final boolean                includeReservedEdgeType;
-  private final boolean                includeReservedEdgeLabel;
-  private final boolean                includeReservedEdgeOutV;
-  private final boolean                includeReservedEdgeInV;
+  private final boolean includeReservedVertexId;
+  private final boolean includeReservedEdgeId;
+  private final boolean includeReservedVertexType;
+  private final boolean includeReservedEdgeType;
+  private final boolean includeReservedEdgeLabel;
+  private final boolean includeReservedEdgeOutV;
+  private final boolean includeReservedEdgeInV;
 
   /**
    * A GraphSONUtiltiy that includes all properties of vertices and edges.
@@ -259,14 +259,10 @@ public class OGraphSONUtility {
   /**
    * Reads an individual Vertex from JSON. The vertex must match the accepted GraphSON format.
    *
-   * @param json
-   *          a single vertex in GraphSON format as Jettison JSONObject
-   * @param factory
-   *          the factory responsible for constructing graph elements
-   * @param mode
-   *          the mode of the GraphSON
-   * @param propertyKeys
-   *          a list of keys to include on reading of element properties
+   * @param json         a single vertex in GraphSON format as Jettison JSONObject
+   * @param factory      the factory responsible for constructing graph elements
+   * @param mode         the mode of the GraphSON
+   * @param propertyKeys a list of keys to include on reading of element properties
    */
   public static Vertex vertexFromJson(final JSONObject json, final ElementFactory factory, final GraphSONMode mode,
       final Set<String> propertyKeys) throws IOException {
@@ -277,14 +273,10 @@ public class OGraphSONUtility {
   /**
    * Reads an individual Vertex from JSON. The vertex must match the accepted GraphSON format.
    *
-   * @param json
-   *          a single vertex in GraphSON format as a String.
-   * @param factory
-   *          the factory responsible for constructing graph elements
-   * @param mode
-   *          the mode of the GraphSON
-   * @param propertyKeys
-   *          a list of keys to include on reading of element properties
+   * @param json         a single vertex in GraphSON format as a String.
+   * @param factory      the factory responsible for constructing graph elements
+   * @param mode         the mode of the GraphSON
+   * @param propertyKeys a list of keys to include on reading of element properties
    */
   public static Vertex vertexFromJson(final String json, final ElementFactory factory, final GraphSONMode mode,
       final Set<String> propertyKeys) throws IOException {
@@ -295,14 +287,10 @@ public class OGraphSONUtility {
   /**
    * Reads an individual Vertex from JSON. The vertex must match the accepted GraphSON format.
    *
-   * @param json
-   *          a single vertex in GraphSON format as an InputStream.
-   * @param factory
-   *          the factory responsible for constructing graph elements
-   * @param mode
-   *          the mode of the GraphSON
-   * @param propertyKeys
-   *          a list of keys to include on reading of element properties
+   * @param json         a single vertex in GraphSON format as an InputStream.
+   * @param factory      the factory responsible for constructing graph elements
+   * @param mode         the mode of the GraphSON
+   * @param propertyKeys a list of keys to include on reading of element properties
    */
   public static Vertex vertexFromJson(final InputStream json, final ElementFactory factory, final GraphSONMode mode,
       final Set<String> propertyKeys) throws IOException {
@@ -313,14 +301,10 @@ public class OGraphSONUtility {
   /**
    * Reads an individual Vertex from JSON. The vertex must match the accepted GraphSON format.
    *
-   * @param json
-   *          a single vertex in GraphSON format as Jackson JsonNode
-   * @param factory
-   *          the factory responsible for constructing graph elements
-   * @param mode
-   *          the mode of the GraphSON
-   * @param propertyKeys
-   *          a list of keys to include on reading of element properties
+   * @param json         a single vertex in GraphSON format as Jackson JsonNode
+   * @param factory      the factory responsible for constructing graph elements
+   * @param mode         the mode of the GraphSON
+   * @param propertyKeys a list of keys to include on reading of element properties
    */
   public static Vertex vertexFromJson(final JsonNode json, final ElementFactory factory, final GraphSONMode mode,
       final Set<String> propertyKeys) throws IOException {
@@ -331,14 +315,10 @@ public class OGraphSONUtility {
   /**
    * Reads an individual Edge from JSON. The edge must match the accepted GraphSON format.
    *
-   * @param json
-   *          a single edge in GraphSON format as a Jettison JSONObject
-   * @param factory
-   *          the factory responsible for constructing graph elements
-   * @param mode
-   *          the mode of the GraphSON
-   * @param propertyKeys
-   *          a list of keys to include when reading of element properties
+   * @param json         a single edge in GraphSON format as a Jettison JSONObject
+   * @param factory      the factory responsible for constructing graph elements
+   * @param mode         the mode of the GraphSON
+   * @param propertyKeys a list of keys to include when reading of element properties
    */
   public static Edge edgeFromJson(final JSONObject json, final Vertex out, final Vertex in, final ElementFactory factory,
       final GraphSONMode mode, final Set<String> propertyKeys) throws IOException {
@@ -349,14 +329,10 @@ public class OGraphSONUtility {
   /**
    * Reads an individual Edge from JSON. The edge must match the accepted GraphSON format.
    *
-   * @param json
-   *          a single edge in GraphSON format as a String
-   * @param factory
-   *          the factory responsible for constructing graph elements
-   * @param mode
-   *          the mode of the GraphSON
-   * @param propertyKeys
-   *          a list of keys to include when reading of element properties
+   * @param json         a single edge in GraphSON format as a String
+   * @param factory      the factory responsible for constructing graph elements
+   * @param mode         the mode of the GraphSON
+   * @param propertyKeys a list of keys to include when reading of element properties
    */
   public static Edge edgeFromJson(final String json, final Vertex out, final Vertex in, final ElementFactory factory,
       final GraphSONMode mode, final Set<String> propertyKeys) throws IOException {
@@ -367,14 +343,10 @@ public class OGraphSONUtility {
   /**
    * Reads an individual Edge from JSON. The edge must match the accepted GraphSON format.
    *
-   * @param json
-   *          a single edge in GraphSON format as an InputStream
-   * @param factory
-   *          the factory responsible for constructing graph elements
-   * @param mode
-   *          the mode of the GraphSON
-   * @param propertyKeys
-   *          a list of keys to include when reading of element properties
+   * @param json         a single edge in GraphSON format as an InputStream
+   * @param factory      the factory responsible for constructing graph elements
+   * @param mode         the mode of the GraphSON
+   * @param propertyKeys a list of keys to include when reading of element properties
    */
   public static Edge edgeFromJson(final InputStream json, final Vertex out, final Vertex in, final ElementFactory factory,
       final GraphSONMode mode, final Set<String> propertyKeys) throws IOException {
@@ -385,14 +357,10 @@ public class OGraphSONUtility {
   /**
    * Reads an individual Edge from JSON. The edge must match the accepted GraphSON format.
    *
-   * @param json
-   *          a single edge in GraphSON format as a Jackson JsonNode
-   * @param factory
-   *          the factory responsible for constructing graph elements
-   * @param mode
-   *          the mode of the GraphSON
-   * @param propertyKeys
-   *          a list of keys to include when reading of element properties
+   * @param json         a single edge in GraphSON format as a Jackson JsonNode
+   * @param factory      the factory responsible for constructing graph elements
+   * @param mode         the mode of the GraphSON
+   * @param propertyKeys a list of keys to include when reading of element properties
    */
   public static Edge edgeFromJson(final JsonNode json, final Vertex out, final Vertex in, final ElementFactory factory,
       final GraphSONMode mode, final Set<String> propertyKeys) throws IOException {
@@ -400,43 +368,13 @@ public class OGraphSONUtility {
     return graphson.edgeFromJson(json, out, in);
   }
 
-  /**
-   * Creates a Jettison JSONObject from a graph element.
-   *
-   * @param element
-   *          the graph element to convert to JSON.
-   * @param propertyKeys
-   *          The property keys at the root of the element to serialize. If null, then all keys are serialized.
-   * @param mode
-   *          the type of GraphSON to be generated.
-   */
-  public static JSONObject jsonFromElement(final Element element, final Set<String> propertyKeys, final GraphSONMode mode)
-      throws JSONException {
-    final OGraphSONUtility graphson = element instanceof Edge ? new OGraphSONUtility(mode, null, null, propertyKeys)
-        : new OGraphSONUtility(mode, null, propertyKeys, null);
-    return graphson.jsonFromElement(element);
-  }
-
-  /**
-   * Creates a Jackson ObjectNode from a graph element.
-   *
-   * @param element
-   *          the graph element to convert to JSON.
-   * @param propertyKeys
-   *          The property keys at the root of the element to serialize. If null, then all keys are serialized.
-   * @param mode
-   *          The type of GraphSON to generate.
-   */
-  public static ObjectNode objectNodeFromElement(final Element element, final Set<String> propertyKeys, final GraphSONMode mode) {
-    final OGraphSONUtility graphson = element instanceof Edge ? new OGraphSONUtility(mode, null, null, propertyKeys)
-        : new OGraphSONUtility(mode, null, propertyKeys, null);
-    return graphson.objectNodeFromElement(element);
-  }
-
   private static ObjectNode objectNodeFromElement(final Element element, final List<String> propertyKeys, final GraphSONMode mode) {
-    final OGraphSONUtility graphson = element instanceof Edge
-        ? new OGraphSONUtility(mode, null, null, new HashSet<String>(propertyKeys))
-        : new OGraphSONUtility(mode, null, new HashSet<String>(propertyKeys), null);
+    final OGraphSONUtility graphson;
+    if (element instanceof Edge) {
+      graphson = new OGraphSONUtility(mode, null, null, new HashSet<String>(propertyKeys));
+    } else {
+      graphson = new OGraphSONUtility(mode, null, new HashSet<String>(propertyKeys), null);
+    }
     return graphson.objectNodeFromElement(element);
   }
 
@@ -490,8 +428,8 @@ public class OGraphSONUtility {
   }
 
   private static boolean isReservedKey(final String key) {
-    return key.equals(GraphSONTokens._ID) || key.equals(GraphSONTokens._TYPE) || key.equals(GraphSONTokens._LABEL)
-        || key.equals(GraphSONTokens._OUT_V) || key.equals(GraphSONTokens._IN_V);
+    return key.equals(GraphSONTokens._ID) || key.equals(GraphSONTokens._TYPE) || key.equals(GraphSONTokens._LABEL) || key
+        .equals(GraphSONTokens._OUT_V) || key.equals(GraphSONTokens._IN_V);
   }
 
   private static Object readProperty(final JsonNode node, final boolean hasEmbeddedTypes) {

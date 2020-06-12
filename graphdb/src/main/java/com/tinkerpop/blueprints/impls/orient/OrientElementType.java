@@ -29,7 +29,7 @@ import java.util.Arrays;
 
 /**
  * Represents a generic element class
- * 
+ *
  * @author Luca Garulli (l.garulli--(at)--orientdb.com) (http://orientdb.com)
  */
 public abstract class OrientElementType extends OClassAbstractDelegate {
@@ -42,24 +42,28 @@ public abstract class OrientElementType extends OClassAbstractDelegate {
 
   @Override
   public OProperty createProperty(final String iPropertyName, final OType iType, final OClass iLinkedClass) {
-    return graph.executeOutsideTx(new OCallable<OProperty, OrientBaseGraph>() {
+    OCallable<OProperty, OrientBaseGraph> outsideTx = new OCallable<OProperty, OrientBaseGraph>() {
       @Override
       public OProperty call(final OrientBaseGraph g) {
         return OrientElementType.super.createProperty(iPropertyName, iType, iLinkedClass);
       }
-    }, "create ", getTypeName(), " property '", iPropertyName, "' as type '", iType.toString(), "' linked class '",
-        iLinkedClass.getName(), "'");
+    };
+    return graph
+        .executeOutsideTx(outsideTx, "create ", getTypeName(), " property '", iPropertyName, "' as type '", iType.toString(),
+            "' linked class '", iLinkedClass.getName(), "'");
   }
 
   @Override
   public OProperty createProperty(final String iPropertyName, final OType iType, final OType iLinkedType) {
-    return graph.executeOutsideTx(new OCallable<OProperty, OrientBaseGraph>() {
+    OCallable<OProperty, OrientBaseGraph> outsideTx = new OCallable<OProperty, OrientBaseGraph>() {
       @Override
       public OProperty call(final OrientBaseGraph g) {
         return OrientElementType.super.createProperty(iPropertyName, iType, iLinkedType);
       }
-    }, "create ", getTypeName(), " property '", iPropertyName, "' as type '", iType.toString(), "' linked type '",
-        iLinkedType.toString(), "'");
+    };
+    return graph
+        .executeOutsideTx(outsideTx, "create ", getTypeName(), " property '", iPropertyName, "' as type '", iType.toString(),
+            "' linked type '", iLinkedType.toString(), "'");
   }
 
   @Override

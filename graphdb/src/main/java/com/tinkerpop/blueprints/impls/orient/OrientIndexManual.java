@@ -70,10 +70,10 @@ public class OrientIndexManual<T extends OrientElement> implements OrientIndex<T
     OIndexInternal rawIndexInternal = rawIndex.getInternal();
     if (rawIndexInternal == null) {
       this.underlying = rawIndex;
+    } else if (rawIndexInternal instanceof OIndexTxAwareMultiValue) {
+      this.underlying = rawIndexInternal;
     } else {
-      this.underlying = rawIndexInternal instanceof OIndexTxAwareMultiValue
-          ? rawIndexInternal
-          : new OIndexTxAwareMultiValue(orientGraph.getRawGraph(), rawIndexInternal);
+      this.underlying = new OIndexTxAwareMultiValue(orientGraph.getRawGraph(), rawIndexInternal);
     }
 
     final ODocument metadata = rawIndex.getMetadata();

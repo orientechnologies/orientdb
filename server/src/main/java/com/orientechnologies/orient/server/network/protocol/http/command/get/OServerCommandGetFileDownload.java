@@ -34,7 +34,6 @@ import com.orientechnologies.orient.server.network.protocol.http.command.OServer
 
 /**
  * @author Luca Molino (molino.luca--at--gmail.com)
- * 
  */
 public class OServerCommandGetFileDownload extends OServerCommandAuthenticatedDbAbstract {
 
@@ -46,8 +45,12 @@ public class OServerCommandGetFileDownload extends OServerCommandAuthenticatedDb
 
     final String fileName = urlParts.length > 3 ? encodeResponseText(urlParts[3]) : "unknown";
 
-    final String fileType = urlParts.length > 5 ? encodeResponseText(urlParts[4]) + '/' + encodeResponseText(urlParts[5])
-        : (urlParts.length > 4 ? encodeResponseText(urlParts[4]) : "");
+    final String fileType;
+    if (urlParts.length > 5) {
+      fileType = encodeResponseText(urlParts[4]) + '/' + encodeResponseText(urlParts[5]);
+    } else {
+      fileType = (urlParts.length > 4 ? encodeResponseText(urlParts[4]) : "");
+    }
 
     final String rid = urlParts[2];
 
@@ -66,8 +69,8 @@ public class OServerCommandGetFileDownload extends OServerCommandAuthenticatedDb
         } else if (response instanceof ODocument) {
           for (OProperty prop : ODocumentInternal.getImmutableSchemaClass(((ODocument) response)).properties()) {
             if (prop.getType().equals(OType.BINARY))
-              sendBinaryFieldFileContent(iRequest, iResponse, OHttpUtils.STATUS_OK_CODE, OHttpUtils.STATUS_OK_DESCRIPTION,
-                  fileType, (byte[]) ((ODocument) response).field(prop.getName()), fileName);
+              sendBinaryFieldFileContent(iRequest, iResponse, OHttpUtils.STATUS_OK_CODE, OHttpUtils.STATUS_OK_DESCRIPTION, fileType,
+                  (byte[]) ((ODocument) response).field(prop.getName()), fileName);
           }
         } else {
           iResponse.send(OHttpUtils.STATUS_INVALIDMETHOD_CODE, "Record requested is not a file nor has a readable schema",
@@ -78,8 +81,9 @@ public class OServerCommandGetFileDownload extends OServerCommandAuthenticatedDb
             "Record requestes not exists", null);
       }
     } catch (Exception e) {
-      iResponse.send(OHttpUtils.STATUS_INTERNALERROR_CODE, OHttpUtils.STATUS_INTERNALERROR_DESCRIPTION,
-          OHttpUtils.CONTENT_TEXT_PLAIN, e.getMessage(), null);
+      iResponse
+          .send(OHttpUtils.STATUS_INTERNALERROR_CODE, OHttpUtils.STATUS_INTERNALERROR_DESCRIPTION, OHttpUtils.CONTENT_TEXT_PLAIN,
+              e.getMessage(), null);
     } finally {
       if (db != null)
         db.close();
