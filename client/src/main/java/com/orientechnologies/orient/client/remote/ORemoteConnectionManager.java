@@ -57,7 +57,8 @@ public class ORemoteConnectionManager {
           checkIdle();
         }
       };
-      timer.schedule(this.idleTask, this.idleTimeout / 3);
+      long delay = this.idleTimeout / 3;
+      timer.schedule(this.idleTask, delay, delay);
     } else {
       idleTask = null;
     }
