@@ -78,6 +78,7 @@ public class ORemoteConnectionPool implements OResourcePoolListener<String, OCha
       } catch (Exception e) {
         OLogManager.instance().debug(this, "Error on closing socket connection", e);
       }
+    iValue.markInUse();
     return canReuse;
   }
 
@@ -89,5 +90,12 @@ public class ORemoteConnectionPool implements OResourcePoolListener<String, OCha
       final OContextConfiguration clientConfiguration) {
     return pool.getResource(iServerURL, timeout, clientConfiguration);
   }
-  
+
+  public void checkIdle(long timeout) {
+    for (OChannelBinaryAsynchClient resource : pool.getResources()) {
+      if (!resource.isInUse() && resource.getLastUse() + timeout < System.currentTimeMillis()) {
+        resource.close();
+      }
+    }
+  }
 }

@@ -1106,15 +1106,18 @@ public enum OGlobalConfiguration { // ENVIRONMENT
    * @Since 3.1
    */
   @OApi(maturity = OApi.MATURITY.NEW)
-
   DISTRIBUTED("distributed", "Enable the clustering mode", Boolean.class, false, false, false, true),
 
   /**
    * @Since 3.1
    */
   @OApi(maturity = OApi.MATURITY.NEW)
+  DISTRIBUTED_NODE_NAME("distributed.nodeName", "Name of the OrientDB node in the cluster", String.class, null, false, false, true),
 
-  DISTRIBUTED_NODE_NAME("distributed.nodeName", "Name of the OrientDB node in the cluster", String.class, null, false, false, true);
+  CLIENT_CHANNEL_IDLE_CLOSE("client.channel.idleAutoClose", "Enable the automatic close of idle sockets after a specific timeout",
+      Boolean.class, false),
+
+  CLIENT_CHANNEL_IDLE_TIMEOUT("client.channel.idleTimeout", "sockets maximum time idle in seconds", Integer.class, 900);
 
   static {
     readConfiguration();
@@ -1199,7 +1202,6 @@ public enum OGlobalConfiguration { // ENVIRONMENT
    * Find the OGlobalConfiguration instance by the key. Key is case insensitive.
    *
    * @param iKey Key to find. It's case insensitive.
-   *
    * @return OGlobalConfiguration instance if found, otherwise null
    */
   public static OGlobalConfiguration findByKey(final String iKey) {

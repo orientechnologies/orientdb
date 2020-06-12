@@ -45,12 +45,14 @@ import java.net.SocketException;
 import java.util.Map;
 
 public class OChannelBinaryAsynchClient extends OChannelBinary {
-  private         int    socketTimeout;                                               // IN MS
-  protected final short  srvProtocolVersion;
-  private         String serverURL;
-  private         byte   currentStatus;
-  private         int    currentSessionId;
-  private         byte   currentMessage;
+  private          int     socketTimeout;                                               // IN MS
+  protected final  short   srvProtocolVersion;
+  private          String  serverURL;
+  private          byte    currentStatus;
+  private          int     currentSessionId;
+  private          byte    currentMessage;
+  private volatile long    lastUse;
+  private volatile boolean inUse;
 
   public OChannelBinaryAsynchClient(final String remoteHost, final int remotePort, final String iDatabaseName,
       final OContextConfiguration iConfig, final int iProtocolVersion) throws IOException {
@@ -374,4 +376,25 @@ public class OChannelBinaryAsynchClient extends OChannelBinary {
     this.socketTimeout = socketTimeout;
   }
 
+  private void markLastUse() {
+    lastUse = System.currentTimeMillis();
+  }
+
+  public long getLastUse() {
+    return lastUse;
+  }
+
+  public void markReturned() {
+    markLastUse();
+    inUse = false;
+  }
+
+  public void markInUse() {
+    markLastUse();
+    inUse = false;
+  }
+
+  public boolean isInUse() {
+    return inUse;
+  }
 }
