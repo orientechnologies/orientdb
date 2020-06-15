@@ -50,18 +50,26 @@ import com.orientechnologies.orient.server.distributed.task.ODistributedRecordLo
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
+import java.util.Set;
+import java.util.SortedSet;
+import java.util.TimerTask;
+import java.util.TreeSet;
 import java.util.stream.Collectors;
 
 /** @author luigi dell'aquila (l.dellaquila - at - orientdb.com) */
 public class OTransactionPhase1Task extends OAbstractReplicatedTask implements OLockKeySource {
   public static final int FACTORYID = 43;
-
   private volatile boolean hasResponse;
   private OLogSequenceNumber lastLSN;
   private List<ORecordOperation> ops;
   private List<ORecordOperationRequest> operations;
-  private SortedSet<OPair<String, String>> uniqueIndexKeys;
+  // Contains the set of <index-name, index-key> for keys (belonging to a unique index) that are
+  // changed with this tx.
+  // If a null key is allowed by the index, index-key could be null.
+  private SortedSet<OPair<String, Object>> uniqueIndexKeys;
   private OCommandDistributedReplicateRequest.QUORUM_TYPE quorumType =
       OCommandDistributedReplicateRequest.QUORUM_TYPE.WRITE;
   private transient int retryCount = 0;
@@ -250,12 +258,8 @@ public class OTransactionPhase1Task extends OAbstractReplicatedTask implements O
       lastLSN = null;
     }
 
-    size = in.readInt();
-    for (int i = 0; i < size; i++) {
-      String k = in.readUTF();
-      String v = in.readUTF();
-      uniqueIndexKeys.add(new OPair<>(k, v));
-    }
+    ORecordSerializerNetworkDistributed serializer = ORecordSerializerNetworkDistributed.INSTANCE;
+    OMessageHelper.readTxUniqueIndexKeys(uniqueIndexKeys, serializer, in);
   }
 
   private void convert(ODatabaseDocumentInternal database) {
@@ -331,11 +335,8 @@ public class OTransactionPhase1Task extends OAbstractReplicatedTask implements O
       lastLSN.toStream(out);
     }
 
-    out.writeInt(uniqueIndexKeys.size());
-    for (OPair<String, String> key : uniqueIndexKeys) {
-      out.writeUTF(key.getKey());
-      out.writeUTF(key.getValue());
-    }
+    ORecordSerializerNetworkDistributed serializer = ORecordSerializerNetworkDistributed.INSTANCE;
+    OMessageHelper.writeTxUniqueIndexKeys(uniqueIndexKeys, serializer, out);
   }
 
   @Override
@@ -356,10 +357,10 @@ public class OTransactionPhase1Task extends OAbstractReplicatedTask implements O
                   .isUnique()) {
                 quorumType = OCommandDistributedReplicateRequest.QUORUM_TYPE.WRITE_ALL_MASTERS;
                 for (Object keyWithChange : changes.changesPerKey.keySet()) {
-                  uniqueIndexKeys.add(new OPair<>(index, "#" + keyWithChange.toString()));
+                  uniqueIndexKeys.add(new OPair<>(index, keyWithChange));
                 }
                 if (!changes.nullKeyChanges.entries.isEmpty()) {
-                  uniqueIndexKeys.add(new OPair<>(index, "#null"));
+                  uniqueIndexKeys.add(new OPair<>(index, null));
                 }
               }
             });
@@ -456,7 +457,7 @@ public class OTransactionPhase1Task extends OAbstractReplicatedTask implements O
   }
 
   @Override
-  public SortedSet<OPair<String, String>> getUniqueKeys() {
+  public SortedSet<OPair<String, Object>> getUniqueKeys() {
     return uniqueIndexKeys;
   }
 }

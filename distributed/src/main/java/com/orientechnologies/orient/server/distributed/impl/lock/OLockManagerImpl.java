@@ -31,7 +31,7 @@ public class OLockManagerImpl implements OLockManager {
   }
 
   public synchronized void lock(
-      SortedSet<ORID> rids, SortedSet<OPair<String, String>> indexKeys, OnLocksAcquired acquired) {
+      SortedSet<ORID> rids, SortedSet<OPair<String, Object>> indexKeys, OnLocksAcquired acquired) {
     List<OLockGuard> guards = new ArrayList<>();
     OWaitingTracker waitingTracker = new OWaitingTracker(acquired);
     for (ORID rid : rids) {
@@ -40,7 +40,7 @@ public class OLockManagerImpl implements OLockManager {
       guards.add(new OLockGuard(key));
     }
 
-    for (OPair<String, String> indexKey : indexKeys) {
+    for (OPair<String, Object> indexKey : indexKeys) {
       OIndexKeyLockKey key = new OIndexKeyLockKey(indexKey);
       lock(key, waitingTracker);
       guards.add(new OLockGuard(key));
