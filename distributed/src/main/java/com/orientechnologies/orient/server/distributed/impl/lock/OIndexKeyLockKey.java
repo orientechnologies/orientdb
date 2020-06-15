@@ -6,9 +6,9 @@ import java.util.Objects;
 
 class OIndexKeyLockKey implements OLockKey {
   private String index;
-  private String key;
+  private Object key;
 
-  public OIndexKeyLockKey(OPair<String, String> indexKey) {
+  public OIndexKeyLockKey(OPair<String, Object> indexKey) {
     this.index = indexKey.getKey();
     this.key = indexKey.getValue();
   }

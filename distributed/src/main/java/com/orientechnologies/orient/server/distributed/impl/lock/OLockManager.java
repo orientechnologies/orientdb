@@ -8,7 +8,7 @@ import java.util.SortedSet;
 
 public interface OLockManager {
 
-  void lock(SortedSet<ORID> rids, SortedSet<OPair<String, String>> indexKeys, OnLocksAcquired acquired);
+  void lock(SortedSet<ORID> rids, SortedSet<OPair<String, Object>> indexKeys, OnLocksAcquired acquired);
 
   void unlock(List<OLockGuard> guards);
 
