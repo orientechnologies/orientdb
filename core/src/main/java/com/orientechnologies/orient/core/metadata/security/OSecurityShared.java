@@ -1437,23 +1437,33 @@ public class OSecurityShared implements OSecurityInternal {
     return new HashSet<>(filteredProperties);
   }
 
+
   protected void updateAllFilteredProperties(ODatabaseDocumentInternal session) {
-    try {
-      Set<OSecurityResourceProperty> result;
-      if (session.getUser() == null) {
-        result = calculateAllFilteredProperties(session);
-      } else {
-        result = session.getSharedContext().getOrientDB()
-            .executeNoAuthorization(session.getName(), (db -> calculateAllFilteredProperties(db))).get();
-      }
+    Set<OSecurityResourceProperty> result;
+    if (session.getUser() == null) {
+      result = calculateAllFilteredProperties(session);
       synchronized (this) {
         filteredProperties = result;
       }
-    } catch (InterruptedException e) {
-      throw OException.wrapException(new OSecurityException("Error loading security filters"), e);
-    } catch (ExecutionException e) {
-      throw OException.wrapException(new OSecurityException("Error loading security filters"), e);
+
+    } else {
+      synchronized (this) {
+        if (filteredProperties == null) {
+          filteredProperties = new HashSet<>();
+        }
+        updateAllFilteredPropertiesInternal(session);
+      }
     }
+  }
+
+  protected void updateAllFilteredPropertiesInternal(ODatabaseDocumentInternal session) {
+    session.getSharedContext().getOrientDB().executeNoAuthorization(session.getName(), (db -> {
+      synchronized (OSecurityShared.this) {
+        filteredProperties.clear();
+        filteredProperties.addAll(calculateAllFilteredProperties(db));
+      }
+      return null;
+    }));
   }
 
   protected Set<OSecurityResourceProperty> calculateAllFilteredProperties(ODatabaseSession session) {
