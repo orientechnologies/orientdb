@@ -7,5 +7,5 @@ import java.util.SortedSet;
 public interface OLockKeySource {
   SortedSet<ORID> getRids();
 
-  SortedSet<OPair<String, String>> getUniqueKeys();
+  SortedSet<OPair<String, Object>> getUniqueKeys();
 }
