@@ -83,8 +83,8 @@ import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.RejectedExecutionException;
-import java.util.concurrent.SynchronousQueue;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
@@ -1251,7 +1251,7 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
               totalWorkers,
               1,
               TimeUnit.HOURS,
-              new SynchronousQueue<Runnable>(),
+              new LinkedBlockingQueue<>(),
               new ThreadFactory() {
                 @Override
                 public Thread newThread(Runnable r) {
