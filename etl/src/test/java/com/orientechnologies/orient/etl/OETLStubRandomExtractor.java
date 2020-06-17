@@ -15,7 +15,7 @@
  *  *  limitations under the License.
  *  *
  *  * For more information: http://orientdb.com
- *  
+ *
  */
 
 package com.orientechnologies.orient.etl;
@@ -23,7 +23,6 @@ package com.orientechnologies.orient.etl;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.etl.extractor.OETLAbstractExtractor;
-
 import java.io.Reader;
 import java.util.Random;
 
@@ -34,7 +33,7 @@ import java.util.Random;
  */
 public class OETLStubRandomExtractor extends OETLAbstractExtractor {
   private long items;
-  private int  fields;
+  private int fields;
   private int delay = 0;
 
   @Override
@@ -53,8 +52,7 @@ public class OETLStubRandomExtractor extends OETLAbstractExtractor {
   }
 
   @Override
-  public void extract(final Reader iReader) {
-  }
+  public void extract(final Reader iReader) {}
 
   @Override
   public String getUnit() {

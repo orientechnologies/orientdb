@@ -3,9 +3,9 @@ package com.orientechnologies.orient.distributed.impl.coordinator.lock;
 import java.util.List;
 
 class OWaitingTracker {
-  private       int              waitingCount = 0;
-  private final OnLocksAcquired  toExecute;
-  private       List<OLockGuard> guards;
+  private int waitingCount = 0;
+  private final OnLocksAcquired toExecute;
+  private List<OLockGuard> guards;
 
   public OWaitingTracker(OnLocksAcquired toExecute) {
     this.toExecute = toExecute;

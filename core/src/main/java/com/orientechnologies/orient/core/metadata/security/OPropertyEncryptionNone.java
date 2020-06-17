@@ -19,5 +19,4 @@ public class OPropertyEncryptionNone implements OPropertyEncryption {
   public byte[] decrypt(String name, byte[] values) {
     return values;
   }
-
 }

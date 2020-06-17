@@ -1,6 +1,10 @@
 package com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.cellbtree.multivalue.v2.bucket;
 
-import com.orientechnologies.common.serialization.types.*;
+import com.orientechnologies.common.serialization.types.OBinarySerializer;
+import com.orientechnologies.common.serialization.types.OByteSerializer;
+import com.orientechnologies.common.serialization.types.OIntegerSerializer;
+import com.orientechnologies.common.serialization.types.OLongSerializer;
+import com.orientechnologies.common.serialization.types.OShortSerializer;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.serialization.serializer.binary.OBinarySerializerFactory;
@@ -8,22 +12,23 @@ import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.WALRecordTypes;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.PageOperationRecord;
 import com.orientechnologies.orient.core.storage.index.sbtree.multivalue.v2.CellBTreeMultiValueV2Bucket;
-
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
 
 public final class CellBTreeMultiValueV2BucketAddAllLeafEntriesPO extends PageOperationRecord {
-  private int                                         prevSize;
+  private int prevSize;
   private List<CellBTreeMultiValueV2Bucket.LeafEntry> leafEntries;
-  private OBinarySerializer                           keySerializer;
-  private boolean                                     isEncrypted;
+  private OBinarySerializer keySerializer;
+  private boolean isEncrypted;
 
-  public CellBTreeMultiValueV2BucketAddAllLeafEntriesPO() {
-  }
+  public CellBTreeMultiValueV2BucketAddAllLeafEntriesPO() {}
 
-  public CellBTreeMultiValueV2BucketAddAllLeafEntriesPO(int prevSize, List<CellBTreeMultiValueV2Bucket.LeafEntry> leafEntries,
-      OBinarySerializer keySerializer, boolean isEncrypted) {
+  public CellBTreeMultiValueV2BucketAddAllLeafEntriesPO(
+      int prevSize,
+      List<CellBTreeMultiValueV2Bucket.LeafEntry> leafEntries,
+      OBinarySerializer keySerializer,
+      boolean isEncrypted) {
     this.prevSize = prevSize;
     this.leafEntries = leafEntries;
     this.keySerializer = keySerializer;
@@ -135,5 +140,4 @@ public final class CellBTreeMultiValueV2BucketAddAllLeafEntriesPO extends PageOp
     isEncrypted = buffer.get() > 0;
     prevSize = buffer.getInt();
   }
-
 }

@@ -2,7 +2,11 @@ package com.orientechnologies.orient.server.distributed.impl.metadata;
 
 import com.orientechnologies.orient.core.cache.OCommandCacheSoftRefs;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
-import com.orientechnologies.orient.core.db.*;
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
+import com.orientechnologies.orient.core.db.ODatabaseLifecycleListener;
+import com.orientechnologies.orient.core.db.OScenarioThreadLocal;
+import com.orientechnologies.orient.core.db.OSharedContextEmbedded;
+import com.orientechnologies.orient.core.db.OrientDBDistributed;
 import com.orientechnologies.orient.core.db.viewmanager.ViewManager;
 import com.orientechnologies.orient.core.index.OIndexException;
 import com.orientechnologies.orient.core.index.OIndexFactory;
@@ -18,11 +22,8 @@ import com.orientechnologies.orient.core.sql.executor.OQueryStats;
 import com.orientechnologies.orient.core.sql.parser.OExecutionPlanCache;
 import com.orientechnologies.orient.core.sql.parser.OStatementCache;
 import com.orientechnologies.orient.core.storage.OStorage;
-import com.orientechnologies.orient.server.distributed.impl.ViewManagerDistributed;
 
-/**
- * Created by tglman on 22/06/17.
- */
+/** Created by tglman on 22/06/17. */
 public class OSharedContextDistributed extends OSharedContextEmbedded {
 
   public OSharedContextDistributed(OStorage storage, OrientDBDistributed orientDB) {
@@ -36,41 +37,53 @@ public class OSharedContextDistributed extends OSharedContextEmbedded {
     liveQueryOps = new OLiveQueryHook.OLiveQueryOps();
     liveQueryOpsV2 = new OLiveQueryHookV2.OLiveQueryOps();
     commandCache = new OCommandCacheSoftRefs(storage.getUnderlying());
-    statementCache = new OStatementCache(
-        storage.getConfiguration().getContextConfiguration().getValueAsInteger(OGlobalConfiguration.STATEMENT_CACHE_SIZE));
+    statementCache =
+        new OStatementCache(
+            storage
+                .getConfiguration()
+                .getContextConfiguration()
+                .getValueAsInteger(OGlobalConfiguration.STATEMENT_CACHE_SIZE));
 
-    executionPlanCache = new OExecutionPlanCache(
-        storage.getConfiguration().getContextConfiguration().getValueAsInteger(OGlobalConfiguration.STATEMENT_CACHE_SIZE));
+    executionPlanCache =
+        new OExecutionPlanCache(
+            storage
+                .getConfiguration()
+                .getContextConfiguration()
+                .getValueAsInteger(OGlobalConfiguration.STATEMENT_CACHE_SIZE));
     this.registerListener(executionPlanCache);
 
     queryStats = new OQueryStats();
-
   }
 
   public synchronized void load(ODatabaseDocumentInternal database) {
-    OScenarioThreadLocal.executeAsDistributed(() -> {
-      final long timer = PROFILER.startChrono();
+    OScenarioThreadLocal.executeAsDistributed(
+        () -> {
+          final long timer = PROFILER.startChrono();
 
-      try {
-        if (!loaded) {
-          schema.load(database);
-          indexManager.load(database);
-          //The Immutable snapshot should be after index and schema that require and before everything else that use it
-          schema.forceSnapshot(database);
-          security.load(database);
-          functionLibrary.load(database);
-          scheduler.load(database);
-          sequenceLibrary.load(database);
-          schema.onPostIndexManagement();
-          viewManager.load();
-          loaded = true;
-        }
-      } finally {
-        PROFILER.stopChrono(PROFILER.getDatabaseMetric(database.getStorage().getName(), "metadata.load"),
-            "Loading of database metadata", timer, "db.*.metadata.load");
-      }
-      return null;
-    });
+          try {
+            if (!loaded) {
+              schema.load(database);
+              indexManager.load(database);
+              // The Immutable snapshot should be after index and schema that require and before
+              // everything else that use it
+              schema.forceSnapshot(database);
+              security.load(database);
+              functionLibrary.load(database);
+              scheduler.load(database);
+              sequenceLibrary.load(database);
+              schema.onPostIndexManagement();
+              viewManager.load();
+              loaded = true;
+            }
+          } finally {
+            PROFILER.stopChrono(
+                PROFILER.getDatabaseMetric(database.getStorage().getName(), "metadata.load"),
+                "Loading of database metadata",
+                timer,
+                "db.*.metadata.load");
+          }
+          return null;
+        });
   }
 
   @Override
@@ -91,52 +104,55 @@ public class OSharedContextDistributed extends OSharedContextEmbedded {
   }
 
   public synchronized void reload(ODatabaseDocumentInternal database) {
-    OScenarioThreadLocal.executeAsDistributed(() -> {
-      schema.reload(database);
-      indexManager.reload();
-      //The Immutable snapshot should be after index and schema that require and before everything else that use it
-      schema.forceSnapshot(database);
-      security.load(database);
-      functionLibrary.load(database);
-      sequenceLibrary.load(database);
-      commandCache.clear();
-      scheduler.load(database);
-      return null;
-    });
+    OScenarioThreadLocal.executeAsDistributed(
+        () -> {
+          schema.reload(database);
+          indexManager.reload();
+          // The Immutable snapshot should be after index and schema that require and before
+          // everything else that use it
+          schema.forceSnapshot(database);
+          security.load(database);
+          functionLibrary.load(database);
+          sequenceLibrary.load(database);
+          commandCache.clear();
+          scheduler.load(database);
+          return null;
+        });
   }
 
   public synchronized void create(ODatabaseDocumentInternal database) {
-    OScenarioThreadLocal.executeAsDistributed(() -> {
-      schema.create(database);
-      indexManager.create(database);
-      security.create(database);
-      functionLibrary.create(database);
-      sequenceLibrary.create(database);
-      security.createClassTrigger(database);
-      scheduler.create(database);
+    OScenarioThreadLocal.executeAsDistributed(
+        () -> {
+          schema.create(database);
+          indexManager.create(database);
+          security.create(database);
+          functionLibrary.create(database);
+          sequenceLibrary.create(database);
+          security.createClassTrigger(database);
+          scheduler.create(database);
 
-      // CREATE BASE VERTEX AND EDGE CLASSES
-      schema.createClass(database, "V");
-      schema.createClass(database, "E");
+          // CREATE BASE VERTEX AND EDGE CLASSES
+          schema.createClass(database, "V");
+          schema.createClass(database, "E");
 
-      //create geospatial classes
-      try {
-        OIndexFactory factory = OIndexes.getFactory(OClass.INDEX_TYPE.SPATIAL.toString(), "LUCENE");
-        if (factory != null && factory instanceof ODatabaseLifecycleListener) {
-          ((ODatabaseLifecycleListener) factory).onCreate(database);
-        }
-      } catch (OIndexException x) {
-        //the index does not exist
-      }
+          // create geospatial classes
+          try {
+            OIndexFactory factory =
+                OIndexes.getFactory(OClass.INDEX_TYPE.SPATIAL.toString(), "LUCENE");
+            if (factory != null && factory instanceof ODatabaseLifecycleListener) {
+              ((ODatabaseLifecycleListener) factory).onCreate(database);
+            }
+          } catch (OIndexException x) {
+            // the index does not exist
+          }
 
-      schema.forceSnapshot(database);
-      loaded = true;
-      return null;
-    });
+          schema.forceSnapshot(database);
+          loaded = true;
+          return null;
+        });
   }
 
   public ViewManager getViewManager() {
     return viewManager;
   }
-
 }

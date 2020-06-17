@@ -6,27 +6,32 @@ import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.sql.parser.OInteger;
 import com.orientechnologies.orient.core.sql.parser.OTraverseProjectionItem;
 import com.orientechnologies.orient.core.sql.parser.OWhereClause;
-
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-/**
- * Created by luigidellaquila on 26/10/16.
- */
+/** Created by luigidellaquila on 26/10/16. */
 public abstract class AbstractTraverseStep extends AbstractExecutionStep {
-  protected final OWhereClause                  whileClause;
+  protected final OWhereClause whileClause;
   protected final List<OTraverseProjectionItem> projections;
-  protected final OInteger                      maxDepth;
+  protected final OInteger maxDepth;
 
   protected List<OResult> entryPoints = null;
-  protected List<OResult> results     = new ArrayList<>();
-  private   long          cost        = 0;
+  protected List<OResult> results = new ArrayList<>();
+  private long cost = 0;
 
   protected Set<ORID> traversed = new ORidSet();
 
-  public AbstractTraverseStep(List<OTraverseProjectionItem> projections, OWhereClause whileClause, OInteger maxDepth,
-      OCommandContext ctx, boolean profilingEnabled) {
+  public AbstractTraverseStep(
+      List<OTraverseProjectionItem> projections,
+      OWhereClause whileClause,
+      OInteger maxDepth,
+      OCommandContext ctx,
+      boolean profilingEnabled) {
     super(ctx, profilingEnabled);
     this.whileClause = whileClause;
     this.maxDepth = maxDepth;
@@ -38,7 +43,7 @@ public abstract class AbstractTraverseStep extends AbstractExecutionStep {
 
   @Override
   public OResultSet syncPull(OCommandContext ctx, int nRecords) throws OTimeoutException {
-    //TODO
+    // TODO
 
     return new OResultSet() {
       private int localFetched = 0;
@@ -77,9 +82,7 @@ public abstract class AbstractTraverseStep extends AbstractExecutionStep {
       }
 
       @Override
-      public void close() {
-
-      }
+      public void close() {}
 
       @Override
       public Optional<OExecutionPlan> getExecutionPlan() {

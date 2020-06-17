@@ -21,7 +21,6 @@ package com.orientechnologies.orient.server.config;
 
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
-
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -37,12 +36,14 @@ import java.util.concurrent.ConcurrentHashMap;
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
  */
 public class OServerConfigurationManager {
-  private final OServerConfigurationLoaderXml         configurationLoader;
-  private       OServerConfiguration                  configuration;
-  private       Map<String, OServerUserConfiguration> ephemeralUsers = new ConcurrentHashMap<String, OServerUserConfiguration>();
+  private final OServerConfigurationLoaderXml configurationLoader;
+  private OServerConfiguration configuration;
+  private Map<String, OServerUserConfiguration> ephemeralUsers =
+      new ConcurrentHashMap<String, OServerUserConfiguration>();
 
   public OServerConfigurationManager(final InputStream iInputStream) throws IOException {
-    configurationLoader = new OServerConfigurationLoaderXml(OServerConfiguration.class, iInputStream);
+    configurationLoader =
+        new OServerConfigurationLoaderXml(OServerConfiguration.class, iInputStream);
     configuration = configurationLoader.load();
   }
 
@@ -60,8 +61,8 @@ public class OServerConfigurationManager {
     return configuration;
   }
 
-  public OServerConfigurationManager setUser(final String iServerUserName, final String iServerUserPasswd,
-      final String iPermissions) {
+  public OServerConfigurationManager setUser(
+      final String iServerUserName, final String iServerUserPasswd, final String iPermissions) {
     if (iServerUserName == null || iServerUserName.length() == 0)
       throw new IllegalArgumentException("User name is null or empty");
 
@@ -96,19 +97,20 @@ public class OServerConfigurationManager {
       }
     }
 
-    configuration.users[userPositionInArray] = new OServerUserConfiguration(iServerUserName, iServerUserPasswd, iPermissions);
+    configuration.users[userPositionInArray] =
+        new OServerUserConfiguration(iServerUserName, iServerUserPasswd, iPermissions);
 
     return this;
   }
 
   public void saveConfiguration() throws IOException {
-    if (configurationLoader == null)
-      return;
+    if (configurationLoader == null) return;
 
     configurationLoader.save(configuration);
   }
 
-  public OServerUserConfiguration setEphemeralUser(final String username, final String password, final String resources) {
+  public OServerUserConfiguration setEphemeralUser(
+      final String username, final String password, final String resources) {
     OServerUserConfiguration userCfg = new OServerUserConfiguration(username, password, resources);
     ephemeralUsers.put(username, userCfg);
     return userCfg;
@@ -158,7 +160,8 @@ public class OServerConfigurationManager {
 
       if (u != null && iServerUserName.equalsIgnoreCase(u.name)) {
         // FOUND
-        final OServerUserConfiguration[] newArray = new OServerUserConfiguration[configuration.users.length - 1];
+        final OServerUserConfiguration[] newArray =
+            new OServerUserConfiguration[configuration.users.length - 1];
         // COPY LEFT PART
         for (int k = 0; k < i; ++k) {
           newArray[k] = configuration.users[k];
@@ -179,8 +182,7 @@ public class OServerConfigurationManager {
     final HashSet<OServerUserConfiguration> result = new HashSet<OServerUserConfiguration>();
 
     for (int i = 0; i < configuration.users.length; ++i) {
-      if (configuration.users[i] != null)
-        result.add(configuration.users[i]);
+      if (configuration.users[i] != null) result.add(configuration.users[i]);
     }
 
     for (OServerUserConfiguration user : ephemeralUsers.values()) {
@@ -196,7 +198,8 @@ public class OServerConfigurationManager {
         try {
           configuration = configurationLoader.load();
         } catch (IOException e) {
-          throw OException.wrapException(new OConfigurationException("Cannot load server configuration"), e);
+          throw OException.wrapException(
+              new OConfigurationException("Cannot load server configuration"), e);
         }
       }
   }

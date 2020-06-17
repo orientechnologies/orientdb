@@ -1,5 +1,9 @@
 package com.orientechnologies.orient.server.lock;
 
+import static com.orientechnologies.orient.core.config.OGlobalConfiguration.SERVER_BACKWARD_COMPATIBILITY;
+import static com.orientechnologies.orient.core.config.OGlobalConfiguration.STORAGE_PESSIMISTIC_LOCKING;
+import static com.orientechnologies.orient.core.db.OrientDBConfig.LOCK_TYPE_READWRITE;
+
 import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
@@ -11,22 +15,17 @@ import com.orientechnologies.orient.core.record.OElement;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.server.OServer;
+import java.io.File;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
-import java.io.File;
-
-import static com.orientechnologies.orient.core.config.OGlobalConfiguration.SERVER_BACKWARD_COMPATIBILITY;
-import static com.orientechnologies.orient.core.config.OGlobalConfiguration.STORAGE_PESSIMISTIC_LOCKING;
-import static com.orientechnologies.orient.core.db.OrientDBConfig.LOCK_TYPE_READWRITE;
-
 public class OPessimisticLockRemoteTest {
 
-  private static final String            SERVER_DIRECTORY = "./target/lock";
-  private              OServer           server;
-  private              OrientDB          orientDB;
-  private              ODatabaseDocument session;
+  private static final String SERVER_DIRECTORY = "./target/lock";
+  private OServer server;
+  private OrientDB orientDB;
+  private ODatabaseDocument session;
 
   @Before
   public void before() throws Exception {
@@ -61,7 +60,6 @@ public class OPessimisticLockRemoteTest {
     record.setProperty("one", "value");
     session.save(record);
     session.commit();
-
   }
 
   @After

@@ -13,10 +13,12 @@
  *  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  *  * See the License for the specific language governing permissions and
  *  * limitations under the License.
- *  
+ *
  */
 
 package com.orientechnologies.lucene.test;
+
+import static org.assertj.core.api.Assertions.assertThat;
 
 import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.lucene.analyzer.OLucenePerFieldAnalyzerWrapper;
@@ -25,6 +27,10 @@ import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.List;
 import org.apache.lucene.analysis.standard.StandardAnalyzer;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.document.Field;
@@ -42,27 +48,16 @@ import org.apache.lucene.search.TopDocs;
 import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.NIOFSDirectory;
 import org.junit.Assert;
-import org.junit.Assume;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
-import java.util.List;
-import java.util.Locale;
-
-import static org.assertj.core.api.Assertions.assertThat;
-
-/**
- * Created by enricorisa on 08/10/14.
- */
+/** Created by enricorisa on 08/10/14. */
 @RunWith(JUnit4.class)
 public class LuceneVsLuceneTest extends BaseLuceneTest {
 
-  private IndexWriter                    indexWriter;
+  private IndexWriter indexWriter;
   private OLucenePerFieldAnalyzerWrapper analyzer;
 
   @Before
@@ -87,8 +82,8 @@ public class LuceneVsLuceneTest extends BaseLuceneTest {
     } catch (IOException e) {
       e.printStackTrace();
     }
-    db.command(new OCommandSQL("create index Song.title on Song (title) FULLTEXT ENGINE LUCENE")).execute();
-
+    db.command(new OCommandSQL("create index Song.title on Song (title) FULLTEXT ENGINE LUCENE"))
+        .execute();
   }
 
   private File getPath() {
@@ -111,7 +106,6 @@ public class LuceneVsLuceneTest extends BaseLuceneTest {
         d.add(new TextField("title", title, Field.Store.YES));
         d.add(new TextField("Song.title", title, Field.Store.YES));
         indexWriter.addDocument(d);
-
       }
     }
 
@@ -123,23 +117,24 @@ public class LuceneVsLuceneTest extends BaseLuceneTest {
 
     IndexSearcher searcher = new IndexSearcher(reader);
 
-    Query query = new MultiFieldQueryParser(new String[] { "title" }, analyzer).parse("down the");
+    Query query = new MultiFieldQueryParser(new String[] {"title"}, analyzer).parse("down the");
     final TopDocs docs = searcher.search(query, Integer.MAX_VALUE);
     ScoreDoc[] hits = docs.scoreDocs;
 
-    List<ODocument> oDocs = db.query(new OSQLSynchQuery<ODocument>("select *,$score from Song where title LUCENE \"down the\""));
+    List<ODocument> oDocs =
+        db.query(
+            new OSQLSynchQuery<ODocument>(
+                "select *,$score from Song where title LUCENE \"down the\""));
 
     Assert.assertEquals(oDocs.size(), hits.length);
 
     int i = 0;
     for (ScoreDoc hit : hits) {
-//      Assert.assertEquals(oDocs.get(i).field("$score"), hit.score);
+      //      Assert.assertEquals(oDocs.get(i).field("$score"), hit.score);
 
       assertThat(oDocs.get(i).<Float>field("$score")).isEqualTo(hit.score);
       i++;
     }
     reader.close();
-
   }
-
 }

@@ -26,16 +26,18 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.etl.OETLComponentFactory;
 import com.orientechnologies.orient.etl.block.OETLBlock;
 
-/**
- * Pass-through Transformer that execute a block.
- */
+/** Pass-through Transformer that execute a block. */
 public class OETLBlockTransformer extends OETLAbstractTransformer {
   private OETLBlock block;
 
   @Override
   public ODocument getConfiguration() {
-    return new ODocument().fromJSON(
-        "{parameters:[" + getCommonConfigurationParameters() + "," + "{block:{optional:false,description:'Block to execute'}}]}");
+    return new ODocument()
+        .fromJSON(
+            "{parameters:["
+                + getCommonConfigurationParameters()
+                + ","
+                + "{block:{optional:false,description:'Block to execute'}}]}");
   }
 
   @Override
@@ -54,9 +56,9 @@ public class OETLBlockTransformer extends OETLAbstractTransformer {
       block = new OETLComponentFactory().getBlock(fieldName);
       block.configure(configuration.<ODocument>field(fieldName), context);
     } catch (Exception e) {
-      throw OException.wrapException(new OConfigurationException("[Block transformer] Error on configuring inner block"), e);
+      throw OException.wrapException(
+          new OConfigurationException("[Block transformer] Error on configuring inner block"), e);
     }
-
   }
 
   @Override

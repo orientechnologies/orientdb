@@ -1,9 +1,6 @@
 package com.orientechnologies.common.profiler;
 
-import com.orientechnologies.common.util.OPair;
-
 import java.util.Date;
-import java.util.Map;
 
 public interface OProfilerMXBean {
   long getCounter(String iStatName);

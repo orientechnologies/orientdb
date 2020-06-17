@@ -6,15 +6,15 @@ import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.OBlob;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ORecordBytes;
-
 import java.util.Map;
 import java.util.Optional;
 
 /**
- * <p>Reads an upstream result set and returns a new result set that contains copies of the original OResult instances
- * </p>
- * <p>This is mainly used from statements that need to copy of the original data to save it somewhere else,
- * eg. INSERT ... FROM SELECT</p>
+ * Reads an upstream result set and returns a new result set that contains copies of the original
+ * OResult instances
+ *
+ * <p>This is mainly used from statements that need to copy of the original data to save it
+ * somewhere else, eg. INSERT ... FROM SELECT
  *
  * @author Luigi Dell'Aquila (l.dellaquila-(at)-orientdb.com)
  */

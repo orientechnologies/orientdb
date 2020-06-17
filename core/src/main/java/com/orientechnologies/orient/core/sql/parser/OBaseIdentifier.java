@@ -13,7 +13,6 @@ import com.orientechnologies.orient.core.record.OElement;
 import com.orientechnologies.orient.core.sql.executor.AggregationContext;
 import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.executor.OResultInternal;
-
 import java.util.Collection;
 import java.util.Map;
 import java.util.Set;
@@ -75,7 +74,6 @@ public class OBaseIdentifier extends SimpleNode {
     return false;
   }
 
-
   public boolean isIndexedFunctionCall() {
     if (levelZero != null) {
       return levelZero.isIndexedFunctionCall();
@@ -83,7 +81,8 @@ public class OBaseIdentifier extends SimpleNode {
     return false;
   }
 
-  public long estimateIndexedFunction(OFromClause target, OCommandContext context, OBinaryCompareOperator operator, Object right) {
+  public long estimateIndexedFunction(
+      OFromClause target, OCommandContext context, OBinaryCompareOperator operator, Object right) {
     if (levelZero != null) {
       return levelZero.estimateIndexedFunction(target, context, operator, right);
     }
@@ -91,8 +90,8 @@ public class OBaseIdentifier extends SimpleNode {
     return -1;
   }
 
-  public Iterable<OIdentifiable> executeIndexedFunction(OFromClause target, OCommandContext context,
-      OBinaryCompareOperator operator, Object right) {
+  public Iterable<OIdentifiable> executeIndexedFunction(
+      OFromClause target, OCommandContext context, OBinaryCompareOperator operator, Object right) {
     if (levelZero != null) {
       return levelZero.executeIndexedFunction(target, context, operator, right);
     }
@@ -101,18 +100,18 @@ public class OBaseIdentifier extends SimpleNode {
   }
 
   /**
-   * tests if current expression is an indexed funciton AND that function can also be executed without using the index
+   * tests if current expression is an indexed funciton AND that function can also be executed
+   * without using the index
    *
-   * @param target   the query target
-   * @param context  the execution context
+   * @param target the query target
+   * @param context the execution context
    * @param operator
    * @param right
-   *
-   * @return true if current expression is an indexed funciton AND that function can also be executed without using the index, false
-   * otherwise
+   * @return true if current expression is an indexed funciton AND that function can also be
+   *     executed without using the index, false otherwise
    */
-  public boolean canExecuteIndexedFunctionWithoutIndex(OFromClause target, OCommandContext context, OBinaryCompareOperator operator,
-      Object right) {
+  public boolean canExecuteIndexedFunctionWithoutIndex(
+      OFromClause target, OCommandContext context, OBinaryCompareOperator operator, Object right) {
     if (this.levelZero == null) {
       return false;
     }
@@ -122,15 +121,15 @@ public class OBaseIdentifier extends SimpleNode {
   /**
    * tests if current expression is an indexed function AND that function can be used on this target
    *
-   * @param target   the query target
-   * @param context  the execution context
+   * @param target the query target
+   * @param context the execution context
    * @param operator
    * @param right
-   *
-   * @return true if current expression involves an indexed function AND that function can be used on this target, false otherwise
+   * @return true if current expression involves an indexed function AND that function can be used
+   *     on this target, false otherwise
    */
-  public boolean allowsIndexedFunctionExecutionOnTarget(OFromClause target, OCommandContext context,
-      OBinaryCompareOperator operator, Object right) {
+  public boolean allowsIndexedFunctionExecutionOnTarget(
+      OFromClause target, OCommandContext context, OBinaryCompareOperator operator, Object right) {
     if (this.levelZero == null) {
       return false;
     }
@@ -138,17 +137,18 @@ public class OBaseIdentifier extends SimpleNode {
   }
 
   /**
-   * tests if current expression is an indexed function AND the function has also to be executed after the index search. In some
-   * cases, the index search is accurate, so this condition can be excluded from further evaluation. In other cases the result from
-   * the index is a superset of the expected result, so the function has to be executed anyway for further filtering
+   * tests if current expression is an indexed function AND the function has also to be executed
+   * after the index search. In some cases, the index search is accurate, so this condition can be
+   * excluded from further evaluation. In other cases the result from the index is a superset of the
+   * expected result, so the function has to be executed anyway for further filtering
    *
-   * @param target  the query target
+   * @param target the query target
    * @param context the execution context
-   *
-   * @return true if current expression is an indexed function AND the function has also to be executed after the index search.
+   * @return true if current expression is an indexed function AND the function has also to be
+   *     executed after the index search.
    */
-  public boolean executeIndexedFunctionAfterIndexSearch(OFromClause target, OCommandContext context,
-      OBinaryCompareOperator operator, Object right) {
+  public boolean executeIndexedFunctionAfterIndexSearch(
+      OFromClause target, OCommandContext context, OBinaryCompareOperator operator, Object right) {
     if (this.levelZero == null) {
       return false;
     }
@@ -210,7 +210,8 @@ public class OBaseIdentifier extends SimpleNode {
     return false;
   }
 
-  public SimpleNode splitForAggregation(AggregateProjectionSplit aggregateProj, OCommandContext ctx) {
+  public SimpleNode splitForAggregation(
+      AggregateProjectionSplit aggregateProj, OCommandContext ctx) {
     if (isAggregate()) {
       OBaseIdentifier result = new OBaseIdentifier(-1);
       if (levelZero != null) {
@@ -259,17 +260,14 @@ public class OBaseIdentifier extends SimpleNode {
 
   @Override
   public boolean equals(Object o) {
-    if (this == o)
-      return true;
-    if (o == null || getClass() != o.getClass())
-      return false;
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
 
     OBaseIdentifier that = (OBaseIdentifier) o;
 
     if (levelZero != null ? !levelZero.equals(that.levelZero) : that.levelZero != null)
       return false;
-    if (suffix != null ? !suffix.equals(that.suffix) : that.suffix != null)
-      return false;
+    if (suffix != null ? !suffix.equals(that.suffix) : that.suffix != null) return false;
 
     return true;
   }
@@ -358,7 +356,6 @@ public class OBaseIdentifier extends SimpleNode {
 
   public OCollate getCollate(OResult currentRecord, OCommandContext ctx) {
     return suffix == null ? null : suffix.getCollate(currentRecord, ctx);
-
   }
 
   public boolean isCacheable() {
@@ -381,7 +378,8 @@ public class OBaseIdentifier extends SimpleNode {
       }
       Collection<OIndex> allIndexes = prop.getAllIndexes();
 
-      return allIndexes != null && allIndexes.stream().anyMatch(idx -> idx.getDefinition().getFields().size() == 1);
+      return allIndexes != null
+          && allIndexes.stream().anyMatch(idx -> idx.getDefinition().getFields().size() == 1);
     }
     return false;
   }

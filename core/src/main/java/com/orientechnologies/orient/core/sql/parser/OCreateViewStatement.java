@@ -12,13 +12,16 @@ import com.orientechnologies.orient.core.sql.OCommandSQLParsingException;
 import com.orientechnologies.orient.core.sql.executor.OInternalResultSet;
 import com.orientechnologies.orient.core.sql.executor.OResultInternal;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
-
-import java.util.*;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
 
 public class OCreateViewStatement extends ODDLStatement {
 
   protected OIdentifier name;
-  protected OStatement  statement;
+  protected OStatement statement;
   protected boolean ifNotExists = false;
   protected OJson metadata;
 
@@ -42,14 +45,18 @@ public class OCreateViewStatement extends ODDLStatement {
     }
 
     if (schema.existsClass(name.getStringValue())) {
-      throw new OCommandExecutionException("Cannot create view " + name + ", a class with the same name already exists");
+      throw new OCommandExecutionException(
+          "Cannot create view " + name + ", a class with the same name already exists");
     }
 
     OResultInternal result = new OResultInternal();
     result.setProperty("operation", "create view");
     result.setProperty("viewName", name.getStringValue());
 
-    schema.createView((ODatabaseDocumentInternal) ctx.getDatabase(), name.getStringValue(), statement.toString(),
+    schema.createView(
+        (ODatabaseDocumentInternal) ctx.getDatabase(),
+        name.getStringValue(),
+        statement.toString(),
         metadata == null ? new HashMap<>() : metadata.toMap(new OResultInternal(), ctx));
 
     OInternalResultSet rs = new OInternalResultSet();
@@ -69,93 +76,106 @@ public class OCreateViewStatement extends ODDLStatement {
     if (metadata == null) {
       return;
     }
-    Map<String, Object> metadataMap = metadata.toMap(new OResultInternal(), new OBasicCommandContext());
+    Map<String, Object> metadataMap =
+        metadata.toMap(new OResultInternal(), new OBasicCommandContext());
     for (Map.Entry<String, Object> s : metadataMap.entrySet()) {
 
       String key = s.getKey();
       Object value = s.getValue();
       switch (key) {
-      case "updatable":
-        if (!(value instanceof Boolean)) {
-          throw new OCommandSQLParsingException(
-              "Invalid value for view metadata: updatable should be true or false, it is " + value);
-        }
-        if (Boolean.TRUE.equals(value)) {
-          if (!metadataMap.containsKey("originRidField"))
-            throw new OCommandSQLParsingException("Updatable view needs a originRidField defined");
-        }
-        break;
-      case "updateIntervalSeconds":
-        if (!(value instanceof Number)) {
-          throw new OCommandSQLParsingException(
-              "Invalid value for view metadata: updateIntervalSeconds should be a number, it is " + value);
-        }
-        break;
-      case "updateStrategy":
-        if (!(OViewConfig.UPDATE_STRATEGY_BATCH.equals(value) || OViewConfig.UPDATE_STRATEGY_LIVE.equals(value))) {
-          throw new OCommandSQLParsingException(
-              "Invalid value for view metadata: updateStrategy should be " + OViewConfig.UPDATE_STRATEGY_LIVE + " or "
-                  + OViewConfig.UPDATE_STRATEGY_BATCH + ", it is " + value);
-        }
-        break;
-      case "watchClasses":
-        if (!(value instanceof Collection)) {
-          throw new OCommandSQLParsingException(
-              "Invalid value for view metadata: watchClasses should be a list of class names as strings, it is " + value);
-        }
-        if (((Collection) value).stream().anyMatch(x -> !(x instanceof String))) {
-          throw new OCommandSQLParsingException(
-              "Invalid value for view metadata: watchClasses should be a list of class names as strings, one value is null");
-        }
-        break;
-      case "originRidField":
-        if (!(value instanceof String)) {
-          throw new OCommandSQLParsingException(
-              "Invalid value for view metadata: updateStrategy should be a string, it is " + value);
-        }
-        break;
-      case "nodes":
-        if (!(value instanceof Collection)) {
-          throw new OCommandSQLParsingException(
-              "Invalid value for view metadata: nodes should be a list of class names as strings, it is " + value);
-        }
-        if (((Collection) value).stream().anyMatch(x -> !(x instanceof String))) {
-          throw new OCommandSQLParsingException(
-              "Invalid value for view metadata: nodes should be a list of class names as strings, one value is null");
-        }
-        break;
-      case "indexes":
-        if (!(value instanceof Collection)) {
-          throw new OCommandSQLParsingException(
-              "Invalid value for view metadata: indexes should be a list of class names as strings, it is " + value);
-        }
-        for (Object o : (Collection) value) {
-          if (!(o instanceof Map)) {
+        case "updatable":
+          if (!(value instanceof Boolean)) {
             throw new OCommandSQLParsingException(
-                "Invalid value for view metadata: index configuration should be as follows: {type:'<index_type>', engine:'<engine_name>', properties:{propName1:'<type>', propNameN:'<type'>}}. Engine is optional");
+                "Invalid value for view metadata: updatable should be true or false, it is "
+                    + value);
           }
-          Map<String, Object> valueMap = (Map<String, Object>) o;
-          for (String idxKey : valueMap.keySet()) {
-            switch (idxKey) {
-            case "type":
-            case "engine":
-            case "properties":
-              break;
-
-            default:
+          if (Boolean.TRUE.equals(value)) {
+            if (!metadataMap.containsKey("originRidField"))
               throw new OCommandSQLParsingException(
-                  "Invalid key for view index metadata: " + idxKey + ". Valid keys are 'type', 'engine', 'properties'");
+                  "Updatable view needs a originRidField defined");
+          }
+          break;
+        case "updateIntervalSeconds":
+          if (!(value instanceof Number)) {
+            throw new OCommandSQLParsingException(
+                "Invalid value for view metadata: updateIntervalSeconds should be a number, it is "
+                    + value);
+          }
+          break;
+        case "updateStrategy":
+          if (!(OViewConfig.UPDATE_STRATEGY_BATCH.equals(value)
+              || OViewConfig.UPDATE_STRATEGY_LIVE.equals(value))) {
+            throw new OCommandSQLParsingException(
+                "Invalid value for view metadata: updateStrategy should be "
+                    + OViewConfig.UPDATE_STRATEGY_LIVE
+                    + " or "
+                    + OViewConfig.UPDATE_STRATEGY_BATCH
+                    + ", it is "
+                    + value);
+          }
+          break;
+        case "watchClasses":
+          if (!(value instanceof Collection)) {
+            throw new OCommandSQLParsingException(
+                "Invalid value for view metadata: watchClasses should be a list of class names as strings, it is "
+                    + value);
+          }
+          if (((Collection) value).stream().anyMatch(x -> !(x instanceof String))) {
+            throw new OCommandSQLParsingException(
+                "Invalid value for view metadata: watchClasses should be a list of class names as strings, one value is null");
+          }
+          break;
+        case "originRidField":
+          if (!(value instanceof String)) {
+            throw new OCommandSQLParsingException(
+                "Invalid value for view metadata: updateStrategy should be a string, it is "
+                    + value);
+          }
+          break;
+        case "nodes":
+          if (!(value instanceof Collection)) {
+            throw new OCommandSQLParsingException(
+                "Invalid value for view metadata: nodes should be a list of class names as strings, it is "
+                    + value);
+          }
+          if (((Collection) value).stream().anyMatch(x -> !(x instanceof String))) {
+            throw new OCommandSQLParsingException(
+                "Invalid value for view metadata: nodes should be a list of class names as strings, one value is null");
+          }
+          break;
+        case "indexes":
+          if (!(value instanceof Collection)) {
+            throw new OCommandSQLParsingException(
+                "Invalid value for view metadata: indexes should be a list of class names as strings, it is "
+                    + value);
+          }
+          for (Object o : (Collection) value) {
+            if (!(o instanceof Map)) {
+              throw new OCommandSQLParsingException(
+                  "Invalid value for view metadata: index configuration should be as follows: {type:'<index_type>', engine:'<engine_name>', properties:{propName1:'<type>', propNameN:'<type'>}}. Engine is optional");
+            }
+            Map<String, Object> valueMap = (Map<String, Object>) o;
+            for (String idxKey : valueMap.keySet()) {
+              switch (idxKey) {
+                case "type":
+                case "engine":
+                case "properties":
+                  break;
+
+                default:
+                  throw new OCommandSQLParsingException(
+                      "Invalid key for view index metadata: "
+                          + idxKey
+                          + ". Valid keys are 'type', 'engine', 'properties'");
+              }
             }
           }
-        }
-        break;
+          break;
 
-      default:
-        throw new OCommandSQLParsingException("Invalid metadata for view: " + key);
+        default:
+          throw new OCommandSQLParsingException("Invalid metadata for view: " + key);
       }
-
     }
-
   }
 
   @Override
@@ -186,17 +206,13 @@ public class OCreateViewStatement extends ODDLStatement {
 
   @Override
   public boolean equals(Object o) {
-    if (this == o)
-      return true;
-    if (o == null || getClass() != o.getClass())
-      return false;
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
 
     OCreateViewStatement that = (OCreateViewStatement) o;
 
-    if (ifNotExists != that.ifNotExists)
-      return false;
-    if (name != null ? !name.equals(that.name) : that.name != null)
-      return false;
+    if (ifNotExists != that.ifNotExists) return false;
+    if (name != null ? !name.equals(that.name) : that.name != null) return false;
     if (statement != null ? !statement.equals(that.statement) : that.statement != null)
       return false;
     return metadata != null ? metadata.equals(that.metadata) : that.metadata == null;

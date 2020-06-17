@@ -6,20 +6,17 @@ import com.orientechnologies.orient.core.index.OIndexDefinition;
 import com.orientechnologies.orient.core.index.OIndexException;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import java.lang.reflect.Constructor;
+import java.util.Collection;
+import java.util.Locale;
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.CharArraySet;
 import org.apache.lucene.analysis.standard.StandardAnalyzer;
 
-import java.lang.reflect.Constructor;
-import java.util.Collection;
-import java.util.Locale;
-import java.util.Optional;
-
-/**
- * Created by frank on 30/10/2015.
- */
+/** Created by frank on 30/10/2015. */
 public class OLuceneAnalyzerFactory {
-  public Analyzer createAnalyzer(final OIndexDefinition index, final AnalyzerKind kind, final ODocument metadata) {
+  public Analyzer createAnalyzer(
+      final OIndexDefinition index, final AnalyzerKind kind, final ODocument metadata) {
     if (index == null) {
       throw new IllegalArgumentException("Index must not be null");
     }
@@ -32,13 +29,15 @@ public class OLuceneAnalyzerFactory {
     final String defaultAnalyzerFQN = metadata.field("default");
     final String prefix = index.getClassName() + ".";
 
-    final OLucenePerFieldAnalyzerWrapper analyzer = geLucenePerFieldPresetAnalyzerWrapperForAllFields(defaultAnalyzerFQN);
+    final OLucenePerFieldAnalyzerWrapper analyzer =
+        geLucenePerFieldPresetAnalyzerWrapperForAllFields(defaultAnalyzerFQN);
     setDefaultAnalyzerForRequestedKind(index, kind, metadata, prefix, analyzer);
     setSpecializedAnalyzersForEachField(index, kind, metadata, prefix, analyzer);
     return analyzer;
   }
 
-  private OLucenePerFieldAnalyzerWrapper geLucenePerFieldPresetAnalyzerWrapperForAllFields(final String defaultAnalyzerFQN) {
+  private OLucenePerFieldAnalyzerWrapper geLucenePerFieldPresetAnalyzerWrapperForAllFields(
+      final String defaultAnalyzerFQN) {
     if (defaultAnalyzerFQN == null) {
       return new OLucenePerFieldAnalyzerWrapper(new StandardAnalyzer());
     } else {
@@ -46,8 +45,12 @@ public class OLuceneAnalyzerFactory {
     }
   }
 
-  private void setDefaultAnalyzerForRequestedKind(final OIndexDefinition index, final AnalyzerKind kind, final ODocument metadata,
-                                                  final String prefix, final OLucenePerFieldAnalyzerWrapper analyzer) {
+  private void setDefaultAnalyzerForRequestedKind(
+      final OIndexDefinition index,
+      final AnalyzerKind kind,
+      final ODocument metadata,
+      final String prefix,
+      final OLucenePerFieldAnalyzerWrapper analyzer) {
     final String specializedAnalyzerFQN = metadata.field(kind.toString());
     if (specializedAnalyzerFQN != null) {
       for (final String field : index.getFields()) {
@@ -57,8 +60,12 @@ public class OLuceneAnalyzerFactory {
     }
   }
 
-  private void setSpecializedAnalyzersForEachField(final OIndexDefinition index, final AnalyzerKind kind, final ODocument metadata,
-                                                   final String prefix, final OLucenePerFieldAnalyzerWrapper analyzer) {
+  private void setSpecializedAnalyzersForEachField(
+      final OIndexDefinition index,
+      final AnalyzerKind kind,
+      final ODocument metadata,
+      final String prefix,
+      final OLucenePerFieldAnalyzerWrapper analyzer) {
     for (final String field : index.getFields()) {
       final String analyzerName = field + "_" + kind.toString();
       final String analyzerStopwords = analyzerName + "_stopwords";
@@ -80,7 +87,8 @@ public class OLuceneAnalyzerFactory {
       final Constructor constructor = classAnalyzer.getConstructor();
       return (Analyzer) constructor.newInstance();
     } catch (final ClassNotFoundException e) {
-      throw OException.wrapException(new OIndexException("Analyzer: " + analyzerFQN + " not found"), e);
+      throw OException.wrapException(
+          new OIndexException("Analyzer: " + analyzerFQN + " not found"), e);
     } catch (final NoSuchMethodException e) {
       Class classAnalyzer = null;
       try {
@@ -89,10 +97,16 @@ public class OLuceneAnalyzerFactory {
       } catch (Exception e1) {
         OLogManager.instance().error(this, "Exception is suppressed, original exception is ", e);
         //noinspection ThrowInsideCatchBlockWhichIgnoresCaughtException
-        throw OException.wrapException(new OIndexException("Couldn't instantiate analyzer:  public constructor  not found"), e1);
+        throw OException.wrapException(
+            new OIndexException("Couldn't instantiate analyzer:  public constructor  not found"),
+            e1);
       }
     } catch (Exception e) {
-      OLogManager.instance().error(this, "Error on getting analyzer for Lucene index (continuing with StandardAnalyzer)", e);
+      OLogManager.instance()
+          .error(
+              this,
+              "Error on getting analyzer for Lucene index (continuing with StandardAnalyzer)",
+              e);
       return new StandardAnalyzer();
     }
   }
@@ -103,17 +117,24 @@ public class OLuceneAnalyzerFactory {
       final Constructor constructor = classAnalyzer.getDeclaredConstructor(CharArraySet.class);
       return (Analyzer) constructor.newInstance(new CharArraySet(stopwords, true));
     } catch (final ClassNotFoundException e) {
-      throw OException.wrapException(new OIndexException("Analyzer: " + analyzerFQN + " not found"), e);
+      throw OException.wrapException(
+          new OIndexException("Analyzer: " + analyzerFQN + " not found"), e);
     } catch (final NoSuchMethodException e) {
-      throw OException.wrapException(new OIndexException("Couldn't instantiate analyzer: public constructor not found"), e);
+      throw OException.wrapException(
+          new OIndexException("Couldn't instantiate analyzer: public constructor not found"), e);
     } catch (final Exception e) {
-      OLogManager.instance().error(this, "Error on getting analyzer for Lucene index (continuing with StandardAnalyzer)", e);
+      OLogManager.instance()
+          .error(
+              this,
+              "Error on getting analyzer for Lucene index (continuing with StandardAnalyzer)",
+              e);
       return new StandardAnalyzer();
     }
   }
 
   public enum AnalyzerKind {
-    INDEX, QUERY;
+    INDEX,
+    QUERY;
 
     @Override
     public String toString() {

@@ -11,28 +11,26 @@ import com.orientechnologies.orient.core.serialization.serializer.record.binary.
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelDataInput;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelDataOutput;
-
 import java.io.IOException;
 
 public class OConnectRequest implements OBinaryRequest<OConnectResponse> {
   private String username;
   private String password;
-  private String  driverName      = OStorageRemote.DRIVER_NAME;
-  private String  driverVersion   = OConstants.getRawVersion();
-  private short   protocolVersion = OChannelBinaryProtocol.CURRENT_PROTOCOL_VERSION;
-  private String  clientId        = null;
-  private String  recordFormat    = ORecordSerializerNetworkV37.NAME;
-  private boolean tokenBased      = true;
-  private boolean supportPush     = true;
-  private boolean collectStats    = true;
+  private String driverName = OStorageRemote.DRIVER_NAME;
+  private String driverVersion = OConstants.getRawVersion();
+  private short protocolVersion = OChannelBinaryProtocol.CURRENT_PROTOCOL_VERSION;
+  private String clientId = null;
+  private String recordFormat = ORecordSerializerNetworkV37.NAME;
+  private boolean tokenBased = true;
+  private boolean supportPush = true;
+  private boolean collectStats = true;
 
   public OConnectRequest(String username, String password) {
     this.username = username;
     this.password = password;
   }
 
-  public OConnectRequest() {
-  }
+  public OConnectRequest() {}
 
   @Override
   public void write(OChannelDataOutput network, OStorageRemoteSession session) throws IOException {
@@ -51,7 +49,8 @@ public class OConnectRequest implements OBinaryRequest<OConnectResponse> {
   }
 
   @Override
-  public void read(OChannelDataInput channel, int protocolVersion, ORecordSerializer serializer) throws IOException {
+  public void read(OChannelDataInput channel, int protocolVersion, ORecordSerializer serializer)
+      throws IOException {
 
     driverName = channel.readString();
     driverVersion = channel.readString();
@@ -61,8 +60,7 @@ public class OConnectRequest implements OBinaryRequest<OConnectResponse> {
 
     if (this.protocolVersion > OChannelBinaryProtocol.PROTOCOL_VERSION_26)
       tokenBased = channel.readBoolean();
-    else
-      tokenBased = false;
+    else tokenBased = false;
 
     if (this.protocolVersion > OChannelBinaryProtocol.PROTOCOL_VERSION_33) {
       supportPush = channel.readBoolean();
@@ -74,7 +72,6 @@ public class OConnectRequest implements OBinaryRequest<OConnectResponse> {
 
     username = channel.readString();
     password = channel.readString();
-
   }
 
   @Override
@@ -141,5 +138,4 @@ public class OConnectRequest implements OBinaryRequest<OConnectResponse> {
   public OBinaryResponse execute(OBinaryRequestExecutor executor) {
     return executor.executeConnect(this);
   }
-
 }

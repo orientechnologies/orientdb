@@ -1,16 +1,17 @@
 /**
  * Copyright 2010-2016 OrientDB LTD (http://orientdb.com)
- * <p>
- * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- * <p>
- * http://www.apache.org/licenses/LICENSE-2.0
- * <p>
- * Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on an "AS IS"
- * BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the specific language
- * governing permissions and limitations under the License.
- * <p>
- * For more information: http://orientdb.com
+ *
+ * <p>Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file
+ * except in compliance with the License. You may obtain a copy of the License at
+ *
+ * <p>http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * <p>Unless required by applicable law or agreed to in writing, software distributed under the
+ * License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either
+ * express or implied. See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ * <p>For more information: http://orientdb.com
  */
 package com.orientechnologies.orient.jdbc;
 
@@ -27,9 +28,18 @@ import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.sql.executor.OInternalResultSet;
 import com.orientechnologies.orient.core.sql.executor.OResultInternal;
-
-import java.sql.*;
-import java.util.*;
+import java.sql.Connection;
+import java.sql.DatabaseMetaData;
+import java.sql.ResultSet;
+import java.sql.RowIdLifetime;
+import java.sql.SQLException;
+import java.sql.Types;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Locale;
+import java.util.Set;
 
 /**
  * @author Roberto Franchini (CELI srl - franchini--at--celi.it)
@@ -37,11 +47,12 @@ import java.util.*;
  * @author Luca Garulli (l.garulli--(at)--orientdb.com) (OrientDB - l.garulli--at--orientdb.com)
  */
 public class OrientJdbcDatabaseMetaData implements DatabaseMetaData {
-  protected static final List<String>              TABLE_TYPES = Arrays.asList("TABLE", "SYSTEM TABLE");
-  private final          OrientJdbcConnection      connection;
-  private final          ODatabaseDocumentInternal database;
+  protected static final List<String> TABLE_TYPES = Arrays.asList("TABLE", "SYSTEM TABLE");
+  private final OrientJdbcConnection connection;
+  private final ODatabaseDocumentInternal database;
 
-  public OrientJdbcDatabaseMetaData(OrientJdbcConnection iConnection, ODatabaseDocumentInternal iDatabase) {
+  public OrientJdbcDatabaseMetaData(
+      OrientJdbcConnection iConnection, ODatabaseDocumentInternal iDatabase) {
     connection = iConnection;
     database = iDatabase;
   }
@@ -615,7 +626,8 @@ public class OrientJdbcDatabaseMetaData implements DatabaseMetaData {
     return true;
   }
 
-  public ResultSet getProcedures(String catalog, String schemaPattern, String procedureNamePattern) throws SQLException {
+  public ResultSet getProcedures(String catalog, String schemaPattern, String procedureNamePattern)
+      throws SQLException {
     database.activateOnCurrentThread();
     final OInternalResultSet resultSet = new OInternalResultSet();
 
@@ -636,11 +648,16 @@ public class OrientJdbcDatabaseMetaData implements DatabaseMetaData {
       }
     }
 
-    return new OrientJdbcResultSet(new OrientJdbcStatement(connection), resultSet, ResultSet.TYPE_FORWARD_ONLY,
-        ResultSet.CONCUR_READ_ONLY, ResultSet.HOLD_CURSORS_OVER_COMMIT);
+    return new OrientJdbcResultSet(
+        new OrientJdbcStatement(connection),
+        resultSet,
+        ResultSet.TYPE_FORWARD_ONLY,
+        ResultSet.CONCUR_READ_ONLY,
+        ResultSet.HOLD_CURSORS_OVER_COMMIT);
   }
 
-  public ResultSet getProcedureColumns(String catalog, String schemaPattern, String procedureNamePattern, String columnNamePattern)
+  public ResultSet getProcedureColumns(
+      String catalog, String schemaPattern, String procedureNamePattern, String columnNamePattern)
       throws SQLException {
     database.activateOnCurrentThread();
 
@@ -664,7 +681,6 @@ public class OrientJdbcDatabaseMetaData implements DatabaseMetaData {
           doc.setProperty("SPECIFIC_NAME", f.getName());
 
           resultSet.add(doc);
-
         }
 
         final OResultInternal doc = new OResultInternal();
@@ -681,12 +697,18 @@ public class OrientJdbcDatabaseMetaData implements DatabaseMetaData {
       }
     }
 
-    return new OrientJdbcResultSet(new OrientJdbcStatement(connection), resultSet, ResultSet.TYPE_FORWARD_ONLY,
-        ResultSet.CONCUR_READ_ONLY, ResultSet.HOLD_CURSORS_OVER_COMMIT);
+    return new OrientJdbcResultSet(
+        new OrientJdbcStatement(connection),
+        resultSet,
+        ResultSet.TYPE_FORWARD_ONLY,
+        ResultSet.CONCUR_READ_ONLY,
+        ResultSet.HOLD_CURSORS_OVER_COMMIT);
   }
 
   @Override
-  public ResultSet getTables(String catalog, String schemaPattern, String tableNamePattern, String[] types) throws SQLException {
+  public ResultSet getTables(
+      String catalog, String schemaPattern, String tableNamePattern, String[] types)
+      throws SQLException {
     database.activateOnCurrentThread();
     final Collection<OClass> classes = database.getMetadata().getSchema().getClasses();
 
@@ -699,11 +721,12 @@ public class OrientJdbcDatabaseMetaData implements DatabaseMetaData {
 
       if (OMetadataInternal.SYSTEM_CLUSTER.contains(cls.getName().toLowerCase(Locale.ENGLISH)))
         type = "SYSTEM TABLE";
-      else
-        type = "TABLE";
+      else type = "TABLE";
 
-      if (tableTypes.contains(type) && (tableNamePattern == null || tableNamePattern.equals("%") || tableNamePattern
-          .equalsIgnoreCase(className))) {
+      if (tableTypes.contains(type)
+          && (tableNamePattern == null
+              || tableNamePattern.equals("%")
+              || tableNamePattern.equalsIgnoreCase(className))) {
 
         OResultInternal doc = new OResultInternal();
 
@@ -718,8 +741,12 @@ public class OrientJdbcDatabaseMetaData implements DatabaseMetaData {
       }
     }
 
-    return new OrientJdbcResultSet(new OrientJdbcStatement(connection), resultSet, ResultSet.TYPE_FORWARD_ONLY,
-        ResultSet.CONCUR_READ_ONLY, ResultSet.HOLD_CURSORS_OVER_COMMIT);
+    return new OrientJdbcResultSet(
+        new OrientJdbcStatement(connection),
+        resultSet,
+        ResultSet.TYPE_FORWARD_ONLY,
+        ResultSet.CONCUR_READ_ONLY,
+        ResultSet.HOLD_CURSORS_OVER_COMMIT);
   }
 
   @Override
@@ -733,8 +760,12 @@ public class OrientJdbcDatabaseMetaData implements DatabaseMetaData {
 
     resultSet.add(field);
 
-    return new OrientJdbcResultSet(new OrientJdbcStatement(connection), resultSet, ResultSet.TYPE_FORWARD_ONLY,
-        ResultSet.CONCUR_READ_ONLY, ResultSet.HOLD_CURSORS_OVER_COMMIT);
+    return new OrientJdbcResultSet(
+        new OrientJdbcStatement(connection),
+        resultSet,
+        ResultSet.TYPE_FORWARD_ONLY,
+        ResultSet.CONCUR_READ_ONLY,
+        ResultSet.HOLD_CURSORS_OVER_COMMIT);
   }
 
   public ResultSet getCatalogs() throws SQLException {
@@ -747,8 +778,12 @@ public class OrientJdbcDatabaseMetaData implements DatabaseMetaData {
 
     resultSet.add(field);
 
-    return new OrientJdbcResultSet(new OrientJdbcStatement(connection), resultSet, ResultSet.TYPE_FORWARD_ONLY,
-        ResultSet.CONCUR_READ_ONLY, ResultSet.HOLD_CURSORS_OVER_COMMIT);
+    return new OrientJdbcResultSet(
+        new OrientJdbcStatement(connection),
+        resultSet,
+        ResultSet.TYPE_FORWARD_ONLY,
+        ResultSet.CONCUR_READ_ONLY,
+        ResultSet.HOLD_CURSORS_OVER_COMMIT);
   }
 
   @Override
@@ -762,13 +797,21 @@ public class OrientJdbcDatabaseMetaData implements DatabaseMetaData {
       resultSet.add(field);
     }
 
-    return new OrientJdbcResultSet(new OrientJdbcStatement(connection), resultSet, ResultSet.TYPE_FORWARD_ONLY,
-        ResultSet.CONCUR_READ_ONLY, ResultSet.HOLD_CURSORS_OVER_COMMIT);
+    return new OrientJdbcResultSet(
+        new OrientJdbcStatement(connection),
+        resultSet,
+        ResultSet.TYPE_FORWARD_ONLY,
+        ResultSet.CONCUR_READ_ONLY,
+        ResultSet.HOLD_CURSORS_OVER_COMMIT);
   }
 
   @Override
-  public ResultSet getColumns(final String catalog, final String schemaPattern, final String tableNamePattern,
-      final String columnNamePattern) throws SQLException {
+  public ResultSet getColumns(
+      final String catalog,
+      final String schemaPattern,
+      final String tableNamePattern,
+      final String columnNamePattern)
+      throws SQLException {
     database.activateOnCurrentThread();
 
     final OInternalResultSet resultSet = new OInternalResultSet();
@@ -786,44 +829,52 @@ public class OrientJdbcDatabaseMetaData implements DatabaseMetaData {
             }
           }
         }
-
       }
     }
-    return new OrientJdbcResultSet(new OrientJdbcStatement(connection), resultSet, ResultSet.TYPE_FORWARD_ONLY,
-        ResultSet.CONCUR_READ_ONLY, ResultSet.HOLD_CURSORS_OVER_COMMIT);
+    return new OrientJdbcResultSet(
+        new OrientJdbcStatement(connection),
+        resultSet,
+        ResultSet.TYPE_FORWARD_ONLY,
+        ResultSet.CONCUR_READ_ONLY,
+        ResultSet.HOLD_CURSORS_OVER_COMMIT);
   }
 
-  public ResultSet getColumnPrivileges(final String catalog, final String schema, final String table,
-      final String columnNamePattern) throws SQLException {
+  public ResultSet getColumnPrivileges(
+      final String catalog, final String schema, final String table, final String columnNamePattern)
+      throws SQLException {
     return getEmptyResultSet();
   }
 
-  public ResultSet getTablePrivileges(String catalog, String schemaPattern, String tableNamePattern) throws SQLException {
-
-    return getEmptyResultSet();
-  }
-
-  public ResultSet getBestRowIdentifier(String catalog, String schema, String table, int scope, boolean nullable)
+  public ResultSet getTablePrivileges(String catalog, String schemaPattern, String tableNamePattern)
       throws SQLException {
 
     return getEmptyResultSet();
   }
 
-  public ResultSet getVersionColumns(String catalog, String schema, String table) throws SQLException {
+  public ResultSet getBestRowIdentifier(
+      String catalog, String schema, String table, int scope, boolean nullable)
+      throws SQLException {
+
+    return getEmptyResultSet();
+  }
+
+  public ResultSet getVersionColumns(String catalog, String schema, String table)
+      throws SQLException {
 
     return getEmptyResultSet();
   }
 
   @Override
-  public ResultSet getPrimaryKeys(final String catalog, final String schema, final String table) throws SQLException {
+  public ResultSet getPrimaryKeys(final String catalog, final String schema, final String table)
+      throws SQLException {
     database.activateOnCurrentThread();
-    final Set<OIndex> classIndexes = database.getMetadata().getIndexManagerInternal().getClassIndexes(database, table);
+    final Set<OIndex> classIndexes =
+        database.getMetadata().getIndexManagerInternal().getClassIndexes(database, table);
 
     final Set<OIndex> uniqueIndexes = new HashSet<>();
 
     for (OIndex oIndex : classIndexes) {
-      if (oIndex.getType().equals(INDEX_TYPE.UNIQUE.name()))
-        uniqueIndexes.add(oIndex);
+      if (oIndex.getType().equals(INDEX_TYPE.UNIQUE.name())) uniqueIndexes.add(oIndex);
     }
 
     final OInternalResultSet resultSet = new OInternalResultSet();
@@ -844,11 +895,16 @@ public class OrientJdbcDatabaseMetaData implements DatabaseMetaData {
       }
     }
 
-    return new OrientJdbcResultSet(new OrientJdbcStatement(connection), resultSet, ResultSet.TYPE_FORWARD_ONLY,
-        ResultSet.CONCUR_READ_ONLY, ResultSet.HOLD_CURSORS_OVER_COMMIT);
+    return new OrientJdbcResultSet(
+        new OrientJdbcStatement(connection),
+        resultSet,
+        ResultSet.TYPE_FORWARD_ONLY,
+        ResultSet.CONCUR_READ_ONLY,
+        ResultSet.HOLD_CURSORS_OVER_COMMIT);
   }
 
-  public ResultSet getImportedKeys(String catalog, String schema, String table) throws SQLException {
+  public ResultSet getImportedKeys(String catalog, String schema, String table)
+      throws SQLException {
 
     database.activateOnCurrentThread();
 
@@ -861,17 +917,28 @@ public class OrientJdbcDatabaseMetaData implements DatabaseMetaData {
   private ResultSet getEmptyResultSet() throws SQLException {
     database.activateOnCurrentThread();
 
-    return new OrientJdbcResultSet(new OrientJdbcStatement(connection), new OInternalResultSet(), ResultSet.TYPE_FORWARD_ONLY,
-        ResultSet.CONCUR_READ_ONLY, ResultSet.HOLD_CURSORS_OVER_COMMIT);
+    return new OrientJdbcResultSet(
+        new OrientJdbcStatement(connection),
+        new OInternalResultSet(),
+        ResultSet.TYPE_FORWARD_ONLY,
+        ResultSet.CONCUR_READ_ONLY,
+        ResultSet.HOLD_CURSORS_OVER_COMMIT);
   }
 
-  public ResultSet getExportedKeys(String catalog, String schema, String table) throws SQLException {
+  public ResultSet getExportedKeys(String catalog, String schema, String table)
+      throws SQLException {
 
     return getEmptyResultSet();
   }
 
-  public ResultSet getCrossReference(String parentCatalog, String parentSchema, String parentTable, String foreignCatalog,
-      String foreignSchema, String foreignTable) throws SQLException {
+  public ResultSet getCrossReference(
+      String parentCatalog,
+      String parentSchema,
+      String parentTable,
+      String foreignCatalog,
+      String foreignSchema,
+      String foreignTable)
+      throws SQLException {
 
     return getEmptyResultSet();
   }
@@ -1006,12 +1073,17 @@ public class OrientJdbcDatabaseMetaData implements DatabaseMetaData {
     res.setProperty("SEARCHABLE", true);
     resultSet.add(res);
 
-    return new OrientJdbcResultSet(new OrientJdbcStatement(connection), resultSet, ResultSet.TYPE_FORWARD_ONLY,
-        ResultSet.CONCUR_READ_ONLY, ResultSet.HOLD_CURSORS_OVER_COMMIT);
+    return new OrientJdbcResultSet(
+        new OrientJdbcStatement(connection),
+        resultSet,
+        ResultSet.TYPE_FORWARD_ONLY,
+        ResultSet.CONCUR_READ_ONLY,
+        ResultSet.HOLD_CURSORS_OVER_COMMIT);
   }
 
   @Override
-  public ResultSet getIndexInfo(String catalog, String schema, String table, boolean unique, boolean approximate)
+  public ResultSet getIndexInfo(
+      String catalog, String schema, String table, boolean unique, boolean approximate)
       throws SQLException {
     database.activateOnCurrentThread();
     OMetadataInternal metadata = database.getMetadata();
@@ -1019,13 +1091,13 @@ public class OrientJdbcDatabaseMetaData implements DatabaseMetaData {
       metadata.getIndexManagerInternal().reload();
     }
 
-    final Set<OIndex> classIndexes = metadata.getIndexManagerInternal().getClassIndexes(database, table);
+    final Set<OIndex> classIndexes =
+        metadata.getIndexManagerInternal().getClassIndexes(database, table);
 
     final Set<OIndex> indexes = new HashSet<>();
 
     for (OIndex oIndex : classIndexes) {
-      if (!unique || oIndex.getType().equals(INDEX_TYPE.UNIQUE.name()))
-        indexes.add(oIndex);
+      if (!unique || oIndex.getType().equals(INDEX_TYPE.UNIQUE.name())) indexes.add(oIndex);
     }
 
     final OInternalResultSet resultSet = new OInternalResultSet();
@@ -1049,8 +1121,12 @@ public class OrientJdbcDatabaseMetaData implements DatabaseMetaData {
       resultSet.add(res);
     }
 
-    return new OrientJdbcResultSet(new OrientJdbcStatement(connection), resultSet, ResultSet.TYPE_FORWARD_ONLY,
-        ResultSet.CONCUR_READ_ONLY, ResultSet.HOLD_CURSORS_OVER_COMMIT);
+    return new OrientJdbcResultSet(
+        new OrientJdbcStatement(connection),
+        resultSet,
+        ResultSet.TYPE_FORWARD_ONLY,
+        ResultSet.CONCUR_READ_ONLY,
+        ResultSet.HOLD_CURSORS_OVER_COMMIT);
   }
 
   public boolean supportsResultSetType(int type) throws SQLException {
@@ -1112,7 +1188,9 @@ public class OrientJdbcDatabaseMetaData implements DatabaseMetaData {
     return false;
   }
 
-  public ResultSet getUDTs(String catalog, String schemaPattern, String typeNamePattern, int[] types) throws SQLException {
+  public ResultSet getUDTs(
+      String catalog, String schemaPattern, String typeNamePattern, int[] types)
+      throws SQLException {
     database.activateOnCurrentThread();
     final Collection<OClass> classes = database.getMetadata().getSchema().getClasses();
 
@@ -1126,11 +1204,14 @@ public class OrientJdbcDatabaseMetaData implements DatabaseMetaData {
       res.setProperty("DATA_TYPE", java.sql.Types.STRUCT);
       res.setProperty("REMARKS", (Object) null);
       resultSet.add(res);
-
     }
 
-    return new OrientJdbcResultSet(new OrientJdbcStatement(connection), resultSet, ResultSet.TYPE_FORWARD_ONLY,
-        ResultSet.CONCUR_READ_ONLY, ResultSet.HOLD_CURSORS_OVER_COMMIT);
+    return new OrientJdbcResultSet(
+        new OrientJdbcStatement(connection),
+        resultSet,
+        ResultSet.TYPE_FORWARD_ONLY,
+        ResultSet.CONCUR_READ_ONLY,
+        ResultSet.HOLD_CURSORS_OVER_COMMIT);
   }
 
   public Connection getConnection() throws SQLException {
@@ -1157,7 +1238,8 @@ public class OrientJdbcDatabaseMetaData implements DatabaseMetaData {
     return false;
   }
 
-  public ResultSet getSuperTypes(String catalog, String schemaPattern, String typeNamePattern) throws SQLException {
+  public ResultSet getSuperTypes(String catalog, String schemaPattern, String typeNamePattern)
+      throws SQLException {
     database.activateOnCurrentThread();
     final OClass cls = database.getMetadata().getSchema().getClass(typeNamePattern);
 
@@ -1173,11 +1255,16 @@ public class OrientJdbcDatabaseMetaData implements DatabaseMetaData {
       resultSet.add(res);
     }
 
-    return new OrientJdbcResultSet(new OrientJdbcStatement(connection), resultSet, ResultSet.TYPE_FORWARD_ONLY,
-        ResultSet.CONCUR_READ_ONLY, ResultSet.HOLD_CURSORS_OVER_COMMIT);
+    return new OrientJdbcResultSet(
+        new OrientJdbcStatement(connection),
+        resultSet,
+        ResultSet.TYPE_FORWARD_ONLY,
+        ResultSet.CONCUR_READ_ONLY,
+        ResultSet.HOLD_CURSORS_OVER_COMMIT);
   }
 
-  public ResultSet getSuperTables(final String catalog, final String schemaPattern, final String tableNamePattern)
+  public ResultSet getSuperTables(
+      final String catalog, final String schemaPattern, final String tableNamePattern)
       throws SQLException {
     database.activateOnCurrentThread();
     final OClass cls = database.getMetadata().getSchema().getClass(tableNamePattern);
@@ -1195,11 +1282,16 @@ public class OrientJdbcDatabaseMetaData implements DatabaseMetaData {
       resultSet.add(res);
     }
 
-    return new OrientJdbcResultSet(new OrientJdbcStatement(connection), resultSet, ResultSet.TYPE_FORWARD_ONLY,
-        ResultSet.CONCUR_READ_ONLY, ResultSet.HOLD_CURSORS_OVER_COMMIT);
+    return new OrientJdbcResultSet(
+        new OrientJdbcStatement(connection),
+        resultSet,
+        ResultSet.TYPE_FORWARD_ONLY,
+        ResultSet.CONCUR_READ_ONLY,
+        ResultSet.HOLD_CURSORS_OVER_COMMIT);
   }
 
-  public ResultSet getAttributes(String catalog, String schemaPattern, String typeNamePattern, String attributeNamePattern)
+  public ResultSet getAttributes(
+      String catalog, String schemaPattern, String typeNamePattern, String attributeNamePattern)
       throws SQLException {
 
     return getEmptyResultSet();
@@ -1270,10 +1362,10 @@ public class OrientJdbcDatabaseMetaData implements DatabaseMetaData {
   public ResultSet getClientInfoProperties() throws SQLException {
 
     return getEmptyResultSet();
-
   }
 
-  public ResultSet getFunctions(String catalog, String schemaPattern, String functionNamePattern) throws SQLException {
+  public ResultSet getFunctions(String catalog, String schemaPattern, String functionNamePattern)
+      throws SQLException {
 
     database.activateOnCurrentThread();
     OInternalResultSet resultSet = new OInternalResultSet();
@@ -1289,16 +1381,22 @@ public class OrientJdbcDatabaseMetaData implements DatabaseMetaData {
       resultSet.add(res);
     }
 
-    return new OrientJdbcResultSet(new OrientJdbcStatement(connection), resultSet, ResultSet.TYPE_FORWARD_ONLY,
-        ResultSet.CONCUR_READ_ONLY, ResultSet.HOLD_CURSORS_OVER_COMMIT);
+    return new OrientJdbcResultSet(
+        new OrientJdbcStatement(connection),
+        resultSet,
+        ResultSet.TYPE_FORWARD_ONLY,
+        ResultSet.CONCUR_READ_ONLY,
+        ResultSet.HOLD_CURSORS_OVER_COMMIT);
   }
 
-  public ResultSet getFunctionColumns(String catalog, String schemaPattern, String functionNamePattern, String columnNamePattern)
+  public ResultSet getFunctionColumns(
+      String catalog, String schemaPattern, String functionNamePattern, String columnNamePattern)
       throws SQLException {
     database.activateOnCurrentThread();
     final OInternalResultSet resultSet = new OInternalResultSet();
 
-    final OFunction f = database.getMetadata().getFunctionLibrary().getFunction(functionNamePattern);
+    final OFunction f =
+        database.getMetadata().getFunctionLibrary().getFunction(functionNamePattern);
 
     for (String p : f.getParameters()) {
       final OResultInternal res = new OResultInternal();
@@ -1310,7 +1408,6 @@ public class OrientJdbcDatabaseMetaData implements DatabaseMetaData {
       res.setProperty("DATA_TYPE", java.sql.Types.OTHER);
       res.setProperty("SPECIFIC_NAME", f.getName());
       resultSet.add(res);
-
     }
 
     final OResultInternal res = new OResultInternal();
@@ -1324,11 +1421,16 @@ public class OrientJdbcDatabaseMetaData implements DatabaseMetaData {
 
     resultSet.add(res);
 
-    return new OrientJdbcResultSet(new OrientJdbcStatement(connection), resultSet, ResultSet.TYPE_FORWARD_ONLY,
-        ResultSet.CONCUR_READ_ONLY, ResultSet.HOLD_CURSORS_OVER_COMMIT);
+    return new OrientJdbcResultSet(
+        new OrientJdbcStatement(connection),
+        resultSet,
+        ResultSet.TYPE_FORWARD_ONLY,
+        ResultSet.CONCUR_READ_ONLY,
+        ResultSet.HOLD_CURSORS_OVER_COMMIT);
   }
 
-  public ResultSet getPseudoColumns(String arg0, String arg1, String arg2, String arg3) throws SQLException {
+  public ResultSet getPseudoColumns(String arg0, String arg1, String arg2, String arg3)
+      throws SQLException {
     return getEmptyResultSet();
   }
 

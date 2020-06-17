@@ -4,7 +4,7 @@ import java.util.concurrent.atomic.AtomicReference;
 
 public final class Node<E> {
   private final AtomicReference<Node<E>> next = new AtomicReference<>();
-  private final E                        item;
+  private final E item;
 
   public Node(final E item) {
     this.item = item;

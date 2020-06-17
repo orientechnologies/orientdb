@@ -15,48 +15,46 @@
  */
 package com.orientechnologies.orient.server.network;
 
+import com.orientechnologies.common.exception.OException;
+import com.orientechnologies.common.parser.OSystemVariableResolver;
+import com.orientechnologies.orient.core.exception.OConfigurationException;
+import com.orientechnologies.orient.server.config.OServerParameterConfiguration;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.security.KeyStore;
-
 import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLServerSocket;
 import javax.net.ssl.SSLServerSocketFactory;
 import javax.net.ssl.TrustManagerFactory;
 
-import com.orientechnologies.common.exception.OException;
-import com.orientechnologies.common.parser.OSystemVariableResolver;
-import com.orientechnologies.orient.core.exception.OConfigurationException;
-import com.orientechnologies.orient.server.config.OServerParameterConfiguration;
-
 public class OServerSSLSocketFactory extends OServerSocketFactory {
 
-  public static final String     PARAM_NETWORK_SSL_CLIENT_AUTH         = "network.ssl.clientAuth";
-  public static final String     PARAM_NETWORK_SSL_KEYSTORE            = "network.ssl.keyStore";
-  public static final String     PARAM_NETWORK_SSL_KEYSTORE_TYPE       = "network.ssl.keyStoreType";
-  public static final String     PARAM_NETWORK_SSL_KEYSTORE_PASSWORD   = "network.ssl.keyStorePassword";
-  public static final String     PARAM_NETWORK_SSL_TRUSTSTORE          = "network.ssl.trustStore";
-  public static final String     PARAM_NETWORK_SSL_TRUSTSTORE_TYPE     = "network.ssl.trustStoreType";
-  public static final String     PARAM_NETWORK_SSL_TRUSTSTORE_PASSWORD = "network.ssl.trustStorePassword";
+  public static final String PARAM_NETWORK_SSL_CLIENT_AUTH = "network.ssl.clientAuth";
+  public static final String PARAM_NETWORK_SSL_KEYSTORE = "network.ssl.keyStore";
+  public static final String PARAM_NETWORK_SSL_KEYSTORE_TYPE = "network.ssl.keyStoreType";
+  public static final String PARAM_NETWORK_SSL_KEYSTORE_PASSWORD = "network.ssl.keyStorePassword";
+  public static final String PARAM_NETWORK_SSL_TRUSTSTORE = "network.ssl.trustStore";
+  public static final String PARAM_NETWORK_SSL_TRUSTSTORE_TYPE = "network.ssl.trustStoreType";
+  public static final String PARAM_NETWORK_SSL_TRUSTSTORE_PASSWORD =
+      "network.ssl.trustStorePassword";
 
-  private SSLServerSocketFactory sslServerSocketFactory                = null;
+  private SSLServerSocketFactory sslServerSocketFactory = null;
 
-  private String                 keyStorePath                          = null;
-  private File                   keyStoreFile                          = null;
-  private String                 keyStorePassword                      = null;
-  private String                 keyStoreType                          = KeyStore.getDefaultType();
-  private String                 trustStorePath                        = null;
-  private File                   trustStoreFile                        = null;
-  private String                 trustStorePassword                    = null;
-  private String                 trustStoreType                        = KeyStore.getDefaultType();
-  private boolean                clientAuth                            = false;
+  private String keyStorePath = null;
+  private File keyStoreFile = null;
+  private String keyStorePassword = null;
+  private String keyStoreType = KeyStore.getDefaultType();
+  private String trustStorePath = null;
+  private File trustStoreFile = null;
+  private String trustStorePassword = null;
+  private String trustStoreType = KeyStore.getDefaultType();
+  private boolean clientAuth = false;
 
-  public OServerSSLSocketFactory() {
-  }
+  public OServerSSLSocketFactory() {}
 
   @Override
   public void config(String name, final OServerParameterConfiguration[] iParameters) {
@@ -88,13 +86,17 @@ public class OServerSSLSocketFactory extends OServerSocketFactory {
 
     keyStoreFile = new File(keyStorePath);
     if (!keyStoreFile.isAbsolute()) {
-      keyStoreFile = new File(OSystemVariableResolver.resolveSystemVariables("${ORIENTDB_HOME}"), keyStorePath);
+      keyStoreFile =
+          new File(
+              OSystemVariableResolver.resolveSystemVariables("${ORIENTDB_HOME}"), keyStorePath);
     }
 
     if (trustStorePath != null) {
       trustStoreFile = new File(trustStorePath);
       if (!trustStoreFile.isAbsolute()) {
-        trustStoreFile = new File(OSystemVariableResolver.resolveSystemVariables("${ORIENTDB_HOME}"), trustStorePath);
+        trustStoreFile =
+            new File(
+                OSystemVariableResolver.resolveSystemVariables("${ORIENTDB_HOME}"), trustStorePath);
       }
     }
   }
@@ -119,7 +121,8 @@ public class OServerSSLSocketFactory extends OServerSocketFactory {
     try {
       SSLContext context = SSLContext.getInstance("TLS");
 
-      KeyManagerFactory kmf = KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm());
+      KeyManagerFactory kmf =
+          KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm());
 
       KeyStore keyStore = KeyStore.getInstance(keyStoreType);
       char[] keyStorePass = keyStorePassword.toCharArray();
@@ -140,7 +143,8 @@ public class OServerSSLSocketFactory extends OServerSocketFactory {
 
       return context;
     } catch (Exception e) {
-      throw OException.wrapException(new OConfigurationException("Failed to create SSL context"), e);
+      throw OException.wrapException(
+          new OConfigurationException("Failed to create SSL context"), e);
     }
   }
 
@@ -155,8 +159,9 @@ public class OServerSSLSocketFactory extends OServerSocketFactory {
   }
 
   @Override
-  public ServerSocket createServerSocket(int port, int backlog, InetAddress ifAddress) throws IOException {
-    return configureSocket((SSLServerSocket) getBackingFactory().createServerSocket(port, backlog, ifAddress));
+  public ServerSocket createServerSocket(int port, int backlog, InetAddress ifAddress)
+      throws IOException {
+    return configureSocket(
+        (SSLServerSocket) getBackingFactory().createServerSocket(port, backlog, ifAddress));
   }
-
 }

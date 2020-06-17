@@ -1,41 +1,38 @@
 /**
  * Copyright 2010-2016 OrientDB LTD (http://orientdb.com)
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
+ * <p>Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file
+ * except in compliance with the License. You may obtain a copy of the License at
  *
- * 	http://www.apache.org/licenses/LICENSE-2.0
+ * <p>http://www.apache.org/licenses/LICENSE-2.0
  *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
+ * <p>Unless required by applicable law or agreed to in writing, software distributed under the
+ * License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either
+ * express or implied. See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * For more information: http://orientdb.com
+ * <p>For more information: http://orientdb.com
  */
 package com.orientechnologies.orient.jdbc;
-
-import org.junit.Test;
-
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
 
 import static java.sql.ResultSet.CONCUR_READ_ONLY;
 import static java.sql.ResultSet.TYPE_FORWARD_ONLY;
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import org.junit.Test;
+
 public class OrientJdbcPreparedStatementTest extends OrientJdbcDbPerMethodTemplateTest {
 
   @Test
   public void shouldCreateStatement() throws Exception {
-    PreparedStatement stmt = conn.prepareStatement("SELECT * FROM Item WHERE stringKey = ? OR intKey = ?");
+    PreparedStatement stmt =
+        conn.prepareStatement("SELECT * FROM Item WHERE stringKey = ? OR intKey = ?");
     assertThat(stmt).isNotNull();
     stmt.close();
     assertThat(stmt.isClosed()).isTrue();
-
   }
 
   @Test
@@ -57,7 +54,6 @@ public class OrientJdbcPreparedStatementTest extends OrientJdbcDbPerMethodTempla
     int one = resultSet.getInt("1");
     assertThat(one).isEqualTo(1);
     assertThat(stmt.getMoreResults()).isFalse();
-
   }
 
   @Test
@@ -87,7 +83,8 @@ public class OrientJdbcPreparedStatementTest extends OrientJdbcDbPerMethodTempla
   @Test
   public void testInsertRIDReturning() throws Exception {
     conn.createStatement().executeQuery("CREATE CLASS Insertable ");
-    ResultSet result = conn.createStatement().executeQuery("INSERT INTO Insertable(id) VALUES(1) return @rid");
+    ResultSet result =
+        conn.createStatement().executeQuery("INSERT INTO Insertable(id) VALUES(1) return @rid");
 
     assertThat(result.next()).isTrue();
     assertThat(result.getObject("@rid")).isNotNull();
@@ -108,7 +105,8 @@ public class OrientJdbcPreparedStatementTest extends OrientJdbcDbPerMethodTempla
 
   @Test
   public void shouldExecutePreparedStatement() throws Exception {
-    PreparedStatement stmt = conn.prepareStatement("SELECT  " + "FROM Item " + "WHERE stringKey = ? OR intKey = ?");
+    PreparedStatement stmt =
+        conn.prepareStatement("SELECT  " + "FROM Item " + "WHERE stringKey = ? OR intKey = ?");
 
     assertThat(stmt).isNotNull();
     stmt.setString(1, "1");
@@ -124,12 +122,13 @@ public class OrientJdbcPreparedStatementTest extends OrientJdbcDbPerMethodTempla
     assertThat(rs.getString("stringKey")).isEqualTo("1");
     assertThat(rs.getInt("intKey")).isEqualTo(1);
     //
-    // assertThat(rs.getDate("date").toString(), equalTo(new java.sql.Date(System.currentTimeMillis()).toString()));
-    // assertThat(rs.getDate("time").toString(), equalTo(new java.sql.Date(System.currentTimeMillis()).toString()));
+    // assertThat(rs.getDate("date").toString(), equalTo(new
+    // java.sql.Date(System.currentTimeMillis()).toString()));
+    // assertThat(rs.getDate("time").toString(), equalTo(new
+    // java.sql.Date(System.currentTimeMillis()).toString()));
 
     stmt.close();
     assertThat(stmt.isClosed()).isTrue();
-
   }
 
   @Test
@@ -142,20 +141,24 @@ public class OrientJdbcPreparedStatementTest extends OrientJdbcDbPerMethodTempla
     stmt.close();
 
     // Let's verify the previous process
-    ResultSet resultSet = conn.createStatement()
-        .executeQuery("SELECT count(*) AS num FROM insertable WHERE id = 'someRandomUid'");
+    ResultSet resultSet =
+        conn.createStatement()
+            .executeQuery("SELECT count(*) AS num FROM insertable WHERE id = 'someRandomUid'");
     assertThat(resultSet.getLong(1)).isEqualTo(1);
 
-    //without alias!
-    resultSet = conn.createStatement()
-        .executeQuery("SELECT count(*) FROM insertable WHERE id = 'someRandomUid'");
+    // without alias!
+    resultSet =
+        conn.createStatement()
+            .executeQuery("SELECT count(*) FROM insertable WHERE id = 'someRandomUid'");
     assertThat(resultSet.getLong(1)).isEqualTo(1);
   }
 
   @Test
   public void shouldCreatePreparedStatementWithExtendConstructor() throws Exception {
 
-    PreparedStatement stmt = conn.prepareStatement("SELECT * FROM Item WHERE intKey = ?", TYPE_FORWARD_ONLY, CONCUR_READ_ONLY);
+    PreparedStatement stmt =
+        conn.prepareStatement(
+            "SELECT * FROM Item WHERE intKey = ?", TYPE_FORWARD_ONLY, CONCUR_READ_ONLY);
     stmt.setInt(1, 1);
 
     ResultSet rs = stmt.executeQuery();
@@ -170,9 +173,12 @@ public class OrientJdbcPreparedStatementTest extends OrientJdbcDbPerMethodTempla
   }
 
   @Test
-  public void shouldCreatePreparedStatementWithExtendConstructorWithOutProjection() throws Exception {
-    //same test as above, no projection at all
-    PreparedStatement stmt = conn.prepareStatement("SELECT FROM Item WHERE intKey = ?", TYPE_FORWARD_ONLY, CONCUR_READ_ONLY);
+  public void shouldCreatePreparedStatementWithExtendConstructorWithOutProjection()
+      throws Exception {
+    // same test as above, no projection at all
+    PreparedStatement stmt =
+        conn.prepareStatement(
+            "SELECT FROM Item WHERE intKey = ?", TYPE_FORWARD_ONLY, CONCUR_READ_ONLY);
     stmt.setInt(1, 1);
 
     ResultSet rs = stmt.executeQuery();
@@ -193,6 +199,5 @@ public class OrientJdbcPreparedStatementTest extends OrientJdbcDbPerMethodTempla
     PreparedStatement stmt = conn.prepareStatement(query);
     stmt.setString(1, "theSequence");
     stmt.executeQuery();
-
   }
 }

@@ -18,24 +18,21 @@
 
 package com.orientechnologies.orient.graph.blueprints;
 
+import static org.junit.Assert.assertEquals;
+
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.tinkerpop.blueprints.Vertex;
 import com.tinkerpop.blueprints.impls.orient.OrientGraphNoTx;
 import com.tinkerpop.blueprints.impls.orient.OrientVertex;
 import com.tinkerpop.blueprints.impls.orient.OrientVertexType;
-import org.junit.Test;
-
 import java.util.Iterator;
-
-import static org.junit.Assert.assertEquals;
+import org.junit.Test;
 
 /**
  * @author Gabriele Ponzi
  * @email gabriele.ponzi@gmail.com
- *
  */
-
 public class GraphGetVerticesTest {
 
   @Test
@@ -66,8 +63,8 @@ public class GraphGetVerticesTest {
      */
 
     // String key and value
-    String[] singleKey = { "person_id" };
-    String[] singleValue = { "01" };
+    String[] singleKey = {"person_id"};
+    String[] singleValue = {"01"};
 
     iterator = graph.getVertices("Person", singleKey, singleValue).iterator();
 
@@ -125,8 +122,8 @@ public class GraphGetVerticesTest {
     graph.getRawGraph().command(sqlCommand).execute();
 
     // String key and value
-    String[] keys = { "person_id", "name" };
-    String[] values = { "03", "Emanuel" };
+    String[] keys = {"person_id", "name"};
+    String[] values = {"03", "Emanuel"};
 
     iterator = graph.getVertices("Person", keys, values).iterator();
 
@@ -146,7 +143,8 @@ public class GraphGetVerticesTest {
 
     graph.createVertexType("PersonDummy");
 
-    Iterator<Vertex> personDummy = graph.getVertices("PersonDummy", singleKey, singleValue).iterator();
+    Iterator<Vertex> personDummy =
+        graph.getVertices("PersonDummy", singleKey, singleValue).iterator();
 
     resultsAmount = 0;
     while (personDummy.hasNext()) {
@@ -154,7 +152,5 @@ public class GraphGetVerticesTest {
       resultsAmount++;
     }
     assertEquals(0, resultsAmount);
-
   }
-
 }

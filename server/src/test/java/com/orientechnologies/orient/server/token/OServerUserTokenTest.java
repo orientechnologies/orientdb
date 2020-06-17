@@ -15,7 +15,6 @@ public class OServerUserTokenTest {
   public void setup() throws Exception {
 
     server = OServer.startFromClasspathConfig("orientdb-server-config.xml");
-
   }
 
   @Test
@@ -27,7 +26,8 @@ public class OServerUserTokenTest {
 
     Assert.assertNotNull(signedWebTokenServerUser);
 
-    JsonWebToken token = (JsonWebToken) server.getTokenHandler().parseWebToken(signedWebTokenServerUser);
+    JsonWebToken token =
+        (JsonWebToken) server.getTokenHandler().parseWebToken(signedWebTokenServerUser);
 
     server.getTokenHandler().validateServerUserToken(token, "", "");
 

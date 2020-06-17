@@ -4,7 +4,6 @@ package com.orientechnologies.orient.core.sql.parser;
 
 import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.executor.OResultInternal;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -12,17 +11,17 @@ import java.util.stream.Collectors;
 
 public class OFromItem extends SimpleNode {
 
-  protected List<ORid>            rids;
+  protected List<ORid> rids;
   protected List<OInputParameter> inputParams;
-  protected OCluster              cluster;
-  protected OClusterList          clusterList;
-  protected OIndexIdentifier      index;
-  protected OMetadataIdentifier   metadata;
-  protected OStatement            statement;
-  protected OInputParameter       inputParam;
-  protected OIdentifier           identifier;
-  protected OFunctionCall         functionCall;
-  protected OModifier             modifier;
+  protected OCluster cluster;
+  protected OClusterList clusterList;
+  protected OIndexIdentifier index;
+  protected OMetadataIdentifier metadata;
+  protected OStatement statement;
+  protected OInputParameter inputParam;
+  protected OIdentifier identifier;
+  protected OFunctionCall functionCall;
+  protected OModifier modifier;
 
   public OFromItem(int id) {
     super(id);
@@ -165,33 +164,34 @@ public class OFromItem extends SimpleNode {
 
   @Override
   public boolean equals(Object o) {
-    if (this == o)
-      return true;
-    if (o == null || getClass() != o.getClass())
-      return false;
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
 
     OFromItem oFromItem = (OFromItem) o;
 
-    if (rids != null ? !rids.equals(oFromItem.rids) : oFromItem.rids != null)
-      return false;
-    if (inputParams != null ? !inputParams.equals(oFromItem.inputParams) : oFromItem.inputParams != null)
-      return false;
+    if (rids != null ? !rids.equals(oFromItem.rids) : oFromItem.rids != null) return false;
+    if (inputParams != null
+        ? !inputParams.equals(oFromItem.inputParams)
+        : oFromItem.inputParams != null) return false;
     if (cluster != null ? !cluster.equals(oFromItem.cluster) : oFromItem.cluster != null)
       return false;
-    if (clusterList != null ? !clusterList.equals(oFromItem.clusterList) : oFromItem.clusterList != null)
-      return false;
-    if (index != null ? !index.equals(oFromItem.index) : oFromItem.index != null)
-      return false;
+    if (clusterList != null
+        ? !clusterList.equals(oFromItem.clusterList)
+        : oFromItem.clusterList != null) return false;
+    if (index != null ? !index.equals(oFromItem.index) : oFromItem.index != null) return false;
     if (metadata != null ? !metadata.equals(oFromItem.metadata) : oFromItem.metadata != null)
       return false;
     if (statement != null ? !statement.equals(oFromItem.statement) : oFromItem.statement != null)
       return false;
-    if (inputParam != null ? !inputParam.equals(oFromItem.inputParam) : oFromItem.inputParam != null)
-      return false;
-    if (identifier != null ? !identifier.equals(oFromItem.identifier) : oFromItem.identifier != null)
-      return false;
-    if (functionCall != null ? !functionCall.equals(oFromItem.functionCall) : oFromItem.functionCall != null)
-      return false;
+    if (inputParam != null
+        ? !inputParam.equals(oFromItem.inputParam)
+        : oFromItem.inputParam != null) return false;
+    if (identifier != null
+        ? !identifier.equals(oFromItem.identifier)
+        : oFromItem.identifier != null) return false;
+    if (functionCall != null
+        ? !functionCall.equals(oFromItem.functionCall)
+        : oFromItem.functionCall != null) return false;
     if (modifier != null ? !modifier.equals(oFromItem.modifier) : oFromItem.modifier != null)
       return false;
 
@@ -261,10 +261,12 @@ public class OFromItem extends SimpleNode {
   public OResult serialize() {
     OResultInternal result = new OResultInternal();
     if (rids != null) {
-      result.setProperty("rids", rids.stream().map(x -> x.serialize()).collect(Collectors.toList()));
+      result.setProperty(
+          "rids", rids.stream().map(x -> x.serialize()).collect(Collectors.toList()));
     }
     if (inputParams != null) {
-      result.setProperty("inputParams", rids.stream().map(x -> x.serialize()).collect(Collectors.toList()));
+      result.setProperty(
+          "inputParams", rids.stream().map(x -> x.serialize()).collect(Collectors.toList()));
     }
     if (cluster != null) {
       result.setProperty("cluster", cluster.serialize());

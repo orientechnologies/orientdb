@@ -1,22 +1,22 @@
 /*
-  *
-  *  *  Copyright 2010-2016 OrientDB LTD (http://orientdb.com)
-  *  *
-  *  *  Licensed under the Apache License, Version 2.0 (the "License");
-  *  *  you may not use this file except in compliance with the License.
-  *  *  You may obtain a copy of the License at
-  *  *
-  *  *       http://www.apache.org/licenses/LICENSE-2.0
-  *  *
-  *  *  Unless required by applicable law or agreed to in writing, software
-  *  *  distributed under the License is distributed on an "AS IS" BASIS,
-  *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-  *  *  See the License for the specific language governing permissions and
-  *  *  limitations under the License.
-  *  *
-  *  * For more information: http://orientdb.com
-  *
-  */
+ *
+ *  *  Copyright 2010-2016 OrientDB LTD (http://orientdb.com)
+ *  *
+ *  *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  *  you may not use this file except in compliance with the License.
+ *  *  You may obtain a copy of the License at
+ *  *
+ *  *       http://www.apache.org/licenses/LICENSE-2.0
+ *  *
+ *  *  Unless required by applicable law or agreed to in writing, software
+ *  *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  *  See the License for the specific language governing permissions and
+ *  *  limitations under the License.
+ *  *
+ *  * For more information: http://orientdb.com
+ *
+ */
 package com.orientechnologies.orient.graph.sql.functions;
 
 import com.orientechnologies.orient.core.command.OCommandContext;
@@ -27,7 +27,6 @@ import com.tinkerpop.blueprints.Direction;
 import com.tinkerpop.blueprints.Vertex;
 import com.tinkerpop.blueprints.impls.orient.OrientBaseGraph;
 import com.tinkerpop.blueprints.impls.orient.OrientVertex;
-
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -37,22 +36,21 @@ import java.util.Set;
 
 /**
  * Abstract class to find paths between nodes.
- * 
+ *
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
- * 
  */
 public abstract class OSQLFunctionPathFinder extends OSQLFunctionMathAbstract {
-  protected OrientBaseGraph         db;
-  protected Set<OrientVertex>       unSettledNodes;
+  protected OrientBaseGraph db;
+  protected Set<OrientVertex> unSettledNodes;
   protected Map<ORID, OrientVertex> predecessors;
-  protected Map<ORID, Float>        distance;
+  protected Map<ORID, Float> distance;
 
-  protected OrientVertex            paramSourceVertex;
-  protected OrientVertex            paramDestinationVertex;
-  protected Direction               paramDirection = Direction.OUT;
-  protected OCommandContext         context;
+  protected OrientVertex paramSourceVertex;
+  protected OrientVertex paramDestinationVertex;
+  protected Direction paramDirection = Direction.OUT;
+  protected OCommandContext context;
 
-  protected static final float      MIN            = 0f;
+  protected static final float MIN = 0f;
 
   public OSQLFunctionPathFinder(final String iName, final int iMinParams, final int iMaxParams) {
     super(iName, iMinParams, iMaxParams);
@@ -76,19 +74,15 @@ public abstract class OSQLFunctionPathFinder extends OSQLFunctionMathAbstract {
       unSettledNodes.remove(node);
       findMinimalDistances(node);
 
-      if (distance.size() > maxDistances)
-        maxDistances = distance.size();
-      if (unSettledNodes.size() > maxUnSettled)
-        maxUnSettled = unSettledNodes.size();
-      if (predecessors.size() > maxPredecessors)
-        maxPredecessors = predecessors.size();
+      if (distance.size() > maxDistances) maxDistances = distance.size();
+      if (unSettledNodes.size() > maxUnSettled) maxUnSettled = unSettledNodes.size();
+      if (predecessors.size() > maxPredecessors) maxPredecessors = predecessors.size();
 
       if (!isVariableEdgeWeight() && distance.containsKey(paramDestinationVertex.getIdentity()))
         // FOUND
         break;
 
-      if ( !OCommandExecutorAbstract.checkInterruption(context) )
-        break;
+      if (!OCommandExecutorAbstract.checkInterruption(context)) break;
     }
 
     context.setVariable("maxDistances", maxDistances);
@@ -112,8 +106,7 @@ public abstract class OSQLFunctionPathFinder extends OSQLFunctionMathAbstract {
     final LinkedList<OrientVertex> path = new LinkedList<OrientVertex>();
     OrientVertex step = paramDestinationVertex;
     // Check if a path exists
-    if (predecessors.get(step.getIdentity()) == null)
-      return null;
+    if (predecessors.get(step.getIdentity()) == null) return null;
 
     path.add(step);
     while (predecessors.get(step.getIdentity()) != null) {
@@ -144,7 +137,6 @@ public abstract class OSQLFunctionPathFinder extends OSQLFunctionMathAbstract {
         unSettledNodes.add(neighbor);
       }
     }
-
   }
 
   protected Set<OrientVertex> getNeighbors(final Vertex node) {
@@ -154,8 +146,7 @@ public abstract class OSQLFunctionPathFinder extends OSQLFunctionMathAbstract {
     if (node != null) {
       for (Vertex v : node.getVertices(paramDirection)) {
         final OrientVertex ov = (OrientVertex) v;
-        if (ov != null && isNotSettled(ov))
-          neighbors.add(ov);
+        if (ov != null && isNotSettled(ov)) neighbors.add(ov);
       }
     }
     return neighbors;
@@ -182,8 +173,7 @@ public abstract class OSQLFunctionPathFinder extends OSQLFunctionMathAbstract {
   }
 
   protected float getShortestDistance(final OrientVertex destination) {
-    if (destination == null)
-      return Float.MAX_VALUE;
+    if (destination == null) return Float.MAX_VALUE;
 
     final Float d = distance.get(destination.getIdentity());
     return d == null ? Float.MAX_VALUE : d;

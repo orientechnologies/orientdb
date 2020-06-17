@@ -1,18 +1,17 @@
 package com.orientechnologies.orient.core.sql.method.misc;
 
+import static org.junit.Assert.assertEquals;
+
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import java.util.ArrayList;
+import java.util.HashSet;
 import org.junit.Before;
 import org.junit.Test;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-
-import static org.junit.Assert.assertEquals;
-
 /**
- * Tests the "asSet()" method implemented by the OSQLMethodAsSet class. Note
- * that the only input to the execute() method from the OSQLMethod interface
- * that is used is the ioResult argument (the 4th argument).
+ * Tests the "asSet()" method implemented by the OSQLMethodAsSet class. Note that the only input to
+ * the execute() method from the OSQLMethod interface that is used is the ioResult argument (the 4th
+ * argument).
  *
  * @author Michael MacFadden
  */

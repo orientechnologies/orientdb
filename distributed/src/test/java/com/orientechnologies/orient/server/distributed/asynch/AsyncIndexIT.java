@@ -31,17 +31,23 @@ public class AsyncIndexIT extends BareBoneBase2ServerTest {
       graph.command(new OCommandSQL("alter property SMS.lang max 2")).execute();
       graph.command(new OCommandSQL("create index sms_keys ON SMS (type, lang) unique")).execute();
 
-      graph.command(new OCommandSQL("insert into sms (type, lang, source, content) values ( 'notify', 'en', 1, 'This is a test')"))
+      graph
+          .command(
+              new OCommandSQL(
+                  "insert into sms (type, lang, source, content) values ( 'notify', 'en', 1, 'This is a test')"))
           .execute();
       try {
         graph
-            .command(new OCommandSQL("insert into sms (type, lang, source, content) values ( 'notify', 'en', 1, 'This is a test')"))
+            .command(
+                new OCommandSQL(
+                    "insert into sms (type, lang, source, content) values ( 'notify', 'en', 1, 'This is a test')"))
             .execute();
         Assert.fail("violated unique index was not raised");
       } catch (ORecordDuplicatedException e) {
       }
 
-      final Iterable<OElement> result = graph.command(new OSQLSynchQuery<OElement>("select count(*) from SMS")).execute();
+      final Iterable<OElement> result =
+          graph.command(new OSQLSynchQuery<OElement>("select count(*) from SMS")).execute();
 
       Assert.assertEquals(1, ((Number) result.iterator().next().getProperty("count")).intValue());
 
@@ -61,13 +67,16 @@ public class AsyncIndexIT extends BareBoneBase2ServerTest {
     try {
       try {
         graph2
-            .command(new OCommandSQL("insert into sms (type, lang, source, content) values ( 'notify', 'en', 1, 'This is a test')"))
+            .command(
+                new OCommandSQL(
+                    "insert into sms (type, lang, source, content) values ( 'notify', 'en', 1, 'This is a test')"))
             .execute();
         Assert.fail("violated unique index was not raised");
       } catch (ORecordDuplicatedException e) {
       }
 
-      final Iterable<OElement> result = graph2.command(new OSQLSynchQuery<OElement>("select count(*) from SMS")).execute();
+      final Iterable<OElement> result =
+          graph2.command(new OSQLSynchQuery<OElement>("select count(*) from SMS")).execute();
 
       Assert.assertEquals(1, ((Number) result.iterator().next().getProperty("count")).intValue());
 
@@ -82,7 +91,5 @@ public class AsyncIndexIT extends BareBoneBase2ServerTest {
   }
 
   @Override
-  protected void dbClient2(BareBonesServer[] servers) {
-
-  }
+  protected void dbClient2(BareBonesServer[] servers) {}
 }

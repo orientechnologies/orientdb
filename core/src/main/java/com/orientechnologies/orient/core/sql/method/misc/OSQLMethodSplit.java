@@ -21,7 +21,7 @@ import com.orientechnologies.orient.core.db.record.OIdentifiable;
 
 /**
  * Splits a string using a delimiter.
- * 
+ *
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
  */
 public class OSQLMethodSplit extends OAbstractSQLMethod {
@@ -33,9 +33,13 @@ public class OSQLMethodSplit extends OAbstractSQLMethod {
   }
 
   @Override
-  public Object execute(Object iThis, OIdentifiable iRecord, OCommandContext iContext, Object ioResult, Object[] iParams) {
-    if (iThis == null || iParams[0] == null)
-      return iThis;
+  public Object execute(
+      Object iThis,
+      OIdentifiable iRecord,
+      OCommandContext iContext,
+      Object ioResult,
+      Object[] iParams) {
+    if (iThis == null || iParams[0] == null) return iThis;
 
     return iThis.toString().split(iParams[0].toString());
   }

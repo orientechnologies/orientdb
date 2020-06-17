@@ -8,19 +8,18 @@ import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.record.binary.ODocumentSerializerDelta;
 import com.orientechnologies.orient.core.serialization.serializer.record.binary.ORecordSerializerNetworkDistributed;
-
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
 import java.util.Optional;
 
 public class OTransactionDataChange {
-  private byte             type;
-  private byte             recordType;
-  private ORID             id;
+  private byte type;
+  private byte recordType;
+  private ORID id;
   private Optional<byte[]> record;
-  private int              version;
-  private boolean          contentChanged;
+  private int version;
+  private boolean contentChanged;
 
   public OTransactionDataChange(ORecordOperation operation) {
     this.type = operation.type;
@@ -29,29 +28,33 @@ public class OTransactionDataChange {
     this.id = rec.getIdentity();
     this.version = rec.getVersion();
     switch (operation.type) {
-    case ORecordOperation.CREATED:
-      this.record = Optional.of(ORecordSerializerNetworkDistributed.INSTANCE.toStream(rec));
-      this.contentChanged = ORecordInternal.isContentChanged(rec);
-      break;
-    case ORecordOperation.UPDATED:
-      if (recordType == ODocument.RECORD_TYPE) {
-        record = Optional.of(ODocumentSerializerDelta.instance().serializeDelta((ODocument) rec));
-      } else {
-        record = Optional.of(ORecordSerializerNetworkDistributed.INSTANCE.toStream(rec));
-      }
-      this.contentChanged = ORecordInternal.isContentChanged(rec);
-      break;
-    case ORecordOperation.DELETED:
-      record = Optional.empty();
-      break;
+      case ORecordOperation.CREATED:
+        this.record = Optional.of(ORecordSerializerNetworkDistributed.INSTANCE.toStream(rec));
+        this.contentChanged = ORecordInternal.isContentChanged(rec);
+        break;
+      case ORecordOperation.UPDATED:
+        if (recordType == ODocument.RECORD_TYPE) {
+          record = Optional.of(ODocumentSerializerDelta.instance().serializeDelta((ODocument) rec));
+        } else {
+          record = Optional.of(ORecordSerializerNetworkDistributed.INSTANCE.toStream(rec));
+        }
+        this.contentChanged = ORecordInternal.isContentChanged(rec);
+        break;
+      case ORecordOperation.DELETED:
+        record = Optional.empty();
+        break;
     }
   }
 
-  private OTransactionDataChange() {
+  private OTransactionDataChange() {}
 
-  }
-
-  public OTransactionDataChange(byte type, byte recordType, ORID id, Optional<byte[]> record, int version, boolean contentChanged) {
+  public OTransactionDataChange(
+      byte type,
+      byte recordType,
+      ORID id,
+      Optional<byte[]> record,
+      int version,
+      boolean contentChanged) {
     this.type = type;
     this.recordType = recordType;
     this.id = id;
@@ -120,5 +123,4 @@ public class OTransactionDataChange {
   public ORID getId() {
     return id;
   }
-
 }

@@ -14,5 +14,4 @@ public class ValidationMapComparable implements Comparable<Object> {
   public int compareTo(Object o) {
     return size - ((Map<Object, Object>) o).size();
   }
-
 }

@@ -20,7 +20,12 @@
 package com.orientechnologies.orient.core.sql;
 
 import com.orientechnologies.common.types.OModifiableBoolean;
-import com.orientechnologies.orient.core.command.*;
+import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
+import com.orientechnologies.orient.core.command.OCommandExecutor;
+import com.orientechnologies.orient.core.command.OCommandRequest;
+import com.orientechnologies.orient.core.command.OCommandRequestInternal;
+import com.orientechnologies.orient.core.command.OCommandRequestText;
+import com.orientechnologies.orient.core.command.OCommandResultListener;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
@@ -35,8 +40,12 @@ import com.orientechnologies.orient.core.record.OVertex;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilter;
 import com.orientechnologies.orient.core.sql.query.OSQLAsynchQuery;
-
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * SQL DELETE EDGE command.
@@ -45,19 +54,20 @@ import java.util.*;
  */
 public class OCommandExecutorSQLDeleteEdge extends OCommandExecutorSQLSetAware
     implements OCommandDistributedReplicateRequest, OCommandResultListener {
-  public static final  String             NAME          = "DELETE EDGE";
-  private static final String             KEYWORD_BATCH = "BATCH";
-  private              List<ORecordId>    rids;
-  private              String             fromExpr;
-  private              String             toExpr;
-  private              int                removed       = 0;
-  private              OCommandRequest    query;
-  private              OSQLFilter         compiledFilter;
-  //  private AtomicReference<OrientBaseGraph> currentGraph  = new AtomicReference<OrientBaseGraph>();
-  private              String             label;
-  private              OModifiableBoolean shutdownFlag  = new OModifiableBoolean();
-  private              boolean            txAlreadyBegun;
-  private              int                batch         = 100;
+  public static final String NAME = "DELETE EDGE";
+  private static final String KEYWORD_BATCH = "BATCH";
+  private List<ORecordId> rids;
+  private String fromExpr;
+  private String toExpr;
+  private int removed = 0;
+  private OCommandRequest query;
+  private OSQLFilter compiledFilter;
+  //  private AtomicReference<OrientBaseGraph> currentGraph  = new
+  // AtomicReference<OrientBaseGraph>();
+  private String label;
+  private OModifiableBoolean shutdownFlag = new OModifiableBoolean();
+  private boolean txAlreadyBegun;
+  private int batch = 100;
 
   @SuppressWarnings("unchecked")
   public OCommandExecutorSQLDeleteEdge parse(final OCommandRequest iRequest) {
@@ -84,29 +94,34 @@ public class OCommandExecutorSQLDeleteEdge extends OCommandExecutorSQLSetAware
       int limit = -1;
 
       if (temp != null && !parserIsEnded())
-        originalTemp = parserText.substring(parserGetPreviousPosition(), parserGetCurrentPosition()).trim();
+        originalTemp =
+            parserText.substring(parserGetPreviousPosition(), parserGetCurrentPosition()).trim();
 
       final OModifiableBoolean shutdownFlag = new OModifiableBoolean();
       ODatabaseDocumentInternal curDb = ODatabaseRecordThreadLocal.instance().get();
-//      final OrientGraph graph = OGraphCommandExecutorSQLFactory.getGraph(false, shutdownFlag);
+      //      final OrientGraph graph = OGraphCommandExecutorSQLFactory.getGraph(false,
+      // shutdownFlag);
       try {
         while (temp != null) {
 
           if (temp.equals("FROM")) {
             fromExpr = parserRequiredWord(false, "Syntax error", " =><,\r\n");
             if (rids != null)
-              throwSyntaxErrorException("FROM '" + fromExpr + "' is not allowed when specify a RIDs (" + rids + ")");
+              throwSyntaxErrorException(
+                  "FROM '" + fromExpr + "' is not allowed when specify a RIDs (" + rids + ")");
 
           } else if (temp.equals("TO")) {
             toExpr = parserRequiredWord(false, "Syntax error", " =><,\r\n");
             if (rids != null)
-              throwSyntaxErrorException("TO '" + toExpr + "' is not allowed when specify a RID (" + rids + ")");
+              throwSyntaxErrorException(
+                  "TO '" + toExpr + "' is not allowed when specify a RID (" + rids + ")");
 
           } else if (temp.startsWith("#")) {
             rids = new ArrayList<ORecordId>();
             rids.add(new ORecordId(temp));
             if (fromExpr != null || toExpr != null)
-              throwSyntaxErrorException("Specifying the RID " + rids + " is not allowed with FROM/TO");
+              throwSyntaxErrorException(
+                  "Specifying the RID " + rids + " is not allowed with FROM/TO");
 
           } else if (temp.startsWith("[") && temp.endsWith("]")) {
             temp = temp.substring(1, temp.length() - 1);
@@ -123,20 +138,22 @@ public class OCommandExecutorSQLDeleteEdge extends OCommandExecutorSQLSetAware
               // ASSIGN DEFAULT CLASS
               clazz = curDb.getMetadata().getSchema().getClass("E");
 
-            where = parserGetCurrentPosition() > -1 ? " " + parserText.substring(parserGetCurrentPosition()) : "";
+            where =
+                parserGetCurrentPosition() > -1
+                    ? " " + parserText.substring(parserGetCurrentPosition())
+                    : "";
 
-            compiledFilter = OSQLEngine.getInstance().parseCondition(where, getContext(), KEYWORD_WHERE);
+            compiledFilter =
+                OSQLEngine.getInstance().parseCondition(where, getContext(), KEYWORD_WHERE);
             break;
 
           } else if (temp.equals(KEYWORD_BATCH)) {
             temp = parserNextWord(true);
-            if (temp != null)
-              batch = Integer.parseInt(temp);
+            if (temp != null) batch = Integer.parseInt(temp);
 
           } else if (temp.equals(KEYWORD_LIMIT)) {
             temp = parserNextWord(true);
-            if (temp != null)
-              limit = Integer.parseInt(temp);
+            if (temp != null) limit = Integer.parseInt(temp);
 
           } else if (temp.length() > 0) {
             // GET/CHECK CLASS NAME
@@ -147,8 +164,7 @@ public class OCommandExecutorSQLDeleteEdge extends OCommandExecutorSQLSetAware
           }
 
           temp = parseOptionalWord(true);
-          if (parserIsEnded())
-            break;
+          if (parserIsEnded()) break;
         }
 
         if (where == null)
@@ -157,8 +173,7 @@ public class OCommandExecutorSQLDeleteEdge extends OCommandExecutorSQLSetAware
           } else {
             where = "";
           }
-        else
-          where = " WHERE " + where;
+        else where = " WHERE " + where;
 
         if (fromExpr == null && toExpr == null && rids == null)
           if (clazz == null)
@@ -166,7 +181,10 @@ public class OCommandExecutorSQLDeleteEdge extends OCommandExecutorSQLSetAware
             query = curDb.command(new OSQLAsynchQuery<ODocument>("select from E" + where, this));
           else
             // DELETE EDGES OF CLASS X
-            query = curDb.command(new OSQLAsynchQuery<ODocument>("select from `" + clazz.getName() + "` " + where, this));
+            query =
+                curDb.command(
+                    new OSQLAsynchQuery<ODocument>(
+                        "select from `" + clazz.getName() + "` " + where, this));
 
         return this;
       } finally {
@@ -175,15 +193,17 @@ public class OCommandExecutorSQLDeleteEdge extends OCommandExecutorSQLSetAware
     } finally {
       textRequest.setText(originalQuery);
     }
-
   }
 
-  /**
-   * Execute the command and return the ODocument object created.
-   */
+  /** Execute the command and return the ODocument object created. */
   public Object execute(final Map<Object, Object> iArgs) {
-    if (fromExpr == null && toExpr == null && rids == null && query == null && compiledFilter == null)
-      throw new OCommandExecutionException("Cannot execute the command because it has not been parsed yet");
+    if (fromExpr == null
+        && toExpr == null
+        && rids == null
+        && query == null
+        && compiledFilter == null)
+      throw new OCommandExecutionException(
+          "Cannot execute the command because it has not been parsed yet");
     ODatabaseDocumentInternal db = getDatabase();
     txAlreadyBegun = db.getTransaction().isActive();
 
@@ -210,21 +230,18 @@ public class OCommandExecutorSQLDeleteEdge extends OCommandExecutorSQLSetAware
         Set<OIdentifiable> toIds = null;
         if (toExpr != null)
           toIds = OSQLEngine.getInstance().parseRIDTarget(db, toExpr, context, iArgs);
-        if (label == null)
-          label = "E";
+        if (label == null) label = "E";
 
         if (fromIds != null && toIds != null) {
           int fromCount = 0;
           int toCount = 0;
           for (OIdentifiable fromId : fromIds) {
             final OVertex v = toVertex(fromId);
-            if (v != null)
-              fromCount += count(v.getEdges(ODirection.OUT, label));
+            if (v != null) fromCount += count(v.getEdges(ODirection.OUT, label));
           }
           for (OIdentifiable toId : toIds) {
             final OVertex v = toVertex(toId);
-            if (v != null)
-              toCount += count(v.getEdges(ODirection.IN, label));
+            if (v != null) toCount += count(v.getEdges(ODirection.IN, label));
           }
           if (fromCount <= toCount) {
             // REMOVE ALL THE EDGES BETWEEN VERTICES
@@ -233,8 +250,7 @@ public class OCommandExecutorSQLDeleteEdge extends OCommandExecutorSQLSetAware
               if (v != null)
                 for (OEdge e : v.getEdges(ODirection.OUT, label)) {
                   final OIdentifiable inV = ((OEdge) e).getTo();
-                  if (inV != null && toIds.contains(inV.getIdentity()))
-                    edges.add(e);
+                  if (inV != null && toIds.contains(inV.getIdentity())) edges.add(e);
                 }
             }
           } else {
@@ -243,8 +259,7 @@ public class OCommandExecutorSQLDeleteEdge extends OCommandExecutorSQLSetAware
               if (v != null)
                 for (OEdge e : v.getEdges(ODirection.IN, label)) {
                   final OIdentifiable outV = ((OEdge) e).getFrom();
-                  if (outV != null && fromIds.contains(outV.getIdentity()))
-                    edges.add(e);
+                  if (outV != null && fromIds.contains(outV.getIdentity())) edges.add(e);
                 }
             }
           }
@@ -269,22 +284,19 @@ public class OCommandExecutorSQLDeleteEdge extends OCommandExecutorSQLSetAware
               }
             }
           }
-        } else
-          throw new OCommandExecutionException("Invalid target: " + toIds);
+        } else throw new OCommandExecutionException("Invalid target: " + toIds);
 
         if (compiledFilter != null) {
           // ADDITIONAL FILTERING
           for (Iterator<OEdge> it = edges.iterator(); it.hasNext(); ) {
             final OEdge edge = it.next();
-            if (!(Boolean) compiledFilter.evaluate(edge.getRecord(), null, context))
-              it.remove();
+            if (!(Boolean) compiledFilter.evaluate(edge.getRecord(), null, context)) it.remove();
           }
         }
 
         // DELETE THE FOUND EDGES
         removed = edges.size();
-        for (OEdge edge : edges)
-          edge.delete();
+        for (OEdge edge : edges) edge.delete();
 
         db.commit();
         return removed;
@@ -308,16 +320,13 @@ public class OCommandExecutorSQLDeleteEdge extends OCommandExecutorSQLSetAware
     return result;
   }
 
-  /**
-   * Delete the current edge.
-   */
+  /** Delete the current edge. */
   public boolean result(final Object iRecord) {
     final OIdentifiable id = (OIdentifiable) iRecord;
 
     if (compiledFilter != null) {
       // ADDITIONAL FILTERING
-      if (!(Boolean) compiledFilter.evaluate(id.getRecord(), null, context))
-        return true;
+      if (!(Boolean) compiledFilter.evaluate(id.getRecord(), null, context)) return true;
     }
 
     if (id.getIdentity().isValid()) {
@@ -342,14 +351,18 @@ public class OCommandExecutorSQLDeleteEdge extends OCommandExecutorSQLSetAware
   private OEdge toEdge(OIdentifiable item) {
     if (item != null && item instanceof OElement) {
       final OIdentifiable a = item;
-      return ((OElement) item).asEdge()
-          .orElseThrow(() -> new OCommandExecutionException("" + (a.getIdentity()) + " is not an edge"));
+      return ((OElement) item)
+          .asEdge()
+          .orElseThrow(
+              () -> new OCommandExecutionException("" + (a.getIdentity()) + " is not an edge"));
     } else {
       item = getDatabase().load(item.getIdentity());
       if (item != null && item instanceof OElement) {
         final OIdentifiable a = item;
-        return ((OElement) item).asEdge()
-            .orElseThrow(() -> new OCommandExecutionException("" + (a.getIdentity()) + " is not an edge"));
+        return ((OElement) item)
+            .asEdge()
+            .orElseThrow(
+                () -> new OCommandExecutionException("" + (a.getIdentity()) + " is not an edge"));
       }
     }
     return null;
@@ -373,9 +386,7 @@ public class OCommandExecutorSQLDeleteEdge extends OCommandExecutorSQLSetAware
   }
 
   @Override
-  public void end() {
-
-  }
+  public void end() {}
 
   @Override
   public int getSecurityOperationType() {
@@ -418,8 +429,13 @@ public class OCommandExecutorSQLDeleteEdge extends OCommandExecutorSQLSetAware
       }
     } else if (query != null) {
 
-      final OCommandExecutor executor = getDatabase().getSharedContext().getOrientDB().getScriptManager().getCommandManager()
-          .getExecutor((OCommandRequestInternal) query);
+      final OCommandExecutor executor =
+          getDatabase()
+              .getSharedContext()
+              .getOrientDB()
+              .getScriptManager()
+              .getCommandManager()
+              .getExecutor((OCommandRequestInternal) query);
       // COPY THE CONTEXT FROM THE REQUEST
       executor.setContext(context);
       executor.parse(query);
@@ -428,9 +444,7 @@ public class OCommandExecutorSQLDeleteEdge extends OCommandExecutorSQLSetAware
     return result;
   }
 
-  /**
-   * setLimit() for DELETE EDGE is ignored. Please use LIMIT keyword in the SQL statement
-   */
+  /** setLimit() for DELETE EDGE is ignored. Please use LIMIT keyword in the SQL statement */
   public <RET extends OCommandExecutor> RET setLimit(final int iLimit) {
     // do nothing
     return (RET) this;

@@ -21,7 +21,6 @@
 package com.orientechnologies.common.serialization.types;
 
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALChanges;
-
 import java.nio.ByteBuffer;
 
 /**
@@ -31,14 +30,15 @@ import java.nio.ByteBuffer;
  */
 public class ONullSerializer implements OBinarySerializer<Object> {
 
-  public static final byte            ID       = 11;
+  public static final byte ID = 11;
   public static final ONullSerializer INSTANCE = new ONullSerializer();
 
   public int getObjectSize(final Object object, Object... hints) {
     return 0;
   }
 
-  public void serialize(final Object object, final byte[] stream, final int startPosition, Object... hints) {
+  public void serialize(
+      final Object object, final byte[] stream, final int startPosition, Object... hints) {
     // nothing to serialize
   }
 
@@ -59,8 +59,8 @@ public class ONullSerializer implements OBinarySerializer<Object> {
     return 0;
   }
 
-  public void serializeNativeObject(Object object, byte[] stream, int startPosition, Object... hints) {
-  }
+  public void serializeNativeObject(
+      Object object, byte[] stream, int startPosition, Object... hints) {}
 
   public Object deserializeNativeObject(byte[] stream, int startPosition) {
     return null;
@@ -79,40 +79,30 @@ public class ONullSerializer implements OBinarySerializer<Object> {
     return null;
   }
 
-  /**
-   * {@inheritDoc}
-   */
+  /** {@inheritDoc} */
   @Override
-  public void serializeInByteBufferObject(Object object, ByteBuffer buffer, Object... hints) {
-  }
+  public void serializeInByteBufferObject(Object object, ByteBuffer buffer, Object... hints) {}
 
-  /**
-   * {@inheritDoc}
-   */
+  /** {@inheritDoc} */
   @Override
   public Object deserializeFromByteBufferObject(ByteBuffer buffer) {
     return null;
   }
 
-  /**
-   * {@inheritDoc}
-   */
+  /** {@inheritDoc} */
   @Override
   public int getObjectSizeInByteBuffer(ByteBuffer buffer) {
     return 0;
   }
 
-  /**
-   * {@inheritDoc}
-   */
+  /** {@inheritDoc} */
   @Override
-  public Object deserializeFromByteBufferObject(ByteBuffer buffer, OWALChanges walChanges, int offset) {
+  public Object deserializeFromByteBufferObject(
+      ByteBuffer buffer, OWALChanges walChanges, int offset) {
     return null;
   }
 
-  /**
-   * {@inheritDoc}
-   */
+  /** {@inheritDoc} */
   @Override
   public int getObjectSizeInByteBuffer(ByteBuffer buffer, OWALChanges walChanges, int offset) {
     return 0;

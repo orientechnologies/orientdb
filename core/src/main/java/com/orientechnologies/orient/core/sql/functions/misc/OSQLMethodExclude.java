@@ -25,36 +25,49 @@ import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.method.misc.OAbstractSQLMethod;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
 /**
- * Filter the content by excluding only some fields. If the content is a document, then creates a copy without the excluded fields.
- * If it's a collection of documents it acts against on each single entry.
+ * Filter the content by excluding only some fields. If the content is a document, then creates a
+ * copy without the excluded fields. If it's a collection of documents it acts against on each
+ * single entry.
+ *
  * <p>
+ *
+ * <p>Syntax:
+ *
+ * <blockquote>
+ *
  * <p>
- * Syntax: <blockquote>
- * <p>
+ *
  * <pre>
  * exclude(&lt;field|value|expression&gt; [,&lt;field-name&gt;]* )
  * </pre>
+ *
  * <p>
+ *
  * </blockquote>
+ *
  * <p>
+ *
+ * <p>Examples:
+ *
+ * <blockquote>
+ *
  * <p>
- * Examples: <blockquote>
- * <p>
+ *
  * <pre>
  * SELECT <b>exclude(roles, 'permissions')</b> FROM OUser
  * </pre>
+ *
  * <p>
+ *
  * </blockquote>
  *
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
  */
-
 public class OSQLMethodExclude extends OAbstractSQLMethod {
 
   public static final String NAME = "exclude";
@@ -69,7 +82,12 @@ public class OSQLMethodExclude extends OAbstractSQLMethod {
   }
 
   @Override
-  public Object execute(Object iThis, OIdentifiable iCurrentRecord, OCommandContext iContext, Object ioResult, Object[] iParams) {
+  public Object execute(
+      Object iThis,
+      OIdentifiable iCurrentRecord,
+      OCommandContext iContext,
+      Object ioResult,
+      Object[] iParams) {
     if (iThis != null) {
       if (iThis instanceof ORecordId) {
         iThis = ((ORecordId) iThis).getRecord();
@@ -105,15 +123,12 @@ public class OSQLMethodExclude extends OAbstractSQLMethod {
           final String fieldPart = fieldName.substring(0, fieldName.length() - 1);
           final List<String> toExclude = new ArrayList<String>();
           for (String f : doc.fieldNames()) {
-            if (f.startsWith(fieldPart))
-              toExclude.add(f);
+            if (f.startsWith(fieldPart)) toExclude.add(f);
           }
 
-          for (String f : toExclude)
-            doc.removeField(f);
+          for (String f : toExclude) doc.removeField(f);
 
-        } else
-          doc.removeField(fieldName);
+        } else doc.removeField(fieldName);
       }
     }
     doc.deserializeFields();
@@ -130,15 +145,12 @@ public class OSQLMethodExclude extends OAbstractSQLMethod {
           final String fieldPart = fieldName.substring(0, fieldName.length() - 1);
           final List<String> toExclude = new ArrayList<String>();
           for (String f : doc.fieldNames()) {
-            if (f.startsWith(fieldPart))
-              toExclude.add(f);
+            if (f.startsWith(fieldPart)) toExclude.add(f);
           }
 
-          for (String f : toExclude)
-            doc.removeField(f);
+          for (String f : toExclude) doc.removeField(f);
 
-        } else
-          doc.removeField(fieldName);
+        } else doc.removeField(fieldName);
       }
     }
     return doc;

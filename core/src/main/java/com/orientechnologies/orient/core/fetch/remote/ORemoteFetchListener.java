@@ -26,36 +26,54 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 
 /**
  * Fetch listener for {@class ONetworkBinaryProtocol} class
- * 
- * Whenever a record has to be fetched it will be added to the list of records to send
- * 
+ *
+ * <p>Whenever a record has to be fetched it will be added to the list of records to send
+ *
  * @author Luca Molino (molino.luca--at--gmail.com)
- * 
  */
 public abstract class ORemoteFetchListener implements OFetchListener {
   public boolean requireFieldProcessing() {
     return false;
   }
 
-  public ORemoteFetchListener() {
-  }
+  public ORemoteFetchListener() {}
 
   protected abstract void sendRecord(ORecord iLinked);
 
-  public void processStandardField(ODocument iRecord, Object iFieldValue, String iFieldName, OFetchContext iContext,
-      final Object iusObject, final String iFormat, OType filedType) throws OFetchException {
-  }
+  public void processStandardField(
+      ODocument iRecord,
+      Object iFieldValue,
+      String iFieldName,
+      OFetchContext iContext,
+      final Object iusObject,
+      final String iFormat,
+      OType filedType)
+      throws OFetchException {}
 
-  public void parseLinked(ODocument iRootRecord, OIdentifiable iLinked, Object iUserObject, String iFieldName,
-      OFetchContext iContext) throws OFetchException {
-  }
+  public void parseLinked(
+      ODocument iRootRecord,
+      OIdentifiable iLinked,
+      Object iUserObject,
+      String iFieldName,
+      OFetchContext iContext)
+      throws OFetchException {}
 
-  public void parseLinkedCollectionValue(ODocument iRootRecord, OIdentifiable iLinked, Object iUserObject, String iFieldName,
-      OFetchContext iContext) throws OFetchException {
-  }
+  public void parseLinkedCollectionValue(
+      ODocument iRootRecord,
+      OIdentifiable iLinked,
+      Object iUserObject,
+      String iFieldName,
+      OFetchContext iContext)
+      throws OFetchException {}
 
-  public Object fetchLinkedMapEntry(ODocument iRoot, Object iUserObject, String iFieldName, String iKey, ODocument iLinked,
-      OFetchContext iContext) throws OFetchException {
+  public Object fetchLinkedMapEntry(
+      ODocument iRoot,
+      Object iUserObject,
+      String iFieldName,
+      String iKey,
+      ODocument iLinked,
+      OFetchContext iContext)
+      throws OFetchException {
     if (iLinked.getIdentity().isValid()) {
       sendRecord(iLinked);
       return true;
@@ -63,8 +81,13 @@ public abstract class ORemoteFetchListener implements OFetchListener {
     return null;
   }
 
-  public Object fetchLinkedCollectionValue(ODocument iRoot, Object iUserObject, String iFieldName, ODocument iLinked,
-      OFetchContext iContext) throws OFetchException {
+  public Object fetchLinkedCollectionValue(
+      ODocument iRoot,
+      Object iUserObject,
+      String iFieldName,
+      ODocument iLinked,
+      OFetchContext iContext)
+      throws OFetchException {
     if (iLinked.getIdentity().isValid()) {
       sendRecord(iLinked);
       return true;
@@ -72,14 +95,23 @@ public abstract class ORemoteFetchListener implements OFetchListener {
     return null;
   }
 
-  public Object fetchLinked(ODocument iRoot, Object iUserObject, String iFieldName, ODocument iLinked, OFetchContext iContext)
+  public Object fetchLinked(
+      ODocument iRoot,
+      Object iUserObject,
+      String iFieldName,
+      ODocument iLinked,
+      OFetchContext iContext)
       throws OFetchException {
     sendRecord(iLinked);
     return true;
   }
 
   @Override
-  public void skipStandardField(ODocument iRecord, String iFieldName, OFetchContext iContext, Object iUserObject, String iFormat)
-      throws OFetchException {
-  }
+  public void skipStandardField(
+      ODocument iRecord,
+      String iFieldName,
+      OFetchContext iContext,
+      Object iUserObject,
+      String iFormat)
+      throws OFetchException {}
 }

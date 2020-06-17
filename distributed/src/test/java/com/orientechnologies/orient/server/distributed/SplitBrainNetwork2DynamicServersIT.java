@@ -20,11 +20,11 @@ import org.junit.Ignore;
 import org.junit.Test;
 
 /**
- * Distributed test with 2 servers (0 and 1) running as dynamic and after a while the server 1 is isolated from the network (using a
- * proxy) and then it re-merges the cluster again.
+ * Distributed test with 2 servers (0 and 1) running as dynamic and after a while the server 1 is
+ * isolated from the network (using a proxy) and then it re-merges the cluster again.
  */
 public class SplitBrainNetwork2DynamicServersIT extends AbstractHARemoveNode {
-  final static int SERVERS = 2;
+  static final int SERVERS = 2;
 
   @Test
   @Ignore
@@ -39,8 +39,12 @@ public class SplitBrainNetwork2DynamicServersIT extends AbstractHARemoveNode {
 
   @Override
   protected void onAfterExecution() throws Exception {
-    Assert.assertEquals("europe-0", serverInstance.get(0).getServerInstance().getDistributedManager().getCoordinatorServer());
-    Assert.assertEquals("europe-0", serverInstance.get(1).getServerInstance().getDistributedManager().getCoordinatorServer());
+    Assert.assertEquals(
+        "europe-0",
+        serverInstance.get(0).getServerInstance().getDistributedManager().getCoordinatorServer());
+    Assert.assertEquals(
+        "europe-0",
+        serverInstance.get(1).getServerInstance().getDistributedManager().getCoordinatorServer());
 
     banner("SIMULATE ISOLATION OF SERVER " + (SERVERS - 1) + "...");
 
@@ -49,20 +53,34 @@ public class SplitBrainNetwork2DynamicServersIT extends AbstractHARemoveNode {
 
     serverInstance.get(1).disconnectFrom(serverInstance.get(0));
 
-    banner("SERVER " + (SERVERS - 1) + " HAS BEEN ISOLATED, WAITING FOR THE DATABASE ON SERVER " + (SERVERS - 1)
-        + " TO BE OFFLINE...");
+    banner(
+        "SERVER "
+            + (SERVERS - 1)
+            + " HAS BEEN ISOLATED, WAITING FOR THE DATABASE ON SERVER "
+            + (SERVERS - 1)
+            + " TO BE OFFLINE...");
 
-    Assert.assertEquals("europe-0", serverInstance.get(0).getServerInstance().getDistributedManager().getCoordinatorServer());
-    Assert.assertEquals("europe-1", serverInstance.get(1).getServerInstance().getDistributedManager().getCoordinatorServer());
+    Assert.assertEquals(
+        "europe-0",
+        serverInstance.get(0).getServerInstance().getDistributedManager().getCoordinatorServer());
+    Assert.assertEquals(
+        "europe-1",
+        serverInstance.get(1).getServerInstance().getDistributedManager().getCoordinatorServer());
 
     // CHECK THE SPLIT
-    waitForDatabaseStatus(0, "europe-1", getDatabaseName(), ODistributedServerManager.DB_STATUS.NOT_AVAILABLE, 30000);
-    assertDatabaseStatusEquals(0, "europe-1", getDatabaseName(), ODistributedServerManager.DB_STATUS.NOT_AVAILABLE);
-    assertDatabaseStatusEquals(0, "europe-0", getDatabaseName(), ODistributedServerManager.DB_STATUS.ONLINE);
+    waitForDatabaseStatus(
+        0, "europe-1", getDatabaseName(), ODistributedServerManager.DB_STATUS.NOT_AVAILABLE, 30000);
+    assertDatabaseStatusEquals(
+        0, "europe-1", getDatabaseName(), ODistributedServerManager.DB_STATUS.NOT_AVAILABLE);
+    assertDatabaseStatusEquals(
+        0, "europe-0", getDatabaseName(), ODistributedServerManager.DB_STATUS.ONLINE);
 
-    waitForDatabaseStatus(1, "europe-0", getDatabaseName(), ODistributedServerManager.DB_STATUS.NOT_AVAILABLE, 90000);
-    assertDatabaseStatusEquals(1, "europe-0", getDatabaseName(), ODistributedServerManager.DB_STATUS.NOT_AVAILABLE);
-    assertDatabaseStatusEquals(1, "europe-1", getDatabaseName(), ODistributedServerManager.DB_STATUS.ONLINE);
+    waitForDatabaseStatus(
+        1, "europe-0", getDatabaseName(), ODistributedServerManager.DB_STATUS.NOT_AVAILABLE, 90000);
+    assertDatabaseStatusEquals(
+        1, "europe-0", getDatabaseName(), ODistributedServerManager.DB_STATUS.NOT_AVAILABLE);
+    assertDatabaseStatusEquals(
+        1, "europe-1", getDatabaseName(), ODistributedServerManager.DB_STATUS.ONLINE);
 
     banner("RUN TEST WITHOUT THE OFFLINE SERVER " + (SERVERS - 1) + "...");
 
@@ -79,8 +97,14 @@ public class SplitBrainNetwork2DynamicServersIT extends AbstractHARemoveNode {
       executeMultipleTest();
     } catch (AssertionError e) {
       final String message = e.getMessage();
-      Assert.assertTrue(message,
-          message.contains("Server 1 count is not what was expected expected:<" + expected + "> but was:<" + (currentRecords) + ">"));
+      Assert.assertTrue(
+          message,
+          message.contains(
+              "Server 1 count is not what was expected expected:<"
+                  + expected
+                  + "> but was:<"
+                  + (currentRecords)
+                  + ">"));
     }
 
     banner("TEST WITH THE ISOLATED NODE FINISHED, REJOIN THE SERVER " + (SERVERS - 1) + "...");
@@ -103,19 +127,25 @@ public class SplitBrainNetwork2DynamicServersIT extends AbstractHARemoveNode {
     waitForDatabaseIsOnline(1, "europe-0", getDatabaseName(), 5000);
     waitForDatabaseIsOnline(1, "europe-1", getDatabaseName(), 5000);
 
-    assertDatabaseStatusEquals(0, "europe-1", getDatabaseName(), ODistributedServerManager.DB_STATUS.ONLINE);
-    assertDatabaseStatusEquals(1, "europe-0", getDatabaseName(), ODistributedServerManager.DB_STATUS.ONLINE);
+    assertDatabaseStatusEquals(
+        0, "europe-1", getDatabaseName(), ODistributedServerManager.DB_STATUS.ONLINE);
+    assertDatabaseStatusEquals(
+        1, "europe-0", getDatabaseName(), ODistributedServerManager.DB_STATUS.ONLINE);
 
-    Assert.assertEquals("europe-0", serverInstance.get(0).getServerInstance().getDistributedManager().getCoordinatorServer());
-    Assert.assertEquals("europe-0", serverInstance.get(1).getServerInstance().getDistributedManager().getCoordinatorServer());
+    Assert.assertEquals(
+        "europe-0",
+        serverInstance.get(0).getServerInstance().getDistributedManager().getCoordinatorServer());
+    Assert.assertEquals(
+        "europe-0",
+        serverInstance.get(1).getServerInstance().getDistributedManager().getCoordinatorServer());
 
     banner("NETWORK FOR THE ISOLATED NODE " + (SERVERS - 1) + " HAS BEEN RESTORED");
 
-//    poolFactory.reset();
+    //    poolFactory.reset();
 
     checkInsertedEntries(executeTestsOnServers);
     checkIndexedEntries(executeTestsOnServers);
-    
+
     banner("RESTARTING TESTS WITH SERVER " + (SERVERS - 1) + " CONNECTED...");
 
     count = 10;

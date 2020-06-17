@@ -3,6 +3,8 @@ package com.orientechnologies.orient.test.server.network.http;
 import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.server.OServer;
+import java.io.File;
+import java.io.IOException;
 import org.apache.http.Consts;
 import org.apache.http.Header;
 import org.apache.http.HttpHost;
@@ -11,7 +13,13 @@ import org.apache.http.auth.AuthScope;
 import org.apache.http.auth.UsernamePasswordCredentials;
 import org.apache.http.client.AuthCache;
 import org.apache.http.client.CredentialsProvider;
-import org.apache.http.client.methods.*;
+import org.apache.http.client.methods.HttpDelete;
+import org.apache.http.client.methods.HttpEntityEnclosingRequestBase;
+import org.apache.http.client.methods.HttpGet;
+import org.apache.http.client.methods.HttpPatch;
+import org.apache.http.client.methods.HttpPost;
+import org.apache.http.client.methods.HttpPut;
+import org.apache.http.client.methods.HttpRequestBase;
 import org.apache.http.client.protocol.HttpClientContext;
 import org.apache.http.entity.AbstractHttpEntity;
 import org.apache.http.entity.ContentType;
@@ -21,9 +29,6 @@ import org.apache.http.impl.client.BasicAuthCache;
 import org.apache.http.impl.client.BasicCredentialsProvider;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
-
-import java.io.File;
-import java.io.IOException;
 
 /**
  * Base test class for HTTP protocol.
@@ -35,27 +40,33 @@ public abstract class BaseHttpTest {
 
   private static OServer server;
 
-  private String serverCfg    = "/com/orientechnologies/orient/server/network/orientdb-server-config-httponly.xml";
-  private String protocol     = "http";
-  private String host         = "localhost";
-  private int    port         = 2499;
-  private String realm        = "OrientDB-";
-  private String userName     = "admin";
+  private String serverCfg =
+      "/com/orientechnologies/orient/server/network/orientdb-server-config-httponly.xml";
+  private String protocol = "http";
+  private String host = "localhost";
+  private int port = 2499;
+  private String realm = "OrientDB-";
+  private String userName = "admin";
   private String userPassword = "admin";
   private String databaseName;
   private Boolean keepAlive = null;
 
-  private HttpRequestBase    request;
+  private HttpRequestBase request;
   private AbstractHttpEntity payload;
-  private HttpResponse       response;
+  private HttpResponse response;
   private int retry = 1;
 
   public enum CONTENT {
-    TEXT, JSON
+    TEXT,
+    JSON
   }
 
   public BaseHttpTest payload(final String s, final CONTENT iContent) {
-    payload = new StringEntity(s, ContentType.create(iContent == CONTENT.JSON ? "application/json" : "plain/text", Consts.UTF_8));
+    payload =
+        new StringEntity(
+            s,
+            ContentType.create(
+                iContent == CONTENT.JSON ? "application/json" : "plain/text", Consts.UTF_8));
     return this;
   }
 
@@ -92,7 +103,9 @@ public abstract class BaseHttpTest {
     final HttpHost targetHost = new HttpHost(getHost(), getPort(), getProtocol());
 
     CredentialsProvider credsProvider = new BasicCredentialsProvider();
-    credsProvider.setCredentials(new AuthScope(targetHost), new UsernamePasswordCredentials(getUserName(), getUserPassword()));
+    credsProvider.setCredentials(
+        new AuthScope(targetHost),
+        new UsernamePasswordCredentials(getUserName(), getUserPassword()));
 
     // Create AuthCache instance
     AuthCache authCache = new BasicAuthCache();
@@ -105,8 +118,7 @@ public abstract class BaseHttpTest {
     context.setCredentialsProvider(credsProvider);
     context.setAuthCache(authCache);
 
-    if (keepAlive != null)
-      request.addHeader("Connection", keepAlive ? "Keep-Alive" : "Close");
+    if (keepAlive != null) request.addHeader("Connection", keepAlive ? "Keep-Alive" : "Close");
 
     if (payload != null && request instanceof HttpEntityEnclosingRequestBase)
       ((HttpEntityEnclosingRequestBase) request).setEntity(payload);
@@ -160,8 +172,7 @@ public abstract class BaseHttpTest {
   }
 
   protected HttpResponse getResponse() throws IOException {
-    if (response == null)
-      exec();
+    if (response == null) exec();
     return response;
   }
 

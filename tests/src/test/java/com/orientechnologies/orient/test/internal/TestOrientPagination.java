@@ -1,11 +1,5 @@
 package com.orientechnologies.orient.test.internal;
 
-import java.io.IOException;
-import java.util.List;
-
-import org.testng.annotations.BeforeClass;
-import org.testng.annotations.Test;
-
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OClass.INDEX_TYPE;
@@ -13,16 +7,20 @@ import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
+import java.io.IOException;
+import java.util.List;
+import org.testng.annotations.BeforeClass;
+import org.testng.annotations.Test;
 
 public class TestOrientPagination {
-  public static final String         dbName   = "memory:/testDB";
-  public static final String         dbUser   = "admin";
-  public static final String         dbPwd    = "admin";
+  public static final String dbName = "memory:/testDB";
+  public static final String dbUser = "admin";
+  public static final String dbPwd = "admin";
 
   private static ODatabaseDocumentTx database = null;
 
   @BeforeClass
-  static public void init() throws IOException {
+  public static void init() throws IOException {
     // database = new ODatabaseDocumentTx(dbName);
     // ODatabaseHelper.createDatabase(database, dbName);
 

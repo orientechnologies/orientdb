@@ -1,21 +1,22 @@
 package com.orientechnologies.orient.core.db.tool;
 
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
-import com.orientechnologies.orient.core.db.*;
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
+import com.orientechnologies.orient.core.db.ODatabaseSession;
+import com.orientechnologies.orient.core.db.ODatabaseType;
+import com.orientechnologies.orient.core.db.OrientDB;
+import com.orientechnologies.orient.core.db.OrientDBConfig;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
+import java.util.List;
 import org.junit.Assert;
 import org.junit.Test;
 
-import java.util.List;
-
-/**
- * Created by luigidellaquila on 14/09/17.
- */
+/** Created by luigidellaquila on 14/09/17. */
 public class OCheckIndexToolTest {
 
   @Test
@@ -50,12 +51,13 @@ public class OCheckIndexToolTest {
       OCheckIndexTool tool = new OCheckIndexTool();
       tool.setDatabase(db);
       tool.setVerbose(true);
-      tool.setOutputListener(new OCommandOutputListener() {
-        @Override
-        public void onMessage(String iText) {
-          System.out.println(iText);
-        }
-      });
+      tool.setOutputListener(
+          new OCommandOutputListener() {
+            @Override
+            public void onMessage(String iText) {
+              System.out.println(iText);
+            }
+          });
 
       tool.run();
       Assert.assertEquals(1, tool.getTotalErrors());
@@ -87,16 +89,16 @@ public class OCheckIndexToolTest {
 
       tool.setDatabase((ODatabaseDocumentInternal) db);
       tool.setVerbose(true);
-      tool.setOutputListener(new OCommandOutputListener() {
-        @Override
-        public void onMessage(String iText) {
-          System.out.println(iText);
-        }
-      });
+      tool.setOutputListener(
+          new OCommandOutputListener() {
+            @Override
+            public void onMessage(String iText) {
+              System.out.println(iText);
+            }
+          });
 
       tool.run();
       Assert.assertEquals(0, tool.getTotalErrors());
-
     }
     context.close();
   }

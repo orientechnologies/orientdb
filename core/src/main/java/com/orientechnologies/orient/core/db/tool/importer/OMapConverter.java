@@ -3,9 +3,7 @@ package com.orientechnologies.orient.core.db.tool.importer;
 import java.util.HashMap;
 import java.util.Map;
 
-/**
- * Created by tglman on 28/07/17.
- */
+/** Created by tglman on 28/07/17. */
 public final class OMapConverter extends OAbstractCollectionConverter<Map> {
   public OMapConverter(OConverterData converterData) {
     super(converterData);
@@ -33,8 +31,7 @@ public final class OMapConverter extends OAbstractCollectionConverter<Map> {
       callback.setKey(entry.getKey());
       updated = convertSingleValue(entry.getValue(), callback, updated);
     }
-    if (updated)
-      return result;
+    if (updated) return result;
 
     return value;
   }

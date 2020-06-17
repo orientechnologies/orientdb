@@ -7,7 +7,15 @@ import com.orientechnologies.common.serialization.types.OByteSerializer;
 import com.orientechnologies.common.serialization.types.OIntegerSerializer;
 import com.orientechnologies.common.serialization.types.OStringSerializer;
 import com.orientechnologies.common.util.ORawPair;
-import com.orientechnologies.orient.core.config.*;
+import com.orientechnologies.orient.core.config.OContextConfiguration;
+import com.orientechnologies.orient.core.config.OGlobalConfiguration;
+import com.orientechnologies.orient.core.config.OStorageClusterConfiguration;
+import com.orientechnologies.orient.core.config.OStorageConfiguration;
+import com.orientechnologies.orient.core.config.OStorageConfigurationUpdateListener;
+import com.orientechnologies.orient.core.config.OStorageEntryConfiguration;
+import com.orientechnologies.orient.core.config.OStorageFileConfiguration;
+import com.orientechnologies.orient.core.config.OStoragePaginatedClusterConfiguration;
+import com.orientechnologies.orient.core.config.OStorageSegmentConfiguration;
 import com.orientechnologies.orient.core.exception.OSerializationException;
 import com.orientechnologies.orient.core.exception.OStorageException;
 import com.orientechnologies.orient.core.id.ORID;
@@ -22,94 +30,128 @@ import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedSt
 import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperation;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OPaginatedClusterFactory;
 import com.orientechnologies.orient.core.storage.index.sbtree.singlevalue.v1.CellBTreeSingleValueV1;
-
 import java.io.IOException;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.text.SimpleDateFormat;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Set;
+import java.util.TimeZone;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public final class OClusterBasedStorageConfiguration implements OStorageConfiguration {
-  public static final String MAP_FILE_EXTENSION  = ".ccm";
+  public static final String MAP_FILE_EXTENSION = ".ccm";
   public static final String DATA_FILE_EXTENSION = ".cd";
 
   public static final String TREE_DATA_FILE_EXTENSION = ".bd";
   public static final String TREE_NULL_FILE_EXTENSION = ".nd";
 
-  public static final  String COMPONENT_NAME                   = "config";
-  private static final String VERSION_PROPERTY                 = "version";
-  private static final String SCHEMA_RECORD_ID_PROPERTY        = "schemaRecordId";
+  public static final String COMPONENT_NAME = "config";
+  private static final String VERSION_PROPERTY = "version";
+  private static final String SCHEMA_RECORD_ID_PROPERTY = "schemaRecordId";
   private static final String INDEX_MANAGER_RECORD_ID_PROPERTY = "indexManagerRecordId";
 
   private static final String LOCALE_LANGUAGE_PROPERTY = "localeLanguage";
-  private static final String LOCALE_COUNTRY_PROPERTY  = "localeCountry";
+  private static final String LOCALE_COUNTRY_PROPERTY = "localeCountry";
   private static final String LOCALE_PROPERTY_INSTANCE = "localeInstance";
 
-  private static final String DATE_FORMAT_PROPERTY      = "dateFormat";
+  private static final String DATE_FORMAT_PROPERTY = "dateFormat";
   private static final String DATE_TIME_FORMAT_PROPERTY = "dateTimeFormat";
 
-  private static final String TIME_ZONE_PROPERTY                 = "timeZone";
-  private static final String CHARSET_PROPERTY                   = "charset";
-  private static final String CONFLICT_STRATEGY_PROPERTY         = "conflictStrategy";
-  private static final String BINARY_FORMAT_VERSION_PROPERTY     = "binaryFormatVersion";
-  private static final String CLUSTER_SELECTION_PROPERTY         = "clusterSelection";
-  private static final String MINIMUM_CLUSTERS_PROPERTY          = "minimumClusters";
-  private static final String RECORD_SERIALIZER_PROPERTY         = "recordSerializer";
+  private static final String TIME_ZONE_PROPERTY = "timeZone";
+  private static final String CHARSET_PROPERTY = "charset";
+  private static final String CONFLICT_STRATEGY_PROPERTY = "conflictStrategy";
+  private static final String BINARY_FORMAT_VERSION_PROPERTY = "binaryFormatVersion";
+  private static final String CLUSTER_SELECTION_PROPERTY = "clusterSelection";
+  private static final String MINIMUM_CLUSTERS_PROPERTY = "minimumClusters";
+  private static final String RECORD_SERIALIZER_PROPERTY = "recordSerializer";
   private static final String RECORD_SERIALIZER_VERSION_PROPERTY = "recordSerializerVersion";
-  private static final String CONFIGURATION_PROPERTY             = "configuration";
-  private static final String CREATED_AT_VERSION_PROPERTY        = "createAtVersion";
-  private static final String PAGE_SIZE_PROPERTY                 = "pageSize";
-  private static final String FREE_LIST_BOUNDARY_PROPERTY        = "freeListBoundary";
-  private static final String MAX_KEY_SIZE_PROPERTY              = "maxKeySize";
+  private static final String CONFIGURATION_PROPERTY = "configuration";
+  private static final String CREATED_AT_VERSION_PROPERTY = "createAtVersion";
+  private static final String PAGE_SIZE_PROPERTY = "pageSize";
+  private static final String FREE_LIST_BOUNDARY_PROPERTY = "freeListBoundary";
+  private static final String MAX_KEY_SIZE_PROPERTY = "maxKeySize";
 
   private static final String CLUSTERS_PREFIX_PROPERTY = "cluster_";
   private static final String PROPERTY_PREFIX_PROPERTY = "property_";
-  private static final String ENGINE_PREFIX_PROPERTY   = "engine_";
+  private static final String ENGINE_PREFIX_PROPERTY = "engine_";
 
   private static final String PROPERTIES = "properties";
-  private static final String CLUSTERS   = "clusters";
-  private static final String UUID       = "UUID";
+  private static final String CLUSTERS = "clusters";
+  private static final String UUID = "UUID";
 
-  private static final String[] INT_PROPERTIES = new String[] { MINIMUM_CLUSTERS_PROPERTY, VERSION_PROPERTY,
-      BINARY_FORMAT_VERSION_PROPERTY, RECORD_SERIALIZER_VERSION_PROPERTY, PAGE_SIZE_PROPERTY, FREE_LIST_BOUNDARY_PROPERTY,
-      MAX_KEY_SIZE_PROPERTY };
+  private static final String[] INT_PROPERTIES =
+      new String[] {
+        MINIMUM_CLUSTERS_PROPERTY,
+        VERSION_PROPERTY,
+        BINARY_FORMAT_VERSION_PROPERTY,
+        RECORD_SERIALIZER_VERSION_PROPERTY,
+        PAGE_SIZE_PROPERTY,
+        FREE_LIST_BOUNDARY_PROPERTY,
+        MAX_KEY_SIZE_PROPERTY
+      };
 
-  private static final String[] STRING_PROPERTIES = new String[] { SCHEMA_RECORD_ID_PROPERTY, INDEX_MANAGER_RECORD_ID_PROPERTY,
-      LOCALE_LANGUAGE_PROPERTY, LOCALE_COUNTRY_PROPERTY, DATE_FORMAT_PROPERTY, DATE_TIME_FORMAT_PROPERTY, TIME_ZONE_PROPERTY,
-      CHARSET_PROPERTY, CONFLICT_STRATEGY_PROPERTY, CLUSTER_SELECTION_PROPERTY, RECORD_SERIALIZER_PROPERTY,
-      CREATED_AT_VERSION_PROPERTY, UUID };
+  private static final String[] STRING_PROPERTIES =
+      new String[] {
+        SCHEMA_RECORD_ID_PROPERTY,
+        INDEX_MANAGER_RECORD_ID_PROPERTY,
+        LOCALE_LANGUAGE_PROPERTY,
+        LOCALE_COUNTRY_PROPERTY,
+        DATE_FORMAT_PROPERTY,
+        DATE_TIME_FORMAT_PROPERTY,
+        TIME_ZONE_PROPERTY,
+        CHARSET_PROPERTY,
+        CONFLICT_STRATEGY_PROPERTY,
+        CLUSTER_SELECTION_PROPERTY,
+        RECORD_SERIALIZER_PROPERTY,
+        CREATED_AT_VERSION_PROPERTY,
+        UUID
+      };
 
   private OContextConfiguration configuration;
-  private boolean               validation;
+  private boolean validation;
 
   private final CellBTreeSingleValueV1<String> btree;
-  private final OPaginatedCluster              cluster;
+  private final OPaginatedCluster cluster;
 
   private final OAbstractPaginatedStorage storage;
-  private final OReadersWriterSpinLock    lock = new OReadersWriterSpinLock();
+  private final OReadersWriterSpinLock lock = new OReadersWriterSpinLock();
 
   private final HashMap<String, Object> cache = new HashMap<>();
 
   private OStorageConfigurationUpdateListener updateListener;
 
-  private final ThreadLocal<PausedNotificationsState> pauseNotifications = ThreadLocal.withInitial(PausedNotificationsState::new);
+  private final ThreadLocal<PausedNotificationsState> pauseNotifications =
+      ThreadLocal.withInitial(PausedNotificationsState::new);
 
   public static boolean exists(final OWriteCache writeCache) {
     return writeCache.exists(COMPONENT_NAME + DATA_FILE_EXTENSION);
   }
 
   public OClusterBasedStorageConfiguration(final OAbstractPaginatedStorage storage) {
-    cluster = OPaginatedClusterFactory
-        .createCluster(COMPONENT_NAME, OPaginatedCluster.getLatestBinaryVersion(), storage, DATA_FILE_EXTENSION,
+    cluster =
+        OPaginatedClusterFactory.createCluster(
+            COMPONENT_NAME,
+            OPaginatedCluster.getLatestBinaryVersion(),
+            storage,
+            DATA_FILE_EXTENSION,
             MAP_FILE_EXTENSION);
-    btree = new CellBTreeSingleValueV1<>(COMPONENT_NAME, TREE_DATA_FILE_EXTENSION, TREE_NULL_FILE_EXTENSION, storage);
+    btree =
+        new CellBTreeSingleValueV1<>(
+            COMPONENT_NAME, TREE_DATA_FILE_EXTENSION, TREE_NULL_FILE_EXTENSION, storage);
 
     this.storage = storage;
   }
 
-  public void create(final OAtomicOperation atomicOperation, final OContextConfiguration contextConfiguration) throws IOException {
+  public void create(
+      final OAtomicOperation atomicOperation, final OContextConfiguration contextConfiguration)
+      throws IOException {
     lock.acquireWriteLock();
     try {
       cluster.create(atomicOperation);
@@ -123,15 +165,20 @@ public final class OClusterBasedStorageConfiguration implements OStorageConfigur
       preloadStringProperties();
       preloadClusters();
       preloadConfigurationProperties();
-      setValidation(atomicOperation, getContextConfiguration().getValueAsBoolean(OGlobalConfiguration.DB_VALIDATION));
+      setValidation(
+          atomicOperation,
+          getContextConfiguration().getValueAsBoolean(OGlobalConfiguration.DB_VALIDATION));
       recalculateLocale();
     } finally {
       lock.releaseWriteLock();
     }
   }
 
-  public void create(final OAtomicOperation atomicOperation, final OContextConfiguration contextConfiguration,
-      final OStorageConfiguration source) throws IOException {
+  public void create(
+      final OAtomicOperation atomicOperation,
+      final OContextConfiguration contextConfiguration,
+      final OStorageConfiguration source)
+      throws IOException {
     lock.acquireWriteLock();
     try {
       create(atomicOperation, contextConfiguration);
@@ -147,7 +194,8 @@ public final class OClusterBasedStorageConfiguration implements OStorageConfigur
       updateListener = null;
 
       final long firstPosition = cluster.getFirstPosition();
-      OPhysicalPosition[] positions = cluster.ceilingPositions(new OPhysicalPosition(firstPosition));
+      OPhysicalPosition[] positions =
+          cluster.ceilingPositions(new OPhysicalPosition(firstPosition));
       while (positions.length > 0) {
         for (OPhysicalPosition position : positions) {
           cluster.deleteRecord(atomicOperation, position.clusterPosition);
@@ -180,13 +228,14 @@ public final class OClusterBasedStorageConfiguration implements OStorageConfigur
 
       cache.clear();
 
-      //tree and cluster will be closed by storage automatically
+      // tree and cluster will be closed by storage automatically
     } finally {
       lock.releaseWriteLock();
     }
   }
 
-  public void load(final OContextConfiguration configuration) throws OSerializationException, IOException {
+  public void load(final OContextConfiguration configuration)
+      throws OSerializationException, IOException {
     lock.acquireWriteLock();
     try {
       this.configuration = configuration;
@@ -207,7 +256,6 @@ public final class OClusterBasedStorageConfiguration implements OStorageConfigur
     } finally {
       lock.releaseWriteLock();
     }
-
   }
 
   public void pauseUpdateNotifications() {
@@ -239,7 +287,8 @@ public final class OClusterBasedStorageConfiguration implements OStorageConfigur
   public void setMinimumClusters(final int minimumClusters) {
     lock.acquireWriteLock();
     try {
-      getContextConfiguration().setValue(OGlobalConfiguration.CLASS_MINIMUM_CLUSTERS, minimumClusters);
+      getContextConfiguration()
+          .setValue(OGlobalConfiguration.CLASS_MINIMUM_CLUSTERS, minimumClusters);
       autoInitClusters();
     } finally {
       lock.releaseWriteLock();
@@ -259,10 +308,12 @@ public final class OClusterBasedStorageConfiguration implements OStorageConfigur
   public int getMinimumClusters() {
     lock.acquireReadLock();
     try {
-      final int mc = getContextConfiguration().getValueAsInteger(OGlobalConfiguration.CLASS_MINIMUM_CLUSTERS);
+      final int mc =
+          getContextConfiguration().getValueAsInteger(OGlobalConfiguration.CLASS_MINIMUM_CLUSTERS);
       if (mc == 0) {
         autoInitClusters();
-        return (Integer) getContextConfiguration().getValue(OGlobalConfiguration.CLASS_MINIMUM_CLUSTERS);
+        return (Integer)
+            getContextConfiguration().getValue(OGlobalConfiguration.CLASS_MINIMUM_CLUSTERS);
       }
       return mc;
     } finally {
@@ -280,10 +331,9 @@ public final class OClusterBasedStorageConfiguration implements OStorageConfigur
     }
   }
 
-  /**
-   * Added version used for managed Network Versioning.
-   */
-  public byte[] toStream(final int iNetworkVersion, final Charset charset) throws OSerializationException {
+  /** Added version used for managed Network Versioning. */
+  public byte[] toStream(final int iNetworkVersion, final Charset charset)
+      throws OSerializationException {
     lock.acquireReadLock();
     try {
       final StringBuilder buffer = new StringBuilder(8192);
@@ -326,7 +376,8 @@ public final class OClusterBasedStorageConfiguration implements OStorageConfigur
         if (c instanceof OStoragePaginatedClusterConfiguration) {
           write(buffer, "d");
 
-          final OStoragePaginatedClusterConfiguration paginatedClusterConfiguration = (OStoragePaginatedClusterConfiguration) c;
+          final OStoragePaginatedClusterConfiguration paginatedClusterConfiguration =
+              (OStoragePaginatedClusterConfiguration) c;
 
           write(buffer, paginatedClusterConfiguration.useWal);
           write(buffer, paginatedClusterConfiguration.recordOverflowGrowFactor);
@@ -383,7 +434,12 @@ public final class OClusterBasedStorageConfiguration implements OStorageConfigur
             write(buffer, cfg.isHidden() ? null : configuration.getValueAsString(cfg));
           } else {
             write(buffer, null);
-            OLogManager.instance().warn(this, "Storing configuration for property:'" + k + "' not existing in current version");
+            OLogManager.instance()
+                .warn(
+                    this,
+                    "Storing configuration for property:'"
+                        + k
+                        + "' not existing in current version");
           }
         }
       }
@@ -420,7 +476,8 @@ public final class OClusterBasedStorageConfiguration implements OStorageConfigur
           write(buffer, 0);
         } else {
           write(buffer, engineData.getEngineProperties().size());
-          for (final Map.Entry<String, String> property : engineData.getEngineProperties().entrySet()) {
+          for (final Map.Entry<String, String> property :
+              engineData.getEngineProperties().entrySet()) {
             write(buffer, property.getKey());
             write(buffer, property.getValue());
           }
@@ -444,12 +501,14 @@ public final class OClusterBasedStorageConfiguration implements OStorageConfigur
     }
   }
 
-  private static void entryToStream(final StringBuilder buffer, final OStorageEntryConfiguration entry) {
+  private static void entryToStream(
+      final StringBuilder buffer, final OStorageEntryConfiguration entry) {
     write(buffer, entry.name);
     write(buffer, entry.value);
   }
 
-  private static void phySegmentToStream(final StringBuilder buffer, final OStorageSegmentConfiguration segment) {
+  private static void phySegmentToStream(
+      final StringBuilder buffer, final OStorageSegmentConfiguration segment) {
     write(buffer, segment.getLocation());
     write(buffer, segment.maxSize);
     write(buffer, segment.fileType);
@@ -464,7 +523,8 @@ public final class OClusterBasedStorageConfiguration implements OStorageConfigur
     }
   }
 
-  private static void fileToStream(final StringBuilder iBuffer, final OStorageFileConfiguration iFile) {
+  private static void fileToStream(
+      final StringBuilder iBuffer, final OStorageFileConfiguration iFile) {
     write(iBuffer, iFile.path);
     write(iBuffer, iFile.type);
     write(iBuffer, iFile.maxSize);
@@ -494,7 +554,6 @@ public final class OClusterBasedStorageConfiguration implements OStorageConfigur
     } finally {
       lock.releaseReadLock();
     }
-
   }
 
   @Override
@@ -524,7 +583,8 @@ public final class OClusterBasedStorageConfiguration implements OStorageConfigur
   public void setIndexMgrRecordId(OAtomicOperation atomicOperation, final String indexMgrRecordId) {
     lock.acquireWriteLock();
     try {
-      updateStringProperty(atomicOperation, INDEX_MANAGER_RECORD_ID_PROPERTY, indexMgrRecordId, true);
+      updateStringProperty(
+          atomicOperation, INDEX_MANAGER_RECORD_ID_PROPERTY, indexMgrRecordId, true);
     } finally {
       lock.releaseWriteLock();
     }
@@ -634,7 +694,8 @@ public final class OClusterBasedStorageConfiguration implements OStorageConfigur
     }
   }
 
-  public void setDateTimeFormat(final OAtomicOperation atomicOperation, final String dateTimeFormat) {
+  public void setDateTimeFormat(
+      final OAtomicOperation atomicOperation, final String dateTimeFormat) {
     lock.acquireWriteLock();
     try {
       updateStringProperty(atomicOperation, DATE_TIME_FORMAT_PROPERTY, dateTimeFormat, true);
@@ -744,10 +805,12 @@ public final class OClusterBasedStorageConfiguration implements OStorageConfigur
   }
 
   private void updateBinaryFormatVersion(final OAtomicOperation atomicOperation) {
-    updateIntProperty(atomicOperation, BINARY_FORMAT_VERSION_PROPERTY, CURRENT_BINARY_FORMAT_VERSION);
+    updateIntProperty(
+        atomicOperation, BINARY_FORMAT_VERSION_PROPERTY, CURRENT_BINARY_FORMAT_VERSION);
   }
 
-  private void updateBinaryFormatVersion(final OAtomicOperation atomicOperation, final int version) {
+  private void updateBinaryFormatVersion(
+      final OAtomicOperation atomicOperation, final int version) {
     updateIntProperty(atomicOperation, BINARY_FORMAT_VERSION_PROPERTY, version);
   }
 
@@ -761,7 +824,8 @@ public final class OClusterBasedStorageConfiguration implements OStorageConfigur
     }
   }
 
-  public void setClusterSelection(final OAtomicOperation atomicOperation, final String clusterSelection) {
+  public void setClusterSelection(
+      final OAtomicOperation atomicOperation, final String clusterSelection) {
     lock.acquireWriteLock();
     try {
       updateStringProperty(atomicOperation, CLUSTER_SELECTION_PROPERTY, clusterSelection, true);
@@ -780,7 +844,8 @@ public final class OClusterBasedStorageConfiguration implements OStorageConfigur
     }
   }
 
-  public void setRecordSerializer(final OAtomicOperation atomicOperation, final String recordSerializer) {
+  public void setRecordSerializer(
+      final OAtomicOperation atomicOperation, final String recordSerializer) {
     lock.acquireWriteLock();
     try {
       updateStringProperty(atomicOperation, RECORD_SERIALIZER_PROPERTY, recordSerializer, true);
@@ -799,10 +864,12 @@ public final class OClusterBasedStorageConfiguration implements OStorageConfigur
     }
   }
 
-  public void setRecordSerializerVersion(final OAtomicOperation atomicOperation, final int recordSerializerVersion) {
+  public void setRecordSerializerVersion(
+      final OAtomicOperation atomicOperation, final int recordSerializerVersion) {
     lock.acquireWriteLock();
     try {
-      updateIntProperty(atomicOperation, RECORD_SERIALIZER_VERSION_PROPERTY, recordSerializerVersion);
+      updateIntProperty(
+          atomicOperation, RECORD_SERIALIZER_VERSION_PROPERTY, recordSerializerVersion);
     } finally {
       lock.releaseWriteLock();
     }
@@ -835,7 +902,8 @@ public final class OClusterBasedStorageConfiguration implements OStorageConfigur
       entries.add(key);
 
       if (cfg != null) {
-        final byte[] value = serializeStringValue(cfg.isHidden() ? null : configuration.getValueAsString(cfg));
+        final byte[] value =
+            serializeStringValue(cfg.isHidden() ? null : configuration.getValueAsString(cfg));
         totalSize += value.length;
         entries.add(value);
       } else {
@@ -843,7 +911,10 @@ public final class OClusterBasedStorageConfiguration implements OStorageConfigur
         totalSize += value.length;
         entries.add(value);
 
-        OLogManager.instance().warn(this, "Storing configuration for property:'" + k + "' not existing in current version");
+        OLogManager.instance()
+            .warn(
+                this,
+                "Storing configuration for property:'" + k + "' not existing in current version");
       }
     }
 
@@ -875,7 +946,8 @@ public final class OClusterBasedStorageConfiguration implements OStorageConfigur
           configuration.setValue(key, OType.convert(value, cfg.getType()));
         }
       } else {
-        OLogManager.instance().warn(this, "Ignored storage configuration because not supported: %s=%s", key, value);
+        OLogManager.instance()
+            .warn(this, "Ignored storage configuration because not supported: %s=%s", key, value);
       }
     }
   }
@@ -918,7 +990,8 @@ public final class OClusterBasedStorageConfiguration implements OStorageConfigur
     }
   }
 
-  public void setFreeListBoundary(final OAtomicOperation atomicOperation, final int freeListBoundary) {
+  public void setFreeListBoundary(
+      final OAtomicOperation atomicOperation, final int freeListBoundary) {
     lock.acquireWriteLock();
     try {
       updateIntProperty(atomicOperation, FREE_LIST_BOUNDARY_PROPERTY, freeListBoundary);
@@ -956,7 +1029,8 @@ public final class OClusterBasedStorageConfiguration implements OStorageConfigur
     }
   }
 
-  public void setProperty(final OAtomicOperation atomicOperation, final String name, final String value) {
+  public void setProperty(
+      final OAtomicOperation atomicOperation, final String name, final String value) {
     lock.acquireWriteLock();
     try {
       if ("validation".equalsIgnoreCase(name)) {
@@ -1030,16 +1104,25 @@ public final class OClusterBasedStorageConfiguration implements OStorageConfigur
 
   private void preloadConfigurationProperties() {
     final Map<String, String> properties;
-    try (Stream<ORawPair<String, ORID>> stream = btree.iterateEntriesMajor(PROPERTY_PREFIX_PROPERTY, false, true)) {
-      properties = stream.filter((pair) -> pair.first.startsWith(PROPERTY_PREFIX_PROPERTY)).map((entry) -> {
-        final ORawBuffer buffer;
-        try {
-          buffer = cluster.readRecord(entry.second.getClusterPosition(), false);
-          return new ORawPair<>(entry.first.substring(PROPERTY_PREFIX_PROPERTY.length()), deserializeStringValue(buffer.buffer, 0));
-        } catch (IOException e) {
-          throw OException.wrapException(new OStorageException("Can not preload configuration properties"), e);
-        }
-      }).collect(Collectors.toMap((pair) -> pair.first, (pair) -> pair.second));
+    try (Stream<ORawPair<String, ORID>> stream =
+        btree.iterateEntriesMajor(PROPERTY_PREFIX_PROPERTY, false, true)) {
+      properties =
+          stream
+              .filter((pair) -> pair.first.startsWith(PROPERTY_PREFIX_PROPERTY))
+              .map(
+                  (entry) -> {
+                    final ORawBuffer buffer;
+                    try {
+                      buffer = cluster.readRecord(entry.second.getClusterPosition(), false);
+                      return new ORawPair<>(
+                          entry.first.substring(PROPERTY_PREFIX_PROPERTY.length()),
+                          deserializeStringValue(buffer.buffer, 0));
+                    } catch (IOException e) {
+                      throw OException.wrapException(
+                          new OStorageException("Can not preload configuration properties"), e);
+                    }
+                  })
+              .collect(Collectors.toMap((pair) -> pair.first, (pair) -> pair.second));
     }
 
     cache.put(PROPERTIES, properties);
@@ -1082,15 +1165,19 @@ public final class OClusterBasedStorageConfiguration implements OStorageConfigur
     try {
       final List<String> keysToRemove;
       final List<ORID> ridsToRemove;
-      try (Stream<ORawPair<String, ORID>> stream = btree.iterateEntriesMajor(PROPERTY_PREFIX_PROPERTY, false, true)) {
+      try (Stream<ORawPair<String, ORID>> stream =
+          btree.iterateEntriesMajor(PROPERTY_PREFIX_PROPERTY, false, true)) {
 
         keysToRemove = new ArrayList<>(8);
         ridsToRemove = new ArrayList<>(8);
 
-        stream.filter((entry) -> entry.first.startsWith(PROPERTY_PREFIX_PROPERTY)).forEach((entry) -> {
-          keysToRemove.add(entry.first);
-          ridsToRemove.add(entry.second);
-        });
+        stream
+            .filter((entry) -> entry.first.startsWith(PROPERTY_PREFIX_PROPERTY))
+            .forEach(
+                (entry) -> {
+                  keysToRemove.add(entry.first);
+                  ridsToRemove.add(entry.second);
+                });
       }
 
       for (final String key : keysToRemove) {
@@ -1118,15 +1205,23 @@ public final class OClusterBasedStorageConfiguration implements OStorageConfigur
     }
   }
 
-  public void addIndexEngine(final OAtomicOperation atomicOperation, final String name, final IndexEngineData engineData) {
+  public void addIndexEngine(
+      final OAtomicOperation atomicOperation, final String name, final IndexEngineData engineData) {
     lock.acquireWriteLock();
     try {
       final ORID identifiable = btree.get(ENGINE_PREFIX_PROPERTY + name);
       if (identifiable != null) {
         OLogManager.instance()
-            .warn(this, "Index engine with name '" + engineData.getName() + "' already contained in database configuration");
+            .warn(
+                this,
+                "Index engine with name '"
+                    + engineData.getName()
+                    + "' already contained in database configuration");
       } else {
-        storeProperty(atomicOperation, ENGINE_PREFIX_PROPERTY + name, serializeIndexEngineProperty(engineData));
+        storeProperty(
+            atomicOperation,
+            ENGINE_PREFIX_PROPERTY + name,
+            serializeIndexEngineProperty(engineData));
       }
     } finally {
       lock.releaseWriteLock();
@@ -1146,9 +1241,12 @@ public final class OClusterBasedStorageConfiguration implements OStorageConfigur
   public Set<String> indexEngines() {
     lock.acquireReadLock();
     try {
-      try (Stream<ORawPair<String, ORID>> stream = btree.iterateEntriesMajor(ENGINE_PREFIX_PROPERTY, false, true)) {
-        return stream.filter((entry) -> entry.first.startsWith(ENGINE_PREFIX_PROPERTY))
-            .map((entry) -> entry.first.substring(ENGINE_PREFIX_PROPERTY.length())).collect(Collectors.toSet());
+      try (Stream<ORawPair<String, ORID>> stream =
+          btree.iterateEntriesMajor(ENGINE_PREFIX_PROPERTY, false, true)) {
+        return stream
+            .filter((entry) -> entry.first.startsWith(ENGINE_PREFIX_PROPERTY))
+            .map((entry) -> entry.first.substring(ENGINE_PREFIX_PROPERTY.length()))
+            .collect(Collectors.toSet());
       }
     } finally {
       lock.releaseReadLock();
@@ -1156,18 +1254,29 @@ public final class OClusterBasedStorageConfiguration implements OStorageConfigur
   }
 
   private List<IndexEngineData> loadIndexEngines() {
-    try (Stream<ORawPair<String, ORID>> stream = btree.iterateEntriesMajor(ENGINE_PREFIX_PROPERTY, false, true)) {
-      return stream.filter((entry) -> entry.first.startsWith(ENGINE_PREFIX_PROPERTY)).map((entry) -> {
-        String name = null;
-        try {
-          name = entry.first.substring(ENGINE_PREFIX_PROPERTY.length());
-          final ORawBuffer buffer = cluster.readRecord(entry.second.getClusterPosition(), false);
-          return deserializeIndexEngineProperty(name, buffer.buffer, Integer.MIN_VALUE);
-        } catch (IOException e) {
-          throw OException
-              .wrapException(new OStorageException("Can not load data for index " + name + " for storage " + storage.getName()), e);
-        }
-      }).collect(Collectors.toList());
+    try (Stream<ORawPair<String, ORID>> stream =
+        btree.iterateEntriesMajor(ENGINE_PREFIX_PROPERTY, false, true)) {
+      return stream
+          .filter((entry) -> entry.first.startsWith(ENGINE_PREFIX_PROPERTY))
+          .map(
+              (entry) -> {
+                String name = null;
+                try {
+                  name = entry.first.substring(ENGINE_PREFIX_PROPERTY.length());
+                  final ORawBuffer buffer =
+                      cluster.readRecord(entry.second.getClusterPosition(), false);
+                  return deserializeIndexEngineProperty(name, buffer.buffer, Integer.MIN_VALUE);
+                } catch (IOException e) {
+                  throw OException.wrapException(
+                      new OStorageException(
+                          "Can not load data for index "
+                              + name
+                              + " for storage "
+                              + storage.getName()),
+                      e);
+                }
+              })
+          .collect(Collectors.toList());
     }
   }
 
@@ -1186,11 +1295,13 @@ public final class OClusterBasedStorageConfiguration implements OStorageConfigur
     }
   }
 
-  public void updateCluster(OAtomicOperation atomicOperation, final OStorageClusterConfiguration config) {
+  public void updateCluster(
+      OAtomicOperation atomicOperation, final OStorageClusterConfiguration config) {
     lock.acquireWriteLock();
     try {
       @SuppressWarnings("unchecked")
-      final List<OStorageClusterConfiguration> clusters = (List<OStorageClusterConfiguration>) cache.get(CLUSTERS);
+      final List<OStorageClusterConfiguration> clusters =
+          (List<OStorageClusterConfiguration>) cache.get(CLUSTERS);
       if (config.getId() < clusters.size()) {
         clusters.set(config.getId(), config);
       } else {
@@ -1203,18 +1314,22 @@ public final class OClusterBasedStorageConfiguration implements OStorageConfigur
         assert clusters.size() - 1 == config.getId();
       }
 
-      storeProperty(atomicOperation, CLUSTERS_PREFIX_PROPERTY + config.getId(), updateClusterConfig(config));
+      storeProperty(
+          atomicOperation, CLUSTERS_PREFIX_PROPERTY + config.getId(), updateClusterConfig(config));
     } finally {
       lock.releaseWriteLock();
     }
   }
 
-  public void setClusterStatus(final OAtomicOperation atomicOperation, final int clusterId,
+  public void setClusterStatus(
+      final OAtomicOperation atomicOperation,
+      final int clusterId,
       final OStorageClusterConfiguration.STATUS status) {
     lock.acquireWriteLock();
     try {
       @SuppressWarnings("unchecked")
-      final List<OStorageClusterConfiguration> clusters = (List<OStorageClusterConfiguration>) cache.get(CLUSTERS);
+      final List<OStorageClusterConfiguration> clusters =
+          (List<OStorageClusterConfiguration>) cache.get(CLUSTERS);
 
       if (clusterId < clusters.size()) {
         final OStorageClusterConfiguration config = clusters.get(clusterId);
@@ -1223,7 +1338,8 @@ public final class OClusterBasedStorageConfiguration implements OStorageConfigur
 
       final byte[] property = readProperty(CLUSTERS_PREFIX_PROPERTY + clusterId);
       if (property != null) {
-        final OStorageClusterConfiguration clusterCfg = deserializeStorageClusterConfig(clusterId, property);
+        final OStorageClusterConfiguration clusterCfg =
+            deserializeStorageClusterConfig(clusterId, property);
         clusterCfg.setStatus(status);
         updateCluster(atomicOperation, clusterCfg);
       }
@@ -1245,32 +1361,42 @@ public final class OClusterBasedStorageConfiguration implements OStorageConfigur
 
   private void preloadClusters() {
     final List<OStorageClusterConfiguration> clusters = new ArrayList<>(1024);
-    try (Stream<ORawPair<String, ORID>> stream = btree.iterateEntriesMajor(CLUSTERS_PREFIX_PROPERTY, false, true)) {
+    try (Stream<ORawPair<String, ORID>> stream =
+        btree.iterateEntriesMajor(CLUSTERS_PREFIX_PROPERTY, false, true)) {
 
-      stream.filter((entry) -> entry.first.startsWith(CLUSTERS_PREFIX_PROPERTY)).forEach((entry) -> {
-        final int id = Integer.parseInt(entry.first.substring(CLUSTERS_PREFIX_PROPERTY.length()));
+      stream
+          .filter((entry) -> entry.first.startsWith(CLUSTERS_PREFIX_PROPERTY))
+          .forEach(
+              (entry) -> {
+                final int id =
+                    Integer.parseInt(entry.first.substring(CLUSTERS_PREFIX_PROPERTY.length()));
 
-        try {
-          final ORawBuffer buffer = cluster.readRecord(entry.second.getClusterPosition(), false);
+                try {
+                  final ORawBuffer buffer =
+                      cluster.readRecord(entry.second.getClusterPosition(), false);
 
-          if (clusters.size() <= id) {
-            final int diff = id - clusters.size();
+                  if (clusters.size() <= id) {
+                    final int diff = id - clusters.size();
 
-            for (int i = 0; i < diff; i++) {
-              clusters.add(null);
-            }
+                    for (int i = 0; i < diff; i++) {
+                      clusters.add(null);
+                    }
 
-            clusters.add(deserializeStorageClusterConfig(id, buffer.buffer));
-            assert id == clusters.size() - 1;
-          } else {
-            clusters.set(id, deserializeStorageClusterConfig(id, buffer.buffer));
-          }
-        } catch (final IOException e) {
-          throw OException.wrapException(
-              new OStorageException("Can not load data for cluster with id=" + id + " for storage " + storage.getName()), e);
-        }
-
-      });
+                    clusters.add(deserializeStorageClusterConfig(id, buffer.buffer));
+                    assert id == clusters.size() - 1;
+                  } else {
+                    clusters.set(id, deserializeStorageClusterConfig(id, buffer.buffer));
+                  }
+                } catch (final IOException e) {
+                  throw OException.wrapException(
+                      new OStorageException(
+                          "Can not load data for cluster with id="
+                              + id
+                              + " for storage "
+                              + storage.getName()),
+                      e);
+                }
+              });
     }
 
     cache.put(CLUSTERS, clusters);
@@ -1280,7 +1406,8 @@ public final class OClusterBasedStorageConfiguration implements OStorageConfigur
     lock.acquireWriteLock();
     try {
       @SuppressWarnings("unchecked")
-      final List<OStorageClusterConfiguration> clusters = (List<OStorageClusterConfiguration>) cache.get(CLUSTERS);
+      final List<OStorageClusterConfiguration> clusters =
+          (List<OStorageClusterConfiguration>) cache.get(CLUSTERS);
       if (clusterId < clusters.size()) {
         clusters.set(clusterId, null);
       }
@@ -1291,7 +1418,8 @@ public final class OClusterBasedStorageConfiguration implements OStorageConfigur
     }
   }
 
-  public void setConfigurationUpdateListener(final OStorageConfigurationUpdateListener updateListener) {
+  public void setConfigurationUpdateListener(
+      final OStorageConfigurationUpdateListener updateListener) {
     lock.acquireWriteLock();
     try {
       this.updateListener = updateListener;
@@ -1304,15 +1432,18 @@ public final class OClusterBasedStorageConfiguration implements OStorageConfigur
     int totalSize = 0;
     final List<byte[]> entries = new ArrayList<>(16);
 
-    final byte[] numericProperties = new byte[4 * OIntegerSerializer.INT_SIZE + 5 * OByteSerializer.BYTE_SIZE];
+    final byte[] numericProperties =
+        new byte[4 * OIntegerSerializer.INT_SIZE + 5 * OByteSerializer.BYTE_SIZE];
     totalSize += numericProperties.length;
     entries.add(numericProperties);
 
     {
       int pos = 0;
-      OIntegerSerializer.INSTANCE.serializeNative(indexEngineData.getVersion(), numericProperties, pos);
+      OIntegerSerializer.INSTANCE.serializeNative(
+          indexEngineData.getVersion(), numericProperties, pos);
       pos += OIntegerSerializer.INT_SIZE;
-      OIntegerSerializer.INSTANCE.serializeNative(indexEngineData.getApiVersion(), numericProperties, pos);
+      OIntegerSerializer.INSTANCE.serializeNative(
+          indexEngineData.getApiVersion(), numericProperties, pos);
       pos += OIntegerSerializer.INT_SIZE;
 
       numericProperties[pos] = indexEngineData.getValueSerializerId();
@@ -1326,17 +1457,21 @@ public final class OClusterBasedStorageConfiguration implements OStorageConfigur
       numericProperties[pos] = indexEngineData.isMultivalue() ? (byte) 1 : 0;
       pos++;
 
-      OIntegerSerializer.INSTANCE.serializeNative(indexEngineData.getKeySize(), numericProperties, pos);
+      OIntegerSerializer.INSTANCE.serializeNative(
+          indexEngineData.getKeySize(), numericProperties, pos);
       pos += OIntegerSerializer.INT_SIZE;
 
-      OIntegerSerializer.INSTANCE.serializeNative(indexEngineData.getIndexId(), numericProperties, pos);
+      OIntegerSerializer.INSTANCE.serializeNative(
+          indexEngineData.getIndexId(), numericProperties, pos);
     }
 
     final byte[] algorithm = serializeStringValue(indexEngineData.getAlgorithm());
     totalSize += algorithm.length;
     entries.add(algorithm);
 
-    final byte[] indexType = serializeStringValue(indexEngineData.getIndexType() == null ? "" : indexEngineData.getIndexType());
+    final byte[] indexType =
+        serializeStringValue(
+            indexEngineData.getIndexType() == null ? "" : indexEngineData.getIndexType());
     entries.add(indexType);
     totalSize += indexType.length;
 
@@ -1378,7 +1513,8 @@ public final class OClusterBasedStorageConfiguration implements OStorageConfigur
     return mergeBinaryEntries(totalSize, entries);
   }
 
-  private IndexEngineData deserializeIndexEngineProperty(final String name, final byte[] property, final int defaultIndexId) {
+  private IndexEngineData deserializeIndexEngineProperty(
+      final String name, final byte[] property, final int defaultIndexId) {
     int pos = 0;
 
     final int version = OIntegerSerializer.INSTANCE.deserializeNative(property, pos);
@@ -1452,9 +1588,24 @@ public final class OClusterBasedStorageConfiguration implements OStorageConfigur
       engineProperties.put(key, value);
     }
 
-    return new IndexEngineData(indexId, name, algorithm, indexType, true, version, apiVersion, isMultiValue, valueSerializerId,
-        keySerializerId, isAutomatic, keyTypes, isNullValueSupport, keySize, encryption,
-        configuration.getValueAsString(OGlobalConfiguration.STORAGE_ENCRYPTION_KEY), engineProperties);
+    return new IndexEngineData(
+        indexId,
+        name,
+        algorithm,
+        indexType,
+        true,
+        version,
+        apiVersion,
+        isMultiValue,
+        valueSerializerId,
+        keySerializerId,
+        isAutomatic,
+        keyTypes,
+        isNullValueSupport,
+        keySize,
+        encryption,
+        configuration.getValueAsString(OGlobalConfiguration.STORAGE_ENCRYPTION_KEY),
+        engineProperties);
   }
 
   private static byte[] mergeBinaryEntries(final int totalSize, final List<byte[]> entries) {
@@ -1477,20 +1628,23 @@ public final class OClusterBasedStorageConfiguration implements OStorageConfigur
     totalSize += name.length;
     entries.add(name);
 
-    final OStoragePaginatedClusterConfiguration paginatedClusterConfiguration = (OStoragePaginatedClusterConfiguration) cluster;
+    final OStoragePaginatedClusterConfiguration paginatedClusterConfiguration =
+        (OStoragePaginatedClusterConfiguration) cluster;
     final byte[] numericData = new byte[OIntegerSerializer.INT_SIZE + OByteSerializer.BYTE_SIZE];
     totalSize += numericData.length;
     entries.add(numericData);
 
     numericData[0] = paginatedClusterConfiguration.useWal ? (byte) 1 : 0;
 
-    OIntegerSerializer.INSTANCE.serializeNative(paginatedClusterConfiguration.getBinaryVersion(), numericData, 1);
+    OIntegerSerializer.INSTANCE.serializeNative(
+        paginatedClusterConfiguration.getBinaryVersion(), numericData, 1);
 
     final byte[] encryption = serializeStringValue(paginatedClusterConfiguration.encryption);
     totalSize += encryption.length;
     entries.add(encryption);
 
-    final byte[] conflictStrategy = serializeStringValue(paginatedClusterConfiguration.conflictStrategy);
+    final byte[] conflictStrategy =
+        serializeStringValue(paginatedClusterConfiguration.conflictStrategy);
     totalSize += conflictStrategy.length;
     entries.add(conflictStrategy);
 
@@ -1505,7 +1659,8 @@ public final class OClusterBasedStorageConfiguration implements OStorageConfigur
     return mergeBinaryEntries(totalSize, entries);
   }
 
-  private OStorageClusterConfiguration deserializeStorageClusterConfig(final int id, final byte[] property) {
+  private OStorageClusterConfiguration deserializeStorageClusterConfig(
+      final int id, final byte[] property) {
     int pos = 0;
 
     final String name = deserializeStringValue(property, pos);
@@ -1528,9 +1683,19 @@ public final class OClusterBasedStorageConfiguration implements OStorageConfigur
 
     final String compression = deserializeStringValue(property, pos);
 
-    return new OStoragePaginatedClusterConfiguration(id, name, null, useWal, 0, 0, compression, encryption,
-        configuration.getValueAsString(OGlobalConfiguration.STORAGE_ENCRYPTION_KEY), conflictStrategy,
-        OStorageClusterConfiguration.STATUS.valueOf(status), binaryVersion);
+    return new OStoragePaginatedClusterConfiguration(
+        id,
+        name,
+        null,
+        useWal,
+        0,
+        0,
+        compression,
+        encryption,
+        configuration.getValueAsString(OGlobalConfiguration.STORAGE_ENCRYPTION_KEY),
+        conflictStrategy,
+        OStorageClusterConfiguration.STATUS.valueOf(status),
+        binaryVersion);
   }
 
   private void dropProperty(final OAtomicOperation atomicOperation, final String name) {
@@ -1551,7 +1716,10 @@ public final class OClusterBasedStorageConfiguration implements OStorageConfigur
     }
   }
 
-  private void updateStringProperty(final OAtomicOperation atomicOperation, final String name, final String value,
+  private void updateStringProperty(
+      final OAtomicOperation atomicOperation,
+      final String name,
+      final String value,
       final boolean useCache) {
     if (useCache) {
       cache.put(name, value);
@@ -1596,7 +1764,8 @@ public final class OClusterBasedStorageConfiguration implements OStorageConfigur
     return OIntegerSerializer.INSTANCE.deserializeNative(raw, start + 1) + 5;
   }
 
-  private void updateIntProperty(OAtomicOperation atomicOperation, final String name, final int value) {
+  private void updateIntProperty(
+      OAtomicOperation atomicOperation, final String name, final int value) {
     cache.put(name, value);
 
     final byte[] property = new byte[OIntegerSerializer.INT_SIZE];
@@ -1605,10 +1774,12 @@ public final class OClusterBasedStorageConfiguration implements OStorageConfigur
     storeProperty(atomicOperation, name, property);
   }
 
-  private void storeProperty(OAtomicOperation atomicOperation, final String name, final byte[] property) {
+  private void storeProperty(
+      OAtomicOperation atomicOperation, final String name, final byte[] property) {
     ORID identity = btree.get(name);
     if (identity == null) {
-      final OPhysicalPosition position = cluster.createRecord(property, 0, (byte) 0, null, atomicOperation);
+      final OPhysicalPosition position =
+          cluster.createRecord(property, 0, (byte) 0, null, atomicOperation);
       identity = new ORecordId(0, position.clusterPosition);
       btree.put(atomicOperation, name, identity);
     } else {
@@ -1636,7 +1807,8 @@ public final class OClusterBasedStorageConfiguration implements OStorageConfigur
       final ORawBuffer buffer = cluster.readRecord(rid.getClusterPosition(), false);
       return buffer.buffer;
     } catch (final IOException e) {
-      throw OException.wrapException(new OStorageException("Error during read of configuration property " + name), e);
+      throw OException.wrapException(
+          new OStorageException("Error during read of configuration property " + name), e);
     }
   }
 
@@ -1660,7 +1832,8 @@ public final class OClusterBasedStorageConfiguration implements OStorageConfigur
     }
 
     if (property.length < 4) {
-      throw new IllegalStateException("Invalid length of property " + name + " len = " + property.length);
+      throw new IllegalStateException(
+          "Invalid length of property " + name + " len = " + property.length);
     }
 
     return OIntegerSerializer.INSTANCE.deserializeNative(property, 0);
@@ -1701,18 +1874,22 @@ public final class OClusterBasedStorageConfiguration implements OStorageConfigur
     setFreeListBoundary(atomicOperation, -1);
     setMaxKeySize(atomicOperation, -1);
 
-    if (!configuration.getContextKeys().contains(OGlobalConfiguration.CLASS_MINIMUM_CLUSTERS.getKey())) {
-      configuration.setValue(OGlobalConfiguration.CLASS_MINIMUM_CLUSTERS,
+    if (!configuration
+        .getContextKeys()
+        .contains(OGlobalConfiguration.CLASS_MINIMUM_CLUSTERS.getKey())) {
+      configuration.setValue(
+          OGlobalConfiguration.CLASS_MINIMUM_CLUSTERS,
           OGlobalConfiguration.CLASS_MINIMUM_CLUSTERS.getValueAsInteger()); // 0 = AUTOMATIC
     }
     autoInitClusters();
 
-    updateMinimumClusters(atomicOperation);//store inside of configuration
+    updateMinimumClusters(atomicOperation); // store inside of configuration
 
     setRecordSerializerVersion(atomicOperation, 0);
   }
 
-  private void copy(OAtomicOperation atomicOperation, final OStorageConfiguration storageConfiguration) {
+  private void copy(
+      OAtomicOperation atomicOperation, final OStorageConfiguration storageConfiguration) {
     setCharset(atomicOperation, storageConfiguration.getCharset());
     setSchemaRecordId(atomicOperation, storageConfiguration.getSchemaRecordId());
     setIndexMgrRecordId(atomicOperation, storageConfiguration.getIndexMgrRecordId());
@@ -1765,15 +1942,17 @@ public final class OClusterBasedStorageConfiguration implements OStorageConfigur
   }
 
   private void autoInitClusters() {
-    if (getContextConfiguration().getValueAsInteger(OGlobalConfiguration.CLASS_MINIMUM_CLUSTERS) == 0) {
+    if (getContextConfiguration().getValueAsInteger(OGlobalConfiguration.CLASS_MINIMUM_CLUSTERS)
+        == 0) {
       @SuppressWarnings("SpellCheckingInspection")
       final int cpus = Runtime.getRuntime().availableProcessors();
-      getContextConfiguration().setValue(OGlobalConfiguration.CLASS_MINIMUM_CLUSTERS, cpus > 64 ? 64 : cpus);
+      getContextConfiguration()
+          .setValue(OGlobalConfiguration.CLASS_MINIMUM_CLUSTERS, cpus > 64 ? 64 : cpus);
     }
   }
 
   private static final class PausedNotificationsState {
     private boolean notificationsPaused;
-    private long    pendingChanges;
+    private long pendingChanges;
   }
 }

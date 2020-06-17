@@ -1,36 +1,33 @@
 /*
-  *
-  *  *  Copyright 2010-2016 OrientDB LTD (http://orientdb.com)
-  *  *
-  *  *  Licensed under the Apache License, Version 2.0 (the "License");
-  *  *  you may not use this file except in compliance with the License.
-  *  *  You may obtain a copy of the License at
-  *  *
-  *  *       http://www.apache.org/licenses/LICENSE-2.0
-  *  *
-  *  *  Unless required by applicable law or agreed to in writing, software
-  *  *  distributed under the License is distributed on an "AS IS" BASIS,
-  *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-  *  *  See the License for the specific language governing permissions and
-  *  *  limitations under the License.
-  *  *
-  *  * For more information: http://orientdb.com
-  *
-  */
+ *
+ *  *  Copyright 2010-2016 OrientDB LTD (http://orientdb.com)
+ *  *
+ *  *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  *  you may not use this file except in compliance with the License.
+ *  *  You may obtain a copy of the License at
+ *  *
+ *  *       http://www.apache.org/licenses/LICENSE-2.0
+ *  *
+ *  *  Unless required by applicable law or agreed to in writing, software
+ *  *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  *  See the License for the specific language governing permissions and
+ *  *  limitations under the License.
+ *  *
+ *  * For more information: http://orientdb.com
+ *
+ */
 
 package com.orientechnologies.common.serialization.types;
 
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALChanges;
 import java.nio.ByteBuffer;
 import java.util.UUID;
 
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALChanges;
-
-/**
- * @author Artem Orobets (enisher-at-gmail.com)
- */
+/** @author Artem Orobets (enisher-at-gmail.com) */
 public class OUUIDSerializer implements OBinarySerializer<UUID> {
-  public static final OUUIDSerializer INSTANCE  = new OUUIDSerializer();
-  public static final int             UUID_SIZE = 2 * OLongSerializer.LONG_SIZE;
+  public static final OUUIDSerializer INSTANCE = new OUUIDSerializer();
+  public static final int UUID_SIZE = 2 * OLongSerializer.LONG_SIZE;
 
   @Override
   public int getObjectSize(UUID object, Object... hints) {
@@ -43,16 +40,21 @@ public class OUUIDSerializer implements OBinarySerializer<UUID> {
   }
 
   @Override
-  public void serialize(final UUID object, final byte[] stream, final int startPosition, final Object... hints) {
-    OLongSerializer.INSTANCE.serializeLiteral(object.getMostSignificantBits(), stream, startPosition);
-    OLongSerializer.INSTANCE.serializeLiteral(object.getLeastSignificantBits(), stream, startPosition + OLongSerializer.LONG_SIZE);
+  public void serialize(
+      final UUID object, final byte[] stream, final int startPosition, final Object... hints) {
+    OLongSerializer.INSTANCE.serializeLiteral(
+        object.getMostSignificantBits(), stream, startPosition);
+    OLongSerializer.INSTANCE.serializeLiteral(
+        object.getLeastSignificantBits(), stream, startPosition + OLongSerializer.LONG_SIZE);
   }
 
   @Override
   public UUID deserialize(byte[] stream, int startPosition) {
-    final long mostSignificantBits = OLongSerializer.INSTANCE.deserializeLiteral(stream, startPosition);
-    final long leastSignificantBits = OLongSerializer.INSTANCE
-        .deserializeLiteral(stream, startPosition + OLongSerializer.LONG_SIZE);
+    final long mostSignificantBits =
+        OLongSerializer.INSTANCE.deserializeLiteral(stream, startPosition);
+    final long leastSignificantBits =
+        OLongSerializer.INSTANCE.deserializeLiteral(
+            stream, startPosition + OLongSerializer.LONG_SIZE);
     return new UUID(mostSignificantBits, leastSignificantBits);
   }
 
@@ -72,16 +74,21 @@ public class OUUIDSerializer implements OBinarySerializer<UUID> {
   }
 
   @Override
-  public void serializeNativeObject(final UUID object, final byte[] stream, final int startPosition, final Object... hints) {
-    OLongSerializer.INSTANCE.serializeNative(object.getMostSignificantBits(), stream, startPosition, hints);
-    OLongSerializer.INSTANCE
-        .serializeNative(object.getLeastSignificantBits(), stream, startPosition + OLongSerializer.LONG_SIZE, hints);
+  public void serializeNativeObject(
+      final UUID object, final byte[] stream, final int startPosition, final Object... hints) {
+    OLongSerializer.INSTANCE.serializeNative(
+        object.getMostSignificantBits(), stream, startPosition, hints);
+    OLongSerializer.INSTANCE.serializeNative(
+        object.getLeastSignificantBits(), stream, startPosition + OLongSerializer.LONG_SIZE, hints);
   }
 
   @Override
   public UUID deserializeNativeObject(final byte[] stream, final int startPosition) {
-    final long mostSignificantBits = OLongSerializer.INSTANCE.deserializeNative(stream, startPosition);
-    final long leastSignificantBits = OLongSerializer.INSTANCE.deserializeNative(stream, startPosition + OLongSerializer.LONG_SIZE);
+    final long mostSignificantBits =
+        OLongSerializer.INSTANCE.deserializeNative(stream, startPosition);
+    final long leastSignificantBits =
+        OLongSerializer.INSTANCE.deserializeNative(
+            stream, startPosition + OLongSerializer.LONG_SIZE);
     return new UUID(mostSignificantBits, leastSignificantBits);
   }
 
@@ -95,18 +102,14 @@ public class OUUIDSerializer implements OBinarySerializer<UUID> {
     return value;
   }
 
-  /**
-   * {@inheritDoc}
-   */
+  /** {@inheritDoc} */
   @Override
   public void serializeInByteBufferObject(UUID object, ByteBuffer buffer, Object... hints) {
     buffer.putLong(object.getMostSignificantBits());
     buffer.putLong(object.getLeastSignificantBits());
   }
 
-  /**
-   * {@inheritDoc}
-   */
+  /** {@inheritDoc} */
   @Override
   public UUID deserializeFromByteBufferObject(ByteBuffer buffer) {
     final long mostSignificantBits = buffer.getLong();
@@ -114,27 +117,23 @@ public class OUUIDSerializer implements OBinarySerializer<UUID> {
     return new UUID(mostSignificantBits, leastSignificantBits);
   }
 
-  /**
-   * {@inheritDoc}
-   */
+  /** {@inheritDoc} */
   @Override
   public int getObjectSizeInByteBuffer(ByteBuffer buffer) {
     return UUID_SIZE;
   }
 
-  /**
-   * {@inheritDoc}
-   */
+  /** {@inheritDoc} */
   @Override
-  public UUID deserializeFromByteBufferObject(ByteBuffer buffer, OWALChanges walChanges, int offset) {
+  public UUID deserializeFromByteBufferObject(
+      ByteBuffer buffer, OWALChanges walChanges, int offset) {
     final long mostSignificantBits = walChanges.getLongValue(buffer, offset);
-    final long leastSignificantBits = walChanges.getLongValue(buffer, offset + OLongSerializer.LONG_SIZE);
+    final long leastSignificantBits =
+        walChanges.getLongValue(buffer, offset + OLongSerializer.LONG_SIZE);
     return new UUID(mostSignificantBits, leastSignificantBits);
   }
 
-  /**
-   * {@inheritDoc}
-   */
+  /** {@inheritDoc} */
   @Override
   public int getObjectSizeInByteBuffer(ByteBuffer buffer, OWALChanges walChanges, int offset) {
     return UUID_SIZE;

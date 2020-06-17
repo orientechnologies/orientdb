@@ -6,7 +6,8 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODura
 public abstract class OClusterPositionMap extends ODurableComponent {
   public static final String DEF_EXTENSION = ".cpm";
 
-  public OClusterPositionMap(OAbstractPaginatedStorage storage, String name, String extension, String lockName) {
+  public OClusterPositionMap(
+      OAbstractPaginatedStorage storage, String name, String extension, String lockName) {
     super(storage, name, extension, lockName);
   }
 }

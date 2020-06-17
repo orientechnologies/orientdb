@@ -52,5 +52,4 @@ public class ReplicationVersionIncrementedByOneIT extends BareBoneBase1ClientTes
       graph.close();
     }
   }
-
 }

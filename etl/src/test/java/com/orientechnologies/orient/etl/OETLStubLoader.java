@@ -15,7 +15,7 @@
  *  *  limitations under the License.
  *  *
  *  * For more information: http://orientdb.com
- *  
+ *
  */
 
 package com.orientechnologies.orient.etl;
@@ -27,7 +27,6 @@ import com.orientechnologies.orient.core.db.OrientDB;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.etl.loader.OETLAbstractLoader;
-
 import java.util.ArrayList;
 import java.util.List;
 
@@ -39,10 +38,9 @@ import java.util.List;
 public class OETLStubLoader extends OETLAbstractLoader {
   public final List<ODocument> loadedRecords = new ArrayList<ODocument>();
   private ODatabasePool pool;
-  private OrientDB      orient;
+  private OrientDB orient;
 
-  public OETLStubLoader() {
-  }
+  public OETLStubLoader() {}
 
   @Override
   public void beginLoader(OETLPipeline pipeline) {
@@ -69,8 +67,7 @@ public class OETLStubLoader extends OETLAbstractLoader {
   }
 
   @Override
-  public void rollback(ODatabaseDocument db) {
-  }
+  public void rollback(ODatabaseDocument db) {}
 
   @Override
   public ODatabasePool getPool() {

@@ -18,9 +18,9 @@ package com.orientechnologies.orient.core.schedule;
 
 import com.orientechnologies.common.concur.ONeedRetryException;
 import com.orientechnologies.common.log.OLogManager;
-import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.script.OCommandScriptException;
-import com.orientechnologies.orient.core.db.*;
+import com.orientechnologies.orient.core.db.ODatabaseSession;
+import com.orientechnologies.orient.core.db.OrientDBInternal;
 import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.function.OFunction;
@@ -28,7 +28,6 @@ import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.schedule.OScheduler.STATUS;
 import com.orientechnologies.orient.core.type.ODocumentWrapper;
-
 import java.text.ParseException;
 import java.util.Date;
 import java.util.Map;
@@ -43,27 +42,24 @@ import java.util.concurrent.atomic.AtomicLong;
  * @author henryzhao81-at-gmail.com
  * @since Mar 28, 2013
  */
-
 public class OScheduledEvent extends ODocumentWrapper {
   public static final String CLASS_NAME = "OSchedule";
 
-  public static final String PROP_NAME      = "name";
-  public static final String PROP_RULE      = "rule";
+  public static final String PROP_NAME = "name";
+  public static final String PROP_RULE = "rule";
   public static final String PROP_ARGUMENTS = "arguments";
-  public static final String PROP_STATUS    = "status";
-  public static final String PROP_FUNC      = "function";
+  public static final String PROP_STATUS = "status";
+  public static final String PROP_FUNC = "function";
   public static final String PROP_STARTTIME = "starttime";
-  public static final String PROP_EXEC_ID   = "nextExecId";
+  public static final String PROP_EXEC_ID = "nextExecId";
 
-  private          OFunction       function;
-  private final    AtomicBoolean   running;
-  private          OCronExpression cron;
-  private volatile TimerTask       timer;
-  private final    AtomicLong      nextExecutionId;
+  private OFunction function;
+  private final AtomicBoolean running;
+  private OCronExpression cron;
+  private volatile TimerTask timer;
+  private final AtomicLong nextExecutionId;
 
-  /**
-   * Creates a scheduled event object from a configuration.
-   */
+  /** Creates a scheduled event object from a configuration. */
   public OScheduledEvent(final ODocument doc) {
     super(doc);
     running = new AtomicBoolean(false);
@@ -80,15 +76,13 @@ public class OScheduledEvent extends ODocumentWrapper {
     synchronized (this) {
       final TimerTask t = timer;
       timer = null;
-      if (t != null)
-        t.cancel();
+      if (t != null) t.cancel();
     }
   }
 
   public OFunction getFunction() {
     final OFunction fun = getFunctionSafe();
-    if (fun == null)
-      throw new OCommandScriptException("Function cannot be null");
+    if (fun == null) throw new OCommandScriptException("Function cannot be null");
     return fun;
   }
 
@@ -133,8 +127,17 @@ public class OScheduledEvent extends ODocumentWrapper {
 
   @Override
   public String toString() {
-    return "OSchedule [name:" + getName() + ",rule:" + getRule() + ",current status:" + getStatus() + ",func:" + getFunctionSafe()
-        + ",started:" + getStartTime() + "]";
+    return "OSchedule [name:"
+        + getName()
+        + ",rule:"
+        + getRule()
+        + ",current status:"
+        + getStatus()
+        + ",func:"
+        + getFunctionSafe()
+        + ",started:"
+        + getStartTime()
+        + "]";
   }
 
   @Override
@@ -159,10 +162,8 @@ public class OScheduledEvent extends ODocumentWrapper {
           function = (OFunction) funcDoc;
           // OVERWRITE FUNCTION ID
           document.field(PROP_FUNC, function.getId());
-        } else if (funcDoc instanceof ODocument)
-          function = new OFunction((ODocument) funcDoc);
-        else if (funcDoc instanceof ORecordId)
-          function = new OFunction((ORecordId) funcDoc);
+        } else if (funcDoc instanceof ODocument) function = new OFunction((ODocument) funcDoc);
+        else if (funcDoc instanceof ORecordId) function = new OFunction((ORecordId) funcDoc);
       }
     }
     return function;
@@ -170,12 +171,13 @@ public class OScheduledEvent extends ODocumentWrapper {
 
   private static class ScheduledTimerTask extends TimerTask {
 
-    private final OScheduledEvent  event;
-    private final String           database;
-    private final String           user;
+    private final OScheduledEvent event;
+    private final String database;
+    private final String user;
     private final OrientDBInternal orientDB;
 
-    private ScheduledTimerTask(OScheduledEvent event, String database, String user, OrientDBInternal orientDB) {
+    private ScheduledTimerTask(
+        OScheduledEvent event, String database, String user, OrientDBInternal orientDB) {
       this.event = event;
       this.database = database;
       this.user = user;
@@ -194,22 +196,33 @@ public class OScheduledEvent extends ODocumentWrapper {
 
     @Override
     public void run() {
-      orientDB.execute(database, user, db -> {
-        runTask(db);
-        return null;
-      });
+      orientDB.execute(
+          database,
+          user,
+          db -> {
+            runTask(db);
+            return null;
+          });
     }
 
     private void runTask(ODatabaseSession db) {
       event.reload();
 
       if (event.running.get()) {
-        OLogManager.instance().error(this, "Error: The scheduled event '" + event.getName() + "' is already running", null);
+        OLogManager.instance()
+            .error(
+                this,
+                "Error: The scheduled event '" + event.getName() + "' is already running",
+                null);
         return;
       }
 
       if (event.function == null) {
-        OLogManager.instance().error(this, "Error: The scheduled event '" + event.getName() + "' has no configured function", null);
+        OLogManager.instance()
+            .error(
+                this,
+                "Error: The scheduled event '" + event.getName() + "' has no configured function",
+                null);
         return;
       }
 
@@ -217,13 +230,20 @@ public class OScheduledEvent extends ODocumentWrapper {
         event.setRunning(true);
 
         OLogManager.instance()
-            .info(this, "Checking for the execution of the scheduled event '%s' executionId=%d...", event.getName(),
+            .info(
+                this,
+                "Checking for the execution of the scheduled event '%s' executionId=%d...",
+                event.getName(),
                 event.nextExecutionId.get());
         try {
           boolean executeEvent = executeEvent();
           if (executeEvent) {
             OLogManager.instance()
-                .info(this, "Executing scheduled event '%s' executionId=%d...", event.getName(), event.nextExecutionId.get());
+                .info(
+                    this,
+                    "Executing scheduled event '%s' executionId=%d...",
+                    event.getName(),
+                    event.nextExecutionId.get());
             executeEventFunction();
           }
 
@@ -243,8 +263,7 @@ public class OScheduledEvent extends ODocumentWrapper {
     private boolean executeEvent() {
       for (int retry = 0; retry < 10; ++retry) {
         try {
-          if (isEventAlreadyExecuted())
-            break;
+          if (isEventAlreadyExecuted()) break;
 
           event.document.field(PROP_STATUS, STATUS.RUNNING);
           event.document.field(PROP_STARTTIME, System.currentTimeMillis());
@@ -257,23 +276,36 @@ public class OScheduledEvent extends ODocumentWrapper {
         } catch (ONeedRetryException e) {
           event.document.reload(null, true);
           // CONCURRENT UPDATE, PROBABLY EXECUTED BY ANOTHER SERVER
-          if (isEventAlreadyExecuted())
-            break;
+          if (isEventAlreadyExecuted()) break;
 
           OLogManager.instance()
-              .info(this, "Cannot change the status of the scheduled event '%s' executionId=%d, retry %d", e, event.getName(),
-                  event.nextExecutionId.get(), retry);
+              .info(
+                  this,
+                  "Cannot change the status of the scheduled event '%s' executionId=%d, retry %d",
+                  e,
+                  event.getName(),
+                  event.nextExecutionId.get(),
+                  retry);
 
         } catch (ORecordNotFoundException e) {
           OLogManager.instance()
-              .info(this, "Scheduled event '%s' executionId=%d not found on database, removing event", e, event.getName(),
+              .info(
+                  this,
+                  "Scheduled event '%s' executionId=%d not found on database, removing event",
+                  e,
+                  event.getName(),
                   event.nextExecutionId.get());
           event.interrupt();
           break;
         } catch (Exception e) {
           // SUSPEND EXECUTION
-          OLogManager.instance().error(this, "Error during starting of scheduled event '%s' executionId=%d", e, event.getName(),
-              event.nextExecutionId.get());
+          OLogManager.instance()
+              .error(
+                  this,
+                  "Error during starting of scheduled event '%s' executionId=%d",
+                  e,
+                  event.getName(),
+                  event.nextExecutionId.get());
 
           event.interrupt();
           break;
@@ -287,8 +319,13 @@ public class OScheduledEvent extends ODocumentWrapper {
       try {
         result = event.function.execute(event.getArguments());
       } finally {
-        OLogManager.instance().info(this, "Scheduled event '%s' executionId=%d completed with result: %s", event.getName(),
-            event.nextExecutionId.get(), result);
+        OLogManager.instance()
+            .info(
+                this,
+                "Scheduled event '%s' executionId=%d completed with result: %s",
+                event.getName(),
+                event.nextExecutionId.get(),
+                result);
         for (int retry = 0; retry < 10; ++retry) {
           try {
             event.document.field(PROP_STATUS, STATUS.WAITING);
@@ -296,7 +333,8 @@ public class OScheduledEvent extends ODocumentWrapper {
           } catch (ONeedRetryException e) {
             event.document.reload(null, true);
           } catch (Exception e) {
-            OLogManager.instance().error(this, "Error on saving status for event '%s'", e, event.getName());
+            OLogManager.instance()
+                .error(this, "Error on saving status for event '%s'", e, event.getName());
           }
         }
       }
@@ -311,17 +349,20 @@ public class OScheduledEvent extends ODocumentWrapper {
       final ODocument updated = rec.reload();
 
       final Long currentExecutionId = updated.field(PROP_EXEC_ID);
-      if (currentExecutionId == null)
-        return false;
+      if (currentExecutionId == null) return false;
 
       if (currentExecutionId >= event.nextExecutionId.get()) {
-        OLogManager.instance().info(this, "Scheduled event '%s' with id %d is already running (current id=%d)", event.getName(),
-            event.nextExecutionId.get(), currentExecutionId);
+        OLogManager.instance()
+            .info(
+                this,
+                "Scheduled event '%s' with id %d is already running (current id=%d)",
+                event.getName(),
+                event.nextExecutionId.get(),
+                currentExecutionId);
         // ALREADY RUNNING
         return true;
       }
       return false;
     }
-
   }
 }

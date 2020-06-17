@@ -1,23 +1,24 @@
 package com.orientechnologies.orient.object.db;
 
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 import java.util.HashMap;
 import java.util.Map;
-
-import static org.junit.Assert.*;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Test;
 
 /**
  * @author JN <a href="mailto:jn@brain-activit.com">Julian Neuhaus</a>
  * @since 21.08.2014
  */
 public class OObjectLazyMapTest {
-  private final int idOfRootEntity     = 0;
-  private final int idOfFirstMapEntry  = 1;
+  private final int idOfRootEntity = 0;
+  private final int idOfFirstMapEntry = 1;
   private final int idOfSecondMapEntry = 2;
-  private final int invalidId          = 3;
+  private final int invalidId = 3;
   private OObjectDatabaseTx databaseTx;
 
   @Before
@@ -62,7 +63,7 @@ public class OObjectLazyMapTest {
     assertFalse(testMap.containsKey(null));
     assertFalse(testMap.containsKey(String.valueOf(invalidId)));
 
-    //should fail because the keys will be automatically converted to string
+    // should fail because the keys will be automatically converted to string
     assertFalse(testMap.containsKey(idOfFirstMapEntry));
 
     assertTrue(testMap.containsKey(String.valueOf(idOfFirstMapEntry)));
@@ -75,7 +76,7 @@ public class OObjectLazyMapTest {
 
     assertTrue(testMap.get(String.valueOf(invalidId)) == null);
 
-    //should fail because the keys will be automatically converted to string
+    // should fail because the keys will be automatically converted to string
     try {
       testMap.get(idOfFirstMapEntry);
       fail("Expected ClassCastException");
@@ -91,15 +92,17 @@ public class OObjectLazyMapTest {
     Object toCast = getMapWithPersistedEntries();
     assertTrue(toCast instanceof OObjectLazyMap);
 
-    @SuppressWarnings({ "unchecked", "rawtypes" })
+    @SuppressWarnings({"unchecked", "rawtypes"})
     OObjectLazyMap<EntityWithMap> testMap = (OObjectLazyMap) toCast;
 
     assertTrue(testMap.getClass() == OObjectLazyMap.class);
     assertTrue(testMap.getOrDefault(String.valueOf(idOfFirstMapEntry), null) != null);
     assertTrue(testMap.getOrDefault(String.valueOf(idOfSecondMapEntry), null) != null);
     assertTrue(testMap.getOrDefault(String.valueOf(invalidId), null) == null);
-    assertTrue(testMap.getOrDefault(String.valueOf(invalidId), testMap.get(String.valueOf(idOfFirstMapEntry))) == testMap
-        .get(String.valueOf(idOfFirstMapEntry)));
+    assertTrue(
+        testMap.getOrDefault(
+                String.valueOf(invalidId), testMap.get(String.valueOf(idOfFirstMapEntry)))
+            == testMap.get(String.valueOf(idOfFirstMapEntry)));
   }
 
   private Map<String, EntityWithMap> getMapWithPersistedEntries() {
@@ -131,7 +134,7 @@ public class OObjectLazyMapTest {
   }
 
   public class EntityWithMap {
-    private int                        id;
+    private int id;
     private Map<String, EntityWithMap> map;
 
     public Map<String, EntityWithMap> getMap() {

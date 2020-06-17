@@ -15,14 +15,17 @@ import com.orientechnologies.orient.core.sql.executor.AggregationContext;
 import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.executor.OResultInternal;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
-
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 public class OSuffixIdentifier extends SimpleNode {
 
-  protected OIdentifier      identifier;
+  protected OIdentifier identifier;
   protected ORecordAttribute recordAttribute;
-  protected boolean          star = false;
+  protected boolean star = false;
 
   public OSuffixIdentifier(int id) {
     super(id);
@@ -83,7 +86,10 @@ public class OSuffixIdentifier extends SimpleNode {
       return null;
     }
     if (recordAttribute != null && iCurrentRecord != null) {
-      OElement rec = iCurrentRecord instanceof OElement ? (OElement) iCurrentRecord : iCurrentRecord.getRecord();
+      OElement rec =
+          iCurrentRecord instanceof OElement
+              ? (OElement) iCurrentRecord
+              : iCurrentRecord.getRecord();
       if (rec != null) {
         return recordAttribute.evaluate(rec, ctx);
       }
@@ -115,8 +121,9 @@ public class OSuffixIdentifier extends SimpleNode {
         if (iCurrentRecord.getMetadataKeys().contains(varName)) {
           return iCurrentRecord.getMetadata(varName);
         }
-        if (iCurrentRecord instanceof OResultInternal && ((OResultInternal)iCurrentRecord).getTemporaryProperties().contains(varName)) {
-          return ((OResultInternal)iCurrentRecord).getTemporaryProperty(varName);
+        if (iCurrentRecord instanceof OResultInternal
+            && ((OResultInternal) iCurrentRecord).getTemporaryProperties().contains(varName)) {
+          return ((OResultInternal) iCurrentRecord).getTemporaryProperty(varName);
         }
       }
       return null;
@@ -269,11 +276,13 @@ public class OSuffixIdentifier extends SimpleNode {
   }
 
   public void aggregate(Object value, OCommandContext ctx) {
-    throw new UnsupportedOperationException("this operation does not support plain aggregation: " + toString());
+    throw new UnsupportedOperationException(
+        "this operation does not support plain aggregation: " + toString());
   }
 
   public AggregationContext getAggregationContext(OCommandContext ctx) {
-    throw new UnsupportedOperationException("this operation does not support plain aggregation: " + toString());
+    throw new UnsupportedOperationException(
+        "this operation does not support plain aggregation: " + toString());
   }
 
   public OSuffixIdentifier copy() {
@@ -286,19 +295,17 @@ public class OSuffixIdentifier extends SimpleNode {
 
   @Override
   public boolean equals(Object o) {
-    if (this == o)
-      return true;
-    if (o == null || getClass() != o.getClass())
-      return false;
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
 
     OSuffixIdentifier that = (OSuffixIdentifier) o;
 
-    if (star != that.star)
-      return false;
+    if (star != that.star) return false;
     if (identifier != null ? !identifier.equals(that.identifier) : that.identifier != null)
       return false;
-    if (recordAttribute != null ? !recordAttribute.equals(that.recordAttribute) : that.recordAttribute != null)
-      return false;
+    if (recordAttribute != null
+        ? !recordAttribute.equals(that.recordAttribute)
+        : that.recordAttribute != null) return false;
 
     return true;
   }
@@ -311,9 +318,7 @@ public class OSuffixIdentifier extends SimpleNode {
     return result;
   }
 
-  public void extractSubQueries(SubQueryCollector collector) {
-
-  }
+  public void extractSubQueries(SubQueryCollector collector) {}
 
   public boolean refersToParent() {
     if (identifier != null && identifier.getStringValue().equalsIgnoreCase("$parent")) {
@@ -348,7 +353,8 @@ public class OSuffixIdentifier extends SimpleNode {
     if (doc != null) {
       doc.setProperty(identifier.getStringValue(), value);
     } else {
-      throw new OCommandExecutionException("Cannot set record attribute " + recordAttribute + " on existing document");
+      throw new OCommandExecutionException(
+          "Cannot set record attribute " + recordAttribute + " on existing document");
     }
   }
 
@@ -433,8 +439,13 @@ public class OSuffixIdentifier extends SimpleNode {
 
   public OCollate getCollate(OResult currentRecord, OCommandContext ctx) {
     if (identifier != null && currentRecord != null) {
-      return currentRecord.getRecord().map(x -> (OElement) x).flatMap(elem -> elem.getSchemaType())
-          .map(clazz -> clazz.getProperty(identifier.getStringValue())).map(prop -> prop.getCollate()).orElse(null);
+      return currentRecord
+          .getRecord()
+          .map(x -> (OElement) x)
+          .flatMap(elem -> elem.getSchemaType())
+          .map(clazz -> clazz.getProperty(identifier.getStringValue()))
+          .map(prop -> prop.getCollate())
+          .orElse(null);
     }
     return null;
   }

@@ -25,16 +25,14 @@ import com.orientechnologies.orient.client.remote.OStorageRemoteSession;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializer;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelDataInput;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelDataOutput;
-
 import java.io.IOException;
 
 public class OReloadResponse implements OBinaryResponse {
 
   private String[] clusterNames;
-  private int[]    clusterIds;
+  private int[] clusterIds;
 
-  public OReloadResponse() {
-  }
+  public OReloadResponse() {}
 
   public OReloadResponse(String[] clusterNames, int[] clusterIds) {
     this.clusterNames = clusterNames;
@@ -48,8 +46,10 @@ public class OReloadResponse implements OBinaryResponse {
     clusterIds = clusters.second;
   }
 
-  public void write(OChannelDataOutput channel, int protocolVersion, ORecordSerializer serializer) throws IOException {
-    OMessageHelper.writeClustersArray(channel, new ORawPair<>(clusterNames, clusterIds), protocolVersion);
+  public void write(OChannelDataOutput channel, int protocolVersion, ORecordSerializer serializer)
+      throws IOException {
+    OMessageHelper.writeClustersArray(
+        channel, new ORawPair<>(clusterNames, clusterIds), protocolVersion);
   }
 
   public String[] getClusterNames() {

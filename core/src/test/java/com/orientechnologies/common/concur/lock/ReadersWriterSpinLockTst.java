@@ -1,15 +1,19 @@
 package com.orientechnologies.common.concur.lock;
 
-import org.junit.Assert;
-import org.junit.Ignore;
-import org.junit.Test;
+import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.*;
+import java.util.concurrent.Callable;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.atomic.AtomicLong;
-
-import static org.assertj.core.api.Assertions.assertThat;
+import org.junit.Assert;
+import org.junit.Ignore;
+import org.junit.Test;
 
 /**
  * @author Andrey Lomakin (a.lomakin-at-orientdb.com)
@@ -21,14 +25,14 @@ public class ReadersWriterSpinLockTst {
   private final AtomicLong readers = new AtomicLong();
   private final AtomicLong writers = new AtomicLong();
 
-  private final AtomicLong readersCounter   = new AtomicLong();
-  private final AtomicLong writersCounter   = new AtomicLong();
+  private final AtomicLong readersCounter = new AtomicLong();
+  private final AtomicLong writersCounter = new AtomicLong();
   private final AtomicLong readRetryCounter = new AtomicLong();
 
-  private final    OReadersWriterSpinLock spinLock        = new OReadersWriterSpinLock();
-  private final    ExecutorService        executorService = Executors.newCachedThreadPool();
-  private volatile boolean                stop            = false;
-  private volatile long                   c               = 47;
+  private final OReadersWriterSpinLock spinLock = new OReadersWriterSpinLock();
+  private final ExecutorService executorService = Executors.newCachedThreadPool();
+  private volatile boolean stop = false;
+  private volatile long c = 47;
 
   @Test
   @Ignore
@@ -36,19 +40,16 @@ public class ReadersWriterSpinLockTst {
     List<Future> futures = new ArrayList<Future>();
     int threads = 8;
 
-    for (int i = 0; i < threads; i++)
-      futures.add(executorService.submit(new Writer()));
+    for (int i = 0; i < threads; i++) futures.add(executorService.submit(new Writer()));
 
-    for (int i = 0; i < threads; i++)
-      futures.add(executorService.submit(new Reader()));
+    for (int i = 0; i < threads; i++) futures.add(executorService.submit(new Reader()));
 
     latch.countDown();
     Thread.sleep(60 * 60 * 1000);
 
     stop = true;
 
-    for (Future future : futures)
-      future.get();
+    for (Future future : futures) future.get();
 
     System.out.println("Writes : " + writers.get());
     System.out.println("Reads : " + readers.get());
@@ -60,19 +61,16 @@ public class ReadersWriterSpinLockTst {
     List<Future> futures = new ArrayList<Future>();
     int threads = 8;
 
-    for (int i = 0; i < threads; i++)
-      futures.add(executorService.submit(new Writer()));
+    for (int i = 0; i < threads; i++) futures.add(executorService.submit(new Writer()));
 
-    for (int i = 0; i < threads; i++)
-      futures.add(executorService.submit(new TryReader()));
+    for (int i = 0; i < threads; i++) futures.add(executorService.submit(new TryReader()));
 
     latch.countDown();
     Thread.sleep(60 * 60 * 1000);
 
     stop = true;
 
-    for (Future future : futures)
-      future.get();
+    for (Future future : futures) future.get();
 
     System.out.println("Writes : " + writers.get());
     System.out.println("Reads : " + readers.get());
@@ -141,8 +139,7 @@ public class ReadersWriterSpinLockTst {
             assertThat(System.nanoTime() - start).isGreaterThan(500);
             readRetryCounter.incrementAndGet();
 
-            if (stop)
-              return null;
+            if (stop) return null;
             start = System.nanoTime();
           }
           try {

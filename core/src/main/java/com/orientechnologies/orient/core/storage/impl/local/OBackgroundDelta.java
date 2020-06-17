@@ -3,23 +3,30 @@ package com.orientechnologies.orient.core.storage.impl.local;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
-
-import java.io.*;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.PipedInputStream;
+import java.io.PipedOutputStream;
 import java.util.SortedSet;
 import java.util.concurrent.CountDownLatch;
 
 public class OBackgroundDelta implements Runnable, OSyncSource {
   private OAbstractPaginatedStorage storage;
-  private PipedOutputStream         outputStream;
-  private InputStream               inputStream;
-  private OCommandOutputListener    outputListener;
-  private SortedSet<ORID>           sortedRids;
-  private OLogSequenceNumber        lsn;
-  private OLogSequenceNumber        endLsn;
-  private CountDownLatch            finished = new CountDownLatch(1);
+  private PipedOutputStream outputStream;
+  private InputStream inputStream;
+  private OCommandOutputListener outputListener;
+  private SortedSet<ORID> sortedRids;
+  private OLogSequenceNumber lsn;
+  private OLogSequenceNumber endLsn;
+  private CountDownLatch finished = new CountDownLatch(1);
 
-  public OBackgroundDelta(OAbstractPaginatedStorage storage, OCommandOutputListener outputListener, SortedSet<ORID> sortedRids,
-      OLogSequenceNumber lsn, OLogSequenceNumber endLsn) throws IOException {
+  public OBackgroundDelta(
+      OAbstractPaginatedStorage storage,
+      OCommandOutputListener outputListener,
+      SortedSet<ORID> sortedRids,
+      OLogSequenceNumber lsn,
+      OLogSequenceNumber endLsn)
+      throws IOException {
     this.storage = storage;
     this.outputListener = outputListener;
     this.sortedRids = sortedRids;
@@ -71,6 +78,6 @@ public class OBackgroundDelta implements Runnable, OSyncSource {
 
   @Override
   public void invalidate() {
-    //DO NOTHING IS INVALID BY DEFINITION
+    // DO NOTHING IS INVALID BY DEFINITION
   }
 }

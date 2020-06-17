@@ -7,10 +7,6 @@ import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
-import org.junit.Assert;
-import org.junit.Ignore;
-import org.junit.Test;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Callable;
@@ -18,16 +14,20 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicBoolean;
+import org.junit.Assert;
+import org.junit.Ignore;
+import org.junit.Test;
 
 public class OLiveIndexRebuildTest {
-  private final OPartitionedDatabasePool pool = new OPartitionedDatabasePool("memory:liveIndexRebuild", "admin", "admin");
+  private final OPartitionedDatabasePool pool =
+      new OPartitionedDatabasePool("memory:liveIndexRebuild", "admin", "admin");
 
-  private final String indexName    = "liveIndex";
-  private final String className    = "liveIndexClass";
+  private final String indexName = "liveIndex";
+  private final String className = "liveIndexClass";
   private final String propertyName = "liveIndexProperty";
 
-  private final String        databaseURL = "memory:liveIndexRebuild";
-  private final AtomicBoolean stop        = new AtomicBoolean();
+  private final String databaseURL = "memory:liveIndexRebuild";
+  private final AtomicBoolean stop = new AtomicBoolean();
 
   @Test
   @Ignore
@@ -67,15 +67,18 @@ public class OLiveIndexRebuildTest {
       Object result = future.get();
       if (result instanceof long[]) {
         long[] results = (long[]) result;
-        if (results[0] < minInterval)
-          minInterval = results[0];
+        if (results[0] < minInterval) minInterval = results[0];
 
-        if (results[1] > maxInterval)
-          maxInterval = results[1];
+        if (results[1] > maxInterval) maxInterval = results[1];
       }
     }
 
-    System.out.println("Min interval " + (minInterval / 1000000) + ", max interval " + (maxInterval / 1000000) + " ms");
+    System.out.println(
+        "Min interval "
+            + (minInterval / 1000000)
+            + ", max interval "
+            + (maxInterval / 1000000)
+            + " ms");
   }
 
   private final class Writer implements Callable<Void> {
@@ -98,14 +101,14 @@ public class OLiveIndexRebuildTest {
               database.close();
             }
 
-            if (stop.get())
-              break;
+            if (stop.get()) break;
           }
 
           Thread.sleep(5 * 60 * 1000);
         }
 
-        System.out.println("Average rebuild interval " + ((rebuildInterval / rebuildCount) / 1000000) + ", ms");
+        System.out.println(
+            "Average rebuild interval " + ((rebuildInterval / rebuildCount) / 1000000) + ", ms");
       } catch (Exception e) {
         e.printStackTrace();
         throw e;
@@ -127,18 +130,23 @@ public class OLiveIndexRebuildTest {
           try {
             long start = System.nanoTime();
 
-            final List<ODocument> result = database
-                .query(new OSQLSynchQuery<ODocument>("select from " + className + " where " + propertyName + " >= 100 and " +
-                    propertyName + "< 200"));
+            final List<ODocument> result =
+                database.query(
+                    new OSQLSynchQuery<ODocument>(
+                        "select from "
+                            + className
+                            + " where "
+                            + propertyName
+                            + " >= 100 and "
+                            + propertyName
+                            + "< 200"));
 
             long end = System.nanoTime();
             long interval = end - start;
 
-            if (interval > maxInterval)
-              maxInterval = interval;
+            if (interval > maxInterval) maxInterval = interval;
 
-            if (interval < minInterval)
-              minInterval = interval;
+            if (interval < minInterval) minInterval = interval;
 
             Assert.assertEquals(result.size(), 100);
           } finally {
@@ -151,7 +159,7 @@ public class OLiveIndexRebuildTest {
         throw e;
       }
 
-      return new long[] { minInterval, maxInterval };
+      return new long[] {minInterval, maxInterval};
     }
   }
 }

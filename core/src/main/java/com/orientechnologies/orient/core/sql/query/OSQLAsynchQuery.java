@@ -22,28 +22,25 @@ package com.orientechnologies.orient.core.sql.query;
 import com.orientechnologies.orient.core.command.OCommandRequestAsynch;
 import com.orientechnologies.orient.core.command.OCommandResultListener;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
-
 import java.util.List;
 import java.util.Map;
 
 /**
- * SQL asynchronous query. When executed the caller does not wait for the execution, rather the listener will be called for each
- * item found in the query. OSQLAsynchQuery has been built on top of this. NOTE: if you're working with remote databases don't
- * execute any remote call inside the callback function because the network channel is locked until the query command has finished.
- * 
+ * SQL asynchronous query. When executed the caller does not wait for the execution, rather the
+ * listener will be called for each item found in the query. OSQLAsynchQuery has been built on top
+ * of this. NOTE: if you're working with remote databases don't execute any remote call inside the
+ * callback function because the network channel is locked until the query command has finished.
+ *
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
- * 
  * @param <T>
  * @see OSQLSynchQuery
  */
-public class OSQLAsynchQuery<T extends Object> extends OSQLQuery<T> implements OCommandRequestAsynch {
+public class OSQLAsynchQuery<T extends Object> extends OSQLQuery<T>
+    implements OCommandRequestAsynch {
   private static final long serialVersionUID = 1L;
 
-  /**
-   * Empty constructor for unmarshalling.
-   */
-  public OSQLAsynchQuery() {
-  }
+  /** Empty constructor for unmarshalling. */
+  public OSQLAsynchQuery() {}
 
   public OSQLAsynchQuery(final String iText) {
     this(iText, null);
@@ -53,14 +50,19 @@ public class OSQLAsynchQuery<T extends Object> extends OSQLQuery<T> implements O
     this(iText, -1, iResultListener);
   }
 
-  public OSQLAsynchQuery(final String iText, final int iLimit, final String iFetchPlan, final Map<Object, Object> iArgs,
+  public OSQLAsynchQuery(
+      final String iText,
+      final int iLimit,
+      final String iFetchPlan,
+      final Map<Object, Object> iArgs,
       final OCommandResultListener iResultListener) {
     this(iText, iLimit, iResultListener);
     this.fetchPlan = iFetchPlan;
     this.parameters = iArgs;
   }
 
-  public OSQLAsynchQuery(final String iText, final int iLimit, final OCommandResultListener iResultListener) {
+  public OSQLAsynchQuery(
+      final String iText, final int iLimit, final OCommandResultListener iResultListener) {
     super(iText);
     limit = iLimit;
     resultListener = iResultListener;
@@ -74,9 +76,7 @@ public class OSQLAsynchQuery<T extends Object> extends OSQLQuery<T> implements O
     return super.run(iArgs);
   }
 
-  /**
-   * Sets default non idempotent to avoid custom query deadlocks database.
-   */
+  /** Sets default non idempotent to avoid custom query deadlocks database. */
   @Override
   public boolean isIdempotent() {
     return true;

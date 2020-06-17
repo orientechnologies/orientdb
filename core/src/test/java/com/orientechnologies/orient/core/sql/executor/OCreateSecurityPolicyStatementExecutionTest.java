@@ -1,16 +1,19 @@
 package com.orientechnologies.orient.core.sql.executor;
 
-import com.orientechnologies.orient.core.db.*;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.db.ODatabaseInternal;
+import com.orientechnologies.orient.core.db.ODatabaseSession;
+import com.orientechnologies.orient.core.db.ODatabaseType;
+import com.orientechnologies.orient.core.db.OrientDB;
+import com.orientechnologies.orient.core.db.OrientDBConfig;
 import com.orientechnologies.orient.core.metadata.security.OSecurityInternal;
-import org.junit.*;
+import org.junit.After;
+import org.junit.AfterClass;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.BeforeClass;
+import org.junit.Test;
 
-import java.util.List;
-
-/**
- * @author Luigi Dell'Aquila (l.dellaquila-(at)-orientdb.com)
- */
+/** @author Luigi Dell'Aquila (l.dellaquila-(at)-orientdb.com) */
 public class OCreateSecurityPolicyStatementExecutionTest {
   static OrientDB orient;
   private ODatabaseSession db;
@@ -38,7 +41,6 @@ public class OCreateSecurityPolicyStatementExecutionTest {
     this.db = null;
   }
 
-
   @Test
   public void testPlain() {
     OResultSet result = db.command("CREATE SECURITY POLICY foo");
@@ -46,6 +48,4 @@ public class OCreateSecurityPolicyStatementExecutionTest {
     OSecurityInternal security = ((ODatabaseInternal) db).getSharedContext().getSecurity();
     Assert.assertNotNull(security.getSecurityPolicy((ODatabaseSession) db, "foo"));
   }
-
-
 }

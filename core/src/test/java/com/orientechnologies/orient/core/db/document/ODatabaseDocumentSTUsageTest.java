@@ -1,11 +1,10 @@
 package com.orientechnologies.orient.core.db.document;
 
-import org.junit.Assert;
-import org.junit.Test;
-
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import org.junit.Assert;
+import org.junit.Test;
 
 public class ODatabaseDocumentSTUsageTest {
 
@@ -18,10 +17,12 @@ public class ODatabaseDocumentSTUsageTest {
     db.open("admin", "admin");
 
     ExecutorService singleThread = Executors.newSingleThreadExecutor();
-    Future<Object> future = singleThread.submit(() -> {
-      db.open("admin", "admin");
-      return null;
-    });
+    Future<Object> future =
+        singleThread.submit(
+            () -> {
+              db.open("admin", "admin");
+              return null;
+            });
 
     try {
       future.get();

@@ -22,7 +22,9 @@ package com.orientechnologies.orient.object.jpa;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.object.db.OObjectDatabaseTx;
-
+import java.util.Map;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javax.persistence.EntityManager;
 import javax.persistence.EntityManagerFactory;
 import javax.persistence.EntityTransaction;
@@ -33,19 +35,16 @@ import javax.persistence.TypedQuery;
 import javax.persistence.criteria.CriteriaBuilder;
 import javax.persistence.criteria.CriteriaQuery;
 import javax.persistence.metamodel.Metamodel;
-import java.util.Map;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 public class OJPAEntityManager implements EntityManager {
   /** the log used by this class. */
-  private static Logger              logger    = Logger.getLogger(OJPAPersistenceProvider.class.getName());
+  private static Logger logger = Logger.getLogger(OJPAPersistenceProvider.class.getName());
 
   private final EntityManagerFactory emFactory;
-  private final OObjectDatabaseTx    database;
-  private final EntityTransaction    transaction;
-  private final OJPAProperties       properties;
-  private FlushModeType              flushMode = FlushModeType.AUTO;
+  private final OObjectDatabaseTx database;
+  private final EntityTransaction transaction;
+  private final OJPAProperties properties;
+  private FlushModeType flushMode = FlushModeType.AUTO;
 
   OJPAEntityManager(EntityManagerFactory entityManagerFactory, OJPAProperties properties) {
     this.properties = properties;
@@ -59,7 +58,8 @@ public class OJPAEntityManager implements EntityManager {
     transaction = new OJPAEntityTransaction(database);
 
     if (logger.isLoggable(Level.INFO)) {
-      logger.info("EntityManager created for persistence unit : " + entityManagerFactory.toString());
+      logger.info(
+          "EntityManager created for persistence unit : " + entityManagerFactory.toString());
     }
   }
 
@@ -91,11 +91,13 @@ public class OJPAEntityManager implements EntityManager {
       // COMPOSE THE RID
       OClass cls = database.getMetadata().getSchema().getClass(entityClass);
       if (cls == null) {
-        throw new IllegalArgumentException("Class '" + entityClass + "' is not configured in the database");
+        throw new IllegalArgumentException(
+            "Class '" + entityClass + "' is not configured in the database");
       }
       rid = new ORecordId(cls.getDefaultClusterId(), ((Number) primaryKey).longValue());
     } else {
-      throw new IllegalArgumentException("PrimaryKey '" + primaryKey + "' type (" + primaryKey.getClass() + ") is not supported");
+      throw new IllegalArgumentException(
+          "PrimaryKey '" + primaryKey + "' type (" + primaryKey.getClass() + ") is not supported");
     }
 
     return (T) database.load(rid);
@@ -196,32 +198,33 @@ public class OJPAEntityManager implements EntityManager {
   }
 
   @Override
-  public <T> T find(Class<T> entityClass, Object primaryKey, LockModeType lockMode, Map<String, Object> properties) {
-    throw new UnsupportedOperationException("find(Class<T>, Object, LockModeType, Map<String, Object>)");
+  public <T> T find(
+      Class<T> entityClass,
+      Object primaryKey,
+      LockModeType lockMode,
+      Map<String, Object> properties) {
+    throw new UnsupportedOperationException(
+        "find(Class<T>, Object, LockModeType, Map<String, Object>)");
   }
 
   @Override
   public void lock(Object entity, LockModeType lockMode, Map<String, Object> properties) {
     throw new UnsupportedOperationException("lock");
-
   }
 
   @Override
   public void refresh(Object entity, Map<String, Object> properties) {
     throw new UnsupportedOperationException("refresh");
-
   }
 
   @Override
   public void refresh(Object entity, LockModeType lockMode) {
     throw new UnsupportedOperationException("refresh");
-
   }
 
   @Override
   public void refresh(Object entity, LockModeType lockMode, Map<String, Object> properties) {
     throw new UnsupportedOperationException("refresh");
-
   }
 
   @Override
@@ -304,7 +307,11 @@ public class OJPAEntityManager implements EntityManager {
 
   @Override
   public String toString() {
-    return "EntityManager for User@Database:" + database.getUser() + "@" + database.getURL() + ", " + super.toString();
+    return "EntityManager for User@Database:"
+        + database.getUser()
+        + "@"
+        + database.getURL()
+        + ", "
+        + super.toString();
   }
-
 }

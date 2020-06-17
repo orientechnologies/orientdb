@@ -7,12 +7,11 @@ import com.orientechnologies.orient.core.metadata.schema.OClass.INDEX_TYPE;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
+import java.util.List;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
-
-import java.util.List;
 
 public class TestOrderByIndexPropDesc {
 
@@ -56,14 +55,18 @@ public class TestOrderByIndexPropDesc {
       db.save(doc);
     }
 
-    List<ODocument> result = db
-        .query(new OSQLSynchQuery<ODocument>("select from " + DOCUMENT_CLASS_NAME + " order by " + PROP_INDEXED_STRING + " desc"));
+    List<ODocument> result =
+        db.query(
+            new OSQLSynchQuery<ODocument>(
+                "select from "
+                    + DOCUMENT_CLASS_NAME
+                    + " order by "
+                    + PROP_INDEXED_STRING
+                    + " desc"));
     for (ODocument d : result) {
-      //System.out.println(d.<Integer>field(PROP_INDEXED_STRING));
+      // System.out.println(d.<Integer>field(PROP_INDEXED_STRING));
     }
 
     Assert.assertEquals(count, result.size());
-
   }
-
 }

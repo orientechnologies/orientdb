@@ -1,5 +1,7 @@
 package com.orientechnologies.orient.core.sql.executor;
 
+import static com.orientechnologies.orient.core.sql.executor.ExecutionPlanPrintUtils.printExecutionPlan;
+
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
@@ -10,24 +12,23 @@ import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import static com.orientechnologies.orient.core.sql.executor.ExecutionPlanPrintUtils.printExecutionPlan;
-
-/**
- * @author Luigi Dell'Aquila (l.dellaquila-(at)-orientdb.com)
- */
+/** @author Luigi Dell'Aquila (l.dellaquila-(at)-orientdb.com) */
 public class OAlterPropertyStatementExecutionTest {
   static ODatabaseDocument db;
 
-  @BeforeClass public static void beforeClass() {
+  @BeforeClass
+  public static void beforeClass() {
     db = new ODatabaseDocumentTx("memory:OAlterPropertyStatementExecutionTest");
     db.create();
   }
 
-  @AfterClass public static void afterClass() {
+  @AfterClass
+  public static void afterClass() {
     db.close();
   }
 
-  @Test public void testSetProperty() {
+  @Test
+  public void testSetProperty() {
     String className = "testSetProperty";
     OClass clazz = db.getMetadata().getSchema().createClass(className);
     OProperty prop = clazz.createProperty("name", OType.STRING);
@@ -47,7 +48,8 @@ public class OAlterPropertyStatementExecutionTest {
     result.close();
   }
 
-  @Test public void testSetCustom() {
+  @Test
+  public void testSetCustom() {
     String className = "testSetCustom";
     OClass clazz = db.getMetadata().getSchema().createClass(className);
     OProperty prop = clazz.createProperty("name", OType.STRING);
@@ -66,6 +68,4 @@ public class OAlterPropertyStatementExecutionTest {
     Assert.assertEquals(currentValue, next.getProperty("newValue"));
     result.close();
   }
-
-
 }

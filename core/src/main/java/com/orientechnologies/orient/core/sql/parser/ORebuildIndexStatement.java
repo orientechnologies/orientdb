@@ -9,12 +9,11 @@ import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.sql.executor.OInternalResultSet;
 import com.orientechnologies.orient.core.sql.executor.OResultInternal;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
-
 import java.util.Map;
 
 public class ORebuildIndexStatement extends OSimpleExecStatement {
 
-  protected boolean    all = false;
+  protected boolean all = false;
   protected OIndexName name;
 
   public ORebuildIndexStatement(int id) {
@@ -34,28 +33,27 @@ public class ORebuildIndexStatement extends OSimpleExecStatement {
     if (all) {
       long totalIndexed = 0;
       for (OIndex idx : database.getMetadata().getIndexManagerInternal().getIndexes(database)) {
-        if (idx.isAutomatic())
-          totalIndexed += idx.rebuild();
+        if (idx.isAutomatic()) totalIndexed += idx.rebuild();
       }
 
       result.setProperty("totalIndexed", totalIndexed);
     } else {
-      final OIndex idx = database.getMetadata().getIndexManagerInternal().getIndex(database, name.getValue());
-      if (idx == null)
-        throw new OCommandExecutionException("Index '" + name + "' not found");
+      final OIndex idx =
+          database.getMetadata().getIndexManagerInternal().getIndex(database, name.getValue());
+      if (idx == null) throw new OCommandExecutionException("Index '" + name + "' not found");
 
       if (!idx.isAutomatic())
         throw new OCommandExecutionException(
-            "Cannot rebuild index '" + name + "' because it's manual and there aren't indications of what to index");
+            "Cannot rebuild index '"
+                + name
+                + "' because it's manual and there aren't indications of what to index");
 
       long val = idx.rebuild();
       result.setProperty("totalIndexed", val);
-
     }
     OInternalResultSet rs = new OInternalResultSet();
     rs.add(result);
     return rs;
-
   }
 
   @Override
@@ -78,17 +76,13 @@ public class ORebuildIndexStatement extends OSimpleExecStatement {
 
   @Override
   public boolean equals(Object o) {
-    if (this == o)
-      return true;
-    if (o == null || getClass() != o.getClass())
-      return false;
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
 
     ORebuildIndexStatement that = (ORebuildIndexStatement) o;
 
-    if (all != that.all)
-      return false;
-    if (name != null ? !name.equals(that.name) : that.name != null)
-      return false;
+    if (all != that.all) return false;
+    if (name != null ? !name.equals(that.name) : that.name != null) return false;
 
     return true;
   }

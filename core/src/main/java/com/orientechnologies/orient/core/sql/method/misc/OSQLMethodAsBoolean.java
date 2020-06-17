@@ -32,7 +32,12 @@ public class OSQLMethodAsBoolean extends OAbstractSQLMethod {
   }
 
   @Override
-  public Object execute(Object iThis, OIdentifiable iCurrentRecord, OCommandContext iContext, Object ioResult, Object[] iParams) {
+  public Object execute(
+      Object iThis,
+      OIdentifiable iCurrentRecord,
+      OCommandContext iContext,
+      Object ioResult,
+      Object[] iParams) {
     if (ioResult != null) {
       if (ioResult instanceof String) {
         ioResult = Boolean.valueOf(((String) ioResult).trim());

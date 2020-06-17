@@ -19,18 +19,20 @@
  */
 package com.orientechnologies.orient.core.db.record;
 
-import java.io.Serializable;
-import java.util.*;
-
-import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
 import com.orientechnologies.orient.core.record.impl.OSimpleMultiValueTracker;
+import java.io.Serializable;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.ListIterator;
+import java.util.Map;
 
 /**
- * Implementation of LinkedHashMap bound to a source ORecord object to keep track of changes. This avoid to call the makeDirty() by
- * hand when the map is changed.
+ * Implementation of LinkedHashMap bound to a source ORecord object to keep track of changes. This
+ * avoid to call the makeDirty() by hand when the map is changed.
  *
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
  */
@@ -38,18 +40,18 @@ import com.orientechnologies.orient.core.record.impl.OSimpleMultiValueTracker;
 public class OTrackedMap<T> extends LinkedHashMap<Object, T>
     implements ORecordElement, OTrackedMultiValue<Object, T>, Serializable {
   protected final ORecordElement sourceRecord;
-  protected       Class<?>       genericClass;
-  private final   boolean        embeddedCollection;
-  private         boolean        dirty            = false;
-  private         boolean        transactionDirty = false;
+  protected Class<?> genericClass;
+  private final boolean embeddedCollection;
+  private boolean dirty = false;
+  private boolean transactionDirty = false;
 
   private OSimpleMultiValueTracker<Object, T> tracker = new OSimpleMultiValueTracker<>(this);
 
-  public OTrackedMap(final ORecordElement iRecord, final Map<Object, T> iOrigin, final Class<?> cls) {
+  public OTrackedMap(
+      final ORecordElement iRecord, final Map<Object, T> iOrigin, final Class<?> cls) {
     this(iRecord);
     genericClass = cls;
-    if (iOrigin != null && !iOrigin.isEmpty())
-      putAll(iOrigin);
+    if (iOrigin != null && !iOrigin.isEmpty()) putAll(iOrigin);
   }
 
   public OTrackedMap(final ORecordElement iSourceRecord) {
@@ -63,17 +65,14 @@ public class OTrackedMap<T> extends LinkedHashMap<Object, T>
   }
 
   public T putInternal(final Object key, final T value) {
-    if (key == null)
-      throw new IllegalArgumentException("null key not supported by embedded map");
+    if (key == null) throw new IllegalArgumentException("null key not supported by embedded map");
     boolean containsKey = containsKey(key);
 
     T oldValue = super.put(key, value);
 
-    if (containsKey && oldValue == value)
-      return oldValue;
+    if (containsKey && oldValue == value) return oldValue;
 
-    if (oldValue instanceof ODocument)
-      ODocumentInternal.removeOwner((ODocument) oldValue, this);
+    if (oldValue instanceof ODocument) ODocumentInternal.removeOwner((ODocument) oldValue, this);
 
     addOwnerToEmbeddedDoc(value);
 
@@ -82,14 +81,12 @@ public class OTrackedMap<T> extends LinkedHashMap<Object, T>
 
   @Override
   public T put(final Object key, final T value) {
-    if (key == null)
-      throw new IllegalArgumentException("null key not supported by embedded map");
+    if (key == null) throw new IllegalArgumentException("null key not supported by embedded map");
     boolean containsKey = containsKey(key);
 
     T oldValue = super.put(key, value);
 
-    if (containsKey && oldValue == value)
-      return oldValue;
+    if (containsKey && oldValue == value) return oldValue;
     if (containsKey) {
       updateEvent(key, oldValue, value);
     } else {
@@ -101,8 +98,7 @@ public class OTrackedMap<T> extends LinkedHashMap<Object, T>
   private void addOwnerToEmbeddedDoc(T e) {
     if (embeddedCollection && e instanceof ODocument && !((ODocument) e).getIdentity().isValid())
       ODocumentInternal.addOwner((ODocument) e, this);
-    if (e instanceof ODocument)
-      ORecordInternal.track(sourceRecord, (ODocument) e);
+    if (e instanceof ODocument) ORecordInternal.track(sourceRecord, (ODocument) e);
   }
 
   @Override
@@ -141,7 +137,7 @@ public class OTrackedMap<T> extends LinkedHashMap<Object, T>
     }
   }
 
-  @SuppressWarnings({ "unchecked" })
+  @SuppressWarnings({"unchecked"})
   public OTrackedMap<T> setDirty() {
     if (sourceRecord != null) {
       sourceRecord.setDirty();
@@ -153,30 +149,30 @@ public class OTrackedMap<T> extends LinkedHashMap<Object, T>
 
   @Override
   public void setDirtyNoChanged() {
-    if (sourceRecord != null)
-      sourceRecord.setDirtyNoChanged();
+    if (sourceRecord != null) sourceRecord.setDirtyNoChanged();
   }
 
-  public Map<Object, T> returnOriginalState(final List<OMultiValueChangeEvent<Object, T>> multiValueChangeEvents) {
+  public Map<Object, T> returnOriginalState(
+      final List<OMultiValueChangeEvent<Object, T>> multiValueChangeEvents) {
     final Map<Object, T> reverted = new HashMap<Object, T>(this);
 
-    final ListIterator<OMultiValueChangeEvent<Object, T>> listIterator = multiValueChangeEvents
-        .listIterator(multiValueChangeEvents.size());
+    final ListIterator<OMultiValueChangeEvent<Object, T>> listIterator =
+        multiValueChangeEvents.listIterator(multiValueChangeEvents.size());
 
     while (listIterator.hasPrevious()) {
       final OMultiValueChangeEvent<Object, T> event = listIterator.previous();
       switch (event.getChangeType()) {
-      case ADD:
-        reverted.remove(event.getKey());
-        break;
-      case REMOVE:
-        reverted.put(event.getKey(), event.getOldValue());
-        break;
-      case UPDATE:
-        reverted.put(event.getKey(), event.getOldValue());
-        break;
-      default:
-        throw new IllegalArgumentException("Invalid change type : " + event.getChangeType());
+        case ADD:
+          reverted.remove(event.getKey());
+          break;
+        case REMOVE:
+          reverted.put(event.getKey(), event.getOldValue());
+          break;
+        case UPDATE:
+          reverted.put(event.getKey(), event.getOldValue());
+          break;
+        default:
+          throw new IllegalArgumentException("Invalid change type : " + event.getChangeType());
       }
     }
 
@@ -207,8 +203,7 @@ public class OTrackedMap<T> extends LinkedHashMap<Object, T>
   }
 
   private void updateEvent(Object key, T oldValue, T newValue) {
-    if (oldValue instanceof ODocument)
-      ODocumentInternal.removeOwner((ODocument) oldValue, this);
+    if (oldValue instanceof ODocument) ODocumentInternal.removeOwner((ODocument) oldValue, this);
 
     addOwnerToEmbeddedDoc(newValue);
 

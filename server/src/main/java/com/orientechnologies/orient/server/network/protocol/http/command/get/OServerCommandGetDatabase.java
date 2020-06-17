@@ -43,18 +43,24 @@ import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpRequest;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpResponse;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpUtils;
-
 import java.io.IOException;
 import java.io.StringWriter;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 public class OServerCommandGetDatabase extends OServerCommandGetConnect {
-  private static final String[] NAMES = { "GET|database/*" };
+  private static final String[] NAMES = {"GET|database/*"};
 
-  public static void exportClass(final ODatabaseDocument db, final OJSONWriter json, final OClass cls) throws IOException {
+  public static void exportClass(
+      final ODatabaseDocument db, final OJSONWriter json, final OClass cls) throws IOException {
     json.beginObject();
     json.writeAttribute("name", cls.getName());
-    json.writeAttribute("superClass", cls.getSuperClass() != null ? cls.getSuperClass().getName() : "");
+    json.writeAttribute(
+        "superClass", cls.getSuperClass() != null ? cls.getSuperClass().getName() : "");
 
     json.beginCollection("superClasses");
     int i = 0;
@@ -101,7 +107,8 @@ public class OServerCommandGetDatabase extends OServerCommandGetConnect {
         json.writeAttribute("min", prop.getMin());
         json.writeAttribute("max", prop.getMax());
         json.writeAttribute("regexp", prop.getRegexp());
-        json.writeAttribute("collate", prop.getCollate() != null ? prop.getCollate().getName() : "default");
+        json.writeAttribute(
+            "collate", prop.getCollate() != null ? prop.getCollate().getName() : "default");
         json.writeAttribute("defaultValue", prop.getDefaultValue());
 
         if (prop instanceof OPropertyImpl) {
@@ -156,14 +163,14 @@ public class OServerCommandGetDatabase extends OServerCommandGetConnect {
     return NAMES;
   }
 
-  protected void exec(final OHttpRequest iRequest, final OHttpResponse iResponse, final String[] urlParts)
+  protected void exec(
+      final OHttpRequest iRequest, final OHttpResponse iResponse, final String[] urlParts)
       throws InterruptedException, IOException {
     ODatabaseDocumentInternal db = null;
     try {
       if (urlParts.length > 2) {
         db = server.openDatabase(urlParts[1], urlParts[2], urlParts[3]);
-      } else
-        db = getProfiledDatabaseInstance(iRequest);
+      } else db = getProfiledDatabaseInstance(iRequest);
 
       final StringWriter buffer = new StringWriter();
       final OJSONWriter json = new OJSONWriter(buffer);
@@ -181,7 +188,8 @@ public class OServerCommandGetDatabase extends OServerCommandGetConnect {
 
       json.beginCollection("conflictStrategies");
 
-      Set<String> strategies = Orient.instance().getRecordConflictStrategy().getRegisteredImplementationNames();
+      Set<String> strategies =
+          Orient.instance().getRecordConflictStrategy().getRegisteredImplementationNames();
 
       int i = 0;
       for (String strategy : strategies) {
@@ -191,7 +199,8 @@ public class OServerCommandGetDatabase extends OServerCommandGetConnect {
       json.endCollection();
 
       json.beginCollection("clusterSelectionStrategies");
-      Set<String> clusterSelectionStrategies = db.getMetadata().getSchema().getClusterSelectionFactory().getRegisteredNames();
+      Set<String> clusterSelectionStrategies =
+          db.getMetadata().getSchema().getClusterSelectionFactory().getRegisteredNames();
       int j = 0;
       for (String strategy : clusterSelectionStrategies) {
         json.write((j > 0 ? "," : "") + "\"" + strategy + "\"");
@@ -201,12 +210,12 @@ public class OServerCommandGetDatabase extends OServerCommandGetConnect {
 
       json.endObject();
 
-      if (((OMetadataInternal) db.getMetadata()).getImmutableSchemaSnapshot().getClasses() != null) {
+      if (((OMetadataInternal) db.getMetadata()).getImmutableSchemaSnapshot().getClasses()
+          != null) {
         json.beginCollection("classes");
         List<String> classNames = new ArrayList<String>();
 
-        for (OClass cls : db.getMetadata().getSchema().getClasses())
-          classNames.add(cls.getName());
+        for (OClass cls : db.getMetadata().getSchema().getClasses()) classNames.add(cls.getName());
         Collections.sort(classNames);
 
         for (String className : classNames) {
@@ -273,21 +282,59 @@ public class OServerCommandGetDatabase extends OServerCommandGetConnect {
       json.beginObject("config");
 
       json.beginCollection("values");
-      json.writeObjects(null, new Object[] { "name", "dateFormat", "value", db.getStorage().getConfiguration().getDateFormat() },
-          new Object[] { "name", "dateTimeFormat", "value", db.getStorage().getConfiguration().getDateTimeFormat() },
-          new Object[] { "name", "localeCountry", "value", db.getStorage().getConfiguration().getLocaleCountry() },
-          new Object[] { "name", "localeLanguage", "value", db.getStorage().getConfiguration().getLocaleLanguage() },
-          new Object[] { "name", "charSet", "value", db.getStorage().getConfiguration().getCharset() },
-          new Object[] { "name", "timezone", "value", db.getStorage().getConfiguration().getTimeZone().getID() },
-          new Object[] { "name", "definitionVersion", "value", db.getStorage().getConfiguration().getVersion() },
-          new Object[] { "name", "clusterSelection", "value", db.getStorage().getConfiguration().getClusterSelection() },
-          new Object[] { "name", "minimumClusters", "value", db.getStorage().getConfiguration().getMinimumClusters() },
-          new Object[] { "name", "conflictStrategy", "value", db.getStorage().getConfiguration().getConflictStrategy() });
+      json.writeObjects(
+          null,
+          new Object[] {
+            "name", "dateFormat", "value", db.getStorage().getConfiguration().getDateFormat()
+          },
+          new Object[] {
+            "name",
+            "dateTimeFormat",
+            "value",
+            db.getStorage().getConfiguration().getDateTimeFormat()
+          },
+          new Object[] {
+            "name", "localeCountry", "value", db.getStorage().getConfiguration().getLocaleCountry()
+          },
+          new Object[] {
+            "name",
+            "localeLanguage",
+            "value",
+            db.getStorage().getConfiguration().getLocaleLanguage()
+          },
+          new Object[] {
+            "name", "charSet", "value", db.getStorage().getConfiguration().getCharset()
+          },
+          new Object[] {
+            "name", "timezone", "value", db.getStorage().getConfiguration().getTimeZone().getID()
+          },
+          new Object[] {
+            "name", "definitionVersion", "value", db.getStorage().getConfiguration().getVersion()
+          },
+          new Object[] {
+            "name",
+            "clusterSelection",
+            "value",
+            db.getStorage().getConfiguration().getClusterSelection()
+          },
+          new Object[] {
+            "name",
+            "minimumClusters",
+            "value",
+            db.getStorage().getConfiguration().getMinimumClusters()
+          },
+          new Object[] {
+            "name",
+            "conflictStrategy",
+            "value",
+            db.getStorage().getConfiguration().getConflictStrategy()
+          });
       json.endCollection();
 
       json.beginCollection("properties");
       if (db.getStorage().getConfiguration().getProperties() != null)
-        for (OStorageEntryConfiguration entry : db.getStorage().getConfiguration().getProperties()) {
+        for (OStorageEntryConfiguration entry :
+            db.getStorage().getConfiguration().getProperties()) {
           if (entry != null) {
             json.beginObject();
             json.writeAttribute("name", entry.name);
@@ -301,10 +348,14 @@ public class OServerCommandGetDatabase extends OServerCommandGetConnect {
       json.endObject();
       json.flush();
 
-      iResponse.send(OHttpUtils.STATUS_OK_CODE, OHttpUtils.STATUS_OK_DESCRIPTION, OHttpUtils.CONTENT_JSON, buffer.toString(), null);
+      iResponse.send(
+          OHttpUtils.STATUS_OK_CODE,
+          OHttpUtils.STATUS_OK_DESCRIPTION,
+          OHttpUtils.CONTENT_JSON,
+          buffer.toString(),
+          null);
     } finally {
-      if (db != null)
-        db.close();
+      if (db != null) db.close();
     }
   }
 
@@ -314,7 +365,8 @@ public class OServerCommandGetDatabase extends OServerCommandGetConnect {
       OUser user = new OUser(doc);
       json.beginObject();
       json.writeAttribute("name", user.getName());
-      json.writeAttribute("roles", user.getRoles() != null ? Arrays.toString(user.getRoles().toArray()) : "null");
+      json.writeAttribute(
+          "roles", user.getRoles() != null ? Arrays.toString(user.getRoles().toArray()) : "null");
       json.endObject();
     }
     json.endCollection();

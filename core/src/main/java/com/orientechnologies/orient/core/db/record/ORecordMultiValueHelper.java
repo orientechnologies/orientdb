@@ -24,35 +24,34 @@ import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.record.ORecord;
 
 /**
- * Lazy implementation of ArrayList. It's bound to a source ORecord object to keep track of changes. This avoid to call the
- * makeDirty() by hand when the list is changed.
+ * Lazy implementation of ArrayList. It's bound to a source ORecord object to keep track of changes.
+ * This avoid to call the makeDirty() by hand when the list is changed.
  *
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
  */
 public class ORecordMultiValueHelper {
   public enum MULTIVALUE_CONTENT_TYPE {
-    EMPTY, ALL_RECORDS, ALL_RIDS, HYBRID
+    EMPTY,
+    ALL_RECORDS,
+    ALL_RIDS,
+    HYBRID
   }
 
-  public static MULTIVALUE_CONTENT_TYPE updateContentType(final MULTIVALUE_CONTENT_TYPE iPreviousStatus, final Object iValue) {
+  public static MULTIVALUE_CONTENT_TYPE updateContentType(
+      final MULTIVALUE_CONTENT_TYPE iPreviousStatus, final Object iValue) {
     if (iPreviousStatus == MULTIVALUE_CONTENT_TYPE.HYBRID) {
       // DO NOTHING
 
     } else if (iPreviousStatus == MULTIVALUE_CONTENT_TYPE.EMPTY) {
-      if (iValue instanceof ORID)
-        return MULTIVALUE_CONTENT_TYPE.ALL_RIDS;
-      else if (iValue instanceof ORecord)
-        return MULTIVALUE_CONTENT_TYPE.ALL_RECORDS;
-      else
-        return MULTIVALUE_CONTENT_TYPE.HYBRID;
+      if (iValue instanceof ORID) return MULTIVALUE_CONTENT_TYPE.ALL_RIDS;
+      else if (iValue instanceof ORecord) return MULTIVALUE_CONTENT_TYPE.ALL_RECORDS;
+      else return MULTIVALUE_CONTENT_TYPE.HYBRID;
 
     } else if (iPreviousStatus == MULTIVALUE_CONTENT_TYPE.ALL_RECORDS) {
-      if (iValue instanceof ORID)
-        return MULTIVALUE_CONTENT_TYPE.HYBRID;
+      if (iValue instanceof ORID) return MULTIVALUE_CONTENT_TYPE.HYBRID;
 
     } else if (iPreviousStatus == MULTIVALUE_CONTENT_TYPE.ALL_RIDS) {
-      if (!(iValue instanceof ORID))
-        return MULTIVALUE_CONTENT_TYPE.HYBRID;
+      if (!(iValue instanceof ORID)) return MULTIVALUE_CONTENT_TYPE.HYBRID;
     }
     return iPreviousStatus;
   }

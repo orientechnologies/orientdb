@@ -20,7 +20,6 @@ import com.orientechnologies.common.io.OIOUtils;
 import com.orientechnologies.common.util.OPatternConst;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
-
 import java.text.Normalizer;
 
 /**
@@ -36,7 +35,12 @@ public class OSQLMethodNormalize extends OAbstractSQLMethod {
   }
 
   @Override
-  public Object execute(Object iThis, OIdentifiable iCurrentRecord, OCommandContext iContext, Object ioResult, Object[] iParams) {
+  public Object execute(
+      Object iThis,
+      OIdentifiable iCurrentRecord,
+      OCommandContext iContext,
+      Object ioResult,
+      Object[] iParams) {
 
     if (ioResult != null) {
       final Normalizer.Form form;

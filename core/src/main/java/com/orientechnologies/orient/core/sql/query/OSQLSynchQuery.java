@@ -25,7 +25,6 @@ import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.serialization.OMemoryStream;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializer;
-
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -33,16 +32,16 @@ import java.util.Map;
 
 /**
  * SQL synchronous query. When executed the caller wait for the result.
- * 
+ *
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
- * 
  * @param <T>
  * @see OSQLAsynchQuery
  */
-@SuppressWarnings({ "unchecked", "serial" })
-public class OSQLSynchQuery<T extends Object> extends OSQLAsynchQuery<T> implements OCommandResultListener, Iterable<T> {
+@SuppressWarnings({"unchecked", "serial"})
+public class OSQLSynchQuery<T extends Object> extends OSQLAsynchQuery<T>
+    implements OCommandResultListener, Iterable<T> {
   private final OLegacyResultSet<T> result = new OConcurrentLegacyResultSet<T>();
-  private ORID                nextPageRID;
+  private ORID nextPageRID;
   private Map<Object, Object> previousQueryParams = new HashMap<Object, Object>();
 
   public OSQLSynchQuery() {
@@ -65,8 +64,7 @@ public class OSQLSynchQuery<T extends Object> extends OSQLAsynchQuery<T> impleme
   }
 
   public boolean result(final Object iRecord) {
-    if (iRecord != null)
-      result.add((T) iRecord);
+    if (iRecord != null) result.add((T) iRecord);
     return true;
   }
 
@@ -113,9 +111,7 @@ public class OSQLSynchQuery<T extends Object> extends OSQLAsynchQuery<T> impleme
     return result;
   }
 
-  /**
-   * @return RID of the record that will be processed first during pagination mode.
-   */
+  /** @return RID of the record that will be processed first during pagination mode. */
   public ORID getNextPageRID() {
     return nextPageRID;
   }
@@ -151,29 +147,22 @@ public class OSQLSynchQuery<T extends Object> extends OSQLAsynchQuery<T> impleme
     super.queryFromStream(buffer, serializer);
 
     final String rid = buffer.getAsString();
-    if ("".equals(rid))
-      nextPageRID = null;
-    else
-      nextPageRID = new ORecordId(rid);
+    if ("".equals(rid)) nextPageRID = null;
+    else nextPageRID = new ORecordId(rid);
 
     final byte[] serializedPrevParams = buffer.getAsByteArray();
     previousQueryParams = deserializeQueryParameters(serializedPrevParams, serializer);
-
   }
 
   private void resetNextRIDIfParametersWereChanged(final Map<Object, Object> queryParams) {
-    if (!queryParams.equals(previousQueryParams))
-      nextPageRID = null;
+    if (!queryParams.equals(previousQueryParams)) nextPageRID = null;
   }
 
   private Map<Object, Object> fetchQueryParams(final Object... iArgs) {
-    if (iArgs != null && iArgs.length > 0)
-      return convertToParameters(iArgs);
+    if (iArgs != null && iArgs.length > 0) return convertToParameters(iArgs);
 
     Map<Object, Object> queryParams = getParameters();
-    if (queryParams == null)
-      queryParams = new HashMap<Object, Object>();
+    if (queryParams == null) queryParams = new HashMap<Object, Object>();
     return queryParams;
   }
-
 }

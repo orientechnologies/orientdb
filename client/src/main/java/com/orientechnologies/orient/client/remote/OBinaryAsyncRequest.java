@@ -5,5 +5,4 @@ public interface OBinaryAsyncRequest<T extends OBinaryResponse> extends OBinaryR
   void setMode(byte mode);
 
   byte getMode();
-
 }

@@ -24,15 +24,16 @@ import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.exception.OSerializationException;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.OSerializableStream;
-
 import java.util.Base64;
 
 public class OStringSerializerAnyStreamable implements OStringSerializer {
-  public static final OStringSerializerAnyStreamable INSTANCE = new OStringSerializerAnyStreamable();
-  public static final String                         NAME     = "st";
+  public static final OStringSerializerAnyStreamable INSTANCE =
+      new OStringSerializerAnyStreamable();
+  public static final String NAME = "st";
 
   /**
-   * Re-Create any object if the class has a public constructor that accepts a String as unique parameter.
+   * Re-Create any object if the class has a public constructor that accepts a String as unique
+   * parameter.
    */
   public Object fromStream(final String iStream) {
     if (iStream == null || iStream.length() == 0)
@@ -64,13 +65,14 @@ public class OStringSerializerAnyStreamable implements OStringSerializer {
 
   /**
    * Serialize the class name size + class name + object content
-   * 
+   *
    * @param iValue
    */
   public StringBuilder toStream(final StringBuilder iOutput, Object iValue) {
     if (iValue != null) {
       if (!(iValue instanceof OSerializableStream))
-        throw new OSerializationException("Cannot serialize the object since it's not implements the OSerializableStream interface");
+        throw new OSerializationException(
+            "Cannot serialize the object since it's not implements the OSerializableStream interface");
 
       OSerializableStream stream = (OSerializableStream) iValue;
       iOutput.append(iValue.getClass().getName());

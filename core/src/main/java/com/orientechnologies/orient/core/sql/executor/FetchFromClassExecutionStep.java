@@ -5,28 +5,35 @@ import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
-
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 
-/**
- * Created by luigidellaquila on 08/07/16.
- */
+/** Created by luigidellaquila on 08/07/16. */
 public class FetchFromClassExecutionStep extends AbstractExecutionStep {
 
-  protected String               className;
-  protected boolean              orderByRidAsc  = false;
-  protected boolean              orderByRidDesc = false;
-  protected List<OExecutionStep> subSteps       = new ArrayList<>();
+  protected String className;
+  protected boolean orderByRidAsc = false;
+  protected boolean orderByRidDesc = false;
+  protected List<OExecutionStep> subSteps = new ArrayList<>();
 
   private OResultSet currentResultSet;
-  private int        currentStep = 0;
+  private int currentStep = 0;
 
   protected FetchFromClassExecutionStep(OCommandContext ctx, boolean profilingEnabled) {
     super(ctx, profilingEnabled);
   }
 
-  public FetchFromClassExecutionStep(String className, Set<String> clusters, OCommandContext ctx, Boolean ridOrder,
+  public FetchFromClassExecutionStep(
+      String className,
+      Set<String> clusters,
+      OCommandContext ctx,
+      Boolean ridOrder,
       boolean profilingEnabled) {
     this(className, clusters, null, ctx, ridOrder, profilingEnabled);
   }
@@ -35,12 +42,17 @@ public class FetchFromClassExecutionStep extends AbstractExecutionStep {
    * iterates over a class and its subclasses
    *
    * @param className the class name
-   * @param clusters  if present (it can be null), filter by only these clusters
-   * @param ctx       the query context
-   * @param ridOrder  true to sort by RID asc, false to sort by RID desc, null for no sort.
+   * @param clusters if present (it can be null), filter by only these clusters
+   * @param ctx the query context
+   * @param ridOrder true to sort by RID asc, false to sort by RID desc, null for no sort.
    */
-  public FetchFromClassExecutionStep(String className, Set<String> clusters, QueryPlanningInfo planningInfo, OCommandContext ctx,
-      Boolean ridOrder, boolean profilingEnabled) {
+  public FetchFromClassExecutionStep(
+      String className,
+      Set<String> clusters,
+      QueryPlanningInfo planningInfo,
+      OCommandContext ctx,
+      Boolean ridOrder,
+      boolean profilingEnabled) {
     super(ctx, profilingEnabled);
 
     this.className = className;
@@ -63,13 +75,14 @@ public class FetchFromClassExecutionStep extends AbstractExecutionStep {
     for (int i = 0; i < filteredClassClusters.size(); i++) {
       clusterIds[i] = filteredClassClusters.get(i);
     }
-    clusterIds[clusterIds.length - 1] = -1;//temporary cluster, data in tx
+    clusterIds[clusterIds.length - 1] = -1; // temporary cluster, data in tx
 
     sortClusers(clusterIds);
     for (int i = 0; i < clusterIds.length; i++) {
       int clusterId = clusterIds[i];
       if (clusterId > 0) {
-        FetchFromClusterExecutionStep step = new FetchFromClusterExecutionStep(clusterId, planningInfo, ctx, profilingEnabled);
+        FetchFromClusterExecutionStep step =
+            new FetchFromClusterExecutionStep(clusterId, planningInfo, ctx, profilingEnabled);
         if (orderByRidAsc) {
           step.setOrder(FetchFromClusterExecutionStep.ORDER_ASC);
         } else if (orderByRidDesc) {
@@ -77,8 +90,9 @@ public class FetchFromClassExecutionStep extends AbstractExecutionStep {
         }
         getSubSteps().add(step);
       } else {
-        //current tx
-        FetchTemporaryFromTxStep step = new FetchTemporaryFromTxStep(ctx, className, profilingEnabled);
+        // current tx
+        FetchTemporaryFromTxStep step =
+            new FetchTemporaryFromTxStep(ctx, className, profilingEnabled);
         if (orderByRidAsc) {
           step.setOrder(FetchFromClusterExecutionStep.ORDER_ASC);
         } else if (orderByRidDesc) {
@@ -102,7 +116,7 @@ public class FetchFromClassExecutionStep extends AbstractExecutionStep {
       Arrays.sort(clusterIds);
     } else if (orderByRidDesc) {
       Arrays.sort(clusterIds);
-      //revert order
+      // revert order
       for (int i = 0; i < clusterIds.length / 2; i++) {
         int old = clusterIds[i];
         clusterIds[i] = clusterIds[clusterIds.length - 1 - i];
@@ -130,9 +144,12 @@ public class FetchFromClassExecutionStep extends AbstractExecutionStep {
             if (currentStep >= getSubSteps().size()) {
               return false;
             }
-            currentResultSet = ((AbstractExecutionStep) getSubSteps().get(currentStep)).syncPull(ctx, nRecords);
+            currentResultSet =
+                ((AbstractExecutionStep) getSubSteps().get(currentStep)).syncPull(ctx, nRecords);
             if (!currentResultSet.hasNext()) {
-              currentResultSet = ((AbstractExecutionStep) getSubSteps().get(currentStep++)).syncPull(ctx, nRecords);
+              currentResultSet =
+                  ((AbstractExecutionStep) getSubSteps().get(currentStep++))
+                      .syncPull(ctx, nRecords);
             }
           }
         }
@@ -153,9 +170,12 @@ public class FetchFromClassExecutionStep extends AbstractExecutionStep {
             if (currentStep >= getSubSteps().size()) {
               throw new IllegalStateException();
             }
-            currentResultSet = ((AbstractExecutionStep) getSubSteps().get(currentStep)).syncPull(ctx, nRecords);
+            currentResultSet =
+                ((AbstractExecutionStep) getSubSteps().get(currentStep)).syncPull(ctx, nRecords);
             if (!currentResultSet.hasNext()) {
-              currentResultSet = ((AbstractExecutionStep) getSubSteps().get(currentStep++)).syncPull(ctx, nRecords);
+              currentResultSet =
+                  ((AbstractExecutionStep) getSubSteps().get(currentStep++))
+                      .syncPull(ctx, nRecords);
             }
           }
         }
@@ -178,7 +198,6 @@ public class FetchFromClassExecutionStep extends AbstractExecutionStep {
         return new HashMap<>();
       }
     };
-
   }
 
   @Override
@@ -259,8 +278,10 @@ public class FetchFromClassExecutionStep extends AbstractExecutionStep {
     result.className = this.className;
     result.orderByRidAsc = this.orderByRidAsc;
     result.orderByRidDesc = this.orderByRidDesc;
-    result.subSteps = this.subSteps.stream().map(x -> ((OExecutionStepInternal) x).copy(ctx)).collect(Collectors.toList());
+    result.subSteps =
+        this.subSteps.stream()
+            .map(x -> ((OExecutionStepInternal) x).copy(ctx))
+            .collect(Collectors.toList());
     return result;
   }
 }
-

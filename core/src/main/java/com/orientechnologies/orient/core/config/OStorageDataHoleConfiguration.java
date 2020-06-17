@@ -22,13 +22,13 @@ package com.orientechnologies.orient.core.config;
 public class OStorageDataHoleConfiguration extends OStorageFileConfiguration {
   private static final long serialVersionUID = 1L;
 
-  private static final String DEF_EXTENSION      = ".odh";
+  private static final String DEF_EXTENSION = ".odh";
   private static final String DEF_INCREMENT_SIZE = "50%";
 
-  public OStorageDataHoleConfiguration() {
-  }
+  public OStorageDataHoleConfiguration() {}
 
-  public OStorageDataHoleConfiguration(OStorageSegmentConfiguration iParent, String iPath, String iType, String iMaxSize) {
+  public OStorageDataHoleConfiguration(
+      OStorageSegmentConfiguration iParent, String iPath, String iType, String iMaxSize) {
     super(iParent, iPath + DEF_EXTENSION, iType, iMaxSize, DEF_INCREMENT_SIZE);
   }
 }

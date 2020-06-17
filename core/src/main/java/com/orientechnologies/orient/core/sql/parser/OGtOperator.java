@@ -19,15 +19,16 @@ public class OGtOperator extends SimpleNode implements OBinaryCompareOperator {
     if (iLeft == null || iRight == null) {
       return false;
     }
-    if (iLeft.getClass() != iRight.getClass() && iLeft instanceof Number && iRight instanceof Number) {
+    if (iLeft.getClass() != iRight.getClass()
+        && iLeft instanceof Number
+        && iRight instanceof Number) {
       Number[] couple = OType.castComparableNumber((Number) iLeft, (Number) iRight);
       iLeft = couple[0];
       iRight = couple[1];
     } else {
       iRight = OType.convert(iRight, iLeft.getClass());
     }
-    if (iRight == null)
-      return false;
+    if (iRight == null) return false;
     if (iLeft instanceof OIdentifiable && !(iRight instanceof OIdentifiable)) {
       return false;
     }

@@ -24,13 +24,16 @@ import com.orientechnologies.orient.core.conflict.ORecordConflictStrategy;
 import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
 import com.orientechnologies.orient.core.storage.impl.local.OClusterBrowsePage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperation;
-
 import java.io.IOException;
 
 public interface OCluster {
 
   enum ATTRIBUTES {
-    NAME, CONFLICTSTRATEGY, STATUS, @Deprecated ENCRYPTION
+    NAME,
+    CONFLICTSTRATEGY,
+    STATUS,
+    @Deprecated
+    ENCRYPTION
   }
 
   void configure(int iId, String iClusterName) throws IOException;
@@ -60,39 +63,50 @@ public interface OCluster {
   /**
    * Allocates a physical position pointer on the storage for generate an id without a content.
    *
-   * @param recordType      the type of record of which allocate the position.
+   * @param recordType the type of record of which allocate the position.
    * @param atomicOperation
-   *
    * @return the allocated position.
    */
-  OPhysicalPosition allocatePosition(byte recordType, OAtomicOperation atomicOperation) throws IOException;
+  OPhysicalPosition allocatePosition(byte recordType, OAtomicOperation atomicOperation)
+      throws IOException;
 
   /**
    * Creates a new record in the cluster.
    *
-   * @param content           the content of the record.
-   * @param recordVersion     the current version
-   * @param recordType        the type of the record
-   * @param allocatedPosition the eventual allocated position or null if there is no allocated position.
+   * @param content the content of the record.
+   * @param recordVersion the current version
+   * @param recordType the type of the record
+   * @param allocatedPosition the eventual allocated position or null if there is no allocated
+   *     position.
    * @param atomicOperation
-   *
    * @return the position where the record si created.
    */
-  OPhysicalPosition createRecord(byte[] content, int recordVersion, byte recordType, OPhysicalPosition allocatedPosition,
+  OPhysicalPosition createRecord(
+      byte[] content,
+      int recordVersion,
+      byte recordType,
+      OPhysicalPosition allocatedPosition,
       OAtomicOperation atomicOperation);
 
   boolean deleteRecord(OAtomicOperation atomicOperation, long clusterPosition);
 
-  void updateRecord(long clusterPosition, byte[] content, int recordVersion, byte recordType, OAtomicOperation atomicOperation);
+  void updateRecord(
+      long clusterPosition,
+      byte[] content,
+      int recordVersion,
+      byte recordType,
+      OAtomicOperation atomicOperation);
 
   ORawBuffer readRecord(long clusterPosition, boolean prefetchRecords) throws IOException;
 
-  ORawBuffer readRecordIfVersionIsNotLatest(long clusterPosition, int recordVersion) throws IOException, ORecordNotFoundException;
+  ORawBuffer readRecordIfVersionIsNotLatest(long clusterPosition, int recordVersion)
+      throws IOException, ORecordNotFoundException;
 
   boolean exists();
 
   /**
-   * Fills and return the PhysicalPosition object received as parameter with the physical position of logical record iPosition
+   * Fills and return the PhysicalPosition object received as parameter with the physical position
+   * of logical record iPosition
    */
   OPhysicalPosition getPhysicalPosition(OPhysicalPosition iPPosition) throws IOException;
 
@@ -117,9 +131,7 @@ public interface OCluster {
 
   String getName();
 
-  /**
-   * Returns the size of the records contained in the cluster in bytes.
-   */
+  /** Returns the size of the records contained in the cluster in bytes. */
   long getRecordsSize() throws IOException;
 
   String compression();
@@ -137,7 +149,8 @@ public interface OCluster {
   ORecordConflictStrategy getRecordConflictStrategy();
 
   /**
-   * Acquires exclusive lock in the active atomic operation running on the current thread for this cluster.
+   * Acquires exclusive lock in the active atomic operation running on the current thread for this
+   * cluster.
    */
   void acquireAtomicExclusiveLock();
 

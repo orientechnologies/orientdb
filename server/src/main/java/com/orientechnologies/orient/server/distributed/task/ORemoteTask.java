@@ -22,8 +22,11 @@ package com.orientechnologies.orient.server.distributed.task;
 import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.server.OServer;
-import com.orientechnologies.orient.server.distributed.*;
-
+import com.orientechnologies.orient.server.distributed.ODistributedDatabase;
+import com.orientechnologies.orient.server.distributed.ODistributedRequest;
+import com.orientechnologies.orient.server.distributed.ODistributedRequestId;
+import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
+import com.orientechnologies.orient.server.distributed.ORemoteTaskFactory;
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
@@ -36,20 +39,23 @@ import java.io.IOException;
 public interface ORemoteTask {
   boolean hasResponse();
 
-  default void received(ODistributedRequest request, ODistributedDatabase distributedDatabase) {
-
-  }
+  default void received(ODistributedRequest request, ODistributedDatabase distributedDatabase) {}
 
   enum RESULT_STRATEGY {
-    ANY, UNION
+    ANY,
+    UNION
   }
 
   String getName();
 
   OCommandDistributedReplicateRequest.QUORUM_TYPE getQuorumType();
 
-  Object execute(ODistributedRequestId requestId, OServer iServer, ODistributedServerManager iManager,
-      ODatabaseDocumentInternal database) throws Exception;
+  Object execute(
+      ODistributedRequestId requestId,
+      OServer iServer,
+      ODistributedServerManager iManager,
+      ODatabaseDocumentInternal database)
+      throws Exception;
 
   int[] getPartitionKey();
 
@@ -73,16 +79,12 @@ public interface ORemoteTask {
 
   int getFactoryId();
 
-  /**
-   * Checks the request is still valid.
-   */
+  /** Checks the request is still valid. */
   void checkIsValid(ODistributedServerManager dManager);
 
   void toStream(DataOutput out) throws IOException;
 
   void fromStream(DataInput in, ORemoteTaskFactory factory) throws IOException;
 
-  default void finished() {
-
-  }
+  default void finished() {}
 }

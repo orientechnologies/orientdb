@@ -1,6 +1,9 @@
 package com.orientechnologies.lucene.sandbox;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import java.io.IOException;
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.standard.StandardAnalyzer;
 import org.apache.lucene.document.Document;
@@ -19,13 +22,7 @@ import org.apache.lucene.store.RAMDirectory;
 import org.junit.After;
 import org.junit.Test;
 
-import java.io.IOException;
-
-import static org.assertj.core.api.Assertions.assertThat;
-
-/**
- * Created by frank on 9/28/15.
- */
+/** Created by frank on 9/28/15. */
 public class VertexIndexTest {
 
   @Test
@@ -67,7 +64,6 @@ public class VertexIndexTest {
       final Document found = searcher.doc(topDocs.scoreDocs[i].doc);
 
       assertThat(found.get("name")).startsWith("Max");
-
     }
 
     reader.close();
@@ -75,13 +71,10 @@ public class VertexIndexTest {
   }
 
   @Test
-  public void name() throws Exception {
-
-  }
+  public void name() throws Exception {}
 
   @After
   public void deInit() {
     ODatabaseDocumentTx.closeAll();
   }
-
 }

@@ -1,25 +1,28 @@
 package com.orientechnologies.orient.server.metadata;
 
-import com.orientechnologies.common.io.OFileUtils;
-import com.orientechnologies.orient.core.Orient;
-import com.orientechnologies.orient.core.db.*;
-import com.orientechnologies.orient.server.OServer;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
-
-import java.io.File;
-import java.util.Locale;
-
 import static junit.framework.TestCase.assertTrue;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 
+import com.orientechnologies.common.io.OFileUtils;
+import com.orientechnologies.orient.core.Orient;
+import com.orientechnologies.orient.core.db.ODatabase;
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
+import com.orientechnologies.orient.core.db.ODatabaseType;
+import com.orientechnologies.orient.core.db.OrientDB;
+import com.orientechnologies.orient.core.db.OrientDBConfig;
+import com.orientechnologies.orient.server.OServer;
+import java.io.File;
+import java.util.Locale;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Test;
+
 public class RemoteMetadataReloadTest {
-  private static final String                    SERVER_DIRECTORY = "./target/metadata-reload";
-  private              OServer                   server;
-  private              OrientDB                  orientDB;
-  private              ODatabaseDocumentInternal database;
+  private static final String SERVER_DIRECTORY = "./target/metadata-reload";
+  private OServer server;
+  private OrientDB orientDB;
+  private ODatabaseDocumentInternal database;
 
   @Before
   public void before() throws Exception {
@@ -30,8 +33,9 @@ public class RemoteMetadataReloadTest {
 
     orientDB = new OrientDB("remote:localhost", "root", "root", OrientDBConfig.defaultConfig());
     orientDB.create(MetadataPushTest.class.getSimpleName(), ODatabaseType.MEMORY);
-    database = (ODatabaseDocumentInternal) orientDB.open(MetadataPushTest.class.getSimpleName(), "admin", "admin");
-
+    database =
+        (ODatabaseDocumentInternal)
+            orientDB.open(MetadataPushTest.class.getSimpleName(), "admin", "admin");
   }
 
   @After

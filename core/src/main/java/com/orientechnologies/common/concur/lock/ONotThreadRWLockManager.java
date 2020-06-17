@@ -1,7 +1,6 @@
 package com.orientechnologies.common.concur.lock;
 
 import com.orientechnologies.common.exception.OException;
-
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
@@ -12,9 +11,9 @@ import java.util.concurrent.locks.ReentrantLock;
 public class ONotThreadRWLockManager<T> implements OSimpleRWLockManager<T> {
 
   private static class LockGuard {
-    private volatile int       count;
-    private final    Condition condition;
-    private final    boolean   shared;
+    private volatile int count;
+    private final Condition condition;
+    private final boolean shared;
 
     public LockGuard(int count, Condition condition, boolean shared) {
       this.count = count;
@@ -23,11 +22,10 @@ public class ONotThreadRWLockManager<T> implements OSimpleRWLockManager<T> {
     }
   }
 
-  private final Lock              lock = new ReentrantLock();
-  private final Map<T, LockGuard> map  = new ConcurrentHashMap<>();
+  private final Lock lock = new ReentrantLock();
+  private final Map<T, LockGuard> map = new ConcurrentHashMap<>();
 
-  public ONotThreadRWLockManager() {
-  }
+  public ONotThreadRWLockManager() {}
 
   public void lock(T key, boolean shared, long timeout) {
 
@@ -47,7 +45,8 @@ public class ONotThreadRWLockManager<T> implements OSimpleRWLockManager<T> {
                 c.condition.await();
               } else {
                 if (!c.condition.await(timeout, TimeUnit.MILLISECONDS)) {
-                  throw new OLockException(String.format("Time out acquire lock for resource: '%s' ", key));
+                  throw new OLockException(
+                      String.format("Time out acquire lock for resource: '%s' ", key));
                 }
               }
             }
@@ -61,7 +60,6 @@ public class ONotThreadRWLockManager<T> implements OSimpleRWLockManager<T> {
     } finally {
       lock.unlock();
     }
-
   }
 
   public void unlock(T key, boolean shared) {
@@ -101,5 +99,4 @@ public class ONotThreadRWLockManager<T> implements OSimpleRWLockManager<T> {
   public void releaseWriteLock(T key) {
     unlock(key, false);
   }
-
 }

@@ -4,29 +4,29 @@ import com.orientechnologies.orient.core.config.OStorageEntryConfiguration;
 import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import java.util.List;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import java.util.List;
-
-/**
- * @author Luigi Dell'Aquila (l.dellaquila-(at)-orientdb.com)
- */
+/** @author Luigi Dell'Aquila (l.dellaquila-(at)-orientdb.com) */
 public class OAlterDatabaseStatementExecutionTest {
   static ODatabaseDocument db;
 
-  @BeforeClass public static void beforeClass() {
+  @BeforeClass
+  public static void beforeClass() {
     db = new ODatabaseDocumentTx("memory:OAlterDatabaseStatementExecutionTest");
     db.create();
   }
 
-  @AfterClass public static void afterClass() {
+  @AfterClass
+  public static void afterClass() {
     db.close();
   }
 
-  @Test public void testSetProperty() {
+  @Test
+  public void testSetProperty() {
     Object previousValue = db.get(ODatabase.ATTRIBUTES.MINIMUMCLUSTERS);
 
     OResultSet result = db.command("alter database MINIMUMCLUSTERS 12");
@@ -43,8 +43,10 @@ public class OAlterDatabaseStatementExecutionTest {
     result.close();
   }
 
-  @Test public void testSetCustom() {
-    List<OStorageEntryConfiguration> previousCustoms = (List<OStorageEntryConfiguration>) db.get(ODatabase.ATTRIBUTES.CUSTOM);
+  @Test
+  public void testSetCustom() {
+    List<OStorageEntryConfiguration> previousCustoms =
+        (List<OStorageEntryConfiguration>) db.get(ODatabase.ATTRIBUTES.CUSTOM);
     Object prev = null;
     for (OStorageEntryConfiguration entry : previousCustoms) {
       if (entry.name.equals("foo")) {
@@ -61,7 +63,6 @@ public class OAlterDatabaseStatementExecutionTest {
       }
     }
 
-
     Assert.assertNotNull(result);
     Assert.assertTrue(result.hasNext());
     OResult next = result.next();
@@ -72,6 +73,4 @@ public class OAlterDatabaseStatementExecutionTest {
     Assert.assertFalse(result.hasNext());
     result.close();
   }
-
-
 }

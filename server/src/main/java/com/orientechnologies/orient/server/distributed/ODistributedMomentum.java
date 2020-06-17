@@ -23,8 +23,11 @@ import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.OStreamable;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
-
-import java.io.*;
+import java.io.DataInput;
+import java.io.DataOutput;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -36,7 +39,7 @@ import java.util.List;
  */
 public class ODistributedMomentum implements OStreamable {
   private static final String LAST_OPERATION_TIME_STAMP = "lastOperationTimeStamp";
-  private static final String VERSION                   = "version";
+  private static final String VERSION = "version";
   private final ODocument configuration;
 
   public ODistributedMomentum() {
@@ -50,10 +53,10 @@ public class ODistributedMomentum implements OStreamable {
   public OLogSequenceNumber getLSN(final String iNode) {
     synchronized (configuration) {
       final ODocument embedded = configuration.field(iNode);
-      if (embedded == null)
-        return null;
+      if (embedded == null) return null;
 
-      return new OLogSequenceNumber((Long) embedded.field("segment"), (Long) embedded.field("position"));
+      return new OLogSequenceNumber(
+          (Long) embedded.field("segment"), (Long) embedded.field("position"));
     }
   }
 
@@ -71,8 +74,7 @@ public class ODistributedMomentum implements OStreamable {
   public long getLastOperationTimestamp() {
     synchronized (configuration) {
       final Long ts = configuration.field("lastOperationTimeStamp");
-      if (ts == null)
-        return -1;
+      if (ts == null) return -1;
 
       return ts;
     }
@@ -106,8 +108,7 @@ public class ODistributedMomentum implements OStreamable {
   private void incrementVersion() {
     // INCREMENT VERSION
     Integer oldVersion = configuration.field("version");
-    if (oldVersion == null)
-      oldVersion = 0;
+    if (oldVersion == null) oldVersion = 0;
     configuration.field(VERSION, oldVersion.intValue() + 1);
   }
 
@@ -147,8 +148,7 @@ public class ODistributedMomentum implements OStreamable {
     final List<String> result = new ArrayList<String>();
     synchronized (configuration) {
       for (String s : configuration.fieldNames()) {
-        if (!LAST_OPERATION_TIME_STAMP.equals(s) && !VERSION.equals(s))
-          result.add(s);
+        if (!LAST_OPERATION_TIME_STAMP.equals(s) && !VERSION.equals(s)) result.add(s);
       }
     }
     return result;

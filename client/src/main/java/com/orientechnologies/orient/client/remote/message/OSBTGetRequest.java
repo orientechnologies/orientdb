@@ -29,20 +29,18 @@ import com.orientechnologies.orient.core.storage.ridbag.sbtree.OBonsaiCollection
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelDataInput;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelDataOutput;
-
 import java.io.IOException;
 
 public class OSBTGetRequest implements OBinaryRequest<OSBTGetResponse> {
   private OBonsaiCollectionPointer collectionPointer;
-  private byte[]                   keyStream;
+  private byte[] keyStream;
 
   public OSBTGetRequest(OBonsaiCollectionPointer collectionPointer, byte[] keyStream) {
     this.collectionPointer = collectionPointer;
     this.keyStream = keyStream;
   }
 
-  public OSBTGetRequest() {
-  }
+  public OSBTGetRequest() {}
 
   @Override
   public void write(OChannelDataOutput network, OStorageRemoteSession session) throws IOException {
@@ -50,7 +48,8 @@ public class OSBTGetRequest implements OBinaryRequest<OSBTGetResponse> {
     network.writeBytes(keyStream);
   }
 
-  public void read(OChannelDataInput channel, int protocolVersion, ORecordSerializer serializer) throws IOException {
+  public void read(OChannelDataInput channel, int protocolVersion, ORecordSerializer serializer)
+      throws IOException {
     this.collectionPointer = OCollectionNetworkSerializer.INSTANCE.readCollectionPointer(channel);
     this.keyStream = channel.readBytes();
   }
@@ -82,5 +81,4 @@ public class OSBTGetRequest implements OBinaryRequest<OSBTGetResponse> {
   public OBinaryResponse execute(OBinaryRequestExecutor executor) {
     return executor.executeSBTGet(this);
   }
-
 }

@@ -1,33 +1,31 @@
 /*
-  *
-  *  *  Copyright 2010-2016 OrientDB LTD (http://orientdb.com)
-  *  *
-  *  *  Licensed under the Apache License, Version 2.0 (the "License");
-  *  *  you may not use this file except in compliance with the License.
-  *  *  You may obtain a copy of the License at
-  *  *
-  *  *       http://www.apache.org/licenses/LICENSE-2.0
-  *  *
-  *  *  Unless required by applicable law or agreed to in writing, software
-  *  *  distributed under the License is distributed on an "AS IS" BASIS,
-  *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-  *  *  See the License for the specific language governing permissions and
-  *  *  limitations under the License.
-  *  *
-  *  * For more information: http://orientdb.com
-  *
-  */
+ *
+ *  *  Copyright 2010-2016 OrientDB LTD (http://orientdb.com)
+ *  *
+ *  *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  *  you may not use this file except in compliance with the License.
+ *  *  You may obtain a copy of the License at
+ *  *
+ *  *       http://www.apache.org/licenses/LICENSE-2.0
+ *  *
+ *  *  Unless required by applicable law or agreed to in writing, software
+ *  *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  *  See the License for the specific language governing permissions and
+ *  *  limitations under the License.
+ *  *
+ *  * For more information: http://orientdb.com
+ *
+ */
 package com.orientechnologies.orient.core.command.script.formatter;
 
 import com.orientechnologies.orient.core.metadata.function.OFunction;
-
 import java.util.Scanner;
 
 /**
  * Ruby script formatter
- * 
+ *
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
- * 
  */
 public class ORubyScriptFormatter implements OScriptFormatter {
   public String getFunctionDefinition(final OFunction f) {
@@ -39,8 +37,7 @@ public class ORubyScriptFormatter implements OScriptFormatter {
     int i = 0;
     if (f.getParameters() != null)
       for (String p : f.getParameters()) {
-        if (i++ > 0)
-          fCode.append(',');
+        if (i++ > 0) fCode.append(',');
         fCode.append(p);
       }
     fCode.append(")\n");
@@ -70,8 +67,7 @@ public class ORubyScriptFormatter implements OScriptFormatter {
     if (iArgs != null) {
       int i = 0;
       for (Object a : iArgs) {
-        if (i++ > 0)
-          code.append(',');
+        if (i++ > 0) code.append(',');
         code.append(a);
       }
     }

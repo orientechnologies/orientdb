@@ -11,22 +11,22 @@ import com.orientechnologies.orient.core.record.OElement;
 import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import com.orientechnologies.orient.server.OServer;
+import java.io.IOException;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
-import java.io.IOException;
-
 public class ORemoteSecurityTests {
 
-  private static String           DB_NAME = ORemoteSecurityTests.class.getSimpleName();
-  private        OrientDB         orient;
-  private        OServer          server;
-  private        ODatabaseSession db;
+  private static String DB_NAME = ORemoteSecurityTests.class.getSimpleName();
+  private OrientDB orient;
+  private OServer server;
+  private ODatabaseSession db;
 
   @Before
-  public void before() throws ClassNotFoundException, InstantiationException, IllegalAccessException, IOException {
+  public void before()
+      throws ClassNotFoundException, InstantiationException, IllegalAccessException, IOException {
     server = OServer.startFromClasspathConfig("abstract-orientdb-server-config.xml");
     orient = new OrientDB("remote:localhost", "root", "root", OrientDBConfig.defaultConfig());
     orient.create(DB_NAME, ODatabaseType.MEMORY);
@@ -97,7 +97,6 @@ public class ORemoteSecurityTests {
         Assert.assertFalse(rs.hasNext());
       }
     }
-
   }
 
   @Test
@@ -119,7 +118,6 @@ public class ORemoteSecurityTests {
         Assert.assertFalse(rs.hasNext());
       }
     }
-
   }
 
   @Test
@@ -146,7 +144,6 @@ public class ORemoteSecurityTests {
         Assert.assertFalse(rs.hasNext());
       }
     }
-
   }
 
   @Test
@@ -167,7 +164,6 @@ public class ORemoteSecurityTests {
       elem = elem.reload(null, true, true);
       Assert.assertEquals("foo", elem.getProperty("name"));
     }
-
   }
 
   @Test
@@ -188,7 +184,6 @@ public class ORemoteSecurityTests {
       elem = elem.reload(null, true, true);
       Assert.assertEquals("foo", elem.getProperty("name"));
     }
-
   }
 
   @Test
@@ -210,7 +205,6 @@ public class ORemoteSecurityTests {
       elem = elem.reload(null, true, true);
       Assert.assertEquals("foo", elem.getProperty("name"));
     }
-
   }
 
   @Test
@@ -231,7 +225,6 @@ public class ORemoteSecurityTests {
       elem = elem.reload(null, true, true);
       Assert.assertEquals("foo", elem.getProperty("name"));
     }
-
   }
 
   @Test
@@ -255,7 +248,6 @@ public class ORemoteSecurityTests {
       filteredSession.save(elem);
       filteredSession.delete(elem);
     }
-
   }
 
   @Test
@@ -324,11 +316,13 @@ public class ORemoteSecurityTests {
 
     db.close();
     try (ODatabaseSession filteredSession = orient.open(DB_NAME, "reader", "reader")) {
-      try (OResultSet rs = filteredSession.query("select count(*) as count from Person where name = 'bar'")) {
+      try (OResultSet rs =
+          filteredSession.query("select count(*) as count from Person where name = 'bar'")) {
         Assert.assertEquals(0L, (long) rs.next().getProperty("count"));
       }
 
-      try (OResultSet rs = filteredSession.query("select count(*) as count from Person where name = 'foo'")) {
+      try (OResultSet rs =
+          filteredSession.query("select count(*) as count from Person where name = 'foo'")) {
         Assert.assertEquals(1L, (long) rs.next().getProperty("count"));
       }
     }
@@ -349,11 +343,13 @@ public class ORemoteSecurityTests {
     db.save(elem);
 
     try (ODatabaseSession filteredSession = orient.open(DB_NAME, "reader", "reader")) {
-      try (final OResultSet resultSet = filteredSession.query("SELECT from Person where name = ?", "bar")) {
+      try (final OResultSet resultSet =
+          filteredSession.query("SELECT from Person where name = ?", "bar")) {
         Assert.assertEquals(0, resultSet.stream().count());
       }
 
-      try (final OResultSet resultSet = filteredSession.query("SELECT from Person where name = ?", "foo")) {
+      try (final OResultSet resultSet =
+          filteredSession.query("SELECT from Person where name = ?", "foo")) {
         Assert.assertEquals(1, resultSet.stream().count());
       }
     }
@@ -374,11 +370,13 @@ public class ORemoteSecurityTests {
     db.save(elem);
 
     try (ODatabaseSession filteredSession = orient.open(DB_NAME, "reader", "reader")) {
-      try (final OResultSet resultSet = filteredSession.query("SELECT from Person where name = ?", "bar")) {
+      try (final OResultSet resultSet =
+          filteredSession.query("SELECT from Person where name = ?", "bar")) {
         Assert.assertEquals(0, resultSet.stream().count());
       }
 
-      try (final OResultSet resultSet = filteredSession.query("SELECT from Person where name = ?", "foo")) {
+      try (final OResultSet resultSet =
+          filteredSession.query("SELECT from Person where name = ?", "foo")) {
         Assert.assertEquals(1, resultSet.stream().count());
       }
     }
@@ -402,7 +400,6 @@ public class ORemoteSecurityTests {
       OResult item = resultSet.next();
       Assert.assertNull(item.getProperty("name"));
     }
-
   }
 
   @Test
@@ -429,7 +426,6 @@ public class ORemoteSecurityTests {
       } catch (Exception e) {
 
       }
-
     }
   }
 }

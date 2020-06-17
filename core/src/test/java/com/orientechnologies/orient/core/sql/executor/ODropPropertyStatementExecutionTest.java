@@ -11,22 +11,23 @@ import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-/**
- * @author Luigi Dell'Aquila (l.dellaquila-(at)-orientdb.com)
- */
+/** @author Luigi Dell'Aquila (l.dellaquila-(at)-orientdb.com) */
 public class ODropPropertyStatementExecutionTest {
   static ODatabaseDocument db;
 
-  @BeforeClass public static void beforeClass() {
+  @BeforeClass
+  public static void beforeClass() {
     db = new ODatabaseDocumentTx("memory:ODropPropertyStatementExecutionTest");
     db.create();
   }
 
-  @AfterClass public static void afterClass() {
+  @AfterClass
+  public static void afterClass() {
     db.close();
   }
 
-  @Test public void testPlain() {
+  @Test
+  public void testPlain() {
     String className = "testPlain";
     String propertyName = "foo";
     OSchema schema = db.getMetadata().getSchema();
@@ -45,11 +46,15 @@ public class ODropPropertyStatementExecutionTest {
     Assert.assertNull(schema.getClass(className).getProperty(propertyName));
   }
 
-  @Test public void testDropIndexForce() {
+  @Test
+  public void testDropIndexForce() {
     String className = "testDropIndexForce";
     String propertyName = "foo";
     OSchema schema = db.getMetadata().getSchema();
-    schema.createClass(className).createProperty(propertyName, OType.STRING).createIndex(OClass.INDEX_TYPE.NOTUNIQUE);
+    schema
+        .createClass(className)
+        .createProperty(propertyName, OType.STRING)
+        .createIndex(OClass.INDEX_TYPE.NOTUNIQUE);
 
     schema.reload();
     Assert.assertNotNull(schema.getClass(className).getProperty(propertyName));
@@ -67,12 +72,16 @@ public class ODropPropertyStatementExecutionTest {
     Assert.assertNull(schema.getClass(className).getProperty(propertyName));
   }
 
-  @Test public void testDropIndex() {
+  @Test
+  public void testDropIndex() {
 
     String className = "testDropIndex";
     String propertyName = "foo";
     OSchema schema = db.getMetadata().getSchema();
-    schema.createClass(className).createProperty(propertyName, OType.STRING).createIndex(OClass.INDEX_TYPE.NOTUNIQUE);
+    schema
+        .createClass(className)
+        .createProperty(propertyName, OType.STRING)
+        .createIndex(OClass.INDEX_TYPE.NOTUNIQUE);
 
     schema.reload();
     Assert.assertNotNull(schema.getClass(className).getProperty(propertyName));

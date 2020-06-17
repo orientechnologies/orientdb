@@ -9,7 +9,6 @@ import com.orientechnologies.orient.core.sql.OCommandSQLParsingException;
 import com.orientechnologies.orient.core.sql.executor.OInternalExecutionPlan;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import com.orientechnologies.orient.core.sql.executor.OTraverseExecutionPlanner;
-
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -19,7 +18,8 @@ import java.util.stream.Collectors;
 public class OTraverseStatement extends OStatement {
 
   public enum Strategy {
-    DEPTH_FIRST, BREADTH_FIRST
+    DEPTH_FIRST,
+    BREADTH_FIRST
   }
 
   protected List<OTraverseProjectionItem> projections = new ArrayList<OTraverseProjectionItem>();
@@ -45,21 +45,23 @@ public class OTraverseStatement extends OStatement {
   }
 
   public void validate() throws OCommandSQLParsingException {
-//    for(OTraverseProjectionItem projection:projections) {
-//
-//        projection. validate();
-//        if (projection.isExpand() && groupBy != null) {
-//          throw new OCommandSQLParsingException("expand() cannot be used together with GROUP BY");
-//        }
-//
-//    }
+    //    for(OTraverseProjectionItem projection:projections) {
+    //
+    //        projection. validate();
+    //        if (projection.isExpand() && groupBy != null) {
+    //          throw new OCommandSQLParsingException("expand() cannot be used together with GROUP
+    // BY");
+    //        }
+    //
+    //    }
     if (target.getItem().getStatement() != null) {
       target.getItem().getStatement().validate();
     }
   }
 
   @Override
-  public OResultSet execute(ODatabase db, Object[] args, OCommandContext parentCtx, boolean usePlanCache) {
+  public OResultSet execute(
+      ODatabase db, Object[] args, OCommandContext parentCtx, boolean usePlanCache) {
     OBasicCommandContext ctx = new OBasicCommandContext();
     if (parentCtx != null) {
       ctx.setParentWithoutOverridingChild(parentCtx);
@@ -83,7 +85,8 @@ public class OTraverseStatement extends OStatement {
   }
 
   @Override
-  public OResultSet execute(ODatabase db, Map params, OCommandContext parentCtx, boolean usePlanCache) {
+  public OResultSet execute(
+      ODatabase db, Map params, OCommandContext parentCtx, boolean usePlanCache) {
     OBasicCommandContext ctx = new OBasicCommandContext();
     if (parentCtx != null) {
       ctx.setParentWithoutOverridingChild(parentCtx);
@@ -141,15 +144,14 @@ public class OTraverseStatement extends OStatement {
     if (strategy != null) {
       builder.append(" strategy ");
       switch (strategy) {
-      case BREADTH_FIRST:
-        builder.append("breadth_first");
-        break;
-      case DEPTH_FIRST:
-        builder.append("depth_first");
-        break;
+        case BREADTH_FIRST:
+          builder.append("breadth_first");
+          break;
+        case DEPTH_FIRST:
+          builder.append("depth_first");
+          break;
       }
     }
-
   }
 
   public boolean refersToParent() {
@@ -168,7 +170,10 @@ public class OTraverseStatement extends OStatement {
   @Override
   public OStatement copy() {
     OTraverseStatement result = new OTraverseStatement(-1);
-    result.projections = projections == null ? null : projections.stream().map(x -> x.copy()).collect(Collectors.toList());
+    result.projections =
+        projections == null
+            ? null
+            : projections.stream().map(x -> x.copy()).collect(Collectors.toList());
     result.target = target == null ? null : target.copy();
     result.whileClause = whileClause == null ? null : whileClause.copy();
     result.limit = limit == null ? null : limit.copy();
@@ -179,25 +184,19 @@ public class OTraverseStatement extends OStatement {
 
   @Override
   public boolean equals(Object o) {
-    if (this == o)
-      return true;
-    if (o == null || getClass() != o.getClass())
-      return false;
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
 
     OTraverseStatement that = (OTraverseStatement) o;
 
     if (projections != null ? !projections.equals(that.projections) : that.projections != null)
       return false;
-    if (target != null ? !target.equals(that.target) : that.target != null)
-      return false;
+    if (target != null ? !target.equals(that.target) : that.target != null) return false;
     if (whileClause != null ? !whileClause.equals(that.whileClause) : that.whileClause != null)
       return false;
-    if (limit != null ? !limit.equals(that.limit) : that.limit != null)
-      return false;
-    if (strategy != that.strategy)
-      return false;
-    if (maxDepth != null ? !maxDepth.equals(that.maxDepth) : that.maxDepth != null)
-      return false;
+    if (limit != null ? !limit.equals(that.limit) : that.limit != null) return false;
+    if (strategy != that.strategy) return false;
+    if (maxDepth != null ? !maxDepth.equals(that.maxDepth) : that.maxDepth != null) return false;
 
     return true;
   }

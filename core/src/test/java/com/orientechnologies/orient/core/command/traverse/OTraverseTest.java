@@ -4,23 +4,20 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-
-/**
- * @author Artem Orobets (enisher-at-gmail.com)
- */
+/** @author Artem Orobets (enisher-at-gmail.com) */
 public class OTraverseTest {
 
   private ODatabaseDocument db;
-  private ODocument           rootDocument;
-  private OTraverse           traverse;
+  private ODocument rootDocument;
+  private OTraverse traverse;
 
   @Before
   public void setUp() throws Exception {
@@ -78,8 +75,8 @@ public class OTraverseTest {
 
     rootDocument.save(db.getClusterNameById(db.getDefaultClusterId()));
 
-    final List<ODocument> expectedResult = Arrays
-        .asList(rootDocument, a, aa, ab, b, ba, bb, c1, c1a, c1b, c2, c2a, c2b, c3, c3a, c3b);
+    final List<ODocument> expectedResult =
+        Arrays.asList(rootDocument, a, aa, ab, b, ba, bb, c1, c1a, c1b, c2, c2a, c2b, c3, c3a, c3b);
 
     final List<OIdentifiable> results = traverse.execute();
 
@@ -123,8 +120,8 @@ public class OTraverseTest {
 
     rootDocument.save(db.getClusterNameById(db.getDefaultClusterId()));
 
-    final List<ODocument> expectedResult = Arrays
-        .asList(rootDocument, a, b, aa, ab, ba, bb, c1, c2, c3, c1a, c1b, c2a, c2b, c3a, c3b);
+    final List<ODocument> expectedResult =
+        Arrays.asList(rootDocument, a, b, aa, ab, ba, bb, c1, c2, c3, c1a, c1b, c2a, c2b, c3a, c3b);
 
     final List<OIdentifiable> results = traverse.execute();
 

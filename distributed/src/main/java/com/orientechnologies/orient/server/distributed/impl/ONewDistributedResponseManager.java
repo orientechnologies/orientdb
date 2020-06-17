@@ -1,36 +1,50 @@
 package com.orientechnologies.orient.server.distributed.impl;
 
-
-import com.orientechnologies.orient.server.distributed.*;
+import com.orientechnologies.orient.server.distributed.ODistributedException;
+import com.orientechnologies.orient.server.distributed.ODistributedRequest;
+import com.orientechnologies.orient.server.distributed.ODistributedRequestId;
+import com.orientechnologies.orient.server.distributed.ODistributedResponse;
+import com.orientechnologies.orient.server.distributed.ODistributedResponseManager;
 import com.orientechnologies.orient.server.distributed.impl.task.OTransactionPhase1Task;
 import com.orientechnologies.orient.server.distributed.impl.task.OTransactionPhase1TaskResult;
 import com.orientechnologies.orient.server.distributed.impl.task.transaction.OTransactionResultPayload;
 import com.orientechnologies.orient.server.distributed.impl.task.transaction.OTxException;
 import com.orientechnologies.orient.server.distributed.impl.task.transaction.OTxStillRunning;
-
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.IdentityHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 public class ONewDistributedResponseManager implements ODistributedResponseManager {
 
-  private final    OTransactionPhase1Task                             iRequest;
-  private final    Collection<String>                                 iNodes;
-  private final    Set<String>                                        nodesConcurToTheQuorum;
-  private final    int                                                availableNodes;
-  private final    int                                                expectedResponses;
-  private final    int                                                quorum;
-  private volatile long                                               timeout;
-  private volatile int                                                responseCount;
-  private final    List<String>                                       debugNodeReplied   = new ArrayList<>();
-  private volatile Map<Integer, List<OTransactionResultPayload>>      resultsByType      = new HashMap<>();
-  private volatile IdentityHashMap<OTransactionResultPayload, String> payloadToNode      = new IdentityHashMap<>();
-  private volatile boolean                                            finished           = false;
-  private volatile boolean                                            quorumReached      = false;
-  private volatile Object                                             finalResult;
-  private volatile int                                                stillRunning       = 0;
-  private volatile int                                                stillRunningWaited = 0;
+  private final OTransactionPhase1Task iRequest;
+  private final Collection<String> iNodes;
+  private final Set<String> nodesConcurToTheQuorum;
+  private final int availableNodes;
+  private final int expectedResponses;
+  private final int quorum;
+  private volatile long timeout;
+  private volatile int responseCount;
+  private final List<String> debugNodeReplied = new ArrayList<>();
+  private volatile Map<Integer, List<OTransactionResultPayload>> resultsByType = new HashMap<>();
+  private volatile IdentityHashMap<OTransactionResultPayload, String> payloadToNode =
+      new IdentityHashMap<>();
+  private volatile boolean finished = false;
+  private volatile boolean quorumReached = false;
+  private volatile Object finalResult;
+  private volatile int stillRunning = 0;
+  private volatile int stillRunningWaited = 0;
 
-  public ONewDistributedResponseManager(OTransactionPhase1Task iRequest, Collection<String> iNodes,
-      Set<String> nodesConcurToTheQuorum, int availableNodes, int expectedResponses, int quorum) {
+  public ONewDistributedResponseManager(
+      OTransactionPhase1Task iRequest,
+      Collection<String> iNodes,
+      Set<String> nodesConcurToTheQuorum,
+      int availableNodes,
+      int expectedResponses,
+      int quorum) {
     this.iRequest = iRequest;
     this.iNodes = iNodes;
     this.nodesConcurToTheQuorum = nodesConcurToTheQuorum;
@@ -80,12 +94,12 @@ public class ONewDistributedResponseManager implements ODistributedResponseManag
           return quorumReached;
         }
       } catch (InterruptedException e) {
-        //Let the operation finish anyway
+        // Let the operation finish anyway
         Thread.currentThread().interrupt();
         interrupted = true;
       }
     }
-    return quorumReached  ;
+    return quorumReached;
   }
 
   @Override
@@ -95,7 +109,7 @@ public class ONewDistributedResponseManager implements ODistributedResponseManag
 
   @Override
   public void cancel() {
-    //This should do nothing we cannot cancel things
+    // This should do nothing we cannot cancel things
   }
 
   @Override
@@ -132,7 +146,8 @@ public class ONewDistributedResponseManager implements ODistributedResponseManag
     return quorum;
   }
 
-  public synchronized boolean collectResponse(OTransactionPhase1TaskResult response, String senderNodeName) {
+  public synchronized boolean collectResponse(
+      OTransactionPhase1TaskResult response, String senderNodeName) {
     if (response.getResultPayload() instanceof OTxStillRunning) {
       stillRunning++;
       return false;
@@ -193,13 +208,18 @@ public class ONewDistributedResponseManager implements ODistributedResponseManag
   @Override
   public boolean collectResponse(ODistributedResponse response) {
     if (response.getPayload() instanceof OTransactionPhase1TaskResult) {
-      return collectResponse((OTransactionPhase1TaskResult) response.getPayload(), response.getExecutorNodeName());
+      return collectResponse(
+          (OTransactionPhase1TaskResult) response.getPayload(), response.getExecutorNodeName());
     } else if (response.getPayload() instanceof RuntimeException) {
-      return collectResponse(new OTransactionPhase1TaskResult(new OTxException((RuntimeException) response.getPayload())),
+      return collectResponse(
+          new OTransactionPhase1TaskResult(
+              new OTxException((RuntimeException) response.getPayload())),
           response.getExecutorNodeName());
     } else {
       return collectResponse(
-          new OTransactionPhase1TaskResult(new OTxException(new ODistributedException("unknown payload:" + response.getPayload()))),
+          new OTransactionPhase1TaskResult(
+              new OTxException(
+                  new ODistributedException("unknown payload:" + response.getPayload()))),
           response.getExecutorNodeName());
     }
   }
@@ -213,9 +233,7 @@ public class ONewDistributedResponseManager implements ODistributedResponseManag
   }
 
   @Override
-  public void timeout() {
-
-  }
+  public void timeout() {}
 
   @Override
   public long getSentOn() {

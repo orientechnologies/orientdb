@@ -22,7 +22,6 @@ package com.orientechnologies.orient.core.storage.impl.local.paginated.wal;
 
 import com.kenai.jffi.MemoryIO;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.common.WriteableWALRecord;
-
 import java.nio.ByteBuffer;
 import java.util.Objects;
 
@@ -39,13 +38,12 @@ public abstract class OAbstractWALRecord implements WriteableWALRecord {
   private int diskSize = 0;
 
   private ByteBuffer binaryContent;
-  private int        binaryContentLen = -1;
-  private long       pointer;
+  private int binaryContentLen = -1;
+  private long pointer;
 
   private boolean written;
 
-  protected OAbstractWALRecord() {
-  }
+  protected OAbstractWALRecord() {}
 
   protected OAbstractWALRecord(final OLogSequenceNumber previousCheckpoint) {
     this.lsn = previousCheckpoint;
@@ -128,10 +126,8 @@ public abstract class OAbstractWALRecord implements WriteableWALRecord {
 
   @Override
   public boolean equals(final Object o) {
-    if (this == o)
-      return true;
-    if (o == null || getClass() != o.getClass())
-      return false;
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
 
     final OAbstractWALRecord that = (OAbstractWALRecord) o;
 

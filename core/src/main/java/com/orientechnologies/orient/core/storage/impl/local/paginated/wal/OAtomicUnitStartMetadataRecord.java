@@ -1,17 +1,16 @@
 package com.orientechnologies.orient.core.storage.impl.local.paginated.wal;
 
 import com.orientechnologies.common.serialization.types.OIntegerSerializer;
-
 import java.nio.ByteBuffer;
 
 public class OAtomicUnitStartMetadataRecord extends OAtomicUnitStartRecord {
 
   private byte[] metadata;
 
-  public OAtomicUnitStartMetadataRecord() {
-  }
+  public OAtomicUnitStartMetadataRecord() {}
 
-  public OAtomicUnitStartMetadataRecord(final boolean isRollbackSupported, final long unitId, byte[] metadata) {
+  public OAtomicUnitStartMetadataRecord(
+      final boolean isRollbackSupported, final long unitId, byte[] metadata) {
     super(isRollbackSupported, unitId);
     this.metadata = metadata;
   }

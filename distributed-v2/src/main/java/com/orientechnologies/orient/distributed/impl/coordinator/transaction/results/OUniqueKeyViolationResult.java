@@ -1,27 +1,25 @@
 package com.orientechnologies.orient.distributed.impl.coordinator.transaction.results;
 
 import com.orientechnologies.orient.core.id.ORecordId;
-
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
 
 public class OUniqueKeyViolationResult implements OTransactionResult {
-  private String    keyStringified;
+  private String keyStringified;
   private ORecordId recordRequesting;
   private ORecordId recordOwner;
-  private String    indexName;
+  private String indexName;
 
-  public OUniqueKeyViolationResult(String keyStringified, ORecordId recordRequesting, ORecordId recordOwner, String indexName) {
+  public OUniqueKeyViolationResult(
+      String keyStringified, ORecordId recordRequesting, ORecordId recordOwner, String indexName) {
     this.keyStringified = keyStringified;
     this.recordRequesting = recordRequesting;
     this.recordOwner = recordOwner;
     this.indexName = indexName;
   }
 
-  public OUniqueKeyViolationResult() {
-
-  }
+  public OUniqueKeyViolationResult() {}
 
   public String getKeyStringified() {
     return keyStringified;

@@ -23,9 +23,7 @@ import com.orientechnologies.orient.core.db.ODatabasePool;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
-/**
- * ETL Loader that saves record into OrientDB database.
- */
+/** ETL Loader that saves record into OrientDB database. */
 public class OETLOutputLoader extends OETLAbstractLoader {
   @Override
   public void load(ODatabaseDocument db, final Object input, final OCommandContext context) {
@@ -39,8 +37,7 @@ public class OETLOutputLoader extends OETLAbstractLoader {
   }
 
   @Override
-  public void rollback(ODatabaseDocument db) {
-  }
+  public void rollback(ODatabaseDocument db) {}
 
   @Override
   public ODatabasePool getPool() {
@@ -58,7 +55,5 @@ public class OETLOutputLoader extends OETLAbstractLoader {
   }
 
   @Override
-  public void close() {
-
-  }
+  public void close() {}
 }

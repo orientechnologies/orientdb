@@ -15,32 +15,30 @@
  *  *  limitations under the License.
  *  *
  *  * For more information: http://orientdb.com
- *  
+ *
  */
 
 package com.orientechnologies.orient.core;
 
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
-import sun.misc.Signal;
-import sun.misc.SignalHandler;
-
 import java.util.ArrayList;
 import java.util.Hashtable;
 import java.util.List;
 import java.util.Map.Entry;
+import sun.misc.Signal;
+import sun.misc.SignalHandler;
 
 @SuppressWarnings("restriction")
 public class OSignalHandler implements SignalHandler {
   private Hashtable<Signal, SignalHandler> redefinedHandlers = new Hashtable(4);
-  private List<OSignalListener>            listeners         = new ArrayList<OSignalListener>();
+  private List<OSignalListener> listeners = new ArrayList<OSignalListener>();
 
   public interface OSignalListener {
     void onSignal(Signal signal);
   }
 
-  public OSignalHandler() {
-  }
+  public OSignalHandler() {}
 
   public void registerListener(final OSignalListener listener) {
     listeners.add(listener);
@@ -63,8 +61,11 @@ public class OSignalHandler implements SignalHandler {
 
     final String s = signal.toString().trim();
 
-    if (Orient.instance().isSelfManagedShutdown() && (s.equals("SIGKILL") || s.equals("SIGHUP") || s.equals("SIGINT") || s
-        .equals("SIGTERM"))) {
+    if (Orient.instance().isSelfManagedShutdown()
+        && (s.equals("SIGKILL")
+            || s.equals("SIGHUP")
+            || s.equals("SIGINT")
+            || s.equals("SIGTERM"))) {
       Orient.instance().shutdown();
       System.exit(1);
     } else if (s.equals("SIGTRAP")) {
@@ -81,8 +82,7 @@ public class OSignalHandler implements SignalHandler {
       }
     }
 
-    for (OSignalListener l : listeners)
-      l.onSignal(signal);
+    for (OSignalListener l : listeners) l.onSignal(signal);
   }
 
   public void installDefaultSignals() {
@@ -90,7 +90,8 @@ public class OSignalHandler implements SignalHandler {
   }
 
   public void installDefaultSignals(final SignalHandler iListener) {
-    // listenTo("HUP", iListener); // DISABLED HUB BECAUSE ON WINDOWS IT'S USED INTERNALLY AND CAUSED JVM KILL
+    // listenTo("HUP", iListener); // DISABLED HUB BECAUSE ON WINDOWS IT'S USED INTERNALLY AND
+    // CAUSED JVM KILL
     // listenTo("KILL",iListener);
 
     try {
@@ -116,7 +117,8 @@ public class OSignalHandler implements SignalHandler {
         // re-install the original handler we replaced
         Signal.handle(entry.getKey(), entry.getValue());
       } catch (IllegalStateException e) {
-        OLogManager.instance().error(this, "Error during reverting signal handlers to default ones", e);
+        OLogManager.instance()
+            .error(this, "Error during reverting signal handlers to default ones", e);
         // not expected as we were able to redefine it earlier, but just in case
       }
     }

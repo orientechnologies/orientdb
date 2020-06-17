@@ -22,12 +22,12 @@ package com.orientechnologies.orient.core.db.record;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
-
 import java.util.Iterator;
 import java.util.List;
 
 /**
- * Interface that indicates that collection will send notifications about operations that are performed on it to the listeners.
+ * Interface that indicates that collection will send notifications about operations that are
+ * performed on it to the listeners.
  *
  * @param <K> Value that indicates position of item inside collection.
  * @param <V> Value that is hold by collection.

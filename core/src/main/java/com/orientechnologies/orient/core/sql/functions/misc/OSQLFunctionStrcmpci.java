@@ -19,10 +19,7 @@ import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.sql.functions.OSQLFunctionAbstract;
 
-/**
- *
- * @author mdjurovi
- */
+/** @author mdjurovi */
 public class OSQLFunctionStrcmpci extends OSQLFunctionAbstract {
 
   public static final String NAME = "strcmpci";
@@ -30,9 +27,14 @@ public class OSQLFunctionStrcmpci extends OSQLFunctionAbstract {
   public OSQLFunctionStrcmpci() {
     super(NAME, 2, 2);
   }
-  
+
   @Override
-  public Object execute(Object iThis, OIdentifiable iCurrentRecord, Object iCurrentResult, Object[] iParams, OCommandContext iContext) {
+  public Object execute(
+      Object iThis,
+      OIdentifiable iCurrentRecord,
+      Object iCurrentResult,
+      Object[] iParams,
+      OCommandContext iContext) {
     String s1 = null;
     String s2 = null;
 
@@ -58,7 +60,7 @@ public class OSQLFunctionStrcmpci extends OSQLFunctionAbstract {
 
     int res = s1.compareToIgnoreCase(s2);
     if (res != 0) {
-      //normalize res to -1, 0, 1
+      // normalize res to -1, 0, 1
       res = res / Math.abs(res);
     }
     return res;
@@ -68,5 +70,4 @@ public class OSQLFunctionStrcmpci extends OSQLFunctionAbstract {
   public String getSyntax() {
     return "strcmpci(<arg1>, <arg2>)";
   }
-  
 }

@@ -20,10 +20,6 @@
 package com.orientechnologies.orient.server.handler;
 
 import com.orientechnologies.common.log.OLogManager;
-import com.orientechnologies.common.util.OCallable;
-import com.orientechnologies.orient.core.Orient;
-import com.orientechnologies.orient.core.command.OCommandManager;
-import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.command.OScriptInterceptor;
 import com.orientechnologies.orient.core.command.script.OCommandExecutorScript;
 import com.orientechnologies.orient.core.command.script.OCommandScript;
@@ -32,24 +28,23 @@ import com.orientechnologies.orient.core.exception.OSecurityException;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.config.OServerParameterConfiguration;
 import com.orientechnologies.orient.server.plugin.OServerPluginAbstract;
-
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Locale;
 import java.util.Set;
 
 /**
- * Allow the execution of server-side scripting. This could be a security hole in your configuration if users have access to the
- * database and can execute any kind of code.
+ * Allow the execution of server-side scripting. This could be a security hole in your configuration
+ * if users have access to the database and can execute any kind of code.
  *
  * @author Luca
  */
 public class OServerSideScriptInterpreter extends OServerPluginAbstract {
-  protected boolean     enabled          = false;
+  protected boolean enabled = false;
   protected Set<String> allowedLanguages = new HashSet<String>();
 
   protected OScriptInterceptor interceptor;
-  private   OServer            server;
+  private OServer server;
 
   @Override
   public void config(final OServer iServer, OServerParameterConfiguration[] iParams) {
@@ -61,9 +56,11 @@ public class OServerSideScriptInterpreter extends OServerPluginAbstract {
           // ENABLE IT
           enabled = true;
       } else if (param.name.equalsIgnoreCase("allowedLanguages")) {
-        allowedLanguages = new HashSet<>(Arrays.asList(param.value.toLowerCase(Locale.ENGLISH).split(",")));
+        allowedLanguages =
+            new HashSet<>(Arrays.asList(param.value.toLowerCase(Locale.ENGLISH).split(",")));
       } else if (param.name.equalsIgnoreCase("allowedPackages")) {
-        OrientDBInternal.extract(iServer.getContext()).getScriptManager()
+        OrientDBInternal.extract(iServer.getContext())
+            .getScriptManager()
             .addAllowedPackages(new HashSet<>(Arrays.asList(param.value.split(","))));
       }
     }
@@ -77,41 +74,61 @@ public class OServerSideScriptInterpreter extends OServerPluginAbstract {
   @Override
   public void startup() {
 
-    if (!enabled)
-      return;
+    if (!enabled) return;
 
-    OrientDBInternal.extract(server.getContext()).getScriptManager().getCommandManager()
-        .registerExecutor(OCommandScript.class, OCommandExecutorScript.class, iArgument -> {
-          final String language = ((OCommandScript) iArgument).getLanguage().toLowerCase(Locale.ENGLISH);
+    OrientDBInternal.extract(server.getContext())
+        .getScriptManager()
+        .getCommandManager()
+        .registerExecutor(
+            OCommandScript.class,
+            OCommandExecutorScript.class,
+            iArgument -> {
+              final String language =
+                  ((OCommandScript) iArgument).getLanguage().toLowerCase(Locale.ENGLISH);
 
+              if (!allowedLanguages.contains(language))
+                throw new OSecurityException(
+                    "Language '" + language + "' is not allowed to be executed");
+
+              return null;
+            });
+
+    interceptor =
+        (db, language, script, params) -> {
           if (!allowedLanguages.contains(language))
-            throw new OSecurityException("Language '" + language + "' is not allowed to be executed");
+            throw new OSecurityException(
+                "Language '" + language + "' is not allowed to be executed");
+        };
 
-          return null;
-        });
-
-    interceptor = (db, language, script, params) -> {
-      if (!allowedLanguages.contains(language))
-        throw new OSecurityException("Language '" + language + "' is not allowed to be executed");
-    };
-
-    OrientDBInternal.extract(server.getContext()).getScriptManager().getCommandManager().getScriptExecutors().entrySet()
+    OrientDBInternal.extract(server.getContext())
+        .getScriptManager()
+        .getCommandManager()
+        .getScriptExecutors()
+        .entrySet()
         .forEach(e -> e.getValue().registerInterceptor(interceptor));
-    OLogManager.instance().warn(this,
-        "Authenticated clients can execute any kind of code into the server by using the following allowed languages: "
-            + allowedLanguages);
+    OLogManager.instance()
+        .warn(
+            this,
+            "Authenticated clients can execute any kind of code into the server by using the following allowed languages: "
+                + allowedLanguages);
   }
 
   @Override
   public void shutdown() {
-    if (!enabled)
-      return;
+    if (!enabled) return;
 
     if (interceptor != null) {
-      OrientDBInternal.extract(server.getContext()).getScriptManager().getCommandManager().getScriptExecutors().entrySet()
+      OrientDBInternal.extract(server.getContext())
+          .getScriptManager()
+          .getCommandManager()
+          .getScriptExecutors()
+          .entrySet()
           .forEach(e -> e.getValue().unregisterInterceptor(interceptor));
     }
 
-    OrientDBInternal.extract(server.getContext()).getScriptManager().getCommandManager().unregisterExecutor(OCommandScript.class);
+    OrientDBInternal.extract(server.getContext())
+        .getScriptManager()
+        .getCommandManager()
+        .unregisterExecutor(OCommandScript.class);
   }
 }

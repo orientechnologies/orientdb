@@ -15,18 +15,16 @@
  *  *  limitations under the License.
  *  *
  *  * For more information: http://orientdb.com
- *  
+ *
  */
 
 package com.orientechnologies.orient.server.distributed;
 
 import org.junit.Test;
 
-/**
- * Starts a server, then restart it
- */
+/** Starts a server, then restart it */
 public class DistributedRestartServerIT extends AbstractServerClusterTest {
-  final static int SERVERS = 1;
+  static final int SERVERS = 1;
 
   public String getDatabaseName() {
     return "distributed-restarttest";

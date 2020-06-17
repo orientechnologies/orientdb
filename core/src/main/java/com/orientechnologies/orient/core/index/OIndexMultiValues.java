@@ -35,8 +35,13 @@ import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedSt
 import com.orientechnologies.orient.core.storage.ridbag.sbtree.OIndexRIDContainer;
 import com.orientechnologies.orient.core.storage.ridbag.sbtree.OIndexRIDContainerSBTree;
 import com.orientechnologies.orient.core.storage.ridbag.sbtree.OMixedIndexRIDContainer;
-
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -47,9 +52,24 @@ import java.util.stream.Stream;
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
  */
 public abstract class OIndexMultiValues extends OIndexAbstract {
-  OIndexMultiValues(String name, final String type, String algorithm, int version, OAbstractPaginatedStorage storage,
-      String valueContainerAlgorithm, final ODocument metadata, final int binaryFormatVersion) {
-    super(name, type, algorithm, valueContainerAlgorithm, metadata, version, storage, binaryFormatVersion);
+  OIndexMultiValues(
+      String name,
+      final String type,
+      String algorithm,
+      int version,
+      OAbstractPaginatedStorage storage,
+      String valueContainerAlgorithm,
+      final ODocument metadata,
+      final int binaryFormatVersion) {
+    super(
+        name,
+        type,
+        algorithm,
+        valueContainerAlgorithm,
+        metadata,
+        version,
+        storage,
+        binaryFormatVersion);
   }
 
   @Deprecated
@@ -123,7 +143,8 @@ public abstract class OIndexMultiValues extends OIndexAbstract {
   }
 
   @Override
-  public void doPut(OAbstractPaginatedStorage storage, Object key, ORID rid) throws OInvalidIndexEngineIdException {
+  public void doPut(OAbstractPaginatedStorage storage, Object key, ORID rid)
+      throws OInvalidIndexEngineIdException {
     if (apiVersion == 0) {
       doPutV0(indexId, storage, binaryFormatVersion, valueContainerAlgorithm, getName(), key, rid);
     } else if (apiVersion == 1) {
@@ -138,57 +159,66 @@ public abstract class OIndexMultiValues extends OIndexAbstract {
     return true;
   }
 
-  private static void doPutV0(final int indexId, final OAbstractPaginatedStorage storage, final int binaryFormatVersion,
-      String valueContainerAlgorithm, String indexName, Object key, ORID identity) throws OInvalidIndexEngineIdException {
-    final OIndexKeyUpdater<Object> creator = (oldValue, bonsayFileId) -> {
-      @SuppressWarnings("unchecked")
-      Set<OIdentifiable> toUpdate = (Set<OIdentifiable>) oldValue;
-      if (toUpdate == null) {
-        if (ODefaultIndexFactory.SBTREE_BONSAI_VALUE_CONTAINER.equals(valueContainerAlgorithm)) {
-          if (binaryFormatVersion >= 13) {
-            toUpdate = new OMixedIndexRIDContainer(indexName, bonsayFileId);
-          } else {
-            toUpdate = new OIndexRIDContainer(indexName, true, bonsayFileId);
+  private static void doPutV0(
+      final int indexId,
+      final OAbstractPaginatedStorage storage,
+      final int binaryFormatVersion,
+      String valueContainerAlgorithm,
+      String indexName,
+      Object key,
+      ORID identity)
+      throws OInvalidIndexEngineIdException {
+    final OIndexKeyUpdater<Object> creator =
+        (oldValue, bonsayFileId) -> {
+          @SuppressWarnings("unchecked")
+          Set<OIdentifiable> toUpdate = (Set<OIdentifiable>) oldValue;
+          if (toUpdate == null) {
+            if (ODefaultIndexFactory.SBTREE_BONSAI_VALUE_CONTAINER.equals(
+                valueContainerAlgorithm)) {
+              if (binaryFormatVersion >= 13) {
+                toUpdate = new OMixedIndexRIDContainer(indexName, bonsayFileId);
+              } else {
+                toUpdate = new OIndexRIDContainer(indexName, true, bonsayFileId);
+              }
+            } else {
+              throw new IllegalStateException("MVRBTree is not supported any more");
+            }
           }
-        } else {
-          throw new IllegalStateException("MVRBTree is not supported any more");
-        }
-      }
-      if (toUpdate instanceof OIndexRIDContainer) {
-        boolean isTree = !((OIndexRIDContainer) toUpdate).isEmbedded();
-        toUpdate.add(identity);
+          if (toUpdate instanceof OIndexRIDContainer) {
+            boolean isTree = !((OIndexRIDContainer) toUpdate).isEmbedded();
+            toUpdate.add(identity);
 
-        if (isTree) {
-          //noinspection unchecked
-          return OIndexUpdateAction.nothing();
-        } else {
-          return OIndexUpdateAction.changed(toUpdate);
-        }
-      } else if (toUpdate instanceof OMixedIndexRIDContainer) {
-        final OMixedIndexRIDContainer ridContainer = (OMixedIndexRIDContainer) toUpdate;
-        final boolean embeddedWasUpdated = ridContainer.addEntry(identity);
+            if (isTree) {
+              //noinspection unchecked
+              return OIndexUpdateAction.nothing();
+            } else {
+              return OIndexUpdateAction.changed(toUpdate);
+            }
+          } else if (toUpdate instanceof OMixedIndexRIDContainer) {
+            final OMixedIndexRIDContainer ridContainer = (OMixedIndexRIDContainer) toUpdate;
+            final boolean embeddedWasUpdated = ridContainer.addEntry(identity);
 
-        if (!embeddedWasUpdated) {
-          //noinspection unchecked
-          return OIndexUpdateAction.nothing();
-        } else {
-          return OIndexUpdateAction.changed(toUpdate);
-        }
-      } else {
-        if (toUpdate.add(identity)) {
-          return OIndexUpdateAction.changed(toUpdate);
-        } else {
-          //noinspection unchecked
-          return OIndexUpdateAction.nothing();
-        }
-      }
-
-    };
+            if (!embeddedWasUpdated) {
+              //noinspection unchecked
+              return OIndexUpdateAction.nothing();
+            } else {
+              return OIndexUpdateAction.changed(toUpdate);
+            }
+          } else {
+            if (toUpdate.add(identity)) {
+              return OIndexUpdateAction.changed(toUpdate);
+            } else {
+              //noinspection unchecked
+              return OIndexUpdateAction.nothing();
+            }
+          }
+        };
 
     storage.updateIndexEntry(indexId, key, creator);
   }
 
-  private static void doPutV1(OAbstractPaginatedStorage storage, int indexId, Object key, ORID identity)
+  private static void doPutV1(
+      OAbstractPaginatedStorage storage, int indexId, Object key, ORID identity)
       throws OInvalidIndexEngineIdException {
     storage.putRidIndexEntry(indexId, key, identity);
   }
@@ -212,7 +242,8 @@ public abstract class OIndexMultiValues extends OIndexAbstract {
   }
 
   @Override
-  public boolean doRemove(OAbstractPaginatedStorage storage, Object key, ORID rid) throws OInvalidIndexEngineIdException {
+  public boolean doRemove(OAbstractPaginatedStorage storage, Object key, ORID rid)
+      throws OInvalidIndexEngineIdException {
     if (apiVersion == 0) {
       return doRemoveV0(indexId, storage, key, rid);
     }
@@ -224,7 +255,8 @@ public abstract class OIndexMultiValues extends OIndexAbstract {
     throw new IllegalStateException("Invalid API version, " + apiVersion);
   }
 
-  private static boolean doRemoveV0(int indexId, OAbstractPaginatedStorage storage, Object key, OIdentifiable value)
+  private static boolean doRemoveV0(
+      int indexId, OAbstractPaginatedStorage storage, Object key, OIdentifiable value)
       throws OInvalidIndexEngineIdException {
     Set<OIdentifiable> values;
     //noinspection unchecked
@@ -243,29 +275,47 @@ public abstract class OIndexMultiValues extends OIndexAbstract {
     return removed.getValue();
   }
 
-  private static boolean doRemoveV1(int indexId, OAbstractPaginatedStorage storage, Object key, OIdentifiable value)
+  private static boolean doRemoveV1(
+      int indexId, OAbstractPaginatedStorage storage, Object key, OIdentifiable value)
       throws OInvalidIndexEngineIdException {
     return storage.removeRidIndexEntry(indexId, key, value.getIdentity());
   }
 
-  public OIndexMultiValues create(final String name, final OIndexDefinition indexDefinition, final String clusterIndexName,
-      final Set<String> clustersToIndex, boolean rebuild, final OProgressListener progressListener) {
+  public OIndexMultiValues create(
+      final String name,
+      final OIndexDefinition indexDefinition,
+      final String clusterIndexName,
+      final Set<String> clustersToIndex,
+      boolean rebuild,
+      final OProgressListener progressListener) {
 
-    return (OIndexMultiValues) super
-        .create(indexDefinition, clusterIndexName, clustersToIndex, rebuild, progressListener, determineValueSerializer());
+    return (OIndexMultiValues)
+        super.create(
+            indexDefinition,
+            clusterIndexName,
+            clustersToIndex,
+            rebuild,
+            progressListener,
+            determineValueSerializer());
   }
 
   protected OBinarySerializer determineValueSerializer() {
     if (binaryFormatVersion >= 13) {
-      return storage.getComponentsFactory().binarySerializerFactory.getObjectSerializer(OMixedIndexRIDContainerSerializer.ID);
+      return storage
+          .getComponentsFactory()
+          .binarySerializerFactory
+          .getObjectSerializer(OMixedIndexRIDContainerSerializer.ID);
     }
 
-    return storage.getComponentsFactory().binarySerializerFactory.getObjectSerializer(OStreamSerializerSBTreeIndexRIDContainer.ID);
+    return storage
+        .getComponentsFactory()
+        .binarySerializerFactory
+        .getObjectSerializer(OStreamSerializerSBTreeIndexRIDContainer.ID);
   }
 
   @Override
-  public Stream<ORawPair<Object, ORID>> streamEntriesBetween(Object fromKey, boolean fromInclusive, Object toKey,
-      boolean toInclusive, boolean ascOrder) {
+  public Stream<ORawPair<Object, ORID>> streamEntriesBetween(
+      Object fromKey, boolean fromInclusive, Object toKey, boolean toInclusive, boolean ascOrder) {
     fromKey = getCollatingValue(fromKey);
     toKey = getCollatingValue(toKey);
 
@@ -273,8 +323,15 @@ public abstract class OIndexMultiValues extends OIndexAbstract {
     try {
       while (true) {
         try {
-          return IndexStreamSecurityDecorator.decorateStream(this, storage
-              .iterateIndexEntriesBetween(indexId, fromKey, fromInclusive, toKey, toInclusive, ascOrder,
+          return IndexStreamSecurityDecorator.decorateStream(
+              this,
+              storage.iterateIndexEntriesBetween(
+                  indexId,
+                  fromKey,
+                  fromInclusive,
+                  toKey,
+                  toInclusive,
+                  ascOrder,
                   MultiValuesTransformer.INSTANCE));
         } catch (OInvalidIndexEngineIdException ignore) {
           doReloadIndexEngine();
@@ -286,15 +343,18 @@ public abstract class OIndexMultiValues extends OIndexAbstract {
   }
 
   @Override
-  public Stream<ORawPair<Object, ORID>> streamEntriesMajor(Object fromKey, boolean fromInclusive, boolean ascOrder) {
+  public Stream<ORawPair<Object, ORID>> streamEntriesMajor(
+      Object fromKey, boolean fromInclusive, boolean ascOrder) {
     fromKey = getCollatingValue(fromKey);
 
     acquireSharedLock();
     try {
       while (true) {
         try {
-          return IndexStreamSecurityDecorator.decorateStream(this,
-              storage.iterateIndexEntriesMajor(indexId, fromKey, fromInclusive, ascOrder, MultiValuesTransformer.INSTANCE));
+          return IndexStreamSecurityDecorator.decorateStream(
+              this,
+              storage.iterateIndexEntriesMajor(
+                  indexId, fromKey, fromInclusive, ascOrder, MultiValuesTransformer.INSTANCE));
         } catch (OInvalidIndexEngineIdException ignore) {
           doReloadIndexEngine();
         }
@@ -305,15 +365,18 @@ public abstract class OIndexMultiValues extends OIndexAbstract {
   }
 
   @Override
-  public Stream<ORawPair<Object, ORID>> streamEntriesMinor(Object toKey, boolean toInclusive, boolean ascOrder) {
+  public Stream<ORawPair<Object, ORID>> streamEntriesMinor(
+      Object toKey, boolean toInclusive, boolean ascOrder) {
     toKey = getCollatingValue(toKey);
 
     acquireSharedLock();
     try {
       while (true) {
         try {
-          return IndexStreamSecurityDecorator.decorateStream(this,
-              storage.iterateIndexEntriesMinor(indexId, toKey, toInclusive, ascOrder, MultiValuesTransformer.INSTANCE));
+          return IndexStreamSecurityDecorator.decorateStream(
+              this,
+              storage.iterateIndexEntriesMinor(
+                  indexId, toKey, toInclusive, ascOrder, MultiValuesTransformer.INSTANCE));
         } catch (OInvalidIndexEngineIdException ignore) {
           doReloadIndexEngine();
         }
@@ -336,33 +399,44 @@ public abstract class OIndexMultiValues extends OIndexAbstract {
     sortedKeys.sort(comparator);
 
     //noinspection resource
-    return IndexStreamSecurityDecorator.decorateStream(this, sortedKeys.stream().flatMap((key) -> {
-      key = getCollatingValue(key);
+    return IndexStreamSecurityDecorator.decorateStream(
+        this,
+        sortedKeys.stream()
+            .flatMap(
+                (key) -> {
+                  key = getCollatingValue(key);
 
-      final Object entryKey = key;
-      acquireSharedLock();
-      try {
-        while (true) {
-          try {
-            if (apiVersion == 0) {
-              //noinspection unchecked,resource
-              return Optional.ofNullable((Collection<ORID>) storage.getIndexValue(indexId, key))
-                  .map((rids) -> rids.stream().map((rid) -> new ORawPair<>(entryKey, rid))).orElse(Stream.empty());
-            } else if (apiVersion == 1) {
-              //noinspection resource
-              return storage.getIndexValues(indexId, key).map((rid) -> new ORawPair<>(entryKey, rid));
-            } else {
-              throw new IllegalStateException("Invalid version of index API - " + apiVersion);
-            }
-          } catch (OInvalidIndexEngineIdException ignore) {
-            doReloadIndexEngine();
-          }
-        }
+                  final Object entryKey = key;
+                  acquireSharedLock();
+                  try {
+                    while (true) {
+                      try {
+                        if (apiVersion == 0) {
+                          //noinspection unchecked,resource
+                          return Optional.ofNullable(
+                                  (Collection<ORID>) storage.getIndexValue(indexId, key))
+                              .map(
+                                  (rids) ->
+                                      rids.stream().map((rid) -> new ORawPair<>(entryKey, rid)))
+                              .orElse(Stream.empty());
+                        } else if (apiVersion == 1) {
+                          //noinspection resource
+                          return storage
+                              .getIndexValues(indexId, key)
+                              .map((rid) -> new ORawPair<>(entryKey, rid));
+                        } else {
+                          throw new IllegalStateException(
+                              "Invalid version of index API - " + apiVersion);
+                        }
+                      } catch (OInvalidIndexEngineIdException ignore) {
+                        doReloadIndexEngine();
+                      }
+                    }
 
-      } finally {
-        releaseSharedLock();
-      }
-    }));
+                  } finally {
+                    releaseSharedLock();
+                  }
+                }));
   }
 
   public long size() {
@@ -378,7 +452,6 @@ public abstract class OIndexMultiValues extends OIndexAbstract {
     } finally {
       releaseSharedLock();
     }
-
   }
 
   @Override
@@ -387,8 +460,8 @@ public abstract class OIndexMultiValues extends OIndexAbstract {
     try {
       while (true) {
         try {
-          return IndexStreamSecurityDecorator
-              .decorateStream(this, storage.getIndexStream(indexId, MultiValuesTransformer.INSTANCE));
+          return IndexStreamSecurityDecorator.decorateStream(
+              this, storage.getIndexStream(indexId, MultiValuesTransformer.INSTANCE));
         } catch (OInvalidIndexEngineIdException ignore) {
           doReloadIndexEngine();
         }
@@ -405,8 +478,8 @@ public abstract class OIndexMultiValues extends OIndexAbstract {
     try {
       while (true) {
         try {
-          return IndexStreamSecurityDecorator
-              .decorateStream(this, storage.getIndexDescStream(indexId, MultiValuesTransformer.INSTANCE));
+          return IndexStreamSecurityDecorator.decorateStream(
+              this, storage.getIndexDescStream(indexId, MultiValuesTransformer.INSTANCE));
         } catch (OInvalidIndexEngineIdException ignore) {
           doReloadIndexEngine();
         }
@@ -427,7 +500,7 @@ public abstract class OIndexMultiValues extends OIndexAbstract {
   }
 
   private static class EntityRemover implements OIndexKeyUpdater<Object> {
-    private final OIdentifiable      value;
+    private final OIdentifiable value;
     private final OModifiableBoolean removed;
 
     private EntityRemover(OIdentifiable value, OModifiableBoolean removed) {
@@ -448,7 +521,7 @@ public abstract class OIndexMultiValues extends OIndexAbstract {
         removed.setValue(true);
 
         if (values.isEmpty()) {
-          //remove tree ridbag too
+          // remove tree ridbag too
           if (values instanceof OMixedIndexRIDContainer) {
             ((OMixedIndexRIDContainer) values).delete();
           } else if (values instanceof OIndexRIDContainerSBTree) {

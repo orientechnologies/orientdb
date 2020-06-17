@@ -23,9 +23,8 @@ import com.orientechnologies.common.exception.OSystemException;
 
 /**
  * Timeout exception. The acquiring of a shared resource caused a timeout.
- * 
+ *
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
- * 
  */
 public class OTimeoutException extends OSystemException {
   private static final long serialVersionUID = 1L;

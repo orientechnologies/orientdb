@@ -7,24 +7,21 @@ import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.sql.OSQLEngine;
 import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.executor.OResultInternal;
-
 import java.util.Locale;
 import java.util.Map;
 
-/**
- * Created by luigidellaquila on 06/02/15.
- */
+/** Created by luigidellaquila on 06/02/15. */
 public class OOrderByItem {
-  public static final String      ASC  = "ASC";
-  public static final String      DESC = "DESC";
-  protected           String      alias;
-  protected           OModifier   modifier;
-  protected           String      recordAttr;
-  protected           ORid        rid;
-  protected           String      type = ASC;
-  protected           OExpression collate;
+  public static final String ASC = "ASC";
+  public static final String DESC = "DESC";
+  protected String alias;
+  protected OModifier modifier;
+  protected String recordAttr;
+  protected ORid rid;
+  protected String type = ASC;
+  protected OExpression collate;
 
-  //calculated at run time
+  // calculated at run time
   private OCollate collateStrategy;
 
   public String getAlias() {
@@ -110,10 +107,12 @@ public class OOrderByItem {
       if (collateVal != null) {
         collateStrategy = OSQLEngine.getCollate(String.valueOf(collateVal));
         if (collateStrategy == null) {
-          collateStrategy = OSQLEngine.getCollate(String.valueOf(collateVal).toUpperCase(Locale.ENGLISH));
+          collateStrategy =
+              OSQLEngine.getCollate(String.valueOf(collateVal).toUpperCase(Locale.ENGLISH));
         }
         if (collateStrategy == null) {
-          collateStrategy = OSQLEngine.getCollate(String.valueOf(collateVal).toLowerCase(Locale.ENGLISH));
+          collateStrategy =
+              OSQLEngine.getCollate(String.valueOf(collateVal).toLowerCase(Locale.ENGLISH));
         }
         if (collateStrategy == null) {
           throw new OCommandExecutionException("Invalid collate for ORDER BY: " + collateVal);
@@ -222,23 +221,17 @@ public class OOrderByItem {
 
   @Override
   public boolean equals(Object o) {
-    if (this == o)
-      return true;
-    if (o == null || getClass() != o.getClass())
-      return false;
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
 
     OOrderByItem that = (OOrderByItem) o;
 
-    if (alias != null ? !alias.equals(that.alias) : that.alias != null)
-      return false;
-    if (modifier != null ? !modifier.equals(that.modifier) : that.modifier != null)
-      return false;
+    if (alias != null ? !alias.equals(that.alias) : that.alias != null) return false;
+    if (modifier != null ? !modifier.equals(that.modifier) : that.modifier != null) return false;
     if (recordAttr != null ? !recordAttr.equals(that.recordAttr) : that.recordAttr != null)
       return false;
-    if (rid != null ? !rid.equals(that.rid) : that.rid != null)
-      return false;
-    if (type != null ? !type.equals(that.type) : that.type != null)
-      return false;
+    if (rid != null ? !rid.equals(that.rid) : that.rid != null) return false;
+    if (type != null ? !type.equals(that.type) : that.type != null) return false;
     return collate != null ? collate.equals(that.collate) : that.collate == null;
   }
 

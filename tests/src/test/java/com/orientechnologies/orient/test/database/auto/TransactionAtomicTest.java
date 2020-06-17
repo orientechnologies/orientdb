@@ -28,12 +28,11 @@ import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.storage.ORecordDuplicatedException;
+import java.io.IOException;
 import org.testng.Assert;
 import org.testng.annotations.Optional;
 import org.testng.annotations.Parameters;
 import org.testng.annotations.Test;
-
-import java.io.IOException;
 
 @Test(groups = "dictionary")
 public class TransactionAtomicTest extends DocumentDBBaseTest {
@@ -51,7 +50,9 @@ public class TransactionAtomicTest extends DocumentDBBaseTest {
     db2.open("admin", "admin");
 
     ODocument record1 = new ODocument();
-    record1.field("value", "This is the first version").save(db2.getClusterNameById(db2.getDefaultClusterId()));
+    record1
+        .field("value", "This is the first version")
+        .save(db2.getClusterNameById(db2.getDefaultClusterId()));
 
     // RE-READ THE RECORD
     record1.reload();
@@ -96,62 +97,55 @@ public class TransactionAtomicTest extends DocumentDBBaseTest {
   @Test
   public void testTransactionPreListenerRollback() throws IOException {
     ODocument record1 = new ODocument();
-    record1.field("value", "This is the first version").save(database.getClusterNameById(database.getDefaultClusterId()));
+    record1
+        .field("value", "This is the first version")
+        .save(database.getClusterNameById(database.getDefaultClusterId()));
 
-    final ODatabaseListener listener = new ODatabaseListener() {
+    final ODatabaseListener listener =
+        new ODatabaseListener() {
 
-      @Override
-      public void onAfterTxCommit(ODatabase iDatabase) {
-      }
+          @Override
+          public void onAfterTxCommit(ODatabase iDatabase) {}
 
-      @Override
-      public void onAfterTxRollback(ODatabase iDatabase) {
-      }
+          @Override
+          public void onAfterTxRollback(ODatabase iDatabase) {}
 
-      @Override
-      public void onBeforeTxBegin(ODatabase iDatabase) {
-      }
+          @Override
+          public void onBeforeTxBegin(ODatabase iDatabase) {}
 
-      @Override
-      public void onBeforeTxCommit(ODatabase iDatabase) {
-        throw new RuntimeException("Rollback test");
-      }
+          @Override
+          public void onBeforeTxCommit(ODatabase iDatabase) {
+            throw new RuntimeException("Rollback test");
+          }
 
-      @Override
-      public void onBeforeTxRollback(ODatabase iDatabase) {
-      }
+          @Override
+          public void onBeforeTxRollback(ODatabase iDatabase) {}
 
-      @Override
-      public void onClose(ODatabase iDatabase) {
-      }
+          @Override
+          public void onClose(ODatabase iDatabase) {}
 
-      @Override
-      public void onBeforeCommand(OCommandRequestText iCommand, OCommandExecutor executor) {
+          @Override
+          public void onBeforeCommand(OCommandRequestText iCommand, OCommandExecutor executor) {}
 
-      }
+          @Override
+          public void onAfterCommand(
+              OCommandRequestText iCommand, OCommandExecutor executor, Object result) {}
 
-      @Override
-      public void onAfterCommand(OCommandRequestText iCommand, OCommandExecutor executor, Object result) {
+          @Override
+          public void onCreate(ODatabase iDatabase) {}
 
-      }
+          @Override
+          public void onDelete(ODatabase iDatabase) {}
 
-      @Override
-      public void onCreate(ODatabase iDatabase) {
-      }
+          @Override
+          public void onOpen(ODatabase iDatabase) {}
 
-      @Override
-      public void onDelete(ODatabase iDatabase) {
-      }
-
-      @Override
-      public void onOpen(ODatabase iDatabase) {
-      }
-
-      @Override
-      public boolean onCorruptionRepairDatabase(ODatabase iDatabase, final String iReason, String iWhatWillbeFixed) {
-        return true;
-      }
-    };
+          @Override
+          public boolean onCorruptionRepairDatabase(
+              ODatabase iDatabase, final String iReason, String iWhatWillbeFixed) {
+            return true;
+          }
+        };
 
     database.registerListener(listener);
     database.begin();
@@ -176,7 +170,12 @@ public class TransactionAtomicTest extends DocumentDBBaseTest {
       fruitClass.createProperty("name", OType.STRING);
       fruitClass.createProperty("color", OType.STRING);
 
-      database.getMetadata().getSchema().getClass("Fruit").getProperty("color").createIndex(OClass.INDEX_TYPE.UNIQUE);
+      database
+          .getMetadata()
+          .getSchema()
+          .getClass("Fruit")
+          .getProperty("color")
+          .createIndex(OClass.INDEX_TYPE.UNIQUE);
     }
 
     Assert.assertEquals(database.countClusterElements("Fruit"), 0);
@@ -215,7 +214,9 @@ public class TransactionAtomicTest extends DocumentDBBaseTest {
   public void testTransactionalSQL() {
     long prev = database.countClusterElements("Account");
 
-    database.command(new OCommandSQL("transactional insert into Account set name = 'txTest1'")).execute();
+    database
+        .command(new OCommandSQL("transactional insert into Account set name = 'txTest1'"))
+        .execute();
 
     Assert.assertEquals(database.countClusterElements("Account"), prev + 1);
   }
@@ -226,7 +227,9 @@ public class TransactionAtomicTest extends DocumentDBBaseTest {
 
     database.begin();
 
-    database.command(new OCommandSQL("transactional insert into Account set name = 'txTest2'")).execute();
+    database
+        .command(new OCommandSQL("transactional insert into Account set name = 'txTest2'"))
+        .execute();
 
     Assert.assertTrue(database.getTransaction().isActive());
 

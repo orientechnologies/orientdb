@@ -15,11 +15,10 @@
  */
 package com.orientechnologies.orient.test.database.speed;
 
-import org.testng.annotations.Test;
-
 import com.orientechnologies.orient.core.serialization.serializer.record.binary.BytesContainer;
 import com.orientechnologies.orient.core.serialization.serializer.record.binary.OVarIntSerializer;
 import com.orientechnologies.orient.test.database.base.OrientMonoThreadTest;
+import org.testng.annotations.Test;
 
 @Test
 public class VarIntSpeedTest extends OrientMonoThreadTest {
@@ -36,8 +35,7 @@ public class VarIntSpeedTest extends OrientMonoThreadTest {
 
   @Override
   @Test(enabled = false)
-  public void init() {
-  }
+  public void init() {}
 
   @Override
   @Test(enabled = false)
@@ -56,6 +54,5 @@ public class VarIntSpeedTest extends OrientMonoThreadTest {
 
   @Override
   @Test(enabled = false)
-  public void deinit() {
-  }
+  public void deinit() {}
 }

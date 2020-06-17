@@ -3,16 +3,19 @@ package com.orientechnologies.orient.core.sql.parser;
 import com.orientechnologies.orient.core.sql.OCommandSQLParsingException;
 import com.orientechnologies.orient.core.sql.executor.PatternEdge;
 import com.orientechnologies.orient.core.sql.executor.PatternNode;
-
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.IdentityHashMap;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
-/**
- * Created by luigidellaquila on 28/07/15.
- */
+/** Created by luigidellaquila on 28/07/15. */
 public class Pattern {
   public Map<String, PatternNode> aliasToNode = new LinkedHashMap<String, PatternNode>();
-  public int                      numOfEdges  = 0;
+  public int numOfEdges = 0;
 
   public void addExpression(OMatchExpression expression) {
     PatternNode originNode = getOrCreateNode(expression.origin);
@@ -59,7 +62,8 @@ public class Pattern {
               "In current MATCH version, optional nodes must have at least one incoming pattern edge");
         }
         //        if (node.in.size() != 1) {
-        //          throw new OCommandSQLParsingException("In current MATCH version, optional nodes are allowed only as single terminal nodes. ");
+        //          throw new OCommandSQLParsingException("In current MATCH version, optional nodes
+        // are allowed only as single terminal nodes. ");
         //        }
       }
     }
@@ -72,7 +76,9 @@ public class Pattern {
    */
   public List<Pattern> getDisjointPatterns() {
     Map<PatternNode, String> reverseMap = new IdentityHashMap<>();
-    reverseMap.putAll(this.aliasToNode.entrySet().stream().collect(Collectors.toMap(x -> x.getValue(), x -> x.getKey())));
+    reverseMap.putAll(
+        this.aliasToNode.entrySet().stream()
+            .collect(Collectors.toMap(x -> x.getValue(), x -> x.getKey())));
 
     List<Pattern> result = new ArrayList<>();
     while (!reverseMap.isEmpty()) {

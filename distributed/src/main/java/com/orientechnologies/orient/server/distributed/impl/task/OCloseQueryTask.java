@@ -10,14 +10,11 @@ import com.orientechnologies.orient.server.distributed.ODistributedRequestId;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
 import com.orientechnologies.orient.server.distributed.ORemoteTaskFactory;
 import com.orientechnologies.orient.server.distributed.task.OAbstractRemoteTask;
-
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
 
-/**
- * Created by luigidellaquila on 28/06/17.
- */
+/** Created by luigidellaquila on 28/06/17. */
 public class OCloseQueryTask extends OAbstractRemoteTask {
 
   public static final int FACTORYID = 42;
@@ -28,8 +25,7 @@ public class OCloseQueryTask extends OAbstractRemoteTask {
     this.queryId = queryId;
   }
 
-  public OCloseQueryTask() {
-  }
+  public OCloseQueryTask() {}
 
   @Override
   public String getName() {
@@ -42,10 +38,17 @@ public class OCloseQueryTask extends OAbstractRemoteTask {
   }
 
   @Override
-  public Object execute(ODistributedRequestId requestId, OServer iServer, ODistributedServerManager iManager,
-      ODatabaseDocumentInternal database) throws Exception {
+  public Object execute(
+      ODistributedRequestId requestId,
+      OServer iServer,
+      ODistributedServerManager iManager,
+      ODatabaseDocumentInternal database)
+      throws Exception {
 
-    DistributedQueryContext ctx = ((OSharedContextEmbedded) database.getSharedContext()).getActiveDistributedQueries().get(queryId);
+    DistributedQueryContext ctx =
+        ((OSharedContextEmbedded) database.getSharedContext())
+            .getActiveDistributedQueries()
+            .get(queryId);
     if (ctx == null) {
       throw new ODistributedException("Invalid query ID: " + queryId);
     }

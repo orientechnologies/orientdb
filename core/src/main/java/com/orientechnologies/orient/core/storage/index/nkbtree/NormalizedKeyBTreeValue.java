@@ -7,7 +7,10 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODura
 public class NormalizedKeyBTreeValue<K> extends ODurableComponent implements NormalizedKeyBTree<K> {
   private final String nullFileExtension;
 
-  public NormalizedKeyBTreeValue(final String name, final String dataFileExtension, final String nullFileExtension,
+  public NormalizedKeyBTreeValue(
+      final String name,
+      final String dataFileExtension,
+      final String nullFileExtension,
       final OAbstractPaginatedStorage storage) {
     super(storage, name, dataFileExtension, name + dataFileExtension);
     acquireExclusiveLock();
@@ -24,7 +27,5 @@ public class NormalizedKeyBTreeValue<K> extends ODurableComponent implements Nor
   }
 
   @Override
-  public void put(final OCompositeKey key, final byte[] value) {
-
-  }
+  public void put(final OCompositeKey key, final byte[] value) {}
 }

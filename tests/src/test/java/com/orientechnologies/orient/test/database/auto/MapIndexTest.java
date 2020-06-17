@@ -7,18 +7,24 @@ import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.orientechnologies.orient.test.domain.whiz.Mapper;
-import org.testng.Assert;
-import org.testng.annotations.*;
-import org.testng.annotations.Optional;
-
-import java.util.*;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
 import java.util.stream.Stream;
+import org.testng.Assert;
+import org.testng.annotations.AfterClass;
+import org.testng.annotations.AfterMethod;
+import org.testng.annotations.BeforeClass;
+import org.testng.annotations.Optional;
+import org.testng.annotations.Parameters;
+import org.testng.annotations.Test;
 
 /**
  * @author LomakiA <a href="mailto:a.lomakin@orientechnologies.com">Andrey Lomakin</a>
  * @since 21.12.11
  */
-@Test(groups = { "index" })
+@Test(groups = {"index"})
 public class MapIndexTest extends ObjectDBBaseTest {
 
   @Parameters(value = "url")
@@ -28,7 +34,9 @@ public class MapIndexTest extends ObjectDBBaseTest {
 
   @BeforeClass
   public void setupSchema() {
-    database.getEntityManager().registerEntityClasses("com.orientechnologies.orient.test.domain.whiz");
+    database
+        .getEntityManager()
+        .registerEntityClasses("com.orientechnologies.orient.test.domain.whiz");
 
     final OClass mapper = database.getMetadata().getSchema().getClass("Mapper");
     mapper.createProperty("id", OType.STRING);
@@ -321,7 +329,9 @@ public class MapIndexTest extends ObjectDBBaseTest {
     mapper.setIntMap(map);
     mapper = database.save(mapper);
 
-    database.command(new OCommandSQL("UPDATE " + mapper.getId() + " put intMap = 'key3', 30")).execute();
+    database
+        .command(new OCommandSQL("UPDATE " + mapper.getId() + " put intMap = 'key3', 30"))
+        .execute();
 
     OIndex keyIndex = getIndex("mapIndexTestKey");
     Assert.assertEquals(keyIndex.getInternal().size(), 3);
@@ -471,7 +481,9 @@ public class MapIndexTest extends ObjectDBBaseTest {
     mapper.setIntMap(map);
     mapper = database.save(mapper);
 
-    database.command(new OCommandSQL("UPDATE " + mapper.getId() + " put intMap = 'key2', 40")).execute();
+    database
+        .command(new OCommandSQL("UPDATE " + mapper.getId() + " put intMap = 'key2', 40"))
+        .execute();
 
     OIndex keyIndex = getIndex("mapIndexTestKey");
     Assert.assertEquals(keyIndex.getInternal().size(), 2);
@@ -621,7 +633,9 @@ public class MapIndexTest extends ObjectDBBaseTest {
     mapper.setIntMap(map);
     mapper = database.save(mapper);
 
-    database.command(new OCommandSQL("UPDATE " + mapper.getId() + " remove intMap = 'key2'")).execute();
+    database
+        .command(new OCommandSQL("UPDATE " + mapper.getId() + " remove intMap = 'key2'"))
+        .execute();
 
     OIndex keyIndex = getIndex("mapIndexTestKey");
     Assert.assertEquals(keyIndex.getInternal().size(), 2);
@@ -865,15 +879,17 @@ public class MapIndexTest extends ObjectDBBaseTest {
     mapper.setIntMap(map);
     database.save(mapper);
 
-    final List<Mapper> resultByKey = database
-        .query(new OSQLSynchQuery<Mapper>("select * from Mapper where intMap containskey ?"), "key1");
+    final List<Mapper> resultByKey =
+        database.query(
+            new OSQLSynchQuery<Mapper>("select * from Mapper where intMap containskey ?"), "key1");
     Assert.assertNotNull(resultByKey);
     Assert.assertEquals(resultByKey.size(), 1);
 
     Assert.assertEquals(map, resultByKey.get(0).getIntMap());
 
-    final List<Mapper> resultByValue = database
-        .query(new OSQLSynchQuery<Mapper>("select * from Mapper where intMap containsvalue ?"), 10);
+    final List<Mapper> resultByValue =
+        database.query(
+            new OSQLSynchQuery<Mapper>("select * from Mapper where intMap containsvalue ?"), 10);
     Assert.assertNotNull(resultByValue);
     Assert.assertEquals(resultByValue.size(), 1);
 

@@ -15,7 +15,7 @@
  *  *  limitations under the License.
  *  *
  *  * For more information: http://orientdb.com
- *  
+ *
  */
 
 package com.orientechnologies.orient.core.db.record;
@@ -25,8 +25,11 @@ import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import org.junit.Assert;import org.junit.After; import org.junit.Before; import org.junit.Test;
 import java.util.Map;
+import org.junit.After;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Test;
 
 public class DocumentTest {
   private ODatabaseDocumentTx db;
@@ -87,7 +90,6 @@ public class DocumentTest {
     doc.setFieldType("some", OType.STRING);
     Assert.assertEquals(doc.fieldType("some"), OType.STRING);
     Assert.assertEquals(doc.field("some"), "3");
-
   }
 
   @Test
@@ -112,5 +114,4 @@ public class DocumentTest {
 
     Assert.assertEquals(amountPlusVat.longValue(), 360l);
   }
-
 }

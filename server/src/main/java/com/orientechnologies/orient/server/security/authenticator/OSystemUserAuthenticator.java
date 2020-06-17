@@ -44,15 +44,16 @@ public class OSystemUserAuthenticator extends OSecurityAuthenticatorAbstract {
   }
 
   // OSecurityComponent
-  public void config(final OServer oServer, final OServerConfigurationManager serverCfg, final ODocument jsonConfig) {
+  public void config(
+      final OServer oServer,
+      final OServerConfigurationManager serverCfg,
+      final ODocument jsonConfig) {
     super.config(oServer, serverCfg, jsonConfig);
-
   }
 
   // OSecurityComponent
   // Called on removal of the authenticator.
-  public void dispose() {
-  }
+  public void dispose() {}
 
   // OSecurityAuthenticator
   // Returns the actual username if successful, null otherwise.
@@ -66,8 +67,7 @@ public class OSystemUserAuthenticator extends OSecurityAuthenticatorAbstract {
         OUser user = getServer().getSecurity().getSystemUser(username, null);
 
         if (user != null && user.getAccountStatus() == OSecurityUser.STATUSES.ACTIVE) {
-          if (user.checkPassword(password))
-            principal = username;
+          if (user.checkPassword(password)) principal = username;
         }
       }
     } catch (Exception ex) {
@@ -79,10 +79,9 @@ public class OSystemUserAuthenticator extends OSecurityAuthenticatorAbstract {
 
   // OSecurityAuthenticator
   // If not supported by the authenticator, return false.
-  // Checks to see if a 
+  // Checks to see if a
   public boolean isAuthorized(final String username, final String resource) {
-    if (username == null || resource == null)
-      return false;
+    if (username == null || resource == null) return false;
 
     try {
       if (getServer() != null) {

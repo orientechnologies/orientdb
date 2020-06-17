@@ -4,34 +4,31 @@ import com.orientechnologies.orient.core.annotation.OId;
 import com.orientechnologies.orient.core.annotation.OVersion;
 
 public class Country {
-	@OId
-	private Object	id;
+  @OId private Object id;
 
-	@OVersion
-	private Object	version;
+  @OVersion private Object version;
 
-	private String	name;
+  private String name;
 
-	public Country() {
-	}
+  public Country() {}
 
-	public Country(String iName) {
-		name = iName;
-	}
+  public Country(String iName) {
+    name = iName;
+  }
 
-	public String getName() {
-		return name;
-	}
+  public String getName() {
+    return name;
+  }
 
-	public void setName(String name) {
-		this.name = name;
-	}
+  public void setName(String name) {
+    this.name = name;
+  }
 
-	public Object getId() {
-		return id;
-	}
+  public Object getId() {
+    return id;
+  }
 
-	public Object getVersion() {
-		return version;
-	}
+  public Object getVersion() {
+    return version;
+  }
 }

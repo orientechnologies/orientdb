@@ -1,17 +1,16 @@
 package com.orientechnologies.orient.graph;
 
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
+
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.tinkerpop.blueprints.impls.orient.OrientGraph;
 import com.tinkerpop.blueprints.impls.orient.OrientGraphFactory;
 import com.tinkerpop.blueprints.impls.orient.OrientVertex;
+import java.util.List;
 import org.junit.BeforeClass;
 import org.junit.Test;
-
-import java.util.List;
-
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
 
 public class ODatabaseFailDueCloseTest {
 
@@ -66,7 +65,8 @@ public class ODatabaseFailDueCloseTest {
     final OrientGraph graph = pool.getTx();
     try {
 
-      String queryText = "SELECT @rid as rid, localName FROM Person WHERE ( 'milano' IN out('lives').localName OR 'roma' IN out('lives').localName ) ORDER BY age ASC";
+      String queryText =
+          "SELECT @rid as rid, localName FROM Person WHERE ( 'milano' IN out('lives').localName OR 'roma' IN out('lives').localName ) ORDER BY age ASC";
       OSQLSynchQuery<ODocument> query = new OSQLSynchQuery<ODocument>(queryText);
       List<ODocument> results = graph.getRawGraph().query(query);
       assertNotNull(results);

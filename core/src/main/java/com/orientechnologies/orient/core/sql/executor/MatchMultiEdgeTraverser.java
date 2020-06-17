@@ -3,24 +3,32 @@ package com.orientechnologies.orient.core.sql.executor;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
-import com.orientechnologies.orient.core.sql.parser.*;
+import com.orientechnologies.orient.core.sql.parser.OMatchFilter;
+import com.orientechnologies.orient.core.sql.parser.OMatchPathItem;
+import com.orientechnologies.orient.core.sql.parser.OMatchPathItemFirst;
+import com.orientechnologies.orient.core.sql.parser.OMethodCall;
+import com.orientechnologies.orient.core.sql.parser.OMultiMatchPathItem;
+import com.orientechnologies.orient.core.sql.parser.OWhereClause;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Objects;
 
-import java.util.*;
-
-/**
- * Created by luigidellaquila on 14/10/16.
- */
+/** Created by luigidellaquila on 14/10/16. */
 public class MatchMultiEdgeTraverser extends MatchEdgeTraverser {
   public MatchMultiEdgeTraverser(OResult lastUpstreamRecord, EdgeTraversal edge) {
     super(lastUpstreamRecord, edge);
   }
 
-  protected Iterable<OResultInternal> traversePatternEdge(OIdentifiable startingPoint, OCommandContext iCommandContext) {
+  protected Iterable<OResultInternal> traversePatternEdge(
+      OIdentifiable startingPoint, OCommandContext iCommandContext) {
 
     Iterable possibleResults = null;
     //    if (this.edge.edge.item.getFilter() != null) {
     //      String alias = this.edge.edge.item.getFilter().getAlias();
-    //      Object matchedNodes = iCommandContext.getVariable(MatchPrefetchStep.PREFETCHED_MATCH_ALIAS_PREFIX + alias);
+    //      Object matchedNodes =
+    // iCommandContext.getVariable(MatchPrefetchStep.PREFETCHED_MATCH_ALIAS_PREFIX + alias);
     //      if (matchedNodes != null) {
     //        if (matchedNodes instanceof Iterable) {
     //          possibleResults = (Iterable) matchedNodes;
@@ -40,7 +48,8 @@ public class MatchMultiEdgeTraverser extends MatchEdgeTraverser {
     for (OMatchPathItem sub : item.getItems()) {
       List<OResultInternal> rightSide = new ArrayList<>();
       for (Object o : nextStep) {
-        OWhereClause whileCond = sub.getFilter() == null ? null : sub.getFilter().getWhileCondition();
+        OWhereClause whileCond =
+            sub.getFilter() == null ? null : sub.getFilter().getWhileCondition();
 
         OMethodCall method = sub.getMethod();
         if (sub instanceof OMatchPathItemFirst) {
@@ -53,15 +62,22 @@ public class MatchMultiEdgeTraverser extends MatchEdgeTraverser {
             current = ((OResult) current).getElement().orElse(null);
           }
           MatchEdgeTraverser subtraverser = new MatchEdgeTraverser(null, sub);
-          subtraverser.executeTraversal(iCommandContext, sub, (OIdentifiable) current, 0, null).forEach(x -> rightSide.add(x));
+          subtraverser
+              .executeTraversal(iCommandContext, sub, (OIdentifiable) current, 0, null)
+              .forEach(x -> rightSide.add(x));
 
         } else {
           iCommandContext.setVariable("$current", o);
           Object nextSteps = method.execute(o, possibleResults, iCommandContext);
           if (nextSteps instanceof Collection) {
-            ((Collection) nextSteps).stream().map(x -> toOResultInternal(x)).filter(Objects::nonNull)
-                .filter(x -> matchesCondition((OResultInternal) x, sub.getFilter(), iCommandContext))
-                .forEach(i -> rightSide.add((OResultInternal) i));
+            ((Collection) nextSteps)
+                .stream()
+                    .map(x -> toOResultInternal(x))
+                    .filter(Objects::nonNull)
+                    .filter(
+                        x ->
+                            matchesCondition((OResultInternal) x, sub.getFilter(), iCommandContext))
+                    .forEach(i -> rightSide.add((OResultInternal) i));
           } else if (nextSteps instanceof OIdentifiable) {
             OResultInternal res = new OResultInternal((OIdentifiable) nextSteps);
             if (matchesCondition(res, sub.getFilter(), iCommandContext)) {
@@ -74,7 +90,8 @@ public class MatchMultiEdgeTraverser extends MatchEdgeTraverser {
           } else if (nextSteps instanceof Iterable) {
             for (Object step : (Iterable) nextSteps) {
               OResultInternal converted = toOResultInternal(step);
-              if (converted != null && matchesCondition(converted, sub.getFilter(), iCommandContext)) {
+              if (converted != null
+                  && matchesCondition(converted, sub.getFilter(), iCommandContext)) {
                 rightSide.add(converted);
               }
             }
@@ -82,7 +99,8 @@ public class MatchMultiEdgeTraverser extends MatchEdgeTraverser {
             Iterator iterator = (Iterator) nextSteps;
             while (iterator.hasNext()) {
               OResultInternal converted = toOResultInternal(iterator.next());
-              if (converted != null && matchesCondition(converted, sub.getFilter(), iCommandContext)) {
+              if (converted != null
+                  && matchesCondition(converted, sub.getFilter(), iCommandContext)) {
                 rightSide.add(converted);
               }
             }
@@ -94,7 +112,8 @@ public class MatchMultiEdgeTraverser extends MatchEdgeTraverser {
     }
 
     iCommandContext.setVariable("$current", oldCurrent);
-    //    return (qR instanceof Iterable) ? (Iterable) qR : Collections.singleton((OIdentifiable) qR);
+    //    return (qR instanceof Iterable) ? (Iterable) qR : Collections.singleton((OIdentifiable)
+    // qR);
     return (Iterable) result;
   }
 

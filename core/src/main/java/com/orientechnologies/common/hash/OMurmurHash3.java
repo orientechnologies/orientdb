@@ -1,28 +1,26 @@
 /*
-  *
-  *  *  Copyright 2010-2016 OrientDB LTD (http://orientdb.com)
-  *  *
-  *  *  Licensed under the Apache License, Version 2.0 (the "License");
-  *  *  you may not use this file except in compliance with the License.
-  *  *  You may obtain a copy of the License at
-  *  *
-  *  *       http://www.apache.org/licenses/LICENSE-2.0
-  *  *
-  *  *  Unless required by applicable law or agreed to in writing, software
-  *  *  distributed under the License is distributed on an "AS IS" BASIS,
-  *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-  *  *  See the License for the specific language governing permissions and
-  *  *  limitations under the License.
-  *  *
-  *  * For more information: http://orientdb.com
-  *
-  */
+ *
+ *  *  Copyright 2010-2016 OrientDB LTD (http://orientdb.com)
+ *  *
+ *  *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  *  you may not use this file except in compliance with the License.
+ *  *  You may obtain a copy of the License at
+ *  *
+ *  *       http://www.apache.org/licenses/LICENSE-2.0
+ *  *
+ *  *  Unless required by applicable law or agreed to in writing, software
+ *  *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  *  See the License for the specific language governing permissions and
+ *  *  limitations under the License.
+ *  *
+ *  * For more information: http://orientdb.com
+ *
+ */
 
 package com.orientechnologies.common.hash;
 
-/**
- * @since 13.08.12
- */
+/** @since 13.08.12 */
 public class OMurmurHash3 {
   private static class State {
     private long h1;
@@ -36,10 +34,14 @@ public class OMurmurHash3 {
   }
 
   static long getblock(byte[] key, int i) {
-    return (((long) key[i + 0] & 0x00000000000000FFL)) | (((long) key[i + 1] & 0x00000000000000FFL) << 8)
-        | (((long) key[i + 2] & 0x00000000000000FFL) << 16) | (((long) key[i + 3] & 0x00000000000000FFL) << 24)
-        | (((long) key[i + 4] & 0x00000000000000FFL) << 32) | (((long) key[i + 5] & 0x00000000000000FFL) << 40)
-        | (((long) key[i + 6] & 0x00000000000000FFL) << 48) | (((long) key[i + 7] & 0x00000000000000FFL) << 56);
+    return (((long) key[i + 0] & 0x00000000000000FFL))
+        | (((long) key[i + 1] & 0x00000000000000FFL) << 8)
+        | (((long) key[i + 2] & 0x00000000000000FFL) << 16)
+        | (((long) key[i + 3] & 0x00000000000000FFL) << 24)
+        | (((long) key[i + 4] & 0x00000000000000FFL) << 32)
+        | (((long) key[i + 5] & 0x00000000000000FFL) << 40)
+        | (((long) key[i + 6] & 0x00000000000000FFL) << 48)
+        | (((long) key[i + 7] & 0x00000000000000FFL) << 56);
   }
 
   static void bmix(State state) {
@@ -96,38 +98,38 @@ public class OMurmurHash3 {
     int tail = (key.length >>> 4) << 4;
 
     switch (key.length & 15) {
-    case 15:
-      state.k2 ^= (long) key[tail + 14] << 48;
-    case 14:
-      state.k2 ^= (long) key[tail + 13] << 40;
-    case 13:
-      state.k2 ^= (long) key[tail + 12] << 32;
-    case 12:
-      state.k2 ^= (long) key[tail + 11] << 24;
-    case 11:
-      state.k2 ^= (long) key[tail + 10] << 16;
-    case 10:
-      state.k2 ^= (long) key[tail + 9] << 8;
-    case 9:
-      state.k2 ^= (long) key[tail + 8];
+      case 15:
+        state.k2 ^= (long) key[tail + 14] << 48;
+      case 14:
+        state.k2 ^= (long) key[tail + 13] << 40;
+      case 13:
+        state.k2 ^= (long) key[tail + 12] << 32;
+      case 12:
+        state.k2 ^= (long) key[tail + 11] << 24;
+      case 11:
+        state.k2 ^= (long) key[tail + 10] << 16;
+      case 10:
+        state.k2 ^= (long) key[tail + 9] << 8;
+      case 9:
+        state.k2 ^= (long) key[tail + 8];
 
-    case 8:
-      state.k1 ^= (long) key[tail + 7] << 56;
-    case 7:
-      state.k1 ^= (long) key[tail + 6] << 48;
-    case 6:
-      state.k1 ^= (long) key[tail + 5] << 40;
-    case 5:
-      state.k1 ^= (long) key[tail + 4] << 32;
-    case 4:
-      state.k1 ^= (long) key[tail + 3] << 24;
-    case 3:
-      state.k1 ^= (long) key[tail + 2] << 16;
-    case 2:
-      state.k1 ^= (long) key[tail + 1] << 8;
-    case 1:
-      state.k1 ^= (long) key[tail + 0];
-      bmix(state);
+      case 8:
+        state.k1 ^= (long) key[tail + 7] << 56;
+      case 7:
+        state.k1 ^= (long) key[tail + 6] << 48;
+      case 6:
+        state.k1 ^= (long) key[tail + 5] << 40;
+      case 5:
+        state.k1 ^= (long) key[tail + 4] << 32;
+      case 4:
+        state.k1 ^= (long) key[tail + 3] << 24;
+      case 3:
+        state.k1 ^= (long) key[tail + 2] << 16;
+      case 2:
+        state.k1 ^= (long) key[tail + 1] << 8;
+      case 1:
+        state.k1 ^= (long) key[tail + 0];
+        bmix(state);
     }
 
     state.h2 ^= key.length;

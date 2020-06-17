@@ -25,13 +25,12 @@ import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.command.OCommandContext.TIMEOUT_STRATEGY;
 import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
-
 import java.util.Iterator;
 import java.util.Map;
 
 /**
  * Command wraps the command request and return wrapped Graph Element such as Vertex and Edge
- * 
+ *
  * @author Luca Garulli (l.garulli--(at)--orientdb.com) (http://orientdb.com)
  */
 public class OrientGraphCommand implements OCommandRequest {
@@ -116,5 +115,4 @@ public class OrientGraphCommand implements OCommandRequest {
     underlying.setContext(iContext);
     return this;
   }
-
 }

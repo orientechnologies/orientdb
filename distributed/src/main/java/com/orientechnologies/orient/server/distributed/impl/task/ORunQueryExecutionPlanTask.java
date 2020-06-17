@@ -9,38 +9,47 @@ import com.orientechnologies.orient.core.db.OSharedContextEmbedded;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentEmbedded;
 import com.orientechnologies.orient.core.serialization.serializer.record.binary.BytesContainer;
 import com.orientechnologies.orient.core.serialization.serializer.result.binary.OResultSerializerNetwork;
-import com.orientechnologies.orient.core.sql.executor.*;
+import com.orientechnologies.orient.core.sql.executor.OExecutionPlan;
+import com.orientechnologies.orient.core.sql.executor.OInternalExecutionPlan;
+import com.orientechnologies.orient.core.sql.executor.OResult;
+import com.orientechnologies.orient.core.sql.executor.OResultInternal;
+import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import com.orientechnologies.orient.core.sql.parser.OLocalResultSetLifecycleDecorator;
 import com.orientechnologies.orient.server.OServer;
-import com.orientechnologies.orient.server.distributed.*;
+import com.orientechnologies.orient.server.distributed.ODistributedException;
+import com.orientechnologies.orient.server.distributed.ODistributedRequestId;
+import com.orientechnologies.orient.server.distributed.ODistributedResponse;
+import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
+import com.orientechnologies.orient.server.distributed.ORemoteTaskFactory;
 import com.orientechnologies.orient.server.distributed.impl.ODatabaseDocumentDistributed;
 import com.orientechnologies.orient.server.distributed.impl.sql.executor.ODistributedResultSet;
 import com.orientechnologies.orient.server.distributed.task.OAbstractRemoteTask;
-
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
 
-/**
- * Created by luigidellaquila on 23/06/17.
- */
+/** Created by luigidellaquila on 23/06/17. */
 public class ORunQueryExecutionPlanTask extends OAbstractRemoteTask {
 
   public static final int FACTORYID = 40;
 
-  private String              nodeName;
-  private OExecutionPlan      plan;
+  private String nodeName;
+  private OExecutionPlan plan;
   private Map<Object, Object> inputParams;
 
-  public ORunQueryExecutionPlanTask(OExecutionPlan executionPlan, Map<Object, Object> inputParameters, String nodeName) {
+  public ORunQueryExecutionPlanTask(
+      OExecutionPlan executionPlan, Map<Object, Object> inputParameters, String nodeName) {
     this.plan = executionPlan;
     this.inputParams = inputParameters;
     this.nodeName = nodeName;
   }
 
-  public ORunQueryExecutionPlanTask() {
-  }
+  public ORunQueryExecutionPlanTask() {}
 
   @Override
   public String getName() {
@@ -53,21 +62,28 @@ public class ORunQueryExecutionPlanTask extends OAbstractRemoteTask {
   }
 
   @Override
-  public Object execute(ODistributedRequestId requestId, OServer iServer, ODistributedServerManager iManager,
-      ODatabaseDocumentInternal database) throws Exception {
+  public Object execute(
+      ODistributedRequestId requestId,
+      OServer iServer,
+      ODistributedServerManager iManager,
+      ODatabaseDocumentInternal database)
+      throws Exception {
 
     ODatabaseDocumentInternal prev = ODatabaseRecordThreadLocal.instance().getIfDefined();
     try {
       ODatabaseDocumentInternal db = database.copy();
       db.activateOnCurrentThread();
-      OLocalResultSetLifecycleDecorator result = ((ODatabaseDocumentEmbedded) db).query(plan, inputParams);
+      OLocalResultSetLifecycleDecorator result =
+          ((ODatabaseDocumentEmbedded) db).query(plan, inputParams);
 
       DistributedQueryContext context = new DistributedQueryContext();
       context.setDb(db);
       context.setResultSet(result);
       context.setQueryId(String.valueOf(UUID.randomUUID()));
 
-      ((OSharedContextEmbedded) db.getSharedContext()).getActiveDistributedQueries().put(context.getQueryId(), context);
+      ((OSharedContextEmbedded) db.getSharedContext())
+          .getActiveDistributedQueries()
+          .put(context.getQueryId(), context);
       OResultInternal serialized = new OResultInternal();
 
       serialized.setProperty("queryId", context.getQueryId());
@@ -118,7 +134,6 @@ public class ORunQueryExecutionPlanTask extends OAbstractRemoteTask {
     container.fitBytes();
     out.write(container.bytes.length);
     out.write(container.bytes);
-
   }
 
   private Map<String, Object> convertParams(Map<Object, Object> inputParams) {
@@ -153,7 +168,8 @@ public class ORunQueryExecutionPlanTask extends OAbstractRemoteTask {
       internalPlan = (OInternalExecutionPlan) Class.forName(className).newInstance();
       internalPlan.deserialize(serializedExecutionPlan);
     } catch (Exception e) {
-      throw OException.wrapException(new ODistributedException("Cannot create execution plan: " + className), e);
+      throw OException.wrapException(
+          new ODistributedException("Cannot create execution plan: " + className), e);
     }
     return internalPlan;
   }
@@ -166,5 +182,4 @@ public class ORunQueryExecutionPlanTask extends OAbstractRemoteTask {
   public int getFactoryId() {
     return FACTORYID;
   }
-
 }

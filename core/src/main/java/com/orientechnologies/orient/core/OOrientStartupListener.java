@@ -21,9 +21,8 @@ package com.orientechnologies.orient.core;
 
 /**
  * Listener Interface to catch Orient startup event.
- * 
+ *
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
- * 
  */
 public interface OOrientStartupListener {
   public void onStartup();

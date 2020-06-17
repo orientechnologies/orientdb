@@ -1,35 +1,36 @@
-//package com.orientechnologies.orient.core.storage.index.sbtreebonsai.local;
+// package com.orientechnologies.orient.core.storage.index.sbtreebonsai.local;
 //
-//import com.orientechnologies.common.serialization.types.OIntegerSerializer;
-//import com.orientechnologies.orient.core.config.OGlobalConfiguration;
-//import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
-//import com.orientechnologies.orient.core.db.record.OIdentifiable;
-//import com.orientechnologies.orient.core.serialization.serializer.binary.impl.OLinkSerializer;
-//import com.orientechnologies.orient.core.storage.OStorage;
-//import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
-//import com.orientechnologies.orient.core.storage.cache.OReadCache;
-//import com.orientechnologies.orient.core.storage.cache.OWriteCache;
-//import com.orientechnologies.orient.core.storage.cache.local.OWOWCache;
-//import com.orientechnologies.orient.core.storage.fs.OFileClassic;
-//import com.orientechnologies.orient.core.storage.cluster.OClusterPage;
-//import com.orientechnologies.orient.core.storage.disk.OLocalPaginatedStorage;
-//import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperationsManager;
-//import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurablePage;
-//import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.*;
-//import org.junit.*;
+// import com.orientechnologies.common.serialization.types.OIntegerSerializer;
+// import com.orientechnologies.orient.core.config.OGlobalConfiguration;
+// import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+// import com.orientechnologies.orient.core.db.record.OIdentifiable;
+// import com.orientechnologies.orient.core.serialization.serializer.binary.impl.OLinkSerializer;
+// import com.orientechnologies.orient.core.storage.OStorage;
+// import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
+// import com.orientechnologies.orient.core.storage.cache.OReadCache;
+// import com.orientechnologies.orient.core.storage.cache.OWriteCache;
+// import com.orientechnologies.orient.core.storage.cache.local.OWOWCache;
+// import com.orientechnologies.orient.core.storage.fs.OFileClassic;
+// import com.orientechnologies.orient.core.storage.cluster.OClusterPage;
+// import com.orientechnologies.orient.core.storage.disk.OLocalPaginatedStorage;
+// import
+// com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperationsManager;
+// import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurablePage;
+// import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.*;
+// import org.junit.*;
 //
-//import java.io.File;
-//import java.io.IOException;
-//import java.io.RandomAccessFile;
-//import java.util.ArrayList;
-//import java.util.Arrays;
-//import java.util.List;
+// import java.io.File;
+// import java.io.IOException;
+// import java.io.RandomAccessFile;
+// import java.util.ArrayList;
+// import java.util.Arrays;
+// import java.util.List;
 //
-///**
+/// **
 // * @author Andrey Lomakin (a.lomakin-at-orientdb.com)
 // * @since 8/27/13
 // */
-//public class OSBTreeBonsaiWALTestIT extends OSBTreeBonsaiLocalTestIT {
+// public class OSBTreeBonsaiWALTestIT extends OSBTreeBonsaiLocalTestIT {
 //  static {
 //    OGlobalConfiguration.FILE_LOCK.setValue(false);
 //  }
@@ -115,7 +116,8 @@
 //    actualStorage.synch();
 //    writeAheadLog.addCutTillLimit(writeAheadLog.getFlushedLsn());
 //
-//    sbTree = new OSBTreeBonsaiLocal<Integer, OIdentifiable>("actualSBTree", ".sbt", actualStorage);
+//    sbTree = new OSBTreeBonsaiLocal<Integer, OIdentifiable>("actualSBTree", ".sbt",
+// actualStorage);
 //    sbTree.create(OIntegerSerializer.INSTANCE, OLinkSerializer.INSTANCE);
 //  }
 //
@@ -138,7 +140,8 @@
 //
 //    expectedDatabaseDocumentTx.create();
 //
-//    final OLocalPaginatedStorage expectedStorage = (OLocalPaginatedStorage) expectedDatabaseDocumentTx.getStorage();
+//    final OLocalPaginatedStorage expectedStorage = (OLocalPaginatedStorage)
+// expectedDatabaseDocumentTx.getStorage();
 //    expectedWriteCache = expectedStorage.getWriteCache();
 //    expectedReadCache = expectedStorage.getReadCache();
 //
@@ -242,7 +245,8 @@
 //  }
 //
 //  private void assertFileRestoreFromWAL() throws IOException {
-//    OWOWCache actualWriteCache = (OWOWCache) ((OLocalPaginatedStorage) (databaseDocumentTx.getStorage())).getWriteCache();
+//    OWOWCache actualWriteCache = (OWOWCache) ((OLocalPaginatedStorage)
+// (databaseDocumentTx.getStorage())).getWriteCache();
 //
 //    final long sbtreeFileId = actualWriteCache.fileIdByName(sbTree.getName() + ".sbt");
 //    final String nativeSBTreeFileName = actualWriteCache.nativeFileNameById(sbtreeFileId);
@@ -255,7 +259,8 @@
 //    restoreDataFromWAL();
 //
 //    final long nativeExpectedSBTreeFileId = expectedWriteCache.fileIdByName("expectedSBTree.sbt");
-//    final String nativeExpectedSBTreeFileName = ((OWOWCache) expectedWriteCache).nativeFileNameById(nativeExpectedSBTreeFileId);
+//    final String nativeExpectedSBTreeFileName = ((OWOWCache)
+// expectedWriteCache).nativeFileNameById(nativeExpectedSBTreeFileId);
 //
 //    expectedDatabaseDocumentTx.activateOnCurrentThread();
 //    expectedDatabaseDocumentTx.close();
@@ -268,7 +273,8 @@
 //  }
 //
 //  private void restoreDataFromWAL() throws IOException {
-//    ODiskWriteAheadLog log = new ODiskWriteAheadLog(4, -1, 10 * 1024L * OWALPage.PAGE_SIZE, null, false, actualStorage,
+//    ODiskWriteAheadLog log = new ODiskWriteAheadLog(4, -1, 10 * 1024L * OWALPage.PAGE_SIZE, null,
+// false, actualStorage,
 //        16 * OWALPage.PAGE_SIZE, 120);
 //    OLogSequenceNumber lsn = log.begin();
 //
@@ -287,23 +293,28 @@
 //        atomicChangeIsProcessed = false;
 //
 //        for (OWALRecord restoreRecord : atomicUnit) {
-//          if (restoreRecord instanceof OAtomicUnitStartRecord || restoreRecord instanceof OAtomicUnitEndRecord
+//          if (restoreRecord instanceof OAtomicUnitStartRecord || restoreRecord instanceof
+// OAtomicUnitEndRecord
 //              || restoreRecord instanceof ONonTxOperationPerformedWALRecord)
 //            continue;
 //
 //          if (restoreRecord instanceof OFileCreatedWALRecord) {
-//            final OFileCreatedWALRecord fileCreatedCreatedRecord = (OFileCreatedWALRecord) restoreRecord;
-//            final String fileName = fileCreatedCreatedRecord.getFileName().replace("actualSBTree", "expectedSBTree");
+//            final OFileCreatedWALRecord fileCreatedCreatedRecord = (OFileCreatedWALRecord)
+// restoreRecord;
+//            final String fileName = fileCreatedCreatedRecord.getFileName().replace("actualSBTree",
+// "expectedSBTree");
 //
 //            if (!expectedWriteCache.exists(fileName))
-//              expectedReadCache.addFile(fileName, fileCreatedCreatedRecord.getFileId(), expectedWriteCache);
+//              expectedReadCache.addFile(fileName, fileCreatedCreatedRecord.getFileId(),
+// expectedWriteCache);
 //          } else {
 //            final OUpdatePageRecord updatePageRecord = (OUpdatePageRecord) restoreRecord;
 //
 //            final long fileId = updatePageRecord.getFileId();
 //            final long pageIndex = updatePageRecord.getPageIndex();
 //
-//            OCacheEntry cacheEntry = expectedReadCache.loadForWrite(fileId, pageIndex, true, expectedWriteCache, 1, false);
+//            OCacheEntry cacheEntry = expectedReadCache.loadForWrite(fileId, pageIndex, true,
+// expectedWriteCache, 1, false);
 //            if (cacheEntry == null) {
 //              do {
 //                if (cacheEntry != null)
@@ -326,8 +337,10 @@
 //        }
 //        atomicUnit.clear();
 //      } else {
-//        Assert.assertTrue(walRecord instanceof OUpdatePageRecord || walRecord instanceof ONonTxOperationPerformedWALRecord
-//            || walRecord instanceof OFileCreatedWALRecord || walRecord instanceof OFuzzyCheckpointStartRecord
+//        Assert.assertTrue(walRecord instanceof OUpdatePageRecord || walRecord instanceof
+// ONonTxOperationPerformedWALRecord
+//            || walRecord instanceof OFileCreatedWALRecord || walRecord instanceof
+// OFuzzyCheckpointStartRecord
 //            || walRecord instanceof OFuzzyCheckpointEndRecord);
 //      }
 //
@@ -338,10 +351,12 @@
 //    log.close();
 //  }
 //
-//  private void assertFileContentIsTheSame(String expectedBTreeFile, String actualBTreeFile) throws IOException {
+//  private void assertFileContentIsTheSame(String expectedBTreeFile, String actualBTreeFile) throws
+// IOException {
 //    File expectedFile = new File(expectedStorageDir, expectedBTreeFile);
 //    RandomAccessFile fileOne = new RandomAccessFile(expectedFile, "r");
-//    RandomAccessFile fileTwo = new RandomAccessFile(new File(actualStorageDir, actualBTreeFile), "r");
+//    RandomAccessFile fileTwo = new RandomAccessFile(new File(actualStorageDir, actualBTreeFile),
+// "r");
 //
 //    Assert.assertEquals(fileOne.length(), fileTwo.length());
 //
@@ -356,8 +371,10 @@
 //      fileTwo.readFully(actualContent, 0, bytesRead);
 //
 //      Assert
-//          .assertArrayEquals(Arrays.copyOfRange(expectedContent, ODurablePage.NEXT_FREE_POSITION, ODurablePage.MAX_PAGE_SIZE_BYTES),
-//              Arrays.copyOfRange(actualContent, ODurablePage.NEXT_FREE_POSITION, ODurablePage.MAX_PAGE_SIZE_BYTES));
+//          .assertArrayEquals(Arrays.copyOfRange(expectedContent, ODurablePage.NEXT_FREE_POSITION,
+// ODurablePage.MAX_PAGE_SIZE_BYTES),
+//              Arrays.copyOfRange(actualContent, ODurablePage.NEXT_FREE_POSITION,
+// ODurablePage.MAX_PAGE_SIZE_BYTES));
 //
 //      expectedContent = new byte[OClusterPage.PAGE_SIZE];
 //      actualContent = new byte[OClusterPage.PAGE_SIZE];
@@ -367,4 +384,4 @@
 //    fileOne.close();
 //    fileTwo.close();
 //  }
-//}
+// }

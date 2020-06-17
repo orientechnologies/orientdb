@@ -37,31 +37,32 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoper
 import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperationsManager;
 import com.orientechnologies.orient.core.storage.index.sbtreebonsai.local.OSBTreeBonsai;
 import com.orientechnologies.orient.core.storage.index.sbtreebonsai.local.OSBTreeBonsaiLocal;
-
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
-/**
- * @author Artem Orobets (enisher-at-gmail.com)
- */
+/** @author Artem Orobets (enisher-at-gmail.com) */
 public class OSBTreeCollectionManagerShared extends OSBTreeCollectionManagerAbstract
     implements OOrientStartupListener, OOrientShutdownListener {
   /**
-   * Message which is provided during throwing of {@link OAccessToSBtreeCollectionManagerIsProhibitedException}.
+   * Message which is provided during throwing of {@link
+   * OAccessToSBtreeCollectionManagerIsProhibitedException}.
    */
-  private static final String PROHIBITED_EXCEPTION_MESSAGE = "Access to the manager of RidBags which are based on B-Tree "
-      + "implementation is prohibited. Typically it means that you use database under distributed cluster configuration. Please check "
-      + "that following setting in your server configuration " + OGlobalConfiguration.RID_BAG_EMBEDDED_TO_SBTREEBONSAI_THRESHOLD
-      .getKey() + " is set to " + Integer.MAX_VALUE;
+  private static final String PROHIBITED_EXCEPTION_MESSAGE =
+      "Access to the manager of RidBags which are based on B-Tree "
+          + "implementation is prohibited. Typically it means that you use database under distributed cluster configuration. Please check "
+          + "that following setting in your server configuration "
+          + OGlobalConfiguration.RID_BAG_EMBEDDED_TO_SBTREEBONSAI_THRESHOLD.getKey()
+          + " is set to "
+          + Integer.MAX_VALUE;
 
   private final OAbstractPaginatedStorage storage;
 
   /**
-   * If this flag is set to {@code true} then all access to the manager will be prohibited and exception {@link
-   * OAccessToSBtreeCollectionManagerIsProhibitedException} will be thrown.
+   * If this flag is set to {@code true} then all access to the manager will be prohibited and
+   * exception {@link OAccessToSBtreeCollectionManagerIsProhibitedException} will be thrown.
    */
   private volatile boolean prohibitAccess = false;
 
@@ -72,14 +73,16 @@ public class OSBTreeCollectionManagerShared extends OSBTreeCollectionManagerAbst
   }
 
   // for testing purposes
-  /* internal */ OSBTreeCollectionManagerShared(int evictionThreshold, int cacheMaxSize, OAbstractPaginatedStorage storage) {
+  /* internal */ OSBTreeCollectionManagerShared(
+      int evictionThreshold, int cacheMaxSize, OAbstractPaginatedStorage storage) {
     super(storage, evictionThreshold, cacheMaxSize);
 
     this.storage = storage;
   }
 
   /**
-   * Once this method is called any attempt to load/create/delete b-tree will be resulted in exception thrown.
+   * Once this method is called any attempt to load/create/delete b-tree will be resulted in
+   * exception thrown.
    */
   public void prohibitAccess() {
     prohibitAccess = true;
@@ -92,14 +95,16 @@ public class OSBTreeCollectionManagerShared extends OSBTreeCollectionManagerAbst
   }
 
   @Override
-  public OSBTreeBonsai<OIdentifiable, Integer> createAndLoadTree(OAtomicOperation atomicOperation, int clusterId) throws IOException {
+  public OSBTreeBonsai<OIdentifiable, Integer> createAndLoadTree(
+      OAtomicOperation atomicOperation, int clusterId) throws IOException {
     checkAccess();
 
     return super.createAndLoadTree(atomicOperation, clusterId);
   }
 
   @Override
-  public OSBTreeBonsai<OIdentifiable, Integer> loadSBTree(OBonsaiCollectionPointer collectionPointer) {
+  public OSBTreeBonsai<OIdentifiable, Integer> loadSBTree(
+      OBonsaiCollectionPointer collectionPointer) {
     return super.loadSBTree(collectionPointer);
   }
 
@@ -109,10 +114,10 @@ public class OSBTreeCollectionManagerShared extends OSBTreeCollectionManagerAbst
   }
 
   public void createComponent(final OAtomicOperation atomicOperation, final int clusterId) {
-    //ignore creation of ridbags in distributed storage
+    // ignore creation of ridbags in distributed storage
     if (!prohibitAccess) {
-      final OSBTreeBonsaiLocal<OIdentifiable, Integer> tree = new OSBTreeBonsaiLocal<>(FILE_NAME_PREFIX + clusterId,
-          DEFAULT_EXTENSION, storage);
+      final OSBTreeBonsaiLocal<OIdentifiable, Integer> tree =
+          new OSBTreeBonsaiLocal<>(FILE_NAME_PREFIX + clusterId, DEFAULT_EXTENSION, storage);
       tree.createComponent(atomicOperation);
     }
   }
@@ -120,33 +125,42 @@ public class OSBTreeCollectionManagerShared extends OSBTreeCollectionManagerAbst
   public long createComponent(final OAtomicOperation atomicOperation, final String fileName) {
     checkAccess();
 
-    final OSBTreeBonsaiLocal<OIdentifiable, Integer> tree = new OSBTreeBonsaiLocal<>(fileName, DEFAULT_EXTENSION, storage);
+    final OSBTreeBonsaiLocal<OIdentifiable, Integer> tree =
+        new OSBTreeBonsaiLocal<>(fileName, DEFAULT_EXTENSION, storage);
     return tree.createComponent(atomicOperation);
   }
 
   @Override
-  protected OSBTreeBonsaiLocal<OIdentifiable, Integer> createEdgeTree(final OAtomicOperation atomicOperation, int clusterId)
-      throws IOException {
+  protected OSBTreeBonsaiLocal<OIdentifiable, Integer> createEdgeTree(
+      final OAtomicOperation atomicOperation, int clusterId) throws IOException {
 
-    OSBTreeBonsaiLocal<OIdentifiable, Integer> tree = new OSBTreeBonsaiLocal<>(FILE_NAME_PREFIX + clusterId, DEFAULT_EXTENSION,
-        storage);
+    OSBTreeBonsaiLocal<OIdentifiable, Integer> tree =
+        new OSBTreeBonsaiLocal<>(FILE_NAME_PREFIX + clusterId, DEFAULT_EXTENSION, storage);
     tree.create(atomicOperation, OLinkSerializer.INSTANCE, OIntegerSerializer.INSTANCE);
 
     return tree;
   }
 
-  public OBonsaiCollectionPointer createTree(OAtomicOperation atomicOperation, String fileName, final int pageIndex,
-      final int pageOffset) throws IOException {
+  public OBonsaiCollectionPointer createTree(
+      OAtomicOperation atomicOperation, String fileName, final int pageIndex, final int pageOffset)
+      throws IOException {
     checkAccess();
 
-    final OSBTreeBonsaiLocal<OIdentifiable, Integer> tree = new OSBTreeBonsaiLocal<>(fileName, DEFAULT_EXTENSION, storage);
-    tree.create(atomicOperation, OLinkSerializer.INSTANCE, OIntegerSerializer.INSTANCE, pageIndex, pageOffset);
+    final OSBTreeBonsaiLocal<OIdentifiable, Integer> tree =
+        new OSBTreeBonsaiLocal<>(fileName, DEFAULT_EXTENSION, storage);
+    tree.create(
+        atomicOperation,
+        OLinkSerializer.INSTANCE,
+        OIntegerSerializer.INSTANCE,
+        pageIndex,
+        pageOffset);
 
     return tree.getCollectionPointer();
   }
 
-  public void deleteComponentByClusterId(final OAtomicOperation atomicOperation, final int clusterId) {
-    //ignore deletion of ridbags in distributed storage
+  public void deleteComponentByClusterId(
+      final OAtomicOperation atomicOperation, final int clusterId) {
+    // ignore deletion of ridbags in distributed storage
     if (!prohibitAccess) {
       final String fileName = FILE_NAME_PREFIX + clusterId;
       final String fullFileName = fileName + DEFAULT_EXTENSION;
@@ -154,7 +168,8 @@ public class OSBTreeCollectionManagerShared extends OSBTreeCollectionManagerAbst
 
       clearClusterCache(fileId, fileName);
 
-      final OSBTreeBonsaiLocal<OIdentifiable, Integer> tree = new OSBTreeBonsaiLocal<>(fileName, DEFAULT_EXTENSION, storage);
+      final OSBTreeBonsaiLocal<OIdentifiable, Integer> tree =
+          new OSBTreeBonsaiLocal<>(fileName, DEFAULT_EXTENSION, storage);
       tree.deleteComponent(atomicOperation);
     }
   }
@@ -163,22 +178,27 @@ public class OSBTreeCollectionManagerShared extends OSBTreeCollectionManagerAbst
     checkAccess();
 
     final String fullFileName = storage.getWriteCache().fileNameById(fileId);
-    final String fileName = fullFileName.substring(0, fullFileName.length() - DEFAULT_EXTENSION.length());
+    final String fileName =
+        fullFileName.substring(0, fullFileName.length() - DEFAULT_EXTENSION.length());
 
     clearClusterCache(fileId, fileName);
 
-    final OSBTreeBonsaiLocal<OIdentifiable, Integer> tree = new OSBTreeBonsaiLocal<>(fileName, DEFAULT_EXTENSION, storage);
+    final OSBTreeBonsaiLocal<OIdentifiable, Integer> tree =
+        new OSBTreeBonsaiLocal<>(fileName, DEFAULT_EXTENSION, storage);
     tree.deleteComponent(atomicOperation);
   }
 
   @Override
-  public OBonsaiCollectionPointer createSBTree(int clusterId, OAtomicOperation atomicOperation, UUID ownerUUID) throws IOException {
+  public OBonsaiCollectionPointer createSBTree(
+      int clusterId, OAtomicOperation atomicOperation, UUID ownerUUID) throws IOException {
     checkAccess();
 
-    final OBonsaiCollectionPointer pointer = super.createSBTree(clusterId, atomicOperation, ownerUUID);
+    final OBonsaiCollectionPointer pointer =
+        super.createSBTree(clusterId, atomicOperation, ownerUUID);
 
     if (ownerUUID != null) {
-      Map<UUID, OBonsaiCollectionPointer> changedPointers = ODatabaseRecordThreadLocal.instance().get().getCollectionsChanges();
+      Map<UUID, OBonsaiCollectionPointer> changedPointers =
+          ODatabaseRecordThreadLocal.instance().get().getCollectionsChanges();
       if (pointer != null && pointer.isValid()) {
         changedPointers.put(ownerUUID, pointer);
       }
@@ -188,7 +208,8 @@ public class OSBTreeCollectionManagerShared extends OSBTreeCollectionManagerAbst
   }
 
   @Override
-  protected OSBTreeBonsai<OIdentifiable, Integer> loadTree(OBonsaiCollectionPointer collectionPointer) {
+  protected OSBTreeBonsai<OIdentifiable, Integer> loadTree(
+      OBonsaiCollectionPointer collectionPointer) {
     String fileName;
     OAtomicOperation atomicOperation = OAtomicOperationsManager.getCurrentOperation();
     if (atomicOperation == null) {
@@ -199,8 +220,11 @@ public class OSBTreeCollectionManagerShared extends OSBTreeCollectionManagerAbst
     if (fileName == null) {
       return null;
     }
-    OSBTreeBonsaiLocal<OIdentifiable, Integer> tree = new OSBTreeBonsaiLocal<>(
-        fileName.substring(0, fileName.length() - DEFAULT_EXTENSION.length()), DEFAULT_EXTENSION, storage);
+    OSBTreeBonsaiLocal<OIdentifiable, Integer> tree =
+        new OSBTreeBonsaiLocal<>(
+            fileName.substring(0, fileName.length() - DEFAULT_EXTENSION.length()),
+            DEFAULT_EXTENSION,
+            storage);
 
     if (tree.load(collectionPointer.getRootPointer())) {
       return tree;
@@ -209,9 +233,7 @@ public class OSBTreeCollectionManagerShared extends OSBTreeCollectionManagerAbst
     }
   }
 
-  /**
-   * Change UUID to null to prevent its serialization to disk.
-   */
+  /** Change UUID to null to prevent its serialization to disk. */
   @Override
   public UUID listenForChanges(ORidBag collection) {
     UUID ownerUUID = collection.getTemporaryId();
@@ -228,12 +250,10 @@ public class OSBTreeCollectionManagerShared extends OSBTreeCollectionManagerAbst
   }
 
   @Override
-  public void updateCollectionPointer(UUID uuid, OBonsaiCollectionPointer pointer) {
-  }
+  public void updateCollectionPointer(UUID uuid, OBonsaiCollectionPointer pointer) {}
 
   @Override
-  public void clearPendingCollections() {
-  }
+  public void clearPendingCollections() {}
 
   @Override
   public Map<UUID, OBonsaiCollectionPointer> changedIds() {
@@ -245,13 +265,16 @@ public class OSBTreeCollectionManagerShared extends OSBTreeCollectionManagerAbst
     ODatabaseRecordThreadLocal.instance().get().getCollectionsChanges().clear();
   }
 
-  public boolean tryDelete(OAtomicOperation atomicOperation, OBonsaiCollectionPointer collectionPointer, long delay) {
+  public boolean tryDelete(
+      OAtomicOperation atomicOperation, OBonsaiCollectionPointer collectionPointer, long delay) {
     final CacheKey cacheKey = new CacheKey(storage, collectionPointer);
     final Object lock = treesSubsetLock(cacheKey);
     //noinspection SynchronizationOnLocalVariableOrMethodParameter
     synchronized (lock) {
       SBTreeBonsaiContainer container = treeCache.getQuietly(cacheKey);
-      if (container != null && (container.usagesCounter != 0 || container.lastAccessTime > System.currentTimeMillis() - delay)) {
+      if (container != null
+          && (container.usagesCounter != 0
+              || container.lastAccessTime > System.currentTimeMillis() - delay)) {
         return false;
       }
 
@@ -263,16 +286,21 @@ public class OSBTreeCollectionManagerShared extends OSBTreeCollectionManagerAbst
           final OIdentifiable last = treeBonsai.lastKey();
           final List<OIdentifiable> entriesToDelete = new ArrayList<>(64);
 
-          treeBonsai.loadEntriesBetween(first, true, last, true, (entry) -> {
-            final int count = entry.getValue();
-            final OIdentifiable rid = entry.getKey();
+          treeBonsai.loadEntriesBetween(
+              first,
+              true,
+              last,
+              true,
+              (entry) -> {
+                final int count = entry.getValue();
+                final OIdentifiable rid = entry.getKey();
 
-            for (int i = 0; i < count; i++) {
-              entriesToDelete.add(rid);
-            }
+                for (int i = 0; i < count; i++) {
+                  entriesToDelete.add(rid);
+                }
 
-            return true;
-          });
+                return true;
+              });
 
           for (final OIdentifiable identifiable : entriesToDelete) {
             treeBonsai.remove(atomicOperation, identifiable);

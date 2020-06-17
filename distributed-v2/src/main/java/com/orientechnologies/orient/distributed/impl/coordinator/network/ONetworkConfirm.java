@@ -1,13 +1,12 @@
 package com.orientechnologies.orient.distributed.impl.coordinator.network;
 
+import static com.orientechnologies.orient.distributed.network.binary.OBinaryDistributedMessage.DISTRIBUTED_CONFIRM_REQUEST;
+
 import com.orientechnologies.orient.core.db.config.ONodeIdentity;
 import com.orientechnologies.orient.distributed.impl.log.OLogId;
-
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
-
-import static com.orientechnologies.orient.distributed.network.binary.OBinaryDistributedMessage.DISTRIBUTED_CONFIRM_REQUEST;
 
 public class ONetworkConfirm implements ODistributedMessage {
   private OLogId id;
@@ -16,8 +15,7 @@ public class ONetworkConfirm implements ODistributedMessage {
     this.id = id;
   }
 
-  public ONetworkConfirm() {
-  }
+  public ONetworkConfirm() {}
 
   @Override
   public void write(DataOutput output) throws IOException {
@@ -42,5 +40,4 @@ public class ONetworkConfirm implements ODistributedMessage {
   public OLogId getId() {
     return id;
   }
-
 }

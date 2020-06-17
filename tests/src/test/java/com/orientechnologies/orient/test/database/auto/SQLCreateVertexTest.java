@@ -7,14 +7,13 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.tinkerpop.blueprints.impls.orient.OrientGraph;
+import java.nio.charset.Charset;
+import java.util.ArrayList;
+import java.util.List;
 import org.testng.Assert;
 import org.testng.annotations.Optional;
 import org.testng.annotations.Parameters;
 import org.testng.annotations.Test;
-
-import java.nio.charset.Charset;
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * @author Andrey Lomakin (a.lomakin-at-orientdb.com)
@@ -41,10 +40,18 @@ public class SQLCreateVertexTest extends DocumentDBBaseTest {
       vClass.createProperty("message", OType.STRING);
     }
 
-    database.command(new OCommandSQL("create vertex CreateVertexByContent content { \"message\": \"(:\"}")).execute();
-    database.command(new OCommandSQL("create vertex CreateVertexByContent content { \"message\": \"\\\"‎ה, כן?...‎\\\"\"}")).execute();
+    database
+        .command(
+            new OCommandSQL("create vertex CreateVertexByContent content { \"message\": \"(:\"}"))
+        .execute();
+    database
+        .command(
+            new OCommandSQL(
+                "create vertex CreateVertexByContent content { \"message\": \"\\\"‎ה, כן?...‎\\\"\"}"))
+        .execute();
 
-    List<ODocument> result = database.query(new OSQLSynchQuery<ODocument>("select from CreateVertexByContent"));
+    List<ODocument> result =
+        database.query(new OSQLSynchQuery<ODocument>("select from CreateVertexByContent"));
     Assert.assertEquals(result.size(), 2);
 
     List<String> messages = new ArrayList<String>();
@@ -54,11 +61,14 @@ public class SQLCreateVertexTest extends DocumentDBBaseTest {
     List<String> resultMessages = new ArrayList<String>();
 
     for (ODocument document : result) {
-      resultMessages.add(document.<String> field("message"));
+      resultMessages.add(document.<String>field("message"));
     }
 
-//    issue #1787, works fine locally, not on CI
-    Assert.assertEqualsNoOrder(messages.toArray(), resultMessages.toArray(), "arrays are different: "+toString(messages)+" - "+toString(resultMessages) );
+    //    issue #1787, works fine locally, not on CI
+    Assert.assertEqualsNoOrder(
+        messages.toArray(),
+        resultMessages.toArray(),
+        "arrays are different: " + toString(messages) + " - " + toString(resultMessages));
   }
 
   private String toString(List<String> resultMessages) {
@@ -93,12 +103,11 @@ public class SQLCreateVertexTest extends DocumentDBBaseTest {
 
   }
 
-  public void testIsClassName(){
+  public void testIsClassName() {
     OrientGraph graph = new OrientGraph(database, false);
     graph.shutdown();
     database.open("admin", "admin");
     graph.createVertexType("Like").createProperty("anything", OType.STRING);
     graph.createVertexType("Is").createProperty("anything", OType.STRING);
   }
-
 }

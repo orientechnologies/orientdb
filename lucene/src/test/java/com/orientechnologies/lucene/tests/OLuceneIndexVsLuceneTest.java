@@ -13,10 +13,12 @@
  *  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  *  * See the License for the specific language governing permissions and
  *  * limitations under the License.
- *  
+ *
  */
 
 package com.orientechnologies.lucene.tests;
+
+import static org.assertj.core.api.Assertions.assertThat;
 
 import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.lucene.analyzer.OLucenePerFieldAnalyzerWrapper;
@@ -24,6 +26,9 @@ import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
 import org.apache.lucene.analysis.standard.StandardAnalyzer;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.document.Field;
@@ -44,18 +49,10 @@ import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
 
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
-
-import static org.assertj.core.api.Assertions.assertThat;
-
-/**
- * Created by enricorisa on 08/10/14.
- */
+/** Created by enricorisa on 08/10/14. */
 public class OLuceneIndexVsLuceneTest extends OLuceneBaseTest {
 
-  private IndexWriter                    indexWriter;
+  private IndexWriter indexWriter;
   private OLucenePerFieldAnalyzerWrapper analyzer;
 
   @Before
@@ -80,8 +77,8 @@ public class OLuceneIndexVsLuceneTest extends OLuceneBaseTest {
     } catch (IOException e) {
       e.printStackTrace();
     }
-    db.command(new OCommandSQL("create index Song.title on Song (title) FULLTEXT ENGINE LUCENE")).execute();
-
+    db.command(new OCommandSQL("create index Song.title on Song (title) FULLTEXT ENGINE LUCENE"))
+        .execute();
   }
 
   private File getPath() {
@@ -105,7 +102,6 @@ public class OLuceneIndexVsLuceneTest extends OLuceneBaseTest {
         d.add(new TextField("title", title, Field.Store.YES));
         d.add(new TextField("Song.title", title, Field.Store.YES));
         indexWriter.addDocument(d);
-
       }
     }
 
@@ -117,28 +113,28 @@ public class OLuceneIndexVsLuceneTest extends OLuceneBaseTest {
 
     IndexSearcher searcher = new IndexSearcher(reader);
 
-    Query query = new MultiFieldQueryParser(new String[] { "title" }, analyzer).parse("down the");
+    Query query = new MultiFieldQueryParser(new String[] {"title"}, analyzer).parse("down the");
     final TopDocs docs = searcher.search(query, Integer.MAX_VALUE);
     ScoreDoc[] hits = docs.scoreDocs;
 
-    OResultSet resultSet = db.query("select *,$score from Song where search_class('down the')=true");
+    OResultSet resultSet =
+        db.query("select *,$score from Song where search_class('down the')=true");
 
     resultSet.stream()
-        .forEach(r -> {
-          System.out.println("r = " + r);
-          assertThat((Object[]) r.toElement().getProperty("$score")).isNotNull();
-        });
+        .forEach(
+            r -> {
+              System.out.println("r = " + r);
+              assertThat((Object[]) r.toElement().getProperty("$score")).isNotNull();
+            });
 
-//    int i = 0;
-//    for (ScoreDoc hit : hits) {
-////      Assert.assertEquals(oDocs.get(i).field("$score"), hit.score);
-//
-//      assertThat(resultSet.get(i).<Float>field("$score")).isEqualTo(hit.score);
-//      i++;
-//    }
-//    reader.close();
+    //    int i = 0;
+    //    for (ScoreDoc hit : hits) {
+    ////      Assert.assertEquals(oDocs.get(i).field("$score"), hit.score);
+    //
+    //      assertThat(resultSet.get(i).<Float>field("$score")).isEqualTo(hit.score);
+    //      i++;
+    //    }
+    //    reader.close();
     resultSet.close();
-
   }
-
 }

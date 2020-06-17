@@ -15,7 +15,7 @@
  *  *  limitations under the License.
  *  *
  *  * For more information: http://orientdb.com
- *  
+ *
  */
 
 package com.orientechnologies.orient.server.distributed;
@@ -25,11 +25,9 @@ import com.orientechnologies.orient.core.sql.OCommandSQL;
 import junit.framework.Assert;
 import org.junit.Test;
 
-/**
- * Tests the behavior of security in distributed configuration.
- */
+/** Tests the behavior of security in distributed configuration. */
 public class DistributedSecurityIT extends AbstractServerClusterTest {
-  private final static int SERVERS = 1;
+  private static final int SERVERS = 1;
 
   public String getDatabaseName() {
     return "distributed-security";
@@ -46,7 +44,12 @@ public class DistributedSecurityIT extends AbstractServerClusterTest {
   protected void executeTest() throws Exception {
     for (int s = 0; s < SERVERS; ++s) {
 
-      ODatabaseDocument g = serverInstance.get(s).getServerInstance().getContext().open(getDatabaseName(),"admin","admin");
+      ODatabaseDocument g =
+          serverInstance
+              .get(s)
+              .getServerInstance()
+              .getContext()
+              .open(getDatabaseName(), "admin", "admin");
 
       try {
 

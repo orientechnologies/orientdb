@@ -12,7 +12,6 @@ import com.orientechnologies.orient.server.network.protocol.http.OHttpRequest;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpResponse;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpUtils;
 import com.orientechnologies.orient.server.network.protocol.http.command.OServerCommandAbstract;
-
 import java.io.IOException;
 import java.util.Locale;
 import java.util.Map;
@@ -23,9 +22,9 @@ import java.util.Map;
  * @author Emrul Islam <emrul@emrul.com> Copyright 2014 Emrul Islam
  */
 public class OServerCommandPostAuthToken extends OServerCommandAbstract {
-  private static final String[]      NAMES           = { "POST|token/*" };
-  private static final String        RESPONSE_FORMAT = "indent:-1,attribSameRow";
-  private volatile     OTokenHandler tokenHandler;
+  private static final String[] NAMES = {"POST|token/*"};
+  private static final String RESPONSE_FORMAT = "indent:-1,attribSameRow";
+  private volatile OTokenHandler tokenHandler;
 
   @Override
   public String[] getNames() {
@@ -34,7 +33,10 @@ public class OServerCommandPostAuthToken extends OServerCommandAbstract {
 
   private void init() {
 
-    if (tokenHandler == null && server.getContextConfiguration().getValueAsBoolean(OGlobalConfiguration.NETWORK_HTTP_USE_TOKEN)) {
+    if (tokenHandler == null
+        && server
+            .getContextConfiguration()
+            .getValueAsBoolean(OGlobalConfiguration.NETWORK_HTTP_USE_TOKEN)) {
       tokenHandler = server.getTokenHandler();
     }
   }
@@ -54,7 +56,7 @@ public class OServerCommandPostAuthToken extends OServerCommandAbstract {
       sendError(iRequest, iResponse, result);
       return false;
     }
-    String signedToken = "";// signedJWT.serialize();
+    String signedToken = ""; // signedJWT.serialize();
 
     String grantType = content.get("grant_type").toLowerCase(Locale.ENGLISH);
     String username = content.get("username");
@@ -72,7 +74,9 @@ public class OServerCommandPostAuthToken extends OServerCommandAbstract {
         ODatabaseDocument db = null;
         OSecurityUser user = null;
         try {
-          db = (ODatabaseDocument) server.openDatabase(iRequest.getDatabaseName(), username, password);
+          db =
+              (ODatabaseDocument)
+                  server.openDatabase(iRequest.getDatabaseName(), username, password);
           user = db.getUser();
 
           if (user != null) {
@@ -85,7 +89,8 @@ public class OServerCommandPostAuthToken extends OServerCommandAbstract {
         } catch (OSecurityAccessException e) {
           // WRONG USER/PASSWD
         } catch (OLockException e) {
-          OLogManager.instance().error(this, "Cannot access to the database '" + iRequest.getDatabaseName() + "'", e);
+          OLogManager.instance()
+              .error(this, "Cannot access to the database '" + iRequest.getDatabaseName() + "'", e);
         } finally {
           if (db != null) {
             db.close();
@@ -111,17 +116,22 @@ public class OServerCommandPostAuthToken extends OServerCommandAbstract {
   // Return user rid if authentication successful.
   // If user is server user (doesn't have a rid) then '<server user>' is returned.
   // null is returned in all other cases and means authentication was unsuccessful.
-  protected String authenticate(final String username, final String password, final String iDatabaseName) throws IOException {
+  protected String authenticate(
+      final String username, final String password, final String iDatabaseName) throws IOException {
     ODatabaseDocument db = null;
     String userRid = null;
     try {
       db = (ODatabaseDocument) server.openDatabase(iDatabaseName, username, password);
 
-      userRid = (db.getUser() == null ? "<server user>" : db.getUser().getDocument().getIdentity().toString());
+      userRid =
+          (db.getUser() == null
+              ? "<server user>"
+              : db.getUser().getDocument().getIdentity().toString());
     } catch (OSecurityAccessException e) {
       // WRONG USER/PASSWD
     } catch (OLockException e) {
-      OLogManager.instance().error(this, "Cannot access to the database '" + iDatabaseName + "'", e);
+      OLogManager.instance()
+          .error(this, "Cannot access to the database '" + iDatabaseName + "'", e);
     } finally {
       if (db != null) {
         db.close();
@@ -130,12 +140,19 @@ public class OServerCommandPostAuthToken extends OServerCommandAbstract {
     return userRid;
   }
 
-  protected void sendError(final OHttpRequest iRequest, final OHttpResponse iResponse, final ODocument error) throws IOException {
-    iResponse
-        .send(OHttpUtils.STATUS_BADREQ_CODE, OHttpUtils.STATUS_BADREQ_DESCRIPTION, OHttpUtils.CONTENT_JSON, error.toJSON(), null);
+  protected void sendError(
+      final OHttpRequest iRequest, final OHttpResponse iResponse, final ODocument error)
+      throws IOException {
+    iResponse.send(
+        OHttpUtils.STATUS_BADREQ_CODE,
+        OHttpUtils.STATUS_BADREQ_DESCRIPTION,
+        OHttpUtils.CONTENT_JSON,
+        error.toJSON(),
+        null);
   }
 
-  protected void sendAuthorizationRequest(final OHttpRequest iRequest, final OHttpResponse iResponse, final String iDatabaseName)
+  protected void sendAuthorizationRequest(
+      final OHttpRequest iRequest, final OHttpResponse iResponse, final String iDatabaseName)
       throws IOException {
 
     String header = null;
@@ -149,13 +166,20 @@ public class OServerCommandPostAuthToken extends OServerCommandAbstract {
     }
 
     if (isJsonResponse(iResponse)) {
-      sendJsonError(iResponse, OHttpUtils.STATUS_BADREQ_CODE, OHttpUtils.STATUS_BADREQ_DESCRIPTION, OHttpUtils.CONTENT_TEXT_PLAIN,
-          "401 Unauthorized.", header);
+      sendJsonError(
+          iResponse,
+          OHttpUtils.STATUS_BADREQ_CODE,
+          OHttpUtils.STATUS_BADREQ_DESCRIPTION,
+          OHttpUtils.CONTENT_TEXT_PLAIN,
+          "401 Unauthorized.",
+          header);
     } else {
-      iResponse
-          .send(OHttpUtils.STATUS_AUTH_CODE, OHttpUtils.STATUS_AUTH_DESCRIPTION, OHttpUtils.CONTENT_TEXT_PLAIN, "401 Unauthorized.",
-              header);
+      iResponse.send(
+          OHttpUtils.STATUS_AUTH_CODE,
+          OHttpUtils.STATUS_AUTH_DESCRIPTION,
+          OHttpUtils.CONTENT_TEXT_PLAIN,
+          "401 Unauthorized.",
+          header);
     }
-
   }
 }

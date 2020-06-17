@@ -19,37 +19,40 @@
  */
 package com.orientechnologies.orient.server.network.protocol.http.command.get;
 
-import java.io.IOException;
-
 import com.orientechnologies.orient.server.network.protocol.http.OHttpRequest;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpResponse;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpUtils;
 import com.orientechnologies.orient.server.network.protocol.http.command.OServerCommandAuthenticatedDbAbstract;
+import java.io.IOException;
 
 public class OServerCommandGetConnect extends OServerCommandAuthenticatedDbAbstract {
-  private static final String[] NAMES = { "GET|connect/*", "HEAD|connect/*" };
+  private static final String[] NAMES = {"GET|connect/*", "HEAD|connect/*"};
 
   @Override
   public boolean execute(final OHttpRequest iRequest, OHttpResponse iResponse) throws Exception {
-    final String[] urlParts = checkSyntax(iRequest.getUrl(), 2, "Syntax error: connect/<database>[/<user>/<password>]");
+    final String[] urlParts =
+        checkSyntax(iRequest.getUrl(), 2, "Syntax error: connect/<database>[/<user>/<password>]");
 
     urlParts[1] = urlParts[1].replace(DBNAME_DIR_SEPARATOR, '/');
 
     iRequest.getData().commandInfo = "Connect";
     iRequest.getData().commandDetail = urlParts[1];
 
-    iResponse
-        .send(OHttpUtils.STATUS_OK_NOCONTENT_CODE, OHttpUtils.STATUS_OK_NOCONTENT_DESCRIPTION, OHttpUtils.CONTENT_TEXT_PLAIN, null,
-            null);
+    iResponse.send(
+        OHttpUtils.STATUS_OK_NOCONTENT_CODE,
+        OHttpUtils.STATUS_OK_NOCONTENT_DESCRIPTION,
+        OHttpUtils.CONTENT_TEXT_PLAIN,
+        null,
+        null);
     return false;
   }
 
   @Override
   public boolean beforeExecute(OHttpRequest iRequest, OHttpResponse iResponse) throws IOException {
-    final String[] urlParts = checkSyntax(iRequest.getUrl(), 2, "Syntax error: connect/<database>[/<user>/<password>]");
+    final String[] urlParts =
+        checkSyntax(iRequest.getUrl(), 2, "Syntax error: connect/<database>[/<user>/<password>]");
 
-    if (urlParts == null || urlParts.length < 3)
-      return super.beforeExecute(iRequest, iResponse);
+    if (urlParts == null || urlParts.length < 3) return super.beforeExecute(iRequest, iResponse);
 
     // USER+PASSWD AS PARAMETERS
     setNoCache(iResponse);

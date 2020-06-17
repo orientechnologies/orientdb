@@ -1,7 +1,16 @@
 package com.orientechnologies.orient.core.metadata.security;
 
-import com.orientechnologies.orient.core.db.*;
-import org.junit.*;
+import com.orientechnologies.orient.core.db.ODatabaseInternal;
+import com.orientechnologies.orient.core.db.ODatabaseSession;
+import com.orientechnologies.orient.core.db.ODatabaseType;
+import com.orientechnologies.orient.core.db.OrientDB;
+import com.orientechnologies.orient.core.db.OrientDBConfig;
+import org.junit.After;
+import org.junit.AfterClass;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.BeforeClass;
+import org.junit.Test;
 
 public class OSecuritySharedTest {
 
@@ -69,7 +78,12 @@ public class OSecuritySharedTest {
     security.saveSecurityPolicy(db, policy);
     security.setSecurityPolicy(db, security.getRole(db, "reader"), "database.class.Person", policy);
 
-    Assert.assertEquals("testPolicy", security.getSecurityPolicies(db, security.getRole(db, "reader")).get("database.class.Person").getName());
+    Assert.assertEquals(
+        "testPolicy",
+        security
+            .getSecurityPolicies(db, security.getRole(db, "reader"))
+            .get("database.class.Person")
+            .getName());
   }
 
   @Test
@@ -85,7 +99,9 @@ public class OSecuritySharedTest {
     security.setSecurityPolicy(db, security.getRole(db, "reader"), "database.class.Person", policy);
     security.removeSecurityPolicy(db, security.getRole(db, "reader"), "database.class.Person");
 
-    Assert.assertNull(security.getSecurityPolicies(db, security.getRole(db, "reader")).get("database.class.Person"));
+    Assert.assertNull(
+        security
+            .getSecurityPolicies(db, security.getRole(db, "reader"))
+            .get("database.class.Person"));
   }
-
 }

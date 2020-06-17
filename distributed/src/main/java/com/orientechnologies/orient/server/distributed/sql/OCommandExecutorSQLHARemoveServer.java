@@ -32,7 +32,6 @@ import com.orientechnologies.orient.core.sql.parser.OHaRemoveServerStatement;
 import com.orientechnologies.orient.core.sql.parser.OStatementCache;
 import com.orientechnologies.orient.server.distributed.impl.ODatabaseDocumentDistributed;
 import com.orientechnologies.orient.server.hazelcast.OHazelcastPlugin;
-
 import java.util.Map;
 
 /**
@@ -41,7 +40,8 @@ import java.util.Map;
  * @author Luca Garulli
  */
 @SuppressWarnings("unchecked")
-public class OCommandExecutorSQLHARemoveServer extends OCommandExecutorSQLAbstract implements OCommandDistributedReplicateRequest {
+public class OCommandExecutorSQLHARemoveServer extends OCommandExecutorSQLAbstract
+    implements OCommandDistributedReplicateRequest {
   public static final String NAME = "HA REMOVE SERVER";
 
   private OHaRemoveServerStatement parsedStatement;
@@ -49,7 +49,8 @@ public class OCommandExecutorSQLHARemoveServer extends OCommandExecutorSQLAbstra
   public OCommandExecutorSQLHARemoveServer parse(final OCommandRequest iRequest) {
     init((OCommandRequestText) iRequest);
     try {
-      parsedStatement = (OHaRemoveServerStatement) OStatementCache.get(this.parserText, getDatabase());
+      parsedStatement =
+          (OHaRemoveServerStatement) OStatementCache.get(this.parserText, getDatabase());
       preParsedStatement = parsedStatement;
     } catch (OCommandSQLParsingException sqlx) {
       throw sqlx;
@@ -59,9 +60,7 @@ public class OCommandExecutorSQLHARemoveServer extends OCommandExecutorSQLAbstra
     return this;
   }
 
-  /**
-   * Execute the command.
-   */
+  /** Execute the command. */
   public Object execute(final Map<Object, Object> iArgs) {
     final ODatabaseDocumentInternal database = getDatabase();
     database.checkSecurity(ORule.ResourceGeneric.SERVER, "remove", ORole.PERMISSION_EXECUTE);
@@ -70,16 +69,19 @@ public class OCommandExecutorSQLHARemoveServer extends OCommandExecutorSQLAbstra
       throw new OCommandExecutionException("OrientDB is not started in distributed mode");
     }
 
-    final OHazelcastPlugin dManager = (OHazelcastPlugin) ((ODatabaseDocumentDistributed) database).getDistributedManager();
+    final OHazelcastPlugin dManager =
+        (OHazelcastPlugin) ((ODatabaseDocumentDistributed) database).getDistributedManager();
     if (dManager == null || !dManager.isEnabled())
       throw new OCommandExecutionException("OrientDB is not started in distributed mode");
 
     final String databaseName = database.getName();
 
     // The last parameter (true) indicates to set the node's database status to OFFLINE.
-    // If this is changed to false, the node will be set to NOT_AVAILABLE, and then the auto-repairer will
+    // If this is changed to false, the node will be set to NOT_AVAILABLE, and then the
+    // auto-repairer will
     // re-synchronize the database on the node, and then set it to ONLINE.
-    return dManager.removeNodeFromConfiguration(parsedStatement.serverName.getStringValue(), databaseName, false, true);
+    return dManager.removeNodeFromConfiguration(
+        parsedStatement.serverName.getStringValue(), databaseName, false, true);
   }
 
   @Override

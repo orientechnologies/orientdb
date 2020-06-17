@@ -27,17 +27,31 @@ import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpRequest;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpResponse;
 import com.orientechnologies.orient.server.network.protocol.http.command.OServerCommandDocumentAbstract;
-
 import java.util.Collection;
 import java.util.Map;
 import java.util.stream.Collectors;
 
 /**
- * Executes a batch of operations in a single call. This is useful to reduce network latency issuing multiple commands as multiple
- * requests. Batch command supports transactions as well.<br> <br> Format: { "transaction" : &lt;true|false&gt;, "operations" : [ {
- * "type" : "&lt;type&gt;" }* ] }<br> Where: <ul> <li><b>type</b> can be: <ul> <li>'c' for create</li> <li>'u' for update</li>
- * <li>'d' for delete. The '@rid' field only is needed.</li> </ul> </li> </ul> Example:<br>
+ * Executes a batch of operations in a single call. This is useful to reduce network latency issuing
+ * multiple commands as multiple requests. Batch command supports transactions as well.<br>
+ * <br>
+ * Format: { "transaction" : &lt;true|false&gt;, "operations" : [ { "type" : "&lt;type&gt;" }* ] }
+ * <br>
+ * Where:
+ *
+ * <ul>
+ *   <li><b>type</b> can be:
+ *       <ul>
+ *         <li>'c' for create
+ *         <li>'u' for update
+ *         <li>'d' for delete. The '@rid' field only is needed.
+ *       </ul>
+ * </ul>
+ *
+ * Example:<br>
+ *
  * <p>
+ *
  * <pre>
  * { "transaction" : true,
  *   "operations" : [
@@ -64,7 +78,7 @@ import java.util.stream.Collectors;
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
  */
 public class OServerCommandPostBatch extends OServerCommandDocumentAbstract {
-  private static final String[] NAMES = { "POST|batch/*" };
+  private static final String[] NAMES = {"POST|batch/*"};
 
   @Override
   public boolean execute(final OHttpRequest iRequest, OHttpResponse iResponse) throws Exception {
@@ -82,23 +96,26 @@ public class OServerCommandPostBatch extends OServerCommandDocumentAbstract {
       db = getProfiledDatabaseInstance(iRequest);
 
       if (db.getTransaction().isActive()) {
-        // TEMPORARY PATCH TO UNDERSTAND WHY UNDER HIGH LOAD TX IS NOT COMMITTED AFTER BATCH. MAYBE A PENDING TRANSACTION?
+        // TEMPORARY PATCH TO UNDERSTAND WHY UNDER HIGH LOAD TX IS NOT COMMITTED AFTER BATCH. MAYBE
+        // A PENDING TRANSACTION?
         OLogManager.instance()
-            .warn(this, "Found database instance from the pool with a pending transaction. Forcing rollback before using it");
+            .warn(
+                this,
+                "Found database instance from the pool with a pending transaction. Forcing rollback before using it");
         db.rollback(true);
       }
 
       batch = new ODocument().fromJSON(iRequest.getContent());
 
       Boolean tx = batch.field("transaction");
-      if (tx == null)
-        tx = false;
+      if (tx == null) tx = false;
 
       final Collection<Map<Object, Object>> operations;
       try {
         operations = batch.field("operations");
       } catch (Exception e) {
-        throw new IllegalArgumentException("Expected 'operations' field as a collection of objects", e);
+        throw new IllegalArgumentException(
+            "Expected 'operations' field as a collection of objects", e);
       }
 
       if (operations == null || operations.isEmpty())
@@ -132,12 +149,10 @@ public class OServerCommandPostBatch extends OServerCommandDocumentAbstract {
         } else if (type.equals("cmd")) {
           // COMMAND
           final String language = (String) operation.get("language");
-          if (language == null)
-            throw new IllegalArgumentException("language parameter is null");
+          if (language == null) throw new IllegalArgumentException("language parameter is null");
 
           final Object command = operation.get("command");
-          if (command == null)
-            throw new IllegalArgumentException("command parameter is null");
+          if (command == null) throw new IllegalArgumentException("command parameter is null");
 
           Object params = operation.get("parameters");
           if (params instanceof Collection) {
@@ -148,13 +163,10 @@ public class OServerCommandPostBatch extends OServerCommandDocumentAbstract {
           if (command != null)
             if (OMultiValue.isMultiValue(command)) {
               for (Object c : OMultiValue.getMultiValueIterable(command)) {
-                if (commandAsString == null)
-                  commandAsString = c.toString();
-                else
-                  commandAsString += ";" + c.toString();
+                if (commandAsString == null) commandAsString = c.toString();
+                else commandAsString += ";" + c.toString();
               }
-            } else
-              commandAsString = command.toString();
+            } else commandAsString = command.toString();
 
           OResultSet result;
           if (params == null) {
@@ -167,12 +179,10 @@ public class OServerCommandPostBatch extends OServerCommandDocumentAbstract {
         } else if (type.equals("script")) {
           // COMMAND
           final String language = (String) operation.get("language");
-          if (language == null)
-            throw new IllegalArgumentException("language parameter is null");
+          if (language == null) throw new IllegalArgumentException("language parameter is null");
 
           final Object script = operation.get("script");
-          if (script == null)
-            throw new IllegalArgumentException("script parameter is null");
+          if (script == null) throw new IllegalArgumentException("script parameter is null");
 
           StringBuilder text = new StringBuilder(1024);
           if (OMultiValue.isMultiValue(script)) {
@@ -189,14 +199,12 @@ public class OServerCommandPostBatch extends OServerCommandDocumentAbstract {
                 text.append(o.toString());
               }
             }
-          } else
-            text.append(script);
+          } else text.append(script);
 
           Object params = operation.get("parameters");
           if (params instanceof Collection) {
             params = ((Collection) params).toArray();
           }
-
 
           OResultSet result;
           if (params == null) {
@@ -210,20 +218,22 @@ public class OServerCommandPostBatch extends OServerCommandDocumentAbstract {
         }
       }
 
-      if (txBegun)
-        db.commit();
+      if (txBegun) db.commit();
 
       try {
         iResponse.writeResult(lastResult);
       } catch (RuntimeException e) {
         OLogManager.instance()
-            .error(this, "Error (%s) on serializing result of batch command:\n%s", e, batch.toJSON("prettyPrint"));
+            .error(
+                this,
+                "Error (%s) on serializing result of batch command:\n%s",
+                e,
+                batch.toJSON("prettyPrint"));
         throw e;
       }
 
     } finally {
-      if (db != null)
-        db.close();
+      if (db != null) db.close();
     }
     return false;
   }
@@ -235,8 +245,7 @@ public class OServerCommandPostBatch extends OServerCommandDocumentAbstract {
     if (record instanceof Map<?, ?>)
       // CONVERT MAP IN DOCUMENT
       doc = new ODocument((Map<String, Object>) record);
-    else
-      doc = (ODocument) record;
+    else doc = (ODocument) record;
     return doc;
   }
 

@@ -1,6 +1,10 @@
 package com.orientechnologies.orient.distributed.impl.log;
 
-import java.io.*;
+import java.io.DataInputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.util.NoSuchElementException;
 
 public class OPersistentOperationalLogIterator implements OOplogIterator {
@@ -60,7 +64,6 @@ public class OPersistentOperationalLogIterator implements OOplogIterator {
     } while (from != null && nextEntry != null && nextEntry.getLogId().getId() < from);
 
     nextIdToLoad++;
-
   }
 
   private void initStream() {
@@ -91,5 +94,4 @@ public class OPersistentOperationalLogIterator implements OOplogIterator {
       e.printStackTrace();
     }
   }
-
 }

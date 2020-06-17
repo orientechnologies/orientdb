@@ -25,16 +25,13 @@ import com.orientechnologies.orient.core.metadata.schema.OImmutableClass;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
 import com.tinkerpop.blueprints.Element;
-
 import java.util.Iterator;
 import java.util.NoSuchElementException;
 
-/**
- * @author Marko A. Rodriguez (http://markorodriguez.com)
- */
+/** @author Marko A. Rodriguez (http://markorodriguez.com) */
 class OrientElementIterator<T extends Element> implements Iterator<T> {
 
-  private final Iterator<?>     itty;
+  private final Iterator<?> itty;
   private final OrientBaseGraph graph;
 
   public OrientElementIterator(final OrientBaseGraph graph, final Iterator<?> itty) {
@@ -50,16 +47,13 @@ class OrientElementIterator<T extends Element> implements Iterator<T> {
   public T next() {
     OrientElement currentElement = null;
 
-    if (!hasNext())
-      throw new NoSuchElementException();
+    if (!hasNext()) throw new NoSuchElementException();
 
     Object current = itty.next();
 
-    if (null == current)
-      throw new NoSuchElementException();
+    if (null == current) throw new NoSuchElementException();
 
-    if (current instanceof OIdentifiable)
-      current = ((OIdentifiable) current).getRecord();
+    if (current instanceof OIdentifiable) current = ((OIdentifiable) current).getRecord();
 
     if (current instanceof ODocument) {
       final ODocument currentDocument = (ODocument) current;
@@ -68,15 +62,15 @@ class OrientElementIterator<T extends Element> implements Iterator<T> {
         currentDocument.load();
 
       OImmutableClass immutableClass = ODocumentInternal.getImmutableSchemaClass(currentDocument);
-      // clusterId -2 is a projection and is correct that doesn't have a class, we consider projection a vertex
+      // clusterId -2 is a projection and is correct that doesn't have a class, we consider
+      // projection a vertex
       if (immutableClass == null && currentDocument.getIdentity().getClusterId() != -2)
         throw new IllegalArgumentException(
             "Cannot determine the graph element type because the document class is null. Probably this is a projection, use the EXPAND() function");
 
-      if (currentDocument.getIdentity().getClusterId() != -2 && immutableClass.isEdgeType() )
+      if (currentDocument.getIdentity().getClusterId() != -2 && immutableClass.isEdgeType())
         currentElement = graph.getEdge(currentDocument);
-      else
-        currentElement = graph.getVertex(currentDocument);
+      else currentElement = graph.getVertex(currentDocument);
     }
 
     return (T) currentElement;

@@ -12,7 +12,6 @@ import com.orientechnologies.orient.core.record.OElement;
 import com.orientechnologies.orient.core.sql.executor.AggregationContext;
 import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.executor.OResultInternal;
-
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -22,12 +21,12 @@ public class OExpression extends SimpleNode {
   protected Boolean singleQuotes;
   protected Boolean doubleQuotes;
 
-  protected boolean                isNull = false;
-  protected ORid                   rid;
-  protected OMathExpression        mathExpression;
+  protected boolean isNull = false;
+  protected ORid rid;
+  protected OMathExpression mathExpression;
   protected OArrayConcatExpression arrayConcatExpression;
-  protected OJson                  json;
-  protected Boolean                booleanValue;
+  protected OJson json;
+  protected Boolean booleanValue;
 
   public OExpression(int id) {
     super(id);
@@ -70,10 +69,10 @@ public class OExpression extends SimpleNode {
       return booleanValue;
     }
     if (value instanceof ONumber) {
-      return ((ONumber) value).getValue();//only for old executor (manually replaced params)
+      return ((ONumber) value).getValue(); // only for old executor (manually replaced params)
     }
 
-    //from here it's old stuff, only for the old executor
+    // from here it's old stuff, only for the old executor
     if (value instanceof ORid) {
       ORid v = (ORid) value;
       return new ORecordId(v.cluster.getValue().intValue(), v.position.getValue().longValue());
@@ -112,10 +111,10 @@ public class OExpression extends SimpleNode {
       return booleanValue;
     }
     if (value instanceof ONumber) {
-      return ((ONumber) value).getValue();//only for old executor (manually replaced params)
+      return ((ONumber) value).getValue(); // only for old executor (manually replaced params)
     }
 
-    //from here it's old stuff, only for the old executor
+    // from here it's old stuff, only for the old executor
     if (value instanceof ORid) {
       ORid v = (ORid) value;
       return new ORecordId(v.cluster.getValue().intValue(), v.position.getValue().longValue());
@@ -138,7 +137,7 @@ public class OExpression extends SimpleNode {
     if (mathExpression != null) {
       return mathExpression.isBaseIdentifier();
     }
-    if (value instanceof OMathExpression) {//only backward stuff, remote it
+    if (value instanceof OMathExpression) { // only backward stuff, remote it
       return ((OMathExpression) value).isBaseIdentifier();
     }
 
@@ -175,7 +174,13 @@ public class OExpression extends SimpleNode {
   public OIdentifier getDefaultAlias() {
     OIdentifier identifier;
     if (isBaseIdentifier()) {
-      identifier = new OIdentifier(((OBaseExpression) mathExpression).identifier.getSuffix().identifier.getStringValue());
+      identifier =
+          new OIdentifier(
+              ((OBaseExpression) mathExpression)
+                  .identifier
+                  .getSuffix()
+                  .identifier
+                  .getStringValue());
     } else {
       identifier = new OIdentifier(this.toString());
     }
@@ -210,7 +215,10 @@ public class OExpression extends SimpleNode {
     } else if (booleanValue != null) {
       builder.append(booleanValue.toString());
     } else if (value instanceof SimpleNode) {
-      ((SimpleNode) value).toString(params, builder);//only for translated input params, will disappear with new executor
+      ((SimpleNode) value)
+          .toString(
+              params,
+              builder); // only for translated input params, will disappear with new executor
     } else if (value instanceof String) {
       if (Boolean.TRUE.equals(singleQuotes)) {
         builder.append("'" + value + "'");
@@ -219,7 +227,8 @@ public class OExpression extends SimpleNode {
       }
 
     } else {
-      builder.append("" + value);//only for translated input params, will disappear with new executor
+      builder.append(
+          "" + value); // only for translated input params, will disappear with new executor
     }
   }
 
@@ -279,15 +288,16 @@ public class OExpression extends SimpleNode {
     return builder.toString();
   }
 
-  public long estimateIndexedFunction(OFromClause target, OCommandContext context, OBinaryCompareOperator operator, Object right) {
+  public long estimateIndexedFunction(
+      OFromClause target, OCommandContext context, OBinaryCompareOperator operator, Object right) {
     if (mathExpression != null) {
       return mathExpression.estimateIndexedFunction(target, context, operator, right);
     }
     return -1;
   }
 
-  public Iterable<OIdentifiable> executeIndexedFunction(OFromClause target, OCommandContext context,
-      OBinaryCompareOperator operator, Object right) {
+  public Iterable<OIdentifiable> executeIndexedFunction(
+      OFromClause target, OCommandContext context, OBinaryCompareOperator operator, Object right) {
     if (mathExpression != null) {
       return mathExpression.executeIndexedFunction(target, context, operator, right);
     }
@@ -295,18 +305,18 @@ public class OExpression extends SimpleNode {
   }
 
   /**
-   * tests if current expression is an indexed function AND that function can also be executed without using the index
+   * tests if current expression is an indexed function AND that function can also be executed
+   * without using the index
    *
-   * @param target   the query target
-   * @param context  the execution context
+   * @param target the query target
+   * @param context the execution context
    * @param operator
    * @param right
-   *
-   * @return true if current expression is an indexed funciton AND that function can also be executed without using the index, false
-   * otherwise
+   * @return true if current expression is an indexed funciton AND that function can also be
+   *     executed without using the index, false otherwise
    */
-  public boolean canExecuteIndexedFunctionWithoutIndex(OFromClause target, OCommandContext context, OBinaryCompareOperator operator,
-      Object right) {
+  public boolean canExecuteIndexedFunctionWithoutIndex(
+      OFromClause target, OCommandContext context, OBinaryCompareOperator operator, Object right) {
     if (mathExpression != null) {
       return mathExpression.canExecuteIndexedFunctionWithoutIndex(target, context, operator, right);
     }
@@ -316,36 +326,38 @@ public class OExpression extends SimpleNode {
   /**
    * tests if current expression is an indexed function AND that function can be used on this target
    *
-   * @param target   the query target
-   * @param context  the execution context
+   * @param target the query target
+   * @param context the execution context
    * @param operator
    * @param right
-   *
-   * @return true if current expression involves an indexed function AND that function can be used on this target, false otherwise
+   * @return true if current expression involves an indexed function AND that function can be used
+   *     on this target, false otherwise
    */
-  public boolean allowsIndexedFunctionExecutionOnTarget(OFromClause target, OCommandContext context,
-      OBinaryCompareOperator operator, Object right) {
+  public boolean allowsIndexedFunctionExecutionOnTarget(
+      OFromClause target, OCommandContext context, OBinaryCompareOperator operator, Object right) {
     if (mathExpression != null) {
-      return mathExpression.allowsIndexedFunctionExecutionOnTarget(target, context, operator, right);
+      return mathExpression.allowsIndexedFunctionExecutionOnTarget(
+          target, context, operator, right);
     }
     return false;
   }
 
   /**
-   * tests if current expression is an indexed function AND the function has also to be executed after the index search. In some
-   * cases, the index search is accurate, so this condition can be excluded from further evaluation. In other cases the result from
-   * the index is a superset of the expected result, so the function has to be executed anyway for further filtering
+   * tests if current expression is an indexed function AND the function has also to be executed
+   * after the index search. In some cases, the index search is accurate, so this condition can be
+   * excluded from further evaluation. In other cases the result from the index is a superset of the
+   * expected result, so the function has to be executed anyway for further filtering
    *
-   * @param target  the query target
+   * @param target the query target
    * @param context the execution context
-   *
-   * @return true if current expression involves an indexed function AND the function has also to be executed after the index
-   * search.
+   * @return true if current expression involves an indexed function AND the function has also to be
+   *     executed after the index search.
    */
-  public boolean executeIndexedFunctionAfterIndexSearch(OFromClause target, OCommandContext context,
-      OBinaryCompareOperator operator, Object right) {
+  public boolean executeIndexedFunctionAfterIndexSearch(
+      OFromClause target, OCommandContext context, OBinaryCompareOperator operator, Object right) {
     if (mathExpression != null) {
-      return mathExpression.executeIndexedFunctionAfterIndexSearch(target, context, operator, right);
+      return mathExpression.executeIndexedFunctionAfterIndexSearch(
+          target, context, operator, right);
     }
     return false;
   }
@@ -387,7 +399,8 @@ public class OExpression extends SimpleNode {
     return false;
   }
 
-  public OExpression splitForAggregation(AggregateProjectionSplit aggregateSplit, OCommandContext ctx) {
+  public OExpression splitForAggregation(
+      AggregateProjectionSplit aggregateSplit, OCommandContext ctx) {
     if (isAggregate()) {
       OExpression result = new OExpression(-1);
       if (mathExpression != null) {
@@ -397,7 +410,8 @@ public class OExpression extends SimpleNode {
         } else if (splitResult instanceof OExpression) {
           return (OExpression) splitResult;
         } else {
-          throw new IllegalStateException("something went wrong while splitting expression for aggregate " + toString());
+          throw new IllegalStateException(
+              "something went wrong while splitting expression for aggregate " + toString());
         }
       }
       if (arrayConcatExpression != null) {
@@ -407,7 +421,8 @@ public class OExpression extends SimpleNode {
         } else if (splitResult instanceof OExpression) {
           return (OExpression) splitResult;
         } else {
-          throw new IllegalStateException("something went wrong while splitting expression for aggregate " + toString());
+          throw new IllegalStateException(
+              "something went wrong while splitting expression for aggregate " + toString());
         }
       }
       if (json != null) {
@@ -437,7 +452,8 @@ public class OExpression extends SimpleNode {
     result.isNull = isNull;
     result.rid = rid == null ? null : rid.copy();
     result.mathExpression = mathExpression == null ? null : mathExpression.copy();
-    result.arrayConcatExpression = arrayConcatExpression == null ? null : arrayConcatExpression.copy();
+    result.arrayConcatExpression =
+        arrayConcatExpression == null ? null : arrayConcatExpression.copy();
     result.json = json == null ? null : json.copy();
     result.booleanValue = booleanValue;
 
@@ -446,29 +462,24 @@ public class OExpression extends SimpleNode {
 
   @Override
   public boolean equals(Object o) {
-    if (this == o)
-      return true;
-    if (o == null || getClass() != o.getClass())
-      return false;
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
 
     OExpression that = (OExpression) o;
 
-    if (isNull != that.isNull)
-      return false;
+    if (isNull != that.isNull) return false;
     if (singleQuotes != null ? !singleQuotes.equals(that.singleQuotes) : that.singleQuotes != null)
       return false;
     if (doubleQuotes != null ? !doubleQuotes.equals(that.doubleQuotes) : that.doubleQuotes != null)
       return false;
-    if (rid != null ? !rid.equals(that.rid) : that.rid != null)
-      return false;
-    if (mathExpression != null ? !mathExpression.equals(that.mathExpression) : that.mathExpression != null)
-      return false;
-    if (arrayConcatExpression != null ?
-        !arrayConcatExpression.equals(that.arrayConcatExpression) :
-        that.arrayConcatExpression != null)
-      return false;
-    if (json != null ? !json.equals(that.json) : that.json != null)
-      return false;
+    if (rid != null ? !rid.equals(that.rid) : that.rid != null) return false;
+    if (mathExpression != null
+        ? !mathExpression.equals(that.mathExpression)
+        : that.mathExpression != null) return false;
+    if (arrayConcatExpression != null
+        ? !arrayConcatExpression.equals(that.arrayConcatExpression)
+        : that.arrayConcatExpression != null) return false;
+    if (json != null ? !json.equals(that.json) : that.json != null) return false;
     if (booleanValue != null ? !booleanValue.equals(that.booleanValue) : that.booleanValue != null)
       return false;
 
@@ -542,14 +553,14 @@ public class OExpression extends SimpleNode {
   }
 
   /**
-   * if the condition involved the current pattern (MATCH statement, eg. $matched.something = foo), returns the name of involved
-   * pattern aliases ("something" in this case)
+   * if the condition involved the current pattern (MATCH statement, eg. $matched.something = foo),
+   * returns the name of involved pattern aliases ("something" in this case)
    *
-   * @return a list of pattern aliases involved in this condition. Null it does not involve the pattern
+   * @return a list of pattern aliases involved in this condition. Null it does not involve the
+   *     pattern
    */
   List<String> getMatchPatternInvolvedAliases() {
-    if (mathExpression != null)
-      return mathExpression.getMatchPatternInvolvedAliases();
+    if (mathExpression != null) return mathExpression.getMatchPatternInvolvedAliases();
     if (arrayConcatExpression != null)
       return arrayConcatExpression.getMatchPatternInvolvedAliases();
     return null;
@@ -610,7 +621,8 @@ public class OExpression extends SimpleNode {
       rid.deserialize(fromResult.getProperty("rid"));
     }
     if (fromResult.getProperty("mathExpression") != null) {
-      mathExpression = OMathExpression.deserializeFromResult(fromResult.getProperty("mathExpression"));
+      mathExpression =
+          OMathExpression.deserializeFromResult(fromResult.getProperty("mathExpression"));
     }
     if (fromResult.getProperty("arrayConcatExpression") != null) {
       arrayConcatExpression = new OArrayConcatExpression(-1);

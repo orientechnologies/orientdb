@@ -7,7 +7,6 @@ import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.metadata.function.OFunction;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -22,41 +21,56 @@ public class OSecurityRemote implements OSecurityInternal {
   }
 
   @Override
-  public boolean isAllowed(ODatabaseSession session, Set<OIdentifiable> iAllowAll, Set<OIdentifiable> iAllowOperation) {
+  public boolean isAllowed(
+      ODatabaseSession session, Set<OIdentifiable> iAllowAll, Set<OIdentifiable> iAllowOperation) {
     return delegate.isAllowed(session, iAllowAll, iAllowOperation);
   }
 
   @Override
-  public OIdentifiable allowUser(ODatabaseSession session, ODocument iDocument, ORestrictedOperation iOperationType,
+  public OIdentifiable allowUser(
+      ODatabaseSession session,
+      ODocument iDocument,
+      ORestrictedOperation iOperationType,
       String iUserName) {
     return delegate.allowUser(session, iDocument, iOperationType, iUserName);
   }
 
   @Override
-  public OIdentifiable allowRole(ODatabaseSession session, ODocument iDocument, ORestrictedOperation iOperationType,
+  public OIdentifiable allowRole(
+      ODatabaseSession session,
+      ODocument iDocument,
+      ORestrictedOperation iOperationType,
       String iRoleName) {
     return delegate.allowRole(session, iDocument, iOperationType, iRoleName);
   }
 
   @Override
-  public OIdentifiable denyUser(ODatabaseSession session, ODocument iDocument, ORestrictedOperation iOperationType,
+  public OIdentifiable denyUser(
+      ODatabaseSession session,
+      ODocument iDocument,
+      ORestrictedOperation iOperationType,
       String iUserName) {
     return delegate.denyUser(session, iDocument, iOperationType, iUserName);
   }
 
   @Override
-  public OIdentifiable denyRole(ODatabaseSession session, ODocument iDocument, ORestrictedOperation iOperationType,
+  public OIdentifiable denyRole(
+      ODatabaseSession session,
+      ODocument iDocument,
+      ORestrictedOperation iOperationType,
       String iRoleName) {
     return delegate.denyRole(session, iDocument, iOperationType, iRoleName);
   }
 
   @Override
-  public OIdentifiable allowIdentity(ODatabaseSession session, ODocument iDocument, String iAllowFieldName, OIdentifiable iId) {
+  public OIdentifiable allowIdentity(
+      ODatabaseSession session, ODocument iDocument, String iAllowFieldName, OIdentifiable iId) {
     return delegate.allowIdentity(session, iDocument, iAllowFieldName, iId);
   }
 
   @Override
-  public OIdentifiable disallowIdentity(ODatabaseSession session, ODocument iDocument, String iAllowFieldName, OIdentifiable iId) {
+  public OIdentifiable disallowIdentity(
+      ODatabaseSession session, ODocument iDocument, String iAllowFieldName, OIdentifiable iId) {
     return delegate.disallowIdentity(session, iDocument, iAllowFieldName, iId);
   }
 
@@ -66,12 +80,14 @@ public class OSecurityRemote implements OSecurityInternal {
   }
 
   @Override
-  public OUser createUser(ODatabaseSession session, String iUserName, String iUserPassword, String[] iRoles) {
+  public OUser createUser(
+      ODatabaseSession session, String iUserName, String iUserPassword, String[] iRoles) {
     return delegate.createUser(session, iUserName, iUserPassword, iRoles);
   }
 
   @Override
-  public OUser createUser(ODatabaseSession session, String iUserName, String iUserPassword, ORole[] iRoles) {
+  public OUser createUser(
+      ODatabaseSession session, String iUserName, String iUserPassword, ORole[] iRoles) {
     return delegate.createUser(session, iUserName, iUserPassword, iRoles);
   }
 
@@ -81,12 +97,17 @@ public class OSecurityRemote implements OSecurityInternal {
   }
 
   @Override
-  public ORole createRole(ODatabaseSession session, String iRoleName, ORole iParent, OSecurityRole.ALLOW_MODES iAllowMode) {
+  public ORole createRole(
+      ODatabaseSession session,
+      String iRoleName,
+      ORole iParent,
+      OSecurityRole.ALLOW_MODES iAllowMode) {
     return delegate.createRole(session, iRoleName, iParent, iAllowMode);
   }
 
   @Override
-  public ORole createRole(ODatabaseSession session, String iRoleName, OSecurityRole.ALLOW_MODES iAllowMode) {
+  public ORole createRole(
+      ODatabaseSession session, String iRoleName, OSecurityRole.ALLOW_MODES iAllowMode) {
     return delegate.createRole(session, iRoleName, iAllowMode);
   }
 
@@ -121,17 +142,20 @@ public class OSecurityRemote implements OSecurityInternal {
   }
 
   @Override
-  public Map<String, OSecurityPolicy> getSecurityPolicies(ODatabaseSession session, OSecurityRole role) {
+  public Map<String, OSecurityPolicy> getSecurityPolicies(
+      ODatabaseSession session, OSecurityRole role) {
     return delegate.getSecurityPolicies(session, role);
   }
 
   @Override
-  public OSecurityPolicy getSecurityPolicy(ODatabaseSession session, OSecurityRole role, String resource) {
+  public OSecurityPolicy getSecurityPolicy(
+      ODatabaseSession session, OSecurityRole role, String resource) {
     return delegate.getSecurityPolicy(session, role, resource);
   }
 
   @Override
-  public void setSecurityPolicy(ODatabaseSession session, OSecurityRole role, String resource, OSecurityPolicy policy) {
+  public void setSecurityPolicy(
+      ODatabaseSession session, OSecurityRole role, String resource, OSecurityPolicy policy) {
     delegate.setSecurityPolicy(session, role, resource, policy);
   }
 
@@ -241,7 +265,8 @@ public class OSecurityRemote implements OSecurityInternal {
   }
 
   @Override
-  public Set<OSecurityResourceProperty> getAllFilteredProperties(ODatabaseDocumentInternal database) {
+  public Set<OSecurityResourceProperty> getAllFilteredProperties(
+      ODatabaseDocumentInternal database) {
     return Collections.EMPTY_SET;
   }
 }

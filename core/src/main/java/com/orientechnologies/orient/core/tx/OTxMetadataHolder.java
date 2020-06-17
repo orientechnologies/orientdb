@@ -9,5 +9,4 @@ public interface OTxMetadataHolder {
   OTransactionId getId();
 
   OTransactionSequenceStatus getStatus();
-
 }

@@ -19,29 +19,29 @@ import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.util.OCallable;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.server.hazelcast.OHazelcastPlugin;
-import org.junit.Assert;
-import org.junit.Ignore;
-import org.junit.Test;
-
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.atomic.AtomicInteger;
+import org.junit.Assert;
+import org.junit.Ignore;
+import org.junit.Test;
 
 /**
  * Starts 3 servers, stop last node, checks:
+ *
  * <ul>
- * <li>other nodes can work in the meanwhile</li>
- * <li>node3 is down</li>
+ *   <li>other nodes can work in the meanwhile
+ *   <li>node3 is down
  * </ul>
  */
 public class StopNodeIT extends AbstractServerClusterTxTest {
-  final static int            SERVERS       = 3;
-  volatile boolean            inserting     = true;
-  volatile int                serverStarted = 0;
-  final private Set<String>   nodeReJoined  = new HashSet<String>();
-  final private AtomicInteger nodeLefts     = new AtomicInteger();
+  static final int SERVERS = 3;
+  volatile boolean inserting = true;
+  volatile int serverStarted = 0;
+  private final Set<String> nodeReJoined = new HashSet<String>();
+  private final AtomicInteger nodeLefts = new AtomicInteger();
 
   @Test
   @Ignore
@@ -68,83 +68,99 @@ public class StopNodeIT extends AbstractServerClusterTxTest {
 
     if (serverStarted == 0) {
       // INSTALL ON FIRST SERVER ONLY THE SERVER MONITOR TO CHECK IF HAS BEEN RESTARTED
-      server.server.getDistributedManager().registerLifecycleListener(new ODistributedLifecycleListener() {
-        @Override
-        public boolean onNodeJoining(String iNode) {
-          return true;
-        }
+      server
+          .server
+          .getDistributedManager()
+          .registerLifecycleListener(
+              new ODistributedLifecycleListener() {
+                @Override
+                public boolean onNodeJoining(String iNode) {
+                  return true;
+                }
 
-        @Override
-        public void onNodeJoined(String iNode) {
-          nodeReJoined.add(iNode);
-        }
+                @Override
+                public void onNodeJoined(String iNode) {
+                  nodeReJoined.add(iNode);
+                }
 
-        @Override
-        public void onNodeLeft(String iNode) {
-          nodeReJoined.clear();
-          nodeLefts.incrementAndGet();
-          OLogManager.instance().info(this, "NODE LEFT %s = %d", iNode, nodeLefts.get());
-        }
+                @Override
+                public void onNodeLeft(String iNode) {
+                  nodeReJoined.clear();
+                  nodeLefts.incrementAndGet();
+                  OLogManager.instance().info(this, "NODE LEFT %s = %d", iNode, nodeLefts.get());
+                }
 
-        @Override
-        public void onDatabaseChangeStatus(String iNode, String iDatabaseName, ODistributedServerManager.DB_STATUS iNewStatus) {
-        }
-      });
+                @Override
+                public void onDatabaseChangeStatus(
+                    String iNode,
+                    String iDatabaseName,
+                    ODistributedServerManager.DB_STATUS iNewStatus) {}
+              });
     }
 
     if (serverStarted++ == (SERVERS - 1)) {
 
       // STOP LAST SERVER, RUN ASYNCHRONOUSLY
-      new Thread(new Runnable() {
+      new Thread(
+              new Runnable() {
 
-        @Override
-        public void run() {
-          try {
-            // CRASH LAST SERVER try {
-            executeWhen(new Callable<Boolean>() {
-              // CONDITION
-              @Override
-              public Boolean call() throws Exception {
-                final ODatabaseDocument database = getDatabase(0);
-                try {
-                  return database.countClass("Person") > (count * writerCount * SERVERS) * 1 / 3;
-                } finally {
-                  database.close();
-                }
-              }
-            }, // ACTION
-                new Callable() {
-                  @Override
-                  public Object call() throws Exception {
-                    Assert.assertTrue("Insert was too fast", inserting);
+                @Override
+                public void run() {
+                  try {
+                    // CRASH LAST SERVER try {
+                    executeWhen(
+                        new Callable<Boolean>() {
+                          // CONDITION
+                          @Override
+                          public Boolean call() throws Exception {
+                            final ODatabaseDocument database = getDatabase(0);
+                            try {
+                              return database.countClass("Person")
+                                  > (count * writerCount * SERVERS) * 1 / 3;
+                            } finally {
+                              database.close();
+                            }
+                          }
+                        }, // ACTION
+                        new Callable() {
+                          @Override
+                          public Object call() throws Exception {
+                            Assert.assertTrue("Insert was too fast", inserting);
 
-                    banner("STOPPING SERVER " + (SERVERS - 1));
+                            banner("STOPPING SERVER " + (SERVERS - 1));
 
-                    ((OHazelcastPlugin) serverInstance.get(0).getServerInstance().getDistributedManager())
-                        .stopNode(server.server.getDistributedManager().getLocalNodeName());
+                            ((OHazelcastPlugin)
+                                    serverInstance
+                                        .get(0)
+                                        .getServerInstance()
+                                        .getDistributedManager())
+                                .stopNode(server.server.getDistributedManager().getLocalNodeName());
 
-                    return null;
+                            return null;
+                          }
+                        });
+
+                  } catch (Exception e) {
+                    e.printStackTrace();
+                    Assert.fail("Error on execution flow");
                   }
-                });
-
-          } catch (Exception e) {
-            e.printStackTrace();
-            Assert.fail("Error on execution flow");
-          }
-        }
-
-      }).start();
+                }
+              })
+          .start();
     }
   }
 
   @Override
   protected void onBeforeChecks() throws InterruptedException {
-    waitFor(10000, new OCallable<Boolean, Void>() {
-      @Override
-      public Boolean call(Void nothing) {
-        return nodeLefts.get() > 0;
-      }
-    }, "Nodes left are " + nodeLefts.get());
+    waitFor(
+        10000,
+        new OCallable<Boolean, Void>() {
+          @Override
+          public Boolean call(Void nothing) {
+            return nodeLefts.get() > 0;
+          }
+        },
+        "Nodes left are " + nodeLefts.get());
   }
 
   @Override

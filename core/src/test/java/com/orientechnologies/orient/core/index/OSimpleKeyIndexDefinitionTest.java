@@ -3,13 +3,12 @@ package com.orientechnologies.orient.core.index;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
-
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Test;
 
 @SuppressWarnings("unchecked")
 public class OSimpleKeyIndexDefinitionTest {
@@ -33,7 +32,8 @@ public class OSimpleKeyIndexDefinitionTest {
 
   @Test
   public void testCreateValueSimpleKey() {
-    final OSimpleKeyIndexDefinition keyIndexDefinition = new OSimpleKeyIndexDefinition(OType.INTEGER);
+    final OSimpleKeyIndexDefinition keyIndexDefinition =
+        new OSimpleKeyIndexDefinition(OType.INTEGER);
     final Object result = keyIndexDefinition.createValue("2");
     Assert.assertEquals(result, 2);
   }
@@ -113,30 +113,35 @@ public class OSimpleKeyIndexDefinitionTest {
 
   @Test
   public void testParamCountOneItem() {
-    final OSimpleKeyIndexDefinition keyIndexDefinition = new OSimpleKeyIndexDefinition(OType.INTEGER);
+    final OSimpleKeyIndexDefinition keyIndexDefinition =
+        new OSimpleKeyIndexDefinition(OType.INTEGER);
 
     Assert.assertEquals(keyIndexDefinition.getParamCount(), 1);
   }
 
   @Test
   public void testGetKeyTypes() {
-    Assert.assertEquals(simpleKeyIndexDefinition.getTypes(), new OType[] { OType.INTEGER, OType.STRING });
+    Assert.assertEquals(
+        simpleKeyIndexDefinition.getTypes(), new OType[] {OType.INTEGER, OType.STRING});
   }
 
   @Test
   public void testGetKeyTypesOneType() {
-    final OSimpleKeyIndexDefinition keyIndexDefinition = new OSimpleKeyIndexDefinition(OType.BOOLEAN);
+    final OSimpleKeyIndexDefinition keyIndexDefinition =
+        new OSimpleKeyIndexDefinition(OType.BOOLEAN);
 
-    Assert.assertEquals(keyIndexDefinition.getTypes(), new OType[] { OType.BOOLEAN });
+    Assert.assertEquals(keyIndexDefinition.getTypes(), new OType[] {OType.BOOLEAN});
   }
 
   @Test
   public void testReload() {
-    final ODatabaseDocumentTx databaseDocumentTx = new ODatabaseDocumentTx("memory:osimplekeyindexdefinitiontest");
+    final ODatabaseDocumentTx databaseDocumentTx =
+        new ODatabaseDocumentTx("memory:osimplekeyindexdefinitiontest");
     databaseDocumentTx.create();
 
     final ODocument storeDocument = simpleKeyIndexDefinition.toStream();
-    storeDocument.save(databaseDocumentTx.getClusterNameById(databaseDocumentTx.getDefaultClusterId()));
+    storeDocument.save(
+        databaseDocumentTx.getClusterNameById(databaseDocumentTx.getDefaultClusterId()));
 
     final ODocument loadDocument = databaseDocumentTx.load(storeDocument.getIdentity());
     final OSimpleKeyIndexDefinition loadedKeyIndexDefinition = new OSimpleKeyIndexDefinition();
@@ -151,5 +156,4 @@ public class OSimpleKeyIndexDefinitionTest {
   public void testGetDocumentValueToIndex() {
     simpleKeyIndexDefinition.getDocumentValueToIndex(new ODocument());
   }
-
 }

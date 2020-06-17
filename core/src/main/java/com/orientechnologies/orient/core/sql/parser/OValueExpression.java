@@ -10,14 +10,13 @@ import com.orientechnologies.orient.core.record.OElement;
 import com.orientechnologies.orient.core.sql.executor.AggregationContext;
 import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.executor.OResultInternal;
-
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
 /**
- * this class is only used by the query executor to store pre-calculated values and store them in a temporary AST. It's not produced
- * by parsing
+ * this class is only used by the query executor to store pre-calculated values and store them in a
+ * temporary AST. It's not produced by parsing
  */
 public class OValueExpression extends OExpression {
 
@@ -58,18 +57,18 @@ public class OValueExpression extends OExpression {
     return false;
   }
 
-  public boolean canExecuteIndexedFunctionWithoutIndex(OFromClause target, OCommandContext context, OBinaryCompareOperator operator,
-      Object right) {
+  public boolean canExecuteIndexedFunctionWithoutIndex(
+      OFromClause target, OCommandContext context, OBinaryCompareOperator operator, Object right) {
     return false;
   }
 
-  public boolean allowsIndexedFunctionExecutionOnTarget(OFromClause target, OCommandContext context,
-      OBinaryCompareOperator operator, Object right) {
+  public boolean allowsIndexedFunctionExecutionOnTarget(
+      OFromClause target, OCommandContext context, OBinaryCompareOperator operator, Object right) {
     return false;
   }
 
-  public boolean executeIndexedFunctionAfterIndexSearch(OFromClause target, OCommandContext context,
-      OBinaryCompareOperator operator, Object right) {
+  public boolean executeIndexedFunctionAfterIndexSearch(
+      OFromClause target, OCommandContext context, OBinaryCompareOperator operator, Object right) {
     return false;
   }
 
@@ -106,14 +105,11 @@ public class OValueExpression extends OExpression {
 
   @Override
   public boolean equals(Object o) {
-    if (this == o)
-      return true;
-    if (o == null || getClass() != o.getClass())
-      return false;
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
 
     OValueExpression that = (OValueExpression) o;
     return that.value == this.value;
-
   }
 
   @Override
@@ -121,12 +117,9 @@ public class OValueExpression extends OExpression {
     return 1;
   }
 
-  public void extractSubQueries(SubQueryCollector collector) {
+  public void extractSubQueries(SubQueryCollector collector) {}
 
-  }
-
-  public void extractSubQueries(OIdentifier letAlias, SubQueryCollector collector) {
-  }
+  public void extractSubQueries(OIdentifier letAlias, SubQueryCollector collector) {}
 
   public boolean refersToParent() {
 
@@ -146,21 +139,21 @@ public class OValueExpression extends OExpression {
   }
 
   public OResult serialize() {
-    throw new UnsupportedOperationException("Cannot serialize value expression (not supported yet)");
+    throw new UnsupportedOperationException(
+        "Cannot serialize value expression (not supported yet)");
   }
 
   public void deserialize(OResult fromResult) {
-    throw new UnsupportedOperationException("Cannot deserialize value expression (not supported yet)");
+    throw new UnsupportedOperationException(
+        "Cannot deserialize value expression (not supported yet)");
   }
 
   public boolean isDefinedFor(OResult currentRecord) {
     return true;
-
   }
 
   public boolean isDefinedFor(OElement currentRecord) {
     return true;
-
   }
 
   public OCollate getCollate(OResult currentRecord, OCommandContext ctx) {

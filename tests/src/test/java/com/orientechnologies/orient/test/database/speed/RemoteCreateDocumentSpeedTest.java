@@ -15,10 +15,6 @@
  */
 package com.orientechnologies.orient.test.database.speed;
 
-import java.util.Date;
-
-import org.testng.annotations.Test;
-
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.ODatabase.OPERATION_MODE;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
@@ -27,14 +23,16 @@ import com.orientechnologies.orient.core.intent.OIntentMassiveInsert;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.tx.OTransaction.TXTYPE;
 import com.orientechnologies.orient.test.database.base.OrientMonoThreadTest;
+import java.util.Date;
+import org.testng.annotations.Test;
 
 @Test(enabled = false)
 public class RemoteCreateDocumentSpeedTest extends OrientMonoThreadTest {
   private ODatabaseDocument database;
-  private ODocument         record;
-  private Date              date  = new Date();
-  private long              beginRecords;
-  private final static long DELAY = 0;
+  private ODocument record;
+  private Date date = new Date();
+  private long beginRecords;
+  private static final long DELAY = 0;
 
   public static void main(String[] iArgs) throws InstantiationException, IllegalAccessException {
     RemoteCreateDocumentSpeedTest test = new RemoteCreateDocumentSpeedTest();
@@ -72,8 +70,7 @@ public class RemoteCreateDocumentSpeedTest extends OrientMonoThreadTest {
 
     database.save(record, OPERATION_MODE.ASYNCHRONOUS_NOANSWER, false, null, null);
 
-    if (data.getCyclesDone() == data.getCycles() - 1)
-      database.commit();
+    if (data.getCyclesDone() == data.getCycles() - 1) database.commit();
 
     if (DELAY > 0)
       try {
@@ -87,12 +84,12 @@ public class RemoteCreateDocumentSpeedTest extends OrientMonoThreadTest {
   @Override
   public void deinit() {
     final long endRecords = database.countClass("Account");
-    System.out.println("Total accounts: " + endRecords + ". Expected: " + (beginRecords + data.getCycles()));
+    System.out.println(
+        "Total accounts: " + endRecords + ". Expected: " + (beginRecords + data.getCycles()));
 
     System.out.println(Orient.instance().getProfiler().dump());
 
-    if (database != null)
-      database.close();
+    if (database != null) database.close();
     super.deinit();
   }
 }

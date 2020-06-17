@@ -19,10 +19,12 @@ package com.orientechnologies.common.console;
 import com.orientechnologies.common.console.annotation.ConsoleCommand;
 
 /**
- * Commun interface for addtitional console commands. Instances of this class are discovered throught serviceLoaders. It should be
- * declared in file : META-INF/services/com.orientechnologies.common.console.OConsoleCommandCollection
- * <p>
- * This interface is empty, all wanted commands are expected to be annoted with {@link ConsoleCommand}.
+ * Commun interface for addtitional console commands. Instances of this class are discovered
+ * throught serviceLoaders. It should be declared in file :
+ * META-INF/services/com.orientechnologies.common.console.OConsoleCommandCollection
+ *
+ * <p>This interface is empty, all wanted commands are expected to be annoted with {@link
+ * ConsoleCommand}.
  *
  * @author Johann Sorel (Geomatys)
  */
@@ -33,5 +35,4 @@ public abstract class OConsoleCommandCollection {
   void setContext(OConsoleApplication context) {
     this.context = context;
   }
-
 }

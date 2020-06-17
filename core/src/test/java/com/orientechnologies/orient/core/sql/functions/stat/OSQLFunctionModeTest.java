@@ -1,12 +1,13 @@
 package com.orientechnologies.orient.core.sql.functions.stat;
 
-import org.junit.Before;
-import org.junit.Test;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
 
 import java.util.Arrays;
 import java.util.List;
-
-import static org.junit.Assert.*;
+import org.junit.Before;
+import org.junit.Test;
 
 public class OSQLFunctionModeTest {
 
@@ -14,12 +15,13 @@ public class OSQLFunctionModeTest {
 
   @Before
   public void setup() {
-    mode = new OSQLFunctionMode() {
-      @Override
-      protected boolean returnDistributedResult() {
-        return false;
-      }
-    };
+    mode =
+        new OSQLFunctionMode() {
+          @Override
+          protected boolean returnDistributedResult() {
+            return false;
+          }
+        };
   }
 
   @Test
@@ -30,10 +32,10 @@ public class OSQLFunctionModeTest {
 
   @Test
   public void testSingleMode() {
-    int[] scores = { 1, 2, 3, 3, 3, 2 };
+    int[] scores = {1, 2, 3, 3, 3, 2};
 
     for (int s : scores) {
-      mode.execute(null, null, null, new Object[] { s }, null);
+      mode.execute(null, null, null, new Object[] {s}, null);
     }
 
     Object result = mode.getResult();
@@ -42,10 +44,10 @@ public class OSQLFunctionModeTest {
 
   @Test
   public void testMultiMode() {
-    int[] scores = { 1, 2, 3, 3, 3, 2, 2 };
+    int[] scores = {1, 2, 3, 3, 3, 2, 2};
 
     for (int s : scores) {
-      mode.execute(null, null, null, new Object[] { s }, null);
+      mode.execute(null, null, null, new Object[] {s}, null);
     }
 
     Object result = mode.getResult();
@@ -58,15 +60,14 @@ public class OSQLFunctionModeTest {
   @Test
   public void testMultiValue() {
     List[] scores = new List[2];
-    scores[0] = Arrays.asList(new Integer[] { 1, 2, null, 3, 4 });
-    scores[1] = Arrays.asList(new Integer[] { 1, 1, 1, 2, null });
+    scores[0] = Arrays.asList(new Integer[] {1, 2, null, 3, 4});
+    scores[1] = Arrays.asList(new Integer[] {1, 1, 1, 2, null});
 
     for (List s : scores) {
-      mode.execute(null, null, null, new Object[] { s }, null);
+      mode.execute(null, null, null, new Object[] {s}, null);
     }
 
     Object result = mode.getResult();
     assertEquals(1, (int) ((List<Integer>) result).get(0));
   }
-
 }

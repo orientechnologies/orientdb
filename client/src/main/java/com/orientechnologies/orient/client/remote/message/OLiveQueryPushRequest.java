@@ -8,28 +8,26 @@ import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelDataInput;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelDataOutput;
-
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * Created by tglman on 17/05/17.
- */
+/** Created by tglman on 17/05/17. */
 public class OLiveQueryPushRequest implements OBinaryPushRequest {
 
   public static final byte HAS_MORE = 1;
-  public static final byte END      = 2;
-  public static final byte ERROR    = 3;
+  public static final byte END = 2;
+  public static final byte ERROR = 3;
 
-  private int                    monitorId;
-  private byte                   status;
-  private int                    errorIdentifier;
-  private OErrorCode             errorCode;
-  private String                 errorMessage;
+  private int monitorId;
+  private byte status;
+  private int errorIdentifier;
+  private OErrorCode errorCode;
+  private String errorMessage;
   private List<OLiveQueryResult> events;
 
-  public OLiveQueryPushRequest(int monitorId, int errorIdentifier, OErrorCode errorCode, String errorMessage) {
+  public OLiveQueryPushRequest(
+      int monitorId, int errorIdentifier, OErrorCode errorCode, String errorMessage) {
     this.monitorId = monitorId;
     this.status = ERROR;
     this.errorIdentifier = errorIdentifier;
@@ -43,9 +41,7 @@ public class OLiveQueryPushRequest implements OBinaryPushRequest {
     this.events = events;
   }
 
-  public OLiveQueryPushRequest() {
-
-  }
+  public OLiveQueryPushRequest() {}
 
   @Override
   public void write(OChannelDataOutput channel) throws IOException {
@@ -59,9 +55,11 @@ public class OLiveQueryPushRequest implements OBinaryPushRequest {
       channel.writeInt(events.size());
       for (OLiveQueryResult event : events) {
         channel.writeByte(event.getEventType());
-        OMessageHelper.writeResult(event.getCurrentValue(), channel, ORecordSerializerNetworkV37.INSTANCE);
+        OMessageHelper.writeResult(
+            event.getCurrentValue(), channel, ORecordSerializerNetworkV37.INSTANCE);
         if (event.getEventType() == OLiveQueryResult.UPDATE_EVENT) {
-          OMessageHelper.writeResult(event.getOldValue(), channel, ORecordSerializerNetworkV37.INSTANCE);
+          OMessageHelper.writeResult(
+              event.getOldValue(), channel, ORecordSerializerNetworkV37.INSTANCE);
         }
       }
     }

@@ -7,10 +7,9 @@ import com.orientechnologies.orient.core.storage.cache.OCacheEntryImpl;
 import com.orientechnologies.orient.core.storage.cache.OCachePointer;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.PageOperationRecord;
 import com.orientechnologies.orient.core.storage.index.sbtree.multivalue.v2.CellBTreeMultiValueV2Bucket;
+import java.util.List;
 import org.junit.Assert;
 import org.junit.Test;
-
-import java.util.List;
 
 public class CellBTreeMultiValueV2BucketInitPOTest {
   @Test
@@ -30,15 +29,18 @@ public class CellBTreeMultiValueV2BucketInitPOTest {
 
       Assert.assertTrue(operations.get(0) instanceof CellBTreeMultiValueV2BucketInitPO);
 
-      final CellBTreeMultiValueV2BucketInitPO pageOperation = (CellBTreeMultiValueV2BucketInitPO) operations.get(0);
+      final CellBTreeMultiValueV2BucketInitPO pageOperation =
+          (CellBTreeMultiValueV2BucketInitPO) operations.get(0);
 
       final OPointer restoredPointer = byteBufferPool.acquireDirect(false);
-      final OCachePointer restoredCachePointer = new OCachePointer(restoredPointer, byteBufferPool, 0, 0);
+      final OCachePointer restoredCachePointer =
+          new OCachePointer(restoredPointer, byteBufferPool, 0, 0);
       final OCacheEntry restoredCacheEntry = new OCacheEntryImpl(0, 0, restoredCachePointer);
 
       pageOperation.redo(restoredCacheEntry);
 
-      CellBTreeMultiValueV2Bucket restoredPage = new CellBTreeMultiValueV2Bucket(restoredCacheEntry);
+      CellBTreeMultiValueV2Bucket restoredPage =
+          new CellBTreeMultiValueV2Bucket(restoredCacheEntry);
 
       Assert.assertTrue(restoredPage.isLeaf());
       Assert.assertEquals(0, restoredPage.size());

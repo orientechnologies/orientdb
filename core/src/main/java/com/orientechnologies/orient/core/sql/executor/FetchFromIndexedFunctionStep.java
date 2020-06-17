@@ -9,23 +9,23 @@ import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.exception.OCommandInterruptedException;
 import com.orientechnologies.orient.core.sql.parser.OBinaryCondition;
 import com.orientechnologies.orient.core.sql.parser.OFromClause;
-
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Optional;
 
-/**
- * Created by luigidellaquila on 06/08/16.
- */
+/** Created by luigidellaquila on 06/08/16. */
 public class FetchFromIndexedFunctionStep extends AbstractExecutionStep {
   private OBinaryCondition functionCondition;
-  private OFromClause      queryTarget;
+  private OFromClause queryTarget;
 
-  private long                    cost       = 0;
-  //runtime
+  private long cost = 0;
+  // runtime
   private Iterator<OIdentifiable> fullResult = null;
 
-  public FetchFromIndexedFunctionStep(OBinaryCondition functionCondition, OFromClause queryTarget, OCommandContext ctx,
+  public FetchFromIndexedFunctionStep(
+      OBinaryCondition functionCondition,
+      OFromClause queryTarget,
+      OCommandContext ctx,
       boolean profilingEnabled) {
     super(ctx, profilingEnabled);
     this.functionCondition = functionCondition;
@@ -77,9 +77,7 @@ public class FetchFromIndexedFunctionStep extends AbstractExecutionStep {
       }
 
       @Override
-      public void close() {
-
-      }
+      public void close() {}
 
       @Override
       public Optional<OExecutionPlan> getExecutionPlan() {
@@ -109,7 +107,9 @@ public class FetchFromIndexedFunctionStep extends AbstractExecutionStep {
   @Override
   public String prettyPrint(int depth, int indent) {
     String result =
-        OExecutionStepInternal.getIndent(depth, indent) + "+ FETCH FROM INDEXED FUNCTION " + functionCondition.toString();
+        OExecutionStepInternal.getIndent(depth, indent)
+            + "+ FETCH FROM INDEXED FUNCTION "
+            + functionCondition.toString();
     if (profilingEnabled) {
       result += " (" + getCostFormatted() + ")";
     }

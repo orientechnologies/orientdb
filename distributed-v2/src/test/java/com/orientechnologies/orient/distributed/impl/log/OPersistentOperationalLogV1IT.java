@@ -1,22 +1,21 @@
 package com.orientechnologies.orient.distributed.impl.log;
 
 import com.orientechnologies.orient.distributed.impl.coordinator.mocktx.OPhase1Tx;
-import org.junit.Assert;
-import org.junit.Test;
-
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import org.junit.Assert;
+import org.junit.Test;
 
 public class OPersistentOperationalLogV1IT {
-
 
   @Test
   public void testIterate() throws IOException {
 
     Path file = Files.createTempDirectory(".");
-    OPersistentOperationalLogV1 log = new OPersistentOperationalLogV1(file.toString(), (id) -> new OPhase1Tx());
+    OPersistentOperationalLogV1 log =
+        new OPersistentOperationalLogV1(file.toString(), (id) -> new OPhase1Tx());
     log.setLeader(true, 0);
     try {
       int totLogEntries = 50_000;
@@ -48,7 +47,8 @@ public class OPersistentOperationalLogV1IT {
   public void testIterate2() throws IOException {
 
     Path file = Files.createTempDirectory(".");
-    OPersistentOperationalLogV1 log = new OPersistentOperationalLogV1(file.toString(), (id) -> new OPhase1Tx());
+    OPersistentOperationalLogV1 log =
+        new OPersistentOperationalLogV1(file.toString(), (id) -> new OPhase1Tx());
     log.setLeader(true, 0);
     try {
       int totLogEntries = 50_000;
@@ -74,7 +74,6 @@ public class OPersistentOperationalLogV1IT {
     }
   }
 
-
   /**
    * test off-by-one errors across oplog file split
    *
@@ -84,9 +83,9 @@ public class OPersistentOperationalLogV1IT {
   public void testRemoveAfter() throws IOException {
     for (int iter = -2; iter < 3; iter++) {
 
-
       Path file = Files.createTempDirectory(".");
-      OPersistentOperationalLogV1 log = new OPersistentOperationalLogV1(file.toString(), (id) -> new OPhase1Tx());
+      OPersistentOperationalLogV1 log =
+          new OPersistentOperationalLogV1(file.toString(), (id) -> new OPhase1Tx());
       log.setLeader(true, 0);
 
       try {
@@ -122,6 +121,4 @@ public class OPersistentOperationalLogV1IT {
       }
     }
   }
-
 }
-

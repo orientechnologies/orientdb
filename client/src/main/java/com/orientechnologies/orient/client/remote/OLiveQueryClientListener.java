@@ -8,12 +8,10 @@ import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.OLiveQueryResultListener;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 
-/**
- * Created by tglman on 28/05/17.
- */
+/** Created by tglman on 28/05/17. */
 public class OLiveQueryClientListener {
 
-  private ODatabaseDocument        database;
+  private ODatabaseDocument database;
   private OLiveQueryResultListener listener;
 
   public OLiveQueryClientListener(ODatabaseDocument database, OLiveQueryResultListener listener) {
@@ -25,7 +23,6 @@ public class OLiveQueryClientListener {
    * Return true if the push request require an unregister
    *
    * @param pushRequest
-   *
    * @return
    */
   public boolean onEvent(OLiveQueryPushRequest pushRequest) {
@@ -38,15 +35,15 @@ public class OLiveQueryClientListener {
       } else {
         for (OLiveQueryResult result : pushRequest.getEvents()) {
           switch (result.getEventType()) {
-          case OLiveQueryResult.CREATE_EVENT:
-            listener.onCreate(database, result.getCurrentValue());
-            break;
-          case OLiveQueryResult.UPDATE_EVENT:
-            listener.onUpdate(database, result.getOldValue(), result.getCurrentValue());
-            break;
-          case OLiveQueryResult.DELETE_EVENT:
-            listener.onDelete(database, result.getCurrentValue());
-            break;
+            case OLiveQueryResult.CREATE_EVENT:
+              listener.onCreate(database, result.getCurrentValue());
+              break;
+            case OLiveQueryResult.UPDATE_EVENT:
+              listener.onUpdate(database, result.getOldValue(), result.getCurrentValue());
+              break;
+            case OLiveQueryResult.DELETE_EVENT:
+              listener.onDelete(database, result.getCurrentValue());
+              break;
           }
         }
         if (pushRequest.getStatus() == OLiveQueryPushRequest.END) {

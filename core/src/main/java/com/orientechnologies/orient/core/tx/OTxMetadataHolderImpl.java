@@ -1,14 +1,21 @@
 package com.orientechnologies.orient.core.tx;
 
-import java.io.*;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.DataInput;
+import java.io.DataInputStream;
+import java.io.DataOutput;
+import java.io.DataOutputStream;
+import java.io.IOException;
 import java.util.concurrent.CountDownLatch;
 
 public class OTxMetadataHolderImpl implements OTxMetadataHolder {
-  private final CountDownLatch             request;
+  private final CountDownLatch request;
   private final OTransactionSequenceStatus status;
-  private final OTransactionId             id;
+  private final OTransactionId id;
 
-  public OTxMetadataHolderImpl(CountDownLatch request, OTransactionId id, OTransactionSequenceStatus status) {
+  public OTxMetadataHolderImpl(
+      CountDownLatch request, OTransactionId id, OTransactionSequenceStatus status) {
     this.request = request;
     this.id = id;
     this.status = status;
@@ -38,7 +45,8 @@ public class OTxMetadataHolderImpl implements OTxMetadataHolder {
       int size = input.readInt();
       byte[] status = new byte[size];
       input.readFully(status);
-      return new OTxMetadataHolderImpl(new CountDownLatch(0), txId, OTransactionSequenceStatus.read(status));
+      return new OTxMetadataHolderImpl(
+          new CountDownLatch(0), txId, OTransactionSequenceStatus.read(status));
     } catch (IOException e) {
       e.printStackTrace();
     }

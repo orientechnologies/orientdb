@@ -1,5 +1,8 @@
 package com.orientechnologies.orient.core.db.tool;
 
+import static com.orientechnologies.orient.core.db.tool.ODatabaseImport.EXPORT_IMPORT_CLASS_NAME;
+import static com.orientechnologies.orient.core.db.tool.ODatabaseImport.EXPORT_IMPORT_INDEX_NAME;
+
 import com.orientechnologies.orient.core.db.ODatabaseSession;
 import com.orientechnologies.orient.core.db.ODatabaseType;
 import com.orientechnologies.orient.core.db.OrientDB;
@@ -11,19 +14,21 @@ import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import org.junit.Assert;
 import org.junit.Test;
-
-import java.util.*;
-
-import static com.orientechnologies.orient.core.db.tool.ODatabaseImport.EXPORT_IMPORT_CLASS_NAME;
-import static com.orientechnologies.orient.core.db.tool.ODatabaseImport.EXPORT_IMPORT_INDEX_NAME;
 
 public class TestImportRewriteLinks {
 
   @Test
   public void testNestedLinkRewrite() {
-    try (final OrientDB orientDB = new OrientDB("embedded:mapperTest", OrientDBConfig.defaultConfig())) {
+    try (final OrientDB orientDB =
+        new OrientDB("embedded:mapperTest", OrientDBConfig.defaultConfig())) {
       orientDB.create("testDB", ODatabaseType.MEMORY);
       try (final ODatabaseSession session = orientDB.open("testDB", "admin", "admin")) {
         final OSchema schema = session.getMetadata().getSchema();
@@ -33,17 +38,25 @@ public class TestImportRewriteLinks {
         cls.createProperty("value", OType.STRING);
         cls.createIndex(EXPORT_IMPORT_INDEX_NAME, OClass.INDEX_TYPE.DICTIONARY, "key");
 
-        new ODocument(EXPORT_IMPORT_CLASS_NAME).field("key", new ORecordId(10, 4).toString()).
-            field("value", new ORecordId(10, 3).toString()).save();
+        new ODocument(EXPORT_IMPORT_CLASS_NAME)
+            .field("key", new ORecordId(10, 4).toString())
+            .field("value", new ORecordId(10, 3).toString())
+            .save();
 
-        new ODocument(EXPORT_IMPORT_CLASS_NAME).field("key", new ORecordId(11, 1).toString()).
-            field("value", new ORecordId(21, 1).toString()).save();
+        new ODocument(EXPORT_IMPORT_CLASS_NAME)
+            .field("key", new ORecordId(11, 1).toString())
+            .field("value", new ORecordId(21, 1).toString())
+            .save();
 
-        new ODocument(EXPORT_IMPORT_CLASS_NAME).field("key", new ORecordId(31, 1).toString()).
-            field("value", new ORecordId(41, 1).toString()).save();
+        new ODocument(EXPORT_IMPORT_CLASS_NAME)
+            .field("key", new ORecordId(31, 1).toString())
+            .field("value", new ORecordId(41, 1).toString())
+            .save();
 
-        new ODocument(EXPORT_IMPORT_CLASS_NAME).field("key", new ORecordId(51, 1).toString()).
-            field("value", new ORecordId(61, 1).toString()).save();
+        new ODocument(EXPORT_IMPORT_CLASS_NAME)
+            .field("key", new ORecordId(51, 1).toString())
+            .field("value", new ORecordId(61, 1).toString())
+            .save();
 
         final Set<ORID> brokenRids = new HashSet<>();
 
@@ -107,7 +120,6 @@ public class TestImportRewriteLinks {
         resLinkMap.put("key3", new ORecordId(-1, -42));
 
         Assert.assertEquals(emb1.field("linkMap"), resLinkMap);
-
       }
     }
   }

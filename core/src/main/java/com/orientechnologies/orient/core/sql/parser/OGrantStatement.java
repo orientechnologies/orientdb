@@ -4,7 +4,6 @@ package com.orientechnologies.orient.core.sql.parser;
 
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
-import com.orientechnologies.orient.core.db.ODatabaseInternal;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.metadata.security.OSecurityInternal;
@@ -12,8 +11,6 @@ import com.orientechnologies.orient.core.metadata.security.OSecurityPolicy;
 import com.orientechnologies.orient.core.sql.executor.OInternalResultSet;
 import com.orientechnologies.orient.core.sql.executor.OResultInternal;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
-
-import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
@@ -64,22 +61,14 @@ public class OGrantStatement extends OSimpleExecStatement {
 
   protected int toPrivilege(String privilegeName) {
     int privilege;
-    if ("CREATE".equals(privilegeName))
-      privilege = ORole.PERMISSION_CREATE;
-    else if ("READ".equals(privilegeName))
-      privilege = ORole.PERMISSION_READ;
-    else if ("UPDATE".equals(privilegeName))
-      privilege = ORole.PERMISSION_UPDATE;
-    else if ("DELETE".equals(privilegeName))
-      privilege = ORole.PERMISSION_DELETE;
-    else if ("EXECUTE".equals(privilegeName))
-      privilege = ORole.PERMISSION_EXECUTE;
-    else if ("ALL".equals(privilegeName))
-      privilege = ORole.PERMISSION_ALL;
-    else if ("NONE".equals(privilegeName))
-      privilege = ORole.PERMISSION_NONE;
-    else
-      throw new OCommandExecutionException("Unrecognized privilege '" + privilegeName + "'");
+    if ("CREATE".equals(privilegeName)) privilege = ORole.PERMISSION_CREATE;
+    else if ("READ".equals(privilegeName)) privilege = ORole.PERMISSION_READ;
+    else if ("UPDATE".equals(privilegeName)) privilege = ORole.PERMISSION_UPDATE;
+    else if ("DELETE".equals(privilegeName)) privilege = ORole.PERMISSION_DELETE;
+    else if ("EXECUTE".equals(privilegeName)) privilege = ORole.PERMISSION_EXECUTE;
+    else if ("ALL".equals(privilegeName)) privilege = ORole.PERMISSION_ALL;
+    else if ("NONE".equals(privilegeName)) privilege = ORole.PERMISSION_NONE;
+    else throw new OCommandExecutionException("Unrecognized privilege '" + privilegeName + "'");
     return privilege;
   }
 
@@ -114,9 +103,9 @@ public class OGrantStatement extends OSimpleExecStatement {
     if (o == null || getClass() != o.getClass()) return false;
     OGrantStatement that = (OGrantStatement) o;
     return Objects.equals(permission, that.permission)
-            && Objects.equals(policyName, that.policyName)
-            && Objects.equals(securityResource, that.securityResource)
-            && Objects.equals(actor, that.actor);
+        && Objects.equals(policyName, that.policyName)
+        && Objects.equals(securityResource, that.securityResource)
+        && Objects.equals(actor, that.actor);
   }
 
   @Override

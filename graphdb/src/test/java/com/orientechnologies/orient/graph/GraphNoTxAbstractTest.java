@@ -21,9 +21,8 @@
 package com.orientechnologies.orient.graph;
 
 import com.tinkerpop.blueprints.impls.orient.OrientGraphNoTx;
-import org.junit.AfterClass;
-
 import java.util.Locale;
+import org.junit.AfterClass;
 
 /**
  * Base class for tests against Non transactonal Graphs.
@@ -41,15 +40,13 @@ public abstract class GraphNoTxAbstractTest {
     } catch (IllegalArgumentException e) {
     }
 
-    if (result == null)
-      result = ENV.DEV;
+    if (result == null) result = ENV.DEV;
 
     return result;
   }
 
   public static String getStorageType() {
-    if (getEnvironment().equals(ENV.DEV))
-      return "memory";
+    if (getEnvironment().equals(ENV.DEV)) return "memory";
 
     return "plocal";
   }
@@ -58,13 +55,11 @@ public abstract class GraphNoTxAbstractTest {
     final String storageType = getStorageType();
     final String buildDirectory = "./target/";
 
-//    OFileUtils.deleteRecursively(new File(buildDirectory + "/" + dbName));
+    //    OFileUtils.deleteRecursively(new File(buildDirectory + "/" + dbName));
 
     final String url = System.getProperty("url");
-    if (url != null)
-      graph = new OrientGraphNoTx(url);
-    else
-      graph = new OrientGraphNoTx(storageType + ":" + buildDirectory + "/" + dbName);
+    if (url != null) graph = new OrientGraphNoTx(url);
+    else graph = new OrientGraphNoTx(storageType + ":" + buildDirectory + "/" + dbName);
   }
 
   @AfterClass
@@ -76,6 +71,8 @@ public abstract class GraphNoTxAbstractTest {
   }
 
   public static enum ENV {
-    DEV, RELEASE, CI
+    DEV,
+    RELEASE,
+    CI
   }
 }

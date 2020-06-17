@@ -19,7 +19,6 @@ import com.orientechnologies.common.serialization.types.OLongSerializer;
 import com.orientechnologies.common.types.OModifiableLong;
 import com.orientechnologies.orient.core.OOrientListenerAbstract;
 import com.orientechnologies.orient.core.Orient;
-
 import java.nio.ByteBuffer;
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -30,28 +29,28 @@ import java.util.concurrent.atomic.AtomicLong;
 public class OOperationUnitId {
   private static final AtomicLong sharedId = new AtomicLong();
 
-  private static volatile ThreadLocal<OModifiableLong> localId      = new ThreadLocal<>();
-  private static volatile ThreadLocal<Long>            sharedIdCopy = new ThreadLocal<>();
+  private static volatile ThreadLocal<OModifiableLong> localId = new ThreadLocal<>();
+  private static volatile ThreadLocal<Long> sharedIdCopy = new ThreadLocal<>();
 
   public static final int SERIALIZED_SIZE = 2 * OLongSerializer.LONG_SIZE;
 
   static {
-    Orient.instance().registerListener(new OOrientListenerAbstract() {
-      @Override
-      public void onStartup() {
-        if (localId == null)
-          localId = new ThreadLocal<>();
+    Orient.instance()
+        .registerListener(
+            new OOrientListenerAbstract() {
+              @Override
+              public void onStartup() {
+                if (localId == null) localId = new ThreadLocal<>();
 
-        if (sharedIdCopy == null)
-          sharedIdCopy = new ThreadLocal<>();
-      }
+                if (sharedIdCopy == null) sharedIdCopy = new ThreadLocal<>();
+              }
 
-      @Override
-      public void onShutdown() {
-        localId = null;
-        sharedIdCopy = null;
-      }
-    });
+              @Override
+              public void onShutdown() {
+                localId = null;
+                sharedIdCopy = null;
+              }
+            });
   }
 
   private long lId;
@@ -84,8 +83,7 @@ public class OOperationUnitId {
     return operationUnitId;
   }
 
-  public OOperationUnitId() {
-  }
+  public OOperationUnitId() {}
 
   public int toStream(byte[] content, int offset) {
     OLongSerializer.INSTANCE.serializeNative(sId, content, offset);
@@ -119,18 +117,14 @@ public class OOperationUnitId {
 
   @Override
   public boolean equals(Object o) {
-    if (this == o)
-      return true;
-    if (!(o instanceof OOperationUnitId))
-      return false;
+    if (this == o) return true;
+    if (!(o instanceof OOperationUnitId)) return false;
 
     OOperationUnitId that = (OOperationUnitId) o;
 
-    if (lId != that.lId)
-      return false;
+    if (lId != that.lId) return false;
 
     return sId == that.sId;
-
   }
 
   @Override

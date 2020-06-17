@@ -1,5 +1,7 @@
 package com.orientechnologies.orient.core.record.impl;
 
+import static org.junit.Assert.assertEquals;
+
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseSession;
 import com.orientechnologies.orient.core.db.ODatabaseType;
@@ -10,11 +12,7 @@ import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import org.junit.Test;
 
-import static org.junit.Assert.assertEquals;
-
-/**
- * Created by tglman on 25/01/16.
- */
+/** Created by tglman on 25/01/16. */
 public class OJsonWithCustom {
 
   @Test
@@ -46,7 +44,6 @@ public class OJsonWithCustom {
     ODocument doc1 = new ODocument();
     doc1.fromJSON(json);
     assertEquals(doc.<String>field("test"), doc1.field("test"));
-
   }
 
   @Test
@@ -75,7 +72,7 @@ public class OJsonWithCustom {
   }
 
   public enum TestCustom {
-    ONE, TWO
+    ONE,
+    TWO
   }
-
 }

@@ -15,7 +15,7 @@
  *  *  limitations under the License.
  *  *
  *  * For more information: http://orientdb.com
- *  
+ *
  */
 
 package com.tinkerpop.blueprints.impls.orient;
@@ -26,7 +26,7 @@ import com.tinkerpop.blueprints.Vertex;
 
 /**
  * OrientDB Extended Vertex implementation of TinkerPop Blueprints standard.
- * 
+ *
  * @author Luca Garulli (l.garulli--(at)--orientdb.com) (http://orientdb.com)
  */
 @SuppressWarnings("unchecked")
@@ -43,8 +43,6 @@ public interface OrientExtendedVertex extends Vertex {
 
   OrientVertex getVertexInstance();
 
-  /**
-   * (Blueprints Extension) Returns the Vertex type as OrientVertexType object.
-   */
+  /** (Blueprints Extension) Returns the Vertex type as OrientVertexType object. */
   OrientVertexType getType();
 }

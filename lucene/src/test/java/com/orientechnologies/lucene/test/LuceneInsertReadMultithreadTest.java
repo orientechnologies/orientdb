@@ -31,15 +31,12 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
-/**
- * Created by enricorisa on 28/06/14.
- */
-
+/** Created by enricorisa on 28/06/14. */
 public class LuceneInsertReadMultithreadTest extends BaseLuceneTest {
 
-  private final static int THREADS  = 10;
-  private final static int RTHREADS = 1;
-  private final static int CYCLE    = 100;
+  private static final int THREADS = 10;
+  private static final int RTHREADS = 1;
+  private static final int CYCLE = 100;
 
   protected String url = "";
 
@@ -51,7 +48,8 @@ public class LuceneInsertReadMultithreadTest extends BaseLuceneTest {
     OClass oClass = schema.createClass("City");
 
     oClass.createProperty("name", OType.STRING);
-    db.command(new OCommandSQL("create index City.name on City (name) FULLTEXT ENGINE LUCENE")).execute();
+    db.command(new OCommandSQL("create index City.name on City (name) FULLTEXT ENGINE LUCENE"))
+        .execute();
   }
 
   @Test
@@ -67,14 +65,14 @@ public class LuceneInsertReadMultithreadTest extends BaseLuceneTest {
     for (int i = THREADS; i < THREADS + RTHREADS; ++i)
       threads[i] = new Thread(new LuceneReadThread(CYCLE), "ConcurrentReadTest" + i);
 
-    for (int i = 0; i < THREADS + RTHREADS; ++i)
-      threads[i].start();
+    for (int i = 0; i < THREADS + RTHREADS; ++i) threads[i].start();
 
-    System.out
-        .println("Started LuceneInsertReadMultithreadBaseTest test, waiting for " + threads.length + " threads to complete...");
+    System.out.println(
+        "Started LuceneInsertReadMultithreadBaseTest test, waiting for "
+            + threads.length
+            + " threads to complete...");
 
-    for (int i = 0; i < THREADS + RTHREADS; ++i)
-      threads[i].join();
+    for (int i = 0; i < THREADS + RTHREADS; ++i) threads[i].join();
 
     System.out.println("LuceneInsertReadMultithreadBaseTest all threads completed");
 
@@ -86,8 +84,8 @@ public class LuceneInsertReadMultithreadTest extends BaseLuceneTest {
   public class LuceneInsertThread implements Runnable {
 
     private ODatabaseSession db;
-    private int              cycle     = 0;
-    private int              commitBuf = 500;
+    private int cycle = 0;
+    private int commitBuf = 500;
 
     public LuceneInsertThread(int cycle) {
       this.cycle = cycle;
@@ -110,7 +108,6 @@ public class LuceneInsertReadMultithreadTest extends BaseLuceneTest {
           db.commit();
           db.begin();
         }
-
       }
       db.commit();
 
@@ -119,8 +116,8 @@ public class LuceneInsertReadMultithreadTest extends BaseLuceneTest {
   }
 
   public class LuceneReadThread implements Runnable {
-    private final int              cycle;
-    private       ODatabaseSession databaseDocumentTx;
+    private final int cycle;
+    private ODatabaseSession databaseDocumentTx;
 
     public LuceneReadThread(int cycle) {
       this.cycle = cycle;
@@ -136,10 +133,10 @@ public class LuceneInsertReadMultithreadTest extends BaseLuceneTest {
 
       for (int i = 0; i < cycle; i++) {
 
-        databaseDocumentTx.command(new OSQLSynchQuery<ODocument>("select from city where name LUCENE 'Rome'")).execute();
-
+        databaseDocumentTx
+            .command(new OSQLSynchQuery<ODocument>("select from city where name LUCENE 'Rome'"))
+            .execute();
       }
-
     }
   }
 }

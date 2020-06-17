@@ -21,7 +21,6 @@
 package com.orientechnologies.orient.core.storage.impl.local.paginated.wal;
 
 import com.orientechnologies.common.serialization.types.OByteSerializer;
-
 import java.nio.ByteBuffer;
 
 /**
@@ -31,8 +30,7 @@ import java.nio.ByteBuffer;
 public class OAtomicUnitStartRecord extends OOperationUnitRecord {
   private boolean isRollbackSupported;
 
-  public OAtomicUnitStartRecord() {
-  }
+  public OAtomicUnitStartRecord() {}
 
   public OAtomicUnitStartRecord(final boolean isRollbackSupported, final long unitId) {
     super(unitId);

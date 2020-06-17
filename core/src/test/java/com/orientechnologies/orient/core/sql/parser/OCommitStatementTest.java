@@ -1,6 +1,7 @@
 package com.orientechnologies.orient.core.sql.parser;
 
 import org.junit.Test;
+
 public class OCommitStatementTest extends OParserTestAbstract {
 
   @Test
@@ -12,7 +13,8 @@ public class OCommitStatementTest extends OParserTestAbstract {
     checkRightSyntax("commit retry 10");
 
     checkRightSyntax("commit retry 10 ELSE {INSERT INTO A SET name = 'Foo';}");
-    checkRightSyntax("commit retry 10 ELSE {INSERT INTO A SET name = 'Foo'; INSERT INTO A SET name = 'Bar';}");
+    checkRightSyntax(
+        "commit retry 10 ELSE {INSERT INTO A SET name = 'Foo'; INSERT INTO A SET name = 'Bar';}");
 
     checkRightSyntax("commit retry 10 ELSE CONTINUE");
     checkRightSyntax("commit retry 10 ELSE FAIL");
@@ -35,6 +37,4 @@ public class OCommitStatementTest extends OParserTestAbstract {
     checkWrongSyntax("commit retry 10 ELSE {INSERT INTO A SET name = 'Foo';} CONTINUE");
     checkWrongSyntax("commit retry 10 ELSE {INSERT INTO A SET name = 'Foo';} FAIL");
   }
-
-
 }

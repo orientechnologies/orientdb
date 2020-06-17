@@ -31,5 +31,6 @@ public interface OCredentialInterceptor {
 
   String getPassword();
 
-  void intercept(final String url, final String username, final String password) throws OSecurityException;
+  void intercept(final String url, final String username, final String password)
+      throws OSecurityException;
 }

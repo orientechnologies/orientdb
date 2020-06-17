@@ -30,15 +30,12 @@ import com.orientechnologies.orient.core.record.OEdge;
 import com.orientechnologies.orient.core.record.OElement;
 import com.orientechnologies.orient.core.record.OVertex;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
-import junit.framework.Assert;
-
 import java.util.Date;
 import java.util.UUID;
 import java.util.concurrent.Callable;
+import junit.framework.Assert;
 
-/**
- * Test distributed TX
- */
+/** Test distributed TX */
 public abstract class AbstractServerClusterSQLGraphTest extends AbstractServerClusterInsertTest {
 
   class TxWriter implements Callable<Void> {
@@ -52,8 +49,13 @@ public abstract class AbstractServerClusterSQLGraphTest extends AbstractServerCl
 
     @Override
     public Void call() throws Exception {
-      ODatabasePool pool = new ODatabasePool(serverInstance.get(serverId).getServerInstance().getContext(), getDatabaseName(),
-          "admin", "admin", OrientDBConfig.defaultConfig());
+      ODatabasePool pool =
+          new ODatabasePool(
+              serverInstance.get(serverId).getServerInstance().getContext(),
+              getDatabaseName(),
+              "admin",
+              "admin",
+              OrientDBConfig.defaultConfig());
       String name = Integer.toString(serverId);
 
       try {
@@ -61,7 +63,14 @@ public abstract class AbstractServerClusterSQLGraphTest extends AbstractServerCl
           final ODatabaseDocument graph = pool.acquire();
           try {
             if ((i + 1) % 100 == 0)
-              System.out.println("\nWriter " + graph.getURL() + " managed " + (i + 1) + "/" + count + " vertices so far");
+              System.out.println(
+                  "\nWriter "
+                      + graph.getURL()
+                      + " managed "
+                      + (i + 1)
+                      + "/"
+                      + count
+                      + " vertices so far");
 
             try {
               OVertex person1 = createVertex(graph, serverId, threadId, i);
@@ -86,8 +95,7 @@ public abstract class AbstractServerClusterSQLGraphTest extends AbstractServerCl
               throw e;
             }
 
-            if (delayWriter > 0)
-              Thread.sleep(delayWriter);
+            if (delayWriter > 0) Thread.sleep(delayWriter);
 
           } catch (InterruptedException e) {
             System.out.println("Writer received interrupt (db=" + graph.getURL());
@@ -112,8 +120,7 @@ public abstract class AbstractServerClusterSQLGraphTest extends AbstractServerCl
     }
   }
 
-  protected void onAfterExecution() {
-  }
+  protected void onAfterExecution() {}
 
   @Override
   protected void onAfterDatabaseCreation(final ODatabaseDocument graph) {
@@ -136,7 +143,6 @@ public abstract class AbstractServerClusterSQLGraphTest extends AbstractServerCl
     provider.createProperty("totalPurchased", OType.DECIMAL);
 
     OClass knows = graph.createEdgeClass("Knows");
-
   }
 
   @Override
@@ -147,16 +153,37 @@ public abstract class AbstractServerClusterSQLGraphTest extends AbstractServerCl
   protected OVertex createVertex(ODatabaseDocument graph, int serverId, int threadId, int i) {
     final String uniqueId = serverId + "-" + threadId + "-" + i;
 
-    final Object result = graph.command(new OCommandSQL(
-        "create vertex Person content {'id': '" + UUID.randomUUID().toString() + "', 'name': 'Billy" + uniqueId
-            + "', 'surname': 'Mayes" + uniqueId + "', 'birthday': '" + ODatabaseRecordThreadLocal.instance().get().getStorage()
-            .getConfiguration().getDateFormatInstance().format(new Date()) + "', 'children': '" + uniqueId + "'}")).execute();
+    final Object result =
+        graph
+            .command(
+                new OCommandSQL(
+                    "create vertex Person content {'id': '"
+                        + UUID.randomUUID().toString()
+                        + "', 'name': 'Billy"
+                        + uniqueId
+                        + "', 'surname': 'Mayes"
+                        + uniqueId
+                        + "', 'birthday': '"
+                        + ODatabaseRecordThreadLocal.instance()
+                            .get()
+                            .getStorage()
+                            .getConfiguration()
+                            .getDateFormatInstance()
+                            .format(new Date())
+                        + "', 'children': '"
+                        + uniqueId
+                        + "'}"))
+            .execute();
     return ((OElement) result).asVertex().get();
   }
 
   protected OEdge createEdge(ODatabaseDocument graph, OVertex v1, OVertex v2) {
-    final Iterable<OEdge> result = graph
-        .command(new OCommandSQL("create edge knows from " + v1.getIdentity() + " to " + v2.getIdentity())).execute();
+    final Iterable<OEdge> result =
+        graph
+            .command(
+                new OCommandSQL(
+                    "create edge knows from " + v1.getIdentity() + " to " + v2.getIdentity()))
+            .execute();
     return result.iterator().next().asEdge().get();
   }
 
@@ -165,7 +192,8 @@ public abstract class AbstractServerClusterSQLGraphTest extends AbstractServerCl
   }
 
   protected void checkVertex(ODatabaseDocument graph, OVertex v) {
-    final Iterable<OVertex> result = graph.command(new OCommandSQL("select from " + v.getIdentity())).execute();
+    final Iterable<OVertex> result =
+        graph.command(new OCommandSQL("select from " + v.getIdentity())).execute();
     Assert.assertTrue(result.iterator().hasNext());
 
     final OVertex vertex = result.iterator().next().asVertex().get();

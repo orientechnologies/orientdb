@@ -8,7 +8,6 @@ import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.executor.OResultInternal;
-
 import java.math.BigDecimal;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -78,7 +77,9 @@ public class OInputParameter extends SimpleNode {
     if (value instanceof String) {
       return value;
     }
-    if (OMultiValue.isMultiValue(value) && !(value instanceof byte[]) && !(value instanceof Byte[])) {
+    if (OMultiValue.isMultiValue(value)
+        && !(value instanceof byte[])
+        && !(value instanceof Byte[])) {
       OCollection coll = new OCollection(-1);
       coll.expressions = new ArrayList<OExpression>();
       Iterator iterator = OMultiValue.getMultiValueIterator(value);
@@ -149,8 +150,11 @@ public class OInputParameter extends SimpleNode {
 
   public static OInputParameter deserializeFromOResult(OResult doc) {
     try {
-      OInputParameter result = (OInputParameter) Class.forName(doc.getProperty("__class")).getConstructor(Integer.class)
-          .newInstance(-1);
+      OInputParameter result =
+          (OInputParameter)
+              Class.forName(doc.getProperty("__class"))
+                  .getConstructor(Integer.class)
+                  .newInstance(-1);
       result.deserialize(doc);
     } catch (Exception e) {
       throw OException.wrapException(new OCommandExecutionException(""), e);

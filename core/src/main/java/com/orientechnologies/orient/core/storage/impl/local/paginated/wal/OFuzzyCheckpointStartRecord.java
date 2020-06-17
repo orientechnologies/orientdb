@@ -21,7 +21,6 @@
 package com.orientechnologies.orient.core.storage.impl.local.paginated.wal;
 
 import com.orientechnologies.common.serialization.types.OLongSerializer;
-
 import java.nio.ByteBuffer;
 
 /**
@@ -30,12 +29,12 @@ import java.nio.ByteBuffer;
  */
 public class OFuzzyCheckpointStartRecord extends OAbstractCheckPointStartRecord {
   private volatile OLogSequenceNumber lsn;
-  private          OLogSequenceNumber flushedLsn;
+  private OLogSequenceNumber flushedLsn;
 
-  public OFuzzyCheckpointStartRecord() {
-  }
+  public OFuzzyCheckpointStartRecord() {}
 
-  public OFuzzyCheckpointStartRecord(OLogSequenceNumber previousCheckpoint, OLogSequenceNumber flushedLsn) {
+  public OFuzzyCheckpointStartRecord(
+      OLogSequenceNumber previousCheckpoint, OLogSequenceNumber flushedLsn) {
     super(previousCheckpoint);
 
     this.flushedLsn = flushedLsn;

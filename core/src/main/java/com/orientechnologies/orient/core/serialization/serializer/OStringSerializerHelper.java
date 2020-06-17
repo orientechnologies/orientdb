@@ -36,9 +36,18 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.record.string.ORecordSerializerSchemaAware2CSV;
 import com.orientechnologies.orient.core.serialization.serializer.string.OStringSerializerAnyStreamable;
 import com.orientechnologies.orient.core.sql.OCommandSQLParsingException;
-
 import java.math.BigDecimal;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Base64;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 public abstract class OStringSerializerHelper {
   public static final char RECORD_SEPARATOR = ',';
@@ -61,106 +70,96 @@ public abstract class OStringSerializerHelper {
   public static final char ENTRY_SEPARATOR = ':';
   public static final char PARAMETER_NAMED = ':';
   public static final char PARAMETER_POSITIONAL = '?';
-  public static final char[] PARAMETER_SEPARATOR = new char[]{','};
-  public static final char[] PARAMETER_EXT_SEPARATOR = new char[]{' ', '.'};
-  public static final char[] DEFAULT_IGNORE_CHARS = new char[]{'\n', '\r', ' '};
-  public static final char[] DEFAULT_FIELD_SEPARATOR = new char[]{',', ' '};
+  public static final char[] PARAMETER_SEPARATOR = new char[] {','};
+  public static final char[] PARAMETER_EXT_SEPARATOR = new char[] {' ', '.'};
+  public static final char[] DEFAULT_IGNORE_CHARS = new char[] {'\n', '\r', ' '};
+  public static final char[] DEFAULT_FIELD_SEPARATOR = new char[] {',', ' '};
   public static final char COLLECTION_SEPARATOR = ',';
   public static final String SKIPPED_VALUE = "[SKIPPED VALUE]";
 
-  public static Object fieldTypeFromStream(final ODocument iDocument, OType iType, final Object iValue) {
-    if (iValue == null)
-      return null;
+  public static Object fieldTypeFromStream(
+      final ODocument iDocument, OType iType, final Object iValue) {
+    if (iValue == null) return null;
 
-    if (iType == null)
-      iType = OType.EMBEDDED;
+    if (iType == null) iType = OType.EMBEDDED;
 
     switch (iType) {
-    case STRING:
-      if (iValue instanceof String) {
-        final String s = (String) iValue;
-        return decode(OIOUtils.getStringContent(s));
-      }
-      return iValue.toString();
-
-    case INTEGER:
-      if (iValue instanceof Integer)
-        return iValue;
-      return new Integer(OIOUtils.getStringContent(iValue));
-
-    case BOOLEAN:
-      if (iValue instanceof Boolean)
-        return iValue;
-      return new Boolean(OIOUtils.getStringContent(iValue));
-
-    case DECIMAL:
-      if (iValue instanceof BigDecimal)
-        return iValue;
-      return new BigDecimal(OIOUtils.getStringContent(iValue));
-
-    case FLOAT:
-      if (iValue instanceof Float)
-        return iValue;
-      return new Float(OIOUtils.getStringContent(iValue));
-
-    case LONG:
-      if (iValue instanceof Long)
-        return iValue;
-      return new Long(OIOUtils.getStringContent(iValue));
-
-    case DOUBLE:
-      if (iValue instanceof Double)
-        return iValue;
-      return new Double(OIOUtils.getStringContent(iValue));
-
-    case SHORT:
-      if (iValue instanceof Short)
-        return iValue;
-      return new Short(OIOUtils.getStringContent(iValue));
-
-    case BYTE:
-      if (iValue instanceof Byte)
-        return iValue;
-      return new Byte(OIOUtils.getStringContent(iValue));
-
-    case BINARY:
-      return getBinaryContent(iValue);
-
-    case DATE:
-    case DATETIME:
-      if (iValue instanceof Date)
-        return iValue;
-      return new Date(Long.parseLong(OIOUtils.getStringContent(iValue)));
-
-    case LINK:
-      if (iValue instanceof ORID)
+      case STRING:
+        if (iValue instanceof String) {
+          final String s = (String) iValue;
+          return decode(OIOUtils.getStringContent(s));
+        }
         return iValue.toString();
-      else if (iValue instanceof String)
-        return new ORecordId((String) iValue);
-      else
-        return ((ORecord) iValue).getIdentity().toString();
 
-    case EMBEDDED:
-      // EMBEDDED
-      return OStringSerializerAnyStreamable.INSTANCE.fromStream((String) iValue);
+      case INTEGER:
+        if (iValue instanceof Integer) return iValue;
+        return new Integer(OIOUtils.getStringContent(iValue));
 
-    case EMBEDDEDMAP:
-      // RECORD
-      final String value = (String) iValue;
-      return ORecordSerializerSchemaAware2CSV.INSTANCE.embeddedMapFromStream(iDocument, null, value, null);
+      case BOOLEAN:
+        if (iValue instanceof Boolean) return iValue;
+        return new Boolean(OIOUtils.getStringContent(iValue));
 
-    case ANY:
-      if (iValue instanceof String) {
-        final String s = (String) iValue;
-        return decode(OIOUtils.getStringContent(s));
-      }
-      return iValue;
+      case DECIMAL:
+        if (iValue instanceof BigDecimal) return iValue;
+        return new BigDecimal(OIOUtils.getStringContent(iValue));
+
+      case FLOAT:
+        if (iValue instanceof Float) return iValue;
+        return new Float(OIOUtils.getStringContent(iValue));
+
+      case LONG:
+        if (iValue instanceof Long) return iValue;
+        return new Long(OIOUtils.getStringContent(iValue));
+
+      case DOUBLE:
+        if (iValue instanceof Double) return iValue;
+        return new Double(OIOUtils.getStringContent(iValue));
+
+      case SHORT:
+        if (iValue instanceof Short) return iValue;
+        return new Short(OIOUtils.getStringContent(iValue));
+
+      case BYTE:
+        if (iValue instanceof Byte) return iValue;
+        return new Byte(OIOUtils.getStringContent(iValue));
+
+      case BINARY:
+        return getBinaryContent(iValue);
+
+      case DATE:
+      case DATETIME:
+        if (iValue instanceof Date) return iValue;
+        return new Date(Long.parseLong(OIOUtils.getStringContent(iValue)));
+
+      case LINK:
+        if (iValue instanceof ORID) return iValue.toString();
+        else if (iValue instanceof String) return new ORecordId((String) iValue);
+        else return ((ORecord) iValue).getIdentity().toString();
+
+      case EMBEDDED:
+        // EMBEDDED
+        return OStringSerializerAnyStreamable.INSTANCE.fromStream((String) iValue);
+
+      case EMBEDDEDMAP:
+        // RECORD
+        final String value = (String) iValue;
+        return ORecordSerializerSchemaAware2CSV.INSTANCE.embeddedMapFromStream(
+            iDocument, null, value, null);
+
+      case ANY:
+        if (iValue instanceof String) {
+          final String s = (String) iValue;
+          return decode(OIOUtils.getStringContent(s));
+        }
+        return iValue;
     }
 
-    throw new IllegalArgumentException("Type " + iType + " does not support converting value: " + iValue);
+    throw new IllegalArgumentException(
+        "Type " + iType + " does not support converting value: " + iValue);
   }
 
-  public static String smartTrim(String source, final boolean removeLeadingSpaces, final boolean removeTailingSpaces) {
+  public static String smartTrim(
+      String source, final boolean removeLeadingSpaces, final boolean removeTailingSpaces) {
     int startIndex = 0;
     int length = source.length();
 
@@ -168,75 +167,207 @@ public abstract class OStringSerializerHelper {
       startIndex++;
     }
 
-    if (!removeLeadingSpaces && startIndex > 0)
-      startIndex--;
+    if (!removeLeadingSpaces && startIndex > 0) startIndex--;
 
     while (length > startIndex && source.charAt(length - 1) == ' ') {
       length--;
     }
 
-    if (!removeTailingSpaces && length < source.length())
-      length++;
+    if (!removeTailingSpaces && length < source.length()) length++;
 
     return source.substring(startIndex, length);
   }
 
-  public static List<String> smartSplit(final String iSource, final char iRecordSeparator, boolean iPreserveQuotes,
-                                        final char... iJumpChars) {
-    return smartSplit(iSource, new char[]{iRecordSeparator}, 0, -1, true, true, false, false, true, iPreserveQuotes, iJumpChars);
+  public static List<String> smartSplit(
+      final String iSource,
+      final char iRecordSeparator,
+      boolean iPreserveQuotes,
+      final char... iJumpChars) {
+    return smartSplit(
+        iSource,
+        new char[] {iRecordSeparator},
+        0,
+        -1,
+        true,
+        true,
+        false,
+        false,
+        true,
+        iPreserveQuotes,
+        iJumpChars);
   }
 
-  public static List<String> smartSplit(final String iSource, final char iRecordSeparator, final char... iJumpChars) {
-    return smartSplit(iSource, new char[]{iRecordSeparator}, 0, -1, true, true, false, false, iJumpChars);
+  public static List<String> smartSplit(
+      final String iSource, final char iRecordSeparator, final char... iJumpChars) {
+    return smartSplit(
+        iSource, new char[] {iRecordSeparator}, 0, -1, true, true, false, false, iJumpChars);
   }
 
-  public static List<String> smartSplit(final String iSource, final char iRecordSeparator, final boolean iConsiderSets,
-                                        boolean considerBags, final char... iJumpChars) {
-    return smartSplit(iSource, new char[]{iRecordSeparator}, 0, -1, false, true, iConsiderSets, considerBags, iJumpChars);
+  public static List<String> smartSplit(
+      final String iSource,
+      final char iRecordSeparator,
+      final boolean iConsiderSets,
+      boolean considerBags,
+      final char... iJumpChars) {
+    return smartSplit(
+        iSource,
+        new char[] {iRecordSeparator},
+        0,
+        -1,
+        false,
+        true,
+        iConsiderSets,
+        considerBags,
+        iJumpChars);
   }
 
-
-  public static List<String> smartSplit(final String iSource, final char[] iRecordSeparator, int beginIndex, final int endIndex,
-                                        final boolean iStringSeparatorExtended, final boolean iConsiderBraces, final boolean iConsiderSets,
-                                        final boolean iConsiderBags, final char... iJumpChars) {
-    return smartSplit(iSource, iRecordSeparator, beginIndex, endIndex, iStringSeparatorExtended, iConsiderBraces, iConsiderSets,
-            iConsiderBags, true, iJumpChars);
+  public static List<String> smartSplit(
+      final String iSource,
+      final char[] iRecordSeparator,
+      int beginIndex,
+      final int endIndex,
+      final boolean iStringSeparatorExtended,
+      final boolean iConsiderBraces,
+      final boolean iConsiderSets,
+      final boolean iConsiderBags,
+      final char... iJumpChars) {
+    return smartSplit(
+        iSource,
+        iRecordSeparator,
+        beginIndex,
+        endIndex,
+        iStringSeparatorExtended,
+        iConsiderBraces,
+        iConsiderSets,
+        iConsiderBags,
+        true,
+        iJumpChars);
   }
 
-  public static List<String> smartSplit(final String iSource, final char[] iRecordSeparator, int beginIndex, final int endIndex,
-                                        final boolean iStringSeparatorExtended, final boolean iConsiderBraces, final boolean iConsiderSets,
-                                        final boolean iConsiderBags, final int maxRidbagSizeBeforeSkip, Set<Integer> skippedPartsIndexes, char... iJumpChars) {
-    return smartSplit(iSource, iRecordSeparator, beginIndex, endIndex, iStringSeparatorExtended, iConsiderBraces, iConsiderSets,
-            iConsiderBags, true, maxRidbagSizeBeforeSkip, skippedPartsIndexes, iJumpChars);
+  public static List<String> smartSplit(
+      final String iSource,
+      final char[] iRecordSeparator,
+      int beginIndex,
+      final int endIndex,
+      final boolean iStringSeparatorExtended,
+      final boolean iConsiderBraces,
+      final boolean iConsiderSets,
+      final boolean iConsiderBags,
+      final int maxRidbagSizeBeforeSkip,
+      Set<Integer> skippedPartsIndexes,
+      char... iJumpChars) {
+    return smartSplit(
+        iSource,
+        iRecordSeparator,
+        beginIndex,
+        endIndex,
+        iStringSeparatorExtended,
+        iConsiderBraces,
+        iConsiderSets,
+        iConsiderBags,
+        true,
+        maxRidbagSizeBeforeSkip,
+        skippedPartsIndexes,
+        iJumpChars);
   }
 
-
-  public static List<String> smartSplit(final String iSource, final char[] iRecordSeparator, int beginIndex, final int endIndex,
-                                        final boolean iStringSeparatorExtended, final boolean iConsiderBraces, final boolean iConsiderSets,
-                                        final boolean iConsiderBags, boolean iUnicode, final char... iJumpChars) {
-    return smartSplit(iSource, iRecordSeparator, beginIndex, endIndex, iStringSeparatorExtended, iConsiderBraces, iConsiderSets,
-            iConsiderBags, iUnicode, false, iJumpChars);
-
+  public static List<String> smartSplit(
+      final String iSource,
+      final char[] iRecordSeparator,
+      int beginIndex,
+      final int endIndex,
+      final boolean iStringSeparatorExtended,
+      final boolean iConsiderBraces,
+      final boolean iConsiderSets,
+      final boolean iConsiderBags,
+      boolean iUnicode,
+      final char... iJumpChars) {
+    return smartSplit(
+        iSource,
+        iRecordSeparator,
+        beginIndex,
+        endIndex,
+        iStringSeparatorExtended,
+        iConsiderBraces,
+        iConsiderSets,
+        iConsiderBags,
+        iUnicode,
+        false,
+        iJumpChars);
   }
 
-  public static List<String> smartSplit(final String iSource, final char[] iRecordSeparator, int beginIndex, final int endIndex,
-                                        final boolean iStringSeparatorExtended, final boolean iConsiderBraces, final boolean iConsiderSets,
-                                        final boolean iConsiderBags, boolean iUnicode, final int maxRidbagSizeBeforeSkip, final Set<Integer> skippedPartsIndexes, final char... iJumpChars) {
-    return smartSplit(iSource, iRecordSeparator, beginIndex, endIndex, iStringSeparatorExtended, iConsiderBraces, iConsiderSets,
-            iConsiderBags, iUnicode, false, maxRidbagSizeBeforeSkip, skippedPartsIndexes, iJumpChars);
-
+  public static List<String> smartSplit(
+      final String iSource,
+      final char[] iRecordSeparator,
+      int beginIndex,
+      final int endIndex,
+      final boolean iStringSeparatorExtended,
+      final boolean iConsiderBraces,
+      final boolean iConsiderSets,
+      final boolean iConsiderBags,
+      boolean iUnicode,
+      final int maxRidbagSizeBeforeSkip,
+      final Set<Integer> skippedPartsIndexes,
+      final char... iJumpChars) {
+    return smartSplit(
+        iSource,
+        iRecordSeparator,
+        beginIndex,
+        endIndex,
+        iStringSeparatorExtended,
+        iConsiderBraces,
+        iConsiderSets,
+        iConsiderBags,
+        iUnicode,
+        false,
+        maxRidbagSizeBeforeSkip,
+        skippedPartsIndexes,
+        iJumpChars);
   }
 
-  public static List<String> smartSplit(final String iSource, final char[] iRecordSeparator, int beginIndex, final int endIndex,
-                                        final boolean iStringSeparatorExtended, final boolean iConsiderBraces, final boolean iConsiderSets,
-                                        final boolean iConsiderBags, boolean iUnicode, boolean iPreserveQuotes, final char... iJumpChars) {
+  public static List<String> smartSplit(
+      final String iSource,
+      final char[] iRecordSeparator,
+      int beginIndex,
+      final int endIndex,
+      final boolean iStringSeparatorExtended,
+      final boolean iConsiderBraces,
+      final boolean iConsiderSets,
+      final boolean iConsiderBags,
+      boolean iUnicode,
+      boolean iPreserveQuotes,
+      final char... iJumpChars) {
 
-    return smartSplit(iSource, iRecordSeparator, beginIndex, endIndex, iStringSeparatorExtended, iConsiderBraces, iConsiderSets, iConsiderBags, iUnicode, iPreserveQuotes, -1, new HashSet<>(), iJumpChars);
+    return smartSplit(
+        iSource,
+        iRecordSeparator,
+        beginIndex,
+        endIndex,
+        iStringSeparatorExtended,
+        iConsiderBraces,
+        iConsiderSets,
+        iConsiderBags,
+        iUnicode,
+        iPreserveQuotes,
+        -1,
+        new HashSet<>(),
+        iJumpChars);
   }
 
-  public static List<String> smartSplit(final String iSource, final char[] iRecordSeparator, int beginIndex, final int endIndex,
-                                        final boolean iStringSeparatorExtended, final boolean iConsiderBraces, final boolean iConsiderSets,
-                                        final boolean iConsiderBags, boolean iUnicode, boolean iPreserveQuotes, final int maxRidbagSizeBeforeSkip, Set<Integer> skippedPartsIndexes, final char... iJumpChars) {
+  public static List<String> smartSplit(
+      final String iSource,
+      final char[] iRecordSeparator,
+      int beginIndex,
+      final int endIndex,
+      final boolean iStringSeparatorExtended,
+      final boolean iConsiderBraces,
+      final boolean iConsiderSets,
+      final boolean iConsiderBags,
+      boolean iUnicode,
+      boolean iPreserveQuotes,
+      final int maxRidbagSizeBeforeSkip,
+      Set<Integer> skippedPartsIndexes,
+      final char... iJumpChars) {
 
     final StringBuilder buffer = new StringBuilder(128);
     final ArrayList<String> parts = new ArrayList<String>();
@@ -244,10 +375,27 @@ public abstract class OStringSerializerHelper {
     int previousBegin1 = beginIndex;
     int previousBegin2 = beginIndex;
     if (iSource != null && !iSource.isEmpty()) {
-      while ((beginIndex = parse(iSource, buffer, beginIndex, endIndex, iRecordSeparator, iStringSeparatorExtended, iConsiderBraces,
-              iConsiderSets, -1, iConsiderBags, iUnicode, iPreserveQuotes,
-              (parts.size() % 2 == 1 && (parts.get(parts.size() - 1).startsWith("\"out_") || parts.get(parts.size() - 1).startsWith("\"in_"))) ? maxRidbagSizeBeforeSkip : -1,
-              iJumpChars)) > -1) {
+      while ((beginIndex =
+              parse(
+                  iSource,
+                  buffer,
+                  beginIndex,
+                  endIndex,
+                  iRecordSeparator,
+                  iStringSeparatorExtended,
+                  iConsiderBraces,
+                  iConsiderSets,
+                  -1,
+                  iConsiderBags,
+                  iUnicode,
+                  iPreserveQuotes,
+                  (parts.size() % 2 == 1
+                          && (parts.get(parts.size() - 1).startsWith("\"out_")
+                              || parts.get(parts.size() - 1).startsWith("\"in_")))
+                      ? maxRidbagSizeBeforeSkip
+                      : -1,
+                  iJumpChars))
+          > -1) {
         parts.add(buffer.toString());
         if (buffer.toString().equals(SKIPPED_VALUE)) {
           skippedPartsIndexes.add(previousBegin2);
@@ -257,25 +405,47 @@ public abstract class OStringSerializerHelper {
         previousBegin1 = beginIndex;
       }
 
-      if (buffer.length() > 0 || isCharPresent(iSource.charAt(iSource.length() - 1), iRecordSeparator))
+      if (buffer.length() > 0
+          || isCharPresent(iSource.charAt(iSource.length() - 1), iRecordSeparator))
         parts.add(buffer.toString());
     }
 
     return parts;
   }
 
-  public static List<String> smartSplit(final String iSource, final char[] iRecordSeparator,
-                                        final boolean[] iRecordSeparatorIncludeAsPrefix, final boolean[] iRecordSeparatorIncludeAsPostfix, int beginIndex,
-                                        final int endIndex, final boolean iStringSeparatorExtended, boolean iConsiderBraces, boolean iConsiderSets,
-                                        boolean considerBags, final char... iJumpChars) {
+  public static List<String> smartSplit(
+      final String iSource,
+      final char[] iRecordSeparator,
+      final boolean[] iRecordSeparatorIncludeAsPrefix,
+      final boolean[] iRecordSeparatorIncludeAsPostfix,
+      int beginIndex,
+      final int endIndex,
+      final boolean iStringSeparatorExtended,
+      boolean iConsiderBraces,
+      boolean iConsiderSets,
+      boolean considerBags,
+      final char... iJumpChars) {
     final StringBuilder buffer = new StringBuilder(128);
     final ArrayList<String> parts = new ArrayList<String>();
 
     int startSeparatorAt = -1;
     if (iSource != null && !iSource.isEmpty()) {
 
-      while ((beginIndex = parse(iSource, buffer, beginIndex, endIndex, iRecordSeparator, iStringSeparatorExtended, iConsiderBraces,
-              iConsiderSets, startSeparatorAt, considerBags, true, iJumpChars)) > -1) {
+      while ((beginIndex =
+              parse(
+                  iSource,
+                  buffer,
+                  beginIndex,
+                  endIndex,
+                  iRecordSeparator,
+                  iStringSeparatorExtended,
+                  iConsiderBraces,
+                  iConsiderSets,
+                  startSeparatorAt,
+                  considerBags,
+                  true,
+                  iJumpChars))
+          > -1) {
 
         if (beginIndex > -1) {
           final char lastSeparator = iSource.charAt(beginIndex - 1);
@@ -308,41 +478,99 @@ public abstract class OStringSerializerHelper {
         }
       }
 
-      if (buffer.length() > 0)
-        parts.add(buffer.toString());
+      if (buffer.length() > 0) parts.add(buffer.toString());
     }
 
     return parts;
   }
 
-  public static int parse(final String iSource, final StringBuilder iBuffer, final int beginIndex, final int endIndex,
-                          final char[] iSeparator, final boolean iStringSeparatorExtended, final boolean iConsiderBraces, final boolean iConsiderSets,
-                          final int iMinPosSeparatorAreValid, boolean considerBags, final char... iJumpChars) {
-    return parse(iSource, iBuffer, beginIndex, endIndex, iSeparator, iStringSeparatorExtended, iConsiderBraces,
-            iConsiderSets, iMinPosSeparatorAreValid, considerBags, true, false, -1, iJumpChars);
+  public static int parse(
+      final String iSource,
+      final StringBuilder iBuffer,
+      final int beginIndex,
+      final int endIndex,
+      final char[] iSeparator,
+      final boolean iStringSeparatorExtended,
+      final boolean iConsiderBraces,
+      final boolean iConsiderSets,
+      final int iMinPosSeparatorAreValid,
+      boolean considerBags,
+      final char... iJumpChars) {
+    return parse(
+        iSource,
+        iBuffer,
+        beginIndex,
+        endIndex,
+        iSeparator,
+        iStringSeparatorExtended,
+        iConsiderBraces,
+        iConsiderSets,
+        iMinPosSeparatorAreValid,
+        considerBags,
+        true,
+        false,
+        -1,
+        iJumpChars);
   }
 
-  public static int parse(final String iSource, final StringBuilder iBuffer, final int beginIndex, final int endIndex,
-                          final char[] iSeparator, final boolean iStringSeparatorExtended, final boolean iConsiderBraces, final boolean iConsiderSets,
-                          final int iMinPosSeparatorAreValid, boolean considerBags, boolean iPreserveQuotes, final char... iJumpChars) {
-    return parse(iSource, iBuffer, beginIndex, endIndex, iSeparator, iStringSeparatorExtended, iConsiderBraces,
-            iConsiderSets, iMinPosSeparatorAreValid, considerBags, true, iPreserveQuotes, -1, iJumpChars);
+  public static int parse(
+      final String iSource,
+      final StringBuilder iBuffer,
+      final int beginIndex,
+      final int endIndex,
+      final char[] iSeparator,
+      final boolean iStringSeparatorExtended,
+      final boolean iConsiderBraces,
+      final boolean iConsiderSets,
+      final int iMinPosSeparatorAreValid,
+      boolean considerBags,
+      boolean iPreserveQuotes,
+      final char... iJumpChars) {
+    return parse(
+        iSource,
+        iBuffer,
+        beginIndex,
+        endIndex,
+        iSeparator,
+        iStringSeparatorExtended,
+        iConsiderBraces,
+        iConsiderSets,
+        iMinPosSeparatorAreValid,
+        considerBags,
+        true,
+        iPreserveQuotes,
+        -1,
+        iJumpChars);
   }
 
-//  public static int parse(final String iSource, final StringBuilder iBuffer, final int beginIndex, final int endIndex,
-//      final char[] iSeparator, final boolean iStringSeparatorExtended, final boolean iConsiderBraces, final boolean iConsiderSets,
-//      final int iMinPosSeparatorAreValid, boolean considerBags, final boolean iUnicode, final char... iJumpChars) {
-//    return parse(iSource, iBuffer, beginIndex, endIndex, iSeparator, iStringSeparatorExtended, iConsiderBraces, iConsiderSets,
-//        iMinPosSeparatorAreValid, considerBags, iUnicode, false, iJumpChars);
-//
-//  }
+  //  public static int parse(final String iSource, final StringBuilder iBuffer, final int
+  // beginIndex, final int endIndex,
+  //      final char[] iSeparator, final boolean iStringSeparatorExtended, final boolean
+  // iConsiderBraces, final boolean iConsiderSets,
+  //      final int iMinPosSeparatorAreValid, boolean considerBags, final boolean iUnicode, final
+  // char... iJumpChars) {
+  //    return parse(iSource, iBuffer, beginIndex, endIndex, iSeparator, iStringSeparatorExtended,
+  // iConsiderBraces, iConsiderSets,
+  //        iMinPosSeparatorAreValid, considerBags, iUnicode, false, iJumpChars);
+  //
+  //  }
 
-  public static int parse(final String iSource, final StringBuilder iBuffer, final int beginIndex, final int endIndex,
-                          final char[] iSeparator, final boolean iStringSeparatorExtended, final boolean iConsiderBraces, final boolean iConsiderSets,
-                          final int iMinPosSeparatorAreValid, boolean considerBags, final boolean iUnicode, boolean iPreserveQuotes,
-                          final int iMaxValueSizeBeforeSkip, final char... iJumpChars) {
-    if (beginIndex < 0)
-      return beginIndex;
+  public static int parse(
+      final String iSource,
+      final StringBuilder iBuffer,
+      final int beginIndex,
+      final int endIndex,
+      final char[] iSeparator,
+      final boolean iStringSeparatorExtended,
+      final boolean iConsiderBraces,
+      final boolean iConsiderSets,
+      final int iMinPosSeparatorAreValid,
+      boolean considerBags,
+      final boolean iUnicode,
+      boolean iPreserveQuotes,
+      final int iMaxValueSizeBeforeSkip,
+      final char... iJumpChars) {
+    if (beginIndex < 0) return beginIndex;
 
     char stringBeginChar = ' ';
     boolean encodeMode = false;
@@ -357,14 +585,13 @@ public abstract class OStringSerializerHelper {
 
     final int max = endIndex > -1 ? endIndex + 1 : iSource.length();
 
-//    iBuffer.ensureCapacity(max);
+    //    iBuffer.ensureCapacity(max);
 
     // JUMP FIRST CHARS
     int i = beginIndex;
     for (; i < max; ++i) {
       final char c = iSource.charAt(i);
-      if (!isCharPresent(c, iJumpChars))
-        break;
+      if (!isCharPresent(c, iJumpChars)) break;
     }
 
     for (; i < max; ++i) {
@@ -375,14 +602,24 @@ public abstract class OStringSerializerHelper {
 
         if (iConsiderBraces) {
           if (c == LIST_BEGIN) {
-            if (i < iMinPosSeparatorAreValid || insideParenthesis > 0 || insideList > 0 || !isCharPresent(c, iSeparator))
-              insideList++;
+            if (i < iMinPosSeparatorAreValid
+                || insideParenthesis > 0
+                || insideList > 0
+                || !isCharPresent(c, iSeparator)) insideList++;
           } else if (c == LIST_END) {
-            if (i < iMinPosSeparatorAreValid || insideParenthesis > 0 || insideList > 0 || !isCharPresent(c, iSeparator)) {
+            if (i < iMinPosSeparatorAreValid
+                || insideParenthesis > 0
+                || insideList > 0
+                || !isCharPresent(c, iSeparator)) {
               if (insideList == 0)
                 throw new OSerializationException(
-                        "Found invalid " + LIST_END + " character at position " + i + " of text " + new String(iSource)
-                                + ". Ensure it is opened and closed correctly.");
+                    "Found invalid "
+                        + LIST_END
+                        + " character at position "
+                        + i
+                        + " of text "
+                        + new String(iSource)
+                        + ". Ensure it is opened and closed correctly.");
               insideList--;
             }
           } else if (c == EMBEDDED_BEGIN) {
@@ -391,8 +628,13 @@ public abstract class OStringSerializerHelper {
             // if (!isCharPresent(c, iRecordSeparator)) {
             if (insideParenthesis == 0)
               throw new OSerializationException(
-                      "Found invalid " + EMBEDDED_END + " character at position " + i + " of text " + new String(iSource)
-                              + ". Ensure it is opened and closed correctly.");
+                  "Found invalid "
+                      + EMBEDDED_END
+                      + " character at position "
+                      + i
+                      + " of text "
+                      + new String(iSource)
+                      + ". Ensure it is opened and closed correctly.");
             // }
             insideParenthesis--;
 
@@ -402,8 +644,13 @@ public abstract class OStringSerializerHelper {
             if (i < iMinPosSeparatorAreValid || !isCharPresent(c, iSeparator)) {
               if (insideMap == 0)
                 throw new OSerializationException(
-                        "Found invalid " + MAP_END + " character at position " + i + " of text " + new String(iSource)
-                                + ". Ensure it is opened and closed correctly.");
+                    "Found invalid "
+                        + MAP_END
+                        + " character at position "
+                        + i
+                        + " of text "
+                        + new String(iSource)
+                        + ". Ensure it is opened and closed correctly.");
               insideMap--;
             }
           } else if (c == LINK)
@@ -414,41 +661,53 @@ public abstract class OStringSerializerHelper {
             insideLinkPart = 2;
           else {
             if (iConsiderSets)
-              if (c == SET_BEGIN)
-                insideSet++;
+              if (c == SET_BEGIN) insideSet++;
               else if (c == SET_END) {
                 if (i < iMinPosSeparatorAreValid || !isCharPresent(c, iSeparator)) {
                   if (insideSet == 0)
                     throw new OSerializationException(
-                            "Found invalid " + SET_END + " character at position " + i + " of text " + new String(iSource)
-                                    + ". Ensure it is opened and closed correctly.");
+                        "Found invalid "
+                            + SET_END
+                            + " character at position "
+                            + i
+                            + " of text "
+                            + new String(iSource)
+                            + ". Ensure it is opened and closed correctly.");
                   insideSet--;
                 }
               }
             if (considerBags) {
-              if (c == BAG_BEGIN)
-                insideBag++;
+              if (c == BAG_BEGIN) insideBag++;
               else if (c == BAG_END)
                 if (!isCharPresent(c, iSeparator)) {
                   if (insideBag == 0)
                     throw new OSerializationException(
-                            "Found invalid " + BAG_BEGIN + " character. Ensure it is opened and closed correctly.");
+                        "Found invalid "
+                            + BAG_BEGIN
+                            + " character. Ensure it is opened and closed correctly.");
                   insideBag--;
                 }
             }
           }
         }
 
-        if (insideLinkPart > 0 && c != '-' && !Character.isDigit(c) && c != ORID.SEPARATOR && c != LINK)
-          insideLinkPart = 0;
+        if (insideLinkPart > 0
+            && c != '-'
+            && !Character.isDigit(c)
+            && c != ORID.SEPARATOR
+            && c != LINK) insideLinkPart = 0;
 
         if ((c == '"' || c == '`' || iStringSeparatorExtended && c == '\'') && !encodeMode) {
           // START STRING
           stringBeginChar = c;
         }
 
-        if (insideParenthesis == 0 && insideList == 0 && insideSet == 0 && insideMap == 0 && insideLinkPart == 0
-                && insideBag == 0) {
+        if (insideParenthesis == 0
+            && insideList == 0
+            && insideSet == 0
+            && insideMap == 0
+            && insideLinkPart == 0
+            && insideBag == 0) {
           // OUTSIDE A PARAMS/COLLECTION/MAP
           if (i >= iMinPosSeparatorAreValid && isCharPresent(c, iSeparator)) {
             // SEPARATOR (OUTSIDE A STRING): PUSH
@@ -457,8 +716,7 @@ public abstract class OStringSerializerHelper {
         }
 
         if (iJumpChars.length > 0)
-          if (i >= iMinPosSeparatorAreValid && isCharPresent(c, iJumpChars))
-            continue;
+          if (i >= iMinPosSeparatorAreValid && isCharPresent(c, iJumpChars)) continue;
       } else {
         // INSIDE A STRING
         if ((c == '"' || c == '`' || iStringSeparatorExtended && c == '\'') && !encodeMode) {
@@ -474,7 +732,9 @@ public abstract class OStringSerializerHelper {
         // ESCAPE CHARS
         final char nextChar = iSource.charAt(i + 1);
         if (nextChar == 'u' && iUnicode) {
-          i = OStringParser.readUnicode(iSource, i + 2, tooBigValue ? new StringBuilder() : iBuffer);
+          i =
+              OStringParser.readUnicode(
+                  iSource, i + 2, tooBigValue ? new StringBuilder() : iBuffer);
           continue;
         } else if (nextChar == 'n') {
           if (!tooBigValue) {
@@ -500,10 +760,8 @@ public abstract class OStringSerializerHelper {
           }
           i++;
           continue;
-        } else
-          encodeMode = true;
-      } else
-        encodeMode = false;
+        } else encodeMode = true;
+      } else encodeMode = false;
 
       if (c != '\\' && encodeMode) {
         encodeMode = false;
@@ -531,30 +789,59 @@ public abstract class OStringSerializerHelper {
     return false;
   }
 
-  public static List<String> split(final String iSource, final char iRecordSeparator, final char... iJumpCharacters) {
+  public static List<String> split(
+      final String iSource, final char iRecordSeparator, final char... iJumpCharacters) {
     return split(iSource, 0, iSource.length(), iRecordSeparator, iJumpCharacters);
   }
 
-  public static Collection<String> split(final Collection<String> iParts, final String iSource, final char iRecordSeparator,
-                                         final char... iJumpCharacters) {
+  public static Collection<String> split(
+      final Collection<String> iParts,
+      final String iSource,
+      final char iRecordSeparator,
+      final char... iJumpCharacters) {
     return split(iParts, iSource, 0, iSource.length(), iRecordSeparator, iJumpCharacters);
   }
 
-  public static List<String> split(final String iSource, final int iStartPosition, final int iEndPosition,
-                                   final char iRecordSeparator, final char... iJumpCharacters) {
-    return (List<String>) split(new ArrayList<String>(), iSource, iStartPosition, iSource.length(), iRecordSeparator,
+  public static List<String> split(
+      final String iSource,
+      final int iStartPosition,
+      final int iEndPosition,
+      final char iRecordSeparator,
+      final char... iJumpCharacters) {
+    return (List<String>)
+        split(
+            new ArrayList<String>(),
+            iSource,
+            iStartPosition,
+            iSource.length(),
+            iRecordSeparator,
             iJumpCharacters);
   }
 
-  public static Collection<String> split(final Collection<String> iParts, final String iSource, final int iStartPosition,
-                                         final int iEndPosition, final char iRecordSeparator, final char... iJumpCharacters) {
-    return split(iParts, iSource, iStartPosition, iEndPosition, String.valueOf(iRecordSeparator), iJumpCharacters);
+  public static Collection<String> split(
+      final Collection<String> iParts,
+      final String iSource,
+      final int iStartPosition,
+      final int iEndPosition,
+      final char iRecordSeparator,
+      final char... iJumpCharacters) {
+    return split(
+        iParts,
+        iSource,
+        iStartPosition,
+        iEndPosition,
+        String.valueOf(iRecordSeparator),
+        iJumpCharacters);
   }
 
-  public static Collection<String> split(final Collection<String> iParts, final String iSource, final int iStartPosition,
-                                         int iEndPosition, final String iRecordSeparators, final char... iJumpCharacters) {
-    if (iEndPosition == -1)
-      iEndPosition = iSource.length();
+  public static Collection<String> split(
+      final Collection<String> iParts,
+      final String iSource,
+      final int iStartPosition,
+      int iEndPosition,
+      final String iRecordSeparators,
+      final char... iJumpCharacters) {
+    if (iEndPosition == -1) iEndPosition = iSource.length();
 
     final StringBuilder buffer = new StringBuilder(128);
 
@@ -570,8 +857,7 @@ public abstract class OStringSerializerHelper {
           if (!isCharPresent(c, iJumpCharacters)) {
             buffer.append(c);
           }
-        } else
-          buffer.append(c);
+        } else buffer.append(c);
       }
     }
 
@@ -590,11 +876,9 @@ public abstract class OStringSerializerHelper {
             break;
           }
         }
-        if (!found)
-          break;
+        if (!found) break;
       }
-      if (newSize > 0)
-        buffer.setLength(buffer.length() - newSize);
+      if (newSize > 0) buffer.setLength(buffer.length() - newSize);
     }
 
     iParts.add(buffer.toString());
@@ -605,8 +889,7 @@ public abstract class OStringSerializerHelper {
   public static String joinIntArray(int[] iArray) {
     final StringBuilder ids = new StringBuilder(iArray.length * 3);
     for (int id : iArray) {
-      if (ids.length() > 0)
-        ids.append(RECORD_SEPARATOR);
+      if (ids.length() > 0) ids.append(RECORD_SEPARATOR);
       ids.append(id);
     }
     return ids.toString();
@@ -622,21 +905,26 @@ public abstract class OStringSerializerHelper {
   }
 
   public static boolean contains(final String iText, final char iSeparator) {
-    if (iText == null)
-      return false;
+    if (iText == null) return false;
 
     return iText.indexOf(iSeparator) > -1;
   }
 
-  public static int getCollection(final String iText, final int iStartPosition, final Collection<String> iCollection) {
-    return getCollection(iText, iStartPosition, iCollection, LIST_BEGIN, LIST_END, COLLECTION_SEPARATOR);
+  public static int getCollection(
+      final String iText, final int iStartPosition, final Collection<String> iCollection) {
+    return getCollection(
+        iText, iStartPosition, iCollection, LIST_BEGIN, LIST_END, COLLECTION_SEPARATOR);
   }
 
-  public static int getCollection(final String iText, final int iStartPosition, final Collection<String> iCollection,
-                                  final char iCollectionBegin, final char iCollectionEnd, final char iCollectionSeparator) {
+  public static int getCollection(
+      final String iText,
+      final int iStartPosition,
+      final Collection<String> iCollection,
+      final char iCollectionBegin,
+      final char iCollectionEnd,
+      final char iCollectionSeparator) {
     int openPos = iText.indexOf(iCollectionBegin, iStartPosition);
-    if (openPos == -1)
-      return -1;
+    if (openPos == -1) return -1;
 
     final StringBuilder buffer = new StringBuilder(128);
 
@@ -646,13 +934,11 @@ public abstract class OStringSerializerHelper {
     int deep;
     int maxPos = iText.length() - 1;
     for (currentPos = openPos + 1, deep = 1; deep > 0; currentPos++) {
-      if (currentPos > maxPos)
-        return -1;
+      if (currentPos > maxPos) return -1;
 
       char c = iText.charAt(currentPos);
 
-      if (buffer.length() == 0 && c == ' ')
-        continue;
+      if (buffer.length() == 0 && c == ' ') continue;
 
       if (c == iCollectionBegin) {
         // BEGIN
@@ -660,8 +946,7 @@ public abstract class OStringSerializerHelper {
         deep++;
       } else if (c == iCollectionEnd) {
         // END
-        if (deep > 1)
-          buffer.append(c);
+        if (deep > 1) buffer.append(c);
         deep--;
       } else if (c == iCollectionSeparator) {
         // SEPARATOR
@@ -671,7 +956,8 @@ public abstract class OStringSerializerHelper {
           iCollection.add(buffer.toString().trim());
           buffer.setLength(0);
         }
-      } else if (!escape && ((insideQuote == ' ' && (c == '"' || c == '\'')) || (insideQuote == c))) {
+      } else if (!escape
+          && ((insideQuote == ' ' && (c == '"' || c == '\'')) || (insideQuote == c))) {
         insideQuote = insideQuote == ' ' ? c : ' ';
         buffer.append(c);
       } else {
@@ -694,8 +980,7 @@ public abstract class OStringSerializerHelper {
           } else if (nextChar == 'f') {
             buffer.append("\f");
             currentPos++;
-          } else
-            escape = true;
+          } else escape = true;
 
           continue;
         }
@@ -704,42 +989,64 @@ public abstract class OStringSerializerHelper {
       }
     }
 
-    if (buffer.length() > 0)
-      iCollection.add(buffer.toString().trim());
+    if (buffer.length() > 0) iCollection.add(buffer.toString().trim());
 
     return --currentPos;
   }
 
-  public static int getParameters(final String iText, final int iBeginPosition, int iEndPosition, final List<String> iParameters) {
+  public static int getParameters(
+      final String iText,
+      final int iBeginPosition,
+      int iEndPosition,
+      final List<String> iParameters) {
     iParameters.clear();
 
     final int openPos = iText.indexOf(EMBEDDED_BEGIN, iBeginPosition);
-    if (openPos == -1 || (iEndPosition > -1 && openPos > iEndPosition))
-      return iBeginPosition;
+    if (openPos == -1 || (iEndPosition > -1 && openPos > iEndPosition)) return iBeginPosition;
 
     final StringBuilder buffer = new StringBuilder(128);
-    parse(iText, buffer, openPos, iEndPosition, PARAMETER_EXT_SEPARATOR, true, true, false, -1, false);
-    if (buffer.length() == 0)
-      return iBeginPosition;
+    parse(
+        iText,
+        buffer,
+        openPos,
+        iEndPosition,
+        PARAMETER_EXT_SEPARATOR,
+        true,
+        true,
+        false,
+        -1,
+        false);
+    if (buffer.length() == 0) return iBeginPosition;
 
     final String t = buffer.substring(1, buffer.length() - 1).trim();
     final List<String> pars = smartSplit(t, PARAMETER_SEPARATOR, 0, -1, true, true, false, false);
 
-    for (int i = 0; i < pars.size(); ++i)
-      iParameters.add(pars.get(i).trim());
+    for (int i = 0; i < pars.size(); ++i) iParameters.add(pars.get(i).trim());
 
     return iBeginPosition + buffer.length();
   }
 
-  public static int getEmbedded(final String iText, final int iBeginPosition, int iEndPosition, final StringBuilder iEmbedded) {
+  public static int getEmbedded(
+      final String iText,
+      final int iBeginPosition,
+      int iEndPosition,
+      final StringBuilder iEmbedded) {
     final int openPos = iText.indexOf(EMBEDDED_BEGIN, iBeginPosition);
-    if (openPos == -1 || (iEndPosition > -1 && openPos > iEndPosition))
-      return iBeginPosition;
+    if (openPos == -1 || (iEndPosition > -1 && openPos > iEndPosition)) return iBeginPosition;
 
     final StringBuilder buffer = new StringBuilder(128);
-    parse(iText, buffer, openPos, iEndPosition, PARAMETER_EXT_SEPARATOR, true, true, false, -1, false);
-    if (buffer.length() == 0)
-      return iBeginPosition;
+    parse(
+        iText,
+        buffer,
+        openPos,
+        iEndPosition,
+        PARAMETER_EXT_SEPARATOR,
+        true,
+        true,
+        false,
+        -1,
+        false);
+    if (buffer.length() == 0) return iBeginPosition;
 
     final String t = buffer.substring(1, buffer.length() - 1).trim();
     iEmbedded.append(t);
@@ -751,23 +1058,22 @@ public abstract class OStringSerializerHelper {
     try {
       getParameters(iText, 0, -1, params);
     } catch (Exception e) {
-      throw OException.wrapException(new OCommandSQLParsingException("Error on reading parameters in: " + iText), e);
+      throw OException.wrapException(
+          new OCommandSQLParsingException("Error on reading parameters in: " + iText), e);
     }
     return params;
   }
 
   public static Map<String, String> getMap(final String iText) {
     int openPos = iText.indexOf(MAP_BEGIN);
-    if (openPos == -1)
-      return Collections.emptyMap();
+    if (openPos == -1) return Collections.emptyMap();
 
     int closePos = iText.indexOf(MAP_END, openPos + 1);
-    if (closePos == -1)
-      return Collections.emptyMap();
+    if (closePos == -1) return Collections.emptyMap();
 
-    final List<String> entries = smartSplit(iText.substring(openPos + 1, closePos), COLLECTION_SEPARATOR);
-    if (entries.size() == 0)
-      return Collections.emptyMap();
+    final List<String> entries =
+        smartSplit(iText.substring(openPos + 1, closePos), COLLECTION_SEPARATOR);
+    if (entries.size() == 0) return Collections.emptyMap();
 
     Map<String, String> map = new HashMap<String, String>();
 
@@ -814,8 +1120,7 @@ public abstract class OStringSerializerHelper {
       for (int i = 0; i < newSize; ++i) {
         c = iText.charAt(i);
 
-        if (c == '"' || c == '\\')
-          iOutput.append('\\');
+        if (c == '"' || c == '\\') iOutput.append('\\');
 
         iOutput.append(c);
       }
@@ -883,13 +1188,17 @@ public abstract class OStringSerializerHelper {
 
   public static OClass getRecordClassName(final String iValue, OClass iLinkedClass) {
     // EXTRACT THE CLASS NAME
-    final int classSeparatorPos = OStringParser
-            .indexOfOutsideStrings(iValue, OStringSerializerHelper.CLASS_SEPARATOR.charAt(0), 0, -1);
+    final int classSeparatorPos =
+        OStringParser.indexOfOutsideStrings(
+            iValue, OStringSerializerHelper.CLASS_SEPARATOR.charAt(0), 0, -1);
     if (classSeparatorPos > -1) {
       final String className = iValue.substring(0, classSeparatorPos);
       final ODatabaseDocument database = ODatabaseRecordThreadLocal.instance().get();
       if (className != null && database != null)
-        iLinkedClass = ((OMetadataInternal) database.getMetadata()).getImmutableSchemaSnapshot().getClass(className);
+        iLinkedClass =
+            ((OMetadataInternal) database.getMetadata())
+                .getImmutableSchemaSnapshot()
+                .getClass(className);
     }
     return iLinkedClass;
   }
@@ -910,16 +1219,14 @@ public abstract class OStringSerializerHelper {
    * Returns the binary representation of a content. If it's a String a Base64 decoding is applied.
    */
   public static byte[] getBinaryContent(final Object iValue) {
-    if (iValue == null)
-      return null;
-    else if (iValue instanceof OBinary)
-      return ((OBinary) iValue).toByteArray();
-    else if (iValue instanceof byte[])
-      return (byte[]) iValue;
+    if (iValue == null) return null;
+    else if (iValue instanceof OBinary) return ((OBinary) iValue).toByteArray();
+    else if (iValue instanceof byte[]) return (byte[]) iValue;
     else if (iValue instanceof String) {
       String s = (String) iValue;
-      if (s.length() > 1 && (s.charAt(0) == BINARY_BEGINEND && s.charAt(s.length() - 1) == BINARY_BEGINEND) || (s.charAt(0) == '\''
-              && s.charAt(s.length() - 1) == '\''))
+      if (s.length() > 1
+              && (s.charAt(0) == BINARY_BEGINEND && s.charAt(s.length() - 1) == BINARY_BEGINEND)
+          || (s.charAt(0) == '\'' && s.charAt(s.length() - 1) == '\''))
         // @COMPATIBILITY 1.0rc7-SNAPSHOT ' TO SUPPORT OLD DATABASES
         s = s.substring(1, s.length() - 1);
       // IN CASE OF JSON BINARY IMPORT THIS EXEPTION IS WRONG
@@ -929,7 +1236,10 @@ public abstract class OStringSerializerHelper {
       return Base64.getDecoder().decode(s);
     } else
       throw new IllegalArgumentException(
-              "Cannot parse binary as the same type as the value (class=" + iValue.getClass().getName() + "): " + iValue);
+          "Cannot parse binary as the same type as the value (class="
+              + iValue.getClass().getName()
+              + "): "
+              + iValue);
   }
 
   /**
@@ -941,14 +1251,15 @@ public abstract class OStringSerializerHelper {
   public static boolean isAlphanumeric(final String iContent) {
     final int tot = iContent.length();
     for (int i = 0; i < tot; ++i) {
-      if (!Character.isLetterOrDigit(iContent.charAt(i)))
-        return false;
+      if (!Character.isLetterOrDigit(iContent.charAt(i))) return false;
     }
     return true;
   }
 
   public static String removeQuotationMarks(final String iValue) {
-    if (iValue != null && iValue.length() > 1 && (iValue.charAt(0) == '\'' && iValue.charAt(iValue.length() - 1) == '\''
+    if (iValue != null
+        && iValue.length() > 1
+        && (iValue.charAt(0) == '\'' && iValue.charAt(iValue.length() - 1) == '\''
             || iValue.charAt(0) == '"' && iValue.charAt(iValue.length() - 1) == '"'))
       return iValue.substring(1, iValue.length() - 1);
 
@@ -956,15 +1267,12 @@ public abstract class OStringSerializerHelper {
   }
 
   public static boolean startsWithIgnoreCase(final String iFirst, final String iSecond) {
-    if (iFirst == null)
-      throw new IllegalArgumentException("Origin string to compare is null");
-    if (iSecond == null)
-      throw new IllegalArgumentException("String to match is null");
+    if (iFirst == null) throw new IllegalArgumentException("Origin string to compare is null");
+    if (iSecond == null) throw new IllegalArgumentException("String to match is null");
 
     final int iSecondLength = iSecond.length();
 
-    if (iSecondLength > iFirst.length())
-      return false;
+    if (iSecondLength > iFirst.length()) return false;
 
     for (int i = 0; i < iSecondLength; ++i) {
       if (Character.toUpperCase(iFirst.charAt(i)) != Character.toUpperCase(iSecond.charAt(i)))
@@ -982,17 +1290,15 @@ public abstract class OStringSerializerHelper {
     for (int i = iBegin; i < len; ++i) {
       for (int k = 0; k < iChars.length; ++k) {
         final char c = iSource.charAt(i);
-        if (c == iChars[k])
-          return i;
+        if (c == iChars[k]) return i;
       }
     }
     return -1;
   }
 
-  /**
-   * Finds the end of a block delimited by 2 chars.
-   */
-  public static final int findEndBlock(final String iOrigin, final char iBeginChar, final char iEndChar, final int iBeginOffset) {
+  /** Finds the end of a block delimited by 2 chars. */
+  public static final int findEndBlock(
+      final String iOrigin, final char iBeginChar, final char iEndChar, final int iBeginOffset) {
     int inc = 0;
 
     for (int i = iBeginOffset; i < iOrigin.length(); i++) {
@@ -1017,8 +1323,7 @@ public abstract class OStringSerializerHelper {
         continue;
       }
 
-      if (c != iBeginChar && c != iEndChar)
-        continue;
+      if (c != iBeginChar && c != iEndChar) continue;
 
       if (c == iBeginChar) {
         inc++;
@@ -1033,7 +1338,8 @@ public abstract class OStringSerializerHelper {
     return -1;
   }
 
-  public static int getLowerIndexOf(final String iText, final int iBeginOffset, final String... iToSearch) {
+  public static int getLowerIndexOf(
+      final String iText, final int iBeginOffset, final String... iToSearch) {
     int lowest = -1;
     for (String toSearch : iToSearch) {
       boolean singleQuote = false;
@@ -1073,7 +1379,8 @@ public abstract class OStringSerializerHelper {
     return lowest;
   }
 
-  public static int getLowerIndexOfKeywords(final String iText, final int iBeginOffset, final String... iToSearch) {
+  public static int getLowerIndexOfKeywords(
+      final String iText, final int iBeginOffset, final String... iToSearch) {
     Character lastQuote = null;
     List<Character> nestedStack = new LinkedList<Character>();
 
@@ -1134,12 +1441,12 @@ public abstract class OStringSerializerHelper {
     return -1;
   }
 
-  public static int getHigherIndexOf(final String iText, final int iBeginOffset, final String... iToSearch) {
+  public static int getHigherIndexOf(
+      final String iText, final int iBeginOffset, final String... iToSearch) {
     int lowest = -1;
     for (String toSearch : iToSearch) {
       int index = iText.indexOf(toSearch, iBeginOffset);
-      if (index > -1 && (lowest == -1 || index > lowest))
-        lowest = index;
+      if (index > -1 && (lowest == -1 || index > lowest)) lowest = index;
     }
     return lowest;
   }

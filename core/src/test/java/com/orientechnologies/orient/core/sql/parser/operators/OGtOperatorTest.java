@@ -20,13 +20,11 @@
 package com.orientechnologies.orient.core.sql.parser.operators;
 
 import com.orientechnologies.orient.core.sql.parser.OGtOperator;
-import org.junit.Assert; import org.junit.Test;
-
 import java.math.BigDecimal;
+import org.junit.Assert;
+import org.junit.Test;
 
-/**
- * @author Luigi Dell'Aquila (l.dellaquila-(at)-orientdb.com)
- */
+/** @author Luigi Dell'Aquila (l.dellaquila-(at)-orientdb.com) */
 public class OGtOperatorTest {
   @Test
   public void test() {

@@ -18,24 +18,20 @@
 
 package com.orientechnologies.lucene.tests;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 import com.orientechnologies.orient.core.command.script.OCommandScript;
 import com.orientechnologies.orient.core.record.OVertex;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
+import java.io.InputStream;
 import org.apache.lucene.analysis.standard.StandardAnalyzer;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
-import java.io.InputStream;
-
-import static org.assertj.core.api.Assertions.assertThat;
-
-/**
- * Created by enricorisa on 26/09/14.
- */
-
+/** Created by enricorisa on 26/09/14. */
 public class OLuceneCreateIndexTest extends OLuceneBaseTest {
 
   @Before
@@ -44,12 +40,18 @@ public class OLuceneCreateIndexTest extends OLuceneBaseTest {
 
     db.command(new OCommandScript("sql", getScriptFromStream(stream))).execute();
 
-    db.command(new OCommandSQL(
-        "create index Song.title on Song (title) fulltext ENGINE LUCENE METADATA {\"analyzer\":\"" + StandardAnalyzer.class
-            .getName() + "\"}")).execute();
-    db.command(new OCommandSQL(
-        "create index Song.author on Song (author) FULLTEXT ENGINE lucene METADATA {\"analyzer\":\"" + StandardAnalyzer.class
-            .getName() + "\"}")).execute();
+    db.command(
+            new OCommandSQL(
+                "create index Song.title on Song (title) fulltext ENGINE LUCENE METADATA {\"analyzer\":\""
+                    + StandardAnalyzer.class.getName()
+                    + "\"}"))
+        .execute();
+    db.command(
+            new OCommandSQL(
+                "create index Song.author on Song (author) FULLTEXT ENGINE lucene METADATA {\"analyzer\":\""
+                    + StandardAnalyzer.class.getName()
+                    + "\"}"))
+        .execute();
 
     OVertex doc = db.newVertex("Song");
 
@@ -57,12 +59,12 @@ public class OLuceneCreateIndexTest extends OLuceneBaseTest {
     doc.setProperty("author", "Local");
 
     db.save(doc);
-
   }
 
   @Test
   public void testMetadata() {
-    final ODocument index = db.getMetadata().getIndexManagerInternal().getIndex(db, "Song.title").getMetadata();
+    final ODocument index =
+        db.getMetadata().getIndexManagerInternal().getIndex(db, "Song.title").getMetadata();
 
     Assert.assertEquals(index.field("analyzer"), StandardAnalyzer.class.getName());
   }
@@ -77,11 +79,13 @@ public class OLuceneCreateIndexTest extends OLuceneBaseTest {
 
     assertThat(docs).hasSize(87);
     docs.close();
-    String query = "select * from Song where search_fields(['title'],'mountain')=true AND search_fields(['author'],'Fabbio')=true";
+    String query =
+        "select * from Song where search_fields(['title'],'mountain')=true AND search_fields(['author'],'Fabbio')=true";
     docs = db.query(query);
     assertThat(docs).hasSize(1);
     docs.close();
-    query = "select * from Song where search_fields(['title'],'mountain')=true   and author = 'Fabbio'";
+    query =
+        "select * from Song where search_fields(['title'],'mountain')=true   and author = 'Fabbio'";
     docs = db.query(query);
 
     assertThat(docs).hasSize(1);
@@ -97,5 +101,4 @@ public class OLuceneCreateIndexTest extends OLuceneBaseTest {
     assertThat(docs).hasSize(1);
     docs.close();
   }
-
 }

@@ -20,8 +20,5 @@ package com.orientechnologies.orient.etl.source;
 
 import com.orientechnologies.orient.etl.OETLAbstractComponent;
 
-/**
- * ETL Abstract Source component.
- */
-public abstract class OETLAbstractSource extends OETLAbstractComponent implements OETLSource {
-}
+/** ETL Abstract Source component. */
+public abstract class OETLAbstractSource extends OETLAbstractComponent implements OETLSource {}

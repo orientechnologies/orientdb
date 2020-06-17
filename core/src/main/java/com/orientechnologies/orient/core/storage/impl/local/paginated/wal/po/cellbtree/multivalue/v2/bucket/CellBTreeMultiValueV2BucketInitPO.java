@@ -5,14 +5,12 @@ import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.WALRecordTypes;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.PageOperationRecord;
 import com.orientechnologies.orient.core.storage.index.sbtree.multivalue.v2.CellBTreeMultiValueV2Bucket;
-
 import java.nio.ByteBuffer;
 
 public final class CellBTreeMultiValueV2BucketInitPO extends PageOperationRecord {
   private boolean isLeaf;
 
-  public CellBTreeMultiValueV2BucketInitPO() {
-  }
+  public CellBTreeMultiValueV2BucketInitPO() {}
 
   public CellBTreeMultiValueV2BucketInitPO(boolean isLeaf) {
     this.isLeaf = isLeaf;
@@ -25,8 +23,7 @@ public final class CellBTreeMultiValueV2BucketInitPO extends PageOperationRecord
   }
 
   @Override
-  public void undo(OCacheEntry cacheEntry) {
-  }
+  public void undo(OCacheEntry cacheEntry) {}
 
   @Override
   public int getId() {

@@ -1,32 +1,26 @@
 package com.orientechnologies.orient.client.remote.message;
 
-import com.orientechnologies.common.util.OCommonConst;
 import com.orientechnologies.orient.client.binary.OBinaryRequestExecutor;
 import com.orientechnologies.orient.client.remote.OBinaryRequest;
 import com.orientechnologies.orient.client.remote.OBinaryResponse;
 import com.orientechnologies.orient.client.remote.OStorageRemoteSession;
-import com.orientechnologies.orient.core.exception.OSecurityAccessException;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializer;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelDataInput;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelDataOutput;
-
 import java.io.IOException;
 
-/**
- * Created by tglman on 21/06/17.
- */
+/** Created by tglman on 21/06/17. */
 public class ODistributedConnectRequest implements OBinaryRequest<ODistributedConnectResponse> {
 
-  private int    distributedProtocolVersion;
+  private int distributedProtocolVersion;
   private String username;
   private String password;
 
-  public ODistributedConnectRequest() {
+  public ODistributedConnectRequest() {}
 
-  }
-
-  public ODistributedConnectRequest(int distributedProtocolVersion, String username, String password) {
+  public ODistributedConnectRequest(
+      int distributedProtocolVersion, String username, String password) {
     this.distributedProtocolVersion = distributedProtocolVersion;
     this.username = username;
     this.password = password;
@@ -40,7 +34,8 @@ public class ODistributedConnectRequest implements OBinaryRequest<ODistributedCo
   }
 
   @Override
-  public void read(OChannelDataInput channel, int protocolVersion, ORecordSerializer serializer) throws IOException {
+  public void read(OChannelDataInput channel, int protocolVersion, ORecordSerializer serializer)
+      throws IOException {
     distributedProtocolVersion = channel.readInt();
     username = channel.readString();
     password = channel.readString();

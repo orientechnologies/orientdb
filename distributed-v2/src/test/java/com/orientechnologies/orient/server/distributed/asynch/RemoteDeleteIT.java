@@ -58,5 +58,4 @@ public class RemoteDeleteIT extends BareBoneBase1ClientTest {
   protected String getDatabaseName() {
     return "RemoteDeleteIT";
   }
-
 }

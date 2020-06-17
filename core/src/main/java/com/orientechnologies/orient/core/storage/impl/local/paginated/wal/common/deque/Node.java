@@ -9,12 +9,11 @@ public final class Node<T> extends AtomicReference<Node<T>> {
 
   private volatile Node<T> prev;
 
-  public volatile int                     deqidx = 0;
-  public final    AtomicReferenceArray<T> items  = new AtomicReferenceArray<>(BUFFER_SIZE);
-  public final    AtomicInteger           enqidx = new AtomicInteger(1);
+  public volatile int deqidx = 0;
+  public final AtomicReferenceArray<T> items = new AtomicReferenceArray<>(BUFFER_SIZE);
+  public final AtomicInteger enqidx = new AtomicInteger(1);
 
-  Node() {
-  }
+  Node() {}
 
   Node(T record, Node<T> prev) {
     items.lazySet(0, record);

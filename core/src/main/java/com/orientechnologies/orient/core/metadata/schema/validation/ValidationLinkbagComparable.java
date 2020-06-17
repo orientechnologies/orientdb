@@ -14,5 +14,4 @@ public class ValidationLinkbagComparable implements Comparable<Object> {
   public int compareTo(Object o) {
     return size - ((ORidBag) o).size();
   }
-
 }

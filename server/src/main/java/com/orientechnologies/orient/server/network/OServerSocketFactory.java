@@ -15,19 +15,17 @@
  */
 package com.orientechnologies.orient.server.network;
 
+import com.orientechnologies.orient.server.config.OServerParameterConfiguration;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.ServerSocket;
 
-import com.orientechnologies.orient.server.config.OServerParameterConfiguration;
-
 public abstract class OServerSocketFactory {
 
   private static OServerSocketFactory theFactory;
-  private        String               name;
+  private String name;
 
-  public OServerSocketFactory() {
-  }
+  public OServerSocketFactory() {}
 
   public static OServerSocketFactory getDefault() {
     synchronized (OServerSocketFactory.class) {
@@ -55,6 +53,6 @@ public abstract class OServerSocketFactory {
 
   public abstract ServerSocket createServerSocket(int port, int backlog) throws IOException;
 
-  public abstract ServerSocket createServerSocket(int port, int backlog, InetAddress ifAddress) throws IOException;
+  public abstract ServerSocket createServerSocket(int port, int backlog, InetAddress ifAddress)
+      throws IOException;
 }
-

@@ -7,7 +7,6 @@ import com.orientechnologies.orient.core.sql.executor.OInternalResultSet;
 import com.orientechnologies.orient.core.sql.executor.OResultInternal;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import com.orientechnologies.orient.core.tx.OTransaction;
-
 import java.util.Map;
 
 public class OBeginStatement extends OSimpleExecStatement {
@@ -21,20 +20,24 @@ public class OBeginStatement extends OSimpleExecStatement {
     super(p, id);
   }
 
-  @Override public OResultSet executeSimple(OCommandContext ctx) {
+  @Override
+  public OResultSet executeSimple(OCommandContext ctx) {
     ctx.getDatabase().begin();
     OInternalResultSet result = new OInternalResultSet();
     OResultInternal item = new OResultInternal();
     item.setProperty("operation", "begin");
     if (isolation != null) {
-      ctx.getDatabase().getTransaction().setIsolationLevel(OTransaction.ISOLATION_LEVEL.valueOf(isolation.getStringValue()));
+      ctx.getDatabase()
+          .getTransaction()
+          .setIsolationLevel(OTransaction.ISOLATION_LEVEL.valueOf(isolation.getStringValue()));
       item.setProperty("isolation", isolation.getStringValue());
     }
     result.add(item);
     return result;
   }
 
-  @Override public void toString(Map<Object, Object> params, StringBuilder builder) {
+  @Override
+  public void toString(Map<Object, Object> params, StringBuilder builder) {
     builder.append("BEGIN");
     if (isolation != null) {
       builder.append(" ISOLATION ");
@@ -42,17 +45,17 @@ public class OBeginStatement extends OSimpleExecStatement {
     }
   }
 
-  @Override public OBeginStatement copy() {
+  @Override
+  public OBeginStatement copy() {
     OBeginStatement result = new OBeginStatement(-1);
     result.isolation = isolation == null ? null : isolation.copy();
     return result;
   }
 
-  @Override public boolean equals(Object o) {
-    if (this == o)
-      return true;
-    if (o == null || getClass() != o.getClass())
-      return false;
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
 
     OBeginStatement that = (OBeginStatement) o;
 
@@ -62,7 +65,8 @@ public class OBeginStatement extends OSimpleExecStatement {
     return true;
   }
 
-  @Override public int hashCode() {
+  @Override
+  public int hashCode() {
     return isolation != null ? isolation.hashCode() : 0;
   }
 }

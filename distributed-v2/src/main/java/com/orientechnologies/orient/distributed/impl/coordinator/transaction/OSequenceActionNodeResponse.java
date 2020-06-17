@@ -17,18 +17,17 @@ package com.orientechnologies.orient.distributed.impl.coordinator.transaction;
 
 import com.orientechnologies.orient.distributed.impl.coordinator.OCoordinateMessagesFactory;
 import com.orientechnologies.orient.distributed.impl.coordinator.ONodeResponse;
-
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 
-/**
- * @author marko
- */
+/** @author marko */
 public class OSequenceActionNodeResponse implements ONodeResponse {
   public enum Type {
-    SUCCESS((byte) 1), ERROR((byte) 2), LIMIT_REACHED((byte) 3);
+    SUCCESS((byte) 1),
+    ERROR((byte) 2),
+    LIMIT_REACHED((byte) 3);
 
     private final byte val;
 
@@ -42,27 +41,23 @@ public class OSequenceActionNodeResponse implements ONodeResponse {
 
     public static Type fromVal(byte val) {
       switch (val) {
-      case 1:
-        return SUCCESS;
-      case 2:
-        return ERROR;
-      case 3:
-        return LIMIT_REACHED;
-      default:
-        return null;
+        case 1:
+          return SUCCESS;
+        case 2:
+          return ERROR;
+        case 3:
+          return LIMIT_REACHED;
+        default:
+          return null;
       }
     }
-  }
+  };
 
-  ;
-
-  private Type   responseResultType;
+  private Type responseResultType;
   private String message;
   private Object responseResult;
 
-  public OSequenceActionNodeResponse() {
-
-  }
+  public OSequenceActionNodeResponse() {}
 
   public OSequenceActionNodeResponse(Type responseType, String message, Object responseResult) {
     this.responseResultType = responseType;
@@ -90,7 +85,8 @@ public class OSequenceActionNodeResponse implements ONodeResponse {
       output.writeByte(4);
       output.writeBoolean((Boolean) result);
     } else {
-      throw new IllegalArgumentException("Result type not supported: " + result.getClass().getSimpleName());
+      throw new IllegalArgumentException(
+          "Result type not supported: " + result.getClass().getSimpleName());
     }
   }
 
@@ -110,21 +106,21 @@ public class OSequenceActionNodeResponse implements ONodeResponse {
   protected static Object deserializeResult(DataInput input) throws IOException {
     byte typeFlag = input.readByte();
     switch (typeFlag) {
-    case 0:
-      return null;
-    case 1:
-      int dataLength = input.readInt();
-      byte[] dataBytes = new byte[dataLength];
-      input.readFully(dataBytes);
-      return new String(dataBytes, StandardCharsets.UTF_8.name());
-    case 2:
-      return input.readInt();
-    case 3:
-      return input.readLong();
-    case 4:
-      return input.readBoolean();
-    default:
-      throw new IllegalArgumentException("Inavlid type value");
+      case 0:
+        return null;
+      case 1:
+        int dataLength = input.readInt();
+        byte[] dataBytes = new byte[dataLength];
+        input.readFully(dataBytes);
+        return new String(dataBytes, StandardCharsets.UTF_8.name());
+      case 2:
+        return input.readInt();
+      case 3:
+        return input.readLong();
+      case 4:
+        return input.readBoolean();
+      default:
+        throw new IllegalArgumentException("Inavlid type value");
     }
   }
 
@@ -154,5 +150,4 @@ public class OSequenceActionNodeResponse implements ONodeResponse {
   public Object getResponseResult() {
     return responseResult;
   }
-
 }

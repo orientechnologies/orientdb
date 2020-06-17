@@ -26,12 +26,16 @@ import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.sequence.OSequence;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.OBasicTransaction;
-
 import java.io.IOException;
-import java.util.*;
+import java.util.Collection;
+import java.util.Iterator;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
 
 /**
- * Expose the api for extract the internal details needed by the storage for perform the transaction commit
+ * Expose the api for extract the internal details needed by the storage for perform the transaction
+ * commit
  */
 public interface OTransactionInternal extends OBasicTransaction {
 
@@ -43,8 +47,8 @@ public interface OTransactionInternal extends OBasicTransaction {
   Collection<ORecordOperation> getRecordOperations();
 
   /**
-   * Extract all the calculated index operations for the current transaction changes, the key of the map is the index name the value
-   * all the changes for the specified index.
+   * Extract all the calculated index operations for the current transaction changes, the key of the
+   * map is the index name the value all the changes for the specified index.
    *
    * @return the index changes, the map should not be modified.
    */
@@ -65,16 +69,15 @@ public interface OTransactionInternal extends OBasicTransaction {
   ODatabaseDocumentInternal getDatabase();
 
   /**
-   * Notify the transaction for the rid change, the changed will be tracked inside the transaction and used for remapping links.
+   * Notify the transaction for the rid change, the changed will be tracked inside the transaction
+   * and used for remapping links.
    *
    * @param oldRID the id old value.
-   * @param rid    the id new value.
+   * @param rid the id new value.
    */
   void updateIdentityAfterCommit(ORID oldRID, ORID rid);
 
-  /**
-   * Retrieve if log is enabled for the transaction
-   */
+  /** Retrieve if log is enabled for the transaction */
   @Deprecated
   boolean isUsingLog();
 
@@ -109,9 +112,7 @@ public interface OTransactionInternal extends OBasicTransaction {
 
   void setMetadataHolder(Optional<OTxMetadataHolder> metadata);
 
-  default void storageBegun() {
-
-  }
+  default void storageBegun() {}
 
   void prepareSerializedOperations() throws IOException;
 

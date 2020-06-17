@@ -1,9 +1,8 @@
 package com.orientechnologies.common.test;
 
-import org.junit.Test;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-
+import org.junit.Test;
 
 public abstract class SpeedTestAbstract implements SpeedTest {
   protected final SpeedTestData data;
@@ -20,21 +19,16 @@ public abstract class SpeedTestAbstract implements SpeedTest {
     data = new SpeedTestData(iGroup);
   }
 
-
   @Test
   public abstract void cycle() throws Exception;
 
-  public void init() throws Exception {
-  }
+  public void init() throws Exception {}
 
-  public void deinit() throws Exception {
-  }
+  public void deinit() throws Exception {}
 
-  public void beforeCycle() throws Exception {
-  }
+  public void beforeCycle() throws Exception {}
 
-  public void afterCycle() throws Exception {
-  }
+  public void afterCycle() throws Exception {}
 
   @Test
   public void test() {
@@ -51,8 +45,8 @@ public abstract class SpeedTestAbstract implements SpeedTest {
    *
    * @see com.orientechnologies.common.test.SpeedTest#executeCycle(java.lang.reflect.Method, java.lang.Object)
    */
-  public long executeCycle(final Method iMethod, final Object... iArgs) throws IllegalArgumentException, IllegalAccessException,
-      InvocationTargetException {
+  public long executeCycle(final Method iMethod, final Object... iArgs)
+      throws IllegalArgumentException, IllegalAccessException, InvocationTargetException {
     data.startTimer(getClass().getSimpleName());
 
     int percent = 0;

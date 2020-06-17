@@ -36,7 +36,6 @@ public class OVarIntSerializer {
     int pos = bytes.offset;
     writeUnsignedVarLong(value, bytes);
     return pos;
-
   }
 
   public static int readAsInt(final DataInput input) throws IOException {
@@ -64,8 +63,9 @@ public class OVarIntSerializer {
   }
 
   /**
-   * Encodes a value using the variable-length encoding from <a href="http://code.google.com/apis/protocolbuffers/docs/encoding.html">
-   * Google Protocol Buffers</a>. It uses zig-zag encoding to efficiently encode signed values.
+   * Encodes a value using the variable-length encoding from <a
+   * href="http://code.google.com/apis/protocolbuffers/docs/encoding.html">Google Protocol
+   * Buffers</a>. It uses zig-zag encoding to efficiently encode signed values.
    *
    * @param value value to encode
    */
@@ -74,8 +74,9 @@ public class OVarIntSerializer {
   }
 
   /**
-   * Encodes a value using the variable-length encoding from <a href="http://code.google.com/apis/protocolbuffers/docs/encoding.html">
-   * Google Protocol Buffers</a>. Zig-zag is not used, so input must not be negative.
+   * Encodes a value using the variable-length encoding from <a
+   * href="http://code.google.com/apis/protocolbuffers/docs/encoding.html">Google Protocol
+   * Buffers</a>. Zig-zag is not used, so input must not be negative.
    *
    * @param value value to encode
    * @return the number of bytes written
@@ -94,8 +95,9 @@ public class OVarIntSerializer {
   }
 
   /**
-   * Encodes a value using the variable-length encoding from <a href="http://code.google.com/apis/protocolbuffers/docs/encoding.html">
-   * Google Protocol Buffers</a>. Zig-zag is not used, so input must not be negative.
+   * Encodes a value using the variable-length encoding from <a
+   * href="http://code.google.com/apis/protocolbuffers/docs/encoding.html">Google Protocol
+   * Buffers</a>. Zig-zag is not used, so input must not be negative.
    *
    * @param value value to encode
    * @return the number of bytes written
@@ -114,7 +116,8 @@ public class OVarIntSerializer {
   /**
    * @param bytes to read bytes from
    * @return decode value
-   * @throws IllegalArgumentException if variable-length value does not terminate after 9 bytes have been read
+   * @throws IllegalArgumentException if variable-length value does not terminate after 9 bytes have
+   *     been read
    */
   public static long readSignedVarLong(final BytesContainer bytes) {
     final long raw = readUnsignedVarLong(bytes);
@@ -130,7 +133,8 @@ public class OVarIntSerializer {
   /**
    * @param bytes to read bytes from
    * @return decode value
-   * @throws IllegalArgumentException if variable-length value does not terminate after 9 bytes have been read
+   * @throws IllegalArgumentException if variable-length value does not terminate after 9 bytes have
+   *     been read
    */
   public static long readSignedVarLong(final DataInput bytes) throws IOException {
     final long raw = readUnsignedVarLong(bytes);
@@ -146,7 +150,8 @@ public class OVarIntSerializer {
   /**
    * @param bytes to read bytes from
    * @return decode value
-   * @throws IllegalArgumentException if variable-length value does not terminate after 9 bytes have been read
+   * @throws IllegalArgumentException if variable-length value does not terminate after 9 bytes have
+   *     been read
    */
   public static long readUnsignedVarLong(final BytesContainer bytes) {
     long value = 0L;
@@ -164,7 +169,8 @@ public class OVarIntSerializer {
   /**
    * @param bytes to read bytes from
    * @return decode value
-   * @throws IllegalArgumentException if variable-length value does not terminate after 9 bytes have been read
+   * @throws IllegalArgumentException if variable-length value does not terminate after 9 bytes have
+   *     been read
    */
   public static long readUnsignedVarLong(final DataInput bytes) throws IOException {
     long value = 0L;
@@ -178,5 +184,4 @@ public class OVarIntSerializer {
     }
     return value | (b << i);
   }
-
 }

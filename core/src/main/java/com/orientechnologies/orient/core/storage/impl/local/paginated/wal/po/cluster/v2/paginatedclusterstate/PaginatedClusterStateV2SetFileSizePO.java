@@ -5,15 +5,13 @@ import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
 import com.orientechnologies.orient.core.storage.cluster.v2.OPaginatedClusterStateV2;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.WALRecordTypes;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.PageOperationRecord;
-
 import java.nio.ByteBuffer;
 
 public final class PaginatedClusterStateV2SetFileSizePO extends PageOperationRecord {
   private int oldFileSize;
   private int newFileSize;
 
-  public PaginatedClusterStateV2SetFileSizePO() {
-  }
+  public PaginatedClusterStateV2SetFileSizePO() {}
 
   public PaginatedClusterStateV2SetFileSizePO(int oldFileSize, int newFileSize) {
     this.oldFileSize = oldFileSize;
@@ -30,13 +28,15 @@ public final class PaginatedClusterStateV2SetFileSizePO extends PageOperationRec
 
   @Override
   public void redo(OCacheEntry cacheEntry) {
-    final OPaginatedClusterStateV2 paginatedClusterStateV2 = new OPaginatedClusterStateV2(cacheEntry);
+    final OPaginatedClusterStateV2 paginatedClusterStateV2 =
+        new OPaginatedClusterStateV2(cacheEntry);
     paginatedClusterStateV2.setFileSize(newFileSize);
   }
 
   @Override
   public void undo(OCacheEntry cacheEntry) {
-    final OPaginatedClusterStateV2 paginatedClusterStateV2 = new OPaginatedClusterStateV2(cacheEntry);
+    final OPaginatedClusterStateV2 paginatedClusterStateV2 =
+        new OPaginatedClusterStateV2(cacheEntry);
     paginatedClusterStateV2.setFileSize(oldFileSize);
   }
 

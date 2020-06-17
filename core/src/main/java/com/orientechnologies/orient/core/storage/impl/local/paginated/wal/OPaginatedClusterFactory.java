@@ -34,36 +34,45 @@ import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedSt
 public final class OPaginatedClusterFactory {
   public static final OPaginatedClusterFactory INSTANCE = new OPaginatedClusterFactory();
 
-  public static OPaginatedCluster createCluster(final String name, final int configurationVersion, final int binaryVersion,
+  public static OPaginatedCluster createCluster(
+      final String name,
+      final int configurationVersion,
+      final int binaryVersion,
       final OAbstractPaginatedStorage storage) {
     if (configurationVersion >= 0 && configurationVersion < 6) {
-      throw new OStorageException("You use deprecated version of storage cluster, "
-          + "this version is not supported in current implementation. Please do export/import or recreate database.");
+      throw new OStorageException(
+          "You use deprecated version of storage cluster, "
+              + "this version is not supported in current implementation. Please do export/import or recreate database.");
     }
 
     switch (binaryVersion) {
-    case 0:
-      return new OPaginatedClusterV0(name, storage);
-    case 1:
-      return new OPaginatedClusterV1(name, storage);
-    case 2:
-      return new OPaginatedClusterV2(name, storage);
-    default:
-      throw new IllegalStateException("Invalid binary version of cluster " + binaryVersion);
+      case 0:
+        return new OPaginatedClusterV0(name, storage);
+      case 1:
+        return new OPaginatedClusterV1(name, storage);
+      case 2:
+        return new OPaginatedClusterV2(name, storage);
+      default:
+        throw new IllegalStateException("Invalid binary version of cluster " + binaryVersion);
     }
   }
 
-  public static OPaginatedCluster createCluster(final String name, final int binaryVersion, final OAbstractPaginatedStorage storage,
-      final String dataExtension, final String cpmExtension) {
+  public static OPaginatedCluster createCluster(
+      final String name,
+      final int binaryVersion,
+      final OAbstractPaginatedStorage storage,
+      final String dataExtension,
+      final String cpmExtension) {
     switch (binaryVersion) {
-    case 0:
-      throw new IllegalStateException("Version 0 of cluster is not supported with given configuration");
-    case 1:
-      return new OPaginatedClusterV1(name, dataExtension, cpmExtension, storage);
-    case 2:
-      return new OPaginatedClusterV2(name, dataExtension, cpmExtension, storage);
-    default:
-      throw new IllegalStateException("Invalid binary version of cluster " + binaryVersion);
+      case 0:
+        throw new IllegalStateException(
+            "Version 0 of cluster is not supported with given configuration");
+      case 1:
+        return new OPaginatedClusterV1(name, dataExtension, cpmExtension, storage);
+      case 2:
+        return new OPaginatedClusterV2(name, dataExtension, cpmExtension, storage);
+      default:
+        throw new IllegalStateException("Invalid binary version of cluster " + binaryVersion);
     }
   }
 }

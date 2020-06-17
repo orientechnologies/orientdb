@@ -13,25 +13,22 @@
  *  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  *  * See the License for the specific language governing permissions and
  *  * limitations under the License.
- *  
+ *
  */
 
 package com.orientechnologies.lucene.tests;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
-import org.junit.Before;
-import org.junit.Test;
-
 import java.io.InputStream;
 import java.util.List;
 import java.util.stream.Collectors;
+import org.junit.Before;
+import org.junit.Test;
 
-import static org.assertj.core.api.Assertions.assertThat;
-
-/**
- * Created by enricorisa on 08/10/14.
- */
+/** Created by enricorisa on 08/10/14. */
 public class OLuceneContextTest extends OLuceneBaseTest {
 
   @Before
@@ -41,26 +38,23 @@ public class OLuceneContextTest extends OLuceneBaseTest {
     db.execute("sql", getScriptFromStream(stream));
 
     db.command("create index Song.title on Song (title) FULLTEXT ENGINE LUCENE");
-
   }
 
   @Test
   public void shouldReturnScore() {
 
-    OResultSet docs = db
-        .query("select *,$score from Song where search_index('Song.title', 'title:man')= true ");
+    OResultSet docs =
+        db.query("select *,$score from Song where search_index('Song.title', 'title:man')= true ");
 
     List<OResult> results = docs.stream().collect(Collectors.toList());
 
     assertThat(results).hasSize(14);
     Float latestScore = 100f;
 
-    //results are ordered by score desc
+    // results are ordered by score desc
     for (OResult doc : results) {
       Float score = doc.getProperty("$score");
-      assertThat(score)
-          .isNotNull()
-          .isLessThanOrEqualTo(latestScore);
+      assertThat(score).isNotNull().isLessThanOrEqualTo(latestScore);
       latestScore = score;
     }
     docs.close();
@@ -68,8 +62,9 @@ public class OLuceneContextTest extends OLuceneBaseTest {
 
   @Test
   public void shouldReturnTotalHits() throws Exception {
-    OResultSet docs = db.query(
-        "select *,$totalHits,$Song_title_totalHits from Song where search_class('title:man')= true  limit 1");
+    OResultSet docs =
+        db.query(
+            "select *,$totalHits,$Song_title_totalHits from Song where search_class('title:man')= true  limit 1");
 
     List<OResult> results = docs.stream().collect(Collectors.toList());
     assertThat(results).hasSize(1);

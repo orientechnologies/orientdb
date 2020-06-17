@@ -21,17 +21,16 @@ package com.orientechnologies.orient.etl.extractor;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.etl.OETLExtractedItem;
-
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.Reader;
 import java.util.NoSuchElementException;
 
 public class OETLRowExtractor extends OETLAbstractSourceExtractor {
-  protected BufferedReader    bReader;
+  protected BufferedReader bReader;
   protected OETLExtractedItem next;
   protected boolean multiLine = true;
-  protected String  lineFeed  = "\r\n";
+  protected String lineFeed = "\r\n";
 
   @Override
   public String getName() {
@@ -45,17 +44,14 @@ public class OETLRowExtractor extends OETLAbstractSourceExtractor {
     if (iConfiguration.containsField("multiLine"))
       multiLine = iConfiguration.<Boolean>field("multiLine");
 
-    if (iConfiguration.containsField("lineFeed"))
-      lineFeed = iConfiguration.field("lineFeed");
+    if (iConfiguration.containsField("lineFeed")) lineFeed = iConfiguration.field("lineFeed");
   }
 
   @Override
   public boolean hasNext() {
-    if (next != null)
-      return true;
+    if (next != null) return true;
 
-    if (bReader == null)
-      return false;
+    if (bReader == null) return false;
 
     try {
       next = fetchNext();
@@ -73,8 +69,7 @@ public class OETLRowExtractor extends OETLAbstractSourceExtractor {
       return ret;
     }
 
-    if (!hasNext())
-      throw new NoSuchElementException("EOF");
+    if (!hasNext()) throw new NoSuchElementException("EOF");
 
     try {
       return fetchNext();
@@ -106,13 +101,11 @@ public class OETLRowExtractor extends OETLAbstractSourceExtractor {
   }
 
   protected OETLExtractedItem fetchNext() throws IOException {
-    if (!bReader.ready())
-      return null;
+    if (!bReader.ready()) return null;
 
     final String line = readLine();
 
-    if (line == null || line.isEmpty())
-      return null;
+    if (line == null || line.isEmpty()) return null;
 
     return new OETLExtractedItem(current++, line);
   }
@@ -128,15 +121,12 @@ public class OETLRowExtractor extends OETLAbstractSourceExtractor {
         }
 
         final String l = bReader.readLine();
-        if (l == null)
-          break;
+        if (l == null) break;
 
         sbLine.append(l);
 
         // CHECK FOR OPEN QUOTE
-        for (char c : l.toCharArray())
-          if ('"' == c)
-            isOpenQuote = !isOpenQuote;
+        for (char c : l.toCharArray()) if ('"' == c) isOpenQuote = !isOpenQuote;
 
       } while (isOpenQuote);
 

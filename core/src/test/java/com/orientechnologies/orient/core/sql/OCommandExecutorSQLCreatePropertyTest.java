@@ -19,36 +19,33 @@
  */
 package com.orientechnologies.orient.core.sql;
 
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
-import com.orientechnologies.orient.core.metadata.schema.OClass;
-import com.orientechnologies.orient.core.metadata.schema.OProperty;
-import com.orientechnologies.orient.core.metadata.schema.OType;
-import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.sql.parser.OStatement;
-import org.junit.Test;
-
 import static junit.framework.TestCase.assertFalse;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
+import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.metadata.schema.OClass;
+import com.orientechnologies.orient.core.metadata.schema.OProperty;
+import com.orientechnologies.orient.core.metadata.schema.OType;
+import com.orientechnologies.orient.core.sql.parser.OStatement;
+import org.junit.Test;
 
-/**
- * @author Michael MacFadden
- */
+/** @author Michael MacFadden */
 public class OCommandExecutorSQLCreatePropertyTest {
 
-  private static final String PROP_NAME          = "name";
-  private static final String PROP_FULL_NAME     = "company.name";
-  private static final String PROP_DIVISION      = "division";
+  private static final String PROP_NAME = "name";
+  private static final String PROP_FULL_NAME = "company.name";
+  private static final String PROP_DIVISION = "division";
   private static final String PROP_FULL_DIVISION = "company.division";
-  private static final String PROP_OFFICERS      = "officers";
+  private static final String PROP_OFFICERS = "officers";
   private static final String PROP_FULL_OFFICERS = "company.officers";
-  private static final String PROP_ID            = "id";
-  private static final String PROP_FULL_ID       = "company.id";
+  private static final String PROP_ID = "id";
+  private static final String PROP_FULL_ID = "company.id";
 
   @Test
   public void testBasicCreateProperty() throws Exception {
-    final ODatabaseDocumentTx db = new ODatabaseDocumentTx("memory:OCommandExecutorSQLCreatePropertyTest" + System.nanoTime());
+    final ODatabaseDocumentTx db =
+        new ODatabaseDocumentTx("memory:OCommandExecutorSQLCreatePropertyTest" + System.nanoTime());
 
     db.create();
 
@@ -70,7 +67,8 @@ public class OCommandExecutorSQLCreatePropertyTest {
 
   @Test
   public void testBasicUnsafeCreateProperty() throws Exception {
-    final ODatabaseDocumentTx db = new ODatabaseDocumentTx("memory:OCommandExecutorSQLCreatePropertyTest" + System.nanoTime());
+    final ODatabaseDocumentTx db =
+        new ODatabaseDocumentTx("memory:OCommandExecutorSQLCreatePropertyTest" + System.nanoTime());
 
     db.create();
 
@@ -92,7 +90,8 @@ public class OCommandExecutorSQLCreatePropertyTest {
 
   @Test
   public void testCreatePropertyWithLinkedClass() throws Exception {
-    final ODatabaseDocumentTx db = new ODatabaseDocumentTx("memory:OCommandExecutorSQLCreatePropertyTest" + System.nanoTime());
+    final ODatabaseDocumentTx db =
+        new ODatabaseDocumentTx("memory:OCommandExecutorSQLCreatePropertyTest" + System.nanoTime());
 
     db.create();
 
@@ -116,7 +115,8 @@ public class OCommandExecutorSQLCreatePropertyTest {
 
   @Test
   public void testCreatePropertyWithEmbeddedType() throws Exception {
-    final ODatabaseDocumentTx db = new ODatabaseDocumentTx("memory:OCommandExecutorSQLCreatePropertyTest" + System.nanoTime());
+    final ODatabaseDocumentTx db =
+        new ODatabaseDocumentTx("memory:OCommandExecutorSQLCreatePropertyTest" + System.nanoTime());
 
     db.create();
 
@@ -139,7 +139,8 @@ public class OCommandExecutorSQLCreatePropertyTest {
 
   @Test
   public void testCreateMandatoryProperty() throws Exception {
-    final ODatabaseDocumentTx db = new ODatabaseDocumentTx("memory:OCommandExecutorSQLCreatePropertyTest" + System.nanoTime());
+    final ODatabaseDocumentTx db =
+        new ODatabaseDocumentTx("memory:OCommandExecutorSQLCreatePropertyTest" + System.nanoTime());
 
     db.create();
 
@@ -160,7 +161,8 @@ public class OCommandExecutorSQLCreatePropertyTest {
 
   @Test
   public void testCreateNotNullProperty() throws Exception {
-    final ODatabaseDocumentTx db = new ODatabaseDocumentTx("memory:OCommandExecutorSQLCreatePropertyTest" + System.nanoTime());
+    final ODatabaseDocumentTx db =
+        new ODatabaseDocumentTx("memory:OCommandExecutorSQLCreatePropertyTest" + System.nanoTime());
 
     db.create();
 
@@ -181,7 +183,8 @@ public class OCommandExecutorSQLCreatePropertyTest {
 
   @Test
   public void testCreateReadOnlyProperty() throws Exception {
-    final ODatabaseDocumentTx db = new ODatabaseDocumentTx("memory:OCommandExecutorSQLCreatePropertyTest" + System.nanoTime());
+    final ODatabaseDocumentTx db =
+        new ODatabaseDocumentTx("memory:OCommandExecutorSQLCreatePropertyTest" + System.nanoTime());
 
     db.create();
 
@@ -202,7 +205,8 @@ public class OCommandExecutorSQLCreatePropertyTest {
 
   @Test
   public void testCreateReadOnlyFalseProperty() throws Exception {
-    final ODatabaseDocumentTx db = new ODatabaseDocumentTx("memory:OCommandExecutorSQLCreatePropertyTest" + System.nanoTime());
+    final ODatabaseDocumentTx db =
+        new ODatabaseDocumentTx("memory:OCommandExecutorSQLCreatePropertyTest" + System.nanoTime());
 
     db.create();
 
@@ -221,12 +225,14 @@ public class OCommandExecutorSQLCreatePropertyTest {
 
   @Test
   public void testCreateMandatoryPropertyWithEmbeddedType() throws Exception {
-    final ODatabaseDocumentTx db = new ODatabaseDocumentTx("memory:OCommandExecutorSQLCreatePropertyTest" + System.nanoTime());
+    final ODatabaseDocumentTx db =
+        new ODatabaseDocumentTx("memory:OCommandExecutorSQLCreatePropertyTest" + System.nanoTime());
 
     db.create();
 
     db.command(new OCommandSQL("CREATE Class company")).execute();
-    db.command(new OCommandSQL("CREATE Property company.officers EMBEDDEDLIST STRING (MANDATORY)")).execute();
+    db.command(new OCommandSQL("CREATE Property company.officers EMBEDDEDLIST STRING (MANDATORY)"))
+        .execute();
 
     OClass companyClass = db.getMetadata().getSchema().getClass("company");
     OProperty nameProperty = companyClass.getProperty(PROP_OFFICERS);
@@ -244,12 +250,14 @@ public class OCommandExecutorSQLCreatePropertyTest {
 
   @Test
   public void testCreateUnsafePropertyWithEmbeddedType() throws Exception {
-    final ODatabaseDocumentTx db = new ODatabaseDocumentTx("memory:OCommandExecutorSQLCreatePropertyTest" + System.nanoTime());
+    final ODatabaseDocumentTx db =
+        new ODatabaseDocumentTx("memory:OCommandExecutorSQLCreatePropertyTest" + System.nanoTime());
 
     db.create();
 
     db.command(new OCommandSQL("CREATE Class company")).execute();
-    db.command(new OCommandSQL("CREATE Property company.officers EMBEDDEDLIST STRING UNSAFE")).execute();
+    db.command(new OCommandSQL("CREATE Property company.officers EMBEDDEDLIST STRING UNSAFE"))
+        .execute();
 
     OClass companyClass = db.getMetadata().getSchema().getClass("company");
     OProperty nameProperty = companyClass.getProperty(PROP_OFFICERS);
@@ -264,12 +272,15 @@ public class OCommandExecutorSQLCreatePropertyTest {
 
   @Test
   public void testComplexCreateProperty() throws Exception {
-    final ODatabaseDocumentTx db = new ODatabaseDocumentTx("memory:OCommandExecutorSQLCreatePropertyTest" + System.nanoTime());
+    final ODatabaseDocumentTx db =
+        new ODatabaseDocumentTx("memory:OCommandExecutorSQLCreatePropertyTest" + System.nanoTime());
 
     db.create();
 
     db.command(new OCommandSQL("CREATE Class company")).execute();
-    db.command(new OCommandSQL("CREATE Property company.officers EMBEDDEDLIST STRING (MANDATORY, READONLY, NOTNULL) UNSAFE"))
+    db.command(
+            new OCommandSQL(
+                "CREATE Property company.officers EMBEDDEDLIST STRING (MANDATORY, READONLY, NOTNULL) UNSAFE"))
         .execute();
 
     OClass companyClass = db.getMetadata().getSchema().getClass("company");
@@ -288,12 +299,16 @@ public class OCommandExecutorSQLCreatePropertyTest {
 
   @Test
   public void testLinkedTypeDefaultAndMinMaxUnsafeProperty() throws Exception {
-    final ODatabaseDocumentTx db = new ODatabaseDocumentTx("memory:OCommandExecutorSQLCreatePropertyTest" + System.nanoTime());
+    final ODatabaseDocumentTx db =
+        new ODatabaseDocumentTx("memory:OCommandExecutorSQLCreatePropertyTest" + System.nanoTime());
 
     db.create();
 
     db.command(new OCommandSQL("CREATE CLASS company")).execute();
-    db.command(new OCommandSQL("CREATE PROPERTY company.id EMBEDDEDLIST Integer (DEFAULT 5, MIN 1, MAX 10) UNSAFE")).execute();
+    db.command(
+            new OCommandSQL(
+                "CREATE PROPERTY company.id EMBEDDEDLIST Integer (DEFAULT 5, MIN 1, MAX 10) UNSAFE"))
+        .execute();
 
     OClass companyClass = db.getMetadata().getSchema().getClass("company");
     OProperty idProperty = companyClass.getProperty(PROP_ID);
@@ -314,12 +329,15 @@ public class OCommandExecutorSQLCreatePropertyTest {
 
   @Test
   public void testDefaultAndMinMaxUnsafeProperty() throws Exception {
-    final ODatabaseDocumentTx db = new ODatabaseDocumentTx("memory:OCommandExecutorSQLCreatePropertyTest" + System.nanoTime());
+    final ODatabaseDocumentTx db =
+        new ODatabaseDocumentTx("memory:OCommandExecutorSQLCreatePropertyTest" + System.nanoTime());
 
     db.create();
 
     db.command(new OCommandSQL("CREATE CLASS company")).execute();
-    db.command(new OCommandSQL("CREATE PROPERTY company.id INTEGER (DEFAULT 5, MIN 1, MAX 10) UNSAFE")).execute();
+    db.command(
+            new OCommandSQL("CREATE PROPERTY company.id INTEGER (DEFAULT 5, MIN 1, MAX 10) UNSAFE"))
+        .execute();
 
     OClass companyClass = db.getMetadata().getSchema().getClass("company");
     OProperty idProperty = companyClass.getProperty(PROP_ID);
@@ -340,12 +358,16 @@ public class OCommandExecutorSQLCreatePropertyTest {
 
   @Test
   public void testExtraSpaces() throws Exception {
-    final ODatabaseDocumentTx db = new ODatabaseDocumentTx("memory:OCommandExecutorSQLCreatePropertyTest" + System.nanoTime());
+    final ODatabaseDocumentTx db =
+        new ODatabaseDocumentTx("memory:OCommandExecutorSQLCreatePropertyTest" + System.nanoTime());
 
     db.create();
 
     db.command(new OCommandSQL("CREATE CLASS company")).execute();
-    db.command(new OCommandSQL("CREATE PROPERTY company.id INTEGER  ( DEFAULT  5 ,  MANDATORY  )  UNSAFE ")).execute();
+    db.command(
+            new OCommandSQL(
+                "CREATE PROPERTY company.id INTEGER  ( DEFAULT  5 ,  MANDATORY  )  UNSAFE "))
+        .execute();
 
     OClass companyClass = db.getMetadata().getSchema().getClass("company");
     OProperty idProperty = companyClass.getProperty(PROP_ID);
@@ -362,15 +384,17 @@ public class OCommandExecutorSQLCreatePropertyTest {
 
   @Test
   public void testNonStrict() throws Exception {
-    final ODatabaseDocumentTx db = new ODatabaseDocumentTx("memory:OCommandExecutorSQLCreatePropertyTest" + System.nanoTime());
+    final ODatabaseDocumentTx db =
+        new ODatabaseDocumentTx("memory:OCommandExecutorSQLCreatePropertyTest" + System.nanoTime());
 
     db.create();
 
     db.getStorage().setProperty(OStatement.CUSTOM_STRICT_SQL, "false");
 
     db.command(new OCommandSQL("CREATE CLASS company")).execute();
-    db.command(new OCommandSQL(
-        "CREATE PROPERTY company.id INTEGER (MANDATORY, NOTNULL false, READONLY true, MAX 10, MIN 4, DEFAULT 6)  UNSAFE"))
+    db.command(
+            new OCommandSQL(
+                "CREATE PROPERTY company.id INTEGER (MANDATORY, NOTNULL false, READONLY true, MAX 10, MIN 4, DEFAULT 6)  UNSAFE"))
         .execute();
 
     OClass companyClass = db.getMetadata().getSchema().getClass("company");
@@ -392,12 +416,16 @@ public class OCommandExecutorSQLCreatePropertyTest {
 
   @Test(expected = OCommandSQLParsingException.class)
   public void testInvalidAttributeName() throws Exception {
-    final ODatabaseDocumentTx db = new ODatabaseDocumentTx("memory:OCommandExecutorSQLCreatePropertyTest" + System.nanoTime());
+    final ODatabaseDocumentTx db =
+        new ODatabaseDocumentTx("memory:OCommandExecutorSQLCreatePropertyTest" + System.nanoTime());
     db.create();
 
     db.command(new OCommandSQL("CREATE CLASS company")).execute();
     try {
-      db.command(new OCommandSQL("CREATE PROPERTY company.id INTEGER (MANDATORY, INVALID, NOTNULL)  UNSAFE")).execute();
+      db.command(
+              new OCommandSQL(
+                  "CREATE PROPERTY company.id INTEGER (MANDATORY, INVALID, NOTNULL)  UNSAFE"))
+          .execute();
     } finally {
       db.close();
     }
@@ -405,7 +433,8 @@ public class OCommandExecutorSQLCreatePropertyTest {
 
   @Test(expected = OCommandSQLParsingException.class)
   public void testMissingAttributeValue() throws Exception {
-    final ODatabaseDocumentTx db = new ODatabaseDocumentTx("memory:OCommandExecutorSQLCreatePropertyTest" + System.nanoTime());
+    final ODatabaseDocumentTx db =
+        new ODatabaseDocumentTx("memory:OCommandExecutorSQLCreatePropertyTest" + System.nanoTime());
     db.create();
 
     db.command(new OCommandSQL("CREATE CLASS company")).execute();
@@ -418,12 +447,14 @@ public class OCommandExecutorSQLCreatePropertyTest {
 
   @Test(expected = OCommandSQLParsingException.class)
   public void tooManyAttributeParts() throws Exception {
-    final ODatabaseDocumentTx db = new ODatabaseDocumentTx("memory:OCommandExecutorSQLCreatePropertyTest" + System.nanoTime());
+    final ODatabaseDocumentTx db =
+        new ODatabaseDocumentTx("memory:OCommandExecutorSQLCreatePropertyTest" + System.nanoTime());
     db.create();
 
     db.command(new OCommandSQL("CREATE CLASS company")).execute();
     try {
-      db.command(new OCommandSQL("CREATE PROPERTY company.id INTEGER (DEFAULT 5 10)  UNSAFE")).execute();
+      db.command(new OCommandSQL("CREATE PROPERTY company.id INTEGER (DEFAULT 5 10)  UNSAFE"))
+          .execute();
     } finally {
       db.close();
     }
@@ -431,13 +462,15 @@ public class OCommandExecutorSQLCreatePropertyTest {
 
   @Test
   public void testMandatoryAsLinkedName() throws Exception {
-    final ODatabaseDocumentTx db = new ODatabaseDocumentTx("memory:OCommandExecutorSQLCreatePropertyTest" + System.nanoTime());
+    final ODatabaseDocumentTx db =
+        new ODatabaseDocumentTx("memory:OCommandExecutorSQLCreatePropertyTest" + System.nanoTime());
 
     db.create();
 
     db.command(new OCommandSQL("CREATE CLASS company")).execute();
     db.command(new OCommandSQL("CREATE CLASS Mandatory")).execute();
-    db.command(new OCommandSQL("CREATE PROPERTY company.id EMBEDDEDLIST Mandatory UNSAFE")).execute();
+    db.command(new OCommandSQL("CREATE PROPERTY company.id EMBEDDEDLIST Mandatory UNSAFE"))
+        .execute();
 
     OClass companyClass = db.getMetadata().getSchema().getClass("company");
     OClass mandatoryClass = db.getMetadata().getSchema().getClass("Mandatory");
@@ -454,26 +487,26 @@ public class OCommandExecutorSQLCreatePropertyTest {
 
   @Test
   public void testIfNotExists() throws Exception {
-    final ODatabaseDocumentTx db = new ODatabaseDocumentTx("memory:OCommandExecutorSQLCreatePropertyTest" + System.nanoTime());
+    final ODatabaseDocumentTx db =
+        new ODatabaseDocumentTx("memory:OCommandExecutorSQLCreatePropertyTest" + System.nanoTime());
 
     db.create();
 
     db.command(new OCommandSQL("CREATE class testIfNotExists")).execute();
-    db.command(new OCommandSQL("CREATE property testIfNotExists.name if not exists STRING")).execute();
+    db.command(new OCommandSQL("CREATE property testIfNotExists.name if not exists STRING"))
+        .execute();
 
     OClass companyClass = db.getMetadata().getSchema().getClass("testIfNotExists");
     OProperty property = companyClass.getProperty("name");
     assertEquals(property.getName(), PROP_NAME);
 
-    db.command(new OCommandSQL("CREATE property testIfNotExists.name if not exists STRING")).execute();
+    db.command(new OCommandSQL("CREATE property testIfNotExists.name if not exists STRING"))
+        .execute();
 
     companyClass = db.getMetadata().getSchema().getClass("testIfNotExists");
     property = companyClass.getProperty("name");
     assertEquals(property.getName(), PROP_NAME);
 
-
     db.drop();
   }
-
-
 }

@@ -21,7 +21,6 @@
 package com.orientechnologies.common.serialization.types;
 
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALChanges;
-
 import java.nio.ByteBuffer;
 
 /**
@@ -31,18 +30,18 @@ import java.nio.ByteBuffer;
  * @since 18.01.12
  */
 public class OByteSerializer implements OBinarySerializer<Byte> {
-  /**
-   * size of byte value in bytes
-   */
-  public static final int             BYTE_SIZE = 1;
-  public static final byte            ID        = 2;
-  public static final OByteSerializer INSTANCE  = new OByteSerializer();
+  /** size of byte value in bytes */
+  public static final int BYTE_SIZE = 1;
+
+  public static final byte ID = 2;
+  public static final OByteSerializer INSTANCE = new OByteSerializer();
 
   public int getObjectSize(Byte object, Object... hints) {
     return BYTE_SIZE;
   }
 
-  public void serialize(final Byte object, final byte[] stream, final int startPosition, final Object... hints) {
+  public void serialize(
+      final Byte object, final byte[] stream, final int startPosition, final Object... hints) {
     stream[startPosition] = object.byteValue();
   }
 
@@ -71,14 +70,15 @@ public class OByteSerializer implements OBinarySerializer<Byte> {
   }
 
   @Override
-  public void serializeNativeObject(final Byte object, final byte[] stream, final int startPosition, final Object... hints) {
+  public void serializeNativeObject(
+      final Byte object, final byte[] stream, final int startPosition, final Object... hints) {
     serialize(object, stream, startPosition);
   }
 
   public void serializeNative(byte object, byte[] stream, int startPosition, Object... hints) {
     serializeLiteral(object, stream, startPosition);
   }
-  
+
   public void serializeRawBytes(final byte[] bytesToWrite, final byte[] stream, int startPosition) {
     System.arraycopy(bytesToWrite, 0, stream, startPosition, bytesToWrite.length);
   }
@@ -105,41 +105,32 @@ public class OByteSerializer implements OBinarySerializer<Byte> {
     return value;
   }
 
-  /**
-   * {@inheritDoc}
-   */
+  /** {@inheritDoc} */
   @Override
   public void serializeInByteBufferObject(Byte object, ByteBuffer buffer, Object... hints) {
     buffer.put(object);
   }
 
-  /**
-   * {@inheritDoc}
-   */
+  /** {@inheritDoc} */
   @Override
   public Byte deserializeFromByteBufferObject(ByteBuffer buffer) {
     return buffer.get();
   }
 
-  /**
-   * {@inheritDoc}
-   */
+  /** {@inheritDoc} */
   @Override
   public int getObjectSizeInByteBuffer(ByteBuffer buffer) {
     return BYTE_SIZE;
   }
 
-  /**
-   * {@inheritDoc}
-   */
+  /** {@inheritDoc} */
   @Override
-  public Byte deserializeFromByteBufferObject(ByteBuffer buffer, OWALChanges walChanges, int offset) {
+  public Byte deserializeFromByteBufferObject(
+      ByteBuffer buffer, OWALChanges walChanges, int offset) {
     return walChanges.getByteValue(buffer, offset);
   }
 
-  /**
-   * {@inheritDoc}
-   */
+  /** {@inheritDoc} */
   @Override
   public int getObjectSizeInByteBuffer(ByteBuffer buffer, OWALChanges walChanges, int offset) {
     return BYTE_SIZE;

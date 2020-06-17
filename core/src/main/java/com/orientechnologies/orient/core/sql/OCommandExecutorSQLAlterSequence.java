@@ -9,21 +9,21 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.metadata.sequence.OSequence;
-
 import java.util.Map;
 
 /**
  * @author Matan Shukry (matanshukry@gmail.com)
  * @since 3/5/2015
  */
-public class OCommandExecutorSQLAlterSequence extends OCommandExecutorSQLAbstract implements OCommandDistributedReplicateRequest {
-  public static final String KEYWORD_ALTER     = "ALTER";
-  public static final String KEYWORD_SEQUENCE  = "SEQUENCE";
-  public static final String KEYWORD_START     = "START";
+public class OCommandExecutorSQLAlterSequence extends OCommandExecutorSQLAbstract
+    implements OCommandDistributedReplicateRequest {
+  public static final String KEYWORD_ALTER = "ALTER";
+  public static final String KEYWORD_SEQUENCE = "SEQUENCE";
+  public static final String KEYWORD_START = "START";
   public static final String KEYWORD_INCREMENT = "INCREMENT";
-  public static final String KEYWORD_CACHE     = "CACHE";
+  public static final String KEYWORD_CACHE = "CACHE";
 
-  private String                 sequenceName;
+  private String sequenceName;
   private OSequence.CreateParams params;
 
   @Override
@@ -72,7 +72,8 @@ public class OCommandExecutorSQLAlterSequence extends OCommandExecutorSQLAbstrac
   @Override
   public Object execute(Map<Object, Object> iArgs) {
     if (this.sequenceName == null) {
-      throw new OCommandExecutionException("Cannot execute the command because it has not been parsed yet");
+      throw new OCommandExecutionException(
+          "Cannot execute the command because it has not been parsed yet");
     }
 
     final ODatabaseDocument database = getDatabase();
@@ -81,14 +82,14 @@ public class OCommandExecutorSQLAlterSequence extends OCommandExecutorSQLAbstrac
     boolean result;
     try {
       result = sequence.updateParams(this.params);
-      //TODO check, but reset should not be here
-//      sequence.reset();
+      // TODO check, but reset should not be here
+      //      sequence.reset();
     } catch (ODatabaseException exc) {
       String message = "Unable to execute command: " + exc.getMessage();
       OLogManager.instance().error(this, message, exc, (Object) null);
       throw new OCommandExecutionException(message);
     }
-    //TODO check if save shouldn't be here update is enough
+    // TODO check if save shouldn't be here update is enough
     sequence.save(getDatabase());
     return result;
   }

@@ -52,4 +52,3 @@ public final class MilestoneWALRecord implements OWALRecord {
     return "MilestoneWALRecord{" + "lsn=" + lsn + '}';
   }
 }
-

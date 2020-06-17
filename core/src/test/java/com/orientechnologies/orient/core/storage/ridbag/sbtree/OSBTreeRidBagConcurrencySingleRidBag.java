@@ -9,38 +9,43 @@ import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.intent.OIntentMassiveInsert;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Random;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ConcurrentSkipListSet;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.atomic.AtomicInteger;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Random;
-import java.util.concurrent.*;
-import java.util.concurrent.atomic.AtomicInteger;
-
 public class OSBTreeRidBagConcurrencySingleRidBag {
-  public static final String                      URL             = "plocal:target/testdb/OSBTreeRidBagConcurrencySingleRidBag";
-  private final       AtomicInteger               positionCounter = new AtomicInteger();
-  private final       ConcurrentSkipListSet<ORID> ridTree         = new ConcurrentSkipListSet<ORID>();
-  private final       CountDownLatch              latch           = new CountDownLatch(1);
+  public static final String URL = "plocal:target/testdb/OSBTreeRidBagConcurrencySingleRidBag";
+  private final AtomicInteger positionCounter = new AtomicInteger();
+  private final ConcurrentSkipListSet<ORID> ridTree = new ConcurrentSkipListSet<ORID>();
+  private final CountDownLatch latch = new CountDownLatch(1);
   private ORID docContainerRid;
-  private          ExecutorService threadExecutor = Executors.newCachedThreadPool();
-  private volatile boolean         cont           = true;
+  private ExecutorService threadExecutor = Executors.newCachedThreadPool();
+  private volatile boolean cont = true;
 
   private int topThreshold;
   private int bottomThreshold;
 
   @Before
   public void beforeMethod() {
-    topThreshold = OGlobalConfiguration.RID_BAG_EMBEDDED_TO_SBTREEBONSAI_THRESHOLD.getValueAsInteger();
-    bottomThreshold = OGlobalConfiguration.RID_BAG_SBTREEBONSAI_TO_EMBEDDED_THRESHOLD.getValueAsInteger();
+    topThreshold =
+        OGlobalConfiguration.RID_BAG_EMBEDDED_TO_SBTREEBONSAI_THRESHOLD.getValueAsInteger();
+    bottomThreshold =
+        OGlobalConfiguration.RID_BAG_SBTREEBONSAI_TO_EMBEDDED_THRESHOLD.getValueAsInteger();
 
     OGlobalConfiguration.RID_BAG_EMBEDDED_TO_SBTREEBONSAI_THRESHOLD.setValue(30);
     OGlobalConfiguration.RID_BAG_SBTREEBONSAI_TO_EMBEDDED_THRESHOLD.setValue(20);
-
   }
 
   @After
@@ -76,19 +81,16 @@ public class OSBTreeRidBagConcurrencySingleRidBag {
 
     List<Future<Void>> futures = new ArrayList<Future<Void>>();
 
-    for (int i = 0; i < 5; i++)
-      futures.add(threadExecutor.submit(new RidAdder(i)));
+    for (int i = 0; i < 5; i++) futures.add(threadExecutor.submit(new RidAdder(i)));
 
-    for (int i = 0; i < 5; i++)
-      futures.add(threadExecutor.submit(new RidDeleter(i)));
+    for (int i = 0; i < 5; i++) futures.add(threadExecutor.submit(new RidDeleter(i)));
 
     latch.countDown();
 
     Thread.sleep(30 * 60000);
     cont = false;
 
-    for (Future<Void> future : futures)
-      future.get();
+    for (Future<Void> future : futures) future.get();
 
     document = db.load(document.getIdentity());
     document.setLazyLoad(false);
@@ -133,8 +135,7 @@ public class OSBTreeRidBagConcurrencySingleRidBag {
             document.setLazyLoad(false);
 
             ORidBag ridBag = document.field("ridBag");
-            for (ORID rid : ridsToAdd)
-              ridBag.add(rid);
+            for (ORID rid : ridsToAdd) ridBag.add(rid);
 
             try {
               document.save();
@@ -152,7 +153,8 @@ public class OSBTreeRidBagConcurrencySingleRidBag {
         db.close();
       }
 
-      System.out.println(RidAdder.class.getSimpleName() + ":" + id + "-" + addedRecords + " were added.");
+      System.out.println(
+          RidAdder.class.getSimpleName() + ":" + id + "-" + addedRecords + " were added.");
       return null;
     }
   }
@@ -193,8 +195,7 @@ public class OSBTreeRidBagConcurrencySingleRidBag {
                 ridsToDelete.add(identifiable.getIdentity());
               }
 
-              if (counter >= 5)
-                break;
+              if (counter >= 5) break;
             }
 
             try {
@@ -213,7 +214,8 @@ public class OSBTreeRidBagConcurrencySingleRidBag {
         db.close();
       }
 
-      System.out.println(RidDeleter.class.getSimpleName() + ":" + id + "-" + deletedRecords + " were deleted.");
+      System.out.println(
+          RidDeleter.class.getSimpleName() + ":" + id + "-" + deletedRecords + " were deleted.");
       return null;
     }
   }

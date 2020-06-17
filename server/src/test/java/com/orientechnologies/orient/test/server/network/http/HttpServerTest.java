@@ -18,7 +18,8 @@ public class HttpServerTest extends BaseHttpDatabaseTest {
 
   @Test
   public void testGetConnections() throws Exception {
-    HttpResponse res = setUserName("root").setUserPassword("root").get("connections/").getResponse();
+    HttpResponse res =
+        setUserName("root").setUserPassword("root").get("connections/").getResponse();
     Assert.assertEquals(res.getStatusLine().getStatusCode(), 200);
 
     ODocument payload = new ODocument().fromJSON(res.getEntity().getContent());

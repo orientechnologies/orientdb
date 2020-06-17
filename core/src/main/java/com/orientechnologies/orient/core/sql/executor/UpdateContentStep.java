@@ -12,15 +12,12 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
 import com.orientechnologies.orient.core.sql.parser.OInputParameter;
 import com.orientechnologies.orient.core.sql.parser.OJson;
-
 import java.util.Map;
 import java.util.Optional;
 
-/**
- * Created by luigidellaquila on 09/08/16.
- */
+/** Created by luigidellaquila on 09/08/16. */
 public class UpdateContentStep extends AbstractExecutionStep {
-  private OJson           json;
+  private OJson json;
   private OInputParameter inputParameter;
 
   public UpdateContentStep(OJson json, OCommandContext ctx, boolean profilingEnabled) {
@@ -28,7 +25,8 @@ public class UpdateContentStep extends AbstractExecutionStep {
     this.json = json;
   }
 
-  public UpdateContentStep(OInputParameter inputParameter, OCommandContext ctx, boolean profilingEnabled) {
+  public UpdateContentStep(
+      OInputParameter inputParameter, OCommandContext ctx, boolean profilingEnabled) {
     super(ctx, profilingEnabled);
     this.inputParameter = inputParameter;
   }
@@ -80,7 +78,8 @@ public class UpdateContentStep extends AbstractExecutionStep {
     // REPLACE ALL THE CONTENT
     final ODocument fieldsToPreserve = new ODocument();
 
-    final OClass restricted = ctx.getDatabase().getMetadata().getSchema().getClass(OSecurity.RESTRICTED_CLASSNAME);
+    final OClass restricted =
+        ctx.getDatabase().getMetadata().getSchema().getClass(OSecurity.RESTRICTED_CLASSNAME);
 
     if (restricted != null && restricted.isSuperClassOf(record.getSchemaType().orElse(null))) {
       for (OProperty prop : restricted.properties()) {
@@ -88,8 +87,9 @@ public class UpdateContentStep extends AbstractExecutionStep {
       }
     }
 
-    OClass recordClass = ODocumentInternal
-        .getImmutableSchemaClass((ODatabaseDocumentInternal) ctx.getDatabase(), record.getRecord());
+    OClass recordClass =
+        ODocumentInternal.getImmutableSchemaClass(
+            (ODatabaseDocumentInternal) ctx.getDatabase(), record.getRecord());
     if (recordClass != null && recordClass.isSubClassOf("V")) {
       for (String fieldName : record.getPropertyNames()) {
         if (fieldName.startsWith("in_") || fieldName.startsWith("out_")) {

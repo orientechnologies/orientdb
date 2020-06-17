@@ -2,7 +2,6 @@ package com.orientechnologies.orient.server.distributed.impl.task;
 
 import com.orientechnologies.orient.core.serialization.OStreamable;
 import com.orientechnologies.orient.server.distributed.impl.ODistributedDatabaseChunk;
-
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
@@ -10,8 +9,7 @@ import java.util.Optional;
 
 public class ONewDeltaTaskResponse implements OStreamable {
 
-  public ONewDeltaTaskResponse() {
-  }
+  public ONewDeltaTaskResponse() {}
 
   public ONewDeltaTaskResponse(ResponseType responseType) {
     this.responseType = responseType;
@@ -23,7 +21,10 @@ public class ONewDeltaTaskResponse implements OStreamable {
   }
 
   public enum ResponseType {
-    CHUNK((byte) 1), FULL_SYNC((byte) 2), PARTIAL_CHUNK((byte) 3), NO_CHANGES((byte) 4);
+    CHUNK((byte) 1),
+    FULL_SYNC((byte) 2),
+    PARTIAL_CHUNK((byte) 3),
+    NO_CHANGES((byte) 4);
     private byte value;
 
     ResponseType(byte b) {
@@ -36,21 +37,20 @@ public class ONewDeltaTaskResponse implements OStreamable {
 
     static ResponseType fromValue(byte b) {
       switch (b) {
-      case 1:
-        return ResponseType.CHUNK;
-      case 2:
-        return ResponseType.FULL_SYNC;
-      case 3:
-        return ResponseType.PARTIAL_CHUNK;
-      case 4:
-        return ResponseType.NO_CHANGES;
+        case 1:
+          return ResponseType.CHUNK;
+        case 2:
+          return ResponseType.FULL_SYNC;
+        case 3:
+          return ResponseType.PARTIAL_CHUNK;
+        case 4:
+          return ResponseType.NO_CHANGES;
       }
       return null;
     }
-
   }
 
-  private ResponseType                        responseType;
+  private ResponseType responseType;
   private Optional<ODistributedDatabaseChunk> chunk;
 
   @Override

@@ -31,7 +31,11 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 public interface ODatabaseLifecycleListener {
 
   enum PRIORITY {
-    FIRST, EARLY, REGULAR, LATE, LAST
+    FIRST,
+    EARLY,
+    REGULAR,
+    LATE,
+    LAST
   }
 
   default PRIORITY getPriority() {
@@ -47,26 +51,19 @@ public interface ODatabaseLifecycleListener {
   void onDrop(ODatabaseInternal iDatabase);
 
   @Deprecated
-  default void onCreateClass(ODatabaseInternal iDatabase, OClass iClass) {
-
-  }
+  default void onCreateClass(ODatabaseInternal iDatabase, OClass iClass) {}
 
   @Deprecated
-  default void onDropClass(ODatabaseInternal iDatabase, OClass iClass) {
+  default void onDropClass(ODatabaseInternal iDatabase, OClass iClass) {}
 
-  }
+  default void onCreateView(ODatabaseInternal database, OView view) {}
 
-  default void onCreateView(ODatabaseInternal database, OView view) {
-
-  }
-
-  default void onDropView(ODatabaseInternal database, OView cls) {
-
-  }
+  default void onDropView(ODatabaseInternal database, OView cls) {}
 
   /**
-   * Event called during the retrieving of distributed configuration, usually at startup and when the cluster shape changes. You can
-   * use this event to enrich the ODocument sent to the client with custom properties.
+   * Event called during the retrieving of distributed configuration, usually at startup and when
+   * the cluster shape changes. You can use this event to enrich the ODocument sent to the client
+   * with custom properties.
    *
    * @param iConfiguration
    */

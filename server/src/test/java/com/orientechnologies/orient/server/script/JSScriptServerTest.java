@@ -6,26 +6,32 @@ import com.orientechnologies.orient.core.db.OrientDBConfig;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import com.orientechnologies.orient.server.OServer;
-import org.junit.*;
+import org.junit.After;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Rule;
+import org.junit.Test;
 import org.junit.rules.TestName;
 
 public class JSScriptServerTest {
 
-  @Rule
-  public TestName name = new TestName();
+  @Rule public TestName name = new TestName();
 
   private OServer server;
 
   @Before
   public void before() throws Exception {
 
-      server = OServer.startFromStreamConfig(getClass().getResourceAsStream("orientdb-server-javascript-config.xml"));
+    server =
+        OServer.startFromStreamConfig(
+            getClass().getResourceAsStream("orientdb-server-javascript-config.xml"));
   }
 
   @Test
   public void jsPackagesFromConfigTest() {
 
-    OrientDB orientDB = new OrientDB("remote:localhost", "root", "root", OrientDBConfig.defaultConfig());
+    OrientDB orientDB =
+        new OrientDB("remote:localhost", "root", "root", OrientDBConfig.defaultConfig());
     orientDB.create(name.getMethodName(), ODatabaseType.MEMORY);
     try (ODatabaseDocument db = orientDB.open(name.getMethodName(), "admin", "admin")) {
 

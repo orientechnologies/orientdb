@@ -6,8 +6,5 @@ public interface ONetworkHttpExecutor {
 
   String getRemoteAddress();
 
-
-
   void setDatabase(ODatabaseDocumentInternal db);
-
 }

@@ -22,25 +22,23 @@ import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.lucene.engine.OLuceneIndexEngine;
 import com.orientechnologies.lucene.exception.OLuceneIndexException;
+import java.io.IOException;
 import org.apache.lucene.index.DirectoryReader;
 import org.apache.lucene.index.IndexWriter;
 import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.TopDocs;
 
-import java.io.IOException;
-
-/**
- * Created by Enrico Risa on 28/09/15.
- */
+/** Created by Enrico Risa on 28/09/15. */
 public abstract class OLuceneTxChangesAbstract implements OLuceneTxChanges {
   public static final String TMP = "_tmp_rid";
 
   protected final OLuceneIndexEngine engine;
-  protected final IndexWriter        writer;
-  protected final IndexWriter        deletedIdx;
+  protected final IndexWriter writer;
+  protected final IndexWriter deletedIdx;
 
-  public OLuceneTxChangesAbstract(final OLuceneIndexEngine engine, final IndexWriter writer, final IndexWriter deletedIdx) {
+  public OLuceneTxChangesAbstract(
+      final OLuceneIndexEngine engine, final IndexWriter writer, final IndexWriter deletedIdx) {
     this.engine = engine;
     this.writer = writer;
     this.deletedIdx = deletedIdx;
@@ -51,20 +49,24 @@ public abstract class OLuceneTxChangesAbstract implements OLuceneTxChanges {
     try {
       return new IndexSearcher(DirectoryReader.open(writer, true, true));
     } catch (IOException e) {
-//      OLogManager.instance().error(this, "Error during searcher index instantiation on new documents", e);
-      throw OException.wrapException(new OLuceneIndexException("Error during searcher index instantiation on new documents"), e);
+      //      OLogManager.instance().error(this, "Error during searcher index instantiation on new
+      // documents", e);
+      throw OException.wrapException(
+          new OLuceneIndexException("Error during searcher index instantiation on new documents"),
+          e);
     }
-
   }
 
   @Override
   public long deletedDocs(Query query) {
     try {
-      final IndexSearcher indexSearcher = new IndexSearcher(DirectoryReader.open(deletedIdx, true, true));
+      final IndexSearcher indexSearcher =
+          new IndexSearcher(DirectoryReader.open(deletedIdx, true, true));
       final TopDocs search = indexSearcher.search(query, Integer.MAX_VALUE);
       return search.totalHits;
     } catch (IOException e) {
-      OLogManager.instance().error(this, "Error during searcher index instantiation on deleted documents ", e);
+      OLogManager.instance()
+          .error(this, "Error during searcher index instantiation on deleted documents ", e);
     }
     return 0;
   }

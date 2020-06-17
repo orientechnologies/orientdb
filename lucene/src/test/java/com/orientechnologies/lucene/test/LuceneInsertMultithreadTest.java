@@ -32,25 +32,21 @@ import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import org.assertj.core.api.Assertions;
 import org.junit.Test;
 
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
-
-/**
- * Created by enricorisa on 28/06/14.
- */
-
+/** Created by enricorisa on 28/06/14. */
 public class LuceneInsertMultithreadTest {
 
-  private final static int           THREADS  = 10;
-  private final static int           RTHREADS = 1;
-  private final static int           CYCLE    = 100;
-  private static       String        buildDirectory;
-  private static final String        dbName;
+  private static final int THREADS = 10;
+  private static final int RTHREADS = 1;
+  private static final int CYCLE = 100;
+  private static String buildDirectory;
+  private static final String dbName;
   private static final ODatabaseType databaseType;
-  private static final OrientDB      orientDB;
+  private static final OrientDB orientDB;
 
   static {
     System.getProperty("buildDirectory", ".");
@@ -92,7 +88,7 @@ public class LuceneInsertMultithreadTest {
         OClass oClass = schema.createClass("City");
 
         oClass.createProperty("name", OType.STRING);
-        oClass.createIndex("City.name", "FULLTEXT", null, null, "LUCENE", new String[] { "name" });
+        oClass.createIndex("City.name", "FULLTEXT", null, null, "LUCENE", new String[] {"name"});
       }
 
       Thread[] threads = new Thread[THREADS + RTHREADS];
@@ -102,11 +98,9 @@ public class LuceneInsertMultithreadTest {
       for (int i = THREADS; i < THREADS + RTHREADS; ++i)
         threads[i] = new Thread(new LuceneReadThread(CYCLE), "ConcurrentReadTest" + i);
 
-      for (int i = 0; i < THREADS + RTHREADS; ++i)
-        threads[i].start();
+      for (int i = 0; i < THREADS + RTHREADS; ++i) threads[i].start();
 
-      for (int i = 0; i < THREADS + RTHREADS; ++i)
-        threads[i].join();
+      for (int i = 0; i < THREADS + RTHREADS; ++i) threads[i].join();
 
       OIndex idx = schema.getClass("City").getClassIndex("City.name");
 
@@ -140,7 +134,6 @@ public class LuceneInsertMultithreadTest {
             db.commit();
             db.begin();
           }
-
         }
         db.commit();
       }

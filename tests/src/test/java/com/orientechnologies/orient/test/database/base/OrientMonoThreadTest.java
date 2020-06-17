@@ -15,10 +15,9 @@
  */
 package com.orientechnologies.orient.test.database.base;
 
-import org.testng.annotations.Test;
-
 import com.orientechnologies.common.test.SpeedTestMonoThread;
 import com.orientechnologies.orient.core.Orient;
+import org.testng.annotations.Test;
 
 @Test(enabled = false)
 public abstract class OrientMonoThreadTest extends SpeedTestMonoThread {

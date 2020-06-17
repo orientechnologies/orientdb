@@ -2,16 +2,22 @@ package com.orientechnologies.orient.distributed.impl.log;
 
 import com.orientechnologies.orient.distributed.impl.coordinator.OCoordinateMessagesFactory;
 import com.orientechnologies.orient.distributed.impl.coordinator.mocktx.OPhase1Tx;
-import org.junit.Assert;
-import org.junit.Ignore;
-import org.junit.Test;
-
-import java.io.*;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.DataInputStream;
+import java.io.DataOutput;
+import java.io.DataOutputStream;
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicLong;
+import org.junit.Assert;
+import org.junit.Ignore;
+import org.junit.Test;
 
 public class OPersistentOperationalLogV1Test {
 
@@ -20,8 +26,9 @@ public class OPersistentOperationalLogV1Test {
     OCoordinateMessagesFactory factory = new OCoordinateMessagesFactory();
     Path file = Files.createTempDirectory(".");
     try {
-      OPersistentOperationalLogV1 oplog = new OPersistentOperationalLogV1(file.toString(),
-              (id) -> factory.createOperationRequest(id));
+      OPersistentOperationalLogV1 oplog =
+          new OPersistentOperationalLogV1(
+              file.toString(), (id) -> factory.createOperationRequest(id));
       oplog.setLeader(true, 0);
       OLogId logId = null;
       for (int i = 0; i < 10; i++) {
@@ -29,7 +36,9 @@ public class OPersistentOperationalLogV1Test {
         logId = oplog.log(req);
       }
       oplog.close();
-      oplog = new OPersistentOperationalLogV1(file.toString(), (id) -> factory.createOperationRequest(id));
+      oplog =
+          new OPersistentOperationalLogV1(
+              file.toString(), (id) -> factory.createOperationRequest(id));
       AtomicLong lastLogId = oplog.readLastLogId();
       Assert.assertEquals(logId.getId(), lastLogId.get());
     } finally {
@@ -45,7 +54,8 @@ public class OPersistentOperationalLogV1Test {
   public void testReadRecord() throws IOException {
     ByteArrayOutputStream out = new ByteArrayOutputStream();
     Path file = Files.createTempDirectory(".");
-    OPersistentOperationalLogV1 log = new OPersistentOperationalLogV1(file.toString(), (id) -> new OPhase1Tx());
+    OPersistentOperationalLogV1 log =
+        new OPersistentOperationalLogV1(file.toString(), (id) -> new OPhase1Tx());
 
     try {
 
@@ -77,7 +87,8 @@ public class OPersistentOperationalLogV1Test {
   public void testIterate() throws IOException {
 
     Path file = Files.createTempDirectory(".");
-    OPersistentOperationalLogV1 log = new OPersistentOperationalLogV1(file.toString(), (id) -> new OPhase1Tx());
+    OPersistentOperationalLogV1 log =
+        new OPersistentOperationalLogV1(file.toString(), (id) -> new OPhase1Tx());
     log.setLeader(true, 0);
     try {
       int totLogEntries = 500;
@@ -109,7 +120,8 @@ public class OPersistentOperationalLogV1Test {
   public void testIterate2() throws IOException {
 
     Path file = Files.createTempDirectory(".");
-    OPersistentOperationalLogV1 log = new OPersistentOperationalLogV1(file.toString(), (id) -> new OPhase1Tx());
+    OPersistentOperationalLogV1 log =
+        new OPersistentOperationalLogV1(file.toString(), (id) -> new OPhase1Tx());
     log.setLeader(true, 0);
     try {
       int totLogEntries = 500;
@@ -135,11 +147,11 @@ public class OPersistentOperationalLogV1Test {
     }
   }
 
-
   @Test
   public void testRemoveAfter1() throws IOException {
     Path file = Files.createTempDirectory(".");
-    OPersistentOperationalLogV1 log = new OPersistentOperationalLogV1(file.toString(), (id) -> new OPhase1Tx());
+    OPersistentOperationalLogV1 log =
+        new OPersistentOperationalLogV1(file.toString(), (id) -> new OPhase1Tx());
     log.setLeader(true, 0);
     try {
       int totLogEntries = 100;
@@ -185,7 +197,8 @@ public class OPersistentOperationalLogV1Test {
   @Test
   public void testRemoveAfter2() throws IOException {
     Path file = Files.createTempDirectory(".");
-    OPersistentOperationalLogV1 log = new OPersistentOperationalLogV1(file.toString(), (id) -> new OPhase1Tx());
+    OPersistentOperationalLogV1 log =
+        new OPersistentOperationalLogV1(file.toString(), (id) -> new OPhase1Tx());
     log.setLeader(true, 0);
     try {
       int totLogEntries = 100;
@@ -214,11 +227,11 @@ public class OPersistentOperationalLogV1Test {
     }
   }
 
-
   @Test
   public void testRemoveAfter3() throws IOException {
     Path file = Files.createTempDirectory(".");
-    OPersistentOperationalLogV1 log = new OPersistentOperationalLogV1(file.toString(), (id) -> new OPhase1Tx());
+    OPersistentOperationalLogV1 log =
+        new OPersistentOperationalLogV1(file.toString(), (id) -> new OPhase1Tx());
     log.setLeader(true, 0);
 
     try {
@@ -245,11 +258,11 @@ public class OPersistentOperationalLogV1Test {
     }
   }
 
-
   @Test
   public void testRemoveAfter4() throws IOException {
     Path file = Files.createTempDirectory(".");
-    OPersistentOperationalLogV1 log = new OPersistentOperationalLogV1(file.toString(), (id) -> new OPhase1Tx());
+    OPersistentOperationalLogV1 log =
+        new OPersistentOperationalLogV1(file.toString(), (id) -> new OPhase1Tx());
     log.setLeader(true, 0);
 
     try {
@@ -259,12 +272,14 @@ public class OPersistentOperationalLogV1Test {
         OPhase1Tx item = new OPhase1Tx();
         log.log(item);
       }
-      OOperationLog.LogIdStatus status = log.removeAfter(new OLogId(10, 0, 0) {
-        @Override
-        public boolean equals(Object o) {
-          return false;
-        }
-      });
+      OOperationLog.LogIdStatus status =
+          log.removeAfter(
+              new OLogId(10, 0, 0) {
+                @Override
+                public boolean equals(Object o) {
+                  return false;
+                }
+              });
 
       Assert.assertEquals(OOperationLog.LogIdStatus.INVALID, status);
 
@@ -287,13 +302,13 @@ public class OPersistentOperationalLogV1Test {
     }
   }
 
-
   @Test
   @Ignore
   public void stressTest() throws IOException {
 
     Path file = Files.createTempDirectory(".");
-    OPersistentOperationalLogV1 log = new OPersistentOperationalLogV1(file.toString(), (id) -> new OPhase1Tx());
+    OPersistentOperationalLogV1 log =
+        new OPersistentOperationalLogV1(file.toString(), (id) -> new OPhase1Tx());
     log.setLeader(true, 0);
     try {
       final long totLogEntries = 500_000;
@@ -301,17 +316,20 @@ public class OPersistentOperationalLogV1Test {
 
       long begin = System.currentTimeMillis();
       for (int i = 0; i < totLogEntries; i++) {
-        OPhase1Tx item = new OPhase1Tx() {
-          @Override
-          public void serialize(DataOutput output) throws IOException {
-            output.write(new byte[recordSize]);
-          }
-        };
+        OPhase1Tx item =
+            new OPhase1Tx() {
+              @Override
+              public void serialize(DataOutput output) throws IOException {
+                output.write(new byte[recordSize]);
+              }
+            };
         log.log(item);
       }
       System.out.println("Elapsed (ms): " + (System.currentTimeMillis() - begin));
-      System.out.println("Entries per record: " + totLogEntries / ((System.currentTimeMillis() - begin) / 1000));
-      System.out.println("Kb/s: " + recordSize * totLogEntries / (System.currentTimeMillis() - begin));
+      System.out.println(
+          "Entries per record: " + totLogEntries / ((System.currentTimeMillis() - begin) / 1000));
+      System.out.println(
+          "Kb/s: " + recordSize * totLogEntries / (System.currentTimeMillis() - begin));
 
     } finally {
       for (File file1 : file.toFile().listFiles()) {
@@ -321,13 +339,13 @@ public class OPersistentOperationalLogV1Test {
     }
   }
 
-
   @Test
   @Ignore
   public void stressTestMt() throws IOException {
 
     Path file = Files.createTempDirectory(".");
-    OPersistentOperationalLogV1 log = new OPersistentOperationalLogV1(file.toString(), (id) -> new OPhase1Tx());
+    OPersistentOperationalLogV1 log =
+        new OPersistentOperationalLogV1(file.toString(), (id) -> new OPhase1Tx());
     log.setLeader(true, 0);
     try {
       final long totLogEntries = 1_000;
@@ -339,40 +357,45 @@ public class OPersistentOperationalLogV1Test {
 
       for (int iThread = 0; iThread < nThreads; iThread++) {
 
-        Thread thread = new Thread() {
-          @Override
-          public void run() {
+        Thread thread =
+            new Thread() {
+              @Override
+              public void run() {
 
-            for (int i = 0; i < totLogEntries; i++) {
-              OPhase1Tx item = new OPhase1Tx() {
-                @Override
-                public void serialize(DataOutput output) throws IOException {
-                  output.write(new byte[(int) (recordSize * 2 * Math.random())]);
+                for (int i = 0; i < totLogEntries; i++) {
+                  OPhase1Tx item =
+                      new OPhase1Tx() {
+                        @Override
+                        public void serialize(DataOutput output) throws IOException {
+                          output.write(new byte[(int) (recordSize * 2 * Math.random())]);
+                        }
+                      };
+                  log.log(item);
+                  if (i % 100 == 0) {
+                    System.out.println("flushed " + i);
+                  }
                 }
-              };
-              log.log(item);
-              if (i % 100 == 0) {
-                System.out.println("flushed " + i);
               }
-            }
-          }
-        };
+            };
         threads.add(thread);
         thread.start();
       }
 
-      threads.forEach(x -> {
-        try {
-          x.join();
-        } catch (InterruptedException e) {
-          e.printStackTrace();
-        }
-      });
-
+      threads.forEach(
+          x -> {
+            try {
+              x.join();
+            } catch (InterruptedException e) {
+              e.printStackTrace();
+            }
+          });
 
       System.out.println("Elapsed (ms): " + (System.currentTimeMillis() - begin));
-      System.out.println("Entries per second: " + totLogEntries * nThreads / ((System.currentTimeMillis() - begin) / 1000));
-      System.out.println("Kb/s: " + totLogEntries * recordSize * nThreads / (System.currentTimeMillis() - begin));
+      System.out.println(
+          "Entries per second: "
+              + totLogEntries * nThreads / ((System.currentTimeMillis() - begin) / 1000));
+      System.out.println(
+          "Kb/s: " + totLogEntries * recordSize * nThreads / (System.currentTimeMillis() - begin));
 
     } finally {
       for (File file1 : file.toFile().listFiles()) {
@@ -385,7 +408,8 @@ public class OPersistentOperationalLogV1Test {
   @Test
   public void testLogReceived() throws IOException {
     Path file = Files.createTempDirectory(".");
-    OPersistentOperationalLogV1 log = new OPersistentOperationalLogV1(file.toString(), (id) -> new OPhase1Tx());
+    OPersistentOperationalLogV1 log =
+        new OPersistentOperationalLogV1(file.toString(), (id) -> new OPhase1Tx());
     log.setLeader(false, 0);
 
     Assert.assertTrue(log.logReceived(new OLogId(0, 0, 0), new OPhase1Tx()));
@@ -400,7 +424,8 @@ public class OPersistentOperationalLogV1Test {
   @Test
   public void testStartWithEmptyLog() throws IOException {
     Path file = Files.createTempDirectory(".");
-    OPersistentOperationalLogV1 log = new OPersistentOperationalLogV1(file.toString(), (id) -> new OPhase1Tx());
+    OPersistentOperationalLogV1 log =
+        new OPersistentOperationalLogV1(file.toString(), (id) -> new OPhase1Tx());
     log.setLeader(false, 0);
 
     Assert.assertFalse(log.logReceived(new OLogId(100, 4, 0), new OPhase1Tx()));
@@ -409,7 +434,8 @@ public class OPersistentOperationalLogV1Test {
   @Test
   public void testLog() throws IOException {
     Path file = Files.createTempDirectory(".");
-    OPersistentOperationalLogV1 log = new OPersistentOperationalLogV1(file.toString(), (id) -> new OPhase1Tx());
+    OPersistentOperationalLogV1 log =
+        new OPersistentOperationalLogV1(file.toString(), (id) -> new OPhase1Tx());
     log.setLeader(true, 0);
 
     OLogId logId = log.log(new OPhase1Tx());
@@ -445,12 +471,11 @@ public class OPersistentOperationalLogV1Test {
     Assert.assertEquals(3L, logId.getTerm());
     Assert.assertEquals(2L, logId.getPreviousIdTerm());
 
-    log.log(new OPhase1Tx());//6
-    log.log(new OPhase1Tx());//7
+    log.log(new OPhase1Tx()); // 6
+    log.log(new OPhase1Tx()); // 7
 
     log.setLeader(false, 4);
     Assert.assertTrue(log.logReceived(new OLogId(6, 4, 3), new OPhase1Tx()));
-
 
     OLogId last = log.lastPersistentLog();
     Assert.assertEquals(6L, last.getId());
@@ -461,13 +486,13 @@ public class OPersistentOperationalLogV1Test {
   @Test
   public void testRecover1() throws IOException {
     Path file = Files.createTempDirectory(".");
-    OPersistentOperationalLogV1 log = new OPersistentOperationalLogV1(file.toString(), (id) -> new OPhase1Tx());
+    OPersistentOperationalLogV1 log =
+        new OPersistentOperationalLogV1(file.toString(), (id) -> new OPhase1Tx());
     log.setLeader(true, 0);
 
     log.log(new OPhase1Tx());
     log.log(new OPhase1Tx());
     log.log(new OPhase1Tx());
-
 
     OLogId lastLogId = log.log(new OPhase1Tx());
 
@@ -476,20 +501,18 @@ public class OPersistentOperationalLogV1Test {
     log = new OPersistentOperationalLogV1(file.toString(), (id) -> new OPhase1Tx());
     log.setLeader(true, 0);
     Assert.assertEquals(lastLogId, log.lastPersistentLog());
-
-
   }
 
   @Test
   public void testRecover2() throws IOException {
     Path file = Files.createTempDirectory(".");
-    OPersistentOperationalLogV1 log = new OPersistentOperationalLogV1(file.toString(), (id) -> new OPhase1Tx());
+    OPersistentOperationalLogV1 log =
+        new OPersistentOperationalLogV1(file.toString(), (id) -> new OPhase1Tx());
     log.setLeader(true, 0);
 
     log.log(new OPhase1Tx());
     log.log(new OPhase1Tx());
     log.log(new OPhase1Tx());
-
 
     OLogId lastLogId = log.log(new OPhase1Tx());
 
@@ -503,7 +526,6 @@ public class OPersistentOperationalLogV1Test {
     writer.flush();
     writer.close();
 
-
     log = new OPersistentOperationalLogV1(file.toString(), (id) -> new OPhase1Tx());
     log.setLeader(true, 0);
     Assert.assertEquals(lastLogId, log.lastPersistentLog());
@@ -512,12 +534,13 @@ public class OPersistentOperationalLogV1Test {
   @Test
   public void testSearchFrom() throws IOException {
     Path file = Files.createTempDirectory(".");
-    OPersistentOperationalLogV1 master = new OPersistentOperationalLogV1(file.toString(), (id) -> new OPhase1Tx());
+    OPersistentOperationalLogV1 master =
+        new OPersistentOperationalLogV1(file.toString(), (id) -> new OPhase1Tx());
     master.setLeader(true, 0);
     master.log(new OPhase1Tx());
     master.log(new OPhase1Tx());
     master.log(new OPhase1Tx());
-    master.log(new OPhase1Tx());//4
+    master.log(new OPhase1Tx()); // 4
     master.setLeader(true, 1);
     master.log(new OPhase1Tx());
     master.log(new OPhase1Tx());
@@ -545,9 +568,9 @@ public class OPersistentOperationalLogV1Test {
     master.log(new OPhase1Tx());
     master.log(new OPhase1Tx());
 
-
     Path file2 = Files.createTempDirectory(".");
-    OPersistentOperationalLogV1 follower = new OPersistentOperationalLogV1(file2.toString(), (id) -> new OPhase1Tx());
+    OPersistentOperationalLogV1 follower =
+        new OPersistentOperationalLogV1(file2.toString(), (id) -> new OPhase1Tx());
     follower.setLeader(true, 0);
     follower.log(new OPhase1Tx());
     follower.log(new OPhase1Tx());
@@ -569,7 +592,6 @@ public class OPersistentOperationalLogV1Test {
     }
     data.close();
 
-
     OOplogIterator masterIterator = master.iterate(0, 100);
     OOplogIterator followerIterator = follower.iterate(0, 100);
     while (masterIterator.hasNext()) {
@@ -583,18 +605,14 @@ public class OPersistentOperationalLogV1Test {
     follower.close();
   }
 
-
   @Test
   public void testSearchFromEmpty() throws IOException {
     Path file = Files.createTempDirectory(".");
-    OPersistentOperationalLogV1 master = new OPersistentOperationalLogV1(file.toString(), (id) -> new OPhase1Tx());
+    OPersistentOperationalLogV1 master =
+        new OPersistentOperationalLogV1(file.toString(), (id) -> new OPhase1Tx());
     master.setLeader(true, 0);
 
     Assert.assertFalse(master.searchFrom(new OLogId(0, 10, 0)).isPresent());
     master.close();
-
   }
-
-
 }
-

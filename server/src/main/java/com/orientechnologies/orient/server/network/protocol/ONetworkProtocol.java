@@ -26,7 +26,6 @@ import com.orientechnologies.orient.enterprise.channel.OChannel;
 import com.orientechnologies.orient.server.OClientConnection;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.network.OServerNetworkListener;
-
 import java.io.IOException;
 import java.net.Socket;
 
@@ -38,8 +37,12 @@ public abstract class ONetworkProtocol extends OSoftThread {
     setDumpExceptions(false);
   }
 
-  public abstract void config(final OServerNetworkListener iListener, final OServer iServer, final Socket iSocket,
-      OContextConfiguration iConfiguration) throws IOException;
+  public abstract void config(
+      final OServerNetworkListener iListener,
+      final OServer iServer,
+      final Socket iSocket,
+      OContextConfiguration iConfiguration)
+      throws IOException;
 
   public abstract String getType();
 
@@ -49,8 +52,7 @@ public abstract class ONetworkProtocol extends OSoftThread {
 
   public String getListeningAddress() {
     final OChannel c = getChannel();
-    if (c != null)
-      return c.socket.getLocalAddress().getHostAddress();
+    if (c != null) return c.socket.getLocalAddress().getHostAddress();
     return null;
   }
 

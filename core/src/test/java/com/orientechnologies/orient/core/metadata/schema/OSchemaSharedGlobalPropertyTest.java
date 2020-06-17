@@ -1,12 +1,12 @@
 package com.orientechnologies.orient.core.metadata.schema;
 
+import static org.junit.Assert.assertEquals;
+
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.exception.OSchemaException;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-
-import static org.junit.Assert.assertEquals;
 
 public class OSchemaSharedGlobalPropertyTest {
 
@@ -17,8 +17,7 @@ public class OSchemaSharedGlobalPropertyTest {
     db = new ODatabaseDocumentTx("memory:" + OSchemaSharedGlobalPropertyTest.class.getSimpleName());
     if (db.exists()) {
       db.open("admin", "admin");
-    } else
-      db.create();
+    } else db.create();
   }
 
   @After
@@ -42,7 +41,6 @@ public class OSchemaSharedGlobalPropertyTest {
     assertEquals(prop.getName(), "testaasd");
     assertEquals(prop.getId(), (Integer) 100);
     assertEquals(prop.getType(), OType.SHORT);
-
   }
 
   @Test
@@ -52,7 +50,6 @@ public class OSchemaSharedGlobalPropertyTest {
 
     schema.createGlobalProperty("test", OType.SHORT, 200);
     schema.createGlobalProperty("test", OType.SHORT, 200);
-
   }
 
   @Test(expected = OSchemaException.class)
@@ -62,7 +59,5 @@ public class OSchemaSharedGlobalPropertyTest {
 
     schema.createGlobalProperty("test", OType.SHORT, 201);
     schema.createGlobalProperty("test1", OType.SHORT, 201);
-
   }
-
 }

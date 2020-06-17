@@ -8,13 +8,24 @@ import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORID;
-import com.orientechnologies.orient.core.index.*;
+import com.orientechnologies.orient.core.index.OCompositeIndexDefinition;
+import com.orientechnologies.orient.core.index.OCompositeKey;
+import com.orientechnologies.orient.core.index.OIndex;
+import com.orientechnologies.orient.core.index.OIndexDefinition;
+import com.orientechnologies.orient.core.index.OPropertyIndexDefinition;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.executor.OResultInternal;
-
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.Set;
+import java.util.Spliterator;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -55,8 +66,8 @@ public class OWhereClause extends SimpleNode {
   /**
    * estimates how many items of this class will be returned applying this filter
    *
-   * @return an estimation of the number of records of this class returned applying this filter, 0 if and only if sure that no
-   * records are returned
+   * @return an estimation of the number of records of this class returned applying this filter, 0
+   *     if and only if sure that no records are returned
    */
   public long estimate(OClass oClass, long threshold, OCommandContext ctx) {
     long count = oClass.count();
@@ -72,8 +83,9 @@ public class OWhereClause extends SimpleNode {
     Set<OIndex> indexes = oClass.getIndexes();
     for (OAndBlock condition : flattenedConditions) {
 
-      List<OBinaryCondition> indexedFunctConditions = condition
-          .getIndexedFunctionConditions(oClass, (ODatabaseDocumentInternal) ctx.getDatabase());
+      List<OBinaryCondition> indexedFunctConditions =
+          condition.getIndexedFunctionConditions(
+              oClass, (ODatabaseDocumentInternal) ctx.getDatabase());
 
       long conditionEstimation = Long.MAX_VALUE;
 
@@ -119,7 +131,8 @@ public class OWhereClause extends SimpleNode {
     return Math.min(indexesCount, count);
   }
 
-  private static long estimateFromIndex(OIndex index, Map<String, Object> conditions, int nMatchingKeys) {
+  private static long estimateFromIndex(
+      OIndex index, Map<String, Object> conditions, int nMatchingKeys) {
     if (nMatchingKeys < 1) {
       throw new IllegalArgumentException("Cannot estimate from an index with zero keys");
     }
@@ -131,7 +144,8 @@ public class OWhereClause extends SimpleNode {
     } else if (definition instanceof OCompositeIndexDefinition) {
       key = new OCompositeKey();
       for (int i = 0; i < nMatchingKeys; i++) {
-        Object keyValue = convert(conditions.get(definitionFields.get(i)), definition.getTypes()[i]);
+        Object keyValue =
+            convert(conditions.get(definitionFields.get(i)), definition.getTypes()[i]);
         ((OCompositeKey) key).addKey(keyValue);
       }
     }
@@ -143,12 +157,12 @@ public class OWhereClause extends SimpleNode {
       } else if (index.supportsOrderedIterations()) {
         final Spliterator<ORawPair<Object, ORID>> spliterator;
 
-        try (Stream<ORawPair<Object, ORID>> stream = index.getInternal().streamEntriesBetween(key, true, key, true, true)) {
+        try (Stream<ORawPair<Object, ORID>> stream =
+            index.getInternal().streamEntriesBetween(key, true, key, true, true)) {
           spliterator = stream.spliterator();
           return spliterator.estimateSize();
         }
       }
-
     }
     return Long.MAX_VALUE;
   }
@@ -231,7 +245,8 @@ public class OWhereClause extends SimpleNode {
     return OType.convert(o, oType.getDefaultJavaType());
   }
 
-  private static Map<String, Object> getEqualityOperations(OAndBlock condition, OCommandContext ctx) {
+  private static Map<String, Object> getEqualityOperations(
+      OAndBlock condition, OCommandContext ctx) {
     Map<String, Object> result = new HashMap<>();
     for (OBooleanExpression expression : condition.subBlocks) {
       if (expression instanceof OBinaryCondition) {
@@ -255,10 +270,10 @@ public class OWhereClause extends SimpleNode {
     }
     // TODO remove false conditions (contraddictions)
     return flattened;
-
   }
 
-  public List<OBinaryCondition> getIndexedFunctionConditions(OClass iSchemaClass, ODatabaseDocumentInternal database) {
+  public List<OBinaryCondition> getIndexedFunctionConditions(
+      OClass iSchemaClass, ODatabaseDocumentInternal database) {
     if (baseExpression == null) {
       return null;
     }
@@ -276,25 +291,26 @@ public class OWhereClause extends SimpleNode {
   public OWhereClause copy() {
     OWhereClause result = new OWhereClause(-1);
     result.baseExpression = baseExpression.copy();
-    result.flattened = Optional.ofNullable(flattened).map(oAndBlocks -> {
-      try (Stream<OAndBlock> stream = oAndBlocks.stream()) {
-        return stream.map(OAndBlock::copy).collect(Collectors.toList());
-      }
-    }).orElse(null);
+    result.flattened =
+        Optional.ofNullable(flattened)
+            .map(
+                oAndBlocks -> {
+                  try (Stream<OAndBlock> stream = oAndBlocks.stream()) {
+                    return stream.map(OAndBlock::copy).collect(Collectors.toList());
+                  }
+                })
+            .orElse(null);
     return result;
   }
 
   @Override
   public boolean equals(Object o) {
-    if (this == o)
-      return true;
-    if (o == null || getClass() != o.getClass())
-      return false;
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
 
     OWhereClause that = (OWhereClause) o;
 
-    if (!Objects.equals(baseExpression, that.baseExpression))
-      return false;
+    if (!Objects.equals(baseExpression, that.baseExpression)) return false;
     return Objects.equals(flattened, that.flattened);
   }
 
@@ -335,7 +351,8 @@ public class OWhereClause extends SimpleNode {
     }
     if (flattened != null) {
       try (Stream<OAndBlock> stream = flattened.stream()) {
-        result.setProperty("flattened", stream.map(OBooleanExpression::serialize).collect(Collectors.toList()));
+        result.setProperty(
+            "flattened", stream.map(OBooleanExpression::serialize).collect(Collectors.toList()));
       }
     }
     return result;
@@ -343,7 +360,8 @@ public class OWhereClause extends SimpleNode {
 
   public void deserialize(OResult fromResult) {
     if (fromResult.getProperty("baseExpression") != null) {
-      baseExpression = OBooleanExpression.deserializeFromOResult(fromResult.getProperty("baseExpression"));
+      baseExpression =
+          OBooleanExpression.deserializeFromOResult(fromResult.getProperty("baseExpression"));
     }
     if (fromResult.getProperty("flattened") != null) {
       List<OResult> ser = fromResult.getProperty("flattened");

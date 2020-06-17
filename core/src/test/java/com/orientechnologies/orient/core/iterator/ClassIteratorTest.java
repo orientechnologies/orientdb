@@ -6,20 +6,17 @@ import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.metadata.schema.clusterselection.ODefaultClusterSelectionStrategy;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import java.util.HashSet;
+import java.util.Set;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
-import java.util.HashSet;
-import java.util.Set;
-
-/**
- * @author Artem Loginov
- */
+/** @author Artem Loginov */
 public class ClassIteratorTest {
-  private static final boolean             RECREATE_DATABASE = true;
-  private static       ODatabaseDocumentTx db                = null;
+  private static final boolean RECREATE_DATABASE = true;
+  private static ODatabaseDocumentTx db = null;
   private Set<String> names;
 
   private static void initializeDatabase() {
@@ -37,7 +34,11 @@ public class ClassIteratorTest {
 
       // Create Person class
       final OClass personClass = schema.createClass("Person");
-      personClass.createProperty("First", OType.STRING).setMandatory(true).setNotNull(true).setMin("1");
+      personClass
+          .createProperty("First", OType.STRING)
+          .setMandatory(true)
+          .setNotNull(true)
+          .setMin("1");
 
       System.out.println("Created schema.");
     } else {
@@ -70,8 +71,7 @@ public class ClassIteratorTest {
 
   @After
   public void tearDown() throws Exception {
-    if (!db.isClosed())
-      db.close();
+    if (!db.isClosed()) db.close();
   }
 
   @Test
@@ -137,7 +137,8 @@ public class ClassIteratorTest {
     }
 
     // Use descending class iterator.
-    final ORecordIteratorClass<ODocument> personIter = new ORecordIteratorClassDescendentOrder<ODocument>(db, db, "Person", true);
+    final ORecordIteratorClass<ODocument> personIter =
+        new ORecordIteratorClassDescendentOrder<ODocument>(db, db, "Person", true);
 
     personIter.setRange(null, null); // open range
 
@@ -155,12 +156,14 @@ public class ClassIteratorTest {
 
   @Test
   public void testMultipleClusters() throws Exception {
-    final OClass personClass = db.getMetadata().getSchema().createClass("PersonMultipleClusters", 4, null);
+    final OClass personClass =
+        db.getMetadata().getSchema().createClass("PersonMultipleClusters", 4, null);
     for (String name : names) {
       createPerson("PersonMultipleClusters", name);
     }
 
-    final ORecordIteratorClass<ODocument> personIter = new ORecordIteratorClass<ODocument>(db, "PersonMultipleClusters", true);
+    final ORecordIteratorClass<ODocument> personIter =
+        new ORecordIteratorClass<ODocument>(db, "PersonMultipleClusters", true);
 
     int docNum = 0;
 

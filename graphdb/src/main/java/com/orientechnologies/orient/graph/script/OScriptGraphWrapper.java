@@ -1,22 +1,22 @@
 /*
-  *
-  *  *  Copyright 2010-2016 OrientDB LTD (http://orientdb.com)
-  *  *
-  *  *  Licensed under the Apache License, Version 2.0 (the "License");
-  *  *  you may not use this file except in compliance with the License.
-  *  *  You may obtain a copy of the License at
-  *  *
-  *  *       http://www.apache.org/licenses/LICENSE-2.0
-  *  *
-  *  *  Unless required by applicable law or agreed to in writing, software
-  *  *  distributed under the License is distributed on an "AS IS" BASIS,
-  *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-  *  *  See the License for the specific language governing permissions and
-  *  *  limitations under the License.
-  *  *
-  *  * For more information: http://orientdb.com
-  *
-  */
+ *
+ *  *  Copyright 2010-2016 OrientDB LTD (http://orientdb.com)
+ *  *
+ *  *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  *  you may not use this file except in compliance with the License.
+ *  *  You may obtain a copy of the License at
+ *  *
+ *  *       http://www.apache.org/licenses/LICENSE-2.0
+ *  *
+ *  *  Unless required by applicable law or agreed to in writing, software
+ *  *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  *  See the License for the specific language governing permissions and
+ *  *  limitations under the License.
+ *  *
+ *  * For more information: http://orientdb.com
+ *
+ */
 package com.orientechnologies.orient.graph.script;
 
 import com.orientechnologies.orient.core.command.OCommandRequest;
@@ -24,7 +24,6 @@ import com.orientechnologies.orient.core.command.script.OCommandScript;
 import com.orientechnologies.orient.core.command.traverse.OTraverse;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.graph.gremlin.OCommandGremlin;
@@ -42,16 +41,14 @@ import com.tinkerpop.blueprints.impls.orient.OrientEdge;
 import com.tinkerpop.blueprints.impls.orient.OrientElement;
 import com.tinkerpop.blueprints.impls.orient.OrientGraph;
 import com.tinkerpop.blueprints.impls.orient.OrientVertex;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
 /**
  * Blueprints Graph wrapper class to use from scripts.
- * 
+ *
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
- * 
  */
 public class OScriptGraphWrapper implements TransactionalGraph {
   protected OrientBaseGraph graph;
@@ -71,8 +68,7 @@ public class OScriptGraphWrapper implements TransactionalGraph {
       result = graph.command(new OCommandSQL(iText)).execute(iArgs);
     else if (language.equalsIgnoreCase("gremlin"))
       result = graph.command(new OCommandGremlin(iText)).execute(iArgs);
-    else
-      result = graph.command(new OCommandScript(language, iText)).execute(iArgs);
+    else result = graph.command(new OCommandScript(language, iText)).execute(iArgs);
 
     if (result instanceof Iterable<?>) {
       // FOR SAKE OF SIMPLICITY TRANSFORM ANY ITERABLE IN ARRAY
@@ -104,20 +100,17 @@ public class OScriptGraphWrapper implements TransactionalGraph {
   }
 
   public boolean isAutoStartTx() {
-    if (graph instanceof OrientGraph)
-      return graph.isAutoStartTx();
+    if (graph instanceof OrientGraph) return graph.isAutoStartTx();
 
     return false;
   }
 
   public void setAutoStartTx(boolean autoStartTx) {
-    if (graph instanceof OrientGraph)
-      graph.setAutoStartTx(autoStartTx);
+    if (graph instanceof OrientGraph) graph.setAutoStartTx(autoStartTx);
   }
 
   public void stopTransaction(Conclusion conclusion) {
-    if (graph instanceof OrientGraph)
-      ((OrientGraph) graph).stopTransaction(conclusion);
+    if (graph instanceof OrientGraph) ((OrientGraph) graph).stopTransaction(conclusion);
   }
 
   public boolean equals(final Object obj) {
@@ -128,7 +121,8 @@ public class OScriptGraphWrapper implements TransactionalGraph {
     graph.drop();
   }
 
-  public <T extends Element> Index<T> createIndex(final String indexName, Class<T> indexClass, Parameter... indexParameters) {
+  public <T extends Element> Index<T> createIndex(
+      final String indexName, Class<T> indexClass, Parameter... indexParameters) {
     return graph.createIndex(indexName, indexClass, indexParameters);
   }
 
@@ -292,7 +286,8 @@ public class OScriptGraphWrapper implements TransactionalGraph {
     graph.dropKeyIndex(key, elementClass);
   }
 
-  public <T extends Element> void createKeyIndex(final String key, Class<T> elementClass, Parameter... indexParameters) {
+  public <T extends Element> void createKeyIndex(
+      final String key, Class<T> elementClass, Parameter... indexParameters) {
     graph.createKeyIndex(key, elementClass, indexParameters);
   }
 
@@ -300,7 +295,8 @@ public class OScriptGraphWrapper implements TransactionalGraph {
     return graph.getIndexedKeys(elementClass);
   }
 
-  public <T extends Element> Set<String> getIndexedKeys(Class<T> elementClass, boolean includeClassNames) {
+  public <T extends Element> Set<String> getIndexedKeys(
+      Class<T> elementClass, boolean includeClassNames) {
     return graph.getIndexedKeys(elementClass, includeClassNames);
   }
 
@@ -395,5 +391,4 @@ public class OScriptGraphWrapper implements TransactionalGraph {
   public OrientBaseGraph setThreadMode(THREAD_MODE iControl) {
     return (OrientBaseGraph) graph.setThreadMode(iControl);
   }
-
 }

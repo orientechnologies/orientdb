@@ -7,24 +7,39 @@ import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.index.engine.OBaseIndexEngine;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperation;
-
 import java.io.IOException;
 import java.util.stream.Stream;
 
 public interface OCellBTreeSingleValue<K> {
-  void create(OAtomicOperation atomicOperation, OBinarySerializer<K> keySerializer, OType[] keyTypes, int keySize, OEncryption encryption) throws IOException;
+  void create(
+      OAtomicOperation atomicOperation,
+      OBinarySerializer<K> keySerializer,
+      OType[] keyTypes,
+      int keySize,
+      OEncryption encryption)
+      throws IOException;
 
   ORID get(K key);
 
   void put(OAtomicOperation atomicOperation, K key, ORID value) throws IOException;
 
-  boolean validatedPut(OAtomicOperation atomicOperation, K key, ORID value, OBaseIndexEngine.Validator<K, ORID> validator) throws IOException;
+  boolean validatedPut(
+      OAtomicOperation atomicOperation,
+      K key,
+      ORID value,
+      OBaseIndexEngine.Validator<K, ORID> validator)
+      throws IOException;
 
   void close();
 
   void delete(OAtomicOperation atomicOperation) throws IOException;
 
-  void load(String name, int keySize, OType[] keyTypes, OBinarySerializer<K> keySerializer, OEncryption encryption);
+  void load(
+      String name,
+      int keySize,
+      OType[] keyTypes,
+      OBinarySerializer<K> keySerializer,
+      OEncryption encryption);
 
   long size();
 
@@ -40,8 +55,8 @@ public interface OCellBTreeSingleValue<K> {
 
   Stream<K> keyStream();
 
-  Stream<ORawPair<K, ORID>> iterateEntriesBetween(K keyFrom, boolean fromInclusive, K keyTo, boolean toInclusive,
-      boolean ascSortOrder);
+  Stream<ORawPair<K, ORID>> iterateEntriesBetween(
+      K keyFrom, boolean fromInclusive, K keyTo, boolean toInclusive, boolean ascSortOrder);
 
   void acquireAtomicExclusiveLock();
 }

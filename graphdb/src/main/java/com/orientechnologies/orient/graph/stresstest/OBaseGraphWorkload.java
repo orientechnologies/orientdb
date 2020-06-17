@@ -26,7 +26,12 @@ import com.orientechnologies.orient.stresstest.ODatabaseIdentifier;
 import com.orientechnologies.orient.stresstest.ODatabaseUtils;
 import com.orientechnologies.orient.stresstest.workload.OBaseWorkload;
 import com.orientechnologies.orient.stresstest.workload.OCheckWorkload;
-import com.tinkerpop.blueprints.impls.orient.*;
+import com.tinkerpop.blueprints.impls.orient.OGraphRepair;
+import com.tinkerpop.blueprints.impls.orient.OrientBaseGraph;
+import com.tinkerpop.blueprints.impls.orient.OrientGraph;
+import com.tinkerpop.blueprints.impls.orient.OrientGraphFactory;
+import com.tinkerpop.blueprints.impls.orient.OrientGraphNoTx;
+import com.tinkerpop.blueprints.impls.orient.OrientVertex;
 
 /**
  * CRUD implementation of the workload.
@@ -36,8 +41,8 @@ import com.tinkerpop.blueprints.impls.orient.*;
 public abstract class OBaseGraphWorkload extends OBaseWorkload implements OCheckWorkload {
   public class OWorkLoadContext extends OBaseWorkload.OBaseWorkLoadContext {
     protected OrientBaseGraph graph;
-    protected OrientVertex    lastVertexToConnect;
-    protected int             lastVertexEdges;
+    protected OrientVertex lastVertexToConnect;
+    protected int lastVertexEdges;
 
     @Override
     public void init(ODatabaseIdentifier dbIdentifier, int operationsPerTransaction) {
@@ -46,8 +51,7 @@ public abstract class OBaseGraphWorkload extends OBaseWorkload implements OCheck
 
     @Override
     public void close() {
-      if (graph != null)
-        graph.shutdown();
+      if (graph != null) graph.shutdown();
     }
   }
 
@@ -59,17 +63,22 @@ public abstract class OBaseGraphWorkload extends OBaseWorkload implements OCheck
   protected OrientGraphNoTx getGraphNoTx(final ODatabaseIdentifier databaseIdentifier) {
     final ODatabase database = ODatabaseUtils.openDatabase(databaseIdentifier, connectionStrategy);
     if (database == null)
-      throw new IllegalArgumentException("Error on opening database " + databaseIdentifier.getName());
+      throw new IllegalArgumentException(
+          "Error on opening database " + databaseIdentifier.getName());
 
-    return (OrientGraphNoTx) OrientGraphFactory.getNoTxGraphImplFactory().getGraph((ODatabaseDocumentTx) database);
+    return (OrientGraphNoTx)
+        OrientGraphFactory.getNoTxGraphImplFactory().getGraph((ODatabaseDocumentTx) database);
   }
 
   protected OrientGraph getGraph(final ODatabaseIdentifier databaseIdentifier) {
     final ODatabase database = ODatabaseUtils.openDatabase(databaseIdentifier, connectionStrategy);
     if (database == null)
-      throw new IllegalArgumentException("Error on opening database " + databaseIdentifier.getName());
+      throw new IllegalArgumentException(
+          "Error on opening database " + databaseIdentifier.getName());
 
-    final OrientGraph g = (OrientGraph) OrientGraphFactory.getTxGraphImplFactory().getGraph((ODatabaseDocumentTx) database);
+    final OrientGraph g =
+        (OrientGraph)
+            OrientGraphFactory.getTxGraphImplFactory().getGraph((ODatabaseDocumentTx) database);
     g.setAutoStartTx(false);
     return g;
   }
@@ -77,12 +86,15 @@ public abstract class OBaseGraphWorkload extends OBaseWorkload implements OCheck
   @Override
   public void check(final ODatabaseIdentifier databaseIdentifier) {
     final OGraphRepair repair = new OGraphRepair();
-    repair.repair(getGraphNoTx(databaseIdentifier), new OCommandOutputListener() {
-      @Override
-      public void onMessage(String iText) {
-        System.out.print("   - " + iText);
-      }
-    }, null);
+    repair.repair(
+        getGraphNoTx(databaseIdentifier),
+        new OCommandOutputListener() {
+          @Override
+          public void onMessage(String iText) {
+            System.out.print("   - " + iText);
+          }
+        },
+        null);
   }
 
   @Override

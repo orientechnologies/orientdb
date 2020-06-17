@@ -1,5 +1,9 @@
 package com.orientechnologies.orient.server.token;
 
+import com.orientechnologies.orient.core.id.ORID;
+import com.orientechnologies.orient.core.id.ORecordId;
+import com.orientechnologies.orient.core.metadata.security.jwt.OJwtHeader;
+import com.orientechnologies.orient.server.binary.impl.OBinaryToken;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
@@ -9,23 +13,19 @@ import java.io.UnsupportedEncodingException;
 import java.util.HashMap;
 import java.util.Map;
 
-import com.orientechnologies.orient.core.id.ORID;
-import com.orientechnologies.orient.core.id.ORecordId;
-import com.orientechnologies.orient.core.metadata.security.jwt.OJwtHeader;
-import com.orientechnologies.orient.server.binary.impl.OBinaryToken;
-
 public class OBinaryTokenSerializer {
 
-  private final String[]          types;
-  private final String[]          keys;
-  private final String[]          algorithms;
-  private final String[]          dbTypes;
+  private final String[] types;
+  private final String[] keys;
+  private final String[] algorithms;
+  private final String[] dbTypes;
   private final Map<String, Byte> associetedDdTypes;
   private final Map<String, Byte> associetedKeys;
   private final Map<String, Byte> associetedAlgorithms;
   private final Map<String, Byte> associetedTypes;
 
-  public OBinaryTokenSerializer(String[] dbTypes, String[] keys, String[] algorithms, String[] entityTypes) {
+  public OBinaryTokenSerializer(
+      String[] dbTypes, String[] keys, String[] algorithms, String[] entityTypes) {
     this.dbTypes = dbTypes;
     this.keys = keys;
     this.algorithms = algorithms;
@@ -38,8 +38,7 @@ public class OBinaryTokenSerializer {
 
   public Map<String, Byte> createMap(String[] entries) {
     Map<String, Byte> newMap = new HashMap<String, Byte>();
-    for (int i = 0; i < entries.length; i++)
-      newMap.put(entries[i], (byte) i);
+    for (int i = 0; i < entries.length; i++) newMap.put(entries[i], (byte) i);
     return newMap;
   }
 
@@ -56,13 +55,11 @@ public class OBinaryTokenSerializer {
 
     token.setDatabase(readString(input));
     byte pos = input.readByte();
-    if (pos >= 0)
-      token.setDatabaseType(dbTypes[pos]);
+    if (pos >= 0) token.setDatabaseType(dbTypes[pos]);
 
     short cluster = input.readShort();
     long position = input.readLong();
-    if (cluster != -1 && position != -1)
-      token.setUserRid(new ORecordId(cluster, position));
+    if (cluster != -1 && position != -1) token.setUserRid(new ORecordId(cluster, position));
     token.setExpiry(input.readLong());
     token.setServerUser(input.readBoolean());
     if (token.isServerUser()) {
@@ -91,16 +88,14 @@ public class OBinaryTokenSerializer {
 
     DataOutputStream output = new DataOutputStream(stream);
     OJwtHeader header = token.getHeader();
-    output.writeByte(associetedTypes.get(header.getType()));// type
-    output.writeByte(associetedKeys.get(header.getKeyId()));// keys
-    output.writeByte(associetedAlgorithms.get(header.getAlgorithm()));// algorithm
+    output.writeByte(associetedTypes.get(header.getType())); // type
+    output.writeByte(associetedKeys.get(header.getKeyId())); // keys
+    output.writeByte(associetedAlgorithms.get(header.getAlgorithm())); // algorithm
 
     String toWrite = token.getDatabase();
     writeString(output, toWrite);
-    if (token.getDatabaseType() == null)
-      output.writeByte(-1);
-    else
-      output.writeByte(associetedDdTypes.get(token.getDatabaseType()));
+    if (token.getDatabaseType() == null) output.writeByte(-1);
+    else output.writeByte(associetedDdTypes.get(token.getDatabaseType()));
     ORID id = token.getUserId();
     if (id == null) {
       output.writeShort(-1);
@@ -118,12 +113,11 @@ public class OBinaryTokenSerializer {
     writeString(output, token.getSerializer());
     writeString(output, token.getDriverName());
     writeString(output, token.getDriverVersion());
-
   }
 
-  private void writeString(DataOutputStream output, String toWrite) throws UnsupportedEncodingException, IOException {
-    if (toWrite == null)
-      output.writeShort(-1);
+  private void writeString(DataOutputStream output, String toWrite)
+      throws UnsupportedEncodingException, IOException {
+    if (toWrite == null) output.writeShort(-1);
     else {
       byte[] str = toWrite.getBytes("UTF-8");
       output.writeShort(str.length);

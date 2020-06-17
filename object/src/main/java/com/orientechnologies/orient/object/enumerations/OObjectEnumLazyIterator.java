@@ -15,26 +15,27 @@
  */
 package com.orientechnologies.orient.object.enumerations;
 
+import com.orientechnologies.orient.core.record.ORecord;
 import java.io.Serializable;
 import java.util.Iterator;
 
-import com.orientechnologies.orient.core.record.ORecord;
-
 /**
- * Lazy implementation of Iterator that load the records only when accessed. It keep also track of changes to the source record
- * avoiding to call setDirty() by hand.
+ * Lazy implementation of Iterator that load the records only when accessed. It keep also track of
+ * changes to the source record avoiding to call setDirty() by hand.
  *
  * @author Luca Molino (molino.luca--at--gmail.com)
  */
-@SuppressWarnings({ "unchecked" })
+@SuppressWarnings({"unchecked"})
 public class OObjectEnumLazyIterator<TYPE extends Enum> implements Iterator<TYPE>, Serializable {
   private static final long serialVersionUID = -4012483076050044405L;
 
-  private final ORecord                    sourceRecord;
+  private final ORecord sourceRecord;
   private final Iterator<? extends Object> underlying;
-  private final Class<Enum>                enumClass;
+  private final Class<Enum> enumClass;
 
-  public OObjectEnumLazyIterator(final Class<Enum> iEnumClass, final ORecord iSourceRecord,
+  public OObjectEnumLazyIterator(
+      final Class<Enum> iEnumClass,
+      final ORecord iSourceRecord,
       final Iterator<? extends Object> iIterator) {
     this.sourceRecord = iSourceRecord;
     this.underlying = iIterator;
@@ -45,8 +46,7 @@ public class OObjectEnumLazyIterator<TYPE extends Enum> implements Iterator<TYPE
     final Object value = underlying.next();
     if (value instanceof Number)
       return (TYPE) enumClass.getEnumConstants()[((Number) value).intValue()];
-    else
-      return (TYPE) Enum.valueOf(enumClass, value.toString());
+    else return (TYPE) Enum.valueOf(enumClass, value.toString());
   }
 
   public boolean hasNext() {
@@ -55,8 +55,6 @@ public class OObjectEnumLazyIterator<TYPE extends Enum> implements Iterator<TYPE
 
   public void remove() {
     underlying.remove();
-    if (sourceRecord != null)
-      sourceRecord.setDirty();
+    if (sourceRecord != null) sourceRecord.setDirty();
   }
-
 }

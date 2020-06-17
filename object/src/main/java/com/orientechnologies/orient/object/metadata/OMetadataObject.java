@@ -29,17 +29,14 @@ import com.orientechnologies.orient.core.metadata.security.OSecurity;
 import com.orientechnologies.orient.core.metadata.sequence.OSequenceLibrary;
 import com.orientechnologies.orient.core.schedule.OScheduler;
 import com.orientechnologies.orient.object.metadata.schema.OSchemaProxyObject;
-
 import java.io.IOException;
 
-/**
- * @author Luca Molino (molino.luca--at--gmail.com)
- */
+/** @author Luca Molino (molino.luca--at--gmail.com) */
 public class OMetadataObject implements OMetadataInternal {
 
-  protected OMetadataInternal         underlying;
-  protected OSchemaProxyObject        schema;
-  private   ODatabaseDocumentInternal database;
+  protected OMetadataInternal underlying;
+  protected OSchemaProxyObject schema;
+  private ODatabaseDocumentInternal database;
 
   public OMetadataObject(OMetadataInternal iUnderlying, ODatabaseDocumentInternal database) {
     underlying = iUnderlying;
@@ -80,8 +77,7 @@ public class OMetadataObject implements OMetadataInternal {
 
   @Override
   public OSchemaProxyObject getSchema() {
-    if (schema == null)
-      schema = new OSchemaProxyObject(underlying.getSchema());
+    if (schema == null) schema = new OSchemaProxyObject(underlying.getSchema());
     return schema;
   }
 
@@ -95,9 +91,7 @@ public class OMetadataObject implements OMetadataInternal {
     return underlying.getSecurity();
   }
 
-  /**
-   * {@inheritDoc}
-   */
+  /** {@inheritDoc} */
   @Deprecated
   @Override
   public OIndexManager getIndexManager() {
@@ -143,5 +137,4 @@ public class OMetadataObject implements OMetadataInternal {
   public OMetadata getUnderlying() {
     return underlying;
   }
-
 }

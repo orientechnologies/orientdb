@@ -40,7 +40,6 @@ import com.orientechnologies.orient.core.storage.index.hashindex.local.OMurmurHa
 import com.orientechnologies.orient.core.storage.index.hashindex.local.OSHA256HashFunction;
 import com.orientechnologies.orient.core.storage.index.hashindex.local.v2.LocalHashTableV2;
 import com.orientechnologies.orient.core.storage.index.hashindex.local.v3.OLocalHashTableV3;
-
 import java.io.IOException;
 import java.util.Collections;
 import java.util.Iterator;
@@ -58,28 +57,41 @@ import java.util.stream.StreamSupport;
 public final class OHashTableIndexEngine implements OIndexEngine {
   public static final int VERSION = 3;
 
-  public static final String METADATA_FILE_EXTENSION    = ".him";
-  public static final String TREE_FILE_EXTENSION        = ".hit";
-  public static final String BUCKET_FILE_EXTENSION      = ".hib";
+  public static final String METADATA_FILE_EXTENSION = ".him";
+  public static final String TREE_FILE_EXTENSION = ".hit";
+  public static final String BUCKET_FILE_EXTENSION = ".hib";
   public static final String NULL_BUCKET_FILE_EXTENSION = ".hnb";
 
   private final OHashTable<Object, Object> hashTable;
-  private final AtomicLong                 bonsayFileId = new AtomicLong(0);
+  private final AtomicLong bonsayFileId = new AtomicLong(0);
 
   private final String name;
 
   private final int id;
 
-  public OHashTableIndexEngine(String name, int id, OAbstractPaginatedStorage storage, int version) {
+  public OHashTableIndexEngine(
+      String name, int id, OAbstractPaginatedStorage storage, int version) {
     this.id = id;
     if (version < 2) {
       throw new IllegalStateException("Unsupported version of hash index");
     } else if (version == 2) {
-      hashTable = new LocalHashTableV2<>(name, METADATA_FILE_EXTENSION, TREE_FILE_EXTENSION, BUCKET_FILE_EXTENSION,
-          NULL_BUCKET_FILE_EXTENSION, storage);
+      hashTable =
+          new LocalHashTableV2<>(
+              name,
+              METADATA_FILE_EXTENSION,
+              TREE_FILE_EXTENSION,
+              BUCKET_FILE_EXTENSION,
+              NULL_BUCKET_FILE_EXTENSION,
+              storage);
     } else if (version == 3) {
-      hashTable = new OLocalHashTableV3<>(name, METADATA_FILE_EXTENSION, TREE_FILE_EXTENSION, BUCKET_FILE_EXTENSION,
-          NULL_BUCKET_FILE_EXTENSION, storage);
+      hashTable =
+          new OLocalHashTableV3<>(
+              name,
+              METADATA_FILE_EXTENSION,
+              TREE_FILE_EXTENSION,
+              BUCKET_FILE_EXTENSION,
+              NULL_BUCKET_FILE_EXTENSION,
+              storage);
     } else {
       throw new IllegalStateException("Invalid value of the index version , version = " + version);
     }
@@ -93,8 +105,12 @@ public final class OHashTableIndexEngine implements OIndexEngine {
   }
 
   @Override
-  public void init(String indexName, String indexType, OIndexDefinition indexDefinition, boolean isAutomatic, ODocument metadata) {
-  }
+  public void init(
+      String indexName,
+      String indexType,
+      OIndexDefinition indexDefinition,
+      boolean isAutomatic,
+      ODocument metadata) {}
 
   @Override
   public String getName() {
@@ -102,8 +118,16 @@ public final class OHashTableIndexEngine implements OIndexEngine {
   }
 
   @Override
-  public void create(OAtomicOperation atomicOperation, OBinarySerializer valueSerializer, boolean isAutomatic, OType[] keyTypes, boolean nullPointerSupport,
-      OBinarySerializer keySerializer, int keySize, Map<String, String> engineProperties, OEncryption encryption)
+  public void create(
+      OAtomicOperation atomicOperation,
+      OBinarySerializer valueSerializer,
+      boolean isAutomatic,
+      OType[] keyTypes,
+      boolean nullPointerSupport,
+      OBinarySerializer keySerializer,
+      int keySize,
+      Map<String, String> engineProperties,
+      OEncryption encryption)
       throws IOException {
     final OHashFunction<Object> hashFunction;
 
@@ -116,12 +140,18 @@ public final class OHashTableIndexEngine implements OIndexEngine {
     }
 
     //noinspection unchecked
-    hashTable.create(atomicOperation, keySerializer, valueSerializer, keyTypes, encryption, hashFunction, nullPointerSupport);
+    hashTable.create(
+        atomicOperation,
+        keySerializer,
+        valueSerializer,
+        keyTypes,
+        encryption,
+        hashFunction,
+        nullPointerSupport);
   }
 
   @Override
-  public void flush() {
-  }
+  public void flush() {}
 
   @Override
   public String getIndexNameByKey(final Object key) {
@@ -155,8 +185,16 @@ public final class OHashTableIndexEngine implements OIndexEngine {
   }
 
   @Override
-  public void load(String indexName, OBinarySerializer valueSerializer, boolean isAutomatic, OBinarySerializer keySerializer,
-      OType[] keyTypes, boolean nullPointerSupport, int keySize, Map<String, String> engineProperties, OEncryption encryption) {
+  public void load(
+      String indexName,
+      OBinarySerializer valueSerializer,
+      boolean isAutomatic,
+      OBinarySerializer keySerializer,
+      OType[] keyTypes,
+      boolean nullPointerSupport,
+      int keySize,
+      Map<String, String> engineProperties,
+      OEncryption encryption) {
 
     final OHashFunction<Object> hashFunction;
 
@@ -168,7 +206,14 @@ public final class OHashTableIndexEngine implements OIndexEngine {
       hashFunction = new OMurmurHash3HashFunction<>(keySerializer);
     }
     //noinspection unchecked
-    hashTable.load(indexName, keyTypes, nullPointerSupport, encryption, hashFunction, keySerializer, valueSerializer);
+    hashTable.load(
+        indexName,
+        keyTypes,
+        nullPointerSupport,
+        encryption,
+        hashFunction,
+        keySerializer,
+        valueSerializer);
   }
 
   @Override
@@ -197,7 +242,8 @@ public final class OHashTableIndexEngine implements OIndexEngine {
   }
 
   @Override
-  public void update(OAtomicOperation atomicOperation, Object key, OIndexKeyUpdater<Object> updater) throws IOException {
+  public void update(OAtomicOperation atomicOperation, Object key, OIndexKeyUpdater<Object> updater)
+      throws IOException {
     Object value = get(key);
     OIndexUpdateAction<Object> updated = updater.update(value, bonsayFileId);
     if (updated.isChange()) {
@@ -205,14 +251,16 @@ public final class OHashTableIndexEngine implements OIndexEngine {
     } else if (updated.isRemove()) {
       remove(atomicOperation, key);
     } else //noinspection StatementWithEmptyBody
-      if (updated.isNothing()) {
-        //Do nothing
-      }
+    if (updated.isNothing()) {
+      // Do nothing
+    }
   }
 
   @SuppressWarnings("unchecked")
   @Override
-  public boolean validatedPut(OAtomicOperation atomicOperation, Object key, ORID value, Validator<Object, ORID> validator) throws IOException {
+  public boolean validatedPut(
+      OAtomicOperation atomicOperation, Object key, ORID value, Validator<Object, ORID> validator)
+      throws IOException {
     return hashTable.validatedPut(atomicOperation, key, value, (Validator) validator);
   }
 
@@ -255,246 +303,257 @@ public final class OHashTableIndexEngine implements OIndexEngine {
   }
 
   @Override
-  public Stream<ORawPair<Object, ORID>> iterateEntriesBetween(Object rangeFrom, boolean fromInclusive, Object rangeTo,
-      boolean toInclusive, boolean ascSortOrder, ValuesTransformer transformer) {
+  public Stream<ORawPair<Object, ORID>> iterateEntriesBetween(
+      Object rangeFrom,
+      boolean fromInclusive,
+      Object rangeTo,
+      boolean toInclusive,
+      boolean ascSortOrder,
+      ValuesTransformer transformer) {
     throw new UnsupportedOperationException("iterateEntriesBetween");
   }
 
   @Override
-  public Stream<ORawPair<Object, ORID>> iterateEntriesMajor(Object fromKey, boolean isInclusive, boolean ascSortOrder,
-      ValuesTransformer transformer) {
+  public Stream<ORawPair<Object, ORID>> iterateEntriesMajor(
+      Object fromKey, boolean isInclusive, boolean ascSortOrder, ValuesTransformer transformer) {
     throw new UnsupportedOperationException("iterateEntriesMajor");
   }
 
   @Override
-  public Stream<ORawPair<Object, ORID>> iterateEntriesMinor(Object toKey, boolean isInclusive, boolean ascSortOrder,
-      ValuesTransformer transformer) {
+  public Stream<ORawPair<Object, ORID>> iterateEntriesMinor(
+      Object toKey, boolean isInclusive, boolean ascSortOrder, ValuesTransformer transformer) {
     throw new UnsupportedOperationException("iterateEntriesMinor");
   }
 
   @Override
   public Stream<ORawPair<Object, ORID>> stream(final ValuesTransformer valuesTransformer) {
-    return StreamSupport.stream(new Spliterator<ORawPair<Object, ORID>>() {
-      private int nextEntriesIndex;
-      private OHashTable.Entry<Object, Object>[] entries;
+    return StreamSupport.stream(
+        new Spliterator<ORawPair<Object, ORID>>() {
+          private int nextEntriesIndex;
+          private OHashTable.Entry<Object, Object>[] entries;
 
-      private Iterator<ORID> currentIterator = new OEmptyIterator<>();
-      private Object currentKey;
+          private Iterator<ORID> currentIterator = new OEmptyIterator<>();
+          private Object currentKey;
 
-      {
-        OHashTable.Entry<Object, Object> firstEntry = hashTable.firstEntry();
-        if (firstEntry == null) {
-          //noinspection unchecked
-          entries = OCommonConst.EMPTY_BUCKET_ENTRY_ARRAY;
-        } else {
-          entries = hashTable.ceilingEntries(firstEntry.key);
-        }
+          {
+            OHashTable.Entry<Object, Object> firstEntry = hashTable.firstEntry();
+            if (firstEntry == null) {
+              //noinspection unchecked
+              entries = OCommonConst.EMPTY_BUCKET_ENTRY_ARRAY;
+            } else {
+              entries = hashTable.ceilingEntries(firstEntry.key);
+            }
 
-        if (entries.length == 0) {
-          currentIterator = null;
-        }
-      }
+            if (entries.length == 0) {
+              currentIterator = null;
+            }
+          }
 
-      @Override
-      public boolean tryAdvance(Consumer<? super ORawPair<Object, ORID>> action) {
-        if (currentIterator == null) {
-          return false;
-        }
+          @Override
+          public boolean tryAdvance(Consumer<? super ORawPair<Object, ORID>> action) {
+            if (currentIterator == null) {
+              return false;
+            }
 
-        if (currentIterator.hasNext()) {
-          final OIdentifiable identifiable = currentIterator.next();
-          action.accept(new ORawPair<>(currentKey, identifiable.getIdentity()));
-          return true;
-        }
+            if (currentIterator.hasNext()) {
+              final OIdentifiable identifiable = currentIterator.next();
+              action.accept(new ORawPair<>(currentKey, identifiable.getIdentity()));
+              return true;
+            }
 
-        while (currentIterator != null && !currentIterator.hasNext()) {
-          if (entries.length == 0) {
-            currentIterator = null;
+            while (currentIterator != null && !currentIterator.hasNext()) {
+              if (entries.length == 0) {
+                currentIterator = null;
+                return false;
+              }
+
+              final OHashTable.Entry<Object, Object> bucketEntry = entries[nextEntriesIndex];
+
+              currentKey = bucketEntry.key;
+
+              Object value = bucketEntry.value;
+              if (valuesTransformer != null) {
+                currentIterator = valuesTransformer.transformFromValue(value).iterator();
+              } else {
+                currentIterator = Collections.singletonList((ORID) value).iterator();
+              }
+
+              nextEntriesIndex++;
+
+              if (nextEntriesIndex >= entries.length) {
+                entries = hashTable.higherEntries(entries[entries.length - 1].key);
+
+                nextEntriesIndex = 0;
+              }
+            }
+
+            if (currentIterator != null) {
+              final OIdentifiable identifiable = currentIterator.next();
+              action.accept(new ORawPair<>(currentKey, identifiable.getIdentity()));
+              return true;
+            }
+
             return false;
           }
 
-          final OHashTable.Entry<Object, Object> bucketEntry = entries[nextEntriesIndex];
-
-          currentKey = bucketEntry.key;
-
-          Object value = bucketEntry.value;
-          if (valuesTransformer != null) {
-            currentIterator = valuesTransformer.transformFromValue(value).iterator();
-          } else {
-            currentIterator = Collections.singletonList((ORID) value).iterator();
+          @Override
+          public Spliterator<ORawPair<Object, ORID>> trySplit() {
+            return null;
           }
 
-          nextEntriesIndex++;
-
-          if (nextEntriesIndex >= entries.length) {
-            entries = hashTable.higherEntries(entries[entries.length - 1].key);
-
-            nextEntriesIndex = 0;
+          @Override
+          public long estimateSize() {
+            return Long.MAX_VALUE;
           }
-        }
 
-        if (currentIterator != null) {
-          final OIdentifiable identifiable = currentIterator.next();
-          action.accept(new ORawPair<>(currentKey, identifiable.getIdentity()));
-          return true;
-        }
-
-        return false;
-      }
-
-      @Override
-      public Spliterator<ORawPair<Object, ORID>> trySplit() {
-        return null;
-      }
-
-      @Override
-      public long estimateSize() {
-        return Long.MAX_VALUE;
-      }
-
-      @Override
-      public int characteristics() {
-        return NONNULL;
-      }
-    }, false);
+          @Override
+          public int characteristics() {
+            return NONNULL;
+          }
+        },
+        false);
   }
 
   @Override
   public Stream<ORawPair<Object, ORID>> descStream(final ValuesTransformer valuesTransformer) {
-    return StreamSupport.stream(new Spliterator<ORawPair<Object, ORID>>() {
-      private int nextEntriesIndex;
-      private OHashTable.Entry<Object, Object>[] entries;
+    return StreamSupport.stream(
+        new Spliterator<ORawPair<Object, ORID>>() {
+          private int nextEntriesIndex;
+          private OHashTable.Entry<Object, Object>[] entries;
 
-      private Iterator<ORID> currentIterator = new OEmptyIterator<>();
-      private Object currentKey;
+          private Iterator<ORID> currentIterator = new OEmptyIterator<>();
+          private Object currentKey;
 
-      {
-        OHashTable.Entry<Object, Object> lastEntry = hashTable.lastEntry();
-        if (lastEntry == null) {
-          //noinspection unchecked
-          entries = OCommonConst.EMPTY_BUCKET_ENTRY_ARRAY;
-        } else {
-          entries = hashTable.floorEntries(lastEntry.key);
-        }
+          {
+            OHashTable.Entry<Object, Object> lastEntry = hashTable.lastEntry();
+            if (lastEntry == null) {
+              //noinspection unchecked
+              entries = OCommonConst.EMPTY_BUCKET_ENTRY_ARRAY;
+            } else {
+              entries = hashTable.floorEntries(lastEntry.key);
+            }
 
-        if (entries.length == 0) {
-          currentIterator = null;
-        }
-      }
+            if (entries.length == 0) {
+              currentIterator = null;
+            }
+          }
 
-      @Override
-      public boolean tryAdvance(Consumer<? super ORawPair<Object, ORID>> action) {
-        if (currentIterator == null) {
-          return false;
-        }
+          @Override
+          public boolean tryAdvance(Consumer<? super ORawPair<Object, ORID>> action) {
+            if (currentIterator == null) {
+              return false;
+            }
 
-        if (currentIterator.hasNext()) {
-          final OIdentifiable identifiable = currentIterator.next();
-          action.accept(new ORawPair<>(currentKey, identifiable.getIdentity()));
-          return true;
-        }
+            if (currentIterator.hasNext()) {
+              final OIdentifiable identifiable = currentIterator.next();
+              action.accept(new ORawPair<>(currentKey, identifiable.getIdentity()));
+              return true;
+            }
 
-        while (currentIterator != null && !currentIterator.hasNext()) {
-          if (entries.length == 0) {
-            currentIterator = null;
+            while (currentIterator != null && !currentIterator.hasNext()) {
+              if (entries.length == 0) {
+                currentIterator = null;
+                return false;
+              }
+
+              final OHashTable.Entry<Object, Object> bucketEntry = entries[nextEntriesIndex];
+
+              currentKey = bucketEntry.key;
+
+              Object value = bucketEntry.value;
+              if (valuesTransformer != null) {
+                currentIterator = valuesTransformer.transformFromValue(value).iterator();
+              } else {
+                currentIterator = Collections.singletonList((ORID) value).iterator();
+              }
+
+              nextEntriesIndex--;
+
+              if (nextEntriesIndex < 0) {
+                entries = hashTable.lowerEntries(entries[0].key);
+
+                nextEntriesIndex = entries.length - 1;
+              }
+            }
+
+            if (currentIterator != null) {
+              final OIdentifiable identifiable = currentIterator.next();
+              action.accept(new ORawPair<>(currentKey, identifiable.getIdentity()));
+              return true;
+            }
+
             return false;
           }
 
-          final OHashTable.Entry<Object, Object> bucketEntry = entries[nextEntriesIndex];
-
-          currentKey = bucketEntry.key;
-
-          Object value = bucketEntry.value;
-          if (valuesTransformer != null) {
-            currentIterator = valuesTransformer.transformFromValue(value).iterator();
-          } else {
-            currentIterator = Collections.singletonList((ORID) value).iterator();
+          @Override
+          public Spliterator<ORawPair<Object, ORID>> trySplit() {
+            return null;
           }
 
-          nextEntriesIndex--;
-
-          if (nextEntriesIndex < 0) {
-            entries = hashTable.lowerEntries(entries[0].key);
-
-            nextEntriesIndex = entries.length - 1;
+          @Override
+          public long estimateSize() {
+            return Long.MAX_VALUE;
           }
-        }
 
-        if (currentIterator != null) {
-          final OIdentifiable identifiable = currentIterator.next();
-          action.accept(new ORawPair<>(currentKey, identifiable.getIdentity()));
-          return true;
-        }
-
-        return false;
-      }
-
-      @Override
-      public Spliterator<ORawPair<Object, ORID>> trySplit() {
-        return null;
-      }
-
-      @Override
-      public long estimateSize() {
-        return Long.MAX_VALUE;
-      }
-
-      @Override
-      public int characteristics() {
-        return NONNULL;
-      }
-    }, false);
+          @Override
+          public int characteristics() {
+            return NONNULL;
+          }
+        },
+        false);
   }
 
   @Override
   public Stream<Object> keyStream() {
-    return StreamSupport.stream(new Spliterator<Object>() {
-      private int nextEntriesIndex;
-      private OHashTable.Entry<Object, Object>[] entries;
+    return StreamSupport.stream(
+        new Spliterator<Object>() {
+          private int nextEntriesIndex;
+          private OHashTable.Entry<Object, Object>[] entries;
 
-      {
-        OHashTable.Entry<Object, Object> firstEntry = hashTable.firstEntry();
-        if (firstEntry == null) {
-          //noinspection unchecked
-          entries = OCommonConst.EMPTY_BUCKET_ENTRY_ARRAY;
-        } else {
-          entries = hashTable.ceilingEntries(firstEntry.key);
-        }
-      }
+          {
+            OHashTable.Entry<Object, Object> firstEntry = hashTable.firstEntry();
+            if (firstEntry == null) {
+              //noinspection unchecked
+              entries = OCommonConst.EMPTY_BUCKET_ENTRY_ARRAY;
+            } else {
+              entries = hashTable.ceilingEntries(firstEntry.key);
+            }
+          }
 
-      @Override
-      public boolean tryAdvance(Consumer<? super Object> action) {
-        if (entries.length == 0) {
-          return false;
-        }
+          @Override
+          public boolean tryAdvance(Consumer<? super Object> action) {
+            if (entries.length == 0) {
+              return false;
+            }
 
-        final OHashTable.Entry<Object, Object> bucketEntry = entries[nextEntriesIndex];
-        nextEntriesIndex++;
-        if (nextEntriesIndex >= entries.length) {
-          entries = hashTable.higherEntries(entries[entries.length - 1].key);
+            final OHashTable.Entry<Object, Object> bucketEntry = entries[nextEntriesIndex];
+            nextEntriesIndex++;
+            if (nextEntriesIndex >= entries.length) {
+              entries = hashTable.higherEntries(entries[entries.length - 1].key);
 
-          nextEntriesIndex = 0;
-        }
+              nextEntriesIndex = 0;
+            }
 
-        action.accept(bucketEntry.key);
-        return true;
-      }
+            action.accept(bucketEntry.key);
+            return true;
+          }
 
-      @Override
-      public Spliterator<Object> trySplit() {
-        return null;
-      }
+          @Override
+          public Spliterator<Object> trySplit() {
+            return null;
+          }
 
-      @Override
-      public long estimateSize() {
-        return Long.MAX_VALUE;
-      }
+          @Override
+          public long estimateSize() {
+            return Long.MAX_VALUE;
+          }
 
-      @Override
-      public int characteristics() {
-        return NONNULL;
-      }
-    }, false);
+          @Override
+          public int characteristics() {
+            return NONNULL;
+          }
+        },
+        false);
   }
 
   @Override
@@ -502,5 +561,4 @@ public final class OHashTableIndexEngine implements OIndexEngine {
     hashTable.acquireAtomicExclusiveLock();
     return true;
   }
-
 }

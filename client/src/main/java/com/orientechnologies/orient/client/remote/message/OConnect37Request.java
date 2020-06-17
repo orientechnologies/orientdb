@@ -8,7 +8,6 @@ import com.orientechnologies.orient.core.serialization.serializer.record.ORecord
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelDataInput;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelDataOutput;
-
 import java.io.IOException;
 
 public class OConnect37Request implements OBinaryRequest<OConnectResponse> {
@@ -20,8 +19,7 @@ public class OConnect37Request implements OBinaryRequest<OConnectResponse> {
     this.password = password;
   }
 
-  public OConnect37Request() {
-  }
+  public OConnect37Request() {}
 
   @Override
   public void write(OChannelDataOutput network, OStorageRemoteSession session) throws IOException {
@@ -30,7 +28,8 @@ public class OConnect37Request implements OBinaryRequest<OConnectResponse> {
   }
 
   @Override
-  public void read(OChannelDataInput channel, int protocolVersion, ORecordSerializer serializer) throws IOException {
+  public void read(OChannelDataInput channel, int protocolVersion, ORecordSerializer serializer)
+      throws IOException {
     username = channel.readString();
     password = channel.readString();
   }
@@ -66,5 +65,4 @@ public class OConnect37Request implements OBinaryRequest<OConnectResponse> {
   public OBinaryResponse execute(OBinaryRequestExecutor executor) {
     return executor.executeConnect37(this);
   }
-
 }

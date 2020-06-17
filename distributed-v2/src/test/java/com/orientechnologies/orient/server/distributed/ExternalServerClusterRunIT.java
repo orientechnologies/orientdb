@@ -15,7 +15,7 @@
  *  *  limitations under the License.
  *  *
  *  * For more information: http://orientdb.com
- *  
+ *
  */
 
 package com.orientechnologies.orient.server.distributed;
@@ -24,7 +24,8 @@ import org.junit.Ignore;
 import org.junit.Test;
 
 /**
- * Start 3 servers and wait for external commands. This test must be ignored and activated only upon request for local debugging.
+ * Start 3 servers and wait for external commands. This test must be ignored and activated only upon
+ * request for local debugging.
  */
 public class ExternalServerClusterRunIT extends AbstractServerClusterTest {
   public String getDatabaseName() {
@@ -43,5 +44,4 @@ public class ExternalServerClusterRunIT extends AbstractServerClusterTest {
   protected void executeTest() throws Exception {
     Thread.sleep(Long.MAX_VALUE);
   }
-
 }

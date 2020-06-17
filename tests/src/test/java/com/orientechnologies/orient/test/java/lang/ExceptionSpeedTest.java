@@ -15,27 +15,25 @@
  */
 package com.orientechnologies.orient.test.java.lang;
 
+import com.orientechnologies.common.test.SpeedTestMonoThread;
 import java.io.IOException;
 import java.util.NoSuchElementException;
-
 import org.testng.annotations.Test;
-
-import com.orientechnologies.common.test.SpeedTestMonoThread;
 
 public class ExceptionSpeedTest extends SpeedTestMonoThread {
 
-	public ExceptionSpeedTest() {
-		super(1000000);
-	}
+  public ExceptionSpeedTest() {
+    super(1000000);
+  }
 
-	@Override
-	@Test(enabled = false)
-	public void cycle() throws IOException {
-		try {
-			throw new NoSuchElementException();
-		} catch (Throwable t) {
+  @Override
+  @Test(enabled = false)
+  public void cycle() throws IOException {
+    try {
+      throw new NoSuchElementException();
+    } catch (Throwable t) {
 
-		} finally {
-		}
-	}
+    } finally {
+    }
+  }
 }

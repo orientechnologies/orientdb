@@ -1,19 +1,18 @@
 package com.orientechnologies.orient.core.db;
 
+import static org.junit.Assert.assertEquals;
+
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import org.junit.Test;
-
-import static org.junit.Assert.assertEquals;
 
 public class ODatabasePoolTest {
   @Test
   public void testPool() {
     OrientDB orientDb = new OrientDB("embedded:", OrientDBConfig.defaultConfig());
 
-    if (!orientDb.exists("test"))
-      orientDb.create("test", ODatabaseType.MEMORY);
+    if (!orientDb.exists("test")) orientDb.create("test", ODatabaseType.MEMORY);
 
     ODatabasePool pool = new ODatabasePool(orientDb, "test", "admin", "admin");
     ODatabaseDocument db = pool.acquire();
@@ -25,7 +24,10 @@ public class ODatabasePoolTest {
 
   @Test
   public void testPoolCloseTx() {
-    OrientDB orientDb = new OrientDB("embedded:", OrientDBConfig.builder().addConfig(OGlobalConfiguration.DB_POOL_MAX, 1).build());
+    OrientDB orientDb =
+        new OrientDB(
+            "embedded:",
+            OrientDBConfig.builder().addConfig(OGlobalConfiguration.DB_POOL_MAX, 1).build());
 
     if (!orientDb.exists("test")) {
       orientDb.create("test", ODatabaseType.MEMORY);
@@ -46,7 +48,10 @@ public class ODatabasePoolTest {
 
   @Test
   public void testPoolDoubleClose() {
-    OrientDB orientDb = new OrientDB("embedded:", OrientDBConfig.builder().addConfig(OGlobalConfiguration.DB_POOL_MAX, 1).build());
+    OrientDB orientDb =
+        new OrientDB(
+            "embedded:",
+            OrientDBConfig.builder().addConfig(OGlobalConfiguration.DB_POOL_MAX, 1).build());
 
     if (!orientDb.exists("test")) {
       orientDb.create("test", ODatabaseType.MEMORY);
@@ -58,5 +63,4 @@ public class ODatabasePoolTest {
     db.close();
     orientDb.close();
   }
-
 }

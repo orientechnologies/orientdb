@@ -2,19 +2,18 @@ package com.orientechnologies.orient.distributed.impl.metadata;
 
 import com.orientechnologies.orient.core.db.config.ONodeIdentity;
 import com.orientechnologies.orient.distributed.impl.log.OLogId;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
 public class OElection {
-  private final UUID                     electionId;
-  private final int                      quorum;
-  private final List<OElectionReply>     replies    = new ArrayList<>();
-  private       Optional<OElectionReply> elected;
-  private final List<OElectionReply>     logsStatus = new ArrayList<>();
-  private       Optional<OElectionReply> logChosen;
+  private final UUID electionId;
+  private final int quorum;
+  private final List<OElectionReply> replies = new ArrayList<>();
+  private Optional<OElectionReply> elected;
+  private final List<OElectionReply> logsStatus = new ArrayList<>();
+  private Optional<OElectionReply> logChosen;
 
   public OElection(int quorum) {
     this.quorum = quorum;

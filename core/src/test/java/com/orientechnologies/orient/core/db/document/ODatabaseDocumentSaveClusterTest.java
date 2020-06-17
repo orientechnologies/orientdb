@@ -9,16 +9,15 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
-/**
- * Created by tglman on 04/11/15.
- */
+/** Created by tglman on 04/11/15. */
 public class ODatabaseDocumentSaveClusterTest {
 
   private ODatabaseDocument db;
 
   @Before
   public void before() {
-    db = new ODatabaseDocumentTx("memory:" + ODatabaseDocumentSaveClusterTest.class.getSimpleName());
+    db =
+        new ODatabaseDocumentTx("memory:" + ODatabaseDocumentSaveClusterTest.class.getSimpleName());
     db.create();
   }
 
@@ -28,7 +27,6 @@ public class ODatabaseDocumentSaveClusterTest {
     db.addCluster("test_one");
 
     db.save(new ODocument("test"), "test_one");
-
   }
 
   @Test(expected = OSchemaException.class)
@@ -66,5 +64,4 @@ public class ODatabaseDocumentSaveClusterTest {
   public void after() {
     db.drop();
   }
-
 }

@@ -5,8 +5,13 @@ package com.orientechnologies.orient.core.sql.parser;
 import com.orientechnologies.orient.core.command.OBasicCommandContext;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.ODatabase;
-import com.orientechnologies.orient.core.sql.executor.*;
-
+import com.orientechnologies.orient.core.sql.executor.EmptyStep;
+import com.orientechnologies.orient.core.sql.executor.IfStep;
+import com.orientechnologies.orient.core.sql.executor.OExecutionStepInternal;
+import com.orientechnologies.orient.core.sql.executor.OIfExecutionPlan;
+import com.orientechnologies.orient.core.sql.executor.OResultSet;
+import com.orientechnologies.orient.core.sql.executor.OSelectExecutionPlan;
+import com.orientechnologies.orient.core.sql.executor.OUpdateExecutionPlan;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -15,8 +20,9 @@ import java.util.stream.Collectors;
 
 public class OIfStatement extends OStatement {
   protected OBooleanExpression expression;
-  protected List<OStatement> statements     = new ArrayList<OStatement>();
-  protected List<OStatement> elseStatements = new ArrayList<OStatement>();//TODO support ELSE in the SQL syntax
+  protected List<OStatement> statements = new ArrayList<OStatement>();
+  protected List<OStatement> elseStatements =
+      new ArrayList<OStatement>(); // TODO support ELSE in the SQL syntax
 
   public OIfStatement(int id) {
     super(id);
@@ -42,7 +48,8 @@ public class OIfStatement extends OStatement {
   }
 
   @Override
-  public OResultSet execute(ODatabase db, Object[] args, OCommandContext parentCtx, boolean usePlanCache) {
+  public OResultSet execute(
+      ODatabase db, Object[] args, OCommandContext parentCtx, boolean usePlanCache) {
     OBasicCommandContext ctx = new OBasicCommandContext();
     if (parentCtx != null) {
       ctx.setParentWithoutOverridingChild(parentCtx);
@@ -60,7 +67,7 @@ public class OIfStatement extends OStatement {
     if (usePlanCache) {
       executionPlan = createExecutionPlan(ctx, false);
     } else {
-      executionPlan = (OIfExecutionPlan)createExecutionPlanNoCache(ctx, false);
+      executionPlan = (OIfExecutionPlan) createExecutionPlanNoCache(ctx, false);
     }
 
     OExecutionStepInternal last = executionPlan.executeUntilReturn();
@@ -80,7 +87,8 @@ public class OIfStatement extends OStatement {
   }
 
   @Override
-  public OResultSet execute(ODatabase db, Map params, OCommandContext parentCtx, boolean usePlanCache) {
+  public OResultSet execute(
+      ODatabase db, Map params, OCommandContext parentCtx, boolean usePlanCache) {
     OBasicCommandContext ctx = new OBasicCommandContext();
     if (parentCtx != null) {
       ctx.setParentWithoutOverridingChild(parentCtx);
@@ -92,7 +100,7 @@ public class OIfStatement extends OStatement {
     if (usePlanCache) {
       executionPlan = createExecutionPlan(ctx, false);
     } else {
-      executionPlan = (OIfExecutionPlan)createExecutionPlanNoCache(ctx, false);
+      executionPlan = (OIfExecutionPlan) createExecutionPlanNoCache(ctx, false);
     }
 
     OExecutionStepInternal last = executionPlan.executeUntilReturn();
@@ -142,7 +150,6 @@ public class OIfStatement extends OStatement {
         builder.append(";\n");
       }
       builder.append("}");
-
     }
   }
 
@@ -150,18 +157,21 @@ public class OIfStatement extends OStatement {
   public OIfStatement copy() {
     OIfStatement result = new OIfStatement(-1);
     result.expression = expression == null ? null : expression.copy();
-    result.statements = statements == null ? null : statements.stream().map(OStatement::copy).collect(Collectors.toList());
+    result.statements =
+        statements == null
+            ? null
+            : statements.stream().map(OStatement::copy).collect(Collectors.toList());
     result.elseStatements =
-        elseStatements == null ? null : elseStatements.stream().map(OStatement::copy).collect(Collectors.toList());
+        elseStatements == null
+            ? null
+            : elseStatements.stream().map(OStatement::copy).collect(Collectors.toList());
     return result;
   }
 
   @Override
   public boolean equals(Object o) {
-    if (this == o)
-      return true;
-    if (o == null || getClass() != o.getClass())
-      return false;
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
 
     OIfStatement that = (OIfStatement) o;
 
@@ -169,8 +179,9 @@ public class OIfStatement extends OStatement {
       return false;
     if (statements != null ? !statements.equals(that.statements) : that.statements != null)
       return false;
-    if (elseStatements != null ? !elseStatements.equals(that.elseStatements) : that.elseStatements != null)
-      return false;
+    if (elseStatements != null
+        ? !elseStatements.equals(that.elseStatements)
+        : that.elseStatements != null) return false;
 
     return true;
   }

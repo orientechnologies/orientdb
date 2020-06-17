@@ -9,7 +9,6 @@ import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import com.orientechnologies.orient.core.sql.operator.OQueryOperatorEquals;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -17,15 +16,15 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 public class OInCondition extends OBooleanExpression {
-  protected OExpression            left;
+  protected OExpression left;
   protected OBinaryCompareOperator operator;
-  protected OSelectStatement       rightStatement;
-  protected OInputParameter        rightParam;
-  protected OMathExpression        rightMathExpression;
-  protected Object                 right;
+  protected OSelectStatement rightStatement;
+  protected OInputParameter rightParam;
+  protected OMathExpression rightMathExpression;
+  protected Object right;
 
-  private static final Object UNSET           = new Object();
-  private              Object inputFinalValue = UNSET;
+  private static final Object UNSET = new Object();
+  private Object inputFinalValue = UNSET;
 
   public OInCondition(int id) {
     super(id);
@@ -101,27 +100,23 @@ public class OInCondition extends OBooleanExpression {
       }
 
       for (final Object o : OMultiValue.getMultiValueIterable(iRight, false)) {
-        if (OQueryOperatorEquals.equals(iLeft, o))
-          return true;
+        if (OQueryOperatorEquals.equals(iLeft, o)) return true;
         if (OMultiValue.isMultiValue(iLeft) && OMultiValue.getSize(iLeft) == 1) {
 
           Object item = OMultiValue.getFirstValue(iLeft);
           if (item instanceof OResult && ((OResult) item).getPropertyNames().size() == 1) {
-            Object propValue = ((OResult) item).getProperty(((OResult) item).getPropertyNames().iterator().next());
-            if (OQueryOperatorEquals.equals(propValue, o))
-              return true;
+            Object propValue =
+                ((OResult) item).getProperty(((OResult) item).getPropertyNames().iterator().next());
+            if (OQueryOperatorEquals.equals(propValue, o)) return true;
           }
         }
-
       }
     } else if (iRight.getClass().isArray()) {
       for (final Object o : (Object[]) iRight) {
-        if (OQueryOperatorEquals.equals(iLeft, o))
-          return true;
+        if (OQueryOperatorEquals.equals(iLeft, o)) return true;
       }
-    } else if (iRight instanceof OResultSet)
+    } else if (iRight instanceof OResultSet) {
 
-    {
       OResultSet rsRight = (OResultSet) iRight;
       rsRight.reset();
       while (((OResultSet) iRight).hasNext()) {
@@ -257,27 +252,25 @@ public class OInCondition extends OBooleanExpression {
 
   @Override
   public boolean equals(Object o) {
-    if (this == o)
-      return true;
-    if (o == null || getClass() != o.getClass())
-      return false;
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
 
     OInCondition that = (OInCondition) o;
 
-    if (left != null ? !left.equals(that.left) : that.left != null)
-      return false;
-    if (operator != null ? !operator.equals(that.operator) : that.operator != null)
-      return false;
-    if (rightStatement != null ? !rightStatement.equals(that.rightStatement) : that.rightStatement != null)
-      return false;
+    if (left != null ? !left.equals(that.left) : that.left != null) return false;
+    if (operator != null ? !operator.equals(that.operator) : that.operator != null) return false;
+    if (rightStatement != null
+        ? !rightStatement.equals(that.rightStatement)
+        : that.rightStatement != null) return false;
     if (rightParam != null ? !rightParam.equals(that.rightParam) : that.rightParam != null)
       return false;
-    if (rightMathExpression != null ? !rightMathExpression.equals(that.rightMathExpression) : that.rightMathExpression != null)
-      return false;
-    if (right != null ? !right.equals(that.right) : that.right != null)
-      return false;
-    if (inputFinalValue != null ? !inputFinalValue.equals(that.inputFinalValue) : that.inputFinalValue != null)
-      return false;
+    if (rightMathExpression != null
+        ? !rightMathExpression.equals(that.rightMathExpression)
+        : that.rightMathExpression != null) return false;
+    if (right != null ? !right.equals(that.right) : that.right != null) return false;
+    if (inputFinalValue != null
+        ? !inputFinalValue.equals(that.inputFinalValue)
+        : that.inputFinalValue != null) return false;
 
     return true;
   }
@@ -298,7 +291,8 @@ public class OInCondition extends OBooleanExpression {
   public List<String> getMatchPatternInvolvedAliases() {
     List<String> leftX = left == null ? null : left.getMatchPatternInvolvedAliases();
 
-    List<String> conditionX = rightMathExpression == null ? null : rightMathExpression.getMatchPatternInvolvedAliases();
+    List<String> conditionX =
+        rightMathExpression == null ? null : rightMathExpression.getMatchPatternInvolvedAliases();
 
     List<String> result = new ArrayList<String>();
     if (leftX != null) {
@@ -354,4 +348,3 @@ public class OInCondition extends OBooleanExpression {
   }
 }
 /* JavaCC - OriginalChecksum=00df7cb1877c0a12d24205c1700653c7 (do not edit this line) */
-

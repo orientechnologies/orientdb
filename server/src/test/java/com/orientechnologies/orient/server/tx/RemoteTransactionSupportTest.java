@@ -1,5 +1,9 @@
 package com.orientechnologies.orient.server.tx;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
+
 import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
@@ -22,28 +26,23 @@ import com.orientechnologies.orient.core.storage.ORecordDuplicatedException;
 import com.orientechnologies.orient.core.tx.OTransaction;
 import com.orientechnologies.orient.server.OClientConnection;
 import com.orientechnologies.orient.server.OServer;
+import java.io.File;
+import java.util.ArrayList;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
-import java.io.File;
-import java.util.ArrayList;
-
-import static org.junit.Assert.*;
-
-/**
- * Created by tglman on 03/01/17.
- */
+/** Created by tglman on 03/01/17. */
 public class RemoteTransactionSupportTest {
 
-  private static final String            CLASS_1          = "SomeClass";
-  private static final String            CLASS_2          = "AnotherClass";
-  private static final String            EDGE             = "SomeEdge";
-  private static final String            FIELD_VALUE      = "VALUE";
-  private static final String            SERVER_DIRECTORY = "./target/transaction";
-  private              OServer           server;
-  private              OrientDB          orientDB;
-  private              ODatabaseDocument database;
+  private static final String CLASS_1 = "SomeClass";
+  private static final String CLASS_2 = "AnotherClass";
+  private static final String EDGE = "SomeEdge";
+  private static final String FIELD_VALUE = "VALUE";
+  private static final String SERVER_DIRECTORY = "./target/transaction";
+  private OServer server;
+  private OrientDB orientDB;
+  private ODatabaseDocument database;
 
   @Before
   public void before() throws Exception {
@@ -64,7 +63,6 @@ public class RemoteTransactionSupportTest {
 
     OClass uniqueClass = database.createClass("UniqueIndexedTx");
     uniqueClass.createProperty("name", OType.STRING).createIndex(OClass.INDEX_TYPE.UNIQUE);
-
   }
 
   @Test
@@ -139,7 +137,6 @@ public class RemoteTransactionSupportTest {
     assertTrue(result1.hasNext());
     assertEquals((long) result1.next().getProperty("count(*)"), 1L);
     result1.close();
-
   }
 
   @Test
@@ -167,7 +164,6 @@ public class RemoteTransactionSupportTest {
 
     assertFalse(database.getTransaction().isActive());
     result1.close();
-
   }
 
   @Test
@@ -213,7 +209,6 @@ public class RemoteTransactionSupportTest {
     OResultSet result = database.command("select from SomeTx");
     assertFalse(result.hasNext());
     result.close();
-
   }
 
   @Test
@@ -346,7 +341,6 @@ public class RemoteTransactionSupportTest {
     assertEquals((long) result1.next().getProperty("count(*)"), 6L);
     result1.close();
     assertFalse(database.getTransaction().isActive());
-
   }
 
   @Test
@@ -391,7 +385,6 @@ public class RemoteTransactionSupportTest {
     assertTrue(result1.hasNext());
     assertEquals(result1.next().getProperty("rids"), val);
     result1.close();
-
   }
 
   @Test
@@ -404,8 +397,7 @@ public class RemoteTransactionSupportTest {
     OElement someTx = database.newElement("SomeTx");
     someTx.setProperty("name", "foo");
     ORecord id = database.save(someTx);
-    try (OResultSet rs = database.query("select from ?", id)) {
-    }
+    try (OResultSet rs = database.query("select from ?", id)) {}
 
     database.commit();
 
@@ -413,7 +405,6 @@ public class RemoteTransactionSupportTest {
     try (OResultSet rs = database.query("select * from IndexedTx where name = ?", FIELD_VALUE)) {
       assertEquals(rs.stream().count(), 1);
     }
-
   }
 
   @Test(expected = ORecordDuplicatedException.class)
@@ -428,7 +419,6 @@ public class RemoteTransactionSupportTest {
     v2.setProperty("name", "a");
     database.save(v2);
     database.commit();
-
   }
 
   @Test
@@ -451,7 +441,6 @@ public class RemoteTransactionSupportTest {
     result1 = database.query("select rids from SomeTx ");
     assertTrue(result1.hasNext());
     result1.close();
-
   }
 
   @After
@@ -464,5 +453,4 @@ public class RemoteTransactionSupportTest {
     OFileUtils.deleteRecursively(new File(SERVER_DIRECTORY));
     Orient.instance().startup();
   }
-
 }

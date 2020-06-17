@@ -23,17 +23,13 @@ import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
+import java.io.InputStream;
+import java.util.List;
 import org.apache.lucene.analysis.standard.StandardAnalyzer;
 import org.junit.Assert;
 import org.junit.Test;
 
-import java.io.InputStream;
-import java.util.List;
-
-/**
- * Created by enricorisa on 26/09/14.
- */
-
+/** Created by enricorisa on 26/09/14. */
 public class LuceneCreateIndexTest extends BaseLuceneTest {
 
   @Test
@@ -42,12 +38,18 @@ public class LuceneCreateIndexTest extends BaseLuceneTest {
 
     db.command(new OCommandScript("sql", getScriptFromStream(stream))).execute();
 
-    db.command(new OCommandSQL(
-        "create index Song.title on Song (title) FULLTEXT ENGINE LUCENE METADATA {\"analyzer\":\"" + StandardAnalyzer.class
-            .getName() + "\"}")).execute();
-    db.command(new OCommandSQL(
-        "create index Song.author on Song (author) FULLTEXT ENGINE LUCENE METADATA {\"analyzer\":\"" + StandardAnalyzer.class
-            .getName() + "\"}")).execute();
+    db.command(
+            new OCommandSQL(
+                "create index Song.title on Song (title) FULLTEXT ENGINE LUCENE METADATA {\"analyzer\":\""
+                    + StandardAnalyzer.class.getName()
+                    + "\"}"))
+        .execute();
+    db.command(
+            new OCommandSQL(
+                "create index Song.author on Song (author) FULLTEXT ENGINE LUCENE METADATA {\"analyzer\":\""
+                    + StandardAnalyzer.class.getName()
+                    + "\"}"))
+        .execute();
 
     ODocument doc = new ODocument("Song");
 
@@ -70,23 +72,30 @@ public class LuceneCreateIndexTest extends BaseLuceneTest {
   }
 
   protected void testMetadata() {
-    final ODocument index = db.getMetadata().getIndexManagerInternal().getIndex(db, "Song.title").getMetadata();
+    final ODocument index =
+        db.getMetadata().getIndexManagerInternal().getIndex(db, "Song.title").getMetadata();
 
     Assert.assertEquals(index.field("analyzer"), StandardAnalyzer.class.getName());
   }
 
   protected void assertQuery() {
-    List<ODocument> docs = db.query(new OSQLSynchQuery<ODocument>("select * from Song where title LUCENE \"mountain\""));
+    List<ODocument> docs =
+        db.query(
+            new OSQLSynchQuery<ODocument>("select * from Song where title LUCENE \"mountain\""));
 
     Assert.assertEquals(4, docs.size());
 
-    docs = db.query(new OSQLSynchQuery<ODocument>("select * from Song where author LUCENE \"Fabbio\""));
+    docs =
+        db.query(
+            new OSQLSynchQuery<ODocument>("select * from Song where author LUCENE \"Fabbio\""));
 
     Assert.assertEquals(87, docs.size());
 
     System.out.println("-------------");
-    String query = "select * from Song where title LUCENE \"mountain\" and author LUCENE \"Fabbio\"  ";
-    //String query = "select * from Song where [title] LUCENE \"(title:mountain)\"  and author = 'Fabbio'";
+    String query =
+        "select * from Song where title LUCENE \"mountain\" and author LUCENE \"Fabbio\"  ";
+    // String query = "select * from Song where [title] LUCENE \"(title:mountain)\"  and author =
+    // 'Fabbio'";
     docs = db.query(new OSQLSynchQuery<ODocument>(query));
     Assert.assertEquals(1, docs.size());
 
@@ -98,9 +107,11 @@ public class LuceneCreateIndexTest extends BaseLuceneTest {
 
   protected void assertNewQuery() {
 
-    List<ODocument> docs = db.query(new OSQLSynchQuery<ODocument>("select * from Song where [title] LUCENE \"(title:Local)\""));
+    List<ODocument> docs =
+        db.query(
+            new OSQLSynchQuery<ODocument>(
+                "select * from Song where [title] LUCENE \"(title:Local)\""));
 
     Assert.assertEquals(1, docs.size());
   }
-
 }

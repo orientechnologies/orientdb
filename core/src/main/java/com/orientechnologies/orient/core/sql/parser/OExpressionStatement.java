@@ -6,12 +6,10 @@ import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.sql.executor.OInternalResultSet;
 import com.orientechnologies.orient.core.sql.executor.OResultInternal;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
-
 import java.util.Map;
 import java.util.Objects;
 
-public
-class OExpressionStatement extends OSimpleExecStatement {
+public class OExpressionStatement extends OSimpleExecStatement {
 
   protected OExpression expression;
 
@@ -32,7 +30,6 @@ class OExpressionStatement extends OSimpleExecStatement {
     result.add(item);
     return result;
   }
-
 
   @Override
   public boolean executinPlanCanBeCached() {
@@ -68,6 +65,5 @@ class OExpressionStatement extends OSimpleExecStatement {
   public int hashCode() {
     return Objects.hash(expression);
   }
-
 }
 /* JavaCC - OriginalChecksum=c3eda193cdcf863b4ced490ef1f37734 (do not edit this line) */

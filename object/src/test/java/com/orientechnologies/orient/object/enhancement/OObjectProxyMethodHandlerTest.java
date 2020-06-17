@@ -1,21 +1,21 @@
 package com.orientechnologies.orient.object.enhancement;
 
-import com.orientechnologies.orient.object.db.OObjectDatabaseTx;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
-import javax.persistence.CascadeType;
-import javax.persistence.Embedded;
-import javax.persistence.OneToMany;
+import com.orientechnologies.orient.object.db.OObjectDatabaseTx;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-
-import static org.junit.Assert.*;
+import javax.persistence.CascadeType;
+import javax.persistence.Embedded;
+import javax.persistence.OneToMany;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Test;
 
 /**
  * @author JN <a href="mailto:jn@brain-activit.com">Julian Neuhaus</a>
@@ -56,8 +56,10 @@ public class OObjectProxyMethodHandlerTest {
 
   @Test
   public void reloadTestForMapsInTarget() {
-    EntityWithDifferentFieldTypes targetObject = this.databaseTx.newInstance(EntityWithDifferentFieldTypes.class);
-    EntityWithDifferentFieldTypes childObject = this.databaseTx.newInstance(EntityWithDifferentFieldTypes.class);
+    EntityWithDifferentFieldTypes targetObject =
+        this.databaseTx.newInstance(EntityWithDifferentFieldTypes.class);
+    EntityWithDifferentFieldTypes childObject =
+        this.databaseTx.newInstance(EntityWithDifferentFieldTypes.class);
 
     Map<String, String> map = new HashMap<String, String>();
     map.put("key", "value");
@@ -92,7 +94,8 @@ public class OObjectProxyMethodHandlerTest {
   public void reloadTestForListsInTarget() {
     EntityWithDifferentFieldTypes targetObject = new EntityWithDifferentFieldTypes();
 
-    List<EntityWithDifferentFieldTypes> entitieList = new ArrayList<EntityWithDifferentFieldTypes>();
+    List<EntityWithDifferentFieldTypes> entitieList =
+        new ArrayList<EntityWithDifferentFieldTypes>();
 
     EntityWithDifferentFieldTypes listObject1 = new EntityWithDifferentFieldTypes();
     EntityWithDifferentFieldTypes listObject2 = new EntityWithDifferentFieldTypes();
@@ -122,7 +125,8 @@ public class OObjectProxyMethodHandlerTest {
 
     targetObject = this.databaseTx.save(targetObject);
 
-    for (EntityWithDifferentFieldTypes entity : targetObject.getListOfEntityWithDifferentFieldTypes()) {
+    for (EntityWithDifferentFieldTypes entity :
+        targetObject.getListOfEntityWithDifferentFieldTypes()) {
       assertTrue(entity.isBooleanField() == true);
       assertTrue(entity.getByteField() == Byte.MIN_VALUE);
       assertTrue(entity.getDoubleField() == 1.1);
@@ -144,7 +148,8 @@ public class OObjectProxyMethodHandlerTest {
       entity.setObjectField(new EntityWithDifferentFieldTypes());
     }
 
-    for (EntityWithDifferentFieldTypes entity : targetObject.getListOfEntityWithDifferentFieldTypes()) {
+    for (EntityWithDifferentFieldTypes entity :
+        targetObject.getListOfEntityWithDifferentFieldTypes()) {
       this.databaseTx.reload(entity);
       assertTrue(entity.isBooleanField() == true);
       assertTrue(entity.getByteField() == Byte.MIN_VALUE);
@@ -193,10 +198,8 @@ public class OObjectProxyMethodHandlerTest {
         Object defaultValue = m.invoke(handler, field);
         Object expectedValue = fieldsAndThereDefaultValue.get(fieldName);
 
-        if (expectedValue == null)
-          assertTrue(defaultValue == null);
-        else
-          assertTrue(expectedValue.equals(defaultValue));
+        if (expectedValue == null) assertTrue(defaultValue == null);
+        else assertTrue(expectedValue.equals(defaultValue));
       } catch (Exception e) {
         e.printStackTrace();
         fail("Unexpected exception");
@@ -213,20 +216,15 @@ public class OObjectProxyMethodHandlerTest {
     databaseTx.detachAll(saved, true);
   }
 
-  public static class EmbeddedType1 {
-  }
+  public static class EmbeddedType1 {}
 
-  public static class EmbeddedType2 {
-  }
+  public static class EmbeddedType2 {}
 
   public static class EntityWithEmbeddedFields {
-    @Embedded
-    private EmbeddedType1 _embeddedType1;
-    @Embedded
-    private EmbeddedType2 _embeddedType2;
+    @Embedded private EmbeddedType1 _embeddedType1;
+    @Embedded private EmbeddedType2 _embeddedType2;
 
-    public EntityWithEmbeddedFields() {
-    }
+    public EntityWithEmbeddedFields() {}
 
     public EmbeddedType1 getEmbeddedType1() {
       return _embeddedType1;
@@ -246,16 +244,16 @@ public class OObjectProxyMethodHandlerTest {
   }
 
   public class EntityWithDifferentFieldTypes {
-    private byte                          byteField;
-    private short                         shortField;
-    private int                           intField;
-    private long                          longField;
-    private float                         floatField;
-    private double                        doubleField;
-    private String                        stringField;
-    private boolean                       booleanField;
+    private byte byteField;
+    private short shortField;
+    private int intField;
+    private long longField;
+    private float floatField;
+    private double doubleField;
+    private String stringField;
+    private boolean booleanField;
     private EntityWithDifferentFieldTypes objectField;
-    private Map<String, String> stringStringMap  = new HashMap<String, String>();
+    private Map<String, String> stringStringMap = new HashMap<String, String>();
     private Map<String, String> stringStringMap2 = new HashMap<String, String>();
 
     @OneToMany(cascade = CascadeType.ALL)
@@ -342,7 +340,8 @@ public class OObjectProxyMethodHandlerTest {
       return listOfEntityWithDifferentFieldTypes;
     }
 
-    public void setListOfEntityWithDifferentFieldTypes(List<EntityWithDifferentFieldTypes> listOfEntityWithDifferentFieldTypes) {
+    public void setListOfEntityWithDifferentFieldTypes(
+        List<EntityWithDifferentFieldTypes> listOfEntityWithDifferentFieldTypes) {
       this.listOfEntityWithDifferentFieldTypes = listOfEntityWithDifferentFieldTypes;
     }
 

@@ -24,7 +24,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-
 import javax.persistence.Cache;
 import javax.persistence.EntityManager;
 import javax.persistence.EntityManagerFactory;
@@ -38,14 +37,12 @@ import javax.persistence.metamodel.Metamodel;
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
  */
 public class OJPAEntityManagerFactory implements EntityManagerFactory {
-  /**
-   * the log used by this class.
-   */
+  /** the log used by this class. */
   private static Logger logger = Logger.getLogger(OJPAPersistenceProvider.class.getName());
 
-  private       boolean                 opened    = true;
+  private boolean opened = true;
   private final List<OJPAEntityManager> instances = new ArrayList<OJPAEntityManager>();
-  private final OJPAProperties          properties;
+  private final OJPAProperties properties;
 
   public OJPAEntityManagerFactory(final OJPAProperties properties) {
     this.properties = properties;
@@ -55,7 +52,7 @@ public class OJPAEntityManagerFactory implements EntityManagerFactory {
   }
 
   @Override
-  @SuppressWarnings({ "rawtypes", "unchecked" })
+  @SuppressWarnings({"rawtypes", "unchecked"})
   public EntityManager createEntityManager(final Map map) {
     return createEntityManager(new OJPAProperties(map));
   }

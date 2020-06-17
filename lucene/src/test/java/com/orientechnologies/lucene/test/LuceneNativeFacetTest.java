@@ -18,10 +18,19 @@
 
 package com.orientechnologies.lucene.test;
 
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 import org.apache.lucene.analysis.core.WhitespaceAnalyzer;
 import org.apache.lucene.document.Document;
-import org.apache.lucene.facet.*;
+import org.apache.lucene.facet.DrillDownQuery;
+import org.apache.lucene.facet.DrillSideways;
 import org.apache.lucene.facet.DrillSideways.DrillSidewaysResult;
+import org.apache.lucene.facet.FacetField;
+import org.apache.lucene.facet.FacetResult;
+import org.apache.lucene.facet.Facets;
+import org.apache.lucene.facet.FacetsCollector;
+import org.apache.lucene.facet.FacetsConfig;
 import org.apache.lucene.facet.taxonomy.FastTaxonomyFacetCounts;
 import org.apache.lucene.facet.taxonomy.TaxonomyReader;
 import org.apache.lucene.facet.taxonomy.directory.DirectoryTaxonomyReader;
@@ -35,29 +44,19 @@ import org.apache.lucene.search.MatchAllDocsQuery;
 import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.RAMDirectory;
 
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-
-/**
- * Shows simple usage of faceted indexing and search.
- */
+/** Shows simple usage of faceted indexing and search. */
 public class LuceneNativeFacetTest {
 
-  private final Directory    indexDir = new RAMDirectory();
-  private final Directory    taxoDir  = new RAMDirectory();
-  private final FacetsConfig config   = new FacetsConfig();
+  private final Directory indexDir = new RAMDirectory();
+  private final Directory taxoDir = new RAMDirectory();
+  private final FacetsConfig config = new FacetsConfig();
 
-  /**
-   * Empty constructor
-   */
+  /** Empty constructor */
   public LuceneNativeFacetTest() {
     config.setHierarchical("Publish Date", true);
   }
 
-  /**
-   * Runs the search and drill-down examples and prints the results.
-   */
+  /** Runs the search and drill-down examples and prints the results. */
   public static void main(String[] args) throws Exception {
     System.out.println("Facet counting example:");
     System.out.println("-----------------------");
@@ -83,44 +82,35 @@ public class LuceneNativeFacetTest {
     }
   }
 
-  /**
-   * Runs the search example.
-   */
+  /** Runs the search example. */
   public List<FacetResult> runFacetOnly() throws IOException {
     index();
     return facetsOnly();
   }
 
-  /**
-   * Runs the search example.
-   */
+  /** Runs the search example. */
   public List<FacetResult> runSearch() throws IOException {
     index();
     return facetsWithSearch();
   }
 
-  /**
-   * Runs the drill-down example.
-   */
+  /** Runs the drill-down example. */
   public FacetResult runDrillDown() throws IOException {
     index();
     return drillDown();
   }
 
-  /**
-   * Runs the drill-sideways example.
-   */
+  /** Runs the drill-sideways example. */
   public List<FacetResult> runDrillSideways() throws IOException {
     index();
     return drillSideways();
   }
 
-  /**
-   * Build the example index.
-   */
+  /** Build the example index. */
   private void index() throws IOException {
-    IndexWriter indexWriter = new IndexWriter(indexDir,
-        new IndexWriterConfig(new WhitespaceAnalyzer()).setOpenMode(OpenMode.CREATE));
+    IndexWriter indexWriter =
+        new IndexWriter(
+            indexDir, new IndexWriterConfig(new WhitespaceAnalyzer()).setOpenMode(OpenMode.CREATE));
 
     // Writes facet ords to a separate directory from the main index
     DirectoryTaxonomyWriter taxoWriter = new DirectoryTaxonomyWriter(taxoDir);
@@ -154,9 +144,7 @@ public class LuceneNativeFacetTest {
     taxoWriter.close();
   }
 
-  /**
-   * User runs a query and counts facets only without collecting the matching documents.
-   */
+  /** User runs a query and counts facets only without collecting the matching documents. */
   private List<FacetResult> facetsOnly() throws IOException {
     DirectoryReader indexReader = DirectoryReader.open(indexDir);
     IndexSearcher searcher = new IndexSearcher(indexReader);
@@ -184,9 +172,7 @@ public class LuceneNativeFacetTest {
     return results;
   }
 
-  /**
-   * User runs a query and counts facets.
-   */
+  /** User runs a query and counts facets. */
   private List<FacetResult> facetsWithSearch() throws IOException {
     DirectoryReader indexReader = DirectoryReader.open(indexDir);
     IndexSearcher searcher = new IndexSearcher(indexReader);
@@ -213,9 +199,7 @@ public class LuceneNativeFacetTest {
     return results;
   }
 
-  /**
-   * User drills down on 'Publish Date/2010', and we return facets for 'Author'
-   */
+  /** User drills down on 'Publish Date/2010', and we return facets for 'Author' */
   private FacetResult drillDown() throws IOException {
     DirectoryReader indexReader = DirectoryReader.open(indexDir);
     IndexSearcher searcher = new IndexSearcher(indexReader);
@@ -241,7 +225,8 @@ public class LuceneNativeFacetTest {
   }
 
   /**
-   * User drills down on 'Publish Date/2010', and we return facets for both 'Publish Date' and 'Author', using DrillSideways.
+   * User drills down on 'Publish Date/2010', and we return facets for both 'Publish Date' and
+   * 'Author', using DrillSideways.
    */
   private List<FacetResult> drillSideways() throws IOException {
     DirectoryReader indexReader = DirectoryReader.open(indexDir);
@@ -267,5 +252,4 @@ public class LuceneNativeFacetTest {
 
     return facets;
   }
-
 }

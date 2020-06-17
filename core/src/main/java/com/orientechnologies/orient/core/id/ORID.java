@@ -21,22 +21,21 @@ package com.orientechnologies.orient.core.id;
 
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.serialization.OSerializableStream;
-
 import java.io.IOException;
 import java.io.OutputStream;
 
 /**
- * RecordID interface that represents a recordid in database. RecordID are made of 2 numbers: cluster id (cluster number) and
- * cluster position (absolute position inside the cluster). Loading a record by its RecordID allows O(1) performance, no matter the
- * database size.
- * 
+ * RecordID interface that represents a recordid in database. RecordID are made of 2 numbers:
+ * cluster id (cluster number) and cluster position (absolute position inside the cluster). Loading
+ * a record by its RecordID allows O(1) performance, no matter the database size.
+ *
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
  */
 public interface ORID extends OIdentifiable, OSerializableStream {
-  char PREFIX              = '#';
-  char SEPARATOR           = ':';
-  int  CLUSTER_MAX         = 32767;
-  int  CLUSTER_ID_INVALID  = -1;
+  char PREFIX = '#';
+  char SEPARATOR = ':';
+  int CLUSTER_MAX = 32767;
+  int CLUSTER_ID_INVALID = -1;
   long CLUSTER_POS_INVALID = -1;
 
   int getClusterId();
@@ -57,9 +56,7 @@ public interface ORID extends OIdentifiable, OSerializableStream {
 
   String next();
 
-  /**
-   * Deprecated since v2.2
-   */
+  /** Deprecated since v2.2 */
   @Deprecated
   ORID nextRid();
 

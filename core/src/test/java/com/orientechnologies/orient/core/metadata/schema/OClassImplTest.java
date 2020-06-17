@@ -1,18 +1,30 @@
 package com.orientechnologies.orient.core.metadata.schema;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
+
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.exception.OSchemaException;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
+import java.math.BigDecimal;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-
-import java.math.BigDecimal;
-import java.util.*;
-import java.util.concurrent.*;
-
-import static org.junit.Assert.*;
 
 public class OClassImplTest {
 
@@ -23,8 +35,7 @@ public class OClassImplTest {
     db = new ODatabaseDocumentTx("memory:" + OClassImplTest.class.getSimpleName());
     if (db.exists()) {
       db.open("admin", "admin");
-    } else
-      db.create();
+    } else db.create();
   }
 
   @After
@@ -39,7 +50,8 @@ public class OClassImplTest {
   }
 
   /**
-   * If class was not abstract and we call {@code setAbstract(false)} clusters should not be changed.
+   * If class was not abstract and we call {@code setAbstract(false)} clusters should not be
+   * changed.
    *
    * @throws Exception
    */
@@ -56,7 +68,8 @@ public class OClassImplTest {
   }
 
   /**
-   * If class was abstract and we call {@code setAbstract(false)} a new non default cluster should be created.
+   * If class was abstract and we call {@code setAbstract(false)} a new non default cluster should
+   * be created.
    *
    * @throws Exception
    */
@@ -82,7 +95,6 @@ public class OClassImplTest {
 
     assertNotNull(oClass.getProperty("some"));
     assertNotNull(oClass.getProperty("some2"));
-
   }
 
   @Test(expected = OSchemaException.class)
@@ -96,7 +108,6 @@ public class OClassImplTest {
     db.save(document);
     db.commit();
     oClass.createProperty("some", OType.INTEGER);
-
   }
 
   @Test(expected = OSchemaException.class)
@@ -111,7 +122,6 @@ public class OClassImplTest {
     db.save(document);
     db.commit();
     oClass.createProperty("some", OType.EMBEDDEDLIST);
-
   }
 
   @Test(expected = OSchemaException.class)
@@ -126,7 +136,6 @@ public class OClassImplTest {
     db.save(document);
     db.commit();
     oClass.createProperty("somelinkset", OType.EMBEDDEDSET);
-
   }
 
   @Test(expected = OSchemaException.class)
@@ -141,7 +150,6 @@ public class OClassImplTest {
     db.save(document);
     db.commit();
     oClass.createProperty("someembededset", OType.LINKSET);
-
   }
 
   @Test(expected = OSchemaException.class)
@@ -156,7 +164,6 @@ public class OClassImplTest {
     db.save(document);
     db.commit();
     oClass.createProperty("someembeddedlist", OType.LINKLIST);
-
   }
 
   @Test(expected = OSchemaException.class)
@@ -171,7 +178,6 @@ public class OClassImplTest {
     db.save(document);
     db.commit();
     oClass.createProperty("someembededmap", OType.LINKMAP);
-
   }
 
   @Test(expected = OSchemaException.class)
@@ -186,7 +192,6 @@ public class OClassImplTest {
     db.save(document);
     db.commit();
     oClass.createProperty("somelinkmap", OType.EMBEDDEDMAP);
-
   }
 
   @Test
@@ -254,7 +259,6 @@ public class OClassImplTest {
     assertEquals(doc1.fieldType("test4"), OType.EMBEDDEDSET);
     assertEquals(doc1.fieldType("test5"), OType.LINKMAP);
     assertEquals(doc1.fieldType("test6"), OType.EMBEDDEDMAP);
-
   }
 
   @Test
@@ -448,19 +452,21 @@ public class OClassImplTest {
 
     ExecutorService executor = Executors.newSingleThreadExecutor();
 
-    Future<ODocument> future = executor.submit(new Callable<ODocument>() {
-      @Override
-      public ODocument call() throws Exception {
-        ODocument doc1 = db.copy().load(document.getIdentity());
-        assertEquals(doc1.fieldType("test1"), OType.LINKLIST);
-        assertEquals(doc1.fieldType("test2"), OType.EMBEDDEDLIST);
-        assertEquals(doc1.fieldType("test3"), OType.LINKSET);
-        assertEquals(doc1.fieldType("test4"), OType.EMBEDDEDSET);
-        assertEquals(doc1.fieldType("test5"), OType.LINKMAP);
-        assertEquals(doc1.fieldType("test6"), OType.EMBEDDEDMAP);
-        return doc1;
-      }
-    });
+    Future<ODocument> future =
+        executor.submit(
+            new Callable<ODocument>() {
+              @Override
+              public ODocument call() throws Exception {
+                ODocument doc1 = db.copy().load(document.getIdentity());
+                assertEquals(doc1.fieldType("test1"), OType.LINKLIST);
+                assertEquals(doc1.fieldType("test2"), OType.EMBEDDEDLIST);
+                assertEquals(doc1.fieldType("test3"), OType.LINKSET);
+                assertEquals(doc1.fieldType("test4"), OType.EMBEDDEDSET);
+                assertEquals(doc1.fieldType("test5"), OType.LINKMAP);
+                assertEquals(doc1.fieldType("test6"), OType.EMBEDDEDMAP);
+                return doc1;
+              }
+            });
 
     try {
       future.get();
@@ -473,7 +479,6 @@ public class OClassImplTest {
     }
 
     executor.shutdown();
-
   }
 
   @Test
@@ -490,11 +495,21 @@ public class OClassImplTest {
     assertNotNull(oSchema.createClass("$OClassImplTesttestCla23ssNameSyntax_12"));
     assertNotNull(oSchema.createClass("OClassImplTesttestC$la23ssNameSyntax_12"));
     assertNotNull(oSchema.createClass("oOClassImplTesttestC$la23ssNameSyntax_12"));
-    String[] validClassNamesSince30 = { "foo bar", "12", "#12", "12AAA", ",asdfasdf", "adsf,asdf", "asdf.sadf", ".asdf", "asdfaf.", "asdf:asdf" };
+    String[] validClassNamesSince30 = {
+      "foo bar",
+      "12",
+      "#12",
+      "12AAA",
+      ",asdfasdf",
+      "adsf,asdf",
+      "asdf.sadf",
+      ".asdf",
+      "asdfaf.",
+      "asdf:asdf"
+    };
     for (String s : validClassNamesSince30) {
       assertNotNull(oSchema.createClass(s));
     }
-
   }
 
   @Test
@@ -510,7 +525,8 @@ public class OClassImplTest {
 
     oClass.createProperty("name", OType.ANY);
 
-    List<?> result = db.query(new OSQLSynchQuery<Object>("select from " + className + " where name = 'foo'"));
+    List<?> result =
+        db.query(new OSQLSynchQuery<Object>("select from " + className + " where name = 'foo'"));
     assertEquals(result.size(), 1);
   }
 

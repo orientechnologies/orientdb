@@ -11,7 +11,6 @@ import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.tinkerpop.blueprints.impls.orient.OrientEdgeType;
 import com.tinkerpop.blueprints.impls.orient.OrientVertexType;
-
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -19,17 +18,20 @@ import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
- * this is and API for fast batch import of simple graphs, starting from an empty (or non existing) DB. This class allows import of
- * graphs with
+ * this is and API for fast batch import of simple graphs, starting from an empty (or non existing)
+ * DB. This class allows import of graphs with
+ *
  * <ul>
- * <li>no properties on edges</li>
- * <li>no properties on vertices</li>
- * <li>Long values for vertex ids</li>
+ *   <li>no properties on edges
+ *   <li>no properties on vertices
+ *   <li>Long values for vertex ids
  * </ul>
- * These limitations are intended to have best performance on a very simple use case. If there limitations don't fit your
- * requirements you can rely on other implementations (at the time of writing this they are planned, but not implemented yet)
- * <p>
- * Typical usage: <code>
+ *
+ * These limitations are intended to have best performance on a very simple use case. If there
+ * limitations don't fit your requirements you can rely on other implementations (at the time of
+ * writing this they are planned, but not implemented yet)
+ *
+ * <p>Typical usage: <code>
  *   OGraphBatchInsertSimple batch = new OGraphBatchInsertSimple("plocal:your/db", "admin", "admin");
  *   batch.begin();
  *   batch.createEdge(0L, 1L);
@@ -37,47 +39,47 @@ import java.util.concurrent.atomic.AtomicInteger;
  *   ...
  *   batch.end();
  * </code>
- * <p>
- * There is no need to create vertices before connecting them: <code>
+ *
+ * <p>There is no need to create vertices before connecting them: <code>
  *   batch.createVertex(0L);
  *   batch.createVertex(1L);
  *   batch.createEdge(0L, 1L);
  * </code>
- * <p>
- * is equivalent to (but less performing than) <code>
+ *
+ * <p>is equivalent to (but less performing than) <code>
  *   batch.createEdge(0L, 1L);
  * </code>
- * <p>
- * batch.createVertex() is needed only if you want to create unconnected vertices.
+ *
+ * <p>batch.createVertex() is needed only if you want to create unconnected vertices.
  *
  * @author Luigi Dell'Aquila (l.dellaquila-(at)-orientdb.com) (l.dellaquila-at-orientdb.com)
  * @since 2.0 M3
  */
 public class OGraphBatchInsertBasic {
 
-  private final String                    userName;
-  private final String                    dbUrl;
-  private final String                    password;
-  private       Map<Long, List<Long>>     out                      = new HashMap<Long, List<Long>>();
-  private       Map<Long, List<Long>>     in                       = new HashMap<Long, List<Long>>();
-  private       String                    idPropertyName           = "uid";
-  private       String                    edgeClass                = OrientEdgeType.CLASS_NAME;
-  private       String                    vertexClass              = OrientVertexType.CLASS_NAME;
-  private       ODatabaseDocumentInternal db;
-  private       int                       averageEdgeNumberPerNode = -1;
-  private       int                       estimatedEntries         = -1;
-  private       int                       bonsaiThreshold          = 1000;
-  private       int[]                     clusterIds;
-  private       long[]                    lastClusterPositions;
-  private       long                      last                     = 0;
+  private final String userName;
+  private final String dbUrl;
+  private final String password;
+  private Map<Long, List<Long>> out = new HashMap<Long, List<Long>>();
+  private Map<Long, List<Long>> in = new HashMap<Long, List<Long>>();
+  private String idPropertyName = "uid";
+  private String edgeClass = OrientEdgeType.CLASS_NAME;
+  private String vertexClass = OrientVertexType.CLASS_NAME;
+  private ODatabaseDocumentInternal db;
+  private int averageEdgeNumberPerNode = -1;
+  private int estimatedEntries = -1;
+  private int bonsaiThreshold = 1000;
+  private int[] clusterIds;
+  private long[] lastClusterPositions;
+  private long last = 0;
 
-  private int           parallel = 4;
+  private int parallel = 4;
   private AtomicInteger runningThreads;
 
   class BatchImporterJob extends Thread {
 
-    private final int    mod;
-    private       OClass vClass;
+    private final int mod;
+    private OClass vClass;
 
     BatchImporterJob(int mod, OClass vertexClass) {
       this.mod = mod;
@@ -92,8 +94,10 @@ public class OGraphBatchInsertBasic {
         db.declareIntent(new OIntentMassiveInsert());
         int clusterId = clusterIds[mod];
 
-        final String outField = OrientEdgeType.CLASS_NAME.equals(edgeClass) ? "out_" : ("out_" + edgeClass);
-        final String inField = OrientEdgeType.CLASS_NAME.equals(edgeClass) ? "in_" : ("in_" + edgeClass);
+        final String outField =
+            OrientEdgeType.CLASS_NAME.equals(edgeClass) ? "out_" : ("out_" + edgeClass);
+        final String inField =
+            OrientEdgeType.CLASS_NAME.equals(edgeClass) ? "in_" : ("in_" + edgeClass);
 
         String clusterName = db.getStorage().getClusterNameById(clusterId);
         // long firstAvailableClusterPosition = lastClusterPositions[mod] + 1;
@@ -138,8 +142,8 @@ public class OGraphBatchInsertBasic {
   }
 
   /**
-   * Creates a new batch insert procedure by using admin user. It's intended to be used only for a single batch cycle (begin,
-   * create..., end)
+   * Creates a new batch insert procedure by using admin user. It's intended to be used only for a
+   * single batch cycle (begin, create..., end)
    *
    * @param iDbURL db connection URL (plocal:/your/db/path)
    */
@@ -150,9 +154,10 @@ public class OGraphBatchInsertBasic {
   }
 
   /**
-   * Creates a new batch insert procedure. It's intended to be used only for a single batch cycle (begin, create..., end)
+   * Creates a new batch insert procedure. It's intended to be used only for a single batch cycle
+   * (begin, create..., end)
    *
-   * @param iDbURL    db connection URL (plocal:/your/db/path)
+   * @param iDbURL db connection URL (plocal:/your/db/path)
    * @param iUserName db user name (use admin for new db)
    * @param iPassword db password (use admin for new db)
    */
@@ -163,8 +168,8 @@ public class OGraphBatchInsertBasic {
   }
 
   /**
-   * Creates the database (if it does not exist) and initializes batch operations. Call this once, before starting to create
-   * vertices and edges.
+   * Creates the database (if it does not exist) and initializes batch operations. Call this once,
+   * before starting to create vertices and edges.
    */
   public void begin() {
     if (averageEdgeNumberPerNode > 0) {
@@ -180,8 +185,14 @@ public class OGraphBatchInsertBasic {
     }
     createBaseSchema();
 
-    out = estimatedEntries > 0 ? new HashMap<Long, List<Long>>(estimatedEntries) : new HashMap<Long, List<Long>>();
-    in = estimatedEntries > 0 ? new HashMap<Long, List<Long>>(estimatedEntries) : new HashMap<Long, List<Long>>();
+    out =
+        estimatedEntries > 0
+            ? new HashMap<Long, List<Long>>(estimatedEntries)
+            : new HashMap<Long, List<Long>>();
+    in =
+        estimatedEntries > 0
+            ? new HashMap<Long, List<Long>>(estimatedEntries)
+            : new HashMap<Long, List<Long>>();
 
     OClass vClass = db.getMetadata().getSchema().getClass(this.vertexClass);
     int[] existingClusters = vClass.getClusterIds();
@@ -202,9 +213,7 @@ public class OGraphBatchInsertBasic {
     }
   }
 
-  /**
-   * Flushes data to db and closes the db. Call this once, after vertices and edges creation.
-   */
+  /** Flushes data to db and closes the db. Call this once, after vertices and edges creation. */
   public void end() {
     final OClass vClass = db.getMetadata().getSchema().getClass(vertexClass);
 
@@ -253,7 +262,7 @@ public class OGraphBatchInsertBasic {
    * Creates a new edge between two vertices. If vertices do not exist, they will be created
    *
    * @param from id of the vertex that is starting point of the edge
-   * @param to   id of the vertex that is end point of the edge
+   * @param to id of the vertex that is end point of the edge
    */
   public void createEdge(final Long from, final Long to) {
     if (from < 0) {
@@ -269,14 +278,16 @@ public class OGraphBatchInsertBasic {
   }
 
   /**
-   * @return the configured average number of edges per node (optimization parameter, not calculated)
+   * @return the configured average number of edges per node (optimization parameter, not
+   *     calculated)
    */
   public int getAverageEdgeNumberPerNode() {
     return averageEdgeNumberPerNode;
   }
 
   /**
-   * configures the average number of edges per node (for optimization). Use it before calling begin()
+   * configures the average number of edges per node (for optimization). Use it before calling
+   * begin()
    *
    * @param averageEdgeNumberPerNode
    */
@@ -284,83 +295,69 @@ public class OGraphBatchInsertBasic {
     this.averageEdgeNumberPerNode = averageEdgeNumberPerNode;
   }
 
-  /**
-   * @return the property name where ids are written on vertices
-   */
+  /** @return the property name where ids are written on vertices */
   public String getIdPropertyName() {
     return idPropertyName;
   }
 
-  /**
-   * @param idPropertyName the property name where ids are written on vertices
-   */
+  /** @param idPropertyName the property name where ids are written on vertices */
   public void setIdPropertyName(final String idPropertyName) {
     this.idPropertyName = idPropertyName;
   }
 
-  /**
-   * @return the edge class name (E by default)
-   */
+  /** @return the edge class name (E by default) */
   public String getEdgeClass() {
     return edgeClass;
   }
 
-  /**
-   * @param edgeClass the edge class name
-   */
+  /** @param edgeClass the edge class name */
   public void setEdgeClass(final String edgeClass) {
     this.edgeClass = edgeClass;
   }
 
-  /**
-   * @return the vertex class name (V by default)
-   */
+  /** @return the vertex class name (V by default) */
   public String getVertexClass() {
     return vertexClass;
   }
 
-  /**
-   * @param vertexClass the vertex class name
-   */
+  /** @param vertexClass the vertex class name */
   public void setVertexClass(final String vertexClass) {
     this.vertexClass = vertexClass;
   }
 
   /**
-   * @return the threshold for passing from emdedded RidBag to SBTreeBonsai (low level optimization).
+   * @return the threshold for passing from emdedded RidBag to SBTreeBonsai (low level
+   *     optimization).
    */
   public int getBonsaiThreshold() {
     return bonsaiThreshold;
   }
 
   /**
-   * Sets the threshold for passing from emdedded RidBag to SBTreeBonsai implementation, in number of edges (low level
-   * optimization). High values speed up writes but slow down reads later. Set -1 (default) to use default database configuration.
-   * <p>
-   * See OGlobalConfiguration.RID_BAG_EMBEDDED_TO_SBTREEBONSAI_THRESHOLD}
+   * Sets the threshold for passing from emdedded RidBag to SBTreeBonsai implementation, in number
+   * of edges (low level optimization). High values speed up writes but slow down reads later. Set
+   * -1 (default) to use default database configuration.
+   *
+   * <p>See OGlobalConfiguration.RID_BAG_EMBEDDED_TO_SBTREEBONSAI_THRESHOLD}
    */
   public void setBonsaiThreshold(final int bonsaiThreshold) {
     this.bonsaiThreshold = bonsaiThreshold;
   }
 
-  /**
-   * Returns the estimated number of entries. 0 for auto-resize.
-   */
+  /** Returns the estimated number of entries. 0 for auto-resize. */
   public int getEstimatedEntries() {
     return estimatedEntries;
   }
 
   /**
-   * Sets the estimated number of entries, 0 for auto-resize (default). This pre-allocate in memory structure avoiding resizing of
-   * them at run-time.
+   * Sets the estimated number of entries, 0 for auto-resize (default). This pre-allocate in memory
+   * structure avoiding resizing of them at run-time.
    */
   public void setEstimatedEntries(final int estimatedEntries) {
     this.estimatedEntries = estimatedEntries;
   }
 
-  /**
-   * @return number of parallel threads used for batch import
-   */
+  /** @return number of parallel threads used for batch import */
   public int getParallel() {
     return parallel;
   }
@@ -416,5 +413,4 @@ public class OGraphBatchInsertBasic {
   private int getClusterId(final long left) {
     return clusterIds[(int) (left % parallel)];
   }
-
 }

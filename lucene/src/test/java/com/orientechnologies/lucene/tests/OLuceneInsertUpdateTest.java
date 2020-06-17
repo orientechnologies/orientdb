@@ -27,18 +27,14 @@ import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
+import java.util.Collection;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
-import java.util.Collection;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
-
-/**
- * Created by enricorisa on 28/06/14.
- */
-
+/** Created by enricorisa on 28/06/14. */
 public class OLuceneInsertUpdateTest extends OLuceneBaseTest {
 
   @Before
@@ -49,8 +45,8 @@ public class OLuceneInsertUpdateTest extends OLuceneBaseTest {
 
     oClass.createProperty("name", OType.STRING);
     //noinspection EmptyTryBlock
-    try (OResultSet command = db.command("create index City.name on City (name) FULLTEXT ENGINE LUCENE")) {
-    }
+    try (OResultSet command =
+        db.command("create index City.name on City (name) FULLTEXT ENGINE LUCENE")) {}
   }
 
   @Test
@@ -105,6 +101,5 @@ public class OLuceneInsertUpdateTest extends OLuceneBaseTest {
       coll = stream.collect(Collectors.toList());
     }
     Assert.assertEquals(coll.size(), 1);
-
   }
 }

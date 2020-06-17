@@ -6,8 +6,7 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.Pag
 import com.orientechnologies.orient.core.storage.index.sbtree.local.v2.OSBTreeNullBucketV2;
 
 public class SBTreeNullBucketV2InitPO extends PageOperationRecord {
-  public SBTreeNullBucketV2InitPO() {
-  }
+  public SBTreeNullBucketV2InitPO() {}
 
   @Override
   public void redo(OCacheEntry cacheEntry) {
@@ -16,8 +15,7 @@ public class SBTreeNullBucketV2InitPO extends PageOperationRecord {
   }
 
   @Override
-  public void undo(OCacheEntry cacheEntry) {
-  }
+  public void undo(OCacheEntry cacheEntry) {}
 
   @Override
   public int getId() {

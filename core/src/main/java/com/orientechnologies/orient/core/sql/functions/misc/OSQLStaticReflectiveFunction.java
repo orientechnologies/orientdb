@@ -7,7 +7,6 @@ import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OQueryParsingException;
 import com.orientechnologies.orient.core.sql.functions.OSQLFunction;
 import com.orientechnologies.orient.core.sql.functions.OSQLFunctionAbstract;
-
 import java.lang.reflect.Method;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -17,8 +16,8 @@ import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 /**
- * This {@link OSQLFunction} is able to invoke a static method using reflection. If contains more than one {@link Method} it tries
- * to pick the one that better fits the input parameters.
+ * This {@link OSQLFunction} is able to invoke a static method using reflection. If contains more
+ * than one {@link Method} it tries to pick the one that better fits the input parameters.
  *
  * @author Fabrizio Fortino
  */
@@ -65,50 +64,65 @@ public class OSQLStaticReflectiveFunction extends OSQLFunctionAbstract {
 
   private Method[] methods;
 
-  public OSQLStaticReflectiveFunction(String name, int minParams, int maxParams, Method... methods) {
+  public OSQLStaticReflectiveFunction(
+      String name, int minParams, int maxParams, Method... methods) {
     super(name, minParams, maxParams);
     this.methods = methods;
     // we need to sort the methods by parameters type to return the closest overloaded method
-    Arrays.sort(methods, (m1, m2) -> {
-      Class<?>[] m1Params = m1.getParameterTypes();
-      Class<?>[] m2Params = m2.getParameterTypes();
+    Arrays.sort(
+        methods,
+        (m1, m2) -> {
+          Class<?>[] m1Params = m1.getParameterTypes();
+          Class<?>[] m2Params = m2.getParameterTypes();
 
-      int c = m1Params.length - m2Params.length;
-      if (c == 0) {
-        for (int i = 0; i < m1Params.length; i++) {
-          if (m1Params[i].isPrimitive() && m2Params[i].isPrimitive() && !m1Params[i].equals(m2Params[i])) {
-            c += PRIMITIVE_WEIGHT.get(m1Params[i]) - PRIMITIVE_WEIGHT.get(m2Params[i]);
+          int c = m1Params.length - m2Params.length;
+          if (c == 0) {
+            for (int i = 0; i < m1Params.length; i++) {
+              if (m1Params[i].isPrimitive()
+                  && m2Params[i].isPrimitive()
+                  && !m1Params[i].equals(m2Params[i])) {
+                c += PRIMITIVE_WEIGHT.get(m1Params[i]) - PRIMITIVE_WEIGHT.get(m2Params[i]);
+              }
+            }
           }
-        }
-      }
 
-      return c;
-    });
+          return c;
+        });
   }
 
   @Override
-  public Object execute(Object iThis, OIdentifiable iCurrentRecord, Object iCurrentResult, Object[] iParams,
+  public Object execute(
+      Object iThis,
+      OIdentifiable iCurrentRecord,
+      Object iCurrentResult,
+      Object[] iParams,
       OCommandContext iContext) {
 
-    final Supplier<String> paramsPrettyPrint = () -> Arrays.stream(iParams).map(p -> p + " [ " + p.getClass().getName() + " ]")
-        .collect(Collectors.joining(", ", "(", ")"));
+    final Supplier<String> paramsPrettyPrint =
+        () ->
+            Arrays.stream(iParams)
+                .map(p -> p + " [ " + p.getClass().getName() + " ]")
+                .collect(Collectors.joining(", ", "(", ")"));
 
     Method method = pickMethod(iParams);
 
     if (method == null) {
-      throw new OQueryParsingException("Unable to find a function for " + name + paramsPrettyPrint.get());
+      throw new OQueryParsingException(
+          "Unable to find a function for " + name + paramsPrettyPrint.get());
     }
 
     try {
       return method.invoke(null, iParams);
     } catch (ReflectiveOperationException e) {
-      throw OException.wrapException(new OQueryParsingException("Error executing function " + name + paramsPrettyPrint.get()), e);
+      throw OException.wrapException(
+          new OQueryParsingException("Error executing function " + name + paramsPrettyPrint.get()),
+          e);
     } catch (IllegalArgumentException x) {
       OLogManager.instance().error(this, "Error executing function %s", x, name);
 
-      return null; //if a function fails for given input, just return null to avoid breaking the query execution
+      return null; // if a function fails for given input, just return null to avoid breaking the
+      // query execution
     }
-
   }
 
   @Override
@@ -139,14 +153,14 @@ public class OSQLStaticReflectiveFunction extends OSQLFunctionAbstract {
 
   private static boolean isAssignable(final Class<?> iFromClass, final Class<?> iToClass) {
     // handle autoboxing
-    final BiFunction<Class<?>, Class<?>, Class<?>> autoboxer = (from, to) -> {
-      if (from.isPrimitive() && !to.isPrimitive()) {
-        return PRIMITIVE_TO_WRAPPER.get(from);
-      } else if (to.isPrimitive() && !from.isPrimitive()) {
-        return WRAPPER_TO_PRIMITIVE.get(from);
-      } else
-        return from;
-    };
+    final BiFunction<Class<?>, Class<?>, Class<?>> autoboxer =
+        (from, to) -> {
+          if (from.isPrimitive() && !to.isPrimitive()) {
+            return PRIMITIVE_TO_WRAPPER.get(from);
+          } else if (to.isPrimitive() && !from.isPrimitive()) {
+            return WRAPPER_TO_PRIMITIVE.get(from);
+          } else return from;
+        };
 
     final Class<?> fromClass = autoboxer.apply(iFromClass, iToClass);
 
@@ -158,7 +172,9 @@ public class OSQLStaticReflectiveFunction extends OSQLFunctionAbstract {
       if (!iToClass.isPrimitive()) {
         return false;
       } else if (Integer.TYPE.equals(fromClass)) {
-        return Long.TYPE.equals(iToClass) || Float.TYPE.equals(iToClass) || Double.TYPE.equals(iToClass);
+        return Long.TYPE.equals(iToClass)
+            || Float.TYPE.equals(iToClass)
+            || Double.TYPE.equals(iToClass);
       } else if (Long.TYPE.equals(fromClass)) {
         return Float.TYPE.equals(iToClass) || Double.TYPE.equals(iToClass);
       } else if (Boolean.TYPE.equals(fromClass)) {
@@ -168,19 +184,25 @@ public class OSQLStaticReflectiveFunction extends OSQLFunctionAbstract {
       } else if (Float.TYPE.equals(fromClass)) {
         return Double.TYPE.equals(iToClass);
       } else if (Character.TYPE.equals(fromClass)) {
-        return Integer.TYPE.equals(iToClass) || Long.TYPE.equals(iToClass) || Float.TYPE.equals(iToClass) || Double.TYPE
-            .equals(iToClass);
+        return Integer.TYPE.equals(iToClass)
+            || Long.TYPE.equals(iToClass)
+            || Float.TYPE.equals(iToClass)
+            || Double.TYPE.equals(iToClass);
       } else if (Short.TYPE.equals(fromClass)) {
-        return Integer.TYPE.equals(iToClass) || Long.TYPE.equals(iToClass) || Float.TYPE.equals(iToClass) || Double.TYPE
-            .equals(iToClass);
+        return Integer.TYPE.equals(iToClass)
+            || Long.TYPE.equals(iToClass)
+            || Float.TYPE.equals(iToClass)
+            || Double.TYPE.equals(iToClass);
       } else if (Byte.TYPE.equals(fromClass)) {
-        return Short.TYPE.equals(iToClass) || Integer.TYPE.equals(iToClass) || Long.TYPE.equals(iToClass) || Float.TYPE
-            .equals(iToClass) || Double.TYPE.equals(iToClass);
+        return Short.TYPE.equals(iToClass)
+            || Integer.TYPE.equals(iToClass)
+            || Long.TYPE.equals(iToClass)
+            || Float.TYPE.equals(iToClass)
+            || Double.TYPE.equals(iToClass);
       }
       // this should never happen
       return false;
     }
     return iToClass.isAssignableFrom(fromClass);
   }
-
 }

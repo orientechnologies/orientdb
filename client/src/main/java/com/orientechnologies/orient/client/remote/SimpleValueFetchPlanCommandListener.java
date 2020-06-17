@@ -6,5 +6,4 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 public interface SimpleValueFetchPlanCommandListener extends OCommandResultListener {
 
   void linkdedBySimpleValue(ODocument doc);
-
 }

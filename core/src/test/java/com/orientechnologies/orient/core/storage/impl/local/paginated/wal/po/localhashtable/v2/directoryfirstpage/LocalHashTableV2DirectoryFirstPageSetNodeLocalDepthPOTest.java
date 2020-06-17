@@ -7,11 +7,10 @@ import com.orientechnologies.orient.core.storage.cache.OCacheEntryImpl;
 import com.orientechnologies.orient.core.storage.cache.OCachePointer;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.PageOperationRecord;
 import com.orientechnologies.orient.core.storage.index.hashindex.local.v2.DirectoryFirstPageV2;
-import org.junit.Assert;
-import org.junit.Test;
-
 import java.nio.ByteBuffer;
 import java.util.List;
+import org.junit.Assert;
+import org.junit.Test;
 
 public class LocalHashTableV2DirectoryFirstPageSetNodeLocalDepthPOTest {
   @Test
@@ -29,7 +28,8 @@ public class LocalHashTableV2DirectoryFirstPageSetNodeLocalDepthPOTest {
       entry.clearPageOperations();
 
       final OPointer restoredPointer = byteBufferPool.acquireDirect(false);
-      final OCachePointer restoredCachePointer = new OCachePointer(restoredPointer, byteBufferPool, 0, 0);
+      final OCachePointer restoredCachePointer =
+          new OCachePointer(restoredPointer, byteBufferPool, 0, 0);
       final OCacheEntry restoredCacheEntry = new OCacheEntryImpl(0, 0, restoredCachePointer);
 
       final ByteBuffer originalBuffer = cachePointer.getBufferDuplicate();
@@ -45,10 +45,11 @@ public class LocalHashTableV2DirectoryFirstPageSetNodeLocalDepthPOTest {
       final List<PageOperationRecord> operations = entry.getPageOperations();
       Assert.assertEquals(1, operations.size());
 
-      Assert.assertTrue(operations.get(0) instanceof LocalHashTableV2DirectoryFirstPageSetNodeLocalDepthPO);
+      Assert.assertTrue(
+          operations.get(0) instanceof LocalHashTableV2DirectoryFirstPageSetNodeLocalDepthPO);
 
-      final LocalHashTableV2DirectoryFirstPageSetNodeLocalDepthPO pageOperation = (LocalHashTableV2DirectoryFirstPageSetNodeLocalDepthPO) operations
-          .get(0);
+      final LocalHashTableV2DirectoryFirstPageSetNodeLocalDepthPO pageOperation =
+          (LocalHashTableV2DirectoryFirstPageSetNodeLocalDepthPO) operations.get(0);
 
       DirectoryFirstPageV2 restoredPage = new DirectoryFirstPageV2(restoredCacheEntry);
       Assert.assertEquals(24, restoredPage.getNodeLocalDepth(2));
@@ -84,10 +85,11 @@ public class LocalHashTableV2DirectoryFirstPageSetNodeLocalDepthPOTest {
       final List<PageOperationRecord> operations = entry.getPageOperations();
       Assert.assertEquals(1, operations.size());
 
-      Assert.assertTrue(operations.get(0) instanceof LocalHashTableV2DirectoryFirstPageSetNodeLocalDepthPO);
+      Assert.assertTrue(
+          operations.get(0) instanceof LocalHashTableV2DirectoryFirstPageSetNodeLocalDepthPO);
 
-      final LocalHashTableV2DirectoryFirstPageSetNodeLocalDepthPO pageOperation = (LocalHashTableV2DirectoryFirstPageSetNodeLocalDepthPO) operations
-          .get(0);
+      final LocalHashTableV2DirectoryFirstPageSetNodeLocalDepthPO pageOperation =
+          (LocalHashTableV2DirectoryFirstPageSetNodeLocalDepthPO) operations.get(0);
 
       final DirectoryFirstPageV2 restoredPage = new DirectoryFirstPageV2(entry);
 
@@ -105,8 +107,8 @@ public class LocalHashTableV2DirectoryFirstPageSetNodeLocalDepthPOTest {
 
   @Test
   public void testSerialization() {
-    LocalHashTableV2DirectoryFirstPageSetNodeLocalDepthPO operation = new LocalHashTableV2DirectoryFirstPageSetNodeLocalDepthPO(2,
-        (byte) 12, (byte) 21);
+    LocalHashTableV2DirectoryFirstPageSetNodeLocalDepthPO operation =
+        new LocalHashTableV2DirectoryFirstPageSetNodeLocalDepthPO(2, (byte) 12, (byte) 21);
 
     operation.setFileId(42);
     operation.setPageIndex(24);
@@ -118,7 +120,8 @@ public class LocalHashTableV2DirectoryFirstPageSetNodeLocalDepthPOTest {
 
     Assert.assertEquals(serializedSize + 1, pos);
 
-    LocalHashTableV2DirectoryFirstPageSetNodeLocalDepthPO restoredOperation = new LocalHashTableV2DirectoryFirstPageSetNodeLocalDepthPO();
+    LocalHashTableV2DirectoryFirstPageSetNodeLocalDepthPO restoredOperation =
+        new LocalHashTableV2DirectoryFirstPageSetNodeLocalDepthPO();
     restoredOperation.fromStream(stream, 1);
 
     Assert.assertEquals(42, restoredOperation.getFileId());

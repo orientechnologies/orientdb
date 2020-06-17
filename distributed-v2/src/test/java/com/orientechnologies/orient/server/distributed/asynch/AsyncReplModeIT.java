@@ -16,7 +16,7 @@ import org.junit.Ignore;
 public class AsyncReplModeIT extends BareBoneBase2ClientTest {
 
   private static final int NUM_OF_LOOP_ITERATIONS = 25;
-  private static final int NUM_OF_RETRIES         = 3;
+  private static final int NUM_OF_RETRIES = 3;
 
   private Object parentV1Id;
   private Object parentV2Id;
@@ -61,9 +61,8 @@ public class AsyncReplModeIT extends BareBoneBase2ClientTest {
         for (int i = 0; i < NUM_OF_LOOP_ITERATIONS; i++) {
           pause();
 
-          if (exceptionInThread != null)
-            break;
-//          sleep(500);
+          if (exceptionInThread != null) break;
+          //          sleep(500);
           OVertex vertex = graph.newVertex("vertextype3");
           vertex.save();
           graph.commit();
@@ -167,10 +166,9 @@ public class AsyncReplModeIT extends BareBoneBase2ClientTest {
         for (int i = 0; i < NUM_OF_LOOP_ITERATIONS; i++) {
           pause();
 
-          if (exceptionInThread != null)
-            break;
+          if (exceptionInThread != null) break;
           // Let's give it some time for asynchronous replication.
-//          sleep(500);
+          //          sleep(500);
           countPropValue++;
           if (parentV1 == null) {
             parentV1 = graph.load((ORID) parentV1Id);
@@ -212,5 +210,4 @@ public class AsyncReplModeIT extends BareBoneBase2ClientTest {
       }
     }
   }
-
 }

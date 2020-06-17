@@ -5,7 +5,6 @@ import com.orientechnologies.orient.distributed.OrientDBDistributed;
 import com.orientechnologies.orient.distributed.impl.database.sync.ODatabaseFullSyncSender;
 import com.orientechnologies.orient.distributed.impl.log.OLogId;
 import com.orientechnologies.orient.distributed.impl.structural.operations.OOperation;
-
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
@@ -13,7 +12,7 @@ import java.util.Optional;
 
 public class ODatabaseSyncRequest implements OOperation {
 
-  private String           database;
+  private String database;
   private Optional<OLogId> opId;
 
   public ODatabaseSyncRequest(String database, Optional<OLogId> opId) {
@@ -23,7 +22,8 @@ public class ODatabaseSyncRequest implements OOperation {
 
   @Override
   public void apply(ONodeIdentity sender, OrientDBDistributed context) {
-    boolean delta = context.getDistributedContext(this.database).getCoordinator().requestSync(sender, opId);
+    boolean delta =
+        context.getDistributedContext(this.database).getCoordinator().requestSync(sender, opId);
     if (!delta) {
       new ODatabaseFullSyncSender(context, sender, database).run();
     }

@@ -32,7 +32,12 @@ public interface ODocumentSerializer {
 
   void serialize(ODocument document, BytesContainer bytes);
 
-  int serializeValue(BytesContainer bytes, Object value, OType type, OType linkedType, OImmutableSchema schema,
+  int serializeValue(
+      BytesContainer bytes,
+      Object value,
+      OType type,
+      OType linkedType,
+      OImmutableSchema schema,
       OPropertyEncryption encryption);
 
   void deserialize(ODocument document, BytesContainer bytes);
@@ -41,7 +46,12 @@ public interface ODocumentSerializer {
 
   Object deserializeValue(BytesContainer bytes, OType type, ORecordElement owner);
 
-  OBinaryField deserializeField(BytesContainer bytes, OClass iClass, String iFieldName, boolean embedded, OImmutableSchema schema,
+  OBinaryField deserializeField(
+      BytesContainer bytes,
+      OClass iClass,
+      String iFieldName,
+      boolean embedded,
+      OImmutableSchema schema,
       OPropertyEncryption encryption);
 
   OBinaryComparator getComparator();
@@ -56,9 +66,16 @@ public interface ODocumentSerializer {
 
   boolean isSerializingClassNameByDefault();
 
-  <RET> RET deserializeFieldTyped(BytesContainer record, String iFieldName, boolean isEmbedded, OImmutableSchema schema,
+  <RET> RET deserializeFieldTyped(
+      BytesContainer record,
+      String iFieldName,
+      boolean isEmbedded,
+      OImmutableSchema schema,
       OPropertyEncryption encryption);
 
-  void deserializeDebug(BytesContainer bytes, ODatabaseDocumentInternal db, ORecordSerializationDebug debugInfo,
+  void deserializeDebug(
+      BytesContainer bytes,
+      ODatabaseDocumentInternal db,
+      ORecordSerializationDebug debugInfo,
       OImmutableSchema schema);
 }

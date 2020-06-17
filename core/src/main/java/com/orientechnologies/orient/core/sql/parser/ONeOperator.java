@@ -4,7 +4,7 @@ package com.orientechnologies.orient.core.sql.parser;
 
 import com.orientechnologies.orient.core.sql.operator.OQueryOperatorEquals;
 
-public class ONeOperator extends SimpleNode  implements OBinaryCompareOperator{
+public class ONeOperator extends SimpleNode implements OBinaryCompareOperator {
   public ONeOperator(int id) {
     super(id);
   }
@@ -13,27 +13,33 @@ public class ONeOperator extends SimpleNode  implements OBinaryCompareOperator{
     super(p, id);
   }
 
-  @Override public boolean execute(Object left, Object right) {
+  @Override
+  public boolean execute(Object left, Object right) {
     return !OQueryOperatorEquals.equals(left, right);
   }
 
-  @Override public String toString() {
+  @Override
+  public String toString() {
     return "!=";
   }
 
-  @Override public boolean supportsBasicCalculation() {
+  @Override
+  public boolean supportsBasicCalculation() {
     return true;
   }
 
-  @Override public ONeOperator copy() {
+  @Override
+  public ONeOperator copy() {
     return this;
   }
 
-  @Override public boolean equals(Object obj) {
+  @Override
+  public boolean equals(Object obj) {
     return obj != null && obj.getClass().equals(this.getClass());
   }
 
-  @Override public int hashCode() {
+  @Override
+  public int hashCode() {
     return getClass().hashCode();
   }
 }

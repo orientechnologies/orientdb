@@ -5,14 +5,12 @@ import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.WALRecordTypes;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.PageOperationRecord;
 import com.orientechnologies.orient.core.storage.index.sbtree.multivalue.v2.CellBTreeMultiValueV2Bucket;
-
 import java.nio.ByteBuffer;
 
 public final class CellBTreeMultiValueV2BucketIncrementEntriesCountPO extends PageOperationRecord {
   public int entryIndex;
 
-  public CellBTreeMultiValueV2BucketIncrementEntriesCountPO() {
-  }
+  public CellBTreeMultiValueV2BucketIncrementEntriesCountPO() {}
 
   public CellBTreeMultiValueV2BucketIncrementEntriesCountPO(int entryIndex) {
     this.entryIndex = entryIndex;

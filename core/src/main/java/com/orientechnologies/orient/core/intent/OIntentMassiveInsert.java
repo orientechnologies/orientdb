@@ -26,20 +26,19 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.hook.ORecordHook;
 import com.orientechnologies.orient.core.index.OClassIndexManager;
 import com.orientechnologies.orient.core.metadata.security.OSecurityUser;
-
 import java.util.HashMap;
 import java.util.Map;
 
 public class OIntentMassiveInsert implements OIntent {
-  private boolean                                     previousRetainRecords;
-  private boolean                                     previousRetainObjects;
-  private boolean                                     previousValidation;
+  private boolean previousRetainRecords;
+  private boolean previousRetainObjects;
+  private boolean previousValidation;
   private Map<ORecordHook, ORecordHook.HOOK_POSITION> removedHooks;
-  private OSecurityUser                               currentUser;
+  private OSecurityUser currentUser;
   private boolean disableValidation = true;
-  private boolean disableSecurity   = true;
-  private boolean disableHooks      = true;
-  private boolean enableCache       = true;
+  private boolean disableSecurity = true;
+  private boolean disableHooks = true;
+  private boolean enableCache = true;
 
   public void begin(final ODatabaseDocumentInternal iDatabase) {
     if (disableSecurity) {
@@ -61,19 +60,17 @@ public class OIntentMassiveInsert implements OIntent {
       if (disableValidation && !iDatabase.getStorage().isRemote()) {
         // Avoid to change server side validation if massive intent run on a client
         previousValidation = ((ODatabaseDocument) ownerDb).isValidationEnabled();
-        if (previousValidation)
-          ((ODatabaseDocument) ownerDb).setValidationEnabled(false);
+        if (previousValidation) ((ODatabaseDocument) ownerDb).setValidationEnabled(false);
       }
     }
 
-    while (ownerDb.getDatabaseOwner() != ownerDb)
-      ownerDb = ownerDb.getDatabaseOwner();
+    while (ownerDb.getDatabaseOwner() != ownerDb) ownerDb = ownerDb.getDatabaseOwner();
 
     if (disableHooks) {
       // REMOVE ALL HOOKS BUT INDEX
       removedHooks = new HashMap<ORecordHook, ORecordHook.HOOK_POSITION>();
-      HashMap<ORecordHook, ORecordHook.HOOK_POSITION> hooks = new HashMap<ORecordHook, ORecordHook.HOOK_POSITION>(
-          ownerDb.getHooks());
+      HashMap<ORecordHook, ORecordHook.HOOK_POSITION> hooks =
+          new HashMap<ORecordHook, ORecordHook.HOOK_POSITION>(ownerDb.getHooks());
       for (Map.Entry<ORecordHook, ORecordHook.HOOK_POSITION> hook : hooks.entrySet()) {
         if (!(hook.getKey() instanceof OClassIndexManager)) {
           removedHooks.put(hook.getKey(), hook.getValue());
@@ -100,8 +97,7 @@ public class OIntentMassiveInsert implements OIntent {
         ((ODatabaseDocument) ownerDb).setValidationEnabled(previousValidation);
     }
 
-    while (ownerDb.getDatabaseOwner() != ownerDb)
-      ownerDb = ownerDb.getDatabaseOwner();
+    while (ownerDb.getDatabaseOwner() != ownerDb) ownerDb = ownerDb.getDatabaseOwner();
 
     if (disableHooks)
       if (removedHooks != null) {
@@ -137,13 +133,11 @@ public class OIntentMassiveInsert implements OIntent {
   public OIntentMassiveInsert setDisableHooks(final boolean disableHooks) {
     this.disableHooks = disableHooks;
     return this;
-
   }
 
   public OIntentMassiveInsert setEnableCache(boolean enableCache) {
     this.enableCache = enableCache;
     return this;
-
   }
 
   @Override

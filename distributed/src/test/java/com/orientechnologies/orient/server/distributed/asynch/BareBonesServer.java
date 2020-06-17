@@ -7,7 +7,6 @@ import com.orientechnologies.orient.core.db.ODatabaseType;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.hazelcast.OHazelcastPlugin;
-
 import java.io.File;
 
 public class BareBonesServer {

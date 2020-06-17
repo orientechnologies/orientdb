@@ -8,7 +8,6 @@ import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.sql.executor.OExecutionPlan;
 import com.orientechnologies.orient.core.sql.executor.OInternalExecutionPlan;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
-
 import java.util.HashMap;
 import java.util.Map;
 
@@ -24,12 +23,15 @@ public class OExplainStatement extends OStatement {
     super(p, id);
   }
 
-  @Override public void toString(Map<Object, Object> params, StringBuilder builder) {
+  @Override
+  public void toString(Map<Object, Object> params, StringBuilder builder) {
     builder.append("EXPLAIN ");
     statement.toString(params, builder);
   }
 
-  @Override public OResultSet execute(ODatabase db, Object[] args, OCommandContext parentCtx, boolean usePlanCache) {
+  @Override
+  public OResultSet execute(
+      ODatabase db, Object[] args, OCommandContext parentCtx, boolean usePlanCache) {
     OBasicCommandContext ctx = new OBasicCommandContext();
     if (parentCtx != null) {
       ctx.setParentWithoutOverridingChild(parentCtx);
@@ -37,8 +39,7 @@ public class OExplainStatement extends OStatement {
     ctx.setDatabase(db);
     Map<Object, Object> params = new HashMap<>();
     if (args != null) {
-      for (int i = 0; i < args.length; i++)
-        params.put(i, args[i]);
+      for (int i = 0; i < args.length; i++) params.put(i, args[i]);
     }
     ctx.setInputParameters(params);
 
@@ -53,7 +54,9 @@ public class OExplainStatement extends OStatement {
     return result;
   }
 
-  @Override public OResultSet execute(ODatabase db, Map args, OCommandContext parentCtx, boolean usePlanCache) {
+  @Override
+  public OResultSet execute(
+      ODatabase db, Map args, OCommandContext parentCtx, boolean usePlanCache) {
     OBasicCommandContext ctx = new OBasicCommandContext();
     if (parentCtx != null) {
       ctx.setParentWithoutOverridingChild(parentCtx);
@@ -72,21 +75,22 @@ public class OExplainStatement extends OStatement {
     return result;
   }
 
-  @Override public OInternalExecutionPlan createExecutionPlan(OCommandContext ctx, boolean enableProfiling) {
+  @Override
+  public OInternalExecutionPlan createExecutionPlan(OCommandContext ctx, boolean enableProfiling) {
     return statement.createExecutionPlan(ctx, enableProfiling);
   }
 
-  @Override public OExplainStatement copy() {
+  @Override
+  public OExplainStatement copy() {
     OExplainStatement result = new OExplainStatement(-1);
     result.statement = statement == null ? null : statement.copy();
     return result;
   }
 
-  @Override public boolean equals(Object o) {
-    if (this == o)
-      return true;
-    if (o == null || getClass() != o.getClass())
-      return false;
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
 
     OExplainStatement that = (OExplainStatement) o;
 
@@ -96,11 +100,13 @@ public class OExplainStatement extends OStatement {
     return true;
   }
 
-  @Override public int hashCode() {
+  @Override
+  public int hashCode() {
     return statement != null ? statement.hashCode() : 0;
   }
 
-  @Override public boolean isIdempotent() {
+  @Override
+  public boolean isIdempotent() {
     return true;
   }
 }

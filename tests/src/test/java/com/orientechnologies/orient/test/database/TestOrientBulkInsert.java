@@ -9,11 +9,10 @@ import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import org.testng.annotations.Test;
-
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Random;
+import org.testng.annotations.Test;
 
 public class TestOrientBulkInsert {
 
@@ -37,8 +36,7 @@ public class TestOrientBulkInsert {
     OGlobalConfiguration.setConfiguration(defaultsMap);
 
     ODatabaseDocumentTx database = new ODatabaseDocumentTx("plocal:/temp/databases/bulktest");
-    if (database.exists())
-      database.open("admin", "admin").drop();
+    if (database.exists()) database.open("admin", "admin").drop();
 
     database.create();
 
@@ -90,9 +88,9 @@ public class TestOrientBulkInsert {
     return document;
   }
 
-  static final String AB      = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ";
-  static Random       rnd     = new Random();
-  static int          counter = 0;
+  static final String AB = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+  static Random rnd = new Random();
+  static int counter = 0;
 
   private String getRandomText(int len) {
 
@@ -103,5 +101,4 @@ public class TestOrientBulkInsert {
     String s = sb.toString() + " - " + (++counter);
     return s;
   }
-
 }

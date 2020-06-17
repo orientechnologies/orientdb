@@ -23,24 +23,29 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSe
 import com.orientechnologies.orient.server.distributed.ODistributedRequest;
 import com.orientechnologies.orient.server.distributed.ODistributedRequestId;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
-
 import java.util.List;
 
 /**
  * Base class for Replicated tasks.
  *
  * @author Luca Garulli (l.garulli--at--orientdb.com)
- *
  */
 public abstract class OAbstractReplicatedTask extends OAbstractRemoteTask {
   protected OLogSequenceNumber lastLSN;
 
-  public ORemoteTask getFixTask(final ODistributedRequest iRequest, final ORemoteTask iOriginalTask, final Object iBadResponse,
-      final Object iGoodResponse, final String executorNodeName, final ODistributedServerManager dManager) {
+  public ORemoteTask getFixTask(
+      final ODistributedRequest iRequest,
+      final ORemoteTask iOriginalTask,
+      final Object iBadResponse,
+      final Object iGoodResponse,
+      final String executorNodeName,
+      final ODistributedServerManager dManager) {
     return null;
   }
 
-  public ORemoteTask getUndoTask(final ODistributedServerManager dManager, final ODistributedRequestId reqId,
+  public ORemoteTask getUndoTask(
+      final ODistributedServerManager dManager,
+      final ODistributedRequestId reqId,
       final List<String> servers) {
     return null;
   }

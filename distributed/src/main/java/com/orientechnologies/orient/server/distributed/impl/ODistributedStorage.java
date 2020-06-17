@@ -38,7 +38,14 @@ import com.orientechnologies.orient.core.exception.OStorageException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.storage.*;
+import com.orientechnologies.orient.core.storage.OAutoshardedStorage;
+import com.orientechnologies.orient.core.storage.OCluster;
+import com.orientechnologies.orient.core.storage.OPhysicalPosition;
+import com.orientechnologies.orient.core.storage.ORawBuffer;
+import com.orientechnologies.orient.core.storage.ORecordCallback;
+import com.orientechnologies.orient.core.storage.ORecordMetadata;
+import com.orientechnologies.orient.core.storage.OStorage;
+import com.orientechnologies.orient.core.storage.OStorageOperationResult;
 import com.orientechnologies.orient.core.storage.cluster.OPaginatedCluster;
 import com.orientechnologies.orient.core.storage.disk.OLocalPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
@@ -47,11 +54,24 @@ import com.orientechnologies.orient.core.storage.impl.local.OSyncSource;
 import com.orientechnologies.orient.core.storage.ridbag.sbtree.OSBTreeCollectionManager;
 import com.orientechnologies.orient.core.tx.OTransactionInternal;
 import com.orientechnologies.orient.server.OServer;
-import com.orientechnologies.orient.server.distributed.*;
+import com.orientechnologies.orient.server.distributed.ODistributedConfiguration;
+import com.orientechnologies.orient.server.distributed.ODistributedDatabase;
+import com.orientechnologies.orient.server.distributed.ODistributedServerLog;
+import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
+import com.orientechnologies.orient.server.distributed.OModifiableDistributedConfiguration;
+import com.orientechnologies.orient.server.distributed.OWriteOperationNotPermittedException;
 import com.orientechnologies.orient.server.hazelcast.OHazelcastPlugin;
-
-import java.io.*;
-import java.util.*;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.TimeZone;
 import java.util.concurrent.Callable;
 
 /**
@@ -59,18 +79,19 @@ import java.util.concurrent.Callable;
  *
  * @author Luca Garulli (l.garulli--at--orientdb.com)
  */
-public class ODistributedStorage implements OStorage, OFreezableStorageComponent, OAutoshardedStorage {
-  private final    String                    name;
-  private final    OServer                   serverInstance;
-  private final    ODistributedServerManager dManager;
+public class ODistributedStorage
+    implements OStorage, OFreezableStorageComponent, OAutoshardedStorage {
+  private final String name;
+  private final OServer serverInstance;
+  private final ODistributedServerManager dManager;
   private volatile OAbstractPaginatedStorage wrapped;
 
   private ODistributedServerManager.DB_STATUS prevStatus;
-  private ODistributedDatabase                localDistributedDatabase;
-  private ODistributedStorageEventListener    eventListener;
+  private ODistributedDatabase localDistributedDatabase;
+  private ODistributedStorageEventListener eventListener;
 
   private volatile ODistributedConfiguration distributedConfiguration;
-  private volatile OSyncSource               lastValidBackup = null;
+  private volatile OSyncSource lastValidBackup = null;
 
   public ODistributedStorage(final OServer iServer, final String dbName) {
     this.serverInstance = iServer;
@@ -79,8 +100,7 @@ public class ODistributedStorage implements OStorage, OFreezableStorageComponent
   }
 
   public synchronized void replaceIfNeeded(final OAbstractPaginatedStorage wrapped) {
-    if (this.wrapped != wrapped)
-      this.wrapped = wrapped;
+    if (this.wrapped != wrapped) this.wrapped = wrapped;
   }
 
   public synchronized void wrap(final OAbstractPaginatedStorage wrapped) {
@@ -91,21 +111,25 @@ public class ODistributedStorage implements OStorage, OFreezableStorageComponent
     this.wrapped = wrapped;
     this.localDistributedDatabase = dManager.getMessageService().getDatabase(getName());
 
-    ODistributedServerLog
-        .debug(this, dManager != null ? dManager.getLocalNodeName() : "?", null, ODistributedServerLog.DIRECTION.NONE,
-            "Installing distributed storage on database '%s'", wrapped.getName());
+    ODistributedServerLog.debug(
+        this,
+        dManager != null ? dManager.getLocalNodeName() : "?",
+        null,
+        ODistributedServerLog.DIRECTION.NONE,
+        "Installing distributed storage on database '%s'",
+        wrapped.getName());
 
-    final int queueSize = getServer().getContextConfiguration()
-        .getValueAsInteger(OGlobalConfiguration.DISTRIBUTED_ASYNCH_QUEUE_SIZE);
-
+    final int queueSize =
+        getServer()
+            .getContextConfiguration()
+            .getValueAsInteger(OGlobalConfiguration.DISTRIBUTED_ASYNCH_QUEUE_SIZE);
   }
 
-  /**
-   * Supported only in embedded storage. Use <code>SELECT FROM metadata:storage</code> instead.
-   */
+  /** Supported only in embedded storage. Use <code>SELECT FROM metadata:storage</code> instead. */
   @Override
   public String getCreatedAtVersion() {
-    throw new UnsupportedOperationException("Supported only in embedded storage. Use 'SELECT FROM metadata:storage' instead.");
+    throw new UnsupportedOperationException(
+        "Supported only in embedded storage. Use 'SELECT FROM metadata:storage' instead.");
   }
 
   @Override
@@ -123,7 +147,9 @@ public class ODistributedStorage implements OStorage, OFreezableStorageComponent
   }
 
   public void acquireDistributedExclusiveLock(final long timeout) {
-    dManager.getLockManagerRequester().acquireExclusiveLock(getName(), dManager.getLocalNodeName(), timeout);
+    dManager
+        .getLockManagerRequester()
+        .acquireExclusiveLock(getName(), dManager.getLocalNodeName(), timeout);
   }
 
   public void releaseDistributedExclusiveLock() {
@@ -131,24 +157,37 @@ public class ODistributedStorage implements OStorage, OFreezableStorageComponent
   }
 
   public boolean isLocalEnv() {
-    return localDistributedDatabase == null || dManager == null || distributedConfiguration == null || OScenarioThreadLocal.INSTANCE
-        .isRunModeDistributed();
+    return localDistributedDatabase == null
+        || dManager == null
+        || distributedConfiguration == null
+        || OScenarioThreadLocal.INSTANCE.isRunModeDistributed();
   }
 
-  public OStorageOperationResult<ORawBuffer> readRecord(final ORecordId iRecordId, final String iFetchPlan,
-      final boolean iIgnoreCache, final boolean prefetchRecords, final ORecordCallback<ORawBuffer> iCallback) {
+  public OStorageOperationResult<ORawBuffer> readRecord(
+      final ORecordId iRecordId,
+      final String iFetchPlan,
+      final boolean iIgnoreCache,
+      final boolean prefetchRecords,
+      final ORecordCallback<ORawBuffer> iCallback) {
     // ALREADY DISTRIBUTED
     return wrapped.readRecord(iRecordId, iFetchPlan, iIgnoreCache, prefetchRecords, iCallback);
   }
 
   @Override
-  public OStorageOperationResult<ORawBuffer> readRecordIfVersionIsNotLatest(final ORecordId rid, final String fetchPlan,
-      final boolean ignoreCache, final int recordVersion) throws ORecordNotFoundException {
+  public OStorageOperationResult<ORawBuffer> readRecordIfVersionIsNotLatest(
+      final ORecordId rid,
+      final String fetchPlan,
+      final boolean ignoreCache,
+      final int recordVersion)
+      throws ORecordNotFoundException {
     return wrapped.readRecordIfVersionIsNotLatest(rid, fetchPlan, ignoreCache, recordVersion);
   }
 
   @Override
-  public OStorageOperationResult<Boolean> deleteRecord(final ORecordId iRecordId, final int iVersion, final int iMode,
+  public OStorageOperationResult<Boolean> deleteRecord(
+      final ORecordId iRecordId,
+      final int iVersion,
+      final int iMode,
       final ORecordCallback<Boolean> iCallback) {
     // IF is a real delete should be with a tx
     return wrapped.deleteRecord(iRecordId, iVersion, iMode, iCallback);
@@ -165,7 +204,8 @@ public class ODistributedStorage implements OStorage, OFreezableStorageComponent
   }
 
   @Override
-  public boolean cleanOutRecord(ORecordId recordId, final int recordVersion, int iMode, ORecordCallback<Boolean> callback) {
+  public boolean cleanOutRecord(
+      ORecordId recordId, final int recordVersion, int iMode, ORecordCallback<Boolean> callback) {
     return wrapped.cleanOutRecord(recordId, recordVersion, iMode, callback);
   }
 
@@ -180,7 +220,8 @@ public class ODistributedStorage implements OStorage, OFreezableStorageComponent
   }
 
   @Override
-  public boolean setClusterAttribute(final int id, final OCluster.ATTRIBUTES attribute, final Object value) {
+  public boolean setClusterAttribute(
+      final int id, final OCluster.ATTRIBUTES attribute, final Object value) {
     return wrapped.setClusterAttribute(id, attribute, value);
   }
 
@@ -206,7 +247,8 @@ public class ODistributedStorage implements OStorage, OFreezableStorageComponent
   }
 
   @Override
-  public void open(final String iUserName, final String iUserPassword, final OContextConfiguration iProperties) {
+  public void open(
+      final String iUserName, final String iUserPassword, final OContextConfiguration iProperties) {
     wrapped.open(iUserName, iUserPassword, iProperties);
   }
 
@@ -227,8 +269,7 @@ public class ODistributedStorage implements OStorage, OFreezableStorageComponent
 
   @Override
   public void delete() {
-    if (wrapped instanceof OLocalPaginatedStorage)
-      dropStorageFiles();
+    if (wrapped instanceof OLocalPaginatedStorage) dropStorageFiles();
 
     wrapped.delete();
   }
@@ -249,12 +290,14 @@ public class ODistributedStorage implements OStorage, OFreezableStorageComponent
   }
 
   @Override
-  public void fullIncrementalBackup(final OutputStream stream) throws UnsupportedOperationException {
+  public void fullIncrementalBackup(final OutputStream stream)
+      throws UnsupportedOperationException {
     wrapped.fullIncrementalBackup(stream);
   }
 
   @Override
-  public void restoreFullIncrementalBackup(final InputStream stream) throws UnsupportedOperationException {
+  public void restoreFullIncrementalBackup(final InputStream stream)
+      throws UnsupportedOperationException {
     wrapped.restoreFullIncrementalBackup(stream);
   }
 
@@ -265,32 +308,29 @@ public class ODistributedStorage implements OStorage, OFreezableStorageComponent
 
   @Override
   public void close(final boolean iForce, final boolean onDelete) {
-    if (wrapped == null)
-      return;
+    if (wrapped == null) return;
 
     if (onDelete && wrapped instanceof OLocalPaginatedStorage) {
-      // REMOVE distributed-config.json and distributed-sync.json files to allow removal of directory
+      // REMOVE distributed-config.json and distributed-sync.json files to allow removal of
+      // directory
       dropStorageFiles();
     }
 
     wrapped.close(iForce, onDelete);
-
   }
 
   public void closeOnDrop() {
-    if (wrapped == null)
-      return;
+    if (wrapped == null) return;
     if (wrapped instanceof OLocalPaginatedStorage) {
-      // REMOVE distributed-config.json and distributed-sync.json files to allow removal of directory
+      // REMOVE distributed-config.json and distributed-sync.json files to allow removal of
+      // directory
       dropStorageFiles();
     }
-
   }
 
   @Override
   public boolean isClosed() {
-    if (wrapped == null)
-      return true;
+    if (wrapped == null) return true;
 
     return wrapped.isClosed();
   }
@@ -362,7 +402,8 @@ public class ODistributedStorage implements OStorage, OFreezableStorageComponent
   }
 
   @Override
-  public boolean setClusterAttribute(String clusterName, OCluster.ATTRIBUTES attribute, Object value) {
+  public boolean setClusterAttribute(
+      String clusterName, OCluster.ATTRIBUTES attribute, Object value) {
     return wrapped.setClusterAttribute(clusterName, attribute, value);
   }
 
@@ -489,7 +530,8 @@ public class ODistributedStorage implements OStorage, OFreezableStorageComponent
   }
 
   @Override
-  public OPhysicalPosition[] higherPhysicalPositions(int currentClusterId, OPhysicalPosition entry) {
+  public OPhysicalPosition[] higherPhysicalPositions(
+      int currentClusterId, OPhysicalPosition entry) {
     return wrapped.higherPhysicalPositions(currentClusterId, entry);
   }
 
@@ -504,14 +546,18 @@ public class ODistributedStorage implements OStorage, OFreezableStorageComponent
   public ODistributedConfiguration getDistributedConfiguration() {
     if (distributedConfiguration == null) {
       final Map<String, Object> map = dManager.getConfigurationMap();
-      if (map == null)
-        return null;
+      if (map == null) return null;
 
       ODocument doc = (ODocument) map.get(OHazelcastPlugin.CONFIG_DATABASE_PREFIX + getName());
       if (doc != null) {
         // DISTRIBUTED CFG AVAILABLE: COPY IT TO THE LOCAL DIRECTORY
-        ODistributedServerLog.info(this, dManager.getLocalNodeName(), null, ODistributedServerLog.DIRECTION.NONE,
-            "Downloaded configuration for database '%s' from the cluster", getName());
+        ODistributedServerLog.info(
+            this,
+            dManager.getLocalNodeName(),
+            null,
+            ODistributedServerLog.DIRECTION.NONE,
+            "Downloaded configuration for database '%s' from the cluster",
+            getName());
         setDistributedConfiguration(new OModifiableDistributedConfiguration(doc));
       } else {
         doc = loadDatabaseConfiguration(getDistributedConfigFile());
@@ -520,8 +566,10 @@ public class ODistributedStorage implements OStorage, OFreezableStorageComponent
           doc = loadDatabaseConfiguration(dManager.getDefaultDatabaseConfigFile());
           if (doc == null)
             throw new OConfigurationException(
-                "Cannot load default distributed for database '" + getName() + "' config file: " + dManager
-                    .getDefaultDatabaseConfigFile());
+                "Cannot load default distributed for database '"
+                    + getName()
+                    + "' config file: "
+                    + dManager.getDefaultDatabaseConfigFile());
 
           // SAVE THE GENERIC FILE AS DATABASE FILE
           setDistributedConfiguration(new OModifiableDistributedConfiguration(doc));
@@ -530,36 +578,48 @@ public class ODistributedStorage implements OStorage, OFreezableStorageComponent
           distributedConfiguration = new ODistributedConfiguration(doc);
 
         // LOADED FILE, PUBLISH IT IN THE CLUSTER
-        dManager.updateCachedDatabaseConfiguration(getName(), new OModifiableDistributedConfiguration(doc), true);
+        dManager.updateCachedDatabaseConfiguration(
+            getName(), new OModifiableDistributedConfiguration(doc), true);
       }
     }
     return distributedConfiguration;
   }
 
-  public void setDistributedConfiguration(final OModifiableDistributedConfiguration distributedConfiguration) {
-    if (this.distributedConfiguration == null || distributedConfiguration.getVersion() > this.distributedConfiguration
-        .getVersion()) {
-      this.distributedConfiguration = new ODistributedConfiguration(distributedConfiguration.getDocument().copy());
+  public void setDistributedConfiguration(
+      final OModifiableDistributedConfiguration distributedConfiguration) {
+    if (this.distributedConfiguration == null
+        || distributedConfiguration.getVersion() > this.distributedConfiguration.getVersion()) {
+      this.distributedConfiguration =
+          new ODistributedConfiguration(distributedConfiguration.getDocument().copy());
 
       // PRINT THE NEW CONFIGURATION
-      final String cfgOutput = ODistributedOutput
-          .formatClusterTable(dManager, getName(), distributedConfiguration, dManager.getTotalNodes(getName()));
+      final String cfgOutput =
+          ODistributedOutput.formatClusterTable(
+              dManager, getName(), distributedConfiguration, dManager.getTotalNodes(getName()));
 
-      ODistributedServerLog.info(this, dManager.getLocalNodeName(), null, ODistributedServerLog.DIRECTION.NONE,
-          "Setting new distributed configuration for database: %s (version=%d)%s\n", getName(),
-          distributedConfiguration.getVersion(), cfgOutput);
+      ODistributedServerLog.info(
+          this,
+          dManager.getLocalNodeName(),
+          null,
+          ODistributedServerLog.DIRECTION.NONE,
+          "Setting new distributed configuration for database: %s (version=%d)%s\n",
+          getName(),
+          distributedConfiguration.getVersion(),
+          cfgOutput);
 
       saveDatabaseConfiguration();
     }
   }
 
   @Override
-  public OPhysicalPosition[] ceilingPhysicalPositions(int clusterId, OPhysicalPosition physicalPosition) {
+  public OPhysicalPosition[] ceilingPhysicalPositions(
+      int clusterId, OPhysicalPosition physicalPosition) {
     return wrapped.ceilingPhysicalPositions(clusterId, physicalPosition);
   }
 
   @Override
-  public OPhysicalPosition[] floorPhysicalPositions(int clusterId, OPhysicalPosition physicalPosition) {
+  public OPhysicalPosition[] floorPhysicalPositions(
+      int clusterId, OPhysicalPosition physicalPosition) {
     return wrapped.floorPhysicalPositions(clusterId, physicalPosition);
   }
 
@@ -610,8 +670,14 @@ public class ODistributedStorage implements OStorage, OFreezableStorageComponent
   }
 
   @Override
-  public List<String> backup(final OutputStream out, final Map<String, Object> options, final Callable<Object> callable,
-      final OCommandOutputListener iListener, final int compressionLevel, final int bufferSize) throws IOException {
+  public List<String> backup(
+      final OutputStream out,
+      final Map<String, Object> options,
+      final Callable<Object> callable,
+      final OCommandOutputListener iListener,
+      final int compressionLevel,
+      final int bufferSize)
+      throws IOException {
     // THIS CAUSES DEADLOCK
     // try {
     // return (List<String>) executeOperationInLock(new OCallable<Object, Void>() {
@@ -619,7 +685,8 @@ public class ODistributedStorage implements OStorage, OFreezableStorageComponent
     // public Object call(Void iArgument) {
     final String localNode = dManager.getLocalNodeName();
 
-    final ODistributedServerManager.DB_STATUS prevStatus = dManager.getDatabaseStatus(localNode, getName());
+    final ODistributedServerManager.DB_STATUS prevStatus =
+        dManager.getDatabaseStatus(localNode, getName());
     if (prevStatus == ODistributedServerManager.DB_STATUS.ONLINE)
       // SET STATUS = BACKUP
       dManager.setDatabaseStatus(localNode, getName(), ODistributedServerManager.DB_STATUS.BACKUP);
@@ -645,8 +712,12 @@ public class ODistributedStorage implements OStorage, OFreezableStorageComponent
   }
 
   @Override
-  public void restore(final InputStream in, final Map<String, Object> options, final Callable<Object> callable,
-      final OCommandOutputListener iListener) throws IOException {
+  public void restore(
+      final InputStream in,
+      final Map<String, Object> options,
+      final Callable<Object> callable,
+      final OCommandOutputListener iListener)
+      throws IOException {
     wrapped.restore(in, options, callable, iListener);
   }
 
@@ -669,11 +740,16 @@ public class ODistributedStorage implements OStorage, OFreezableStorageComponent
     close(true, false);
   }
 
-  protected void checkNodeIsMaster(final String localNodeName, final ODistributedConfiguration dbCfg, final String operation) {
+  protected void checkNodeIsMaster(
+      final String localNodeName, final ODistributedConfiguration dbCfg, final String operation) {
     final ODistributedConfiguration.ROLES nodeRole = dbCfg.getServerRole(localNodeName);
     if (nodeRole != ODistributedConfiguration.ROLES.MASTER)
       throw new OWriteOperationNotPermittedException(
-          "Cannot execute write operation (" + operation + ") on node '" + localNodeName + "' because is non a master");
+          "Cannot execute write operation ("
+              + operation
+              + ") on node '"
+              + localNodeName
+              + "' because is non a master");
   }
 
   public OSyncSource getLastValidBackup() {
@@ -684,12 +760,11 @@ public class ODistributedStorage implements OStorage, OFreezableStorageComponent
     this.lastValidBackup = lastValidBackup;
   }
 
-  protected void handleDistributedException(final String iMessage, final Exception e, final Object... iParams) {
+  protected void handleDistributedException(
+      final String iMessage, final Exception e, final Object... iParams) {
     if (e != null) {
-      if (e instanceof OException)
-        throw (OException) e;
-      else if (e.getCause() instanceof OException)
-        throw (OException) e.getCause();
+      if (e instanceof OException) throw (OException) e;
+      else if (e.getCause() instanceof OException) throw (OException) e.getCause();
       else if (e.getCause() != null && e.getCause().getCause() instanceof OException)
         throw (OException) e.getCause().getCause();
     }
@@ -699,10 +774,10 @@ public class ODistributedStorage implements OStorage, OFreezableStorageComponent
   }
 
   private OFreezableStorageComponent getFreezableStorage() {
-    if (wrapped instanceof OFreezableStorageComponent)
-      return wrapped;
+    if (wrapped instanceof OFreezableStorageComponent) return wrapped;
     else
-      throw new UnsupportedOperationException("Storage engine " + wrapped.getType() + " does not support freeze operation");
+      throw new UnsupportedOperationException(
+          "Storage engine " + wrapped.getType() + " does not support freeze operation");
   }
 
   public void resetLastValidBackup() {
@@ -723,22 +798,26 @@ public class ODistributedStorage implements OStorage, OFreezableStorageComponent
 
   public static void dropStorageFiles(OLocalPaginatedStorage storage) {
     // REMOVE distributed-config.json and distributed-sync.json files to allow removal of directory
-    final File dCfg = new File(storage.getStoragePath() + "/" + ODistributedServerManager.FILE_DISTRIBUTED_DB_CONFIG);
+    final File dCfg =
+        new File(
+            storage.getStoragePath() + "/" + ODistributedServerManager.FILE_DISTRIBUTED_DB_CONFIG);
 
     try {
       if (dCfg.exists()) {
         for (int i = 0; i < 10; ++i) {
-          if (dCfg.delete())
-            break;
+          if (dCfg.delete()) break;
           Thread.sleep(100);
         }
       }
 
-      final File dCfg2 = new File(storage.getStoragePath() + "/" + ODistributedDatabaseImpl.DISTRIBUTED_SYNC_JSON_FILENAME);
+      final File dCfg2 =
+          new File(
+              storage.getStoragePath()
+                  + "/"
+                  + ODistributedDatabaseImpl.DISTRIBUTED_SYNC_JSON_FILENAME);
       if (dCfg2.exists()) {
         for (int i = 0; i < 10; ++i) {
-          if (dCfg2.delete())
-            break;
+          if (dCfg2.delete()) break;
           Thread.sleep(100);
         }
       }
@@ -748,11 +827,16 @@ public class ODistributedStorage implements OStorage, OFreezableStorageComponent
   }
 
   public ODocument loadDatabaseConfiguration(final File file) {
-    if (!file.exists() || file.length() == 0)
-      return null;
+    if (!file.exists() || file.length() == 0) return null;
 
-    ODistributedServerLog.info(this, dManager.getLocalNodeName(), null, ODistributedServerLog.DIRECTION.NONE,
-        "Loaded configuration for database '%s' from disk: %s", getName(), file);
+    ODistributedServerLog.info(
+        this,
+        dManager.getLocalNodeName(),
+        null,
+        ODistributedServerLog.DIRECTION.NONE,
+        "Loaded configuration for database '%s' from disk: %s",
+        getName(),
+        file);
 
     FileInputStream f = null;
     try {
@@ -765,8 +849,14 @@ public class ODistributedStorage implements OStorage, OFreezableStorageComponent
       return doc;
 
     } catch (Exception e) {
-      ODistributedServerLog.error(this, dManager.getLocalNodeName(), null, ODistributedServerLog.DIRECTION.NONE,
-          "Error on loading distributed configuration file in: %s", e, file.getAbsolutePath());
+      ODistributedServerLog.error(
+          this,
+          dManager.getLocalNodeName(),
+          null,
+          ODistributedServerLog.DIRECTION.NONE,
+          "Error on loading distributed configuration file in: %s",
+          e,
+          file.getAbsolutePath());
     } finally {
       if (f != null)
         try {
@@ -783,8 +873,14 @@ public class ODistributedStorage implements OStorage, OFreezableStorageComponent
     try {
       File file = getDistributedConfigFile();
 
-      ODistributedServerLog.debug(this, dManager.getLocalNodeName(), null, ODistributedServerLog.DIRECTION.NONE,
-          "Saving distributed configuration file for database '%s' to: %s", getName(), file);
+      ODistributedServerLog.debug(
+          this,
+          dManager.getLocalNodeName(),
+          null,
+          ODistributedServerLog.DIRECTION.NONE,
+          "Saving distributed configuration file for database '%s' to: %s",
+          getName(),
+          file);
 
       if (!file.exists()) {
         file.getParentFile().mkdirs();
@@ -795,8 +891,13 @@ public class ODistributedStorage implements OStorage, OFreezableStorageComponent
       f.write(distributedConfiguration.getDocument().toJSON().getBytes());
       f.flush();
     } catch (Exception e) {
-      ODistributedServerLog.error(this, dManager.getLocalNodeName(), null, ODistributedServerLog.DIRECTION.NONE,
-          "Error on saving distributed configuration file", e);
+      ODistributedServerLog.error(
+          this,
+          dManager.getLocalNodeName(),
+          null,
+          ODistributedServerLog.DIRECTION.NONE,
+          "Error on saving distributed configuration file",
+          e);
 
     } finally {
       if (f != null)
@@ -808,7 +909,11 @@ public class ODistributedStorage implements OStorage, OFreezableStorageComponent
   }
 
   protected File getDistributedConfigFile() {
-    return new File(serverInstance.getDatabaseDirectory() + getName() + "/" + ODistributedServerManager.FILE_DISTRIBUTED_DB_CONFIG);
+    return new File(
+        serverInstance.getDatabaseDirectory()
+            + getName()
+            + "/"
+            + ODistributedServerManager.FILE_DISTRIBUTED_DB_CONFIG);
   }
 
   public ODistributedDatabase getLocalDistributedDatabase() {

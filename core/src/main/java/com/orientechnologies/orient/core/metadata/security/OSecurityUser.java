@@ -2,7 +2,6 @@ package com.orientechnologies.orient.core.metadata.security;
 
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-
 import java.io.Serializable;
 import java.util.Set;
 
@@ -12,12 +11,15 @@ import java.util.Set;
  */
 public interface OSecurityUser extends Serializable {
   enum STATUSES {
-    SUSPENDED, ACTIVE
+    SUSPENDED,
+    ACTIVE
   }
 
-  OSecurityRole allow(final ORule.ResourceGeneric resourceGeneric, String resourceSpecific, final int iOperation);
+  OSecurityRole allow(
+      final ORule.ResourceGeneric resourceGeneric, String resourceSpecific, final int iOperation);
 
-  OSecurityRole checkIfAllowed(final ORule.ResourceGeneric resourceGeneric, String resourceSpecific, final int iOperation);
+  OSecurityRole checkIfAllowed(
+      final ORule.ResourceGeneric resourceGeneric, String resourceSpecific, final int iOperation);
 
   boolean isRuleDefined(final ORule.ResourceGeneric resourceGeneric, String resourceSpecific);
 

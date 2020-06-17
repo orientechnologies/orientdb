@@ -20,13 +20,12 @@
 
 package com.orientechnologies.orient.core.storage.impl.local.paginated;
 
-import java.nio.charset.Charset;
-
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.orient.core.config.OContextConfiguration;
 import com.orientechnologies.orient.core.config.OStorageConfigurationImpl;
 import com.orientechnologies.orient.core.exception.OSerializationException;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
+import java.nio.charset.Charset;
 
 /**
  * @author Andrey Lomakin (a.lomakin-at-orientdb.com)
@@ -42,7 +41,8 @@ public class OStorageMemoryConfiguration extends OStorageConfigurationImpl {
   }
 
   @Override
-  public OStorageConfigurationImpl load(final OContextConfiguration configuration) throws OSerializationException {
+  public OStorageConfigurationImpl load(final OContextConfiguration configuration)
+      throws OSerializationException {
     lock.acquireWriteLock();
     try {
       initConfiguration(configuration);
@@ -50,8 +50,10 @@ public class OStorageMemoryConfiguration extends OStorageConfigurationImpl {
       try {
         fromStream(serializedContent, 0, serializedContent.length, streamCharset);
       } catch (Exception e) {
-        throw OException
-            .wrapException(new OSerializationException("Cannot load database configuration. The database seems corrupted"), e);
+        throw OException.wrapException(
+            new OSerializationException(
+                "Cannot load database configuration. The database seems corrupted"),
+            e);
       }
       return this;
     } finally {
@@ -66,7 +68,8 @@ public class OStorageMemoryConfiguration extends OStorageConfigurationImpl {
       try {
         serializedContent = toStream(streamCharset);
       } catch (Exception e) {
-        throw OException.wrapException(new OSerializationException("Error on update storage configuration"), e);
+        throw OException.wrapException(
+            new OSerializationException("Error on update storage configuration"), e);
       }
       if (updateListener != null) {
         updateListener.onUpdate(this);

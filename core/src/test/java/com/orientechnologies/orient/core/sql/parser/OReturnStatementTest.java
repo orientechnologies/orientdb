@@ -1,6 +1,7 @@
 package com.orientechnologies.orient.core.sql.parser;
 
 import org.junit.Test;
+
 public class OReturnStatementTest extends OParserTestAbstract {
 
   @Test
@@ -14,6 +15,4 @@ public class OReturnStatementTest extends OParserTestAbstract {
 
     checkWrongSyntax("return foo bar");
   }
-
-
 }

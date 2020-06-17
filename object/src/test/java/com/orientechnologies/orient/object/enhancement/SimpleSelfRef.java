@@ -2,7 +2,7 @@ package com.orientechnologies.orient.object.enhancement;
 
 public class SimpleSelfRef {
 
-  private String        name;
+  private String name;
   private SimpleSelfRef friend;
 
   public String getName() {
@@ -20,5 +20,4 @@ public class SimpleSelfRef {
   public void setFriend(SimpleSelfRef friend) {
     this.friend = friend;
   }
-
 }

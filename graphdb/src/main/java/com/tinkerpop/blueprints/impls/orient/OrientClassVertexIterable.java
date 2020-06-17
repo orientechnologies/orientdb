@@ -1,8 +1,7 @@
 package com.tinkerpop.blueprints.impls.orient;
 
-import java.util.Iterator;
-
 import com.tinkerpop.blueprints.Vertex;
+import java.util.Iterator;
 
 public class OrientClassVertexIterable extends OrientElementIterable<Vertex> {
 
@@ -17,5 +16,4 @@ public class OrientClassVertexIterable extends OrientElementIterable<Vertex> {
   public Iterator<Vertex> iterator() {
     return new OrientClassVertexIterator(super.graph, super.iterator(), klass);
   }
-
 }

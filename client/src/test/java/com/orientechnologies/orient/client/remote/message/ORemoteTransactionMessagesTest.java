@@ -1,5 +1,11 @@
 package com.orientechnologies.orient.client.remote.message;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
+
 import com.orientechnologies.common.comparator.ODefaultComparator;
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
 import com.orientechnologies.orient.core.id.ORecordId;
@@ -11,13 +17,15 @@ import com.orientechnologies.orient.core.storage.ridbag.sbtree.OBonsaiCollection
 import com.orientechnologies.orient.core.tx.OTransactionIndexChanges;
 import com.orientechnologies.orient.core.tx.OTransactionIndexChanges.OPERATION;
 import com.orientechnologies.orient.core.tx.OTransactionIndexChangesPerKey;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.TreeMap;
+import java.util.UUID;
 import org.junit.Ignore;
 import org.junit.Test;
-
-import java.io.IOException;
-import java.util.*;
-
-import static org.junit.Assert.*;
 
 public class ORemoteTransactionMessagesTest {
 
@@ -48,7 +56,8 @@ public class ORemoteTransactionMessagesTest {
     changes.put("some", change);
 
     MockChannel channel = new MockChannel();
-    OBeginTransactionRequest request = new OBeginTransactionRequest(0, true, true, operations, changes);
+    OBeginTransactionRequest request =
+        new OBeginTransactionRequest(0, true, true, operations, changes);
     request.write(channel, null);
 
     channel.close();
@@ -116,8 +125,12 @@ public class ORemoteTransactionMessagesTest {
 
     MockChannel channel = new MockChannel();
     List<OCommit37Response.OCreatedRecordResponse> creates = new ArrayList<>();
-    creates.add(new OCommit37Response.OCreatedRecordResponse(new ORecordId(1, 2), new ORecordId(-1, -2), 10));
-    creates.add(new OCommit37Response.OCreatedRecordResponse(new ORecordId(1, 3), new ORecordId(-1, -3), 20));
+    creates.add(
+        new OCommit37Response.OCreatedRecordResponse(
+            new ORecordId(1, 2), new ORecordId(-1, -2), 10));
+    creates.add(
+        new OCommit37Response.OCreatedRecordResponse(
+            new ORecordId(1, 3), new ORecordId(-1, -3), 20));
 
     List<OCommit37Response.OUpdatedRecordResponse> updates = new ArrayList<>();
     updates.add(new OCommit37Response.OUpdatedRecordResponse(new ORecordId(10, 20), 3));
@@ -185,8 +198,10 @@ public class ORemoteTransactionMessagesTest {
 
     List<ORecordOperation> operations = new ArrayList<>();
     operations.add(new ORecordOperation(new ODocument(), ORecordOperation.CREATED));
-    operations.add(new ORecordOperation(new ODocument(new ORecordId(10, 2)), ORecordOperation.UPDATED));
-    operations.add(new ORecordOperation(new ODocument(new ORecordId(10, 1)), ORecordOperation.DELETED));
+    operations.add(
+        new ORecordOperation(new ODocument(new ORecordId(10, 2)), ORecordOperation.UPDATED));
+    operations.add(
+        new ORecordOperation(new ODocument(new ORecordId(10, 1)), ORecordOperation.DELETED));
     Map<String, OTransactionIndexChanges> changes = new HashMap<>();
     OTransactionIndexChanges change = new OTransactionIndexChanges();
     change.cleared = false;
@@ -198,7 +213,8 @@ public class ORemoteTransactionMessagesTest {
     changes.put("some", change);
 
     MockChannel channel = new MockChannel();
-    OFetchTransactionResponse response = new OFetchTransactionResponse(10, operations, changes, new HashMap<>());
+    OFetchTransactionResponse response =
+        new OFetchTransactionResponse(10, operations, changes, new HashMap<>());
     response.write(channel, 0, ORecordSerializerNetworkV37.INSTANCE);
 
     channel.close();
@@ -234,8 +250,10 @@ public class ORemoteTransactionMessagesTest {
 
     List<ORecordOperation> operations = new ArrayList<>();
     operations.add(new ORecordOperation(new ODocument(), ORecordOperation.CREATED));
-    operations.add(new ORecordOperation(new ODocument(new ORecordId(10, 2)), ORecordOperation.UPDATED));
-    operations.add(new ORecordOperation(new ODocument(new ORecordId(10, 1)), ORecordOperation.DELETED));
+    operations.add(
+        new ORecordOperation(new ODocument(new ORecordId(10, 2)), ORecordOperation.UPDATED));
+    operations.add(
+        new ORecordOperation(new ODocument(new ORecordId(10, 1)), ORecordOperation.DELETED));
     Map<String, OTransactionIndexChanges> changes = new HashMap<>();
     OTransactionIndexChanges change = new OTransactionIndexChanges();
     change.cleared = false;
@@ -247,7 +265,8 @@ public class ORemoteTransactionMessagesTest {
     changes.put("some", change);
 
     MockChannel channel = new MockChannel();
-    OFetchTransaction38Response response = new OFetchTransaction38Response(10, operations, changes, new HashMap<>(), null);
+    OFetchTransaction38Response response =
+        new OFetchTransaction38Response(10, operations, changes, new HashMap<>(), null);
     response.write(channel, 0, ORecordSerializerNetworkV37.INSTANCE);
 
     channel.close();
@@ -292,12 +311,14 @@ public class ORemoteTransactionMessagesTest {
     changes.put("some", change);
 
     MockChannel channel = new MockChannel();
-    OFetchTransactionResponse response = new OFetchTransactionResponse(10, operations, changes, new HashMap<>());
+    OFetchTransactionResponse response =
+        new OFetchTransactionResponse(10, operations, changes, new HashMap<>());
     response.write(channel, 0, ORecordSerializerNetworkV37.INSTANCE);
 
     channel.close();
 
-    OFetchTransactionResponse readResponse = new OFetchTransactionResponse(10, operations, changes, new HashMap<>());
+    OFetchTransactionResponse readResponse =
+        new OFetchTransactionResponse(10, operations, changes, new HashMap<>());
     readResponse.read(channel, null);
 
     assertEquals(readResponse.getTxId(), 10);
@@ -313,7 +334,5 @@ public class ORemoteTransactionMessagesTest {
     assertEquals(entryChange.entries.get(0).operation, OPERATION.PUT);
     assertEquals(entryChange.entries.get(1).value, new ORecordId(2, 2));
     assertEquals(entryChange.entries.get(1).operation, OPERATION.REMOVE);
-
   }
-
 }

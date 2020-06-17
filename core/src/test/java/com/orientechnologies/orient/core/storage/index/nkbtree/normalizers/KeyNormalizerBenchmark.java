@@ -2,15 +2,7 @@ package com.orientechnologies.orient.core.storage.index.nkbtree.normalizers;
 
 import com.ibm.icu.text.Collator;
 import com.orientechnologies.orient.core.index.OCompositeKey;
-
 import com.orientechnologies.orient.core.metadata.schema.OType;
-import org.openjdk.jmh.annotations.*;
-import org.openjdk.jmh.profile.StackProfiler;
-import org.openjdk.jmh.runner.Runner;
-import org.openjdk.jmh.runner.RunnerException;
-import org.openjdk.jmh.runner.options.Options;
-import org.openjdk.jmh.runner.options.OptionsBuilder;
-
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.time.LocalDateTime;
@@ -19,6 +11,22 @@ import java.util.Calendar;
 import java.util.Date;
 import java.util.GregorianCalendar;
 import java.util.concurrent.TimeUnit;
+import org.openjdk.jmh.annotations.Benchmark;
+import org.openjdk.jmh.annotations.BenchmarkMode;
+import org.openjdk.jmh.annotations.Fork;
+import org.openjdk.jmh.annotations.Level;
+import org.openjdk.jmh.annotations.Measurement;
+import org.openjdk.jmh.annotations.Mode;
+import org.openjdk.jmh.annotations.OutputTimeUnit;
+import org.openjdk.jmh.annotations.Scope;
+import org.openjdk.jmh.annotations.Setup;
+import org.openjdk.jmh.annotations.State;
+import org.openjdk.jmh.annotations.Warmup;
+import org.openjdk.jmh.profile.StackProfiler;
+import org.openjdk.jmh.runner.Runner;
+import org.openjdk.jmh.runner.RunnerException;
+import org.openjdk.jmh.runner.options.Options;
+import org.openjdk.jmh.runner.options.OptionsBuilder;
 
 @State(Scope.Thread)
 @BenchmarkMode(Mode.AverageTime)
@@ -30,22 +38,24 @@ public class KeyNormalizerBenchmark {
   private KeyNormalizer keyNormalizer;
 
   private OCompositeKey binaryCompositeKey;
-  private OType[]       binaryTypes;
+  private OType[] binaryTypes;
 
   private OCompositeKey dateCompositeKey;
-  private OType[]       dateTypes;
+  private OType[] dateTypes;
 
   private OCompositeKey dateTimeCompositeKey;
-  private OType[]       dateTimeTypes;
+  private OType[] dateTimeTypes;
 
   public static void main(String[] args) throws RunnerException {
-    final Options opt = new OptionsBuilder().include("KeyNormalizerBenchmark.*")
-        .addProfiler(StackProfiler.class, "detailLine=true;excludePackages=true;period=1")
-        .jvmArgs("-server", "-XX:+UseConcMarkSweepGC", "-Xmx4G", "-Xms1G")
-        // .result("target" + "/" + "results.csv")
-        // .param("offHeapMessages", "true""
-        // .resultFormat(ResultFormatType.CSV)
-        .build();
+    final Options opt =
+        new OptionsBuilder()
+            .include("KeyNormalizerBenchmark.*")
+            .addProfiler(StackProfiler.class, "detailLine=true;excludePackages=true;period=1")
+            .jvmArgs("-server", "-XX:+UseConcMarkSweepGC", "-Xmx4G", "-Xms1G")
+            // .result("target" + "/" + "results.csv")
+            // .param("offHeapMessages", "true""
+            // .resultFormat(ResultFormatType.CSV)
+            .build();
     new Runner(opt).run();
   }
 
@@ -58,7 +68,7 @@ public class KeyNormalizerBenchmark {
 
   private void binaryFixture() {
     keyNormalizer = new KeyNormalizer();
-    final byte[] binaryKey = new byte[] { 1, 2, 3, 4, 5, 6 };
+    final byte[] binaryKey = new byte[] {1, 2, 3, 4, 5, 6};
     binaryCompositeKey = new OCompositeKey();
     binaryCompositeKey.addKey(binaryKey);
     binaryTypes = new OType[1];

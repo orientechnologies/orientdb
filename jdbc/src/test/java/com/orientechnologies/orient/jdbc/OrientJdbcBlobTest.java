@@ -1,25 +1,28 @@
 /**
  * Copyright 2010-2016 OrientDB LTD (http://orientdb.com)
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
+ * <p>Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file
+ * except in compliance with the License. You may obtain a copy of the License at
  *
- * 	http://www.apache.org/licenses/LICENSE-2.0
+ * <p>http://www.apache.org/licenses/LICENSE-2.0
  *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
+ * <p>Unless required by applicable law or agreed to in writing, software distributed under the
+ * License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either
+ * express or implied. See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * For more information: http://orientdb.com
+ * <p>For more information: http://orientdb.com
  */
 package com.orientechnologies.orient.jdbc;
 
-import org.junit.Test;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.fail;
 
-import java.io.*;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
 import java.math.BigInteger;
 import java.security.DigestInputStream;
 import java.security.MessageDigest;
@@ -28,9 +31,7 @@ import java.sql.Blob;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.fail;
+import org.junit.Test;
 
 public class OrientJdbcBlobTest extends OrientJdbcDbPerClassTemplateTest {
   private static final String TEST_WORKING_DIR = "./target/working/";
@@ -39,19 +40,17 @@ public class OrientJdbcBlobTest extends OrientJdbcDbPerClassTemplateTest {
   public void shouldStoreBinaryStream() throws Exception {
     conn.createStatement().executeQuery("CREATE CLASS Blobs");
 
-    PreparedStatement statement = conn.prepareStatement("INSERT INTO Blobs (uuid,attachment) VALUES (?,?)");
+    PreparedStatement statement =
+        conn.prepareStatement("INSERT INTO Blobs (uuid,attachment) VALUES (?,?)");
 
-    statement.setInt(1,1);
+    statement.setInt(1, 1);
     statement.setBinaryStream(2, ClassLoader.getSystemResourceAsStream("file.pdf"));
 
     int rowsInserted = statement.executeUpdate();
 
     assertThat(rowsInserted).isEqualTo(1);
 
-
-    //verify the blob
-
-
+    // verify the blob
 
     PreparedStatement stmt = conn.prepareStatement("SELECT FROM Blobs WHERE uuid = 1 ");
 
@@ -61,10 +60,10 @@ public class OrientJdbcBlobTest extends OrientJdbcDbPerClassTemplateTest {
 
     Blob blob = rs.getBlob("attachment");
     verifyBlobAgainstFile(blob);
-
   }
 
-  private void verifyBlobAgainstFile(Blob blob) throws NoSuchAlgorithmException, IOException, SQLException {
+  private void verifyBlobAgainstFile(Blob blob)
+      throws NoSuchAlgorithmException, IOException, SQLException {
     String digest = this.calculateMD5checksum(ClassLoader.getSystemResourceAsStream("file.pdf"));
     File binaryFile = getOutFile();
 
@@ -80,7 +79,6 @@ public class OrientJdbcBlobTest extends OrientJdbcDbPerClassTemplateTest {
   @Test
   public void shouldLoadBlob() throws SQLException, IOException, NoSuchAlgorithmException {
 
-
     PreparedStatement stmt = conn.prepareStatement("SELECT FROM Article WHERE uuid = 1 ");
 
     ResultSet rs = stmt.executeQuery();
@@ -90,12 +88,10 @@ public class OrientJdbcBlobTest extends OrientJdbcDbPerClassTemplateTest {
     Blob blob = rs.getBlob("attachment");
 
     verifyBlobAgainstFile(blob);
-
   }
 
   @Test
   public void shouldLoadChuckedBlob() throws SQLException, IOException, NoSuchAlgorithmException {
-
 
     PreparedStatement stmt = conn.prepareStatement("SELECT FROM Article WHERE uuid = 2 ");
 
@@ -105,7 +101,6 @@ public class OrientJdbcBlobTest extends OrientJdbcDbPerClassTemplateTest {
     Blob blob = rs.getBlob("attachment");
 
     verifyBlobAgainstFile(blob);
-
   }
 
   protected void createWorkingDirIfRequired() {
@@ -136,13 +131,13 @@ public class OrientJdbcBlobTest extends OrientJdbcDbPerClassTemplateTest {
     }
   }
 
-  private String calculateMD5checksum(InputStream fileStream) throws NoSuchAlgorithmException, IOException {
+  private String calculateMD5checksum(InputStream fileStream)
+      throws NoSuchAlgorithmException, IOException {
     MessageDigest md = MessageDigest.getInstance("MD5");
 
     try {
       fileStream = new DigestInputStream(fileStream, md);
-      while (fileStream.read() != -1)
-        ;
+      while (fileStream.read() != -1) ;
     } finally {
       try {
         fileStream.close();
@@ -160,9 +155,7 @@ public class OrientJdbcBlobTest extends OrientJdbcDbPerClassTemplateTest {
       s = new FileOutputStream(binaryFile);
       s.write(blob.getBytes(1, (int) blob.length()));
     } finally {
-      if (s != null)
-        s.close();
+      if (s != null) s.close();
     }
   }
-
 }

@@ -18,13 +18,15 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ORecordBytes;
 
 /**
- * {@link ODocumentFieldOTypeHandlingStrategy} that stores each {@link OType#BINARY} object in a {@link ORecordBytes}.
- * 
- * Binary data optimization: http://orientdb.com/docs/2.2/Binary-Data.html
- * 
+ * {@link ODocumentFieldOTypeHandlingStrategy} that stores each {@link OType#BINARY} object in a
+ * {@link ORecordBytes}.
+ *
+ * <p>Binary data optimization: http://orientdb.com/docs/2.2/Binary-Data.html
+ *
  * @author diegomtassis <a href="mailto:dta@compart.com">Diego Martin Tassis</a>
  */
-public class ODocumentSingleRecordBytesOTypeHandlingStrategy implements ODocumentFieldOTypeHandlingStrategy {
+public class ODocumentSingleRecordBytesOTypeHandlingStrategy
+    implements ODocumentFieldOTypeHandlingStrategy {
 
   @Override
   public ODocument store(ODocument iRecord, String fieldName, Object fieldValue) {

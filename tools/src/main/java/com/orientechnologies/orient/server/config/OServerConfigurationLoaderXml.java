@@ -22,29 +22,30 @@ package com.orientechnologies.orient.server.config;
 import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
-
-import javax.xml.bind.JAXBContext;
-import javax.xml.bind.JAXBException;
-import javax.xml.bind.Marshaller;
-import javax.xml.bind.Unmarshaller;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
+import javax.xml.bind.JAXBContext;
+import javax.xml.bind.JAXBException;
+import javax.xml.bind.Marshaller;
+import javax.xml.bind.Unmarshaller;
 
 public class OServerConfigurationLoaderXml {
   private Class<? extends OServerConfiguration> rootClass;
-  private JAXBContext                           context;
-  private InputStream                           inputStream;
-  private File                                  file;
-  private long                                  fileLastModified = -1;
+  private JAXBContext context;
+  private InputStream inputStream;
+  private File file;
+  private long fileLastModified = -1;
 
-  public OServerConfigurationLoaderXml(final Class<? extends OServerConfiguration> iRootClass, final InputStream iInputStream) {
+  public OServerConfigurationLoaderXml(
+      final Class<? extends OServerConfiguration> iRootClass, final InputStream iInputStream) {
     rootClass = iRootClass;
     inputStream = iInputStream;
   }
 
-  public OServerConfigurationLoaderXml(final Class<? extends OServerConfiguration> iRootClass, final File iFile) {
+  public OServerConfigurationLoaderXml(
+      final Class<? extends OServerConfiguration> iRootClass, final File iFile) {
     rootClass = iRootClass;
     file = iFile;
   }
@@ -56,8 +57,7 @@ public class OServerConfigurationLoaderXml {
 
         String path = OFileUtils.getPath(file.getAbsolutePath());
         String current = OFileUtils.getPath(new File("").getAbsolutePath());
-        if (path.startsWith(current))
-          path = path.substring(current.length() + 1);
+        if (path.startsWith(current)) path = path.substring(current.length() + 1);
         OLogManager.instance().info(this, "Loading configuration from: %s...", path);
       } else {
         OLogManager.instance().info(this, "Loading configuration from input stream");
@@ -70,8 +70,7 @@ public class OServerConfigurationLoaderXml {
       final OServerConfiguration obj;
 
       if (file != null) {
-        if (file.exists())
-          obj = rootClass.cast(unmarshaller.unmarshal(file));
+        if (file.exists()) obj = rootClass.cast(unmarshaller.unmarshal(file));
         else {
           OLogManager.instance().error(this, "Server configuration file not found: %s", null, file);
           return rootClass.getConstructor(OServerConfigurationLoaderXml.class).newInstance(this);
@@ -98,13 +97,15 @@ public class OServerConfigurationLoaderXml {
       return obj;
     } catch (Exception e) {
       // SYNTAX ERROR? PRINT AN EXAMPLE
-      OLogManager.instance().error(this, "Invalid syntax. Below an example of how it should be:", e);
+      OLogManager.instance()
+          .error(this, "Invalid syntax. Below an example of how it should be:", e);
 
       try {
         context = JAXBContext.newInstance(rootClass);
         Marshaller marshaller = context.createMarshaller();
         marshaller.setProperty(Marshaller.JAXB_FORMATTED_OUTPUT, Boolean.TRUE);
-        Object example = rootClass.getConstructor(OServerConfigurationLoaderXml.class).newInstance(this);
+        Object example =
+            rootClass.getConstructor(OServerConfigurationLoaderXml.class).newInstance(this);
         marshaller.marshal(example, System.out);
       } catch (Exception ex) {
       }
@@ -135,8 +136,7 @@ public class OServerConfigurationLoaderXml {
   }
 
   public boolean checkForAutoReloading() {
-    if (file != null)
-      return file.lastModified() > fileLastModified;
+    if (file != null) return file.lastModified() > fileLastModified;
 
     return false;
   }

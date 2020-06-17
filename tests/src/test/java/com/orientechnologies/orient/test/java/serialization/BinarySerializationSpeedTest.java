@@ -15,35 +15,33 @@
  */
 package com.orientechnologies.orient.test.java.serialization;
 
+import com.orientechnologies.common.test.SpeedTestMonoThread;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.ObjectOutputStream;
-
 import org.testng.annotations.Test;
-
-import com.orientechnologies.common.test.SpeedTestMonoThread;
 
 public class BinarySerializationSpeedTest extends SpeedTestMonoThread {
 
-	public BinarySerializationSpeedTest() {
-		super(1000000);
-	}
+  public BinarySerializationSpeedTest() {
+    super(1000000);
+  }
 
-	@Override
-	@Test(enabled = false)
-	public void cycle() throws IOException {
-		ByteArrayOutputStream ba = new ByteArrayOutputStream();
-		ObjectOutputStream oos = new ObjectOutputStream(ba);
+  @Override
+  @Test(enabled = false)
+  public void cycle() throws IOException {
+    ByteArrayOutputStream ba = new ByteArrayOutputStream();
+    ObjectOutputStream oos = new ObjectOutputStream(ba);
 
-		try {
-			oos.writeInt(300);
-			oos.writeBoolean(true);
-			oos.writeUTF("Questa e una prova di scrittura di una stringa");
-			oos.writeFloat(3.0f);
-			oos.writeLong(30000000L);
-		} finally {
-			oos.close();
-			ba.close();
-		}
-	}
+    try {
+      oos.writeInt(300);
+      oos.writeBoolean(true);
+      oos.writeUTF("Questa e una prova di scrittura di una stringa");
+      oos.writeFloat(3.0f);
+      oos.writeLong(30000000L);
+    } finally {
+      oos.close();
+      ba.close();
+    }
+  }
 }

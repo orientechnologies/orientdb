@@ -21,30 +21,30 @@ package com.orientechnologies.orient.etl.transformer;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-
 import java.util.logging.Level;
 
-/**
- * ETL Transformer that logs the input.
- */
+/** ETL Transformer that logs the input. */
 public class OETLLogTransformer extends OETLAbstractTransformer {
-  private String prefix  = "";
+  private String prefix = "";
   private String postfix = "";
 
   @Override
   public void configure(final ODocument iConfiguration, OCommandContext iContext) {
     super.configure(iConfiguration, iContext);
-    if (iConfiguration.containsField("prefix"))
-      prefix = iConfiguration.field("prefix");
-    if (iConfiguration.containsField("postfix"))
-      postfix = iConfiguration.field("postfix");
+    if (iConfiguration.containsField("prefix")) prefix = iConfiguration.field("prefix");
+    if (iConfiguration.containsField("postfix")) postfix = iConfiguration.field("postfix");
   }
 
   @Override
   public ODocument getConfiguration() {
-    return new ODocument().fromJSON("{parameters:[" + getCommonConfigurationParameters() + ","
-        + "{prefix:{optional:true,description:'Custom prefix to prepend to the message'}},"
-        + "{postfix:{optional:true,description:'Custom postfix to append to the message'}}" + "]}");
+    return new ODocument()
+        .fromJSON(
+            "{parameters:["
+                + getCommonConfigurationParameters()
+                + ","
+                + "{prefix:{optional:true,description:'Custom prefix to prepend to the message'}},"
+                + "{postfix:{optional:true,description:'Custom postfix to append to the message'}}"
+                + "]}");
   }
 
   @Override
@@ -56,14 +56,11 @@ public class OETLLogTransformer extends OETLAbstractTransformer {
   public Object executeTransform(ODatabaseDocument db, final Object input) {
     final StringBuilder buffer = new StringBuilder();
 
-    if (prefix != null && !prefix.isEmpty())
-      buffer.append(resolve(prefix));
+    if (prefix != null && !prefix.isEmpty()) buffer.append(resolve(prefix));
 
-    if (input != null)
-      buffer.append(input);
+    if (input != null) buffer.append(input);
 
-    if (postfix != null && !postfix.isEmpty())
-      buffer.append(resolve(postfix));
+    if (postfix != null && !postfix.isEmpty()) buffer.append(resolve(postfix));
 
     log(Level.INFO, buffer.toString());
 

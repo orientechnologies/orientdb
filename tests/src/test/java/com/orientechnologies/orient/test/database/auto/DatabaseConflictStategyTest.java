@@ -31,7 +31,7 @@ import com.tinkerpop.blueprints.impls.orient.OrientVertex;
 
 public final class DatabaseConflictStategyTest {
 
-  private String             dbName;
+  private String dbName;
   private OrientGraphFactory graphReadFactory;
 
   public DatabaseConflictStategyTest(String dbName) {
@@ -39,7 +39,8 @@ public final class DatabaseConflictStategyTest {
   }
 
   public static void main(String args[]) {
-    DatabaseConflictStategyTest test = new DatabaseConflictStategyTest("DatabaseConflictStategyTest");
+    DatabaseConflictStategyTest test =
+        new DatabaseConflictStategyTest("DatabaseConflictStategyTest");
     test.runTest();
     Runtime.getRuntime().halt(0);
   }
@@ -69,47 +70,45 @@ public final class DatabaseConflictStategyTest {
     } catch (Exception ex) {
       ex.printStackTrace();
     }
-
   }
 
   public void printVertex(String info, OrientVertex vtx) {
-//    System.out.println("--------" + info + " ----------");
-//    System.out.println(vtx);
-//    Set<String> keys = vtx.getPropertyKeys();
-//    for (String key : keys) {
-//      System.out.println("Key = " + key + " Value = " + vtx.getProperty(key));
-//    }
+    //    System.out.println("--------" + info + " ----------");
+    //    System.out.println(vtx);
+    //    Set<String> keys = vtx.getPropertyKeys();
+    //    for (String key : keys) {
+    //      System.out.println("Key = " + key + " Value = " + vtx.getProperty(key));
+    //    }
   }
 
-  /**
-   * @return
-   */
+  /** @return */
   public String getDBURL() {
     return "memory:" + dbName;
   }
 
   private Thread startThread(final int version, final long timeout, final String key) {
 
-    Thread th = new Thread() {
-      @Override
-      public void run() {
-        OrientVertex vtx1 = null;
-        OrientGraph graph = getGraphFactory().getTx();
-        Iterable<Vertex> vtxs = graph.getVertices();
-        for (Vertex vtx : vtxs) {
-          vtx1 = (OrientVertex) vtx;
-        }
-        try {
-          Thread.sleep(timeout);
-        } catch (InterruptedException e) {
-          e.printStackTrace();
-        }
-        vtx1.setProperty(key, "key-" + version);
-        graph.commit();
-        printVertex(version + "", vtx1);
-        graph.shutdown();
-      }
-    };
+    Thread th =
+        new Thread() {
+          @Override
+          public void run() {
+            OrientVertex vtx1 = null;
+            OrientGraph graph = getGraphFactory().getTx();
+            Iterable<Vertex> vtxs = graph.getVertices();
+            for (Vertex vtx : vtxs) {
+              vtx1 = (OrientVertex) vtx;
+            }
+            try {
+              Thread.sleep(timeout);
+            } catch (InterruptedException e) {
+              e.printStackTrace();
+            }
+            vtx1.setProperty(key, "key-" + version);
+            graph.commit();
+            printVertex(version + "", vtx1);
+            graph.shutdown();
+          }
+        };
     th.start();
     return th;
   }
@@ -131,12 +130,11 @@ public final class DatabaseConflictStategyTest {
   }
 
   private void log(String message) {
-//    System.out.println(message);
+    //    System.out.println(message);
   }
 
   private void log(String message, Throwable th) {
     System.out.println(th.getMessage());
     th.printStackTrace();
   }
-
 }

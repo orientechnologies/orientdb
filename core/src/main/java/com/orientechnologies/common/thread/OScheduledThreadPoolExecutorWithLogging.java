@@ -1,7 +1,6 @@
 package com.orientechnologies.common.thread;
 
 import com.orientechnologies.common.log.OLogManager;
-
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
@@ -10,8 +9,8 @@ import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.ThreadFactory;
 
 /**
- * The same as thread {@link ScheduledThreadPoolExecutor} but also logs all exceptions happened inside of the tasks which caused
- * tasks to stop.
+ * The same as thread {@link ScheduledThreadPoolExecutor} but also logs all exceptions happened
+ * inside of the tasks which caused tasks to stop.
  */
 public class OScheduledThreadPoolExecutorWithLogging extends ScheduledThreadPoolExecutor {
   public OScheduledThreadPoolExecutorWithLogging(int corePoolSize) {
@@ -23,12 +22,14 @@ public class OScheduledThreadPoolExecutorWithLogging extends ScheduledThreadPool
   }
 
   @SuppressWarnings("unused")
-  public OScheduledThreadPoolExecutorWithLogging(int corePoolSize, RejectedExecutionHandler handler) {
+  public OScheduledThreadPoolExecutorWithLogging(
+      int corePoolSize, RejectedExecutionHandler handler) {
     super(corePoolSize, handler);
   }
 
   @SuppressWarnings("unused")
-  public OScheduledThreadPoolExecutorWithLogging(int corePoolSize, ThreadFactory threadFactory, RejectedExecutionHandler handler) {
+  public OScheduledThreadPoolExecutorWithLogging(
+      int corePoolSize, ThreadFactory threadFactory, RejectedExecutionHandler handler) {
     super(corePoolSize, threadFactory, handler);
   }
 
@@ -38,12 +39,12 @@ public class OScheduledThreadPoolExecutorWithLogging extends ScheduledThreadPool
 
     if (r instanceof Future<?>) {
       final Future<?> future = (Future<?>) r;
-      //scheduled futures can block execution forever if they are not done
+      // scheduled futures can block execution forever if they are not done
       if (future.isDone()) {
         try {
           future.get();
         } catch (CancellationException ce) {
-          //ignore it we cancel tasks on shutdown that is normal
+          // ignore it we cancel tasks on shutdown that is normal
         } catch (ExecutionException ee) {
           t = ee.getCause();
         } catch (InterruptedException ie) {

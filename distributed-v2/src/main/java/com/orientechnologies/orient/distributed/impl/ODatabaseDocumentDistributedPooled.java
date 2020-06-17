@@ -6,22 +6,20 @@ import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.config.ONodeIdentity;
 import com.orientechnologies.orient.core.storage.OStorage;
 
-/**
- * Created by tglman on 30/03/17.
- */
+/** Created by tglman on 30/03/17. */
 public class ODatabaseDocumentDistributedPooled extends ODatabaseDocumentDistributed {
 
   private ODatabasePoolInternal pool;
 
-  public ODatabaseDocumentDistributedPooled(ODatabasePoolInternal pool, OStorage storage, ONodeIdentity nodeIdentity) {
+  public ODatabaseDocumentDistributedPooled(
+      ODatabasePoolInternal pool, OStorage storage, ONodeIdentity nodeIdentity) {
     super(storage, nodeIdentity);
     this.pool = pool;
   }
 
   @Override
   public void close() {
-    if (isClosed())
-      return;
+    if (isClosed()) return;
     internalClose(true);
     pool.release(this);
   }

@@ -35,7 +35,6 @@ import com.orientechnologies.orient.core.record.OElement;
 import com.orientechnologies.orient.core.record.OVertex;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.functions.OSQLFunctionRuntime;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -46,16 +45,17 @@ import java.util.Set;
  *
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
  */
-public class OCommandExecutorSQLMoveVertex extends OCommandExecutorSQLSetAware implements OCommandDistributedReplicateRequest {
-  public static final  String NAME          = "MOVE VERTEX";
+public class OCommandExecutorSQLMoveVertex extends OCommandExecutorSQLSetAware
+    implements OCommandDistributedReplicateRequest {
+  public static final String NAME = "MOVE VERTEX";
   private static final String KEYWORD_MERGE = "MERGE";
   private static final String KEYWORD_BATCH = "BATCH";
-  private              String source        = null;
-  private String                      clusterName;
-  private String                      className;
-  private OClass                      clazz;
+  private String source = null;
+  private String clusterName;
+  private String className;
+  private OClass clazz;
   private List<OPair<String, Object>> fields;
-  private ODocument                   merge;
+  private ODocument merge;
   private int batch = 100;
 
   @SuppressWarnings("unchecked")
@@ -68,8 +68,7 @@ public class OCommandExecutorSQLMoveVertex extends OCommandExecutorSQLSetAware i
     parserRequiredKeyword("VERTEX");
 
     source = parserRequiredWord(false, "Syntax error", " =><,\r\n");
-    if (source == null)
-      throw new OCommandSQLParsingException("Cannot find source");
+    if (source == null) throw new OCommandSQLParsingException("Cannot find source");
 
     parserRequiredKeyword("TO");
 
@@ -78,7 +77,8 @@ public class OCommandExecutorSQLMoveVertex extends OCommandExecutorSQLSetAware i
     while (temp != null) {
       if (temp.startsWith("CLUSTER:")) {
         if (className != null)
-          throw new OCommandSQLParsingException("Cannot define multiple sources. Found both cluster and class.");
+          throw new OCommandSQLParsingException(
+              "Cannot define multiple sources. Found both cluster and class.");
 
         clusterName = temp.substring("CLUSTER:".length());
         if (database.getClusterIdByName(clusterName) == -1)
@@ -86,7 +86,8 @@ public class OCommandExecutorSQLMoveVertex extends OCommandExecutorSQLSetAware i
 
       } else if (temp.startsWith("CLASS:")) {
         if (clusterName != null)
-          throw new OCommandSQLParsingException("Cannot define multiple sources. Found both cluster and class.");
+          throw new OCommandSQLParsingException(
+              "Cannot define multiple sources. Found both cluster and class.");
 
         className = temp.substring("CLASS:".length());
 
@@ -104,21 +105,17 @@ public class OCommandExecutorSQLMoveVertex extends OCommandExecutorSQLSetAware i
 
       } else if (temp.equals(KEYWORD_BATCH)) {
         temp = parserNextWord(true);
-        if (temp != null)
-          batch = Integer.parseInt(temp);
+        if (temp != null) batch = Integer.parseInt(temp);
       }
 
       temp = parserOptionalWord(true);
-      if (parserIsEnded())
-        break;
+      if (parserIsEnded()) break;
     }
 
     return this;
   }
 
-  /**
-   * Executes the command and return the ODocument object created.
-   */
+  /** Executes the command and return the ODocument object created. */
   public Object execute(final Map<Object, Object> iArgs) {
 
     ODatabaseDocumentInternal db = getDatabase();
@@ -126,21 +123,22 @@ public class OCommandExecutorSQLMoveVertex extends OCommandExecutorSQLSetAware i
     db.begin();
 
     if (className == null && clusterName == null)
-      throw new OCommandExecutionException("Cannot execute the command because it has not been parsed yet");
+      throw new OCommandExecutionException(
+          "Cannot execute the command because it has not been parsed yet");
 
     OModifiableBoolean shutdownGraph = new OModifiableBoolean();
     final boolean txAlreadyBegun = getDatabase().getTransaction().isActive();
 
     try {
-      final Set<OIdentifiable> sourceRIDs = OSQLEngine.getInstance().parseRIDTarget(db, source, context, iArgs);
+      final Set<OIdentifiable> sourceRIDs =
+          OSQLEngine.getInstance().parseRIDTarget(db, source, context, iArgs);
 
       // CREATE EDGES
       final List<ODocument> result = new ArrayList<ODocument>(sourceRIDs.size());
 
       for (OIdentifiable from : sourceRIDs) {
         final OVertex fromVertex = toVertex(from);
-        if (fromVertex == null)
-          continue;
+        if (fromVertex == null) continue;
 
         final ORID oldVertex = fromVertex.getIdentity().copy();
         final ORID newVertex = fromVertex.moveTo(className, clusterName);
@@ -151,21 +149,25 @@ public class OCommandExecutorSQLMoveVertex extends OCommandExecutorSQLSetAware i
           // EVALUATE FIELDS
           for (final OPair<String, Object> f : fields) {
             if (f.getValue() instanceof OSQLFunctionRuntime)
-              f.setValue(((OSQLFunctionRuntime) f.getValue()).getValue(newVertex.getRecord(), null, context));
+              f.setValue(
+                  ((OSQLFunctionRuntime) f.getValue())
+                      .getValue(newVertex.getRecord(), null, context));
           }
 
           OSQLHelper.bindParameters(newVertexDoc, fields, new OCommandParameters(iArgs), context);
         }
 
-        if (merge != null)
-          newVertexDoc.merge(merge, true, false);
+        if (merge != null) newVertexDoc.merge(merge, true, false);
 
         // SAVE CHANGES
         newVertexDoc.save();
 
         // PUT THE MOVE INTO THE RESULT
-        result
-            .add(new ODocument().setTrackingChanges(false).field("old", oldVertex, OType.LINK).field("new", newVertex, OType.LINK));
+        result.add(
+            new ODocument()
+                .setTrackingChanges(false)
+                .field("old", oldVertex, OType.LINK)
+                .field("new", newVertex, OType.LINK));
 
         if (batch > 0 && result.size() % batch == 0) {
           db.commit();
@@ -177,8 +179,8 @@ public class OCommandExecutorSQLMoveVertex extends OCommandExecutorSQLSetAware i
 
       return result;
     } finally {
-//      if (!txAlreadyBegun)
-//        db.commit();
+      //      if (!txAlreadyBegun)
+      //        db.commit();
 
     }
   }
@@ -204,5 +206,4 @@ public class OCommandExecutorSQLMoveVertex extends OCommandExecutorSQLSetAware i
     }
     return null;
   }
-
 }

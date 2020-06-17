@@ -3,16 +3,19 @@
 /*
 
 
- */
+*/
 package com.orientechnologies.orient.core.sql.parser;
 
 import com.orientechnologies.orient.core.command.OBasicCommandContext;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.sql.OCommandSQLParsingException;
-import com.orientechnologies.orient.core.sql.executor.*;
+import com.orientechnologies.orient.core.sql.executor.OInternalExecutionPlan;
+import com.orientechnologies.orient.core.sql.executor.OResult;
+import com.orientechnologies.orient.core.sql.executor.OResultInternal;
+import com.orientechnologies.orient.core.sql.executor.OResultSet;
+import com.orientechnologies.orient.core.sql.executor.OSelectExecutionPlanner;
 import com.orientechnologies.orient.core.storage.OStorage;
-
 import java.util.HashMap;
 import java.util.Map;
 
@@ -182,18 +185,18 @@ public class OSelectStatement extends OStatement {
     if (lockRecord != null) {
       builder.append(" LOCK ");
       switch (lockRecord) {
-      case DEFAULT:
-        builder.append("DEFAULT");
-        break;
-      case EXCLUSIVE_LOCK:
-        builder.append("RECORD");
-        break;
-      case SHARED_LOCK:
-        builder.append("SHARED");
-        break;
-      case NONE:
-        builder.append("NONE");
-        break;
+        case DEFAULT:
+          builder.append("DEFAULT");
+          break;
+        case EXCLUSIVE_LOCK:
+          builder.append("RECORD");
+          break;
+        case SHARED_LOCK:
+          builder.append("SHARED");
+          break;
+        case NONE:
+          builder.append("NONE");
+          break;
       }
     }
 
@@ -249,7 +252,8 @@ public class OSelectStatement extends OStatement {
   }
 
   @Override
-  public OResultSet execute(ODatabase db, Object[] args, OCommandContext parentCtx, boolean usePlanCache) {
+  public OResultSet execute(
+      ODatabase db, Object[] args, OCommandContext parentCtx, boolean usePlanCache) {
     OBasicCommandContext ctx = new OBasicCommandContext();
     if (parentCtx != null) {
       ctx.setParentWithoutOverridingChild(parentCtx);
@@ -263,9 +267,9 @@ public class OSelectStatement extends OStatement {
     }
     ctx.setInputParameters(params);
     OInternalExecutionPlan executionPlan;
-    if(usePlanCache) {
+    if (usePlanCache) {
       executionPlan = createExecutionPlan(ctx, false);
-    }else{
+    } else {
       executionPlan = createExecutionPlanNoCache(ctx, false);
     }
 
@@ -274,7 +278,8 @@ public class OSelectStatement extends OStatement {
   }
 
   @Override
-  public OResultSet execute(ODatabase db, Map params, OCommandContext parentCtx, boolean usePlanCache) {
+  public OResultSet execute(
+      ODatabase db, Map params, OCommandContext parentCtx, boolean usePlanCache) {
     OBasicCommandContext ctx = new OBasicCommandContext();
     if (parentCtx != null) {
       ctx.setParentWithoutOverridingChild(parentCtx);
@@ -282,9 +287,9 @@ public class OSelectStatement extends OStatement {
     ctx.setDatabase(db);
     ctx.setInputParameters(params);
     OInternalExecutionPlan executionPlan;
-    if(usePlanCache) {
+    if (usePlanCache) {
       executionPlan = createExecutionPlan(ctx, false);
-    }else{
+    } else {
       executionPlan = createExecutionPlanNoCache(ctx, false);
     }
 
@@ -299,7 +304,8 @@ public class OSelectStatement extends OStatement {
     return result;
   }
 
-  public OInternalExecutionPlan createExecutionPlanNoCache(OCommandContext ctx, boolean enableProfiling) {
+  public OInternalExecutionPlan createExecutionPlanNoCache(
+      OCommandContext ctx, boolean enableProfiling) {
     OSelectExecutionPlanner planner = new OSelectExecutionPlanner(this);
     OInternalExecutionPlan result = planner.createExecutionPlan(ctx, enableProfiling, false);
     result.setStatement(this.originalStatement);
@@ -335,41 +341,29 @@ public class OSelectStatement extends OStatement {
 
   @Override
   public boolean equals(Object o) {
-    if (this == o)
-      return true;
-    if (o == null || getClass() != o.getClass())
-      return false;
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
 
     OSelectStatement that = (OSelectStatement) o;
 
-    if (target != null ? !target.equals(that.target) : that.target != null)
-      return false;
+    if (target != null ? !target.equals(that.target) : that.target != null) return false;
     if (projection != null ? !projection.equals(that.projection) : that.projection != null)
       return false;
     if (whereClause != null ? !whereClause.equals(that.whereClause) : that.whereClause != null)
       return false;
-    if (groupBy != null ? !groupBy.equals(that.groupBy) : that.groupBy != null)
-      return false;
-    if (orderBy != null ? !orderBy.equals(that.orderBy) : that.orderBy != null)
-      return false;
-    if (unwind != null ? !unwind.equals(that.unwind) : that.unwind != null)
-      return false;
-    if (skip != null ? !skip.equals(that.skip) : that.skip != null)
-      return false;
-    if (limit != null ? !limit.equals(that.limit) : that.limit != null)
-      return false;
-    if (lockRecord != that.lockRecord)
-      return false;
+    if (groupBy != null ? !groupBy.equals(that.groupBy) : that.groupBy != null) return false;
+    if (orderBy != null ? !orderBy.equals(that.orderBy) : that.orderBy != null) return false;
+    if (unwind != null ? !unwind.equals(that.unwind) : that.unwind != null) return false;
+    if (skip != null ? !skip.equals(that.skip) : that.skip != null) return false;
+    if (limit != null ? !limit.equals(that.limit) : that.limit != null) return false;
+    if (lockRecord != that.lockRecord) return false;
     if (fetchPlan != null ? !fetchPlan.equals(that.fetchPlan) : that.fetchPlan != null)
       return false;
     if (letClause != null ? !letClause.equals(that.letClause) : that.letClause != null)
       return false;
-    if (timeout != null ? !timeout.equals(that.timeout) : that.timeout != null)
-      return false;
-    if (parallel != null ? !parallel.equals(that.parallel) : that.parallel != null)
-      return false;
-    if (noCache != null ? !noCache.equals(that.noCache) : that.noCache != null)
-      return false;
+    if (timeout != null ? !timeout.equals(that.timeout) : that.timeout != null) return false;
+    if (parallel != null ? !parallel.equals(that.parallel) : that.parallel != null) return false;
+    if (noCache != null ? !noCache.equals(that.noCache) : that.noCache != null) return false;
 
     return true;
   }
@@ -395,12 +389,13 @@ public class OSelectStatement extends OStatement {
 
   @Override
   public boolean refersToParent() {
-    //no FROM, if a subquery refers to parent it does not make sense, so that reference will be just ignored
+    // no FROM, if a subquery refers to parent it does not make sense, so that reference will be
+    // just ignored
 
     if (projection != null && projection.refersToParent()) {
       return true;
     }
-    if(target!=null && target.refersToParent()){
+    if (target != null && target.refersToParent()) {
       return true;
     }
     if (whereClause != null && whereClause.refersToParent()) {

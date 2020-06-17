@@ -21,16 +21,28 @@ public class OSQLFunctionSequence extends OSQLFunctionConfigurableAbstract {
   }
 
   @Override
-  public Object execute(Object iThis, OIdentifiable iCurrentRecord, Object iCurrentResult, Object[] iParams,
+  public Object execute(
+      Object iThis,
+      OIdentifiable iCurrentRecord,
+      Object iCurrentResult,
+      Object[] iParams,
       OCommandContext iContext) {
     final String seqName;
-    if (configuredParameters != null && configuredParameters.length > 0
-        && configuredParameters[0] instanceof OSQLFilterItem)//old stuff
-      seqName = (String) ((OSQLFilterItem) configuredParameters[0]).getValue(iCurrentRecord, iCurrentResult, iContext);
-    else
-      seqName = "" + iParams[0];
+    if (configuredParameters != null
+        && configuredParameters.length > 0
+        && configuredParameters[0] instanceof OSQLFilterItem) // old stuff
+    seqName =
+          (String)
+              ((OSQLFilterItem) configuredParameters[0])
+                  .getValue(iCurrentRecord, iCurrentResult, iContext);
+    else seqName = "" + iParams[0];
 
-    OSequence result = ODatabaseRecordThreadLocal.instance().get().getMetadata().getSequenceLibrary().getSequence(seqName);
+    OSequence result =
+        ODatabaseRecordThreadLocal.instance()
+            .get()
+            .getMetadata()
+            .getSequenceLibrary()
+            .getSequence(seqName);
     if (result == null) {
       throw new OCommandExecutionException("Sequence not found: " + seqName);
     }
@@ -51,5 +63,4 @@ public class OSQLFunctionSequence extends OSQLFunctionConfigurableAbstract {
   public boolean aggregateResults() {
     return false;
   }
-
 }

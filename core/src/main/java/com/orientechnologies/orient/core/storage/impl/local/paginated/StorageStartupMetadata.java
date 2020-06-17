@@ -24,9 +24,6 @@ import com.orientechnologies.common.io.OIOUtils;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.exception.OStorageException;
-import net.jpountz.xxhash.XXHash64;
-import net.jpountz.xxhash.XXHashFactory;
-
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
@@ -39,20 +36,22 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
+import net.jpountz.xxhash.XXHash64;
+import net.jpountz.xxhash.XXHashFactory;
 
 /**
  * @author Andrey Lomakin (a.lomakin-at-orientdb.com)
  * @since 5/6/14
  */
 public class StorageStartupMetadata {
-  private static final long     XX_HASH_SEED = 0xADF678FE45L;
+  private static final long XX_HASH_SEED = 0xADF678FE45L;
   private static final XXHash64 XX_HASH_64;
 
-  private static final int XX_HASH_OFFSET        = 0;
-  private static final int VERSION_OFFSET        = XX_HASH_OFFSET + 8;
-  private static final int DIRTY_FLAG_OFFSET     = VERSION_OFFSET + 4;
+  private static final int XX_HASH_OFFSET = 0;
+  private static final int VERSION_OFFSET = XX_HASH_OFFSET + 8;
+  private static final int DIRTY_FLAG_OFFSET = VERSION_OFFSET + 4;
   private static final int TRANSACTION_ID_OFFSET = DIRTY_FLAG_OFFSET + 1;
-  private static final int METADATA_LEN_OFFSET   = TRANSACTION_ID_OFFSET + 8;
+  private static final int METADATA_LEN_OFFSET = TRANSACTION_ID_OFFSET + 8;
 
   static {
     final XXHashFactory xxHashFactory = XXHashFactory.fastestInstance();
@@ -61,13 +60,13 @@ public class StorageStartupMetadata {
 
   private static final int VERSION = 3;
 
-  private final Path        filePath;
-  private       FileChannel channel;
-  private       FileLock    fileLock;
+  private final Path filePath;
+  private FileChannel channel;
+  private FileLock fileLock;
 
   private volatile boolean dirtyFlag;
-  private volatile long    lastTxId;
-  private volatile byte[]  txMetadata;
+  private volatile long lastTxId;
+  private volatile byte[] txMetadata;
 
   private final Lock lock = new ReentrantLock();
 
@@ -95,22 +94,29 @@ public class StorageStartupMetadata {
         Files.delete(filePath);
       }
 
-      channel = FileChannel
-          .open(filePath, StandardOpenOption.READ, StandardOpenOption.CREATE, StandardOpenOption.WRITE, StandardOpenOption.SYNC);
+      channel =
+          FileChannel.open(
+              filePath,
+              StandardOpenOption.READ,
+              StandardOpenOption.CREATE,
+              StandardOpenOption.WRITE,
+              StandardOpenOption.SYNC);
       if (OGlobalConfiguration.FILE_LOCK.getValueAsBoolean()) {
         lockFile();
       }
 
-      final ByteBuffer buffer = ByteBuffer.allocate(1 + 8 + 8 + 4 + 4);//version + dirty flag + transaction id + tx metadata len
+      final ByteBuffer buffer =
+          ByteBuffer.allocate(
+              1 + 8 + 8 + 4 + 4); // version + dirty flag + transaction id + tx metadata len
 
       buffer.position(8);
 
       buffer.putInt(VERSION);
-      //dirty flag
+      // dirty flag
       buffer.put((byte) 1);
-      //transaction id
+      // transaction id
       buffer.putLong(-1);
-      //tx metadata len
+      // tx metadata len
       buffer.putInt(-1);
 
       final long xxHash = XX_HASH_64.hash(buffer, 8, buffer.capacity() - 8, XX_HASH_SEED);
@@ -135,7 +141,8 @@ public class StorageStartupMetadata {
     }
 
     if (fileLock == null)
-      throw new OStorageException("Database is locked by another process, please shutdown process and try again");
+      throw new OStorageException(
+          "Database is locked by another process, please shutdown process and try again");
   }
 
   public boolean exists() {
@@ -151,12 +158,18 @@ public class StorageStartupMetadata {
     lock.lock();
     try {
       if (!Files.exists(filePath)) {
-        OLogManager.instance().infoNoDb(this, "File with startup metadata does not exist, creating new one");
+        OLogManager.instance()
+            .infoNoDb(this, "File with startup metadata does not exist, creating new one");
         create();
         return;
       } else {
-        channel = FileChannel
-            .open(filePath, StandardOpenOption.SYNC, StandardOpenOption.WRITE, StandardOpenOption.READ, StandardOpenOption.CREATE);
+        channel =
+            FileChannel.open(
+                filePath,
+                StandardOpenOption.SYNC,
+                StandardOpenOption.WRITE,
+                StandardOpenOption.READ,
+                StandardOpenOption.CREATE);
 
         final long size = channel.size();
 
@@ -181,7 +194,11 @@ public class StorageStartupMetadata {
 
           final long xxHash = XX_HASH_64.hash(buffer, 8, buffer.capacity() - 8, XX_HASH_SEED);
           if (xxHash != buffer.getLong(0)) {
-            OLogManager.instance().error(this, "File with startup metadata is broken and can not be used, creation new one", null);
+            OLogManager.instance()
+                .error(
+                    this,
+                    "File with startup metadata is broken and can not be used, creation new one",
+                    null);
             channel.close();
             create();
             return;
@@ -191,7 +208,10 @@ public class StorageStartupMetadata {
           final int version = buffer.getInt();
           if (version != VERSION) {
             throw new IllegalStateException(
-                "Invalid version of the binary format of startup metadata file found " + version + " but expected " + VERSION);
+                "Invalid version of the binary format of startup metadata file found "
+                    + version
+                    + " but expected "
+                    + VERSION);
           }
 
           dirtyFlag = buffer.get() > 0;
@@ -219,8 +239,7 @@ public class StorageStartupMetadata {
   public void close() throws IOException {
     lock.lock();
     try {
-      if (channel == null)
-        return;
+      if (channel == null) return;
 
       if (Files.exists(filePath)) {
         if (fileLock != null) {
@@ -240,8 +259,7 @@ public class StorageStartupMetadata {
   public void delete() throws IOException {
     lock.lock();
     try {
-      if (channel == null)
-        return;
+      if (channel == null) return;
 
       if (Files.exists(filePath)) {
 
@@ -261,13 +279,11 @@ public class StorageStartupMetadata {
   }
 
   public void makeDirty() throws IOException {
-    if (dirtyFlag)
-      return;
+    if (dirtyFlag) return;
 
     lock.lock();
     try {
-      if (dirtyFlag)
-        return;
+      if (dirtyFlag) return;
 
       dirtyFlag = true;
 
@@ -278,13 +294,11 @@ public class StorageStartupMetadata {
   }
 
   public void clearDirty() throws IOException {
-    if (!dirtyFlag)
-      return;
+    if (!dirtyFlag) return;
 
     lock.lock();
     try {
-      if (!dirtyFlag)
-        return;
+      if (!dirtyFlag) return;
 
       dirtyFlag = false;
       OIOUtils.writeByteBuffer(serialize(), channel, 0);
@@ -338,12 +352,12 @@ public class StorageStartupMetadata {
     buffer.position(8);
 
     buffer.putInt(VERSION);
-    //dirty flag
+    // dirty flag
     buffer.put(dirtyFlag ? (byte) 1 : (byte) 0);
-    //transaction id
+    // transaction id
     buffer.putLong(lastTxId);
 
-    //tx metadata
+    // tx metadata
     if (txMetadata == null) {
       buffer.putInt(-1);
     } else {

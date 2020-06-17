@@ -1,20 +1,19 @@
 package com.orientechnologies.orient.distributed.impl.coordinator.network;
 
+import static com.orientechnologies.orient.distributed.network.binary.OBinaryDistributedMessage.DISTRIBUTED_OPERATION_RESPONSE;
+
 import com.orientechnologies.orient.core.db.config.ONodeIdentity;
 import com.orientechnologies.orient.distributed.impl.coordinator.OCoordinateMessagesFactory;
 import com.orientechnologies.orient.distributed.impl.coordinator.ONodeResponse;
 import com.orientechnologies.orient.distributed.impl.log.OLogId;
-
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
 
-import static com.orientechnologies.orient.distributed.network.binary.OBinaryDistributedMessage.DISTRIBUTED_OPERATION_RESPONSE;
-
 public class OOperationResponse implements ODistributedMessage {
-  private OLogId        id;
+  private OLogId id;
   private ONodeResponse response;
-  private String        database;
+  private String database;
 
   public OOperationResponse(String database, OLogId id, ONodeResponse response) {
     this.id = id;
@@ -22,8 +21,7 @@ public class OOperationResponse implements ODistributedMessage {
     this.database = database;
   }
 
-  public OOperationResponse() {
-  }
+  public OOperationResponse() {}
 
   @Override
   public void write(DataOutput output) throws IOException {
@@ -63,5 +61,4 @@ public class OOperationResponse implements ODistributedMessage {
   public String getDatabase() {
     return database;
   }
-
 }

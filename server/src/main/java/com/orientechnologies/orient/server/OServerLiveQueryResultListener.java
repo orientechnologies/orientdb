@@ -9,25 +9,21 @@ import com.orientechnologies.orient.core.db.OSharedContext;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.exception.OCoreException;
 import com.orientechnologies.orient.core.exception.OLiveQueryInterruptedException;
-import com.orientechnologies.orient.core.query.live.OLiveQueryHookV2;
 import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.server.network.protocol.binary.ONetworkProtocolBinary;
-
 import java.io.IOException;
 import java.util.Collections;
 
-/**
- * Created by tglman on 19/06/17.
- */
+/** Created by tglman on 19/06/17. */
 class OServerLiveQueryResultListener implements OLiveQueryResultListener {
   private final ONetworkProtocolBinary protocol;
-  private final OSharedContext         sharedContext;
-  private       int                    monitorId;
+  private final OSharedContext sharedContext;
+  private int monitorId;
 
-  public OServerLiveQueryResultListener(ONetworkProtocolBinary protocol, OSharedContext sharedContext) {
+  public OServerLiveQueryResultListener(
+      ONetworkProtocolBinary protocol, OSharedContext sharedContext) {
     this.protocol = protocol;
     this.sharedContext = sharedContext;
-
   }
 
   public void setMonitorId(int monitorId) {
@@ -36,10 +32,13 @@ class OServerLiveQueryResultListener implements OLiveQueryResultListener {
 
   private void sendEvent(OLiveQueryResult event) {
     try {
-      protocol.push(new OLiveQueryPushRequest(monitorId, OLiveQueryPushRequest.HAS_MORE, Collections.singletonList(event)));
+      protocol.push(
+          new OLiveQueryPushRequest(
+              monitorId, OLiveQueryPushRequest.HAS_MORE, Collections.singletonList(event)));
     } catch (IOException e) {
       sharedContext.getLiveQueryOpsV2().getSubscribers().remove(monitorId);
-      throw OException.wrapException(new OLiveQueryInterruptedException("Live query interrupted by socket close"), e);
+      throw OException.wrapException(
+          new OLiveQueryInterruptedException("Live query interrupted by socket close"), e);
     }
   }
 
@@ -61,25 +60,28 @@ class OServerLiveQueryResultListener implements OLiveQueryResultListener {
   @Override
   public void onError(ODatabaseDocument database, OException exception) {
     try {
-      //TODO: resolve error identifier
+      // TODO: resolve error identifier
       int errorIdentifier = 0;
       OErrorCode code = OErrorCode.GENERIC_ERROR;
       if (exception instanceof OCoreException) {
         code = ((OCoreException) exception).getErrorCode();
       }
-      protocol.push(new OLiveQueryPushRequest(monitorId, errorIdentifier, code, exception.getMessage()));
+      protocol.push(
+          new OLiveQueryPushRequest(monitorId, errorIdentifier, code, exception.getMessage()));
     } catch (IOException e) {
-      throw OException.wrapException(new OLiveQueryInterruptedException("Live query interrupted by socket close"), e);
+      throw OException.wrapException(
+          new OLiveQueryInterruptedException("Live query interrupted by socket close"), e);
     }
   }
 
   @Override
   public void onEnd(ODatabaseDocument database) {
     try {
-      protocol.push(new OLiveQueryPushRequest(monitorId, OLiveQueryPushRequest.END, Collections.emptyList()));
+      protocol.push(
+          new OLiveQueryPushRequest(monitorId, OLiveQueryPushRequest.END, Collections.emptyList()));
     } catch (IOException e) {
-      throw OException.wrapException(new OLiveQueryInterruptedException("Live query interrupted by socket close"), e);
+      throw OException.wrapException(
+          new OLiveQueryInterruptedException("Live query interrupted by socket close"), e);
     }
-
   }
 }

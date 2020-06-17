@@ -21,7 +21,6 @@
 package com.orientechnologies.orient.core.fetch;
 
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
-
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -29,8 +28,9 @@ import java.util.Map;
 public class OFetchPlan {
   private static final String ANY_WILDCARD = "*";
 
-  private final Map<String, OFetchPlanLevel> fetchPlan           = new HashMap<String, OFetchPlanLevel>();
-  private final Map<String, OFetchPlanLevel> fetchPlanStartsWith = new HashMap<String, OFetchPlanLevel>();
+  private final Map<String, OFetchPlanLevel> fetchPlan = new HashMap<String, OFetchPlanLevel>();
+  private final Map<String, OFetchPlanLevel> fetchPlanStartsWith =
+      new HashMap<String, OFetchPlanLevel>();
 
   private static class OFetchPlanLevel {
     public int depthLevelFrom;
@@ -66,7 +66,8 @@ public class OFetchPlan {
             // EXTRACT DEPTH LEVEL
             final int endLevel = key.indexOf("]");
             if (endLevel == -1)
-              throw new IllegalArgumentException("Missing closing square bracket on depth level in fetch plan: " + key);
+              throw new IllegalArgumentException(
+                  "Missing closing square bracket on depth level in fetch plan: " + key);
 
             final String range = key.substring(1, endLevel);
             key = key.substring(endLevel + 1);
@@ -123,8 +124,8 @@ public class OFetchPlan {
       final String fpLevelKey = fpLevel.getKey();
       final OFetchPlanLevel fpLevelValue = fpLevel.getValue();
 
-      if (iCurrentLevel >= fpLevelValue.depthLevelFrom && (fpLevelValue.depthLevelTo == -1
-          || iCurrentLevel <= fpLevelValue.depthLevelTo)) {
+      if (iCurrentLevel >= fpLevelValue.depthLevelFrom
+          && (fpLevelValue.depthLevelTo == -1 || iCurrentLevel <= fpLevelValue.depthLevelTo)) {
         // IT'S IN RANGE
         if (iFieldPath.equals(fpLevelKey))
           // GET THE FETCH PLAN FOR THE GENERIC FIELD IF SPECIFIED
@@ -134,7 +135,8 @@ public class OFetchPlan {
           return 1;
 
         for (int i = 0; i < fpParts.length; ++i) {
-          if (i >= fpLevelValue.depthLevelFrom && (fpLevelValue.depthLevelTo == -1 || i <= fpLevelValue.depthLevelTo)) {
+          if (i >= fpLevelValue.depthLevelFrom
+              && (fpLevelValue.depthLevelTo == -1 || i <= fpLevelValue.depthLevelTo)) {
             // IT'S IN RANGE
             if (fpParts[i].equals(fpLevelKey))
               // GET THE FETCH PLAN FOR THE GENERIC FIELD IF SPECIFIED
@@ -156,12 +158,11 @@ public class OFetchPlan {
         final String fpLevelKey = fpLevel.getKey();
         final OFetchPlanLevel fpLevelValue = fpLevel.getValue();
 
-        if (iCurrentLevel >= fpLevelValue.depthLevelFrom && (fpLevelValue.depthLevelTo == -1
-            || iCurrentLevel <= fpLevelValue.depthLevelTo)) {
+        if (iCurrentLevel >= fpLevelValue.depthLevelFrom
+            && (fpLevelValue.depthLevelTo == -1 || iCurrentLevel <= fpLevelValue.depthLevelTo)) {
           // IT'S IN RANGE
           for (int i = 0; i < fpParts.length; ++i) {
-            if (fpParts[i].startsWith(fpLevelKey))
-              return fpLevelValue.level;
+            if (fpParts[i].startsWith(fpLevelKey)) return fpLevelValue.level;
           }
         }
       }
@@ -177,8 +178,8 @@ public class OFetchPlan {
       final String fpLevelKey = fpLevel.getKey();
       final OFetchPlanLevel fpLevelValue = fpLevel.getValue();
 
-      if (iCurrentLevel >= fpLevelValue.depthLevelFrom && (fpLevelValue.depthLevelTo == -1
-          || iCurrentLevel <= fpLevelValue.depthLevelTo)) {
+      if (iCurrentLevel >= fpLevelValue.depthLevelFrom
+          && (fpLevelValue.depthLevelTo == -1 || iCurrentLevel <= fpLevelValue.depthLevelTo)) {
         if (iFieldPath.equals(fpLevelKey))
           // GET THE FETCH PLAN FOR THE GENERIC FIELD IF SPECIFIED
           return true;
@@ -187,7 +188,8 @@ public class OFetchPlan {
           return true;
 
         for (int i = 0; i < fpParts.length; ++i) {
-          if (i >= fpLevelValue.depthLevelFrom && (fpLevelValue.depthLevelTo == -1 || i <= fpLevelValue.depthLevelTo)) {
+          if (i >= fpLevelValue.depthLevelFrom
+              && (fpLevelValue.depthLevelTo == -1 || i <= fpLevelValue.depthLevelTo)) {
             // IT'S IN RANGE
             if (fpParts[i].equals(fpLevelKey))
               // GET THE FETCH PLAN FOR THE GENERIC FIELD IF SPECIFIED
@@ -209,12 +211,11 @@ public class OFetchPlan {
         final String fpLevelKey = fpLevel.getKey();
         final OFetchPlanLevel fpLevelValue = fpLevel.getValue();
 
-        if (iCurrentLevel >= fpLevelValue.depthLevelFrom && (fpLevelValue.depthLevelTo == -1
-            || iCurrentLevel <= fpLevelValue.depthLevelTo)) {
+        if (iCurrentLevel >= fpLevelValue.depthLevelFrom
+            && (fpLevelValue.depthLevelTo == -1 || iCurrentLevel <= fpLevelValue.depthLevelTo)) {
           // IT'S IN RANGE
           for (int i = 0; i < fpParts.length; ++i) {
-            if (fpParts[i].startsWith(fpLevelKey))
-              return true;
+            if (fpParts[i].startsWith(fpLevelKey)) return true;
           }
         }
       }

@@ -23,35 +23,38 @@ import com.orientechnologies.common.util.OPair;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.sql.executor.ORidSet;
-
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.Reader;
 import java.text.ParseException;
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class OJSONReader {
   public static final char NEW_LINE = '\n';
-  public static final char[] DEFAULT_JUMP = new char[]{' ', '\r', '\n', '\t'};
-  public static final char[] DEFAULT_SKIP = new char[]{'\r', '\n', '\t'};
-  public static final char[] BEGIN_OBJECT = new char[]{'{'};
-  public static final char[] END_OBJECT = new char[]{'}'};
-  public static final char[] FIELD_ASSIGNMENT = new char[]{':'};
-  public static final char[] BEGIN_STRING = new char[]{'"'};
-  public static final char[] COMMA_SEPARATOR = new char[]{','};
-  public static final char[] NEXT_IN_OBJECT = new char[]{',', '}'};
-  public static final char[] NEXT_IN_ARRAY = new char[]{',', ']'};
-  public static final char[] NEXT_OBJ_IN_ARRAY = new char[]{'{', ']'};
-  public static final char[] ANY_NUMBER = new char[]{'0', '1', '2', '3', '4', '5', '6', '7', '8', '9'};
-  public static final char[] BEGIN_COLLECTION = new char[]{'['};
-  public static final char[] END_COLLECTION = new char[]{']'};
+  public static final char[] DEFAULT_JUMP = new char[] {' ', '\r', '\n', '\t'};
+  public static final char[] DEFAULT_SKIP = new char[] {'\r', '\n', '\t'};
+  public static final char[] BEGIN_OBJECT = new char[] {'{'};
+  public static final char[] END_OBJECT = new char[] {'}'};
+  public static final char[] FIELD_ASSIGNMENT = new char[] {':'};
+  public static final char[] BEGIN_STRING = new char[] {'"'};
+  public static final char[] COMMA_SEPARATOR = new char[] {','};
+  public static final char[] NEXT_IN_OBJECT = new char[] {',', '}'};
+  public static final char[] NEXT_IN_ARRAY = new char[] {',', ']'};
+  public static final char[] NEXT_OBJ_IN_ARRAY = new char[] {'{', ']'};
+  public static final char[] ANY_NUMBER =
+      new char[] {'0', '1', '2', '3', '4', '5', '6', '7', '8', '9'};
+  public static final char[] BEGIN_COLLECTION = new char[] {'['};
+  public static final char[] END_COLLECTION = new char[] {']'};
   private BufferedReader in;
   private int cursor = 0;
   private int lineNumber = 0;
   private int columnNumber = 0;
-  private StringBuilder buffer = new StringBuilder(16384);                                       // 16KB
+  private StringBuilder buffer = new StringBuilder(16384); // 16KB
   private String value;
   private char c;
   private char lastCharacter;
@@ -79,9 +82,9 @@ public class OJSONReader {
     return readNumber(iUntil, false);
   }
 
-  public int readNumber(final char[] iUntil, final boolean iInclude) throws IOException, ParseException {
-    if (readNext(iUntil, iInclude) == null)
-      throw new ParseException("Expected integer", cursor);
+  public int readNumber(final char[] iUntil, final boolean iInclude)
+      throws IOException, ParseException {
+    if (readNext(iUntil, iInclude) == null) throw new ParseException("Expected integer", cursor);
 
     return Integer.parseInt(value.trim());
   }
@@ -90,14 +93,15 @@ public class OJSONReader {
     return readString(iUntil, false);
   }
 
-  public String readString(final char[] iUntil, final boolean iInclude) throws IOException, ParseException {
+  public String readString(final char[] iUntil, final boolean iInclude)
+      throws IOException, ParseException {
     return readString(iUntil, iInclude, DEFAULT_JUMP, null);
   }
 
-  public String readString(final char[] iUntil, final boolean iInclude, final char[] iJumpChars, final char[] iSkipChars)
-          throws IOException, ParseException {
-    if (readNext(iUntil, iInclude, iJumpChars, iSkipChars) == null)
-      return null;
+  public String readString(
+      final char[] iUntil, final boolean iInclude, final char[] iJumpChars, final char[] iSkipChars)
+      throws IOException, ParseException {
+    if (readNext(iUntil, iInclude, iJumpChars, iSkipChars) == null) return null;
 
     if (!iInclude && value.startsWith("\"")) {
       return value.substring(1, value.lastIndexOf("\""));
@@ -106,11 +110,14 @@ public class OJSONReader {
     return value;
   }
 
-
-  public String readString(final char[] iUntil, final boolean iInclude, final char[] iJumpChars, final char[] iSkipChars, boolean preserveQuotes)
-          throws IOException, ParseException {
-    if (readNext(iUntil, iInclude, iJumpChars, iSkipChars, preserveQuotes) == null)
-      return null;
+  public String readString(
+      final char[] iUntil,
+      final boolean iInclude,
+      final char[] iJumpChars,
+      final char[] iSkipChars,
+      boolean preserveQuotes)
+      throws IOException, ParseException {
+    if (readNext(iUntil, iInclude, iJumpChars, iSkipChars, preserveQuotes) == null) return null;
 
     if (!iInclude && value.startsWith("\"")) {
       return value.substring(1, value.lastIndexOf("\""));
@@ -118,21 +125,25 @@ public class OJSONReader {
 
     return value;
   }
-
 
   /**
-   *
    * @param maxRidbagSizeLazyImport
-   * @return a pair containing as a key the parsed record string (with big ridbags emptied), and as a value the map of big ridbag field names and content
+   * @return a pair containing as a key the parsed record string (with big ridbags emptied), and as
+   *     a value the map of big ridbag field names and content
    * @throws IOException
    * @throws ParseException
    */
   public OPair<String, Map<String, ORidSet>> readRecordString(int maxRidbagSizeLazyImport)
-          throws IOException, ParseException {
-    Map<String, ORidSet> ridbags = readNextRecord(OJSONReader.NEXT_IN_ARRAY, false, OJSONReader.DEFAULT_JUMP, null, true, maxRidbagSizeLazyImport);
-    if (ridbags == null)
-      return null;
-
+      throws IOException, ParseException {
+    Map<String, ORidSet> ridbags =
+        readNextRecord(
+            OJSONReader.NEXT_IN_ARRAY,
+            false,
+            OJSONReader.DEFAULT_JUMP,
+            null,
+            true,
+            maxRidbagSizeLazyImport);
+    if (ridbags == null) return null;
 
     String resultValue = value;
     if (value.startsWith("\"")) {
@@ -151,26 +162,31 @@ public class OJSONReader {
     return this;
   }
 
-  public OJSONReader readNext(final char[] iUntil, final boolean iInclude) throws IOException, ParseException {
+  public OJSONReader readNext(final char[] iUntil, final boolean iInclude)
+      throws IOException, ParseException {
     readNext(iUntil, iInclude, DEFAULT_JUMP, null);
     return this;
   }
 
-  public OJSONReader readNext(final char[] iUntil, final boolean iInclude, final char[] iJumpChars, final char[] iSkipChars)
-          throws IOException, ParseException {
+  public OJSONReader readNext(
+      final char[] iUntil, final boolean iInclude, final char[] iJumpChars, final char[] iSkipChars)
+      throws IOException, ParseException {
     readNext(iUntil, iInclude, iJumpChars, iSkipChars, true);
     return this;
   }
 
-  public OJSONReader readNext(final char[] iUntil, final boolean iInclude, final char[] iJumpChars, final char[] iSkipChars, boolean preserveQuotes)
-          throws IOException, ParseException {
-    if (!in.ready())
-      return this;
+  public OJSONReader readNext(
+      final char[] iUntil,
+      final boolean iInclude,
+      final char[] iJumpChars,
+      final char[] iSkipChars,
+      boolean preserveQuotes)
+      throws IOException, ParseException {
+    if (!in.ready()) return this;
 
     jump(iJumpChars);
 
-    if (!in.ready())
-      return this;
+    if (!in.ready()) return this;
 
     // READ WHILE THERE IS SOMETHING OF AVAILABLE
     int openBrackets = 0;
@@ -214,15 +230,12 @@ public class OJSONReader {
         // END OF STRING
         beginStringChar = ' ';
 
-      if (c == '\\' && !encodeMode)
-        encodeMode = true;
-      else
-        encodeMode = false;
+      if (c == '\\' && !encodeMode) encodeMode = true;
+      else encodeMode = false;
 
       if (!found) {
         final int read = nextChar();
-        if (read == -1)
-          break;
+        if (read == -1) break;
 
         // APPEND IT
         c = (char) read;
@@ -245,24 +258,28 @@ public class OJSONReader {
     } while (!found && in.ready());
 
     if (buffer.length() == 0)
-      throw new ParseException("Expected characters '" + Arrays.toString(iUntil) + "' not found", cursor);
+      throw new ParseException(
+          "Expected characters '" + Arrays.toString(iUntil) + "' not found", cursor);
 
-    if (!iInclude)
-      buffer.setLength(buffer.length() - 1);
+    if (!iInclude) buffer.setLength(buffer.length() - 1);
 
     value = buffer.toString();
     return this;
   }
 
-  public Map<String, ORidSet> readNextRecord(final char[] iUntil, final boolean iInclude, final char[] iJumpChars, final char[] iSkipChars, boolean preserveQuotes, int maxRidbagSizeLazyImport)
-          throws IOException, ParseException {
-    if (!in.ready())
-      return Collections.emptyMap();
+  public Map<String, ORidSet> readNextRecord(
+      final char[] iUntil,
+      final boolean iInclude,
+      final char[] iJumpChars,
+      final char[] iSkipChars,
+      boolean preserveQuotes,
+      int maxRidbagSizeLazyImport)
+      throws IOException, ParseException {
+    if (!in.ready()) return Collections.emptyMap();
 
     jump(iJumpChars);
 
-    if (!in.ready())
-      return Collections.emptyMap();
+    if (!in.ready()) return Collections.emptyMap();
 
     Map<String, ORidSet> result = new HashMap<>();
 
@@ -303,7 +320,9 @@ public class OJSONReader {
           // CLOSE EMBEDDED
           openBrackets--;
         else if (c == '[') {
-          if (openSquare == 0 && (lastString.toString().startsWith("out_") || lastString.toString().startsWith("in_"))) {
+          if (openSquare == 0
+              && (lastString.toString().startsWith("out_")
+                  || lastString.toString().startsWith("in_"))) {
             lastCollection = new StringBuilder();
             lastFieldName = lastString.toString();
             lastFieldName = lastFieldName.substring(0, lastFieldName.length() - 1);
@@ -336,15 +355,12 @@ public class OJSONReader {
         // END OF STRING
         beginStringChar = ' ';
 
-      if (c == '\\' && !encodeMode)
-        encodeMode = true;
-      else
-        encodeMode = false;
+      if (c == '\\' && !encodeMode) encodeMode = true;
+      else encodeMode = false;
 
       if (!found) {
         final int read = nextChar();
-        if (read == -1)
-          break;
+        if (read == -1) break;
 
         // APPEND IT
         c = (char) read;
@@ -366,11 +382,13 @@ public class OJSONReader {
             lastCollection = null;
           } else if (openSquare > 0 && lastCollection != null) {
             lastCollection.append(c);
-            if (lastCollection.length() > maxRidbagSizeLazyImport && lastFieldName != null && lastCollection != null) {
-              //preprocess RIDs
+            if (lastCollection.length() > maxRidbagSizeLazyImport
+                && lastFieldName != null
+                && lastCollection != null) {
+              // preprocess RIDs
               if (!stringToRidbag(lastCollection, ridbagSet, ridPattern)) {
                 lastFieldName = null;
-//                openBrackets = 0;
+                //                openBrackets = 0;
               }
             }
           } else {
@@ -385,17 +403,17 @@ public class OJSONReader {
     } while (!found && in.ready());
 
     if (buffer.length() == 0)
-      throw new ParseException("Expected characters '" + Arrays.toString(iUntil) + "' not found", cursor);
+      throw new ParseException(
+          "Expected characters '" + Arrays.toString(iUntil) + "' not found", cursor);
 
-    if (!iInclude)
-      buffer.setLength(buffer.length() - 1);
+    if (!iInclude) buffer.setLength(buffer.length() - 1);
 
     value = buffer.toString();
     return result;
   }
 
-
-  private boolean stringToRidbag(StringBuilder lastCollection, ORidSet ridbagSet, Pattern ridPattern) {
+  private boolean stringToRidbag(
+      StringBuilder lastCollection, ORidSet ridbagSet, Pattern ridPattern) {
     String collectionString = lastCollection.toString();
 
     if (collectionString.startsWith(",") && collectionString.endsWith("]")) {
@@ -438,15 +456,13 @@ public class OJSONReader {
   public int jump(final char[] iJumpChars) throws IOException, ParseException {
     buffer.setLength(0);
 
-    if (!in.ready())
-      return 0;
+    if (!in.ready()) return 0;
 
     // READ WHILE THERE IS SOMETHING OF AVAILABLE
     boolean go = true;
     while (go && in.ready()) {
       int read = nextChar();
-      if (read == -1)
-        return -1;
+      if (read == -1) return -1;
 
       go = false;
       for (char j : iJumpChars) {
@@ -465,9 +481,7 @@ public class OJSONReader {
     return c;
   }
 
-  /**
-   * Returns the next character from the input stream. Handles Unicode decoding.
-   */
+  /** Returns the next character from the input stream. Handles Unicode decoding. */
   public int nextChar() throws IOException {
     if (missedChar != null) {
       // RETURNS THE PREVIOUS PARSED CHAR
@@ -476,15 +490,13 @@ public class OJSONReader {
 
     } else {
       int read = in.read();
-      if (read == -1)
-        return -1;
+      if (read == -1) return -1;
 
       c = (char) read;
 
       if (c == '\\') {
         read = in.read();
-        if (read == -1)
-          return -1;
+        if (read == -1) return -1;
 
         char c2 = (char) read;
         if (c2 == 'u') {
@@ -492,8 +504,7 @@ public class OJSONReader {
           final StringBuilder buff = new StringBuilder(8);
           for (int i = 0; i < 4; ++i) {
             read = in.read();
-            if (read == -1)
-              return -1;
+            if (read == -1) return -1;
 
             buff.append((char) read);
           }
@@ -513,8 +524,7 @@ public class OJSONReader {
     if (c == NEW_LINE) {
       ++lineNumber;
       columnNumber = 0;
-    } else
-      ++columnNumber;
+    } else ++columnNumber;
 
     return (char) c;
   }

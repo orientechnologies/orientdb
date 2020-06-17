@@ -20,25 +20,27 @@
 package com.orientechnologies.orient.core.sql.query;
 
 import com.orientechnologies.common.log.OLogManager;
-
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
-import java.util.*;
+import java.util.Collection;
+import java.util.Iterator;
+import java.util.List;
+import java.util.ListIterator;
+import java.util.NoSuchElementException;
 
 /**
  * ResultSet implementation that allows concurrent population.
  *
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
- *
  * @param <T>
  * @see OSQLAsynchQuery
  */
 public class OConcurrentLegacyResultSet<T> implements OLegacyResultSet<T> {
-  protected final transient Object             waitForNextItem   = new Object();
-  protected final transient Object             waitForCompletion = new Object();
+  protected final transient Object waitForNextItem = new Object();
+  protected final transient Object waitForCompletion = new Object();
   protected final transient OBasicLegacyResultSet<T> wrapped;
-  protected transient volatile boolean         completed         = false;
+  protected transient volatile boolean completed = false;
 
   public OConcurrentLegacyResultSet() {
     this.wrapped = new OBasicLegacyResultSet<T>();
@@ -186,8 +188,7 @@ public class OConcurrentLegacyResultSet<T> implements OLegacyResultSet<T> {
           size = wrapped.size();
         }
         while (!completed) {
-          if (index < size)
-            return true;
+          if (index < size) return true;
 
           waitForNewItemOrCompleted();
 
@@ -207,8 +208,7 @@ public class OConcurrentLegacyResultSet<T> implements OLegacyResultSet<T> {
         }
 
         while (!completed) {
-          if (index < size)
-            break;
+          if (index < size) break;
 
           waitForNewItemOrCompleted();
 
@@ -219,12 +219,15 @@ public class OConcurrentLegacyResultSet<T> implements OLegacyResultSet<T> {
 
         if (index > size || size == 0)
           throw new NoSuchElementException(
-              "Error on browsing at element " + index + " while the resultset contains only " + size + " items");
+              "Error on browsing at element "
+                  + index
+                  + " while the resultset contains only "
+                  + size
+                  + " items");
 
         synchronized (wrapped) {
           return wrapped.get(index++);
         }
-
       }
 
       @Override

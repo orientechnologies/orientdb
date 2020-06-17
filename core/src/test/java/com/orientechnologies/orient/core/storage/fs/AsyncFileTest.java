@@ -2,11 +2,6 @@ package com.orientechnologies.orient.core.storage.fs;
 
 import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.common.util.ORawPair;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.Test;
-
 import java.io.File;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
@@ -15,6 +10,10 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.BeforeClass;
+import org.junit.Test;
 
 public class AsyncFileTest {
   private static Path buildDirectoryPath;
@@ -22,8 +21,7 @@ public class AsyncFileTest {
   @BeforeClass
   public static void beforeClass() {
     String buildDirectory = System.getProperty("buildDirectory");
-    if (buildDirectory == null || buildDirectory.isEmpty())
-      buildDirectory = ".";
+    if (buildDirectory == null || buildDirectory.isEmpty()) buildDirectory = ".";
 
     buildDirectory += File.separator + "localPaginatedClusterTestV2";
     buildDirectoryPath = Paths.get(buildDirectory);

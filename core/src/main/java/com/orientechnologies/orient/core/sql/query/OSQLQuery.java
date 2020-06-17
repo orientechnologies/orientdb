@@ -35,7 +35,6 @@ import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.OMemoryStream;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializer;
-
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -49,28 +48,23 @@ import java.util.Set;
  * SQL query implementation.
  *
  * @param <T> Record type to return.
- *
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
  */
 @SuppressWarnings("serial")
 public abstract class OSQLQuery<T> extends OQueryAbstract<T> implements OCommandRequestText {
   protected String text;
 
-  public OSQLQuery() {
-  }
+  public OSQLQuery() {}
 
   public OSQLQuery(final String iText) {
     text = iText.trim();
   }
 
-  /**
-   * Delegates to the OQueryExecutor the query execution.
-   */
+  /** Delegates to the OQueryExecutor the query execution. */
   @SuppressWarnings("unchecked")
   public List<T> run(final Object... iArgs) {
     final ODatabaseDocumentInternal database = ODatabaseRecordThreadLocal.instance().get();
-    if (database == null)
-      throw new OQueryParsingException("No database configured");
+    if (database == null) throw new OQueryParsingException("No database configured");
 
     ((OMetadataInternal) database.getMetadata()).makeThreadLocalSchemaSnapshot();
     try {
@@ -87,9 +81,7 @@ public abstract class OSQLQuery<T> extends OQueryAbstract<T> implements OCommand
     }
   }
 
-  /**
-   * Returns only the first record if any.
-   */
+  /** Returns only the first record if any. */
   public T runFirst(final Object... iArgs) {
     setLimit(1);
     final List<T> result = execute(iArgs);
@@ -110,7 +102,8 @@ public abstract class OSQLQuery<T> extends OQueryAbstract<T> implements OCommand
     return "sql." + text;
   }
 
-  public OCommandRequestText fromStream(final byte[] iStream, ORecordSerializer serializer) throws OSerializationException {
+  public OCommandRequestText fromStream(final byte[] iStream, ORecordSerializer serializer)
+      throws OSerializationException {
     final OMemoryStream buffer = new OMemoryStream(iStream);
 
     queryFromStream(buffer, serializer);
@@ -144,13 +137,14 @@ public abstract class OSQLQuery<T> extends OQueryAbstract<T> implements OCommand
     parameters = deserializeQueryParameters(paramBuffer, serializer);
   }
 
-  protected Map<Object, Object> deserializeQueryParameters(final byte[] paramBuffer, ORecordSerializer serializer) {
-    if (paramBuffer == null || paramBuffer.length == 0)
-      return Collections.emptyMap();
+  protected Map<Object, Object> deserializeQueryParameters(
+      final byte[] paramBuffer, ORecordSerializer serializer) {
+    if (paramBuffer == null || paramBuffer.length == 0) return Collections.emptyMap();
 
     final ODocument param = new ODocument();
 
-    OImmutableSchema schema = ODatabaseRecordThreadLocal.instance().get().getMetadata().getImmutableSchemaSnapshot();
+    OImmutableSchema schema =
+        ODatabaseRecordThreadLocal.instance().get().getMetadata().getImmutableSchemaSnapshot();
     serializer.fromStream(paramBuffer, param, null);
     param.setFieldType("params", OType.EMBEDDEDMAP);
     final Map<String, Object> params = param.rawField("params");
@@ -159,8 +153,7 @@ public abstract class OSQLQuery<T> extends OQueryAbstract<T> implements OCommand
     for (Entry<String, Object> p : params.entrySet()) {
       if (Character.isDigit(p.getKey().charAt(0)))
         result.put(Integer.parseInt(p.getKey()), p.getValue());
-      else
-        result.put(p.getKey(), p.getValue());
+      else result.put(p.getKey(), p.getValue());
     }
     return result;
   }
@@ -182,7 +175,9 @@ public abstract class OSQLQuery<T> extends OQueryAbstract<T> implements OCommand
     for (Entry<Object, Object> entry : params.entrySet()) {
       final Object value = entry.getValue();
 
-      if (value instanceof Set<?> && !((Set<?>) value).isEmpty() && ((Set<?>) value).iterator().next() instanceof ORecord) {
+      if (value instanceof Set<?>
+          && !((Set<?>) value).isEmpty()
+          && ((Set<?>) value).iterator().next() instanceof ORecord) {
         // CONVERT RECORDS AS RIDS
         final Set<ORID> newSet = new HashSet<ORID>();
         for (ORecord rec : (Set<ORecord>) value) {
@@ -190,7 +185,9 @@ public abstract class OSQLQuery<T> extends OQueryAbstract<T> implements OCommand
         }
         newParams.put(entry.getKey(), newSet);
 
-      } else if (value instanceof List<?> && !((List<?>) value).isEmpty() && ((List<?>) value).get(0) instanceof ORecord) {
+      } else if (value instanceof List<?>
+          && !((List<?>) value).isEmpty()
+          && ((List<?>) value).get(0) instanceof ORecord) {
         // CONVERT RECORDS AS RIDS
         final List<ORID> newList = new ArrayList<ORID>();
         for (ORecord rec : (List<ORecord>) value) {
@@ -198,8 +195,9 @@ public abstract class OSQLQuery<T> extends OQueryAbstract<T> implements OCommand
         }
         newParams.put(entry.getKey(), newList);
 
-      } else if (value instanceof Map<?, ?> && !((Map<?, ?>) value).isEmpty() && ((Map<?, ?>) value).values().iterator()
-          .next() instanceof ORecord) {
+      } else if (value instanceof Map<?, ?>
+          && !((Map<?, ?>) value).isEmpty()
+          && ((Map<?, ?>) value).values().iterator().next() instanceof ORecord) {
         // CONVERT RECORDS AS RIDS
         final Map<Object, ORID> newMap = new HashMap<Object, ORID>();
         for (Entry<?, ORecord> mapEntry : ((Map<?, ORecord>) value).entrySet()) {
@@ -208,8 +206,7 @@ public abstract class OSQLQuery<T> extends OQueryAbstract<T> implements OCommand
         newParams.put(entry.getKey(), newMap);
       } else if (value instanceof OIdentifiable) {
         newParams.put(entry.getKey(), ((OIdentifiable) value).getIdentity());
-      } else
-        newParams.put(entry.getKey(), value);
+      } else newParams.put(entry.getKey(), value);
     }
 
     return newParams;

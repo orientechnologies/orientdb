@@ -1,7 +1,5 @@
 package com.orientechnologies.orient.client.remote.message;
 
-import java.io.IOException;
-
 import com.orientechnologies.orient.client.binary.OBinaryRequestExecutor;
 import com.orientechnologies.orient.client.remote.OBinaryRequest;
 import com.orientechnologies.orient.client.remote.OBinaryResponse;
@@ -10,20 +8,20 @@ import com.orientechnologies.orient.client.remote.OStorageRemoteSession;
 import com.orientechnologies.orient.core.OConstants;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializer;
 import com.orientechnologies.orient.core.serialization.serializer.record.binary.ORecordSerializerNetwork;
-import com.orientechnologies.orient.core.serialization.serializer.record.binary.ORecordSerializerNetworkV37;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelDataInput;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelDataOutput;
+import java.io.IOException;
 
 public class OOpenRequest implements OBinaryRequest<OOpenResponse> {
-  private String  driverName      = OStorageRemote.DRIVER_NAME;
-  private String  driverVersion   = OConstants.getRawVersion();
-  private short   protocolVersion = OChannelBinaryProtocol.CURRENT_PROTOCOL_VERSION;
-  private String  clientId        = null;
-  private String  recordFormat    = ORecordSerializerNetwork.NAME;
-  private boolean useToken        = true;
-  private boolean supportsPush    = true;
-  private boolean collectStats    = true;
+  private String driverName = OStorageRemote.DRIVER_NAME;
+  private String driverVersion = OConstants.getRawVersion();
+  private short protocolVersion = OChannelBinaryProtocol.CURRENT_PROTOCOL_VERSION;
+  private String clientId = null;
+  private String recordFormat = ORecordSerializerNetwork.NAME;
+  private boolean useToken = true;
+  private boolean supportsPush = true;
+  private boolean collectStats = true;
   private String databaseName;
   private String userName;
   private String userPassword;
@@ -35,9 +33,7 @@ public class OOpenRequest implements OBinaryRequest<OOpenResponse> {
     this.userPassword = userPassword;
   }
 
-  public OOpenRequest() {
-
-  }
+  public OOpenRequest() {}
 
   @Override
   public void write(OChannelDataOutput network, OStorageRemoteSession session) throws IOException {
@@ -55,7 +51,8 @@ public class OOpenRequest implements OBinaryRequest<OOpenResponse> {
   }
 
   @Override
-  public void read(OChannelDataInput channel, int protocolVersion, ORecordSerializer serializer) throws IOException {
+  public void read(OChannelDataInput channel, int protocolVersion, ORecordSerializer serializer)
+      throws IOException {
 
     driverName = channel.readString();
     driverVersion = channel.readString();
@@ -65,8 +62,7 @@ public class OOpenRequest implements OBinaryRequest<OOpenResponse> {
 
     if (this.protocolVersion > OChannelBinaryProtocol.PROTOCOL_VERSION_26)
       useToken = channel.readBoolean();
-    else
-      useToken = false;
+    else useToken = false;
     if (this.protocolVersion > OChannelBinaryProtocol.PROTOCOL_VERSION_33) {
       supportsPush = channel.readBoolean();
       collectStats = channel.readBoolean();
@@ -149,5 +145,4 @@ public class OOpenRequest implements OBinaryRequest<OOpenResponse> {
   public OBinaryResponse execute(OBinaryRequestExecutor executor) {
     return executor.executeDatabaseOpen(this);
   }
-
 }

@@ -24,37 +24,36 @@ import com.orientechnologies.orient.core.command.script.OCommandScript;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-
 import java.util.HashMap;
 import java.util.Map;
 import java.util.logging.Level;
 
-/**
- * Executes arbitrary code in any supported language by JVM.
- */
+/** Executes arbitrary code in any supported language by JVM. */
 public class OETLCodeTransformer extends OETLAbstractTransformer {
-  private final Map<Object, Object> params   = new HashMap<Object, Object>();
-  private       String              language = "javascript";
+  private final Map<Object, Object> params = new HashMap<Object, Object>();
+  private String language = "javascript";
   private OCommandExecutorScript cmd;
 
   @Override
   public ODocument getConfiguration() {
-    return new ODocument().fromJSON("{parameters:[" + getCommonConfigurationParameters() + ","
-        + "{language:{optional:true,description:'Code language, default is Javascript'}},"
-        + "{code:{optional:false,description:'Code to execute'}}" + "]}");
+    return new ODocument()
+        .fromJSON(
+            "{parameters:["
+                + getCommonConfigurationParameters()
+                + ","
+                + "{language:{optional:true,description:'Code language, default is Javascript'}},"
+                + "{code:{optional:false,description:'Code to execute'}}"
+                + "]}");
   }
 
   @Override
   public void configure(final ODocument iConfiguration, OCommandContext iContext) {
     super.configure(iConfiguration, iContext);
-    if (iConfiguration.containsField("language"))
-      language = iConfiguration.field("language");
+    if (iConfiguration.containsField("language")) language = iConfiguration.field("language");
 
     String code;
-    if (iConfiguration.containsField("code"))
-      code = iConfiguration.field("code");
-    else
-      throw new IllegalArgumentException("'code' parameter is mandatory in Code Transformer");
+    if (iConfiguration.containsField("code")) code = iConfiguration.field("code");
+    else throw new IllegalArgumentException("'code' parameter is mandatory in Code Transformer");
 
     cmd = new OCommandExecutorScript().parse(new OCommandScript(language, code));
   }
@@ -66,12 +65,10 @@ public class OETLCodeTransformer extends OETLAbstractTransformer {
 
   @Override
   public Object executeTransform(ODatabaseDocument db, final Object input) {
-    if (input == null)
-      return null;
+    if (input == null) return null;
 
     params.put("input", input);
-    if (input instanceof OIdentifiable)
-      params.put("record", ((OIdentifiable) input).getRecord());
+    if (input instanceof OIdentifiable) params.put("record", ((OIdentifiable) input).getRecord());
 
     try {
       Object result = cmd.executeInContext(context, params);
@@ -85,6 +82,5 @@ public class OETLCodeTransformer extends OETLAbstractTransformer {
 
       throw e;
     }
-
   }
 }

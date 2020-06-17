@@ -5,22 +5,25 @@ import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
 import com.orientechnologies.orient.core.storage.cluster.OClusterPage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.WALRecordTypes;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.PageOperationRecord;
-
 import java.nio.ByteBuffer;
 
 public final class ClusterPageReplaceRecordPO extends PageOperationRecord {
   private int recordPosition;
 
-  private int    recordVersion;
+  private int recordVersion;
   private byte[] record;
 
-  private int    oldRecordVersion;
+  private int oldRecordVersion;
   private byte[] oldRecord;
 
-  public ClusterPageReplaceRecordPO() {
-  }
+  public ClusterPageReplaceRecordPO() {}
 
-  public ClusterPageReplaceRecordPO(int recordPosition, int recordVersion, byte[] record, int oldRecordVersion, byte[] oldRecord) {
+  public ClusterPageReplaceRecordPO(
+      int recordPosition,
+      int recordVersion,
+      byte[] record,
+      int oldRecordVersion,
+      byte[] oldRecord) {
     this.recordPosition = recordPosition;
     this.recordVersion = recordVersion;
     this.record = record;
@@ -67,7 +70,10 @@ public final class ClusterPageReplaceRecordPO extends PageOperationRecord {
 
   @Override
   public int serializedSize() {
-    return super.serializedSize() + 5 * OIntegerSerializer.INT_SIZE + record.length + oldRecord.length;
+    return super.serializedSize()
+        + 5 * OIntegerSerializer.INT_SIZE
+        + record.length
+        + oldRecord.length;
   }
 
   @Override

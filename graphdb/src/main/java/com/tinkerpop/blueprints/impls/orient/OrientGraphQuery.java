@@ -24,10 +24,20 @@ import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.orientechnologies.orient.core.tx.OTransaction;
-import com.tinkerpop.blueprints.*;
+import com.tinkerpop.blueprints.Contains;
+import com.tinkerpop.blueprints.Edge;
+import com.tinkerpop.blueprints.Element;
+import com.tinkerpop.blueprints.Graph;
+import com.tinkerpop.blueprints.Query;
+import com.tinkerpop.blueprints.Vertex;
 import com.tinkerpop.blueprints.util.DefaultGraphQuery;
-
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Date;
+import java.util.List;
+import java.util.Set;
 
 /**
  * OrientDB implementation for Graph query.
@@ -36,37 +46,37 @@ import java.util.*;
  */
 public class OrientGraphQuery extends DefaultGraphQuery {
 
-  protected static final char   SPACE              = ' ';
+  protected static final char SPACE = ' ';
   protected static final String OPERATOR_DIFFERENT = "<>";
-  protected static final String OPERATOR_NOT       = "not ";
-  protected static final String OPERATOR_IS_NOT    = "is not";
-  protected static final String OPERATOR_LET       = "<=";
-  protected static final char   OPERATOR_LT        = '<';
-  protected static final String OPERATOR_GTE       = ">=";
-  protected static final char   OPERATOR_GT        = '>';
-  protected static final String OPERATOR_EQUALS    = "=";
-  protected static final String OPERATOR_IS        = "is";
-  protected static final String OPERATOR_IN        = " in ";
-  protected static final String OPERATOR_LIKE      = " like ";
+  protected static final String OPERATOR_NOT = "not ";
+  protected static final String OPERATOR_IS_NOT = "is not";
+  protected static final String OPERATOR_LET = "<=";
+  protected static final char OPERATOR_LT = '<';
+  protected static final String OPERATOR_GTE = ">=";
+  protected static final char OPERATOR_GT = '>';
+  protected static final String OPERATOR_EQUALS = "=";
+  protected static final String OPERATOR_IS = "is";
+  protected static final String OPERATOR_IN = " in ";
+  protected static final String OPERATOR_LIKE = " like ";
 
-  protected static final String QUERY_FILTER_AND  = " and ";
-  protected static final String QUERY_FILTER_OR   = " or ";
-  protected static final char   QUERY_STRING      = '\'';
-  protected static final char   QUERY_SEPARATOR   = ',';
-  protected static final char   COLLECTION_BEGIN  = '[';
-  protected static final char   COLLECTION_END    = ']';
-  protected static final char   PARENTHESIS_BEGIN = '(';
-  protected static final char   PARENTHESIS_END   = ')';
+  protected static final String QUERY_FILTER_AND = " and ";
+  protected static final String QUERY_FILTER_OR = " or ";
+  protected static final char QUERY_STRING = '\'';
+  protected static final char QUERY_SEPARATOR = ',';
+  protected static final char COLLECTION_BEGIN = '[';
+  protected static final char COLLECTION_END = ']';
+  protected static final char PARENTHESIS_BEGIN = '(';
+  protected static final char PARENTHESIS_END = ')';
   protected static final String QUERY_LABEL_BEGIN = " label in [";
-  protected static final String QUERY_LABEL_END   = "]";
-  protected static final String QUERY_WHERE       = " where ";
+  protected static final String QUERY_LABEL_END = "]";
+  protected static final String QUERY_WHERE = " where ";
   protected static final String QUERY_SELECT_FROM = "select from ";
-  protected static final String SKIP              = " SKIP ";
-  protected static final String LIMIT             = " LIMIT ";
-  protected static final String ORDERBY           = " ORDER BY ";
-  public                 int    skip              = 0;
-  public                 String orderBy           = "";
-  public                 String orderByDir        = "desc";
+  protected static final String SKIP = " SKIP ";
+  protected static final String LIMIT = " LIMIT ";
+  protected static final String ORDERBY = " ORDER BY ";
+  public int skip = 0;
+  public String orderBy = "";
+  public String orderByDir = "desc";
   protected String fetchPlan;
 
   public class OrientGraphQueryIterable<T extends Element> extends DefaultGraphQueryIterable<T> {
@@ -82,7 +92,6 @@ public class OrientGraphQuery extends DefaultGraphQuery {
     protected Set<String> getIndexedKeys(final Class<? extends Element> elementClass) {
       return ((OrientBaseGraph) graph).getIndexedKeys(elementClass, true);
     }
-
   }
 
   protected OrientGraphQuery(final Graph iGraph) {
@@ -93,7 +102,6 @@ public class OrientGraphQuery extends DefaultGraphQuery {
    * (Blueprints Extension) Sets the labels to filter. Labels are bound to Class names by default.
    *
    * @param labels String vararg of labels
-   *
    * @return Current Query Object to allow calls in chain.
    */
   public Query labels(final String... labels) {
@@ -105,7 +113,6 @@ public class OrientGraphQuery extends DefaultGraphQuery {
    * Skips first iSkip items from the result set.
    *
    * @param iSkip Number of items to skip on result set
-   *
    * @return Current Query Object to allow calls in chain.
    */
   public Query skip(final int iSkip) {
@@ -114,11 +121,10 @@ public class OrientGraphQuery extends DefaultGraphQuery {
   }
 
   /**
-   * (Blueprints Extension) Sets the order of results by a field in ascending (asc) order. This is translated on ORDER BY in the
-   * underlying SQL query.
+   * (Blueprints Extension) Sets the order of results by a field in ascending (asc) order. This is
+   * translated on ORDER BY in the underlying SQL query.
    *
    * @param props Field to order by
-   *
    * @return Current Query Object to allow calls in chain.
    */
   public Query order(final String props) {
@@ -127,12 +133,12 @@ public class OrientGraphQuery extends DefaultGraphQuery {
   }
 
   /**
-   * (Blueprints Extension) Sets the order of results by a field in ascending (asc) or descending (desc) order based on dir
-   * parameter. This is translated on ORDER BY in the underlying SQL query.
+   * (Blueprints Extension) Sets the order of results by a field in ascending (asc) or descending
+   * (desc) order based on dir parameter. This is translated on ORDER BY in the underlying SQL
+   * query.
    *
    * @param props Field to order by
-   * @param dir   Direction. Use "asc" for ascending and "desc" for descending
-   *
+   * @param dir Direction. Use "asc" for ascending and "desc" for descending
    * @return Current Query Object to allow calls in chain.
    */
   public Query order(final String props, final String dir) {
@@ -141,13 +147,10 @@ public class OrientGraphQuery extends DefaultGraphQuery {
     return this;
   }
 
-  /**
-   * Returns the result set of the query as iterable vertices.
-   */
+  /** Returns the result set of the query as iterable vertices. */
   @Override
   public Iterable<Vertex> vertices() {
-    if (limit == 0)
-      return Collections.emptyList();
+    if (limit == 0) return Collections.emptyList();
 
     OTransaction transaction = ((OrientBaseGraph) graph).getRawGraph().getTransaction();
     if (transaction.isActive() && transaction.getEntryCount() > 0 || hasCustomPredicate()) {
@@ -161,7 +164,9 @@ public class OrientGraphQuery extends DefaultGraphQuery {
     // GO DIRECTLY AGAINST E CLASS AND SUB-CLASSES
     text.append(QUERY_SELECT_FROM);
 
-    if (((OrientBaseGraph) graph).isUseClassForVertexLabel() && labels != null && labels.length > 0) {
+    if (((OrientBaseGraph) graph).isUseClassForVertexLabel()
+        && labels != null
+        && labels.length > 0) {
       // FILTER PER CLASS SAVING CHECKING OF LABEL PROPERTY
       if (labels.length == 1)
         // USE THE CLASS NAME
@@ -171,8 +176,7 @@ public class OrientGraphQuery extends DefaultGraphQuery {
         String[] classes = allSubClassesLabels();
         return new OrientGraphQueryIterable<Vertex>(true, classes);
       }
-    } else
-      text.append(OrientVertexType.CLASS_NAME);
+    } else text.append(OrientVertexType.CLASS_NAME);
 
     final List<Object> queryParams = manageFilters(text);
     if (!((OrientBaseGraph) graph).isUseClassForVertexLabel())
@@ -195,10 +199,10 @@ public class OrientGraphQuery extends DefaultGraphQuery {
 
     final OSQLSynchQuery<OIdentifiable> query = new OSQLSynchQuery<OIdentifiable>(text.toString());
 
-    if (fetchPlan != null)
-      query.setFetchPlan(fetchPlan);
+    if (fetchPlan != null) query.setFetchPlan(fetchPlan);
 
-    return new OrientElementIterable<Vertex>(((OrientBaseGraph) graph),
+    return new OrientElementIterable<Vertex>(
+        ((OrientBaseGraph) graph),
         ((OrientBaseGraph) graph).getRawGraph().query(query, queryParams.toArray()));
   }
 
@@ -222,13 +226,10 @@ public class OrientGraphQuery extends DefaultGraphQuery {
     return classes;
   }
 
-  /**
-   * Returns the result set of the query as iterable edges.
-   */
+  /** Returns the result set of the query as iterable edges. */
   @Override
   public Iterable<Edge> edges() {
-    if (limit == 0)
-      return Collections.emptyList();
+    if (limit == 0) return Collections.emptyList();
 
     if (((OrientBaseGraph) graph).getRawGraph().getTransaction().isActive() || hasCustomPredicate())
       // INSIDE TRANSACTION QUERY DOESN'T SEE IN MEMORY CHANGES, UNTIL
@@ -252,8 +253,7 @@ public class OrientGraphQuery extends DefaultGraphQuery {
         // MULTIPLE CLASSES NOT SUPPORTED DIRECTLY: CREATE A SUB-QUERY
         return new OrientGraphQueryIterable<Edge>(false, labels);
       }
-    } else
-      text.append(OrientEdgeType.CLASS_NAME);
+    } else text.append(OrientEdgeType.CLASS_NAME);
 
     List<Object> queryParams = manageFilters(text);
     if (!((OrientBaseGraph) graph).isUseClassForEdgeLabel())
@@ -261,26 +261,21 @@ public class OrientGraphQuery extends DefaultGraphQuery {
 
     final OSQLSynchQuery<OIdentifiable> query = new OSQLSynchQuery<OIdentifiable>(text.toString());
 
-    if (fetchPlan != null)
-      query.setFetchPlan(fetchPlan);
+    if (fetchPlan != null) query.setFetchPlan(fetchPlan);
 
-    if (limit > 0 && limit < Integer.MAX_VALUE)
-      query.setLimit(limit);
+    if (limit > 0 && limit < Integer.MAX_VALUE) query.setLimit(limit);
 
-    return new OrientElementIterable<Edge>(((OrientBaseGraph) graph),
+    return new OrientElementIterable<Edge>(
+        ((OrientBaseGraph) graph),
         ((OrientBaseGraph) graph).getRawGraph().query(query, queryParams.toArray()));
   }
 
-  /**
-   * (Blueprints Extension) Returns the fetch plan used.
-   */
+  /** (Blueprints Extension) Returns the fetch plan used. */
   public String getFetchPlan() {
     return fetchPlan;
   }
 
-  /**
-   * (Blueprints Extension) Sets the fetch plan to use on returning result set.
-   */
+  /** (Blueprints Extension) Sets the fetch plan to use on returning result set. */
   public void setFetchPlan(final String fetchPlan) {
     this.fetchPlan = fetchPlan;
   }
@@ -291,13 +286,11 @@ public class OrientGraphQuery extends DefaultGraphQuery {
       if (!usedWhere) {
         // APPEND WHERE
         text.append(QUERY_WHERE);
-      } else
-        text.append(QUERY_FILTER_AND);
+      } else text.append(QUERY_FILTER_AND);
 
       text.append(QUERY_LABEL_BEGIN);
       for (int i = 0; i < labels.length; ++i) {
-        if (i > 0)
-          text.append(QUERY_SEPARATOR);
+        if (i > 0) text.append(QUERY_SEPARATOR);
         text.append(QUERY_STRING);
         text.append(labels[i]);
         text.append(QUERY_STRING);
@@ -308,8 +301,8 @@ public class OrientGraphQuery extends DefaultGraphQuery {
 
   protected boolean hasCustomPredicate() {
     for (HasContainer has : hasContainers) {
-      if (!(has.predicate instanceof Contains) && !(has.predicate instanceof com.tinkerpop.blueprints.Compare))
-        return true;
+      if (!(has.predicate instanceof Contains)
+          && !(has.predicate instanceof com.tinkerpop.blueprints.Compare)) return true;
     }
     return false;
   }
@@ -319,8 +312,7 @@ public class OrientGraphQuery extends DefaultGraphQuery {
     boolean firstPredicate = true;
     List<Object> params = new ArrayList<Object>();
     for (HasContainer has : hasContainers) {
-      if (!firstPredicate)
-        text.append(QUERY_FILTER_AND);
+      if (!firstPredicate) text.append(QUERY_FILTER_AND);
       else {
         text.append(QUERY_WHERE);
         firstPredicate = false;
@@ -338,98 +330,89 @@ public class OrientGraphQuery extends DefaultGraphQuery {
           text.append(OPERATOR_LIKE);
           text.append("?");
           params.add(has.value);
-//          generateFilterValue(text, has.value);
+          //          generateFilterValue(text, has.value);
         } else {
           text.append(OPERATOR_IN);
           text.append(COLLECTION_BEGIN);
 
           boolean firstItem = true;
           for (Object o : (Collection<Object>) has.value) {
-            if (!firstItem)
-              text.append(QUERY_SEPARATOR);
-            else
-              firstItem = false;
+            if (!firstItem) text.append(QUERY_SEPARATOR);
+            else firstItem = false;
             text.append("?");
             params.add(o);
-//            generateFilterValue(text, o);
+            //            generateFilterValue(text, o);
           }
 
           text.append(COLLECTION_END);
         }
 
-        if (has.predicate == Contains.NOT_IN)
-          text.append(PARENTHESIS_END);
+        if (has.predicate == Contains.NOT_IN) text.append(PARENTHESIS_END);
       } else {
         // ANY OTHER OPERATORS
         text.append('`').append(has.key).append('`');
         text.append(SPACE);
 
         if (has.predicate instanceof com.tinkerpop.blueprints.Compare) {
-          final com.tinkerpop.blueprints.Compare compare = (com.tinkerpop.blueprints.Compare) has.predicate;
+          final com.tinkerpop.blueprints.Compare compare =
+              (com.tinkerpop.blueprints.Compare) has.predicate;
           boolean appendParam = true;
           switch (compare) {
-          case EQUAL:
-            if (has.value == null) {
-              // IS
-              text.append(OPERATOR_IS);
-              text.append(" NULL ");
-              appendParam = false;
-            } else
-              // EQUALS
-              text.append(OPERATOR_EQUALS);
-            break;
-          case GREATER_THAN:
-            text.append(OPERATOR_GT);
-            break;
-          case GREATER_THAN_EQUAL:
-            text.append(OPERATOR_GTE);
-            break;
-          case LESS_THAN:
-            text.append(OPERATOR_LT);
-            break;
-          case LESS_THAN_EQUAL:
-            text.append(OPERATOR_LET);
-            break;
-          case NOT_EQUAL:
-            if (has.value == null) {
-              text.append(OPERATOR_IS_NOT);
-              text.append(" NULL ");
-              appendParam = false;
-            } else
-              text.append(OPERATOR_DIFFERENT);
-            break;
+            case EQUAL:
+              if (has.value == null) {
+                // IS
+                text.append(OPERATOR_IS);
+                text.append(" NULL ");
+                appendParam = false;
+              } else
+                // EQUALS
+                text.append(OPERATOR_EQUALS);
+              break;
+            case GREATER_THAN:
+              text.append(OPERATOR_GT);
+              break;
+            case GREATER_THAN_EQUAL:
+              text.append(OPERATOR_GTE);
+              break;
+            case LESS_THAN:
+              text.append(OPERATOR_LT);
+              break;
+            case LESS_THAN_EQUAL:
+              text.append(OPERATOR_LET);
+              break;
+            case NOT_EQUAL:
+              if (has.value == null) {
+                text.append(OPERATOR_IS_NOT);
+                text.append(" NULL ");
+                appendParam = false;
+              } else text.append(OPERATOR_DIFFERENT);
+              break;
           }
           text.append(SPACE);
           if (appendParam) {
             text.append("?");
             params.add(has.value);
           }
-//          generateFilterValue(text, has.value);
+          //          generateFilterValue(text, has.value);
         }
 
-        if (has.value instanceof Collection<?>)
-          text.append(PARENTHESIS_END);
+        if (has.value instanceof Collection<?>) text.append(PARENTHESIS_END);
       }
     }
     return params;
   }
 
   protected void generateFilterValue(final StringBuilder text, final Object iValue) {
-    if (iValue instanceof String)
-      text.append(QUERY_STRING);
+    if (iValue instanceof String) text.append(QUERY_STRING);
 
     final Object value;
 
-    if (iValue instanceof Date)
-      value = ((Date) iValue).getTime();
-    else if (iValue != null)
-      value = iValue.toString().replace("'", "\\'");
-    else
-      value = null;
+    if (iValue instanceof Date) value = ((Date) iValue).getTime();
+    else if (iValue != null) value = iValue.toString().replace("'", "\\'");
+    else value = null;
 
     text.append(value);
 
-    if (iValue instanceof String)
-      text.append(QUERY_STRING);
+    if (iValue instanceof String) text.append(QUERY_STRING);
   }
 }

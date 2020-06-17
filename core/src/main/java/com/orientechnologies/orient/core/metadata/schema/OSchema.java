@@ -23,7 +23,6 @@ import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.viewmanager.ViewCreationListener;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.metadata.schema.clusterselection.OClusterSelectionFactory;
-
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -63,14 +62,14 @@ public interface OSchema {
 
   /**
    * Returns the OClass instance by class name.
-   * <p>
-   * If the class is not configured and the database has an entity manager with the requested class as registered, then creates a
-   * schema class for it at the fly.
-   * <p>
-   * If the database nor the entity manager have not registered class with specified name, returns null.
+   *
+   * <p>If the class is not configured and the database has an entity manager with the requested
+   * class as registered, then creates a schema class for it at the fly.
+   *
+   * <p>If the database nor the entity manager have not registered class with specified name,
+   * returns null.
    *
    * @param iClassName Name of the class to retrieve
-   *
    * @return class instance or null if class with given name is not configured.
    */
   OClass getClass(String iClassName);
@@ -89,7 +88,11 @@ public interface OSchema {
 
   OView createView(final String viewName, String statement);
 
-  OView createView(ODatabaseDocumentInternal database, final String viewName, String statement, Map<String, Object> metadata);
+  OView createView(
+      ODatabaseDocumentInternal database,
+      final String viewName,
+      String statement,
+      Map<String, Object> metadata);
 
   OView createView(OViewConfig config);
 
@@ -127,5 +130,4 @@ public interface OSchema {
   OClusterSelectionFactory getClusterSelectionFactory();
 
   OImmutableSchema makeSnapshot();
-
 }

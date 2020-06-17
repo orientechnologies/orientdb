@@ -19,45 +19,55 @@
  */
 package com.orientechnologies.orient.core.db;
 
+import static com.orientechnologies.orient.core.config.OGlobalConfiguration.DB_POOL_ACQUIRE_TIMEOUT;
+import static com.orientechnologies.orient.core.config.OGlobalConfiguration.DB_POOL_MAX;
+import static com.orientechnologies.orient.core.config.OGlobalConfiguration.DB_POOL_MIN;
+
 import com.orientechnologies.common.concur.resource.OResourcePool;
 import com.orientechnologies.common.concur.resource.OResourcePoolListener;
 import com.orientechnologies.orient.core.exception.OAcquireTimeoutException;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 
-import static com.orientechnologies.orient.core.config.OGlobalConfiguration.*;
-
-/**
- * Created by tglman on 07/07/16.
- */
+/** Created by tglman on 07/07/16. */
 public class ODatabasePoolImpl implements ODatabasePoolInternal {
   private volatile OResourcePool<Void, ODatabaseDocumentInternal> pool;
-  private final    OrientDBInternal                               factory;
-  private final    OrientDBConfig                                 config;
-  private volatile long                                           lastCloseTime = System.currentTimeMillis();
+  private final OrientDBInternal factory;
+  private final OrientDBConfig config;
+  private volatile long lastCloseTime = System.currentTimeMillis();
 
-  public ODatabasePoolImpl(OrientDBInternal factory, String database, String user, String password, OrientDBConfig config) {
+  public ODatabasePoolImpl(
+      OrientDBInternal factory,
+      String database,
+      String user,
+      String password,
+      OrientDBConfig config) {
     int max = config.getConfigurations().getValueAsInteger(DB_POOL_MAX);
     int min = config.getConfigurations().getValueAsInteger(DB_POOL_MIN);
     this.factory = factory;
     this.config = config;
-    pool = new OResourcePool(min, max, new OResourcePoolListener<Void, ODatabaseDocumentInternal>() {
-      @Override
-      public ODatabaseDocumentInternal createNewResource(Void iKey, Object... iAdditionalArgs) {
-        return factory.poolOpen(database, user, password, ODatabasePoolImpl.this);
-      }
+    pool =
+        new OResourcePool(
+            min,
+            max,
+            new OResourcePoolListener<Void, ODatabaseDocumentInternal>() {
+              @Override
+              public ODatabaseDocumentInternal createNewResource(
+                  Void iKey, Object... iAdditionalArgs) {
+                return factory.poolOpen(database, user, password, ODatabasePoolImpl.this);
+              }
 
-      @Override
-      public boolean reuseResource(Void iKey, Object[] iAdditionalArgs, ODatabaseDocumentInternal iValue) {
-        if (iValue.getStorage().isClosed()) {
-          return false;
-        }
-        iValue.reuse();
-        return true;
-      }
-    });
+              @Override
+              public boolean reuseResource(
+                  Void iKey, Object[] iAdditionalArgs, ODatabaseDocumentInternal iValue) {
+                if (iValue.getStorage().isClosed()) {
+                  return false;
+                }
+                iValue.reuse();
+                return true;
+              }
+            });
 
     ODatabaseRecordThreadLocal.instance().remove();
-
   }
 
   @Override
@@ -67,7 +77,8 @@ public class ODatabasePoolImpl implements ODatabasePoolInternal {
       p = pool;
     }
     if (p != null) {
-      return p.getResource(null, config.getConfigurations().getValueAsLong(DB_POOL_ACQUIRE_TIMEOUT));
+      return p.getResource(
+          null, config.getConfigurations().getValueAsLong(DB_POOL_ACQUIRE_TIMEOUT));
     } else {
       throw new ODatabaseException("The pool is closed");
     }

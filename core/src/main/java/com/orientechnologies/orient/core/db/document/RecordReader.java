@@ -5,10 +5,13 @@ import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.storage.ORawBuffer;
 import com.orientechnologies.orient.core.storage.OStorage;
 
-/**
- * @Internal
- */
+/** @Internal */
 public interface RecordReader {
-  ORawBuffer readRecord(OStorage storage, ORecordId rid, String fetchPlan, boolean ignoreCache, final int recordVersion)
+  ORawBuffer readRecord(
+      OStorage storage,
+      ORecordId rid,
+      String fetchPlan,
+      boolean ignoreCache,
+      final int recordVersion)
       throws ORecordNotFoundException;
 }

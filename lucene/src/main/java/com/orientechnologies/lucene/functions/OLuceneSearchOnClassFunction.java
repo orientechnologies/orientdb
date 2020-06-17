@@ -1,5 +1,7 @@
 package com.orientechnologies.lucene.functions;
 
+import static com.orientechnologies.lucene.functions.OLuceneFunctionsUtils.getOrCreateMemoryIndex;
+
 import com.orientechnologies.lucene.builder.OLuceneQueryBuilder;
 import com.orientechnologies.lucene.collections.OLuceneCompositeKey;
 import com.orientechnologies.lucene.index.OLuceneFullTextIndex;
@@ -16,21 +18,16 @@ import com.orientechnologies.orient.core.sql.parser.OBinaryCompareOperator;
 import com.orientechnologies.orient.core.sql.parser.OExpression;
 import com.orientechnologies.orient.core.sql.parser.OFromClause;
 import com.orientechnologies.orient.core.sql.parser.OFromItem;
-import org.apache.lucene.index.IndexableField;
-import org.apache.lucene.index.memory.MemoryIndex;
-
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import org.apache.lucene.index.IndexableField;
+import org.apache.lucene.index.memory.MemoryIndex;
 
-import static com.orientechnologies.lucene.functions.OLuceneFunctionsUtils.getOrCreateMemoryIndex;
-
-/**
- * Created by frank on 15/01/2017.
- */
+/** Created by frank on 15/01/2017. */
 public class OLuceneSearchOnClassFunction extends OLuceneSearchFunctionTemplate {
 
   public static final String NAME = "search_class";
@@ -45,7 +42,12 @@ public class OLuceneSearchOnClassFunction extends OLuceneSearchFunctionTemplate 
   }
 
   @Override
-  public Object execute(Object iThis, OIdentifiable iCurrentRecord, Object iCurrentResult, Object[] params, OCommandContext ctx) {
+  public Object execute(
+      Object iThis,
+      OIdentifiable iCurrentRecord,
+      Object iCurrentResult,
+      Object[] params,
+      OCommandContext ctx) {
 
     OResult result;
     if (iThis instanceof OResult) {
@@ -60,22 +62,25 @@ public class OLuceneSearchOnClassFunction extends OLuceneSearchFunctionTemplate 
 
     OLuceneFullTextIndex index = searchForIndex(ctx, className);
 
-    if (index == null)
-      return false;
+    if (index == null) return false;
 
     String query = (String) params[0];
 
     MemoryIndex memoryIndex = getOrCreateMemoryIndex(ctx);
 
-    List<Object> key = index.getDefinition().getFields().stream().map(s -> element.getProperty(s)).collect(Collectors.toList());
+    List<Object> key =
+        index.getDefinition().getFields().stream()
+            .map(s -> element.getProperty(s))
+            .collect(Collectors.toList());
 
     for (IndexableField field : index.buildDocument(key).getFields()) {
       memoryIndex.addField(field, index.indexAnalyzer());
     }
 
     ODocument metadata = getMetadata(params);
-    OLuceneKeyAndMetadata keyAndMetadata = new OLuceneKeyAndMetadata(new OLuceneCompositeKey(Arrays.asList(query)).setContext(ctx),
-        metadata);
+    OLuceneKeyAndMetadata keyAndMetadata =
+        new OLuceneKeyAndMetadata(
+            new OLuceneCompositeKey(Arrays.asList(query)).setContext(ctx), metadata);
 
     return memoryIndex.search(index.buildQuery(keyAndMetadata)) > 0.0f;
   }
@@ -87,7 +92,6 @@ public class OLuceneSearchOnClassFunction extends OLuceneSearchFunctionTemplate 
     }
 
     return OLuceneQueryBuilder.EMPTY_METADATA;
-
   }
 
   @Override
@@ -101,8 +105,12 @@ public class OLuceneSearchOnClassFunction extends OLuceneSearchFunctionTemplate 
   }
 
   @Override
-  public Iterable<OIdentifiable> searchFromTarget(OFromClause target, OBinaryCompareOperator operator, Object rightValue,
-      OCommandContext ctx, OExpression... args) {
+  public Iterable<OIdentifiable> searchFromTarget(
+      OFromClause target,
+      OBinaryCompareOperator operator,
+      Object rightValue,
+      OCommandContext ctx,
+      OExpression... args) {
 
     OLuceneFullTextIndex index = searchForIndex(target, ctx);
 
@@ -114,15 +122,18 @@ public class OLuceneSearchOnClassFunction extends OLuceneSearchFunctionTemplate 
       ODocument metadata = getMetadata(args);
 
       List<OIdentifiable> luceneResultSet;
-      try (Stream<ORID> rids = index.getInternal()
-          .getRids(new OLuceneKeyAndMetadata(new OLuceneCompositeKey(Arrays.asList(query)).setContext(ctx), metadata))) {
+      try (Stream<ORID> rids =
+          index
+              .getInternal()
+              .getRids(
+                  new OLuceneKeyAndMetadata(
+                      new OLuceneCompositeKey(Arrays.asList(query)).setContext(ctx), metadata))) {
         luceneResultSet = rids.collect(Collectors.toList());
       }
 
       return luceneResultSet;
     }
     return Collections.emptySet();
-
   }
 
   private ODocument getMetadata(OExpression[] args) {
@@ -133,7 +144,8 @@ public class OLuceneSearchOnClassFunction extends OLuceneSearchFunctionTemplate 
   }
 
   @Override
-  protected OLuceneFullTextIndex searchForIndex(OFromClause target, OCommandContext ctx, OExpression... args) {
+  protected OLuceneFullTextIndex searchForIndex(
+      OFromClause target, OCommandContext ctx, OExpression... args) {
     OFromItem item = target.getItem();
 
     String className = item.getIdentifier().getStringValue();
@@ -144,8 +156,11 @@ public class OLuceneSearchOnClassFunction extends OLuceneSearchFunctionTemplate 
   private OLuceneFullTextIndex searchForIndex(OCommandContext ctx, String className) {
     OMetadata dbMetadata = ctx.getDatabase().activateOnCurrentThread().getMetadata();
 
-    List<OLuceneFullTextIndex> indices = dbMetadata.getSchema().getClass(className).getIndexes().stream()
-        .filter(idx -> idx instanceof OLuceneFullTextIndex).map(idx -> (OLuceneFullTextIndex) idx).collect(Collectors.toList());
+    List<OLuceneFullTextIndex> indices =
+        dbMetadata.getSchema().getClass(className).getIndexes().stream()
+            .filter(idx -> idx instanceof OLuceneFullTextIndex)
+            .map(idx -> (OLuceneFullTextIndex) idx)
+            .collect(Collectors.toList());
 
     if (indices.size() > 1) {
       throw new IllegalArgumentException("too many full-text indices on given class: " + className);
@@ -153,5 +168,4 @@ public class OLuceneSearchOnClassFunction extends OLuceneSearchFunctionTemplate 
 
     return indices.size() == 0 ? null : indices.get(0);
   }
-
 }

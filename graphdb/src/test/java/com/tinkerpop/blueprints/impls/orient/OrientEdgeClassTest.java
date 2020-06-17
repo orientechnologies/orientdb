@@ -4,10 +4,9 @@ import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.tinkerpop.blueprints.Direction;
 import com.tinkerpop.blueprints.Edge;
+import java.util.Iterator;
 import org.junit.Assert;
 import org.junit.Test;
-
-import java.util.Iterator;
 
 public class OrientEdgeClassTest {
 
@@ -57,7 +56,5 @@ public class OrientEdgeClassTest {
     } finally {
       graph.drop();
     }
-
   }
-
 }

@@ -13,14 +13,13 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.executor.OInternalResultSet;
 import com.orientechnologies.orient.core.sql.executor.OResultInternal;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
-
 import java.util.Map;
 
 public class OTruncateClusterStatement extends ODDLStatement {
 
   public OIdentifier clusterName;
-  public OInteger    clusterNumber;
-  public boolean     unsafe = false;
+  public OInteger clusterNumber;
+  public boolean unsafe = false;
 
   public OTruncateClusterStatement(int id) {
     super(id);
@@ -100,19 +99,17 @@ public class OTruncateClusterStatement extends ODDLStatement {
 
   @Override
   public boolean equals(Object o) {
-    if (this == o)
-      return true;
-    if (o == null || getClass() != o.getClass())
-      return false;
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
 
     OTruncateClusterStatement that = (OTruncateClusterStatement) o;
 
-    if (unsafe != that.unsafe)
-      return false;
+    if (unsafe != that.unsafe) return false;
     if (clusterName != null ? !clusterName.equals(that.clusterName) : that.clusterName != null)
       return false;
-    if (clusterNumber != null ? !clusterNumber.equals(that.clusterNumber) : that.clusterNumber != null)
-      return false;
+    if (clusterNumber != null
+        ? !clusterNumber.equals(that.clusterNumber)
+        : that.clusterNumber != null) return false;
 
     return true;
   }

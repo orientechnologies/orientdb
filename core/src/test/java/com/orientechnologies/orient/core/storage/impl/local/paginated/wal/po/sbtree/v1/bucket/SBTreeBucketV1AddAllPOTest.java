@@ -12,12 +12,11 @@ import com.orientechnologies.orient.core.storage.cache.OCacheEntryImpl;
 import com.orientechnologies.orient.core.storage.cache.OCachePointer;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.PageOperationRecord;
 import com.orientechnologies.orient.core.storage.index.sbtree.local.v1.OSBTreeBucketV1;
-import org.junit.Assert;
-import org.junit.Test;
-
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
+import org.junit.Assert;
+import org.junit.Test;
 
 public class SBTreeBucketV1AddAllPOTest {
   @Test
@@ -32,20 +31,25 @@ public class SBTreeBucketV1AddAllPOTest {
       OSBTreeBucketV1<Byte, OIdentifiable> bucket = new OSBTreeBucketV1<>(entry);
       bucket.init(true);
 
-      bucket.addLeafEntry(0, new byte[] { 0 }, OLinkSerializer.INSTANCE.serializeNativeAsWhole(new ORecordId(0, 0)));
-      bucket.addLeafEntry(1, new byte[] { 1 }, OLinkSerializer.INSTANCE.serializeNativeAsWhole(new ORecordId(1, 1)));
-      bucket.addLeafEntry(2, new byte[] { 2 }, OLinkSerializer.INSTANCE.serializeNativeAsWhole(new ORecordId(2, 2)));
+      bucket.addLeafEntry(
+          0, new byte[] {0}, OLinkSerializer.INSTANCE.serializeNativeAsWhole(new ORecordId(0, 0)));
+      bucket.addLeafEntry(
+          1, new byte[] {1}, OLinkSerializer.INSTANCE.serializeNativeAsWhole(new ORecordId(1, 1)));
+      bucket.addLeafEntry(
+          2, new byte[] {2}, OLinkSerializer.INSTANCE.serializeNativeAsWhole(new ORecordId(2, 2)));
 
       final List<byte[]> rawEntries = new ArrayList<>();
       for (int i = 0; i < 3; i++) {
-        rawEntries.add(bucket.getRawEntry(i, false, OByteSerializer.INSTANCE, OLinkSerializer.INSTANCE));
+        rawEntries.add(
+            bucket.getRawEntry(i, false, OByteSerializer.INSTANCE, OLinkSerializer.INSTANCE));
       }
       bucket.shrink(0, false, OByteSerializer.INSTANCE, OLinkSerializer.INSTANCE);
 
       entry.clearPageOperations();
 
       final OPointer restoredPointer = byteBufferPool.acquireDirect(false);
-      final OCachePointer restoredCachePointer = new OCachePointer(restoredPointer, byteBufferPool, 0, 0);
+      final OCachePointer restoredCachePointer =
+          new OCachePointer(restoredPointer, byteBufferPool, 0, 0);
       final OCacheEntry restoredCacheEntry = new OCacheEntryImpl(0, 0, restoredCachePointer);
 
       final ByteBuffer originalBuffer = cachePointer.getBufferDuplicate();
@@ -65,19 +69,29 @@ public class SBTreeBucketV1AddAllPOTest {
 
       final SBTreeBucketV1AddAllPO pageOperation = (SBTreeBucketV1AddAllPO) operations.get(0);
 
-      OSBTreeBucketV1<Byte, OIdentifiable> restoredBucket = new OSBTreeBucketV1<>(restoredCacheEntry);
+      OSBTreeBucketV1<Byte, OIdentifiable> restoredBucket =
+          new OSBTreeBucketV1<>(restoredCacheEntry);
       Assert.assertEquals(0, restoredBucket.size());
 
       pageOperation.redo(restoredCacheEntry);
 
       Assert.assertEquals(3, restoredBucket.size());
 
-      Assert.assertEquals(new ORecordId(0, 0),
-          restoredBucket.getValue(0, false, OByteSerializer.INSTANCE, OLinkSerializer.INSTANCE).getValue());
-      Assert.assertEquals(new ORecordId(1, 1),
-          restoredBucket.getValue(1, false, OByteSerializer.INSTANCE, OLinkSerializer.INSTANCE).getValue());
-      Assert.assertEquals(new ORecordId(2, 2),
-          restoredBucket.getValue(2, false, OByteSerializer.INSTANCE, OLinkSerializer.INSTANCE).getValue());
+      Assert.assertEquals(
+          new ORecordId(0, 0),
+          restoredBucket
+              .getValue(0, false, OByteSerializer.INSTANCE, OLinkSerializer.INSTANCE)
+              .getValue());
+      Assert.assertEquals(
+          new ORecordId(1, 1),
+          restoredBucket
+              .getValue(1, false, OByteSerializer.INSTANCE, OLinkSerializer.INSTANCE)
+              .getValue());
+      Assert.assertEquals(
+          new ORecordId(2, 2),
+          restoredBucket
+              .getValue(2, false, OByteSerializer.INSTANCE, OLinkSerializer.INSTANCE)
+              .getValue());
 
       byteBufferPool.release(pointer);
       byteBufferPool.release(restoredPointer);
@@ -99,13 +113,17 @@ public class SBTreeBucketV1AddAllPOTest {
       OSBTreeBucketV1<Byte, OIdentifiable> bucket = new OSBTreeBucketV1<>(entry);
       bucket.init(true);
 
-      bucket.addLeafEntry(0, new byte[] { 0 }, OLinkSerializer.INSTANCE.serializeNativeAsWhole(new ORecordId(0, 0)));
-      bucket.addLeafEntry(1, new byte[] { 1 }, OLinkSerializer.INSTANCE.serializeNativeAsWhole(new ORecordId(1, 1)));
-      bucket.addLeafEntry(2, new byte[] { 2 }, OLinkSerializer.INSTANCE.serializeNativeAsWhole(new ORecordId(2, 2)));
+      bucket.addLeafEntry(
+          0, new byte[] {0}, OLinkSerializer.INSTANCE.serializeNativeAsWhole(new ORecordId(0, 0)));
+      bucket.addLeafEntry(
+          1, new byte[] {1}, OLinkSerializer.INSTANCE.serializeNativeAsWhole(new ORecordId(1, 1)));
+      bucket.addLeafEntry(
+          2, new byte[] {2}, OLinkSerializer.INSTANCE.serializeNativeAsWhole(new ORecordId(2, 2)));
 
       final List<byte[]> rawEntries = new ArrayList<>();
       for (int i = 0; i < 3; i++) {
-        rawEntries.add(bucket.getRawEntry(i, false, OByteSerializer.INSTANCE, OLinkSerializer.INSTANCE));
+        rawEntries.add(
+            bucket.getRawEntry(i, false, OByteSerializer.INSTANCE, OLinkSerializer.INSTANCE));
       }
 
       bucket.shrink(0, false, OByteSerializer.INSTANCE, OLinkSerializer.INSTANCE);
@@ -125,12 +143,21 @@ public class SBTreeBucketV1AddAllPOTest {
 
       Assert.assertEquals(3, restoredBucket.size());
 
-      Assert.assertEquals(new ORecordId(0, 0),
-          restoredBucket.getValue(0, false, OByteSerializer.INSTANCE, OLinkSerializer.INSTANCE).getValue());
-      Assert.assertEquals(new ORecordId(1, 1),
-          restoredBucket.getValue(1, false, OByteSerializer.INSTANCE, OLinkSerializer.INSTANCE).getValue());
-      Assert.assertEquals(new ORecordId(2, 2),
-          restoredBucket.getValue(2, false, OByteSerializer.INSTANCE, OLinkSerializer.INSTANCE).getValue());
+      Assert.assertEquals(
+          new ORecordId(0, 0),
+          restoredBucket
+              .getValue(0, false, OByteSerializer.INSTANCE, OLinkSerializer.INSTANCE)
+              .getValue());
+      Assert.assertEquals(
+          new ORecordId(1, 1),
+          restoredBucket
+              .getValue(1, false, OByteSerializer.INSTANCE, OLinkSerializer.INSTANCE)
+              .getValue());
+      Assert.assertEquals(
+          new ORecordId(2, 2),
+          restoredBucket
+              .getValue(2, false, OByteSerializer.INSTANCE, OLinkSerializer.INSTANCE)
+              .getValue());
 
       pageOperation.undo(entry);
 
@@ -145,11 +172,12 @@ public class SBTreeBucketV1AddAllPOTest {
   @Test
   public void testSerialization() {
     final List<byte[]> rawRecords = new ArrayList<>();
-    rawRecords.add(new byte[] { 4, 2 });
-    rawRecords.add(new byte[] { 2, 4 });
+    rawRecords.add(new byte[] {4, 2});
+    rawRecords.add(new byte[] {2, 4});
 
-    SBTreeBucketV1AddAllPO operation = new SBTreeBucketV1AddAllPO(3, rawRecords, true, OIntegerSerializer.INSTANCE,
-        OLinkSerializer.INSTANCE);
+    SBTreeBucketV1AddAllPO operation =
+        new SBTreeBucketV1AddAllPO(
+            3, rawRecords, true, OIntegerSerializer.INSTANCE, OLinkSerializer.INSTANCE);
 
     operation.setFileId(42);
     operation.setPageIndex(24);

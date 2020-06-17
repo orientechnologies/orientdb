@@ -3,7 +3,7 @@ package com.orientechnologies.orient.test.domain.base;
 import java.util.Set;
 
 public class SimplePerson {
-  private String      name;
+  private String name;
   private Set<String> animals;
 
   public SimplePerson(String name, Set<String> animals) {
@@ -11,8 +11,7 @@ public class SimplePerson {
     this.setAnimals(animals);
   }
 
-  public SimplePerson() {
-  }
+  public SimplePerson() {}
 
   public String getName() {
     return name;
@@ -32,17 +31,13 @@ public class SimplePerson {
 
   @Override
   public boolean equals(Object o) {
-    if (this == o)
-      return true;
-    if (!(o instanceof SimplePerson))
-      return false;
+    if (this == o) return true;
+    if (!(o instanceof SimplePerson)) return false;
 
     SimplePerson person = (SimplePerson) o;
 
-    if (!getAnimals().equals(person.getAnimals()))
-      return false;
-    if (!getName().equals(person.getName()))
-      return false;
+    if (!getAnimals().equals(person.getAnimals())) return false;
+    if (!getName().equals(person.getName())) return false;
 
     return true;
   }

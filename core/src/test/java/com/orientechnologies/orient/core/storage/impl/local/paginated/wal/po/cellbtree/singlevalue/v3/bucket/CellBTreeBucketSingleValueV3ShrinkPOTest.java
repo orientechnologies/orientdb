@@ -11,13 +11,12 @@ import com.orientechnologies.orient.core.storage.cache.OCacheEntryImpl;
 import com.orientechnologies.orient.core.storage.cache.OCachePointer;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.PageOperationRecord;
 import com.orientechnologies.orient.core.storage.index.sbtree.singlevalue.v3.CellBTreeSingleValueBucketV3;
-import org.junit.Assert;
-import org.junit.Test;
-
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.util.ArrayList;
 import java.util.List;
+import org.junit.Assert;
+import org.junit.Test;
 
 public class CellBTreeBucketSingleValueV3ShrinkPOTest {
   @Test
@@ -32,14 +31,15 @@ public class CellBTreeBucketSingleValueV3ShrinkPOTest {
       CellBTreeSingleValueBucketV3<Byte> bucket = new CellBTreeSingleValueBucketV3<>(entry);
       bucket.init(true);
 
-      bucket.addLeafEntry(0, new byte[] { 0 }, serializeRid(new ORecordId(0, 0)));
-      bucket.addLeafEntry(1, new byte[] { 1 }, serializeRid(new ORecordId(1, 1)));
-      bucket.addLeafEntry(2, new byte[] { 2 }, serializeRid(new ORecordId(2, 2)));
+      bucket.addLeafEntry(0, new byte[] {0}, serializeRid(new ORecordId(0, 0)));
+      bucket.addLeafEntry(1, new byte[] {1}, serializeRid(new ORecordId(1, 1)));
+      bucket.addLeafEntry(2, new byte[] {2}, serializeRid(new ORecordId(2, 2)));
 
       entry.clearPageOperations();
 
       final OPointer restoredPointer = byteBufferPool.acquireDirect(false);
-      final OCachePointer restoredCachePointer = new OCachePointer(restoredPointer, byteBufferPool, 0, 0);
+      final OCachePointer restoredCachePointer =
+          new OCachePointer(restoredPointer, byteBufferPool, 0, 0);
       final OCacheEntry restoredCacheEntry = new OCacheEntryImpl(0, 0, restoredCachePointer);
 
       final ByteBuffer originalBuffer = cachePointer.getBufferDuplicate();
@@ -57,21 +57,27 @@ public class CellBTreeBucketSingleValueV3ShrinkPOTest {
 
       Assert.assertTrue(operations.get(0) instanceof CellBTreeBucketSingleValueV3ShrinkPO);
 
-      final CellBTreeBucketSingleValueV3ShrinkPO pageOperation = (CellBTreeBucketSingleValueV3ShrinkPO) operations.get(0);
+      final CellBTreeBucketSingleValueV3ShrinkPO pageOperation =
+          (CellBTreeBucketSingleValueV3ShrinkPO) operations.get(0);
 
-      CellBTreeSingleValueBucketV3<Byte> restoredBucket = new CellBTreeSingleValueBucketV3<>(restoredCacheEntry);
+      CellBTreeSingleValueBucketV3<Byte> restoredBucket =
+          new CellBTreeSingleValueBucketV3<>(restoredCacheEntry);
 
       Assert.assertEquals(3, restoredBucket.size());
 
-      Assert.assertEquals(new ORecordId(0, 0), restoredBucket.getValue(0, OByteSerializer.INSTANCE));
-      Assert.assertEquals(new ORecordId(1, 1), restoredBucket.getValue(1, OByteSerializer.INSTANCE));
-      Assert.assertEquals(new ORecordId(2, 2), restoredBucket.getValue(2, OByteSerializer.INSTANCE));
+      Assert.assertEquals(
+          new ORecordId(0, 0), restoredBucket.getValue(0, OByteSerializer.INSTANCE));
+      Assert.assertEquals(
+          new ORecordId(1, 1), restoredBucket.getValue(1, OByteSerializer.INSTANCE));
+      Assert.assertEquals(
+          new ORecordId(2, 2), restoredBucket.getValue(2, OByteSerializer.INSTANCE));
 
       pageOperation.redo(restoredCacheEntry);
 
       Assert.assertEquals(1, restoredBucket.size());
 
-      Assert.assertEquals(new ORecordId(0, 0), restoredBucket.getValue(0, OByteSerializer.INSTANCE));
+      Assert.assertEquals(
+          new ORecordId(0, 0), restoredBucket.getValue(0, OByteSerializer.INSTANCE));
 
       byteBufferPool.release(pointer);
       byteBufferPool.release(restoredPointer);
@@ -93,9 +99,9 @@ public class CellBTreeBucketSingleValueV3ShrinkPOTest {
       CellBTreeSingleValueBucketV3<Byte> bucket = new CellBTreeSingleValueBucketV3<>(entry);
       bucket.init(true);
 
-      bucket.addLeafEntry(0, new byte[] { 0 }, serializeRid(new ORecordId(0, 0)));
-      bucket.addLeafEntry(1, new byte[] { 1 }, serializeRid(new ORecordId(1, 1)));
-      bucket.addLeafEntry(2, new byte[] { 2 }, serializeRid(new ORecordId(2, 2)));
+      bucket.addLeafEntry(0, new byte[] {0}, serializeRid(new ORecordId(0, 0)));
+      bucket.addLeafEntry(1, new byte[] {1}, serializeRid(new ORecordId(1, 1)));
+      bucket.addLeafEntry(2, new byte[] {2}, serializeRid(new ORecordId(2, 2)));
 
       entry.clearPageOperations();
 
@@ -106,21 +112,27 @@ public class CellBTreeBucketSingleValueV3ShrinkPOTest {
 
       Assert.assertTrue(operations.get(0) instanceof CellBTreeBucketSingleValueV3ShrinkPO);
 
-      final CellBTreeBucketSingleValueV3ShrinkPO pageOperation = (CellBTreeBucketSingleValueV3ShrinkPO) operations.get(0);
+      final CellBTreeBucketSingleValueV3ShrinkPO pageOperation =
+          (CellBTreeBucketSingleValueV3ShrinkPO) operations.get(0);
 
-      final CellBTreeSingleValueBucketV3<Byte> restoredBucket = new CellBTreeSingleValueBucketV3<>(entry);
+      final CellBTreeSingleValueBucketV3<Byte> restoredBucket =
+          new CellBTreeSingleValueBucketV3<>(entry);
 
       Assert.assertEquals(1, restoredBucket.size());
 
-      Assert.assertEquals(new ORecordId(0, 0), restoredBucket.getValue(0, OByteSerializer.INSTANCE));
+      Assert.assertEquals(
+          new ORecordId(0, 0), restoredBucket.getValue(0, OByteSerializer.INSTANCE));
 
       pageOperation.undo(entry);
 
       Assert.assertEquals(3, restoredBucket.size());
 
-      Assert.assertEquals(new ORecordId(0, 0), restoredBucket.getValue(0, OByteSerializer.INSTANCE));
-      Assert.assertEquals(new ORecordId(1, 1), restoredBucket.getValue(1, OByteSerializer.INSTANCE));
-      Assert.assertEquals(new ORecordId(2, 2), restoredBucket.getValue(2, OByteSerializer.INSTANCE));
+      Assert.assertEquals(
+          new ORecordId(0, 0), restoredBucket.getValue(0, OByteSerializer.INSTANCE));
+      Assert.assertEquals(
+          new ORecordId(1, 1), restoredBucket.getValue(1, OByteSerializer.INSTANCE));
+      Assert.assertEquals(
+          new ORecordId(2, 2), restoredBucket.getValue(2, OByteSerializer.INSTANCE));
 
       byteBufferPool.release(pointer);
     } finally {
@@ -131,11 +143,11 @@ public class CellBTreeBucketSingleValueV3ShrinkPOTest {
   @Test
   public void testSerialization() {
     final List<byte[]> rawRecords = new ArrayList<>();
-    rawRecords.add(new byte[] { 4, 2 });
-    rawRecords.add(new byte[] { 2, 4 });
+    rawRecords.add(new byte[] {4, 2});
+    rawRecords.add(new byte[] {2, 4});
 
-    CellBTreeBucketSingleValueV3ShrinkPO operation = new CellBTreeBucketSingleValueV3ShrinkPO(12, rawRecords,
-        OIntegerSerializer.INSTANCE);
+    CellBTreeBucketSingleValueV3ShrinkPO operation =
+        new CellBTreeBucketSingleValueV3ShrinkPO(12, rawRecords, OIntegerSerializer.INSTANCE);
 
     operation.setFileId(42);
     operation.setPageIndex(24);
@@ -147,7 +159,8 @@ public class CellBTreeBucketSingleValueV3ShrinkPOTest {
 
     Assert.assertEquals(serializedSize + 1, pos);
 
-    CellBTreeBucketSingleValueV3ShrinkPO restoredOperation = new CellBTreeBucketSingleValueV3ShrinkPO();
+    CellBTreeBucketSingleValueV3ShrinkPO restoredOperation =
+        new CellBTreeBucketSingleValueV3ShrinkPO();
     restoredOperation.fromStream(stream, 1);
 
     Assert.assertEquals(42, restoredOperation.getFileId());

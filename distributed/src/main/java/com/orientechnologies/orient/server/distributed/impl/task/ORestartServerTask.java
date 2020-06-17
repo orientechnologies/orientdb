@@ -28,7 +28,6 @@ import com.orientechnologies.orient.server.distributed.ODistributedServerLog;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
 import com.orientechnologies.orient.server.distributed.ORemoteTaskFactory;
 import com.orientechnologies.orient.server.distributed.task.OAbstractRemoteTask;
-
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
@@ -37,35 +36,50 @@ import java.io.IOException;
  * Distributed task to restart a node.
  *
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
- *
  */
 public class ORestartServerTask extends OAbstractRemoteTask {
   private static final long serialVersionUID = 1L;
-  public static final int   FACTORYID        = 10;
+  public static final int FACTORYID = 10;
 
-  public ORestartServerTask() {
-  }
+  public ORestartServerTask() {}
 
   @Override
-  public Object execute(ODistributedRequestId requestId, final OServer iServer, final ODistributedServerManager iManager,
-      final ODatabaseDocumentInternal database) throws Exception {
+  public Object execute(
+      ODistributedRequestId requestId,
+      final OServer iServer,
+      final ODistributedServerManager iManager,
+      final ODatabaseDocumentInternal database)
+      throws Exception {
 
-    ODistributedServerLog.warn(this, iManager.getLocalNodeName(), getNodeSource(), ODistributedServerLog.DIRECTION.IN,
+    ODistributedServerLog.warn(
+        this,
+        iManager.getLocalNodeName(),
+        getNodeSource(),
+        ODistributedServerLog.DIRECTION.IN,
         "Restarting server...");
 
     iManager.setNodeStatus(ODistributedServerManager.NODE_STATUS.OFFLINE);
 
-    Orient.instance().scheduleTask(new Runnable() {
-      @Override
-      public void run() {
-        try {
-          iServer.restart();
-        } catch (Exception e) {
-          ODistributedServerLog.error(this, iManager.getLocalNodeName(), getNodeSource(), ODistributedServerLog.DIRECTION.IN,
-              "Error on restarting server", e);
-        }
-      }
-    }, 1, 0);
+    Orient.instance()
+        .scheduleTask(
+            new Runnable() {
+              @Override
+              public void run() {
+                try {
+                  iServer.restart();
+                } catch (Exception e) {
+                  ODistributedServerLog.error(
+                      this,
+                      iManager.getLocalNodeName(),
+                      getNodeSource(),
+                      ODistributedServerLog.DIRECTION.IN,
+                      "Error on restarting server",
+                      e);
+                }
+              }
+            },
+            1,
+            0);
 
     return true;
   }
@@ -81,12 +95,10 @@ public class ORestartServerTask extends OAbstractRemoteTask {
   }
 
   @Override
-  public void toStream(DataOutput out) throws IOException {
-  }
+  public void toStream(DataOutput out) throws IOException {}
 
   @Override
-  public void fromStream(DataInput in, final ORemoteTaskFactory factory) throws IOException {
-  }
+  public void fromStream(DataInput in, final ORemoteTaskFactory factory) throws IOException {}
 
   @Override
   public int getFactoryId() {

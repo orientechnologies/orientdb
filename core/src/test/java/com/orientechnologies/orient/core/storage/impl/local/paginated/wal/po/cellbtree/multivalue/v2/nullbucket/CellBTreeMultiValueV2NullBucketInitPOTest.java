@@ -7,10 +7,9 @@ import com.orientechnologies.orient.core.storage.cache.OCacheEntryImpl;
 import com.orientechnologies.orient.core.storage.cache.OCachePointer;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.PageOperationRecord;
 import com.orientechnologies.orient.core.storage.index.sbtree.multivalue.v2.CellBTreeMultiValueV2NullBucket;
+import java.util.List;
 import org.junit.Assert;
 import org.junit.Test;
-
-import java.util.List;
 
 public class CellBTreeMultiValueV2NullBucketInitPOTest {
   @Test
@@ -30,15 +29,18 @@ public class CellBTreeMultiValueV2NullBucketInitPOTest {
 
       Assert.assertTrue(operations.get(0) instanceof CellBTreeMultiValueV2NullBucketInitPO);
 
-      final CellBTreeMultiValueV2NullBucketInitPO pageOperation = (CellBTreeMultiValueV2NullBucketInitPO) operations.get(0);
+      final CellBTreeMultiValueV2NullBucketInitPO pageOperation =
+          (CellBTreeMultiValueV2NullBucketInitPO) operations.get(0);
 
       final OPointer restoredPointer = byteBufferPool.acquireDirect(false);
-      final OCachePointer restoredCachePointer = new OCachePointer(restoredPointer, byteBufferPool, 0, 0);
+      final OCachePointer restoredCachePointer =
+          new OCachePointer(restoredPointer, byteBufferPool, 0, 0);
       final OCacheEntry restoredCacheEntry = new OCacheEntryImpl(0, 0, restoredCachePointer);
 
       pageOperation.redo(restoredCacheEntry);
 
-      CellBTreeMultiValueV2NullBucket restoredPage = new CellBTreeMultiValueV2NullBucket(restoredCacheEntry);
+      CellBTreeMultiValueV2NullBucket restoredPage =
+          new CellBTreeMultiValueV2NullBucket(restoredCacheEntry);
 
       Assert.assertEquals(0, restoredPage.getSize());
       Assert.assertTrue(restoredPage.getValues().isEmpty());
@@ -65,7 +67,8 @@ public class CellBTreeMultiValueV2NullBucketInitPOTest {
 
     Assert.assertEquals(serializedSize + 1, pos);
 
-    CellBTreeMultiValueV2NullBucketInitPO restoredOperation = new CellBTreeMultiValueV2NullBucketInitPO();
+    CellBTreeMultiValueV2NullBucketInitPO restoredOperation =
+        new CellBTreeMultiValueV2NullBucketInitPO();
     restoredOperation.fromStream(stream, 1);
 
     Assert.assertEquals(42, restoredOperation.getFileId());

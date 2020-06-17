@@ -8,13 +8,13 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 public class OUpdateOperations extends SimpleNode {
-  public static final int TYPE_SET       = 0;
-  public static final int TYPE_PUT       = 1;
-  public static final int TYPE_MERGE     = 2;
-  public static final int TYPE_CONTENT   = 3;
+  public static final int TYPE_SET = 0;
+  public static final int TYPE_PUT = 1;
+  public static final int TYPE_MERGE = 2;
+  public static final int TYPE_CONTENT = 3;
   public static final int TYPE_INCREMENT = 4;
-  public static final int TYPE_ADD       = 5;
-  public static final int TYPE_REMOVE    = 6;
+  public static final int TYPE_ADD = 5;
+  public static final int TYPE_REMOVE = 6;
 
   protected int type;
 
@@ -39,65 +39,64 @@ public class OUpdateOperations extends SimpleNode {
   public void toString(Map<Object, Object> params, StringBuilder builder) {
     boolean first = true;
     switch (type) {
-    case TYPE_SET:
-      builder.append("SET ");
-      for (OUpdateItem item : this.updateItems) {
-        if (!first) {
-          builder.append(", ");
+      case TYPE_SET:
+        builder.append("SET ");
+        for (OUpdateItem item : this.updateItems) {
+          if (!first) {
+            builder.append(", ");
+          }
+          item.toString(params, builder);
+          first = false;
         }
-        item.toString(params, builder);
-        first = false;
-      }
-      break;
-    case TYPE_PUT:
-      builder.append("PUT ");
-      for (OUpdatePutItem item : this.updatePutItems) {
-        if (!first) {
-          builder.append(", ");
+        break;
+      case TYPE_PUT:
+        builder.append("PUT ");
+        for (OUpdatePutItem item : this.updatePutItems) {
+          if (!first) {
+            builder.append(", ");
+          }
+          item.toString(params, builder);
+          first = false;
         }
-        item.toString(params, builder);
-        first = false;
-      }
-      break;
-    case TYPE_MERGE:
-      builder.append("MERGE ");
-      json.toString(params, builder);
-      break;
-    case TYPE_CONTENT:
-      builder.append("CONTENT ");
-      json.toString(params, builder);
-      break;
-    case TYPE_INCREMENT:
-      builder.append("INCREMENT ");
-      for (OUpdateIncrementItem item : this.updateIncrementItems) {
-        if (!first) {
-          builder.append(", ");
+        break;
+      case TYPE_MERGE:
+        builder.append("MERGE ");
+        json.toString(params, builder);
+        break;
+      case TYPE_CONTENT:
+        builder.append("CONTENT ");
+        json.toString(params, builder);
+        break;
+      case TYPE_INCREMENT:
+        builder.append("INCREMENT ");
+        for (OUpdateIncrementItem item : this.updateIncrementItems) {
+          if (!first) {
+            builder.append(", ");
+          }
+          item.toString(params, builder);
+          first = false;
         }
-        item.toString(params, builder);
-        first = false;
-      }
-      break;
-    case TYPE_ADD:
-      builder.append("ADD ");
-      for (OUpdateIncrementItem item : this.updateIncrementItems) {
-        if (!first) {
-          builder.append(", ");
+        break;
+      case TYPE_ADD:
+        builder.append("ADD ");
+        for (OUpdateIncrementItem item : this.updateIncrementItems) {
+          if (!first) {
+            builder.append(", ");
+          }
+          item.toString(params, builder);
+          first = false;
         }
-        item.toString(params, builder);
-        first = false;
-      }
-      break;
-    case TYPE_REMOVE:
-      builder.append("REMOVE ");
-      for (OUpdateRemoveItem item : this.updateRemoveItems) {
-        if (!first) {
-          builder.append(", ");
+        break;
+      case TYPE_REMOVE:
+        builder.append("REMOVE ");
+        for (OUpdateRemoveItem item : this.updateRemoveItems) {
+          if (!first) {
+            builder.append(", ");
+          }
+          item.toString(params, builder);
+          first = false;
         }
-        item.toString(params, builder);
-        first = false;
-      }
-      break;
-
+        break;
     }
   }
 
@@ -105,37 +104,46 @@ public class OUpdateOperations extends SimpleNode {
 
     OUpdateOperations result = new OUpdateOperations(-1);
     result.type = type;
-    result.updateItems = updateItems == null ? null : updateItems.stream().map(x -> x.copy()).collect(Collectors.toList());
-    result.updatePutItems = updatePutItems == null ? null : updatePutItems.stream().map(x -> x.copy()).collect(Collectors.toList());
+    result.updateItems =
+        updateItems == null
+            ? null
+            : updateItems.stream().map(x -> x.copy()).collect(Collectors.toList());
+    result.updatePutItems =
+        updatePutItems == null
+            ? null
+            : updatePutItems.stream().map(x -> x.copy()).collect(Collectors.toList());
     result.json = json == null ? null : json.copy();
     result.updateIncrementItems =
-        updateIncrementItems == null ? null : updateIncrementItems.stream().map(x -> x.copy()).collect(Collectors.toList());
+        updateIncrementItems == null
+            ? null
+            : updateIncrementItems.stream().map(x -> x.copy()).collect(Collectors.toList());
     result.updateRemoveItems =
-        updateRemoveItems == null ? null : updateRemoveItems.stream().map(x -> x.copy()).collect(Collectors.toList());
+        updateRemoveItems == null
+            ? null
+            : updateRemoveItems.stream().map(x -> x.copy()).collect(Collectors.toList());
     return result;
   }
 
   @Override
   public boolean equals(Object o) {
-    if (this == o)
-      return true;
-    if (o == null || getClass() != o.getClass())
-      return false;
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
 
     OUpdateOperations that = (OUpdateOperations) o;
 
-    if (type != that.type)
-      return false;
+    if (type != that.type) return false;
     if (updateItems != null ? !updateItems.equals(that.updateItems) : that.updateItems != null)
       return false;
-    if (updatePutItems != null ? !updatePutItems.equals(that.updatePutItems) : that.updatePutItems != null)
-      return false;
-    if (json != null ? !json.equals(that.json) : that.json != null)
-      return false;
-    if (updateIncrementItems != null ? !updateIncrementItems.equals(that.updateIncrementItems) : that.updateIncrementItems != null)
-      return false;
-    if (updateRemoveItems != null ? !updateRemoveItems.equals(that.updateRemoveItems) : that.updateRemoveItems != null)
-      return false;
+    if (updatePutItems != null
+        ? !updatePutItems.equals(that.updatePutItems)
+        : that.updatePutItems != null) return false;
+    if (json != null ? !json.equals(that.json) : that.json != null) return false;
+    if (updateIncrementItems != null
+        ? !updateIncrementItems.equals(that.updateIncrementItems)
+        : that.updateIncrementItems != null) return false;
+    if (updateRemoveItems != null
+        ? !updateRemoveItems.equals(that.updateRemoveItems)
+        : that.updateRemoveItems != null) return false;
 
     return true;
   }

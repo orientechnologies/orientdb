@@ -17,7 +17,6 @@ package com.orientechnologies.orient.core.metadata.schema.clusterselection;
 
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-
 import java.util.concurrent.atomic.AtomicLong;
 
 /**
@@ -26,8 +25,8 @@ import java.util.concurrent.atomic.AtomicLong;
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
  */
 public class ORoundRobinClusterSelectionStrategy implements OClusterSelectionStrategy {
-  public static final String     NAME    = "round-robin";
-  private             AtomicLong pointer = new AtomicLong(0);
+  public static final String NAME = "round-robin";
+  private AtomicLong pointer = new AtomicLong(0);
 
   public int getCluster(final OClass iClass, final ODocument doc) {
     return getCluster(iClass, iClass.getClusterIds(), doc);

@@ -13,22 +13,19 @@
  *  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  *  * See the License for the specific language governing permissions and
  *  * limitations under the License.
- *  
+ *
  */
 
 package com.orientechnologies.lucene.tests;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
+import java.io.InputStream;
 import org.junit.Before;
 import org.junit.Test;
 
-import java.io.InputStream;
-
-import static org.assertj.core.api.Assertions.assertThat;
-
-/**
- * Created by enricorisa on 19/09/14.
- */
+/** Created by enricorisa on 19/09/14. */
 public class OLuceneSingleFieldEmbeddedTest extends OLuceneBaseTest {
 
   @Before
@@ -39,13 +36,13 @@ public class OLuceneSingleFieldEmbeddedTest extends OLuceneBaseTest {
 
     db.command("create index Song.title on Song (title) FULLTEXT ENGINE LUCENE");
     db.command("create index Song.author on Song (author) FULLTEXT ENGINE LUCENE");
-
   }
 
   @Test
   public void loadAndTest() {
 
-    OResultSet docs = db.query("select * from Song where search_fields(['title'],\"(title:mountain)\")=true");
+    OResultSet docs =
+        db.query("select * from Song where search_fields(['title'],\"(title:mountain)\")=true");
 
     assertThat(docs).hasSize(4);
     docs.close();
@@ -54,11 +51,11 @@ public class OLuceneSingleFieldEmbeddedTest extends OLuceneBaseTest {
 
     assertThat(docs).hasSize(87);
     docs.close();
-    docs = db.query(
-        "select * from Song where search_fields(['title'],\"(title:mountain)\")=true  and search_fields(['author'],\"(author:Fabbio)\")=true");
+    docs =
+        db.query(
+            "select * from Song where search_fields(['title'],\"(title:mountain)\")=true  and search_fields(['author'],\"(author:Fabbio)\")=true");
 
     assertThat(docs).hasSize(1);
     docs.close();
   }
-
 }

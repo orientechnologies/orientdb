@@ -3,16 +3,13 @@ package com.orientechnologies.orient.core.sql.parser;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.executor.OResultInternal;
-
 import java.util.Map;
 import java.util.Set;
 
-/**
- * Created by luigidellaquila on 18/02/15.
- */
+/** Created by luigidellaquila on 18/02/15. */
 public class OJsonItem {
   protected OIdentifier leftIdentifier;
-  protected String      leftString;
+  protected String leftString;
   protected OExpression right;
 
   public void toString(Map<Object, Object> params, StringBuilder builder) {
@@ -54,7 +51,8 @@ public class OJsonItem {
     return right.isAggregate();
   }
 
-  public OJsonItem splitForAggregation(AggregateProjectionSplit aggregateSplit, OCommandContext ctx) {
+  public OJsonItem splitForAggregation(
+      AggregateProjectionSplit aggregateSplit, OCommandContext ctx) {
     if (isAggregate()) {
       OJsonItem item = new OJsonItem();
       item.leftIdentifier = leftIdentifier;
@@ -84,17 +82,17 @@ public class OJsonItem {
 
   @Override
   public boolean equals(Object o) {
-    if (this == o)
-      return true;
-    if (o == null || getClass() != o.getClass())
-      return false;
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
 
     OJsonItem oJsonItem = (OJsonItem) o;
 
-    if (leftIdentifier != null ? !leftIdentifier.equals(oJsonItem.leftIdentifier) : oJsonItem.leftIdentifier != null)
-      return false;
-    if (leftString != null ? !leftString.equals(oJsonItem.leftString) : oJsonItem.leftString != null)
-      return false;
+    if (leftIdentifier != null
+        ? !leftIdentifier.equals(oJsonItem.leftIdentifier)
+        : oJsonItem.leftIdentifier != null) return false;
+    if (leftString != null
+        ? !leftString.equals(oJsonItem.leftString)
+        : oJsonItem.leftString != null) return false;
     return right != null ? right.equals(oJsonItem.right) : oJsonItem.right == null;
   }
 
@@ -125,7 +123,5 @@ public class OJsonItem {
       right = new OExpression(-1);
       right.deserialize(fromResult.getProperty("right"));
     }
-
   }
-
 }

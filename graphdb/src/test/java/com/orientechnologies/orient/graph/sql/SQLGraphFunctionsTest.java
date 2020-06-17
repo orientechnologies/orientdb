@@ -24,6 +24,7 @@ import com.orientechnologies.orient.graph.gremlin.OGremlinHelper;
 import com.tinkerpop.blueprints.impls.orient.OrientEdge;
 import com.tinkerpop.blueprints.impls.orient.OrientGraph;
 import com.tinkerpop.blueprints.impls.orient.OrientVertex;
+import java.util.List;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
@@ -31,14 +32,11 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
-import java.util.List;
-
 @RunWith(JUnit4.class)
 public class SQLGraphFunctionsTest {
   private static OrientGraph graph;
 
-  public SQLGraphFunctionsTest() {
-  }
+  public SQLGraphFunctionsTest() {}
 
   @BeforeClass
   public static void beforeClass() {
@@ -69,8 +67,10 @@ public class SQLGraphFunctionsTest {
 
   @Test
   public void checkDijkstra() {
-    String subquery = "select $current, $target, Dijkstra($current, $target , 'weight') as path from V let $target = ( select from V where name = \'C\' ) where 1 > 0";
-    Iterable<OrientVertex> result = graph.command(new OSQLSynchQuery<OrientVertex>(subquery)).execute();
+    String subquery =
+        "select $current, $target, Dijkstra($current, $target , 'weight') as path from V let $target = ( select from V where name = \'C\' ) where 1 > 0";
+    Iterable<OrientVertex> result =
+        graph.command(new OSQLSynchQuery<OrientVertex>(subquery)).execute();
     Assert.assertTrue(result.iterator().hasNext());
 
     for (OrientVertex d : result) {
@@ -79,13 +79,15 @@ public class SQLGraphFunctionsTest {
       Object name = $current.getProperty("name");
       Iterable<OrientVertex> $target = (Iterable<OrientVertex>) d.getProperty("$target");
       Object name1 = $target.iterator().next().getProperty("name");
-      System.out.println("Shortest path from " + name + " and " + name1 + " is: " + d.getProperty("path"));
+      System.out.println(
+          "Shortest path from " + name + " and " + name1 + " is: " + d.getProperty("path"));
     }
   }
 
   @Test
   public void checkMinusInString() {
-    Iterable<OrientVertex> result = graph.command(new OCommandSQL("select expand( out()[name='D-D'] ) from V")).execute();
+    Iterable<OrientVertex> result =
+        graph.command(new OCommandSQL("select expand( out()[name='D-D'] ) from V")).execute();
     Assert.assertTrue(result.iterator().hasNext());
   }
 
@@ -101,19 +103,32 @@ public class SQLGraphFunctionsTest {
 
     graph.setAutoStartTx(true);
 
-    OrientVertex v1 = graph.command(new OCommandSQL("create vertex tc1 SET id='1', name='name1'")).execute();
-    OrientVertex v2 = graph.command(new OCommandSQL("create vertex tc1 SET id='2', name='name2'")).execute();
+    OrientVertex v1 =
+        graph.command(new OCommandSQL("create vertex tc1 SET id='1', name='name1'")).execute();
+    OrientVertex v2 =
+        graph.command(new OCommandSQL("create vertex tc1 SET id='2', name='name2'")).execute();
 
     graph.commit();
 
     int tc1Id = graph.getRawGraph().getClusterIdByName("tc1");
     int edge1Id = graph.getRawGraph().getClusterIdByName("edge1");
 
-    Iterable<OrientEdge> e = graph
-        .command(new OCommandSQL("create edge edge1 from #" + tc1Id + ":0 to #" + tc1Id + ":1 set f='fieldValue';")).execute();
+    Iterable<OrientEdge> e =
+        graph
+            .command(
+                new OCommandSQL(
+                    "create edge edge1 from #"
+                        + tc1Id
+                        + ":0 to #"
+                        + tc1Id
+                        + ":1 set f='fieldValue';"))
+            .execute();
     graph.commit();
 
-    List<ODocument> result = graph.getRawGraph().query(new OSQLSynchQuery<ODocument>("select gremlin('current.outE') from tc1"));
+    List<ODocument> result =
+        graph
+            .getRawGraph()
+            .query(new OSQLSynchQuery<ODocument>("select gremlin('current.outE') from tc1"));
 
     Assert.assertEquals(2, result.size());
 

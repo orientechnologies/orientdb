@@ -19,23 +19,23 @@
  */
 package com.orientechnologies.orient.core.db.record;
 
-import com.orientechnologies.orient.core.record.ORecord;
-
 /**
  * Base interface that represents a record element.
  *
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
  */
 public interface ORecordElement {
-  /**
-   * Available record statuses.
-   */
+  /** Available record statuses. */
   enum STATUS {
-    NOT_LOADED, LOADED, MARSHALLING, UNMARSHALLING
+    NOT_LOADED,
+    LOADED,
+    MARSHALLING,
+    UNMARSHALLING
   }
 
   /**
-   * Marks the instance as dirty. The dirty status could be propagated up if the implementation supports ownership concept.
+   * Marks the instance as dirty. The dirty status could be propagated up if the implementation
+   * supports ownership concept.
    *
    * @return The object it self. Useful to call methods in chain.
    */
@@ -43,9 +43,6 @@ public interface ORecordElement {
 
   void setDirtyNoChanged();
 
-  /**
-   * @return Returns record element which contains given one.
-   */
+  /** @return Returns record element which contains given one. */
   ORecordElement getOwner();
-
 }

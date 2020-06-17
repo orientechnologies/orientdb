@@ -20,16 +20,14 @@
 package com.orientechnologies.common.concur.resource;
 
 import com.orientechnologies.common.exception.OException;
-import com.orientechnologies.orient.core.exception.OStorageException;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
-
 import java.util.Map;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
- * Shared container that works with callbacks like closures. If the resource implements the {@link OSharedResource} interface then
- * the resource is locked until is removed.
+ * Shared container that works with callbacks like closures. If the resource implements the {@link
+ * OSharedResource} interface then the resource is locked until is removed.
  *
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
  */
@@ -46,8 +44,7 @@ public class OSharedContainerImpl implements OSharedContainer {
     synchronized (this) {
       T resource = (T) sharedResources.remove(iName);
 
-      if (resource instanceof OSharedResource)
-        ((OSharedResource) resource).releaseExclusiveLock();
+      if (resource instanceof OSharedResource) ((OSharedResource) resource).releaseExclusiveLock();
       return resource;
     }
   }
@@ -55,20 +52,20 @@ public class OSharedContainerImpl implements OSharedContainer {
   public <T> T getResource(final String iName, final Callable<T> iCallback) {
     T value = (T) sharedResources.get(iName);
     if (value == null) {
-      // THE SYNCHRONIZED BLOCK I CREATES NEEDED ONLY TO PREVENT MULTIPLE CALL TO THE CALLBACK IN CASE OF CONCURRENT
+      // THE SYNCHRONIZED BLOCK I CREATES NEEDED ONLY TO PREVENT MULTIPLE CALL TO THE CALLBACK IN
+      // CASE OF CONCURRENT
       synchronized (this) {
         if (value == null) {
           // CREATE IT
           try {
             value = iCallback.call();
           } catch (Exception e) {
-            throw OException.wrapException(new ODatabaseException("Error on creation of shared resource"), e);
+            throw OException.wrapException(
+                new ODatabaseException("Error on creation of shared resource"), e);
           }
 
-          if (value instanceof OSharedResource)
-            ((OSharedResource) value).acquireExclusiveLock();
-          if (value != null)
-            sharedResources.put(iName, value);
+          if (value instanceof OSharedResource) ((OSharedResource) value).acquireExclusiveLock();
+          if (value != null) sharedResources.put(iName, value);
         }
       }
     }
@@ -79,8 +76,7 @@ public class OSharedContainerImpl implements OSharedContainer {
   public void clearResources() {
     synchronized (this) {
       for (Object resource : sharedResources.values()) {
-        if (resource instanceof OCloseable)
-          (((OCloseable) resource)).close();
+        if (resource instanceof OCloseable) (((OCloseable) resource)).close();
       }
 
       sharedResources.clear();

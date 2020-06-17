@@ -27,5 +27,4 @@ public class OGraphFunctionFactory extends OSQLFunctionFactoryTemplate {
     register(OSQLFunctionGremlin.NAME, OSQLFunctionGremlin.class);
     register(new OSQLFunctionLabel());
   }
-
 }

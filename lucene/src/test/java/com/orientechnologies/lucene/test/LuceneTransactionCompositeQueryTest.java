@@ -18,6 +18,8 @@
 
 package com.orientechnologies.lucene.test;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.index.OIndex;
@@ -25,22 +27,17 @@ import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
-
 import java.io.IOException;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Test;
 
-import static org.assertj.core.api.Assertions.assertThat;
-
-/**
- * Created by Enrico Risa on 10/08/15.
- */
+/** Created by Enrico Risa on 10/08/15. */
 public class LuceneTransactionCompositeQueryTest extends BaseLuceneTest {
 
   @Before
@@ -49,8 +46,8 @@ public class LuceneTransactionCompositeQueryTest extends BaseLuceneTest {
     final OClass c1 = db.createVertexClass("Foo");
     c1.createProperty("name", OType.STRING);
     c1.createProperty("bar", OType.STRING);
-    c1.createIndex("Foo.bar", "FULLTEXT", null, null, "LUCENE", new String[] { "bar" });
-    c1.createIndex("Foo.name", "NOTUNIQUE", null, null, "SBTREE", new String[] { "name" });
+    c1.createIndex("Foo.bar", "FULLTEXT", null, null, "LUCENE", new String[] {"bar"});
+    c1.createIndex("Foo.name", "NOTUNIQUE", null, null, "SBTREE", new String[] {"name"});
   }
 
   @Test
@@ -73,7 +70,6 @@ public class LuceneTransactionCompositeQueryTest extends BaseLuceneTest {
     //noinspection deprecation
     vertices = db.command(new OSQLSynchQuery<ODocument>(query)).execute();
     assertThat(vertices).hasSize(0);
-
   }
 
   @Test
@@ -118,7 +114,6 @@ public class LuceneTransactionCompositeQueryTest extends BaseLuceneTest {
     assertThat(vertices).hasSize(1);
 
     Assert.assertEquals(1, index.getInternal().size());
-
   }
 
   @Test
@@ -189,7 +184,6 @@ public class LuceneTransactionCompositeQueryTest extends BaseLuceneTest {
     assertThat(vertices).hasSize(1);
 
     Assert.assertEquals(index.getInternal().size(), 1);
-
   }
 
   @Test
@@ -270,7 +264,5 @@ public class LuceneTransactionCompositeQueryTest extends BaseLuceneTest {
     assertThat(vertices).hasSize(2);
 
     Assert.assertEquals(2, index.getInternal().size());
-
   }
-
 }

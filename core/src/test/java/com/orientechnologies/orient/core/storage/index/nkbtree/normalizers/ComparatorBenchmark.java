@@ -5,15 +5,24 @@ import com.orientechnologies.common.comparator.OByteArrayComparator;
 import com.orientechnologies.common.comparator.OUnsafeByteArrayComparator;
 import com.orientechnologies.orient.core.index.OCompositeKey;
 import com.orientechnologies.orient.core.metadata.schema.OType;
+import java.util.concurrent.TimeUnit;
 import org.junit.Assert;
-import org.openjdk.jmh.annotations.*;
+import org.openjdk.jmh.annotations.Benchmark;
+import org.openjdk.jmh.annotations.BenchmarkMode;
+import org.openjdk.jmh.annotations.Fork;
+import org.openjdk.jmh.annotations.Level;
+import org.openjdk.jmh.annotations.Measurement;
+import org.openjdk.jmh.annotations.Mode;
+import org.openjdk.jmh.annotations.OutputTimeUnit;
+import org.openjdk.jmh.annotations.Scope;
+import org.openjdk.jmh.annotations.Setup;
+import org.openjdk.jmh.annotations.State;
+import org.openjdk.jmh.annotations.Warmup;
 import org.openjdk.jmh.profile.StackProfiler;
 import org.openjdk.jmh.runner.Runner;
 import org.openjdk.jmh.runner.RunnerException;
 import org.openjdk.jmh.runner.options.Options;
 import org.openjdk.jmh.runner.options.OptionsBuilder;
-
-import java.util.concurrent.TimeUnit;
 
 @State(Scope.Thread)
 @BenchmarkMode(Mode.AverageTime)
@@ -25,22 +34,24 @@ public class ComparatorBenchmark {
   KeyNormalizer keyNormalizer;
 
   public static void main(String[] args) throws RunnerException {
-    final Options opt = new OptionsBuilder().include("ComparatorBenchmark.*")
-        .addProfiler(StackProfiler.class, "detailLine=true;excludePackages=true;period=1")
-        .jvmArgs("-server", "-XX:+UseConcMarkSweepGC", "-Xmx4G", "-Xms1G")
-        // .result("target" + "/" + "results.csv")
-        // .param("offHeapMessages", "true""
-        // .resultFormat(ResultFormatType.CSV)
-        .build();
+    final Options opt =
+        new OptionsBuilder()
+            .include("ComparatorBenchmark.*")
+            .addProfiler(StackProfiler.class, "detailLine=true;excludePackages=true;period=1")
+            .jvmArgs("-server", "-XX:+UseConcMarkSweepGC", "-Xmx4G", "-Xms1G")
+            // .result("target" + "/" + "results.csv")
+            // .param("offHeapMessages", "true""
+            // .resultFormat(ResultFormatType.CSV)
+            .build();
     new Runner(opt).run();
   }
 
-  final OByteArrayComparator       arrayComparator     = new OByteArrayComparator();
+  final OByteArrayComparator arrayComparator = new OByteArrayComparator();
   final OUnsafeByteArrayComparator byteArrayComparator = new OUnsafeByteArrayComparator();
 
-  byte[]                           negative;
-  byte[]                           zero;
-  byte[]                           positive;
+  byte[] negative;
+  byte[] zero;
+  byte[] positive;
 
   @Setup(Level.Iteration)
   public void setup() {

@@ -23,19 +23,23 @@ import java.util.Set;
 
 /**
  * Contains the index metadata.
- * 
+ *
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
- * 
  */
 public class OIndexMetadata {
-  private final String           name;
+  private final String name;
   private final OIndexDefinition indexDefinition;
-  private final Set<String>      clustersToIndex;
-  private final String           type;
-  private final String           algorithm;
-  private final String           valueContainerAlgorithm;
+  private final Set<String> clustersToIndex;
+  private final String type;
+  private final String algorithm;
+  private final String valueContainerAlgorithm;
 
-  public OIndexMetadata(String name, OIndexDefinition indexDefinition, Set<String> clustersToIndex, String type, String algorithm,
+  public OIndexMetadata(
+      String name,
+      OIndexDefinition indexDefinition,
+      Set<String> clustersToIndex,
+      String type,
+      String algorithm,
       String valueContainerAlgorithm) {
     this.name = name;
     this.indexDefinition = indexDefinition;
@@ -67,23 +71,19 @@ public class OIndexMetadata {
 
   @Override
   public boolean equals(final Object o) {
-    if (this == o)
-      return true;
-    if (o == null || getClass() != o.getClass())
-      return false;
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
 
     final OIndexMetadata that = (OIndexMetadata) o;
 
     if (algorithm != null ? !algorithm.equals(that.algorithm) : that.algorithm != null)
       return false;
-    if (!clustersToIndex.equals(that.clustersToIndex))
-      return false;
-    if (indexDefinition != null ? !indexDefinition.equals(that.indexDefinition) : that.indexDefinition != null)
-      return false;
-    if (!name.equals(that.name))
-      return false;
-    if (!type.equals(that.type))
-      return false;
+    if (!clustersToIndex.equals(that.clustersToIndex)) return false;
+    if (indexDefinition != null
+        ? !indexDefinition.equals(that.indexDefinition)
+        : that.indexDefinition != null) return false;
+    if (!name.equals(that.name)) return false;
+    if (!type.equals(that.type)) return false;
 
     return true;
   }

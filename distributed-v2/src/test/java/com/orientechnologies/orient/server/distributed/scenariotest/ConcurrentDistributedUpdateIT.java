@@ -10,10 +10,9 @@ import com.orientechnologies.orient.core.record.OVertex;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.server.distributed.ServerRun;
 import com.orientechnologies.orient.server.distributed.task.ODistributedRecordLockedException;
+import java.util.concurrent.Callable;
 import org.junit.Assert;
 import org.junit.Test;
-
-import java.util.concurrent.Callable;
 
 public class ConcurrentDistributedUpdateIT extends AbstractScenarioTest {
 
@@ -69,7 +68,8 @@ public class ConcurrentDistributedUpdateIT extends AbstractScenarioTest {
     executeMultipleTest();
   }
 
-  protected Callable<Void> createWriter(final int serverId, final int threadId, final ServerRun server) {
+  protected Callable<Void> createWriter(
+      final int serverId, final int threadId, final ServerRun server) {
     return new Callable<Void>() {
       @Override
       public Void call() throws Exception {
@@ -80,7 +80,8 @@ public class ConcurrentDistributedUpdateIT extends AbstractScenarioTest {
         if (!server.getServerInstance().existsDatabase(getDatabaseName())) {
           server.getServerInstance().createDatabase(getDatabaseName(), ODatabaseType.PLOCAL, null);
         }
-        ODatabaseDocument graph = server.getServerInstance().openDatabase(getDatabaseName(), "admin", "admin");
+        ODatabaseDocument graph =
+            server.getServerInstance().openDatabase(getDatabaseName(), "admin", "admin");
         graph.begin();
 
         try {
@@ -106,21 +107,42 @@ public class ConcurrentDistributedUpdateIT extends AbstractScenarioTest {
                   } catch (OConcurrentModificationException ex) {
                     vtx1.reload();
                   } catch (ODistributedRecordLockedException ex) {
-                    log("[" + id + "/" + i + "/" + k + "] Distributed lock Exception " + ex + " for vertex " + vtx1 + " \n");
-//                    ex.printStackTrace();
+                    log(
+                        "["
+                            + id
+                            + "/"
+                            + i
+                            + "/"
+                            + k
+                            + "] Distributed lock Exception "
+                            + ex
+                            + " for vertex "
+                            + vtx1
+                            + " \n");
+                    //                    ex.printStackTrace();
                     update = false;
                     //                    isRunning = false;
                     break;
                   } catch (Exception ex) {
-                    log("[" + id + "/" + i + "/" + k + "] Exception " + ex + " for vertex " + vtx1 + "\n\n");
+                    log(
+                        "["
+                            + id
+                            + "/"
+                            + i
+                            + "/"
+                            + k
+                            + "] Exception "
+                            + ex
+                            + " for vertex "
+                            + vtx1
+                            + "\n\n");
                     ex.printStackTrace();
                     isRunning = false;
                     break;
                   }
                 }
 
-                if (!isRunning)
-                  break;
+                if (!isRunning) break;
               }
             }
           }

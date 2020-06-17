@@ -3,7 +3,6 @@ package com.orientechnologies.orient.core.sql.executor;
 import com.orientechnologies.common.concur.OTimeoutException;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.ODatabase;
-
 import java.util.Map;
 import java.util.Optional;
 
@@ -15,7 +14,7 @@ import java.util.Optional;
 public class FetchFromDatabaseMetadataStep extends AbstractExecutionStep {
 
   private boolean served = false;
-  private long    cost   = 0;
+  private long cost = 0;
 
   public FetchFromDatabaseMetadataStep(OCommandContext ctx, boolean profilingEnabled) {
     super(ctx, profilingEnabled);
@@ -43,17 +42,26 @@ public class FetchFromDatabaseMetadataStep extends AbstractExecutionStep {
             result.setProperty("user", db.getUser() == null ? null : db.getUser().getName());
             result.setProperty("type", String.valueOf(db.get(ODatabase.ATTRIBUTES.TYPE)));
             result.setProperty("status", String.valueOf(db.get(ODatabase.ATTRIBUTES.STATUS)));
-            result.setProperty("defaultClusterId", String.valueOf(db.get(ODatabase.ATTRIBUTES.DEFAULTCLUSTERID)));
-            result.setProperty("dateFormat", String.valueOf(db.get(ODatabase.ATTRIBUTES.DATEFORMAT)));
-            result.setProperty("dateTimeFormat", String.valueOf(db.get(ODatabase.ATTRIBUTES.DATETIMEFORMAT)));
+            result.setProperty(
+                "defaultClusterId", String.valueOf(db.get(ODatabase.ATTRIBUTES.DEFAULTCLUSTERID)));
+            result.setProperty(
+                "dateFormat", String.valueOf(db.get(ODatabase.ATTRIBUTES.DATEFORMAT)));
+            result.setProperty(
+                "dateTimeFormat", String.valueOf(db.get(ODatabase.ATTRIBUTES.DATETIMEFORMAT)));
             result.setProperty("timezone", String.valueOf(db.get(ODatabase.ATTRIBUTES.TIMEZONE)));
-            result.setProperty("localeCountry", String.valueOf(db.get(ODatabase.ATTRIBUTES.LOCALECOUNTRY)));
-            result.setProperty("localeLanguage", String.valueOf(db.get(ODatabase.ATTRIBUTES.LOCALELANGUAGE)));
+            result.setProperty(
+                "localeCountry", String.valueOf(db.get(ODatabase.ATTRIBUTES.LOCALECOUNTRY)));
+            result.setProperty(
+                "localeLanguage", String.valueOf(db.get(ODatabase.ATTRIBUTES.LOCALELANGUAGE)));
             result.setProperty("charset", String.valueOf(db.get(ODatabase.ATTRIBUTES.CHARSET)));
-            result.setProperty("clusterSelection", String.valueOf(db.get(ODatabase.ATTRIBUTES.CLUSTERSELECTION)));
-            result.setProperty("minimumClusters", String.valueOf(db.get(ODatabase.ATTRIBUTES.MINIMUMCLUSTERS)));
-            result.setProperty("conflictStrategy", String.valueOf(db.get(ODatabase.ATTRIBUTES.CONFLICTSTRATEGY)));
-            result.setProperty("validation", String.valueOf(db.get(ODatabase.ATTRIBUTES.VALIDATION)));
+            result.setProperty(
+                "clusterSelection", String.valueOf(db.get(ODatabase.ATTRIBUTES.CLUSTERSELECTION)));
+            result.setProperty(
+                "minimumClusters", String.valueOf(db.get(ODatabase.ATTRIBUTES.MINIMUMCLUSTERS)));
+            result.setProperty(
+                "conflictStrategy", String.valueOf(db.get(ODatabase.ATTRIBUTES.CONFLICTSTRATEGY)));
+            result.setProperty(
+                "validation", String.valueOf(db.get(ODatabase.ATTRIBUTES.VALIDATION)));
 
             served = true;
             return result;
@@ -67,9 +75,7 @@ public class FetchFromDatabaseMetadataStep extends AbstractExecutionStep {
       }
 
       @Override
-      public void close() {
-
-      }
+      public void close() {}
 
       @Override
       public Optional<OExecutionPlan> getExecutionPlan() {

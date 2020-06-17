@@ -5,15 +5,16 @@ import com.orientechnologies.orient.core.db.ODatabaseType;
 import com.orientechnologies.orient.core.db.OrientDB;
 import com.orientechnologies.orient.core.db.OrientDBConfig;
 import com.orientechnologies.orient.core.db.object.ODatabaseObject;
-
 import java.util.List;
 
 /**
- * OrientDB Object management environment, it allow to connect to an environment and manipulate databases or open sessions.
- * <p>
- * Usage example:
- * <p>
- * Remote Example:
+ * OrientDB Object management environment, it allow to connect to an environment and manipulate
+ * databases or open sessions.
+ *
+ * <p>Usage example:
+ *
+ * <p>Remote Example:
+ *
  * <pre>
  * <code>
  * OrientDBObject orientDbObject = new OrientDBObject("remote:localhost","root","root");
@@ -28,8 +29,9 @@ import java.util.List;
  * orientDbObject.close();
  * </code>
  * </pre>
- * <p>
- * Embedded example:
+ *
+ * <p>Embedded example:
+ *
  * <pre>
  * <code>
  * OrientDBObject orientDbObject = new OrientDBObject("embedded:./databases/",null,null);
@@ -40,9 +42,11 @@ import java.util.List;
  * orientDbObject.close();
  * </code>
  * </pre>
+ *
+ * <p>Database Manipulation Example:
+ *
  * <p>
- * Database Manipulation Example:
- * <p>
+ *
  * <pre>
  * <code>
  * OrientDB orientDbObject = ...
@@ -57,11 +61,14 @@ import java.util.List;
  * assertEquals(databases.get("0"),"one");
  * </code>
  * </pre>
+ *
  * <p>
+ *
  * <p>
+ *
  * <p>
- * <p>
- * Created by tglman on 13/01/17.
+ *
+ * <p>Created by tglman on 13/01/17.
  */
 public class OrientDBObject implements AutoCloseable {
 
@@ -78,10 +85,12 @@ public class OrientDBObject implements AutoCloseable {
 
   /**
    * Create a new OrientDb Object instance for a specific environment
-   * <p/>
-   * possible kind of urls 'embedded','remote', for the case of remote and distributed can be specified multiple nodes using comma.
-   * <p>
-   * Remote Example:
+   *
+   * <p>possible kind of urls 'embedded','remote', for the case of remote and distributed can be
+   * specified multiple nodes using comma.
+   *
+   * <p>Remote Example:
+   *
    * <pre>
    * <code>
    * OrientDBObject orientDbObject = new OrientDBObject("remote:localhost");
@@ -91,8 +100,9 @@ public class OrientDBObject implements AutoCloseable {
    * orientDbObject.close();
    * </code>
    * </pre>
-   * <p>
-   * Embedded Example:
+   *
+   * <p>Embedded Example:
+   *
    * <pre>
    * <code>
    * OrientDBObject orientDbObject = new OrientDBObject("embedded:./databases/");
@@ -104,7 +114,8 @@ public class OrientDBObject implements AutoCloseable {
    * </pre>
    *
    * @param environment the url for the specific environment.
-   * @param config      configuration for the specific environment for the list of option {@see OGlobalConfiguration}.
+   * @param config configuration for the specific environment for the list of option {@see
+   *     OGlobalConfiguration}.
    */
   public OrientDBObject(String environment, OrientDBConfig config) {
     this(environment, null, null, config);
@@ -112,10 +123,12 @@ public class OrientDBObject implements AutoCloseable {
 
   /**
    * Create a new OrientDB Object instance for a specific environment
-   * <p/>
-   * possible kind of urls 'embedded','remote', for the case of remote and distributed can be specified multiple nodes using comma.
-   * <p>
-   * Remote Example:
+   *
+   * <p>possible kind of urls 'embedded','remote', for the case of remote and distributed can be
+   * specified multiple nodes using comma.
+   *
+   * <p>Remote Example:
+   *
    * <pre>
    * <code>
    * OrientDBObject orientDbObject = new OrientDBObject("remote:localhost","root","root");
@@ -126,8 +139,9 @@ public class OrientDBObject implements AutoCloseable {
    * orientDbObject.close();
    * </code>
    * </pre>
-   * <p>
-   * Embedded Example:
+   *
+   * <p>Embedded Example:
+   *
    * <pre>
    * <code>
    * OrientDBObject orientDbObject = new OrientDBObject("embedded:./databases/",null,null);
@@ -139,22 +153,23 @@ public class OrientDBObject implements AutoCloseable {
    * </code>
    * </pre>
    *
-   * @param environment    the url for the specific environment.
-   * @param serverUser     the server user allowed to manipulate databases.
+   * @param environment the url for the specific environment.
+   * @param serverUser the server user allowed to manipulate databases.
    * @param serverPassword relative to the server user.
-   * @param config         configuration for the specific environment for the list of option {@see OGlobalConfiguration}.
+   * @param config configuration for the specific environment for the list of option {@see
+   *     OGlobalConfiguration}.
    */
-  public OrientDBObject(String environment, String serverUser, String serverPassword, OrientDBConfig config) {
+  public OrientDBObject(
+      String environment, String serverUser, String serverPassword, OrientDBConfig config) {
     this.orientDB = new OrientDB(environment, serverUser, serverPassword, config);
   }
 
   /**
    * Open a database specified by name using the username and password if needed
    *
-   * @param name     of the database to open
-   * @param user     the username allowed to open the database
+   * @param name of the database to open
+   * @param user the username allowed to open the database
    * @param password related to the specified username
-   *
    * @return the opened database
    */
   public ODatabaseObject open(String name, String user, String password) {
@@ -162,17 +177,19 @@ public class OrientDBObject implements AutoCloseable {
   }
 
   /**
-   * Open a database specified by name using the username and password if needed, with specific configuration
+   * Open a database specified by name using the username and password if needed, with specific
+   * configuration
    *
-   * @param name     of the database to open
-   * @param user     the username allowed to open the database
+   * @param name of the database to open
+   * @param user the username allowed to open the database
    * @param password related to the specified username
-   * @param config   database specific configuration that override the orientDB global settings where needed.
-   *
+   * @param config database specific configuration that override the orientDB global settings where
+   *     needed.
    * @return the opened database
    */
   public ODatabaseObject open(String name, String user, String password, OrientDBConfig config) {
-    return new OObjectDatabaseTx((ODatabaseDocumentInternal) orientDB.open(name, user, password, config));
+    return new OObjectDatabaseTx(
+        (ODatabaseDocumentInternal) orientDB.open(name, user, password, config));
   }
 
   /**
@@ -188,9 +205,10 @@ public class OrientDBObject implements AutoCloseable {
   /**
    * Create a new database
    *
-   * @param name   database name
-   * @param type   can be plocal or memory
-   * @param config database specific configuration that override the orientDB global settings where needed.
+   * @param name database name
+   * @param type can be plocal or memory
+   * @param config database specific configuration that override the orientDB global settings where
+   *     needed.
    */
   public void create(String name, ODatabaseType type, OrientDBConfig config) {
     orientDB.create(name, type, config);
@@ -200,7 +218,6 @@ public class OrientDBObject implements AutoCloseable {
    * Check if a database exists
    *
    * @param name database name to check
-   *
    * @return boolean true if exist false otherwise.
    */
   public boolean exists(String name) {

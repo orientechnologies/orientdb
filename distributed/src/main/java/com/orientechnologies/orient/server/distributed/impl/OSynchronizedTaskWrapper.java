@@ -26,7 +26,6 @@ import com.orientechnologies.orient.server.distributed.ODistributedRequestId;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
 import com.orientechnologies.orient.server.distributed.task.OAbstractRemoteTask;
 import com.orientechnologies.orient.server.distributed.task.ORemoteTask;
-
 import java.util.concurrent.CountDownLatch;
 
 /**
@@ -35,11 +34,12 @@ import java.util.concurrent.CountDownLatch;
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
  */
 public class OSynchronizedTaskWrapper extends OAbstractRemoteTask {
-  private boolean        usesDatabase;
+  private boolean usesDatabase;
   private CountDownLatch latch;
-  private ORemoteTask    task;
+  private ORemoteTask task;
 
-  public OSynchronizedTaskWrapper(final CountDownLatch iLatch, final String iNodeName, final ORemoteTask iTask) {
+  public OSynchronizedTaskWrapper(
+      final CountDownLatch iLatch, final String iNodeName, final ORemoteTask iTask) {
     this.latch = iLatch;
     this.task = iTask;
     this.task.setNodeSource(iNodeName);
@@ -62,11 +62,14 @@ public class OSynchronizedTaskWrapper extends OAbstractRemoteTask {
   }
 
   @Override
-  public Object execute(ODistributedRequestId requestId, OServer iServer, ODistributedServerManager iManager,
-      ODatabaseDocumentInternal database) throws Exception {
+  public Object execute(
+      ODistributedRequestId requestId,
+      OServer iServer,
+      ODistributedServerManager iManager,
+      ODatabaseDocumentInternal database)
+      throws Exception {
     try {
-      if (task != null)
-        return task.execute(requestId, iServer, iManager, database);
+      if (task != null) return task.execute(requestId, iServer, iManager, database);
       return null;
     } finally {
       // RELEASE ALL PENDING WORKERS
@@ -91,9 +94,7 @@ public class OSynchronizedTaskWrapper extends OAbstractRemoteTask {
 
   @Override
   public boolean hasResponse() {
-    if (task == null)
-      return super.hasResponse();
-    else
-      return task.hasResponse();
+    if (task == null) return super.hasResponse();
+    else return task.hasResponse();
   }
 }

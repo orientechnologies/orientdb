@@ -12,40 +12,51 @@ import com.orientechnologies.orient.core.record.OElement;
 import com.orientechnologies.orient.core.record.OVertex;
 import com.orientechnologies.orient.core.sql.parser.OBatch;
 import com.orientechnologies.orient.core.sql.parser.OIdentifier;
-
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Stream;
 
-/**
- * Created by luigidellaquila on 28/11/16.
- */
+/** Created by luigidellaquila on 28/11/16. */
 public class CreateEdgesStep extends AbstractExecutionStep {
 
   private final OIdentifier targetClass;
   private final OIdentifier targetCluster;
-  private final String      uniqueIndexName;
+  private final String uniqueIndexName;
   private final OIdentifier fromAlias;
   private final OIdentifier toAlias;
-  private final Number      wait;
-  private final Number      retry;
-  private final OBatch      batch;
+  private final Number wait;
+  private final Number retry;
+  private final OBatch batch;
 
-  //operation stuff
+  // operation stuff
   private Iterator fromIter;
   private Iterator toIterator;
-  private OVertex  currentFrom;
-  private OVertex  currentTo;
-  private OEdge    edgeToUpdate;//for upsert
-  private boolean  finished = false;
-  private List     toList   = new ArrayList<>();
-  private OIndex   uniqueIndex;
+  private OVertex currentFrom;
+  private OVertex currentTo;
+  private OEdge edgeToUpdate; // for upsert
+  private boolean finished = false;
+  private List toList = new ArrayList<>();
+  private OIndex uniqueIndex;
 
   private boolean inited = false;
 
   private long cost = 0;
 
-  public CreateEdgesStep(OIdentifier targetClass, OIdentifier targetClusterName, String uniqueIndex, OIdentifier fromAlias,
-      OIdentifier toAlias, Number wait, Number retry, OBatch batch, OCommandContext ctx, boolean profilingEnabled) {
+  public CreateEdgesStep(
+      OIdentifier targetClass,
+      OIdentifier targetClusterName,
+      String uniqueIndex,
+      OIdentifier fromAlias,
+      OIdentifier toAlias,
+      Number wait,
+      Number retry,
+      OBatch batch,
+      OCommandContext ctx,
+      boolean profilingEnabled) {
     super(ctx, profilingEnabled);
     this.targetClass = targetClass;
     this.targetCluster = targetClusterName;
@@ -87,7 +98,10 @@ public class CreateEdgesStep extends AbstractExecutionStep {
             throw new OCommandExecutionException("Invalid TO vertex for edge");
           }
 
-          OEdge edge = edgeToUpdate != null ? edgeToUpdate : currentFrom.addEdge(currentTo, targetClass.getStringValue());
+          OEdge edge =
+              edgeToUpdate != null
+                  ? edgeToUpdate
+                  : currentFrom.addEdge(currentTo, targetClass.getStringValue());
 
           OUpdatableResult result = new OUpdatableResult(edge);
           result.setElement(edge);
@@ -102,9 +116,7 @@ public class CreateEdgesStep extends AbstractExecutionStep {
       }
 
       @Override
-      public void close() {
-
-      }
+      public void close() {}
 
       @Override
       public Optional<OExecutionPlan> getExecutionPlan() {
@@ -171,13 +183,12 @@ public class CreateEdgesStep extends AbstractExecutionStep {
 
     if (uniqueIndexName != null) {
       final ODatabaseDocumentInternal database = (ODatabaseDocumentInternal) ctx.getDatabase();
-      uniqueIndex = database.getMetadata().getIndexManagerInternal().getIndex(database, uniqueIndexName);
+      uniqueIndex =
+          database.getMetadata().getIndexManagerInternal().getIndex(database, uniqueIndexName);
       if (uniqueIndex == null) {
         throw new OCommandExecutionException("Index not found for upsert: " + uniqueIndexName);
       }
-
     }
-
   }
 
   protected void loadNextFromTo() {
@@ -228,7 +239,8 @@ public class CreateEdgesStep extends AbstractExecutionStep {
   }
 
   private OEdge getExistingEdge(OVertex currentFrom, OVertex currentTo) {
-    Object key = uniqueIndex.getDefinition().createValue(currentFrom.getIdentity(), currentTo.getIdentity());
+    Object key =
+        uniqueIndex.getDefinition().createValue(currentFrom.getIdentity(), currentTo.getIdentity());
 
     final Iterator<ORID> iterator;
     try (Stream<ORID> stream = uniqueIndex.getInternal().getRids(key)) {
@@ -251,19 +263,29 @@ public class CreateEdgesStep extends AbstractExecutionStep {
     }
     if (currentFrom instanceof OResult) {
       Object from = currentFrom;
-      currentFrom = ((OResult) currentFrom).getVertex()
-          .orElseThrow(() -> new OCommandExecutionException("Invalid vertex for edge creation: " + from.toString()));
+      currentFrom =
+          ((OResult) currentFrom)
+              .getVertex()
+              .orElseThrow(
+                  () ->
+                      new OCommandExecutionException(
+                          "Invalid vertex for edge creation: " + from.toString()));
     }
     if (currentFrom instanceof OVertex) {
       return (OVertex) currentFrom;
     }
     if (currentFrom instanceof OElement) {
       Object from = currentFrom;
-      return ((OElement) currentFrom).asVertex()
-          .orElseThrow(() -> new OCommandExecutionException("Invalid vertex for edge creation: " + from.toString()));
+      return ((OElement) currentFrom)
+          .asVertex()
+          .orElseThrow(
+              () ->
+                  new OCommandExecutionException(
+                      "Invalid vertex for edge creation: " + from.toString()));
     }
     throw new OCommandExecutionException(
-        "Invalid vertex for edge creation: " + (currentFrom == null ? "null" : currentFrom.toString()));
+        "Invalid vertex for edge creation: "
+            + (currentFrom == null ? "null" : currentFrom.toString()));
   }
 
   @Override
@@ -293,10 +315,16 @@ public class CreateEdgesStep extends AbstractExecutionStep {
 
   @Override
   public OExecutionStep copy(OCommandContext ctx) {
-    return new CreateEdgesStep(targetClass == null ? null : targetClass.copy(), targetCluster == null ? null : targetCluster.copy(),
-        uniqueIndexName, fromAlias == null ? null : fromAlias.copy(), toAlias == null ? null : toAlias.copy(), wait, retry,
-        batch == null ? null : batch.copy(), ctx, profilingEnabled);
+    return new CreateEdgesStep(
+        targetClass == null ? null : targetClass.copy(),
+        targetCluster == null ? null : targetCluster.copy(),
+        uniqueIndexName,
+        fromAlias == null ? null : fromAlias.copy(),
+        toAlias == null ? null : toAlias.copy(),
+        wait,
+        retry,
+        batch == null ? null : batch.copy(),
+        ctx,
+        profilingEnabled);
   }
 }
-
-

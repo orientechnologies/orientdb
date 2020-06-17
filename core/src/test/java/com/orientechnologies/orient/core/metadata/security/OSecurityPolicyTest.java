@@ -1,18 +1,25 @@
 package com.orientechnologies.orient.core.metadata.security;
 
-import com.orientechnologies.orient.core.db.*;
+import com.orientechnologies.orient.core.db.ODatabaseInternal;
+import com.orientechnologies.orient.core.db.ODatabaseSession;
+import com.orientechnologies.orient.core.db.ODatabaseType;
+import com.orientechnologies.orient.core.db.OrientDB;
+import com.orientechnologies.orient.core.db.OrientDBConfig;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
-import org.junit.*;
-
 import java.util.Map;
+import org.junit.After;
+import org.junit.AfterClass;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.BeforeClass;
+import org.junit.Test;
 
 public class OSecurityPolicyTest {
   static OrientDB orientDB;
   ODatabaseSession db;
-
 
   @BeforeClass
   public static void beforeClass() {
@@ -39,13 +46,17 @@ public class OSecurityPolicyTest {
 
   @Test
   public void testSecurityPolicyCreate() {
-    OResultSet rs = db.query("select from " + OSecurityPolicy.class.getSimpleName() + " WHERE name = ?", "test");
+    OResultSet rs =
+        db.query(
+            "select from " + OSecurityPolicy.class.getSimpleName() + " WHERE name = ?", "test");
     Assert.assertFalse(rs.hasNext());
     rs.close();
     OSecurityInternal security = ((ODatabaseInternal) db).getSharedContext().getSecurity();
     OSecurityPolicy policy = security.createSecurityPolicy(db, "test");
 
-    rs = db.query("select from " + OSecurityPolicy.class.getSimpleName() + " WHERE name = ?", "test");
+    rs =
+        db.query(
+            "select from " + OSecurityPolicy.class.getSimpleName() + " WHERE name = ?", "test");
     Assert.assertTrue(rs.hasNext());
     OResult item = rs.next();
     Assert.assertEquals("test", item.getProperty("name"));
@@ -73,7 +84,6 @@ public class OSecurityPolicyTest {
     policy.setDeleteRule("name = 'delete'");
     policy.setExecuteRule("name = 'execute'");
 
-
     security.saveSecurityPolicy(db, policy);
     policy = security.getSecurityPolicy(db, "test");
     Assert.assertNotNull(policy);
@@ -84,7 +94,6 @@ public class OSecurityPolicyTest {
     Assert.assertEquals("name = 'delete'", policy.getDeleteRule());
     Assert.assertEquals("name = 'execute'", policy.getExecuteRule());
   }
-
 
   @Test
   public void testInvalidPredicates() {
@@ -165,6 +174,5 @@ public class OSecurityPolicyTest {
 
     security.removeSecurityPolicy(db, reader, resource);
     Assert.assertNull(security.getSecurityPolicy(db, reader, resource));
-
   }
 }

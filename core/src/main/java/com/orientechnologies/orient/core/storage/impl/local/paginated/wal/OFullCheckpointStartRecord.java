@@ -24,8 +24,7 @@ package com.orientechnologies.orient.core.storage.impl.local.paginated.wal;
  * @since 5/2/13
  */
 public class OFullCheckpointStartRecord extends OAbstractCheckPointStartRecord {
-  public OFullCheckpointStartRecord() {
-  }
+  public OFullCheckpointStartRecord() {}
 
   public OFullCheckpointStartRecord(final OLogSequenceNumber previousCheckpoint) {
     super(previousCheckpoint);

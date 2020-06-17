@@ -21,7 +21,6 @@ import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.sql.method.misc.OAbstractSQLMethod;
-
 import java.text.ParseException;
 import java.util.Calendar;
 import java.util.Date;
@@ -47,7 +46,12 @@ public class OSQLMethodAsDate extends OAbstractSQLMethod {
   }
 
   @Override
-  public Object execute(Object iThis, OIdentifiable iCurrentRecord, OCommandContext iContext, Object ioResult, Object[] iParams) {
+  public Object execute(
+      Object iThis,
+      OIdentifiable iCurrentRecord,
+      OCommandContext iContext,
+      Object ioResult,
+      Object[] iParams) {
     if (iThis != null) {
       if (iThis instanceof Date) {
         Calendar cal = new GregorianCalendar();
@@ -68,7 +72,11 @@ public class OSQLMethodAsDate extends OAbstractSQLMethod {
         return cal.getTime();
       } else {
         try {
-          return ODatabaseRecordThreadLocal.instance().get().getStorage().getConfiguration().getDateFormatInstance()
+          return ODatabaseRecordThreadLocal.instance()
+              .get()
+              .getStorage()
+              .getConfiguration()
+              .getDateFormatInstance()
               .parse(iThis.toString());
         } catch (ParseException e) {
           OLogManager.instance().error(this, "Error during %s execution", e, NAME);

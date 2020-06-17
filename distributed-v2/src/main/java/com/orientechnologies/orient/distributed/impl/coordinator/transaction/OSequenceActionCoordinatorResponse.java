@@ -18,28 +18,26 @@ package com.orientechnologies.orient.distributed.impl.coordinator.transaction;
 import com.orientechnologies.orient.core.db.config.ONodeIdentity;
 import com.orientechnologies.orient.distributed.impl.coordinator.OCoordinateMessagesFactory;
 import com.orientechnologies.orient.distributed.impl.coordinator.OSubmitResponse;
-
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * @author mdjurovi
- */
+/** @author mdjurovi */
 public class OSequenceActionCoordinatorResponse implements OSubmitResponse {
 
   private List<ONodeIdentity> failedOn;
   private List<ONodeIdentity> limitReachedOn;
-  private Object              resultOfSenderNode;
-  private int                 nodesInvolved = 0;
+  private Object resultOfSenderNode;
+  private int nodesInvolved = 0;
 
-  public OSequenceActionCoordinatorResponse() {
+  public OSequenceActionCoordinatorResponse() {}
 
-  }
-
-  public OSequenceActionCoordinatorResponse(List<ONodeIdentity> failedOnNo, List<ONodeIdentity> limitReachedOnNo, Object result,
+  public OSequenceActionCoordinatorResponse(
+      List<ONodeIdentity> failedOnNo,
+      List<ONodeIdentity> limitReachedOnNo,
+      Object result,
       int numOfNodes) {
     failedOn = failedOnNo;
     limitReachedOn = limitReachedOnNo;
@@ -47,7 +45,8 @@ public class OSequenceActionCoordinatorResponse implements OSubmitResponse {
     this.nodesInvolved = numOfNodes;
   }
 
-  private static void serializeList(DataOutput output, List<ONodeIdentity> list) throws IOException {
+  private static void serializeList(DataOutput output, List<ONodeIdentity> list)
+      throws IOException {
     if (list == null) {
       output.writeByte(-1);
     } else {

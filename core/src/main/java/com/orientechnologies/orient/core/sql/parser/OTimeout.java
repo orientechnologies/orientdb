@@ -4,11 +4,10 @@ package com.orientechnologies.orient.core.sql.parser;
 
 import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.executor.OResultInternal;
-
 import java.util.Map;
 
 public class OTimeout extends SimpleNode {
-  public static final String RETURN    = "RETURN";
+  public static final String RETURN = "RETURN";
   public static final String EXCEPTION = "EXCEPTION";
 
   protected Number val;
@@ -39,17 +38,15 @@ public class OTimeout extends SimpleNode {
 
   @Override
   public boolean equals(Object o) {
-    if (this == o)
-      return true;
-    if (o == null || getClass() != o.getClass())
-      return false;
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
 
     OTimeout timeout = (OTimeout) o;
 
-    if (val != null ? !val.equals(timeout.val) : timeout.val != null)
-      return false;
-    if (failureStrategy != null ? !failureStrategy.equals(timeout.failureStrategy) : timeout.failureStrategy != null)
-      return false;
+    if (val != null ? !val.equals(timeout.val) : timeout.val != null) return false;
+    if (failureStrategy != null
+        ? !failureStrategy.equals(timeout.failureStrategy)
+        : timeout.failureStrategy != null) return false;
 
     return true;
   }

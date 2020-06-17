@@ -3,19 +3,16 @@ package com.orientechnologies.orient.core.sql.executor;
 import com.orientechnologies.common.concur.OTimeoutException;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-
 import java.util.Map;
 import java.util.Optional;
 
-/**
- * @author Luigi Dell'Aquila (l.dellaquila-(at)-orientdb.com)
- */
+/** @author Luigi Dell'Aquila (l.dellaquila-(at)-orientdb.com) */
 public class CreateRecordStep extends AbstractExecutionStep {
 
   private long cost = 0;
 
   private int created = 0;
-  private int total   = 0;
+  private int total = 0;
 
   public CreateRecordStep(OCommandContext ctx, int total, boolean profilingEnabled) {
     super(ctx, profilingEnabled);
@@ -54,9 +51,7 @@ public class CreateRecordStep extends AbstractExecutionStep {
       }
 
       @Override
-      public void close() {
-
-      }
+      public void close() {}
 
       @Override
       public Optional<OExecutionPlan> getExecutionPlan() {

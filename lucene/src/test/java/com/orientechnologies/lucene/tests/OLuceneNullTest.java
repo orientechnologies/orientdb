@@ -6,9 +6,7 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
-/**
- * Created by Enrico Risa on 05/10/16.
- */
+/** Created by Enrico Risa on 05/10/16. */
 public class OLuceneNullTest extends OLuceneBaseTest {
 
   @Before
@@ -18,7 +16,6 @@ public class OLuceneNullTest extends OLuceneBaseTest {
     db.command("create property Test.names EMBEDDEDLIST STRING");
 
     db.command("create index Test.names on Test(names) FULLTEXT ENGINE LUCENE");
-
   }
 
   @Test
@@ -30,14 +27,13 @@ public class OLuceneNullTest extends OLuceneBaseTest {
     db.commit();
 
     db.begin();
-    doc.field("names", new String[] { "foo" });
+    doc.field("names", new String[] {"foo"});
     db.save(doc);
     db.commit();
 
     OIndex index = db.getMetadata().getIndexManagerInternal().getIndex(db, "Test.names");
 
     Assert.assertEquals(1, index.getInternal().size());
-
   }
 
   @Test
@@ -46,7 +42,7 @@ public class OLuceneNullTest extends OLuceneBaseTest {
     ODocument doc = new ODocument("Test");
 
     db.begin();
-    doc.field("names", new String[] { "foo" });
+    doc.field("names", new String[] {"foo"});
     db.save(doc);
     db.commit();
 
@@ -59,6 +55,5 @@ public class OLuceneNullTest extends OLuceneBaseTest {
 
     OIndex index = db.getMetadata().getIndexManagerInternal().getIndex(db, "Test.names");
     Assert.assertEquals(0, index.getInternal().size());
-
   }
 }

@@ -1,12 +1,12 @@
 package com.orientechnologies.orient.core.storage.impl.local.paginated.wal.common.deque;
 
-import java.util.concurrent.atomic.AtomicReference;
-
 import static com.orientechnologies.orient.core.storage.impl.local.paginated.wal.common.deque.Node.BUFFER_SIZE;
 
+import java.util.concurrent.atomic.AtomicReference;
+
 public final class MPSCFAAArrayDequeue<T> extends AtomicReference<Node<T>> {
-  private volatile     Node<T> head;
-  private static final Object  taken = new Object();
+  private volatile Node<T> head;
+  private static final Object taken = new Object();
 
   public MPSCFAAArrayDequeue() {
     final Node<T> dummyNode = new Node<>();
@@ -22,8 +22,7 @@ public final class MPSCFAAArrayDequeue<T> extends AtomicReference<Node<T>> {
       final int idx = tail.enqidx.getAndIncrement();
 
       if (idx > BUFFER_SIZE - 1) { // This node is full
-        if (tail != get())
-          continue;
+        if (tail != get()) continue;
         final Node<T> next = tail.getNext();
         if (next == null) {
           final Node<T> newNode = new Node<>(record, tail);
@@ -58,7 +57,7 @@ public final class MPSCFAAArrayDequeue<T> extends AtomicReference<Node<T>> {
       if (deqidx >= BUFFER_SIZE) {
         this.head = head.getNext();
 
-        head.clearPrev();//allow gc to clear previous items
+        head.clearPrev(); // allow gc to clear previous items
         continue;
       }
 
@@ -140,7 +139,7 @@ public final class MPSCFAAArrayDequeue<T> extends AtomicReference<Node<T>> {
 
       if (idx >= enqidx || idx >= BUFFER_SIZE) {
         if (enqidx < BUFFER_SIZE) {
-          return null; //reached the end of the queue
+          return null; // reached the end of the queue
         } else {
           node = node.getNext();
           idx = 0;
@@ -150,7 +149,7 @@ public final class MPSCFAAArrayDequeue<T> extends AtomicReference<Node<T>> {
 
       final T item = node.items.get(idx);
       if (item == null) {
-        continue;//counters may be updated but item itslef is not updated yet
+        continue; // counters may be updated but item itslef is not updated yet
       }
       if (item == taken) {
         return null;
@@ -169,7 +168,8 @@ public final class MPSCFAAArrayDequeue<T> extends AtomicReference<Node<T>> {
       final int enqidx = tail.enqidx.get();
       final int deqidx = tail.deqidx;
       if (deqidx >= enqidx || deqidx >= BUFFER_SIZE) {
-        return null; //we remove only from the head, so if tail is empty it means that queue is empty
+        return null; // we remove only from the head, so if tail is empty it means that queue is
+        // empty
       }
 
       int idx = enqidx;
@@ -178,12 +178,12 @@ public final class MPSCFAAArrayDequeue<T> extends AtomicReference<Node<T>> {
       }
 
       if (idx <= 0) {
-        return null;  // No more items in the node
+        return null; // No more items in the node
       }
 
       final T item = tail.items.get(idx - 1);
       if (item == null || item == taken) {
-        continue;//concurrent modification
+        continue; // concurrent modification
       }
 
       return new Cursor<>(tail, idx - 1, item);
@@ -201,9 +201,10 @@ public final class MPSCFAAArrayDequeue<T> extends AtomicReference<Node<T>> {
     while (node != null) {
       int deqidx = node.deqidx;
 
-      if (deqidx > idx || deqidx >= BUFFER_SIZE) { //idx == enqidx -1, that is why we use >, but not >=
+      if (deqidx > idx
+          || deqidx >= BUFFER_SIZE) { // idx == enqidx -1, that is why we use >, but not >=
         if (deqidx > 0) {
-          return null; //reached the end of the queue
+          return null; // reached the end of the queue
         } else {
           node = node.getPrev();
           idx = BUFFER_SIZE - 1;
@@ -211,9 +212,9 @@ public final class MPSCFAAArrayDequeue<T> extends AtomicReference<Node<T>> {
         }
       }
 
-      final T item = node.items.get(idx);//reached end of the queue
+      final T item = node.items.get(idx); // reached end of the queue
       if (item == null) {
-        continue;//counters may be updated but values are still not updated
+        continue; // counters may be updated but values are still not updated
       }
       if (item == taken) {
         return null;

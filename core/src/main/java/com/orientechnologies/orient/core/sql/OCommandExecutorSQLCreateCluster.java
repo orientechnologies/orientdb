@@ -26,7 +26,6 @@ import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
-
 import java.util.Map;
 
 /**
@@ -35,15 +34,16 @@ import java.util.Map;
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
  */
 @SuppressWarnings("unchecked")
-public class OCommandExecutorSQLCreateCluster extends OCommandExecutorSQLAbstract implements OCommandDistributedReplicateRequest {
-  public static final String KEYWORD_CREATE  = "CREATE";
-  public static final String KEYWORD_BLOB    = "BLOB";
+public class OCommandExecutorSQLCreateCluster extends OCommandExecutorSQLAbstract
+    implements OCommandDistributedReplicateRequest {
+  public static final String KEYWORD_CREATE = "CREATE";
+  public static final String KEYWORD_BLOB = "BLOB";
   public static final String KEYWORD_CLUSTER = "CLUSTER";
-  public static final String KEYWORD_ID      = "ID";
+  public static final String KEYWORD_ID = "ID";
 
   private String clusterName;
-  private int     requestedId = -1;
-  private boolean blob        = false;
+  private int requestedId = -1;
+  private boolean blob = false;
 
   public OCommandExecutorSQLCreateCluster parse(final OCommandRequest iRequest) {
     final OCommandRequestText textRequest = (OCommandRequestText) iRequest;
@@ -80,8 +80,7 @@ public class OCommandExecutorSQLCreateCluster extends OCommandExecutorSQLAbstrac
         }
 
         temp = parseOptionalWord(true);
-        if (parserIsEnded())
-          break;
+        if (parserIsEnded()) break;
       }
 
     } finally {
@@ -93,7 +92,9 @@ public class OCommandExecutorSQLCreateCluster extends OCommandExecutorSQLAbstrac
 
   @Override
   public long getDistributedTimeout() {
-    return getDatabase().getConfiguration().getValueAsLong(OGlobalConfiguration.DISTRIBUTED_COMMAND_QUICK_TASK_SYNCH_TIMEOUT);
+    return getDatabase()
+        .getConfiguration()
+        .getValueAsLong(OGlobalConfiguration.DISTRIBUTED_COMMAND_QUICK_TASK_SYNCH_TIMEOUT);
   }
 
   @Override
@@ -101,12 +102,11 @@ public class OCommandExecutorSQLCreateCluster extends OCommandExecutorSQLAbstrac
     return QUORUM_TYPE.ALL;
   }
 
-  /**
-   * Execute the CREATE CLUSTER.
-   */
+  /** Execute the CREATE CLUSTER. */
   public Object execute(final Map<Object, Object> iArgs) {
     if (clusterName == null)
-      throw new OCommandExecutionException("Cannot execute the command because it has not been parsed yet");
+      throw new OCommandExecutionException(
+          "Cannot execute the command because it has not been parsed yet");
 
     final ODatabaseDocument database = getDatabase();
 

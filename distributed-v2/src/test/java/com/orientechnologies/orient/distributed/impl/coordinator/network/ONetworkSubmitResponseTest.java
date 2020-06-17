@@ -3,10 +3,13 @@ package com.orientechnologies.orient.distributed.impl.coordinator.network;
 import com.orientechnologies.orient.distributed.impl.coordinator.OSubmitResponse;
 import com.orientechnologies.orient.distributed.impl.coordinator.ddl.ODDLQuerySubmitResponse;
 import com.orientechnologies.orient.distributed.impl.coordinator.transaction.OSessionOperationId;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
+import java.io.IOException;
 import org.junit.Assert;
 import org.junit.Test;
-
-import java.io.*;
 
 public class ONetworkSubmitResponseTest {
 
@@ -17,7 +20,6 @@ public class ONetworkSubmitResponseTest {
     OSessionOperationId opId = new OSessionOperationId("foo");
     ODDLQuerySubmitResponse res = new ODDLQuerySubmitResponse();
     ONetworkSubmitResponse response = new ONetworkSubmitResponse(db, opId, res);
-
 
     ByteArrayOutputStream baos = new ByteArrayOutputStream();
     DataOutputStream out = new DataOutputStream(baos);
@@ -33,15 +35,11 @@ public class ONetworkSubmitResponseTest {
     in.close();
     bais.close();
 
-
     Assert.assertEquals(response.getCommand(), response2.getCommand());
     Assert.assertEquals(response.getDatabase(), response2.getDatabase());
     Assert.assertEquals(response.getOperationId(), response2.getOperationId());
     OSubmitResponse res2 = response2.getResponse();
     Assert.assertEquals(res.getResponseType(), res2.getResponseType());
     Assert.assertEquals(res.getClass(), res2.getClass());
-
   }
 }
-
-

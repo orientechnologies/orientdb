@@ -29,9 +29,13 @@ public class OETLFlowTransformer extends OETLAbstractTransformer {
 
   @Override
   public ODocument getConfiguration() {
-    return new ODocument().fromJSON("{parameters:[" + getCommonConfigurationParameters() + ","
-        + "{operation:{optional:false,description:'Flow operation between: skip and halt'}}],"
-        + "input:['Object'],output:'Object'}");
+    return new ODocument()
+        .fromJSON(
+            "{parameters:["
+                + getCommonConfigurationParameters()
+                + ","
+                + "{operation:{optional:false,description:'Flow operation between: skip and halt'}}],"
+                + "input:['Object'],output:'Object'}");
   }
 
   @Override
@@ -42,7 +46,9 @@ public class OETLFlowTransformer extends OETLAbstractTransformer {
       throw new OConfigurationException("Flow transformer has not mandatory 'operation' field");
     if (!operation.equalsIgnoreCase("halt") && !operation.equalsIgnoreCase("skip"))
       throw new OConfigurationException(
-          "Flow transformer has invalid 'operation' field='" + operation + "', while supported are: 'skip' and 'halt'");
+          "Flow transformer has invalid 'operation' field='"
+              + operation
+              + "', while supported are: 'skip' and 'halt'");
   }
 
   @Override
@@ -52,8 +58,7 @@ public class OETLFlowTransformer extends OETLAbstractTransformer {
 
   @Override
   public Object executeTransform(ODatabaseDocument db, final Object input) {
-    if (operation.equalsIgnoreCase("skip"))
-      return null;
+    if (operation.equalsIgnoreCase("skip")) return null;
 
     throw new OETLProcessHaltedException("Process stopped because this condition: " + ifExpression);
   }

@@ -10,13 +10,12 @@ import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-/**
- * @author Luigi Dell'Aquila (l.dellaquila-(at)-orientdb.com)
- */
+/** @author Luigi Dell'Aquila (l.dellaquila-(at)-orientdb.com) */
 public class ODropClassStatementExecutionTest {
   static ODatabaseDocument db;
 
-  @BeforeClass public static void beforeClass() {
+  @BeforeClass
+  public static void beforeClass() {
     db = new ODatabaseDocumentTx("memory:ODropClassStatementExecutionTest");
     db.create();
     OClass v = db.getMetadata().getSchema().getClass("V");
@@ -25,11 +24,13 @@ public class ODropClassStatementExecutionTest {
     }
   }
 
-  @AfterClass public static void afterClass() {
+  @AfterClass
+  public static void afterClass() {
     db.close();
   }
 
-  @Test public void testPlain() {
+  @Test
+  public void testPlain() {
     String className = "testPlain";
     OSchema schema = db.getMetadata().getSchema();
     schema.createClass(className);
@@ -47,7 +48,8 @@ public class ODropClassStatementExecutionTest {
     Assert.assertNull(schema.getClass(className));
   }
 
-  @Test public void testUnsafe() {
+  @Test
+  public void testUnsafe() {
 
     String className = "testUnsafe";
     OSchema schema = db.getMetadata().getSchema();
@@ -73,8 +75,8 @@ public class ODropClassStatementExecutionTest {
     Assert.assertNull(schema.getClass(className));
   }
 
-
-  @Test public void testIfExists() {
+  @Test
+  public void testIfExists() {
     String className = "testIfExists";
     OSchema schema = db.getMetadata().getSchema();
     schema.createClass(className);
@@ -82,7 +84,7 @@ public class ODropClassStatementExecutionTest {
     schema.reload();
     Assert.assertNotNull(schema.getClass(className));
 
-    OResultSet result = db.command("drop class " + className+" if exists");
+    OResultSet result = db.command("drop class " + className + " if exists");
     Assert.assertTrue(result.hasNext());
     OResult next = result.next();
     Assert.assertEquals("drop class", next.getProperty("operation"));
@@ -91,10 +93,9 @@ public class ODropClassStatementExecutionTest {
     schema.reload();
     Assert.assertNull(schema.getClass(className));
 
-    result = db.command("drop class " + className+" if exists");
+    result = db.command("drop class " + className + " if exists");
     result.close();
     schema.reload();
     Assert.assertNull(schema.getClass(className));
   }
-
 }

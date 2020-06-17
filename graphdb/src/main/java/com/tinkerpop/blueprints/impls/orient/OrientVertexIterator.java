@@ -33,17 +33,21 @@ import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
 import com.orientechnologies.orient.graph.sql.OGraphCommandExecutorSQLFactory;
 import com.tinkerpop.blueprints.Direction;
 import com.tinkerpop.blueprints.Vertex;
-
 import java.util.Collection;
 import java.util.Iterator;
 
 public class OrientVertexIterator extends OLazyWrapperIterator<Vertex> {
-  private final OrientVertex             vertex;
-  private final String[]                 iLabels;
+  private final OrientVertex vertex;
+  private final String[] iLabels;
   private final OPair<Direction, String> connection;
 
-  public OrientVertexIterator(final OrientVertex orientVertex, final Object iMultiValue, final Iterator<?> iterator,
-      final OPair<Direction, String> connection, final String[] iLabels, final int iSize) {
+  public OrientVertexIterator(
+      final OrientVertex orientVertex,
+      final Object iMultiValue,
+      final Iterator<?> iterator,
+      final OPair<Direction, String> connection,
+      final String[] iLabels,
+      final int iSize) {
     super(iterator, iSize, iMultiValue);
     this.vertex = orientVertex;
     this.connection = connection;
@@ -52,8 +56,7 @@ public class OrientVertexIterator extends OLazyWrapperIterator<Vertex> {
 
   @Override
   public Vertex createGraphElement(final Object iObject) {
-    if (iObject instanceof OrientVertex)
-      return (OrientVertex) iObject;
+    if (iObject instanceof OrientVertex) return (OrientVertex) iObject;
 
     if (iObject == null) {
       return null;
@@ -61,8 +64,7 @@ public class OrientVertexIterator extends OLazyWrapperIterator<Vertex> {
 
     final ORecord rec = ((OIdentifiable) iObject).getRecord();
 
-    if (rec == null || !(rec instanceof ODocument))
-      return null;
+    if (rec == null || !(rec instanceof ODocument)) return null;
 
     final ODocument value = (ODocument) rec;
 
@@ -76,33 +78,36 @@ public class OrientVertexIterator extends OLazyWrapperIterator<Vertex> {
       throw new IllegalStateException("Invalid content found between connections: " + value);
     }
 
-    return OGraphCommandExecutorSQLFactory.runWithAnyGraph(new OGraphCommandExecutorSQLFactory.GraphCallBack<Vertex>() {
-      @Override
-      public Vertex call(OrientBaseGraph graph) {
-        final OrientVertex v;
-        if (klass.isVertexType()) {
-          // DIRECT VERTEX
-          v = graph.getVertex(value);
-        } else if (klass.isEdgeType()) {
-          // EDGE
-          if (vertex.settings.isUseVertexFieldsForEdgeLabels() || OrientEdge.isLabeled(OrientEdge.getRecordLabel(value), iLabels))
-            v = graph.getVertex(OrientEdge.getConnection(value, connection.getKey().opposite()));
-          else
-            v = null;
-        } else
-          throw new IllegalStateException("Invalid content found between connections: " + value);
+    return OGraphCommandExecutorSQLFactory.runWithAnyGraph(
+        new OGraphCommandExecutorSQLFactory.GraphCallBack<Vertex>() {
+          @Override
+          public Vertex call(OrientBaseGraph graph) {
+            final OrientVertex v;
+            if (klass.isVertexType()) {
+              // DIRECT VERTEX
+              v = graph.getVertex(value);
+            } else if (klass.isEdgeType()) {
+              // EDGE
+              if (vertex.settings.isUseVertexFieldsForEdgeLabels()
+                  || OrientEdge.isLabeled(OrientEdge.getRecordLabel(value), iLabels))
+                v =
+                    graph.getVertex(
+                        OrientEdge.getConnection(value, connection.getKey().opposite()));
+              else v = null;
+            } else
+              throw new IllegalStateException(
+                  "Invalid content found between connections: " + value);
 
-        return v;
-      }
-    });
+            return v;
+          }
+        });
   }
 
   @Override
   public OIdentifiable getGraphElementRecord(final Object iObject) {
     final ORecord rec = ((OIdentifiable) iObject).getRecord();
 
-    if (rec == null || !(rec instanceof ODocument))
-      return null;
+    if (rec == null || !(rec instanceof ODocument)) return null;
 
     final ODocument value = (ODocument) rec;
 
@@ -113,12 +118,11 @@ public class OrientVertexIterator extends OLazyWrapperIterator<Vertex> {
       v = value;
     } else if (immutableClass.isEdgeType()) {
       // EDGE
-      if (vertex.settings.isUseVertexFieldsForEdgeLabels() || OrientEdge.isLabeled(OrientEdge.getRecordLabel(value), iLabels))
+      if (vertex.settings.isUseVertexFieldsForEdgeLabels()
+          || OrientEdge.isLabeled(OrientEdge.getRecordLabel(value), iLabels))
         v = OrientEdge.getConnection(value, connection.getKey().opposite());
-      else
-        v = null;
-    } else
-      throw new IllegalStateException("Invalid content found between connections: " + value);
+      else v = null;
+    } else throw new IllegalStateException("Invalid content found between connections: " + value);
 
     return v;
   }
@@ -126,8 +130,8 @@ public class OrientVertexIterator extends OLazyWrapperIterator<Vertex> {
   @Override
   public boolean canUseMultiValueDirectly() {
     if (multiValue instanceof Collection) {
-      if ((((Collection) multiValue).isEmpty()) || isVertex((OIdentifiable) ((Collection) multiValue).iterator().next()))
-        return true;
+      if ((((Collection) multiValue).isEmpty())
+          || isVertex((OIdentifiable) ((Collection) multiValue).iterator().next())) return true;
     } else if (multiValue instanceof ORidBag) {
       if ((((ORidBag) multiValue).isEmpty()) || isVertex(((ORidBag) multiValue).iterator().next()))
         return true;
@@ -143,8 +147,7 @@ public class OrientVertexIterator extends OLazyWrapperIterator<Vertex> {
   private boolean isVertex(final OIdentifiable iObject) {
     final ORecord rec = iObject.getRecord();
 
-    if (rec == null || !(rec instanceof ODocument))
-      return false;
+    if (rec == null || !(rec instanceof ODocument)) return false;
 
     final ODocument value = (ODocument) rec;
 

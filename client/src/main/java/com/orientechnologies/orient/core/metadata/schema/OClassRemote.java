@@ -6,13 +6,10 @@ import com.orientechnologies.orient.core.exception.OSchemaException;
 import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.metadata.security.ORule;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * Created by tglman on 14/06/17.
- */
+/** Created by tglman on 14/06/17. */
 public class OClassRemote extends OClassImpl {
   protected OClassRemote(OSchemaShared iOwner, String iName) {
     super(iOwner, iName);
@@ -26,10 +23,13 @@ public class OClassRemote extends OClassImpl {
     super(iOwner, iDocument, iName);
   }
 
-  protected OProperty addProperty(final String propertyName, final OType type, final OType linkedType, final OClass linkedClass,
+  protected OProperty addProperty(
+      final String propertyName,
+      final OType type,
+      final OType linkedType,
+      final OClass linkedClass,
       final boolean unsafe) {
-    if (type == null)
-      throw new OSchemaException("Property type not defined.");
+    if (type == null) throw new OSchemaException("Property type not defined.");
 
     if (propertyName == null || propertyName.length() == 0)
       throw new OSchemaException("Property name is null or empty");
@@ -37,16 +37,15 @@ public class OClassRemote extends OClassImpl {
     final ODatabaseDocumentInternal database = getDatabase();
     validatePropertyName(propertyName);
     if (database.getTransaction().isActive()) {
-      throw new OSchemaException("Cannot create property '" + propertyName + "' inside a transaction");
+      throw new OSchemaException(
+          "Cannot create property '" + propertyName + "' inside a transaction");
     }
 
     database.checkSecurity(ORule.ResourceGeneric.SCHEMA, ORole.PERMISSION_UPDATE);
 
-    if (linkedType != null)
-      OPropertyImpl.checkLinkTypeSupport(type);
+    if (linkedType != null) OPropertyImpl.checkLinkTypeSupport(type);
 
-    if (linkedClass != null)
-      OPropertyImpl.checkSupportLinkedClass(type);
+    if (linkedClass != null) OPropertyImpl.checkSupportLinkedClass(type);
 
     acquireSchemaWriteLock();
     try {
@@ -77,8 +76,7 @@ public class OClassRemote extends OClassImpl {
         cmd.append('`');
       }
 
-      if (unsafe)
-        cmd.append(" unsafe ");
+      if (unsafe) cmd.append(" unsafe ");
 
       database.command(cmd.toString()).close();
       getOwner().reload(database);
@@ -162,8 +160,7 @@ public class OClassRemote extends OClassImpl {
           sb.append('`').append(superClass.getName()).append("`,");
         }
         sb.deleteCharAt(sb.length() - 1);
-      } else
-        sb.append("null");
+      } else sb.append("null");
 
       final String cmd = String.format("alter class `%s` superclasses %s", name, sb);
       database.command(cmd).close();
@@ -181,7 +178,10 @@ public class OClassRemote extends OClassImpl {
     acquireSchemaWriteLock();
     try {
 
-      final String cmd = String.format("alter class `%s` superclass +`%s`", name, superClass != null ? superClass.getName() : null);
+      final String cmd =
+          String.format(
+              "alter class `%s` superclass +`%s`",
+              name, superClass != null ? superClass.getName() : null);
       database.command(cmd).close();
 
     } finally {
@@ -196,7 +196,10 @@ public class OClassRemote extends OClassImpl {
     database.checkSecurity(ORule.ResourceGeneric.SCHEMA, ORole.PERMISSION_UPDATE);
     acquireSchemaWriteLock();
     try {
-      final String cmd = String.format("alter class `%s` superclass -`%s`", name, superClass != null ? superClass.getName() : null);
+      final String cmd =
+          String.format(
+              "alter class `%s` superclass -`%s`",
+              name, superClass != null ? superClass.getName() : null);
       database.command(cmd).close();
     } finally {
       releaseSchemaWriteLock();
@@ -205,19 +208,24 @@ public class OClassRemote extends OClassImpl {
   }
 
   public OClass setName(final String name) {
-    if (getName().equals(name))
-      return this;
+    if (getName().equals(name)) return this;
     final ODatabaseDocumentInternal database = getDatabase();
     database.checkSecurity(ORule.ResourceGeneric.SCHEMA, ORole.PERMISSION_UPDATE);
     final Character wrongCharacter = OSchemaShared.checkClassNameIfValid(name);
     OClass oClass = database.getMetadata().getSchema().getClass(name);
     if (oClass != null) {
-      String error = String.format("Cannot rename class %s to %s. A Class with name %s exists", this.name, name, name);
+      String error =
+          String.format(
+              "Cannot rename class %s to %s. A Class with name %s exists", this.name, name, name);
       throw new OSchemaException(error);
     }
     if (wrongCharacter != null)
       throw new OSchemaException(
-          "Invalid class name found. Character '" + wrongCharacter + "' cannot be used in class name '" + name + "'");
+          "Invalid class name found. Character '"
+              + wrongCharacter
+              + "' cannot be used in class name '"
+              + name
+              + "'");
     acquireSchemaWriteLock();
     try {
 
@@ -234,8 +242,7 @@ public class OClassRemote extends OClassImpl {
   public OClass setShortName(String shortName) {
     if (shortName != null) {
       shortName = shortName.trim();
-      if (shortName.isEmpty())
-        shortName = null;
+      if (shortName.isEmpty()) shortName = null;
     }
     final ODatabaseDocumentInternal database = getDatabase();
     database.checkSecurity(ORule.ResourceGeneric.SCHEMA, ORole.PERMISSION_UPDATE);
@@ -255,9 +262,7 @@ public class OClassRemote extends OClassImpl {
     return new OPropertyRemote(this, p);
   }
 
-  /**
-   * {@inheritDoc}
-   */
+  /** {@inheritDoc} */
   @Override
   public OClass truncateCluster(String clusterName) {
     final ODatabaseDocumentInternal database = getDatabase();
@@ -291,8 +296,7 @@ public class OClassRemote extends OClassImpl {
   public OClass setDescription(String iDescription) {
     if (iDescription != null) {
       iDescription = iDescription.trim();
-      if (iDescription.isEmpty())
-        iDescription = null;
+      if (iDescription.isEmpty()) iDescription = null;
     }
     final ODatabaseDocumentInternal database = getDatabase();
     database.checkSecurity(ORule.ResourceGeneric.SCHEMA, ORole.PERMISSION_UPDATE);
@@ -331,7 +335,10 @@ public class OClassRemote extends OClassImpl {
     database.checkSecurity(ORule.ResourceGeneric.SCHEMA, ORole.PERMISSION_UPDATE);
 
     if (clusterIds.length == 1 && clusterId == clusterIds[0])
-      throw new ODatabaseException(" Impossible to remove the last cluster of class '" + getName() + "' drop the class instead");
+      throw new ODatabaseException(
+          " Impossible to remove the last cluster of class '"
+              + getName()
+              + "' drop the class instead");
 
     acquireSchemaWriteLock();
     try {
@@ -354,7 +361,8 @@ public class OClassRemote extends OClassImpl {
     acquireSchemaWriteLock();
     try {
       if (!properties.containsKey(propertyName))
-        throw new OSchemaException("Property '" + propertyName + "' not found in class " + name + "'");
+        throw new OSchemaException(
+            "Property '" + propertyName + "' not found in class " + name + "'");
 
       database.command("drop property " + name + '.' + propertyName).close();
 
@@ -390,7 +398,8 @@ public class OClassRemote extends OClassImpl {
     acquireSchemaWriteLock();
     try {
       // FORMAT FLOAT LOCALE AGNOSTIC
-      final String cmd = String.format("alter class `%s` oversize %s", name, new Float(overSize).toString());
+      final String cmd =
+          String.format("alter class `%s` oversize %s", name, new Float(overSize).toString());
       database.command(cmd).close();
     } finally {
       releaseSchemaWriteLock();
@@ -419,11 +428,9 @@ public class OClassRemote extends OClassImpl {
     try {
       checkEmbedded();
 
-      if (subclasses == null)
-        return this;
+      if (subclasses == null) return this;
 
-      if (subclasses.remove(baseClass))
-        removePolymorphicClusterIds((OClassImpl) baseClass);
+      if (subclasses.remove(baseClass)) removePolymorphicClusterIds((OClassImpl) baseClass);
 
       return this;
     } finally {
@@ -437,8 +444,7 @@ public class OClassRemote extends OClassImpl {
     for (OClass superClass : classes) {
       if (superClass instanceof OClassAbstractDelegate)
         cls = (OClassImpl) ((OClassAbstractDelegate) superClass).delegate;
-      else
-        cls = (OClassImpl) superClass;
+      else cls = (OClassImpl) superClass;
 
       if (newSuperClasses.contains(cls)) {
         throw new OSchemaException("Duplicated superclass '" + cls.getName() + "'");
@@ -468,8 +474,8 @@ public class OClassRemote extends OClassImpl {
     if (clusterName == null) {
       throw new OSchemaException("Cluster with id '" + defaultClusterId + "' does not exist");
     }
-    final String cmd = String.format("alter class `%s` DEFAULTCLUSTER `%s`", this.name, clusterName);
+    final String cmd =
+        String.format("alter class `%s` DEFAULTCLUSTER `%s`", this.name, clusterName);
     database.command(cmd).close();
   }
-
 }

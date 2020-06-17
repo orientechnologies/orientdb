@@ -1,33 +1,29 @@
 package com.orientechnologies.orient.distributed.impl.database.operations;
 
+import static com.orientechnologies.orient.distributed.impl.coordinator.OCoordinateMessagesFactory.DATABASE_FULL_SYNC_CHUNK;
+
 import com.orientechnologies.orient.core.db.config.ONodeIdentity;
 import com.orientechnologies.orient.distributed.OrientDBDistributed;
 import com.orientechnologies.orient.distributed.impl.structural.operations.OOperation;
-
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
 import java.util.UUID;
 
-import static com.orientechnologies.orient.distributed.impl.coordinator.OCoordinateMessagesFactory.DATABASE_FULL_SYNC_CHUNK;
-
 public class ODatabaseFullSyncChunk implements OOperation {
   private String database;
-  private UUID   uuid;
+  private UUID uuid;
   private byte[] bytes;
-  private int    len;
+  private int len;
 
   public ODatabaseFullSyncChunk(String database, UUID uuid, byte[] b, int len) {
     this.database = database;
     this.uuid = uuid;
     this.bytes = b;
     this.len = len;
-
   }
 
-  public ODatabaseFullSyncChunk() {
-
-  }
+  public ODatabaseFullSyncChunk() {}
 
   @Override
   public void apply(ONodeIdentity sender, OrientDBDistributed context) {

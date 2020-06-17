@@ -26,11 +26,6 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.object.serialization.OObjectCustomSerializerList;
 import com.orientechnologies.orient.object.serialization.OObjectCustomSerializerMap;
 import com.orientechnologies.orient.object.serialization.OObjectCustomSerializerSet;
-import javassist.util.proxy.MethodHandler;
-import javassist.util.proxy.Proxy;
-import javassist.util.proxy.ProxyFactory;
-import javassist.util.proxy.ProxyObject;
-
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
@@ -41,32 +36,42 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import javassist.util.proxy.MethodHandler;
+import javassist.util.proxy.Proxy;
+import javassist.util.proxy.ProxyFactory;
+import javassist.util.proxy.ProxyObject;
 
-/**
- * @author Luca Molino (molino.luca--at--gmail.com)
- * 
- */
+/** @author Luca Molino (molino.luca--at--gmail.com) */
 public class OObjectEntityEnhancer {
 
-  private static final OObjectEntityEnhancer       instance              = new OObjectEntityEnhancer();
-  private final Map<Class<?>, OObjectMethodFilter> customMethodFilters   = new HashMap<Class<?>, OObjectMethodFilter>();
-  private final OObjectMethodFilter                defaultMethodFilter   = new OObjectMethodFilter();
+  private static final OObjectEntityEnhancer instance = new OObjectEntityEnhancer();
+  private final Map<Class<?>, OObjectMethodFilter> customMethodFilters =
+      new HashMap<Class<?>, OObjectMethodFilter>();
+  private final OObjectMethodFilter defaultMethodFilter = new OObjectMethodFilter();
 
-  public static final String                       ENHANCER_CLASS_PREFIX = "orientdb_";
+  public static final String ENHANCER_CLASS_PREFIX = "orientdb_";
 
-  public OObjectEntityEnhancer() {
-  }
+  public OObjectEntityEnhancer() {}
 
   @SuppressWarnings("unchecked")
-  public <T> T getProxiedInstance(final String iClass, final OEntityManager entityManager, final ODocument doc,
-      final ProxyObject parent, Object... iArgs) {
+  public <T> T getProxiedInstance(
+      final String iClass,
+      final OEntityManager entityManager,
+      final ODocument doc,
+      final ProxyObject parent,
+      Object... iArgs) {
     final Class<T> clazz = (Class<T>) entityManager.getEntityClass(iClass);
     return getProxiedInstance(clazz, null, doc, parent, iArgs);
   }
 
   @SuppressWarnings("unchecked")
-  public <T> T getProxiedInstance(final String iClass, final Object iEnclosingInstance, final OEntityManager entityManager,
-      final ODocument doc, final ProxyObject parent, Object... iArgs) {
+  public <T> T getProxiedInstance(
+      final String iClass,
+      final Object iEnclosingInstance,
+      final OEntityManager entityManager,
+      final ODocument doc,
+      final ProxyObject parent,
+      Object... iArgs) {
     final Class<T> clazz = (Class<T>) entityManager.getEntityClass(iClass);
     return getProxiedInstance(clazz, iEnclosingInstance, doc, parent, iArgs);
   }
@@ -76,11 +81,17 @@ public class OObjectEntityEnhancer {
   }
 
   @SuppressWarnings("unchecked")
-  public <T> T getProxiedInstance(final Class<T> iClass, Object iEnclosingInstance, final ODocument doc, final ProxyObject parent,
+  public <T> T getProxiedInstance(
+      final Class<T> iClass,
+      Object iEnclosingInstance,
+      final ODocument doc,
+      final ProxyObject parent,
       Object... iArgs) {
     if (iClass == null) {
-      throw new OSerializationException("Type '" + doc.getClassName()
-          + "' cannot be serialized because is not part of registered entities. To fix this error register this class");
+      throw new OSerializationException(
+          "Type '"
+              + doc.getClassName()
+              + "' cannot be serialized because is not part of registered entities. To fix this error register this class");
     }
     final Class<T> c;
     boolean isInnerClass = OObjectEntitySerializer.getEnclosingClass(iClass) != null;
@@ -138,46 +149,53 @@ public class OObjectEntityEnhancer {
         }
         if (constructor != null) {
           newEntity = (T) constructor.newInstance(iArgs);
-          initDocument(iClass, newEntity, doc, (ODatabaseObject) ODatabaseRecordThreadLocal.instance().get().getDatabaseOwner());
+          initDocument(
+              iClass,
+              newEntity,
+              doc,
+              (ODatabaseObject) ODatabaseRecordThreadLocal.instance().get().getDatabaseOwner());
         } else {
           if (iEnclosingInstance != null)
             newEntity = createInstanceNoParameters(c, iEnclosingInstance);
-          else
-            newEntity = createInstanceNoParameters(c, iClass);
+          else newEntity = createInstanceNoParameters(c, iClass);
         }
       } else {
         if (iEnclosingInstance != null)
           newEntity = createInstanceNoParameters(c, iEnclosingInstance);
-        else
-          newEntity = createInstanceNoParameters(c, iClass);
+        else newEntity = createInstanceNoParameters(c, iClass);
       }
       ((Proxy) newEntity).setHandler(mi);
       if (OObjectEntitySerializer.hasBoundedDocumentField(iClass))
-        OObjectEntitySerializer.setFieldValue(OObjectEntitySerializer.getBoundedDocumentField(iClass), newEntity, doc);
+        OObjectEntitySerializer.setFieldValue(
+            OObjectEntitySerializer.getBoundedDocumentField(iClass), newEntity, doc);
       OObjectEntitySerializer.setVersionField(iClass, newEntity, doc.getVersion());
       return newEntity;
     } catch (InstantiationException ie) {
-      OLogManager.instance().error(this, "Error creating proxied instance for class " + iClass.getName(), ie);
+      OLogManager.instance()
+          .error(this, "Error creating proxied instance for class " + iClass.getName(), ie);
     } catch (IllegalAccessException iae) {
-      OLogManager.instance().error(this, "Error creating proxied instance for class " + iClass.getName(), iae);
+      OLogManager.instance()
+          .error(this, "Error creating proxied instance for class " + iClass.getName(), iae);
     } catch (IllegalArgumentException iae) {
-      OLogManager.instance().error(this, "Error creating proxied instance for class " + iClass.getName(), iae);
+      OLogManager.instance()
+          .error(this, "Error creating proxied instance for class " + iClass.getName(), iae);
     } catch (SecurityException se) {
-      OLogManager.instance().error(this, "Error creating proxied instance for class " + iClass.getName(), se);
+      OLogManager.instance()
+          .error(this, "Error creating proxied instance for class " + iClass.getName(), se);
     } catch (InvocationTargetException ite) {
-      OLogManager.instance().error(this, "Error creating proxied instance for class " + iClass.getName(), ite);
+      OLogManager.instance()
+          .error(this, "Error creating proxied instance for class " + iClass.getName(), ite);
     } catch (NoSuchMethodException nsme) {
-      OLogManager.instance().error(this, "Error creating proxied instance for class " + iClass.getName(), nsme);
+      OLogManager.instance()
+          .error(this, "Error creating proxied instance for class " + iClass.getName(), nsme);
     }
     return null;
   }
 
   public OObjectMethodFilter getMethodFilter(Class<?> iClass) {
-    if (Proxy.class.isAssignableFrom(iClass))
-      iClass = iClass.getSuperclass();
+    if (Proxy.class.isAssignableFrom(iClass)) iClass = iClass.getSuperclass();
     OObjectMethodFilter filter = customMethodFilters.get(iClass);
-    if (filter == null)
-      filter = defaultMethodFilter;
+    if (filter == null) filter = defaultMethodFilter;
     return filter;
   }
 
@@ -194,8 +212,7 @@ public class OObjectEntityEnhancer {
   }
 
   private boolean isPrimitiveParameterCorrect(Class<?> primitiveClass, Object parameterValue) {
-    if (parameterValue == null)
-      return false;
+    if (parameterValue == null) return false;
     final Class<?> parameterClass = parameterValue.getClass();
     if (Integer.TYPE.isAssignableFrom(primitiveClass))
       return Integer.class.isAssignableFrom(parameterClass);
@@ -212,13 +229,13 @@ public class OObjectEntityEnhancer {
     return false;
   }
 
-  @SuppressWarnings({ "rawtypes", "unchecked" })
-  protected void initDocument(Class<?> iClass, Object iInstance, ODocument iDocument, ODatabaseObject db)
+  @SuppressWarnings({"rawtypes", "unchecked"})
+  protected void initDocument(
+      Class<?> iClass, Object iInstance, ODocument iDocument, ODatabaseObject db)
       throws IllegalArgumentException, IllegalAccessException {
-    for (Class<?> currentClass = iClass; currentClass != Object.class;) {
+    for (Class<?> currentClass = iClass; currentClass != Object.class; ) {
       for (Field f : currentClass.getDeclaredFields()) {
-        if (f.getName().equals("this$0"))
-          continue;
+        if (f.getName().equals("this$0")) continue;
         if (!f.isAccessible()) {
           f.setAccessible(true);
         }
@@ -228,24 +245,33 @@ public class OObjectEntityEnhancer {
             if (o instanceof List<?>) {
               List<?> list = new ArrayList();
               iDocument.field(f.getName(), list);
-              o = new OObjectCustomSerializerList(OObjectEntitySerializer.getSerializedType(f), iDocument, list, (List<?>) o);
+              o =
+                  new OObjectCustomSerializerList(
+                      OObjectEntitySerializer.getSerializedType(f), iDocument, list, (List<?>) o);
               f.set(iInstance, o);
             } else if (o instanceof Set<?>) {
               Set<?> set = new HashSet();
               iDocument.field(f.getName(), set);
-              o = new OObjectCustomSerializerSet(OObjectEntitySerializer.getSerializedType(f), iDocument, set, (Set<?>) o);
+              o =
+                  new OObjectCustomSerializerSet(
+                      OObjectEntitySerializer.getSerializedType(f), iDocument, set, (Set<?>) o);
               f.set(iInstance, o);
             } else if (o instanceof Map<?, ?>) {
               Map<?, ?> map = new HashMap();
               iDocument.field(f.getName(), map);
-              o = new OObjectCustomSerializerMap(OObjectEntitySerializer.getSerializedType(f), iDocument, map, (Map<?, ?>) o);
+              o =
+                  new OObjectCustomSerializerMap(
+                      OObjectEntitySerializer.getSerializedType(f), iDocument, map, (Map<?, ?>) o);
               f.set(iInstance, o);
             } else {
               o = OObjectEntitySerializer.serializeFieldValue(o.getClass(), o);
               iDocument.field(f.getName(), o);
             }
           } else {
-            iDocument.field(f.getName(), OObjectEntitySerializer.typeToStream(o, OType.getTypeByClass(f.getType()), db, iDocument));
+            iDocument.field(
+                f.getName(),
+                OObjectEntitySerializer.typeToStream(
+                    o, OType.getTypeByClass(f.getType()), db, iDocument));
           }
         }
       }
@@ -253,8 +279,9 @@ public class OObjectEntityEnhancer {
     }
   }
 
-  protected <T> T createInstanceNoParameters(Class<T> iProxiedClass, Class<?> iOriginalClass) throws SecurityException,
-      NoSuchMethodException, IllegalArgumentException, InstantiationException, IllegalAccessException, InvocationTargetException {
+  protected <T> T createInstanceNoParameters(Class<T> iProxiedClass, Class<?> iOriginalClass)
+      throws SecurityException, NoSuchMethodException, IllegalArgumentException,
+          InstantiationException, IllegalAccessException, InvocationTargetException {
     T instanceToReturn = null;
     final Class<?> enclosingClass = OObjectEntitySerializer.getEnclosingClass(iOriginalClass);
 
@@ -270,17 +297,19 @@ public class OObjectEntityEnhancer {
       try {
         instanceToReturn = iProxiedClass.newInstance();
       } catch (InstantiationException e) {
-        OLogManager.instance().error(this, "Cannot create an instance of the enclosing class '%s'", e, iOriginalClass);
+        OLogManager.instance()
+            .error(
+                this, "Cannot create an instance of the enclosing class '%s'", e, iOriginalClass);
         throw e;
       }
     }
 
     return instanceToReturn;
-
   }
 
-  protected <T> T createInstanceNoParameters(Class<T> iProxiedClass, Object iEnclosingInstance) throws SecurityException,
-      NoSuchMethodException, IllegalArgumentException, InstantiationException, IllegalAccessException, InvocationTargetException {
+  protected <T> T createInstanceNoParameters(Class<T> iProxiedClass, Object iEnclosingInstance)
+      throws SecurityException, NoSuchMethodException, IllegalArgumentException,
+          InstantiationException, IllegalAccessException, InvocationTargetException {
     T instanceToReturn = null;
     final Class<?> enclosingClass = iEnclosingInstance.getClass();
 
@@ -296,6 +325,5 @@ public class OObjectEntityEnhancer {
     }
 
     return instanceToReturn;
-
   }
 }

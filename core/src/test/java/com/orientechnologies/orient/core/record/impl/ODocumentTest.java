@@ -1,5 +1,12 @@
 package com.orientechnologies.orient.core.record.impl;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
+
 import com.orientechnologies.orient.core.db.ODatabaseSession;
 import com.orientechnologies.orient.core.db.ODatabaseType;
 import com.orientechnologies.orient.core.db.OrientDB;
@@ -13,30 +20,30 @@ import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializer;
-import org.assertj.core.api.Assertions;
-import org.junit.Test;
-
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import org.assertj.core.api.Assertions;
+import org.junit.Test;
 
-import static org.junit.Assert.*;
-
-/**
- * @author Artem Orobets (enisher-at-gmail.com)
- */
+/** @author Artem Orobets (enisher-at-gmail.com) */
 public class ODocumentTest {
-  private static final String dbName                    = ODocumentTest.class.getSimpleName();
+  private static final String dbName = ODocumentTest.class.getSimpleName();
   private static final String defaultDbAdminCredentials = "admin";
 
   @Test
   public void testCopyToCopiesEmptyFieldsTypesAndOwners() throws Exception {
     ODocument doc1 = new ODocument();
 
-    ODocument doc2 = new ODocument().field("integer2", 123).field("string", "OrientDB").field("a", 123.3)
-
-        .setFieldType("integer", OType.INTEGER).setFieldType("string", OType.STRING).setFieldType("binary", OType.BINARY);
+    ODocument doc2 =
+        new ODocument()
+            .field("integer2", 123)
+            .field("string", "OrientDB")
+            .field("a", 123.3)
+            .setFieldType("integer", OType.INTEGER)
+            .setFieldType("string", OType.STRING)
+            .setFieldType("binary", OType.BINARY);
     ODocumentInternal.addOwner(doc2, new ODocument());
 
     assertEquals(doc2.<Object>field("integer2"), 123);
@@ -110,7 +117,7 @@ public class ODocumentTest {
     ODocument doc = new ODocument();
     doc.field("integer", 10, OType.INTEGER);
     doc.field("string", 20, OType.STRING);
-    doc.field("binary", new byte[] { 30 }, OType.BINARY);
+    doc.field("binary", new byte[] {30}, OType.BINARY);
 
     assertEquals(doc.fieldType("integer"), OType.INTEGER);
     assertEquals(doc.fieldType("string"), OType.STRING);
@@ -123,7 +130,7 @@ public class ODocumentTest {
     doc.field("integer", 10, OType.INTEGER);
     doc.field("link", new ORecordId(1, 2), OType.LINK);
     doc.field("string", 20, OType.STRING);
-    doc.field("binary", new byte[] { 30 }, OType.BINARY);
+    doc.field("binary", new byte[] {30}, OType.BINARY);
 
     assertEquals(doc.fieldType("integer"), OType.INTEGER);
     assertEquals(doc.fieldType("link"), OType.LINK);
@@ -145,7 +152,7 @@ public class ODocumentTest {
     doc.field("integer", 10);
     doc.field("link", new ORecordId(1, 2));
     doc.field("string", "string");
-    doc.field("binary", new byte[] { 30 });
+    doc.field("binary", new byte[] {30});
 
     // this is null because is not set on value set.
     assertNull(doc.fieldType("integer"));
@@ -180,7 +187,7 @@ public class ODocumentTest {
       doc.field("integer", 10);
       doc.field("link", new ORecordId(1, 2));
       doc.field("string", "string");
-      doc.field("binary", new byte[] { 30 });
+      doc.field("binary", new byte[] {30});
 
       // the types are from the schema.
       assertEquals(doc.fieldType("integer"), OType.INTEGER);
@@ -196,8 +203,7 @@ public class ODocumentTest {
       assertEquals(doc.fieldType("binary"), OType.BINARY);
       assertEquals(doc.fieldType("link"), OType.LINK);
     } finally {
-      if (db != null)
-        db.close();
+      if (db != null) db.close();
       if (odb != null) {
         odb.drop(dbName);
         odb.close();
@@ -245,11 +251,10 @@ public class ODocumentTest {
       doc.save();
       doc.field("name", "My Name 4");
       doc.field("property", "value4");
-      doc.undo("property");// we decided undo readonly field
+      doc.undo("property"); // we decided undo readonly field
       doc.save();
     } finally {
-      if (db != null)
-        db.close();
+      if (db != null) db.close();
       if (odb != null) {
         odb.drop(dbName);
         odb.close();
@@ -330,8 +335,7 @@ public class ODocumentTest {
       assertEquals(doc.field("name"), "My Name 4");
       assertEquals(doc.field("property"), "value1");
     } finally {
-      if (db != null)
-        db.close();
+      if (db != null) db.close();
       if (odb != null) {
         odb.drop(dbName);
         odb.close();
@@ -352,7 +356,6 @@ public class ODocumentTest {
     assertEquals(dest.field("key"), "value");
 
     assertTrue(dest.containsField("somenull"));
-
   }
 
   @Test(expected = IllegalArgumentException.class)
@@ -382,8 +385,8 @@ public class ODocumentTest {
     assertEquals(doc.getProperty("theMap.foo"), "bar");
     assertEquals(doc.eval("theMap.foo"), "valueInTheMap");
 
-//    doc.setProperty("", "foo");
-//    assertEquals(doc.getProperty(""), "foo");
+    //    doc.setProperty("", "foo");
+    //    assertEquals(doc.getProperty(""), "foo");
 
     doc.setProperty(",", "comma");
     assertEquals(doc.getProperty(","), "comma");
@@ -398,7 +401,7 @@ public class ODocumentTest {
   @Test
   public void testNoDirtySameBytes() {
     ODocument doc = new ODocument();
-    byte[] bytes = new byte[] { 0, 1, 2, 3, 4, 5 };
+    byte[] bytes = new byte[] {0, 1, 2, 3, 4, 5};
     doc.field("bytes", bytes);
     ODocumentInternal.clearTrackData(doc);
     ORecordInternal.unsetDirty(doc);
@@ -408,5 +411,4 @@ public class ODocumentTest {
     assertFalse(doc.isDirty());
     assertNull(doc.getOriginalValue("bytes"));
   }
-
 }

@@ -21,7 +21,6 @@ package com.orientechnologies.orient.core.sql.functions.coll;
 
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
-
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -29,9 +28,8 @@ import java.util.Map;
 
 /**
  * This operator add an entry in a map. The entry is composed by a key and a value.
- * 
+ *
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
- * 
  */
 public class OSQLFunctionMap extends OSQLFunctionMultiValueAbstract<Map<Object, Object>> {
   public static final String NAME = "map";
@@ -41,7 +39,11 @@ public class OSQLFunctionMap extends OSQLFunctionMultiValueAbstract<Map<Object, 
   }
 
   @SuppressWarnings("unchecked")
-  public Object execute(Object iThis, final OIdentifiable iCurrentRecord, Object iCurrentResult, final Object[] iParams,
+  public Object execute(
+      Object iThis,
+      final OIdentifiable iCurrentRecord,
+      Object iCurrentResult,
+      final Object[] iParams,
       OCommandContext iContext) {
 
     if (iParams.length > 2)
@@ -49,8 +51,7 @@ public class OSQLFunctionMap extends OSQLFunctionMultiValueAbstract<Map<Object, 
       context = new HashMap<Object, Object>();
 
     if (iParams.length == 1) {
-      if (iParams[0] == null)
-        return null;
+      if (iParams[0] == null) return null;
 
       if (iParams[0] instanceof Map<?, ?>) {
         if (context == null)
@@ -60,9 +61,11 @@ public class OSQLFunctionMap extends OSQLFunctionMultiValueAbstract<Map<Object, 
         // INSERT EVERY SINGLE COLLECTION ITEM
         context.putAll((Map<Object, Object>) iParams[0]);
       } else
-        throw new IllegalArgumentException("Map function: expected a map or pairs of parameters as key, value");
+        throw new IllegalArgumentException(
+            "Map function: expected a map or pairs of parameters as key, value");
     } else if (iParams.length % 2 != 0)
-      throw new IllegalArgumentException("Map function: expected a map or pairs of parameters as key, value");
+      throw new IllegalArgumentException(
+          "Map function: expected a map or pairs of parameters as key, value");
     else
       for (int i = 0; i < iParams.length; i += 2) {
         final Object key = iParams[i];
@@ -117,14 +120,14 @@ public class OSQLFunctionMap extends OSQLFunctionMultiValueAbstract<Map<Object, 
     if (returnDistributedResult()) {
       final Map<Object, Object> result = new HashMap<Object, Object>();
       for (Object iParameter : resultsToMerge) {
-        final Map<String, Object> container = (Map<String, Object>) ((Map<Object, Object>) iParameter).get("doc");
+        final Map<String, Object> container =
+            (Map<String, Object>) ((Map<Object, Object>) iParameter).get("doc");
         result.putAll((Map<Object, Object>) container.get("context"));
       }
       return result;
     }
 
-    if (!resultsToMerge.isEmpty())
-      return resultsToMerge.get(0);
+    if (!resultsToMerge.isEmpty()) return resultsToMerge.get(0);
 
     return null;
   }

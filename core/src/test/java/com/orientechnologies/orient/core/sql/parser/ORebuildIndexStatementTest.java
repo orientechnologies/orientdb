@@ -1,6 +1,7 @@
 package com.orientechnologies.orient.core.sql.parser;
 
 import org.junit.Test;
+
 public class ORebuildIndexStatementTest extends OParserTestAbstract {
 
   @Test
@@ -12,5 +13,4 @@ public class ORebuildIndexStatementTest extends OParserTestAbstract {
     checkRightSyntax("REBUILD INDEX Foo.bar.baz");
     checkWrongSyntax("REBUILD INDEX Foo.bar foo");
   }
-
 }

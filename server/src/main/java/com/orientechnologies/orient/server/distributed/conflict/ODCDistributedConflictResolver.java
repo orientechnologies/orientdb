@@ -15,7 +15,7 @@
  *  *  limitations under the License.
  *  *
  *  * For more information: http://orientdb.com
- *  
+ *
  */
 
 package com.orientechnologies.orient.server.distributed.conflict;
@@ -24,14 +24,13 @@ import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.server.distributed.ODistributedConfiguration;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
-
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
 /**
- * Conflict resolver implementation where the majority is selected only in the specified data center. Use this if you have an
- * active-passive configuration.
+ * Conflict resolver implementation where the majority is selected only in the specified data
+ * center. Use this if you have an active-passive configuration.
  *
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
  */
@@ -39,11 +38,16 @@ public class ODCDistributedConflictResolver extends OMajorityDistributedConflict
   public static final String NAME = "dc";
 
   @Override
-  public OConflictResult onConflict(final String databaseName, final String clusterName, final ORecordId rid,
-      final ODistributedServerManager dManager, final Map<Object, List<String>> candidates) {
+  public OConflictResult onConflict(
+      final String databaseName,
+      final String clusterName,
+      final ORecordId rid,
+      final ODistributedServerManager dManager,
+      final Map<Object, List<String>> candidates) {
 
     if (configuration == null)
-      throw new OConfigurationException("DC conflict resolver requires a configuration for the winner");
+      throw new OConfigurationException(
+          "DC conflict resolver requires a configuration for the winner");
 
     final ODistributedConfiguration dCfg = dManager.getDatabaseConfiguration(databaseName);
     final String winnerDC = configuration.field("winner");

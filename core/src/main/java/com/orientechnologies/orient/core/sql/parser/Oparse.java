@@ -10,6 +10,5 @@ public class Oparse extends SimpleNode {
   public Oparse(OrientSql p, int id) {
     super(p, id);
   }
-
 }
 /* JavaCC - OriginalChecksum=9967d5e420c95913a45cded5863b8a91 (do not edit this line) */

@@ -1,14 +1,12 @@
 package com.orientechnologies.orient.core.storage.index.nkbtree.normalizers;
 
 import com.orientechnologies.orient.core.index.OCompositeKey;
-
+import com.orientechnologies.orient.core.metadata.schema.OType;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
-
-import com.orientechnologies.orient.core.metadata.schema.OType;
 
 public class KeyNormalizer {
   private final Map<OType, KeyNormalizers> normalizers = new HashMap<>();
@@ -29,26 +27,40 @@ public class KeyNormalizer {
     normalizers.put(OType.BINARY, new BinaryKeyNormalizer());
   }
 
-  public byte[] normalize(final OCompositeKey keys, final OType[] keyTypes, final int decompositon) {
+  public byte[] normalize(
+      final OCompositeKey keys, final OType[] keyTypes, final int decompositon) {
     if (keys == null) {
       throw new IllegalArgumentException("Keys must not be null.");
     }
     if (keys.getKeys().size() != keyTypes.length) {
       throw new IllegalArgumentException(
-          "Number of keys must fit to number of types: " + keys.getKeys().size() + " != " + keyTypes.length + ".");
+          "Number of keys must fit to number of types: "
+              + keys.getKeys().size()
+              + " != "
+              + keyTypes.length
+              + ".");
     }
     final AtomicInteger counter = new AtomicInteger(0);
-    return keys.getKeys().stream().collect(ByteArrayOutputStream::new, (baos, key) -> {
-      normalizeCompositeKeys(baos, key, keyTypes[counter.getAndIncrement()], decompositon);
-    }, (baos1, baos2) -> baos1.write(baos2.toByteArray(), 0, baos2.size())).toByteArray();
+    return keys.getKeys().stream()
+        .collect(
+            ByteArrayOutputStream::new,
+            (baos, key) -> {
+              normalizeCompositeKeys(baos, key, keyTypes[counter.getAndIncrement()], decompositon);
+            },
+            (baos1, baos2) -> baos1.write(baos2.toByteArray(), 0, baos2.size()))
+        .toByteArray();
   }
 
-  private void normalizeCompositeKeys(final ByteArrayOutputStream normalizedKeyStream, final Object key, final OType keyType,
+  private void normalizeCompositeKeys(
+      final ByteArrayOutputStream normalizedKeyStream,
+      final Object key,
+      final OType keyType,
       final int decompositon) {
     try {
       final KeyNormalizers keyNormalizer = normalizers.get(keyType);
       if (keyNormalizer == null) {
-        throw new UnsupportedOperationException("Type " + key.getClass().getTypeName() + " is currently not supported");
+        throw new UnsupportedOperationException(
+            "Type " + key.getClass().getTypeName() + " is currently not supported");
       }
       normalizedKeyStream.write(keyNormalizer.execute(key, decompositon));
     } catch (final IOException e) {

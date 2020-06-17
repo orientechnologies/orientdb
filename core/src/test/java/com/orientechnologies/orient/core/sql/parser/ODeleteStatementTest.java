@@ -1,19 +1,18 @@
 package com.orientechnologies.orient.core.sql.parser;
 
+import static org.junit.Assert.fail;
+
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
-import org.junit.Assert;
-import org.junit.Test;
-
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
-
-import static org.junit.Assert.fail;
+import org.junit.Assert;
+import org.junit.Test;
 
 public class ODeleteStatementTest {
 
@@ -45,7 +44,8 @@ public class ODeleteStatementTest {
   @Test
   public void deleteFromSubqueryWithWhereTest() {
 
-    ODatabaseDocument database = new ODatabaseDocumentTx("memory:ODeleteStatementTestFromSubqueryWithWhereTest");
+    ODatabaseDocument database =
+        new ODatabaseDocumentTx("memory:ODeleteStatementTestFromSubqueryWithWhereTest");
     database.create();
 
     try {
@@ -66,7 +66,9 @@ public class ODeleteStatementTest {
       final ODocument bar = new ODocument("Bar").field("arr", list);
       bar.save();
 
-      database.command(new OCommandSQL("delete from (select expand(arr) from Bar) where k = 'key2'")).execute();
+      database
+          .command(new OCommandSQL("delete from (select expand(arr) from Bar) where k = 'key2'"))
+          .execute();
 
       List<ODocument> result = database.query(new OSQLSynchQuery<ODocument>("select from Foo"));
       Assert.assertNotNull(result);

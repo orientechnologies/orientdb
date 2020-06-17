@@ -2,15 +2,14 @@ package com.orientechnologies.orient.test.server.network.http;
 
 import com.orientechnologies.orient.core.OConstants;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import java.io.IOException;
+import java.net.URLEncoder;
+import java.util.Map;
 import org.apache.http.HttpResponse;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
-
-import java.io.IOException;
-import java.net.URLEncoder;
-import java.util.Map;
 
 /**
  * Tests HTTP "database" command.
@@ -21,25 +20,44 @@ public class HttpDatabaseTest extends BaseHttpTest {
   @Test
   public void testCreateDatabaseNoType() throws Exception {
     Assert.assertEquals(
-        setUserName("root").setUserPassword("root").post("database/" + getDatabaseName()).getResponse().getStatusLine()
-            .getStatusCode(), 500);
+        setUserName("root")
+            .setUserPassword("root")
+            .post("database/" + getDatabaseName())
+            .getResponse()
+            .getStatusLine()
+            .getStatusCode(),
+        500);
   }
 
   @Test
   public void testCreateDatabaseWrongPassword() throws Exception {
     Assert.assertEquals(
-        setUserName("root").setUserPassword("wrongPasswod").post("database/wrongpasswd").getResponse().getStatusLine()
-            .getStatusCode(), 401);
+        setUserName("root")
+            .setUserPassword("wrongPasswod")
+            .post("database/wrongpasswd")
+            .getResponse()
+            .getStatusLine()
+            .getStatusCode(),
+        401);
   }
 
   @Test
   public void testCreateAndGetDatabase() throws IOException {
 
     Assert.assertEquals(
-        setUserName("root").setUserPassword("root").post("database/" + getDatabaseName() + "/memory").getResponse().getStatusLine()
-            .getStatusCode(), 200);
+        setUserName("root")
+            .setUserPassword("root")
+            .post("database/" + getDatabaseName() + "/memory")
+            .getResponse()
+            .getStatusLine()
+            .getStatusCode(),
+        200);
 
-    HttpResponse response = setUserName("admin").setUserPassword("admin").get("database/" + getDatabaseName()).getResponse();
+    HttpResponse response =
+        setUserName("admin")
+            .setUserPassword("admin")
+            .get("database/" + getDatabaseName())
+            .getResponse();
 
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
 
@@ -47,28 +65,52 @@ public class HttpDatabaseTest extends BaseHttpTest {
 
     Map<String, Object> server = payload.field("server");
     Assert.assertEquals(OConstants.getRawVersion(), server.get("version"));
-
   }
 
   @Test
   public void testCreateQueryAndDropDatabase() throws Exception {
     Assert.assertEquals(
-        setUserName("root").setUserPassword("root").post("database/" + getDatabaseName() + "/memory").getResponse().getStatusLine()
-            .getStatusCode(), 200);
-
-    Assert.assertEquals(setUserName("admin").setUserPassword("admin")
-        .get("query/" + getDatabaseName() + "/sql/" + URLEncoder.encode("select from OUSer", "UTF8") + "/10").getResponse()
-        .getStatusLine().getStatusCode(), 200);
+        setUserName("root")
+            .setUserPassword("root")
+            .post("database/" + getDatabaseName() + "/memory")
+            .getResponse()
+            .getStatusLine()
+            .getStatusCode(),
+        200);
 
     Assert.assertEquals(
-        setUserName("root").setUserPassword("root").delete("database/" + getDatabaseName()).getResponse().getStatusLine()
-            .getStatusCode(), 204);
+        setUserName("admin")
+            .setUserPassword("admin")
+            .get(
+                "query/"
+                    + getDatabaseName()
+                    + "/sql/"
+                    + URLEncoder.encode("select from OUSer", "UTF8")
+                    + "/10")
+            .getResponse()
+            .getStatusLine()
+            .getStatusCode(),
+        200);
+
+    Assert.assertEquals(
+        setUserName("root")
+            .setUserPassword("root")
+            .delete("database/" + getDatabaseName())
+            .getResponse()
+            .getStatusLine()
+            .getStatusCode(),
+        204);
   }
 
   @Test
   public void testDropUnknownDatabase() throws Exception {
     Assert.assertEquals(
-        setUserName("root").setUserPassword("root").delete("database/whateverdbname").getResponse().getStatusLine().getStatusCode(),
+        setUserName("root")
+            .setUserPassword("root")
+            .delete("database/whateverdbname")
+            .getResponse()
+            .getStatusLine()
+            .getStatusCode(),
         500);
   }
 

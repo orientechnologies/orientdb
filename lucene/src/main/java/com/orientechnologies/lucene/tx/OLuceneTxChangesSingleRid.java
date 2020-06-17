@@ -23,23 +23,21 @@ import com.orientechnologies.lucene.builder.OLuceneIndexType;
 import com.orientechnologies.lucene.engine.OLuceneIndexEngine;
 import com.orientechnologies.lucene.exception.OLuceneIndexException;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import java.io.IOException;
+import java.util.HashSet;
+import java.util.Set;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.document.Field;
 import org.apache.lucene.index.IndexWriter;
 
-import java.io.IOException;
-import java.util.HashSet;
-import java.util.Set;
-
-/**
- * Created by Enrico Risa on 15/09/15.
- */
+/** Created by Enrico Risa on 15/09/15. */
 public class OLuceneTxChangesSingleRid extends OLuceneTxChangesAbstract {
-  private final Set<String>   deleted     = new HashSet<String>();
-  private final Set<String>   updated     = new HashSet<String>();
+  private final Set<String> deleted = new HashSet<String>();
+  private final Set<String> updated = new HashSet<String>();
   private final Set<Document> deletedDocs = new HashSet<Document>();
 
-  public OLuceneTxChangesSingleRid(final OLuceneIndexEngine engine, final IndexWriter writer, final IndexWriter deletedIdx) {
+  public OLuceneTxChangesSingleRid(
+      final OLuceneIndexEngine engine, final IndexWriter writer, final IndexWriter deletedIdx) {
     super(engine, writer, deletedIdx);
   }
 
@@ -51,7 +49,8 @@ public class OLuceneTxChangesSingleRid extends OLuceneTxChangesAbstract {
     try {
       writer.addDocument(doc);
     } catch (IOException e) {
-      throw OException.wrapException(new OLuceneIndexException("unable to add document to changes index"), e);
+      throw OException.wrapException(
+          new OLuceneIndexException("unable to add document to changes index"), e);
     }
   }
 
@@ -66,8 +65,10 @@ public class OLuceneTxChangesSingleRid extends OLuceneTxChangesAbstract {
         deletedIdx.addDocument(doc);
       }
     } catch (final IOException e) {
-      throw OException
-          .wrapException(new OLuceneIndexException("Error while deleting documents in transaction from lucene index"), e);
+      throw OException.wrapException(
+          new OLuceneIndexException(
+              "Error while deleting documents in transaction from lucene index"),
+          e);
     }
   }
 

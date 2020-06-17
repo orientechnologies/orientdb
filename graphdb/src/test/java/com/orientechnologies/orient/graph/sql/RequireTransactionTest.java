@@ -15,7 +15,7 @@
  *  *  limitations under the License.
  *  *
  *  * For more information: http://orientdb.com
- *  
+ *
  */
 
 package com.orientechnologies.orient.graph.sql;
@@ -23,22 +23,22 @@ package com.orientechnologies.orient.graph.sql;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
-import org.junit.Test;
-
 import com.orientechnologies.orient.core.exception.OTransactionException;
 import com.orientechnologies.orient.graph.GraphTxAbstractTest;
 import com.tinkerpop.blueprints.impls.orient.OrientGraph;
-
 import java.util.Locale;
+import org.junit.AfterClass;
+import org.junit.BeforeClass;
+import org.junit.Test;
 
 public class RequireTransactionTest {
 
   protected static OrientGraph graph;
 
   public static enum ENV {
-    DEV, RELEASE, CI
+    DEV,
+    RELEASE,
+    CI
   }
 
   public static ENV getEnvironment() {
@@ -49,15 +49,13 @@ public class RequireTransactionTest {
     } catch (IllegalArgumentException e) {
     }
 
-    if (result == null)
-      result = ENV.DEV;
+    if (result == null) result = ENV.DEV;
 
     return result;
   }
 
   public static String getStorageType() {
-    if (getEnvironment().equals(ENV.DEV))
-      return "memory";
+    if (getEnvironment().equals(ENV.DEV)) return "memory";
 
     return "plocal";
   }
@@ -72,7 +70,6 @@ public class RequireTransactionTest {
       graph.drop();
       graph = new OrientGraph(storageType + ":" + buildDirectory + "/" + dbName);
     }
-
   }
 
   @AfterClass

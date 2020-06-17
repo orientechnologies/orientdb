@@ -20,12 +20,9 @@
 package com.orientechnologies.orient.server.distributed;
 
 import com.orientechnologies.orient.core.record.impl.ODocument;
-
 import java.util.Set;
 
-/**
- * @author Luca Garulli (l.garulli--at--orientdb.com)
- */
+/** @author Luca Garulli (l.garulli--at--orientdb.com) */
 public interface ODistributedMessageService {
   ODistributedDatabase registerDatabase(String iDatabaseName, ODistributedConfiguration cfg);
 

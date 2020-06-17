@@ -28,18 +28,16 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoper
 import com.orientechnologies.orient.core.storage.index.sbtreebonsai.local.OSBTreeBonsai;
 import com.orientechnologies.orient.core.storage.ridbag.sbtree.OBonsaiCollectionPointer;
 import com.orientechnologies.orient.core.storage.ridbag.sbtree.OSBTreeCollectionManagerAbstract;
-
 import java.lang.ref.WeakReference;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 
-/**
- * @author Artem Orobets (enisher-at-gmail.com)
- */
+/** @author Artem Orobets (enisher-at-gmail.com) */
 public class OSBTreeCollectionManagerRemote extends OSBTreeCollectionManagerAbstract {
 
-  private volatile ThreadLocal<Map<UUID, WeakReference<ORidBag>>> pendingCollections = new PendingCollectionsThreadLocal();
+  private volatile ThreadLocal<Map<UUID, WeakReference<ORidBag>>> pendingCollections =
+      new PendingCollectionsThreadLocal();
 
   public OSBTreeCollectionManagerRemote(OStorage storage) {
     super(storage);
@@ -54,25 +52,26 @@ public class OSBTreeCollectionManagerRemote extends OSBTreeCollectionManagerAbst
   @Override
   public void onStartup() {
     super.onStartup();
-    if (pendingCollections == null)
-      pendingCollections = new PendingCollectionsThreadLocal();
+    if (pendingCollections == null) pendingCollections = new PendingCollectionsThreadLocal();
   }
 
   @Override
-  protected OSBTreeBonsai<OIdentifiable, Integer> createEdgeTree(OAtomicOperation atomicOperation, final int clusterId) {
-    throw new UnsupportedOperationException("Creation of SB-Tree from remote storage is not allowed");
+  protected OSBTreeBonsai<OIdentifiable, Integer> createEdgeTree(
+      OAtomicOperation atomicOperation, final int clusterId) {
+    throw new UnsupportedOperationException(
+        "Creation of SB-Tree from remote storage is not allowed");
   }
 
   @Override
-  protected OSBTreeBonsai<OIdentifiable, Integer> loadTree(OBonsaiCollectionPointer collectionPointer) {
+  protected OSBTreeBonsai<OIdentifiable, Integer> loadTree(
+      OBonsaiCollectionPointer collectionPointer) {
     throw new UnsupportedOperationException();
   }
 
   @Override
   public UUID listenForChanges(ORidBag collection) {
     UUID id = collection.getTemporaryId();
-    if (id == null)
-      id = UUID.randomUUID();
+    if (id == null) id = UUID.randomUUID();
 
     pendingCollections.get().put(id, new WeakReference<ORidBag>(collection));
 
@@ -83,7 +82,8 @@ public class OSBTreeCollectionManagerRemote extends OSBTreeCollectionManagerAbst
   public void updateCollectionPointer(UUID uuid, OBonsaiCollectionPointer pointer) {
     final WeakReference<ORidBag> reference = pendingCollections.get().get(uuid);
     if (reference == null) {
-      OLogManager.instance().warn(this, "Update of collection pointer is received but collection is not registered");
+      OLogManager.instance()
+          .warn(this, "Update of collection pointer is received but collection is not registered");
       return;
     }
 
@@ -109,7 +109,8 @@ public class OSBTreeCollectionManagerRemote extends OSBTreeCollectionManagerAbst
     throw new UnsupportedOperationException();
   }
 
-  private static class PendingCollectionsThreadLocal extends ThreadLocal<Map<UUID, WeakReference<ORidBag>>> {
+  private static class PendingCollectionsThreadLocal
+      extends ThreadLocal<Map<UUID, WeakReference<ORidBag>>> {
     @Override
     protected Map<UUID, WeakReference<ORidBag>> initialValue() {
       return new HashMap<UUID, WeakReference<ORidBag>>();

@@ -39,7 +39,6 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.ORecordCallback;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.tx.OTransactionIndexChanges.OPERATION;
-
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -50,18 +49,17 @@ import java.util.Map;
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
  */
 public class OTransactionNoTx extends OTransactionAbstract {
-  public OTransactionNoTx(final ODatabaseDocumentInternal iDatabase, Map<ORID, LockedRecordMetadata> noTxLocks) {
+  public OTransactionNoTx(
+      final ODatabaseDocumentInternal iDatabase, Map<ORID, LockedRecordMetadata> noTxLocks) {
     super(iDatabase);
     if (noTxLocks != null) {
       setLocks(noTxLocks);
     }
   }
 
-  public void begin() {
-  }
+  public void begin() {}
 
-  public void commit() {
-  }
+  public void commit() {}
 
   @Override
   public int getEntryCount() {
@@ -69,40 +67,69 @@ public class OTransactionNoTx extends OTransactionAbstract {
   }
 
   @Override
-  public void commit(boolean force) {
-  }
+  public void commit(boolean force) {}
 
-  public void rollback() {
+  public void rollback() {}
+
+  @Deprecated
+  public ORecord loadRecord(
+      final ORID iRid,
+      final ORecord iRecord,
+      final String iFetchPlan,
+      final boolean ignoreCache,
+      final boolean loadTombstone,
+      final OStorage.LOCKING_STRATEGY iLockingStrategy) {
+    if (iRid.isNew()) return null;
+
+    return database.executeReadRecord(
+        (ORecordId) iRid,
+        iRecord,
+        -1,
+        iFetchPlan,
+        ignoreCache,
+        !ignoreCache,
+        loadTombstone,
+        iLockingStrategy,
+        new SimpleRecordReader(database.isPrefetchRecords()));
   }
 
   @Deprecated
-  public ORecord loadRecord(final ORID iRid, final ORecord iRecord, final String iFetchPlan, final boolean ignoreCache,
-      final boolean loadTombstone, final OStorage.LOCKING_STRATEGY iLockingStrategy) {
-    if (iRid.isNew())
-      return null;
+  public ORecord loadRecord(
+      final ORID iRid,
+      final ORecord iRecord,
+      final String iFetchPlan,
+      final boolean ignoreCache,
+      final boolean iUpdateCache,
+      final boolean loadTombstone,
+      final OStorage.LOCKING_STRATEGY iLockingStrategy) {
+    if (iRid.isNew()) return null;
 
-    return database
-        .executeReadRecord((ORecordId) iRid, iRecord, -1, iFetchPlan, ignoreCache, !ignoreCache, loadTombstone, iLockingStrategy,
-            new SimpleRecordReader(database.isPrefetchRecords()));
+    return database.executeReadRecord(
+        (ORecordId) iRid,
+        iRecord,
+        -1,
+        iFetchPlan,
+        ignoreCache,
+        iUpdateCache,
+        loadTombstone,
+        iLockingStrategy,
+        new SimpleRecordReader(database.isPrefetchRecords()));
   }
 
-  @Deprecated
-  public ORecord loadRecord(final ORID iRid, final ORecord iRecord, final String iFetchPlan, final boolean ignoreCache,
-      final boolean iUpdateCache, final boolean loadTombstone, final OStorage.LOCKING_STRATEGY iLockingStrategy) {
-    if (iRid.isNew())
-      return null;
+  public ORecord loadRecord(
+      final ORID iRid, final ORecord iRecord, final String iFetchPlan, final boolean ignoreCache) {
+    if (iRid.isNew()) return null;
 
-    return database
-        .executeReadRecord((ORecordId) iRid, iRecord, -1, iFetchPlan, ignoreCache, iUpdateCache, loadTombstone, iLockingStrategy,
-            new SimpleRecordReader(database.isPrefetchRecords()));
-  }
-
-  public ORecord loadRecord(final ORID iRid, final ORecord iRecord, final String iFetchPlan, final boolean ignoreCache) {
-    if (iRid.isNew())
-      return null;
-
-    return database.executeReadRecord((ORecordId) iRid, iRecord, -1, iFetchPlan, ignoreCache, !ignoreCache, false,
-        OStorage.LOCKING_STRATEGY.NONE, new SimpleRecordReader(database.isPrefetchRecords()));
+    return database.executeReadRecord(
+        (ORecordId) iRid,
+        iRecord,
+        -1,
+        iFetchPlan,
+        ignoreCache,
+        !ignoreCache,
+        false,
+        OStorage.LOCKING_STRATEGY.NONE,
+        new SimpleRecordReader(database.isPrefetchRecords()));
   }
 
   @Override
@@ -111,9 +138,9 @@ public class OTransactionNoTx extends OTransactionAbstract {
   }
 
   @Override
-  public ORecord reloadRecord(ORID rid, ORecord record, String fetchPlan, boolean ignoreCache, boolean force) {
-    if (rid.isNew())
-      return null;
+  public ORecord reloadRecord(
+      ORID rid, ORecord record, String fetchPlan, boolean ignoreCache, boolean force) {
+    if (rid.isNew()) return null;
 
     final RecordReader recordReader;
     if (force) {
@@ -122,28 +149,43 @@ public class OTransactionNoTx extends OTransactionAbstract {
       recordReader = new LatestVersionRecordReader();
     }
 
-    final ORecord loadedRecord = database
-        .executeReadRecord((ORecordId) rid, record, -1, fetchPlan, ignoreCache, !ignoreCache, false, OStorage.LOCKING_STRATEGY.NONE,
+    final ORecord loadedRecord =
+        database.executeReadRecord(
+            (ORecordId) rid,
+            record,
+            -1,
+            fetchPlan,
+            ignoreCache,
+            !ignoreCache,
+            false,
+            OStorage.LOCKING_STRATEGY.NONE,
             recordReader);
 
     if (force) {
       return loadedRecord;
     } else {
-      if (loadedRecord == null)
-        return record;
+      if (loadedRecord == null) return record;
 
       return loadedRecord;
     }
   }
 
   @Override
-  public ORecord loadRecordIfVersionIsNotLatest(ORID rid, int recordVersion, String fetchPlan, boolean ignoreCache)
+  public ORecord loadRecordIfVersionIsNotLatest(
+      ORID rid, int recordVersion, String fetchPlan, boolean ignoreCache)
       throws ORecordNotFoundException {
-    if (rid.isNew())
-      return null;
+    if (rid.isNew()) return null;
 
-    return database.executeReadRecord((ORecordId) rid, null, recordVersion, fetchPlan, ignoreCache, !ignoreCache, false,
-        OStorage.LOCKING_STRATEGY.NONE, new LatestVersionRecordReader());
+    return database.executeReadRecord(
+        (ORecordId) rid,
+        null,
+        recordVersion,
+        fetchPlan,
+        ignoreCache,
+        !ignoreCache,
+        false,
+        OStorage.LOCKING_STRATEGY.NONE,
+        new LatestVersionRecordReader());
   }
 
   /**
@@ -154,23 +196,34 @@ public class OTransactionNoTx extends OTransactionAbstract {
    * @param iRecordCreatedCallback
    * @param iRecordUpdatedCallback
    */
-  public ORecord saveRecord(final ORecord iRecord, final String iClusterName, final OPERATION_MODE iMode, boolean iForceCreate,
-      final ORecordCallback<? extends Number> iRecordCreatedCallback, ORecordCallback<Integer> iRecordUpdatedCallback) {
+  public ORecord saveRecord(
+      final ORecord iRecord,
+      final String iClusterName,
+      final OPERATION_MODE iMode,
+      boolean iForceCreate,
+      final ORecordCallback<? extends Number> iRecordCreatedCallback,
+      ORecordCallback<Integer> iRecordUpdatedCallback) {
     try {
 
-      return database.saveAll(iRecord, iClusterName, iMode, iForceCreate, iRecordCreatedCallback, iRecordUpdatedCallback);
+      return database.saveAll(
+          iRecord,
+          iClusterName,
+          iMode,
+          iForceCreate,
+          iRecordCreatedCallback,
+          iRecordUpdatedCallback);
 
     } catch (Exception e) {
       // REMOVE IT FROM THE CACHE TO AVOID DIRTY RECORDS
       final ORecordId rid = (ORecordId) iRecord.getIdentity();
-      if (rid.isValid())
-        database.getLocalCache().freeRecord(rid);
+      if (rid.isValid()) database.getLocalCache().freeRecord(rid);
 
-      if (e instanceof ONeedRetryException)
-        throw (ONeedRetryException) e;
+      if (e instanceof ONeedRetryException) throw (ONeedRetryException) e;
 
       throw OException.wrapException(
-          new ODatabaseException("Error during saving of record" + (iRecord != null ? " with rid " + iRecord.getIdentity() : "")),
+          new ODatabaseException(
+              "Error during saving of record"
+                  + (iRecord != null ? " with rid " + iRecord.getIdentity() : "")),
           e);
     }
   }
@@ -178,29 +231,29 @@ public class OTransactionNoTx extends OTransactionAbstract {
   @Override
   public OTransaction setIsolationLevel(final ISOLATION_LEVEL isolationLevel) {
     if (isolationLevel != ISOLATION_LEVEL.READ_COMMITTED)
-      throw new IllegalArgumentException("Isolation level '" + isolationLevel + "' is not supported without an active transaction");
+      throw new IllegalArgumentException(
+          "Isolation level '"
+              + isolationLevel
+              + "' is not supported without an active transaction");
     return super.setIsolationLevel(isolationLevel);
   }
 
-  /**
-   * Deletes the record.
-   */
+  /** Deletes the record. */
   public void deleteRecord(final ORecord iRecord, final OPERATION_MODE iMode) {
-    if (!iRecord.getIdentity().isPersistent())
-      return;
+    if (!iRecord.getIdentity().isPersistent()) return;
 
     try {
       database.executeDeleteRecord(iRecord, iRecord.getVersion(), true, iMode, false);
     } catch (Exception e) {
       // REMOVE IT FROM THE CACHE TO AVOID DIRTY RECORDS
       final ORecordId rid = (ORecordId) iRecord.getIdentity();
-      if (rid.isValid())
-        database.getLocalCache().freeRecord(rid);
+      if (rid.isValid()) database.getLocalCache().freeRecord(rid);
 
-      if (e instanceof RuntimeException)
-        throw (RuntimeException) e;
+      if (e instanceof RuntimeException) throw (RuntimeException) e;
       throw OException.wrapException(
-          new ODatabaseException("Error during deletion of record" + (iRecord != null ? " with rid " + iRecord.getIdentity() : "")),
+          new ODatabaseException(
+              "Error during deletion of record"
+                  + (iRecord != null ? " with rid " + iRecord.getIdentity() : "")),
           e);
     }
   }
@@ -213,7 +266,8 @@ public class OTransactionNoTx extends OTransactionAbstract {
     return null;
   }
 
-  public List<ORecordOperation> getNewRecordEntriesByClass(final OClass iClass, final boolean iPolymorphic) {
+  public List<ORecordOperation> getNewRecordEntriesByClass(
+      final OClass iClass, final boolean iPolymorphic) {
     return null;
   }
 
@@ -221,8 +275,7 @@ public class OTransactionNoTx extends OTransactionAbstract {
     return null;
   }
 
-  public void clearRecordEntries() {
-  }
+  public void clearRecordEntries() {}
 
   public int getRecordEntriesSize() {
     return 0;
@@ -241,36 +294,37 @@ public class OTransactionNoTx extends OTransactionAbstract {
   }
 
   @Override
-  public void setCustomData(String iName, Object iValue) {
-
-  }
+  public void setCustomData(String iName, Object iValue) {}
 
   @Override
   public Object getCustomData(String iName) {
     return null;
   }
 
-  public void setUsingLog(final boolean useLog) {
-  }
+  public void setUsingLog(final boolean useLog) {}
 
   public ODocument getIndexChanges() {
     return null;
   }
 
-  public void addIndexEntry(final OIndex delegate, final String indexName, final OPERATION status, final Object key,
+  public void addIndexEntry(
+      final OIndex delegate,
+      final String indexName,
+      final OPERATION status,
+      final Object key,
       final OIdentifiable value) {
     switch (status) {
-    case CLEAR:
-      delegate.clear();
-      break;
+      case CLEAR:
+        delegate.clear();
+        break;
 
-    case PUT:
-      delegate.put(key, value);
-      break;
+      case PUT:
+        delegate.put(key, value);
+        break;
 
-    case REMOVE:
-      delegate.remove(key, value);
-      break;
+      case REMOVE:
+        delegate.remove(key, value);
+        break;
     }
   }
 
@@ -279,8 +333,7 @@ public class OTransactionNoTx extends OTransactionAbstract {
     // do nothing
   }
 
-  public void clearIndexEntries() {
-  }
+  public void clearIndexEntries() {}
 
   public OTransactionIndexChanges getIndexChanges(final String iName) {
     return null;
@@ -294,8 +347,7 @@ public class OTransactionNoTx extends OTransactionAbstract {
     return null;
   }
 
-  public void updateIdentityAfterCommit(ORID oldRid, ORID newRid) {
-  }
+  public void updateIdentityAfterCommit(ORID oldRid, ORID newRid) {}
 
   @Override
   public int amountOfNestedTxs() {
@@ -303,8 +355,7 @@ public class OTransactionNoTx extends OTransactionAbstract {
   }
 
   @Override
-  public void rollback(boolean force, int commitLevelDiff) {
-  }
+  public void rollback(boolean force, int commitLevelDiff) {}
 
   @Override
   public OTransactionIndexChanges getIndexChangesInternal(String indexName) {
@@ -312,7 +363,5 @@ public class OTransactionNoTx extends OTransactionAbstract {
   }
 
   @Override
-  public void internalRollback() {
-
-  }
+  public void internalRollback() {}
 }

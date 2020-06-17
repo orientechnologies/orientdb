@@ -7,22 +7,25 @@ import com.orientechnologies.orient.core.serialization.serializer.record.ORecord
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelDataInput;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelDataOutput;
-
 import java.io.IOException;
 
 public class OOpenResponse implements OBinaryResponse {
-  private int      sessionId;
-  private byte[]   sessionToken;
-  private int[]    clusterIds;
+  private int sessionId;
+  private byte[] sessionToken;
+  private int[] clusterIds;
   private String[] clusterNames;
 
   private byte[] distributedConfiguration;
   private String serverVersion;
 
-  public OOpenResponse() {
-  }
+  public OOpenResponse() {}
 
-  public OOpenResponse(int sessionId, byte[] sessionToken, int[] clusterIds, String[] clusterNames, byte[] distriConf,
+  public OOpenResponse(
+      int sessionId,
+      byte[] sessionToken,
+      int[] clusterIds,
+      String[] clusterNames,
+      byte[] distriConf,
       String version) {
     this.sessionId = sessionId;
     this.sessionToken = sessionToken;
@@ -33,12 +36,14 @@ public class OOpenResponse implements OBinaryResponse {
   }
 
   @Override
-  public void write(OChannelDataOutput channel, int protocolVersion, ORecordSerializer serializer) throws IOException {
+  public void write(OChannelDataOutput channel, int protocolVersion, ORecordSerializer serializer)
+      throws IOException {
     channel.writeInt(sessionId);
     if (protocolVersion > OChannelBinaryProtocol.PROTOCOL_VERSION_26)
       channel.writeBytes(sessionToken);
 
-    OMessageHelper.writeClustersArray(channel, new ORawPair<>(clusterNames, clusterIds), protocolVersion);
+    OMessageHelper.writeClustersArray(
+        channel, new ORawPair<>(clusterNames, clusterIds), protocolVersion);
     channel.writeBytes(distributedConfiguration);
     channel.writeString(serverVersion);
   }
@@ -71,5 +76,4 @@ public class OOpenResponse implements OBinaryResponse {
   public byte[] getDistributedConfiguration() {
     return distributedConfiguration;
   }
-
 }

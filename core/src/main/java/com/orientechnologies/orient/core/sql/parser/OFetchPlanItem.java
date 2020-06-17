@@ -4,7 +4,6 @@ package com.orientechnologies.orient.core.sql.parser;
 
 import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.executor.OResultInternal;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -12,7 +11,7 @@ import java.util.stream.Collectors;
 
 public class OFetchPlanItem extends SimpleNode {
 
-  protected Boolean  star;
+  protected Boolean star;
   protected OInteger leftDepth;
   protected boolean leftStar = false;
   protected OInteger rightDepth;
@@ -46,7 +45,6 @@ public class OFetchPlanItem extends SimpleNode {
         builder.append(s);
         first = false;
       }
-
     }
     builder.append(":");
     rightDepth.toString(params, builder);
@@ -64,17 +62,13 @@ public class OFetchPlanItem extends SimpleNode {
 
   @Override
   public boolean equals(Object o) {
-    if (this == o)
-      return true;
-    if (o == null || getClass() != o.getClass())
-      return false;
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
 
     OFetchPlanItem that = (OFetchPlanItem) o;
 
-    if (leftStar != that.leftStar)
-      return false;
-    if (star != null ? !star.equals(that.star) : that.star != null)
-      return false;
+    if (leftStar != that.leftStar) return false;
+    if (star != null ? !star.equals(that.star) : that.star != null) return false;
     if (leftDepth != null ? !leftDepth.equals(that.leftDepth) : that.leftDepth != null)
       return false;
     if (rightDepth != null ? !rightDepth.equals(that.rightDepth) : that.rightDepth != null)

@@ -42,18 +42,6 @@ import com.orientechnologies.orient.test.domain.business.IdentityChild;
 import com.orientechnologies.orient.test.domain.customserialization.Sec;
 import com.orientechnologies.orient.test.domain.customserialization.SecurityRole;
 import com.orientechnologies.orient.test.domain.whiz.Profile;
-import javassist.util.proxy.Proxy;
-import org.testng.Assert;
-import org.testng.annotations.AfterClass;
-import org.testng.annotations.BeforeClass;
-import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.Optional;
-import org.testng.annotations.Parameters;
-import org.testng.annotations.Test;
-
-import javax.persistence.Id;
-import javax.persistence.OneToOne;
-import javax.persistence.Version;
 import java.io.IOException;
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -64,13 +52,24 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import javassist.util.proxy.Proxy;
+import javax.persistence.Id;
+import javax.persistence.OneToOne;
+import javax.persistence.Version;
+import org.testng.Assert;
+import org.testng.annotations.AfterClass;
+import org.testng.annotations.BeforeClass;
+import org.testng.annotations.BeforeMethod;
+import org.testng.annotations.Optional;
+import org.testng.annotations.Parameters;
+import org.testng.annotations.Test;
 
-@Test(groups = { "record-object" })
+@Test(groups = {"record-object"})
 public class ObjectTreeTest extends ObjectDBBaseTest {
   protected long startRecordNumber;
-  private   long beginCities;
-  protected int  serialized;
-  protected int  unserialized;
+  private long beginCities;
+  protected int serialized;
+  protected int unserialized;
 
   @BeforeMethod
   @Override
@@ -88,9 +87,7 @@ public class ObjectTreeTest extends ObjectDBBaseTest {
     super.afterClass();
   }
 
-
-  public ObjectTreeTest() {
-  }
+  public ObjectTreeTest() {}
 
   @Parameters(value = "url")
   public ObjectTreeTest(@Optional String url) {
@@ -98,17 +95,22 @@ public class ObjectTreeTest extends ObjectDBBaseTest {
   }
 
   public class CustomClass {
-    private String                name;
-    private Long                  age;
-    private CustomType            custom;
-    private List<CustomType>      customTypeList;
-    private Set<CustomType>       customTypeSet;
+    private String name;
+    private Long age;
+    private CustomType custom;
+    private List<CustomType> customTypeList;
+    private Set<CustomType> customTypeSet;
     private Map<Long, CustomType> customTypeMap;
 
-    public CustomClass() {
-    }
+    public CustomClass() {}
 
-    public CustomClass(String iName, Long iAge, CustomType iCustom, List<CustomType> iCustomTypeList, Set<CustomType> iCustomTypeSet, Map<Long, CustomType> iCustomTypeMap) {
+    public CustomClass(
+        String iName,
+        Long iAge,
+        CustomType iCustom,
+        List<CustomType> iCustomTypeList,
+        Set<CustomType> iCustomTypeSet,
+        Map<Long, CustomType> iCustomTypeMap) {
       name = iName;
       age = iAge;
       custom = iCustom;
@@ -169,8 +171,7 @@ public class ObjectTreeTest extends ObjectDBBaseTest {
   public class CustomType {
     public long value;
 
-    public CustomType() {
-    }
+    public CustomType() {}
 
     public CustomType(Long iFieldValue) {
       value = iFieldValue;
@@ -187,20 +188,26 @@ public class ObjectTreeTest extends ObjectDBBaseTest {
 
   @BeforeClass
   public void init() {
-    database.getEntityManager().registerEntityClasses("com.orientechnologies.orient.test.domain.business");
-    database.getEntityManager().registerEntityClasses("com.orientechnologies.orient.test.domain.whiz");
-    database.getEntityManager().registerEntityClasses("com.orientechnologies.orient.test.domain.base");
+    database
+        .getEntityManager()
+        .registerEntityClasses("com.orientechnologies.orient.test.domain.business");
+    database
+        .getEntityManager()
+        .registerEntityClasses("com.orientechnologies.orient.test.domain.whiz");
+    database
+        .getEntityManager()
+        .registerEntityClasses("com.orientechnologies.orient.test.domain.base");
   }
 
   @Test
   public void testPool() throws IOException {
-    final OObjectDatabaseTx[] dbs = new OObjectDatabaseTx[OObjectDatabasePool.global().getMaxSize()];
+    final OObjectDatabaseTx[] dbs =
+        new OObjectDatabaseTx[OObjectDatabasePool.global().getMaxSize()];
 
     for (int i = 0; i < 10; ++i) {
       for (int db = 0; db < dbs.length; ++db)
         dbs[db] = OObjectDatabasePool.global().acquire(url, "admin", "admin");
-      for (int db = 0; db < dbs.length; ++db)
-        dbs[db].close();
+      for (int db = 0; db < dbs.length; ++db) dbs[db].close();
     }
   }
 
@@ -211,11 +218,23 @@ public class ObjectTreeTest extends ObjectDBBaseTest {
 
     Country italy = database.newInstance(Country.class, "Italy");
 
-    Profile garibaldi = database.newInstance(Profile.class, "GGaribaldi", "Giuseppe", "Garibaldi", null);
-    garibaldi.setLocation(database.newInstance(Address.class, "Residence", database.newInstance(City.class, italy, "Rome"), "Piazza Navona, 1"));
+    Profile garibaldi =
+        database.newInstance(Profile.class, "GGaribaldi", "Giuseppe", "Garibaldi", null);
+    garibaldi.setLocation(
+        database.newInstance(
+            Address.class,
+            "Residence",
+            database.newInstance(City.class, italy, "Rome"),
+            "Piazza Navona, 1"));
 
-    Profile bonaparte = database.newInstance(Profile.class, "NBonaparte", "Napoleone", "Bonaparte", garibaldi);
-    bonaparte.setLocation(database.newInstance(Address.class, "Residence", garibaldi.getLocation().getCity(), "Piazza di Spagna, 111"));
+    Profile bonaparte =
+        database.newInstance(Profile.class, "NBonaparte", "Napoleone", "Bonaparte", garibaldi);
+    bonaparte.setLocation(
+        database.newInstance(
+            Address.class,
+            "Residence",
+            garibaldi.getLocation().getCity(),
+            "Piazza di Spagna, 111"));
     database.save(bonaparte);
 
     Assert.assertEquals(database.countClass("Profile"), beginProfiles + 2);
@@ -228,22 +247,33 @@ public class ObjectTreeTest extends ObjectDBBaseTest {
 
   @Test(dependsOnMethods = "testCitySaving")
   public void testCityEquality() {
-    List<Profile> resultset = database.query(new OSQLSynchQuery<Object>("select from profile where location.city.name = 'Rome'"));
+    List<Profile> resultset =
+        database.query(
+            new OSQLSynchQuery<Object>("select from profile where location.city.name = 'Rome'"));
     Assert.assertEquals(resultset.size(), 2);
 
     Profile p1 = resultset.get(0);
     Profile p2 = resultset.get(1);
 
     Assert.assertNotSame(p1, p2);
-    Assert.assertSame(OObjectEntitySerializer.getDocument((Proxy) p1.getLocation().getCity()), OObjectEntitySerializer.getDocument((Proxy) p2.getLocation().getCity()));
+    Assert.assertSame(
+        OObjectEntitySerializer.getDocument((Proxy) p1.getLocation().getCity()),
+        OObjectEntitySerializer.getDocument((Proxy) p2.getLocation().getCity()));
   }
 
   @Test(dependsOnMethods = "testCityEquality")
   public void testSaveCircularLink() {
     Profile winston = database.newInstance(Profile.class, "WChurcill", "Winston", "Churcill", null);
-    winston.setLocation(database.newInstance(Address.class, "Residence", database.newInstance(City.class, database.newInstance(Country.class, "England"), "London"), "unknown"));
+    winston.setLocation(
+        database.newInstance(
+            Address.class,
+            "Residence",
+            database.newInstance(
+                City.class, database.newInstance(Country.class, "England"), "London"),
+            "unknown"));
 
-    Profile nicholas = database.newInstance(Profile.class, "NChurcill", "Nicholas ", "Churcill", winston);
+    Profile nicholas =
+        database.newInstance(Profile.class, "NChurcill", "Nicholas ", "Churcill", winston);
     nicholas.setLocation(winston.getLocation());
 
     nicholas.setInvitedBy(winston);
@@ -273,9 +303,17 @@ public class ObjectTreeTest extends ObjectDBBaseTest {
     startRecordNumber = database.countClass("Profile");
 
     Profile bObama = database.newInstance(Profile.class, "ThePresident", "Barack", "Obama", null);
-    bObama.setLocation(database.newInstance(Address.class, "Residence", database.newInstance(City.class, database.newInstance(Country.class, "Hawaii"), "Honolulu"), "unknown"));
-    bObama.addFollower(database.newInstance(Profile.class, "PresidentSon1", "Malia Ann", "Obama", bObama));
-    bObama.addFollower(database.newInstance(Profile.class, "PresidentSon2", "Natasha", "Obama", bObama));
+    bObama.setLocation(
+        database.newInstance(
+            Address.class,
+            "Residence",
+            database.newInstance(
+                City.class, database.newInstance(Country.class, "Hawaii"), "Honolulu"),
+            "unknown"));
+    bObama.addFollower(
+        database.newInstance(Profile.class, "PresidentSon1", "Malia Ann", "Obama", bObama));
+    bObama.addFollower(
+        database.newInstance(Profile.class, "PresidentSon2", "Natasha", "Obama", bObama));
 
     database.save(bObama);
   }
@@ -285,7 +323,13 @@ public class ObjectTreeTest extends ObjectDBBaseTest {
   public void testQueryMultiCircular() {
     Assert.assertEquals(database.countClass("Profile"), startRecordNumber + 3);
 
-    List<ODocument> result = database.getUnderlying().command(new OSQLSynchQuery<ODocument>("select * from Profile where name = 'Barack' and surname = 'Obama'")).execute();
+    List<ODocument> result =
+        database
+            .getUnderlying()
+            .command(
+                new OSQLSynchQuery<ODocument>(
+                    "select * from Profile where name = 'Barack' and surname = 'Obama'"))
+            .execute();
 
     Assert.assertEquals(result.size(), 1);
 
@@ -297,9 +341,19 @@ public class ObjectTreeTest extends ObjectDBBaseTest {
 
       if (followers != null) {
         for (ODocument follower : followers) {
-          Assert.assertTrue(((Collection<ODocument>) follower.field("followings")).contains(profile));
+          Assert.assertTrue(
+              ((Collection<ODocument>) follower.field("followings")).contains(profile));
 
-          System.out.println("- follower: " + follower.field("name") + " " + follower.field("surname") + " (parent: " + follower.field("name") + " " + follower.field("surname") + ")");
+          System.out.println(
+              "- follower: "
+                  + follower.field("name")
+                  + " "
+                  + follower.field("surname")
+                  + " (parent: "
+                  + follower.field("name")
+                  + " "
+                  + follower.field("surname")
+                  + ")");
         }
       }
     }
@@ -442,7 +496,8 @@ public class ObjectTreeTest extends ObjectDBBaseTest {
     test = database.load(rid);
     Assert.assertNotNull(test.getDuplicationTestSet());
     Assert.assertEquals(test.getDuplicationTestSet().size(), 1);
-    List<IdentityChild> childs = database.query(new OSQLSynchQuery<IdentityChild>("select from IdentityChild"));
+    List<IdentityChild> childs =
+        database.query(new OSQLSynchQuery<IdentityChild>("select from IdentityChild"));
     Assert.assertEquals(childs.size(), 1);
     database.delete(test);
   }
@@ -535,7 +590,6 @@ public class ObjectTreeTest extends ObjectDBBaseTest {
     Assert.assertEquals(((Collection<?>) doc.field("set")).size(), 4);
 
     database.delete(rid);
-
   }
 
   @Test(dependsOnMethods = "testCollectionsRemove")
@@ -722,7 +776,8 @@ public class ObjectTreeTest extends ObjectDBBaseTest {
     Assert.assertNull(listChild3);
     Assert.assertNotNull(listChild4);
     Assert.assertNull(setChild1);
-    Assert.assertTrue((setChild3 != null && setChild2 == null) || (setChild3 == null && setChild2 != null));
+    Assert.assertTrue(
+        (setChild3 != null && setChild2 == null) || (setChild3 == null && setChild2 != null));
     Assert.assertNotNull(setChild4);
     database.delete(test);
   }
@@ -769,8 +824,7 @@ public class ObjectTreeTest extends ObjectDBBaseTest {
           Assert.assertNotNull(test.getList().get(i));
         }
       }
-      for (Child c : test.getSet()) {
-      }
+      for (Child c : test.getSet()) {}
     } catch (NullPointerException npe) {
       Assert.fail("NullPointer on list retrieving that shouldn't happen");
     }
@@ -867,21 +921,22 @@ public class ObjectTreeTest extends ObjectDBBaseTest {
   @Test(dependsOnMethods = "testPool")
   public void testCustomTypes() {
     OObjectSerializerContext serializerContext = new OObjectSerializerContext();
-    serializerContext.bind(new OObjectSerializer<CustomType, Long>() {
+    serializerContext.bind(
+        new OObjectSerializer<CustomType, Long>() {
 
-      @Override
-      public Long serializeFieldValue(Class<?> itype, CustomType iFieldValue) {
-        serialized++;
-        return iFieldValue.value;
-      }
+          @Override
+          public Long serializeFieldValue(Class<?> itype, CustomType iFieldValue) {
+            serialized++;
+            return iFieldValue.value;
+          }
 
-      @Override
-      public CustomType unserializeFieldValue(Class<?> itype, Long iFieldValue) {
-        unserialized++;
-        return new CustomType(iFieldValue);
-      }
-
-    }, database);
+          @Override
+          public CustomType unserializeFieldValue(Class<?> itype, Long iFieldValue) {
+            unserialized++;
+            return new CustomType(iFieldValue);
+          }
+        },
+        database);
     OObjectSerializerHelper.bindSerializerContext(null, serializerContext);
     database.getEntityManager().registerEntityClass(CustomClass.class);
 
@@ -897,7 +952,9 @@ public class ObjectTreeTest extends ObjectDBBaseTest {
     Map<Long, CustomType> customTypeMap = new HashMap<Long, CustomType>();
     customTypeMap.put(1L, new CustomType(104L));
 
-    CustomClass pojo = new CustomClass("test", 33L, new CustomType(101L), customTypesList, customTypeSet, customTypeMap);
+    CustomClass pojo =
+        new CustomClass(
+            "test", 33L, new CustomType(101L), customTypesList, customTypeSet, customTypeMap);
     // init counters
     serialized = 0;
     unserialized = 0;
@@ -946,7 +1003,15 @@ public class ObjectTreeTest extends ObjectDBBaseTest {
       Map<Long, CustomType> customTypeMap = new HashMap<Long, CustomType>();
       customTypeMap.put(1L, new CustomType(104L));
 
-      CustomClass pojo = database.newInstance(CustomClass.class, "test", 33L, new CustomType(101L), customTypesList, customTypeSet, customTypeMap);
+      CustomClass pojo =
+          database.newInstance(
+              CustomClass.class,
+              "test",
+              33L,
+              new CustomType(101L),
+              customTypesList,
+              customTypeSet,
+              customTypeMap);
       Assert.assertEquals(serialized, 4);
       Assert.assertEquals(unserialized, 0);
 
@@ -990,22 +1055,26 @@ public class ObjectTreeTest extends ObjectDBBaseTest {
     ORID rid = null;
     try {
       OObjectSerializerContext serializerContext = new OObjectSerializerContext();
-      serializerContext.bind(new OObjectSerializer<SecurityRole, String>() {
+      serializerContext.bind(
+          new OObjectSerializer<SecurityRole, String>() {
 
-        @Override
-        public Object serializeFieldValue(Class<?> type, SecurityRole role) {
-          return role.name();
-        }
+            @Override
+            public Object serializeFieldValue(Class<?> type, SecurityRole role) {
+              return role.name();
+            }
 
-        @Override
-        public Object unserializeFieldValue(Class<?> type, String str) {
-          return SecurityRole.getByName(str);
-        }
-      }, database);
+            @Override
+            public Object unserializeFieldValue(Class<?> type, String str) {
+              return SecurityRole.getByName(str);
+            }
+          },
+          database);
 
       OObjectSerializerHelper.bindSerializerContext(null, serializerContext);
 
-      database.getEntityManager().registerEntityClasses("com.orientechnologies.orient.test.domain.customserialization");
+      database
+          .getEntityManager()
+          .registerEntityClasses("com.orientechnologies.orient.test.domain.customserialization");
 
       Sec s = new Sec();
       s.getSecurityRoleList().add(SecurityRole.LOGIN);
@@ -1217,7 +1286,6 @@ public class ObjectTreeTest extends ObjectDBBaseTest {
     }
   }
 
-
   @Test
   public void testSave() {
 
@@ -1271,11 +1339,9 @@ public class ObjectTreeTest extends ObjectDBBaseTest {
 
   public static class RefParent {
 
-    @Id
-    private Serializable id;
+    @Id private Serializable id;
 
-    @Version
-    private int version;
+    @Version private int version;
 
     private Set<RefChild> children = new HashSet<RefChild>();
 
@@ -1296,18 +1362,13 @@ public class ObjectTreeTest extends ObjectDBBaseTest {
     }
   }
 
-
   public static class RefChild {
 
-    @Id
-    private Serializable id;
+    @Id private Serializable id;
 
-    @Version
-    private int version;
+    @Version private int version;
 
-    @OneToOne
-    private OtherThing otherThing;
-
+    @OneToOne private OtherThing otherThing;
 
     public Serializable getId() {
       return id;
@@ -1328,15 +1389,12 @@ public class ObjectTreeTest extends ObjectDBBaseTest {
 
   public static class OtherThing {
 
-    @Id
-    private Serializable id;
+    @Id private Serializable id;
 
-    @Version
-    private int version;
+    @Version private int version;
 
     private RefParent relationToParent1;
     private RefParent relationToParent2;
-
 
     public Serializable getId() {
       return id;

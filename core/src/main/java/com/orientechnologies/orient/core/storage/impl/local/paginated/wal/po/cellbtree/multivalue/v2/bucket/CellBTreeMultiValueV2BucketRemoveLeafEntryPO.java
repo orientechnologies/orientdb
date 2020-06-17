@@ -9,15 +9,13 @@ import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.WALRecordTypes;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.PageOperationRecord;
 import com.orientechnologies.orient.core.storage.index.sbtree.multivalue.v2.CellBTreeMultiValueV2Bucket;
-
 import java.nio.ByteBuffer;
 
 public final class CellBTreeMultiValueV2BucketRemoveLeafEntryPO extends PageOperationRecord {
-  private int  index;
+  private int index;
   private ORID value;
 
-  public CellBTreeMultiValueV2BucketRemoveLeafEntryPO() {
-  }
+  public CellBTreeMultiValueV2BucketRemoveLeafEntryPO() {}
 
   public CellBTreeMultiValueV2BucketRemoveLeafEntryPO(int index, ORID value) {
     this.index = index;
@@ -57,7 +55,10 @@ public final class CellBTreeMultiValueV2BucketRemoveLeafEntryPO extends PageOper
 
   @Override
   public int serializedSize() {
-    return super.serializedSize() + OIntegerSerializer.INT_SIZE + OLongSerializer.LONG_SIZE + OShortSerializer.SHORT_SIZE;
+    return super.serializedSize()
+        + OIntegerSerializer.INT_SIZE
+        + OLongSerializer.LONG_SIZE
+        + OShortSerializer.SHORT_SIZE;
   }
 
   @Override

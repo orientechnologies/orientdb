@@ -8,16 +8,17 @@ import com.orientechnologies.orient.core.sql.parser.OBinaryCompareOperator;
 import com.orientechnologies.orient.core.sql.parser.OBinaryCondition;
 import com.orientechnologies.orient.core.sql.parser.OBooleanExpression;
 
-/**
- * Created by luigidellaquila on 26/07/16.
- */
+/** Created by luigidellaquila on 26/07/16. */
 public class IndexSearchDescriptor {
-  protected OIndex             idx;
-  protected OAndBlock          keyCondition;
-  protected OBinaryCondition   additionalRangeCondition;
+  protected OIndex idx;
+  protected OAndBlock keyCondition;
+  protected OBinaryCondition additionalRangeCondition;
   protected OBooleanExpression remainingCondition;
 
-  public IndexSearchDescriptor(OIndex idx, OAndBlock keyCondition, OBinaryCondition additional,
+  public IndexSearchDescriptor(
+      OIndex idx,
+      OAndBlock keyCondition,
+      OBinaryCondition additional,
       OBooleanExpression remainingCondition) {
     this.idx = idx;
     this.keyCondition = keyCondition;
@@ -25,9 +26,7 @@ public class IndexSearchDescriptor {
     this.remainingCondition = remainingCondition;
   }
 
-  public IndexSearchDescriptor() {
-
-  }
+  public IndexSearchDescriptor() {}
 
   public int cost(OCommandContext ctx) {
     OQueryStats stats = OQueryStats.get((ODatabaseDocumentInternal) ctx.getDatabase());
@@ -35,7 +34,8 @@ public class IndexSearchDescriptor {
     String indexName = idx.getName();
     int size = keyCondition.getSubBlocks().size();
     boolean range = false;
-    OBooleanExpression lastOp = keyCondition.getSubBlocks().get(keyCondition.getSubBlocks().size() - 1);
+    OBooleanExpression lastOp =
+        keyCondition.getSubBlocks().get(keyCondition.getSubBlocks().size() - 1);
     if (lastOp instanceof OBinaryCondition) {
       OBinaryCompareOperator op = ((OBinaryCondition) lastOp).getOperator();
       range = op.isRangeOperator();
@@ -43,7 +43,7 @@ public class IndexSearchDescriptor {
 
     long val = stats.getIndexStats(indexName, size, range, additionalRangeCondition != null);
     if (val == -1) {
-      //TODO query the index!
+      // TODO query the index!
     }
     if (val >= 0) {
       return val > Integer.MAX_VALUE ? Integer.MAX_VALUE : (int) val;

@@ -21,57 +21,73 @@ import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
-import org.testng.Assert;
-import org.testng.annotations.*;
-
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import org.testng.Assert;
+import org.testng.annotations.AfterClass;
+import org.testng.annotations.BeforeClass;
+import org.testng.annotations.Optional;
+import org.testng.annotations.Parameters;
+import org.testng.annotations.Test;
 
 @Test(groups = "sql-findReferences")
 public class SQLFindReferencesTest extends DocumentDBBaseTest {
 
   private static final String WORKPLACE = "Workplace";
-  private static final String WORKER    = "Worker";
-  private static final String CAR       = "Car";
+  private static final String WORKER = "Worker";
+  private static final String CAR = "Car";
 
-  private ORID                carID;
-  private ORID                johnDoeID;
-  private ORID                janeDoeID;
-  private ORID                chuckNorrisID;
-  private ORID                jackBauerID;
-  private ORID                ctuID;
-  private ORID                fbiID;
+  private ORID carID;
+  private ORID johnDoeID;
+  private ORID janeDoeID;
+  private ORID chuckNorrisID;
+  private ORID jackBauerID;
+  private ORID ctuID;
+  private ORID fbiID;
 
-	@Parameters(value = "url")
-	public SQLFindReferencesTest(@Optional String url) {
-		super(url);
-	}
+  @Parameters(value = "url")
+  public SQLFindReferencesTest(@Optional String url) {
+    super(url);
+  }
 
   @SuppressWarnings("unchecked")
   @Test
   public void findSimpleReference() {
-    Collection<ODocument> result = database.command(new OCommandSQL("find references " + carID)).execute();
+    Collection<ODocument> result =
+        database.command(new OCommandSQL("find references " + carID)).execute();
 
     Assert.assertEquals(result.size(), 1);
-    Assert.assertEquals(((Collection<OIdentifiable>) result.iterator().next().field("referredBy")).iterator().next(), johnDoeID);
+    Assert.assertEquals(
+        ((Collection<OIdentifiable>) result.iterator().next().field("referredBy"))
+            .iterator()
+            .next(),
+        johnDoeID);
 
     // SUB QUERY
-    result = database.command(new OCommandSQL("find references ( select from " + carID + ")")).execute();
+    result =
+        database.command(new OCommandSQL("find references ( select from " + carID + ")")).execute();
     Assert.assertEquals(result.size(), 1);
-    Assert.assertEquals(((Collection<OIdentifiable>) result.iterator().next().field("referredBy")).iterator().next(), johnDoeID);
+    Assert.assertEquals(
+        ((Collection<OIdentifiable>) result.iterator().next().field("referredBy"))
+            .iterator()
+            .next(),
+        johnDoeID);
 
     result = database.command(new OCommandSQL("find references " + chuckNorrisID)).execute();
     Assert.assertEquals(result.size(), 1);
-    Assert.assertEquals(((Collection<OIdentifiable>) result.iterator().next().field("referredBy")).size(), 2);
+    Assert.assertEquals(
+        ((Collection<OIdentifiable>) result.iterator().next().field("referredBy")).size(), 2);
 
-    for (OIdentifiable rid : ((Collection<OIdentifiable>) result.iterator().next().field("referredBy"))) {
+    for (OIdentifiable rid :
+        ((Collection<OIdentifiable>) result.iterator().next().field("referredBy"))) {
       Assert.assertTrue(rid.equals(ctuID) || rid.equals(fbiID));
     }
 
     result = database.command(new OCommandSQL("find references " + johnDoeID)).execute();
     Assert.assertEquals(result.size(), 1);
-    Assert.assertEquals(((Collection<OIdentifiable>) result.iterator().next().field("referredBy")).size(), 0);
+    Assert.assertEquals(
+        ((Collection<OIdentifiable>) result.iterator().next().field("referredBy")).size(), 0);
 
     result.clear();
     result = null;
@@ -80,27 +96,52 @@ public class SQLFindReferencesTest extends DocumentDBBaseTest {
   @SuppressWarnings("unchecked")
   @Test
   public void findReferenceByClassAndClusters() {
-    Collection<ODocument> result = database.command(new OCommandSQL("find references " + janeDoeID + " [" + WORKPLACE + "]"))
-        .execute();
+    Collection<ODocument> result =
+        database
+            .command(new OCommandSQL("find references " + janeDoeID + " [" + WORKPLACE + "]"))
+            .execute();
 
     Assert.assertEquals(result.size(), 1);
-    Assert.assertTrue(((Collection<OIdentifiable>) result.iterator().next().field("referredBy")).iterator().next().equals(ctuID));
+    Assert.assertTrue(
+        ((Collection<OIdentifiable>) result.iterator().next().field("referredBy"))
+            .iterator()
+            .next()
+            .equals(ctuID));
 
-    result = database.command(new OCommandSQL("find references " + jackBauerID + " [" + WORKPLACE + ",cluster:" + CAR + "]"))
-        .execute();
+    result =
+        database
+            .command(
+                new OCommandSQL(
+                    "find references " + jackBauerID + " [" + WORKPLACE + ",cluster:" + CAR + "]"))
+            .execute();
 
     Assert.assertEquals(result.size(), 1);
-    Assert.assertEquals(((Collection<OIdentifiable>) result.iterator().next().field("referredBy")).size(), 3);
+    Assert.assertEquals(
+        ((Collection<OIdentifiable>) result.iterator().next().field("referredBy")).size(), 3);
 
-    for (OIdentifiable rid : ((Collection<OIdentifiable>) result.iterator().next().field("referredBy"))) {
+    for (OIdentifiable rid :
+        ((Collection<OIdentifiable>) result.iterator().next().field("referredBy"))) {
       Assert.assertTrue(rid.equals(ctuID) || rid.equals(fbiID) || rid.equals(carID));
     }
 
-    result = database.command(
-        new OCommandSQL("find references " + johnDoeID + " [" + WORKPLACE + "," + CAR + ",cluster:" + WORKER + "]")).execute();
+    result =
+        database
+            .command(
+                new OCommandSQL(
+                    "find references "
+                        + johnDoeID
+                        + " ["
+                        + WORKPLACE
+                        + ","
+                        + CAR
+                        + ",cluster:"
+                        + WORKER
+                        + "]"))
+            .execute();
 
     Assert.assertEquals(result.size(), 1);
-    Assert.assertEquals(((Collection<OIdentifiable>) result.iterator().next().field("referredBy")).size(), 0);
+    Assert.assertEquals(
+        ((Collection<OIdentifiable>) result.iterator().next().field("referredBy")).size(), 0);
 
     result.clear();
     result = null;
@@ -128,7 +169,6 @@ public class SQLFindReferencesTest extends DocumentDBBaseTest {
 
     car.createProperty("plate", OType.STRING);
     car.createProperty("owner", OType.LINK, worker);
-
   }
 
   private void populateDatabase() {
@@ -187,7 +227,7 @@ public class SQLFindReferencesTest extends DocumentDBBaseTest {
 
   @AfterClass
   public void deleteTestEnvironment() {
-		database.open("admin", "admin");
+    database.open("admin", "admin");
 
     carID.reset();
     carID = null;
@@ -205,7 +245,7 @@ public class SQLFindReferencesTest extends DocumentDBBaseTest {
     fbiID = null;
     deleteSchema();
 
-		database.close();
+    database.close();
   }
 
   private void deleteSchema() {
@@ -228,5 +268,4 @@ public class SQLFindReferencesTest extends DocumentDBBaseTest {
       database.reload();
     }
   }
-
 }

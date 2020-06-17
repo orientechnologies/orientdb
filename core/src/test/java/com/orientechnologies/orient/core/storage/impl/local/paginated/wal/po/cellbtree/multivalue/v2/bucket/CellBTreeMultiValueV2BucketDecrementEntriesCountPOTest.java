@@ -9,11 +9,10 @@ import com.orientechnologies.orient.core.storage.cache.OCacheEntryImpl;
 import com.orientechnologies.orient.core.storage.cache.OCachePointer;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.PageOperationRecord;
 import com.orientechnologies.orient.core.storage.index.sbtree.multivalue.v2.CellBTreeMultiValueV2Bucket;
-import org.junit.Assert;
-import org.junit.Test;
-
 import java.nio.ByteBuffer;
 import java.util.List;
+import org.junit.Assert;
+import org.junit.Test;
 
 public class CellBTreeMultiValueV2BucketDecrementEntriesCountPOTest {
   @Test
@@ -28,13 +27,14 @@ public class CellBTreeMultiValueV2BucketDecrementEntriesCountPOTest {
       CellBTreeMultiValueV2Bucket<Byte> bucket = new CellBTreeMultiValueV2Bucket<>(entry);
       bucket.init(true);
 
-      bucket.createMainLeafEntry(0, new byte[] { 1 }, new ORecordId(1, 1), 1);
+      bucket.createMainLeafEntry(0, new byte[] {1}, new ORecordId(1, 1), 1);
       bucket.incrementEntriesCount(0);
 
       entry.clearPageOperations();
 
       final OPointer restoredPointer = byteBufferPool.acquireDirect(false);
-      final OCachePointer restoredCachePointer = new OCachePointer(restoredPointer, byteBufferPool, 0, 0);
+      final OCachePointer restoredCachePointer =
+          new OCachePointer(restoredPointer, byteBufferPool, 0, 0);
       final OCacheEntry restoredCacheEntry = new OCacheEntryImpl(0, 0, restoredCachePointer);
 
       final ByteBuffer originalBuffer = cachePointer.getBufferDuplicate();
@@ -50,15 +50,18 @@ public class CellBTreeMultiValueV2BucketDecrementEntriesCountPOTest {
       final List<PageOperationRecord> operations = entry.getPageOperations();
       Assert.assertEquals(1, operations.size());
 
-      Assert.assertTrue(operations.get(0) instanceof CellBTreeMultiValueV2BucketDecrementEntriesCountPO);
+      Assert.assertTrue(
+          operations.get(0) instanceof CellBTreeMultiValueV2BucketDecrementEntriesCountPO);
 
-      final CellBTreeMultiValueV2BucketDecrementEntriesCountPO pageOperation = (CellBTreeMultiValueV2BucketDecrementEntriesCountPO) operations
-          .get(0);
+      final CellBTreeMultiValueV2BucketDecrementEntriesCountPO pageOperation =
+          (CellBTreeMultiValueV2BucketDecrementEntriesCountPO) operations.get(0);
 
-      CellBTreeMultiValueV2Bucket<Byte> restoredBucket = new CellBTreeMultiValueV2Bucket<>(restoredCacheEntry);
+      CellBTreeMultiValueV2Bucket<Byte> restoredBucket =
+          new CellBTreeMultiValueV2Bucket<>(restoredCacheEntry);
       Assert.assertEquals(1, restoredBucket.size());
 
-      CellBTreeMultiValueV2Bucket.LeafEntry leafEntry = restoredBucket.getLeafEntry(0, OByteSerializer.INSTANCE, false);
+      CellBTreeMultiValueV2Bucket.LeafEntry leafEntry =
+          restoredBucket.getLeafEntry(0, OByteSerializer.INSTANCE, false);
       Assert.assertEquals(2, leafEntry.entriesCount);
       Assert.assertEquals(new ORecordId(1, 1), leafEntry.values.get(0));
       Assert.assertEquals(1, leafEntry.mId);
@@ -92,7 +95,7 @@ public class CellBTreeMultiValueV2BucketDecrementEntriesCountPOTest {
       CellBTreeMultiValueV2Bucket<Byte> bucket = new CellBTreeMultiValueV2Bucket<>(entry);
       bucket.init(true);
 
-      bucket.createMainLeafEntry(0, new byte[] { 1 }, new ORecordId(1, 1), 1);
+      bucket.createMainLeafEntry(0, new byte[] {1}, new ORecordId(1, 1), 1);
       bucket.incrementEntriesCount(0);
 
       entry.clearPageOperations();
@@ -102,16 +105,19 @@ public class CellBTreeMultiValueV2BucketDecrementEntriesCountPOTest {
       final List<PageOperationRecord> operations = entry.getPageOperations();
       Assert.assertEquals(1, operations.size());
 
-      Assert.assertTrue(operations.get(0) instanceof CellBTreeMultiValueV2BucketDecrementEntriesCountPO);
+      Assert.assertTrue(
+          operations.get(0) instanceof CellBTreeMultiValueV2BucketDecrementEntriesCountPO);
 
-      final CellBTreeMultiValueV2BucketDecrementEntriesCountPO pageOperation = (CellBTreeMultiValueV2BucketDecrementEntriesCountPO) operations
-          .get(0);
+      final CellBTreeMultiValueV2BucketDecrementEntriesCountPO pageOperation =
+          (CellBTreeMultiValueV2BucketDecrementEntriesCountPO) operations.get(0);
 
-      final CellBTreeMultiValueV2Bucket<Byte> restoredBucket = new CellBTreeMultiValueV2Bucket<>(entry);
+      final CellBTreeMultiValueV2Bucket<Byte> restoredBucket =
+          new CellBTreeMultiValueV2Bucket<>(entry);
 
       Assert.assertEquals(1, restoredBucket.size());
 
-      CellBTreeMultiValueV2Bucket.LeafEntry leafEntry = restoredBucket.getLeafEntry(0, OByteSerializer.INSTANCE, false);
+      CellBTreeMultiValueV2Bucket.LeafEntry leafEntry =
+          restoredBucket.getLeafEntry(0, OByteSerializer.INSTANCE, false);
       Assert.assertEquals(1, leafEntry.entriesCount);
       Assert.assertEquals(new ORecordId(1, 1), leafEntry.values.get(0));
       Assert.assertEquals(1, leafEntry.mId);
@@ -133,7 +139,8 @@ public class CellBTreeMultiValueV2BucketDecrementEntriesCountPOTest {
 
   @Test
   public void testSerialization() {
-    CellBTreeMultiValueV2BucketDecrementEntriesCountPO operation = new CellBTreeMultiValueV2BucketDecrementEntriesCountPO(42);
+    CellBTreeMultiValueV2BucketDecrementEntriesCountPO operation =
+        new CellBTreeMultiValueV2BucketDecrementEntriesCountPO(42);
 
     operation.setFileId(42);
     operation.setPageIndex(24);
@@ -145,7 +152,8 @@ public class CellBTreeMultiValueV2BucketDecrementEntriesCountPOTest {
 
     Assert.assertEquals(serializedSize + 1, pos);
 
-    CellBTreeMultiValueV2BucketDecrementEntriesCountPO restoredOperation = new CellBTreeMultiValueV2BucketDecrementEntriesCountPO();
+    CellBTreeMultiValueV2BucketDecrementEntriesCountPO restoredOperation =
+        new CellBTreeMultiValueV2BucketDecrementEntriesCountPO();
     restoredOperation.fromStream(stream, 1);
 
     Assert.assertEquals(42, restoredOperation.getFileId());

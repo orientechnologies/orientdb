@@ -27,7 +27,10 @@ import com.orientechnologies.common.util.OSizeable;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
-import com.orientechnologies.orient.core.db.record.*;
+import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.db.record.OMultiValueChangeEvent;
+import com.orientechnologies.orient.core.db.record.OMultiValueChangeTimeLine;
+import com.orientechnologies.orient.core.db.record.ORecordElement;
 import com.orientechnologies.orient.core.db.record.ridbag.ORidBagDelegate;
 import com.orientechnologies.orient.core.exception.OSerializationException;
 import com.orientechnologies.orient.core.id.ORID;
@@ -36,24 +39,30 @@ import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.OSimpleMultiValueTracker;
 import com.orientechnologies.orient.core.serialization.serializer.binary.impl.OLinkSerializer;
 import com.orientechnologies.orient.core.storage.ridbag.sbtree.Change;
-
-import java.util.*;
+import java.util.Collection;
+import java.util.Iterator;
+import java.util.List;
+import java.util.ListIterator;
+import java.util.NavigableMap;
+import java.util.NoSuchElementException;
+import java.util.UUID;
 
 public class OEmbeddedRidBag implements ORidBagDelegate {
   private boolean contentWasChanged = false;
 
-  private Object[] entries       = OCommonConst.EMPTY_OBJECT_ARRAY;
-  private int      entriesLength = 0;
+  private Object[] entries = OCommonConst.EMPTY_OBJECT_ARRAY;
+  private int entriesLength = 0;
 
   private boolean convertToRecord = true;
-  private int     size            = 0;
+  private int size = 0;
 
   private transient ORecordElement owner;
 
-  private boolean dirty            = false;
+  private boolean dirty = false;
   private boolean transactionDirty = false;
 
-  private OSimpleMultiValueTracker<OIdentifiable, OIdentifiable> tracker = new OSimpleMultiValueTracker<>(this);
+  private OSimpleMultiValueTracker<OIdentifiable, OIdentifiable> tracker =
+      new OSimpleMultiValueTracker<>(this);
 
   @Override
   public void setSize(int size) {
@@ -70,9 +79,9 @@ public class OEmbeddedRidBag implements ORidBagDelegate {
 
   private final class EntriesIterator implements Iterator<OIdentifiable>, OResettable, OSizeable {
     private final boolean convertToRecord;
-    private       int     currentIndex = -1;
-    private       int     nextIndex    = -1;
-    private       boolean currentRemoved;
+    private int currentIndex = -1;
+    private int nextIndex = -1;
+    private boolean currentRemoved;
 
     private EntriesIterator(boolean convertToRecord) {
       reset();
@@ -81,10 +90,10 @@ public class OEmbeddedRidBag implements ORidBagDelegate {
 
     @Override
     public boolean hasNext() {
-      //we may remove items in ridbag during iteration so we need to be sure that pointed item is not removed.
+      // we may remove items in ridbag during iteration so we need to be sure that pointed item is
+      // not removed.
       if (nextIndex > -1) {
-        if (entries[nextIndex] instanceof OIdentifiable)
-          return true;
+        if (entries[nextIndex] instanceof OIdentifiable) return true;
 
         nextIndex = nextIndex();
       }
@@ -97,18 +106,17 @@ public class OEmbeddedRidBag implements ORidBagDelegate {
       currentRemoved = false;
 
       currentIndex = nextIndex;
-      if (currentIndex == -1)
-        throw new NoSuchElementException();
+      if (currentIndex == -1) throw new NoSuchElementException();
 
       Object nextValue = entries[currentIndex];
 
-      //we may remove items in ridbag during iteration so we need to be sure that pointed item is not removed.
+      // we may remove items in ridbag during iteration so we need to be sure that pointed item is
+      // not removed.
       if (!(nextValue instanceof OIdentifiable)) {
         nextIndex = nextIndex();
 
         currentIndex = nextIndex;
-        if (currentIndex == -1)
-          throw new NoSuchElementException();
+        if (currentIndex == -1) throw new NoSuchElementException();
 
         nextValue = entries[currentIndex];
       }
@@ -121,8 +129,7 @@ public class OEmbeddedRidBag implements ORidBagDelegate {
       nextIndex = nextIndex();
 
       final OIdentifiable identifiable = (OIdentifiable) nextValue;
-      if (convertToRecord)
-        return identifiable.getRecord();
+      if (convertToRecord) return identifiable.getRecord();
 
       return identifiable;
     }
@@ -177,8 +184,7 @@ public class OEmbeddedRidBag implements ORidBagDelegate {
     private int nextIndex() {
       for (int i = currentIndex + 1; i < entriesLength; i++) {
         Object entry = entries[i];
-        if (entry instanceof OIdentifiable)
-          return i;
+        if (entry instanceof OIdentifiable) return i;
       }
 
       return -1;
@@ -192,12 +198,10 @@ public class OEmbeddedRidBag implements ORidBagDelegate {
 
   @Override
   public boolean contains(OIdentifiable identifiable) {
-    if (identifiable == null)
-      return false;
+    if (identifiable == null) return false;
 
     for (int i = 0; i < entriesLength; i++) {
-      if (identifiable.equals(entries[i]))
-        return true;
+      if (identifiable.equals(entries[i])) return true;
     }
 
     return false;
@@ -206,8 +210,10 @@ public class OEmbeddedRidBag implements ORidBagDelegate {
   @Override
   public void setOwner(ORecordElement owner) {
     if (owner != null && this.owner != null && !this.owner.equals(owner)) {
-      throw new IllegalStateException("This data structure is owned by document " + owner
-          + " if you want to use it in other document create new rid bag instance and copy content of current one.");
+      throw new IllegalStateException(
+          "This data structure is owned by document "
+              + owner
+              + " if you want to use it in other document create new rid bag instance and copy content of current one.");
     }
     if (this.owner != null) {
       for (int i = 0; i < entriesLength; i++) {
@@ -231,8 +237,7 @@ public class OEmbeddedRidBag implements ORidBagDelegate {
 
   @Override
   public void addAll(Collection<OIdentifiable> values) {
-    for (OIdentifiable value : values)
-      add(value);
+    for (OIdentifiable value : values) add(value);
   }
 
   @Override
@@ -373,8 +378,7 @@ public class OEmbeddedRidBag implements ORidBagDelegate {
         try {
           OIdentifiable e = it.next();
           if (e != null) {
-            if (sb.length() > 1)
-              sb.append(", ");
+            if (sb.length() > 1) sb.append(", ");
 
             sb.append(e.getIdentity());
           }
@@ -384,30 +388,29 @@ public class OEmbeddedRidBag implements ORidBagDelegate {
       }
       return sb.append(']').toString();
 
-    } else
-      return "[size=" + size + "]";
+    } else return "[size=" + size + "]";
   }
 
   @Override
-  public Object returnOriginalState(List<OMultiValueChangeEvent<OIdentifiable, OIdentifiable>> multiValueChangeEvents) {
+  public Object returnOriginalState(
+      List<OMultiValueChangeEvent<OIdentifiable, OIdentifiable>> multiValueChangeEvents) {
     final OEmbeddedRidBag reverted = new OEmbeddedRidBag();
-    for (OIdentifiable identifiable : this)
-      reverted.add(identifiable);
+    for (OIdentifiable identifiable : this) reverted.add(identifiable);
 
-    final ListIterator<OMultiValueChangeEvent<OIdentifiable, OIdentifiable>> listIterator = multiValueChangeEvents
-        .listIterator(multiValueChangeEvents.size());
+    final ListIterator<OMultiValueChangeEvent<OIdentifiable, OIdentifiable>> listIterator =
+        multiValueChangeEvents.listIterator(multiValueChangeEvents.size());
 
     while (listIterator.hasPrevious()) {
       final OMultiValueChangeEvent<OIdentifiable, OIdentifiable> event = listIterator.previous();
       switch (event.getChangeType()) {
-      case ADD:
-        reverted.remove(event.getKey());
-        break;
-      case REMOVE:
-        reverted.add(event.getOldValue());
-        break;
-      default:
-        throw new IllegalArgumentException("Invalid change type : " + event.getChangeType());
+        case ADD:
+          reverted.remove(event.getKey());
+          break;
+        case REMOVE:
+          reverted.add(event.getOldValue());
+          break;
+        default:
+          throw new IllegalArgumentException("Invalid change type : " + event.getChangeType());
       }
     }
 
@@ -427,7 +430,8 @@ public class OEmbeddedRidBag implements ORidBagDelegate {
 
   @Override
   public int getSerializedSize(byte[] stream, int offset) {
-    return OIntegerSerializer.INSTANCE.deserializeLiteral(stream, offset) * OLinkSerializer.RID_SIZE + OIntegerSerializer.INT_SIZE;
+    return OIntegerSerializer.INSTANCE.deserializeLiteral(stream, offset) * OLinkSerializer.RID_SIZE
+        + OIntegerSerializer.INT_SIZE;
   }
 
   @Override
@@ -470,24 +474,21 @@ public class OEmbeddedRidBag implements ORidBagDelegate {
       offset += OLinkSerializer.RID_SIZE;
 
       OIdentifiable identifiable = null;
-      if (rid.isTemporary())
-        identifiable = rid.getRecord();
+      if (rid.isTemporary()) identifiable = rid.getRecord();
+
+      if (identifiable == null) identifiable = rid;
 
       if (identifiable == null)
-        identifiable = rid;
-
-      if (identifiable == null)
-        OLogManager.instance().warn(this, "Found null reference during ridbag deserialization (rid=%s)", rid);
-      else
-        addInternal(identifiable);
+        OLogManager.instance()
+            .warn(this, "Found null reference during ridbag deserialization (rid=%s)", rid);
+      else addInternal(identifiable);
     }
 
     return offset;
   }
 
   @Override
-  public void requestDelete() {
-  }
+  public void requestDelete() {}
 
   @Override
   public Class<?> getGenericClass() {
@@ -496,14 +497,14 @@ public class OEmbeddedRidBag implements ORidBagDelegate {
 
   public void addInternal(final OIdentifiable identifiable) {
     addEntry(identifiable);
-    if (this.owner != null)
-      ORecordInternal.track(this.owner, identifiable);
+    if (this.owner != null) ORecordInternal.track(this.owner, identifiable);
   }
 
   public void addEntry(final OIdentifiable identifiable) {
     if (entries.length == entriesLength) {
       if (entriesLength == 0) {
-        final int cfgValue = OGlobalConfiguration.RID_BAG_EMBEDDED_TO_SBTREEBONSAI_THRESHOLD.getValueAsInteger();
+        final int cfgValue =
+            OGlobalConfiguration.RID_BAG_EMBEDDED_TO_SBTREEBONSAI_THRESHOLD.getValueAsInteger();
         entries = new Object[cfgValue > 0 ? Math.min(cfgValue, 40) : 40];
       } else {
         final Object[] oldEntries = entries;
@@ -539,8 +540,7 @@ public class OEmbeddedRidBag implements ORidBagDelegate {
   }
 
   private void addEvent(OIdentifiable key, OIdentifiable identifiable) {
-    if (this.owner != null)
-      ORecordInternal.track(this.owner, identifiable);
+    if (this.owner != null) ORecordInternal.track(this.owner, identifiable);
 
     if (tracker.isEnabled()) {
       tracker.add(key, identifiable);
@@ -550,8 +550,7 @@ public class OEmbeddedRidBag implements ORidBagDelegate {
   }
 
   private void updateEvent(OIdentifiable key, OIdentifiable oldValue, OIdentifiable newValue) {
-    if (this.owner != null)
-      ORecordInternal.unTrack(this.owner, oldValue);
+    if (this.owner != null) ORecordInternal.unTrack(this.owner, oldValue);
 
     if (tracker.isEnabled()) {
       tracker.updated(key, oldValue, newValue);
@@ -561,8 +560,7 @@ public class OEmbeddedRidBag implements ORidBagDelegate {
   }
 
   private void removeEvent(OIdentifiable removed) {
-    if (this.owner != null)
-      ORecordInternal.unTrack(this.owner, removed);
+    if (this.owner != null) ORecordInternal.unTrack(this.owner, removed);
 
     if (tracker.isEnabled()) {
       tracker.remove(removed, removed);
@@ -621,8 +619,7 @@ public class OEmbeddedRidBag implements ORidBagDelegate {
 
   @Override
   public void setDirtyNoChanged() {
-    if (owner != null)
-      owner.setDirtyNoChanged();
+    if (owner != null) owner.setDirtyNoChanged();
   }
 
   @Override

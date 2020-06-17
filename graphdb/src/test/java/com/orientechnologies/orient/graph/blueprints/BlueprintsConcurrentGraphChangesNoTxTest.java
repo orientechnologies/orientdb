@@ -21,10 +21,6 @@ import com.tinkerpop.blueprints.impls.orient.OrientEdgeType;
 import com.tinkerpop.blueprints.impls.orient.OrientGraph;
 import com.tinkerpop.blueprints.impls.orient.OrientGraphNoTx;
 import com.tinkerpop.blueprints.impls.orient.OrientVertexType;
-import org.junit.Assert;
-import org.junit.Ignore;
-import org.junit.Test;
-
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Iterator;
@@ -40,31 +36,36 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicInteger;
+import org.junit.Assert;
+import org.junit.Ignore;
+import org.junit.Test;
 
 public class BlueprintsConcurrentGraphChangesNoTxTest {
-  protected static final int    VERTEXES_COUNT = 1000;
-  protected static final int    EDGES_COUNT    = 5 * VERTEXES_COUNT;
-  protected static final int    THREADS        = 8;
-  protected static final String URL            = "plocal:./target/databases/BlueprintsConcurrentGraphChangesNoTxTest";
+  protected static final int VERTEXES_COUNT = 1000;
+  protected static final int EDGES_COUNT = 5 * VERTEXES_COUNT;
+  protected static final int THREADS = 8;
+  protected static final String URL =
+      "plocal:./target/databases/BlueprintsConcurrentGraphChangesNoTxTest";
 
-  protected final ConcurrentSkipListMap<String, TestVertex> vertexesToCreate = new ConcurrentSkipListMap<String, TestVertex>();
-  protected final List<TestVertex>                          vertexes         = new ArrayList<TestVertex>();
-  protected final List<TestEdge>                            edges            = new ArrayList<TestEdge>();
+  protected final ConcurrentSkipListMap<String, TestVertex> vertexesToCreate =
+      new ConcurrentSkipListMap<String, TestVertex>();
+  protected final List<TestVertex> vertexes = new ArrayList<TestVertex>();
+  protected final List<TestEdge> edges = new ArrayList<TestEdge>();
 
-  protected AtomicInteger  indexCollisionsCreate   = new AtomicInteger();
-  protected AtomicInteger  versionCollisionsCreate = new AtomicInteger();
-  protected CountDownLatch latchCreate             = new CountDownLatch(1);
-  protected final Random   random                  = new Random();
+  protected AtomicInteger indexCollisionsCreate = new AtomicInteger();
+  protected AtomicInteger versionCollisionsCreate = new AtomicInteger();
+  protected CountDownLatch latchCreate = new CountDownLatch(1);
+  protected final Random random = new Random();
 
-  protected CountDownLatch latchEdgeDelete             = new CountDownLatch(1);
-  protected AtomicInteger  versionCollisionsEdgeDelete = new AtomicInteger();
-  protected AtomicInteger  notFoundEdgeDelete          = new AtomicInteger();
+  protected CountDownLatch latchEdgeDelete = new CountDownLatch(1);
+  protected AtomicInteger versionCollisionsEdgeDelete = new AtomicInteger();
+  protected AtomicInteger notFoundEdgeDelete = new AtomicInteger();
 
-  protected CountDownLatch latchVertexDelete             = new CountDownLatch(1);
-  protected AtomicInteger  versionCollisionsVertexDelete = new AtomicInteger();
-  protected AtomicInteger  notFoundVertexDelete          = new AtomicInteger();
+  protected CountDownLatch latchVertexDelete = new CountDownLatch(1);
+  protected AtomicInteger versionCollisionsVertexDelete = new AtomicInteger();
+  protected AtomicInteger notFoundVertexDelete = new AtomicInteger();
 
-  protected long  beginTime      = 0;
+  protected long beginTime = 0;
   private boolean printTempStats = false;
 
   protected OrientBaseGraph getGraph() {
@@ -188,8 +189,7 @@ public class BlueprintsConcurrentGraphChangesNoTxTest {
 
     latchCreate.countDown();
 
-    for (Future<Void> future : futures)
-      future.get();
+    for (Future<Void> future : futures) future.get();
 
     final OrientBaseGraph g = getGraph();
     printStats(g);
@@ -207,8 +207,7 @@ public class BlueprintsConcurrentGraphChangesNoTxTest {
 
     latchEdgeDelete.countDown();
 
-    for (Future<Void> future : futures)
-      future.get();
+    for (Future<Void> future : futures) future.get();
 
     final OrientBaseGraph g = getGraph();
     printStats(g);
@@ -226,8 +225,7 @@ public class BlueprintsConcurrentGraphChangesNoTxTest {
 
     latchVertexDelete.countDown();
 
-    for (Future<Void> future : futures)
-      future.get();
+    for (Future<Void> future : futures) future.get();
 
     final OrientBaseGraph g = getGraph();
     printStats(g);
@@ -242,22 +240,33 @@ public class BlueprintsConcurrentGraphChangesNoTxTest {
     Assert.assertEquals(EDGES_COUNT, graph.countEdges("TestEdge"));
 
     for (TestVertex vertex : vertexes) {
-      Iterable<Vertex> vertexes = graph
-          .command(new OSQLSynchQuery<Vertex>("select from TestVertex where uuid = '" + vertex.uuid + "'")).execute();
+      Iterable<Vertex> vertexes =
+          graph
+              .command(
+                  new OSQLSynchQuery<Vertex>(
+                      "select from TestVertex where uuid = '" + vertex.uuid + "'"))
+              .execute();
 
       Assert.assertTrue(vertexes.iterator().hasNext());
     }
 
     for (TestEdge edge : edges) {
-      Iterable<Edge> edges = graph.command(new OSQLSynchQuery<Edge>("select from TestEdge where uuid = '" + edge.uuid + "'"))
-          .execute();
+      Iterable<Edge> edges =
+          graph
+              .command(
+                  new OSQLSynchQuery<Edge>("select from TestEdge where uuid = '" + edge.uuid + "'"))
+              .execute();
 
       Assert.assertTrue(edges.iterator().hasNext());
     }
 
     for (TestVertex vertex : vertexes) {
-      Iterable<Vertex> vertexes = graph
-          .command(new OSQLSynchQuery<Vertex>("select from TestVertex where uuid = '" + vertex.uuid + "'")).execute();
+      Iterable<Vertex> vertexes =
+          graph
+              .command(
+                  new OSQLSynchQuery<Vertex>(
+                      "select from TestVertex where uuid = '" + vertex.uuid + "'"))
+              .execute();
 
       Assert.assertTrue(vertexes.iterator().hasNext());
 
@@ -293,7 +302,6 @@ public class BlueprintsConcurrentGraphChangesNoTxTest {
         Assert.assertTrue(vertex.inEdges.contains(testEdge));
       }
       Assert.assertEquals(vertex.inEdges.size(), counter);
-
     }
     assertGraphIsConsistent(graph);
 
@@ -308,18 +316,24 @@ public class BlueprintsConcurrentGraphChangesNoTxTest {
     Assert.assertEquals(0, graph.countEdges("TestEdge"));
 
     for (TestVertex vertex : vertexes) {
-      Iterable<Vertex> vertexes = graph
-          .command(new OSQLSynchQuery<Vertex>("select from TestVertex where uuid = '" + vertex.uuid + "'")).execute();
+      Iterable<Vertex> vertexes =
+          graph
+              .command(
+                  new OSQLSynchQuery<Vertex>(
+                      "select from TestVertex where uuid = '" + vertex.uuid + "'"))
+              .execute();
 
       Assert.assertTrue(vertexes.iterator().hasNext());
 
       Vertex gVertex = vertexes.iterator().next();
 
-      OMultiCollectionIterator<Edge> outEdges = (OMultiCollectionIterator<Edge>) gVertex.getEdges(Direction.OUT);
+      OMultiCollectionIterator<Edge> outEdges =
+          (OMultiCollectionIterator<Edge>) gVertex.getEdges(Direction.OUT);
 
       Assert.assertEquals(outEdges.size(), 0);
 
-      OMultiCollectionIterator<Edge> inEdges = (OMultiCollectionIterator<Edge>) gVertex.getEdges(Direction.IN);
+      OMultiCollectionIterator<Edge> inEdges =
+          (OMultiCollectionIterator<Edge>) gVertex.getEdges(Direction.IN);
 
       Assert.assertEquals(inEdges.size(), 0);
     }
@@ -356,15 +370,12 @@ public class BlueprintsConcurrentGraphChangesNoTxTest {
 
     @Override
     public boolean equals(Object o) {
-      if (this == o)
-        return true;
-      if (o == null || getClass() != o.getClass())
-        return false;
+      if (this == o) return true;
+      if (o == null || getClass() != o.getClass()) return false;
 
       TestEdge testEdge = (TestEdge) o;
 
-      if (uuid != null ? !uuid.equals(testEdge.uuid) : testEdge.uuid != null)
-        return false;
+      if (uuid != null ? !uuid.equals(testEdge.uuid) : testEdge.uuid != null) return false;
 
       return true;
     }
@@ -394,35 +405,58 @@ public class BlueprintsConcurrentGraphChangesNoTxTest {
             boolean success = false;
             while (!success)
               try {
-                Iterable<Vertex> vertexes = graph
-                    .command(new OSQLSynchQuery<Vertex>("select from TestVertex where uuid = '" + fromVertex.uuid + "'")).execute();
+                Iterable<Vertex> vertexes =
+                    graph
+                        .command(
+                            new OSQLSynchQuery<Vertex>(
+                                "select from TestVertex where uuid = '" + fromVertex.uuid + "'"))
+                        .execute();
 
                 Vertex gFromVertex;
 
                 Iterator<Vertex> gVertexesIterator = vertexes.iterator();
 
                 if (!gVertexesIterator.hasNext()) {
-                  graph.command(new OCommandSQL("CREATE VERTEX TestVertex SET uuid = '" + fromVertex.uuid + "'")).execute();
-
-                  vertexes = graph
-                      .command(new OSQLSynchQuery<Vertex>("select from TestVertex where uuid = '" + fromVertex.uuid + "'"))
+                  graph
+                      .command(
+                          new OCommandSQL(
+                              "CREATE VERTEX TestVertex SET uuid = '" + fromVertex.uuid + "'"))
                       .execute();
+
+                  vertexes =
+                      graph
+                          .command(
+                              new OSQLSynchQuery<Vertex>(
+                                  "select from TestVertex where uuid = '" + fromVertex.uuid + "'"))
+                          .execute();
                   gVertexesIterator = vertexes.iterator();
                   gFromVertex = gVertexesIterator.next();
                 } else {
                   gFromVertex = gVertexesIterator.next();
                 }
 
-                vertexes = graph.command(new OSQLSynchQuery<Vertex>("select from TestVertex where uuid = '" + toVertex.uuid + "'"))
-                    .execute();
+                vertexes =
+                    graph
+                        .command(
+                            new OSQLSynchQuery<Vertex>(
+                                "select from TestVertex where uuid = '" + toVertex.uuid + "'"))
+                        .execute();
 
                 Vertex gToVertex;
 
                 gVertexesIterator = vertexes.iterator();
                 if (!gVertexesIterator.hasNext()) {
-                  graph.command(new OCommandSQL("CREATE VERTEX TestVertex SET uuid = '" + toVertex.uuid + "'")).execute();
-                  vertexes = graph
-                      .command(new OSQLSynchQuery<Vertex>("select from TestVertex where uuid = '" + toVertex.uuid + "'")).execute();
+                  graph
+                      .command(
+                          new OCommandSQL(
+                              "CREATE VERTEX TestVertex SET uuid = '" + toVertex.uuid + "'"))
+                      .execute();
+                  vertexes =
+                      graph
+                          .command(
+                              new OSQLSynchQuery<Vertex>(
+                                  "select from TestVertex where uuid = '" + toVertex.uuid + "'"))
+                          .execute();
 
                   gVertexesIterator = vertexes.iterator();
                   gToVertex = gVertexesIterator.next();
@@ -430,12 +464,25 @@ public class BlueprintsConcurrentGraphChangesNoTxTest {
                   gToVertex = gVertexesIterator.next();
                 }
 
-                Iterable<Edge> edges = graph
-                    .command(new OSQLSynchQuery<Edge>("select from TestEdge where uuid = '" + edge.uuid + "'")).execute();
+                Iterable<Edge> edges =
+                    graph
+                        .command(
+                            new OSQLSynchQuery<Edge>(
+                                "select from TestEdge where uuid = '" + edge.uuid + "'"))
+                        .execute();
 
                 if (!edges.iterator().hasNext()) {
-                  graph.command(new OCommandSQL("CREATE EDGE TestEdge FROM " + gFromVertex.getId() + " TO " + gToVertex.getId()
-                      + " SET uuid = '" + edge.uuid + "'")).execute();
+                  graph
+                      .command(
+                          new OCommandSQL(
+                              "CREATE EDGE TestEdge FROM "
+                                  + gFromVertex.getId()
+                                  + " TO "
+                                  + gToVertex.getId()
+                                  + " SET uuid = '"
+                                  + edge.uuid
+                                  + "'"))
+                      .execute();
                 }
 
                 graph.commit();
@@ -447,8 +494,7 @@ public class BlueprintsConcurrentGraphChangesNoTxTest {
 
                 versionCollisionsCreate.incrementAndGet();
 
-                if (printTempStats && versionCollisionsCreate.get() % 1000 == 0)
-                  printStats(graph);
+                if (printTempStats && versionCollisionsCreate.get() % 1000 == 0) printStats(graph);
 
                 Thread.yield();
               } catch (ORecordDuplicatedException e) {
@@ -456,8 +502,7 @@ public class BlueprintsConcurrentGraphChangesNoTxTest {
 
                 indexCollisionsCreate.incrementAndGet();
 
-                if (indexCollisionsCreate.get() % 1000 == 0)
-                  printStats(graph);
+                if (indexCollisionsCreate.get() % 1000 == 0) printStats(graph);
 
                 Thread.yield();
               }
@@ -467,13 +512,21 @@ public class BlueprintsConcurrentGraphChangesNoTxTest {
             boolean success = false;
             while (!success)
               try {
-                Iterable<Vertex> vertexes = graph
-                    .command(new OSQLSynchQuery<Vertex>("select from TestVertex where uuid = '" + fromVertex.uuid + "'")).execute();
+                Iterable<Vertex> vertexes =
+                    graph
+                        .command(
+                            new OSQLSynchQuery<Vertex>(
+                                "select from TestVertex where uuid = '" + fromVertex.uuid + "'"))
+                        .execute();
 
                 Iterator<Vertex> gVertexesIterator = vertexes.iterator();
 
                 if (!gVertexesIterator.hasNext()) {
-                  graph.command(new OCommandSQL("CREATE VERTEX TestVertex SET uuid = '" + fromVertex.uuid + "'")).execute();
+                  graph
+                      .command(
+                          new OCommandSQL(
+                              "CREATE VERTEX TestVertex SET uuid = '" + fromVertex.uuid + "'"))
+                      .execute();
                 }
 
                 success = true;
@@ -491,8 +544,7 @@ public class BlueprintsConcurrentGraphChangesNoTxTest {
           }
 
           currentUUID = vertexesToCreate.higherKey(currentUUID);
-          if (currentUUID == null)
-            currentUUID = vertexesToCreate.firstKey();
+          if (currentUUID == null) currentUUID = vertexesToCreate.firstKey();
         } while (!startUUID.equals(currentUUID));
       } catch (Exception e) {
         e.printStackTrace();
@@ -502,20 +554,40 @@ public class BlueprintsConcurrentGraphChangesNoTxTest {
       }
 
       return null;
-
     }
   }
 
   protected void printStats(OrientBaseGraph g) {
-    System.out.println("---------------------------------------------------------------------------------------------------------");
-    System.out.println("Graph " + (getGraph() instanceof OrientGraph ? "TX" : "NOTX") + " stats threads: " + THREADS + " TIME: "
-        + (beginTime > 0 ? System.currentTimeMillis() - beginTime : "?") + " vertexes: " + g.countVertices() + " edges: "
-        + g.countEdges());
-    System.out.println(" create edge -    CME: " + versionCollisionsCreate.get() + " duplication: " + indexCollisionsCreate.get());
-    System.out.println(" delete edge -    CME: " + versionCollisionsEdgeDelete.get() + " not found: " + notFoundEdgeDelete.get());
-    System.out
-        .println(" delete vertex - CME: " + versionCollisionsVertexDelete.get() + " not found: " + notFoundVertexDelete.get());
-    System.out.println("---------------------------------------------------------------------------------------------------------");
+    System.out.println(
+        "---------------------------------------------------------------------------------------------------------");
+    System.out.println(
+        "Graph "
+            + (getGraph() instanceof OrientGraph ? "TX" : "NOTX")
+            + " stats threads: "
+            + THREADS
+            + " TIME: "
+            + (beginTime > 0 ? System.currentTimeMillis() - beginTime : "?")
+            + " vertexes: "
+            + g.countVertices()
+            + " edges: "
+            + g.countEdges());
+    System.out.println(
+        " create edge -    CME: "
+            + versionCollisionsCreate.get()
+            + " duplication: "
+            + indexCollisionsCreate.get());
+    System.out.println(
+        " delete edge -    CME: "
+            + versionCollisionsEdgeDelete.get()
+            + " not found: "
+            + notFoundEdgeDelete.get());
+    System.out.println(
+        " delete vertex - CME: "
+            + versionCollisionsVertexDelete.get()
+            + " not found: "
+            + notFoundVertexDelete.get());
+    System.out.println(
+        "---------------------------------------------------------------------------------------------------------");
   }
 
   private class ConcurrentEdgeRemover implements Callable<Void> {
@@ -529,7 +601,9 @@ public class BlueprintsConcurrentGraphChangesNoTxTest {
         TestEdge edge = edges.get(randomEdge);
         do {
           try {
-            graph.command(new OCommandSQL("delete edge TestEdge where uuid = '" + edge.uuid + "'")).execute();
+            graph
+                .command(new OCommandSQL("delete edge TestEdge where uuid = '" + edge.uuid + "'"))
+                .execute();
             graph.commit();
             break;
 
@@ -542,8 +616,7 @@ public class BlueprintsConcurrentGraphChangesNoTxTest {
 
             versionCollisionsEdgeDelete.incrementAndGet();
 
-            if (printTempStats && versionCollisionsEdgeDelete.get() % 1000 == 0)
-              printStats(graph);
+            if (printTempStats && versionCollisionsEdgeDelete.get() % 1000 == 0) printStats(graph);
 
             Thread.yield();
           }
@@ -565,7 +638,10 @@ public class BlueprintsConcurrentGraphChangesNoTxTest {
 
         do {
           try {
-            graph.command(new OCommandSQL("delete vertex TestVertex where uuid = '" + vertex.uuid + "'")).execute();
+            graph
+                .command(
+                    new OCommandSQL("delete vertex TestVertex where uuid = '" + vertex.uuid + "'"))
+                .execute();
             graph.commit();
             break;
 
@@ -590,33 +666,33 @@ public class BlueprintsConcurrentGraphChangesNoTxTest {
   }
 
   private void assertGraphIsConsistent(OrientBaseGraph graph) {
-    new OGraphRepair().setEventListener(new OStorageRecoverEventListener() {
-      @Override
-      public void onScannedEdge(ODocument edge) {
-      }
+    new OGraphRepair()
+        .setEventListener(
+            new OStorageRecoverEventListener() {
+              @Override
+              public void onScannedEdge(ODocument edge) {}
 
-      @Override
-      public void onRemovedEdge(ODocument edge) {
-        Assert.fail("onRemovedEdge " + edge);
-      }
+              @Override
+              public void onRemovedEdge(ODocument edge) {
+                Assert.fail("onRemovedEdge " + edge);
+              }
 
-      @Override
-      public void onScannedVertex(ODocument vertex) {
-      }
+              @Override
+              public void onScannedVertex(ODocument vertex) {}
 
-      @Override
-      public void onScannedLink(OIdentifiable link) {
-      }
+              @Override
+              public void onScannedLink(OIdentifiable link) {}
 
-      @Override
-      public void onRemovedLink(OIdentifiable link) {
-        Assert.fail("onRemovedLink " + link);
-      }
+              @Override
+              public void onRemovedLink(OIdentifiable link) {
+                Assert.fail("onRemovedLink " + link);
+              }
 
-      @Override
-      public void onRepairedVertex(ODocument vertex) {
-        Assert.fail("onRepairedVertex " + vertex);
-      }
-    }).repair(graph, null, null);
+              @Override
+              public void onRepairedVertex(ODocument vertex) {
+                Assert.fail("onRepairedVertex " + vertex);
+              }
+            })
+        .repair(graph, null, null);
   }
 }

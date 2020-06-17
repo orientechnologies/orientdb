@@ -19,7 +19,6 @@
  */
 package com.orientechnologies.orient.core.db;
 
-import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
 /**
@@ -35,27 +34,17 @@ public abstract class ODatabaseLifecycleListenerAbstract implements ODatabaseLif
   }
 
   @Override
-  public void onCreate(ODatabaseInternal iDatabase) {
-
-  }
+  public void onCreate(ODatabaseInternal iDatabase) {}
 
   @Override
-  public void onOpen(ODatabaseInternal iDatabase) {
-
-  }
+  public void onOpen(ODatabaseInternal iDatabase) {}
 
   @Override
-  public void onClose(ODatabaseInternal iDatabase) {
-
-  }
+  public void onClose(ODatabaseInternal iDatabase) {}
 
   @Override
-  public void onDrop(ODatabaseInternal iDatabase) {
-
-  }
+  public void onDrop(ODatabaseInternal iDatabase) {}
 
   @Override
-  public void onLocalNodeConfigurationRequest(ODocument iConfiguration) {
-
-  }
+  public void onLocalNodeConfigurationRequest(ODocument iConfiguration) {}
 }

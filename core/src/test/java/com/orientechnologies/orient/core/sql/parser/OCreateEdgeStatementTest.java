@@ -1,11 +1,10 @@
 package com.orientechnologies.orient.core.sql.parser;
 
-import org.junit.Test;
+import static org.junit.Assert.fail;
 
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
-
-import static org.junit.Assert.fail;
+import org.junit.Test;
 
 public class OCreateEdgeStatementTest {
 
@@ -43,41 +42,38 @@ public class OCreateEdgeStatementTest {
   @Test
   public void testCreateFromRid() {
     checkRightSyntax("create edge Foo from #11:0 to #11:1");
-
   }
 
   @Test
   public void testCreateFromRidArray() {
     checkRightSyntax("create edge Foo from [#11:0, #11:3] to [#11:1, #12:0]");
-
   }
 
   @Test
   public void testRetry() {
     checkRightSyntax("create edge Foo from [#11:0, #11:3] to [#11:1, #12:0] retry 3 wait 20");
-
   }
 
   @Test
   public void testCreateFromRidSet() {
     checkRightSyntax("create edge Foo from #11:0 to #11:1 set foo='bar', bar=2");
-
   }
 
   @Test
   public void testCreateFromRidArraySet() {
     checkRightSyntax("create edge Foo from [#11:0, #11:3] to [#11:1, #12:0] set foo='bar', bar=2");
-
   }
 
   @Test
   public void testRetrySet() {
-    checkRightSyntax("create edge Foo from [#11:0, #11:3] to [#11:1, #12:0] set foo='bar', bar=2 retry 3 wait 20");
+    checkRightSyntax(
+        "create edge Foo from [#11:0, #11:3] to [#11:1, #12:0] set foo='bar', bar=2 retry 3 wait 20");
   }
 
   @Test
   public void testBatch() {
-    checkRightSyntax("create edge Foo from [#11:0, #11:3] to [#11:1, #12:0] set foo='bar', bar=2 retry 3 wait 20 batch 10");
+    checkRightSyntax(
+        "create edge Foo from [#11:0, #11:3] to [#11:1, #12:0] set foo='bar', bar=2 retry 3 wait 20 batch 10");
   }
 
   public void testInputVariables() {
@@ -89,7 +85,8 @@ public class OCreateEdgeStatementTest {
   public void testSubStatements() {
     checkRightSyntax("create edge Foo from (select from Foo) to (select from bar)");
     checkRightSyntax("create edge Foo from (traverse out() from #12:0) to (select from bar)");
-    checkRightSyntax("create edge Foo from (MATCH {class:Person, as:A} return $elements) to (select from bar)");
+    checkRightSyntax(
+        "create edge Foo from (MATCH {class:Person, as:A} return $elements) to (select from bar)");
   }
 
   private void printTree(String s) {
@@ -99,7 +96,6 @@ public class OCreateEdgeStatementTest {
     } catch (ParseException e) {
       e.printStackTrace();
     }
-
   }
 
   protected OrientSql getParserFor(String string) {

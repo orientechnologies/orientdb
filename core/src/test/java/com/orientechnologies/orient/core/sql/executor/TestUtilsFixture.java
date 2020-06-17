@@ -10,46 +10,43 @@ import org.apache.commons.lang.RandomStringUtils;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 
-/**
- * Created by olena.kolesnyk on 28/07/2017.
- */
+/** Created by olena.kolesnyk on 28/07/2017. */
 public class TestUtilsFixture {
 
-    protected static ODatabaseDocument database;
-    protected static OrientDB factory;
-    private static final String PATH = "memory";
-    private static final String DB_NAME = "test_database";
-    private static final String USER = "admin";
-    private static final String PASSWORD = "admin";
+  protected static ODatabaseDocument database;
+  protected static OrientDB factory;
+  private static final String PATH = "memory";
+  private static final String DB_NAME = "test_database";
+  private static final String USER = "admin";
+  private static final String PASSWORD = "admin";
 
-    @BeforeClass
-    public static void setUp() {
-        factory = new OrientDB(PATH, OrientDBConfig.defaultConfig());
-        factory.create(DB_NAME, ODatabaseType.MEMORY);
-        database = factory.open(DB_NAME, USER, PASSWORD);
-    }
+  @BeforeClass
+  public static void setUp() {
+    factory = new OrientDB(PATH, OrientDBConfig.defaultConfig());
+    factory.create(DB_NAME, ODatabaseType.MEMORY);
+    database = factory.open(DB_NAME, USER, PASSWORD);
+  }
 
-    @AfterClass
-    public static void tearDown() {
-        database.close();
-        factory.drop(DB_NAME);
-        factory.close();
-    }
+  @AfterClass
+  public static void tearDown() {
+    database.close();
+    factory.drop(DB_NAME);
+    factory.close();
+  }
 
-    static OClass createClassInstance() {
-        return getDBSchema().createClass(generateClassName());
-    }
+  static OClass createClassInstance() {
+    return getDBSchema().createClass(generateClassName());
+  }
 
-    static OClass createChildClassInstance(OClass superclass) {
-        return getDBSchema().createClass(generateClassName(), superclass);
-    }
+  static OClass createChildClassInstance(OClass superclass) {
+    return getDBSchema().createClass(generateClassName(), superclass);
+  }
 
-    private static OSchema getDBSchema() {
-        return database.getMetadata().getSchema();
-    }
+  private static OSchema getDBSchema() {
+    return database.getMetadata().getSchema();
+  }
 
-    private static String generateClassName() {
-        return "Class" + RandomStringUtils.randomNumeric(10);
-    }
-
+  private static String generateClassName() {
+    return "Class" + RandomStringUtils.randomNumeric(10);
+  }
 }

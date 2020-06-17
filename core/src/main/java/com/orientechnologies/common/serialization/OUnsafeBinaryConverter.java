@@ -1,31 +1,30 @@
 /*
-  *
-  *  *  Copyright 2010-2016 OrientDB LTD (http://orientdb.com)
-  *  *
-  *  *  Licensed under the Apache License, Version 2.0 (the "License");
-  *  *  you may not use this file except in compliance with the License.
-  *  *  You may obtain a copy of the License at
-  *  *
-  *  *       http://www.apache.org/licenses/LICENSE-2.0
-  *  *
-  *  *  Unless required by applicable law or agreed to in writing, software
-  *  *  distributed under the License is distributed on an "AS IS" BASIS,
-  *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-  *  *  See the License for the specific language governing permissions and
-  *  *  limitations under the License.
-  *  *
-  *  * For more information: http://orientdb.com
-  *
-  */
+ *
+ *  *  Copyright 2010-2016 OrientDB LTD (http://orientdb.com)
+ *  *
+ *  *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  *  you may not use this file except in compliance with the License.
+ *  *  You may obtain a copy of the License at
+ *  *
+ *  *       http://www.apache.org/licenses/LICENSE-2.0
+ *  *
+ *  *  Unless required by applicable law or agreed to in writing, software
+ *  *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  *  See the License for the specific language governing permissions and
+ *  *  limitations under the License.
+ *  *
+ *  * For more information: http://orientdb.com
+ *
+ */
 
 package com.orientechnologies.common.serialization;
 
+import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import java.lang.reflect.Field;
 import java.nio.ByteOrder;
 import java.security.AccessController;
 import java.security.PrivilegedAction;
-
-import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import sun.misc.Unsafe;
 
 /**
@@ -34,41 +33,43 @@ import sun.misc.Unsafe;
  */
 @SuppressWarnings("restriction")
 public class OUnsafeBinaryConverter implements OBinaryConverter {
-  public static final OUnsafeBinaryConverter INSTANCE             = new OUnsafeBinaryConverter();
+  public static final OUnsafeBinaryConverter INSTANCE = new OUnsafeBinaryConverter();
 
-  private static final Unsafe                theUnsafe;
-  private static final long                  BYTE_ARRAY_OFFSET;
+  private static final Unsafe theUnsafe;
+  private static final long BYTE_ARRAY_OFFSET;
 
-  private static final boolean               useOnlyAlignedAccess = OGlobalConfiguration.DIRECT_MEMORY_ONLY_ALIGNED_ACCESS
-                                                                      .getValueAsBoolean();
+  private static final boolean useOnlyAlignedAccess =
+      OGlobalConfiguration.DIRECT_MEMORY_ONLY_ALIGNED_ACCESS.getValueAsBoolean();
 
   static {
-    theUnsafe = (Unsafe) AccessController.doPrivileged(new PrivilegedAction<Object>() {
-      public Object run() {
-        try {
-          Field f = Unsafe.class.getDeclaredField("theUnsafe");
-          boolean wasAccessible = f.isAccessible();
-          f.setAccessible(true);
-          try {
-            return f.get(null);
-          } finally {
-            f.setAccessible(wasAccessible);
-          }
+    theUnsafe =
+        (Unsafe)
+            AccessController.doPrivileged(
+                new PrivilegedAction<Object>() {
+                  public Object run() {
+                    try {
+                      Field f = Unsafe.class.getDeclaredField("theUnsafe");
+                      boolean wasAccessible = f.isAccessible();
+                      f.setAccessible(true);
+                      try {
+                        return f.get(null);
+                      } finally {
+                        f.setAccessible(wasAccessible);
+                      }
 
-        } catch (NoSuchFieldException e) {
-          throw new Error(e);
-        } catch (IllegalAccessException e) {
-          throw new Error(e);
-        }
-      }
-    });
+                    } catch (NoSuchFieldException e) {
+                      throw new Error(e);
+                    } catch (IllegalAccessException e) {
+                      throw new Error(e);
+                    }
+                  }
+                });
     BYTE_ARRAY_OFFSET = theUnsafe.arrayBaseOffset(byte[].class);
   }
 
   public void putShort(byte[] buffer, int index, short value, ByteOrder byteOrder) {
     if (!useOnlyAlignedAccess) {
-      if (!byteOrder.equals(ByteOrder.nativeOrder()))
-        value = Short.reverseBytes(value);
+      if (!byteOrder.equals(ByteOrder.nativeOrder())) value = Short.reverseBytes(value);
 
       theUnsafe.putShort(buffer, index + BYTE_ARRAY_OFFSET, value);
     } else {
@@ -85,25 +86,25 @@ public class OUnsafeBinaryConverter implements OBinaryConverter {
   public short getShort(byte[] buffer, int index, ByteOrder byteOrder) {
     if (!useOnlyAlignedAccess) {
       short result = theUnsafe.getShort(buffer, index + BYTE_ARRAY_OFFSET);
-      if (!byteOrder.equals(ByteOrder.nativeOrder()))
-        result = Short.reverseBytes(result);
+      if (!byteOrder.equals(ByteOrder.nativeOrder())) result = Short.reverseBytes(result);
 
       return result;
     }
 
     if (byteOrder.equals(ByteOrder.BIG_ENDIAN))
-      return (short) ((theUnsafe.getByte(buffer, index + BYTE_ARRAY_OFFSET)) << 8 | (theUnsafe.getByte(buffer, index
-          + BYTE_ARRAY_OFFSET + 1) & 0xff));
+      return (short)
+          ((theUnsafe.getByte(buffer, index + BYTE_ARRAY_OFFSET)) << 8
+              | (theUnsafe.getByte(buffer, index + BYTE_ARRAY_OFFSET + 1) & 0xff));
 
-    return (short) ((theUnsafe.getByte(buffer, index + BYTE_ARRAY_OFFSET) & 0xff) | (theUnsafe.getByte(buffer, index
-        + BYTE_ARRAY_OFFSET + 1) << 8));
+    return (short)
+        ((theUnsafe.getByte(buffer, index + BYTE_ARRAY_OFFSET) & 0xff)
+            | (theUnsafe.getByte(buffer, index + BYTE_ARRAY_OFFSET + 1) << 8));
   }
 
   public void putInt(byte[] buffer, int pointer, int value, ByteOrder byteOrder) {
     if (!useOnlyAlignedAccess) {
       final long position = pointer + BYTE_ARRAY_OFFSET;
-      if (!byteOrder.equals(ByteOrder.nativeOrder()))
-        value = Integer.reverseBytes(value);
+      if (!byteOrder.equals(ByteOrder.nativeOrder())) value = Integer.reverseBytes(value);
 
       theUnsafe.putInt(buffer, position, value);
     } else {
@@ -125,8 +126,7 @@ public class OUnsafeBinaryConverter implements OBinaryConverter {
     if (!useOnlyAlignedAccess) {
       final long position = pointer + BYTE_ARRAY_OFFSET;
       int result = theUnsafe.getInt(buffer, position);
-      if (!byteOrder.equals(ByteOrder.nativeOrder()))
-        result = Integer.reverseBytes(result);
+      if (!byteOrder.equals(ByteOrder.nativeOrder())) result = Integer.reverseBytes(result);
 
       return result;
     }
@@ -146,8 +146,7 @@ public class OUnsafeBinaryConverter implements OBinaryConverter {
 
   public void putLong(byte[] buffer, int index, long value, ByteOrder byteOrder) {
     if (!useOnlyAlignedAccess) {
-      if (!byteOrder.equals(ByteOrder.nativeOrder()))
-        value = Long.reverseBytes(value);
+      if (!byteOrder.equals(ByteOrder.nativeOrder())) value = Long.reverseBytes(value);
 
       theUnsafe.putLong(buffer, index + BYTE_ARRAY_OFFSET, value);
     } else {
@@ -176,8 +175,7 @@ public class OUnsafeBinaryConverter implements OBinaryConverter {
   public long getLong(byte[] buffer, int index, ByteOrder byteOrder) {
     if (!useOnlyAlignedAccess) {
       long result = theUnsafe.getLong(buffer, index + BYTE_ARRAY_OFFSET);
-      if (!byteOrder.equals(ByteOrder.nativeOrder()))
-        result = Long.reverseBytes(result);
+      if (!byteOrder.equals(ByteOrder.nativeOrder())) result = Long.reverseBytes(result);
 
       return result;
     }
@@ -204,8 +202,7 @@ public class OUnsafeBinaryConverter implements OBinaryConverter {
 
   public void putChar(byte[] buffer, int index, char character, ByteOrder byteOrder) {
     if (!useOnlyAlignedAccess) {
-      if (!byteOrder.equals(ByteOrder.nativeOrder()))
-        character = Character.reverseBytes(character);
+      if (!byteOrder.equals(ByteOrder.nativeOrder())) character = Character.reverseBytes(character);
 
       theUnsafe.putChar(buffer, index + BYTE_ARRAY_OFFSET, character);
     } else {
@@ -216,25 +213,25 @@ public class OUnsafeBinaryConverter implements OBinaryConverter {
         theUnsafe.putByte(buffer, index + BYTE_ARRAY_OFFSET, (byte) (character));
         theUnsafe.putByte(buffer, index + BYTE_ARRAY_OFFSET + 1, (byte) (character >>> 8));
       }
-
     }
   }
 
   public char getChar(byte[] buffer, int index, ByteOrder byteOrder) {
     if (!useOnlyAlignedAccess) {
       char result = theUnsafe.getChar(buffer, index + BYTE_ARRAY_OFFSET);
-      if (!byteOrder.equals(ByteOrder.nativeOrder()))
-        result = Character.reverseBytes(result);
+      if (!byteOrder.equals(ByteOrder.nativeOrder())) result = Character.reverseBytes(result);
 
       return result;
     }
 
     if (byteOrder.equals(ByteOrder.BIG_ENDIAN))
-      return (char) ((theUnsafe.getByte(buffer, index + BYTE_ARRAY_OFFSET) << 8) | (theUnsafe.getByte(buffer, index
-          + BYTE_ARRAY_OFFSET + 1) & 0xff));
+      return (char)
+          ((theUnsafe.getByte(buffer, index + BYTE_ARRAY_OFFSET) << 8)
+              | (theUnsafe.getByte(buffer, index + BYTE_ARRAY_OFFSET + 1) & 0xff));
 
-    return (char) ((theUnsafe.getByte(buffer, index + BYTE_ARRAY_OFFSET) & 0xff) | (theUnsafe.getByte(buffer, index
-        + BYTE_ARRAY_OFFSET + 1) << 8));
+    return (char)
+        ((theUnsafe.getByte(buffer, index + BYTE_ARRAY_OFFSET) & 0xff)
+            | (theUnsafe.getByte(buffer, index + BYTE_ARRAY_OFFSET + 1) << 8));
   }
 
   public boolean nativeAccelerationUsed() {

@@ -1,18 +1,15 @@
 package com.orientechnologies.orient.core.metadata.schema;
 
+import static org.junit.Assert.assertEquals;
+
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.exception.OSchemaException;
+import java.util.Arrays;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
-import java.util.Arrays;
-
-import static org.junit.Assert.assertEquals;
-
-/**
- * Created by tglman on 01/12/15.
- */
+/** Created by tglman on 01/12/15. */
 public class AlterSuperclassTest {
 
   private ODatabaseDocumentTx db;
@@ -76,8 +73,8 @@ public class AlterSuperclassTest {
   }
 
   /**
-   * This tests fixes a problem created in Issue #5586.
-   * It should not throw ArrayIndexOutOfBoundsException
+   * This tests fixes a problem created in Issue #5586. It should not throw
+   * ArrayIndexOutOfBoundsException
    */
   @Test
   public void testBrokenDbAlteringSuperClass() {
@@ -89,7 +86,5 @@ public class AlterSuperclassTest {
     classChild2.setSuperClass(classChild);
 
     schema.dropClass("ChildClass2");
-
   }
-
 }

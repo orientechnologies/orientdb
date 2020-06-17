@@ -22,5 +22,5 @@ package com.orientechnologies.orient.server.network.protocol.http.command.get;
 public class OStaticContentCachedEntry {
   public String type;
   public byte[] content;
-  public long   size;
+  public long size;
 }

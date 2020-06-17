@@ -32,12 +32,16 @@ import com.orientechnologies.orient.core.storage.index.sbtree.OSBTreeMapEntryIte
 import com.orientechnologies.orient.core.storage.index.sbtree.OTreeInternal;
 import com.orientechnologies.orient.core.storage.index.sbtreebonsai.local.OBonsaiBucketPointer;
 import com.orientechnologies.orient.core.storage.index.sbtreebonsai.local.OSBTreeBonsaiLocal;
-
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Iterator;
+import java.util.Objects;
+import java.util.Set;
 
 /**
- * Persistent Set<OIdentifiable> implementation that uses the SBTree to handle entries in persistent way.
+ * Persistent Set<OIdentifiable> implementation that uses the SBTree to handle entries in persistent
+ * way.
  *
  * @author Artem Orobets (enisher-at-gmail.com)
  */
@@ -48,7 +52,6 @@ public class OIndexRIDContainerSBTree implements Set<OIdentifiable> {
    * Generates a lock name for the given index name.
    *
    * @param indexName the index name to generate the lock name for.
-   *
    * @return the generated lock name.
    */
   public static String generateLockName(String indexName) {
@@ -67,17 +70,22 @@ public class OIndexRIDContainerSBTree implements Set<OIdentifiable> {
       fileName = atomicOperation.fileNameById(fileId);
     }
 
-    tree = new OSBTreeBonsaiLocal<>(fileName.substring(0, fileName.length() - INDEX_FILE_EXTENSION.length()), INDEX_FILE_EXTENSION,
-        storage);
+    tree =
+        new OSBTreeBonsaiLocal<>(
+            fileName.substring(0, fileName.length() - INDEX_FILE_EXTENSION.length()),
+            INDEX_FILE_EXTENSION,
+            storage);
 
     try {
       tree.create(atomicOperation, OCompactedLinkSerializer.INSTANCE, OBooleanSerializer.INSTANCE);
     } catch (IOException e) {
-      throw OException.wrapException(new ODatabaseException("Error during creation of index container "), e);
+      throw OException.wrapException(
+          new ODatabaseException("Error during creation of index container "), e);
     }
   }
 
-  public OIndexRIDContainerSBTree(long fileId, OBonsaiBucketPointer rootPointer, OAbstractPaginatedStorage storage) {
+  public OIndexRIDContainerSBTree(
+      long fileId, OBonsaiBucketPointer rootPointer, OAbstractPaginatedStorage storage) {
     String fileName;
 
     OAtomicOperation atomicOperation = OAtomicOperationsManager.getCurrentOperation();
@@ -87,8 +95,11 @@ public class OIndexRIDContainerSBTree implements Set<OIdentifiable> {
       fileName = atomicOperation.fileNameById(fileId);
     }
 
-    tree = new OSBTreeBonsaiLocal<>(fileName.substring(0, fileName.length() - INDEX_FILE_EXTENSION.length()), INDEX_FILE_EXTENSION,
-        storage);
+    tree =
+        new OSBTreeBonsaiLocal<>(
+            fileName.substring(0, fileName.length() - INDEX_FILE_EXTENSION.length()),
+            INDEX_FILE_EXTENSION,
+            storage);
     tree.load(rootPointer);
   }
 
@@ -222,10 +233,11 @@ public class OIndexRIDContainerSBTree implements Set<OIdentifiable> {
   }
 
   private static class TreeKeyIterator implements Iterator<OIdentifiable> {
-    private final boolean                                         autoConvertToRecord;
+    private final boolean autoConvertToRecord;
     private final OSBTreeMapEntryIterator<OIdentifiable, Boolean> entryIterator;
 
-    private TreeKeyIterator(OTreeInternal<OIdentifiable, Boolean> tree, boolean autoConvertToRecord) {
+    private TreeKeyIterator(
+        OTreeInternal<OIdentifiable, Boolean> tree, boolean autoConvertToRecord) {
       entryIterator = new OSBTreeMapEntryIterator<>(tree);
       this.autoConvertToRecord = autoConvertToRecord;
     }

@@ -19,12 +19,11 @@
  */
 package com.orientechnologies.orient.core.metadata.security;
 
+import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseSession;
 import com.orientechnologies.orient.core.exception.OSecurityAccessException;
 import com.orientechnologies.orient.core.storage.OStorageProxy;
-
-import com.orientechnologies.orient.core.Orient;
 
 /**
  * OSecurity implementation that extends OSecurityShared but uses an external security plugin.
@@ -33,7 +32,8 @@ import com.orientechnologies.orient.core.Orient;
  */
 public class OSecurityExternal extends OSecurityShared {
   @Override
-  public OUser authenticate(ODatabaseSession session, final String iUsername, final String iUserPassword) {
+  public OUser authenticate(
+      ODatabaseSession session, final String iUsername, final String iUserPassword) {
     OUser user = null;
     final String dbName = session.getName();
 
@@ -49,8 +49,13 @@ public class OSecurityExternal extends OSecurityShared {
         user = getUser(session, username);
 
         if (user == null)
-          throw new OSecurityAccessException(dbName,
-              "User or password not valid for username: " + username + ", database: '" + dbName + "'");
+          throw new OSecurityAccessException(
+              dbName,
+              "User or password not valid for username: "
+                  + username
+                  + ", database: '"
+                  + dbName
+                  + "'");
 
         if (user.getAccountStatus() != OSecurityUser.STATUSES.ACTIVE)
           throw new OSecurityAccessException(dbName, "User '" + username + "' is not active");
@@ -66,8 +71,13 @@ public class OSecurityExternal extends OSecurityShared {
             Thread.currentThread().interrupt();
           }
 
-          throw new OSecurityAccessException(dbName,
-              "User or password not valid for username: " + iUsername + ", database: '" + dbName + "'");
+          throw new OSecurityAccessException(
+              dbName,
+              "User or password not valid for username: "
+                  + iUsername
+                  + ", database: '"
+                  + dbName
+                  + "'");
         }
       }
     }
@@ -85,8 +95,7 @@ public class OSecurityExternal extends OSecurityShared {
     }
 
     // If not found, try the local database.
-    if (user == null)
-      user = super.getUser(session, username);
+    if (user == null) user = super.getUser(session, username);
 
     return user;
   }

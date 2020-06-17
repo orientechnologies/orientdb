@@ -13,9 +13,7 @@ import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-/**
- * @author Luigi Dell'Aquila (l.dellaquila-(at)-orientdb.com)
- */
+/** @author Luigi Dell'Aquila (l.dellaquila-(at)-orientdb.com) */
 public class OOptimizeDatabaseExecutionTest {
   static ODatabaseDocument db;
 
@@ -56,7 +54,9 @@ public class OOptimizeDatabaseExecutionTest {
     v2.setProperty("name", "v2");
     v2.save();
 
-    OResultSet createREs = db.command("create edge " + eClass + " from " + v1.getIdentity() + " to " + v2.getIdentity());
+    OResultSet createREs =
+        db.command(
+            "create edge " + eClass + " from " + v1.getIdentity() + " to " + v2.getIdentity());
     ExecutionPlanPrintUtils.printExecutionPlan(createREs);
     OResultSet result = db.query("select expand(out()) from " + v1.getIdentity());
     Assert.assertNotNull(result);
@@ -71,8 +71,5 @@ public class OOptimizeDatabaseExecutionTest {
     OResultSet rs = db.query("select from E");
     Assert.assertFalse(rs.hasNext());
     rs.close();
-
   }
-
-
 }

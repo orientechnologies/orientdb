@@ -20,13 +20,11 @@ package com.orientechnologies.orient.etl;
 
 import java.util.concurrent.BlockingQueue;
 
-/**
- * Created by frank on 14/06/2016.
- */
+/** Created by frank on 14/06/2016. */
 final class OETLPipelineWorker implements Runnable {
 
   private final BlockingQueue<OETLExtractedItem> queue;
-  private final OETLPipeline                     pipeline;
+  private final OETLPipeline pipeline;
 
   public OETLPipelineWorker(BlockingQueue<OETLExtractedItem> queue, OETLPipeline pipeline) {
     this.queue = queue;
@@ -42,7 +40,7 @@ final class OETLPipelineWorker implements Runnable {
         pipeline.execute(content);
       }
       pipeline.end();
-      //RE-ADD END FLAG FOR OTHER THREADS
+      // RE-ADD END FLAG FOR OTHER THREADS
       queue.put(content);
     } catch (InterruptedException e) {
     }

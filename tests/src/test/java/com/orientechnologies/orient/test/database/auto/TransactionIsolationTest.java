@@ -26,16 +26,15 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.tx.OTransaction;
-import org.testng.Assert;
-import org.testng.annotations.Optional;
-import org.testng.annotations.Parameters;
-import org.testng.annotations.Test;
-
 import java.io.IOException;
 import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
+import org.testng.Assert;
+import org.testng.annotations.Optional;
+import org.testng.annotations.Parameters;
+import org.testng.annotations.Test;
 
 @Test(groups = "dictionary")
 public class TransactionIsolationTest extends DocumentDBBaseTest {
@@ -51,7 +50,9 @@ public class TransactionIsolationTest extends DocumentDBBaseTest {
     db1.open("admin", "admin");
 
     ODocument record1 = new ODocument();
-    record1.field("name", "This is the first version").save(db1.getClusterNameById(db1.getDefaultClusterId()));
+    record1
+        .field("name", "This is the first version")
+        .save(db1.getClusterNameById(db1.getDefaultClusterId()));
 
     db1.begin();
     try {
@@ -88,7 +89,9 @@ public class TransactionIsolationTest extends DocumentDBBaseTest {
     db1.open("admin", "admin");
 
     ODocument record1 = new ODocument();
-    record1.field("name", "This is the first version").save(db1.getClusterNameById(db1.getDefaultClusterId()));
+    record1
+        .field("name", "This is the first version")
+        .save(db1.getClusterNameById(db1.getDefaultClusterId()));
 
     db1.begin();
     db1.getTransaction().setIsolationLevel(OTransaction.ISOLATION_LEVEL.READ_COMMITTED);
@@ -120,27 +123,32 @@ public class TransactionIsolationTest extends DocumentDBBaseTest {
     db1.open("admin", "admin");
 
     final ODocument record1 = new ODocument();
-    record1.field("name", "This is the first version").save(db1.getClusterNameById(db1.getDefaultClusterId()));
+    record1
+        .field("name", "This is the first version")
+        .save(db1.getClusterNameById(db1.getDefaultClusterId()));
 
-    Future<List<OIdentifiable>> txFuture = Orient.instance().submit(new Callable<List<OIdentifiable>>() {
-      @Override
-      public List<OIdentifiable> call() throws Exception {
-        try {
-          String cmd = "";
-          cmd += "begin isolation REPEATABLE_READ;";
-          cmd += "let r1 = select from " + record1.getIdentity() + ";";
-          cmd += "sleep 2000;";
-          cmd += "let r2 = select from " + record1.getIdentity() + ";";
-          cmd += "commit;";
-          cmd += "return $r2;";
+    Future<List<OIdentifiable>> txFuture =
+        Orient.instance()
+            .submit(
+                new Callable<List<OIdentifiable>>() {
+                  @Override
+                  public List<OIdentifiable> call() throws Exception {
+                    try {
+                      String cmd = "";
+                      cmd += "begin isolation REPEATABLE_READ;";
+                      cmd += "let r1 = select from " + record1.getIdentity() + ";";
+                      cmd += "sleep 2000;";
+                      cmd += "let r2 = select from " + record1.getIdentity() + ";";
+                      cmd += "commit;";
+                      cmd += "return $r2;";
 
-          db1.activateOnCurrentThread();
-          return db1.command(new OCommandScript("sql", cmd)).execute();
-        } finally {
-          ODatabaseRecordThreadLocal.instance().remove();
-        }
-      }
-    });
+                      db1.activateOnCurrentThread();
+                      return db1.command(new OCommandScript("sql", cmd)).execute();
+                    } finally {
+                      ODatabaseRecordThreadLocal.instance().remove();
+                    }
+                  }
+                });
 
     Thread.sleep(500);
 
@@ -155,7 +163,8 @@ public class TransactionIsolationTest extends DocumentDBBaseTest {
 
     Assert.assertNotNull(txRecord);
     Assert.assertEquals(txRecord.size(), 1);
-    Assert.assertEquals(((ODocument) txRecord.get(0).getRecord()).field("name"), "This is the first version");
+    Assert.assertEquals(
+        ((ODocument) txRecord.get(0).getRecord()).field("name"), "This is the first version");
 
     db1.activateOnCurrentThread();
     db1.close();
@@ -170,27 +179,32 @@ public class TransactionIsolationTest extends DocumentDBBaseTest {
     db1.open("admin", "admin");
 
     final ODocument record1 = new ODocument();
-    record1.field("name", "This is the first version").save(db1.getClusterNameById(db1.getDefaultClusterId()));
+    record1
+        .field("name", "This is the first version")
+        .save(db1.getClusterNameById(db1.getDefaultClusterId()));
 
-    Future<List<OIdentifiable>> txFuture = Orient.instance().submit(new Callable<List<OIdentifiable>>() {
-      @Override
-      public List<OIdentifiable> call() throws Exception {
-        try {
-          String cmd = "";
-          cmd += "begin isolation READ_COMMITTED;";
-          cmd += "let r1 = select from " + record1.getIdentity() + ";";
-          cmd += "sleep 2000;";
-          cmd += "let r2 = select from " + record1.getIdentity() + " nocache;";
-          cmd += "commit;";
-          cmd += "return $r2;";
+    Future<List<OIdentifiable>> txFuture =
+        Orient.instance()
+            .submit(
+                new Callable<List<OIdentifiable>>() {
+                  @Override
+                  public List<OIdentifiable> call() throws Exception {
+                    try {
+                      String cmd = "";
+                      cmd += "begin isolation READ_COMMITTED;";
+                      cmd += "let r1 = select from " + record1.getIdentity() + ";";
+                      cmd += "sleep 2000;";
+                      cmd += "let r2 = select from " + record1.getIdentity() + " nocache;";
+                      cmd += "commit;";
+                      cmd += "return $r2;";
 
-          db1.activateOnCurrentThread();
-          return db1.command(new OCommandScript("sql", cmd)).execute();
-        } finally {
-          ODatabaseRecordThreadLocal.instance().remove();
-        }
-      }
-    });
+                      db1.activateOnCurrentThread();
+                      return db1.command(new OCommandScript("sql", cmd)).execute();
+                    } finally {
+                      ODatabaseRecordThreadLocal.instance().remove();
+                    }
+                  }
+                });
 
     Thread.sleep(500);
 
@@ -205,7 +219,8 @@ public class TransactionIsolationTest extends DocumentDBBaseTest {
 
     Assert.assertNotNull(txRecord);
     Assert.assertEquals(txRecord.size(), 1);
-    Assert.assertEquals(((ODocument) txRecord.get(0).getRecord()).field("name"), "This is the second version");
+    Assert.assertEquals(
+        ((ODocument) txRecord.get(0).getRecord()).field("name"), "This is the second version");
 
     db2.close();
 

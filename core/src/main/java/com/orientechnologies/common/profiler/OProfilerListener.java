@@ -19,9 +19,7 @@
  */
 package com.orientechnologies.common.profiler;
 
-/**
- * Created by Enrico Risa on 23/11/15.
- */
+/** Created by Enrico Risa on 23/11/15. */
 public interface OProfilerListener {
 
   void onUpdateCounter(String iName, long counter, long recordingFrom, long recordingTo);

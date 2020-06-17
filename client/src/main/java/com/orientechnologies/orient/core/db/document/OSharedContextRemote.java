@@ -12,9 +12,7 @@ import com.orientechnologies.orient.core.schedule.OSchedulerImpl;
 import com.orientechnologies.orient.core.security.OSecurityManager;
 import com.orientechnologies.orient.core.storage.OStorage;
 
-/**
- * Created by tglman on 13/06/17.
- */
+/** Created by tglman on 13/06/17. */
 public class OSharedContextRemote extends OSharedContext {
 
   public OSharedContextRemote(OStorage storage, OrientDBRemote orientDBRemote) {
@@ -35,7 +33,8 @@ public class OSharedContextRemote extends OSharedContext {
       if (!loaded) {
         schema.load(database);
         indexManager.load(database);
-        //The Immutable snapshot should be after index and schema that require and before everything else that use it
+        // The Immutable snapshot should be after index and schema that require and before
+        // everything else that use it
         schema.forceSnapshot(database);
         security.load(database);
         sequenceLibrary.load(database);
@@ -43,9 +42,11 @@ public class OSharedContextRemote extends OSharedContext {
         loaded = true;
       }
     } finally {
-      PROFILER
-          .stopChrono(PROFILER.getDatabaseMetric(database.getStorage().getName(), "metadata.load"), "Loading of database metadata",
-              timer, "db.*.metadata.load");
+      PROFILER.stopChrono(
+          PROFILER.getDatabaseMetric(database.getStorage().getName(), "metadata.load"),
+          "Loading of database metadata",
+          timer,
+          "db.*.metadata.load");
     }
   }
 
@@ -61,12 +62,12 @@ public class OSharedContextRemote extends OSharedContext {
   public synchronized void reload(ODatabaseDocumentInternal database) {
     schema.reload(database);
     indexManager.reload();
-    //The Immutable snapshot should be after index and schema that require and before everything else that use it
+    // The Immutable snapshot should be after index and schema that require and before everything
+    // else that use it
     schema.forceSnapshot(database);
     security.load(database);
     scheduler.load(database);
     sequenceLibrary.load(database);
     functionLibrary.load(database);
   }
-
 }

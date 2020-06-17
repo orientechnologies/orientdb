@@ -6,7 +6,6 @@ import com.orientechnologies.common.serialization.types.OIntegerSerializer;
 import com.orientechnologies.common.serialization.types.OLongSerializer;
 import com.orientechnologies.common.serialization.types.OShortSerializer;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
-
 import java.nio.ByteBuffer;
 
 /**
@@ -14,11 +13,12 @@ import java.nio.ByteBuffer;
  * @since 8/17/2015
  */
 public class OWALPageChangesPortion implements OWALChanges {
-  private static final int PAGE_SIZE = OGlobalConfiguration.DISK_CACHE_PAGE_SIZE.getValueAsInteger() * 1024;
+  private static final int PAGE_SIZE =
+      OGlobalConfiguration.DISK_CACHE_PAGE_SIZE.getValueAsInteger() * 1024;
 
-  private static final int CHUNK_SIZE    = 32;
-  private static final int PORTION_SIZE  = 32;
-  static final         int PORTION_BYTES = PORTION_SIZE * CHUNK_SIZE;
+  private static final int CHUNK_SIZE = 32;
+  private static final int PORTION_SIZE = 32;
+  static final int PORTION_BYTES = PORTION_SIZE * CHUNK_SIZE;
 
   private byte[][][] pageChunks;
 
@@ -60,7 +60,7 @@ public class OWALPageChangesPortion implements OWALChanges {
 
   @Override
   public void setByteValue(ByteBuffer pointer, byte value, int offset) {
-    byte[] data = new byte[] { value };
+    byte[] data = new byte[] {value};
 
     updateData(pointer, offset, data);
   }
@@ -123,8 +123,7 @@ public class OWALPageChangesPortion implements OWALChanges {
 
   @Override
   public void applyChanges(ByteBuffer pointer) {
-    if (pageChunks == null)
-      return;
+    if (pageChunks == null) return;
     for (int i = 0; i < pageChunks.length; i++) {
       if (pageChunks[i] != null) {
         for (int j = 0; j < PORTION_SIZE; j++) {
@@ -287,7 +286,8 @@ public class OWALPageChangesPortion implements OWALChanges {
     }
 
     int portionIndex = offset / PORTION_BYTES;
-    if (portionIndex == (offset + data.length - 1) / PORTION_BYTES && pageChunks[portionIndex] == null) {
+    if (portionIndex == (offset + data.length - 1) / PORTION_BYTES
+        && pageChunks[portionIndex] == null) {
       if (pointer != null) {
         pointer.position(offset);
         pointer.get(data, 0, data.length);
@@ -302,8 +302,7 @@ public class OWALPageChangesPortion implements OWALChanges {
 
     while (read < data.length) {
       byte[] chunk = null;
-      if (pageChunks[portionIndex] != null)
-        chunk = pageChunks[portionIndex][chunkIndex];
+      if (pageChunks[portionIndex] != null) chunk = pageChunks[portionIndex][chunkIndex];
 
       final int rl = Math.min(CHUNK_SIZE - chunkOffset, data.length - read);
       if (chunk == null) {
@@ -315,9 +314,20 @@ public class OWALPageChangesPortion implements OWALChanges {
         try {
           System.arraycopy(chunk, chunkOffset, data, read, rl);
         } catch (Exception e) {
-          OLogManager.instance().error(this,
-              "System.arraycopy error: chunk.length = " + chunk.length + ", chunkOffset = " + chunkOffset + ", data.length = "
-                  + data.length + ", read = " + read + ", rl = " + rl, e);
+          OLogManager.instance()
+              .error(
+                  this,
+                  "System.arraycopy error: chunk.length = "
+                      + chunk.length
+                      + ", chunkOffset = "
+                      + chunkOffset
+                      + ", data.length = "
+                      + data.length
+                      + ", read = "
+                      + read
+                      + ", rl = "
+                      + rl,
+                  e);
           throw e;
         }
 
@@ -353,7 +363,7 @@ public class OWALPageChangesPortion implements OWALChanges {
       if (chunk == null) {
         chunk = new byte[CHUNK_SIZE];
 
-        //pointer can be null for new pages
+        // pointer can be null for new pages
         if (pointer != null) {
           pointer.position(portionIndex * PORTION_BYTES + (chunkIndex) * CHUNK_SIZE);
           pointer.get(chunk);

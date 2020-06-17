@@ -31,7 +31,6 @@ import com.orientechnologies.orient.etl.extractor.OETLExtractor;
 import com.orientechnologies.orient.etl.loader.OETLLoader;
 import com.orientechnologies.orient.etl.source.OETLSource;
 import com.orientechnologies.orient.etl.transformer.OETLTransformer;
-
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -39,9 +38,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 
-/**
- * Created by frank on 17/06/2016.
- */
+/** Created by frank on 17/06/2016. */
 public class OETLProcessorConfigurator {
   private final OETLComponentFactory factory;
 
@@ -69,14 +66,15 @@ public class OETLProcessorConfigurator {
           final String config = OIOUtils.readFileAsString(new File(arg));
 
           configuration.merge(new ODocument().fromJSON(config, "noMap"), true, true);
-//          ODocument cfgGlobal = configuration.field("config");
-//          if (cfgGlobal != null) {
-//            for (String f : cfgGlobal.fieldNames()) {
-//              context.setVariable(f, cfgGlobal.field(f));
-//            }
-//          }
+          //          ODocument cfgGlobal = configuration.field("config");
+          //          if (cfgGlobal != null) {
+          //            for (String f : cfgGlobal.fieldNames()) {
+          //              context.setVariable(f, cfgGlobal.field(f));
+          //            }
+          //          }
         } catch (IOException e) {
-          throw OException.wrapException(new OConfigurationException("Error on loading config file: " + arg), e);
+          throw OException.wrapException(
+              new OConfigurationException("Error on loading config file: " + arg), e);
         }
       }
     }
@@ -94,13 +92,12 @@ public class OETLProcessorConfigurator {
 
   public OETLProcessor parse(final ODocument cfg, final OCommandContext context) {
 
-    //setup contex vars
+    // setup contex vars
 
     ODocument cfgGlobal = cfg.field("config");
     if (cfgGlobal != null) {
       for (String f : cfgGlobal.fieldNames()) {
-        if (context.getVariable(f) == null)
-          context.setVariable(f, cfgGlobal.field(f));
+        if (context.getVariable(f) == null) context.setVariable(f, cfgGlobal.field(f));
       }
     }
 
@@ -114,12 +111,21 @@ public class OETLProcessorConfigurator {
 
       OETLExtractor extractor = configureExtractor(cfg, context);
 
-      //copy  the skipDuplicates flag from vertex transformer to Loader
-      Optional.ofNullable(cfg.<Collection<ODocument>>field("transformers")).map(
-          c -> c.stream().filter(d -> d.containsField("vertex")).map(d -> d.<ODocument>field("vertex"))
-              .filter(d -> d.containsField("skipDuplicates")).map(d -> d.field("skipDuplicates")).map(
-                  skip -> cfg.<ODocument>field("loader").<ODocument>field(cfg.<ODocument>field("loader").fieldNames()[0])
-                      .field("skipDuplicates", skip)).count());
+      // copy  the skipDuplicates flag from vertex transformer to Loader
+      Optional.ofNullable(cfg.<Collection<ODocument>>field("transformers"))
+          .map(
+              c ->
+                  c.stream()
+                      .filter(d -> d.containsField("vertex"))
+                      .map(d -> d.<ODocument>field("vertex"))
+                      .filter(d -> d.containsField("skipDuplicates"))
+                      .map(d -> d.field("skipDuplicates"))
+                      .map(
+                          skip ->
+                              cfg.<ODocument>field("loader")
+                                  .<ODocument>field(cfg.<ODocument>field("loader").fieldNames()[0])
+                                  .field("skipDuplicates", skip))
+                      .count());
 
       OETLLoader loader = configureLoader(cfg, context);
 
@@ -130,32 +136,37 @@ public class OETLProcessorConfigurator {
       // isn't working right now
       // analyzeFlow();
 
-      OETLProcessor processor = new OETLProcessor(beginBlocks, source, extractor, transformers, loader, endBlocks, context);
+      OETLProcessor processor =
+          new OETLProcessor(
+              beginBlocks, source, extractor, transformers, loader, endBlocks, context);
 
-      List<OETLComponent> components = new ArrayList<OETLComponent>() {
-        {
-          add(source);
-          addAll(transformers);
-          addAll(beginBlocks);
-          addAll(endBlocks);
-          add(loader);
-          add(extractor);
-        }};
+      List<OETLComponent> components =
+          new ArrayList<OETLComponent>() {
+            {
+              add(source);
+              addAll(transformers);
+              addAll(beginBlocks);
+              addAll(endBlocks);
+              add(loader);
+              add(extractor);
+            }
+          };
 
       components.stream().forEach(c -> c.setProcessor(processor));
 
       return processor;
     } catch (Exception e) {
-      throw OException.wrapException(new OConfigurationException("Error on creating ETL processor"), e);
+      throw OException.wrapException(
+          new OConfigurationException("Error on creating ETL processor"), e);
     }
   }
 
-  protected void configureComponent(final OETLComponent iComponent, final ODocument iCfg, final OCommandContext iContext) {
+  protected void configureComponent(
+      final OETLComponent iComponent, final ODocument iCfg, final OCommandContext iContext) {
     iComponent.configure(iCfg, iContext);
   }
 
   private List<OETLBlock> configureEndBlocks(ODocument cfg, OCommandContext iContext)
-
       throws IllegalAccessException, InstantiationException {
     List<OETLBlock> endBlocks = new ArrayList();
     Collection<ODocument> endBlocksConf = cfg.field("end");
@@ -200,7 +211,6 @@ public class OETLProcessorConfigurator {
     configureComponent(loader, new ODocument(), iContext);
 
     return loader;
-
   }
 
   private OETLExtractor configureExtractor(ODocument cfg, OCommandContext iContext)
@@ -228,7 +238,6 @@ public class OETLProcessorConfigurator {
     OETLSource source = factory.getSource("input");
     configureComponent(source, new ODocument(), iContext);
     return source;
-
   }
 
   private List<OETLBlock> configureBeginBlocks(ODocument cfg, OCommandContext iContext)
@@ -238,15 +247,15 @@ public class OETLProcessorConfigurator {
     List<OETLBlock> blocks = new ArrayList<OETLBlock>();
     if (iBeginBlocks != null) {
       for (ODocument block : iBeginBlocks) {
-        final String name = block.fieldNames()[0];// BEGIN BLOCKS
+        final String name = block.fieldNames()[0]; // BEGIN BLOCKS
         final OETLBlock b = factory.getBlock(name);
         blocks.add(b);
         configureComponent(b, block.<ODocument>field(name), iContext);
-        // Execution is necessary to resolve let blocks and provide resolved variables to other components
+        // Execution is necessary to resolve let blocks and provide resolved variables to other
+        // components
         b.execute();
       }
     }
     return blocks;
   }
-
 }

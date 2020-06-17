@@ -25,7 +25,7 @@ import com.orientechnologies.orient.server.network.protocol.http.OHttpUtils;
 import com.orientechnologies.orient.server.network.protocol.http.command.OServerCommandAuthenticatedServerAbstract;
 
 public class OServerCommandPostConnection extends OServerCommandAuthenticatedServerAbstract {
-  private static final String[] NAMES = { "POST|connection/*" };
+  private static final String[] NAMES = {"POST|connection/*"};
 
   public OServerCommandPostConnection() {
     super("server.connection");
@@ -33,7 +33,8 @@ public class OServerCommandPostConnection extends OServerCommandAuthenticatedSer
 
   @Override
   public boolean execute(final OHttpRequest iRequest, OHttpResponse iResponse) throws Exception {
-    final String[] urlParts = checkSyntax(iRequest.getUrl(), 3, "Syntax error: connection/<command>/<id>");
+    final String[] urlParts =
+        checkSyntax(iRequest.getUrl(), 3, "Syntax error: connection/<command>/<id>");
 
     iRequest.getData().commandInfo = "Interrupt command";
     iRequest.getData().commandDetail = urlParts[1];
@@ -43,10 +44,15 @@ public class OServerCommandPostConnection extends OServerCommandAuthenticatedSer
     else if ("INTERRUPT".equalsIgnoreCase(urlParts[1]))
       server.getClientConnectionManager().interrupt(Integer.parseInt(urlParts[2]));
     else
-      throw new IllegalArgumentException("Connection command '" + urlParts[1] + "' is unknown. Supported are: kill, interrupt");
+      throw new IllegalArgumentException(
+          "Connection command '" + urlParts[1] + "' is unknown. Supported are: kill, interrupt");
 
-    iResponse.send(OHttpUtils.STATUS_OK_NOCONTENT_CODE, OHttpUtils.STATUS_OK_NOCONTENT_DESCRIPTION, OHttpUtils.CONTENT_TEXT_PLAIN,
-        null, null);
+    iResponse.send(
+        OHttpUtils.STATUS_OK_NOCONTENT_CODE,
+        OHttpUtils.STATUS_OK_NOCONTENT_DESCRIPTION,
+        OHttpUtils.CONTENT_TEXT_PLAIN,
+        null,
+        null);
     return false;
   }
 

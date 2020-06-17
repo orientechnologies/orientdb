@@ -16,53 +16,53 @@
 
 package com.orientechnologies.orient.server.distributed.scenariotest;
 
+import static org.junit.Assert.assertEquals;
+
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.server.distributed.impl.ODistributedStorage;
-import org.junit.Ignore;
-import org.junit.Test;
-
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
-
-import static org.junit.Assert.assertEquals;
+import org.junit.Ignore;
+import org.junit.Test;
 
 /**
-  @author Andrea Iacono (a.iacono--at--orientdb.com)
- * Checks for consistency on the cluster with these steps:
- * - 2 server (quorum=2)
- * - record1 is inserted on server1
- * - record1 (version 1) is propagated to the other server
- * - introduce a delay after record locking for the two servers (different for each one)
- * - the two clients at the same time update the same record on different servers
- * - the server1 immediately commits the transaction and tries to update the record to server2, which has the record locked
- * - meanwhile (while server1 is retrying) server2 commits and starts to try to update server1 as well
- * - since server1 has started first, it's the one which finishes first and rollback
- * - server2 can now successfully update the record on server1
+ * @author Andrea Iacono (a.iacono--at--orientdb.com) Checks for consistency on the cluster with
+ *     these steps: - 2 server (quorum=2) - record1 is inserted on server1 - record1 (version 1) is
+ *     propagated to the other server - introduce a delay after record locking for the two servers
+ *     (different for each one) - the two clients at the same time update the same record on
+ *     different servers - the server1 immediately commits the transaction and tries to update the
+ *     record to server2, which has the record locked - meanwhile (while server1 is retrying)
+ *     server2 commits and starts to try to update server1 as well - since server1 has started
+ *     first, it's the one which finishes first and rollback - server2 can now successfully update
+ *     the record on server1
  */
 
 // TODO Temporary Ignored
-public class TwoClientsRecordUpdateDuringRetryWithTransactionsOnMultipleServersScenarioIT extends AbstractScenarioTest {
+public class TwoClientsRecordUpdateDuringRetryWithTransactionsOnMultipleServersScenarioIT
+    extends AbstractScenarioTest {
 
-  private final String                  RECORD_ID   = "R001";
-  private       HashMap<String, Object> lukeFields  = new HashMap<String, Object>() {
-    {
-      put("firstName", "Luke");
-      put("lastName", "Skywalker");
-    }
-  };
-  private       HashMap<String, Object> darthFields = new HashMap<String, Object>() {
-    {
-      put("firstName", "Darth");
-      put("lastName", "Vader");
-    }
-  };
+  private final String RECORD_ID = "R001";
+  private HashMap<String, Object> lukeFields =
+      new HashMap<String, Object>() {
+        {
+          put("firstName", "Luke");
+          put("lastName", "Skywalker");
+        }
+      };
+  private HashMap<String, Object> darthFields =
+      new HashMap<String, Object>() {
+        {
+          put("firstName", "Darth");
+          put("lastName", "Vader");
+        }
+      };
 
   @Test
   @Ignore
@@ -81,7 +81,8 @@ public class TwoClientsRecordUpdateDuringRetryWithTransactionsOnMultipleServersS
     ODatabaseDocument dbServer2 = getDatabase(1);
 
     // inserts record1
-    ODocument record1Server1 = new ODocument("Person").fields("id", RECORD_ID, "firstName", "Han", "lastName", "Solo");
+    ODocument record1Server1 =
+        new ODocument("Person").fields("id", RECORD_ID, "firstName", "Han", "lastName", "Solo");
     record1Server1.save();
 
     // waits for propagation of the record on all the servers
@@ -92,11 +93,12 @@ public class TwoClientsRecordUpdateDuringRetryWithTransactionsOnMultipleServersS
 
     ODatabaseDocument dbServer1 = getDatabase(0);
 
-
     // sets a delay for operations on distributed storage of server1 and server2
     // so that server1 will start to commit after server2 has started the transaction
-    ((ODistributedStorage) ((ODatabaseDocumentInternal)dbServer2).getStorage()).setEventListener(new AfterRecordLockDelayer("server2", 1000));
-    ((ODistributedStorage) ((ODatabaseDocumentInternal)dbServer1).getStorage()).setEventListener(new AfterRecordLockDelayer("server1", 250));
+    ((ODistributedStorage) ((ODatabaseDocumentInternal) dbServer2).getStorage())
+        .setEventListener(new AfterRecordLockDelayer("server2", 1000));
+    ((ODistributedStorage) ((ODatabaseDocumentInternal) dbServer1).getStorage())
+        .setEventListener(new AfterRecordLockDelayer("server1", 250));
 
     // updates the same record from two different clients, each calling a different node
     ODocument record1Server2 = retrieveRecord(serverInstance.get(1), RECORD_ID);

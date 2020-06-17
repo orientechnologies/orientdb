@@ -25,11 +25,14 @@ import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.storage.impl.local.OSyncSource;
 import com.orientechnologies.orient.server.OServer;
-import com.orientechnologies.orient.server.distributed.*;
+import com.orientechnologies.orient.server.distributed.ODistributedException;
+import com.orientechnologies.orient.server.distributed.ODistributedRequestId;
+import com.orientechnologies.orient.server.distributed.ODistributedServerLog;
+import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
+import com.orientechnologies.orient.server.distributed.ORemoteTaskFactory;
 import com.orientechnologies.orient.server.distributed.impl.ODistributedDatabaseChunk;
 import com.orientechnologies.orient.server.distributed.impl.ODistributedStorage;
 import com.orientechnologies.orient.server.distributed.task.OAbstractReplicatedTask;
-
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
@@ -41,17 +44,17 @@ import java.io.IOException;
  */
 public class OCopyDatabaseChunkTask extends OAbstractReplicatedTask {
   private static final long serialVersionUID = 1L;
-  public static final  int  FACTORYID        = 15;
+  public static final int FACTORYID = 15;
 
-  private String  fileName;
-  private int     chunkNum;
-  private long    offset;
+  private String fileName;
+  private int chunkNum;
+  private long offset;
   private boolean compressed;
 
-  public OCopyDatabaseChunkTask() {
-  }
+  public OCopyDatabaseChunkTask() {}
 
-  public OCopyDatabaseChunkTask(final String iFileName, final int iChunkNum, final long iOffset, final boolean iCompressed) {
+  public OCopyDatabaseChunkTask(
+      final String iFileName, final int iChunkNum, final long iOffset, final boolean iCompressed) {
     fileName = iFileName;
     chunkNum = iChunkNum;
     offset = iOffset;
@@ -59,8 +62,12 @@ public class OCopyDatabaseChunkTask extends OAbstractReplicatedTask {
   }
 
   @Override
-  public Object execute(ODistributedRequestId requestId, final OServer iServer, ODistributedServerManager iManager,
-      final ODatabaseDocumentInternal database) throws Exception {
+  public Object execute(
+      ODistributedRequestId requestId,
+      final OServer iServer,
+      ODistributedServerManager iManager,
+      final ODatabaseDocumentInternal database)
+      throws Exception {
 
     if (database == null) {
       throw new ODistributedException("database not available anymore during sync");
@@ -71,10 +78,18 @@ public class OCopyDatabaseChunkTask extends OAbstractReplicatedTask {
     }
     OSyncSource b = storage.getLastValidBackup();
 
-    final ODistributedDatabaseChunk result = new ODistributedDatabaseChunk(b, OSyncDatabaseTask.CHUNK_MAX_SIZE);
+    final ODistributedDatabaseChunk result =
+        new ODistributedDatabaseChunk(b, OSyncDatabaseTask.CHUNK_MAX_SIZE);
 
-    ODistributedServerLog.info(this, iManager.getLocalNodeName(), getNodeSource(), ODistributedServerLog.DIRECTION.OUT,
-        "- transferring chunk #%d offset=%d size=%s...", chunkNum, result.offset, OFileUtils.getSizeAsNumber(result.buffer.length));
+    ODistributedServerLog.info(
+        this,
+        iManager.getLocalNodeName(),
+        getNodeSource(),
+        ODistributedServerLog.DIRECTION.OUT,
+        "- transferring chunk #%d offset=%d size=%s...",
+        chunkNum,
+        result.offset,
+        OFileUtils.getSizeAsNumber(result.buffer.length));
 
     return result;
   }

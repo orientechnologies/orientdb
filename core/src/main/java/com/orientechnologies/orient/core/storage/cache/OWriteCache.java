@@ -26,20 +26,15 @@ import com.orientechnologies.orient.core.storage.cache.local.OBackgroundExceptio
 import com.orientechnologies.orient.core.storage.impl.local.OLowDiskSpaceListener;
 import com.orientechnologies.orient.core.storage.impl.local.OPageIsBrokenListener;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
-
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.Map;
 
 public interface OWriteCache {
-  /**
-   * Adds listener which is called by cache if corruption of file page is detected.
-   */
+  /** Adds listener which is called by cache if corruption of file page is detected. */
   void addPageIsBrokenListener(OPageIsBrokenListener listener);
 
-  /**
-   * Removes listener which is called by cache if corruption of file page is detected.
-   */
+  /** Removes listener which is called by cache if corruption of file page is detected. */
   @SuppressWarnings("unused")
   void removePageIsBrokenListener(OPageIsBrokenListener listener);
 
@@ -51,17 +46,19 @@ public interface OWriteCache {
 
   /**
    * Registers new file in write cache and returns file id assigned to this file.
-   * <p>
-   * File id consist of two parts:
+   *
+   * <p>File id consist of two parts:
+   *
    * <ol>
-   * <li>Internal id is permanent and can not be changed during life of storage {@link #internalFileId(long)}</li>
-   * <li>Write cache id  which is changed between storage open/close cycles</li>
+   *   <li>Internal id is permanent and can not be changed during life of storage {@link
+   *       #internalFileId(long)}
+   *   <li>Write cache id which is changed between storage open/close cycles
    * </ol>
-   * <p>
-   * If file with the same name is deleted and then new file is created this file with have the same internal id.
+   *
+   * <p>If file with the same name is deleted and then new file is created this file with have the
+   * same internal id.
    *
    * @param fileName Name of file to register inside storage.
-   *
    * @return Id of registered file
    */
   long loadFile(String fileName) throws IOException;
@@ -74,7 +71,6 @@ public interface OWriteCache {
    * Returns id associated with given file or value &lt; 0 if such file does not exist.
    *
    * @param fileName File name id of which has to be returned.
-   *
    * @return id associated with given file or value &lt; 0 if such file does not exist.
    */
   long fileIdByName(String fileName);
@@ -99,7 +95,9 @@ public interface OWriteCache {
 
   int allocateNewPage(final long fileId) throws IOException;
 
-  OCachePointer load(long fileId, long startPageIndex, OModifiableBoolean cacheHit, boolean verifyChecksums) throws IOException;
+  OCachePointer load(
+      long fileId, long startPageIndex, OModifiableBoolean cacheHit, boolean verifyChecksums)
+      throws IOException;
 
   void flush(long fileId);
 
@@ -127,12 +125,13 @@ public interface OWriteCache {
 
   /**
    * Obtains native file name by the given file id.
-   * <p>
-   * Native file name is a file name of a "physical" on-disk file, it may differ from the "virtual" logical file name.
+   *
+   * <p>Native file name is a file name of a "physical" on-disk file, it may differ from the
+   * "virtual" logical file name.
    *
    * @param fileId the file id to obtain the native file name of.
-   *
-   * @return the obtained native file name or {@code null} if the passed file id doesn't correspond to any file.
+   * @return the obtained native file name or {@code null} if the passed file id doesn't correspond
+   *     to any file.
    */
   String nativeFileNameById(long fileId);
 
@@ -149,18 +148,17 @@ public interface OWriteCache {
 
   /**
    * DO NOT DELETE THIS METHOD IT IS USED IN ENTERPRISE STORAGE
-   * <p>
-   * Takes two ids and checks whether they are equal from point of view of write cache. In other words methods checks whether two
-   * ids in reality contain the same internal ids.
+   *
+   * <p>Takes two ids and checks whether they are equal from point of view of write cache. In other
+   * words methods checks whether two ids in reality contain the same internal ids.
    */
   boolean fileIdsAreEqual(long firsId, long secondId);
 
   /**
-   * Finds if there was file in write cache with given id which is deleted right now. If such file exists it creates new file with
-   * the same name at it was in deleted file.
+   * Finds if there was file in write cache with given id which is deleted right now. If such file
+   * exists it creates new file with the same name at it was in deleted file.
    *
    * @param fileId If of file which should be restored
-   *
    * @return Name of restored file or <code>null</code> if such name does not exist
    */
   String restoreFileById(long fileId) throws IOException;
@@ -182,28 +180,26 @@ public interface OWriteCache {
   /**
    * Directory which contains all files managed by write cache.
    *
-   * @return Directory which contains all files managed by write cache or <code>null</code> in case of in memory database.
+   * @return Directory which contains all files managed by write cache or <code>null</code> in case
+   *     of in memory database.
    */
   Path getRootDirectory();
 
   /**
-   * Returns internal file id which is unique and always the same for given file in contrary to external id which changes over
-   * close/open cycle of cache.
+   * Returns internal file id which is unique and always the same for given file in contrary to
+   * external id which changes over close/open cycle of cache.
    *
    * @param fileId External file id.
-   *
    * @return Internal file id.
    */
   int internalFileId(long fileId);
 
   /**
-   * Converts unique internal file id to external one. External id is combination of internal id and write cache id, which changes
-   * every time when cache is closed and opened again.
+   * Converts unique internal file id to external one. External id is combination of internal id and
+   * write cache id, which changes every time when cache is closed and opened again.
    *
    * @param fileId Internal file id.
-   *
    * @return External file id.
-   *
    * @see #internalFileId(long)
    * @see #getId()
    */

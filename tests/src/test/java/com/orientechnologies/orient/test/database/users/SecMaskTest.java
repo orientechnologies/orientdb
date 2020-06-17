@@ -7,9 +7,8 @@ import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.orientechnologies.orient.core.tx.OTransaction.TXTYPE;
-import org.testng.annotations.Test;
-
 import java.util.List;
+import org.testng.annotations.Test;
 
 public class SecMaskTest {
   private static ODatabaseDocumentTx database;
@@ -17,8 +16,7 @@ public class SecMaskTest {
   @Test
   public static void main(String[] args) {
     database = new ODatabaseDocumentTx("plocal:/tmp/secmask/secmask");
-    if (database.exists())
-      database.open("admin", "admin");
+    if (database.exists()) database.open("admin", "admin");
     else {
       database.create();
       create();
@@ -61,7 +59,12 @@ public class SecMaskTest {
     block = System.nanoTime();
 
     // CREATE THE INDEX AT THE END
-    database.getMetadata().getSchema().getClass("Account").getProperty("id").createIndex(OClass.INDEX_TYPE.UNIQUE);
+    database
+        .getMetadata()
+        .getSchema()
+        .getClass("Account")
+        .getProperty("id")
+        .createIndex(OClass.INDEX_TYPE.UNIQUE);
 
     System.out.println("Indexing done in: " + (System.nanoTime() - block) / 1000000 + "ms");
   }
@@ -69,7 +72,8 @@ public class SecMaskTest {
   public static void query() {
     System.out.println("Querying docs...");
 
-    // List<ODocument> result = database.query(new ONativeSynchQuery<ODocument, OQueryContextNativeSchema<ODocument>>(database,
+    // List<ODocument> result = database.query(new ONativeSynchQuery<ODocument,
+    // OQueryContextNativeSchema<ODocument>>(database,
     // "Account", new OQueryContextNativeSchema<ODocument>()) {
     // @Override
     // public boolean filter(OQueryContextNativeSchema<ODocument> iRecord) {
@@ -79,7 +83,8 @@ public class SecMaskTest {
 
     long start = System.currentTimeMillis();
 
-    List<ODocument> result = database.query(new OSQLSynchQuery<ODocument>("SELECT FROM Account WHERE id = " + 100999));
+    List<ODocument> result =
+        database.query(new OSQLSynchQuery<ODocument>("SELECT FROM Account WHERE id = " + 100999));
 
     System.out.println("Elapsed: " + (System.currentTimeMillis() - start));
 

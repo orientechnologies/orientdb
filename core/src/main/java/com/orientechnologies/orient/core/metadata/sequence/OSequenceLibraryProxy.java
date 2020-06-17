@@ -24,7 +24,6 @@ import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.metadata.sequence.OSequence.SEQUENCE_TYPE;
-
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
 
@@ -33,9 +32,11 @@ import java.util.concurrent.ExecutionException;
  * @since 3/2/2015
  */
 public class OSequenceLibraryProxy extends OSequenceLibraryAbstract {
-  private static final int replicationProtocolVersion = OGlobalConfiguration.DISTRIBUTED_REPLICATION_PROTOCOL_VERSION.getValue();
+  private static final int replicationProtocolVersion =
+      OGlobalConfiguration.DISTRIBUTED_REPLICATION_PROTOCOL_VERSION.getValue();
 
-  public OSequenceLibraryProxy(final OSequenceLibraryImpl iDelegate, final ODatabaseDocumentInternal iDatabase) {
+  public OSequenceLibraryProxy(
+      final OSequenceLibraryImpl iDelegate, final ODatabaseDocumentInternal iDatabase) {
     super(iDelegate, iDatabase);
   }
 
@@ -55,17 +56,24 @@ public class OSequenceLibraryProxy extends OSequenceLibraryAbstract {
   }
 
   @Override
-  public OSequence createSequence(String iName, SEQUENCE_TYPE sequenceType, OSequence.CreateParams params)
+  public OSequence createSequence(
+      String iName, SEQUENCE_TYPE sequenceType, OSequence.CreateParams params)
       throws ODatabaseException {
-    boolean shouldGoOverDistributted = database.isDistributed() && (replicationProtocolVersion == 2);
+    boolean shouldGoOverDistributted =
+        database.isDistributed() && (replicationProtocolVersion == 2);
     return createSequence(iName, sequenceType, params, shouldGoOverDistributted);
   }
 
   @Override
-  OSequence createSequence(String iName, SEQUENCE_TYPE sequenceType, OSequence.CreateParams params, boolean executeViaDistributed)
+  OSequence createSequence(
+      String iName,
+      SEQUENCE_TYPE sequenceType,
+      OSequence.CreateParams params,
+      boolean executeViaDistributed)
       throws ODatabaseException {
     if (executeViaDistributed) {
-      OSequenceAction action = new OSequenceAction(OSequenceAction.CREATE, iName, params, sequenceType);
+      OSequenceAction action =
+          new OSequenceAction(OSequenceAction.CREATE, iName, params, sequenceType);
       try {
         String sequenceName = database.sendSequenceAction(action);
         return delegate.getSequence(database, sequenceName);
@@ -81,7 +89,8 @@ public class OSequenceLibraryProxy extends OSequenceLibraryAbstract {
   @Override
   @Deprecated
   public void dropSequence(String iName) throws ODatabaseException {
-    boolean shouldGoOverDistributted = database.isDistributed() && (replicationProtocolVersion == 2);
+    boolean shouldGoOverDistributted =
+        database.isDistributed() && (replicationProtocolVersion == 2);
     dropSequence(iName, shouldGoOverDistributted);
   }
 
@@ -118,5 +127,4 @@ public class OSequenceLibraryProxy extends OSequenceLibraryAbstract {
   public OSequenceLibraryImpl getDelegate() {
     return delegate;
   }
-
 }

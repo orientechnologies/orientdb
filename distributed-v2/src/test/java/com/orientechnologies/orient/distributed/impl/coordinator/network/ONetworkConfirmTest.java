@@ -1,10 +1,13 @@
 package com.orientechnologies.orient.distributed.impl.coordinator.network;
 
 import com.orientechnologies.orient.distributed.impl.log.OLogId;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
+import java.io.IOException;
 import org.junit.Assert;
 import org.junit.Test;
-
-import java.io.*;
 
 public class ONetworkConfirmTest {
 
@@ -31,5 +34,3 @@ public class ONetworkConfirmTest {
     Assert.assertEquals(ack.getId(), ack2.getId());
   }
 }
-
-

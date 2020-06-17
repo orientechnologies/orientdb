@@ -1,25 +1,23 @@
 package com.orientechnologies.orient.distributed.impl.coordinator.transaction.results;
 
 import com.orientechnologies.orient.core.id.ORecordId;
-
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
 
 public class OConcurrentModificationResult implements OTransactionResult {
   private ORecordId recordId;
-  private int       updateVersion;
-  private int       persistentVersion;
+  private int updateVersion;
+  private int persistentVersion;
 
-  public OConcurrentModificationResult(ORecordId recordId, int updateVersion, int persistentVersion) {
+  public OConcurrentModificationResult(
+      ORecordId recordId, int updateVersion, int persistentVersion) {
     this.recordId = recordId;
     this.updateVersion = updateVersion;
     this.persistentVersion = persistentVersion;
   }
 
-  public OConcurrentModificationResult() {
-
-  }
+  public OConcurrentModificationResult() {}
 
   public ORecordId getRecordId() {
     return recordId;

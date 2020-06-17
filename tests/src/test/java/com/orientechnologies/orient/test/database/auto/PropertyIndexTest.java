@@ -23,12 +23,15 @@ import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
-import org.testng.Assert;
-import org.testng.annotations.*;
-
 import java.util.Collection;
+import org.testng.Assert;
+import org.testng.annotations.AfterClass;
+import org.testng.annotations.BeforeClass;
+import org.testng.annotations.Optional;
+import org.testng.annotations.Parameters;
+import org.testng.annotations.Test;
 
-@Test(groups = { "index" })
+@Test(groups = {"index"})
 public class PropertyIndexTest extends DocumentDBBaseTest {
 
   @Parameters(value = "url")
@@ -52,8 +55,7 @@ public class PropertyIndexTest extends DocumentDBBaseTest {
 
   @AfterClass
   public void afterClass() {
-    if (database.isClosed())
-      database.open("admin", "admin");
+    if (database.isClosed()) database.open("admin", "admin");
 
     database.command(new OCommandSQL("delete from PropertyIndexTestClass")).execute();
     database.command(new OCommandSQL("drop class PropertyIndexTestClass")).execute();
@@ -85,25 +87,43 @@ public class PropertyIndexTest extends DocumentDBBaseTest {
     Assert.assertTrue(indexDefinition.getFields().contains("prop1"));
     Assert.assertEquals(indexDefinition.getTypes().length, 1);
     Assert.assertEquals(indexDefinition.getTypes()[0], OType.STRING);
-
   }
 
-  @Test(dependsOnMethods = { "testCreateUniqueIndex" })
+  @Test(dependsOnMethods = {"testCreateUniqueIndex"})
   public void createAdditionalSchemas() {
     final OSchema schema = database.getMetadata().getSchema();
     final OClass oClass = schema.getClass("PropertyIndexTestClass");
 
-    oClass.createIndex("propOne0", OClass.INDEX_TYPE.UNIQUE.toString(), null, new ODocument().fields("ignoreNullValues", true),
-        new String[] { "prop0", "prop1" });
-    oClass.createIndex("propOne1", OClass.INDEX_TYPE.UNIQUE.toString(), null, new ODocument().fields("ignoreNullValues", true),
-        new String[] { "prop1", "prop2" });
-    oClass.createIndex("propOne2", OClass.INDEX_TYPE.UNIQUE.toString(), null, new ODocument().fields("ignoreNullValues", true),
-        new String[] { "prop1", "prop3" });
-    oClass.createIndex("propOne3", OClass.INDEX_TYPE.UNIQUE.toString(), null, new ODocument().fields("ignoreNullValues", true),
-        new String[] { "prop2", "prop3" });
-    oClass.createIndex("propOne4", OClass.INDEX_TYPE.UNIQUE.toString(), null, new ODocument().fields("ignoreNullValues", true),
-        new String[] { "prop2", "prop1" });
-
+    oClass.createIndex(
+        "propOne0",
+        OClass.INDEX_TYPE.UNIQUE.toString(),
+        null,
+        new ODocument().fields("ignoreNullValues", true),
+        new String[] {"prop0", "prop1"});
+    oClass.createIndex(
+        "propOne1",
+        OClass.INDEX_TYPE.UNIQUE.toString(),
+        null,
+        new ODocument().fields("ignoreNullValues", true),
+        new String[] {"prop1", "prop2"});
+    oClass.createIndex(
+        "propOne2",
+        OClass.INDEX_TYPE.UNIQUE.toString(),
+        null,
+        new ODocument().fields("ignoreNullValues", true),
+        new String[] {"prop1", "prop3"});
+    oClass.createIndex(
+        "propOne3",
+        OClass.INDEX_TYPE.UNIQUE.toString(),
+        null,
+        new ODocument().fields("ignoreNullValues", true),
+        new String[] {"prop2", "prop3"});
+    oClass.createIndex(
+        "propOne4",
+        OClass.INDEX_TYPE.UNIQUE.toString(),
+        null,
+        new ODocument().fields("ignoreNullValues", true),
+        new String[] {"prop2", "prop1"});
   }
 
   @Test(dependsOnMethods = "createAdditionalSchemas")
@@ -140,7 +160,7 @@ public class PropertyIndexTest extends DocumentDBBaseTest {
     Assert.assertFalse(propThree.isIndexed());
   }
 
-  @Test(dependsOnMethods = { "testCreateUniqueIndex" })
+  @Test(dependsOnMethods = {"testCreateUniqueIndex"})
   public void testIsIndexedIndexedField() {
     final OSchema schema = database.getMetadata().getSchema();
     final OClass oClass = schema.getClass("PropertyIndexTestClass");
@@ -148,36 +168,90 @@ public class PropertyIndexTest extends DocumentDBBaseTest {
     Assert.assertTrue(propOne.isIndexed());
   }
 
-  @Test(dependsOnMethods = { "testIsIndexedIndexedField" })
+  @Test(dependsOnMethods = {"testIsIndexedIndexedField"})
   public void testIndexingCompositeRIDAndOthers() throws Exception {
     checkEmbeddedDB();
 
-    long prev0 = database.getMetadata().getIndexManagerInternal().getIndex(database, "propOne0").getInternal().size();
-    long prev1 = database.getMetadata().getIndexManagerInternal().getIndex(database, "propOne1").getInternal().size();
+    long prev0 =
+        database
+            .getMetadata()
+            .getIndexManagerInternal()
+            .getIndex(database, "propOne0")
+            .getInternal()
+            .size();
+    long prev1 =
+        database
+            .getMetadata()
+            .getIndexManagerInternal()
+            .getIndex(database, "propOne1")
+            .getInternal()
+            .size();
 
-    ODocument doc = new ODocument("PropertyIndexTestClass").fields("prop1", "testComposite3").save();
+    ODocument doc =
+        new ODocument("PropertyIndexTestClass").fields("prop1", "testComposite3").save();
     new ODocument("PropertyIndexTestClass").fields("prop0", doc, "prop1", "testComposite1").save();
     new ODocument("PropertyIndexTestClass").fields("prop0", doc).save();
 
-    Assert.assertEquals(database.getMetadata().getIndexManagerInternal().getIndex(database, "propOne0").getInternal().size(), prev0 + 1);
-    Assert.assertEquals(database.getMetadata().getIndexManagerInternal().getIndex(database, "propOne1").getInternal().size(), prev1);
+    Assert.assertEquals(
+        database
+            .getMetadata()
+            .getIndexManagerInternal()
+            .getIndex(database, "propOne0")
+            .getInternal()
+            .size(),
+        prev0 + 1);
+    Assert.assertEquals(
+        database
+            .getMetadata()
+            .getIndexManagerInternal()
+            .getIndex(database, "propOne1")
+            .getInternal()
+            .size(),
+        prev1);
   }
 
-  @Test(dependsOnMethods = { "testIndexingCompositeRIDAndOthers" })
+  @Test(dependsOnMethods = {"testIndexingCompositeRIDAndOthers"})
   public void testIndexingCompositeRIDAndOthersInTx() throws Exception {
     database.begin();
 
-    long prev0 = database.getMetadata().getIndexManagerInternal().getIndex(database, "propOne0").getInternal().size();
-    long prev1 = database.getMetadata().getIndexManagerInternal().getIndex(database, "propOne1").getInternal().size();
+    long prev0 =
+        database
+            .getMetadata()
+            .getIndexManagerInternal()
+            .getIndex(database, "propOne0")
+            .getInternal()
+            .size();
+    long prev1 =
+        database
+            .getMetadata()
+            .getIndexManagerInternal()
+            .getIndex(database, "propOne1")
+            .getInternal()
+            .size();
 
-    ODocument doc = new ODocument("PropertyIndexTestClass").fields("prop1", "testComposite34").save();
+    ODocument doc =
+        new ODocument("PropertyIndexTestClass").fields("prop1", "testComposite34").save();
     new ODocument("PropertyIndexTestClass").fields("prop0", doc, "prop1", "testComposite33").save();
     new ODocument("PropertyIndexTestClass").fields("prop0", doc).save();
 
     database.commit();
 
-    Assert.assertEquals(database.getMetadata().getIndexManagerInternal().getIndex(database, "propOne0").getInternal().size(), prev0 + 1);
-    Assert.assertEquals(database.getMetadata().getIndexManagerInternal().getIndex(database, "propOne1").getInternal().size(), prev1);
+    Assert.assertEquals(
+        database
+            .getMetadata()
+            .getIndexManagerInternal()
+            .getIndex(database, "propOne0")
+            .getInternal()
+            .size(),
+        prev0 + 1);
+    Assert.assertEquals(
+        database
+            .getMetadata()
+            .getIndexManagerInternal()
+            .getIndex(database, "propOne1")
+            .getInternal()
+            .size(),
+        prev1);
   }
 
   @Test
@@ -185,15 +259,31 @@ public class PropertyIndexTest extends DocumentDBBaseTest {
     final OSchema schema = database.getMetadata().getSchema();
     final OClass oClass = schema.getClass("PropertyIndexTestClass");
 
-    oClass.createIndex("PropertyIndexFirstIndex", OClass.INDEX_TYPE.UNIQUE.toString(), null,
-        new ODocument().fields("ignoreNullValues", true), new String[] { "prop4" });
-    oClass.createIndex("PropertyIndexSecondIndex", OClass.INDEX_TYPE.UNIQUE.toString(), null,
-        new ODocument().fields("ignoreNullValues", true), new String[] { "prop4" });
+    oClass.createIndex(
+        "PropertyIndexFirstIndex",
+        OClass.INDEX_TYPE.UNIQUE.toString(),
+        null,
+        new ODocument().fields("ignoreNullValues", true),
+        new String[] {"prop4"});
+    oClass.createIndex(
+        "PropertyIndexSecondIndex",
+        OClass.INDEX_TYPE.UNIQUE.toString(),
+        null,
+        new ODocument().fields("ignoreNullValues", true),
+        new String[] {"prop4"});
 
     oClass.getProperty("prop4").dropIndexes();
 
-    Assert.assertNull(database.getMetadata().getIndexManagerInternal().getIndex(database, "PropertyIndexFirstIndex"));
-    Assert.assertNull(database.getMetadata().getIndexManagerInternal().getIndex(database, "PropertyIndexSecondIndex"));
+    Assert.assertNull(
+        database
+            .getMetadata()
+            .getIndexManagerInternal()
+            .getIndex(database, "PropertyIndexFirstIndex"));
+    Assert.assertNull(
+        database
+            .getMetadata()
+            .getIndexManagerInternal()
+            .getIndex(database, "PropertyIndexSecondIndex"));
   }
 
   @Test
@@ -201,26 +291,42 @@ public class PropertyIndexTest extends DocumentDBBaseTest {
     final OSchema schema = database.getMetadata().getSchema();
     final OClass oClass = schema.getClass("PropertyIndexTestClass");
 
-    oClass.createIndex("PropertyIndexFirstIndex", OClass.INDEX_TYPE.UNIQUE.toString(), null,
-        new ODocument().fields("ignoreNullValues", true), new String[] { "prop4" });
-    oClass.createIndex("PropertyIndexSecondIndex", OClass.INDEX_TYPE.UNIQUE.toString(), null,
-        new ODocument().fields("ignoreNullValues", true), new String[] { "prop4", "prop5" });
+    oClass.createIndex(
+        "PropertyIndexFirstIndex",
+        OClass.INDEX_TYPE.UNIQUE.toString(),
+        null,
+        new ODocument().fields("ignoreNullValues", true),
+        new String[] {"prop4"});
+    oClass.createIndex(
+        "PropertyIndexSecondIndex",
+        OClass.INDEX_TYPE.UNIQUE.toString(),
+        null,
+        new ODocument().fields("ignoreNullValues", true),
+        new String[] {"prop4", "prop5"});
 
     try {
       oClass.getProperty("prop4").dropIndexes();
       Assert.fail();
     } catch (IllegalArgumentException e) {
-      Assert.assertTrue(e.getMessage().contains("This operation applicable only for property indexes. "));
+      Assert.assertTrue(
+          e.getMessage().contains("This operation applicable only for property indexes. "));
     }
 
-    Assert.assertNotNull(database.getMetadata().getIndexManagerInternal().getIndex(database, "PropertyIndexFirstIndex"));
-    Assert.assertNotNull(database.getMetadata().getIndexManagerInternal().getIndex(database, "PropertyIndexSecondIndex"));
+    Assert.assertNotNull(
+        database
+            .getMetadata()
+            .getIndexManagerInternal()
+            .getIndex(database, "PropertyIndexFirstIndex"));
+    Assert.assertNotNull(
+        database
+            .getMetadata()
+            .getIndexManagerInternal()
+            .getIndex(database, "PropertyIndexSecondIndex"));
   }
 
   private OIndex containsIndex(final Collection<OIndex> indexes, final String indexName) {
     for (final OIndex index : indexes) {
-      if (index.getName().equals(indexName))
-        return index;
+      if (index.getName().equals(indexName)) return index;
     }
     return null;
   }

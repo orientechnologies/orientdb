@@ -1,7 +1,6 @@
 package com.orientechnologies.orient.core.cache;
 
 import com.orientechnologies.common.log.OLogManager;
-
 import java.io.Serializable;
 import java.lang.ref.Reference;
 import java.lang.ref.ReferenceQueue;
@@ -13,12 +12,14 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
- * Soft References Map inspired by the code published by Dr. Heinz M. Kabutz on http://www.javaspecialists.eu/archive/Issue015.html.
+ * Soft References Map inspired by the code published by Dr. Heinz M. Kabutz on
+ * http://www.javaspecialists.eu/archive/Issue015.html.
  */
 public class OSoftRefsHashMap<K, V> extends AbstractMap<K, V> implements Serializable {
-  private final Map<K, SoftReference<V>> hashCodes     = new ConcurrentHashMap<K, SoftReference<V>>();
-  private final Map<SoftReference<V>, K> reverseLookup = new ConcurrentHashMap<SoftReference<V>, K>();
-  private final ReferenceQueue<V>        refQueue      = new ReferenceQueue<V>();
+  private final Map<K, SoftReference<V>> hashCodes = new ConcurrentHashMap<K, SoftReference<V>>();
+  private final Map<SoftReference<V>, K> reverseLookup =
+      new ConcurrentHashMap<SoftReference<V>, K>();
+  private final ReferenceQueue<V> refQueue = new ReferenceQueue<V>();
 
   public V get(Object key) {
     evictStaleEntries();
@@ -46,8 +47,7 @@ public class OSoftRefsHashMap<K, V> extends AbstractMap<K, V> implements Seriali
       }
     }
 
-    if (evicted > 0)
-      OLogManager.instance().debug(this, "Evicted %d items", evicted);
+    if (evicted > 0) OLogManager.instance().debug(this, "Evicted %d items", evicted);
   }
 
   public V put(final K key, final V value) {
@@ -55,8 +55,7 @@ public class OSoftRefsHashMap<K, V> extends AbstractMap<K, V> implements Seriali
     final SoftReference<V> soft_ref = new SoftReference<V>(value, refQueue);
     reverseLookup.put(soft_ref, key);
     final SoftReference<V> result = hashCodes.put(key, soft_ref);
-    if (result == null)
-      return null;
+    if (result == null) return null;
     reverseLookup.remove(result);
     return result.get();
   }
@@ -64,8 +63,7 @@ public class OSoftRefsHashMap<K, V> extends AbstractMap<K, V> implements Seriali
   public V remove(Object key) {
     evictStaleEntries();
     final SoftReference<V> result = hashCodes.remove(key);
-    if (result == null)
-      return null;
+    if (result == null) return null;
     return result.get();
   }
 
@@ -85,20 +83,21 @@ public class OSoftRefsHashMap<K, V> extends AbstractMap<K, V> implements Seriali
     for (final Entry<K, SoftReference<V>> entry : hashCodes.entrySet()) {
       final V value = entry.getValue().get();
       if (value != null) {
-        result.add(new Entry<K, V>() {
-          public K getKey() {
-            return entry.getKey();
-          }
+        result.add(
+            new Entry<K, V>() {
+              public K getKey() {
+                return entry.getKey();
+              }
 
-          public V getValue() {
-            return value;
-          }
+              public V getValue() {
+                return value;
+              }
 
-          public V setValue(V v) {
-            entry.setValue(new SoftReference<V>(v, refQueue));
-            return value;
-          }
-        });
+              public V setValue(V v) {
+                entry.setValue(new SoftReference<V>(v, refQueue));
+                return value;
+              }
+            });
       }
     }
     return result;

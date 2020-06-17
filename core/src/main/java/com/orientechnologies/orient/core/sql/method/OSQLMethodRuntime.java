@@ -38,7 +38,6 @@ import com.orientechnologies.orient.core.sql.filter.OSQLFilterItemField;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilterItemVariable;
 import com.orientechnologies.orient.core.sql.filter.OSQLPredicate;
 import com.orientechnologies.orient.core.sql.functions.OSQLFunctionRuntime;
-
 import java.util.List;
 
 /**
@@ -46,11 +45,12 @@ import java.util.List;
  *
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
  */
-public class OSQLMethodRuntime extends OSQLFilterItemAbstract implements Comparable<OSQLMethodRuntime> {
+public class OSQLMethodRuntime extends OSQLFilterItemAbstract
+    implements Comparable<OSQLMethodRuntime> {
 
   public OSQLMethod method;
-  public Object[]   configuredParameters;
-  public Object[]   runtimeParameters;
+  public Object[] configuredParameters;
+  public Object[] runtimeParameters;
 
   public OSQLMethodRuntime(final OBaseParser iQueryToParse, final String iText) {
     super(iQueryToParse, iText);
@@ -68,10 +68,12 @@ public class OSQLMethodRuntime extends OSQLFilterItemAbstract implements Compara
    * @param iContext
    * @return
    */
-  public Object execute(final Object iThis, final OIdentifiable iCurrentRecord, final Object iCurrentResult,
+  public Object execute(
+      final Object iThis,
+      final OIdentifiable iCurrentRecord,
+      final Object iCurrentResult,
       final OCommandContext iContext) {
-    if (iThis == null)
-      return null;
+    if (iThis == null) return null;
 
     if (configuredParameters != null) {
       // RESOLVE VALUES USING THE CURRENT RECORD
@@ -80,53 +82,65 @@ public class OSQLMethodRuntime extends OSQLFilterItemAbstract implements Compara
 
         if (method.evaluateParameters()) {
           if (configuredParameters[i] instanceof OSQLFilterItemField) {
-            runtimeParameters[i] = ((OSQLFilterItemField) configuredParameters[i])
-                .getValue(iCurrentRecord, iCurrentResult, iContext);
+            runtimeParameters[i] =
+                ((OSQLFilterItemField) configuredParameters[i])
+                    .getValue(iCurrentRecord, iCurrentResult, iContext);
             if (runtimeParameters[i] == null && iCurrentResult instanceof OIdentifiable)
               // LOOK INTO THE CURRENT RESULT
-              runtimeParameters[i] = ((OSQLFilterItemField) configuredParameters[i])
-                  .getValue((OIdentifiable) iCurrentResult, iCurrentResult, iContext);
+              runtimeParameters[i] =
+                  ((OSQLFilterItemField) configuredParameters[i])
+                      .getValue((OIdentifiable) iCurrentResult, iCurrentResult, iContext);
           } else if (configuredParameters[i] instanceof OSQLMethodRuntime)
-            runtimeParameters[i] = ((OSQLMethodRuntime) configuredParameters[i])
-                .execute(iThis, iCurrentRecord, iCurrentResult, iContext);
+            runtimeParameters[i] =
+                ((OSQLMethodRuntime) configuredParameters[i])
+                    .execute(iThis, iCurrentRecord, iCurrentResult, iContext);
           else if (configuredParameters[i] instanceof OSQLFunctionRuntime)
-            runtimeParameters[i] = ((OSQLFunctionRuntime) configuredParameters[i])
-                .execute(iCurrentRecord, iCurrentRecord, iCurrentResult, iContext);
+            runtimeParameters[i] =
+                ((OSQLFunctionRuntime) configuredParameters[i])
+                    .execute(iCurrentRecord, iCurrentRecord, iCurrentResult, iContext);
           else if (configuredParameters[i] instanceof OSQLFilterItemVariable) {
-            runtimeParameters[i] = ((OSQLFilterItemVariable) configuredParameters[i])
-                .getValue(iCurrentRecord, iCurrentResult, iContext);
+            runtimeParameters[i] =
+                ((OSQLFilterItemVariable) configuredParameters[i])
+                    .getValue(iCurrentRecord, iCurrentResult, iContext);
             if (runtimeParameters[i] == null && iCurrentResult instanceof OIdentifiable)
               // LOOK INTO THE CURRENT RESULT
-              runtimeParameters[i] = ((OSQLFilterItemVariable) configuredParameters[i])
-                  .getValue((OIdentifiable) iCurrentResult, iCurrentResult, iContext);
+              runtimeParameters[i] =
+                  ((OSQLFilterItemVariable) configuredParameters[i])
+                      .getValue((OIdentifiable) iCurrentResult, iCurrentResult, iContext);
           } else if (configuredParameters[i] instanceof OCommandSQL) {
             try {
-              runtimeParameters[i] = ((OCommandSQL) configuredParameters[i]).setContext(iContext).execute();
+              runtimeParameters[i] =
+                  ((OCommandSQL) configuredParameters[i]).setContext(iContext).execute();
             } catch (OCommandExecutorNotFoundException ignore) {
               // TRY WITH SIMPLE CONDITION
               final String text = ((OCommandSQL) configuredParameters[i]).getText();
               final OSQLPredicate pred = new OSQLPredicate(text);
-              runtimeParameters[i] = pred
-                  .evaluate(iCurrentRecord instanceof ORecord ? (ORecord) iCurrentRecord : null, (ODocument) iCurrentResult,
+              runtimeParameters[i] =
+                  pred.evaluate(
+                      iCurrentRecord instanceof ORecord ? (ORecord) iCurrentRecord : null,
+                      (ODocument) iCurrentResult,
                       iContext);
               // REPLACE ORIGINAL PARAM
               configuredParameters[i] = pred;
-
             }
           } else if (configuredParameters[i] instanceof OSQLPredicate)
-            runtimeParameters[i] = ((OSQLPredicate) configuredParameters[i])
-                .evaluate(iCurrentRecord.getRecord(), (iCurrentRecord instanceof ODocument ? (ODocument) iCurrentResult : null),
-                    iContext);
+            runtimeParameters[i] =
+                ((OSQLPredicate) configuredParameters[i])
+                    .evaluate(
+                        iCurrentRecord.getRecord(),
+                        (iCurrentRecord instanceof ODocument ? (ODocument) iCurrentResult : null),
+                        iContext);
           else if (configuredParameters[i] instanceof String) {
-            if (configuredParameters[i].toString().startsWith("\"") || configuredParameters[i].toString().startsWith("'"))
+            if (configuredParameters[i].toString().startsWith("\"")
+                || configuredParameters[i].toString().startsWith("'"))
               runtimeParameters[i] = OIOUtils.getStringContent(configuredParameters[i]);
           }
         }
       }
 
       if (method.getMaxParams() == -1 || method.getMaxParams() > 0) {
-        if (runtimeParameters.length < method.getMinParams() || (method.getMaxParams() > -1 && runtimeParameters.length > method
-            .getMaxParams())) {
+        if (runtimeParameters.length < method.getMinParams()
+            || (method.getMaxParams() > -1 && runtimeParameters.length > method.getMaxParams())) {
           String params;
           if (method.getMinParams() == method.getMaxParams()) {
             params = "" + method.getMinParams();
@@ -134,19 +148,25 @@ public class OSQLMethodRuntime extends OSQLFilterItemAbstract implements Compara
             params = method.getMinParams() + "-" + method.getMaxParams();
           }
           throw new OCommandExecutionException(
-              "Syntax error: function '" + method.getName() + "' needs " + (params) + " argument(s) while has been received "
+              "Syntax error: function '"
+                  + method.getName()
+                  + "' needs "
+                  + (params)
+                  + " argument(s) while has been received "
                   + runtimeParameters.length);
         }
       }
     }
 
-    final Object functionResult = method.execute(iThis, iCurrentRecord, iContext, iCurrentResult, runtimeParameters);
+    final Object functionResult =
+        method.execute(iThis, iCurrentRecord, iContext, iCurrentResult, runtimeParameters);
 
     return transformValue(iCurrentRecord, iContext, functionResult);
   }
 
   @Override
-  public Object getValue(final OIdentifiable iRecord, Object iCurrentResult, OCommandContext iContext) {
+  public Object getValue(
+      final OIdentifiable iRecord, Object iCurrentResult, OCommandContext iContext) {
     final ODocument current = iRecord != null ? (ODocument) iRecord.getRecord() : null;
     return execute(current, current, null, iContext);
   }
@@ -166,8 +186,7 @@ public class OSQLMethodRuntime extends OSQLFilterItemAbstract implements Compara
     final List<String> funcParamsText = OStringSerializerHelper.getParameters(iText);
 
     method = OSQLEngine.getMethod(funcName);
-    if (method == null)
-      throw new OCommandSQLParsingException("Unknown method " + funcName + "()");
+    if (method == null) throw new OCommandSQLParsingException("Unknown method " + funcName + "()");
 
     // PARSE PARAMETERS
     this.configuredParameters = new Object[funcParamsText.size()];
@@ -186,20 +205,21 @@ public class OSQLMethodRuntime extends OSQLFilterItemAbstract implements Compara
         if (iParameters[i] != null) {
           if (iParameters[i] instanceof String && !iParameters[i].toString().startsWith("[")) {
             final Object v = OSQLHelper.parseValue(null, null, iParameters[i].toString(), null);
-            if (v == OSQLHelper.VALUE_NOT_PARSED || (v != null && OMultiValue.isMultiValue(v)
-                && OMultiValue.getFirstValue(v) == OSQLHelper.VALUE_NOT_PARSED))
-              continue;
+            if (v == OSQLHelper.VALUE_NOT_PARSED
+                || (v != null
+                    && OMultiValue.isMultiValue(v)
+                    && OMultiValue.getFirstValue(v) == OSQLHelper.VALUE_NOT_PARSED)) continue;
 
             configuredParameters[i] = v;
           }
-        } else
-          this.configuredParameters[i] = null;
+        } else this.configuredParameters[i] = null;
       }
 
       // COPY STATIC VALUES
       this.runtimeParameters = new Object[configuredParameters.length];
       for (int i = 0; i < configuredParameters.length; ++i) {
-        if (!(configuredParameters[i] instanceof OSQLFilterItemField) && !(configuredParameters[i] instanceof OSQLMethodRuntime))
+        if (!(configuredParameters[i] instanceof OSQLFilterItemField)
+            && !(configuredParameters[i] instanceof OSQLMethodRuntime))
           runtimeParameters[i] = configuredParameters[i];
       }
     }

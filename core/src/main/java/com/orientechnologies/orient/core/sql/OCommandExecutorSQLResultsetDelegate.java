@@ -20,19 +20,17 @@
 package com.orientechnologies.orient.core.sql;
 
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
-
 import java.util.Iterator;
 import java.util.Map;
 
 /**
  * SQL UPDATE command.
- * 
+ *
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
- * 
  */
 @SuppressWarnings("unchecked")
-public class OCommandExecutorSQLResultsetDelegate extends OCommandExecutorSQLDelegate implements OIterableRecordSource,
-    Iterable<OIdentifiable> {
+public class OCommandExecutorSQLResultsetDelegate extends OCommandExecutorSQLDelegate
+    implements OIterableRecordSource, Iterable<OIdentifiable> {
 
   @Override
   public Iterator<OIdentifiable> iterator() {

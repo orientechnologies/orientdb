@@ -8,8 +8,8 @@ import java.util.Optional;
 
 public class OTransactionId {
   private Optional<String> nodeOwner;
-  private int              position;
-  private long             sequence;
+  private int position;
+  private long sequence;
 
   public OTransactionId(Optional<String> nodeOwner, int position, long sequence) {
     assert nodeOwner != null;
@@ -32,12 +32,12 @@ public class OTransactionId {
 
   @Override
   public boolean equals(Object o) {
-    if (this == o)
-      return true;
-    if (o == null || getClass() != o.getClass())
-      return false;
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
     OTransactionId that = (OTransactionId) o;
-    return position == that.position && sequence == that.sequence && Objects.equals(nodeOwner, that.nodeOwner);
+    return position == that.position
+        && sequence == that.sequence
+        && Objects.equals(nodeOwner, that.nodeOwner);
   }
 
   @Override

@@ -8,10 +8,9 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.record.OElement;
 import com.orientechnologies.orient.core.record.OVertex;
+import java.util.concurrent.CountDownLatch;
 import org.junit.Assert;
 import org.junit.Ignore;
-
-import java.util.concurrent.CountDownLatch;
 
 @Ignore
 public class AsyncReplMode2Servers2OpsCommitConcurrentIT extends BareBoneBase2ServerTest {
@@ -53,7 +52,8 @@ public class AsyncReplMode2Servers2OpsCommitConcurrentIT extends BareBoneBase2Se
       e.printStackTrace();
     }
 
-    ODatabaseSession graph = servers[0].getServer().getContext().open(getDatabaseName(), "admin", "admin");
+    ODatabaseSession graph =
+        servers[0].getServer().getContext().open(getDatabaseName(), "admin", "admin");
 
     OVertex vertex1 = ((OElement) graph.getRecord(vertex1Id)).asVertex().get();
 
@@ -68,13 +68,21 @@ public class AsyncReplMode2Servers2OpsCommitConcurrentIT extends BareBoneBase2Se
             vertex1.save();
             graph.commit();
 
-            System.out
-                .println(iClient + " - successfully committed version: " + vertex1.getRecord().getVersion() + " retry: " + retry);
+            System.out.println(
+                iClient
+                    + " - successfully committed version: "
+                    + vertex1.getRecord().getVersion()
+                    + " retry: "
+                    + retry);
             break;
 
           } catch (ONeedRetryException e) {
             System.out.println(
-                iClient + " - caught conflict, reloading vertex. v=" + vertex1.getRecord().getVersion() + " retry: " + retry);
+                iClient
+                    + " - caught conflict, reloading vertex. v="
+                    + vertex1.getRecord().getVersion()
+                    + " retry: "
+                    + retry);
             graph.rollback();
             vertex1.reload();
           }
@@ -88,8 +96,7 @@ public class AsyncReplMode2Servers2OpsCommitConcurrentIT extends BareBoneBase2Se
       Assert.assertEquals(TOTAL, i);
 
     } catch (Throwable e) {
-      if (exceptionInThread == null)
-        exceptionInThread = e;
+      if (exceptionInThread == null) exceptionInThread = e;
 
     } finally {
       System.out.println("Shutting down");

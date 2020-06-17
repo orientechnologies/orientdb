@@ -25,29 +25,31 @@ import com.orientechnologies.orient.core.intent.OIntentMassiveInsert;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.test.database.base.OrientMultiThreadTest;
 import com.orientechnologies.orient.test.database.base.OrientThreadTest;
-import com.tinkerpop.blueprints.impls.orient.*;
+import com.tinkerpop.blueprints.impls.orient.OrientBaseGraph;
+import com.tinkerpop.blueprints.impls.orient.OrientGraphFactory;
+import com.tinkerpop.blueprints.impls.orient.OrientGraphNoTx;
+import com.tinkerpop.blueprints.impls.orient.OrientVertex;
+import com.tinkerpop.blueprints.impls.orient.OrientVertexType;
+import java.util.concurrent.atomic.AtomicLong;
 import org.testng.Assert;
 import org.testng.annotations.Test;
-
-import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * Creates medium connected vertices, to test how RIDBag threshold impact on performance.
  *
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
  */
-
 @Test(enabled = false)
 public class GraphInsertSpeedMTTest extends OrientMultiThreadTest {
-  protected static final String             URL     = "plocal:target/databases/graphspeedtest";
-  protected final        OrientGraphFactory factory = new OrientGraphFactory(URL);
-  protected static final AtomicLong         counter = new AtomicLong();
-  protected final static int                EDGES   = 15;
+  protected static final String URL = "plocal:target/databases/graphspeedtest";
+  protected final OrientGraphFactory factory = new OrientGraphFactory(URL);
+  protected static final AtomicLong counter = new AtomicLong();
+  protected static final int EDGES = 15;
 
   @Test(enabled = false)
   public static class CreateObjectsThread extends OrientThreadTest {
     protected OrientBaseGraph graph;
-    protected OrientVertex    superNode;
+    protected OrientVertex superNode;
 
     public CreateObjectsThread(final SpeedTestMultiThreads parent, final int threadId) {
       super(parent, threadId);
@@ -62,7 +64,8 @@ public class GraphInsertSpeedMTTest extends OrientMultiThreadTest {
     }
 
     public void cycle() {
-      OrientVertex superNode = graph.addVertex("class:Client", "name", "superNode", "uid", counter.getAndIncrement());
+      OrientVertex superNode =
+          graph.addVertex("class:Client", "name", "superNode", "uid", counter.getAndIncrement());
       for (int i = 0; i < EDGES; ++i) {
         final OrientVertex v = graph.addVertex("class:Client", "uid", counter.getAndIncrement());
         superNode.addEdge("test", v);
@@ -71,8 +74,7 @@ public class GraphInsertSpeedMTTest extends OrientMultiThreadTest {
 
     @Override
     public void deinit() throws Exception {
-      if (graph != null)
-        graph.shutdown();
+      if (graph != null) graph.shutdown();
       super.deinit();
     }
 
@@ -93,8 +95,7 @@ public class GraphInsertSpeedMTTest extends OrientMultiThreadTest {
 
   @Override
   public void init() {
-    if (factory.exists())
-      factory.drop();
+    if (factory.exists()) factory.drop();
 
     final OrientGraphNoTx graph = factory.getNoTx();
 
@@ -102,7 +103,8 @@ public class GraphInsertSpeedMTTest extends OrientMultiThreadTest {
       if (graph.getVertexType("Client") == null) {
         final OrientVertexType clientType = graph.createVertexType("Client");
 
-        final OrientVertexType.OrientVertexProperty property = clientType.createProperty("uid", OType.STRING);
+        final OrientVertexType.OrientVertexProperty property =
+            clientType.createProperty("uid", OType.STRING);
         // property.createIndex(OClass.INDEX_TYPE.UNIQUE_HASH_INDEX);
 
         // CREATE ONE CLUSTER PER THREAD
@@ -127,8 +129,14 @@ public class GraphInsertSpeedMTTest extends OrientMultiThreadTest {
       System.out.println("Created " + (total));
       Assert.assertEquals(total, threadCycles);
 
-      final long indexedItems = graph.getRawGraph().getMetadata().getIndexManagerInternal()
-          .getIndex(graph.getRawGraph(), "Client.uid").getInternal().size();
+      final long indexedItems =
+          graph
+              .getRawGraph()
+              .getMetadata()
+              .getIndexManagerInternal()
+              .getIndex(graph.getRawGraph(), "Client.uid")
+              .getInternal()
+              .size();
       System.out.println("\nTotal indexed objects after the test: " + indexedItems);
 
     } finally {

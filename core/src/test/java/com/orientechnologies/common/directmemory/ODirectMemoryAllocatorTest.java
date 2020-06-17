@@ -1,12 +1,11 @@
 package com.orientechnologies.common.directmemory;
 
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
+import java.nio.ByteBuffer;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
-
-import java.nio.ByteBuffer;
 
 public class ODirectMemoryAllocatorTest {
   @BeforeClass

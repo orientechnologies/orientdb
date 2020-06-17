@@ -28,7 +28,6 @@ import com.orientechnologies.orient.core.storage.ORawBuffer;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.impl.local.OClusterBrowsePage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperation;
-
 import java.io.IOException;
 
 /**
@@ -38,7 +37,7 @@ import java.io.IOException;
  */
 public class OClusterRemote implements OCluster {
   private String name;
-  private int    id;
+  private int id;
 
   /*
    * (non-Javadoc)
@@ -57,7 +56,8 @@ public class OClusterRemote implements OCluster {
    * @see com.orientechnologies.orient.core.storage.OCluster#configure(com.orientechnologies.orient.core.storage.OStorage,
    * com.orientechnologies.orient.core.config.OStorageClusterConfiguration)
    */
-  public void configure(OStorage iStorage, OStorageClusterConfiguration iConfig) throws IOException {
+  public void configure(OStorage iStorage, OStorageClusterConfiguration iConfig)
+      throws IOException {
     id = iConfig.getId();
     name = iConfig.getName();
   }
@@ -67,32 +67,32 @@ public class OClusterRemote implements OCluster {
    *
    * @see com.orientechnologies.orient.core.storage.OCluster#create(int)
    */
-  public void create(OAtomicOperation atomicOperation) throws IOException {
-
-  }
+  public void create(OAtomicOperation atomicOperation) throws IOException {}
 
   /*
    * (non-Javadoc)
    *
    * @see com.orientechnologies.orient.core.storage.OCluster#open()
    */
-  public void open() throws IOException {
-  }
+  public void open() throws IOException {}
 
-  public void close() throws IOException {
-  }
+  public void close() throws IOException {}
 
   @Override
-  public void close(boolean flush) throws IOException {
-  }
+  public void close(boolean flush) throws IOException {}
 
   @Override
-  public OPhysicalPosition allocatePosition(byte recordType, OAtomicOperation atomicOperation) throws IOException {
+  public OPhysicalPosition allocatePosition(byte recordType, OAtomicOperation atomicOperation)
+      throws IOException {
     throw new UnsupportedOperationException("allocatePosition");
   }
 
   @Override
-  public OPhysicalPosition createRecord(byte[] content, int recordVersion, byte recordType, OPhysicalPosition allocatedPosition,
+  public OPhysicalPosition createRecord(
+      byte[] content,
+      int recordVersion,
+      byte recordType,
+      OPhysicalPosition allocatedPosition,
       OAtomicOperation atomicOperation) {
     throw new UnsupportedOperationException("createRecord");
   }
@@ -103,7 +103,11 @@ public class OClusterRemote implements OCluster {
   }
 
   @Override
-  public void updateRecord(long clusterPosition, byte[] content, int recordVersion, byte recordType,
+  public void updateRecord(
+      long clusterPosition,
+      byte[] content,
+      int recordVersion,
+      byte recordType,
       OAtomicOperation atomicOperation) {
     throw new UnsupportedOperationException("updateRecord");
   }
@@ -139,8 +143,7 @@ public class OClusterRemote implements OCluster {
     throw new UnsupportedOperationException("exists");
   }
 
-  public void delete(OAtomicOperation atomicOperation) throws IOException {
-  }
+  public void delete(OAtomicOperation atomicOperation) throws IOException {}
 
   public Object set(ATTRIBUTES iAttribute, Object iValue) throws IOException {
     return null;
@@ -188,8 +191,7 @@ public class OClusterRemote implements OCluster {
     return id;
   }
 
-  public void synch() throws IOException {
-  }
+  public void synch() throws IOException {}
 
   public String getName() {
     return name;
@@ -251,7 +253,7 @@ public class OClusterRemote implements OCluster {
 
   @Override
   public int getBinaryVersion() {
-    throw new UnsupportedOperationException("Operation is not supported for given cluster implementation");
+    throw new UnsupportedOperationException(
+        "Operation is not supported for given cluster implementation");
   }
 }
-

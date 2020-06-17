@@ -7,25 +7,26 @@ import com.orientechnologies.orient.core.sql.parser.OExpression;
 import com.orientechnologies.orient.core.sql.parser.OGroupBy;
 import com.orientechnologies.orient.core.sql.parser.OProjection;
 import com.orientechnologies.orient.core.sql.parser.OProjectionItem;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 
-import java.util.*;
-
-/**
- * Created by luigidellaquila on 12/07/16.
- */
+/** Created by luigidellaquila on 12/07/16. */
 public class AggregateProjectionCalculationStep extends ProjectionCalculationStep {
 
   private final OGroupBy groupBy;
 
-  //the key is the GROUP BY key, the value is the (partially) aggregated value
+  // the key is the GROUP BY key, the value is the (partially) aggregated value
   private Map<List, OResultInternal> aggregateResults = new LinkedHashMap<>();
-  private List<OResultInternal>      finalResults     = null;
+  private List<OResultInternal> finalResults = null;
 
-  private int  nextItem = 0;
-  private long cost     = 0;
+  private int nextItem = 0;
+  private long cost = 0;
 
-  public AggregateProjectionCalculationStep(OProjection projection, OGroupBy groupBy, OCommandContext ctx,
-      boolean profilingEnabled) {
+  public AggregateProjectionCalculationStep(
+      OProjection projection, OGroupBy groupBy, OCommandContext ctx, boolean profilingEnabled) {
     super(projection, ctx, profilingEnabled);
     this.groupBy = groupBy;
   }
@@ -59,9 +60,7 @@ public class AggregateProjectionCalculationStep extends ProjectionCalculationSte
       }
 
       @Override
-      public void close() {
-
-      }
+      public void close() {}
 
       @Override
       public Optional<OExecutionPlan> getExecutionPlan() {
@@ -77,7 +76,8 @@ public class AggregateProjectionCalculationStep extends ProjectionCalculationSte
 
   private void executeAggregation(OCommandContext ctx, int nRecords) {
     if (!prev.isPresent()) {
-      throw new OCommandExecutionException("Cannot execute an aggregation or a GROUP BY without a previous result");
+      throw new OCommandExecutionException(
+          "Cannot execute an aggregation or a GROUP BY without a previous result");
     }
     OExecutionStepInternal prevStep = prev.get();
     OResultSet lastRs = prevStep.syncPull(ctx, nRecords);
@@ -144,7 +144,12 @@ public class AggregateProjectionCalculationStep extends ProjectionCalculationSte
       result += " (" + getCostFormatted() + ")";
     }
     result +=
-        "\n" + spaces + "      " + projection.toString() + "" + (groupBy == null ? "" : (spaces + "\n  " + groupBy.toString()));
+        "\n"
+            + spaces
+            + "      "
+            + projection.toString()
+            + ""
+            + (groupBy == null ? "" : (spaces + "\n  " + groupBy.toString()));
     return result;
   }
 

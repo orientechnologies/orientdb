@@ -27,8 +27,8 @@ import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.storage.OStorage;
 
 /**
- * Iterator class to browse forward and backward the records of a cluster. Once browsed in a direction, the iterator cannot change
- * it.
+ * Iterator class to browse forward and backward the records of a cluster. Once browsed in a
+ * direction, the iterator cannot change it.
  *
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
  */
@@ -36,12 +36,21 @@ public class ORecordIteratorCluster<REC extends ORecord> extends OIdentifiableIt
   private ORecord currentRecord;
 
   public ORecordIteratorCluster(final ODatabaseDocumentInternal iDatabase, final int iClusterId) {
-    this(iDatabase, iClusterId, ORID.CLUSTER_POS_INVALID, ORID.CLUSTER_POS_INVALID, OStorage.LOCKING_STRATEGY.DEFAULT);
+    this(
+        iDatabase,
+        iClusterId,
+        ORID.CLUSTER_POS_INVALID,
+        ORID.CLUSTER_POS_INVALID,
+        OStorage.LOCKING_STRATEGY.DEFAULT);
   }
 
-  public ORecordIteratorCluster(final ODatabaseDocumentInternal iDatabase, final int iClusterId, final long firstClusterEntry,
+  public ORecordIteratorCluster(
+      final ODatabaseDocumentInternal iDatabase,
+      final int iClusterId,
+      final long firstClusterEntry,
       final long lastClusterEntry) {
-    this(iDatabase, iClusterId, firstClusterEntry, lastClusterEntry, OStorage.LOCKING_STRATEGY.NONE);
+    this(
+        iDatabase, iClusterId, firstClusterEntry, lastClusterEntry, OStorage.LOCKING_STRATEGY.NONE);
   }
 
   protected ORecordIteratorCluster(final ODatabaseDocumentInternal database) {
@@ -49,43 +58,43 @@ public class ORecordIteratorCluster<REC extends ORecord> extends OIdentifiableIt
   }
 
   @Deprecated
-  public ORecordIteratorCluster(final ODatabaseDocumentInternal iDatabase, final int iClusterId, final long firstClusterEntry,
-      final long lastClusterEntry, final OStorage.LOCKING_STRATEGY iLockingStrategy) {
+  public ORecordIteratorCluster(
+      final ODatabaseDocumentInternal iDatabase,
+      final int iClusterId,
+      final long firstClusterEntry,
+      final long lastClusterEntry,
+      final OStorage.LOCKING_STRATEGY iLockingStrategy) {
     super(iDatabase, iLockingStrategy);
 
     if (iClusterId == ORID.CLUSTER_ID_INVALID)
       throw new IllegalArgumentException("The clusterId is invalid");
 
-    checkForSystemClusters(iDatabase, new int[] { iClusterId });
+    checkForSystemClusters(iDatabase, new int[] {iClusterId});
 
     current.setClusterId(iClusterId);
     final long[] range = database.getStorage().getClusterDataRange(current.getClusterId());
 
-    if (firstClusterEntry == ORID.CLUSTER_POS_INVALID)
-      this.firstClusterEntry = range[0];
-    else
-      this.firstClusterEntry = firstClusterEntry > range[0] ? firstClusterEntry : range[0];
+    if (firstClusterEntry == ORID.CLUSTER_POS_INVALID) this.firstClusterEntry = range[0];
+    else this.firstClusterEntry = firstClusterEntry > range[0] ? firstClusterEntry : range[0];
 
-    if (lastClusterEntry == ORID.CLUSTER_POS_INVALID)
-      this.lastClusterEntry = range[1];
-    else
-      this.lastClusterEntry = lastClusterEntry < range[1] ? lastClusterEntry : range[1];
+    if (lastClusterEntry == ORID.CLUSTER_POS_INVALID) this.lastClusterEntry = range[1];
+    else this.lastClusterEntry = lastClusterEntry < range[1] ? lastClusterEntry : range[1];
 
     totalAvailableRecords = database.countClusterElements(current.getClusterId());
 
-    txEntries = iDatabase.getTransaction().getNewRecordEntriesByClusterIds(new int[] { iClusterId });
+    txEntries = iDatabase.getTransaction().getNewRecordEntriesByClusterIds(new int[] {iClusterId});
 
     if (txEntries != null)
       // ADJUST TOTAL ELEMENT BASED ON CURRENT TRANSACTION'S ENTRIES
       for (ORecordOperation entry : txEntries) {
         switch (entry.type) {
-        case ORecordOperation.CREATED:
-          totalAvailableRecords++;
-          break;
+          case ORecordOperation.CREATED:
+            totalAvailableRecords++;
+            break;
 
-        case ORecordOperation.DELETED:
-          totalAvailableRecords--;
-          break;
+          case ORecordOperation.DELETED:
+            totalAvailableRecords--;
+            break;
         }
       }
 
@@ -133,10 +142,10 @@ public class ORecordIteratorCluster<REC extends ORecord> extends OIdentifiableIt
       // LIMIT REACHED
       return false;
 
-    if (browsedRecords >= totalAvailableRecords)
-      return false;
+    if (browsedRecords >= totalAvailableRecords) return false;
 
-    if (!(current.getClusterPosition() < ORID.CLUSTER_POS_INVALID) && getCurrentEntry() < lastClusterEntry) {
+    if (!(current.getClusterPosition() < ORID.CLUSTER_POS_INVALID)
+        && getCurrentEntry() < lastClusterEntry) {
       ORecord record = getRecord();
       try {
         currentRecord = readCurrentRecord(record, +1);
@@ -145,27 +154,26 @@ public class ORecordIteratorCluster<REC extends ORecord> extends OIdentifiableIt
 
         final ORID recordRid = record == null ? null : record.getIdentity();
 
-        if (recordRid != null)
-          brokenRIDs.add(recordRid.copy());
+        if (recordRid != null) brokenRIDs.add(recordRid.copy());
 
         currentRecord = null;
       }
 
-      if (currentRecord != null)
-        return true;
+      if (currentRecord != null) return true;
     }
 
     // CHECK IN TX IF ANY
-    if (txEntries != null)
-      return txEntries.size() - (currentTxEntryPosition + 1) > 0;
+    if (txEntries != null) return txEntries.size() - (currentTxEntryPosition + 1) > 0;
 
     return false;
   }
 
   /**
-   * Return the element at the current position and move backward the stream to the previous position available.
+   * Return the element at the current position and move backward the stream to the previous
+   * position available.
    *
-   * @return the previous record found, otherwise the NoSuchElementException exception is thrown when no more records are found.
+   * @return the previous record found, otherwise the NoSuchElementException exception is thrown
+   *     when no more records are found.
    */
   @SuppressWarnings("unchecked")
   @Override
@@ -192,9 +200,11 @@ public class ORecordIteratorCluster<REC extends ORecord> extends OIdentifiableIt
   }
 
   /**
-   * Return the element at the current position and move forward the stream to the next position available.
+   * Return the element at the current position and move forward the stream to the next position
+   * available.
    *
-   * @return the next record found, otherwise the NoSuchElementException exception is thrown when no more records are found.
+   * @return the next record found, otherwise the NoSuchElementException exception is thrown when no
+   *     more records are found.
    */
   @SuppressWarnings("unchecked")
   public REC next() {
@@ -214,15 +224,15 @@ public class ORecordIteratorCluster<REC extends ORecord> extends OIdentifiableIt
       }
 
       record = getTransactionEntry();
-      if (record != null)
-        return (REC) record;
+      if (record != null) return (REC) record;
     }
 
     return null;
   }
 
   /**
-   * Move the iterator to the begin of the range. If no range was specified move to the first record of the cluster.
+   * Move the iterator to the begin of the range. If no range was specified move to the first record
+   * of the cluster.
    *
    * @return The object itself
    */
@@ -239,7 +249,8 @@ public class ORecordIteratorCluster<REC extends ORecord> extends OIdentifiableIt
   }
 
   /**
-   * Move the iterator to the end of the range. If no range was specified move to the last record of the cluster.
+   * Move the iterator to the end of the range. If no range was specified move to the last record of
+   * the cluster.
    *
    * @return The object itself
    */
@@ -256,11 +267,11 @@ public class ORecordIteratorCluster<REC extends ORecord> extends OIdentifiableIt
   }
 
   /**
-   * Tell to the iterator that the upper limit must be checked at every cycle. Useful when concurrent deletes or additions change
-   * the size of the cluster while you're browsing it. Default is false.
+   * Tell to the iterator that the upper limit must be checked at every cycle. Useful when
+   * concurrent deletes or additions change the size of the cluster while you're browsing it.
+   * Default is false.
    *
    * @param iLiveUpdated True to activate it, otherwise false (default)
-   *
    * @see #isLiveUpdated()
    */
   @Override

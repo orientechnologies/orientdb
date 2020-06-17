@@ -21,9 +21,8 @@ package com.orientechnologies.orient.server.network.protocol;
 
 /**
  * Listener interface to receive notification before a new database is open.
- * 
+ *
  * @author Luca Garulli (l.garulli--at--orientdb.com)
- * 
  */
 public interface OBeforeDatabaseOpenNetworkEventListener {
   void onBeforeDatabaseOpen(String url);

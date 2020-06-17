@@ -22,8 +22,11 @@ package com.orientechnologies.common.concur.lock;
 import com.googlecode.concurrentlinkedhashmap.ConcurrentLinkedHashMap;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
-
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Iterator;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.Condition;
@@ -32,45 +35,56 @@ import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 /**
- * Original Lock Manager implementation that uses a concurrent linked hash map to store one entry per key. This could be very
- * expensive in case the number of locks are a lot. This implementation works better than {@link OPartitionedLockManager} when
- * running distributed because there is no way to
+ * Original Lock Manager implementation that uses a concurrent linked hash map to store one entry
+ * per key. This could be very expensive in case the number of locks are a lot. This implementation
+ * works better than {@link OPartitionedLockManager} when running distributed because there is no
+ * way to
  *
  * @param <T> Type of keys
- *
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
  */
 public class OOneEntryPerKeyLockManager<T> implements OLockManager<T> {
   public enum LOCK {
-    SHARED, EXCLUSIVE
+    SHARED,
+    EXCLUSIVE
   }
 
-  private         long                                      acquireTimeout;
+  private long acquireTimeout;
   protected final ConcurrentLinkedHashMap<T, CountableLock> map;
-  private final   boolean                                   enabled;
-  private final   int                                       amountOfCachedInstances;
+  private final boolean enabled;
+  private final int amountOfCachedInstances;
 
   private static final Object NULL_KEY = new Object();
 
   @SuppressWarnings("serial")
   private static class CountableLock {
-    private final AtomicInteger countLocks    = new AtomicInteger(1);
+    private final AtomicInteger countLocks = new AtomicInteger(1);
     private final ReadWriteLock readWriteLock = new ReentrantReadWriteLock();
   }
 
-  public OOneEntryPerKeyLockManager(final boolean iEnabled, final int iAcquireTimeout, final int amountOfCachedInstances) {
-    this(iEnabled, iAcquireTimeout, OGlobalConfiguration.ENVIRONMENT_LOCK_MANAGER_CONCURRENCY_LEVEL.getValueAsInteger(),
+  public OOneEntryPerKeyLockManager(
+      final boolean iEnabled, final int iAcquireTimeout, final int amountOfCachedInstances) {
+    this(
+        iEnabled,
+        iAcquireTimeout,
+        OGlobalConfiguration.ENVIRONMENT_LOCK_MANAGER_CONCURRENCY_LEVEL.getValueAsInteger(),
         amountOfCachedInstances);
   }
 
-  public OOneEntryPerKeyLockManager(final boolean iEnabled, final int iAcquireTimeout, final int concurrencyLevel,
+  public OOneEntryPerKeyLockManager(
+      final boolean iEnabled,
+      final int iAcquireTimeout,
+      final int concurrencyLevel,
       final int amountOfCachedInstances) {
 
     this.amountOfCachedInstances = amountOfCachedInstances;
     final int cL = closestInteger(concurrencyLevel);
 
-    map = new ConcurrentLinkedHashMap.Builder<T, CountableLock>().concurrencyLevel(cL).maximumWeightedCapacity(Long.MAX_VALUE)
-        .build();
+    map =
+        new ConcurrentLinkedHashMap.Builder<T, CountableLock>()
+            .concurrencyLevel(cL)
+            .maximumWeightedCapacity(Long.MAX_VALUE)
+            .build();
 
     acquireTimeout = iAcquireTimeout;
     enabled = iEnabled;
@@ -101,12 +115,10 @@ public class OOneEntryPerKeyLockManager<T> implements OLockManager<T> {
   }
 
   public Lock acquireLock(final T iResourceId, final LOCK iLockType, long iTimeout) {
-    if (!enabled)
-      return null;
+    if (!enabled) return null;
 
     T immutableResource = getImmutableResourceId(iResourceId);
-    if (immutableResource == null)
-      immutableResource = (T) NULL_KEY;
+    if (immutableResource == null) immutableResource = (T) NULL_KEY;
 
     CountableLock lock;
     do {
@@ -130,8 +142,7 @@ public class OOneEntryPerKeyLockManager<T> implements OLockManager<T> {
         lock = new CountableLock();
 
         CountableLock oldLock = map.putIfAbsent(immutableResource, lock);
-        if (oldLock == null)
-          break;
+        if (oldLock == null) break;
 
         lock = oldLock;
         final int oldValue = lock.countLocks.get();
@@ -164,57 +175,64 @@ public class OOneEntryPerKeyLockManager<T> implements OLockManager<T> {
 
     try {
       if (iTimeout <= 0) {
-        if (iLockType == LOCK.SHARED)
-          lock.readWriteLock.readLock().lock();
-        else
-          lock.readWriteLock.writeLock().lock();
+        if (iLockType == LOCK.SHARED) lock.readWriteLock.readLock().lock();
+        else lock.readWriteLock.writeLock().lock();
       } else {
         try {
           if (iLockType == LOCK.SHARED) {
             if (!lock.readWriteLock.readLock().tryLock(iTimeout, TimeUnit.MILLISECONDS))
               throw new OLockException(
-                  "Timeout (" + iTimeout + "ms) on acquiring resource '" + iResourceId + "' because is locked from another thread");
+                  "Timeout ("
+                      + iTimeout
+                      + "ms) on acquiring resource '"
+                      + iResourceId
+                      + "' because is locked from another thread");
           } else {
             if (!lock.readWriteLock.writeLock().tryLock(iTimeout, TimeUnit.MILLISECONDS))
               throw new OLockException(
-                  "Timeout (" + iTimeout + "ms) on acquiring resource '" + iResourceId + "' because is locked from another thread");
+                  "Timeout ("
+                      + iTimeout
+                      + "ms) on acquiring resource '"
+                      + iResourceId
+                      + "' because is locked from another thread");
           }
         } catch (InterruptedException e) {
           Thread.currentThread().interrupt();
-          throw OException
-              .wrapException(new OLockException("Thread interrupted while waiting for resource '" + iResourceId + "'"), e);
+          throw OException.wrapException(
+              new OLockException(
+                  "Thread interrupted while waiting for resource '" + iResourceId + "'"),
+              e);
         }
       }
 
       return new CountableLockWrapper(lock, iLockType == LOCK.SHARED);
     } catch (RuntimeException e) {
       final int usages = lock.countLocks.decrementAndGet();
-      if (usages == 0)
-        map.remove(immutableResource);
+      if (usages == 0) map.remove(immutableResource);
 
       throw e;
     }
   }
 
-  public void releaseLock(final Object iRequester, T iResourceId, final LOCK iLockType) throws OLockException {
-    if (!enabled)
-      return;
+  public void releaseLock(final Object iRequester, T iResourceId, final LOCK iLockType)
+      throws OLockException {
+    if (!enabled) return;
 
-    if (iResourceId == null)
-      iResourceId = (T) NULL_KEY;
+    if (iResourceId == null) iResourceId = (T) NULL_KEY;
 
     final CountableLock lock = map.get(iResourceId);
     if (lock == null)
       throw new OLockException(
-          "Error on releasing a non acquired lock by the requester '" + iRequester + "' against the resource: '" + iResourceId
+          "Error on releasing a non acquired lock by the requester '"
+              + iRequester
+              + "' against the resource: '"
+              + iResourceId
               + "'");
 
     lock.countLocks.decrementAndGet();
 
-    if (iLockType == LOCK.SHARED)
-      lock.readWriteLock.readLock().unlock();
-    else
-      lock.readWriteLock.writeLock().unlock();
+    if (iLockType == LOCK.SHARED) lock.readWriteLock.readLock().unlock();
+    else lock.readWriteLock.writeLock().unlock();
   }
 
   @Override
@@ -229,8 +247,7 @@ public class OOneEntryPerKeyLockManager<T> implements OLockManager<T> {
 
   @Override
   public Lock[] acquireExclusiveLocksInBatch(Collection<T> values) {
-    if (values == null || values.isEmpty())
-      return new Lock[0];
+    if (values == null || values.isEmpty()) return new Lock[0];
 
     final List<Comparable> comparables = new ArrayList<Comparable>();
 
@@ -242,7 +259,9 @@ public class OOneEntryPerKeyLockManager<T> implements OLockManager<T> {
         ++seenNulls;
       } else {
         throw new IllegalArgumentException(
-            "In order to lock value in batch it should implement " + Comparable.class.getName() + " interface");
+            "In order to lock value in batch it should implement "
+                + Comparable.class.getName()
+                + " interface");
       }
     }
 
@@ -250,10 +269,8 @@ public class OOneEntryPerKeyLockManager<T> implements OLockManager<T> {
 
     final Lock[] locks = new Lock[comparables.size() + seenNulls];
     int i = 0;
-    for (int j = 0; j < seenNulls; ++j)
-      locks[i++] = acquireExclusiveLock((T) NULL_KEY);
-    for (Comparable value : comparables)
-      locks[i++] = acquireExclusiveLock((T) value);
+    for (int j = 0; j < seenNulls; ++j) locks[i++] = acquireExclusiveLock((T) NULL_KEY);
+    for (Comparable value : comparables) locks[i++] = acquireExclusiveLock((T) value);
 
     return locks;
   }
@@ -275,7 +292,7 @@ public class OOneEntryPerKeyLockManager<T> implements OLockManager<T> {
   /* internal */ static class CountableLockWrapper implements Lock {
 
     private final CountableLock countableLock;
-    private final boolean       read;
+    private final boolean read;
 
     public CountableLockWrapper(CountableLock countableLock, boolean read) {
       this.countableLock = countableLock;
@@ -310,10 +327,8 @@ public class OOneEntryPerKeyLockManager<T> implements OLockManager<T> {
     public void unlock() {
       countableLock.countLocks.decrementAndGet();
 
-      if (read)
-        countableLock.readWriteLock.readLock().unlock();
-      else
-        countableLock.readWriteLock.writeLock().unlock();
+      if (read) countableLock.readWriteLock.readLock().unlock();
+      else countableLock.readWriteLock.writeLock().unlock();
     }
 
     @Override
@@ -323,8 +338,7 @@ public class OOneEntryPerKeyLockManager<T> implements OLockManager<T> {
   }
 
   protected Lock[] acquireLockInBatch(T[] values, final boolean exclusiveMode) {
-    if (values == null || values.length == 0)
-      return null;
+    if (values == null || values.length == 0) return null;
 
     final List<Comparable> comparables = new ArrayList<Comparable>();
 
@@ -336,7 +350,9 @@ public class OOneEntryPerKeyLockManager<T> implements OLockManager<T> {
         ++seenNulls;
       } else {
         throw new IllegalArgumentException(
-            "In order to lock value in batch it should implement " + Comparable.class.getName() + " interface");
+            "In order to lock value in batch it should implement "
+                + Comparable.class.getName()
+                + " interface");
       }
     }
 
@@ -345,7 +361,8 @@ public class OOneEntryPerKeyLockManager<T> implements OLockManager<T> {
     final Lock[] locks = new Lock[comparables.size() + seenNulls];
     int i = 0;
     for (int j = 0; j < seenNulls; ++j)
-      locks[i++] = exclusiveMode ? acquireExclusiveLock((T) NULL_KEY) : acquireSharedLock((T) NULL_KEY);
+      locks[i++] =
+          exclusiveMode ? acquireExclusiveLock((T) NULL_KEY) : acquireSharedLock((T) NULL_KEY);
     for (Comparable value : comparables)
       locks[i++] = exclusiveMode ? acquireExclusiveLock((T) value) : acquireSharedLock((T) value);
 

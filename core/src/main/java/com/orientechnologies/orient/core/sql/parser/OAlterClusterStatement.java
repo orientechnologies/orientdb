@@ -11,15 +11,18 @@ import com.orientechnologies.orient.core.sql.executor.OResultInternal;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import com.orientechnologies.orient.core.storage.OCluster;
 import com.orientechnologies.orient.core.storage.OStorage;
-
 import java.lang.reflect.Field;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 public class OAlterClusterStatement extends ODDLStatement {
 
   protected OIdentifier name;
-  protected boolean     starred = false;
+  protected boolean starred = false;
   protected OIdentifier attributeName;
   protected OExpression attributeValue;
 
@@ -61,16 +64,27 @@ public class OAlterClusterStatement extends ODDLStatement {
 
     Object finalValue = attributeValue.execute((OIdentifiable) null, ctx);
 
-    final com.orientechnologies.orient.core.storage.OCluster.ATTRIBUTES attribute = Arrays.stream(OCluster.ATTRIBUTES.values())
-            .filter(e -> e.name().equalsIgnoreCase(notNull(attributeName.getStringValue()))).findAny()
-            .orElseThrow(() -> new UnsupportedOperationException("Unknown class attribute '" + attributeName
-                    + "'. Supported attributes are: " + noDeprecatedValues(OCluster.ATTRIBUTES.values())));
+    final com.orientechnologies.orient.core.storage.OCluster.ATTRIBUTES attribute =
+        Arrays.stream(OCluster.ATTRIBUTES.values())
+            .filter(e -> e.name().equalsIgnoreCase(notNull(attributeName.getStringValue())))
+            .findAny()
+            .orElseThrow(
+                () ->
+                    new UnsupportedOperationException(
+                        "Unknown class attribute '"
+                            + attributeName
+                            + "'. Supported attributes are: "
+                            + noDeprecatedValues(OCluster.ATTRIBUTES.values())));
 
     final OStorage storage = ((ODatabaseDocumentInternal) ctx.getDatabase()).getStorage();
     for (final int clusterId : clustersToUpdate) {
-      if (attributeName.getStringValue().equalsIgnoreCase("status") || attributeName.getStringValue().equalsIgnoreCase("name"))
+      if (attributeName.getStringValue().equalsIgnoreCase("status")
+          || attributeName.getStringValue().equalsIgnoreCase("name"))
         // REMOVE CACHE OF COMMAND RESULTS IF ACTIVE
-        getDatabase().getMetadata().getCommandCache().invalidateResultsOfCluster(storage.getPhysicalClusterNameById(clusterId));
+        getDatabase()
+            .getMetadata()
+            .getCommandCache()
+            .invalidateResultsOfCluster(storage.getPhysicalClusterNameById(clusterId));
       storage.setClusterAttribute(clusterId, attribute, finalValue);
 
       OResultInternal resultItem = new OResultInternal();
@@ -82,14 +96,17 @@ public class OAlterClusterStatement extends ODDLStatement {
   }
 
   private List<OCluster.ATTRIBUTES> noDeprecatedValues(final OCluster.ATTRIBUTES[] values) {
-    return Arrays.stream(values).filter(value -> {
-      try {
-        final Field field = OCluster.ATTRIBUTES.class.getField(value.name());
-        return !field.isAnnotationPresent(Deprecated.class);
-      } catch (final NoSuchFieldException | SecurityException e) {
-        return false;
-      }
-    }).collect(Collectors.toList());
+    return Arrays.stream(values)
+        .filter(
+            value -> {
+              try {
+                final Field field = OCluster.ATTRIBUTES.class.getField(value.name());
+                return !field.isAnnotationPresent(Deprecated.class);
+              } catch (final NoSuchFieldException | SecurityException e) {
+                return false;
+              }
+            })
+        .collect(Collectors.toList());
   }
 
   private String notNull(final String value) {
@@ -122,21 +139,19 @@ public class OAlterClusterStatement extends ODDLStatement {
 
   @Override
   public boolean equals(Object o) {
-    if (this == o)
-      return true;
-    if (o == null || getClass() != o.getClass())
-      return false;
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
 
     OAlterClusterStatement that = (OAlterClusterStatement) o;
 
-    if (starred != that.starred)
-      return false;
-    if (name != null ? !name.equals(that.name) : that.name != null)
-      return false;
-    if (attributeName != null ? !attributeName.equals(that.attributeName) : that.attributeName != null)
-      return false;
-    if (attributeValue != null ? !attributeValue.equals(that.attributeValue) : that.attributeValue != null)
-      return false;
+    if (starred != that.starred) return false;
+    if (name != null ? !name.equals(that.name) : that.name != null) return false;
+    if (attributeName != null
+        ? !attributeName.equals(that.attributeName)
+        : that.attributeName != null) return false;
+    if (attributeValue != null
+        ? !attributeValue.equals(that.attributeValue)
+        : that.attributeValue != null) return false;
 
     return true;
   }

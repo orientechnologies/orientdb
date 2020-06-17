@@ -34,31 +34,34 @@ public class ODatabaseUtils {
 
   public static void createDatabase(final ODatabaseIdentifier databaseIdentifier) throws Exception {
     switch (databaseIdentifier.getMode()) {
-    case PLOCAL:
-    case MEMORY:
-      new ODatabaseDocumentTx(databaseIdentifier.getUrl()).create();
-      break;
-    case REMOTE:
-      new OServerAdmin(databaseIdentifier.getUrl()).connect("root", databaseIdentifier.getPassword())
-          .createDatabase(databaseIdentifier.getName(), "document", "plocal");
-      break;
+      case PLOCAL:
+      case MEMORY:
+        new ODatabaseDocumentTx(databaseIdentifier.getUrl()).create();
+        break;
+      case REMOTE:
+        new OServerAdmin(databaseIdentifier.getUrl())
+            .connect("root", databaseIdentifier.getPassword())
+            .createDatabase(databaseIdentifier.getName(), "document", "plocal");
+        break;
     }
   }
 
-  public static ODatabase openDatabase(final ODatabaseIdentifier databaseIdentifier,
+  public static ODatabase openDatabase(
+      final ODatabaseIdentifier databaseIdentifier,
       final OStorageRemote.CONNECTION_STRATEGY connectionStrategy) {
     ODatabaseDocument database = null;
 
     switch (databaseIdentifier.getMode()) {
-    case PLOCAL:
-    case MEMORY:
-      database = new ODatabaseDocumentTx(databaseIdentifier.getUrl()).open("admin", "admin");
-      break;
-    case REMOTE:
-      database = new ODatabaseDocumentTx(databaseIdentifier.getUrl());
-      database.setProperty(OStorageRemote.PARAM_CONNECTION_STRATEGY, connectionStrategy.toString());
-      database.open("root", databaseIdentifier.getPassword());
-      break;
+      case PLOCAL:
+      case MEMORY:
+        database = new ODatabaseDocumentTx(databaseIdentifier.getUrl()).open("admin", "admin");
+        break;
+      case REMOTE:
+        database = new ODatabaseDocumentTx(databaseIdentifier.getUrl());
+        database.setProperty(
+            OStorageRemote.PARAM_CONNECTION_STRATEGY, connectionStrategy.toString());
+        database.open("root", databaseIdentifier.getPassword());
+        break;
     }
 
     return database;
@@ -67,14 +70,15 @@ public class ODatabaseUtils {
   public static void dropDatabase(ODatabaseIdentifier databaseIdentifier) throws Exception {
 
     switch (databaseIdentifier.getMode()) {
-    case PLOCAL:
-    case MEMORY:
-      openDatabase(databaseIdentifier, OStorageRemote.CONNECTION_STRATEGY.STICKY).drop();
-      break;
-    case REMOTE:
-      new OServerAdmin(databaseIdentifier.getUrl()).connect("root", databaseIdentifier.getPassword())
-          .dropDatabase(databaseIdentifier.getName(), "plocal");
-      break;
+      case PLOCAL:
+      case MEMORY:
+        openDatabase(databaseIdentifier, OStorageRemote.CONNECTION_STRATEGY.STICKY).drop();
+        break;
+      case REMOTE:
+        new OServerAdmin(databaseIdentifier.getUrl())
+            .connect("root", databaseIdentifier.getPassword())
+            .dropDatabase(databaseIdentifier.getName(), "plocal");
+        break;
     }
   }
 }

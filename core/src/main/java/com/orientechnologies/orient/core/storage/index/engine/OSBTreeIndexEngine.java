@@ -36,7 +36,6 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoper
 import com.orientechnologies.orient.core.storage.index.sbtree.local.OSBTree;
 import com.orientechnologies.orient.core.storage.index.sbtree.local.v1.OSBTreeV1;
 import com.orientechnologies.orient.core.storage.index.sbtree.local.v2.OSBTreeV2;
-
 import java.io.IOException;
 import java.util.Map;
 import java.util.Spliterators;
@@ -50,14 +49,15 @@ import java.util.stream.StreamSupport;
 public class OSBTreeIndexEngine implements OIndexEngine {
   public static final int VERSION = 2;
 
-  public static final String DATA_FILE_EXTENSION        = ".sbt";
+  public static final String DATA_FILE_EXTENSION = ".sbt";
   public static final String NULL_BUCKET_FILE_EXTENSION = ".nbt";
 
   private final OSBTree<Object, Object> sbTree;
-  private final String                  name;
-  private final int                     id;
+  private final String name;
+  private final int id;
 
-  public OSBTreeIndexEngine(final int id, String name, OAbstractPaginatedStorage storage, int version) {
+  public OSBTreeIndexEngine(
+      final int id, String name, OAbstractPaginatedStorage storage, int version) {
     this.id = id;
     this.name = name;
 
@@ -76,8 +76,12 @@ public class OSBTreeIndexEngine implements OIndexEngine {
   }
 
   @Override
-  public void init(String indexName, String indexType, OIndexDefinition indexDefinition, boolean isAutomatic, ODocument metadata) {
-  }
+  public void init(
+      String indexName,
+      String indexType,
+      OIndexDefinition indexDefinition,
+      boolean isAutomatic,
+      ODocument metadata) {}
 
   @Override
   public String getName() {
@@ -85,17 +89,32 @@ public class OSBTreeIndexEngine implements OIndexEngine {
   }
 
   @Override
-  public void flush() {
-  }
+  public void flush() {}
 
   @Override
-  public void create(OAtomicOperation atomicOperation, OBinarySerializer valueSerializer, boolean isAutomatic, OType[] keyTypes, boolean nullPointerSupport,
-      OBinarySerializer keySerializer, int keySize, Map<String, String> engineProperties, OEncryption encryption) {
+  public void create(
+      OAtomicOperation atomicOperation,
+      OBinarySerializer valueSerializer,
+      boolean isAutomatic,
+      OType[] keyTypes,
+      boolean nullPointerSupport,
+      OBinarySerializer keySerializer,
+      int keySize,
+      Map<String, String> engineProperties,
+      OEncryption encryption) {
     try {
       //noinspection unchecked
-      sbTree.create(atomicOperation, keySerializer, valueSerializer, keyTypes, keySize, nullPointerSupport, encryption);
+      sbTree.create(
+          atomicOperation,
+          keySerializer,
+          valueSerializer,
+          keyTypes,
+          keySize,
+          nullPointerSupport,
+          encryption);
     } catch (IOException e) {
-      throw OException.wrapException(new OIndexException("Error during creation of index " + name), e);
+      throw OException.wrapException(
+          new OIndexException("Error during creation of index " + name), e);
     }
   }
 
@@ -106,19 +125,22 @@ public class OSBTreeIndexEngine implements OIndexEngine {
 
       sbTree.delete(atomicOperation);
     } catch (IOException e) {
-      throw OException.wrapException(new OIndexException("Error during deletion of index " + name), e);
+      throw OException.wrapException(
+          new OIndexException("Error during deletion of index " + name), e);
     }
   }
 
   private void doClearTree(OAtomicOperation atomicOperation) throws IOException {
     try (final Stream<Object> stream = sbTree.keyStream()) {
-      stream.forEach((key) -> {
-        try {
-          sbTree.remove(atomicOperation, key);
-        } catch (final IOException e) {
-          throw OException.wrapException(new OIndexException("Error during clearing a tree" + name), e);
-        }
-      });
+      stream.forEach(
+          (key) -> {
+            try {
+              sbTree.remove(atomicOperation, key);
+            } catch (final IOException e) {
+              throw OException.wrapException(
+                  new OIndexException("Error during clearing a tree" + name), e);
+            }
+          });
     }
 
     if (sbTree.isNullPointerSupport()) {
@@ -127,10 +149,25 @@ public class OSBTreeIndexEngine implements OIndexEngine {
   }
 
   @Override
-  public void load(String indexName, OBinarySerializer valueSerializer, boolean isAutomatic, OBinarySerializer keySerializer,
-      OType[] keyTypes, boolean nullPointerSupport, int keySize, Map<String, String> engineProperties, OEncryption encryption) {
+  public void load(
+      String indexName,
+      OBinarySerializer valueSerializer,
+      boolean isAutomatic,
+      OBinarySerializer keySerializer,
+      OType[] keyTypes,
+      boolean nullPointerSupport,
+      int keySize,
+      Map<String, String> engineProperties,
+      OEncryption encryption) {
     //noinspection unchecked
-    sbTree.load(indexName, keySerializer, valueSerializer, keyTypes, keySize, nullPointerSupport, encryption);
+    sbTree.load(
+        indexName,
+        keySerializer,
+        valueSerializer,
+        keyTypes,
+        keySize,
+        nullPointerSupport,
+        encryption);
   }
 
   @Override
@@ -138,7 +175,8 @@ public class OSBTreeIndexEngine implements OIndexEngine {
     try {
       return sbTree.remove(atomicOperation, key) != null;
     } catch (IOException e) {
-      throw OException.wrapException(new OIndexException("Error during removal of key " + key + " from index " + name), e);
+      throw OException.wrapException(
+          new OIndexException("Error during removal of key " + key + " from index " + name), e);
     }
   }
 
@@ -167,17 +205,20 @@ public class OSBTreeIndexEngine implements OIndexEngine {
     if (firstKey == null) {
       return StreamSupport.stream(Spliterators.emptySpliterator(), false);
     }
-    return convertTreeStreamToIndexStream(valuesTransformer, sbTree.iterateEntriesMajor(firstKey, true, true));
+    return convertTreeStreamToIndexStream(
+        valuesTransformer, sbTree.iterateEntriesMajor(firstKey, true, true));
   }
 
-  private static Stream<ORawPair<Object, ORID>> convertTreeStreamToIndexStream(ValuesTransformer valuesTransformer,
-      Stream<ORawPair<Object, Object>> treeStream) {
+  private static Stream<ORawPair<Object, ORID>> convertTreeStreamToIndexStream(
+      ValuesTransformer valuesTransformer, Stream<ORawPair<Object, Object>> treeStream) {
     if (valuesTransformer == null) {
       return treeStream.map((entry) -> new ORawPair<>(entry.first, (ORID) entry.second));
     } else {
       //noinspection resource
       return treeStream.flatMap(
-          (entry) -> valuesTransformer.transformFromValue(entry.second).stream().map((rid) -> new ORawPair<>(entry.first, rid)));
+          (entry) ->
+              valuesTransformer.transformFromValue(entry.second).stream()
+                  .map((rid) -> new ORawPair<>(entry.first, rid)));
     }
   }
 
@@ -188,7 +229,8 @@ public class OSBTreeIndexEngine implements OIndexEngine {
       return StreamSupport.stream(Spliterators.emptySpliterator(), false);
     }
 
-    return convertTreeStreamToIndexStream(valuesTransformer, sbTree.iterateEntriesMinor(lastKey, true, false));
+    return convertTreeStreamToIndexStream(
+        valuesTransformer, sbTree.iterateEntriesMinor(lastKey, true, false));
   }
 
   @Override
@@ -201,46 +243,59 @@ public class OSBTreeIndexEngine implements OIndexEngine {
     try {
       sbTree.put(atomicOperation, key, value);
     } catch (IOException e) {
-      throw OException.wrapException(new OIndexException("Error during insertion of key " + key + " in index " + name), e);
+      throw OException.wrapException(
+          new OIndexException("Error during insertion of key " + key + " in index " + name), e);
     }
   }
 
   @Override
-  public void update(OAtomicOperation atomicOperation, Object key, OIndexKeyUpdater<Object> updater) {
+  public void update(
+      OAtomicOperation atomicOperation, Object key, OIndexKeyUpdater<Object> updater) {
     try {
       sbTree.update(atomicOperation, key, updater, null);
     } catch (IOException e) {
-      throw OException.wrapException(new OIndexException("Error during update of key " + key + " in index " + name), e);
+      throw OException.wrapException(
+          new OIndexException("Error during update of key " + key + " in index " + name), e);
     }
   }
 
   @SuppressWarnings("unchecked")
   @Override
-  public boolean validatedPut(OAtomicOperation atomicOperation, Object key, ORID value, Validator<Object, ORID> validator) {
+  public boolean validatedPut(
+      OAtomicOperation atomicOperation, Object key, ORID value, Validator<Object, ORID> validator) {
     try {
       return sbTree.validatedPut(atomicOperation, key, value, (Validator) validator);
     } catch (IOException e) {
-      throw OException.wrapException(new OIndexException("Error during insertion of key " + key + " in index " + name), e);
+      throw OException.wrapException(
+          new OIndexException("Error during insertion of key " + key + " in index " + name), e);
     }
   }
 
   @Override
-  public Stream<ORawPair<Object, ORID>> iterateEntriesBetween(Object rangeFrom, boolean fromInclusive, Object rangeTo,
-      boolean toInclusive, boolean ascSortOrder, ValuesTransformer transformer) {
-    return convertTreeStreamToIndexStream(transformer,
+  public Stream<ORawPair<Object, ORID>> iterateEntriesBetween(
+      Object rangeFrom,
+      boolean fromInclusive,
+      Object rangeTo,
+      boolean toInclusive,
+      boolean ascSortOrder,
+      ValuesTransformer transformer) {
+    return convertTreeStreamToIndexStream(
+        transformer,
         sbTree.iterateEntriesBetween(rangeFrom, fromInclusive, rangeTo, toInclusive, ascSortOrder));
   }
 
   @Override
-  public Stream<ORawPair<Object, ORID>> iterateEntriesMajor(Object fromKey, boolean isInclusive, boolean ascSortOrder,
-      ValuesTransformer transformer) {
-    return convertTreeStreamToIndexStream(transformer, sbTree.iterateEntriesMajor(fromKey, isInclusive, ascSortOrder));
+  public Stream<ORawPair<Object, ORID>> iterateEntriesMajor(
+      Object fromKey, boolean isInclusive, boolean ascSortOrder, ValuesTransformer transformer) {
+    return convertTreeStreamToIndexStream(
+        transformer, sbTree.iterateEntriesMajor(fromKey, isInclusive, ascSortOrder));
   }
 
   @Override
-  public Stream<ORawPair<Object, ORID>> iterateEntriesMinor(Object toKey, boolean isInclusive, boolean ascSortOrder,
-      ValuesTransformer transformer) {
-    return convertTreeStreamToIndexStream(transformer, sbTree.iterateEntriesMinor(toKey, isInclusive, ascSortOrder));
+  public Stream<ORawPair<Object, ORID>> iterateEntriesMinor(
+      Object toKey, boolean isInclusive, boolean ascSortOrder, ValuesTransformer transformer) {
+    return convertTreeStreamToIndexStream(
+        transformer, sbTree.iterateEntriesMinor(toKey, isInclusive, ascSortOrder));
   }
 
   @Override
@@ -261,8 +316,10 @@ public class OSBTreeIndexEngine implements OIndexEngine {
       final Object lastKey = sbTree.lastKey();
 
       if (firstKey != null && lastKey != null) {
-        try (final Stream<ORawPair<Object, Object>> stream = sbTree.iterateEntriesBetween(firstKey, true, lastKey, true, true)) {
-          counter += stream.mapToInt((pair) -> transformer.transformFromValue(pair.second).size()).sum();
+        try (final Stream<ORawPair<Object, Object>> stream =
+            sbTree.iterateEntriesBetween(firstKey, true, lastKey, true, true)) {
+          counter +=
+              stream.mapToInt((pair) -> transformer.transformFromValue(pair.second).size()).sum();
         }
         return counter;
       }
@@ -286,5 +343,4 @@ public class OSBTreeIndexEngine implements OIndexEngine {
   public String getIndexNameByKey(Object key) {
     return name;
   }
-
 }

@@ -24,7 +24,6 @@ import com.orientechnologies.common.serialization.types.OByteSerializer;
 import com.orientechnologies.common.serialization.types.OLongSerializer;
 import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurablePage;
-
 import java.io.IOException;
 
 /**
@@ -33,19 +32,21 @@ import java.io.IOException;
  */
 public final class OHashIndexFileLevelMetadataPage extends ODurablePage {
 
-  private static final int RECORDS_COUNT_OFFSET       = NEXT_FREE_POSITION;
-  private static final int KEY_SERIALIZER_ID_OFFSET   = RECORDS_COUNT_OFFSET + OLongSerializer.LONG_SIZE;
-  private static final int VALUE_SERIALIZER_ID_OFFSET = KEY_SERIALIZER_ID_OFFSET + OByteSerializer.BYTE_SIZE;
-  private static final int METADATA_ARRAY_OFFSET      = VALUE_SERIALIZER_ID_OFFSET + OByteSerializer.BYTE_SIZE;
+  private static final int RECORDS_COUNT_OFFSET = NEXT_FREE_POSITION;
+  private static final int KEY_SERIALIZER_ID_OFFSET =
+      RECORDS_COUNT_OFFSET + OLongSerializer.LONG_SIZE;
+  private static final int VALUE_SERIALIZER_ID_OFFSET =
+      KEY_SERIALIZER_ID_OFFSET + OByteSerializer.BYTE_SIZE;
+  private static final int METADATA_ARRAY_OFFSET =
+      VALUE_SERIALIZER_ID_OFFSET + OByteSerializer.BYTE_SIZE;
 
-  private static final int ITEM_SIZE                  = OByteSerializer.BYTE_SIZE + 3 * OLongSerializer.LONG_SIZE;
+  private static final int ITEM_SIZE = OByteSerializer.BYTE_SIZE + 3 * OLongSerializer.LONG_SIZE;
 
   OHashIndexFileLevelMetadataPage(OCacheEntry cacheEntry, boolean isNewPage) {
     super(cacheEntry);
 
     if (isNewPage) {
-      for (int i = 0; i < OLocalHashTableV3.HASH_CODE_SIZE; i++)
-        remove(i);
+      for (int i = 0; i < OLocalHashTableV3.HASH_CODE_SIZE; i++) remove(i);
 
       setRecordsCount(0);
       setKeySerializerId((byte) -1);

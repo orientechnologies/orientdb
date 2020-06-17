@@ -20,7 +20,6 @@
 package com.orientechnologies.orient.core.cache;
 
 import com.orientechnologies.orient.core.metadata.security.OSecurityUser;
-
 import java.util.Set;
 
 /**
@@ -29,14 +28,10 @@ import java.util.Set;
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
  */
 public interface OCommandCache {
-  /**
-   * All operations running at cache initialization stage.
-   */
+  /** All operations running at cache initialization stage. */
   void startup();
 
-  /**
-   * All operations running at cache destruction stage.
-   */
+  /** All operations running at cache destruction stage. */
   void shutdown();
 
   /**
@@ -46,40 +41,36 @@ public interface OCommandCache {
    */
   boolean isEnabled();
 
-  /**
-   * Enables cache.
-   */
+  /** Enables cache. */
   OCommandCache enable();
 
   /**
-   * Disables cache. None of query methods will cause effect on cache in disabled state. Only cache info methods available at that
-   * state.
+   * Disables cache. None of query methods will cause effect on cache in disabled state. Only cache
+   * info methods available at that state.
    */
   OCommandCache disable();
 
-  /**
-   * Looks up for query result in cache.
-   */
+  /** Looks up for query result in cache. */
   Object get(OSecurityUser iUser, String queryText, int iLimit);
 
-  /**
-   * Pushes record to cache. Identifier of record used as access key
-   */
-  void put(OSecurityUser iUser, String queryText, Object iResult, int iLimit, Set<String> iInvolvedClusters, long iExecutionTime);
+  /** Pushes record to cache. Identifier of record used as access key */
+  void put(
+      OSecurityUser iUser,
+      String queryText,
+      Object iResult,
+      int iLimit,
+      Set<String> iInvolvedClusters,
+      long iExecutionTime);
 
-  /**
-   * Removes result of query.
-   **/
+  /** Removes result of query. */
   void remove(OSecurityUser iUser, String queryText, int iLimit);
 
-  /**
-   * Remove all results from the cache.
-   */
+  /** Remove all results from the cache. */
   OCommandCache clear();
 
   /**
    * Total number of stored queries.
-   * 
+   *
    * @return non-negative number
    */
   int size();
@@ -87,8 +78,7 @@ public interface OCommandCache {
   /**
    * Invalidates results of given cluster.
    *
-   * @param iCluster
-   *          Cluster name
+   * @param iCluster Cluster name
    */
   void invalidateResultsOfCluster(final String iCluster);
 
@@ -97,6 +87,7 @@ public interface OCommandCache {
   STRATEGY getEvictStrategy();
 
   public enum STRATEGY {
-    INVALIDATE_ALL, PER_CLUSTER
+    INVALIDATE_ALL,
+    PER_CLUSTER
   }
 }

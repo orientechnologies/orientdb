@@ -10,33 +10,40 @@ import com.orientechnologies.orient.core.record.OEdge;
 import com.orientechnologies.orient.core.record.OElement;
 import com.orientechnologies.orient.core.record.OVertex;
 import com.orientechnologies.orient.core.sql.parser.OIdentifier;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
 
-import java.util.*;
-
-/**
- * Created by luigidellaquila on 21/02/17.
- */
+/** Created by luigidellaquila on 21/02/17. */
 public class FetchEdgesFromToVerticesStep extends AbstractExecutionStep {
   private final OIdentifier targetClass;
   private final OIdentifier targetCluster;
-  private final String      fromAlias;
-  private final String      toAlias;
+  private final String fromAlias;
+  private final String toAlias;
 
-  //operation stuff
+  // operation stuff
 
-  //iterator of FROM vertices
-  private Iterator        fromIter;
-  //iterator of edges on current from
+  // iterator of FROM vertices
+  private Iterator fromIter;
+  // iterator of edges on current from
   private Iterator<OEdge> currentFromEdgesIter;
-  private Iterator        toIterator;
+  private Iterator toIterator;
 
   private Set<ORID> toList = new HashSet<>();
-  private boolean   inited = false;
+  private boolean inited = false;
 
   private OEdge nextEdge = null;
 
-  public FetchEdgesFromToVerticesStep(String fromAlias, String toAlias, OIdentifier targetClass, OIdentifier targetCluster,
-      OCommandContext ctx, boolean profilingEnabled) {
+  public FetchEdgesFromToVerticesStep(
+      String fromAlias,
+      String toAlias,
+      OIdentifier targetClass,
+      OIdentifier targetCluster,
+      OCommandContext ctx,
+      boolean profilingEnabled) {
     super(ctx, profilingEnabled);
     this.targetClass = targetClass;
     this.targetCluster = targetCluster;
@@ -225,6 +232,7 @@ public class FetchEdgesFromToVerticesStep extends AbstractExecutionStep {
 
   @Override
   public OExecutionStep copy(OCommandContext ctx) {
-    return new FetchEdgesFromToVerticesStep(fromAlias, toAlias, targetClass, targetCluster, ctx, profilingEnabled);
+    return new FetchEdgesFromToVerticesStep(
+        fromAlias, toAlias, targetClass, targetCluster, ctx, profilingEnabled);
   }
 }

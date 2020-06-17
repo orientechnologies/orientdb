@@ -29,7 +29,6 @@ import com.orientechnologies.orient.output.OPluginMessageHandler;
  * @author Gabriele Ponzi
  * @email gabriele.ponzi--at--gmail.com
  */
-
 public class OETLContextWrapper {
 
   private static OETLContextWrapper instance = null;
@@ -55,10 +54,10 @@ public class OETLContextWrapper {
   }
 
   public OPluginMessageHandler getMessageHandler() {
-    return ((OETLContext)this.context).getMessageHandler();
+    return ((OETLContext) this.context).getMessageHandler();
   }
 
   public void setMessageHandler(OPluginMessageHandler messageHandler) {
-    ((OETLContext)this.context).setMessageHandler(messageHandler);
+    ((OETLContext) this.context).setMessageHandler(messageHandler);
   }
 }

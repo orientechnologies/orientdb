@@ -26,9 +26,7 @@ import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
 
-/**
- * @author Sergey Sitnikov
- */
+/** @author Sergey Sitnikov */
 public class VersionedDeleteTest {
 
   private ODatabaseDocumentTx db;
@@ -91,5 +89,4 @@ public class VersionedDeleteTest {
     db.delete(doc.getIdentity(), 1);
     db.commit();
   }
-
 }

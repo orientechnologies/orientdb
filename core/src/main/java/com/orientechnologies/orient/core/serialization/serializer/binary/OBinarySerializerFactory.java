@@ -48,27 +48,28 @@ import com.orientechnologies.orient.core.serialization.serializer.stream.OMixedI
 import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializerRID;
 import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializerSBTreeIndexRIDContainer;
 import com.orientechnologies.orient.core.storage.index.sbtree.multivalue.v2.MultiValueEntrySerializer;
-
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
 /**
- * This class is responsible for obtaining OBinarySerializer realization, by it's id of type of object that should be serialized.
+ * This class is responsible for obtaining OBinarySerializer realization, by it's id of type of
+ * object that should be serialized.
  *
  * @author Evgeniy Degtiarenko (gmandnepr-at-gmail.com)
  */
 public class OBinarySerializerFactory {
 
-  /**
-   * Size of the type identifier block size
-   */
-  public static final int                                                     TYPE_IDENTIFIER_SIZE   = 1;
-  private final       ConcurrentMap<Byte, OBinarySerializer<?>>               serializerIdMap        = new ConcurrentHashMap<Byte, OBinarySerializer<?>>();
-  private final       ConcurrentMap<Byte, Class<? extends OBinarySerializer>> serializerClassesIdMap = new ConcurrentHashMap<Byte, Class<? extends OBinarySerializer>>();
-  private final       ConcurrentMap<OType, OBinarySerializer<?>>              serializerTypeMap      = new ConcurrentHashMap<OType, OBinarySerializer<?>>();
+  /** Size of the type identifier block size */
+  public static final int TYPE_IDENTIFIER_SIZE = 1;
 
-  private OBinarySerializerFactory() {
-  }
+  private final ConcurrentMap<Byte, OBinarySerializer<?>> serializerIdMap =
+      new ConcurrentHashMap<Byte, OBinarySerializer<?>>();
+  private final ConcurrentMap<Byte, Class<? extends OBinarySerializer>> serializerClassesIdMap =
+      new ConcurrentHashMap<Byte, Class<? extends OBinarySerializer>>();
+  private final ConcurrentMap<OType, OBinarySerializer<?>> serializerTypeMap =
+      new ConcurrentHashMap<OType, OBinarySerializer<?>>();
+
+  private OBinarySerializerFactory() {}
 
   public static OBinarySerializerFactory create(int binaryFormatVersion) {
     final OBinarySerializerFactory factory = new OBinarySerializerFactory();
@@ -110,25 +111,24 @@ public class OBinarySerializerFactory {
 
   public static OBinarySerializerFactory getInstance() {
     final ODatabaseDocumentInternal database = ODatabaseRecordThreadLocal.instance().getIfDefined();
-    if (database != null)
-      return database.getSerializerFactory();
-    else
-      return OBinarySerializerFactory.create(Integer.MAX_VALUE);
+    if (database != null) return database.getSerializerFactory();
+    else return OBinarySerializerFactory.create(Integer.MAX_VALUE);
   }
 
   public void registerSerializer(final OBinarySerializer<?> iInstance, final OType iType) {
     if (serializerIdMap.containsKey(iInstance.getId()))
-      throw new IllegalArgumentException("Binary serializer with id " + iInstance.getId() + " has been already registered.");
+      throw new IllegalArgumentException(
+          "Binary serializer with id " + iInstance.getId() + " has been already registered.");
 
     serializerIdMap.put(iInstance.getId(), iInstance);
-    if (iType != null)
-      serializerTypeMap.put(iType, iInstance);
+    if (iType != null) serializerTypeMap.put(iType, iInstance);
   }
 
-  @SuppressWarnings({ "unchecked", "rawtypes" })
+  @SuppressWarnings({"unchecked", "rawtypes"})
   public void registerSerializer(final byte iId, final Class<? extends OBinarySerializer> iClass) {
     if (serializerClassesIdMap.containsKey(iId))
-      throw new IllegalStateException("Serializer with id " + iId + " has been already registered.");
+      throw new IllegalStateException(
+          "Serializer with id " + iId + " has been already registered.");
 
     serializerClassesIdMap.put(iId, iClass);
   }
@@ -137,7 +137,6 @@ public class OBinarySerializerFactory {
    * Obtain OBinarySerializer instance by it's id.
    *
    * @param identifier is serializes identifier.
-   *
    * @return OBinarySerializer instance.
    */
   public OBinarySerializer<?> getObjectSerializer(final byte identifier) {
@@ -148,7 +147,12 @@ public class OBinarySerializerFactory {
         try {
           impl = cls.newInstance();
         } catch (Exception e) {
-          OLogManager.instance().error(this, "Cannot create an instance of class %s invoking the empty constructor", e, cls);
+          OLogManager.instance()
+              .error(
+                  this,
+                  "Cannot create an instance of class %s invoking the empty constructor",
+                  e,
+                  cls);
         }
     }
     return impl;
@@ -158,7 +162,6 @@ public class OBinarySerializerFactory {
    * Obtain OBinarySerializer realization for the OType
    *
    * @param type is the OType to obtain serializer algorithm for
-   *
    * @return OBinarySerializer instance
    */
   @SuppressWarnings("unchecked")

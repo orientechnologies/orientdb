@@ -35,30 +35,51 @@ import com.orientechnologies.orient.core.tx.OTransactionIndexChangesPerKey;
  */
 public class OIndexUnique extends OIndexOneValue {
 
-  private final OBaseIndexEngine.Validator<Object, ORID> uniqueValidator = (key, oldValue, newValue) -> {
-    if (oldValue != null) {
-      // CHECK IF THE ID IS THE SAME OF CURRENT: THIS IS THE UPDATE CASE
-      if (!oldValue.equals(newValue)) {
-        final Boolean mergeSameKey = metadata != null ? (Boolean) metadata.field(OIndex.MERGE_KEYS) : Boolean.FALSE;
-        if (mergeSameKey == null || !mergeSameKey) {
-          throw new ORecordDuplicatedException(String
-              .format("Cannot index record %s: found duplicated key '%s' in index '%s' previously assigned to the record %s",
-                  newValue.getIdentity(), key, getName(), oldValue.getIdentity()), getName(), oldValue.getIdentity(), key);
+  private final OBaseIndexEngine.Validator<Object, ORID> uniqueValidator =
+      (key, oldValue, newValue) -> {
+        if (oldValue != null) {
+          // CHECK IF THE ID IS THE SAME OF CURRENT: THIS IS THE UPDATE CASE
+          if (!oldValue.equals(newValue)) {
+            final Boolean mergeSameKey =
+                metadata != null ? (Boolean) metadata.field(OIndex.MERGE_KEYS) : Boolean.FALSE;
+            if (mergeSameKey == null || !mergeSameKey) {
+              throw new ORecordDuplicatedException(
+                  String.format(
+                      "Cannot index record %s: found duplicated key '%s' in index '%s' previously assigned to the record %s",
+                      newValue.getIdentity(), key, getName(), oldValue.getIdentity()),
+                  getName(),
+                  oldValue.getIdentity(),
+                  key);
+            }
+          } else {
+            return OBaseIndexEngine.Validator.IGNORE;
+          }
         }
-      } else {
-        return OBaseIndexEngine.Validator.IGNORE;
-      }
-    }
 
-    if (!newValue.getIdentity().isPersistent()) {
-      newValue = newValue.getRecord();
-    }
-    return newValue.getIdentity();
-  };
+        if (!newValue.getIdentity().isPersistent()) {
+          newValue = newValue.getRecord();
+        }
+        return newValue.getIdentity();
+      };
 
-  public OIndexUnique(String name, String typeId, String algorithm, int version, OAbstractPaginatedStorage storage,
-      String valueContainerAlgorithm, ODocument metadata, int binaryFormatVersion) {
-    super(name, typeId, algorithm, version, storage, valueContainerAlgorithm, metadata, binaryFormatVersion);
+  public OIndexUnique(
+      String name,
+      String typeId,
+      String algorithm,
+      int version,
+      OAbstractPaginatedStorage storage,
+      String valueContainerAlgorithm,
+      ODocument metadata,
+      int binaryFormatVersion) {
+    super(
+        name,
+        typeId,
+        algorithm,
+        version,
+        storage,
+        valueContainerAlgorithm,
+        metadata,
+        binaryFormatVersion);
   }
 
   @Override
@@ -87,7 +108,8 @@ public class OIndexUnique extends OIndexOneValue {
   }
 
   @Override
-  public void doPut(OAbstractPaginatedStorage storage, Object key, ORID rid) throws OInvalidIndexEngineIdException {
+  public void doPut(OAbstractPaginatedStorage storage, Object key, ORID rid)
+      throws OInvalidIndexEngineIdException {
     storage.validatedPutIndexValue(indexId, key, rid, uniqueValidator);
   }
 

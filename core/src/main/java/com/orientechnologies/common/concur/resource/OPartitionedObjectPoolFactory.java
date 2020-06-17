@@ -5,7 +5,6 @@ import com.googlecode.concurrentlinkedhashmap.EvictionListener;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.OOrientListenerAbstract;
 import com.orientechnologies.orient.core.Orient;
-
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Iterator;
@@ -13,32 +12,38 @@ import java.util.Iterator;
 /**
  * This is internal API, do not use it.
  *
- * @author Andrey Lomakin (a.lomakin-at-orientdb.com) <a href="mailto:lomakin.andrey@gmail.com">Andrey Lomakin</a>
+ * @author Andrey Lomakin (a.lomakin-at-orientdb.com) <a
+ *     href="mailto:lomakin.andrey@gmail.com">Andrey Lomakin</a>
  * @since 15/12/14
  */
 public class OPartitionedObjectPoolFactory<K, T> extends OOrientListenerAbstract {
-  private volatile int     maxPartitions = Runtime.getRuntime().availableProcessors() << 3;
-  private volatile int     maxPoolSize   = 64;
-  private          boolean closed        = false;
+  private volatile int maxPartitions = Runtime.getRuntime().availableProcessors() << 3;
+  private volatile int maxPoolSize = 64;
+  private boolean closed = false;
 
   private final ConcurrentLinkedHashMap<K, OPartitionedObjectPool<T>> poolStore;
-  private final ObjectFactoryFactory<K, T>                            objectFactoryFactory;
+  private final ObjectFactoryFactory<K, T> objectFactoryFactory;
 
-  private final EvictionListener<K, OPartitionedObjectPool<T>> evictionListener = new EvictionListener<K, OPartitionedObjectPool<T>>() {
-    @Override
-    public void onEviction(K key, OPartitionedObjectPool<T> partitionedObjectPool) {
-      partitionedObjectPool.close();
-    }
-  };
+  private final EvictionListener<K, OPartitionedObjectPool<T>> evictionListener =
+      new EvictionListener<K, OPartitionedObjectPool<T>>() {
+        @Override
+        public void onEviction(K key, OPartitionedObjectPool<T> partitionedObjectPool) {
+          partitionedObjectPool.close();
+        }
+      };
 
   public OPartitionedObjectPoolFactory(final ObjectFactoryFactory<K, T> objectFactoryFactory) {
     this(objectFactoryFactory, 100);
   }
 
-  public OPartitionedObjectPoolFactory(final ObjectFactoryFactory<K, T> objectFactoryFactory, final int capacity) {
+  public OPartitionedObjectPoolFactory(
+      final ObjectFactoryFactory<K, T> objectFactoryFactory, final int capacity) {
     this.objectFactoryFactory = objectFactoryFactory;
-    poolStore = new ConcurrentLinkedHashMap.Builder<K, OPartitionedObjectPool<T>>().maximumWeightedCapacity(capacity)
-        .listener(evictionListener).build();
+    poolStore =
+        new ConcurrentLinkedHashMap.Builder<K, OPartitionedObjectPool<T>>()
+            .maximumWeightedCapacity(capacity)
+            .listener(evictionListener)
+            .build();
 
     Orient.instance().registerWeakOrientStartupListener(this);
     Orient.instance().registerWeakOrientShutdownListener(this);
@@ -58,10 +63,10 @@ public class OPartitionedObjectPoolFactory<K, T> extends OOrientListenerAbstract
     checkForClose();
 
     OPartitionedObjectPool<T> pool = poolStore.get(key);
-    if (pool != null)
-      return pool;
+    if (pool != null) return pool;
 
-    pool = new OPartitionedObjectPool<T>(objectFactoryFactory.create(key), maxPoolSize, maxPartitions);
+    pool =
+        new OPartitionedObjectPool<T>(objectFactoryFactory.create(key), maxPoolSize, maxPartitions);
 
     final OPartitionedObjectPool<T> oldPool = poolStore.putIfAbsent(key, pool);
     if (oldPool != null) {
@@ -87,8 +92,7 @@ public class OPartitionedObjectPoolFactory<K, T> extends OOrientListenerAbstract
   }
 
   public void close() {
-    if (closed)
-      return;
+    if (closed) return;
 
     closed = true;
 
@@ -108,8 +112,7 @@ public class OPartitionedObjectPoolFactory<K, T> extends OOrientListenerAbstract
       }
     }
 
-    for (OPartitionedObjectPool<T> pool : poolStore.values())
-      pool.close();
+    for (OPartitionedObjectPool<T> pool : poolStore.values()) pool.close();
 
     poolStore.clear();
   }
@@ -120,8 +123,7 @@ public class OPartitionedObjectPoolFactory<K, T> extends OOrientListenerAbstract
   }
 
   private void checkForClose() {
-    if (closed)
-      throw new IllegalStateException("Pool factory is closed");
+    if (closed) throw new IllegalStateException("Pool factory is closed");
   }
 
   public interface ObjectFactoryFactory<K, T> {

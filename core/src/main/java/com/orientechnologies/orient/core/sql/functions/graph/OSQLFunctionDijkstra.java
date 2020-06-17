@@ -22,18 +22,18 @@ package com.orientechnologies.orient.core.sql.functions.graph;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.record.OVertex;
-
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.Map;
 
 /**
- * Dijkstra's algorithm describes how to find the cheapest path from one node to another node in a directed weighted graph.
- * <p>
- * The first parameter is source record. The second parameter is destination record. The third parameter is a name of property that
- * represents 'weight'.
- * <p>
- * If property is not defined in edge or is null, distance between vertexes are 0.
+ * Dijkstra's algorithm describes how to find the cheapest path from one node to another node in a
+ * directed weighted graph.
+ *
+ * <p>The first parameter is source record. The second parameter is destination record. The third
+ * parameter is a name of property that represents 'weight'.
+ *
+ * <p>If property is not defined in edge or is null, distance between vertexes are 0.
  *
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
  */
@@ -46,9 +46,14 @@ public class OSQLFunctionDijkstra extends OSQLFunctionPathFinder {
     super(NAME, 3, 4);
   }
 
-  public LinkedList<OVertex> execute(final Object iThis, final OIdentifiable iCurrentRecord, final Object iCurrentResult,
-      final Object[] iParams, final OCommandContext iContext) {
-    return new OSQLFunctionAstar().execute(this, iCurrentRecord, iCurrentResult, toAStarParams(iParams), iContext);
+  public LinkedList<OVertex> execute(
+      final Object iThis,
+      final OIdentifiable iCurrentRecord,
+      final Object iCurrentResult,
+      final Object[] iParams,
+      final OCommandContext iContext) {
+    return new OSQLFunctionAstar()
+        .execute(this, iCurrentRecord, iCurrentResult, toAStarParams(iParams), iContext);
   }
 
   private Object[] toAStarParams(Object[] iParams) {
@@ -74,7 +79,7 @@ public class OSQLFunctionDijkstra extends OSQLFunctionPathFinder {
   }
 
   protected float getDistance(final OVertex node, final OVertex target) {
-    return -1;//not used anymore
+    return -1; // not used anymore
   }
 
   @Override

@@ -8,19 +8,21 @@ import com.orientechnologies.orient.core.config.OStorageEntryConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseInternal;
 import com.orientechnologies.orient.core.storage.OCluster;
 import com.orientechnologies.orient.core.storage.OStorage;
-
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 
 /**
  * Returns an OResult containing metadata regarding the storage
  *
  * @author Luigi Dell'Aquila (l.dellaquila - at - orientdb.com)
  */
-
 public class FetchFromStorageMetadataStep extends AbstractExecutionStep {
 
   private boolean served = false;
-  private long    cost   = 0;
+  private long cost = 0;
 
   public FetchFromStorageMetadataStep(OCommandContext ctx, boolean profilingEnabled) {
     super(ctx, profilingEnabled);
@@ -50,8 +52,11 @@ public class FetchFromStorageMetadataStep extends AbstractExecutionStep {
               result.setProperty("defaultClusterId", storage.getDefaultClusterId());
               result.setProperty("totalClusters", storage.getClusters());
               result.setProperty("configuration", toResult(storage.getConfiguration()));
-              result.setProperty("conflictStrategy",
-                  storage.getRecordConflictStrategy() == null ? null : storage.getRecordConflictStrategy().getName());
+              result.setProperty(
+                  "conflictStrategy",
+                  storage.getRecordConflictStrategy() == null
+                      ? null
+                      : storage.getRecordConflictStrategy().getName());
               result.setProperty("name", storage.getName());
               result.setProperty("size", storage.getSize());
               result.setProperty("type", storage.getType());
@@ -70,9 +75,7 @@ public class FetchFromStorageMetadataStep extends AbstractExecutionStep {
       }
 
       @Override
-      public void close() {
-
-      }
+      public void close() {}
 
       @Override
       public Optional<OExecutionPlan> getExecutionPlan() {
@@ -128,8 +131,11 @@ public class FetchFromStorageMetadataStep extends AbstractExecutionStep {
         item.setProperty("fileName", cluster.getFileName());
         item.setProperty("id", cluster.getId());
         item.setProperty("entries", cluster.getEntries());
-        item.setProperty("conflictStrategy",
-            cluster.getRecordConflictStrategy() == null ? null : cluster.getRecordConflictStrategy().getName());
+        item.setProperty(
+            "conflictStrategy",
+            cluster.getRecordConflictStrategy() == null
+                ? null
+                : cluster.getRecordConflictStrategy().getName());
         item.setProperty("tombstonesCount", cluster.getTombstonesCount());
         try {
           item.setProperty("encryption", cluster.encryption());

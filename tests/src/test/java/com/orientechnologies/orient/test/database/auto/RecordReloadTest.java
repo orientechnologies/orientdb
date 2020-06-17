@@ -4,14 +4,13 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.OStorageProxy;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import org.testng.Assert;
 import org.testng.annotations.Optional;
 import org.testng.annotations.Parameters;
 import org.testng.annotations.Test;
-
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
 
 @Test
 public class RecordReloadTest extends DocumentDBBaseTest {
@@ -29,19 +28,21 @@ public class RecordReloadTest extends DocumentDBBaseTest {
     document.save(database.getClusterNameById(database.getDefaultClusterId()));
 
     final ORID rid = document.getIdentity();
-    final Future<?> future = executor.submit(new Runnable() {
-      @Override
-      public void run() {
-        ODatabaseDocumentTx db = new ODatabaseDocumentTx(url);
-        db.open("admin", "admin");
+    final Future<?> future =
+        executor.submit(
+            new Runnable() {
+              @Override
+              public void run() {
+                ODatabaseDocumentTx db = new ODatabaseDocumentTx(url);
+                db.open("admin", "admin");
 
-        ODocument doc = db.load(rid);
-        doc.field("value", "value two");
-        doc.save();
+                ODocument doc = db.load(rid);
+                doc.field("value", "value two");
+                doc.save();
 
-        db.close();
-      }
-    });
+                db.close();
+              }
+            });
 
     future.get();
 
@@ -58,19 +59,21 @@ public class RecordReloadTest extends DocumentDBBaseTest {
     document.save(database.getClusterNameById(database.getDefaultClusterId()));
 
     final ORID rid = document.getIdentity();
-    final Future<?> future = executor.submit(new Runnable() {
-      @Override
-      public void run() {
-        ODatabaseDocumentTx db = new ODatabaseDocumentTx(url);
-        db.open("admin", "admin");
+    final Future<?> future =
+        executor.submit(
+            new Runnable() {
+              @Override
+              public void run() {
+                ODatabaseDocumentTx db = new ODatabaseDocumentTx(url);
+                db.open("admin", "admin");
 
-        ODocument doc = db.load(rid);
-        doc.field("value", "value two");
-        doc.save();
+                ODocument doc = db.load(rid);
+                doc.field("value", "value two");
+                doc.save();
 
-        db.close();
-      }
-    });
+                db.close();
+              }
+            });
 
     future.get();
 
@@ -80,8 +83,7 @@ public class RecordReloadTest extends DocumentDBBaseTest {
   }
 
   public void documentReloadLatestVersionLinkedValueOne() throws Exception {
-    if (!(database.getStorage() instanceof OStorageProxy))
-      return;
+    if (!(database.getStorage() instanceof OStorageProxy)) return;
 
     ExecutorService executor = Executors.newSingleThreadExecutor();
     final ODocument document = new ODocument();
@@ -96,21 +98,23 @@ public class RecordReloadTest extends DocumentDBBaseTest {
     document.save(database.getClusterNameById(database.getDefaultClusterId()));
 
     final ORID rid = document.getIdentity();
-    final Future<?> future = executor.submit(new Runnable() {
-      @Override
-      public void run() {
-        ODatabaseDocumentTx db = new ODatabaseDocumentTx(url);
-        db.open("admin", "admin");
+    final Future<?> future =
+        executor.submit(
+            new Runnable() {
+              @Override
+              public void run() {
+                ODatabaseDocumentTx db = new ODatabaseDocumentTx(url);
+                db.open("admin", "admin");
 
-        ODocument doc = db.load(rid);
+                ODocument doc = db.load(rid);
 
-        ODocument linkedValue = doc.field("link");
-        linkedValue.field("val", "value 2");
-        linkedValue.save();
+                ODocument linkedValue = doc.field("link");
+                linkedValue.field("val", "value 2");
+                linkedValue.save();
 
-        db.close();
-      }
-    });
+                db.close();
+              }
+            });
 
     future.get();
 
@@ -121,8 +125,7 @@ public class RecordReloadTest extends DocumentDBBaseTest {
   }
 
   public void documentReloadLatestVersionLinkedValueTwo() throws Exception {
-    if (!(database.getStorage() instanceof OStorageProxy))
-      return;
+    if (!(database.getStorage() instanceof OStorageProxy)) return;
 
     ExecutorService executor = Executors.newSingleThreadExecutor();
     final ODocument document = new ODocument();
@@ -137,21 +140,23 @@ public class RecordReloadTest extends DocumentDBBaseTest {
     document.save(database.getClusterNameById(database.getDefaultClusterId()));
 
     final ORID rid = document.getIdentity();
-    final Future<?> future = executor.submit(new Runnable() {
-      @Override
-      public void run() {
-        ODatabaseDocumentTx db = new ODatabaseDocumentTx(url);
-        db.open("admin", "admin");
+    final Future<?> future =
+        executor.submit(
+            new Runnable() {
+              @Override
+              public void run() {
+                ODatabaseDocumentTx db = new ODatabaseDocumentTx(url);
+                db.open("admin", "admin");
 
-        ODocument doc = db.load(rid);
+                ODocument doc = db.load(rid);
 
-        ODocument linkedValue = doc.field("link");
-        linkedValue.field("val", "value 2");
-        linkedValue.save();
+                ODocument linkedValue = doc.field("link");
+                linkedValue.field("val", "value 2");
+                linkedValue.save();
 
-        db.close();
-      }
-    });
+                db.close();
+              }
+            });
 
     future.get();
 

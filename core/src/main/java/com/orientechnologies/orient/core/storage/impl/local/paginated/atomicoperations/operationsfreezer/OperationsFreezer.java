@@ -3,7 +3,6 @@ package com.orientechnologies.orient.core.storage.impl.local.paginated.atomicope
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.types.OModifiableInteger;
-
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.util.HashMap;
@@ -16,15 +15,17 @@ import java.util.concurrent.atomic.LongAdder;
 import java.util.concurrent.locks.LockSupport;
 
 public final class OperationsFreezer {
-  private final LongAdder     operationsCount = new LongAdder();
-  private final AtomicInteger freezeRequests  = new AtomicInteger();
+  private final LongAdder operationsCount = new LongAdder();
+  private final AtomicInteger freezeRequests = new AtomicInteger();
 
   private final WaitingList operationsWaitingList = new WaitingList();
 
-  private final AtomicLong                            freezeIdGen           = new AtomicLong();
-  private final ConcurrentMap<Long, FreezeParameters> freezeParametersIdMap = new ConcurrentHashMap<>();
+  private final AtomicLong freezeIdGen = new AtomicLong();
+  private final ConcurrentMap<Long, FreezeParameters> freezeParametersIdMap =
+      new ConcurrentHashMap<>();
 
-  private final ThreadLocal<OModifiableInteger> operationDepth = ThreadLocal.withInitial(OModifiableInteger::new);
+  private final ThreadLocal<OModifiableInteger> operationDepth =
+      ThreadLocal.withInitial(OModifiableInteger::new);
 
   public void startOperation() {
     final OModifiableInteger operationDepth = this.operationDepth.get();
@@ -68,7 +69,8 @@ public final class OperationsFreezer {
     }
   }
 
-  public long freezeOperations(final Class<? extends OException> exceptionClass, final String message) {
+  public long freezeOperations(
+      final Class<? extends OException> exceptionClass, final String message) {
     final long id = freezeIdGen.incrementAndGet();
 
     freezeRequests.incrementAndGet();
@@ -112,11 +114,21 @@ public final class OperationsFreezer {
 
       if (freezeParameters.message != null) {
         try {
-          final Constructor<? extends OException> mConstructor = freezeParameters.exceptionClass.getConstructor(String.class);
+          final Constructor<? extends OException> mConstructor =
+              freezeParameters.exceptionClass.getConstructor(String.class);
           throw mConstructor.newInstance(freezeParameters.message);
-        } catch (InstantiationException | IllegalAccessException | NoSuchMethodException | SecurityException | InvocationTargetException ie) {
-          OLogManager.instance().error(this, "Can not create instance of exception " + freezeParameters.exceptionClass
-              + " with message will try empty constructor instead", ie);
+        } catch (InstantiationException
+            | IllegalAccessException
+            | NoSuchMethodException
+            | SecurityException
+            | InvocationTargetException ie) {
+          OLogManager.instance()
+              .error(
+                  this,
+                  "Can not create instance of exception "
+                      + freezeParameters.exceptionClass
+                      + " with message will try empty constructor instead",
+                  ie);
           throwFreezeExceptionWithoutMessage(freezeParameters);
         }
       } else {
@@ -130,13 +142,18 @@ public final class OperationsFreezer {
       //noinspection deprecation
       throw freezeParameters.exceptionClass.newInstance();
     } catch (InstantiationException | IllegalAccessException ie) {
-      OLogManager.instance().error(this, "Can not create instance of exception " + freezeParameters.exceptionClass
-          + " will park thread instead of throwing of exception", ie);
+      OLogManager.instance()
+          .error(
+              this,
+              "Can not create instance of exception "
+                  + freezeParameters.exceptionClass
+                  + " will park thread instead of throwing of exception",
+              ie);
     }
   }
 
   private static final class FreezeParameters {
-    private final String                      message;
+    private final String message;
     private final Class<? extends OException> exceptionClass;
 
     private FreezeParameters(String message, Class<? extends OException> exceptionClass) {

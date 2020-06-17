@@ -7,11 +7,10 @@ import com.orientechnologies.orient.core.storage.cache.OCacheEntryImpl;
 import com.orientechnologies.orient.core.storage.cache.OCachePointer;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.PageOperationRecord;
 import com.orientechnologies.orient.core.storage.index.hashindex.local.v2.HashIndexBucketV2;
-import org.junit.Assert;
-import org.junit.Test;
-
 import java.nio.ByteBuffer;
 import java.util.List;
+import org.junit.Assert;
+import org.junit.Test;
 
 public class LocalHashTableV2BucketSetDepthPOTest {
   @Test
@@ -26,12 +25,13 @@ public class LocalHashTableV2BucketSetDepthPOTest {
       HashIndexBucketV2<Byte, Byte> bucket = new HashIndexBucketV2<>(entry);
       bucket.init(2);
 
-      bucket.addEntry(0, 1, new byte[] { (byte) 1 }, new byte[] { (byte) 2 });
+      bucket.addEntry(0, 1, new byte[] {(byte) 1}, new byte[] {(byte) 2});
 
       entry.clearPageOperations();
 
       final OPointer restoredPointer = byteBufferPool.acquireDirect(false);
-      final OCachePointer restoredCachePointer = new OCachePointer(restoredPointer, byteBufferPool, 0, 0);
+      final OCachePointer restoredCachePointer =
+          new OCachePointer(restoredPointer, byteBufferPool, 0, 0);
       final OCacheEntry restoredCacheEntry = new OCacheEntryImpl(0, 0, restoredCachePointer);
 
       final ByteBuffer originalBuffer = cachePointer.getBufferDuplicate();
@@ -49,7 +49,8 @@ public class LocalHashTableV2BucketSetDepthPOTest {
 
       Assert.assertTrue(operations.get(0) instanceof LocalHashTableV2BucketSetDepthPO);
 
-      final LocalHashTableV2BucketSetDepthPO pageOperation = (LocalHashTableV2BucketSetDepthPO) operations.get(0);
+      final LocalHashTableV2BucketSetDepthPO pageOperation =
+          (LocalHashTableV2BucketSetDepthPO) operations.get(0);
 
       HashIndexBucketV2<Byte, Byte> restoredBucket = new HashIndexBucketV2<>(restoredCacheEntry);
 
@@ -80,7 +81,7 @@ public class LocalHashTableV2BucketSetDepthPOTest {
 
       bucket.init(2);
 
-      bucket.addEntry(0, 1, new byte[] { (byte) 1 }, new byte[] { (byte) 2 });
+      bucket.addEntry(0, 1, new byte[] {(byte) 1}, new byte[] {(byte) 2});
 
       entry.clearPageOperations();
 
@@ -91,7 +92,8 @@ public class LocalHashTableV2BucketSetDepthPOTest {
 
       Assert.assertTrue(operations.get(0) instanceof LocalHashTableV2BucketSetDepthPO);
 
-      final LocalHashTableV2BucketSetDepthPO pageOperation = (LocalHashTableV2BucketSetDepthPO) operations.get(0);
+      final LocalHashTableV2BucketSetDepthPO pageOperation =
+          (LocalHashTableV2BucketSetDepthPO) operations.get(0);
 
       final HashIndexBucketV2<Byte, Byte> restoredBucket = new HashIndexBucketV2<>(entry);
 
@@ -109,7 +111,8 @@ public class LocalHashTableV2BucketSetDepthPOTest {
 
   @Test
   public void testSerialization() {
-    LocalHashTableV2BucketSetDepthPO operation = new LocalHashTableV2BucketSetDepthPO((byte) 12, (byte) 34);
+    LocalHashTableV2BucketSetDepthPO operation =
+        new LocalHashTableV2BucketSetDepthPO((byte) 12, (byte) 34);
 
     operation.setFileId(42);
     operation.setPageIndex(24);

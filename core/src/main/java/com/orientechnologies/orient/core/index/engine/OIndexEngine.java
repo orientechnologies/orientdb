@@ -26,7 +26,6 @@ import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.index.OIndexKeyUpdater;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperation;
-
 import java.io.IOException;
 import java.util.Map;
 
@@ -41,30 +40,39 @@ public interface OIndexEngine extends OBaseIndexEngine {
 
   void put(OAtomicOperation atomicOperation, Object key, Object value) throws IOException;
 
-  void update(OAtomicOperation atomicOperation, Object key, OIndexKeyUpdater<Object> updater) throws IOException;
+  void update(OAtomicOperation atomicOperation, Object key, OIndexKeyUpdater<Object> updater)
+      throws IOException;
 
   boolean remove(OAtomicOperation atomicOperation, Object key) throws IOException;
 
   /**
-   * Puts the given value under the given key into this index engine. Validates the operation using the provided validator.
-   *
+   * Puts the given value under the given key into this index engine. Validates the operation using
+   * the provided validator.
    *
    * @param atomicOperation
-   * @param key       the key to put the value under.
-   * @param value     the value to put.
+   * @param key the key to put the value under.
+   * @param value the value to put.
    * @param validator the operation validator.
-   *
    * @return {@code true} if the validator allowed the put, {@code false} otherwise.
-   *
    * @see Validator#validate(Object, Object, Object)
    */
-  boolean validatedPut(OAtomicOperation atomicOperation, Object key, ORID value, Validator<Object, ORID> validator) throws IOException;
+  boolean validatedPut(
+      OAtomicOperation atomicOperation, Object key, ORID value, Validator<Object, ORID> validator)
+      throws IOException;
 
   @Override
   default int getEngineAPIVersion() {
     return VERSION;
   }
 
-  void load(String indexName, OBinarySerializer valueSerializer, boolean isAutomatic, OBinarySerializer keySerializer,
-      OType[] keyTypes, boolean nullPointerSupport, int keySize, Map<String, String> engineProperties, OEncryption encryption);
+  void load(
+      String indexName,
+      OBinarySerializer valueSerializer,
+      boolean isAutomatic,
+      OBinarySerializer keySerializer,
+      OType[] keyTypes,
+      boolean nullPointerSupport,
+      int keySize,
+      Map<String, String> engineProperties,
+      OEncryption encryption);
 }

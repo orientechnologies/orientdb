@@ -1,11 +1,10 @@
 package com.orientechnologies.orient.server.distributed.impl.task;
 
+import java.io.IOException;
 import org.junit.Assert;
 import org.junit.Test;
 
-import java.io.IOException;
-
-public class OFetchQueryPageTaskTest extends AbstractRemoteTaskTest{
+public class OFetchQueryPageTaskTest extends AbstractRemoteTaskTest {
 
   @Test
   public void testSerialization() throws IOException {

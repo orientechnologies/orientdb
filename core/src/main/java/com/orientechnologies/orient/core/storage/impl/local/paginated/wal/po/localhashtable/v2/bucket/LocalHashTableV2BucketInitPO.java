@@ -5,14 +5,12 @@ import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.WALRecordTypes;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.PageOperationRecord;
 import com.orientechnologies.orient.core.storage.index.hashindex.local.v2.HashIndexBucketV2;
-
 import java.nio.ByteBuffer;
 
 public final class LocalHashTableV2BucketInitPO extends PageOperationRecord {
   private int depth;
 
-  public LocalHashTableV2BucketInitPO() {
-  }
+  public LocalHashTableV2BucketInitPO() {}
 
   public LocalHashTableV2BucketInitPO(int depth) {
     this.depth = depth;
@@ -25,8 +23,7 @@ public final class LocalHashTableV2BucketInitPO extends PageOperationRecord {
   }
 
   @Override
-  public void undo(OCacheEntry cacheEntry) {
-  }
+  public void undo(OCacheEntry cacheEntry) {}
 
   @Override
   public int getId() {

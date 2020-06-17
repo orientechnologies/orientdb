@@ -16,6 +16,9 @@
  */
 package com.orientechnologies.orient.test.domain.schemageneration;
 
+import com.orientechnologies.orient.core.record.impl.OBlob;
+import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.test.domain.base.EnumTest;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
@@ -23,72 +26,68 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-
 import javax.persistence.Embedded;
 import javax.persistence.Id;
 import javax.persistence.Transient;
 import javax.persistence.Version;
 
-import com.orientechnologies.orient.core.record.impl.OBlob;
-import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.test.domain.base.EnumTest;
-
-/**
- * @author Luca Molino (molino.luca--at--gmail.com)
- * 
- */
+/** @author Luca Molino (molino.luca--at--gmail.com) */
 public class JavaTestSchemaGeneration {
 
-  @Id
-  private Object                                 id;
-  @Version
-  private Object                                 version;
+  @Id private Object id;
+  @Version private Object version;
 
-  private String                                 text              = "initTest";
-  private EnumTest                               enumeration;
-  private int                                    numberSimple      = 0;
-  private long                                   longSimple        = 0l;
-  private double                                 doubleSimple      = 0d;
-  private float                                  floatSimple       = 0f;
-  private byte                                   byteSimple        = 0;
-  private boolean                                flagSimple        = false;
-  private Date                                   dateField;
+  private String text = "initTest";
+  private EnumTest enumeration;
+  private int numberSimple = 0;
+  private long longSimple = 0l;
+  private double doubleSimple = 0d;
+  private float floatSimple = 0f;
+  private byte byteSimple = 0;
+  private boolean flagSimple = false;
+  private Date dateField;
+  @Embedded private ODocument embeddedDocument;
+  private ODocument document;
+  private OBlob byteArray;
+  private TestSchemaGenerationChild child;
+  @Embedded private TestSchemaGenerationChild embeddedChild;
+  private Map<String, String> stringMap = new HashMap<String, String>();
+  private Map<String, List<String>> stringListMap = new HashMap<String, List<String>>();
+  private List<TestSchemaGenerationChild> list = new ArrayList<TestSchemaGenerationChild>();
+  private Set<TestSchemaGenerationChild> set = new HashSet<TestSchemaGenerationChild>();
+  private Map<String, TestSchemaGenerationChild> children =
+      new HashMap<String, TestSchemaGenerationChild>();
+  private Map<String, Object> mapObject = new HashMap<String, Object>();
+  private List<EnumTest> enumList = new ArrayList<EnumTest>();
+  private Set<EnumTest> enumSet = new HashSet<EnumTest>();
+  private Set<String> stringSet = new HashSet<String>();
+  private Map<String, EnumTest> enumMap = new HashMap<String, EnumTest>();
+
   @Embedded
-  private ODocument                              embeddedDocument;
-  private ODocument                              document;
-  private OBlob                                  byteArray;
-  private TestSchemaGenerationChild              child;
+  private List<TestSchemaGenerationChild> embeddedList = new ArrayList<TestSchemaGenerationChild>();
+
   @Embedded
-  private TestSchemaGenerationChild              embeddedChild;
-  private Map<String, String>                    stringMap         = new HashMap<String, String>();
-  private Map<String, List<String>>              stringListMap     = new HashMap<String, List<String>>();
-  private List<TestSchemaGenerationChild>        list              = new ArrayList<TestSchemaGenerationChild>();
-  private Set<TestSchemaGenerationChild>         set               = new HashSet<TestSchemaGenerationChild>();
-  private Map<String, TestSchemaGenerationChild> children          = new HashMap<String, TestSchemaGenerationChild>();
-  private Map<String, Object>                    mapObject         = new HashMap<String, Object>();
-  private List<EnumTest>                         enumList          = new ArrayList<EnumTest>();
-  private Set<EnumTest>                          enumSet           = new HashSet<EnumTest>();
-  private Set<String>                            stringSet         = new HashSet<String>();
-  private Map<String, EnumTest>                  enumMap           = new HashMap<String, EnumTest>();
+  private Set<TestSchemaGenerationChild> embeddedSet = new HashSet<TestSchemaGenerationChild>();
+
   @Embedded
-  private List<TestSchemaGenerationChild>        embeddedList      = new ArrayList<TestSchemaGenerationChild>();
-  @Embedded
-  private Set<TestSchemaGenerationChild>         embeddedSet       = new HashSet<TestSchemaGenerationChild>();
-  @Embedded
-  private Map<String, TestSchemaGenerationChild> embeddedChildren  = new HashMap<String, TestSchemaGenerationChild>();
+  private Map<String, TestSchemaGenerationChild> embeddedChildren =
+      new HashMap<String, TestSchemaGenerationChild>();
+
+  @Transient private String tranisentText = "transientTest";
 
   @Transient
-  private String                                 tranisentText     = "transientTest";
+  private List<TestSchemaGenerationChild> transientList =
+      new ArrayList<TestSchemaGenerationChild>();
+
   @Transient
-  private List<TestSchemaGenerationChild>        transientList     = new ArrayList<TestSchemaGenerationChild>();
+  private Set<TestSchemaGenerationChild> transientSet = new HashSet<TestSchemaGenerationChild>();
+
   @Transient
-  private Set<TestSchemaGenerationChild>         transientSet      = new HashSet<TestSchemaGenerationChild>();
-  @Transient
-  private Map<String, TestSchemaGenerationChild> transientChildren = new HashMap<String, TestSchemaGenerationChild>();
-  @Transient
-  private ODocument                              transientDocument;
-  @Transient
-  private Date                                   transientDateField;
+  private Map<String, TestSchemaGenerationChild> transientChildren =
+      new HashMap<String, TestSchemaGenerationChild>();
+
+  @Transient private ODocument transientDocument;
+  @Transient private Date transientDateField;
 
   public Object getId() {
     return id;
@@ -369,5 +368,4 @@ public class JavaTestSchemaGeneration {
   public void setTransientDateField(Date transientDateField) {
     this.transientDateField = transientDateField;
   }
-
 }

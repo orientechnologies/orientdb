@@ -23,7 +23,6 @@ package com.orientechnologies.orient.etl.util;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.etl.context.OETLContext;
 import com.orientechnologies.orient.etl.context.OETLContextWrapper;
-
 import java.io.File;
 import java.io.IOException;
 
@@ -31,21 +30,20 @@ import java.io.IOException;
  * @author Gabriele Ponzi
  * @email <g.ponzi--at--orientdb.com>
  */
-
 public class OMigrationConfigManager {
 
   // config info
   private static final String configurationDirectoryName = "etl-config/";
-  private static final String configFileDefaultName      = "migration-config.json";           // path ORIENTDB_HOME/<db-name>/teleporter-config/migration-config.json
-
+  private static final String configFileDefaultName = "migration-config.json"; // path
+  // ORIENTDB_HOME/<db-name>/teleporter-config/migration-config.json
 
   /**
-   *
    * @param migrationConfig
    * @param outOrientGraphUri
    * @param configName
    */
-  public static String writeConfigurationInTargetDB(ODocument migrationConfig, String outOrientGraphUri, String configName) {
+  public static String writeConfigurationInTargetDB(
+      ODocument migrationConfig, String outOrientGraphUri, String configName) {
 
     String outDBConfigPath = prepareConfigDirectoryForWriting(outOrientGraphUri, configName);
     String jsonSourcesInfo = migrationConfig.toJSON("prettyPrint");
@@ -53,22 +51,24 @@ public class OMigrationConfigManager {
       OFileManager.writeFileFromText(jsonSourcesInfo, outDBConfigPath, false);
     } catch (IOException e) {
       String mess = "";
-      ((OETLContext) OETLContextWrapper.getInstance().getContext()).printExceptionMessage(e, mess, "error");
-      ((OETLContext) OETLContextWrapper.getInstance().getContext()).printExceptionStackTrace(e, "error");
+      ((OETLContext) OETLContextWrapper.getInstance().getContext())
+          .printExceptionMessage(e, mess, "error");
+      ((OETLContext) OETLContextWrapper.getInstance().getContext())
+          .printExceptionStackTrace(e, "error");
     }
 
     return outDBConfigPath;
   }
 
   /**
-   *
    * @param migrationConfig
    * @param outOrientGraphUri
    * @param configName
    * @return Configuration file path.
    * @throws IOException
    */
-  public static String writeConfigurationInTargetDB(String migrationConfig, String outOrientGraphUri, String configName) throws IOException {
+  public static String writeConfigurationInTargetDB(
+      String migrationConfig, String outOrientGraphUri, String configName) throws IOException {
 
     String outDBConfigPath = prepareConfigDirectoryForWriting(outOrientGraphUri, configName);
     OFileManager.writeFileFromText(migrationConfig, outDBConfigPath, false);
@@ -76,7 +76,8 @@ public class OMigrationConfigManager {
     return outDBConfigPath;
   }
 
-  private static String prepareConfigDirectoryForWriting(String outOrientGraphUri, String configName) {
+  private static String prepareConfigDirectoryForWriting(
+      String outOrientGraphUri, String configName) {
 
     String outDBConfigPath;
     if (configName == null) {
@@ -112,6 +113,4 @@ public class OMigrationConfigManager {
     outDBConfigPath = outDBConfigPath.replace("plocal:", "");
     return outDBConfigPath;
   }
-
-
 }

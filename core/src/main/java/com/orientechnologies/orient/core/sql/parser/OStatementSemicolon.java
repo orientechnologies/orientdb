@@ -10,6 +10,5 @@ public class OStatementSemicolon extends SimpleNode {
   public OStatementSemicolon(OrientSql p, int id) {
     super(p, id);
   }
-
 }
 /* JavaCC - OriginalChecksum=dd666171278492fc7540b6aed7c08733 (do not edit this line) */

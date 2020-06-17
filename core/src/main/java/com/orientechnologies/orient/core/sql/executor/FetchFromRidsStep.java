@@ -6,13 +6,14 @@ import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.id.ORecordId;
-
-import java.util.*;
+import java.util.Collection;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
-/**
- * Created by luigidellaquila on 22/07/16.
- */
+/** Created by luigidellaquila on 22/07/16. */
 public class FetchFromRidsStep extends AbstractExecutionStep {
   private Collection<ORecordId> rids;
 
@@ -20,7 +21,8 @@ public class FetchFromRidsStep extends AbstractExecutionStep {
 
   private OResult nextResult = null;
 
-  public FetchFromRidsStep(Collection<ORecordId> rids, OCommandContext ctx, boolean profilingEnabled) {
+  public FetchFromRidsStep(
+      Collection<ORecordId> rids, OCommandContext ctx, boolean profilingEnabled) {
     super(ctx, profilingEnabled);
     this.rids = rids;
     reset();
@@ -82,9 +84,7 @@ public class FetchFromRidsStep extends AbstractExecutionStep {
       }
 
       @Override
-      public void close() {
-
-      }
+      public void close() {}
 
       @Override
       public Optional<OExecutionPlan> getExecutionPlan() {
@@ -100,8 +100,11 @@ public class FetchFromRidsStep extends AbstractExecutionStep {
 
   @Override
   public String prettyPrint(int depth, int indent) {
-    return OExecutionStepInternal.getIndent(depth, indent) + "+ FETCH FROM RIDs\n" + OExecutionStepInternal.getIndent(depth, indent)
-        + "  " + rids;
+    return OExecutionStepInternal.getIndent(depth, indent)
+        + "+ FETCH FROM RIDs\n"
+        + OExecutionStepInternal.getIndent(depth, indent)
+        + "  "
+        + rids;
   }
 
   @Override

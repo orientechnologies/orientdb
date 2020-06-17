@@ -5,20 +5,17 @@ import com.orientechnologies.orient.core.command.OBasicCommandContext;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.sql.parser.OBooleanExpression;
 import com.orientechnologies.orient.core.sql.parser.OStatement;
-
 import java.util.List;
 
-/**
- * Created by luigidellaquila on 19/09/16.
- */
+/** Created by luigidellaquila on 19/09/16. */
 public class IfStep extends AbstractExecutionStep {
-  protected OBooleanExpression   condition;
+  protected OBooleanExpression condition;
   protected OScriptExecutionPlan positivePlan;
   protected OScriptExecutionPlan negativePlan;
 
-  private Boolean          conditionMet = null;
-  public  List<OStatement> positiveStatements;
-  public  List<OStatement> negativeStatements;
+  private Boolean conditionMet = null;
+  public List<OStatement> positiveStatements;
+  public List<OStatement> negativeStatements;
 
   public IfStep(OCommandContext ctx, boolean profilingEnabled) {
     super(ctx, profilingEnabled);
@@ -37,14 +34,12 @@ public class IfStep extends AbstractExecutionStep {
       }
     }
     return new OInternalResultSet();
-
   }
 
   protected void init(OCommandContext ctx) {
     if (conditionMet == null) {
       conditionMet = condition.evaluate((OResult) null, ctx);
     }
-
   }
 
   public void initPositivePlan(OCommandContext ctx) {

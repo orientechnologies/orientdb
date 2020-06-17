@@ -4,24 +4,24 @@ import com.orientechnologies.orient.core.command.OCommandDistributedReplicateReq
 import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
-
 import java.util.Map;
 
 /**
  * Drops a use.
- * 
+ *
  * @author Matan Shukry (matanshukry@gmail.com)
  * @since 4/22/2015
  */
-public class OCommandExecutorSQLDropUser extends OCommandExecutorSQLAbstract implements OCommandDistributedReplicateRequest {
-  public static final String  KEYWORD_DROP    = "DROP";
-  public static final String  KEYWORD_USER    = "USER";
+public class OCommandExecutorSQLDropUser extends OCommandExecutorSQLAbstract
+    implements OCommandDistributedReplicateRequest {
+  public static final String KEYWORD_DROP = "DROP";
+  public static final String KEYWORD_USER = "USER";
 
-  private static final String SYNTAX          = "DROP USER <user-name>";
-  private static final String USER_CLASS      = "OUser";
+  private static final String SYNTAX = "DROP USER <user-name>";
+  private static final String USER_CLASS = "OUser";
   private static final String USER_FIELD_NAME = "name";
 
-  private String              userName;
+  private String userName;
 
   @Override
   public OCommandExecutorSQLDropUser parse(OCommandRequest iRequest) {
@@ -37,7 +37,8 @@ public class OCommandExecutorSQLDropUser extends OCommandExecutorSQLAbstract imp
   @Override
   public Object execute(Map<Object, Object> iArgs) {
     if (this.userName == null) {
-      throw new OCommandExecutionException("Cannot execute the command because it has not been parsed yet");
+      throw new OCommandExecutionException(
+          "Cannot execute the command because it has not been parsed yet");
     }
 
     // Build following command:

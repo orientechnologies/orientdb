@@ -10,12 +10,11 @@ import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.sql.executor.OInternalResultSet;
 import com.orientechnologies.orient.core.sql.executor.OResultInternal;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
-
 import java.util.Map;
 
 public class ODropClusterStatement extends ODDLStatement {
   protected OIdentifier name;
-  protected OInteger    id;
+  protected OInteger id;
   protected boolean ifExists = false;
 
   public ODropClusterStatement(int id) {
@@ -48,7 +47,10 @@ public class ODropClusterStatement extends ODDLStatement {
         if (i == clusterId) {
           // IN USE
           throw new OCommandExecutionException(
-              "Cannot drop cluster " + clusterId + " because it's used by class " + iClass.getName());
+              "Cannot drop cluster "
+                  + clusterId
+                  + " because it's used by class "
+                  + iClass.getName());
         }
       }
     }
@@ -62,7 +64,9 @@ public class ODropClusterStatement extends ODDLStatement {
         throw new OCommandExecutionException("Cluster not found: " + clusterId);
       }
     }
-    ((OMetadataInternal) database.getMetadata()).getCommandCache().invalidateResultsOfCluster(clusterName);
+    ((OMetadataInternal) database.getMetadata())
+        .getCommandCache()
+        .invalidateResultsOfCluster(clusterName);
 
     database.dropCluster(clusterId);
 
@@ -99,17 +103,13 @@ public class ODropClusterStatement extends ODDLStatement {
 
   @Override
   public boolean equals(Object o) {
-    if (this == o)
-      return true;
-    if (o == null || getClass() != o.getClass())
-      return false;
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
 
     ODropClusterStatement that = (ODropClusterStatement) o;
 
-    if (ifExists != that.ifExists)
-      return false;
-    if (name != null ? !name.equals(that.name) : that.name != null)
-      return false;
+    if (ifExists != that.ifExists) return false;
+    if (name != null ? !name.equals(that.name) : that.name != null) return false;
     return id != null ? id.equals(that.id) : that.id == null;
   }
 

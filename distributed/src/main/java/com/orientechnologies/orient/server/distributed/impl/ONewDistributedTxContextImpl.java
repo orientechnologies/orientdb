@@ -7,32 +7,43 @@ import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.tx.OTransactionId;
-import com.orientechnologies.orient.core.tx.OTxMetadataHolder;
 import com.orientechnologies.orient.core.tx.OTransactionInternal;
-import com.orientechnologies.orient.server.distributed.*;
+import com.orientechnologies.orient.core.tx.OTxMetadataHolder;
+import com.orientechnologies.orient.server.distributed.ODistributedDatabase;
+import com.orientechnologies.orient.server.distributed.ODistributedException;
+import com.orientechnologies.orient.server.distributed.ODistributedRequestId;
+import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
+import com.orientechnologies.orient.server.distributed.ODistributedTxContext;
 import com.orientechnologies.orient.server.distributed.task.ODistributedKeyLockedException;
 import com.orientechnologies.orient.server.distributed.task.ODistributedRecordLockedException;
-import com.orientechnologies.orient.server.distributed.task.ORemoteTask;
-
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Optional;
+import java.util.Set;
 
 public class ONewDistributedTxContextImpl implements ODistributedTxContext {
 
   public enum Status {
-    FAILED, SUCCESS, TIMEDOUT,
+    FAILED,
+    SUCCESS,
+    TIMEDOUT,
   }
 
   private final ODistributedDatabaseImpl shared;
-  private final ODistributedRequestId    id;
-  private final OTransactionInternal     tx;
-  private final long                     startedOn;
-  private final List<ORID>               lockedRids = new ArrayList<>();
-  private final List<Object>             lockedKeys = new ArrayList<>();
-  private       Status                   status;
-  private final OTransactionId           transactionId;
+  private final ODistributedRequestId id;
+  private final OTransactionInternal tx;
+  private final long startedOn;
+  private final List<ORID> lockedRids = new ArrayList<>();
+  private final List<Object> lockedKeys = new ArrayList<>();
+  private Status status;
+  private final OTransactionId transactionId;
 
-  public ONewDistributedTxContextImpl(ODistributedDatabaseImpl shared, ODistributedRequestId reqId, OTransactionInternal tx,
+  public ONewDistributedTxContextImpl(
+      ODistributedDatabaseImpl shared,
+      ODistributedRequestId reqId,
+      OTransactionInternal tx,
       OTransactionId id) {
     this.shared = shared;
     this.id = reqId;
@@ -48,7 +59,8 @@ public class ONewDistributedTxContextImpl implements ODistributedTxContext {
       recordLockManager.lock(key);
     } catch (OLockException ex) {
       this.unlock();
-      throw new ODistributedKeyLockedException(shared.getLocalNodeName(), key, recordLockManager.getTimeout());
+      throw new ODistributedKeyLockedException(
+          shared.getLocalNodeName(), key, recordLockManager.getTimeout());
     }
     lockedKeys.add(key);
   }
@@ -60,14 +72,15 @@ public class ONewDistributedTxContextImpl implements ODistributedTxContext {
       recordLockManager.lock(rid);
     } catch (OLockException ex) {
       this.unlock();
-      throw new ODistributedRecordLockedException(shared.getLocalNodeName(), rid, recordLockManager.getTimeout());
+      throw new ODistributedRecordLockedException(
+          shared.getLocalNodeName(), rid, recordLockManager.getTimeout());
     }
     lockedRids.add(rid);
   }
 
   @Override
   public void lock(ORID rid, long timeout) {
-    //TODO: the timeout is only in the lock manager, this implementation may need evolution
+    // TODO: the timeout is only in the lock manager, this implementation may need evolution
     OSimpleLockManager<ORID> recordLockManager = shared.getRecordLockManager();
     try {
       recordLockManager.lock(rid, timeout);
@@ -90,15 +103,18 @@ public class ONewDistributedTxContextImpl implements ODistributedTxContext {
 
   @Override
   public synchronized void commit(ODatabaseDocumentInternal database) {
-    ODistributedDatabase localDistributedDatabase = ((ODatabaseDocumentDistributed) database).getStorageDistributed()
-        .getLocalDistributedDatabase();
+    ODistributedDatabase localDistributedDatabase =
+        ((ODatabaseDocumentDistributed) database)
+            .getStorageDistributed()
+            .getLocalDistributedDatabase();
     OTxMetadataHolder metadataHolder = localDistributedDatabase.commit(getTransactionId());
     try {
       tx.setMetadataHolder(Optional.of(metadataHolder));
       tx.prepareSerializedOperations();
       ((ODatabaseDocumentDistributed) database).internalCommit2pc(this);
     } catch (IOException e) {
-      throw OException.wrapException(new ODistributedException("Error on preparation of log serialized operations"), e);
+      throw OException.wrapException(
+          new ODistributedException("Error on preparation of log serialized operations"), e);
     } finally {
       metadataHolder.notifyMetadataRead();
     }
@@ -138,7 +154,8 @@ public class ONewDistributedTxContextImpl implements ODistributedTxContext {
   }
 
   @Override
-  public Set<ORecordId> cancel(ODistributedServerManager current, ODatabaseDocumentInternal database) {
+  public Set<ORecordId> cancel(
+      ODistributedServerManager current, ODatabaseDocumentInternal database) {
     destroy();
     return null;
   }

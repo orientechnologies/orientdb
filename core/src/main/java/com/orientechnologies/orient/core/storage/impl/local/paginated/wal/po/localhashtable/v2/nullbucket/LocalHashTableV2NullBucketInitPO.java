@@ -14,7 +14,7 @@ public final class LocalHashTableV2NullBucketInitPO extends PageOperationRecord 
 
   @Override
   public void undo(OCacheEntry cacheEntry) {
-    //do nothing
+    // do nothing
   }
 
   @Override

@@ -5,13 +5,10 @@ import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.sql.parser.OWhereClause;
-
 import java.util.Map;
 import java.util.Optional;
 
-/**
- * Created by luigidellaquila on 12/07/16.
- */
+/** Created by luigidellaquila on 12/07/16. */
 public class FilterStep extends AbstractExecutionStep {
   private OWhereClause whereClause;
 
@@ -122,7 +119,6 @@ public class FilterStep extends AbstractExecutionStep {
         return null;
       }
     };
-
   }
 
   @Override

@@ -24,11 +24,11 @@ import com.orientechnologies.common.exception.OHighLevelException;
 
 /**
  * Exception thrown when a distributed operation doesn't reach the quorum.
- * 
+ *
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
- * 
  */
-public class ODistributedOperationException extends ONeedRetryException implements OHighLevelException {
+public class ODistributedOperationException extends ONeedRetryException
+    implements OHighLevelException {
 
   private static final long serialVersionUID = 1L;
 
@@ -42,8 +42,7 @@ public class ODistributedOperationException extends ONeedRetryException implemen
 
   @Override
   public boolean equals(final Object obj) {
-    if (obj == null || !obj.getClass().equals(getClass()))
-      return false;
+    if (obj == null || !obj.getClass().equals(getClass())) return false;
 
     final String message = ((ODistributedOperationException) obj).getMessage();
     return getMessage() != null && getMessage().equals(message);

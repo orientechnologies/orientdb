@@ -19,16 +19,16 @@
  */
 package com.orientechnologies.orient.core.sql;
 
-import java.util.Map;
-
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
+import java.util.Map;
 
 /**
- * Acts as a delegate to the real command inserting the execution of the command inside a new transaction if not yet begun.
- * 
+ * Acts as a delegate to the real command inserting the execution of the command inside a new
+ * transaction if not yet begun.
+ *
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
  */
 public class OCommandExecutorSQLTransactional extends OCommandExecutorSQLDelegate {
@@ -47,20 +47,18 @@ public class OCommandExecutorSQLTransactional extends OCommandExecutorSQLDelegat
     final ODatabaseDocument database = getDatabase();
     boolean txbegun = database.getTransaction() == null || !database.getTransaction().isActive();
 
-    if (txbegun)
-      database.begin();
+    if (txbegun) database.begin();
 
     try {
       final Object result = super.execute(iArgs);
 
-      if (txbegun)
-        database.commit();
+      if (txbegun) database.commit();
 
       return result;
     } catch (Exception e) {
-      if (txbegun)
-        database.rollback();
-      throw OException.wrapException(new OCommandExecutionException("Transactional command failed"), e);
+      if (txbegun) database.rollback();
+      throw OException.wrapException(
+          new OCommandExecutionException("Transactional command failed"), e);
     }
   }
 }

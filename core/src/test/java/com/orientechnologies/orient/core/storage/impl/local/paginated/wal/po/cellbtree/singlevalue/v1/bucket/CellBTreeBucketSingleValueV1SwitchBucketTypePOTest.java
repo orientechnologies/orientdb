@@ -7,11 +7,10 @@ import com.orientechnologies.orient.core.storage.cache.OCacheEntryImpl;
 import com.orientechnologies.orient.core.storage.cache.OCachePointer;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.PageOperationRecord;
 import com.orientechnologies.orient.core.storage.index.sbtree.singlevalue.v1.CellBTreeBucketSingleValueV1;
-import org.junit.Assert;
-import org.junit.Test;
-
 import java.nio.ByteBuffer;
 import java.util.List;
+import org.junit.Assert;
+import org.junit.Test;
 
 public class CellBTreeBucketSingleValueV1SwitchBucketTypePOTest {
   @Test
@@ -29,7 +28,8 @@ public class CellBTreeBucketSingleValueV1SwitchBucketTypePOTest {
       entry.clearPageOperations();
 
       final OPointer restoredPointer = byteBufferPool.acquireDirect(false);
-      final OCachePointer restoredCachePointer = new OCachePointer(restoredPointer, byteBufferPool, 0, 0);
+      final OCachePointer restoredCachePointer =
+          new OCachePointer(restoredPointer, byteBufferPool, 0, 0);
       final OCacheEntry restoredCacheEntry = new OCacheEntryImpl(0, 0, restoredCachePointer);
 
       final ByteBuffer originalBuffer = cachePointer.getBufferDuplicate();
@@ -45,12 +45,14 @@ public class CellBTreeBucketSingleValueV1SwitchBucketTypePOTest {
       final List<PageOperationRecord> operations = entry.getPageOperations();
       Assert.assertEquals(1, operations.size());
 
-      Assert.assertTrue(operations.get(0) instanceof CellBTreeBucketSingleValueV1SwitchBucketTypePO);
+      Assert.assertTrue(
+          operations.get(0) instanceof CellBTreeBucketSingleValueV1SwitchBucketTypePO);
 
-      final CellBTreeBucketSingleValueV1SwitchBucketTypePO pageOperation = (CellBTreeBucketSingleValueV1SwitchBucketTypePO) operations
-          .get(0);
+      final CellBTreeBucketSingleValueV1SwitchBucketTypePO pageOperation =
+          (CellBTreeBucketSingleValueV1SwitchBucketTypePO) operations.get(0);
 
-      CellBTreeBucketSingleValueV1<Byte> restoredBucket = new CellBTreeBucketSingleValueV1<>(restoredCacheEntry);
+      CellBTreeBucketSingleValueV1<Byte> restoredBucket =
+          new CellBTreeBucketSingleValueV1<>(restoredCacheEntry);
 
       Assert.assertTrue(restoredBucket.isLeaf());
 
@@ -85,12 +87,14 @@ public class CellBTreeBucketSingleValueV1SwitchBucketTypePOTest {
       final List<PageOperationRecord> operations = entry.getPageOperations();
       Assert.assertEquals(1, operations.size());
 
-      Assert.assertTrue(operations.get(0) instanceof CellBTreeBucketSingleValueV1SwitchBucketTypePO);
+      Assert.assertTrue(
+          operations.get(0) instanceof CellBTreeBucketSingleValueV1SwitchBucketTypePO);
 
-      final CellBTreeBucketSingleValueV1SwitchBucketTypePO pageOperation = (CellBTreeBucketSingleValueV1SwitchBucketTypePO) operations
-          .get(0);
+      final CellBTreeBucketSingleValueV1SwitchBucketTypePO pageOperation =
+          (CellBTreeBucketSingleValueV1SwitchBucketTypePO) operations.get(0);
 
-      final CellBTreeBucketSingleValueV1<Byte> restoredBucket = new CellBTreeBucketSingleValueV1<>(entry);
+      final CellBTreeBucketSingleValueV1<Byte> restoredBucket =
+          new CellBTreeBucketSingleValueV1<>(entry);
 
       Assert.assertFalse(restoredBucket.isLeaf());
 

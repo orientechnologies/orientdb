@@ -7,11 +7,10 @@ import com.orientechnologies.orient.core.storage.cache.OCacheEntryImpl;
 import com.orientechnologies.orient.core.storage.cache.OCachePointer;
 import com.orientechnologies.orient.core.storage.cluster.OClusterPositionMapBucket;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.PageOperationRecord;
-import org.junit.Assert;
-import org.junit.Test;
-
 import java.nio.ByteBuffer;
 import java.util.List;
+import org.junit.Assert;
+import org.junit.Test;
 
 public class ClusterPositionMapBucketUpdateEntryPOTest {
   @Test
@@ -32,7 +31,8 @@ public class ClusterPositionMapBucketUpdateEntryPOTest {
       entry.clearPageOperations();
 
       final OPointer restoredPointer = byteBufferPool.acquireDirect(false);
-      final OCachePointer restoredCachePointer = new OCachePointer(restoredPointer, byteBufferPool, 0, 0);
+      final OCachePointer restoredCachePointer =
+          new OCachePointer(restoredPointer, byteBufferPool, 0, 0);
       final OCacheEntry restoredCacheEntry = new OCacheEntryImpl(0, 0, restoredCachePointer);
 
       final ByteBuffer originalBuffer = cachePointer.getBufferDuplicate();
@@ -50,20 +50,25 @@ public class ClusterPositionMapBucketUpdateEntryPOTest {
 
       Assert.assertTrue(operations.get(0) instanceof ClusterPositionMapBucketUpdateEntryPO);
 
-      final ClusterPositionMapBucketUpdateEntryPO pageOperation = (ClusterPositionMapBucketUpdateEntryPO) operations.get(0);
+      final ClusterPositionMapBucketUpdateEntryPO pageOperation =
+          (ClusterPositionMapBucketUpdateEntryPO) operations.get(0);
 
       OClusterPositionMapBucket restoredBucket = new OClusterPositionMapBucket(restoredCacheEntry);
       Assert.assertEquals(2, restoredBucket.getSize());
 
-      Assert.assertEquals(new OClusterPositionMapBucket.PositionEntry(12, 34), restoredBucket.get(0));
-      Assert.assertEquals(new OClusterPositionMapBucket.PositionEntry(34, 56), restoredBucket.get(1));
+      Assert.assertEquals(
+          new OClusterPositionMapBucket.PositionEntry(12, 34), restoredBucket.get(0));
+      Assert.assertEquals(
+          new OClusterPositionMapBucket.PositionEntry(34, 56), restoredBucket.get(1));
 
       pageOperation.redo(restoredCacheEntry);
 
       Assert.assertEquals(2, restoredBucket.getSize());
 
-      Assert.assertEquals(new OClusterPositionMapBucket.PositionEntry(12, 34), restoredBucket.get(0));
-      Assert.assertEquals(new OClusterPositionMapBucket.PositionEntry(24, 42), restoredBucket.get(1));
+      Assert.assertEquals(
+          new OClusterPositionMapBucket.PositionEntry(12, 34), restoredBucket.get(0));
+      Assert.assertEquals(
+          new OClusterPositionMapBucket.PositionEntry(24, 42), restoredBucket.get(1));
 
       byteBufferPool.release(pointer);
       byteBufferPool.release(restoredPointer);
@@ -96,21 +101,26 @@ public class ClusterPositionMapBucketUpdateEntryPOTest {
 
       Assert.assertTrue(operations.get(0) instanceof ClusterPositionMapBucketUpdateEntryPO);
 
-      final ClusterPositionMapBucketUpdateEntryPO pageOperation = (ClusterPositionMapBucketUpdateEntryPO) operations.get(0);
+      final ClusterPositionMapBucketUpdateEntryPO pageOperation =
+          (ClusterPositionMapBucketUpdateEntryPO) operations.get(0);
 
       OClusterPositionMapBucket restoredBucket = new OClusterPositionMapBucket(entry);
 
       Assert.assertEquals(2, restoredBucket.getSize());
 
-      Assert.assertEquals(new OClusterPositionMapBucket.PositionEntry(12, 34), restoredBucket.get(0));
-      Assert.assertEquals(new OClusterPositionMapBucket.PositionEntry(24, 42), restoredBucket.get(1));
+      Assert.assertEquals(
+          new OClusterPositionMapBucket.PositionEntry(12, 34), restoredBucket.get(0));
+      Assert.assertEquals(
+          new OClusterPositionMapBucket.PositionEntry(24, 42), restoredBucket.get(1));
 
       pageOperation.undo(entry);
 
       Assert.assertEquals(2, restoredBucket.getSize());
 
-      Assert.assertEquals(new OClusterPositionMapBucket.PositionEntry(12, 34), restoredBucket.get(0));
-      Assert.assertEquals(new OClusterPositionMapBucket.PositionEntry(34, 56), restoredBucket.get(1));
+      Assert.assertEquals(
+          new OClusterPositionMapBucket.PositionEntry(12, 34), restoredBucket.get(0));
+      Assert.assertEquals(
+          new OClusterPositionMapBucket.PositionEntry(34, 56), restoredBucket.get(1));
 
       byteBufferPool.release(pointer);
     } finally {
@@ -120,8 +130,15 @@ public class ClusterPositionMapBucketUpdateEntryPOTest {
 
   @Test
   public void testSerialization() {
-    ClusterPositionMapBucketUpdateEntryPO operation = new ClusterPositionMapBucketUpdateEntryPO(23,
-        OClusterPositionMapBucket.FILLED, 45, 43, OClusterPositionMapBucket.ALLOCATED, 90, 1);
+    ClusterPositionMapBucketUpdateEntryPO operation =
+        new ClusterPositionMapBucketUpdateEntryPO(
+            23,
+            OClusterPositionMapBucket.FILLED,
+            45,
+            43,
+            OClusterPositionMapBucket.ALLOCATED,
+            90,
+            1);
     operation.setFileId(42);
     operation.setPageIndex(24);
     operation.setOperationUnitId(1);
@@ -132,7 +149,8 @@ public class ClusterPositionMapBucketUpdateEntryPOTest {
 
     Assert.assertEquals(serializedSize + 1, pos);
 
-    ClusterPositionMapBucketUpdateEntryPO restoredOperation = new ClusterPositionMapBucketUpdateEntryPO();
+    ClusterPositionMapBucketUpdateEntryPO restoredOperation =
+        new ClusterPositionMapBucketUpdateEntryPO();
     restoredOperation.fromStream(stream, 1);
 
     Assert.assertEquals(42, restoredOperation.getFileId());

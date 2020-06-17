@@ -25,7 +25,8 @@ import org.junit.Test;
 public class OServerConfigurationManagerTest {
   @Test
   public void testManagerUsers() {
-    final OServerConfigurationManager cfgManager = new OServerConfigurationManager(new OServerConfiguration());
+    final OServerConfigurationManager cfgManager =
+        new OServerConfigurationManager(new OServerConfiguration());
 
     Assert.assertNull(cfgManager.getConfiguration().users);
 

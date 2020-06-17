@@ -19,38 +19,38 @@
  */
 package com.orientechnologies.orient.core.serialization.serializer.stream;
 
-import java.io.IOException;
-import java.util.Arrays;
-
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.util.OArrays;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
 import com.orientechnologies.orient.core.command.script.OCommandScript;
 import com.orientechnologies.orient.core.exception.OSerializationException;
-import com.orientechnologies.orient.core.query.OQuery;
 import com.orientechnologies.orient.core.serialization.OBinaryProtocol;
-import com.orientechnologies.orient.core.serialization.OSerializableStream;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializer;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.query.OLiveQuery;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
+import java.io.IOException;
+import java.util.Arrays;
 
 public class OStreamSerializerAnyStreamable {
-  private static final String                        SCRIPT_COMMAND_CLASS         = "s";
-  private static final byte[]                        SCRIPT_COMMAND_CLASS_ASBYTES = SCRIPT_COMMAND_CLASS.getBytes();
-  private static final String                        SQL_COMMAND_CLASS            = "c";
-  private static final byte[]                        SQL_COMMAND_CLASS_ASBYTES    = SQL_COMMAND_CLASS.getBytes();
-  private static final String                        QUERY_COMMAND_CLASS          = "q";
-  private static final byte[]                        QUERY_COMMAND_CLASS_ASBYTES  = QUERY_COMMAND_CLASS.getBytes();
+  private static final String SCRIPT_COMMAND_CLASS = "s";
+  private static final byte[] SCRIPT_COMMAND_CLASS_ASBYTES = SCRIPT_COMMAND_CLASS.getBytes();
+  private static final String SQL_COMMAND_CLASS = "c";
+  private static final byte[] SQL_COMMAND_CLASS_ASBYTES = SQL_COMMAND_CLASS.getBytes();
+  private static final String QUERY_COMMAND_CLASS = "q";
+  private static final byte[] QUERY_COMMAND_CLASS_ASBYTES = QUERY_COMMAND_CLASS.getBytes();
 
-  public static final OStreamSerializerAnyStreamable INSTANCE                     = new OStreamSerializerAnyStreamable();
-  public static final String                         NAME                         = "at";
+  public static final OStreamSerializerAnyStreamable INSTANCE =
+      new OStreamSerializerAnyStreamable();
+  public static final String NAME = "at";
 
   /**
-   * Re-Create any object if the class has a public constructor that accepts a String as unique parameter.
+   * Re-Create any object if the class has a public constructor that accepts a String as unique
+   * parameter.
    */
-  public OCommandRequestText fromStream(final byte[] iStream, ORecordSerializer serializer) throws IOException {
+  public OCommandRequestText fromStream(final byte[] iStream, ORecordSerializer serializer)
+      throws IOException {
     if (iStream == null || iStream.length == 0)
       // NULL VALUE
       return null;
@@ -58,14 +58,14 @@ public class OStreamSerializerAnyStreamable {
     final int classNameSize = OBinaryProtocol.bytes2int(iStream);
 
     if (classNameSize <= 0) {
-      final String message = "Class signature not found in ANY element: " + Arrays.toString(iStream);
+      final String message =
+          "Class signature not found in ANY element: " + Arrays.toString(iStream);
       OLogManager.instance().error(this, message, null);
 
       throw new OSerializationException(message);
     }
 
-
-    final String className = new String(iStream,4,classNameSize,"UTF-8");
+    final String className = new String(iStream, 4, classNameSize, "UTF-8");
 
     try {
       final OCommandRequestText stream;
@@ -83,7 +83,8 @@ public class OStreamSerializerAnyStreamable {
         // CREATE THE OBJECT BY INVOKING THE EMPTY CONSTRUCTOR
         stream = (OCommandRequestText) Class.forName(className).newInstance();
 
-      return stream.fromStream(OArrays.copyOfRange(iStream, 4 + classNameSize, iStream.length), serializer);
+      return stream.fromStream(
+          OArrays.copyOfRange(iStream, 4 + classNameSize, iStream.length), serializer);
 
     } catch (Exception e) {
       final String message = "Error on unmarshalling content. Class: " + className;
@@ -92,28 +93,20 @@ public class OStreamSerializerAnyStreamable {
     }
   }
 
-  /**
-   * Serialize the class name size + class name + object content
-   */
+  /** Serialize the class name size + class name + object content */
   public byte[] toStream(final OCommandRequestText iObject) throws IOException {
-    if (iObject == null)
-      return null;
+    if (iObject == null) return null;
 
     // SERIALIZE THE CLASS NAME
     final byte[] className;
     if (iObject instanceof OLiveQuery<?>)
       className = iObject.getClass().getName().getBytes("UTF-8");
-    else if (iObject instanceof OSQLSynchQuery<?>)
-      className = QUERY_COMMAND_CLASS_ASBYTES;
-    else if (iObject instanceof OCommandSQL)
-      className = SQL_COMMAND_CLASS_ASBYTES;
-    else if (iObject instanceof OCommandScript)
-      className = SCRIPT_COMMAND_CLASS_ASBYTES;
+    else if (iObject instanceof OSQLSynchQuery<?>) className = QUERY_COMMAND_CLASS_ASBYTES;
+    else if (iObject instanceof OCommandSQL) className = SQL_COMMAND_CLASS_ASBYTES;
+    else if (iObject instanceof OCommandScript) className = SCRIPT_COMMAND_CLASS_ASBYTES;
     else {
-      if (iObject == null)
-        className = null;
-      else
-        className = iObject.getClass().getName().getBytes("UTF-8");
+      if (iObject == null) className = null;
+      else className = iObject.getClass().getName().getBytes("UTF-8");
     }
     // SERIALIZE THE OBJECT CONTENT
     byte[] objectContent = iObject.toStream();

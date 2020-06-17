@@ -1,28 +1,32 @@
 package com.orientechnologies.orient.core.db.record;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
+
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
-import java.util.*;
-
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
-
-/**
- * Created by tglman on 11/03/16.
- */
+/** Created by tglman on 11/03/16. */
 public class ODocumentTrackingNestedCollectionsTest {
 
   private ODatabaseDocument db;
 
   @Before
   public void before() {
-    db = new ODatabaseDocumentTx("memory:" + ODocumentTrackingNestedCollectionsTest.class.getSimpleName());
+    db =
+        new ODatabaseDocumentTx(
+            "memory:" + ODocumentTrackingNestedCollectionsTest.class.getSimpleName());
     db.create();
   }
 
@@ -62,7 +66,6 @@ public class ODocumentTrackingNestedCollectionsTest {
     subObjects = (Set) objects.iterator().next();
 
     assertTrue(!subObjects.isEmpty());
-
   }
 
   @Test
@@ -85,11 +88,12 @@ public class ODocumentTrackingNestedCollectionsTest {
     subObjects.add("one");
 
     assertTrue(document.isDirty());
-    OMultiValueChangeTimeLine<Object, Object> nestedTimiline = ((OTrackedMultiValue<Object, Object>) subObjects).getTimeLine();
+    OMultiValueChangeTimeLine<Object, Object> nestedTimiline =
+        ((OTrackedMultiValue<Object, Object>) subObjects).getTimeLine();
     assertEquals(1, nestedTimiline.getMultiValueChangeEvents().size());
-    List<OMultiValueChangeEvent<Object, Object>> multiValueChangeEvents = nestedTimiline.getMultiValueChangeEvents();
+    List<OMultiValueChangeEvent<Object, Object>> multiValueChangeEvents =
+        nestedTimiline.getMultiValueChangeEvents();
     assertEquals("one", multiValueChangeEvents.get(0).getValue());
-
   }
 
   @Test
@@ -113,12 +117,12 @@ public class ODocumentTrackingNestedCollectionsTest {
     subObjects.add(new ODocument());
 
     assertTrue(document.isDirty());
-    List<OMultiValueChangeEvent<Object, Object>> multiValueChangeEvents = ((OTrackedMultiValue<Object, Object>)subObjects).getTimeLine().getMultiValueChangeEvents();
+    List<OMultiValueChangeEvent<Object, Object>> multiValueChangeEvents =
+        ((OTrackedMultiValue<Object, Object>) subObjects).getTimeLine().getMultiValueChangeEvents();
     assertEquals(1, multiValueChangeEvents.get(0).getKey());
     assertEquals("one", multiValueChangeEvents.get(0).getValue());
     assertEquals(2, multiValueChangeEvents.get(1).getKey());
     assertTrue(multiValueChangeEvents.get(1).getValue() instanceof ODocument);
-
   }
 
   @Test
@@ -142,12 +146,11 @@ public class ODocumentTrackingNestedCollectionsTest {
     subObjects.put("two", new ODocument());
 
     assertTrue(document.isDirty());
-    List<OMultiValueChangeEvent<Object, Object>> multiValueChangeEvents = ((OTrackedMultiValue<Object, Object>)subObjects).getTimeLine().getMultiValueChangeEvents();
+    List<OMultiValueChangeEvent<Object, Object>> multiValueChangeEvents =
+        ((OTrackedMultiValue<Object, Object>) subObjects).getTimeLine().getMultiValueChangeEvents();
     assertEquals("one", multiValueChangeEvents.get(0).getKey());
     assertEquals("String", multiValueChangeEvents.get(0).getValue());
     assertEquals("two", multiValueChangeEvents.get(1).getKey());
     assertTrue(multiValueChangeEvents.get(1).getValue() instanceof ODocument);
-
   }
-
 }

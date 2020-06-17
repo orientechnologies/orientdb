@@ -19,8 +19,6 @@
  */
 package com.orientechnologies.orient.client.remote.message;
 
-import java.io.IOException;
-
 import com.orientechnologies.orient.client.binary.OBinaryRequestExecutor;
 import com.orientechnologies.orient.client.remote.OBinaryRequest;
 import com.orientechnologies.orient.client.remote.OBinaryResponse;
@@ -30,9 +28,11 @@ import com.orientechnologies.orient.core.storage.OPhysicalPosition;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelDataInput;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelDataOutput;
+import java.io.IOException;
 
-public class OCeilingPhysicalPositionsRequest implements OBinaryRequest<OCeilingPhysicalPositionsResponse> {
-  private int               clusterId;
+public class OCeilingPhysicalPositionsRequest
+    implements OBinaryRequest<OCeilingPhysicalPositionsResponse> {
+  private int clusterId;
   private OPhysicalPosition physicalPosition;
 
   public OCeilingPhysicalPositionsRequest(int clusterId, OPhysicalPosition physicalPosition) {
@@ -40,8 +40,7 @@ public class OCeilingPhysicalPositionsRequest implements OBinaryRequest<OCeiling
     this.physicalPosition = physicalPosition;
   }
 
-  public OCeilingPhysicalPositionsRequest() {
-  }
+  public OCeilingPhysicalPositionsRequest() {}
 
   @Override
   public void write(OChannelDataOutput network, OStorageRemoteSession session) throws IOException {
@@ -49,7 +48,8 @@ public class OCeilingPhysicalPositionsRequest implements OBinaryRequest<OCeiling
     network.writeLong(physicalPosition.clusterPosition);
   }
 
-  public void read(OChannelDataInput channel, int protocolVersion, ORecordSerializer serializer) throws IOException {
+  public void read(OChannelDataInput channel, int protocolVersion, ORecordSerializer serializer)
+      throws IOException {
     this.clusterId = channel.readInt();
     this.physicalPosition = new OPhysicalPosition(channel.readLong());
   }
@@ -62,7 +62,7 @@ public class OCeilingPhysicalPositionsRequest implements OBinaryRequest<OCeiling
   public String getDescription() {
     return "Retrieve ceiling positions";
   }
-  
+
   @Override
   public byte getCommand() {
     return OChannelBinaryProtocol.REQUEST_POSITIONS_CEILING;
@@ -81,5 +81,4 @@ public class OCeilingPhysicalPositionsRequest implements OBinaryRequest<OCeiling
   public OBinaryResponse execute(OBinaryRequestExecutor executor) {
     return executor.executeCeilingPosition(this);
   }
-
 }

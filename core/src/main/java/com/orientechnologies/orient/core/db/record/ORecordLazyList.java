@@ -19,15 +19,9 @@
  */
 package com.orientechnologies.orient.core.db.record;
 
-import java.util.Collection;
-import java.util.Iterator;
-import java.util.List;
-import java.util.ListIterator;
-
 import com.orientechnologies.common.collection.OLazyIterator;
 import com.orientechnologies.common.collection.OLazyIteratorListWrapper;
 import com.orientechnologies.common.collection.OMultiValue;
-import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.record.ORecordMultiValueHelper.MULTIVALUE_CONTENT_TYPE;
 import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
 import com.orientechnologies.orient.core.id.ORID;
@@ -35,20 +29,23 @@ import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
+import java.util.Collection;
+import java.util.Iterator;
+import java.util.ListIterator;
 
 /**
- * Lazy implementation of ArrayList. It's bound to a source ORecord object to keep track of changes. This avoid to call the
- * makeDirty() by hand when the list is changed. It handles an internal contentType to speed up some operations like conversion
- * to/from record/links.
+ * Lazy implementation of ArrayList. It's bound to a source ORecord object to keep track of changes.
+ * This avoid to call the makeDirty() by hand when the list is changed. It handles an internal
+ * contentType to speed up some operations like conversion to/from record/links.
  *
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
  */
-@SuppressWarnings({ "serial" })
+@SuppressWarnings({"serial"})
 public class ORecordLazyList extends OTrackedList<OIdentifiable> implements ORecordLazyMultiValue {
-  protected ORecordMultiValueHelper.MULTIVALUE_CONTENT_TYPE contentType         = MULTIVALUE_CONTENT_TYPE.EMPTY;
-  protected boolean                                         autoConvertToRecord = true;
-  protected boolean                                         ridOnly             = false;
+  protected ORecordMultiValueHelper.MULTIVALUE_CONTENT_TYPE contentType =
+      MULTIVALUE_CONTENT_TYPE.EMPTY;
+  protected boolean autoConvertToRecord = true;
+  protected boolean ridOnly = false;
 
   public ORecordLazyList() {
     super(null);
@@ -67,25 +64,26 @@ public class ORecordLazyList extends OTrackedList<OIdentifiable> implements ORec
     }
   }
 
-  public ORecordLazyList(final ORecordElement iSourceRecord, final Collection<? extends OIdentifiable> iOrigin) {
+  public ORecordLazyList(
+      final ORecordElement iSourceRecord, final Collection<? extends OIdentifiable> iOrigin) {
     this(iSourceRecord);
-    if (iOrigin != null && !iOrigin.isEmpty())
-      addAll(iOrigin);
+    if (iOrigin != null && !iOrigin.isEmpty()) addAll(iOrigin);
   }
 
   @SuppressWarnings("unchecked")
   @Override
   public boolean addAll(Collection<? extends OIdentifiable> c) {
-    final Iterator it = (Iterator) (c instanceof ORecordLazyMultiValue ? ((ORecordLazyMultiValue) c).rawIterator() : c.iterator());
+    final Iterator it =
+        (Iterator)
+            (c instanceof ORecordLazyMultiValue
+                ? ((ORecordLazyMultiValue) c).rawIterator()
+                : c.iterator());
 
     while (it.hasNext()) {
       Object o = it.next();
-      if (o == null)
-        add(null);
-      else if (o instanceof OIdentifiable)
-        add((OIdentifiable) o);
-      else
-        OMultiValue.add(this, o);
+      if (o == null) add(null);
+      else if (o instanceof OIdentifiable) add((OIdentifiable) o);
+      else OMultiValue.add(this, o);
     }
 
     return true;
@@ -96,30 +94,29 @@ public class ORecordLazyList extends OTrackedList<OIdentifiable> implements ORec
     return super.isEmpty();
   }
 
-  /**
-   * @return iterator that just returns the elements without conversion.
-   */
+  /** @return iterator that just returns the elements without conversion. */
   public Iterator<OIdentifiable> rawIterator() {
     lazyLoad(false);
-    final Iterator<OIdentifiable> subIterator = new OLazyIterator<OIdentifiable>() {
-      private int pos = -1;
+    final Iterator<OIdentifiable> subIterator =
+        new OLazyIterator<OIdentifiable>() {
+          private int pos = -1;
 
-      public boolean hasNext() {
-        return pos < size() - 1;
-      }
+          public boolean hasNext() {
+            return pos < size() - 1;
+          }
 
-      public OIdentifiable next() {
-        return ORecordLazyList.this.rawGet(++pos);
-      }
+          public OIdentifiable next() {
+            return ORecordLazyList.this.rawGet(++pos);
+          }
 
-      public void remove() {
-        ORecordLazyList.this.remove(pos);
-      }
+          public void remove() {
+            ORecordLazyList.this.remove(pos);
+          }
 
-      public OIdentifiable update(final OIdentifiable iValue) {
-        return ORecordLazyList.this.set(pos, iValue);
-      }
-    };
+          public OIdentifiable update(final OIdentifiable iValue) {
+            return ORecordLazyList.this.set(pos, iValue);
+          }
+        };
     return new OLazyRecordIterator(sourceRecord, subIterator, false);
   }
 
@@ -131,7 +128,9 @@ public class ORecordLazyList extends OTrackedList<OIdentifiable> implements ORec
   @Override
   public OLazyIterator<OIdentifiable> iterator() {
     lazyLoad(false);
-    return new OLazyRecordIterator(sourceRecord, new OLazyIteratorListWrapper<OIdentifiable>(super.listIterator()),
+    return new OLazyRecordIterator(
+        sourceRecord,
+        new OLazyIteratorListWrapper<OIdentifiable>(super.listIterator()),
         autoConvertToRecord);
   }
 
@@ -156,12 +155,12 @@ public class ORecordLazyList extends OTrackedList<OIdentifiable> implements ORec
   @Override
   public boolean add(OIdentifiable e) {
     if (e != null) {
-      if ((ridOnly || contentType == MULTIVALUE_CONTENT_TYPE.ALL_RIDS) && e.getIdentity().isPersistent() && (e instanceof ODocument
-          && !((ODocument) e).isDirty()))
+      if ((ridOnly || contentType == MULTIVALUE_CONTENT_TYPE.ALL_RIDS)
+          && e.getIdentity().isPersistent()
+          && (e instanceof ODocument && !((ODocument) e).isDirty()))
         // IT'S BETTER TO LEAVE ALL RIDS AND EXTRACT ONLY THIS ONE
         e = e.getIdentity();
-      else
-        contentType = ORecordMultiValueHelper.updateContentType(contentType, e);
+      else contentType = ORecordMultiValueHelper.updateContentType(contentType, e);
     }
     lazyLoad(true);
     return super.add(e);
@@ -171,12 +170,12 @@ public class ORecordLazyList extends OTrackedList<OIdentifiable> implements ORec
   public void add(int index, OIdentifiable e) {
     if (e != null) {
       ORecordInternal.track(sourceRecord, e);
-      if ((ridOnly || contentType == MULTIVALUE_CONTENT_TYPE.ALL_RIDS) && e.getIdentity().isPersistent() && (e instanceof ODocument
-          && !((ODocument) e).isDirty()))
+      if ((ridOnly || contentType == MULTIVALUE_CONTENT_TYPE.ALL_RIDS)
+          && e.getIdentity().isPersistent()
+          && (e instanceof ODocument && !((ODocument) e).isDirty()))
         // IT'S BETTER TO LEAVE ALL RIDS AND EXTRACT ONLY THIS ONE
         e = e.getIdentity();
-      else
-        contentType = ORecordMultiValueHelper.updateContentType(contentType, e);
+      else contentType = ORecordMultiValueHelper.updateContentType(contentType, e);
     }
     lazyLoad(true);
 
@@ -190,12 +189,12 @@ public class ORecordLazyList extends OTrackedList<OIdentifiable> implements ORec
     if (e != null) {
       ORecordInternal.track(sourceRecord, e);
       if (e != null)
-        if ((ridOnly || contentType == MULTIVALUE_CONTENT_TYPE.ALL_RIDS) && e.getIdentity().isPersistent() && (
-            e instanceof ODocument && !((ODocument) e).isDirty()))
+        if ((ridOnly || contentType == MULTIVALUE_CONTENT_TYPE.ALL_RIDS)
+            && e.getIdentity().isPersistent()
+            && (e instanceof ODocument && !((ODocument) e).isDirty()))
           // IT'S BETTER TO LEAVE ALL RIDS AND EXTRACT ONLY THIS ONE
           e = e.getIdentity();
-        else
-          contentType = ORecordMultiValueHelper.updateContentType(contentType, e);
+        else contentType = ORecordMultiValueHelper.updateContentType(contentType, e);
     }
     return super.set(index, e);
   }
@@ -203,8 +202,7 @@ public class ORecordLazyList extends OTrackedList<OIdentifiable> implements ORec
   @Override
   public OIdentifiable get(final int index) {
     lazyLoad(false);
-    if (autoConvertToRecord)
-      convertLink2Record(index);
+    if (autoConvertToRecord) convertLink2Record(index);
     return super.get(index);
   }
 
@@ -235,8 +233,7 @@ public class ORecordLazyList extends OTrackedList<OIdentifiable> implements ORec
     lazyLoad(true);
     result = super.remove(iElement);
 
-    if (isEmpty())
-      contentType = MULTIVALUE_CONTENT_TYPE.EMPTY;
+    if (isEmpty()) contentType = MULTIVALUE_CONTENT_TYPE.EMPTY;
 
     return result;
   }
@@ -292,15 +289,13 @@ public class ORecordLazyList extends OTrackedList<OIdentifiable> implements ORec
     boolean allConverted = true;
     for (int i = 0; i < super.size(); ++i) {
       try {
-        if (!convertRecord2Link(i))
-          allConverted = false;
+        if (!convertRecord2Link(i)) allConverted = false;
       } catch (ORecordNotFoundException ignore) {
         // LEAVE THE RID DIRTY
       }
     }
 
-    if (allConverted)
-      contentType = MULTIVALUE_CONTENT_TYPE.ALL_RIDS;
+    if (allConverted) contentType = MULTIVALUE_CONTENT_TYPE.ALL_RIDS;
 
     return allConverted;
   }
@@ -324,8 +319,7 @@ public class ORecordLazyList extends OTrackedList<OIdentifiable> implements ORec
     copy.autoConvertToRecord = autoConvertToRecord;
 
     final int tot = super.size();
-    for (int i = 0; i < tot; ++i)
-      copy.add(rawGet(i));
+    for (int i = 0; i < tot; ++i) copy.add(rawGet(i));
 
     return copy;
   }
@@ -375,7 +369,6 @@ public class ORecordLazyList extends OTrackedList<OIdentifiable> implements ORec
    * Convert the item requested from record to link.
    *
    * @param iIndex Position of the item to convert
-   *
    * @return <code>true</code> if conversion was successful.
    */
   private boolean convertRecord2Link(final int iIndex) {
@@ -385,7 +378,9 @@ public class ORecordLazyList extends OTrackedList<OIdentifiable> implements ORec
 
     final Object o = super.get(iIndex);
 
-    if (o != null && o instanceof OIdentifiable && ((OIdentifiable) o).getIdentity().isPersistent()) {
+    if (o != null
+        && o instanceof OIdentifiable
+        && ((OIdentifiable) o).getIdentity().isPersistent()) {
       if (o instanceof ORecord && !((ORecord) o).isDirty()) {
         try {
           super.setInternal(iIndex, ((ORecord) o).getIdentity());
@@ -416,7 +411,6 @@ public class ORecordLazyList extends OTrackedList<OIdentifiable> implements ORec
 
   @Override
   public void replace(OMultiValueChangeEvent<Object, Object> event, Object newValue) {
-    //not needed do nothing
+    // not needed do nothing
   }
-
 }

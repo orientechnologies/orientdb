@@ -26,43 +26,77 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 
 /**
  * Listener interface used while fetching records.
- * 
+ *
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
- * 
  */
 public interface OFetchListener {
-  /**
-   * Returns true if the listener fetches he fields.
-   */
+  /** Returns true if the listener fetches he fields. */
   boolean requireFieldProcessing();
 
   /**
    * Fetch the linked field.
-   * 
+   *
    * @param iRoot
    * @param iFieldName
    * @param iLinked
    * @return null if the fetching must stop, otherwise the current field value
    */
-  Object fetchLinked(final ODocument iRoot, final Object iUserObject, final String iFieldName, final ODocument iLinked,
-      final OFetchContext iContext) throws OFetchException;
+  Object fetchLinked(
+      final ODocument iRoot,
+      final Object iUserObject,
+      final String iFieldName,
+      final ODocument iLinked,
+      final OFetchContext iContext)
+      throws OFetchException;
 
-  void parseLinked(final ODocument iRootRecord, final OIdentifiable iLinked, final Object iUserObject, final String iFieldName,
-      final OFetchContext iContext) throws OFetchException;
+  void parseLinked(
+      final ODocument iRootRecord,
+      final OIdentifiable iLinked,
+      final Object iUserObject,
+      final String iFieldName,
+      final OFetchContext iContext)
+      throws OFetchException;
 
-  void parseLinkedCollectionValue(final ODocument iRootRecord, final OIdentifiable iLinked, final Object iUserObject,
-      final String iFieldName, final OFetchContext iContext) throws OFetchException;
+  void parseLinkedCollectionValue(
+      final ODocument iRootRecord,
+      final OIdentifiable iLinked,
+      final Object iUserObject,
+      final String iFieldName,
+      final OFetchContext iContext)
+      throws OFetchException;
 
-  Object fetchLinkedMapEntry(final ODocument iRoot, final Object iUserObject, final String iFieldName, final String iKey,
-      final ODocument iLinked, final OFetchContext iContext) throws OFetchException;
+  Object fetchLinkedMapEntry(
+      final ODocument iRoot,
+      final Object iUserObject,
+      final String iFieldName,
+      final String iKey,
+      final ODocument iLinked,
+      final OFetchContext iContext)
+      throws OFetchException;
 
-  Object fetchLinkedCollectionValue(final ODocument iRoot, final Object iUserObject, final String iFieldName,
-      final ODocument iLinked, final OFetchContext iContext) throws OFetchException;
+  Object fetchLinkedCollectionValue(
+      final ODocument iRoot,
+      final Object iUserObject,
+      final String iFieldName,
+      final ODocument iLinked,
+      final OFetchContext iContext)
+      throws OFetchException;
 
-  void processStandardField(final ODocument iRecord, final Object iFieldValue, final String iFieldName,
-      final OFetchContext iContext, final Object iUserObject, String iFormat, OType filedType) throws OFetchException;
+  void processStandardField(
+      final ODocument iRecord,
+      final Object iFieldValue,
+      final String iFieldName,
+      final OFetchContext iContext,
+      final Object iUserObject,
+      String iFormat,
+      OType filedType)
+      throws OFetchException;
 
-  void skipStandardField(final ODocument iRecord, final String iFieldName, final OFetchContext iContext, final Object iUserObject,
-      String iFormat) throws OFetchException;
-
+  void skipStandardField(
+      final ODocument iRecord,
+      final String iFieldName,
+      final OFetchContext iContext,
+      final Object iUserObject,
+      String iFormat)
+      throws OFetchException;
 }

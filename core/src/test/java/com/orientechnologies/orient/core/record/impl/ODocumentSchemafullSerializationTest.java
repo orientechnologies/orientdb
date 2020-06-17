@@ -1,5 +1,8 @@
 package com.orientechnologies.orient.core.record.impl;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
@@ -10,63 +13,59 @@ import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializer;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializerFactory;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TestName;
 
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
-import static org.junit.Assert.*;
-
 public abstract class ODocumentSchemafullSerializationTest {
 
-  private static final String   CITY           = "city";
-  private static final String   NUMBER         = "number";
-  private static final String   INT_FIELD      = NUMBER;
-  private static final String   NAME           = "name";
-  private static final String   MAP_BYTES      = "bytesMap";
-  private static final String   MAP_DOUBLE     = "doubleMap";
-  private static final String   MAP_FLOAT      = "floatMap";
-  private static final String   MAP_DATE       = "dateMap";
-  private static final String   MAP_SHORT      = "shortMap";
-  private static final String   MAP_LONG       = "mapLong";
-  private static final String   MAP_INT        = "mapInt";
-  private static final String   MAP_STRING     = "mapString";
-  private static final String   LIST_MIXED     = "listMixed";
-  private static final String   LIST_BOOLEANS  = "booleans";
-  private static final String   LIST_BYTES     = "bytes";
-  private static final String   LIST_DATES     = "dates";
-  private static final String   LIST_DOUBLES   = "doubles";
-  private static final String   LIST_FLOATS    = "floats";
-  private static final String   LIST_INTEGERS  = "integers";
-  private static final String   LIST_LONGS     = "longs";
-  private static final String   LIST_SHORTS    = "shorts";
-  private static final String   LIST_STRINGS   = "listStrings";
-  private static final String   SHORT_FIELD    = "shortNumber";
-  private static final String   LONG_FIELD     = "longNumber";
-  private static final String   STRING_FIELD   = "stringField";
-  private static final String   FLOAT_NUMBER   = "floatNumber";
-  private static final String   DOUBLE_NUMBER  = "doubleNumber";
-  private static final String   BYTE_FIELD     = "byteField";
-  private static final String   BOOLEAN_FIELD  = "booleanField";
-  private static final String   DATE_FIELD     = "dateField";
-  private static final String   RECORDID_FIELD = "recordField";
-  private static final String   EMBEDDED_FIELD = "embeddedField";
-  private static final String   ANY_FIELD      = "anyField";
-  @Rule
-  public               TestName name           = new TestName();
+  private static final String CITY = "city";
+  private static final String NUMBER = "number";
+  private static final String INT_FIELD = NUMBER;
+  private static final String NAME = "name";
+  private static final String MAP_BYTES = "bytesMap";
+  private static final String MAP_DOUBLE = "doubleMap";
+  private static final String MAP_FLOAT = "floatMap";
+  private static final String MAP_DATE = "dateMap";
+  private static final String MAP_SHORT = "shortMap";
+  private static final String MAP_LONG = "mapLong";
+  private static final String MAP_INT = "mapInt";
+  private static final String MAP_STRING = "mapString";
+  private static final String LIST_MIXED = "listMixed";
+  private static final String LIST_BOOLEANS = "booleans";
+  private static final String LIST_BYTES = "bytes";
+  private static final String LIST_DATES = "dates";
+  private static final String LIST_DOUBLES = "doubles";
+  private static final String LIST_FLOATS = "floats";
+  private static final String LIST_INTEGERS = "integers";
+  private static final String LIST_LONGS = "longs";
+  private static final String LIST_SHORTS = "shorts";
+  private static final String LIST_STRINGS = "listStrings";
+  private static final String SHORT_FIELD = "shortNumber";
+  private static final String LONG_FIELD = "longNumber";
+  private static final String STRING_FIELD = "stringField";
+  private static final String FLOAT_NUMBER = "floatNumber";
+  private static final String DOUBLE_NUMBER = "doubleNumber";
+  private static final String BYTE_FIELD = "byteField";
+  private static final String BOOLEAN_FIELD = "booleanField";
+  private static final String DATE_FIELD = "dateField";
+  private static final String RECORDID_FIELD = "recordField";
+  private static final String EMBEDDED_FIELD = "embeddedField";
+  private static final String ANY_FIELD = "anyField";
+  @Rule public TestName name = new TestName();
   private ODatabaseDocumentInternal databaseDocument;
-  private OClass                    simple;
-  private ORecordSerializer         serializer;
-  private OClass                    embSimp;
-  private OClass                    address;
-  private OClass                    embMapSimple;
+  private OClass simple;
+  private ORecordSerializer serializer;
+  private OClass embSimp;
+  private OClass address;
+  private OClass embMapSimple;
 
   public ODocumentSchemafullSerializationTest(ORecordSerializer serializer) {
     this.serializer = serializer;
@@ -129,7 +128,8 @@ public abstract class ODocumentSchemafullSerializationTest {
   public void after() {
     databaseDocument.drop();
     ODatabaseDocumentTx.setDefaultSerializer(
-        ORecordSerializerFactory.instance().getFormat(OGlobalConfiguration.DB_DOCUMENT_SERIALIZER.getValueAsString()));
+        ORecordSerializerFactory.instance()
+            .getFormat(OGlobalConfiguration.DB_DOCUMENT_SERIALIZER.getValueAsString()));
   }
 
   @Test
@@ -164,7 +164,7 @@ public abstract class ODocumentSchemafullSerializationTest {
     assertEquals(extr.<Object>field(RECORDID_FIELD), document.field(RECORDID_FIELD));
   }
 
-  @SuppressWarnings({ "rawtypes", "unchecked" })
+  @SuppressWarnings({"rawtypes", "unchecked"})
   @Test
   public void testSimpleLiteralList() {
     ODatabaseRecordThreadLocal.instance().set(databaseDocument);
@@ -348,7 +348,6 @@ public abstract class ODocumentSchemafullSerializationTest {
     ODocument extr2 = (ODocument) serializer.fromStream(res, new ODocument(), new String[] {});
     assertEquals(extr.fields(), extr2.fields());
     assertEquals(extr2.<Object>field(ANY_FIELD), false);
-
   }
 
   @Test
@@ -360,7 +359,5 @@ public abstract class ODocumentSchemafullSerializationTest {
     byte[] res = serializer.toStream(document);
     ODocument extr = new ODocument().fromStream(res);
     assertEquals(OType.STRING, extr.fieldType("name"));
-
   }
-
 }

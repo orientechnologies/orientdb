@@ -12,15 +12,12 @@ import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.metadata.security.ORule;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OSQLEngine;
-
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Set;
 
-/**
- * Created by tglman on 14/06/17.
- */
+/** Created by tglman on 14/06/17. */
 public class OPropertyEmbedded extends OPropertyImpl {
   protected OPropertyEmbedded(OClassImpl owner) {
     super(owner);
@@ -64,7 +61,8 @@ public class OPropertyEmbedded extends OPropertyImpl {
         return;
 
       if (!iType.getCastable().contains(globalRef.getType()))
-        throw new IllegalArgumentException("Cannot change property type from " + globalRef.getType() + " to " + iType);
+        throw new IllegalArgumentException(
+            "Cannot change property type from " + globalRef.getType() + " to " + iType);
 
       this.globalRef = owner.owner.findOrCreateGlobalProperty(this.globalRef.getName(), iType);
     } finally {
@@ -128,8 +126,7 @@ public class OPropertyEmbedded extends OPropertyImpl {
   }
 
   public OProperty setCollate(String collate) {
-    if (collate == null)
-      collate = ODefaultCollate.NAME;
+    if (collate == null) collate = ODefaultCollate.NAME;
 
     getDatabase().checkSecurity(ORule.ResourceGeneric.SCHEMA, ORole.PERMISSION_UPDATE);
 
@@ -150,12 +147,12 @@ public class OPropertyEmbedded extends OPropertyImpl {
 
       final OCollate oldCollate = this.collate;
 
-      if (iCollate == null)
-        iCollate = ODefaultCollate.NAME;
+      if (iCollate == null) iCollate = ODefaultCollate.NAME;
 
       collate = OSQLEngine.getCollate(iCollate);
 
-      if ((this.collate != null && !this.collate.equals(oldCollate)) || (this.collate == null && oldCollate != null)) {
+      if ((this.collate != null && !this.collate.equals(oldCollate))
+          || (this.collate == null && oldCollate != null)) {
         final Set<OIndex> indexes = owner.getClassIndexes();
         final List<OIndex> indexesToRecreate = new ArrayList<OIndex>();
 
@@ -163,25 +160,35 @@ public class OPropertyEmbedded extends OPropertyImpl {
           OIndexDefinition definition = index.getDefinition();
 
           final List<String> fields = definition.getFields();
-          if (fields.contains(getName()))
-            indexesToRecreate.add(index);
+          if (fields.contains(getName())) indexesToRecreate.add(index);
         }
 
         if (!indexesToRecreate.isEmpty()) {
-          OLogManager.instance().info(this, "Collate value was changed, following indexes will be rebuilt %s", indexesToRecreate);
+          OLogManager.instance()
+              .info(
+                  this,
+                  "Collate value was changed, following indexes will be rebuilt %s",
+                  indexesToRecreate);
 
           final ODatabaseDocumentInternal database = getDatabase();
-          final OIndexManagerAbstract indexManager = database.getMetadata().getIndexManagerInternal();
+          final OIndexManagerAbstract indexManager =
+              database.getMetadata().getIndexManagerInternal();
 
           for (OIndex indexToRecreate : indexesToRecreate) {
-            final OIndexMetadata indexMetadata = indexToRecreate.getInternal().loadMetadata(indexToRecreate.getConfiguration());
+            final OIndexMetadata indexMetadata =
+                indexToRecreate.getInternal().loadMetadata(indexToRecreate.getConfiguration());
 
             final ODocument metadata = indexToRecreate.getMetadata();
             final List<String> fields = indexMetadata.getIndexDefinition().getFields();
             final String[] fieldsToIndex = fields.toArray(new String[fields.size()]);
 
             indexManager.dropIndex(database, indexMetadata.getName());
-            owner.createIndex(indexMetadata.getName(), indexMetadata.getType(), null, metadata, indexMetadata.getAlgorithm(),
+            owner.createIndex(
+                indexMetadata.getName(),
+                indexMetadata.getType(),
+                null,
+                metadata,
+                indexMetadata.getAlgorithm(),
                 fieldsToIndex);
           }
         }
@@ -212,7 +219,6 @@ public class OPropertyEmbedded extends OPropertyImpl {
     } finally {
       releaseSchemaWriteLock();
     }
-
   }
 
   public OPropertyImpl setCustom(final String name, final String value) {
@@ -233,12 +239,9 @@ public class OPropertyEmbedded extends OPropertyImpl {
     try {
       checkEmbedded();
 
-      if (customFields == null)
-        customFields = new HashMap<String, String>();
-      if (iValue == null || "null".equalsIgnoreCase(iValue))
-        customFields.remove(iName);
-      else
-        customFields.put(iName, iValue);
+      if (customFields == null) customFields = new HashMap<String, String>();
+      if (iValue == null || "null".equalsIgnoreCase(iValue)) customFields.remove(iName);
+      else customFields.put(iName, iValue);
     } finally {
       releaseSchemaWriteLock();
     }
@@ -294,7 +297,6 @@ public class OPropertyEmbedded extends OPropertyImpl {
     } finally {
       releaseSchemaWriteLock();
     }
-
   }
 
   public OProperty setLinkedType(final OType linkedType) {
@@ -322,7 +324,6 @@ public class OPropertyEmbedded extends OPropertyImpl {
     } finally {
       releaseSchemaWriteLock();
     }
-
   }
 
   public OPropertyImpl setNotNull(final boolean isNotNull) {
@@ -479,5 +480,4 @@ public class OPropertyEmbedded extends OPropertyImpl {
       releaseSchemaWriteLock();
     }
   }
-
 }

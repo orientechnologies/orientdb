@@ -23,7 +23,6 @@ import com.orientechnologies.orient.core.OOrientListenerAbstract;
 import com.orientechnologies.orient.core.Orient;
 import com.tinkerpop.blueprints.impls.orient.OrientBaseGraph;
 import com.tinkerpop.gremlin.groovy.jsr223.GremlinGroovyScriptEngine;
-
 import javax.script.ScriptContext;
 import javax.script.ScriptEngine;
 
@@ -32,25 +31,29 @@ public class OGremlinEngineThreadLocal extends ThreadLocal<ScriptEngine> {
   public static volatile OGremlinEngineThreadLocal INSTANCE = new OGremlinEngineThreadLocal();
 
   static {
-    Orient.instance().registerListener(new OOrientListenerAbstract() {
-      @Override
-      public void onStartup() {
-        if (INSTANCE == null)
-          INSTANCE = new OGremlinEngineThreadLocal();
-      }
+    Orient.instance()
+        .registerListener(
+            new OOrientListenerAbstract() {
+              @Override
+              public void onStartup() {
+                if (INSTANCE == null) INSTANCE = new OGremlinEngineThreadLocal();
+              }
 
-      @Override
-      public void onShutdown() {
-        INSTANCE = null;
-      }
-    });
+              @Override
+              public void onShutdown() {
+                INSTANCE = null;
+              }
+            });
   }
 
   public ScriptEngine get(final OrientBaseGraph iGraph) {
     ScriptEngine engine = super.get();
     if (engine != null) {
-      final OrientBaseGraph currGraph = (OrientBaseGraph) engine.getBindings(ScriptContext.ENGINE_SCOPE).get("g");
-      if (currGraph == iGraph || (currGraph != null && currGraph.getRawGraph().getURL().equals(iGraph.getRawGraph().getURL()))) {
+      final OrientBaseGraph currGraph =
+          (OrientBaseGraph) engine.getBindings(ScriptContext.ENGINE_SCOPE).get("g");
+      if (currGraph == iGraph
+          || (currGraph != null
+              && currGraph.getRawGraph().getURL().equals(iGraph.getRawGraph().getURL()))) {
         // REUSE IT
         engine.getBindings(ScriptContext.ENGINE_SCOPE).put("g", iGraph);
         return engine;
@@ -72,5 +75,4 @@ public class OGremlinEngineThreadLocal extends ThreadLocal<ScriptEngine> {
   public boolean isDefined() {
     return super.get() != null;
   }
-
 }

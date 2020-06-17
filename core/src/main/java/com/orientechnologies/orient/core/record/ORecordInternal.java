@@ -30,60 +30,58 @@ import com.orientechnologies.orient.core.serialization.serializer.record.ORecord
 
 public class ORecordInternal {
 
-  /**
-   * Internal only. Fills in one shot the record.
-   */
-  public static ORecordAbstract fill(final ORecord record, final ORID iRid, final int iVersion, final byte[] iBuffer,
+  /** Internal only. Fills in one shot the record. */
+  public static ORecordAbstract fill(
+      final ORecord record,
+      final ORID iRid,
+      final int iVersion,
+      final byte[] iBuffer,
       final boolean iDirty) {
     final ORecordAbstract rec = (ORecordAbstract) record;
     rec.fill(iRid, iVersion, iBuffer, iDirty);
     return rec;
   }
 
-  public static ORecordAbstract fill(final ORecord record, final ORID iRid, final int iVersion, final byte[] iBuffer,
-      final boolean iDirty, ODatabaseDocumentInternal db) {
+  public static ORecordAbstract fill(
+      final ORecord record,
+      final ORID iRid,
+      final int iVersion,
+      final byte[] iBuffer,
+      final boolean iDirty,
+      ODatabaseDocumentInternal db) {
     final ORecordAbstract rec = (ORecordAbstract) record;
     rec.fill(iRid, iVersion, iBuffer, iDirty, db);
     return rec;
   }
 
-  /**
-   * Internal only. Changes the identity of the record.
-   */
-  public static ORecordAbstract setIdentity(final ORecord record, final int iClusterId, final long iClusterPosition) {
+  /** Internal only. Changes the identity of the record. */
+  public static ORecordAbstract setIdentity(
+      final ORecord record, final int iClusterId, final long iClusterPosition) {
     final ORecordAbstract rec = (ORecordAbstract) record;
     rec.setIdentity(iClusterId, iClusterPosition);
     return rec;
   }
 
-  /**
-   * Internal only. Changes the identity of the record.
-   */
+  /** Internal only. Changes the identity of the record. */
   public static ORecordAbstract setIdentity(final ORecord record, final ORecordId iIdentity) {
     final ORecordAbstract rec = (ORecordAbstract) record;
     rec.setIdentity(iIdentity);
     return rec;
   }
 
-  /**
-   * Internal only. Unsets the dirty status of the record.
-   */
+  /** Internal only. Unsets the dirty status of the record. */
   public static void unsetDirty(final ORecord record) {
     final ORecordAbstract rec = (ORecordAbstract) record;
     rec.unsetDirty();
   }
 
-  /**
-   * Internal only. Sets the version.
-   */
+  /** Internal only. Sets the version. */
   public static void setVersion(final ORecord record, final int iVersion) {
     final ORecordAbstract rec = (ORecordAbstract) record;
     rec.setVersion(iVersion);
   }
 
-  /**
-   * Internal only. Return the record type.
-   */
+  /** Internal only. Return the record type. */
   public static byte getRecordType(final ORecord record) {
     if (record instanceof ORecordAbstract) {
       return ((ORecordAbstract) record).getRecordType();
@@ -107,9 +105,10 @@ public class ORecordInternal {
     rec.clearSource();
   }
 
-  public static void addIdentityChangeListener(ORecord record, final OIdentityChangeListener identityChangeListener) {
+  public static void addIdentityChangeListener(
+      ORecord record, final OIdentityChangeListener identityChangeListener) {
     if (!(record instanceof ORecordAbstract)) {
-      //manage O*Delegate
+      // manage O*Delegate
       record = record.getRecord();
     }
     if (record instanceof ORecordAbstract) {
@@ -117,7 +116,8 @@ public class ORecordInternal {
     }
   }
 
-  public static void removeIdentityChangeListener(final ORecord record, final OIdentityChangeListener identityChangeListener) {
+  public static void removeIdentityChangeListener(
+      final ORecord record, final OIdentityChangeListener identityChangeListener) {
     ((ORecordAbstract) record).removeIdentityChangeListener(identityChangeListener);
   }
 

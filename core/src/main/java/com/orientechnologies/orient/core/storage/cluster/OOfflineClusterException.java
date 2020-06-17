@@ -19,7 +19,7 @@ import com.orientechnologies.orient.core.exception.OCoreException;
 
 /**
  * Exception when any non idempotent operation is executed against the offline cluster
- * 
+ *
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
  * @since 2.0
  */

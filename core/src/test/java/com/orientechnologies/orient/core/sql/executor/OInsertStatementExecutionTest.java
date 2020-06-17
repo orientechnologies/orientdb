@@ -1,26 +1,23 @@
 package com.orientechnologies.orient.core.sql.executor;
 
+import static com.orientechnologies.orient.core.sql.executor.ExecutionPlanPrintUtils.printExecutionPlan;
+
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import org.junit.AfterClass;
-import org.junit.Assert;
-import org.junit.BeforeClass;
-import org.junit.Test;
-
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import org.junit.AfterClass;
+import org.junit.Assert;
+import org.junit.BeforeClass;
+import org.junit.Test;
 
-import static com.orientechnologies.orient.core.sql.executor.ExecutionPlanPrintUtils.printExecutionPlan;
-
-/**
- * @author Luigi Dell'Aquila (l.dellaquila-(at)-orientdb.com)
- */
+/** @author Luigi Dell'Aquila (l.dellaquila-(at)-orientdb.com) */
 public class OInsertStatementExecutionTest {
   static ODatabaseDocument db;
 
@@ -66,7 +63,8 @@ public class OInsertStatementExecutionTest {
     String className = "testInsertValue";
     db.getMetadata().getSchema().createClass(className);
 
-    OResultSet result = db.command("insert into " + className + "  (name, surname) values ('name1', 'surname1')");
+    OResultSet result =
+        db.command("insert into " + className + "  (name, surname) values ('name1', 'surname1')");
     printExecutionPlan(result);
     for (int i = 0; i < 1; i++) {
       Assert.assertTrue(result.hasNext());
@@ -93,8 +91,11 @@ public class OInsertStatementExecutionTest {
     String className = "testInsertValue2";
     db.getMetadata().getSchema().createClass(className);
 
-    OResultSet result = db
-        .command("insert into " + className + "  (name, surname) values ('name1', 'surname1'), ('name2', 'surname2')");
+    OResultSet result =
+        db.command(
+            "insert into "
+                + className
+                + "  (name, surname) values ('name1', 'surname1'), ('name2', 'surname2')");
     printExecutionPlan(result);
 
     for (int i = 0; i < 2; i++) {
@@ -179,7 +180,8 @@ public class OInsertStatementExecutionTest {
       doc.setProperty("surname", "surname" + i);
       doc.save();
     }
-    OResultSet result = db.command("insert into " + className2 + " ( select from " + className1 + ")");
+    OResultSet result =
+        db.command("insert into " + className2 + " ( select from " + className1 + ")");
     printExecutionPlan(result);
 
     for (int i = 0; i < 10; i++) {
@@ -214,7 +216,8 @@ public class OInsertStatementExecutionTest {
     String className = "testContent";
     db.getMetadata().getSchema().createClass(className);
 
-    OResultSet result = db.command("insert into " + className + " content {'name':'name1', 'surname':'surname1'}");
+    OResultSet result =
+        db.command("insert into " + className + " content {'name':'name1', 'surname':'surname1'}");
     printExecutionPlan(result);
     for (int i = 0; i < 1; i++) {
       Assert.assertTrue(result.hasNext());
@@ -278,12 +281,23 @@ public class OInsertStatementExecutionTest {
     db.command("INSERT INTO " + className1 + " SET name='Inactive';").close();
 
     db.command("CREATE CLASS " + className2 + ";").close();
-    db.command("CREATE PROPERTY " + className2 + ".processingType LINK " + className1 + ";").close();
+    db.command("CREATE PROPERTY " + className2 + ".processingType LINK " + className1 + ";")
+        .close();
 
-    db.command("INSERT INTO " + className2 + " SET name='Active', processingType = (SELECT FROM " + className1
-        + " WHERE name = 'Active') ;").close();
-    db.command("INSERT INTO " + className2 + " SET name='Inactive', processingType = (SELECT FROM " + className1
-        + " WHERE name = 'Inactive') ;").close();
+    db.command(
+            "INSERT INTO "
+                + className2
+                + " SET name='Active', processingType = (SELECT FROM "
+                + className1
+                + " WHERE name = 'Active') ;")
+        .close();
+    db.command(
+            "INSERT INTO "
+                + className2
+                + " SET name='Inactive', processingType = (SELECT FROM "
+                + className1
+                + " WHERE name = 'Inactive') ;")
+        .close();
 
     OResultSet result = db.query("SELECT FROM " + className2);
     for (int i = 0; i < 2; i++) {
@@ -335,7 +349,8 @@ public class OInsertStatementExecutionTest {
     db.command("CREATE CLASS " + className2 + ";").close();
     db.command("CREATE PROPERTY " + className2 + ".sub EMBEDDEDLIST " + className1 + ";").close();
 
-    db.command("INSERT INTO " + className2 + " (name, sub) values ('Active', [{'name':'foo'}]);").close();
+    db.command("INSERT INTO " + className2 + " (name, sub) values ('Active', [{'name':'foo'}]);")
+        .close();
 
     OResultSet result = db.query("SELECT FROM " + className2);
     for (int i = 0; i < 1; i++) {
@@ -359,7 +374,8 @@ public class OInsertStatementExecutionTest {
     String className = "testInsertReturn";
     db.getMetadata().getSchema().createClass(className);
 
-    OResultSet result = db.command("insert into " + className + " set name = 'name1' RETURN 'OK' as result");
+    OResultSet result =
+        db.command("insert into " + className + " set name = 'name1' RETURN 'OK' as result");
     printExecutionPlan(result);
     for (int i = 0; i < 1; i++) {
       Assert.assertTrue(result.hasNext());
@@ -385,8 +401,13 @@ public class OInsertStatementExecutionTest {
     String className = "testNestedInsert";
     db.getMetadata().getSchema().createClass(className);
 
-    OResultSet result = db.command(
-        "insert into " + className + " set name = 'parent', children = (INSERT INTO " + className + " SET name = 'child')");
+    OResultSet result =
+        db.command(
+            "insert into "
+                + className
+                + " set name = 'parent', children = (INSERT INTO "
+                + className
+                + " SET name = 'child')");
 
     result.close();
 
@@ -413,7 +434,12 @@ public class OInsertStatementExecutionTest {
     db.command("CREATE PROPERTY " + className + ".mymap LINKMAP " + itemclassName);
 
     db.command("INSERT INTO " + itemclassName + " (name) VALUES ('test')");
-    db.command("INSERT INTO " + className + " (mymap) VALUES ({'A-1': (SELECT FROM " + itemclassName + " WHERE name = 'test')})");
+    db.command(
+        "INSERT INTO "
+            + className
+            + " (mymap) VALUES ({'A-1': (SELECT FROM "
+            + itemclassName
+            + " WHERE name = 'test')})");
 
     OResultSet result = db.query("SELECT FROM " + className);
 
@@ -432,7 +458,10 @@ public class OInsertStatementExecutionTest {
 
     db.command("CREATE CLASS " + className);
 
-    db.command("INSERT INTO " + className + " CONTENT { name: \"jack\", memo: \"this is a \\n multi line text\" }");
+    db.command(
+        "INSERT INTO "
+            + className
+            + " CONTENT { name: \"jack\", memo: \"this is a \\n multi line text\" }");
 
     OResultSet result = db.query("SELECT FROM " + className);
 
@@ -443,5 +472,4 @@ public class OInsertStatementExecutionTest {
     Assert.assertFalse(result.hasNext());
     result.close();
   }
-
 }

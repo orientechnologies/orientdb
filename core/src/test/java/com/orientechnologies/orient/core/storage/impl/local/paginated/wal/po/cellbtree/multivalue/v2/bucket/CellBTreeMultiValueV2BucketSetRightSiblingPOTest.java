@@ -7,11 +7,10 @@ import com.orientechnologies.orient.core.storage.cache.OCacheEntryImpl;
 import com.orientechnologies.orient.core.storage.cache.OCachePointer;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.PageOperationRecord;
 import com.orientechnologies.orient.core.storage.index.sbtree.multivalue.v2.CellBTreeMultiValueV2Bucket;
-import org.junit.Assert;
-import org.junit.Test;
-
 import java.nio.ByteBuffer;
 import java.util.List;
+import org.junit.Assert;
+import org.junit.Test;
 
 public class CellBTreeMultiValueV2BucketSetRightSiblingPOTest {
   @Test
@@ -31,7 +30,8 @@ public class CellBTreeMultiValueV2BucketSetRightSiblingPOTest {
       entry.clearPageOperations();
 
       final OPointer restoredPointer = byteBufferPool.acquireDirect(false);
-      final OCachePointer restoredCachePointer = new OCachePointer(restoredPointer, byteBufferPool, 0, 0);
+      final OCachePointer restoredCachePointer =
+          new OCachePointer(restoredPointer, byteBufferPool, 0, 0);
       final OCacheEntry restoredCacheEntry = new OCacheEntryImpl(0, 0, restoredCachePointer);
 
       final ByteBuffer originalBuffer = cachePointer.getBufferDuplicate();
@@ -49,10 +49,11 @@ public class CellBTreeMultiValueV2BucketSetRightSiblingPOTest {
 
       Assert.assertTrue(operations.get(0) instanceof CellBTreeMultiValueV2BucketSetRightSiblingPO);
 
-      final CellBTreeMultiValueV2BucketSetRightSiblingPO pageOperation = (CellBTreeMultiValueV2BucketSetRightSiblingPO) operations
-          .get(0);
+      final CellBTreeMultiValueV2BucketSetRightSiblingPO pageOperation =
+          (CellBTreeMultiValueV2BucketSetRightSiblingPO) operations.get(0);
 
-      CellBTreeMultiValueV2Bucket<Byte> restoredBucket = new CellBTreeMultiValueV2Bucket<>(restoredCacheEntry);
+      CellBTreeMultiValueV2Bucket<Byte> restoredBucket =
+          new CellBTreeMultiValueV2Bucket<>(restoredCacheEntry);
 
       Assert.assertEquals(42, restoredBucket.getRightSibling());
 
@@ -89,10 +90,11 @@ public class CellBTreeMultiValueV2BucketSetRightSiblingPOTest {
       final List<PageOperationRecord> operations = entry.getPageOperations();
 
       Assert.assertTrue(operations.get(0) instanceof CellBTreeMultiValueV2BucketSetRightSiblingPO);
-      final CellBTreeMultiValueV2BucketSetRightSiblingPO pageOperation = (CellBTreeMultiValueV2BucketSetRightSiblingPO) operations
-          .get(0);
+      final CellBTreeMultiValueV2BucketSetRightSiblingPO pageOperation =
+          (CellBTreeMultiValueV2BucketSetRightSiblingPO) operations.get(0);
 
-      final CellBTreeMultiValueV2Bucket<Byte> restoredBucket = new CellBTreeMultiValueV2Bucket<>(entry);
+      final CellBTreeMultiValueV2Bucket<Byte> restoredBucket =
+          new CellBTreeMultiValueV2Bucket<>(entry);
 
       Assert.assertEquals(24, restoredBucket.getRightSibling());
 
@@ -108,7 +110,8 @@ public class CellBTreeMultiValueV2BucketSetRightSiblingPOTest {
 
   @Test
   public void testSerialization() {
-    CellBTreeMultiValueV2BucketSetRightSiblingPO operation = new CellBTreeMultiValueV2BucketSetRightSiblingPO(12, 21);
+    CellBTreeMultiValueV2BucketSetRightSiblingPO operation =
+        new CellBTreeMultiValueV2BucketSetRightSiblingPO(12, 21);
 
     operation.setFileId(42);
     operation.setPageIndex(24);
@@ -120,7 +123,8 @@ public class CellBTreeMultiValueV2BucketSetRightSiblingPOTest {
 
     Assert.assertEquals(serializedSize + 1, pos);
 
-    CellBTreeMultiValueV2BucketSetRightSiblingPO restoredOperation = new CellBTreeMultiValueV2BucketSetRightSiblingPO();
+    CellBTreeMultiValueV2BucketSetRightSiblingPO restoredOperation =
+        new CellBTreeMultiValueV2BucketSetRightSiblingPO();
     restoredOperation.fromStream(stream, 1);
 
     Assert.assertEquals(42, restoredOperation.getFileId());

@@ -21,7 +21,6 @@
 package com.orientechnologies.common.concur.lock;
 
 import com.orientechnologies.common.types.OModifiableInteger;
-
 import java.util.Iterator;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
@@ -29,7 +28,6 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.atomic.LongAdder;
 import java.util.concurrent.locks.AbstractOwnableSynchronizer;
 import java.util.concurrent.locks.LockSupport;
-
 
 /**
  * @author Andrey Lomakin (a.lomakin-at-orientdb.com)
@@ -39,7 +37,7 @@ public class OReadersWriterSpinLock extends AbstractOwnableSynchronizer {
   private static final long serialVersionUID = 7975120282194559960L;
 
   private final transient LongAdder distributedCounter;
-  private final transient AtomicReference<WNode>          tail      = new AtomicReference<WNode>();
+  private final transient AtomicReference<WNode> tail = new AtomicReference<WNode>();
   private final transient ThreadLocal<OModifiableInteger> lockHolds = new InitOModifiableInteger();
 
   private final transient ThreadLocal<WNode> myNode = new InitWNode();
@@ -54,11 +52,10 @@ public class OReadersWriterSpinLock extends AbstractOwnableSynchronizer {
   }
 
   /**
-   * Tries to acquire lock during provided interval of time and returns either if provided time interval was passed or
-   * if lock was acquired.
+   * Tries to acquire lock during provided interval of time and returns either if provided time
+   * interval was passed or if lock was acquired.
    *
    * @param timeout Timeout during of which we should wait for read lock.
-   *
    * @return <code>true</code> if read lock was acquired.
    */
   public boolean tryAcquireReadLock(long timeout) {
@@ -139,8 +136,7 @@ public class OReadersWriterSpinLock extends AbstractOwnableSynchronizer {
       while (wNode.locked && wNode == tail.get()) {
         wNode.waitingReaders.put(Thread.currentThread(), Boolean.TRUE);
 
-        if (wNode.locked && wNode == tail.get())
-          LockSupport.park(this);
+        if (wNode.locked && wNode == tail.get()) LockSupport.park(this);
 
         wNode = tail.get();
       }
@@ -187,8 +183,7 @@ public class OReadersWriterSpinLock extends AbstractOwnableSynchronizer {
     while (pNode.locked) {
       pNode.waitingWriter = Thread.currentThread();
 
-      if (pNode.locked)
-        LockSupport.park(this);
+      if (pNode.locked) LockSupport.park(this);
     }
 
     pNode.waitingWriter = null;
@@ -218,8 +213,7 @@ public class OReadersWriterSpinLock extends AbstractOwnableSynchronizer {
     node.locked = false;
 
     final Thread waitingWriter = node.waitingWriter;
-    if (waitingWriter != null)
-      LockSupport.unpark(waitingWriter);
+    if (waitingWriter != null) LockSupport.unpark(waitingWriter);
 
     while (!node.waitingReaders.isEmpty()) {
       final Set<Thread> readers = node.waitingReaders.keySet();
@@ -252,7 +246,8 @@ public class OReadersWriterSpinLock extends AbstractOwnableSynchronizer {
   }
 
   private static final class WNode {
-    private final ConcurrentHashMap<Thread, Boolean> waitingReaders = new ConcurrentHashMap<Thread, Boolean>();
+    private final ConcurrentHashMap<Thread, Boolean> waitingReaders =
+        new ConcurrentHashMap<Thread, Boolean>();
 
     private volatile boolean locked = true;
     private volatile Thread waitingWriter;

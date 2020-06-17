@@ -10,7 +10,6 @@ import com.orientechnologies.orient.core.sql.executor.OExecutionPlan;
 import com.orientechnologies.orient.core.sql.executor.OInternalExecutionPlan;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import com.orientechnologies.orient.core.sql.executor.OUpdateExecutionPlan;
-
 import java.util.HashMap;
 import java.util.Map;
 
@@ -33,7 +32,8 @@ public class OProfileStatement extends OStatement {
   }
 
   @Override
-  public OResultSet execute(ODatabase db, Object[] args, OCommandContext parentCtx, boolean usePlanCache) {
+  public OResultSet execute(
+      ODatabase db, Object[] args, OCommandContext parentCtx, boolean usePlanCache) {
     OBasicCommandContext ctx = new OBasicCommandContext();
     if (parentCtx != null) {
       ctx.setParentWithoutOverridingChild(parentCtx);
@@ -41,8 +41,7 @@ public class OProfileStatement extends OStatement {
     ctx.setDatabase(db);
     Map<Object, Object> params = new HashMap<>();
     if (args != null) {
-      for (int i = 0; i < args.length; i++)
-        params.put(i, args[i]);
+      for (int i = 0; i < args.length; i++) params.put(i, args[i]);
     }
     ctx.setInputParameters(params);
 
@@ -63,15 +62,18 @@ public class OProfileStatement extends OStatement {
       rs.next();
     }
 
-    OExplainResultSet result = new OExplainResultSet(
-        rs.getExecutionPlan().orElseThrow(() -> new OCommandExecutionException("Cannot profile command: " + statement)));
+    OExplainResultSet result =
+        new OExplainResultSet(
+            rs.getExecutionPlan()
+                .orElseThrow(
+                    () -> new OCommandExecutionException("Cannot profile command: " + statement)));
     rs.close();
     return result;
-
   }
 
   @Override
-  public OResultSet execute(ODatabase db, Map args, OCommandContext parentCtx, boolean usePlanCache) {
+  public OResultSet execute(
+      ODatabase db, Map args, OCommandContext parentCtx, boolean usePlanCache) {
     OBasicCommandContext ctx = new OBasicCommandContext();
     if (parentCtx != null) {
       ctx.setParentWithoutOverridingChild(parentCtx);
@@ -92,8 +94,11 @@ public class OProfileStatement extends OStatement {
       rs.next();
     }
 
-    OExplainResultSet result = new OExplainResultSet(
-        rs.getExecutionPlan().orElseThrow(() -> new OCommandExecutionException("Cannot profile command: " + statement)));
+    OExplainResultSet result =
+        new OExplainResultSet(
+            rs.getExecutionPlan()
+                .orElseThrow(
+                    () -> new OCommandExecutionException("Cannot profile command: " + statement)));
     rs.close();
     return result;
   }
@@ -112,10 +117,8 @@ public class OProfileStatement extends OStatement {
 
   @Override
   public boolean equals(Object o) {
-    if (this == o)
-      return true;
-    if (o == null || getClass() != o.getClass())
-      return false;
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
 
     OProfileStatement that = (OProfileStatement) o;
 

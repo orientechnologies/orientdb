@@ -18,17 +18,26 @@ package com.orientechnologies.orient.test.java.collection;
 import com.orientechnologies.common.test.SpeedTestGroup;
 
 public class CollectionSpeedTest extends SpeedTestGroup {
-	protected static final int		TEST_CYCLES			= 10000000;
-	protected static final int		COLLECTION_SIZE	= 10;
-	protected static final String	SEARCHED_VALUE	= String.valueOf(COLLECTION_SIZE - 1);
+  protected static final int TEST_CYCLES = 10000000;
+  protected static final int COLLECTION_SIZE = 10;
+  protected static final String SEARCHED_VALUE = String.valueOf(COLLECTION_SIZE - 1);
 
-	public void testOnce() {
-		addTest(new ArrayListSpeedTest()).data().setCycles(TEST_CYCLES).config(COLLECTION_SIZE, SEARCHED_VALUE);
+  public void testOnce() {
+    addTest(new ArrayListSpeedTest())
+        .data()
+        .setCycles(TEST_CYCLES)
+        .config(COLLECTION_SIZE, SEARCHED_VALUE);
 
-		addTest(new HashMapSpeedTest()).data().setCycles(TEST_CYCLES).config(COLLECTION_SIZE, SEARCHED_VALUE);
+    addTest(new HashMapSpeedTest())
+        .data()
+        .setCycles(TEST_CYCLES)
+        .config(COLLECTION_SIZE, SEARCHED_VALUE);
 
-		addTest(new ArraySpeedTest()).data().setCycles(TEST_CYCLES).config(COLLECTION_SIZE, SEARCHED_VALUE);
+    addTest(new ArraySpeedTest())
+        .data()
+        .setCycles(TEST_CYCLES)
+        .config(COLLECTION_SIZE, SEARCHED_VALUE);
 
-		go();
-	}
+    go();
+  }
 }

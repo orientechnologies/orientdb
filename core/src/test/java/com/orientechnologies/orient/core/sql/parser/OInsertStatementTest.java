@@ -1,11 +1,10 @@
 package com.orientechnologies.orient.core.sql.parser;
 
-import org.junit.Test;
+import static org.junit.Assert.fail;
 
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
-
-import static org.junit.Assert.fail;
+import org.junit.Test;
 
 public class OInsertStatementTest {
 
@@ -43,7 +42,6 @@ public class OInsertStatementTest {
     checkRightSyntax("insert into Foo (a,b) values (1, 2)");
     checkRightSyntax("insert into Foo (a,b) values ('1', '2')");
     checkRightSyntax("insert into Foo (a,b) values (\"1\", \"2\")");
-
   }
 
   @Test
@@ -57,7 +55,6 @@ public class OInsertStatementTest {
         "insert into Foo cluster foo1 (equaledges, name, list) values ('yes', 'square', ['bottom', 'top','left','right'] )");
     checkRightSyntax(
         "insert into Foo CLUSTER foo1 (equaledges, name, list) values ('yes', 'square', ['bottom', 'top','left','right'] )");
-
   }
 
   @Test
@@ -75,23 +72,31 @@ public class OInsertStatementTest {
   @Test
   public void testInsertEmbeddedDocs() {
     checkRightSyntax(
-        "INSERT INTO Activity SET user = #14:1, story = #18:2, `like` = { \n" + "      count: 0, \n" + "      latest: [], \n"
-            + "      '@type': 'document', \n" + "      '@class': 'Like'\n" + "    }");
+        "INSERT INTO Activity SET user = #14:1, story = #18:2, `like` = { \n"
+            + "      count: 0, \n"
+            + "      latest: [], \n"
+            + "      '@type': 'document', \n"
+            + "      '@class': 'Like'\n"
+            + "    }");
 
     checkRightSyntax(
-        "INSERT INTO Activity SET user = #14:1, story = #18:2, `like` = { \n" + "      count: 0, \n" + "      latest: [], \n"
-            + "      '@type': 'document', \n" + "      '@class': 'Like'\n" + "    }");
+        "INSERT INTO Activity SET user = #14:1, story = #18:2, `like` = { \n"
+            + "      count: 0, \n"
+            + "      latest: [], \n"
+            + "      '@type': 'document', \n"
+            + "      '@class': 'Like'\n"
+            + "    }");
   }
 
   @Test
   public void testJsonEscaping() {
-    //issue #5911
-    checkRightSyntax("insert into Bookmark content {\"data\""
-        + ":\"DPl62xXzEqG3tIPv7jYYWK34IG4bwTUNk0UUnhYHOluUdPiMQOLSz3V\\/GraBuzbEbjDARS6X1wUh53Dh3\\/hFpSXVy74iw4K7\\/WvwtyvdDJ51\\/6qg8RgPyL8qByNXnqxLviMaZk+UZCNmJ+wPJ+\\/Jphtb\\/cNPw5HmbTIA2VxOq"
-        + "1OybZIuJaTRVD5tO8sVpMqJTa4IFjMb69vlIYpWctEYByp7gtBCRQOsBeLydnoW+DUOeG1jDyrMmA4hi5M+ctwdn9Vb5wqTjWw=\",\"isRead\":\"N\",\"id\":\"52013784-4e32-4e9b-9676-1814ca1256fb\",\"isPrivate\":\"F\",\"is"
-        + "Shared\":0}");
+    // issue #5911
+    checkRightSyntax(
+        "insert into Bookmark content {\"data\""
+            + ":\"DPl62xXzEqG3tIPv7jYYWK34IG4bwTUNk0UUnhYHOluUdPiMQOLSz3V\\/GraBuzbEbjDARS6X1wUh53Dh3\\/hFpSXVy74iw4K7\\/WvwtyvdDJ51\\/6qg8RgPyL8qByNXnqxLviMaZk+UZCNmJ+wPJ+\\/Jphtb\\/cNPw5HmbTIA2VxOq"
+            + "1OybZIuJaTRVD5tO8sVpMqJTa4IFjMb69vlIYpWctEYByp7gtBCRQOsBeLydnoW+DUOeG1jDyrMmA4hi5M+ctwdn9Vb5wqTjWw=\",\"isRead\":\"N\",\"id\":\"52013784-4e32-4e9b-9676-1814ca1256fb\",\"isPrivate\":\"F\",\"is"
+            + "Shared\":0}");
   }
-
 
   @Test
   public void testInsertSelectNoTarget() {
@@ -108,7 +113,6 @@ public class OInsertStatementTest {
     } catch (ParseException e) {
       e.printStackTrace();
     }
-
   }
 
   protected OrientSql getParserFor(String string) {

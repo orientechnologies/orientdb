@@ -306,9 +306,9 @@
                 </plugin>
 
                 <plugin>
-                    <groupId>org.apache.maven.plugins</groupId>
-                    <artifactId>maven-checkstyle-plugin</artifactId>
-                    <version>3.1.0</version>
+                    <groupId>com.coveo</groupId>
+                    <artifactId>fmt-maven-plugin</artifactId>
+                    <version>2.9.1</version>
                 </plugin>
 
                 <plugin>
@@ -423,7 +423,7 @@
                 <configuration>
                     <doCheck>false</doCheck>
                     <doUpdate>false</doUpdate>
-                    <!-- Use committed revision so it does not change every 
+                    <!-- Use committed revision so it does not change every
                         time svn update is run -->
                     <useLastCommittedRevision>true</useLastCommittedRevision>
                     <!-- default revision number if unavailable -->
@@ -437,7 +437,7 @@
                 <artifactId>maven-bundle-plugin</artifactId>
                 <version>3.5.0</version>
                 <configuration>
-                    <!-- | dummy entry to stop bundle plugin from picking 
+                    <!-- | dummy entry to stop bundle plugin from picking
                         up jar config and reporting | WARNING: Duplicate name in Manifest | See http://markmail.org/message/mpkl24wk3jrjhhjg -->
                     <archive>
                         <forced>true</forced>
@@ -445,10 +445,10 @@
                     <excludeDependencies>true</excludeDependencies>
                     <manifestLocation>${project.build.directory}/osgi</manifestLocation>
                     <instructions>
-                        <!-- | stops the "uses" clauses being added to "Export-Package" 
+                        <!-- | stops the "uses" clauses being added to "Export-Package"
                             manifest entry -->
                         <_nouses>true</_nouses>
-                        <!-- | Stop the JAVA_1_n_HOME variables from being 
+                        <!-- | Stop the JAVA_1_n_HOME variables from being
                             treated as headers by Bnd -->
                         <_removeheaders>JAVA_1_3_HOME,JAVA_1_4_HOME,JAVA_1_5_HOME,JAVA_1_6_HOME,JAVA_1_7_HOME,
                             Bnd-LastModified,Built-By,Private-Package,Tool,Created-By,Build-Jdk,Include-Resource,
@@ -554,24 +554,19 @@
                 </configuration>
             </plugin>
             <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-checkstyle-plugin</artifactId>
-                <version>3.1.0</version>
-                <configuration>
-                    <excludes>com/orientechnologies/orient/core/sql/parser/*.java</excludes>
-                    <configLocation>${project.rootdir}/_base/orient_checks.xml</configLocation>
-                </configuration>
+                <groupId>com.coveo</groupId>
+                <artifactId>fmt-maven-plugin</artifactId>
+                <version>2.9.1</version>
                 <executions>
                     <execution>
-                        <phase>package</phase>
                         <goals>
                             <goal>check</goal>
                         </goals>
                     </execution>
                 </executions>
             </plugin>
-
         </plugins>
+
     </build>
 
     <reporting>

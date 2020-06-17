@@ -1,8 +1,11 @@
 package com.orientechnologies.orient.server.distributed.impl.task;
 
 import com.orientechnologies.orient.server.distributed.task.ORemoteTask;
-
-import java.io.*;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
+import java.io.IOException;
 
 public abstract class AbstractRemoteTaskTest {
 
@@ -17,5 +20,4 @@ public abstract class AbstractRemoteTaskTest {
     DataInputStream in = new DataInputStream(bais);
     to.fromStream(in, new ODefaultRemoteTaskFactoryV3());
   }
-
 }

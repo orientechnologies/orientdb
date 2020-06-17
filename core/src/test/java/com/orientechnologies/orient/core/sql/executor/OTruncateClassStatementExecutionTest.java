@@ -13,17 +13,19 @@ import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+import java.util.stream.Stream;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import java.util.*;
-import java.util.stream.Stream;
-
-/**
- * @author Luigi Dell'Aquila (l.dellaquila-(at)-orientdb.com)
- */
+/** @author Luigi Dell'Aquila (l.dellaquila-(at)-orientdb.com) */
 public class OTruncateClassStatementExecutionTest {
   static ODatabaseDocumentInternal database;
 
@@ -54,8 +56,10 @@ public class OTruncateClassStatementExecutionTest {
 
     database.command(new OCommandSQL("truncate class test_class")).execute();
 
-    database.save(new ODocument(testClass).field("name", "x").field("data", Arrays.asList(5, 6, 7)));
-    database.save(new ODocument(testClass).field("name", "y").field("data", Arrays.asList(8, 9, -1)));
+    database.save(
+        new ODocument(testClass).field("name", "x").field("data", Arrays.asList(5, 6, 7)));
+    database.save(
+        new ODocument(testClass).field("name", "y").field("data", Arrays.asList(8, 9, -1)));
 
     OResultSet result = database.query("select from test_class");
     //    Assert.assertEquals(result.size(), 2);
@@ -70,9 +74,10 @@ public class OTruncateClassStatementExecutionTest {
     Assert.assertEquals(index.getInternal().size(), 6);
 
     try (Stream<ORawPair<Object, ORID>> stream = index.getInternal().stream()) {
-      stream.forEach((entry) -> {
-        Assert.assertTrue(set.contains((Integer) entry.first));
-      });
+      stream.forEach(
+          (entry) -> {
+            Assert.assertTrue(set.contains((Integer) entry.first));
+          });
     }
 
     schema.dropClass("test_class");
@@ -96,14 +101,14 @@ public class OTruncateClassStatementExecutionTest {
     result = database.query("select from TestTruncateVertexClass");
     Assert.assertFalse(result.hasNext());
     result.close();
-
   }
 
   @Test
   public void testTruncateVertexClassSubclasses() {
 
     database.command("create class TestTruncateVertexClassSuperclass");
-    database.command("create class TestTruncateVertexClassSubclass extends TestTruncateVertexClassSuperclass");
+    database.command(
+        "create class TestTruncateVertexClassSubclass extends TestTruncateVertexClassSuperclass");
 
     database.command("insert into TestTruncateVertexClassSuperclass set name = 'foo'");
     database.command("insert into TestTruncateVertexClassSubclass set name = 'bar'");
@@ -127,7 +132,6 @@ public class OTruncateClassStatementExecutionTest {
     result = database.query("select from TestTruncateVertexClassSubclass");
     Assert.assertFalse(result.hasNext());
     result.close();
-
   }
 
   @Test
@@ -138,15 +142,19 @@ public class OTruncateClassStatementExecutionTest {
     database.command(
         "create index TestTruncateVertexClassSuperclassWithIndex_index on TestTruncateVertexClassSuperclassWithIndex (name) NOTUNIQUE");
 
-    database.command("create class TestTruncateVertexClassSubclassWithIndex extends TestTruncateVertexClassSuperclassWithIndex");
+    database.command(
+        "create class TestTruncateVertexClassSubclassWithIndex extends TestTruncateVertexClassSuperclassWithIndex");
 
     database.command("insert into TestTruncateVertexClassSuperclassWithIndex set name = 'foo'");
     database.command("insert into TestTruncateVertexClassSubclassWithIndex set name = 'bar'");
 
     if (!((ODatabaseInternal) database).getStorage().isRemote()) {
-      final OIndexManagerAbstract indexManager = ((OMetadataInternal) database.getMetadata()).getIndexManagerInternal();
-      final OIndex indexOne = indexManager
-          .getIndex((ODatabaseDocumentInternal) database, "TestTruncateVertexClassSuperclassWithIndex_index");
+      final OIndexManagerAbstract indexManager =
+          ((OMetadataInternal) database.getMetadata()).getIndexManagerInternal();
+      final OIndex indexOne =
+          indexManager.getIndex(
+              (ODatabaseDocumentInternal) database,
+              "TestTruncateVertexClassSuperclassWithIndex_index");
       Assert.assertEquals(2, indexOne.getInternal().size());
 
       database.command("truncate class TestTruncateVertexClassSubclassWithIndex");
@@ -155,7 +163,6 @@ public class OTruncateClassStatementExecutionTest {
       database.command("truncate class TestTruncateVertexClassSuperclassWithIndex polymorphic");
       Assert.assertEquals(0, indexOne.getInternal().size());
     }
-
   }
 
   private List<OResult> toList(OResultSet input) {
@@ -167,7 +174,8 @@ public class OTruncateClassStatementExecutionTest {
   }
 
   private OIndex getOrCreateIndex(OClass testClass) {
-    OIndex index = database.getMetadata().getIndexManagerInternal().getIndex(database, "test_class_by_data");
+    OIndex index =
+        database.getMetadata().getIndexManagerInternal().getIndex(database, "test_class_by_data");
     if (index == null) {
       testClass.createProperty("data", OType.EMBEDDEDLIST, OType.INTEGER);
       index = testClass.createIndex("test_class_by_data", OClass.INDEX_TYPE.UNIQUE, "data");
@@ -192,7 +200,8 @@ public class OTruncateClassStatementExecutionTest {
     OSchema schema = database.getMetadata().getSchema();
     OClass testClass = getOrCreateClass(schema);
 
-    boolean ccWasEnabled = ((OMetadataInternal) database.getMetadata()).getCommandCache().isEnabled();
+    boolean ccWasEnabled =
+        ((OMetadataInternal) database.getMetadata()).getCommandCache().isEnabled();
     ((OMetadataInternal) database.getMetadata()).getCommandCache().enable();
 
     database.command("truncate class test_class");
@@ -215,5 +224,4 @@ public class OTruncateClassStatementExecutionTest {
       ((OMetadataInternal) database.getMetadata()).getCommandCache().disable();
     }
   }
-
 }

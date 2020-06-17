@@ -1,9 +1,7 @@
 package com.orientechnologies.orient.server.distributed.sequence;
 
-import org.junit.Test;
-
-import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.server.distributed.ServerRun;
+import org.junit.Test;
 
 /**
  * @author Matan Shukry (matanshukry@gmail.com)

@@ -1,5 +1,7 @@
 package com.orientechnologies.orient.core.sql.executor;
 
+import static com.orientechnologies.orient.core.sql.executor.ExecutionPlanPrintUtils.printExecutionPlan;
+
 import com.orientechnologies.orient.core.db.ODatabaseSession;
 import com.orientechnologies.orient.core.db.ODatabaseType;
 import com.orientechnologies.orient.core.db.OrientDB;
@@ -10,28 +12,26 @@ import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.metadata.schema.OViewConfig;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import org.assertj.core.api.Assertions;
-import org.junit.*;
-import org.junit.rules.TestName;
-
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CountDownLatch;
+import org.assertj.core.api.Assertions;
+import org.junit.After;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Rule;
+import org.junit.Test;
+import org.junit.rules.TestName;
 
-import static com.orientechnologies.orient.core.sql.executor.ExecutionPlanPrintUtils.printExecutionPlan;
-
-/**
- * @author Luigi Dell'Aquila (l.dellaquila-(at)-orientdb.com)
- */
+/** @author Luigi Dell'Aquila (l.dellaquila-(at)-orientdb.com) */
 public class OUpdateStatementExecutionTest {
-  @Rule
-  public TestName name = new TestName();
+  @Rule public TestName name = new TestName();
 
   private ODatabaseDocument db;
 
-  private String   className;
+  private String className;
   private OrientDB orientDB;
 
   @Before
@@ -66,7 +66,6 @@ public class OUpdateStatementExecutionTest {
 
       doc.save();
     }
-
   }
 
   @After
@@ -144,7 +143,8 @@ public class OUpdateStatementExecutionTest {
 
   @Test
   public void testConditionalSet() {
-    OResultSet result = db.command("update " + className + " set surname = 'foo' where name = 'name3'");
+    OResultSet result =
+        db.command("update " + className + " set surname = 'foo' where name = 'name3'");
     Assert.assertTrue(result.hasNext());
     OResult item = result.next();
     Assert.assertNotNull(item);
@@ -170,7 +170,8 @@ public class OUpdateStatementExecutionTest {
 
   @Test
   public void testSetOnList() {
-    OResultSet result = db.command("update " + className + " set tagsList[0] = 'abc' where name = 'name3'");
+    OResultSet result =
+        db.command("update " + className + " set tagsList[0] = 'abc' where name = 'name3'");
     printExecutionPlan(result);
     Assert.assertTrue(result.hasNext());
     OResult item = result.next();
@@ -201,7 +202,8 @@ public class OUpdateStatementExecutionTest {
 
   @Test
   public void testSetOnList2() {
-    OResultSet result = db.command("update " + className + " set tagsList[6] = 'abc' where name = 'name3'");
+    OResultSet result =
+        db.command("update " + className + " set tagsList[6] = 'abc' where name = 'name3'");
     printExecutionPlan(result);
     Assert.assertTrue(result.hasNext());
     OResult item = result.next();
@@ -236,7 +238,8 @@ public class OUpdateStatementExecutionTest {
 
   @Test
   public void testSetOnMap() {
-    OResultSet result = db.command("update " + className + " set tagsMap['foo'] = 'abc' where name = 'name3'");
+    OResultSet result =
+        db.command("update " + className + " set tagsMap['foo'] = 'abc' where name = 'name3'");
     Assert.assertTrue(result.hasNext());
     OResult item = result.next();
     Assert.assertNotNull(item);
@@ -272,7 +275,8 @@ public class OUpdateStatementExecutionTest {
 
   @Test
   public void testPlusAssign() {
-    OResultSet result = db.command("update " + className + " set name += 'foo', newField += 'bar', number += 5");
+    OResultSet result =
+        db.command("update " + className + " set name += 'foo', newField += 'bar', number += 5");
     Assert.assertTrue(result.hasNext());
     OResult item = result.next();
     Assert.assertNotNull(item);
@@ -285,10 +289,11 @@ public class OUpdateStatementExecutionTest {
       Assert.assertTrue(result.hasNext());
       item = result.next();
       Assert.assertNotNull(item);
-      Assert.assertTrue(item.getProperty("name").toString().endsWith("foo")); //test concatenate string to string
+      Assert.assertTrue(
+          item.getProperty("name").toString().endsWith("foo")); // test concatenate string to string
       Assert.assertEquals(8, item.getProperty("name").toString().length());
-      Assert.assertEquals("bar", item.getProperty("newField")); //test concatenate null to string
-      Assert.assertEquals((Object) 9L, item.getProperty("number")); //test sum numbers
+      Assert.assertEquals("bar", item.getProperty("newField")); // test concatenate null to string
+      Assert.assertEquals((Object) 9L, item.getProperty("number")); // test sum numbers
     }
     Assert.assertFalse(result.hasNext());
     result.close();
@@ -393,7 +398,8 @@ public class OUpdateStatementExecutionTest {
   @Test
   public void testContent() {
 
-    OResultSet result = db.command("update " + className + " content {'name': 'foo', 'secondName': 'bar'}");
+    OResultSet result =
+        db.command("update " + className + " content {'name': 'foo', 'secondName': 'bar'}");
     Assert.assertTrue(result.hasNext());
     OResult item = result.next();
     Assert.assertNotNull(item);
@@ -417,7 +423,8 @@ public class OUpdateStatementExecutionTest {
   @Test
   public void testMerge() {
 
-    OResultSet result = db.command("update " + className + " merge {'name': 'foo', 'secondName': 'bar'}");
+    OResultSet result =
+        db.command("update " + className + " merge {'name': 'foo', 'secondName': 'bar'}");
     Assert.assertTrue(result.hasNext());
     OResult item = result.next();
     Assert.assertNotNull(item);
@@ -441,7 +448,8 @@ public class OUpdateStatementExecutionTest {
   @Test
   public void testUpsert1() {
 
-    OResultSet result = db.command("update " + className + " set foo = 'bar' upsert where name = 'name1'");
+    OResultSet result =
+        db.command("update " + className + " set foo = 'bar' upsert where name = 'name1'");
     Assert.assertTrue(result.hasNext());
     OResult item = result.next();
     Assert.assertNotNull(item);
@@ -469,7 +477,9 @@ public class OUpdateStatementExecutionTest {
   @Test
   public void testUpsertAndReturn() {
 
-    OResultSet result = db.command("update " + className + " set foo = 'bar' upsert  return after  where name = 'name1' ");
+    OResultSet result =
+        db.command(
+            "update " + className + " set foo = 'bar' upsert  return after  where name = 'name1' ");
 
     Assert.assertTrue(result.hasNext());
     OResult item = result.next();
@@ -477,13 +487,13 @@ public class OUpdateStatementExecutionTest {
     Assert.assertEquals("bar", item.getProperty("foo"));
     Assert.assertFalse(result.hasNext());
     result.close();
-
   }
 
   @Test
   public void testUpsert2() {
 
-    OResultSet result = db.command("update " + className + " set foo = 'bar' upsert where name = 'name11'");
+    OResultSet result =
+        db.command("update " + className + " set foo = 'bar' upsert where name = 'name11'");
     Assert.assertTrue(result.hasNext());
     OResult item = result.next();
     Assert.assertNotNull(item);
@@ -573,16 +583,22 @@ public class OUpdateStatementExecutionTest {
     Assert.assertNotNull(item);
     List ls = item.getProperty("theProperty");
 
-    Assertions.assertThat(ls).isNotNull().hasSize(7).doesNotContain("n0").doesNotContain("n1").contains("n2").doesNotContain("n3")
+    Assertions.assertThat(ls)
+        .isNotNull()
+        .hasSize(7)
+        .doesNotContain("n0")
+        .doesNotContain("n1")
+        .contains("n2")
+        .doesNotContain("n3")
         .contains("n4");
 
-//    Assert.assertNotNull(ls);
-//    Assert.assertEquals(7, ls.size());
-//    Assert.assertFalse(ls.contains("n0"));
-//    Assert.assertFalse(ls.contains("n1"));
-//    Assert.assertTrue(ls.contains("n2"));
-//    Assert.assertFalse(ls.contains("n3"));
-//    Assert.assertTrue(ls.contains("n4"));
+    //    Assert.assertNotNull(ls);
+    //    Assert.assertEquals(7, ls.size());
+    //    Assert.assertFalse(ls.contains("n0"));
+    //    Assert.assertFalse(ls.contains("n1"));
+    //    Assert.assertTrue(ls.contains("n2"));
+    //    Assert.assertFalse(ls.contains("n3"));
+    //    Assert.assertTrue(ls.contains("n4"));
 
     Assert.assertFalse(result.hasNext());
     result.close();
@@ -666,17 +682,21 @@ public class OUpdateStatementExecutionTest {
     cfg.setUpdatable(true);
     cfg.setOriginRidField("origin");
     CountDownLatch latch = new CountDownLatch(1);
-    db.getMetadata().getSchema().createView(cfg, new ViewCreationListener() {
-      @Override
-      public void afterCreate(ODatabaseSession database, String viewName) {
-        latch.countDown();
-      }
+    db.getMetadata()
+        .getSchema()
+        .createView(
+            cfg,
+            new ViewCreationListener() {
+              @Override
+              public void afterCreate(ODatabaseSession database, String viewName) {
+                latch.countDown();
+              }
 
-      @Override
-      public void onError(String viewName, Exception exception) {
-        latch.countDown();
-      }
-    });
+              @Override
+              public void onError(String viewName, Exception exception) {
+                latch.countDown();
+              }
+            });
     latch.await();
 
     db.command("UPDATE " + viewName + " SET aNewProp = \"newPropValue\"").close();
@@ -697,7 +717,6 @@ public class OUpdateStatementExecutionTest {
       OResult item = result.next();
       Assert.assertNotNull(item);
       Assert.assertEquals("newPropValue", item.getProperty("aNewProp"));
-
     }
     Assert.assertFalse(result.hasNext());
     result.close();
@@ -705,7 +724,8 @@ public class OUpdateStatementExecutionTest {
 
   @Test
   public void testReturnBefore() {
-    OResultSet result = db.command("update " + className + " set name = 'foo' RETURN BEFORE where name = 'name1'");
+    OResultSet result =
+        db.command("update " + className + " set name = 'foo' RETURN BEFORE where name = 'name1'");
     printExecutionPlan(result);
     Assert.assertTrue(result.hasNext());
     OResult item = result.next();
@@ -715,5 +735,4 @@ public class OUpdateStatementExecutionTest {
     Assert.assertFalse(result.hasNext());
     result.close();
   }
-
 }

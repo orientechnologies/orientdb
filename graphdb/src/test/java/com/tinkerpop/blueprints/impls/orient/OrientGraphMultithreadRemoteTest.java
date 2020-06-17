@@ -1,28 +1,30 @@
 package com.tinkerpop.blueprints.impls.orient;
 
-import java.io.File;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-
-import org.junit.*;
+import static org.junit.Assert.assertEquals;
 
 import com.orientechnologies.orient.client.remote.OServerAdmin;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.server.OServer;
-import com.orientechnologies.orient.server.OServerMain;
 import com.tinkerpop.blueprints.Vertex;
-
-import static org.junit.Assert.assertEquals;
+import java.io.File;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+import org.junit.After;
+import org.junit.AfterClass;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.BeforeClass;
+import org.junit.Test;
 
 public class OrientGraphMultithreadRemoteTest {
   private static final String serverPort = System.getProperty("orient.server.port", "3080");
-  private static OServer     server;
-  private static String      oldOrientDBHome;
+  private static OServer server;
+  private static String oldOrientDBHome;
 
-  private static String      serverHome;
+  private static String serverHome;
 
   private OrientGraphFactory graphFactory;
 
@@ -41,9 +43,9 @@ public class OrientGraphMultithreadRemoteTest {
     System.setProperty("ORIENTDB_HOME", serverHome);
 
     server = new OServer(false);
-    server.startup(OrientGraphMultithreadRemoteTest.class.getResourceAsStream("/embedded-server-config.xml"));
+    server.startup(
+        OrientGraphMultithreadRemoteTest.class.getResourceAsStream("/embedded-server-config.xml"));
     server.activate();
-
   }
 
   @AfterClass
@@ -55,10 +57,8 @@ public class OrientGraphMultithreadRemoteTest {
     Orient.instance().shutdown();
     Orient.instance().startup();
 
-    if (oldOrientDBHome != null)
-      System.setProperty("ORIENTDB_HOME", oldOrientDBHome);
-    else
-      System.clearProperty("ORIENTDB_HOME");
+    if (oldOrientDBHome != null) System.setProperty("ORIENTDB_HOME", oldOrientDBHome);
+    else System.clearProperty("ORIENTDB_HOME");
 
     final File file = new File(serverHome);
     deleteDirectory(file);
@@ -69,7 +69,11 @@ public class OrientGraphMultithreadRemoteTest {
   @Before
   public void before() {
     OGlobalConfiguration.NETWORK_LOCK_TIMEOUT.setValue(15000);
-    final String url = "remote:localhost:" + serverPort + "/" + OrientGraphMultithreadRemoteTest.class.getSimpleName();
+    final String url =
+        "remote:localhost:"
+            + serverPort
+            + "/"
+            + OrientGraphMultithreadRemoteTest.class.getSimpleName();
 
     try {
       final OServerAdmin serverAdmin = new OServerAdmin(url);
@@ -85,7 +89,6 @@ public class OrientGraphMultithreadRemoteTest {
 
     graphFactory = new OrientGraphFactory(url);
     graphFactory.setupPool(5, 256);
-
   }
 
   @Test
@@ -96,33 +99,34 @@ public class OrientGraphMultithreadRemoteTest {
     long records = threadCount * recordsPerThread;
     try {
       for (int t = 0; t < threadCount; t++) {
-        Thread thread = new Thread() {
-          @Override
-          public void run() {
-            for (int i = 0; i < recordsPerThread; i++) {
-              OrientGraph graph = graphFactory.getTx(); // get an instance from the pool
-              try {
+        Thread thread =
+            new Thread() {
+              @Override
+              public void run() {
+                for (int i = 0; i < recordsPerThread; i++) {
+                  OrientGraph graph = graphFactory.getTx(); // get an instance from the pool
+                  try {
 
-                Vertex v1 = graph.addVertex(null);
-                v1.setProperty("name", "b");
-                // v1.setProperty("blob", blob);
+                    Vertex v1 = graph.addVertex(null);
+                    v1.setProperty("name", "b");
+                    // v1.setProperty("blob", blob);
 
-                graph.commit(); // commits transaction
-              } catch (Exception ex) {
-                try {
-                  graph.rollback();
-                } catch (Exception ex1) {
-                  System.out.println("rollback exception! " + ex);
+                    graph.commit(); // commits transaction
+                  } catch (Exception ex) {
+                    try {
+                      graph.rollback();
+                    } catch (Exception ex1) {
+                      System.out.println("rollback exception! " + ex);
+                    }
+
+                    System.out.println("operation exception! " + ex);
+                    ex.printStackTrace(System.out);
+                  } finally {
+                    graph.shutdown();
+                  }
                 }
-
-                System.out.println("operation exception! " + ex);
-                ex.printStackTrace(System.out);
-              } finally {
-                graph.shutdown();
               }
-            }
-          }
-        };
+            };
         threads.add(thread);
         thread.start();
       }
@@ -138,7 +142,6 @@ public class OrientGraphMultithreadRemoteTest {
     OrientGraph graph = graphFactory.getTx();
     assertEquals(graph.countVertices(), records);
     graph.shutdown();
-
   }
 
   @After
@@ -158,5 +161,4 @@ public class OrientGraphMultithreadRemoteTest {
       directory.delete();
     }
   }
-
 }

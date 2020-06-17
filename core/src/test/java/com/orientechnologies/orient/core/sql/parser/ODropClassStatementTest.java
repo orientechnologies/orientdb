@@ -4,7 +4,8 @@ import org.junit.Test;
 
 public class ODropClassStatementTest extends OParserTestAbstract {
 
-  @Test public void testPlain() {
+  @Test
+  public void testPlain() {
     checkRightSyntax("DROP CLASS Foo");
     checkRightSyntax("drop class Foo");
     checkRightSyntax("drop class Foo UNSAFE");
@@ -15,7 +16,8 @@ public class ODropClassStatementTest extends OParserTestAbstract {
     checkWrongSyntax("drop class Foo bar");
   }
 
-  @Test public void testIfExists() {
+  @Test
+  public void testIfExists() {
     checkRightSyntax("DROP CLASS Foo if exists");
     checkRightSyntax("DROP CLASS Foo IF EXISTS");
     checkRightSyntax("DROP CLASS if if exists");
@@ -25,5 +27,4 @@ public class ODropClassStatementTest extends OParserTestAbstract {
     checkWrongSyntax("drop class Foo if exists lkj");
     checkWrongSyntax("drop class Foo if lkj");
   }
-
 }

@@ -13,26 +13,21 @@
  *  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  *  * See the License for the specific language governing permissions and
  *  * limitations under the License.
- *  
+ *
  */
 
 package com.orientechnologies.lucene.tests;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.OVertex;
-import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
-import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
-import static org.assertj.core.api.Assertions.assertThat;
-
-/**
- * Created by enricorisa on 28/06/14.
- */
-
+/** Created by enricorisa on 28/06/14. */
 public class OLuceneGraphTxTest extends OLuceneBaseTest {
 
   @Before
@@ -49,20 +44,20 @@ public class OLuceneGraphTxTest extends OLuceneBaseTest {
     OVertex v = db.newVertex("City");
     v.setProperty("name", "London");
 
-    //save london
+    // save london
     db.save(v);
 
     OResultSet resultSet = db.command("select from City where search_class('London') =true ");
 
     assertThat(resultSet).hasSize(1);
 
-    //modifiy vertex
+    // modifiy vertex
     v.setProperty("name", "Berlin");
 
-    //re-save
+    // re-save
     db.save(v);
 
-    //only berlin
+    // only berlin
     resultSet = db.command("select from City where search_class('Berlin') =true ");
     assertThat(resultSet).hasSize(1);
 
@@ -77,7 +72,5 @@ public class OLuceneGraphTxTest extends OLuceneBaseTest {
 
     resultSet = db.command("select from City where search_class('London') =true ");
     assertThat(resultSet).hasSize(0);
-
   }
-
 }

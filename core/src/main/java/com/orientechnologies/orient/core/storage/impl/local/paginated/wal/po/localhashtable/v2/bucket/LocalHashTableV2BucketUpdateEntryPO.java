@@ -5,19 +5,18 @@ import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.WALRecordTypes;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.PageOperationRecord;
 import com.orientechnologies.orient.core.storage.index.hashindex.local.v2.HashIndexBucketV2;
-
 import java.nio.ByteBuffer;
 
 public final class LocalHashTableV2BucketUpdateEntryPO extends PageOperationRecord {
-  private int    keySize;
-  private int    index;
+  private int keySize;
+  private int index;
   private byte[] value;
   private byte[] oldValue;
 
-  public LocalHashTableV2BucketUpdateEntryPO() {
-  }
+  public LocalHashTableV2BucketUpdateEntryPO() {}
 
-  public LocalHashTableV2BucketUpdateEntryPO(int index, byte[] value, byte[] oldValue, int keySize) {
+  public LocalHashTableV2BucketUpdateEntryPO(
+      int index, byte[] value, byte[] oldValue, int keySize) {
     this.index = index;
     this.value = value;
     this.oldValue = oldValue;
@@ -59,7 +58,10 @@ public final class LocalHashTableV2BucketUpdateEntryPO extends PageOperationReco
 
   @Override
   public int serializedSize() {
-    return super.serializedSize() + 4 * OIntegerSerializer.INT_SIZE + value.length + oldValue.length;
+    return super.serializedSize()
+        + 4 * OIntegerSerializer.INT_SIZE
+        + value.length
+        + oldValue.length;
   }
 
   @Override

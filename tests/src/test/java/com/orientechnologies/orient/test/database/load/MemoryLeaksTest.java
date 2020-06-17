@@ -6,7 +6,7 @@ import org.testng.annotations.Test;
 
 /**
  * Check the system as for memory leaks.
- * 
+ *
  * @author Artem Orobets (enisher-at-gmail.com)
  */
 public class MemoryLeaksTest {

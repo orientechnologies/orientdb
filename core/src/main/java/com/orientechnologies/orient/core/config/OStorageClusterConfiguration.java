@@ -22,7 +22,8 @@ package com.orientechnologies.orient.core.config;
 public interface OStorageClusterConfiguration {
 
   enum STATUS {
-    ONLINE, OFFLINE
+    ONLINE,
+    OFFLINE
   }
 
   int getId();

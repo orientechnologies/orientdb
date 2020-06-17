@@ -25,26 +25,22 @@ import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.serialization.OStreamable;
 import com.orientechnologies.orient.core.storage.OStorage;
-
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
 
 /**
- * Base interface for identifiable objects. This abstraction is required to use ORID and ORecord in many points.
- * 
+ * Base interface for identifiable objects. This abstraction is required to use ORID and ORecord in
+ * many points.
+ *
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
- * 
  */
 public class OPlaceholder implements OIdentifiable, OStreamable {
   private ORecordId rid;
-  private int       recordVersion;
+  private int recordVersion;
 
-  /**
-   * Empty constructor used by serialization
-   */
-  public OPlaceholder() {
-  }
+  /** Empty constructor used by serialization */
+  public OPlaceholder() {}
 
   public OPlaceholder(final ORecordId rid, final int version) {
     this.rid = rid;
@@ -68,8 +64,7 @@ public class OPlaceholder implements OIdentifiable, OStreamable {
 
   @Override
   public boolean equals(final Object obj) {
-    if (!(obj instanceof OPlaceholder))
-      return false;
+    if (!(obj instanceof OPlaceholder)) return false;
 
     final OPlaceholder other = (OPlaceholder) obj;
 
@@ -115,8 +110,14 @@ public class OPlaceholder implements OIdentifiable, OStreamable {
 
   @Override
   public void lock(final boolean iExclusive) {
-    ODatabaseRecordThreadLocal.instance().get().getTransaction().lockRecord(this,
-        iExclusive ? OStorage.LOCKING_STRATEGY.EXCLUSIVE_LOCK : OStorage.LOCKING_STRATEGY.SHARED_LOCK);
+    ODatabaseRecordThreadLocal.instance()
+        .get()
+        .getTransaction()
+        .lockRecord(
+            this,
+            iExclusive
+                ? OStorage.LOCKING_STRATEGY.EXCLUSIVE_LOCK
+                : OStorage.LOCKING_STRATEGY.SHARED_LOCK);
   }
 
   @Override

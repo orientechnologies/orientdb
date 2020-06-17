@@ -8,8 +8,9 @@ public class OSchemaNotCreatedException extends OSchemaException implements OHig
   }
 
   /**
-   * This constructor is needed to restore and reproduce exception on client side in case of remote storage exception handling.
-   * Please create "copy constructor" for each exception which has current one as a parent.
+   * This constructor is needed to restore and reproduce exception on client side in case of remote
+   * storage exception handling. Please create "copy constructor" for each exception which has
+   * current one as a parent.
    *
    * @param exception
    */

@@ -50,8 +50,7 @@ public class OServerConfigAuthenticator extends OSecurityAuthenticatorAbstract {
 
         // This will throw an IllegalArgumentException if username is null or empty.
         // However, a null or empty username is possible with some security implementations.
-        if (username != null && !username.isEmpty())
-          userCfg = getServerConfig().getUser(username);
+        if (username != null && !username.isEmpty()) userCfg = getServerConfig().getUser(username);
 
         if (userCfg != null && userCfg.password != null) {
           if (OSecurityManager.instance().checkPassword(password, userCfg.password)) {
@@ -59,7 +58,8 @@ public class OServerConfigAuthenticator extends OSecurityAuthenticatorAbstract {
           }
         }
       } else {
-        OLogManager.instance().error(this, "OServerConfigAuthenticator.authenticate() ServerConfig is null", null);
+        OLogManager.instance()
+            .error(this, "OServerConfigAuthenticator.authenticate() ServerConfig is null", null);
       }
     } catch (Exception ex) {
       OLogManager.instance().error(this, "OServerConfigAuthenticator.authenticate()", ex);
@@ -69,7 +69,10 @@ public class OServerConfigAuthenticator extends OSecurityAuthenticatorAbstract {
   }
 
   // OSecurityAuthenticator
-  public void config(final OServer oServer, final OServerConfigurationManager serverCfg, final ODocument jsonConfig) {
+  public void config(
+      final OServer oServer,
+      final OServerConfigurationManager serverCfg,
+      final ODocument jsonConfig) {
     super.config(oServer, serverCfg, jsonConfig);
   }
 
@@ -87,8 +90,7 @@ public class OServerConfigAuthenticator extends OSecurityAuthenticatorAbstract {
   // OSecurityAuthenticator
   // If not supported by the authenticator, return false.
   public boolean isAuthorized(final String username, final String resource) {
-    if (username == null || resource == null)
-      return false;
+    if (username == null || resource == null) return false;
 
     if (getServerConfig() != null) {
       // getUser() will throw an IllegalArgumentException if username is null or empty.
@@ -98,19 +100,18 @@ public class OServerConfigAuthenticator extends OSecurityAuthenticatorAbstract {
 
         if (userCfg != null) {
           // Total Access
-          if (userCfg.resources.equals("*"))
-            return true;
+          if (userCfg.resources.equals("*")) return true;
 
           String[] resourceParts = userCfg.resources.split(",");
 
           for (String r : resourceParts) {
-            if (r.equalsIgnoreCase(resource))
-              return true;
+            if (r.equalsIgnoreCase(resource)) return true;
           }
         }
       }
     } else {
-      OLogManager.instance().error(this, "OServerConfigAuthenticator.isAuthorized() ServerConfig is null", null);
+      OLogManager.instance()
+          .error(this, "OServerConfigAuthenticator.isAuthorized() ServerConfig is null", null);
     }
 
     return false;

@@ -24,31 +24,41 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.concurrent.*;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Future;
+import java.util.concurrent.RejectedExecutionException;
+import java.util.concurrent.Semaphore;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
 /**
- * Limits the tasks scope of an {@link ExecutorService} into a smaller sub-executor service. This allows to submit tasks to the
- * underlying executor service while the shutdown related methods are scoped only to the subset of tasks submitted through this
- * sub-executor:
+ * Limits the tasks scope of an {@link ExecutorService} into a smaller sub-executor service. This
+ * allows to submit tasks to the underlying executor service while the shutdown related methods are
+ * scoped only to the subset of tasks submitted through this sub-executor:
+ *
  * <ul>
- * <li>{@link #shutdown()} – shutdowns this sub-executor only.
- * <li>{@link #isShutdown()} and {@link #isTerminated()} – report status of this sub-executor only.
- * <li>{@link #awaitTermination(long, TimeUnit)} – awaits for tasks submitted through this sub-executor only.
+ *   <li>{@link #shutdown()} – shutdowns this sub-executor only.
+ *   <li>{@link #isShutdown()} and {@link #isTerminated()} – report status of this sub-executor
+ *       only.
+ *   <li>{@link #awaitTermination(long, TimeUnit)} – awaits for tasks submitted through this
+ *       sub-executor only.
  * </ul>
  *
  * @author Sergey Sitnikov
  */
-@SuppressWarnings({ "unchecked", "NullableProblems" })
+@SuppressWarnings({"unchecked", "NullableProblems"})
 public class SubExecutorService implements ExecutorService {
 
   private final ExecutorService executorService;
 
   private boolean alive = true;
 
-  private final Lock      aliveLock  = new ReentrantLock();
+  private final Lock aliveLock = new ReentrantLock();
   private final Condition terminated = aliveLock.newCondition();
 
   private final Set<Task> tasks = new HashSet<Task>();
@@ -121,8 +131,7 @@ public class SubExecutorService implements ExecutorService {
         } finally {
           wrapped.releaseExecution();
         }
-      } else
-        return throwRejected(task);
+      } else return throwRejected(task);
     } finally {
       releaseAlive();
     }
@@ -141,8 +150,7 @@ public class SubExecutorService implements ExecutorService {
         } finally {
           wrapped.releaseExecution();
         }
-      } else
-        return throwRejected(task);
+      } else return throwRejected(task);
     } finally {
       releaseAlive();
     }
@@ -161,26 +169,28 @@ public class SubExecutorService implements ExecutorService {
         } finally {
           wrapped.releaseExecution();
         }
-      } else
-        return throwRejected(task);
+      } else return throwRejected(task);
     } finally {
       releaseAlive();
     }
   }
 
   @Override
-  public <T> List<Future<T>> invokeAll(Collection<? extends Callable<T>> tasks) throws InterruptedException {
-    throw new UnsupportedOperationException("invokeAll is not supported");
-  }
-
-  @Override
-  public <T> List<Future<T>> invokeAll(Collection<? extends Callable<T>> tasks, long timeout, TimeUnit unit)
+  public <T> List<Future<T>> invokeAll(Collection<? extends Callable<T>> tasks)
       throws InterruptedException {
     throw new UnsupportedOperationException("invokeAll is not supported");
   }
 
   @Override
-  public <T> T invokeAny(Collection<? extends Callable<T>> tasks) throws InterruptedException, ExecutionException {
+  public <T> List<Future<T>> invokeAll(
+      Collection<? extends Callable<T>> tasks, long timeout, TimeUnit unit)
+      throws InterruptedException {
+    throw new UnsupportedOperationException("invokeAll is not supported");
+  }
+
+  @Override
+  public <T> T invokeAny(Collection<? extends Callable<T>> tasks)
+      throws InterruptedException, ExecutionException {
     throw new UnsupportedOperationException("invokeAny is not supported");
   }
 
@@ -232,8 +242,7 @@ public class SubExecutorService implements ExecutorService {
   protected void unregister(Task task) {
     tasks.remove(task);
 
-    if (!isAlive() && tasks.isEmpty())
-      terminated.signalAll();
+    if (!isAlive() && tasks.isEmpty()) terminated.signalAll();
   }
 
   protected void shutdownTasks(Set<Task> tasks) {
@@ -249,7 +258,6 @@ public class SubExecutorService implements ExecutorService {
     void acquireExecution();
 
     void releaseExecution();
-
   }
 
   protected class RunnableTask<V> implements Task<V> {
@@ -257,7 +265,7 @@ public class SubExecutorService implements ExecutorService {
     private final Semaphore executionLock = new Semaphore(1);
 
     private final Runnable runnable;
-    private final boolean  unregister;
+    private final boolean unregister;
 
     private Future<V> future;
 
@@ -290,8 +298,7 @@ public class SubExecutorService implements ExecutorService {
     public void run() {
       acquireExecution();
       try {
-        if (!unregister && isCancelled())
-          return;
+        if (!unregister && isCancelled()) return;
         try {
           runnable.run();
         } finally {
@@ -336,7 +343,8 @@ public class SubExecutorService implements ExecutorService {
     }
 
     @Override
-    public V get(long timeout, TimeUnit unit) throws InterruptedException, ExecutionException, TimeoutException {
+    public V get(long timeout, TimeUnit unit)
+        throws InterruptedException, ExecutionException, TimeoutException {
       return getFuture().get(timeout, unit);
     }
   }
@@ -346,7 +354,7 @@ public class SubExecutorService implements ExecutorService {
     private final Semaphore executionLock = new Semaphore(1);
 
     private final Callable<V> callable;
-    private final boolean     unregister;
+    private final boolean unregister;
 
     private Future<V> future;
 
@@ -379,8 +387,7 @@ public class SubExecutorService implements ExecutorService {
     public void run() {
       acquireExecution();
       try {
-        if (!unregister && isCancelled())
-          return;
+        if (!unregister && isCancelled()) return;
         try {
           try {
             callable.call();
@@ -408,8 +415,7 @@ public class SubExecutorService implements ExecutorService {
     public V call() throws Exception {
       acquireExecution();
       try {
-        if (!unregister && isCancelled())
-          return null;
+        if (!unregister && isCancelled()) return null;
         try {
           return callable.call();
         } finally {
@@ -448,10 +454,9 @@ public class SubExecutorService implements ExecutorService {
     }
 
     @Override
-    public V get(long timeout, TimeUnit unit) throws InterruptedException, ExecutionException, TimeoutException {
+    public V get(long timeout, TimeUnit unit)
+        throws InterruptedException, ExecutionException, TimeoutException {
       return getFuture().get(timeout, unit);
     }
-
   }
-
 }

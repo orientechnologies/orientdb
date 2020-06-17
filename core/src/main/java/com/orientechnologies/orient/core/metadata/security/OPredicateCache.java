@@ -4,31 +4,29 @@ import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.sql.OCommandSQLParsingException;
 import com.orientechnologies.orient.core.sql.OSQLEngine;
 import com.orientechnologies.orient.core.sql.parser.OOrBlock;
-
 import java.util.LinkedHashMap;
 import java.util.Map;
 
 /**
- * This class is an LRU cache for already parsed SQL statement executors. It stores itself in the storage as a resource. It also
- * acts an an entry point for the SQL parser.
+ * This class is an LRU cache for already parsed SQL statement executors. It stores itself in the
+ * storage as a resource. It also acts an an entry point for the SQL parser.
  *
  * @author Luigi Dell'Aquila (l.dellaquila-(at)-orientdb.com)
  */
 public class OPredicateCache {
 
   private Map<String, OOrBlock> map;
-  private int                   mapSize;
+  private int mapSize;
 
-  /**
-   * @param size the size of the cache
-   */
+  /** @param size the size of the cache */
   public OPredicateCache(int size) {
     this.mapSize = size;
-    map = new LinkedHashMap<String, OOrBlock>(size) {
-      protected boolean removeEldestEntry(final Map.Entry<String, OOrBlock> eldest) {
-        return super.size() > mapSize;
-      }
-    };
+    map =
+        new LinkedHashMap<String, OOrBlock>(size) {
+          protected boolean removeEldestEntry(final Map.Entry<String, OOrBlock> eldest) {
+            return super.size() > mapSize;
+          }
+        };
   }
 
   /**
@@ -56,7 +54,7 @@ public class OPredicateCache {
 
     OOrBlock result;
     synchronized (map) {
-      //LRU
+      // LRU
       result = map.remove(statement);
       if (result != null) {
         map.put(statement, result);

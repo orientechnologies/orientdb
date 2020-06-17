@@ -21,15 +21,11 @@ package com.orientechnologies.orient.server.distributed;
 
 import com.orientechnologies.common.util.OCallable;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
-import com.orientechnologies.orient.core.db.record.OIdentifiable;
-import com.orientechnologies.orient.core.id.ORID;
-import com.orientechnologies.orient.core.storage.ORawBuffer;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
 import com.orientechnologies.orient.core.tx.OTransactionId;
 import com.orientechnologies.orient.core.tx.OTransactionSequenceStatus;
 import com.orientechnologies.orient.core.tx.OTxMetadataHolder;
 import com.orientechnologies.orient.server.distributed.task.ORemoteTask;
-
 import java.io.IOException;
 import java.util.Collection;
 import java.util.List;
@@ -44,9 +40,14 @@ public interface ODistributedDatabase {
 
   String getDatabaseName();
 
-  ODistributedResponse send2Nodes(ODistributedRequest iRequest, Collection<String> iClusterNames, Collection<String> iNodes,
-      ODistributedRequest.EXECUTION_MODE iExecutionMode, Object localResult,
-      OCallable<Void, ODistributedRequestId> iAfterSentCallback, OCallable<Void, ODistributedResponseManager> endCallback);
+  ODistributedResponse send2Nodes(
+      ODistributedRequest iRequest,
+      Collection<String> iClusterNames,
+      Collection<String> iNodes,
+      ODistributedRequest.EXECUTION_MODE iExecutionMode,
+      Object localResult,
+      OCallable<Void, ODistributedRequestId> iAfterSentCallback,
+      OCallable<Void, ODistributedResponseManager> endCallback);
 
   void setOnline();
 
@@ -65,8 +66,13 @@ public interface ODistributedDatabase {
 
   void waitForOnline();
 
-  void reEnqueue(final int senderNodeId, final long msgSequence, final String databaseName, final ORemoteTask payload,
-      int retryCount, int autoRetryDelay);
+  void reEnqueue(
+      final int senderNodeId,
+      final long msgSequence,
+      final String databaseName,
+      final ORemoteTask payload,
+      int retryCount,
+      int autoRetryDelay);
 
   void processRequest(ODistributedRequest request, boolean waitForAcceptingRequests);
 
@@ -78,7 +84,8 @@ public interface ODistributedDatabase {
 
   OTxMetadataHolder commit(OTransactionId id);
 
-  ODistributedTxContext registerTxContext(final ODistributedRequestId reqId, ODistributedTxContext ctx);
+  ODistributedTxContext registerTxContext(
+      final ODistributedRequestId reqId, ODistributedTxContext ctx);
 
   ODistributedTxContext popTxContext(ODistributedRequestId requestId);
 
@@ -94,7 +101,8 @@ public interface ODistributedDatabase {
 
   void checkNodeInConfiguration(ODistributedConfiguration cfg, String serverName);
 
-  void setLSN(String sourceNodeName, OLogSequenceNumber taskLastLSN, boolean writeLastOperation) throws IOException;
+  void setLSN(String sourceNodeName, OLogSequenceNumber taskLastLSN, boolean writeLastOperation)
+      throws IOException;
 
   Optional<OTransactionId> nextId();
 

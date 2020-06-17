@@ -3,15 +3,18 @@ package com.orientechnologies.orient.test.database.auto;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentPool;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Random;
+import java.util.concurrent.Callable;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import org.testng.Assert;
 import org.testng.annotations.Optional;
 import org.testng.annotations.Parameters;
 import org.testng.annotations.Test;
-
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Random;
-import java.util.concurrent.*;
 
 /**
  * @author Andrey Lomakin (a.lomakin-at-orientdb.com)
@@ -19,10 +22,10 @@ import java.util.concurrent.*;
  */
 @Test
 public class PoolTest extends DocumentDBBaseTest {
-  private int                  counter = 0;
-  private final Object         lock    = new Object();
+  private int counter = 0;
+  private final Object lock = new Object();
 
-  private final CountDownLatch latch   = new CountDownLatch(1);
+  private final CountDownLatch latch = new CountDownLatch(1);
 
   @Parameters(value = "url")
   public PoolTest(@Optional String url) {
@@ -42,12 +45,11 @@ public class PoolTest extends DocumentDBBaseTest {
 
     latch.countDown();
 
-    for (Future<Void> future : futures)
-      future.get();
+    for (Future<Void> future : futures) future.get();
   }
 
   private final class Acquirer implements Callable<Void> {
-    private final int    maxSize;
+    private final int maxSize;
     private final Random random;
 
     private Acquirer(int maxSize, Random random) {
@@ -72,7 +74,9 @@ public class PoolTest extends DocumentDBBaseTest {
         Assert.assertEquals(ODatabaseDocumentPool.global().getMaxSize(), maxSize);
 
         synchronized (lock) {
-          Assert.assertEquals(ODatabaseDocumentPool.global().getAvailableConnections(url, "admin"), maxSize - counter);
+          Assert.assertEquals(
+              ODatabaseDocumentPool.global().getAvailableConnections(url, "admin"),
+              maxSize - counter);
         }
       } finally {
         synchronized (lock) {

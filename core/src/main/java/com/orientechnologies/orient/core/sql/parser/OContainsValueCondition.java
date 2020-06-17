@@ -5,14 +5,17 @@ package com.orientechnologies.orient.core.sql.parser;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.sql.executor.OResult;
-
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 public class OContainsValueCondition extends OBooleanExpression {
-  protected OExpression            left;
+  protected OExpression left;
   protected OContainsValueOperator operator;
-  protected OOrBlock               condition;
-  protected OExpression            expression;
+  protected OOrBlock condition;
+  protected OExpression expression;
 
   public OContainsValueCondition(int id) {
     super(id);
@@ -36,9 +39,8 @@ public class OContainsValueCondition extends OBooleanExpression {
         return false;
       } else {
         Object rightValue = expression.execute(currentRecord, ctx);
-        return map.values().contains(rightValue);//TODO type conversions...?
+        return map.values().contains(rightValue); // TODO type conversions...?
       }
-
     }
     return false;
   }
@@ -57,9 +59,8 @@ public class OContainsValueCondition extends OBooleanExpression {
         return false;
       } else {
         Object rightValue = expression.execute(currentRecord, ctx);
-        return map.values().contains(rightValue);//TODO type conversions...?
+        return map.values().contains(rightValue); // TODO type conversions...?
       }
-
     }
     return false;
   }
@@ -75,7 +76,6 @@ public class OContainsValueCondition extends OBooleanExpression {
     } else {
       expression.toString(params, builder);
     }
-
   }
 
   @Override
@@ -151,17 +151,13 @@ public class OContainsValueCondition extends OBooleanExpression {
 
   @Override
   public boolean equals(Object o) {
-    if (this == o)
-      return true;
-    if (o == null || getClass() != o.getClass())
-      return false;
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
 
     OContainsValueCondition that = (OContainsValueCondition) o;
 
-    if (left != null ? !left.equals(that.left) : that.left != null)
-      return false;
-    if (operator != null ? !operator.equals(that.operator) : that.operator != null)
-      return false;
+    if (left != null ? !left.equals(that.left) : that.left != null) return false;
+    if (operator != null ? !operator.equals(that.operator) : that.operator != null) return false;
     if (condition != null ? !condition.equals(that.condition) : that.condition != null)
       return false;
     if (expression != null ? !expression.equals(that.expression) : that.expression != null)
@@ -182,7 +178,8 @@ public class OContainsValueCondition extends OBooleanExpression {
   @Override
   public List<String> getMatchPatternInvolvedAliases() {
     List<String> leftX = left == null ? null : left.getMatchPatternInvolvedAliases();
-    List<String> expressionX = expression == null ? null : expression.getMatchPatternInvolvedAliases();
+    List<String> expressionX =
+        expression == null ? null : expression.getMatchPatternInvolvedAliases();
     List<String> conditionX = condition == null ? null : condition.getMatchPatternInvolvedAliases();
 
     List<String> result = new ArrayList<String>();

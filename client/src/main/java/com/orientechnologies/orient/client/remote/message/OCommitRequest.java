@@ -19,34 +19,28 @@
  */
 package com.orientechnologies.orient.client.remote.message;
 
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-
 import com.orientechnologies.orient.client.binary.OBinaryRequestExecutor;
 import com.orientechnologies.orient.client.remote.OBinaryRequest;
 import com.orientechnologies.orient.client.remote.OBinaryResponse;
 import com.orientechnologies.orient.client.remote.OStorageRemoteSession;
 import com.orientechnologies.orient.client.remote.message.tx.ORecordOperationRequest;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
-import com.orientechnologies.orient.core.db.record.ORecordOperation;
-import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializer;
-import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializerFactory;
-import com.orientechnologies.orient.core.serialization.serializer.record.binary.ORecordSerializerNetworkV37;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelDataInput;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelDataOutput;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
 public final class OCommitRequest implements OBinaryRequest<OCommitResponse> {
-  private int                           txId;
-  private boolean                       usingLong;
+  private int txId;
+  private boolean usingLong;
   private List<ORecordOperationRequest> operations;
-  private ODocument                     indexChanges;
+  private ODocument indexChanges;
 
-  public OCommitRequest() {
-  }
+  public OCommitRequest() {}
 
   @Override
   public void write(OChannelDataOutput network, OStorageRemoteSession session) throws IOException {
@@ -64,11 +58,11 @@ public final class OCommitRequest implements OBinaryRequest<OCommitResponse> {
 
     // SEND MANUAL INDEX CHANGES
     network.writeBytes(indexChanges.toStream());
-
   }
 
   @Override
-  public void read(OChannelDataInput channel, int protocolVersion, ORecordSerializer serializer) throws IOException {
+  public void read(OChannelDataInput channel, int protocolVersion, ORecordSerializer serializer)
+      throws IOException {
     txId = channel.readInt();
     usingLong = channel.readBoolean();
     operations = new ArrayList<>();
@@ -82,7 +76,6 @@ public final class OCommitRequest implements OBinaryRequest<OCommitResponse> {
     } while (hasEntry == 1);
 
     indexChanges = new ODocument(channel.readBytes());
-
   }
 
   @Override

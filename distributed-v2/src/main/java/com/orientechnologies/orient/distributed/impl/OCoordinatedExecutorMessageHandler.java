@@ -3,7 +3,13 @@ package com.orientechnologies.orient.distributed.impl;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.db.config.ONodeIdentity;
 import com.orientechnologies.orient.distributed.OrientDBDistributed;
-import com.orientechnologies.orient.distributed.impl.coordinator.*;
+import com.orientechnologies.orient.distributed.impl.coordinator.ODistributedCoordinator;
+import com.orientechnologies.orient.distributed.impl.coordinator.ODistributedExecutor;
+import com.orientechnologies.orient.distributed.impl.coordinator.ONodeRequest;
+import com.orientechnologies.orient.distributed.impl.coordinator.ONodeResponse;
+import com.orientechnologies.orient.distributed.impl.coordinator.OSubmitContext;
+import com.orientechnologies.orient.distributed.impl.coordinator.OSubmitRequest;
+import com.orientechnologies.orient.distributed.impl.coordinator.OSubmitResponse;
 import com.orientechnologies.orient.distributed.impl.coordinator.network.OCoordinatedExecutor;
 import com.orientechnologies.orient.distributed.impl.coordinator.transaction.OSessionOperationId;
 import com.orientechnologies.orient.distributed.impl.log.OLogId;
@@ -19,7 +25,7 @@ import com.orientechnologies.orient.distributed.impl.structural.submit.OStructur
 
 public class OCoordinatedExecutorMessageHandler implements OCoordinatedExecutor {
   private OrientDBDistributed distributed;
-  private ONodeIdentity       leader;
+  private ONodeIdentity leader;
 
   public OCoordinatedExecutorMessageHandler(OrientDBDistributed distributed) {
     this.distributed = distributed;
@@ -30,7 +36,8 @@ public class OCoordinatedExecutorMessageHandler implements OCoordinatedExecutor 
   }
 
   @Override
-  public void executeOperationRequest(ONodeIdentity sender, String database, OLogId id, ONodeRequest request) {
+  public void executeOperationRequest(
+      ONodeIdentity sender, String database, OLogId id, ONodeRequest request) {
     checkDatabaseReady(database);
     ODistributedContext distributedContext = distributed.getDistributedContext(database);
     if (distributedContext != null) {
@@ -40,19 +47,27 @@ public class OCoordinatedExecutorMessageHandler implements OCoordinatedExecutor 
   }
 
   @Override
-  public void executeOperationResponse(ONodeIdentity sender, String database, OLogId id, ONodeResponse response) {
+  public void executeOperationResponse(
+      ONodeIdentity sender, String database, OLogId id, ONodeResponse response) {
     checkDatabaseReady(database);
     ODistributedContext distributedContext = distributed.getDistributedContext(database);
     ODistributedCoordinator coordinator = distributedContext.getCoordinator();
     if (coordinator == null) {
-      OLogManager.instance().error(this, "Received coordinator response on a node that is not a coordinator ignoring it", null);
+      OLogManager.instance()
+          .error(
+              this,
+              "Received coordinator response on a node that is not a coordinator ignoring it",
+              null);
     } else {
       coordinator.receive(sender, id, response);
     }
   }
 
   @Override
-  public void executeSubmitResponse(ONodeIdentity sender, String database, OSessionOperationId operationId,
+  public void executeSubmitResponse(
+      ONodeIdentity sender,
+      String database,
+      OSessionOperationId operationId,
       OSubmitResponse response) {
     checkDatabaseReady(database);
     ODistributedContext distributedContext = distributed.getDistributedContext(database);
@@ -61,26 +76,38 @@ public class OCoordinatedExecutorMessageHandler implements OCoordinatedExecutor 
   }
 
   @Override
-  public void executeSubmitRequest(ONodeIdentity sender, String database, OSessionOperationId operationId, OSubmitRequest request) {
+  public void executeSubmitRequest(
+      ONodeIdentity sender,
+      String database,
+      OSessionOperationId operationId,
+      OSubmitRequest request) {
     checkDatabaseReady(database);
     ODistributedContext distributedContext = distributed.getDistributedContext(database);
     ODistributedCoordinator coordinator = distributedContext.getCoordinator();
     if (coordinator == null) {
-      OLogManager.instance().error(this, "Received submit request on a node that is not a coordinator ignoring it", null);
+      OLogManager.instance()
+          .error(
+              this,
+              "Received submit request on a node that is not a coordinator ignoring it",
+              null);
     } else {
       coordinator.submit(sender, operationId, request);
     }
   }
 
   @Override
-  public void executeStructuralSubmitRequest(ONodeIdentity sender, OSessionOperationId id, OStructuralSubmitRequest request) {
-    OStructuralDistributedContext distributedContext = distributed.getStructuralDistributedContext();
+  public void executeStructuralSubmitRequest(
+      ONodeIdentity sender, OSessionOperationId id, OStructuralSubmitRequest request) {
+    OStructuralDistributedContext distributedContext =
+        distributed.getStructuralDistributedContext();
     distributedContext.execute(sender, id, request);
   }
 
   @Override
-  public void executeStructuralSubmitResponse(ONodeIdentity sender, OSessionOperationId id, OStructuralSubmitResponse response) {
-    OStructuralDistributedContext distributedContext = distributed.getStructuralDistributedContext();
+  public void executeStructuralSubmitResponse(
+      ONodeIdentity sender, OSessionOperationId id, OStructuralSubmitResponse response) {
+    OStructuralDistributedContext distributedContext =
+        distributed.getStructuralDistributedContext();
     OStructuralSubmitContext context = distributedContext.getSubmitContext();
     context.receive(id, response);
   }
@@ -88,10 +115,16 @@ public class OCoordinatedExecutorMessageHandler implements OCoordinatedExecutor 
   @Override
   public void executePropagate(ONodeIdentity sender, OLogId id, ORaftOperation operation) {
     if (!sender.equals(leader)) {
-      OLogManager.instance().warn(this, "Received propagate from node '%s' but leader is '%s' ignoring it", sender, leader);
+      OLogManager.instance()
+          .warn(
+              this,
+              "Received propagate from node '%s' but leader is '%s' ignoring it",
+              sender,
+              leader);
       return;
     }
-    OStructuralDistributedContext distributedContext = distributed.getStructuralDistributedContext();
+    OStructuralDistributedContext distributedContext =
+        distributed.getStructuralDistributedContext();
     OStructuralFollower follower = distributedContext.getFollower();
     follower.log(sender, id, operation);
   }
@@ -99,20 +132,31 @@ public class OCoordinatedExecutorMessageHandler implements OCoordinatedExecutor 
   @Override
   public void executeConfirm(ONodeIdentity sender, OLogId id) {
     if (!sender.equals(leader)) {
-      OLogManager.instance().warn(this, "Received confirm from node '%s' but leader is '%s' ignoring it", sender, leader);
+      OLogManager.instance()
+          .warn(
+              this,
+              "Received confirm from node '%s' but leader is '%s' ignoring it",
+              sender,
+              leader);
       return;
     }
-    OStructuralDistributedContext distributedContext = distributed.getStructuralDistributedContext();
+    OStructuralDistributedContext distributedContext =
+        distributed.getStructuralDistributedContext();
     OStructuralFollower slave = distributedContext.getFollower();
     slave.confirm(id);
   }
 
   @Override
   public void executeAck(ONodeIdentity sender, OLogId id) {
-    OStructuralDistributedContext distributedContext = distributed.getStructuralDistributedContext();
+    OStructuralDistributedContext distributedContext =
+        distributed.getStructuralDistributedContext();
     OStructuralLeader master = distributedContext.getLeader();
     if (master == null) {
-      OLogManager.instance().error(this, "Received coordinator response on a node that is not a coordinator ignoring it", null);
+      OLogManager.instance()
+          .error(
+              this,
+              "Received coordinator response on a node that is not a coordinator ignoring it",
+              null);
     } else {
       master.receiveAck(sender, id);
     }
@@ -132,7 +176,9 @@ public class OCoordinatedExecutorMessageHandler implements OCoordinatedExecutor 
   public void setLeader(ONodeIdentity leader, OLogId leaderLastValid) {
     this.leader = leader;
     if (distributed.getNodeIdentity().equals(leader)) {
-      distributed.getStructuralDistributedContext().makeLeader(leader, distributed.getActiveNodes());
+      distributed
+          .getStructuralDistributedContext()
+          .makeLeader(leader, distributed.getActiveNodes());
     } else {
       distributed.getStructuralDistributedContext().setExternalLeader(leader, leaderLastValid);
     }
@@ -154,8 +200,12 @@ public class OCoordinatedExecutorMessageHandler implements OCoordinatedExecutor 
   }
 
   @Override
-  public void notifyLastDatabaseOperation(ONodeIdentity leader, String database, OLogId leaderLastValid) {
-    distributed.getDistributedContext(database).getExecutor().notifyLastValidLog(leader, leaderLastValid);
+  public void notifyLastDatabaseOperation(
+      ONodeIdentity leader, String database, OLogId leaderLastValid) {
+    distributed
+        .getDistributedContext(database)
+        .getExecutor()
+        .notifyLastValidLog(leader, leaderLastValid);
   }
 
   @Override

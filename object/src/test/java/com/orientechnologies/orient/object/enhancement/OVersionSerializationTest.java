@@ -74,14 +74,11 @@ public class OVersionSerializationTest {
   }
 
   public static class EntityStringVersion {
-    @OId
-    private ORID rid;
+    @OId private ORID rid;
 
-    @OVersion
-    private String version;
+    @OVersion private String version;
 
-    public EntityStringVersion() {
-    }
+    public EntityStringVersion() {}
 
     public ORID getRid() {
       return rid;
@@ -93,14 +90,11 @@ public class OVersionSerializationTest {
   }
 
   public static class EntityObjectVersion {
-    @OId
-    private ORID rid;
+    @OId private ORID rid;
 
-    @OVersion
-    private Object version;
+    @OVersion private Object version;
 
-    public EntityObjectVersion() {
-    }
+    public EntityObjectVersion() {}
 
     public ORID getRid() {
       return rid;
@@ -112,14 +106,11 @@ public class OVersionSerializationTest {
   }
 
   public static class EntityExactVersionType {
-    @OId
-    private ORID rid;
+    @OId private ORID rid;
 
-    @OVersion
-    private int version;
+    @OVersion private int version;
 
-    public EntityExactVersionType() {
-    }
+    public EntityExactVersionType() {}
 
     public ORID getRid() {
       return rid;
@@ -131,14 +122,11 @@ public class OVersionSerializationTest {
   }
 
   public static class EntityLongVersion {
-    @OId
-    private ORID rid;
+    @OId private ORID rid;
 
-    @OVersion
-    private Long version;
+    @OVersion private Long version;
 
-    public EntityLongVersion() {
-    }
+    public EntityLongVersion() {}
 
     public ORID getRid() {
       return rid;

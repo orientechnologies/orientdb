@@ -40,7 +40,11 @@ public class OSQLMethodSubString extends OAbstractSQLMethod {
   }
 
   @Override
-  public Object execute(Object iThis, OIdentifiable iCurrentRecord, OCommandContext iContext, Object ioResult,
+  public Object execute(
+      Object iThis,
+      OIdentifiable iCurrentRecord,
+      OCommandContext iContext,
+      Object ioResult,
       Object[] iParams) {
     if (iThis == null || iParams[0] == null) {
       return null;

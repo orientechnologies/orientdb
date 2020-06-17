@@ -20,15 +20,14 @@
 
 package com.orientechnologies.orient.core.tx;
 
-/**
- * Represents information for each index operation for each record in DB.
- */
+/** Represents information for each index operation for each record in DB. */
 public final class OTransactionRecordIndexOperation {
-  public String                             index;
-  public Object                             key;
+  public String index;
+  public Object key;
   public OTransactionIndexChanges.OPERATION operation;
 
-  public OTransactionRecordIndexOperation(String index, Object key, OTransactionIndexChanges.OPERATION operation) {
+  public OTransactionRecordIndexOperation(
+      String index, Object key, OTransactionIndexChanges.OPERATION operation) {
     this.index = index;
     this.key = key;
     this.operation = operation;

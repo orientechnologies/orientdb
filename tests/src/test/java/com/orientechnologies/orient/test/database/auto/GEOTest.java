@@ -21,13 +21,12 @@ import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
+import java.util.List;
+import java.util.Set;
 import org.testng.Assert;
 import org.testng.annotations.Optional;
 import org.testng.annotations.Parameters;
 import org.testng.annotations.Test;
-
-import java.util.List;
-import java.util.Set;
 
 @Test(groups = "sql-select")
 public class GEOTest extends DocumentDBBaseTest {
@@ -43,19 +42,23 @@ public class GEOTest extends DocumentDBBaseTest {
     mapPointClass.createProperty("x", OType.DOUBLE).createIndex(OClass.INDEX_TYPE.NOTUNIQUE);
     mapPointClass.createProperty("y", OType.DOUBLE).createIndex(OClass.INDEX_TYPE.NOTUNIQUE);
 
-    final Set<OIndex> xIndexes = database.getMetadata().getSchema().getClass("MapPoint").getProperty("x").getIndexes();
+    final Set<OIndex> xIndexes =
+        database.getMetadata().getSchema().getClass("MapPoint").getProperty("x").getIndexes();
     Assert.assertEquals(xIndexes.size(), 1);
 
-    final Set<OIndex> yIndexes = database.getMetadata().getSchema().getClass("MapPoint").getProperty("y").getIndexes();
+    final Set<OIndex> yIndexes =
+        database.getMetadata().getSchema().getClass("MapPoint").getProperty("y").getIndexes();
     Assert.assertEquals(yIndexes.size(), 1);
   }
 
   @Test(dependsOnMethods = "geoSchema")
   public void checkGeoIndexes() {
-    final Set<OIndex> xIndexes = database.getMetadata().getSchema().getClass("MapPoint").getProperty("x").getIndexes();
+    final Set<OIndex> xIndexes =
+        database.getMetadata().getSchema().getClass("MapPoint").getProperty("x").getIndexes();
     Assert.assertEquals(xIndexes.size(), 1);
 
-    final Set<OIndex> yIndexDefinitions = database.getMetadata().getSchema().getClass("MapPoint").getProperty("y").getIndexes();
+    final Set<OIndex> yIndexDefinitions =
+        database.getMetadata().getSchema().getClass("MapPoint").getProperty("y").getIndexes();
     Assert.assertEquals(yIndexDefinitions.size(), 1);
   }
 
@@ -78,8 +81,12 @@ public class GEOTest extends DocumentDBBaseTest {
   public void queryDistance() {
     Assert.assertEquals(database.countClass("MapPoint"), 10000);
 
-    List<ODocument> result = database
-        .command(new OSQLSynchQuery<ODocument>("select from MapPoint where distance(x, y,52.20472, 0.14056 ) <= 30")).execute();
+    List<ODocument> result =
+        database
+            .command(
+                new OSQLSynchQuery<ODocument>(
+                    "select from MapPoint where distance(x, y,52.20472, 0.14056 ) <= 30"))
+            .execute();
 
     Assert.assertTrue(result.size() != 0);
 
@@ -87,7 +94,6 @@ public class GEOTest extends DocumentDBBaseTest {
       Assert.assertEquals(d.getClassName(), "MapPoint");
       Assert.assertEquals(ORecordInternal.getRecordType(d), ODocument.RECORD_TYPE);
     }
-
   }
 
   @Test(dependsOnMethods = "queryCreatePoints")
@@ -95,7 +101,8 @@ public class GEOTest extends DocumentDBBaseTest {
     Assert.assertEquals(database.countClass("MapPoint"), 10000);
 
     // MAKE THE FIRST RECORD DIRTY TO TEST IF DISTANCE JUMP IT
-    List<ODocument> result = database.command(new OSQLSynchQuery<ODocument>("select from MapPoint limit 1")).execute();
+    List<ODocument> result =
+        database.command(new OSQLSynchQuery<ODocument>("select from MapPoint limit 1")).execute();
     try {
       result.get(0).field("x", "--wrong--");
       Assert.assertTrue(false);
@@ -105,9 +112,12 @@ public class GEOTest extends DocumentDBBaseTest {
 
     result.get(0).save();
 
-    result = database.command(
-        new OSQLSynchQuery<ODocument>("select distance(x, y,52.20472, 0.14056 ) as distance from MapPoint order by distance desc"))
-        .execute();
+    result =
+        database
+            .command(
+                new OSQLSynchQuery<ODocument>(
+                    "select distance(x, y,52.20472, 0.14056 ) as distance from MapPoint order by distance desc"))
+            .execute();
 
     Assert.assertTrue(result.size() != 0);
 

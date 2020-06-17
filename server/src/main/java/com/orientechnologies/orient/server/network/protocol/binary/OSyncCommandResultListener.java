@@ -20,9 +20,6 @@
 
 package com.orientechnologies.orient.server.network.protocol.binary;
 
-import java.util.HashSet;
-import java.util.Set;
-
 import com.orientechnologies.orient.client.remote.OFetchPlanResults;
 import com.orientechnologies.orient.core.command.OCommandResultListener;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
@@ -34,16 +31,18 @@ import com.orientechnologies.orient.core.fetch.remote.ORemoteFetchListener;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  * Synchronous command result manager.
  *
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
- *
  */
-public class OSyncCommandResultListener extends OAbstractCommandResultListener implements OFetchPlanResults {
+public class OSyncCommandResultListener extends OAbstractCommandResultListener
+    implements OFetchPlanResults {
   private final Set<ORecord> fetchedRecordsToSend = new HashSet<ORecord>();
-  private final Set<ORecord> alreadySent          = new HashSet<ORecord>();
+  private final Set<ORecord> alreadySent = new HashSet<ORecord>();
 
   public OSyncCommandResultListener(final OCommandResultListener wrappedResultListener) {
     super(wrappedResultListener);
@@ -60,13 +59,14 @@ public class OSyncCommandResultListener extends OAbstractCommandResultListener i
       // NOTIFY THE WRAPPED LISTENER
       wrappedResultListener.result(iRecord);
 
-    fetchRecord(iRecord, new ORemoteFetchListener() {
-      @Override
-      protected void sendRecord(ORecord iLinked) {
-        if (!alreadySent.contains(iLinked))
-          fetchedRecordsToSend.add(iLinked);
-      }
-    });
+    fetchRecord(
+        iRecord,
+        new ORemoteFetchListener() {
+          @Override
+          protected void sendRecord(ORecord iLinked) {
+            if (!alreadySent.contains(iLinked)) fetchedRecordsToSend.add(iLinked);
+          }
+        });
     return true;
   }
 
@@ -81,34 +81,41 @@ public class OSyncCommandResultListener extends OAbstractCommandResultListener i
   @Override
   public void linkdedBySimpleValue(ODocument doc) {
 
-    ORemoteFetchListener listener = new ORemoteFetchListener() {
-      @Override
-      protected void sendRecord(ORecord iLinked) {
-        if (!alreadySent.contains(iLinked))
-          fetchedRecordsToSend.add(iLinked);
-      }
+    ORemoteFetchListener listener =
+        new ORemoteFetchListener() {
+          @Override
+          protected void sendRecord(ORecord iLinked) {
+            if (!alreadySent.contains(iLinked)) fetchedRecordsToSend.add(iLinked);
+          }
 
-      @Override
-      public void parseLinked(ODocument iRootRecord, OIdentifiable iLinked, Object iUserObject, String iFieldName,
-          OFetchContext iContext) throws OFetchException {
-        if (!(iLinked instanceof ORecordId)) {
-          sendRecord(iLinked.getRecord());
-        }
-      }
+          @Override
+          public void parseLinked(
+              ODocument iRootRecord,
+              OIdentifiable iLinked,
+              Object iUserObject,
+              String iFieldName,
+              OFetchContext iContext)
+              throws OFetchException {
+            if (!(iLinked instanceof ORecordId)) {
+              sendRecord(iLinked.getRecord());
+            }
+          }
 
-      @Override
-      public void parseLinkedCollectionValue(ODocument iRootRecord, OIdentifiable iLinked, Object iUserObject, String iFieldName,
-          OFetchContext iContext) throws OFetchException {
+          @Override
+          public void parseLinkedCollectionValue(
+              ODocument iRootRecord,
+              OIdentifiable iLinked,
+              Object iUserObject,
+              String iFieldName,
+              OFetchContext iContext)
+              throws OFetchException {
 
-        if (!(iLinked instanceof ORecordId)) {
-          sendRecord(iLinked.getRecord());
-        }
-
-      }
-
-    };
+            if (!(iLinked instanceof ORecordId)) {
+              sendRecord(iLinked.getRecord());
+            }
+          }
+        };
     final OFetchContext context = new ORemoteFetchContext();
     OFetchHelper.fetch(doc, doc, OFetchHelper.buildFetchPlan(""), listener, context, "");
-
   }
 }

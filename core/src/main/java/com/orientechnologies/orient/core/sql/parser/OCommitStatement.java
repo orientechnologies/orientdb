@@ -6,16 +6,15 @@ import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.sql.executor.OInternalResultSet;
 import com.orientechnologies.orient.core.sql.executor.OResultInternal;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
 public class OCommitStatement extends OSimpleExecStatement {
 
-  protected OInteger         retry;
+  protected OInteger retry;
   protected List<OStatement> elseStatements;
-  protected Boolean          elseFail;
+  protected Boolean elseFail;
 
   public OCommitStatement(int id) {
     super(id);
@@ -27,7 +26,8 @@ public class OCommitStatement extends OSimpleExecStatement {
 
   @Override
   public OResultSet executeSimple(OCommandContext ctx) {
-    ctx.getDatabase().commit();//no RETRY and ELSE here, that case is allowed only for batch scripts;
+    ctx.getDatabase()
+        .commit(); // no RETRY and ELSE here, that case is allowed only for batch scripts;
     OInternalResultSet result = new OInternalResultSet();
     OResultInternal item = new OResultInternal();
     item.setProperty("operation", "commit");
@@ -95,17 +95,15 @@ public class OCommitStatement extends OSimpleExecStatement {
 
   @Override
   public boolean equals(Object o) {
-    if (this == o)
-      return true;
-    if (o == null || getClass() != o.getClass())
-      return false;
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
 
     OCommitStatement that = (OCommitStatement) o;
 
-    if (retry != null ? !retry.equals(that.retry) : that.retry != null)
-      return false;
-    if (elseStatements != null ? !elseStatements.equals(that.elseStatements) : that.elseStatements != null)
-      return false;
+    if (retry != null ? !retry.equals(that.retry) : that.retry != null) return false;
+    if (elseStatements != null
+        ? !elseStatements.equals(that.elseStatements)
+        : that.elseStatements != null) return false;
     return elseFail != null ? elseFail.equals(that.elseFail) : that.elseFail == null;
   }
 

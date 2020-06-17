@@ -1,14 +1,13 @@
 package com.orientechnologies.orient.distributed.impl.coordinator.transaction;
 
-import com.orientechnologies.orient.distributed.impl.coordinator.OSubmitResponse;
+import static com.orientechnologies.orient.distributed.impl.coordinator.OCoordinateMessagesFactory.TRANSACTION_SUBMIT_RESPONSE;
 
+import com.orientechnologies.orient.distributed.impl.coordinator.OSubmitResponse;
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-
-import static com.orientechnologies.orient.distributed.impl.coordinator.OCoordinateMessagesFactory.TRANSACTION_SUBMIT_RESPONSE;
 
 public class OTransactionResponse implements OSubmitResponse {
   private boolean success;
@@ -17,17 +16,18 @@ public class OTransactionResponse implements OSubmitResponse {
   private List<OUpdatedRecordResponse> updatedRecords;
   private List<ODeletedRecordResponse> deletedRecords;
 
-  public OTransactionResponse(boolean success, List<OCreatedRecordResponse> createdRecords,
-      List<OUpdatedRecordResponse> updatedRecords, List<ODeletedRecordResponse> deletedRecords) {
+  public OTransactionResponse(
+      boolean success,
+      List<OCreatedRecordResponse> createdRecords,
+      List<OUpdatedRecordResponse> updatedRecords,
+      List<ODeletedRecordResponse> deletedRecords) {
     this.success = success;
     this.createdRecords = createdRecords;
     this.updatedRecords = updatedRecords;
     this.deletedRecords = deletedRecords;
   }
 
-  public OTransactionResponse() {
-
-  }
+  public OTransactionResponse() {}
 
   @Override
   public void serialize(DataOutput output) throws IOException {

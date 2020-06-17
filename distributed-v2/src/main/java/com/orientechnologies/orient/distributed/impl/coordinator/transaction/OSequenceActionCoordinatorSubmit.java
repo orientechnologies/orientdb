@@ -21,30 +21,29 @@ import com.orientechnologies.orient.core.metadata.sequence.OSequenceAction;
 import com.orientechnologies.orient.distributed.impl.coordinator.OCoordinateMessagesFactory;
 import com.orientechnologies.orient.distributed.impl.coordinator.ODistributedCoordinator;
 import com.orientechnologies.orient.distributed.impl.coordinator.OSubmitRequest;
-
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
 
-/**
- * @author marko
- */
+/** @author marko */
 public class OSequenceActionCoordinatorSubmit implements OSubmitRequest {
 
   private OSequenceActionRequest action = null;
 
-  public OSequenceActionCoordinatorSubmit() {
-
-  }
+  public OSequenceActionCoordinatorSubmit() {}
 
   public OSequenceActionCoordinatorSubmit(OSequenceAction action) {
     this.action = new OSequenceActionRequest(action);
   }
 
   @Override
-  public void begin(ONodeIdentity requester, OSessionOperationId operationId, ODistributedCoordinator coordinator) {
+  public void begin(
+      ONodeIdentity requester,
+      OSessionOperationId operationId,
+      ODistributedCoordinator coordinator) {
     OSequenceActionNodeRequest nodeRequest = new OSequenceActionNodeRequest(action, requester);
-    OSequenceActionNodeResponseHandler nodeResponseHandler = new OSequenceActionNodeResponseHandler(operationId, requester);
+    OSequenceActionNodeResponseHandler nodeResponseHandler =
+        new OSequenceActionNodeResponseHandler(operationId, requester);
 
     coordinator.sendOperation(this, nodeRequest, nodeResponseHandler);
   }
@@ -73,5 +72,4 @@ public class OSequenceActionCoordinatorSubmit implements OSubmitRequest {
   public int getRequestType() {
     return OCoordinateMessagesFactory.SEQUENCE_ACTION_COORDINATOR_SUBMIT;
   }
-
 }

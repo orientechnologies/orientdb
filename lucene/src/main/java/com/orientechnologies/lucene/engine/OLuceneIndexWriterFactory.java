@@ -1,21 +1,19 @@
 package com.orientechnologies.lucene.engine;
 
+import static org.apache.lucene.index.IndexWriterConfig.OpenMode.CREATE_OR_APPEND;
+
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import java.io.IOException;
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.index.IndexWriter;
 import org.apache.lucene.index.IndexWriterConfig;
 import org.apache.lucene.store.Directory;
 
-import java.io.IOException;
-
-import static org.apache.lucene.index.IndexWriterConfig.OpenMode.CREATE_OR_APPEND;
-
-/**
- * Created by frank on 05/01/2016.
- */
+/** Created by frank on 05/01/2016. */
 public class OLuceneIndexWriterFactory {
 
-  public IndexWriter createIndexWriter(Directory dir, ODocument metadata, Analyzer analyzer) throws IOException {
+  public IndexWriter createIndexWriter(Directory dir, ODocument metadata, Analyzer analyzer)
+      throws IOException {
 
     IndexWriterConfig config = createIndexWriterConfig(metadata, analyzer);
 
@@ -36,14 +34,15 @@ public class OLuceneIndexWriterFactory {
     if (metadata.containsField("max_buffered_docs"))
       config.setMaxBufferedDocs(Integer.valueOf(metadata.<String>field("max_buffered_docs")));
 
-
     // TODO REMOVED
 
-//    if (metadata.containsField("max_buffered_delete_terms"))
-//      config.setMaxBufferedDeleteTerms(Integer.valueOf(metadata.<String>field("max_buffered_delete_terms")));
+    //    if (metadata.containsField("max_buffered_delete_terms"))
+    //
+    // config.setMaxBufferedDeleteTerms(Integer.valueOf(metadata.<String>field("max_buffered_delete_terms")));
 
     if (metadata.containsField("ram_per_thread_MB"))
-      config.setRAMPerThreadHardLimitMB(Integer.valueOf(metadata.<String>field("ram_per_thread_MB")));
+      config.setRAMPerThreadHardLimitMB(
+          Integer.valueOf(metadata.<String>field("ram_per_thread_MB")));
 
     return config;
   }

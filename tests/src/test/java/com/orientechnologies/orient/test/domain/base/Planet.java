@@ -20,32 +20,25 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-
 import javax.persistence.Id;
 import javax.persistence.Version;
 
-/**
- * @author Luca Molino (molino.luca--at--gmail.com)
- * 
- */
+/** @author Luca Molino (molino.luca--at--gmail.com) */
 public class Planet {
 
-  @Id
-  private String                 id;
+  @Id private String id;
 
-  @Version
-  private Integer                version;
+  @Version private Integer version;
 
-  private String                 name;
+  private String name;
 
-  private int                    distanceSun;
+  private int distanceSun;
 
-  private List<Satellite>        satellites    = new ArrayList<Satellite>();
+  private List<Satellite> satellites = new ArrayList<Satellite>();
 
   private Map<String, Satellite> satellitesMap = new HashMap<String, Satellite>();
 
-  public Planet() {
-  }
+  public Planet() {}
 
   Planet(String iName, int iDistance) {
     name = iName;
@@ -115,5 +108,4 @@ public class Planet {
   public void removeSatellite(Satellite satellite) {
     getSatellites().remove(satellite);
   }
-
 }

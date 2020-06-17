@@ -1,9 +1,5 @@
 package com.orientechnologies.orient.core.index;
 
-import java.text.ParseException;
-
-import org.junit.Assert; import org.junit.Test;
-
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
@@ -12,12 +8,16 @@ import com.orientechnologies.orient.core.metadata.schema.OClass.INDEX_TYPE;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import java.text.ParseException;
+import org.junit.Assert;
+import org.junit.Test;
 
 public class UniqueHashIndexForDate {
 
   @Test
   public void testSimpleUniqueDateIndex() throws ParseException {
-    ODatabaseDocument db = new ODatabaseDocumentTx("memory:" + UniqueHashIndexForDate.class.getSimpleName());
+    ODatabaseDocument db =
+        new ODatabaseDocumentTx("memory:" + UniqueHashIndexForDate.class.getSimpleName());
     db.create();
     try {
       OClass clazz = db.getMetadata().getSchema().createClass("test_edge");
@@ -45,5 +45,4 @@ public class UniqueHashIndexForDate {
       db.drop();
     }
   }
-
 }

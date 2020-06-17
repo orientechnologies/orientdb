@@ -22,17 +22,13 @@ import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.command.script.OCommandScript;
 import com.orientechnologies.orient.core.metadata.OMetadataInternal;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
+import java.io.InputStream;
+import java.util.logging.Level;
 import org.apache.lucene.analysis.standard.StandardAnalyzer;
 import org.assertj.core.api.Assertions;
 import org.junit.Test;
 
-import java.io.InputStream;
-import java.util.logging.Level;
-
-/**
- * Created by enricorisa on 26/09/14.
- */
-
+/** Created by enricorisa on 26/09/14. */
 public class LuceneDropClusterTest extends BaseLuceneTest {
 
   @Test
@@ -42,25 +38,31 @@ public class LuceneDropClusterTest extends BaseLuceneTest {
 
     db.command(new OCommandScript("sql", getScriptFromStream(stream))).execute();
 
-    db.command(new OCommandSQL(
-        "create index Song.title on Song (title) FULLTEXT ENGINE LUCENE METADATA {\"default\":\"" + StandardAnalyzer.class.getName()
-            + "\"}")).execute();
-    db.command(new OCommandSQL(
-        "create index Song.author on Song (author) FULLTEXT ENGINE LUCENE METADATA {\"default\":\"" + StandardAnalyzer.class
-            .getName() + "\"}")).execute();
+    db.command(
+            new OCommandSQL(
+                "create index Song.title on Song (title) FULLTEXT ENGINE LUCENE METADATA {\"default\":\""
+                    + StandardAnalyzer.class.getName()
+                    + "\"}"))
+        .execute();
+    db.command(
+            new OCommandSQL(
+                "create index Song.author on Song (author) FULLTEXT ENGINE LUCENE METADATA {\"default\":\""
+                    + StandardAnalyzer.class.getName()
+                    + "\"}"))
+        .execute();
 
     OMetadataInternal metadata = db.getMetadata();
 
-    long initialIndexSize = metadata.getIndexManagerInternal().getIndex(db, "Song.title").getInternal().size();
+    long initialIndexSize =
+        metadata.getIndexManagerInternal().getIndex(db, "Song.title").getInternal().size();
 
     int[] clusterIds = metadata.getSchema().getClass("Song").getClusterIds();
 
     db.dropCluster(clusterIds[1]);
 
-    long afterDropIndexSize = metadata.getIndexManagerInternal().getIndex(db, "Song.title").getInternal().size();
+    long afterDropIndexSize =
+        metadata.getIndexManagerInternal().getIndex(db, "Song.title").getInternal().size();
 
     Assertions.assertThat(afterDropIndexSize).isLessThan(initialIndexSize);
-
   }
-
 }

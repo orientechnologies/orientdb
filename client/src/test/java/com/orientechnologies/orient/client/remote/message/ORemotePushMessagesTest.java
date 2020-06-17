@@ -1,28 +1,27 @@
 package com.orientechnologies.orient.client.remote.message;
 
-import com.orientechnologies.orient.client.remote.message.push.OStorageConfigurationPayload;
-import com.orientechnologies.orient.core.config.OStorageClusterConfiguration;
-import com.orientechnologies.orient.core.config.OStorageConfiguration;
-import com.orientechnologies.orient.core.config.OStorageEntryConfiguration;
-import com.orientechnologies.orient.core.db.*;
-import com.orientechnologies.orient.core.id.ORecordId;
-import com.orientechnologies.orient.core.metadata.schema.OSchemaProxy;
-import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.serialization.serializer.record.binary.ORecordSerializerNetworkV37;
-import org.junit.Test;
-
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
-/**
- * Created by tglman on 09/05/17.
- */
+import com.orientechnologies.orient.client.remote.message.push.OStorageConfigurationPayload;
+import com.orientechnologies.orient.core.config.OStorageClusterConfiguration;
+import com.orientechnologies.orient.core.config.OStorageConfiguration;
+import com.orientechnologies.orient.core.config.OStorageEntryConfiguration;
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
+import com.orientechnologies.orient.core.db.ODatabaseSession;
+import com.orientechnologies.orient.core.db.ODatabaseType;
+import com.orientechnologies.orient.core.db.OrientDB;
+import com.orientechnologies.orient.core.db.OrientDBConfig;
+import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.serialization.serializer.record.binary.ORecordSerializerNetworkV37;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import org.junit.Test;
+
+/** Created by tglman on 09/05/17. */
 public class ORemotePushMessagesTest {
 
   @Test
@@ -48,7 +47,8 @@ public class ORemotePushMessagesTest {
     OrientDB orientDB = new OrientDB("embedded:", OrientDBConfig.defaultConfig());
     orientDB.create("test", ODatabaseType.MEMORY);
     ODatabaseSession session = orientDB.open("test", "admin", "admin");
-    ODocument schema = ((ODatabaseDocumentInternal) session).getSharedContext().getSchema().toStream();
+    ODocument schema =
+        ((ODatabaseDocumentInternal) session).getSharedContext().getSchema().toStream();
     session.close();
     orientDB.close();
     MockChannel channel = new MockChannel();
@@ -60,7 +60,6 @@ public class ORemotePushMessagesTest {
     OPushSchemaRequest readRequest = new OPushSchemaRequest();
     readRequest.read(channel);
     assertNotNull(readRequest.getSchema());
-
   }
 
   @Test
@@ -69,7 +68,8 @@ public class ORemotePushMessagesTest {
     OrientDB orientDB = new OrientDB("embedded:", OrientDBConfig.defaultConfig());
     orientDB.create("test", ODatabaseType.MEMORY);
     ODatabaseSession session = orientDB.open("test", "admin", "admin");
-    ODocument schema = ((ODatabaseDocumentInternal) session).getSharedContext().getIndexManager().toStream();
+    ODocument schema =
+        ((ODatabaseDocumentInternal) session).getSharedContext().getIndexManager().toStream();
     session.close();
     orientDB.close();
     MockChannel channel = new MockChannel();
@@ -81,7 +81,6 @@ public class ORemotePushMessagesTest {
     OPushIndexManagerRequest readRequest = new OPushIndexManagerRequest();
     readRequest.read(channel);
     assertNotNull(readRequest.getIndexManager());
-
   }
 
   @Test
@@ -89,7 +88,8 @@ public class ORemotePushMessagesTest {
     OrientDB orientDB = new OrientDB("embedded:", OrientDBConfig.defaultConfig());
     orientDB.create("test", ODatabaseType.MEMORY);
     ODatabaseSession session = orientDB.open("test", "admin", "admin");
-    OStorageConfiguration configuration = ((ODatabaseDocumentInternal) session).getStorage().getConfiguration();
+    OStorageConfiguration configuration =
+        ((ODatabaseDocumentInternal) session).getStorage().getConfiguration();
     session.close();
     orientDB.close();
     MockChannel channel = new MockChannel();
@@ -134,7 +134,8 @@ public class ORemotePushMessagesTest {
     for (OStorageClusterConfiguration readCluster : readPayload.getClusters()) {
       boolean found = false;
       for (OStorageClusterConfiguration cluster : payload.getClusters()) {
-        if (readCluster.getName().equals(cluster.getName()) && readCluster.getId() == cluster.getId()) {
+        if (readCluster.getName().equals(cluster.getName())
+            && readCluster.getId() == cluster.getId()) {
           found = true;
           break;
         }
@@ -147,7 +148,8 @@ public class ORemotePushMessagesTest {
   public void testSubscribeRequest() throws IOException {
     MockChannel channel = new MockChannel();
 
-    OSubscribeRequest request = new OSubscribeRequest(new OSubscribeLiveQueryRequest("10", new HashMap<>()));
+    OSubscribeRequest request =
+        new OSubscribeRequest(new OSubscribeLiveQueryRequest("10", new HashMap<>()));
     request.write(channel, null);
     channel.close();
 
@@ -156,7 +158,6 @@ public class ORemotePushMessagesTest {
 
     assertEquals(request.getPushMessage(), requestRead.getPushMessage());
     assertTrue(requestRead.getPushRequest() instanceof OSubscribeLiveQueryRequest);
-
   }
 
   @Test
@@ -172,7 +173,6 @@ public class ORemotePushMessagesTest {
 
     assertTrue(responseRead.getResponse() instanceof OSubscribeLiveQueryResponse);
     assertEquals(((OSubscribeLiveQueryResponse) responseRead.getResponse()).getMonitorId(), 10);
-
   }
 
   @Test
@@ -183,7 +183,7 @@ public class ORemotePushMessagesTest {
     channel.close();
     OUnsubscribeRequest readRequest = new OUnsubscribeRequest();
     readRequest.read(channel, 0, null);
-    assertEquals(((OUnsubscribeLiveQueryRequest) readRequest.getUnsubscribeRequest()).getMonitorId(), 10);
+    assertEquals(
+        ((OUnsubscribeLiveQueryRequest) readRequest.getUnsubscribeRequest()).getMonitorId(), 10);
   }
-
 }

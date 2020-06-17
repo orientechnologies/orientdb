@@ -15,28 +15,25 @@
  */
 package com.orientechnologies.orient.test.java.lang;
 
-import java.io.IOException;
-import java.lang.reflect.Field;
-
-import org.testng.annotations.Test;
-
 import com.orientechnologies.common.test.SpeedTestMonoThread;
 import com.orientechnologies.orient.test.domain.business.Account;
+import java.io.IOException;
+import java.lang.reflect.Field;
+import org.testng.annotations.Test;
 
 public class ReflectionSpeedTest extends SpeedTestMonoThread {
-	private Field		field;
-	private Account	account	= new Account();
+  private Field field;
+  private Account account = new Account();
 
-	public ReflectionSpeedTest() throws SecurityException, NoSuchFieldException {
-		super(10000000);
-		field = Account.class.getDeclaredField("name");
-		if (!field.isAccessible())
-			field.setAccessible(true);
-	}
+  public ReflectionSpeedTest() throws SecurityException, NoSuchFieldException {
+    super(10000000);
+    field = Account.class.getDeclaredField("name");
+    if (!field.isAccessible()) field.setAccessible(true);
+  }
 
-	@Override
-	@Test(enabled = false)
-	public void cycle() throws IOException, IllegalArgumentException, IllegalAccessException {
-		field.set(account, "Set test");
-	}
+  @Override
+  @Test(enabled = false)
+  public void cycle() throws IOException, IllegalArgumentException, IllegalAccessException {
+    field.set(account, "Set test");
+  }
 }

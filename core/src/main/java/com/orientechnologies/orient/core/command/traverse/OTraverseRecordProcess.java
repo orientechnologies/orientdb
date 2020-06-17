@@ -30,7 +30,6 @@ import com.orientechnologies.orient.core.serialization.serializer.OStringSeriali
 import com.orientechnologies.orient.core.sql.filter.OSQLFilterItem;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilterItemFieldAll;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilterItemFieldAny;
-
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Iterator;
@@ -39,14 +38,14 @@ import java.util.List;
 public class OTraverseRecordProcess extends OTraverseAbstractProcess<OIdentifiable> {
   private final OTraversePath path;
 
-  public OTraverseRecordProcess(final OTraverse iCommand, final OIdentifiable iTarget, OTraversePath parentPath) {
+  public OTraverseRecordProcess(
+      final OTraverse iCommand, final OIdentifiable iTarget, OTraversePath parentPath) {
     super(iCommand, iTarget);
     this.path = parentPath.append(iTarget);
   }
 
   public OIdentifiable process() {
-    if (target == null)
-      return pop();
+    if (target == null) return pop();
 
     final int depth = path.getDepth();
 
@@ -55,9 +54,9 @@ public class OTraverseRecordProcess extends OTraverseAbstractProcess<OIdentifiab
       return drop();
 
     if (command.getPredicate() != null) {
-      final Object conditionResult = command.getPredicate().evaluate(target, null, command.getContext());
-      if (conditionResult != Boolean.TRUE)
-        return drop();
+      final Object conditionResult =
+          command.getPredicate().evaluate(target, null, command.getContext());
+      if (conditionResult != Boolean.TRUE) return drop();
     }
 
     // UPDATE ALL TRAVERSED RECORD TO AVOID RECURSION
@@ -82,7 +81,8 @@ public class OTraverseRecordProcess extends OTraverseAbstractProcess<OIdentifiab
       for (Object cfgFieldObject : command.getFields()) {
         String cfgField = cfgFieldObject.toString();
 
-        if ("*".equals(cfgField) || OSQLFilterItemFieldAll.FULL_NAME.equalsIgnoreCase(cfgField)
+        if ("*".equals(cfgField)
+            || OSQLFilterItemFieldAll.FULL_NAME.equalsIgnoreCase(cfgField)
             || OSQLFilterItemFieldAny.FULL_NAME.equalsIgnoreCase(cfgField)) {
 
           // ADD ALL THE DOCUMENT FIELD
@@ -91,8 +91,19 @@ public class OTraverseRecordProcess extends OTraverseAbstractProcess<OIdentifiab
 
         } else {
           // SINGLE FIELD
-          final int pos = OStringSerializerHelper
-              .parse(cfgField, new StringBuilder(), 0, -1, new char[] { '.' }, true, true, true, 0, true) - 1;
+          final int pos =
+              OStringSerializerHelper.parse(
+                      cfgField,
+                      new StringBuilder(),
+                      0,
+                      -1,
+                      new char[] {'.'},
+                      true,
+                      true,
+                      true,
+                      0,
+                      true)
+                  - 1;
           if (pos > -1) {
             // FOUND <CLASS>.<FIELD>
             final OClass cls = ODocumentInternal.getImmutableSchemaClass(targetDoc);
@@ -108,8 +119,7 @@ public class OTraverseRecordProcess extends OTraverseAbstractProcess<OIdentifiab
             cfgField = cfgField.substring(pos + 1);
 
             fields.add(cfgField);
-          } else
-            fields.add(cfgFieldObject);
+          } else fields.add(cfgFieldObject);
         }
       }
 
@@ -119,8 +129,7 @@ public class OTraverseRecordProcess extends OTraverseAbstractProcess<OIdentifiab
 
       processFields(fields.iterator());
 
-      if (targetDoc.isEmbedded())
-        return null;
+      if (targetDoc.isEmbedded()) return null;
     }
 
     return target;
@@ -135,8 +144,7 @@ public class OTraverseRecordProcess extends OTraverseAbstractProcess<OIdentifiab
       final Object fieldValue;
       if (field instanceof OSQLFilterItem)
         fieldValue = ((OSQLFilterItem) field).getValue(doc, null, null);
-      else
-        fieldValue = doc.rawField(field.toString());
+      else fieldValue = doc.rawField(field.toString());
 
       if (fieldValue != null) {
         final OTraverseAbstractProcess<?> subProcess;
@@ -145,15 +153,19 @@ public class OTraverseRecordProcess extends OTraverseAbstractProcess<OIdentifiab
           final Iterator<?> coll;
           if (fieldValue instanceof ORecordLazyMultiValue)
             coll = ((ORecordLazyMultiValue) fieldValue).rawIterator();
-          else
-            coll = OMultiValue.getMultiValueIterator(fieldValue, false);
+          else coll = OMultiValue.getMultiValueIterator(fieldValue, false);
 
-          subProcess = new OTraverseMultiValueProcess(command, (Iterator<Object>) coll, getPath().appendField(field.toString()));
-        } else if (fieldValue instanceof OIdentifiable && ((OIdentifiable) fieldValue).getRecord() instanceof ODocument) {
-          subProcess = new OTraverseRecordProcess(command, (ODocument) ((OIdentifiable) fieldValue).getRecord(), getPath()
-              .appendField(field.toString()));
-        } else
-          continue;
+          subProcess =
+              new OTraverseMultiValueProcess(
+                  command, (Iterator<Object>) coll, getPath().appendField(field.toString()));
+        } else if (fieldValue instanceof OIdentifiable
+            && ((OIdentifiable) fieldValue).getRecord() instanceof ODocument) {
+          subProcess =
+              new OTraverseRecordProcess(
+                  command,
+                  (ODocument) ((OIdentifiable) fieldValue).getRecord(),
+                  getPath().appendField(field.toString()));
+        } else continue;
 
         command.getContext().push(subProcess);
       }

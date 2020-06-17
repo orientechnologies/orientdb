@@ -1,5 +1,7 @@
 package com.orientechnologies.orient.server.distributed.impl.task;
 
+import static com.orientechnologies.orient.core.config.OGlobalConfiguration.DISTRIBUTED_CONCURRENT_TX_MAX_AUTORETRY;
+
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
@@ -12,26 +14,24 @@ import com.orientechnologies.orient.server.distributed.ODistributedServerManager
 import com.orientechnologies.orient.server.distributed.ORemoteTaskFactory;
 import com.orientechnologies.orient.server.distributed.impl.ODatabaseDocumentDistributed;
 import com.orientechnologies.orient.server.distributed.task.OAbstractReplicatedTask;
-
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
 
-import static com.orientechnologies.orient.core.config.OGlobalConfiguration.DISTRIBUTED_CONCURRENT_TX_MAX_AUTORETRY;
-
-/**
- * @author Luigi Dell'Aquila (l.dellaquila - at - orientdb.com)
- */
+/** @author Luigi Dell'Aquila (l.dellaquila - at - orientdb.com) */
 public class OTransactionPhase2Task extends OAbstractReplicatedTask {
   public static final int FACTORYID = 44;
 
-  private          ODistributedRequestId transactionId;
-  private          boolean               success;
-  private          int[]                 involvedClusters;
-  private          boolean               hasResponse = false;
-  private volatile int                   retryCount  = 0;
+  private ODistributedRequestId transactionId;
+  private boolean success;
+  private int[] involvedClusters;
+  private boolean hasResponse = false;
+  private volatile int retryCount = 0;
 
-  public OTransactionPhase2Task(ODistributedRequestId transactionId, boolean success, int[] involvedClusters,
+  public OTransactionPhase2Task(
+      ODistributedRequestId transactionId,
+      boolean success,
+      int[] involvedClusters,
       OLogSequenceNumber lsn) {
     this.transactionId = transactionId;
     this.success = success;
@@ -39,9 +39,7 @@ public class OTransactionPhase2Task extends OAbstractReplicatedTask {
     this.lastLSN = lsn;
   }
 
-  public OTransactionPhase2Task() {
-
-  }
+  public OTransactionPhase2Task() {}
 
   @Override
   public String getName() {
@@ -88,25 +86,47 @@ public class OTransactionPhase2Task extends OAbstractReplicatedTask {
   }
 
   @Override
-  public Object execute(ODistributedRequestId requestId, OServer iServer, ODistributedServerManager iManager,
-      ODatabaseDocumentInternal database) throws Exception {
+  public Object execute(
+      ODistributedRequestId requestId,
+      OServer iServer,
+      ODistributedServerManager iManager,
+      ODatabaseDocumentInternal database)
+      throws Exception {
     if (success) {
       if (!((ODatabaseDocumentDistributed) database).commit2pc(transactionId, false, requestId)) {
-        final int autoRetryDelay = OGlobalConfiguration.DISTRIBUTED_CONCURRENT_TX_AUTORETRY_DELAY.getValueAsInteger();
+        final int autoRetryDelay =
+            OGlobalConfiguration.DISTRIBUTED_CONCURRENT_TX_AUTORETRY_DELAY.getValueAsInteger();
         retryCount++;
-        if (retryCount < database.getConfiguration().getValueAsInteger(DISTRIBUTED_CONCURRENT_TX_MAX_AUTORETRY)) {
+        if (retryCount
+            < database
+                .getConfiguration()
+                .getValueAsInteger(DISTRIBUTED_CONCURRENT_TX_MAX_AUTORETRY)) {
           OLogManager.instance()
-              .info(OTransactionPhase2Task.this, "Received second phase but not yet first phase, re-enqueue second phase");
-          ((ODatabaseDocumentDistributed) database).getStorageDistributed().getLocalDistributedDatabase()
-              .reEnqueue(requestId.getNodeId(), requestId.getMessageId(), database.getName(), this, retryCount, autoRetryDelay);
+              .info(
+                  OTransactionPhase2Task.this,
+                  "Received second phase but not yet first phase, re-enqueue second phase");
+          ((ODatabaseDocumentDistributed) database)
+              .getStorageDistributed()
+              .getLocalDistributedDatabase()
+              .reEnqueue(
+                  requestId.getNodeId(),
+                  requestId.getMessageId(),
+                  database.getName(),
+                  this,
+                  retryCount,
+                  autoRetryDelay);
           hasResponse = false;
         } else {
-          Orient.instance().submit(() -> {
-            OLogManager.instance()
-                .warn(OTransactionPhase2Task.this, "Reached limit of retry for commit tx:%s forcing database re-install",
-                    transactionId);
-            iManager.installDatabase(false, database.getName(), true, true);
-          });
+          Orient.instance()
+              .submit(
+                  () -> {
+                    OLogManager.instance()
+                        .warn(
+                            OTransactionPhase2Task.this,
+                            "Reached limit of retry for commit tx:%s forcing database re-install",
+                            transactionId);
+                    iManager.installDatabase(false, database.getName(), true, true);
+                  });
           hasResponse = true;
           return "KO";
         }
@@ -115,16 +135,31 @@ public class OTransactionPhase2Task extends OAbstractReplicatedTask {
       }
     } else {
       if (!((ODatabaseDocumentDistributed) database).rollback2pc(transactionId)) {
-        final int autoRetryDelay = OGlobalConfiguration.DISTRIBUTED_CONCURRENT_TX_AUTORETRY_DELAY.getValueAsInteger();
+        final int autoRetryDelay =
+            OGlobalConfiguration.DISTRIBUTED_CONCURRENT_TX_AUTORETRY_DELAY.getValueAsInteger();
         retryCount++;
-        if (retryCount < database.getConfiguration().getValueAsInteger(DISTRIBUTED_CONCURRENT_TX_MAX_AUTORETRY)) {
+        if (retryCount
+            < database
+                .getConfiguration()
+                .getValueAsInteger(DISTRIBUTED_CONCURRENT_TX_MAX_AUTORETRY)) {
           OLogManager.instance()
-              .info(OTransactionPhase2Task.this, "Received second phase but not yet first phase, re-enqueue second phase");
-          ((ODatabaseDocumentDistributed) database).getStorageDistributed().getLocalDistributedDatabase()
-              .reEnqueue(requestId.getNodeId(), requestId.getMessageId(), database.getName(), this, retryCount, autoRetryDelay);
+              .info(
+                  OTransactionPhase2Task.this,
+                  "Received second phase but not yet first phase, re-enqueue second phase");
+          ((ODatabaseDocumentDistributed) database)
+              .getStorageDistributed()
+              .getLocalDistributedDatabase()
+              .reEnqueue(
+                  requestId.getNodeId(),
+                  requestId.getMessageId(),
+                  database.getName(),
+                  this,
+                  retryCount,
+                  autoRetryDelay);
           hasResponse = false;
         } else {
-          //ABORT THE OPERATION IF THERE IS A NOT VALID TRANSACTION ACTIVE WILL BE ROLLBACK ON RE-INSTALL
+          // ABORT THE OPERATION IF THERE IS A NOT VALID TRANSACTION ACTIVE WILL BE ROLLBACK ON
+          // RE-INSTALL
           hasResponse = true;
           return "KO";
         }
@@ -133,7 +168,6 @@ public class OTransactionPhase2Task extends OAbstractReplicatedTask {
       }
     }
     return "OK";
-
   }
 
   public int getRetryCount() {

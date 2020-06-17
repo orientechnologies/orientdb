@@ -5,26 +5,22 @@ import com.orientechnologies.orient.client.remote.OStorageRemoteSession;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializer;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelDataInput;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelDataOutput;
-
 import java.io.IOException;
 
-/**
- * Created by tglman on 16/05/17.
- */
+/** Created by tglman on 16/05/17. */
 public class OExperimentalResponse implements OBinaryResponse {
 
   private OBinaryResponse response;
 
-  public OExperimentalResponse() {
-
-  }
+  public OExperimentalResponse() {}
 
   public OExperimentalResponse(OBinaryResponse response) {
     this.response = response;
   }
 
   @Override
-  public void write(OChannelDataOutput channel, int protocolVersion, ORecordSerializer serializer) throws IOException {
+  public void write(OChannelDataOutput channel, int protocolVersion, ORecordSerializer serializer)
+      throws IOException {
     response.write(channel, protocolVersion, serializer);
   }
 

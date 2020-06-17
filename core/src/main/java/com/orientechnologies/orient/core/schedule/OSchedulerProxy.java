@@ -18,23 +18,19 @@ package com.orientechnologies.orient.core.schedule;
 
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.record.OProxedResource;
-
 import java.util.Map;
 
 /**
- * Proxy implementation of the Scheduler.
-<<<<<<< HEAD
- * 
- * @author Luca Garulli (l.garulli--(at)--orientdb.com)
-=======
+ * Proxy implementation of the Scheduler. <<<<<<< HEAD
  *
- * @author Luca Garulli
->>>>>>> 1b627a8... HA: fixed issues with distributed scheduler events
+ * @author Luca Garulli (l.garulli--(at)--orientdb.com) =======
+ * @author Luca Garulli >>>>>>> 1b627a8... HA: fixed issues with distributed scheduler events
  * @author henryzhao81-at-gmail.com
  * @since Mar 28, 2013
  */
 public class OSchedulerProxy extends OProxedResource<OSchedulerImpl> implements OScheduler {
-  public OSchedulerProxy(final OSchedulerImpl iDelegate, final ODatabaseDocumentInternal iDatabase) {
+  public OSchedulerProxy(
+      final OSchedulerImpl iDelegate, final ODatabaseDocumentInternal iDatabase) {
     super(iDelegate, iDatabase);
   }
 
@@ -70,7 +66,7 @@ public class OSchedulerProxy extends OProxedResource<OSchedulerImpl> implements 
 
   @Override
   public void close() {
-    //DO NOTHING THE DELEGATE CLOSE IS MANAGED IN A DIFFERENT CONTEXT
+    // DO NOTHING THE DELEGATE CLOSE IS MANAGED IN A DIFFERENT CONTEXT
   }
 
   @Override

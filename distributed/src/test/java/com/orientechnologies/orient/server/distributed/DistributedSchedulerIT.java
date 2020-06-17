@@ -15,7 +15,7 @@
  *  *  limitations under the License.
  *  *
  *  * For more information: http://orientdb.com
- *  
+ *
  */
 
 package com.orientechnologies.orient.server.distributed;
@@ -27,18 +27,15 @@ import com.orientechnologies.orient.core.metadata.function.OFunction;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.schedule.OScheduledEventBuilder;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
+import java.util.ArrayList;
+import java.util.List;
 import org.junit.Assert;
 import org.junit.Ignore;
 import org.junit.Test;
 
-import java.util.ArrayList;
-import java.util.List;
-
-/**
- * Tests the behavior of the schedule rin case of distributed execution.
- */
+/** Tests the behavior of the schedule rin case of distributed execution. */
 public class DistributedSchedulerIT extends AbstractServerClusterTest {
-  private final static int SERVERS = 2;
+  private static final int SERVERS = 2;
 
   @Test
   @Ignore
@@ -51,11 +48,17 @@ public class DistributedSchedulerIT extends AbstractServerClusterTest {
   @Override
   protected void executeTest() throws Exception {
 
-    waitForDatabaseIsOnline(0, serverInstance.get(1).getServerInstance().getDistributedManager().getLocalNodeName(),
-        getDatabaseName(), 20000);
+    waitForDatabaseIsOnline(
+        0,
+        serverInstance.get(1).getServerInstance().getDistributedManager().getLocalNodeName(),
+        getDatabaseName(),
+        20000);
 
-    waitForDatabaseIsOnline(1, serverInstance.get(0).getServerInstance().getDistributedManager().getLocalNodeName(),
-        getDatabaseName(), 20000);
+    waitForDatabaseIsOnline(
+        1,
+        serverInstance.get(0).getServerInstance().getDistributedManager().getLocalNodeName(),
+        getDatabaseName(),
+        20000);
 
     eventByAPI();
     eventBySQL();
@@ -64,11 +67,22 @@ public class DistributedSchedulerIT extends AbstractServerClusterTest {
   }
 
   private void eventByAPI() throws InterruptedException {
-    final ODatabaseDocument db = serverInstance.get(0).getServerInstance().getContext().open(getDatabaseName(),"admin","admin");
+    final ODatabaseDocument db =
+        serverInstance
+            .get(0)
+            .getServerInstance()
+            .getContext()
+            .open(getDatabaseName(), "admin", "admin");
     OFunction func = createFunction(db);
 
-    db.getMetadata().getScheduler()
-        .scheduleEvent(new OScheduledEventBuilder().setName("test").setRule("0/1 * * * * ?").setFunction(func).build());
+    db.getMetadata()
+        .getScheduler()
+        .scheduleEvent(
+            new OScheduledEventBuilder()
+                .setName("test")
+                .setRule("0/1 * * * * ?")
+                .setFunction(func)
+                .build());
 
     Thread.sleep(5000);
 
@@ -83,12 +97,14 @@ public class DistributedSchedulerIT extends AbstractServerClusterTest {
 
   public void eventBySQL() throws Exception {
     OrientDB context = serverInstance.get(0).getServerInstance().getContext();
-    final ODatabaseDocument db = context.open(getDatabaseName(),"admin","admin");
+    final ODatabaseDocument db = context.open(getDatabaseName(), "admin", "admin");
     try {
       OFunction func = createFunction(db);
 
       // CREATE NEW EVENT
-      db.command(new OCommandSQL("insert into oschedule set name = 'test', function = ?, rule = \"0/1 * * * * ?\""))
+      db.command(
+              new OCommandSQL(
+                  "insert into oschedule set name = 'test', function = ?, rule = \"0/1 * * * * ?\""))
           .execute(func.getId());
 
       Thread.sleep(5000);
@@ -102,16 +118,21 @@ public class DistributedSchedulerIT extends AbstractServerClusterTest {
       OLogManager.instance().info(this, "UPDATING EVENT FROM 1 TO 2 SECONDS...");
 
       // UPDATE
-      db.command(new OCommandSQL("update oschedule set rule = \"0/2 * * * * ?\" where name = 'test'")).execute(func.getId());
+      db.command(
+              new OCommandSQL("update oschedule set rule = \"0/2 * * * * ?\" where name = 'test'"))
+          .execute(func.getId());
 
       Thread.sleep(4000);
 
       long newCount = getLogCounter(db);
 
-      Assert.assertTrue("newCount = " + newCount + " count=" + count, newCount - count > 1 && newCount - count <= 2);
+      Assert.assertTrue(
+          "newCount = " + newCount + " count=" + count,
+          newCount - count > 1 && newCount - count <= 2);
 
       // DELETE
-      db.command(new OCommandSQL("delete from oschedule where name = 'test'")).execute(func.getId());
+      db.command(new OCommandSQL("delete from oschedule where name = 'test'"))
+          .execute(func.getId());
 
       Thread.sleep(3000);
 
@@ -155,7 +176,9 @@ public class DistributedSchedulerIT extends AbstractServerClusterTest {
 
   private Long getLogCounter(final ODatabaseDocument db) {
     db.activateOnCurrentThread();
-    List<ODocument> result = (List<ODocument>) db.command(new OCommandSQL("select count(*) from scheduler_log")).execute();
+    List<ODocument> result =
+        (List<ODocument>)
+            db.command(new OCommandSQL("select count(*) from scheduler_log")).execute();
     return result.get(0).field("count");
   }
 }

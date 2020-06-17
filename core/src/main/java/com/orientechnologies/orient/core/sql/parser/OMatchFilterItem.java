@@ -5,19 +5,19 @@ package com.orientechnologies.orient.core.sql.parser;
 import java.util.Map;
 
 public class OMatchFilterItem extends SimpleNode {
-  protected OExpression         className;
-  protected OExpression         classNames;
-  protected OIdentifier         clusterName;
-  protected OInteger            clusterId;
-  protected ORid                rid;
-  protected OIdentifier         alias;
-  protected OWhereClause        filter;
-  protected OWhereClause        whileCondition;
+  protected OExpression className;
+  protected OExpression classNames;
+  protected OIdentifier clusterName;
+  protected OInteger clusterId;
+  protected ORid rid;
+  protected OIdentifier alias;
+  protected OWhereClause filter;
+  protected OWhereClause whileCondition;
   protected OArrayRangeSelector depth;
-  protected OInteger            maxDepth;
-  protected Boolean             optional;
-  protected OIdentifier         depthAlias;
-  protected OIdentifier         pathAlias;
+  protected OInteger maxDepth;
+  protected Boolean optional;
+  protected OIdentifier depthAlias;
+  protected OIdentifier pathAlias;
 
   public OMatchFilterItem(int id) {
     super(id);
@@ -97,7 +97,6 @@ public class OMatchFilterItem extends SimpleNode {
       pathAlias.toString(params, builder);
       return;
     }
-
   }
 
   @Override
@@ -121,10 +120,8 @@ public class OMatchFilterItem extends SimpleNode {
 
   @Override
   public boolean equals(Object o) {
-    if (this == o)
-      return true;
-    if (o == null || getClass() != o.getClass())
-      return false;
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
 
     OMatchFilterItem that = (OMatchFilterItem) o;
 
@@ -136,20 +133,15 @@ public class OMatchFilterItem extends SimpleNode {
       return false;
     if (clusterId != null ? !clusterId.equals(that.clusterId) : that.clusterId != null)
       return false;
-    if (rid != null ? !rid.equals(that.rid) : that.rid != null)
-      return false;
-    if (alias != null ? !alias.equals(that.alias) : that.alias != null)
-      return false;
-    if (filter != null ? !filter.equals(that.filter) : that.filter != null)
-      return false;
-    if (whileCondition != null ? !whileCondition.equals(that.whileCondition) : that.whileCondition != null)
-      return false;
-    if (depth != null ? !depth.equals(that.depth) : that.depth != null)
-      return false;
-    if (maxDepth != null ? !maxDepth.equals(that.maxDepth) : that.maxDepth != null)
-      return false;
-    if (optional != null ? !optional.equals(that.optional) : that.optional != null)
-      return false;
+    if (rid != null ? !rid.equals(that.rid) : that.rid != null) return false;
+    if (alias != null ? !alias.equals(that.alias) : that.alias != null) return false;
+    if (filter != null ? !filter.equals(that.filter) : that.filter != null) return false;
+    if (whileCondition != null
+        ? !whileCondition.equals(that.whileCondition)
+        : that.whileCondition != null) return false;
+    if (depth != null ? !depth.equals(that.depth) : that.depth != null) return false;
+    if (maxDepth != null ? !maxDepth.equals(that.maxDepth) : that.maxDepth != null) return false;
+    if (optional != null ? !optional.equals(that.optional) : that.optional != null) return false;
     if (depthAlias != null ? !depthAlias.equals(that.depthAlias) : that.depthAlias != null)
       return false;
     return pathAlias != null ? pathAlias.equals(that.pathAlias) : that.pathAlias == null;

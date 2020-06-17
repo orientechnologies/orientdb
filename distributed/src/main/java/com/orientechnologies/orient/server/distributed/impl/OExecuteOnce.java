@@ -5,29 +5,31 @@ import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.distributed.ODistributedRequestId;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
 import com.orientechnologies.orient.server.distributed.task.ORemoteTask;
-
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
 public class OExecuteOnce {
-  private final    CountDownLatch start;
-  private final    ORemoteTask    toRun;
-  private volatile boolean        toExecute = true;
-  private volatile Object         result;
-  private volatile boolean        finished  = false;
+  private final CountDownLatch start;
+  private final ORemoteTask toRun;
+  private volatile boolean toExecute = true;
+  private volatile Object result;
+  private volatile boolean finished = false;
 
   public OExecuteOnce(CountDownLatch start, ORemoteTask toRun) {
     this.start = start;
     this.toRun = toRun;
   }
 
-  public boolean execute(ODistributedRequestId requestId, OServer iServer, ODistributedServerManager iManager,
-      ODatabaseDocumentInternal database) throws Exception {
+  public boolean execute(
+      ODistributedRequestId requestId,
+      OServer iServer,
+      ODistributedServerManager iManager,
+      ODatabaseDocumentInternal database)
+      throws Exception {
     start.countDown();
     while (!start.await(1, TimeUnit.SECONDS)) {
       synchronized (this) {
-        if (finished)
-          return false;
+        if (finished) return false;
       }
     }
     synchronized (this) {
@@ -52,5 +54,4 @@ public class OExecuteOnce {
     this.finished = true;
     toRun.finished();
   }
-
 }

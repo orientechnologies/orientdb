@@ -7,5 +7,6 @@ import javax.xml.bind.annotation.XmlRootElement;
 public class OServerDistributedNetworkConfiguration {
 
   @XmlElementRef(type = OServerDistributedNetworkMulticastConfiguration.class)
-  public OServerDistributedNetworkMulticastConfiguration multicast = new OServerDistributedNetworkMulticastConfiguration();
+  public OServerDistributedNetworkMulticastConfiguration multicast =
+      new OServerDistributedNetworkMulticastConfiguration();
 }

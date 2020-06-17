@@ -4,17 +4,19 @@ package com.orientechnologies.orient.core.sql.parser;
 
 import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.executor.OResultInternal;
-
 import java.util.Map;
 
 public class OIndexIdentifier extends SimpleNode {
 
   public enum Type {
-    INDEX, VALUES, VALUESASC, VALUESDESC
+    INDEX,
+    VALUES,
+    VALUESASC,
+    VALUESDESC
   }
 
-  protected Type       type;
-  protected String     indexNameString;
+  protected Type type;
+  protected String indexNameString;
   protected OIndexName indexName;
 
   public OIndexIdentifier(int id) {
@@ -27,18 +29,18 @@ public class OIndexIdentifier extends SimpleNode {
 
   public void toString(Map<Object, Object> params, StringBuilder builder) {
     switch (type) {
-    case INDEX:
-      builder.append("INDEX");
-      break;
-    case VALUES:
-      builder.append("INDEXVALUES");
-      break;
-    case VALUESASC:
-      builder.append("INDEXVALUESASC");
-      break;
-    case VALUESDESC:
-      builder.append("INDEXVALUESDESC");
-      break;
+      case INDEX:
+        builder.append("INDEX");
+        break;
+      case VALUES:
+        builder.append("INDEXVALUES");
+        break;
+      case VALUESASC:
+        builder.append("INDEXVALUESASC");
+        break;
+      case VALUESDESC:
+        builder.append("INDEXVALUESDESC");
+        break;
     }
     builder.append(":");
     if (indexNameString != null) {
@@ -69,17 +71,15 @@ public class OIndexIdentifier extends SimpleNode {
 
   @Override
   public boolean equals(Object o) {
-    if (this == o)
-      return true;
-    if (o == null || getClass() != o.getClass())
-      return false;
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
 
     OIndexIdentifier that = (OIndexIdentifier) o;
 
-    if (type != that.type)
-      return false;
-    if (indexNameString != null ? !indexNameString.equals(that.indexNameString) : that.indexNameString != null)
-      return false;
+    if (type != that.type) return false;
+    if (indexNameString != null
+        ? !indexNameString.equals(that.indexNameString)
+        : that.indexNameString != null) return false;
     if (indexName != null ? !indexName.equals(that.indexName) : that.indexName != null)
       return false;
 
@@ -128,4 +128,3 @@ public class OIndexIdentifier extends SimpleNode {
   }
 }
 /* JavaCC - OriginalChecksum=025f134fd4b27b84210738cdb6dd027c (do not edit this line) */
-

@@ -15,12 +15,10 @@
  */
 package com.orientechnologies.orient.core.metadata.sequence;
 
-/**
- * @author mdjurovi
- */
+/** @author mdjurovi */
 public enum SequenceOrderType {
-
-  ORDER_POSITIVE((byte) 1), ORDER_NEGATIVE((byte) 2);
+  ORDER_POSITIVE((byte) 1),
+  ORDER_NEGATIVE((byte) 2);
 
   private byte val;
 
@@ -34,12 +32,12 @@ public enum SequenceOrderType {
 
   public static SequenceOrderType fromValue(byte val) {
     switch (val) {
-    case (byte) 1:
-      return ORDER_POSITIVE;
-    case (byte) 2:
-      return ORDER_NEGATIVE;
-    default:
-      return ORDER_POSITIVE;
+      case (byte) 1:
+        return ORDER_POSITIVE;
+      case (byte) 2:
+        return ORDER_NEGATIVE;
+      default:
+        return ORDER_POSITIVE;
     }
   }
 }

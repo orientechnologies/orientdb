@@ -1,17 +1,15 @@
 package com.orientechnologies.orient.core.metadata.function;
 
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-
-/**
- * Created by tglman on 10/02/16.
- */
+/** Created by tglman on 10/02/16. */
 public class OFunctionLibraryTest {
 
   private ODatabaseDocument db;
@@ -56,5 +54,4 @@ public class OFunctionLibraryTest {
     func = db.getMetadata().getFunctionLibrary().getFunction("TestFunc");
     assertNull(func);
   }
-
 }

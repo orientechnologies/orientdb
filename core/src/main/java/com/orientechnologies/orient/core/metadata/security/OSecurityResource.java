@@ -3,7 +3,6 @@ package com.orientechnologies.orient.core.metadata.security;
 import com.orientechnologies.orient.core.exception.OSecurityException;
 import com.orientechnologies.orient.core.sql.OSQLEngine;
 import com.orientechnologies.orient.core.sql.parser.OSecurityResourceSegment;
-
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
@@ -130,7 +129,6 @@ public abstract class OSecurityResource {
   }
 
   protected final String resourceString;
-
 
   public OSecurityResource(String resourceString) {
     this.resourceString = resourceString;

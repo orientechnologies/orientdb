@@ -6,16 +6,19 @@ import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.executor.OResultInternal;
-
 import java.lang.reflect.Array;
-import java.util.*;
+import java.util.Iterator;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 public class OArraySelector extends SimpleNode {
 
-  protected ORid            rid;
+  protected ORid rid;
   protected OInputParameter inputParam;
-  protected OExpression     expression;
-  protected OInteger        integer;
+  protected OExpression expression;
+  protected OInteger integer;
 
   public OArraySelector(int id) {
     super(id);
@@ -95,21 +98,17 @@ public class OArraySelector extends SimpleNode {
 
   @Override
   public boolean equals(Object o) {
-    if (this == o)
-      return true;
-    if (o == null || getClass() != o.getClass())
-      return false;
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
 
     OArraySelector that = (OArraySelector) o;
 
-    if (rid != null ? !rid.equals(that.rid) : that.rid != null)
-      return false;
+    if (rid != null ? !rid.equals(that.rid) : that.rid != null) return false;
     if (inputParam != null ? !inputParam.equals(that.inputParam) : that.inputParam != null)
       return false;
     if (expression != null ? !expression.equals(that.expression) : that.expression != null)
       return false;
-    if (integer != null ? !integer.equals(that.integer) : that.integer != null)
-      return false;
+    if (integer != null ? !integer.equals(that.integer) : that.integer != null) return false;
 
     return true;
   }

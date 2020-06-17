@@ -8,9 +8,18 @@ import com.orientechnologies.orient.core.exception.OConcurrentModificationExcept
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.intent.OIntentMassiveInsert;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import org.junit.*;
-
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Random;
+import org.junit.After;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Ignore;
+import org.junit.Test;
 
 public class ORidBagAtomicUpdateTest extends DatabaseAbstractTest {
   private int topThreshold;
@@ -23,8 +32,10 @@ public class ORidBagAtomicUpdateTest extends DatabaseAbstractTest {
 
   @Before
   public void beforeMethod() {
-    topThreshold = OGlobalConfiguration.RID_BAG_EMBEDDED_TO_SBTREEBONSAI_THRESHOLD.getValueAsInteger();
-    bottomThreshold = OGlobalConfiguration.RID_BAG_SBTREEBONSAI_TO_EMBEDDED_THRESHOLD.getValueAsInteger();
+    topThreshold =
+        OGlobalConfiguration.RID_BAG_EMBEDDED_TO_SBTREEBONSAI_THRESHOLD.getValueAsInteger();
+    bottomThreshold =
+        OGlobalConfiguration.RID_BAG_SBTREEBONSAI_TO_EMBEDDED_THRESHOLD.getValueAsInteger();
 
     OGlobalConfiguration.RID_BAG_EMBEDDED_TO_SBTREEBONSAI_THRESHOLD.setValue(-1);
     OGlobalConfiguration.RID_BAG_SBTREEBONSAI_TO_EMBEDDED_THRESHOLD.setValue(-1);
@@ -144,7 +155,8 @@ public class ORidBagAtomicUpdateTest extends DatabaseAbstractTest {
 
     database.rollback();
 
-    Assert.assertEquals(database.countClusterElements(database.getDefaultClusterId()), recordsCount);
+    Assert.assertEquals(
+        database.countClusterElements(database.getDefaultClusterId()), recordsCount);
 
     rootDoc = database.load(rootDoc.getIdentity());
     ridBag = rootDoc.field("ridBag");
@@ -274,7 +286,8 @@ public class ORidBagAtomicUpdateTest extends DatabaseAbstractTest {
     } catch (OConcurrentModificationException e) {
     }
 
-    Assert.assertEquals(database.countClusterElements(database.getDefaultClusterId()), recordsCount);
+    Assert.assertEquals(
+        database.countClusterElements(database.getDefaultClusterId()), recordsCount);
 
     rootDoc = database.load(rootDoc.getIdentity());
     ridBag = rootDoc.field("ridBag");
@@ -311,7 +324,8 @@ public class ORidBagAtomicUpdateTest extends DatabaseAbstractTest {
 
     database.rollback();
 
-    Assert.assertEquals(database.countClusterElements(database.getDefaultClusterId()), recordsCount);
+    Assert.assertEquals(
+        database.countClusterElements(database.getDefaultClusterId()), recordsCount);
   }
 
   @Test
@@ -352,7 +366,8 @@ public class ORidBagAtomicUpdateTest extends DatabaseAbstractTest {
 
     database.rollback();
 
-    Assert.assertEquals(database.countClusterElements(database.getDefaultClusterId()), recordsCount);
+    Assert.assertEquals(
+        database.countClusterElements(database.getDefaultClusterId()), recordsCount);
 
     rootDoc = database.load(rootDoc.getIdentity());
     ridBag = rootDoc.field("ridBag");
@@ -421,7 +436,8 @@ public class ORidBagAtomicUpdateTest extends DatabaseAbstractTest {
     } catch (OConcurrentModificationException e) {
     }
 
-    Assert.assertEquals(database.countClusterElements(database.getDefaultClusterId()), recordsCount);
+    Assert.assertEquals(
+        database.countClusterElements(database.getDefaultClusterId()), recordsCount);
 
     rootDoc = database.load(rootDoc.getIdentity());
     ridBag = rootDoc.field("ridBag");
@@ -503,7 +519,8 @@ public class ORidBagAtomicUpdateTest extends DatabaseAbstractTest {
 
     database.rollback();
 
-    Assert.assertEquals(database.countClusterElements(database.getDefaultClusterId()), recordsCount);
+    Assert.assertEquals(
+        database.countClusterElements(database.getDefaultClusterId()), recordsCount);
     List<OIdentifiable> addedDocs = new ArrayList<OIdentifiable>(Arrays.asList(docOne, docTwo));
 
     rootDoc = database.load(rootDoc.getIdentity());
@@ -598,7 +615,8 @@ public class ORidBagAtomicUpdateTest extends DatabaseAbstractTest {
     } catch (OConcurrentModificationException e) {
     }
 
-    Assert.assertEquals(database.countClusterElements(database.getDefaultClusterId()), recordsCount);
+    Assert.assertEquals(
+        database.countClusterElements(database.getDefaultClusterId()), recordsCount);
     List<OIdentifiable> addedDocs = new ArrayList<OIdentifiable>(Arrays.asList(docOne, docTwo));
 
     rootDoc = database.load(rootDoc.getIdentity());
@@ -609,9 +627,7 @@ public class ORidBagAtomicUpdateTest extends DatabaseAbstractTest {
     Assert.assertTrue(addedDocs.remove(iterator.next()));
   }
 
-  /**
-   * This test is no longer useful
-   */
+  /** This test is no longer useful */
   @Test
   @Ignore
   public void testAddTwoSavedDocumentsWithoutTx() {
@@ -645,9 +661,7 @@ public class ORidBagAtomicUpdateTest extends DatabaseAbstractTest {
     Assert.assertEquals(ridBag.size(), 0);
   }
 
-  /**
-   * This test is no longer useful
-   */
+  /** This test is no longer useful */
   @Test
   @Ignore
   public void testAddOneSavedDocumentsAndDeleteOneWithoutTx() {
@@ -742,8 +756,7 @@ public class ORidBagAtomicUpdateTest extends DatabaseAbstractTest {
           k++;
         }
 
-        if (!iterator.hasNext())
-          iterator = staleRidBag.iterator();
+        if (!iterator.hasNext()) iterator = staleRidBag.iterator();
       }
 
       for (k = 0; k < amountOfAddedDocsAfterSave; k++) {
@@ -765,8 +778,7 @@ public class ORidBagAtomicUpdateTest extends DatabaseAbstractTest {
 
       Assert.assertEquals(ridBag.size(), addedDocuments.size() - amountOfDeletedDocs);
       iterator = ridBag.iterator();
-      while (iterator.hasNext())
-        Assert.assertTrue(addedDocuments.contains(iterator.next()));
+      while (iterator.hasNext()) Assert.assertTrue(addedDocuments.contains(iterator.next()));
     }
   }
 
@@ -828,7 +840,8 @@ public class ORidBagAtomicUpdateTest extends DatabaseAbstractTest {
     final List<Integer> amountOfAddedDocsPerLevel = new ArrayList<Integer>();
     final List<Integer> amountOfAddedDocsAfterSavePerLevel = new ArrayList<Integer>();
     final List<Integer> amountOfDeletedDocsPerLevel = new ArrayList<Integer>();
-    Map<LevelKey, List<OIdentifiable>> addedDocPerLevel = new HashMap<LevelKey, List<OIdentifiable>>();
+    Map<LevelKey, List<OIdentifiable>> addedDocPerLevel =
+        new HashMap<LevelKey, List<OIdentifiable>>();
 
     for (int i = 0; i < levels; i++) {
       amountOfAddedDocsPerLevel.add(rnd.nextInt(5) + 10);
@@ -864,7 +877,8 @@ public class ORidBagAtomicUpdateTest extends DatabaseAbstractTest {
     final List<Integer> amountOfAddedDocsPerLevel = new ArrayList<Integer>();
     final List<Integer> amountOfAddedDocsAfterSavePerLevel = new ArrayList<Integer>();
     final List<Integer> amountOfDeletedDocsPerLevel = new ArrayList<Integer>();
-    Map<LevelKey, List<OIdentifiable>> addedDocPerLevel = new HashMap<LevelKey, List<OIdentifiable>>();
+    Map<LevelKey, List<OIdentifiable>> addedDocPerLevel =
+        new HashMap<LevelKey, List<OIdentifiable>>();
 
     for (int i = 0; i < levels; i++) {
       amountOfAddedDocsPerLevel.add(rnd.nextInt(5) + 10);
@@ -951,8 +965,7 @@ public class ORidBagAtomicUpdateTest extends DatabaseAbstractTest {
     ridBag = document.field("ridBag");
 
     Assert.assertTrue(ridBag.isEmbedded());
-    for (OIdentifiable identifiable : ridBag)
-      Assert.assertTrue(docsToAdd.remove(identifiable));
+    for (OIdentifiable identifiable : ridBag) Assert.assertTrue(docsToAdd.remove(identifiable));
 
     Assert.assertTrue(docsToAdd.isEmpty());
   }
@@ -1023,8 +1036,7 @@ public class ORidBagAtomicUpdateTest extends DatabaseAbstractTest {
     ridBag = document.field("ridBag");
 
     Assert.assertTrue(ridBag.isEmbedded());
-    for (OIdentifiable identifiable : ridBag)
-      Assert.assertTrue(docsToAdd.remove(identifiable));
+    for (OIdentifiable identifiable : ridBag) Assert.assertTrue(docsToAdd.remove(identifiable));
 
     Assert.assertTrue(docsToAdd.isEmpty());
   }
@@ -1081,8 +1093,7 @@ public class ORidBagAtomicUpdateTest extends DatabaseAbstractTest {
     ridBag = document.field("ridBag");
 
     Assert.assertTrue(ridBag.isEmbedded());
-    for (OIdentifiable identifiable : ridBag)
-      Assert.assertTrue(docsToAdd.remove(identifiable));
+    for (OIdentifiable identifiable : ridBag) Assert.assertTrue(docsToAdd.remove(identifiable));
 
     Assert.assertTrue(docsToAdd.isEmpty());
   }
@@ -1135,8 +1146,7 @@ public class ORidBagAtomicUpdateTest extends DatabaseAbstractTest {
 
     Assert.assertTrue(!ridBag.isEmbedded());
 
-    for (OIdentifiable identifiable : ridBag)
-      Assert.assertTrue(docsToAdd.remove(identifiable));
+    for (OIdentifiable identifiable : ridBag) Assert.assertTrue(docsToAdd.remove(identifiable));
 
     Assert.assertTrue(docsToAdd.isEmpty());
   }
@@ -1207,15 +1217,12 @@ public class ORidBagAtomicUpdateTest extends DatabaseAbstractTest {
 
     Assert.assertTrue(!ridBag.isEmbedded());
 
-    for (OIdentifiable identifiable : ridBag)
-      Assert.assertTrue(docsToAdd.remove(identifiable));
+    for (OIdentifiable identifiable : ridBag) Assert.assertTrue(docsToAdd.remove(identifiable));
 
     Assert.assertTrue(docsToAdd.isEmpty());
   }
 
-  /**
-   * This test is no longer useful
-   */
+  /** This test is no longer useful */
   @Test
   @Ignore
   public void testFromSBTreeToEmbeddedWithCME() {
@@ -1267,14 +1274,17 @@ public class ORidBagAtomicUpdateTest extends DatabaseAbstractTest {
 
     Assert.assertTrue(!ridBag.isEmbedded());
 
-    for (OIdentifiable identifiable : ridBag)
-      Assert.assertTrue(docsToAdd.remove(identifiable));
+    for (OIdentifiable identifiable : ridBag) Assert.assertTrue(docsToAdd.remove(identifiable));
 
     Assert.assertTrue(docsToAdd.isEmpty());
   }
 
-  private void createDocsForLevel(final List<Integer> amountOfAddedDocsPerLevel, int level, int levels,
-      Map<LevelKey, List<OIdentifiable>> addedDocPerLevel, ODocument rootDoc) {
+  private void createDocsForLevel(
+      final List<Integer> amountOfAddedDocsPerLevel,
+      int level,
+      int levels,
+      Map<LevelKey, List<OIdentifiable>> addedDocPerLevel,
+      ODocument rootDoc) {
 
     int docs = amountOfAddedDocsPerLevel.get(level);
 
@@ -1292,13 +1302,19 @@ public class ORidBagAtomicUpdateTest extends DatabaseAbstractTest {
       ridBag.add(docToAdd);
 
       if (level + 1 < levels)
-        createDocsForLevel(amountOfAddedDocsPerLevel, level + 1, levels, addedDocPerLevel, docToAdd);
+        createDocsForLevel(
+            amountOfAddedDocsPerLevel, level + 1, levels, addedDocPerLevel, docToAdd);
     }
 
     rootDoc.save(database.getClusterNameById(database.getDefaultClusterId()));
   }
 
-  private void deleteDocsForLevel(List<Integer> amountOfDeletedDocsPerLevel, int level, int levels, ODocument rootDoc, Random rnd) {
+  private void deleteDocsForLevel(
+      List<Integer> amountOfDeletedDocsPerLevel,
+      int level,
+      int levels,
+      ODocument rootDoc,
+      Random rnd) {
     ORidBag ridBag = rootDoc.field("ridBag");
     Iterator<OIdentifiable> iter = ridBag.iterator();
     while (iter.hasNext()) {
@@ -1320,14 +1336,13 @@ public class ORidBagAtomicUpdateTest extends DatabaseAbstractTest {
         k++;
       }
 
-      if (!iterator.hasNext())
-        iterator = ridBag.iterator();
+      if (!iterator.hasNext()) iterator = ridBag.iterator();
     }
     rootDoc.save(database.getClusterNameById(database.getDefaultClusterId()));
-
   }
 
-  private void addDocsForLevel(List<Integer> amountOfAddedDocsAfterSavePerLevel, int level, int levels, ODocument rootDoc) {
+  private void addDocsForLevel(
+      List<Integer> amountOfAddedDocsAfterSavePerLevel, int level, int levels, ODocument rootDoc) {
     ORidBag ridBag = rootDoc.field("ridBag");
 
     for (OIdentifiable identifiable : ridBag) {
@@ -1344,21 +1359,23 @@ public class ORidBagAtomicUpdateTest extends DatabaseAbstractTest {
       ridBag.add(docToAdd);
     }
     rootDoc.save(database.getClusterNameById(database.getDefaultClusterId()));
-
   }
 
-  private void assertDocsAfterRollback(int level, int levels, Map<LevelKey, List<OIdentifiable>> addedDocPerLevel,
+  private void assertDocsAfterRollback(
+      int level,
+      int levels,
+      Map<LevelKey, List<OIdentifiable>> addedDocPerLevel,
       ODocument rootDoc) {
     ORidBag ridBag = rootDoc.field("ridBag");
-    List<OIdentifiable> addedDocs = new ArrayList<OIdentifiable>(addedDocPerLevel.get(new LevelKey(rootDoc.getIdentity(), level)));
+    List<OIdentifiable> addedDocs =
+        new ArrayList<OIdentifiable>(
+            addedDocPerLevel.get(new LevelKey(rootDoc.getIdentity(), level)));
 
     Iterator<OIdentifiable> iterator = ridBag.iterator();
     while (iterator.hasNext()) {
       ODocument doc = iterator.next().getRecord();
-      if (level + 1 < levels)
-        assertDocsAfterRollback(level + 1, levels, addedDocPerLevel, doc);
-      else
-        Assert.assertNull(doc.field("ridBag"));
+      if (level + 1 < levels) assertDocsAfterRollback(level + 1, levels, addedDocPerLevel, doc);
+      else Assert.assertNull(doc.field("ridBag"));
 
       Assert.assertTrue(addedDocs.remove(doc));
     }
@@ -1368,7 +1385,7 @@ public class ORidBagAtomicUpdateTest extends DatabaseAbstractTest {
 
   private final class LevelKey {
     private final ORID rid;
-    private final int  level;
+    private final int level;
 
     private LevelKey(ORID rid, int level) {
       this.rid = rid;
@@ -1377,17 +1394,13 @@ public class ORidBagAtomicUpdateTest extends DatabaseAbstractTest {
 
     @Override
     public boolean equals(Object o) {
-      if (this == o)
-        return true;
-      if (o == null || getClass() != o.getClass())
-        return false;
+      if (this == o) return true;
+      if (o == null || getClass() != o.getClass()) return false;
 
       LevelKey levelKey = (LevelKey) o;
 
-      if (level != levelKey.level)
-        return false;
-      if (!rid.equals(levelKey.rid))
-        return false;
+      if (level != levelKey.level) return false;
+      if (!rid.equals(levelKey.rid)) return false;
 
       return true;
     }

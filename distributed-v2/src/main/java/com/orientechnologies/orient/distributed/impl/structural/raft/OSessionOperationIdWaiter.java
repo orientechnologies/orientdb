@@ -18,7 +18,8 @@ public class OSessionOperationIdWaiter {
       try {
         this.wait();
       } catch (InterruptedException e) {
-        throw OException.wrapException(new OInterruptedException("Interrupted waiting for apply of own requests"), e);
+        throw OException.wrapException(
+            new OInterruptedException("Interrupted waiting for apply of own requests"), e);
       }
     }
   }

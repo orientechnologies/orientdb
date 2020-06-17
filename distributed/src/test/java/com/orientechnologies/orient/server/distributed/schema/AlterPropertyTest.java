@@ -1,5 +1,7 @@
 package com.orientechnologies.orient.server.distributed.schema;
 
+import static org.junit.Assert.assertEquals;
+
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
@@ -7,8 +9,6 @@ import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.server.distributed.AbstractServerClusterTest;
 import com.orientechnologies.orient.server.distributed.ServerRun;
 import org.junit.Test;
-
-import static org.junit.Assert.assertEquals;
 
 public class AlterPropertyTest extends AbstractServerClusterTest {
 
@@ -40,9 +40,10 @@ public class AlterPropertyTest extends AbstractServerClusterTest {
 
   @Override
   protected void executeTest() throws Exception {
-    ODatabaseDocument db = serverInstance.get(0).getServerInstance().openDatabase(getDatabaseName());
+    ODatabaseDocument db =
+        serverInstance.get(0).getServerInstance().openDatabase(getDatabaseName());
     try {
-      //wait till databases will be opened on both servers
+      // wait till databases will be opened on both servers
       Thread.sleep(1_000);
 
       testAlterCustomAttributeInProperty();

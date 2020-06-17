@@ -7,9 +7,7 @@ import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-/**
- * @author Luigi Dell'Aquila (l.dellaquila-(at)-orientdb.com)
- */
+/** @author Luigi Dell'Aquila (l.dellaquila-(at)-orientdb.com) */
 public class OWhileBlockExecutionTest {
   static ODatabaseDocument db;
 
@@ -84,5 +82,4 @@ public class OWhileBlockExecutionTest {
     Assert.assertEquals(1, sum);
     results.close();
   }
-
 }

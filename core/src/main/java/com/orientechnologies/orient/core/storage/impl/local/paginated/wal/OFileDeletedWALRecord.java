@@ -1,14 +1,12 @@
 package com.orientechnologies.orient.core.storage.impl.local.paginated.wal;
 
 import com.orientechnologies.common.serialization.types.OLongSerializer;
-
 import java.nio.ByteBuffer;
 
 public class OFileDeletedWALRecord extends OOperationUnitBodyRecord {
   private long fileId;
 
-  public OFileDeletedWALRecord() {
-  }
+  public OFileDeletedWALRecord() {}
 
   public OFileDeletedWALRecord(long operationUnitId, long fileId) {
     super(operationUnitId);
@@ -18,7 +16,6 @@ public class OFileDeletedWALRecord extends OOperationUnitBodyRecord {
   public long getFileId() {
     return fileId;
   }
-
 
   @Override
   protected void serializeToByteBuffer(ByteBuffer buffer) {

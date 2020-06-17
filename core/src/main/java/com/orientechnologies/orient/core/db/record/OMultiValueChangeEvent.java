@@ -28,31 +28,24 @@ import java.util.Objects;
  * @param <V> Item value.
  */
 public class OMultiValueChangeEvent<K, V> {
-  /**
-   * Operation that is performed on collection.
-   */
+  /** Operation that is performed on collection. */
   public enum OChangeType {
-    ADD, UPDATE, REMOVE, NESTED
+    ADD,
+    UPDATE,
+    REMOVE,
+    NESTED
   }
 
-  /**
-   * Operation that is performed on collection.
-   */
+  /** Operation that is performed on collection. */
   private final OChangeType changeType;
 
-  /**
-   * Value that indicates position of item inside collection.
-   */
+  /** Value that indicates position of item inside collection. */
   private final K key;
 
-  /**
-   * New item value.
-   */
+  /** New item value. */
   private V value;
 
-  /**
-   * Previous item value.
-   */
+  /** Previous item value. */
   private V oldValue;
 
   public OMultiValueChangeEvent(OChangeType changeType, K key, V value) {
@@ -86,13 +79,13 @@ public class OMultiValueChangeEvent<K, V> {
 
   @Override
   public boolean equals(Object o) {
-    if (this == o)
-      return true;
-    if (o == null || getClass() != o.getClass())
-      return false;
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
     OMultiValueChangeEvent<?, ?> that = (OMultiValueChangeEvent<?, ?>) o;
-    return changeType == that.changeType && Objects.equals(key, that.key) && Objects.equals(value, that.value) && Objects
-        .equals(oldValue, that.oldValue);
+    return changeType == that.changeType
+        && Objects.equals(key, that.key)
+        && Objects.equals(value, that.value)
+        && Objects.equals(oldValue, that.oldValue);
   }
 
   @Override
@@ -106,7 +99,15 @@ public class OMultiValueChangeEvent<K, V> {
 
   @Override
   public String toString() {
-    return "OMultiValueChangeEvent{" + "changeType=" + changeType + ", key=" + key + ", value=" + value + ", oldValue=" + oldValue
+    return "OMultiValueChangeEvent{"
+        + "changeType="
+        + changeType
+        + ", key="
+        + key
+        + ", value="
+        + value
+        + ", oldValue="
+        + oldValue
         + '}';
   }
 }

@@ -54,5 +54,4 @@ public class OUDPUnicastConfiguration {
   public static OUDPUnicastConfigurationBuilder builder() {
     return new OUDPUnicastConfigurationBuilder();
   }
-
 }

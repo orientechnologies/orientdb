@@ -24,7 +24,6 @@ import com.orientechnologies.common.console.annotation.ConsoleParameter;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.parser.OStringParser;
 import com.orientechnologies.common.util.OArrays;
-
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -54,22 +53,23 @@ public class OConsoleApplication {
 
   public static final String PARAM_DISABLE_HISTORY = "--disable-history";
 
-  public static final    String                  ONLINE_HELP_URL    = "https://raw.githubusercontent.com/orientechnologies/orientdb-docs/master/";
-  public static final    String                  ONLINE_HELP_EXT    = ".md";
-  protected static final String[]                COMMENT_PREFIXS    = new String[] { "#", "--", "//" };
-  protected final        StringBuilder           commandBuffer      = new StringBuilder(2048);
-  protected              InputStream             in                 = System.in;                                                                  // System.in;
-  protected              PrintStream             out                = System.out;
-  protected              PrintStream             err                = System.err;
-  protected              String                  wordSeparator      = " ";
-  protected              String[]                helpCommands       = { "help", "?" };
-  protected              String[]                exitCommands       = { "exit", "bye", "quit" };
-  protected              Map<String, String>     properties         = new HashMap<String, String>();
-  protected              OConsoleReader          reader             = new ODefaultConsoleReader();
-  protected              boolean                 interactiveMode;
-  protected              String[]                args;
-  protected              TreeMap<Method, Object> methods;
-  private                boolean                 isInCollectingMode = false;
+  public static final String ONLINE_HELP_URL =
+      "https://raw.githubusercontent.com/orientechnologies/orientdb-docs/master/";
+  public static final String ONLINE_HELP_EXT = ".md";
+  protected static final String[] COMMENT_PREFIXS = new String[] {"#", "--", "//"};
+  protected final StringBuilder commandBuffer = new StringBuilder(2048);
+  protected InputStream in = System.in; // System.in;
+  protected PrintStream out = System.out;
+  protected PrintStream err = System.err;
+  protected String wordSeparator = " ";
+  protected String[] helpCommands = {"help", "?"};
+  protected String[] exitCommands = {"exit", "bye", "quit"};
+  protected Map<String, String> properties = new HashMap<String, String>();
+  protected OConsoleReader reader = new ODefaultConsoleReader();
+  protected boolean interactiveMode;
+  protected String[] args;
+  protected TreeMap<Method, Object> methods;
+  private boolean isInCollectingMode = false;
 
   public OConsoleApplication(String[] iArgs) {
     this.args = iArgs;
@@ -80,9 +80,13 @@ public class OConsoleApplication {
     buffer.append(getClearName(m.getName()));
     for (int i = 0; i < m.getParameterAnnotations().length; i++) {
       for (int j = 0; j < m.getParameterAnnotations()[i].length; j++) {
-        if (m.getParameterAnnotations()[i][j] instanceof com.orientechnologies.common.console.annotation.ConsoleParameter) {
+        if (m.getParameterAnnotations()[i][j]
+            instanceof com.orientechnologies.common.console.annotation.ConsoleParameter) {
           buffer.append(
-              " <" + ((com.orientechnologies.common.console.annotation.ConsoleParameter) m.getParameterAnnotations()[i][j]).name()
+              " <"
+                  + ((com.orientechnologies.common.console.annotation.ConsoleParameter)
+                          m.getParameterAnnotations()[i][j])
+                      .name()
                   + ">");
         }
       }
@@ -105,7 +109,6 @@ public class OConsoleApplication {
 
         buffer.append(Character.toLowerCase(c));
       }
-
     }
     return buffer.toString();
   }
@@ -136,11 +139,9 @@ public class OConsoleApplication {
 
           consoleInput = reader.readLine();
 
-          if (consoleInput == null || consoleInput.length() == 0)
-            continue;
+          if (consoleInput == null || consoleInput.length() == 0) continue;
 
-          if (!executeCommands(new OConsoleCommandStream(consoleInput), false))
-            break;
+          if (!executeCommands(new OConsoleCommandStream(consoleInput), false)) break;
         } catch (Exception e) {
           result = 1;
           out.print("Error on reading console input: " + e.getMessage());
@@ -160,20 +161,16 @@ public class OConsoleApplication {
   public void message(final String iMessage, final Object... iArgs) {
     final int verboseLevel = getVerboseLevel();
     if (verboseLevel > 1) {
-      if (iArgs != null && iArgs.length > 0)
-        out.printf(iMessage, iArgs);
-      else
-        out.print(iMessage);
+      if (iArgs != null && iArgs.length > 0) out.printf(iMessage, iArgs);
+      else out.print(iMessage);
     }
   }
 
   public void error(final String iMessage, final Object... iArgs) {
     final int verboseLevel = getVerboseLevel();
     if (verboseLevel > 0) {
-      if (iArgs != null && iArgs.length > 0)
-        out.printf(iMessage, iArgs);
-      else
-        out.print(iMessage);
+      if (iArgs != null && iArgs.length > 0) out.printf(iMessage, iArgs);
+      else out.print(iMessage);
     }
   }
 
@@ -250,8 +247,7 @@ public class OConsoleApplication {
           // EMPTY LINE
           continue;
 
-        if (isComment(commandLine))
-          continue;
+        if (isComment(commandLine)) continue;
 
         // SCRIPT CASE: MANAGE ENSEMBLING ALL TOGETHER
         if (isCollectingCommands(commandLine)) {
@@ -288,8 +284,8 @@ public class OConsoleApplication {
           commandLine = null;
 
           if (status == RESULT.EXIT
-              || (status == RESULT.ERROR && !Boolean.parseBoolean(properties.get("ignoreErrors"))) && iBatchMode)
-            return false;
+              || (status == RESULT.ERROR && !Boolean.parseBoolean(properties.get("ignoreErrors")))
+                  && iBatchMode) return false;
         }
       }
 
@@ -303,8 +299,8 @@ public class OConsoleApplication {
 
         final RESULT status = execute(commandBuffer.toString());
         if (status == RESULT.EXIT
-            || (status == RESULT.ERROR && !Boolean.parseBoolean(properties.get("ignoreErrors"))) && iBatchMode)
-          return false;
+            || (status == RESULT.ERROR && !Boolean.parseBoolean(properties.get("ignoreErrors")))
+                && iBatchMode) return false;
       }
     } finally {
       commandStream.close();
@@ -313,9 +309,7 @@ public class OConsoleApplication {
   }
 
   protected boolean isComment(final String commandLine) {
-    for (String comment : COMMENT_PREFIXS)
-      if (commandLine.startsWith(comment))
-        return true;
+    for (String comment : COMMENT_PREFIXS) if (commandLine.startsWith(comment)) return true;
     return false;
   }
 
@@ -336,8 +330,10 @@ public class OConsoleApplication {
       return RESULT.OK;
 
     String[] commandWords;
-    if (iCommand.toLowerCase().startsWith("load script") || iCommand.toLowerCase().startsWith("create database") || iCommand
-        .toLowerCase().startsWith("drop database") || iCommand.toLowerCase().startsWith("connect")) {
+    if (iCommand.toLowerCase().startsWith("load script")
+        || iCommand.toLowerCase().startsWith("create database")
+        || iCommand.toLowerCase().startsWith("drop database")
+        || iCommand.toLowerCase().startsWith("connect")) {
       commandWords = iCommand.split(" ");
       commandWords = Arrays.stream(commandWords).filter(s -> s.length() > 0).toArray(String[]::new);
       for (int i = 2; i < commandWords.length; i++) {
@@ -358,10 +354,8 @@ public class OConsoleApplication {
 
     for (String cmd : helpCommands)
       if (cmd.equals(commandWords[0])) {
-        if (iCommand.length() > cmd.length())
-          help(iCommand.substring(cmd.length() + 1));
-        else
-          help(null);
+        if (iCommand.length() > cmd.length()) help(iCommand.substring(cmd.length() + 1));
+        else help(null);
 
         return RESULT.OK;
       }
@@ -401,13 +395,12 @@ public class OConsoleApplication {
         commandName.append(ch);
       }
 
-      if (!commandLowerCase.equals(commandName.toString()) && !commandLowerCase.startsWith(commandName.toString() + " ")) {
-        if (ann == null)
-          continue;
+      if (!commandLowerCase.equals(commandName.toString())
+          && !commandLowerCase.startsWith(commandName.toString() + " ")) {
+        if (ann == null) continue;
 
         String[] aliases = ann.aliases();
-        if (aliases == null || aliases.length == 0)
-          continue;
+        if (aliases == null || aliases.length == 0) continue;
 
         boolean aliasMatch = false;
         for (String alias : aliases) {
@@ -418,20 +411,21 @@ public class OConsoleApplication {
           }
         }
 
-        if (!aliasMatch)
-          continue;
+        if (!aliasMatch) continue;
       }
 
       Object[] methodArgs;
 
       // BUILD PARAMETERS
       if (ann != null && !ann.splitInWords()) {
-        methodArgs = new String[] { iCommand.substring(iCommand.indexOf(' ') + 1) };
+        methodArgs = new String[] {iCommand.substring(iCommand.indexOf(' ') + 1)};
       } else {
         final int actualParamCount = commandWords.length - commandWordCount;
         if (m.getParameterTypes().length > actualParamCount) {
           // METHOD PARAMS AND USED PARAMS MISMATCH: CHECK FOR OPTIONALS
-          for (int paramNum = m.getParameterAnnotations().length - 1; paramNum > actualParamCount - 1; paramNum--) {
+          for (int paramNum = m.getParameterAnnotations().length - 1;
+              paramNum > actualParamCount - 1;
+              paramNum--) {
             final Annotation[] paramAnn = m.getParameterAnnotations()[paramNum];
             if (paramAnn != null)
               for (int annNum = paramAnn.length - 1; annNum > -1; annNum--) {
@@ -455,23 +449,19 @@ public class OConsoleApplication {
         // GET THE COMMAND NAME
         lastCommandInvoked.setLength(0);
         for (int i = 0; i < commandWordCount; ++i) {
-          if (lastCommandInvoked.length() > 0)
-            lastCommandInvoked.append(" ");
+          if (lastCommandInvoked.length() > 0) lastCommandInvoked.append(" ");
           lastCommandInvoked.append(commandWords[i]);
         }
         continue;
       } catch (Exception e) {
-        if (e.getCause() != null)
-          onException(e.getCause());
-        else
-          e.printStackTrace(err);
+        if (e.getCause() != null) onException(e.getCause());
+        else e.printStackTrace(err);
         return RESULT.ERROR;
       }
       return RESULT.OK;
     }
 
-    if (lastMethodInvoked != null)
-      syntaxError(lastCommandInvoked.toString(), lastMethodInvoked);
+    if (lastMethodInvoked != null) syntaxError(lastCommandInvoked.toString(), lastMethodInvoked);
 
     error("\n!Unrecognized command: '%s'", iCommand);
     return RESULT.ERROR;
@@ -496,14 +486,12 @@ public class OConsoleApplication {
     boolean separator = false;
     for (int i = 0; i < iCommand.length(); ++i) {
       final char ch = iCommand.charAt(i);
-      if (ch == ' ')
-        separator = true;
+      if (ch == ' ') separator = true;
       else {
         if (separator) {
           separator = false;
           commandSignature.append(Character.toUpperCase(ch));
-        } else
-          commandSignature.append(ch);
+        } else commandSignature.append(ch);
       }
     }
 
@@ -532,21 +520,19 @@ public class OConsoleApplication {
         commandName.append(ch);
       }
 
-      if (!commandLowerCase.equals(commandName.toString()) && !commandLowerCase.startsWith(commandName.toString() + " ")) {
-        if (ann == null)
-          continue;
+      if (!commandLowerCase.equals(commandName.toString())
+          && !commandLowerCase.startsWith(commandName.toString() + " ")) {
+        if (ann == null) continue;
 
         String[] aliases = ann.aliases();
-        if (aliases == null || aliases.length == 0)
-          continue;
+        if (aliases == null || aliases.length == 0) continue;
 
         for (String alias : aliases) {
           if (iCommand.startsWith(alias.split(" ")[0])) {
             return m;
           }
         }
-      } else
-        return m;
+      } else return m;
     }
 
     error("\n!Unrecognized command: '%s'", iCommand);
@@ -574,29 +560,28 @@ public class OConsoleApplication {
     for (Annotation[] annotations : m.getParameterAnnotations()) {
       for (Annotation ann : annotations) {
         if (ann instanceof com.orientechnologies.common.console.annotation.ConsoleParameter) {
-          paramName = ((com.orientechnologies.common.console.annotation.ConsoleParameter) ann).name();
-          paramDescription = ((com.orientechnologies.common.console.annotation.ConsoleParameter) ann).description();
-          paramOptional = ((com.orientechnologies.common.console.annotation.ConsoleParameter) ann).optional();
+          paramName =
+              ((com.orientechnologies.common.console.annotation.ConsoleParameter) ann).name();
+          paramDescription =
+              ((com.orientechnologies.common.console.annotation.ConsoleParameter) ann)
+                  .description();
+          paramOptional =
+              ((com.orientechnologies.common.console.annotation.ConsoleParameter) ann).optional();
           break;
         }
       }
 
-      if (paramName == null)
-        paramName = "?";
+      if (paramName == null) paramName = "?";
 
-      if (paramOptional)
-        signature.append(" [<" + paramName + ">]");
-      else
-        signature.append(" <" + paramName + ">");
+      if (paramOptional) signature.append(" [<" + paramName + ">]");
+      else signature.append(" <" + paramName + ">");
 
       buffer.append("* ");
       buffer.append(String.format("%-18s", paramName));
 
-      if (paramDescription != null)
-        buffer.append(paramDescription);
+      if (paramDescription != null) buffer.append(paramDescription);
 
-      if (paramOptional)
-        buffer.append(" (optional)");
+      if (paramOptional) buffer.append(" (optional)");
 
       buffer.append("\n");
     }
@@ -612,11 +597,11 @@ public class OConsoleApplication {
    * @return Map&lt;Method,Object&gt;
    */
   protected Map<Method, Object> getConsoleMethods() {
-    if (methods != null)
-      return methods;
+    if (methods != null) return methods;
 
     // search for declared command collections
-    final Iterator<OConsoleCommandCollection> ite = ServiceLoader.load(OConsoleCommandCollection.class).iterator();
+    final Iterator<OConsoleCommandCollection> ite =
+        ServiceLoader.load(OConsoleCommandCollection.class).iterator();
     final Collection<Object> candidates = new ArrayList<Object>();
     candidates.add(this);
     while (ite.hasNext()) {
@@ -632,29 +617,32 @@ public class OConsoleApplication {
       }
     }
 
-    methods = new TreeMap<Method, Object>(new Comparator<Method>() {
-      public int compare(Method o1, Method o2) {
-        final ConsoleCommand ann1 = o1.getAnnotation(ConsoleCommand.class);
-        final ConsoleCommand ann2 = o2.getAnnotation(ConsoleCommand.class);
+    methods =
+        new TreeMap<Method, Object>(
+            new Comparator<Method>() {
+              public int compare(Method o1, Method o2) {
+                final ConsoleCommand ann1 = o1.getAnnotation(ConsoleCommand.class);
+                final ConsoleCommand ann2 = o2.getAnnotation(ConsoleCommand.class);
 
-        if (ann1 != null && ann2 != null) {
-          if (ann1.priority() != ann2.priority())
-            // PRIORITY WINS
-            return ann1.priority() - ann2.priority();
-        }
+                if (ann1 != null && ann2 != null) {
+                  if (ann1.priority() != ann2.priority())
+                    // PRIORITY WINS
+                    return ann1.priority() - ann2.priority();
+                }
 
-        int res = o1.getName().compareTo(o2.getName());
-        if (res == 0)
-          res = o1.toString().compareTo(o2.toString());
-        return res;
-      }
-    });
+                int res = o1.getName().compareTo(o2.getName());
+                if (res == 0) res = o1.toString().compareTo(o2.toString());
+                return res;
+              }
+            });
 
     for (final Object candidate : candidates) {
       final Method[] classMethods = candidate.getClass().getMethods();
 
       for (Method m : classMethods) {
-        if (Modifier.isAbstract(m.getModifiers()) || Modifier.isStatic(m.getModifiers()) || !Modifier.isPublic(m.getModifiers())) {
+        if (Modifier.isAbstract(m.getModifiers())
+            || Modifier.isStatic(m.getModifiers())
+            || !Modifier.isPublic(m.getModifiers())) {
           continue;
         }
         if (m.getReturnType() != Void.TYPE) {
@@ -670,8 +658,13 @@ public class OConsoleApplication {
     return commandsTree;
   }
 
-  @ConsoleCommand(splitInWords = false, description = "Receives help on available commands or a specific one. Use 'help -online <cmd>' to fetch online documentation")
-  public void help(@ConsoleParameter(name = "command", description = "Command to receive help") String iCommand) {
+  @ConsoleCommand(
+      splitInWords = false,
+      description =
+          "Receives help on available commands or a specific one. Use 'help -online <cmd>' to fetch online documentation")
+  public void help(
+      @ConsoleParameter(name = "command", description = "Command to receive help")
+          String iCommand) {
     if (iCommand == null || iCommand.trim().isEmpty()) {
       // GENERIC HELP
       message("\nAVAILABLE COMMANDS:\n");
@@ -679,8 +672,7 @@ public class OConsoleApplication {
       for (Method m : getConsoleMethods().keySet()) {
         ConsoleCommand annotation = m.getAnnotation(ConsoleCommand.class);
 
-        if (annotation == null)
-          continue;
+        if (annotation == null) continue;
 
         message("* %-85s%s\n", getCorrectMethodName(m), annotation.description());
       }
@@ -691,8 +683,7 @@ public class OConsoleApplication {
     final String[] commandWords = OStringParser.getWords(iCommand, wordSeparator);
 
     boolean onlineMode = commandWords.length > 1 && commandWords[0].equalsIgnoreCase("-online");
-    if (onlineMode)
-      iCommand = iCommand.substring("-online".length() + 1);
+    if (onlineMode) iCommand = iCommand.substring("-online".length() + 1);
 
     final Method m = getMethod(iCommand);
     if (m != null) {
@@ -711,7 +702,8 @@ public class OConsoleApplication {
           }
           // } catch (Exception e) {
           // }
-          error("!CANNOT FETCH ONLINE DOCUMENTATION, CHECK IF COMPUTER IS CONNECTED TO THE INTERNET.");
+          error(
+              "!CANNOT FETCH ONLINE DOCUMENTATION, CHECK IF COMPUTER IS CONNECTED TO THE INTERNET.");
           return;
         }
 
@@ -720,10 +712,8 @@ public class OConsoleApplication {
         // IN ANY CASE DISPLAY INFORMATION BY READING ANNOTATIONS
         message(formatCommandSpecs(iCommand, m));
 
-      } else
-        message("No description available");
+      } else message("No description available");
     }
-
   }
 
   protected String getCommandLine(String[] iArguments) {
@@ -733,8 +723,7 @@ public class OConsoleApplication {
       if (isInteractiveConfigParam(iArguments[i])) {
         continue;
       }
-      if (!first)
-        command.append(" ");
+      if (!first) command.append(" ");
 
       command.append(iArguments[i]);
       first = false;
@@ -742,11 +731,9 @@ public class OConsoleApplication {
     return command.toString();
   }
 
-  protected void onBefore() {
-  }
+  protected void onBefore() {}
 
-  protected void onAfter() {
-  }
+  protected void onAfter() {}
 
   protected void onException(final Throwable throwable) {
     throwable.printStackTrace(err);
@@ -768,13 +755,10 @@ public class OConsoleApplication {
       conn.setRequestMethod("GET");
       rd = new BufferedReader(new InputStreamReader(conn.getInputStream()));
       while ((line = rd.readLine()) != null) {
-        if (line.startsWith("```"))
-          continue;
-        else if (line.startsWith("# "))
-          continue;
+        if (line.startsWith("```")) continue;
+        else if (line.startsWith("# ")) continue;
 
-        if (result.length() > 0)
-          result.append("\n");
+        if (result.length() > 0) result.append("\n");
 
         result.append(line);
       }
@@ -785,6 +769,8 @@ public class OConsoleApplication {
   }
 
   protected enum RESULT {
-    OK, ERROR, EXIT
+    OK,
+    ERROR,
+    EXIT
   }
 }

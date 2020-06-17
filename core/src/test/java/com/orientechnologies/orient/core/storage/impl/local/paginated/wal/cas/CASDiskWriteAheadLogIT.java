@@ -4,13 +4,15 @@ import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.common.io.OIOUtils;
 import com.orientechnologies.common.serialization.types.OIntegerSerializer;
 import com.orientechnologies.orient.core.storage.impl.local.OCheckpointRequestListener;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.*;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OAbstractWALRecord;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OFullCheckpointStartRecord;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALRecord;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALRecordsFactory;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.common.CASWALPage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.common.EmptyWALRecord;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.common.SegmentOverflowListener;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.common.WriteableWALRecord;
-import org.junit.*;
-
 import java.io.File;
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -19,19 +21,44 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
-import java.util.*;
-import java.util.concurrent.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Base64;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Locale;
+import java.util.NavigableMap;
+import java.util.Random;
+import java.util.SortedMap;
+import java.util.Timer;
+import java.util.TimerTask;
+import java.util.TreeMap;
+import java.util.TreeSet;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.ThreadLocalRandom;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Stream;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.BeforeClass;
+import org.junit.Ignore;
+import org.junit.Test;
 
 public class CASDiskWriteAheadLogIT {
   private static Path testDirectory;
 
   @BeforeClass
   public static void beforeClass() {
-    testDirectory = Paths.get(System.getProperty("buildDirectory" + File.separator + "casWALTest",
-        "." + File.separator + "target" + File.separator + "casWALTest"));
+    testDirectory =
+        Paths.get(
+            System.getProperty(
+                "buildDirectory" + File.separator + "casWALTest",
+                "." + File.separator + "target" + File.separator + "casWALTest"));
 
     OWALRecordsFactory.INSTANCE.registerNewRecord(1024, TestRecord.class);
   }
@@ -52,8 +79,28 @@ public class CASDiskWriteAheadLogIT {
       try {
         final Random random = new Random(seed);
 
-        CASDiskWriteAheadLog wal = new CASDiskWriteAheadLog("walTest", testDirectory, testDirectory, 100, 64, null, null,
-            Integer.MAX_VALUE, Integer.MAX_VALUE, 20, true, Locale.US, -1, -1, 1000, false, false, false, true, 10);
+        CASDiskWriteAheadLog wal =
+            new CASDiskWriteAheadLog(
+                "walTest",
+                testDirectory,
+                testDirectory,
+                100,
+                64,
+                null,
+                null,
+                Integer.MAX_VALUE,
+                Integer.MAX_VALUE,
+                20,
+                true,
+                Locale.US,
+                -1,
+                -1,
+                1000,
+                false,
+                false,
+                false,
+                true,
+                10);
 
         Assert.assertEquals(wal.begin(), new OLogSequenceNumber(1, CASWALPage.RECORDS_OFFSET));
         Assert.assertEquals(wal.end(), new OLogSequenceNumber(1, CASWALPage.RECORDS_OFFSET));
@@ -72,8 +119,28 @@ public class CASDiskWriteAheadLogIT {
         Assert.assertEquals(lsn, walRecord.getLsn());
         wal.close();
 
-        wal = new CASDiskWriteAheadLog("walTest", testDirectory, testDirectory, 100, 64, null, null, Integer.MAX_VALUE,
-            Integer.MAX_VALUE, 20, true, Locale.US, -1, -1, 1000, false, false, false, true, 10);
+        wal =
+            new CASDiskWriteAheadLog(
+                "walTest",
+                testDirectory,
+                testDirectory,
+                100,
+                64,
+                null,
+                null,
+                Integer.MAX_VALUE,
+                Integer.MAX_VALUE,
+                20,
+                true,
+                Locale.US,
+                -1,
+                -1,
+                1000,
+                false,
+                false,
+                false,
+                true,
+                10);
 
         Assert.assertEquals(wal.begin(), new OLogSequenceNumber(1, CASWALPage.RECORDS_OFFSET));
         Assert.assertEquals(wal.end(), new OLogSequenceNumber(2, CASWALPage.RECORDS_OFFSET));
@@ -122,8 +189,28 @@ public class CASDiskWriteAheadLogIT {
       try {
         final Random random = new Random(seed);
 
-        CASDiskWriteAheadLog wal = new CASDiskWriteAheadLog("walTest", testDirectory, testDirectory, 100, 64, aesKey, iv,
-            Integer.MAX_VALUE, Integer.MAX_VALUE, 20, true, Locale.US, -1, -1, 1000, false, false, false, true, 10);
+        CASDiskWriteAheadLog wal =
+            new CASDiskWriteAheadLog(
+                "walTest",
+                testDirectory,
+                testDirectory,
+                100,
+                64,
+                aesKey,
+                iv,
+                Integer.MAX_VALUE,
+                Integer.MAX_VALUE,
+                20,
+                true,
+                Locale.US,
+                -1,
+                -1,
+                1000,
+                false,
+                false,
+                false,
+                true,
+                10);
 
         Assert.assertEquals(wal.begin(), new OLogSequenceNumber(1, CASWALPage.RECORDS_OFFSET));
         Assert.assertEquals(wal.end(), new OLogSequenceNumber(1, CASWALPage.RECORDS_OFFSET));
@@ -142,8 +229,28 @@ public class CASDiskWriteAheadLogIT {
         Assert.assertEquals(lsn, walRecord.getLsn());
         wal.close();
 
-        wal = new CASDiskWriteAheadLog("walTest", testDirectory, testDirectory, 100, 64, aesKey, iv, Integer.MAX_VALUE,
-            Integer.MAX_VALUE, 20, true, Locale.US, -1, -1, 1000, false, false, false, true, 10);
+        wal =
+            new CASDiskWriteAheadLog(
+                "walTest",
+                testDirectory,
+                testDirectory,
+                100,
+                64,
+                aesKey,
+                iv,
+                Integer.MAX_VALUE,
+                Integer.MAX_VALUE,
+                20,
+                true,
+                Locale.US,
+                -1,
+                -1,
+                1000,
+                false,
+                false,
+                false,
+                true,
+                10);
 
         Assert.assertEquals(wal.begin(), new OLogSequenceNumber(1, CASWALPage.RECORDS_OFFSET));
         Assert.assertEquals(wal.end(), new OLogSequenceNumber(2, CASWALPage.RECORDS_OFFSET));
@@ -192,8 +299,28 @@ public class CASDiskWriteAheadLogIT {
       try {
         final Random random = new Random(seed);
 
-        CASDiskWriteAheadLog wal = new CASDiskWriteAheadLog("walTest", testDirectory, testDirectory, 100, 64, aesKey, iv,
-            Integer.MAX_VALUE, Integer.MAX_VALUE, 20, true, Locale.US, -1, -1, 1000, false, false, false, true, 10);
+        CASDiskWriteAheadLog wal =
+            new CASDiskWriteAheadLog(
+                "walTest",
+                testDirectory,
+                testDirectory,
+                100,
+                64,
+                aesKey,
+                iv,
+                Integer.MAX_VALUE,
+                Integer.MAX_VALUE,
+                20,
+                true,
+                Locale.US,
+                -1,
+                -1,
+                1000,
+                false,
+                false,
+                false,
+                true,
+                10);
 
         Assert.assertEquals(wal.begin(), new OLogSequenceNumber(1, CASWALPage.RECORDS_OFFSET));
         Assert.assertEquals(wal.end(), new OLogSequenceNumber(1, CASWALPage.RECORDS_OFFSET));
@@ -212,8 +339,28 @@ public class CASDiskWriteAheadLogIT {
         Assert.assertEquals(lsn, walRecord.getLsn());
         wal.close();
 
-        wal = new CASDiskWriteAheadLog("walTest", testDirectory, testDirectory, 100, 64, null, null, Integer.MAX_VALUE,
-            Integer.MAX_VALUE, 20, true, Locale.US, -1, -1, 1000, false, false, false, true, 10);
+        wal =
+            new CASDiskWriteAheadLog(
+                "walTest",
+                testDirectory,
+                testDirectory,
+                100,
+                64,
+                null,
+                null,
+                Integer.MAX_VALUE,
+                Integer.MAX_VALUE,
+                20,
+                true,
+                Locale.US,
+                -1,
+                -1,
+                1000,
+                false,
+                false,
+                false,
+                true,
+                10);
 
         Assert.assertEquals(wal.begin(), new OLogSequenceNumber(1, CASWALPage.RECORDS_OFFSET));
         Assert.assertEquals(wal.end(), new OLogSequenceNumber(2, CASWALPage.RECORDS_OFFSET));
@@ -227,7 +374,7 @@ public class CASDiskWriteAheadLogIT {
           wal.read(lsn, 10);
           Assert.fail();
         } catch (Exception e) {
-          //ignore
+          // ignore
         }
 
         wal.close();
@@ -260,8 +407,28 @@ public class CASDiskWriteAheadLogIT {
       try {
         final Random random = new Random(seed);
 
-        CASDiskWriteAheadLog wal = new CASDiskWriteAheadLog("walTest", testDirectory, testDirectory, 100, 64, aesKey, iv,
-            Integer.MAX_VALUE, Integer.MAX_VALUE, 20, true, Locale.US, -1, -1, 1000, false, false, false, true, 10);
+        CASDiskWriteAheadLog wal =
+            new CASDiskWriteAheadLog(
+                "walTest",
+                testDirectory,
+                testDirectory,
+                100,
+                64,
+                aesKey,
+                iv,
+                Integer.MAX_VALUE,
+                Integer.MAX_VALUE,
+                20,
+                true,
+                Locale.US,
+                -1,
+                -1,
+                1000,
+                false,
+                false,
+                false,
+                true,
+                10);
 
         Assert.assertEquals(wal.begin(), new OLogSequenceNumber(1, CASWALPage.RECORDS_OFFSET));
         Assert.assertEquals(wal.end(), new OLogSequenceNumber(1, CASWALPage.RECORDS_OFFSET));
@@ -283,8 +450,28 @@ public class CASDiskWriteAheadLogIT {
         final String otherAesKeyEncoded = "DD0ViGecppQOx4ijWL4XGBwun9NAfbqFaDnVpn9+lj8=";
         final byte[] otherAesKey = Base64.getDecoder().decode(otherAesKeyEncoded);
 
-        wal = new CASDiskWriteAheadLog("walTest", testDirectory, testDirectory, 100, 64, otherAesKey, iv, Integer.MAX_VALUE,
-            Integer.MAX_VALUE, 20, true, Locale.US, -1, -1, 1000, false, false, false, true, 10);
+        wal =
+            new CASDiskWriteAheadLog(
+                "walTest",
+                testDirectory,
+                testDirectory,
+                100,
+                64,
+                otherAesKey,
+                iv,
+                Integer.MAX_VALUE,
+                Integer.MAX_VALUE,
+                20,
+                true,
+                Locale.US,
+                -1,
+                -1,
+                1000,
+                false,
+                false,
+                false,
+                true,
+                10);
 
         Assert.assertEquals(wal.begin(), new OLogSequenceNumber(1, CASWALPage.RECORDS_OFFSET));
         Assert.assertEquals(wal.end(), new OLogSequenceNumber(2, CASWALPage.RECORDS_OFFSET));
@@ -322,8 +509,28 @@ public class CASDiskWriteAheadLogIT {
       try {
         final Random random = new Random(seed);
 
-        CASDiskWriteAheadLog wal = new CASDiskWriteAheadLog("walTest", testDirectory, testDirectory, 100, 64, null, null,
-            Integer.MAX_VALUE, Integer.MAX_VALUE, 20, true, Locale.US, -1, -1, 1000, false, false, false, true, 10);
+        CASDiskWriteAheadLog wal =
+            new CASDiskWriteAheadLog(
+                "walTest",
+                testDirectory,
+                testDirectory,
+                100,
+                64,
+                null,
+                null,
+                Integer.MAX_VALUE,
+                Integer.MAX_VALUE,
+                20,
+                true,
+                Locale.US,
+                -1,
+                -1,
+                1000,
+                false,
+                false,
+                false,
+                true,
+                10);
 
         Assert.assertEquals(wal.begin(), new OLogSequenceNumber(1, CASWALPage.RECORDS_OFFSET));
         Assert.assertEquals(wal.end(), new OLogSequenceNumber(1, CASWALPage.RECORDS_OFFSET));
@@ -342,8 +549,28 @@ public class CASDiskWriteAheadLogIT {
         Assert.assertEquals(lsn, walRecord.getLsn());
         wal.close();
 
-        wal = new CASDiskWriteAheadLog("walTest", testDirectory, testDirectory, 100, 64, null, null, Integer.MAX_VALUE,
-            Integer.MAX_VALUE, 20, true, Locale.US, -1, -1, 1000, false, false, false, true, 10);
+        wal =
+            new CASDiskWriteAheadLog(
+                "walTest",
+                testDirectory,
+                testDirectory,
+                100,
+                64,
+                null,
+                null,
+                Integer.MAX_VALUE,
+                Integer.MAX_VALUE,
+                20,
+                true,
+                Locale.US,
+                -1,
+                -1,
+                1000,
+                false,
+                false,
+                false,
+                true,
+                10);
 
         Assert.assertEquals(wal.begin(), new OLogSequenceNumber(1, CASWALPage.RECORDS_OFFSET));
         Assert.assertEquals(wal.end(), new OLogSequenceNumber(2, CASWALPage.RECORDS_OFFSET));
@@ -392,8 +619,28 @@ public class CASDiskWriteAheadLogIT {
       try {
         final Random random = new Random(seed);
 
-        CASDiskWriteAheadLog wal = new CASDiskWriteAheadLog("walTest", testDirectory, testDirectory, 100, 64, aesKey, iv,
-            Integer.MAX_VALUE, Integer.MAX_VALUE, 20, true, Locale.US, -1, -1, 1000, false, false, false, true, 10);
+        CASDiskWriteAheadLog wal =
+            new CASDiskWriteAheadLog(
+                "walTest",
+                testDirectory,
+                testDirectory,
+                100,
+                64,
+                aesKey,
+                iv,
+                Integer.MAX_VALUE,
+                Integer.MAX_VALUE,
+                20,
+                true,
+                Locale.US,
+                -1,
+                -1,
+                1000,
+                false,
+                false,
+                false,
+                true,
+                10);
 
         Assert.assertEquals(wal.begin(), new OLogSequenceNumber(1, CASWALPage.RECORDS_OFFSET));
         Assert.assertEquals(wal.end(), new OLogSequenceNumber(1, CASWALPage.RECORDS_OFFSET));
@@ -412,8 +659,28 @@ public class CASDiskWriteAheadLogIT {
         Assert.assertEquals(lsn, walRecord.getLsn());
         wal.close();
 
-        wal = new CASDiskWriteAheadLog("walTest", testDirectory, testDirectory, 100, 64, aesKey, iv, Integer.MAX_VALUE,
-            Integer.MAX_VALUE, 20, true, Locale.US, -1, -1, 1000, false, false, false, true, 10);
+        wal =
+            new CASDiskWriteAheadLog(
+                "walTest",
+                testDirectory,
+                testDirectory,
+                100,
+                64,
+                aesKey,
+                iv,
+                Integer.MAX_VALUE,
+                Integer.MAX_VALUE,
+                20,
+                true,
+                Locale.US,
+                -1,
+                -1,
+                1000,
+                false,
+                false,
+                false,
+                true,
+                10);
 
         Assert.assertEquals(wal.begin(), new OLogSequenceNumber(1, CASWALPage.RECORDS_OFFSET));
         Assert.assertEquals(wal.end(), new OLogSequenceNumber(2, CASWALPage.RECORDS_OFFSET));
@@ -458,8 +725,28 @@ public class CASDiskWriteAheadLogIT {
       try {
         final Random random = new Random(seed);
 
-        CASDiskWriteAheadLog wal = new CASDiskWriteAheadLog("walTest", testDirectory, testDirectory, 100, 64, null, null,
-            Integer.MAX_VALUE, Integer.MAX_VALUE, 20, true, Locale.US, -1, -1, 1000, false, false, false, true, 10);
+        CASDiskWriteAheadLog wal =
+            new CASDiskWriteAheadLog(
+                "walTest",
+                testDirectory,
+                testDirectory,
+                100,
+                64,
+                null,
+                null,
+                Integer.MAX_VALUE,
+                Integer.MAX_VALUE,
+                20,
+                true,
+                Locale.US,
+                -1,
+                -1,
+                1000,
+                false,
+                false,
+                false,
+                true,
+                10);
 
         Assert.assertEquals(wal.begin(), new OLogSequenceNumber(1, CASWALPage.RECORDS_OFFSET));
         Assert.assertEquals(wal.end(), new OLogSequenceNumber(1, CASWALPage.RECORDS_OFFSET));
@@ -475,7 +762,6 @@ public class CASDiskWriteAheadLogIT {
 
           Assert.assertEquals(wal.begin(), new OLogSequenceNumber(1, CASWALPage.RECORDS_OFFSET));
           Assert.assertEquals(wal.end(), lsn);
-
         }
 
         for (int i = 0; i < 5; i++) {
@@ -496,8 +782,28 @@ public class CASDiskWriteAheadLogIT {
 
         wal.close();
 
-        wal = new CASDiskWriteAheadLog("walTest", testDirectory, testDirectory, 100, 64, null, null, Integer.MAX_VALUE,
-            Integer.MAX_VALUE, 20, true, Locale.US, -1, -1, 1000, false, false, false, true, 10);
+        wal =
+            new CASDiskWriteAheadLog(
+                "walTest",
+                testDirectory,
+                testDirectory,
+                100,
+                64,
+                null,
+                null,
+                Integer.MAX_VALUE,
+                Integer.MAX_VALUE,
+                20,
+                true,
+                Locale.US,
+                -1,
+                -1,
+                1000,
+                false,
+                false,
+                false,
+                true,
+                10);
 
         Assert.assertEquals(wal.begin(), new OLogSequenceNumber(1, CASWALPage.RECORDS_OFFSET));
         Assert.assertEquals(wal.end(), new OLogSequenceNumber(2, CASWALPage.RECORDS_OFFSET));
@@ -552,8 +858,28 @@ public class CASDiskWriteAheadLogIT {
       try {
         final Random random = new Random(seed);
 
-        CASDiskWriteAheadLog wal = new CASDiskWriteAheadLog("walTest", testDirectory, testDirectory, 100, 64, aesKey, iv,
-            Integer.MAX_VALUE, Integer.MAX_VALUE, 20, true, Locale.US, -1, -1, 1000, false, false, false, true, 10);
+        CASDiskWriteAheadLog wal =
+            new CASDiskWriteAheadLog(
+                "walTest",
+                testDirectory,
+                testDirectory,
+                100,
+                64,
+                aesKey,
+                iv,
+                Integer.MAX_VALUE,
+                Integer.MAX_VALUE,
+                20,
+                true,
+                Locale.US,
+                -1,
+                -1,
+                1000,
+                false,
+                false,
+                false,
+                true,
+                10);
 
         Assert.assertEquals(wal.begin(), new OLogSequenceNumber(1, CASWALPage.RECORDS_OFFSET));
         Assert.assertEquals(wal.end(), new OLogSequenceNumber(1, CASWALPage.RECORDS_OFFSET));
@@ -569,7 +895,6 @@ public class CASDiskWriteAheadLogIT {
 
           Assert.assertEquals(wal.begin(), new OLogSequenceNumber(1, CASWALPage.RECORDS_OFFSET));
           Assert.assertEquals(wal.end(), lsn);
-
         }
 
         for (int i = 0; i < 5; i++) {
@@ -590,8 +915,28 @@ public class CASDiskWriteAheadLogIT {
 
         wal.close();
 
-        wal = new CASDiskWriteAheadLog("walTest", testDirectory, testDirectory, 100, 64, aesKey, iv, Integer.MAX_VALUE,
-            Integer.MAX_VALUE, 20, true, Locale.US, -1, -1, 1000, false, false, false, true, 10);
+        wal =
+            new CASDiskWriteAheadLog(
+                "walTest",
+                testDirectory,
+                testDirectory,
+                100,
+                64,
+                aesKey,
+                iv,
+                Integer.MAX_VALUE,
+                Integer.MAX_VALUE,
+                20,
+                true,
+                Locale.US,
+                -1,
+                -1,
+                1000,
+                false,
+                false,
+                false,
+                true,
+                10);
 
         Assert.assertEquals(wal.begin(), new OLogSequenceNumber(1, CASWALPage.RECORDS_OFFSET));
         Assert.assertEquals(wal.end(), new OLogSequenceNumber(2, CASWALPage.RECORDS_OFFSET));
@@ -643,8 +988,28 @@ public class CASDiskWriteAheadLogIT {
       try {
         final Random random = new Random(seed);
 
-        CASDiskWriteAheadLog wal = new CASDiskWriteAheadLog("walTest", testDirectory, testDirectory, 100, 64, null, null,
-            Integer.MAX_VALUE, Integer.MAX_VALUE, 20, true, Locale.US, -1, -1, 1000, false, false, false, true, 10);
+        CASDiskWriteAheadLog wal =
+            new CASDiskWriteAheadLog(
+                "walTest",
+                testDirectory,
+                testDirectory,
+                100,
+                64,
+                null,
+                null,
+                Integer.MAX_VALUE,
+                Integer.MAX_VALUE,
+                20,
+                true,
+                Locale.US,
+                -1,
+                -1,
+                1000,
+                false,
+                false,
+                false,
+                true,
+                10);
 
         Assert.assertEquals(wal.begin(), new OLogSequenceNumber(1, CASWALPage.RECORDS_OFFSET));
         Assert.assertEquals(wal.end(), new OLogSequenceNumber(1, CASWALPage.RECORDS_OFFSET));
@@ -682,8 +1047,28 @@ public class CASDiskWriteAheadLogIT {
 
         wal.close();
 
-        wal = new CASDiskWriteAheadLog("walTest", testDirectory, testDirectory, 100, 64, null, null, Integer.MAX_VALUE,
-            Integer.MAX_VALUE, 20, true, Locale.US, -1, -1, 1000, false, false, false, true, 10);
+        wal =
+            new CASDiskWriteAheadLog(
+                "walTest",
+                testDirectory,
+                testDirectory,
+                100,
+                64,
+                null,
+                null,
+                Integer.MAX_VALUE,
+                Integer.MAX_VALUE,
+                20,
+                true,
+                Locale.US,
+                -1,
+                -1,
+                1000,
+                false,
+                false,
+                false,
+                true,
+                10);
 
         Assert.assertEquals(wal.begin(), new OLogSequenceNumber(1, CASWALPage.RECORDS_OFFSET));
         Assert.assertEquals(wal.end(), new OLogSequenceNumber(2, CASWALPage.RECORDS_OFFSET));
@@ -745,8 +1130,28 @@ public class CASDiskWriteAheadLogIT {
       try {
         final Random random = new Random(seed);
 
-        CASDiskWriteAheadLog wal = new CASDiskWriteAheadLog("walTest", testDirectory, testDirectory, 100, 64, aesKey, iv,
-            Integer.MAX_VALUE, Integer.MAX_VALUE, 20, true, Locale.US, -1, -1, 1000, false, false, false, true, 10);
+        CASDiskWriteAheadLog wal =
+            new CASDiskWriteAheadLog(
+                "walTest",
+                testDirectory,
+                testDirectory,
+                100,
+                64,
+                aesKey,
+                iv,
+                Integer.MAX_VALUE,
+                Integer.MAX_VALUE,
+                20,
+                true,
+                Locale.US,
+                -1,
+                -1,
+                1000,
+                false,
+                false,
+                false,
+                true,
+                10);
 
         Assert.assertEquals(wal.begin(), new OLogSequenceNumber(1, CASWALPage.RECORDS_OFFSET));
         Assert.assertEquals(wal.end(), new OLogSequenceNumber(1, CASWALPage.RECORDS_OFFSET));
@@ -784,8 +1189,28 @@ public class CASDiskWriteAheadLogIT {
 
         wal.close();
 
-        wal = new CASDiskWriteAheadLog("walTest", testDirectory, testDirectory, 100, 64, aesKey, iv, Integer.MAX_VALUE,
-            Integer.MAX_VALUE, 20, true, Locale.US, -1, -1, 1000, false, false, false, true, 10);
+        wal =
+            new CASDiskWriteAheadLog(
+                "walTest",
+                testDirectory,
+                testDirectory,
+                100,
+                64,
+                aesKey,
+                iv,
+                Integer.MAX_VALUE,
+                Integer.MAX_VALUE,
+                20,
+                true,
+                Locale.US,
+                -1,
+                -1,
+                1000,
+                false,
+                false,
+                false,
+                true,
+                10);
 
         Assert.assertEquals(wal.begin(), new OLogSequenceNumber(1, CASWALPage.RECORDS_OFFSET));
         Assert.assertEquals(wal.end(), new OLogSequenceNumber(2, CASWALPage.RECORDS_OFFSET));
@@ -843,8 +1268,28 @@ public class CASDiskWriteAheadLogIT {
       try {
         final Random random = new Random(seed);
 
-        CASDiskWriteAheadLog wal = new CASDiskWriteAheadLog("walTest", testDirectory, testDirectory, 100, 64, null, null,
-            Integer.MAX_VALUE, Integer.MAX_VALUE, 20, true, Locale.US, -1, -1, 1000, false, false, false, true, 10);
+        CASDiskWriteAheadLog wal =
+            new CASDiskWriteAheadLog(
+                "walTest",
+                testDirectory,
+                testDirectory,
+                100,
+                64,
+                null,
+                null,
+                Integer.MAX_VALUE,
+                Integer.MAX_VALUE,
+                20,
+                true,
+                Locale.US,
+                -1,
+                -1,
+                1000,
+                false,
+                false,
+                false,
+                true,
+                10);
 
         Assert.assertEquals(wal.begin(), new OLogSequenceNumber(1, CASWALPage.RECORDS_OFFSET));
         Assert.assertEquals(wal.end(), new OLogSequenceNumber(1, CASWALPage.RECORDS_OFFSET));
@@ -880,8 +1325,28 @@ public class CASDiskWriteAheadLogIT {
 
         wal.close();
 
-        wal = new CASDiskWriteAheadLog("walTest", testDirectory, testDirectory, 100, 64, null, null, Integer.MAX_VALUE,
-            Integer.MAX_VALUE, 20, true, Locale.US, -1, -1, 1000, false, false, false, true, 10);
+        wal =
+            new CASDiskWriteAheadLog(
+                "walTest",
+                testDirectory,
+                testDirectory,
+                100,
+                64,
+                null,
+                null,
+                Integer.MAX_VALUE,
+                Integer.MAX_VALUE,
+                20,
+                true,
+                Locale.US,
+                -1,
+                -1,
+                1000,
+                false,
+                false,
+                false,
+                true,
+                10);
 
         Assert.assertEquals(wal.begin(), new OLogSequenceNumber(1, CASWALPage.RECORDS_OFFSET));
         Assert.assertEquals(wal.end(), new OLogSequenceNumber(2, CASWALPage.RECORDS_OFFSET));
@@ -936,8 +1401,28 @@ public class CASDiskWriteAheadLogIT {
       try {
         final Random random = new Random(seed);
 
-        CASDiskWriteAheadLog wal = new CASDiskWriteAheadLog("walTest", testDirectory, testDirectory, 100, 64, aesKey, iv,
-            Integer.MAX_VALUE, Integer.MAX_VALUE, 20, true, Locale.US, -1, -1, 1000, false, false, false, true, 10);
+        CASDiskWriteAheadLog wal =
+            new CASDiskWriteAheadLog(
+                "walTest",
+                testDirectory,
+                testDirectory,
+                100,
+                64,
+                aesKey,
+                iv,
+                Integer.MAX_VALUE,
+                Integer.MAX_VALUE,
+                20,
+                true,
+                Locale.US,
+                -1,
+                -1,
+                1000,
+                false,
+                false,
+                false,
+                true,
+                10);
 
         Assert.assertEquals(wal.begin(), new OLogSequenceNumber(1, CASWALPage.RECORDS_OFFSET));
         Assert.assertEquals(wal.end(), new OLogSequenceNumber(1, CASWALPage.RECORDS_OFFSET));
@@ -973,8 +1458,28 @@ public class CASDiskWriteAheadLogIT {
 
         wal.close();
 
-        wal = new CASDiskWriteAheadLog("walTest", testDirectory, testDirectory, 100, 64, aesKey, iv, Integer.MAX_VALUE,
-            Integer.MAX_VALUE, 20, true, Locale.US, -1, -1, 1000, false, false, false, true, 10);
+        wal =
+            new CASDiskWriteAheadLog(
+                "walTest",
+                testDirectory,
+                testDirectory,
+                100,
+                64,
+                aesKey,
+                iv,
+                Integer.MAX_VALUE,
+                Integer.MAX_VALUE,
+                20,
+                true,
+                Locale.US,
+                -1,
+                -1,
+                1000,
+                false,
+                false,
+                false,
+                true,
+                10);
 
         Assert.assertEquals(wal.begin(), new OLogSequenceNumber(1, CASWALPage.RECORDS_OFFSET));
         Assert.assertEquals(wal.end(), new OLogSequenceNumber(2, CASWALPage.RECORDS_OFFSET));
@@ -1025,8 +1530,28 @@ public class CASDiskWriteAheadLogIT {
       try {
         final Random random = new Random(seed);
 
-        CASDiskWriteAheadLog wal = new CASDiskWriteAheadLog("walTest", testDirectory, testDirectory, 100, 64, null, null,
-            Integer.MAX_VALUE, Integer.MAX_VALUE, 20, true, Locale.US, -1, -1, 1000, false, false, false, true, 10);
+        CASDiskWriteAheadLog wal =
+            new CASDiskWriteAheadLog(
+                "walTest",
+                testDirectory,
+                testDirectory,
+                100,
+                64,
+                null,
+                null,
+                Integer.MAX_VALUE,
+                Integer.MAX_VALUE,
+                20,
+                true,
+                Locale.US,
+                -1,
+                -1,
+                1000,
+                false,
+                false,
+                false,
+                true,
+                10);
 
         Assert.assertEquals(wal.begin(), new OLogSequenceNumber(1, CASWALPage.RECORDS_OFFSET));
         Assert.assertEquals(wal.end(), new OLogSequenceNumber(1, CASWALPage.RECORDS_OFFSET));
@@ -1063,8 +1588,28 @@ public class CASDiskWriteAheadLogIT {
         Assert.assertTrue(wal.next(records.get(4).getLsn(), 10).isEmpty());
         wal.close();
 
-        wal = new CASDiskWriteAheadLog("walTest", testDirectory, testDirectory, 100, 64, null, null, Integer.MAX_VALUE,
-            Integer.MAX_VALUE, 20, true, Locale.US, -1, -1, 1000, false, false, false, true, 10);
+        wal =
+            new CASDiskWriteAheadLog(
+                "walTest",
+                testDirectory,
+                testDirectory,
+                100,
+                64,
+                null,
+                null,
+                Integer.MAX_VALUE,
+                Integer.MAX_VALUE,
+                20,
+                true,
+                Locale.US,
+                -1,
+                -1,
+                1000,
+                false,
+                false,
+                false,
+                true,
+                10);
 
         Assert.assertEquals(wal.begin(), new OLogSequenceNumber(1, CASWALPage.RECORDS_OFFSET));
         Assert.assertEquals(wal.end(), new OLogSequenceNumber(2, CASWALPage.RECORDS_OFFSET));
@@ -1126,8 +1671,28 @@ public class CASDiskWriteAheadLogIT {
       try {
         final Random random = new Random(seed);
 
-        CASDiskWriteAheadLog wal = new CASDiskWriteAheadLog("walTest", testDirectory, testDirectory, 100, 64, aesKey, iv,
-            Integer.MAX_VALUE, Integer.MAX_VALUE, 20, true, Locale.US, -1, -1, 1000, false, false, false, true, 10);
+        CASDiskWriteAheadLog wal =
+            new CASDiskWriteAheadLog(
+                "walTest",
+                testDirectory,
+                testDirectory,
+                100,
+                64,
+                aesKey,
+                iv,
+                Integer.MAX_VALUE,
+                Integer.MAX_VALUE,
+                20,
+                true,
+                Locale.US,
+                -1,
+                -1,
+                1000,
+                false,
+                false,
+                false,
+                true,
+                10);
 
         Assert.assertEquals(wal.begin(), new OLogSequenceNumber(1, CASWALPage.RECORDS_OFFSET));
         Assert.assertEquals(wal.end(), new OLogSequenceNumber(1, CASWALPage.RECORDS_OFFSET));
@@ -1164,8 +1729,28 @@ public class CASDiskWriteAheadLogIT {
         Assert.assertTrue(wal.next(records.get(4).getLsn(), 10).isEmpty());
         wal.close();
 
-        wal = new CASDiskWriteAheadLog("walTest", testDirectory, testDirectory, 100, 64, aesKey, iv, Integer.MAX_VALUE,
-            Integer.MAX_VALUE, 20, true, Locale.US, -1, -1, 1000, false, false, false, true, 10);
+        wal =
+            new CASDiskWriteAheadLog(
+                "walTest",
+                testDirectory,
+                testDirectory,
+                100,
+                64,
+                aesKey,
+                iv,
+                Integer.MAX_VALUE,
+                Integer.MAX_VALUE,
+                20,
+                true,
+                Locale.US,
+                -1,
+                -1,
+                1000,
+                false,
+                false,
+                false,
+                true,
+                10);
 
         Assert.assertEquals(wal.begin(), new OLogSequenceNumber(1, CASWALPage.RECORDS_OFFSET));
         Assert.assertEquals(wal.end(), new OLogSequenceNumber(2, CASWALPage.RECORDS_OFFSET));
@@ -1223,8 +1808,28 @@ public class CASDiskWriteAheadLogIT {
       try {
         final Random random = new Random(seed);
 
-        CASDiskWriteAheadLog wal = new CASDiskWriteAheadLog("walTest", testDirectory, testDirectory, 100, 64, null, null,
-            Integer.MAX_VALUE, Integer.MAX_VALUE, 20, true, Locale.US, -1, -1, 1000, false, false, false, true, 10);
+        CASDiskWriteAheadLog wal =
+            new CASDiskWriteAheadLog(
+                "walTest",
+                testDirectory,
+                testDirectory,
+                100,
+                64,
+                null,
+                null,
+                Integer.MAX_VALUE,
+                Integer.MAX_VALUE,
+                20,
+                true,
+                Locale.US,
+                -1,
+                -1,
+                1000,
+                false,
+                false,
+                false,
+                true,
+                10);
 
         Assert.assertEquals(wal.begin(), new OLogSequenceNumber(1, CASWALPage.RECORDS_OFFSET));
         Assert.assertEquals(wal.end(), new OLogSequenceNumber(1, CASWALPage.RECORDS_OFFSET));
@@ -1267,8 +1872,28 @@ public class CASDiskWriteAheadLogIT {
 
         wal.close();
 
-        wal = new CASDiskWriteAheadLog("walTest", testDirectory, testDirectory, 100, 64, null, null, Integer.MAX_VALUE,
-            Integer.MAX_VALUE, 20, true, Locale.US, -1, -1, 1000, false, false, false, true, 10);
+        wal =
+            new CASDiskWriteAheadLog(
+                "walTest",
+                testDirectory,
+                testDirectory,
+                100,
+                64,
+                null,
+                null,
+                Integer.MAX_VALUE,
+                Integer.MAX_VALUE,
+                20,
+                true,
+                Locale.US,
+                -1,
+                -1,
+                1000,
+                false,
+                false,
+                false,
+                true,
+                10);
 
         Assert.assertEquals(wal.begin(), new OLogSequenceNumber(1, CASWALPage.RECORDS_OFFSET));
         Assert.assertEquals(wal.end(), new OLogSequenceNumber(2, CASWALPage.RECORDS_OFFSET));
@@ -1321,8 +1946,28 @@ public class CASDiskWriteAheadLogIT {
       try {
         final Random random = new Random(seed);
 
-        CASDiskWriteAheadLog wal = new CASDiskWriteAheadLog("walTest", testDirectory, testDirectory, 100, 64, aesKey, iv,
-            Integer.MAX_VALUE, Integer.MAX_VALUE, 20, true, Locale.US, -1, -1, 1000, false, false, false, true, 10);
+        CASDiskWriteAheadLog wal =
+            new CASDiskWriteAheadLog(
+                "walTest",
+                testDirectory,
+                testDirectory,
+                100,
+                64,
+                aesKey,
+                iv,
+                Integer.MAX_VALUE,
+                Integer.MAX_VALUE,
+                20,
+                true,
+                Locale.US,
+                -1,
+                -1,
+                1000,
+                false,
+                false,
+                false,
+                true,
+                10);
 
         Assert.assertEquals(wal.begin(), new OLogSequenceNumber(1, CASWALPage.RECORDS_OFFSET));
         Assert.assertEquals(wal.end(), new OLogSequenceNumber(1, CASWALPage.RECORDS_OFFSET));
@@ -1365,8 +2010,28 @@ public class CASDiskWriteAheadLogIT {
 
         wal.close();
 
-        wal = new CASDiskWriteAheadLog("walTest", testDirectory, testDirectory, 100, 64, aesKey, iv, Integer.MAX_VALUE,
-            Integer.MAX_VALUE, 20, true, Locale.US, -1, -1, 1000, false, false, false, true, 10);
+        wal =
+            new CASDiskWriteAheadLog(
+                "walTest",
+                testDirectory,
+                testDirectory,
+                100,
+                64,
+                aesKey,
+                iv,
+                Integer.MAX_VALUE,
+                Integer.MAX_VALUE,
+                20,
+                true,
+                Locale.US,
+                -1,
+                -1,
+                1000,
+                false,
+                false,
+                false,
+                true,
+                10);
 
         Assert.assertEquals(wal.begin(), new OLogSequenceNumber(1, CASWALPage.RECORDS_OFFSET));
         Assert.assertEquals(wal.end(), new OLogSequenceNumber(2, CASWALPage.RECORDS_OFFSET));
@@ -1415,8 +2080,28 @@ public class CASDiskWriteAheadLogIT {
       try {
         final Random random = new Random(seed);
 
-        CASDiskWriteAheadLog wal = new CASDiskWriteAheadLog("walTest", testDirectory, testDirectory, 100, 64, null, null,
-            Integer.MAX_VALUE, Integer.MAX_VALUE, 20, true, Locale.US, -1, -1, 1000, false, false, false, true, 10);
+        CASDiskWriteAheadLog wal =
+            new CASDiskWriteAheadLog(
+                "walTest",
+                testDirectory,
+                testDirectory,
+                100,
+                64,
+                null,
+                null,
+                Integer.MAX_VALUE,
+                Integer.MAX_VALUE,
+                20,
+                true,
+                Locale.US,
+                -1,
+                -1,
+                1000,
+                false,
+                false,
+                false,
+                true,
+                10);
 
         Assert.assertEquals(wal.begin(), new OLogSequenceNumber(1, CASWALPage.RECORDS_OFFSET));
         Assert.assertEquals(wal.end(), new OLogSequenceNumber(1, CASWALPage.RECORDS_OFFSET));
@@ -1441,7 +2126,8 @@ public class CASDiskWriteAheadLogIT {
           Assert.assertFalse(result.isEmpty());
 
           final Iterator<WriteableWALRecord> resultIterator = result.iterator();
-          final Iterator<TestRecord> recordIterator = records.subList(i + 1, recordsCount).iterator();
+          final Iterator<TestRecord> recordIterator =
+              records.subList(i + 1, recordsCount).iterator();
 
           while (resultIterator.hasNext()) {
             TestRecord record = recordIterator.next();
@@ -1456,8 +2142,28 @@ public class CASDiskWriteAheadLogIT {
 
         wal.close();
 
-        wal = new CASDiskWriteAheadLog("walTest", testDirectory, testDirectory, 100, 64, null, null, Integer.MAX_VALUE,
-            Integer.MAX_VALUE, 20, true, Locale.US, -1, -1, 1000, false, false, false, true, 10);
+        wal =
+            new CASDiskWriteAheadLog(
+                "walTest",
+                testDirectory,
+                testDirectory,
+                100,
+                64,
+                null,
+                null,
+                Integer.MAX_VALUE,
+                Integer.MAX_VALUE,
+                20,
+                true,
+                Locale.US,
+                -1,
+                -1,
+                1000,
+                false,
+                false,
+                false,
+                true,
+                10);
 
         Assert.assertEquals(wal.begin(), new OLogSequenceNumber(1, CASWALPage.RECORDS_OFFSET));
         Assert.assertEquals(wal.end(), new OLogSequenceNumber(2, CASWALPage.RECORDS_OFFSET));
@@ -1467,7 +2173,8 @@ public class CASDiskWriteAheadLogIT {
           Assert.assertFalse(result.isEmpty());
 
           final Iterator<WriteableWALRecord> resultIterator = result.iterator();
-          final Iterator<TestRecord> recordIterator = records.subList(i + 1, recordsCount).iterator();
+          final Iterator<TestRecord> recordIterator =
+              records.subList(i + 1, recordsCount).iterator();
 
           while (resultIterator.hasNext() && recordIterator.hasNext()) {
             TestRecord record = recordIterator.next();
@@ -1511,8 +2218,28 @@ public class CASDiskWriteAheadLogIT {
       try {
         final Random random = new Random(seed);
 
-        CASDiskWriteAheadLog wal = new CASDiskWriteAheadLog("walTest", testDirectory, testDirectory, 100, 64, aesKey, iv,
-            Integer.MAX_VALUE, Integer.MAX_VALUE, 20, true, Locale.US, -1, -1, 1000, false, false, false, true, 10);
+        CASDiskWriteAheadLog wal =
+            new CASDiskWriteAheadLog(
+                "walTest",
+                testDirectory,
+                testDirectory,
+                100,
+                64,
+                aesKey,
+                iv,
+                Integer.MAX_VALUE,
+                Integer.MAX_VALUE,
+                20,
+                true,
+                Locale.US,
+                -1,
+                -1,
+                1000,
+                false,
+                false,
+                false,
+                true,
+                10);
 
         Assert.assertEquals(wal.begin(), new OLogSequenceNumber(1, CASWALPage.RECORDS_OFFSET));
         Assert.assertEquals(wal.end(), new OLogSequenceNumber(1, CASWALPage.RECORDS_OFFSET));
@@ -1537,7 +2264,8 @@ public class CASDiskWriteAheadLogIT {
           Assert.assertFalse(result.isEmpty());
 
           final Iterator<WriteableWALRecord> resultIterator = result.iterator();
-          final Iterator<TestRecord> recordIterator = records.subList(i + 1, recordsCount).iterator();
+          final Iterator<TestRecord> recordIterator =
+              records.subList(i + 1, recordsCount).iterator();
 
           while (resultIterator.hasNext()) {
             TestRecord record = recordIterator.next();
@@ -1552,8 +2280,28 @@ public class CASDiskWriteAheadLogIT {
 
         wal.close();
 
-        wal = new CASDiskWriteAheadLog("walTest", testDirectory, testDirectory, 100, 64, aesKey, iv, Integer.MAX_VALUE,
-            Integer.MAX_VALUE, 20, true, Locale.US, -1, -1, 1000, false, false, false, true, 10);
+        wal =
+            new CASDiskWriteAheadLog(
+                "walTest",
+                testDirectory,
+                testDirectory,
+                100,
+                64,
+                aesKey,
+                iv,
+                Integer.MAX_VALUE,
+                Integer.MAX_VALUE,
+                20,
+                true,
+                Locale.US,
+                -1,
+                -1,
+                1000,
+                false,
+                false,
+                false,
+                true,
+                10);
 
         Assert.assertEquals(wal.begin(), new OLogSequenceNumber(1, CASWALPage.RECORDS_OFFSET));
         Assert.assertEquals(wal.end(), new OLogSequenceNumber(2, CASWALPage.RECORDS_OFFSET));
@@ -1563,7 +2311,8 @@ public class CASDiskWriteAheadLogIT {
           Assert.assertFalse(result.isEmpty());
 
           final Iterator<WriteableWALRecord> resultIterator = result.iterator();
-          final Iterator<TestRecord> recordIterator = records.subList(i + 1, recordsCount).iterator();
+          final Iterator<TestRecord> recordIterator =
+              records.subList(i + 1, recordsCount).iterator();
 
           while (resultIterator.hasNext() && recordIterator.hasNext()) {
             TestRecord record = recordIterator.next();
@@ -1604,8 +2353,28 @@ public class CASDiskWriteAheadLogIT {
       try {
         final int numberOfSegmentsToAdd = random.nextInt(4) + 3;
 
-        CASDiskWriteAheadLog wal = new CASDiskWriteAheadLog("walTest", testDirectory, testDirectory, 100, 64, null, null,
-            Integer.MAX_VALUE, Integer.MAX_VALUE, 20, true, Locale.US, -1, -1, 1000, false, false, false, true, 10);
+        CASDiskWriteAheadLog wal =
+            new CASDiskWriteAheadLog(
+                "walTest",
+                testDirectory,
+                testDirectory,
+                100,
+                64,
+                null,
+                null,
+                Integer.MAX_VALUE,
+                Integer.MAX_VALUE,
+                20,
+                true,
+                Locale.US,
+                -1,
+                -1,
+                1000,
+                false,
+                false,
+                false,
+                true,
+                10);
 
         Assert.assertEquals(wal.begin(), new OLogSequenceNumber(1, CASWALPage.RECORDS_OFFSET));
         Assert.assertEquals(wal.end(), new OLogSequenceNumber(1, CASWALPage.RECORDS_OFFSET));
@@ -1632,7 +2401,6 @@ public class CASDiskWriteAheadLogIT {
 
             Assert.assertEquals(wal.begin(), new OLogSequenceNumber(1, CASWALPage.RECORDS_OFFSET));
             Assert.assertEquals(wal.end(), lastLsn);
-
           }
         }
 
@@ -1660,19 +2428,44 @@ public class CASDiskWriteAheadLogIT {
 
         long walSize;
         try (Stream<Path> walk = Files.walk(testDirectory)) {
-          walSize = walk.filter(p -> p.toFile().isFile() && p.getFileName().toString().endsWith(".wal"))
-              .mapToLong(p -> p.toFile().length()).sum();
+          walSize =
+              walk.filter(p -> p.toFile().isFile() && p.getFileName().toString().endsWith(".wal"))
+                  .mapToLong(p -> p.toFile().length())
+                  .sum();
         }
 
-        long calculatedWalSize = ((wal.size() + wal.pageSize() - 1) / wal.pageSize()) * wal.pageSize();
+        long calculatedWalSize =
+            ((wal.size() + wal.pageSize() - 1) / wal.pageSize()) * wal.pageSize();
 
         Assert.assertEquals(calculatedWalSize, walSize);
 
-        wal = new CASDiskWriteAheadLog("walTest", testDirectory, testDirectory, 100, 64, null, null, Integer.MAX_VALUE,
-            Integer.MAX_VALUE, 20, true, Locale.US, -1, -1, 1000, false, false, false, true, 10);
+        wal =
+            new CASDiskWriteAheadLog(
+                "walTest",
+                testDirectory,
+                testDirectory,
+                100,
+                64,
+                null,
+                null,
+                Integer.MAX_VALUE,
+                Integer.MAX_VALUE,
+                20,
+                true,
+                Locale.US,
+                -1,
+                -1,
+                1000,
+                false,
+                false,
+                false,
+                true,
+                10);
 
         Assert.assertEquals(wal.begin(), new OLogSequenceNumber(1, CASWALPage.RECORDS_OFFSET));
-        Assert.assertEquals(wal.end(), new OLogSequenceNumber(numberOfSegmentsToAdd + 2, CASWALPage.RECORDS_OFFSET));
+        Assert.assertEquals(
+            wal.end(),
+            new OLogSequenceNumber(numberOfSegmentsToAdd + 2, CASWALPage.RECORDS_OFFSET));
 
         Assert.assertEquals(numberOfSegmentsToAdd + 2, wal.activeSegment());
 
@@ -1731,7 +2524,10 @@ public class CASDiskWriteAheadLogIT {
         wal.close();
 
         try (Stream<Path> walk = Files.walk(testDirectory)) {
-          walSize = walk.filter(p -> p.toFile().isFile() && p.getFileName().toString().endsWith(".wal")).mapToLong(p -> p.toFile().length()).sum();
+          walSize =
+              walk.filter(p -> p.toFile().isFile() && p.getFileName().toString().endsWith(".wal"))
+                  .mapToLong(p -> p.toFile().length())
+                  .sum();
         }
 
         calculatedWalSize = ((wal.size() + wal.pageSize() - 1) / wal.pageSize()) * wal.pageSize();
@@ -1764,8 +2560,28 @@ public class CASDiskWriteAheadLogIT {
       try {
         final int numberOfSegmentsToAdd = random.nextInt(4) + 3;
 
-        CASDiskWriteAheadLog wal = new CASDiskWriteAheadLog("walTest", testDirectory, testDirectory, 100, 64, aesKey, iv,
-            Integer.MAX_VALUE, Integer.MAX_VALUE, 20, true, Locale.US, -1, -1, 1000, false, false, false, true, 10);
+        CASDiskWriteAheadLog wal =
+            new CASDiskWriteAheadLog(
+                "walTest",
+                testDirectory,
+                testDirectory,
+                100,
+                64,
+                aesKey,
+                iv,
+                Integer.MAX_VALUE,
+                Integer.MAX_VALUE,
+                20,
+                true,
+                Locale.US,
+                -1,
+                -1,
+                1000,
+                false,
+                false,
+                false,
+                true,
+                10);
 
         Assert.assertEquals(wal.begin(), new OLogSequenceNumber(1, CASWALPage.RECORDS_OFFSET));
         Assert.assertEquals(wal.end(), new OLogSequenceNumber(1, CASWALPage.RECORDS_OFFSET));
@@ -1792,7 +2608,6 @@ public class CASDiskWriteAheadLogIT {
 
             Assert.assertEquals(wal.begin(), new OLogSequenceNumber(1, CASWALPage.RECORDS_OFFSET));
             Assert.assertEquals(wal.end(), lastLsn);
-
           }
         }
 
@@ -1820,19 +2635,44 @@ public class CASDiskWriteAheadLogIT {
 
         long walSize;
         try (Stream<Path> walk = Files.walk(testDirectory)) {
-          walSize = walk.filter(p -> p.toFile().isFile() && p.getFileName().toString().endsWith(".wal"))
-              .mapToLong(p -> p.toFile().length()).sum();
+          walSize =
+              walk.filter(p -> p.toFile().isFile() && p.getFileName().toString().endsWith(".wal"))
+                  .mapToLong(p -> p.toFile().length())
+                  .sum();
         }
 
-        long calculatedWalSize = ((wal.size() + wal.pageSize() - 1) / wal.pageSize()) * wal.pageSize();
+        long calculatedWalSize =
+            ((wal.size() + wal.pageSize() - 1) / wal.pageSize()) * wal.pageSize();
 
         Assert.assertEquals(calculatedWalSize, walSize);
 
-        wal = new CASDiskWriteAheadLog("walTest", testDirectory, testDirectory, 100, 64, aesKey, iv, Integer.MAX_VALUE,
-            Integer.MAX_VALUE, 20, true, Locale.US, -1, -1, 1000, false, false, false, true, 10);
+        wal =
+            new CASDiskWriteAheadLog(
+                "walTest",
+                testDirectory,
+                testDirectory,
+                100,
+                64,
+                aesKey,
+                iv,
+                Integer.MAX_VALUE,
+                Integer.MAX_VALUE,
+                20,
+                true,
+                Locale.US,
+                -1,
+                -1,
+                1000,
+                false,
+                false,
+                false,
+                true,
+                10);
 
         Assert.assertEquals(wal.begin(), new OLogSequenceNumber(1, CASWALPage.RECORDS_OFFSET));
-        Assert.assertEquals(wal.end(), new OLogSequenceNumber(numberOfSegmentsToAdd + 2, CASWALPage.RECORDS_OFFSET));
+        Assert.assertEquals(
+            wal.end(),
+            new OLogSequenceNumber(numberOfSegmentsToAdd + 2, CASWALPage.RECORDS_OFFSET));
 
         Assert.assertEquals(numberOfSegmentsToAdd + 2, wal.activeSegment());
 
@@ -1891,7 +2731,10 @@ public class CASDiskWriteAheadLogIT {
         wal.close();
 
         try (Stream<Path> walk = Files.walk(testDirectory)) {
-          walSize = walk.filter(p -> p.toFile().isFile() && p.getFileName().toString().endsWith(".wal")).mapToLong(p -> p.toFile().length()).sum();
+          walSize =
+              walk.filter(p -> p.toFile().isFile() && p.getFileName().toString().endsWith(".wal"))
+                  .mapToLong(p -> p.toFile().length())
+                  .sum();
         }
 
         calculatedWalSize = ((wal.size() + wal.pageSize() - 1) / wal.pageSize()) * wal.pageSize();
@@ -1920,8 +2763,28 @@ public class CASDiskWriteAheadLogIT {
       try {
         final Random random = new Random(seed);
 
-        CASDiskWriteAheadLog wal = new CASDiskWriteAheadLog("walTest", testDirectory, testDirectory, 100, 64, null, null,
-            Integer.MAX_VALUE, Integer.MAX_VALUE, 20, true, Locale.US, -1, -1, 1000, false, false, false, true, 10);
+        CASDiskWriteAheadLog wal =
+            new CASDiskWriteAheadLog(
+                "walTest",
+                testDirectory,
+                testDirectory,
+                100,
+                64,
+                null,
+                null,
+                Integer.MAX_VALUE,
+                Integer.MAX_VALUE,
+                20,
+                true,
+                Locale.US,
+                -1,
+                -1,
+                1000,
+                false,
+                false,
+                false,
+                true,
+                10);
 
         Assert.assertEquals(wal.begin(), new OLogSequenceNumber(1, CASWALPage.RECORDS_OFFSET));
         Assert.assertEquals(wal.end(), new OLogSequenceNumber(1, CASWALPage.RECORDS_OFFSET));
@@ -1959,8 +2822,28 @@ public class CASDiskWriteAheadLogIT {
 
         wal.close();
 
-        wal = new CASDiskWriteAheadLog("walTest", testDirectory, testDirectory, 100, 64, null, null, Integer.MAX_VALUE,
-            Integer.MAX_VALUE, 20, true, Locale.US, -1, -1, 1000, false, false, false, true, 10);
+        wal =
+            new CASDiskWriteAheadLog(
+                "walTest",
+                testDirectory,
+                testDirectory,
+                100,
+                64,
+                null,
+                null,
+                Integer.MAX_VALUE,
+                Integer.MAX_VALUE,
+                20,
+                true,
+                Locale.US,
+                -1,
+                -1,
+                1000,
+                false,
+                false,
+                false,
+                true,
+                10);
 
         Assert.assertEquals(wal.begin(), new OLogSequenceNumber(1, CASWALPage.RECORDS_OFFSET));
         Assert.assertEquals(wal.end(), new OLogSequenceNumber(2, CASWALPage.RECORDS_OFFSET));
@@ -2008,8 +2891,28 @@ public class CASDiskWriteAheadLogIT {
       try {
         final Random random = new Random(seed);
 
-        CASDiskWriteAheadLog wal = new CASDiskWriteAheadLog("walTest", testDirectory, testDirectory, 100, 64, aesKey, iv,
-            Integer.MAX_VALUE, Integer.MAX_VALUE, 20, true, Locale.US, -1, -1, 1000, false, false, false, true, 10);
+        CASDiskWriteAheadLog wal =
+            new CASDiskWriteAheadLog(
+                "walTest",
+                testDirectory,
+                testDirectory,
+                100,
+                64,
+                aesKey,
+                iv,
+                Integer.MAX_VALUE,
+                Integer.MAX_VALUE,
+                20,
+                true,
+                Locale.US,
+                -1,
+                -1,
+                1000,
+                false,
+                false,
+                false,
+                true,
+                10);
 
         Assert.assertEquals(wal.begin(), new OLogSequenceNumber(1, CASWALPage.RECORDS_OFFSET));
         Assert.assertEquals(wal.end(), new OLogSequenceNumber(1, CASWALPage.RECORDS_OFFSET));
@@ -2047,8 +2950,28 @@ public class CASDiskWriteAheadLogIT {
 
         wal.close();
 
-        wal = new CASDiskWriteAheadLog("walTest", testDirectory, testDirectory, 100, 64, aesKey, iv, Integer.MAX_VALUE,
-            Integer.MAX_VALUE, 20, true, Locale.US, -1, -1, 1000, false, false, false, true, 10);
+        wal =
+            new CASDiskWriteAheadLog(
+                "walTest",
+                testDirectory,
+                testDirectory,
+                100,
+                64,
+                aesKey,
+                iv,
+                Integer.MAX_VALUE,
+                Integer.MAX_VALUE,
+                20,
+                true,
+                Locale.US,
+                -1,
+                -1,
+                1000,
+                false,
+                false,
+                false,
+                true,
+                10);
 
         Assert.assertEquals(wal.begin(), new OLogSequenceNumber(1, CASWALPage.RECORDS_OFFSET));
         Assert.assertEquals(wal.end(), new OLogSequenceNumber(2, CASWALPage.RECORDS_OFFSET));
@@ -2092,8 +3015,28 @@ public class CASDiskWriteAheadLogIT {
       try {
         final Random random = new Random(seed);
 
-        CASDiskWriteAheadLog wal = new CASDiskWriteAheadLog("walTest", testDirectory, testDirectory, 100, 64, null, null,
-            Integer.MAX_VALUE, Integer.MAX_VALUE, 20, true, Locale.US, -1, -1, 1000, false, false, false, true, 10);
+        CASDiskWriteAheadLog wal =
+            new CASDiskWriteAheadLog(
+                "walTest",
+                testDirectory,
+                testDirectory,
+                100,
+                64,
+                null,
+                null,
+                Integer.MAX_VALUE,
+                Integer.MAX_VALUE,
+                20,
+                true,
+                Locale.US,
+                -1,
+                -1,
+                1000,
+                false,
+                false,
+                false,
+                true,
+                10);
 
         Assert.assertEquals(wal.begin(), new OLogSequenceNumber(1, CASWALPage.RECORDS_OFFSET));
         Assert.assertEquals(wal.end(), new OLogSequenceNumber(1, CASWALPage.RECORDS_OFFSET));
@@ -2118,7 +3061,8 @@ public class CASDiskWriteAheadLogIT {
           Assert.assertFalse(result.isEmpty());
 
           final Iterator<WriteableWALRecord> resultIterator = result.iterator();
-          final Iterator<TestRecord> recordIterator = records.subList(i + 1, recordsCount).iterator();
+          final Iterator<TestRecord> recordIterator =
+              records.subList(i + 1, recordsCount).iterator();
 
           while (resultIterator.hasNext()) {
             TestRecord record = recordIterator.next();
@@ -2133,8 +3077,28 @@ public class CASDiskWriteAheadLogIT {
 
         wal.close();
 
-        wal = new CASDiskWriteAheadLog("walTest", testDirectory, testDirectory, 100, 64, null, null, Integer.MAX_VALUE,
-            Integer.MAX_VALUE, 20, true, Locale.US, -1, -1, 1000, false, false, false, true, 10);
+        wal =
+            new CASDiskWriteAheadLog(
+                "walTest",
+                testDirectory,
+                testDirectory,
+                100,
+                64,
+                null,
+                null,
+                Integer.MAX_VALUE,
+                Integer.MAX_VALUE,
+                20,
+                true,
+                Locale.US,
+                -1,
+                -1,
+                1000,
+                false,
+                false,
+                false,
+                true,
+                10);
 
         Assert.assertEquals(wal.begin(), new OLogSequenceNumber(1, CASWALPage.RECORDS_OFFSET));
         Assert.assertEquals(wal.end(), new OLogSequenceNumber(2, CASWALPage.RECORDS_OFFSET));
@@ -2144,7 +3108,8 @@ public class CASDiskWriteAheadLogIT {
           Assert.assertFalse(result.isEmpty());
 
           final Iterator<WriteableWALRecord> resultIterator = result.iterator();
-          final Iterator<TestRecord> recordIterator = records.subList(i + 1, recordsCount).iterator();
+          final Iterator<TestRecord> recordIterator =
+              records.subList(i + 1, recordsCount).iterator();
 
           while (resultIterator.hasNext() && recordIterator.hasNext()) {
             TestRecord record = recordIterator.next();
@@ -2188,8 +3153,28 @@ public class CASDiskWriteAheadLogIT {
       try {
         final Random random = new Random(seed);
 
-        CASDiskWriteAheadLog wal = new CASDiskWriteAheadLog("walTest", testDirectory, testDirectory, 100, 64, aesKey, iv,
-            Integer.MAX_VALUE, Integer.MAX_VALUE, 20, true, Locale.US, -1, -1, 1000, false, false, false, true, 10);
+        CASDiskWriteAheadLog wal =
+            new CASDiskWriteAheadLog(
+                "walTest",
+                testDirectory,
+                testDirectory,
+                100,
+                64,
+                aesKey,
+                iv,
+                Integer.MAX_VALUE,
+                Integer.MAX_VALUE,
+                20,
+                true,
+                Locale.US,
+                -1,
+                -1,
+                1000,
+                false,
+                false,
+                false,
+                true,
+                10);
 
         Assert.assertEquals(wal.begin(), new OLogSequenceNumber(1, CASWALPage.RECORDS_OFFSET));
         Assert.assertEquals(wal.end(), new OLogSequenceNumber(1, CASWALPage.RECORDS_OFFSET));
@@ -2214,7 +3199,8 @@ public class CASDiskWriteAheadLogIT {
           Assert.assertFalse(result.isEmpty());
 
           final Iterator<WriteableWALRecord> resultIterator = result.iterator();
-          final Iterator<TestRecord> recordIterator = records.subList(i + 1, recordsCount).iterator();
+          final Iterator<TestRecord> recordIterator =
+              records.subList(i + 1, recordsCount).iterator();
 
           while (resultIterator.hasNext()) {
             TestRecord record = recordIterator.next();
@@ -2229,8 +3215,28 @@ public class CASDiskWriteAheadLogIT {
 
         wal.close();
 
-        wal = new CASDiskWriteAheadLog("walTest", testDirectory, testDirectory, 100, 64, aesKey, iv, Integer.MAX_VALUE,
-            Integer.MAX_VALUE, 20, true, Locale.US, -1, -1, 1000, false, false, false, true, 10);
+        wal =
+            new CASDiskWriteAheadLog(
+                "walTest",
+                testDirectory,
+                testDirectory,
+                100,
+                64,
+                aesKey,
+                iv,
+                Integer.MAX_VALUE,
+                Integer.MAX_VALUE,
+                20,
+                true,
+                Locale.US,
+                -1,
+                -1,
+                1000,
+                false,
+                false,
+                false,
+                true,
+                10);
 
         Assert.assertEquals(wal.begin(), new OLogSequenceNumber(1, CASWALPage.RECORDS_OFFSET));
         Assert.assertEquals(wal.end(), new OLogSequenceNumber(2, CASWALPage.RECORDS_OFFSET));
@@ -2240,7 +3246,8 @@ public class CASDiskWriteAheadLogIT {
           Assert.assertFalse(result.isEmpty());
 
           final Iterator<WriteableWALRecord> resultIterator = result.iterator();
-          final Iterator<TestRecord> recordIterator = records.subList(i + 1, recordsCount).iterator();
+          final Iterator<TestRecord> recordIterator =
+              records.subList(i + 1, recordsCount).iterator();
 
           while (resultIterator.hasNext() && recordIterator.hasNext()) {
             TestRecord record = recordIterator.next();
@@ -2279,8 +3286,28 @@ public class CASDiskWriteAheadLogIT {
       try {
         final Random random = new Random(seed);
 
-        CASDiskWriteAheadLog wal = new CASDiskWriteAheadLog("walTest", testDirectory, testDirectory, 100, 64, null, null,
-            Integer.MAX_VALUE, Integer.MAX_VALUE, 20, true, Locale.US, -1, -1, 1000, false, false, false, true, 10);
+        CASDiskWriteAheadLog wal =
+            new CASDiskWriteAheadLog(
+                "walTest",
+                testDirectory,
+                testDirectory,
+                100,
+                64,
+                null,
+                null,
+                Integer.MAX_VALUE,
+                Integer.MAX_VALUE,
+                20,
+                true,
+                Locale.US,
+                -1,
+                -1,
+                1000,
+                false,
+                false,
+                false,
+                true,
+                10);
 
         Assert.assertEquals(wal.begin(), new OLogSequenceNumber(1, CASWALPage.RECORDS_OFFSET));
         Assert.assertEquals(wal.end(), new OLogSequenceNumber(1, CASWALPage.RECORDS_OFFSET));
@@ -2318,8 +3345,28 @@ public class CASDiskWriteAheadLogIT {
 
         wal.close();
 
-        wal = new CASDiskWriteAheadLog("walTest", testDirectory, testDirectory, 100, 64, null, null, Integer.MAX_VALUE,
-            Integer.MAX_VALUE, 20, true, Locale.US, -1, -1, 1000, false, false, false, true, 10);
+        wal =
+            new CASDiskWriteAheadLog(
+                "walTest",
+                testDirectory,
+                testDirectory,
+                100,
+                64,
+                null,
+                null,
+                Integer.MAX_VALUE,
+                Integer.MAX_VALUE,
+                20,
+                true,
+                Locale.US,
+                -1,
+                -1,
+                1000,
+                false,
+                false,
+                false,
+                true,
+                10);
 
         Assert.assertEquals(wal.begin(), new OLogSequenceNumber(1, CASWALPage.RECORDS_OFFSET));
         Assert.assertEquals(wal.end(), new OLogSequenceNumber(2, CASWALPage.RECORDS_OFFSET));
@@ -2365,8 +3412,28 @@ public class CASDiskWriteAheadLogIT {
       try {
         final Random random = new Random(seed);
 
-        CASDiskWriteAheadLog wal = new CASDiskWriteAheadLog("walTest", testDirectory, testDirectory, 100, 64, aesKey, iv,
-            Integer.MAX_VALUE, Integer.MAX_VALUE, 20, true, Locale.US, -1, -1, 1000, false, false, false, true, 10);
+        CASDiskWriteAheadLog wal =
+            new CASDiskWriteAheadLog(
+                "walTest",
+                testDirectory,
+                testDirectory,
+                100,
+                64,
+                aesKey,
+                iv,
+                Integer.MAX_VALUE,
+                Integer.MAX_VALUE,
+                20,
+                true,
+                Locale.US,
+                -1,
+                -1,
+                1000,
+                false,
+                false,
+                false,
+                true,
+                10);
 
         Assert.assertEquals(wal.begin(), new OLogSequenceNumber(1, CASWALPage.RECORDS_OFFSET));
         Assert.assertEquals(wal.end(), new OLogSequenceNumber(1, CASWALPage.RECORDS_OFFSET));
@@ -2404,8 +3471,28 @@ public class CASDiskWriteAheadLogIT {
 
         wal.close();
 
-        wal = new CASDiskWriteAheadLog("walTest", testDirectory, testDirectory, 100, 64, aesKey, iv, Integer.MAX_VALUE,
-            Integer.MAX_VALUE, 20, true, Locale.US, -1, -1, 1000, false, false, false, true, 10);
+        wal =
+            new CASDiskWriteAheadLog(
+                "walTest",
+                testDirectory,
+                testDirectory,
+                100,
+                64,
+                aesKey,
+                iv,
+                Integer.MAX_VALUE,
+                Integer.MAX_VALUE,
+                20,
+                true,
+                Locale.US,
+                -1,
+                -1,
+                1000,
+                false,
+                false,
+                false,
+                true,
+                10);
 
         Assert.assertEquals(wal.begin(), new OLogSequenceNumber(1, CASWALPage.RECORDS_OFFSET));
         Assert.assertEquals(wal.end(), new OLogSequenceNumber(2, CASWALPage.RECORDS_OFFSET));
@@ -2447,8 +3534,28 @@ public class CASDiskWriteAheadLogIT {
       try {
         final Random random = new Random(seed);
 
-        CASDiskWriteAheadLog wal = new CASDiskWriteAheadLog("walTest", testDirectory, testDirectory, 100, 64, null, null,
-            Integer.MAX_VALUE, Integer.MAX_VALUE, 20, true, Locale.US, -1, -1, 1000, false, false, false, true, 10);
+        CASDiskWriteAheadLog wal =
+            new CASDiskWriteAheadLog(
+                "walTest",
+                testDirectory,
+                testDirectory,
+                100,
+                64,
+                null,
+                null,
+                Integer.MAX_VALUE,
+                Integer.MAX_VALUE,
+                20,
+                true,
+                Locale.US,
+                -1,
+                -1,
+                1000,
+                false,
+                false,
+                false,
+                true,
+                10);
         Assert.assertEquals(wal.begin(), new OLogSequenceNumber(1, CASWALPage.RECORDS_OFFSET));
         Assert.assertEquals(wal.end(), new OLogSequenceNumber(1, CASWALPage.RECORDS_OFFSET));
 
@@ -2472,7 +3579,8 @@ public class CASDiskWriteAheadLogIT {
           Assert.assertFalse(result.isEmpty());
 
           final Iterator<WriteableWALRecord> resultIterator = result.iterator();
-          final Iterator<TestRecord> recordIterator = records.subList(i + 1, recordsCount).iterator();
+          final Iterator<TestRecord> recordIterator =
+              records.subList(i + 1, recordsCount).iterator();
 
           while (resultIterator.hasNext()) {
             TestRecord record = recordIterator.next();
@@ -2487,8 +3595,28 @@ public class CASDiskWriteAheadLogIT {
 
         wal.close();
 
-        wal = new CASDiskWriteAheadLog("walTest", testDirectory, testDirectory, 100, 64, null, null, Integer.MAX_VALUE,
-            Integer.MAX_VALUE, 20, true, Locale.US, -1, -1, 1000, false, false, false, true, 10);
+        wal =
+            new CASDiskWriteAheadLog(
+                "walTest",
+                testDirectory,
+                testDirectory,
+                100,
+                64,
+                null,
+                null,
+                Integer.MAX_VALUE,
+                Integer.MAX_VALUE,
+                20,
+                true,
+                Locale.US,
+                -1,
+                -1,
+                1000,
+                false,
+                false,
+                false,
+                true,
+                10);
 
         Assert.assertEquals(wal.begin(), new OLogSequenceNumber(1, CASWALPage.RECORDS_OFFSET));
         Assert.assertEquals(wal.end(), new OLogSequenceNumber(2, CASWALPage.RECORDS_OFFSET));
@@ -2498,7 +3626,8 @@ public class CASDiskWriteAheadLogIT {
           Assert.assertFalse(result.isEmpty());
 
           final Iterator<WriteableWALRecord> resultIterator = result.iterator();
-          final Iterator<TestRecord> recordIterator = records.subList(i + 1, recordsCount).iterator();
+          final Iterator<TestRecord> recordIterator =
+              records.subList(i + 1, recordsCount).iterator();
 
           while (resultIterator.hasNext() && recordIterator.hasNext()) {
             TestRecord record = recordIterator.next();
@@ -2541,8 +3670,28 @@ public class CASDiskWriteAheadLogIT {
       try {
         final Random random = new Random(seed);
 
-        CASDiskWriteAheadLog wal = new CASDiskWriteAheadLog("walTest", testDirectory, testDirectory, 100, 64, aesKey, iv,
-            Integer.MAX_VALUE, Integer.MAX_VALUE, 20, true, Locale.US, -1, -1, 1000, false, false, false, true, 10);
+        CASDiskWriteAheadLog wal =
+            new CASDiskWriteAheadLog(
+                "walTest",
+                testDirectory,
+                testDirectory,
+                100,
+                64,
+                aesKey,
+                iv,
+                Integer.MAX_VALUE,
+                Integer.MAX_VALUE,
+                20,
+                true,
+                Locale.US,
+                -1,
+                -1,
+                1000,
+                false,
+                false,
+                false,
+                true,
+                10);
 
         Assert.assertEquals(wal.begin(), new OLogSequenceNumber(1, CASWALPage.RECORDS_OFFSET));
         Assert.assertEquals(wal.end(), new OLogSequenceNumber(1, CASWALPage.RECORDS_OFFSET));
@@ -2567,7 +3716,8 @@ public class CASDiskWriteAheadLogIT {
           Assert.assertFalse(result.isEmpty());
 
           final Iterator<WriteableWALRecord> resultIterator = result.iterator();
-          final Iterator<TestRecord> recordIterator = records.subList(i + 1, recordsCount).iterator();
+          final Iterator<TestRecord> recordIterator =
+              records.subList(i + 1, recordsCount).iterator();
 
           while (resultIterator.hasNext()) {
             TestRecord record = recordIterator.next();
@@ -2582,8 +3732,28 @@ public class CASDiskWriteAheadLogIT {
 
         wal.close();
 
-        wal = new CASDiskWriteAheadLog("walTest", testDirectory, testDirectory, 100, 64, aesKey, iv, Integer.MAX_VALUE,
-            Integer.MAX_VALUE, 20, true, Locale.US, -1, -1, 1000, false, false, false, true, 10);
+        wal =
+            new CASDiskWriteAheadLog(
+                "walTest",
+                testDirectory,
+                testDirectory,
+                100,
+                64,
+                aesKey,
+                iv,
+                Integer.MAX_VALUE,
+                Integer.MAX_VALUE,
+                20,
+                true,
+                Locale.US,
+                -1,
+                -1,
+                1000,
+                false,
+                false,
+                false,
+                true,
+                10);
 
         Assert.assertEquals(wal.begin(), new OLogSequenceNumber(1, CASWALPage.RECORDS_OFFSET));
         Assert.assertEquals(wal.end(), new OLogSequenceNumber(2, CASWALPage.RECORDS_OFFSET));
@@ -2593,7 +3763,8 @@ public class CASDiskWriteAheadLogIT {
           Assert.assertFalse(result.isEmpty());
 
           final Iterator<WriteableWALRecord> resultIterator = result.iterator();
-          final Iterator<TestRecord> recordIterator = records.subList(i + 1, recordsCount).iterator();
+          final Iterator<TestRecord> recordIterator =
+              records.subList(i + 1, recordsCount).iterator();
 
           while (resultIterator.hasNext() && recordIterator.hasNext()) {
             TestRecord record = recordIterator.next();
@@ -2633,8 +3804,28 @@ public class CASDiskWriteAheadLogIT {
         final Random random = new Random(seed);
         final int recordsCount = random.nextInt(10_000) + 100;
 
-        CASDiskWriteAheadLog wal = new CASDiskWriteAheadLog("walTest", testDirectory, testDirectory, 100, 64, null, null,
-            Integer.MAX_VALUE, Integer.MAX_VALUE, 20, true, Locale.US, -1, -1, 1000, false, false, false, true, 10);
+        CASDiskWriteAheadLog wal =
+            new CASDiskWriteAheadLog(
+                "walTest",
+                testDirectory,
+                testDirectory,
+                100,
+                64,
+                null,
+                null,
+                Integer.MAX_VALUE,
+                Integer.MAX_VALUE,
+                20,
+                true,
+                Locale.US,
+                -1,
+                -1,
+                1000,
+                false,
+                false,
+                false,
+                true,
+                10);
         for (int i = 0; i < recordsCount; i++) {
 
           final TestRecord testRecord = new TestRecord(random, 4 * wal.pageSize(), 1);
@@ -2645,11 +3836,14 @@ public class CASDiskWriteAheadLogIT {
 
         final long segSize;
         try (Stream<Path> walk = Files.walk(testDirectory)) {
-          segSize = walk.filter(p -> p.toFile().isFile() && p.getFileName().toString().endsWith(".wal"))
-              .mapToLong(p -> p.toFile().length()).sum();
+          segSize =
+              walk.filter(p -> p.toFile().isFile() && p.getFileName().toString().endsWith(".wal"))
+                  .mapToLong(p -> p.toFile().length())
+                  .sum();
         }
 
-        final long calculatedSegSize = ((wal.segSize() + wal.pageSize() - 1) / wal.pageSize()) * wal.pageSize();
+        final long calculatedSegSize =
+            ((wal.segSize() + wal.pageSize() - 1) / wal.pageSize()) * wal.pageSize();
         Assert.assertEquals(segSize, calculatedSegSize);
 
         Thread.sleep(2);
@@ -2672,8 +3866,28 @@ public class CASDiskWriteAheadLogIT {
     for (int n = 0; n < iterations; n++) {
       OFileUtils.deleteRecursively(testDirectory.toFile());
 
-      CASDiskWriteAheadLog wal = new CASDiskWriteAheadLog("walTest", testDirectory, testDirectory, 100, 64, null, null,
-          Integer.MAX_VALUE, 10 * 1024 * 1024, 20, true, Locale.US, 10 * 1024 * 1024 * 1024L, -1, 1000, false, false, false, true, 10);
+      CASDiskWriteAheadLog wal =
+          new CASDiskWriteAheadLog(
+              "walTest",
+              testDirectory,
+              testDirectory,
+              100,
+              64,
+              null,
+              null,
+              Integer.MAX_VALUE,
+              10 * 1024 * 1024,
+              20,
+              true,
+              Locale.US,
+              10 * 1024 * 1024 * 1024L,
+              -1,
+              1000,
+              false,
+              false,
+              false,
+              true,
+              10);
 
       Assert.assertEquals(wal.begin(), new OLogSequenceNumber(1, CASWALPage.RECORDS_OFFSET));
       Assert.assertEquals(wal.end(), new OLogSequenceNumber(1, CASWALPage.RECORDS_OFFSET));
@@ -2686,24 +3900,26 @@ public class CASDiskWriteAheadLogIT {
 
       AtomicReference<Future<Void>> segmentAppender = new AtomicReference<>();
 
-      final SegmentOverflowListener listener = (segment) -> {
-        Future<Void> oldAppender = segmentAppender.get();
+      final SegmentOverflowListener listener =
+          (segment) -> {
+            Future<Void> oldAppender = segmentAppender.get();
 
-        while (oldAppender == null || oldAppender.isDone()) {
-          if (wal.activeSegment() <= segment) {
-            final Future<Void> appender = executorService.submit(new SegmentAdder(segment, wal));
+            while (oldAppender == null || oldAppender.isDone()) {
+              if (wal.activeSegment() <= segment) {
+                final Future<Void> appender =
+                    executorService.submit(new SegmentAdder(segment, wal));
 
-            if (segmentAppender.compareAndSet(oldAppender, appender)) {
-              break;
+                if (segmentAppender.compareAndSet(oldAppender, appender)) {
+                  break;
+                }
+
+                appender.cancel(false);
+                oldAppender = segmentAppender.get();
+              } else {
+                break;
+              }
             }
-
-            appender.cancel(false);
-            oldAppender = segmentAppender.get();
-          } else {
-            break;
-          }
-        }
-      };
+          };
 
       wal.addSegmentOverflowListener(listener);
 
@@ -2734,14 +3950,36 @@ public class CASDiskWriteAheadLogIT {
 
       wal.close();
 
-      CASDiskWriteAheadLog loadedWAL = new CASDiskWriteAheadLog("walTest", testDirectory, testDirectory, 100, 64, null, null,
-          Integer.MAX_VALUE, 10 * 1024 * 1024, 20, true, Locale.US, 3 * 1024 * 1024 * 1024L, -1, 1000, false, false, false, true, 10);
+      CASDiskWriteAheadLog loadedWAL =
+          new CASDiskWriteAheadLog(
+              "walTest",
+              testDirectory,
+              testDirectory,
+              100,
+              64,
+              null,
+              null,
+              Integer.MAX_VALUE,
+              10 * 1024 * 1024,
+              20,
+              true,
+              Locale.US,
+              3 * 1024 * 1024 * 1024L,
+              -1,
+              1000,
+              false,
+              false,
+              false,
+              true,
+              10);
 
       System.out.println("Assert WAL content 2");
       assertMTWALInsertion(loadedWAL, addedRecords);
 
       Assert.assertEquals(loadedWAL.begin(), new OLogSequenceNumber(1, CASWALPage.RECORDS_OFFSET));
-      Assert.assertEquals(loadedWAL.end(), new OLogSequenceNumber(lastLSN.getSegment() + 1, CASWALPage.RECORDS_OFFSET));
+      Assert.assertEquals(
+          loadedWAL.end(),
+          new OLogSequenceNumber(lastLSN.getSegment() + 1, CASWALPage.RECORDS_OFFSET));
 
       loadedWAL.close();
 
@@ -2756,8 +3994,28 @@ public class CASDiskWriteAheadLogIT {
     for (int n = 0; n < iterations; n++) {
       OFileUtils.deleteRecursively(testDirectory.toFile());
 
-      CASDiskWriteAheadLog wal = new CASDiskWriteAheadLog("walTest", testDirectory, testDirectory, 100, 64, null, null,
-          Integer.MAX_VALUE, 10 * 1024 * 1024, 20, true, Locale.US, 10 * 1024 * 1024 * 1024L, -1, 1000, false, false, false, true, 10);
+      CASDiskWriteAheadLog wal =
+          new CASDiskWriteAheadLog(
+              "walTest",
+              testDirectory,
+              testDirectory,
+              100,
+              64,
+              null,
+              null,
+              Integer.MAX_VALUE,
+              10 * 1024 * 1024,
+              20,
+              true,
+              Locale.US,
+              10 * 1024 * 1024 * 1024L,
+              -1,
+              1000,
+              false,
+              false,
+              false,
+              true,
+              10);
 
       Assert.assertEquals(wal.begin(), new OLogSequenceNumber(1, CASWALPage.RECORDS_OFFSET));
       Assert.assertEquals(wal.end(), new OLogSequenceNumber(1, CASWALPage.RECORDS_OFFSET));
@@ -2770,24 +4028,26 @@ public class CASDiskWriteAheadLogIT {
 
       AtomicReference<Future<Void>> segmentAppender = new AtomicReference<>();
 
-      final SegmentOverflowListener listener = (segment) -> {
-        Future<Void> oldAppender = segmentAppender.get();
+      final SegmentOverflowListener listener =
+          (segment) -> {
+            Future<Void> oldAppender = segmentAppender.get();
 
-        while (oldAppender == null || oldAppender.isDone()) {
-          if (wal.activeSegment() <= segment) {
-            final Future<Void> appender = executorService.submit(new SegmentAdder(segment, wal));
+            while (oldAppender == null || oldAppender.isDone()) {
+              if (wal.activeSegment() <= segment) {
+                final Future<Void> appender =
+                    executorService.submit(new SegmentAdder(segment, wal));
 
-            if (segmentAppender.compareAndSet(oldAppender, appender)) {
-              break;
+                if (segmentAppender.compareAndSet(oldAppender, appender)) {
+                  break;
+                }
+
+                appender.cancel(false);
+                oldAppender = segmentAppender.get();
+              } else {
+                break;
+              }
             }
-
-            appender.cancel(false);
-            oldAppender = segmentAppender.get();
-          } else {
-            break;
-          }
-        }
-      };
+          };
 
       wal.addSegmentOverflowListener(listener);
 
@@ -2816,15 +4076,37 @@ public class CASDiskWriteAheadLogIT {
 
       wal.close();
 
-      CASDiskWriteAheadLog loadedWAL = new CASDiskWriteAheadLog("walTest", testDirectory, testDirectory, 100, 64, null, null,
-          Integer.MAX_VALUE, 10 * 1024 * 1024, 20, true, Locale.US, 3 * 1024 * 1024 * 1024L, -1, 1000, false, false, false, true, 10);
+      CASDiskWriteAheadLog loadedWAL =
+          new CASDiskWriteAheadLog(
+              "walTest",
+              testDirectory,
+              testDirectory,
+              100,
+              64,
+              null,
+              null,
+              Integer.MAX_VALUE,
+              10 * 1024 * 1024,
+              20,
+              true,
+              Locale.US,
+              3 * 1024 * 1024 * 1024L,
+              -1,
+              1000,
+              false,
+              false,
+              false,
+              true,
+              10);
 
       System.out.println("Assert WAL content 2");
       assertMTWALInsertion(loadedWAL, addedRecords);
 
       Assert.assertEquals(loadedWAL.begin(), new OLogSequenceNumber(1, CASWALPage.RECORDS_OFFSET));
-      Assert.assertEquals(loadedWAL.end(),
-          new OLogSequenceNumber(addedRecords.lastKey().getSegment() + 1, CASWALPage.RECORDS_OFFSET));
+      Assert.assertEquals(
+          loadedWAL.end(),
+          new OLogSequenceNumber(
+              addedRecords.lastKey().getSegment() + 1, CASWALPage.RECORDS_OFFSET));
 
       loadedWAL.close();
 
@@ -2839,8 +4121,28 @@ public class CASDiskWriteAheadLogIT {
     for (int n = 0; n < iterations; n++) {
       OFileUtils.deleteRecursively(testDirectory.toFile());
 
-      CASDiskWriteAheadLog wal = new CASDiskWriteAheadLog("walTest", testDirectory, testDirectory, 48_000, 64, null, null,
-          Integer.MAX_VALUE, 10 * 1024 * 1024, 20, true, Locale.US, 10 * 1024 * 1024 * 1024L, -1, 1000, false, false, false, true, 10);
+      CASDiskWriteAheadLog wal =
+          new CASDiskWriteAheadLog(
+              "walTest",
+              testDirectory,
+              testDirectory,
+              48_000,
+              64,
+              null,
+              null,
+              Integer.MAX_VALUE,
+              10 * 1024 * 1024,
+              20,
+              true,
+              Locale.US,
+              10 * 1024 * 1024 * 1024L,
+              -1,
+              1000,
+              false,
+              false,
+              false,
+              true,
+              10);
 
       Assert.assertEquals(wal.begin(), new OLogSequenceNumber(1, CASWALPage.RECORDS_OFFSET));
       Assert.assertEquals(wal.end(), new OLogSequenceNumber(1, CASWALPage.RECORDS_OFFSET));
@@ -2853,24 +4155,26 @@ public class CASDiskWriteAheadLogIT {
 
       AtomicReference<Future<Void>> segmentAppender = new AtomicReference<>();
 
-      final SegmentOverflowListener listener = (segment) -> {
-        Future<Void> oldAppender = segmentAppender.get();
+      final SegmentOverflowListener listener =
+          (segment) -> {
+            Future<Void> oldAppender = segmentAppender.get();
 
-        while (oldAppender == null || oldAppender.isDone()) {
-          if (wal.activeSegment() <= segment) {
-            final Future<Void> appender = executorService.submit(new SegmentAdder(segment, wal));
+            while (oldAppender == null || oldAppender.isDone()) {
+              if (wal.activeSegment() <= segment) {
+                final Future<Void> appender =
+                    executorService.submit(new SegmentAdder(segment, wal));
 
-            if (segmentAppender.compareAndSet(oldAppender, appender)) {
-              break;
+                if (segmentAppender.compareAndSet(oldAppender, appender)) {
+                  break;
+                }
+
+                appender.cancel(false);
+                oldAppender = segmentAppender.get();
+              } else {
+                break;
+              }
             }
-
-            appender.cancel(false);
-            oldAppender = segmentAppender.get();
-          } else {
-            break;
-          }
-        }
-      };
+          };
 
       wal.addSegmentOverflowListener(listener);
 
@@ -2898,15 +4202,37 @@ public class CASDiskWriteAheadLogIT {
       Assert.assertEquals(wal.end(), addedRecords.lastKey());
       wal.close();
 
-      CASDiskWriteAheadLog loadedWAL = new CASDiskWriteAheadLog("walTest", testDirectory, testDirectory, 48_000, 64, null, null,
-          Integer.MAX_VALUE, 10 * 1024 * 1024, 20, true, Locale.US, 3 * 1024 * 1024 * 1024L, -1, 1000, false, false, false, true, 10);
+      CASDiskWriteAheadLog loadedWAL =
+          new CASDiskWriteAheadLog(
+              "walTest",
+              testDirectory,
+              testDirectory,
+              48_000,
+              64,
+              null,
+              null,
+              Integer.MAX_VALUE,
+              10 * 1024 * 1024,
+              20,
+              true,
+              Locale.US,
+              3 * 1024 * 1024 * 1024L,
+              -1,
+              1000,
+              false,
+              false,
+              false,
+              true,
+              10);
 
       System.out.println("Assert WAL content 2");
       assertMTWALInsertion(loadedWAL, addedRecords);
 
       Assert.assertEquals(loadedWAL.begin(), new OLogSequenceNumber(1, CASWALPage.RECORDS_OFFSET));
-      Assert.assertEquals(loadedWAL.end(),
-          new OLogSequenceNumber(addedRecords.lastKey().getSegment() + 1, CASWALPage.RECORDS_OFFSET));
+      Assert.assertEquals(
+          loadedWAL.end(),
+          new OLogSequenceNumber(
+              addedRecords.lastKey().getSegment() + 1, CASWALPage.RECORDS_OFFSET));
 
       loadedWAL.close();
 
@@ -2921,8 +4247,28 @@ public class CASDiskWriteAheadLogIT {
     for (int n = 0; n < iterations; n++) {
       OFileUtils.deleteRecursively(testDirectory.toFile());
 
-      CASDiskWriteAheadLog wal = new CASDiskWriteAheadLog("walTest", testDirectory, testDirectory, 48_000, 64, null, null,
-          Integer.MAX_VALUE, 10 * 1024 * 1024, 20, true, Locale.US, 10 * 1024 * 1024 * 1024L, -1, 1000, false, false, false, true, 10);
+      CASDiskWriteAheadLog wal =
+          new CASDiskWriteAheadLog(
+              "walTest",
+              testDirectory,
+              testDirectory,
+              48_000,
+              64,
+              null,
+              null,
+              Integer.MAX_VALUE,
+              10 * 1024 * 1024,
+              20,
+              true,
+              Locale.US,
+              10 * 1024 * 1024 * 1024L,
+              -1,
+              1000,
+              false,
+              false,
+              false,
+              true,
+              10);
 
       Assert.assertEquals(wal.begin(), new OLogSequenceNumber(1, CASWALPage.RECORDS_OFFSET));
       Assert.assertEquals(wal.end(), new OLogSequenceNumber(1, CASWALPage.RECORDS_OFFSET));
@@ -2935,24 +4281,26 @@ public class CASDiskWriteAheadLogIT {
 
       AtomicReference<Future<Void>> segmentAppender = new AtomicReference<>();
 
-      final SegmentOverflowListener listener = (segment) -> {
-        Future<Void> oldAppender = segmentAppender.get();
+      final SegmentOverflowListener listener =
+          (segment) -> {
+            Future<Void> oldAppender = segmentAppender.get();
 
-        while (oldAppender == null || oldAppender.isDone()) {
-          if (wal.activeSegment() <= segment) {
-            final Future<Void> appender = executorService.submit(new SegmentAdder(segment, wal));
+            while (oldAppender == null || oldAppender.isDone()) {
+              if (wal.activeSegment() <= segment) {
+                final Future<Void> appender =
+                    executorService.submit(new SegmentAdder(segment, wal));
 
-            if (segmentAppender.compareAndSet(oldAppender, appender)) {
-              break;
+                if (segmentAppender.compareAndSet(oldAppender, appender)) {
+                  break;
+                }
+
+                appender.cancel(false);
+                oldAppender = segmentAppender.get();
+              } else {
+                break;
+              }
             }
-
-            appender.cancel(false);
-            oldAppender = segmentAppender.get();
-          } else {
-            break;
-          }
-        }
-      };
+          };
 
       wal.addSegmentOverflowListener(listener);
 
@@ -2981,15 +4329,37 @@ public class CASDiskWriteAheadLogIT {
 
       wal.close();
 
-      CASDiskWriteAheadLog loadedWAL = new CASDiskWriteAheadLog("walTest", testDirectory, testDirectory, 48_000, 64, null, null,
-          Integer.MAX_VALUE, 10 * 1024 * 1024, 20, true, Locale.US, 3 * 1024 * 1024 * 1024L, -1, 1000, false, false, false, true, 10);
+      CASDiskWriteAheadLog loadedWAL =
+          new CASDiskWriteAheadLog(
+              "walTest",
+              testDirectory,
+              testDirectory,
+              48_000,
+              64,
+              null,
+              null,
+              Integer.MAX_VALUE,
+              10 * 1024 * 1024,
+              20,
+              true,
+              Locale.US,
+              3 * 1024 * 1024 * 1024L,
+              -1,
+              1000,
+              false,
+              false,
+              false,
+              true,
+              10);
 
       System.out.println("Assert WAL content 2");
       assertMTWALInsertion(loadedWAL, addedRecords);
 
       Assert.assertEquals(loadedWAL.begin(), new OLogSequenceNumber(1, CASWALPage.RECORDS_OFFSET));
-      Assert.assertEquals(loadedWAL.end(),
-          new OLogSequenceNumber(addedRecords.lastKey().getSegment() + 1, CASWALPage.RECORDS_OFFSET));
+      Assert.assertEquals(
+          loadedWAL.end(),
+          new OLogSequenceNumber(
+              addedRecords.lastKey().getSegment() + 1, CASWALPage.RECORDS_OFFSET));
 
       loadedWAL.close();
 
@@ -3004,8 +4374,28 @@ public class CASDiskWriteAheadLogIT {
     for (int n = 0; n < iterations; n++) {
       OFileUtils.deleteRecursively(testDirectory.toFile());
 
-      CASDiskWriteAheadLog wal = new CASDiskWriteAheadLog("walTest", testDirectory, testDirectory, 100, 64, null, null,
-          Integer.MAX_VALUE, 256 * 1024 * 1024, 20, true, Locale.US, 10 * 1024 * 1024 * 1024L, -1, 1000, false, false, false, true, 10);
+      CASDiskWriteAheadLog wal =
+          new CASDiskWriteAheadLog(
+              "walTest",
+              testDirectory,
+              testDirectory,
+              100,
+              64,
+              null,
+              null,
+              Integer.MAX_VALUE,
+              256 * 1024 * 1024,
+              20,
+              true,
+              Locale.US,
+              10 * 1024 * 1024 * 1024L,
+              -1,
+              1000,
+              false,
+              false,
+              false,
+              true,
+              10);
 
       Assert.assertEquals(wal.begin(), new OLogSequenceNumber(1, CASWALPage.RECORDS_OFFSET));
       Assert.assertEquals(wal.end(), new OLogSequenceNumber(1, CASWALPage.RECORDS_OFFSET));
@@ -3018,24 +4408,26 @@ public class CASDiskWriteAheadLogIT {
 
       AtomicReference<Future<Void>> segmentAppender = new AtomicReference<>();
 
-      final SegmentOverflowListener listener = (segment) -> {
-        Future<Void> oldAppender = segmentAppender.get();
+      final SegmentOverflowListener listener =
+          (segment) -> {
+            Future<Void> oldAppender = segmentAppender.get();
 
-        while (oldAppender == null || oldAppender.isDone()) {
-          if (wal.activeSegment() <= segment) {
-            final Future<Void> appender = executorService.submit(new SegmentAdder(segment, wal));
+            while (oldAppender == null || oldAppender.isDone()) {
+              if (wal.activeSegment() <= segment) {
+                final Future<Void> appender =
+                    executorService.submit(new SegmentAdder(segment, wal));
 
-            if (segmentAppender.compareAndSet(oldAppender, appender)) {
-              break;
+                if (segmentAppender.compareAndSet(oldAppender, appender)) {
+                  break;
+                }
+
+                appender.cancel(false);
+                oldAppender = segmentAppender.get();
+              } else {
+                break;
+              }
             }
-
-            appender.cancel(false);
-            oldAppender = segmentAppender.get();
-          } else {
-            break;
-          }
-        }
-      };
+          };
 
       wal.addSegmentOverflowListener(listener);
 
@@ -3064,15 +4456,37 @@ public class CASDiskWriteAheadLogIT {
 
       wal.close();
 
-      CASDiskWriteAheadLog loadedWAL = new CASDiskWriteAheadLog("walTest", testDirectory, testDirectory, 100, 64, null, null,
-          Integer.MAX_VALUE, 10 * 1024 * 1024, 20, true, Locale.US, 3 * 1024 * 1024 * 1024L, -1, 1000, false, false, false, true, 10);
+      CASDiskWriteAheadLog loadedWAL =
+          new CASDiskWriteAheadLog(
+              "walTest",
+              testDirectory,
+              testDirectory,
+              100,
+              64,
+              null,
+              null,
+              Integer.MAX_VALUE,
+              10 * 1024 * 1024,
+              20,
+              true,
+              Locale.US,
+              3 * 1024 * 1024 * 1024L,
+              -1,
+              1000,
+              false,
+              false,
+              false,
+              true,
+              10);
 
       System.out.println("Assert WAL content 2");
       assertMTWALInsertion(loadedWAL, addedRecords);
 
       Assert.assertEquals(loadedWAL.begin(), new OLogSequenceNumber(1, CASWALPage.RECORDS_OFFSET));
-      Assert.assertEquals(loadedWAL.end(),
-          new OLogSequenceNumber(addedRecords.lastKey().getSegment() + 1, CASWALPage.RECORDS_OFFSET));
+      Assert.assertEquals(
+          loadedWAL.end(),
+          new OLogSequenceNumber(
+              addedRecords.lastKey().getSegment() + 1, CASWALPage.RECORDS_OFFSET));
 
       loadedWAL.close();
 
@@ -3087,8 +4501,28 @@ public class CASDiskWriteAheadLogIT {
     for (int n = 0; n < iterations; n++) {
       OFileUtils.deleteRecursively(testDirectory.toFile());
 
-      CASDiskWriteAheadLog wal = new CASDiskWriteAheadLog("walTest", testDirectory, testDirectory, 100, 64, null, null,
-          Integer.MAX_VALUE, 256 * 1024 * 1024, 20, true, Locale.US, 10 * 1024 * 1024 * 1024L, -1, 1000, false, false, false, true, 10);
+      CASDiskWriteAheadLog wal =
+          new CASDiskWriteAheadLog(
+              "walTest",
+              testDirectory,
+              testDirectory,
+              100,
+              64,
+              null,
+              null,
+              Integer.MAX_VALUE,
+              256 * 1024 * 1024,
+              20,
+              true,
+              Locale.US,
+              10 * 1024 * 1024 * 1024L,
+              -1,
+              1000,
+              false,
+              false,
+              false,
+              true,
+              10);
 
       Assert.assertEquals(wal.begin(), new OLogSequenceNumber(1, CASWALPage.RECORDS_OFFSET));
       Assert.assertEquals(wal.end(), new OLogSequenceNumber(1, CASWALPage.RECORDS_OFFSET));
@@ -3101,24 +4535,26 @@ public class CASDiskWriteAheadLogIT {
 
       AtomicReference<Future<Void>> segmentAppender = new AtomicReference<>();
 
-      final SegmentOverflowListener listener = (segment) -> {
-        Future<Void> oldAppender = segmentAppender.get();
+      final SegmentOverflowListener listener =
+          (segment) -> {
+            Future<Void> oldAppender = segmentAppender.get();
 
-        while (oldAppender == null || oldAppender.isDone()) {
-          if (wal.activeSegment() <= segment) {
-            final Future<Void> appender = executorService.submit(new SegmentAdder(segment, wal));
+            while (oldAppender == null || oldAppender.isDone()) {
+              if (wal.activeSegment() <= segment) {
+                final Future<Void> appender =
+                    executorService.submit(new SegmentAdder(segment, wal));
 
-            if (segmentAppender.compareAndSet(oldAppender, appender)) {
-              break;
+                if (segmentAppender.compareAndSet(oldAppender, appender)) {
+                  break;
+                }
+
+                appender.cancel(false);
+                oldAppender = segmentAppender.get();
+              } else {
+                break;
+              }
             }
-
-            appender.cancel(false);
-            oldAppender = segmentAppender.get();
-          } else {
-            break;
-          }
-        }
-      };
+          };
 
       wal.addSegmentOverflowListener(listener);
 
@@ -3147,15 +4583,37 @@ public class CASDiskWriteAheadLogIT {
 
       wal.close();
 
-      CASDiskWriteAheadLog loadedWAL = new CASDiskWriteAheadLog("walTest", testDirectory, testDirectory, 100, 64, null, null,
-          Integer.MAX_VALUE, 10 * 1024 * 1024, 20, true, Locale.US, 3 * 1024 * 1024 * 1024L, -1, 1000, false, false, false, true, 10);
+      CASDiskWriteAheadLog loadedWAL =
+          new CASDiskWriteAheadLog(
+              "walTest",
+              testDirectory,
+              testDirectory,
+              100,
+              64,
+              null,
+              null,
+              Integer.MAX_VALUE,
+              10 * 1024 * 1024,
+              20,
+              true,
+              Locale.US,
+              3 * 1024 * 1024 * 1024L,
+              -1,
+              1000,
+              false,
+              false,
+              false,
+              true,
+              10);
 
       System.out.println("Assert WAL content 2");
       assertMTWALInsertion(loadedWAL, addedRecords);
 
       Assert.assertEquals(loadedWAL.begin(), new OLogSequenceNumber(1, CASWALPage.RECORDS_OFFSET));
-      Assert.assertEquals(loadedWAL.end(),
-          new OLogSequenceNumber(addedRecords.lastKey().getSegment() + 1, CASWALPage.RECORDS_OFFSET));
+      Assert.assertEquals(
+          loadedWAL.end(),
+          new OLogSequenceNumber(
+              addedRecords.lastKey().getSegment() + 1, CASWALPage.RECORDS_OFFSET));
 
       loadedWAL.close();
 
@@ -3170,8 +4628,28 @@ public class CASDiskWriteAheadLogIT {
     for (int n = 0; n < iterations; n++) {
       OFileUtils.deleteRecursively(testDirectory.toFile());
 
-      CASDiskWriteAheadLog wal = new CASDiskWriteAheadLog("walTest", testDirectory, testDirectory, 48_000, 64, null, null,
-          Integer.MAX_VALUE, 256 * 1024 * 1024, 20, true, Locale.US, 10 * 1024 * 1024 * 1024L, -1, 1000, false, false, false, true, 10);
+      CASDiskWriteAheadLog wal =
+          new CASDiskWriteAheadLog(
+              "walTest",
+              testDirectory,
+              testDirectory,
+              48_000,
+              64,
+              null,
+              null,
+              Integer.MAX_VALUE,
+              256 * 1024 * 1024,
+              20,
+              true,
+              Locale.US,
+              10 * 1024 * 1024 * 1024L,
+              -1,
+              1000,
+              false,
+              false,
+              false,
+              true,
+              10);
 
       Assert.assertEquals(wal.begin(), new OLogSequenceNumber(1, CASWALPage.RECORDS_OFFSET));
       Assert.assertEquals(wal.end(), new OLogSequenceNumber(1, CASWALPage.RECORDS_OFFSET));
@@ -3184,24 +4662,26 @@ public class CASDiskWriteAheadLogIT {
 
       AtomicReference<Future<Void>> segmentAppender = new AtomicReference<>();
 
-      final SegmentOverflowListener listener = (segment) -> {
-        Future<Void> oldAppender = segmentAppender.get();
+      final SegmentOverflowListener listener =
+          (segment) -> {
+            Future<Void> oldAppender = segmentAppender.get();
 
-        while (oldAppender == null || oldAppender.isDone()) {
-          if (wal.activeSegment() <= segment) {
-            final Future<Void> appender = executorService.submit(new SegmentAdder(segment, wal));
+            while (oldAppender == null || oldAppender.isDone()) {
+              if (wal.activeSegment() <= segment) {
+                final Future<Void> appender =
+                    executorService.submit(new SegmentAdder(segment, wal));
 
-            if (segmentAppender.compareAndSet(oldAppender, appender)) {
-              break;
+                if (segmentAppender.compareAndSet(oldAppender, appender)) {
+                  break;
+                }
+
+                appender.cancel(false);
+                oldAppender = segmentAppender.get();
+              } else {
+                break;
+              }
             }
-
-            appender.cancel(false);
-            oldAppender = segmentAppender.get();
-          } else {
-            break;
-          }
-        }
-      };
+          };
 
       wal.addSegmentOverflowListener(listener);
 
@@ -3230,15 +4710,37 @@ public class CASDiskWriteAheadLogIT {
 
       wal.close();
 
-      CASDiskWriteAheadLog loadedWAL = new CASDiskWriteAheadLog("walTest", testDirectory, testDirectory, 48_000, 64, null, null,
-          Integer.MAX_VALUE, 10 * 1024 * 1024, 20, true, Locale.US, 3 * 1024 * 1024 * 1024L, -1, 1000, false, false, false, true, 10);
+      CASDiskWriteAheadLog loadedWAL =
+          new CASDiskWriteAheadLog(
+              "walTest",
+              testDirectory,
+              testDirectory,
+              48_000,
+              64,
+              null,
+              null,
+              Integer.MAX_VALUE,
+              10 * 1024 * 1024,
+              20,
+              true,
+              Locale.US,
+              3 * 1024 * 1024 * 1024L,
+              -1,
+              1000,
+              false,
+              false,
+              false,
+              true,
+              10);
 
       System.out.println("Assert WAL content 2");
       assertMTWALInsertion(loadedWAL, addedRecords);
 
       Assert.assertEquals(loadedWAL.begin(), new OLogSequenceNumber(1, CASWALPage.RECORDS_OFFSET));
-      Assert.assertEquals(loadedWAL.end(),
-          new OLogSequenceNumber(addedRecords.lastKey().getSegment() + 1, CASWALPage.RECORDS_OFFSET));
+      Assert.assertEquals(
+          loadedWAL.end(),
+          new OLogSequenceNumber(
+              addedRecords.lastKey().getSegment() + 1, CASWALPage.RECORDS_OFFSET));
 
       loadedWAL.close();
 
@@ -3253,8 +4755,28 @@ public class CASDiskWriteAheadLogIT {
     for (int n = 0; n < iterations; n++) {
       OFileUtils.deleteRecursively(testDirectory.toFile());
 
-      CASDiskWriteAheadLog wal = new CASDiskWriteAheadLog("walTest", testDirectory, testDirectory, 48_000, 64, null, null,
-          Integer.MAX_VALUE, 256 * 1024 * 1024, 20, true, Locale.US, 10 * 1024 * 1024 * 1024L, -1, 1000, false, false, false, true, 10);
+      CASDiskWriteAheadLog wal =
+          new CASDiskWriteAheadLog(
+              "walTest",
+              testDirectory,
+              testDirectory,
+              48_000,
+              64,
+              null,
+              null,
+              Integer.MAX_VALUE,
+              256 * 1024 * 1024,
+              20,
+              true,
+              Locale.US,
+              10 * 1024 * 1024 * 1024L,
+              -1,
+              1000,
+              false,
+              false,
+              false,
+              true,
+              10);
 
       Assert.assertEquals(wal.begin(), new OLogSequenceNumber(1, CASWALPage.RECORDS_OFFSET));
       Assert.assertEquals(wal.end(), new OLogSequenceNumber(1, CASWALPage.RECORDS_OFFSET));
@@ -3267,24 +4789,26 @@ public class CASDiskWriteAheadLogIT {
 
       AtomicReference<Future<Void>> segmentAppender = new AtomicReference<>();
 
-      final SegmentOverflowListener listener = (segment) -> {
-        Future<Void> oldAppender = segmentAppender.get();
+      final SegmentOverflowListener listener =
+          (segment) -> {
+            Future<Void> oldAppender = segmentAppender.get();
 
-        while (oldAppender == null || oldAppender.isDone()) {
-          if (wal.activeSegment() <= segment) {
-            final Future<Void> appender = executorService.submit(new SegmentAdder(segment, wal));
+            while (oldAppender == null || oldAppender.isDone()) {
+              if (wal.activeSegment() <= segment) {
+                final Future<Void> appender =
+                    executorService.submit(new SegmentAdder(segment, wal));
 
-            if (segmentAppender.compareAndSet(oldAppender, appender)) {
-              break;
+                if (segmentAppender.compareAndSet(oldAppender, appender)) {
+                  break;
+                }
+
+                appender.cancel(false);
+                oldAppender = segmentAppender.get();
+              } else {
+                break;
+              }
             }
-
-            appender.cancel(false);
-            oldAppender = segmentAppender.get();
-          } else {
-            break;
-          }
-        }
-      };
+          };
 
       wal.addSegmentOverflowListener(listener);
 
@@ -3313,15 +4837,37 @@ public class CASDiskWriteAheadLogIT {
 
       wal.close();
 
-      CASDiskWriteAheadLog loadedWAL = new CASDiskWriteAheadLog("walTest", testDirectory, testDirectory, 48_000, 64, null, null,
-          Integer.MAX_VALUE, 10 * 1024 * 1024, 20, true, Locale.US, 3 * 1024 * 1024 * 1024L, -1, 1000, false, false, false, true, 10);
+      CASDiskWriteAheadLog loadedWAL =
+          new CASDiskWriteAheadLog(
+              "walTest",
+              testDirectory,
+              testDirectory,
+              48_000,
+              64,
+              null,
+              null,
+              Integer.MAX_VALUE,
+              10 * 1024 * 1024,
+              20,
+              true,
+              Locale.US,
+              3 * 1024 * 1024 * 1024L,
+              -1,
+              1000,
+              false,
+              false,
+              false,
+              true,
+              10);
 
       System.out.println("Assert WAL content 2");
       assertMTWALInsertion(loadedWAL, addedRecords);
 
       Assert.assertEquals(loadedWAL.begin(), new OLogSequenceNumber(1, CASWALPage.RECORDS_OFFSET));
-      Assert.assertEquals(loadedWAL.end(),
-          new OLogSequenceNumber(addedRecords.lastKey().getSegment() + 1, CASWALPage.RECORDS_OFFSET));
+      Assert.assertEquals(
+          loadedWAL.end(),
+          new OLogSequenceNumber(
+              addedRecords.lastKey().getSegment() + 1, CASWALPage.RECORDS_OFFSET));
 
       loadedWAL.close();
 
@@ -3336,8 +4882,28 @@ public class CASDiskWriteAheadLogIT {
     for (int n = 0; n < iterations; n++) {
       OFileUtils.deleteRecursively(testDirectory.toFile());
 
-      CASDiskWriteAheadLog wal = new CASDiskWriteAheadLog("walTest", testDirectory, testDirectory, 48_000, 64, null, null,
-          Integer.MAX_VALUE, 256 * 1024 * 1024, 20, true, Locale.US, 10 * 1024 * 1024 * 1024L, -1, 1000, false, false, false, true, 10);
+      CASDiskWriteAheadLog wal =
+          new CASDiskWriteAheadLog(
+              "walTest",
+              testDirectory,
+              testDirectory,
+              48_000,
+              64,
+              null,
+              null,
+              Integer.MAX_VALUE,
+              256 * 1024 * 1024,
+              20,
+              true,
+              Locale.US,
+              10 * 1024 * 1024 * 1024L,
+              -1,
+              1000,
+              false,
+              false,
+              false,
+              true,
+              10);
 
       ThreadLocalRandom random = ThreadLocalRandom.current();
 
@@ -3363,8 +4929,28 @@ public class CASDiskWriteAheadLogIT {
 
       wal.close();
 
-      CASDiskWriteAheadLog loadedWAL = new CASDiskWriteAheadLog("walTest", testDirectory, testDirectory, 48_000, 64, null, null,
-          Integer.MAX_VALUE, 256 * 1024 * 1024, 20, true, Locale.US, 10 * 1024 * 1024 * 1024L, -1, 1000, false, false, false, true, 10);
+      CASDiskWriteAheadLog loadedWAL =
+          new CASDiskWriteAheadLog(
+              "walTest",
+              testDirectory,
+              testDirectory,
+              48_000,
+              64,
+              null,
+              null,
+              Integer.MAX_VALUE,
+              256 * 1024 * 1024,
+              20,
+              true,
+              Locale.US,
+              10 * 1024 * 1024 * 1024L,
+              -1,
+              1000,
+              false,
+              false,
+              false,
+              true,
+              10);
 
       Assert.assertEquals(masterLSN, loadedWAL.lastCheckpoint());
 
@@ -3377,8 +4963,28 @@ public class CASDiskWriteAheadLogIT {
     for (int n = 0; n < 1; n++) {
       OFileUtils.deleteRecursively(testDirectory.toFile());
 
-      CASDiskWriteAheadLog wal = new CASDiskWriteAheadLog("walTest", testDirectory, testDirectory, 48_000, 64, null, null,
-          Integer.MAX_VALUE, 256 * 1024 * 1024, 20, true, Locale.US, 10 * 1024 * 1024 * 1024L, -1, 1000, false, false, false, true, 10);
+      CASDiskWriteAheadLog wal =
+          new CASDiskWriteAheadLog(
+              "walTest",
+              testDirectory,
+              testDirectory,
+              48_000,
+              64,
+              null,
+              null,
+              Integer.MAX_VALUE,
+              256 * 1024 * 1024,
+              20,
+              true,
+              Locale.US,
+              10 * 1024 * 1024 * 1024L,
+              -1,
+              1000,
+              false,
+              false,
+              false,
+              true,
+              10);
 
       long seed = System.nanoTime();
       Random random = new Random(seed);
@@ -3414,16 +5020,35 @@ public class CASDiskWriteAheadLogIT {
       }
 
       //noinspection StatementWithEmptyBody
-      while (wal.getFlushedLsn() == null || wal.end().compareTo(wal.getFlushedLsn()) > 0)
-        ;
+      while (wal.getFlushedLsn() == null || wal.end().compareTo(wal.getFlushedLsn()) > 0) ;
 
       Assert.assertEquals(wal.end(), wal.getFlushedLsn());
       Assert.assertEquals(masterRecords.last(), wal.lastCheckpoint());
 
       wal.close();
 
-      CASDiskWriteAheadLog loadedWAL = new CASDiskWriteAheadLog("walTest", testDirectory, testDirectory, 48_000, 64, null, null,
-          Integer.MAX_VALUE, 256 * 1024 * 1024, 20, true, Locale.US, 10 * 1024 * 1024 * 1024L, -1, 1000, false, false, false, true, 10);
+      CASDiskWriteAheadLog loadedWAL =
+          new CASDiskWriteAheadLog(
+              "walTest",
+              testDirectory,
+              testDirectory,
+              48_000,
+              64,
+              null,
+              null,
+              Integer.MAX_VALUE,
+              256 * 1024 * 1024,
+              20,
+              true,
+              Locale.US,
+              10 * 1024 * 1024 * 1024L,
+              -1,
+              1000,
+              false,
+              false,
+              false,
+              true,
+              10);
       Assert.assertEquals(masterRecords.last(), wal.lastCheckpoint());
 
       loadedWAL.close();
@@ -3437,8 +5062,28 @@ public class CASDiskWriteAheadLogIT {
     for (int n = 0; n < iterations; n++) {
       OFileUtils.deleteRecursively(testDirectory.toFile());
 
-      CASDiskWriteAheadLog wal = new CASDiskWriteAheadLog("walTest", testDirectory, testDirectory, 48_000, 64, null, null,
-          Integer.MAX_VALUE, 256 * 1024 * 1024, 20, true, Locale.US, 10 * 1024 * 1024 * 1024L, -1, 1000, false, false, false, true, 10);
+      CASDiskWriteAheadLog wal =
+          new CASDiskWriteAheadLog(
+              "walTest",
+              testDirectory,
+              testDirectory,
+              48_000,
+              64,
+              null,
+              null,
+              Integer.MAX_VALUE,
+              256 * 1024 * 1024,
+              20,
+              true,
+              Locale.US,
+              10 * 1024 * 1024 * 1024L,
+              -1,
+              1000,
+              false,
+              false,
+              false,
+              true,
+              10);
 
       long seed = System.nanoTime();
       Random random = new Random(seed);
@@ -3464,8 +5109,28 @@ public class CASDiskWriteAheadLogIT {
 
       wal.close();
 
-      CASDiskWriteAheadLog loadedWAL = new CASDiskWriteAheadLog("walTest", testDirectory, testDirectory, 48_000, 64, null, null,
-          Integer.MAX_VALUE, 256 * 1024 * 1024, 20, true, Locale.US, 10 * 1024 * 1024 * 1024L, -1, 1000, false, false, false, true, 10);
+      CASDiskWriteAheadLog loadedWAL =
+          new CASDiskWriteAheadLog(
+              "walTest",
+              testDirectory,
+              testDirectory,
+              48_000,
+              64,
+              null,
+              null,
+              Integer.MAX_VALUE,
+              256 * 1024 * 1024,
+              20,
+              true,
+              Locale.US,
+              10 * 1024 * 1024 * 1024L,
+              -1,
+              1000,
+              false,
+              false,
+              false,
+              true,
+              10);
 
       Assert.assertNotNull(loadedWAL.getFlushedLsn());
       Assert.assertEquals(loadedWAL.end(), loadedWAL.getFlushedLsn());
@@ -3488,30 +5153,52 @@ public class CASDiskWriteAheadLogIT {
       TreeSet<Long> segments = new TreeSet<>();
       TreeMap<OLogSequenceNumber, TestRecord> records = new TreeMap<>();
 
-      CASDiskWriteAheadLog wal = new CASDiskWriteAheadLog("walTest", testDirectory, testDirectory, 48_000, 64, null, null,
-          Integer.MAX_VALUE, 10 * 1024 * 1024, 20, true, Locale.US, 10 * 1024 * 1024L, -1, 1000, false, false, false, true, 10);
+      CASDiskWriteAheadLog wal =
+          new CASDiskWriteAheadLog(
+              "walTest",
+              testDirectory,
+              testDirectory,
+              48_000,
+              64,
+              null,
+              null,
+              Integer.MAX_VALUE,
+              10 * 1024 * 1024,
+              20,
+              true,
+              Locale.US,
+              10 * 1024 * 1024L,
+              -1,
+              1000,
+              false,
+              false,
+              false,
+              true,
+              10);
 
       ExecutorService executorService = Executors.newCachedThreadPool();
       AtomicReference<Future<Void>> segmentAppender = new AtomicReference<>();
 
-      final SegmentOverflowListener listener = (segment) -> {
-        Future<Void> oldAppender = segmentAppender.get();
+      final SegmentOverflowListener listener =
+          (segment) -> {
+            Future<Void> oldAppender = segmentAppender.get();
 
-        while (oldAppender == null || oldAppender.isDone()) {
-          if (wal.activeSegment() <= segment) {
-            final Future<Void> appender = executorService.submit(new SegmentAdder(segment, wal));
+            while (oldAppender == null || oldAppender.isDone()) {
+              if (wal.activeSegment() <= segment) {
+                final Future<Void> appender =
+                    executorService.submit(new SegmentAdder(segment, wal));
 
-            if (segmentAppender.compareAndSet(oldAppender, appender)) {
-              break;
+                if (segmentAppender.compareAndSet(oldAppender, appender)) {
+                  break;
+                }
+
+                appender.cancel(false);
+                oldAppender = segmentAppender.get();
+              } else {
+                break;
+              }
             }
-
-            appender.cancel(false);
-            oldAppender = segmentAppender.get();
-          } else {
-            break;
-          }
-        }
-      };
+          };
 
       wal.addSegmentOverflowListener(listener);
 
@@ -3520,7 +5207,8 @@ public class CASDiskWriteAheadLogIT {
 
       for (int k = 0; k < 10; k++) {
         for (int i = 0; i < 30_000; i++) {
-          final TestRecord walRecord = new TestRecord(random, 4 * wal.pageSize(), 2 * wal.pageSize());
+          final TestRecord walRecord =
+              new TestRecord(random, 4 * wal.pageSize(), 2 * wal.pageSize());
           OLogSequenceNumber lsn = wal.log(walRecord);
           records.put(lsn, walRecord);
 
@@ -3552,7 +5240,8 @@ public class CASDiskWriteAheadLogIT {
           if (record.getLsn().getSegment() < begin.getSegment()) {
             Assert.assertTrue(wal.read(record.getLsn(), 1).isEmpty());
           } else {
-            Assert.assertArrayEquals(record.data, ((TestRecord) (wal.read(record.getLsn(), 1).get(0))).data);
+            Assert.assertArrayEquals(
+                record.data, ((TestRecord) (wal.read(record.getLsn(), 1).get(0))).data);
           }
         }
 
@@ -3571,8 +5260,28 @@ public class CASDiskWriteAheadLogIT {
 
       wal.close();
 
-      CASDiskWriteAheadLog loadedWAL = new CASDiskWriteAheadLog("walTest", testDirectory, testDirectory, 48_000, 64, null, null,
-          Integer.MAX_VALUE, 10 * 1024 * 1024, 20, true, Locale.US, 10 * 1024 * 1024L, -1, 1000, false, false, false, true, 10);
+      CASDiskWriteAheadLog loadedWAL =
+          new CASDiskWriteAheadLog(
+              "walTest",
+              testDirectory,
+              testDirectory,
+              48_000,
+              64,
+              null,
+              null,
+              Integer.MAX_VALUE,
+              10 * 1024 * 1024,
+              20,
+              true,
+              Locale.US,
+              10 * 1024 * 1024L,
+              -1,
+              1000,
+              false,
+              false,
+              false,
+              true,
+              10);
 
       long minSegment = begin.getSegment();
       long maxSegment = end.getSegment();
@@ -3580,14 +5289,17 @@ public class CASDiskWriteAheadLogIT {
       long segment = random.nextInt((int) (maxSegment - minSegment)) + minSegment;
       loadedWAL.cutAllSegmentsSmallerThan(segment);
 
-      Assert.assertEquals(new OLogSequenceNumber(segment, CASWALPage.RECORDS_OFFSET), loadedWAL.begin());
-      Assert.assertEquals(new OLogSequenceNumber(end.getSegment() + 1, CASWALPage.RECORDS_OFFSET), loadedWAL.end());
+      Assert.assertEquals(
+          new OLogSequenceNumber(segment, CASWALPage.RECORDS_OFFSET), loadedWAL.begin());
+      Assert.assertEquals(
+          new OLogSequenceNumber(end.getSegment() + 1, CASWALPage.RECORDS_OFFSET), loadedWAL.end());
 
       for (TestRecord record : records.values()) {
         if (record.getLsn().getSegment() < segment) {
           Assert.assertTrue(loadedWAL.read(record.getLsn(), 1).isEmpty());
         } else {
-          Assert.assertArrayEquals(record.data, ((TestRecord) (loadedWAL.read(record.getLsn(), 1).get(0))).data);
+          Assert.assertArrayEquals(
+              record.data, ((TestRecord) (loadedWAL.read(record.getLsn(), 1).get(0))).data);
         }
       }
 
@@ -3619,30 +5331,51 @@ public class CASDiskWriteAheadLogIT {
 
     final TreeMap<OLogSequenceNumber, TestRecord> records = new TreeMap<>();
 
-    CASDiskWriteAheadLog wal = new CASDiskWriteAheadLog("walTest", testDirectory, testDirectory, 48_000, 64, null, null,
-        Integer.MAX_VALUE, 10 * 1024 * 1024, 20, true, Locale.US, 10 * 1024 * 1024L, -1, 1000, false, false, false, true, 10);
+    CASDiskWriteAheadLog wal =
+        new CASDiskWriteAheadLog(
+            "walTest",
+            testDirectory,
+            testDirectory,
+            48_000,
+            64,
+            null,
+            null,
+            Integer.MAX_VALUE,
+            10 * 1024 * 1024,
+            20,
+            true,
+            Locale.US,
+            10 * 1024 * 1024L,
+            -1,
+            1000,
+            false,
+            false,
+            false,
+            true,
+            10);
 
     AtomicReference<Future<Void>> segmentAppender = new AtomicReference<>();
     ExecutorService executorService = Executors.newCachedThreadPool();
 
-    final SegmentOverflowListener listener = (segment) -> {
-      Future<Void> oldAppender = segmentAppender.get();
+    final SegmentOverflowListener listener =
+        (segment) -> {
+          Future<Void> oldAppender = segmentAppender.get();
 
-      while (oldAppender == null || oldAppender.isDone()) {
-        if (wal.activeSegment() <= segment) {
-          final Future<Void> appender = executorService.submit(new SegmentAdder(segment, wal));
+          while (oldAppender == null || oldAppender.isDone()) {
+            if (wal.activeSegment() <= segment) {
+              final Future<Void> appender = executorService.submit(new SegmentAdder(segment, wal));
 
-          if (segmentAppender.compareAndSet(oldAppender, appender)) {
-            break;
+              if (segmentAppender.compareAndSet(oldAppender, appender)) {
+                break;
+              }
+
+              appender.cancel(false);
+              oldAppender = segmentAppender.get();
+            } else {
+              break;
+            }
           }
-
-          appender.cancel(false);
-          oldAppender = segmentAppender.get();
-        } else {
-          break;
-        }
-      }
-    };
+        };
 
     wal.addSegmentOverflowListener(listener);
 
@@ -3723,30 +5456,51 @@ public class CASDiskWriteAheadLogIT {
   @Test
   @Ignore
   public void testCutTillMT() throws Exception {
-    CASDiskWriteAheadLog wal = new CASDiskWriteAheadLog("walTest", testDirectory, testDirectory, 48_000, 64, null, null,
-        Integer.MAX_VALUE, 10 * 1024 * 1024, 20, true, Locale.US, 10 * 1024 * 1024 * 1024L, -1, 1000, false, false, false, true, 10);
+    CASDiskWriteAheadLog wal =
+        new CASDiskWriteAheadLog(
+            "walTest",
+            testDirectory,
+            testDirectory,
+            48_000,
+            64,
+            null,
+            null,
+            Integer.MAX_VALUE,
+            10 * 1024 * 1024,
+            20,
+            true,
+            Locale.US,
+            10 * 1024 * 1024 * 1024L,
+            -1,
+            1000,
+            false,
+            false,
+            false,
+            true,
+            10);
 
     AtomicReference<Future<Void>> segmentAppender = new AtomicReference<>();
     ExecutorService executorService = Executors.newCachedThreadPool();
 
-    final SegmentOverflowListener listener = (segment) -> {
-      Future<Void> oldAppender = segmentAppender.get();
+    final SegmentOverflowListener listener =
+        (segment) -> {
+          Future<Void> oldAppender = segmentAppender.get();
 
-      while (oldAppender == null || oldAppender.isDone()) {
-        if (wal.activeSegment() <= segment) {
-          final Future<Void> appender = executorService.submit(new SegmentAdder(segment, wal));
+          while (oldAppender == null || oldAppender.isDone()) {
+            if (wal.activeSegment() <= segment) {
+              final Future<Void> appender = executorService.submit(new SegmentAdder(segment, wal));
 
-          if (segmentAppender.compareAndSet(oldAppender, appender)) {
-            break;
+              if (segmentAppender.compareAndSet(oldAppender, appender)) {
+                break;
+              }
+
+              appender.cancel(false);
+              oldAppender = segmentAppender.get();
+            } else {
+              break;
+            }
           }
-
-          appender.cancel(false);
-          oldAppender = segmentAppender.get();
-        } else {
-          break;
-        }
-      }
-    };
+        };
 
     wal.addSegmentOverflowListener(listener);
 
@@ -3764,21 +5518,26 @@ public class CASDiskWriteAheadLogIT {
     }
 
     Timer timer = new Timer();
-    timer.schedule(new TimerTask() {
-      @Override
-      public void run() {
-        walIsFull.set(true);
-      }
-    }, 1000 * 60 * 60 * 10);
+    timer.schedule(
+        new TimerTask() {
+          @Override
+          public void run() {
+            walIsFull.set(true);
+          }
+        },
+        1000 * 60 * 60 * 10);
 
-    timer.schedule(new TimerTask() {
-      @Override
-      public void run() {
-        for (AtomicBoolean report : sendReport) {
-          report.set(true);
-        }
-      }
-    }, 1000 * 30, 1000 * 30);
+    timer.schedule(
+        new TimerTask() {
+          @Override
+          public void run() {
+            for (AtomicBoolean report : sendReport) {
+              report.set(true);
+            }
+          }
+        },
+        1000 * 30,
+        1000 * 30);
 
     TreeMap<OLogSequenceNumber, WriteableWALRecord> addedRecords = new TreeMap<>();
     for (Future<TreeMap<OLogSequenceNumber, WriteableWALRecord>> future : futures) {
@@ -3803,8 +5562,28 @@ public class CASDiskWriteAheadLogIT {
       final Random random = new Random(seed);
 
       try {
-        CASDiskWriteAheadLog wal = new CASDiskWriteAheadLog("walTest", testDirectory, testDirectory, 48_000, 64, null, null,
-            Integer.MAX_VALUE, 10 * 1024 * 1024, 20, true, Locale.US, 10 * 1024 * 1024 * 1024L, -1, 1000, false, false, false, true, 10);
+        CASDiskWriteAheadLog wal =
+            new CASDiskWriteAheadLog(
+                "walTest",
+                testDirectory,
+                testDirectory,
+                48_000,
+                64,
+                null,
+                null,
+                Integer.MAX_VALUE,
+                10 * 1024 * 1024,
+                20,
+                true,
+                Locale.US,
+                10 * 1024 * 1024 * 1024L,
+                -1,
+                1000,
+                false,
+                false,
+                false,
+                true,
+                10);
 
         List<TestRecord> records = new ArrayList<>();
 
@@ -3849,12 +5628,35 @@ public class CASDiskWriteAheadLogIT {
         wal.close();
 
         System.out.println("Second check");
-        wal = new CASDiskWriteAheadLog("walTest", testDirectory, testDirectory, 100, 64, null, null, Integer.MAX_VALUE,
-            Integer.MAX_VALUE, 20, true, Locale.US, -1, -1, 1000, false, false, false, true, 10);
+        wal =
+            new CASDiskWriteAheadLog(
+                "walTest",
+                testDirectory,
+                testDirectory,
+                100,
+                64,
+                null,
+                null,
+                Integer.MAX_VALUE,
+                Integer.MAX_VALUE,
+                20,
+                true,
+                Locale.US,
+                -1,
+                -1,
+                1000,
+                false,
+                false,
+                false,
+                true,
+                10);
 
         Assert.assertEquals(wal.begin(), new OLogSequenceNumber(1, CASWALPage.RECORDS_OFFSET));
-        Assert.assertEquals(wal.end(),
-            new OLogSequenceNumber(records.get(records.size() - 1).getLsn().getSegment() + 1, CASWALPage.RECORDS_OFFSET));
+        Assert.assertEquals(
+            wal.end(),
+            new OLogSequenceNumber(
+                records.get(records.size() - 1).getLsn().getSegment() + 1,
+                CASWALPage.RECORDS_OFFSET));
 
         for (int i = 0; i < recordsCount; i++) {
           final List<WriteableWALRecord> result = wal.read(records.get(i).getLsn(), 500);
@@ -3893,8 +5695,28 @@ public class CASDiskWriteAheadLogIT {
       final Random random = new Random(seed);
 
       try {
-        CASDiskWriteAheadLog wal = new CASDiskWriteAheadLog("walTest", testDirectory, testDirectory, 48_000, 64, null, null,
-            Integer.MAX_VALUE, 10 * 1024 * 1024, 20, true, Locale.US, 10 * 1024 * 1024 * 1024L, -1, 1000, false, false, false, true, 10);
+        CASDiskWriteAheadLog wal =
+            new CASDiskWriteAheadLog(
+                "walTest",
+                testDirectory,
+                testDirectory,
+                48_000,
+                64,
+                null,
+                null,
+                Integer.MAX_VALUE,
+                10 * 1024 * 1024,
+                20,
+                true,
+                Locale.US,
+                10 * 1024 * 1024 * 1024L,
+                -1,
+                1000,
+                false,
+                false,
+                false,
+                true,
+                10);
 
         List<TestRecord> records = new ArrayList<>();
 
@@ -3925,7 +5747,8 @@ public class CASDiskWriteAheadLogIT {
           Assert.assertFalse(result.isEmpty());
 
           final Iterator<WriteableWALRecord> resultIterator = result.iterator();
-          final Iterator<TestRecord> recordIterator = records.subList(i + 1, recordsCount).iterator();
+          final Iterator<TestRecord> recordIterator =
+              records.subList(i + 1, recordsCount).iterator();
 
           while (resultIterator.hasNext()) {
             TestRecord record = recordIterator.next();
@@ -3941,19 +5764,43 @@ public class CASDiskWriteAheadLogIT {
         wal.close();
 
         System.out.println("Second check");
-        wal = new CASDiskWriteAheadLog("walTest", testDirectory, testDirectory, 100, 64, null, null, Integer.MAX_VALUE,
-            Integer.MAX_VALUE, 20, true, Locale.US, -1, -1, 1000, false, false, false, true, 10);
+        wal =
+            new CASDiskWriteAheadLog(
+                "walTest",
+                testDirectory,
+                testDirectory,
+                100,
+                64,
+                null,
+                null,
+                Integer.MAX_VALUE,
+                Integer.MAX_VALUE,
+                20,
+                true,
+                Locale.US,
+                -1,
+                -1,
+                1000,
+                false,
+                false,
+                false,
+                true,
+                10);
 
         Assert.assertEquals(wal.begin(), new OLogSequenceNumber(1, CASWALPage.RECORDS_OFFSET));
-        Assert.assertEquals(wal.end(),
-            new OLogSequenceNumber(records.get(records.size() - 1).getLsn().getSegment() + 1, CASWALPage.RECORDS_OFFSET));
+        Assert.assertEquals(
+            wal.end(),
+            new OLogSequenceNumber(
+                records.get(records.size() - 1).getLsn().getSegment() + 1,
+                CASWALPage.RECORDS_OFFSET));
 
         for (int i = 0; i < recordsCount - 1; i++) {
           final List<WriteableWALRecord> result = wal.next(records.get(i).getLsn(), 500);
           Assert.assertFalse(result.isEmpty());
 
           final Iterator<WriteableWALRecord> resultIterator = result.iterator();
-          final Iterator<TestRecord> recordIterator = records.subList(i + 1, recordsCount).iterator();
+          final Iterator<TestRecord> recordIterator =
+              records.subList(i + 1, recordsCount).iterator();
 
           while (resultIterator.hasNext() && recordIterator.hasNext()) {
             TestRecord record = recordIterator.next();
@@ -3983,8 +5830,28 @@ public class CASDiskWriteAheadLogIT {
 
   @Test
   public void testDelete() throws Exception {
-    CASDiskWriteAheadLog wal = new CASDiskWriteAheadLog("walTest", testDirectory, testDirectory, 48_000, 64, null, null,
-        Integer.MAX_VALUE, 10 * 1024 * 1024, 20, true, Locale.US, 10 * 1024 * 1024 * 1024L, -1, 1000, false, false, false, true, 10);
+    CASDiskWriteAheadLog wal =
+        new CASDiskWriteAheadLog(
+            "walTest",
+            testDirectory,
+            testDirectory,
+            48_000,
+            64,
+            null,
+            null,
+            Integer.MAX_VALUE,
+            10 * 1024 * 1024,
+            20,
+            true,
+            Locale.US,
+            10 * 1024 * 1024 * 1024L,
+            -1,
+            1000,
+            false,
+            false,
+            false,
+            true,
+            10);
 
     final long seed = System.nanoTime();
     final Random random = new Random(seed);
@@ -4026,8 +5893,28 @@ public class CASDiskWriteAheadLogIT {
 
       try {
         final long walSizeLimit = 2 * 1024 * 1024 * 1024L;
-        CASDiskWriteAheadLog wal = new CASDiskWriteAheadLog("walTest", testDirectory, testDirectory, 48_000, 64, null, null,
-            Integer.MAX_VALUE, 10 * 1024 * 1024, 20, true, Locale.US, walSizeLimit, -1, 1000, false, false, false, true, 10);
+        CASDiskWriteAheadLog wal =
+            new CASDiskWriteAheadLog(
+                "walTest",
+                testDirectory,
+                testDirectory,
+                48_000,
+                64,
+                null,
+                null,
+                Integer.MAX_VALUE,
+                10 * 1024 * 1024,
+                20,
+                true,
+                Locale.US,
+                walSizeLimit,
+                -1,
+                1000,
+                false,
+                false,
+                false,
+                true,
+                10);
 
         AtomicBoolean walIsFull = new AtomicBoolean();
 
@@ -4037,35 +5924,40 @@ public class CASDiskWriteAheadLogIT {
 
         AtomicReference<Future<Void>> segmentAppender = new AtomicReference<>();
 
-        final SegmentOverflowListener listener = (segment) -> {
-          Future<Void> oldAppender = segmentAppender.get();
+        final SegmentOverflowListener listener =
+            (segment) -> {
+              Future<Void> oldAppender = segmentAppender.get();
 
-          while (oldAppender == null || oldAppender.isDone()) {
-            if (wal.activeSegment() <= segment) {
-              final Future<Void> appender = executorService.submit(new SegmentAdder(segment, wal));
+              while (oldAppender == null || oldAppender.isDone()) {
+                if (wal.activeSegment() <= segment) {
+                  final Future<Void> appender =
+                      executorService.submit(new SegmentAdder(segment, wal));
 
-              if (segmentAppender.compareAndSet(oldAppender, appender)) {
-                break;
+                  if (segmentAppender.compareAndSet(oldAppender, appender)) {
+                    break;
+                  }
+
+                  appender.cancel(false);
+                  oldAppender = segmentAppender.get();
+                } else {
+                  break;
+                }
               }
-
-              appender.cancel(false);
-              oldAppender = segmentAppender.get();
-            } else {
-              break;
-            }
-          }
-        };
+            };
 
         wal.addSegmentOverflowListener(listener);
 
         boolean[] report = new boolean[1];
         Timer timer = new Timer();
-        timer.schedule(new TimerTask() {
-          @Override
-          public void run() {
-            report[0] = true;
-          }
-        }, 1000 * 30, 1000 * 30);
+        timer.schedule(
+            new TimerTask() {
+              @Override
+              public void run() {
+                report[0] = true;
+              }
+            },
+            1000 * 30,
+            1000 * 30);
 
         System.out.println("Records load");
         List<TestRecord> records = new ArrayList<>();
@@ -4080,7 +5972,9 @@ public class CASDiskWriteAheadLogIT {
           Assert.assertEquals(wal.end(), lsn);
 
           if (report[0]) {
-            System.out.printf("%d records were added, log is filled on %d%%\n", records.size(), 100L * wal.size() / walSizeLimit);
+            System.out.printf(
+                "%d records were added, log is filled on %d%%\n",
+                records.size(), 100L * wal.size() / walSizeLimit);
             report[0] = false;
           }
         }
@@ -4126,8 +6020,28 @@ public class CASDiskWriteAheadLogIT {
 
       try {
         final long walSizeLimit = 2 * 1024 * 1024 * 1024L;
-        CASDiskWriteAheadLog wal = new CASDiskWriteAheadLog("walTest", testDirectory, testDirectory, 48_000, 64, null, null,
-            Integer.MAX_VALUE, 512 * 1024 * 1024, 20, true, Locale.US, walSizeLimit, -1, 1000, false, false, false, true, 10);
+        CASDiskWriteAheadLog wal =
+            new CASDiskWriteAheadLog(
+                "walTest",
+                testDirectory,
+                testDirectory,
+                48_000,
+                64,
+                null,
+                null,
+                Integer.MAX_VALUE,
+                512 * 1024 * 1024,
+                20,
+                true,
+                Locale.US,
+                walSizeLimit,
+                -1,
+                1000,
+                false,
+                false,
+                false,
+                true,
+                10);
 
         AtomicBoolean walIsFull = new AtomicBoolean();
 
@@ -4137,35 +6051,40 @@ public class CASDiskWriteAheadLogIT {
 
         AtomicReference<Future<Void>> segmentAppender = new AtomicReference<>();
 
-        final SegmentOverflowListener listener = (segment) -> {
-          Future<Void> oldAppender = segmentAppender.get();
+        final SegmentOverflowListener listener =
+            (segment) -> {
+              Future<Void> oldAppender = segmentAppender.get();
 
-          while (oldAppender == null || oldAppender.isDone()) {
-            if (wal.activeSegment() <= segment) {
-              final Future<Void> appender = executorService.submit(new SegmentAdder(segment, wal));
+              while (oldAppender == null || oldAppender.isDone()) {
+                if (wal.activeSegment() <= segment) {
+                  final Future<Void> appender =
+                      executorService.submit(new SegmentAdder(segment, wal));
 
-              if (segmentAppender.compareAndSet(oldAppender, appender)) {
-                break;
+                  if (segmentAppender.compareAndSet(oldAppender, appender)) {
+                    break;
+                  }
+
+                  appender.cancel(false);
+                  oldAppender = segmentAppender.get();
+                } else {
+                  break;
+                }
               }
-
-              appender.cancel(false);
-              oldAppender = segmentAppender.get();
-            } else {
-              break;
-            }
-          }
-        };
+            };
 
         wal.addSegmentOverflowListener(listener);
 
         boolean[] report = new boolean[1];
         Timer timer = new Timer();
-        timer.schedule(new TimerTask() {
-          @Override
-          public void run() {
-            report[0] = true;
-          }
-        }, 1000 * 30, 1000 * 30);
+        timer.schedule(
+            new TimerTask() {
+              @Override
+              public void run() {
+                report[0] = true;
+              }
+            },
+            1000 * 30,
+            1000 * 30);
 
         System.out.println("Records load");
         List<TestRecord> records = new ArrayList<>();
@@ -4180,7 +6099,9 @@ public class CASDiskWriteAheadLogIT {
           Assert.assertEquals(wal.end(), lsn);
 
           if (report[0]) {
-            System.out.printf("%d records were added, log is filled on %d%%\n", records.size(), 100L * wal.size() / walSizeLimit);
+            System.out.printf(
+                "%d records were added, log is filled on %d%%\n",
+                records.size(), 100L * wal.size() / walSizeLimit);
             report[0] = false;
           }
         }
@@ -4226,8 +6147,28 @@ public class CASDiskWriteAheadLogIT {
 
       try {
         final long walSizeLimit = 10 * 1024 * 1024 * 1024L;
-        CASDiskWriteAheadLog wal = new CASDiskWriteAheadLog("walTest", testDirectory, testDirectory, 48_000, 64, null, null,
-            Integer.MAX_VALUE, 10 * 1024 * 1024, 20, true, Locale.US, walSizeLimit, -1, 1000, false, false, false, true, 10);
+        CASDiskWriteAheadLog wal =
+            new CASDiskWriteAheadLog(
+                "walTest",
+                testDirectory,
+                testDirectory,
+                48_000,
+                64,
+                null,
+                null,
+                Integer.MAX_VALUE,
+                10 * 1024 * 1024,
+                20,
+                true,
+                Locale.US,
+                walSizeLimit,
+                -1,
+                1000,
+                false,
+                false,
+                false,
+                true,
+                10);
 
         AtomicBoolean walIsFull = new AtomicBoolean();
 
@@ -4237,40 +6178,46 @@ public class CASDiskWriteAheadLogIT {
 
         AtomicReference<Future<Void>> segmentAppender = new AtomicReference<>();
 
-        final SegmentOverflowListener listener = (segment) -> {
-          Future<Void> oldAppender = segmentAppender.get();
+        final SegmentOverflowListener listener =
+            (segment) -> {
+              Future<Void> oldAppender = segmentAppender.get();
 
-          while (oldAppender == null || oldAppender.isDone()) {
-            if (wal.activeSegment() <= segment) {
-              final Future<Void> appender = executorService.submit(new SegmentAdder(segment, wal));
+              while (oldAppender == null || oldAppender.isDone()) {
+                if (wal.activeSegment() <= segment) {
+                  final Future<Void> appender =
+                      executorService.submit(new SegmentAdder(segment, wal));
 
-              if (segmentAppender.compareAndSet(oldAppender, appender)) {
-                break;
+                  if (segmentAppender.compareAndSet(oldAppender, appender)) {
+                    break;
+                  }
+
+                  appender.cancel(false);
+                  oldAppender = segmentAppender.get();
+                } else {
+                  break;
+                }
               }
-
-              appender.cancel(false);
-              oldAppender = segmentAppender.get();
-            } else {
-              break;
-            }
-          }
-        };
+            };
 
         wal.addSegmentOverflowListener(listener);
 
         boolean[] report = new boolean[1];
         Timer timer = new Timer();
-        timer.schedule(new TimerTask() {
-          @Override
-          public void run() {
-            report[0] = true;
-          }
-        }, 1000 * 30, 1000 * 30);
+        timer.schedule(
+            new TimerTask() {
+              @Override
+              public void run() {
+                report[0] = true;
+              }
+            },
+            1000 * 30,
+            1000 * 30);
 
         System.out.println("Records load");
         List<TestRecord> records = new ArrayList<>();
         while (!walIsFull.get()) {
-          final TestRecord walRecord = new TestRecord(random, 4 * wal.pageSize(), 2 * wal.pageSize());
+          final TestRecord walRecord =
+              new TestRecord(random, 4 * wal.pageSize(), 2 * wal.pageSize());
           records.add(walRecord);
 
           OLogSequenceNumber lsn = wal.log(walRecord);
@@ -4280,7 +6227,9 @@ public class CASDiskWriteAheadLogIT {
           Assert.assertEquals(wal.end(), lsn);
 
           if (report[0]) {
-            System.out.printf("%d records were added, log is filled on %d%%\n", records.size(), 100L * wal.size() / walSizeLimit);
+            System.out.printf(
+                "%d records were added, log is filled on %d%%\n",
+                records.size(), 100L * wal.size() / walSizeLimit);
             report[0] = false;
           }
         }
@@ -4326,8 +6275,28 @@ public class CASDiskWriteAheadLogIT {
 
       try {
         final long walSizeLimit = 10 * 1024 * 1024 * 1024L;
-        CASDiskWriteAheadLog wal = new CASDiskWriteAheadLog("walTest", testDirectory, testDirectory, 48_000, 64, null, null,
-            Integer.MAX_VALUE, 512 * 1024 * 1024, 20, true, Locale.US, walSizeLimit, -1, 1000, false, false, false, true, 10);
+        CASDiskWriteAheadLog wal =
+            new CASDiskWriteAheadLog(
+                "walTest",
+                testDirectory,
+                testDirectory,
+                48_000,
+                64,
+                null,
+                null,
+                Integer.MAX_VALUE,
+                512 * 1024 * 1024,
+                20,
+                true,
+                Locale.US,
+                walSizeLimit,
+                -1,
+                1000,
+                false,
+                false,
+                false,
+                true,
+                10);
 
         AtomicBoolean walIsFull = new AtomicBoolean();
 
@@ -4337,40 +6306,46 @@ public class CASDiskWriteAheadLogIT {
 
         AtomicReference<Future<Void>> segmentAppender = new AtomicReference<>();
 
-        final SegmentOverflowListener listener = (segment) -> {
-          Future<Void> oldAppender = segmentAppender.get();
+        final SegmentOverflowListener listener =
+            (segment) -> {
+              Future<Void> oldAppender = segmentAppender.get();
 
-          while (oldAppender == null || oldAppender.isDone()) {
-            if (wal.activeSegment() <= segment) {
-              final Future<Void> appender = executorService.submit(new SegmentAdder(segment, wal));
+              while (oldAppender == null || oldAppender.isDone()) {
+                if (wal.activeSegment() <= segment) {
+                  final Future<Void> appender =
+                      executorService.submit(new SegmentAdder(segment, wal));
 
-              if (segmentAppender.compareAndSet(oldAppender, appender)) {
-                break;
+                  if (segmentAppender.compareAndSet(oldAppender, appender)) {
+                    break;
+                  }
+
+                  appender.cancel(false);
+                  oldAppender = segmentAppender.get();
+                } else {
+                  break;
+                }
               }
-
-              appender.cancel(false);
-              oldAppender = segmentAppender.get();
-            } else {
-              break;
-            }
-          }
-        };
+            };
 
         wal.addSegmentOverflowListener(listener);
 
         boolean[] report = new boolean[1];
         Timer timer = new Timer();
-        timer.schedule(new TimerTask() {
-          @Override
-          public void run() {
-            report[0] = true;
-          }
-        }, 1000 * 30, 1000 * 30);
+        timer.schedule(
+            new TimerTask() {
+              @Override
+              public void run() {
+                report[0] = true;
+              }
+            },
+            1000 * 30,
+            1000 * 30);
 
         System.out.println("Records load");
         List<TestRecord> records = new ArrayList<>();
         while (!walIsFull.get()) {
-          final TestRecord walRecord = new TestRecord(random, 4 * wal.pageSize(), 2 * wal.pageSize());
+          final TestRecord walRecord =
+              new TestRecord(random, 4 * wal.pageSize(), 2 * wal.pageSize());
           records.add(walRecord);
 
           OLogSequenceNumber lsn = wal.log(walRecord);
@@ -4380,7 +6355,9 @@ public class CASDiskWriteAheadLogIT {
           Assert.assertEquals(wal.end(), lsn);
 
           if (report[0]) {
-            System.out.printf("%d records were added, log is filled on %d%%\n", records.size(), 100L * wal.size() / walSizeLimit);
+            System.out.printf(
+                "%d records were added, log is filled on %d%%\n",
+                records.size(), 100L * wal.size() / walSizeLimit);
             report[0] = false;
           }
         }
@@ -4426,8 +6403,28 @@ public class CASDiskWriteAheadLogIT {
 
       try {
         final long walSizeLimit = 5 * 1024 * 1024 * 1024L;
-        CASDiskWriteAheadLog wal = new CASDiskWriteAheadLog("walTest", testDirectory, testDirectory, 48_000, 64, null, null,
-            Integer.MAX_VALUE, 10 * 1024 * 1024, 20, true, Locale.US, walSizeLimit, -1, 1000, false, false, false, true, 10);
+        CASDiskWriteAheadLog wal =
+            new CASDiskWriteAheadLog(
+                "walTest",
+                testDirectory,
+                testDirectory,
+                48_000,
+                64,
+                null,
+                null,
+                Integer.MAX_VALUE,
+                10 * 1024 * 1024,
+                20,
+                true,
+                Locale.US,
+                walSizeLimit,
+                -1,
+                1000,
+                false,
+                false,
+                false,
+                true,
+                10);
 
         AtomicBoolean walIsFull = new AtomicBoolean();
 
@@ -4437,35 +6434,40 @@ public class CASDiskWriteAheadLogIT {
 
         AtomicReference<Future<Void>> segmentAppender = new AtomicReference<>();
 
-        final SegmentOverflowListener listener = (segment) -> {
-          Future<Void> oldAppender = segmentAppender.get();
+        final SegmentOverflowListener listener =
+            (segment) -> {
+              Future<Void> oldAppender = segmentAppender.get();
 
-          while (oldAppender == null || oldAppender.isDone()) {
-            if (wal.activeSegment() <= segment) {
-              final Future<Void> appender = executorService.submit(new SegmentAdder(segment, wal));
+              while (oldAppender == null || oldAppender.isDone()) {
+                if (wal.activeSegment() <= segment) {
+                  final Future<Void> appender =
+                      executorService.submit(new SegmentAdder(segment, wal));
 
-              if (segmentAppender.compareAndSet(oldAppender, appender)) {
-                break;
+                  if (segmentAppender.compareAndSet(oldAppender, appender)) {
+                    break;
+                  }
+
+                  appender.cancel(false);
+                  oldAppender = segmentAppender.get();
+                } else {
+                  break;
+                }
               }
-
-              appender.cancel(false);
-              oldAppender = segmentAppender.get();
-            } else {
-              break;
-            }
-          }
-        };
+            };
 
         wal.addSegmentOverflowListener(listener);
 
         boolean[] report = new boolean[1];
         Timer timer = new Timer();
-        timer.schedule(new TimerTask() {
-          @Override
-          public void run() {
-            report[0] = true;
-          }
-        }, 1000 * 30, 1000 * 30);
+        timer.schedule(
+            new TimerTask() {
+              @Override
+              public void run() {
+                report[0] = true;
+              }
+            },
+            1000 * 30,
+            1000 * 30);
 
         System.out.println("Records load");
         List<TestRecord> records = new ArrayList<>();
@@ -4485,7 +6487,9 @@ public class CASDiskWriteAheadLogIT {
           Assert.assertEquals(wal.end(), lsn);
 
           if (report[0]) {
-            System.out.printf("%d records were added, log is filled on %d%%\n", records.size(), 100L * wal.size() / walSizeLimit);
+            System.out.printf(
+                "%d records were added, log is filled on %d%%\n",
+                records.size(), 100L * wal.size() / walSizeLimit);
             report[0] = false;
           }
         }
@@ -4531,8 +6535,28 @@ public class CASDiskWriteAheadLogIT {
 
       try {
         final long walSizeLimit = 5 * 1024 * 1024 * 1024L;
-        CASDiskWriteAheadLog wal = new CASDiskWriteAheadLog("walTest", testDirectory, testDirectory, 48_000, 64, null, null,
-            Integer.MAX_VALUE, 512 * 1024 * 1024, 20, true, Locale.US, walSizeLimit, -1, 1000, false, false, false, true, 10);
+        CASDiskWriteAheadLog wal =
+            new CASDiskWriteAheadLog(
+                "walTest",
+                testDirectory,
+                testDirectory,
+                48_000,
+                64,
+                null,
+                null,
+                Integer.MAX_VALUE,
+                512 * 1024 * 1024,
+                20,
+                true,
+                Locale.US,
+                walSizeLimit,
+                -1,
+                1000,
+                false,
+                false,
+                false,
+                true,
+                10);
 
         AtomicBoolean walIsFull = new AtomicBoolean();
 
@@ -4542,35 +6566,40 @@ public class CASDiskWriteAheadLogIT {
 
         AtomicReference<Future<Void>> segmentAppender = new AtomicReference<>();
 
-        final SegmentOverflowListener listener = (segment) -> {
-          Future<Void> oldAppender = segmentAppender.get();
+        final SegmentOverflowListener listener =
+            (segment) -> {
+              Future<Void> oldAppender = segmentAppender.get();
 
-          while (oldAppender == null || oldAppender.isDone()) {
-            if (wal.activeSegment() <= segment) {
-              final Future<Void> appender = executorService.submit(new SegmentAdder(segment, wal));
+              while (oldAppender == null || oldAppender.isDone()) {
+                if (wal.activeSegment() <= segment) {
+                  final Future<Void> appender =
+                      executorService.submit(new SegmentAdder(segment, wal));
 
-              if (segmentAppender.compareAndSet(oldAppender, appender)) {
-                break;
+                  if (segmentAppender.compareAndSet(oldAppender, appender)) {
+                    break;
+                  }
+
+                  appender.cancel(false);
+                  oldAppender = segmentAppender.get();
+                } else {
+                  break;
+                }
               }
-
-              appender.cancel(false);
-              oldAppender = segmentAppender.get();
-            } else {
-              break;
-            }
-          }
-        };
+            };
 
         wal.addSegmentOverflowListener(listener);
 
         boolean[] report = new boolean[1];
         Timer timer = new Timer();
-        timer.schedule(new TimerTask() {
-          @Override
-          public void run() {
-            report[0] = true;
-          }
-        }, 1000 * 30, 1000 * 30);
+        timer.schedule(
+            new TimerTask() {
+              @Override
+              public void run() {
+                report[0] = true;
+              }
+            },
+            1000 * 30,
+            1000 * 30);
 
         System.out.println("Records load");
         List<TestRecord> records = new ArrayList<>();
@@ -4590,7 +6619,9 @@ public class CASDiskWriteAheadLogIT {
           Assert.assertEquals(wal.end(), lsn);
 
           if (report[0]) {
-            System.out.printf("%d records were added, log is filled on %d%%\n", records.size(), 100L * wal.size() / walSizeLimit);
+            System.out.printf(
+                "%d records were added, log is filled on %d%%\n",
+                records.size(), 100L * wal.size() / walSizeLimit);
             report[0] = false;
           }
         }
@@ -4636,8 +6667,28 @@ public class CASDiskWriteAheadLogIT {
 
       try {
         final long walSizeLimit = 10 * 1024 * 1024 * 1024L;
-        CASDiskWriteAheadLog wal = new CASDiskWriteAheadLog("walTest", testDirectory, testDirectory, 48_000, 64, null, null,
-            Integer.MAX_VALUE, 10 * 1024 * 1024, 20, true, Locale.US, walSizeLimit, -1, 1000, false, false, false, true, 10);
+        CASDiskWriteAheadLog wal =
+            new CASDiskWriteAheadLog(
+                "walTest",
+                testDirectory,
+                testDirectory,
+                48_000,
+                64,
+                null,
+                null,
+                Integer.MAX_VALUE,
+                10 * 1024 * 1024,
+                20,
+                true,
+                Locale.US,
+                walSizeLimit,
+                -1,
+                1000,
+                false,
+                false,
+                false,
+                true,
+                10);
 
         AtomicBoolean walIsFull = new AtomicBoolean();
 
@@ -4647,35 +6698,40 @@ public class CASDiskWriteAheadLogIT {
 
         AtomicReference<Future<Void>> segmentAppender = new AtomicReference<>();
 
-        final SegmentOverflowListener listener = (segment) -> {
-          Future<Void> oldAppender = segmentAppender.get();
+        final SegmentOverflowListener listener =
+            (segment) -> {
+              Future<Void> oldAppender = segmentAppender.get();
 
-          while (oldAppender == null || oldAppender.isDone()) {
-            if (wal.activeSegment() <= segment) {
-              final Future<Void> appender = executorService.submit(new SegmentAdder(segment, wal));
+              while (oldAppender == null || oldAppender.isDone()) {
+                if (wal.activeSegment() <= segment) {
+                  final Future<Void> appender =
+                      executorService.submit(new SegmentAdder(segment, wal));
 
-              if (segmentAppender.compareAndSet(oldAppender, appender)) {
-                break;
+                  if (segmentAppender.compareAndSet(oldAppender, appender)) {
+                    break;
+                  }
+
+                  appender.cancel(false);
+                  oldAppender = segmentAppender.get();
+                } else {
+                  break;
+                }
               }
-
-              appender.cancel(false);
-              oldAppender = segmentAppender.get();
-            } else {
-              break;
-            }
-          }
-        };
+            };
 
         wal.addSegmentOverflowListener(listener);
 
         boolean[] report = new boolean[1];
         Timer timer = new Timer();
-        timer.schedule(new TimerTask() {
-          @Override
-          public void run() {
-            report[0] = true;
-          }
-        }, 1000 * 30, 1000 * 30);
+        timer.schedule(
+            new TimerTask() {
+              @Override
+              public void run() {
+                report[0] = true;
+              }
+            },
+            1000 * 30,
+            1000 * 30);
 
         System.out.println("Records load");
         List<TestRecord> records = new ArrayList<>();
@@ -4699,7 +6755,9 @@ public class CASDiskWriteAheadLogIT {
           Assert.assertEquals(wal.end(), lsn);
 
           if (report[0]) {
-            System.out.printf("%d records were added, log is filled on %d%%\n", records.size(), 100L * wal.size() / walSizeLimit);
+            System.out.printf(
+                "%d records were added, log is filled on %d%%\n",
+                records.size(), 100L * wal.size() / walSizeLimit);
             report[0] = false;
           }
         }
@@ -4745,8 +6803,28 @@ public class CASDiskWriteAheadLogIT {
 
       try {
         final long walSizeLimit = 10 * 1024 * 1024 * 1024L;
-        CASDiskWriteAheadLog wal = new CASDiskWriteAheadLog("walTest", testDirectory, testDirectory, 48_000, 64, null, null,
-            Integer.MAX_VALUE, 512 * 1024 * 1024, 20, true, Locale.US, walSizeLimit, -1, 1000, false, false, false, true, 10);
+        CASDiskWriteAheadLog wal =
+            new CASDiskWriteAheadLog(
+                "walTest",
+                testDirectory,
+                testDirectory,
+                48_000,
+                64,
+                null,
+                null,
+                Integer.MAX_VALUE,
+                512 * 1024 * 1024,
+                20,
+                true,
+                Locale.US,
+                walSizeLimit,
+                -1,
+                1000,
+                false,
+                false,
+                false,
+                true,
+                10);
 
         AtomicBoolean walIsFull = new AtomicBoolean();
 
@@ -4756,35 +6834,40 @@ public class CASDiskWriteAheadLogIT {
 
         AtomicReference<Future<Void>> segmentAppender = new AtomicReference<>();
 
-        final SegmentOverflowListener listener = (segment) -> {
-          Future<Void> oldAppender = segmentAppender.get();
+        final SegmentOverflowListener listener =
+            (segment) -> {
+              Future<Void> oldAppender = segmentAppender.get();
 
-          while (oldAppender == null || oldAppender.isDone()) {
-            if (wal.activeSegment() <= segment) {
-              final Future<Void> appender = executorService.submit(new SegmentAdder(segment, wal));
+              while (oldAppender == null || oldAppender.isDone()) {
+                if (wal.activeSegment() <= segment) {
+                  final Future<Void> appender =
+                      executorService.submit(new SegmentAdder(segment, wal));
 
-              if (segmentAppender.compareAndSet(oldAppender, appender)) {
-                break;
+                  if (segmentAppender.compareAndSet(oldAppender, appender)) {
+                    break;
+                  }
+
+                  appender.cancel(false);
+                  oldAppender = segmentAppender.get();
+                } else {
+                  break;
+                }
               }
-
-              appender.cancel(false);
-              oldAppender = segmentAppender.get();
-            } else {
-              break;
-            }
-          }
-        };
+            };
 
         wal.addSegmentOverflowListener(listener);
 
         boolean[] report = new boolean[1];
         Timer timer = new Timer();
-        timer.schedule(new TimerTask() {
-          @Override
-          public void run() {
-            report[0] = true;
-          }
-        }, 1000 * 30, 1000 * 30);
+        timer.schedule(
+            new TimerTask() {
+              @Override
+              public void run() {
+                report[0] = true;
+              }
+            },
+            1000 * 30,
+            1000 * 30);
 
         System.out.println("Records load");
         List<TestRecord> records = new ArrayList<>();
@@ -4808,7 +6891,9 @@ public class CASDiskWriteAheadLogIT {
           Assert.assertEquals(wal.end(), lsn);
 
           if (report[0]) {
-            System.out.printf("%d records were added, log is filled on %d%%\n", records.size(), 100L * wal.size() / walSizeLimit);
+            System.out.printf(
+                "%d records were added, log is filled on %d%%\n",
+                records.size(), 100L * wal.size() / walSizeLimit);
             report[0] = false;
           }
         }
@@ -4855,31 +6940,53 @@ public class CASDiskWriteAheadLogIT {
       final Random random = new Random(seed);
 
       try {
-        CASDiskWriteAheadLog wal = new CASDiskWriteAheadLog("walTest", testDirectory, testDirectory, 48_000, 64, null, null,
-            Integer.MAX_VALUE, 10 * 1024 * 1024, 20, true, Locale.US, 10 * 1024 * 1024 * 1024L, -1, 1000, false, false, false, true, 10);
+        CASDiskWriteAheadLog wal =
+            new CASDiskWriteAheadLog(
+                "walTest",
+                testDirectory,
+                testDirectory,
+                48_000,
+                64,
+                null,
+                null,
+                Integer.MAX_VALUE,
+                10 * 1024 * 1024,
+                20,
+                true,
+                Locale.US,
+                10 * 1024 * 1024 * 1024L,
+                -1,
+                1000,
+                false,
+                false,
+                false,
+                true,
+                10);
 
         ExecutorService executorService = Executors.newCachedThreadPool();
 
         AtomicReference<Future<Void>> segmentAppender = new AtomicReference<>();
 
-        final SegmentOverflowListener listener = (segment) -> {
-          Future<Void> oldAppender = segmentAppender.get();
+        final SegmentOverflowListener listener =
+            (segment) -> {
+              Future<Void> oldAppender = segmentAppender.get();
 
-          while (oldAppender == null || oldAppender.isDone()) {
-            if (wal.activeSegment() <= segment) {
-              final Future<Void> appender = executorService.submit(new SegmentAdder(segment, wal));
+              while (oldAppender == null || oldAppender.isDone()) {
+                if (wal.activeSegment() <= segment) {
+                  final Future<Void> appender =
+                      executorService.submit(new SegmentAdder(segment, wal));
 
-              if (segmentAppender.compareAndSet(oldAppender, appender)) {
-                break;
+                  if (segmentAppender.compareAndSet(oldAppender, appender)) {
+                    break;
+                  }
+
+                  appender.cancel(false);
+                  oldAppender = segmentAppender.get();
+                } else {
+                  break;
+                }
               }
-
-              appender.cancel(false);
-              oldAppender = segmentAppender.get();
-            } else {
-              break;
-            }
-          }
-        };
+            };
 
         wal.addSegmentOverflowListener(listener);
 
@@ -4898,8 +7005,11 @@ public class CASDiskWriteAheadLogIT {
         final long segment = lsn.getSegment();
         final long page = lsn.getPosition() / wal.pageSize();
 
-        try (final FileChannel channel = FileChannel
-            .open(testDirectory.resolve(getSegmentName(segment)), StandardOpenOption.WRITE, StandardOpenOption.READ)) {
+        try (final FileChannel channel =
+            FileChannel.open(
+                testDirectory.resolve(getSegmentName(segment)),
+                StandardOpenOption.WRITE,
+                StandardOpenOption.READ)) {
           channel.position(page * wal.pageSize());
 
           final ByteBuffer buffer = ByteBuffer.allocate(wal.pageSize());
@@ -4911,8 +7021,28 @@ public class CASDiskWriteAheadLogIT {
           channel.write(buffer);
         }
 
-        CASDiskWriteAheadLog loadedWAL = new CASDiskWriteAheadLog("walTest", testDirectory, testDirectory, 48_000, 64, null, null,
-            Integer.MAX_VALUE, 10 * 1024 * 1024, 20, true, Locale.US, 10 * 1024 * 1024 * 1024L, -1, 1000, false, false, false, true, 10);
+        CASDiskWriteAheadLog loadedWAL =
+            new CASDiskWriteAheadLog(
+                "walTest",
+                testDirectory,
+                testDirectory,
+                48_000,
+                64,
+                null,
+                null,
+                Integer.MAX_VALUE,
+                10 * 1024 * 1024,
+                20,
+                true,
+                Locale.US,
+                10 * 1024 * 1024 * 1024L,
+                -1,
+                1000,
+                false,
+                false,
+                false,
+                true,
+                10);
 
         Iterator<TestRecord> recordIterator = records.iterator();
         List<WriteableWALRecord> walRecords = loadedWAL.read(records.get(0).getLsn(), 100);
@@ -4965,8 +7095,28 @@ public class CASDiskWriteAheadLogIT {
 
   @Test
   public void testMasterRecordCrashTwoRecords() throws Exception {
-    CASDiskWriteAheadLog wal = new CASDiskWriteAheadLog("walTest", testDirectory, testDirectory, 48_000, 64, null, null,
-        Integer.MAX_VALUE, 10 * 1024 * 1024, 20, true, Locale.US, 10 * 1024 * 1024 * 1024L, -1, 1000, false, false, false, true, 10);
+    CASDiskWriteAheadLog wal =
+        new CASDiskWriteAheadLog(
+            "walTest",
+            testDirectory,
+            testDirectory,
+            48_000,
+            64,
+            null,
+            null,
+            Integer.MAX_VALUE,
+            10 * 1024 * 1024,
+            20,
+            true,
+            Locale.US,
+            10 * 1024 * 1024 * 1024L,
+            -1,
+            1000,
+            false,
+            false,
+            false,
+            true,
+            10);
 
     OLogSequenceNumber masterLSNOne = wal.log(new OFullCheckpointStartRecord());
     wal.flush();
@@ -4978,8 +7128,11 @@ public class CASDiskWriteAheadLogIT {
 
     wal.close();
 
-    try (FileChannel wmrChannel = FileChannel
-        .open(testDirectory.resolve("walTest.wmr"), StandardOpenOption.READ, StandardOpenOption.WRITE)) {
+    try (FileChannel wmrChannel =
+        FileChannel.open(
+            testDirectory.resolve("walTest.wmr"),
+            StandardOpenOption.READ,
+            StandardOpenOption.WRITE)) {
       final ByteBuffer buffer = ByteBuffer.allocate(20);
 
       wmrChannel.position(20);
@@ -4991,8 +7144,28 @@ public class CASDiskWriteAheadLogIT {
       OIOUtils.writeByteBuffer(buffer, wmrChannel, 20);
     }
 
-    wal = new CASDiskWriteAheadLog("walTest", testDirectory, testDirectory, 48_000, 64, null, null, Integer.MAX_VALUE,
-        10 * 1024 * 1024, 20, true, Locale.US, 10 * 1024 * 1024 * 1024L, -1, 1000, false, false, false, true, 10);
+    wal =
+        new CASDiskWriteAheadLog(
+            "walTest",
+            testDirectory,
+            testDirectory,
+            48_000,
+            64,
+            null,
+            null,
+            Integer.MAX_VALUE,
+            10 * 1024 * 1024,
+            20,
+            true,
+            Locale.US,
+            10 * 1024 * 1024 * 1024L,
+            -1,
+            1000,
+            false,
+            false,
+            false,
+            true,
+            10);
 
     Assert.assertEquals(masterLSNOne, wal.lastCheckpoint());
 
@@ -5001,8 +7174,28 @@ public class CASDiskWriteAheadLogIT {
 
   @Test
   public void testMasterRecordCrashThreeRecordsFirstDamage() throws Exception {
-    CASDiskWriteAheadLog wal = new CASDiskWriteAheadLog("walTest", testDirectory, testDirectory, 48_000, 64, null, null,
-        Integer.MAX_VALUE, 10 * 1024 * 1024, 20, true, Locale.US, 10 * 1024 * 1024 * 1024L, -1, 1000, false, false, false, true, 10);
+    CASDiskWriteAheadLog wal =
+        new CASDiskWriteAheadLog(
+            "walTest",
+            testDirectory,
+            testDirectory,
+            48_000,
+            64,
+            null,
+            null,
+            Integer.MAX_VALUE,
+            10 * 1024 * 1024,
+            20,
+            true,
+            Locale.US,
+            10 * 1024 * 1024 * 1024L,
+            -1,
+            1000,
+            false,
+            false,
+            false,
+            true,
+            10);
 
     wal.log(new OFullCheckpointStartRecord());
     wal.flush();
@@ -5017,8 +7210,11 @@ public class CASDiskWriteAheadLogIT {
 
     wal.close();
 
-    try (FileChannel wmrChannel = FileChannel
-        .open(testDirectory.resolve("walTest.wmr"), StandardOpenOption.READ, StandardOpenOption.WRITE)) {
+    try (FileChannel wmrChannel =
+        FileChannel.open(
+            testDirectory.resolve("walTest.wmr"),
+            StandardOpenOption.READ,
+            StandardOpenOption.WRITE)) {
       final ByteBuffer buffer = ByteBuffer.allocate(20);
 
       wmrChannel.position(0);
@@ -5030,8 +7226,28 @@ public class CASDiskWriteAheadLogIT {
       OIOUtils.writeByteBuffer(buffer, wmrChannel, 0);
     }
 
-    wal = new CASDiskWriteAheadLog("walTest", testDirectory, testDirectory, 48_000, 64, null, null, Integer.MAX_VALUE,
-        10 * 1024 * 1024, 20, true, Locale.US, 10 * 1024 * 1024 * 1024L, -1, 1000, false, false, false, true, 10);
+    wal =
+        new CASDiskWriteAheadLog(
+            "walTest",
+            testDirectory,
+            testDirectory,
+            48_000,
+            64,
+            null,
+            null,
+            Integer.MAX_VALUE,
+            10 * 1024 * 1024,
+            20,
+            true,
+            Locale.US,
+            10 * 1024 * 1024 * 1024L,
+            -1,
+            1000,
+            false,
+            false,
+            false,
+            true,
+            10);
 
     Assert.assertEquals(masterLSNOne, wal.lastCheckpoint());
 
@@ -5040,8 +7256,28 @@ public class CASDiskWriteAheadLogIT {
 
   @Test
   public void testMasterRecordCrashThreeRecordsSecondDamage() throws Exception {
-    CASDiskWriteAheadLog wal = new CASDiskWriteAheadLog("walTest", testDirectory, testDirectory, 48_000, 64, null, null,
-        Integer.MAX_VALUE, 10 * 1024 * 1024, 20, true, Locale.US, 10 * 1024 * 1024 * 1024L, -1, 1000, false, false, false, true, 10);
+    CASDiskWriteAheadLog wal =
+        new CASDiskWriteAheadLog(
+            "walTest",
+            testDirectory,
+            testDirectory,
+            48_000,
+            64,
+            null,
+            null,
+            Integer.MAX_VALUE,
+            10 * 1024 * 1024,
+            20,
+            true,
+            Locale.US,
+            10 * 1024 * 1024 * 1024L,
+            -1,
+            1000,
+            false,
+            false,
+            false,
+            true,
+            10);
 
     wal.log(new OFullCheckpointStartRecord());
     wal.flush();
@@ -5056,8 +7292,11 @@ public class CASDiskWriteAheadLogIT {
 
     wal.close();
 
-    try (FileChannel wmrChannel = FileChannel
-        .open(testDirectory.resolve("walTest.wmr"), StandardOpenOption.READ, StandardOpenOption.WRITE)) {
+    try (FileChannel wmrChannel =
+        FileChannel.open(
+            testDirectory.resolve("walTest.wmr"),
+            StandardOpenOption.READ,
+            StandardOpenOption.WRITE)) {
       final ByteBuffer buffer = ByteBuffer.allocate(20);
 
       wmrChannel.position(20);
@@ -5069,8 +7308,28 @@ public class CASDiskWriteAheadLogIT {
       OIOUtils.writeByteBuffer(buffer, wmrChannel, 20);
     }
 
-    wal = new CASDiskWriteAheadLog("walTest", testDirectory, testDirectory, 48_000, 64, null, null, Integer.MAX_VALUE,
-        10 * 1024 * 1024, 20, true, Locale.US, 10 * 1024 * 1024 * 1024L, -1, 1000, false, false, false, true, 10);
+    wal =
+        new CASDiskWriteAheadLog(
+            "walTest",
+            testDirectory,
+            testDirectory,
+            48_000,
+            64,
+            null,
+            null,
+            Integer.MAX_VALUE,
+            10 * 1024 * 1024,
+            20,
+            true,
+            Locale.US,
+            10 * 1024 * 1024 * 1024L,
+            -1,
+            1000,
+            false,
+            false,
+            false,
+            true,
+            10);
 
     Assert.assertEquals(masterLSNTwo, wal.lastCheckpoint());
 
@@ -5079,28 +7338,93 @@ public class CASDiskWriteAheadLogIT {
 
   @Test
   public void testIntegerOverflowNoException() throws Exception {
-    final CASDiskWriteAheadLog wal = new CASDiskWriteAheadLog("walTest", testDirectory, testDirectory, Integer.MAX_VALUE, 64, null, null,
-        Integer.MAX_VALUE, Integer.MAX_VALUE, 20, true, Locale.US, -1, -1, 1000, false, false, false, true, 10);
+    final CASDiskWriteAheadLog wal =
+        new CASDiskWriteAheadLog(
+            "walTest",
+            testDirectory,
+            testDirectory,
+            Integer.MAX_VALUE,
+            64,
+            null,
+            null,
+            Integer.MAX_VALUE,
+            Integer.MAX_VALUE,
+            20,
+            true,
+            Locale.US,
+            -1,
+            -1,
+            1000,
+            false,
+            false,
+            false,
+            true,
+            10);
     wal.close();
-    Assert.assertEquals("Integer.MAX overflow must be reset to Integer.MAX.",
-        CASDiskWriteAheadLog.DEFAULT_MAX_CACHE_SIZE, wal.maxCacheSize());
+    Assert.assertEquals(
+        "Integer.MAX overflow must be reset to Integer.MAX.",
+        CASDiskWriteAheadLog.DEFAULT_MAX_CACHE_SIZE,
+        wal.maxCacheSize());
   }
 
   @Test
   public void testIntegerNegativeNoException() throws Exception {
-    final CASDiskWriteAheadLog wal = new CASDiskWriteAheadLog("walTest", testDirectory, testDirectory, -27, 64, null, null,
-        Integer.MAX_VALUE, Integer.MAX_VALUE, 20, true, Locale.US, -1, -1, 1000, false, false, false, true, 10);
+    final CASDiskWriteAheadLog wal =
+        new CASDiskWriteAheadLog(
+            "walTest",
+            testDirectory,
+            testDirectory,
+            -27,
+            64,
+            null,
+            null,
+            Integer.MAX_VALUE,
+            Integer.MAX_VALUE,
+            20,
+            true,
+            Locale.US,
+            -1,
+            -1,
+            1000,
+            false,
+            false,
+            false,
+            true,
+            10);
     wal.close();
-    Assert.assertTrue("Negative int must not produce exception in `doFlush`", 0 > wal.maxCacheSize());
+    Assert.assertTrue(
+        "Negative int must not produce exception in `doFlush`", 0 > wal.maxCacheSize());
   }
 
   @Test
   public void testIntegerNegativeOverflowNoException() throws Exception {
-    final CASDiskWriteAheadLog wal = new CASDiskWriteAheadLog("walTest", testDirectory, testDirectory, Integer.MIN_VALUE, 64, null, null,
-        Integer.MAX_VALUE, Integer.MAX_VALUE, 20, true, Locale.US, -1, -1, 1000, false, false, false, true, 10);
+    final CASDiskWriteAheadLog wal =
+        new CASDiskWriteAheadLog(
+            "walTest",
+            testDirectory,
+            testDirectory,
+            Integer.MIN_VALUE,
+            64,
+            null,
+            null,
+            Integer.MAX_VALUE,
+            Integer.MAX_VALUE,
+            20,
+            true,
+            Locale.US,
+            -1,
+            -1,
+            1000,
+            false,
+            false,
+            false,
+            true,
+            10);
     wal.close();
-    Assert.assertEquals("Integer.MIN overflow must be reset to Integer.MAX.",
-        CASDiskWriteAheadLog.DEFAULT_MAX_CACHE_SIZE, wal.maxCacheSize());
+    Assert.assertEquals(
+        "Integer.MIN overflow must be reset to Integer.MAX.",
+        CASDiskWriteAheadLog.DEFAULT_MAX_CACHE_SIZE,
+        wal.maxCacheSize());
   }
 
   private void checkThatSegmentsBellowAreRemoved(CASDiskWriteAheadLog wal) {
@@ -5112,7 +7436,8 @@ public class CASDiskWriteAheadLogIT {
     }
   }
 
-  private void checkThatAllNonActiveSegmentsAreRemoved(long[] nonActive, long segment, CASDiskWriteAheadLog wal) {
+  private void checkThatAllNonActiveSegmentsAreRemoved(
+      long[] nonActive, long segment, CASDiskWriteAheadLog wal) {
     if (nonActive.length == 0) {
       return;
     }
@@ -5127,11 +7452,13 @@ public class CASDiskWriteAheadLogIT {
     }
   }
 
-  private static void addLimit(TreeMap<OLogSequenceNumber, Integer> limits, OLogSequenceNumber lsn) {
+  private static void addLimit(
+      TreeMap<OLogSequenceNumber, Integer> limits, OLogSequenceNumber lsn) {
     limits.merge(lsn, 1, Integer::sum);
   }
 
-  private static void removeLimit(TreeMap<OLogSequenceNumber, Integer> limits, OLogSequenceNumber lsn) {
+  private static void removeLimit(
+      TreeMap<OLogSequenceNumber, Integer> limits, OLogSequenceNumber lsn) {
     Integer counter = limits.get(lsn);
     if (counter == 1) {
       limits.remove(lsn);
@@ -5140,8 +7467,8 @@ public class CASDiskWriteAheadLogIT {
     }
   }
 
-  private static OLogSequenceNumber chooseRandomRecord(Random random,
-                                                       NavigableMap<OLogSequenceNumber, ? extends WriteableWALRecord> records) {
+  private static OLogSequenceNumber chooseRandomRecord(
+      Random random, NavigableMap<OLogSequenceNumber, ? extends WriteableWALRecord> records) {
     if (records.isEmpty()) {
       return null;
     }
@@ -5158,7 +7485,8 @@ public class CASDiskWriteAheadLogIT {
       segment = lastSegment;
     }
 
-    final OLogSequenceNumber lastLSN = records.floorKey(new OLogSequenceNumber(segment, Integer.MAX_VALUE));
+    final OLogSequenceNumber lastLSN =
+        records.floorKey(new OLogSequenceNumber(segment, Integer.MAX_VALUE));
     final int position = random.nextInt((int) lastLSN.getPosition());
 
     OLogSequenceNumber lsn = records.ceilingKey(new OLogSequenceNumber(segment, position));
@@ -5167,8 +7495,10 @@ public class CASDiskWriteAheadLogIT {
     return lsn;
   }
 
-  private void assertMTWALInsertion(CASDiskWriteAheadLog wal,
-                                    SortedMap<OLogSequenceNumber, ? extends WriteableWALRecord> addedRecords) throws IOException {
+  private void assertMTWALInsertion(
+      CASDiskWriteAheadLog wal,
+      SortedMap<OLogSequenceNumber, ? extends WriteableWALRecord> addedRecords)
+      throws IOException {
     final Iterator<? extends WriteableWALRecord> recordsIterator = addedRecords.values().iterator();
 
     WriteableWALRecord record = recordsIterator.next();
@@ -5206,21 +7536,34 @@ public class CASDiskWriteAheadLogIT {
         Assert.assertEquals(record.getLsn(), readRecord.getLsn());
         try {
           if (record instanceof TestRecord) {
-            Assert.assertArrayEquals("Record LSN " + record.getLsn() + ", record data length " + ((TestRecord) record).data.length,
-                ((TestRecord) record).data, ((TestRecord) readRecord).data);
+            Assert.assertArrayEquals(
+                "Record LSN "
+                    + record.getLsn()
+                    + ", record data length "
+                    + ((TestRecord) record).data.length,
+                ((TestRecord) record).data,
+                ((TestRecord) readRecord).data);
           }
         } catch (AssertionError e) {
           if (readIterator.hasNext()) {
             WriteableWALRecord r = readIterator.next();
             if (r instanceof TestRecord) {
-              System.out.println("Next read LSN is " + r.getLsn() + " record size is " + ((TestRecord) r).data.length);
+              System.out.println(
+                  "Next read LSN is "
+                      + r.getLsn()
+                      + " record size is "
+                      + ((TestRecord) r).data.length);
             }
           }
 
           if (recordsIterator.hasNext()) {
             WriteableWALRecord r = recordsIterator.next();
             if (r instanceof TestRecord) {
-              System.out.println("Next stored LSN is " + r.getLsn() + " record size is " + ((TestRecord) r).data.length);
+              System.out.println(
+                  "Next stored LSN is "
+                      + r.getLsn()
+                      + " record size is "
+                      + ((TestRecord) r).data.length);
             }
           }
           throw e;
@@ -5260,8 +7603,7 @@ public class CASDiskWriteAheadLogIT {
     private byte[] data;
 
     @SuppressWarnings("unused")
-    public TestRecord() {
-    }
+    public TestRecord() {}
 
     @SuppressWarnings("unused")
     public TestRecord(byte[] data) {
@@ -5362,7 +7704,9 @@ public class CASDiskWriteAheadLogIT {
       final int startIndex = random.nextInt(addedRecords.size());
       final int checkInterval = random.nextInt(81) + 20;
 
-      List<TestRecord> records = addedRecords.subList(startIndex, Math.min(addedRecords.size(), startIndex + checkInterval));
+      List<TestRecord> records =
+          addedRecords.subList(
+              startIndex, Math.min(addedRecords.size(), startIndex + checkInterval));
       OLogSequenceNumber lsn = records.get(0).getLsn();
 
       List<WriteableWALRecord> readRecords = wal.read(lsn, 10);
@@ -5387,12 +7731,30 @@ public class CASDiskWriteAheadLogIT {
               //noinspection UnnecessaryContinue
               continue;
             } else if (compare == 0) {
-              Assert.assertArrayEquals("Call LSN " + callLSN + ", record LSN " + recordLSN + ", record length " + record.data.length
-                  + ", wal record length" + ((TestRecord) walRecord).data.length + ", record distance " + record.getDistance()
-                  + ", record size " + record.getDiskSize(), record.data, ((TestRecord) walRecord).data);
+              Assert.assertArrayEquals(
+                  "Call LSN "
+                      + callLSN
+                      + ", record LSN "
+                      + recordLSN
+                      + ", record length "
+                      + record.data.length
+                      + ", wal record length"
+                      + ((TestRecord) walRecord).data.length
+                      + ", record distance "
+                      + record.getDistance()
+                      + ", record size "
+                      + record.getDiskSize(),
+                  record.data,
+                  ((TestRecord) walRecord).data);
               break;
             } else {
-              Assert.fail("Call LSN " + callLSN + ", record LSN " + recordLSN + ", WAL record LSN " + walRecordLSN);
+              Assert.fail(
+                  "Call LSN "
+                      + callLSN
+                      + ", record LSN "
+                      + recordLSN
+                      + ", WAL record LSN "
+                      + walRecordLSN);
             }
 
           } else {
@@ -5405,7 +7767,6 @@ public class CASDiskWriteAheadLogIT {
             Assert.assertTrue("Call LSN " + callLSN, readIterator.hasNext());
           }
         }
-
       }
     }
   }
@@ -5454,7 +7815,9 @@ public class CASDiskWriteAheadLogIT {
 
       final int startIndex = Math.max(0, addedRecords.size() - checkInterval);
 
-      List<TestRecord> records = addedRecords.subList(startIndex, Math.min(startIndex + checkInterval, addedRecords.size()));
+      List<TestRecord> records =
+          addedRecords.subList(
+              startIndex, Math.min(startIndex + checkInterval, addedRecords.size()));
       OLogSequenceNumber lsn = records.get(0).getLsn();
 
       List<WriteableWALRecord> readRecords = wal.read(lsn, 10);
@@ -5478,13 +7841,31 @@ public class CASDiskWriteAheadLogIT {
               //noinspection UnnecessaryContinue
               continue;
             } else if (compare == 0) {
-              Assert.assertArrayEquals("Call LSN " + callLSN + ", record LSN " + recordLSN + ", record length " + record.data.length
-                  + ", wal record length" + ((TestRecord) walRecord).data.length + ", record distance " + record.getDistance()
-                  + ", record size " + record.getDiskSize(), record.data, ((TestRecord) walRecord).data);
+              Assert.assertArrayEquals(
+                  "Call LSN "
+                      + callLSN
+                      + ", record LSN "
+                      + recordLSN
+                      + ", record length "
+                      + record.data.length
+                      + ", wal record length"
+                      + ((TestRecord) walRecord).data.length
+                      + ", record distance "
+                      + record.getDistance()
+                      + ", record size "
+                      + record.getDiskSize(),
+                  record.data,
+                  ((TestRecord) walRecord).data);
 
               break;
             } else {
-              Assert.fail("Call LSN " + callLSN + ", record LSN " + recordLSN + ", WAL record LSN " + walRecordLSN);
+              Assert.fail(
+                  "Call LSN "
+                      + callLSN
+                      + ", record LSN "
+                      + recordLSN
+                      + ", WAL record LSN "
+                      + walRecordLSN);
             }
 
           } else {
@@ -5496,12 +7877,12 @@ public class CASDiskWriteAheadLogIT {
             Assert.assertTrue("Call LSN " + callLSN, readIterator.hasNext());
           }
         }
-
       }
     }
   }
 
-  private static final class CutTillTester implements Callable<TreeMap<OLogSequenceNumber, WriteableWALRecord>> {
+  private static final class CutTillTester
+      implements Callable<TreeMap<OLogSequenceNumber, WriteableWALRecord>> {
     private final CASDiskWriteAheadLog wal;
     private final AtomicBoolean walIsFull;
 
@@ -5542,7 +7923,10 @@ public class CASDiskWriteAheadLogIT {
 
         boolean result;
         if (begin.getSegment() != end.getSegment()) {
-          final int segment = (int) (random.nextInt((int) (end.getSegment() - begin.getSegment())) + begin.getSegment());
+          final int segment =
+              (int)
+                  (random.nextInt((int) (end.getSegment() - begin.getSegment()))
+                      + begin.getSegment());
           result = wal.cutAllSegmentsSmallerThan(segment);
         } else {
           result = wal.cutAllSegmentsSmallerThan(begin.getSegment());
@@ -5558,7 +7942,8 @@ public class CASDiskWriteAheadLogIT {
 
         clearRecords();
         if (sendReport.get()) {
-          System.out.println("Thread " + Thread.currentThread().getId() + ", cut till limit " + cutLimit);
+          System.out.println(
+              "Thread " + Thread.currentThread().getId() + ", cut till limit " + cutLimit);
           sendReport.set(false);
         }
       }

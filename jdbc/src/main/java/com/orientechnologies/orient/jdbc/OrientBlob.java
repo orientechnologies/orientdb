@@ -1,24 +1,21 @@
 /**
  * Copyright 2010-2016 OrientDB LTD (http://orientdb.com)
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
+ * <p>Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file
+ * except in compliance with the License. You may obtain a copy of the License at
  *
- * 	http://www.apache.org/licenses/LICENSE-2.0
+ * <p>http://www.apache.org/licenses/LICENSE-2.0
  *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
+ * <p>Unless required by applicable law or agreed to in writing, software distributed under the
+ * License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either
+ * express or implied. See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * For more information: http://orientdb.com
+ * <p>For more information: http://orientdb.com
  */
 package com.orientechnologies.orient.jdbc;
 
 import com.orientechnologies.orient.core.record.impl.OBlob;
-
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -29,8 +26,6 @@ import java.sql.SQLFeatureNotSupportedException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-
-import static java.util.Arrays.asList;
 
 /**
  * @author Roberto Franchini (CELI Srl - franchini@celi.it)
@@ -67,7 +62,7 @@ public class OrientBlob implements Blob {
 
   /*
    * (non-Javadoc)
-   * 
+   *
    * @see java.sql.Blob#length()
    */
   public long length() throws SQLException {
@@ -84,15 +79,18 @@ public class OrientBlob implements Blob {
 
   /*
    * (non-Javadoc)
-   * 
+   *
    * @see java.sql.Blob#getBytes(long, int)
    */
   public byte[] getBytes(long pos, int length) throws SQLException {
     if (pos < 1)
-      throw new SQLException("The position of the first byte in the BLOB value to be " + "extracted cannot be less than 1");
+      throw new SQLException(
+          "The position of the first byte in the BLOB value to be "
+              + "extracted cannot be less than 1");
     if (length < 0)
       throw new SQLException(
-          "The number of the consecutive bytes in the BLOB value to " + "be extracted cannot be a negative number");
+          "The number of the consecutive bytes in the BLOB value to "
+              + "be extracted cannot be a negative number");
 
     int relativeIndex = this.getRelativeIndex(pos);
 
@@ -119,7 +117,8 @@ public class OrientBlob implements Blob {
   }
 
   /**
-   * Calculates the index within a binary chunk corresponding to the given absolute position within this BLOB
+   * Calculates the index within a binary chunk corresponding to the given absolute position within
+   * this BLOB
    *
    * @param pos
    * @return
@@ -142,7 +141,7 @@ public class OrientBlob implements Blob {
 
   /*
    * (non-Javadoc)
-   * 
+   *
    * @see java.sql.Blob#getBinaryStream()
    */
   public InputStream getBinaryStream() throws SQLException {
@@ -151,7 +150,7 @@ public class OrientBlob implements Blob {
 
   /*
    * (non-Javadoc)
-   * 
+   *
    * @see java.sql.Blob#position(byte[], long)
    */
   public long position(byte[] pattern, long start) throws SQLException {
@@ -160,7 +159,7 @@ public class OrientBlob implements Blob {
 
   /*
    * (non-Javadoc)
-   * 
+   *
    * @see java.sql.Blob#position(java.sql.Blob, long)
    */
   public long position(Blob pattern, long start) throws SQLException {
@@ -169,7 +168,7 @@ public class OrientBlob implements Blob {
 
   /*
    * (non-Javadoc)
-   * 
+   *
    * @see java.sql.Blob#setBytes(long, byte[])
    */
   public int setBytes(long pos, byte[] bytes) throws SQLException {
@@ -178,7 +177,7 @@ public class OrientBlob implements Blob {
 
   /*
    * (non-Javadoc)
-   * 
+   *
    * @see java.sql.Blob#setBytes(long, byte[], int, int)
    */
   public int setBytes(long pos, byte[] bytes, int offset, int len) throws SQLException {
@@ -187,7 +186,7 @@ public class OrientBlob implements Blob {
 
   /*
    * (non-Javadoc)
-   * 
+   *
    * @see java.sql.Blob#setBinaryStream(long)
    */
   public OutputStream setBinaryStream(long pos) throws SQLException {
@@ -196,19 +195,17 @@ public class OrientBlob implements Blob {
 
   /*
    * (non-Javadoc)
-   * 
+   *
    * @see java.sql.Blob#truncate(long)
    */
   public void truncate(long len) throws SQLException {
-    if (len < 0)
-      throw new SQLException("The length of a BLOB cannot be a negtive number.");
-    if (len < this.length)
-      this.length = len;
+    if (len < 0) throw new SQLException("The length of a BLOB cannot be a negtive number.");
+    if (len < this.length) this.length = len;
   }
 
   /*
    * (non-Javadoc)
-   * 
+   *
    * @see java.sql.Blob#free()
    */
   public void free() throws SQLException {
@@ -217,7 +214,7 @@ public class OrientBlob implements Blob {
 
   /*
    * (non-Javadoc)
-   * 
+   *
    * @see java.sql.Blob#getBinaryStream(long, long)
    */
   public InputStream getBinaryStream(long pos, long length) throws SQLException {
@@ -242,7 +239,7 @@ public class OrientBlob implements Blob {
 
     /*
      * (non-Javadoc)
-     * 
+     *
      * @see java.io.InputStream#read()
      */
     @Override
@@ -259,7 +256,8 @@ public class OrientBlob implements Blob {
             // we've read the last byte of the last binary chunk!
             return -1;
           } else {
-            OrientBlob.this.currentChunk = OrientBlob.this.binaryDataChunks.get(++OrientBlob.this.currentChunkIndex);
+            OrientBlob.this.currentChunk =
+                OrientBlob.this.binaryDataChunks.get(++OrientBlob.this.currentChunkIndex);
             positionInTheCurrentChunk = 0;
           }
         }
@@ -268,6 +266,5 @@ public class OrientBlob implements Blob {
       }
       return -1;
     }
-
   }
 }

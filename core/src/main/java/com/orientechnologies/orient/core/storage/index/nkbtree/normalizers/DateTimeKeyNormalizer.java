@@ -3,7 +3,6 @@ package com.orientechnologies.orient.core.storage.index.nkbtree.normalizers;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
-import java.util.Calendar;
 import java.util.Date;
 
 public class DateTimeKeyNormalizer implements KeyNormalizers {

@@ -42,5 +42,4 @@ public class OrientJwtHeader implements OJwtHeader {
   public void setKeyId(String kid) {
     this.kid = kid;
   }
-
 }

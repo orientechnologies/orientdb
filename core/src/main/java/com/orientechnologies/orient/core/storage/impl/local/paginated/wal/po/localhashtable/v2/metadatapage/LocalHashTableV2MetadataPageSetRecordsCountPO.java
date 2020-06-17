@@ -5,15 +5,13 @@ import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.WALRecordTypes;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.PageOperationRecord;
 import com.orientechnologies.orient.core.storage.index.hashindex.local.v2.HashIndexMetadataPageV2;
-
 import java.nio.ByteBuffer;
 
 public final class LocalHashTableV2MetadataPageSetRecordsCountPO extends PageOperationRecord {
   private long recordsCount;
   private long pastRecordsCount;
 
-  public LocalHashTableV2MetadataPageSetRecordsCountPO() {
-  }
+  public LocalHashTableV2MetadataPageSetRecordsCountPO() {}
 
   public LocalHashTableV2MetadataPageSetRecordsCountPO(long recordsCount, long pastRecordsCount) {
     this.recordsCount = recordsCount;

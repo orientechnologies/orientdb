@@ -3,7 +3,6 @@
 package com.orientechnologies.orient.core.sql.parser;
 
 import com.orientechnologies.orient.core.sql.executor.OResult;
-
 import java.util.Map;
 
 public class ONumber extends SimpleNode {

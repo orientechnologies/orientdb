@@ -1,15 +1,13 @@
 package com.tinkerpop.blueprints.impls.orient;
 
+import static org.junit.Assert.assertTrue;
+
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
-import static org.junit.Assert.assertTrue;
-
-/**
- * Created by tglman on 28/04/16.
- */
+/** Created by tglman on 28/04/16. */
 public class SimplePropertyLinkTest {
 
   private OrientGraph graph;
@@ -33,7 +31,9 @@ public class SimplePropertyLinkTest {
     v2.save();
     graph.commit();
     graph.getRawGraph().getLocalCache().clear();
-    assertTrue(((OIdentifiable) graph.getVertex(v1.getIdentity()).getProperty("link")).getIdentity().isPersistent());
+    assertTrue(
+        ((OIdentifiable) graph.getVertex(v1.getIdentity()).getProperty("link"))
+            .getIdentity()
+            .isPersistent());
   }
-
 }

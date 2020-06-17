@@ -41,11 +41,9 @@ public abstract class OSoftThread extends Thread implements OService {
 
   protected abstract void execute() throws Exception;
 
-  public void startup() {
-  }
+  public void startup() {}
 
-  public void shutdown() {
-  }
+  public void shutdown() {}
 
   public void sendShutdown() {
     shutdownFlag = true;
@@ -69,11 +67,9 @@ public abstract class OSoftThread extends Thread implements OService {
         execute();
         afterExecution();
       } catch (Exception e) {
-        if (dumpExceptions)
-          OLogManager.instance().error(this, "Error during thread execution", e);
+        if (dumpExceptions) OLogManager.instance().error(this, "Error during thread execution", e);
       } catch (Error e) {
-        if (dumpExceptions)
-          OLogManager.instance().error(this, "Error during thread execution", e);
+        if (dumpExceptions) OLogManager.instance().error(this, "Error during thread execution", e);
         shutdown();
         throw e;
       }

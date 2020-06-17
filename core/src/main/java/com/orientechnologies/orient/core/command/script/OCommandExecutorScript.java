@@ -26,8 +26,11 @@ import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.io.OIOUtils;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.parser.OContextVariableResolver;
-import com.orientechnologies.orient.core.Orient;
-import com.orientechnologies.orient.core.command.*;
+import com.orientechnologies.orient.core.command.OBasicCommandContext;
+import com.orientechnologies.orient.core.command.OCommandContext;
+import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
+import com.orientechnologies.orient.core.command.OCommandExecutorAbstract;
+import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
@@ -49,11 +52,28 @@ import com.orientechnologies.orient.core.sql.parser.ParseException;
 import com.orientechnologies.orient.core.sql.query.OLegacyResultSet;
 import com.orientechnologies.orient.core.storage.ORecordDuplicatedException;
 import com.orientechnologies.orient.core.tx.OTransaction;
-
-import javax.script.*;
-import java.io.*;
-import java.util.*;
+import java.io.BufferedReader;
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.StringReader;
+import java.io.UnsupportedEncodingException;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Random;
 import java.util.concurrent.atomic.AtomicInteger;
+import javax.script.Bindings;
+import javax.script.Compilable;
+import javax.script.CompiledScript;
+import javax.script.ScriptContext;
+import javax.script.ScriptEngine;
+import javax.script.ScriptException;
+import javax.script.SimpleBindings;
 
 /**
  * Executes Script Commands.
@@ -66,10 +86,9 @@ public class OCommandExecutorScript extends OCommandExecutorAbstract
   private static final int MAX_DELAY = 100;
   protected OCommandScript request;
   protected DISTRIBUTED_EXECUTION_MODE executionMode = DISTRIBUTED_EXECUTION_MODE.LOCAL;
-  protected AtomicInteger              serialTempRID = new AtomicInteger(0);
+  protected AtomicInteger serialTempRID = new AtomicInteger(0);
 
-  public OCommandExecutorScript() {
-  }
+  public OCommandExecutorScript() {}
 
   @SuppressWarnings("unchecked")
   public OCommandExecutorScript parse(final OCommandRequest iRequest) {
@@ -78,13 +97,13 @@ public class OCommandExecutorScript extends OCommandExecutorAbstract
     return this;
   }
 
-  public OCommandDistributedReplicateRequest.DISTRIBUTED_EXECUTION_MODE getDistributedExecutionMode() {
+  public OCommandDistributedReplicateRequest.DISTRIBUTED_EXECUTION_MODE
+      getDistributedExecutionMode() {
     return executionMode;
   }
 
   public Object execute(final Map<Object, Object> iArgs) {
-    if (context == null)
-      context = new OBasicCommandContext();
+    if (context == null) context = new OBasicCommandContext();
     return executeInContext(context, iArgs);
   }
 
@@ -99,7 +118,8 @@ public class OCommandExecutorScript extends OCommandExecutorAbstract
       try {
         parserText = preParse(parserText, iArgs);
       } catch (ParseException e) {
-        throw OException.wrapException(new OCommandExecutionException("Invalid script:" + e.getMessage()), e);
+        throw OException.wrapException(
+            new OCommandExecutionException("Invalid script:" + e.getMessage()), e);
       }
       return executeSQL();
     } else {
@@ -107,7 +127,8 @@ public class OCommandExecutorScript extends OCommandExecutorAbstract
     }
   }
 
-  private String preParse(String parserText, final Map<Object, Object> iArgs) throws ParseException {
+  private String preParse(String parserText, final Map<Object, Object> iArgs)
+      throws ParseException {
     final boolean strict = getDatabase().getStorage().getConfiguration().isStrictSql();
     if (strict) {
       parserText = addSemicolons(parserText);
@@ -122,8 +143,13 @@ public class OCommandExecutorScript extends OCommandExecutorAbstract
           bytes = parserText.getBytes(getDatabase().getStorage().getConfiguration().getCharset());
         }
       } catch (UnsupportedEncodingException e) {
-        OLogManager.instance().warn(this,
-            "Invalid charset for database " + getDatabase() + " " + getDatabase().getStorage().getConfiguration().getCharset());
+        OLogManager.instance()
+            .warn(
+                this,
+                "Invalid charset for database "
+                    + getDatabase()
+                    + " "
+                    + getDatabase().getStorage().getConfiguration().getCharset());
 
         bytes = parserText.getBytes();
       }
@@ -139,8 +165,13 @@ public class OCommandExecutorScript extends OCommandExecutorAbstract
           osql = new OrientSql(is, db.getStorage().getConfiguration().getCharset());
         }
       } catch (UnsupportedEncodingException e) {
-        OLogManager.instance().warn(this,
-            "Invalid charset for database " + getDatabase() + " " + getDatabase().getStorage().getConfiguration().getCharset());
+        OLogManager.instance()
+            .warn(
+                this,
+                "Invalid charset for database "
+                    + getDatabase()
+                    + " "
+                    + getDatabase().getStorage().getConfiguration().getCharset());
         osql = new OrientSql(is);
       }
       List<OStatement> statements = osql.parseScript();
@@ -176,19 +207,22 @@ public class OCommandExecutorScript extends OCommandExecutorAbstract
     return false;
   }
 
-  protected Object executeJsr223Script(final String language, final OCommandContext iContext, final Map<Object, Object> iArgs) {
+  protected Object executeJsr223Script(
+      final String language, final OCommandContext iContext, final Map<Object, Object> iArgs) {
     ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.instance().get();
 
     final OScriptManager scriptManager = db.getSharedContext().getOrientDB().getScriptManager();
     CompiledScript compiledScript = request.getCompiledScript();
 
-    final OPartitionedObjectPool.PoolEntry<ScriptEngine> entry = scriptManager.acquireDatabaseEngine(db.getName(), language);
+    final OPartitionedObjectPool.PoolEntry<ScriptEngine> entry =
+        scriptManager.acquireDatabaseEngine(db.getName(), language);
     final ScriptEngine scriptEngine = entry.object;
     try {
 
       if (compiledScript == null) {
         if (!(scriptEngine instanceof Compilable))
-          throw new OCommandExecutionException("Language '" + language + "' does not support compilation");
+          throw new OCommandExecutionException(
+              "Language '" + language + "' does not support compilation");
 
         final Compilable c = (Compilable) scriptEngine;
         try {
@@ -200,17 +234,23 @@ public class OCommandExecutorScript extends OCommandExecutorAbstract
         request.setCompiledScript(compiledScript);
       }
 
-      final Bindings binding = scriptManager
-          .bind(scriptEngine, compiledScript.getEngine().getBindings(ScriptContext.ENGINE_SCOPE), db, iContext, iArgs);
+      final Bindings binding =
+          scriptManager.bind(
+              scriptEngine,
+              compiledScript.getEngine().getBindings(ScriptContext.ENGINE_SCOPE),
+              db,
+              iContext,
+              iArgs);
 
       try {
         final Object ob = compiledScript.eval(binding);
 
         return OCommandExecutorUtility.transformResult(ob);
       } catch (ScriptException e) {
-        throw OException
-            .wrapException(new OCommandScriptException("Error on execution of the script", request.getText(), e.getColumnNumber()),
-                e);
+        throw OException.wrapException(
+            new OCommandScriptException(
+                "Error on execution of the script", request.getText(), e.getColumnNumber()),
+            e);
 
       } finally {
         scriptManager.unbind(scriptEngine, binding, iContext, iArgs);
@@ -228,16 +268,19 @@ public class OCommandExecutorScript extends OCommandExecutorAbstract
       return executeSQLScript(parserText, db);
 
     } catch (IOException e) {
-      throw OException.wrapException(new OCommandExecutionException("Error on executing command: " + parserText), e);
+      throw OException.wrapException(
+          new OCommandExecutionException("Error on executing command: " + parserText), e);
     }
   }
 
   @Override
   protected void throwSyntaxErrorException(String iText) {
-    throw new OCommandScriptException("Error on execution of the script: " + iText, request.getText(), 0);
+    throw new OCommandScriptException(
+        "Error on execution of the script: " + iText, request.getText(), 0);
   }
 
-  protected Object executeSQLScript(final String iText, final ODatabaseDocument db) throws IOException {
+  protected Object executeSQLScript(final String iText, final ODatabaseDocument db)
+      throws IOException {
     Object lastResult = null;
     int maxRetry = 1;
 
@@ -270,14 +313,14 @@ public class OCommandExecutorScript extends OCommandExecutorAbstract
             // this block is here (and not below, with the other conditions)
             // just because of the smartSprit() that does not parse correctly a single bracket
 
-            // final List<String> lineParts = OStringSerializerHelper.smartSplit(lastLine, ';', true);
+            // final List<String> lineParts = OStringSerializerHelper.smartSplit(lastLine, ';',
+            // true);
             final List<String> lineParts = splitBySemicolon(lastLine);
 
             if (line == txBegunAtLine)
               // SKIP PREVIOUS COMMAND PART AND JUMP TO THE BEGIN IF ANY
               linePart = txBegunAtPart;
-            else
-              linePart = 0;
+            else linePart = 0;
 
             boolean breakReturn = false;
 
@@ -308,8 +351,7 @@ public class OCommandExecutorScript extends OCommandExecutorAbstract
 
               } else if (OStringSerializerHelper.startsWithIgnoreCase(lastCommand, "begin")) {
 
-                if (txBegun)
-                  throw new OCommandSQLParsingException("Transaction already begun");
+                if (txBegun) throw new OCommandSQLParsingException("Transaction already begun");
 
                 if (db.getTransaction().isActive())
                   // COMMIT ANY ACTIVE TX
@@ -325,14 +367,15 @@ public class OCommandExecutorScript extends OCommandExecutorAbstract
                   String next = lastCommand.substring("begin ".length()).trim();
                   if (OStringSerializerHelper.startsWithIgnoreCase(next, "isolation ")) {
                     next = next.substring("isolation ".length()).trim();
-                    db.getTransaction().setIsolationLevel(OTransaction.ISOLATION_LEVEL.valueOf(next.toUpperCase(Locale.ENGLISH)));
+                    db.getTransaction()
+                        .setIsolationLevel(
+                            OTransaction.ISOLATION_LEVEL.valueOf(next.toUpperCase(Locale.ENGLISH)));
                   }
                 }
 
               } else if ("rollback".equalsIgnoreCase(lastCommand)) {
 
-                if (!txBegun)
-                  throw new OCommandSQLParsingException("Transaction not begun");
+                if (!txBegun) throw new OCommandSQLParsingException("Transaction not begun");
 
                 db.rollback();
 
@@ -362,13 +405,16 @@ public class OCommandExecutorScript extends OCommandExecutorAbstract
               } else if (OStringSerializerHelper.startsWithIgnoreCase(lastCommand, "sleep ")) {
                 executeSleep(lastCommand);
 
-              } else if (OStringSerializerHelper.startsWithIgnoreCase(lastCommand, "console.log ")) {
+              } else if (OStringSerializerHelper.startsWithIgnoreCase(
+                  lastCommand, "console.log ")) {
                 executeConsoleLog(lastCommand, db);
 
-              } else if (OStringSerializerHelper.startsWithIgnoreCase(lastCommand, "console.output ")) {
+              } else if (OStringSerializerHelper.startsWithIgnoreCase(
+                  lastCommand, "console.output ")) {
                 executeConsoleOutput(lastCommand, db);
 
-              } else if (OStringSerializerHelper.startsWithIgnoreCase(lastCommand, "console.error ")) {
+              } else if (OStringSerializerHelper.startsWithIgnoreCase(
+                  lastCommand, "console.error ")) {
                 executeConsoleError(lastCommand, db);
 
               } else if (OStringSerializerHelper.startsWithIgnoreCase(lastCommand, "return ")) {
@@ -386,8 +432,7 @@ public class OCommandExecutorScript extends OCommandExecutorAbstract
             }
           }
         } catch (RuntimeException ex) {
-          if (db.getTransaction().isActive())
-            db.rollback();
+          if (db.getTransaction().isActive()) db.rollback();
           throw ex;
         }
 
@@ -398,8 +443,7 @@ public class OCommandExecutorScript extends OCommandExecutorAbstract
         // THIS CASE IS ON UPSERT
         context.setVariable("retries", retry);
         getDatabase().getLocalCache().clear();
-        if (retry >= maxRetry)
-          throw e;
+        if (retry >= maxRetry) throw e;
 
         waitForNextRetry();
 
@@ -407,8 +451,7 @@ public class OCommandExecutorScript extends OCommandExecutorAbstract
         // THIS CASE IS ON UPSERT
         context.setVariable("retries", retry);
         getDatabase().getLocalCache().clear();
-        if (retry >= maxRetry)
-          throw e;
+        if (retry >= maxRetry) throw e;
 
         waitForNextRetry();
 
@@ -416,14 +459,12 @@ public class OCommandExecutorScript extends OCommandExecutorAbstract
         // THIS CASE IS ON UPSERT
         context.setVariable("retries", retry);
         getDatabase().getLocalCache().clear();
-        if (retry >= maxRetry)
-          throw e;
+        if (retry >= maxRetry) throw e;
 
       } catch (ONeedRetryException e) {
         context.setVariable("retries", retry);
         getDatabase().getLocalCache().clear();
-        if (retry >= maxRetry)
-          throw e;
+        if (retry >= maxRetry) throw e;
 
         waitForNextRetry();
       }
@@ -467,15 +508,17 @@ public class OCommandExecutorScript extends OCommandExecutorAbstract
 
   private boolean evaluateIfCondition(String lastCommand) {
     String cmd = lastCommand;
-    cmd = cmd.trim().substring(2);// remove IF
+    cmd = cmd.trim().substring(2); // remove IF
     cmd = cmd.trim().substring(0, cmd.trim().length() - 1); // remove {
     OSQLFilter condition = OSQLEngine.getInstance().parseCondition(cmd, getContext(), "IF");
     Object result = null;
     try {
       result = condition.evaluate(null, null, getContext());
     } catch (Exception e) {
-      throw OException
-          .wrapException(new OCommandExecutionException("Could not evaluate IF condition: " + cmd + " - " + e.getMessage()), e);
+      throw OException.wrapException(
+          new OCommandExecutionException(
+              "Could not evaluate IF condition: " + cmd + " - " + e.getMessage()),
+          e);
     }
 
     if (Boolean.TRUE.equals(result)) {
@@ -492,7 +535,8 @@ public class OCommandExecutorScript extends OCommandExecutorAbstract
     if (cmd.length() < 3) {
       return false;
     }
-    if (!((OStringSerializerHelper.startsWithIgnoreCase(cmd, "if ")) || OStringSerializerHelper.startsWithIgnoreCase(cmd, "if("))) {
+    if (!((OStringSerializerHelper.startsWithIgnoreCase(cmd, "if "))
+        || OStringSerializerHelper.startsWithIgnoreCase(cmd, "if("))) {
       return false;
     }
     if (!cmd.endsWith("{")) {
@@ -501,9 +545,7 @@ public class OCommandExecutorScript extends OCommandExecutorAbstract
     return true;
   }
 
-  /**
-   * Wait before to retry
-   */
+  /** Wait before to retry */
   protected void waitForNextRetry() {
     try {
       Thread.sleep(new Random().nextInt(MAX_DELAY - 1) + 1);
@@ -531,8 +573,7 @@ public class OCommandExecutorScript extends OCommandExecutorAbstract
   private Object getValue(final String iValue, final ODatabaseDocument db) {
     Object lastResult = null;
     boolean recordResultSet = true;
-    if (iValue.equalsIgnoreCase("NULL"))
-      lastResult = null;
+    if (iValue.equalsIgnoreCase("NULL")) lastResult = null;
     else if (iValue.startsWith("[") && iValue.endsWith("]")) {
       // ARRAY - COLLECTION
       final List<String> items = new ArrayList<String>();
@@ -555,45 +596,39 @@ public class OCommandExecutorScript extends OCommandExecutorAbstract
       for (Map.Entry<String, String> entry : map.entrySet()) {
         // KEY
         String stringKey = entry.getKey();
-        if (stringKey == null)
-          continue;
+        if (stringKey == null) continue;
 
         stringKey = stringKey.trim();
 
         Object key;
-        if (stringKey.startsWith("$"))
-          key = getContext().getVariable(stringKey);
-        else
-          key = stringKey;
+        if (stringKey.startsWith("$")) key = getContext().getVariable(stringKey);
+        else key = stringKey;
 
         if (OMultiValue.isMultiValue(key) && OMultiValue.getSize(key) == 1)
           key = OMultiValue.getFirstValue(key);
 
         // VALUE
         String stringValue = entry.getValue();
-        if (stringValue == null)
-          continue;
+        if (stringValue == null) continue;
 
         stringValue = stringValue.trim();
 
         Object value;
-        if (stringValue.toString().startsWith("$"))
-          value = getContext().getVariable(stringValue);
-        else
-          value = stringValue;
+        if (stringValue.toString().startsWith("$")) value = getContext().getVariable(stringValue);
+        else value = stringValue;
 
         result.put(key, value);
       }
       lastResult = result;
       checkIsRecordResultSet(lastResult);
-    } else if (iValue.startsWith("\"") && iValue.endsWith("\"") || iValue.startsWith("'") && iValue.endsWith("'")) {
+    } else if (iValue.startsWith("\"") && iValue.endsWith("\"")
+        || iValue.startsWith("'") && iValue.endsWith("'")) {
       lastResult = new OContextVariableResolver(context).parse(OIOUtils.getStringContent(iValue));
       checkIsRecordResultSet(lastResult);
     } else if (iValue.startsWith("(") && iValue.endsWith(")"))
       lastResult = executeCommand(iValue, db);
     else {
       lastResult = new OSQLPredicate(iValue).evaluate(context);
-
     }
     // END OF THE SCRIPT
     return lastResult;
@@ -605,8 +640,7 @@ public class OCommandExecutorScript extends OCommandExecutorAbstract
         request.setRecordResultSet(false);
       } else {
         for (Object val : OMultiValue.getMultiValueIterable(result)) {
-          if (!(val instanceof OIdentifiable))
-            request.setRecordResultSet(false);
+          if (!(val instanceof OIdentifiable)) request.setRecordResultSet(false);
         }
       }
     }
@@ -640,17 +674,18 @@ public class OCommandExecutorScript extends OCommandExecutorAbstract
     final int equalsPos = lastCommand.indexOf('=');
     final String variable = lastCommand.substring("let ".length(), equalsPos).trim();
     final String cmd = lastCommand.substring(equalsPos + 1).trim();
-    if (cmd == null)
-      return null;
+    if (cmd == null) return null;
 
     Object lastResult = null;
 
-    if (cmd.equalsIgnoreCase("NULL") || cmd.startsWith("$") || (cmd.startsWith("[") && cmd.endsWith("]")) || (cmd.startsWith("{")
-        && cmd.endsWith("}")) || (cmd.startsWith("\"") && cmd.endsWith("\"") || cmd.startsWith("'") && cmd.endsWith("'")) || (
-        cmd.startsWith("(") && cmd.endsWith(")")) || cmd.startsWith("#"))
-      lastResult = getValue(cmd, db);
-    else
-      lastResult = executeCommand(cmd, db);
+    if (cmd.equalsIgnoreCase("NULL")
+        || cmd.startsWith("$")
+        || (cmd.startsWith("[") && cmd.endsWith("]"))
+        || (cmd.startsWith("{") && cmd.endsWith("}"))
+        || (cmd.startsWith("\"") && cmd.endsWith("\"") || cmd.startsWith("'") && cmd.endsWith("'"))
+        || (cmd.startsWith("(") && cmd.endsWith(")"))
+        || cmd.startsWith("#")) lastResult = getValue(cmd, db);
+    else lastResult = executeCommand(cmd, db);
 
     // PUT THE RESULT INTO THE CONTEXT
     getContext().setVariable(variable, lastResult);

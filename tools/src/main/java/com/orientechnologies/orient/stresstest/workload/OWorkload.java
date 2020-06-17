@@ -29,7 +29,7 @@ import com.orientechnologies.orient.stresstest.OStressTesterSettings;
  */
 public interface OWorkload {
   String getName();
-  
+
   void parseParameters(String params);
 
   void execute(OStressTesterSettings settings, ODatabaseIdentifier databaseIdentifier);

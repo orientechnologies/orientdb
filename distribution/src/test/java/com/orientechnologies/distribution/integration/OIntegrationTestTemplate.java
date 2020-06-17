@@ -9,32 +9,33 @@ import org.junit.Before;
 
 /**
  * This abstract class is a template to be extended to implements integration tests.
+ *
  * <p>
- * <p>
- * Created by frank on 15/03/2017.
+ *
+ * <p>Created by frank on 15/03/2017.
  */
 public abstract class OIntegrationTestTemplate extends OSingleOrientDBServerBaseIT {
 
-    protected ODatabaseDocument db;
+  protected ODatabaseDocument db;
 
-    @Before
-    public void setUp() throws Exception {
+  @Before
+  public void setUp() throws Exception {
 
-        String serverUrl = "remote:" + container.getContainerIpAddress() + ":" + container.getMappedPort(2424);
+    String serverUrl =
+        "remote:" + container.getContainerIpAddress() + ":" + container.getMappedPort(2424);
 
-        orientDB = new OrientDB(serverUrl, "root", "root", OrientDBConfig.defaultConfig());
+    orientDB = new OrientDB(serverUrl, "root", "root", OrientDBConfig.defaultConfig());
 
-        pool = new ODatabasePool(orientDB, "demodb", "admin", "admin");
+    pool = new ODatabasePool(orientDB, "demodb", "admin", "admin");
 
-        db = pool.acquire();
-    }
+    db = pool.acquire();
+  }
 
-    @After
-    public void tearDown() {
-        db.activateOnCurrentThread();
-        db.close();
-        pool.close();
-        orientDB.close();
-    }
-
+  @After
+  public void tearDown() {
+    db.activateOnCurrentThread();
+    db.close();
+    pool.close();
+    orientDB.close();
+  }
 }

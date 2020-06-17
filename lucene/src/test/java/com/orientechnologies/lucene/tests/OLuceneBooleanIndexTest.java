@@ -13,10 +13,12 @@
  *  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  *  * See the License for the specific language governing permissions and
  *  * limitations under the License.
- *  
+ *
  */
 
 package com.orientechnologies.lucene.tests;
+
+import static org.assertj.core.api.Assertions.assertThat;
 
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OType;
@@ -24,17 +26,12 @@ import com.orientechnologies.orient.core.record.OVertex;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
+import java.util.List;
+import java.util.stream.Collectors;
 import org.junit.Before;
 import org.junit.Test;
 
-import java.util.List;
-import java.util.stream.Collectors;
-
-import static org.assertj.core.api.Assertions.assertThat;
-
-/**
- * Created by Enrico Risa on 29/04/15.
- */
+/** Created by Enrico Risa on 29/04/15. */
 public class OLuceneBooleanIndexTest extends OLuceneBaseTest {
 
   @Before
@@ -43,7 +40,10 @@ public class OLuceneBooleanIndexTest extends OLuceneBaseTest {
     OClass personClass = db.createVertexClass("Person");
     personClass.createProperty("isDeleted", OType.BOOLEAN);
 
-    db.command(new OCommandSQL("create index Person.isDeleted on Person (isDeleted) FULLTEXT ENGINE LUCENE")).execute();
+    db.command(
+            new OCommandSQL(
+                "create index Person.isDeleted on Person (isDeleted) FULLTEXT ENGINE LUCENE"))
+        .execute();
 
     for (int i = 0; i < 1000; i++) {
       OVertex person = db.newVertex("Person");
@@ -70,5 +70,4 @@ public class OLuceneBooleanIndexTest extends OLuceneBaseTest {
     assertThat(results.get(0).<Boolean>getProperty("isDeleted")).isTrue();
     docs.close();
   }
-
 }

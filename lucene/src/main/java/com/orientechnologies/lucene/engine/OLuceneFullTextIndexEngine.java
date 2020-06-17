@@ -16,6 +16,8 @@
 
 package com.orientechnologies.lucene.engine;
 
+import static com.orientechnologies.lucene.builder.OLuceneQueryBuilder.EMPTY_METADATA;
+
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.util.ORawPair;
@@ -40,6 +42,14 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.parser.ParseException;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperation;
+import java.io.IOException;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.atomic.AtomicLong;
+import java.util.stream.Stream;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.document.Field;
 import org.apache.lucene.index.IndexWriter;
@@ -51,27 +61,24 @@ import org.apache.lucene.search.SortField;
 import org.apache.lucene.search.highlight.TextFragment;
 import org.apache.lucene.store.Directory;
 
-import java.io.IOException;
-import java.util.*;
-import java.util.concurrent.atomic.AtomicLong;
-import java.util.stream.Stream;
-
-import static com.orientechnologies.lucene.builder.OLuceneQueryBuilder.EMPTY_METADATA;
-
 public class OLuceneFullTextIndexEngine extends OLuceneIndexEngineAbstract {
 
   private final OLuceneDocumentBuilder builder;
-  private       OLuceneQueryBuilder    queryBuilder;
-  private final AtomicLong             bonsayFileId = new AtomicLong(0);
+  private OLuceneQueryBuilder queryBuilder;
+  private final AtomicLong bonsayFileId = new AtomicLong(0);
 
   public OLuceneFullTextIndexEngine(OStorage storage, String idxName, int id) {
     super(id, storage, idxName);
     builder = new OLuceneDocumentBuilder();
-
   }
 
   @Override
-  public void init(String indexName, String indexType, OIndexDefinition indexDefinition, boolean isAutomatic, ODocument metadata) {
+  public void init(
+      String indexName,
+      String indexType,
+      OIndexDefinition indexDefinition,
+      boolean isAutomatic,
+      ODocument metadata) {
     super.init(indexName, indexType, indexDefinition, isAutomatic, metadata);
     queryBuilder = new OLuceneQueryBuilder(metadata);
   }
@@ -87,23 +94,28 @@ public class OLuceneFullTextIndexEngine extends OLuceneIndexEngineAbstract {
   }
 
   @Override
-  public void onRecordAddedToResultSet(final OLuceneQueryContext queryContext, final OContextualRecordId recordId,
-                                       final Document ret, final ScoreDoc score) {
-    recordId.setContext(new HashMap<String, Object>() {
-      {
-        final Map<String, TextFragment[]> frag = queryContext.getFragments();
-        frag.forEach((key, fragments) -> {
-          final StringBuilder hlField = new StringBuilder();
-          for (final TextFragment fragment : fragments) {
-            if ((fragment != null) && (fragment.getScore() > 0)) {
-              hlField.append(fragment.toString());
-            }
+  public void onRecordAddedToResultSet(
+      final OLuceneQueryContext queryContext,
+      final OContextualRecordId recordId,
+      final Document ret,
+      final ScoreDoc score) {
+    recordId.setContext(
+        new HashMap<String, Object>() {
+          {
+            final Map<String, TextFragment[]> frag = queryContext.getFragments();
+            frag.forEach(
+                (key, fragments) -> {
+                  final StringBuilder hlField = new StringBuilder();
+                  for (final TextFragment fragment : fragments) {
+                    if ((fragment != null) && (fragment.getScore() > 0)) {
+                      hlField.append(fragment.toString());
+                    }
+                  }
+                  put("$" + key + "_hl", hlField.toString());
+                });
+            put("$score", score.score);
           }
-          put("$" + key + "_hl", hlField.toString());
         });
-        put("$score", score.score);
-      }
-    });
   }
 
   @Override
@@ -126,7 +138,10 @@ public class OLuceneFullTextIndexEngine extends OLuceneIndexEngineAbstract {
   }
 
   @Override
-  public void update(final OAtomicOperation atomicOperation, final Object key, final OIndexKeyUpdater<Object> updater) {
+  public void update(
+      final OAtomicOperation atomicOperation,
+      final Object key,
+      final OIndexKeyUpdater<Object> updater) {
     put(atomicOperation, key, updater.update(null, bonsayFileId).getValue());
   }
 
@@ -143,34 +158,45 @@ public class OLuceneFullTextIndexEngine extends OLuceneIndexEngineAbstract {
   }
 
   @Override
-  public boolean validatedPut(OAtomicOperation atomicOperation, Object key, ORID value, Validator<Object, ORID> validator) {
-    throw new UnsupportedOperationException("Validated put is not supported by OLuceneFullTextIndexEngine");
+  public boolean validatedPut(
+      OAtomicOperation atomicOperation, Object key, ORID value, Validator<Object, ORID> validator) {
+    throw new UnsupportedOperationException(
+        "Validated put is not supported by OLuceneFullTextIndexEngine");
   }
 
   @Override
-  public Stream<ORawPair<Object, ORID>> iterateEntriesBetween(Object rangeFrom, boolean fromInclusive, Object rangeTo,
-      boolean toInclusive, boolean ascSortOrder, ValuesTransformer transformer) {
+  public Stream<ORawPair<Object, ORID>> iterateEntriesBetween(
+      Object rangeFrom,
+      boolean fromInclusive,
+      Object rangeTo,
+      boolean toInclusive,
+      boolean ascSortOrder,
+      ValuesTransformer transformer) {
     return LuceneIndexTransformer.transformToStream((OLuceneResultSet) get(rangeFrom), rangeFrom);
   }
 
-  private Set<OIdentifiable> getResults(final Query query, final OCommandContext context, final OLuceneTxChanges changes,
-                                        final ODocument metadata) {
-    //sort
+  private Set<OIdentifiable> getResults(
+      final Query query,
+      final OCommandContext context,
+      final OLuceneTxChanges changes,
+      final ODocument metadata) {
+    // sort
     final List<SortField> fields = OLuceneIndexEngineUtils.buildSortFields(metadata);
     final IndexSearcher luceneSearcher = searcher();
-    final OLuceneQueryContext queryContext = new OLuceneQueryContext(context, luceneSearcher, query, fields).withChanges(changes);
+    final OLuceneQueryContext queryContext =
+        new OLuceneQueryContext(context, luceneSearcher, query, fields).withChanges(changes);
     return new OLuceneResultSet(this, queryContext, metadata);
   }
 
   @Override
-  public Stream<ORawPair<Object, ORID>> iterateEntriesMajor(Object fromKey, boolean isInclusive, boolean ascSortOrder,
-      ValuesTransformer transformer) {
+  public Stream<ORawPair<Object, ORID>> iterateEntriesMajor(
+      Object fromKey, boolean isInclusive, boolean ascSortOrder, ValuesTransformer transformer) {
     return null;
   }
 
   @Override
-  public Stream<ORawPair<Object, ORID>> iterateEntriesMinor(Object toKey, boolean isInclusive, boolean ascSortOrder,
-      ValuesTransformer transformer) {
+  public Stream<ORawPair<Object, ORID>> iterateEntriesMinor(
+      Object toKey, boolean isInclusive, boolean ascSortOrder, ValuesTransformer transformer) {
     return null;
   }
 
@@ -182,7 +208,7 @@ public class OLuceneFullTextIndexEngine extends OLuceneIndexEngineAbstract {
   @Override
   public Document buildDocument(Object key, OIdentifiable value) {
     if (indexDefinition.isAutomatic()) {
-//      builder.newBuild(index, key, value);
+      //      builder.newBuild(index, key, value);
 
       return builder.build(indexDefinition, key, value, collectionFields, metadata);
     } else {
@@ -192,7 +218,8 @@ public class OLuceneFullTextIndexEngine extends OLuceneIndexEngineAbstract {
 
   private static Document putInManualindex(Object key, OIdentifiable oIdentifiable) {
     Document doc = new Document();
-    doc.add(OLuceneIndexType.createField(RID, oIdentifiable.getIdentity().toString(), Field.Store.YES));
+    doc.add(
+        OLuceneIndexType.createField(RID, oIdentifiable.getIdentity().toString(), Field.Store.YES));
 
     if (key instanceof OCompositeKey) {
 

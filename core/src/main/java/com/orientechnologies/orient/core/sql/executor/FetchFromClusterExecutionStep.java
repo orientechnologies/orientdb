@@ -11,31 +11,39 @@ import com.orientechnologies.orient.core.exception.OCommandInterruptedException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.iterator.ORecordIteratorCluster;
 import com.orientechnologies.orient.core.record.ORecord;
-import com.orientechnologies.orient.core.sql.parser.*;
-
+import com.orientechnologies.orient.core.sql.parser.OBinaryCompareOperator;
+import com.orientechnologies.orient.core.sql.parser.OBinaryCondition;
+import com.orientechnologies.orient.core.sql.parser.OBooleanExpression;
+import com.orientechnologies.orient.core.sql.parser.OGeOperator;
+import com.orientechnologies.orient.core.sql.parser.OGtOperator;
+import com.orientechnologies.orient.core.sql.parser.OLeOperator;
+import com.orientechnologies.orient.core.sql.parser.OLtOperator;
+import com.orientechnologies.orient.core.sql.parser.ORid;
 import java.util.Map;
 import java.util.Optional;
 
-/**
- * @author Luigi Dell'Aquila (l.dellaquila-(at)-orientdb.com)
- */
+/** @author Luigi Dell'Aquila (l.dellaquila-(at)-orientdb.com) */
 public class FetchFromClusterExecutionStep extends AbstractExecutionStep {
 
-  public static final Object ORDER_ASC  = "ASC";
+  public static final Object ORDER_ASC = "ASC";
   public static final Object ORDER_DESC = "DESC";
   private final QueryPlanningInfo queryPlanning;
 
-  private int    clusterId;
+  private int clusterId;
   private Object order;
 
   private ORecordIteratorCluster iterator;
   private long cost = 0;
 
-  public FetchFromClusterExecutionStep(int clusterId, OCommandContext ctx, boolean profilingEnabled) {
+  public FetchFromClusterExecutionStep(
+      int clusterId, OCommandContext ctx, boolean profilingEnabled) {
     this(clusterId, null, ctx, profilingEnabled);
   }
 
-  public FetchFromClusterExecutionStep(int clusterId, QueryPlanningInfo queryPlanning, OCommandContext ctx,
+  public FetchFromClusterExecutionStep(
+      int clusterId,
+      QueryPlanningInfo queryPlanning,
+      OCommandContext ctx,
       boolean profilingEnabled) {
     super(ctx, profilingEnabled);
     this.clusterId = clusterId;
@@ -50,95 +58,99 @@ public class FetchFromClusterExecutionStep extends AbstractExecutionStep {
       if (iterator == null) {
         long minClusterPosition = calculateMinClusterPosition();
         long maxClusterPosition = calculateMaxClusterPosition();
-        iterator = new ORecordIteratorCluster((ODatabaseDocumentInternal) ctx.getDatabase(), clusterId, minClusterPosition, maxClusterPosition);
+        iterator =
+            new ORecordIteratorCluster(
+                (ODatabaseDocumentInternal) ctx.getDatabase(),
+                clusterId,
+                minClusterPosition,
+                maxClusterPosition);
         if (ORDER_DESC.equals(order)) {
           iterator.last();
         }
       }
-      OResultSet rs = new OResultSet() {
+      OResultSet rs =
+          new OResultSet() {
 
-        private int nFetched = 0;
+            private int nFetched = 0;
 
-        @Override
-        public boolean hasNext() {
-          long begin = profilingEnabled ? System.nanoTime() : 0;
-          try {
-            if (nFetched >= nRecords) {
-              return false;
-            }
-            if (ORDER_DESC.equals(order)) {
-              return iterator.hasPrevious();
-            } else {
-              return iterator.hasNext();
-            }
-          } finally {
-            if (profilingEnabled) {
-              cost += (System.nanoTime() - begin);
-            }
-          }
-        }
-
-        @Override
-        public OResult next() {
-          if (nFetched % 100 == 0 && OExecutionThreadLocal.isInterruptCurrentOperation()) {
-            throw new OCommandInterruptedException("The command has been interrupted");
-          }
-          long begin = profilingEnabled ? System.nanoTime() : 0;
-          try {
-            if (nFetched >= nRecords) {
-              throw new IllegalStateException();
-            }
-            if (ORDER_DESC.equals(order) && !iterator.hasPrevious()) {
-              throw new IllegalStateException();
-            } else if (!ORDER_DESC.equals(order) && !iterator.hasNext()) {
-              throw new IllegalStateException();
+            @Override
+            public boolean hasNext() {
+              long begin = profilingEnabled ? System.nanoTime() : 0;
+              try {
+                if (nFetched >= nRecords) {
+                  return false;
+                }
+                if (ORDER_DESC.equals(order)) {
+                  return iterator.hasPrevious();
+                } else {
+                  return iterator.hasNext();
+                }
+              } finally {
+                if (profilingEnabled) {
+                  cost += (System.nanoTime() - begin);
+                }
+              }
             }
 
-            ORecord record = null;
-            if (ORDER_DESC.equals(order)) {
-              record = iterator.previous();
-            } else {
-              record = iterator.next();
+            @Override
+            public OResult next() {
+              if (nFetched % 100 == 0 && OExecutionThreadLocal.isInterruptCurrentOperation()) {
+                throw new OCommandInterruptedException("The command has been interrupted");
+              }
+              long begin = profilingEnabled ? System.nanoTime() : 0;
+              try {
+                if (nFetched >= nRecords) {
+                  throw new IllegalStateException();
+                }
+                if (ORDER_DESC.equals(order) && !iterator.hasPrevious()) {
+                  throw new IllegalStateException();
+                } else if (!ORDER_DESC.equals(order) && !iterator.hasNext()) {
+                  throw new IllegalStateException();
+                }
+
+                ORecord record = null;
+                if (ORDER_DESC.equals(order)) {
+                  record = iterator.previous();
+                } else {
+                  record = iterator.next();
+                }
+                nFetched++;
+                OResultInternal result = new OResultInternal();
+                result.element = record;
+                ctx.setVariable("$current", result);
+                return result;
+              } finally {
+                if (profilingEnabled) {
+                  cost += (System.nanoTime() - begin);
+                }
+              }
             }
-            nFetched++;
-            OResultInternal result = new OResultInternal();
-            result.element = record;
-            ctx.setVariable("$current", result);
-            return result;
-          } finally {
-            if (profilingEnabled) {
-              cost += (System.nanoTime() - begin);
+
+            @Override
+            public void close() {}
+
+            @Override
+            public Optional<OExecutionPlan> getExecutionPlan() {
+              return Optional.empty();
             }
-          }
-        }
 
-        @Override
-        public void close() {
-
-        }
-
-        @Override
-        public Optional<OExecutionPlan> getExecutionPlan() {
-          return Optional.empty();
-        }
-
-        @Override
-        public Map<String, Long> getQueryStats() {
-          return null;
-        }
-
-      };
+            @Override
+            public Map<String, Long> getQueryStats() {
+              return null;
+            }
+          };
       return rs;
     } finally {
       if (profilingEnabled) {
         cost += (System.nanoTime() - begin);
       }
     }
-
   }
 
   private long calculateMinClusterPosition() {
-    if (queryPlanning == null || queryPlanning.ridRangeConditions == null || queryPlanning.ridRangeConditions.isEmpty()) {
+    if (queryPlanning == null
+        || queryPlanning.ridRangeConditions == null
+        || queryPlanning.ridRangeConditions.isEmpty()) {
       return -1;
     }
 
@@ -164,7 +176,9 @@ public class FetchFromClusterExecutionStep extends AbstractExecutionStep {
   }
 
   private long calculateMaxClusterPosition() {
-    if (queryPlanning == null || queryPlanning.ridRangeConditions == null || queryPlanning.ridRangeConditions.isEmpty()) {
+    if (queryPlanning == null
+        || queryPlanning.ridRangeConditions == null
+        || queryPlanning.ridRangeConditions.isEmpty()) {
       return -1;
     }
     long minValue = Long.MAX_VALUE;
@@ -176,7 +190,11 @@ public class FetchFromClusterExecutionStep extends AbstractExecutionStep {
 
         Object obj;
         if (((OBinaryCondition) ridRangeCondition).getRight().getRid() != null) {
-          obj = ((OBinaryCondition) ridRangeCondition).getRight().getRid().toRecordId((OResult) null, ctx);
+          obj =
+              ((OBinaryCondition) ridRangeCondition)
+                  .getRight()
+                  .getRid()
+                  .toRecordId((OResult) null, ctx);
         } else {
           obj = ((OBinaryCondition) ridRangeCondition).getRight().execute((OResult) null, ctx);
         }
@@ -210,7 +228,12 @@ public class FetchFromClusterExecutionStep extends AbstractExecutionStep {
   @Override
   public String prettyPrint(int depth, int indent) {
     String orderString = ORDER_DESC.equals(order) ? "DESC" : "ASC";
-    String result = OExecutionStepInternal.getIndent(depth, indent) + "+ FETCH FROM CLUSTER " + clusterId + " " + orderString;
+    String result =
+        OExecutionStepInternal.getIndent(depth, indent)
+            + "+ FETCH FROM CLUSTER "
+            + clusterId
+            + " "
+            + orderString;
     if (profilingEnabled) {
       result += " (" + getCostFormatted() + ")";
     }
@@ -255,8 +278,12 @@ public class FetchFromClusterExecutionStep extends AbstractExecutionStep {
 
   @Override
   public OExecutionStep copy(OCommandContext ctx) {
-    FetchFromClusterExecutionStep result = new FetchFromClusterExecutionStep(this.clusterId,
-        this.queryPlanning == null ? null : this.queryPlanning.copy(), ctx, profilingEnabled);
+    FetchFromClusterExecutionStep result =
+        new FetchFromClusterExecutionStep(
+            this.clusterId,
+            this.queryPlanning == null ? null : this.queryPlanning.copy(),
+            ctx,
+            profilingEnabled);
     return result;
   }
 }

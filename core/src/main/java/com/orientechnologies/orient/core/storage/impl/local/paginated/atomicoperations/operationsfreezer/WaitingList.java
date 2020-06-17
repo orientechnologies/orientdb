@@ -34,9 +34,9 @@ final class WaitingList {
         return null;
       }
 
-      //head is null but tail is not null we are in the middle of addition of item in the list
+      // head is null but tail is not null we are in the middle of addition of item in the list
       if (head == null) {
-        //let other thread to make it's work
+        // let other thread to make it's work
         Thread.yield();
         continue;
       }

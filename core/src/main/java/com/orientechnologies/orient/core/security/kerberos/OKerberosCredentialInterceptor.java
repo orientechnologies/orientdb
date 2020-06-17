@@ -24,16 +24,20 @@ import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.exception.OSecurityException;
 import com.orientechnologies.orient.core.security.OCredentialInterceptor;
-import org.ietf.jgss.*;
-
-import javax.security.auth.Subject;
-import javax.security.auth.login.LoginContext;
-import javax.security.auth.login.LoginException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.security.Principal;
 import java.security.PrivilegedAction;
 import java.util.Base64;
+import javax.security.auth.Subject;
+import javax.security.auth.login.LoginContext;
+import javax.security.auth.login.LoginException;
+import org.ietf.jgss.GSSContext;
+import org.ietf.jgss.GSSCredential;
+import org.ietf.jgss.GSSException;
+import org.ietf.jgss.GSSManager;
+import org.ietf.jgss.GSSName;
+import org.ietf.jgss.Oid;
 
 /**
  * Provides a Kerberos credential interceptor.
@@ -52,8 +56,10 @@ public class OKerberosCredentialInterceptor implements OCredentialInterceptor {
     return this.serviceTicket;
   }
 
-  public void intercept(final String url, final String principal, final String spn) throws OSecurityException {
-    // While the principal can be determined from the ticket cache, if a client keytab is used instead,
+  public void intercept(final String url, final String principal, final String spn)
+      throws OSecurityException {
+    // While the principal can be determined from the ticket cache, if a client keytab is used
+    // instead,
     // it may contain multiple principals.
     if (principal == null || principal.isEmpty())
       throw new OSecurityException("OKerberosCredentialInterceptor Principal cannot be null!");
@@ -67,7 +73,8 @@ public class OKerberosCredentialInterceptor implements OCredentialInterceptor {
       // If spn is null or an empty string, the SPN will be generated from the URL like this:
       //		OrientDB/host
       if (url == null || url.isEmpty())
-        throw new OSecurityException("OKerberosCredentialInterceptor URL and SPN cannot both be null!");
+        throw new OSecurityException(
+            "OKerberosCredentialInterceptor URL and SPN cannot both be null!");
 
       try {
         String tempURL = url;
@@ -81,51 +88,55 @@ public class OKerberosCredentialInterceptor implements OCredentialInterceptor {
         String host = remoteURI.getHost();
 
         if (host == null)
-          throw new OSecurityException("OKerberosCredentialInterceptor Could not create SPN from URL: " + url);
+          throw new OSecurityException(
+              "OKerberosCredentialInterceptor Could not create SPN from URL: " + url);
 
         actualSPN = "OrientDB/" + host;
       } catch (URISyntaxException ex) {
-        throw OException
-            .wrapException(new OSecurityException("OKerberosCredentialInterceptor Could not create SPN from URL: " + url), ex);
+        throw OException.wrapException(
+            new OSecurityException(
+                "OKerberosCredentialInterceptor Could not create SPN from URL: " + url),
+            ex);
       }
     }
 
     // Defaults to the environment variable.
     String config = System.getenv("KRB5_CONFIG");
     String ckc = OGlobalConfiguration.CLIENT_KRB5_CONFIG.getValueAsString();
-    if (ckc != null)
-      config = ckc;
+    if (ckc != null) config = ckc;
 
     // Defaults to the environment variable.
     String ccname = System.getenv("KRB5CCNAME");
     String ccn = OGlobalConfiguration.CLIENT_KRB5_CCNAME.getValueAsString();
-    if (ccn != null)
-      ccname = ccn;
+    if (ccn != null) ccname = ccn;
 
     // Defaults to the environment variable.
     String ktname = System.getenv("KRB5_CLIENT_KTNAME");
     String ckn = OGlobalConfiguration.CLIENT_KRB5_KTNAME.getValueAsString();
-    if (ckn != null)
-      ktname = ckn;
+    if (ckn != null) ktname = ckn;
 
     if (config == null)
       throw new OSecurityException("OKerberosCredentialInterceptor KRB5 Config cannot be null!");
     if (ccname == null && ktname == null)
-      throw new OSecurityException("OKerberosCredentialInterceptor KRB5 Credential Cache and KeyTab cannot both be null!");
+      throw new OSecurityException(
+          "OKerberosCredentialInterceptor KRB5 Credential Cache and KeyTab cannot both be null!");
 
     LoginContext lc = null;
 
     try {
       System.setProperty("java.security.krb5.conf", config);
 
-      OKrb5ClientLoginModuleConfig cfg = new OKrb5ClientLoginModuleConfig(principal, ccname, ktname);
+      OKrb5ClientLoginModuleConfig cfg =
+          new OKrb5ClientLoginModuleConfig(principal, ccname, ktname);
 
       lc = new LoginContext("ignore", null, null, cfg);
       lc.login();
     } catch (LoginException lie) {
       OLogManager.instance().debug(this, "intercept() LoginException", lie);
 
-      throw OException.wrapException(new OSecurityException("OKerberosCredentialInterceptor Client Validation Exception!"), lie);
+      throw OException.wrapException(
+          new OSecurityException("OKerberosCredentialInterceptor Client Validation Exception!"),
+          lie);
     }
 
     Subject subject = lc.getSubject();
@@ -133,7 +144,8 @@ public class OKerberosCredentialInterceptor implements OCredentialInterceptor {
     // Assign the client's principal name.
     //		this.principal = getFirstPrincipal(subject);
 
-    //		if(this.principal == null) throw new OSecurityException("OKerberosCredentialInterceptor Cannot obtain client principal!");
+    //		if(this.principal == null) throw new OSecurityException("OKerberosCredentialInterceptor
+    // Cannot obtain client principal!");
 
     this.serviceTicket = getServiceTicket(subject, principal, actualSPN);
 
@@ -144,7 +156,8 @@ public class OKerberosCredentialInterceptor implements OCredentialInterceptor {
     }
 
     if (this.serviceTicket == null)
-      throw new OSecurityException("OKerberosCredentialInterceptor Cannot obtain the service ticket!");
+      throw new OSecurityException(
+          "OKerberosCredentialInterceptor Cannot obtain the service ticket!");
   }
 
   private String getFirstPrincipal(Subject subject) {
@@ -158,7 +171,8 @@ public class OKerberosCredentialInterceptor implements OCredentialInterceptor {
     return null;
   }
 
-  private String getServiceTicket(final Subject subject, final String principal, final String servicePrincipalName) {
+  private String getServiceTicket(
+      final Subject subject, final String principal, final String servicePrincipalName) {
     try {
       GSSManager manager = GSSManager.getInstance();
       GSSName serviceName = manager.createName(servicePrincipalName, GSSName.NT_USER_NAME);
@@ -166,13 +180,16 @@ public class OKerberosCredentialInterceptor implements OCredentialInterceptor {
       Oid krb5Oid = new Oid("1.2.840.113554.1.2.2");
 
       // Initiator.
-      final GSSContext context = manager.createContext(serviceName, krb5Oid, null, GSSContext.DEFAULT_LIFETIME);
+      final GSSContext context =
+          manager.createContext(serviceName, krb5Oid, null, GSSContext.DEFAULT_LIFETIME);
 
       if (context != null) {
         // http://docs.oracle.com/javase/6/docs/technotes/guides/security/jgss/jgss-features.html
-        // When performing operations as a particular Subject, e.g. Subject.doAs(...) or Subject.doAsPrivileged(...),
-        // the to-be-used GSSCredential should be added to Subject's private credential set. Otherwise, 
-        // the GSS operations will fail since no credential is found.				
+        // When performing operations as a particular Subject, e.g. Subject.doAs(...) or
+        // Subject.doAsPrivileged(...),
+        // the to-be-used GSSCredential should be added to Subject's private credential set.
+        // Otherwise,
+        // the GSS operations will fail since no credential is found.
         boolean useNativeJgss = Boolean.getBoolean("sun.security.jgss.native");
 
         if (useNativeJgss) {
@@ -182,35 +199,40 @@ public class OKerberosCredentialInterceptor implements OCredentialInterceptor {
             GSSName clientName = manager.createName(principal, GSSName.NT_USER_NAME);
 
             // null: indicates using the default principal.
-            GSSCredential cred = manager
-                .createCredential(clientName, GSSContext.DEFAULT_LIFETIME, krb5Oid, GSSCredential.INITIATE_ONLY);
+            GSSCredential cred =
+                manager.createCredential(
+                    clientName, GSSContext.DEFAULT_LIFETIME, krb5Oid, GSSCredential.INITIATE_ONLY);
 
             subject.getPrivateCredentials().add(cred);
           } catch (GSSException gssEx) {
-            OLogManager.instance().error(this, "getServiceTicket() Use Native JGSS GSSException", gssEx);
+            OLogManager.instance()
+                .error(this, "getServiceTicket() Use Native JGSS GSSException", gssEx);
           }
         }
 
         // The GSS context initiation has to be performed as a privileged action.
-        byte[] serviceTicket = Subject.doAs(subject, new PrivilegedAction<byte[]>() {
-          public byte[] run() {
-            try {
-              byte[] token = new byte[0];
+        byte[] serviceTicket =
+            Subject.doAs(
+                subject,
+                new PrivilegedAction<byte[]>() {
+                  public byte[] run() {
+                    try {
+                      byte[] token = new byte[0];
 
-              // This is a one pass context initialisation.
-              context.requestMutualAuth(false);
-              context.requestCredDeleg(false);
-              return context.initSecContext(token, 0, token.length);
-            } catch (Exception inner) {
-              OLogManager.instance().debug(this, "getServiceTicket() doAs() Exception", inner);
-            }
+                      // This is a one pass context initialisation.
+                      context.requestMutualAuth(false);
+                      context.requestCredDeleg(false);
+                      return context.initSecContext(token, 0, token.length);
+                    } catch (Exception inner) {
+                      OLogManager.instance()
+                          .debug(this, "getServiceTicket() doAs() Exception", inner);
+                    }
 
-            return null;
-          }
-        });
+                    return null;
+                  }
+                });
 
-        if (serviceTicket != null)
-          return Base64.getEncoder().encodeToString(serviceTicket);
+        if (serviceTicket != null) return Base64.getEncoder().encodeToString(serviceTicket);
 
         context.dispose();
       } else {

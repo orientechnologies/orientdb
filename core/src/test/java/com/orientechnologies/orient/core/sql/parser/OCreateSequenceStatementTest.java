@@ -18,7 +18,6 @@ public class OCreateSequenceStatementTest extends OParserTestAbstract {
     checkRightSyntax("create sequence Foo type ordered START 100 INCREMENT 4 CACHE 5");
     checkRightSyntax("create sequence Foo type ordered START :a INCREMENT :b CACHE :c");
 
-
     checkRightSyntax("CREATE SEQUENCE Foo IF NOT EXISTS TYPE CACHED");
 
     checkRightSyntax("CREATE SEQUENCE Foo type cached START 10 LIMIT 1000 CYCLE TRUE");
@@ -28,5 +27,4 @@ public class OCreateSequenceStatementTest extends OParserTestAbstract {
 
     checkWrongSyntax("CREATE SEQUENCE Foo IF EXISTS TYPE CACHED");
   }
-
 }

@@ -28,29 +28,37 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.query.OConcurrentLegacyResultSet;
 import com.orientechnologies.orient.core.storage.ORecordDuplicatedException;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Random;
+import java.util.Set;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.Phaser;
+import java.util.concurrent.atomic.AtomicInteger;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
-import java.util.*;
-import java.util.concurrent.*;
-import java.util.concurrent.atomic.AtomicInteger;
-
 @Test
 public class IndexUniqueTest {
-  private final        AtomicInteger[] propValues = new AtomicInteger[10];
-  private final        Random          random     = new Random();
-  private static final int             ATTEMPTS   = 100000;
+  private final AtomicInteger[] propValues = new AtomicInteger[10];
+  private final Random random = new Random();
+  private static final int ATTEMPTS = 100000;
 
-  private final Phaser phaser = new Phaser() {
-    @Override
-    protected boolean onAdvance(int phase, int registeredParties) {
-      for (AtomicInteger value : propValues) {
-        value.set(random.nextInt());
-      }
+  private final Phaser phaser =
+      new Phaser() {
+        @Override
+        protected boolean onAdvance(int phase, int registeredParties) {
+          for (AtomicInteger value : propValues) {
+            value.set(random.nextInt());
+          }
 
-      return super.onAdvance(phase, registeredParties);
-    }
-  };
+          return super.onAdvance(phase, registeredParties);
+        }
+      };
 
   public void indexUniqueTest() throws Exception {
     String[] indexNames = new String[10];
@@ -59,8 +67,7 @@ public class IndexUniqueTest {
     char[] chars = "abcdefghijklmnopqrstuvwxyz".toCharArray();
     for (int i = 0; i < indexNames.length; i++) {
       String nm = "";
-      for (int k = 0; k < 10; k++)
-        nm += chars[random.nextInt(chars.length)];
+      for (int k = 0; k < 10; k++) nm += chars[random.nextInt(chars.length)];
 
       indexNames[i] = nm;
     }
@@ -73,8 +80,7 @@ public class IndexUniqueTest {
       db.drop();
     }
 
-    for (int i = 0; i < propValues.length; i++)
-      propValues[i] = new AtomicInteger();
+    for (int i = 0; i < propValues.length; i++) propValues[i] = new AtomicInteger();
 
     db.create();
 
@@ -97,8 +103,7 @@ public class IndexUniqueTest {
     }
 
     int sum = 0;
-    for (Future<Integer> future : futures)
-      sum += future.get();
+    for (Future<Integer> future : futures) sum += future.get();
 
     System.out.println("Total documents " + sum);
 
@@ -115,11 +120,10 @@ public class IndexUniqueTest {
         Assert.assertTrue(propValues.add(document.<Integer>field("prop" + i)));
       }
     }
-
   }
 
   public final class Populator implements Callable<Integer> {
-    private final String  url;
+    private final String url;
     private final boolean tx;
 
     public Populator(String url, boolean tx) {
@@ -137,24 +141,27 @@ public class IndexUniqueTest {
         try {
           i++;
 
-          if (tx)
-            db.begin();
+          if (tx) db.begin();
 
           ODocument document = new ODocument("indexTest");
 
-          for (int n = 0; n < 10; n++)
-            document.field("prop" + n, propValues[n].get());
+          for (int n = 0; n < 10; n++) document.field("prop" + n, propValues[n].get());
 
           document.save();
 
-          if (tx)
-            db.commit();
+          if (tx) db.commit();
 
           success++;
         } catch (ORecordDuplicatedException e) {
           for (int n = 0; n < 10; n++) {
-            OConcurrentLegacyResultSet result = db
-                .command(new OCommandSQL("select * from indexTest where prop" + n + " like " + propValues[n].get())).execute();
+            OConcurrentLegacyResultSet result =
+                db.command(
+                        new OCommandSQL(
+                            "select * from indexTest where prop"
+                                + n
+                                + " like "
+                                + propValues[n].get()))
+                    .execute();
             assert result.size() == 1;
           }
         } catch (Exception e) {

@@ -8,15 +8,12 @@ import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializer;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelDataInput;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelDataOutput;
-
 import java.io.IOException;
 
 public class OUnlockRecordRequest implements OBinaryRequest<OUnlockRecordResponse> {
   private ORID identity;
 
-  public OUnlockRecordRequest() {
-
-  }
+  public OUnlockRecordRequest() {}
 
   public OUnlockRecordRequest(ORID identity) {
     this.identity = identity;
@@ -28,7 +25,8 @@ public class OUnlockRecordRequest implements OBinaryRequest<OUnlockRecordRespons
   }
 
   @Override
-  public void read(OChannelDataInput channel, int protocolVersion, ORecordSerializer serializer) throws IOException {
+  public void read(OChannelDataInput channel, int protocolVersion, ORecordSerializer serializer)
+      throws IOException {
     this.identity = channel.readRID();
   }
 

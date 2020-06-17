@@ -2,13 +2,10 @@ package com.orientechnologies.orient.core.sql.parser;
 
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
-
 import java.util.Collections;
 import java.util.Map;
 
-/**
- * @author Luigi Dell'Aquila (l.dellaquila-(at)-orientdb.com)
- */
+/** @author Luigi Dell'Aquila (l.dellaquila-(at)-orientdb.com) */
 public class OMatchPathItemFirst extends OMatchPathItem {
   protected OFunctionCall function;
 
@@ -34,7 +31,9 @@ public class OMatchPathItemFirst extends OMatchPathItem {
     }
   }
 
-  protected Iterable<OIdentifiable> traversePatternEdge(OMatchStatement.MatchContext matchContext, OIdentifiable startingPoint,
+  protected Iterable<OIdentifiable> traversePatternEdge(
+      OMatchStatement.MatchContext matchContext,
+      OIdentifiable startingPoint,
       OCommandContext iCommandContext) {
     Object qR = this.function.execute(startingPoint, iCommandContext);
     return (qR instanceof Iterable) ? (Iterable) qR : Collections.singleton((OIdentifiable) qR);
@@ -54,8 +53,7 @@ public class OMatchPathItemFirst extends OMatchPathItem {
     }
     OMatchPathItemFirst that = (OMatchPathItemFirst) o;
 
-    if (function != null ? !function.equals(that.function) : that.function != null)
-      return false;
+    if (function != null ? !function.equals(that.function) : that.function != null) return false;
 
     return true;
   }

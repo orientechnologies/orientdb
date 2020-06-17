@@ -1,23 +1,29 @@
 package com.orientechnologies.orient.distributed.impl.coordinator.transaction;
 
 import com.orientechnologies.orient.core.db.config.ONodeIdentity;
-import com.orientechnologies.orient.distributed.impl.coordinator.*;
+import com.orientechnologies.orient.distributed.impl.coordinator.ODistributedCoordinator;
+import com.orientechnologies.orient.distributed.impl.coordinator.ONodeResponse;
+import com.orientechnologies.orient.distributed.impl.coordinator.ORequestContext;
+import com.orientechnologies.orient.distributed.impl.coordinator.OResponseHandler;
 import com.orientechnologies.orient.distributed.impl.coordinator.lock.OLockGuard;
-
 import java.util.List;
 
 public class OTransactionSecondPhaseResponseHandler implements OResponseHandler {
 
-  private       OTransactionSubmit  request;
-  private       ONodeIdentity       requester;
-  private final boolean             success;
-  private       int                 responseCount = 0;
-  private final List<OLockGuard>    guards;
-  private       OSessionOperationId operationId;
-  private       boolean             replySent     = false;
+  private OTransactionSubmit request;
+  private ONodeIdentity requester;
+  private final boolean success;
+  private int responseCount = 0;
+  private final List<OLockGuard> guards;
+  private OSessionOperationId operationId;
+  private boolean replySent = false;
 
-  public OTransactionSecondPhaseResponseHandler(boolean success, OTransactionSubmit request, ONodeIdentity requester,
-      List<OLockGuard> guards, OSessionOperationId operationId) {
+  public OTransactionSecondPhaseResponseHandler(
+      boolean success,
+      OTransactionSubmit request,
+      ONodeIdentity requester,
+      List<OLockGuard> guards,
+      OSessionOperationId operationId) {
     this.success = success;
     this.request = request;
     this.requester = requester;
@@ -26,7 +32,10 @@ public class OTransactionSecondPhaseResponseHandler implements OResponseHandler 
   }
 
   @Override
-  public boolean receive(ODistributedCoordinator coordinator, ORequestContext context, ONodeIdentity member,
+  public boolean receive(
+      ODistributedCoordinator coordinator,
+      ORequestContext context,
+      ONodeIdentity member,
       ONodeResponse response) {
     responseCount++;
     if (responseCount >= context.getQuorum()) {
@@ -36,8 +45,14 @@ public class OTransactionSecondPhaseResponseHandler implements OResponseHandler 
           if (guards != null) {
             coordinator.getLockManager().unlock(guards);
           }
-          coordinator.reply(requester, operationId,
-              new OTransactionResponse(true, values.getCreatedRecords(), values.getUpdatedRecords(), values.getDeletedRecords()));
+          coordinator.reply(
+              requester,
+              operationId,
+              new OTransactionResponse(
+                  true,
+                  values.getCreatedRecords(),
+                  values.getUpdatedRecords(),
+                  values.getDeletedRecords()));
           replySent = true;
         }
       }

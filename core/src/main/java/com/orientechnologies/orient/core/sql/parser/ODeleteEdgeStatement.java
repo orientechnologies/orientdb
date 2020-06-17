@@ -9,7 +9,6 @@ import com.orientechnologies.orient.core.sql.executor.ODeleteEdgeExecutionPlanne
 import com.orientechnologies.orient.core.sql.executor.ODeleteExecutionPlan;
 import com.orientechnologies.orient.core.sql.executor.OInternalExecutionPlan;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
-
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -21,7 +20,7 @@ public class ODeleteEdgeStatement extends OStatement {
   protected OIdentifier className;
   protected OIdentifier targetClusterName;
 
-  protected ORid       rid;
+  protected ORid rid;
   protected List<ORid> rids;
 
   protected OExpression leftExpression;
@@ -41,7 +40,8 @@ public class ODeleteEdgeStatement extends OStatement {
   }
 
   @Override
-  public OResultSet execute(ODatabase db, Map params, OCommandContext parentCtx, boolean usePlanCache) {
+  public OResultSet execute(
+      ODatabase db, Map params, OCommandContext parentCtx, boolean usePlanCache) {
     OBasicCommandContext ctx = new OBasicCommandContext();
     if (parentCtx != null) {
       ctx.setParentWithoutOverridingChild(parentCtx);
@@ -59,7 +59,8 @@ public class ODeleteEdgeStatement extends OStatement {
   }
 
   @Override
-  public OResultSet execute(ODatabase db, Object[] args, OCommandContext parentCtx, boolean usePlanCache) {
+  public OResultSet execute(
+      ODatabase db, Object[] args, OCommandContext parentCtx, boolean usePlanCache) {
     Map<Object, Object> params = new HashMap<>();
     if (args != null) {
       for (int i = 0; i < args.length; i++) {
@@ -76,7 +77,8 @@ public class ODeleteEdgeStatement extends OStatement {
     return result;
   }
 
-  public OInternalExecutionPlan createExecutionPlanNoCache(OCommandContext ctx, boolean enableProfiling) {
+  public OInternalExecutionPlan createExecutionPlanNoCache(
+      OCommandContext ctx, boolean enableProfiling) {
     ODeleteEdgeExecutionPlanner planner = new ODeleteEdgeExecutionPlanner(this);
     OInternalExecutionPlan result = planner.createExecutionPlan(ctx, enableProfiling, false);
     result.setStatement(this.originalStatement);
@@ -144,7 +146,8 @@ public class ODeleteEdgeStatement extends OStatement {
     result.className = className == null ? null : className.copy();
     result.targetClusterName = targetClusterName == null ? null : targetClusterName.copy();
     result.rid = rid == null ? null : rid.copy();
-    result.rids = rids == null ? null : rids.stream().map(x -> x.copy()).collect(Collectors.toList());
+    result.rids =
+        rids == null ? null : rids.stream().map(x -> x.copy()).collect(Collectors.toList());
     result.leftExpression = leftExpression == null ? null : leftExpression.copy();
     result.rightExpression = rightExpression == null ? null : rightExpression.copy();
     result.whereClause = whereClause == null ? null : whereClause.copy();
@@ -170,31 +173,28 @@ public class ODeleteEdgeStatement extends OStatement {
 
   @Override
   public boolean equals(Object o) {
-    if (this == o)
-      return true;
-    if (o == null || getClass() != o.getClass())
-      return false;
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
 
     ODeleteEdgeStatement that = (ODeleteEdgeStatement) o;
 
     if (className != null ? !className.equals(that.className) : that.className != null)
       return false;
-    if (targetClusterName != null ? !targetClusterName.equals(that.targetClusterName) : that.targetClusterName != null)
-      return false;
-    if (rid != null ? !rid.equals(that.rid) : that.rid != null)
-      return false;
-    if (rids != null ? !rids.equals(that.rids) : that.rids != null)
-      return false;
-    if (leftExpression != null ? !leftExpression.equals(that.leftExpression) : that.leftExpression != null)
-      return false;
-    if (rightExpression != null ? !rightExpression.equals(that.rightExpression) : that.rightExpression != null)
-      return false;
+    if (targetClusterName != null
+        ? !targetClusterName.equals(that.targetClusterName)
+        : that.targetClusterName != null) return false;
+    if (rid != null ? !rid.equals(that.rid) : that.rid != null) return false;
+    if (rids != null ? !rids.equals(that.rids) : that.rids != null) return false;
+    if (leftExpression != null
+        ? !leftExpression.equals(that.leftExpression)
+        : that.leftExpression != null) return false;
+    if (rightExpression != null
+        ? !rightExpression.equals(that.rightExpression)
+        : that.rightExpression != null) return false;
     if (whereClause != null ? !whereClause.equals(that.whereClause) : that.whereClause != null)
       return false;
-    if (limit != null ? !limit.equals(that.limit) : that.limit != null)
-      return false;
-    if (batch != null ? !batch.equals(that.batch) : that.batch != null)
-      return false;
+    if (limit != null ? !limit.equals(that.limit) : that.limit != null) return false;
+    if (batch != null ? !batch.equals(that.batch) : that.batch != null) return false;
 
     return true;
   }

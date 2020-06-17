@@ -31,8 +31,11 @@ import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.storage.OCluster;
 import com.orientechnologies.orient.core.storage.OCluster.ATTRIBUTES;
 import com.orientechnologies.orient.core.storage.OStorage;
-
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -42,14 +45,15 @@ import java.util.regex.Pattern;
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
  */
 @SuppressWarnings("unchecked")
-public class OCommandExecutorSQLAlterCluster extends OCommandExecutorSQLAbstract implements OCommandDistributedReplicateRequest {
-  public static final String KEYWORD_ALTER   = "ALTER";
+public class OCommandExecutorSQLAlterCluster extends OCommandExecutorSQLAbstract
+    implements OCommandDistributedReplicateRequest {
+  public static final String KEYWORD_ALTER = "ALTER";
   public static final String KEYWORD_CLUSTER = "CLUSTER";
 
-  protected String     clusterName;
-  protected int        clusterId = -1;
+  protected String clusterName;
+  protected int clusterId = -1;
   protected ATTRIBUTES attribute;
-  protected String     value;
+  protected String value;
 
   public OCommandExecutorSQLAlterCluster parse(final OCommandRequest iRequest) {
     final OCommandRequestText textRequest = (OCommandRequestText) iRequest;
@@ -69,39 +73,48 @@ public class OCommandExecutorSQLAlterCluster extends OCommandExecutorSQLAbstract
       int oldPos = 0;
       int pos = nextWord(parserText, parserTextUpperCase, oldPos, word, true);
       if (pos == -1 || !word.toString().equals(KEYWORD_ALTER))
-        throw new OCommandSQLParsingException("Keyword " + KEYWORD_ALTER + " not found. Use " + getSyntax(), parserText, oldPos);
+        throw new OCommandSQLParsingException(
+            "Keyword " + KEYWORD_ALTER + " not found. Use " + getSyntax(), parserText, oldPos);
 
       oldPos = pos;
       pos = nextWord(parserText, parserTextUpperCase, oldPos, word, true);
       if (pos == -1 || !word.toString().equals(KEYWORD_CLUSTER))
-        throw new OCommandSQLParsingException("Keyword " + KEYWORD_CLUSTER + " not found. Use " + getSyntax(), parserText, oldPos);
+        throw new OCommandSQLParsingException(
+            "Keyword " + KEYWORD_CLUSTER + " not found. Use " + getSyntax(), parserText, oldPos);
 
       oldPos = pos;
       pos = nextWord(parserText, parserTextUpperCase, oldPos, word, false);
       if (pos == -1)
-        throw new OCommandSQLParsingException("Expected <cluster-name>. Use " + getSyntax(), parserText, oldPos);
+        throw new OCommandSQLParsingException(
+            "Expected <cluster-name>. Use " + getSyntax(), parserText, oldPos);
 
       clusterName = word.toString();
       clusterName = decodeClassName(clusterName);
 
       final Pattern p = Pattern.compile("([0-9]*)");
       final Matcher m = p.matcher(clusterName);
-      if (m.matches())
-        clusterId = Integer.parseInt(clusterName);
+      if (m.matches()) clusterId = Integer.parseInt(clusterName);
 
       oldPos = pos;
       pos = nextWord(parserText, parserTextUpperCase, oldPos, word, true);
       if (pos == -1)
-        throw new OCommandSQLParsingException("Missing cluster attribute to change. Use " + getSyntax(), parserText, oldPos);
+        throw new OCommandSQLParsingException(
+            "Missing cluster attribute to change. Use " + getSyntax(), parserText, oldPos);
 
       final String attributeAsString = word.toString();
 
       try {
         attribute = OCluster.ATTRIBUTES.valueOf(attributeAsString.toUpperCase(Locale.ENGLISH));
       } catch (IllegalArgumentException e) {
-        throw OException.wrapException(new OCommandSQLParsingException(
-            "Unknown class attribute '" + attributeAsString + "'. Supported attributes are: " + Arrays
-                .toString(OCluster.ATTRIBUTES.values()), parserText, oldPos), e);
+        throw OException.wrapException(
+            new OCommandSQLParsingException(
+                "Unknown class attribute '"
+                    + attributeAsString
+                    + "'. Supported attributes are: "
+                    + Arrays.toString(OCluster.ATTRIBUTES.values()),
+                parserText,
+                oldPos),
+            e);
       }
 
       value = parserText.substring(pos + 1).trim();
@@ -109,15 +122,19 @@ public class OCommandExecutorSQLAlterCluster extends OCommandExecutorSQLAbstract
       value = decodeClassName(value);
 
       if (attribute == ATTRIBUTES.NAME) {
-        value = value.replaceAll(" ", ""); //no spaces in cluster names
+        value = value.replaceAll(" ", ""); // no spaces in cluster names
       }
 
       if (value.length() == 0)
         throw new OCommandSQLParsingException(
-            "Missing property value to change for attribute '" + attribute + "'. Use " + getSyntax(), parserText, oldPos);
+            "Missing property value to change for attribute '"
+                + attribute
+                + "'. Use "
+                + getSyntax(),
+            parserText,
+            oldPos);
 
-      if (value.equalsIgnoreCase("null"))
-        value = null;
+      if (value.equalsIgnoreCase("null")) value = null;
     } finally {
       textRequest.setText(originalQuery);
     }
@@ -125,12 +142,11 @@ public class OCommandExecutorSQLAlterCluster extends OCommandExecutorSQLAbstract
     return this;
   }
 
-  /**
-   * Execute the ALTER CLASS.
-   */
+  /** Execute the ALTER CLASS. */
   public Object execute(final Map<Object, Object> iArgs) {
     if (attribute == null)
-      throw new OCommandExecutionException("Cannot execute the command because it has not been parsed yet");
+      throw new OCommandExecutionException(
+          "Cannot execute the command because it has not been parsed yet");
 
     final List<Integer> clusters = getClusters();
 
@@ -149,7 +165,8 @@ public class OCommandExecutorSQLAlterCluster extends OCommandExecutorSQLAbstract
         this.clusterId = clusterId;
       }
 
-      if (attribute == ATTRIBUTES.STATUS && OStorageClusterConfiguration.STATUS.OFFLINE.toString().equalsIgnoreCase(value)) {
+      if (attribute == ATTRIBUTES.STATUS
+          && OStorageClusterConfiguration.STATUS.OFFLINE.toString().equalsIgnoreCase(value)) {
         // REMOVE CACHE OF COMMAND RESULTS IF ACTIVE
         database.getMetadata().getCommandCache().invalidateResultsOfCluster(clusterName);
       }
@@ -167,7 +184,9 @@ public class OCommandExecutorSQLAlterCluster extends OCommandExecutorSQLAbstract
 
   @Override
   public long getDistributedTimeout() {
-    return getDatabase().getConfiguration().getValueAsLong(OGlobalConfiguration.DISTRIBUTED_COMMAND_QUICK_TASK_SYNCH_TIMEOUT);
+    return getDatabase()
+        .getConfiguration()
+        .getValueAsLong(OGlobalConfiguration.DISTRIBUTED_COMMAND_QUICK_TASK_SYNCH_TIMEOUT);
   }
 
   protected List<Integer> getClusters() {
@@ -176,10 +195,10 @@ public class OCommandExecutorSQLAlterCluster extends OCommandExecutorSQLAbstract
     final List<Integer> result = new ArrayList<>();
 
     if (clusterName.endsWith("*")) {
-      final String toMatch = clusterName.substring(0, clusterName.length() - 1).toLowerCase(Locale.ENGLISH);
+      final String toMatch =
+          clusterName.substring(0, clusterName.length() - 1).toLowerCase(Locale.ENGLISH);
       for (String cl : database.getStorage().getClusterNames()) {
-        if (cl.startsWith(toMatch))
-          result.add(database.getStorage().getClusterIdByName(cl));
+        if (cl.startsWith(toMatch)) result.add(database.getStorage().getClusterIdByName(cl));
       }
     } else {
       if (clusterId > -1) {

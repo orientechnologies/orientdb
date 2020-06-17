@@ -8,8 +8,12 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ODocumentHelper;
 import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.executor.OResultInternal;
-
-import java.util.*;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 public class OJson extends SimpleNode {
@@ -63,11 +67,12 @@ public class OJson extends SimpleNode {
     return doc;
   }
 
-  private ODocument toDocument(OResult source, OCommandContext ctx, String className){
+  private ODocument toDocument(OResult source, OCommandContext ctx, String className) {
     ODocument retDoc = new ODocument(className);
     for (OJsonItem item : items) {
       String name = item.getLeftValue();
-      if (name == null || ODocumentHelper.getReservedAttributes().contains(name.toLowerCase(Locale.ENGLISH))) {
+      if (name == null
+          || ODocumentHelper.getReservedAttributes().contains(name.toLowerCase(Locale.ENGLISH))) {
         continue;
       }
       Object value = item.right.execute(source, ctx);
@@ -78,17 +83,17 @@ public class OJson extends SimpleNode {
 
   /**
    * choosing return type is based on existence of @class and @type field in JSON
+   *
    * @param source
    * @param ctx
    * @return
    */
-  public Object toObjectDetermineType(OResult source, OCommandContext ctx){
+  public Object toObjectDetermineType(OResult source, OCommandContext ctx) {
     String className = getClassNameForDocument(ctx);
     String type = getTypeForDocument(ctx);
     if (className != null || (type != null && "d".equalsIgnoreCase(type))) {
       return toDocument(source, ctx, className);
-    }
-    else{
+    } else {
       return toMap(source, ctx);
     }
   }
@@ -179,15 +184,12 @@ public class OJson extends SimpleNode {
 
   @Override
   public boolean equals(Object o) {
-    if (this == o)
-      return true;
-    if (o == null || getClass() != o.getClass())
-      return false;
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
 
     OJson oJson = (OJson) o;
 
-    if (items != null ? !items.equals(oJson.items) : oJson.items != null)
-      return false;
+    if (items != null ? !items.equals(oJson.items) : oJson.items != null) return false;
 
     return true;
   }
@@ -215,7 +217,8 @@ public class OJson extends SimpleNode {
   public OResult serialize() {
     OResultInternal result = new OResultInternal();
     if (items != null) {
-      result.setProperty("items", items.stream().map(x -> x.serialize()).collect(Collectors.toList()));
+      result.setProperty(
+          "items", items.stream().map(x -> x.serialize()).collect(Collectors.toList()));
     }
     return result;
   }
@@ -234,7 +237,7 @@ public class OJson extends SimpleNode {
   }
 
   public boolean isCacheable() {
-    return false;//TODO optimize
+    return false; // TODO optimize
   }
 }
 /* JavaCC - OriginalChecksum=3beec9f6db486de944498588b51a505d (do not edit this line) */

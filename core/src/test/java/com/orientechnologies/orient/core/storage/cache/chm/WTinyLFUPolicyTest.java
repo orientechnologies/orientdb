@@ -1,22 +1,21 @@
 package com.orientechnologies.orient.core.storage.cache.chm;
 
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
+
 import com.orientechnologies.common.directmemory.OByteBufferPool;
 import com.orientechnologies.common.directmemory.ODirectMemoryAllocator;
 import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
 import com.orientechnologies.orient.core.storage.cache.OCacheEntryImpl;
 import com.orientechnologies.orient.core.storage.cache.OCachePointer;
-import org.junit.Assert;
-import org.junit.Test;
-import org.mockito.Mockito;
-
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
-
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
+import org.junit.Assert;
+import org.junit.Test;
+import org.mockito.Mockito;
 
 public class WTinyLFUPolicyTest {
   @Test
@@ -59,7 +58,9 @@ public class WTinyLFUPolicyTest {
       Assert.assertFalse(protectionIterator.hasNext());
     }
 
-    Assert.assertArrayEquals(new OCacheEntry[] { cacheEntries[2], cacheEntries[1], cacheEntries[0] }, toArray(wTinyLFU.eden()));
+    Assert.assertArrayEquals(
+        new OCacheEntry[] {cacheEntries[2], cacheEntries[1], cacheEntries[0]},
+        toArray(wTinyLFU.eden()));
 
     wTinyLFU.onAccess(cacheEntries[1]);
 
@@ -73,7 +74,9 @@ public class WTinyLFUPolicyTest {
       Assert.assertFalse(protectionIterator.hasNext());
     }
 
-    Assert.assertArrayEquals(new OCacheEntry[] { cacheEntries[1], cacheEntries[2], cacheEntries[0] }, toArray(wTinyLFU.eden()));
+    Assert.assertArrayEquals(
+        new OCacheEntry[] {cacheEntries[1], cacheEntries[2], cacheEntries[0]},
+        toArray(wTinyLFU.eden()));
 
     wTinyLFU.onAccess(cacheEntries[1]);
 
@@ -86,7 +89,9 @@ public class WTinyLFUPolicyTest {
       final Iterator<OCacheEntry> protectionIterator = wTinyLFU.protection();
       Assert.assertFalse(protectionIterator.hasNext());
     }
-    Assert.assertArrayEquals(new OCacheEntry[] { cacheEntries[1], cacheEntries[2], cacheEntries[0] }, toArray(wTinyLFU.eden()));
+    Assert.assertArrayEquals(
+        new OCacheEntry[] {cacheEntries[1], cacheEntries[2], cacheEntries[0]},
+        toArray(wTinyLFU.eden()));
 
     wTinyLFU.onAccess(cacheEntries[0]);
 
@@ -100,7 +105,9 @@ public class WTinyLFUPolicyTest {
       Assert.assertFalse(protectionIterator.hasNext());
     }
 
-    Assert.assertArrayEquals(new OCacheEntry[] { cacheEntries[0], cacheEntries[1], cacheEntries[2] }, toArray(wTinyLFU.eden()));
+    Assert.assertArrayEquals(
+        new OCacheEntry[] {cacheEntries[0], cacheEntries[1], cacheEntries[2]},
+        toArray(wTinyLFU.eden()));
 
     Assert.assertEquals(3, cacheSize.get());
 
@@ -137,9 +144,11 @@ public class WTinyLFUPolicyTest {
     cacheSize.incrementAndGet();
     wTinyLFU.onAdd(cacheEntries[3]);
 
-    Assert.assertArrayEquals(new OCacheEntry[] { cacheEntries[0] }, toArray(wTinyLFU.probation()));
+    Assert.assertArrayEquals(new OCacheEntry[] {cacheEntries[0]}, toArray(wTinyLFU.probation()));
     Assert.assertFalse(wTinyLFU.protection().hasNext());
-    Assert.assertArrayEquals(new OCacheEntry[] { cacheEntries[3], cacheEntries[2], cacheEntries[1] }, toArray(wTinyLFU.eden()));
+    Assert.assertArrayEquals(
+        new OCacheEntry[] {cacheEntries[3], cacheEntries[2], cacheEntries[1]},
+        toArray(wTinyLFU.eden()));
 
     Assert.assertEquals(4, cacheSize.get());
 
@@ -664,7 +673,8 @@ public class WTinyLFUPolicyTest {
     return entries.toArray(new OCacheEntry[0]);
   }
 
-  private static void generateEntries(OCacheEntry[] cacheEntries, OCachePointer[] cachePointers, OByteBufferPool pool) {
+  private static void generateEntries(
+      OCacheEntry[] cacheEntries, OCachePointer[] cachePointers, OByteBufferPool pool) {
     for (int i = 0; i < cacheEntries.length; i++) {
       final OCachePointer cachePointer = new OCachePointer(pool.acquireDirect(true), pool, 1, i);
       final OCacheEntry cacheEntry = new OCacheEntryImpl(1, i, cachePointer);
@@ -688,4 +698,3 @@ public class WTinyLFUPolicyTest {
     }
   }
 }
-

@@ -18,6 +18,8 @@
 
 package com.orientechnologies.spatial;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 import com.kenai.jffi.Platform;
 import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.common.io.OIOUtils;
@@ -34,37 +36,40 @@ import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.config.OServerParameterConfiguration;
 import com.orientechnologies.orient.server.handler.OAutomaticBackup;
-import org.junit.*;
-import org.junit.rules.TestName;
-
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 import java.util.zip.GZIPInputStream;
+import org.junit.After;
+import org.junit.Assert;
+import org.junit.Assume;
+import org.junit.Before;
+import org.junit.Rule;
+import org.junit.Test;
+import org.junit.rules.TestName;
 
-import static org.assertj.core.api.Assertions.assertThat;
-
-/**
- * Created by Enrico Risa on 07/07/15.
- */
+/** Created by Enrico Risa on 07/07/15. */
 public class LuceneSpatialAutomaticBackupRestoreTest {
 
-  private final static String DBNAME = "OLuceneAutomaticBackupRestoreTest";
+  private static final String DBNAME = "OLuceneAutomaticBackupRestoreTest";
 
-  public  File     tempFolder;
+  public File tempFolder;
   private OrientDB orientDB;
-  private String   URL       = null;
-  private String   BACKUPDIR = null;
-  private String   BACKUFILE = null;
+  private String URL = null;
+  private String BACKUPDIR = null;
+  private String BACKUFILE = null;
 
-  private OServer                   server;
+  private OServer server;
   private ODatabaseDocumentInternal db;
 
-  @Rule
-  public TestName name = new TestName();
+  @Rule public TestName name = new TestName();
 
   @Before
   public void setUp() throws Exception {
@@ -77,14 +82,15 @@ public class LuceneSpatialAutomaticBackupRestoreTest {
     OFileUtils.deleteRecursively(tempFolder);
     Assert.assertTrue(tempFolder.mkdirs());
 
-    server = new OServer() {
-      @Override
-      public Map<String, String> getAvailableStorageNames() {
-        HashMap<String, String> result = new HashMap<String, String>();
-        result.put(DBNAME, URL);
-        return result;
-      }
-    };
+    server =
+        new OServer() {
+          @Override
+          public Map<String, String> getAvailableStorageNames() {
+            HashMap<String, String> result = new HashMap<String, String>();
+            result.put(DBNAME, URL);
+            return result;
+          }
+        };
     server.startup();
 
     System.setProperty("ORIENTDB_HOME", tempFolder.getAbsolutePath());
@@ -109,11 +115,14 @@ public class LuceneSpatialAutomaticBackupRestoreTest {
 
     db.command(new OCommandSQL("create class City ")).execute();
     db.command(new OCommandSQL("create property City.name string")).execute();
-    db.command(new OCommandSQL("create index City.name on City (name) FULLTEXT ENGINE LUCENE")).execute();
+    db.command(new OCommandSQL("create index City.name on City (name) FULLTEXT ENGINE LUCENE"))
+        .execute();
 
     db.command(new OCommandSQL("create property City.location EMBEDDED OPOINT")).execute();
 
-    db.command(new OCommandSQL("CREATE INDEX City.location ON City(location) SPATIAL ENGINE LUCENE")).execute();
+    db.command(
+            new OCommandSQL("CREATE INDEX City.location ON City(location) SPATIAL ENGINE LUCENE"))
+        .execute();
 
     ODocument rome = newCity("Rome", 12.5, 41.9);
 
@@ -122,13 +131,20 @@ public class LuceneSpatialAutomaticBackupRestoreTest {
 
   protected ODocument newCity(String name, final Double longitude, final Double latitude) {
 
-    ODocument city = new ODocument("City").field("name", name)
-        .field("location", new ODocument("OPoint").field("coordinates", new ArrayList<Double>() {
-          {
-            add(longitude);
-            add(latitude);
-          }
-        }));
+    ODocument city =
+        new ODocument("City")
+            .field("name", name)
+            .field(
+                "location",
+                new ODocument("OPoint")
+                    .field(
+                        "coordinates",
+                        new ArrayList<Double>() {
+                          {
+                            add(longitude);
+                            add(latitude);
+                          }
+                        }));
     return city;
   }
 
@@ -158,13 +174,24 @@ public class LuceneSpatialAutomaticBackupRestoreTest {
 
     Assert.assertEquals(docs.size(), 1);
 
-    String jsonConfig = OIOUtils.readStreamAsString(getClass().getClassLoader().getResourceAsStream("automatic-backup.json"));
+    String jsonConfig =
+        OIOUtils.readStreamAsString(
+            getClass().getClassLoader().getResourceAsStream("automatic-backup.json"));
 
-    ODocument doc = new ODocument().fromJSON(jsonConfig).field("enabled", true).field("targetFileName", "${DBNAME}.zip")
-        .field("targetDirectory", BACKUPDIR).field("dbInclude", new String[] { DBNAME })
-        .field("firstTime", new SimpleDateFormat("HH:mm:ss").format(new Date(System.currentTimeMillis() + 2000)));
+    ODocument doc =
+        new ODocument()
+            .fromJSON(jsonConfig)
+            .field("enabled", true)
+            .field("targetFileName", "${DBNAME}.zip")
+            .field("targetDirectory", BACKUPDIR)
+            .field("dbInclude", new String[] {DBNAME})
+            .field(
+                "firstTime",
+                new SimpleDateFormat("HH:mm:ss")
+                    .format(new Date(System.currentTimeMillis() + 2000)));
 
-    OIOUtils.writeFile(new File(tempFolder.getAbsolutePath() + "/config/automatic-backup.json"), doc.toJSON());
+    OIOUtils.writeFile(
+        new File(tempFolder.getAbsolutePath() + "/config/automatic-backup.json"), doc.toJSON());
 
     final OAutomaticBackup aBackup = new OAutomaticBackup();
 
@@ -174,20 +201,20 @@ public class LuceneSpatialAutomaticBackupRestoreTest {
 
     final CountDownLatch latch = new CountDownLatch(1);
 
-    aBackup.registerListener(new OAutomaticBackup.OAutomaticBackupListener() {
-      @Override
-      public void onBackupCompleted(String database) {
+    aBackup.registerListener(
+        new OAutomaticBackup.OAutomaticBackupListener() {
+          @Override
+          public void onBackupCompleted(String database) {
 
-        System.out.println("complete ");
-        latch.countDown();
+            System.out.println("complete ");
+            latch.countDown();
+          }
 
-      }
-
-      @Override
-      public void onBackupError(String database, Exception e) {
-        System.out.println("e.getMessage() = " + e.getMessage());
-      }
-    });
+          @Override
+          public void onBackupError(String database, Exception e) {
+            System.out.println("e.getMessage() = " + e.getMessage());
+          }
+        });
 
     latch.await();
 
@@ -227,13 +254,25 @@ public class LuceneSpatialAutomaticBackupRestoreTest {
 
     Assert.assertEquals(docs.size(), 1);
 
-    String jsonConfig = OIOUtils.readStreamAsString(getClass().getClassLoader().getResourceAsStream("automatic-backup.json"));
+    String jsonConfig =
+        OIOUtils.readStreamAsString(
+            getClass().getClassLoader().getResourceAsStream("automatic-backup.json"));
 
-    ODocument doc = new ODocument().fromJSON(jsonConfig).field("enabled", true).field("targetFileName", "${DBNAME}.json")
-        .field("targetDirectory", BACKUPDIR).field("mode", "EXPORT").field("dbInclude", new String[] { DBNAME })
-        .field("firstTime", new SimpleDateFormat("HH:mm:ss").format(new Date(System.currentTimeMillis() + 2000)));
+    ODocument doc =
+        new ODocument()
+            .fromJSON(jsonConfig)
+            .field("enabled", true)
+            .field("targetFileName", "${DBNAME}.json")
+            .field("targetDirectory", BACKUPDIR)
+            .field("mode", "EXPORT")
+            .field("dbInclude", new String[] {DBNAME})
+            .field(
+                "firstTime",
+                new SimpleDateFormat("HH:mm:ss")
+                    .format(new Date(System.currentTimeMillis() + 2000)));
 
-    OIOUtils.writeFile(new File(tempFolder.getAbsolutePath() + "/config/automatic-backup.json"), doc.toJSON());
+    OIOUtils.writeFile(
+        new File(tempFolder.getAbsolutePath() + "/config/automatic-backup.json"), doc.toJSON());
 
     final OAutomaticBackup aBackup = new OAutomaticBackup();
 
@@ -242,17 +281,18 @@ public class LuceneSpatialAutomaticBackupRestoreTest {
     aBackup.config(server, config);
     final CountDownLatch latch = new CountDownLatch(1);
 
-    aBackup.registerListener(new OAutomaticBackup.OAutomaticBackupListener() {
-      @Override
-      public void onBackupCompleted(String database) {
-        latch.countDown();
-      }
+    aBackup.registerListener(
+        new OAutomaticBackup.OAutomaticBackupListener() {
+          @Override
+          public void onBackupCompleted(String database) {
+            latch.countDown();
+          }
 
-      @Override
-      public void onBackupError(String database, Exception e) {
-        latch.countDown();
-      }
-    });
+          @Override
+          public void onBackupError(String database, Exception e) {
+            latch.countDown();
+          }
+        });
     latch.await();
     aBackup.sendShutdown();
 
@@ -264,11 +304,14 @@ public class LuceneSpatialAutomaticBackupRestoreTest {
     db = createAndOpen();
 
     GZIPInputStream stream = new GZIPInputStream(new FileInputStream(BACKUFILE + ".json.gz"));
-    new ODatabaseImport(db, stream, new OCommandOutputListener() {
-      @Override
-      public void onMessage(String s) {
-      }
-    }).importDatabase();
+    new ODatabaseImport(
+            db,
+            stream,
+            new OCommandOutputListener() {
+              @Override
+              public void onMessage(String s) {}
+            })
+        .importDatabase();
 
     db.close();
 

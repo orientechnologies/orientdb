@@ -30,13 +30,13 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.tx.OTransactionIndexChanges;
 import com.orientechnologies.orient.core.tx.OTransactionIndexChangesPerKey;
-
 import java.util.Collection;
 import java.util.Set;
 import java.util.stream.Stream;
 
 /**
- * Generic abstract wrapper for indexes. It delegates all the operations to the wrapped OIndex instance.
+ * Generic abstract wrapper for indexes. It delegates all the operations to the wrapped OIndex
+ * instance.
  *
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
  */
@@ -51,9 +51,15 @@ public class OIndexAbstractDelegate implements OIndexInternal {
     return this;
   }
 
-  public OIndex create(final String name, final OIndexDefinition indexDefinition, final String clusterIndexName,
-      final Set<String> clustersToIndex, boolean rebuild, final OProgressListener progressListener) {
-    return delegate.create(name, indexDefinition, clusterIndexName, clustersToIndex, rebuild, progressListener);
+  public OIndex create(
+      final String name,
+      final OIndexDefinition indexDefinition,
+      final String clusterIndexName,
+      final Set<String> clustersToIndex,
+      boolean rebuild,
+      final OProgressListener progressListener) {
+    return delegate.create(
+        name, indexDefinition, clusterIndexName, clustersToIndex, rebuild, progressListener);
   }
 
   @Deprecated
@@ -84,9 +90,7 @@ public class OIndexAbstractDelegate implements OIndexInternal {
     return delegate.remove(key, rid);
   }
 
-  /**
-   * {@inheritDoc}
-   */
+  /** {@inheritDoc} */
   @Deprecated
   public OIndex clear() {
     return delegate.clear();
@@ -97,10 +101,10 @@ public class OIndexAbstractDelegate implements OIndexInternal {
       // RECOGNIZE THE KEY TYPE AT RUN-TIME
 
       final OType type = OType.getTypeByClass(iKey.getClass());
-      if (type == null)
-        return;
+      if (type == null) return;
 
-      OIndexManagerAbstract indexManager = ODatabaseRecordThreadLocal.instance().get().getMetadata().getIndexManagerInternal();
+      OIndexManagerAbstract indexManager =
+          ODatabaseRecordThreadLocal.instance().get().getMetadata().getIndexManagerInternal();
       delegate.setType(type);
       indexManager.save();
     }
@@ -180,8 +184,8 @@ public class OIndexAbstractDelegate implements OIndexInternal {
 
   @Deprecated
   @Override
-  public OIndexCursor iterateEntriesBetween(Object fromKey, boolean fromInclusive, Object toKey, boolean toInclusive,
-      boolean ascOrder) {
+  public OIndexCursor iterateEntriesBetween(
+      Object fromKey, boolean fromInclusive, Object toKey, boolean toInclusive, boolean ascOrder) {
     return delegate.iterateEntriesBetween(fromKey, fromInclusive, toKey, toInclusive, ascOrder);
   }
 
@@ -250,10 +254,8 @@ public class OIndexAbstractDelegate implements OIndexInternal {
 
   @Override
   public boolean equals(final Object o) {
-    if (this == o)
-      return true;
-    if (o == null || getClass() != o.getClass())
-      return false;
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
 
     final OIndexAbstractDelegate that = (OIndexAbstractDelegate) o;
 
@@ -344,7 +346,8 @@ public class OIndexAbstractDelegate implements OIndexInternal {
   }
 
   @Override
-  public void addTxOperation(OIndexAbstract.IndexTxSnapshot snapshots, OTransactionIndexChanges changes) {
+  public void addTxOperation(
+      OIndexAbstract.IndexTxSnapshot snapshots, OTransactionIndexChanges changes) {
     delegate.addTxOperation(snapshots, changes);
   }
 
@@ -394,8 +397,8 @@ public class OIndexAbstractDelegate implements OIndexInternal {
   }
 
   @Override
-  public Stream<ORawPair<Object, ORID>> streamEntriesBetween(Object fromKey, boolean fromInclusive, Object toKey,
-      boolean toInclusive, boolean ascOrder) {
+  public Stream<ORawPair<Object, ORID>> streamEntriesBetween(
+      Object fromKey, boolean fromInclusive, Object toKey, boolean toInclusive, boolean ascOrder) {
     return delegate.streamEntriesBetween(fromKey, fromInclusive, toKey, toInclusive, ascOrder);
   }
 
@@ -405,12 +408,14 @@ public class OIndexAbstractDelegate implements OIndexInternal {
   }
 
   @Override
-  public Stream<ORawPair<Object, ORID>> streamEntriesMajor(Object fromKey, boolean fromInclusive, boolean ascOrder) {
+  public Stream<ORawPair<Object, ORID>> streamEntriesMajor(
+      Object fromKey, boolean fromInclusive, boolean ascOrder) {
     return delegate.streamEntriesMajor(fromKey, fromInclusive, ascOrder);
   }
 
   @Override
-  public Stream<ORawPair<Object, ORID>> streamEntriesMinor(Object toKey, boolean toInclusive, boolean ascOrder) {
+  public Stream<ORawPair<Object, ORID>> streamEntriesMinor(
+      Object toKey, boolean toInclusive, boolean ascOrder) {
     return delegate.streamEntriesMinor(toKey, toInclusive, ascOrder);
   }
 
@@ -426,17 +431,20 @@ public class OIndexAbstractDelegate implements OIndexInternal {
   }
 
   @Override
-  public void doPut(OAbstractPaginatedStorage storage, Object key, ORID rid) throws OInvalidIndexEngineIdException {
+  public void doPut(OAbstractPaginatedStorage storage, Object key, ORID rid)
+      throws OInvalidIndexEngineIdException {
     delegate.doPut(storage, key, rid);
   }
 
   @Override
-  public boolean doRemove(OAbstractPaginatedStorage storage, Object key, ORID rid) throws OInvalidIndexEngineIdException {
+  public boolean doRemove(OAbstractPaginatedStorage storage, Object key, ORID rid)
+      throws OInvalidIndexEngineIdException {
     return delegate.doRemove(storage, key, rid);
   }
 
   @Override
-  public boolean doRemove(OAbstractPaginatedStorage storage, Object key) throws OInvalidIndexEngineIdException {
+  public boolean doRemove(OAbstractPaginatedStorage storage, Object key)
+      throws OInvalidIndexEngineIdException {
     return delegate.doRemove(storage, key);
   }
 }

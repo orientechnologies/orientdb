@@ -31,19 +31,25 @@ import com.orientechnologies.orient.core.tx.OTransactionIndexChangesPerKey;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelDataInput;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelDataOutput;
-
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
 import java.util.Map.Entry;
+import java.util.NavigableMap;
+import java.util.TreeMap;
+import java.util.UUID;
 
 public class OMessageHelper {
 
-  public static void writeIdentifiable(OChannelDataOutput channel, final OIdentifiable o, ORecordSerializer serializer)
+  public static void writeIdentifiable(
+      OChannelDataOutput channel, final OIdentifiable o, ORecordSerializer serializer)
       throws IOException {
-    if (o == null)
-      channel.writeShort(OChannelBinaryProtocol.RECORD_NULL);
+    if (o == null) channel.writeShort(OChannelBinaryProtocol.RECORD_NULL);
     else if (o instanceof ORecordId) {
       channel.writeShort(OChannelBinaryProtocol.RECORD_RID);
       channel.writeRID((ORID) o);
@@ -52,7 +58,8 @@ public class OMessageHelper {
     }
   }
 
-  public static void writeRecord(OChannelDataOutput channel, final ORecord iRecord, ORecordSerializer serializer)
+  public static void writeRecord(
+      OChannelDataOutput channel, final ORecord iRecord, ORecordSerializer serializer)
       throws IOException {
     channel.writeShort((short) 0);
     channel.writeByte(ORecordInternal.getRecordType(iRecord));
@@ -63,7 +70,8 @@ public class OMessageHelper {
       channel.writeBytes(stream);
     } catch (Exception e) {
       channel.writeBytes(null);
-      final String message = "Error on unmarshalling record " + iRecord.getIdentity().toString() + " (" + e + ")";
+      final String message =
+          "Error on unmarshalling record " + iRecord.getIdentity().toString() + " (" + e + ")";
 
       throw OException.wrapException(new OSerializationException(message), e);
     }
@@ -74,32 +82,35 @@ public class OMessageHelper {
     final byte[] stream;
     String dbSerializerName = null;
     if (ODatabaseRecordThreadLocal.instance().getIfDefined() != null)
-      dbSerializerName = ((ODatabaseDocumentInternal) iRecord.getDatabase()).getSerializer().toString();
-    if (ORecordInternal.getRecordType(iRecord) == ODocument.RECORD_TYPE && (dbSerializerName == null || !dbSerializerName
-        .equals(serializer.toString()))) {
+      dbSerializerName =
+          ((ODatabaseDocumentInternal) iRecord.getDatabase()).getSerializer().toString();
+    if (ORecordInternal.getRecordType(iRecord) == ODocument.RECORD_TYPE
+        && (dbSerializerName == null || !dbSerializerName.equals(serializer.toString()))) {
       ((ODocument) iRecord).deserializeFields();
       stream = serializer.toStream(iRecord);
-    } else
-      stream = iRecord.toStream();
+    } else stream = iRecord.toStream();
 
     return stream;
   }
 
-  public static Map<UUID, OBonsaiCollectionPointer> readCollectionChanges(OChannelDataInput network) throws IOException {
+  public static Map<UUID, OBonsaiCollectionPointer> readCollectionChanges(OChannelDataInput network)
+      throws IOException {
     Map<UUID, OBonsaiCollectionPointer> collectionsUpdates = new HashMap<>();
     int count = network.readInt();
     for (int i = 0; i < count; i++) {
       final long mBitsOfId = network.readLong();
       final long lBitsOfId = network.readLong();
 
-      final OBonsaiCollectionPointer pointer = OCollectionNetworkSerializer.INSTANCE.readCollectionPointer(network);
+      final OBonsaiCollectionPointer pointer =
+          OCollectionNetworkSerializer.INSTANCE.readCollectionPointer(network);
 
       collectionsUpdates.put(new UUID(mBitsOfId, lBitsOfId), pointer);
     }
     return collectionsUpdates;
   }
 
-  public static void writeCollectionChanges(OChannelDataOutput channel, Map<UUID, OBonsaiCollectionPointer> changedIds)
+  public static void writeCollectionChanges(
+      OChannelDataOutput channel, Map<UUID, OBonsaiCollectionPointer> changedIds)
       throws IOException {
     channel.writeInt(changedIds.size());
     for (Entry<UUID, OBonsaiCollectionPointer> entry : changedIds.entrySet()) {
@@ -109,7 +120,8 @@ public class OMessageHelper {
     }
   }
 
-  public static void writePhysicalPositions(OChannelDataOutput channel, OPhysicalPosition[] previousPositions) throws IOException {
+  public static void writePhysicalPositions(
+      OChannelDataOutput channel, OPhysicalPosition[] previousPositions) throws IOException {
     if (previousPositions == null) {
       channel.writeInt(0); // NO ENTRIEs
     } else {
@@ -123,7 +135,8 @@ public class OMessageHelper {
     }
   }
 
-  public static OPhysicalPosition[] readPhysicalPositions(OChannelDataInput network) throws IOException {
+  public static OPhysicalPosition[] readPhysicalPositions(OChannelDataInput network)
+      throws IOException {
     final int positionsCount = network.readInt();
     final OPhysicalPosition[] physicalPositions;
     if (positionsCount == 0) {
@@ -144,7 +157,8 @@ public class OMessageHelper {
     return physicalPositions;
   }
 
-  public static ORawPair<String[], int[]> readClustersArray(final OChannelDataInput network) throws IOException {
+  public static ORawPair<String[], int[]> readClustersArray(final OChannelDataInput network)
+      throws IOException {
     final int tot = network.readShort();
     final String[] clusterNames = new String[tot];
     final int[] clusterIds = new int[tot];
@@ -159,7 +173,8 @@ public class OMessageHelper {
     return new ORawPair<>(clusterNames, clusterIds);
   }
 
-  public static void writeClustersArray(OChannelDataOutput channel, ORawPair<String[], int[]> clusters, int protocolVersion)
+  public static void writeClustersArray(
+      OChannelDataOutput channel, ORawPair<String[], int[]> clusters, int protocolVersion)
       throws IOException {
     final String[] clusterNames = clusters.first;
     final int[] clusterIds = clusters.second;
@@ -172,57 +187,62 @@ public class OMessageHelper {
     }
   }
 
-  public static void writeTransactionEntry(final DataOutput iNetwork, final ORecordOperationRequest txEntry) throws IOException {
+  public static void writeTransactionEntry(
+      final DataOutput iNetwork, final ORecordOperationRequest txEntry) throws IOException {
     iNetwork.writeByte(txEntry.getType());
     iNetwork.writeInt(txEntry.getId().getClusterId());
     iNetwork.writeLong(txEntry.getId().getClusterPosition());
     iNetwork.writeByte(txEntry.getRecordType());
 
     switch (txEntry.getType()) {
-    case ORecordOperation.CREATED:
-      byte[] record = txEntry.getRecord();
-      iNetwork.writeInt(record.length);
-      iNetwork.write(record);
-      break;
+      case ORecordOperation.CREATED:
+        byte[] record = txEntry.getRecord();
+        iNetwork.writeInt(record.length);
+        iNetwork.write(record);
+        break;
 
-    case ORecordOperation.UPDATED:
-      iNetwork.writeInt(txEntry.getVersion());
-      byte[] record2 = txEntry.getRecord();
-      iNetwork.writeInt(record2.length);
-      iNetwork.write(record2);
-      iNetwork.writeBoolean(txEntry.isContentChanged());
-      break;
+      case ORecordOperation.UPDATED:
+        iNetwork.writeInt(txEntry.getVersion());
+        byte[] record2 = txEntry.getRecord();
+        iNetwork.writeInt(record2.length);
+        iNetwork.write(record2);
+        iNetwork.writeBoolean(txEntry.isContentChanged());
+        break;
 
-    case ORecordOperation.DELETED:
-      iNetwork.writeInt(txEntry.getVersion());
-      break;
+      case ORecordOperation.DELETED:
+        iNetwork.writeInt(txEntry.getVersion());
+        break;
     }
   }
 
-  static void writeTransactionEntry(final OChannelDataOutput iNetwork, final ORecordOperationRequest txEntry,
-      ORecordSerializer serializer) throws IOException {
+  static void writeTransactionEntry(
+      final OChannelDataOutput iNetwork,
+      final ORecordOperationRequest txEntry,
+      ORecordSerializer serializer)
+      throws IOException {
     iNetwork.writeByte(txEntry.getType());
     iNetwork.writeRID(txEntry.getId());
     iNetwork.writeByte(txEntry.getRecordType());
 
     switch (txEntry.getType()) {
-    case ORecordOperation.CREATED:
-      iNetwork.writeBytes(txEntry.getRecord());
-      break;
+      case ORecordOperation.CREATED:
+        iNetwork.writeBytes(txEntry.getRecord());
+        break;
 
-    case ORecordOperation.UPDATED:
-      iNetwork.writeVersion(txEntry.getVersion());
-      iNetwork.writeBytes(txEntry.getRecord());
-      iNetwork.writeBoolean(txEntry.isContentChanged());
-      break;
+      case ORecordOperation.UPDATED:
+        iNetwork.writeVersion(txEntry.getVersion());
+        iNetwork.writeBytes(txEntry.getRecord());
+        iNetwork.writeBoolean(txEntry.isContentChanged());
+        break;
 
-    case ORecordOperation.DELETED:
-      iNetwork.writeVersion(txEntry.getVersion());
-      break;
+      case ORecordOperation.DELETED:
+        iNetwork.writeVersion(txEntry.getVersion());
+        break;
     }
   }
 
-  public static ORecordOperationRequest readTransactionEntry(final DataInput iNetwork) throws IOException {
+  public static ORecordOperationRequest readTransactionEntry(final DataInput iNetwork)
+      throws IOException {
     ORecordOperationRequest result = new ORecordOperationRequest();
     result.setType(iNetwork.readByte());
     int clusterId = iNetwork.readInt();
@@ -231,54 +251,56 @@ public class OMessageHelper {
     result.setRecordType(iNetwork.readByte());
 
     switch (result.getType()) {
-    case ORecordOperation.CREATED:
-      int length = iNetwork.readInt();
-      byte[] record = new byte[length];
-      iNetwork.readFully(record);
-      result.setRecord(record);
-      break;
+      case ORecordOperation.CREATED:
+        int length = iNetwork.readInt();
+        byte[] record = new byte[length];
+        iNetwork.readFully(record);
+        result.setRecord(record);
+        break;
 
-    case ORecordOperation.UPDATED:
-      result.setVersion(iNetwork.readInt());
-      int length2 = iNetwork.readInt();
-      byte[] record2 = new byte[length2];
-      iNetwork.readFully(record2);
-      result.setRecord(record2);
-      result.setContentChanged(iNetwork.readBoolean());
-      break;
+      case ORecordOperation.UPDATED:
+        result.setVersion(iNetwork.readInt());
+        int length2 = iNetwork.readInt();
+        byte[] record2 = new byte[length2];
+        iNetwork.readFully(record2);
+        result.setRecord(record2);
+        result.setContentChanged(iNetwork.readBoolean());
+        break;
 
-    case ORecordOperation.DELETED:
-      result.setVersion(iNetwork.readInt());
-      break;
+      case ORecordOperation.DELETED:
+        result.setVersion(iNetwork.readInt());
+        break;
     }
     return result;
   }
 
-  static ORecordOperationRequest readTransactionEntry(OChannelDataInput channel, ORecordSerializer ser) throws IOException {
+  static ORecordOperationRequest readTransactionEntry(
+      OChannelDataInput channel, ORecordSerializer ser) throws IOException {
     ORecordOperationRequest entry = new ORecordOperationRequest();
     entry.setType(channel.readByte());
     entry.setId(channel.readRID());
     entry.setRecordType(channel.readByte());
     switch (entry.getType()) {
-    case ORecordOperation.CREATED:
-      entry.setRecord(channel.readBytes());
-      break;
-    case ORecordOperation.UPDATED:
-      entry.setVersion(channel.readVersion());
-      entry.setRecord(channel.readBytes());
-      entry.setContentChanged(channel.readBoolean());
-      break;
-    case ORecordOperation.DELETED:
-      entry.setVersion(channel.readVersion());
-      break;
-    default:
-      break;
+      case ORecordOperation.CREATED:
+        entry.setRecord(channel.readBytes());
+        break;
+      case ORecordOperation.UPDATED:
+        entry.setVersion(channel.readVersion());
+        entry.setRecord(channel.readBytes());
+        entry.setContentChanged(channel.readBoolean());
+        break;
+      case ORecordOperation.DELETED:
+        entry.setVersion(channel.readVersion());
+        break;
+      default:
+        break;
     }
     return entry;
   }
 
-  static void writeTransactionIndexChanges(OChannelDataOutput network, ORecordSerializerNetworkV37 serializer,
-      List<IndexChange> changes) throws IOException {
+  static void writeTransactionIndexChanges(
+      OChannelDataOutput network, ORecordSerializerNetworkV37 serializer, List<IndexChange> changes)
+      throws IOException {
     network.writeInt(changes.size());
     for (IndexChange indexChange : changes) {
       network.writeString(indexChange.getName());
@@ -292,13 +314,14 @@ public class OMessageHelper {
       if (indexChange.getKeyChanges().nullKeyChanges != null) {
         network.writeByte((byte) -1);
         network.writeInt(indexChange.getKeyChanges().nullKeyChanges.entries.size());
-        for (OTransactionIndexChangesPerKey.OTransactionIndexEntry perKeyChange : indexChange
-            .getKeyChanges().nullKeyChanges.entries) {
+        for (OTransactionIndexChangesPerKey.OTransactionIndexEntry perKeyChange :
+            indexChange.getKeyChanges().nullKeyChanges.entries) {
           network.writeInt(perKeyChange.operation.ordinal());
           network.writeRID(perKeyChange.value.getIdentity());
         }
       }
-      for (OTransactionIndexChangesPerKey change : indexChange.getKeyChanges().changesPerKey.values()) {
+      for (OTransactionIndexChangesPerKey change :
+          indexChange.getKeyChanges().changesPerKey.values()) {
         OType type = OType.getTypeByValue(change.key);
         byte[] value = serializer.serializeValue(change.key, type);
         network.writeByte((byte) type.getId());
@@ -317,8 +340,8 @@ public class OMessageHelper {
     }
   }
 
-  static List<IndexChange> readTransactionIndexChanges(OChannelDataInput channel, ORecordSerializerNetworkV37 serializer)
-      throws IOException {
+  static List<IndexChange> readTransactionIndexChanges(
+      OChannelDataInput channel, ORecordSerializerNetworkV37 serializer) throws IOException {
     List<IndexChange> changes = new ArrayList<>();
     int val = channel.readInt();
     while (val-- > 0) {
@@ -363,10 +386,10 @@ public class OMessageHelper {
     return changes;
   }
 
-  public static OIdentifiable readIdentifiable(final OChannelDataInput network, ORecordSerializer serializer) throws IOException {
+  public static OIdentifiable readIdentifiable(
+      final OChannelDataInput network, ORecordSerializer serializer) throws IOException {
     final int classId = network.readShort();
-    if (classId == OChannelBinaryProtocol.RECORD_NULL)
-      return null;
+    if (classId == OChannelBinaryProtocol.RECORD_NULL) return null;
 
     if (classId == OChannelBinaryProtocol.RECORD_RID) {
       return network.readRID();
@@ -376,14 +399,18 @@ public class OMessageHelper {
     }
   }
 
-  private static ORecord readRecordFromBytes(OChannelDataInput network, ORecordSerializer serializer) throws IOException {
+  private static ORecord readRecordFromBytes(
+      OChannelDataInput network, ORecordSerializer serializer) throws IOException {
     byte rec = network.readByte();
     final ORecordId rid = network.readRID();
     final int version = network.readVersion();
     final byte[] content = network.readBytes();
 
-    ORecord record = Orient.instance().getRecordFactoryManager()
-        .newInstance(rec, rid.getClusterId(), ODatabaseRecordThreadLocal.instance().getIfDefined());
+    ORecord record =
+        Orient.instance()
+            .getRecordFactoryManager()
+            .newInstance(
+                rec, rid.getClusterId(), ODatabaseRecordThreadLocal.instance().getIfDefined());
     ORecordInternal.setIdentity(record, rid);
     ORecordInternal.setVersion(record, version);
     serializer.fromStream(content, record, null);
@@ -398,31 +425,42 @@ public class OMessageHelper {
     ser.toStream(item, channel);
   }
 
-  private static void writeBlob(OResult row, OChannelDataOutput channel, ORecordSerializer recordSerializer) throws IOException {
+  private static void writeBlob(
+      OResult row, OChannelDataOutput channel, ORecordSerializer recordSerializer)
+      throws IOException {
     channel.writeByte(OQueryResponse.RECORD_TYPE_BLOB);
     writeIdentifiable(channel, row.getBlob().get(), recordSerializer);
   }
 
-  private static void writeVertex(OResult row, OChannelDataOutput channel, ORecordSerializer recordSerializer) throws IOException {
+  private static void writeVertex(
+      OResult row, OChannelDataOutput channel, ORecordSerializer recordSerializer)
+      throws IOException {
     channel.writeByte(OQueryResponse.RECORD_TYPE_VERTEX);
     writeDocument(channel, (ODocument) row.getElement().get().getRecord(), recordSerializer);
   }
 
-  private static void writeElement(OResult row, OChannelDataOutput channel, ORecordSerializer recordSerializer) throws IOException {
+  private static void writeElement(
+      OResult row, OChannelDataOutput channel, ORecordSerializer recordSerializer)
+      throws IOException {
     channel.writeByte(OQueryResponse.RECORD_TYPE_ELEMENT);
     writeDocument(channel, (ODocument) row.getElement().get().getRecord(), recordSerializer);
   }
 
-  private static void writeEdge(OResult row, OChannelDataOutput channel, ORecordSerializer recordSerializer) throws IOException {
+  private static void writeEdge(
+      OResult row, OChannelDataOutput channel, ORecordSerializer recordSerializer)
+      throws IOException {
     channel.writeByte(OQueryResponse.RECORD_TYPE_EDGE);
     writeDocument(channel, (ODocument) row.getElement().get().getRecord(), recordSerializer);
   }
 
-  private static void writeDocument(OChannelDataOutput channel, ODocument doc, ORecordSerializer serializer) throws IOException {
+  private static void writeDocument(
+      OChannelDataOutput channel, ODocument doc, ORecordSerializer serializer) throws IOException {
     writeIdentifiable(channel, doc, serializer);
   }
 
-  public static void writeResult(OResult row, OChannelDataOutput channel, ORecordSerializer recordSerializer) throws IOException {
+  public static void writeResult(
+      OResult row, OChannelDataOutput channel, ORecordSerializer recordSerializer)
+      throws IOException {
     if (row.isBlob()) {
       writeBlob(row, channel, recordSerializer);
     } else if (row.isVertex()) {
@@ -446,17 +484,16 @@ public class OMessageHelper {
   public static OResultInternal readResult(OChannelDataInput channel) throws IOException {
     byte type = channel.readByte();
     switch (type) {
-    case OQueryResponse.RECORD_TYPE_BLOB:
-      return readBlob(channel);
-    case OQueryResponse.RECORD_TYPE_VERTEX:
-      return readVertex(channel);
-    case OQueryResponse.RECORD_TYPE_EDGE:
-      return readEdge(channel);
-    case OQueryResponse.RECORD_TYPE_ELEMENT:
-      return readElement(channel);
-    case OQueryResponse.RECORD_TYPE_PROJECTION:
-      return readProjection(channel);
-
+      case OQueryResponse.RECORD_TYPE_BLOB:
+        return readBlob(channel);
+      case OQueryResponse.RECORD_TYPE_VERTEX:
+        return readVertex(channel);
+      case OQueryResponse.RECORD_TYPE_EDGE:
+        return readEdge(channel);
+      case OQueryResponse.RECORD_TYPE_ELEMENT:
+        return readElement(channel);
+      case OQueryResponse.RECORD_TYPE_PROJECTION:
+        return readProjection(channel);
     }
     return new OResultInternal();
   }

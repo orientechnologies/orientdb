@@ -24,7 +24,6 @@ import com.orientechnologies.orient.core.storage.impl.local.OCheckpointRequestLi
 import com.orientechnologies.orient.core.storage.impl.local.OLowDiskSpaceListener;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperationMetadata;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.common.WriteableWALRecord;
-
 import java.io.File;
 import java.io.IOException;
 import java.util.List;
@@ -49,21 +48,26 @@ public class OMemoryWriteAheadLog extends OAbstractWriteAheadLog {
   }
 
   @Override
-  public void flush() {
-  }
+  public void flush() {}
 
   @Override
-  public OLogSequenceNumber logAtomicOperationStartRecord(boolean isRollbackSupported, long unitId) {
+  public OLogSequenceNumber logAtomicOperationStartRecord(
+      boolean isRollbackSupported, long unitId) {
     return log(new OAtomicUnitStartRecord(isRollbackSupported, unitId));
   }
 
-  public OLogSequenceNumber logAtomicOperationStartRecord(final boolean isRollbackSupported, final long unitId, byte[] metadata) {
-    final OAtomicUnitStartMetadataRecord record = new OAtomicUnitStartMetadataRecord(isRollbackSupported, unitId, metadata);
+  public OLogSequenceNumber logAtomicOperationStartRecord(
+      final boolean isRollbackSupported, final long unitId, byte[] metadata) {
+    final OAtomicUnitStartMetadataRecord record =
+        new OAtomicUnitStartMetadataRecord(isRollbackSupported, unitId, metadata);
     return log(record);
   }
 
   @Override
-  public OLogSequenceNumber logAtomicOperationEndRecord(long operationUnitId, boolean rollback, OLogSequenceNumber startLsn,
+  public OLogSequenceNumber logAtomicOperationEndRecord(
+      long operationUnitId,
+      boolean rollback,
+      OLogSequenceNumber startLsn,
       Map<String, OAtomicOperationMetadata<?>> atomicOperationMetadata) {
     return log(new OAtomicUnitEndRecord(operationUnitId, rollback, atomicOperationMetadata));
   }
@@ -74,16 +78,13 @@ public class OMemoryWriteAheadLog extends OAbstractWriteAheadLog {
   }
 
   @Override
-  public void close() throws IOException {
-  }
+  public void close() throws IOException {}
 
   @Override
-  public void close(boolean flush) throws IOException {
-  }
+  public void close(boolean flush) throws IOException {}
 
   @Override
-  public void delete() throws IOException {
-  }
+  public void delete() throws IOException {}
 
   @Override
   public List<WriteableWALRecord> read(OLogSequenceNumber lsn, int limit) throws IOException {
@@ -106,26 +107,19 @@ public class OMemoryWriteAheadLog extends OAbstractWriteAheadLog {
   }
 
   @Override
-  public void addFullCheckpointListener(OCheckpointRequestListener listener) {
-  }
+  public void addFullCheckpointListener(OCheckpointRequestListener listener) {}
 
   @Override
-  public void removeFullCheckpointListener(OCheckpointRequestListener listener) {
-  }
+  public void removeFullCheckpointListener(OCheckpointRequestListener listener) {}
 
   @Override
-  public void moveLsnAfter(OLogSequenceNumber lsn) {
-  }
+  public void moveLsnAfter(OLogSequenceNumber lsn) {}
 
   @Override
-  public void addCutTillLimit(OLogSequenceNumber lsn) {
-
-  }
+  public void addCutTillLimit(OLogSequenceNumber lsn) {}
 
   @Override
-  public void removeCutTillLimit(OLogSequenceNumber lsn) {
-
-  }
+  public void removeCutTillLimit(OLogSequenceNumber lsn) {}
 
   @Override
   public File[] nonActiveSegments(long fromSegment) {
@@ -143,12 +137,10 @@ public class OMemoryWriteAheadLog extends OAbstractWriteAheadLog {
   }
 
   @Override
-  public void addLowDiskSpaceListener(OLowDiskSpaceListener listener) {
-  }
+  public void addLowDiskSpaceListener(OLowDiskSpaceListener listener) {}
 
   @Override
-  public void removeLowDiskSpaceListener(OLowDiskSpaceListener listener) {
-  }
+  public void removeLowDiskSpaceListener(OLowDiskSpaceListener listener) {}
 
   @Override
   public OLogSequenceNumber begin(long segmentId) {

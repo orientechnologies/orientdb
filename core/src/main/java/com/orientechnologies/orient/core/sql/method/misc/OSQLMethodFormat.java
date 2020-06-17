@@ -20,9 +20,12 @@ import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.util.ODateHelper;
-
 import java.text.SimpleDateFormat;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.Iterator;
+import java.util.List;
+import java.util.TimeZone;
 
 /**
  * @author Johann Sorel (Geomatys)
@@ -37,7 +40,11 @@ public class OSQLMethodFormat extends OAbstractSQLMethod {
   }
 
   @Override
-  public Object execute(final Object iThis, final OIdentifiable iRecord, final OCommandContext iContext, Object ioResult,
+  public Object execute(
+      final Object iThis,
+      final OIdentifiable iRecord,
+      final OCommandContext iContext,
+      Object ioResult,
       final Object[] iParams) {
 
     // TRY TO RESOLVE AS DYNAMIC VALUE

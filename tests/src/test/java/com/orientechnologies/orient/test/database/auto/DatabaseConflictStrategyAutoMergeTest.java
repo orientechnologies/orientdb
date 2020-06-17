@@ -1,5 +1,9 @@
 package com.orientechnologies.orient.test.database.auto;
 
+import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertNotNull;
+import static org.testng.Assert.assertTrue;
+
 import com.orientechnologies.orient.core.conflict.OAutoMergeRecordConflictStrategy;
 import com.tinkerpop.blueprints.Direction;
 import com.tinkerpop.blueprints.Edge;
@@ -9,17 +13,15 @@ import com.tinkerpop.blueprints.impls.orient.OrientGraphFactory;
 import com.tinkerpop.blueprints.impls.orient.OrientVertex;
 import org.testng.annotations.Test;
 
-import static org.testng.Assert.*;
-
 public class DatabaseConflictStrategyAutoMergeTest {
 
   private static final String CLIENT_ORIENT_URL_MAIN = "memory:testAutoMerge";
 
-  private static final int    NUM_OF_LOOP_ITERATIONS = 50;
-  private static Object       LOCK                   = new Object();
-  private volatile Throwable  exceptionInThread;
-  private Object              parentV1Id;
-  private Object              parentV2Id;
+  private static final int NUM_OF_LOOP_ITERATIONS = 50;
+  private static Object LOCK = new Object();
+  private volatile Throwable exceptionInThread;
+  private Object parentV1Id;
+  private Object parentV2Id;
 
   @Test
   public void testAutoMerge() throws Throwable {
@@ -31,21 +33,23 @@ public class DatabaseConflictStrategyAutoMergeTest {
     graph.shutdown();
     factory.close();
 
-    Thread dbClient1 = new Thread() {
-      @Override
-      public void run() {
-        dbClient1();
-      }
-    };
+    Thread dbClient1 =
+        new Thread() {
+          @Override
+          public void run() {
+            dbClient1();
+          }
+        };
 
     dbClient1.start();
     // Start the second DB client.
-    Thread dbClient2 = new Thread() {
-      @Override
-      public void run() {
-        dbClient2();
-      }
-    };
+    Thread dbClient2 =
+        new Thread() {
+          @Override
+          public void run() {
+            dbClient2();
+          }
+        };
     dbClient2.start();
 
     dbClient1.join();
@@ -77,8 +81,7 @@ public class DatabaseConflictStrategyAutoMergeTest {
         for (int i = 0; i < NUM_OF_LOOP_ITERATIONS; i++) {
           pause();
 
-          if (exceptionInThread != null)
-            break;
+          if (exceptionInThread != null) break;
           OrientVertex vertex = graph.addVertex("vertextype3", (String) null);
           graph.commit();
           assertEquals(1, vertex.getRecord().getVersion());
@@ -89,7 +92,9 @@ public class DatabaseConflictStrategyAutoMergeTest {
 
           parentV1.addEdge("edgetype1", vertex);
           graph.commit();
-          assertNotNull(parentV1.getProperty("cnt"), "record " + parentV1.getIdentity() + " has no 'cnt' property");
+          assertNotNull(
+              parentV1.getProperty("cnt"),
+              "record " + parentV1.getIdentity() + " has no 'cnt' property");
           boolean edge1Exists = false;
           for (Edge e : parentV1.getEdges(Direction.OUT, "edgetype1")) {
             if (e.getVertex(Direction.IN).equals(vertex)) {
@@ -150,8 +155,7 @@ public class DatabaseConflictStrategyAutoMergeTest {
         for (int i = 0; i < NUM_OF_LOOP_ITERATIONS; i++) {
           pause();
 
-          if (exceptionInThread != null)
-            break;
+          if (exceptionInThread != null) break;
           countPropValue++;
           if (parentV1 == null) {
             parentV1 = graph.getVertex(parentV1Id);
@@ -192,5 +196,4 @@ public class DatabaseConflictStrategyAutoMergeTest {
       xcpt.printStackTrace();
     }
   }
-
 }

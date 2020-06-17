@@ -23,7 +23,7 @@ import com.orientechnologies.common.concur.ONeedRetryException;
 
 /**
  * Exception thrown in case the execution of the command has been interrupted.
- * 
+ *
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
  */
 public class OCommandInterruptedException extends ONeedRetryException {
@@ -37,5 +37,4 @@ public class OCommandInterruptedException extends ONeedRetryException {
   public OCommandInterruptedException(String message) {
     super(message);
   }
-
 }

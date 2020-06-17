@@ -18,6 +18,8 @@
 
 package com.orientechnologies.lucene.test;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseType;
 import com.orientechnologies.orient.core.db.OrientDB;
@@ -26,27 +28,25 @@ import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
-import org.junit.*;
-import org.junit.rules.TestName;
-import org.junit.runner.RunWith;
-import org.junit.runners.JUnit4;
-
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.Locale;
+import org.junit.After;
+import org.junit.Assume;
+import org.junit.Before;
+import org.junit.Rule;
+import org.junit.Test;
+import org.junit.rules.TestName;
+import org.junit.runner.RunWith;
+import org.junit.runners.JUnit4;
 
-import static org.assertj.core.api.Assertions.assertThat;
-
-/**
- * Created by Enrico Risa on 07/07/15.
- */
+/** Created by Enrico Risa on 07/07/15. */
 @RunWith(JUnit4.class)
 public class LuceneBackupRestoreTest {
 
-  @Rule
-  public TestName name = new TestName();
+  @Rule public TestName name = new TestName();
 
   private File tempFolder;
 
@@ -65,7 +65,8 @@ public class LuceneBackupRestoreTest {
 
     tempFolder = new File(buildDirectoryFile, name.getMethodName());
 
-    orientDB = new OrientDB("plocal:" + tempFolder.getCanonicalPath(), OrientDBConfig.defaultConfig());
+    orientDB =
+        new OrientDB("plocal:" + tempFolder.getCanonicalPath(), OrientDBConfig.defaultConfig());
 
     dropIfExists();
 
@@ -94,9 +95,7 @@ public class LuceneBackupRestoreTest {
   @After
   public void tearDown() throws Exception {
     final String os = System.getProperty("os.name").toLowerCase(Locale.ENGLISH);
-    if (!os.contains("win"))
-      dropIfExists();
-
+    if (!os.contains("win")) dropIfExists();
   }
 
   @Test
@@ -111,7 +110,8 @@ public class LuceneBackupRestoreTest {
 
     orientDB.drop(getClass().getSimpleName());
     orientDB.create(getClass().getSimpleName(), ODatabaseType.PLOCAL);
-    databaseDocumentTx = (ODatabaseDocumentInternal) orientDB.open(getClass().getSimpleName(), "admin", "admin");
+    databaseDocumentTx =
+        (ODatabaseDocumentInternal) orientDB.open(getClass().getSimpleName(), "admin", "admin");
 
     FileInputStream stream = new FileInputStream(backupFile);
 
@@ -119,7 +119,11 @@ public class LuceneBackupRestoreTest {
 
     assertThat(databaseDocumentTx.countClass("City")).isEqualTo(1);
 
-    OIndex index = databaseDocumentTx.getMetadata().getIndexManagerInternal().getIndex(databaseDocumentTx, "City.name");
+    OIndex index =
+        databaseDocumentTx
+            .getMetadata()
+            .getIndexManagerInternal()
+            .getIndex(databaseDocumentTx, "City.name");
 
     assertThat(index).isNotNull();
     assertThat(index.getType()).isEqualTo(OClass.INDEX_TYPE.FULLTEXT.name());

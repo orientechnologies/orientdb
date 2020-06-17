@@ -1,27 +1,25 @@
 package com.orientechnologies.orient.core.sql.executor;
 
+import static com.orientechnologies.orient.core.sql.executor.ExecutionPlanPrintUtils.printExecutionPlan;
+
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
+import java.util.HashSet;
+import java.util.Set;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import java.util.HashSet;
-import java.util.Set;
-
-import static com.orientechnologies.orient.core.sql.executor.ExecutionPlanPrintUtils.printExecutionPlan;
-
-/**
- * @author Luigi Dell'Aquila (l.dellaquila-(at)-orientdb.com)
- */
+/** @author Luigi Dell'Aquila (l.dellaquila-(at)-orientdb.com) */
 public class OCreateVertexStatementExecutionTest {
   static ODatabaseDocument db;
 
-  @BeforeClass public static void beforeClass() {
+  @BeforeClass
+  public static void beforeClass() {
     db = new ODatabaseDocumentTx("memory:OCreateVertexStatementExecutionTest");
     db.create();
     OClass v = db.getMetadata().getSchema().getClass("V");
@@ -30,11 +28,13 @@ public class OCreateVertexStatementExecutionTest {
     }
   }
 
-  @AfterClass public static void afterClass() {
+  @AfterClass
+  public static void afterClass() {
     db.close();
   }
 
-  @Test public void testInsertSet() {
+  @Test
+  public void testInsertSet() {
     String className = "testInsertSet";
     OSchema schema = db.getMetadata().getSchema();
     schema.createClass(className, schema.getClass("V"));
@@ -60,7 +60,8 @@ public class OCreateVertexStatementExecutionTest {
     result.close();
   }
 
-  @Test public void testInsertSetNoVertex() {
+  @Test
+  public void testInsertSetNoVertex() {
     String className = "testInsertSetNoVertex";
     OSchema schema = db.getMetadata().getSchema();
     schema.createClass(className);
@@ -74,12 +75,14 @@ public class OCreateVertexStatementExecutionTest {
     }
   }
 
-  @Test public void testInsertValue() {
+  @Test
+  public void testInsertValue() {
     String className = "testInsertValue";
     OSchema schema = db.getMetadata().getSchema();
     schema.createClass(className, schema.getClass("V"));
 
-    OResultSet result = db.command("create vertex " + className + "  (name, surname) values ('name1', 'surname1')");
+    OResultSet result =
+        db.command("create vertex " + className + "  (name, surname) values ('name1', 'surname1')");
     printExecutionPlan(result);
     for (int i = 0; i < 1; i++) {
       Assert.assertTrue(result.hasNext());
@@ -101,13 +104,17 @@ public class OCreateVertexStatementExecutionTest {
     result.close();
   }
 
-  @Test public void testInsertValue2() {
+  @Test
+  public void testInsertValue2() {
     String className = "testInsertValue2";
     OSchema schema = db.getMetadata().getSchema();
     schema.createClass(className, schema.getClass("V"));
 
-    OResultSet result = db
-        .command("create vertex " + className + "  (name, surname) values ('name1', 'surname1'), ('name2', 'surname2')");
+    OResultSet result =
+        db.command(
+            "create vertex "
+                + className
+                + "  (name, surname) values ('name1', 'surname1'), ('name2', 'surname2')");
     printExecutionPlan(result);
 
     for (int i = 0; i < 2; i++) {
@@ -136,12 +143,15 @@ public class OCreateVertexStatementExecutionTest {
     result.close();
   }
 
-  @Test public void testContent() {
+  @Test
+  public void testContent() {
     String className = "testContent";
     OSchema schema = db.getMetadata().getSchema();
     schema.createClass(className, schema.getClass("V"));
 
-    OResultSet result = db.command("create vertex " + className + " content {'name':'name1', 'surname':'surname1'}");
+    OResultSet result =
+        db.command(
+            "create vertex " + className + " content {'name':'name1', 'surname':'surname1'}");
     printExecutionPlan(result);
     for (int i = 0; i < 1; i++) {
       Assert.assertTrue(result.hasNext());
@@ -162,7 +172,4 @@ public class OCreateVertexStatementExecutionTest {
     Assert.assertFalse(result.hasNext());
     result.close();
   }
-
-
-
 }

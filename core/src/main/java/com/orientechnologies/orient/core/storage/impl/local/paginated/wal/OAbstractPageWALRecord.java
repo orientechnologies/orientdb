@@ -21,7 +21,6 @@
 package com.orientechnologies.orient.core.storage.impl.local.paginated.wal;
 
 import com.orientechnologies.common.serialization.types.OLongSerializer;
-
 import java.nio.ByteBuffer;
 
 /**
@@ -32,8 +31,7 @@ public abstract class OAbstractPageWALRecord extends OOperationUnitBodyRecord {
   private long pageIndex;
   private long fileId;
 
-  protected OAbstractPageWALRecord() {
-  }
+  protected OAbstractPageWALRecord() {}
 
   protected OAbstractPageWALRecord(long pageIndex, long fileId, long operationUnitId) {
     super(operationUnitId);
@@ -68,21 +66,15 @@ public abstract class OAbstractPageWALRecord extends OOperationUnitBodyRecord {
 
   @Override
   public boolean equals(Object o) {
-    if (this == o)
-      return true;
-    if (o == null || getClass() != o.getClass())
-      return false;
-    if (!super.equals(o))
-      return false;
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+    if (!super.equals(o)) return false;
 
     OAbstractPageWALRecord that = (OAbstractPageWALRecord) o;
 
-    if (fileId != that.fileId)
-      return false;
-    if (pageIndex != that.pageIndex)
-      return false;
-    if (lsn != null ? !lsn.equals(that.lsn) : that.lsn != null)
-      return false;
+    if (fileId != that.fileId) return false;
+    if (pageIndex != that.pageIndex) return false;
+    if (lsn != null ? !lsn.equals(that.lsn) : that.lsn != null) return false;
 
     return true;
   }

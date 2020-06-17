@@ -1,14 +1,21 @@
 package com.orientechnologies.orient.core.storage.index.nkbtree.normalizers;
 
-import com.ibm.icu.text.Collator;
-import com.orientechnologies.common.serialization.types.*;
-import org.openjdk.jmh.annotations.*;
-import org.openjdk.jmh.profile.StackProfiler;
-import org.openjdk.jmh.runner.Runner;
-import org.openjdk.jmh.runner.RunnerException;
-import org.openjdk.jmh.runner.options.Options;
-import org.openjdk.jmh.runner.options.OptionsBuilder;
+import static com.orientechnologies.common.serialization.types.OLongSerializer.LONG_SIZE;
 
+import com.ibm.icu.text.Collator;
+import com.orientechnologies.common.serialization.types.OBinaryTypeSerializer;
+import com.orientechnologies.common.serialization.types.OBooleanSerializer;
+import com.orientechnologies.common.serialization.types.OByteSerializer;
+import com.orientechnologies.common.serialization.types.ODateSerializer;
+import com.orientechnologies.common.serialization.types.ODateTimeSerializer;
+import com.orientechnologies.common.serialization.types.ODecimalSerializer;
+import com.orientechnologies.common.serialization.types.ODoubleSerializer;
+import com.orientechnologies.common.serialization.types.OFloatSerializer;
+import com.orientechnologies.common.serialization.types.OIntegerSerializer;
+import com.orientechnologies.common.serialization.types.OLongSerializer;
+import com.orientechnologies.common.serialization.types.OShortSerializer;
+import com.orientechnologies.common.serialization.types.OStringSerializer;
+import com.orientechnologies.common.serialization.types.OUTF8Serializer;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.nio.ByteOrder;
@@ -18,8 +25,22 @@ import java.util.Calendar;
 import java.util.Date;
 import java.util.GregorianCalendar;
 import java.util.concurrent.TimeUnit;
-
-import static com.orientechnologies.common.serialization.types.OLongSerializer.LONG_SIZE;
+import org.openjdk.jmh.annotations.Benchmark;
+import org.openjdk.jmh.annotations.BenchmarkMode;
+import org.openjdk.jmh.annotations.Fork;
+import org.openjdk.jmh.annotations.Level;
+import org.openjdk.jmh.annotations.Measurement;
+import org.openjdk.jmh.annotations.Mode;
+import org.openjdk.jmh.annotations.OutputTimeUnit;
+import org.openjdk.jmh.annotations.Scope;
+import org.openjdk.jmh.annotations.Setup;
+import org.openjdk.jmh.annotations.State;
+import org.openjdk.jmh.annotations.Warmup;
+import org.openjdk.jmh.profile.StackProfiler;
+import org.openjdk.jmh.runner.Runner;
+import org.openjdk.jmh.runner.RunnerException;
+import org.openjdk.jmh.runner.options.Options;
+import org.openjdk.jmh.runner.options.OptionsBuilder;
 
 @State(Scope.Thread)
 @BenchmarkMode(Mode.AverageTime)
@@ -29,16 +50,18 @@ import static com.orientechnologies.common.serialization.types.OLongSerializer.L
 @Fork(1)
 public class KeyNormalizerVsSerializerBenchmark {
   private KeyNormalizer keyNormalizer;
-  private ByteOrder     byteOrder;
+  private ByteOrder byteOrder;
 
   public static void main(String[] args) throws RunnerException {
-    final Options opt = new OptionsBuilder().include("KeyNormalizerVsSerializerBenchmark.*")
-        .addProfiler(StackProfiler.class, "detailLine=true;excludePackages=true;period=1")
-        .jvmArgs("-server", "-XX:+UseConcMarkSweepGC", "-Xmx4G", "-Xms1G")
-        // .result("target" + "/" + "results.csv")
-        // .param("offHeapMessages", "true""
-        // .resultFormat(ResultFormatType.CSV)
-        .build();
+    final Options opt =
+        new OptionsBuilder()
+            .include("KeyNormalizerVsSerializerBenchmark.*")
+            .addProfiler(StackProfiler.class, "detailLine=true;excludePackages=true;period=1")
+            .jvmArgs("-server", "-XX:+UseConcMarkSweepGC", "-Xmx4G", "-Xms1G")
+            // .result("target" + "/" + "results.csv")
+            // .param("offHeapMessages", "true""
+            // .resultFormat(ResultFormatType.CSV)
+            .build();
     new Runner(opt).run();
   }
 
@@ -153,14 +176,14 @@ public class KeyNormalizerVsSerializerBenchmark {
   @Benchmark
   public void binarySerializer() {
     final OBinaryTypeSerializer serializer = new OBinaryTypeSerializer();
-    final byte[] binary = new byte[] { 1, 2, 3, 4, 5, 6 };
+    final byte[] binary = new byte[] {1, 2, 3, 4, 5, 6};
     serializer.serialize(binary, new byte[binary.length + OIntegerSerializer.INT_SIZE], 0);
   }
 
   @Benchmark
   public void binaryNormalizer() throws Exception {
     final BinaryKeyNormalizer normalizer = new BinaryKeyNormalizer();
-    final byte[] binary = new byte[] { 1, 2, 3, 4, 5, 6 };
+    final byte[] binary = new byte[] {1, 2, 3, 4, 5, 6};
     normalizer.execute(binary, 0);
   }
 

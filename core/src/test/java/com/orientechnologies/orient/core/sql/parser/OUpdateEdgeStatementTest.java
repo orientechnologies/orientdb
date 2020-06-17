@@ -1,11 +1,10 @@
 package com.orientechnologies.orient.core.sql.parser;
 
-import org.junit.Test;
+import static org.junit.Assert.fail;
 
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
-
-import static org.junit.Assert.fail;
+import org.junit.Test;
 
 public class OUpdateEdgeStatementTest {
 
@@ -51,7 +50,6 @@ public class OUpdateEdgeStatementTest {
     checkRightSyntax("update edge Foo set a = a.b.toLowerCase(), b=out('pippo')[0]");
     printTree("update edge Foo set a = a.b.toLowerCase(), b=out('pippo')[0]");
     checkRightSyntax("UPDATE EDGE E1 SET out = #10:0, in = #21:0 WHERE @rid = #24:0");
-
   }
 
   @Test
@@ -68,7 +66,8 @@ public class OUpdateEdgeStatementTest {
   @Test
   public void testJson() {
     checkRightSyntax("update edge Foo merge {'a':'b', 'c':{'d':'e'}} where name = 'foo'");
-    checkRightSyntax("update edge Foo content {'a':'b', 'c':{'d':'e', 'f': ['a', 'b', 4]}} where name = 'foo'");
+    checkRightSyntax(
+        "update edge Foo content {'a':'b', 'c':{'d':'e', 'f': ['a', 'b', 4]}} where name = 'foo'");
   }
 
   @Test
@@ -89,12 +88,13 @@ public class OUpdateEdgeStatementTest {
 
   @Test
   public void testQuotedJson() {
-    checkRightSyntax("update edge E SET key = \"test\", value = {\"f12\":\"test\\\\\"} UPSERT WHERE key = \"test\"");
+    checkRightSyntax(
+        "update edge E SET key = \"test\", value = {\"f12\":\"test\\\\\"} UPSERT WHERE key = \"test\"");
   }
 
   @Test
   public void testTargetQuery() {
-    //issue #4415
+    // issue #4415
     checkRightSyntax(
         "update edge (select from (traverse References from ( select from Node WHERE Email = 'julia@local'  ) ) WHERE @class = 'Node' and $depth <= 1 and Active = true ) set Points = 0 RETURN BEFORE $current.Points");
   }
@@ -112,7 +112,6 @@ public class OUpdateEdgeStatementTest {
     } catch (ParseException e) {
       e.printStackTrace();
     }
-
   }
 
   protected OrientSql getParserFor(String string) {

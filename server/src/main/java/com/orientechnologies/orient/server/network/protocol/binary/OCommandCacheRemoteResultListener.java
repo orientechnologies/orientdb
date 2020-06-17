@@ -11,7 +11,8 @@ public final class OCommandCacheRemoteResultListener extends OAbstractCommandRes
   private final OCommandCache cmdCache;
   private OLegacyResultSet collector = new OConcurrentLegacyResultSet<ORecord>();
 
-  public OCommandCacheRemoteResultListener(OCommandResultListener wrappedResultListener, OCommandCache cmdCache) {
+  public OCommandCacheRemoteResultListener(
+      OCommandResultListener wrappedResultListener, OCommandCache cmdCache) {
     super(wrappedResultListener);
     this.cmdCache = cmdCache;
   }
@@ -27,8 +28,7 @@ public final class OCommandCacheRemoteResultListener extends OAbstractCommandRes
       if (collector.currentSize() > cmdCache.getMaxResultsetSize()) {
         // TOO MANY RESULTS: STOP COLLECTING IT BECAUSE THEY WOULD NEVER CACHED
         collector = null;
-      } else if (iRecord != null && iRecord instanceof ORecord)
-        collector.add(iRecord);
+      } else if (iRecord != null && iRecord instanceof ORecord) collector.add(iRecord);
     }
     return true;
   }
@@ -48,5 +48,4 @@ public final class OCommandCacheRemoteResultListener extends OAbstractCommandRes
     if (wrappedResultListener instanceof OAbstractCommandResultListener)
       ((OAbstractCommandResultListener) wrappedResultListener).linkdedBySimpleValue(doc);
   }
-
 }

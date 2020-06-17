@@ -26,7 +26,6 @@ import com.orientechnologies.orient.core.serialization.serializer.record.ORecord
 import com.orientechnologies.orient.core.storage.ridbag.sbtree.OBonsaiCollectionPointer;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelDataInput;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelDataOutput;
-
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -50,12 +49,11 @@ public final class OCommitResponse implements OBinaryResponse {
     public ORecordId getCurrentRid() {
       return currentRid;
     }
-
   }
 
   public static class OUpdatedRecordResponse {
     private final ORecordId rid;
-    private final int       version;
+    private final int version;
 
     public OUpdatedRecordResponse(ORecordId rid, int version) {
       this.rid = rid;
@@ -71,11 +69,13 @@ public final class OCommitResponse implements OBinaryResponse {
     }
   }
 
-  private List<OCreatedRecordResponse>        created;
-  private List<OUpdatedRecordResponse>        updated;
+  private List<OCreatedRecordResponse> created;
+  private List<OUpdatedRecordResponse> updated;
   private Map<UUID, OBonsaiCollectionPointer> collectionChanges;
 
-  public OCommitResponse(List<OCreatedRecordResponse> created, List<OUpdatedRecordResponse> updated,
+  public OCommitResponse(
+      List<OCreatedRecordResponse> created,
+      List<OUpdatedRecordResponse> updated,
       Map<UUID, OBonsaiCollectionPointer> collectionChanges) {
     super();
     this.created = created;
@@ -83,8 +83,7 @@ public final class OCommitResponse implements OBinaryResponse {
     this.collectionChanges = collectionChanges;
   }
 
-  public OCommitResponse() {
-  }
+  public OCommitResponse() {}
 
   @Override
   public void read(OChannelDataInput network, OStorageRemoteSession session) throws IOException {
@@ -109,11 +108,11 @@ public final class OCommitResponse implements OBinaryResponse {
     }
 
     collectionChanges = OMessageHelper.readCollectionChanges(network);
-
   }
 
   @Override
-  public void write(OChannelDataOutput channel, int protocolVersion, ORecordSerializer serializer) throws IOException {
+  public void write(OChannelDataOutput channel, int protocolVersion, ORecordSerializer serializer)
+      throws IOException {
 
     channel.writeInt(created.size());
     for (OCreatedRecordResponse createdRecord : created) {
@@ -126,8 +125,7 @@ public final class OCommitResponse implements OBinaryResponse {
       channel.writeRID(updatedRecord.rid);
       channel.writeVersion(updatedRecord.version);
     }
-    if (protocolVersion >= 20)
-      OMessageHelper.writeCollectionChanges(channel, collectionChanges);
+    if (protocolVersion >= 20) OMessageHelper.writeCollectionChanges(channel, collectionChanges);
   }
 
   public List<OCreatedRecordResponse> getCreated() {
@@ -141,5 +139,4 @@ public final class OCommitResponse implements OBinaryResponse {
   public Map<UUID, OBonsaiCollectionPointer> getCollectionChanges() {
     return collectionChanges;
   }
-
 }

@@ -8,7 +8,6 @@ import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.WALRecordTypes;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.PageOperationRecord;
 import com.orientechnologies.orient.core.storage.index.sbtree.local.v2.OSBTreeNullBucketV2;
-
 import java.nio.ByteBuffer;
 
 public class SBTreeNullBucketV2SetValuePO extends PageOperationRecord {
@@ -17,10 +16,10 @@ public class SBTreeNullBucketV2SetValuePO extends PageOperationRecord {
 
   private OBinarySerializer valueSerializer;
 
-  public SBTreeNullBucketV2SetValuePO() {
-  }
+  public SBTreeNullBucketV2SetValuePO() {}
 
-  public SBTreeNullBucketV2SetValuePO(byte[] prevValue, byte[] value, OBinarySerializer valueSerializer) {
+  public SBTreeNullBucketV2SetValuePO(
+      byte[] prevValue, byte[] value, OBinarySerializer valueSerializer) {
     this.prevValue = prevValue;
     this.value = value;
     this.valueSerializer = valueSerializer;

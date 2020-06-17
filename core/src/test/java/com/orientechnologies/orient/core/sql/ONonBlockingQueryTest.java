@@ -1,27 +1,24 @@
 package com.orientechnologies.orient.core.sql;
 
+import static org.junit.Assert.assertTrue;
+
 import com.orientechnologies.orient.core.command.OCommandResultListener;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.sql.query.OSQLNonBlockingQuery;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 import org.junit.Assert;
 import org.junit.Test;
 
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
-
-import static org.junit.Assert.assertTrue;
-
-/**
- * Created by luigidellaquila on 13/04/15.
- */
+/** Created by luigidellaquila on 13/04/15. */
 public class ONonBlockingQueryTest {
 
   static class MyResultListener implements OCommandResultListener {
 
     private CountDownLatch latch;
-    public int     numResults = 0;
-    public boolean finished   = false;
+    public int numResults = 0;
+    public boolean finished = false;
 
     MyResultListener(CountDownLatch latch) {
       this.latch = latch;
@@ -48,7 +45,7 @@ public class ONonBlockingQueryTest {
 
   @Test
   public void testExceptionManagement() {
-    //issue #5244
+    // issue #5244
     OLiveCommandExecutorSQLFactory.init();
 
     ODatabaseDocument db = new ODatabaseDocumentTx("memory:ONonBlockingQueryTest");
@@ -65,20 +62,20 @@ public class ONonBlockingQueryTest {
         listener.latch.await(1, TimeUnit.MINUTES);
       } catch (InterruptedException e) {
         e.printStackTrace();
-      } Assert.assertEquals(listener.finished, true);
+      }
+      Assert.assertEquals(listener.finished, true);
 
       listener = new MyResultListener(new CountDownLatch(2));
       db.query(new OSQLNonBlockingQuery<Object>("select from test", listener));
 
     } finally {
       db.close();
-    } try {
+    }
+    try {
       assertTrue(listener.latch.await(1, TimeUnit.MINUTES));
     } catch (InterruptedException e) {
       e.printStackTrace();
     }
     Assert.assertEquals(listener.numResults, 1);
-
   }
-
 }

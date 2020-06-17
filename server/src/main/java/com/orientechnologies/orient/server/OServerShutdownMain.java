@@ -27,7 +27,6 @@ import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProt
 import com.orientechnologies.orient.enterprise.channel.binary.ONetworkProtocolException;
 import com.orientechnologies.orient.server.config.OServerConfiguration;
 import com.orientechnologies.orient.server.network.OServerNetworkListener;
-
 import java.io.IOException;
 import java.util.Arrays;
 
@@ -37,15 +36,18 @@ import java.util.Arrays;
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
  */
 public class OServerShutdownMain {
-  public String                     networkAddress;
-  public int[]                      networkPort;
+  public String networkAddress;
+  public int[] networkPort;
   public OChannelBinaryAsynchClient channel;
 
   private OContextConfiguration contextConfig;
-  private String                rootUser;
-  private String                rootPassword;
+  private String rootUser;
+  private String rootPassword;
 
-  public OServerShutdownMain(final String iServerAddress, final String iServerPorts, final String iRootUser,
+  public OServerShutdownMain(
+      final String iServerAddress,
+      final String iServerPorts,
+      final String iRootUser,
       final String iRootPassword) {
     contextConfig = new OContextConfiguration();
 
@@ -54,15 +56,19 @@ public class OServerShutdownMain {
 
     networkAddress = iServerAddress;
     networkPort = OServerNetworkListener.getPorts(iServerPorts);
-
   }
 
   public void connect(final int iTimeout) throws IOException {
     // TRY TO CONNECT TO THE RIGHT PORT
     for (int port : networkPort)
       try {
-        channel = new OChannelBinaryAsynchClient(networkAddress, port, null, contextConfig,
-            OChannelBinaryProtocol.CURRENT_PROTOCOL_VERSION);
+        channel =
+            new OChannelBinaryAsynchClient(
+                networkAddress,
+                port,
+                null,
+                contextConfig,
+                OChannelBinaryProtocol.CURRENT_PROTOCOL_VERSION);
         break;
       } catch (Exception e) {
         OLogManager.instance().error(this, "Error on connecting to %s:%d", e, networkAddress, port);
@@ -70,7 +76,10 @@ public class OServerShutdownMain {
 
     if (channel == null)
       throw new ONetworkProtocolException(
-          "Cannot connect to server host '" + networkAddress + "', ports: " + Arrays.toString(networkPort));
+          "Cannot connect to server host '"
+              + networkAddress
+              + "', ports: "
+              + Arrays.toString(networkPort));
 
     OShutdownRequest request = new OShutdownRequest(rootUser, rootPassword);
     channel.writeByte(request.getCommand());
@@ -93,26 +102,23 @@ public class OServerShutdownMain {
 
     for (int i = 0; i < iArgs.length; i++) {
       String arg = iArgs[i];
-      if ("-P".equals(arg) || "--ports".equals(arg))
-        serverPorts = iArgs[i + 1];
-      if ("-h".equals(arg) || "--host".equals(arg))
-        serverHost = iArgs[i + 1];
-      if ("-p".equals(arg) || "--password".equals(arg))
-        rootPassword = iArgs[i + 1];
-      if ("-u".equals(arg) || "--user".equals(arg))
-        rootUser = iArgs[i + 1];
-      if ("-h".equals(arg) || "--help".equals(arg))
-        printUsage = true;
+      if ("-P".equals(arg) || "--ports".equals(arg)) serverPorts = iArgs[i + 1];
+      if ("-h".equals(arg) || "--host".equals(arg)) serverHost = iArgs[i + 1];
+      if ("-p".equals(arg) || "--password".equals(arg)) rootPassword = iArgs[i + 1];
+      if ("-u".equals(arg) || "--user".equals(arg)) rootUser = iArgs[i + 1];
+      if ("-h".equals(arg) || "--help".equals(arg)) printUsage = true;
     }
 
     if ("NOT_PRESENT".equals(rootPassword) || printUsage) {
       System.out.println("allowed parameters");
-      System.out.println("-h | --host hostname : name or ip of the host where OrientDB is running. Deafult to localhost ");
-      System.out.println("-P | --ports  ports : ports in the form of single value or range. Default to 2424-2430");
+      System.out.println(
+          "-h | --host hostname : name or ip of the host where OrientDB is running. Deafult to localhost ");
+      System.out.println(
+          "-P | --ports  ports : ports in the form of single value or range. Default to 2424-2430");
       System.out.println("-p | --password password : the super user password");
       System.out.println("-u | --user username: the super user name. Default to root");
-      System.out.println("example: shutdown.sh -h orientserver.mydomain -P 2424-2430 -u root -p securePassword");
-
+      System.out.println(
+          "example: shutdown.sh -h orientserver.mydomain -P 2424-2430 -u root -p securePassword");
     }
 
     System.out.println("Sending shutdown command to remote OrientDB Server instance...");

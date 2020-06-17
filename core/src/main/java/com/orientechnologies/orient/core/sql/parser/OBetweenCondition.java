@@ -6,8 +6,11 @@ import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.sql.executor.OResult;
-
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 public class OBetweenCondition extends OBooleanExpression {
 
@@ -159,19 +162,14 @@ public class OBetweenCondition extends OBooleanExpression {
 
   @Override
   public boolean equals(Object o) {
-    if (this == o)
-      return true;
-    if (o == null || getClass() != o.getClass())
-      return false;
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
 
     OBetweenCondition that = (OBetweenCondition) o;
 
-    if (first != null ? !first.equals(that.first) : that.first != null)
-      return false;
-    if (second != null ? !second.equals(that.second) : that.second != null)
-      return false;
-    if (third != null ? !third.equals(that.third) : that.third != null)
-      return false;
+    if (first != null ? !first.equals(that.first) : that.first != null) return false;
+    if (second != null ? !second.equals(that.second) : that.second != null) return false;
+    if (third != null ? !third.equals(that.third) : that.third != null) return false;
 
     return true;
   }
@@ -207,8 +205,7 @@ public class OBetweenCondition extends OBooleanExpression {
   }
 
   @Override
-  public void translateLuceneOperator() {
-  }
+  public void translateLuceneOperator() {}
 
   @Override
   public boolean isCacheable() {

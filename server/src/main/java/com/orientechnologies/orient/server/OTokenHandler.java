@@ -6,7 +6,6 @@ import com.orientechnologies.orient.core.metadata.security.OSecurityUser;
 import com.orientechnologies.orient.core.metadata.security.OToken;
 import com.orientechnologies.orient.server.config.OServerUserConfiguration;
 import com.orientechnologies.orient.server.network.protocol.ONetworkProtocolData;
-
 import java.io.IOException;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
@@ -17,12 +16,12 @@ import java.security.NoSuchAlgorithmException;
  * @author Emrul Islam <emrul@emrul.com> Copyright 2014 Emrul Islam
  */
 public interface OTokenHandler {
-  @Deprecated
-  public static final String TOKEN_HANDLER_NAME = "OTokenHandler";
+  @Deprecated public static final String TOKEN_HANDLER_NAME = "OTokenHandler";
 
   // Return null if token is unparseable or fails verification.
   // The returned token should be checked to ensure isVerified == true.
-  OToken parseWebToken(byte[] tokenBytes) throws InvalidKeyException, NoSuchAlgorithmException, IOException;
+  OToken parseWebToken(byte[] tokenBytes)
+      throws InvalidKeyException, NoSuchAlgorithmException, IOException;
 
   OToken parseNotVerifyBinaryToken(byte[] tokenBytes);
 
@@ -45,12 +44,12 @@ public interface OTokenHandler {
     throw new UnsupportedOperationException();
   }
 
-  byte[] getSignedBinaryToken(ODatabaseDocumentInternal db, OSecurityUser user, ONetworkProtocolData data);
+  byte[] getSignedBinaryToken(
+      ODatabaseDocumentInternal db, OSecurityUser user, ONetworkProtocolData data);
 
   byte[] getDistributedToken(ONetworkProtocolData data);
 
   byte[] renewIfNeeded(OToken token);
 
   boolean isEnabled();
-
 }

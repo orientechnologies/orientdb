@@ -24,9 +24,8 @@ import com.orientechnologies.orient.core.db.record.OIdentifiable;
 
 /**
  * Represent a value inside a query condition.
- * 
+ *
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
- * 
  */
 public interface OSQLFilterItem {
 

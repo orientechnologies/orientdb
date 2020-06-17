@@ -13,10 +13,12 @@
  *  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  *  * See the License for the specific language governing permissions and
  *  * limitations under the License.
- *  
+ *
  */
 
 package com.orientechnologies.lucene.tests;
+
+import static org.assertj.core.api.Assertions.assertThat;
 
 import com.orientechnologies.orient.core.db.ODatabasePool;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
@@ -27,26 +29,20 @@ import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.OElement;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
-
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Test;
 
-import static org.assertj.core.api.Assertions.assertThat;
-
-/**
- * Created by enricorisa on 28/06/14.
- */
-
+/** Created by enricorisa on 28/06/14. */
 public class OLuceneInsertReadMultiThreadTest extends OLuceneBaseTest {
 
-  private final static int THREADS  = 10;
-  private final static int RTHREADS = 10;
-  private final static int CYCLE    = 100;
+  private static final int THREADS = 10;
+  private static final int RTHREADS = 10;
+  private static final int CYCLE = 100;
 
   @Before
   public void init() {
@@ -61,15 +57,17 @@ public class OLuceneInsertReadMultiThreadTest extends OLuceneBaseTest {
   @Test
   public void testConcurrentInsertWithIndex() throws Exception {
 
-    List<CompletableFuture<Void>> futures = IntStream.range(0, THREADS).boxed()
-        .map(i -> CompletableFuture.runAsync(new LuceneInsert(pool, CYCLE)))
-        .collect(Collectors.toList());
+    List<CompletableFuture<Void>> futures =
+        IntStream.range(0, THREADS)
+            .boxed()
+            .map(i -> CompletableFuture.runAsync(new LuceneInsert(pool, CYCLE)))
+            .collect(Collectors.toList());
 
     futures.addAll(
-        IntStream.range(0, 1).boxed()
+        IntStream.range(0, 1)
+            .boxed()
             .map(i -> CompletableFuture.runAsync(new LuceneReader(pool, CYCLE)))
-            .collect(Collectors.toList())
-    );
+            .collect(Collectors.toList()));
 
     futures.forEach(cf -> cf.join());
 
@@ -85,8 +83,8 @@ public class OLuceneInsertReadMultiThreadTest extends OLuceneBaseTest {
   public class LuceneInsert implements Runnable {
 
     private final ODatabasePool pool;
-    private final int           cycle;
-    private final int           commitBuf;
+    private final int cycle;
+    private final int commitBuf;
 
     public LuceneInsert(ODatabasePool pool, int cycle) {
       this.pool = pool;
@@ -113,7 +111,6 @@ public class OLuceneInsertReadMultiThreadTest extends OLuceneBaseTest {
           db.commit();
           db.begin();
         }
-
       }
       db.commit();
       db.close();
@@ -121,7 +118,7 @@ public class OLuceneInsertReadMultiThreadTest extends OLuceneBaseTest {
   }
 
   public class LuceneReader implements Runnable {
-    private final int           cycle;
+    private final int cycle;
     private final ODatabasePool pool;
 
     public LuceneReader(ODatabasePool pool, int cycle) {
@@ -139,15 +136,16 @@ public class OLuceneInsertReadMultiThreadTest extends OLuceneBaseTest {
 
       for (int i = 0; i < cycle; i++) {
 
-        OResultSet resultSet = db.query("select from City where SEARCH_FIELDS(['name'], 'Rome') =true ");
+        OResultSet resultSet =
+            db.query("select from City where SEARCH_FIELDS(['name'], 'Rome') =true ");
 
         if (resultSet.hasNext()) {
-          assertThat(resultSet.next().toElement().<String>getProperty("name")).isEqualToIgnoringCase("rome");
+          assertThat(resultSet.next().toElement().<String>getProperty("name"))
+              .isEqualToIgnoringCase("rome");
         }
         resultSet.close();
       }
       db.close();
-
     }
   }
 }

@@ -6,9 +6,6 @@ import javax.xml.bind.annotation.XmlRootElement;
 @XmlRootElement(name = "group")
 public class OServerDistributedGroupConfiguration {
 
-  @XmlElement
-  public String name;
-  @XmlElement
-  public String password;
-
+  @XmlElement public String name;
+  @XmlElement public String password;
 }

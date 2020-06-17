@@ -20,17 +20,14 @@
 package com.orientechnologies.orient.core.sql.parser.operators;
 
 import com.orientechnologies.orient.core.sql.parser.OContainsCondition;
-import org.junit.Assert;
-import org.junit.Test;
-
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
+import org.junit.Assert;
+import org.junit.Test;
 
-/**
- * @author Luigi Dell'Aquila (l.dellaquila-(at)-orientdb.com)
- */
+/** @author Luigi Dell'Aquila (l.dellaquila-(at)-orientdb.com) */
 public class OContainsConditionTest {
   @Test
   public void test() {
@@ -49,31 +46,33 @@ public class OContainsConditionTest {
     Assert.assertTrue(op.execute(left, "foo"));
     Assert.assertTrue(op.execute(left, "bar"));
     Assert.assertFalse(op.execute(left, "fooz"));
-    
+
     left.add(null);
     Assert.assertTrue(op.execute(left, null));
   }
-  
+
   @Test
   public void testIterable() {
-    Iterable left = new Iterable() {
-      private final List<Integer> ls = Arrays.asList(3, 1, 2);
-      
-      @Override
-      public Iterator iterator() {
-        return ls.iterator();
-      }
-    };
-    
-    Iterable right = new Iterable() {
-      private final List<Integer> ls = Arrays.asList(2, 3);
-      
-      @Override
-      public Iterator iterator() {
-        return ls.iterator();
-      }
-    };
-    
+    Iterable left =
+        new Iterable() {
+          private final List<Integer> ls = Arrays.asList(3, 1, 2);
+
+          @Override
+          public Iterator iterator() {
+            return ls.iterator();
+          }
+        };
+
+    Iterable right =
+        new Iterable() {
+          private final List<Integer> ls = Arrays.asList(2, 3);
+
+          @Override
+          public Iterator iterator() {
+            return ls.iterator();
+          }
+        };
+
     OContainsCondition op = new OContainsCondition(-1);
     Assert.assertTrue(op.execute(left, right));
   }

@@ -21,20 +21,17 @@ package com.orientechnologies.orient.core.metadata.function;
 
 /**
  * Wrapper of function with additional utility methods to help inside functions.
- * 
+ *
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
- * 
  */
 public class OFunctionUtilWrapper {
 
-  public OFunctionUtilWrapper() {
-  }
+  public OFunctionUtilWrapper() {}
 
   public boolean exists(final Object... iValues) {
     if (iValues != null)
       for (Object o : iValues)
-        if (o != null && !o.equals("undefined") && !o.equals("null"))
-          return true;
+        if (o != null && !o.equals("undefined") && !o.equals("null")) return true;
     return false;
   }
 

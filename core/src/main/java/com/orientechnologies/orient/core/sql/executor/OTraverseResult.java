@@ -1,8 +1,6 @@
 package com.orientechnologies.orient.core.sql.executor;
 
-/**
- * Created by luigidellaquila on 02/11/16.
- */
+/** Created by luigidellaquila on 02/11/16. */
 public class OTraverseResult extends OResultInternal {
   protected Integer depth;
 

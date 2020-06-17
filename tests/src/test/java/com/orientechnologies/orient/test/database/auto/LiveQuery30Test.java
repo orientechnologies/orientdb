@@ -23,25 +23,22 @@ import com.orientechnologies.orient.core.db.OLiveQueryResultListener;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.sql.executor.OResult;
-import org.testng.Assert;
-import org.testng.annotations.Optional;
-import org.testng.annotations.Parameters;
-import org.testng.annotations.Test;
-
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
+import org.testng.Assert;
+import org.testng.annotations.Optional;
+import org.testng.annotations.Parameters;
+import org.testng.annotations.Test;
 
-/**
- * only for remote usage (it requires registered LiveQuery plugin)
- */
+/** only for remote usage (it requires registered LiveQuery plugin) */
 @Test(groups = "Query")
 public class LiveQuery30Test extends DocumentDBBaseTest implements OCommandOutputListener {
 
-  private final CountDownLatch latch   = new CountDownLatch(2);
-  private       CountDownLatch unLatch = new CountDownLatch(1);
+  private final CountDownLatch latch = new CountDownLatch(2);
+  private CountDownLatch unLatch = new CountDownLatch(1);
 
   class MyLiveQueryListener implements OLiveQueryResultListener {
 
@@ -67,9 +64,7 @@ public class LiveQuery30Test extends DocumentDBBaseTest implements OCommandOutpu
     }
 
     @Override
-    public void onError(ODatabaseDocument database, OException exception) {
-
-    }
+    public void onError(ODatabaseDocument database, OException exception) {}
 
     @Override
     public void onEnd(ODatabaseDocument database) {
@@ -78,7 +73,7 @@ public class LiveQuery30Test extends DocumentDBBaseTest implements OCommandOutpu
     }
   }
 
-  @Parameters(value = { "url" })
+  @Parameters(value = {"url"})
   public LiveQuery30Test(@Optional String url) {
     super(url);
   }

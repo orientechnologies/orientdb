@@ -30,7 +30,6 @@ import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OClass.ATTRIBUTES;
 import com.orientechnologies.orient.core.metadata.schema.OClassImpl;
 import com.orientechnologies.orient.core.sql.parser.OAlterClassStatement;
-
 import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
@@ -42,13 +41,14 @@ import java.util.Map;
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
  */
 @SuppressWarnings("unchecked")
-public class OCommandExecutorSQLAlterClass extends OCommandExecutorSQLAbstract implements OCommandDistributedReplicateRequest {
+public class OCommandExecutorSQLAlterClass extends OCommandExecutorSQLAbstract
+    implements OCommandDistributedReplicateRequest {
   public static final String KEYWORD_ALTER = "ALTER";
   public static final String KEYWORD_CLASS = "CLASS";
 
-  private String     className;
+  private String className;
   private ATTRIBUTES attribute;
-  private String     value;
+  private String value;
   private boolean unsafe = false;
 
   public OCommandExecutorSQLAlterClass parse(final OCommandRequest iRequest) {
@@ -69,38 +69,47 @@ public class OCommandExecutorSQLAlterClass extends OCommandExecutorSQLAbstract i
       int oldPos = 0;
       int pos = nextWord(parserText, parserTextUpperCase, oldPos, word, true);
       if (pos == -1 || !word.toString().equals(KEYWORD_ALTER))
-        throw new OCommandSQLParsingException("Keyword " + KEYWORD_ALTER + " not found", parserText, oldPos);
+        throw new OCommandSQLParsingException(
+            "Keyword " + KEYWORD_ALTER + " not found", parserText, oldPos);
 
       oldPos = pos;
       pos = nextWord(parserText, parserTextUpperCase, oldPos, word, true);
       if (pos == -1 || !word.toString().equals(KEYWORD_CLASS))
-        throw new OCommandSQLParsingException("Keyword " + KEYWORD_CLASS + " not found", parserText, oldPos);
+        throw new OCommandSQLParsingException(
+            "Keyword " + KEYWORD_CLASS + " not found", parserText, oldPos);
 
       oldPos = pos;
       pos = nextWord(parserText, parserTextUpperCase, oldPos, word, false);
-      if (pos == -1)
-        throw new OCommandSQLParsingException("Expected <class>", parserText, oldPos);
+      if (pos == -1) throw new OCommandSQLParsingException("Expected <class>", parserText, oldPos);
 
       className = decodeClassName(word.toString());
 
       oldPos = pos;
       pos = nextWord(parserText, parserTextUpperCase, oldPos, word, true);
       if (pos == -1)
-        throw new OCommandSQLParsingException("Missed the class's attribute to change", parserText, oldPos);
+        throw new OCommandSQLParsingException(
+            "Missed the class's attribute to change", parserText, oldPos);
 
       final String attributeAsString = word.toString();
 
       try {
         attribute = OClass.ATTRIBUTES.valueOf(attributeAsString.toUpperCase(Locale.ENGLISH));
       } catch (IllegalArgumentException e) {
-        throw OException.wrapException(new OCommandSQLParsingException(
-            "Unknown class's attribute '" + attributeAsString + "'. Supported attributes are: " + Arrays
-                .toString(OClass.ATTRIBUTES.values()), parserText, oldPos), e);
+        throw OException.wrapException(
+            new OCommandSQLParsingException(
+                "Unknown class's attribute '"
+                    + attributeAsString
+                    + "'. Supported attributes are: "
+                    + Arrays.toString(OClass.ATTRIBUTES.values()),
+                parserText,
+                oldPos),
+            e);
       }
 
       value = parserText.substring(pos + 1).trim();
 
-      if ("addcluster".equalsIgnoreCase(attributeAsString) || "removecluster".equalsIgnoreCase(attributeAsString)) {
+      if ("addcluster".equalsIgnoreCase(attributeAsString)
+          || "removecluster".equalsIgnoreCase(attributeAsString)) {
         value = decodeClassName(value);
       }
       OAlterClassStatement stm = (OAlterClassStatement) preParsedStatement;
@@ -115,11 +124,12 @@ public class OCommandExecutorSQLAlterClass extends OCommandExecutorSQLAbstract i
           value = value.substring(0, value.length() - 1);
       }
       if (value.length() == 0)
-        throw new OCommandSQLParsingException("Missed the property's value to change for attribute '" + attribute + "'", parserText,
+        throw new OCommandSQLParsingException(
+            "Missed the property's value to change for attribute '" + attribute + "'",
+            parserText,
             oldPos);
 
-      if (value.equalsIgnoreCase("null"))
-        value = null;
+      if (value.equalsIgnoreCase("null")) value = null;
     } finally {
       textRequest.setText(originalQuery);
     }
@@ -127,26 +137,31 @@ public class OCommandExecutorSQLAlterClass extends OCommandExecutorSQLAbstract i
     return this;
   }
 
-  /**
-   * Execute the ALTER CLASS.
-   */
+  /** Execute the ALTER CLASS. */
   public Object execute(final Map<Object, Object> iArgs) {
     final ODatabaseDocument database = getDatabase();
 
     if (attribute == null)
-      throw new OCommandExecutionException("Cannot execute the command because it has not been parsed yet");
+      throw new OCommandExecutionException(
+          "Cannot execute the command because it has not been parsed yet");
 
     final OClassImpl cls = (OClassImpl) database.getMetadata().getSchema().getClass(className);
     if (cls == null)
-      throw new OCommandExecutionException("Cannot alter class '" + className + "' because not found");
+      throw new OCommandExecutionException(
+          "Cannot alter class '" + className + "' because not found");
 
     if (!unsafe && attribute == ATTRIBUTES.NAME && cls.isSubClassOf("E"))
-      throw new OCommandExecutionException("Cannot alter class '" + className
-          + "' because is an Edge class and could break vertices. Use UNSAFE if you want to force it");
+      throw new OCommandExecutionException(
+          "Cannot alter class '"
+              + className
+              + "' because is an Edge class and could break vertices. Use UNSAFE if you want to force it");
 
     // REMOVE CACHE OF COMMAND RESULTS
     for (int clId : cls.getPolymorphicClusterIds())
-      getDatabase().getMetadata().getCommandCache().invalidateResultsOfCluster(getDatabase().getClusterNameById(clId));
+      getDatabase()
+          .getMetadata()
+          .getCommandCache()
+          .invalidateResultsOfCluster(getDatabase().getClusterNameById(clId));
 
     if (value != null && attribute == ATTRIBUTES.SUPERCLASS) {
       checkClassExists(database, className, decodeClassName(value));
@@ -159,8 +174,10 @@ public class OCommandExecutorSQLAlterClass extends OCommandExecutorSQLAbstract i
     }
     if (!unsafe && value != null && attribute == ATTRIBUTES.NAME) {
       if (!cls.getIndexes().isEmpty()) {
-        throw new OCommandExecutionException("Cannot rename class '" + className
-            + "' because it has indexes defined on it. Drop indexes before or use UNSAFE (at your won risk)");
+        throw new OCommandExecutionException(
+            "Cannot rename class '"
+                + className
+                + "' because it has indexes defined on it. Drop indexes before or use UNSAFE (at your won risk)");
       }
     }
     cls.set(attribute, value);
@@ -170,16 +187,23 @@ public class OCommandExecutorSQLAlterClass extends OCommandExecutorSQLAbstract i
 
   @Override
   public long getDistributedTimeout() {
-    return getDatabase().getConfiguration().getValueAsLong(OGlobalConfiguration.DISTRIBUTED_COMMAND_QUICK_TASK_SYNCH_TIMEOUT);
+    return getDatabase()
+        .getConfiguration()
+        .getValueAsLong(OGlobalConfiguration.DISTRIBUTED_COMMAND_QUICK_TASK_SYNCH_TIMEOUT);
   }
 
-  protected void checkClassExists(ODatabaseDocument database, String targetClass, String superClass) {
+  protected void checkClassExists(
+      ODatabaseDocument database, String targetClass, String superClass) {
     if (superClass.startsWith("+") || superClass.startsWith("-")) {
       superClass = superClass.substring(1);
     }
     if (database.getMetadata().getSchema().getClass(decodeClassName(superClass)) == null) {
       throw new OCommandExecutionException(
-          "Cannot alter superClass of '" + targetClass + "' because " + superClass + " class not found");
+          "Cannot alter superClass of '"
+              + targetClass
+              + "' because "
+              + superClass
+              + " class not found");
     }
   }
 

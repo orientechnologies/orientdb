@@ -1,6 +1,7 @@
 package com.orientechnologies.common.io;
 
-import org.junit.Test;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.Assert.assertEquals;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -9,9 +10,7 @@ import java.nio.file.Paths;
 import java.text.ParseException;
 import java.util.Calendar;
 import java.util.Date;
-
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.Assert.assertEquals;
+import org.junit.Test;
 
 public class OIOUtilsTest {
 
@@ -21,7 +20,6 @@ public class OIOUtilsTest {
     assertGetTimeAsMilis("500ms", 500);
     assertGetTimeAsMilis("4d", 4 * 24 * 3600 * 1000);
     assertGetTimeAsMilis("6w", 6l * 7 * 24 * 3600 * 1000);
-
   }
 
   private void assertGetTimeAsMilis(String data, long expected) {
@@ -54,7 +52,6 @@ public class OIOUtilsTest {
     asString = OIOUtils.readFileAsString(path.toFile());
 
     assertThat(asString).isNotEqualToIgnoringCase("iso-8859-1 :: èàòì?");
-
   }
 
   @Test
@@ -72,7 +69,5 @@ public class OIOUtilsTest {
     asString = OIOUtils.readFileAsString(path.toFile(), StandardCharsets.ISO_8859_1);
 
     assertThat(asString).isEqualToIgnoringCase("iso-8859-1 :: èàòì?");
-
   }
-
 }

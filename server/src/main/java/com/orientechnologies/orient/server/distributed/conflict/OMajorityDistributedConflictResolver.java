@@ -15,20 +15,20 @@
  *  *  limitations under the License.
  *  *
  *  * For more information: http://orientdb.com
- *  
+ *
  */
 
 package com.orientechnologies.orient.server.distributed.conflict;
 
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
 /**
- * Conflict resolver implementation based on the majority of results. If there is no majority, no operation is executed.
+ * Conflict resolver implementation based on the majority of results. If there is no majority, no
+ * operation is executed.
  *
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
  */
@@ -36,14 +36,17 @@ public class OMajorityDistributedConflictResolver extends OAbstractDistributedCo
   public static final String NAME = "majority";
 
   @Override
-  public OConflictResult onConflict(final String databaseName, final String clusterName, final ORecordId rid,
-      final ODistributedServerManager dManager, final Map<Object, List<String>> candidates) {
+  public OConflictResult onConflict(
+      final String databaseName,
+      final String clusterName,
+      final ORecordId rid,
+      final ODistributedServerManager dManager,
+      final Map<Object, List<String>> candidates) {
 
     final OConflictResult result = new OConflictResult(candidates);
 
     final Object bestResult = getBestResult(candidates, null);
-    if (bestResult == NOT_FOUND)
-      return result;
+    if (bestResult == NOT_FOUND) return result;
 
     final int bestResultServerCount = candidates.get(bestResult).size();
 

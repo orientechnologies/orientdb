@@ -1,22 +1,22 @@
 /*
-  *
-  *  *  Copyright 2010-2016 OrientDB LTD (http://orientdb.com)
-  *  *
-  *  *  Licensed under the Apache License, Version 2.0 (the "License");
-  *  *  you may not use this file except in compliance with the License.
-  *  *  You may obtain a copy of the License at
-  *  *
-  *  *       http://www.apache.org/licenses/LICENSE-2.0
-  *  *
-  *  *  Unless required by applicable law or agreed to in writing, software
-  *  *  distributed under the License is distributed on an "AS IS" BASIS,
-  *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-  *  *  See the License for the specific language governing permissions and
-  *  *  limitations under the License.
-  *  *
-  *  * For more information: http://orientdb.com
-  *
-  */
+ *
+ *  *  Copyright 2010-2016 OrientDB LTD (http://orientdb.com)
+ *  *
+ *  *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  *  you may not use this file except in compliance with the License.
+ *  *  You may obtain a copy of the License at
+ *  *
+ *  *       http://www.apache.org/licenses/LICENSE-2.0
+ *  *
+ *  *  Unless required by applicable law or agreed to in writing, software
+ *  *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  *  See the License for the specific language governing permissions and
+ *  *  limitations under the License.
+ *  *
+ *  * For more information: http://orientdb.com
+ *
+ */
 package com.orientechnologies.common.parser;
 
 import java.util.ArrayList;
@@ -25,7 +25,6 @@ import java.util.ArrayList;
  * String parser utility class
  *
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
- *
  */
 public class OStringParser {
 
@@ -36,11 +35,15 @@ public class OStringParser {
     return getWords(iRecord, iSeparatorChars, false);
   }
 
-  public static String[] getWords(String iRecord, final String iSeparatorChars, final boolean iIncludeStringSep) {
+  public static String[] getWords(
+      String iRecord, final String iSeparatorChars, final boolean iIncludeStringSep) {
     return getWords(iRecord, iSeparatorChars, " \n\r\t", iIncludeStringSep);
   }
 
-  public static String[] getWords(String iText, final String iSeparatorChars, final String iJumpChars,
+  public static String[] getWords(
+      String iText,
+      final String iSeparatorChars,
+      final String iJumpChars,
       final boolean iIncludeStringSep) {
     iText = iText.trim();
 
@@ -93,27 +96,21 @@ public class OStringParser {
             // SAME CHAR AS THE BEGIN OF THE STRING: CLOSE IT AND PUSH
             stringBeginChar = ' ';
 
-            if (iIncludeStringSep)
-              buffer.append(c);
+            if (iIncludeStringSep) buffer.append(c);
             continue;
           }
         } else {
           // START STRING
           stringBeginChar = c;
-          if (iIncludeStringSep)
-            buffer.append(c);
+          if (iIncludeStringSep) buffer.append(c);
 
           continue;
         }
       } else if (stringBeginChar == ' ') {
-        if (c == '[')
-          openBraket++;
-        else if (c == ']')
-          openBraket--;
-        else if (c == '{')
-          openGraph++;
-        else if (c == '}')
-          openGraph--;
+        if (c == '[') openBraket++;
+        else if (c == ']') openBraket--;
+        else if (c == '{') openGraph++;
+        else if (c == '}') openGraph--;
         else if (openBraket == 0 && openGraph == 0) {
           charFound = false;
           for (int sepIndex = 0; sepIndex < iSeparatorChars.length(); ++sepIndex) {
@@ -128,8 +125,7 @@ public class OStringParser {
             }
           }
 
-          if (charFound)
-            continue;
+          if (charFound) continue;
         }
 
         if (stringBeginChar == ' ') {
@@ -143,15 +139,13 @@ public class OStringParser {
             }
           }
 
-          if (charFound)
-            continue;
+          if (charFound) continue;
         }
       }
 
       buffer.append(c);
 
-      if (escape)
-        escape = false;
+      if (escape) escape = false;
     }
 
     if (buffer.length() > 0) {
@@ -193,8 +187,7 @@ public class OStringParser {
           jumpSplitChar = true;
           stringChar = c;
         } else {
-          if (!escape && c == stringChar)
-            jumpSplitChar = false;
+          if (!escape && c == stringChar) jumpSplitChar = false;
         }
       }
 
@@ -217,14 +210,12 @@ public class OStringParser {
           }
         }
 
-        if (charFound)
-          continue;
+        if (charFound) continue;
       }
 
       buffer.append(c);
 
-      if (escape)
-        escape = false;
+      if (escape) escape = false;
     }
 
     if (buffer.length() > 0) {
@@ -237,14 +228,13 @@ public class OStringParser {
   }
 
   /**
-   * Finds a character inside a string specyfing the limits and direction. If iFrom is minor than iTo, then it moves forward,
-   * otherwise backward.
+   * Finds a character inside a string specyfing the limits and direction. If iFrom is minor than
+   * iTo, then it moves forward, otherwise backward.
    */
-  public static int indexOfOutsideStrings(final String iText, final char iToFind, int iFrom, int iTo) {
-    if (iTo == -1)
-      iTo = iText.length() - 1;
-    if (iFrom == -1)
-      iFrom = iText.length() - 1;
+  public static int indexOfOutsideStrings(
+      final String iText, final char iToFind, int iFrom, int iTo) {
+    if (iTo == -1) iTo = iText.length() - 1;
+    if (iFrom == -1) iFrom = iText.length() - 1;
 
     char c;
     char stringChar = ' ';
@@ -259,8 +249,7 @@ public class OStringParser {
       if (!escape && c == '\\' && ((i + 1) < iText.length())) {
         if (iText.charAt(i + 1) == 'u') {
           i = readUnicode(iText, i + 2, buffer);
-        } else
-          escape = true;
+        } else escape = true;
       } else {
         if (c == '\'' || c == '"') {
           // BEGIN/END STRING
@@ -269,26 +258,21 @@ public class OStringParser {
             stringChar = c;
           } else {
             // END
-            if (!escape && c == stringChar)
-              stringChar = ' ';
+            if (!escape && c == stringChar) stringChar = ' ';
           }
         }
 
-        if (c == iToFind && stringChar == ' ')
-          return i;
+        if (c == iToFind && stringChar == ' ') return i;
 
-        if (escape)
-          escape = false;
+        if (escape) escape = false;
       }
 
       if (iFrom < iTo) {
         // MOVE FORWARD
-        if (++i > iTo)
-          break;
+        if (++i > iTo) break;
       } else {
         // MOVE BACKWARD
-        if (--i < iFrom)
-          break;
+        if (--i < iFrom) break;
       }
     }
     return -1;
@@ -296,35 +280,32 @@ public class OStringParser {
 
   /**
    * Jump white spaces.
-   * 
-   * @param iText
-   *          String to analyze
-   * @param iCurrentPosition
-   *          Current position in text
-   * @param iMaxPosition
-   *          TODO
+   *
+   * @param iText String to analyze
+   * @param iCurrentPosition Current position in text
+   * @param iMaxPosition TODO
    * @return The new offset inside the string analyzed
    */
-  public static int jumpWhiteSpaces(final CharSequence iText, final int iCurrentPosition, final int iMaxPosition) {
+  public static int jumpWhiteSpaces(
+      final CharSequence iText, final int iCurrentPosition, final int iMaxPosition) {
     return jump(iText, iCurrentPosition, iMaxPosition, COMMON_JUMP);
   }
 
   /**
    * Jump some characters reading from an offset of a String.
-   * 
-   * @param iText
-   *          String to analyze
-   * @param iCurrentPosition
-   *          Current position in text
-   * @param iMaxPosition
-   *          Maximum position to read
-   * @param iJumpChars
-   *          String as char array of chars to jump
+   *
+   * @param iText String to analyze
+   * @param iCurrentPosition Current position in text
+   * @param iMaxPosition Maximum position to read
+   * @param iJumpChars String as char array of chars to jump
    * @return The new offset inside the string analyzed
    */
-  public static int jump(final CharSequence iText, int iCurrentPosition, final int iMaxPosition, final String iJumpChars) {
-    if (iCurrentPosition < 0)
-      return -1;
+  public static int jump(
+      final CharSequence iText,
+      int iCurrentPosition,
+      final int iMaxPosition,
+      final String iJumpChars) {
+    if (iCurrentPosition < 0) return -1;
 
     final int size = iMaxPosition > -1 ? Math.min(iMaxPosition, iText.length()) : iText.length();
     final int jumpCharSize = iJumpChars.length();
@@ -340,8 +321,7 @@ public class OStringParser {
         }
       }
 
-      if (!found)
-        break;
+      if (!found) break;
     }
 
     return iCurrentPosition >= size ? -1 : iCurrentPosition;
@@ -351,8 +331,7 @@ public class OStringParser {
     // DECODE UNICODE CHAR
     final StringBuilder buff = new StringBuilder(64);
     final int lastPos = position + 4;
-    for (; position < lastPos; ++position)
-      buff.append(iText.charAt(position));
+    for (; position < lastPos; ++position) buff.append(iText.charAt(position));
 
     buffer.append((char) Integer.parseInt(buff.toString(), 16));
     return position - 1;
@@ -362,14 +341,14 @@ public class OStringParser {
     // DECODE UNICODE CHAR
     final StringBuilder buff = new StringBuilder(64);
     final int lastPos = position + 4;
-    for (; position < lastPos; ++position)
-      buff.append(iText[position]);
+    for (; position < lastPos; ++position) buff.append(iText[position]);
 
     buffer.append((char) Integer.parseInt(buff.toString(), 16));
     return position - 1;
   }
 
-  public static String replaceAll(final String iText, final String iToReplace, final String iReplacement) {
+  public static String replaceAll(
+      final String iText, final String iToReplace, final String iReplacement) {
     if (iText == null || iText.length() <= 0 || iToReplace == null || iToReplace.length() <= 0)
       return iText;
     int pos = iText.indexOf(iToReplace);
@@ -385,12 +364,9 @@ public class OStringParser {
     return buffer.toString();
   }
 
-  /**
-   * Like String.startsWith() but ignoring case
-   */
+  /** Like String.startsWith() but ignoring case */
   public static boolean startsWithIgnoreCase(final String iText, final String iToFind) {
-    if (iText.length() < iToFind.length())
-      return false;
+    if (iText.length() < iToFind.length()) return false;
 
     return iText.substring(0, iToFind.length()).equalsIgnoreCase(iToFind);
   }

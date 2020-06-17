@@ -27,13 +27,12 @@ import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.record.binary.ODocumentSerializer;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilterCondition;
-
 import java.util.List;
 import java.util.stream.Stream;
 
 /**
- * CONTAINSTEXT operator. Look if a text is contained in a property. This is usually used with the FULLTEXT-INDEX for fast lookup at
- * piece of text.
+ * CONTAINSTEXT operator. Look if a text is contained in a property. This is usually used with the
+ * FULLTEXT-INDEX for fast lookup at piece of text.
  *
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
  */
@@ -54,14 +53,17 @@ public class OQueryOperatorContainsText extends OQueryTargetOperator {
     return "<left> CONTAINSTEXT[( noignorecase ] )] <right>";
   }
 
-  /**
-   * This is executed on non-indexed fields.
-   */
+  /** This is executed on non-indexed fields. */
   @Override
-  public Object evaluateRecord(final OIdentifiable iRecord, ODocument iCurrentResult, final OSQLFilterCondition iCondition,
-      final Object iLeft, final Object iRight, OCommandContext iContext, final ODocumentSerializer serializer) {
-    if (iLeft == null || iRight == null)
-      return false;
+  public Object evaluateRecord(
+      final OIdentifiable iRecord,
+      ODocument iCurrentResult,
+      final OSQLFilterCondition iCondition,
+      final Object iLeft,
+      final Object iRight,
+      OCommandContext iContext,
+      final ODocumentSerializer serializer) {
+    if (iLeft == null || iRight == null) return false;
 
     return iLeft.toString().indexOf(iRight.toString()) > -1;
   }
@@ -76,8 +78,8 @@ public class OQueryOperatorContainsText extends OQueryTargetOperator {
   }
 
   @Override
-  public Stream<ORawPair<Object, ORID>> executeIndexQuery(OCommandContext iContext, OIndex index, List<Object> keyParams,
-      boolean ascSortOrder) {
+  public Stream<ORawPair<Object, ORID>> executeIndexQuery(
+      OCommandContext iContext, OIndex index, List<Object> keyParams, boolean ascSortOrder) {
     return null;
   }
 

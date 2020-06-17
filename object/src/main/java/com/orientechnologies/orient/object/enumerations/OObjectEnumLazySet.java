@@ -15,6 +15,7 @@
  */
 package com.orientechnologies.orient.object.enumerations;
 
+import com.orientechnologies.orient.core.record.ORecord;
 import java.io.Serializable;
 import java.util.Collection;
 import java.util.HashSet;
@@ -22,30 +23,28 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 
-import com.orientechnologies.orient.core.record.ORecord;
-
-/**
- * 
- * @author Luca Molino (molino.luca--at--gmail.com)
- * 
- */
+/** @author Luca Molino (molino.luca--at--gmail.com) */
 @SuppressWarnings("unchecked")
-public class OObjectEnumLazySet<TYPE extends Enum> extends HashSet<TYPE> implements OObjectLazyEnumSerializer<Set<TYPE>>,
-    Serializable {
+public class OObjectEnumLazySet<TYPE extends Enum> extends HashSet<TYPE>
+    implements OObjectLazyEnumSerializer<Set<TYPE>>, Serializable {
   private static final long serialVersionUID = -7698875159671927472L;
 
-  private final ORecord  sourceRecord;
+  private final ORecord sourceRecord;
   private final Set<Object> underlying;
-  private boolean           converted        = false;
+  private boolean converted = false;
   private final Class<Enum> enumClass;
 
-  public OObjectEnumLazySet(final Class<Enum> iEnumClass, final ORecord iSourceRecord, final Set<Object> iRecordSource) {
+  public OObjectEnumLazySet(
+      final Class<Enum> iEnumClass, final ORecord iSourceRecord, final Set<Object> iRecordSource) {
     this.sourceRecord = iSourceRecord;
     this.underlying = iRecordSource;
     this.enumClass = iEnumClass;
   }
 
-  public OObjectEnumLazySet(final Class<Enum> iEnumClass, final ORecord iSourceRecord, final Set<Object> iRecordSource,
+  public OObjectEnumLazySet(
+      final Class<Enum> iEnumClass,
+      final ORecord iSourceRecord,
+      final Set<Object> iRecordSource,
       final Set<? extends TYPE> iSourceCollection) {
     this.sourceRecord = iSourceRecord;
     this.underlying = iRecordSource;
@@ -55,7 +54,8 @@ public class OObjectEnumLazySet<TYPE extends Enum> extends HashSet<TYPE> impleme
   }
 
   public Iterator<TYPE> iterator() {
-    return (Iterator<TYPE>) new OObjectEnumLazyIterator<TYPE>(enumClass, sourceRecord, underlying.iterator());
+    return (Iterator<TYPE>)
+        new OObjectEnumLazyIterator<TYPE>(enumClass, sourceRecord, underlying.iterator());
   }
 
   public int size() {
@@ -91,9 +91,7 @@ public class OObjectEnumLazySet<TYPE extends Enum> extends HashSet<TYPE> impleme
   }
 
   public boolean containsAll(final Collection<?> c) {
-    for (Object o : c)
-      if (!super.contains(o) && !underlying.contains(o.toString()))
-        return false;
+    for (Object o : c) if (!super.contains(o) && !underlying.contains(o.toString())) return false;
 
     return true;
   }
@@ -101,8 +99,7 @@ public class OObjectEnumLazySet<TYPE extends Enum> extends HashSet<TYPE> impleme
   public boolean addAll(final Collection<? extends TYPE> c) {
     boolean modified = false;
     setDirty();
-    for (Object o : c)
-      modified = add((TYPE) o) || modified;
+    for (Object o : c) modified = add((TYPE) o) || modified;
     return modified;
   }
 
@@ -142,8 +139,7 @@ public class OObjectEnumLazySet<TYPE extends Enum> extends HashSet<TYPE> impleme
   }
 
   public void setDirty() {
-    if (sourceRecord != null)
-      sourceRecord.setDirty();
+    if (sourceRecord != null) sourceRecord.setDirty();
   }
 
   public void detach() {
@@ -154,7 +150,10 @@ public class OObjectEnumLazySet<TYPE extends Enum> extends HashSet<TYPE> impleme
     convertAll();
   }
 
-  public void detachAll(boolean nonProxiedInstance, Map<Object, Object> alreadyDetached, Map<Object, Object> lazyObjects) {
+  public void detachAll(
+      boolean nonProxiedInstance,
+      Map<Object, Object> alreadyDetached,
+      Map<Object, Object> lazyObjects) {
     convertAll();
   }
 
@@ -171,19 +170,15 @@ public class OObjectEnumLazySet<TYPE extends Enum> extends HashSet<TYPE> impleme
   }
 
   protected void convertAll() {
-    if (converted)
-      return;
+    if (converted) return;
 
     super.clear();
     for (Object o : underlying) {
-      if (o instanceof Number)
-        o = enumClass.getEnumConstants()[((Number) o).intValue()];
-      else
-        o = Enum.valueOf(enumClass, o.toString());
+      if (o instanceof Number) o = enumClass.getEnumConstants()[((Number) o).intValue()];
+      else o = Enum.valueOf(enumClass, o.toString());
       super.add((TYPE) o);
     }
 
     converted = true;
   }
-
 }

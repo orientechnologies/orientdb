@@ -25,26 +25,25 @@ import com.orientechnologies.common.util.OCommonConst;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.serialization.serializer.binary.OBinarySerializerFactory;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALChanges;
-
 import java.nio.ByteBuffer;
 
 /**
- * Serializer that is used for serialization of non {@link com.orientechnologies.orient.core.index.OCompositeKey} keys in index.
+ * Serializer that is used for serialization of non {@link
+ * com.orientechnologies.orient.core.index.OCompositeKey} keys in index.
  *
  * @author Andrey Lomakin (a.lomakin-at-orientdb.com)
  * @since 31.03.12
  */
-@SuppressWarnings({ "rawtypes", "unchecked" })
+@SuppressWarnings({"rawtypes", "unchecked"})
 public class OSimpleKeySerializer<T extends Comparable<?>> implements OBinarySerializer<T> {
 
-  private OType             type;
+  private OType type;
   private OBinarySerializer binarySerializer;
 
-  public static final byte   ID   = 15;
+  public static final byte ID = 15;
   public static final String NAME = "bsks";
 
-  public OSimpleKeySerializer() {
-  }
+  public OSimpleKeySerializer() {}
 
   public OSimpleKeySerializer(final OType iType) {
     type = iType;
@@ -75,8 +74,9 @@ public class OSimpleKeySerializer<T extends Comparable<?>> implements OBinarySer
   public int getObjectSize(byte[] stream, int startPosition) {
     final byte serializerId = stream[startPosition];
     init(serializerId);
-    return OBinarySerializerFactory.TYPE_IDENTIFIER_SIZE + binarySerializer
-        .getObjectSize(stream, startPosition + OBinarySerializerFactory.TYPE_IDENTIFIER_SIZE);
+    return OBinarySerializerFactory.TYPE_IDENTIFIER_SIZE
+        + binarySerializer.getObjectSize(
+            stream, startPosition + OBinarySerializerFactory.TYPE_IDENTIFIER_SIZE);
   }
 
   public byte getId() {
@@ -87,15 +87,11 @@ public class OSimpleKeySerializer<T extends Comparable<?>> implements OBinarySer
     if (binarySerializer == null) {
       final OType[] types;
 
-      if (hints != null && hints.length > 0)
-        types = (OType[]) hints;
-      else
-        types = OCommonConst.EMPTY_TYPES_ARRAY;
+      if (hints != null && hints.length > 0) types = (OType[]) hints;
+      else types = OCommonConst.EMPTY_TYPES_ARRAY;
 
-      if (types.length > 0)
-        type = types[0];
-      else
-        type = OType.getTypeByClass(key.getClass());
+      if (types.length > 0) type = types[0];
+      else type = OType.getTypeByClass(key.getClass());
 
       binarySerializer = OBinarySerializerFactory.getInstance().getObjectSerializer(type);
     }
@@ -109,8 +105,9 @@ public class OSimpleKeySerializer<T extends Comparable<?>> implements OBinarySer
   public int getObjectSizeNative(byte[] stream, int startPosition) {
     final byte serializerId = stream[startPosition];
     init(serializerId);
-    return OBinarySerializerFactory.TYPE_IDENTIFIER_SIZE + binarySerializer
-        .getObjectSizeNative(stream, startPosition + OBinarySerializerFactory.TYPE_IDENTIFIER_SIZE);
+    return OBinarySerializerFactory.TYPE_IDENTIFIER_SIZE
+        + binarySerializer.getObjectSizeNative(
+            stream, startPosition + OBinarySerializerFactory.TYPE_IDENTIFIER_SIZE);
   }
 
   public void serializeNativeObject(T key, byte[] stream, int startPosition, Object... hints) {
@@ -143,9 +140,7 @@ public class OSimpleKeySerializer<T extends Comparable<?>> implements OBinarySer
     return (T) binarySerializer.preprocess(value);
   }
 
-  /**
-   * {@inheritDoc}
-   */
+  /** {@inheritDoc} */
   @Override
   public void serializeInByteBufferObject(T object, ByteBuffer buffer, Object... hints) {
     init(object, hints);
@@ -153,9 +148,7 @@ public class OSimpleKeySerializer<T extends Comparable<?>> implements OBinarySer
     binarySerializer.serializeInByteBufferObject(object, buffer);
   }
 
-  /**
-   * {@inheritDoc}
-   */
+  /** {@inheritDoc} */
   @Override
   public T deserializeFromByteBufferObject(ByteBuffer buffer) {
     final byte typeId = buffer.get();
@@ -164,19 +157,16 @@ public class OSimpleKeySerializer<T extends Comparable<?>> implements OBinarySer
     return (T) binarySerializer.deserializeFromByteBufferObject(buffer);
   }
 
-  /**
-   * {@inheritDoc}
-   */
+  /** {@inheritDoc} */
   @Override
   public int getObjectSizeInByteBuffer(ByteBuffer buffer) {
     final byte serializerId = buffer.get();
     init(serializerId);
-    return OBinarySerializerFactory.TYPE_IDENTIFIER_SIZE + binarySerializer.getObjectSizeInByteBuffer(buffer);
+    return OBinarySerializerFactory.TYPE_IDENTIFIER_SIZE
+        + binarySerializer.getObjectSizeInByteBuffer(buffer);
   }
 
-  /**
-   * {@inheritDoc}
-   */
+  /** {@inheritDoc} */
   @Override
   public T deserializeFromByteBufferObject(ByteBuffer buffer, OWALChanges walChanges, int offset) {
     final byte typeId = walChanges.getByteValue(buffer, offset++);
@@ -185,12 +175,11 @@ public class OSimpleKeySerializer<T extends Comparable<?>> implements OBinarySer
     return (T) binarySerializer.deserializeFromByteBufferObject(buffer, walChanges, offset);
   }
 
-  /**
-   * {@inheritDoc}
-   */
+  /** {@inheritDoc} */
   @Override
   public int getObjectSizeInByteBuffer(ByteBuffer buffer, OWALChanges walChanges, int offset) {
-    return OBinarySerializerFactory.TYPE_IDENTIFIER_SIZE + binarySerializer
-        .getObjectSizeInByteBuffer(buffer, walChanges, OBinarySerializerFactory.TYPE_IDENTIFIER_SIZE + offset);
+    return OBinarySerializerFactory.TYPE_IDENTIFIER_SIZE
+        + binarySerializer.getObjectSizeInByteBuffer(
+            buffer, walChanges, OBinarySerializerFactory.TYPE_IDENTIFIER_SIZE + offset);
   }
 }

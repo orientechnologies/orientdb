@@ -10,6 +10,5 @@ public class OStatementInternal extends SimpleNode {
   public OStatementInternal(OrientSql p, int id) {
     super(p, id);
   }
-
 }
 /* JavaCC - OriginalChecksum=441892d4d3a90ef763379175fb756b22 (do not edit this line) */

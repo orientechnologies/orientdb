@@ -39,18 +39,27 @@ import com.orientechnologies.orient.core.sql.query.OSQLAsynchQuery;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.tinkerpop.blueprints.impls.orient.OrientGraph;
 import com.tinkerpop.blueprints.impls.orient.OrientVertex;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Calendar;
+import java.util.Collection;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.atomic.AtomicBoolean;
 import org.testng.Assert;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Optional;
 import org.testng.annotations.Parameters;
 import org.testng.annotations.Test;
 
-import java.util.*;
-import java.util.concurrent.atomic.AtomicBoolean;
-
 /**
- * If some of the tests start to fail then check cluster number in queries, e.g #7:1. It can be because the order of clusters could
- * be affected due to adding or removing cluster from storage.
+ * If some of the tests start to fail then check cluster number in queries, e.g #7:1. It can be
+ * because the order of clusters could be affected due to adding or removing cluster from storage.
  */
 @Test(groups = "sql-select")
 @SuppressWarnings("unchecked")
@@ -62,7 +71,8 @@ public class SQLSelectTestNew extends AbstractSelectTest {
     super(url);
   }
 
-  private static void createAndLink(final OrientGraph graph, String name, Map<String, String> map, ODocument root) {
+  private static void createAndLink(
+      final OrientGraph graph, String name, Map<String, String> map, ODocument root) {
     OrientVertex vertex = graph.addVertex("class:vertexB", "name", name, "map", map);
 
     graph.addEdge(null, graph.getVertex(root), vertex, "E");
@@ -80,8 +90,7 @@ public class SQLSelectTestNew extends AbstractSelectTest {
 
     if (!database.getMetadata().getSchema().existsClass("company")) {
       database.getMetadata().getSchema().createClass("company", 1, null);
-      for (int i = 0; i < 20; ++i)
-        new ODocument("company").field("id", i).save();
+      for (int i = 0; i < 20; ++i) new ODocument("company").field("id", i).save();
     }
 
     database.getMetadata().getSchema().getOrCreateClass("Account");
@@ -111,8 +120,10 @@ public class SQLSelectTestNew extends AbstractSelectTest {
 
   @Test
   public void queryParentesisAsRight() {
-    List<ODocument> result = executeQuery(
-        "  select from Profile where ( name = 'Giuseppe' and ( name <> 'Napoleone' and nick is not null ))  ", database);
+    List<ODocument> result =
+        executeQuery(
+            "  select from Profile where ( name = 'Giuseppe' and ( name <> 'Napoleone' and nick is not null ))  ",
+            database);
 
     Assert.assertTrue(result.size() != 0);
 
@@ -135,9 +146,10 @@ public class SQLSelectTestNew extends AbstractSelectTest {
 
   @Test
   public void queryTwoParentesisConditions() {
-    List<ODocument> result = executeQuery(
-        "select from Profile  where ( name = 'Giuseppe' and nick is not null ) or ( name = 'Napoleone' and nick is not null ) ",
-        database);
+    List<ODocument> result =
+        executeQuery(
+            "select from Profile  where ( name = 'Giuseppe' and nick is not null ) or ( name = 'Napoleone' and nick is not null ) ",
+            database);
 
     Assert.assertTrue(result.size() != 0);
 
@@ -150,13 +162,15 @@ public class SQLSelectTestNew extends AbstractSelectTest {
   public void testQueryCount() {
     database.getMetadata().reload();
     final long vertexesCount = database.countClass("V");
-    List<ODocument> result = database.query(new OSQLSynchQuery<ODocument>("select count(*) from V"));
+    List<ODocument> result =
+        database.query(new OSQLSynchQuery<ODocument>("select count(*) from V"));
     Assert.assertEquals(result.get(0).<Object>field("count"), vertexesCount);
   }
 
   @Test
   public void querySchemaAndLike() {
-    List<ODocument> result1 = executeQuery("select * from cluster:profile where name like 'Gi%'", database);
+    List<ODocument> result1 =
+        executeQuery("select * from cluster:profile where name like 'Gi%'", database);
 
     for (int i = 0; i < result1.size(); ++i) {
       record = result1.get(i);
@@ -165,11 +179,13 @@ public class SQLSelectTestNew extends AbstractSelectTest {
       Assert.assertTrue(record.field("name").toString().startsWith("Gi"));
     }
 
-    List<ODocument> result2 = executeQuery("select * from cluster:profile where name like '%epp%'", database);
+    List<ODocument> result2 =
+        executeQuery("select * from cluster:profile where name like '%epp%'", database);
 
     Assert.assertEquals(result1, result2);
 
-    List<ODocument> result3 = executeQuery("select * from cluster:profile where name like 'Gius%pe'", database);
+    List<ODocument> result3 =
+        executeQuery("select * from cluster:profile where name like 'Gius%pe'", database);
 
     Assert.assertEquals(result1, result3);
 
@@ -203,15 +219,17 @@ public class SQLSelectTestNew extends AbstractSelectTest {
 
     doc.save();
 
-    List<ODocument> resultset = executeQuery("select from Profile where tags CONTAINS 'smart'", database);
+    List<ODocument> resultset =
+        executeQuery("select from Profile where tags CONTAINS 'smart'", database);
 
     Assert.assertEquals(resultset.size(), 1);
     Assert.assertEquals(resultset.get(0).getIdentity(), doc.getIdentity());
 
-//    resultset = executeQuery("select from Profile where tags[0-1]  CONTAINSALL ['smart','nice']", database);
-//
-//    Assert.assertEquals(resultset.size(), 1);
-//    Assert.assertEquals(resultset.get(0).getIdentity(), doc.getIdentity());
+    //    resultset = executeQuery("select from Profile where tags[0-1]  CONTAINSALL
+    // ['smart','nice']", database);
+    //
+    //    Assert.assertEquals(resultset.size(), 1);
+    //    Assert.assertEquals(resultset.get(0).getIdentity(), doc.getIdentity());
 
     doc.delete();
   }
@@ -227,12 +245,14 @@ public class SQLSelectTestNew extends AbstractSelectTest {
 
     doc.save();
 
-    List<ODocument> resultset = executeQuery("select from Profile where tags[0] = 'smart'", database);
+    List<ODocument> resultset =
+        executeQuery("select from Profile where tags[0] = 'smart'", database);
 
     Assert.assertEquals(resultset.size(), 1);
     Assert.assertEquals(resultset.get(0).getIdentity(), doc.getIdentity());
 
-    resultset = executeQuery("select from Profile where tags[0,1] CONTAINSALL ['smart','nice']", database);
+    resultset =
+        executeQuery("select from Profile where tags[0,1] CONTAINSALL ['smart','nice']", database);
 
     Assert.assertEquals(resultset.size(), 1);
     Assert.assertEquals(resultset.get(0).getIdentity(), doc.getIdentity());
@@ -251,7 +271,9 @@ public class SQLSelectTestNew extends AbstractSelectTest {
 
     doc.save();
 
-    List<ODocument> resultset = executeQuery("select coll[name='Jay'] as value from Profile where coll is not null", database);
+    List<ODocument> resultset =
+        executeQuery(
+            "select coll[name='Jay'] as value from Profile where coll is not null", database);
     Assert.assertEquals(resultset.size(), 1);
     Assert.assertTrue(resultset.get(0).field("value") instanceof Collection);
 
@@ -272,13 +294,16 @@ public class SQLSelectTestNew extends AbstractSelectTest {
 
     doc.save();
 
-    List<ODocument> resultset = executeQuery("select coll[name='Jay'] as value from Profile where coll is not null", database);
+    List<ODocument> resultset =
+        executeQuery(
+            "select coll[name='Jay'] as value from Profile where coll is not null", database);
     Assert.assertEquals(resultset.size(), 1);
-//    Assert.assertEquals(resultset.get(0).field("value").getClass(), ODocument.class);
+    //    Assert.assertEquals(resultset.get(0).field("value").getClass(), ODocument.class);
     Object result = resultset.get(0).field("value");
     Assert.assertTrue(result instanceof Collection);
     Assert.assertEquals(((Collection) result).size(), 1);
-    Assert.assertEquals(((OElement) ((Collection) result).iterator().next()).getProperty("name"), "Jay");
+    Assert.assertEquals(
+        ((OElement) ((Collection) result).iterator().next()).getProperty("name"), "Jay");
 
     doc.delete();
   }
@@ -294,22 +319,30 @@ public class SQLSelectTestNew extends AbstractSelectTest {
 
     doc.save();
 
-    List<ODocument> resultset = executeQuery("select from Profile where customReferences CONTAINSKEY 'first'", database);
+    List<ODocument> resultset =
+        executeQuery("select from Profile where customReferences CONTAINSKEY 'first'", database);
 
     Assert.assertEquals(resultset.size(), 1);
     Assert.assertEquals(resultset.get(0).getIdentity(), doc.getIdentity());
 
-    resultset = executeQuery("select from Profile where customReferences CONTAINSVALUE ( name like 'Ja%')", database);
+    resultset =
+        executeQuery(
+            "select from Profile where customReferences CONTAINSVALUE ( name like 'Ja%')",
+            database);
 
     Assert.assertEquals(resultset.size(), 1);
     Assert.assertEquals(resultset.get(0).getIdentity(), doc.getIdentity());
 
-    resultset = executeQuery("select from Profile where customReferences['second']['name'] like 'Ja%'", database);
+    resultset =
+        executeQuery(
+            "select from Profile where customReferences['second']['name'] like 'Ja%'", database);
     Assert.assertEquals(resultset.size(), 1);
     Assert.assertEquals(resultset.get(0).getIdentity(), doc.getIdentity());
 
-    resultset = executeQuery(
-        "select customReferences['second', 'first'] as customReferences from Profile where customReferences.size() = 2", database);
+    resultset =
+        executeQuery(
+            "select customReferences['second', 'first'] as customReferences from Profile where customReferences.size() = 2",
+            database);
     Assert.assertEquals(resultset.size(), 1);
 
     if (resultset.get(0).field("customReferences").getClass().isArray()) {
@@ -323,15 +356,19 @@ public class SQLSelectTestNew extends AbstractSelectTest {
       Assert.assertTrue(customReferencesBack.get(0) instanceof ODocument);
       Assert.assertTrue(customReferencesBack.get(1) instanceof ODocument);
     } else
-      Assert.assertTrue(false, "Wrong type received: " + resultset.get(0).field("customReferences"));
+      Assert.assertTrue(
+          false, "Wrong type received: " + resultset.get(0).field("customReferences"));
 
-    resultset = executeQuery(
-        "select customReferences['second']['name'] from Profile where customReferences['second']['name'] is not null", database);
+    resultset =
+        executeQuery(
+            "select customReferences['second']['name'] from Profile where customReferences['second']['name'] is not null",
+            database);
     Assert.assertEquals(resultset.size(), 1);
 
-    resultset = executeQuery(
-        "select customReferences['second']['name'] as value from Profile where customReferences['second']['name'] is not null",
-        database);
+    resultset =
+        executeQuery(
+            "select customReferences['second']['name'] as value from Profile where customReferences['second']['name'] is not null",
+            database);
     Assert.assertEquals(resultset.size(), 1);
 
     doc.delete();
@@ -348,12 +385,17 @@ public class SQLSelectTestNew extends AbstractSelectTest {
 
     doc.save();
 
-    List<ODocument> resultset = executeQuery("select from Profile where customReferences.keys() CONTAINS 'first'", database);
+    List<ODocument> resultset =
+        executeQuery(
+            "select from Profile where customReferences.keys() CONTAINS 'first'", database);
 
     Assert.assertEquals(resultset.size(), 1);
     Assert.assertEquals(resultset.get(0).getIdentity(), doc.getIdentity());
 
-    resultset = executeQuery("select from Profile where customReferences.values() CONTAINS ( name like 'Ja%')", database);
+    resultset =
+        executeQuery(
+            "select from Profile where customReferences.values() CONTAINS ( name like 'Ja%')",
+            database);
 
     Assert.assertEquals(resultset.size(), 1);
     Assert.assertEquals(resultset.get(0).getIdentity(), doc.getIdentity());
@@ -363,8 +405,10 @@ public class SQLSelectTestNew extends AbstractSelectTest {
 
   @Test
   public void queryCollectionContainsLowerCaseSubStringIgnoreCase() {
-    List<ODocument> result = executeQuery(
-        "select * from cluster:profile where races contains (name.toLowerCase(Locale.ENGLISH).subString(0,1) = 'e')", database);
+    List<ODocument> result =
+        executeQuery(
+            "select * from cluster:profile where races contains (name.toLowerCase(Locale.ENGLISH).subString(0,1) = 'e')",
+            database);
 
     for (int i = 0; i < result.size(); ++i) {
       record = result.get(i);
@@ -397,8 +441,10 @@ public class SQLSelectTestNew extends AbstractSelectTest {
     record.field("races", races);
     record.save();
 
-    List<ODocument> result = executeQuery("select * from cluster:animal where races contains (name in ['European','Asiatic'])",
-        database);
+    List<ODocument> result =
+        executeQuery(
+            "select * from cluster:animal where races contains (name in ['European','Asiatic'])",
+            database);
 
     boolean found = false;
     for (int i = 0; i < result.size() && !found; ++i) {
@@ -409,7 +455,8 @@ public class SQLSelectTestNew extends AbstractSelectTest {
 
       races = record.field("races");
       for (ODocument race : races) {
-        if (((String) race.field("name")).equals("European") || ((String) race.field("name")).equals("Asiatic")) {
+        if (((String) race.field("name")).equals("European")
+            || ((String) race.field("name")).equals("Asiatic")) {
           found = true;
           break;
         }
@@ -417,7 +464,10 @@ public class SQLSelectTestNew extends AbstractSelectTest {
     }
     Assert.assertTrue(found);
 
-    result = executeQuery("select * from cluster:animal where races contains (name in ['Asiatic','European'])", database);
+    result =
+        executeQuery(
+            "select * from cluster:animal where races contains (name in ['Asiatic','European'])",
+            database);
 
     found = false;
     for (int i = 0; i < result.size() && !found; ++i) {
@@ -428,7 +478,8 @@ public class SQLSelectTestNew extends AbstractSelectTest {
 
       races = record.field("races");
       for (ODocument race : races) {
-        if (((String) race.field("name")).equals("European") || ((String) race.field("name")).equals("Asiatic")) {
+        if (((String) race.field("name")).equals("European")
+            || ((String) race.field("name")).equals("Asiatic")) {
           found = true;
           break;
         }
@@ -436,19 +487,33 @@ public class SQLSelectTestNew extends AbstractSelectTest {
     }
     Assert.assertTrue(found);
 
-    result = executeQuery("select * from cluster:animal where races contains (name in ['aaa','bbb'])", database);
+    result =
+        executeQuery(
+            "select * from cluster:animal where races contains (name in ['aaa','bbb'])", database);
     Assert.assertEquals(result.size(), 0);
 
-    result = executeQuery("select * from cluster:animal where races containsall (name in ['European','Asiatic'])", database);
+    result =
+        executeQuery(
+            "select * from cluster:animal where races containsall (name in ['European','Asiatic'])",
+            database);
     Assert.assertEquals(result.size(), 0);
 
-    result = executeQuery("select * from cluster:animal where races containsall (name in ['European','Siamese'])", database);
+    result =
+        executeQuery(
+            "select * from cluster:animal where races containsall (name in ['European','Siamese'])",
+            database);
     Assert.assertEquals(result.size(), 1);
 
-    result = executeQuery("select * from cluster:animal where races containsall (age < 100) LIMIT 1000 SKIP 0", database);
+    result =
+        executeQuery(
+            "select * from cluster:animal where races containsall (age < 100) LIMIT 1000 SKIP 0",
+            database);
     Assert.assertEquals(result.size(), 0);
 
-    result = executeQuery("select * from cluster:animal where not ( races contains (age < 100) ) LIMIT 20 SKIP 0", database);
+    result =
+        executeQuery(
+            "select * from cluster:animal where not ( races contains (age < 100) ) LIMIT 20 SKIP 0",
+            database);
     Assert.assertEquals(result.size(), 1);
 
     record.delete();
@@ -467,7 +532,8 @@ public class SQLSelectTestNew extends AbstractSelectTest {
 
     record.save("animal");
 
-    List<ODocument> result = executeQuery("select * from cluster:animal where rates contains 500", database);
+    List<ODocument> result =
+        executeQuery("select * from cluster:animal where rates contains 500", database);
     Assert.assertEquals(result.size(), 0);
 
     result = executeQuery("select * from cluster:animal where rates contains 100", database);
@@ -481,15 +547,18 @@ public class SQLSelectTestNew extends AbstractSelectTest {
     int clusterId = database.getMetadata().getSchema().getClass("ORole").getDefaultClusterId();
     List<Long> positions = getValidPositions(clusterId);
 
-    List<ODocument> result = executeQuery("select * from OUser where roles contains #" + clusterId + ":" + positions.get(0),
-        database);
+    List<ODocument> result =
+        executeQuery(
+            "select * from OUser where roles contains #" + clusterId + ":" + positions.get(0),
+            database);
 
     Assert.assertEquals(result.size(), 1);
   }
 
   @Test
   public void queryWhereInpreparred() {
-    List<ODocument> result = executeQuery("select * from OUser where name in [ :name ]", database, "admin");
+    List<ODocument> result =
+        executeQuery("select * from OUser where name in [ :name ]", database, "admin");
 
     Assert.assertEquals(result.size(), 1);
     Assert.assertEquals(((ODocument) result.get(0).getRecord()).field("name"), "admin");
@@ -512,10 +581,8 @@ public class SQLSelectTestNew extends AbstractSelectTest {
     boolean isNullSegment = true; // NULL VALUES AT THE BEGINNING!
     for (ODocument d : result) {
       final String fieldValue = d.field("name");
-      if (fieldValue != null)
-        isNullSegment = false;
-      else
-        Assert.assertTrue(isNullSegment);
+      if (fieldValue != null) isNullSegment = false;
+      else Assert.assertTrue(isNullSegment);
 
       if (lastName != null && fieldValue != null)
         Assert.assertTrue(fieldValue.compareTo(lastName) >= 0);
@@ -585,7 +652,8 @@ public class SQLSelectTestNew extends AbstractSelectTest {
   public void queryPaginationWithOrderBySkipAndLimit() {
     List<ODocument> result = executeQuery("select from Profile order by name", database);
 
-    List<ODocument> page = executeQuery("select from Profile order by name limit 10 skip 10", database);
+    List<ODocument> page =
+        executeQuery("select from Profile order by name limit 10 skip 10", database);
     Assert.assertEquals(page.size(), 10);
 
     for (int i = 0; i < page.size(); ++i) {
@@ -597,7 +665,8 @@ public class SQLSelectTestNew extends AbstractSelectTest {
   public void queryPaginationWithOrderByDescSkipAndLimit() {
     List<ODocument> result = executeQuery("select from Profile order by name desc", database);
 
-    List<ODocument> page = executeQuery("select from Profile order by name desc limit 10 skip 10", database);
+    List<ODocument> page =
+        executeQuery("select from Profile order by name desc limit 10 skip 10", database);
     Assert.assertEquals(page.size(), 10);
 
     for (int i = 0; i < page.size(); ++i) {
@@ -621,7 +690,8 @@ public class SQLSelectTestNew extends AbstractSelectTest {
 
   @Test
   public void queryConditionAndOrderBy() {
-    List<ODocument> result = executeQuery("select from Profile where name is not null order by name", database);
+    List<ODocument> result =
+        executeQuery("select from Profile where name is not null order by name", database);
 
     Assert.assertTrue(result.size() != 0);
 
@@ -635,7 +705,9 @@ public class SQLSelectTestNew extends AbstractSelectTest {
 
   @Test
   public void queryConditionsAndOrderBy() {
-    List<ODocument> result = executeQuery("select from Profile where name is not null order by name desc, id asc", database);
+    List<ODocument> result =
+        executeQuery(
+            "select from Profile where name is not null order by name desc, id asc", database);
 
     Assert.assertTrue(result.size() != 0);
 
@@ -649,46 +721,65 @@ public class SQLSelectTestNew extends AbstractSelectTest {
 
   @Test
   public void queryRecordTargetRid() {
-    int profileClusterId = database.getMetadata().getSchema().getClass("Profile").getDefaultClusterId();
+    int profileClusterId =
+        database.getMetadata().getSchema().getClass("Profile").getDefaultClusterId();
     List<Long> positions = getValidPositions(profileClusterId);
 
-    List<ODocument> result = executeQuery("select from " + profileClusterId + ":" + positions.get(0), database);
+    List<ODocument> result =
+        executeQuery("select from " + profileClusterId + ":" + positions.get(0), database);
 
     Assert.assertEquals(result.size(), 1);
 
     for (ODocument d : result) {
-      Assert.assertEquals(d.getIdentity().toString(), "#" + profileClusterId + ":" + positions.get(0));
+      Assert.assertEquals(
+          d.getIdentity().toString(), "#" + profileClusterId + ":" + positions.get(0));
     }
   }
 
   @Test
   public void queryRecordTargetRids() {
-    int profileClusterId = database.getMetadata().getSchema().getClass("Profile").getDefaultClusterId();
+    int profileClusterId =
+        database.getMetadata().getSchema().getClass("Profile").getDefaultClusterId();
     List<Long> positions = getValidPositions(profileClusterId);
 
-    List<ODocument> result = executeQuery(
-        " select from [" + profileClusterId + ":" + positions.get(0) + ", " + profileClusterId + ":" + positions.get(1) + "]",
-        database);
+    List<ODocument> result =
+        executeQuery(
+            " select from ["
+                + profileClusterId
+                + ":"
+                + positions.get(0)
+                + ", "
+                + profileClusterId
+                + ":"
+                + positions.get(1)
+                + "]",
+            database);
 
     Assert.assertEquals(result.size(), 2);
 
-    Assert.assertEquals(result.get(0).getIdentity().toString(), "#" + profileClusterId + ":" + positions.get(0));
-    Assert.assertEquals(result.get(1).getIdentity().toString(), "#" + profileClusterId + ":" + positions.get(1));
+    Assert.assertEquals(
+        result.get(0).getIdentity().toString(), "#" + profileClusterId + ":" + positions.get(0));
+    Assert.assertEquals(
+        result.get(1).getIdentity().toString(), "#" + profileClusterId + ":" + positions.get(1));
   }
 
   @Test
   public void queryRecordAttribRid() {
 
-    int profileClusterId = database.getMetadata().getSchema().getClass("Profile").getDefaultClusterId();
+    int profileClusterId =
+        database.getMetadata().getSchema().getClass("Profile").getDefaultClusterId();
     List<Long> postions = getValidPositions(profileClusterId);
 
-    List<ODocument> result = executeQuery("select from Profile where @rid = #" + profileClusterId + ":" + postions.get(0),
-        database);
+    List<ODocument> result =
+        executeQuery(
+            "select from Profile where @rid = #" + profileClusterId + ":" + postions.get(0),
+            database);
 
     Assert.assertEquals(result.size(), 1);
 
     for (ODocument d : result) {
-      Assert.assertEquals(d.getIdentity().toString(), "#" + profileClusterId + ":" + postions.get(0));
+      Assert.assertEquals(
+          d.getIdentity().toString(), "#" + profileClusterId + ":" + postions.get(0));
     }
   }
 
@@ -774,7 +865,8 @@ public class SQLSelectTestNew extends AbstractSelectTest {
   @Test
   public void queryWithManualPagination() {
     ORID last = new ORecordId();
-    List<ODocument> resultset = executeQuery("select from Profile where @rid > ? LIMIT 3", database, last);
+    List<ODocument> resultset =
+        executeQuery("select from Profile where @rid > ? LIMIT 3", database, last);
 
     int iterationCount = 0;
     Assert.assertTrue(!resultset.isEmpty());
@@ -782,9 +874,10 @@ public class SQLSelectTestNew extends AbstractSelectTest {
       Assert.assertTrue(resultset.size() <= 3);
 
       for (ODocument d : resultset) {
-        Assert.assertTrue(d.getIdentity().getClusterId() < 0
-            || (d.getIdentity().getClusterId() >= last.getClusterId()) && d.getIdentity().getClusterPosition() > last
-            .getClusterPosition());
+        Assert.assertTrue(
+            d.getIdentity().getClusterId() < 0
+                || (d.getIdentity().getClusterId() >= last.getClusterId())
+                    && d.getIdentity().getClusterPosition() > last.getClusterPosition());
       }
 
       last = resultset.get(resultset.size() - 1).getIdentity();
@@ -798,7 +891,8 @@ public class SQLSelectTestNew extends AbstractSelectTest {
 
   @Test
   public void queryWithAutomaticPagination() {
-    final OSQLSynchQuery<ODocument> query = new OSQLSynchQuery<ODocument>("select from Profile LIMIT 3");
+    final OSQLSynchQuery<ODocument> query =
+        new OSQLSynchQuery<ODocument>("select from Profile LIMIT 3");
     ORID last = new ORecordId();
 
     List<ODocument> resultset = database.query(query);
@@ -808,8 +902,9 @@ public class SQLSelectTestNew extends AbstractSelectTest {
       Assert.assertTrue(resultset.size() <= 3);
 
       for (ODocument d : resultset) {
-        Assert.assertTrue(d.getIdentity().getClusterId() >= last.getClusterId() && d.getIdentity().getClusterPosition() > last
-            .getClusterPosition());
+        Assert.assertTrue(
+            d.getIdentity().getClusterId() >= last.getClusterId()
+                && d.getIdentity().getClusterPosition() > last.getClusterPosition());
       }
 
       last = resultset.get(resultset.size() - 1).getIdentity();
@@ -827,9 +922,17 @@ public class SQLSelectTestNew extends AbstractSelectTest {
 
     long[] range = database.getStorage().getClusterDataRange(clusterId);
 
-    final OSQLSynchQuery<ODocument> query = new OSQLSynchQuery<ODocument>(
-        "select from Profile where @rid between #" + clusterId + ":" + range[0] + " and #" + clusterId + ":" + range[1]
-            + " LIMIT 3");
+    final OSQLSynchQuery<ODocument> query =
+        new OSQLSynchQuery<ODocument>(
+            "select from Profile where @rid between #"
+                + clusterId
+                + ":"
+                + range[0]
+                + " and #"
+                + clusterId
+                + ":"
+                + range[1]
+                + " LIMIT 3");
 
     ORID last = new ORecordId();
 
@@ -842,8 +945,9 @@ public class SQLSelectTestNew extends AbstractSelectTest {
       Assert.assertTrue(resultset.size() <= 3);
 
       for (ODocument d : resultset) {
-        Assert.assertTrue(d.getIdentity().getClusterId() >= last.getClusterId() && d.getIdentity().getClusterPosition() > last
-            .getClusterPosition());
+        Assert.assertTrue(
+            d.getIdentity().getClusterId() >= last.getClusterId()
+                && d.getIdentity().getClusterPosition() > last.getClusterPosition());
       }
 
       last = resultset.get(resultset.size() - 1).getIdentity();
@@ -858,8 +962,8 @@ public class SQLSelectTestNew extends AbstractSelectTest {
 
   @Test
   public void queryWithAutomaticPaginationWithWhere() {
-    final OSQLSynchQuery<ODocument> query = new OSQLSynchQuery<ODocument>(
-        "select from Profile where followers.length() > 0 LIMIT 3");
+    final OSQLSynchQuery<ODocument> query =
+        new OSQLSynchQuery<ODocument>("select from Profile where followers.length() > 0 LIMIT 3");
     ORID last = new ORecordId();
 
     List<ODocument> resultset = database.query(query);
@@ -870,8 +974,9 @@ public class SQLSelectTestNew extends AbstractSelectTest {
       Assert.assertTrue(resultset.size() <= 3);
 
       for (ODocument d : resultset) {
-        Assert.assertTrue(d.getIdentity().getClusterId() >= last.getClusterId() && d.getIdentity().getClusterPosition() > last
-            .getClusterPosition());
+        Assert.assertTrue(
+            d.getIdentity().getClusterId() >= last.getClusterId()
+                && d.getIdentity().getClusterPosition() > last.getClusterPosition());
       }
 
       last = resultset.get(resultset.size() - 1).getIdentity();
@@ -887,8 +992,8 @@ public class SQLSelectTestNew extends AbstractSelectTest {
 
   @Test
   public void queryWithAutomaticPaginationWithWhereAndBindingVar() {
-    final OSQLSynchQuery<ODocument> query = new OSQLSynchQuery<ODocument>(
-        "select from Profile where followers.length() > ? LIMIT 3");
+    final OSQLSynchQuery<ODocument> query =
+        new OSQLSynchQuery<ODocument>("select from Profile where followers.length() > ? LIMIT 3");
     ORID last = new ORecordId();
 
     List<ODocument> resultset = database.query(query, 0);
@@ -899,8 +1004,9 @@ public class SQLSelectTestNew extends AbstractSelectTest {
       Assert.assertTrue(resultset.size() <= 3);
 
       for (ODocument d : resultset) {
-        Assert.assertTrue(d.getIdentity().getClusterId() >= last.getClusterId() && d.getIdentity().getClusterPosition() > last
-            .getClusterPosition());
+        Assert.assertTrue(
+            d.getIdentity().getClusterId() >= last.getClusterId()
+                && d.getIdentity().getClusterPosition() > last.getClusterPosition());
       }
 
       last = resultset.get(resultset.size() - 1).getIdentity();
@@ -914,8 +1020,8 @@ public class SQLSelectTestNew extends AbstractSelectTest {
 
   @Test
   public void queryWithAutomaticPaginationWithWhereAndBindingVarAtTheFirstQueryCall() {
-    final OSQLSynchQuery<ODocument> query = new OSQLSynchQuery<ODocument>(
-        "select from Profile where followers.length() > ? LIMIT 3");
+    final OSQLSynchQuery<ODocument> query =
+        new OSQLSynchQuery<ODocument>("select from Profile where followers.length() > ? LIMIT 3");
     ORID last = new ORecordId();
 
     List<ODocument> resultset = database.query(query, 0);
@@ -926,8 +1032,9 @@ public class SQLSelectTestNew extends AbstractSelectTest {
       Assert.assertTrue(resultset.size() <= 3);
 
       for (ODocument d : resultset) {
-        Assert.assertTrue(d.getIdentity().getClusterId() >= last.getClusterId() && d.getIdentity().getClusterPosition() > last
-            .getClusterPosition());
+        Assert.assertTrue(
+            d.getIdentity().getClusterId() >= last.getClusterId()
+                && d.getIdentity().getClusterPosition() > last.getClusterPosition());
       }
 
       last = resultset.get(resultset.size() - 1).getIdentity();
@@ -941,8 +1048,8 @@ public class SQLSelectTestNew extends AbstractSelectTest {
 
   @Test
   public void queryWithAbsenceOfAutomaticPaginationBecauseOfBindingVarReset() {
-    final OSQLSynchQuery<ODocument> query = new OSQLSynchQuery<ODocument>(
-        "select from Profile where followers.length() > ? LIMIT 3");
+    final OSQLSynchQuery<ODocument> query =
+        new OSQLSynchQuery<ODocument>("select from Profile where followers.length() > ? LIMIT 3");
 
     List<ODocument> resultset = database.query(query, -1);
 
@@ -957,20 +1064,21 @@ public class SQLSelectTestNew extends AbstractSelectTest {
 
   @Test
   public void includeFields() {
-    final OSQLSynchQuery<ODocument> query = new OSQLSynchQuery<ODocument>("select expand( roles.include('name') ) from OUser");
+    final OSQLSynchQuery<ODocument> query =
+        new OSQLSynchQuery<ODocument>("select expand( roles.include('name') ) from OUser");
 
     List<ODocument> resultset = database.query(query);
 
     for (ODocument d : resultset) {
       Assert.assertTrue(d.fields() <= 1);
-      if (d.fields() == 1)
-        Assert.assertTrue(d.containsField("name"));
+      if (d.fields() == 1) Assert.assertTrue(d.containsField("name"));
     }
   }
 
   @Test
   public void excludeFields() {
-    final OSQLSynchQuery<ODocument> query = new OSQLSynchQuery<ODocument>("select expand( roles.exclude('rules') ) from OUser");
+    final OSQLSynchQuery<ODocument> query =
+        new OSQLSynchQuery<ODocument>("select expand( roles.exclude('rules') ) from OUser");
 
     List<ODocument> resultset = database.query(query);
 
@@ -981,8 +1089,9 @@ public class SQLSelectTestNew extends AbstractSelectTest {
 
   @Test
   public void excludeAttributes() {
-    final OSQLSynchQuery<ODocument> query = new OSQLSynchQuery<ODocument>(
-        "select expand( roles.exclude('@rid', '@class') ) from OUser");
+    final OSQLSynchQuery<ODocument> query =
+        new OSQLSynchQuery<ODocument>(
+            "select expand( roles.exclude('@rid', '@class') ) from OUser");
 
     List<ODocument> resultset = database.query(query);
 
@@ -994,7 +1103,8 @@ public class SQLSelectTestNew extends AbstractSelectTest {
 
   @Test
   public void queryResetPagination() {
-    final OSQLSynchQuery<ODocument> query = new OSQLSynchQuery<ODocument>("select from Profile LIMIT 3");
+    final OSQLSynchQuery<ODocument> query =
+        new OSQLSynchQuery<ODocument>("select from Profile LIMIT 3");
 
     List<ODocument> resultset = database.query(query);
     final ORID firstRidFirstQuery = resultset.get(0).getIdentity();
@@ -1008,20 +1118,26 @@ public class SQLSelectTestNew extends AbstractSelectTest {
 
   @Test
   public void queryBetween() {
-    List<ODocument> result = executeQuery("select * from account where nr between 10 and 20", database);
+    List<ODocument> result =
+        executeQuery("select * from account where nr between 10 and 20", database);
 
     for (int i = 0; i < result.size(); ++i) {
       record = result.get(i);
 
-      Assert.assertTrue(((Integer) record.field("nr")) >= 10 && ((Integer) record.field("nr")) <= 20);
+      Assert.assertTrue(
+          ((Integer) record.field("nr")) >= 10 && ((Integer) record.field("nr")) <= 20);
     }
   }
 
   @Test
   public void queryParenthesisInStrings() {
-    Assert.assertNotNull(database.command(new OCommandSQL("INSERT INTO account (name) VALUES ('test (demo)')")).execute());
+    Assert.assertNotNull(
+        database
+            .command(new OCommandSQL("INSERT INTO account (name) VALUES ('test (demo)')"))
+            .execute());
 
-    List<ODocument> result = executeQuery("select * from account where name = 'test (demo)'", database);
+    List<ODocument> result =
+        executeQuery("select * from account where name = 'test (demo)'", database);
 
     Assert.assertEquals(result.size(), 1);
 
@@ -1029,7 +1145,6 @@ public class SQLSelectTestNew extends AbstractSelectTest {
       record = result.get(i);
       Assert.assertEquals(record.field("name"), "test (demo)");
     }
-
   }
 
   @Test
@@ -1062,20 +1177,23 @@ public class SQLSelectTestNew extends AbstractSelectTest {
     result = executeQuery("select * from account where id = id * 1", database);
     Assert.assertFalse(result.isEmpty());
 
-    List<ODocument> result2 = executeQuery("select count(*) as tot from account where id >= 0", database);
+    List<ODocument> result2 =
+        executeQuery("select count(*) as tot from account where id >= 0", database);
     Assert.assertEquals(result.size(), ((Number) result2.get(0).field("tot")).intValue());
-
   }
 
   @Test
   public void testBetweenWithParameters() {
 
-    final List<ODocument> result = executeQuery("select * from company where id between ? and ? and salary is not null", database,
-        4, 7);
+    final List<ODocument> result =
+        executeQuery(
+            "select * from company where id between ? and ? and salary is not null",
+            database,
+            4,
+            7);
 
     System.out.println("testBetweenWithParameters:");
-    for (ODocument d : result)
-      System.out.println(d);
+    for (ODocument d : result) System.out.println(d);
 
     Assert.assertEquals(result.size(), 4, "Found: " + result);
 
@@ -1088,8 +1206,14 @@ public class SQLSelectTestNew extends AbstractSelectTest {
   @Test
   public void testInWithParameters() {
 
-    final List<ODocument> result = executeQuery("select * from company where id in [?, ?, ?, ?] and salary is not null", database,
-        4, 5, 6, 7);
+    final List<ODocument> result =
+        executeQuery(
+            "select * from company where id in [?, ?, ?, ?] and salary is not null",
+            database,
+            4,
+            5,
+            6,
+            7);
 
     Assert.assertEquals(result.size(), 4);
 
@@ -1097,7 +1221,6 @@ public class SQLSelectTestNew extends AbstractSelectTest {
     for (final ODocument record : result) {
       resultsList.remove(record.<Integer>field("id"));
     }
-
   }
 
   @Test
@@ -1105,7 +1228,9 @@ public class SQLSelectTestNew extends AbstractSelectTest {
 
     Map<String, Object> params = new HashMap<String, Object>();
     params.put("id", 4);
-    final List<ODocument> result = executeQuery("select * from company where id = :id and salary is not null", database, params);
+    final List<ODocument> result =
+        executeQuery(
+            "select * from company where id = :id and salary is not null", database, params);
 
     Assert.assertEquals(result.size(), 1);
   }
@@ -1113,12 +1238,16 @@ public class SQLSelectTestNew extends AbstractSelectTest {
   @Test
   public void testQueryAsClass() {
 
-    List<ODocument> result = executeQuery("select from Account where addresses.@class in [ 'Address' ]", database);
+    List<ODocument> result =
+        executeQuery("select from Account where addresses.@class in [ 'Address' ]", database);
     Assert.assertFalse(result.isEmpty());
     for (ODocument d : result) {
       Assert.assertNotNull(d.field("addresses"));
       Assert.assertEquals(
-          ((ODocument) ((Collection<OIdentifiable>) d.field("addresses")).iterator().next().getRecord()).getSchemaClass().getName(),
+          ((ODocument)
+                  ((Collection<OIdentifiable>) d.field("addresses")).iterator().next().getRecord())
+              .getSchemaClass()
+              .getName(),
           "Address");
     }
   }
@@ -1126,24 +1255,39 @@ public class SQLSelectTestNew extends AbstractSelectTest {
   @Test
   public void testQueryNotOperator() {
 
-    List<ODocument> result = executeQuery("select from Account where not ( addresses.@class in [ 'Address' ] )", database);
+    List<ODocument> result =
+        executeQuery(
+            "select from Account where not ( addresses.@class in [ 'Address' ] )", database);
     Assert.assertFalse(result.isEmpty());
     for (ODocument d : result) {
-      Assert.assertTrue(d.field("addresses") == null || ((Collection<OIdentifiable>) d.field("addresses")).isEmpty()
-          || !((ODocument) ((Collection<OIdentifiable>) d.field("addresses")).iterator().next().getRecord()).getSchemaClass()
-          .getName().equals("Address"));
+      Assert.assertTrue(
+          d.field("addresses") == null
+              || ((Collection<OIdentifiable>) d.field("addresses")).isEmpty()
+              || !((ODocument)
+                      ((Collection<OIdentifiable>) d.field("addresses"))
+                          .iterator()
+                          .next()
+                          .getRecord())
+                  .getSchemaClass()
+                  .getName()
+                  .equals("Address"));
     }
   }
 
   @Test
   public void testSquareBracketsOnCondition() {
-    List<ODocument> result = executeQuery("select from Account where addresses[@class='Address'][city.country.name] = 'Washington'",
-        database);
+    List<ODocument> result =
+        executeQuery(
+            "select from Account where addresses[@class='Address'][city.country.name] = 'Washington'",
+            database);
     Assert.assertFalse(result.isEmpty());
     for (ODocument d : result) {
       Assert.assertNotNull(d.field("addresses"));
       Assert.assertEquals(
-          ((ODocument) ((Collection<OIdentifiable>) d.field("addresses")).iterator().next().getRecord()).getSchemaClass().getName(),
+          ((ODocument)
+                  ((Collection<OIdentifiable>) d.field("addresses")).iterator().next().getRecord())
+              .getSchemaClass()
+              .getName(),
           "Address");
     }
   }
@@ -1162,7 +1306,8 @@ public class SQLSelectTestNew extends AbstractSelectTest {
     Map<String, Object> parameters = new HashMap<String, Object>();
     parameters.put("p1", "a");
     database.query(new OSQLSynchQuery<ODocument>("select from test where (f1 = :p1)"), parameters);
-    database.query(new OSQLSynchQuery<ODocument>("select from test where f1 = :p1 and f2 = :p1"), parameters);
+    database.query(
+        new OSQLSynchQuery<ODocument>("select from test where f1 = :p1 and f2 = :p1"), parameters);
   }
 
   @Test
@@ -1171,28 +1316,33 @@ public class SQLSelectTestNew extends AbstractSelectTest {
 
     Assert.assertTrue(result.size() != 0);
 
-    List<ODocument> result2 = executeQuery("select from Account where @this instanceof 'Account'", database);
+    List<ODocument> result2 =
+        executeQuery("select from Account where @this instanceof 'Account'", database);
 
     Assert.assertEquals(result2.size(), result.size());
 
-    List<ODocument> result3 = executeQuery("select from Account where @class instanceof 'Account'", database);
+    List<ODocument> result3 =
+        executeQuery("select from Account where @class instanceof 'Account'", database);
 
     Assert.assertEquals(result3.size(), result.size());
-
   }
 
   @Test
   public void subQuery() {
-    List<ODocument> result = executeQuery(
-        "select from Account where name in ( select name from Account where name is not null limit 1 )", database);
+    List<ODocument> result =
+        executeQuery(
+            "select from Account where name in ( select name from Account where name is not null limit 1 )",
+            database);
 
     Assert.assertTrue(result.size() != 0);
   }
 
   @Test
   public void subQueryNoFrom() {
-    List<ODocument> result2 = executeQuery(
-        "select $names let $names = (select EXPAND( addresses.city ) as city from Account where addresses.size() > 0 )", database);
+    List<ODocument> result2 =
+        executeQuery(
+            "select $names let $names = (select EXPAND( addresses.city ) as city from Account where addresses.size() > 0 )",
+            database);
 
     Assert.assertTrue(result2.size() != 0);
     Assert.assertTrue(result2.get(0).field("$names") instanceof Collection<?>);
@@ -1201,7 +1351,8 @@ public class SQLSelectTestNew extends AbstractSelectTest {
 
   @Test
   public void subQueryLetAndIndexedWhere() {
-    List<ODocument> result = executeQuery("select $now from OUser let $now = eval('42') where name = 'admin'", database);
+    List<ODocument> result =
+        executeQuery("select $now from OUser let $now = eval('42') where name = 'admin'", database);
 
     Assert.assertEquals(result.size(), 1);
     Assert.assertNotNull(result.get(0).field("$now"), result.get(0).toString());
@@ -1233,15 +1384,23 @@ public class SQLSelectTestNew extends AbstractSelectTest {
     doc2.field("date", oneYearAgo.getTime());
     doc2.save();
 
-    List<ODocument> result = database
-        .query(new OSQLSynchQuery<ODocument>("select * from " + facClass.getName() + " where context = 'test' order by date", 1));
+    List<ODocument> result =
+        database.query(
+            new OSQLSynchQuery<ODocument>(
+                "select * from " + facClass.getName() + " where context = 'test' order by date",
+                1));
 
     Calendar smaller = Calendar.getInstance();
     smaller.setTime((Date) result.get(0).field("date", Date.class));
     Assert.assertEquals(smaller.get(Calendar.YEAR), oneYearAgo.get(Calendar.YEAR));
 
-    result = database.query(
-        new OSQLSynchQuery<ODocument>("select * from " + facClass.getName() + " where context = 'test' order by date DESC", 1));
+    result =
+        database.query(
+            new OSQLSynchQuery<ODocument>(
+                "select * from "
+                    + facClass.getName()
+                    + " where context = 'test' order by date DESC",
+                1));
 
     Calendar bigger = Calendar.getInstance();
     bigger.setTime((Date) result.get(0).field("date", Date.class));
@@ -1264,9 +1423,19 @@ public class SQLSelectTestNew extends AbstractSelectTest {
       maxPos = positions.get(25);
     }
 
-    List<ODocument> resultset = executeQuery(
-        "select @rid.trim() as oid, name from Profile where (@rid in [#" + clusterId + ":" + positions.get(5) + "] or @rid in [#"
-            + clusterId + ":" + positions.get(25) + "]) AND @rid > ? LIMIT 10000", database, new ORecordId(clusterId, minPos));
+    List<ODocument> resultset =
+        executeQuery(
+            "select @rid.trim() as oid, name from Profile where (@rid in [#"
+                + clusterId
+                + ":"
+                + positions.get(5)
+                + "] or @rid in [#"
+                + clusterId
+                + ":"
+                + positions.get(25)
+                + "]) AND @rid > ? LIMIT 10000",
+            database,
+            new ORecordId(clusterId, minPos));
 
     Assert.assertEquals(resultset.size(), 1);
 
@@ -1326,7 +1495,8 @@ public class SQLSelectTestNew extends AbstractSelectTest {
     Map<String, Object> params = new HashMap<String, Object>();
     params.put("place", inputValues);
 
-    List<ODocument> result = executeQuery("select from place where @rid in :place", database, params);
+    List<ODocument> result =
+        executeQuery("select from place where @rid in :place", database, params);
     Assert.assertEquals(2, result.size());
 
     database.getMetadata().getSchema().dropClass("Place");
@@ -1350,8 +1520,10 @@ public class SQLSelectTestNew extends AbstractSelectTest {
     Assert.assertTrue(secondPlaceId.getClusterId() < famousPlaceId.getClusterId());
     Assert.assertTrue(secondPlaceId.getClusterPosition() > famousPlaceId.getClusterPosition());
 
-    List<ODocument> result = executeQuery("select from Place where @rid in [" + secondPlaceId + "," + famousPlaceId + "]",
-        database);
+    List<ODocument> result =
+        executeQuery(
+            "select from Place where @rid in [" + secondPlaceId + "," + famousPlaceId + "]",
+            database);
     Assert.assertEquals(2, result.size());
 
     database.getMetadata().getSchema().dropClass("FamousPlace");
@@ -1362,7 +1534,9 @@ public class SQLSelectTestNew extends AbstractSelectTest {
   public void testMapKeys() {
     Map<String, Object> params = new HashMap<String, Object>();
     params.put("id", 4);
-    final List<ODocument> result = executeQuery("select * from company where id = :id and salary is not null", database, params);
+    final List<ODocument> result =
+        executeQuery(
+            "select * from company where id = :id and salary is not null", database, params);
 
     Assert.assertEquals(result.size(), 1);
   }
@@ -1370,10 +1544,13 @@ public class SQLSelectTestNew extends AbstractSelectTest {
   @Test
   public void queryAsynch() {
     final String sqlOne = "select * from company where id between 4 and 7";
-    final String sqlTwo = "select $names let $names = (select EXPAND( addresses.city ) as city from Account where addresses.size() > 0 )";
+    final String sqlTwo =
+        "select $names let $names = (select EXPAND( addresses.city ) as city from Account where addresses.size() > 0 )";
 
-    final List<ODocument> synchResultOne = database.command(new OSQLSynchQuery<ODocument>(sqlOne)).execute();
-    final List<ODocument> synchResultTwo = database.command(new OSQLSynchQuery<ODocument>(sqlTwo)).execute();
+    final List<ODocument> synchResultOne =
+        database.command(new OSQLSynchQuery<ODocument>(sqlOne)).execute();
+    final List<ODocument> synchResultTwo =
+        database.command(new OSQLSynchQuery<ODocument>(sqlTwo)).execute();
 
     Assert.assertTrue(synchResultOne.size() > 0);
     Assert.assertTrue(synchResultTwo.size() > 0);
@@ -1383,58 +1560,75 @@ public class SQLSelectTestNew extends AbstractSelectTest {
     final AtomicBoolean endOneCalled = new AtomicBoolean();
     final AtomicBoolean endTwoCalled = new AtomicBoolean();
 
-    database.command(new OSQLAsynchQuery<ODocument>(sqlOne, new OCommandResultListener() {
-      @Override
-      public boolean result(Object iRecord) {
-        asynchResultOne.add((ODocument) iRecord);
-        return true;
-      }
+    database
+        .command(
+            new OSQLAsynchQuery<ODocument>(
+                sqlOne,
+                new OCommandResultListener() {
+                  @Override
+                  public boolean result(Object iRecord) {
+                    asynchResultOne.add((ODocument) iRecord);
+                    return true;
+                  }
 
-      @Override
-      public void end() {
-        endOneCalled.set(true);
+                  @Override
+                  public void end() {
+                    endOneCalled.set(true);
 
-        database.command(new OSQLAsynchQuery<ODocument>(sqlTwo, new OCommandResultListener() {
-          @Override
-          public boolean result(Object iRecord) {
-            asynchResultTwo.add((ODocument) iRecord);
-            return true;
-          }
+                    database
+                        .command(
+                            new OSQLAsynchQuery<ODocument>(
+                                sqlTwo,
+                                new OCommandResultListener() {
+                                  @Override
+                                  public boolean result(Object iRecord) {
+                                    asynchResultTwo.add((ODocument) iRecord);
+                                    return true;
+                                  }
 
-          @Override
-          public void end() {
-            endTwoCalled.set(true);
-          }
+                                  @Override
+                                  public void end() {
+                                    endTwoCalled.set(true);
+                                  }
 
-          @Override
-          public Object getResult() {
-            return null;
-          }
-        })).execute();
-      }
+                                  @Override
+                                  public Object getResult() {
+                                    return null;
+                                  }
+                                }))
+                        .execute();
+                  }
 
-      @Override
-      public Object getResult() {
-        return null;
-      }
-    })).execute();
+                  @Override
+                  public Object getResult() {
+                    return null;
+                  }
+                }))
+        .execute();
 
     Assert.assertTrue(endOneCalled.get());
     Assert.assertTrue(endTwoCalled.get());
 
-    Assert.assertTrue(ODocumentHelper.compareCollections(database, synchResultTwo, database, asynchResultTwo, null),
+    Assert.assertTrue(
+        ODocumentHelper.compareCollections(
+            database, synchResultTwo, database, asynchResultTwo, null),
         "synchResultTwo=" + synchResultTwo.size() + " asynchResultTwo=" + asynchResultTwo.size());
-    Assert.assertTrue(ODocumentHelper.compareCollections(database, synchResultOne, database, asynchResultOne, null),
+    Assert.assertTrue(
+        ODocumentHelper.compareCollections(
+            database, synchResultOne, database, asynchResultOne, null),
         "synchResultOne=" + synchResultOne.size() + " asynchResultOne=" + asynchResultOne.size());
   }
 
   @Test
   public void queryAsynchHalfForheFirstQuery() {
     final String sqlOne = "select * from company where id between 4 and 7";
-    final String sqlTwo = "select $names let $names = (select EXPAND( addresses.city ) as city from Account where addresses.size() > 0 )";
+    final String sqlTwo =
+        "select $names let $names = (select EXPAND( addresses.city ) as city from Account where addresses.size() > 0 )";
 
-    final List<ODocument> synchResultOne = database.command(new OSQLSynchQuery<ODocument>(sqlOne)).execute();
-    final List<ODocument> synchResultTwo = database.command(new OSQLSynchQuery<ODocument>(sqlTwo)).execute();
+    final List<ODocument> synchResultOne =
+        database.command(new OSQLSynchQuery<ODocument>(sqlOne)).execute();
+    final List<ODocument> synchResultTwo =
+        database.command(new OSQLSynchQuery<ODocument>(sqlTwo)).execute();
 
     Assert.assertTrue(synchResultOne.size() > 0);
     Assert.assertTrue(synchResultTwo.size() > 0);
@@ -1444,48 +1638,65 @@ public class SQLSelectTestNew extends AbstractSelectTest {
     final AtomicBoolean endOneCalled = new AtomicBoolean();
     final AtomicBoolean endTwoCalled = new AtomicBoolean();
 
-    database.command(new OSQLAsynchQuery<ODocument>(sqlOne, new OCommandResultListener() {
-      @Override
-      public boolean result(Object iRecord) {
-        asynchResultOne.add((ODocument) iRecord);
-        return asynchResultOne.size() < synchResultOne.size() / 2;
-      }
+    database
+        .command(
+            new OSQLAsynchQuery<ODocument>(
+                sqlOne,
+                new OCommandResultListener() {
+                  @Override
+                  public boolean result(Object iRecord) {
+                    asynchResultOne.add((ODocument) iRecord);
+                    return asynchResultOne.size() < synchResultOne.size() / 2;
+                  }
 
-      @Override
-      public void end() {
-        endOneCalled.set(true);
+                  @Override
+                  public void end() {
+                    endOneCalled.set(true);
 
-        database.command(new OSQLAsynchQuery<ODocument>(sqlTwo, new OCommandResultListener() {
-          @Override
-          public boolean result(Object iRecord) {
-            asynchResultTwo.add((ODocument) iRecord);
-            return true;
-          }
+                    database
+                        .command(
+                            new OSQLAsynchQuery<ODocument>(
+                                sqlTwo,
+                                new OCommandResultListener() {
+                                  @Override
+                                  public boolean result(Object iRecord) {
+                                    asynchResultTwo.add((ODocument) iRecord);
+                                    return true;
+                                  }
 
-          @Override
-          public void end() {
-            endTwoCalled.set(true);
-          }
+                                  @Override
+                                  public void end() {
+                                    endTwoCalled.set(true);
+                                  }
 
-          @Override
-          public Object getResult() {
-            return null;
-          }
-        })).execute();
-      }
+                                  @Override
+                                  public Object getResult() {
+                                    return null;
+                                  }
+                                }))
+                        .execute();
+                  }
 
-      @Override
-      public Object getResult() {
-        return null;
-      }
-    })).execute();
+                  @Override
+                  public Object getResult() {
+                    return null;
+                  }
+                }))
+        .execute();
 
     Assert.assertTrue(endOneCalled.get());
     Assert.assertTrue(endTwoCalled.get());
 
-    Assert.assertTrue(ODocumentHelper
-        .compareCollections(database, synchResultOne.subList(0, synchResultOne.size() / 2), database, asynchResultOne, null));
-    Assert.assertTrue(ODocumentHelper.compareCollections(database, synchResultTwo, database, asynchResultTwo, null));
+    Assert.assertTrue(
+        ODocumentHelper.compareCollections(
+            database,
+            synchResultOne.subList(0, synchResultOne.size() / 2),
+            database,
+            asynchResultOne,
+            null));
+    Assert.assertTrue(
+        ODocumentHelper.compareCollections(
+            database, synchResultTwo, database, asynchResultTwo, null));
   }
 
   @Test
@@ -1498,25 +1709,32 @@ public class SQLSelectTestNew extends AbstractSelectTest {
     for (ODocument d : result) {
       ORID rid = d.getIdentity();
 
-      if (lastRid != null)
-        Assert.assertTrue(rid.compareTo(lastRid) < 0);
+      if (lastRid != null) Assert.assertTrue(rid.compareTo(lastRid) < 0);
       lastRid = rid;
     }
 
-    ODocument res = database.command(new OCommandSQL("explain select from OUser order by @rid desc")).execute();
+    ODocument res =
+        database.command(new OCommandSQL("explain select from OUser order by @rid desc")).execute();
     Assert.assertNull(res.field("orderByElapsed"));
-
   }
 
   @Test
   public void testSelectFromIndexValues() {
-    database.command(new OCommandSQL("create index selectFromIndexValues on Profile (name) notunique")).execute();
+    database
+        .command(new OCommandSQL("create index selectFromIndexValues on Profile (name) notunique"))
+        .execute();
 
-    final List<ODocument> classResult = new ArrayList<ODocument>((List<ODocument>) database.query(
-        new OSQLSynchQuery<ODocument>("select from Profile where ((nick like 'J%') or (nick like 'N%')) and (name is not null)")));
+    final List<ODocument> classResult =
+        new ArrayList<ODocument>(
+            (List<ODocument>)
+                database.query(
+                    new OSQLSynchQuery<ODocument>(
+                        "select from Profile where ((nick like 'J%') or (nick like 'N%')) and (name is not null)")));
 
-    final List<ODocument> indexValuesResult = database.query(new OSQLSynchQuery<ODocument>(
-        "select from indexvalues:selectFromIndexValues where ((nick like 'J%') or (nick like 'N%')) and (name is not null)"));
+    final List<ODocument> indexValuesResult =
+        database.query(
+            new OSQLSynchQuery<ODocument>(
+                "select from indexvalues:selectFromIndexValues where ((nick like 'J%') or (nick like 'N%')) and (name is not null)"));
 
     Assert.assertEquals(indexValuesResult.size(), classResult.size());
 
@@ -1525,8 +1743,7 @@ public class SQLSelectTestNew extends AbstractSelectTest {
     for (ODocument document : indexValuesResult) {
       String name = document.field("name");
 
-      if (lastName != null)
-        Assert.assertTrue(lastName.compareTo(name) <= 0);
+      if (lastName != null) Assert.assertTrue(lastName.compareTo(name) <= 0);
 
       lastName = name;
       Assert.assertTrue(classResult.remove(document));
@@ -1536,13 +1753,22 @@ public class SQLSelectTestNew extends AbstractSelectTest {
   }
 
   public void testSelectFromIndexValuesAsc() {
-    database.command(new OCommandSQL("create index selectFromIndexValuesAsc on Profile (name) notunique")).execute();
+    database
+        .command(
+            new OCommandSQL("create index selectFromIndexValuesAsc on Profile (name) notunique"))
+        .execute();
 
-    final List<ODocument> classResult = new ArrayList<ODocument>((List<ODocument>) database.query(
-        new OSQLSynchQuery<ODocument>("select from Profile where ((nick like 'J%') or (nick like 'N%')) and (name is not null)")));
+    final List<ODocument> classResult =
+        new ArrayList<ODocument>(
+            (List<ODocument>)
+                database.query(
+                    new OSQLSynchQuery<ODocument>(
+                        "select from Profile where ((nick like 'J%') or (nick like 'N%')) and (name is not null)")));
 
-    final List<ODocument> indexValuesResult = database.query(new OSQLSynchQuery<ODocument>(
-        "select from indexvaluesasc:selectFromIndexValuesAsc where ((nick like 'J%') or (nick like 'N%')) and (name is not null)"));
+    final List<ODocument> indexValuesResult =
+        database.query(
+            new OSQLSynchQuery<ODocument>(
+                "select from indexvaluesasc:selectFromIndexValuesAsc where ((nick like 'J%') or (nick like 'N%')) and (name is not null)"));
 
     Assert.assertEquals(indexValuesResult.size(), classResult.size());
 
@@ -1551,8 +1777,7 @@ public class SQLSelectTestNew extends AbstractSelectTest {
     for (ODocument document : indexValuesResult) {
       String name = document.field("name");
 
-      if (lastName != null)
-        Assert.assertTrue(lastName.compareTo(name) <= 0);
+      if (lastName != null) Assert.assertTrue(lastName.compareTo(name) <= 0);
 
       lastName = name;
       Assert.assertTrue(classResult.remove(document));
@@ -1562,13 +1787,22 @@ public class SQLSelectTestNew extends AbstractSelectTest {
   }
 
   public void testSelectFromIndexValuesDesc() {
-    database.command(new OCommandSQL("create index selectFromIndexValuesDesc on Profile (name) notunique")).execute();
+    database
+        .command(
+            new OCommandSQL("create index selectFromIndexValuesDesc on Profile (name) notunique"))
+        .execute();
 
-    final List<ODocument> classResult = new ArrayList<ODocument>((List<ODocument>) database.query(
-        new OSQLSynchQuery<ODocument>("select from Profile where ((nick like 'J%') or (nick like 'N%')) and (name is not null)")));
+    final List<ODocument> classResult =
+        new ArrayList<ODocument>(
+            (List<ODocument>)
+                database.query(
+                    new OSQLSynchQuery<ODocument>(
+                        "select from Profile where ((nick like 'J%') or (nick like 'N%')) and (name is not null)")));
 
-    final List<ODocument> indexValuesResult = database.query(new OSQLSynchQuery<ODocument>(
-        "select from indexvaluesdesc:selectFromIndexValuesDesc where ((nick like 'J%') or (nick like 'N%')) and (name is not null)"));
+    final List<ODocument> indexValuesResult =
+        database.query(
+            new OSQLSynchQuery<ODocument>(
+                "select from indexvaluesdesc:selectFromIndexValuesDesc where ((nick like 'J%') or (nick like 'N%')) and (name is not null)"));
 
     Assert.assertEquals(indexValuesResult.size(), classResult.size());
 
@@ -1577,8 +1811,7 @@ public class SQLSelectTestNew extends AbstractSelectTest {
     for (ODocument document : indexValuesResult) {
       String name = document.field("name");
 
-      if (lastName != null)
-        Assert.assertTrue(lastName.compareTo(name) >= 0);
+      if (lastName != null) Assert.assertTrue(lastName.compareTo(name) >= 0);
 
       lastName = name;
       Assert.assertTrue(classResult.remove(document));
@@ -1592,12 +1825,13 @@ public class SQLSelectTestNew extends AbstractSelectTest {
     doc.field("test", "test");
     database.query(new OSQLSynchQuery<Object>("select from OUser where @rid = ?"), doc);
     Assert.assertTrue(doc.isDirty());
-
   }
 
   public void testQueryLetExecutedOnce() {
-    final List<OIdentifiable> result = database.query(
-        new OSQLSynchQuery<OIdentifiable>("select name, $counter as counter from OUser let $counter = eval(\"$counter + 1\")"));
+    final List<OIdentifiable> result =
+        database.query(
+            new OSQLSynchQuery<OIdentifiable>(
+                "select name, $counter as counter from OUser let $counter = eval(\"$counter + 1\")"));
 
     Assert.assertFalse(result.isEmpty());
     int i = 1;
@@ -1615,12 +1849,16 @@ public class SQLSelectTestNew extends AbstractSelectTest {
     cls.addCluster("PersonMultipleClusters_4");
 
     try {
-      Set<String> names = new HashSet<String>(Arrays.asList(new String[] { "Luca", "Jill", "Sara", "Tania", "Gianluca", "Marco" }));
+      Set<String> names =
+          new HashSet<String>(
+              Arrays.asList(new String[] {"Luca", "Jill", "Sara", "Tania", "Gianluca", "Marco"}));
       for (String n : names) {
         new ODocument("PersonMultipleClusters").field("First", n).save();
       }
 
-      OSQLSynchQuery<ODocument> query = new OSQLSynchQuery<ODocument>("select from PersonMultipleClusters where @rid > ? limit 2");
+      OSQLSynchQuery<ODocument> query =
+          new OSQLSynchQuery<ODocument>(
+              "select from PersonMultipleClusters where @rid > ? limit 2");
       List<ODocument> resultset = database.query(query, new ORecordId());
 
       while (!resultset.isEmpty()) {
@@ -1646,14 +1884,22 @@ public class SQLSelectTestNew extends AbstractSelectTest {
     OSchema schema = database.getMetadata().getSchema();
     schema.createClass("TestOutFilterInclude", schema.getClass("V"));
     database.command(new OCommandSQL("create class linkedToOutFilterInclude extends E")).execute();
-    database.command(new OCommandSQL("insert into TestOutFilterInclude content { \"name\": \"one\" }")).execute();
-    database.command(new OCommandSQL("insert into TestOutFilterInclude content { \"name\": \"two\" }")).execute();
-    database.command(new OCommandSQL(
-        "create edge linkedToOutFilterInclude from (select from TestOutFilterInclude where name = 'one') to (select from TestOutFilterInclude where name = 'two')"))
+    database
+        .command(new OCommandSQL("insert into TestOutFilterInclude content { \"name\": \"one\" }"))
+        .execute();
+    database
+        .command(new OCommandSQL("insert into TestOutFilterInclude content { \"name\": \"two\" }"))
+        .execute();
+    database
+        .command(
+            new OCommandSQL(
+                "create edge linkedToOutFilterInclude from (select from TestOutFilterInclude where name = 'one') to (select from TestOutFilterInclude where name = 'two')"))
         .execute();
 
-    final List<OIdentifiable> result = database.query(new OSQLSynchQuery<OIdentifiable>(
-        "select expand(out('linkedToOutFilterInclude')[@class='TestOutFilterInclude'].include('@rid')) from TestOutFilterInclude where name = 'one'"));
+    final List<OIdentifiable> result =
+        database.query(
+            new OSQLSynchQuery<OIdentifiable>(
+                "select expand(out('linkedToOutFilterInclude')[@class='TestOutFilterInclude'].include('@rid')) from TestOutFilterInclude where name = 'one'"));
 
     Assert.assertEquals(result.size(), 1);
 
@@ -1665,11 +1911,11 @@ public class SQLSelectTestNew extends AbstractSelectTest {
   private List<Long> getValidPositions(int clusterId) {
     final List<Long> positions = new ArrayList<Long>();
 
-    final ORecordIteratorCluster<ODocument> iteratorCluster = database.browseCluster(database.getClusterNameById(clusterId));
+    final ORecordIteratorCluster<ODocument> iteratorCluster =
+        database.browseCluster(database.getClusterNameById(clusterId));
 
     for (int i = 0; i < 100; i++) {
-      if (!iteratorCluster.hasNext())
-        break;
+      if (!iteratorCluster.hasNext()) break;
 
       ODocument doc = iteratorCluster.next();
       positions.add(doc.getIdentity().getClusterPosition());
@@ -1681,10 +1927,11 @@ public class SQLSelectTestNew extends AbstractSelectTest {
   public void testBinaryClusterSelect() {
     database.command(new OCommandSQL("create blob cluster binarycluster")).execute();
     database.reload();
-    OBlob bytes = new ORecordBytes(new byte[] { 1, 2, 3 });
+    OBlob bytes = new ORecordBytes(new byte[] {1, 2, 3});
     database.save(bytes, "binarycluster");
 
-    List<OIdentifiable> result = database.query(new OSQLSynchQuery<OIdentifiable>("select from cluster:binarycluster"));
+    List<OIdentifiable> result =
+        database.query(new OSQLSynchQuery<OIdentifiable>("select from cluster:binarycluster"));
 
     Assert.assertEquals(result.size(), 1);
 
@@ -1707,34 +1954,50 @@ public class SQLSelectTestNew extends AbstractSelectTest {
     database.command(new OCommandSQL("CREATE VERTEX TestExpandSkip set name = '3'")).execute();
     database.command(new OCommandSQL("CREATE VERTEX TestExpandSkip set name = '4'")).execute();
 
-    database.command(new OCommandSQL(
-        "CREATE EDGE E FROM (SELECT FROM TestExpandSkip WHERE name = '1') to (SELECT FROM TestExpandSkip WHERE name <> '1')"))
+    database
+        .command(
+            new OCommandSQL(
+                "CREATE EDGE E FROM (SELECT FROM TestExpandSkip WHERE name = '1') to (SELECT FROM TestExpandSkip WHERE name <> '1')"))
         .execute();
 
-    List<OIdentifiable> result = database
-        .query(new OSQLSynchQuery<OIdentifiable>("select expand(out()) from TestExpandSkip where name = '1'"));
+    List<OIdentifiable> result =
+        database.query(
+            new OSQLSynchQuery<OIdentifiable>(
+                "select expand(out()) from TestExpandSkip where name = '1'"));
     Assert.assertEquals(result.size(), 3);
 
     Map<Object, Object> params = new HashMap<Object, Object>();
-    params.put("values", Arrays.asList(new String[] { "2", "3", "antani" }));
-    result = database
-        .query(new OSQLSynchQuery<OIdentifiable>("select expand(out()[name in :values]) from TestExpandSkip where name = '1'"),
+    params.put("values", Arrays.asList(new String[] {"2", "3", "antani"}));
+    result =
+        database.query(
+            new OSQLSynchQuery<OIdentifiable>(
+                "select expand(out()[name in :values]) from TestExpandSkip where name = '1'"),
             params);
     Assert.assertEquals(result.size(), 2);
 
-    result = database.query(new OSQLSynchQuery<OIdentifiable>("select expand(out()) from TestExpandSkip where name = '1' skip 1"));
+    result =
+        database.query(
+            new OSQLSynchQuery<OIdentifiable>(
+                "select expand(out()) from TestExpandSkip where name = '1' skip 1"));
     Assert.assertEquals(result.size(), 2);
 
-    result = database.query(new OSQLSynchQuery<OIdentifiable>("select expand(out()) from TestExpandSkip where name = '1' skip 2"));
+    result =
+        database.query(
+            new OSQLSynchQuery<OIdentifiable>(
+                "select expand(out()) from TestExpandSkip where name = '1' skip 2"));
     Assert.assertEquals(result.size(), 1);
 
-    result = database.query(new OSQLSynchQuery<OIdentifiable>("select expand(out()) from TestExpandSkip where name = '1' skip 3"));
+    result =
+        database.query(
+            new OSQLSynchQuery<OIdentifiable>(
+                "select expand(out()) from TestExpandSkip where name = '1' skip 3"));
     Assert.assertEquals(result.size(), 0);
 
-    result = database
-        .query(new OSQLSynchQuery<OIdentifiable>("select expand(out()) from TestExpandSkip where name = '1' skip 1 limit 1"));
+    result =
+        database.query(
+            new OSQLSynchQuery<OIdentifiable>(
+                "select expand(out()) from TestExpandSkip where name = '1' skip 1 limit 1"));
     Assert.assertEquals(result.size(), 1);
-
   }
 
   @Test
@@ -1746,25 +2009,38 @@ public class SQLSelectTestNew extends AbstractSelectTest {
     final OClass e1 = schema.createClass("TestPolymorphicEdges_E1", e);
     final OClass e2 = schema.createClass("TestPolymorphicEdges_E2", e1);
 
-    database.command(new OCommandSQL("CREATE VERTEX TestPolymorphicEdges_V set name = '1'")).execute();
-    database.command(new OCommandSQL("CREATE VERTEX TestPolymorphicEdges_V set name = '2'")).execute();
-    database.command(new OCommandSQL("CREATE VERTEX TestPolymorphicEdges_V set name = '3'")).execute();
-
-    database.command(new OCommandSQL(
-        "CREATE EDGE TestPolymorphicEdges_E1 FROM (SELECT FROM TestPolymorphicEdges_V WHERE name = '1') to (SELECT FROM TestPolymorphicEdges_V WHERE name = '2')"))
+    database
+        .command(new OCommandSQL("CREATE VERTEX TestPolymorphicEdges_V set name = '1'"))
         .execute();
-    database.command(new OCommandSQL(
-        "CREATE EDGE TestPolymorphicEdges_E2 FROM (SELECT FROM TestPolymorphicEdges_V WHERE name = '1') to (SELECT FROM TestPolymorphicEdges_V WHERE name = '3')"))
+    database
+        .command(new OCommandSQL("CREATE VERTEX TestPolymorphicEdges_V set name = '2'"))
+        .execute();
+    database
+        .command(new OCommandSQL("CREATE VERTEX TestPolymorphicEdges_V set name = '3'"))
         .execute();
 
-    List<OIdentifiable> result = database.query(new OSQLSynchQuery<OIdentifiable>(
-        "select expand(out('TestPolymorphicEdges_E1')) from TestPolymorphicEdges_V where name = '1'"));
+    database
+        .command(
+            new OCommandSQL(
+                "CREATE EDGE TestPolymorphicEdges_E1 FROM (SELECT FROM TestPolymorphicEdges_V WHERE name = '1') to (SELECT FROM TestPolymorphicEdges_V WHERE name = '2')"))
+        .execute();
+    database
+        .command(
+            new OCommandSQL(
+                "CREATE EDGE TestPolymorphicEdges_E2 FROM (SELECT FROM TestPolymorphicEdges_V WHERE name = '1') to (SELECT FROM TestPolymorphicEdges_V WHERE name = '3')"))
+        .execute();
+
+    List<OIdentifiable> result =
+        database.query(
+            new OSQLSynchQuery<OIdentifiable>(
+                "select expand(out('TestPolymorphicEdges_E1')) from TestPolymorphicEdges_V where name = '1'"));
     Assert.assertEquals(result.size(), 2);
 
-    result = database.query(new OSQLSynchQuery<OIdentifiable>(
-        "select expand(out('TestPolymorphicEdges_E2')) from TestPolymorphicEdges_V where name = '1' "));
+    result =
+        database.query(
+            new OSQLSynchQuery<OIdentifiable>(
+                "select expand(out('TestPolymorphicEdges_E2')) from TestPolymorphicEdges_V where name = '1' "));
     Assert.assertEquals(result.size(), 1);
-
   }
 
   @Test
@@ -1775,12 +2051,16 @@ public class SQLSelectTestNew extends AbstractSelectTest {
     database.command(new OCommandSQL("CREATE VERTEX TestSizeOfLink set name = '1'")).execute();
     database.command(new OCommandSQL("CREATE VERTEX TestSizeOfLink set name = '2'")).execute();
     database.command(new OCommandSQL("CREATE VERTEX TestSizeOfLink set name = '3'")).execute();
-    database.command(new OCommandSQL(
-        "CREATE EDGE E FROM (SELECT FROM TestSizeOfLink WHERE name = '1') to (SELECT FROM TestSizeOfLink WHERE name <> '1')"))
+    database
+        .command(
+            new OCommandSQL(
+                "CREATE EDGE E FROM (SELECT FROM TestSizeOfLink WHERE name = '1') to (SELECT FROM TestSizeOfLink WHERE name <> '1')"))
         .execute();
 
-    List<OIdentifiable> result = database.query(new OSQLSynchQuery<OIdentifiable>(
-        " select from (select from TestSizeOfLink where name = '1') where out()[name=2].size() > 0"));
+    List<OIdentifiable> result =
+        database.query(
+            new OSQLSynchQuery<OIdentifiable>(
+                " select from (select from TestSizeOfLink where name = '1') where out()[name=2].size() > 0"));
     Assert.assertEquals(result.size(), 1);
   }
 
@@ -1789,16 +2069,24 @@ public class SQLSelectTestNew extends AbstractSelectTest {
     OSchema schema = database.getMetadata().getSchema();
     OClass v = schema.getClass("V");
     final OClass cls = schema.createClass("EmbeddedMapAndDotNotation", v);
-    database.command(new OCommandSQL("CREATE VERTEX EmbeddedMapAndDotNotation set name = 'foo'")).execute();
-    database.command(
-        new OCommandSQL("CREATE VERTEX EmbeddedMapAndDotNotation set data = {\"bar\": \"baz\", \"quux\": 1}, name = 'bar'"))
+    database
+        .command(new OCommandSQL("CREATE VERTEX EmbeddedMapAndDotNotation set name = 'foo'"))
         .execute();
-    database.command(new OCommandSQL(
-        "CREATE EDGE E FROM (SELECT FROM EmbeddedMapAndDotNotation WHERE name = 'foo') to (SELECT FROM EmbeddedMapAndDotNotation WHERE name = 'bar')"))
+    database
+        .command(
+            new OCommandSQL(
+                "CREATE VERTEX EmbeddedMapAndDotNotation set data = {\"bar\": \"baz\", \"quux\": 1}, name = 'bar'"))
+        .execute();
+    database
+        .command(
+            new OCommandSQL(
+                "CREATE EDGE E FROM (SELECT FROM EmbeddedMapAndDotNotation WHERE name = 'foo') to (SELECT FROM EmbeddedMapAndDotNotation WHERE name = 'bar')"))
         .execute();
 
-    List<OIdentifiable> result = database.query(new OSQLSynchQuery<OIdentifiable>(
-        " select out().data as result from (select from EmbeddedMapAndDotNotation where name = 'foo')"));
+    List<OIdentifiable> result =
+        database.query(
+            new OSQLSynchQuery<OIdentifiable>(
+                " select out().data as result from (select from EmbeddedMapAndDotNotation where name = 'foo')"));
     Assert.assertEquals(result.size(), 1);
     ODocument doc = result.get(0).getRecord();
     Assert.assertNotNull(doc);
@@ -1807,7 +2095,6 @@ public class SQLSelectTestNew extends AbstractSelectTest {
     Object first = list.get(0);
     Assert.assertTrue(first instanceof Map);
     Assert.assertEquals(((Map) first).get("bar"), "baz");
-
   }
 
   @Test
@@ -1815,12 +2102,15 @@ public class SQLSelectTestNew extends AbstractSelectTest {
     OSchema schema = database.getMetadata().getSchema();
     OClass v = schema.getClass("V");
     final OClass cls = schema.createClass("LetWithQuotedValue", v);
-    database.command(new OCommandSQL("CREATE VERTEX LetWithQuotedValue set name = \"\\\"foo\\\"\"")).execute();
+    database
+        .command(new OCommandSQL("CREATE VERTEX LetWithQuotedValue set name = \"\\\"foo\\\"\""))
+        .execute();
 
-    List<OIdentifiable> result = database.query(new OSQLSynchQuery<OIdentifiable>(
-        " select expand($a) let $a = (select from LetWithQuotedValue where name = \"\\\"foo\\\"\")"));
+    List<OIdentifiable> result =
+        database.query(
+            new OSQLSynchQuery<OIdentifiable>(
+                " select expand($a) let $a = (select from LetWithQuotedValue where name = \"\\\"foo\\\"\")"));
     Assert.assertEquals(result.size(), 1);
-
   }
 
   @Test
@@ -1847,7 +2137,9 @@ public class SQLSelectTestNew extends AbstractSelectTest {
     elem4.setProperty("elem3", elem3);
     elem4.save();
 
-    OResultSet result = database.query("select name, elem1:{*}, elem2:{!surname} from " + className + " where name = 'd'");
+    OResultSet result =
+        database.query(
+            "select name, elem1:{*}, elem2:{!surname} from " + className + " where name = 'd'");
     Assert.assertTrue(result.hasNext());
     OResult item = result.next();
     Assert.assertNotNull(item);

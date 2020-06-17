@@ -1,19 +1,18 @@
 package com.orientechnologies.orient.distributed.impl.database.operations;
 
+import static com.orientechnologies.orient.distributed.impl.coordinator.OCoordinateMessagesFactory.DATABASE_FULL_SYNC_START;
+
 import com.orientechnologies.orient.core.db.config.ONodeIdentity;
 import com.orientechnologies.orient.distributed.OrientDBDistributed;
 import com.orientechnologies.orient.distributed.impl.structural.operations.OOperation;
-
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
 import java.util.UUID;
 
-import static com.orientechnologies.orient.distributed.impl.coordinator.OCoordinateMessagesFactory.DATABASE_FULL_SYNC_START;
-
 public class ODatabaseFullSyncStart implements OOperation {
-  private String  database;
-  private UUID    uuid;
+  private String database;
+  private UUID uuid;
   private boolean incremental;
 
   public ODatabaseFullSyncStart(String database, UUID uuid, boolean incremental) {
@@ -22,9 +21,7 @@ public class ODatabaseFullSyncStart implements OOperation {
     this.incremental = incremental;
   }
 
-  public ODatabaseFullSyncStart() {
-
-  }
+  public ODatabaseFullSyncStart() {}
 
   @Override
   public void apply(ONodeIdentity sender, OrientDBDistributed context) {

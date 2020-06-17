@@ -7,7 +7,6 @@ import com.orientechnologies.orient.core.record.OElement;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.executor.OResultInternal;
-
 import java.util.Map;
 
 public class ORecordAttribute extends SimpleNode {
@@ -34,15 +33,12 @@ public class ORecordAttribute extends SimpleNode {
 
   @Override
   public boolean equals(Object o) {
-    if (this == o)
-      return true;
-    if (o == null || getClass() != o.getClass())
-      return false;
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
 
     ORecordAttribute that = (ORecordAttribute) o;
 
-    if (name != null ? !name.equals(that.name) : that.name != null)
-      return false;
+    if (name != null ? !name.equals(that.name) : that.name != null) return false;
 
     return true;
   }
@@ -74,7 +70,7 @@ public class ORecordAttribute extends SimpleNode {
     if (name.equalsIgnoreCase("@rid")) {
       return iCurrentRecord.getIdentity().orElse(null);
     } else if (name.equalsIgnoreCase("@class")) {
-      return iCurrentRecord.toElement().getSchemaType().map(x->x.getName()).orElse(null);
+      return iCurrentRecord.toElement().getSchemaType().map(x -> x.getName()).orElse(null);
     } else if (name.equalsIgnoreCase("@version")) {
       return iCurrentRecord.getRecord().map(r -> r.getVersion()).orElse(null);
     }

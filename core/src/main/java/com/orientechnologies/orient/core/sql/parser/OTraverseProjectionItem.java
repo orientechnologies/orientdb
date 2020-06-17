@@ -6,7 +6,6 @@ import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
-
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
@@ -15,7 +14,7 @@ import java.util.Set;
 public class OTraverseProjectionItem extends SimpleNode {
 
   protected OBaseIdentifier base;
-  protected OModifier       modifier;
+  protected OModifier modifier;
 
   public OTraverseProjectionItem(int id) {
     super(id);
@@ -106,17 +105,13 @@ public class OTraverseProjectionItem extends SimpleNode {
 
   @Override
   public boolean equals(Object o) {
-    if (this == o)
-      return true;
-    if (o == null || getClass() != o.getClass())
-      return false;
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
 
     OTraverseProjectionItem that = (OTraverseProjectionItem) o;
 
-    if (base != null ? !base.equals(that.base) : that.base != null)
-      return false;
-    if (modifier != null ? !modifier.equals(that.modifier) : that.modifier != null)
-      return false;
+    if (base != null ? !base.equals(that.base) : that.base != null) return false;
+    if (modifier != null ? !modifier.equals(that.modifier) : that.modifier != null) return false;
 
     return true;
   }

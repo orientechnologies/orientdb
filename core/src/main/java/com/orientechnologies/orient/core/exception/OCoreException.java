@@ -32,10 +32,10 @@ public abstract class OCoreException extends OException {
 
   public OCoreException(final String message, final String componentName) {
     this(message, componentName, null);
-
   }
 
-  public OCoreException(final String message, final String componentName, final OErrorCode errorCode) {
+  public OCoreException(
+      final String message, final String componentName, final OErrorCode errorCode) {
     super(message);
 
     this.errorCode = errorCode;

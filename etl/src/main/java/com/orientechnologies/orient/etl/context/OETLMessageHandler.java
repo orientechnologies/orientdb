@@ -3,19 +3,18 @@ package com.orientechnologies.orient.etl.context;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.output.OOutputStreamManager;
 import com.orientechnologies.orient.output.OPluginMessageHandler;
-
 import java.io.PrintStream;
 
 /**
- * Implementation of OPluginMessageHandler for ETL plugin.
- * It receives messages application from the application and just delegates its printing on a stream through the OutputStreamManager.
+ * Implementation of OPluginMessageHandler for ETL plugin. It receives messages application from the
+ * application and just delegates its printing on a stream through the OutputStreamManager.
  *
  * @author Gabriele Ponzi
  * @email gabriele.ponzi--at--gmail.com
  */
 public class OETLMessageHandler implements OPluginMessageHandler {
 
-  private int                  outputManagerLevel;    // affects OutputStreamManager outputManagerLevel
+  private int outputManagerLevel; // affects OutputStreamManager outputManagerLevel
   private OOutputStreamManager outputManager;
 
   public OETLMessageHandler(PrintStream outputStream, int level) {
@@ -40,7 +39,6 @@ public class OETLMessageHandler implements OPluginMessageHandler {
   public void setOutputManager(OOutputStreamManager outputManager) {
     this.outputManager = outputManager;
   }
-
 
   public int getOutputManagerLevel() {
     return this.outputManagerLevel;

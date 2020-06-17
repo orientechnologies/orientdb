@@ -1,26 +1,23 @@
 package com.orientechnologies.orient.test.database.auto;
 
-import java.util.List;
-
-import org.testng.annotations.Optional;
-import org.testng.annotations.Parameters;
-import org.testng.annotations.Test;
-
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.index.OIndexException;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
+import java.util.List;
+import org.testng.annotations.Optional;
+import org.testng.annotations.Parameters;
+import org.testng.annotations.Test;
 
 @Test
 public class IndexConcurrentCommitTest extends DocumentDBBaseTest {
-	@Parameters(value = "url")
-	public IndexConcurrentCommitTest(@Optional String url) {
-		super(url);
-	}
+  @Parameters(value = "url")
+  public IndexConcurrentCommitTest(@Optional String url) {
+    super(url);
+  }
 
-	public void testConcurrentUpdate() {
+  public void testConcurrentUpdate() {
     OClass personClass = database.getMetadata().getSchema().createClass("Person");
     personClass.createProperty("ssn", OType.STRING).createIndex(OClass.INDEX_TYPE.UNIQUE);
     personClass.createProperty("name", OType.STRING).createIndex(OClass.INDEX_TYPE.NOTUNIQUE);
@@ -44,10 +41,10 @@ public class IndexConcurrentCommitTest extends DocumentDBBaseTest {
       database.commit();
 
       // Ensure that the people made it in correctly
-      final List<ODocument> result1 = database.command(new OCommandSQL("select from Person")).execute();
+      final List<ODocument> result1 =
+          database.command(new OCommandSQL("select from Person")).execute();
       System.out.println("After transaction 1");
-      for (ODocument d : result1)
-        System.out.println(d);
+      for (ODocument d : result1) System.out.println(d);
 
       // Transaction 2
       database.begin();
@@ -72,9 +69,9 @@ public class IndexConcurrentCommitTest extends DocumentDBBaseTest {
       database.rollback();
     }
 
-    final List<ODocument> result2 = database.command(new OCommandSQL("select from Person")).execute();
+    final List<ODocument> result2 =
+        database.command(new OCommandSQL("select from Person")).execute();
     System.out.println("After transaction 2");
-    for (ODocument d : result2)
-      System.out.println(d);
+    for (ODocument d : result2) System.out.println(d);
   }
 }

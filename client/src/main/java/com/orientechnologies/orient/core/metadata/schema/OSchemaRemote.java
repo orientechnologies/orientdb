@@ -9,13 +9,15 @@ import com.orientechnologies.orient.core.exception.OSchemaException;
 import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.metadata.security.ORule;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-/**
- * Created by tglman on 13/06/17.
- */
+/** Created by tglman on 13/06/17. */
 public class OSchemaRemote extends OSchemaShared {
   private AtomicBoolean skipPush = new AtomicBoolean(false);
 
@@ -24,15 +26,14 @@ public class OSchemaRemote extends OSchemaShared {
   }
 
   @Override
-  public OClass getOrCreateClass(ODatabaseDocumentInternal database, String iClassName, OClass... superClasses) {
-    if (iClassName == null)
-      return null;
+  public OClass getOrCreateClass(
+      ODatabaseDocumentInternal database, String iClassName, OClass... superClasses) {
+    if (iClassName == null) return null;
 
     acquireSchemaReadLock();
     try {
       OClass cls = classes.get(iClassName.toLowerCase(Locale.ENGLISH));
-      if (cls != null)
-        return cls;
+      if (cls != null) return cls;
     } finally {
       releaseSchemaReadLock();
     }
@@ -44,8 +45,7 @@ public class OSchemaRemote extends OSchemaShared {
     acquireSchemaWriteLock(database);
     try {
       cls = classes.get(iClassName.toLowerCase(Locale.ENGLISH));
-      if (cls != null)
-        return cls;
+      if (cls != null) return cls;
 
       cls = createClass(database, iClassName, clusterIds, superClasses);
 
@@ -65,16 +65,23 @@ public class OSchemaRemote extends OSchemaShared {
     return new OViewRemote(this, c, (String) c.field("name"));
   }
 
-  public OClass createClass(ODatabaseDocumentInternal database, final String className, int[] clusterIds, OClass... superClasses) {
+  public OClass createClass(
+      ODatabaseDocumentInternal database,
+      final String className,
+      int[] clusterIds,
+      OClass... superClasses) {
     final Character wrongCharacter = OSchemaShared.checkClassNameIfValid(className);
     if (wrongCharacter != null)
       throw new OSchemaException(
-          "Invalid class name found. Character '" + wrongCharacter + "' cannot be used in class name '" + className + "'");
+          "Invalid class name found. Character '"
+              + wrongCharacter
+              + "' cannot be used in class name '"
+              + className
+              + "'");
     OClass result;
 
     database.checkSecurity(ORule.ResourceGeneric.SCHEMA, ORole.PERMISSION_CREATE);
-    if (superClasses != null)
-      OClassImpl.checkParametersConflict(Arrays.asList(superClasses));
+    if (superClasses != null) OClassImpl.checkParametersConflict(Arrays.asList(superClasses));
 
     acquireSchemaWriteLock(database);
     try {
@@ -96,10 +103,8 @@ public class OSchemaRemote extends OSchemaShared {
         for (OClass superClass : superClasses) {
           // Filtering for null
           if (superClass != null) {
-            if (first)
-              cmd.append(" extends ");
-            else
-              cmd.append(", ");
+            if (first) cmd.append(" extends ");
+            else cmd.append(", ");
             cmd.append('`').append(superClass.getName()).append('`');
             first = false;
             superClassesList.add(superClass);
@@ -108,15 +113,12 @@ public class OSchemaRemote extends OSchemaShared {
       }
 
       if (clusterIds != null) {
-        if (clusterIds.length == 1 && clusterIds[0] == -1)
-          cmd.append(" abstract");
+        if (clusterIds.length == 1 && clusterIds[0] == -1) cmd.append(" abstract");
         else {
           cmd.append(" cluster ");
           for (int i = 0; i < clusterIds.length; ++i) {
-            if (i > 0)
-              cmd.append(',');
-            else
-              cmd.append(' ');
+            if (i > 0) cmd.append(',');
+            else cmd.append(' ');
 
             cmd.append(clusterIds[i]);
           }
@@ -129,8 +131,8 @@ public class OSchemaRemote extends OSchemaShared {
       result = classes.get(className.toLowerCase(Locale.ENGLISH));
 
       // WAKE UP DB LIFECYCLE LISTENER
-      for (Iterator<ODatabaseLifecycleListener> it = Orient.instance().getDbLifecycleListeners(); it.hasNext(); )
-        it.next().onCreateClass(database, result);
+      for (Iterator<ODatabaseLifecycleListener> it = Orient.instance().getDbLifecycleListeners();
+          it.hasNext(); ) it.next().onCreateClass(database, result);
 
       for (Iterator<ODatabaseListener> it = database.getListeners().iterator(); it.hasNext(); )
         it.next().onCreateClass(database, result);
@@ -142,17 +144,24 @@ public class OSchemaRemote extends OSchemaShared {
     return result;
   }
 
-  public OClass createClass(ODatabaseDocumentInternal database, final String className, int clusters, OClass... superClasses) {
+  public OClass createClass(
+      ODatabaseDocumentInternal database,
+      final String className,
+      int clusters,
+      OClass... superClasses) {
     final Character wrongCharacter = OSchemaShared.checkClassNameIfValid(className);
     if (wrongCharacter != null)
       throw new OSchemaException(
-          "Invalid class name found. Character '" + wrongCharacter + "' cannot be used in class name '" + className + "'");
+          "Invalid class name found. Character '"
+              + wrongCharacter
+              + "' cannot be used in class name '"
+              + className
+              + "'");
 
     OClass result;
 
     database.checkSecurity(ORule.ResourceGeneric.SCHEMA, ORole.PERMISSION_CREATE);
-    if (superClasses != null)
-      OClassImpl.checkParametersConflict(Arrays.asList(superClasses));
+    if (superClasses != null) OClassImpl.checkParametersConflict(Arrays.asList(superClasses));
     acquireSchemaWriteLock(database);
     try {
 
@@ -171,10 +180,8 @@ public class OSchemaRemote extends OSchemaShared {
         for (OClass superClass : superClasses) {
           // Filtering for null
           if (superClass != null) {
-            if (first)
-              cmd.append(" extends ");
-            else
-              cmd.append(", ");
+            if (first) cmd.append(" extends ");
+            else cmd.append(", ");
             cmd.append(superClass.getName());
             first = false;
             superClassesList.add(superClass);
@@ -182,8 +189,7 @@ public class OSchemaRemote extends OSchemaShared {
         }
       }
 
-      if (clusters == 0)
-        cmd.append(" abstract");
+      if (clusters == 0) cmd.append(" abstract");
       else {
         cmd.append(" clusters ");
         cmd.append(clusters);
@@ -194,8 +200,8 @@ public class OSchemaRemote extends OSchemaShared {
       result = classes.get(className.toLowerCase(Locale.ENGLISH));
 
       // WAKE UP DB LIFECYCLE LISTENER
-      for (Iterator<ODatabaseLifecycleListener> it = Orient.instance().getDbLifecycleListeners(); it.hasNext(); )
-        it.next().onCreateClass(database, result);
+      for (Iterator<ODatabaseLifecycleListener> it = Orient.instance().getDbLifecycleListeners();
+          it.hasNext(); ) it.next().onCreateClass(database, result);
 
       for (Iterator<ODatabaseListener> it = database.getListeners().iterator(); it.hasNext(); )
         it.next().onCreateClass(database, result);
@@ -207,7 +213,8 @@ public class OSchemaRemote extends OSchemaShared {
     return result;
   }
 
-  public OView createView(ODatabaseDocumentInternal database, OViewConfig cfg, ViewCreationListener listener)
+  public OView createView(
+      ODatabaseDocumentInternal database, OViewConfig cfg, ViewCreationListener listener)
       throws UnsupportedOperationException {
     throw new UnsupportedOperationException();
   }
@@ -217,7 +224,11 @@ public class OSchemaRemote extends OSchemaShared {
     final Character wrongCharacter = OSchemaShared.checkClassNameIfValid(cfg.getName());
     if (wrongCharacter != null)
       throw new OSchemaException(
-          "Invalid view name found. Character '" + wrongCharacter + "' cannot be used in view name '" + cfg.getName() + "'");
+          "Invalid view name found. Character '"
+              + wrongCharacter
+              + "' cannot be used in view name '"
+              + cfg.getName()
+              + "'");
 
     OView result;
 
@@ -227,7 +238,8 @@ public class OSchemaRemote extends OSchemaShared {
 
       final String key = cfg.getName().toLowerCase(Locale.ENGLISH);
       if (views.containsKey(key))
-        throw new OSchemaException("View '" + cfg.getName() + "' already exists in current database");
+        throw new OSchemaException(
+            "View '" + cfg.getName() + "' already exists in current database");
 
       StringBuilder cmd = new StringBuilder("create view ");
       cmd.append('`');
@@ -237,15 +249,15 @@ public class OSchemaRemote extends OSchemaShared {
       if (cfg.isUpdatable()) {
         cmd.append(" UPDATABLE");
       }
-      //TODO METADATA!!!
+      // TODO METADATA!!!
 
       database.command(cmd.toString()).close();
       reload(database);
       result = views.get(cfg.getName().toLowerCase(Locale.ENGLISH));
 
       // WAKE UP DB LIFECYCLE LISTENER
-      for (Iterator<ODatabaseLifecycleListener> it = Orient.instance().getDbLifecycleListeners(); it.hasNext(); )
-        it.next().onCreateView(database, result);
+      for (Iterator<ODatabaseLifecycleListener> it = Orient.instance().getDbLifecycleListeners();
+          it.hasNext(); ) it.next().onCreateView(database, result);
 
       for (Iterator<ODatabaseListener> it = database.getListeners().iterator(); it.hasNext(); )
         it.next().onCreateView(database, result);
@@ -258,11 +270,19 @@ public class OSchemaRemote extends OSchemaShared {
   }
 
   @Override
-  public OView createView(ODatabaseDocumentInternal database, String name, String statement, Map<String, Object> metadata) {
+  public OView createView(
+      ODatabaseDocumentInternal database,
+      String name,
+      String statement,
+      Map<String, Object> metadata) {
     final Character wrongCharacter = OSchemaShared.checkClassNameIfValid(name);
     if (wrongCharacter != null)
       throw new OSchemaException(
-          "Invalid class name found. Character '" + wrongCharacter + "' cannot be used in view name '" + name + "'");
+          "Invalid class name found. Character '"
+              + wrongCharacter
+              + "' cannot be used in view name '"
+              + name
+              + "'");
 
     OView result;
 
@@ -279,17 +299,17 @@ public class OSchemaRemote extends OSchemaShared {
       cmd.append(name);
       cmd.append('`');
       cmd.append(" FROM (" + statement + ") ");
-//      if (metadata!=null) {//TODO
-//        cmd.append(" METADATA");
-//      }
+      //      if (metadata!=null) {//TODO
+      //        cmd.append(" METADATA");
+      //      }
 
       database.command(cmd.toString()).close();
       reload(database);
       result = views.get(name.toLowerCase(Locale.ENGLISH));
 
       // WAKE UP DB LIFECYCLE LISTENER
-      for (Iterator<ODatabaseLifecycleListener> it = Orient.instance().getDbLifecycleListeners(); it.hasNext(); )
-        it.next().onCreateView(database, result);
+      for (Iterator<ODatabaseLifecycleListener> it = Orient.instance().getDbLifecycleListeners();
+          it.hasNext(); ) it.next().onCreateView(database, result);
 
       for (Iterator<ODatabaseListener> it = database.getListeners().iterator(); it.hasNext(); )
         it.next().onCreateView(database, result);
@@ -302,16 +322,17 @@ public class OSchemaRemote extends OSchemaShared {
   }
 
   private void checkClustersAreAbsent(final int[] iClusterIds) {
-    if (iClusterIds == null)
-      return;
+    if (iClusterIds == null) return;
 
     for (int clusterId : iClusterIds) {
-      if (clusterId < 0)
-        continue;
+      if (clusterId < 0) continue;
 
       if (clustersToClasses.containsKey(clusterId))
         throw new OSchemaException(
-            "Cluster with id " + clusterId + " already belongs to class " + clustersToClasses.get(clusterId));
+            "Cluster with id "
+                + clusterId
+                + " already belongs to class "
+                + clustersToClasses.get(clusterId));
     }
   }
 
@@ -322,8 +343,7 @@ public class OSchemaRemote extends OSchemaShared {
       if (database.getTransaction().isActive())
         throw new IllegalStateException("Cannot drop a class inside a transaction");
 
-      if (className == null)
-        throw new IllegalArgumentException("Class name is null");
+      if (className == null) throw new IllegalArgumentException("Class name is null");
 
       database.checkSecurity(ORule.ResourceGeneric.SCHEMA, ORole.PERMISSION_DELETE);
 
@@ -335,8 +355,12 @@ public class OSchemaRemote extends OSchemaShared {
         throw new OSchemaException("Class '" + className + "' was not found in current database");
 
       if (!cls.getSubclasses().isEmpty())
-        throw new OSchemaException("Class '" + className + "' cannot be dropped because it has sub classes " + cls.getSubclasses()
-            + ". Remove the dependencies before trying to drop it again");
+        throw new OSchemaException(
+            "Class '"
+                + className
+                + "' cannot be dropped because it has sub classes "
+                + cls.getSubclasses()
+                + ". Remove the dependencies before trying to drop it again");
 
       final StringBuilder cmd = new StringBuilder("drop class `");
       cmd.append(className);
@@ -359,8 +383,7 @@ public class OSchemaRemote extends OSchemaShared {
       if (database.getTransaction().isActive())
         throw new IllegalStateException("Cannot drop a class inside a transaction");
 
-      if (name == null)
-        throw new IllegalArgumentException("View name is null");
+      if (name == null) throw new IllegalArgumentException("View name is null");
 
       database.checkSecurity(ORule.ResourceGeneric.SCHEMA, ORole.PERMISSION_DELETE);
 
@@ -372,8 +395,12 @@ public class OSchemaRemote extends OSchemaShared {
         throw new OSchemaException("View '" + name + "' was not found in current database");
 
       if (!cls.getSubclasses().isEmpty())
-        throw new OSchemaException("View '" + name + "' cannot be dropped because it has sub classes " + cls.getSubclasses()
-            + ". Remove the dependencies before trying to drop it again");
+        throw new OSchemaException(
+            "View '"
+                + name
+                + "' cannot be dropped because it has sub classes "
+                + cls.getSubclasses()
+                + ". Remove the dependencies before trying to drop it again");
 
       final StringBuilder cmd = new StringBuilder("drop view ");
       cmd.append(name);
@@ -401,7 +428,8 @@ public class OSchemaRemote extends OSchemaShared {
 
   @Override
   public void checkEmbedded() {
-    throw new OSchemaException("'Internal' schema modification methods can be used only inside of embedded database");
+    throw new OSchemaException(
+        "'Internal' schema modification methods can be used only inside of embedded database");
   }
 
   public void update(ODocument schema) {
@@ -414,7 +442,8 @@ public class OSchemaRemote extends OSchemaShared {
 
   @Override
   public int addBlobCluster(ODatabaseDocumentInternal database, int clusterId) {
-    throw new OSchemaException("Not supported operation use instead ODatabaseSession.addBlobCluster");
+    throw new OSchemaException(
+        "Not supported operation use instead ODatabaseSession.addBlobCluster");
   }
 
   @Override

@@ -21,7 +21,6 @@
 package com.orientechnologies.common.serialization.types;
 
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALChanges;
-
 import java.nio.ByteBuffer;
 import java.util.Calendar;
 import java.util.Date;
@@ -33,7 +32,7 @@ import java.util.Date;
  * @since 20.01.12
  */
 public class ODateTimeSerializer implements OBinarySerializer<Date> {
-  public static final byte                ID       = 5;
+  public static final byte ID = 5;
   public static final ODateTimeSerializer INSTANCE = new ODateTimeSerializer();
 
   public int getObjectSize(Date object, Object... hints) {
@@ -65,7 +64,8 @@ public class ODateTimeSerializer implements OBinarySerializer<Date> {
   }
 
   @Override
-  public void serializeNativeObject(Date object, byte[] stream, int startPosition, Object... hints) {
+  public void serializeNativeObject(
+      Date object, byte[] stream, int startPosition, Object... hints) {
     final Calendar calendar = Calendar.getInstance();
     calendar.setTime(object);
     OLongSerializer.INSTANCE.serializeNative(calendar.getTimeInMillis(), stream, startPosition);
@@ -91,9 +91,7 @@ public class ODateTimeSerializer implements OBinarySerializer<Date> {
     return value;
   }
 
-  /**
-   * {@inheritDoc}
-   */
+  /** {@inheritDoc} */
   @Override
   public void serializeInByteBufferObject(Date object, ByteBuffer buffer, Object... hints) {
     final Calendar calendar = Calendar.getInstance();
@@ -101,9 +99,7 @@ public class ODateTimeSerializer implements OBinarySerializer<Date> {
     buffer.putLong(calendar.getTimeInMillis());
   }
 
-  /**
-   * {@inheritDoc}
-   */
+  /** {@inheritDoc} */
   @Override
   public Date deserializeFromByteBufferObject(ByteBuffer buffer) {
     final Calendar calendar = Calendar.getInstance();
@@ -111,27 +107,22 @@ public class ODateTimeSerializer implements OBinarySerializer<Date> {
     return calendar.getTime();
   }
 
-  /**
-   * {@inheritDoc}
-   */
+  /** {@inheritDoc} */
   @Override
   public int getObjectSizeInByteBuffer(ByteBuffer buffer) {
     return OLongSerializer.LONG_SIZE;
   }
 
-  /**
-   * {@inheritDoc}
-   */
+  /** {@inheritDoc} */
   @Override
-  public Date deserializeFromByteBufferObject(ByteBuffer buffer, OWALChanges walChanges, int offset) {
+  public Date deserializeFromByteBufferObject(
+      ByteBuffer buffer, OWALChanges walChanges, int offset) {
     final Calendar calendar = Calendar.getInstance();
     calendar.setTimeInMillis(walChanges.getLongValue(buffer, offset));
     return calendar.getTime();
   }
 
-  /**
-   * {@inheritDoc}
-   */
+  /** {@inheritDoc} */
   @Override
   public int getObjectSizeInByteBuffer(ByteBuffer buffer, OWALChanges walChanges, int offset) {
     return OLongSerializer.LONG_SIZE;

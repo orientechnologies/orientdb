@@ -19,16 +19,13 @@
 package com.orientechnologies.lucene.tx;
 
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import java.util.Collections;
+import java.util.Set;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.Query;
 
-import java.util.Collections;
-import java.util.Set;
-
-/**
- * Created by Enrico Risa on 15/09/15.
- */
+/** Created by Enrico Risa on 15/09/15. */
 public interface OLuceneTxChanges {
 
   void put(Object key, OIdentifiable value, Document doc);

@@ -7,11 +7,10 @@ import com.orientechnologies.orient.core.storage.cache.OCacheEntryImpl;
 import com.orientechnologies.orient.core.storage.cache.OCachePointer;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.PageOperationRecord;
 import com.orientechnologies.orient.core.storage.index.hashindex.local.v2.DirectoryFirstPageV2;
-import org.junit.Assert;
-import org.junit.Test;
-
 import java.nio.ByteBuffer;
 import java.util.List;
+import org.junit.Assert;
+import org.junit.Test;
 
 public class LocalHashTableV2DirectoryFirstPageSetPointerPOTest {
   @Test
@@ -29,7 +28,8 @@ public class LocalHashTableV2DirectoryFirstPageSetPointerPOTest {
       entry.clearPageOperations();
 
       final OPointer restoredPointer = byteBufferPool.acquireDirect(false);
-      final OCachePointer restoredCachePointer = new OCachePointer(restoredPointer, byteBufferPool, 0, 0);
+      final OCachePointer restoredCachePointer =
+          new OCachePointer(restoredPointer, byteBufferPool, 0, 0);
       final OCacheEntry restoredCacheEntry = new OCacheEntryImpl(0, 0, restoredCachePointer);
 
       final ByteBuffer originalBuffer = cachePointer.getBufferDuplicate();
@@ -45,10 +45,11 @@ public class LocalHashTableV2DirectoryFirstPageSetPointerPOTest {
       final List<PageOperationRecord> operations = entry.getPageOperations();
       Assert.assertEquals(1, operations.size());
 
-      Assert.assertTrue(operations.get(0) instanceof LocalHashTableV2DirectoryFirstPageSetPointerPO);
+      Assert.assertTrue(
+          operations.get(0) instanceof LocalHashTableV2DirectoryFirstPageSetPointerPO);
 
-      final LocalHashTableV2DirectoryFirstPageSetPointerPO pageOperation = (LocalHashTableV2DirectoryFirstPageSetPointerPO) operations
-          .get(0);
+      final LocalHashTableV2DirectoryFirstPageSetPointerPO pageOperation =
+          (LocalHashTableV2DirectoryFirstPageSetPointerPO) operations.get(0);
 
       DirectoryFirstPageV2 restoredPage = new DirectoryFirstPageV2(restoredCacheEntry);
       Assert.assertEquals(124, restoredPage.getPointer(1, 2));
@@ -84,10 +85,11 @@ public class LocalHashTableV2DirectoryFirstPageSetPointerPOTest {
       final List<PageOperationRecord> operations = entry.getPageOperations();
       Assert.assertEquals(1, operations.size());
 
-      Assert.assertTrue(operations.get(0) instanceof LocalHashTableV2DirectoryFirstPageSetPointerPO);
+      Assert.assertTrue(
+          operations.get(0) instanceof LocalHashTableV2DirectoryFirstPageSetPointerPO);
 
-      final LocalHashTableV2DirectoryFirstPageSetPointerPO pageOperation = (LocalHashTableV2DirectoryFirstPageSetPointerPO) operations
-          .get(0);
+      final LocalHashTableV2DirectoryFirstPageSetPointerPO pageOperation =
+          (LocalHashTableV2DirectoryFirstPageSetPointerPO) operations.get(0);
 
       final DirectoryFirstPageV2 restoredPage = new DirectoryFirstPageV2(entry);
 
@@ -105,7 +107,8 @@ public class LocalHashTableV2DirectoryFirstPageSetPointerPOTest {
 
   @Test
   public void testSerialization() {
-    LocalHashTableV2DirectoryFirstPageSetPointerPO operation = new LocalHashTableV2DirectoryFirstPageSetPointerPO(1, 2, 124, 421);
+    LocalHashTableV2DirectoryFirstPageSetPointerPO operation =
+        new LocalHashTableV2DirectoryFirstPageSetPointerPO(1, 2, 124, 421);
 
     operation.setFileId(42);
     operation.setPageIndex(24);
@@ -117,7 +120,8 @@ public class LocalHashTableV2DirectoryFirstPageSetPointerPOTest {
 
     Assert.assertEquals(serializedSize + 1, pos);
 
-    LocalHashTableV2DirectoryFirstPageSetPointerPO restoredOperation = new LocalHashTableV2DirectoryFirstPageSetPointerPO();
+    LocalHashTableV2DirectoryFirstPageSetPointerPO restoredOperation =
+        new LocalHashTableV2DirectoryFirstPageSetPointerPO();
     restoredOperation.fromStream(stream, 1);
 
     Assert.assertEquals(42, restoredOperation.getFileId());
@@ -128,6 +132,5 @@ public class LocalHashTableV2DirectoryFirstPageSetPointerPOTest {
     Assert.assertEquals(2, restoredOperation.getIndex());
     Assert.assertEquals(124, restoredOperation.getPointer());
     Assert.assertEquals(421, restoredOperation.getPastPointer());
-
   }
 }

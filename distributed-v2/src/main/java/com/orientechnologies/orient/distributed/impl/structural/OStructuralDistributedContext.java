@@ -11,20 +11,19 @@ import com.orientechnologies.orient.distributed.impl.structural.raft.OStructural
 import com.orientechnologies.orient.distributed.impl.structural.raft.OStructuralLeader;
 import com.orientechnologies.orient.distributed.impl.structural.submit.OStructuralSubmitRequest;
 import com.orientechnologies.orient.distributed.impl.structural.submit.OStructuralSubmitResponse;
-
 import java.util.Set;
 import java.util.concurrent.Future;
 
 public class OStructuralDistributedContext {
   private OStructuralSubmitContext submitContext;
-  private OOperationLog            opLog;
-  private OrientDBDistributed      context;
-  private OStructuralLeader        leader;
-  private OStructuralFollower      follower;
+  private OOperationLog opLog;
+  private OrientDBDistributed context;
+  private OStructuralLeader leader;
+  private OStructuralFollower follower;
 
   /**
-   * used in client->follower->leader communication pattern to guarantee that op N is executed AFTER op N-1 is ALREADY propagated to
-   * the slave eg. create database VS open database
+   * used in client->follower->leader communication pattern to guarantee that op N is executed AFTER
+   * op N-1 is ALREADY propagated to the slave eg. create database VS open database
    */
   private OSessionOperationId last;
 
@@ -37,8 +36,9 @@ public class OStructuralDistributedContext {
   }
 
   private void initOpLog() {
-    this.opLog = OPersistentOperationalLogV1
-        .newInstance("OSystem", context, (x) -> OCoordinateMessagesFactory.createRaftOperation(x));
+    this.opLog =
+        OPersistentOperationalLogV1.newInstance(
+            "OSystem", context, (x) -> OCoordinateMessagesFactory.createRaftOperation(x));
   }
 
   public OStructuralSubmitContext getSubmitContext() {
@@ -80,12 +80,12 @@ public class OStructuralDistributedContext {
   }
 
   public synchronized void close() {
-    if (leader != null)
-      leader.close();
+    if (leader != null) leader.close();
     follower.close();
   }
 
-  public void execute(ONodeIdentity senderNode, OSessionOperationId operationId, OStructuralSubmitRequest request) {
+  public void execute(
+      ONodeIdentity senderNode, OSessionOperationId operationId, OStructuralSubmitRequest request) {
     if (leader != null) {
       leader.receiveSubmit(senderNode, operationId, request);
     }

@@ -21,59 +21,58 @@ package com.orientechnologies.orient.core.cache;
 
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.hook.ORecordHookAbstract;
 import com.orientechnologies.orient.core.record.ORecord;
 
 /**
  * Hook that takes care to invalidate query cache as soon any change happen on database.
- * 
+ *
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
  */
 public class OCommandCacheHook extends ORecordHookAbstract {
 
-  private final OCommandCache     cmdCache;
+  private final OCommandCache cmdCache;
   private final ODatabaseDocument database;
 
   public OCommandCacheHook(final ODatabaseDocumentInternal iDatabase) {
     database = iDatabase;
-    cmdCache = iDatabase.getMetadata().getCommandCache().isEnabled() ? iDatabase.getMetadata().getCommandCache() : null;
+    cmdCache =
+        iDatabase.getMetadata().getCommandCache().isEnabled()
+            ? iDatabase.getMetadata().getCommandCache()
+            : null;
   }
 
   @Override
   public SCOPE[] getScopes() {
-    return new SCOPE[] { SCOPE.CREATE, SCOPE.UPDATE, SCOPE.DELETE };
+    return new SCOPE[] {SCOPE.CREATE, SCOPE.UPDATE, SCOPE.DELETE};
   }
 
   @Override
   public void onRecordAfterCreate(final ORecord iRecord) {
-    if (cmdCache == null)
-      return;
+    if (cmdCache == null) return;
 
     invalidateCache(iRecord);
   }
 
   @Override
   public void onRecordAfterUpdate(final ORecord iRecord) {
-    if (cmdCache == null)
-      return;
+    if (cmdCache == null) return;
 
     invalidateCache(iRecord);
   }
 
   @Override
   public void onRecordAfterDelete(final ORecord iRecord) {
-    if (cmdCache == null)
-      return;
+    if (cmdCache == null) return;
 
     invalidateCache(iRecord);
   }
 
   protected void invalidateCache(final ORecord iRecord) {
     if (cmdCache.getEvictStrategy() == OCommandCacheSoftRefs.STRATEGY.PER_CLUSTER)
-      cmdCache.invalidateResultsOfCluster(database.getClusterNameById(iRecord.getIdentity().getClusterId()));
-    else
-      cmdCache.invalidateResultsOfCluster(null);
+      cmdCache.invalidateResultsOfCluster(
+          database.getClusterNameById(iRecord.getIdentity().getClusterId()));
+    else cmdCache.invalidateResultsOfCluster(null);
   }
 
   @Override

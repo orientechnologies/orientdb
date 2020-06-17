@@ -1,9 +1,7 @@
 package com.orientechnologies.orient.server.hazelcast;
 
-import com.hazelcast.core.Hazelcast;
 import com.hazelcast.core.HazelcastInstance;
 import com.orientechnologies.orient.server.distributed.ODistributedLockManager;
-
 import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
@@ -14,7 +12,7 @@ public class OHazelcastLockManager implements ODistributedLockManager {
   }
 
   private HazelcastInstance hazelcast;
-  private Set<String>       lockedResurces = new HashSet<>();
+  private Set<String> lockedResurces = new HashSet<>();
 
   @Override
   public void acquireExclusiveLock(String resource, String nodeSource, long timeout) {
@@ -41,9 +39,7 @@ public class OHazelcastLockManager implements ODistributedLockManager {
   }
 
   @Override
-  public void handleUnreachableServer(String nodeLeftName) {
-
-  }
+  public void handleUnreachableServer(String nodeLeftName) {}
 
   @Override
   public void shutdown() {

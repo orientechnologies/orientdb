@@ -26,15 +26,13 @@ import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.OVertex;
 import com.orientechnologies.orient.core.record.impl.OBlob;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
-
 import java.util.Map;
 
 /**
  * Database wrapper class to use from scripts.
  *
- * @author Enrico  Risa (e.risa--(at)--orientdb.com)
+ * @author Enrico Risa (e.risa--(at)--orientdb.com)
  */
-
 public class OScriptDatabaseWrapper {
   protected ODatabaseDocumentInternal database;
 
@@ -101,5 +99,4 @@ public class OScriptDatabaseWrapper {
   public OBlob newBlob() {
     return this.database.newBlob();
   }
-
 }

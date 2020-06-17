@@ -13,21 +13,26 @@ public class OSqlUpdateContentValidationTest {
 
   @Test
   public void testReadOnlyValidation() {
-    ODatabaseDocumentTx db = new ODatabaseDocumentTx("memory:" + OSqlUpdateContentValidationTest.class.getSimpleName());
+    ODatabaseDocumentTx db =
+        new ODatabaseDocumentTx("memory:" + OSqlUpdateContentValidationTest.class.getSimpleName());
     db.create();
     OClass clazz = db.getMetadata().getSchema().createClass("Test");
     clazz.createProperty("testNormal", OType.STRING);
     clazz.createProperty("test", OType.STRING).setReadonly(true);
 
-    OIdentifiable res = db.command(new OCommandSQL("insert into Test content {\"testNormal\":\"hello\",\"test\":\"only read\"} "))
-        .execute();
+    OIdentifiable res =
+        db.command(
+                new OCommandSQL(
+                    "insert into Test content {\"testNormal\":\"hello\",\"test\":\"only read\"} "))
+            .execute();
     try {
-      db.command(new OCommandSQL("update " + res.getIdentity() + " CONTENT {\"testNormal\":\"by\"}")).execute();
+      db.command(
+              new OCommandSQL("update " + res.getIdentity() + " CONTENT {\"testNormal\":\"by\"}"))
+          .execute();
       Assert.fail("Error on update of a record removing a readonly property");
     } catch (OValidationException val) {
-      
+
     }
     db.close();
   }
-
 }

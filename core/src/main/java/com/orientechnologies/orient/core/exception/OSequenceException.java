@@ -1,7 +1,5 @@
 package com.orientechnologies.orient.core.exception;
 
-import com.orientechnologies.common.exception.OException;
-
 /**
  * @author Matan Shukry (matanshukry@gmail.com)
  * @since 2/28/2015

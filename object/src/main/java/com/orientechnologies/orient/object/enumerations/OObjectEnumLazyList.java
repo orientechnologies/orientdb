@@ -15,6 +15,7 @@
  */
 package com.orientechnologies.orient.object.enumerations;
 
+import com.orientechnologies.orient.core.record.ORecord;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -23,22 +24,20 @@ import java.util.List;
 import java.util.ListIterator;
 import java.util.Map;
 
-import com.orientechnologies.orient.core.record.ORecord;
-
-/**
- * @author Luca Molino (molino.luca--at--gmail.com)
- */
-@SuppressWarnings({ "unchecked" })
-public class OObjectEnumLazyList<TYPE extends Enum<?>> implements List<TYPE>, OObjectLazyEnumSerializer<List<TYPE>>, Serializable {
+/** @author Luca Molino (molino.luca--at--gmail.com) */
+@SuppressWarnings({"unchecked"})
+public class OObjectEnumLazyList<TYPE extends Enum<?>>
+    implements List<TYPE>, OObjectLazyEnumSerializer<List<TYPE>>, Serializable {
   private static final long serialVersionUID = -8541477416577361792L;
 
-  private       ORecord         sourceRecord;
-  private final List<Object>    serializedList;
-  private final ArrayList<TYPE> list      = new ArrayList<TYPE>();
-  private       boolean         converted = false;
-  private final Class<Enum>     enumClass;
+  private ORecord sourceRecord;
+  private final List<Object> serializedList;
+  private final ArrayList<TYPE> list = new ArrayList<TYPE>();
+  private boolean converted = false;
+  private final Class<Enum> enumClass;
 
-  public OObjectEnumLazyList(final Class<Enum> iEnumClass, final ORecord iSourceRecord, final List<Object> iRecordList) {
+  public OObjectEnumLazyList(
+      final Class<Enum> iEnumClass, final ORecord iSourceRecord, final List<Object> iRecordList) {
     this.sourceRecord = iSourceRecord;
     this.serializedList = iRecordList;
     this.enumClass = iEnumClass;
@@ -47,7 +46,10 @@ public class OObjectEnumLazyList<TYPE extends Enum<?>> implements List<TYPE>, OO
     }
   }
 
-  public OObjectEnumLazyList(final Class<Enum> iEnumClass, final ORecord iSourceRecord, final List<Object> iRecordList,
+  public OObjectEnumLazyList(
+      final Class<Enum> iEnumClass,
+      final ORecord iSourceRecord,
+      final List<Object> iRecordList,
       final Collection<? extends TYPE> iSourceList) {
     this.sourceRecord = iSourceRecord;
     this.serializedList = iRecordList;
@@ -83,8 +85,7 @@ public class OObjectEnumLazyList<TYPE extends Enum<?>> implements List<TYPE>, OO
       Object toDeserialize = serializedList.get(index);
       if (toDeserialize instanceof Number)
         o = (TYPE) enumClass.getEnumConstants()[((Number) toDeserialize).intValue()];
-      else
-        o = (TYPE) Enum.valueOf(enumClass, toDeserialize.toString());
+      else o = (TYPE) Enum.valueOf(enumClass, toDeserialize.toString());
       list.set(index, o);
     }
     return o;
@@ -93,19 +94,15 @@ public class OObjectEnumLazyList<TYPE extends Enum<?>> implements List<TYPE>, OO
   public int indexOf(final Object o) {
     TYPE enumToCheck = objectToEnum(o);
 
-    if (enumToCheck != null)
-      return serializedList.indexOf(enumToCheck.name());
-    else
-      return -1;
+    if (enumToCheck != null) return serializedList.indexOf(enumToCheck.name());
+    else return -1;
   }
 
   public int lastIndexOf(final Object o) {
     TYPE enumToCheck = objectToEnum(o);
 
-    if (enumToCheck != null)
-      return serializedList.lastIndexOf(enumToCheck.name());
-    else
-      return -1;
+    if (enumToCheck != null) return serializedList.lastIndexOf(enumToCheck.name());
+    else return -1;
   }
 
   public Object[] toArray() {
@@ -135,8 +132,7 @@ public class OObjectEnumLazyList<TYPE extends Enum<?>> implements List<TYPE>, OO
 
   public boolean containsAll(Collection<?> c) {
     for (Object o : c) {
-      if (!contains(o))
-        return false;
+      if (!contains(o)) return false;
     }
     return true;
   }
@@ -146,8 +142,7 @@ public class OObjectEnumLazyList<TYPE extends Enum<?>> implements List<TYPE>, OO
     for (TYPE element : c) {
       dirty = add(element) || dirty;
     }
-    if (dirty)
-      setDirty();
+    if (dirty) setDirty();
     return dirty;
   }
 
@@ -156,8 +151,7 @@ public class OObjectEnumLazyList<TYPE extends Enum<?>> implements List<TYPE>, OO
       add(index, element);
       index++;
     }
-    if (c.size() > 0)
-      setDirty();
+    if (c.size() > 0) setDirty();
     return c.size() > 0;
   }
 
@@ -166,8 +160,7 @@ public class OObjectEnumLazyList<TYPE extends Enum<?>> implements List<TYPE>, OO
     for (Object o : c) {
       dirty = dirty || remove(o);
     }
-    if (dirty)
-      setDirty();
+    if (dirty) setDirty();
     return dirty;
   }
 
@@ -223,7 +216,10 @@ public class OObjectEnumLazyList<TYPE extends Enum<?>> implements List<TYPE>, OO
     convertAll();
   }
 
-  public void detachAll(boolean nonProxiedInstance, Map<Object, Object> alreadyDetached, Map<Object, Object> lazyObjects) {
+  public void detachAll(
+      boolean nonProxiedInstance,
+      Map<Object, Object> alreadyDetached,
+      Map<Object, Object> lazyObjects) {
     convertAll();
   }
 
@@ -235,18 +231,15 @@ public class OObjectEnumLazyList<TYPE extends Enum<?>> implements List<TYPE>, OO
   }
 
   protected void convertAll() {
-    if (converted)
-      return;
+    if (converted) return;
 
-    for (int i = 0; i < size(); ++i)
-      convert(i);
+    for (int i = 0; i < size(); ++i) convert(i);
 
     converted = true;
   }
 
   public void setDirty() {
-    if (sourceRecord != null)
-      sourceRecord.setDirty();
+    if (sourceRecord != null) sourceRecord.setDirty();
   }
 
   @Override
@@ -260,16 +253,13 @@ public class OObjectEnumLazyList<TYPE extends Enum<?>> implements List<TYPE>, OO
    * @param iIndex Position of the item to convert
    */
   private void convert(final int iIndex) {
-    if (converted)
-      return;
+    if (converted) return;
 
     Object o = list.get(iIndex);
     if (o == null) {
       o = serializedList.get(iIndex);
-      if (o instanceof Number)
-        o = enumClass.getEnumConstants()[((Number) o).intValue()];
-      else
-        o = Enum.valueOf(enumClass, o.toString());
+      if (o instanceof Number) o = enumClass.getEnumConstants()[((Number) o).intValue()];
+      else o = Enum.valueOf(enumClass, o.toString());
       list.set(iIndex, (TYPE) o);
     }
   }
@@ -286,7 +276,6 @@ public class OObjectEnumLazyList<TYPE extends Enum<?>> implements List<TYPE>, OO
   private TYPE objectToEnum(Object o) {
     if (o != null && (o.getClass() == this.enumClass)) {
       return (TYPE) o;
-    } else
-      return null;
+    } else return null;
   }
 }

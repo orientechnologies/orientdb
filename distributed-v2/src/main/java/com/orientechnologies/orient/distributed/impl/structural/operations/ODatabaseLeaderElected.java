@@ -1,24 +1,21 @@
 package com.orientechnologies.orient.distributed.impl.structural.operations;
 
+import static com.orientechnologies.orient.distributed.impl.coordinator.OCoordinateMessagesFactory.DATABASE_LEADER_ELECTED;
+
 import com.orientechnologies.orient.core.db.config.ONodeIdentity;
 import com.orientechnologies.orient.distributed.OrientDBDistributed;
 import com.orientechnologies.orient.distributed.impl.log.OLogId;
-
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
 import java.util.Optional;
 
-import static com.orientechnologies.orient.distributed.impl.coordinator.OCoordinateMessagesFactory.DATABASE_LEADER_ELECTED;
-
 public class ODatabaseLeaderElected implements OOperation {
-  private String           database;
-  private ONodeIdentity    leader;
+  private String database;
+  private ONodeIdentity leader;
   private Optional<OLogId> id;
 
-  public ODatabaseLeaderElected() {
-
-  }
+  public ODatabaseLeaderElected() {}
 
   public ODatabaseLeaderElected(String database, ONodeIdentity leader, Optional<OLogId> id) {
     this.database = database;

@@ -10,6 +10,5 @@ public class OQueryStatement extends SimpleNode {
   public OQueryStatement(OrientSql p, int id) {
     super(p, id);
   }
-
 }
 /* JavaCC - OriginalChecksum=f78d23e607a64459efb18502e47359c1 (do not edit this line) */

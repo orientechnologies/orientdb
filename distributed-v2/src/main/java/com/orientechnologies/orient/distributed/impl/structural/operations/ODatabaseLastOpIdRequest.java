@@ -1,24 +1,21 @@
 package com.orientechnologies.orient.distributed.impl.structural.operations;
 
+import static com.orientechnologies.orient.distributed.impl.coordinator.OCoordinateMessagesFactory.DATABASE_LAST_OPLOG_ID_RESPONSE;
+
 import com.orientechnologies.orient.core.db.config.ONodeIdentity;
 import com.orientechnologies.orient.distributed.OrientDBDistributed;
 import com.orientechnologies.orient.distributed.impl.log.OLogId;
-
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
 import java.util.Optional;
 import java.util.UUID;
 
-import static com.orientechnologies.orient.distributed.impl.coordinator.OCoordinateMessagesFactory.DATABASE_LAST_OPLOG_ID_RESPONSE;
-
 public class ODatabaseLastOpIdRequest implements OOperation {
   private String database;
-  private UUID   electionId;
+  private UUID electionId;
 
-  public ODatabaseLastOpIdRequest() {
-
-  }
+  public ODatabaseLastOpIdRequest() {}
 
   public ODatabaseLastOpIdRequest(String database, UUID electionId) {
     this.database = database;
@@ -28,7 +25,9 @@ public class ODatabaseLastOpIdRequest implements OOperation {
   @Override
   public void apply(ONodeIdentity sender, OrientDBDistributed context) {
     OLogId id = context.getDistributedContext(database).getOpLog().lastPersistentLog();
-    context.getNetworkManager().send(sender, new ODatabaseLastOpIdResponse(database, electionId, Optional.ofNullable(id)));
+    context
+        .getNetworkManager()
+        .send(sender, new ODatabaseLastOpIdResponse(database, electionId, Optional.ofNullable(id)));
   }
 
   @Override

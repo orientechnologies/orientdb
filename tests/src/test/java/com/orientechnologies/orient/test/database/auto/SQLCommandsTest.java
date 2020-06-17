@@ -25,14 +25,13 @@ import com.orientechnologies.orient.core.storage.cache.local.OWOWCache;
 import com.orientechnologies.orient.core.storage.cluster.OClusterPositionMap;
 import com.orientechnologies.orient.core.storage.cluster.OPaginatedCluster;
 import com.orientechnologies.orient.core.storage.disk.OLocalPaginatedStorage;
+import java.io.File;
+import java.util.Collection;
+import java.util.Locale;
 import org.testng.Assert;
 import org.testng.annotations.Optional;
 import org.testng.annotations.Parameters;
 import org.testng.annotations.Test;
-
-import java.io.File;
-import java.util.Collection;
-import java.util.Locale;
 
 @Test(groups = "sql-delete", sequential = true)
 public class SQLCommandsTest extends DocumentDBBaseTest {
@@ -44,20 +43,31 @@ public class SQLCommandsTest extends DocumentDBBaseTest {
 
   public void createProperty() {
     OSchema schema = database.getMetadata().getSchema();
-    if (!schema.existsClass("account"))
-      schema.createClass("account");
+    if (!schema.existsClass("account")) schema.createClass("account");
 
     database.command(new OCommandSQL("create property account.timesheet string")).execute();
 
-    Assert.assertEquals(database.getMetadata().getSchema().getClass("account").getProperty("timesheet").getType(), OType.STRING);
+    Assert.assertEquals(
+        database.getMetadata().getSchema().getClass("account").getProperty("timesheet").getType(),
+        OType.STRING);
   }
 
   @Test(dependsOnMethods = "createProperty")
   public void createLinkedClassProperty() {
-    database.command(new OCommandSQL("create property account.knows embeddedmap account")).execute();
+    database
+        .command(new OCommandSQL("create property account.knows embeddedmap account"))
+        .execute();
 
-    Assert.assertEquals(database.getMetadata().getSchema().getClass("account").getProperty("knows").getType(), OType.EMBEDDEDMAP);
-    Assert.assertEquals(database.getMetadata().getSchema().getClass("account").getProperty("knows").getLinkedClass(),
+    Assert.assertEquals(
+        database.getMetadata().getSchema().getClass("account").getProperty("knows").getType(),
+        OType.EMBEDDEDMAP);
+    Assert.assertEquals(
+        database
+            .getMetadata()
+            .getSchema()
+            .getClass("account")
+            .getProperty("knows")
+            .getLinkedClass(),
         database.getMetadata().getSchema().getClass("account"));
   }
 
@@ -65,8 +75,12 @@ public class SQLCommandsTest extends DocumentDBBaseTest {
   public void createLinkedTypeProperty() {
     database.command(new OCommandSQL("create property account.tags embeddedlist string")).execute();
 
-    Assert.assertEquals(database.getMetadata().getSchema().getClass("account").getProperty("tags").getType(), OType.EMBEDDEDLIST);
-    Assert.assertEquals(database.getMetadata().getSchema().getClass("account").getProperty("tags").getLinkedType(), OType.STRING);
+    Assert.assertEquals(
+        database.getMetadata().getSchema().getClass("account").getProperty("tags").getType(),
+        OType.EMBEDDEDLIST);
+    Assert.assertEquals(
+        database.getMetadata().getSchema().getClass("account").getProperty("tags").getLinkedType(),
+        OType.STRING);
   }
 
   @Test(dependsOnMethods = "createLinkedTypeProperty")
@@ -74,8 +88,10 @@ public class SQLCommandsTest extends DocumentDBBaseTest {
     database.command(new OCommandSQL("drop property account.timesheet")).execute();
     database.command(new OCommandSQL("drop property account.tags")).execute();
 
-    Assert.assertFalse(database.getMetadata().getSchema().getClass("account").existsProperty("timesheet"));
-    Assert.assertFalse(database.getMetadata().getSchema().getClass("account").existsProperty("tags"));
+    Assert.assertFalse(
+        database.getMetadata().getSchema().getClass("account").existsProperty("timesheet"));
+    Assert.assertFalse(
+        database.getMetadata().getSchema().getClass("account").existsProperty("tags"));
   }
 
   @Test(dependsOnMethods = "removeProperty")
@@ -96,8 +112,7 @@ public class SQLCommandsTest extends DocumentDBBaseTest {
   }
 
   public void testClusterRename() {
-    if (database.getURL().startsWith("memory:"))
-      return;
+    if (database.getURL().startsWith("memory:")) return;
 
     Collection<String> names = database.getClusterNames();
     Assert.assertFalse(names.contains("testClusterRename".toLowerCase(Locale.ENGLISH)));
@@ -107,7 +122,9 @@ public class SQLCommandsTest extends DocumentDBBaseTest {
     names = database.getClusterNames();
     Assert.assertTrue(names.contains("testClusterRename".toLowerCase(Locale.ENGLISH)));
 
-    database.command(new OCommandSQL("alter cluster testClusterRename name testClusterRename42")).execute();
+    database
+        .command(new OCommandSQL("alter cluster testClusterRename name testClusterRename42"))
+        .execute();
     names = database.getClusterNames();
 
     Assert.assertTrue(names.contains("testClusterRename42".toLowerCase(Locale.ENGLISH)));
@@ -116,16 +133,23 @@ public class SQLCommandsTest extends DocumentDBBaseTest {
     if (database.getURL().startsWith("plocal:")) {
       String storagePath = database.getStorage().getConfiguration().getDirectory();
 
-      final OWOWCache wowCache = (OWOWCache) ((OLocalPaginatedStorage) database.getStorage()).getWriteCache();
+      final OWOWCache wowCache =
+          (OWOWCache) ((OLocalPaginatedStorage) database.getStorage()).getWriteCache();
 
-      File dataFile = new File(storagePath,
-          wowCache.nativeFileNameById(wowCache.fileIdByName("testClusterRename42" + OPaginatedCluster.DEF_EXTENSION)));
-      File mapFile = new File(storagePath,
-          wowCache.nativeFileNameById(wowCache.fileIdByName("testClusterRename42" + OClusterPositionMap.DEF_EXTENSION)));
+      File dataFile =
+          new File(
+              storagePath,
+              wowCache.nativeFileNameById(
+                  wowCache.fileIdByName("testClusterRename42" + OPaginatedCluster.DEF_EXTENSION)));
+      File mapFile =
+          new File(
+              storagePath,
+              wowCache.nativeFileNameById(
+                  wowCache.fileIdByName(
+                      "testClusterRename42" + OClusterPositionMap.DEF_EXTENSION)));
 
       Assert.assertTrue(dataFile.exists());
       Assert.assertTrue(mapFile.exists());
     }
-
   }
 }

@@ -8,11 +8,10 @@ import com.orientechnologies.orient.core.storage.cache.OCacheEntryImpl;
 import com.orientechnologies.orient.core.storage.cache.OCachePointer;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.PageOperationRecord;
 import com.orientechnologies.orient.core.storage.index.sbtree.local.v1.OSBTreeBucketV1;
-import org.junit.Assert;
-import org.junit.Test;
-
 import java.nio.ByteBuffer;
 import java.util.List;
+import org.junit.Assert;
+import org.junit.Test;
 
 public class SBTreeBucketV1SetTreeSizePOTest {
   @Test
@@ -32,7 +31,8 @@ public class SBTreeBucketV1SetTreeSizePOTest {
       entry.clearPageOperations();
 
       final OPointer restoredPointer = byteBufferPool.acquireDirect(false);
-      final OCachePointer restoredCachePointer = new OCachePointer(restoredPointer, byteBufferPool, 0, 0);
+      final OCachePointer restoredCachePointer =
+          new OCachePointer(restoredPointer, byteBufferPool, 0, 0);
       final OCacheEntry restoredCacheEntry = new OCacheEntryImpl(0, 0, restoredCachePointer);
 
       final ByteBuffer originalBuffer = cachePointer.getBufferDuplicate();
@@ -50,9 +50,11 @@ public class SBTreeBucketV1SetTreeSizePOTest {
 
       Assert.assertTrue(operations.get(0) instanceof SBTreeBucketV1SetTreeSizePO);
 
-      final SBTreeBucketV1SetTreeSizePO pageOperation = (SBTreeBucketV1SetTreeSizePO) operations.get(0);
+      final SBTreeBucketV1SetTreeSizePO pageOperation =
+          (SBTreeBucketV1SetTreeSizePO) operations.get(0);
 
-      OSBTreeBucketV1<Byte, OIdentifiable> restoredBucket = new OSBTreeBucketV1<>(restoredCacheEntry);
+      OSBTreeBucketV1<Byte, OIdentifiable> restoredBucket =
+          new OSBTreeBucketV1<>(restoredCacheEntry);
 
       Assert.assertEquals(24, restoredBucket.getTreeSize());
 
@@ -91,7 +93,8 @@ public class SBTreeBucketV1SetTreeSizePOTest {
 
       Assert.assertTrue(operations.get(0) instanceof SBTreeBucketV1SetTreeSizePO);
 
-      final SBTreeBucketV1SetTreeSizePO pageOperation = (SBTreeBucketV1SetTreeSizePO) operations.get(0);
+      final SBTreeBucketV1SetTreeSizePO pageOperation =
+          (SBTreeBucketV1SetTreeSizePO) operations.get(0);
 
       final OSBTreeBucketV1<Byte, OIdentifiable> restoredBucket = new OSBTreeBucketV1<>(entry);
 

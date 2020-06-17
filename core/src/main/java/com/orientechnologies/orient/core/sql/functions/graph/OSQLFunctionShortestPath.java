@@ -7,21 +7,33 @@ import com.orientechnologies.orient.core.command.OCommandExecutorAbstract;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.id.ORID;
-import com.orientechnologies.orient.core.record.*;
+import com.orientechnologies.orient.core.record.ODirection;
+import com.orientechnologies.orient.core.record.OEdge;
+import com.orientechnologies.orient.core.record.OElement;
+import com.orientechnologies.orient.core.record.ORecord;
+import com.orientechnologies.orient.core.record.OVertex;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.OEdgeToVertexIterable;
 import com.orientechnologies.orient.core.sql.OSQLHelper;
 import com.orientechnologies.orient.core.sql.functions.math.OSQLFunctionMathAbstract;
-
-import java.util.*;
+import java.util.ArrayDeque;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Set;
 
 /**
- * Shortest path algorithm to find the shortest path from one node to another node in a directed graph.
+ * Shortest path algorithm to find the shortest path from one node to another node in a directed
+ * graph.
  *
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
  */
 public class OSQLFunctionShortestPath extends OSQLFunctionMathAbstract {
-  public static final String NAME            = "shortestPath";
+  public static final String NAME = "shortestPath";
   public static final String PARAM_MAX_DEPTH = "maxDepth";
 
   protected static final float DISTANCE = 1f;
@@ -31,33 +43,35 @@ public class OSQLFunctionShortestPath extends OSQLFunctionMathAbstract {
   }
 
   private class OShortestPathContext {
-    private OVertex    sourceVertex;
-    private OVertex    destinationVertex;
-    private ODirection directionLeft  = ODirection.BOTH;
+    private OVertex sourceVertex;
+    private OVertex destinationVertex;
+    private ODirection directionLeft = ODirection.BOTH;
     private ODirection directionRight = ODirection.BOTH;
 
-    private String   edgeType;
+    private String edgeType;
     private String[] edgeTypeParam;
 
-    private ArrayDeque<OVertex> queueLeft  = new ArrayDeque<>();
+    private ArrayDeque<OVertex> queueLeft = new ArrayDeque<>();
     private ArrayDeque<OVertex> queueRight = new ArrayDeque<>();
 
-    private final Set<ORID> leftVisited  = new HashSet<ORID>();
+    private final Set<ORID> leftVisited = new HashSet<ORID>();
     private final Set<ORID> rightVisited = new HashSet<ORID>();
 
     private final Map<ORID, ORID> previouses = new HashMap<ORID, ORID>();
-    private final Map<ORID, ORID> nexts      = new HashMap<ORID, ORID>();
+    private final Map<ORID, ORID> nexts = new HashMap<ORID, ORID>();
 
     private OVertex current;
     private OVertex currentRight;
-    public  Integer maxDepth;
-    /**
-     * option that decides whether or not to return the edge information
-     */
-    public  Boolean edge;
+    public Integer maxDepth;
+    /** option that decides whether or not to return the edge information */
+    public Boolean edge;
   }
 
-  public List<ORID> execute(Object iThis, final OIdentifiable iCurrentRecord, final Object iCurrentResult, final Object[] iParams,
+  public List<ORID> execute(
+      Object iThis,
+      final OIdentifiable iCurrentRecord,
+      final Object iCurrentResult,
+      final Object[] iParams,
       final OCommandContext iContext) {
 
     final ORecord record = iCurrentRecord != null ? iCurrentRecord.getRecord() : null;
@@ -115,7 +129,7 @@ public class OSQLFunctionShortestPath extends OSQLFunctionMathAbstract {
     if (iParams.length > 3) {
       ctx.edgeType = iParams[3] == null ? null : "" + iParams[3];
     }
-    ctx.edgeTypeParam = new String[] { ctx.edgeType };
+    ctx.edgeTypeParam = new String[] {ctx.edgeType};
 
     if (iParams.length > 4) {
       bindAdditionalParams(iParams[4], ctx);
@@ -132,58 +146,49 @@ public class OSQLFunctionShortestPath extends OSQLFunctionMathAbstract {
       if (ctx.maxDepth != null && ctx.maxDepth <= depth) {
         break;
       }
-      if (ctx.queueLeft.isEmpty() || ctx.queueRight.isEmpty())
-        break;
+      if (ctx.queueLeft.isEmpty() || ctx.queueRight.isEmpty()) break;
 
       if (Thread.interrupted())
         throw new OCommandExecutionException("The shortestPath() function has been interrupted");
 
-      if (!OCommandExecutorAbstract.checkInterruption(iContext))
-        break;
+      if (!OCommandExecutorAbstract.checkInterruption(iContext)) break;
 
       List<ORID> neighborIdentity;
 
       if (ctx.queueLeft.size() <= ctx.queueRight.size()) {
         // START EVALUATING FROM LEFT
         neighborIdentity = walkLeft(ctx);
-        if (neighborIdentity != null)
-          return neighborIdentity;
+        if (neighborIdentity != null) return neighborIdentity;
         depth++;
         if (ctx.maxDepth != null && ctx.maxDepth <= depth) {
           break;
         }
 
-        if (ctx.queueLeft.isEmpty())
-          break;
+        if (ctx.queueLeft.isEmpty()) break;
 
         neighborIdentity = walkRight(ctx);
-        if (neighborIdentity != null)
-          return neighborIdentity;
+        if (neighborIdentity != null) return neighborIdentity;
 
       } else {
 
         // START EVALUATING FROM RIGHT
         neighborIdentity = walkRight(ctx);
-        if (neighborIdentity != null)
-          return neighborIdentity;
+        if (neighborIdentity != null) return neighborIdentity;
 
         depth++;
         if (ctx.maxDepth != null && ctx.maxDepth <= depth) {
           break;
         }
 
-        if (ctx.queueRight.isEmpty())
-          break;
+        if (ctx.queueRight.isEmpty()) break;
 
         neighborIdentity = walkLeft(ctx);
-        if (neighborIdentity != null)
-          return neighborIdentity;
+        if (neighborIdentity != null) return neighborIdentity;
       }
 
       depth++;
     }
     return new ArrayList<ORID>();
-
   }
 
   private void bindAdditionalParams(Object additionalParams, OShortestPathContext ctx) {
@@ -248,13 +253,15 @@ public class OSQLFunctionShortestPath extends OSQLFunctionMathAbstract {
    * @return
    * @author Thomas Young (YJJThomasYoung@hotmail.com)
    */
-  private ORawPair<Iterable<OVertex>, Iterable<OEdge>> getVerticesAndEdges(OVertex srcVertex, ODirection direction,
-      String... types) {
+  private ORawPair<Iterable<OVertex>, Iterable<OEdge>> getVerticesAndEdges(
+      OVertex srcVertex, ODirection direction, String... types) {
     if (direction == ODirection.BOTH) {
       OMultiCollectionIterator<OVertex> vertexIterator = new OMultiCollectionIterator<>();
       OMultiCollectionIterator<OEdge> edgeIterator = new OMultiCollectionIterator<>();
-      ORawPair<Iterable<OVertex>, Iterable<OEdge>> pair1 = getVerticesAndEdges(srcVertex, ODirection.OUT, types);
-      ORawPair<Iterable<OVertex>, Iterable<OEdge>> pair2 = getVerticesAndEdges(srcVertex, ODirection.IN, types);
+      ORawPair<Iterable<OVertex>, Iterable<OEdge>> pair1 =
+          getVerticesAndEdges(srcVertex, ODirection.OUT, types);
+      ORawPair<Iterable<OVertex>, Iterable<OEdge>> pair2 =
+          getVerticesAndEdges(srcVertex, ODirection.IN, types);
       vertexIterator.add(pair1.first);
       vertexIterator.add(pair2.first);
       edgeIterator.add(pair1.second);
@@ -275,7 +282,8 @@ public class OSQLFunctionShortestPath extends OSQLFunctionMathAbstract {
    * @return
    * @author Thomas Young (YJJThomasYoung@hotmail.com)
    */
-  private ORawPair<Iterable<OVertex>, Iterable<OEdge>> getVerticesAndEdges(OVertex srcVertex, ODirection direction) {
+  private ORawPair<Iterable<OVertex>, Iterable<OEdge>> getVerticesAndEdges(
+      OVertex srcVertex, ODirection direction) {
     return getVerticesAndEdges(srcVertex, direction, (String[]) null);
   }
 
@@ -309,7 +317,6 @@ public class OSQLFunctionShortestPath extends OSQLFunctionMathAbstract {
             nextLevelQueue.offer(v);
             ctx.leftVisited.add(neighborIdentity);
           }
-
         }
       }
     } else {
@@ -375,7 +382,6 @@ public class OSQLFunctionShortestPath extends OSQLFunctionMathAbstract {
             nextLevelQueue.offer(v);
             ctx.rightVisited.add(neighborIdentity);
           }
-
         }
       }
     } else {
@@ -415,7 +421,10 @@ public class OSQLFunctionShortestPath extends OSQLFunctionMathAbstract {
     return null;
   }
 
-  private List<ORID> computePath(final Map<ORID, ORID> leftDistances, final Map<ORID, ORID> rightDistances, final ORID neighbor) {
+  private List<ORID> computePath(
+      final Map<ORID, ORID> leftDistances,
+      final Map<ORID, ORID> rightDistances,
+      final ORID neighbor) {
     final List<ORID> result = new ArrayList<ORID>();
 
     ORID current = neighbor;

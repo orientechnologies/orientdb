@@ -31,18 +31,15 @@ import com.orientechnologies.orient.core.serialization.serializer.record.binary.
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelDataInput;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelDataOutput;
-
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * Created by Enrico Risa on 15/05/2017.
- */
+/** Created by Enrico Risa on 15/05/2017. */
 public class OBatchOperationsRequest implements OBinaryRequest<OBatchOperationsResponse> {
 
-  private ORecordSerializerNetworkV37   serializer = ORecordSerializerNetworkV37.INSTANCE;
-  private int                           txId;
+  private ORecordSerializerNetworkV37 serializer = ORecordSerializerNetworkV37.INSTANCE;
+  private int txId;
   private List<ORecordOperationRequest> operations;
 
   public OBatchOperationsRequest(int txId, Iterable<ORecordOperation> operations) {
@@ -50,27 +47,25 @@ public class OBatchOperationsRequest implements OBinaryRequest<OBatchOperationsR
     this.txId = txId;
     List<ORecordOperationRequest> netOperations = new ArrayList<>();
     for (ORecordOperation txEntry : operations) {
-      if (txEntry.type == ORecordOperation.LOADED)
-        continue;
+      if (txEntry.type == ORecordOperation.LOADED) continue;
       ORecordOperationRequest request = new ORecordOperationRequest();
       request.setType(txEntry.type);
       request.setVersion(txEntry.getRecord().getVersion());
       request.setId(txEntry.getRecord().getIdentity());
       request.setRecordType(ORecordInternal.getRecordType(txEntry.getRecord()));
       switch (txEntry.type) {
-      case ORecordOperation.CREATED:
-      case ORecordOperation.UPDATED:
-        request.setRecord(serializer.toStream(txEntry.getRecord()));
-        request.setContentChanged(ORecordInternal.isContentChanged(txEntry.getRecord()));
-        break;
+        case ORecordOperation.CREATED:
+        case ORecordOperation.UPDATED:
+          request.setRecord(serializer.toStream(txEntry.getRecord()));
+          request.setContentChanged(ORecordInternal.isContentChanged(txEntry.getRecord()));
+          break;
       }
       netOperations.add(request);
     }
     this.operations = netOperations;
   }
 
-  public OBatchOperationsRequest() {
-  }
+  public OBatchOperationsRequest() {}
 
   @Override
   public void write(OChannelDataOutput network, OStorageRemoteSession session) throws IOException {
@@ -86,7 +81,8 @@ public class OBatchOperationsRequest implements OBinaryRequest<OBatchOperationsR
   }
 
   @Override
-  public void read(OChannelDataInput channel, int protocolVersion, ORecordSerializer serializer) throws IOException {
+  public void read(OChannelDataInput channel, int protocolVersion, ORecordSerializer serializer)
+      throws IOException {
     txId = channel.readInt();
     operations = new ArrayList<>();
     byte hasEntry;

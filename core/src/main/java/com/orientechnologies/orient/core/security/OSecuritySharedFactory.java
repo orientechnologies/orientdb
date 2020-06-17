@@ -19,7 +19,6 @@
  */
 package com.orientechnologies.orient.core.security;
 
-import com.orientechnologies.orient.core.metadata.security.OSecurity;
 import com.orientechnologies.orient.core.metadata.security.OSecurityInternal;
 import com.orientechnologies.orient.core.metadata.security.OSecurityShared;
 

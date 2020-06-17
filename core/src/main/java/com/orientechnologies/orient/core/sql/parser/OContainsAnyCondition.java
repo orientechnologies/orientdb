@@ -6,8 +6,13 @@ import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.sql.executor.OResult;
-
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 public class OContainsAnyCondition extends OBooleanExpression {
 
@@ -37,7 +42,9 @@ public class OContainsAnyCondition extends OBooleanExpression {
           if (((Collection) left).contains(next)) {
             return true;
           }
-          if (next instanceof OResult && ((OResult) next).isElement() && ((Collection) left).contains(((OResult) next).toElement())) {
+          if (next instanceof OResult
+              && ((OResult) next).isElement()
+              && ((Collection) left).contains(((OResult) next).toElement())) {
             return true;
           }
         }
@@ -62,8 +69,14 @@ public class OContainsAnyCondition extends OBooleanExpression {
           if (leftItem != null && leftItem.equals(rightItem)) {
             return true;
           }
-          Object leftElem = leftItem instanceof OResult && ((OResult) leftItem).isElement() ? ((OResult) leftItem).getElement().get() : rightItem;
-          Object rightElem = rightItem instanceof OResult && ((OResult) rightItem).isElement() ? ((OResult) rightItem).getElement().get() : rightItem;
+          Object leftElem =
+              leftItem instanceof OResult && ((OResult) leftItem).isElement()
+                  ? ((OResult) leftItem).getElement().get()
+                  : rightItem;
+          Object rightElem =
+              rightItem instanceof OResult && ((OResult) rightItem).isElement()
+                  ? ((OResult) rightItem).getElement().get()
+                  : rightItem;
           if (leftElem != null && leftElem.equals(rightElem)) {
             return true;
           }
@@ -129,7 +142,6 @@ public class OContainsAnyCondition extends OBooleanExpression {
       }
       return true;
     }
-
   }
 
   public void toString(Map<Object, Object> params, StringBuilder builder) {
@@ -255,17 +267,13 @@ public class OContainsAnyCondition extends OBooleanExpression {
 
   @Override
   public boolean equals(Object o) {
-    if (this == o)
-      return true;
-    if (o == null || getClass() != o.getClass())
-      return false;
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
 
     OContainsAnyCondition that = (OContainsAnyCondition) o;
 
-    if (left != null ? !left.equals(that.left) : that.left != null)
-      return false;
-    if (right != null ? !right.equals(that.right) : that.right != null)
-      return false;
+    if (left != null ? !left.equals(that.left) : that.left != null) return false;
+    if (right != null ? !right.equals(that.right) : that.right != null) return false;
     if (rightBlock != null ? !rightBlock.equals(that.rightBlock) : that.rightBlock != null)
       return false;
 
@@ -284,7 +292,8 @@ public class OContainsAnyCondition extends OBooleanExpression {
   public List<String> getMatchPatternInvolvedAliases() {
     List<String> leftX = left == null ? null : left.getMatchPatternInvolvedAliases();
     List<String> rightX = right == null ? null : right.getMatchPatternInvolvedAliases();
-    List<String> rightBlockX = rightBlock == null ? null : rightBlock.getMatchPatternInvolvedAliases();
+    List<String> rightBlockX =
+        rightBlock == null ? null : rightBlock.getMatchPatternInvolvedAliases();
 
     List<String> result = new ArrayList<String>();
     if (leftX != null) {

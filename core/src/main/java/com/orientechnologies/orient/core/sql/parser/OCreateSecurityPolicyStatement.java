@@ -10,7 +10,6 @@ import com.orientechnologies.orient.core.metadata.security.OSecurityPolicy;
 import com.orientechnologies.orient.core.sql.executor.OInternalResultSet;
 import com.orientechnologies.orient.core.sql.executor.OResultInternal;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
-
 import java.util.Map;
 import java.util.Objects;
 
@@ -59,14 +58,12 @@ public class OCreateSecurityPolicyStatement extends OSimpleExecStatement {
     }
     security.saveSecurityPolicy(db, policy);
 
-
     OResultInternal result = new OResultInternal();
     result.setProperty("operation", "create security policy");
     result.setProperty("name", name.getStringValue());
     OInternalResultSet rs = new OInternalResultSet();
     rs.add(result);
     return rs;
-
   }
 
   @Override
@@ -150,13 +147,13 @@ public class OCreateSecurityPolicyStatement extends OSimpleExecStatement {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
     OCreateSecurityPolicyStatement that = (OCreateSecurityPolicyStatement) o;
-    return Objects.equals(name, that.name) &&
-            Objects.equals(create, that.create) &&
-            Objects.equals(read, that.read) &&
-            Objects.equals(beforeUpdate, that.beforeUpdate) &&
-            Objects.equals(afterUpdate, that.afterUpdate) &&
-            Objects.equals(delete, that.delete) &&
-            Objects.equals(execute, that.execute);
+    return Objects.equals(name, that.name)
+        && Objects.equals(create, that.create)
+        && Objects.equals(read, that.read)
+        && Objects.equals(beforeUpdate, that.beforeUpdate)
+        && Objects.equals(afterUpdate, that.afterUpdate)
+        && Objects.equals(delete, that.delete)
+        && Objects.equals(execute, that.execute);
   }
 
   @Override

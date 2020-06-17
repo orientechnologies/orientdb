@@ -19,28 +19,20 @@
  */
 package com.orientechnologies.orient.server.distributed;
 
-import com.orientechnologies.common.exception.OException;
-import com.orientechnologies.common.io.OIOException;
-import com.orientechnologies.common.log.OLogManager;
-import com.orientechnologies.common.thread.OThreadPoolExecutorWithLogging;
-import com.orientechnologies.orient.client.binary.OChannelBinaryAsynchClient;
 import com.orientechnologies.orient.client.binary.OChannelBinarySynchClient;
 import com.orientechnologies.orient.client.remote.OBinaryRequest;
-import com.orientechnologies.orient.client.remote.OBinaryResponse;
-import com.orientechnologies.orient.client.remote.OStorageRemoteOperation;
-import com.orientechnologies.orient.client.remote.OStorageRemoteSession;
 import com.orientechnologies.orient.client.remote.message.ODistributedConnectRequest;
 import com.orientechnologies.orient.client.remote.message.ODistributedConnectResponse;
-import com.orientechnologies.orient.core.OConstants;
 import com.orientechnologies.orient.core.config.OContextConfiguration;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
-import com.orientechnologies.orient.core.metadata.security.OToken;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol;
-
 import java.io.IOException;
 import java.util.Date;
-import java.util.concurrent.*;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.RejectedExecutionHandler;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Remote server channel.
@@ -49,32 +41,39 @@ import java.util.concurrent.*;
  */
 public class ORemoteServerChannel {
   private final ORemoteServerAvailabilityCheck check;
-  private final String                         url;
-  private final String                         remoteHost;
-  private final int                            remotePort;
-  private final String                         userName;
-  private final String                         userPassword;
-  private final String                         server;
-  private       OChannelBinarySynchClient      channel;
-  private       int                            protocolVersion;
-  private       ODistributedRequest            prevRequest;
-  private       ODistributedResponse           prevResponse;
-  private       String                         localNodeName;
+  private final String url;
+  private final String remoteHost;
+  private final int remotePort;
+  private final String userName;
+  private final String userPassword;
+  private final String server;
+  private OChannelBinarySynchClient channel;
+  private int protocolVersion;
+  private ODistributedRequest prevRequest;
+  private ODistributedResponse prevResponse;
+  private String localNodeName;
 
-  private static final int                   MAX_RETRY     = 3;
-  private static final String                CLIENT_TYPE   = "OrientDB Server";
-  private static final boolean               COLLECT_STATS = false;
-  private              int                   sessionId     = -1;
-  private              byte[]                sessionToken;
-  private              OContextConfiguration contextConfig = new OContextConfiguration();
-  private              Date                  createdOn     = new Date();
+  private static final int MAX_RETRY = 3;
+  private static final String CLIENT_TYPE = "OrientDB Server";
+  private static final boolean COLLECT_STATS = false;
+  private int sessionId = -1;
+  private byte[] sessionToken;
+  private OContextConfiguration contextConfig = new OContextConfiguration();
+  private Date createdOn = new Date();
 
-  private volatile     int             totalConsecutiveErrors = 0;
-  private static final int             MAX_CONSECUTIVE_ERRORS = 10;
-  private              ExecutorService executor;
+  private volatile int totalConsecutiveErrors = 0;
+  private static final int MAX_CONSECUTIVE_ERRORS = 10;
+  private ExecutorService executor;
 
-  public ORemoteServerChannel(final ORemoteServerAvailabilityCheck check, String localNodeName, final String iServer,
-      final String iURL, final String user, final String passwd, final int currentProtocolVersion) throws IOException {
+  public ORemoteServerChannel(
+      final ORemoteServerAvailabilityCheck check,
+      String localNodeName,
+      final String iServer,
+      final String iURL,
+      final String user,
+      final String passwd,
+      final int currentProtocolVersion)
+      throws IOException {
     this.check = check;
     this.localNodeName = localNodeName;
     this.server = iServer;
@@ -85,18 +84,22 @@ public class ORemoteServerChannel {
     final int sepPos = iURL.lastIndexOf(":");
     remoteHost = iURL.substring(0, sepPos);
     remotePort = Integer.parseInt(iURL.substring(sepPos + 1));
-    long timeout = contextConfig.getValueAsLong(OGlobalConfiguration.DISTRIBUTED_TX_EXPIRE_TIMEOUT) / 2;
+    long timeout =
+        contextConfig.getValueAsLong(OGlobalConfiguration.DISTRIBUTED_TX_EXPIRE_TIMEOUT) / 2;
     protocolVersion = currentProtocolVersion;
-    RejectedExecutionHandler reject = (task, executor) -> {
-      try {
-        if (!executor.getQueue().offer(task, timeout, TimeUnit.MILLISECONDS)) {
-          check.nodeDisconnected(server);
-        }
-      } catch (InterruptedException e) {
-        Thread.currentThread().interrupt();
-      }
-    };
-    executor = new ThreadPoolExecutor(1, 1, 0L, TimeUnit.MILLISECONDS, new LinkedBlockingQueue<>(10), reject);
+    RejectedExecutionHandler reject =
+        (task, executor) -> {
+          try {
+            if (!executor.getQueue().offer(task, timeout, TimeUnit.MILLISECONDS)) {
+              check.nodeDisconnected(server);
+            }
+          } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+          }
+        };
+    executor =
+        new ThreadPoolExecutor(
+            1, 1, 0L, TimeUnit.MILLISECONDS, new LinkedBlockingQueue<>(10), reject);
 
     connect();
   }
@@ -106,70 +109,106 @@ public class ORemoteServerChannel {
   }
 
   public void sendBinaryRequest(OBinaryRequest request) {
-    executor.execute(() -> {
-      networkOperation(request.getCommand(), () -> {
-        request.write(channel, null);
-        channel.flush();
-        return null;
-      }, "Cannot send distributed request " + request.getClass(), MAX_RETRY, true);
-    });
-
+    executor.execute(
+        () -> {
+          networkOperation(
+              request.getCommand(),
+              () -> {
+                request.write(channel, null);
+                channel.flush();
+                return null;
+              },
+              "Cannot send distributed request " + request.getClass(),
+              MAX_RETRY,
+              true);
+        });
   }
 
   public interface OStorageRemoteOperation<T> {
     T execute() throws IOException;
   }
 
-  private <T> void executeNetworkOperation(final byte operationId, final OStorageRemoteOperation<T> operation,
-      final String errorMessage, final int maxRetry, final boolean autoReconnect) {
-    executor.execute(() -> {
-      networkOperation(OChannelBinaryProtocol.DISTRIBUTED_REQUEST, operation, errorMessage, maxRetry, autoReconnect);
-    });
+  private <T> void executeNetworkOperation(
+      final byte operationId,
+      final OStorageRemoteOperation<T> operation,
+      final String errorMessage,
+      final int maxRetry,
+      final boolean autoReconnect) {
+    executor.execute(
+        () -> {
+          networkOperation(
+              OChannelBinaryProtocol.DISTRIBUTED_REQUEST,
+              operation,
+              errorMessage,
+              maxRetry,
+              autoReconnect);
+        });
   }
 
   public void sendRequest(final ODistributedRequest request) {
-    executeNetworkOperation(OChannelBinaryProtocol.DISTRIBUTED_REQUEST, () -> {
-      request.toStream(channel.getDataOutput());
-      channel.flush();
-      return null;
-    }, "Cannot send distributed request " + request.getClass(), MAX_RETRY, true);
+    executeNetworkOperation(
+        OChannelBinaryProtocol.DISTRIBUTED_REQUEST,
+        () -> {
+          request.toStream(channel.getDataOutput());
+          channel.flush();
+          return null;
+        },
+        "Cannot send distributed request " + request.getClass(),
+        MAX_RETRY,
+        true);
     this.prevRequest = request;
-
   }
 
   public void sendResponse(final ODistributedResponse response) {
-    OStorageRemoteOperation<Object> remoteOperation = () -> {
-      response.toStream(channel.getDataOutput());
-      channel.flush();
-      return null;
-    };
-    networkOperation(OChannelBinaryProtocol.DISTRIBUTED_RESPONSE, remoteOperation,
-        "Cannot send response back to the sender node '" + response.getSenderNodeName() + "' " + response.getClass(), MAX_RETRY,
+    OStorageRemoteOperation<Object> remoteOperation =
+        () -> {
+          response.toStream(channel.getDataOutput());
+          channel.flush();
+          return null;
+        };
+    networkOperation(
+        OChannelBinaryProtocol.DISTRIBUTED_RESPONSE,
+        remoteOperation,
+        "Cannot send response back to the sender node '"
+            + response.getSenderNodeName()
+            + "' "
+            + response.getClass(),
+        MAX_RETRY,
         true);
     this.prevResponse = response;
   }
 
   public void connect() throws IOException {
-    channel = new OChannelBinarySynchClient(remoteHost, remotePort, null, contextConfig,
-        OChannelBinaryProtocol.CURRENT_PROTOCOL_VERSION);
+    channel =
+        new OChannelBinarySynchClient(
+            remoteHost,
+            remotePort,
+            null,
+            contextConfig,
+            OChannelBinaryProtocol.CURRENT_PROTOCOL_VERSION);
 
-    networkOperation(OChannelBinaryProtocol.DISTRIBUTED_CONNECT, () -> {
+    networkOperation(
+        OChannelBinaryProtocol.DISTRIBUTED_CONNECT,
+        () -> {
+          ODistributedConnectRequest request =
+              new ODistributedConnectRequest(protocolVersion, userName, userPassword);
+          request.write(channel, null);
+          channel.flush();
 
-      ODistributedConnectRequest request = new ODistributedConnectRequest(protocolVersion, userName, userPassword);
-      request.write(channel, null);
-      channel.flush();
+          channel.beginResponse(true);
+          ODistributedConnectResponse response = request.createResponse();
+          response.read(channel, null);
+          sessionId = response.getSessionId();
+          sessionToken = response.getToken();
 
-      channel.beginResponse(true);
-      ODistributedConnectResponse response = request.createResponse();
-      response.read(channel, null);
-      sessionId = response.getSessionId();
-      sessionToken = response.getToken();
+          // SET THE PROTOCOL TO THE MINIMUM NUMBER TO SUPPORT BACKWARD COMPATIBILITY
+          protocolVersion = response.getDistributedProtocolVersion();
 
-      // SET THE PROTOCOL TO THE MINIMUM NUMBER TO SUPPORT BACKWARD COMPATIBILITY
-      protocolVersion = response.getDistributedProtocolVersion();
-
-      return null;
-    }, "Cannot connect to the remote server '" + url + "'", MAX_RETRY, false);
+          return null;
+        },
+        "Cannot connect to the remote server '" + url + "'",
+        MAX_RETRY,
+        false);
   }
 
   public void close() {
@@ -183,17 +222,22 @@ public class ORemoteServerChannel {
   }
 
   private void networkClose() {
-    if (channel != null)
-      channel.close();
+    if (channel != null) channel.close();
 
     sessionId = -1;
     sessionToken = null;
   }
 
-  protected synchronized <T> T networkOperation(final byte operationId, final OStorageRemoteOperation<T> operation,
-      final String errorMessage, final int maxRetry, final boolean autoReconnect) {
+  protected synchronized <T> T networkOperation(
+      final byte operationId,
+      final OStorageRemoteOperation<T> operation,
+      final String errorMessage,
+      final int maxRetry,
+      final boolean autoReconnect) {
     Exception lastException = null;
-    for (int retry = 1; retry <= maxRetry && totalConsecutiveErrors < MAX_CONSECUTIVE_ERRORS; ++retry) {
+    for (int retry = 1;
+        retry <= maxRetry && totalConsecutiveErrors < MAX_CONSECUTIVE_ERRORS;
+        ++retry) {
       try {
         channel.setWaitResponseTimeout();
         channel.beginRequest(operationId, sessionId, sessionToken);
@@ -213,11 +257,9 @@ public class ORemoteServerChannel {
 
         networkClose();
 
-        if (!autoReconnect)
-          break;
+        if (!autoReconnect) break;
 
-        if (!check.isNodeAvailable(server))
-          break;
+        if (!check.isNodeAvailable(server)) break;
 
         if (retry > 1)
           try {
@@ -235,13 +277,11 @@ public class ORemoteServerChannel {
         } catch (IOException e1) {
           lastException = e1;
           handleNewError();
-
         }
       }
     }
 
-    if (lastException == null)
-      handleNewError();
+    if (lastException == null) handleNewError();
 
     return null;
   }
@@ -258,14 +298,25 @@ public class ORemoteServerChannel {
     totalConsecutiveErrors++;
 
     if (totalConsecutiveErrors >= MAX_CONSECUTIVE_ERRORS) {
-      ODistributedServerLog.warn(this, localNodeName, server, ODistributedServerLog.DIRECTION.OUT,
-          "Reached %d consecutive errors on connection, remove the server '%s' from the cluster", totalConsecutiveErrors, server);
+      ODistributedServerLog.warn(
+          this,
+          localNodeName,
+          server,
+          ODistributedServerLog.DIRECTION.OUT,
+          "Reached %d consecutive errors on connection, remove the server '%s' from the cluster",
+          totalConsecutiveErrors,
+          server);
 
       try {
         check.nodeDisconnected(server);
       } catch (Exception e) {
-        ODistributedServerLog.warn(this, localNodeName, server, ODistributedServerLog.DIRECTION.OUT,
-            "Error on removing server '%s' from the cluster", server);
+        ODistributedServerLog.warn(
+            this,
+            localNodeName,
+            server,
+            ODistributedServerLog.DIRECTION.OUT,
+            "Error on removing server '%s' from the cluster",
+            server);
       }
     }
   }

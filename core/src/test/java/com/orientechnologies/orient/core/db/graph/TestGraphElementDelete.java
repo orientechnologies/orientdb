@@ -1,24 +1,28 @@
 package com.orientechnologies.orient.core.db.graph;
 
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
+
 import com.orientechnologies.orient.core.db.ODatabaseType;
 import com.orientechnologies.orient.core.db.OrientDB;
 import com.orientechnologies.orient.core.db.OrientDBConfig;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.exception.OConcurrentModificationException;
-import com.orientechnologies.orient.core.record.*;
+import com.orientechnologies.orient.core.record.ODirection;
+import com.orientechnologies.orient.core.record.OEdge;
+import com.orientechnologies.orient.core.record.OElement;
+import com.orientechnologies.orient.core.record.OVertex;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
-import static org.junit.Assert.*;
-
-/**
- * Created by tglman on 20/02/17.
- */
+/** Created by tglman on 20/02/17. */
 public class TestGraphElementDelete {
 
-  private OrientDB          orientDB;
+  private OrientDB orientDB;
   private ODatabaseDocument database;
 
   @Before
@@ -26,7 +30,6 @@ public class TestGraphElementDelete {
     orientDB = new OrientDB("embedded:", OrientDBConfig.defaultConfig());
     orientDB.createIfNotExists("test", ODatabaseType.MEMORY);
     database = orientDB.open("test", "admin", "admin");
-
   }
 
   @After
@@ -46,7 +49,6 @@ public class TestGraphElementDelete {
     database.delete(vertex);
 
     assertNull(database.load(edge.getIdentity()));
-
   }
 
   @Test
@@ -60,7 +62,6 @@ public class TestGraphElementDelete {
     database.delete(edge);
 
     assertFalse(vertex.getEdges(ODirection.OUT, "E").iterator().hasNext());
-
   }
 
   @Test
@@ -84,8 +85,15 @@ public class TestGraphElementDelete {
     assertNotNull(database.load(edge.getIdentity()));
     assertNotNull(database.load(vertex.getIdentity()));
     assertNotNull(database.load(vertex1.getIdentity()));
-    assertTrue(((OVertex) database.load(vertex.getIdentity())).getEdges(ODirection.OUT, "E").iterator().hasNext());
-    assertTrue(((OVertex) database.load(vertex1.getIdentity())).getEdges(ODirection.IN, "E").iterator().hasNext());
+    assertTrue(
+        ((OVertex) database.load(vertex.getIdentity()))
+            .getEdges(ODirection.OUT, "E")
+            .iterator()
+            .hasNext());
+    assertTrue(
+        ((OVertex) database.load(vertex1.getIdentity()))
+            .getEdges(ODirection.IN, "E")
+            .iterator()
+            .hasNext());
   }
-
 }

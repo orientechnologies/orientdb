@@ -1,24 +1,28 @@
 /**
  * Copyright 2010-2016 OrientDB LTD (http://orientdb.com)
- * <p>
- * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- * <p>
- * http://www.apache.org/licenses/LICENSE-2.0
- * <p>
- * Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on an "AS IS"
- * BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the specific language
- * governing permissions and limitations under the License.
- * <p>
- * For more information: http://orientdb.com
+ *
+ * <p>Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file
+ * except in compliance with the License. You may obtain a copy of the License at
+ *
+ * <p>http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * <p>Unless required by applicable law or agreed to in writing, software distributed under the
+ * License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either
+ * express or implied. See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ * <p>For more information: http://orientdb.com
  */
 package com.orientechnologies.orient.jdbc;
 
-import org.junit.Test;
-
-import java.sql.*;
-
 import static org.assertj.core.api.Assertions.assertThat;
+
+import java.sql.Array;
+import java.sql.ResultSet;
+import java.sql.ResultSetMetaData;
+import java.sql.Statement;
+import java.sql.Types;
+import org.junit.Test;
 
 public class OrientJdbcResultSetTest extends OrientJdbcDbPerMethodTemplateTest {
 
@@ -85,7 +89,7 @@ public class OrientJdbcResultSetTest extends OrientJdbcDbPerMethodTemplateTest {
   @Test
   public void shouldReturnReultSetWithSparkStyle() throws Exception {
 
-    //set spark "profile"
+    // set spark "profile"
 
     conn.getInfo().setProperty("spark", "true");
     Statement stmt = conn.createStatement();
@@ -93,7 +97,6 @@ public class OrientJdbcResultSetTest extends OrientJdbcDbPerMethodTemplateTest {
     ResultSet rs = stmt.executeQuery("select \"stringKey\",\"published\" from item");
 
     assertThat(rs.next()).isTrue();
-
   }
 
   @Test
@@ -101,13 +104,15 @@ public class OrientJdbcResultSetTest extends OrientJdbcDbPerMethodTemplateTest {
 
     Statement stmt = conn.createStatement();
 
-    stmt.execute("INSERT INTO Article(uuid, date, title, content) VALUES (123456, null, 'title', 'the content')");
+    stmt.execute(
+        "INSERT INTO Article(uuid, date, title, content) VALUES (123456, null, 'title', 'the content')");
 
     stmt.close();
 
     stmt = conn.createStatement();
 
-    assertThat(stmt.execute("SELECT uuid,date, title, content FROM Article WHERE uuid = 123456")).isTrue();
+    assertThat(stmt.execute("SELECT uuid,date, title, content FROM Article WHERE uuid = 123456"))
+        .isTrue();
     ResultSet rs = stmt.getResultSet();
     assertThat(rs).isNotNull();
 
@@ -115,19 +120,20 @@ public class OrientJdbcResultSetTest extends OrientJdbcDbPerMethodTemplateTest {
 
     rs.getLong("uuid");
     rs.getDate(2);
-
   }
 
   @Test
   public void shouldSelectContentInsertedByInsertContent() throws Exception {
 
     Statement insert = conn.createStatement();
-    insert.execute("INSERT INTO Article CONTENT {'uuid':'1234567',  'title':'title', 'content':'content'} ");
+    insert.execute(
+        "INSERT INTO Article CONTENT {'uuid':'1234567',  'title':'title', 'content':'content'} ");
     insert.close();
 
     Statement stmt = conn.createStatement();
 
-    assertThat(stmt.execute("SELECT uuid, date, title, content FROM Article WHERE uuid = 1234567")).isTrue();
+    assertThat(stmt.execute("SELECT uuid, date, title, content FROM Article WHERE uuid = 1234567"))
+        .isTrue();
 
     ResultSet rs = stmt.getResultSet();
     assertThat(rs).isNotNull();
@@ -136,7 +142,6 @@ public class OrientJdbcResultSetTest extends OrientJdbcDbPerMethodTemplateTest {
 
     assertThat(rs.getLong(1)).isEqualTo(1234567);
     assertThat(rs.getLong("uuid")).isEqualTo(1234567);
-
   }
 
   @Test
@@ -153,7 +158,6 @@ public class OrientJdbcResultSetTest extends OrientJdbcDbPerMethodTemplateTest {
 
     assertThat(rs.getBoolean(1)).isEqualTo(true);
     assertThat(rs.getBoolean("pub")).isEqualTo(true);
-
   }
 
   @Test
@@ -174,7 +178,7 @@ public class OrientJdbcResultSetTest extends OrientJdbcDbPerMethodTemplateTest {
     stmt.close();
     stmt = conn.createStatement();
 
-    //double check in lowercase
+    // double check in lowercase
     assertThat(stmt.execute("SELECT sum(score) AS totalScore FROM Item ")).isTrue();
 
     rs = stmt.getResultSet();
@@ -184,7 +188,6 @@ public class OrientJdbcResultSetTest extends OrientJdbcDbPerMethodTemplateTest {
 
     assertThat(rs.getBigDecimal(1).intValue()).isEqualTo(3438);
     assertThat(rs.getBigDecimal("totalScore").intValue()).isEqualTo(3438);
-
   }
 
   @Test
@@ -218,13 +221,12 @@ public class OrientJdbcResultSetTest extends OrientJdbcDbPerMethodTemplateTest {
     assertThat(rs.getLong("COUNT(*)")).isEqualTo(20);
 
     stmt.close();
-
   }
 
   @Test
   public void shouldFetchEmbeddedList() throws Exception {
 
-    String[] expectedNamee = new String[] { "John", "Chris", "Jill", "Karl", "Susan" };
+    String[] expectedNamee = new String[] {"John", "Chris", "Jill", "Karl", "Susan"};
     Statement stmt = conn.createStatement();
 
     stmt.executeUpdate("CREATE CLASS ListDemo");

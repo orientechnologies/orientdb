@@ -4,17 +4,12 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.metadata.sequence.OSequence;
-
-import java.util.concurrent.ExecutionException;
-
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-/**
- * @author Luigi Dell'Aquila (l.dellaquila-(at)-orientdb.com)
- */
+/** @author Luigi Dell'Aquila (l.dellaquila-(at)-orientdb.com) */
 public class OAlterSequenceStatementExecutionTest {
   static ODatabaseDocument db;
 
@@ -33,8 +28,10 @@ public class OAlterSequenceStatementExecutionTest {
   public void testSetIncrement() {
     String sequenceName = "testSetStart";
     try {
-      db.getMetadata().getSequenceLibrary()
-          .createSequence(sequenceName, OSequence.SEQUENCE_TYPE.ORDERED, new OSequence.CreateParams());
+      db.getMetadata()
+          .getSequenceLibrary()
+          .createSequence(
+              sequenceName, OSequence.SEQUENCE_TYPE.ORDERED, new OSequence.CreateParams());
     } catch (ODatabaseException exc) {
       Assert.assertTrue("Failed to create sequence", false);
     }
@@ -54,5 +51,4 @@ public class OAlterSequenceStatementExecutionTest {
       Assert.assertTrue("Failed to call next", false);
     }
   }
-
 }

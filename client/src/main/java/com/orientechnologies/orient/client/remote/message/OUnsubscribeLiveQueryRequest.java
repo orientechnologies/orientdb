@@ -8,19 +8,14 @@ import com.orientechnologies.orient.core.serialization.serializer.record.ORecord
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelDataInput;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelDataOutput;
-
 import java.io.IOException;
 
-/**
- * Created by tglman on 19/06/17.
- */
+/** Created by tglman on 19/06/17. */
 public class OUnsubscribeLiveQueryRequest implements OBinaryRequest<OUnsubscribLiveQueryResponse> {
 
   private int monitorId;
 
-  public OUnsubscribeLiveQueryRequest() {
-
-  }
+  public OUnsubscribeLiveQueryRequest() {}
 
   public OUnsubscribeLiveQueryRequest(int monitorId) {
     this.monitorId = monitorId;
@@ -32,7 +27,8 @@ public class OUnsubscribeLiveQueryRequest implements OBinaryRequest<OUnsubscribL
   }
 
   @Override
-  public void read(OChannelDataInput channel, int protocolVersion, ORecordSerializer serializer) throws IOException {
+  public void read(OChannelDataInput channel, int protocolVersion, ORecordSerializer serializer)
+      throws IOException {
     monitorId = channel.readInt();
   }
 

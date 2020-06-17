@@ -10,9 +10,7 @@ import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-/**
- * @author Luigi Dell'Aquila (l.dellaquila-(at)-orientdb.com)
- */
+/** @author Luigi Dell'Aquila (l.dellaquila-(at)-orientdb.com) */
 public class OCreateIndexStatementExecutionTest {
   static ODatabaseDocumentInternal db;
 
@@ -34,7 +32,8 @@ public class OCreateIndexStatementExecutionTest {
     clazz.createProperty("name", OType.STRING);
 
     Assert.assertNull(db.getMetadata().getIndexManagerInternal().getIndex(db, className + ".name"));
-    OResultSet result = db.command("create index " + className + ".name on " + className + " (name) notunique");
+    OResultSet result =
+        db.command("create index " + className + ".name on " + className + " (name) notunique");
     Assert.assertTrue(result.hasNext());
     OResult next = result.next();
     Assert.assertFalse(result.hasNext());
@@ -52,7 +51,13 @@ public class OCreateIndexStatementExecutionTest {
     clazz.createProperty("name", OType.STRING);
 
     Assert.assertNull(db.getMetadata().getIndexManagerInternal().getIndex(db, className + ".name"));
-    OResultSet result = db.command("create index " + className + ".name IF NOT EXISTS on " + className + " (name) notunique");
+    OResultSet result =
+        db.command(
+            "create index "
+                + className
+                + ".name IF NOT EXISTS on "
+                + className
+                + " (name) notunique");
     Assert.assertTrue(result.hasNext());
     OResult next = result.next();
     Assert.assertFalse(result.hasNext());
@@ -62,9 +67,14 @@ public class OCreateIndexStatementExecutionTest {
     Assert.assertNotNull(idx);
     Assert.assertFalse(idx.isUnique());
 
-    result = db.command("create index " + className + ".name IF NOT EXISTS on " + className + " (name) notunique");
+    result =
+        db.command(
+            "create index "
+                + className
+                + ".name IF NOT EXISTS on "
+                + className
+                + " (name) notunique");
     Assert.assertFalse(result.hasNext());
     result.close();
   }
-
 }

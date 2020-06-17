@@ -26,48 +26,65 @@ import com.orientechnologies.orient.core.query.OQueryRuntimeValueMulti;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.record.binary.OBinaryField;
 import com.orientechnologies.orient.core.serialization.serializer.record.binary.ODocumentSerializer;
-import com.orientechnologies.orient.core.serialization.serializer.record.binary.ORecordSerializerBinary;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilterCondition;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilterItemFieldAll;
 
 /**
  * Base equality operator. It's an abstract class able to compare the equality between two values.
- * 
+ *
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
- * 
  */
 public abstract class OQueryOperatorEquality extends OQueryOperator {
 
-  protected OQueryOperatorEquality(final String iKeyword, final int iPrecedence, final boolean iLogical) {
+  protected OQueryOperatorEquality(
+      final String iKeyword, final int iPrecedence, final boolean iLogical) {
     super(iKeyword, iPrecedence, false);
   }
 
-  protected OQueryOperatorEquality(final String iKeyword, final int iPrecedence, final boolean iLogical,
+  protected OQueryOperatorEquality(
+      final String iKeyword,
+      final int iPrecedence,
+      final boolean iLogical,
       final int iExpectedRightWords) {
     super(iKeyword, iPrecedence, false, iExpectedRightWords);
   }
 
-  protected OQueryOperatorEquality(final String iKeyword, final int iPrecedence, final boolean iLogical,
-      final int iExpectedRightWords, final boolean iExpectsParameters) {
+  protected OQueryOperatorEquality(
+      final String iKeyword,
+      final int iPrecedence,
+      final boolean iLogical,
+      final int iExpectedRightWords,
+      final boolean iExpectsParameters) {
     super(iKeyword, iPrecedence, iLogical, iExpectedRightWords, iExpectsParameters);
   }
 
-  protected abstract boolean evaluateExpression(final OIdentifiable iRecord, final OSQLFilterCondition iCondition,
-      final Object iLeft, final Object iRight, OCommandContext iContext);
+  protected abstract boolean evaluateExpression(
+      final OIdentifiable iRecord,
+      final OSQLFilterCondition iCondition,
+      final Object iLeft,
+      final Object iRight,
+      OCommandContext iContext);
 
-  public boolean evaluate(final OBinaryField iFirstField, final OBinaryField iSecondField, 
-                          final OCommandContext iContext, final ODocumentSerializer serializer) {     
-    final Object left = serializer.deserializeValue(iFirstField.bytes,
-        iFirstField.type, null);
-    final Object right = serializer.deserializeValue(iSecondField.bytes,
-        iFirstField.type, null);
+  public boolean evaluate(
+      final OBinaryField iFirstField,
+      final OBinaryField iSecondField,
+      final OCommandContext iContext,
+      final ODocumentSerializer serializer) {
+    final Object left = serializer.deserializeValue(iFirstField.bytes, iFirstField.type, null);
+    final Object right = serializer.deserializeValue(iSecondField.bytes, iFirstField.type, null);
 
     return evaluateExpression(null, null, left, right, iContext);
   }
 
   @Override
-  public Object evaluateRecord(final OIdentifiable iRecord, ODocument iCurrentResult, final OSQLFilterCondition iCondition,
-      final Object iLeft, final Object iRight, OCommandContext iContext, final ODocumentSerializer serializer) {
+  public Object evaluateRecord(
+      final OIdentifiable iRecord,
+      ODocument iCurrentResult,
+      final OSQLFilterCondition iCondition,
+      final Object iLeft,
+      final Object iRight,
+      OCommandContext iContext,
+      final ODocumentSerializer serializer) {
 
     if (iLeft instanceof OBinaryField && iRight instanceof OBinaryField)
       // BINARY COMPARISON
@@ -76,8 +93,7 @@ public abstract class OQueryOperatorEquality extends OQueryOperator {
       // LEFT = MULTI
       final OQueryRuntimeValueMulti left = (OQueryRuntimeValueMulti) iLeft;
 
-      if (left.getValues().length == 0)
-        return false;
+      if (left.getValues().length == 0) return false;
 
       if (left.getDefinition().getRoot().startsWith(OSQLFilterItemFieldAll.NAME)) {
         // ALL VALUES
@@ -91,8 +107,7 @@ public abstract class OQueryOperatorEquality extends OQueryOperator {
             r = collate.transform(iRight);
           }
 
-          if (v == null || !evaluateExpression(iRecord, iCondition, v, r, iContext))
-            return false;
+          if (v == null || !evaluateExpression(iRecord, iCondition, v, r, iContext)) return false;
         }
         return true;
       } else {
@@ -107,8 +122,7 @@ public abstract class OQueryOperatorEquality extends OQueryOperator {
             r = collate.transform(iRight);
           }
 
-          if (v != null && evaluateExpression(iRecord, iCondition, v, r, iContext))
-            return true;
+          if (v != null && evaluateExpression(iRecord, iCondition, v, r, iContext)) return true;
         }
         return false;
       }
@@ -117,8 +131,7 @@ public abstract class OQueryOperatorEquality extends OQueryOperator {
       // RIGHT = MULTI
       final OQueryRuntimeValueMulti right = (OQueryRuntimeValueMulti) iRight;
 
-      if (right.getValues().length == 0)
-        return false;
+      if (right.getValues().length == 0) return false;
 
       if (right.getDefinition().getRoot().startsWith(OSQLFilterItemFieldAll.NAME)) {
         // ALL VALUES
@@ -132,8 +145,7 @@ public abstract class OQueryOperatorEquality extends OQueryOperator {
             l = collate.transform(iLeft);
           }
 
-          if (v == null || !evaluateExpression(iRecord, iCondition, l, v, iContext))
-            return false;
+          if (v == null || !evaluateExpression(iRecord, iCondition, l, v, iContext)) return false;
         }
         return true;
       } else {
@@ -148,8 +160,7 @@ public abstract class OQueryOperatorEquality extends OQueryOperator {
             l = collate.transform(iLeft);
           }
 
-          if (v != null && evaluateExpression(iRecord, iCondition, l, v, iContext))
-            return true;
+          if (v != null && evaluateExpression(iRecord, iCondition, l, v, iContext)) return true;
         }
         return false;
       }

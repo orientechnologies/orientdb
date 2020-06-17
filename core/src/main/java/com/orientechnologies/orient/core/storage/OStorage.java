@@ -33,7 +33,6 @@ import com.orientechnologies.orient.core.storage.cluster.OPaginatedCluster;
 import com.orientechnologies.orient.core.storage.ridbag.sbtree.OSBTreeCollectionManager;
 import com.orientechnologies.orient.core.tx.OTransactionInternal;
 import com.orientechnologies.orient.core.util.OBackupable;
-
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -43,28 +42,40 @@ import java.util.Set;
 import java.util.TimeZone;
 
 /**
- * This is the gateway interface between the Database side and the storage. Provided implementations are: Local, Remote and Memory.
+ * This is the gateway interface between the Database side and the storage. Provided implementations
+ * are: Local, Remote and Memory.
  *
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
  * @see com.orientechnologies.orient.core.storage.memory.ODirectMemoryStorage
  */
-
 public interface OStorage extends OBackupable, OSharedContainer, OStorageInfo {
   String CLUSTER_DEFAULT_NAME = "default";
 
   enum STATUS {
-    CLOSED, OPEN, CLOSING, @Deprecated OPENING
+    CLOSED,
+    OPEN,
+    CLOSING,
+    @Deprecated
+    OPENING
   }
 
   enum LOCKING_STRATEGY {
-    NONE, DEFAULT, SHARED_LOCK, EXCLUSIVE_LOCK,
+    NONE,
+    DEFAULT,
+    SHARED_LOCK,
+    EXCLUSIVE_LOCK,
 
-    @SuppressWarnings("DeprecatedIsStillUsed") @Deprecated KEEP_SHARED_LOCK,
+    @SuppressWarnings("DeprecatedIsStillUsed")
+    @Deprecated
+    KEEP_SHARED_LOCK,
 
-    @SuppressWarnings("DeprecatedIsStillUsed") @Deprecated KEEP_EXCLUSIVE_LOCK
+    @SuppressWarnings("DeprecatedIsStillUsed")
+    @Deprecated
+    KEEP_EXCLUSIVE_LOCK
   }
 
-  void open(String iUserName, String iUserPassword, final OContextConfiguration contextConfiguration);
+  void open(
+      String iUserName, String iUserPassword, final OContextConfiguration contextConfiguration);
 
   void create(OContextConfiguration contextConfiguration) throws IOException;
 
@@ -81,17 +92,24 @@ public interface OStorage extends OBackupable, OSharedContainer, OStorageInfo {
   boolean isClosed();
 
   // CRUD OPERATIONS
-  OStorageOperationResult<ORawBuffer> readRecord(ORecordId iRid, String iFetchPlan, boolean iIgnoreCache, boolean prefetchRecords,
+  OStorageOperationResult<ORawBuffer> readRecord(
+      ORecordId iRid,
+      String iFetchPlan,
+      boolean iIgnoreCache,
+      boolean prefetchRecords,
       ORecordCallback<ORawBuffer> iCallback);
 
-  OStorageOperationResult<ORawBuffer> readRecordIfVersionIsNotLatest(ORecordId rid, String fetchPlan, boolean ignoreCache,
-      int recordVersion) throws ORecordNotFoundException;
+  OStorageOperationResult<ORawBuffer> readRecordIfVersionIsNotLatest(
+      ORecordId rid, String fetchPlan, boolean ignoreCache, int recordVersion)
+      throws ORecordNotFoundException;
 
-  OStorageOperationResult<Boolean> deleteRecord(ORecordId iRecordId, int iVersion, int iMode, ORecordCallback<Boolean> iCallback);
+  OStorageOperationResult<Boolean> deleteRecord(
+      ORecordId iRecordId, int iVersion, int iMode, ORecordCallback<Boolean> iCallback);
 
   ORecordMetadata getRecordMetadata(final ORID rid);
 
-  boolean cleanOutRecord(ORecordId recordId, int recordVersion, int iMode, ORecordCallback<Boolean> callback);
+  boolean cleanOutRecord(
+      ORecordId recordId, int recordVersion, int iMode, ORecordCallback<Boolean> callback);
 
   // TX OPERATIONS
   List<ORecordOperation> commit(OTransactionInternal iTx);
@@ -128,7 +146,6 @@ public interface OStorage extends OBackupable, OSharedContainer, OStorageInfo {
    * Drops a cluster.
    *
    * @param iId id of the cluster to delete
-   *
    * @return true if has been removed, otherwise false
    */
   boolean dropCluster(int iId);
@@ -139,7 +156,8 @@ public interface OStorage extends OBackupable, OSharedContainer, OStorageInfo {
 
   long getClusterRecordsSizeByName(final String clusterName);
 
-  boolean setClusterAttribute(final String clusterName, OCluster.ATTRIBUTES attribute, Object value);
+  boolean setClusterAttribute(
+      final String clusterName, OCluster.ATTRIBUTES attribute, Object value);
 
   String getClusterRecordConflictStrategy(final int clusterId);
 
@@ -161,14 +179,10 @@ public interface OStorage extends OBackupable, OSharedContainer, OStorageInfo {
 
   long count(int[] iClusterIds, boolean countTombstones);
 
-  /**
-   * Returns the size of the database.
-   */
+  /** Returns the size of the database. */
   long getSize();
 
-  /**
-   * Returns the total number of records.
-   */
+  /** Returns the total number of records. */
   long countRecords();
 
   void setDefaultClusterId(final int defaultClusterId);
@@ -183,21 +197,17 @@ public interface OStorage extends OBackupable, OSharedContainer, OStorageInfo {
 
   long getVersion();
 
-  /**
-   * @return Version of product release under which storage was created.
-   */
+  /** @return Version of product release under which storage was created. */
   String getCreatedAtVersion();
 
   void synch();
 
-  /**
-   * Execute the command request and return the result back.
-   */
+  /** Execute the command request and return the result back. */
   Object command(OCommandRequestText iCommand);
 
   /**
-   * Returns a pair of long values telling the begin and end positions of data in the requested cluster. Useful to know the range of
-   * the records.
+   * Returns a pair of long values telling the begin and end positions of data in the requested
+   * cluster. Useful to know the range of the records.
    *
    * @param currentClusterId Cluster id
    */
@@ -211,14 +221,10 @@ public interface OStorage extends OBackupable, OSharedContainer, OStorageInfo {
 
   OPhysicalPosition[] floorPhysicalPositions(int clusterId, OPhysicalPosition physicalPosition);
 
-  /**
-   * Returns the current storage's status
-   */
+  /** Returns the current storage's status */
   STATUS getStatus();
 
-  /**
-   * Returns the storage's type.
-   */
+  /** Returns the storage's type. */
   String getType();
 
   OStorage getUnderlying();
@@ -237,10 +243,9 @@ public interface OStorage extends OBackupable, OSharedContainer, OStorageInfo {
 
   void setConflictStrategy(ORecordConflictStrategy iResolver);
 
-  /**
-   * @return Backup file name
-   */
-  String incrementalBackup(String backupDirectory, OCallable<Void, Void> started) throws UnsupportedOperationException;
+  /** @return Backup file name */
+  String incrementalBackup(String backupDirectory, OCallable<Void, Void> started)
+      throws UnsupportedOperationException;
 
   boolean supportIncremental();
 
@@ -251,8 +256,9 @@ public interface OStorage extends OBackupable, OSharedContainer, OStorageInfo {
   void restoreFullIncrementalBackup(InputStream stream) throws UnsupportedOperationException;
 
   /**
-   * This method is called in {@link com.orientechnologies.orient.core.Orient#shutdown()} method. For most of the storages it means
-   * that storage will be merely closed, but sometimes additional operations are need to be taken in account.
+   * This method is called in {@link com.orientechnologies.orient.core.Orient#shutdown()} method.
+   * For most of the storages it means that storage will be merely closed, but sometimes additional
+   * operations are need to be taken in account.
    */
   void shutdown();
 

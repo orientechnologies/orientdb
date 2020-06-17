@@ -24,41 +24,47 @@ import com.googlecode.concurrentlinkedhashmap.EvictionListener;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.OOrientListenerAbstract;
 import com.orientechnologies.orient.core.Orient;
-
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Iterator;
 
 /**
- * Factory for {@link OPartitionedDatabasePool} pool, which also works as LRU cache with good mutlicore architecture support.
- * <p>
- * In case of remote storage database pool will keep connections to the remote storage till you close pool. So in case of remote
- * storage you should close pool factory at the end of it's usage, it also may be closed on application shutdown but you should not
- * rely on this behaviour.
+ * Factory for {@link OPartitionedDatabasePool} pool, which also works as LRU cache with good
+ * mutlicore architecture support.
+ *
+ * <p>In case of remote storage database pool will keep connections to the remote storage till you
+ * close pool. So in case of remote storage you should close pool factory at the end of it's usage,
+ * it also may be closed on application shutdown but you should not rely on this behaviour.
  *
  * @author Andrey Lomakin (a.lomakin-at-orientdb.com)
  * @since 06/11/14
  */
 public class OPartitionedDatabasePoolFactory extends OOrientListenerAbstract {
-  private volatile int                                                          maxPoolSize      = 64;
-  private boolean                                                               closed           = false;
+  private volatile int maxPoolSize = 64;
+  private boolean closed = false;
 
   private final ConcurrentLinkedHashMap<PoolIdentity, OPartitionedDatabasePool> poolStore;
 
-  private final EvictionListener<PoolIdentity, OPartitionedDatabasePool> evictionListener = new EvictionListener<PoolIdentity, OPartitionedDatabasePool>() {
-    @Override
-    public void onEviction(final PoolIdentity poolIdentity, final OPartitionedDatabasePool partitionedDatabasePool) {
-      partitionedDatabasePool.close();
-    }
-  };
+  private final EvictionListener<PoolIdentity, OPartitionedDatabasePool> evictionListener =
+      new EvictionListener<PoolIdentity, OPartitionedDatabasePool>() {
+        @Override
+        public void onEviction(
+            final PoolIdentity poolIdentity,
+            final OPartitionedDatabasePool partitionedDatabasePool) {
+          partitionedDatabasePool.close();
+        }
+      };
 
   public OPartitionedDatabasePoolFactory() {
     this(100);
   }
 
   public OPartitionedDatabasePoolFactory(final int capacity) {
-    poolStore = new ConcurrentLinkedHashMap.Builder<PoolIdentity, OPartitionedDatabasePool>().maximumWeightedCapacity(capacity)
-        .listener(evictionListener).build();
+    poolStore =
+        new ConcurrentLinkedHashMap.Builder<PoolIdentity, OPartitionedDatabasePool>()
+            .maximumWeightedCapacity(capacity)
+            .listener(evictionListener)
+            .build();
 
     Orient.instance().registerWeakOrientStartupListener(this);
     Orient.instance().registerWeakOrientShutdownListener(this);
@@ -91,23 +97,21 @@ public class OPartitionedDatabasePoolFactory extends OOrientListenerAbstract {
       }
     }
 
-    for (OPartitionedDatabasePool pool : poolStore.values())
-      pool.close();
+    for (OPartitionedDatabasePool pool : poolStore.values()) pool.close();
 
     poolStore.clear();
   }
 
-  public OPartitionedDatabasePool get(final String url, final String userName, final String userPassword) {
+  public OPartitionedDatabasePool get(
+      final String url, final String userName, final String userPassword) {
     checkForClose();
 
     final PoolIdentity poolIdentity = new PoolIdentity(url, userName, userPassword);
 
     OPartitionedDatabasePool pool = poolStore.get(poolIdentity);
-    if (pool != null && !pool.isClosed())
-      return pool;
+    if (pool != null && !pool.isClosed()) return pool;
 
-    if (pool != null)
-      poolStore.remove(poolIdentity, pool);
+    if (pool != null) poolStore.remove(poolIdentity, pool);
 
     while (true) {
       pool = new OPartitionedDatabasePool(url, userName, userPassword, 8, maxPoolSize);
@@ -124,7 +128,6 @@ public class OPartitionedDatabasePoolFactory extends OOrientListenerAbstract {
         return pool;
       }
     }
-
   }
 
   public Collection<OPartitionedDatabasePool> getPools() {
@@ -134,16 +137,14 @@ public class OPartitionedDatabasePoolFactory extends OOrientListenerAbstract {
   }
 
   public void close() {
-    if (closed)
-      return;
+    if (closed) return;
 
     closed = true;
     reset();
   }
 
   private void checkForClose() {
-    if (closed)
-      throw new IllegalStateException("Pool factory is closed");
+    if (closed) throw new IllegalStateException("Pool factory is closed");
   }
 
   public boolean isClosed() {
@@ -168,19 +169,14 @@ public class OPartitionedDatabasePoolFactory extends OOrientListenerAbstract {
 
     @Override
     public boolean equals(final Object o) {
-      if (this == o)
-        return true;
-      if (o == null || getClass() != o.getClass())
-        return false;
+      if (this == o) return true;
+      if (o == null || getClass() != o.getClass()) return false;
 
       final PoolIdentity that = (PoolIdentity) o;
 
-      if (!url.equals(that.url))
-        return false;
-      if (!userName.equals(that.userName))
-        return false;
-      if (!userPassword.equals(that.userPassword))
-        return false;
+      if (!url.equals(that.url)) return false;
+      if (!userName.equals(that.userName)) return false;
+      if (!userPassword.equals(that.userPassword)) return false;
 
       return true;
     }

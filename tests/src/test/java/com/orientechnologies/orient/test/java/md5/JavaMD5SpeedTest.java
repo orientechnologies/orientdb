@@ -15,35 +15,34 @@
  */
 package com.orientechnologies.orient.test.java.md5;
 
+import com.orientechnologies.common.test.SpeedTestMonoThread;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
-import com.orientechnologies.common.test.SpeedTestMonoThread;
-
 public class JavaMD5SpeedTest extends SpeedTestMonoThread {
-	private MessageDigest				md;
-	private final static byte[]	RESULT	= { 33, 35, 47, 41, 122, 87, -91, -89, 67, -119, 74, 14, 74, -128, 31, -61 };
+  private MessageDigest md;
+  private static final byte[] RESULT = {
+    33, 35, 47, 41, 122, 87, -91, -89, 67, -119, 74, 14, 74, -128, 31, -61
+  };
 
-	public JavaMD5SpeedTest() {
-		super(1000000);
-	}
+  public JavaMD5SpeedTest() {
+    super(1000000);
+  }
 
-	@Override
-	@Test(enabled = false)
-	public void cycle() {
-		md.reset();
-		md.update("admin".getBytes());
-		byte[] result = md.digest();
+  @Override
+  @Test(enabled = false)
+  public void cycle() {
+    md.reset();
+    md.update("admin".getBytes());
+    byte[] result = md.digest();
 
-		for (int i = 0; i < RESULT.length; ++i)
-			Assert.assertTrue(result[i] == RESULT[i]);
-	}
+    for (int i = 0; i < RESULT.length; ++i) Assert.assertTrue(result[i] == RESULT[i]);
+  }
 
-	@Override
-	public void init() throws NoSuchAlgorithmException {
-		md = MessageDigest.getInstance("MD5");
-	}
+  @Override
+  public void init() throws NoSuchAlgorithmException {
+    md = MessageDigest.getInstance("MD5");
+  }
 }

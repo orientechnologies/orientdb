@@ -20,20 +20,16 @@ import javax.persistence.Lob;
 
 /**
  * Dummy entity class created for test purposes.
- * 
+ *
  * @author diegomtassis <a href="mailto:dta@compart.com">Diego Martin Tassis</a>
  */
 public class Driver {
 
-  @Id
-  private String id;
+  @Id private String id;
 
-  @Basic
-  private String name;
+  @Basic private String name;
 
-  @Basic
-  @Lob
-  private byte[] imageData;
+  @Basic @Lob private byte[] imageData;
 
   public String getId() {
     return this.id;

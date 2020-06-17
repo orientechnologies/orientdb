@@ -35,16 +35,19 @@ import com.tinkerpop.blueprints.impls.orient.OrientGraph;
 import com.tinkerpop.blueprints.impls.orient.OrientGraphNoTx;
 import com.tinkerpop.blueprints.util.io.graphson.GraphSONMode;
 import com.tinkerpop.blueprints.util.io.graphson.GraphSONWriter;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.IOException;
+import java.io.PrintStream;
+import java.util.Iterator;
+import java.util.List;
 import org.junit.Assert;
 import org.junit.Test;
 
-import java.io.*;
-import java.util.Iterator;
-import java.util.List;
-
 /**
  * Test cases for gremlin console.
- * 
+ *
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
  */
 public class OGremlinConsoleTest {
@@ -57,7 +60,6 @@ public class OGremlinConsoleTest {
       super(args);
       setOutput(new PrintStream(output));
     }
-
   }
 
   @Test
@@ -67,7 +69,7 @@ public class OGremlinConsoleTest {
     StringBuilder builder = new StringBuilder();
     builder.append("create database " + dbUrl + ";\n");
     builder.append("import database " + INPUT_FILE + ";\n");
-    OConsoleDatabaseApp console = new TestOGremlinConsole(new String[] { builder.toString() });
+    OConsoleDatabaseApp console = new TestOGremlinConsole(new String[] {builder.toString()});
     try {
       console.run();
 
@@ -95,7 +97,7 @@ public class OGremlinConsoleTest {
     builder.append("create database " + dbUrl + ";\n");
     builder.append("import database " + INPUT_FILE + ";\n");
     builder.append("export database " + OUTPUT_FILE + ";\n");
-    OConsoleDatabaseApp console = new TestOGremlinConsole(new String[] { builder.toString() });
+    OConsoleDatabaseApp console = new TestOGremlinConsole(new String[] {builder.toString()});
     try {
       console.run();
 
@@ -117,7 +119,7 @@ public class OGremlinConsoleTest {
     builder.append("import database " + INPUT_FILE + " batchSize=10;\n");
     builder.append("create class newposition extends V;\n");
     builder.append("move vertex (select from V) to class:newposition;\n");
-    OConsoleDatabaseApp console = new TestOGremlinConsole(new String[] { builder.toString() });
+    OConsoleDatabaseApp console = new TestOGremlinConsole(new String[] {builder.toString()});
 
     try {
       console.run();
@@ -133,7 +135,6 @@ public class OGremlinConsoleTest {
     } finally {
       console.close();
     }
-
   }
 
   @Test
@@ -144,7 +145,7 @@ public class OGremlinConsoleTest {
     builder.append("create database " + dbUrl + ";\n");
     builder.append("import database " + INPUT_FILE + " batchSize=10;\n");
     builder.append("gremlin g.V;\n");
-    OConsoleDatabaseApp console = new TestOGremlinConsole(new String[] { builder.toString() });
+    OConsoleDatabaseApp console = new TestOGremlinConsole(new String[] {builder.toString()});
 
     try {
       console.run();
@@ -164,7 +165,6 @@ public class OGremlinConsoleTest {
     } finally {
       console.close();
     }
-
   }
 
   @Test
@@ -174,7 +174,7 @@ public class OGremlinConsoleTest {
     StringBuilder builder = new StringBuilder();
     builder.append("create database " + dbUrl + ";\n");
     builder.append("import database " + INPUT_FILE + " batchSize=10;\n");
-    OConsoleDatabaseApp console = new TestOGremlinConsole(new String[] { builder.toString() });
+    OConsoleDatabaseApp console = new TestOGremlinConsole(new String[] {builder.toString()});
 
     try {
       console.run();
@@ -189,7 +189,6 @@ public class OGremlinConsoleTest {
     } finally {
       console.close();
     }
-
   }
 
   @Test
@@ -197,8 +196,10 @@ public class OGremlinConsoleTest {
     final String INPUT_FILE = "src/test/resources/graph-example-fromexport.xml";
     String dbUrl = "memory:testGraphMLImportIgnoreVAttribute";
 
-    final OGraphMLReader graphml = new OGraphMLReader(new OrientGraphNoTx(dbUrl))
-        .defineVertexAttributeStrategy("__type__", new OIgnoreGraphMLImportStrategy()).inputGraph(INPUT_FILE);
+    final OGraphMLReader graphml =
+        new OGraphMLReader(new OrientGraphNoTx(dbUrl))
+            .defineVertexAttributeStrategy("__type__", new OIgnoreGraphMLImportStrategy())
+            .inputGraph(INPUT_FILE);
 
     ODatabaseDocumentTx db = new ODatabaseDocumentTx(dbUrl);
     db.open("admin", "admin");
@@ -230,8 +231,7 @@ public class OGremlinConsoleTest {
       List<ODocument> result = db.query(new OSQLSynchQuery<ODocument>("select from V"));
       Assert.assertFalse(result.isEmpty());
       for (ODocument d : result) {
-        if (d.containsField("__type__"))
-          foundTypeVAttr = true;
+        if (d.containsField("__type__")) foundTypeVAttr = true;
       }
 
       Assert.assertTrue(foundTypeVAttr);
@@ -239,8 +239,7 @@ public class OGremlinConsoleTest {
       result = db.query(new OSQLSynchQuery<ODocument>("select from E"));
       Assert.assertFalse(result.isEmpty());
       for (ODocument d : result) {
-        if (d.containsField("friend"))
-          foundFriendEAttr = true;
+        if (d.containsField("friend")) foundFriendEAttr = true;
       }
 
       Assert.assertTrue(foundFriendEAttr);
@@ -254,7 +253,8 @@ public class OGremlinConsoleTest {
     final String INPUT_FILE = "src/test/resources/graph-example-fromexport.xml";
     String dbUrl = "memory:testGraphMLImportIgnoreEAttribute";
 
-    new OGraphMLReader(new OrientGraphNoTx(dbUrl)).defineEdgeAttributeStrategy("friend", new OIgnoreGraphMLImportStrategy())
+    new OGraphMLReader(new OrientGraphNoTx(dbUrl))
+        .defineEdgeAttributeStrategy("friend", new OIgnoreGraphMLImportStrategy())
         .inputGraph(INPUT_FILE);
 
     ODatabaseDocumentTx db = new ODatabaseDocumentTx(dbUrl);
@@ -278,7 +278,8 @@ public class OGremlinConsoleTest {
 
     final OrientGraphNoTx graph = new OrientGraphNoTx(dbUrl);
     try {
-      new OGraphMLReader(graph).defineVertexAttributeStrategy("__type__", new ORenameGraphMLImportStrategy("t"))
+      new OGraphMLReader(graph)
+          .defineVertexAttributeStrategy("__type__", new ORenameGraphMLImportStrategy("t"))
           .inputGraph(INPUT_FILE);
 
       ODatabaseDocumentTx db = new ODatabaseDocumentTx(dbUrl);
@@ -325,8 +326,7 @@ public class OGremlinConsoleTest {
       List<ODocument> result = db.query(new OSQLSynchQuery<ODocument>("select from V"));
       Assert.assertFalse(result.isEmpty());
       for (ODocument d : result) {
-        if (d.containsField("__type__"))
-          foundTypeVAttr = true;
+        if (d.containsField("__type__")) foundTypeVAttr = true;
       }
 
       Assert.assertTrue(foundTypeVAttr);
@@ -334,8 +334,7 @@ public class OGremlinConsoleTest {
       result = db.query(new OSQLSynchQuery<ODocument>("select from E"));
       Assert.assertFalse(result.isEmpty());
       for (ODocument d : result) {
-        if (d.containsField("friend"))
-          foundFriendEAttr = true;
+        if (d.containsField("friend")) foundFriendEAttr = true;
       }
 
       Assert.assertTrue(foundFriendEAttr);
@@ -381,24 +380,26 @@ public class OGremlinConsoleTest {
 
     builder.append("traverse out() from V;\n");
 
-    builder.append("create edge from (select from V where name = 'foo') to (select from V where name = 'bar');\n");
+    builder.append(
+        "create edge from (select from V where name = 'foo') to (select from V where name = 'bar');\n");
 
     builder.append("traverse out() from V;\n");
 
-//    builder.append("create user TestUser identified by password ROLE ['reader','writer'];\n");
+    //    builder.append("create user TestUser identified by password ROLE ['reader','writer'];\n");
 
     builder.append("drop user TestUser;\n");
 
     builder.append("profile storage off;\n");
 
     builder.append("repair database -v;\n");
-    TestOGremlinConsole console = new TestOGremlinConsole(new String[] { builder.toString() });
+    TestOGremlinConsole console = new TestOGremlinConsole(new String[] {builder.toString()});
 
     try {
       console.run();
 
       ODatabaseDocument db = console.getCurrentDatabase();
-      List<ODocument> result = db.query(new OSQLSynchQuery<ODocument>("select from foo where name = 'foo'"));
+      List<ODocument> result =
+          db.query(new OSQLSynchQuery<ODocument>("select from foo where name = 'foo'"));
       Assert.assertEquals(1, result.size());
       ODocument doc = result.get(0);
       Assert.assertEquals("bar", doc.field("surname"));
@@ -407,8 +408,12 @@ public class OGremlinConsoleTest {
       Assert.assertEquals(0, result.size());
 
       OrientGraph graph = new OrientGraph((ODatabaseDocumentInternal) db);
-      Iterable<Vertex> result1 = graph
-          .command(new OSQLSynchQuery<Vertex>("select expand(out()) from (select from V where name = 'foo')")).execute();
+      Iterable<Vertex> result1 =
+          graph
+              .command(
+                  new OSQLSynchQuery<Vertex>(
+                      "select expand(out()) from (select from V where name = 'foo')"))
+              .execute();
       Iterator<Vertex> iterator = result1.iterator();
       Assert.assertTrue(iterator.hasNext());
       Vertex next = iterator.next();
@@ -418,7 +423,5 @@ public class OGremlinConsoleTest {
     } finally {
       console.close();
     }
-
   }
-
 }

@@ -14,6 +14,8 @@
  */
 package com.orientechnologies.spatial.engine;
 
+import static com.orientechnologies.lucene.builder.OLuceneQueryBuilder.EMPTY_METADATA;
+
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.lucene.collections.OLuceneResultSet;
 import com.orientechnologies.lucene.collections.OLuceneResultSetEmpty;
@@ -30,30 +32,28 @@ import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperation;
 import com.orientechnologies.spatial.query.OSpatialQueryContext;
 import com.orientechnologies.spatial.shape.OShapeBuilder;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Set;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.search.ScoreDoc;
 import org.apache.lucene.spatial.SpatialStrategy;
 import org.locationtech.spatial4j.distance.DistanceUtils;
 import org.locationtech.spatial4j.shape.Point;
 
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Set;
-
-import static com.orientechnologies.lucene.builder.OLuceneQueryBuilder.EMPTY_METADATA;
-
 public class OLuceneGeoSpatialIndexEngine extends OLuceneSpatialIndexEngineAbstract {
 
-  public OLuceneGeoSpatialIndexEngine(OStorage storage, String name, int id, OShapeBuilder factory) {
+  public OLuceneGeoSpatialIndexEngine(
+      OStorage storage, String name, int id, OShapeBuilder factory) {
     super(storage, name, id, factory);
   }
 
   @Override
-  protected SpatialStrategy createSpatialStrategy(OIndexDefinition indexDefinition, ODocument metadata) {
+  protected SpatialStrategy createSpatialStrategy(
+      OIndexDefinition indexDefinition, ODocument metadata) {
 
     return strategyFactory.createStrategy(ctx, getDatabase(), indexDefinition, metadata);
-
   }
 
   @Override
@@ -69,7 +69,6 @@ public class OLuceneGeoSpatialIndexEngine extends OLuceneSpatialIndexEngineAbstr
       if (key instanceof Map) {
         //noinspection unchecked
         return newGeoSearch((Map<String, Object>) key, changes);
-
       }
     } catch (Exception e) {
       if (e instanceof OException) {
@@ -83,15 +82,18 @@ public class OLuceneGeoSpatialIndexEngine extends OLuceneSpatialIndexEngineAbstr
     return new OLuceneResultSetEmpty();
   }
 
-  private Set<OIdentifiable> newGeoSearch(Map<String, Object> key, OLuceneTxChanges changes) throws Exception {
+  private Set<OIdentifiable> newGeoSearch(Map<String, Object> key, OLuceneTxChanges changes)
+      throws Exception {
 
     OLuceneQueryContext queryContext = queryStrategy.build(key).withChanges(changes);
     return new OLuceneResultSet(this, queryContext, EMPTY_METADATA);
-
   }
 
   @Override
-  public void onRecordAddedToResultSet(OLuceneQueryContext queryContext, OContextualRecordId recordId, Document doc,
+  public void onRecordAddedToResultSet(
+      OLuceneQueryContext queryContext,
+      OContextualRecordId recordId,
+      Document doc,
       ScoreDoc score) {
 
     OSpatialQueryContext spatialContext = (OSpatialQueryContext) queryContext;
@@ -100,13 +102,16 @@ public class OLuceneGeoSpatialIndexEngine extends OLuceneSpatialIndexEngineAbstr
       openIfClosed();
       @SuppressWarnings("deprecation")
       Point docPoint = (Point) ctx.readShape(doc.get(strategy.getFieldName()));
-      double docDistDEG = ctx.getDistCalc().distance(spatialContext.spatialArgs.getShape().getCenter(), docPoint);
-      final double docDistInKM = DistanceUtils.degrees2Dist(docDistDEG, DistanceUtils.EARTH_EQUATORIAL_RADIUS_KM);
-      recordId.setContext(new HashMap<String, Object>() {
-        {
-          put("distance", docDistInKM);
-        }
-      });
+      double docDistDEG =
+          ctx.getDistCalc().distance(spatialContext.spatialArgs.getShape().getCenter(), docPoint);
+      final double docDistInKM =
+          DistanceUtils.degrees2Dist(docDistDEG, DistanceUtils.EARTH_EQUATORIAL_RADIUS_KM);
+      recordId.setContext(
+          new HashMap<String, Object>() {
+            {
+              put("distance", docDistInKM);
+            }
+          });
     }
   }
 
@@ -126,13 +131,16 @@ public class OLuceneGeoSpatialIndexEngine extends OLuceneSpatialIndexEngineAbstr
   }
 
   @Override
-  public void update(OAtomicOperation atomicOperation, Object key, OIndexKeyUpdater<Object> updater) {
+  public void update(
+      OAtomicOperation atomicOperation, Object key, OIndexKeyUpdater<Object> updater) {
     throw new UnsupportedOperationException();
   }
 
   @Override
-  public boolean validatedPut(OAtomicOperation atomicOperation, Object key, ORID value, Validator<Object, ORID> validator) {
-    throw new UnsupportedOperationException("Validated put is not supported by OLuceneGeoSpatialIndexEngine");
+  public boolean validatedPut(
+      OAtomicOperation atomicOperation, Object key, ORID value, Validator<Object, ORID> validator) {
+    throw new UnsupportedOperationException(
+        "Validated put is not supported by OLuceneGeoSpatialIndexEngine");
   }
 
   @Override

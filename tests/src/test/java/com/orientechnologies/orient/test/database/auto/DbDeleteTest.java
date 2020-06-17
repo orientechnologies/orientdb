@@ -15,14 +15,7 @@
  */
 package com.orientechnologies.orient.test.database.auto;
 
-import java.io.File;
-import java.io.IOException;
-
-import org.testng.Assert;
-import org.testng.annotations.*;
-
 import com.orientechnologies.orient.client.db.ODatabaseHelper;
-import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
@@ -30,41 +23,47 @@ import com.orientechnologies.orient.core.exception.OStorageException;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import java.io.File;
+import java.io.IOException;
+import org.testng.Assert;
+import org.testng.annotations.AfterClass;
+import org.testng.annotations.AfterMethod;
+import org.testng.annotations.BeforeClass;
+import org.testng.annotations.BeforeMethod;
+import org.testng.annotations.Optional;
+import org.testng.annotations.Parameters;
+import org.testng.annotations.Test;
 
 @Test(groups = "db")
 public class DbDeleteTest extends DocumentDBBaseTest {
   private String testPath;
 
-	@Parameters(value = { "url", "testPath" })
-	public DbDeleteTest(@Optional String url, String testPath) {
-		super(url);
-		this.testPath = testPath;
-	}
+  @Parameters(value = {"url", "testPath"})
+  public DbDeleteTest(@Optional String url, String testPath) {
+    super(url);
+    this.testPath = testPath;
+  }
 
-	@BeforeClass
-	@Override
-	public void beforeClass() throws Exception {
-		super.beforeClass();
-		database.close();
-	}
+  @BeforeClass
+  @Override
+  public void beforeClass() throws Exception {
+    super.beforeClass();
+    database.close();
+  }
 
-	@AfterClass
-	@Override
-	public void afterClass() throws Exception {
-	}
+  @AfterClass
+  @Override
+  public void afterClass() throws Exception {}
 
-	@BeforeMethod
-	@Override
-	public void beforeMethod() throws Exception {
-	}
+  @BeforeMethod
+  @Override
+  public void beforeMethod() throws Exception {}
 
-	@AfterMethod
-	@Override
-	public void afterMethod() throws Exception {
-	}
+  @AfterMethod
+  @Override
+  public void afterMethod() throws Exception {}
 
-
-	public void testDbDeleteNoCredential() throws IOException {
+  public void testDbDeleteNoCredential() throws IOException {
     ODatabaseDocument db = new ODatabaseDocumentTx(url);
     try {
       db.drop();
@@ -76,19 +75,17 @@ public class DbDeleteTest extends DocumentDBBaseTest {
     }
   }
 
-  @Test(dependsOnMethods = { "testDbDeleteNoCredential" })
+  @Test(dependsOnMethods = {"testDbDeleteNoCredential"})
   public void testDbDelete() throws IOException {
     String prefix = url.substring(0, url.indexOf(':') + 1);
-    if (prefix.equals("memory:") || prefix.equals("remote:"))
-      return;
+    if (prefix.equals("memory:") || prefix.equals("remote:")) return;
 
-    ODatabaseDocument db = new ODatabaseDocumentTx(prefix + testPath + "/" + DbImportExportTest.NEW_DB_URL);
-    if (!db.exists())
-      db.create();
+    ODatabaseDocument db =
+        new ODatabaseDocumentTx(prefix + testPath + "/" + DbImportExportTest.NEW_DB_URL);
+    if (!db.exists()) db.create();
 
     if (db.exists()) {
-      if (db.isClosed())
-        db.open("admin", "admin");
+      if (db.isClosed()) db.open("admin", "admin");
     }
 
     ODatabaseHelper.dropDatabase(db, getStorageType());
@@ -98,16 +95,14 @@ public class DbDeleteTest extends DocumentDBBaseTest {
 
   public void testDbDeleteWithIndex() {
     String prefix = url.substring(0, url.indexOf(':') + 1);
-    if (prefix.equals("remote:"))
-      return;
+    if (prefix.equals("remote:")) return;
 
-    ODatabaseDocument db = new ODatabaseDocumentTx(prefix + testPath + "/" + DbImportExportTest.NEW_DB_URL);
-    if (!db.exists())
-      db.create();
+    ODatabaseDocument db =
+        new ODatabaseDocumentTx(prefix + testPath + "/" + DbImportExportTest.NEW_DB_URL);
+    if (!db.exists()) db.create();
 
     if (db.exists()) {
-      if (db.isClosed())
-        db.open("admin", "admin");
+      if (db.isClosed()) db.open("admin", "admin");
 
       db.drop();
       db.create();

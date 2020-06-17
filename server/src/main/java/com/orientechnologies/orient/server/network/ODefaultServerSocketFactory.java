@@ -1,15 +1,13 @@
 package com.orientechnologies.orient.server.network;
 
 import com.orientechnologies.orient.server.config.OServerParameterConfiguration;
-
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.ServerSocket;
 
 class ODefaultServerSocketFactory extends OServerSocketFactory {
 
-  ODefaultServerSocketFactory() {
-  }
+  ODefaultServerSocketFactory() {}
 
   public ServerSocket createServerSocket() throws IOException {
     return new ServerSocket();
@@ -26,7 +24,8 @@ class ODefaultServerSocketFactory extends OServerSocketFactory {
   }
 
   @Override
-  public ServerSocket createServerSocket(int port, int backlog, InetAddress ifAddress) throws IOException {
+  public ServerSocket createServerSocket(int port, int backlog, InetAddress ifAddress)
+      throws IOException {
     return new ServerSocket(port, backlog, ifAddress);
   }
 

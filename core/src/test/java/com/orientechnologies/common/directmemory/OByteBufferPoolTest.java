@@ -1,12 +1,6 @@
 package com.orientechnologies.common.directmemory;
 
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
-import org.junit.AfterClass;
-import org.junit.Assert;
-import org.junit.BeforeClass;
-import org.junit.Ignore;
-import org.junit.Test;
-
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
@@ -16,6 +10,11 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.atomic.AtomicBoolean;
+import org.junit.AfterClass;
+import org.junit.Assert;
+import org.junit.BeforeClass;
+import org.junit.Ignore;
+import org.junit.Test;
 
 public class OByteBufferPoolTest {
   @BeforeClass
@@ -191,10 +190,10 @@ public class OByteBufferPoolTest {
   }
 
   private static final class Allocator implements Callable<Void> {
-    private final OByteBufferPool   pool;
-    private final ThreadLocalRandom random            = ThreadLocalRandom.current();
-    private final AtomicBoolean     stop;
-    private final List<OPointer>    allocatedPointers = new ArrayList<>();
+    private final OByteBufferPool pool;
+    private final ThreadLocalRandom random = ThreadLocalRandom.current();
+    private final AtomicBoolean stop;
+    private final List<OPointer> allocatedPointers = new ArrayList<>();
 
     private Allocator(OByteBufferPool pool, AtomicBoolean stop) {
       this.pool = pool;

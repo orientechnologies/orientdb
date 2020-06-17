@@ -23,9 +23,8 @@ import com.orientechnologies.orient.core.storage.OStorage;
 
 /**
  * Listener Interface for basic Orient events.
- * 
+ *
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
- * 
  */
 public interface OOrientListener extends OOrientShutdownListener {
   void onShutdown();

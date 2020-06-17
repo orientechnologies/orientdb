@@ -27,30 +27,32 @@ import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperation;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperationsManager;
-
-import java.util.*;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.Objects;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicLong;
 
 /**
- * Persistent Set<OIdentifiable> implementation that uses the SBTree to handle entries in persistent way.
+ * Persistent Set<OIdentifiable> implementation that uses the SBTree to handle entries in persistent
+ * way.
  *
  * @author Artem Orobets (enisher-at-gmail.com)
  */
 public class OIndexRIDContainer implements Set<OIdentifiable> {
   public static final String INDEX_FILE_EXTENSION = ".irs";
 
-  private final long               fileId;
-  private       Set<OIdentifiable> underlying;
-  private       boolean            isEmbedded;
-  private       int                topThreshold    = OGlobalConfiguration.INDEX_EMBEDDED_TO_SBTREEBONSAI_THRESHOLD
-      .getValueAsInteger();
-  private final int                bottomThreshold = OGlobalConfiguration.INDEX_SBTREEBONSAI_TO_EMBEDDED_THRESHOLD
-      .getValueAsInteger();
-  private final boolean            durableNonTxMode;
+  private final long fileId;
+  private Set<OIdentifiable> underlying;
+  private boolean isEmbedded;
+  private int topThreshold =
+      OGlobalConfiguration.INDEX_EMBEDDED_TO_SBTREEBONSAI_THRESHOLD.getValueAsInteger();
+  private final int bottomThreshold =
+      OGlobalConfiguration.INDEX_SBTREEBONSAI_TO_EMBEDDED_THRESHOLD.getValueAsInteger();
+  private final boolean durableNonTxMode;
 
-  /**
-   * Should be called inside of lock to ensure uniqueness of entity on disk !!!
-   */
+  /** Should be called inside of lock to ensure uniqueness of entity on disk !!! */
   public OIndexRIDContainer(String name, boolean durableNonTxMode, AtomicLong bonsayFileId) {
     long gotFileId = bonsayFileId.get();
     if (gotFileId == 0) {
@@ -76,21 +78,25 @@ public class OIndexRIDContainer implements Set<OIdentifiable> {
   }
 
   private static long resolveFileIdByName(String fileName) {
-    final OAbstractPaginatedStorage storage = (OAbstractPaginatedStorage) ODatabaseRecordThreadLocal.instance().get().getStorage()
-        .getUnderlying();
+    final OAbstractPaginatedStorage storage =
+        (OAbstractPaginatedStorage)
+            ODatabaseRecordThreadLocal.instance().get().getStorage().getUnderlying();
     final OAtomicOperationsManager atomicOperationsManager = storage.getAtomicOperationsManager();
     final OAtomicOperation atomicOperation = OAtomicOperationsManager.getCurrentOperation();
     Objects.requireNonNull(atomicOperation);
 
-    return atomicOperationsManager.calculateInsideComponentOperation(atomicOperation, fileName, (operation) -> {
-      final long fileId;
-      if (atomicOperation.isFileExists(fileName)) {
-        fileId = atomicOperation.loadFile(fileName);
-      } else {
-        fileId = atomicOperation.addFile(fileName);
-      }
-      return fileId;
-    });
+    return atomicOperationsManager.calculateInsideComponentOperation(
+        atomicOperation,
+        fileName,
+        (operation) -> {
+          final long fileId;
+          if (atomicOperation.isFileExists(fileName)) {
+            fileId = atomicOperation.loadFile(fileName);
+          } else {
+            fileId = atomicOperation.addFile(fileName);
+          }
+          return fileId;
+        });
   }
 
   public long getFileId() {
@@ -214,8 +220,9 @@ public class OIndexRIDContainer implements Set<OIdentifiable> {
 
   private void convertToSbTree() {
     final ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.instance().get();
-    final OIndexRIDContainerSBTree tree = new OIndexRIDContainerSBTree(fileId,
-        (OAbstractPaginatedStorage) db.getStorage().getUnderlying());
+    final OIndexRIDContainerSBTree tree =
+        new OIndexRIDContainerSBTree(
+            fileId, (OAbstractPaginatedStorage) db.getStorage().getUnderlying());
 
     tree.addAll(underlying);
 

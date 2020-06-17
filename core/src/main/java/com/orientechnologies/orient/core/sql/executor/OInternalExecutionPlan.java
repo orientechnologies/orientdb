@@ -2,9 +2,7 @@ package com.orientechnologies.orient.core.sql.executor;
 
 import com.orientechnologies.orient.core.command.OCommandContext;
 
-/**
- * Created by luigidellaquila on 06/07/16.
- */
+/** Created by luigidellaquila on 06/07/16. */
 public interface OInternalExecutionPlan extends OExecutionPlan {
 
   public static final String JAVA_TYPE = "javaType";
@@ -12,11 +10,11 @@ public interface OInternalExecutionPlan extends OExecutionPlan {
   void close();
 
   /**
-   * if the execution can still return N elements, then the result will contain them all. If the execution contains less than N
-   * elements, then the result will contain them all, next result(s) will contain zero elements
+   * if the execution can still return N elements, then the result will contain them all. If the
+   * execution contains less than N elements, then the result will contain them all, next result(s)
+   * will contain zero elements
    *
    * @param n
-   *
    * @return
    */
   OResultSet fetchNext(int n);
@@ -43,7 +41,5 @@ public interface OInternalExecutionPlan extends OExecutionPlan {
     return null;
   }
 
-  default void setStatement(String stm) {
-
-  }
+  default void setStatement(String stm) {}
 }

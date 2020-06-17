@@ -18,16 +18,12 @@ package com.orientechnologies.orient.object.db.entity;
 import java.util.ArrayList;
 import java.util.HashMap;
 
-/**
- * @author dominik.kopczynski
- */
+/** @author dominik.kopczynski */
 public class NestedContainer {
   private String name;
   HashMap<String, ArrayList<NestedContent>> foo = new HashMap<String, ArrayList<NestedContent>>();
 
-  public NestedContainer() {
-
-  }
+  public NestedContainer() {}
 
   public void setFoo(HashMap<String, ArrayList<NestedContent>> foo) {
     this.foo = foo;

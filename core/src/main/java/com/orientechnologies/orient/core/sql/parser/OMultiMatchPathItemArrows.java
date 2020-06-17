@@ -10,6 +10,5 @@ public class OMultiMatchPathItemArrows extends OMultiMatchPathItem {
   public OMultiMatchPathItemArrows(OrientSql p, int id) {
     super(p, id);
   }
-
 }
 /* JavaCC - OriginalChecksum=75506ca75aab9f66ab24c9f1b1cfe3ac (do not edit this line) */

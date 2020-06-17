@@ -31,14 +31,15 @@ import com.orientechnologies.orient.server.distributed.ODistributedServerManager
 import com.orientechnologies.orient.server.distributed.task.OAbstractRemoteTask;
 
 /**
- * Task executed when a server becomes unreachable. It's responsible to rollback all the transactions and free all the locks owned
- * by the unreachable server. This is executed as task to block any concurrent operation and to be in the request queue after any
- * request sent by the unreachable server and not executed yet.
+ * Task executed when a server becomes unreachable. It's responsible to rollback all the
+ * transactions and free all the locks owned by the unreachable server. This is executed as task to
+ * block any concurrent operation and to be in the request queue after any request sent by the
+ * unreachable server and not executed yet.
  *
  * @author Luca Garulli (l.garulli--at--orientdb.com)
  */
 public class OUnreachableServerLocalTask extends OAbstractRemoteTask {
-  public static final  int  FACTORYID        = 28;
+  public static final int FACTORYID = 28;
 
   private String unreachableServer;
 
@@ -46,21 +47,29 @@ public class OUnreachableServerLocalTask extends OAbstractRemoteTask {
     this.unreachableServer = unreachableServer;
   }
 
-  /**
-   * Execute the task with no concurrency.
-   */
+  /** Execute the task with no concurrency. */
   @Override
   public int[] getPartitionKey() {
     return ANY;
   }
 
   @Override
-  public Object execute(final ODistributedRequestId msgId, final OServer iServer, ODistributedServerManager iManager,
-      final ODatabaseDocumentInternal database) throws Exception {
-    ODistributedServerLog.debug(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.IN,
-        "Freeing all the resources owned by the unreachable server '%s'...", unreachableServer);
+  public Object execute(
+      final ODistributedRequestId msgId,
+      final OServer iServer,
+      ODistributedServerManager iManager,
+      final ODatabaseDocumentInternal database)
+      throws Exception {
+    ODistributedServerLog.debug(
+        this,
+        iManager.getLocalNodeName(),
+        getNodeSource(),
+        DIRECTION.IN,
+        "Freeing all the resources owned by the unreachable server '%s'...",
+        unreachableServer);
 
-    final ODistributedDatabase dDatabase = iManager.getMessageService().getDatabase(database.getName());
+    final ODistributedDatabase dDatabase =
+        iManager.getMessageService().getDatabase(database.getName());
 
     dDatabase.unlockResourcesOfServer(database, unreachableServer);
 

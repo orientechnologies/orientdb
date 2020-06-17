@@ -21,8 +21,12 @@ package com.orientechnologies.orient.server.distributed;
 
 import com.orientechnologies.orient.core.exception.OSerializationException;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
-
-import java.io.*;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -32,15 +36,17 @@ import java.util.concurrent.ConcurrentHashMap;
  * @author Luca Garulli (l.garulli--at--orientdb.com)
  */
 public class ODistributedSyncConfiguration {
-  private final ODistributedServerManager       dManager;
-  private final Map<String, OLogSequenceNumber> lastLSN                = new ConcurrentHashMap<String, OLogSequenceNumber>();
-  private final String                          databaseName;
-  private final ODistributedMomentum            momentum;
-  private       File                            file;
-  private       long                            lastOperationTimestamp = -1;
-  private       long                            lastLSNWrittenOnDisk   = 0l;
+  private final ODistributedServerManager dManager;
+  private final Map<String, OLogSequenceNumber> lastLSN =
+      new ConcurrentHashMap<String, OLogSequenceNumber>();
+  private final String databaseName;
+  private final ODistributedMomentum momentum;
+  private File file;
+  private long lastOperationTimestamp = -1;
+  private long lastLSNWrittenOnDisk = 0l;
 
-  public ODistributedSyncConfiguration(final ODistributedServerManager manager, final String databaseName, final File file)
+  public ODistributedSyncConfiguration(
+      final ODistributedServerManager manager, final String databaseName, final File file)
       throws IOException {
     this.dManager = manager;
     this.databaseName = databaseName;
@@ -64,25 +70,23 @@ public class ODistributedSyncConfiguration {
     return lastLSN.get(server);
   }
 
-  public void setLastLSN(final String server, final OLogSequenceNumber lsn, final boolean updateLastOperationTimestamp)
+  public void setLastLSN(
+      final String server, final OLogSequenceNumber lsn, final boolean updateLastOperationTimestamp)
       throws IOException {
-    if (lsn == null)
-      lastLSN.put(server, new OLogSequenceNumber(-1, -1));
-    else
-      lastLSN.put(server, lsn);
+    if (lsn == null) lastLSN.put(server, new OLogSequenceNumber(-1, -1));
+    else lastLSN.put(server, lsn);
 
     if (updateLastOperationTimestamp) {
       final long clusterTime = dManager.getClusterTime();
-      if (clusterTime > -1)
-        lastOperationTimestamp = clusterTime;
+      if (clusterTime > -1) lastOperationTimestamp = clusterTime;
     }
 
     // if (updateLastOperationTimestamp)
-    // ODistributedServerLog.debug(this, dManager.getLocalNodeName(), server, ODistributedServerLog.DIRECTION.IN,
+    // ODistributedServerLog.debug(this, dManager.getLocalNodeName(), server,
+    // ODistributedServerLog.DIRECTION.IN,
     // "Updating LSN %s lastOperationTimestamp=%d", lsn, lastOperationTimestamp);
 
-    if (System.currentTimeMillis() - lastLSNWrittenOnDisk > 2000)
-      save();
+    if (System.currentTimeMillis() - lastLSNWrittenOnDisk > 2000) save();
   }
 
   public void load() throws IOException {
@@ -137,7 +141,6 @@ public class ODistributedSyncConfiguration {
   }
 
   public void removeServer(final String nodeName) throws IOException {
-    if (lastLSN.remove(nodeName) != null)
-      save();
+    if (lastLSN.remove(nodeName) != null) save();
   }
 }

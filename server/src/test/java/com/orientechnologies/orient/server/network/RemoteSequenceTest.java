@@ -1,5 +1,7 @@
 package com.orientechnologies.orient.server.network;
 
+import static org.junit.Assert.assertNotEquals;
+
 import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.orient.client.remote.OServerAdmin;
 import com.orientechnologies.orient.core.Orient;
@@ -8,18 +10,12 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.server.OServer;
+import java.io.File;
 import org.junit.After;
-import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.Test;
 
-import java.io.File;
-
-import static org.junit.Assert.assertNotEquals;
-
-/**
- * Created by tglman on 19/07/17.
- */
+/** Created by tglman on 19/07/17. */
 public class RemoteSequenceTest {
 
   private OServer server;
@@ -37,7 +33,8 @@ public class RemoteSequenceTest {
 
   @Test
   public void testSequences() {
-    ODatabaseDocument database = new ODatabaseDocumentTx("remote:localhost/" + RemoteSequenceTest.class.getSimpleName());
+    ODatabaseDocument database =
+        new ODatabaseDocumentTx("remote:localhost/" + RemoteSequenceTest.class.getSimpleName());
     database.open("admin", "admin");
     database.command(new OCommandSQL("DROP CLASS CV1")).execute();
     database.command(new OCommandSQL("DROP CLASS CV2")).execute();
@@ -53,7 +50,10 @@ public class RemoteSequenceTest {
     database.command(new OCommandSQL("ALTER PROPERTY SV.uniqueID NOTNULL true")).execute();
     database.command(new OCommandSQL("ALTER PROPERTY SV.uniqueID MANDATORY true")).execute();
     database.command(new OCommandSQL("ALTER PROPERTY SV.uniqueID READONLY true")).execute();
-    database.command(new OCommandSQL("ALTER PROPERTY SV.uniqueID DEFAULT 'sequence(\"seqCounter\").next()'")).execute();
+    database
+        .command(
+            new OCommandSQL("ALTER PROPERTY SV.uniqueID DEFAULT 'sequence(\"seqCounter\").next()'"))
+        .execute();
     database.command(new OCommandSQL("CREATE CLASS CV1 extends SV")).execute();
     database.command(new OCommandSQL("CREATE CLASS CV2 extends SV")).execute();
     database.command(new OCommandSQL("CREATE INDEX uniqueID ON SV (uniqueID) UNIQUE")).execute();
@@ -68,7 +68,6 @@ public class RemoteSequenceTest {
     doc1.field("testID", 1);
     database.save(doc1);
     assertNotEquals(doc1.field("uniqueID"), doc.field("uniqueID"));
-
   }
 
   @After

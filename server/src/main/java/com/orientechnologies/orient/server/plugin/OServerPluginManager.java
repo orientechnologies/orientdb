@@ -33,7 +33,6 @@ import com.orientechnologies.orient.server.network.OServerNetworkListener;
 import com.orientechnologies.orient.server.network.protocol.http.ONetworkProtocolHttpAbstract;
 import com.orientechnologies.orient.server.network.protocol.http.command.get.OServerCommandGetStaticContent;
 import com.orientechnologies.orient.server.network.protocol.http.command.get.OServerCommandGetStaticContent.OStaticContent;
-
 import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.InputStream;
@@ -56,14 +55,16 @@ import java.util.concurrent.ConcurrentHashMap;
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
  */
 public class OServerPluginManager implements OService {
-  private static final int                                          CHECK_DELAY   = 5000;
-  private              OServer                                      server;
-  private              ConcurrentHashMap<String, OServerPluginInfo> activePlugins = new ConcurrentHashMap<String, OServerPluginInfo>();
-  private              ConcurrentHashMap<String, String>            loadedPlugins = new ConcurrentHashMap<String, String>();
-  private volatile     TimerTask                                    autoReloadTimerTask;
-  private              String                                       directory;
+  private static final int CHECK_DELAY = 5000;
+  private OServer server;
+  private ConcurrentHashMap<String, OServerPluginInfo> activePlugins =
+      new ConcurrentHashMap<String, OServerPluginInfo>();
+  private ConcurrentHashMap<String, String> loadedPlugins = new ConcurrentHashMap<String, String>();
+  private volatile TimerTask autoReloadTimerTask;
+  private String directory;
 
-  protected List<OPluginLifecycleListener> pluginListeners = new ArrayList<OPluginLifecycleListener>();
+  protected List<OPluginLifecycleListener> pluginListeners =
+      new ArrayList<OPluginLifecycleListener>();
 
   public void config(OServer iServer) {
     server = iServer;
@@ -73,34 +74,30 @@ public class OServerPluginManager implements OService {
     boolean hotReload = false;
     boolean dynamic = true;
     boolean loadAtStartup = true;
-    directory = OSystemVariableResolver.resolveSystemVariables("${ORIENTDB_HOME}", ".") + "/plugins/";
+    directory =
+        OSystemVariableResolver.resolveSystemVariables("${ORIENTDB_HOME}", ".") + "/plugins/";
 
     if (server.getConfiguration() != null && server.getConfiguration().properties != null)
       for (OServerEntryConfiguration p : server.getConfiguration().properties) {
-        if (p.name.equals("plugin.hotReload"))
-          hotReload = Boolean.parseBoolean(p.value);
-        else if (p.name.equals("plugin.dynamic"))
-          dynamic = Boolean.parseBoolean(p.value);
+        if (p.name.equals("plugin.hotReload")) hotReload = Boolean.parseBoolean(p.value);
+        else if (p.name.equals("plugin.dynamic")) dynamic = Boolean.parseBoolean(p.value);
         else if (p.name.equals("plugin.loadAtStartup"))
           loadAtStartup = Boolean.parseBoolean(p.value);
-        else if (p.name.equals("plugin.directory"))
-          directory = p.value;
+        else if (p.name.equals("plugin.directory")) directory = p.value;
       }
 
-    if (!dynamic)
-      return;
+    if (!dynamic) return;
 
-    if (loadAtStartup)
-      updatePlugins();
+    if (loadAtStartup) updatePlugins();
 
     if (hotReload) {
-      autoReloadTimerTask = Orient.instance().scheduleTask(this::updatePlugins, CHECK_DELAY, CHECK_DELAY);
+      autoReloadTimerTask =
+          Orient.instance().scheduleTask(this::updatePlugins, CHECK_DELAY, CHECK_DELAY);
     }
   }
 
   public OServerPluginInfo getPluginByName(final String iName) {
-    if (iName == null)
-      return null;
+    if (iName == null) return null;
     return activePlugins.get(iName);
   }
 
@@ -157,8 +154,7 @@ public class OServerPluginManager implements OService {
       }
     }
 
-    if (autoReloadTimerTask != null)
-      autoReloadTimerTask.cancel();
+    if (autoReloadTimerTask != null) autoReloadTimerTask.cancel();
   }
 
   @Override
@@ -169,7 +165,9 @@ public class OServerPluginManager implements OService {
   protected String updatePlugin(final File pluginFile) {
     final String pluginFileName = pluginFile.getName();
 
-    if (!pluginFile.isDirectory() && !pluginFileName.endsWith(".jar") && !pluginFileName.endsWith(".zip"))
+    if (!pluginFile.isDirectory()
+        && !pluginFileName.endsWith(".jar")
+        && !pluginFileName.endsWith(".zip"))
       // SKIP IT
       return null;
 
@@ -194,7 +192,8 @@ public class OServerPluginManager implements OService {
 
       } catch (Exception e) {
         // IGNORE EXCEPTIONS
-        OLogManager.instance().debug(this, "Error on shutdowning plugin '%s'...", e, pluginFileName);
+        OLogManager.instance()
+            .debug(this, "Error on shutdowning plugin '%s'...", e, pluginFileName);
       }
     }
 
@@ -205,37 +204,40 @@ public class OServerPluginManager implements OService {
 
   protected void registerStaticDirectory(final OServerPluginInfo iPluginData) {
     Object pluginWWW = iPluginData.getParameter("www");
-    if (pluginWWW == null)
-      pluginWWW = iPluginData.getName();
+    if (pluginWWW == null) pluginWWW = iPluginData.getName();
 
-    final OServerNetworkListener httpListener = server.getListenerByProtocol(ONetworkProtocolHttpAbstract.class);
+    final OServerNetworkListener httpListener =
+        server.getListenerByProtocol(ONetworkProtocolHttpAbstract.class);
 
     if (httpListener == null)
-      throw new OConfigurationException("HTTP listener not registered while installing Static Content command");
+      throw new OConfigurationException(
+          "HTTP listener not registered while installing Static Content command");
 
-    final OServerCommandGetStaticContent command = (OServerCommandGetStaticContent) httpListener
-        .getCommand(OServerCommandGetStaticContent.class);
+    final OServerCommandGetStaticContent command =
+        (OServerCommandGetStaticContent)
+            httpListener.getCommand(OServerCommandGetStaticContent.class);
 
     if (command != null) {
       final URL wwwURL = iPluginData.getClassLoader().findResource("www/");
 
       final OCallable<Object, String> callback;
-      if (wwwURL != null)
-        callback = createStaticLinkCallback(iPluginData, wwwURL);
+      if (wwwURL != null) callback = createStaticLinkCallback(iPluginData, wwwURL);
       else
         // LET TO THE COMMAND TO CONTROL IT
-        callback = new OCallable<Object, String>() {
-          @Override
-          public Object call(final String iArgument) {
-            return iPluginData.getInstance().getContent(iArgument);
-          }
-        };
+        callback =
+            new OCallable<Object, String>() {
+              @Override
+              public Object call(final String iArgument) {
+                return iPluginData.getInstance().getContent(iArgument);
+              }
+            };
 
       command.registerVirtualFolder(pluginWWW.toString(), callback);
     }
   }
 
-  protected OCallable<Object, String> createStaticLinkCallback(final OServerPluginInfo iPluginData, final URL wwwURL) {
+  protected OCallable<Object, String> createStaticLinkCallback(
+      final OServerPluginInfo iPluginData, final URL wwwURL) {
     return new OCallable<Object, String>() {
       @Override
       public Object call(final String iArgument) {
@@ -244,7 +246,8 @@ public class OServerPluginManager implements OService {
 
         if (url != null) {
           final OServerCommandGetStaticContent.OStaticContent content = new OStaticContent();
-          content.is = new BufferedInputStream(iPluginData.getClassLoader().getResourceAsStream(fileName));
+          content.is =
+              new BufferedInputStream(iPluginData.getClassLoader().getResourceAsStream(fileName));
           content.contentSize = -1;
           content.type = OServerCommandGetStaticContent.getContentType(url.getFile());
           return content;
@@ -255,13 +258,17 @@ public class OServerPluginManager implements OService {
   }
 
   @SuppressWarnings("unchecked")
-  protected OServerPlugin startPluginClass(final String iClassName, final OServerParameterConfiguration[] params) throws Exception {
+  protected OServerPlugin startPluginClass(
+      final String iClassName, final OServerParameterConfiguration[] params) throws Exception {
 
-    final Class<? extends OServerPlugin> classToLoad = (Class<? extends OServerPlugin>) Class.forName(iClassName);
+    final Class<? extends OServerPlugin> classToLoad =
+        (Class<? extends OServerPlugin>) Class.forName(iClassName);
     final OServerPlugin instance = classToLoad.newInstance();
 
     // CONFIG()
-    final Method configMethod = classToLoad.getDeclaredMethod("config", OServer.class, OServerParameterConfiguration[].class);
+    final Method configMethod =
+        classToLoad.getDeclaredMethod(
+            "config", OServer.class, OServerParameterConfiguration[].class);
 
     callListenerBeforeConfig(instance, params);
 
@@ -284,8 +291,7 @@ public class OServerPluginManager implements OService {
   private void updatePlugins() {
     // load plugins.directory from server configuration or default to $ORIENTDB_HOME/plugins
     final File pluginsDirectory = new File(directory);
-    if (!pluginsDirectory.exists())
-      pluginsDirectory.mkdirs();
+    if (!pluginsDirectory.exists()) pluginsDirectory.mkdirs();
 
     final File[] plugins = pluginsDirectory.listFiles();
 
@@ -297,13 +303,11 @@ public class OServerPluginManager implements OService {
     if (plugins != null)
       for (File plugin : plugins) {
         final String pluginName = updatePlugin(plugin);
-        if (pluginName != null)
-          currentDynamicPlugins.remove(pluginName);
+        if (pluginName != null) currentDynamicPlugins.remove(pluginName);
       }
 
     // REMOVE MISSING PLUGIN
-    for (String pluginName : currentDynamicPlugins)
-      uninstallPluginByFile(pluginName);
+    for (String pluginName : currentDynamicPlugins) uninstallPluginByFile(pluginName);
   }
 
   private void installDynamicPlugin(final File pluginFile) {
@@ -316,24 +320,36 @@ public class OServerPluginManager implements OService {
     try {
       final URL url = pluginFile.toURI().toURL();
 
-      pluginClassLoader = new URLClassLoader(new URL[] { url }, getClass().getClassLoader());
+      pluginClassLoader = new URLClassLoader(new URL[] {url}, getClass().getClassLoader());
 
       // LOAD PLUGIN.JSON FILE
       final URL r = pluginClassLoader.findResource("plugin.json");
       if (r == null) {
         OLogManager.instance()
-            .error(this, "Plugin definition file ('plugin.json') is not found for dynamic plugin '%s'", null, pluginName);
+            .error(
+                this,
+                "Plugin definition file ('plugin.json') is not found for dynamic plugin '%s'",
+                null,
+                pluginName);
         throw new IllegalArgumentException(
-            String.format("Plugin definition file ('plugin.json') is not found for dynamic plugin '%s'", pluginName));
+            String.format(
+                "Plugin definition file ('plugin.json') is not found for dynamic plugin '%s'",
+                pluginName));
       }
 
       final InputStream pluginConfigFile = r.openStream();
 
       try {
         if (pluginConfigFile == null || pluginConfigFile.available() == 0) {
-          OLogManager.instance().error(this, "Error on loading 'plugin.json' file for dynamic plugin '%s'", null, pluginName);
+          OLogManager.instance()
+              .error(
+                  this,
+                  "Error on loading 'plugin.json' file for dynamic plugin '%s'",
+                  null,
+                  pluginName);
           throw new IllegalArgumentException(
-              String.format("Error on loading 'plugin.json' file for dynamic plugin '%s'", pluginName));
+              String.format(
+                  "Error on loading 'plugin.json' file for dynamic plugin '%s'", pluginName));
         }
 
         final ODocument properties = new ODocument().fromJSON(pluginConfigFile);
@@ -350,11 +366,14 @@ public class OServerPluginManager implements OService {
         if (pluginClass != null) {
           // CREATE PARAMETERS
           parameters = properties.field("parameters");
-          final List<OServerParameterConfiguration> params = new ArrayList<OServerParameterConfiguration>();
+          final List<OServerParameterConfiguration> params =
+              new ArrayList<OServerParameterConfiguration>();
           for (String paramName : parameters.keySet()) {
-            params.add(new OServerParameterConfiguration(paramName, (String) parameters.get(paramName)));
+            params.add(
+                new OServerParameterConfiguration(paramName, (String) parameters.get(paramName)));
           }
-          final OServerParameterConfiguration[] pluginParams = params.toArray(new OServerParameterConfiguration[params.size()]);
+          final OServerParameterConfiguration[] pluginParams =
+              params.toArray(new OServerParameterConfiguration[params.size()]);
 
           pluginInstance = startPluginClass(pluginClass, pluginParams);
         } else {
@@ -363,9 +382,16 @@ public class OServerPluginManager implements OService {
         }
 
         // REGISTER THE PLUGIN
-        currentPluginData = new OServerPluginInfo(pluginName, properties.field("version"), properties.field("description"),
-            properties.field("web"), pluginInstance, parameters,
-            pluginFile.lastModified(), pluginClassLoader);
+        currentPluginData =
+            new OServerPluginInfo(
+                pluginName,
+                properties.field("version"),
+                properties.field("description"),
+                properties.field("web"),
+                pluginInstance,
+                parameters,
+                pluginFile.lastModified(),
+                pluginClassLoader);
 
         registerPlugin(currentPluginData);
         loadedPlugins.put(pluginFile.getName(), pluginName);
@@ -385,12 +411,14 @@ public class OServerPluginManager implements OService {
     return this;
   }
 
-  public OServerPluginManager unregisterLifecycleListener(final OPluginLifecycleListener iListener) {
+  public OServerPluginManager unregisterLifecycleListener(
+      final OPluginLifecycleListener iListener) {
     pluginListeners.remove(iListener);
     return this;
   }
 
-  public void callListenerBeforeConfig(final OServerPlugin plugin, final OServerParameterConfiguration[] cfg) {
+  public void callListenerBeforeConfig(
+      final OServerPlugin plugin, final OServerParameterConfiguration[] cfg) {
     for (OPluginLifecycleListener l : pluginListeners) {
       try {
         l.onBeforeConfig(plugin, cfg);
@@ -400,7 +428,8 @@ public class OServerPluginManager implements OService {
     }
   }
 
-  public void callListenerAfterConfig(final OServerPlugin plugin, final OServerParameterConfiguration[] cfg) {
+  public void callListenerAfterConfig(
+      final OServerPlugin plugin, final OServerParameterConfiguration[] cfg) {
     for (OPluginLifecycleListener l : pluginListeners) {
       try {
         l.onAfterConfig(plugin, cfg);

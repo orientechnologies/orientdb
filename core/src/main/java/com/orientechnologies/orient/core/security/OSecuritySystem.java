@@ -22,7 +22,6 @@ package com.orientechnologies.orient.core.security;
 import com.orientechnologies.orient.core.metadata.security.OSecurityUser;
 import com.orientechnologies.orient.core.metadata.security.OUser;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-
 import java.util.HashMap;
 import java.util.Map;
 
@@ -39,10 +38,12 @@ public interface OSecuritySystem {
   boolean isDefaultAllowed();
 
   // Returns the actual username if successful, null otherwise.
-  // Some token-based authentication (e.g., SPNEGO tokens have the user's name embedded in the service ticket).
+  // Some token-based authentication (e.g., SPNEGO tokens have the user's name embedded in the
+  // service ticket).
   String authenticate(final String username, final String password);
 
-  // Used for generating the appropriate HTTP authentication mechanism. The chain of authenticators is used for this.
+  // Used for generating the appropriate HTTP authentication mechanism. The chain of authenticators
+  // is used for this.
   String getAuthenticationHeader(final String databaseName);
 
   default Map<String, String> getAuthenticationHeaders(final String databaseName) {
@@ -54,8 +55,8 @@ public interface OSecuritySystem {
   ODocument getComponentConfig(final String name);
 
   /**
-   * Returns the "System User" associated with 'username' from the system database. If not found, returns null. dbName is used to
-   * filter the assigned roles. It may be null.
+   * Returns the "System User" associated with 'username' from the system database. If not found,
+   * returns null. dbName is used to filter the assigned roles. It may be null.
    */
   OUser getSystemUser(final String username, final String dbName);
 
@@ -74,9 +75,13 @@ public interface OSecuritySystem {
    * Logs to the auditing service, if installed.
    *
    * @param dbName May be null or empty.
-   * @param user   May be null or empty.
+   * @param user May be null or empty.
    */
-  void log(final OAuditingOperation operation, final String dbName, OSecurityUser user, final String message);
+  void log(
+      final OAuditingOperation operation,
+      final String dbName,
+      OSecurityUser user,
+      final String message);
 
   void registerSecurityClass(final Class<?> cls);
 
@@ -94,9 +99,7 @@ public interface OSecuritySystem {
 
   void reloadComponent(OSecurityUser user, final String name, final ODocument jsonConfig);
 
-  /**
-   * Called each time one of the security classes (OUser, ORole, OServerRole) is modified.
-   */
+  /** Called each time one of the security classes (OUser, ORole, OServerRole) is modified. */
   void securityRecordChange(final String dbURL, final ODocument record);
 
   void unregisterSecurityClass(final Class<?> cls);
@@ -104,5 +107,6 @@ public interface OSecuritySystem {
   // If a password validator is registered with the security system, it will be called to validate
   // the specified password. An OInvalidPasswordException is thrown if the password does not meet
   // the password validator's requirements.
-  void validatePassword(final String username, final String password) throws OInvalidPasswordException;
+  void validatePassword(final String username, final String password)
+      throws OInvalidPasswordException;
 }

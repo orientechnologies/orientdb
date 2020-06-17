@@ -1,8 +1,6 @@
 package com.orientechnologies.orient.object.db.entity;
 
-/**
- * Created by tglman on 09/05/16.
- */
+/** Created by tglman on 09/05/16. */
 public class LoopEntityLink {
   private LoopEntity linkBack;
 
@@ -13,5 +11,4 @@ public class LoopEntityLink {
   public void setLinkBack(LoopEntity linkBack) {
     this.linkBack = linkBack;
   }
-
 }

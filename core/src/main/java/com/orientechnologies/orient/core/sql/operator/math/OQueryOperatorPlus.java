@@ -1,22 +1,22 @@
 /*
-  *
-  *  *  Copyright 2010-2016 OrientDB LTD (http://orientdb.com)
-  *  *
-  *  *  Licensed under the Apache License, Version 2.0 (the "License");
-  *  *  you may not use this file except in compliance with the License.
-  *  *  You may obtain a copy of the License at
-  *  *
-  *  *       http://www.apache.org/licenses/LICENSE-2.0
-  *  *
-  *  *  Unless required by applicable law or agreed to in writing, software
-  *  *  distributed under the License is distributed on an "AS IS" BASIS,
-  *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-  *  *  See the License for the specific language governing permissions and
-  *  *  limitations under the License.
-  *  *
-  *  * For more information: http://orientdb.com
-  *
-  */
+ *
+ *  *  Copyright 2010-2016 OrientDB LTD (http://orientdb.com)
+ *  *
+ *  *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  *  you may not use this file except in compliance with the License.
+ *  *  You may obtain a copy of the License at
+ *  *
+ *  *       http://www.apache.org/licenses/LICENSE-2.0
+ *  *
+ *  *  Unless required by applicable law or agreed to in writing, software
+ *  *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  *  See the License for the specific language governing permissions and
+ *  *  limitations under the License.
+ *  *
+ *  * For more information: http://orientdb.com
+ *
+ */
 package com.orientechnologies.orient.core.sql.operator.math;
 
 import com.orientechnologies.orient.core.command.OCommandContext;
@@ -27,15 +27,13 @@ import com.orientechnologies.orient.core.serialization.serializer.record.binary.
 import com.orientechnologies.orient.core.sql.filter.OSQLFilterCondition;
 import com.orientechnologies.orient.core.sql.operator.OIndexReuseType;
 import com.orientechnologies.orient.core.sql.operator.OQueryOperator;
-
 import java.math.BigDecimal;
 import java.util.Date;
 
 /**
  * PLUS "+" operator.
- * 
+ *
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
- * 
  */
 public class OQueryOperatorPlus extends OQueryOperator {
 
@@ -44,36 +42,32 @@ public class OQueryOperatorPlus extends OQueryOperator {
   }
 
   @Override
-  public Object evaluateRecord(final OIdentifiable iRecord, ODocument iCurrentResult, final OSQLFilterCondition iCondition,
-      Object iLeft, Object iRight, OCommandContext iContext, final ODocumentSerializer serializer) {
-    if (iRight == null)
-      return iLeft;
-    if (iLeft == null)
-      return iRight;
+  public Object evaluateRecord(
+      final OIdentifiable iRecord,
+      ODocument iCurrentResult,
+      final OSQLFilterCondition iCondition,
+      Object iLeft,
+      Object iRight,
+      OCommandContext iContext,
+      final ODocumentSerializer serializer) {
+    if (iRight == null) return iLeft;
+    if (iLeft == null) return iRight;
 
-    if (iLeft instanceof Date)
-      iLeft = ((Date) iLeft).getTime();
-    if (iRight instanceof Date)
-      iRight = ((Date) iRight).getTime();
+    if (iLeft instanceof Date) iLeft = ((Date) iLeft).getTime();
+    if (iRight instanceof Date) iRight = ((Date) iRight).getTime();
 
-    if (iLeft instanceof String)
-      return (String) iLeft + iRight.toString();
-    else if (iRight instanceof String)
-      return iLeft.toString() + (String) iRight;
+    if (iLeft instanceof String) return (String) iLeft + iRight.toString();
+    else if (iRight instanceof String) return iLeft.toString() + (String) iRight;
     else if (iLeft instanceof Number && iRight instanceof Number) {
       final Number l = (Number) iLeft;
       final Number r = (Number) iRight;
       Class maxPrecisionClass = OQueryOperatorMultiply.getMaxPrecisionClass(l, r);
       if (Integer.class.equals(maxPrecisionClass))
         return OQueryOperatorMultiply.tryDownscaleToInt(l.longValue() + r.longValue());
-      else if (Long.class.equals(maxPrecisionClass))
-        return l.longValue() + r.longValue();
-      else if (Short.class.equals(maxPrecisionClass))
-        return l.shortValue() + r.shortValue();
-      else if (Float.class.equals(maxPrecisionClass))
-        return l.floatValue() + r.floatValue();
-      else if (Double.class.equals(maxPrecisionClass))
-        return l.doubleValue() + r.doubleValue();
+      else if (Long.class.equals(maxPrecisionClass)) return l.longValue() + r.longValue();
+      else if (Short.class.equals(maxPrecisionClass)) return l.shortValue() + r.shortValue();
+      else if (Float.class.equals(maxPrecisionClass)) return l.floatValue() + r.floatValue();
+      else if (Double.class.equals(maxPrecisionClass)) return l.doubleValue() + r.doubleValue();
       else if (BigDecimal.class.equals(maxPrecisionClass)) {
         return (OQueryOperatorMultiply.toBigDecimal(l)).add(OQueryOperatorMultiply.toBigDecimal(r));
       }

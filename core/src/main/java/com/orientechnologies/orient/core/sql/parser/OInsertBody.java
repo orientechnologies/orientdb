@@ -8,11 +8,11 @@ import java.util.stream.Collectors;
 
 public class OInsertBody extends SimpleNode {
 
-  protected List<OIdentifier>          identifierList;
-  protected List<List<OExpression>>    valueExpressions;
+  protected List<OIdentifier> identifierList;
+  protected List<List<OExpression>> valueExpressions;
   protected List<OInsertSetExpression> setExpressions;
 
-  protected OJson           content;
+  protected OJson content;
   protected OInputParameter contentInputParam;
 
   public OInsertBody(int id) {
@@ -56,7 +56,6 @@ public class OInsertBody extends SimpleNode {
         }
       }
       builder.append(")");
-
     }
 
     if (setExpressions != null) {
@@ -78,17 +77,24 @@ public class OInsertBody extends SimpleNode {
       builder.append("CONTENT ");
       contentInputParam.toString(params, builder);
     }
-
   }
 
   public OInsertBody copy() {
     OInsertBody result = new OInsertBody(-1);
-    result.identifierList = identifierList == null ? null : identifierList.stream().map(x -> x.copy()).collect(Collectors.toList());
-    result.valueExpressions = valueExpressions == null ?
-        null :
-        valueExpressions.stream().map(sub -> sub.stream().map(x -> x.copy()).collect(Collectors.toList()))
-            .collect(Collectors.toList());
-    result.setExpressions = setExpressions == null ? null : setExpressions.stream().map(x -> x.copy()).collect(Collectors.toList());
+    result.identifierList =
+        identifierList == null
+            ? null
+            : identifierList.stream().map(x -> x.copy()).collect(Collectors.toList());
+    result.valueExpressions =
+        valueExpressions == null
+            ? null
+            : valueExpressions.stream()
+                .map(sub -> sub.stream().map(x -> x.copy()).collect(Collectors.toList()))
+                .collect(Collectors.toList());
+    result.setExpressions =
+        setExpressions == null
+            ? null
+            : setExpressions.stream().map(x -> x.copy()).collect(Collectors.toList());
     result.content = content == null ? null : content.copy();
     result.contentInputParam = contentInputParam == null ? null : contentInputParam.copy();
     return result;
@@ -96,22 +102,24 @@ public class OInsertBody extends SimpleNode {
 
   @Override
   public boolean equals(Object o) {
-    if (this == o)
-      return true;
-    if (o == null || getClass() != o.getClass())
-      return false;
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
 
     OInsertBody that = (OInsertBody) o;
 
-    if (identifierList != null ? !identifierList.equals(that.identifierList) : that.identifierList != null)
-      return false;
-    if (valueExpressions != null ? !valueExpressions.equals(that.valueExpressions) : that.valueExpressions != null)
-      return false;
-    if (setExpressions != null ? !setExpressions.equals(that.setExpressions) : that.setExpressions != null)
-      return false;
-    if (content != null ? !content.equals(that.content) : that.content != null)
-      return false;
-    return contentInputParam != null ? contentInputParam.equals(that.contentInputParam) : that.contentInputParam == null;
+    if (identifierList != null
+        ? !identifierList.equals(that.identifierList)
+        : that.identifierList != null) return false;
+    if (valueExpressions != null
+        ? !valueExpressions.equals(that.valueExpressions)
+        : that.valueExpressions != null) return false;
+    if (setExpressions != null
+        ? !setExpressions.equals(that.setExpressions)
+        : that.setExpressions != null) return false;
+    if (content != null ? !content.equals(that.content) : that.content != null) return false;
+    return contentInputParam != null
+        ? contentInputParam.equals(that.contentInputParam)
+        : that.contentInputParam == null;
   }
 
   @Override

@@ -1,7 +1,17 @@
 package com.orientechnologies.orient.core.record.impl;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
+
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
-import com.orientechnologies.orient.core.db.*;
+import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
+import com.orientechnologies.orient.core.db.ODatabaseSession;
+import com.orientechnologies.orient.core.db.ODatabaseType;
+import com.orientechnologies.orient.core.db.OrientDB;
+import com.orientechnologies.orient.core.db.OrientDBConfig;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
@@ -14,16 +24,22 @@ import com.orientechnologies.orient.core.record.OElement;
 import com.orientechnologies.orient.core.serialization.ODocumentSerializable;
 import com.orientechnologies.orient.core.serialization.OSerializableStream;
 import com.orientechnologies.orient.core.serialization.serializer.record.binary.ODocumentSerializerDelta;
+import java.math.BigDecimal;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Calendar;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import org.assertj.core.api.Assertions;
 import org.junit.Test;
 
-import java.math.BigDecimal;
-import java.util.*;
-
-import static org.junit.Assert.*;
-
 public class ODocumentSerializerDeltaTest {
-  private static final String dbName                    = ODocumentTest.class.getSimpleName();
+  private static final String dbName = ODocumentTest.class.getSimpleName();
   private static final String defaultDbAdminCredentials = "admin";
 
   @Test
@@ -53,15 +69,14 @@ public class ODocumentSerializerDeltaTest {
 
       doc.field(fieldName, testValue);
       doc.removeField(removeField);
-      //test serialization/deserialization
+      // test serialization/deserialization
       ODocumentSerializerDelta delta = ODocumentSerializerDelta.instance();
       byte[] bytes = delta.serializeDelta(doc);
       delta.deserializeDelta(bytes, originalDoc);
       assertEquals(testValue, originalDoc.field(fieldName));
       assertNull(originalDoc.field(removeField));
     } finally {
-      if (db != null)
-        db.close();
+      if (db != null) db.close();
       if (odb != null) {
         odb.drop(dbName);
         odb.close();
@@ -108,13 +123,12 @@ public class ODocumentSerializerDeltaTest {
       ODocumentSerializerDelta serializerDelta = ODocumentSerializerDelta.instance();
 
       byte[] bytes = serializerDelta.serializeDelta(doc);
-      //test serialization/deserialization
+      // test serialization/deserialization
       serializerDelta.deserializeDelta(bytes, originalDoc);
       nestedDoc = originalDoc.field(nestedDocField);
       assertEquals(nestedDoc.field(fieldName), testValue);
     } finally {
-      if (db != null)
-        db.close();
+      if (db != null) db.close();
       if (odb != null) {
         odb.drop(dbName);
         odb.close();
@@ -150,7 +164,7 @@ public class ODocumentSerializerDeltaTest {
       newArray.set(1, "three");
       newArray.remove("toRemove");
 
-      //test serialization/deserialization
+      // test serialization/deserialization
       ODocumentSerializerDelta serializerDelta = ODocumentSerializerDelta.instance();
 
       byte[] bytes = serializerDelta.serializeDelta(doc);
@@ -160,8 +174,7 @@ public class ODocumentSerializerDeltaTest {
       assertEquals("three", checkList.get(1));
       assertFalse(checkList.contains("toRemove"));
     } finally {
-      if (db != null)
-        db.close();
+      if (db != null) db.close();
       if (odb != null) {
         odb.drop(dbName);
         odb.close();
@@ -196,7 +209,7 @@ public class ODocumentSerializerDeltaTest {
       newArray.add("three");
       newArray.remove("toRemove");
 
-      //test serialization/deserialization
+      // test serialization/deserialization
       ODocumentSerializerDelta serializerDelta = ODocumentSerializerDelta.instance();
 
       byte[] bytes = serializerDelta.serializeDelta(doc);
@@ -206,8 +219,7 @@ public class ODocumentSerializerDeltaTest {
       assertTrue(checkSet.contains("three"));
       assertFalse(checkSet.contains("toRemove"));
     } finally {
-      if (db != null)
-        db.close();
+      if (db != null) db.close();
       if (odb != null) {
         odb.drop(dbName);
         odb.close();
@@ -244,7 +256,7 @@ public class ODocumentSerializerDeltaTest {
       Set<String> newArray = (Set<String>) ((Set) doc.field(fieldName)).iterator().next();
       newArray.add("three");
 
-      //test serialization/deserialization
+      // test serialization/deserialization
       ODocumentSerializerDelta serializerDelta = ODocumentSerializerDelta.instance();
 
       byte[] bytes = serializerDelta.serializeDelta(doc);
@@ -253,8 +265,7 @@ public class ODocumentSerializerDeltaTest {
       Set<List> checkSet = originalDoc.field(fieldName);
       assertFalse(checkSet.contains("three"));
     } finally {
-      if (db != null)
-        db.close();
+      if (db != null) db.close();
       if (odb != null) {
         odb.drop(dbName);
         odb.close();
@@ -292,7 +303,7 @@ public class ODocumentSerializerDeltaTest {
       List<String> newArray = (List<String>) ((List) doc.field(fieldName)).get(0);
       newArray.set(1, "three");
 
-      //test serialization/deserialization
+      // test serialization/deserialization
       ODocumentSerializerDelta serializerDelta = ODocumentSerializerDelta.instance();
 
       byte[] bytes = serializerDelta.serializeDelta(doc);
@@ -301,8 +312,7 @@ public class ODocumentSerializerDeltaTest {
       List<List> checkList = originalDoc.field(fieldName);
       assertEquals("three", checkList.get(0).get(1));
     } finally {
-      if (db != null)
-        db.close();
+      if (db != null) db.close();
       if (odb != null) {
         odb.drop(dbName);
         odb.close();
@@ -344,7 +354,7 @@ public class ODocumentSerializerDeltaTest {
       ODocument testDoc = (ODocument) ((List) doc.getProperty(fieldName)).get(1);
       testDoc.field(variableField, "two");
 
-      //test serialization/deserialization
+      // test serialization/deserialization
       ODocumentSerializerDelta serializerDelta = ODocumentSerializerDelta.instance();
 
       byte[] bytes = serializerDelta.serializeDelta(doc);
@@ -358,8 +368,7 @@ public class ODocumentSerializerDeltaTest {
       e.printStackTrace();
       throw e;
     } finally {
-      if (db != null)
-        db.close();
+      if (db != null) db.close();
       if (odb != null) {
         odb.drop(dbName);
         odb.close();
@@ -410,7 +419,7 @@ public class ODocumentSerializerDeltaTest {
       ODocument d1 = originalValue.get(0).get(0);
       d1.field(variableField, "two");
 
-      //test serialization/deserialization
+      // test serialization/deserialization
       ODocumentSerializerDelta serializerDelta = ODocumentSerializerDelta.instance();
 
       byte[] bytes = serializerDelta.serializeDelta(doc);
@@ -422,8 +431,7 @@ public class ODocumentSerializerDeltaTest {
       e.printStackTrace();
       assertNotNull(null);
     } finally {
-      if (db != null)
-        db.close();
+      if (db != null) db.close();
       if (odb != null) {
         odb.drop(dbName);
         odb.close();
@@ -461,10 +469,11 @@ public class ODocumentSerializerDeltaTest {
       doc = db.save(doc);
       ODocument originalDoc = doc.copy();
 
-      List<String> innerList = (List<String>) ((List) ((List) ((List) doc.field(fieldName)).get(0)).get(0));
+      List<String> innerList =
+          (List<String>) ((List) ((List) ((List) doc.field(fieldName)).get(0)).get(0));
       innerList.set(0, "changed");
 
-      //test serialization/deserialization
+      // test serialization/deserialization
       ODocumentSerializerDelta serializerDelta = ODocumentSerializerDelta.instance();
 
       byte[] bytes = serializerDelta.serializeDelta(doc);
@@ -473,8 +482,7 @@ public class ODocumentSerializerDeltaTest {
       List<List<List<String>>> checkList = originalDoc.field(fieldName);
       assertEquals("changed", checkList.get(0).get(0).get(0));
     } finally {
-      if (db != null)
-        db.close();
+      if (db != null) db.close();
       if (odb != null) {
         odb.drop(dbName);
         odb.close();
@@ -520,7 +528,7 @@ public class ODocumentSerializerDeltaTest {
       ODocument testDoc = (ODocument) ((List) doc.field(fieldName)).get(1);
       List<String> currentList = testDoc.field(variableField);
       currentList.set(0, "changed");
-      //test serialization/deserialization
+      // test serialization/deserialization
       ODocumentSerializerDelta serializerDelta = ODocumentSerializerDelta.instance();
 
       byte[] bytes = serializerDelta.serializeDelta(doc);
@@ -531,8 +539,7 @@ public class ODocumentSerializerDeltaTest {
       List<String> checkInnerList = checkDoc.field(variableField);
       assertEquals("changed", checkInnerList.get(0));
     } finally {
-      if (db != null)
-        db.close();
+      if (db != null) db.close();
       if (odb != null) {
         odb.drop(dbName);
         odb.close();
@@ -565,7 +572,7 @@ public class ODocumentSerializerDeltaTest {
       List<String> newArray = doc.field(fieldName);
       newArray.add("three");
 
-      //test serialization/deserialization
+      // test serialization/deserialization
       ODocumentSerializerDelta serializerDelta = ODocumentSerializerDelta.instance();
 
       byte[] bytes = serializerDelta.serializeDelta(doc);
@@ -574,8 +581,7 @@ public class ODocumentSerializerDeltaTest {
       List checkList = originalDoc.field(fieldName);
       assertEquals(3, checkList.size());
     } finally {
-      if (db != null)
-        db.close();
+      if (db != null) db.close();
       if (odb != null) {
         odb.drop(dbName);
         odb.close();
@@ -609,14 +615,14 @@ public class ODocumentSerializerDeltaTest {
 
       doc = db.save(doc);
       // Deep Copy is not working in this case, use toStream/fromStream as workaround.
-      //ODocument originalDoc = doc.copy();
+      // ODocument originalDoc = doc.copy();
       ODocument originalDoc = new ODocument();
       originalDoc.fromStream(doc.toStream());
 
       List<String> newArray = (List<String>) ((List) doc.field(fieldName)).get(0);
       newArray.add("three");
 
-      //test serialization/deserialization
+      // test serialization/deserialization
       ODocumentSerializerDelta serializerDelta = ODocumentSerializerDelta.instance();
 
       byte[] bytes = serializerDelta.serializeDelta(doc);
@@ -626,8 +632,7 @@ public class ODocumentSerializerDeltaTest {
       List<String> checkList = rootList.get(0);
       assertEquals(3, checkList.size());
     } finally {
-      if (db != null)
-        db.close();
+      if (db != null) db.close();
       if (odb != null) {
         odb.drop(dbName);
         odb.close();
@@ -663,7 +668,7 @@ public class ODocumentSerializerDeltaTest {
       newArray.remove(0);
       newArray.remove(0);
 
-      //test serialization/deserialization
+      // test serialization/deserialization
       ODocumentSerializerDelta serializerDelta = ODocumentSerializerDelta.instance();
 
       byte[] bytes = serializerDelta.serializeDelta(doc);
@@ -672,8 +677,7 @@ public class ODocumentSerializerDeltaTest {
       List checkList = originalDoc.field(fieldName);
       assertEquals("three", checkList.get(0));
     } finally {
-      if (db != null)
-        db.close();
+      if (db != null) db.close();
       if (odb != null) {
         odb.drop(dbName);
         odb.close();
@@ -705,15 +709,14 @@ public class ODocumentSerializerDeltaTest {
 
       doc.field(fieldName, testValue);
 
-      //test serialization/deserialization
+      // test serialization/deserialization
       ODocumentSerializerDelta serializerDelta = ODocumentSerializerDelta.instance();
 
       byte[] bytes = serializerDelta.serializeDelta(doc);
       serializerDelta.deserializeDelta(bytes, originalDoc);
       assertEquals(testValue, originalDoc.field(fieldName));
     } finally {
-      if (db != null)
-        db.close();
+      if (db != null) db.close();
       if (odb != null) {
         odb.drop(dbName);
         odb.close();
@@ -746,7 +749,7 @@ public class ODocumentSerializerDeltaTest {
       doc.removeField(fieldName);
       doc.setProperty("other", "new");
 
-      //test serialization/deserialization
+      // test serialization/deserialization
       ODocumentSerializerDelta serializerDelta = ODocumentSerializerDelta.instance();
 
       byte[] bytes = serializerDelta.serializeDelta(doc);
@@ -755,8 +758,7 @@ public class ODocumentSerializerDeltaTest {
       assertFalse(originalDoc.containsField(fieldName));
       assertEquals(originalDoc.getProperty("other"), "new");
     } finally {
-      if (db != null)
-        db.close();
+      if (db != null) db.close();
       if (odb != null) {
         odb.drop(dbName);
         odb.close();
@@ -794,7 +796,7 @@ public class ODocumentSerializerDeltaTest {
 
       doc.removeField(fieldName);
 
-      //test serialization/deserialization
+      // test serialization/deserialization
       ODocumentSerializerDelta serializerDelta = ODocumentSerializerDelta.instance();
 
       byte[] bytes = serializerDelta.serializeDelta(rootDoc);
@@ -803,8 +805,7 @@ public class ODocumentSerializerDeltaTest {
       ODocument nested = originalDoc.field(nestedFieldName);
       assertFalse(nested.containsField(fieldName));
     } finally {
-      if (db != null)
-        db.close();
+      if (db != null) db.close();
       if (odb != null) {
         odb.drop(dbName);
         odb.close();
@@ -845,7 +846,7 @@ public class ODocumentSerializerDeltaTest {
 
       ODocument testDoc = (ODocument) ((List) doc.field(fieldName)).get(1);
       testDoc.removeField(variableField);
-      //test serialization/deserialization
+      // test serialization/deserialization
       ODocumentSerializerDelta serializerDelta = ODocumentSerializerDelta.instance();
 
       byte[] bytes = serializerDelta.serializeDelta(doc);
@@ -856,8 +857,7 @@ public class ODocumentSerializerDeltaTest {
       assertEquals(checkDoc.field(constantField), constValue);
       assertFalse(checkDoc.containsField(variableField));
     } finally {
-      if (db != null)
-        db.close();
+      if (db != null) db.close();
       if (odb != null) {
         odb.drop(dbName);
         odb.close();
@@ -890,7 +890,7 @@ public class ODocumentSerializerDeltaTest {
       Map<String, String> containedMap = doc.field(fieldName);
       containedMap.put("first", "changed");
 
-      //test serialization/deserialization
+      // test serialization/deserialization
       ODocumentSerializerDelta serializerDelta = ODocumentSerializerDelta.instance();
 
       byte[] bytes = serializerDelta.serializeDelta(doc);
@@ -899,8 +899,7 @@ public class ODocumentSerializerDeltaTest {
       containedMap = originalDoc.field(fieldName);
       assertEquals("changed", containedMap.get("first"));
     } finally {
-      if (db != null)
-        db.close();
+      if (db != null) db.close();
       if (odb != null) {
         odb.drop(dbName);
         odb.close();
@@ -940,7 +939,7 @@ public class ODocumentSerializerDeltaTest {
 
       Map<String, String> containedMap = (Map<String, String>) ((List) doc.field(fieldName)).get(0);
       containedMap.put("first", "changed");
-      //test serialization/deserialization
+      // test serialization/deserialization
       ODocumentSerializerDelta serializerDelta = ODocumentSerializerDelta.instance();
 
       byte[] bytes = serializerDelta.serializeDelta(doc);
@@ -951,8 +950,7 @@ public class ODocumentSerializerDeltaTest {
       containedMap = (Map<String, String>) ((List) originalDoc.field(fieldName)).get(1);
       assertEquals("one", containedMap.get("first"));
     } finally {
-      if (db != null)
-        db.close();
+      if (db != null) db.close();
       if (odb != null) {
         odb.drop(dbName);
         odb.close();
@@ -993,7 +991,7 @@ public class ODocumentSerializerDeltaTest {
       ODocument changeDoc = containedMap.get("first");
       changeDoc.field("f1", "changed");
 
-      //test serialization/deserialization
+      // test serialization/deserialization
       ODocumentSerializerDelta serializerDelta = ODocumentSerializerDelta.instance();
 
       byte[] bytes = serializerDelta.serializeDelta(doc);
@@ -1002,8 +1000,7 @@ public class ODocumentSerializerDeltaTest {
       ODocument containedDoc = containedMap.get("first");
       assertEquals("changed", containedDoc.field("f1"));
     } finally {
-      if (db != null)
-        db.close();
+      if (db != null) db.close();
       if (odb != null) {
         odb.drop(dbName);
         odb.close();
@@ -1048,7 +1045,7 @@ public class ODocumentSerializerDeltaTest {
 
       Map<String, String> containedMap = (Map<String, String>) ((List) doc.field(fieldName)).get(0);
       containedMap.put("first", "changed");
-      //test serialization/deserialization
+      // test serialization/deserialization
       ODocumentSerializerDelta serializerDelta = ODocumentSerializerDelta.instance();
 
       byte[] bytes = serializerDelta.serializeDelta(doc);
@@ -1057,8 +1054,7 @@ public class ODocumentSerializerDeltaTest {
       containedMap = (Map<String, String>) ((List) originalDoc.field(fieldName)).get(0);
       assertEquals("changed", containedMap.get("first"));
     } finally {
-      if (db != null)
-        db.close();
+      if (db != null) db.close();
       if (odb != null) {
         odb.drop(dbName);
         odb.close();
@@ -1100,7 +1096,7 @@ public class ODocumentSerializerDeltaTest {
       ridBag.add(second);
       ridBag.add(third);
       doc.field(fieldName, ridBag, OType.LINKBAG);
-      //test serialization/deserialization
+      // test serialization/deserialization
       ODocumentSerializerDelta serializerDelta = ODocumentSerializerDelta.instance();
 
       byte[] bytes = serializerDelta.serializeDelta(doc);
@@ -1109,8 +1105,7 @@ public class ODocumentSerializerDeltaTest {
       ORidBag mergedRidbag = originalDoc.field(fieldName);
       assertEquals(ridBag, mergedRidbag);
     } finally {
-      if (db != null)
-        db.close();
+      if (db != null) db.close();
       if (odb != null) {
         odb.drop(dbName);
         odb.close();
@@ -1152,7 +1147,7 @@ public class ODocumentSerializerDeltaTest {
       ridBag.add(second);
       doc.field(fieldName, ridBag, OType.LINKBAG);
 
-      //test serialization/deserialization
+      // test serialization/deserialization
       ODocumentSerializerDelta serializerDelta = ODocumentSerializerDelta.instance();
 
       byte[] bytes = serializerDelta.serializeDelta(doc);
@@ -1161,8 +1156,7 @@ public class ODocumentSerializerDeltaTest {
       ORidBag mergedRidbag = originalDoc.field(fieldName);
       assertEquals(ridBag, mergedRidbag);
     } finally {
-      if (db != null)
-        db.close();
+      if (db != null) db.close();
       if (odb != null) {
         odb.drop(dbName);
         odb.close();
@@ -1201,7 +1195,7 @@ public class ODocumentSerializerDeltaTest {
       third = db.save(third);
       ridBag.add(third);
 
-      //test serialization/deserialization
+      // test serialization/deserialization
       ODocumentSerializerDelta serializerDelta = ODocumentSerializerDelta.instance();
 
       byte[] bytes = serializerDelta.serializeDelta(doc);
@@ -1210,8 +1204,7 @@ public class ODocumentSerializerDeltaTest {
       ORidBag mergedRidbag = originalDoc.field(fieldName);
       assertEquals(ridBag, mergedRidbag);
     } finally {
-      if (db != null)
-        db.close();
+      if (db != null) db.close();
       if (odb != null) {
         odb.drop(dbName);
         odb.close();
@@ -1250,7 +1243,7 @@ public class ODocumentSerializerDeltaTest {
       ODocument originalDoc = doc.copy();
       ridBag.remove(third);
 
-      //test serialization/deserialization
+      // test serialization/deserialization
       ODocumentSerializerDelta serializerDelta = ODocumentSerializerDelta.instance();
 
       byte[] bytes = serializerDelta.serializeDelta(doc);
@@ -1259,8 +1252,7 @@ public class ODocumentSerializerDeltaTest {
       ORidBag mergedRidbag = originalDoc.field(fieldName);
       assertEquals(ridBag, mergedRidbag);
     } finally {
-      if (db != null)
-        db.close();
+      if (db != null) db.close();
       if (odb != null) {
         odb.drop(dbName);
         odb.close();
@@ -1303,7 +1295,7 @@ public class ODocumentSerializerDeltaTest {
       ridBag.add(third);
       doc.field(fieldName, ridBag, OType.LINKBAG);
 
-      //test serialization/deserialization
+      // test serialization/deserialization
       ODocumentSerializerDelta serializerDelta = ODocumentSerializerDelta.instance();
 
       byte[] bytes = serializerDelta.serializeDelta(doc);
@@ -1312,8 +1304,7 @@ public class ODocumentSerializerDeltaTest {
       ORidBag mergedRidbag = originalDoc.field(fieldName);
       assertEquals(ridBag, mergedRidbag);
     } finally {
-      if (db != null)
-        db.close();
+      if (db != null) db.close();
       if (odb != null) {
         odb.drop(dbName);
         odb.close();
@@ -1355,7 +1346,7 @@ public class ODocumentSerializerDeltaTest {
       ((List<OIdentifiable>) doc.getProperty("linkList")).add(null);
       ((Set<OIdentifiable>) doc.getProperty("linkSet")).add(null);
       ((Map<String, OIdentifiable>) doc.getProperty("linkMap")).put("nullValue", null);
-      //test serialization/deserialization
+      // test serialization/deserialization
       ODocumentSerializerDelta serializerDelta = ODocumentSerializerDelta.instance();
 
       byte[] bytes = serializerDelta.serializeDelta(doc);
@@ -1367,14 +1358,12 @@ public class ODocumentSerializerDeltaTest {
       assertTrue(((Set) originalDoc.getProperty("linkSet")).contains(null));
       assertTrue(((Map) originalDoc.getProperty("linkMap")).containsKey("nullValue"));
     } finally {
-      if (db != null)
-        db.close();
+      if (db != null) db.close();
       if (odb != null) {
         odb.drop(dbName);
         odb.close();
       }
     }
-
   }
 
   @Test
@@ -1411,7 +1400,7 @@ public class ODocumentSerializerDeltaTest {
       ((Map<String, OIdentifiable>) doc.getProperty("linkMap")).put("new", link2);
       ((Map<String, OIdentifiable>) doc.getProperty("linkMap")).put("three", link2);
       ((Map<String, OIdentifiable>) doc.getProperty("linkMap")).remove("two");
-      //test serialization/deserialization
+      // test serialization/deserialization
       ODocumentSerializerDelta serializerDelta = ODocumentSerializerDelta.instance();
 
       byte[] bytes = serializerDelta.serializeDelta(doc);
@@ -1426,14 +1415,12 @@ public class ODocumentSerializerDeltaTest {
       assertTrue(((Map) originalDoc.getProperty("linkMap")).containsKey("one"));
       assertFalse(((Map) originalDoc.getProperty("linkMap")).containsKey("two"));
     } finally {
-      if (db != null)
-        db.close();
+      if (db != null) db.close();
       if (odb != null) {
         odb.drop(dbName);
         odb.close();
       }
     }
-
   }
 
   @Test
@@ -1475,29 +1462,36 @@ public class ODocumentSerializerDeltaTest {
       ((Map<String, String>) doc.getProperty("map")).put("two", "something");
       ((Map<String, String>) doc.getProperty("map1")).remove("one");
       ((Map<String, String>) doc.getProperty("map1")).put("two", "something");
-      ((Map<String, Map<String, String>>) doc.getProperty("mapNested")).get("nest").put("other", "value");
-      //test serialization/deserialization
+      ((Map<String, Map<String, String>>) doc.getProperty("mapNested"))
+          .get("nest")
+          .put("other", "value");
+      // test serialization/deserialization
       ODocumentSerializerDelta serializerDelta = ODocumentSerializerDelta.instance();
 
       byte[] bytes = serializerDelta.serializeDelta(doc);
       serializerDelta.deserializeDelta(bytes, originalDoc);
       assertNotNull(((Map) originalDoc.getProperty("mapEmbedded")).get("newDoc"));
-      assertEquals(((Map<String, OElement>) originalDoc.getProperty("mapEmbedded")).get("newDoc").getProperty("other"),
+      assertEquals(
+          ((Map<String, OElement>) originalDoc.getProperty("mapEmbedded"))
+              .get("newDoc")
+              .getProperty("other"),
           Integer.valueOf(1));
       assertEquals(((Map) originalDoc.getProperty("map")).get("value"), "other");
       assertEquals(((Map) originalDoc.getProperty("map")).get("two"), "something");
       assertEquals(((Map) originalDoc.getProperty("map1")).get("two"), "something");
       assertNull(((Map) originalDoc.getProperty("map1")).get("one"));
-      assertEquals(((Map<String, Map<String, String>>) originalDoc.getProperty("mapNested")).get("nest").get("other"), "value");
+      assertEquals(
+          ((Map<String, Map<String, String>>) originalDoc.getProperty("mapNested"))
+              .get("nest")
+              .get("other"),
+          "value");
     } finally {
-      if (db != null)
-        db.close();
+      if (db != null) db.close();
       if (odb != null) {
         odb.drop(dbName);
         odb.close();
       }
     }
-
   }
 
   @Test
@@ -1516,7 +1510,8 @@ public class ODocumentSerializerDeltaTest {
     document.field("character", 'C');
     document.field("alive", true);
     document.field("dateTime", new Date());
-    document.field("bigNumber", new BigDecimal("43989872423376487952454365232141525434.32146432321442534"));
+    document.field(
+        "bigNumber", new BigDecimal("43989872423376487952454365232141525434.32146432321442534"));
     ORidBag bag = new ORidBag();
     bag.add(new ORecordId(1, 1));
     bag.add(new ORecordId(2, 2));
@@ -1571,7 +1566,7 @@ public class ODocumentSerializerDeltaTest {
 
   }
 
-  @SuppressWarnings({ "rawtypes", "unchecked" })
+  @SuppressWarnings({"rawtypes", "unchecked"})
   @Test
   public void testSimpleLiteralArray() {
     ODatabaseRecordThreadLocal.instance().remove();
@@ -1668,7 +1663,7 @@ public class ODocumentSerializerDeltaTest {
     // assertEquals(extr.field("listMixed"), document.field("listMixed"));
   }
 
-  @SuppressWarnings({ "rawtypes", "unchecked" })
+  @SuppressWarnings({"rawtypes", "unchecked"})
   @Test
   public void testSimpleLiteralList() {
     ODatabaseRecordThreadLocal.instance().remove();
@@ -1761,7 +1756,7 @@ public class ODocumentSerializerDeltaTest {
     assertEquals(extr.<Object>field("listMixed"), document.field("listMixed"));
   }
 
-  @SuppressWarnings({ "rawtypes", "unchecked" })
+  @SuppressWarnings({"rawtypes", "unchecked"})
   @Test
   public void testSimpleLiteralSet() throws InterruptedException {
     ODatabaseRecordThreadLocal.instance().remove();
@@ -1859,7 +1854,8 @@ public class ODocumentSerializerDeltaTest {
 
   @Test
   public void testLinkCollections() {
-    ODatabaseDocument db = new ODatabaseDocumentTx("memory:ODocumentSchemalessBinarySerializationTest").create();
+    ODatabaseDocument db =
+        new ODatabaseDocumentTx("memory:ODocumentSchemalessBinarySerializationTest").create();
     try {
       ODocument document = new ODocument();
       Set<ORecordId> linkSet = new HashSet<ORecordId>();
@@ -1882,13 +1878,13 @@ public class ODocumentSerializerDeltaTest {
       serializerDelta.deserialize(res, extr);
 
       assertEquals(extr.fields(), document.fields());
-      assertEquals(((Set<?>) extr.field("linkSet")).size(), ((Set<?>) document.field("linkSet")).size());
+      assertEquals(
+          ((Set<?>) extr.field("linkSet")).size(), ((Set<?>) document.field("linkSet")).size());
       assertTrue(((Set<?>) extr.field("linkSet")).containsAll((Set<?>) document.field("linkSet")));
       assertEquals(extr.<Object>field("linkList"), document.field("linkList"));
     } finally {
       db.drop();
     }
-
   }
 
   @Test
@@ -1994,7 +1990,6 @@ public class ODocumentSerializerDeltaTest {
 
     assertEquals(extr.fields(), document.fields());
     assertEquals(extr.<Object>field("complexList"), document.field("complexList"));
-
   }
 
   @Test
@@ -2019,7 +2014,6 @@ public class ODocumentSerializerDeltaTest {
     assertEquals(savedValue.get(0).size(), array[0].length);
     assertEquals(savedValue.get(0).get(0), array[0][0]);
     assertEquals(savedValue.get(0).get(1), array[0][1]);
-
   }
 
   @Test
@@ -2074,7 +2068,8 @@ public class ODocumentSerializerDeltaTest {
   @Test
   public void testMapOfLink() {
     // needs a database because of the lazy loading
-    ODatabaseDocument db = new ODatabaseDocumentTx("memory:ODocumentSchemalessBinarySerializationTest").create();
+    ODatabaseDocument db =
+        new ODatabaseDocumentTx("memory:ODocumentSchemalessBinarySerializationTest").create();
     try {
       ODocument document = new ODocument();
 
@@ -2096,7 +2091,8 @@ public class ODocumentSerializerDeltaTest {
 
   @Test
   public void testDocumentSimple() {
-    ODatabaseDocument db = new ODatabaseDocumentTx("memory:ODocumentSchemalessBinarySerializationTest").create();
+    ODatabaseDocument db =
+        new ODatabaseDocumentTx("memory:ODocumentSchemalessBinarySerializationTest").create();
     try {
       ODocument document = new ODocument("TestClass");
       document.field("test", "test");
@@ -2105,7 +2101,7 @@ public class ODocumentSerializerDeltaTest {
       ODocument extr = new ODocument();
       serializerDelta.deserialize(res, extr);
 
-//      assertEquals(extr.getClassName(), document.getClassName());
+      //      assertEquals(extr.getClassName(), document.getClassName());
       assertEquals(extr.fields(), document.fields());
       assertEquals(extr.<Object>field("test"), document.field("test"));
     } finally {
@@ -2305,8 +2301,8 @@ public class ODocumentSerializerDeltaTest {
     boolean ok = false;
     for (ODocument inSet : setEmb) {
       assertNotNull(inSet);
-      if (embeddedInSet.field("name").equals(inSet.field("name")) && embeddedInSet.field("surname").equals(inSet.field("surname")))
-        ok = true;
+      if (embeddedInSet.field("name").equals(inSet.field("name"))
+          && embeddedInSet.field("surname").equals(inSet.field("surname"))) ok = true;
     }
     assertTrue("not found record in the set after serilize", ok);
   }
@@ -2370,7 +2366,6 @@ public class ODocumentSerializerDeltaTest {
     assertEquals(document.<Object>field("age"), extr.field("age"));
     assertEquals(document.<Object>field("youngAge"), extr.field("youngAge"));
     assertNull(extr.field("oldAge"));
-
   }
 
   @Test
@@ -2417,8 +2412,9 @@ public class ODocumentSerializerDeltaTest {
 
     @Override
     public boolean equals(Object obj) {
-      return obj != null && obj instanceof ODocumentSchemalessBinarySerializationTest.Custom && Arrays
-          .equals(bytes, ((ODocumentSchemalessBinarySerializationTest.Custom) obj).bytes);
+      return obj != null
+          && obj instanceof ODocumentSchemalessBinarySerializationTest.Custom
+          && Arrays.equals(bytes, ((ODocumentSchemalessBinarySerializationTest.Custom) obj).bytes);
     }
   }
 
@@ -2439,12 +2435,10 @@ public class ODocumentSerializerDeltaTest {
 
     @Override
     public boolean equals(Object obj) {
-      return obj != null && document.field("test").equals(((CustomDocument) obj).document.field("test"));
+      return obj != null
+          && document.field("test").equals(((CustomDocument) obj).document.field("test"));
     }
   }
 
-  private class WrongData {
-
-  }
-
+  private class WrongData {}
 }

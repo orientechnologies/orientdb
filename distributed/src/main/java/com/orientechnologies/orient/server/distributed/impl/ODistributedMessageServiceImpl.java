@@ -25,53 +25,64 @@ import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.server.OSystemDatabase;
-import com.orientechnologies.orient.server.distributed.*;
+import com.orientechnologies.orient.server.distributed.ODistributedConfiguration;
+import com.orientechnologies.orient.server.distributed.ODistributedMessageService;
+import com.orientechnologies.orient.server.distributed.ODistributedRequestId;
+import com.orientechnologies.orient.server.distributed.ODistributedResponse;
+import com.orientechnologies.orient.server.distributed.ODistributedResponseManager;
+import com.orientechnologies.orient.server.distributed.ODistributedServerLog;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIRECTION;
+import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
 import com.orientechnologies.orient.server.hazelcast.OHazelcastPlugin;
-
-import java.util.*;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
+import java.util.TimerTask;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicLong;
 
 /**
- * Hazelcast implementation of distributed peer. There is one instance per database. Each node creates own instance to talk with
- * each others.
+ * Hazelcast implementation of distributed peer. There is one instance per database. Each node
+ * creates own instance to talk with each others.
  *
  * @author Luca Garulli (l.garulli--at--orientdb.com)
  */
 public class ODistributedMessageServiceImpl implements ODistributedMessageService {
 
-  private final    OHazelcastPlugin                                     manager;
-  private final    ConcurrentHashMap<Long, ODistributedResponseManager> responsesByRequestIds;
-  private final    TimerTask                                            asynchMessageManager;
-  protected final  ConcurrentHashMap<String, ODistributedDatabaseImpl>  databases           = new ConcurrentHashMap<String, ODistributedDatabaseImpl>();
-  private          Thread                                               responseThread;
-  private          long[]                                               responseTimeMetrics = new long[10];
-  private volatile boolean                                              running             = true;
-  private final    Map<String, OProfilerEntry>                          latencies           = new HashMap<String, OProfilerEntry>();
-  private final    Map<String, AtomicLong>                              messagesStats       = new HashMap<String, AtomicLong>();
+  private final OHazelcastPlugin manager;
+  private final ConcurrentHashMap<Long, ODistributedResponseManager> responsesByRequestIds;
+  private final TimerTask asynchMessageManager;
+  protected final ConcurrentHashMap<String, ODistributedDatabaseImpl> databases =
+      new ConcurrentHashMap<String, ODistributedDatabaseImpl>();
+  private Thread responseThread;
+  private long[] responseTimeMetrics = new long[10];
+  private volatile boolean running = true;
+  private final Map<String, OProfilerEntry> latencies = new HashMap<String, OProfilerEntry>();
+  private final Map<String, AtomicLong> messagesStats = new HashMap<String, AtomicLong>();
 
   public ODistributedMessageServiceImpl(final OHazelcastPlugin manager) {
     this.manager = manager;
     this.responsesByRequestIds = new ConcurrentHashMap<Long, ODistributedResponseManager>();
 
     // RESET ALL THE METRICS
-    for (int i = 0; i < responseTimeMetrics.length; ++i)
-      responseTimeMetrics[i] = -1;
+    for (int i = 0; i < responseTimeMetrics.length; ++i) responseTimeMetrics[i] = -1;
 
     // CREATE TASK THAT CHECK ASYNCHRONOUS MESSAGE RECEIVED
-    asynchMessageManager = new TimerTask() {
-      @Override
-      public void run() {
-        purgePendingMessages();
-      }
-    };
+    asynchMessageManager =
+        new TimerTask() {
+          @Override
+          public void run() {
+            purgePendingMessages();
+          }
+        };
   }
 
   public ODistributedDatabaseImpl getDatabase(final String iDatabaseName) {
-    if (databases != null)
-      return databases.get(iDatabaseName);
+    if (databases != null) return databases.get(iDatabaseName);
 
     // NOT INITIALIZED YET
     return null;
@@ -87,11 +98,13 @@ public class ODistributedMessageServiceImpl implements ODistributedMessageServic
 
     // SET ALL DATABASES TO NOT_AVAILABLE
     for (Entry<String, ODistributedDatabaseImpl> m : databases.entrySet()) {
-      if (OSystemDatabase.SYSTEM_DB_NAME.equals(m.getKey()))
-        continue;
+      if (OSystemDatabase.SYSTEM_DB_NAME.equals(m.getKey())) continue;
 
       try {
-        manager.setDatabaseStatus(manager.getLocalNodeName(), m.getKey(), ODistributedServerManager.DB_STATUS.NOT_AVAILABLE);
+        manager.setDatabaseStatus(
+            manager.getLocalNodeName(),
+            m.getKey(),
+            ODistributedServerManager.DB_STATUS.NOT_AVAILABLE);
       } catch (Exception t) {
         // IGNORE IT
       }
@@ -102,8 +115,7 @@ public class ODistributedMessageServiceImpl implements ODistributedMessageServic
     asynchMessageManager.cancel();
 
     // CANCEL ALL THE PENDING REQUESTS
-    for (ODistributedResponseManager req : responsesByRequestIds.values())
-      req.cancel();
+    for (ODistributedResponseManager req : responsesByRequestIds.values()) req.cancel();
 
     responsesByRequestIds.clear();
 
@@ -138,22 +150,23 @@ public class ODistributedMessageServiceImpl implements ODistributedMessageServic
     return total > 0 ? total / involved : 0;
   }
 
-  /**
-   * Creates a distributed database instance if not defined yet.
-   */
-  public ODistributedDatabaseImpl registerDatabase(final String iDatabaseName, ODistributedConfiguration cfg) {
+  /** Creates a distributed database instance if not defined yet. */
+  public ODistributedDatabaseImpl registerDatabase(
+      final String iDatabaseName, ODistributedConfiguration cfg) {
     final ODistributedDatabaseImpl ddb = databases.get(iDatabaseName);
-    if (ddb != null)
-      return ddb;
+    if (ddb != null) return ddb;
 
-    return new ODistributedDatabaseImpl(manager, this, iDatabaseName, cfg, manager.getServerInstance());
+    return new ODistributedDatabaseImpl(
+        manager, this, iDatabaseName, cfg, manager.getServerInstance());
   }
 
   public ODistributedDatabaseImpl unregisterDatabase(final String iDatabaseName) {
     try {
-      manager.setDatabaseStatus(manager.getLocalNodeName(), iDatabaseName, ODistributedServerManager.DB_STATUS.OFFLINE);
+      manager.setDatabaseStatus(
+          manager.getLocalNodeName(), iDatabaseName, ODistributedServerManager.DB_STATUS.OFFLINE);
     } catch (Exception t) {
-      ODistributedServerLog.warn(this, manager.getLocalNodeName(), null, null, "error un-registering database", t);
+      ODistributedServerLog.warn(
+          this, manager.getLocalNodeName(), null, null, "error un-registering database", t);
       // IGNORE IT
     }
 
@@ -169,7 +182,8 @@ public class ODistributedMessageServiceImpl implements ODistributedMessageServic
     // We assign the ConcurrentHashMap (databases) to the Map interface for this reason:
     // ConcurrentHashMap.keySet() in Java 8 returns a ConcurrentHashMap.KeySetView.
     // ConcurrentHashMap.keySet() in Java 7 returns a Set.
-    // If this code is compiled with Java 8 yet is run on Java 7, you'll receive a NoSuchMethodError:
+    // If this code is compiled with Java 8 yet is run on Java 7, you'll receive a
+    // NoSuchMethodError:
     // java.util.concurrent.ConcurrentHashMap.keySet()Ljava/util/concurrent/ConcurrentHashMap$KeySetView.
     // By assigning the ConcurrentHashMap variable to a Map, the call to keySet() will return a Set
     // and not the Java 8 type, KeySetView.
@@ -180,9 +194,7 @@ public class ODistributedMessageServiceImpl implements ODistributedMessageServic
     return result;
   }
 
-  /**
-   * Not synchronized, it's called when a message arrives
-   */
+  /** Not synchronized, it's called when a message arrives */
   public void dispatchResponseToThread(final ODistributedResponse response) {
     try {
       final long msgId = response.getRequestId().getMessageId();
@@ -191,30 +203,42 @@ public class ODistributedMessageServiceImpl implements ODistributedMessageServic
       final ODistributedResponseManager asynchMgr = responsesByRequestIds.get(msgId);
       if (asynchMgr == null) {
         if (ODistributedServerLog.isDebugEnabled())
-          ODistributedServerLog.debug(this, manager.getLocalNodeName(), response.getExecutorNodeName(), DIRECTION.IN,
-              "received response for message %d after the timeout (%dms)", msgId,
+          ODistributedServerLog.debug(
+              this,
+              manager.getLocalNodeName(),
+              response.getExecutorNodeName(),
+              DIRECTION.IN,
+              "received response for message %d after the timeout (%dms)",
+              msgId,
               OGlobalConfiguration.DISTRIBUTED_ASYNCH_RESPONSES_TIMEOUT.getValueAsLong());
       } else if (asynchMgr.collectResponse(response)) {
-        // ALL RESPONSE RECEIVED, REMOVE THE RESPONSE MANAGER WITHOUT WAITING THE PURGE THREAD REMOVE THEM FOR TIMEOUT
+        // ALL RESPONSE RECEIVED, REMOVE THE RESPONSE MANAGER WITHOUT WAITING THE PURGE THREAD
+        // REMOVE THEM FOR TIMEOUT
         responsesByRequestIds.remove(msgId);
       }
     } finally {
-      Orient.instance().getProfiler()
-          .updateCounter("distributed.node.msgReceived", "Number of replication messages received in current node", +1,
+      Orient.instance()
+          .getProfiler()
+          .updateCounter(
+              "distributed.node.msgReceived",
+              "Number of replication messages received in current node",
+              +1,
               "distributed.node.msgReceived");
 
-      Orient.instance().getProfiler().updateCounter("distributed.node." + response.getExecutorNodeName() + ".msgReceived",
-          "Number of replication messages received in current node from a node", +1, "distributed.node.*.msgReceived");
+      Orient.instance()
+          .getProfiler()
+          .updateCounter(
+              "distributed.node." + response.getExecutorNodeName() + ".msgReceived",
+              "Number of replication messages received in current node from a node",
+              +1,
+              "distributed.node.*.msgReceived");
     }
   }
 
-  /**
-   * Removes a response manager because in timeout.
-   */
+  /** Removes a response manager because in timeout. */
   public void timeoutRequest(final long msgId) {
     final ODistributedResponseManager asynchMgr = responsesByRequestIds.remove(msgId);
-    if (asynchMgr != null)
-      asynchMgr.timeout();
+    if (asynchMgr != null) asynchMgr.timeout();
   }
 
   @Override
@@ -233,8 +257,7 @@ public class ODistributedMessageServiceImpl implements ODistributedMessageServic
   public long getCurrentLatency(final String server) {
     synchronized (latencies) {
       final OProfilerEntry l = latencies.get(server);
-      if (l != null)
-        return (long) (l.average / 1000000);
+      if (l != null) return (long) (l.average / 1000000);
     }
     // NOT FOUND
     return 0;
@@ -248,8 +271,7 @@ public class ODistributedMessageServiceImpl implements ODistributedMessageServic
       if (latency == null) {
         latency = new OProfilerEntry();
         latencies.put(server, latency);
-      } else
-        latency.updateLastExecution();
+      } else latency.updateLastExecution();
 
       latency.entries++;
 
@@ -268,10 +290,8 @@ public class ODistributedMessageServiceImpl implements ODistributedMessageServic
       latency.last = System.nanoTime() - sentOn;
       latency.total += latency.last;
       latency.average = latency.total / latency.lastResetEntries;
-      if (latency.last < latency.min)
-        latency.min = latency.last;
-      if (latency.last > latency.max)
-        latency.max = latency.last;
+      if (latency.last < latency.min) latency.min = latency.last;
+      if (latency.last > latency.max) latency.max = latency.last;
     }
   }
 
@@ -280,7 +300,9 @@ public class ODistributedMessageServiceImpl implements ODistributedMessageServic
 
     final long timeout = OGlobalConfiguration.DISTRIBUTED_ASYNCH_RESPONSES_TIMEOUT.getValueAsLong();
 
-    for (Iterator<Entry<Long, ODistributedResponseManager>> it = responsesByRequestIds.entrySet().iterator(); it.hasNext(); ) {
+    for (Iterator<Entry<Long, ODistributedResponseManager>> it =
+            responsesByRequestIds.entrySet().iterator();
+        it.hasNext(); ) {
       final Entry<Long, ODistributedResponseManager> item = it.next();
 
       final ODistributedResponseManager resp = item.getValue();
@@ -291,16 +313,33 @@ public class ODistributedMessageServiceImpl implements ODistributedMessageServic
         // EXPIRED REQUEST, FREE IT!
         final List<String> missingNodes = resp.getMissingNodes();
 
-        ODistributedServerLog.warn(this, manager.getLocalNodeName(), missingNodes.toString(), DIRECTION.IN,
-            "%d missed response(s) for message %d by nodes %s after %dms when timeout is %dms", missingNodes.size(),
-            resp.getMessageId(), missingNodes, timeElapsed, timeout);
+        ODistributedServerLog.warn(
+            this,
+            manager.getLocalNodeName(),
+            missingNodes.toString(),
+            DIRECTION.IN,
+            "%d missed response(s) for message %d by nodes %s after %dms when timeout is %dms",
+            missingNodes.size(),
+            resp.getMessageId(),
+            missingNodes,
+            timeElapsed,
+            timeout);
 
-        Orient.instance().getProfiler()
-            .updateCounter("distributed.db." + resp.getDatabaseName() + ".timeouts", "Number of messages in timeouts", +1,
+        Orient.instance()
+            .getProfiler()
+            .updateCounter(
+                "distributed.db." + resp.getDatabaseName() + ".timeouts",
+                "Number of messages in timeouts",
+                +1,
                 "distributed.db.*.timeouts");
 
-        Orient.instance().getProfiler()
-            .updateCounter("distributed.node.timeouts", "Number of messages in timeouts", +1, "distributed.node.timeouts");
+        Orient.instance()
+            .getProfiler()
+            .updateCounter(
+                "distributed.node.timeouts",
+                "Number of messages in timeouts",
+                +1,
+                "distributed.node.timeouts");
 
         resp.timeout();
         it.remove();

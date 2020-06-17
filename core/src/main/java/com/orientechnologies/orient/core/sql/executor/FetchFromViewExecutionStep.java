@@ -6,24 +6,26 @@ import com.orientechnologies.orient.core.db.OSharedContextEmbedded;
 import com.orientechnologies.orient.core.db.viewmanager.ViewManager;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.metadata.schema.OView;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
-/**
- * Created by luigidellaquila on 08/07/16.
- */
+/** Created by luigidellaquila on 08/07/16. */
 public class FetchFromViewExecutionStep extends FetchFromClassExecutionStep {
 
   private List<Integer> usedClusters = new ArrayList<>();
-  
-  public FetchFromViewExecutionStep(String className, Set<String> clusters, QueryPlanningInfo planningInfo, OCommandContext ctx,
-      Boolean ridOrder, boolean profilingEnabled) {
+
+  public FetchFromViewExecutionStep(
+      String className,
+      Set<String> clusters,
+      QueryPlanningInfo planningInfo,
+      OCommandContext ctx,
+      Boolean ridOrder,
+      boolean profilingEnabled) {
     super(className, clusters, planningInfo, ctx, ridOrder, profilingEnabled);
 
-    OSharedContextEmbedded sharedContext = (OSharedContextEmbedded) ((ODatabaseDocumentInternal) ctx.getDatabase())
-        .getSharedContext();
+    OSharedContextEmbedded sharedContext =
+        (OSharedContextEmbedded) ((ODatabaseDocumentInternal) ctx.getDatabase()).getSharedContext();
     ViewManager viewManager = sharedContext.getViewManager();
     OView view = loadClassFromSchema(className, ctx);
     int[] classClusters = view.getPolymorphicClusterIds();
@@ -39,8 +41,8 @@ public class FetchFromViewExecutionStep extends FetchFromClassExecutionStep {
   @Override
   public void close() {
     super.close();
-    OSharedContextEmbedded sharedContext = (OSharedContextEmbedded) ((ODatabaseDocumentInternal) ctx.getDatabase())
-        .getSharedContext();
+    OSharedContextEmbedded sharedContext =
+        (OSharedContextEmbedded) ((ODatabaseDocumentInternal) ctx.getDatabase()).getSharedContext();
     ViewManager viewManager = sharedContext.getViewManager();
     usedClusters.forEach(x -> viewManager.endUsingViewCluster(x));
   }
@@ -78,4 +80,3 @@ public class FetchFromViewExecutionStep extends FetchFromClassExecutionStep {
     return false;
   }
 }
-

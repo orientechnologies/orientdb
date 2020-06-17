@@ -6,13 +6,13 @@ import com.orientechnologies.orient.distributed.impl.log.OLogId;
 public interface ODiscoveryListener {
   static class NodeData {
     protected ONodeIdentity identity;
-    protected String        address;
-    protected int           port;
-    protected boolean       leader;
-    protected int           term;
+    protected String address;
+    protected int port;
+    protected boolean leader;
+    protected int term;
     protected volatile long lastPingTimestamp;
-    protected String        connectionUsername;
-    protected String        connectionPassword;
+    protected String connectionUsername;
+    protected String connectionPassword;
 
     public ONodeIdentity getNodeIdentity() {
       return identity;
@@ -24,10 +24,8 @@ public interface ODiscoveryListener {
   void nodeDisconnected(NodeData data);
 
   default void leaderElected(NodeData data) {
-    //TODO
+    // TODO
   }
 
-  default void lastDbOperation(ONodeIdentity leaderIdentity, String database, OLogId logId){
-
-  }
+  default void lastDbOperation(ONodeIdentity leaderIdentity, String database, OLogId logId) {}
 }

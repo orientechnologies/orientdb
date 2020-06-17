@@ -23,7 +23,6 @@ package com.orientechnologies.common.serialization.types;
 import com.orientechnologies.common.serialization.OBinaryConverter;
 import com.orientechnologies.common.serialization.OBinaryConverterFactory;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALChanges;
-
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 
@@ -34,19 +33,19 @@ import java.nio.ByteOrder;
  * @since 18.01.12
  */
 public class OLongSerializer implements OBinarySerializer<Long> {
-  public static final  byte             ID        = 10;
-  /**
-   * size of long value in bytes
-   */
-  public static final  int              LONG_SIZE = 8;
+  public static final byte ID = 10;
+  /** size of long value in bytes */
+  public static final int LONG_SIZE = 8;
+
   private static final OBinaryConverter CONVERTER = OBinaryConverterFactory.getConverter();
-  public static final  OLongSerializer  INSTANCE  = new OLongSerializer();
+  public static final OLongSerializer INSTANCE = new OLongSerializer();
 
   public int getObjectSize(final Long object, final Object... hints) {
     return LONG_SIZE;
   }
 
-  public void serialize(final Long object, final byte[] stream, final int startPosition, final Object... hints) {
+  public void serialize(
+      final Long object, final byte[] stream, final int startPosition, final Object... hints) {
     serializeLiteral(object.longValue(), stream, startPosition);
   }
 
@@ -66,9 +65,13 @@ public class OLongSerializer implements OBinarySerializer<Long> {
   }
 
   public long deserializeLiteral(final byte[] stream, final int startPosition) {
-    return ((0xff & stream[startPosition + 7]) | (0xff & stream[startPosition + 6]) << 8 | (0xff & stream[startPosition + 5]) << 16
-        | (long) (0xff & stream[startPosition + 4]) << 24 | (long) (0xff & stream[startPosition + 3]) << 32
-        | (long) (0xff & stream[startPosition + 2]) << 40 | (long) (0xff & stream[startPosition + 1]) << 48
+    return ((0xff & stream[startPosition + 7])
+        | (0xff & stream[startPosition + 6]) << 8
+        | (0xff & stream[startPosition + 5]) << 16
+        | (long) (0xff & stream[startPosition + 4]) << 24
+        | (long) (0xff & stream[startPosition + 3]) << 32
+        | (long) (0xff & stream[startPosition + 2]) << 40
+        | (long) (0xff & stream[startPosition + 1]) << 48
         | (long) (0xff & stream[startPosition]) << 56);
   }
 
@@ -85,7 +88,8 @@ public class OLongSerializer implements OBinarySerializer<Long> {
   }
 
   @Override
-  public void serializeNativeObject(final Long object, final byte[] stream, final int startPosition, final Object... hints) {
+  public void serializeNativeObject(
+      final Long object, final byte[] stream, final int startPosition, final Object... hints) {
     checkBoundaries(stream, startPosition);
 
     CONVERTER.putLong(stream, startPosition, object, ByteOrder.nativeOrder());
@@ -98,7 +102,8 @@ public class OLongSerializer implements OBinarySerializer<Long> {
     return CONVERTER.getLong(stream, startPosition, ByteOrder.nativeOrder());
   }
 
-  public void serializeNative(final long object, final byte[] stream, final int startPosition, final Object... hints) {
+  public void serializeNative(
+      final long object, final byte[] stream, final int startPosition, final Object... hints) {
     checkBoundaries(stream, startPosition);
 
     CONVERTER.putLong(stream, startPosition, object, ByteOrder.nativeOrder());
@@ -123,41 +128,32 @@ public class OLongSerializer implements OBinarySerializer<Long> {
     return value;
   }
 
-  /**
-   * {@inheritDoc}
-   */
+  /** {@inheritDoc} */
   @Override
   public void serializeInByteBufferObject(Long object, ByteBuffer buffer, Object... hints) {
     buffer.putLong(object);
   }
 
-  /**
-   * {@inheritDoc}
-   */
+  /** {@inheritDoc} */
   @Override
   public Long deserializeFromByteBufferObject(ByteBuffer buffer) {
     return buffer.getLong();
   }
 
-  /**
-   * {@inheritDoc}
-   */
+  /** {@inheritDoc} */
   @Override
   public int getObjectSizeInByteBuffer(ByteBuffer buffer) {
     return LONG_SIZE;
   }
 
-  /**
-   * {@inheritDoc}
-   */
+  /** {@inheritDoc} */
   @Override
-  public Long deserializeFromByteBufferObject(ByteBuffer buffer, OWALChanges walChanges, int offset) {
+  public Long deserializeFromByteBufferObject(
+      ByteBuffer buffer, OWALChanges walChanges, int offset) {
     return walChanges.getLongValue(buffer, offset);
   }
 
-  /**
-   * {@inheritDoc}
-   */
+  /** {@inheritDoc} */
   @Override
   public int getObjectSizeInByteBuffer(ByteBuffer buffer, OWALChanges walChanges, int offset) {
     return LONG_SIZE;
@@ -166,7 +162,10 @@ public class OLongSerializer implements OBinarySerializer<Long> {
   private static void checkBoundaries(byte[] stream, int startPosition) {
     if (startPosition + LONG_SIZE > stream.length) {
       throw new IllegalStateException(
-          "Requested stream size is " + (startPosition + LONG_SIZE) + " but provided stream has size " + stream.length);
+          "Requested stream size is "
+              + (startPosition + LONG_SIZE)
+              + " but provided stream has size "
+              + stream.length);
     }
   }
 }

@@ -20,23 +20,22 @@
 
 package com.orientechnologies.orient.core.db;
 
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
-
 import com.orientechnologies.orient.core.config.OContextConfiguration;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabase.ATTRIBUTES;
 import com.orientechnologies.orient.core.db.config.ONodeConfiguration;
 import com.orientechnologies.orient.core.db.config.ONodeConfigurationBuilder;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
 
 public class OrientDBConfigBuilder {
 
-  private OContextConfiguration     configurations           = new OContextConfiguration();
-  private Map<ATTRIBUTES, Object>   attributes               = new HashMap<>();
-  private Set<ODatabaseListener>    listeners                = new HashSet<>();
-  private ClassLoader               classLoader;
+  private OContextConfiguration configurations = new OContextConfiguration();
+  private Map<ATTRIBUTES, Object> attributes = new HashMap<>();
+  private Set<ODatabaseListener> listeners = new HashSet<>();
+  private ClassLoader classLoader;
   private ONodeConfigurationBuilder nodeConfigurationBuilder = ONodeConfiguration.builder();
 
   public OrientDBConfigBuilder fromGlobalMap(Map<OGlobalConfiguration, Object> values) {
@@ -76,12 +75,12 @@ public class OrientDBConfigBuilder {
   }
 
   public OrientDBConfig build() {
-    return new OrientDBConfig(configurations, attributes, listeners, classLoader, nodeConfigurationBuilder.build());
+    return new OrientDBConfig(
+        configurations, attributes, listeners, classLoader, nodeConfigurationBuilder.build());
   }
 
   public OrientDBConfigBuilder fromContext(OContextConfiguration contextConfiguration) {
     configurations = contextConfiguration;
     return this;
   }
-
 }

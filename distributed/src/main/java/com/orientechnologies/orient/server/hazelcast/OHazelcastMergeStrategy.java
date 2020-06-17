@@ -24,11 +24,11 @@ import com.hazelcast.map.merge.MapMergePolicy;
 import com.hazelcast.nio.ObjectDataInput;
 import com.hazelcast.nio.ObjectDataOutput;
 import com.orientechnologies.common.log.OLogManager;
-
 import java.io.IOException;
 
 /**
- * Strategy used by Hazelcast after a merge of two networks. The local network (the bigger) always wins.
+ * Strategy used by Hazelcast after a merge of two networks. The local network (the bigger) always
+ * wins.
  *
  * @author Luca Garulli (l.garulli--at--orientdb.com)
  */
@@ -38,26 +38,47 @@ public class OHazelcastMergeStrategy implements MapMergePolicy {
   }
 
   @Override
-  public Object merge(final String mapName, final EntryView mergingEntry, final EntryView existingEntry) {
+  public Object merge(
+      final String mapName, final EntryView mergingEntry, final EntryView existingEntry) {
     if (existingEntry.getValue() == null) {
       // NOT PRESENT, USE THE NEW VALUE
-      OLogManager.instance().debug(this, "Merge Strategy map=" + mapName + " key=" + mergingEntry.getKey() + ": "
-          + mergingEntry.getValue() + "/" + existingEntry.getValue() + " returning " + mergingEntry.getValue());
+      OLogManager.instance()
+          .debug(
+              this,
+              "Merge Strategy map="
+                  + mapName
+                  + " key="
+                  + mergingEntry.getKey()
+                  + ": "
+                  + mergingEntry.getValue()
+                  + "/"
+                  + existingEntry.getValue()
+                  + " returning "
+                  + mergingEntry.getValue());
 
       return mergingEntry.getValue();
     }
 
-    OLogManager.instance().debug(this, "Merge Strategy map=" + mapName + " key=" + mergingEntry.getKey() + ": "
-        + mergingEntry.getValue() + "/" + existingEntry.getValue() + " returning " + existingEntry.getValue());
+    OLogManager.instance()
+        .debug(
+            this,
+            "Merge Strategy map="
+                + mapName
+                + " key="
+                + mergingEntry.getKey()
+                + ": "
+                + mergingEntry.getValue()
+                + "/"
+                + existingEntry.getValue()
+                + " returning "
+                + existingEntry.getValue());
 
     return existingEntry.getValue();
   }
 
   @Override
-  public void writeData(final ObjectDataOutput out) throws IOException {
-  }
+  public void writeData(final ObjectDataOutput out) throws IOException {}
 
   @Override
-  public void readData(final ObjectDataInput in) throws IOException {
-  }
+  public void readData(final ObjectDataInput in) throws IOException {}
 }

@@ -18,6 +18,8 @@
 
 package com.orientechnologies.orient.etl.transformer;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 import com.orientechnologies.orient.core.db.ODatabasePool;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
@@ -29,24 +31,25 @@ import com.orientechnologies.orient.etl.OETLBaseTest;
 import org.junit.Before;
 import org.junit.Test;
 
-import static org.assertj.core.api.Assertions.assertThat;
-
-/**
- * Created by frank on 23/11/2015.
- */
+/** Created by frank on 23/11/2015. */
 public class OETLMergeTransformerTest extends OETLBaseTest {
 
   @Before
-  public void loadData() {
-  }
+  public void loadData() {}
 
   @Test
   public void shouldUpdateExistingVertices() throws Exception {
-    //update graph with CSV: avoid num to be casted to integer forcing string
+    // update graph with CSV: avoid num to be casted to integer forcing string
     configure(
-        " {source: { content: { value: 'num,name\n10000,FirstNameUpdated' } }, " + "extractor : { csv: {} }," + " transformers: ["
-            + "{merge: {  joinFieldName:'num', lookup:'Person.num'}}, " + "{vertex: { class:'Person', skipDuplicates: false}}"
-            + "]," + "loader: { orientdb: { dbURL: 'memory:" + name.getMethodName() + "', dbType:'graph', tx: true} } }");
+        " {source: { content: { value: 'num,name\n10000,FirstNameUpdated' } }, "
+            + "extractor : { csv: {} },"
+            + " transformers: ["
+            + "{merge: {  joinFieldName:'num', lookup:'Person.num'}}, "
+            + "{vertex: { class:'Person', skipDuplicates: false}}"
+            + "],"
+            + "loader: { orientdb: { dbURL: 'memory:"
+            + name.getMethodName()
+            + "', dbType:'graph', tx: true} } }");
 
     ODatabasePool pool = proc.getLoader().getPool();
     ODatabaseDocument db = pool.acquire();
@@ -57,7 +60,7 @@ public class OETLMergeTransformerTest extends OETLBaseTest {
 
     db.commit();
 
-    //prepare graph
+    // prepare graph
     OVertex person = db.newVertex("Person");
     person.setProperty("num", 10000);
     person.setProperty("name", "FirstName");
@@ -65,7 +68,7 @@ public class OETLMergeTransformerTest extends OETLBaseTest {
     db.commit();
     db.close();
 
-    //verify
+    // verify
     db = pool.acquire();
     assertThat(db.countClass("Person")).isEqualTo(1);
 
@@ -79,10 +82,10 @@ public class OETLMergeTransformerTest extends OETLBaseTest {
 
     resultSet.close();
     db.close();
-    //run processor
+    // run processor
     proc.execute();
 
-    //verify
+    // verify
     db = pool.acquire();
 
     assertThat(db.countClass("Person")).isEqualTo(1);
@@ -91,7 +94,7 @@ public class OETLMergeTransformerTest extends OETLBaseTest {
 
     final OResult updated = resultSet.next();
 
-//    ORecord load = graph.load(updated.toElement().getIdentity());
+    //    ORecord load = graph.load(updated.toElement().getIdentity());
     assertThat(updated.<String>getProperty("name")).isEqualTo("FirstNameUpdated");
     assertThat(updated.<Integer>getProperty("num")).isEqualTo(10000);
     assertThat(resultSet.hasNext()).isFalse();
@@ -102,11 +105,13 @@ public class OETLMergeTransformerTest extends OETLBaseTest {
   @Test
   public void shouldMergeVertexOnDuplitcatedInputSet() throws Exception {
 
-    //CSV contains duplicated data
+    // CSV contains duplicated data
     configure(
         "{source: { content: { value: 'num,name\n10000,FirstName\n10001,SecondName\n10000,FirstNameUpdated' } }, extractor : { csv: {} },"
             + " transformers: [{merge: { joinFieldName:'num', lookup:'Person.num'}}, {vertex: {class:'Person', skipDuplicates: true}}],"
-            + " " + "loader: { orientdb: { dbURL: 'memory:" + name.getMethodName()
+            + " "
+            + "loader: { orientdb: { dbURL: 'memory:"
+            + name.getMethodName()
             + "', dbType:'graph', useLightweightEdges:false } } }");
 
     ODatabasePool pool = proc.getLoader().getPool();
@@ -120,7 +125,7 @@ public class OETLMergeTransformerTest extends OETLBaseTest {
     db.commit();
     db.close();
 
-    //run processor
+    // run processor
     proc.execute();
 
     db = pool.acquire();
@@ -134,5 +139,4 @@ public class OETLMergeTransformerTest extends OETLBaseTest {
     assertThat(resultSet.hasNext()).isFalse();
     resultSet.close();
   }
-
 }

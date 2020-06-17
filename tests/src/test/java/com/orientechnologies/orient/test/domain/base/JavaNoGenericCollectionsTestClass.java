@@ -22,24 +22,17 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-
-import javax.persistence.Embedded;
 import javax.persistence.Id;
 import javax.persistence.Version;
 
-/**
- * @author Luca Molino (molino.luca--at--gmail.com)
- * 
- */
+/** @author Luca Molino (molino.luca--at--gmail.com) */
 public class JavaNoGenericCollectionsTestClass {
-  @Id
-  private String id;
-  @Version
-  private Object version;
+  @Id private String id;
+  @Version private Object version;
 
-  private Map    map  = new HashMap();
-  private List   list = new ArrayList();
-  private Set    set  = new HashSet();
+  private Map map = new HashMap();
+  private List list = new ArrayList();
+  private Set set = new HashSet();
 
   public String getId() {
     return id;
@@ -80,5 +73,4 @@ public class JavaNoGenericCollectionsTestClass {
   public void setSet(Set set) {
     this.set = set;
   }
-
 }

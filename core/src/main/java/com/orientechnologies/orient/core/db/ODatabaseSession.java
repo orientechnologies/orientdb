@@ -21,8 +21,5 @@ package com.orientechnologies.orient.core.db;
 
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 
-/**
- * Session for database operations with a specific user.
- */
-public interface ODatabaseSession extends ODatabaseDocument {
-}
+/** Session for database operations with a specific user. */
+public interface ODatabaseSession extends ODatabaseDocument {}

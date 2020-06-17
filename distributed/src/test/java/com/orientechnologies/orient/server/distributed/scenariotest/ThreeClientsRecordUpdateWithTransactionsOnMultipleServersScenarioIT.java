@@ -16,13 +16,12 @@
 
 package com.orientechnologies.orient.server.distributed.scenariotest;
 
+import static org.junit.Assert.assertEquals;
+
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.server.distributed.impl.ODistributedStorage;
-import org.junit.Ignore;
-import org.junit.Test;
-
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
@@ -30,50 +29,52 @@ import java.util.Map;
 import java.util.concurrent.Callable;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
-
-import static org.junit.Assert.assertEquals;
+import org.junit.Ignore;
+import org.junit.Test;
 
 /**
- * Checks for consistency on the cluster with these steps:
- * - 3 server (quorum=2)
- * - record1 is inserted on server1
- * - record1 (version 1) is propagated to the other two servers
- * - introduce a delay after record locking for all servers (different for each one)
- * - the three clients at the same time update the same record on different servers
- *
+ * Checks for consistency on the cluster with these steps: - 3 server (quorum=2) - record1 is
+ * inserted on server1 - record1 (version 1) is propagated to the other two servers - introduce a
+ * delay after record locking for all servers (different for each one) - the three clients at the
+ * same time update the same record on different servers
  */
 // TODO Temporary Ignored
-public class ThreeClientsRecordUpdateWithTransactionsOnMultipleServersScenarioIT extends AbstractScenarioTest {
+public class ThreeClientsRecordUpdateWithTransactionsOnMultipleServersScenarioIT
+    extends AbstractScenarioTest {
 
-  private final String        RECORD_ID   = "R001";
-  private Map<String, Object> hanFields   = new HashMap<String, Object>() {
-                                            {
-                                              put("id", RECORD_ID);
-                                              put("firstName", "Han");
-                                              put("lastName", "Solo");
-                                            }
-                                          };
-  private Map<String, Object> lukeFields  = new HashMap<String, Object>() {
-                                            {
-                                              put("id", RECORD_ID);
-                                              put("firstName", "Luke");
-                                              put("lastName", "Skywalker");
-                                            }
-                                          };
-  private Map<String, Object> darthFields = new HashMap<String, Object>() {
-                                            {
-                                              put("id", RECORD_ID);
-                                              put("firstName", "Darth");
-                                              put("lastName", "Vader");
-                                            }
-                                          };
-  private Map<String, Object> leiaFields  = new HashMap<String, Object>() {
-                                            {
-                                              put("id", RECORD_ID);
-                                              put("firstName", "Leia");
-                                              put("lastName", "Organa");
-                                            }
-                                          };
+  private final String RECORD_ID = "R001";
+  private Map<String, Object> hanFields =
+      new HashMap<String, Object>() {
+        {
+          put("id", RECORD_ID);
+          put("firstName", "Han");
+          put("lastName", "Solo");
+        }
+      };
+  private Map<String, Object> lukeFields =
+      new HashMap<String, Object>() {
+        {
+          put("id", RECORD_ID);
+          put("firstName", "Luke");
+          put("lastName", "Skywalker");
+        }
+      };
+  private Map<String, Object> darthFields =
+      new HashMap<String, Object>() {
+        {
+          put("id", RECORD_ID);
+          put("firstName", "Darth");
+          put("lastName", "Vader");
+        }
+      };
+  private Map<String, Object> leiaFields =
+      new HashMap<String, Object>() {
+        {
+          put("id", RECORD_ID);
+          put("firstName", "Leia");
+          put("lastName", "Organa");
+        }
+      };
 
   @Test
   @Ignore
@@ -106,22 +107,25 @@ public class ThreeClientsRecordUpdateWithTransactionsOnMultipleServersScenarioIT
       assertEquals(record1Server2.field("id"), record1Server1.field("id"));
       assertEquals(record1Server2.field("firstName"), record1Server1.field("firstName"));
       assertEquals(record1Server2.field("lastName"), record1Server1.field("lastName"));
-  
+
       ODocument record1Server3 = retrieveRecord(serverInstance.get(2), RECORD_ID);
       assertEquals(record1Server3.getVersion(), record1Server1.getVersion());
       assertEquals(record1Server3.field("id"), record1Server1.field("id"));
       assertEquals(record1Server3.field("firstName"), record1Server1.field("firstName"));
       assertEquals(record1Server3.field("lastName"), record1Server1.field("lastName"));
-  
+
       // gets the actual version of the record1
       int actualVersion = record1Server1.getVersion();
       System.out.println("Actual version: " + actualVersion);
-  
+
       // sets a delay for operations on distributed storage of all servers
-      ((ODistributedStorage) ((ODatabaseDocumentInternal)dbServer1).getStorage()).setEventListener(new AfterRecordLockDelayer("server1", DOCUMENT_WRITE_TIMEOUT));
-      ((ODistributedStorage) ((ODatabaseDocumentInternal)dbServer2).getStorage()).setEventListener(new AfterRecordLockDelayer("server2", DOCUMENT_WRITE_TIMEOUT / 4));
-      ((ODistributedStorage) ((ODatabaseDocumentInternal)dbServer3).getStorage()).setEventListener(new AfterRecordLockDelayer("server3", DOCUMENT_WRITE_TIMEOUT / 2));
-  
+      ((ODistributedStorage) ((ODatabaseDocumentInternal) dbServer1).getStorage())
+          .setEventListener(new AfterRecordLockDelayer("server1", DOCUMENT_WRITE_TIMEOUT));
+      ((ODistributedStorage) ((ODatabaseDocumentInternal) dbServer2).getStorage())
+          .setEventListener(new AfterRecordLockDelayer("server2", DOCUMENT_WRITE_TIMEOUT / 4));
+      ((ODistributedStorage) ((ODatabaseDocumentInternal) dbServer3).getStorage())
+          .setEventListener(new AfterRecordLockDelayer("server3", DOCUMENT_WRITE_TIMEOUT / 2));
+
       // updates the same record from three different clients, each calling a different server
       List<Callable<Void>> clients = new LinkedList<Callable<Void>>();
       clients.add(new RecordUpdater(serverInstance.get(0), record1Server1, lukeFields, true));
@@ -129,14 +133,14 @@ public class ThreeClientsRecordUpdateWithTransactionsOnMultipleServersScenarioIT
       clients.add(new RecordUpdater(serverInstance.get(2), record1Server3, leiaFields, true));
       List<Future<Void>> futures = Executors.newCachedThreadPool().invokeAll(clients);
       executeFutures(futures);
-  
+
       // checks that record on server3 is the one which wins over the others
       waitForUpdatedRecordPropagation(RECORD_ID, "firstName", "Leia");
-  
+
       record1Server1 = retrieveRecord(serverInstance.get(0), RECORD_ID);
       record1Server2 = retrieveRecord(serverInstance.get(1), RECORD_ID);
       record1Server3 = retrieveRecord(serverInstance.get(2), RECORD_ID);
-  
+
       int finalVersionServer1 = record1Server1.getVersion();
       int finalVersionServer2 = record1Server2.getVersion();
       int finalVersionServer3 = record1Server3.getVersion();
@@ -144,9 +148,9 @@ public class ThreeClientsRecordUpdateWithTransactionsOnMultipleServersScenarioIT
       assertEquals(actualVersion + 1, finalVersionServer2);
       assertEquals(actualVersion + 1, finalVersionServer3);
     } finally {
-     	dbServer1.close();
-     	dbServer2.close();
-     	dbServer3.close();
+      dbServer1.close();
+      dbServer2.close();
+      dbServer3.close();
     }
   }
 
@@ -154,5 +158,4 @@ public class ThreeClientsRecordUpdateWithTransactionsOnMultipleServersScenarioIT
   public String getDatabaseName() {
     return "distributed-three-simultaneous-update";
   }
-
 }

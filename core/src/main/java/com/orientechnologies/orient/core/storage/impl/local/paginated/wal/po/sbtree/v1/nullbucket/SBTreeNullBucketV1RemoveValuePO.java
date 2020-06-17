@@ -8,15 +8,13 @@ import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.WALRecordTypes;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.PageOperationRecord;
 import com.orientechnologies.orient.core.storage.index.sbtree.local.v1.OSBTreeNullBucketV1;
-
 import java.nio.ByteBuffer;
 
 public final class SBTreeNullBucketV1RemoveValuePO extends PageOperationRecord {
-  private byte[]            value;
+  private byte[] value;
   private OBinarySerializer valueSerializer;
 
-  public SBTreeNullBucketV1RemoveValuePO() {
-  }
+  public SBTreeNullBucketV1RemoveValuePO() {}
 
   public SBTreeNullBucketV1RemoveValuePO(byte[] value, OBinarySerializer valueSerializer) {
     this.value = value;
@@ -26,8 +24,6 @@ public final class SBTreeNullBucketV1RemoveValuePO extends PageOperationRecord {
   public byte[] getValue() {
     return value;
   }
-
-
 
   public OBinarySerializer getValueSerializer() {
     return valueSerializer;
@@ -54,7 +50,10 @@ public final class SBTreeNullBucketV1RemoveValuePO extends PageOperationRecord {
 
   @Override
   public int serializedSize() {
-    return super.serializedSize() + value.length + OIntegerSerializer.INT_SIZE + OByteSerializer.BYTE_SIZE;
+    return super.serializedSize()
+        + value.length
+        + OIntegerSerializer.INT_SIZE
+        + OByteSerializer.BYTE_SIZE;
   }
 
   @Override

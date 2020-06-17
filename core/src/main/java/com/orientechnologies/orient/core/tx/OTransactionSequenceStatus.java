@@ -1,8 +1,13 @@
 package com.orientechnologies.orient.core.tx;
 
 import com.orientechnologies.orient.core.serialization.serializer.record.binary.OVarIntSerializer;
-
-import java.io.*;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.DataInput;
+import java.io.DataInputStream;
+import java.io.DataOutput;
+import java.io.DataOutputStream;
+import java.io.IOException;
 import java.util.Arrays;
 
 public class OTransactionSequenceStatus {
@@ -54,10 +59,8 @@ public class OTransactionSequenceStatus {
 
   @Override
   public boolean equals(Object o) {
-    if (this == o)
-      return true;
-    if (o == null || getClass() != o.getClass())
-      return false;
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
     OTransactionSequenceStatus that = (OTransactionSequenceStatus) o;
     return Arrays.equals(status, that.status);
   }

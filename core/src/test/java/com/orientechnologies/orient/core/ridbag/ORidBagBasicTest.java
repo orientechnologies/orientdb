@@ -1,5 +1,8 @@
 package com.orientechnologies.orient.core.ridbag;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.fail;
+
 import com.orientechnologies.orient.core.db.ODatabaseSession;
 import com.orientechnologies.orient.core.db.ODatabaseType;
 import com.orientechnologies.orient.core.db.OrientDB;
@@ -12,20 +15,21 @@ import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.OElement;
 import com.orientechnologies.orient.core.record.OVertex;
-import com.orientechnologies.orient.core.record.impl.ODocument;
-import org.junit.Assert;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.UUID;
 import org.junit.Test;
-
-import java.util.*;
-
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.fail;
 
 public class ORidBagBasicTest {
 
   @Test
   public void embeddedRidBagSerializationTest() {
-    ODatabaseDocument db = new ODatabaseDocumentTx("memory:" + OEmbeddedRidBag.class.getSimpleName());
+    ODatabaseDocument db =
+        new ODatabaseDocumentTx("memory:" + OEmbeddedRidBag.class.getSimpleName());
     db.create();
     try {
       OEmbeddedRidBag bag = new OEmbeddedRidBag();
@@ -46,7 +50,6 @@ public class ORidBagBasicTest {
     } finally {
       db.drop();
     }
-
   }
 
   @Test(expected = IllegalArgumentException.class)
@@ -59,7 +62,8 @@ public class ORidBagBasicTest {
   public void allowOnlyAtRoot() {
     OrientDB orientDB = new OrientDB("memory:", OrientDBConfig.defaultConfig());
     orientDB.create(ORidBagBasicTest.class.getSimpleName(), ODatabaseType.MEMORY);
-    ODatabaseSession session = orientDB.open(ORidBagBasicTest.class.getSimpleName(), "admin", "admin");
+    ODatabaseSession session =
+        orientDB.open(ORidBagBasicTest.class.getSimpleName(), "admin", "admin");
     try {
       OVertex record = session.newVertex();
       List<Object> valueList = new ArrayList<>();

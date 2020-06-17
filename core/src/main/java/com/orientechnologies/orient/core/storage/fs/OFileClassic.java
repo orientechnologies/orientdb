@@ -19,6 +19,9 @@
  */
 package com.orientechnologies.orient.core.storage.fs;
 
+import static com.orientechnologies.common.io.OIOUtils.readByteBuffer;
+import static com.orientechnologies.common.io.OIOUtils.writeByteBuffer;
+
 import com.kenai.jffi.MemoryIO;
 import com.kenai.jffi.Platform;
 import com.orientechnologies.common.concur.lock.ScalableRWLock;
@@ -30,7 +33,6 @@ import com.orientechnologies.common.jnr.ONative;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.util.ORawPair;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
-
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -48,40 +50,33 @@ import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicLong;
 
-import static com.orientechnologies.common.io.OIOUtils.readByteBuffer;
-import static com.orientechnologies.common.io.OIOUtils.writeByteBuffer;
-
 public final class OFileClassic implements OFile {
   private static final int ALLOCATION_THRESHOLD = 1024 * 1024;
 
-  private final    ScalableRWLock lock = new ScalableRWLock();
-  private volatile Path           osFile;
+  private final ScalableRWLock lock = new ScalableRWLock();
+  private volatile Path osFile;
 
   private FileChannel channel;
 
-  private final AtomicLong dirtyCounter   = new AtomicLong();
-  private final Object     flushSemaphore = new Object();
+  private final AtomicLong dirtyCounter = new AtomicLong();
+  private final Object flushSemaphore = new Object();
 
-  private final AtomicLong size          = new AtomicLong();
+  private final AtomicLong size = new AtomicLong();
   private final AtomicLong committedSize = new AtomicLong();
 
   private AllocationMode allocationMode;
-  private int            fd;
+  private int fd;
 
-  /**
-   * Map which calculates which files are opened and how many users they have
-   */
+  /** Map which calculates which files are opened and how many users they have */
   private static final ConcurrentHashMap<Path, FileUser> openedFilesMap = new ConcurrentHashMap<>();
 
-  /**
-   * Whether only single file user is allowed.
-   */
-  private final boolean exclusiveFileAccess = OGlobalConfiguration.STORAGE_EXCLUSIVE_FILE_ACCESS.getValueAsBoolean();
+  /** Whether only single file user is allowed. */
+  private final boolean exclusiveFileAccess =
+      OGlobalConfiguration.STORAGE_EXCLUSIVE_FILE_ACCESS.getValueAsBoolean();
 
-  /**
-   * Whether it should be tracked which thread opened file in exclusive mode.
-   */
-  private final boolean trackFileOpen = OGlobalConfiguration.STORAGE_TRACK_FILE_ACCESS.getValueAsBoolean();
+  /** Whether it should be tracked which thread opened file in exclusive mode. */
+  private final boolean trackFileOpen =
+      OGlobalConfiguration.STORAGE_TRACK_FILE_ACCESS.getValueAsBoolean();
 
   public OFileClassic(final Path osFile) {
     this.osFile = osFile;
@@ -117,7 +112,8 @@ public final class OFileClassic implements OFile {
         if (allocationMode == AllocationMode.WRITE) {
           final long ptr = memoryIO.allocateMemory(sizeDiff, true);
           try {
-            final ByteBuffer buffer = memoryIO.newDirectByteBuffer(ptr, (int) sizeDiff).order(ByteOrder.nativeOrder());
+            final ByteBuffer buffer =
+                memoryIO.newDirectByteBuffer(ptr, (int) sizeDiff).order(ByteOrder.nativeOrder());
             buffer.position(0);
             OIOUtils.writeByteBuffer(buffer, channel, currentCommittedSize + HEADER_SIZE);
           } finally {
@@ -129,9 +125,12 @@ public final class OFileClassic implements OFile {
           try {
             ONative.instance().fallocate(fd, currentCommittedSize + HEADER_SIZE, sizeDiff);
           } catch (final LastErrorException e) {
-            OLogManager.instance().debug(this,
-                "Can not allocate space (error %d) for file %s using native Linux API, more slower methods will be used",
-                e.getErrorCode(), osFile.toAbsolutePath().toString());
+            OLogManager.instance()
+                .debug(
+                    this,
+                    "Can not allocate space (error %d) for file %s using native Linux API, more slower methods will be used",
+                    e.getErrorCode(),
+                    osFile.toAbsolutePath().toString());
 
             allocationMode = AllocationMode.WRITE;
 
@@ -139,13 +138,17 @@ public final class OFileClassic implements OFile {
               ONative.instance().close(fd);
             } catch (final LastErrorException lee) {
               OLogManager.instance()
-                  .warnNoDb(this, "Can not close Linux descriptor of file %s, error %d", osFile.toAbsolutePath().toString(),
+                  .warnNoDb(
+                      this,
+                      "Can not close Linux descriptor of file %s, error %d",
+                      osFile.toAbsolutePath().toString(),
                       lee.getErrorCode());
             }
 
             final long ptr = memoryIO.allocateMemory(sizeDiff, true);
             try {
-              final ByteBuffer buffer = memoryIO.newDirectByteBuffer(ptr, (int) sizeDiff).order(ByteOrder.nativeOrder());
+              final ByteBuffer buffer =
+                  memoryIO.newDirectByteBuffer(ptr, (int) sizeDiff).order(ByteOrder.nativeOrder());
               buffer.position(0);
               OIOUtils.writeByteBuffer(buffer, channel, currentCommittedSize + HEADER_SIZE);
             } finally {
@@ -155,7 +158,6 @@ public final class OFileClassic implements OFile {
 
         } else {
           throw new IllegalStateException("Unknown allocation mode");
-
         }
 
         assert channel.size() >= currentSize + HEADER_SIZE;
@@ -167,9 +169,7 @@ public final class OFileClassic implements OFile {
     return allocatedPosition;
   }
 
-  /**
-   * Shrink the file content (filledUpTo attribute only)
-   */
+  /** Shrink the file content (filledUpTo attribute only) */
   @Override
   public void shrink(final long size) throws IOException {
     acquireWriteLock();
@@ -193,7 +193,8 @@ public final class OFileClassic implements OFile {
   }
 
   @Override
-  public void read(long offset, final ByteBuffer buffer, final boolean throwOnEof) throws IOException {
+  public void read(long offset, final ByteBuffer buffer, final boolean throwOnEof)
+      throws IOException {
     acquireReadLock();
     try {
       buffer.rewind();
@@ -231,9 +232,7 @@ public final class OFileClassic implements OFile {
     return SyncIOResult.INSTANCE;
   }
 
-  /**
-   * Synchronizes the buffered changes to disk.
-   */
+  /** Synchronizes the buffered changes to disk. */
   @Override
   public void synch() {
     acquireReadLock();
@@ -245,7 +244,11 @@ public final class OFileClassic implements OFile {
             channel.force(false);
           } catch (final IOException e) {
             OLogManager.instance()
-                .warn(this, "Error during flush of file %s. Data may be lost in case of power failure", e, getName());
+                .warn(
+                    this,
+                    "Error during flush of file %s. Data may be lost in case of power failure",
+                    e,
+                    getName());
           }
 
           dirtyCounter.addAndGet(-dirtyCounterValue);
@@ -256,9 +259,7 @@ public final class OFileClassic implements OFile {
     }
   }
 
-  /**
-   * Creates the file.
-   */
+  /** Creates the file. */
   @Override
   public void create() throws IOException {
     acquireWriteLock();
@@ -283,11 +284,19 @@ public final class OFileClassic implements OFile {
       allocationMode = AllocationMode.DESCRIPTOR;
       int fd = 0;
       try {
-        fd = ONative.instance().open(osFile.toAbsolutePath().toString(), ONative.O_CREAT | ONative.O_RDONLY | ONative.O_WRONLY);
+        fd =
+            ONative.instance()
+                .open(
+                    osFile.toAbsolutePath().toString(),
+                    ONative.O_CREAT | ONative.O_RDONLY | ONative.O_WRONLY);
       } catch (final LastErrorException e) {
-        OLogManager.instance().warnNoDb(this, "File %s can not be opened using Linux native API,"
-                + " more slower methods of allocation will be used. Error code : %d.", osFile.toAbsolutePath().toString(),
-            e.getErrorCode());
+        OLogManager.instance()
+            .warnNoDb(
+                this,
+                "File %s can not be opened using Linux native API,"
+                    + " more slower methods of allocation will be used. Error code : %d.",
+                osFile.toAbsolutePath().toString(),
+                e.getErrorCode());
         allocationMode = AllocationMode.WRITE;
       }
       this.fd = fd;
@@ -296,28 +305,29 @@ public final class OFileClassic implements OFile {
     }
   }
 
-  /**
-   * ALWAYS ADD THE HEADER SIZE BECAUSE ON THIS TYPE IS ALWAYS NEEDED
-   */
+  /** ALWAYS ADD THE HEADER SIZE BECAUSE ON THIS TYPE IS ALWAYS NEEDED */
   private long checkRegions(final long offset, final long iLength) {
     acquireReadLock();
     try {
       if (offset < 0 || offset + iLength > size.get()) {
         throw new OIOException(
-            "You cannot access outside the file size (" + size.get() + " bytes). You have requested portion from " + offset + "-"
-                + (offset + iLength) + " bytes. File: " + this);
+            "You cannot access outside the file size ("
+                + size.get()
+                + " bytes). You have requested portion from "
+                + offset
+                + "-"
+                + (offset + iLength)
+                + " bytes. File: "
+                + this);
       }
 
       return offset + HEADER_SIZE;
     } finally {
       releaseReadLock();
     }
-
   }
 
-  /**
-   * Opens the file.
-   */
+  /** Opens the file. */
   /*
    * (non-Javadoc)
    *
@@ -345,7 +355,8 @@ public final class OFileClassic implements OFile {
     openChannel();
     init();
 
-    OLogManager.instance().debug(this, "Checking file integrity of " + osFile.getFileName() + "...");
+    OLogManager.instance()
+        .debug(this, "Checking file integrity of " + osFile.getFileName() + "...");
 
     initAllocationMode();
   }
@@ -353,13 +364,16 @@ public final class OFileClassic implements OFile {
   private void acquireExclusiveAccess() {
     if (exclusiveFileAccess) {
       while (true) {
-        final FileUser fileUser = openedFilesMap.computeIfAbsent(osFile.toAbsolutePath(), p -> {
-          if (trackFileOpen) {
-            return new FileUser(0, Thread.currentThread().getStackTrace());
-          }
+        final FileUser fileUser =
+            openedFilesMap.computeIfAbsent(
+                osFile.toAbsolutePath(),
+                p -> {
+                  if (trackFileOpen) {
+                    return new FileUser(0, Thread.currentThread().getStackTrace());
+                  }
 
-          return new FileUser(0, null);
-        });
+                  return new FileUser(0, null);
+                });
 
         final int usersCount = fileUser.users;
 
@@ -367,18 +381,21 @@ public final class OFileClassic implements OFile {
           if (!trackFileOpen) {
             throw new IllegalStateException(
                 "File is allowed to be opened only once, to get more information start JVM with system property "
-                    + OGlobalConfiguration.STORAGE_TRACK_FILE_ACCESS.getKey() + " set to true.");
+                    + OGlobalConfiguration.STORAGE_TRACK_FILE_ACCESS.getKey()
+                    + " set to true.");
           } else {
             final StringWriter sw = new StringWriter();
             try (final PrintWriter pw = new PrintWriter(sw)) {
               pw.append("File is allowed to be opened only once.\n");
               if (fileUser.openStackTrace != null) {
                 pw.append("File is already opened under: \n");
-                pw.append("----------------------------------------------------------------------------------------------------\n");
+                pw.append(
+                    "----------------------------------------------------------------------------------------------------\n");
                 for (final StackTraceElement se : fileUser.openStackTrace) {
                   pw.append("\t").append(se.toString()).append("\n");
                 }
-                pw.append("----------------------------------------------------------------------------------------------------\n");
+                pw.append(
+                    "----------------------------------------------------------------------------------------------------\n");
               }
 
               pw.flush();
@@ -413,9 +430,7 @@ public final class OFileClassic implements OFile {
     }
   }
 
-  /**
-   * Closes the file.
-   */
+  /** Closes the file. */
   /*
    * (non-Javadoc)
    *
@@ -453,7 +468,10 @@ public final class OFileClassic implements OFile {
         ONative.instance().close(fd);
       } catch (final LastErrorException e) {
         OLogManager.instance()
-            .warnNoDb(this, "Can not close Linux descriptor of file %s, error %d", osFile.toAbsolutePath().toString(),
+            .warnNoDb(
+                this,
+                "Can not close Linux descriptor of file %s, error %d",
+                osFile.toAbsolutePath().toString(),
                 e.getErrorCode());
       }
 
@@ -462,9 +480,7 @@ public final class OFileClassic implements OFile {
     }
   }
 
-  /**
-   * Deletes the file.
-   */
+  /** Deletes the file. */
   /*
    * (non-Javadoc)
    *
@@ -485,7 +501,9 @@ public final class OFileClassic implements OFile {
   }
 
   private void openChannel() throws IOException {
-    channel = FileChannel.open(osFile, StandardOpenOption.READ, StandardOpenOption.WRITE, StandardOpenOption.CREATE);
+    channel =
+        FileChannel.open(
+            osFile, StandardOpenOption.READ, StandardOpenOption.WRITE, StandardOpenOption.CREATE);
 
     if (channel == null) {
       throw new FileNotFoundException(osFile.toString());
@@ -517,7 +535,6 @@ public final class OFileClassic implements OFile {
     } finally {
       releaseReadLock();
     }
-
   }
 
   /*
@@ -625,7 +642,7 @@ public final class OFileClassic implements OFile {
    * @see OGlobalConfiguration#STORAGE_TRACK_FILE_ACCESS
    */
   private static final class FileUser {
-    private final int                 users;
+    private final int users;
     private final StackTraceElement[] openStackTrace;
 
     FileUser(final int users, final StackTraceElement[] openStackTrace) {
@@ -652,20 +669,17 @@ public final class OFileClassic implements OFile {
       result = 31 * result + Arrays.hashCode(openStackTrace);
       return result;
     }
-
   }
 
   private enum AllocationMode {
-    DESCRIPTOR, WRITE
+    DESCRIPTOR,
+    WRITE
   }
 
   private static final class SyncIOResult implements IOResult {
     private static SyncIOResult INSTANCE = new SyncIOResult();
 
     @Override
-    public void await() {
-    }
+    public void await() {}
   }
-
 }
-

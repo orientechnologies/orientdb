@@ -24,9 +24,7 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.etl.OETLComponent;
 import com.orientechnologies.orient.etl.OETLPipeline;
 
-/**
- * ETL Loader.
- */
+/** ETL Loader. */
 public interface OETLLoader extends OETLComponent {
 
   void load(ODatabaseDocument db, final Object input, OCommandContext context);

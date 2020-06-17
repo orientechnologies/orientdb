@@ -9,7 +9,6 @@ import com.orientechnologies.orient.core.sql.executor.OInsertExecutionPlan;
 import com.orientechnologies.orient.core.sql.executor.OInternalExecutionPlan;
 import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.executor.OResultInternal;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -18,7 +17,7 @@ import java.util.Set;
 public class OParenthesisExpression extends OMathExpression {
 
   protected OExpression expression;
-  protected OStatement  statement;
+  protected OStatement statement;
 
   public OParenthesisExpression(int id) {
     super(id);
@@ -39,7 +38,8 @@ public class OParenthesisExpression extends OMathExpression {
       return expression.execute(iCurrentRecord, ctx);
     }
     if (statement != null) {
-      throw new UnsupportedOperationException("Execution of select in parentheses is not supported");
+      throw new UnsupportedOperationException(
+          "Execution of select in parentheses is not supported");
     }
     return super.execute(iCurrentRecord, ctx);
   }
@@ -52,7 +52,8 @@ public class OParenthesisExpression extends OMathExpression {
     if (statement != null) {
       OInternalExecutionPlan execPlan;
       if (statement.originalStatement == null || statement.originalStatement.contains("?")) {
-        //cannot cache statements with positional params, especially when it's in a subquery/expression.
+        // cannot cache statements with positional params, especially when it's in a
+        // subquery/expression.
         execPlan = statement.createExecutionPlanNoCache(ctx, false);
       } else {
         execPlan = statement.createExecutionPlan(ctx, false);
@@ -65,7 +66,7 @@ public class OParenthesisExpression extends OMathExpression {
       while (rs.hasNext()) {
         result.add(rs.next());
       }
-//      List<OResult> result = rs.stream().collect(Collectors.toList());//TODO streamed...
+      //      List<OResult> result = rs.stream().collect(Collectors.toList());//TODO streamed...
       rs.close();
       return result;
     }
@@ -124,7 +125,8 @@ public class OParenthesisExpression extends OMathExpression {
     return false;
   }
 
-  public SimpleNode splitForAggregation(AggregateProjectionSplit aggregateProj, OCommandContext ctx) {
+  public SimpleNode splitForAggregation(
+      AggregateProjectionSplit aggregateProj, OCommandContext ctx) {
     if (isAggregate()) {
       OParenthesisExpression result = new OParenthesisExpression(-1);
       result.expression = expression.splitForAggregation(aggregateProj, ctx);
@@ -178,12 +180,9 @@ public class OParenthesisExpression extends OMathExpression {
 
   @Override
   public boolean equals(Object o) {
-    if (this == o)
-      return true;
-    if (o == null || getClass() != o.getClass())
-      return false;
-    if (!super.equals(o))
-      return false;
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+    if (!super.equals(o)) return false;
 
     OParenthesisExpression that = (OParenthesisExpression) o;
 
@@ -204,7 +203,7 @@ public class OParenthesisExpression extends OMathExpression {
   }
 
   public List<String> getMatchPatternInvolvedAliases() {
-    return expression.getMatchPatternInvolvedAliases();//TODO also check the statement...?
+    return expression.getMatchPatternInvolvedAliases(); // TODO also check the statement...?
   }
 
   @Override

@@ -12,7 +12,8 @@ public class OSQLFunctionIndexKeySizeTest {
 
   @Test
   public void test() {
-    ODatabaseDocumentTx db = new ODatabaseDocumentTx("memory:" + OSQLFunctionIndexKeySizeTest.class.getSimpleName());
+    ODatabaseDocumentTx db =
+        new ODatabaseDocumentTx("memory:" + OSQLFunctionIndexKeySizeTest.class.getSimpleName());
     db.create();
     OClass clazz = db.getMetadata().getSchema().createClass("Test");
     clazz.createProperty("name", OType.STRING);
@@ -23,10 +24,9 @@ public class OSQLFunctionIndexKeySizeTest {
     try (OResultSet rs = db.query("select indexKeySize('testindex') as foo")) {
       Assert.assertTrue(rs.hasNext());
       OResult item = rs.next();
-      Assert.assertEquals((Object)2L, item.getProperty("foo"));
+      Assert.assertEquals((Object) 2L, item.getProperty("foo"));
       Assert.assertFalse(rs.hasNext());
     }
     db.close();
   }
-
 }

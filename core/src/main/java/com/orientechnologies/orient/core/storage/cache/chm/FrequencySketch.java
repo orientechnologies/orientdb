@@ -40,21 +40,23 @@ public final class FrequencySketch implements Admittor {
    * https://www.usenix.org/legacy/events/sec03/tech/full_papers/crosby/crosby.pdf
    */
 
-  private static final long[] SEED       = new long[] { // A mixture of seeds from FNV-1a, CityHash, and Murmur3
-      0xc3a5c85c97cb3127L, 0xb492b66fbe98f273L, 0x9ae16a3b2f90404fL, 0xcbf29ce484222325L };
-  private static final long   RESET_MASK = 0x7777777777777777L;
-  private static final long   ONE_MASK   = 0x1111111111111111L;
+  private static final long[] SEED =
+      new long[] { // A mixture of seeds from FNV-1a, CityHash, and Murmur3
+        0xc3a5c85c97cb3127L, 0xb492b66fbe98f273L, 0x9ae16a3b2f90404fL, 0xcbf29ce484222325L
+      };
+  private static final long RESET_MASK = 0x7777777777777777L;
+  private static final long ONE_MASK = 0x1111111111111111L;
 
   private final int randomSeed;
 
-  private int    sampleSize;
-  private int    tableMask;
+  private int sampleSize;
+  private int tableMask;
   private long[] table;
-  private int    size;
+  private int size;
 
   /**
-   * Creates a lazily initialized frequency sketch, requiring {@link #ensureCapacity} be called
-   * when the maximum size of the cache has been determined.
+   * Creates a lazily initialized frequency sketch, requiring {@link #ensureCapacity} be called when
+   * the maximum size of the cache has been determined.
    */
   @SuppressWarnings("NullAway.Init")
   FrequencySketch() {
@@ -88,7 +90,6 @@ public final class FrequencySketch implements Admittor {
    * Returns the estimated number of occurrences of an element, up to the maximum (15).
    *
    * @param hash the hash code of element to count occurrences of
-   *
    * @return the estimated number of occurrences of the element; possibly zero but never negative
    */
   @Override
@@ -137,7 +138,6 @@ public final class FrequencySketch implements Admittor {
    *
    * @param i the table index (16 counters)
    * @param j the counter to increment
-   *
    * @return if incremented
    */
   private boolean incrementAt(final int i, final int j) {
@@ -150,9 +150,7 @@ public final class FrequencySketch implements Admittor {
     return false;
   }
 
-  /**
-   * Reduces every counter by half of its original value.
-   */
+  /** Reduces every counter by half of its original value. */
   private void reset() {
     int count = 0;
     for (int i = 0; i < table.length; i++) {
@@ -166,8 +164,7 @@ public final class FrequencySketch implements Admittor {
    * Returns the table index for the counter at the specified depth.
    *
    * @param item the element's hash
-   * @param i    the counter depth
-   *
+   * @param i the counter depth
    * @return the table index
    */
   private int indexOf(final int item, final int i) {

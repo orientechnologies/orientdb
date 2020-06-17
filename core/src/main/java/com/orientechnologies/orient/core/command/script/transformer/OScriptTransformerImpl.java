@@ -8,22 +8,22 @@ import com.orientechnologies.orient.core.command.script.transformer.resultset.OR
 import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.executor.OResultInternal;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.LinkedHashMap;
+import java.util.Map;
 
-import java.util.*;
-
-/**
- * Created by Enrico Risa on 27/01/17.
- */
+/** Created by Enrico Risa on 27/01/17. */
 public class OScriptTransformerImpl implements OScriptTransformer {
 
   protected Map<Class, OResultSetTransformer> resultSetTransformers = new HashMap<>();
-  protected Map<Class, OResultTransformer>    transformers          = new HashMap<>();
+  protected Map<Class, OResultTransformer> transformers = new HashMap<>();
 
   public OScriptTransformerImpl() {
 
     registerResultTransformer(HashMap.class, new MapTransformer(this));
     registerResultTransformer(LinkedHashMap.class, new MapTransformer(this));
-
   }
 
   @Override

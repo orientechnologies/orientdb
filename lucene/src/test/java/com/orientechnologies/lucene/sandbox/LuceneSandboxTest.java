@@ -11,34 +11,36 @@ import org.assertj.core.api.Assertions;
 import org.junit.Before;
 import org.junit.Test;
 
-/**
- * Created by frank on 02/01/2017.
- */
+/** Created by frank on 02/01/2017. */
 public class LuceneSandboxTest extends OLuceneBaseTest {
 
   @Before
   public void setUp() throws Exception {
     db.command("CREATE CLASS CDR");
     db.command("CREATE PROPERTY  CDR.filename STRING");
-    db.command("INSERT into cdr(filename) values('MDCA10MCR201612291808.276388.eno.RRC.20161229183002.PROD_R4.eno.data') ");
-    db.command("INSERT into cdr(filename) values('MDCA20MCR201612291911.277904.eno.RRC.20161229193002.PROD_R4.eno.data') ");
+    db.command(
+        "INSERT into cdr(filename) values('MDCA10MCR201612291808.276388.eno.RRC.20161229183002.PROD_R4.eno.data') ");
+    db.command(
+        "INSERT into cdr(filename) values('MDCA20MCR201612291911.277904.eno.RRC.20161229193002.PROD_R4.eno.data') ");
   }
 
   @Test
   public void shouldFetchOneDocumentWithExactMatchOnLuceneIndexStandardAnalyzer() throws Exception {
     db.command("CREATE INDEX cdr.filename ON cdr(filename) FULLTEXT ENGINE LUCENE ");
-    //partial match
-    OResultSet res = db.query("select from cdr WHERE filename LUCENE ' RRC.20161229193002.PROD_R4.eno.data '");
+    // partial match
+    OResultSet res =
+        db.query("select from cdr WHERE filename LUCENE ' RRC.20161229193002.PROD_R4.eno.data '");
 
     Assertions.assertThat(res).hasSize(2);
     res.close();
-    //exact match
-    res = db.query(
-        "select from cdr WHERE filename LUCENE ' \"MDCA20MCR201612291911.277904.eno.RRC.20161229193002.PROD_R4.eno.data\" '");
+    // exact match
+    res =
+        db.query(
+            "select from cdr WHERE filename LUCENE ' \"MDCA20MCR201612291911.277904.eno.RRC.20161229193002.PROD_R4.eno.data\" '");
 
     Assertions.assertThat(res).hasSize(1);
     res.close();
-    //wildcard
+    // wildcard
     res = db.query("select from cdr WHERE filename LUCENE ' MDCA* '");
 
     Assertions.assertThat(res).hasSize(2);
@@ -51,25 +53,25 @@ public class LuceneSandboxTest extends OLuceneBaseTest {
     db.command(
         "CREATE INDEX cdr.filename ON cdr(filename) FULLTEXT ENGINE LUCENE metadata { 'allowLeadingWildcard': true}");
 
-    //partial match
-    OResultSet res = db.query(
-        "select from cdr WHERE SEARCH_CLASS( ' RRC.20161229193002.PROD_R4.eno.data ') = true");
+    // partial match
+    OResultSet res =
+        db.query(
+            "select from cdr WHERE SEARCH_CLASS( ' RRC.20161229193002.PROD_R4.eno.data ') = true");
 
     Assertions.assertThat(res).hasSize(2);
     res.close();
-    //exact match
-    res = db.query(
-        "select from cdr WHERE SEARCH_CLASS( ' \"MDCA20MCR201612291911.277904.eno.RRC.20161229193002.PROD_R4.eno.data\" ') = true");
+    // exact match
+    res =
+        db.query(
+            "select from cdr WHERE SEARCH_CLASS( ' \"MDCA20MCR201612291911.277904.eno.RRC.20161229193002.PROD_R4.eno.data\" ') = true");
 
     Assertions.assertThat(res).hasSize(1);
     res.close();
-    //wildcard
-    res = db.query(
-        "select from cdr WHERE SEARCH_CLASS(' MDCA* ')= true");
+    // wildcard
+    res = db.query("select from cdr WHERE SEARCH_CLASS(' MDCA* ')= true");
     res.close();
-    //leadind wildcard
-    res = db.query(
-        "select from cdr WHERE SEARCH_CLASS(' *20MCR2016122* ') =true");
+    // leadind wildcard
+    res = db.query("select from cdr WHERE SEARCH_CLASS(' *20MCR2016122* ') =true");
 
     Assertions.assertThat(res).hasSize(1);
     res.close();
@@ -88,7 +90,6 @@ public class LuceneSandboxTest extends OLuceneBaseTest {
 
     db.command("CREATE INDEX Son.textOfSon ON Son(textOfSon) FULLTEXT ENGINE LUCENE ");
     OClass father = db.getMetadata().getSchema().getClass("Father");
-
   }
 
   @Test
@@ -98,9 +99,6 @@ public class LuceneSandboxTest extends OLuceneBaseTest {
     doc.add(new StringField("text", "yabba dabba", Field.Store.YES));
 
     SimpleTextCodec codec = new SimpleTextCodec();
-
-
-
   }
 
   @Test
@@ -108,5 +106,6 @@ public class LuceneSandboxTest extends OLuceneBaseTest {
 
     String element = ";";
     int x = element.charAt(0);
-    System.out.println("x=" + x);  }
+    System.out.println("x=" + x);
+  }
 }

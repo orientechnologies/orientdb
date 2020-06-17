@@ -8,7 +8,6 @@ import com.orientechnologies.orient.distributed.impl.log.OOperationLog;
 import com.orientechnologies.orient.distributed.impl.log.OOperationLogEntry;
 import com.orientechnologies.orient.distributed.impl.log.OOplogIterator;
 import com.orientechnologies.orient.distributed.network.ODistributedNetwork;
-
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
@@ -23,7 +22,8 @@ public class OStructuralFollower implements AutoCloseable {
   private Map<OLogId, ORaftOperation> pending = new HashMap<>();
   private OSessionOperationIdWaiter waiter = new OSessionOperationIdWaiter();
 
-  public OStructuralFollower(OOperationLog operationLog, ODistributedNetwork network, OrientDBDistributed orientDB) {
+  public OStructuralFollower(
+      OOperationLog operationLog, ODistributedNetwork network, OrientDBDistributed orientDB) {
     this.operationLog = operationLog;
     this.executor = Executors.newSingleThreadExecutor();
     this.orientDB = orientDB;
@@ -31,14 +31,15 @@ public class OStructuralFollower implements AutoCloseable {
   }
 
   public void log(ONodeIdentity leader, OLogId logId, ORaftOperation operation) {
-    executor.execute(() -> {
-      if (operationLog.logReceived(logId, operation)) {
-        pending.put(logId, operation);
-        network.ack(leader, logId);
-      } else {
-        resyncOplog();
-      }
-    });
+    executor.execute(
+        () -> {
+          if (operationLog.logReceived(logId, operation)) {
+            pending.put(logId, operation);
+            network.ack(leader, logId);
+          } else {
+            resyncOplog();
+          }
+        });
   }
 
   private void resyncOplog() {
@@ -46,19 +47,20 @@ public class OStructuralFollower implements AutoCloseable {
   }
 
   public void confirm(OLogId logId) {
-    executor.execute(() -> {
-      //TODO: The pending should be a queue we cannot really apply things in random order
-      OLogId lastStateId = orientDB.getStructuralConfiguration().getLastUpdateId();
-      if (lastStateId == null || logId.getId() - 1 == lastStateId.getId()) {
-        ORaftOperation op = pending.get(logId);
-        if (op != null) {
-          op.apply(orientDB);
-          op.getRequesterSequential().ifPresent(this::notifyDone);
-        }
-      } else if (logId.getId() > lastStateId.getId()) {
-        enqueueFrom(lastStateId, logId);
-      }
-    });
+    executor.execute(
+        () -> {
+          // TODO: The pending should be a queue we cannot really apply things in random order
+          OLogId lastStateId = orientDB.getStructuralConfiguration().getLastUpdateId();
+          if (lastStateId == null || logId.getId() - 1 == lastStateId.getId()) {
+            ORaftOperation op = pending.get(logId);
+            if (op != null) {
+              op.apply(orientDB);
+              op.getRequesterSequential().ifPresent(this::notifyDone);
+            }
+          } else if (logId.getId() > lastStateId.getId()) {
+            enqueueFrom(lastStateId, logId);
+          }
+        });
   }
 
   private void enqueueFrom(OLogId lastStateId, OLogId confirmedId) {
@@ -97,18 +99,20 @@ public class OStructuralFollower implements AutoCloseable {
   }
 
   public void recover(ORaftOperation request) {
-    executor.execute(() -> {
-      request.apply(orientDB);
-    });
+    executor.execute(
+        () -> {
+          request.apply(orientDB);
+        });
   }
 
   public void ping(ONodeIdentity leader, OLogId leaderLastValid) {
-    //TODO: verify leader
-    executor.execute(() -> {
-      OLogId lastLogId = operationLog.lastPersistentLog();
-      if (lastLogId == null || leaderLastValid.getId() > lastLogId.getId()) {
-        resyncOplog();
-      }
-    });
+    // TODO: verify leader
+    executor.execute(
+        () -> {
+          OLogId lastLogId = operationLog.lastPersistentLog();
+          if (lastLogId == null || leaderLastValid.getId() > lastLogId.getId()) {
+            resyncOplog();
+          }
+        });
   }
 }

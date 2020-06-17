@@ -21,8 +21,6 @@
 package com.orientechnologies.orient.graph.handler;
 
 import com.orientechnologies.common.log.OLogManager;
-import com.orientechnologies.orient.core.Orient;
-import com.orientechnologies.orient.core.command.OCommandManager;
 import com.orientechnologies.orient.core.command.script.OScriptInjection;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.OrientDBInternal;
@@ -36,18 +34,18 @@ import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.config.OServerParameterConfiguration;
 import com.orientechnologies.orient.server.plugin.OServerPluginAbstract;
 import com.tinkerpop.blueprints.impls.orient.OrientBaseGraph;
-
 import javax.script.Bindings;
 import javax.script.ScriptEngine;
 
 public class OGraphServerHandler extends OServerPluginAbstract implements OScriptInjection {
   private boolean enabled = true;
-  private int     graphPoolMax;
+  private int graphPoolMax;
   private OServer server;
 
   @Override
   public void config(final OServer server, OServerParameterConfiguration[] iParams) {
-    graphPoolMax = server.getContextConfiguration().getValueAsInteger(OGlobalConfiguration.DB_POOL_MAX);
+    graphPoolMax =
+        server.getContextConfiguration().getValueAsInteger(OGlobalConfiguration.DB_POOL_MAX);
     for (OServerParameterConfiguration param : iParams) {
       if (param.name.equalsIgnoreCase("enabled")) {
         if (!Boolean.parseBoolean(param.value))
@@ -60,16 +58,23 @@ public class OGraphServerHandler extends OServerPluginAbstract implements OScrip
     if (OGremlinHelper.isGremlinAvailable()) {
       enabled = true;
       OLogManager.instance()
-          .info(this, "Installed GREMLIN language v.%s - graph.pool.max=%d", OGremlinHelper.getEngineVersion(), graphPoolMax);
+          .info(
+              this,
+              "Installed GREMLIN language v.%s - graph.pool.max=%d",
+              OGremlinHelper.getEngineVersion(),
+              graphPoolMax);
 
       OrientDBInternal.extract(server.getContext()).getScriptManager().registerInjection(this);
 
-      OrientDBInternal.extract(server.getContext()).getScriptManager().getCommandManager()
+      OrientDBInternal.extract(server.getContext())
+          .getScriptManager()
+          .getCommandManager()
           .registerRequester("gremlin", OCommandGremlin.class);
-      OrientDBInternal.extract(server.getContext()).getScriptManager().getCommandManager()
+      OrientDBInternal.extract(server.getContext())
+          .getScriptManager()
+          .getCommandManager()
           .registerExecutor(OCommandGremlin.class, OCommandGremlinExecutor.class);
-    } else
-      enabled = false;
+    } else enabled = false;
 
     this.server = server;
   }
@@ -82,16 +87,14 @@ public class OGraphServerHandler extends OServerPluginAbstract implements OScrip
   @Override
   public void startup() {
 
-    if (!enabled)
-      return;
+    if (!enabled) return;
 
     OGremlinHelper.global().setMaxGraphPool(graphPoolMax).create();
   }
 
   @Override
   public void shutdown() {
-    if (!enabled)
-      return;
+    if (!enabled) return;
 
     OGremlinHelper.global().destroy();
   }

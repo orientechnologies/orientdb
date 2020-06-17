@@ -4,7 +4,6 @@ import org.junit.Test;
 
 public class OHaSyncDatabaseStatementTest extends OParserTestAbstract {
 
-
   @Test
   public void testPlain() {
     checkRightSyntax("HA SYNC DATABASE");
@@ -14,6 +13,4 @@ public class OHaSyncDatabaseStatementTest extends OParserTestAbstract {
 
     checkWrongSyntax("HA SYNC DATABASE foo");
   }
-
-
 }

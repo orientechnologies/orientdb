@@ -29,46 +29,50 @@ import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandExecutorSQLCreateIndex;
 import com.orientechnologies.orient.core.storage.OStorage;
-
 import java.util.Collection;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 public class OIndexManagerRemote extends OIndexManagerAbstract {
-  private              AtomicBoolean skipPush         = new AtomicBoolean(false);
-  private static final String        QUERY_DROP       = "drop index `%s` if exists";
-  private static final long          serialVersionUID = -6570577338095096235L;
-  private              OStorage      storage;
+  private AtomicBoolean skipPush = new AtomicBoolean(false);
+  private static final String QUERY_DROP = "drop index `%s` if exists";
+  private static final long serialVersionUID = -6570577338095096235L;
+  private OStorage storage;
 
   public OIndexManagerRemote(OStorage storage) {
     super();
     this.storage = storage;
   }
 
-  public OIndex createIndex(ODatabaseDocumentInternal database, final String iName, final String iType,
-      final OIndexDefinition iIndexDefinition, final int[] iClusterIdsToIndex, final OProgressListener progressListener,
-      ODocument metadata, String engine) {
+  public OIndex createIndex(
+      ODatabaseDocumentInternal database,
+      final String iName,
+      final String iType,
+      final OIndexDefinition iIndexDefinition,
+      final int[] iClusterIdsToIndex,
+      final OProgressListener progressListener,
+      ODocument metadata,
+      String engine) {
 
     String createIndexDDL;
     if (iIndexDefinition != null)
       createIndexDDL = iIndexDefinition.toCreateIndexDDL(iName, iType, engine);
-    else
-      createIndexDDL = new OSimpleKeyIndexDefinition().toCreateIndexDDL(iName, iType, engine);
+    else createIndexDDL = new OSimpleKeyIndexDefinition().toCreateIndexDDL(iName, iType, engine);
 
     if (metadata != null)
-      createIndexDDL += " " + OCommandExecutorSQLCreateIndex.KEYWORD_METADATA + " " + metadata.toJSON();
+      createIndexDDL +=
+          " " + OCommandExecutorSQLCreateIndex.KEYWORD_METADATA + " " + metadata.toJSON();
 
     acquireExclusiveLock();
     try {
-      if (progressListener != null)
-        progressListener.onBegin(this, 0, false);
+      if (progressListener != null) progressListener.onBegin(this, 0, false);
 
       database.command(createIndexDDL).close();
 
-      ORecordInternal.setIdentity(document, new ORecordId(database.getStorage().getConfiguration().getIndexMgrRecordId()));
+      ORecordInternal.setIdentity(
+          document, new ORecordId(database.getStorage().getConfiguration().getIndexMgrRecordId()));
 
-      if (progressListener != null)
-        progressListener.onCompletition(this, true);
+      if (progressListener != null) progressListener.onCompletition(this, true);
 
       reload();
 
@@ -81,9 +85,23 @@ public class OIndexManagerRemote extends OIndexManagerAbstract {
   }
 
   @Override
-  public OIndex createIndex(ODatabaseDocumentInternal database, String iName, String iType, OIndexDefinition indexDefinition,
-      int[] clusterIdsToIndex, OProgressListener progressListener, ODocument metadata) {
-    return createIndex(database, iName, iType, indexDefinition, clusterIdsToIndex, progressListener, metadata, null);
+  public OIndex createIndex(
+      ODatabaseDocumentInternal database,
+      String iName,
+      String iType,
+      OIndexDefinition indexDefinition,
+      int[] clusterIdsToIndex,
+      OProgressListener progressListener,
+      ODocument metadata) {
+    return createIndex(
+        database,
+        iName,
+        iType,
+        indexDefinition,
+        clusterIdsToIndex,
+        progressListener,
+        metadata,
+        null);
   }
 
   public void dropIndex(ODatabaseDocumentInternal database, final String iIndexName) {
@@ -115,8 +133,7 @@ public class OIndexManagerRemote extends OIndexManagerAbstract {
     throw new UnsupportedOperationException("recreateIndexes(ODatabaseDocumentInternal)");
   }
 
-  public void waitTillIndexRestore() {
-  }
+  public void waitTillIndexRestore() {}
 
   @Override
   public boolean autoRecreateIndexesAfterCrash(ODatabaseDocumentInternal database) {
@@ -127,16 +144,36 @@ public class OIndexManagerRemote extends OIndexManagerAbstract {
     return false;
   }
 
-  public void removeClassPropertyIndex(OIndex idx) {
-  }
+  public void removeClassPropertyIndex(OIndex idx) {}
 
-  protected OIndex getRemoteIndexInstance(boolean isMultiValueIndex, String type, String name, String algorithm,
-      Set<String> clustersToIndex, OIndexDefinition indexDefinition, ORID identity, ODocument configuration) {
+  protected OIndex getRemoteIndexInstance(
+      boolean isMultiValueIndex,
+      String type,
+      String name,
+      String algorithm,
+      Set<String> clustersToIndex,
+      OIndexDefinition indexDefinition,
+      ORID identity,
+      ODocument configuration) {
     if (isMultiValueIndex)
-      return new OIndexRemoteMultiValue(name, type, algorithm, identity, indexDefinition, configuration, clustersToIndex,
+      return new OIndexRemoteMultiValue(
+          name,
+          type,
+          algorithm,
+          identity,
+          indexDefinition,
+          configuration,
+          clustersToIndex,
           getStorage().getName());
 
-    return new OIndexRemoteOneValue(name, type, algorithm, identity, indexDefinition, configuration, clustersToIndex,
+    return new OIndexRemoteOneValue(
+        name,
+        type,
+        algorithm,
+        identity,
+        indexDefinition,
+        configuration,
+        clustersToIndex,
         getStorage().getName());
   }
 
@@ -151,17 +188,30 @@ public class OIndexManagerRemote extends OIndexManagerAbstract {
         for (ODocument d : idxs) {
           d.setLazyLoad(false);
           try {
-            final boolean isMultiValue = ODefaultIndexFactory.isMultiValueIndex((String) d.field(OIndexInternal.CONFIG_TYPE));
+            final boolean isMultiValue =
+                ODefaultIndexFactory.isMultiValueIndex(
+                    (String) d.field(OIndexInternal.CONFIG_TYPE));
 
-            final OIndexMetadata newIndexMetadata = OIndexAbstract
-                .loadMetadataInternal(d, (String) d.field(OIndexInternal.CONFIG_TYPE), d.<String>field(OIndexInternal.ALGORITHM),
+            final OIndexMetadata newIndexMetadata =
+                OIndexAbstract.loadMetadataInternal(
+                    d,
+                    (String) d.field(OIndexInternal.CONFIG_TYPE),
+                    d.<String>field(OIndexInternal.ALGORITHM),
                     d.<String>field(OIndexInternal.VALUE_CONTAINER_ALGORITHM));
 
-            addIndexInternal(getRemoteIndexInstance(isMultiValue, newIndexMetadata.getType(), newIndexMetadata.getName(),
-                newIndexMetadata.getAlgorithm(), newIndexMetadata.getClustersToIndex(), newIndexMetadata.getIndexDefinition(),
-                (ORID) d.field(OIndexAbstract.CONFIG_MAP_RID), d));
+            addIndexInternal(
+                getRemoteIndexInstance(
+                    isMultiValue,
+                    newIndexMetadata.getType(),
+                    newIndexMetadata.getName(),
+                    newIndexMetadata.getAlgorithm(),
+                    newIndexMetadata.getClustersToIndex(),
+                    newIndexMetadata.getIndexDefinition(),
+                    (ORID) d.field(OIndexAbstract.CONFIG_MAP_RID),
+                    d));
           } catch (Exception e) {
-            OLogManager.instance().error(this, "Error on loading of index by configuration: %s", e, d);
+            OLogManager.instance()
+                .error(this, "Error on loading of index by configuration: %s", e, d);
           }
         }
       }
@@ -186,7 +236,7 @@ public class OIndexManagerRemote extends OIndexManagerAbstract {
 
   @Override
   public void fromStream(ODocument iDocument) {
-    //This is the only case where the write locking make sense enabling it using super
+    // This is the only case where the write locking make sense enabling it using super
     super.acquireExclusiveLock();
     try {
       super.fromStream(iDocument);
@@ -204,5 +254,4 @@ public class OIndexManagerRemote extends OIndexManagerAbstract {
   protected OStorage getStorage() {
     return storage;
   }
-
 }

@@ -21,7 +21,6 @@
 package com.orientechnologies.common.serialization.types;
 
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALChanges;
-
 import java.nio.ByteBuffer;
 
 /**
@@ -31,18 +30,18 @@ import java.nio.ByteBuffer;
  * @since 18.01.12
  */
 public class OBooleanSerializer implements OBinarySerializer<Boolean> {
-  /**
-   * size of boolean value in bytes
-   */
-  public static final int                BOOLEAN_SIZE = 1;
-  public static final byte               ID           = 1;
-  public static final OBooleanSerializer INSTANCE     = new OBooleanSerializer();
+  /** size of boolean value in bytes */
+  public static final int BOOLEAN_SIZE = 1;
+
+  public static final byte ID = 1;
+  public static final OBooleanSerializer INSTANCE = new OBooleanSerializer();
 
   public int getObjectSize(Boolean object, Object... hints) {
     return BOOLEAN_SIZE;
   }
 
-  public void serialize(final Boolean object, final byte[] stream, final int startPosition, final Object... hints) {
+  public void serialize(
+      final Boolean object, final byte[] stream, final int startPosition, final Object... hints) {
     stream[startPosition] = object ? (byte) 1 : (byte) 0;
   }
 
@@ -71,11 +70,13 @@ public class OBooleanSerializer implements OBinarySerializer<Boolean> {
   }
 
   @Override
-  public void serializeNativeObject(final Boolean object, final byte[] stream, final int startPosition, final Object... hints) {
+  public void serializeNativeObject(
+      final Boolean object, final byte[] stream, final int startPosition, final Object... hints) {
     serialize(object, stream, startPosition);
   }
 
-  public void serializeNative(final boolean object, final byte[] stream, final int startPosition, final Object... hints) {
+  public void serializeNative(
+      final boolean object, final byte[] stream, final int startPosition, final Object... hints) {
     serializeLiteral(object, stream, startPosition);
   }
 
@@ -101,41 +102,32 @@ public class OBooleanSerializer implements OBinarySerializer<Boolean> {
     return value;
   }
 
-  /**
-   * {@inheritDoc}
-   */
+  /** {@inheritDoc} */
   @Override
   public void serializeInByteBufferObject(Boolean object, ByteBuffer buffer, Object... hints) {
     buffer.put(object.booleanValue() ? (byte) 1 : (byte) 0);
   }
 
-  /**
-   * {@inheritDoc}
-   */
+  /** {@inheritDoc} */
   @Override
   public Boolean deserializeFromByteBufferObject(ByteBuffer buffer) {
     return buffer.get() > 0;
   }
 
-  /**
-   * {@inheritDoc}
-   */
+  /** {@inheritDoc} */
   @Override
   public int getObjectSizeInByteBuffer(ByteBuffer buffer) {
     return BOOLEAN_SIZE;
   }
 
-  /**
-   * {@inheritDoc}
-   */
+  /** {@inheritDoc} */
   @Override
-  public Boolean deserializeFromByteBufferObject(ByteBuffer buffer, OWALChanges walChanges, int offset) {
+  public Boolean deserializeFromByteBufferObject(
+      ByteBuffer buffer, OWALChanges walChanges, int offset) {
     return walChanges.getByteValue(buffer, offset) > 0;
   }
 
-  /**
-   * {@inheritDoc}
-   */
+  /** {@inheritDoc} */
   @Override
   public int getObjectSizeInByteBuffer(ByteBuffer buffer, OWALChanges walChanges, int offset) {
     return BOOLEAN_SIZE;

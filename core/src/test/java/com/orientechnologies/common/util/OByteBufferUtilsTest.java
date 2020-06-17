@@ -16,12 +16,11 @@
 
 package com.orientechnologies.common.util;
 
-import org.junit.Before;
-import org.junit.Test;
+import static org.junit.Assert.assertEquals;
 
 import java.nio.ByteBuffer;
-
-import static org.junit.Assert.assertEquals;
+import org.junit.Before;
+import org.junit.Test;
 
 /**
  * @author Artem Loginov (logart2007-at-gmail.com)
@@ -266,7 +265,6 @@ public class OByteBufferUtilsTest {
     short storedValue = all.getShort();
 
     assertEquals(value, storedValue);
-
   }
 
   @Test
@@ -284,7 +282,6 @@ public class OByteBufferUtilsTest {
     int storedValue = all.getInt();
 
     assertEquals(value, storedValue);
-
   }
 
   @Test
@@ -302,6 +299,5 @@ public class OByteBufferUtilsTest {
     long storedValue = all.getLong();
 
     assertEquals(value, storedValue);
-
   }
 }

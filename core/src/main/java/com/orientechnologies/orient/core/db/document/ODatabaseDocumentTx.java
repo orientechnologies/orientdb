@@ -1,5 +1,7 @@
 package com.orientechnologies.orient.core.db.document;
 
+import static com.orientechnologies.orient.core.db.document.ODatabaseDocumentTxInternal.closeAllOnShutdown;
+
 import com.orientechnologies.common.concur.lock.OLockException;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.cache.OLocalRecordCache;
@@ -9,7 +11,19 @@ import com.orientechnologies.orient.core.command.script.OCommandScriptException;
 import com.orientechnologies.orient.core.config.OContextConfiguration;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.conflict.ORecordConflictStrategy;
-import com.orientechnologies.orient.core.db.*;
+import com.orientechnologies.orient.core.db.ODatabase;
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
+import com.orientechnologies.orient.core.db.ODatabaseInternal;
+import com.orientechnologies.orient.core.db.ODatabaseListener;
+import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
+import com.orientechnologies.orient.core.db.ODatabaseType;
+import com.orientechnologies.orient.core.db.OLiveQueryMonitor;
+import com.orientechnologies.orient.core.db.OLiveQueryResultListener;
+import com.orientechnologies.orient.core.db.OSharedContext;
+import com.orientechnologies.orient.core.db.OrientDB;
+import com.orientechnologies.orient.core.db.OrientDBConfig;
+import com.orientechnologies.orient.core.db.OrientDBConfigBuilder;
+import com.orientechnologies.orient.core.db.OrientDBInternal;
 import com.orientechnologies.orient.core.db.record.OCurrentStorageComponentsFactory;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.dictionary.ODictionary;
@@ -44,7 +58,11 @@ import com.orientechnologies.orient.core.serialization.serializer.record.ORecord
 import com.orientechnologies.orient.core.shutdown.OShutdownHandler;
 import com.orientechnologies.orient.core.sql.OCommandSQLParsingException;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
-import com.orientechnologies.orient.core.storage.*;
+import com.orientechnologies.orient.core.storage.OBasicTransaction;
+import com.orientechnologies.orient.core.storage.ORecordCallback;
+import com.orientechnologies.orient.core.storage.ORecordMetadata;
+import com.orientechnologies.orient.core.storage.OStorage;
+import com.orientechnologies.orient.core.storage.OStorageInfo;
 import com.orientechnologies.orient.core.storage.ridbag.sbtree.OBonsaiCollectionPointer;
 import com.orientechnologies.orient.core.storage.ridbag.sbtree.OSBTreeCollectionManager;
 import com.orientechnologies.orient.core.tx.OTransaction;
@@ -52,60 +70,66 @@ import com.orientechnologies.orient.core.tx.OTransactionAbstract;
 import com.orientechnologies.orient.core.tx.OTransactionInternal;
 import com.orientechnologies.orient.core.util.OURLConnection;
 import com.orientechnologies.orient.core.util.OURLHelper;
-
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.util.*;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
 import java.util.Map.Entry;
-import java.util.concurrent.*;
+import java.util.Set;
+import java.util.UUID;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 
-import static com.orientechnologies.orient.core.db.document.ODatabaseDocumentTxInternal.closeAllOnShutdown;
-
-/**
- * Created by tglman on 20/07/16.
- *
- * @Deprecated use {@link OrientDB} instead.
- */
+/** Created by tglman on 20/07/16. @Deprecated use {@link OrientDB} instead. */
 @Deprecated
 public class ODatabaseDocumentTx implements ODatabaseDocumentInternal {
 
   protected static ConcurrentMap<String, OrientDBInternal> embedded = new ConcurrentHashMap<>();
-  protected static ConcurrentMap<String, OrientDBInternal> remote   = new ConcurrentHashMap<>();
+  protected static ConcurrentMap<String, OrientDBInternal> remote = new ConcurrentHashMap<>();
 
-  protected       ODatabaseDocumentInternal internal;
-  private final   String                    url;
-  private         OrientDBInternal          factory;
-  private final   String                    type;
-  private final   String                    dbName;
-  private final   String                    baseUrl;
-  private final   Map<String, Object>       preopenProperties = new HashMap<>();
-  private final   Map<ATTRIBUTES, Object>   preopenAttributes = new HashMap<>();
+  protected ODatabaseDocumentInternal internal;
+  private final String url;
+  private OrientDBInternal factory;
+  private final String type;
+  private final String dbName;
+  private final String baseUrl;
+  private final Map<String, Object> preopenProperties = new HashMap<>();
+  private final Map<ATTRIBUTES, Object> preopenAttributes = new HashMap<>();
   // TODO review for the case of browseListener before open.
-  private final   Set<ODatabaseListener>    preopenListener   = new HashSet<>();
-  private         ODatabaseInternal<?>      databaseOwner;
-  private         OIntent                   intent;
-  private         OStorage                  delegateStorage;
-  private         ORecordConflictStrategy   conflictStrategy;
-  private         ORecordSerializer         serializer;
-  protected final AtomicReference<Thread>   owner             = new AtomicReference<Thread>();
-  private final   boolean                   ownerProtection;
+  private final Set<ODatabaseListener> preopenListener = new HashSet<>();
+  private ODatabaseInternal<?> databaseOwner;
+  private OIntent intent;
+  private OStorage delegateStorage;
+  private ORecordConflictStrategy conflictStrategy;
+  private ORecordSerializer serializer;
+  protected final AtomicReference<Thread> owner = new AtomicReference<Thread>();
+  private final boolean ownerProtection;
 
-  private static OShutdownHandler shutdownHandler = new OShutdownHandler() {
-    @Override
-    public void shutdown() throws Exception {
-      closeAllOnShutdown();
-    }
+  private static OShutdownHandler shutdownHandler =
+      new OShutdownHandler() {
+        @Override
+        public void shutdown() throws Exception {
+          closeAllOnShutdown();
+        }
 
-    @Override
-    public int getPriority() {
-      return 1000;
-    }
-  };
+        @Override
+        public int getPriority() {
+          return 1000;
+        }
+      };
 
   static {
-    Orient.instance().registerOrientStartupListener(() -> Orient.instance().addShutdownHandler(shutdownHandler));
+    Orient.instance()
+        .registerOrientStartupListener(() -> Orient.instance().addShutdownHandler(shutdownHandler));
     Orient.instance().addShutdownHandler(shutdownHandler);
   }
 
@@ -136,9 +160,9 @@ public class ODatabaseDocumentTx implements ODatabaseDocumentInternal {
     return factory;
   }
 
-  protected static OrientDBInternal getOrCreateEmbeddedFactory(String baseUrl, OrientDBConfig config) {
-    if (!baseUrl.endsWith("/"))
-      baseUrl += "/";
+  protected static OrientDBInternal getOrCreateEmbeddedFactory(
+      String baseUrl, OrientDBConfig config) {
+    if (!baseUrl.endsWith("/")) baseUrl += "/";
     OrientDBInternal factory;
     synchronized (embedded) {
       factory = embedded.get(baseUrl);
@@ -154,9 +178,7 @@ public class ODatabaseDocumentTx implements ODatabaseDocumentInternal {
     return factory;
   }
 
-  /**
-   * @Deprecated use {{@link OrientDB}} instead.
-   */
+  /** @Deprecated use {{@link OrientDB}} instead. */
   @Deprecated
   public ODatabaseDocumentTx(String url) {
     this(url, true);
@@ -170,7 +192,6 @@ public class ODatabaseDocumentTx implements ODatabaseDocumentInternal {
     baseUrl = connection.getPath();
     dbName = connection.getDbName();
     this.ownerProtection = ownerProtection;
-
   }
 
   protected ODatabaseDocumentTx(ODatabaseDocumentInternal ref, String baseUrl) {
@@ -192,15 +213,13 @@ public class ODatabaseDocumentTx implements ODatabaseDocumentInternal {
 
   @Override
   public OCurrentStorageComponentsFactory getStorageVersions() {
-    if (internal == null)
-      return null;
+    if (internal == null) return null;
     return internal.getStorageVersions();
   }
 
   @Override
   public OSBTreeCollectionManager getSbTreeCollectionManager() {
-    if (internal == null)
-      return null;
+    if (internal == null) return null;
     return internal.getSbTreeCollectionManager();
   }
 
@@ -213,8 +232,7 @@ public class ODatabaseDocumentTx implements ODatabaseDocumentInternal {
   @Override
   public ORecordSerializer getSerializer() {
     if (internal == null) {
-      if (serializer != null)
-        return serializer;
+      if (serializer != null) return serializer;
       return ORecordSerializerFactory.instance().getDefaultRecordSerializer();
     }
     return internal.getSerializer();
@@ -226,7 +244,8 @@ public class ODatabaseDocumentTx implements ODatabaseDocumentInternal {
   }
 
   @Override
-  public <RET extends ORecord> RET loadIfVersionIsNotLatest(ORID rid, int recordVersion, String fetchPlan, boolean ignoreCache)
+  public <RET extends ORecord> RET loadIfVersionIsNotLatest(
+      ORID rid, int recordVersion, String fetchPlan, boolean ignoreCache)
       throws ORecordNotFoundException {
     checkOpenness();
     return (RET) internal.loadIfVersionIsNotLatest(rid, recordVersion, fetchPlan, ignoreCache);
@@ -245,24 +264,43 @@ public class ODatabaseDocumentTx implements ODatabaseDocumentInternal {
   }
 
   @Override
-  public <RET extends ORecord> RET executeReadRecord(ORecordId rid, ORecord iRecord, int recordVersion, String fetchPlan,
-      boolean ignoreCache, boolean iUpdateCache, boolean loadTombstones, OStorage.LOCKING_STRATEGY lockingStrategy,
+  public <RET extends ORecord> RET executeReadRecord(
+      ORecordId rid,
+      ORecord iRecord,
+      int recordVersion,
+      String fetchPlan,
+      boolean ignoreCache,
+      boolean iUpdateCache,
+      boolean loadTombstones,
+      OStorage.LOCKING_STRATEGY lockingStrategy,
       RecordReader recordReader) {
     checkOpenness();
-    return internal
-        .executeReadRecord(rid, iRecord, recordVersion, fetchPlan, ignoreCache, iUpdateCache, loadTombstones, lockingStrategy,
-            recordReader);
+    return internal.executeReadRecord(
+        rid,
+        iRecord,
+        recordVersion,
+        fetchPlan,
+        ignoreCache,
+        iUpdateCache,
+        loadTombstones,
+        lockingStrategy,
+        recordReader);
   }
 
   @Override
-  public void executeDeleteRecord(OIdentifiable record, int iVersion, boolean iRequired, OPERATION_MODE iMode,
+  public void executeDeleteRecord(
+      OIdentifiable record,
+      int iVersion,
+      boolean iRequired,
+      OPERATION_MODE iMode,
       boolean prohibitTombstones) {
     checkOpenness();
     internal.executeDeleteRecord(record, iVersion, iRequired, iMode, prohibitTombstones);
   }
 
   @Override
-  public void setDefaultTransactionMode(Map<ORID, OTransactionAbstract.LockedRecordMetadata> noTxLocks) {
+  public void setDefaultTransactionMode(
+      Map<ORID, OTransactionAbstract.LockedRecordMetadata> noTxLocks) {
     checkOpenness();
     internal.setDefaultTransactionMode(noTxLocks);
   }
@@ -281,7 +319,8 @@ public class ODatabaseDocumentTx implements ODatabaseDocumentInternal {
   }
 
   @Override
-  public <DB extends ODatabase<?>> DB registerHook(ORecordHook iHookImpl, ORecordHook.HOOK_POSITION iPosition) {
+  public <DB extends ODatabase<?>> DB registerHook(
+      ORecordHook iHookImpl, ORecordHook.HOOK_POSITION iPosition) {
     checkOpenness();
     internal.registerHook(iHookImpl, iPosition);
     return (DB) this;
@@ -363,8 +402,7 @@ public class ODatabaseDocumentTx implements ODatabaseDocumentInternal {
   }
 
   protected void checkOpenness() {
-    if (internal == null)
-      throw new ODatabaseException("Database '" + getURL() + "' is closed");
+    if (internal == null) throw new ODatabaseException("Database '" + getURL() + "' is closed");
   }
 
   @Override
@@ -382,8 +420,7 @@ public class ODatabaseDocumentTx implements ODatabaseDocumentInternal {
   @Override
   @Deprecated
   public OStorage getStorage() {
-    if (internal == null)
-      return delegateStorage;
+    if (internal == null) return delegateStorage;
     return internal.getStorage();
   }
 
@@ -405,8 +442,7 @@ public class ODatabaseDocumentTx implements ODatabaseDocumentInternal {
 
   @Override
   public void resetInitialization() {
-    if (internal != null)
-      internal.resetInitialization();
+    if (internal != null) internal.resetInitialization();
   }
 
   @Override
@@ -415,16 +451,14 @@ public class ODatabaseDocumentTx implements ODatabaseDocumentInternal {
 
     while (current != null && current != this && current.getDatabaseOwner() != current)
       current = current.getDatabaseOwner();
-    if (current == null)
-      return this;
+    if (current == null) return this;
     return current;
   }
 
   @Override
   public ODatabaseInternal<?> setDatabaseOwner(ODatabaseInternal<?> iOwner) {
     databaseOwner = iOwner;
-    if (internal != null)
-      internal.setDatabaseOwner(iOwner);
+    if (internal != null) internal.setDatabaseOwner(iOwner);
     return this;
   }
 
@@ -540,9 +574,7 @@ public class ODatabaseDocumentTx implements ODatabaseDocumentInternal {
     return internal.newInstance();
   }
 
-  /**
-   * {@inheritDoc}
-   */
+  /** {@inheritDoc} */
   @Override
   @Deprecated
   public ODictionary<ORecord> getDictionary() {
@@ -552,8 +584,7 @@ public class ODatabaseDocumentTx implements ODatabaseDocumentInternal {
 
   @Override
   public OSecurityUser getUser() {
-    if (internal != null)
-      return internal.getUser();
+    if (internal != null) return internal.getUser();
     return null;
   }
 
@@ -576,13 +607,15 @@ public class ODatabaseDocumentTx implements ODatabaseDocumentInternal {
   }
 
   @Override
-  public <RET extends ORecord> RET reload(ORecord iObject, String iFetchPlan, boolean iIgnoreCache) {
+  public <RET extends ORecord> RET reload(
+      ORecord iObject, String iFetchPlan, boolean iIgnoreCache) {
     checkOpenness();
     return internal.reload(iObject, iFetchPlan, iIgnoreCache);
   }
 
   @Override
-  public <RET extends ORecord> RET reload(ORecord iObject, String iFetchPlan, boolean iIgnoreCache, boolean force) {
+  public <RET extends ORecord> RET reload(
+      ORecord iObject, String iFetchPlan, boolean iIgnoreCache, boolean force) {
     checkOpenness();
     return internal.reload(iObject, iFetchPlan, iIgnoreCache, force);
   }
@@ -612,10 +645,15 @@ public class ODatabaseDocumentTx implements ODatabaseDocumentInternal {
   }
 
   @Override
-  public <RET extends ORecord> RET save(ORecord iObject, OPERATION_MODE iMode, boolean iForceCreate,
-      ORecordCallback<? extends Number> iRecordCreatedCallback, ORecordCallback<Integer> iRecordUpdatedCallback) {
+  public <RET extends ORecord> RET save(
+      ORecord iObject,
+      OPERATION_MODE iMode,
+      boolean iForceCreate,
+      ORecordCallback<? extends Number> iRecordCreatedCallback,
+      ORecordCallback<Integer> iRecordUpdatedCallback) {
     checkOpenness();
-    return internal.save(iObject, iMode, iForceCreate, iRecordCreatedCallback, iRecordUpdatedCallback);
+    return internal.save(
+        iObject, iMode, iForceCreate, iRecordCreatedCallback, iRecordUpdatedCallback);
   }
 
   @Override
@@ -625,10 +663,16 @@ public class ODatabaseDocumentTx implements ODatabaseDocumentInternal {
   }
 
   @Override
-  public <RET extends ORecord> RET save(ORecord iObject, String iClusterName, OPERATION_MODE iMode, boolean iForceCreate,
-      ORecordCallback<? extends Number> iRecordCreatedCallback, ORecordCallback<Integer> iRecordUpdatedCallback) {
+  public <RET extends ORecord> RET save(
+      ORecord iObject,
+      String iClusterName,
+      OPERATION_MODE iMode,
+      boolean iForceCreate,
+      ORecordCallback<? extends Number> iRecordCreatedCallback,
+      ORecordCallback<Integer> iRecordUpdatedCallback) {
     checkOpenness();
-    return internal.save(iObject, iClusterName, iMode, iForceCreate, iRecordCreatedCallback, iRecordUpdatedCallback);
+    return internal.save(
+        iObject, iClusterName, iMode, iForceCreate, iRecordCreatedCallback, iRecordUpdatedCallback);
   }
 
   @Override
@@ -738,30 +782,44 @@ public class ODatabaseDocumentTx implements ODatabaseDocumentInternal {
   }
 
   @Override
-  public ORecordIteratorCluster<ODocument> browseCluster(String iClusterName, long startClusterPosition, long endClusterPosition,
+  public ORecordIteratorCluster<ODocument> browseCluster(
+      String iClusterName,
+      long startClusterPosition,
+      long endClusterPosition,
       boolean loadTombstones) {
     checkOpenness();
-    return internal.browseCluster(iClusterName, startClusterPosition, endClusterPosition, loadTombstones);
+    return internal.browseCluster(
+        iClusterName, startClusterPosition, endClusterPosition, loadTombstones);
   }
 
   @Override
-  public <REC extends ORecord> ORecordIteratorCluster<REC> browseCluster(String iClusterName, Class<REC> iRecordClass) {
+  public <REC extends ORecord> ORecordIteratorCluster<REC> browseCluster(
+      String iClusterName, Class<REC> iRecordClass) {
     checkOpenness();
     return internal.browseCluster(iClusterName, iRecordClass);
   }
 
   @Override
-  public <REC extends ORecord> ORecordIteratorCluster<REC> browseCluster(String iClusterName, Class<REC> iRecordClass,
-      long startClusterPosition, long endClusterPosition) {
+  public <REC extends ORecord> ORecordIteratorCluster<REC> browseCluster(
+      String iClusterName,
+      Class<REC> iRecordClass,
+      long startClusterPosition,
+      long endClusterPosition) {
     checkOpenness();
-    return internal.browseCluster(iClusterName, iRecordClass, startClusterPosition, endClusterPosition);
+    return internal.browseCluster(
+        iClusterName, iRecordClass, startClusterPosition, endClusterPosition);
   }
 
   @Override
-  public <REC extends ORecord> ORecordIteratorCluster<REC> browseCluster(String iClusterName, Class<REC> iRecordClass,
-      long startClusterPosition, long endClusterPosition, boolean loadTombstones) {
+  public <REC extends ORecord> ORecordIteratorCluster<REC> browseCluster(
+      String iClusterName,
+      Class<REC> iRecordClass,
+      long startClusterPosition,
+      long endClusterPosition,
+      boolean loadTombstones) {
     checkOpenness();
-    return internal.browseCluster(iClusterName, iRecordClass, startClusterPosition, endClusterPosition, loadTombstones);
+    return internal.browseCluster(
+        iClusterName, iRecordClass, startClusterPosition, endClusterPosition, loadTombstones);
   }
 
   @Override
@@ -789,24 +847,24 @@ public class ODatabaseDocumentTx implements ODatabaseDocumentInternal {
   }
 
   @Override
-  public <DB extends ODatabaseDocument> DB checkSecurity(ORule.ResourceGeneric resourceGeneric, String resourceSpecific,
-      int iOperation) {
+  public <DB extends ODatabaseDocument> DB checkSecurity(
+      ORule.ResourceGeneric resourceGeneric, String resourceSpecific, int iOperation) {
     checkOpenness();
     internal.checkSecurity(resourceGeneric, resourceSpecific, iOperation);
     return (DB) this;
   }
 
   @Override
-  public <DB extends ODatabaseDocument> DB checkSecurity(ORule.ResourceGeneric iResourceGeneric, int iOperation,
-      Object iResourceSpecific) {
+  public <DB extends ODatabaseDocument> DB checkSecurity(
+      ORule.ResourceGeneric iResourceGeneric, int iOperation, Object iResourceSpecific) {
     checkOpenness();
     internal.checkSecurity(iResourceGeneric, iOperation, iResourceSpecific);
     return (DB) this;
   }
 
   @Override
-  public <DB extends ODatabaseDocument> DB checkSecurity(ORule.ResourceGeneric iResourceGeneric, int iOperation,
-      Object... iResourcesSpecific) {
+  public <DB extends ODatabaseDocument> DB checkSecurity(
+      ORule.ResourceGeneric iResourceGeneric, int iOperation, Object... iResourcesSpecific) {
     checkOpenness();
     internal.checkSecurity(iResourceGeneric, iOperation, iResourcesSpecific);
     return (DB) this;
@@ -833,14 +891,16 @@ public class ODatabaseDocumentTx implements ODatabaseDocumentInternal {
   }
 
   @Override
-  public <DB extends ODatabaseDocument> DB checkSecurity(String iResourceGeneric, int iOperation, Object iResourceSpecific) {
+  public <DB extends ODatabaseDocument> DB checkSecurity(
+      String iResourceGeneric, int iOperation, Object iResourceSpecific) {
     checkOpenness();
     internal.checkSecurity(iResourceGeneric, iOperation, iResourceSpecific);
     return (DB) this;
   }
 
   @Override
-  public <DB extends ODatabaseDocument> DB checkSecurity(String iResourceGeneric, int iOperation, Object... iResourcesSpecific) {
+  public <DB extends ODatabaseDocument> DB checkSecurity(
+      String iResourceGeneric, int iOperation, Object... iResourcesSpecific) {
     checkOpenness();
     internal.checkSecurity(iResourceGeneric, iOperation, iResourcesSpecific);
     return (DB) this;
@@ -858,21 +918,19 @@ public class ODatabaseDocumentTx implements ODatabaseDocumentInternal {
       if ("remote".equals(type)) {
         factory = getOrCreateRemoteFactory(baseUrl);
         OrientDBConfig config = buildConfig(null);
-        internal = (ODatabaseDocumentInternal) factory.open(dbName, iUserName, iUserPassword, config);
+        internal =
+            (ODatabaseDocumentInternal) factory.open(dbName, iUserName, iUserPassword, config);
 
       } else {
         factory = getOrCreateEmbeddedFactory(baseUrl, null);
         OrientDBConfig config = buildConfig(null);
-        internal = (ODatabaseDocumentInternal) factory.open(dbName, iUserName, iUserPassword, config);
+        internal =
+            (ODatabaseDocumentInternal) factory.open(dbName, iUserName, iUserPassword, config);
       }
-      if (databaseOwner != null)
-        internal.setDatabaseOwner(databaseOwner);
-      if (intent != null)
-        internal.declareIntent(intent);
-      if (conflictStrategy != null)
-        internal.setConflictStrategy(conflictStrategy);
-      if (serializer != null)
-        internal.setSerializer(serializer);
+      if (databaseOwner != null) internal.setDatabaseOwner(databaseOwner);
+      if (intent != null) internal.declareIntent(intent);
+      if (conflictStrategy != null) internal.setConflictStrategy(conflictStrategy);
+      if (serializer != null) internal.setSerializer(serializer);
       for (Entry<String, Object> pro : preopenProperties.entrySet())
         internal.setProperty(pro.getKey(), pro.getValue());
     } catch (RuntimeException e) {
@@ -883,20 +941,19 @@ public class ODatabaseDocumentTx implements ODatabaseDocumentInternal {
   }
 
   protected void setupThreadOwner() {
-    if (!ownerProtection)
-      return;
+    if (!ownerProtection) return;
 
     final Thread current = Thread.currentThread();
     final Thread o = owner.get();
 
     if (o != null || !owner.compareAndSet(null, current)) {
-      throw new IllegalStateException("Current instance is owned by other thread '" + (o != null ? o.getName() : "?") + "'");
+      throw new IllegalStateException(
+          "Current instance is owned by other thread '" + (o != null ? o.getName() : "?") + "'");
     }
   }
 
   protected void clearOwner() {
-    if (!ownerProtection)
-      return;
+    if (!ownerProtection) return;
     owner.set(null);
   }
 
@@ -921,7 +978,8 @@ public class ODatabaseDocumentTx implements ODatabaseDocumentInternal {
       } else if ("memory".equals(type)) {
         factory = getOrCreateEmbeddedFactory(baseUrl, null);
         factory.create(dbName, null, null, ODatabaseType.MEMORY, config);
-        OrientDBConfig openConfig = OrientDBConfig.builder().fromContext(config.getConfigurations()).build();
+        OrientDBConfig openConfig =
+            OrientDBConfig.builder().fromContext(config.getConfigurations()).build();
         internal = (ODatabaseDocumentInternal) factory.open(dbName, "admin", "admin", openConfig);
         for (Map.Entry<ATTRIBUTES, Object> attr : preopenAttributes.entrySet()) {
           internal.set(attr.getKey(), attr.getValue());
@@ -934,7 +992,8 @@ public class ODatabaseDocumentTx implements ODatabaseDocumentInternal {
       } else {
         factory = getOrCreateEmbeddedFactory(baseUrl, null);
         factory.create(dbName, null, null, ODatabaseType.PLOCAL, config);
-        OrientDBConfig openConfig = OrientDBConfig.builder().fromContext(config.getConfigurations()).build();
+        OrientDBConfig openConfig =
+            OrientDBConfig.builder().fromContext(config.getConfigurations()).build();
         internal = (ODatabaseDocumentInternal) factory.open(dbName, "admin", "admin", openConfig);
         for (Map.Entry<ATTRIBUTES, Object> attr : preopenAttributes.entrySet()) {
           internal.set(attr.getKey(), attr.getValue());
@@ -943,16 +1002,11 @@ public class ODatabaseDocumentTx implements ODatabaseDocumentInternal {
         for (ODatabaseListener oDatabaseListener : preopenListener) {
           internal.registerListener(oDatabaseListener);
         }
-
       }
-      if (databaseOwner != null)
-        internal.setDatabaseOwner(databaseOwner);
-      if (intent != null)
-        internal.declareIntent(intent);
-      if (conflictStrategy != null)
-        internal.setConflictStrategy(conflictStrategy);
-      if (serializer != null)
-        internal.setSerializer(serializer);
+      if (databaseOwner != null) internal.setDatabaseOwner(databaseOwner);
+      if (intent != null) internal.declareIntent(intent);
+      if (conflictStrategy != null) internal.setConflictStrategy(conflictStrategy);
+      if (serializer != null) internal.setSerializer(serializer);
       for (Entry<String, Object> pro : preopenProperties.entrySet())
         internal.setProperty(pro.getKey(), pro.getValue());
     } catch (RuntimeException e) {
@@ -964,15 +1018,13 @@ public class ODatabaseDocumentTx implements ODatabaseDocumentInternal {
 
   @Override
   public ODatabase activateOnCurrentThread() {
-    if (internal != null)
-      internal.activateOnCurrentThread();
+    if (internal != null) internal.activateOnCurrentThread();
     return this;
   }
 
   @Override
   public boolean isActiveOnCurrentThread() {
-    if (internal != null)
-      return internal.isActiveOnCurrentThread();
+    if (internal != null) return internal.isActiveOnCurrentThread();
     return false;
   }
 
@@ -1000,8 +1052,7 @@ public class ODatabaseDocumentTx implements ODatabaseDocumentInternal {
 
   @Override
   public boolean declareIntent(OIntent iIntent) {
-    if (internal != null)
-      return internal.declareIntent(iIntent);
+    if (internal != null) return internal.declareIntent(iIntent);
     else {
       intent = iIntent;
       return true;
@@ -1010,15 +1061,13 @@ public class ODatabaseDocumentTx implements ODatabaseDocumentInternal {
 
   @Override
   public OIntent getActiveIntent() {
-    if (internal == null)
-      return intent;
+    if (internal == null) return intent;
     return internal.getActiveIntent();
   }
 
   @Override
   public boolean exists() {
-    if (internal != null)
-      return true;
+    if (internal != null) return true;
     if ("remote".equals(type)) {
       throw new UnsupportedOperationException();
     } else {
@@ -1198,18 +1247,14 @@ public class ODatabaseDocumentTx implements ODatabaseDocumentInternal {
 
   @Override
   public Object setProperty(String iName, Object iValue) {
-    if (internal != null)
-      return internal.setProperty(iName, iValue);
-    else
-      return preopenProperties.put(iName, iValue);
+    if (internal != null) return internal.setProperty(iName, iValue);
+    else return preopenProperties.put(iName, iValue);
   }
 
   @Override
   public Object getProperty(String iName) {
-    if (internal != null)
-      return internal.getProperty(iName);
-    else
-      return preopenProperties.get(iName);
+    if (internal != null) return internal.getProperty(iName);
+    else return preopenProperties.get(iName);
   }
 
   @Override
@@ -1229,10 +1274,8 @@ public class ODatabaseDocumentTx implements ODatabaseDocumentInternal {
 
   @Override
   public <DB extends ODatabase> DB set(ATTRIBUTES iAttribute, Object iValue) {
-    if (internal != null)
-      internal.set(iAttribute, iValue);
-    else
-      preopenAttributes.put(iAttribute, iValue);
+    if (internal != null) internal.set(iAttribute, iValue);
+    else preopenAttributes.put(iAttribute, iValue);
     return (DB) this;
   }
 
@@ -1302,14 +1345,24 @@ public class ODatabaseDocumentTx implements ODatabaseDocumentInternal {
   }
 
   @Override
-  public List<String> backup(OutputStream out, Map<String, Object> options, Callable<Object> callable,
-      OCommandOutputListener iListener, int compressionLevel, int bufferSize) throws IOException {
+  public List<String> backup(
+      OutputStream out,
+      Map<String, Object> options,
+      Callable<Object> callable,
+      OCommandOutputListener iListener,
+      int compressionLevel,
+      int bufferSize)
+      throws IOException {
     checkOpenness();
     return internal.backup(out, options, callable, iListener, compressionLevel, bufferSize);
   }
 
   @Override
-  public void restore(InputStream in, Map<String, Object> options, Callable<Object> callable, OCommandOutputListener iListener)
+  public void restore(
+      InputStream in,
+      Map<String, Object> options,
+      Callable<Object> callable,
+      OCommandOutputListener iListener)
       throws IOException {
     checkOpenness();
     internal.restore(in, options, callable, iListener);
@@ -1330,7 +1383,8 @@ public class ODatabaseDocumentTx implements ODatabaseDocumentInternal {
   }
 
   @Override
-  public OResultSet query(String query, Map args) throws OCommandSQLParsingException, OCommandExecutionException {
+  public OResultSet query(String query, Map args)
+      throws OCommandSQLParsingException, OCommandExecutionException {
     checkOpenness();
     return internal.query(query, args);
   }
@@ -1343,23 +1397,33 @@ public class ODatabaseDocumentTx implements ODatabaseDocumentInternal {
       }
     }
     OrientDBConfigBuilder builder = OrientDBConfig.builder();
-    final String connectionStrategy = pars != null ? (String) pars.get(OGlobalConfiguration.CLIENT_CONNECTION_STRATEGY.getKey()) : null;
+    final String connectionStrategy =
+        pars != null
+            ? (String) pars.get(OGlobalConfiguration.CLIENT_CONNECTION_STRATEGY.getKey())
+            : null;
     if (connectionStrategy != null)
       builder.addConfig(OGlobalConfiguration.CLIENT_CONNECTION_STRATEGY, connectionStrategy);
 
     final String compressionMethod =
-        pars != null ? (String) pars.get(OGlobalConfiguration.STORAGE_COMPRESSION_METHOD.getKey()) : null;
+        pars != null
+            ? (String) pars.get(OGlobalConfiguration.STORAGE_COMPRESSION_METHOD.getKey())
+            : null;
     if (compressionMethod != null)
       // SAVE COMPRESSION METHOD IN CONFIGURATION
       builder.addConfig(OGlobalConfiguration.STORAGE_COMPRESSION_METHOD, compressionMethod);
 
     final String encryptionMethod =
-        pars != null ? (String) pars.get(OGlobalConfiguration.STORAGE_ENCRYPTION_METHOD.getKey()) : null;
+        pars != null
+            ? (String) pars.get(OGlobalConfiguration.STORAGE_ENCRYPTION_METHOD.getKey())
+            : null;
     if (encryptionMethod != null)
       // SAVE ENCRYPTION METHOD IN CONFIGURATION
       builder.addConfig(OGlobalConfiguration.STORAGE_ENCRYPTION_METHOD, encryptionMethod);
 
-    final String encryptionKey = pars != null ? (String) pars.get(OGlobalConfiguration.STORAGE_ENCRYPTION_KEY.getKey()) : null;
+    final String encryptionKey =
+        pars != null
+            ? (String) pars.get(OGlobalConfiguration.STORAGE_ENCRYPTION_KEY.getKey())
+            : null;
     if (encryptionKey != null)
       // SAVE ENCRYPTION KEY IN CONFIGURATION
       builder.addConfig(OGlobalConfiguration.STORAGE_ENCRYPTION_KEY, encryptionKey);
@@ -1376,12 +1440,14 @@ public class ODatabaseDocumentTx implements ODatabaseDocumentInternal {
   }
 
   @Override
-  public OResultSet command(String query, Object... args) throws OCommandSQLParsingException, OCommandExecutionException {
+  public OResultSet command(String query, Object... args)
+      throws OCommandSQLParsingException, OCommandExecutionException {
     checkOpenness();
     return internal.command(query, args);
   }
 
-  public OResultSet command(String query, Map args) throws OCommandSQLParsingException, OCommandExecutionException {
+  public OResultSet command(String query, Map args)
+      throws OCommandSQLParsingException, OCommandExecutionException {
     checkOpenness();
     return internal.command(query, args);
   }
@@ -1434,7 +1500,8 @@ public class ODatabaseDocumentTx implements ODatabaseDocumentInternal {
   }
 
   @Override
-  public OLiveQueryMonitor live(String query, OLiveQueryResultListener listener, Map<String, ?> args) {
+  public OLiveQueryMonitor live(
+      String query, OLiveQueryResultListener listener, Map<String, ?> args) {
     checkOpenness();
     return internal.live(query, listener, args);
   }
@@ -1512,9 +1579,15 @@ public class ODatabaseDocumentTx implements ODatabaseDocumentInternal {
     internal.internalClose(true);
   }
 
-  public ORecord saveAll(ORecord iRecord, String iClusterName, OPERATION_MODE iMode, boolean iForceCreate,
-      ORecordCallback<? extends Number> iRecordCreatedCallback, ORecordCallback<Integer> iRecordUpdatedCallback) {
-    return internal.saveAll(iRecord, iClusterName, iMode, iForceCreate, iRecordCreatedCallback, iRecordUpdatedCallback);
+  public ORecord saveAll(
+      ORecord iRecord,
+      String iClusterName,
+      OPERATION_MODE iMode,
+      boolean iForceCreate,
+      ORecordCallback<? extends Number> iRecordCreatedCallback,
+      ORecordCallback<Integer> iRecordUpdatedCallback) {
+    return internal.saveAll(
+        iRecord, iClusterName, iMode, iForceCreate, iRecordCreatedCallback, iRecordUpdatedCallback);
   }
 
   @Override
@@ -1544,7 +1617,8 @@ public class ODatabaseDocumentTx implements ODatabaseDocumentInternal {
   }
 
   @Override
-  public <RET extends ORecord> RET lock(ORID recordId, long timeout, TimeUnit timeoutUnit) throws OLockException {
+  public <RET extends ORecord> RET lock(ORID recordId, long timeout, TimeUnit timeoutUnit)
+      throws OLockException {
     checkOpenness();
     return internal.lock(recordId, timeout, timeoutUnit);
   }
@@ -1556,8 +1630,10 @@ public class ODatabaseDocumentTx implements ODatabaseDocumentInternal {
   }
 
   @Override
-  public <T> T sendSequenceAction(OSequenceAction action) throws ExecutionException, InterruptedException {
-    throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+  public <T> T sendSequenceAction(OSequenceAction action)
+      throws ExecutionException, InterruptedException {
+    throw new UnsupportedOperationException(
+        "Not supported yet."); // To change body of generated methods, choose Tools | Templates.
   }
 
   @Override

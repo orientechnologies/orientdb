@@ -7,25 +7,25 @@ import com.orientechnologies.orient.core.annotation.OBeforeSerialization;
  * @since 18.05.12
  */
 public class AbstractEntity {
-	private boolean before1Called = false;
-	private boolean before2Called = false;
+  private boolean before1Called = false;
+  private boolean before2Called = false;
 
-	public void reset() {
-		before1Called = false;
-		before2Called = false;
-	}
+  public void reset() {
+    before1Called = false;
+    before2Called = false;
+  }
 
-	@OBeforeSerialization
-	public void before1() {
-		before1Called = true;
-	}
+  @OBeforeSerialization
+  public void before1() {
+    before1Called = true;
+  }
 
-	@OBeforeSerialization
-	public void before2() {
-		before2Called = true;
-	}
+  @OBeforeSerialization
+  public void before2() {
+    before2Called = true;
+  }
 
-	public boolean callbackExecuted() {
-		return before1Called && before2Called;
-	}
+  public boolean callbackExecuted() {
+    return before1Called && before2Called;
+  }
 }

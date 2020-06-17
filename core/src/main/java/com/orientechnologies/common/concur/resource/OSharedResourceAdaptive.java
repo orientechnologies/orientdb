@@ -22,7 +22,6 @@ package com.orientechnologies.common.concur.resource;
 import com.orientechnologies.common.concur.OTimeoutException;
 import com.orientechnologies.common.concur.lock.OLockException;
 import com.orientechnologies.common.exception.OException;
-
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.lang.reflect.Field;
@@ -34,18 +33,17 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 /**
- * Adaptive class to handle shared resources. It's configurable specifying if it's running in a concurrent environment and allow o
- * specify a maximum timeout to avoid deadlocks.
- * 
+ * Adaptive class to handle shared resources. It's configurable specifying if it's running in a
+ * concurrent environment and allow o specify a maximum timeout to avoid deadlocks.
+ *
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
- * 
  */
 public class OSharedResourceAdaptive {
-  private final ReentrantReadWriteLock lock  = new ReentrantReadWriteLock();
-  private final AtomicInteger          users = new AtomicInteger(0);
-  private final boolean                concurrent;
-  private final int                    timeout;
-  private final boolean                ignoreThreadInterruption;
+  private final ReentrantReadWriteLock lock = new ReentrantReadWriteLock();
+  private final AtomicInteger users = new AtomicInteger(0);
+  private final boolean concurrent;
+  private final int timeout;
+  private final boolean ignoreThreadInterruption;
 
   protected OSharedResourceAdaptive() {
     this.concurrent = true;
@@ -65,7 +63,8 @@ public class OSharedResourceAdaptive {
     this.ignoreThreadInterruption = false;
   }
 
-  protected OSharedResourceAdaptive(final boolean iConcurrent, final int iTimeout, boolean ignoreThreadInterruption) {
+  protected OSharedResourceAdaptive(
+      final boolean iConcurrent, final int iTimeout, boolean ignoreThreadInterruption) {
     this.concurrent = iConcurrent;
     this.timeout = iTimeout;
     this.ignoreThreadInterruption = ignoreThreadInterruption;
@@ -81,7 +80,10 @@ public class OSharedResourceAdaptive {
 
   public int removeUser() {
     if (users.get() < 1)
-      throw new IllegalStateException("Cannot remove user of the shared resource " + toString() + " because no user is using it");
+      throw new IllegalStateException(
+          "Cannot remove user of the shared resource "
+              + toString()
+              + " because no user is using it");
 
     return users.decrementAndGet();
   }
@@ -122,10 +124,13 @@ public class OSharedResourceAdaptive {
             }
           }
 
-          final OLockException exception = new OLockException("Thread interrupted while waiting for resource of class '"
-              + getClass() + "' with timeout=" + timeout);
+          final OLockException exception =
+              new OLockException(
+                  "Thread interrupted while waiting for resource of class '"
+                      + getClass()
+                      + "' with timeout="
+                      + timeout);
           throw OException.wrapException(exception, e);
-
         }
         throwTimeoutException(lock.writeLock());
       } else {
@@ -158,14 +163,17 @@ public class OSharedResourceAdaptive {
             }
           }
 
-          final OLockException exception = new OLockException("Thread interrupted while waiting for resource of class '"
-              + getClass() + "' with timeout=" + timeout);
+          final OLockException exception =
+              new OLockException(
+                  "Thread interrupted while waiting for resource of class '"
+                      + getClass()
+                      + "' with timeout="
+                      + timeout);
           throw OException.wrapException(exception, e);
         }
 
         throwTimeoutException(lock.readLock());
-      } else
-        lock.readLock().lock();
+      } else lock.readLock().lock();
   }
 
   protected boolean tryAcquireSharedLock() {
@@ -179,15 +187,18 @@ public class OSharedResourceAdaptive {
   }
 
   protected void releaseSharedLock() {
-    if (concurrent)
-      lock.readLock().unlock();
+    if (concurrent) lock.readLock().unlock();
   }
 
   private void throwTimeoutException(Lock lock) {
     final String owner = extractLockOwnerStackTrace(lock);
 
-    throw new OTimeoutException("Timeout on acquiring exclusive lock against resource of class: " + getClass() + " with timeout="
-        + timeout + (owner != null ? "\n" + owner : ""));
+    throw new OTimeoutException(
+        "Timeout on acquiring exclusive lock against resource of class: "
+            + getClass()
+            + " with timeout="
+            + timeout
+            + (owner != null ? "\n" + owner : ""));
   }
 
   private String extractLockOwnerStackTrace(Lock lock) {
@@ -200,8 +211,7 @@ public class OSharedResourceAdaptive {
       getOwner.setAccessible(true);
 
       final Thread owner = (Thread) getOwner.invoke(sync);
-      if (owner == null)
-        return null;
+      if (owner == null) return null;
 
       StringWriter stringWriter = new StringWriter();
       PrintWriter printWriter = new PrintWriter(stringWriter);
@@ -209,14 +219,16 @@ public class OSharedResourceAdaptive {
       printWriter.append("Owner thread : ").append(owner.toString()).append("\n");
 
       StackTraceElement[] stackTrace = owner.getStackTrace();
-      for (StackTraceElement traceElement : stackTrace)
-        printWriter.println("\tat " + traceElement);
+      for (StackTraceElement traceElement : stackTrace) printWriter.println("\tat " + traceElement);
 
       printWriter.flush();
       return stringWriter.toString();
-    } catch (RuntimeException | NoSuchFieldException | IllegalAccessException | NoSuchMethodException | InvocationTargetException ignore) {
+    } catch (RuntimeException
+        | NoSuchFieldException
+        | IllegalAccessException
+        | NoSuchMethodException
+        | InvocationTargetException ignore) {
       return null;
     }
-
   }
 }

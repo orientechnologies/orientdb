@@ -22,21 +22,25 @@ package com.orientechnologies.orient.core.index;
 import com.orientechnologies.common.comparator.ODefaultComparator;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.ODocumentSerializable;
-
 import java.io.Serializable;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Iterator;
+import java.util.List;
+import java.util.SortedMap;
+import java.util.TreeMap;
 
 /**
- * Container for the list of heterogeneous values that are going to be stored in in index as composite keys.
+ * Container for the list of heterogeneous values that are going to be stored in in index as
+ * composite keys.
  *
  * @author Andrey Lomakin (a.lomakin-at-orientdb.com), Artem Orobets
  */
-public class OCompositeKey implements Comparable<OCompositeKey>, Serializable, ODocumentSerializable {
-  private static final long         serialVersionUID = 1L;
-  /**
-   *
-   */
-  private final        List<Object> keys;
+public class OCompositeKey
+    implements Comparable<OCompositeKey>, Serializable, ODocumentSerializable {
+  private static final long serialVersionUID = 1L;
+  /** */
+  private final List<Object> keys;
 
   public OCompositeKey(final List<?> keys) {
     this.keys = new ArrayList<>(keys.size());
@@ -58,27 +62,23 @@ public class OCompositeKey implements Comparable<OCompositeKey>, Serializable, O
     this.keys = new ArrayList<>();
   }
 
-  /**
-   * Clears the keys array for reuse of the object
-   */
+  /** Clears the keys array for reuse of the object */
   public void reset() {
     if (this.keys != null) {
       this.keys.clear();
     }
   }
 
-  /**
-   *
-   */
+  /** */
   public List<Object> getKeys() {
     return Collections.unmodifiableList(keys);
   }
 
   /**
    * Add new key value to the list of already registered values.
-   * <p>
-   * If passed in value is {@link OCompositeKey} itself then its values will be copied in current index. But key itself will not be
-   * added.
+   *
+   * <p>If passed in value is {@link OCompositeKey} itself then its values will be copied in current
+   * index. But key itself will not be added.
    *
    * @param key Key to add.
    */
@@ -95,14 +95,14 @@ public class OCompositeKey implements Comparable<OCompositeKey>, Serializable, O
 
   /**
    * Performs partial comparison of two composite keys.
-   * <p>
-   * Two objects will be equal if the common subset of their keys is equal. For example if first object contains two keys and second
-   * contains four keys then only first two keys will be compared.
+   *
+   * <p>Two objects will be equal if the common subset of their keys is equal. For example if first
+   * object contains two keys and second contains four keys then only first two keys will be
+   * compared.
    *
    * @param otherKey Key to compare.
-   *
-   * @return a negative integer, zero, or a positive integer as this object is less than, equal to, or greater than the specified
-   * object.
+   * @return a negative integer, zero, or a positive integer as this object is less than, equal to,
+   *     or greater than the specified object.
    */
   public int compareTo(final OCompositeKey otherKey) {
     final Iterator<Object> inIter = keys.iterator();
@@ -137,32 +137,24 @@ public class OCompositeKey implements Comparable<OCompositeKey>, Serializable, O
     return 0;
   }
 
-  /**
-   * {@inheritDoc }
-   */
+  /** {@inheritDoc } */
   @Override
   public boolean equals(final Object o) {
-    if (this == o)
-      return true;
-    if (o == null || getClass() != o.getClass())
-      return false;
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
 
     final OCompositeKey that = (OCompositeKey) o;
 
     return keys.equals(that.keys);
   }
 
-  /**
-   * {@inheritDoc }
-   */
+  /** {@inheritDoc } */
   @Override
   public int hashCode() {
     return keys.hashCode();
   }
 
-  /**
-   * {@inheritDoc }
-   */
+  /** {@inheritDoc } */
   @Override
   public String toString() {
     return "OCompositeKey{" + "keys=" + keys + '}';

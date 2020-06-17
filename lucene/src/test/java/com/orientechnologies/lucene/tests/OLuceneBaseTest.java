@@ -19,51 +19,51 @@
 package com.orientechnologies.lucene.tests;
 
 import com.orientechnologies.common.io.OIOUtils;
-import com.orientechnologies.orient.core.db.*;
+import com.orientechnologies.orient.core.db.ODatabase;
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
+import com.orientechnologies.orient.core.db.ODatabasePool;
+import com.orientechnologies.orient.core.db.ODatabaseType;
+import com.orientechnologies.orient.core.db.OrientDB;
+import com.orientechnologies.orient.core.db.OrientDBConfig;
+import java.io.IOException;
+import java.io.InputStream;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.rules.TestName;
 
-import java.io.IOException;
-import java.io.InputStream;
-
-/**
- * Created by enricorisa on 19/09/14.
- */
+/** Created by enricorisa on 19/09/14. */
 public abstract class OLuceneBaseTest {
 
-  @Rule
-  public TestName name = new TestName();
+  @Rule public TestName name = new TestName();
 
   protected ODatabaseDocumentInternal db;
 
-  protected OrientDB      orient;
+  protected OrientDB orient;
   protected ODatabasePool pool;
 
   @Before
   public void setupDatabase() {
-    final String config = System.getProperty("orientdb.test.env", ODatabaseType.MEMORY.name().toLowerCase());
+    final String config =
+        System.getProperty("orientdb.test.env", ODatabaseType.MEMORY.name().toLowerCase());
     setupDatabase(config);
   }
 
   protected void setupDatabase(String config) {
-    OrientDBConfig cfg = OrientDBConfig.builder().addAttribute(ODatabase.ATTRIBUTES.MINIMUMCLUSTERS, 8).build();
+    OrientDBConfig cfg =
+        OrientDBConfig.builder().addAttribute(ODatabase.ATTRIBUTES.MINIMUMCLUSTERS, 8).build();
 
     if ("ci".equals(config) || "release".equals(config)) {
       orient = new OrientDB("embedded:./target/databases/", cfg);
-      if (orient.exists(name.getMethodName()))
-        orient.drop(name.getMethodName());
+      if (orient.exists(name.getMethodName())) orient.drop(name.getMethodName());
 
       orient.create(name.getMethodName(), ODatabaseType.PLOCAL);
 
     } else {
       orient = new OrientDB("embedded:", cfg);
-      if (orient.exists(name.getMethodName()))
-        orient.drop(name.getMethodName());
+      if (orient.exists(name.getMethodName())) orient.drop(name.getMethodName());
 
       orient.create(name.getMethodName(), ODatabaseType.MEMORY);
-
     }
 
     pool = new ODatabasePool(orient, name.getMethodName(), "admin", "admin");
@@ -87,5 +87,4 @@ public abstract class OLuceneBaseTest {
       throw new RuntimeException(e);
     }
   }
-
 }

@@ -5,13 +5,16 @@ import java.util.Optional;
 public interface OOperationLog extends AutoCloseable {
 
   enum LogIdStatus {
-    TOO_OLD, PRESENT, INVALID, FUTURE;
+    TOO_OLD,
+    PRESENT,
+    INVALID,
+    FUTURE;
   }
 
   OLogId log(OLogRequest request);
 
   /**
-   * @param logId   A log ID received
+   * @param logId A log ID received
    * @param request a request corresponding to the log ID
    * @return true if the log was added, false otherwise (eg. if the oplog is ahead of the logId)
    */
@@ -21,7 +24,7 @@ public interface OOperationLog extends AutoCloseable {
 
   /**
    * @param from first entry to get.
-   * @param to   last entry to get (included).
+   * @param to last entry to get (included).
    * @return
    */
   OOplogIterator iterate(long from, long to);

@@ -1,6 +1,5 @@
 package com.orientechnologies.orient.core.sql.parser;
 
-import org.junit.Test;
 public class OSleepStatementTest extends OParserTestAbstract {
 
   public void testPlain() {
@@ -11,5 +10,4 @@ public class OSleepStatementTest extends OParserTestAbstract {
     checkWrongSyntax("SLEEP 1.5");
     checkWrongSyntax("SLEEP 1,5");
   }
-
 }
