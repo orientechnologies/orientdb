@@ -46,6 +46,7 @@ import com.orientechnologies.orient.core.sql.functions.math.OSQLFunctionAbsolute
 import com.orientechnologies.orient.core.sql.functions.math.OSQLFunctionAverage;
 import com.orientechnologies.orient.core.sql.functions.math.OSQLFunctionDecimal;
 import com.orientechnologies.orient.core.sql.functions.math.OSQLFunctionEval;
+import com.orientechnologies.orient.core.sql.functions.math.OSQLFunctionInterval;
 import com.orientechnologies.orient.core.sql.functions.math.OSQLFunctionMax;
 import com.orientechnologies.orient.core.sql.functions.math.OSQLFunctionMin;
 import com.orientechnologies.orient.core.sql.functions.math.OSQLFunctionSum;
