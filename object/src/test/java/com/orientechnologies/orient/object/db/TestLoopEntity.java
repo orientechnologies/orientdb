@@ -2,7 +2,6 @@ package com.orientechnologies.orient.object.db;
 
 import static org.junit.Assert.assertTrue;
 
-
 import com.orientechnologies.orient.core.db.object.ODatabaseObject;
 import com.orientechnologies.orient.object.db.entity.LoopEntity;
 import org.junit.Test;

@@ -3,7 +3,6 @@ package com.orientechnologies.orient.server.network;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
-
 import com.orientechnologies.orient.client.remote.ORemotePushHandler;
 import com.orientechnologies.orient.client.remote.OStorageRemotePushThread;
 import com.orientechnologies.orient.client.remote.message.OBinaryPushRequest;

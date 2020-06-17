@@ -3,7 +3,6 @@ package com.orientechnologies.orient.object.enumerations;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
-
 import com.orientechnologies.orient.object.db.OObjectDatabaseTx;
 import java.util.ArrayList;
 import java.util.List;

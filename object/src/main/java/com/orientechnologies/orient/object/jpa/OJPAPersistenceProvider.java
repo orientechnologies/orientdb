@@ -22,7 +22,6 @@ package com.orientechnologies.orient.object.jpa;
 import static com.orientechnologies.orient.core.entity.OEntityManager.getEntityManagerByDatabaseURL;
 import static com.orientechnologies.orient.object.jpa.parsing.PersistenceXmlUtil.PERSISTENCE_XML;
 
-
 import com.orientechnologies.orient.core.entity.OEntityManager;
 import com.orientechnologies.orient.object.jpa.parsing.PersistenceXmlUtil;
 import java.net.URL;

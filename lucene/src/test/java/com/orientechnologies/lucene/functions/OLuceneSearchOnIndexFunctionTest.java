@@ -2,7 +2,6 @@ package com.orientechnologies.lucene.functions;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-
 import com.orientechnologies.lucene.test.BaseLuceneTest;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;

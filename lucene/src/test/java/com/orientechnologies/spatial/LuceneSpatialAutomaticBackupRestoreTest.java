@@ -20,7 +20,6 @@ package com.orientechnologies.spatial;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-
 import com.kenai.jffi.Platform;
 import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.common.io.OIOUtils;

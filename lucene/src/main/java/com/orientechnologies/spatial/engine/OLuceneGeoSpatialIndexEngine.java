@@ -16,7 +16,6 @@ package com.orientechnologies.spatial.engine;
 
 import static com.orientechnologies.lucene.builder.OLuceneQueryBuilder.EMPTY_METADATA;
 
-
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.lucene.collections.OLuceneResultSet;
 import com.orientechnologies.lucene.collections.OLuceneResultSetEmpty;

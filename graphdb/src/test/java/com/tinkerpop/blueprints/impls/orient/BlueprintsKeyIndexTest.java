@@ -3,7 +3,6 @@ package com.tinkerpop.blueprints.impls.orient;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 
-
 import com.tinkerpop.blueprints.Vertex;
 import java.util.ArrayList;
 import java.util.List;

@@ -20,7 +20,6 @@ package com.orientechnologies.lucene.tests;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-
 import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.lucene.analyzer.OLucenePerFieldAnalyzerWrapper;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;

@@ -17,7 +17,6 @@ package com.orientechnologies.orient.jdbc;
 
 import static java.lang.Boolean.parseBoolean;
 
-
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.exception.OQueryParsingException;

@@ -17,7 +17,6 @@ package com.orientechnologies.spatial;
 
 import static com.orientechnologies.lucene.OLuceneIndexFactory.LUCENE_ALGORITHM;
 
-
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.serialization.types.OBinarySerializer;
 import com.orientechnologies.orient.core.Orient;

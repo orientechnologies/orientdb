@@ -21,7 +21,6 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
-
 import com.orientechnologies.orient.core.OConstants;
 import java.sql.DatabaseMetaData;
 import java.sql.ResultSet;

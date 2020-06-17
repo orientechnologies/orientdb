@@ -19,7 +19,6 @@
  */
 package com.orientechnologies.orient.core.metadata.security;
 
-import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
@@ -31,7 +30,6 @@ import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ORecordLazySet;
 import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
 import com.orientechnologies.orient.core.exception.OSecurityAccessException;
-import com.orientechnologies.orient.core.exception.OSecurityException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.index.ONullOutputListener;
@@ -65,7 +63,6 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Collectors;
 
@@ -1803,27 +1800,36 @@ public class OSecurityShared implements OSecurityInternal {
   }
 
   protected void updateAllFilteredProperties(ODatabaseDocumentInternal session) {
-    try {
-      Set<OSecurityResourceProperty> result;
-      if (session.getUser() == null) {
-        result = calculateAllFilteredProperties(session);
-      } else {
-        result =
-            session
-                .getSharedContext()
-                .getOrientDB()
-                .executeNoAuthorization(
-                    session.getName(), (db -> calculateAllFilteredProperties(db)))
-                .get();
-      }
+    Set<OSecurityResourceProperty> result;
+    if (session.getUser() == null) {
+      result = calculateAllFilteredProperties(session);
       synchronized (this) {
         filteredProperties = result;
       }
-    } catch (InterruptedException e) {
-      throw OException.wrapException(new OSecurityException("Error loading security filters"), e);
-    } catch (ExecutionException e) {
-      throw OException.wrapException(new OSecurityException("Error loading security filters"), e);
+
+    } else {
+      synchronized (this) {
+        if (filteredProperties == null) {
+          filteredProperties = new HashSet<>();
+        }
+        updateAllFilteredPropertiesInternal(session);
+      }
     }
+  }
+
+  protected void updateAllFilteredPropertiesInternal(ODatabaseDocumentInternal session) {
+    session
+        .getSharedContext()
+        .getOrientDB()
+        .executeNoAuthorization(
+            session.getName(),
+            (db -> {
+              synchronized (OSecurityShared.this) {
+                filteredProperties.clear();
+                filteredProperties.addAll(calculateAllFilteredProperties(db));
+              }
+              return null;
+            }));
   }
 
   protected Set<OSecurityResourceProperty> calculateAllFilteredProperties(

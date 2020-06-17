@@ -22,7 +22,6 @@ import static com.orientechnologies.lucene.builder.OLuceneIndexType.createField;
 import static com.orientechnologies.lucene.builder.OLuceneIndexType.createFields;
 import static com.orientechnologies.lucene.engine.OLuceneIndexEngineAbstract.RID;
 
-
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.index.OCompositeKey;
 import com.orientechnologies.orient.core.index.OIndexDefinition;

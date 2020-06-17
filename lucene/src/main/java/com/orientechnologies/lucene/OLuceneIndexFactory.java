@@ -18,7 +18,6 @@ package com.orientechnologies.lucene;
 
 import static com.orientechnologies.orient.core.metadata.schema.OClass.INDEX_TYPE.FULLTEXT;
 
-
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.lucene.engine.OLuceneFullTextIndexEngine;
 import com.orientechnologies.lucene.index.OLuceneFullTextIndex;

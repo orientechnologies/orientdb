@@ -2,7 +2,6 @@ package com.tinkerpop.blueprints.impls.orient;
 
 import static org.junit.Assert.assertTrue;
 
-
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import org.junit.After;
 import org.junit.Before;

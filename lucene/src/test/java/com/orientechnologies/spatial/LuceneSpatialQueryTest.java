@@ -17,7 +17,6 @@ package com.orientechnologies.spatial;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.lucene.test.BaseLuceneTest;
 import com.orientechnologies.orient.core.Orient;

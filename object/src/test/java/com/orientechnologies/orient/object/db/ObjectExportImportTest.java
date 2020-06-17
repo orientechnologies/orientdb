@@ -2,7 +2,6 @@ package com.orientechnologies.orient.object.db;
 
 import static org.junit.Assert.assertNotNull;
 
-
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.db.tool.ODatabaseExport;
 import com.orientechnologies.orient.core.db.tool.ODatabaseImport;

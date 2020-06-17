@@ -21,7 +21,6 @@ package com.orientechnologies.orient.stresstest.workload;
 
 import static com.orientechnologies.common.util.OClassLoaderHelper.lookupProviderWithOrientClassLoader;
 
-
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Locale;

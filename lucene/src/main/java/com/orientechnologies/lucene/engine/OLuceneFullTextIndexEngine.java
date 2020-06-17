@@ -18,7 +18,6 @@ package com.orientechnologies.lucene.engine;
 
 import static com.orientechnologies.lucene.builder.OLuceneQueryBuilder.EMPTY_METADATA;
 
-
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.util.ORawPair;

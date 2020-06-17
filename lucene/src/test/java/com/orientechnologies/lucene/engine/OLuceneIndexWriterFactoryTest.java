@@ -2,7 +2,6 @@ package com.orientechnologies.lucene.engine;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-
 import com.orientechnologies.common.io.OIOUtils;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import java.io.File;

@@ -4,7 +4,6 @@ import static com.orientechnologies.orient.core.config.OGlobalConfiguration.SERV
 import static com.orientechnologies.orient.core.config.OGlobalConfiguration.STORAGE_PESSIMISTIC_LOCKING;
 import static com.orientechnologies.orient.core.db.OrientDBConfig.LOCK_TYPE_READWRITE;
 
-
 import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;

@@ -2,7 +2,6 @@ package com.orientechnologies.lucene.index;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-
 import com.orientechnologies.common.io.OIOUtils;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.lucene.test.BaseLuceneTest;

@@ -24,7 +24,6 @@ import static com.orientechnologies.orient.object.jpa.parsing.PersistenceXml.ATT
 import static com.orientechnologies.orient.object.jpa.parsing.PersistenceXml.TAG_PERSISTENCE;
 import static javax.xml.XMLConstants.W3C_XML_SCHEMA_NS_URI;
 
-
 import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.io.InputStream;

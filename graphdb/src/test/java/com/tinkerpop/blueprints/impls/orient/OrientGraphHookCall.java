@@ -2,7 +2,6 @@ package com.tinkerpop.blueprints.impls.orient;
 
 import static org.junit.Assert.assertEquals;
 
-
 import com.orientechnologies.orient.core.hook.ORecordHook;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;

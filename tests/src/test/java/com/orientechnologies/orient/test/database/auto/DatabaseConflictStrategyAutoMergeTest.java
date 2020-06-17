@@ -4,7 +4,6 @@ import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertNotNull;
 import static org.testng.Assert.assertTrue;
 
-
 import com.orientechnologies.orient.core.conflict.OAutoMergeRecordConflictStrategy;
 import com.tinkerpop.blueprints.Direction;
 import com.tinkerpop.blueprints.Edge;

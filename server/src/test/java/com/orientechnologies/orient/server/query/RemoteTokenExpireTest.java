@@ -2,7 +2,6 @@ package com.orientechnologies.orient.server.query;
 
 import static com.orientechnologies.orient.core.config.OGlobalConfiguration.QUERY_REMOTE_RESULTSET_PAGE_SIZE;
 
-
 import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.orient.client.remote.OStorageRemote;
 import com.orientechnologies.orient.core.Orient;

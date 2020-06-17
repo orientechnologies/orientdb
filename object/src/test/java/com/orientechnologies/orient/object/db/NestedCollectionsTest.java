@@ -2,7 +2,6 @@ package com.orientechnologies.orient.object.db;
 
 import static org.junit.Assert.assertEquals;
 
-
 import com.orientechnologies.orient.core.db.object.ODatabaseObject;
 import com.orientechnologies.orient.object.db.entity.NestedContainer;
 import com.orientechnologies.orient.object.db.entity.NestedContent;

@@ -2,7 +2,6 @@ package com.orientechnologies.orient.server.tx;
 
 import static org.junit.Assert.assertEquals;
 
-
 import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.ODatabaseType;

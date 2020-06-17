@@ -3,7 +3,6 @@ package com.tinkerpop.blueprints.impls.orient;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
-
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import java.util.Iterator;

@@ -2,7 +2,6 @@ package com.orientechnologies.orient.test.server.network.http;
 
 import static org.junit.Assert.assertEquals;
 
-
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;

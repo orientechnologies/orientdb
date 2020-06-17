@@ -2,7 +2,6 @@ package com.orientechnologies.lucene.analyzer;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-
 import java.util.HashMap;
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.en.EnglishAnalyzer;

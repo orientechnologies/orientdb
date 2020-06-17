@@ -2,7 +2,6 @@ package com.orientechnologies.orient.test.database.auto;
 
 import static org.testng.AssertJUnit.assertTrue;
 
-
 import com.orientechnologies.orient.client.db.ODatabaseHelper;
 import com.orientechnologies.orient.client.remote.OServerAdmin;
 import com.orientechnologies.orient.core.id.ORecordId;

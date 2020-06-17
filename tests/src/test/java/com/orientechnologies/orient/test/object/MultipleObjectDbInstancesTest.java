@@ -21,7 +21,6 @@ package com.orientechnologies.orient.test.object;
 
 import static org.testng.Assert.assertTrue;
 
-
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.object.db.OObjectDatabaseTx;
 import com.tinkerpop.blueprints.impls.orient.OrientBaseGraph;

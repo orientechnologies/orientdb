@@ -17,7 +17,6 @@ package com.orientechnologies.spatial;
 
 import static com.orientechnologies.spatial.shape.OShapeBuilder.BASE_CLASS;
 
-
 import com.orientechnologies.orient.core.db.ODatabaseInternal;
 import com.orientechnologies.spatial.shape.OShapeBuilder;
 

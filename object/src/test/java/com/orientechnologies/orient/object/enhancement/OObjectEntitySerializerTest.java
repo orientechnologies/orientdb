@@ -2,7 +2,6 @@ package com.orientechnologies.orient.object.enhancement;
 
 import static org.junit.Assert.assertTrue;
 
-
 import com.orientechnologies.orient.object.db.OObjectDatabaseTx;
 import org.junit.After;
 import org.junit.Before;

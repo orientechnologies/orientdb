@@ -18,7 +18,6 @@ package com.orientechnologies.orient.jdbc;
 import static com.orientechnologies.orient.jdbc.OrientDbCreationHelper.createSchemaDB;
 import static com.orientechnologies.orient.jdbc.OrientDbCreationHelper.loadDB;
 
-
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.db.OrientDB;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;

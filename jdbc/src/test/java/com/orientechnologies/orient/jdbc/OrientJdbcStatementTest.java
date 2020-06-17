@@ -17,7 +17,6 @@ package com.orientechnologies.orient.jdbc;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;

@@ -2,7 +2,6 @@ package com.orientechnologies.lucene.analyzer;
 
 import static com.orientechnologies.lucene.engine.OLuceneIndexEngineAbstract.RID;
 
-
 import java.util.HashMap;
 import java.util.Map;
 import org.apache.lucene.analysis.Analyzer;

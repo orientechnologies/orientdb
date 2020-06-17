@@ -2,7 +2,6 @@ package com.orientechnologies.orient.server;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.common.log.OLogManager;

@@ -3,7 +3,6 @@ package com.orientechnologies.orient.object.enhancement;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
-
 import com.orientechnologies.orient.object.db.OObjectDatabaseTx;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;

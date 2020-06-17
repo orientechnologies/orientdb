@@ -2,7 +2,6 @@ package com.orientechnologies.orient.object.jpa.parsing;
 
 import static com.orientechnologies.orient.object.jpa.parsing.PersistenceXml.TAG_PERSISTENCE;
 
-
 import java.util.EnumSet;
 import javax.persistence.PersistenceException;
 import org.xml.sax.Attributes;

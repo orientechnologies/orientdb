@@ -7,7 +7,6 @@ import static com.orientechnologies.lucene.engine.OLuceneDirectoryFactory.DIRECT
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.when;
 
-
 import com.orientechnologies.lucene.test.BaseLuceneTest;
 import com.orientechnologies.orient.core.db.ODatabaseType;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;

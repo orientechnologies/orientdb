@@ -21,7 +21,6 @@ package com.orientechnologies.lucene.tests;
 import static com.orientechnologies.orient.core.metadata.schema.OClass.INDEX_TYPE.FULLTEXT;
 import static org.assertj.core.api.Assertions.assertThat;
 
-
 import com.orientechnologies.lucene.OLuceneIndexFactory;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.tool.ODatabaseExport;

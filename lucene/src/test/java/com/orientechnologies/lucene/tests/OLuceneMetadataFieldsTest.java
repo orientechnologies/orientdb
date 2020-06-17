@@ -3,7 +3,6 @@ package com.orientechnologies.lucene.tests;
 import static com.orientechnologies.lucene.functions.OLuceneFunctionsUtils.doubleEscape;
 import static org.assertj.core.api.Assertions.assertThat;
 
-
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import java.io.InputStream;
 import org.junit.Before;

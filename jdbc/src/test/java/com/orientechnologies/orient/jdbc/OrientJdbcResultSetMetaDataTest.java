@@ -17,7 +17,6 @@ package com.orientechnologies.orient.jdbc;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-
 import com.orientechnologies.orient.core.id.ORecordId;
 import java.math.BigDecimal;
 import java.sql.Date;

@@ -3,7 +3,6 @@ package com.orientechnologies.orient.console;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
-
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;

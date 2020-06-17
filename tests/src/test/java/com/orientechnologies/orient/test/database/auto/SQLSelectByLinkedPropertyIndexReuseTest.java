@@ -3,7 +3,6 @@ package com.orientechnologies.orient.test.database.auto;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertTrue;
 
-
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OType;

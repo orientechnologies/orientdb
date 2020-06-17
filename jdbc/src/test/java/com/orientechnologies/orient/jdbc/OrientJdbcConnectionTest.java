@@ -20,7 +20,6 @@ import static java.sql.ResultSet.HOLD_CURSORS_OVER_COMMIT;
 import static java.sql.ResultSet.TYPE_FORWARD_ONLY;
 import static org.assertj.core.api.Assertions.assertThat;
 
-
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.Statement;

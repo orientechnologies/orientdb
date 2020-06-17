@@ -2,7 +2,6 @@ package com.tinkerpop.blueprints.impls.orient;
 
 import static org.junit.Assert.assertEquals;
 
-
 import org.junit.After;
 import org.junit.Test;
 import org.junit.runner.RunWith;

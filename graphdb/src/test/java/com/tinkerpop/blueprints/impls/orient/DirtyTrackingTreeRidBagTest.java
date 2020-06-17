@@ -2,7 +2,6 @@ package com.tinkerpop.blueprints.impls.orient;
 
 import static org.junit.Assert.assertEquals;
 
-
 import com.orientechnologies.common.util.OCallable;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.tinkerpop.blueprints.Vertex;

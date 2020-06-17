@@ -2,7 +2,6 @@ package com.orientechnologies.orient.graph.sql.functions;
 
 import static org.junit.Assert.assertEquals;
 
-
 import com.orientechnologies.orient.core.command.OBasicCommandContext;
 import com.orientechnologies.orient.core.id.ORID;
 import com.tinkerpop.blueprints.Vertex;

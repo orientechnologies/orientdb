@@ -34,9 +34,8 @@ public class OMigrationConfigManager {
 
   // config info
   private static final String configurationDirectoryName = "etl-config/";
-  private static final String configFileDefaultName =
-      "migration-config.json"; // path
-                               // ORIENTDB_HOME/<db-name>/teleporter-config/migration-config.json
+  private static final String configFileDefaultName = "migration-config.json"; // path
+  // ORIENTDB_HOME/<db-name>/teleporter-config/migration-config.json
 
   /**
    * @param migrationConfig

@@ -3,7 +3,6 @@ package com.orientechnologies.orient.server;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 
-
 import com.orientechnologies.orient.client.remote.ORemoteConnectionManager;
 import com.orientechnologies.orient.client.remote.ORemoteConnectionPool;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;

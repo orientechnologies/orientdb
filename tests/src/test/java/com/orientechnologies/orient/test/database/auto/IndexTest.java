@@ -17,7 +17,6 @@ package com.orientechnologies.orient.test.database.auto;
 
 import static com.orientechnologies.DatabaseAbstractTest.getEnvironment;
 
-
 import com.orientechnologies.DatabaseAbstractTest;
 import com.orientechnologies.common.util.ORawPair;
 import com.orientechnologies.orient.core.Orient;

@@ -2,7 +2,6 @@ package com.orientechnologies.orient.core.db;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.record.OVertex;
 import com.orientechnologies.orient.server.AbstractRemoteTest;

@@ -2,7 +2,6 @@ package com.tinkerpop.blueprints.impls.orient;
 
 import static org.junit.Assert.assertEquals;
 
-
 import com.orientechnologies.orient.client.remote.OServerAdmin;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
