@@ -2,7 +2,6 @@ package com.orientechnologies.orient.graph.blueprints;
 
 import static junit.framework.TestCase.assertEquals;
 
-
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.tinkerpop.blueprints.Direction;
 import com.tinkerpop.blueprints.Edge;

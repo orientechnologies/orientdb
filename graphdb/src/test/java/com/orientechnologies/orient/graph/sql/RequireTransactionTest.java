@@ -23,7 +23,6 @@ package com.orientechnologies.orient.graph.sql;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
-
 import com.orientechnologies.orient.core.exception.OTransactionException;
 import com.orientechnologies.orient.graph.GraphTxAbstractTest;
 import com.tinkerpop.blueprints.impls.orient.OrientGraph;

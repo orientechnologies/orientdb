@@ -20,7 +20,6 @@ package com.orientechnologies.orient.graph.blueprints;
 
 import static org.junit.Assert.assertFalse;
 
-
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.tinkerpop.blueprints.impls.orient.OrientEdge;

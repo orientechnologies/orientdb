@@ -2,7 +2,6 @@ package com.orientechnologies.orient.graph;
 
 import static org.junit.Assert.assertEquals;
 
-
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.tinkerpop.blueprints.impls.orient.OrientGraph;
 import com.tinkerpop.blueprints.impls.orient.OrientGraphFactory;

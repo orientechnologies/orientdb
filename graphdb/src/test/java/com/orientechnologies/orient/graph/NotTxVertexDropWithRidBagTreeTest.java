@@ -2,7 +2,6 @@ package com.orientechnologies.orient.graph;
 
 import static org.junit.Assert.assertNull;
 
-
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.tinkerpop.blueprints.impls.orient.OrientGraphNoTx;
 import com.tinkerpop.blueprints.impls.orient.OrientVertex;

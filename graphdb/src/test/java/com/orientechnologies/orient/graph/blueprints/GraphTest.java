@@ -21,7 +21,6 @@ package com.orientechnologies.orient.graph.blueprints;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.fail;
 
-
 import com.orientechnologies.orient.core.db.ODatabaseInternal;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.index.OCompositeKey;

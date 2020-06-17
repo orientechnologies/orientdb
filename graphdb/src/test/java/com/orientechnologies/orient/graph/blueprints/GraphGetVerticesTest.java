@@ -20,7 +20,6 @@ package com.orientechnologies.orient.graph.blueprints;
 
 import static org.junit.Assert.assertEquals;
 
-
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.tinkerpop.blueprints.Vertex;
