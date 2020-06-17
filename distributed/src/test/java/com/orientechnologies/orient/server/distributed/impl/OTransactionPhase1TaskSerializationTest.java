@@ -2,6 +2,7 @@ package com.orientechnologies.orient.server.distributed.impl;
 
 import com.orientechnologies.common.util.OPair;
 import com.orientechnologies.orient.client.remote.message.OMessageHelper;
+import com.orientechnologies.orient.core.index.OCompositeKey;
 import com.orientechnologies.orient.core.serialization.serializer.record.binary.ORecordSerializerNetworkDistributed;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
 import com.orientechnologies.orient.core.tx.OTransactionId;
@@ -38,10 +39,12 @@ public class OTransactionPhase1TaskSerializationTest {
     OPair<String, Object> keyChange1 = new OPair<>("idx1", null);
     OPair<String, Object> keyChange2 = new OPair<>("idx2", "k2");
     OPair<String, Object> keyChange3 = new OPair<>("idx3", 5);
+    OPair<String, Object> keyChange4 = new OPair<>("idx4", new OCompositeKey("user1", 123));
     SortedSet<OPair<String, Object>> actualUniqueKeys = new TreeSet<OPair<String, Object>>() {{
       add(keyChange1);
       add(keyChange2);
       add(keyChange3);
+      add(keyChange4);
     }};
     OMessageHelper.writeTxUniqueIndexKeys(actualUniqueKeys, ORecordSerializerNetworkDistributed.INSTANCE, out);
 
