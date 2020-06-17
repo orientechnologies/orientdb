@@ -21,7 +21,6 @@ package com.orientechnologies.orient.core.db.tool;
 
 import static com.orientechnologies.orient.core.record.impl.ODocumentHelper.makeDbCall;
 
-
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.config.OStorageConfiguration;

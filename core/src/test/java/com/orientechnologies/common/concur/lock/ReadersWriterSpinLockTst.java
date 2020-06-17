@@ -2,7 +2,6 @@ package com.orientechnologies.common.concur.lock;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Callable;

@@ -2,7 +2,6 @@ package com.orientechnologies.orient.core.sql;
 
 import static org.junit.Assert.assertEquals;
 
-
 import com.orientechnologies.orient.core.db.ODatabasePool;
 import com.orientechnologies.orient.core.db.ODatabaseSession;
 import com.orientechnologies.orient.core.db.ODatabaseType;

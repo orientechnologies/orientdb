@@ -2,7 +2,6 @@ package com.orientechnologies.orient.core.db.document;
 
 import static com.orientechnologies.orient.core.db.document.ODatabaseDocumentTxInternal.closeAllOnShutdown;
 
-
 import com.orientechnologies.common.concur.lock.OLockException;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.cache.OLocalRecordCache;

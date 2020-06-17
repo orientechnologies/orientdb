@@ -2,7 +2,6 @@ package com.orientechnologies.orient.core;
 
 import static org.junit.Assert.assertEquals;
 
-
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.util.OURLConnection;
 import com.orientechnologies.orient.core.util.OURLHelper;

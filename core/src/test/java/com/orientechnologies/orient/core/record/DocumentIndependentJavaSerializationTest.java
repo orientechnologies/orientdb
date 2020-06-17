@@ -2,7 +2,6 @@ package com.orientechnologies.orient.core.record;
 
 import static org.junit.Assert.assertEquals;
 
-
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;

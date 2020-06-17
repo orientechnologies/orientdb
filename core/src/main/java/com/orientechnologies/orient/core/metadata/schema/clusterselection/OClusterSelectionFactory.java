@@ -17,7 +17,6 @@ package com.orientechnologies.orient.core.metadata.schema.clusterselection;
 
 import static com.orientechnologies.common.util.OClassLoaderHelper.lookupProviderWithOrientClassLoader;
 
-
 import com.orientechnologies.common.factory.OConfigurableStatefulFactory;
 import com.orientechnologies.common.log.OLogManager;
 import java.lang.reflect.Method;

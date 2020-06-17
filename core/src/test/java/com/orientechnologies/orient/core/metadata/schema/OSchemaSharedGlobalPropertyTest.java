@@ -2,7 +2,6 @@ package com.orientechnologies.orient.core.metadata.schema;
 
 import static org.junit.Assert.assertEquals;
 
-
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.exception.OSchemaException;
 import org.junit.After;

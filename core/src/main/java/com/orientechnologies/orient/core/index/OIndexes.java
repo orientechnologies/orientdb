@@ -17,7 +17,6 @@ package com.orientechnologies.orient.core.index;
 
 import static com.orientechnologies.common.util.OClassLoaderHelper.lookupProviderWithOrientClassLoader;
 
-
 import com.orientechnologies.common.util.OCollections;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.index.engine.OBaseIndexEngine;

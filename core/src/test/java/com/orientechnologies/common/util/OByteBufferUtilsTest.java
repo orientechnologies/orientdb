@@ -18,7 +18,6 @@ package com.orientechnologies.common.util;
 
 import static org.junit.Assert.assertEquals;
 
-
 import java.nio.ByteBuffer;
 import org.junit.Before;
 import org.junit.Test;

@@ -3,7 +3,6 @@ package com.orientechnologies.orient.core.db.document;
 import static com.orientechnologies.orient.core.config.OGlobalConfiguration.STORAGE_PESSIMISTIC_LOCKING;
 import static com.orientechnologies.orient.core.db.OrientDBConfig.LOCK_TYPE_READWRITE;
 
-
 import com.orientechnologies.orient.core.db.ODatabaseType;
 import com.orientechnologies.orient.core.db.OrientDB;
 import com.orientechnologies.orient.core.db.OrientDBConfig;

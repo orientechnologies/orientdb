@@ -29,7 +29,6 @@ import static com.orientechnologies.orient.core.serialization.serializer.record.
 import static com.orientechnologies.orient.core.serialization.serializer.record.binary.HelperClasses.readString;
 import static com.orientechnologies.orient.core.serialization.serializer.record.binary.HelperClasses.stringFromBytes;
 
-
 import com.orientechnologies.common.io.OIOUtils;
 import com.orientechnologies.common.serialization.types.ODecimalSerializer;
 import com.orientechnologies.orient.core.collate.OCollate;

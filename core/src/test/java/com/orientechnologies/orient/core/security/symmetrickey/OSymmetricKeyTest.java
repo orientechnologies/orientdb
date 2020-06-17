@@ -2,7 +2,6 @@ package com.orientechnologies.orient.core.security.symmetrickey;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import org.junit.Test;

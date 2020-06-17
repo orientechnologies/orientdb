@@ -2,7 +2,6 @@ package com.orientechnologies.orient.client.remote;
 
 import static org.junit.Assert.assertNull;
 
-
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;

@@ -3,7 +3,6 @@ package com.orientechnologies.orient.core.exception;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 
-
 import com.orientechnologies.orient.core.id.ORecordId;
 import org.junit.Test;
 

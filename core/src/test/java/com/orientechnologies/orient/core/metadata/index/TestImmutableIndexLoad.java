@@ -2,7 +2,6 @@ package com.orientechnologies.orient.core.metadata.index;
 
 import static org.junit.Assert.fail;
 
-
 import com.orientechnologies.orient.core.db.ODatabaseSession;
 import com.orientechnologies.orient.core.db.ODatabaseType;
 import com.orientechnologies.orient.core.db.OrientDB;

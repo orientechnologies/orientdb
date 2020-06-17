@@ -2,7 +2,6 @@ package com.orientechnologies.orient.core.storage.impl.local.paginated.wal;
 
 import static com.orientechnologies.orient.core.storage.impl.local.paginated.wal.WALRecordTypes.HIGH_LEVEL_TRANSACTION_CHANGE_RECORD;
 
-
 import com.orientechnologies.common.serialization.types.OIntegerSerializer;
 import java.nio.ByteBuffer;
 

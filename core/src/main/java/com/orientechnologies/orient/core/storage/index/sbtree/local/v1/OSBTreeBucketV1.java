@@ -22,7 +22,6 @@ package com.orientechnologies.orient.core.storage.index.sbtree.local.v1;
 
 import static com.orientechnologies.orient.core.storage.cluster.OClusterPage.PAGE_SIZE;
 
-
 import com.orientechnologies.common.comparator.ODefaultComparator;
 import com.orientechnologies.common.serialization.types.OBinarySerializer;
 import com.orientechnologies.common.serialization.types.OByteSerializer;

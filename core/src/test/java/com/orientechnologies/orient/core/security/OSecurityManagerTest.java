@@ -2,7 +2,6 @@ package com.orientechnologies.orient.core.security;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-
 import org.junit.Test;
 
 /** Created by frank on 19/11/2015. */

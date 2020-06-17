@@ -2,7 +2,6 @@ package com.orientechnologies.orient.core;
 
 import static org.junit.Assert.assertEquals;
 
-
 import com.orientechnologies.orient.core.shutdown.OShutdownHandler;
 import org.junit.After;
 import org.junit.Before;

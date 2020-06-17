@@ -3,7 +3,6 @@ package com.orientechnologies.orient.core.ridbag;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
 
-
 import com.orientechnologies.orient.core.db.ODatabaseSession;
 import com.orientechnologies.orient.core.db.ODatabaseType;
 import com.orientechnologies.orient.core.db.OrientDB;

@@ -22,7 +22,6 @@ package com.orientechnologies.common.log;
 
 import static java.util.logging.Level.SEVERE;
 
-
 import java.time.LocalDateTime;
 import java.util.IllegalFormatException;
 import java.util.logging.Level;

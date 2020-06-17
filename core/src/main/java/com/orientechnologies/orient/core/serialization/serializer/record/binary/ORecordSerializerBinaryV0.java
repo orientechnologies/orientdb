@@ -45,7 +45,6 @@ import static com.orientechnologies.orient.core.serialization.serializer.record.
 import static com.orientechnologies.orient.core.serialization.serializer.record.binary.HelperClasses.writeOptimizedLink;
 import static com.orientechnologies.orient.core.serialization.serializer.record.binary.HelperClasses.writeString;
 
-
 import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.common.serialization.types.ODecimalSerializer;
 import com.orientechnologies.common.serialization.types.OIntegerSerializer;

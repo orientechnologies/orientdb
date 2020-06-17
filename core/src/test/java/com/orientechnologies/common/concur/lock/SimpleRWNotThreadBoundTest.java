@@ -2,7 +2,6 @@ package com.orientechnologies.common.concur.lock;
 
 import static org.junit.Assert.assertTrue;
 
-
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import org.junit.Test;

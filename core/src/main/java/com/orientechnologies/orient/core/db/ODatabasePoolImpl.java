@@ -23,7 +23,6 @@ import static com.orientechnologies.orient.core.config.OGlobalConfiguration.DB_P
 import static com.orientechnologies.orient.core.config.OGlobalConfiguration.DB_POOL_MAX;
 import static com.orientechnologies.orient.core.config.OGlobalConfiguration.DB_POOL_MIN;
 
-
 import com.orientechnologies.common.concur.resource.OResourcePool;
 import com.orientechnologies.common.concur.resource.OResourcePoolListener;
 import com.orientechnologies.orient.core.exception.OAcquireTimeoutException;

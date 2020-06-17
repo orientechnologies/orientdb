@@ -4,7 +4,6 @@ import static junit.framework.TestCase.assertTrue;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 
-
 import com.orientechnologies.orient.core.serialization.serializer.record.binary.BytesContainer;
 import org.junit.Test;
 

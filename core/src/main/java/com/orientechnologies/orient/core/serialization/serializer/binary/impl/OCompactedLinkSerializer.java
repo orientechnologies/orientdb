@@ -3,7 +3,6 @@ package com.orientechnologies.orient.core.serialization.serializer.binary.impl;
 import static com.orientechnologies.orient.core.serialization.OBinaryProtocol.bytes2short;
 import static com.orientechnologies.orient.core.serialization.OBinaryProtocol.short2bytes;
 
-
 import com.orientechnologies.common.serialization.types.OBinarySerializer;
 import com.orientechnologies.common.serialization.types.OByteSerializer;
 import com.orientechnologies.common.serialization.types.OShortSerializer;

@@ -2,7 +2,6 @@ package com.orientechnologies.orient.core.db.conflict;
 
 import static org.junit.Assert.assertTrue;
 
-
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;

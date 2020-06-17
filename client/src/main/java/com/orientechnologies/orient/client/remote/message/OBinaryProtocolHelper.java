@@ -3,7 +3,6 @@ package com.orientechnologies.orient.client.remote.message;
 import static com.orientechnologies.orient.core.config.OGlobalConfiguration.NETWORK_BINARY_MIN_PROTOCOL_VERSION;
 import static com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol.OLDEST_SUPPORTED_PROTOCOL_VERSION;
 
-
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 

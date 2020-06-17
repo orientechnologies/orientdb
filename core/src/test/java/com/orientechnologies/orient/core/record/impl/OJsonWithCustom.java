@@ -2,7 +2,6 @@ package com.orientechnologies.orient.core.record.impl;
 
 import static org.junit.Assert.assertEquals;
 
-
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseSession;
 import com.orientechnologies.orient.core.db.ODatabaseType;

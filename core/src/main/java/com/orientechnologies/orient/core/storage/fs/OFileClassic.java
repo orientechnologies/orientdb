@@ -22,7 +22,6 @@ package com.orientechnologies.orient.core.storage.fs;
 import static com.orientechnologies.common.io.OIOUtils.readByteBuffer;
 import static com.orientechnologies.common.io.OIOUtils.writeByteBuffer;
 
-
 import com.kenai.jffi.MemoryIO;
 import com.kenai.jffi.Platform;
 import com.orientechnologies.common.concur.lock.ScalableRWLock;

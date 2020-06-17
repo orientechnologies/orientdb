@@ -2,7 +2,6 @@ package com.orientechnologies.orient.core.sql.executor;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import org.junit.AfterClass;

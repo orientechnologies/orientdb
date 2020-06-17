@@ -24,7 +24,6 @@ import static com.orientechnologies.orient.core.storage.OStorage.LOCKING_STRATEG
 import static com.orientechnologies.orient.core.storage.OStorage.LOCKING_STRATEGY.KEEP_EXCLUSIVE_LOCK;
 import static com.orientechnologies.orient.core.storage.OStorage.LOCKING_STRATEGY.KEEP_SHARED_LOCK;
 
-
 import com.orientechnologies.common.concur.lock.OLockException;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;

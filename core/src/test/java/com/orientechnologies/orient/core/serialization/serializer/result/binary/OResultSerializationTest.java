@@ -3,7 +3,6 @@ package com.orientechnologies.orient.core.serialization.serializer.result.binary
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 
-
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.serialization.serializer.record.binary.BytesContainer;
 import com.orientechnologies.orient.core.sql.executor.OResult;

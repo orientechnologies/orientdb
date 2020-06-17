@@ -2,7 +2,6 @@ package com.orientechnologies.orient.client.remote.message;
 
 import static com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol.REQUEST_PUSH_STORAGE_CONFIG;
 
-
 import com.orientechnologies.orient.client.remote.ORemotePushHandler;
 import com.orientechnologies.orient.client.remote.message.push.OStorageConfigurationPayload;
 import com.orientechnologies.orient.core.config.OStorageConfiguration;

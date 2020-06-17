@@ -3,7 +3,6 @@ package com.orientechnologies.orient.client.remote.message;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 
-
 import com.orientechnologies.common.exception.OErrorCode;
 import java.io.IOException;
 import java.util.HashMap;
