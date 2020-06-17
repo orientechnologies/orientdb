@@ -15,6 +15,7 @@ import com.orientechnologies.orient.core.db.record.ORecordOperation;
 import com.orientechnologies.orient.core.exception.OSerializationException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
+import com.orientechnologies.orient.core.index.OCompositeKey;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
@@ -539,6 +540,10 @@ public class OMessageHelper {
       out.writeUTF(pair.getKey());
       if (pair.getValue() == null) {
         out.writeByte((byte) -1);
+      } else if (pair.getValue() instanceof OCompositeKey) {
+        // Avoid the default serializer of OCompositeKey which converts the key to a document.
+        out.writeByte((byte) -2);
+        ((OCompositeKey) pair.getValue()).toStream(serializer, out);
       } else {
         OType type = OType.getTypeByValue(pair.getValue());
         byte[] bytes = serializer.serializeValue(pair.getValue(), type);
@@ -557,9 +562,15 @@ public class OMessageHelper {
     int size = in.readInt();
     for (int i = 0; i < size; i++) {
       String k = in.readUTF();
-      Object v = null;
+      Object v;
       byte b = in.readByte();
-      if (b != -1) {
+      if (b == -1) {
+        v = null;
+      } else if (b == -2) {
+        OCompositeKey compositeKey = new OCompositeKey();
+        compositeKey.fromStream(serializer, in);
+        v = compositeKey;
+      } else {
         OType type = OType.getById(b);
         int len = in.readInt();
         byte[] bytes = new byte[len];
