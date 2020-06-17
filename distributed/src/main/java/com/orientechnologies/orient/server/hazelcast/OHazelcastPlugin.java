@@ -859,12 +859,9 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
                 hazelcastConfigFile);
       } else {
         ODistributedServerLog.info(this, nodeName, null, DIRECTION.NONE,
-                "Enabling Hazelcast Kubernetes discovery. Setting Hazelcast port to %d.",
-                NetworkConfig.DEFAULT_PORT);
+                "Enabling Hazelcast Kubernetes discovery.");
         joinConfig.getMulticastConfig().setEnabled(false);
         joinConfig.getKubernetesConfig().setEnabled(true);
-        // use default port in kubernetes. Hazelcast's pod-label-based discovery allows only default port!
-        hazelcastConfig.getNetworkConfig().setPort(NetworkConfig.DEFAULT_PORT);
       }
     }
     return Hazelcast.newHazelcastInstance(hazelcastConfig);
