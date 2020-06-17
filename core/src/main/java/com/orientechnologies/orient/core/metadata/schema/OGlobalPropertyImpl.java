@@ -21,9 +21,8 @@
 package com.orientechnologies.orient.core.metadata.schema;
 
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.serialization.ODocumentSerializable;
 
-public class OGlobalPropertyImpl implements OGlobalProperty, ODocumentSerializable {
+public class OGlobalPropertyImpl implements OGlobalProperty {
 
   private String name;
   private OType type;
@@ -49,14 +48,12 @@ public class OGlobalPropertyImpl implements OGlobalProperty, ODocumentSerializab
     return type;
   }
 
-  @Override
   public void fromDocument(final ODocument document) {
     this.name = document.field("name");
     this.type = OType.valueOf((String) document.field("type"));
     this.id = document.field("id");
   }
 
-  @Override
   public ODocument toDocument() {
     final ODocument doc = new ODocument();
     doc.field("name", name);
