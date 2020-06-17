@@ -2,7 +2,6 @@ package com.orientechnologies.orient.distributed.impl.coordinator.network;
 
 import static com.orientechnologies.orient.distributed.network.binary.OBinaryDistributedMessage.DISTRIBUTED_OPERATION;
 
-
 import com.orientechnologies.orient.core.db.config.ONodeIdentity;
 import com.orientechnologies.orient.distributed.impl.coordinator.OCoordinateMessagesFactory;
 import com.orientechnologies.orient.distributed.impl.structural.operations.OOperation;

@@ -3,7 +3,6 @@ package com.orientechnologies.orient.distributed.impl.coordinator.transaction;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
 
-
 import com.orientechnologies.orient.client.remote.message.tx.ORecordOperationRequest;
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
 import com.orientechnologies.orient.core.id.ORecordId;

@@ -2,7 +2,6 @@ package com.orientechnologies.orient.core.storage.index.nkbtree.normalizers;
 
 import static com.orientechnologies.common.serialization.types.OLongSerializer.LONG_SIZE;
 
-
 import com.ibm.icu.text.Collator;
 import com.orientechnologies.common.serialization.types.OBinaryTypeSerializer;
 import com.orientechnologies.common.serialization.types.OBooleanSerializer;

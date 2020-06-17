@@ -2,7 +2,6 @@ package com.orientechnologies.orient.distributed.impl.coordinator.transaction;
 
 import static com.orientechnologies.orient.distributed.impl.coordinator.OCoordinateMessagesFactory.TRANSACTION_SUBMIT_REQUEST;
 
-
 import com.orientechnologies.common.util.OPair;
 import com.orientechnologies.orient.client.remote.message.tx.ORecordOperationRequest;
 import com.orientechnologies.orient.core.db.config.ONodeIdentity;

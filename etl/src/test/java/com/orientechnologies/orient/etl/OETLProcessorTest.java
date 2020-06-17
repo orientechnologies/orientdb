@@ -20,7 +20,6 @@ package com.orientechnologies.orient.etl;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-
 import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.orient.etl.loader.OETLOrientDBLoader;
 import com.orientechnologies.orient.etl.transformer.OETLVertexTransformer;

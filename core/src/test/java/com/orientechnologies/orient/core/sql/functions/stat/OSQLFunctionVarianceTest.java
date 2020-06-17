@@ -3,7 +3,6 @@ package com.orientechnologies.orient.core.sql.functions.stat;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
 
-
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;

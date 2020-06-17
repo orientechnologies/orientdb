@@ -2,7 +2,6 @@ package com.orientechnologies.orient.distributed.impl.structural.submit;
 
 import static com.orientechnologies.orient.distributed.impl.coordinator.OCoordinateMessagesFactory.SYNC_SUBMIT_REQUEST;
 
-
 import com.orientechnologies.orient.core.db.config.ONodeIdentity;
 import com.orientechnologies.orient.distributed.impl.coordinator.transaction.OSessionOperationId;
 import com.orientechnologies.orient.distributed.impl.log.OLogId;

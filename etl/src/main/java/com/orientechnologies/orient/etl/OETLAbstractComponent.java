@@ -21,7 +21,6 @@ package com.orientechnologies.orient.etl;
 import static com.orientechnologies.common.parser.OSystemVariableResolver.VAR_BEGIN;
 import static com.orientechnologies.common.parser.OSystemVariableResolver.VAR_END;
 
-
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.parser.OVariableParser;
 import com.orientechnologies.orient.core.command.OCommandContext;

@@ -2,7 +2,6 @@ package com.orientechnologies.orient.distributed.impl.coordinator.network;
 
 import static com.orientechnologies.orient.distributed.network.binary.OBinaryDistributedMessage.DISTRIBUTED_CONFIRM_REQUEST;
 
-
 import com.orientechnologies.orient.core.db.config.ONodeIdentity;
 import com.orientechnologies.orient.distributed.impl.log.OLogId;
 import java.io.DataInput;

@@ -2,7 +2,6 @@ package com.orientechnologies.orient.distributed.network;
 
 import static org.junit.Assert.assertTrue;
 
-
 import com.orientechnologies.orient.core.db.OSchedulerInternal;
 import com.orientechnologies.orient.core.db.config.ONodeConfiguration;
 import com.orientechnologies.orient.core.db.config.ONodeIdentity;

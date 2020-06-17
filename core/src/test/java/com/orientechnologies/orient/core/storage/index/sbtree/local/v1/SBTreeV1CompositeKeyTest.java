@@ -3,7 +3,6 @@ package com.orientechnologies.orient.core.storage.index.sbtree.local.v1;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
-
 import com.orientechnologies.DatabaseAbstractTest;
 import com.orientechnologies.common.util.ORawPair;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;

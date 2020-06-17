@@ -3,7 +3,6 @@ package com.orientechnologies.orient.core.storage.cache.chm;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-
 import com.orientechnologies.common.directmemory.OByteBufferPool;
 import com.orientechnologies.common.directmemory.ODirectMemoryAllocator;
 import com.orientechnologies.orient.core.storage.cache.OCacheEntry;

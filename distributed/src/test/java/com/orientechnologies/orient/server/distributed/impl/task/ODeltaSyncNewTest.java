@@ -2,7 +2,6 @@ package com.orientechnologies.orient.server.distributed.impl.task;
 
 import static org.junit.Assert.assertEquals;
 
-
 import com.orientechnologies.orient.core.tx.OTransactionSequenceStatus;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;

@@ -19,7 +19,6 @@ package com.orientechnologies.orient.server.distributed.scenariotest;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.fail;
 
-
 import com.orientechnologies.common.util.OCallable;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.record.impl.ODocument;

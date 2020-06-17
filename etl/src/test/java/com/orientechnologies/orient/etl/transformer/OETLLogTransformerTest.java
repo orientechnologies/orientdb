@@ -20,7 +20,6 @@ package com.orientechnologies.orient.etl.transformer;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.etl.OETLBaseTest;
 import java.io.ByteArrayOutputStream;

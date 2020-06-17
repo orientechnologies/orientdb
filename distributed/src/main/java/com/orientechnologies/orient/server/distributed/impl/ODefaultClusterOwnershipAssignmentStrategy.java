@@ -21,7 +21,6 @@ package com.orientechnologies.orient.server.distributed.impl;
 
 import static java.util.Collections.EMPTY_LIST;
 
-
 import com.orientechnologies.common.util.OPair;
 import com.orientechnologies.orient.core.db.ODatabaseInternal;
 import com.orientechnologies.orient.core.metadata.schema.OClass;

@@ -21,7 +21,6 @@ package com.orientechnologies.orient.etl.loader;
 import static com.orientechnologies.orient.etl.loader.OETLOrientDBLoader.DB_TYPE.DOCUMENT;
 import static com.orientechnologies.orient.etl.loader.OETLOrientDBLoader.DB_TYPE.GRAPH;
 
-
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;

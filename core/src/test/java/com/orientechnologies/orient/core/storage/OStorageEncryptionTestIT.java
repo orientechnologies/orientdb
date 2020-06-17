@@ -2,7 +2,6 @@ package com.orientechnologies.orient.core.storage;
 
 import static org.junit.Assert.assertTrue;
 
-
 import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;

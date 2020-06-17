@@ -2,7 +2,6 @@ package com.orientechnologies.orient.distributed.impl.database.operations;
 
 import static com.orientechnologies.orient.distributed.impl.coordinator.OCoordinateMessagesFactory.DATABASE_FULL_SYNC_CHUNK;
 
-
 import com.orientechnologies.orient.core.db.config.ONodeIdentity;
 import com.orientechnologies.orient.distributed.OrientDBDistributed;
 import com.orientechnologies.orient.distributed.impl.structural.operations.OOperation;

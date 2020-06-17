@@ -2,7 +2,6 @@ package com.orientechnologies.orient.core.sql.method.misc;
 
 import static org.junit.Assert.assertEquals;
 
-
 import com.orientechnologies.orient.core.sql.executor.OResultInternal;
 import java.util.Arrays;
 import org.junit.Before;

@@ -3,7 +3,6 @@ package com.orientechnologies.orient.core.sql.method.misc;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
 
-
 import com.orientechnologies.orient.core.sql.functions.text.OSQLMethodSubString;
 import org.junit.Before;
 import org.junit.Test;

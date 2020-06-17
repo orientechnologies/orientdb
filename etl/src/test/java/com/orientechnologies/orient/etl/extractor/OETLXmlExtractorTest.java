@@ -21,7 +21,6 @@ package com.orientechnologies.orient.etl.extractor;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 
-
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.etl.OETLBaseTest;
 import java.util.Collection;

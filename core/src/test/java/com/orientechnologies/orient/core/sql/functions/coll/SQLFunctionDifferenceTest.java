@@ -18,7 +18,6 @@ package com.orientechnologies.orient.core.sql.functions.coll;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
-
 import com.orientechnologies.orient.core.command.OBasicCommandContext;
 import java.util.Arrays;
 import java.util.HashSet;

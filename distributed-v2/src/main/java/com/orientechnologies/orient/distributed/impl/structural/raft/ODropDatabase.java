@@ -2,7 +2,6 @@ package com.orientechnologies.orient.distributed.impl.structural.raft;
 
 import static com.orientechnologies.orient.distributed.impl.coordinator.OCoordinateMessagesFactory.DROP_DATABASE_REQUEST;
 
-
 import com.orientechnologies.orient.distributed.OrientDBDistributed;
 import com.orientechnologies.orient.distributed.impl.coordinator.transaction.OSessionOperationId;
 import java.io.DataInput;

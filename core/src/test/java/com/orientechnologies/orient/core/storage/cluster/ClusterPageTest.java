@@ -2,7 +2,6 @@ package com.orientechnologies.orient.core.storage.cluster;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-
 import com.orientechnologies.common.directmemory.OByteBufferPool;
 import com.orientechnologies.common.directmemory.OPointer;
 import com.orientechnologies.orient.core.record.ORecordVersionHelper;

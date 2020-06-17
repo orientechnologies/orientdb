@@ -2,7 +2,6 @@ package com.orientechnologies.orient.distributed.network.binary;
 
 import static com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol.COORDINATED_DISTRIBUTED_MESSAGE;
 
-
 import com.orientechnologies.orient.client.binary.OBinaryRequestExecutor;
 import com.orientechnologies.orient.client.remote.OBinaryRequest;
 import com.orientechnologies.orient.client.remote.OBinaryResponse;

@@ -2,7 +2,6 @@ package com.orientechnologies.orient.distributed.impl.coordinator.ddl;
 
 import static com.orientechnologies.orient.distributed.impl.coordinator.OCoordinateMessagesFactory.DDL_QUERY_SUBMIT_RESPONSE;
 
-
 import com.orientechnologies.orient.distributed.impl.coordinator.OSubmitResponse;
 import java.io.DataInput;
 import java.io.DataOutput;

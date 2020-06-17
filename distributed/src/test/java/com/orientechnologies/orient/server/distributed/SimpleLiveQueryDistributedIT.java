@@ -2,7 +2,6 @@ package com.orientechnologies.orient.server.distributed;
 
 import static org.junit.Assert.assertEquals;
 
-
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseSession;

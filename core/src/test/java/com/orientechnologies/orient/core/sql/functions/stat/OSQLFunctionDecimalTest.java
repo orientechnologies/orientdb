@@ -3,7 +3,6 @@ package com.orientechnologies.orient.core.sql.functions.stat;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
 
-
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.functions.math.OSQLFunctionDecimal;

@@ -2,7 +2,6 @@ package com.orientechnologies.orient.distributed.impl.coordinator.transaction;
 
 import static com.orientechnologies.orient.distributed.impl.coordinator.OCoordinateMessagesFactory.TRANSACTION_FIRST_PHASE_RESPONSE;
 
-
 import com.orientechnologies.orient.distributed.impl.coordinator.ONodeResponse;
 import com.orientechnologies.orient.distributed.impl.coordinator.transaction.results.OConcurrentModificationResult;
 import com.orientechnologies.orient.distributed.impl.coordinator.transaction.results.OExceptionResult;

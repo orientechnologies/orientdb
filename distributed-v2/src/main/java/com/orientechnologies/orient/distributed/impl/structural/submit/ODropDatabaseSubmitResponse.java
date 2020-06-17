@@ -2,7 +2,6 @@ package com.orientechnologies.orient.distributed.impl.structural.submit;
 
 import static com.orientechnologies.orient.distributed.impl.coordinator.OCoordinateMessagesFactory.DROP_DATABASE_SUBMIT_RESPONSE;
 
-
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;

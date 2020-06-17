@@ -2,7 +2,6 @@ package com.orientechnologies.orient.core.storage.cache.local.doublewritelog;
 
 import static com.orientechnologies.orient.core.storage.cache.local.doublewritelog.DoubleWriteLogGL.DEFAULT_BLOCK_SIZE;
 
-
 import com.orientechnologies.common.directmemory.OByteBufferPool;
 import com.orientechnologies.common.directmemory.OPointer;
 import com.orientechnologies.common.io.OFileUtils;

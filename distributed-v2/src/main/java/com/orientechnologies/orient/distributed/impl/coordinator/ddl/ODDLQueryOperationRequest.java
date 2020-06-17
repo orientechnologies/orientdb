@@ -2,7 +2,6 @@ package com.orientechnologies.orient.distributed.impl.coordinator.ddl;
 
 import static com.orientechnologies.orient.distributed.impl.coordinator.OCoordinateMessagesFactory.DDL_QUERY_NODE_REQUEST;
 
-
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.OScenarioThreadLocal;
 import com.orientechnologies.orient.core.db.config.ONodeIdentity;

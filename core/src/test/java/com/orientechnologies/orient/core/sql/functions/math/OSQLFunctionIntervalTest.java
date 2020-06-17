@@ -2,7 +2,6 @@ package com.orientechnologies.orient.core.sql.functions.math;
 
 import static org.junit.Assert.assertEquals;
 
-
 import org.junit.Before;
 import org.junit.Test;
 

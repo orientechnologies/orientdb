@@ -21,7 +21,6 @@ package com.orientechnologies.orient.core.sql.functions.graph;
 
 import static org.junit.Assert.assertEquals;
 
-
 import com.orientechnologies.orient.core.command.OBasicCommandContext;
 import com.orientechnologies.orient.core.db.ODatabaseType;
 import com.orientechnologies.orient.core.db.OrientDB;

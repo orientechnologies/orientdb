@@ -2,7 +2,6 @@ package com.orientechnologies.orient.core.sql.method.misc;
 
 import static org.junit.Assert.assertEquals;
 
-
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import java.util.ArrayList;
 import java.util.HashSet;

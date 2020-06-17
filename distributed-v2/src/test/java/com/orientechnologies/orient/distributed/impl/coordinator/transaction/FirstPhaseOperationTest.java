@@ -2,7 +2,6 @@ package com.orientechnologies.orient.distributed.impl.coordinator.transaction;
 
 import static org.junit.Assert.assertEquals;
 
-
 import com.orientechnologies.orient.client.remote.message.tx.ORecordOperationRequest;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
