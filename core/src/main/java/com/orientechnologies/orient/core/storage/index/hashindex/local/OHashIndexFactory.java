@@ -20,7 +20,13 @@
 package com.orientechnologies.orient.core.storage.index.hashindex.local;
 
 import com.orientechnologies.orient.core.exception.OConfigurationException;
-import com.orientechnologies.orient.core.index.*;
+import com.orientechnologies.orient.core.index.ODefaultIndexFactory;
+import com.orientechnologies.orient.core.index.OIndexDictionary;
+import com.orientechnologies.orient.core.index.OIndexException;
+import com.orientechnologies.orient.core.index.OIndexFactory;
+import com.orientechnologies.orient.core.index.OIndexInternal;
+import com.orientechnologies.orient.core.index.OIndexNotUnique;
+import com.orientechnologies.orient.core.index.OIndexUnique;
 import com.orientechnologies.orient.core.index.engine.OBaseIndexEngine;
 import com.orientechnologies.orient.core.index.engine.OIndexEngine;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
@@ -29,19 +35,16 @@ import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.storage.index.engine.OHashTableIndexEngine;
 import com.orientechnologies.orient.core.storage.index.engine.ORemoteIndexEngine;
-
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
-/**
- * @author Artem Orobets (enisher-at-gmail.com)
- */
+/** @author Artem Orobets (enisher-at-gmail.com) */
 public final class OHashIndexFactory implements OIndexFactory {
 
   private static final Set<String> TYPES;
-  public static final  String      HASH_INDEX_ALGORITHM = "HASH_INDEX";
+  public static final String HASH_INDEX_ALGORITHM = "HASH_INDEX";
   private static final Set<String> ALGORITHMS;
 
   static {
@@ -61,11 +64,12 @@ public final class OHashIndexFactory implements OIndexFactory {
 
   /**
    * Index types :
+   *
    * <ul>
-   * <li>UNIQUE</li>
-   * <li>NOTUNIQUE</li>
-   * <li>FULLTEXT</li>
-   * <li>DICTIONARY</li>
+   *   <li>UNIQUE
+   *   <li>NOTUNIQUE
+   *   <li>FULLTEXT
+   *   <li>DICTIONARY
    * </ul>
    */
   public final Set<String> getTypes() {
@@ -76,8 +80,15 @@ public final class OHashIndexFactory implements OIndexFactory {
     return ALGORITHMS;
   }
 
-  public final OIndexInternal createIndex(final String name, final OStorage storage, final String indexType, final String algorithm,
-      String valueContainerAlgorithm, final ODocument metadata, int version) throws OConfigurationException {
+  public final OIndexInternal createIndex(
+      final String name,
+      final OStorage storage,
+      final String indexType,
+      final String algorithm,
+      String valueContainerAlgorithm,
+      final ODocument metadata,
+      int version)
+      throws OConfigurationException {
 
     if (version < 0) {
       version = getLastVersion(algorithm);
@@ -89,14 +100,35 @@ public final class OHashIndexFactory implements OIndexFactory {
     final int binaryFormatVersion = storage.getConfiguration().getBinaryFormatVersion();
 
     if (OClass.INDEX_TYPE.UNIQUE_HASH_INDEX.toString().equals(indexType))
-      return new OIndexUnique(name, indexType, algorithm, version, (OAbstractPaginatedStorage) storage.getUnderlying(),
-          valueContainerAlgorithm, metadata, binaryFormatVersion);
+      return new OIndexUnique(
+          name,
+          indexType,
+          algorithm,
+          version,
+          (OAbstractPaginatedStorage) storage.getUnderlying(),
+          valueContainerAlgorithm,
+          metadata,
+          binaryFormatVersion);
     else if (OClass.INDEX_TYPE.NOTUNIQUE_HASH_INDEX.toString().equals(indexType))
-      return new OIndexNotUnique(name, indexType, algorithm, version, (OAbstractPaginatedStorage) storage.getUnderlying(),
-          valueContainerAlgorithm, metadata, binaryFormatVersion);
+      return new OIndexNotUnique(
+          name,
+          indexType,
+          algorithm,
+          version,
+          (OAbstractPaginatedStorage) storage.getUnderlying(),
+          valueContainerAlgorithm,
+          metadata,
+          binaryFormatVersion);
     else if (OClass.INDEX_TYPE.DICTIONARY_HASH_INDEX.toString().equals(indexType))
-      return new OIndexDictionary(name, indexType, algorithm, version, (OAbstractPaginatedStorage) storage.getUnderlying(),
-          valueContainerAlgorithm, metadata, binaryFormatVersion);
+      return new OIndexDictionary(
+          name,
+          indexType,
+          algorithm,
+          version,
+          (OAbstractPaginatedStorage) storage.getUnderlying(),
+          valueContainerAlgorithm,
+          metadata,
+          binaryFormatVersion);
 
     throw new OConfigurationException("Unsupported type: " + indexType);
   }
@@ -107,26 +139,36 @@ public final class OHashIndexFactory implements OIndexFactory {
   }
 
   @Override
-  public final OBaseIndexEngine createIndexEngine(final int indexId, final String algorithm, final String name,
-      final Boolean durableInNonTxMode, final OStorage storage, final int version, final int apiVersion, final boolean multiValue,
+  public final OBaseIndexEngine createIndexEngine(
+      final int indexId,
+      final String algorithm,
+      final String name,
+      final Boolean durableInNonTxMode,
+      final OStorage storage,
+      final int version,
+      final int apiVersion,
+      final boolean multiValue,
       final Map<String, String> engineProperties) {
     final OIndexEngine indexEngine;
 
     final String storageType = storage.getType();
     switch (storageType) {
-    case "memory":
-    case "plocal":
-      indexEngine = new OHashTableIndexEngine(name, indexId, (OAbstractPaginatedStorage) storage, version);
-      break;
-    case "distributed":
-      // DISTRIBUTED CASE: HANDLE IT AS FOR LOCAL
-      indexEngine = new OHashTableIndexEngine(name, indexId, (OAbstractPaginatedStorage) storage.getUnderlying(), version);
-      break;
-    case "remote":
-      indexEngine = new ORemoteIndexEngine(indexId, name);
-      break;
-    default:
-      throw new OIndexException("Unsupported storage type: " + storageType);
+      case "memory":
+      case "plocal":
+        indexEngine =
+            new OHashTableIndexEngine(name, indexId, (OAbstractPaginatedStorage) storage, version);
+        break;
+      case "distributed":
+        // DISTRIBUTED CASE: HANDLE IT AS FOR LOCAL
+        indexEngine =
+            new OHashTableIndexEngine(
+                name, indexId, (OAbstractPaginatedStorage) storage.getUnderlying(), version);
+        break;
+      case "remote":
+        indexEngine = new ORemoteIndexEngine(indexId, name);
+        break;
+      default:
+        throw new OIndexException("Unsupported storage type: " + storageType);
     }
 
     return indexEngine;

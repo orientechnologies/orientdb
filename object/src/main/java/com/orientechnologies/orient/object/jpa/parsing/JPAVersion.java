@@ -21,8 +21,9 @@
 package com.orientechnologies.orient.object.jpa.parsing;
 
 public enum JPAVersion {
-
-  V1_0((byte) 1, (byte) 0), V2_0((byte) 2, (byte) 0), V2_1((byte) 2, (byte) 1);
+  V1_0((byte) 1, (byte) 0),
+  V2_0((byte) 2, (byte) 0),
+  V2_1((byte) 2, (byte) 1);
 
   public final byte major;
   public final byte minor;
@@ -32,9 +33,7 @@ public enum JPAVersion {
     this.minor = minor;
   }
 
-  /**
-   * @return jpa version formated as MAJOR_MINOR
-   */
+  /** @return jpa version formated as MAJOR_MINOR */
   public String getVersion() {
     return String.format("%d.%d", major, minor);
   }

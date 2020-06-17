@@ -21,22 +21,26 @@ import com.orientechnologies.orient.core.sql.OCommandSQLParsingException;
 import com.orientechnologies.orient.core.sql.executor.OInternalResultSet;
 import com.orientechnologies.orient.core.sql.executor.OResultInternal;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
-
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Set;
 
 public class OCreateLinkStatement extends OSimpleExecStatement {
 
-  protected OIdentifier      name;
-  protected OIdentifier      type;
-  protected OIdentifier      sourceClass;
-  protected OIdentifier      sourceField;
+  protected OIdentifier name;
+  protected OIdentifier type;
+  protected OIdentifier sourceClass;
+  protected OIdentifier sourceField;
   protected ORecordAttribute sourceRecordAttr;
-  protected OIdentifier      destClass;
-  protected OIdentifier      destField;
+  protected OIdentifier destClass;
+  protected OIdentifier destField;
   protected ORecordAttribute destRecordAttr;
   protected boolean inverse = false;
 
-  boolean breakExec = false;//for timeout
+  boolean breakExec = false; // for timeout
 
   public OCreateLinkStatement(int id) {
     super(id);
@@ -46,7 +50,8 @@ public class OCreateLinkStatement extends OSimpleExecStatement {
     super(p, id);
   }
 
-  @Override public OResultSet executeSimple(OCommandContext ctx) {
+  @Override
+  public OResultSet executeSimple(OCommandContext ctx) {
     execute(ctx);
     OInternalResultSet rs = new OInternalResultSet();
     OResultInternal result = new OResultInternal();
@@ -58,27 +63,32 @@ public class OCreateLinkStatement extends OSimpleExecStatement {
     return rs;
   }
 
-  /**
-   * Execute the CREATE LINK.
-   */
+  /** Execute the CREATE LINK. */
   private Object execute(OCommandContext ctx) {
     if (destField == null)
-      throw new OCommandExecutionException("Cannot execute the command because it has not been parsed yet");
+      throw new OCommandExecutionException(
+          "Cannot execute the command because it has not been parsed yet");
 
     final ODatabaseDocumentInternal database = getDatabase();
     if (!(database.getDatabaseOwner() instanceof ODatabaseDocument))
       throw new OCommandSQLParsingException(
-          "This command supports only the database type ODatabaseDocumentTx and type '" + database.getClass() + "' was found");
+          "This command supports only the database type ODatabaseDocumentTx and type '"
+              + database.getClass()
+              + "' was found");
 
     final ODatabaseDocument db = (ODatabaseDocument) database.getDatabaseOwner();
 
-    final OClass sourceClass = database.getMetadata().getSchema().getClass(getSourceClass().getStringValue());
+    final OClass sourceClass =
+        database.getMetadata().getSchema().getClass(getSourceClass().getStringValue());
     if (sourceClass == null)
-      throw new OCommandExecutionException("Source class '" + getSourceClass().getStringValue() + "' not found");
+      throw new OCommandExecutionException(
+          "Source class '" + getSourceClass().getStringValue() + "' not found");
 
-    final OClass destClass = database.getMetadata().getSchema().getClass(getDestClass().getStringValue());
+    final OClass destClass =
+        database.getMetadata().getSchema().getClass(getDestClass().getStringValue());
     if (destClass == null)
-      throw new OCommandExecutionException("Destination class '" + getDestClass().getStringValue() + "' not found");
+      throw new OCommandExecutionException(
+          "Destination class '" + getDestClass().getStringValue() + "' not found");
 
     Object value;
 
@@ -99,8 +109,7 @@ public class OCreateLinkStatement extends OSimpleExecStatement {
     if (linkType != null)
       // DETERMINE BASED ON FORCED TYPE
       multipleRelationship = linkType == OType.LINKSET || linkType == OType.LINKLIST;
-    else
-      multipleRelationship = false;
+    else multipleRelationship = false;
 
     database.declareIntent(new OIntentMassiveInsert());
     try {
@@ -121,21 +130,23 @@ public class OCreateLinkStatement extends OSimpleExecStatement {
             target = null;
 
             if (!ODocumentHelper.ATTRIBUTE_RID.equals(destField) && value instanceof String)
-              if (((String) value).length() == 0)
-                value = null;
-              else
-                value = "'" + value + "'";
+              if (((String) value).length() == 0) value = null;
+              else value = "'" + value + "'";
 
             OResultSet rs = database.query(cmd + value);
             result = toList(rs);
             rs.close();
 
-            if (result == null || result.size() == 0)
-              value = null;
+            if (result == null || result.size() == 0) value = null;
             else if (result.size() > 1)
               throw new OCommandExecutionException(
-                  "Cannot create link because multiple records was found in class '" + destClass.getName() + "' with value " + value
-                      + " in field '" + destField + "'");
+                  "Cannot create link because multiple records was found in class '"
+                      + destClass.getName()
+                      + "' with value "
+                      + value
+                      + " in field '"
+                      + destField
+                      + "'");
             else {
               target = result.get(0);
               value = target;
@@ -146,8 +157,7 @@ public class OCreateLinkStatement extends OSimpleExecStatement {
               oldValue = target.getProperty(linkName);
 
               if (oldValue != null) {
-                if (!multipleRelationship)
-                  multipleRelationship = true;
+                if (!multipleRelationship) multipleRelationship = true;
 
                 Collection<ODocument> coll;
                 if (oldValue instanceof Collection) {
@@ -172,8 +182,7 @@ public class OCreateLinkStatement extends OSimpleExecStatement {
                   } else
                     // IGNORE THE TYPE, SET IT AS LINK
                     value = doc;
-                else
-                  value = doc;
+                else value = doc;
 
                 target.setProperty(linkName, value);
               }
@@ -194,11 +203,9 @@ public class OCreateLinkStatement extends OSimpleExecStatement {
         if (inverse) {
           // REMOVE THE OLD PROPERTY IF ANY
           OProperty prop = destClass.getProperty(linkName);
-          if (prop != null)
-            destClass.dropProperty(linkName);
+          if (prop != null) destClass.dropProperty(linkName);
 
-          if (linkType == null)
-            linkType = multipleRelationship ? OType.LINKSET : OType.LINK;
+          if (linkType == null) linkType = multipleRelationship ? OType.LINKSET : OType.LINK;
 
           // CREATE THE PROPERTY
           destClass.createProperty(linkName, linkType, sourceClass);
@@ -207,15 +214,15 @@ public class OCreateLinkStatement extends OSimpleExecStatement {
 
           // REMOVE THE OLD PROPERTY IF ANY
           OProperty prop = sourceClass.getProperty(linkName);
-          if (prop != null)
-            sourceClass.dropProperty(linkName);
+          if (prop != null) sourceClass.dropProperty(linkName);
 
           // CREATE THE PROPERTY
           sourceClass.createProperty(linkName, OType.LINK, destClass);
         }
       }
     } catch (Exception e) {
-      throw OException.wrapException(new OCommandExecutionException("Error on creation of links"), e);
+      throw OException.wrapException(
+          new OCommandExecutionException("Error on creation of links"), e);
     } finally {
       database.declareIntent(null);
     }
@@ -233,7 +240,8 @@ public class OCreateLinkStatement extends OSimpleExecStatement {
     return result;
   }
 
-  @Override public void toString(Map<Object, Object> params, StringBuilder builder) {
+  @Override
+  public void toString(Map<Object, Object> params, StringBuilder builder) {
     builder.append("CREATE LINK ");
     name.toString(params, builder);
     builder.append(" TYPE ");
@@ -259,7 +267,8 @@ public class OCreateLinkStatement extends OSimpleExecStatement {
     }
   }
 
-  @Override public OCreateLinkStatement copy() {
+  @Override
+  public OCreateLinkStatement copy() {
     OCreateLinkStatement result = new OCreateLinkStatement(-1);
     result.name = name == null ? null : name.copy();
     result.type = type == null ? null : type.copy();
@@ -273,37 +282,36 @@ public class OCreateLinkStatement extends OSimpleExecStatement {
     return result;
   }
 
-  @Override public boolean equals(Object o) {
-    if (this == o)
-      return true;
-    if (o == null || getClass() != o.getClass())
-      return false;
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
 
     OCreateLinkStatement that = (OCreateLinkStatement) o;
 
-    if (inverse != that.inverse)
-      return false;
-    if (name != null ? !name.equals(that.name) : that.name != null)
-      return false;
-    if (type != null ? !type.equals(that.type) : that.type != null)
-      return false;
+    if (inverse != that.inverse) return false;
+    if (name != null ? !name.equals(that.name) : that.name != null) return false;
+    if (type != null ? !type.equals(that.type) : that.type != null) return false;
     if (sourceClass != null ? !sourceClass.equals(that.sourceClass) : that.sourceClass != null)
       return false;
     if (sourceField != null ? !sourceField.equals(that.sourceField) : that.sourceField != null)
       return false;
-    if (sourceRecordAttr != null ? !sourceRecordAttr.equals(that.sourceRecordAttr) : that.sourceRecordAttr != null)
-      return false;
+    if (sourceRecordAttr != null
+        ? !sourceRecordAttr.equals(that.sourceRecordAttr)
+        : that.sourceRecordAttr != null) return false;
     if (destClass != null ? !destClass.equals(that.destClass) : that.destClass != null)
       return false;
     if (destField != null ? !destField.equals(that.destField) : that.destField != null)
       return false;
-    if (destRecordAttr != null ? !destRecordAttr.equals(that.destRecordAttr) : that.destRecordAttr != null)
-      return false;
+    if (destRecordAttr != null
+        ? !destRecordAttr.equals(that.destRecordAttr)
+        : that.destRecordAttr != null) return false;
 
     return true;
   }
 
-  @Override public int hashCode() {
+  @Override
+  public int hashCode() {
     int result = name != null ? name.hashCode() : 0;
     result = 31 * result + (type != null ? type.hashCode() : 0);
     result = 31 * result + (sourceClass != null ? sourceClass.hashCode() : 0);

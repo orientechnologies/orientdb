@@ -15,18 +15,15 @@
  *  *  limitations under the License.
  *  *
  *  * For more information: http://orientdb.com
- *  
+ *
  */
 package com.orientechnologies.orient.server.distributed;
 
+import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import org.junit.Ignore;
 import org.junit.Test;
 
-import com.orientechnologies.orient.core.config.OGlobalConfiguration;
-
-/**
- * Distributed TX test against "plocal" protocol.
- */
+/** Distributed TX test against "plocal" protocol. */
 public class LocalConcurrentTxAutoRetryIT extends AbstractDistributedConcurrentTxTest {
   private static final int SERVERS = 3;
 
@@ -35,10 +32,12 @@ public class LocalConcurrentTxAutoRetryIT extends AbstractDistributedConcurrentT
   public void test() throws Exception {
     expectedConcurrentException = false;
 
-    final int oldAutoRetry = OGlobalConfiguration.DISTRIBUTED_CONCURRENT_TX_MAX_AUTORETRY.getValueAsInteger();
+    final int oldAutoRetry =
+        OGlobalConfiguration.DISTRIBUTED_CONCURRENT_TX_MAX_AUTORETRY.getValueAsInteger();
     OGlobalConfiguration.DISTRIBUTED_CONCURRENT_TX_MAX_AUTORETRY.setValue(100);
 
-    //final int oldLockTimeout = OGlobalConfiguration.DISTRIBUTED_ATOMIC_LOCK_TIMEOUT.getValueAsInteger();
+    // final int oldLockTimeout =
+    // OGlobalConfiguration.DISTRIBUTED_ATOMIC_LOCK_TIMEOUT.getValueAsInteger();
     //  OGlobalConfiguration.DISTRIBUTED_ATOMIC_LOCK_TIMEOUT.setValue(0);
 
     try {
@@ -48,7 +47,7 @@ public class LocalConcurrentTxAutoRetryIT extends AbstractDistributedConcurrentT
       execute();
 
     } finally {
-      //OGlobalConfiguration.DISTRIBUTED_ATOMIC_LOCK_TIMEOUT.setValue(oldLockTimeout);
+      // OGlobalConfiguration.DISTRIBUTED_ATOMIC_LOCK_TIMEOUT.setValue(oldLockTimeout);
       OGlobalConfiguration.DISTRIBUTED_CONCURRENT_TX_MAX_AUTORETRY.setValue(oldAutoRetry);
     }
   }

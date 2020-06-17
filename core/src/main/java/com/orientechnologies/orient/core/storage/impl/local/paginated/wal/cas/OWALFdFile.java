@@ -3,7 +3,6 @@ package com.orientechnologies.orient.core.storage.impl.local.paginated.wal.cas;
 import com.orientechnologies.common.io.OIOUtils;
 import com.orientechnologies.common.jnr.LastErrorException;
 import com.orientechnologies.common.jnr.ONative;
-
 import java.io.IOException;
 import java.nio.ByteBuffer;
 
@@ -29,8 +28,11 @@ public class OWALFdFile implements OWALFile {
   public int write(ByteBuffer buffer) throws IOException {
     if (buffer.limit() % blockSize != 0) {
       throw new IOException(
-          "In direct IO mode, size of the written buffers should be quantified by block size (block size : " + blockSize
-              + ", buffer size: " + buffer.limit() + " )");
+          "In direct IO mode, size of the written buffers should be quantified by block size (block size : "
+              + blockSize
+              + ", buffer size: "
+              + buffer.limit()
+              + " )");
     }
     try {
       final int written = (int) ONative.instance().write(fd, buffer, buffer.remaining());
@@ -54,8 +56,11 @@ public class OWALFdFile implements OWALFile {
   public void position(long position) throws IOException {
     if (position % blockSize != 0) {
       throw new IOException(
-          "In direct IO mode, position of the file should be quantified by block size (block size : " + blockSize + ", position : "
-              + position + " )");
+          "In direct IO mode, position of the file should be quantified by block size (block size : "
+              + blockSize
+              + ", position : "
+              + position
+              + " )");
     }
     try {
       ONative.instance().lseek(fd, position, ONative.SEEK_SET);
@@ -68,8 +73,11 @@ public class OWALFdFile implements OWALFile {
   public void readBuffer(ByteBuffer buffer) throws IOException {
     if (buffer.limit() % blockSize != 0) {
       throw new IOException(
-          "In direct IO mode, size of the written buffers should be quantified by block size (block size : " + blockSize
-              + ", buffer size: " + buffer.limit() + " )");
+          "In direct IO mode, size of the written buffers should be quantified by block size (block size : "
+              + blockSize
+              + ", buffer size: "
+              + buffer.limit()
+              + " )");
     }
 
     OIOUtils.readByteBuffer(buffer, fd);
@@ -84,4 +92,3 @@ public class OWALFdFile implements OWALFile {
     }
   }
 }
-

@@ -3,18 +3,18 @@ package com.tinkerpop.blueprints.impls.orient;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
-import java.util.Iterator;
-
-import org.junit.Test;
 
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
+import java.util.Iterator;
+import org.junit.Test;
 
 public class SelectProjectionVertexTest {
 
   @Test
   public void test() {
-    OrientGraph graph = new OrientGraph("memory:" + SelectProjectionVertexTest.class.getSimpleName());
+    OrientGraph graph =
+        new OrientGraph("memory:" + SelectProjectionVertexTest.class.getSimpleName());
     try {
       graph.createVertexType("VertA");
       graph.createVertexType("VertB");
@@ -28,7 +28,8 @@ public class SelectProjectionVertexTest {
       }
       graph.commit();
 
-      String query = "SELECT $res as val LET $res = (SELECT @rid AS refId, out('AtoB') AS vertices FROM VertA) FETCHPLAN val:2";
+      String query =
+          "SELECT $res as val LET $res = (SELECT @rid AS refId, out('AtoB') AS vertices FROM VertA) FETCHPLAN val:2";
 
       Iterable<OrientVertex> results = graph.command(new OCommandSQL(query)).execute();
       final Iterator<OrientVertex> iterator = results.iterator();
@@ -37,11 +38,11 @@ public class SelectProjectionVertexTest {
 
       Iterable<OrientVertex> vertices = result.getProperty("val");
       for (OrientVertex vertex : vertices) {
-        assertEquals(((OIdentifiable) vertex.getProperty("refId")).getIdentity(), root.getIdentity());
+        assertEquals(
+            ((OIdentifiable) vertex.getProperty("refId")).getIdentity(), root.getIdentity());
       }
     } finally {
       graph.drop();
     }
   }
-
 }

@@ -15,19 +15,18 @@
  */
 package com.orientechnologies.orient.core.sql.functions.text;
 
-import java.io.UnsupportedEncodingException;
-import java.security.NoSuchAlgorithmException;
-
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.security.OSecurityManager;
 import com.orientechnologies.orient.core.sql.method.misc.OAbstractSQLMethod;
+import java.io.UnsupportedEncodingException;
+import java.security.NoSuchAlgorithmException;
 
 /**
  * Hash a string supporting multiple algorithm, all those supported by JVM
- * 
+ *
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
  */
 public class OSQLMethodHash extends OAbstractSQLMethod {
@@ -44,19 +43,26 @@ public class OSQLMethodHash extends OAbstractSQLMethod {
   }
 
   @Override
-  public Object execute(final Object iThis, final OIdentifiable iCurrentRecord, final OCommandContext iContext,
-      final Object ioResult, final Object[] iParams) {
-    if (iThis == null)
-      return null;
+  public Object execute(
+      final Object iThis,
+      final OIdentifiable iCurrentRecord,
+      final OCommandContext iContext,
+      final Object ioResult,
+      final Object[] iParams) {
+    if (iThis == null) return null;
 
-    final String algorithm = iParams.length > 0 ? iParams[0].toString() : OSecurityManager.HASH_ALGORITHM;
+    final String algorithm =
+        iParams.length > 0 ? iParams[0].toString() : OSecurityManager.HASH_ALGORITHM;
     try {
       return OSecurityManager.createHash(iThis.toString(), algorithm);
 
     } catch (NoSuchAlgorithmException e) {
-      throw OException.wrapException(new OCommandExecutionException("hash(): algorithm '" + algorithm + "' is not supported"), e);
+      throw OException.wrapException(
+          new OCommandExecutionException("hash(): algorithm '" + algorithm + "' is not supported"),
+          e);
     } catch (UnsupportedEncodingException e) {
-      throw OException.wrapException(new OCommandExecutionException("hash(): encoding 'UTF-8' is not supported"), e);
+      throw OException.wrapException(
+          new OCommandExecutionException("hash(): encoding 'UTF-8' is not supported"), e);
     }
   }
 }

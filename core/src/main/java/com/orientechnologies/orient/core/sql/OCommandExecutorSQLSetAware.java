@@ -26,23 +26,25 @@ import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Set;
 
-import java.util.*;
-
-/**
- * @author Luca Molino (molino.luca--at--gmail.com)
- */
+/** @author Luca Molino (molino.luca--at--gmail.com) */
 public abstract class OCommandExecutorSQLSetAware extends OCommandExecutorSQLAbstract {
 
-  protected static final String KEYWORD_SET     = "SET";
+  protected static final String KEYWORD_SET = "SET";
   protected static final String KEYWORD_CONTENT = "CONTENT";
 
-  protected ODocument content          = null;
-  protected int       parameterCounter = 0;
+  protected ODocument content = null;
+  protected int parameterCounter = 0;
 
   protected void parseContent() {
-    if (!parserIsEnded() && !parserGetLastWord().equals(KEYWORD_WHERE))
-      content = parseJSON();
+    if (!parserIsEnded() && !parserGetLastWord().equals(KEYWORD_WHERE)) content = parseJSON();
 
     if (content == null)
       throwSyntaxErrorException("Content not provided. Example: CONTENT { \"name\": \"Jay\" }");
@@ -52,7 +54,10 @@ public abstract class OCommandExecutorSQLSetAware extends OCommandExecutorSQLAbs
     String fieldName;
     String fieldValue;
 
-    while (!parserIsEnded() && (fields.size() == 0 || parserGetLastSeparator() == ',' || parserGetCurrentChar() == ',')) {
+    while (!parserIsEnded()
+        && (fields.size() == 0
+            || parserGetLastSeparator() == ','
+            || parserGetCurrentChar() == ',')) {
       fieldName = parserRequiredWord(false, "Field name expected");
       if (fieldName.equalsIgnoreCase(KEYWORD_WHERE)) {
         parserGoBack();
@@ -70,26 +75,33 @@ public abstract class OCommandExecutorSQLSetAware extends OCommandExecutorSQLAbs
     }
 
     if (fields.size() == 0)
-      throwParsingException("Entries to set <field> = <value> are missed. Example: name = 'Bill', salary = 300.2");
+      throwParsingException(
+          "Entries to set <field> = <value> are missed. Example: name = 'Bill', salary = 300.2");
   }
 
   protected OClass extractClassFromTarget(String iTarget) {
     // CLASS
-    if (!iTarget.toUpperCase(Locale.ENGLISH).startsWith(OCommandExecutorSQLAbstract.CLUSTER_PREFIX) && !iTarget
-        .startsWith(OCommandExecutorSQLAbstract.INDEX_PREFIX)) {
+    if (!iTarget.toUpperCase(Locale.ENGLISH).startsWith(OCommandExecutorSQLAbstract.CLUSTER_PREFIX)
+        && !iTarget.startsWith(OCommandExecutorSQLAbstract.INDEX_PREFIX)) {
 
       if (iTarget.toUpperCase(Locale.ENGLISH).startsWith(OCommandExecutorSQLAbstract.CLASS_PREFIX))
         // REMOVE CLASS PREFIX
         iTarget = iTarget.substring(OCommandExecutorSQLAbstract.CLASS_PREFIX.length());
 
       if (iTarget.charAt(0) == ORID.PREFIX)
-        return getDatabase().getMetadata().getSchema().getClassByClusterId(new ORecordId(iTarget).getClusterId());
+        return getDatabase()
+            .getMetadata()
+            .getSchema()
+            .getClassByClusterId(new ORecordId(iTarget).getClusterId());
 
       return getDatabase().getMetadata().getSchema().getClass(iTarget);
     }
-    //CLUSTER
-    if (iTarget.toUpperCase(Locale.ENGLISH).startsWith(OCommandExecutorSQLAbstract.CLUSTER_PREFIX)) {
-      String clusterName = iTarget.substring(OCommandExecutorSQLAbstract.CLUSTER_PREFIX.length()).trim();
+    // CLUSTER
+    if (iTarget
+        .toUpperCase(Locale.ENGLISH)
+        .startsWith(OCommandExecutorSQLAbstract.CLUSTER_PREFIX)) {
+      String clusterName =
+          iTarget.substring(OCommandExecutorSQLAbstract.CLUSTER_PREFIX.length()).trim();
       ODatabaseDocumentInternal db = getDatabase();
       if (clusterName.startsWith("[") && clusterName.endsWith("]")) {
         String[] clusterNames = clusterName.substring(1, clusterName.length() - 1).split(",");
@@ -103,7 +115,9 @@ public abstract class OCommandExecutorSQLSetAware extends OCommandExecutorSQLAbs
           if (aClass == null) {
             return null;
           }
-          if (candidateClass == null || candidateClass.equals(aClass) || candidateClass.isSubClassOf(aClass)) {
+          if (candidateClass == null
+              || candidateClass.equals(aClass)
+              || candidateClass.isSubClassOf(aClass)) {
             candidateClass = aClass;
           } else if (!candidateClass.isSuperClassOf(aClass)) {
             return null;
@@ -128,72 +142,69 @@ public abstract class OCommandExecutorSQLSetAware extends OCommandExecutorSQLAbs
         final OClass embeddedType = p.getLinkedClass();
 
         switch (p.getType()) {
-        case EMBEDDED:
-          // CONVERT MAP IN DOCUMENTS ASSIGNING THE CLASS TAKEN FROM SCHEMA
-          if (v instanceof Map)
-            v = createDocumentFromMap(embeddedType, (Map<String, Object>) v);
-          break;
+          case EMBEDDED:
+            // CONVERT MAP IN DOCUMENTS ASSIGNING THE CLASS TAKEN FROM SCHEMA
+            if (v instanceof Map) v = createDocumentFromMap(embeddedType, (Map<String, Object>) v);
+            break;
 
-        case EMBEDDEDSET:
-          // CONVERT MAPS IN DOCUMENTS ASSIGNING THE CLASS TAKEN FROM SCHEMA
-          if (v instanceof Map)
-            return createDocumentFromMap(embeddedType, (Map<String, Object>) v);
-          else if (OMultiValue.isMultiValue(v)) {
-            final Set set = new HashSet();
+          case EMBEDDEDSET:
+            // CONVERT MAPS IN DOCUMENTS ASSIGNING THE CLASS TAKEN FROM SCHEMA
+            if (v instanceof Map)
+              return createDocumentFromMap(embeddedType, (Map<String, Object>) v);
+            else if (OMultiValue.isMultiValue(v)) {
+              final Set set = new HashSet();
 
-            for (Object o : OMultiValue.getMultiValueIterable(v)) {
-              if (o instanceof Map) {
-                final ODocument doc = createDocumentFromMap(embeddedType, (Map<String, Object>) o);
-                set.add(doc);
-              } else if (o instanceof OIdentifiable)
-                set.add(((OIdentifiable) o).getRecord());
-              else
-                set.add(o);
+              for (Object o : OMultiValue.getMultiValueIterable(v)) {
+                if (o instanceof Map) {
+                  final ODocument doc =
+                      createDocumentFromMap(embeddedType, (Map<String, Object>) o);
+                  set.add(doc);
+                } else if (o instanceof OIdentifiable) set.add(((OIdentifiable) o).getRecord());
+                else set.add(o);
+              }
+
+              v = set;
             }
+            break;
 
-            v = set;
-          }
-          break;
+          case EMBEDDEDLIST:
+            // CONVERT MAPS IN DOCUMENTS ASSIGNING THE CLASS TAKEN FROM SCHEMA
+            if (v instanceof Map)
+              return createDocumentFromMap(embeddedType, (Map<String, Object>) v);
+            else if (OMultiValue.isMultiValue(v)) {
+              final List set = new ArrayList();
 
-        case EMBEDDEDLIST:
-          // CONVERT MAPS IN DOCUMENTS ASSIGNING THE CLASS TAKEN FROM SCHEMA
-          if (v instanceof Map)
-            return createDocumentFromMap(embeddedType, (Map<String, Object>) v);
-          else if (OMultiValue.isMultiValue(v)) {
-            final List set = new ArrayList();
+              for (Object o : OMultiValue.getMultiValueIterable(v)) {
+                if (o instanceof Map) {
+                  final ODocument doc =
+                      createDocumentFromMap(embeddedType, (Map<String, Object>) o);
+                  set.add(doc);
+                } else if (o instanceof OIdentifiable) set.add(((OIdentifiable) o).getRecord());
+                else set.add(o);
+              }
 
-            for (Object o : OMultiValue.getMultiValueIterable(v)) {
-              if (o instanceof Map) {
-                final ODocument doc = createDocumentFromMap(embeddedType, (Map<String, Object>) o);
-                set.add(doc);
-              } else if (o instanceof OIdentifiable)
-                set.add(((OIdentifiable) o).getRecord());
-              else
-                set.add(o);
+              v = set;
             }
+            break;
 
-            v = set;
-          }
-          break;
+          case EMBEDDEDMAP:
+            // CONVERT MAPS IN DOCUMENTS ASSIGNING THE CLASS TAKEN FROM SCHEMA
+            if (v instanceof Map) {
+              final Map<String, Object> map = new HashMap<String, Object>();
 
-        case EMBEDDEDMAP:
-          // CONVERT MAPS IN DOCUMENTS ASSIGNING THE CLASS TAKEN FROM SCHEMA
-          if (v instanceof Map) {
-            final Map<String, Object> map = new HashMap<String, Object>();
+              for (Map.Entry<String, Object> entry : ((Map<String, Object>) v).entrySet()) {
+                if (entry.getValue() instanceof Map) {
+                  final ODocument doc =
+                      createDocumentFromMap(embeddedType, (Map<String, Object>) entry.getValue());
+                  map.put(entry.getKey(), doc);
+                } else if (entry.getValue() instanceof OIdentifiable)
+                  map.put(entry.getKey(), ((OIdentifiable) entry.getValue()).getRecord());
+                else map.put(entry.getKey(), entry.getValue());
+              }
 
-            for (Map.Entry<String, Object> entry : ((Map<String, Object>) v).entrySet()) {
-              if (entry.getValue() instanceof Map) {
-                final ODocument doc = createDocumentFromMap(embeddedType, (Map<String, Object>) entry.getValue());
-                map.put(entry.getKey(), doc);
-              } else if (entry.getValue() instanceof OIdentifiable)
-                map.put(entry.getKey(), ((OIdentifiable) entry.getValue()).getRecord());
-              else
-                map.put(entry.getKey(), entry.getValue());
+              v = map;
             }
-
-            v = map;
-          }
-          break;
+            break;
         }
       }
     }
@@ -202,8 +213,7 @@ public abstract class OCommandExecutorSQLSetAware extends OCommandExecutorSQLAbs
 
   private ODocument createDocumentFromMap(OClass embeddedType, Map<String, Object> o) {
     final ODocument doc = new ODocument();
-    if (embeddedType != null)
-      doc.setClassName(embeddedType.getName());
+    if (embeddedType != null) doc.setClassName(embeddedType.getName());
 
     doc.fromMap(o);
     return doc;
@@ -211,12 +221,13 @@ public abstract class OCommandExecutorSQLSetAware extends OCommandExecutorSQLAbs
 
   @Override
   public long getDistributedTimeout() {
-    return getDatabase().getConfiguration().getValueAsLong(OGlobalConfiguration.DISTRIBUTED_COMMAND_TASK_SYNCH_TIMEOUT);
+    return getDatabase()
+        .getConfiguration()
+        .getValueAsLong(OGlobalConfiguration.DISTRIBUTED_COMMAND_TASK_SYNCH_TIMEOUT);
   }
 
   protected Object getFieldValueCountingParameters(String fieldValue) {
-    if (fieldValue.trim().equals("?"))
-      parameterCounter++;
+    if (fieldValue.trim().equals("?")) parameterCounter++;
     return OSQLHelper.parseValue(this, fieldValue, context, true);
   }
 
@@ -226,5 +237,4 @@ public abstract class OCommandExecutorSQLSetAware extends OCommandExecutorSQLAbs
     parserSkipWhiteSpaces();
     return json;
   }
-
 }

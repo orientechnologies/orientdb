@@ -16,6 +16,12 @@
 
 package com.orientechnologies.orient.server.distributed.scenariotest;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
+
+
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.OrientDB;
 import com.orientechnologies.orient.core.db.OrientDBConfig;
@@ -25,37 +31,26 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.orientechnologies.orient.server.distributed.ServerRun;
-import org.junit.Ignore;
-import org.junit.Test;
-
 import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
-
-import static org.junit.Assert.*;
+import org.junit.Ignore;
+import org.junit.Test;
 
 /**
- * It checks the consistency in the cluster with the following scenario:
- * - 3 server (quorum=2)
- * - network fault on server3
- * - 5 threads for each running server write 100 records
- * - writes on server1 and server2 succeeds, writes on server3 are redirected
- * - restart server3
- * - check consistency
- * - changing quorum (quorum=3)
- * - network fault on server3
- * - writes on server1 and server2 don't succeed
- * - restart server3
- * - 5 threads for each running server write 100 records
- * - check consistency
+ * It checks the consistency in the cluster with the following scenario: - 3 server (quorum=2) -
+ * network fault on server3 - 5 threads for each running server write 100 records - writes on
+ * server1 and server2 succeeds, writes on server3 are redirected - restart server3 - check
+ * consistency - changing quorum (quorum=3) - network fault on server3 - writes on server1 and
+ * server2 don't succeed - restart server3 - 5 threads for each running server write 100 records -
+ * check consistency
  *
  * @author Gabriele Ponzi
  * @email <gabriele.ponzi--at--gmail.com>
  */
-
 public class ShutdownAndRestartNodeScenarioIT extends AbstractScenarioTest {
 
   @Test
@@ -71,11 +66,10 @@ public class ShutdownAndRestartNodeScenarioIT extends AbstractScenarioTest {
 
     try {
 
-      TestQuorum2 tq2 = new TestQuorum2(serverInstance);     // Connection to dbServer3
-      TestQuorum3 tq3 = new TestQuorum3(serverInstance);     // Connection to dbServer1
+      TestQuorum2 tq2 = new TestQuorum2(serverInstance); // Connection to dbServer3
+      TestQuorum3 tq3 = new TestQuorum3(serverInstance); // Connection to dbServer1
       ExecutorService exec = Executors.newSingleThreadExecutor();
       Future currentFuture = null;
-
 
       /*
        * Test with quorum = 2
@@ -88,7 +82,6 @@ public class ShutdownAndRestartNodeScenarioIT extends AbstractScenarioTest {
         e.printStackTrace();
         fail();
       }
-
 
       /*
        * Test with quorum = 3
@@ -105,14 +98,13 @@ public class ShutdownAndRestartNodeScenarioIT extends AbstractScenarioTest {
     } catch (Exception e) {
       e.printStackTrace();
     }
-
   }
 
   private class TestQuorum2 implements Callable<Void> {
 
-    private final String          databaseUrlServer3;
-    private       List<ServerRun> serverInstances;
-    private       List<ServerRun> executeWritesOnServers;
+    private final String databaseUrlServer3;
+    private List<ServerRun> serverInstances;
+    private List<ServerRun> executeWritesOnServers;
     private int initialCount = 0;
 
     public TestQuorum2(List<ServerRun> serverInstances) {
@@ -127,8 +119,10 @@ public class ShutdownAndRestartNodeScenarioIT extends AbstractScenarioTest {
     public Void call() throws Exception {
 
       List<ODocument> result = null;
-      OrientDB orientDB = new OrientDB("remote:" + serverInstances.get(2).getBinaryProtocolAddress() + "/",
-          OrientDBConfig.defaultConfig());
+      OrientDB orientDB =
+          new OrientDB(
+              "remote:" + serverInstances.get(2).getBinaryProtocolAddress() + "/",
+              OrientDBConfig.defaultConfig());
       final ODatabaseDocument dbServer3 = orientDB.open(getDatabaseName(), "admin", "admin");
 
       try {
@@ -149,7 +143,8 @@ public class ShutdownAndRestartNodeScenarioIT extends AbstractScenarioTest {
           dbServer3.activateOnCurrentThread();
           new ODocument("Person").fields("name", "Joe", "surname", "Black").save();
           this.initialCount++;
-          result = dbServer3.query(new OSQLSynchQuery<OIdentifiable>("select count(*) from Person"));
+          result =
+              dbServer3.query(new OSQLSynchQuery<OIdentifiable>("select count(*) from Person"));
           assertEquals(1, result.size());
           assertEquals(1, ((Number) result.get(0).field("count")).intValue());
         } catch (Exception e) {
@@ -163,7 +158,9 @@ public class ShutdownAndRestartNodeScenarioIT extends AbstractScenarioTest {
         executeMultipleWrites(this.executeWritesOnServers, "plocal");
 
         // restarting server3
-        serverInstance.get(2).startServer(getDistributedServerConfiguration(serverInstance.get(SERVERS - 1)));
+        serverInstance
+            .get(2)
+            .startServer(getDistributedServerConfiguration(serverInstance.get(SERVERS - 1)));
         System.out.println("Server 3 restarted.");
         assertTrue(serverInstance.get(2).isActive());
 
@@ -193,10 +190,10 @@ public class ShutdownAndRestartNodeScenarioIT extends AbstractScenarioTest {
 
   private class TestQuorum3 implements Callable<Void> {
 
-    private final String          databaseUrl1;
-    private final String          databaseUrl2;
-    private       List<ServerRun> serverInstances;
-    private       List<ServerRun> executeWritesOnServers;
+    private final String databaseUrl1;
+    private final String databaseUrl2;
+    private List<ServerRun> serverInstances;
+    private List<ServerRun> executeWritesOnServers;
     private int initialCount = 0;
 
     public TestQuorum3(List<ServerRun> serverInstances) {
@@ -251,24 +248,32 @@ public class ShutdownAndRestartNodeScenarioIT extends AbstractScenarioTest {
           fail("Error: record inserted with 2 server running and writeWuorum=3.");
         } catch (Exception e) {
           e.printStackTrace();
-          assertTrue("Record not inserted because there are 2 servers running and writeQuorum=3.", true);
+          assertTrue(
+              "Record not inserted because there are 2 servers running and writeQuorum=3.", true);
         }
         System.out.println("Done.\n");
 
-        System.out.print("Checking the last record wasn't inserted in the db because the quorum was not reached...");
-        result = dbServer1.query(new OSQLSynchQuery<OIdentifiable>("select from Person where id='L-001'"));
+        System.out.print(
+            "Checking the last record wasn't inserted in the db because the quorum was not reached...");
+        result =
+            dbServer1.query(
+                new OSQLSynchQuery<OIdentifiable>("select from Person where id='L-001'"));
         assertEquals(0, result.size());
         OrientDB orientDB1 = serverInstances.get(1).getServerInstance().getContext();
         final ODatabaseDocument dbServer2 = orientDB1.open(getDatabaseName(), "admin", "admin");
         dbServer2.activateOnCurrentThread();
-        result = dbServer2.query(new OSQLSynchQuery<OIdentifiable>("select from Person where id='L-001'"));
+        result =
+            dbServer2.query(
+                new OSQLSynchQuery<OIdentifiable>("select from Person where id='L-001'"));
         assertEquals(0, result.size());
 
         System.out.println("Done.\n");
         ODatabaseRecordThreadLocal.instance().set(null);
 
         // restarting server3
-        serverInstance.get(2).startServer(getDistributedServerConfiguration(serverInstance.get(SERVERS - 1)));
+        serverInstance
+            .get(2)
+            .startServer(getDistributedServerConfiguration(serverInstance.get(SERVERS - 1)));
         System.out.println("Server 3 restarted.");
         assertTrue(serverInstance.get(2).isActive());
 

@@ -1,19 +1,27 @@
 package com.orientechnologies.orient.core.sql;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
+
 import com.orientechnologies.orient.core.command.script.OCommandScript;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
-import org.junit.*;
-
-import java.util.*;
-
-import static org.assertj.core.api.Assertions.assertThat;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import org.junit.After;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Ignore;
+import org.junit.Test;
 
 public class OCommandExecutorSQLScriptTest {
   private static String DB_STORAGE = "memory";
-  private static String DB_NAME    = "OCommandExecutorSQLScriptTest";
+  private static String DB_NAME = "OCommandExecutorSQLScriptTest";
   public ODatabaseDocumentTx db;
 
   @After
@@ -22,7 +30,6 @@ public class OCommandExecutorSQLScriptTest {
       db.open("admin", "admin");
     }
     db.drop();
-
   }
 
   @Before
@@ -83,7 +90,6 @@ public class OCommandExecutorSQLScriptTest {
     Assert.assertTrue(result.startsWith("["));
     Assert.assertTrue(result.endsWith("]"));
     new ODocument().fromJSON(result.substring(1, result.length() - 1));
-
   }
 
   @Test
@@ -284,8 +290,8 @@ public class OCommandExecutorSQLScriptTest {
 
   @Test
   public void testSemicolonInString() throws Exception {
-    //issue https://github.com/orientechnologies/orientjs/issues/133
-    //testing parsing problem
+    // issue https://github.com/orientechnologies/orientjs/issues/133
+    // testing parsing problem
     StringBuilder script = new StringBuilder();
 
     script.append("let $a = select 'foo ; bar' as one\n");
@@ -298,7 +304,7 @@ public class OCommandExecutorSQLScriptTest {
 
   @Test
   public void testQuotedRegex() {
-    //issue #4996 (simplified)
+    // issue #4996 (simplified)
     db.command(new OCommandSQL("CREATE CLASS QuotedRegex2")).execute();
     String batch = "INSERT INTO QuotedRegex2 SET regexp=\"'';\"";
 
@@ -314,8 +320,17 @@ public class OCommandExecutorSQLScriptTest {
   public void testParameters1() {
     String className = "testParameters1";
     db.createVertexClass(className);
-    String script = "BEGIN;" + "LET $a = CREATE VERTEX " + className + " SET name = :name;" + "LET $b = CREATE VERTEX " + className
-        + " SET name = :_name2;" + "LET $edge = CREATE EDGE E from $a to $b;" + "COMMIT;" + "RETURN $edge;";
+    String script =
+        "BEGIN;"
+            + "LET $a = CREATE VERTEX "
+            + className
+            + " SET name = :name;"
+            + "LET $b = CREATE VERTEX "
+            + className
+            + " SET name = :_name2;"
+            + "LET $edge = CREATE EDGE E from $a to $b;"
+            + "COMMIT;"
+            + "RETURN $edge;";
 
     HashMap<String, Object> map = new HashMap<>();
     map.put("name", "bozo");
@@ -335,8 +350,17 @@ public class OCommandExecutorSQLScriptTest {
   public void testPositionalParameters() {
     String className = "testPositionalParameters";
     db.createVertexClass(className);
-    String script = "BEGIN;" + "LET $a = CREATE VERTEX " + className + " SET name = ?;" + "LET $b = CREATE VERTEX " + className
-        + " SET name = ?;" + "LET $edge = CREATE EDGE E from $a to $b;" + "COMMIT;" + "RETURN $edge;";
+    String script =
+        "BEGIN;"
+            + "LET $a = CREATE VERTEX "
+            + className
+            + " SET name = ?;"
+            + "LET $b = CREATE VERTEX "
+            + className
+            + " SET name = ?;"
+            + "LET $edge = CREATE EDGE E from $a to $b;"
+            + "COMMIT;"
+            + "RETURN $edge;";
 
     OResultSet rs = db.execute("sql", script, "bozo", "bozi");
     rs.close();
@@ -347,5 +371,4 @@ public class OCommandExecutorSQLScriptTest {
     rs.next();
     rs.close();
   }
-
 }

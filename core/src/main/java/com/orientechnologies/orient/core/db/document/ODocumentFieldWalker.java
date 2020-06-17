@@ -26,34 +26,41 @@ import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
-
-import java.util.*;
+import java.util.Collections;
+import java.util.IdentityHashMap;
+import java.util.Map;
+import java.util.Set;
 
 /**
- * This class allows to walk through all fields of single document using instance of {@link ODocumentFieldVisitor} class.
- * 
- * Only current document and embedded documents will be walked. Which means that all embedded collections will be visited too and
- * all embedded documents which are contained in this collections also will be visited.
- * 
- * Fields values can be updated/converted too. If method {@link ODocumentFieldVisitor#visitField(OType, OType, Object)} will return
- * new value original value will be updated but returned result will not be visited by {@link ODocumentFieldVisitor} instance.
- * 
- * If currently processed value is collection or map of embedded documents or embedded document itself then method
- * {@link ODocumentFieldVisitor#goDeeper(OType, OType, Object)} is called, if it returns false then this collection will not be
- * visited by {@link ODocumentFieldVisitor} instance.
- * 
- * Fields will be visited till method {@link ODocumentFieldVisitor#goFurther(OType, OType, Object, Object)} returns true.
+ * This class allows to walk through all fields of single document using instance of {@link
+ * ODocumentFieldVisitor} class.
+ *
+ * <p>Only current document and embedded documents will be walked. Which means that all embedded
+ * collections will be visited too and all embedded documents which are contained in this
+ * collections also will be visited.
+ *
+ * <p>Fields values can be updated/converted too. If method {@link
+ * ODocumentFieldVisitor#visitField(OType, OType, Object)} will return new value original value will
+ * be updated but returned result will not be visited by {@link ODocumentFieldVisitor} instance.
+ *
+ * <p>If currently processed value is collection or map of embedded documents or embedded document
+ * itself then method {@link ODocumentFieldVisitor#goDeeper(OType, OType, Object)} is called, if it
+ * returns false then this collection will not be visited by {@link ODocumentFieldVisitor} instance.
+ *
+ * <p>Fields will be visited till method {@link ODocumentFieldVisitor#goFurther(OType, OType,
+ * Object, Object)} returns true.
  */
 public class ODocumentFieldWalker {
   public void walkDocument(ODocument document, ODocumentFieldVisitor fieldWalker) {
-    final Set<ODocument> walked = Collections.newSetFromMap(new IdentityHashMap<ODocument, Boolean>());
+    final Set<ODocument> walked =
+        Collections.newSetFromMap(new IdentityHashMap<ODocument, Boolean>());
     walkDocument(document, fieldWalker, walked);
     walked.clear();
   }
 
-  private void walkDocument(ODocument document, ODocumentFieldVisitor fieldWalker, Set<ODocument> walked) {
-    if (walked.contains(document))
-      return;
+  private void walkDocument(
+      ODocument document, ODocumentFieldVisitor fieldWalker, Set<ODocument> walked) {
+    if (walked.contains(document)) return;
 
     walked.add(document);
     boolean oldLazyLoad = document.isLazyLoad();
@@ -81,9 +88,9 @@ public class ODocumentFieldWalker {
 
       boolean updated;
       if (updateMode)
-        updated = updateFieldValueIfChanged(document, fieldName, fieldValue, newValue, concreteType);
-      else
-        updated = false;
+        updated =
+            updateFieldValueIfChanged(document, fieldName, fieldValue, newValue, concreteType);
+      else updated = false;
 
       // exclude cases when:
       // 1. value was updated.
@@ -91,17 +98,20 @@ public class ODocumentFieldWalker {
       // 3. document is not not embedded.
       if (!updated
           && fieldValue != null
-          && !(OType.LINK.equals(fieldType) || OType.LINKBAG.equals(fieldType) || OType.LINKLIST.equals(fieldType)
-              || OType.LINKSET.equals(fieldType) || (fieldValue instanceof ORecordLazyMultiValue))) {
+          && !(OType.LINK.equals(fieldType)
+              || OType.LINKBAG.equals(fieldType)
+              || OType.LINKLIST.equals(fieldType)
+              || OType.LINKSET.equals(fieldType)
+              || (fieldValue instanceof ORecordLazyMultiValue))) {
         if (fieldWalker.goDeeper(fieldType, linkedType, fieldValue)) {
-          if (fieldValue instanceof Map)
-            walkMap((Map) fieldValue, fieldType, fieldWalker, walked);
+          if (fieldValue instanceof Map) walkMap((Map) fieldValue, fieldType, fieldWalker, walked);
           else if (fieldValue instanceof ODocument) {
             final ODocument doc = (ODocument) fieldValue;
             if (OType.EMBEDDED.equals(fieldType) || doc.isEmbedded())
               walkDocument((ODocument) fieldValue, fieldWalker);
           } else if (OMultiValue.isIterable(fieldValue))
-            walkIterable(OMultiValue.getMultiValueIterable(fieldValue), fieldType, fieldWalker, walked);
+            walkIterable(
+                OMultiValue.getMultiValueIterable(fieldValue), fieldType, fieldWalker, walked);
         }
       }
 
@@ -114,7 +124,8 @@ public class ODocumentFieldWalker {
     document.setLazyLoad(oldLazyLoad);
   }
 
-  private void walkMap(Map map, OType fieldType, ODocumentFieldVisitor fieldWalker, Set<ODocument> walked) {
+  private void walkMap(
+      Map map, OType fieldType, ODocumentFieldVisitor fieldWalker, Set<ODocument> walked) {
     for (Object value : map.values()) {
       if (value instanceof ODocument) {
         final ODocument doc = (ODocument) value;
@@ -125,18 +136,27 @@ public class ODocumentFieldWalker {
     }
   }
 
-  private void walkIterable(Iterable iterable, OType fieldType, ODocumentFieldVisitor fieldWalker, Set<ODocument> walked) {
+  private void walkIterable(
+      Iterable iterable,
+      OType fieldType,
+      ODocumentFieldVisitor fieldWalker,
+      Set<ODocument> walked) {
     for (Object value : iterable) {
       if (value instanceof ODocument) {
         final ODocument doc = (ODocument) value;
         // only embedded documents are walked
-        if (OType.EMBEDDEDLIST.equals(fieldType) || OType.EMBEDDEDSET.equals(fieldType) || doc.isEmbedded())
-          walkDocument((ODocument) value, fieldWalker, walked);
+        if (OType.EMBEDDEDLIST.equals(fieldType)
+            || OType.EMBEDDEDSET.equals(fieldType)
+            || doc.isEmbedded()) walkDocument((ODocument) value, fieldWalker, walked);
       }
     }
   }
 
-  private boolean updateFieldValueIfChanged(ODocument document, String fieldName, Object fieldValue, Object newValue,
+  private boolean updateFieldValueIfChanged(
+      ODocument document,
+      String fieldName,
+      Object fieldValue,
+      Object newValue,
       OType concreteType) {
     if (fieldValue != newValue) {
       document.field(fieldName, newValue, concreteType);

@@ -5,7 +5,6 @@ import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.WALRecordTypes;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.PageOperationRecord;
 import com.orientechnologies.orient.core.storage.index.sbtree.local.v2.OSBTreeBucketV2;
-
 import java.nio.ByteBuffer;
 
 public final class SBTreeBucketV2UpdateValuePO extends PageOperationRecord {
@@ -15,8 +14,7 @@ public final class SBTreeBucketV2UpdateValuePO extends PageOperationRecord {
   private byte[] prevValue;
   private byte[] value;
 
-  public SBTreeBucketV2UpdateValuePO() {
-  }
+  public SBTreeBucketV2UpdateValuePO() {}
 
   public SBTreeBucketV2UpdateValuePO(int index, int keySize, byte[] prevValue, byte[] value) {
     this.index = index;
@@ -60,7 +58,10 @@ public final class SBTreeBucketV2UpdateValuePO extends PageOperationRecord {
 
   @Override
   public int serializedSize() {
-    return super.serializedSize() + 4 * OIntegerSerializer.INT_SIZE + prevValue.length + value.length;
+    return super.serializedSize()
+        + 4 * OIntegerSerializer.INT_SIZE
+        + prevValue.length
+        + value.length;
   }
 
   @Override

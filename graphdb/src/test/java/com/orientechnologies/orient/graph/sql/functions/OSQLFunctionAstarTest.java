@@ -1,23 +1,26 @@
 /*
-  *
-  *  *  Copyright 2010-2016 OrientDB LTD (http://orientdb.com)
-  *  *
-  *  *  Licensed under the Apache License, Version 2.0 (the "License");
-  *  *  you may not use this file except in compliance with the License.
-  *  *  You may obtain a copy of the License at
-  *  *
-  *  *       http://www.apache.org/licenses/LICENSE-2.0
-  *  *
-  *  *  Unless required by applicable law or agreed to in writing, software
-  *  *  distributed under the License is distributed on an "AS IS" BASIS,
-  *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-  *  *  See the License for the specific language governing permissions and
-  *  *  limitations under the License.
-  *  *
-  *  * For more information: http://orientdb.com
-  *
-  */
+ *
+ *  *  Copyright 2010-2016 OrientDB LTD (http://orientdb.com)
+ *  *
+ *  *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  *  you may not use this file except in compliance with the License.
+ *  *  You may obtain a copy of the License at
+ *  *
+ *  *       http://www.apache.org/licenses/LICENSE-2.0
+ *  *
+ *  *  Unless required by applicable law or agreed to in writing, software
+ *  *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  *  See the License for the specific language governing permissions and
+ *  *  limitations under the License.
+ *  *
+ *  * For more information: http://orientdb.com
+ *
+ */
 package com.orientechnologies.orient.graph.sql.functions;
+
+import static org.junit.Assert.assertEquals;
+
 
 import com.orientechnologies.orient.core.command.OBasicCommandContext;
 import com.orientechnologies.orient.core.metadata.function.OFunction;
@@ -27,40 +30,39 @@ import com.tinkerpop.blueprints.Edge;
 import com.tinkerpop.blueprints.Vertex;
 import com.tinkerpop.blueprints.impls.orient.OrientGraph;
 import com.tinkerpop.blueprints.impls.orient.OrientVertex;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
-
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-
-import static org.junit.Assert.assertEquals;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Test;
 
 /*
-* @author Saeed Tabrizi (saeed a_t  nowcando.com)
+ * @author Saeed Tabrizi (saeed a_t  nowcando.com)
  */
 public class OSQLFunctionAstarTest {
   private static int dbCounter = 0;
-  private OrientGraph       graph;
-  private Vertex            v0;
-  private Vertex            v1;
-  private Vertex            v2;
-  private Vertex            v3;
-  private Vertex            v4;
-  private Vertex            v5;
-  private Vertex            v6;
+  private OrientGraph graph;
+  private Vertex v0;
+  private Vertex v1;
+  private Vertex v2;
+  private Vertex v3;
+  private Vertex v4;
+  private Vertex v5;
+  private Vertex v6;
   private OSQLFunctionAstar functionAstar;
 
-  @Before public void setUp() throws Exception {
+  @Before
+  public void setUp() throws Exception {
 
     setUpDatabase();
 
     functionAstar = new OSQLFunctionAstar();
   }
 
-  @After public void tearDown() throws Exception {
+  @After
+  public void tearDown() throws Exception {
     graph.shutdown();
   }
 
@@ -68,7 +70,8 @@ public class OSQLFunctionAstarTest {
     dbCounter++;
     graph = new OrientGraph("memory:OSQLFunctionAstarTest" + dbCounter);
     graph.createEdgeType("has_path");
-    OFunction cf = graph.getRawGraph().getMetadata().getFunctionLibrary().createFunction("myCustomHeuristic");
+    OFunction cf =
+        graph.getRawGraph().getMetadata().getFunctionLibrary().createFunction("myCustomHeuristic");
     cf.setCode("return 1;");
 
     v0 = graph.addVertex(null);
@@ -172,13 +175,19 @@ public class OSQLFunctionAstarTest {
     graph.commit();
   }
 
-  @Test public void test1Execute() throws Exception {
+  @Test
+  public void test1Execute() throws Exception {
     Map<String, Object> options = new HashMap<String, Object>();
     options.put(OSQLFunctionAstar.PARAM_DIRECTION, "out");
     options.put(OSQLFunctionAstar.PARAM_PARALLEL, true);
-    options.put(OSQLFunctionAstar.PARAM_EDGE_TYPE_NAMES, new String[] { "has_path" });
-    final List<OrientVertex> result = functionAstar
-        .execute(null, null, null, new Object[] { v1, v4, "'weight'", options }, new OBasicCommandContext());
+    options.put(OSQLFunctionAstar.PARAM_EDGE_TYPE_NAMES, new String[] {"has_path"});
+    final List<OrientVertex> result =
+        functionAstar.execute(
+            null,
+            null,
+            null,
+            new Object[] {v1, v4, "'weight'", options},
+            new OBasicCommandContext());
     assertEquals(16, graph.countEdges("has_path"));
     assertEquals(4, result.size());
     assertEquals(v1, result.get(0));
@@ -187,77 +196,103 @@ public class OSQLFunctionAstarTest {
     assertEquals(v4, result.get(3));
   }
 
-  @Test public void test2Execute() throws Exception {
+  @Test
+  public void test2Execute() throws Exception {
     Map<String, Object> options = new HashMap<String, Object>();
     options.put(OSQLFunctionAstar.PARAM_DIRECTION, "out");
     options.put(OSQLFunctionAstar.PARAM_PARALLEL, true);
-    options.put(OSQLFunctionAstar.PARAM_EDGE_TYPE_NAMES, new String[] { "has_path" });
-    final List<OrientVertex> result = functionAstar
-        .execute(null, null, null, new Object[] { v1, v6, "'weight'", options }, new OBasicCommandContext());
+    options.put(OSQLFunctionAstar.PARAM_EDGE_TYPE_NAMES, new String[] {"has_path"});
+    final List<OrientVertex> result =
+        functionAstar.execute(
+            null,
+            null,
+            null,
+            new Object[] {v1, v6, "'weight'", options},
+            new OBasicCommandContext());
     assertEquals(16, graph.countEdges("has_path"));
     assertEquals(3, result.size());
     assertEquals(v1, result.get(0));
     assertEquals(v5, result.get(1));
     assertEquals(v6, result.get(2));
-
   }
 
-  @Test public void test3Execute() throws Exception {
+  @Test
+  public void test3Execute() throws Exception {
     Map<String, Object> options = new HashMap<String, Object>();
     options.put(OSQLFunctionAstar.PARAM_DIRECTION, "out");
     options.put(OSQLFunctionAstar.PARAM_PARALLEL, true);
-    options.put(OSQLFunctionAstar.PARAM_EDGE_TYPE_NAMES, new String[] { "has_path" });
-    options.put(OSQLFunctionAstar.PARAM_VERTEX_AXIS_NAMES, new String[] { "lat", "lon" });
-    final List<OrientVertex> result = functionAstar
-        .execute(null, null, null, new Object[] { v1, v6, "'weight'", options }, new OBasicCommandContext());
+    options.put(OSQLFunctionAstar.PARAM_EDGE_TYPE_NAMES, new String[] {"has_path"});
+    options.put(OSQLFunctionAstar.PARAM_VERTEX_AXIS_NAMES, new String[] {"lat", "lon"});
+    final List<OrientVertex> result =
+        functionAstar.execute(
+            null,
+            null,
+            null,
+            new Object[] {v1, v6, "'weight'", options},
+            new OBasicCommandContext());
     assertEquals(16, graph.countEdges("has_path"));
     assertEquals(3, result.size());
     assertEquals(v1, result.get(0));
     assertEquals(v5, result.get(1));
     assertEquals(v6, result.get(2));
-
   }
 
-  @Test public void test4Execute() throws Exception {
+  @Test
+  public void test4Execute() throws Exception {
     Map<String, Object> options = new HashMap<String, Object>();
     options.put(OSQLFunctionAstar.PARAM_DIRECTION, "out");
     options.put(OSQLFunctionAstar.PARAM_PARALLEL, true);
-    options.put(OSQLFunctionAstar.PARAM_EDGE_TYPE_NAMES, new String[] { "has_path" });
-    options.put(OSQLFunctionAstar.PARAM_VERTEX_AXIS_NAMES, new String[] { "lat", "lon", "alt" });
-    final List<OrientVertex> result = functionAstar
-        .execute(null, null, null, new Object[] { v1, v6, "'weight'", options }, new OBasicCommandContext());
+    options.put(OSQLFunctionAstar.PARAM_EDGE_TYPE_NAMES, new String[] {"has_path"});
+    options.put(OSQLFunctionAstar.PARAM_VERTEX_AXIS_NAMES, new String[] {"lat", "lon", "alt"});
+    final List<OrientVertex> result =
+        functionAstar.execute(
+            null,
+            null,
+            null,
+            new Object[] {v1, v6, "'weight'", options},
+            new OBasicCommandContext());
     assertEquals(16, graph.countEdges("has_path"));
     assertEquals(3, result.size());
     assertEquals(v1, result.get(0));
     assertEquals(v5, result.get(1));
     assertEquals(v6, result.get(2));
-
   }
 
-  @Test public void test5Execute() throws Exception {
+  @Test
+  public void test5Execute() throws Exception {
     Map<String, Object> options = new HashMap<String, Object>();
     options.put(OSQLFunctionAstar.PARAM_DIRECTION, "out");
     options.put(OSQLFunctionAstar.PARAM_PARALLEL, true);
-    options.put(OSQLFunctionAstar.PARAM_EDGE_TYPE_NAMES, new String[] { "has_path" });
-    options.put(OSQLFunctionAstar.PARAM_VERTEX_AXIS_NAMES, new String[] { "lat", "lon" });
-    final List<OrientVertex> result = functionAstar
-        .execute(null, null, null, new Object[] { v3, v5, "'weight'", options }, new OBasicCommandContext());
+    options.put(OSQLFunctionAstar.PARAM_EDGE_TYPE_NAMES, new String[] {"has_path"});
+    options.put(OSQLFunctionAstar.PARAM_VERTEX_AXIS_NAMES, new String[] {"lat", "lon"});
+    final List<OrientVertex> result =
+        functionAstar.execute(
+            null,
+            null,
+            null,
+            new Object[] {v3, v5, "'weight'", options},
+            new OBasicCommandContext());
     assertEquals(16, graph.countEdges("has_path"));
     assertEquals(3, result.size());
     assertEquals(v3, result.get(0));
     assertEquals(v6, result.get(1));
     assertEquals(v5, result.get(2));
-
   }
 
-  @Test public void test6Execute() throws Exception {
+  @Test
+  public void test6Execute() throws Exception {
     Map<String, Object> options = new HashMap<String, Object>();
     options.put(OSQLFunctionAstar.PARAM_DIRECTION, "out");
     options.put(OSQLFunctionAstar.PARAM_PARALLEL, true);
-    options.put(OSQLFunctionAstar.PARAM_EDGE_TYPE_NAMES, new String[] { "has_path" });
-    options.put(OSQLFunctionAstar.PARAM_VERTEX_AXIS_NAMES, new String[] { "lat", "lon" });
-    final List<OrientVertex> result = functionAstar
-        .execute(null, null, null, new Object[] { v6, v1, "'weight'", options }, new OBasicCommandContext());
+    options.put(OSQLFunctionAstar.PARAM_EDGE_TYPE_NAMES, new String[] {"has_path"});
+    options.put(OSQLFunctionAstar.PARAM_VERTEX_AXIS_NAMES, new String[] {"lat", "lon"});
+    final List<OrientVertex> result =
+        functionAstar.execute(
+            null,
+            null,
+            null,
+            new Object[] {v6, v1, "'weight'", options},
+            new OBasicCommandContext());
     assertEquals(16, graph.countEdges("has_path"));
     assertEquals(6, result.size());
     assertEquals(v6, result.get(0));
@@ -268,15 +303,21 @@ public class OSQLFunctionAstarTest {
     assertEquals(v1, result.get(5));
   }
 
-  @Test public void test7Execute() throws Exception {
+  @Test
+  public void test7Execute() throws Exception {
     Map<String, Object> options = new HashMap<String, Object>();
     options.put(OSQLFunctionAstar.PARAM_DIRECTION, "out");
     options.put(OSQLFunctionAstar.PARAM_PARALLEL, true);
-    options.put(OSQLFunctionAstar.PARAM_EDGE_TYPE_NAMES, new String[] { "has_path" });
-    options.put(OSQLFunctionAstar.PARAM_VERTEX_AXIS_NAMES, new String[] { "lat", "lon" });
+    options.put(OSQLFunctionAstar.PARAM_EDGE_TYPE_NAMES, new String[] {"has_path"});
+    options.put(OSQLFunctionAstar.PARAM_VERTEX_AXIS_NAMES, new String[] {"lat", "lon"});
     options.put(OSQLFunctionAstar.PARAM_HEURISTIC_FORMULA, "EucliDEAN");
-    final List<OrientVertex> result = functionAstar
-        .execute(null, null, null, new Object[] { v6, v1, "'weight'", options }, new OBasicCommandContext());
+    final List<OrientVertex> result =
+        functionAstar.execute(
+            null,
+            null,
+            null,
+            new Object[] {v6, v1, "'weight'", options},
+            new OBasicCommandContext());
     assertEquals(16, graph.countEdges("has_path"));
     assertEquals(6, result.size());
     assertEquals(v6, result.get(0));
@@ -287,16 +328,22 @@ public class OSQLFunctionAstarTest {
     assertEquals(v1, result.get(5));
   }
 
-  @Test public void test8Execute() throws Exception {
+  @Test
+  public void test8Execute() throws Exception {
     Map<String, Object> options = new HashMap<String, Object>();
     options.put(OSQLFunctionAstar.PARAM_DIRECTION, Direction.OUT);
     options.put(OSQLFunctionAstar.PARAM_PARALLEL, true);
     options.put(OSQLFunctionAstar.PARAM_TIE_BREAKER, false);
-    options.put(OSQLFunctionAstar.PARAM_EDGE_TYPE_NAMES, new String[] { "has_path" });
-    options.put(OSQLFunctionAstar.PARAM_VERTEX_AXIS_NAMES, new String[] { "lat", "lon" });
+    options.put(OSQLFunctionAstar.PARAM_EDGE_TYPE_NAMES, new String[] {"has_path"});
+    options.put(OSQLFunctionAstar.PARAM_VERTEX_AXIS_NAMES, new String[] {"lat", "lon"});
     options.put(OSQLFunctionAstar.PARAM_HEURISTIC_FORMULA, HeuristicFormula.EUCLIDEANNOSQR);
-    final List<OrientVertex> result = functionAstar
-        .execute(null, null, null, new Object[] { v6, v1, "'weight'", options }, new OBasicCommandContext());
+    final List<OrientVertex> result =
+        functionAstar.execute(
+            null,
+            null,
+            null,
+            new Object[] {v6, v1, "'weight'", options},
+            new OBasicCommandContext());
     assertEquals(16, graph.countEdges("has_path"));
     assertEquals(5, result.size());
     assertEquals(v6, result.get(0));
@@ -306,16 +353,22 @@ public class OSQLFunctionAstarTest {
     assertEquals(v1, result.get(4));
   }
 
-  @Test public void test9Execute() throws Exception {
+  @Test
+  public void test9Execute() throws Exception {
     Map<String, Object> options = new HashMap<String, Object>();
     options.put(OSQLFunctionAstar.PARAM_DIRECTION, Direction.BOTH);
     options.put(OSQLFunctionAstar.PARAM_PARALLEL, true);
     options.put(OSQLFunctionAstar.PARAM_TIE_BREAKER, false);
-    options.put(OSQLFunctionAstar.PARAM_EDGE_TYPE_NAMES, new String[] { "has_path" });
-    options.put(OSQLFunctionAstar.PARAM_VERTEX_AXIS_NAMES, new String[] { "lat", "lon" });
+    options.put(OSQLFunctionAstar.PARAM_EDGE_TYPE_NAMES, new String[] {"has_path"});
+    options.put(OSQLFunctionAstar.PARAM_VERTEX_AXIS_NAMES, new String[] {"lat", "lon"});
     options.put(OSQLFunctionAstar.PARAM_HEURISTIC_FORMULA, HeuristicFormula.MAXAXIS);
-    final List<OrientVertex> result = functionAstar
-        .execute(null, null, null, new Object[] { v6, v1, "'weight'", options }, new OBasicCommandContext());
+    final List<OrientVertex> result =
+        functionAstar.execute(
+            null,
+            null,
+            null,
+            new Object[] {v6, v1, "'weight'", options},
+            new OBasicCommandContext());
     assertEquals(16, graph.countEdges("has_path"));
     assertEquals(3, result.size());
     assertEquals(v6, result.get(0));
@@ -323,17 +376,23 @@ public class OSQLFunctionAstarTest {
     assertEquals(v1, result.get(2));
   }
 
-  @Test public void test10Execute() throws Exception {
+  @Test
+  public void test10Execute() throws Exception {
     Map<String, Object> options = new HashMap<String, Object>();
     options.put(OSQLFunctionAstar.PARAM_DIRECTION, Direction.OUT);
     options.put(OSQLFunctionAstar.PARAM_PARALLEL, true);
     options.put(OSQLFunctionAstar.PARAM_TIE_BREAKER, false);
-    options.put(OSQLFunctionAstar.PARAM_EDGE_TYPE_NAMES, new String[] { "has_path" });
-    options.put(OSQLFunctionAstar.PARAM_VERTEX_AXIS_NAMES, new String[] { "lat", "lon" });
+    options.put(OSQLFunctionAstar.PARAM_EDGE_TYPE_NAMES, new String[] {"has_path"});
+    options.put(OSQLFunctionAstar.PARAM_VERTEX_AXIS_NAMES, new String[] {"lat", "lon"});
     options.put(OSQLFunctionAstar.PARAM_HEURISTIC_FORMULA, HeuristicFormula.CUSTOM);
     options.put(OSQLFunctionAstar.PARAM_CUSTOM_HEURISTIC_FORMULA, "myCustomHeuristic");
-    final List<OrientVertex> result = functionAstar
-        .execute(null, null, null, new Object[] { v6, v1, "'weight'", options }, new OBasicCommandContext());
+    final List<OrientVertex> result =
+        functionAstar.execute(
+            null,
+            null,
+            null,
+            new Object[] {v6, v1, "'weight'", options},
+            new OBasicCommandContext());
     assertEquals(16, graph.countEdges("has_path"));
     assertEquals(6, result.size());
     assertEquals(v6, result.get(0));
@@ -344,50 +403,68 @@ public class OSQLFunctionAstarTest {
     assertEquals(v1, result.get(5));
   }
 
-  @Test public void test11Execute() throws Exception {
+  @Test
+  public void test11Execute() throws Exception {
     Map<String, Object> options = new HashMap<String, Object>();
     options.put(OSQLFunctionAstar.PARAM_DIRECTION, Direction.OUT);
     options.put(OSQLFunctionAstar.PARAM_PARALLEL, true);
     options.put(OSQLFunctionAstar.PARAM_TIE_BREAKER, false);
     options.put(OSQLFunctionAstar.PARAM_EMPTY_IF_MAX_DEPTH, true);
     options.put(OSQLFunctionAstar.PARAM_MAX_DEPTH, 3);
-    options.put(OSQLFunctionAstar.PARAM_EDGE_TYPE_NAMES, new String[] { "has_path" });
-    options.put(OSQLFunctionAstar.PARAM_VERTEX_AXIS_NAMES, new String[] { "lat", "lon" });
+    options.put(OSQLFunctionAstar.PARAM_EDGE_TYPE_NAMES, new String[] {"has_path"});
+    options.put(OSQLFunctionAstar.PARAM_VERTEX_AXIS_NAMES, new String[] {"lat", "lon"});
     options.put(OSQLFunctionAstar.PARAM_HEURISTIC_FORMULA, HeuristicFormula.CUSTOM);
     options.put(OSQLFunctionAstar.PARAM_CUSTOM_HEURISTIC_FORMULA, "myCustomHeuristic");
-    final List<OrientVertex> result = functionAstar
-        .execute(null, null, null, new Object[] { v6, v1, "'weight'", options }, new OBasicCommandContext());
+    final List<OrientVertex> result =
+        functionAstar.execute(
+            null,
+            null,
+            null,
+            new Object[] {v6, v1, "'weight'", options},
+            new OBasicCommandContext());
     assertEquals(16, graph.countEdges("has_path"));
     assertEquals(0, result.size());
-
   }
 
-  @Test public void test12Execute() throws Exception {
+  @Test
+  public void test12Execute() throws Exception {
     Map<String, Object> options = new HashMap<String, Object>();
     options.put(OSQLFunctionAstar.PARAM_DIRECTION, Direction.OUT);
     options.put(OSQLFunctionAstar.PARAM_PARALLEL, true);
     options.put(OSQLFunctionAstar.PARAM_TIE_BREAKER, false);
     options.put(OSQLFunctionAstar.PARAM_EMPTY_IF_MAX_DEPTH, false);
     options.put(OSQLFunctionAstar.PARAM_MAX_DEPTH, 3);
-    options.put(OSQLFunctionAstar.PARAM_EDGE_TYPE_NAMES, new String[] { "has_path" });
-    options.put(OSQLFunctionAstar.PARAM_VERTEX_AXIS_NAMES, new String[] { "lat", "lon" });
+    options.put(OSQLFunctionAstar.PARAM_EDGE_TYPE_NAMES, new String[] {"has_path"});
+    options.put(OSQLFunctionAstar.PARAM_VERTEX_AXIS_NAMES, new String[] {"lat", "lon"});
     options.put(OSQLFunctionAstar.PARAM_HEURISTIC_FORMULA, HeuristicFormula.CUSTOM);
     options.put(OSQLFunctionAstar.PARAM_CUSTOM_HEURISTIC_FORMULA, "myCustomHeuristic");
-    final List<OrientVertex> result = functionAstar
-        .execute(null, null, null, new Object[] { v6, v1, "'weight'", options }, new OBasicCommandContext());
+    final List<OrientVertex> result =
+        functionAstar.execute(
+            null,
+            null,
+            null,
+            new Object[] {v6, v1, "'weight'", options},
+            new OBasicCommandContext());
     assertEquals(16, graph.countEdges("has_path"));
     assertEquals(4, result.size());
     assertEquals(v6, result.get(0));
     assertEquals(v5, result.get(1));
     assertEquals(v2, result.get(2));
     assertEquals(v3, result.get(3));
-
   }
 
   @Test
   public void testSql() {
-    Iterable r = graph.command(new OSQLSynchQuery("select expand(astar(" + v1.getId() + ", " + v4.getId()
-        + ", 'weight', {'direction':'out', 'parallel':true, 'edgeTypeNames':'has_path'}))")).execute();
+    Iterable r =
+        graph
+            .command(
+                new OSQLSynchQuery(
+                    "select expand(astar("
+                        + v1.getId()
+                        + ", "
+                        + v4.getId()
+                        + ", 'weight', {'direction':'out', 'parallel':true, 'edgeTypeNames':'has_path'}))"))
+            .execute();
 
     List result = new ArrayList();
     for (Object x : r) {

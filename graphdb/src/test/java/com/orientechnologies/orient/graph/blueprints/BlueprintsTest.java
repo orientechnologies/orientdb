@@ -7,7 +7,11 @@ import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.tinkerpop.blueprints.Edge;
 import com.tinkerpop.blueprints.Vertex;
-import com.tinkerpop.blueprints.impls.orient.*;
+import com.tinkerpop.blueprints.impls.orient.OrientEdge;
+import com.tinkerpop.blueprints.impls.orient.OrientGraph;
+import com.tinkerpop.blueprints.impls.orient.OrientGraphQuery;
+import com.tinkerpop.blueprints.impls.orient.OrientVertex;
+import com.tinkerpop.blueprints.impls.orient.OrientVertexType;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
@@ -17,8 +21,7 @@ public class BlueprintsTest {
   private static String DB_URL = "memory:" + BlueprintsTest.class.getSimpleName();
   private static OrientGraph graph;
 
-  public BlueprintsTest() {
-  }
+  public BlueprintsTest() {}
 
   @BeforeClass
   public static void before() {
@@ -33,8 +36,7 @@ public class BlueprintsTest {
 
   @Test
   public void testSubVertex() {
-    if (graph.getVertexType("SubVertex") == null)
-      graph.createVertexType("SubVertex");
+    if (graph.getVertexType("SubVertex") == null) graph.createVertexType("SubVertex");
 
     Vertex v = graph.addVertex("class:SubVertex");
     v.setProperty("key", "subtype");
@@ -58,7 +60,6 @@ public class BlueprintsTest {
     if (graph.getVertexType("Node") == null) {
       OrientVertexType node = graph.createVertexType("Node");
       node.createProperty("name", OType.STRING);
-
     }
 
     if (graph.getVertexType("SubNode") == null) {
@@ -86,10 +87,8 @@ public class BlueprintsTest {
 
   @Test
   public void testSubEdge() {
-    if (graph.getEdgeType("SubEdge") == null)
-      graph.createEdgeType("SubEdge");
-    if (graph.getVertexType("SubVertex") == null)
-      graph.createVertexType("SubVertex");
+    if (graph.getEdgeType("SubEdge") == null) graph.createEdgeType("SubEdge");
+    if (graph.getVertexType("SubVertex") == null) graph.createVertexType("SubVertex");
 
     Vertex v1 = graph.addVertex("class:SubVertex");
     v1.setProperty("key", "subtype+subedge");
@@ -108,22 +107,31 @@ public class BlueprintsTest {
 
   @Test
   public void testEdgePhysicalRemoval() {
-    graph.command(new OCommandSQL("delete from e where name = 'forceCreationOfDocument'")).execute();
+    graph
+        .command(new OCommandSQL("delete from e where name = 'forceCreationOfDocument'"))
+        .execute();
 
     Vertex v1 = graph.addVertex(null);
     Vertex v2 = graph.addVertex(null);
     OrientEdge e = graph.addEdge(null, v1, v2, "anyLabel");
     e.setProperty("key", "forceCreationOfDocument");
 
-    Iterable<Edge> result = graph.command(new OSQLSynchQuery<Edge>("select from e where key = 'forceCreationOfDocument'"))
-        .execute();
+    Iterable<Edge> result =
+        graph
+            .command(
+                new OSQLSynchQuery<Edge>("select from e where key = 'forceCreationOfDocument'"))
+            .execute();
     Assert.assertTrue(result.iterator().hasNext());
     Assert.assertTrue(result.iterator().next() instanceof Edge);
 
     e.remove();
     graph.commit();
 
-    result = graph.command(new OSQLSynchQuery<Edge>("select from e where key = 'forceCreationOfDocument'")).execute();
+    result =
+        graph
+            .command(
+                new OSQLSynchQuery<Edge>("select from e where key = 'forceCreationOfDocument'"))
+            .execute();
     Assert.assertFalse(result.iterator().hasNext());
   }
 
@@ -151,7 +159,12 @@ public class BlueprintsTest {
   @Test
   public void testInvalidEdgeRID() {
     try {
-      OrientEdge e = graph.addEdge(null, new OrientVertex(graph,new ORecordId("9:9999")), new OrientVertex(graph,new ORecordId("9:99999")), "E");
+      OrientEdge e =
+          graph.addEdge(
+              null,
+              new OrientVertex(graph, new ORecordId("9:9999")),
+              new OrientVertex(graph, new ORecordId("9:99999")),
+              "E");
       Assert.assertTrue(false);
     } catch (IllegalArgumentException e) {
       Assert.assertTrue(true);

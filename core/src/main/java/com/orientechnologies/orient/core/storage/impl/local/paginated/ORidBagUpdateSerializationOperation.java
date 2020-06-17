@@ -29,7 +29,6 @@ import com.orientechnologies.orient.core.storage.index.sbtreebonsai.local.OSBTre
 import com.orientechnologies.orient.core.storage.ridbag.sbtree.Change;
 import com.orientechnologies.orient.core.storage.ridbag.sbtree.OBonsaiCollectionPointer;
 import com.orientechnologies.orient.core.storage.ridbag.sbtree.OSBTreeCollectionManager;
-
 import java.io.IOException;
 import java.util.Map;
 import java.util.NavigableMap;
@@ -45,7 +44,8 @@ public class ORidBagUpdateSerializationOperation implements ORecordSerialization
 
   private final OSBTreeCollectionManager collectionManager;
 
-  public ORidBagUpdateSerializationOperation(final NavigableMap<OIdentifiable, Change> changedValues,
+  public ORidBagUpdateSerializationOperation(
+      final NavigableMap<OIdentifiable, Change> changedValues,
       OBonsaiCollectionPointer collectionPointer) {
     this.changedValues = changedValues;
     this.collectionPointer = collectionPointer;
@@ -54,7 +54,8 @@ public class ORidBagUpdateSerializationOperation implements ORecordSerialization
   }
 
   @Override
-  public void execute(OAtomicOperation atomicOperation, OAbstractPaginatedStorage paginatedStorage) {
+  public void execute(
+      OAtomicOperation atomicOperation, OAbstractPaginatedStorage paginatedStorage) {
     if (changedValues.isEmpty()) {
       return;
     }
@@ -87,5 +88,4 @@ public class ORidBagUpdateSerializationOperation implements ORecordSerialization
   private void releaseTree() {
     collectionManager.releaseSBTree(collectionPointer);
   }
-
 }

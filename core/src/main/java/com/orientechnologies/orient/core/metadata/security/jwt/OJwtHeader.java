@@ -18,5 +18,4 @@ public interface OJwtHeader {
   String getKeyId();
 
   void setKeyId(String kid);
-
 }

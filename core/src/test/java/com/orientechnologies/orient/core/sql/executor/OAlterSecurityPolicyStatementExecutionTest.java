@@ -1,13 +1,20 @@
 package com.orientechnologies.orient.core.sql.executor;
 
-import com.orientechnologies.orient.core.db.*;
+import com.orientechnologies.orient.core.db.ODatabaseInternal;
+import com.orientechnologies.orient.core.db.ODatabaseSession;
+import com.orientechnologies.orient.core.db.ODatabaseType;
+import com.orientechnologies.orient.core.db.OrientDB;
+import com.orientechnologies.orient.core.db.OrientDBConfig;
 import com.orientechnologies.orient.core.metadata.security.OSecurityInternal;
 import com.orientechnologies.orient.core.metadata.security.OSecurityPolicy;
-import org.junit.*;
+import org.junit.After;
+import org.junit.AfterClass;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.BeforeClass;
+import org.junit.Test;
 
-/**
- * @author Luigi Dell'Aquila (l.dellaquila-(at)-orientdb.com)
- */
+/** @author Luigi Dell'Aquila (l.dellaquila-(at)-orientdb.com) */
 public class OAlterSecurityPolicyStatementExecutionTest {
   static OrientDB orient;
   private ODatabaseSession db;
@@ -35,13 +42,11 @@ public class OAlterSecurityPolicyStatementExecutionTest {
     this.db = null;
   }
 
-
   @Test
   public void testPlain() {
     db.command("CREATE SECURITY POLICY foo").close();
 
     db.command("ALTER SECURITY POLICY foo SET READ = (name = 'foo')").close();
-
 
     OSecurityInternal security = ((ODatabaseInternal) db).getSharedContext().getSecurity();
     OSecurityPolicy policy = security.getSecurityPolicy((ODatabaseSession) db, "foo");
@@ -59,9 +64,5 @@ public class OAlterSecurityPolicyStatementExecutionTest {
     policy = security.getSecurityPolicy((ODatabaseSession) db, "foo");
     Assert.assertNotNull(policy);
     Assert.assertNull(policy.getReadRule());
-
   }
-
-
-
 }

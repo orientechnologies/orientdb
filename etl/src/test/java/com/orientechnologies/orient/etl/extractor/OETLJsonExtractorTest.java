@@ -18,13 +18,13 @@
 
 package com.orientechnologies.orient.etl.extractor;
 
-import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.etl.OETLBaseTest;
-import org.junit.Ignore;
-import org.junit.Test;
-
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.assertEquals;
+
+
+import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.etl.OETLBaseTest;
+import org.junit.Test;
 
 /**
  * Tests ETL JSON Extractor.
@@ -35,7 +35,8 @@ public class OETLJsonExtractorTest extends OETLBaseTest {
 
   @Test
   public void testEmptyCollection() {
-    configure("{source: { content: { value: [] }  }, extractor : { json: {} }, loader: { test: {} } }");
+    configure(
+        "{source: { content: { value: [] }  }, extractor : { json: {} }, loader: { test: {} } }");
     proc.execute();
 
     assertEquals(0, getResult().size());
@@ -43,7 +44,8 @@ public class OETLJsonExtractorTest extends OETLBaseTest {
 
   @Test
   public void testEmptyObject() {
-    configure("{source: { content: { value: {} }  }, extractor : { json: {} }, loader: { test: {} } }");
+    configure(
+        "{source: { content: { value: {} }  }, extractor : { json: {} }, loader: { test: {} } }");
     proc.execute();
 
     assertEquals(1, getResult().size());
@@ -68,12 +70,14 @@ public class OETLJsonExtractorTest extends OETLBaseTest {
   public void testSmallSet() {
     String content = "";
     for (int i = 0; i < names.length; ++i) {
-      if (i > 0)
-        content += ",";
+      if (i > 0) content += ",";
       content += "{name:'" + names[i] + "',surname:'" + surnames[i] + "',id:" + i + "}";
     }
 
-    configure("{source: { content: { value: [" + content + "] } }, extractor : { json: {} }, loader: { test: {} } }");
+    configure(
+        "{source: { content: { value: ["
+            + content
+            + "] } }, extractor : { json: {} }, loader: { test: {} } }");
     proc.execute();
 
     assertEquals(names.length, getResult().size());
@@ -92,8 +96,12 @@ public class OETLJsonExtractorTest extends OETLBaseTest {
   @Test
   public void testHaltOnBadInput() {
 
-    configure("{\"source\": {\n" + "    \"file\": {\n" + "      \"path\": \"./src/test/resources/comments.json\"\n" + "    }\n"
-        + "  }, extractor : { json: {} }, loader: { test: {} } }");
+    configure(
+        "{\"source\": {\n"
+            + "    \"file\": {\n"
+            + "      \"path\": \"./src/test/resources/comments.json\"\n"
+            + "    }\n"
+            + "  }, extractor : { json: {} }, loader: { test: {} } }");
     proc.execute();
 
     assertThat(getResult().size()).isEqualTo(2);
@@ -106,15 +114,21 @@ public class OETLJsonExtractorTest extends OETLBaseTest {
   @Test
   public void testSkipOnBadInput() {
 
-    configure(" { \"config\": {\n" + "    \"haltOnError\": false\n" + "  }," + "\"source\": {\n" + "    \"file\": {\n"
-        + "      \"path\": \"./src/test/resources/comments.json\"\n" + "    }\n"
-        + "  }, extractor : { json: {} }, loader: { test: {} } }");
+    configure(
+        " { \"config\": {\n"
+            + "    \"haltOnError\": false\n"
+            + "  },"
+            + "\"source\": {\n"
+            + "    \"file\": {\n"
+            + "      \"path\": \"./src/test/resources/comments.json\"\n"
+            + "    }\n"
+            + "  }, extractor : { json: {} }, loader: { test: {} } }");
     proc.execute();
 
     assertThat(getResult().size()).isEqualTo(4);
     int i = 0;
     for (ODocument doc : getResult()) {
-//      assertThat(doc.<Integer>field("id")).isLessThan(5);
+      //      assertThat(doc.<Integer>field("id")).isLessThan(5);
     }
   }
 }

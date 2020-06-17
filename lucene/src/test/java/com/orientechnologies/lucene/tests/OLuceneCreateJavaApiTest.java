@@ -18,6 +18,9 @@
 
 package com.orientechnologies.lucene.tests;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
+
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
@@ -27,11 +30,7 @@ import org.apache.lucene.analysis.standard.StandardAnalyzer;
 import org.junit.Before;
 import org.junit.Test;
 
-import static org.assertj.core.api.Assertions.assertThat;
-
-/**
- * Created by Enrico Risa on 07/07/15.
- */
+/** Created by Enrico Risa on 07/07/15. */
 public class OLuceneCreateJavaApiTest extends OLuceneBaseTest {
 
   @Before
@@ -49,15 +48,21 @@ public class OLuceneCreateJavaApiTest extends OLuceneBaseTest {
     OClass song = schema.getClass("Song");
 
     ODocument meta = new ODocument().field("analyzer", StandardAnalyzer.class.getName());
-    OIndex lucene = song
-        .createIndex("Song.title", OClass.INDEX_TYPE.FULLTEXT.toString(), null, meta, "LUCENE", new String[] { "title" });
+    OIndex lucene =
+        song.createIndex(
+            "Song.title",
+            OClass.INDEX_TYPE.FULLTEXT.toString(),
+            null,
+            meta,
+            "LUCENE",
+            new String[] {"title"});
 
     assertThat(lucene).isNotNull();
 
     assertThat(lucene.getMetadata().containsField("analyzer")).isTrue();
 
-    assertThat(lucene.getMetadata().<Object>field("analyzer")).isEqualTo(StandardAnalyzer.class.getName());
-
+    assertThat(lucene.getMetadata().<Object>field("analyzer"))
+        .isEqualTo(StandardAnalyzer.class.getName());
   }
 
   @Test
@@ -66,15 +71,20 @@ public class OLuceneCreateJavaApiTest extends OLuceneBaseTest {
 
     OClass song = schema.getClass("Song");
 
-    OIndex lucene = song.createIndex("Song.author_description", OClass.INDEX_TYPE.FULLTEXT.toString(), null, null, "LUCENE",
-        new String[] { "author", "description" });
+    OIndex lucene =
+        song.createIndex(
+            "Song.author_description",
+            OClass.INDEX_TYPE.FULLTEXT.toString(),
+            null,
+            null,
+            "LUCENE",
+            new String[] {"author", "description"});
 
     assertThat(lucene).isNotNull();
 
     assertThat(lucene.getMetadata().containsField("analyzer")).isTrue();
 
-    assertThat(lucene.getMetadata().<Object>field("analyzer")).isEqualTo(StandardAnalyzer.class.getName());
-
+    assertThat(lucene.getMetadata().<Object>field("analyzer"))
+        .isEqualTo(StandardAnalyzer.class.getName());
   }
-
 }

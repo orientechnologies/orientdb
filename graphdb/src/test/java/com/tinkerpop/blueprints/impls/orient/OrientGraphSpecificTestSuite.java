@@ -6,19 +6,15 @@ import com.tinkerpop.blueprints.TestSuite;
 import com.tinkerpop.blueprints.TransactionalGraph;
 import com.tinkerpop.blueprints.Vertex;
 import com.tinkerpop.blueprints.impls.GraphTest;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
-import java.io.File;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Map;
-
-/**
- * @author Stephen Mallette (http://stephen.genoprime.com)
- */
+/** @author Stephen Mallette (http://stephen.genoprime.com) */
 @RunWith(JUnit4.class)
 public class OrientGraphSpecificTestSuite extends TestSuite {
   public OrientGraphSpecificTestSuite() {

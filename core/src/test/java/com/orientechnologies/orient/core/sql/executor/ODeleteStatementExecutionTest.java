@@ -1,5 +1,8 @@
 package com.orientechnologies.orient.core.sql.executor;
 
+import static com.orientechnologies.orient.core.sql.executor.ExecutionPlanPrintUtils.printExecutionPlan;
+
+
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
@@ -10,11 +13,7 @@ import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import static com.orientechnologies.orient.core.sql.executor.ExecutionPlanPrintUtils.printExecutionPlan;
-
-/**
- * @author Luigi Dell'Aquila (l.dellaquila-(at)-orientdb.com)
- */
+/** @author Luigi Dell'Aquila (l.dellaquila-(at)-orientdb.com) */
 public class ODeleteStatementExecutionTest {
   static ODatabaseDocument db;
 
@@ -127,7 +126,8 @@ public class ODeleteStatementExecutionTest {
       doc.setProperty("name", "name" + i);
       doc.save();
     }
-    OResultSet result = db.command("delete from  " + className + " return before where name = 'name4' ");
+    OResultSet result =
+        db.command("delete from  " + className + " return before where name = 'name4' ");
     printExecutionPlan(result);
     for (int i = 0; i < 1; i++) {
       Assert.assertTrue(result.hasNext());
@@ -176,5 +176,4 @@ public class ODeleteStatementExecutionTest {
     Assert.assertFalse(result.hasNext());
     result.close();
   }
-
 }

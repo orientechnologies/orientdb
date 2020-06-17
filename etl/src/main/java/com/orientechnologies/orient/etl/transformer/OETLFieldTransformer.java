@@ -24,29 +24,33 @@ import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilter;
-
 import java.util.List;
 import java.util.logging.Level;
 
 public class OETLFieldTransformer extends OETLAbstractTransformer {
-  private String       fieldName;
+  private String fieldName;
   private List<String> fieldNames;
-  private String       expression;
-  private Object       value;
+  private String expression;
+  private Object value;
   private boolean setOperation = true;
   private OSQLFilter sqlFilter;
   private boolean save = false;
 
   @Override
   public ODocument getConfiguration() {
-    return new ODocument().fromJSON("{parameters:[" + getCommonConfigurationParameters() + ","
-        + "{fieldName:{optional:true,description:'field name to apply the result'}},"
-        + "{fieldNames:{optional:true,description:'field names to apply the result'}},"
-        + "{expression:{optional:true,description:'expression to evaluate. Mandatory with operation=set (default)'}}"
-        + "{value:{optional:true,description:'value to set'}}"
-        + "{operation:{optional:false,description:'operation to execute against the field: set, remove. Default is set'}}"
-        + "{save:{optional:true,description:'save the vertex/edge/document right after the setting of the field'}}" + "],"
-        + "input:['ODocument'],output:'ODocument'}");
+    return new ODocument()
+        .fromJSON(
+            "{parameters:["
+                + getCommonConfigurationParameters()
+                + ","
+                + "{fieldName:{optional:true,description:'field name to apply the result'}},"
+                + "{fieldNames:{optional:true,description:'field names to apply the result'}},"
+                + "{expression:{optional:true,description:'expression to evaluate. Mandatory with operation=set (default)'}}"
+                + "{value:{optional:true,description:'value to set'}}"
+                + "{operation:{optional:false,description:'operation to execute against the field: set, remove. Default is set'}}"
+                + "{save:{optional:true,description:'save the vertex/edge/document right after the setting of the field'}}"
+                + "],"
+                + "input:['ODocument'],output:'ODocument'}");
   }
 
   @Override
@@ -56,16 +60,17 @@ public class OETLFieldTransformer extends OETLAbstractTransformer {
     fieldNames = (List<String>) resolve(iConfiguration.field("fieldNames"));
 
     if (fieldNames == null && fieldName == null)
-      throw new IllegalArgumentException("Field transformer must specify 'fieldName' or 'fieldNames'");
+      throw new IllegalArgumentException(
+          "Field transformer must specify 'fieldName' or 'fieldNames'");
 
     expression = iConfiguration.field("expression");
     value = iConfiguration.field("value");
 
     if (expression != null && value != null)
-      throw new IllegalArgumentException("Field transformer cannot specify both 'expression' and 'value'");
+      throw new IllegalArgumentException(
+          "Field transformer cannot specify both 'expression' and 'value'");
 
-    if (iConfiguration.containsField("save"))
-      save = iConfiguration.<Boolean>field("save");
+    if (iConfiguration.containsField("save")) save = iConfiguration.<Boolean>field("save");
 
     if (iConfiguration.containsField("operation"))
       setOperation = "set".equalsIgnoreCase((String) iConfiguration.field("operation"));
@@ -92,8 +97,7 @@ public class OETLFieldTransformer extends OETLAbstractTransformer {
               sqlFilter = new OSQLFilter(expression, context, null);
 
             newValue = sqlFilter.evaluate(doc, null, context);
-          } else
-            newValue = value;
+          } else newValue = value;
 
           // SET THE TRANSFORMED FIELD BACK
           doc.field(fieldName, newValue);

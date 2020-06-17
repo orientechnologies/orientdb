@@ -21,11 +21,9 @@ package com.orientechnologies.orient.core.metadata.security;
 
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-
 import java.util.List;
 
-/**
- */
+/** */
 public class OSystemRole extends ORole {
   public static final String DB_FILTER = "dbFilter";
 
@@ -35,19 +33,14 @@ public class OSystemRole extends ORole {
     return dbFilter;
   }
 
-  /**
-   * Constructor used in unmarshalling.
-   */
-  public OSystemRole() {
-  }
+  /** Constructor used in unmarshalling. */
+  public OSystemRole() {}
 
   public OSystemRole(final String iName, final ORole iParent, final ALLOW_MODES iAllowMode) {
     super(iName, iParent, iAllowMode);
   }
 
-  /**
-   * Create the role by reading the source document.
-   */
+  /** Create the role by reading the source document. */
   public OSystemRole(final ODocument iSource) {
     super(iSource);
   }
@@ -56,7 +49,9 @@ public class OSystemRole extends ORole {
   public void fromStream(final ODocument iSource) {
     super.fromStream(iSource);
 
-    if (document != null && document.containsField(DB_FILTER) && document.fieldType(DB_FILTER) == OType.EMBEDDEDLIST) {
+    if (document != null
+        && document.containsField(DB_FILTER)
+        && document.fieldType(DB_FILTER) == OType.EMBEDDEDLIST) {
       dbFilter = document.field(DB_FILTER, OType.EMBEDDEDLIST);
     }
   }

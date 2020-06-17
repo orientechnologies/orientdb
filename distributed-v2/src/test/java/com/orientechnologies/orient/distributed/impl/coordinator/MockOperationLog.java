@@ -4,14 +4,13 @@ import com.orientechnologies.orient.distributed.impl.log.OLogId;
 import com.orientechnologies.orient.distributed.impl.log.OLogRequest;
 import com.orientechnologies.orient.distributed.impl.log.OOperationLog;
 import com.orientechnologies.orient.distributed.impl.log.OOplogIterator;
-
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicLong;
 
 public class MockOperationLog implements OOperationLog {
-  private long       term = 0;
+  private long term = 0;
   private AtomicLong sequence;
-  private OLogId     lastLog;
+  private OLogId lastLog;
 
   public MockOperationLog() {
     this(0);
@@ -23,7 +22,8 @@ public class MockOperationLog implements OOperationLog {
 
   @Override
   public OLogId log(OLogRequest request) {
-    lastLog = new OLogId(sequence.incrementAndGet(), term, lastLog == null ? -1 : lastLog.getTerm());
+    lastLog =
+        new OLogId(sequence.incrementAndGet(), term, lastLog == null ? -1 : lastLog.getTerm());
     return lastLog;
   }
 
@@ -49,9 +49,7 @@ public class MockOperationLog implements OOperationLog {
   }
 
   @Override
-  public void close() {
-
-  }
+  public void close() {}
 
   @Override
   public LogIdStatus removeAfter(OLogId lastValid) {

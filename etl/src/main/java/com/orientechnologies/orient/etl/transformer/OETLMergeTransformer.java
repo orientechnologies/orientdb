@@ -24,20 +24,23 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.etl.OETLProcessHaltedException;
-
 import java.util.logging.Level;
 
-/**
- * Merges two records. Useful when a record needs to be updated rather than created.
- */
+/** Merges two records. Useful when a record needs to be updated rather than created. */
 public class OETLMergeTransformer extends OETLAbstractLookupTransformer {
   @Override
   public ODocument getConfiguration() {
-    return new ODocument().fromJSON("{parameters:[" + getCommonConfigurationParameters() + ","
-        + "{joinFieldName:{optional:false,description:'field name containing the value to join'}},"
-        + "{lookup:{optional:false,description:'<Class>.<property> or Query to execute'}},"
-        + "{unresolvedLinkAction:{optional:true,description:'action when a unresolved link is found',values:" + stringArray2Json(
-        ACTION.values()) + "}}]," + "input:['ODocument'],output:'ODocument'}");
+    return new ODocument()
+        .fromJSON(
+            "{parameters:["
+                + getCommonConfigurationParameters()
+                + ","
+                + "{joinFieldName:{optional:false,description:'field name containing the value to join'}},"
+                + "{lookup:{optional:false,description:'<Class>.<property> or Query to execute'}},"
+                + "{unresolvedLinkAction:{optional:true,description:'action when a unresolved link is found',values:"
+                + stringArray2Json(ACTION.values())
+                + "}}],"
+                + "input:['ODocument'],output:'ODocument'}");
   }
 
   @Override
@@ -59,34 +62,42 @@ public class OETLMergeTransformer extends OETLAbstractLookupTransformer {
         return result;
 
       } else if (OMultiValue.isMultiValue(result) && OMultiValue.getSize(result) == 1) {
-        final ODocument firstValue = (ODocument) ((OIdentifiable) OMultiValue.getFirstValue(result)).getRecord();
+        final ODocument firstValue =
+            (ODocument) ((OIdentifiable) OMultiValue.getFirstValue(result)).getRecord();
         firstValue.merge((ODocument) ((OIdentifiable) input).getRecord(), true, false);
         log(Level.FINE, "%s: merged record %s with found record=%s", getName(), firstValue, input);
         return firstValue;
       } else if (OMultiValue.isMultiValue(result) && OMultiValue.getSize(result) > 1) {
         throw new OETLProcessHaltedException(
-            "[Merge transformer] Multiple results returned from join for value '" + joinValue + "'");
+            "[Merge transformer] Multiple results returned from join for value '"
+                + joinValue
+                + "'");
       }
     } else {
 
       // APPLY THE STRATEGY DEFINED IN unresolvedLinkAction
       switch (unresolvedLinkAction) {
-      case NOTHING:
-        log(Level.FINE, "%s: DOING NOTHING for unresolved link on value %s", getName(), joinValue);
-        break;
-      case ERROR:
-        processor.getStats().incrementErrors();
-        log(Level.SEVERE, "%s: ERROR Cannot resolve join for value '%s'", getName(), joinValue);
-        break;
-      case WARNING:
-        processor.getStats().incrementWarnings();
-        log(Level.INFO, "%s: WARN Cannot resolve join for value '%s'", getName(), joinValue);
-        break;
-      case SKIP:
-        log(Level.FINE, "%s: SKIPPING unresolved link on value %s", getName(), joinValue);
-        return null;
-      case HALT:
-        throw new OETLProcessHaltedException("[Merge transformer] Cannot resolve join for value '" + joinValue + "'");
+        case NOTHING:
+          log(
+              Level.FINE,
+              "%s: DOING NOTHING for unresolved link on value %s",
+              getName(),
+              joinValue);
+          break;
+        case ERROR:
+          processor.getStats().incrementErrors();
+          log(Level.SEVERE, "%s: ERROR Cannot resolve join for value '%s'", getName(), joinValue);
+          break;
+        case WARNING:
+          processor.getStats().incrementWarnings();
+          log(Level.INFO, "%s: WARN Cannot resolve join for value '%s'", getName(), joinValue);
+          break;
+        case SKIP:
+          log(Level.FINE, "%s: SKIPPING unresolved link on value %s", getName(), joinValue);
+          return null;
+        case HALT:
+          throw new OETLProcessHaltedException(
+              "[Merge transformer] Cannot resolve join for value '" + joinValue + "'");
       }
     }
 

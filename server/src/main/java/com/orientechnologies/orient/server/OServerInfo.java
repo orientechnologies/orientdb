@@ -25,7 +25,6 @@ import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.disk.OLocalPaginatedStorage;
 import com.orientechnologies.orient.server.config.OServerEntryConfiguration;
 import com.orientechnologies.orient.server.network.protocol.ONetworkProtocolData;
-
 import java.io.IOException;
 import java.io.StringWriter;
 import java.text.DateFormat;
@@ -56,7 +55,8 @@ public class OServerInfo {
     return jsonBuffer.toString();
   }
 
-  public static void getConnections(final OServer server, final OJSONWriter json, final String databaseName) throws IOException {
+  public static void getConnections(
+      final OServer server, final OJSONWriter json, final String databaseName) throws IOException {
     final DateFormat dateTimeFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 
     json.beginCollection(1, true, "connections");
@@ -88,8 +88,13 @@ public class OServerInfo {
       }
       json.beginObject(2);
       writeField(json, 2, "connectionId", c.getId());
-      writeField(json, 2, "remoteAddress",
-          c.getProtocol().getChannel() != null ? c.getProtocol().getChannel().toString() : "Disconnected");
+      writeField(
+          json,
+          2,
+          "remoteAddress",
+          c.getProtocol().getChannel() != null
+              ? c.getProtocol().getChannel().toString()
+              : "Disconnected");
       writeField(json, 2, "db", lastDatabase != null ? lastDatabase : "-");
       writeField(json, 2, "user", lastUser != null ? lastUser : "-");
       writeField(json, 2, "totalRequests", stats.totalRequests);
@@ -121,7 +126,8 @@ public class OServerInfo {
     json.endCollection(1, false);
   }
 
-  public static void getGlobalProperties(final OServer server, final OJSONWriter json) throws IOException {
+  public static void getGlobalProperties(final OServer server, final OJSONWriter json)
+      throws IOException {
     json.beginCollection(2, true, "globalProperties");
 
     for (OGlobalConfiguration c : OGlobalConfiguration.values()) {
@@ -137,7 +143,8 @@ public class OServerInfo {
     json.endCollection(2, true);
   }
 
-  public static void getProperties(final OServer server, final OJSONWriter json) throws IOException {
+  public static void getProperties(final OServer server, final OJSONWriter json)
+      throws IOException {
     json.beginCollection(2, true, "properties");
 
     OServerEntryConfiguration[] confProperties = server.getConfiguration().properties;
@@ -159,8 +166,13 @@ public class OServerInfo {
       json.beginObject(2);
       writeField(json, 2, "name", s.getName());
       writeField(json, 2, "type", s.getClass().getSimpleName());
-      writeField(json, 2, "path",
-          s instanceof OLocalPaginatedStorage ? ((OLocalPaginatedStorage) s).getStoragePath().toString().replace('\\', '/') : "");
+      writeField(
+          json,
+          2,
+          "path",
+          s instanceof OLocalPaginatedStorage
+              ? ((OLocalPaginatedStorage) s).getStoragePath().toString().replace('\\', '/')
+              : "");
       writeField(json, 2, "activeUsers", "n.a.");
       json.endObject(2);
     }
@@ -169,20 +181,26 @@ public class OServerInfo {
 
   public static void getDatabases(final OServer server, final OJSONWriter json) throws IOException {
     json.beginCollection(1, true, "dbs");
-    //TODO:get this info from somewhere else
-//    if (!server.getDatabasePoolFactory().isClosed()) {
-//      Collection<OPartitionedDatabasePool> dbPools = server.getDatabasePoolFactory().getPools();
-//      for (OPartitionedDatabasePool pool : dbPools) {
-//        writeField(json, 2, "db", pool.getUrl());
-//        writeField(json, 2, "user", pool.getUserName());
-//        json.endObject(2);
-//      }
-//    }
+    // TODO:get this info from somewhere else
+    //    if (!server.getDatabasePoolFactory().isClosed()) {
+    //      Collection<OPartitionedDatabasePool> dbPools =
+    // server.getDatabasePoolFactory().getPools();
+    //      for (OPartitionedDatabasePool pool : dbPools) {
+    //        writeField(json, 2, "db", pool.getUrl());
+    //        writeField(json, 2, "user", pool.getUserName());
+    //        json.endObject(2);
+    //      }
+    //    }
     json.endCollection(1, false);
   }
 
-  private static void writeField(final OJSONWriter json, final int iLevel, final String iAttributeName,
-      final Object iAttributeValue) throws IOException {
-    json.writeAttribute(iLevel, true, iAttributeName, iAttributeValue != null ? iAttributeValue.toString() : "-");
+  private static void writeField(
+      final OJSONWriter json,
+      final int iLevel,
+      final String iAttributeName,
+      final Object iAttributeValue)
+      throws IOException {
+    json.writeAttribute(
+        iLevel, true, iAttributeName, iAttributeValue != null ? iAttributeValue.toString() : "-");
   }
 }

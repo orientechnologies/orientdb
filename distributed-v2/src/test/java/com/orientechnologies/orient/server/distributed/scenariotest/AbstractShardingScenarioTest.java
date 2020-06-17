@@ -16,6 +16,11 @@
 
 package com.orientechnologies.orient.server.distributed.scenariotest;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
+
+
 import com.orientechnologies.common.concur.ONeedRetryException;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.ODatabaseSession;
@@ -31,12 +36,19 @@ import com.orientechnologies.orient.core.sql.query.OLegacyResultSet;
 import com.orientechnologies.orient.core.storage.ORecordDuplicatedException;
 import com.orientechnologies.orient.server.distributed.ODistributedException;
 import com.orientechnologies.orient.server.distributed.ServerRun;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.Callable;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 import org.junit.Assert;
-
-import java.util.*;
-import java.util.concurrent.*;
-
-import static org.junit.Assert.*;
 
 /**
  * It represents an abstract scenario test with sharding on the cluster.
@@ -44,16 +56,19 @@ import static org.junit.Assert.*;
  * @author Gabriele Ponzi
  * @email <gabriele.ponzi--at--gmail.com>
  */
-
 public class AbstractShardingScenarioTest extends AbstractScenarioTest {
 
-  protected OVertex loadVertex(ODatabaseDocument graph, String shardName, int serverId, int threadId, int i) {
+  protected OVertex loadVertex(
+      ODatabaseDocument graph, String shardName, int serverId, int threadId, int i) {
 
     List<OVertex> result = null;
 
     try {
       final String uniqueId = shardName + "-s" + serverId + "-t" + threadId + "-v" + i;
-      Iterable<OElement> it = graph.command(new OCommandSQL("select from Client where name = '" + uniqueId + "'")).execute();
+      Iterable<OElement> it =
+          graph
+              .command(new OCommandSQL("select from Client where name = '" + uniqueId + "'"))
+              .execute();
       result = new LinkedList<OVertex>();
 
       for (OElement v : it) {
@@ -62,13 +77,11 @@ public class AbstractShardingScenarioTest extends AbstractScenarioTest {
         }
       }
 
-      if (result.size() == 0)
-        fail("No record found with name = '" + uniqueId + "'!");
+      if (result.size() == 0) fail("No record found with name = '" + uniqueId + "'!");
       else if (result.size() > 1)
         fail(result.size() + " records found with name = '" + uniqueId + "'!");
 
-      if (result.size() > 0)
-        return result.get(0);
+      if (result.size() > 0) return result.get(0);
 
     } catch (Exception e) {
       e.printStackTrace();
@@ -158,13 +171,16 @@ public class AbstractShardingScenarioTest extends AbstractScenarioTest {
         }
         graph = orientDB1.open(getDatabaseName(), "admin", "admin");
         try {
-          String sqlCommand = "select from cluster:client_" + server.getServerInstance().getDistributedManager().getLocalNodeName();
+          String sqlCommand =
+              "select from cluster:client_"
+                  + server.getServerInstance().getDistributedManager().getLocalNodeName();
           List<ODocument> result = new OCommandSQL(sqlCommand).execute();
           int total = result.size();
           // assertEquals(count * writerCount, total);
 
           sqlCommand =
-              "select count(*) from cluster:client_" + server.getServerInstance().getDistributedManager().getLocalNodeName();
+              "select count(*) from cluster:client_"
+                  + server.getServerInstance().getDistributedManager().getLocalNodeName();
           result = new OCommandSQL(sqlCommand).execute();
           total = ((Number) result.get(0).field("count")).intValue();
           // assertEquals(count * writerCount, total);
@@ -179,7 +195,8 @@ public class AbstractShardingScenarioTest extends AbstractScenarioTest {
   }
 
   // checks the consistency in the cluster after the writes in a no-replica sharding scenario
-  protected void checkAvailabilityOnShardsNoReplica(List<ServerRun> checkConsistencyOnServers, List<ServerRun> writerServer) {
+  protected void checkAvailabilityOnShardsNoReplica(
+      List<ServerRun> checkConsistencyOnServers, List<ServerRun> writerServer) {
 
     String checkOnServer = "";
     for (ServerRun server : checkConsistencyOnServers) {
@@ -220,15 +237,19 @@ public class AbstractShardingScenarioTest extends AbstractScenarioTest {
     serverIndex = 0;
 
     for (ServerRun server : writerServer) {
-      serverIndex2serverName.put(serverIndex, server.getServerInstance().getDistributedManager().getLocalNodeName());
+      serverIndex2serverName.put(
+          serverIndex, server.getServerInstance().getDistributedManager().getLocalNodeName());
       serverIndex++;
     }
 
     List<OVertex> verticesToCheck = new LinkedList<OVertex>();
 
     super.banner(
-        "Checking consistency among servers...\nChecking on servers {" + checkOnServer + "} that all the vertices written on {"
-            + writtenServer + "} are consistent.");
+        "Checking consistency among servers...\nChecking on servers {"
+            + checkOnServer
+            + "} that all the vertices written on {"
+            + writtenServer
+            + "} are consistent.");
 
     try {
 
@@ -244,10 +265,8 @@ public class AbstractShardingScenarioTest extends AbstractScenarioTest {
 
         // checking records inserted on server0
         int i;
-        if (serverId == 0)
-          i = 0;
-        else
-          i = serverIndex2thresholdThread.get(serverId - 1);
+        if (serverId == 0) i = 0;
+        else i = serverIndex2thresholdThread.get(serverId - 1);
 
         while (i < serverIndex2thresholdThread.get(serverId)) {
           for (int j = 0; j < 100; j++) {
@@ -266,12 +285,19 @@ public class AbstractShardingScenarioTest extends AbstractScenarioTest {
               k++;
             }
 
-            // checking that all the records have the same version and values (each record is equal to the next one)
+            // checking that all the records have the same version and values (each record is equal
+            // to the next one)
             k = 0;
             while (k <= verticesToCheck.size() - 2) {
-              assertEquals(verticesToCheck.get(k).getProperty("@version"), verticesToCheck.get(k + 1).getProperty("@version"));
-              assertEquals(verticesToCheck.get(k).getProperty("name"), verticesToCheck.get(k + 1).getProperty("name"));
-              assertEquals(verticesToCheck.get(k).getProperty("updated"), verticesToCheck.get(k + 1).getProperty("updated"));
+              assertEquals(
+                  verticesToCheck.get(k).getProperty("@version"),
+                  verticesToCheck.get(k + 1).getProperty("@version"));
+              assertEquals(
+                  verticesToCheck.get(k).getProperty("name"),
+                  verticesToCheck.get(k + 1).getProperty("name"));
+              assertEquals(
+                  verticesToCheck.get(k).getProperty("updated"),
+                  verticesToCheck.get(k + 1).getProperty("updated"));
               k++;
             }
             verticesToCheck.clear();
@@ -279,8 +305,12 @@ public class AbstractShardingScenarioTest extends AbstractScenarioTest {
           i++;
         }
 
-        System.out.println("All records originally inserted on server " + serverName + " in the cluster " + clusterName
-            + " available in the shard.");
+        System.out.println(
+            "All records originally inserted on server "
+                + serverName
+                + " in the cluster "
+                + clusterName
+                + " available in the shard.");
         index++;
       }
 
@@ -302,11 +332,12 @@ public class AbstractShardingScenarioTest extends AbstractScenarioTest {
 
   protected class ShardWriter implements Callable<Void> {
     protected final String databaseUrl;
-    protected       int    serverId;
+    protected int serverId;
     protected final String shardName;
-    protected       int    threadId;
+    protected int threadId;
 
-    protected ShardWriter(final int iServerId, final String shardName, final int iThreadId, final String db) {
+    protected ShardWriter(
+        final int iServerId, final String shardName, final int iThreadId, final String db) {
       serverId = iServerId;
       this.shardName = shardName;
       threadId = iThreadId;
@@ -343,11 +374,16 @@ public class AbstractShardingScenarioTest extends AbstractScenarioTest {
                 checkVertex(graph, id);
 
                 if ((i + 1) % 100 == 0)
-                  System.out
-                      .println("\nDBStartupWriter " + graph.getURL() + " managed " + (i + 1) + "/" + count + " records so far");
+                  System.out.println(
+                      "\nDBStartupWriter "
+                          + graph.getURL()
+                          + " managed "
+                          + (i + 1)
+                          + "/"
+                          + count
+                          + " records so far");
 
-                if (delayWriter > 0)
-                  Thread.sleep(delayWriter);
+                if (delayWriter > 0) Thread.sleep(delayWriter);
 
                 // OK
                 break;
@@ -361,8 +397,7 @@ public class AbstractShardingScenarioTest extends AbstractScenarioTest {
               } catch (ONeedRetryException e) {
                 System.out.println("DBStartupWriter received exception (db=" + graph.getURL());
 
-                if (retry >= maxRetries)
-                  e.printStackTrace();
+                if (retry >= maxRetries) e.printStackTrace();
 
                 break;
               } catch (ODistributedException e) {
@@ -440,5 +475,4 @@ public class AbstractShardingScenarioTest extends AbstractScenarioTest {
   protected String getDistributedServerConfiguration(final ServerRun server) {
     return "sct-sharded-basic-distrib-config-dserver" + server.getServerId() + ".xml";
   }
-
 }

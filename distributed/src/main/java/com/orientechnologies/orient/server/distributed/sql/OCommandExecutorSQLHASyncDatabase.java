@@ -35,7 +35,6 @@ import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.server.distributed.ODistributedException;
 import com.orientechnologies.orient.server.distributed.impl.ODistributedStorage;
 import com.orientechnologies.orient.server.hazelcast.OHazelcastPlugin;
-
 import java.util.Map;
 
 /**
@@ -44,7 +43,8 @@ import java.util.Map;
  * @author Luca Garulli
  */
 @SuppressWarnings("unchecked")
-public class OCommandExecutorSQLHASyncDatabase extends OCommandExecutorSQLAbstract implements OCommandDistributedReplicateRequest {
+public class OCommandExecutorSQLHASyncDatabase extends OCommandExecutorSQLAbstract
+    implements OCommandDistributedReplicateRequest {
   public static final String NAME = "HA SYNC DATABASE";
   private OHaSyncDatabaseStatement parsedStatement;
 
@@ -52,7 +52,8 @@ public class OCommandExecutorSQLHASyncDatabase extends OCommandExecutorSQLAbstra
     init((OCommandRequestText) iRequest);
 
     try {
-      parsedStatement = (OHaSyncDatabaseStatement) OStatementCache.get(this.parserText, getDatabase());
+      parsedStatement =
+          (OHaSyncDatabaseStatement) OStatementCache.get(this.parserText, getDatabase());
       preParsedStatement = parsedStatement;
     } catch (OCommandSQLParsingException sqlx) {
       throw sqlx;
@@ -63,16 +64,15 @@ public class OCommandExecutorSQLHASyncDatabase extends OCommandExecutorSQLAbstra
     return this;
   }
 
-  /**
-   * Execute the SYNC DATABASE.
-   */
+  /** Execute the SYNC DATABASE. */
   public Object execute(final Map<Object, Object> iArgs) {
     final ODatabaseDocumentInternal database = getDatabase();
     database.checkSecurity(ORule.ResourceGeneric.DATABASE, "sync", ORole.PERMISSION_UPDATE);
 
     final OStorage stg = database.getStorage();
     if (!(stg instanceof ODistributedStorage))
-      throw new ODistributedException("SYNC DATABASE command cannot be executed against a non distributed server");
+      throw new ODistributedException(
+          "SYNC DATABASE command cannot be executed against a non distributed server");
 
     final ODistributedStorage dStg = (ODistributedStorage) stg;
 
@@ -82,7 +82,8 @@ public class OCommandExecutorSQLHASyncDatabase extends OCommandExecutorSQLAbstra
 
     final String databaseName = database.getName();
 
-    return dManager.installDatabase(true, databaseName, parsedStatement.isForce(), !parsedStatement.isFull());
+    return dManager.installDatabase(
+        true, databaseName, parsedStatement.isForce(), !parsedStatement.isFull());
   }
 
   @Override
@@ -92,7 +93,9 @@ public class OCommandExecutorSQLHASyncDatabase extends OCommandExecutorSQLAbstra
 
   @Override
   public long getDistributedTimeout() {
-    return getDatabase().getConfiguration().getValueAsLong(OGlobalConfiguration.DISTRIBUTED_DEPLOYDB_TASK_SYNCH_TIMEOUT);
+    return getDatabase()
+        .getConfiguration()
+        .getValueAsLong(OGlobalConfiguration.DISTRIBUTED_DEPLOYDB_TASK_SYNCH_TIMEOUT);
   }
 
   @Override

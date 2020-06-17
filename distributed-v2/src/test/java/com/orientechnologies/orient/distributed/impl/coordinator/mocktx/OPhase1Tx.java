@@ -6,27 +6,25 @@ import com.orientechnologies.orient.distributed.impl.coordinator.ODistributedExe
 import com.orientechnologies.orient.distributed.impl.coordinator.ONodeRequest;
 import com.orientechnologies.orient.distributed.impl.coordinator.ONodeResponse;
 import com.orientechnologies.orient.distributed.impl.log.OLogId;
-
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
 
 public class OPhase1Tx implements ONodeRequest {
   @Override
-  public ONodeResponse execute(ONodeIdentity nodeFrom, OLogId opId, ODistributedExecutor executor,
+  public ONodeResponse execute(
+      ONodeIdentity nodeFrom,
+      OLogId opId,
+      ODistributedExecutor executor,
       ODatabaseDocumentInternal session) {
     return new OPhase1TxOk();
   }
 
   @Override
-  public void serialize(DataOutput output) throws IOException {
-
-  }
+  public void serialize(DataOutput output) throws IOException {}
 
   @Override
-  public void deserialize(DataInput input) throws IOException {
-
-  }
+  public void deserialize(DataInput input) throws IOException {}
 
   @Override
   public int getRequestType() {

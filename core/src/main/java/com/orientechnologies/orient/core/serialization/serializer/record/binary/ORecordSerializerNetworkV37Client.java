@@ -8,21 +8,20 @@ import com.orientechnologies.orient.core.storage.ridbag.ORemoteTreeRidBag;
 import com.orientechnologies.orient.core.storage.ridbag.sbtree.Change;
 import com.orientechnologies.orient.core.storage.ridbag.sbtree.ChangeSerializationHelper;
 import com.orientechnologies.orient.core.storage.ridbag.sbtree.OBonsaiCollectionPointer;
-
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 
 public class ORecordSerializerNetworkV37Client extends ORecordSerializerNetworkV37 {
 
-  public static final ORecordSerializerNetworkV37Client INSTANCE = new ORecordSerializerNetworkV37Client();
-  public static final String                            NAME     = "onet_ser_v37_client";
+  public static final ORecordSerializerNetworkV37Client INSTANCE =
+      new ORecordSerializerNetworkV37Client();
+  public static final String NAME = "onet_ser_v37_client";
 
   protected ORidBag readRidBag(BytesContainer bytes) {
     UUID uuid = OUUIDSerializer.INSTANCE.deserialize(bytes.bytes, bytes.offset);
     bytes.skip(OUUIDSerializer.UUID_SIZE);
-    if (uuid.getMostSignificantBits() == -1 && uuid.getLeastSignificantBits() == -1)
-      uuid = null;
+    if (uuid.getMostSignificantBits() == -1 && uuid.getLeastSignificantBits() == -1) uuid = null;
     byte b = bytes.bytes[bytes.offset];
     bytes.skip(1);
     if (b == 1) {
@@ -30,10 +29,8 @@ public class ORecordSerializerNetworkV37Client extends ORecordSerializerNetworkV
       int size = OVarIntSerializer.readAsInteger(bytes);
       for (int i = 0; i < size; i++) {
         OIdentifiable id = readOptimizedLink(bytes);
-        if (id.equals(NULL_RECORD_ID))
-          bag.add(null);
-        else
-          bag.add(id);
+        if (id.equals(NULL_RECORD_ID)) bag.add(null);
+        else bag.add(id);
       }
       return bag;
     } else {
@@ -53,9 +50,9 @@ public class ORecordSerializerNetworkV37Client extends ORecordSerializerNetworkV
       }
       OBonsaiCollectionPointer pointer = null;
       if (fileId != -1)
-        pointer = new OBonsaiCollectionPointer(fileId, new OBonsaiBucketPointer(pageIndex, pageOffset));
+        pointer =
+            new OBonsaiCollectionPointer(fileId, new OBonsaiBucketPointer(pageIndex, pageOffset));
       return new ORidBag(new ORemoteTreeRidBag(pointer));
     }
   }
-
 }

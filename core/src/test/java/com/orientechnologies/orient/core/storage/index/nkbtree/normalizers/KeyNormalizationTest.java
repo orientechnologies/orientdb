@@ -6,24 +6,22 @@ import com.orientechnologies.common.comparator.OUnsafeByteArrayComparator;
 import com.orientechnologies.common.comparator.OUnsafeByteArrayComparatorV2;
 import com.orientechnologies.orient.core.index.OCompositeKey;
 import com.orientechnologies.orient.core.metadata.schema.OType;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Ignore;
-import org.junit.Test;
-
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
-import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.GregorianCalendar;
 import java.util.TimeZone;
 import java.util.function.Consumer;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Ignore;
+import org.junit.Test;
 
 public class KeyNormalizationTest {
   KeyNormalizer keyNormalizer;
@@ -48,7 +46,7 @@ public class KeyNormalizationTest {
   @Test
   public void normalizeCompositeNull() {
     final byte[] bytes = getNormalizedKeySingle(null, null);
-    Assert.assertEquals((new byte[] { (byte) 0x1 })[0], bytes[0]);
+    Assert.assertEquals((new byte[] {(byte) 0x1})[0], bytes[0]);
   }
 
   @Test
@@ -63,35 +61,35 @@ public class KeyNormalizationTest {
     types[1] = OType.INTEGER;
 
     final byte[] bytes = keyNormalizer.normalize(compositeKey, types, Collator.NO_DECOMPOSITION);
-    Assert.assertEquals((new byte[] { (byte) 0x1 })[0], bytes[0]);
-    Assert.assertEquals((new byte[] { (byte) 0x0 })[0], bytes[1]);
-    Assert.assertEquals((new byte[] { (byte) 0x80 })[0], bytes[2]);
-    Assert.assertEquals((new byte[] { (byte) 0x5 })[0], bytes[5]);
+    Assert.assertEquals((new byte[] {(byte) 0x1})[0], bytes[0]);
+    Assert.assertEquals((new byte[] {(byte) 0x0})[0], bytes[1]);
+    Assert.assertEquals((new byte[] {(byte) 0x80})[0], bytes[2]);
+    Assert.assertEquals((new byte[] {(byte) 0x5})[0], bytes[5]);
   }
 
   @Test
   public void normalizeCompositeInt() {
     final byte[] bytes = getNormalizedKeySingle(5, OType.INTEGER);
-    Assert.assertEquals((new byte[] { (byte) 0x0 })[0], bytes[0]);
-    Assert.assertEquals((new byte[] { (byte) 0x5 })[0], bytes[4]);
+    Assert.assertEquals((new byte[] {(byte) 0x0})[0], bytes[0]);
+    Assert.assertEquals((new byte[] {(byte) 0x5})[0], bytes[4]);
   }
 
   @Test
   public void normalizeCompositeIntZero() {
     final byte[] bytes = getNormalizedKeySingle(0, OType.INTEGER);
-    Assert.assertEquals((new byte[] { (byte) 0x0 })[0], bytes[0]);
-    Assert.assertEquals((new byte[] { (byte) 0x0 })[0], bytes[4]);
+    Assert.assertEquals((new byte[] {(byte) 0x0})[0], bytes[0]);
+    Assert.assertEquals((new byte[] {(byte) 0x0})[0], bytes[4]);
   }
 
   @Test
   public void normalizeCompositeNegInt() {
     final byte[] bytes = getNormalizedKeySingle(-62, OType.INTEGER);
-    Assert.assertEquals((new byte[] { (byte) 0x0 })[0], bytes[0]);
+    Assert.assertEquals((new byte[] {(byte) 0x0})[0], bytes[0]);
     // -62 signed := 4294967234 unsigned := FFFFFFC2 hex
-    Assert.assertEquals((new byte[] { (byte) 0x7f })[0], bytes[1]);
-    Assert.assertEquals((new byte[] { (byte) 0xff })[0], bytes[2]);
-    Assert.assertEquals((new byte[] { (byte) 0xff })[0], bytes[3]);
-    Assert.assertEquals((new byte[] { (byte) 0xc2 })[0], bytes[4]);
+    Assert.assertEquals((new byte[] {(byte) 0x7f})[0], bytes[1]);
+    Assert.assertEquals((new byte[] {(byte) 0xff})[0], bytes[2]);
+    Assert.assertEquals((new byte[] {(byte) 0xff})[0], bytes[3]);
+    Assert.assertEquals((new byte[] {(byte) 0xc2})[0], bytes[4]);
   }
 
   @Test
@@ -120,9 +118,9 @@ public class KeyNormalizationTest {
   @Test
   public void normalizeCompositeDouble() {
     final byte[] bytes = getNormalizedKeySingle(1.5d, OType.DOUBLE);
-    Assert.assertEquals((new byte[] { (byte) 0x0 })[0], bytes[0]);
-    Assert.assertEquals((new byte[] { (byte) 0xbf })[0], bytes[1]);
-    Assert.assertEquals((new byte[] { (byte) 0xf8 })[0], bytes[2]);
+    Assert.assertEquals((new byte[] {(byte) 0x0})[0], bytes[0]);
+    Assert.assertEquals((new byte[] {(byte) 0xbf})[0], bytes[1]);
+    Assert.assertEquals((new byte[] {(byte) 0xf8})[0], bytes[2]);
   }
 
   @Test
@@ -137,9 +135,9 @@ public class KeyNormalizationTest {
   @Test
   public void normalizeCompositeFloat() {
     final byte[] bytes = getNormalizedKeySingle(1.5f, OType.FLOAT);
-    Assert.assertEquals((new byte[] { (byte) 0x0 })[0], bytes[0]);
-    Assert.assertEquals((new byte[] { (byte) 0xbf })[0], bytes[1]);
-    Assert.assertEquals((new byte[] { (byte) 0xc0 })[0], bytes[2]);
+    Assert.assertEquals((new byte[] {(byte) 0x0})[0], bytes[0]);
+    Assert.assertEquals((new byte[] {(byte) 0xbf})[0], bytes[1]);
+    Assert.assertEquals((new byte[] {(byte) 0xc0})[0], bytes[2]);
   }
 
   @Test
@@ -189,9 +187,11 @@ public class KeyNormalizationTest {
     System.out.println(matKey.toPlainString() + "-" + matKey.toEngineeringString());
     byte[] bytes = getNormalizedKeySingle(matKey.toPlainString(), OType.STRING);
     print(bytes);
-    byte[] bytesNeg = getNormalizedKeySingle(new BigDecimal(-3.14159265359).toPlainString(), OType.STRING);
+    byte[] bytesNeg =
+        getNormalizedKeySingle(new BigDecimal(-3.14159265359).toPlainString(), OType.STRING);
     print(bytesNeg);
-    byte[] bytesMoreNeg = getNormalizedKeySingle(new BigDecimal(-3.14159265359).toPlainString(), OType.STRING);
+    byte[] bytesMoreNeg =
+        getNormalizedKeySingle(new BigDecimal(-3.14159265359).toPlainString(), OType.STRING);
     print(bytesMoreNeg);
 
     // compareWithUnsafeByteArrayComparator(bytesMoreNeg, bytesNeg, bytes);
@@ -200,16 +200,16 @@ public class KeyNormalizationTest {
      * final byte[] stream = new byte[9]; ODecimalSerializer decimalSerializer = new ODecimalSerializer();
      * decimalSerializer.serialize(matKey, stream, 0); print(ByteBuffer.wrap(stream).order(ByteOrder.BIG_ENDIAN).array());
      * Assert.assertEquals(decimalSerializer.deserialize(stream, 0), matKey);
-     * 
+     *
      * final BigDecimal matKeyNeg = new BigDecimal(new BigInteger("-2"), 2); final byte[] streamNeg = new byte[9];
      * decimalSerializer.serialize(matKeyNeg, streamNeg, 0); print(ByteBuffer.wrap(streamNeg).order(ByteOrder.BIG_ENDIAN).array());
      * Assert.assertEquals(decimalSerializer.deserialize(streamNeg, 0), matKeyNeg);
-     * 
+     *
      * final BigDecimal matKeyZero = new BigDecimal(new BigInteger("0"), 2); final byte[] streamZero = new byte[9];
      * decimalSerializer.serialize(matKeyZero, streamZero, 0);
      * print(ByteBuffer.wrap(streamZero).order(ByteOrder.BIG_ENDIAN).array());
      * Assert.assertEquals(decimalSerializer.deserialize(streamZero, 0), matKeyZero);
-     * 
+     *
      * compareWithUnsafeByteArrayComparator(streamNeg, streamZero, stream);
      */
   }
@@ -217,38 +217,40 @@ public class KeyNormalizationTest {
   @Test
   public void normalizeCompositeBigDecimal() {
     final byte[] bytes = getNormalizedKeySingle(new BigDecimal("3.14159265359"), OType.DECIMAL);
-    Assert.assertEquals((new byte[] { (byte) 0x0 })[0], bytes[0]);
-    Assert.assertEquals((new byte[] { (byte) 0xc0 })[0], bytes[1]);
-    Assert.assertEquals((new byte[] { (byte) 0x9 })[0], bytes[2]);
-    Assert.assertEquals((new byte[] { (byte) 0x21 })[0], bytes[3]);
-    Assert.assertEquals((new byte[] { (byte) 0xfb })[0], bytes[4]);
-    Assert.assertEquals((new byte[] { (byte) 0x54 })[0], bytes[5]);
-    Assert.assertEquals((new byte[] { (byte) 0x44 })[0], bytes[6]);
-    Assert.assertEquals((new byte[] { (byte) 0x2e })[0], bytes[7]);
-    Assert.assertEquals((new byte[] { (byte) 0xea })[0], bytes[8]);
+    Assert.assertEquals((new byte[] {(byte) 0x0})[0], bytes[0]);
+    Assert.assertEquals((new byte[] {(byte) 0xc0})[0], bytes[1]);
+    Assert.assertEquals((new byte[] {(byte) 0x9})[0], bytes[2]);
+    Assert.assertEquals((new byte[] {(byte) 0x21})[0], bytes[3]);
+    Assert.assertEquals((new byte[] {(byte) 0xfb})[0], bytes[4]);
+    Assert.assertEquals((new byte[] {(byte) 0x54})[0], bytes[5]);
+    Assert.assertEquals((new byte[] {(byte) 0x44})[0], bytes[6]);
+    Assert.assertEquals((new byte[] {(byte) 0x2e})[0], bytes[7]);
+    Assert.assertEquals((new byte[] {(byte) 0xea})[0], bytes[8]);
   }
 
   @Test
   public void normalizeCompositeNegBigDecimal() {
     final byte[] bytes = getNormalizedKeySingle(new BigDecimal("-3.14159265359"), OType.DECIMAL);
-    Assert.assertEquals((new byte[] { (byte) 0x0 })[0], bytes[0]);
-    Assert.assertEquals((new byte[] { (byte) 0x40 })[0], bytes[1]);
-    Assert.assertEquals((new byte[] { (byte) 0x9 })[0], bytes[2]);
-    Assert.assertEquals((new byte[] { (byte) 0x21 })[0], bytes[3]);
-    Assert.assertEquals((new byte[] { (byte) 0xfb })[0], bytes[4]);
-    Assert.assertEquals((new byte[] { (byte) 0x54 })[0], bytes[5]);
-    Assert.assertEquals((new byte[] { (byte) 0x44 })[0], bytes[6]);
-    Assert.assertEquals((new byte[] { (byte) 0x2e })[0], bytes[7]);
-    Assert.assertEquals((new byte[] { (byte) 0xea })[0], bytes[8]);
+    Assert.assertEquals((new byte[] {(byte) 0x0})[0], bytes[0]);
+    Assert.assertEquals((new byte[] {(byte) 0x40})[0], bytes[1]);
+    Assert.assertEquals((new byte[] {(byte) 0x9})[0], bytes[2]);
+    Assert.assertEquals((new byte[] {(byte) 0x21})[0], bytes[3]);
+    Assert.assertEquals((new byte[] {(byte) 0xfb})[0], bytes[4]);
+    Assert.assertEquals((new byte[] {(byte) 0x54})[0], bytes[5]);
+    Assert.assertEquals((new byte[] {(byte) 0x44})[0], bytes[6]);
+    Assert.assertEquals((new byte[] {(byte) 0x2e})[0], bytes[7]);
+    Assert.assertEquals((new byte[] {(byte) 0xea})[0], bytes[8]);
   }
 
   @Test
   public void normalizeCompositeDecimalCompare() {
     final byte[] negative = getNormalizedKeySingle(new BigDecimal("-3.14159265359"), OType.DECIMAL);
     final byte[] zero = getNormalizedKeySingle(new BigDecimal("0.0"), OType.DECIMAL);
-    final byte[] zero2 = getNormalizedKeySingle(new BigDecimal(new BigInteger("0"), 2), OType.DECIMAL);
+    final byte[] zero2 =
+        getNormalizedKeySingle(new BigDecimal(new BigInteger("0"), 2), OType.DECIMAL);
     final byte[] positive = getNormalizedKeySingle(new BigDecimal(3.14159265359), OType.DECIMAL);
-    final byte[] positive2 = getNormalizedKeySingle(new BigDecimal(new BigInteger("314159265359"), 11), OType.DECIMAL);
+    final byte[] positive2 =
+        getNormalizedKeySingle(new BigDecimal(new BigInteger("314159265359"), 11), OType.DECIMAL);
     compareWithUnsafeByteArrayComparator(negative, zero, positive);
     compareWithByteArrayComparator(negative, zero, positive);
     compareWithUnsafeByteArrayComparatorIntertype(zero, zero2);
@@ -258,29 +260,29 @@ public class KeyNormalizationTest {
   @Test
   public void normalizeCompositeBoolean() {
     final byte[] bytes = getNormalizedKeySingle(true, OType.BOOLEAN);
-    Assert.assertEquals((new byte[] { (byte) 0x1 })[0], bytes[0]);
+    Assert.assertEquals((new byte[] {(byte) 0x1})[0], bytes[0]);
   }
 
   @Test
   public void normalizeCompositeLong() {
     final byte[] bytes = getNormalizedKeySingle(5L, OType.LONG);
-    Assert.assertEquals((new byte[] { (byte) 0x0 })[0], bytes[0]);
-    Assert.assertEquals((new byte[] { (byte) 0x80 })[0], bytes[1]);
-    Assert.assertEquals((new byte[] { (byte) 0x5 })[0], bytes[8]);
+    Assert.assertEquals((new byte[] {(byte) 0x0})[0], bytes[0]);
+    Assert.assertEquals((new byte[] {(byte) 0x80})[0], bytes[1]);
+    Assert.assertEquals((new byte[] {(byte) 0x5})[0], bytes[8]);
   }
 
   @Test
   public void normalizeCompositeNegLong() {
     final byte[] bytes = getNormalizedKeySingle(-62L, OType.LONG);
-    Assert.assertEquals((new byte[] { (byte) 0x0 })[0], bytes[0]);
-    Assert.assertEquals((new byte[] { (byte) 0x7f })[0], bytes[1]);
-    Assert.assertEquals((new byte[] { (byte) 0xff })[0], bytes[2]);
-    Assert.assertEquals((new byte[] { (byte) 0xff })[0], bytes[3]);
-    Assert.assertEquals((new byte[] { (byte) 0xff })[0], bytes[4]);
-    Assert.assertEquals((new byte[] { (byte) 0xff })[0], bytes[5]);
-    Assert.assertEquals((new byte[] { (byte) 0xff })[0], bytes[6]);
-    Assert.assertEquals((new byte[] { (byte) 0xff })[0], bytes[7]);
-    Assert.assertEquals((new byte[] { (byte) 0xc2 })[0], bytes[8]);
+    Assert.assertEquals((new byte[] {(byte) 0x0})[0], bytes[0]);
+    Assert.assertEquals((new byte[] {(byte) 0x7f})[0], bytes[1]);
+    Assert.assertEquals((new byte[] {(byte) 0xff})[0], bytes[2]);
+    Assert.assertEquals((new byte[] {(byte) 0xff})[0], bytes[3]);
+    Assert.assertEquals((new byte[] {(byte) 0xff})[0], bytes[4]);
+    Assert.assertEquals((new byte[] {(byte) 0xff})[0], bytes[5]);
+    Assert.assertEquals((new byte[] {(byte) 0xff})[0], bytes[6]);
+    Assert.assertEquals((new byte[] {(byte) 0xff})[0], bytes[7]);
+    Assert.assertEquals((new byte[] {(byte) 0xc2})[0], bytes[8]);
   }
 
   @Test
@@ -303,15 +305,15 @@ public class KeyNormalizationTest {
   @Test
   public void normalizeCompositeByte() {
     final byte[] bytes = getNormalizedKeySingle((byte) 3, OType.BYTE);
-    Assert.assertEquals((new byte[] { (byte) 0x0 })[0], bytes[0]);
-    Assert.assertEquals((new byte[] { (byte) 0x83 })[0], bytes[1]);
+    Assert.assertEquals((new byte[] {(byte) 0x0})[0], bytes[0]);
+    Assert.assertEquals((new byte[] {(byte) 0x83})[0], bytes[1]);
   }
 
   @Test
   public void normalizeCompositeNegByte() {
     final byte[] bytes = getNormalizedKeySingle((byte) -62, OType.BYTE);
-    Assert.assertEquals((new byte[] { (byte) 0x0 })[0], bytes[0]);
-    Assert.assertEquals((new byte[] { (byte) 0x42 })[0], bytes[1]);
+    Assert.assertEquals((new byte[] {(byte) 0x0})[0], bytes[0]);
+    Assert.assertEquals((new byte[] {(byte) 0x42})[0], bytes[1]);
   }
 
   @Test
@@ -326,17 +328,17 @@ public class KeyNormalizationTest {
   @Test
   public void normalizeCompositeShort() {
     final byte[] bytes = getNormalizedKeySingle((short) 3, OType.SHORT);
-    Assert.assertEquals((new byte[] { (byte) 0x0 })[0], bytes[0]);
-    Assert.assertEquals((new byte[] { (byte) 0x80 })[0], bytes[1]);
-    Assert.assertEquals((new byte[] { (byte) 0x3 })[0], bytes[2]);
+    Assert.assertEquals((new byte[] {(byte) 0x0})[0], bytes[0]);
+    Assert.assertEquals((new byte[] {(byte) 0x80})[0], bytes[1]);
+    Assert.assertEquals((new byte[] {(byte) 0x3})[0], bytes[2]);
   }
 
   @Test
   public void normalizeCompositeNegShort() {
     final byte[] bytes = getNormalizedKeySingle((short) -62, OType.SHORT);
-    Assert.assertEquals((new byte[] { (byte) 0x0 })[0], bytes[0]);
-    Assert.assertEquals((new byte[] { (byte) 0x7f })[0], bytes[1]);
-    Assert.assertEquals((new byte[] { (byte) 0xc2 })[0], bytes[2]);
+    Assert.assertEquals((new byte[] {(byte) 0x0})[0], bytes[0]);
+    Assert.assertEquals((new byte[] {(byte) 0x7f})[0], bytes[1]);
+    Assert.assertEquals((new byte[] {(byte) 0xc2})[0], bytes[2]);
   }
 
   @Test
@@ -353,43 +355,52 @@ public class KeyNormalizationTest {
     final OType[] types = new OType[1];
     types[0] = OType.STRING;
 
-    assertCollationOfCompositeKeyString(types, getCompositeKey("abc"), (byte[] bytes) -> {
-      Assert.assertEquals((new byte[] { (byte) 0x0 })[0], bytes[0]);
-      Assert.assertEquals((new byte[] { (byte) 0x2a })[0], bytes[1]);
-      Assert.assertEquals((new byte[] { (byte) 0x2c })[0], bytes[2]);
-      Assert.assertEquals((new byte[] { (byte) 0x2e })[0], bytes[3]);
-      Assert.assertEquals((new byte[] { (byte) 0x1 })[0], bytes[4]);
-      Assert.assertEquals((new byte[] { (byte) 0x7 })[0], bytes[5]);
-      Assert.assertEquals((new byte[] { (byte) 0x1 })[0], bytes[6]);
-      Assert.assertEquals((new byte[] { (byte) 0x7 })[0], bytes[7]);
-      Assert.assertEquals((new byte[] { (byte) 0x0 })[0], bytes[8]);
-    });
+    assertCollationOfCompositeKeyString(
+        types,
+        getCompositeKey("abc"),
+        (byte[] bytes) -> {
+          Assert.assertEquals((new byte[] {(byte) 0x0})[0], bytes[0]);
+          Assert.assertEquals((new byte[] {(byte) 0x2a})[0], bytes[1]);
+          Assert.assertEquals((new byte[] {(byte) 0x2c})[0], bytes[2]);
+          Assert.assertEquals((new byte[] {(byte) 0x2e})[0], bytes[3]);
+          Assert.assertEquals((new byte[] {(byte) 0x1})[0], bytes[4]);
+          Assert.assertEquals((new byte[] {(byte) 0x7})[0], bytes[5]);
+          Assert.assertEquals((new byte[] {(byte) 0x1})[0], bytes[6]);
+          Assert.assertEquals((new byte[] {(byte) 0x7})[0], bytes[7]);
+          Assert.assertEquals((new byte[] {(byte) 0x0})[0], bytes[8]);
+        });
 
-    assertCollationOfCompositeKeyString(types, getCompositeKey("Abc"), (byte[] bytes) -> {
-      Assert.assertEquals((new byte[] { (byte) 0x0 })[0], bytes[0]);
-      Assert.assertEquals((new byte[] { (byte) 0x2a })[0], bytes[1]);
-      Assert.assertEquals((new byte[] { (byte) 0x2c })[0], bytes[2]);
-      Assert.assertEquals((new byte[] { (byte) 0x2e })[0], bytes[3]);
-      Assert.assertEquals((new byte[] { (byte) 0x1 })[0], bytes[4]);
-      Assert.assertEquals((new byte[] { (byte) 0x7 })[0], bytes[5]);
-      Assert.assertEquals((new byte[] { (byte) 0x1 })[0], bytes[6]);
-      Assert.assertEquals((new byte[] { (byte) 0xdc })[0], bytes[7]);
-      Assert.assertEquals((new byte[] { (byte) 0x6 })[0], bytes[8]);
-      Assert.assertEquals((new byte[] { (byte) 0x0 })[0], bytes[9]);
-    });
+    assertCollationOfCompositeKeyString(
+        types,
+        getCompositeKey("Abc"),
+        (byte[] bytes) -> {
+          Assert.assertEquals((new byte[] {(byte) 0x0})[0], bytes[0]);
+          Assert.assertEquals((new byte[] {(byte) 0x2a})[0], bytes[1]);
+          Assert.assertEquals((new byte[] {(byte) 0x2c})[0], bytes[2]);
+          Assert.assertEquals((new byte[] {(byte) 0x2e})[0], bytes[3]);
+          Assert.assertEquals((new byte[] {(byte) 0x1})[0], bytes[4]);
+          Assert.assertEquals((new byte[] {(byte) 0x7})[0], bytes[5]);
+          Assert.assertEquals((new byte[] {(byte) 0x1})[0], bytes[6]);
+          Assert.assertEquals((new byte[] {(byte) 0xdc})[0], bytes[7]);
+          Assert.assertEquals((new byte[] {(byte) 0x6})[0], bytes[8]);
+          Assert.assertEquals((new byte[] {(byte) 0x0})[0], bytes[9]);
+        });
 
-    assertCollationOfCompositeKeyString(types, getCompositeKey("abC"), (byte[] bytes) -> {
-      Assert.assertEquals((new byte[] { (byte) 0x0 })[0], bytes[0]);
-      Assert.assertEquals((new byte[] { (byte) 0x2a })[0], bytes[1]);
-      Assert.assertEquals((new byte[] { (byte) 0x2c })[0], bytes[2]);
-      Assert.assertEquals((new byte[] { (byte) 0x2e })[0], bytes[3]);
-      Assert.assertEquals((new byte[] { (byte) 0x1 })[0], bytes[4]);
-      Assert.assertEquals((new byte[] { (byte) 0x7 })[0], bytes[5]);
-      Assert.assertEquals((new byte[] { (byte) 0x1 })[0], bytes[6]);
-      Assert.assertEquals((new byte[] { (byte) 0xc4 })[0], bytes[7]);
-      Assert.assertEquals((new byte[] { (byte) 0xdc })[0], bytes[8]);
-      Assert.assertEquals((new byte[] { (byte) 0x0 })[0], bytes[9]);
-    });
+    assertCollationOfCompositeKeyString(
+        types,
+        getCompositeKey("abC"),
+        (byte[] bytes) -> {
+          Assert.assertEquals((new byte[] {(byte) 0x0})[0], bytes[0]);
+          Assert.assertEquals((new byte[] {(byte) 0x2a})[0], bytes[1]);
+          Assert.assertEquals((new byte[] {(byte) 0x2c})[0], bytes[2]);
+          Assert.assertEquals((new byte[] {(byte) 0x2e})[0], bytes[3]);
+          Assert.assertEquals((new byte[] {(byte) 0x1})[0], bytes[4]);
+          Assert.assertEquals((new byte[] {(byte) 0x7})[0], bytes[5]);
+          Assert.assertEquals((new byte[] {(byte) 0x1})[0], bytes[6]);
+          Assert.assertEquals((new byte[] {(byte) 0xc4})[0], bytes[7]);
+          Assert.assertEquals((new byte[] {(byte) 0xdc})[0], bytes[8]);
+          Assert.assertEquals((new byte[] {(byte) 0x0})[0], bytes[9]);
+        });
   }
 
   @Test
@@ -426,26 +437,32 @@ public class KeyNormalizationTest {
     final OType[] types = new OType[1];
     types[0] = OType.STRING;
 
-    assertCollationOfCompositeKeyString(types, getCompositeKey("ü"), (byte[] bytes) -> {
-      Assert.assertEquals((new byte[] { (byte) 0x0 })[0], bytes[0]);
-      Assert.assertEquals((new byte[] { (byte) 0x52 })[0], bytes[1]);
-      Assert.assertEquals((new byte[] { (byte) 0x1 })[0], bytes[2]);
-      Assert.assertEquals((new byte[] { (byte) 0x45 })[0], bytes[3]);
-      Assert.assertEquals((new byte[] { (byte) 0x96 })[0], bytes[4]);
-      Assert.assertEquals((new byte[] { (byte) 0x1 })[0], bytes[5]);
-      Assert.assertEquals((new byte[] { (byte) 0x6 })[0], bytes[6]);
-      Assert.assertEquals((new byte[] { (byte) 0x0 })[0], bytes[7]);
-    });
+    assertCollationOfCompositeKeyString(
+        types,
+        getCompositeKey("ü"),
+        (byte[] bytes) -> {
+          Assert.assertEquals((new byte[] {(byte) 0x0})[0], bytes[0]);
+          Assert.assertEquals((new byte[] {(byte) 0x52})[0], bytes[1]);
+          Assert.assertEquals((new byte[] {(byte) 0x1})[0], bytes[2]);
+          Assert.assertEquals((new byte[] {(byte) 0x45})[0], bytes[3]);
+          Assert.assertEquals((new byte[] {(byte) 0x96})[0], bytes[4]);
+          Assert.assertEquals((new byte[] {(byte) 0x1})[0], bytes[5]);
+          Assert.assertEquals((new byte[] {(byte) 0x6})[0], bytes[6]);
+          Assert.assertEquals((new byte[] {(byte) 0x0})[0], bytes[7]);
+        });
 
-    assertCollationOfCompositeKeyString(types, getCompositeKey("u"), (byte[] bytes) -> {
-      Assert.assertEquals((new byte[] { (byte) 0x0 })[0], bytes[0]);
-      Assert.assertEquals((new byte[] { (byte) 0x52 })[0], bytes[1]);
-      Assert.assertEquals((new byte[] { (byte) 0x1 })[0], bytes[2]);
-      Assert.assertEquals((new byte[] { (byte) 0x5 })[0], bytes[3]);
-      Assert.assertEquals((new byte[] { (byte) 0x1 })[0], bytes[4]);
-      Assert.assertEquals((new byte[] { (byte) 0x5 })[0], bytes[5]);
-      Assert.assertEquals((new byte[] { (byte) 0x0 })[0], bytes[6]);
-    });
+    assertCollationOfCompositeKeyString(
+        types,
+        getCompositeKey("u"),
+        (byte[] bytes) -> {
+          Assert.assertEquals((new byte[] {(byte) 0x0})[0], bytes[0]);
+          Assert.assertEquals((new byte[] {(byte) 0x52})[0], bytes[1]);
+          Assert.assertEquals((new byte[] {(byte) 0x1})[0], bytes[2]);
+          Assert.assertEquals((new byte[] {(byte) 0x5})[0], bytes[3]);
+          Assert.assertEquals((new byte[] {(byte) 0x1})[0], bytes[4]);
+          Assert.assertEquals((new byte[] {(byte) 0x5})[0], bytes[5]);
+          Assert.assertEquals((new byte[] {(byte) 0x0})[0], bytes[6]);
+        });
   }
 
   @Test
@@ -461,15 +478,18 @@ public class KeyNormalizationTest {
     types[0] = OType.STRING;
     types[1] = OType.STRING;
 
-    assertCollationOfCompositeKeyString(types, compositeKey, (byte[] bytes) -> {
-      // check 'not null' and beginning of first entry
-      Assert.assertEquals((new byte[] { (byte) 0x0 })[0], bytes[0]);
-      Assert.assertEquals((new byte[] { (byte) 0x2a })[0], bytes[1]);
+    assertCollationOfCompositeKeyString(
+        types,
+        compositeKey,
+        (byte[] bytes) -> {
+          // check 'not null' and beginning of first entry
+          Assert.assertEquals((new byte[] {(byte) 0x0})[0], bytes[0]);
+          Assert.assertEquals((new byte[] {(byte) 0x2a})[0], bytes[1]);
 
-      // finally assert 'not null' for second entry ..
-      Assert.assertEquals((new byte[] { (byte) 0x0 })[0], bytes[10]);
-      Assert.assertEquals((new byte[] { (byte) 0x50 })[0], bytes[11]);
-    });
+          // finally assert 'not null' for second entry ..
+          Assert.assertEquals((new byte[] {(byte) 0x0})[0], bytes[10]);
+          Assert.assertEquals((new byte[] {(byte) 0x50})[0], bytes[11]);
+        });
   }
 
   @Test
@@ -479,18 +499,19 @@ public class KeyNormalizationTest {
     final byte[] bytes = getNormalizedKeySingle(key, OType.DATE);
 
     // 1383606000000 := Tue Nov 05 2013 00:00:00
-    Assert.assertEquals((new byte[] { (byte) 0x0 })[0], bytes[0]);
-    Assert.assertEquals((new byte[] { (byte) 0x0 })[0], bytes[1]);
-    Assert.assertEquals((new byte[] { (byte) 0x0 })[0], bytes[2]);
-    Assert.assertEquals((new byte[] { (byte) 0x1 })[0], bytes[3]);
-    Assert.assertEquals((new byte[] { (byte) 0x42 })[0], bytes[4]);
-    Assert.assertEquals((new byte[] { (byte) 0x25 })[0], bytes[5]);
-    Assert.assertEquals((new byte[] { (byte) 0x8f })[0], bytes[6]);
-    Assert.assertEquals((new byte[] { (byte) 0x8 })[0], bytes[7]);
-    Assert.assertEquals((new byte[] { (byte) 0x0 })[0], bytes[8]);
+    Assert.assertEquals((new byte[] {(byte) 0x0})[0], bytes[0]);
+    Assert.assertEquals((new byte[] {(byte) 0x0})[0], bytes[1]);
+    Assert.assertEquals((new byte[] {(byte) 0x0})[0], bytes[2]);
+    Assert.assertEquals((new byte[] {(byte) 0x1})[0], bytes[3]);
+    Assert.assertEquals((new byte[] {(byte) 0x42})[0], bytes[4]);
+    Assert.assertEquals((new byte[] {(byte) 0x25})[0], bytes[5]);
+    Assert.assertEquals((new byte[] {(byte) 0x8f})[0], bytes[6]);
+    Assert.assertEquals((new byte[] {(byte) 0x8})[0], bytes[7]);
+    Assert.assertEquals((new byte[] {(byte) 0x0})[0], bytes[8]);
   }
 
-  private GregorianCalendar getGregorianCalendarUTC(final int year, final int month, final int dayOfMonth) {
+  private GregorianCalendar getGregorianCalendarUTC(
+      final int year, final int month, final int dayOfMonth) {
     final GregorianCalendar calendar = new GregorianCalendar(year, month, dayOfMonth);
     calendar.setTimeZone(TimeZone.getTimeZone("UTC"));
     return calendar;
@@ -516,39 +537,47 @@ public class KeyNormalizationTest {
   @Ignore
   @Test
   public void normalizeCompositeDateTime() {
-    final ZonedDateTime zdt = LocalDateTime.of(2013, 11, 5, 3, 3, 3)
-        .atZone(ZoneId.systemDefault()).withZoneSameInstant(ZoneId.of("UTC"));
+    final ZonedDateTime zdt =
+        LocalDateTime.of(2013, 11, 5, 3, 3, 3)
+            .atZone(ZoneId.systemDefault())
+            .withZoneSameInstant(ZoneId.of("UTC"));
     final Date key = Date.from(zdt.toInstant());
     System.out.println("Date-key: " + key);
     final byte[] bytes = getNormalizedKeySingle(key, OType.DATETIME);
     print(bytes);
 
     // 1383616983000 := Tue Nov 05 2013 03:03:03
-    Assert.assertEquals((new byte[] { (byte) 0x0 })[0], bytes[0]);
-    Assert.assertEquals((new byte[] { (byte) 0x0 })[0], bytes[1]);
-    Assert.assertEquals((new byte[] { (byte) 0x0 })[0], bytes[2]);
-    Assert.assertEquals((new byte[] { (byte) 0x1 })[0], bytes[3]);
-    Assert.assertEquals((new byte[] { (byte) 0x42 })[0], bytes[4]);
-    Assert.assertEquals((new byte[] { (byte) 0x25 })[0], bytes[5]);
-    Assert.assertEquals((new byte[] { (byte) 0xff })[0], bytes[6]);
-    Assert.assertEquals((new byte[] { (byte) 0xaf })[0], bytes[7]);
-    Assert.assertEquals((new byte[] { (byte) 0xd8 })[0], bytes[8]);
+    Assert.assertEquals((new byte[] {(byte) 0x0})[0], bytes[0]);
+    Assert.assertEquals((new byte[] {(byte) 0x0})[0], bytes[1]);
+    Assert.assertEquals((new byte[] {(byte) 0x0})[0], bytes[2]);
+    Assert.assertEquals((new byte[] {(byte) 0x1})[0], bytes[3]);
+    Assert.assertEquals((new byte[] {(byte) 0x42})[0], bytes[4]);
+    Assert.assertEquals((new byte[] {(byte) 0x25})[0], bytes[5]);
+    Assert.assertEquals((new byte[] {(byte) 0xff})[0], bytes[6]);
+    Assert.assertEquals((new byte[] {(byte) 0xaf})[0], bytes[7]);
+    Assert.assertEquals((new byte[] {(byte) 0xd8})[0], bytes[8]);
   }
 
   @Test
   public void normalizeCompositeDateTimeCompare() {
-    ZonedDateTime zdt = LocalDateTime.of(2013, 11, 5, 3, 3, 3)
-        .atZone(ZoneId.systemDefault()).withZoneSameInstant(ZoneId.of("UTC"));
+    ZonedDateTime zdt =
+        LocalDateTime.of(2013, 11, 5, 3, 3, 3)
+            .atZone(ZoneId.systemDefault())
+            .withZoneSameInstant(ZoneId.of("UTC"));
     Date key = Date.from(zdt.toInstant());
     final byte[] smallest = getNormalizedKeySingle(key, OType.DATETIME);
 
-    zdt = LocalDateTime.of(2013, 11, 5, 5, 3, 3)
-        .atZone(ZoneId.systemDefault()).withZoneSameInstant(ZoneId.of("UTC"));
+    zdt =
+        LocalDateTime.of(2013, 11, 5, 5, 3, 3)
+            .atZone(ZoneId.systemDefault())
+            .withZoneSameInstant(ZoneId.of("UTC"));
     key = Date.from(zdt.toInstant());
     final byte[] middle = getNormalizedKeySingle(key, OType.DATETIME);
 
-    zdt = LocalDateTime.of(2013, 11, 5, 5, 5, 5)
-        .atZone(ZoneId.systemDefault()).withZoneSameInstant(ZoneId.of("UTC"));
+    zdt =
+        LocalDateTime.of(2013, 11, 5, 5, 5, 5)
+            .atZone(ZoneId.systemDefault())
+            .withZoneSameInstant(ZoneId.of("UTC"));
     key = Date.from(zdt.toInstant());
     final byte[] largest = getNormalizedKeySingle(key, OType.DATETIME);
     compareWithUnsafeByteArrayComparator(smallest, middle, largest);
@@ -557,7 +586,7 @@ public class KeyNormalizationTest {
 
   @Test
   public void normalizeCompositeBinary() {
-    final byte[] key = new byte[] { 1, 2, 3, 4, 5, 6 };
+    final byte[] key = new byte[] {1, 2, 3, 4, 5, 6};
 
     final OCompositeKey compositeKey = new OCompositeKey();
     compositeKey.addKey(key);
@@ -567,16 +596,16 @@ public class KeyNormalizationTest {
     types[0] = OType.BINARY;
 
     final byte[] bytes = keyNormalizer.normalize(compositeKey, types, Collator.NO_DECOMPOSITION);
-    Assert.assertEquals((new byte[] { (byte) 0x0 })[0], bytes[0]);
-    Assert.assertEquals((new byte[] { (byte) 0x1 })[0], bytes[1]);
-    Assert.assertEquals((new byte[] { (byte) 0x6 })[0], bytes[6]);
+    Assert.assertEquals((new byte[] {(byte) 0x0})[0], bytes[0]);
+    Assert.assertEquals((new byte[] {(byte) 0x1})[0], bytes[1]);
+    Assert.assertEquals((new byte[] {(byte) 0x6})[0], bytes[6]);
   }
 
   @Test
   public void normalizeCompositeBinaryCompare() {
-    final byte[] smallest = getNormalizedKeySingle(new byte[] { 1, 2, 3, 4, 5, 6 }, OType.BINARY);
-    final byte[] middle = getNormalizedKeySingle(new byte[] { 2, 2, 3, 4, 5, 6 }, OType.BINARY);
-    final byte[] biggest = getNormalizedKeySingle(new byte[] { 3, 2, 3, 4, 5, 6 }, OType.BINARY);
+    final byte[] smallest = getNormalizedKeySingle(new byte[] {1, 2, 3, 4, 5, 6}, OType.BINARY);
+    final byte[] middle = getNormalizedKeySingle(new byte[] {2, 2, 3, 4, 5, 6}, OType.BINARY);
+    final byte[] biggest = getNormalizedKeySingle(new byte[] {3, 2, 3, 4, 5, 6}, OType.BINARY);
     compareWithUnsafeByteArrayComparator(smallest, middle, biggest);
     compareWithByteArrayComparator(smallest, middle, biggest);
   }
@@ -591,8 +620,8 @@ public class KeyNormalizationTest {
     return keyNormalizer.normalize(compositeKey, types, Collator.NO_DECOMPOSITION);
   }
 
-  private void assertCollationOfCompositeKeyString(final OType[] types, final OCompositeKey compositeKey,
-      final Consumer<byte[]> func) {
+  private void assertCollationOfCompositeKeyString(
+      final OType[] types, final OCompositeKey compositeKey, final Consumer<byte[]> func) {
     // System.out.println("actual string: " + compositeKey.getKeys().get(0));
     final byte[] bytes = keyNormalizer.normalize(compositeKey, types, Collator.NO_DECOMPOSITION);
     // print(bytes);
@@ -620,7 +649,8 @@ public class KeyNormalizationTest {
     Assert.assertTrue("[unsafe] negative < zero", 0 > byteArrayComparator.compare(negative, zero));
     Assert.assertTrue("[unsafe] positive > zero", 0 < byteArrayComparator.compare(positive, zero));
     Assert.assertTrue("[unsafe] zero == zero", 0 == byteArrayComparator.compare(zero, zero));
-    Assert.assertTrue("{unsafe] negative < positive", 0 > byteArrayComparator.compare(negative, positive));
+    Assert.assertTrue(
+        "{unsafe] negative < positive", 0 > byteArrayComparator.compare(negative, positive));
   }
 
   private void compareWithUnsafeByteArrayComparatorIntertype(byte[] first, byte[] second) {

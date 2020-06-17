@@ -2,10 +2,13 @@ package com.orientechnologies.orient.distributed.impl.coordinator.network;
 
 import com.orientechnologies.orient.distributed.impl.coordinator.transaction.OSessionOperationId;
 import com.orientechnologies.orient.distributed.impl.structural.submit.ODropDatabaseSubmitResponse;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
+import java.io.IOException;
 import org.junit.Assert;
 import org.junit.Test;
-
-import java.io.*;
 
 public class ONetworkStructuralSubmitResponseTest {
 
@@ -16,7 +19,6 @@ public class ONetworkStructuralSubmitResponseTest {
     ODropDatabaseSubmitResponse res = new ODropDatabaseSubmitResponse(true, null);
     ONetworkStructuralSubmitResponse response = new ONetworkStructuralSubmitResponse(opId, res);
 
-
     ByteArrayOutputStream baos = new ByteArrayOutputStream();
     DataOutputStream out = new DataOutputStream(baos);
     response.write(out);
@@ -31,7 +33,6 @@ public class ONetworkStructuralSubmitResponseTest {
     in.close();
     bais.close();
 
-
     Assert.assertEquals(response.getCommand(), response2.getCommand());
     Assert.assertEquals(response.getOperationId(), response2.getOperationId());
     ODropDatabaseSubmitResponse res2 = (ODropDatabaseSubmitResponse) response2.getResponse();
@@ -39,7 +40,6 @@ public class ONetworkStructuralSubmitResponseTest {
     Assert.assertEquals(res.getClass(), res2.getClass());
     Assert.assertEquals(res.getError(), res2.getError());
     Assert.assertEquals(res.isSuccess(), res2.isSuccess());
-
   }
 
   @Test
@@ -49,7 +49,6 @@ public class ONetworkStructuralSubmitResponseTest {
     ODropDatabaseSubmitResponse res = new ODropDatabaseSubmitResponse(false, "an error!");
     ONetworkStructuralSubmitResponse response = new ONetworkStructuralSubmitResponse(opId, res);
 
-
     ByteArrayOutputStream baos = new ByteArrayOutputStream();
     DataOutputStream out = new DataOutputStream(baos);
     response.write(out);
@@ -64,7 +63,6 @@ public class ONetworkStructuralSubmitResponseTest {
     in.close();
     bais.close();
 
-
     Assert.assertEquals(response.getCommand(), response2.getCommand());
     Assert.assertEquals(response.getOperationId(), response2.getOperationId());
     ODropDatabaseSubmitResponse res2 = (ODropDatabaseSubmitResponse) response2.getResponse();
@@ -72,8 +70,5 @@ public class ONetworkStructuralSubmitResponseTest {
     Assert.assertEquals(res.getClass(), res2.getClass());
     Assert.assertEquals(res.getError(), res2.getError());
     Assert.assertEquals(res.isSuccess(), res2.isSuccess());
-
   }
 }
-
-

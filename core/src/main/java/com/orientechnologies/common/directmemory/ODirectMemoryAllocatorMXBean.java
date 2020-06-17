@@ -21,8 +21,6 @@
 package com.orientechnologies.common.directmemory;
 
 public interface ODirectMemoryAllocatorMXBean {
-  /**
-   * @return Amount of direct memory allocated using this allocator
-   */
+  /** @return Amount of direct memory allocated using this allocator */
   long getMemoryConsumption();
 }

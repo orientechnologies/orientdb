@@ -22,6 +22,13 @@ import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.lucene.engine.OLuceneIndexEngine;
 import com.orientechnologies.lucene.exception.OLuceneIndexException;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import org.apache.lucene.analysis.core.KeywordAnalyzer;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.index.IndexWriter;
@@ -29,17 +36,13 @@ import org.apache.lucene.index.IndexableField;
 import org.apache.lucene.index.memory.MemoryIndex;
 import org.apache.lucene.search.Query;
 
-import java.io.IOException;
-import java.util.*;
-
-/**
- * Created by Enrico Risa on 15/09/15.
- */
+/** Created by Enrico Risa on 15/09/15. */
 public class OLuceneTxChangesMultiRid extends OLuceneTxChangesAbstract {
-  private final Map<String, List<String>> deleted     = new HashMap<String, List<String>>();
-  private final Set<Document>             deletedDocs = new HashSet<Document>();
+  private final Map<String, List<String>> deleted = new HashMap<String, List<String>>();
+  private final Set<Document> deletedDocs = new HashSet<Document>();
 
-  public OLuceneTxChangesMultiRid(final OLuceneIndexEngine engine, final IndexWriter writer, final IndexWriter deletedIdx) {
+  public OLuceneTxChangesMultiRid(
+      final OLuceneIndexEngine engine, final IndexWriter writer, final IndexWriter deletedIdx) {
     super(engine, writer, deletedIdx);
   }
 
@@ -47,7 +50,8 @@ public class OLuceneTxChangesMultiRid extends OLuceneTxChangesAbstract {
     try {
       writer.addDocument(doc);
     } catch (IOException e) {
-      throw OException.wrapException(new OLuceneIndexException("unable to add document to changes index"), e);
+      throw OException.wrapException(
+          new OLuceneIndexException("unable to add document to changes index"), e);
     }
   }
 
@@ -64,8 +68,10 @@ public class OLuceneTxChangesMultiRid extends OLuceneTxChangesAbstract {
         deletedIdx.addDocument(doc);
       }
     } catch (final IOException e) {
-      throw OException
-          .wrapException(new OLuceneIndexException("Error while deleting documents in transaction from lucene index"), e);
+      throw OException.wrapException(
+          new OLuceneIndexException(
+              "Error while deleting documents in transaction from lucene index"),
+          e);
     }
   }
 

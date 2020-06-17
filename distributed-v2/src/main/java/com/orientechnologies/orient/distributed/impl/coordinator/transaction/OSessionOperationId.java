@@ -8,7 +8,7 @@ import java.util.UUID;
 
 public class OSessionOperationId {
   private String nodeId;
-  private long   sequential;
+  private long sequential;
 
   public OSessionOperationId() {
     // TODO: remove this and replace with correct initialization.
@@ -38,10 +38,8 @@ public class OSessionOperationId {
 
   @Override
   public boolean equals(Object o) {
-    if (this == o)
-      return true;
-    if (o == null || getClass() != o.getClass())
-      return false;
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
     OSessionOperationId that = (OSessionOperationId) o;
     return Objects.equals(nodeId, that.nodeId);
   }

@@ -3,8 +3,13 @@ package com.orientechnologies.orient.distributed.impl.coordinator.lock;
 import com.orientechnologies.common.util.OPair;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.distributed.impl.coordinator.ODistributedLockManager;
-
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.Queue;
+import java.util.SortedSet;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class ODistributedLockManagerImpl implements ODistributedLockManager {
@@ -32,7 +37,8 @@ public class ODistributedLockManagerImpl implements ODistributedLockManager {
     }
   }
 
-  public synchronized void lock(SortedSet<ORID> rids, SortedSet<OPair<String, String>> indexKeys, OnLocksAcquired acquired) {
+  public synchronized void lock(
+      SortedSet<ORID> rids, SortedSet<OPair<String, String>> indexKeys, OnLocksAcquired acquired) {
     List<OLockGuard> guards = new ArrayList<>();
     OWaitingTracker waitingTracker = new OWaitingTracker(acquired);
     for (ORID rid : rids) {

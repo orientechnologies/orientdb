@@ -7,10 +7,9 @@ import com.orientechnologies.orient.core.storage.cache.OCacheEntryImpl;
 import com.orientechnologies.orient.core.storage.cache.OCachePointer;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.PageOperationRecord;
 import com.orientechnologies.orient.core.storage.index.hashindex.local.v2.HashIndexMetadataPageV2;
+import java.util.List;
 import org.junit.Assert;
 import org.junit.Test;
-
-import java.util.List;
 
 public class LocalHashTableV2MetadataPageInitPOTest {
   @Test
@@ -30,10 +29,12 @@ public class LocalHashTableV2MetadataPageInitPOTest {
 
       Assert.assertTrue(operations.get(0) instanceof LocalHashTableV2MetadataPageInitPO);
 
-      final LocalHashTableV2MetadataPageInitPO pageOperation = (LocalHashTableV2MetadataPageInitPO) operations.get(0);
+      final LocalHashTableV2MetadataPageInitPO pageOperation =
+          (LocalHashTableV2MetadataPageInitPO) operations.get(0);
 
       final OPointer restoredPointer = byteBufferPool.acquireDirect(false);
-      final OCachePointer restoredCachePointer = new OCachePointer(restoredPointer, byteBufferPool, 0, 0);
+      final OCachePointer restoredCachePointer =
+          new OCachePointer(restoredPointer, byteBufferPool, 0, 0);
       final OCacheEntry restoredCacheEntry = new OCacheEntryImpl(0, 0, restoredCachePointer);
 
       pageOperation.redo(restoredCacheEntry);

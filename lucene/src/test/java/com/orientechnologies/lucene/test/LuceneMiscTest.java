@@ -26,16 +26,13 @@ import com.orientechnologies.orient.core.record.OVertex;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
-import org.junit.Assert;
-import org.junit.Test;
-
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import org.junit.Assert;
+import org.junit.Test;
 
-/**
- * Created by Enrico Risa on 18/09/15.
- */
+/** Created by Enrico Risa on 18/09/15. */
 public class LuceneMiscTest extends BaseLuceneTest {
 
   // TODO Re-enable when removed check syntax on ODB
@@ -43,28 +40,44 @@ public class LuceneMiscTest extends BaseLuceneTest {
 
     db.command(new OCommandSQL("create class Test extends V")).execute();
     db.command(new OCommandSQL("create property Test.attr1 string")).execute();
-    db.command(new OCommandSQL("create index Test.attr1 on Test (attr1) fulltext engine lucene")).execute();
+    db.command(new OCommandSQL("create index Test.attr1 on Test (attr1) fulltext engine lucene"))
+        .execute();
     db.command(new OCommandSQL("create property Test.attr2 string")).execute();
-    db.command(new OCommandSQL("create index Test.attr2 on Test (attr2) fulltext engine lucene")).execute();
+    db.command(new OCommandSQL("create index Test.attr2 on Test (attr2) fulltext engine lucene"))
+        .execute();
     db.command(new OCommandSQL("insert into Test set attr1='foo', attr2='bar'")).execute();
     db.command(new OCommandSQL("insert into Test set attr1='bar', attr2='foo'")).execute();
 
-    List<ODocument> results = db.command(new OCommandSQL("select from Test where attr1 lucene 'foo*' OR attr2 lucene 'foo*'"))
-        .execute();
+    List<ODocument> results =
+        db.command(
+                new OCommandSQL(
+                    "select from Test where attr1 lucene 'foo*' OR attr2 lucene 'foo*'"))
+            .execute();
     Assert.assertEquals(2, results.size());
 
-    results = db.command(new OCommandSQL("select from Test where attr1 lucene 'bar*' OR attr2 lucene 'bar*'")).execute();
+    results =
+        db.command(
+                new OCommandSQL(
+                    "select from Test where attr1 lucene 'bar*' OR attr2 lucene 'bar*'"))
+            .execute();
 
     Assert.assertEquals(2, results.size());
 
-    results = db.command(new OCommandSQL("select from Test where attr1 lucene 'foo*' AND attr2 lucene 'bar*'")).execute();
+    results =
+        db.command(
+                new OCommandSQL(
+                    "select from Test where attr1 lucene 'foo*' AND attr2 lucene 'bar*'"))
+            .execute();
 
     Assert.assertEquals(1, results.size());
 
-    results = db.command(new OCommandSQL("select from Test where attr1 lucene 'bar*' AND attr2 lucene 'foo*'")).execute();
+    results =
+        db.command(
+                new OCommandSQL(
+                    "select from Test where attr1 lucene 'bar*' AND attr2 lucene 'foo*'"))
+            .execute();
 
     Assert.assertEquals(1, results.size());
-
   }
 
   // TODO Re-enable when removed check syntax on ODB
@@ -75,19 +88,23 @@ public class LuceneMiscTest extends BaseLuceneTest {
 
     db.command(new OCommandSQL("create property Person.name string")).execute();
 
-    db.command(new OCommandSQL("create index Person.name on Person (name) fulltext engine lucene")).execute();
+    db.command(new OCommandSQL("create index Person.name on Person (name) fulltext engine lucene"))
+        .execute();
 
     db.command(new OCommandSQL("insert into Person set name='Enrico', age=18")).execute();
 
-    OSQLSynchQuery query = new OSQLSynchQuery("select  from (select from Person where age = 18) where name lucene 'Enrico'");
+    OSQLSynchQuery query =
+        new OSQLSynchQuery(
+            "select  from (select from Person where age = 18) where name lucene 'Enrico'");
     List results = db.command(query).execute();
     Assert.assertEquals(1, results.size());
 
     // WITH PROJECTION does not work as the class is missing
-    query = new OSQLSynchQuery("select  from (select name  from Person where age = 18) where name lucene 'Enrico'");
+    query =
+        new OSQLSynchQuery(
+            "select  from (select name  from Person where age = 18) where name lucene 'Enrico'");
     results = db.command(query).execute();
     Assert.assertEquals(0, results.size());
-
   }
 
   @Test
@@ -97,7 +114,8 @@ public class LuceneMiscTest extends BaseLuceneTest {
 
     db.command(new OCommandSQL("create property Test.attr1 string")).execute();
 
-    db.command(new OCommandSQL("create index Test.attr1 on Test (attr1) fulltext engine lucene")).execute();
+    db.command(new OCommandSQL("create index Test.attr1 on Test (attr1) fulltext engine lucene"))
+        .execute();
 
     db.command(new OCommandSQL("insert into Test set attr1='foo', attr2='bar'")).execute();
 
@@ -125,7 +143,8 @@ public class LuceneMiscTest extends BaseLuceneTest {
     db.commit();
 
     db.command(new OCommandSQL("create index AuthorOf.in on AuthorOf (in) NOTUNIQUE")).execute();
-    db.command(new OCommandSQL("create index Song.title on Song (title) FULLTEXT ENGINE LUCENE")).execute();
+    db.command(new OCommandSQL("create index Song.title on Song (title) FULLTEXT ENGINE LUCENE"))
+        .execute();
 
     OVertex authorVertex = db.newVertex("Author");
     authorVertex.setProperty("name", "Bob Dylan");
@@ -140,7 +159,9 @@ public class LuceneMiscTest extends BaseLuceneTest {
     List<Object> results = db.command(new OCommandSQL("select from AuthorOf")).execute();
     Assert.assertEquals(results.size(), 1);
 
-    results = db.command(new OCommandSQL("select from AuthorOf where in.title lucene 'hurricane'")).execute();
+    results =
+        db.command(new OCommandSQL("select from AuthorOf where in.title lucene 'hurricane'"))
+            .execute();
 
     System.out.println("results = " + results);
     Assert.assertEquals(results.size(), 1);
@@ -153,7 +174,8 @@ public class LuceneMiscTest extends BaseLuceneTest {
 
     db.command(new OCommandSQL("create property V._attr1 string")).execute();
 
-    db.command(new OCommandSQL("create index V._attr1 on V (_attr1) fulltext engine lucene")).execute();
+    db.command(new OCommandSQL("create index V._attr1 on V (_attr1) fulltext engine lucene"))
+        .execute();
 
     db.command(new OCommandSQL("insert into Test set _attr1='anyPerson', attr2='bar'")).execute();
 
@@ -162,6 +184,5 @@ public class LuceneMiscTest extends BaseLuceneTest {
     params.put("name", "anyPerson");
     List results = db.command(query).execute(params);
     Assert.assertEquals(results.size(), 1);
-
   }
 }

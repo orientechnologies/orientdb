@@ -18,7 +18,7 @@ import org.junit.Test;
  */
 public class ShardingManualSyncIT extends AbstractServerClusterTest {
 
-  protected final static int SERVERS = 2;
+  protected static final int SERVERS = 2;
 
   @Test
   @Ignore
@@ -43,11 +43,13 @@ public class ShardingManualSyncIT extends AbstractServerClusterTest {
 
     final ORID v1Identity;
 
-    ODatabaseDocument graphNoTxEurope = serverInstance.get(0).getServerInstance().openDatabase(getDatabaseName(), "admin", "admin");
+    ODatabaseDocument graphNoTxEurope =
+        serverInstance.get(0).getServerInstance().openDatabase(getDatabaseName(), "admin", "admin");
     try {
       final OClass clientType = graphNoTxEurope.createVertexClass("Client-Type");
       for (int i = 1; i < serverInstance.size(); ++i) {
-        final String serverName = serverInstance.get(i).getServerInstance().getDistributedManager().getLocalNodeName();
+        final String serverName =
+            serverInstance.get(i).getServerInstance().getDistributedManager().getLocalNodeName();
         clientType.addCluster("client_" + serverName);
       }
 
@@ -59,7 +61,8 @@ public class ShardingManualSyncIT extends AbstractServerClusterTest {
       graphNoTxEurope.close();
     }
 
-    ODatabaseDocument graphNoTxUsa = serverInstance.get(1).getServerInstance().openDatabase(getDatabaseName(), "admin", "admin");
+    ODatabaseDocument graphNoTxUsa =
+        serverInstance.get(1).getServerInstance().openDatabase(getDatabaseName(), "admin", "admin");
     try {
       Assert.assertEquals(1, graphNoTxUsa.getClass("V").count());
     } finally {
@@ -68,22 +71,37 @@ public class ShardingManualSyncIT extends AbstractServerClusterTest {
 
     final String clusterName;
 
-    graphNoTxEurope = serverInstance.get(0).getServerInstance().openDatabase(getDatabaseName(), "admin", "admin");
+    graphNoTxEurope =
+        serverInstance.get(0).getServerInstance().openDatabase(getDatabaseName(), "admin", "admin");
     try {
       Assert.assertEquals(1, graphNoTxEurope.getClass("V").count());
 
       // CHANGE THE WRITE QUORUM = 1
-      final OModifiableDistributedConfiguration dCfg = serverInstance.get(0).server.getDistributedManager()
-          .getDatabaseConfiguration(getDatabaseName()).modify();
+      final OModifiableDistributedConfiguration dCfg =
+          serverInstance
+              .get(0)
+              .server
+              .getDistributedManager()
+              .getDatabaseConfiguration(getDatabaseName())
+              .modify();
       ODocument newCfg = dCfg.getDocument().field("writeQuorum", 1);
-      serverInstance.get(0).server.getDistributedManager().updateCachedDatabaseConfiguration(getDatabaseName(), dCfg, true);
+      serverInstance
+          .get(0)
+          .server
+          .getDistributedManager()
+          .updateCachedDatabaseConfiguration(getDatabaseName(), dCfg, true);
 
       // CREATE A NEW RECORD ON SERVER 0 BYPASSING REPLICATION
       final ODocument v2 = new ODocument("Client");
       ((ORecordId) v2.getIdentity()).setClusterId(v1Identity.getClusterId());
       ((ORecordId) v2.getIdentity()).setClusterPosition(v1Identity.getClusterPosition() + 1);
-      final Object result = createRemoteRecord(0, v2,
-          new String[] { serverInstance.get(0).getServerInstance().getDistributedManager().getLocalNodeName() });
+      final Object result =
+          createRemoteRecord(
+              0,
+              v2,
+              new String[] {
+                serverInstance.get(0).getServerInstance().getDistributedManager().getLocalNodeName()
+              });
 
       Assert.assertFalse(result instanceof Throwable);
 
@@ -98,7 +116,8 @@ public class ShardingManualSyncIT extends AbstractServerClusterTest {
 
     // TEST SECOND VERTEX IS MISSING ON USA NODE
 
-    graphNoTxUsa = serverInstance.get(1).getServerInstance().openDatabase(getDatabaseName(), "admin", "admin");
+    graphNoTxUsa =
+        serverInstance.get(1).getServerInstance().openDatabase(getDatabaseName(), "admin", "admin");
     try {
       Assert.assertEquals(1, graphNoTxUsa.getClass("V").count());
 
@@ -111,5 +130,4 @@ public class ShardingManualSyncIT extends AbstractServerClusterTest {
       graphNoTxUsa.close();
     }
   }
-
 }

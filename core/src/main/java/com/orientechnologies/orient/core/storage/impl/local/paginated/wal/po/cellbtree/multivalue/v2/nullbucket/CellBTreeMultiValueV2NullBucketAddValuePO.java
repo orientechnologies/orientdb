@@ -8,14 +8,12 @@ import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.WALRecordTypes;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.PageOperationRecord;
 import com.orientechnologies.orient.core.storage.index.sbtree.multivalue.v2.CellBTreeMultiValueV2NullBucket;
-
 import java.nio.ByteBuffer;
 
 public final class CellBTreeMultiValueV2NullBucketAddValuePO extends PageOperationRecord {
   private ORID rid;
 
-  public CellBTreeMultiValueV2NullBucketAddValuePO() {
-  }
+  public CellBTreeMultiValueV2NullBucketAddValuePO() {}
 
   public CellBTreeMultiValueV2NullBucketAddValuePO(ORID rid) {
     this.rid = rid;

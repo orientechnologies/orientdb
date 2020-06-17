@@ -1,5 +1,8 @@
 package com.orientechnologies.orient.server.distributed.impl.task;
 
+import static com.orientechnologies.orient.server.distributed.impl.ONewDistributedTxContextImpl.Status.TIMEDOUT;
+
+
 import com.orientechnologies.orient.client.remote.message.OMessageHelper;
 import com.orientechnologies.orient.client.remote.message.tx.ORecordOperationRequest;
 import com.orientechnologies.orient.core.Orient;
@@ -22,35 +25,52 @@ import com.orientechnologies.orient.core.tx.OTransactionId;
 import com.orientechnologies.orient.core.tx.OTransactionIndexChanges;
 import com.orientechnologies.orient.core.tx.OTransactionInternal;
 import com.orientechnologies.orient.server.OServer;
-import com.orientechnologies.orient.server.distributed.*;
-import com.orientechnologies.orient.server.distributed.impl.*;
-import com.orientechnologies.orient.server.distributed.impl.task.transaction.*;
+import com.orientechnologies.orient.server.distributed.ODistributedDatabase;
+import com.orientechnologies.orient.server.distributed.ODistributedRequest;
+import com.orientechnologies.orient.server.distributed.ODistributedRequestId;
+import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
+import com.orientechnologies.orient.server.distributed.ORemoteTaskFactory;
+import com.orientechnologies.orient.server.distributed.impl.ODatabaseDocumentDistributed;
+import com.orientechnologies.orient.server.distributed.impl.ODistributedDatabaseImpl;
+import com.orientechnologies.orient.server.distributed.impl.ODistributedWorker;
+import com.orientechnologies.orient.server.distributed.impl.ONewDistributedTxContextImpl;
+import com.orientechnologies.orient.server.distributed.impl.OTransactionOptimisticDistributed;
+import com.orientechnologies.orient.server.distributed.impl.task.transaction.OTransactionResultPayload;
+import com.orientechnologies.orient.server.distributed.impl.task.transaction.OTxConcurrentCreation;
+import com.orientechnologies.orient.server.distributed.impl.task.transaction.OTxConcurrentModification;
+import com.orientechnologies.orient.server.distributed.impl.task.transaction.OTxException;
+import com.orientechnologies.orient.server.distributed.impl.task.transaction.OTxInvalidSequential;
+import com.orientechnologies.orient.server.distributed.impl.task.transaction.OTxKeyLockTimeout;
+import com.orientechnologies.orient.server.distributed.impl.task.transaction.OTxRecordLockTimeout;
+import com.orientechnologies.orient.server.distributed.impl.task.transaction.OTxStillRunning;
+import com.orientechnologies.orient.server.distributed.impl.task.transaction.OTxSuccess;
+import com.orientechnologies.orient.server.distributed.impl.task.transaction.OTxUniqueIndex;
 import com.orientechnologies.orient.server.distributed.task.OAbstractReplicatedTask;
 import com.orientechnologies.orient.server.distributed.task.ODistributedKeyLockedException;
 import com.orientechnologies.orient.server.distributed.task.ODistributedRecordLockedException;
-
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.TimerTask;
 
-import static com.orientechnologies.orient.server.distributed.impl.ONewDistributedTxContextImpl.Status.TIMEDOUT;
-
-/**
- * @author Luigi Dell'Aquila (l.dellaquila - at - orientdb.com)
- */
+/** @author Luigi Dell'Aquila (l.dellaquila - at - orientdb.com) */
 public class OTransactionPhase1Task extends OAbstractReplicatedTask {
   public static final int FACTORYID = 43;
 
-  private volatile  boolean                                         hasResponse;
-  private           OLogSequenceNumber                              lastLSN;
-  private           List<ORecordOperation>                          ops;
-  private           List<ORecordOperationRequest>                   operations;
-  private           OCommandDistributedReplicateRequest.QUORUM_TYPE quorumType = OCommandDistributedReplicateRequest.QUORUM_TYPE.WRITE;
-  private transient int                                             retryCount = 0;
-  private volatile  boolean                                         finished;
-  private           TimerTask                                       notYetFinishedTask;
-  private           OTransactionId                                  transactionId;
+  private volatile boolean hasResponse;
+  private OLogSequenceNumber lastLSN;
+  private List<ORecordOperation> ops;
+  private List<ORecordOperationRequest> operations;
+  private OCommandDistributedReplicateRequest.QUORUM_TYPE quorumType =
+      OCommandDistributedReplicateRequest.QUORUM_TYPE.WRITE;
+  private transient int retryCount = 0;
+  private volatile boolean finished;
+  private TimerTask notYetFinishedTask;
+  private OTransactionId transactionId;
 
   public OTransactionPhase1Task() {
     ops = new ArrayList<>();
@@ -66,28 +86,31 @@ public class OTransactionPhase1Task extends OAbstractReplicatedTask {
 
   public void genOps(List<ORecordOperation> ops) {
     for (ORecordOperation txEntry : ops) {
-      if (txEntry.type == ORecordOperation.LOADED)
-        continue;
+      if (txEntry.type == ORecordOperation.LOADED) continue;
       ORecordOperationRequest request = new ORecordOperationRequest();
       request.setType(txEntry.type);
       request.setVersion(txEntry.getRecord().getVersion());
       request.setId(txEntry.getRecord().getIdentity());
       request.setRecordType(ORecordInternal.getRecordType(txEntry.getRecord()));
       switch (txEntry.type) {
-      case ORecordOperation.CREATED:
-        request.setRecord(ORecordSerializerNetworkDistributed.INSTANCE.toStream(txEntry.getRecord()));
-        request.setContentChanged(ORecordInternal.isContentChanged(txEntry.getRecord()));
-        break;
-      case ORecordOperation.UPDATED:
-        if (request.getRecordType() == ODocument.RECORD_TYPE) {
-          request.setRecord(ODocumentSerializerDeltaDistributed.instance().serializeDelta((ODocument) txEntry.getRecord()));
-        } else {
-          request.setRecord(ORecordSerializerNetworkDistributed.INSTANCE.toStream(txEntry.getRecord()));
-        }
-        request.setContentChanged(ORecordInternal.isContentChanged(txEntry.getRecord()));
-        break;
-      case ORecordOperation.DELETED:
-        break;
+        case ORecordOperation.CREATED:
+          request.setRecord(
+              ORecordSerializerNetworkDistributed.INSTANCE.toStream(txEntry.getRecord()));
+          request.setContentChanged(ORecordInternal.isContentChanged(txEntry.getRecord()));
+          break;
+        case ORecordOperation.UPDATED:
+          if (request.getRecordType() == ODocument.RECORD_TYPE) {
+            request.setRecord(
+                ODocumentSerializerDeltaDistributed.instance()
+                    .serializeDelta((ODocument) txEntry.getRecord()));
+          } else {
+            request.setRecord(
+                ORecordSerializerNetworkDistributed.INSTANCE.toStream(txEntry.getRecord()));
+          }
+          request.setContentChanged(ORecordInternal.isContentChanged(txEntry.getRecord()));
+          break;
+        case ORecordOperation.DELETED:
+          break;
       }
       operations.add(request);
     }
@@ -104,8 +127,12 @@ public class OTransactionPhase1Task extends OAbstractReplicatedTask {
   }
 
   @Override
-  public Object execute(ODistributedRequestId requestId, OServer iServer, ODistributedServerManager iManager,
-      ODatabaseDocumentInternal database) throws Exception {
+  public Object execute(
+      ODistributedRequestId requestId,
+      OServer iServer,
+      ODistributedServerManager iManager,
+      ODatabaseDocumentInternal database)
+      throws Exception {
 
     if (iManager != null) {
       iManager.messageBeforeOp("prepare1Phase", requestId);
@@ -116,10 +143,18 @@ public class OTransactionPhase1Task extends OAbstractReplicatedTask {
     }
 
     OTransactionOptimisticDistributed tx = new OTransactionOptimisticDistributed(database, ops);
-    //No need to increase the lock timeout here with the retry because this retries are not deadlock retries
+    // No need to increase the lock timeout here with the retry because this retries are not
+    // deadlock retries
     OTransactionResultPayload res1;
     try {
-      res1 = executeTransaction(requestId, transactionId, (ODatabaseDocumentDistributed) database, tx, false, retryCount);
+      res1 =
+          executeTransaction(
+              requestId,
+              transactionId,
+              (ODatabaseDocumentDistributed) database,
+              tx,
+              false,
+              retryCount);
     } catch (Exception e) {
       this.finished = true;
       if (this.notYetFinishedTask != null) {
@@ -128,10 +163,19 @@ public class OTransactionPhase1Task extends OAbstractReplicatedTask {
       throw e;
     }
     if (res1 == null) {
-      final int autoRetryDelay = OGlobalConfiguration.DISTRIBUTED_CONCURRENT_TX_AUTORETRY_DELAY.getValueAsInteger();
+      final int autoRetryDelay =
+          OGlobalConfiguration.DISTRIBUTED_CONCURRENT_TX_AUTORETRY_DELAY.getValueAsInteger();
       retryCount++;
-      ((ODatabaseDocumentDistributed) database).getStorageDistributed().getLocalDistributedDatabase()
-          .reEnqueue(requestId.getNodeId(), requestId.getMessageId(), database.getName(), this, retryCount, autoRetryDelay);
+      ((ODatabaseDocumentDistributed) database)
+          .getStorageDistributed()
+          .getLocalDistributedDatabase()
+          .reEnqueue(
+              requestId.getNodeId(),
+              requestId.getMessageId(),
+              database.getName(),
+              this,
+              retryCount,
+              autoRetryDelay);
       hasResponse = false;
       return null;
     }
@@ -149,16 +193,23 @@ public class OTransactionPhase1Task extends OAbstractReplicatedTask {
     return hasResponse;
   }
 
-  public static OTransactionResultPayload executeTransaction(ODistributedRequestId requestId, OTransactionId id,
-      ODatabaseDocumentDistributed database, OTransactionInternal tx, boolean local, int retryCount) {
+  public static OTransactionResultPayload executeTransaction(
+      ODistributedRequestId requestId,
+      OTransactionId id,
+      ODatabaseDocumentDistributed database,
+      OTransactionInternal tx,
+      boolean local,
+      int retryCount) {
     OTransactionResultPayload payload;
     try {
       if (!local) {
-        ODistributedDatabase localDistributedDatabase = database.getStorageDistributed().getLocalDistributedDatabase();
+        ODistributedDatabase localDistributedDatabase =
+            database.getStorageDistributed().getLocalDistributedDatabase();
         Optional<OTransactionId> result = localDistributedDatabase.validate(id);
         if (result.isPresent()) {
-          ONewDistributedTxContextImpl txContext = new ONewDistributedTxContextImpl(
-              (ODistributedDatabaseImpl) localDistributedDatabase, requestId, tx, id);
+          ONewDistributedTxContextImpl txContext =
+              new ONewDistributedTxContextImpl(
+                  (ODistributedDatabaseImpl) localDistributedDatabase, requestId, tx, id);
           txContext.setStatus(TIMEDOUT);
           database.register(requestId, localDistributedDatabase, txContext);
           return new OTxInvalidSequential(result.get());
@@ -170,7 +221,8 @@ public class OTransactionPhase1Task extends OAbstractReplicatedTask {
         return null;
       }
     } catch (OConcurrentModificationException ex) {
-      payload = new OTxConcurrentModification((ORecordId) ex.getRid(), ex.getEnhancedDatabaseVersion());
+      payload =
+          new OTxConcurrentModification((ORecordId) ex.getRid(), ex.getEnhancedDatabaseVersion());
     } catch (ODistributedRecordLockedException ex) {
       payload = new OTxRecordLockTimeout(ex.getNode(), ex.getRid());
     } catch (ODistributedKeyLockedException ex) {
@@ -209,40 +261,47 @@ public class OTransactionPhase1Task extends OAbstractReplicatedTask {
 
       ORecord record = null;
       switch (type) {
-      case ORecordOperation.CREATED: {
-        record = ORecordSerializerNetworkDistributed.INSTANCE.fromStream(req.getRecord(), null);
-        ORecordInternal.setRecordSerializer(record, database.getSerializer());
-        break;
-      }
-      case ORecordOperation.UPDATED: {
-        if (req.getRecordType() == ODocument.RECORD_TYPE) {
-          record = database.load(req.getId());
-          if (record == null) {
-            record = new ODocument();
+        case ORecordOperation.CREATED:
+          {
+            record = ORecordSerializerNetworkDistributed.INSTANCE.fromStream(req.getRecord(), null);
+            ORecordInternal.setRecordSerializer(record, database.getSerializer());
+            break;
           }
-          ((ODocument) record).deserializeFields();
-          ODocumentInternal.clearTransactionTrackData((ODocument) record);
-          ODocumentSerializerDeltaDistributed.instance().deserializeDelta(req.getRecord(), (ODocument) record);
-          /// Got record with empty deltas, at this level we mark the record dirty anyway.
-          if (!req.isContentChanged()) {
-            record.setDirtyNoChanged();
-          } else {
-            record.setDirty();
+        case ORecordOperation.UPDATED:
+          {
+            if (req.getRecordType() == ODocument.RECORD_TYPE) {
+              record = database.load(req.getId());
+              if (record == null) {
+                record = new ODocument();
+              }
+              ((ODocument) record).deserializeFields();
+              ODocumentInternal.clearTransactionTrackData((ODocument) record);
+              ODocumentSerializerDeltaDistributed.instance()
+                  .deserializeDelta(req.getRecord(), (ODocument) record);
+              /// Got record with empty deltas, at this level we mark the record dirty anyway.
+              if (!req.isContentChanged()) {
+                record.setDirtyNoChanged();
+              } else {
+                record.setDirty();
+              }
+            } else {
+              record =
+                  ORecordSerializerNetworkDistributed.INSTANCE.fromStream(req.getRecord(), null);
+              ORecordInternal.setRecordSerializer(record, database.getSerializer());
+            }
+            break;
           }
-        } else {
-          record = ORecordSerializerNetworkDistributed.INSTANCE.fromStream(req.getRecord(), null);
-          ORecordInternal.setRecordSerializer(record, database.getSerializer());
-        }
-        break;
-      }
-      case ORecordOperation.DELETED: {
-        record = database.load(req.getId());
-        if (record == null) {
-          record = Orient.instance().getRecordFactoryManager()
-              .newInstance(req.getRecordType(), req.getId().getClusterId(), database);
-        }
-        break;
-      }
+        case ORecordOperation.DELETED:
+          {
+            record = database.load(req.getId());
+            if (record == null) {
+              record =
+                  Orient.instance()
+                      .getRecordFactoryManager()
+                      .newInstance(req.getRecordType(), req.getId().getClusterId(), database);
+            }
+            break;
+          }
       }
       ORecordInternal.setIdentity(record, (ORecordId) req.getId());
       ORecordInternal.setVersion(record, req.getVersion());
@@ -274,9 +333,13 @@ public class OTransactionPhase1Task extends OAbstractReplicatedTask {
 
   public void init(OTransactionId transactionId, OTransactionInternal operations) {
     this.transactionId = transactionId;
-    for (Map.Entry<String, OTransactionIndexChanges> indexOp : operations.getIndexOperations().entrySet()) {
+    for (Map.Entry<String, OTransactionIndexChanges> indexOp :
+        operations.getIndexOperations().entrySet()) {
       final ODatabaseDocumentInternal database = operations.getDatabase();
-      if (indexOp.getValue().resolveAssociatedIndex(indexOp.getKey(), database.getMetadata().getIndexManagerInternal(), database)
+      if (indexOp
+          .getValue()
+          .resolveAssociatedIndex(
+              indexOp.getKey(), database.getMetadata().getIndexManagerInternal(), database)
           .isUnique()) {
         quorumType = OCommandDistributedReplicateRequest.QUORUM_TYPE.WRITE_ALL_MASTERS;
         break;
@@ -304,8 +367,7 @@ public class OTransactionPhase1Task extends OAbstractReplicatedTask {
   public int[] getPartitionKey() {
     if (operations.size() > 0)
       return operations.stream().mapToInt((x) -> x.getId().getClusterId()).toArray();
-    else
-      return ops.stream().mapToInt((x) -> x.getRID().getClusterId()).toArray();
+    else return ops.stream().mapToInt((x) -> x.getRID().getClusterId()).toArray();
   }
 
   @Override
@@ -329,17 +391,27 @@ public class OTransactionPhase1Task extends OAbstractReplicatedTask {
   public void received(ODistributedRequest request, ODistributedDatabase distributedDatabase) {
     if (notYetFinishedTask == null) {
 
-      notYetFinishedTask = Orient.instance().scheduleTask(new Runnable() {
-        @Override
-        public void run() {
-          Orient.instance().submit(() -> {
-            if (!finished) {
-              ODistributedWorker.sendResponseBack(this, distributedDatabase.getManager(), request,
-                  new OTransactionPhase1TaskResult(new OTxStillRunning()));
-            }
-          });
-        }
-      }, getDistributedTimeout(), getDistributedTimeout());
+      notYetFinishedTask =
+          Orient.instance()
+              .scheduleTask(
+                  new Runnable() {
+                    @Override
+                    public void run() {
+                      Orient.instance()
+                          .submit(
+                              () -> {
+                                if (!finished) {
+                                  ODistributedWorker.sendResponseBack(
+                                      this,
+                                      distributedDatabase.getManager(),
+                                      request,
+                                      new OTransactionPhase1TaskResult(new OTxStillRunning()));
+                                }
+                              });
+                    }
+                  },
+                  getDistributedTimeout(),
+                  getDistributedTimeout());
     }
   }
 

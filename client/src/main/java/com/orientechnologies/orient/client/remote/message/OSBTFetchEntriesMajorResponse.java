@@ -27,7 +27,6 @@ import com.orientechnologies.orient.client.remote.TreeEntry;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializer;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelDataInput;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelDataOutput;
-
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -37,14 +36,17 @@ import java.util.Map.Entry;
 public class OSBTFetchEntriesMajorResponse<K, V> implements OBinaryResponse {
   private final OBinarySerializer<K> keySerializer;
   private final OBinarySerializer<V> valueSerializer;
-  private List<Map.Entry<K, V>>      list;
+  private List<Map.Entry<K, V>> list;
 
-  public OSBTFetchEntriesMajorResponse(OBinarySerializer<K> keySerializer, OBinarySerializer<V> valueSerializer) {
+  public OSBTFetchEntriesMajorResponse(
+      OBinarySerializer<K> keySerializer, OBinarySerializer<V> valueSerializer) {
     this.keySerializer = keySerializer;
     this.valueSerializer = valueSerializer;
   }
 
-  public OSBTFetchEntriesMajorResponse(OBinarySerializer<K> keySerializer, OBinarySerializer<V> valueSerializer,
+  public OSBTFetchEntriesMajorResponse(
+      OBinarySerializer<K> keySerializer,
+      OBinarySerializer<V> valueSerializer,
       List<Map.Entry<K, V>> list) {
     this.keySerializer = keySerializer;
     this.valueSerializer = valueSerializer;
@@ -67,9 +69,13 @@ public class OSBTFetchEntriesMajorResponse<K, V> implements OBinaryResponse {
     }
   }
 
-  public void write(OChannelDataOutput channel, int protocolVersion, ORecordSerializer serializer) throws IOException {
-    byte[] stream = new byte[OIntegerSerializer.INT_SIZE
-        + list.size() * (keySerializer.getFixedLength() + valueSerializer.getFixedLength())];
+  public void write(OChannelDataOutput channel, int protocolVersion, ORecordSerializer serializer)
+      throws IOException {
+    byte[] stream =
+        new byte
+            [OIntegerSerializer.INT_SIZE
+                + list.size()
+                    * (keySerializer.getFixedLength() + valueSerializer.getFixedLength())];
     int offset = 0;
 
     OIntegerSerializer.INSTANCE.serializeLiteral(list.size(), stream, offset);
@@ -84,11 +90,9 @@ public class OSBTFetchEntriesMajorResponse<K, V> implements OBinaryResponse {
     }
 
     channel.writeBytes(stream);
-
   }
 
   public List<Map.Entry<K, V>> getList() {
     return list;
   }
-
 }

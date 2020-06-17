@@ -20,8 +20,10 @@
 
 package com.orientechnologies.common.profiler;
 
-import com.googlecode.concurrentlinkedhashmap.ConcurrentLinkedHashMap;
+import static com.orientechnologies.orient.core.config.OGlobalConfiguration.PROFILER_MAXVALUES;
 
+
+import com.googlecode.concurrentlinkedhashmap.ConcurrentLinkedHashMap;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
@@ -29,21 +31,17 @@ import java.util.List;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import static com.orientechnologies.orient.core.config.OGlobalConfiguration.PROFILER_MAXVALUES;
-
 public class OProfilerStub extends OAbstractProfiler {
 
-  protected ConcurrentMap<String, Long>                    counters;
-  private   ConcurrentLinkedHashMap<String, AtomicInteger> tips;
-  private   ConcurrentLinkedHashMap<String, Long>          tipsTimestamp;
+  protected ConcurrentMap<String, Long> counters;
+  private ConcurrentLinkedHashMap<String, AtomicInteger> tips;
+  private ConcurrentLinkedHashMap<String, Long> tipsTimestamp;
 
-  public OProfilerStub() {
-  }
+  public OProfilerStub() {}
 
   public OProfilerStub(boolean registerListener) {
     super(registerListener);
   }
-
 
   public OProfilerStub(final OAbstractProfiler profiler) {
     super(profiler);
@@ -51,9 +49,18 @@ public class OProfilerStub extends OAbstractProfiler {
 
   @Override
   public void startup() {
-    counters = new ConcurrentLinkedHashMap.Builder().maximumWeightedCapacity(PROFILER_MAXVALUES.getValueAsInteger()).build();
-    tips = new ConcurrentLinkedHashMap.Builder().maximumWeightedCapacity(PROFILER_MAXVALUES.getValueAsInteger()).build();
-    tipsTimestamp = new ConcurrentLinkedHashMap.Builder().maximumWeightedCapacity(PROFILER_MAXVALUES.getValueAsInteger()).build();
+    counters =
+        new ConcurrentLinkedHashMap.Builder()
+            .maximumWeightedCapacity(PROFILER_MAXVALUES.getValueAsInteger())
+            .build();
+    tips =
+        new ConcurrentLinkedHashMap.Builder()
+            .maximumWeightedCapacity(PROFILER_MAXVALUES.getValueAsInteger())
+            .build();
+    tipsTimestamp =
+        new ConcurrentLinkedHashMap.Builder()
+            .maximumWeightedCapacity(PROFILER_MAXVALUES.getValueAsInteger())
+            .build();
     super.startup();
   }
 
@@ -75,7 +82,7 @@ public class OProfilerStub extends OAbstractProfiler {
   @Override
   protected void setTip(final String iMessage, final AtomicInteger counter) {
     if (!isRecording()) {
-      //profiler is not started
+      // profiler is not started
       return;
     }
 
@@ -86,12 +93,11 @@ public class OProfilerStub extends OAbstractProfiler {
   @Override
   protected AtomicInteger getTip(final String iMessage) {
     if (!isRecording()) {
-      //profiler is not started.
+      // profiler is not started.
       return null;
     }
 
-    if (iMessage == null)
-      return null;
+    if (iMessage == null) return null;
 
     return tips.get(iMessage);
   }
@@ -102,19 +108,26 @@ public class OProfilerStub extends OAbstractProfiler {
   }
 
   public void configure(final String iConfiguration) {
-    if (iConfiguration == null || iConfiguration.length() == 0)
-      return;
+    if (iConfiguration == null || iConfiguration.length() == 0) return;
 
-    if (isRecording())
-      stopRecording();
+    if (isRecording()) stopRecording();
 
     startRecording();
   }
 
   public boolean startRecording() {
-    counters = new ConcurrentLinkedHashMap.Builder().maximumWeightedCapacity(PROFILER_MAXVALUES.getValueAsInteger()).build();
-    tips = new ConcurrentLinkedHashMap.Builder().maximumWeightedCapacity(PROFILER_MAXVALUES.getValueAsInteger()).build();
-    tipsTimestamp = new ConcurrentLinkedHashMap.Builder().maximumWeightedCapacity(PROFILER_MAXVALUES.getValueAsInteger()).build();
+    counters =
+        new ConcurrentLinkedHashMap.Builder()
+            .maximumWeightedCapacity(PROFILER_MAXVALUES.getValueAsInteger())
+            .build();
+    tips =
+        new ConcurrentLinkedHashMap.Builder()
+            .maximumWeightedCapacity(PROFILER_MAXVALUES.getValueAsInteger())
+            .build();
+    tipsTimestamp =
+        new ConcurrentLinkedHashMap.Builder()
+            .maximumWeightedCapacity(PROFILER_MAXVALUES.getValueAsInteger())
+            .build();
 
     if (super.startRecording()) {
       counters.clear();
@@ -133,13 +146,11 @@ public class OProfilerStub extends OAbstractProfiler {
 
   @Override
   public String dump() {
-    if (recordingFrom < 0)
-      return "<no recording>";
+    if (recordingFrom < 0) return "<no recording>";
 
     final StringBuilder buffer = new StringBuilder(super.dump());
 
-    if (tips.size() == 0)
-      return "";
+    if (tips.size() == 0) return "";
 
     buffer.append("TIPS:");
 
@@ -159,9 +170,9 @@ public class OProfilerStub extends OAbstractProfiler {
     return buffer.toString();
   }
 
-  public void updateCounter(final String statName, final String description, final long plus, final String metadata) {
-    if (statName == null || !isRecording())
-      return;
+  public void updateCounter(
+      final String statName, final String description, final long plus, final String metadata) {
+    if (statName == null || !isRecording()) return;
 
     Long oldValue;
     Long newValue;
@@ -178,12 +189,10 @@ public class OProfilerStub extends OAbstractProfiler {
   }
 
   public long getCounter(final String statName) {
-    if (statName == null || !isRecording())
-      return -1;
+    if (statName == null || !isRecording()) return -1;
 
     final Long stat = counters.get(statName);
-    if (stat == null)
-      return -1;
+    if (stat == null) return -1;
 
     return stat;
   }
@@ -214,12 +223,19 @@ public class OProfilerStub extends OAbstractProfiler {
   }
 
   @Override
-  public long stopChrono(String iName, String iDescription, long iStartTime, String iDictionary, String payload) {
+  public long stopChrono(
+      String iName, String iDescription, long iStartTime, String iDictionary, String payload) {
     return 0;
   }
 
   @Override
-  public long stopChrono(String iName, String iDescription, long iStartTime, String iDictionary, String payload, String user) {
+  public long stopChrono(
+      String iName,
+      String iDescription,
+      long iStartTime,
+      String iDictionary,
+      String payload,
+      String user) {
     return 0;
   }
 
@@ -261,18 +277,16 @@ public class OProfilerStub extends OAbstractProfiler {
   }
 
   @Override
-  public void resetRealtime(String iText) {
-  }
+  public void resetRealtime(String iText) {}
 
   @Override
   public String getStatsAsJson() {
     return null;
   }
 
-  /**
-   * Updates the metric metadata.
-   */
-  protected void updateMetadata(final String iName, final String iDescription, final METRIC_TYPE iType) {
+  /** Updates the metric metadata. */
+  protected void updateMetadata(
+      final String iName, final String iDescription, final METRIC_TYPE iType) {
     if (iDescription != null && dictionary.putIfAbsent(iName, iDescription) == null)
       types.put(iName, iType);
   }

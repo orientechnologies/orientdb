@@ -21,58 +21,70 @@ package com.orientechnologies.orient.core.record;
 
 import com.orientechnologies.common.exception.OSystemException;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
-import com.orientechnologies.orient.core.record.impl.*;
+import com.orientechnologies.orient.core.record.impl.OBlob;
+import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.record.impl.OEdgeDocument;
+import com.orientechnologies.orient.core.record.impl.ORecordBytes;
+import com.orientechnologies.orient.core.record.impl.ORecordFlat;
+import com.orientechnologies.orient.core.record.impl.OVertexDocument;
+import com.orientechnologies.orient.core.record.impl.OViewDocument;
 
 /**
- * Record factory. To use your own record implementation use the declareRecordType() method. Example of registration of the record
- * MyRecord:
- * <p>
- * <code>
+ * Record factory. To use your own record implementation use the declareRecordType() method. Example
+ * of registration of the record MyRecord:
+ *
+ * <p><code>
  * declareRecordType('m', "myrecord", MyRecord.class);
  * </code>
- * </p>
  *
  * @author Sylvain Spinelli
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
  */
 @SuppressWarnings("unchecked")
 public class ORecordFactoryManager {
-  protected final String[]                   recordTypeNames = new String[Byte.MAX_VALUE];
-  protected final Class<? extends ORecord>[] recordTypes     = new Class[Byte.MAX_VALUE];
-  protected final ORecordFactory[]           recordFactories = new ORecordFactory[Byte.MAX_VALUE];
+  protected final String[] recordTypeNames = new String[Byte.MAX_VALUE];
+  protected final Class<? extends ORecord>[] recordTypes = new Class[Byte.MAX_VALUE];
+  protected final ORecordFactory[] recordFactories = new ORecordFactory[Byte.MAX_VALUE];
 
   public interface ORecordFactory {
     ORecord newRecord(int cluster, ODatabaseDocumentInternal database);
   }
 
   public ORecordFactoryManager() {
-    declareRecordType(ODocument.RECORD_TYPE, "document", ODocument.class, (cluster, database) -> {
-      if (database != null && cluster >= 0) {
-        if (database.isClusterVertex(cluster)) {
-          return new OVertexDocument(database);
-        } else if (database.isClusterEdge(cluster)) {
-          return new OEdgeDocument(database);
-        } else if (database.isClusterView(cluster)) {
-          return new OViewDocument(database, cluster);
-        }
-      }
-      return new ODocument();
-    });
-    declareRecordType(OBlob.RECORD_TYPE, "bytes", OBlob.class, (cluster, database) -> new ORecordBytes());
-    declareRecordType(ORecordFlat.RECORD_TYPE, "flat", ORecordFlat.class, (cluster, database) -> new ORecordFlat());
+    declareRecordType(
+        ODocument.RECORD_TYPE,
+        "document",
+        ODocument.class,
+        (cluster, database) -> {
+          if (database != null && cluster >= 0) {
+            if (database.isClusterVertex(cluster)) {
+              return new OVertexDocument(database);
+            } else if (database.isClusterEdge(cluster)) {
+              return new OEdgeDocument(database);
+            } else if (database.isClusterView(cluster)) {
+              return new OViewDocument(database, cluster);
+            }
+          }
+          return new ODocument();
+        });
+    declareRecordType(
+        OBlob.RECORD_TYPE, "bytes", OBlob.class, (cluster, database) -> new ORecordBytes());
+    declareRecordType(
+        ORecordFlat.RECORD_TYPE,
+        "flat",
+        ORecordFlat.class,
+        (cluster, database) -> new ORecordFlat());
   }
 
   public String getRecordTypeName(final byte iRecordType) {
     String name = recordTypeNames[iRecordType];
-    if (name == null)
-      throw new IllegalArgumentException("Unsupported record type: " + iRecordType);
+    if (name == null) throw new IllegalArgumentException("Unsupported record type: " + iRecordType);
     return name;
   }
 
   public Class<? extends ORecord> getRecordTypeClass(final byte iRecordType) {
     Class<? extends ORecord> cls = recordTypes[iRecordType];
-    if (cls == null)
-      throw new IllegalArgumentException("Unsupported record type: " + iRecordType);
+    if (cls == null) throw new IllegalArgumentException("Unsupported record type: " + iRecordType);
     return cls;
   }
 
@@ -84,7 +96,8 @@ public class ORecordFactoryManager {
     }
   }
 
-  public ORecord newInstance(final byte iRecordType, int cluster, ODatabaseDocumentInternal database) {
+  public ORecord newInstance(
+      final byte iRecordType, int cluster, ODatabaseDocumentInternal database) {
     try {
       return (ORecord) getFactory(iRecordType).newRecord(cluster, database);
     } catch (Exception e) {
@@ -92,9 +105,11 @@ public class ORecordFactoryManager {
     }
   }
 
-  public void declareRecordType(byte iByte, String iName, Class<? extends ORecord> iClass, final ORecordFactory iFactory) {
+  public void declareRecordType(
+      byte iByte, String iName, Class<? extends ORecord> iClass, final ORecordFactory iFactory) {
     if (recordTypes[iByte] != null)
-      throw new OSystemException("Record type byte '" + iByte + "' already in use : " + recordTypes[iByte].getName());
+      throw new OSystemException(
+          "Record type byte '" + iByte + "' already in use : " + recordTypes[iByte].getName());
     recordTypeNames[iByte] = iName;
     recordTypes[iByte] = iClass;
     recordFactories[iByte] = iFactory;

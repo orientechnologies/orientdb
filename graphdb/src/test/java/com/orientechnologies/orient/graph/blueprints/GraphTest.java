@@ -18,6 +18,10 @@
 
 package com.orientechnologies.orient.graph.blueprints;
 
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.fail;
+
+
 import com.orientechnologies.orient.core.db.ODatabaseInternal;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.index.OCompositeKey;
@@ -28,17 +32,28 @@ import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.storage.ORecordDuplicatedException;
-import com.tinkerpop.blueprints.*;
-import com.tinkerpop.blueprints.impls.orient.*;
+import com.tinkerpop.blueprints.Direction;
+import com.tinkerpop.blueprints.Edge;
+import com.tinkerpop.blueprints.GraphQuery;
+import com.tinkerpop.blueprints.Parameter;
+import com.tinkerpop.blueprints.Predicate;
+import com.tinkerpop.blueprints.Vertex;
+import com.tinkerpop.blueprints.impls.orient.OrientEdge;
+import com.tinkerpop.blueprints.impls.orient.OrientEdgeType;
+import com.tinkerpop.blueprints.impls.orient.OrientGraph;
+import com.tinkerpop.blueprints.impls.orient.OrientGraphFactory;
+import com.tinkerpop.blueprints.impls.orient.OrientGraphNoTx;
+import com.tinkerpop.blueprints.impls.orient.OrientVertex;
+import com.tinkerpop.blueprints.impls.orient.OrientVertexType;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Set;
+import java.util.stream.Stream;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
-
-import java.util.*;
-import java.util.stream.Stream;
-
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.fail;
 
 public class GraphTest {
 
@@ -64,9 +79,13 @@ public class GraphTest {
     g = new OrientGraph(URL, "admin", "admin");
     try {
       // System.out.println(g.getIndexedKeys(Vertex.class,true)); this will print VC1.p1
-      if (g.getIndex("VC1.p1", Vertex.class) == null) {// this will return null. I do not know why
-        g.createKeyIndex("p1", Vertex.class, new Parameter<String, String>("class", "VC1"),
-            new Parameter<String, String>("type", "UNIQUE"), new Parameter<String, OType>("keytype", OType.STRING));
+      if (g.getIndex("VC1.p1", Vertex.class) == null) { // this will return null. I do not know why
+        g.createKeyIndex(
+            "p1",
+            Vertex.class,
+            new Parameter<String, String>("class", "VC1"),
+            new Parameter<String, String>("type", "UNIQUE"),
+            new Parameter<String, OType>("keytype", OType.STRING));
       }
     } catch (OIndexException e) {
       // ignore because the index may exist
@@ -93,7 +112,6 @@ public class GraphTest {
       } catch (ORecordDuplicatedException e) {
         // ok
       }
-
     }
   }
 
@@ -105,17 +123,20 @@ public class GraphTest {
 
     vCollate.createProperty("name", OType.STRING);
 
-    g.createKeyIndex("name", Vertex.class, new Parameter<String, String>("class", "VCollate"),
-        new Parameter<String, String>("type", "UNIQUE"), new Parameter<String, OType>("keytype", OType.STRING),
+    g.createKeyIndex(
+        "name",
+        Vertex.class,
+        new Parameter<String, String>("class", "VCollate"),
+        new Parameter<String, String>("type", "UNIQUE"),
+        new Parameter<String, OType>("keytype", OType.STRING),
         new Parameter<String, String>("collate", "ci"));
-    OrientVertex vertex = g.addVertex("class:VCollate", new Object[] { "name", "Enrico" });
+    OrientVertex vertex = g.addVertex("class:VCollate", new Object[] {"name", "Enrico"});
 
     g.commit();
 
     Iterable<Vertex> enrico = g.getVertices("VCollate.name", "ENRICO");
 
     Assert.assertEquals(true, enrico.iterator().hasNext());
-
   }
 
   @Test
@@ -126,7 +147,8 @@ public class GraphTest {
     vComposite.createProperty("login", OType.STRING);
     vComposite.createProperty("permissions", OType.EMBEDDEDSET, OType.STRING);
 
-    vComposite.createIndex("VComposite_Login_Perm", OClass.INDEX_TYPE.UNIQUE, "login", "permissions");
+    vComposite.createIndex(
+        "VComposite_Login_Perm", OClass.INDEX_TYPE.UNIQUE, "login", "permissions");
 
     String loginOne = "admin";
     Set<String> permissionsOne = new HashSet<String>();
@@ -144,7 +166,8 @@ public class GraphTest {
     g.addVertex("class:VComposite", "login", loginTwo, "permissions", permissionsTwo);
     g.commit();
 
-    Iterable<Vertex> vertices = g.getVertices("VComposite", new String[] { "login" }, new String[] { "admin" });
+    Iterable<Vertex> vertices =
+        g.getVertices("VComposite", new String[] {"login"}, new String[] {"admin"});
     Iterator<Vertex> verticesIterator = vertices.iterator();
 
     Assert.assertTrue(verticesIterator.hasNext());
@@ -263,12 +286,14 @@ public class GraphTest {
 
       g.commit();
 
-      g.command(new OCommandSQL("delete from " + vertexTwo.getRecord().getIdentity() + " unsafe")).execute();
+      g.command(new OCommandSQL("delete from " + vertexTwo.getRecord().getIdentity() + " unsafe"))
+          .execute();
       // g.command(new OCommandSQL("update BrokenVertex1E set out = null")).execute();
 
       g.shutdown();
       g = new OrientGraph(URL, "admin", "admin");
-      Iterable<Vertex> iterable = g.command(new OCommandSQL("select from BrokenVertex1V")).execute();
+      Iterable<Vertex> iterable =
+          g.command(new OCommandSQL("select from BrokenVertex1V")).execute();
       Iterator<Vertex> iterator = iterable.iterator();
 
       int counter = 0;
@@ -286,7 +311,8 @@ public class GraphTest {
 
   @Test
   public void shouldAddVertexAndEdgeInTheSameCluster() {
-    OrientGraphFactory orientGraphFactory = new OrientGraphFactory("memory:shouldAddVertexAndEdgeInTheSameCluster");
+    OrientGraphFactory orientGraphFactory =
+        new OrientGraphFactory("memory:shouldAddVertexAndEdgeInTheSameCluster");
     final OrientGraphNoTx graphDbNoTx = orientGraphFactory.getNoTx();
     try {
       OrientVertexType deviceVertex = graphDbNoTx.createVertexType("Device");
@@ -299,7 +325,8 @@ public class GraphTest {
 
       final OrientEdge e = graphDbNoTx.addEdge("class:Link,cluster:Links", dev1, dev2, null);
 
-      Assert.assertEquals(e.getIdentity().getClusterId(), graphDbNoTx.getRawGraph().getClusterIdByName("Links"));
+      Assert.assertEquals(
+          e.getIdentity().getClusterId(), graphDbNoTx.getRawGraph().getClusterIdByName("Links"));
 
     } finally {
       graphDbNoTx.shutdown();
@@ -319,12 +346,15 @@ public class GraphTest {
       g.commit();
 
       GraphQuery query = g.query();
-      query.has("test", new Predicate() {
-        @Override
-        public boolean evaluate(Object first, Object second) {
-          return first != null && first.equals(second);
-        }
-      }, true);
+      query.has(
+          "test",
+          new Predicate() {
+            @Override
+            public boolean evaluate(Object first, Object second) {
+              return first != null && first.equals(second);
+            }
+          },
+          true);
 
       Iterable<Vertex> vertices = query.vertices();
 
@@ -363,7 +393,6 @@ public class GraphTest {
       g.shutdown();
       orientGraphFactory.close();
     }
-
   }
 
   @Test
@@ -390,14 +419,26 @@ public class GraphTest {
         graph.command(new OCommandSQL("create property account.description STRING")).execute();
         graph.command(new OCommandSQL("create property account.namespace STRING")).execute();
         graph.command(new OCommandSQL("create property account.name STRING")).execute();
-        graph.command(new OCommandSQL("create index account.composite on account (name, namespace) unique")).execute();
+        graph
+            .command(
+                new OCommandSQL(
+                    "create index account.composite on account (name, namespace) unique"))
+            .execute();
 
-        graph.addVertex("class:account", new Object[] { "name", "foo", "namespace", "bar", "description", "foobar" });
-        final OrientVertex vertex = graph
-            .addVertex("class:account", new Object[] { "name", "foo", "namespace", "baz", "description", "foobaz" });
+        graph.addVertex(
+            "class:account",
+            new Object[] {"name", "foo", "namespace", "bar", "description", "foobar"});
+        final OrientVertex vertex =
+            graph.addVertex(
+                "class:account",
+                new Object[] {"name", "foo", "namespace", "baz", "description", "foobaz"});
 
-        final OIndex index = graph.getRawGraph().getMetadata().getIndexManagerInternal()
-            .getIndex(graph.getRawGraph(), "account.composite");
+        final OIndex index =
+            graph
+                .getRawGraph()
+                .getMetadata()
+                .getIndexManagerInternal()
+                .getIndex(graph.getRawGraph(), "account.composite");
         try (Stream<ORID> rids = index.getInternal().getRids(new OCompositeKey("foo", "baz"))) {
           Assert.assertEquals(vertex.getIdentity(), rids.findAny().orElse(null));
         }

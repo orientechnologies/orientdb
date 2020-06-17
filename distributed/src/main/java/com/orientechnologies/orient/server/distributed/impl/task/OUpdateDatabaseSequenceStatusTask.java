@@ -10,7 +10,6 @@ import com.orientechnologies.orient.server.distributed.ODistributedRequestId;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
 import com.orientechnologies.orient.server.distributed.ORemoteTaskFactory;
 import com.orientechnologies.orient.server.distributed.task.OAbstractRemoteTask;
-
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
@@ -18,20 +17,24 @@ import java.io.IOException;
 public class OUpdateDatabaseSequenceStatusTask extends OAbstractRemoteTask {
   public static final int FACTORYID = 58;
 
-  private String                     databaseName;
+  private String databaseName;
   private OTransactionSequenceStatus status;
 
-  public OUpdateDatabaseSequenceStatusTask() {
-  }
+  public OUpdateDatabaseSequenceStatusTask() {}
 
-  public OUpdateDatabaseSequenceStatusTask(final String databaseName, final OTransactionSequenceStatus status) {
+  public OUpdateDatabaseSequenceStatusTask(
+      final String databaseName, final OTransactionSequenceStatus status) {
     this.databaseName = databaseName;
     this.status = status;
   }
 
   @Override
-  public Object execute(final ODistributedRequestId msgId, final OServer iServer, ODistributedServerManager iManager,
-      final ODatabaseDocumentInternal database) throws Exception {
+  public Object execute(
+      final ODistributedRequestId msgId,
+      final OServer iServer,
+      ODistributedServerManager iManager,
+      final ODatabaseDocumentInternal database)
+      throws Exception {
 
     ODistributedDatabase database1 = iManager.getMessageService().getDatabase(databaseName);
     if (database1 != null) {

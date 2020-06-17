@@ -19,31 +19,33 @@
 package com.orientechnologies.lucene.test;
 
 import com.orientechnologies.common.io.OIOUtils;
-import com.orientechnologies.orient.core.db.*;
+import com.orientechnologies.orient.core.db.ODatabase;
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
+import com.orientechnologies.orient.core.db.ODatabaseSession;
+import com.orientechnologies.orient.core.db.ODatabaseType;
+import com.orientechnologies.orient.core.db.OrientDB;
+import com.orientechnologies.orient.core.db.OrientDBConfig;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import java.io.IOException;
+import java.io.InputStream;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.rules.TestName;
 
-import java.io.IOException;
-import java.io.InputStream;
-
-/**
- * Created by enricorisa on 19/09/14.
- */
+/** Created by enricorisa on 19/09/14. */
 public abstract class BaseLuceneTest {
-  @Rule
-  public TestName name = new TestName();
+  @Rule public TestName name = new TestName();
 
   protected ODatabaseDocumentInternal db;
-  protected OrientDB                  context;
+  protected OrientDB context;
 
   protected ODatabaseType type;
 
   @Before
   public void setupDatabase() throws Throwable {
-    final String config = System.getProperty("orientdb.test.env", ODatabaseType.MEMORY.name().toLowerCase());
+    final String config =
+        System.getProperty("orientdb.test.env", ODatabaseType.MEMORY.name().toLowerCase());
     String path;
 
     if ("ci".equals(config) || "release".equals(config)) {
@@ -92,7 +94,8 @@ public abstract class BaseLuceneTest {
     return db;
   }
 
-  private ODatabaseDocumentTx dropAndCreateDocumentDatabase(final String url, ODatabaseDocumentTx db) {
+  private ODatabaseDocumentTx dropAndCreateDocumentDatabase(
+      final String url, ODatabaseDocumentTx db) {
     db.drop();
     db = createDocumentDatabase(url);
     return db;

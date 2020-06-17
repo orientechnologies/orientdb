@@ -1,19 +1,19 @@
 package com.orientechnologies.orient.distributed.impl.database.sync;
 
 import com.orientechnologies.orient.distributed.OrientDBDistributed;
-
 import java.io.IOException;
 import java.io.PipedInputStream;
 import java.io.PipedOutputStream;
 
 public class ODatabaseSyncReceiver {
 
-  private final PipedOutputStream   output;
+  private final PipedOutputStream output;
   private final OrientDBDistributed orientDB;
-  private final String              database;
-  private final boolean             incremental;
+  private final String database;
+  private final boolean incremental;
 
-  public ODatabaseSyncReceiver(OrientDBDistributed orientDBDistributed, String database, boolean incremental) {
+  public ODatabaseSyncReceiver(
+      OrientDBDistributed orientDBDistributed, String database, boolean incremental) {
     this.orientDB = orientDBDistributed;
     this.database = database;
     this.incremental = incremental;
@@ -23,13 +23,15 @@ public class ODatabaseSyncReceiver {
   public void run() {
     try {
       PipedInputStream inputStream = new PipedInputStream(output);
-      new Thread(() -> {
-        if (incremental) {
-          orientDB.fullSync(database, inputStream, null);
-        } else {
-          orientDB.restore(database, inputStream, null, null, null);
-        }
-      }).start();
+      new Thread(
+              () -> {
+                if (incremental) {
+                  orientDB.fullSync(database, inputStream, null);
+                } else {
+                  orientDB.restore(database, inputStream, null, null, null);
+                }
+              })
+          .start();
     } catch (IOException e) {
       e.printStackTrace();
     }

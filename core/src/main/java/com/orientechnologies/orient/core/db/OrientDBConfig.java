@@ -19,26 +19,27 @@
  */
 package com.orientechnologies.orient.core.db;
 
-import java.util.*;
-
 import com.orientechnologies.orient.core.config.OContextConfiguration;
 import com.orientechnologies.orient.core.db.ODatabase.ATTRIBUTES;
 import com.orientechnologies.orient.core.db.config.ONodeConfiguration;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
 
-/**
- * Created by tglman on 27/06/16.
- */
+/** Created by tglman on 27/06/16. */
 public class OrientDBConfig {
 
   public static final String LOCK_TYPE_MODIFICATION = "modification";
-  public static final String LOCK_TYPE_READWRITE    = "readwrite";
+  public static final String LOCK_TYPE_READWRITE = "readwrite";
 
-  private OrientDBConfig          parent;
-  private OContextConfiguration   configurations;
+  private OrientDBConfig parent;
+  private OContextConfiguration configurations;
   private Map<ATTRIBUTES, Object> attributes;
-  private Set<ODatabaseListener>  listeners;
-  private ClassLoader             classLoader;
-  private ONodeConfiguration      nodeConfiguration;
+  private Set<ODatabaseListener> listeners;
+  private ClassLoader classLoader;
+  private ONodeConfiguration nodeConfiguration;
 
   protected OrientDBConfig() {
     configurations = new OContextConfiguration();
@@ -48,19 +49,20 @@ public class OrientDBConfig {
     classLoader = this.getClass().getClassLoader();
   }
 
-  protected OrientDBConfig(OContextConfiguration configurations, Map<ATTRIBUTES, Object> attributes,
-      Set<ODatabaseListener> listeners, ClassLoader classLoader, ONodeConfiguration nodeConfiguration) {
+  protected OrientDBConfig(
+      OContextConfiguration configurations,
+      Map<ATTRIBUTES, Object> attributes,
+      Set<ODatabaseListener> listeners,
+      ClassLoader classLoader,
+      ONodeConfiguration nodeConfiguration) {
     this.configurations = configurations;
     this.attributes = attributes;
     parent = null;
-    if (listeners != null)
-      this.listeners = listeners;
-    else
-      this.listeners = Collections.emptySet();
+    if (listeners != null) this.listeners = listeners;
+    else this.listeners = Collections.emptySet();
     if (classLoader != null) {
       this.classLoader = classLoader;
-    } else
-      this.classLoader = this.getClass().getClassLoader();
+    } else this.classLoader = this.getClass().getClassLoader();
     this.nodeConfiguration = nodeConfiguration;
   }
 
@@ -126,7 +128,5 @@ public class OrientDBConfig {
         this.listeners = lis;
       }
     }
-
   }
-
 }

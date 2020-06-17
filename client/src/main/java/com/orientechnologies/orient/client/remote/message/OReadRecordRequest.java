@@ -19,8 +19,6 @@
  */
 package com.orientechnologies.orient.client.remote.message;
 
-import java.io.IOException;
-
 import com.orientechnologies.orient.client.binary.OBinaryRequestExecutor;
 import com.orientechnologies.orient.client.remote.OBinaryRequest;
 import com.orientechnologies.orient.client.remote.OBinaryResponse;
@@ -30,22 +28,23 @@ import com.orientechnologies.orient.core.serialization.serializer.record.ORecord
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelDataInput;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelDataOutput;
+import java.io.IOException;
 
 public final class OReadRecordRequest implements OBinaryRequest<OReadRecordResponse> {
-  private boolean   ignoreCache;
+  private boolean ignoreCache;
   private ORecordId rid;
-  private String    fetchPlan;
-  private boolean   loadTumbstone;
+  private String fetchPlan;
+  private boolean loadTumbstone;
 
-  public OReadRecordRequest(boolean iIgnoreCache, ORecordId iRid, String iFetchPlan, boolean iLoadTumbstone) {
+  public OReadRecordRequest(
+      boolean iIgnoreCache, ORecordId iRid, String iFetchPlan, boolean iLoadTumbstone) {
     this.ignoreCache = iIgnoreCache;
     this.rid = iRid;
     this.fetchPlan = iFetchPlan;
     this.loadTumbstone = iLoadTumbstone;
   }
 
-  public OReadRecordRequest() {
-  }
+  public OReadRecordRequest() {}
 
   @Override
   public void write(OChannelDataOutput network, OStorageRemoteSession session) throws IOException {
@@ -55,7 +54,8 @@ public final class OReadRecordRequest implements OBinaryRequest<OReadRecordRespo
     network.writeByte((byte) (loadTumbstone ? 1 : 0));
   }
 
-  public void read(OChannelDataInput channel, int protocolVersion, ORecordSerializer serializer) throws IOException {
+  public void read(OChannelDataInput channel, int protocolVersion, ORecordSerializer serializer)
+      throws IOException {
     rid = channel.readRID();
     fetchPlan = channel.readString();
     ignoreCache = channel.readByte() != 0;
@@ -97,5 +97,4 @@ public final class OReadRecordRequest implements OBinaryRequest<OReadRecordRespo
   public OBinaryResponse execute(OBinaryRequestExecutor executor) {
     return executor.executeReadRecord(this);
   }
-
 }

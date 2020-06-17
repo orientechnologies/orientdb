@@ -15,7 +15,7 @@
  *  *  limitations under the License.
  *  *
  *  * For more information: http://orientdb.com
- *  
+ *
  */
 
 package com.orientechnologies.orient.server.distributed.conflict;
@@ -24,7 +24,6 @@ import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.storage.ORawBuffer;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -38,8 +37,12 @@ public class OVersionDistributedConflictResolver extends OAbstractDistributedCon
   public static final String NAME = "version";
 
   @Override
-  public OConflictResult onConflict(final String databaseName, final String clusterName, final ORecordId rid,
-      final ODistributedServerManager dManager, final Map<Object, List<String>> candidates) {
+  public OConflictResult onConflict(
+      final String databaseName,
+      final String clusterName,
+      final ORecordId rid,
+      final ODistributedServerManager dManager,
+      final Map<Object, List<String>> candidates) {
 
     final OConflictResult result = new OConflictResult(candidates);
 
@@ -68,13 +71,22 @@ public class OVersionDistributedConflictResolver extends OAbstractDistributedCon
 
       if (winners.size() == 1) {
         result.winner = winners.get(0);
-        OLogManager.instance().debug(this,
-            "Version Conflict Resolver decided the value '%s' is the winner for record %s, because its version (%d) is the highest. Servers ok=%s",
-            result.winner, rid, maxVersion, candidates.get(result.winner));
+        OLogManager.instance()
+            .debug(
+                this,
+                "Version Conflict Resolver decided the value '%s' is the winner for record %s, because its version (%d) is the highest. Servers ok=%s",
+                result.winner,
+                rid,
+                maxVersion,
+                candidates.get(result.winner));
       } else {
-        OLogManager.instance().debug(this,
-            "Version Conflict Resolver cannot decide the winner for record %s, because %d records have the highest version %d", rid,
-            winners.size(), maxVersion);
+        OLogManager.instance()
+            .debug(
+                this,
+                "Version Conflict Resolver cannot decide the winner for record %s, because %d records have the highest version %d",
+                rid,
+                winners.size(),
+                maxVersion);
       }
     }
 

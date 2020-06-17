@@ -1,21 +1,24 @@
 package com.orientechnologies.orient.core.db.config;
 
-import java.util.UUID;
-
 public class ONodeConfiguration {
-  //Node name is redundant because it can come also from user configuration appart been stored in the node identity
-  private String                 nodeName;
-  private String                 groupName;
-  private String                 groupPassword;
-  private int                    quorum;
-  private Integer                tcpPort;
+  // Node name is redundant because it can come also from user configuration appart been stored in
+  // the node identity
+  private String nodeName;
+  private String groupName;
+  private String groupPassword;
+  private int quorum;
+  private Integer tcpPort;
   private OMulticastConfguration multicast;
   private OUDPUnicastConfiguration udpUnicast;
 
-  protected ONodeConfiguration() {
-  }
+  protected ONodeConfiguration() {}
 
-  protected ONodeConfiguration(String nodeName, String groupName, String groupPassword, int quorum, Integer tcpPort,
+  protected ONodeConfiguration(
+      String nodeName,
+      String groupName,
+      String groupPassword,
+      int quorum,
+      Integer tcpPort,
       OMulticastConfguration multicast) {
     this.nodeName = nodeName;
     this.groupName = groupName;
@@ -25,8 +28,13 @@ public class ONodeConfiguration {
     this.multicast = multicast;
   }
 
-  protected ONodeConfiguration(String nodeName, String groupName, String groupPassword, int quorum, Integer tcpPort,
-                               OUDPUnicastConfiguration unicastConfig) {
+  protected ONodeConfiguration(
+      String nodeName,
+      String groupName,
+      String groupPassword,
+      int quorum,
+      Integer tcpPort,
+      OUDPUnicastConfiguration unicastConfig) {
     this.nodeName = nodeName;
     this.groupName = groupName;
     this.groupPassword = groupPassword;

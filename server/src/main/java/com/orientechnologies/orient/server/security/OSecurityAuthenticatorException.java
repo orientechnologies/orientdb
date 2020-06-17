@@ -23,9 +23,8 @@ import com.orientechnologies.common.exception.OException;
 
 /**
  * An exception OSecurityAuthenticators can throw.
- * 
+ *
  * @author S. Colin Leister
- * 
  */
 @SuppressWarnings("serial")
 public class OSecurityAuthenticatorException extends OException {

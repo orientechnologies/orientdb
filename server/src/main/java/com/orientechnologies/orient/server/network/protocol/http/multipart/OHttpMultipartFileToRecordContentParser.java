@@ -15,24 +15,24 @@
  */
 package com.orientechnologies.orient.server.network.protocol.http.multipart;
 
-import java.io.IOException;
-import java.util.Map;
-
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.record.impl.OBlob;
 import com.orientechnologies.orient.core.record.impl.ORecordBytes;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpRequest;
+import java.io.IOException;
+import java.util.Map;
 
-/**
- * @author Luca Molino (molino.luca--at--gmail.com)
- * 
- */
+/** @author Luca Molino (molino.luca--at--gmail.com) */
 public class OHttpMultipartFileToRecordContentParser implements OHttpMultipartContentParser<ORID> {
 
   @Override
-  public ORID parse(final OHttpRequest iRequest, final Map<String, String> headers, final OHttpMultipartContentInputStream in,
-      ODatabaseDocument database) throws IOException {
+  public ORID parse(
+      final OHttpRequest iRequest,
+      final Map<String, String> headers,
+      final OHttpMultipartContentInputStream in,
+      ODatabaseDocument database)
+      throws IOException {
     final OBlob record = new ORecordBytes();
     record.fromInputStream(in);
     record.save();

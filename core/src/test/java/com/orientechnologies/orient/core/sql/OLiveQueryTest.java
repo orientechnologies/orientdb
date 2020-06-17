@@ -33,18 +33,20 @@ import com.orientechnologies.orient.core.sql.query.OLiveQuery;
 import com.orientechnologies.orient.core.sql.query.OLiveResultListener;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.orientechnologies.orient.core.storage.OStorage;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.Callable;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 import org.junit.Assert;
 import org.junit.Test;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.concurrent.*;
-import java.util.concurrent.atomic.AtomicInteger;
-
-/**
- * Created by luigidellaquila on 13/04/15.
- */
-
+/** Created by luigidellaquila on 13/04/15. */
 public class OLiveQueryTest {
 
   class MyLiveQueryListener implements OLiveResultListener {
@@ -64,14 +66,10 @@ public class OLiveQueryTest {
     }
 
     @Override
-    public void onError(int iLiveToken) {
-
-    }
+    public void onError(int iLiveToken) {}
 
     @Override
-    public void onUnsubscribe(int iLiveToken) {
-
-    }
+    public void onUnsubscribe(int iLiveToken) {}
   }
 
   @Test
@@ -85,7 +83,8 @@ public class OLiveQueryTest {
       db.getMetadata().getSchema().createClass("test2");
       MyLiveQueryListener listener = new MyLiveQueryListener(new CountDownLatch(2));
 
-      OLegacyResultSet<ODocument> tokens = db.query(new OLiveQuery<ODocument>("live select from test", listener));
+      OLegacyResultSet<ODocument> tokens =
+          db.query(new OLiveQuery<ODocument>("live select from test", listener));
       Assert.assertEquals(tokens.size(), 1);
 
       ODocument tokenDoc = tokens.get(0);
@@ -124,13 +123,20 @@ public class OLiveQueryTest {
       OClass clazz = db.getMetadata().getSchema().createClass("test");
 
       int defaultCluster = clazz.getDefaultClusterId();
-      final OStorage storage = ((ODatabaseDocumentInternal)db).getStorage();
+      final OStorage storage = ((ODatabaseDocumentInternal) db).getStorage();
 
       MyLiveQueryListener listener = new MyLiveQueryListener(new CountDownLatch(1));
 
-      db.query(new OLiveQuery<ODocument>("live select from cluster:" + storage.getClusterNameById(defaultCluster), listener));
+      db.query(
+          new OLiveQuery<ODocument>(
+              "live select from cluster:" + storage.getClusterNameById(defaultCluster), listener));
 
-      db.command(new OCommandSQL("insert into cluster:" + storage.getClusterNameById(defaultCluster) + " set name = 'foo', surname = 'bar'")).execute();
+      db.command(
+              new OCommandSQL(
+                  "insert into cluster:"
+                      + storage.getClusterNameById(defaultCluster)
+                      + " set name = 'foo', surname = 'bar'"))
+          .execute();
 
       try {
         Assert.assertTrue(listener.latch.await(1, TimeUnit.MINUTES));
@@ -143,7 +149,8 @@ public class OLiveQueryTest {
         Assert.assertEquals(((ODocument) doc.record).field("name"), "foo");
         ORID rid = ((ODocument) doc.record).getProperty("@rid");
         Assert.assertNotNull(rid);
-//        Assert.assertTrue(rid.getClusterPosition() >= 0); //TODO fix live queries with microtx!
+        //        Assert.assertTrue(rid.getClusterPosition() >= 0); //TODO fix live queries with
+        // microtx!
       }
     } finally {
       db.drop();
@@ -161,7 +168,8 @@ public class OLiveQueryTest {
       schema.createClass("test", oRestricted);
 
       int liveMatch = 1;
-      List<ODocument> query = db.query(new OSQLSynchQuery("select from OUSer where name = 'reader'"));
+      List<ODocument> query =
+          db.query(new OSQLSynchQuery("select from OUSer where name = 'reader'"));
 
       final OIdentifiable reader = query.iterator().next().getIdentity();
       final OIdentifiable current = db.getUser().getIdentity();
@@ -170,46 +178,51 @@ public class OLiveQueryTest {
 
       final CountDownLatch latch = new CountDownLatch(1);
       final CountDownLatch dataArrived = new CountDownLatch(1);
-      Future<Integer> future = executorService.submit(new Callable<Integer>() {
-        @Override
-        public Integer call() throws Exception {
-          ODatabaseDocumentTx db = new ODatabaseDocumentTx("memory:OLiveQueryTest");
-          db.open("reader", "reader");
+      Future<Integer> future =
+          executorService.submit(
+              new Callable<Integer>() {
+                @Override
+                public Integer call() throws Exception {
+                  ODatabaseDocumentTx db = new ODatabaseDocumentTx("memory:OLiveQueryTest");
+                  db.open("reader", "reader");
 
-          final AtomicInteger integer = new AtomicInteger(0);
-          db.query(new OLiveQuery<ODocument>("live select from test", new OLiveResultListener() {
-            @Override
-            public void onLiveResult(int iLiveToken, ORecordOperation iOp) throws OException {
-              integer.incrementAndGet();
-              dataArrived.countDown();
-            }
+                  final AtomicInteger integer = new AtomicInteger(0);
+                  db.query(
+                      new OLiveQuery<ODocument>(
+                          "live select from test",
+                          new OLiveResultListener() {
+                            @Override
+                            public void onLiveResult(int iLiveToken, ORecordOperation iOp)
+                                throws OException {
+                              integer.incrementAndGet();
+                              dataArrived.countDown();
+                            }
 
-            @Override
-            public void onError(int iLiveToken) {
+                            @Override
+                            public void onError(int iLiveToken) {}
 
-            }
+                            @Override
+                            public void onUnsubscribe(int iLiveToken) {}
+                          }));
 
-            @Override
-            public void onUnsubscribe(int iLiveToken) {
-
-            }
-          }));
-
-          latch.countDown();
-          Assert.assertTrue(dataArrived.await(1, TimeUnit.MINUTES));
-          return integer.get();
-        }
-      });
+                  latch.countDown();
+                  Assert.assertTrue(dataArrived.await(1, TimeUnit.MINUTES));
+                  return integer.get();
+                }
+              });
 
       latch.await();
 
       db.command(new OCommandSQL("insert into test set name = 'foo', surname = 'bar'")).execute();
 
       db.command(new OCommandSQL("insert into test set name = 'foo', surname = 'bar', _allow=?"))
-          .execute(new ArrayList<OIdentifiable>() {{
-            add(current);
-            add(reader);
-          }});
+          .execute(
+              new ArrayList<OIdentifiable>() {
+                {
+                  add(current);
+                  add(reader);
+                }
+              });
 
       Integer integer = future.get();
       Assert.assertEquals(integer.intValue(), liveMatch);
@@ -217,5 +230,4 @@ public class OLiveQueryTest {
       db.drop();
     }
   }
-
 }

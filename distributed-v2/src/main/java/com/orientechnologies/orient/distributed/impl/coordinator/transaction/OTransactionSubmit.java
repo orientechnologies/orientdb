@@ -1,5 +1,8 @@
 package com.orientechnologies.orient.distributed.impl.coordinator.transaction;
 
+import static com.orientechnologies.orient.distributed.impl.coordinator.OCoordinateMessagesFactory.TRANSACTION_SUBMIT_REQUEST;
+
+
 import com.orientechnologies.common.util.OPair;
 import com.orientechnologies.orient.client.remote.message.tx.ORecordOperationRequest;
 import com.orientechnologies.orient.core.db.config.ONodeIdentity;
@@ -17,28 +20,29 @@ import com.orientechnologies.orient.core.tx.OTransactionInternal;
 import com.orientechnologies.orient.distributed.impl.coordinator.ODistributedCoordinator;
 import com.orientechnologies.orient.distributed.impl.coordinator.ODistributedLockManager;
 import com.orientechnologies.orient.distributed.impl.coordinator.OSubmitRequest;
-
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
-import java.util.*;
-
-import static com.orientechnologies.orient.distributed.impl.coordinator.OCoordinateMessagesFactory.TRANSACTION_SUBMIT_REQUEST;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
+import java.util.SortedSet;
+import java.util.TreeSet;
 
 public class OTransactionSubmit implements OSubmitRequest {
   private List<ORecordOperationRequest> operations;
-  private List<OIndexOperationRequest>  indexes;
+  private List<OIndexOperationRequest> indexes;
 
   private static final String _sequencesBaseClass = "OSequence";
 
-  public OTransactionSubmit(Collection<ORecordOperation> ops, List<OIndexOperationRequest> indexes) {
+  public OTransactionSubmit(
+      Collection<ORecordOperation> ops, List<OIndexOperationRequest> indexes) {
     this.operations = genOps(ops);
     this.indexes = indexes;
   }
 
-  public OTransactionSubmit() {
-
-  }
+  public OTransactionSubmit() {}
 
   private static boolean isSequenceDocument(ORecordOperation txEntry) {
     if (txEntry.record != null && txEntry.record.getRecord() instanceof ODocument) {
@@ -54,8 +58,7 @@ public class OTransactionSubmit implements OSubmitRequest {
   public static List<ORecordOperationRequest> genOps(Collection<ORecordOperation> ops) {
     List<ORecordOperationRequest> operations = new ArrayList<>();
     for (ORecordOperation txEntry : ops) {
-      if (txEntry.type == ORecordOperation.LOADED)
-        continue;
+      if (txEntry.type == ORecordOperation.LOADED) continue;
       if (isSequenceDocument(txEntry)) {
         continue;
       }
@@ -65,31 +68,35 @@ public class OTransactionSubmit implements OSubmitRequest {
       request.setId(txEntry.getRecord().getIdentity());
       request.setRecordType(ORecordInternal.getRecordType(txEntry.getRecord()));
       switch (txEntry.type) {
-      case ORecordOperation.CREATED:
-        request.setRecord(ORecordSerializerNetworkDistributed.INSTANCE.toStream(txEntry.getRecord()));
-        request.setContentChanged(ORecordInternal.isContentChanged(txEntry.getRecord()));
-        break;
-      case ORecordOperation.UPDATED:
-        request.setRecord(ORecordSerializerNetworkDistributed.INSTANCE.toStream(txEntry.getRecord()));
-        request.setContentChanged(ORecordInternal.isContentChanged(txEntry.getRecord()));
-        break;
-      case ORecordOperation.DELETED:
-        break;
+        case ORecordOperation.CREATED:
+          request.setRecord(
+              ORecordSerializerNetworkDistributed.INSTANCE.toStream(txEntry.getRecord()));
+          request.setContentChanged(ORecordInternal.isContentChanged(txEntry.getRecord()));
+          break;
+        case ORecordOperation.UPDATED:
+          request.setRecord(
+              ORecordSerializerNetworkDistributed.INSTANCE.toStream(txEntry.getRecord()));
+          request.setContentChanged(ORecordInternal.isContentChanged(txEntry.getRecord()));
+          break;
+        case ORecordOperation.DELETED:
+          break;
       }
       operations.add(request);
     }
     return operations;
   }
 
-  public static List<OIndexOperationRequest> genIndexes(Map<String, OTransactionIndexChanges> indexOperations,
-      OTransactionInternal tx) {
+  public static List<OIndexOperationRequest> genIndexes(
+      Map<String, OTransactionIndexChanges> indexOperations, OTransactionInternal tx) {
     List<OIndexOperationRequest> idx = new ArrayList<>();
     for (Map.Entry<String, OTransactionIndexChanges> index : indexOperations.entrySet()) {
       OTransactionIndexChanges changes = index.getValue();
       List<OIndexKeyChange> keys = new ArrayList<>();
-      for (Map.Entry<Object, OTransactionIndexChangesPerKey> entry : changes.changesPerKey.entrySet()) {
+      for (Map.Entry<Object, OTransactionIndexChangesPerKey> entry :
+          changes.changesPerKey.entrySet()) {
         List<OIndexKeyOperation> oper = new ArrayList<>();
-        for (OTransactionIndexChangesPerKey.OTransactionIndexEntry operat : entry.getValue().entries) {
+        for (OTransactionIndexChangesPerKey.OTransactionIndexEntry operat :
+            entry.getValue().entries) {
           ORID identity = operat.value.getIdentity();
           if (!identity.isPersistent()) {
             identity = tx.getRecordEntry(identity).getRID();
@@ -104,7 +111,8 @@ public class OTransactionSubmit implements OSubmitRequest {
       }
       if (index.getValue().nullKeyChanges != null) {
         List<OIndexKeyOperation> oper = new ArrayList<>();
-        for (OTransactionIndexChangesPerKey.OTransactionIndexEntry operat : index.getValue().nullKeyChanges.entries) {
+        for (OTransactionIndexChangesPerKey.OTransactionIndexEntry operat :
+            index.getValue().nullKeyChanges.entries) {
           ORID identity = operat.value.getIdentity();
           if (!identity.isPersistent()) {
             identity = tx.getRecordEntry(identity).getRID();
@@ -116,7 +124,6 @@ public class OTransactionSubmit implements OSubmitRequest {
           }
         }
         keys.add(new OIndexKeyChange(null, oper));
-
       }
       idx.add(new OIndexOperationRequest(index.getKey(), changes.cleared, keys));
     }
@@ -124,10 +131,14 @@ public class OTransactionSubmit implements OSubmitRequest {
   }
 
   @Override
-  public void begin(ONodeIdentity requester, OSessionOperationId operationId, ODistributedCoordinator coordinator) {
+  public void begin(
+      ONodeIdentity requester,
+      OSessionOperationId operationId,
+      ODistributedCoordinator coordinator) {
     ODistributedLockManager lockManager = coordinator.getLockManager();
 
-    //using OPair because there could be different types of values here, so falling back to lexicographic sorting
+    // using OPair because there could be different types of values here, so falling back to
+    // lexicographic sorting
     SortedSet<OPair<String, String>> keys = new TreeSet<>();
     for (OIndexOperationRequest change : indexes) {
       for (OIndexKeyChange keyChange : change.getIndexKeyChanges()) {
@@ -137,10 +148,9 @@ public class OTransactionSubmit implements OSubmitRequest {
           keys.add(new OPair<>(change.getIndexName(), keyChange.getKey().toString()));
         }
       }
-
     }
 
-    //Sort and lock transaction entry in distributed environment
+    // Sort and lock transaction entry in distributed environment
     SortedSet<ORID> rids = new TreeSet<>();
     for (ORecordOperationRequest entry : operations) {
       if (ORecordOperation.CREATED == entry.getType()) {
@@ -153,12 +163,17 @@ public class OTransactionSubmit implements OSubmitRequest {
         rids.add(entry.getId());
       }
     }
-    lockManager.lock(rids, keys, (guards) -> {
-      OTransactionFirstPhaseResponseHandler responseHandler = new OTransactionFirstPhaseResponseHandler(operationId, this,
-          requester, operations, indexes, guards);
-      OTransactionFirstPhaseOperation request = new OTransactionFirstPhaseOperation(operationId, this.operations, indexes);
-      coordinator.sendOperation(this, request, responseHandler);
-    });
+    lockManager.lock(
+        rids,
+        keys,
+        (guards) -> {
+          OTransactionFirstPhaseResponseHandler responseHandler =
+              new OTransactionFirstPhaseResponseHandler(
+                  operationId, this, requester, operations, indexes, guards);
+          OTransactionFirstPhaseOperation request =
+              new OTransactionFirstPhaseOperation(operationId, this.operations, indexes);
+          coordinator.sendOperation(this, request, responseHandler);
+        });
   }
 
   @Override
@@ -179,7 +194,6 @@ public class OTransactionSubmit implements OSubmitRequest {
       change.deserialize(input);
       indexes.add(change);
     }
-
   }
 
   @Override

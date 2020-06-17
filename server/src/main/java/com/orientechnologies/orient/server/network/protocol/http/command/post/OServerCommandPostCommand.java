@@ -25,20 +25,31 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OSQLEngine;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
-import com.orientechnologies.orient.core.sql.parser.*;
+import com.orientechnologies.orient.core.sql.parser.OFetchPlan;
+import com.orientechnologies.orient.core.sql.parser.OLimit;
+import com.orientechnologies.orient.core.sql.parser.OMatchStatement;
+import com.orientechnologies.orient.core.sql.parser.OSelectStatement;
+import com.orientechnologies.orient.core.sql.parser.OStatement;
+import com.orientechnologies.orient.core.sql.parser.OTraverseStatement;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpRequest;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpResponse;
 import com.orientechnologies.orient.server.network.protocol.http.command.OServerCommandAuthenticatedDbAbstract;
-
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 public class OServerCommandPostCommand extends OServerCommandAuthenticatedDbAbstract {
-  private static final String[] NAMES = { "GET|command/*", "POST|command/*" };
+  private static final String[] NAMES = {"GET|command/*", "POST|command/*"};
 
   @Override
   public boolean execute(final OHttpRequest iRequest, OHttpResponse iResponse) throws Exception {
-    final String[] urlParts = checkSyntax(iRequest.getUrl(), 3,
-        "Syntax error: command/<database>/<language>/<command-text>[/limit][/<fetchPlan>]");
+    final String[] urlParts =
+        checkSyntax(
+            iRequest.getUrl(),
+            3,
+            "Syntax error: command/<database>/<language>/<command-text>[/limit][/<fetchPlan>]");
 
     // TRY TO GET THE COMMAND FROM THE URL, THEN FROM THE CONTENT
     final String language = urlParts.length > 2 ? urlParts[2].trim() : "sql";
@@ -60,8 +71,7 @@ public class OServerCommandPostCommand extends OServerCommandAuthenticatedDbAbst
         final ODocument doc = new ODocument().fromJSON(iRequest.getContent());
         text = doc.field("command");
         params = doc.field("parameters");
-        if (doc.containsField("mode"))
-          mode = doc.field("mode");
+        if (doc.containsField("mode")) mode = doc.field("mode");
 
         if ("false".equalsIgnoreCase("" + doc.field("returnExecutionPlan"))) {
           returnExecutionPlan = false;
@@ -81,8 +91,7 @@ public class OServerCommandPostCommand extends OServerCommandAuthenticatedDbAbst
       returnExecutionPlan = false;
     }
 
-    if (text == null)
-      throw new IllegalArgumentException("text cannot be null");
+    if (text == null) throw new IllegalArgumentException("text cannot be null");
 
     iRequest.getData().commandInfo = "Command";
     iRequest.getData().commandDetail = text;
@@ -110,7 +119,9 @@ public class OServerCommandPostCommand extends OServerCommandAuthenticatedDbAbst
 
       Map<String, Object> additionalContent = new HashMap<>();
       if (returnExecutionPlan) {
-        result.getExecutionPlan().ifPresent(x -> additionalContent.put("executionPlan", x.toResult().toElement()));
+        result
+            .getExecutionPlan()
+            .ifPresent(x -> additionalContent.put("executionPlan", x.toResult().toElement()));
       }
 
       result.close();
@@ -121,8 +132,7 @@ public class OServerCommandPostCommand extends OServerCommandAuthenticatedDbAbst
         format = "fetchPlan:" + fetchPlan;
       }
 
-      if (iRequest.getHeader("TE") != null)
-        iResponse.setStreaming(true);
+      if (iRequest.getHeader("TE") != null) iResponse.setStreaming(true);
 
       additionalContent.put("elapsedMs", elapsedMs);
       iResponse.writeResult(response, format, accept, additionalContent, mode);
@@ -178,7 +188,8 @@ public class OServerCommandPostCommand extends OServerCommandAuthenticatedDbAbst
     return previousLimit;
   }
 
-  protected OResultSet executeStatement(String language, String text, Object params, ODatabaseDocument db) {
+  protected OResultSet executeStatement(
+      String language, String text, Object params, ODatabaseDocument db) {
     OResultSet result;
     if ("sql".equalsIgnoreCase(language)) {
       if (params instanceof Map) {

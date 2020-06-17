@@ -1,29 +1,23 @@
 package com.orientechnologies.orient.core.sql.executor;
 
-/**
- * Created by luigidellaquila on 08/08/16.
- */
-
+/** Created by luigidellaquila on 08/08/16. */
 import com.orientechnologies.orient.core.command.OCommandContext;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
-/**
- * @author Luigi Dell'Aquila (l.dellaquila-(at)-orientdb.com)
- */
+/** @author Luigi Dell'Aquila (l.dellaquila-(at)-orientdb.com) */
 public class OScriptExecutionPlan implements OInternalExecutionPlan {
 
-  private       String                 location;
-  private final OCommandContext        ctx;
-  private       boolean                executed    = false;
-  protected     List<ScriptLineStep>   steps       = new ArrayList<>();
-  private       OExecutionStepInternal lastStep    = null;
-  private       OResultSet             finalResult = null;
-  private       String                 statement;
+  private String location;
+  private final OCommandContext ctx;
+  private boolean executed = false;
+  protected List<ScriptLineStep> steps = new ArrayList<>();
+  private OExecutionStepInternal lastStep = null;
+  private OResultSet finalResult = null;
+  private String statement;
 
   public OScriptExecutionPlan(OCommandContext ctx) {
     this.ctx = ctx;
@@ -31,7 +25,7 @@ public class OScriptExecutionPlan implements OInternalExecutionPlan {
 
   @Override
   public void reset(OCommandContext ctx) {
-    //TODO
+    // TODO
     throw new UnsupportedOperationException();
   }
 
@@ -120,7 +114,7 @@ public class OScriptExecutionPlan implements OInternalExecutionPlan {
 
   @Override
   public List<OExecutionStep> getSteps() {
-    //TODO do a copy of the steps
+    // TODO do a copy of the steps
     return (List) steps;
   }
 
@@ -135,7 +129,9 @@ public class OScriptExecutionPlan implements OInternalExecutionPlan {
     result.setProperty("javaType", getClass().getName());
     result.setProperty("cost", getCost());
     result.setProperty("prettyPrint", prettyPrint(0, 2));
-    result.setProperty("steps", steps == null ? null : steps.stream().map(x -> x.toResult()).collect(Collectors.toList()));
+    result.setProperty(
+        "steps",
+        steps == null ? null : steps.stream().map(x -> x.toResult()).collect(Collectors.toList()));
     return result;
   }
 
@@ -163,7 +159,8 @@ public class OScriptExecutionPlan implements OInternalExecutionPlan {
   }
 
   /**
-   * executes all the script and returns last statement execution step, so that it can be executed from outside
+   * executes all the script and returns last statement execution step, so that it can be executed
+   * from outside
    *
    * @return
    */
@@ -194,7 +191,8 @@ public class OScriptExecutionPlan implements OInternalExecutionPlan {
   }
 
   /**
-   * executes the whole script and returns last statement ONLY if it's a RETURN, otherwise it returns null;
+   * executes the whole script and returns last statement ONLY if it's a RETURN, otherwise it
+   * returns null;
    *
    * @return
    */
@@ -230,4 +228,3 @@ public class OScriptExecutionPlan implements OInternalExecutionPlan {
     this.statement = statement;
   }
 }
-

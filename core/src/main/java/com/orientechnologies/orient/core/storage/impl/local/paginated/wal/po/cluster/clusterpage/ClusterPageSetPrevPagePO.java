@@ -5,15 +5,13 @@ import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
 import com.orientechnologies.orient.core.storage.cluster.OClusterPage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.WALRecordTypes;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.PageOperationRecord;
-
 import java.nio.ByteBuffer;
 
 public final class ClusterPageSetPrevPagePO extends PageOperationRecord {
   private int oldPrevPage;
   private int prevPage;
 
-  public ClusterPageSetPrevPagePO() {
-  }
+  public ClusterPageSetPrevPagePO() {}
 
   public ClusterPageSetPrevPagePO(int oldPrevPage, int prevPage) {
     this.oldPrevPage = oldPrevPage;

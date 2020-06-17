@@ -8,21 +8,22 @@ import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.WALRecordTypes;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.PageOperationRecord;
 import com.orientechnologies.orient.core.storage.index.sbtree.local.v2.OSBTreeBucketV2;
-
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
 
 public final class SBTreeBucketV2ShrinkPO extends PageOperationRecord {
-  private int               newSize;
-  private List<byte[]>      removedRecords;
+  private int newSize;
+  private List<byte[]> removedRecords;
   private OBinarySerializer keySerializer;
   private OBinarySerializer valueSerializer;
 
-  public SBTreeBucketV2ShrinkPO() {
-  }
+  public SBTreeBucketV2ShrinkPO() {}
 
-  public SBTreeBucketV2ShrinkPO(int newSize, List<byte[]> removedRecords, OBinarySerializer keySerializer,
+  public SBTreeBucketV2ShrinkPO(
+      int newSize,
+      List<byte[]> removedRecords,
+      OBinarySerializer keySerializer,
       OBinarySerializer valueSerializer) {
     this.newSize = newSize;
     this.removedRecords = removedRecords;
@@ -64,7 +65,9 @@ public final class SBTreeBucketV2ShrinkPO extends PageOperationRecord {
   @Override
   public int serializedSize() {
     int serializedSize =
-        2 * OIntegerSerializer.INT_SIZE + 2 * OByteSerializer.BYTE_SIZE + removedRecords.size() * OIntegerSerializer.INT_SIZE;
+        2 * OIntegerSerializer.INT_SIZE
+            + 2 * OByteSerializer.BYTE_SIZE
+            + removedRecords.size() * OIntegerSerializer.INT_SIZE;
     for (final byte[] record : removedRecords) {
       serializedSize += record.length;
     }

@@ -12,8 +12,7 @@ public class ONodeConfigurationBuilder {
   private OMulticastConfguration multicastConfguration;
   private OUDPUnicastConfiguration unicastConfiguration;
 
-  protected ONodeConfigurationBuilder() {
-  }
+  protected ONodeConfigurationBuilder() {}
 
   public ONodeConfigurationBuilder setQuorum(int quorum) {
     this.quorum = quorum;
@@ -52,12 +51,15 @@ public class ONodeConfigurationBuilder {
 
   public ONodeConfiguration build() {
     if (multicastConfguration != null) {
-      return new ONodeConfiguration(nodeName, groupName, groupPassword, quorum, tcpPort, multicastConfguration);
+      return new ONodeConfiguration(
+          nodeName, groupName, groupPassword, quorum, tcpPort, multicastConfguration);
     } else if (unicastConfiguration != null) {
-      return new ONodeConfiguration(nodeName, groupName, groupPassword, quorum, tcpPort, unicastConfiguration);
+      return new ONodeConfiguration(
+          nodeName, groupName, groupPassword, quorum, tcpPort, unicastConfiguration);
     } else {
-      //empty multicast as fallback... review...
-      return new ONodeConfiguration(nodeName, groupName, groupPassword, quorum, tcpPort, new OMulticastConfguration());
+      // empty multicast as fallback... review...
+      return new ONodeConfiguration(
+          nodeName, groupName, groupPassword, quorum, tcpPort, new OMulticastConfguration());
     }
   }
 }

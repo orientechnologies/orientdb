@@ -1,26 +1,23 @@
 package com.orientechnologies.orient.core.record.impl;
 
-import java.util.Date;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Ignore;
-import org.junit.Test;
 
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
-import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.util.ODateHelper;
-
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
+import java.util.Date;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Test;
 
 public class DefaultValueTest {
 
@@ -53,7 +50,6 @@ public class DefaultValueTest {
     doc1.fromStream(val);
     doc1.deserializeFields();
     assertEquals((String) doc.field("name"), (String) doc1.field("name"));
-
   }
 
   @Test
@@ -77,7 +73,6 @@ public class DefaultValueTest {
     assertNotNull(seved1.field("date"));
     assertNotNull(seved1.field("id"));
     assertTrue(seved1.field("date") instanceof Date);
-
   }
 
   @Test
@@ -104,7 +99,8 @@ public class DefaultValueTest {
     prop.setDefaultValue(ODateHelper.getDateTimeFormatInstance().format(new Date()));
 
     String value1 = ODateHelper.getDateTimeFormatInstance().format(new Date());
-    ODocument doc = new ODocument().fromJSON("{'@class':'ClassA','date':'" + value1 + "','other':'other'}");
+    ODocument doc =
+        new ODocument().fromJSON("{'@class':'ClassA','date':'" + value1 + "','other':'other'}");
     ODocument saved = database.save(doc);
     assertNotNull(saved.field("date"));
     assertEquals(ODateHelper.getDateTimeFormatInstance().format(saved.field("date")), value1);
@@ -139,7 +135,8 @@ public class DefaultValueTest {
     prop.setDefaultValue(ODateHelper.getDateTimeFormatInstance().format(new Date()));
 
     String value1 = ODateHelper.getDateTimeFormatInstance().format(new Date());
-    ODocument doc = new ODocument().fromJSON("{'@class':'ClassA','date':'" + value1 + "','other':'other'}");
+    ODocument doc =
+        new ODocument().fromJSON("{'@class':'ClassA','date':'" + value1 + "','other':'other'}");
     ODocument saved = database.save(doc);
     assertNotNull(saved.field("date"));
     assertEquals(ODateHelper.getDateTimeFormatInstance().format(saved.field("date")), value1);
@@ -162,12 +159,12 @@ public class DefaultValueTest {
     assertTrue(saved.field("date") instanceof Date);
     assertNotNull(saved.field("other"));
     String val = ODateHelper.getDateTimeFormatInstance().format(doc.field("date"));
-    ODocument doc1 = new ODocument().fromJSON("{'@class':'ClassA','date':'" + val + "','other':'other1'}");
+    ODocument doc1 =
+        new ODocument().fromJSON("{'@class':'ClassA','date':'" + val + "','other':'other1'}");
     saved.merge(doc1, true, true);
     saved = database.save(saved);
     assertNotNull(saved.field("date"));
     assertEquals(ODateHelper.getDateTimeFormatInstance().format(saved.field("date")), val);
     assertEquals(saved.field("other"), "other1");
   }
-
 }

@@ -13,7 +13,6 @@ import com.orientechnologies.orient.core.sql.executor.OInternalResultSet;
 import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.executor.OResultInternal;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
-
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -34,7 +33,8 @@ public class OAlterDatabaseStatement extends ODDLStatement {
     super(p, id);
   }
 
-  @Override public OResultSet executeDDL(OCommandContext ctx) {
+  @Override
+  public OResultSet executeDDL(OCommandContext ctx) {
     OInternalResultSet result = new OInternalResultSet();
     if (customPropertyName == null) {
       result.add(executeSimpleAlter(settingName, settingValue, ctx));
@@ -44,10 +44,12 @@ public class OAlterDatabaseStatement extends ODDLStatement {
     return result;
   }
 
-  private OResult executeCustomAlter(OIdentifier customPropertyName, OExpression customPropertyValue, OCommandContext ctx) {
+  private OResult executeCustomAlter(
+      OIdentifier customPropertyName, OExpression customPropertyValue, OCommandContext ctx) {
     ODatabaseDocumentInternal db = (ODatabaseDocumentInternal) ctx.getDatabase();
     db.checkSecurity(ORule.ResourceGeneric.DATABASE, ORole.PERMISSION_UPDATE);
-    List<OStorageEntryConfiguration> oldValues = (List<OStorageEntryConfiguration>) db.get(ODatabase.ATTRIBUTES.CUSTOM);
+    List<OStorageEntryConfiguration> oldValues =
+        (List<OStorageEntryConfiguration>) db.get(ODatabase.ATTRIBUTES.CUSTOM);
     String oldValue = null;
     if (oldValues != null) {
       for (OStorageEntryConfiguration entry : oldValues) {
@@ -68,8 +70,10 @@ public class OAlterDatabaseStatement extends ODDLStatement {
     return result;
   }
 
-  private OResult executeSimpleAlter(OIdentifier settingName, OExpression settingValue, OCommandContext ctx) {
-    ODatabase.ATTRIBUTES attribute = ODatabase.ATTRIBUTES.valueOf(settingName.getStringValue().toUpperCase(Locale.ENGLISH));
+  private OResult executeSimpleAlter(
+      OIdentifier settingName, OExpression settingValue, OCommandContext ctx) {
+    ODatabase.ATTRIBUTES attribute =
+        ODatabase.ATTRIBUTES.valueOf(settingName.getStringValue().toUpperCase(Locale.ENGLISH));
     ODatabaseDocumentInternal db = (ODatabaseDocumentInternal) ctx.getDatabase();
     db.checkSecurity(ORule.ResourceGeneric.DATABASE, ORole.PERMISSION_UPDATE);
     Object oldValue = db.get(attribute);
@@ -84,7 +88,8 @@ public class OAlterDatabaseStatement extends ODDLStatement {
     return result;
   }
 
-  @Override public void toString(Map<Object, Object> params, StringBuilder builder) {
+  @Override
+  public void toString(Map<Object, Object> params, StringBuilder builder) {
     builder.append("ALTER DATABASE ");
 
     if (customPropertyName != null) {
@@ -99,7 +104,8 @@ public class OAlterDatabaseStatement extends ODDLStatement {
     }
   }
 
-  @Override public OAlterDatabaseStatement copy() {
+  @Override
+  public OAlterDatabaseStatement copy() {
     OAlterDatabaseStatement result = new OAlterDatabaseStatement(-1);
     result.customPropertyName = customPropertyName == null ? null : customPropertyName.copy();
     result.customPropertyValue = customPropertyValue == null ? null : customPropertyValue.copy();
@@ -108,18 +114,19 @@ public class OAlterDatabaseStatement extends ODDLStatement {
     return result;
   }
 
-  @Override public boolean equals(Object o) {
-    if (this == o)
-      return true;
-    if (o == null || getClass() != o.getClass())
-      return false;
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
 
     OAlterDatabaseStatement that = (OAlterDatabaseStatement) o;
 
-    if (customPropertyName != null ? !customPropertyName.equals(that.customPropertyName) : that.customPropertyName != null)
-      return false;
-    if (customPropertyValue != null ? !customPropertyValue.equals(that.customPropertyValue) : that.customPropertyValue != null)
-      return false;
+    if (customPropertyName != null
+        ? !customPropertyName.equals(that.customPropertyName)
+        : that.customPropertyName != null) return false;
+    if (customPropertyValue != null
+        ? !customPropertyValue.equals(that.customPropertyValue)
+        : that.customPropertyValue != null) return false;
     if (settingName != null ? !settingName.equals(that.settingName) : that.settingName != null)
       return false;
     if (settingValue != null ? !settingValue.equals(that.settingValue) : that.settingValue != null)
@@ -128,7 +135,8 @@ public class OAlterDatabaseStatement extends ODDLStatement {
     return true;
   }
 
-  @Override public int hashCode() {
+  @Override
+  public int hashCode() {
     int result = customPropertyName != null ? customPropertyName.hashCode() : 0;
     result = 31 * result + (customPropertyValue != null ? customPropertyValue.hashCode() : 0);
     result = 31 * result + (settingName != null ? settingName.hashCode() : 0);

@@ -2,32 +2,39 @@ package com.orientechnologies.orient.core.sql.executor;
 
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
-import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
 import com.orientechnologies.orient.core.id.OContextualRecordId;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.schema.OType;
-import com.orientechnologies.orient.core.record.*;
+import com.orientechnologies.orient.core.record.OEdge;
+import com.orientechnologies.orient.core.record.OElement;
+import com.orientechnologies.orient.core.record.ORecord;
+import com.orientechnologies.orient.core.record.ORecordInternal;
+import com.orientechnologies.orient.core.record.OVertex;
 import com.orientechnologies.orient.core.record.impl.OBlob;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ORecordBytes;
 import com.orientechnologies.orient.core.serialization.OSerializableStream;
-
 import java.io.Serializable;
-import java.util.*;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 
-/**
- * Created by luigidellaquila on 06/07/16.
- */
+/** Created by luigidellaquila on 06/07/16. */
 public class OResultInternal implements OResult {
   protected Map<String, Object> content = new LinkedHashMap<>();
   protected Map<String, Object> temporaryContent;
   protected Map<String, Object> metadata;
-  protected OIdentifiable       element;
+  protected OIdentifiable element;
 
-  public OResultInternal() {
-  }
+  public OResultInternal() {}
 
   public OResultInternal(OIdentifiable ident) {
     this.element = ident;
@@ -64,7 +71,8 @@ public class OResultInternal implements OResult {
     if (value instanceof OSerializableStream || value instanceof Serializable) {
       return;
     }
-    throw new IllegalArgumentException("Invalid property value for OResult: " + value + " - " + value.getClass().getName());
+    throw new IllegalArgumentException(
+        "Invalid property value for OResult: " + value + " - " + value.getClass().getName());
   }
 
   public void setTemporaryProperty(String name, Object value) {
@@ -419,7 +427,10 @@ public class OResultInternal implements OResult {
     if (element != null) {
       return element.toString();
     }
-    return "{\n" + content.entrySet().stream().map(x -> x.getKey() + ": " + x.getValue()).reduce("", (a, b) -> a + b + "\n")
+    return "{\n"
+        + content.entrySet().stream()
+            .map(x -> x.getKey() + ": " + x.getValue())
+            .reduce("", (a, b) -> a + b + "\n")
         + "}\n";
   }
 

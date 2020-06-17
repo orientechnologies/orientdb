@@ -1,22 +1,24 @@
 package com.orientechnologies.orient.server.distributed.impl.metadata;
 
+import static com.orientechnologies.orient.core.config.OGlobalConfiguration.DISTRIBUTED_REPLICATION_PROTOCOL_VERSION;
+
+
 import com.orientechnologies.common.util.OPair;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.OScenarioThreadLocal;
 import com.orientechnologies.orient.core.db.OSharedContext;
-import com.orientechnologies.orient.core.metadata.schema.*;
+import com.orientechnologies.orient.core.metadata.schema.OClass;
+import com.orientechnologies.orient.core.metadata.schema.OClassImpl;
+import com.orientechnologies.orient.core.metadata.schema.OSchemaEmbedded;
+import com.orientechnologies.orient.core.metadata.schema.OType;
+import com.orientechnologies.orient.core.metadata.schema.OViewConfig;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.OAutoshardedStorage;
 import com.orientechnologies.orient.server.distributed.impl.ODatabaseDocumentDistributed;
-
 import java.util.List;
 import java.util.stream.Collectors;
 
-import static com.orientechnologies.orient.core.config.OGlobalConfiguration.DISTRIBUTED_REPLICATION_PROTOCOL_VERSION;
-
-/**
- * Created by tglman on 22/06/17.
- */
+/** Created by tglman on 22/06/17. */
 public class OSchemaDistributed extends OSchemaEmbedded {
 
   public OSchemaDistributed(OSharedContext sharedContext) {
@@ -65,13 +67,13 @@ public class OSchemaDistributed extends OSchemaEmbedded {
 
       sendCommand(database, cmd.toString());
       if (!isRunLocal(database)) {
-        OScenarioThreadLocal.executeAsDistributed(() -> {
-          dropClassInternal(database, className);
-          return null;
-        });
+        OScenarioThreadLocal.executeAsDistributed(
+            () -> {
+              dropClassInternal(database, className);
+              return null;
+            });
       }
-    } else
-      dropClassInternal(database, className);
+    } else dropClassInternal(database, className);
   }
 
   protected void doDropView(ODatabaseDocumentInternal database, final String name) {
@@ -88,7 +90,8 @@ public class OSchemaDistributed extends OSchemaEmbedded {
     dropViewInternal(database, name);
   }
 
-  protected void doRealCreateView(ODatabaseDocumentInternal database, OViewConfig config, int[] clusterIds)
+  protected void doRealCreateView(
+      ODatabaseDocumentInternal database, OViewConfig config, int[] clusterIds)
       throws ClusterIdsAreEmptyException {
     if (executeThroughDistributedStorage(database)) {
       StringBuilder cmd = new StringBuilder("create view ");
@@ -166,8 +169,12 @@ public class OSchemaDistributed extends OSchemaEmbedded {
     }
   }
 
-  protected void doRealCreateClass(ODatabaseDocumentInternal database, String className, List<OClass> superClassesList,
-      int[] clusterIds) throws ClusterIdsAreEmptyException {
+  protected void doRealCreateClass(
+      ODatabaseDocumentInternal database,
+      String className,
+      List<OClass> superClassesList,
+      int[] clusterIds)
+      throws ClusterIdsAreEmptyException {
     if (executeThroughDistributedStorage(database)) {
       StringBuilder cmd = new StringBuilder("create class ");
       cmd.append('`');
@@ -177,24 +184,19 @@ public class OSchemaDistributed extends OSchemaEmbedded {
       boolean first = true;
       for (OClass superClass : superClassesList) {
         // Filtering for null
-        if (first)
-          cmd.append(" extends ");
-        else
-          cmd.append(", ");
+        if (first) cmd.append(" extends ");
+        else cmd.append(", ");
         cmd.append(superClass.getName());
         first = false;
       }
 
       if (clusterIds != null) {
-        if (clusterIds.length == 1 && clusterIds[0] == -1)
-          cmd.append(" abstract");
+        if (clusterIds.length == 1 && clusterIds[0] == -1) cmd.append(" abstract");
         else {
           cmd.append(" cluster ");
           for (int i = 0; i < clusterIds.length; ++i) {
-            if (i > 0)
-              cmd.append(',');
-            else
-              cmd.append(' ');
+            if (i > 0) cmd.append(',');
+            else cmd.append(' ');
             cmd.append(clusterIds[i]);
           }
         }
@@ -210,7 +212,8 @@ public class OSchemaDistributed extends OSchemaEmbedded {
   }
 
   private boolean isDistributeVersionTwo(ODatabaseDocumentInternal database) {
-    return database.getConfiguration().getValueAsInteger(DISTRIBUTED_REPLICATION_PROTOCOL_VERSION) == 2;
+    return database.getConfiguration().getValueAsInteger(DISTRIBUTED_REPLICATION_PROTOCOL_VERSION)
+        == 2;
   }
 
   protected boolean isRunLocal(ODatabaseDocumentInternal database) {
@@ -221,5 +224,4 @@ public class OSchemaDistributed extends OSchemaEmbedded {
   public void sendCommand(ODatabaseDocumentInternal database, String command) {
     ((ODatabaseDocumentDistributed) database).sendDDLCommand(command, true);
   }
-
 }

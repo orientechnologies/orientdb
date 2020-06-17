@@ -25,12 +25,16 @@ import com.orientechnologies.orient.core.db.record.OProxedResource;
 import com.orientechnologies.orient.core.db.viewmanager.ViewCreationListener;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.metadata.schema.clusterselection.OClusterSelectionFactory;
-
-import java.util.*;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Set;
 
 /**
- * Proxy class to use the shared OSchemaShared instance. Before to delegate each operations it sets the current database in the
- * thread local.
+ * Proxy class to use the shared OSchemaShared instance. Before to delegate each operations it sets
+ * the current database in the thread local.
  *
  * @author Luca
  */
@@ -67,12 +71,10 @@ public class OSchemaProxy extends OProxedResource<OSchemaShared> implements OSch
   }
 
   public OClass getOrCreateClass(final String iClassName, final OClass iSuperClass) {
-    if (iClassName == null)
-      return null;
+    if (iClassName == null) return null;
 
     OClass cls = delegate.getClass(iClassName.toLowerCase(Locale.ENGLISH));
-    if (cls != null)
-      return cls;
+    if (cls != null) return cls;
 
     cls = delegate.getOrCreateClass(database, iClassName, iSuperClass);
 
@@ -94,7 +96,8 @@ public class OSchemaProxy extends OProxedResource<OSchemaShared> implements OSch
     return delegate.createClass(database, iClassName, superClasses);
   }
 
-  public OClass createClass(final String iClassName, final OClass iSuperClass, final int[] iClusterIds) {
+  public OClass createClass(
+      final String iClassName, final OClass iSuperClass, final int[] iClusterIds) {
     return delegate.createClass(database, iClassName, iSuperClass, iClusterIds);
   }
 
@@ -123,15 +126,13 @@ public class OSchemaProxy extends OProxedResource<OSchemaShared> implements OSch
   }
 
   public boolean existsClass(final String iClassName) {
-    if (iClassName == null)
-      return false;
+    if (iClassName == null) return false;
 
     return delegate.existsClass(iClassName.toLowerCase(Locale.ENGLISH));
   }
 
   public boolean existsView(final String name) {
-    if (name == null)
-      return false;
+    if (name == null) return false;
 
     return delegate.existsView(name.toLowerCase(Locale.ENGLISH));
   }
@@ -141,15 +142,13 @@ public class OSchemaProxy extends OProxedResource<OSchemaShared> implements OSch
   }
 
   public OClass getClass(final Class<?> iClass) {
-    if (iClass == null)
-      return null;
+    if (iClass == null) return null;
 
     return delegate.getClass(iClass);
   }
 
   public OClass getClass(final String iClassName) {
-    if (iClassName == null)
-      return null;
+    if (iClassName == null) return null;
 
     return delegate.getClass(iClassName);
   }
@@ -166,12 +165,10 @@ public class OSchemaProxy extends OProxedResource<OSchemaShared> implements OSch
   public void load() {
 
     delegate.load(database);
-
   }
 
   public OView getView(final String name) {
-    if (name == null)
-      return null;
+    if (name == null) return null;
 
     return delegate.getView(name);
   }
@@ -181,7 +178,10 @@ public class OSchemaProxy extends OProxedResource<OSchemaShared> implements OSch
     return createView(database, viewName, statement, new HashMap<>());
   }
 
-  public OView createView(ODatabaseDocumentInternal database, final String viewName, String statement,
+  public OView createView(
+      ODatabaseDocumentInternal database,
+      final String viewName,
+      String statement,
       Map<String, Object> metadata) {
     return delegate.createView(database, viewName, statement, metadata);
   }
@@ -270,5 +270,4 @@ public class OSchemaProxy extends OProxedResource<OSchemaShared> implements OSch
   public void removeBlobCluster(String clusterName) {
     delegate.removeBlobCluster(database, clusterName);
   }
-
 }

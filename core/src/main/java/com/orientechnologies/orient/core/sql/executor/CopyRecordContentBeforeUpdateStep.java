@@ -6,13 +6,15 @@ import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.query.live.OLiveQueryHookV2;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-
 import java.util.Map;
 import java.util.Optional;
 
 /**
- * <p>Reads an upstream result set and returns a new result set that contains copies of the original OResult instances </p> <p>This
- * is mainly used from statements that need to copy of the original data before modifying it, eg. UPDATE ... RETURN BEFORE</p>
+ * Reads an upstream result set and returns a new result set that contains copies of the original
+ * OResult instances
+ *
+ * <p>This is mainly used from statements that need to copy of the original data before modifying
+ * it, eg. UPDATE ... RETURN BEFORE
  *
  * @author Luigi Dell'Aquila (l.dellaquila-(at)-orientdb.com)
  */
@@ -48,7 +50,8 @@ public class CopyRecordContentBeforeUpdateStep extends AbstractExecutionStep {
             }
             if (!result.toElement().getIdentity().isNew()) {
               for (String propName : result.getPropertyNames()) {
-                prevValue.setProperty(propName, OLiveQueryHookV2.unboxRidbags(result.getProperty(propName)));
+                prevValue.setProperty(
+                    propName, OLiveQueryHookV2.unboxRidbags(result.getProperty(propName)));
               }
             }
             ((OUpdatableResult) result).previousValue = prevValue;
@@ -96,5 +99,4 @@ public class CopyRecordContentBeforeUpdateStep extends AbstractExecutionStep {
   public long getCost() {
     return cost;
   }
-
 }

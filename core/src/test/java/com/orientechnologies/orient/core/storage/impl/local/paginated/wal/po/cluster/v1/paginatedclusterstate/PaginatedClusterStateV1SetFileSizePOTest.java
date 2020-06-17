@@ -8,11 +8,10 @@ import com.orientechnologies.orient.core.storage.cache.OCachePointer;
 import com.orientechnologies.orient.core.storage.cluster.OClusterPage;
 import com.orientechnologies.orient.core.storage.cluster.v1.OPaginatedClusterStateV1;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.PageOperationRecord;
-import org.junit.Assert;
-import org.junit.Test;
-
 import java.nio.ByteBuffer;
 import java.util.List;
+import org.junit.Assert;
+import org.junit.Test;
 
 public class PaginatedClusterStateV1SetFileSizePOTest {
   @Test
@@ -30,7 +29,8 @@ public class PaginatedClusterStateV1SetFileSizePOTest {
       entry.clearPageOperations();
 
       final OPointer restoredPointer = byteBufferPool.acquireDirect(false);
-      final OCachePointer restoredCachePointer = new OCachePointer(restoredPointer, byteBufferPool, 0, 0);
+      final OCachePointer restoredCachePointer =
+          new OCachePointer(restoredPointer, byteBufferPool, 0, 0);
       final OCacheEntry restoredCacheEntry = new OCacheEntryImpl(0, 0, restoredCachePointer);
 
       final ByteBuffer originalBuffer = cachePointer.getBufferDuplicate();
@@ -47,7 +47,8 @@ public class PaginatedClusterStateV1SetFileSizePOTest {
       Assert.assertEquals(1, operations.size());
 
       Assert.assertTrue(operations.get(0) instanceof PaginatedClusterStateV1SetFileSizePO);
-      final PaginatedClusterStateV1SetFileSizePO pageOperation = (PaginatedClusterStateV1SetFileSizePO) operations.get(0);
+      final PaginatedClusterStateV1SetFileSizePO pageOperation =
+          (PaginatedClusterStateV1SetFileSizePO) operations.get(0);
 
       OPaginatedClusterStateV1 restoredPage = new OPaginatedClusterStateV1(restoredCacheEntry);
       Assert.assertEquals(12, restoredPage.getFileSize());
@@ -85,7 +86,8 @@ public class PaginatedClusterStateV1SetFileSizePOTest {
 
       Assert.assertTrue(operations.get(0) instanceof PaginatedClusterStateV1SetFileSizePO);
 
-      final PaginatedClusterStateV1SetFileSizePO pageOperation = (PaginatedClusterStateV1SetFileSizePO) operations.get(0);
+      final PaginatedClusterStateV1SetFileSizePO pageOperation =
+          (PaginatedClusterStateV1SetFileSizePO) operations.get(0);
 
       final OPaginatedClusterStateV1 restoredPage = new OPaginatedClusterStateV1(entry);
 
@@ -103,7 +105,8 @@ public class PaginatedClusterStateV1SetFileSizePOTest {
 
   @Test
   public void testSerialization() {
-    PaginatedClusterStateV1SetFileSizePO operation = new PaginatedClusterStateV1SetFileSizePO(12, 42);
+    PaginatedClusterStateV1SetFileSizePO operation =
+        new PaginatedClusterStateV1SetFileSizePO(12, 42);
 
     operation.setFileId(42);
     operation.setPageIndex(24);
@@ -115,7 +118,8 @@ public class PaginatedClusterStateV1SetFileSizePOTest {
 
     Assert.assertEquals(serializedSize + 1, pos);
 
-    PaginatedClusterStateV1SetFileSizePO restoredOperation = new PaginatedClusterStateV1SetFileSizePO();
+    PaginatedClusterStateV1SetFileSizePO restoredOperation =
+        new PaginatedClusterStateV1SetFileSizePO();
     restoredOperation.fromStream(stream, 1);
 
     Assert.assertEquals(42, restoredOperation.getFileId());

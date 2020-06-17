@@ -23,7 +23,6 @@ import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.metadata.schema.OType;
-
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.HashMap;
@@ -31,35 +30,35 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Compute the average value for a field. Uses the context to save the last average number. When different Number class are used,
- * take the class with most precision.
- * 
+ * Compute the average value for a field. Uses the context to save the last average number. When
+ * different Number class are used, take the class with most precision.
+ *
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
- * 
  */
 public class OSQLFunctionAverage extends OSQLFunctionMathAbstract {
-  public static final String NAME  = "avg";
+  public static final String NAME = "avg";
 
-  private Number             sum;
-  private int                total = 0;
+  private Number sum;
+  private int total = 0;
 
   public OSQLFunctionAverage() {
     super(NAME, 1, -1);
   }
 
-  public Object execute(Object iThis, OIdentifiable iCurrentRecord, Object iCurrentResult, final Object[] iParams,
+  public Object execute(
+      Object iThis,
+      OIdentifiable iCurrentRecord,
+      Object iCurrentResult,
+      final Object[] iParams,
       OCommandContext iContext) {
     if (iParams.length == 1) {
-      if (iParams[0] instanceof Number)
-        sum((Number) iParams[0]);
+      if (iParams[0] instanceof Number) sum((Number) iParams[0]);
       else if (OMultiValue.isMultiValue(iParams[0]))
-        for (Object n : OMultiValue.getMultiValueIterable(iParams[0]))
-          sum((Number) n);
+        for (Object n : OMultiValue.getMultiValueIterable(iParams[0])) sum((Number) n);
 
     } else {
       sum = null;
-      for (int i = 0; i < iParams.length; ++i)
-        sum((Number) iParams[i]);
+      for (int i = 0; i < iParams.length; ++i) sum((Number) iParams[i]);
     }
 
     return getResult();
@@ -71,8 +70,7 @@ public class OSQLFunctionAverage extends OSQLFunctionMathAbstract {
       if (sum == null)
         // FIRST TIME
         sum = value;
-      else
-        sum = OType.increment(sum, value);
+      else sum = OType.increment(sum, value);
     }
   }
 
@@ -100,10 +98,8 @@ public class OSQLFunctionAverage extends OSQLFunctionMathAbstract {
       int dTotal = 0;
       for (Object iParameter : resultsToMerge) {
         final Map<String, Object> item = (Map<String, Object>) iParameter;
-        if (dSum == null)
-          dSum = (Number) item.get("sum");
-        else
-          dSum = OType.increment(dSum, (Number) item.get("sum"));
+        if (dSum == null) dSum = (Number) item.get("sum");
+        else dSum = OType.increment(dSum, (Number) item.get("sum"));
 
         dTotal += (Integer) item.get("total");
       }
@@ -111,8 +107,7 @@ public class OSQLFunctionAverage extends OSQLFunctionMathAbstract {
       return computeAverage(dSum, dTotal);
     }
 
-    if (!resultsToMerge.isEmpty())
-      return resultsToMerge.get(0);
+    if (!resultsToMerge.isEmpty()) return resultsToMerge.get(0);
 
     return null;
   }
@@ -123,14 +118,10 @@ public class OSQLFunctionAverage extends OSQLFunctionMathAbstract {
   }
 
   private Object computeAverage(Number iSum, int iTotal) {
-    if (iSum instanceof Integer)
-      return iSum.intValue() / iTotal;
-    else if (iSum instanceof Long)
-      return iSum.longValue() / iTotal;
-    else if (iSum instanceof Float)
-      return iSum.floatValue() / iTotal;
-    else if (iSum instanceof Double)
-      return iSum.doubleValue() / iTotal;
+    if (iSum instanceof Integer) return iSum.intValue() / iTotal;
+    else if (iSum instanceof Long) return iSum.longValue() / iTotal;
+    else if (iSum instanceof Float) return iSum.floatValue() / iTotal;
+    else if (iSum instanceof Double) return iSum.doubleValue() / iTotal;
     else if (iSum instanceof BigDecimal)
       return ((BigDecimal) iSum).divide(new BigDecimal(iTotal), RoundingMode.HALF_UP);
 

@@ -13,7 +13,6 @@ import com.orientechnologies.orient.core.sql.OCommandSQLParsingException;
 import com.orientechnologies.orient.core.sql.executor.OInternalResultSet;
 import com.orientechnologies.orient.core.sql.executor.OResultInternal;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
-
 import java.util.Arrays;
 import java.util.Locale;
 import java.util.Map;
@@ -69,11 +68,16 @@ public class OAlterPropertyStatement extends ODDLStatement {
       String setting = settingName.getStringValue();
       boolean isCollate = setting.equalsIgnoreCase("collate");
       Object finalValue = settingValue.execute((OIdentifiable) null, ctx);
-      if (finalValue == null && (setting.equalsIgnoreCase("name") || setting.equalsIgnoreCase("shortname") || setting
-          .equalsIgnoreCase("type") || isCollate)) {
+      if (finalValue == null
+          && (setting.equalsIgnoreCase("name")
+              || setting.equalsIgnoreCase("shortname")
+              || setting.equalsIgnoreCase("type")
+              || isCollate)) {
         finalValue = settingValue.toString();
         String stringFinalValue = (String) finalValue;
-        if (stringFinalValue.startsWith("`") && stringFinalValue.endsWith("`") && stringFinalValue.length() > 2) {
+        if (stringFinalValue.startsWith("`")
+            && stringFinalValue.endsWith("`")
+            && stringFinalValue.length() > 2) {
           stringFinalValue = stringFinalValue.substring(1, stringFinalValue.length() - 1);
           finalValue = stringFinalValue;
         }
@@ -82,13 +86,17 @@ public class OAlterPropertyStatement extends ODDLStatement {
       try {
         attribute = OProperty.ATTRIBUTES.valueOf(setting.toUpperCase(Locale.ENGLISH));
       } catch (IllegalArgumentException e) {
-        throw OException.wrapException(new OCommandExecutionException(
-            "Unknown property attribute '" + setting + "'. Supported attributes are: " + Arrays
-                .toString(OProperty.ATTRIBUTES.values())), e);
+        throw OException.wrapException(
+            new OCommandExecutionException(
+                "Unknown property attribute '"
+                    + setting
+                    + "'. Supported attributes are: "
+                    + Arrays.toString(OProperty.ATTRIBUTES.values())),
+            e);
       }
       Object oldValue = property.get(attribute);
       property.set(attribute, finalValue);
-      finalValue = property.get(attribute);//it makes some conversions...
+      finalValue = property.get(attribute); // it makes some conversions...
 
       result.setProperty("operation", "alter property");
       result.setProperty("attribute", setting);
@@ -102,7 +110,7 @@ public class OAlterPropertyStatement extends ODDLStatement {
 
   @Override
   public void validate() throws OCommandSQLParsingException {
-    super.validate();//TODO
+    super.validate(); // TODO
   }
 
   @Override
@@ -138,10 +146,8 @@ public class OAlterPropertyStatement extends ODDLStatement {
 
   @Override
   public boolean equals(Object o) {
-    if (this == o)
-      return true;
-    if (o == null || getClass() != o.getClass())
-      return false;
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
 
     OAlterPropertyStatement that = (OAlterPropertyStatement) o;
 
@@ -149,10 +155,12 @@ public class OAlterPropertyStatement extends ODDLStatement {
       return false;
     if (propertyName != null ? !propertyName.equals(that.propertyName) : that.propertyName != null)
       return false;
-    if (customPropertyName != null ? !customPropertyName.equals(that.customPropertyName) : that.customPropertyName != null)
-      return false;
-    if (customPropertyValue != null ? !customPropertyValue.equals(that.customPropertyValue) : that.customPropertyValue != null)
-      return false;
+    if (customPropertyName != null
+        ? !customPropertyName.equals(that.customPropertyName)
+        : that.customPropertyName != null) return false;
+    if (customPropertyValue != null
+        ? !customPropertyValue.equals(that.customPropertyValue)
+        : that.customPropertyValue != null) return false;
     if (settingName != null ? !settingName.equals(that.settingName) : that.settingName != null)
       return false;
     if (settingValue != null ? !settingValue.equals(that.settingValue) : that.settingValue != null)

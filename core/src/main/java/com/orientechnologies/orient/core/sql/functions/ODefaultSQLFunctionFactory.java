@@ -15,13 +15,58 @@
  */
 package com.orientechnologies.orient.core.sql.functions;
 
-import com.orientechnologies.orient.core.sql.functions.coll.*;
+import com.orientechnologies.orient.core.sql.functions.coll.OSQLFunctionDifference;
+import com.orientechnologies.orient.core.sql.functions.coll.OSQLFunctionDistinct;
+import com.orientechnologies.orient.core.sql.functions.coll.OSQLFunctionDocument;
+import com.orientechnologies.orient.core.sql.functions.coll.OSQLFunctionFirst;
+import com.orientechnologies.orient.core.sql.functions.coll.OSQLFunctionIntersect;
+import com.orientechnologies.orient.core.sql.functions.coll.OSQLFunctionLast;
+import com.orientechnologies.orient.core.sql.functions.coll.OSQLFunctionList;
+import com.orientechnologies.orient.core.sql.functions.coll.OSQLFunctionMap;
+import com.orientechnologies.orient.core.sql.functions.coll.OSQLFunctionSet;
+import com.orientechnologies.orient.core.sql.functions.coll.OSQLFunctionSymmetricDifference;
+import com.orientechnologies.orient.core.sql.functions.coll.OSQLFunctionTraversedEdge;
+import com.orientechnologies.orient.core.sql.functions.coll.OSQLFunctionTraversedElement;
+import com.orientechnologies.orient.core.sql.functions.coll.OSQLFunctionTraversedVertex;
+import com.orientechnologies.orient.core.sql.functions.coll.OSQLFunctionUnionAll;
 import com.orientechnologies.orient.core.sql.functions.geo.OSQLFunctionDistance;
-import com.orientechnologies.orient.core.sql.functions.graph.*;
-import com.orientechnologies.orient.core.sql.functions.math.*;
-import com.orientechnologies.orient.core.sql.functions.misc.*;
+import com.orientechnologies.orient.core.sql.functions.graph.OSQLFunctionAstar;
+import com.orientechnologies.orient.core.sql.functions.graph.OSQLFunctionBoth;
+import com.orientechnologies.orient.core.sql.functions.graph.OSQLFunctionBothE;
+import com.orientechnologies.orient.core.sql.functions.graph.OSQLFunctionBothV;
+import com.orientechnologies.orient.core.sql.functions.graph.OSQLFunctionDijkstra;
+import com.orientechnologies.orient.core.sql.functions.graph.OSQLFunctionIn;
+import com.orientechnologies.orient.core.sql.functions.graph.OSQLFunctionInE;
+import com.orientechnologies.orient.core.sql.functions.graph.OSQLFunctionInV;
+import com.orientechnologies.orient.core.sql.functions.graph.OSQLFunctionOut;
+import com.orientechnologies.orient.core.sql.functions.graph.OSQLFunctionOutE;
+import com.orientechnologies.orient.core.sql.functions.graph.OSQLFunctionOutV;
+import com.orientechnologies.orient.core.sql.functions.graph.OSQLFunctionShortestPath;
+import com.orientechnologies.orient.core.sql.functions.math.OSQLFunctionAbsoluteValue;
+import com.orientechnologies.orient.core.sql.functions.math.OSQLFunctionAverage;
+import com.orientechnologies.orient.core.sql.functions.math.OSQLFunctionDecimal;
+import com.orientechnologies.orient.core.sql.functions.math.OSQLFunctionEval;
+import com.orientechnologies.orient.core.sql.functions.math.OSQLFunctionMax;
+import com.orientechnologies.orient.core.sql.functions.math.OSQLFunctionMin;
+import com.orientechnologies.orient.core.sql.functions.math.OSQLFunctionSum;
+import com.orientechnologies.orient.core.sql.functions.misc.OSQLFunctionCoalesce;
+import com.orientechnologies.orient.core.sql.functions.misc.OSQLFunctionCount;
+import com.orientechnologies.orient.core.sql.functions.misc.OSQLFunctionDate;
+import com.orientechnologies.orient.core.sql.functions.misc.OSQLFunctionDecode;
+import com.orientechnologies.orient.core.sql.functions.misc.OSQLFunctionEncode;
+import com.orientechnologies.orient.core.sql.functions.misc.OSQLFunctionIf;
+import com.orientechnologies.orient.core.sql.functions.misc.OSQLFunctionIfNull;
+import com.orientechnologies.orient.core.sql.functions.misc.OSQLFunctionIndexKeySize;
+import com.orientechnologies.orient.core.sql.functions.misc.OSQLFunctionStrcmpci;
+import com.orientechnologies.orient.core.sql.functions.misc.OSQLFunctionSysdate;
+import com.orientechnologies.orient.core.sql.functions.misc.OSQLFunctionThrowCME;
+import com.orientechnologies.orient.core.sql.functions.misc.OSQLFunctionUUID;
 import com.orientechnologies.orient.core.sql.functions.sequence.OSQLFunctionSequence;
-import com.orientechnologies.orient.core.sql.functions.stat.*;
+import com.orientechnologies.orient.core.sql.functions.stat.OSQLFunctionMedian;
+import com.orientechnologies.orient.core.sql.functions.stat.OSQLFunctionMode;
+import com.orientechnologies.orient.core.sql.functions.stat.OSQLFunctionPercentile;
+import com.orientechnologies.orient.core.sql.functions.stat.OSQLFunctionStandardDeviation;
+import com.orientechnologies.orient.core.sql.functions.stat.OSQLFunctionVariance;
 import com.orientechnologies.orient.core.sql.functions.text.OSQLFunctionConcat;
 import com.orientechnologies.orient.core.sql.functions.text.OSQLFunctionFormat;
 
@@ -75,7 +120,7 @@ public final class ODefaultSQLFunctionFactory extends OSQLFunctionFactoryTemplat
     register(OSQLFunctionIndexKeySize.NAME, OSQLFunctionIndexKeySize.class);
     register(OSQLFunctionStrcmpci.NAME, OSQLFunctionStrcmpci.class);
     register(OSQLFunctionThrowCME.NAME, OSQLFunctionThrowCME.class);
-    //graph
+    // graph
     register(OSQLFunctionOut.NAME, OSQLFunctionOut.class);
     register(OSQLFunctionIn.NAME, OSQLFunctionIn.class);
     register(OSQLFunctionBoth.NAME, OSQLFunctionBoth.class);
@@ -88,7 +133,5 @@ public final class ODefaultSQLFunctionFactory extends OSQLFunctionFactoryTemplat
     register(OSQLFunctionShortestPath.NAME, OSQLFunctionShortestPath.class);
     register(OSQLFunctionDijkstra.NAME, OSQLFunctionDijkstra.class);
     register(OSQLFunctionAstar.NAME, OSQLFunctionAstar.class);
-
   }
-
 }

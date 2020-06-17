@@ -25,7 +25,10 @@ public class OMulticastConfigurationBuilder {
   }
 
   public OMulticastConfguration build() {
-    return new OMulticastConfguration(confguration.isEnabled(), confguration.getIp(), confguration.getPort(),
+    return new OMulticastConfguration(
+        confguration.isEnabled(),
+        confguration.getIp(),
+        confguration.getPort(),
         confguration.getDiscoveryPorts());
   }
 }

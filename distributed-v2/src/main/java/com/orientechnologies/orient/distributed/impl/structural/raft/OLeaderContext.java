@@ -4,7 +4,6 @@ import com.orientechnologies.orient.core.db.config.ONodeIdentity;
 import com.orientechnologies.orient.distributed.OrientDBDistributed;
 import com.orientechnologies.orient.distributed.impl.coordinator.transaction.OSessionOperationId;
 import com.orientechnologies.orient.distributed.impl.log.OLogId;
-
 import java.util.Map;
 import java.util.Optional;
 
@@ -13,7 +12,11 @@ public interface OLeaderContext {
 
   void sendFullConfiguration(ONodeIdentity identity);
 
-  void createDatabase(Optional<ONodeIdentity> requester, OSessionOperationId operationId, String database, String type,
+  void createDatabase(
+      Optional<ONodeIdentity> requester,
+      OSessionOperationId operationId,
+      String database,
+      String type,
       Map<String, String> configurations);
 
   void dropDatabase(Optional<ONodeIdentity> requester, OSessionOperationId id, String database);
@@ -25,5 +28,4 @@ public interface OLeaderContext {
   void propagateAndApply(ORaftOperation operation, OpFinished finished);
 
   OrientDBDistributed getOrientDB();
-
 }

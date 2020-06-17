@@ -10,19 +10,23 @@ import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.executor.OResultInternal;
-
 import java.lang.reflect.Array;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 public class OModifier extends SimpleNode {
 
-  protected boolean                    squareBrackets = false;
-  protected OArrayRangeSelector        arrayRange;
-  protected OOrBlock                   condition;
+  protected boolean squareBrackets = false;
+  protected OArrayRangeSelector arrayRange;
+  protected OOrBlock condition;
   protected OArraySingleValuesSelector arraySingleValues;
-  protected ORightBinaryCondition      rightBinaryCondition;
-  protected OMethodCall                methodCall;
-  protected OSuffixIdentifier          suffix;
+  protected ORightBinaryCondition rightBinaryCondition;
+  protected OMethodCall methodCall;
+  protected OSuffixIdentifier suffix;
 
   protected OModifier next;
 
@@ -182,31 +186,28 @@ public class OModifier extends SimpleNode {
 
   @Override
   public boolean equals(Object o) {
-    if (this == o)
-      return true;
-    if (o == null || getClass() != o.getClass())
-      return false;
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
 
     OModifier oModifier = (OModifier) o;
 
-    if (squareBrackets != oModifier.squareBrackets)
-      return false;
-    if (arrayRange != null ? !arrayRange.equals(oModifier.arrayRange) : oModifier.arrayRange != null)
-      return false;
+    if (squareBrackets != oModifier.squareBrackets) return false;
+    if (arrayRange != null
+        ? !arrayRange.equals(oModifier.arrayRange)
+        : oModifier.arrayRange != null) return false;
     if (condition != null ? !condition.equals(oModifier.condition) : oModifier.condition != null)
       return false;
-    if (arraySingleValues != null ? !arraySingleValues.equals(oModifier.arraySingleValues) : oModifier.arraySingleValues != null)
-      return false;
-    if (rightBinaryCondition != null ?
-        !rightBinaryCondition.equals(oModifier.rightBinaryCondition) :
-        oModifier.rightBinaryCondition != null)
-      return false;
-    if (methodCall != null ? !methodCall.equals(oModifier.methodCall) : oModifier.methodCall != null)
-      return false;
-    if (suffix != null ? !suffix.equals(oModifier.suffix) : oModifier.suffix != null)
-      return false;
-    if (next != null ? !next.equals(oModifier.next) : oModifier.next != null)
-      return false;
+    if (arraySingleValues != null
+        ? !arraySingleValues.equals(oModifier.arraySingleValues)
+        : oModifier.arraySingleValues != null) return false;
+    if (rightBinaryCondition != null
+        ? !rightBinaryCondition.equals(oModifier.rightBinaryCondition)
+        : oModifier.rightBinaryCondition != null) return false;
+    if (methodCall != null
+        ? !methodCall.equals(oModifier.methodCall)
+        : oModifier.methodCall != null) return false;
+    if (suffix != null ? !suffix.equals(oModifier.suffix) : oModifier.suffix != null) return false;
+    if (next != null ? !next.equals(oModifier.next) : oModifier.next != null) return false;
 
     return true;
   }
@@ -246,7 +247,6 @@ public class OModifier extends SimpleNode {
     if (next != null) {
       next.extractSubQueries(collector);
     }
-
   }
 
   public boolean refersToParent() {
@@ -286,18 +286,20 @@ public class OModifier extends SimpleNode {
   private void doSetValue(OResult currentRecord, Object target, Object value, OCommandContext ctx) {
     value = OUpdateItem.convertResultToDocument(value);
     if (methodCall != null) {
-      //do nothing
+      // do nothing
     } else if (suffix != null) {
       suffix.setValue(target, value, ctx);
     } else if (arrayRange != null) {
       arrayRange.setValue(target, value, ctx);
     } else if (condition != null) {
-      //TODO
-      throw new UnsupportedOperationException("SET value on conditional filtering will be supported soon");
+      // TODO
+      throw new UnsupportedOperationException(
+          "SET value on conditional filtering will be supported soon");
     } else if (arraySingleValues != null) {
       arraySingleValues.setValue(currentRecord, target, value, ctx);
     } else if (rightBinaryCondition != null) {
-      throw new UnsupportedOperationException("SET value on conditional filtering will be supported soon");
+      throw new UnsupportedOperationException(
+          "SET value on conditional filtering will be supported soon");
     }
   }
 
@@ -332,10 +334,10 @@ public class OModifier extends SimpleNode {
       return rightBinaryCondition.execute(currentRecord, target, ctx);
     }
     return null;
-
   }
 
-  public void applyRemove(Object currentValue, OResultInternal originalRecord, OCommandContext ctx) {
+  public void applyRemove(
+      Object currentValue, OResultInternal originalRecord, OCommandContext ctx) {
     if (next != null) {
       Object val = calculateLocal(originalRecord, currentValue, ctx);
       next.applyRemove(val, originalRecord, ctx);
@@ -343,19 +345,20 @@ public class OModifier extends SimpleNode {
       if (arrayRange != null) {
         arrayRange.applyRemove(currentValue, originalRecord, ctx);
       } else if (condition != null) {
-//TODO
-        throw new UnsupportedOperationException("Remove on conditional filtering will be supported soon");
+        // TODO
+        throw new UnsupportedOperationException(
+            "Remove on conditional filtering will be supported soon");
       } else if (arraySingleValues != null) {
         arraySingleValues.applyRemove(currentValue, originalRecord, ctx);
       } else if (rightBinaryCondition != null) {
-        throw new UnsupportedOperationException("Remove on conditional filtering will be supported soon");
+        throw new UnsupportedOperationException(
+            "Remove on conditional filtering will be supported soon");
       } else if (suffix != null) {
         suffix.applyRemove(currentValue, ctx);
       } else {
         throw new OCommandExecutionException("cannot apply REMOVE " + toString());
       }
     }
-
   }
 
   public OResult serialize() {
@@ -421,7 +424,7 @@ public class OModifier extends SimpleNode {
 
   public boolean isCacheable() {
     if (arrayRange != null || arraySingleValues != null || rightBinaryCondition != null) {
-      return false;//TODO enhance a bit
+      return false; // TODO enhance a bit
     }
     if (condition != null && !condition.isCacheable()) {
       return false;
@@ -437,13 +440,14 @@ public class OModifier extends SimpleNode {
     }
 
     return true;
-
   }
 
   public boolean isIndexChain(OCommandContext ctx, OClass clazz) {
     if (suffix != null && suffix.isBaseIdentifier()) {
       OProperty prop = clazz.getProperty(suffix.identifier.getStringValue());
-      if (prop != null && prop.getAllIndexes().stream().anyMatch(idx -> idx.getDefinition().getFields().size() == 1)) {
+      if (prop != null
+          && prop.getAllIndexes().stream()
+              .anyMatch(idx -> idx.getDefinition().getFields().size() == 1)) {
         if (next != null) {
           OClass linkedClazz = prop.getLinkedClass();
           return next.isIndexChain(ctx, linkedClazz);

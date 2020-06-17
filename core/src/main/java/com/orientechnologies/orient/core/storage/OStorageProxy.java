@@ -21,9 +21,8 @@ package com.orientechnologies.orient.core.storage;
 
 /**
  * Tagged interface for proxy storage implementation
- * 
+ *
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
- * 
  */
 public interface OStorageProxy extends OStorage {
   String getUserName();
@@ -33,5 +32,4 @@ public interface OStorageProxy extends OStorage {
   int addUser();
 
   int removeUser();
-
 }

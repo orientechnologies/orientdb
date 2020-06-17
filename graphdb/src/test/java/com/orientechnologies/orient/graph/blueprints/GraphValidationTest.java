@@ -18,14 +18,10 @@
 
 package com.orientechnologies.orient.graph.blueprints;
 
-import com.orientechnologies.orient.core.metadata.schema.OProperty;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
-
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.exception.OValidationException;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
+import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.tinkerpop.blueprints.Direction;
@@ -36,6 +32,9 @@ import com.tinkerpop.blueprints.impls.orient.OrientGraphFactory;
 import com.tinkerpop.blueprints.impls.orient.OrientGraphNoTx;
 import com.tinkerpop.blueprints.impls.orient.OrientVertex;
 import com.tinkerpop.blueprints.impls.orient.OrientVertexType;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Test;
 
 public class GraphValidationTest {
 
@@ -105,7 +104,8 @@ public class GraphValidationTest {
   @Test
   public void fail() {
     setupSchema();
-    final OrientGraphFactory orientGraphFactory = new OrientGraphFactory(URL, "admin", "admin").setupPool(1, 10);
+    final OrientGraphFactory orientGraphFactory =
+        new OrientGraphFactory(URL, "admin", "admin").setupPool(1, 10);
     OrientGraph graph = orientGraphFactory.getTx();
     try {
 
@@ -174,7 +174,11 @@ public class GraphValidationTest {
       OrientVertexType CmEdgeBaseType = graphNoTx.createVertexType("CmEdgeBase", "V");
       CmEdgeBaseType.setStrictMode(true);
 
-      OClass mOClass = database.getMetadata().getSchema().createClass("M", database.getMetadata().getSchema().getClass("V"));
+      OClass mOClass =
+          database
+              .getMetadata()
+              .getSchema()
+              .createClass("M", database.getMetadata().getSchema().getClass("V"));
       mOClass.createProperty("name", OType.STRING).setMandatory(true).setNotNull(true);
       mOClass.setStrictMode(true);
 
@@ -192,17 +196,17 @@ public class GraphValidationTest {
     prop = testType.createProperty("name", OType.STRING).setReadonly(true);
     graphNoTx.shutdown();
 
-    Assert.assertTrue(prop.isReadonly()); //this one passes
+    Assert.assertTrue(prop.isReadonly()); // this one passes
 
     OrientGraph graph = new OrientGraph(URL);
     try {
       OrientVertex vert1 = graph.addVertex("class:Test", "name", "Sam");
       graph.commit();
 
-      vert1.setProperty("name", "Ben"); //should throw an exception
+      vert1.setProperty("name", "Ben"); // should throw an exception
       graph.commit();
 
-      Assert.assertEquals(vert1.getProperty("name"), "Sam");  //fails
+      Assert.assertEquals(vert1.getProperty("name"), "Sam"); // fails
     } finally {
       graph.shutdown();
     }
@@ -218,7 +222,7 @@ public class GraphValidationTest {
     try {
       vert1.setProperty("age", 4);
     } catch (OValidationException e) {
-      Assert.assertEquals((int) vert1.getProperty("age"), 2); //this fails
+      Assert.assertEquals((int) vert1.getProperty("age"), 2); // this fails
     } finally {
       graphNoTx.shutdown();
     }

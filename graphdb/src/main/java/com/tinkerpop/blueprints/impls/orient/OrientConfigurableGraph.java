@@ -15,72 +15,70 @@
  *  *  limitations under the License.
  *  *
  *  * For more information: http://orientdb.com
- *  
+ *
  */
 
 package com.tinkerpop.blueprints.impls.orient;
 
-import com.orientechnologies.orient.client.remote.OStorageRemote;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
-import org.apache.commons.configuration.Configuration;
-
 import com.orientechnologies.orient.core.intent.OIntent;
-
 import java.util.Map;
+import org.apache.commons.configuration.Configuration;
 
 /**
  * Base class to manage graph settings.
  *
  * @author Luca Garulli (l.garulli--(at)--orientdb.com) (http://orientdb.com)
- *
  */
 public abstract class OrientConfigurableGraph {
   protected Settings settings = new Settings();
 
-  protected static final boolean     USE_LIGHTWEIGHT_EDGES_DEFAULT                    = false;
-  protected static final boolean     USE_CLASS_FOR_EDGE_LABEL_DEFAULT                 = true;
-  protected static final boolean     USE_CLASS_FOR_VERTEX_LABEL_DEFAULT               = true;
-  protected static final boolean     KEEP_IN_MEMORY_REFERENCES_DEFAULT                = false;
-  protected static final boolean     USE_VERTEX_FIELDS_FOR_EDGE_LABELS                = true;
-  protected static final boolean     SAVE_ORIGINAL_IDS_DEFAULT                        = false;
-  protected static final boolean     STANDARD_ELEMENT_CONSTRAINTS_DEFAULT             = true;
-  protected static final boolean     STANDARD_EXCEPTIONS                              = false;
-  protected static final boolean     WARN_ON_FORCE_CLOSING_TX_DEFAULT                 = true;
-  protected static final boolean     AUTO_SCALE_EDGE_TYPE_DEFAULT                     = false;
-  protected static final boolean     USE_LOG_DEFAULT                                  = true;
-  protected static final int         EDGE_CONTAINER_EMBEDDED_2_TREE_THRESHOLD_DEFAULT = -1;
-  protected static final int         EDGE_CONTAINER_TREE_2_EMBEDDED_THRESHOLD_DEFAULT = -1;
-  protected static final THREAD_MODE THREAD_MODE_DEFAULT                              = THREAD_MODE.AUTOSET_IFNULL;
-  protected static final boolean     AUTO_START_TX_DEFAULT                            = true;
-  protected static final boolean     REQUIRE_TRANSACTION_DEFAULT                      = false;
-  protected static final boolean     STANDARD_TX_REQUIRE_FOR_SQL_OPERATIONS           = true;
-  protected static final int         STANDARD_MAX_RETRIES                             = 50;
+  protected static final boolean USE_LIGHTWEIGHT_EDGES_DEFAULT = false;
+  protected static final boolean USE_CLASS_FOR_EDGE_LABEL_DEFAULT = true;
+  protected static final boolean USE_CLASS_FOR_VERTEX_LABEL_DEFAULT = true;
+  protected static final boolean KEEP_IN_MEMORY_REFERENCES_DEFAULT = false;
+  protected static final boolean USE_VERTEX_FIELDS_FOR_EDGE_LABELS = true;
+  protected static final boolean SAVE_ORIGINAL_IDS_DEFAULT = false;
+  protected static final boolean STANDARD_ELEMENT_CONSTRAINTS_DEFAULT = true;
+  protected static final boolean STANDARD_EXCEPTIONS = false;
+  protected static final boolean WARN_ON_FORCE_CLOSING_TX_DEFAULT = true;
+  protected static final boolean AUTO_SCALE_EDGE_TYPE_DEFAULT = false;
+  protected static final boolean USE_LOG_DEFAULT = true;
+  protected static final int EDGE_CONTAINER_EMBEDDED_2_TREE_THRESHOLD_DEFAULT = -1;
+  protected static final int EDGE_CONTAINER_TREE_2_EMBEDDED_THRESHOLD_DEFAULT = -1;
+  protected static final THREAD_MODE THREAD_MODE_DEFAULT = THREAD_MODE.AUTOSET_IFNULL;
+  protected static final boolean AUTO_START_TX_DEFAULT = true;
+  protected static final boolean REQUIRE_TRANSACTION_DEFAULT = false;
+  protected static final boolean STANDARD_TX_REQUIRE_FOR_SQL_OPERATIONS = true;
+  protected static final int STANDARD_MAX_RETRIES = 50;
 
   public enum THREAD_MODE {
-    MANUAL, AUTOSET_IFNULL, ALWAYS_AUTOSET
+    MANUAL,
+    AUTOSET_IFNULL,
+    ALWAYS_AUTOSET
   }
 
   public static class Settings {
 
-    private Boolean     useLightweightEdges                 = null;
-    private Boolean     useClassForEdgeLabel                = null;
-    private Boolean     useClassForVertexLabel              = null;
-    private Boolean     keepInMemoryReferences              = null;
-    private Boolean     useVertexFieldsForEdgeLabels        = null;
-    private Boolean     saveOriginalIds                     = null;
-    private Boolean     standardElementConstraints          = null;
-    private Boolean     standardExceptions                  = null;
-    private Boolean     warnOnForceClosingTx                = null;
-    private Boolean     autoScaleEdgeType                   = null;
-    private Integer     edgeContainerEmbedded2TreeThreshold = null;
-    private Integer     edgeContainerTree2EmbeddedThreshold = null;
-    private THREAD_MODE threadMode                          = null;
-    private Boolean     autoStartTx                         = null;
-    private Boolean     txRequiredForSQLGraphOperations     = null;
-    private Boolean     requireTransaction                  = null;
-    private Boolean     useLog                              = null;
-    private String      connectionStrategy                  = "STICKY";
-    private Integer     maxRetries                          = null;
+    private Boolean useLightweightEdges = null;
+    private Boolean useClassForEdgeLabel = null;
+    private Boolean useClassForVertexLabel = null;
+    private Boolean keepInMemoryReferences = null;
+    private Boolean useVertexFieldsForEdgeLabels = null;
+    private Boolean saveOriginalIds = null;
+    private Boolean standardElementConstraints = null;
+    private Boolean standardExceptions = null;
+    private Boolean warnOnForceClosingTx = null;
+    private Boolean autoScaleEdgeType = null;
+    private Integer edgeContainerEmbedded2TreeThreshold = null;
+    private Integer edgeContainerTree2EmbeddedThreshold = null;
+    private THREAD_MODE threadMode = null;
+    private Boolean autoStartTx = null;
+    private Boolean txRequiredForSQLGraphOperations = null;
+    private Boolean requireTransaction = null;
+    private Boolean useLog = null;
+    private String connectionStrategy = "STICKY";
+    private Integer maxRetries = null;
 
     public Settings copy() {
       final Settings copy = new Settings();
@@ -171,9 +169,7 @@ public abstract class OrientConfigurableGraph {
       }
     }
 
-    /**
-     * Returns true if is using lightweight edges, otherwise false.
-     */
+    /** Returns true if is using lightweight edges, otherwise false. */
     public boolean isUseLightweightEdges() {
       if (useLightweightEdges == null) {
         return USE_LIGHTWEIGHT_EDGES_DEFAULT;
@@ -181,16 +177,12 @@ public abstract class OrientConfigurableGraph {
       return useLightweightEdges;
     }
 
-    /**
-     * Changes the setting about usage of lightweight edges.
-     */
+    /** Changes the setting about usage of lightweight edges. */
     public void setUseLightweightEdges(final boolean useDynamicEdges) {
       useLightweightEdges = useDynamicEdges;
     }
 
-    /**
-     * Returns true if is using auto scale edge type, otherwise false.
-     */
+    /** Returns true if is using auto scale edge type, otherwise false. */
     public boolean isAutoScaleEdgeType() {
       if (autoScaleEdgeType == null) {
         return AUTO_SCALE_EDGE_TYPE_DEFAULT;
@@ -199,17 +191,12 @@ public abstract class OrientConfigurableGraph {
       return autoScaleEdgeType;
     }
 
-    /**
-     * Changes the setting about usage of auto scale edge type.
-     */
+    /** Changes the setting about usage of auto scale edge type. */
     public void setAutoScaleEdgeType(final boolean autoScaleEdgeType) {
       this.autoScaleEdgeType = autoScaleEdgeType;
-
     }
 
-    /**
-     * Returns true if is using transaction logs.
-     */
+    /** Returns true if is using transaction logs. */
     public boolean isUseLog() {
       if (useLog == null) {
         return USE_LOG_DEFAULT;
@@ -218,12 +205,9 @@ public abstract class OrientConfigurableGraph {
       return useLog;
     }
 
-    /**
-     * Changes the setting about usage of transaction log.
-     */
+    /** Changes the setting about usage of transaction log. */
     public void setUseLog(final boolean useLog) {
       this.useLog = useLog;
-
     }
 
     public String getConnectionStrategy() {
@@ -235,7 +219,8 @@ public abstract class OrientConfigurableGraph {
     }
 
     /**
-     * Returns the minimum number of edges for edge containers to transform the underlying structure from embedded to tree.
+     * Returns the minimum number of edges for edge containers to transform the underlying structure
+     * from embedded to tree.
      */
     public int getEdgeContainerEmbedded2TreeThreshold() {
       if (edgeContainerEmbedded2TreeThreshold == null) {
@@ -245,15 +230,17 @@ public abstract class OrientConfigurableGraph {
     }
 
     /**
-     * Changes the minimum number of edges for edge containers to transform the underlying structure from embedded to tree. Use -1
-     * to disable transformation.
+     * Changes the minimum number of edges for edge containers to transform the underlying structure
+     * from embedded to tree. Use -1 to disable transformation.
      */
-    public void setEdgeContainerEmbedded2TreeThreshold(final int edgeContainerEmbedded2TreeThreshold) {
+    public void setEdgeContainerEmbedded2TreeThreshold(
+        final int edgeContainerEmbedded2TreeThreshold) {
       this.edgeContainerEmbedded2TreeThreshold = edgeContainerEmbedded2TreeThreshold;
     }
 
     /**
-     * Returns the minimum number of edges for edge containers to transform the underlying structure from tree to embedded.
+     * Returns the minimum number of edges for edge containers to transform the underlying structure
+     * from tree to embedded.
      */
     public int getEdgeContainerTree2EmbeddedThreshold() {
       if (edgeContainerTree2EmbeddedThreshold == null) {
@@ -263,16 +250,17 @@ public abstract class OrientConfigurableGraph {
     }
 
     /**
-     * Changes the minimum number of edges for edge containers to transform the underlying structure from tree to embedded. Use -1
-     * to disable transformation.
+     * Changes the minimum number of edges for edge containers to transform the underlying structure
+     * from tree to embedded. Use -1 to disable transformation.
      */
-    public void setEdgeContainerTree2EmbeddedThreshold(final int edgeContainerTree2EmbeddedThreshold) {
+    public void setEdgeContainerTree2EmbeddedThreshold(
+        final int edgeContainerTree2EmbeddedThreshold) {
       this.edgeContainerTree2EmbeddedThreshold = edgeContainerTree2EmbeddedThreshold;
     }
 
     /**
-     * Tells if a transaction is started automatically when the graph is changed. This affects only when a transaction hasn't been
-     * started. Default is true.
+     * Tells if a transaction is started automatically when the graph is changed. This affects only
+     * when a transaction hasn't been started. Default is true.
      *
      * @return
      */
@@ -284,8 +272,8 @@ public abstract class OrientConfigurableGraph {
     }
 
     /**
-     * If enabled auto starts a new transaction right before the graph is changed. This affects only when a transaction hasn't been
-     * started. Default is true.
+     * If enabled auto starts a new transaction right before the graph is changed. This affects only
+     * when a transaction hasn't been started. Default is true.
      *
      * @param autoStartTx
      */
@@ -294,7 +282,8 @@ public abstract class OrientConfigurableGraph {
     }
 
     /**
-     * Returns true if it is required that all modification operations are executed inside a transaction.
+     * Returns true if it is required that all modification operations are executed inside a
+     * transaction.
      */
     public boolean isRequireTransaction() {
       if (requireTransaction == null) {
@@ -311,8 +300,8 @@ public abstract class OrientConfigurableGraph {
     }
 
     /**
-     * Changes the setting about usage of transactions on graph modification for SQL commands (create/remove vertex, create/remove
-     * edge).
+     * Changes the setting about usage of transactions on graph modification for SQL commands
+     * (create/remove vertex, create/remove edge).
      *
      * @since v2.2.0
      */
@@ -321,8 +310,8 @@ public abstract class OrientConfigurableGraph {
     }
 
     /**
-     * Returns true if usage of transactions is needed on graph modification for SQL commands (create/remove vertex, create/remove
-     * edge).
+     * Returns true if usage of transactions is needed on graph modification for SQL commands
+     * (create/remove vertex, create/remove edge).
      *
      * @since v2.2.0
      */
@@ -333,9 +322,7 @@ public abstract class OrientConfigurableGraph {
       return txRequiredForSQLGraphOperations;
     }
 
-    /**
-     * Returns true if it saves the original Id, otherwise false.
-     */
+    /** Returns true if it saves the original Id, otherwise false. */
     public boolean isSaveOriginalIds() {
       if (saveOriginalIds == null) {
         return SAVE_ORIGINAL_IDS_DEFAULT;
@@ -343,16 +330,12 @@ public abstract class OrientConfigurableGraph {
       return saveOriginalIds;
     }
 
-    /**
-     * Changes the setting about usage of lightweight edges.
-     */
+    /** Changes the setting about usage of lightweight edges. */
     public void setSaveOriginalIds(final boolean saveIds) {
       saveOriginalIds = saveIds;
     }
 
-    /**
-     * Returns true if the references are kept in memory.
-     */
+    /** Returns true if the references are kept in memory. */
     public boolean isKeepInMemoryReferences() {
       if (keepInMemoryReferences == null) {
         return KEEP_IN_MEMORY_REFERENCES_DEFAULT;
@@ -360,16 +343,12 @@ public abstract class OrientConfigurableGraph {
       return keepInMemoryReferences;
     }
 
-    /**
-     * Changes the setting about using references in memory.
-     */
+    /** Changes the setting about using references in memory. */
     public void setKeepInMemoryReferences(boolean useReferences) {
       keepInMemoryReferences = useReferences;
     }
 
-    /**
-     * Returns true if the class are use for Edge labels.
-     */
+    /** Returns true if the class are use for Edge labels. */
     public boolean isUseClassForEdgeLabel() {
       if (useClassForEdgeLabel == null) {
         return USE_CLASS_FOR_EDGE_LABEL_DEFAULT;
@@ -377,16 +356,12 @@ public abstract class OrientConfigurableGraph {
       return useClassForEdgeLabel;
     }
 
-    /**
-     * Changes the setting to use the Edge class for Edge labels.
-     */
+    /** Changes the setting to use the Edge class for Edge labels. */
     public void setUseClassForEdgeLabel(final boolean useCustomClassesForEdges) {
       useClassForEdgeLabel = useCustomClassesForEdges;
     }
 
-    /**
-     * Returns true if the class are use for Vertex labels.
-     */
+    /** Returns true if the class are use for Vertex labels. */
     public boolean isUseClassForVertexLabel() {
       if (useClassForVertexLabel == null) {
         return USE_CLASS_FOR_VERTEX_LABEL_DEFAULT;
@@ -394,16 +369,14 @@ public abstract class OrientConfigurableGraph {
       return useClassForVertexLabel;
     }
 
-    /**
-     * Changes the setting to use the Vertex class for Vertex labels.
-     */
+    /** Changes the setting to use the Vertex class for Vertex labels. */
     public void setUseClassForVertexLabel(final boolean useCustomClassesForVertex) {
       this.useClassForVertexLabel = useCustomClassesForVertex;
     }
 
     /**
-     * Returns true if the out/in fields in vertex are post-fixed with edge labels. This improves traversal time by partitioning
-     * edges on different collections, one per Edge's class.
+     * Returns true if the out/in fields in vertex are post-fixed with edge labels. This improves
+     * traversal time by partitioning edges on different collections, one per Edge's class.
      */
     public boolean isUseVertexFieldsForEdgeLabels() {
       if (useVertexFieldsForEdgeLabels == null) {
@@ -413,8 +386,8 @@ public abstract class OrientConfigurableGraph {
     }
 
     /**
-     * Changes the setting to postfix vertices fields with edge labels. This improves traversal time by partitioning edges on
-     * different collections, one per Edge's class.
+     * Changes the setting to postfix vertices fields with edge labels. This improves traversal time
+     * by partitioning edges on different collections, one per Edge's class.
      */
     public void setUseVertexFieldsForEdgeLabels(final boolean useVertexFieldsForEdgeLabels) {
       this.useVertexFieldsForEdgeLabels = useVertexFieldsForEdgeLabels;
@@ -423,10 +396,10 @@ public abstract class OrientConfigurableGraph {
     /**
      * Returns true if Blueprints standard exceptions are used:
      * <li>
-     * <ul>
-     * IllegalStateException instead of ORecordNotFoundException when the record was not found
+     *
+     *     <ul>
+     *       IllegalStateException instead of ORecordNotFoundException when the record was not found
      * </ul>
-     * </li>
      */
     public boolean isStandardElementConstraints() {
       if (standardElementConstraints == null) {
@@ -435,16 +408,12 @@ public abstract class OrientConfigurableGraph {
       return standardElementConstraints;
     }
 
-    /**
-     * Changes the setting to apply the Blueprints standard constraints against elements.
-     */
+    /** Changes the setting to apply the Blueprints standard constraints against elements. */
     public void setStandardElementConstraints(final boolean allowsPropertyValueNull) {
       this.standardElementConstraints = allowsPropertyValueNull;
     }
 
-    /**
-     * Returns true if the warning is generated on force the graph closing.
-     */
+    /** Returns true if the warning is generated on force the graph closing. */
     public boolean isStandardExceptions() {
       if (standardExceptions == null) {
         return STANDARD_EXCEPTIONS;
@@ -455,18 +424,16 @@ public abstract class OrientConfigurableGraph {
     /**
      * Changes the setting to throw Blueprints standard exceptions:
      * <li>
-     * <ul>
-     * IllegalStateException instead of ORecordNotFoundException when the record was not found
+     *
+     *     <ul>
+     *       IllegalStateException instead of ORecordNotFoundException when the record was not found
      * </ul>
-     * </li>
      */
     public void setStandardExceptions(final boolean stdExceptions) {
       this.standardExceptions = stdExceptions;
     }
 
-    /**
-     * Returns true if the warning is generated on force the graph closing.
-     */
+    /** Returns true if the warning is generated on force the graph closing. */
     public boolean isWarnOnForceClosingTx() {
       if (warnOnForceClosingTx == null) {
         return WARN_ON_FORCE_CLOSING_TX_DEFAULT;
@@ -474,28 +441,26 @@ public abstract class OrientConfigurableGraph {
       return warnOnForceClosingTx;
     }
 
-    /**
-     * Changes the setting to generate a warning if the graph closing has been forced.
-     */
+    /** Changes the setting to generate a warning if the graph closing has been forced. */
     public void setWarnOnForceClosingTx(final boolean warnOnSchemaChangeInTx) {
       this.warnOnForceClosingTx = warnOnSchemaChangeInTx;
     }
 
     /**
      * Returns the current thread mode:
+     *
      * <ul>
-     * <li><b>MANUAL</b> the user has to manually invoke the current database in Thread Local:
-     * ODatabaseRecordThreadLocal.instance().set(graph.getRawGraph());</li>
-     * <li><b>AUTOSET_IFNULL</b> (default) each call assures the current graph instance is set in the Thread Local only if no one
-     * was set before</li>
-     * <li><b>ALWAYS_AUTOSET</b> each call assures the current graph instance is set in the Thread Local</li>
+     *   <li><b>MANUAL</b> the user has to manually invoke the current database in Thread Local:
+     *       ODatabaseRecordThreadLocal.instance().set(graph.getRawGraph());
+     *   <li><b>AUTOSET_IFNULL</b> (default) each call assures the current graph instance is set in
+     *       the Thread Local only if no one was set before
+     *   <li><b>ALWAYS_AUTOSET</b> each call assures the current graph instance is set in the Thread
+     *       Local
      * </ul>
      *
      * @return Current Graph instance to allow calls in chain (fluent interface)
-     *
      * @see #setThreadMode(THREAD_MODE)
      */
-
     public THREAD_MODE getThreadMode() {
       if (threadMode == null) {
         return THREAD_MODE_DEFAULT;
@@ -505,18 +470,18 @@ public abstract class OrientConfigurableGraph {
 
     /**
      * Changes the thread mode:
+     *
      * <ul>
-     * <li><b>MANUAL</b> the user has to manually invoke the current database in Thread Local:
-     * ODatabaseRecordThreadLocal.instance().set(graph.getRawGraph());</li>
-     * <li><b>AUTOSET_IFNULL</b> (default) each call assures the current graph instance is set in the Thread Local only if no one
-     * was set before</li>
-     * <li><b>ALWAYS_AUTOSET</b> each call assures the current graph instance is set in the Thread Local</li>
+     *   <li><b>MANUAL</b> the user has to manually invoke the current database in Thread Local:
+     *       ODatabaseRecordThreadLocal.instance().set(graph.getRawGraph());
+     *   <li><b>AUTOSET_IFNULL</b> (default) each call assures the current graph instance is set in
+     *       the Thread Local only if no one was set before
+     *   <li><b>ALWAYS_AUTOSET</b> each call assures the current graph instance is set in the Thread
+     *       Local
      * </ul>
      *
      * @param iControl Value to set
-     *
      * @return Current Graph instance to allow calls in chain (fluent interface)
-     *
      * @see #getThreadMode()
      */
     public void setThreadMode(final THREAD_MODE iControl) {
@@ -524,7 +489,8 @@ public abstract class OrientConfigurableGraph {
     }
 
     /**
-     * Returns the maximum number of retry in case of auto managed OConcurrentModificationException (like addEdge).
+     * Returns the maximum number of retry in case of auto managed OConcurrentModificationException
+     * (like addEdge).
      */
     public int getMaxRetries() {
       if (maxRetries == null) {
@@ -534,36 +500,32 @@ public abstract class OrientConfigurableGraph {
     }
 
     /**
-     * Changes the maximum number of retry in case of auto managed OConcurrentModificationException (like addEdge).
+     * Changes the maximum number of retry in case of auto managed OConcurrentModificationException
+     * (like addEdge).
      */
     public void setMaxRetries(final int maxRetries) {
       this.maxRetries = maxRetries;
     }
   }
 
-  protected OrientConfigurableGraph() {
-  }
+  protected OrientConfigurableGraph() {}
 
   public abstract void declareIntent(OIntent iIntent);
 
-  /**
-   * Returns true if is using lightweight edges, otherwise false.
-   */
+  /** Returns true if is using lightweight edges, otherwise false. */
   public boolean isUseLightweightEdges() {
     return settings.isUseLightweightEdges();
   }
 
-  /**
-   * Changes the setting about usage of lightweight edges.
-   */
+  /** Changes the setting about usage of lightweight edges. */
   public OrientConfigurableGraph setUseLightweightEdges(final boolean useDynamicEdges) {
     settings.setUseLightweightEdges(useDynamicEdges);
     return this;
   }
 
   /**
-   * Returns true if usage of transactions is needed on graph modification for SQL commands (create/remove vertex, create/remove
-   * edge).
+   * Returns true if usage of transactions is needed on graph modification for SQL commands
+   * (create/remove vertex, create/remove edge).
    *
    * @since v2.2.0
    */
@@ -572,8 +534,8 @@ public abstract class OrientConfigurableGraph {
   }
 
   /**
-   * Changes the setting about usage of transactions on graph modification for SQL commands (create/remove vertex, create/remove
-   * edge).
+   * Changes the setting about usage of transactions on graph modification for SQL commands
+   * (create/remove vertex, create/remove edge).
    *
    * @since v2.2.0
    */
@@ -582,56 +544,56 @@ public abstract class OrientConfigurableGraph {
     return this;
   }
 
-  /**
-   * Returns true if is using auto scale edge type, otherwise false.
-   */
+  /** Returns true if is using auto scale edge type, otherwise false. */
   public boolean isAutoScaleEdgeType() {
     return settings.isAutoScaleEdgeType();
   }
 
-  /**
-   * Changes the setting about usage of auto scale edge type.
-   */
+  /** Changes the setting about usage of auto scale edge type. */
   public OrientConfigurableGraph setAutoScaleEdgeType(final boolean autoScaleEdgeType) {
     settings.setAutoScaleEdgeType(autoScaleEdgeType);
     return this;
   }
 
   /**
-   * Returns the minimum number of edges for edge containers to transform the underlying structure from embedded to tree.
+   * Returns the minimum number of edges for edge containers to transform the underlying structure
+   * from embedded to tree.
    */
   public int getEdgeContainerEmbedded2TreeThreshold() {
     return settings.getEdgeContainerEmbedded2TreeThreshold();
   }
 
   /**
-   * Changes the minimum number of edges for edge containers to transform the underlying structure from embedded to tree. Use -1 to
-   * disable transformation.
+   * Changes the minimum number of edges for edge containers to transform the underlying structure
+   * from embedded to tree. Use -1 to disable transformation.
    */
-  public OrientConfigurableGraph setEdgeContainerEmbedded2TreeThreshold(final int edgeContainerEmbedded2TreeThreshold) {
+  public OrientConfigurableGraph setEdgeContainerEmbedded2TreeThreshold(
+      final int edgeContainerEmbedded2TreeThreshold) {
     this.settings.setEdgeContainerEmbedded2TreeThreshold(edgeContainerEmbedded2TreeThreshold);
     return this;
   }
 
   /**
-   * Returns the minimum number of edges for edge containers to transform the underlying structure from tree to embedded.
+   * Returns the minimum number of edges for edge containers to transform the underlying structure
+   * from tree to embedded.
    */
   public int getEdgeContainerTree2EmbeddedThreshold() {
     return settings.getEdgeContainerTree2EmbeddedThreshold();
   }
 
   /**
-   * Changes the minimum number of edges for edge containers to transform the underlying structure from tree to embedded. Use -1 to
-   * disable transformation.
+   * Changes the minimum number of edges for edge containers to transform the underlying structure
+   * from tree to embedded. Use -1 to disable transformation.
    */
-  public OrientConfigurableGraph setEdgeContainerTree2EmbeddedThreshold(final int edgeContainerTree2EmbeddedThreshold) {
+  public OrientConfigurableGraph setEdgeContainerTree2EmbeddedThreshold(
+      final int edgeContainerTree2EmbeddedThreshold) {
     this.settings.edgeContainerTree2EmbeddedThreshold = edgeContainerTree2EmbeddedThreshold;
     return this;
   }
 
   /**
-   * Tells if a transaction is started automatically when the graph is changed. This affects only when a transaction hasn't been
-   * started. Default is true.
+   * Tells if a transaction is started automatically when the graph is changed. This affects only
+   * when a transaction hasn't been started. Default is true.
    *
    * @return
    */
@@ -640,8 +602,8 @@ public abstract class OrientConfigurableGraph {
   }
 
   /**
-   * If enabled auto starts a new transaction right before the graph is changed. This affects only when a transaction hasn't been
-   * started. Default is true.
+   * If enabled auto starts a new transaction right before the graph is changed. This affects only
+   * when a transaction hasn't been started. Default is true.
    *
    * @param autoStartTx
    */
@@ -657,95 +619,78 @@ public abstract class OrientConfigurableGraph {
     this.settings.setRequireTransaction(requireTransaction);
   }
 
-  /**
-   * Returns true if it saves the original Id, otherwise false.
-   */
+  /** Returns true if it saves the original Id, otherwise false. */
   public boolean isSaveOriginalIds() {
     return settings.isSaveOriginalIds();
   }
 
-  /**
-   * Changes the setting about usage of lightweight edges.
-   */
+  /** Changes the setting about usage of lightweight edges. */
   public OrientConfigurableGraph setSaveOriginalIds(final boolean saveIds) {
     settings.setSaveOriginalIds(saveIds);
     return this;
   }
 
-  /**
-   * Returns true if the references are kept in memory.
-   */
+  /** Returns true if the references are kept in memory. */
   public boolean isKeepInMemoryReferences() {
     return settings.isKeepInMemoryReferences();
   }
 
-  /**
-   * Changes the setting about using references in memory.
-   */
+  /** Changes the setting about using references in memory. */
   public OrientConfigurableGraph setKeepInMemoryReferences(boolean useReferences) {
     settings.setKeepInMemoryReferences(useReferences);
     return this;
   }
 
-  /**
-   * Returns true if the class are use for Edge labels.
-   */
+  /** Returns true if the class are use for Edge labels. */
   public boolean isUseClassForEdgeLabel() {
     return settings.isUseClassForEdgeLabel();
   }
 
-  /**
-   * Changes the setting to use the Edge class for Edge labels.
-   */
+  /** Changes the setting to use the Edge class for Edge labels. */
   public OrientConfigurableGraph setUseClassForEdgeLabel(final boolean useCustomClassesForEdges) {
     settings.setUseClassForEdgeLabel(useCustomClassesForEdges);
     return this;
   }
 
-  /**
-   * Returns true if the class are use for Vertex labels.
-   */
+  /** Returns true if the class are use for Vertex labels. */
   public boolean isUseClassForVertexLabel() {
     return settings.isUseClassForVertexLabel();
   }
 
-  /**
-   * Changes the setting to use the Vertex class for Vertex labels.
-   */
-  public OrientConfigurableGraph setUseClassForVertexLabel(final boolean useCustomClassesForVertex) {
+  /** Changes the setting to use the Vertex class for Vertex labels. */
+  public OrientConfigurableGraph setUseClassForVertexLabel(
+      final boolean useCustomClassesForVertex) {
     this.settings.setUseClassForVertexLabel(useCustomClassesForVertex);
     return this;
   }
 
   /**
-   * Returns true if the out/in fields in vertex are post-fixed with edge labels. This improves traversal time by partitioning edges
-   * on different collections, one per Edge's class.
+   * Returns true if the out/in fields in vertex are post-fixed with edge labels. This improves
+   * traversal time by partitioning edges on different collections, one per Edge's class.
    */
   public boolean isUseVertexFieldsForEdgeLabels() {
     return settings.isUseVertexFieldsForEdgeLabels();
   }
 
   /**
-   * Changes the setting to postfix vertices fields with edge labels. This improves traversal time by partitioning edges on
-   * different collections, one per Edge's class.
+   * Changes the setting to postfix vertices fields with edge labels. This improves traversal time
+   * by partitioning edges on different collections, one per Edge's class.
    */
   @Deprecated
-  public OrientConfigurableGraph setUseVertexFieldsForEdgeLabels(final boolean useVertexFieldsForEdgeLabels) {
-//    this.settings.setUseVertexFieldsForEdgeLabels(useVertexFieldsForEdgeLabels);
+  public OrientConfigurableGraph setUseVertexFieldsForEdgeLabels(
+      final boolean useVertexFieldsForEdgeLabels) {
+    //    this.settings.setUseVertexFieldsForEdgeLabels(useVertexFieldsForEdgeLabels);
     return this;
   }
 
-  /**
-   * Returns true if Blueprints standard constraints are applied to elements.
-   */
+  /** Returns true if Blueprints standard constraints are applied to elements. */
   public boolean isStandardElementConstraints() {
     return settings.isStandardElementConstraints();
   }
 
-  /**
-   * Changes the setting to apply the Blueprints standard constraints against elements.
-   */
-  public OrientConfigurableGraph setStandardElementConstraints(final boolean allowsPropertyValueNull) {
+  /** Changes the setting to apply the Blueprints standard constraints against elements. */
+  public OrientConfigurableGraph setStandardElementConstraints(
+      final boolean allowsPropertyValueNull) {
     this.settings.setStandardElementConstraints(allowsPropertyValueNull);
     return this;
   }
@@ -753,10 +698,10 @@ public abstract class OrientConfigurableGraph {
   /**
    * Returns true if Blueprints standard exceptions are used:
    * <li>
-   * <ul>
-   * IllegalStateException instead of ORecordNotFoundException when the record was not found
+   *
+   *     <ul>
+   *       IllegalStateException instead of ORecordNotFoundException when the record was not found
    * </ul>
-   * </li>
    */
   public boolean isStandardExceptions() {
     return settings.isStandardExceptions();
@@ -765,26 +710,22 @@ public abstract class OrientConfigurableGraph {
   /**
    * Changes the setting to throw Blueprints standard exceptions:
    * <li>
-   * <ul>
-   * IllegalStateException instead of ORecordNotFoundException when the record was not found
+   *
+   *     <ul>
+   *       IllegalStateException instead of ORecordNotFoundException when the record was not found
    * </ul>
-   * </li>
    */
   public OrientConfigurableGraph setStandardExceptions(final boolean stdExceptions) {
     this.settings.setStandardExceptions(stdExceptions);
     return this;
   }
 
-  /**
-   * Returns true if the warning is generated on force the graph closing.
-   */
+  /** Returns true if the warning is generated on force the graph closing. */
   public boolean isWarnOnForceClosingTx() {
     return settings.isWarnOnForceClosingTx();
   }
 
-  /**
-   * Changes the setting to generate a warning if the graph closing has been forced.
-   */
+  /** Changes the setting to generate a warning if the graph closing has been forced. */
   public OrientConfigurableGraph setWarnOnForceClosingTx(final boolean warnOnSchemaChangeInTx) {
     this.settings.setWarnOnForceClosingTx(warnOnSchemaChangeInTx);
     return this;
@@ -792,37 +733,37 @@ public abstract class OrientConfigurableGraph {
 
   /**
    * Returns the current thread mode:
+   *
    * <ul>
-   * <li><b>MANUAL</b> the user has to manually invoke the current database in Thread Local:
-   * ODatabaseRecordThreadLocal.instance().set(graph.getRawGraph());</li>
-   * <li><b>AUTOSET_IFNULL</b> (default) each call assures the current graph instance is set in the Thread Local only if no one was
-   * set before</li>
-   * <li><b>ALWAYS_AUTOSET</b> each call assures the current graph instance is set in the Thread Local</li>
+   *   <li><b>MANUAL</b> the user has to manually invoke the current database in Thread Local:
+   *       ODatabaseRecordThreadLocal.instance().set(graph.getRawGraph());
+   *   <li><b>AUTOSET_IFNULL</b> (default) each call assures the current graph instance is set in
+   *       the Thread Local only if no one was set before
+   *   <li><b>ALWAYS_AUTOSET</b> each call assures the current graph instance is set in the Thread
+   *       Local
    * </ul>
    *
    * @return Current Graph instance to allow calls in chain (fluent interface)
-   *
    * @see #setThreadMode(THREAD_MODE)
    */
-
   public THREAD_MODE getThreadMode() {
     return settings.getThreadMode();
   }
 
   /**
    * Changes the thread mode:
+   *
    * <ul>
-   * <li><b>MANUAL</b> the user has to manually invoke the current database in Thread Local:
-   * ODatabaseRecordThreadLocal.instance().set(graph.getRawGraph());</li>
-   * <li><b>AUTOSET_IFNULL</b> (default) each call assures the current graph instance is set in the Thread Local only if no one was
-   * set before</li>
-   * <li><b>ALWAYS_AUTOSET</b> each call assures the current graph instance is set in the Thread Local</li>
+   *   <li><b>MANUAL</b> the user has to manually invoke the current database in Thread Local:
+   *       ODatabaseRecordThreadLocal.instance().set(graph.getRawGraph());
+   *   <li><b>AUTOSET_IFNULL</b> (default) each call assures the current graph instance is set in
+   *       the Thread Local only if no one was set before
+   *   <li><b>ALWAYS_AUTOSET</b> each call assures the current graph instance is set in the Thread
+   *       Local
    * </ul>
    *
    * @param iControl Value to set
-   *
    * @return Current Graph instance to allow calls in chain (fluent interface)
-   *
    * @see #getThreadMode()
    */
   public OrientConfigurableGraph setThreadMode(final THREAD_MODE iControl) {
@@ -841,19 +782,21 @@ public abstract class OrientConfigurableGraph {
   }
 
   public void setConnectionStrategy(final String connectionStrategy) {
-    this.setProperty(OGlobalConfiguration.CLIENT_CONNECTION_STRATEGY.getKey(),connectionStrategy);
+    this.setProperty(OGlobalConfiguration.CLIENT_CONNECTION_STRATEGY.getKey(), connectionStrategy);
     this.settings.setConnectionStrategy(connectionStrategy);
   }
 
   /**
-   * Returns the maximum number of retries in case of auto managed OConcurrentModificationException (like addEdge).
+   * Returns the maximum number of retries in case of auto managed OConcurrentModificationException
+   * (like addEdge).
    */
   public int getMaxRetries() {
     return this.settings.getMaxRetries();
   }
 
   /**
-   * Changes the maximum number of retries in case of auto managed OConcurrentModificationException (like addEdge).
+   * Changes the maximum number of retries in case of auto managed OConcurrentModificationException
+   * (like addEdge).
    */
   public void setMaxRetries(final int maxRetries) {
     this.settings.setMaxRetries(maxRetries);
@@ -861,6 +804,7 @@ public abstract class OrientConfigurableGraph {
 
   /**
    * Builds a OrientGraph instance passing a configuration. Supported configuration settings are:
+   *
    * <table>
    * <tr>
    * <td><b>Name</b></td>
@@ -937,52 +881,51 @@ public abstract class OrientConfigurableGraph {
    * @param configuration of graph
    */
   protected void init(final Configuration configuration) {
-    final Boolean saveOriginalIds = configuration.getBoolean("blueprints.orientdb.saveOriginalIds", null);
-    if (saveOriginalIds != null)
-      setSaveOriginalIds(saveOriginalIds);
+    final Boolean saveOriginalIds =
+        configuration.getBoolean("blueprints.orientdb.saveOriginalIds", null);
+    if (saveOriginalIds != null) setSaveOriginalIds(saveOriginalIds);
 
-    final Boolean keepInMemoryReferences = configuration.getBoolean("blueprints.orientdb.keepInMemoryReferences", null);
-    if (keepInMemoryReferences != null)
-      setKeepInMemoryReferences(keepInMemoryReferences);
+    final Boolean keepInMemoryReferences =
+        configuration.getBoolean("blueprints.orientdb.keepInMemoryReferences", null);
+    if (keepInMemoryReferences != null) setKeepInMemoryReferences(keepInMemoryReferences);
 
-    final Boolean useCustomClassesForEdges = configuration.getBoolean("blueprints.orientdb.useCustomClassesForEdges", null);
-    if (useCustomClassesForEdges != null)
-      setUseClassForEdgeLabel(useCustomClassesForEdges);
+    final Boolean useCustomClassesForEdges =
+        configuration.getBoolean("blueprints.orientdb.useCustomClassesForEdges", null);
+    if (useCustomClassesForEdges != null) setUseClassForEdgeLabel(useCustomClassesForEdges);
 
-    final Boolean useCustomClassesForVertex = configuration.getBoolean("blueprints.orientdb.useCustomClassesForVertex", null);
-    if (useCustomClassesForVertex != null)
-      setUseClassForVertexLabel(useCustomClassesForVertex);
+    final Boolean useCustomClassesForVertex =
+        configuration.getBoolean("blueprints.orientdb.useCustomClassesForVertex", null);
+    if (useCustomClassesForVertex != null) setUseClassForVertexLabel(useCustomClassesForVertex);
 
-    final Boolean useVertexFieldsForEdgeLabels = configuration.getBoolean("blueprints.orientdb.useVertexFieldsForEdgeLabels", null);
+    final Boolean useVertexFieldsForEdgeLabels =
+        configuration.getBoolean("blueprints.orientdb.useVertexFieldsForEdgeLabels", null);
     if (useVertexFieldsForEdgeLabels != null)
       setUseVertexFieldsForEdgeLabels(useVertexFieldsForEdgeLabels);
 
-    final Boolean lightweightEdges = configuration.getBoolean("blueprints.orientdb.lightweightEdges", null);
-    if (lightweightEdges != null)
-      setUseLightweightEdges(lightweightEdges);
+    final Boolean lightweightEdges =
+        configuration.getBoolean("blueprints.orientdb.lightweightEdges", null);
+    if (lightweightEdges != null) setUseLightweightEdges(lightweightEdges);
 
-    final Boolean autoScaleEdgeType = configuration.getBoolean("blueprints.orientdb.autoScaleEdgeType", null);
-    if (autoScaleEdgeType != null)
-      setAutoScaleEdgeType(autoScaleEdgeType);
+    final Boolean autoScaleEdgeType =
+        configuration.getBoolean("blueprints.orientdb.autoScaleEdgeType", null);
+    if (autoScaleEdgeType != null) setAutoScaleEdgeType(autoScaleEdgeType);
 
-    final Boolean requireTransaction = configuration.getBoolean("blueprints.orientdb.requireTransaction", null);
-    if (requireTransaction != null)
-      setRequireTransaction(requireTransaction);
+    final Boolean requireTransaction =
+        configuration.getBoolean("blueprints.orientdb.requireTransaction", null);
+    if (requireTransaction != null) setRequireTransaction(requireTransaction);
 
-    final Boolean txRequiredForSQLGraphOperations = configuration
-        .getBoolean("blueprints.orientdb.txRequiredForSQLGraphOperations", null);
+    final Boolean txRequiredForSQLGraphOperations =
+        configuration.getBoolean("blueprints.orientdb.txRequiredForSQLGraphOperations", null);
     if (txRequiredForSQLGraphOperations != null)
       setTxRequiredForSQLGraphOperations(txRequiredForSQLGraphOperations);
 
     final Integer maxRetries = configuration.getInt("blueprints.orientdb.maxRetries", 50);
-    if (maxRetries != null)
-      setMaxRetries(maxRetries);
+    if (maxRetries != null) setMaxRetries(maxRetries);
   }
 
   protected abstract Object setProperty(final String iName, final Object iValue);
 
   protected abstract Object getProperty(final String iName);
 
-  protected abstract Map<String,Object> getProperties();
-
+  protected abstract Map<String, Object> getProperties();
 }

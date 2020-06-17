@@ -1,5 +1,10 @@
 package com.orientechnologies.orient.core.record.impl;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
+
+
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
@@ -11,17 +16,15 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
-
 public class CollectionOfLinkInNestedDocumentTest {
 
   private ODatabaseDocument db;
 
   @Before
   public void before() {
-    db = new ODatabaseDocumentTx("memory:" + CollectionOfLinkInNestedDocumentTest.class.getSimpleName());
+    db =
+        new ODatabaseDocumentTx(
+            "memory:" + CollectionOfLinkInNestedDocumentTest.class.getSimpleName());
     db.create();
   }
 

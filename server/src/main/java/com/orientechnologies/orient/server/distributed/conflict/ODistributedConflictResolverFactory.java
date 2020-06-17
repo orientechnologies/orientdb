@@ -19,18 +19,23 @@ import com.orientechnologies.common.factory.OConfigurableStatelessFactory;
 
 /**
  * Factory to manage the distributed conflict resolved implementations.
- * 
+ *
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
  */
-public class ODistributedConflictResolverFactory extends OConfigurableStatelessFactory<String, ODistributedConflictResolver> {
+public class ODistributedConflictResolverFactory
+    extends OConfigurableStatelessFactory<String, ODistributedConflictResolver> {
   public ODistributedConflictResolverFactory() {
     final OQuorumDistributedConflictResolver def = new OQuorumDistributedConflictResolver();
 
     registerImplementation(OQuorumDistributedConflictResolver.NAME, def);
-    registerImplementation(OMajorityDistributedConflictResolver.NAME, new OMajorityDistributedConflictResolver());
-    registerImplementation(OContentDistributedConflictResolver.NAME, new OContentDistributedConflictResolver());
-    registerImplementation(OVersionDistributedConflictResolver.NAME, new OVersionDistributedConflictResolver());
-    registerImplementation(ODCDistributedConflictResolver.NAME, new ODCDistributedConflictResolver());
+    registerImplementation(
+        OMajorityDistributedConflictResolver.NAME, new OMajorityDistributedConflictResolver());
+    registerImplementation(
+        OContentDistributedConflictResolver.NAME, new OContentDistributedConflictResolver());
+    registerImplementation(
+        OVersionDistributedConflictResolver.NAME, new OVersionDistributedConflictResolver());
+    registerImplementation(
+        ODCDistributedConflictResolver.NAME, new ODCDistributedConflictResolver());
 
     setDefaultImplementation(def);
   }

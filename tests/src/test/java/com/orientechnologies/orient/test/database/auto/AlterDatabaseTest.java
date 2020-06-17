@@ -15,16 +15,15 @@
  *  *  limitations under the License.
  *  *
  *  * For more information: http://orientdb.com
- *  
+ *
  */
 package com.orientechnologies.orient.test.database.auto;
 
 import com.orientechnologies.orient.core.sql.OCommandSQL;
+import java.io.IOException;
 import org.testng.annotations.Optional;
 import org.testng.annotations.Parameters;
 import org.testng.annotations.Test;
-
-import java.io.IOException;
 
 @Test
 public class AlterDatabaseTest extends DocumentDBBaseTest {

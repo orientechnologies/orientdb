@@ -22,15 +22,16 @@ package com.orientechnologies.orient.core.sql;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
-import org.junit.*;
+import java.util.List;
+import org.junit.AfterClass;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.BeforeClass;
+import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
-import java.util.List;
-
-/**
- * @author Enrico Risa
- */
+/** @author Enrico Risa */
 @RunWith(JUnit4.class)
 public class OCommandExecutorSQLCreateClassTest {
 
@@ -38,7 +39,9 @@ public class OCommandExecutorSQLCreateClassTest {
 
   @BeforeClass
   public static void init() throws Exception {
-    db = new ODatabaseDocumentTx("memory:" + OCommandExecutorSQLCreateClassTest.class.getSimpleName());
+    db =
+        new ODatabaseDocumentTx(
+            "memory:" + OCommandExecutorSQLCreateClassTest.class.getSimpleName());
     if (db.exists()) {
       db.open("admin", "admin");
       db.drop();
@@ -58,9 +61,7 @@ public class OCommandExecutorSQLCreateClassTest {
   }
 
   @Before
-  public void setUp() throws Exception {
-
-  }
+  public void setUp() throws Exception {}
 
   @Test
   public void testCreateWithSuperclasses() throws Exception {
@@ -77,7 +78,5 @@ public class OCommandExecutorSQLCreateClassTest {
 
     Assert.assertTrue(superClassesNames.contains("User"));
     Assert.assertTrue(superClassesNames.contains("V"));
-
   }
-
 }

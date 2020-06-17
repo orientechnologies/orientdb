@@ -3,22 +3,19 @@ package com.orientechnologies.orient.core.sql.executor;
 import com.orientechnologies.common.concur.OTimeoutException;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.id.ORID;
-
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 
-/**
- * Created by luigidellaquila on 08/07/16.
- */
+/** Created by luigidellaquila on 08/07/16. */
 public class DistinctExecutionStep extends AbstractExecutionStep {
 
   private Set<OResult> pastItems = new HashSet<>();
-  private ORidSet      pastRids  = new ORidSet();
+  private ORidSet pastRids = new ORidSet();
 
   private OResultSet lastResult = null;
-  private OResult    nextValue;
+  private OResult nextValue;
 
   private long cost = 0;
 
@@ -29,53 +26,52 @@ public class DistinctExecutionStep extends AbstractExecutionStep {
   @Override
   public OResultSet syncPull(OCommandContext ctx, int nRecords) throws OTimeoutException {
 
-    OResultSet result = new OResultSet() {
-      private int nextLocal = 0;
+    OResultSet result =
+        new OResultSet() {
+          private int nextLocal = 0;
 
-      @Override
-      public boolean hasNext() {
-        if (nextLocal >= nRecords) {
-          return false;
-        }
-        if (nextValue != null) {
-          return true;
-        }
-        fetchNext(nRecords);
-        return nextValue != null;
-      }
+          @Override
+          public boolean hasNext() {
+            if (nextLocal >= nRecords) {
+              return false;
+            }
+            if (nextValue != null) {
+              return true;
+            }
+            fetchNext(nRecords);
+            return nextValue != null;
+          }
 
-      @Override
-      public OResult next() {
-        if (nextLocal >= nRecords) {
-          throw new IllegalStateException();
-        }
-        if (nextValue == null) {
-          fetchNext(nRecords);
-        }
-        if (nextValue == null) {
-          throw new IllegalStateException();
-        }
-        OResult result = nextValue;
-        nextValue = null;
-        nextLocal++;
-        return result;
-      }
+          @Override
+          public OResult next() {
+            if (nextLocal >= nRecords) {
+              throw new IllegalStateException();
+            }
+            if (nextValue == null) {
+              fetchNext(nRecords);
+            }
+            if (nextValue == null) {
+              throw new IllegalStateException();
+            }
+            OResult result = nextValue;
+            nextValue = null;
+            nextLocal++;
+            return result;
+          }
 
-      @Override
-      public void close() {
+          @Override
+          public void close() {}
 
-      }
+          @Override
+          public Optional<OExecutionPlan> getExecutionPlan() {
+            return Optional.empty();
+          }
 
-      @Override
-      public Optional<OExecutionPlan> getExecutionPlan() {
-        return Optional.empty();
-      }
-
-      @Override
-      public Map<String, Long> getQueryStats() {
-        return null;
-      }
-    };
+          @Override
+          public Map<String, Long> getQueryStats() {
+            return null;
+          }
+        };
 
     return result;
   }
@@ -133,9 +129,7 @@ public class DistinctExecutionStep extends AbstractExecutionStep {
   }
 
   @Override
-  public void sendTimeout() {
-
-  }
+  public void sendTimeout() {}
 
   @Override
   public void close() {

@@ -21,14 +21,11 @@ package com.orientechnologies.orient.etl.source;
 import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-
 import java.io.BufferedReader;
 import java.io.Reader;
 import java.io.StringReader;
 
-/**
- * ETL Source created with a string content.
- */
+/** ETL Source created with a string content. */
 public class OETLContentSource extends OETLAbstractSource {
   protected BufferedReader reader;
 
@@ -39,30 +36,24 @@ public class OETLContentSource extends OETLAbstractSource {
     final Object value = iConfiguration.field("value");
     if (value != null) {
       String stringContent;
-      if (value instanceof ODocument)
-        stringContent = ((ODocument) value).toJSON((String) null);
+      if (value instanceof ODocument) stringContent = ((ODocument) value).toJSON((String) null);
       else if (OMultiValue.isMultiValue(value)) {
         stringContent = "[";
         int i = 0;
         for (Object o : OMultiValue.getMultiValueIterable(value)) {
           if (o != null) {
-            if (i > 0)
-              stringContent += ",";
+            if (i > 0) stringContent += ",";
 
-            if (o instanceof ODocument)
-              stringContent += ((ODocument) o).toJSON((String) null);
-            else
-              stringContent += o.toString();
+            if (o instanceof ODocument) stringContent += ((ODocument) o).toJSON((String) null);
+            else stringContent += o.toString();
             ++i;
           }
         }
         stringContent += "]";
-      } else
-        stringContent = value.toString();
+      } else stringContent = value.toString();
 
       this.reader = new BufferedReader(new StringReader(stringContent));
-    } else
-      throw new IllegalArgumentException(getName() + " Source has no 'value' set");
+    } else throw new IllegalArgumentException(getName() + " Source has no 'value' set");
   }
 
   @Override

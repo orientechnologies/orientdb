@@ -1,5 +1,8 @@
 package com.orientechnologies.orient.server.distributed;
 
+import static org.junit.Assert.assertTrue;
+
+
 import com.orientechnologies.orient.core.db.ODatabaseSession;
 import com.orientechnologies.orient.core.db.ODatabaseType;
 import com.orientechnologies.orient.core.db.OrientDB;
@@ -14,14 +17,12 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
-import static org.junit.Assert.assertTrue;
-
 public class SimpleIndexDistributedIT {
 
-  private OServer          server0;
-  private OServer          server1;
-  private OServer          server2;
-  private OrientDB         remote;
+  private OServer server0;
+  private OServer server1;
+  private OServer server2;
+  private OrientDB remote;
   private ODatabaseSession session;
 
   @Before
@@ -68,5 +69,4 @@ public class SimpleIndexDistributedIT {
     server2.shutdown();
     ODatabaseDocumentTx.closeAll();
   }
-
 }

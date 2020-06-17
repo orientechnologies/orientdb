@@ -6,38 +6,45 @@ import com.orientechnologies.orient.core.config.OStorageClusterConfiguration;
 import com.orientechnologies.orient.core.config.OStorageConfiguration;
 import com.orientechnologies.orient.core.config.OStorageEntryConfiguration;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperation;
-
 import java.text.SimpleDateFormat;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Set;
+import java.util.TimeZone;
 
 public class OStorageConfigurationRemote implements OStorageConfiguration {
 
   private OContextConfiguration contextConfiguration;
 
-  private String                                  dateFormat;
-  private String                                  dateTimeFormat;
-  private String                                  name;
-  private int                                     version;
-  private String                                  directory;
+  private String dateFormat;
+  private String dateTimeFormat;
+  private String name;
+  private int version;
+  private String directory;
   private Map<String, OStorageEntryConfiguration> properties;
-  private String                                  schemaRecordId;
-  private String                                  indexMgrRecordId;
-  private String                                  clusterSelection;
-  private String                                  conflictStrategy;
-  private boolean                                 validationEnabled;
-  private String                                  localeLanguage;
-  private int                                     minimumClusters;
-  private boolean                                 strictSql;
-  private String                                  charset;
-  private TimeZone                                timeZone;
-  private String                                  localeCountry;
-  private String                                  recordSerializer;
-  private int                                     recordSerializerVersion;
-  private int                                     binaryFormatVersion;
-  private List<OStorageClusterConfiguration>      clusters;
-  private String                                  networkRecordSerializer;
+  private String schemaRecordId;
+  private String indexMgrRecordId;
+  private String clusterSelection;
+  private String conflictStrategy;
+  private boolean validationEnabled;
+  private String localeLanguage;
+  private int minimumClusters;
+  private boolean strictSql;
+  private String charset;
+  private TimeZone timeZone;
+  private String localeCountry;
+  private String recordSerializer;
+  private int recordSerializerVersion;
+  private int binaryFormatVersion;
+  private List<OStorageClusterConfiguration> clusters;
+  private String networkRecordSerializer;
 
-  public OStorageConfigurationRemote(String networkRecordSerializer, OStorageConfigurationPayload payload,
+  public OStorageConfigurationRemote(
+      String networkRecordSerializer,
+      OStorageConfigurationPayload payload,
       OContextConfiguration contextConfiguration) {
     this.networkRecordSerializer = networkRecordSerializer;
     this.contextConfiguration = contextConfiguration;
@@ -184,8 +191,7 @@ public class OStorageConfigurationRemote implements OStorageConfiguration {
 
   public void dropCluster(int iClusterId) {
     // this just remove it locally before a proper update from the push arrive
-    if (clusters.size() > iClusterId)
-      clusters.set(iClusterId, null);
+    if (clusters.size() > iClusterId) clusters.set(iClusterId, null);
   }
 
   @Override
@@ -240,11 +246,13 @@ public class OStorageConfigurationRemote implements OStorageConfiguration {
 
   @Override
   public String getUuid() {
-    throw new UnsupportedOperationException("Current version of the binary protocol do not support uuid");
+    throw new UnsupportedOperationException(
+        "Current version of the binary protocol do not support uuid");
   }
 
   @Override
   public void setUuid(OAtomicOperation atomicOperation, String uuid) {
-    throw new UnsupportedOperationException("Current version of the binary protocol do not support uuid");
+    throw new UnsupportedOperationException(
+        "Current version of the binary protocol do not support uuid");
   }
 }

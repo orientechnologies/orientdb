@@ -1,5 +1,10 @@
 package com.orientechnologies.orient.server;
 
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
+import static org.mockito.Mockito.atLeastOnce;
+
+
 import com.orientechnologies.orient.core.command.OCommandResultListener;
 import com.orientechnologies.orient.core.config.OContextConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
@@ -13,6 +18,7 @@ import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryServ
 import com.orientechnologies.orient.server.network.protocol.binary.OLiveCommandResultListener;
 import com.orientechnologies.orient.server.network.protocol.binary.ONetworkProtocolBinary;
 import com.orientechnologies.orient.server.token.OTokenHandlerImpl;
+import java.io.IOException;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -20,27 +26,16 @@ import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
 
-import java.io.IOException;
-
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
-import static org.mockito.Mockito.atLeastOnce;
-
-/**
- * Created by tglman on 07/06/16.
- */
+/** Created by tglman on 07/06/16. */
 public class OLiveCommandResultListenerTest {
 
-  @Mock
-  private OServer              server;
-  @Mock
-  private OChannelBinaryServer channelBinary;
+  @Mock private OServer server;
+  @Mock private OChannelBinaryServer channelBinary;
 
-  @Mock
-  private OLiveQueryListener rawListener;
+  @Mock private OLiveQueryListener rawListener;
 
-  private ONetworkProtocolBinary    protocol;
-  private OClientConnection         connection;
+  private ONetworkProtocolBinary protocol;
+  private OClientConnection connection;
   private ODatabaseDocumentInternal db;
 
   private static class TestResultListener implements OCommandResultListener {
@@ -50,9 +45,7 @@ public class OLiveCommandResultListenerTest {
     }
 
     @Override
-    public void end() {
-
-    }
+    public void end() {}
 
     @Override
     public Object getResult() {
@@ -76,13 +69,12 @@ public class OLiveCommandResultListenerTest {
     connection.setDatabase(db);
     connection.getData().setSerializationImpl(ORecordSerializerNetwork.NAME);
     Mockito.when(server.getClientConnectionManager()).thenReturn(manager);
-
-
   }
 
   @Test
   public void testSimpleMessageSend() throws IOException {
-    OLiveCommandResultListener listener = new OLiveCommandResultListener(server, connection, new TestResultListener());
+    OLiveCommandResultListener listener =
+        new OLiveCommandResultListener(server, connection, new TestResultListener());
     ORecordOperation op = new ORecordOperation(new ODocument(), ORecordOperation.CREATED);
     listener.onLiveResult(10, op);
     Mockito.verify(channelBinary, atLeastOnce()).writeBytes(Mockito.any(byte[].class));
@@ -90,8 +82,10 @@ public class OLiveCommandResultListenerTest {
 
   @Test
   public void testNetworkError() throws IOException {
-    Mockito.when(channelBinary.writeInt(Mockito.anyInt())).thenThrow(new IOException("Mock Exception"));
-    OLiveCommandResultListener listener = new OLiveCommandResultListener(server, connection, new TestResultListener());
+    Mockito.when(channelBinary.writeInt(Mockito.anyInt()))
+        .thenThrow(new IOException("Mock Exception"));
+    OLiveCommandResultListener listener =
+        new OLiveCommandResultListener(server, connection, new TestResultListener());
     OLiveQueryHook.subscribe(10, rawListener, db);
     assertTrue(OLiveQueryHook.getOpsReference(db).getQueueThread().hasToken(10));
     ORecordOperation op = new ORecordOperation(new ODocument(), ORecordOperation.CREATED);
@@ -103,5 +97,4 @@ public class OLiveCommandResultListenerTest {
   public void after() {
     db.drop();
   }
-
 }

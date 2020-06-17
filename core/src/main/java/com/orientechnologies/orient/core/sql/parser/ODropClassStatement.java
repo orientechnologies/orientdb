@@ -9,14 +9,13 @@ import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.sql.executor.OInternalResultSet;
 import com.orientechnologies.orient.core.sql.executor.OResultInternal;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
-
 import java.util.Map;
 
 public class ODropClassStatement extends ODDLStatement {
 
   public OIdentifier name;
   public boolean ifExists = false;
-  public boolean unsafe   = false;
+  public boolean unsafe = false;
 
   public ODropClassStatement(int id) {
     super(id);
@@ -26,7 +25,8 @@ public class ODropClassStatement extends ODDLStatement {
     super(p, id);
   }
 
-  @Override public OResultSet executeDDL(OCommandContext ctx) {
+  @Override
+  public OResultSet executeDDL(OCommandContext ctx) {
     OSchema schema = ctx.getDatabase().getMetadata().getSchema();
     OClass clazz = schema.getClass(name.getStringValue());
     if (clazz == null) {
@@ -37,14 +37,18 @@ public class ODropClassStatement extends ODDLStatement {
     }
 
     if (!unsafe && clazz.count() > 0) {
-      //check vertex or edge
+      // check vertex or edge
       if (clazz.isVertexType()) {
-        throw new OCommandExecutionException("'DROP CLASS' command cannot drop class '" + name.getStringValue()
-            + "' because it contains Vertices. Use 'DELETE VERTEX' command first to avoid broken edges in a database, or apply the 'UNSAFE' keyword to force it");
+        throw new OCommandExecutionException(
+            "'DROP CLASS' command cannot drop class '"
+                + name.getStringValue()
+                + "' because it contains Vertices. Use 'DELETE VERTEX' command first to avoid broken edges in a database, or apply the 'UNSAFE' keyword to force it");
       } else if (clazz.isEdgeType()) {
         // FOUND EDGE CLASS
-        throw new OCommandExecutionException("'DROP CLASS' command cannot drop class '" + name.getStringValue()
-            + "' because it contains Edges. Use 'DELETE EDGE' command first to avoid broken vertices in a database, or apply the 'UNSAFE' keyword to force it");
+        throw new OCommandExecutionException(
+            "'DROP CLASS' command cannot drop class '"
+                + name.getStringValue()
+                + "' because it contains Edges. Use 'DELETE EDGE' command first to avoid broken vertices in a database, or apply the 'UNSAFE' keyword to force it");
       }
     }
 
@@ -58,7 +62,8 @@ public class ODropClassStatement extends ODDLStatement {
     return rs;
   }
 
-  @Override public void toString(Map<Object, Object> params, StringBuilder builder) {
+  @Override
+  public void toString(Map<Object, Object> params, StringBuilder builder) {
     builder.append("DROP CLASS ");
     name.toString(params, builder);
     if (ifExists) {
@@ -69,7 +74,8 @@ public class ODropClassStatement extends ODDLStatement {
     }
   }
 
-  @Override public ODropClassStatement copy() {
+  @Override
+  public ODropClassStatement copy() {
     ODropClassStatement result = new ODropClassStatement(-1);
     result.name = name == null ? null : name.copy();
     result.ifExists = ifExists;
@@ -77,25 +83,22 @@ public class ODropClassStatement extends ODDLStatement {
     return result;
   }
 
-  @Override public boolean equals(Object o) {
-    if (this == o)
-      return true;
-    if (o == null || getClass() != o.getClass())
-      return false;
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
 
     ODropClassStatement that = (ODropClassStatement) o;
 
-    if (unsafe != that.unsafe)
-      return false;
-    if(ifExists != that.ifExists)
-      return false;
-    if (name != null ? !name.equals(that.name) : that.name != null)
-      return false;
+    if (unsafe != that.unsafe) return false;
+    if (ifExists != that.ifExists) return false;
+    if (name != null ? !name.equals(that.name) : that.name != null) return false;
 
     return true;
   }
 
-  @Override public int hashCode() {
+  @Override
+  public int hashCode() {
     int result = name != null ? name.hashCode() : 0;
     result = 31 * result + (unsafe ? 1 : 0);
     return result;

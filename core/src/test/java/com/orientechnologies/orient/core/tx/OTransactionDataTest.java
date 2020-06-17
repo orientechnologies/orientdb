@@ -1,23 +1,32 @@
 package com.orientechnologies.orient.core.tx;
 
-import com.orientechnologies.orient.core.command.OCommandOutputListener;
-import com.orientechnologies.orient.core.db.*;
+import static org.junit.Assert.assertArrayEquals;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
+
+
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
+import com.orientechnologies.orient.core.db.ODatabaseSession;
+import com.orientechnologies.orient.core.db.ODatabaseType;
+import com.orientechnologies.orient.core.db.OrientDB;
+import com.orientechnologies.orient.core.db.OrientDBConfig;
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
 import com.orientechnologies.orient.core.db.tool.ODatabaseExport;
 import com.orientechnologies.orient.core.db.tool.ODatabaseImport;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.record.impl.ODocumentEntry;
-import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
-import org.junit.Test;
-
-import java.io.*;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
+import java.io.IOException;
 import java.util.Iterator;
 import java.util.Optional;
-
-import static org.junit.Assert.*;
+import org.junit.Test;
 
 public class OTransactionDataTest {
 
@@ -25,15 +34,23 @@ public class OTransactionDataTest {
   public void testReadWriteTransactionData() throws IOException {
 
     OTransactionData data = new OTransactionData(new OTransactionId(Optional.of("one"), 1, 2));
-    byte[] recordData = new byte[] { 1, 2, 3 };
+    byte[] recordData = new byte[] {1, 2, 3};
     ORecordId recordId = new ORecordId(10, 10);
-    OTransactionDataChange change = new OTransactionDataChange(ORecordOperation.CREATED, ODocument.RECORD_TYPE, recordId,
-        Optional.of(recordData), 1, true);
+    OTransactionDataChange change =
+        new OTransactionDataChange(
+            ORecordOperation.CREATED,
+            ODocument.RECORD_TYPE,
+            recordId,
+            Optional.of(recordData),
+            1,
+            true);
     data.addChange(change);
 
     ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
     data.write(new DataOutputStream(outputStream));
-    OTransactionData readData = OTransactionData.read(new DataInputStream(new ByteArrayInputStream(outputStream.toByteArray())));
+    OTransactionData readData =
+        OTransactionData.read(
+            new DataInputStream(new ByteArrayInputStream(outputStream.toByteArray())));
     assertEquals(readData.getTransactionId(), data.getTransactionId());
     assertEquals(readData.getChanges().size(), data.getChanges().size());
     OTransactionDataChange readChange = readData.getChanges().get(0);
@@ -43,7 +60,6 @@ public class OTransactionDataTest {
     assertEquals(readChange.getVersion(), change.getVersion());
     assertArrayEquals(readChange.getRecord().get(), change.getRecord().get());
     assertEquals(readChange.isContentChanged(), change.isContentChanged());
-
   }
 
   @Test
@@ -57,11 +73,13 @@ public class OTransactionDataTest {
         ODocument doc = new ODocument("test");
         db.save(doc);
         ((OTransactionInternal) db.getTransaction()).prepareSerializedOperations();
-        Iterator<byte[]> res = ((OTransactionInternal) db.getTransaction()).getSerializedOperations();
+        Iterator<byte[]> res =
+            ((OTransactionInternal) db.getTransaction()).getSerializedOperations();
         assertTrue(res.hasNext());
         byte[] entry = res.next();
-        OTransactionDataChange readChange = OTransactionDataChange
-            .deserialize(new DataInputStream(new ByteArrayInputStream(entry)));
+        OTransactionDataChange readChange =
+            OTransactionDataChange.deserialize(
+                new DataInputStream(new ByteArrayInputStream(entry)));
         assertEquals(readChange.getId(), doc.getIdentity());
         assertEquals(readChange.getType(), ORecordOperation.CREATED);
         assertEquals(readChange.getRecordType(), ODocument.RECORD_TYPE);
@@ -90,16 +108,18 @@ public class OTransactionDataTest {
         doc1.setProperty("field", "value1");
         db.save(doc1);
         db.commit();
-        ODatabaseExport export = new ODatabaseExport((ODatabaseDocumentInternal) db, backup, iText -> {
-        });
+        ODatabaseExport export =
+            new ODatabaseExport((ODatabaseDocumentInternal) db, backup, iText -> {});
         export.exportDatabase();
         export.close();
       }
       orientDB.create("test1", ODatabaseType.MEMORY);
       try (ODatabaseSession db = orientDB.open("test1", "admin", "admin")) {
-        ODatabaseImport imp = new ODatabaseImport((ODatabaseDocumentInternal) db, new ByteArrayInputStream(backup.toByteArray()),
-            iText -> {
-            });
+        ODatabaseImport imp =
+            new ODatabaseImport(
+                (ODatabaseDocumentInternal) db,
+                new ByteArrayInputStream(backup.toByteArray()),
+                iText -> {});
         imp.importDatabase();
         imp.close();
       }
@@ -114,7 +134,8 @@ public class OTransactionDataTest {
         db.command("delete from test where field='value0'").close();
 
         ((OTransactionInternal) db.getTransaction()).prepareSerializedOperations();
-        Iterator<byte[]> res = ((OTransactionInternal) db.getTransaction()).getSerializedOperations();
+        Iterator<byte[]> res =
+            ((OTransactionInternal) db.getTransaction()).getSerializedOperations();
         while (res.hasNext()) {
           data.addRecord(res.next());
         }
@@ -135,7 +156,5 @@ public class OTransactionDataTest {
         }
       }
     }
-
   }
-
 }

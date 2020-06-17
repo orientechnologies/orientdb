@@ -7,7 +7,6 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.metadata.schema.OType;
-import com.orientechnologies.orient.core.record.ODirection;
 import com.orientechnologies.orient.core.record.OEdge;
 import com.orientechnologies.orient.core.record.OVertex;
 import com.orientechnologies.orient.core.storage.ORecordDuplicatedException;
@@ -16,15 +15,10 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNull;
-
-/**
- * Created by tglman on 20/02/17.
- */
+/** Created by tglman on 20/02/17. */
 public class TestGraphOperations {
 
-  private OrientDB          orientDB;
+  private OrientDB orientDB;
   private ODatabaseDocument database;
 
   @Before
@@ -32,7 +26,6 @@ public class TestGraphOperations {
     orientDB = new OrientDB("embedded:", OrientDBConfig.defaultConfig());
     orientDB.createIfNotExists("TestGraphOperations", ODatabaseType.MEMORY);
     database = orientDB.open("TestGraphOperations", "admin", "admin");
-
   }
 
   @After
@@ -40,7 +33,6 @@ public class TestGraphOperations {
     database.close();
     orientDB.close();
   }
-
 
   @Test
   public void testEdgeUniqueConstraint() {
@@ -76,7 +68,5 @@ public class TestGraphOperations {
     edge.setProperty("key", "notunique");
 
     database.save(edge);
-
   }
-
 }

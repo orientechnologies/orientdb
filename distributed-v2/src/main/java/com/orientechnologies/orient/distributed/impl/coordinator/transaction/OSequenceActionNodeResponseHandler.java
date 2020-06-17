@@ -20,56 +20,62 @@ import com.orientechnologies.orient.distributed.impl.coordinator.ODistributedCoo
 import com.orientechnologies.orient.distributed.impl.coordinator.ONodeResponse;
 import com.orientechnologies.orient.distributed.impl.coordinator.ORequestContext;
 import com.orientechnologies.orient.distributed.impl.coordinator.OResponseHandler;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
-/**
- * @author marko
- */
+/** @author marko */
 public class OSequenceActionNodeResponseHandler implements OResponseHandler {
 
-  private       int                 responseCount     = 0;
-  private final List<ONodeIdentity> failedActionNode  = new ArrayList<>();
+  private int responseCount = 0;
+  private final List<ONodeIdentity> failedActionNode = new ArrayList<>();
   private final List<ONodeIdentity> limitReachedNodes = new ArrayList<>();
   private final OSessionOperationId operationId;
-  private       Object              senderResult      = null;
-  private final ONodeIdentity       initiator;
+  private Object senderResult = null;
+  private final ONodeIdentity initiator;
 
-//  private OSequenceActionNodeResponseHandler(){
-//    
-//  }
+  //  private OSequenceActionNodeResponseHandler(){
+  //
+  //  }
 
-  public OSequenceActionNodeResponseHandler(OSessionOperationId operationId, ONodeIdentity initiator) {
+  public OSequenceActionNodeResponseHandler(
+      OSessionOperationId operationId, ONodeIdentity initiator) {
     this.operationId = operationId;
     this.initiator = initiator;
   }
 
   @Override
-  public boolean receive(ODistributedCoordinator coordinator, ORequestContext context, ONodeIdentity member,
+  public boolean receive(
+      ODistributedCoordinator coordinator,
+      ORequestContext context,
+      ONodeIdentity member,
       ONodeResponse response) {
     responseCount++;
     OSequenceActionNodeResponse responseFromNode = (OSequenceActionNodeResponse) response;
     switch (responseFromNode.getResponseResultType()) {
-    case SUCCESS:
-      //sender result is different from null only from node that initialized whole process
-      if (senderResult == null) {
-        senderResult = responseFromNode.getResponseResult();
-      }
-      break;
-    case ERROR:
-      failedActionNode.add(member);
-      break;
-    case LIMIT_REACHED:
-      limitReachedNodes.add(member);
-      break;
+      case SUCCESS:
+        // sender result is different from null only from node that initialized whole process
+        if (senderResult == null) {
+          senderResult = responseFromNode.getResponseResult();
+        }
+        break;
+      case ERROR:
+        failedActionNode.add(member);
+        break;
+      case LIMIT_REACHED:
+        limitReachedNodes.add(member);
+        break;
     }
     if (responseCount == context.getInvolvedMembers().size()) {
       List<ONodeIdentity> failedNodesNames = failedActionNode.stream().collect(Collectors.toList());
-      List<ONodeIdentity> limitReachedNodeNames = limitReachedNodes.stream().collect(Collectors.toList());
-      OSequenceActionCoordinatorResponse submitedActionResponse = new OSequenceActionCoordinatorResponse(failedNodesNames,
-          limitReachedNodeNames, senderResult, context.getInvolvedMembers().size());
+      List<ONodeIdentity> limitReachedNodeNames =
+          limitReachedNodes.stream().collect(Collectors.toList());
+      OSequenceActionCoordinatorResponse submitedActionResponse =
+          new OSequenceActionCoordinatorResponse(
+              failedNodesNames,
+              limitReachedNodeNames,
+              senderResult,
+              context.getInvolvedMembers().size());
       coordinator.reply(initiator, operationId, submitedActionResponse);
       return true;
     }
@@ -78,8 +84,7 @@ public class OSequenceActionNodeResponseHandler implements OResponseHandler {
 
   @Override
   public boolean timeout(ODistributedCoordinator coordinator, ORequestContext context) {
-    //TODO think about timeouts
+    // TODO think about timeouts
     return false;
   }
-
 }

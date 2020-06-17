@@ -1,5 +1,9 @@
 package com.orientechnologies.orient.core.ridbag;
 
+import static com.orientechnologies.orient.core.config.OGlobalConfiguration.RID_BAG_SBTREEBONSAI_DELETE_DELAY;
+import static org.junit.Assert.assertNull;
+
+
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
@@ -15,12 +19,7 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
-import static com.orientechnologies.orient.core.config.OGlobalConfiguration.RID_BAG_SBTREEBONSAI_DELETE_DELAY;
-import static org.junit.Assert.assertNull;
-
-/**
- * Created by tglman on 01/07/16.
- */
+/** Created by tglman on 01/07/16. */
 public class SBTreeBagDeleteTest {
 
   private ODatabaseDocumentInternal db;
@@ -42,9 +41,9 @@ public class SBTreeBagDeleteTest {
 
     ODocument doc = new ODocument();
     ORidBag bag = new ORidBag();
-    int size = OGlobalConfiguration.INDEX_EMBEDDED_TO_SBTREEBONSAI_THRESHOLD.getValueAsInteger() * 2;
-    for (int i = 0; i < size; i++)
-      bag.add(new ORecordId(10, i));
+    int size =
+        OGlobalConfiguration.INDEX_EMBEDDED_TO_SBTREEBONSAI_THRESHOLD.getValueAsInteger() * 2;
+    for (int i = 0; i < size; i++) bag.add(new ORecordId(10, i));
     doc.field("bag", bag);
 
     ORID id = db.save(doc, db.getClusterNameById(db.getDefaultClusterId())).getIdentity();
@@ -61,7 +60,8 @@ public class SBTreeBagDeleteTest {
 
     Thread.sleep(100);
     ((OSBTreeCollectionManagerShared) db.getSbTreeCollectionManager()).clear();
-    OSBTreeBonsai<OIdentifiable, Integer> tree = db.getSbTreeCollectionManager().loadSBTree(pointer);
+    OSBTreeBonsai<OIdentifiable, Integer> tree =
+        db.getSbTreeCollectionManager().loadSBTree(pointer);
     assertNull(tree);
   }
 
@@ -69,9 +69,9 @@ public class SBTreeBagDeleteTest {
   public void testDeleteRidbagNoTx() throws InterruptedException {
     ODocument doc = new ODocument();
     ORidBag bag = new ORidBag();
-    int size = OGlobalConfiguration.INDEX_EMBEDDED_TO_SBTREEBONSAI_THRESHOLD.getValueAsInteger() * 2;
-    for (int i = 0; i < size; i++)
-      bag.add(new ORecordId(10, i));
+    int size =
+        OGlobalConfiguration.INDEX_EMBEDDED_TO_SBTREEBONSAI_THRESHOLD.getValueAsInteger() * 2;
+    for (int i = 0; i < size; i++) bag.add(new ORecordId(10, i));
     doc.field("bag", bag);
 
     ORID id = db.save(doc, db.getClusterNameById(db.getDefaultClusterId())).getIdentity();
@@ -86,8 +86,8 @@ public class SBTreeBagDeleteTest {
 
     Thread.sleep(100);
     ((OSBTreeCollectionManagerShared) db.getSbTreeCollectionManager()).clear();
-    OSBTreeBonsai<OIdentifiable, Integer> tree = db.getSbTreeCollectionManager().loadSBTree(pointer);
+    OSBTreeBonsai<OIdentifiable, Integer> tree =
+        db.getSbTreeCollectionManager().loadSBTree(pointer);
     assertNull(tree);
   }
-
 }

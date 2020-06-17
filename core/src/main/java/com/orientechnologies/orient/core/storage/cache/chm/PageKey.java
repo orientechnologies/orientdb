@@ -2,7 +2,7 @@ package com.orientechnologies.orient.core.storage.cache.chm;
 
 public final class PageKey {
   private final long fileId;
-  private final int  pageIndex;
+  private final int pageIndex;
 
   private int hash;
 
@@ -21,15 +21,12 @@ public final class PageKey {
 
   @Override
   public boolean equals(final Object o) {
-    if (this == o)
-      return true;
-    if (o == null || getClass() != o.getClass())
-      return false;
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
 
     final PageKey pageKey = (PageKey) o;
 
-    if (fileId != pageKey.fileId)
-      return false;
+    if (fileId != pageKey.fileId) return false;
     return pageIndex == pageKey.pageIndex;
   }
 

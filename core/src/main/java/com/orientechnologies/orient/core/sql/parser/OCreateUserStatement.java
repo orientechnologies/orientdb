@@ -7,21 +7,20 @@ import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.metadata.security.OSecurity;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
 public class OCreateUserStatement extends OSimpleExecStatement {
 
-  protected static final String USER_FIELD_NAME     = "name";
+  protected static final String USER_FIELD_NAME = "name";
   private static final String USER_FIELD_PASSWORD = "password";
-  private static final String USER_FIELD_STATUS   = "status";
-  private static final String USER_FIELD_ROLES    = "roles";
+  private static final String USER_FIELD_STATUS = "status";
+  private static final String USER_FIELD_ROLES = "roles";
 
-  private static final String DEFAULT_STATUS  = "ACTIVE";
-  private static final String DEFAULT_ROLE    = "writer";
-  private static final String ROLE_CLASS      = "ORole";
+  private static final String DEFAULT_STATUS = "ACTIVE";
+  private static final String DEFAULT_ROLE = "writer";
+  private static final String ROLE_CLASS = "ORole";
   private static final String ROLE_FIELD_NAME = "name";
 
   public OCreateUserStatement(int id) {
@@ -34,7 +33,7 @@ public class OCreateUserStatement extends OSimpleExecStatement {
 
   protected OIdentifier name;
   protected OIdentifier passwordIdentifier;
-  protected String      passwordString;
+  protected String passwordString;
 
   protected List<OIdentifier> roles = new ArrayList<>();
 
@@ -87,7 +86,8 @@ public class OCreateUserStatement extends OSimpleExecStatement {
       String roleName = this.roles.get(i).getStringValue();
       ORole role = security.getRole(roleName);
       if (role == null) {
-        throw new OCommandExecutionException("Cannot create user " + this.name + ": role " + roleName + " does not exist");
+        throw new OCommandExecutionException(
+            "Cannot create user " + this.name + ": role " + roleName + " does not exist");
       }
       if (i > 0) {
         sb.append(", ");
@@ -141,19 +141,18 @@ public class OCreateUserStatement extends OSimpleExecStatement {
 
   @Override
   public boolean equals(Object o) {
-    if (this == o)
-      return true;
-    if (o == null || getClass() != o.getClass())
-      return false;
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
 
     OCreateUserStatement that = (OCreateUserStatement) o;
 
-    if (name != null ? !name.equals(that.name) : that.name != null)
-      return false;
-    if (passwordIdentifier != null ? !passwordIdentifier.equals(that.passwordIdentifier) : that.passwordIdentifier != null)
-      return false;
-    if (passwordString != null ? !passwordString.equals(that.passwordString) : that.passwordString != null)
-      return false;
+    if (name != null ? !name.equals(that.name) : that.name != null) return false;
+    if (passwordIdentifier != null
+        ? !passwordIdentifier.equals(that.passwordIdentifier)
+        : that.passwordIdentifier != null) return false;
+    if (passwordString != null
+        ? !passwordString.equals(that.passwordString)
+        : that.passwordString != null) return false;
     return roles != null ? roles.equals(that.roles) : that.roles == null;
   }
 

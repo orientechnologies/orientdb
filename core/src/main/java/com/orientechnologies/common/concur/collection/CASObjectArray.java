@@ -5,8 +5,9 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReferenceArray;
 
 public final class CASObjectArray<T> {
-  private final AtomicInteger                                 size       = new AtomicInteger();
-  private final AtomicReferenceArray<AtomicReferenceArray<T>> containers = new AtomicReferenceArray<>(32);
+  private final AtomicInteger size = new AtomicInteger();
+  private final AtomicReferenceArray<AtomicReferenceArray<T>> containers =
+      new AtomicReferenceArray<>(32);
 
   public int add(T value) {
     Objects.requireNonNull(value);
@@ -30,7 +31,6 @@ public final class CASObjectArray<T> {
         return newIndex;
       }
     }
-
   }
 
   public void set(int index, T value, T placeholder) {
@@ -42,7 +42,7 @@ public final class CASObjectArray<T> {
     if (size <= index) {
       //noinspection StatementWithEmptyBody
       while (add(placeholder) < index) {
-        //repeat till we will not create place for the element
+        // repeat till we will not create place for the element
       }
     }
 

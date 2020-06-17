@@ -16,6 +16,12 @@
 
 package com.orientechnologies.orient.server.distributed.scenariotest;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
+
+
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseType;
 import com.orientechnologies.orient.core.db.OrientDB;
@@ -29,8 +35,6 @@ import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.orientechnologies.orient.server.distributed.ServerRun;
-import org.junit.Test;
-
 import java.io.IOException;
 import java.util.Date;
 import java.util.LinkedList;
@@ -41,13 +45,13 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.stream.Stream;
-
-import static org.junit.Assert.*;
+import org.junit.Test;
 
 /**
- * It checks the consistency in the cluster with the following scenario: - 3 server down (quorum=2) with DBs distributed as below: -
- * server1: db A, db B - server2: db B, db C - populating the databases - servers startup - each server deploys its dbs in the
- * cluster of nodes - check consistency on all servers: - all the servers have  db A, db B, db C. - db A, db B and db C are
+ * It checks the consistency in the cluster with the following scenario: - 3 server down (quorum=2)
+ * with DBs distributed as below: - server1: db A, db B - server2: db B, db C - populating the
+ * databases - servers startup - each server deploys its dbs in the cluster of nodes - check
+ * consistency on all servers: - all the servers have db A, db B, db C. - db A, db B and db C are
  * consistent on each server
  *
  * @author Gabriele Ponzi
@@ -69,7 +73,7 @@ public class MultipleDBAlignmentOnNodesJoiningIT extends AbstractScenarioTest {
     execute();
   }
 
-  public void executeTest() throws Exception {    //  TO-CHANGE
+  public void executeTest() throws Exception { //  TO-CHANGE
 
     // wait for db deploy completion
     Thread.sleep(5000L);
@@ -95,13 +99,16 @@ public class MultipleDBAlignmentOnNodesJoiningIT extends AbstractScenarioTest {
    * @throws IOException
    */
   @Override
-  protected void prepare(final boolean iCopyDatabaseToNodes, final boolean iCreateDatabase) throws IOException {
+  protected void prepare(final boolean iCopyDatabaseToNodes, final boolean iCreateDatabase)
+      throws IOException {
 
     serverInstance.remove(2);
 
     // creating databases on server1
     ServerRun master = serverInstance.get(0);
-    OrientDB orientDB = new OrientDB("embedded:" + master.getServerHome() + "/databases/", OrientDBConfig.defaultConfig());
+    OrientDB orientDB =
+        new OrientDB(
+            "embedded:" + master.getServerHome() + "/databases/", OrientDBConfig.defaultConfig());
 
     if (iCreateDatabase) {
       orientDB.create(dbA, ODatabaseType.PLOCAL);
@@ -125,12 +132,13 @@ public class MultipleDBAlignmentOnNodesJoiningIT extends AbstractScenarioTest {
     }
 
     // copying db-B on server2
-    if (iCopyDatabaseToNodes)
-      master.copyDatabase(dbB, serverInstance.get(1).getDatabasePath(dbB));
+    if (iCopyDatabaseToNodes) master.copyDatabase(dbB, serverInstance.get(1).getDatabasePath(dbB));
 
     // creating db-C on server2
     master = serverInstance.get(1);
-    OrientDB orientDB1 = new OrientDB("embedded:" + master.getServerHome() + "/databases/", OrientDBConfig.defaultConfig());
+    OrientDB orientDB1 =
+        new OrientDB(
+            "embedded:" + master.getServerHome() + "/databases/", OrientDBConfig.defaultConfig());
     if (iCreateDatabase) {
       orientDB1.create(dbC, ODatabaseType.PLOCAL);
       final ODatabaseDocument graph1 = orientDB1.open(dbC, "admin", "admin");
@@ -143,11 +151,11 @@ public class MultipleDBAlignmentOnNodesJoiningIT extends AbstractScenarioTest {
         orientDB1.close();
       }
     }
-
   }
 
   /**
-   * Event called right after the database has been created. It builds the schema and populates the db.
+   * Event called right after the database has been created. It builds the schema and populates the
+   * db.
    *
    * @param db Current database
    */
@@ -181,7 +189,6 @@ public class MultipleDBAlignmentOnNodesJoiningIT extends AbstractScenarioTest {
     } catch (Exception e) {
       e.printStackTrace();
     }
-
   }
 
   // compares a database consistency on multiple servers
@@ -198,13 +205,19 @@ public class MultipleDBAlignmentOnNodesJoiningIT extends AbstractScenarioTest {
     for (ServerRun server : checkConsistencyOnServers) {
       try {
         dbs.add(server.getServerInstance().openDatabase(databaseName, "admin", "admin"));
-        checkOnServer += server.getServerInstance().getDistributedManager().getLocalNodeName() + ",";
+        checkOnServer +=
+            server.getServerInstance().getDistributedManager().getLocalNodeName() + ",";
       } catch (Exception e) {
         fail(databaseName + " is not present on server" + server.getServerId());
       }
     }
     checkOnServer = checkOnServer.substring(0, checkOnServer.length() - 1);
-    super.banner("Checking " + databaseName + " consistency among servers...\nChecking on servers {" + checkOnServer + "}.");
+    super.banner(
+        "Checking "
+            + databaseName
+            + " consistency among servers...\nChecking on servers {"
+            + checkOnServer
+            + "}.");
 
     // class person is Present in each database
     for (ODatabaseDocument db : dbs) {
@@ -226,7 +239,12 @@ public class MultipleDBAlignmentOnNodesJoiningIT extends AbstractScenarioTest {
 
     List<ODocument> docsToCompare = new LinkedList<ODocument>();
 
-    super.banner("Checking " + databaseName + " consistency among servers...\nChecking on servers {" + checkOnServer + "}.");
+    super.banner(
+        "Checking "
+            + databaseName
+            + " consistency among servers...\nChecking on servers {"
+            + checkOnServer
+            + "}.");
 
     try {
 
@@ -242,24 +260,55 @@ public class MultipleDBAlignmentOnNodesJoiningIT extends AbstractScenarioTest {
           assertTrue(doc != null);
         }
 
-        // checking that all the records have the same version and values (each record is equal to the next one)
+        // checking that all the records have the same version and values (each record is equal to
+        // the next one)
         int k = 0;
         while (k <= docsToCompare.size() - 2) {
           assertEquals(
-              "Inconsistency detected. Record: " + docsToCompare.get(k).toString() + " ; Servers: " + (k + 1) + "," + (k + 2),
-              (Integer) docsToCompare.get(k).field("@version"), (Integer) docsToCompare.get(k + 1).field("@version"));
+              "Inconsistency detected. Record: "
+                  + docsToCompare.get(k).toString()
+                  + " ; Servers: "
+                  + (k + 1)
+                  + ","
+                  + (k + 2),
+              (Integer) docsToCompare.get(k).field("@version"),
+              (Integer) docsToCompare.get(k + 1).field("@version"));
           assertEquals(
-              "Inconsistency detected. Record: " + docsToCompare.get(k).toString() + " ; Servers: " + (k + 1) + "," + (k + 2),
-              (String) docsToCompare.get(k).field("name"), (String) docsToCompare.get(k + 1).field("name"));
+              "Inconsistency detected. Record: "
+                  + docsToCompare.get(k).toString()
+                  + " ; Servers: "
+                  + (k + 1)
+                  + ","
+                  + (k + 2),
+              (String) docsToCompare.get(k).field("name"),
+              (String) docsToCompare.get(k + 1).field("name"));
           assertEquals(
-              "Inconsistency detected. Record: " + docsToCompare.get(k).toString() + " ; Servers: " + (k + 1) + "," + (k + 2),
-              (String) docsToCompare.get(k).field("surname"), (String) docsToCompare.get(k + 1).field("surname"));
+              "Inconsistency detected. Record: "
+                  + docsToCompare.get(k).toString()
+                  + " ; Servers: "
+                  + (k + 1)
+                  + ","
+                  + (k + 2),
+              (String) docsToCompare.get(k).field("surname"),
+              (String) docsToCompare.get(k + 1).field("surname"));
           assertEquals(
-              "Inconsistency detected. Record: " + docsToCompare.get(k).toString() + " ; Servers: " + (k + 1) + "," + (k + 2),
-              (Date) docsToCompare.get(k).field("birthday"), (Date) docsToCompare.get(k + 1).field("birthday"));
+              "Inconsistency detected. Record: "
+                  + docsToCompare.get(k).toString()
+                  + " ; Servers: "
+                  + (k + 1)
+                  + ","
+                  + (k + 2),
+              (Date) docsToCompare.get(k).field("birthday"),
+              (Date) docsToCompare.get(k + 1).field("birthday"));
           assertEquals(
-              "Inconsistency detected. Record: " + docsToCompare.get(k).toString() + " ; Servers: " + (k + 1) + "," + (k + 2),
-              (String) docsToCompare.get(k).field("children"), (String) docsToCompare.get(k + 1).field("children"));
+              "Inconsistency detected. Record: "
+                  + docsToCompare.get(k).toString()
+                  + " ; Servers: "
+                  + (k + 1)
+                  + ","
+                  + (k + 2),
+              (String) docsToCompare.get(k).field("children"),
+              (String) docsToCompare.get(k + 1).field("children"));
           k++;
         }
         docsToCompare.clear();
@@ -276,14 +325,15 @@ public class MultipleDBAlignmentOnNodesJoiningIT extends AbstractScenarioTest {
         db.close();
       }
     }
-
   }
 
   protected ODocument loadRecord(ODatabaseDocument database, int i) {
     final String uniqueId = database.getName() + "-" + i;
     database.activateOnCurrentThread();
-    List<ODocument> result = database
-        .query(new OSQLSynchQuery<ODocument>("select from Person where name = 'Billy" + uniqueId + "'"));
+    List<ODocument> result =
+        database.query(
+            new OSQLSynchQuery<ODocument>(
+                "select from Person where name = 'Billy" + uniqueId + "'"));
     if (result.size() == 0)
       assertTrue("No record found with name = 'Billy" + uniqueId + "'!", false);
     else if (result.size() > 1)
@@ -310,16 +360,23 @@ public class MultipleDBAlignmentOnNodesJoiningIT extends AbstractScenarioTest {
       for (int i = 0; i < count; i++) {
         try {
           if ((i + 1) % 100 == 0)
-            System.out.println("\nDBStartupWriter '" + db.getName() + "' (" + db.getURL() + ") managed " + (i + 1) + "/" + count
-                + " records so far");
+            System.out.println(
+                "\nDBStartupWriter '"
+                    + db.getName()
+                    + "' ("
+                    + db.getURL()
+                    + ") managed "
+                    + (i + 1)
+                    + "/"
+                    + count
+                    + " records so far");
 
           final ODocument person = createRecord(db, i);
           updateRecord(db, i);
           checkRecord(db, i);
           checkIndex(db, (String) person.field("name"), person.getIdentity());
 
-          if (delayWriter > 0)
-            Thread.sleep(delayWriter);
+          if (delayWriter > 0) Thread.sleep(delayWriter);
 
         } catch (InterruptedException e) {
           System.out.println("DBStartupWriter received interrupt (db=" + db.getURL());
@@ -339,8 +396,17 @@ public class MultipleDBAlignmentOnNodesJoiningIT extends AbstractScenarioTest {
     private ODocument createRecord(ODatabaseDocument database, int i) {
       final String uniqueId = database.getName() + "-" + i;
 
-      ODocument person = new ODocument("Person")
-          .fields("id", UUID.randomUUID().toString(), "name", "Billy" + uniqueId, "birthday", new Date(), "children", uniqueId);
+      ODocument person =
+          new ODocument("Person")
+              .fields(
+                  "id",
+                  UUID.randomUUID().toString(),
+                  "name",
+                  "Billy" + uniqueId,
+                  "birthday",
+                  new Date(),
+                  "children",
+                  uniqueId);
       database.save(person);
 
       assertTrue(person.getIdentity().isPersistent());
@@ -360,8 +426,11 @@ public class MultipleDBAlignmentOnNodesJoiningIT extends AbstractScenarioTest {
     }
 
     private void checkIndex(ODatabaseDocument database, final String key, final ORID rid) {
-      final OIndex index = ((ODatabaseDocumentInternal) database).getMetadata().getIndexManagerInternal()
-          .getIndex((ODatabaseDocumentInternal) database, "Person.name");
+      final OIndex index =
+          ((ODatabaseDocumentInternal) database)
+              .getMetadata()
+              .getIndexManagerInternal()
+              .getIndex((ODatabaseDocumentInternal) database, "Person.name");
 
       final ODocument result;
       try (Stream<ORID> rids = index.getInternal().getRids(key)) {
@@ -373,8 +442,10 @@ public class MultipleDBAlignmentOnNodesJoiningIT extends AbstractScenarioTest {
     private ODocument loadRecord(ODatabaseDocument database, int i) {
       final String uniqueId = database.getName() + "-" + i;
 
-      List<ODocument> result = database
-          .query(new OSQLSynchQuery<ODocument>("select from Person where name = 'Billy" + uniqueId + "'"));
+      List<ODocument> result =
+          database.query(
+              new OSQLSynchQuery<ODocument>(
+                  "select from Person where name = 'Billy" + uniqueId + "'"));
       if (result.size() == 0)
         assertTrue("No record found with name = 'Billy" + uniqueId + "'!", false);
       else if (result.size() > 1)

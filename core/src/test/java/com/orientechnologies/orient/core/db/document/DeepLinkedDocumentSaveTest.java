@@ -1,19 +1,19 @@
 package com.orientechnologies.orient.core.db.document;
 
-import com.orientechnologies.orient.core.record.impl.ODocument;
-import org.junit.Assert;
-import org.junit.Test;
+import static org.junit.Assert.assertEquals;
 
+
+import com.orientechnologies.orient.core.record.impl.ODocument;
 import java.util.HashSet;
 import java.util.Set;
-
-import static org.junit.Assert.assertEquals;
+import org.junit.Test;
 
 public class DeepLinkedDocumentSaveTest {
 
   @Test
   public void testLinked() {
-    ODatabaseDocument db = new ODatabaseDocumentTx("memory:" + DeepLinkedDocumentSaveTest.class.getSimpleName());
+    ODatabaseDocument db =
+        new ODatabaseDocumentTx("memory:" + DeepLinkedDocumentSaveTest.class.getSimpleName());
     db.create();
     try {
       final Set<ODocument> docs = new HashSet<>();
@@ -21,14 +21,12 @@ public class DeepLinkedDocumentSaveTest {
       db.getMetadata().getSchema().createClass("Test");
       ODocument doc = new ODocument("Test");
       docs.add(doc);
-      for (int i = 0; i < 3000; i++)
-        docs.add(doc = new ODocument("Test").field("linked", doc));
+      for (int i = 0; i < 3000; i++) docs.add(doc = new ODocument("Test").field("linked", doc));
       db.save(doc);
 
       assertEquals(3001, db.countClass("Test"));
 
-      for (ODocument d : docs)
-        assertEquals(1, d.getVersion());
+      for (ODocument d : docs) assertEquals(1, d.getVersion());
     } finally {
       db.drop();
     }
@@ -36,7 +34,8 @@ public class DeepLinkedDocumentSaveTest {
 
   @Test
   public void testLinkedTx() {
-    ODatabaseDocument db = new ODatabaseDocumentTx("memory:" + DeepLinkedDocumentSaveTest.class.getSimpleName());
+    ODatabaseDocument db =
+        new ODatabaseDocumentTx("memory:" + DeepLinkedDocumentSaveTest.class.getSimpleName());
     db.create();
     try {
       final Set<ODocument> docs = new HashSet<>();
@@ -46,18 +45,15 @@ public class DeepLinkedDocumentSaveTest {
       db.begin();
       ODocument doc = new ODocument("Test");
       docs.add(doc);
-      for (int i = 0; i < 3000; i++)
-        docs.add(doc = new ODocument("Test").field("linked", doc));
+      for (int i = 0; i < 3000; i++) docs.add(doc = new ODocument("Test").field("linked", doc));
       db.save(doc);
       db.commit();
 
       assertEquals(3001, db.countClass("Test"));
 
-      for (ODocument d : docs)
-        assertEquals(1, d.getVersion());
+      for (ODocument d : docs) assertEquals(1, d.getVersion());
     } finally {
       db.drop();
     }
   }
-
 }

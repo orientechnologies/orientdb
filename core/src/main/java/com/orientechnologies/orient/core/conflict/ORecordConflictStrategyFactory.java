@@ -19,16 +19,19 @@ import com.orientechnologies.common.factory.OConfigurableStatelessFactory;
 
 /**
  * Factory to manage the record conflict strategy implementations.
- * 
+ *
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
  */
-public class ORecordConflictStrategyFactory extends OConfigurableStatelessFactory<String, ORecordConflictStrategy> {
+public class ORecordConflictStrategyFactory
+    extends OConfigurableStatelessFactory<String, ORecordConflictStrategy> {
   public ORecordConflictStrategyFactory() {
     final OVersionRecordConflictStrategy def = new OVersionRecordConflictStrategy();
 
     registerImplementation(OVersionRecordConflictStrategy.NAME, def);
-    registerImplementation(OAutoMergeRecordConflictStrategy.NAME, new OAutoMergeRecordConflictStrategy());
-    registerImplementation(OContentRecordConflictStrategy.NAME, new OContentRecordConflictStrategy());
+    registerImplementation(
+        OAutoMergeRecordConflictStrategy.NAME, new OAutoMergeRecordConflictStrategy());
+    registerImplementation(
+        OContentRecordConflictStrategy.NAME, new OContentRecordConflictStrategy());
 
     setDefaultImplementation(def);
   }

@@ -1,15 +1,14 @@
 package com.orientechnologies.orient.core.storage.impl.local.paginated.wal;
 
 import com.orientechnologies.orient.core.Orient;
-import org.assertj.core.api.Assertions;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
-
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.util.Arrays;
 import java.util.Random;
+import org.assertj.core.api.Assertions;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Test;
 
 /**
  * @author Andrey Lomakin (a.lomakin-at-orientdb.com) <lomakin.andrey@gmail.com>.
@@ -100,13 +99,13 @@ public class OWALPageV2ChangesPortionTest {
     ByteBuffer pointer = ByteBuffer.wrap(data).order(ByteOrder.nativeOrder());
 
     pointer.position(64);
-    pointer.put(new byte[] { 11, 12, 13, 14 });
+    pointer.put(new byte[] {11, 12, 13, 14});
 
     pointer.position(74);
-    pointer.put(new byte[] { 21, 22, 23, 24 });
+    pointer.put(new byte[] {21, 22, 23, 24});
 
     OWALPageChangesPortion changesCollector = new OWALPageChangesPortion(1024);
-    byte[] values = new byte[] { 1, 2, 3, 4 };
+    byte[] values = new byte[] {1, 2, 3, 4};
 
     changesCollector.setBinaryValue(pointer, values, 64);
     changesCollector.moveData(pointer, 64, 74, 4);
@@ -259,7 +258,9 @@ public class OWALPageV2ChangesPortionTest {
     Assertions.assertThat(changesCollector.getBinaryValue(pointer, 32, 128)).isEqualTo(changes);
     changesCollector.applyChanges(pointer);
 
-    ByteBuffer newBuffer = ByteBuffer.wrap(Arrays.copyOf(originalData, originalData.length)).order(ByteOrder.nativeOrder());
+    ByteBuffer newBuffer =
+        ByteBuffer.wrap(Arrays.copyOf(originalData, originalData.length))
+            .order(ByteOrder.nativeOrder());
 
     int size = changesCollector.serializedSize();
     byte[] content = new byte[size];
@@ -294,7 +295,9 @@ public class OWALPageV2ChangesPortionTest {
     Assertions.assertThat(changesCollector.getBinaryValue(pointer, 32, 128)).isEqualTo(changes);
     changesCollector.applyChanges(pointer);
 
-    ByteBuffer newBuffer = ByteBuffer.wrap(Arrays.copyOf(originalData, originalData.length)).order(ByteOrder.nativeOrder());
+    ByteBuffer newBuffer =
+        ByteBuffer.wrap(Arrays.copyOf(originalData, originalData.length))
+            .order(ByteOrder.nativeOrder());
 
     int size = changesCollector.serializedSize();
     byte[] content = new byte[size];
@@ -319,7 +322,6 @@ public class OWALPageV2ChangesPortionTest {
     changesCollectorRestored.fromStream(0, bytes);
 
     Assert.assertEquals(size, changesCollectorRestored.serializedSize());
-
   }
 
   @Test
@@ -387,10 +389,13 @@ public class OWALPageV2ChangesPortionTest {
 
     changes.setBinaryValue(pointer, smallChange, OWALPageChangesPortion.PORTION_BYTES + 37);
 
-    final byte[] actual = changes.getBinaryValue(pointer, 0, OWALPageChangesPortion.PORTION_BYTES * 2);
+    final byte[] actual =
+        changes.getBinaryValue(pointer, 0, OWALPageChangesPortion.PORTION_BYTES * 2);
 
-    final byte[] expected = Arrays.copyOfRange(originalData, 0, OWALPageChangesPortion.PORTION_BYTES * 2);
-    System.arraycopy(smallChange, 0, expected, OWALPageChangesPortion.PORTION_BYTES + 37, smallChange.length);
+    final byte[] expected =
+        Arrays.copyOfRange(originalData, 0, OWALPageChangesPortion.PORTION_BYTES * 2);
+    System.arraycopy(
+        smallChange, 0, expected, OWALPageChangesPortion.PORTION_BYTES + 37, smallChange.length);
 
     Assertions.assertThat(actual).isEqualTo(expected);
 

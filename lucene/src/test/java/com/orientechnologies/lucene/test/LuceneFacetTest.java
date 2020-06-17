@@ -13,7 +13,7 @@
  *  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  *  * See the License for the specific language governing permissions and
  *  * limitations under the License.
- *  
+ *
  */
 
 package com.orientechnologies.lucene.test;
@@ -24,16 +24,13 @@ import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
+import java.util.List;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
 
-import java.util.List;
-
-/**
- * Created by Enrico Risa on 22/04/15.
- */
+/** Created by Enrico Risa on 22/04/15. */
 public class LuceneFacetTest extends BaseLuceneTest {
 
   @Before
@@ -44,8 +41,9 @@ public class LuceneFacetTest extends BaseLuceneTest {
     oClass.createProperty("name", OType.STRING);
     oClass.createProperty("category", OType.STRING);
 
-    db.command(new OCommandSQL(
-        "create index Item.name_category on Item (name,category) FULLTEXT ENGINE LUCENE METADATA { 'facetFields' : ['category']}"))
+    db.command(
+            new OCommandSQL(
+                "create index Item.name_category on Item (name,category) FULLTEXT ENGINE LUCENE METADATA { 'facetFields' : ['category']}"))
         .execute();
 
     ODocument doc = new ODocument("Item");
@@ -79,8 +77,11 @@ public class LuceneFacetTest extends BaseLuceneTest {
   @Ignore
   public void baseFacetTest() {
 
-    List<ODocument> result = db
-        .command(new OSQLSynchQuery<ODocument>("select *,$facet from Item where name lucene '(name:P*)' limit 1 ")).execute();
+    List<ODocument> result =
+        db.command(
+                new OSQLSynchQuery<ODocument>(
+                    "select *,$facet from Item where name lucene '(name:P*)' limit 1 "))
+            .execute();
 
     Assert.assertEquals(result.size(), 1);
 
@@ -102,8 +103,11 @@ public class LuceneFacetTest extends BaseLuceneTest {
     Assert.assertEquals(labelValues.<Object>field("value"), 2);
     Assert.assertEquals(labelValues.field("label"), "Electronic");
 
-    result = db.command(new OSQLSynchQuery<ODocument>(
-        "select *,$facet from Item where name lucene { 'q' : 'H*', 'drillDown' : 'category:Electronic' }  limit 1 ")).execute();
+    result =
+        db.command(
+                new OSQLSynchQuery<ODocument>(
+                    "select *,$facet from Item where name lucene { 'q' : 'H*', 'drillDown' : 'category:Electronic' }  limit 1 "))
+            .execute();
 
     Assert.assertEquals(result.size(), 1);
 
@@ -130,7 +134,5 @@ public class LuceneFacetTest extends BaseLuceneTest {
 
     Assert.assertEquals(labelValues.<Object>field("value"), 1);
     Assert.assertEquals(labelValues.field("label"), "Computer");
-
   }
-
 }

@@ -5,5 +5,4 @@ public interface ORemoteServerAvailabilityCheck {
   boolean isNodeAvailable(String node);
 
   void nodeDisconnected(String node);
-
 }

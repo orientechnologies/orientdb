@@ -7,11 +7,10 @@ import com.orientechnologies.orient.core.storage.cache.OCacheEntryImpl;
 import com.orientechnologies.orient.core.storage.cache.OCachePointer;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.PageOperationRecord;
 import com.orientechnologies.orient.core.storage.index.hashindex.local.v2.HashIndexMetadataPageV2;
-import org.junit.Assert;
-import org.junit.Test;
-
 import java.nio.ByteBuffer;
 import java.util.List;
+import org.junit.Assert;
+import org.junit.Test;
 
 public class LocalHashTableV2MetadataPageSetRecordsCountPOTest {
   @Test
@@ -29,7 +28,8 @@ public class LocalHashTableV2MetadataPageSetRecordsCountPOTest {
       entry.clearPageOperations();
 
       final OPointer restoredPointer = byteBufferPool.acquireDirect(false);
-      final OCachePointer restoredCachePointer = new OCachePointer(restoredPointer, byteBufferPool, 0, 0);
+      final OCachePointer restoredCachePointer =
+          new OCachePointer(restoredPointer, byteBufferPool, 0, 0);
       final OCacheEntry restoredCacheEntry = new OCacheEntryImpl(0, 0, restoredCachePointer);
 
       final ByteBuffer originalBuffer = cachePointer.getBufferDuplicate();
@@ -47,8 +47,8 @@ public class LocalHashTableV2MetadataPageSetRecordsCountPOTest {
 
       Assert.assertTrue(operations.get(0) instanceof LocalHashTableV2MetadataPageSetRecordsCountPO);
 
-      final LocalHashTableV2MetadataPageSetRecordsCountPO pageOperation = (LocalHashTableV2MetadataPageSetRecordsCountPO) operations
-          .get(0);
+      final LocalHashTableV2MetadataPageSetRecordsCountPO pageOperation =
+          (LocalHashTableV2MetadataPageSetRecordsCountPO) operations.get(0);
 
       HashIndexMetadataPageV2 restoredPage = new HashIndexMetadataPageV2(restoredCacheEntry);
       Assert.assertEquals(23, restoredPage.getRecordsCount());
@@ -86,8 +86,8 @@ public class LocalHashTableV2MetadataPageSetRecordsCountPOTest {
 
       Assert.assertTrue(operations.get(0) instanceof LocalHashTableV2MetadataPageSetRecordsCountPO);
 
-      final LocalHashTableV2MetadataPageSetRecordsCountPO pageOperation = (LocalHashTableV2MetadataPageSetRecordsCountPO) operations
-          .get(0);
+      final LocalHashTableV2MetadataPageSetRecordsCountPO pageOperation =
+          (LocalHashTableV2MetadataPageSetRecordsCountPO) operations.get(0);
 
       final HashIndexMetadataPageV2 restoredPage = new HashIndexMetadataPageV2(entry);
 
@@ -105,7 +105,8 @@ public class LocalHashTableV2MetadataPageSetRecordsCountPOTest {
 
   @Test
   public void testSerialization() {
-    LocalHashTableV2MetadataPageSetRecordsCountPO operation = new LocalHashTableV2MetadataPageSetRecordsCountPO(15, 42);
+    LocalHashTableV2MetadataPageSetRecordsCountPO operation =
+        new LocalHashTableV2MetadataPageSetRecordsCountPO(15, 42);
 
     operation.setFileId(42);
     operation.setPageIndex(24);
@@ -117,7 +118,8 @@ public class LocalHashTableV2MetadataPageSetRecordsCountPOTest {
 
     Assert.assertEquals(serializedSize + 1, pos);
 
-    LocalHashTableV2MetadataPageSetRecordsCountPO restoredOperation = new LocalHashTableV2MetadataPageSetRecordsCountPO();
+    LocalHashTableV2MetadataPageSetRecordsCountPO restoredOperation =
+        new LocalHashTableV2MetadataPageSetRecordsCountPO();
     restoredOperation.fromStream(stream, 1);
 
     Assert.assertEquals(42, restoredOperation.getFileId());

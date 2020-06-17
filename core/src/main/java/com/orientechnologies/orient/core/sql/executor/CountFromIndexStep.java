@@ -5,7 +5,6 @@ import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.index.OIndexInternal;
 import com.orientechnologies.orient.core.sql.parser.OIndexIdentifier;
-
 import java.util.Map;
 import java.util.Optional;
 
@@ -16,19 +15,20 @@ import java.util.Optional;
  */
 public class CountFromIndexStep extends AbstractExecutionStep {
   private final OIndexIdentifier target;
-  private final String           alias;
+  private final String alias;
 
   private long count = 0;
 
   private boolean executed = false;
 
   /**
-   * @param targetIndex      the index name as it is parsed by the SQL parsed
-   * @param alias            the name of the property returned in the result-set
-   * @param ctx              the query context
+   * @param targetIndex the index name as it is parsed by the SQL parsed
+   * @param alias the name of the property returned in the result-set
+   * @param ctx the query context
    * @param profilingEnabled true to enable the profiling of the execution (for SQL PROFILE)
    */
-  public CountFromIndexStep(OIndexIdentifier targetIndex, String alias, OCommandContext ctx, boolean profilingEnabled) {
+  public CountFromIndexStep(
+      OIndexIdentifier targetIndex, String alias, OCommandContext ctx, boolean profilingEnabled) {
     super(ctx, profilingEnabled);
     this.target = targetIndex;
     this.alias = alias;
@@ -52,7 +52,12 @@ public class CountFromIndexStep extends AbstractExecutionStep {
         long begin = profilingEnabled ? System.nanoTime() : 0;
         try {
           final ODatabaseDocumentInternal database = (ODatabaseDocumentInternal) ctx.getDatabase();
-          OIndexInternal idx = database.getMetadata().getIndexManagerInternal().getIndex(database, target.getIndexName()).getInternal();
+          OIndexInternal idx =
+              database
+                  .getMetadata()
+                  .getIndexManagerInternal()
+                  .getIndex(database, target.getIndexName())
+                  .getInternal();
           long size = idx.size();
           executed = true;
           OResultInternal result = new OResultInternal();
@@ -64,9 +69,7 @@ public class CountFromIndexStep extends AbstractExecutionStep {
       }
 
       @Override
-      public void close() {
-
-      }
+      public void close() {}
 
       @Override
       public Optional<OExecutionPlan> getExecutionPlan() {

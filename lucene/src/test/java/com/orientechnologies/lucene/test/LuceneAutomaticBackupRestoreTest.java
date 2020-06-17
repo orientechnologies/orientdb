@@ -1,6 +1,6 @@
 /*
  *
-   *  * Copyright 2010-2016 OrientDB LTD (http://orientdb.com)
+ *  * Copyright 2010-2016 OrientDB LTD (http://orientdb.com)
  *  *
  *  * Licensed under the Apache License, Version 2.0 (the "License");
  *  * you may not use this file except in compliance with the License.
@@ -18,6 +18,9 @@
 
 package com.orientechnologies.lucene.test;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
+
 import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.common.io.OIOUtils;
 import com.orientechnologies.orient.core.Orient;
@@ -32,11 +35,6 @@ import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.config.OServerParameterConfiguration;
 import com.orientechnologies.orient.server.handler.OAutomaticBackup;
-import org.junit.*;
-import org.junit.rules.TestName;
-import org.junit.runner.RunWith;
-import org.junit.runners.JUnit4;
-
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -47,27 +45,32 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 import java.util.zip.GZIPInputStream;
+import org.junit.After;
+import org.junit.AfterClass;
+import org.junit.Assert;
+import org.junit.Assume;
+import org.junit.Before;
+import org.junit.Rule;
+import org.junit.Test;
+import org.junit.rules.TestName;
+import org.junit.runner.RunWith;
+import org.junit.runners.JUnit4;
 
-import static org.assertj.core.api.Assertions.assertThat;
-
-/**
- * Created by Enrico Risa on 07/07/15.
- */
+/** Created by Enrico Risa on 07/07/15. */
 @RunWith(JUnit4.class)
 public class LuceneAutomaticBackupRestoreTest {
 
-  private final static String DBNAME = "OLuceneAutomaticBackupRestoreTest";
+  private static final String DBNAME = "OLuceneAutomaticBackupRestoreTest";
   private File tempFolder;
 
-  @Rule
-  public TestName name = new TestName();
+  @Rule public TestName name = new TestName();
 
   private OrientDB orientDB;
-  private String URL       = null;
+  private String URL = null;
   private String BACKUPDIR = null;
   private String BACKUFILE = null;
 
-  private OServer                   server;
+  private OServer server;
   private ODatabaseDocumentInternal db;
 
   @Before
@@ -86,14 +89,15 @@ public class LuceneAutomaticBackupRestoreTest {
     System.setProperty("ORIENTDB_HOME", tempFolder.getCanonicalPath());
 
     String path = tempFolder.getCanonicalPath() + File.separator + "databases";
-    server = new OServer(false) {
-      @Override
-      public Map<String, String> getAvailableStorageNames() {
-        HashMap<String, String> result = new HashMap<>();
-        result.put(DBNAME, URL);
-        return result;
-      }
-    };
+    server =
+        new OServer(false) {
+          @Override
+          public Map<String, String> getAvailableStorageNames() {
+            HashMap<String, String> result = new HashMap<>();
+            result.put(DBNAME, URL);
+            return result;
+          }
+        };
     server.startup();
 
     orientDB = server.getContext();
@@ -143,7 +147,7 @@ public class LuceneAutomaticBackupRestoreTest {
   public static void afterClass() {
     final Orient orient = Orient.instance();
 
-    if (orient !=null) {
+    if (orient != null) {
       orient.shutdown();
       orient.startup();
     }
@@ -155,7 +159,9 @@ public class LuceneAutomaticBackupRestoreTest {
       assertThat(query).hasSize(1);
     }
 
-    String jsonConfig = OIOUtils.readStreamAsString(getClass().getClassLoader().getResourceAsStream("automatic-backup.json"));
+    String jsonConfig =
+        OIOUtils.readStreamAsString(
+            getClass().getClassLoader().getResourceAsStream("automatic-backup.json"));
 
     ODocument doc = new ODocument().fromJSON(jsonConfig);
 
@@ -164,11 +170,14 @@ public class LuceneAutomaticBackupRestoreTest {
 
     doc.field("targetDirectory", BACKUPDIR);
 
-    doc.field("dbInclude", new String[] { DBNAME });
+    doc.field("dbInclude", new String[] {DBNAME});
 
-    doc.field("firstTime", new SimpleDateFormat("HH:mm:ss").format(new Date(System.currentTimeMillis() + 2000)));
+    doc.field(
+        "firstTime",
+        new SimpleDateFormat("HH:mm:ss").format(new Date(System.currentTimeMillis() + 2000)));
 
-    OIOUtils.writeFile(new File(tempFolder.getCanonicalPath(), "config/automatic-backup.json"), doc.toJSON());
+    OIOUtils.writeFile(
+        new File(tempFolder.getCanonicalPath(), "config/automatic-backup.json"), doc.toJSON());
 
     final OAutomaticBackup aBackup = new OAutomaticBackup();
 
@@ -178,17 +187,18 @@ public class LuceneAutomaticBackupRestoreTest {
 
     final CountDownLatch latch = new CountDownLatch(1);
 
-    aBackup.registerListener(new OAutomaticBackup.OAutomaticBackupListener() {
-      @Override
-      public void onBackupCompleted(String database) {
-        latch.countDown();
-      }
+    aBackup.registerListener(
+        new OAutomaticBackup.OAutomaticBackupListener() {
+          @Override
+          public void onBackupCompleted(String database) {
+            latch.countDown();
+          }
 
-      @Override
-      public void onBackupError(String database, Exception e) {
-        latch.countDown();
-      }
-    });
+          @Override
+          public void onBackupError(String database, Exception e) {
+            latch.countDown();
+          }
+        });
 
     latch.await();
 
@@ -210,13 +220,12 @@ public class LuceneAutomaticBackupRestoreTest {
 
     assertThat(db.countClass("City")).isEqualTo(1);
 
-    OIndex index = db.getMetadata().getIndexManagerInternal().getIndex(db,"City.name");
+    OIndex index = db.getMetadata().getIndexManagerInternal().getIndex(db, "City.name");
 
     assertThat(index).isNotNull();
     assertThat(index.getType()).isEqualTo(OClass.INDEX_TYPE.FULLTEXT.name());
 
     assertThat(db.query("select from City where name lucene 'Rome'")).hasSize(1);
-
   }
 
   @Test
@@ -226,7 +235,9 @@ public class LuceneAutomaticBackupRestoreTest {
       assertThat(query).hasSize(1);
     }
 
-    String jsonConfig = OIOUtils.readStreamAsString(getClass().getClassLoader().getResourceAsStream("automatic-backup.json"));
+    String jsonConfig =
+        OIOUtils.readStreamAsString(
+            getClass().getClassLoader().getResourceAsStream("automatic-backup.json"));
 
     ODocument doc = new ODocument().fromJSON(jsonConfig);
 
@@ -236,9 +247,11 @@ public class LuceneAutomaticBackupRestoreTest {
     doc.field("targetDirectory", BACKUPDIR);
     doc.field("mode", "EXPORT");
 
-    doc.field("dbInclude", new String[] { "OLuceneAutomaticBackupRestoreTest" });
+    doc.field("dbInclude", new String[] {"OLuceneAutomaticBackupRestoreTest"});
 
-    doc.field("firstTime", new SimpleDateFormat("HH:mm:ss").format(new Date(System.currentTimeMillis() + 2000)));
+    doc.field(
+        "firstTime",
+        new SimpleDateFormat("HH:mm:ss").format(new Date(System.currentTimeMillis() + 2000)));
 
     OIOUtils.writeFile(new File(tempFolder, "config/automatic-backup.json"), doc.toJSON());
 
@@ -249,17 +262,18 @@ public class LuceneAutomaticBackupRestoreTest {
     aBackup.config(server, config);
     final CountDownLatch latch = new CountDownLatch(1);
 
-    aBackup.registerListener(new OAutomaticBackup.OAutomaticBackupListener() {
-      @Override
-      public void onBackupCompleted(String database) {
-        latch.countDown();
-      }
+    aBackup.registerListener(
+        new OAutomaticBackup.OAutomaticBackupListener() {
+          @Override
+          public void onBackupCompleted(String database) {
+            latch.countDown();
+          }
 
-      @Override
-      public void onBackupError(String database, Exception e) {
-        latch.countDown();
-      }
-    });
+          @Override
+          public void onBackupError(String database, Exception e) {
+            latch.countDown();
+          }
+        });
     latch.await();
     aBackup.sendShutdown();
 
@@ -270,9 +284,9 @@ public class LuceneAutomaticBackupRestoreTest {
 
     db = createAndOpen();
 
-    try (final GZIPInputStream stream = new GZIPInputStream(new FileInputStream(BACKUFILE + ".json.gz"))) {
-      new ODatabaseImport(db, stream, s -> {
-      }).importDatabase();
+    try (final GZIPInputStream stream =
+        new GZIPInputStream(new FileInputStream(BACKUFILE + ".json.gz"))) {
+      new ODatabaseImport(db, stream, s -> {}).importDatabase();
     }
 
     db.close();
@@ -282,13 +296,12 @@ public class LuceneAutomaticBackupRestoreTest {
 
     assertThat(db.countClass("City")).isEqualTo(1);
 
-    OIndex index = db.getMetadata().getIndexManagerInternal().getIndex(db,"City.name");
+    OIndex index = db.getMetadata().getIndexManagerInternal().getIndex(db, "City.name");
 
     assertThat(index).isNotNull();
     assertThat(index.getType()).isEqualTo(OClass.INDEX_TYPE.FULLTEXT.name());
 
     assertThat(db.query("select from City where name lucene 'Rome'")).hasSize(1);
-
   }
 
   private ODatabaseDocumentInternal createAndOpen() {

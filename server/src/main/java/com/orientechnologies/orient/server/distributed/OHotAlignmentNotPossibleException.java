@@ -13,14 +13,14 @@
  *  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  *  * See the License for the specific language governing permissions and
  *  * limitations under the License.
- *  
+ *
  */
 
 package com.orientechnologies.orient.server.distributed;
 
 /**
  * Hot Aligment is not possible, if autoDeploy:true restore of entire database
- * 
+ *
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
  */
 public class OHotAlignmentNotPossibleException extends ODistributedException {

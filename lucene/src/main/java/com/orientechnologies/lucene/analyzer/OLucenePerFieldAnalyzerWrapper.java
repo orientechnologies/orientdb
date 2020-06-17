@@ -1,29 +1,30 @@
 package com.orientechnologies.lucene.analyzer;
 
+import static com.orientechnologies.lucene.engine.OLuceneIndexEngineAbstract.RID;
+
+
+import java.util.HashMap;
+import java.util.Map;
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.DelegatingAnalyzerWrapper;
 import org.apache.lucene.analysis.core.KeywordAnalyzer;
 
-import java.util.HashMap;
-import java.util.Map;
-
-import static com.orientechnologies.lucene.engine.OLuceneIndexEngineAbstract.RID;
-
 /**
  * Created by frank on 10/12/15.
  *
- * Doesn't allow to wrap components or readers. Thread local resources can be delegated to the delegate analyzer,
- * but not allocated on this analyzer (limit memory consumption).
- * Uses a per field reuse strategy.
+ * <p>Doesn't allow to wrap components or readers. Thread local resources can be delegated to the
+ * delegate analyzer, but not allocated on this analyzer (limit memory consumption). Uses a per
+ * field reuse strategy.
  */
 public class OLucenePerFieldAnalyzerWrapper extends DelegatingAnalyzerWrapper {
-  private final Analyzer              defaultDelegateAnalyzer;
+  private final Analyzer defaultDelegateAnalyzer;
   private final Map<String, Analyzer> fieldAnalyzers;
 
   /**
    * Constructs with default analyzer.
    *
-   * @param defaultAnalyzer Any fields not specifically defined to use a different analyzer will use the one provided here.
+   * @param defaultAnalyzer Any fields not specifically defined to use a different analyzer will use
+   *     the one provided here.
    */
   public OLucenePerFieldAnalyzerWrapper(final Analyzer defaultAnalyzer) {
     this(defaultAnalyzer, new HashMap<>());
@@ -32,10 +33,12 @@ public class OLucenePerFieldAnalyzerWrapper extends DelegatingAnalyzerWrapper {
   /**
    * Constructs with default analyzer and a map of analyzers to use for specific fields.
    *
-   * @param defaultAnalyzer Any fields not specifically defined to use a different analyzer will use the one provided here.
-   * @param fieldAnalyzers  a Map (String field name to the Analyzer) to be used for those fields
+   * @param defaultAnalyzer Any fields not specifically defined to use a different analyzer will use
+   *     the one provided here.
+   * @param fieldAnalyzers a Map (String field name to the Analyzer) to be used for those fields
    */
-  public OLucenePerFieldAnalyzerWrapper(final Analyzer defaultAnalyzer, final Map<String, Analyzer> fieldAnalyzers) {
+  public OLucenePerFieldAnalyzerWrapper(
+      final Analyzer defaultAnalyzer, final Map<String, Analyzer> fieldAnalyzers) {
     super(PER_FIELD_REUSE_STRATEGY);
     this.defaultDelegateAnalyzer = defaultAnalyzer;
     this.fieldAnalyzers = new HashMap<>();
@@ -56,7 +59,11 @@ public class OLucenePerFieldAnalyzerWrapper extends DelegatingAnalyzerWrapper {
 
   @Override
   public String toString() {
-    return "PerFieldAnalyzerWrapper(" + fieldAnalyzers + ", default=" + defaultDelegateAnalyzer + ")";
+    return "PerFieldAnalyzerWrapper("
+        + fieldAnalyzers
+        + ", default="
+        + defaultDelegateAnalyzer
+        + ")";
   }
 
   public OLucenePerFieldAnalyzerWrapper add(final String field, final Analyzer analyzer) {

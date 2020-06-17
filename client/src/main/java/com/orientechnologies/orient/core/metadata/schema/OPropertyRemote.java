@@ -11,12 +11,9 @@ import com.orientechnologies.orient.core.index.OPropertyIndexDefinition;
 import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.metadata.security.ORule;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-
 import java.util.ArrayList;
 
-/**
- * Created by tglman on 14/06/17.
- */
+/** Created by tglman on 14/06/17. */
 public class OPropertyRemote extends OPropertyImpl {
   OPropertyRemote(OClassImpl owner) {
     super(owner);
@@ -35,7 +32,9 @@ public class OPropertyRemote extends OPropertyImpl {
     final ODatabaseDocumentInternal database = getDatabase();
     acquireSchemaWriteLock();
     try {
-      final String cmd = String.format("alter property %s type %s", getFullNameQuoted(), quoteString(type.toString()));
+      final String cmd =
+          String.format(
+              "alter property %s type %s", getFullNameQuoted(), quoteString(type.toString()));
       database.command(cmd).close();
     } finally {
       releaseSchemaWriteLock();
@@ -49,7 +48,8 @@ public class OPropertyRemote extends OPropertyImpl {
     acquireSchemaWriteLock();
     try {
       final ODatabaseDocumentInternal database = getDatabase();
-      final String cmd = String.format("alter property %s name %s", getFullNameQuoted(), quoteString(name));
+      final String cmd =
+          String.format("alter property %s name %s", getFullNameQuoted(), quoteString(name));
       database.command(cmd).close();
 
     } finally {
@@ -66,7 +66,9 @@ public class OPropertyRemote extends OPropertyImpl {
     acquireSchemaWriteLock();
     try {
       final ODatabaseDocumentInternal database = getDatabase();
-      final String cmd = String.format("alter property %s description %s", getFullNameQuoted(), quoteString(iDescription));
+      final String cmd =
+          String.format(
+              "alter property %s description %s", getFullNameQuoted(), quoteString(iDescription));
       database.command(cmd).close();
 
     } finally {
@@ -76,15 +78,15 @@ public class OPropertyRemote extends OPropertyImpl {
   }
 
   public OProperty setCollate(String collate) {
-    if (collate == null)
-      collate = ODefaultCollate.NAME;
+    if (collate == null) collate = ODefaultCollate.NAME;
 
     getDatabase().checkSecurity(ORule.ResourceGeneric.SCHEMA, ORole.PERMISSION_UPDATE);
 
     acquireSchemaWriteLock();
     try {
       final ODatabaseDocumentInternal database = getDatabase();
-      final String cmd = String.format("alter property %s collate %s", getFullNameQuoted(), quoteString(collate));
+      final String cmd =
+          String.format("alter property %s collate %s", getFullNameQuoted(), quoteString(collate));
       database.command(cmd).close();
     } finally {
       releaseSchemaWriteLock();
@@ -111,7 +113,9 @@ public class OPropertyRemote extends OPropertyImpl {
 
     acquireSchemaWriteLock();
     try {
-      final String cmd = String.format("alter property %s custom %s=%s", getFullNameQuoted(), name, quoteString(value));
+      final String cmd =
+          String.format(
+              "alter property %s custom %s=%s", getFullNameQuoted(), name, quoteString(value));
       final ODatabaseDocumentInternal database = getDatabase();
       database.command(cmd).close();
     } finally {
@@ -127,7 +131,8 @@ public class OPropertyRemote extends OPropertyImpl {
     acquireSchemaWriteLock();
     try {
       final ODatabaseDocumentInternal database = getDatabase();
-      final String cmd = String.format("alter property %s regexp %s", getFullNameQuoted(), quoteString(regexp));
+      final String cmd =
+          String.format("alter property %s regexp %s", getFullNameQuoted(), quoteString(regexp));
       database.command(cmd).close();
     } finally {
       releaseSchemaWriteLock();
@@ -143,7 +148,10 @@ public class OPropertyRemote extends OPropertyImpl {
     acquireSchemaWriteLock();
     try {
       final ODatabaseDocumentInternal database = getDatabase();
-      final String cmd = String.format("alter property %s linkedclass %s", getFullNameQuoted(), quoteString(linkedClass.getName()));
+      final String cmd =
+          String.format(
+              "alter property %s linkedclass %s",
+              getFullNameQuoted(), quoteString(linkedClass.getName()));
       database.command(cmd).close();
 
     } finally {
@@ -161,7 +169,10 @@ public class OPropertyRemote extends OPropertyImpl {
     acquireSchemaWriteLock();
     try {
       final ODatabaseDocumentInternal database = getDatabase();
-      final String cmd = String.format("alter property %s linkedtype %s", getFullNameQuoted(), quoteString(linkedType.toString()));
+      final String cmd =
+          String.format(
+              "alter property %s linkedtype %s",
+              getFullNameQuoted(), quoteString(linkedType.toString()));
       database.command(cmd).close();
 
     } finally {
@@ -177,7 +188,8 @@ public class OPropertyRemote extends OPropertyImpl {
     acquireSchemaWriteLock();
     try {
       final ODatabaseDocumentInternal database = getDatabase();
-      final String cmd = String.format("alter property %s notnull %s", getFullNameQuoted(), isNotNull);
+      final String cmd =
+          String.format("alter property %s notnull %s", getFullNameQuoted(), isNotNull);
       database.command(cmd).close();
 
     } finally {
@@ -192,7 +204,9 @@ public class OPropertyRemote extends OPropertyImpl {
     acquireSchemaWriteLock();
     try {
       final ODatabaseDocumentInternal database = getDatabase();
-      final String cmd = String.format("alter property %s default %s", getFullNameQuoted(), quoteString(defaultValue));
+      final String cmd =
+          String.format(
+              "alter property %s default %s", getFullNameQuoted(), quoteString(defaultValue));
       database.command(cmd).close();
 
     } finally {
@@ -208,7 +222,8 @@ public class OPropertyRemote extends OPropertyImpl {
     acquireSchemaWriteLock();
     try {
       final ODatabaseDocumentInternal database = getDatabase();
-      final String cmd = String.format("alter property %s max %s", getFullNameQuoted(), quoteString(max));
+      final String cmd =
+          String.format("alter property %s max %s", getFullNameQuoted(), quoteString(max));
       database.command(cmd).close();
     } finally {
       releaseSchemaWriteLock();
@@ -223,7 +238,8 @@ public class OPropertyRemote extends OPropertyImpl {
     acquireSchemaWriteLock();
     try {
       final ODatabaseDocumentInternal database = getDatabase();
-      final String cmd = String.format("alter property %s min %s", getFullNameQuoted(), quoteString(min));
+      final String cmd =
+          String.format("alter property %s min %s", getFullNameQuoted(), quoteString(min));
       database.command(cmd).close();
     } finally {
       releaseSchemaWriteLock();
@@ -238,7 +254,8 @@ public class OPropertyRemote extends OPropertyImpl {
     acquireSchemaWriteLock();
     try {
       final ODatabaseDocumentInternal database = getDatabase();
-      final String cmd = String.format("alter property %s readonly %s", getFullNameQuoted(), isReadonly);
+      final String cmd =
+          String.format("alter property %s readonly %s", getFullNameQuoted(), isReadonly);
       database.command(cmd).close();
 
     } finally {
@@ -254,7 +271,8 @@ public class OPropertyRemote extends OPropertyImpl {
     acquireSchemaWriteLock();
     try {
       final ODatabaseDocumentInternal database = getDatabase();
-      final String cmd = String.format("alter property %s mandatory %s", getFullNameQuoted(), isMandatory);
+      final String cmd =
+          String.format("alter property %s mandatory %s", getFullNameQuoted(), isMandatory);
       database.command(cmd).close();
     } finally {
       releaseSchemaWriteLock();
@@ -275,7 +293,8 @@ public class OPropertyRemote extends OPropertyImpl {
 
   @Override
   public OIndex createIndex(String iType, ODocument metadata) {
-    return owner.createIndex(getFullName(), iType, null, metadata, new String[] { globalRef.getName() });
+    return owner.createIndex(
+        getFullName(), iType, null, metadata, new String[] {globalRef.getName()});
   }
 
   @Override
@@ -294,12 +313,17 @@ public class OPropertyRemote extends OPropertyImpl {
     for (final OIndex index : indexManager.getClassIndexes(database, owner.getName())) {
       final OIndexDefinition definition = index.getDefinition();
 
-      if (OCollections.indexOf(definition.getFields(), globalRef.getName(), new OCaseInsentiveComparator()) > -1) {
+      if (OCollections.indexOf(
+              definition.getFields(), globalRef.getName(), new OCaseInsentiveComparator())
+          > -1) {
         if (definition instanceof OPropertyIndexDefinition) {
           relatedIndexes.add(index);
         } else {
           throw new IllegalArgumentException(
-              "This operation applicable only for property indexes. " + index.getName() + " is " + index.getDefinition());
+              "This operation applicable only for property indexes. "
+                  + index.getName()
+                  + " is "
+                  + index.getDefinition());
         }
       }
     }

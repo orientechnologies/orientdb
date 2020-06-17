@@ -23,50 +23,55 @@ import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.metadata.OMetadataDefault;
-
-import java.util.*;
+import java.util.HashSet;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Locale;
+import java.util.Set;
 
 /**
  * Abstract class for import/export of database and data in general.
  *
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
- *
  */
 public abstract class ODatabaseImpExpAbstract extends ODatabaseTool {
-  protected static final String       DEFAULT_EXT               = ".json";
+  protected static final String DEFAULT_EXT = ".json";
   protected ODatabaseDocumentInternal database;
-  protected String                    fileName;
-  protected Set<String>               includeClusters;
-  protected Set<String>               excludeClusters;
-  protected Set<String>               includeClasses;
-  protected Set<String>               excludeClasses;
-  protected boolean                   includeInfo               = true;
-  protected boolean                   includeClusterDefinitions = true;
-  protected boolean                   includeSchema             = true;
-  protected boolean                   includeSecurity           = false;
-  protected boolean                   includeRecords            = true;
-  protected boolean                   includeIndexDefinitions   = true;
-  protected boolean                   includeManualIndexes      = true;
-  protected boolean                   useLineFeedForRecords     = false;
-  protected boolean                   preserveRids              = false;
-  protected OCommandOutputListener    listener;
+  protected String fileName;
+  protected Set<String> includeClusters;
+  protected Set<String> excludeClusters;
+  protected Set<String> includeClasses;
+  protected Set<String> excludeClasses;
+  protected boolean includeInfo = true;
+  protected boolean includeClusterDefinitions = true;
+  protected boolean includeSchema = true;
+  protected boolean includeSecurity = false;
+  protected boolean includeRecords = true;
+  protected boolean includeIndexDefinitions = true;
+  protected boolean includeManualIndexes = true;
+  protected boolean useLineFeedForRecords = false;
+  protected boolean preserveRids = false;
+  protected OCommandOutputListener listener;
 
-  public ODatabaseImpExpAbstract(final ODatabaseDocumentInternal iDatabase, final String iFileName,
+  public ODatabaseImpExpAbstract(
+      final ODatabaseDocumentInternal iDatabase,
+      final String iFileName,
       final OCommandOutputListener iListener) {
     database = iDatabase;
     fileName = iFileName;
 
-    // Fix bug where you can't backup files with spaces. Now you can wrap with quotes and the filesystem won't create
+    // Fix bug where you can't backup files with spaces. Now you can wrap with quotes and the
+    // filesystem won't create
     // directories with quotes in their name.
     if (fileName != null) {
-      if ((fileName.startsWith("\"") && fileName.endsWith("\"")) || (fileName.startsWith("'") && fileName.endsWith("'"))) {
+      if ((fileName.startsWith("\"") && fileName.endsWith("\""))
+          || (fileName.startsWith("'") && fileName.endsWith("'"))) {
         fileName = fileName.substring(1, fileName.length() - 1);
         iListener.onMessage("Detected quotes surrounding filename; new backup file: " + fileName);
       }
     }
 
-    if (fileName != null && fileName.indexOf('.') == -1)
-      fileName += DEFAULT_EXT;
+    if (fileName != null && fileName.indexOf('.') == -1) fileName += DEFAULT_EXT;
 
     listener = iListener;
     excludeClusters = new LinkedHashSet<String>();
@@ -206,25 +211,21 @@ public abstract class ODatabaseImpExpAbstract extends ODatabaseTool {
 
     } else if (option.equalsIgnoreCase("-includeClass")) {
       includeClasses = new HashSet<String>();
-      for (String item : items)
-        includeClasses.add(item.toUpperCase(Locale.ENGLISH));
+      for (String item : items) includeClasses.add(item.toUpperCase(Locale.ENGLISH));
       includeRecords = true;
 
     } else if (option.equalsIgnoreCase("-excludeClass")) {
       excludeClasses = new HashSet<String>(items);
-      for (String item : items)
-        excludeClasses.add(item.toUpperCase(Locale.ENGLISH));
+      for (String item : items) excludeClasses.add(item.toUpperCase(Locale.ENGLISH));
 
     } else if (option.equalsIgnoreCase("-includeCluster")) {
       includeClusters = new HashSet<String>(items);
-      for (String item : items)
-        includeClusters.add(item.toUpperCase(Locale.ENGLISH));
+      for (String item : items) includeClusters.add(item.toUpperCase(Locale.ENGLISH));
       includeRecords = true;
 
     } else if (option.equalsIgnoreCase("-excludeCluster")) {
       excludeClusters = new HashSet<String>(items);
-      for (String item : items)
-        excludeClusters.add(item.toUpperCase(Locale.ENGLISH));
+      for (String item : items) excludeClusters.add(item.toUpperCase(Locale.ENGLISH));
 
     } else if (option.equalsIgnoreCase("-includeInfo")) {
       includeInfo = Boolean.parseBoolean(items.get(0));
@@ -252,7 +253,6 @@ public abstract class ODatabaseImpExpAbstract extends ODatabaseTool {
 
     } else if (option.equalsIgnoreCase("-useLineFeedForRecords")) {
       useLineFeedForRecords = Boolean.parseBoolean(items.get(0));
-
     }
   }
 }

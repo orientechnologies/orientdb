@@ -19,24 +19,24 @@
  */
 package com.orientechnologies.orient.server.distributed;
 
-import org.junit.Ignore;
-import org.junit.Test;
-
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.stresstest.OStressTester;
 import com.orientechnologies.orient.stresstest.OStressTesterCommandLineParser;
+import org.junit.Ignore;
+import org.junit.Test;
 
 /**
- * Executed distributed stress tests. In particular executes a load-balanced (per request) insertion in a graph, distributed on 3
- * nodes, with 8 parallel clients in total, trying to build many vertices all connected to the same super node. This means very high
- * contention on update.
+ * Executed distributed stress tests. In particular executes a load-balanced (per request) insertion
+ * in a graph, distributed on 3 nodes, with 8 parallel clients in total, trying to build many
+ * vertices all connected to the same super node. This means very high contention on update.
  *
- * This test has been created to reproduce a weird problem when the UNDO operation left the RID nagative in Ridbag.
- * 
+ * <p>This test has been created to reproduce a weird problem when the UNDO operation left the RID
+ * nagative in Ridbag.
+ *
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
  */
 public class DistributedStressIT extends AbstractServerClusterTest {
-  private final static int SERVERS = 3;
+  private static final int SERVERS = 3;
 
   public String getDatabaseName() {
     return "DistributedStressIT";
@@ -44,8 +44,9 @@ public class DistributedStressIT extends AbstractServerClusterTest {
 
   @Test
   @Ignore
-  //this test uses GINSERT workload, that is in the old graphdb (TP2) module, so it cannot run anymore.
-  //TODO migrate to the new multi-model API
+  // this test uses GINSERT workload, that is in the old graphdb (TP2) module, so it cannot run
+  // anymore.
+  // TODO migrate to the new multi-model API
   public void test() throws Exception {
     init(SERVERS);
     prepare(false);
@@ -54,10 +55,26 @@ public class DistributedStressIT extends AbstractServerClusterTest {
 
   @Override
   protected void executeTest() throws Exception {
-    // -m remote -c 8 -tx 50 -w GINSERT:V100000F20Ssupernode --remote-ip localhost --root-password root --ha-metrics true
-    final OStressTester stressTester = OStressTesterCommandLineParser
-        .getStressTester(new String[] { "-m", "remote", "-c", "8", "-tx", "50", "-w", "GINSERT:V500F20Ssupernode", "--remote-ip",
-            "localhost", "--root-password", "test", "--ha-metrics", "true" });
+    // -m remote -c 8 -tx 50 -w GINSERT:V100000F20Ssupernode --remote-ip localhost --root-password
+    // root --ha-metrics true
+    final OStressTester stressTester =
+        OStressTesterCommandLineParser.getStressTester(
+            new String[] {
+              "-m",
+              "remote",
+              "-c",
+              "8",
+              "-tx",
+              "50",
+              "-w",
+              "GINSERT:V500F20Ssupernode",
+              "--remote-ip",
+              "localhost",
+              "--root-password",
+              "test",
+              "--ha-metrics",
+              "true"
+            });
 
     OLogManager.instance().flush();
     System.out.flush();

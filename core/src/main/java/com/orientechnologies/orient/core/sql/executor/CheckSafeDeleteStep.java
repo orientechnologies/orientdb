@@ -7,19 +7,18 @@ import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-
 import java.util.Map;
 import java.util.Optional;
 
 /**
- * <p>
- * Checks if a record can be safely deleted (throws OCommandExecutionException in case).
- * A record cannot be safely deleted if it's a vertex or an edge (it requires additional operations).</p>
- * <p>
- * The result set returned by syncPull() throws an OCommandExecutionException as soon as it finds a record
- * that cannot be safely deleted (eg. a vertex or an edge)</p>
- * <p>This step is used used in DELETE statement to make sure that you are not deleting vertices or edges without passing for an
- * explicit DELETE VERTEX/EDGE</p>
+ * Checks if a record can be safely deleted (throws OCommandExecutionException in case). A record
+ * cannot be safely deleted if it's a vertex or an edge (it requires additional operations).
+ *
+ * <p>The result set returned by syncPull() throws an OCommandExecutionException as soon as it finds
+ * a record that cannot be safely deleted (eg. a vertex or an edge)
+ *
+ * <p>This step is used used in DELETE statement to make sure that you are not deleting vertices or
+ * edges without passing for an explicit DELETE VERTEX/EDGE
  *
  * @author Luigi Dell'Aquila (l.dellaquila-(at)-orientdb.com)
  */
@@ -52,10 +51,12 @@ public class CheckSafeDeleteStep extends AbstractExecutionStep {
               OClass clazz = doc.getSchemaClass();
               if (clazz != null) {
                 if (clazz.getName().equalsIgnoreCase("V") || clazz.isSubClassOf("V")) {
-                  throw new OCommandExecutionException("Cannot safely delete a vertex, please use DELETE VERTEX or UNSAFE");
+                  throw new OCommandExecutionException(
+                      "Cannot safely delete a vertex, please use DELETE VERTEX or UNSAFE");
                 }
                 if (clazz.getName().equalsIgnoreCase("E") || clazz.isSubClassOf("E")) {
-                  throw new OCommandExecutionException("Cannot safely delete an edge, please use DELETE EDGE or UNSAFE");
+                  throw new OCommandExecutionException(
+                      "Cannot safely delete an edge, please use DELETE EDGE or UNSAFE");
                 }
               }
             }
@@ -69,9 +70,7 @@ public class CheckSafeDeleteStep extends AbstractExecutionStep {
       }
 
       @Override
-      public void close() {
-
-      }
+      public void close() {}
 
       @Override
       public Optional<OExecutionPlan> getExecutionPlan() {

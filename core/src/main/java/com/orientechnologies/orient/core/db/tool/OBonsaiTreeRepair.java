@@ -11,7 +11,6 @@ import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.record.ODirection;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.OVertexDocument;
-
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.HashMap;
@@ -19,8 +18,8 @@ import java.util.HashSet;
 import java.util.Set;
 
 /**
- * Find and repair broken bonsai tree removing the double linked buckets and regenerating the whole tree with data from referring
- * records.
+ * Find and repair broken bonsai tree removing the double linked buckets and regenerating the whole
+ * tree with data from referring records.
  *
  * @author tglman
  */
@@ -54,8 +53,10 @@ public class OBonsaiTreeRepair {
           final ODocument inVertex = edge.<OIdentifiable>field("in").getRecord();
           final ODocument outVertex = edge.<OIdentifiable>field("out").getRecord();
 
-          final String inVertexName = OVertexDocument.getConnectionFieldName(ODirection.IN, label, true);
-          final String outVertexName = OVertexDocument.getConnectionFieldName(ODirection.OUT, label, true);
+          final String inVertexName =
+              OVertexDocument.getConnectionFieldName(ODirection.IN, label, true);
+          final String outVertexName =
+              OVertexDocument.getConnectionFieldName(ODirection.OUT, label, true);
 
           Set<ORID> inVertexes = processedVertexes.get(inVertexName);
           if (inVertexes == null) {
@@ -94,12 +95,15 @@ public class OBonsaiTreeRepair {
           counter++;
 
           if (counter > 0 && counter % 1000 == 0)
-            message(outputListener, counter + " edges were processed out of " + countEdges + " \n.");
+            message(
+                outputListener, counter + " edges were processed out of " + countEdges + " \n.");
 
         } catch (Exception e) {
           final StringWriter sw = new StringWriter();
 
-          sw.append("Error during processing of edge with id ").append(edge.getIdentity().toString()).append("\n");
+          sw.append("Error during processing of edge with id ")
+              .append(edge.getIdentity().toString())
+              .append("\n");
           e.printStackTrace(new PrintWriter(sw));
 
           message(outputListener, sw.toString());

@@ -3,9 +3,7 @@ package com.orientechnologies.orient.core.db;
 import com.orientechnologies.orient.client.remote.OStorageRemote;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentRemote;
 
-/**
- * Created by tglman on 07/07/16.
- */
+/** Created by tglman on 07/07/16. */
 public class ODatabaseDocumentRemotePooled extends ODatabaseDocumentRemote {
 
   private ODatabasePoolInternal pool;
@@ -17,8 +15,7 @@ public class ODatabaseDocumentRemotePooled extends ODatabaseDocumentRemote {
 
   @Override
   public void close() {
-    if (isClosed())
-      return;
+    if (isClosed()) return;
     internalClose(true);
     pool.release(this);
   }

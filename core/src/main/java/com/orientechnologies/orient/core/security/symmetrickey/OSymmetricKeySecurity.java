@@ -26,21 +26,28 @@ import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OSecurityAccessException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.metadata.function.OFunction;
-import com.orientechnologies.orient.core.metadata.security.*;
+import com.orientechnologies.orient.core.metadata.security.ORestrictedOperation;
+import com.orientechnologies.orient.core.metadata.security.ORole;
+import com.orientechnologies.orient.core.metadata.security.OSecurityInternal;
+import com.orientechnologies.orient.core.metadata.security.OSecurityPolicy;
+import com.orientechnologies.orient.core.metadata.security.OSecurityResourceProperty;
+import com.orientechnologies.orient.core.metadata.security.OSecurityRole;
+import com.orientechnologies.orient.core.metadata.security.OSecurityUser;
+import com.orientechnologies.orient.core.metadata.security.OToken;
+import com.orientechnologies.orient.core.metadata.security.OUser;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.security.OSecurityManager;
-
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
 /**
- * Provides a symmetric key specific authentication. Implements an OSecurity interface that delegates to the specified OSecurity
- * object.
- * <p>
- * This is used with embedded (non-server) databases, like so: db.setProperty(ODatabase.OPTIONS.SECURITY.toString(),
- * OSymmetricKeySecurity.class);
+ * Provides a symmetric key specific authentication. Implements an OSecurity interface that
+ * delegates to the specified OSecurity object.
+ *
+ * <p>This is used with embedded (non-server) databases, like so:
+ * db.setProperty(ODatabase.OPTIONS.SECURITY.toString(), OSymmetricKeySecurity.class);
  *
  * @author S. Colin Leister
  */
@@ -51,23 +58,29 @@ public class OSymmetricKeySecurity implements OSecurityInternal {
     this.delegate = iDelegate;
   }
 
-  public OUser authenticate(ODatabaseSession session, final String username, final String password) {
+  public OUser authenticate(
+      ODatabaseSession session, final String username, final String password) {
     if (delegate == null)
-      throw new OSecurityAccessException("OSymmetricKeySecurity.authenticate() Delegate is null for username: " + username);
+      throw new OSecurityAccessException(
+          "OSymmetricKeySecurity.authenticate() Delegate is null for username: " + username);
 
     if (session == null)
-      throw new OSecurityAccessException("OSymmetricKeySecurity.authenticate() Database is null for username: " + username);
+      throw new OSecurityAccessException(
+          "OSymmetricKeySecurity.authenticate() Database is null for username: " + username);
 
     final String dbName = session.getName();
 
     OUser user = delegate.getUser(session, username);
 
     if (user == null)
-      throw new OSecurityAccessException(dbName,
-          "OSymmetricKeySecurity.authenticate() Username or Key is invalid for username: " + username);
+      throw new OSecurityAccessException(
+          dbName,
+          "OSymmetricKeySecurity.authenticate() Username or Key is invalid for username: "
+              + username);
 
     if (user.getAccountStatus() != OSecurityUser.STATUSES.ACTIVE)
-      throw new OSecurityAccessException(dbName, "OSymmetricKeySecurity.authenticate() User '" + username + "' is not active");
+      throw new OSecurityAccessException(
+          dbName, "OSymmetricKeySecurity.authenticate() User '" + username + "' is not active");
 
     try {
       OUserSymmetricKeyConfig userConfig = new OUserSymmetricKeyConfig(user);
@@ -76,54 +89,81 @@ public class OSymmetricKeySecurity implements OSecurityInternal {
 
       String decryptedUsername = sk.decryptAsString(password);
 
-      if (OSecurityManager.instance().checkPassword(username, decryptedUsername))
-        return user;
+      if (OSecurityManager.instance().checkPassword(username, decryptedUsername)) return user;
     } catch (Exception ex) {
-      throw OException.wrapException(new OSecurityAccessException(dbName,
-          "OSymmetricKeySecurity.authenticate() Exception for session: " + dbName + ", username: " + username + " " + ex
-              .getMessage()), ex);
+      throw OException.wrapException(
+          new OSecurityAccessException(
+              dbName,
+              "OSymmetricKeySecurity.authenticate() Exception for session: "
+                  + dbName
+                  + ", username: "
+                  + username
+                  + " "
+                  + ex.getMessage()),
+          ex);
     }
 
-    throw new OSecurityAccessException(dbName,
-        "OSymmetricKeySecurity.authenticate() Username or Key is invalid for session: " + dbName + ", username: " + username);
+    throw new OSecurityAccessException(
+        dbName,
+        "OSymmetricKeySecurity.authenticate() Username or Key is invalid for session: "
+            + dbName
+            + ", username: "
+            + username);
   }
 
   @Override
-  public boolean isAllowed(ODatabaseSession session, final Set<OIdentifiable> iAllowAll, final Set<OIdentifiable> iAllowOperation) {
+  public boolean isAllowed(
+      ODatabaseSession session,
+      final Set<OIdentifiable> iAllowAll,
+      final Set<OIdentifiable> iAllowOperation) {
     return delegate.isAllowed(session, iAllowAll, iAllowOperation);
   }
 
   @Override
-  public OIdentifiable allowUser(ODatabaseSession session, ODocument iDocument, ORestrictedOperation iOperationType,
+  public OIdentifiable allowUser(
+      ODatabaseSession session,
+      ODocument iDocument,
+      ORestrictedOperation iOperationType,
       String iUserName) {
     return delegate.allowUser(session, iDocument, iOperationType, iUserName);
   }
 
   @Override
-  public OIdentifiable allowRole(ODatabaseSession session, ODocument iDocument, ORestrictedOperation iOperationType,
+  public OIdentifiable allowRole(
+      ODatabaseSession session,
+      ODocument iDocument,
+      ORestrictedOperation iOperationType,
       String iRoleName) {
     return delegate.allowRole(session, iDocument, iOperationType, iRoleName);
   }
 
   @Override
-  public OIdentifiable denyUser(ODatabaseSession session, ODocument iDocument, ORestrictedOperation iOperationType,
+  public OIdentifiable denyUser(
+      ODatabaseSession session,
+      ODocument iDocument,
+      ORestrictedOperation iOperationType,
       String iUserName) {
     return delegate.denyUser(session, iDocument, iOperationType, iUserName);
   }
 
   @Override
-  public OIdentifiable denyRole(ODatabaseSession session, ODocument iDocument, ORestrictedOperation iOperationType,
+  public OIdentifiable denyRole(
+      ODatabaseSession session,
+      ODocument iDocument,
+      ORestrictedOperation iOperationType,
       String iRoleName) {
     return delegate.denyRole(session, iDocument, iOperationType, iRoleName);
   }
 
   @Override
-  public OIdentifiable allowIdentity(ODatabaseSession session, ODocument iDocument, String iAllowFieldName, OIdentifiable iId) {
+  public OIdentifiable allowIdentity(
+      ODatabaseSession session, ODocument iDocument, String iAllowFieldName, OIdentifiable iId) {
     return delegate.allowIdentity(session, iDocument, iAllowFieldName, iId);
   }
 
   @Override
-  public OIdentifiable disallowIdentity(ODatabaseSession session, ODocument iDocument, String iAllowFieldName, OIdentifiable iId) {
+  public OIdentifiable disallowIdentity(
+      ODatabaseSession session, ODocument iDocument, String iAllowFieldName, OIdentifiable iId) {
     return delegate.disallowIdentity(session, iDocument, iAllowFieldName, iId);
   }
 
@@ -147,11 +187,19 @@ public class OSymmetricKeySecurity implements OSecurityInternal {
     return delegate.getUser(session, iUserId);
   }
 
-  public OUser createUser(ODatabaseSession session, final String iUserName, final String iUserPassword, final String... iRoles) {
+  public OUser createUser(
+      ODatabaseSession session,
+      final String iUserName,
+      final String iUserPassword,
+      final String... iRoles) {
     return delegate.createUser(session, iUserName, iUserPassword, iRoles);
   }
 
-  public OUser createUser(ODatabaseSession session, final String iUserName, final String iUserPassword, final ORole... iRoles) {
+  public OUser createUser(
+      ODatabaseSession session,
+      final String iUserName,
+      final String iUserPassword,
+      final ORole... iRoles) {
     return delegate.createUser(session, iUserName, iUserPassword, iRoles);
   }
 
@@ -163,11 +211,17 @@ public class OSymmetricKeySecurity implements OSecurityInternal {
     return delegate.getRole(session, iRole);
   }
 
-  public ORole createRole(ODatabaseSession session, final String iRoleName, final OSecurityRole.ALLOW_MODES iAllowMode) {
+  public ORole createRole(
+      ODatabaseSession session,
+      final String iRoleName,
+      final OSecurityRole.ALLOW_MODES iAllowMode) {
     return delegate.createRole(session, iRoleName, iAllowMode);
   }
 
-  public ORole createRole(ODatabaseSession session, final String iRoleName, final ORole iParent,
+  public ORole createRole(
+      ODatabaseSession session,
+      final String iRoleName,
+      final ORole iParent,
       final OSecurityRole.ALLOW_MODES iAllowMode) {
     return delegate.createRole(session, iRoleName, iParent, iAllowMode);
   }
@@ -181,17 +235,20 @@ public class OSymmetricKeySecurity implements OSecurityInternal {
   }
 
   @Override
-  public Map<String, OSecurityPolicy> getSecurityPolicies(ODatabaseSession session, OSecurityRole role) {
+  public Map<String, OSecurityPolicy> getSecurityPolicies(
+      ODatabaseSession session, OSecurityRole role) {
     return delegate.getSecurityPolicies(session, role);
   }
 
   @Override
-  public OSecurityPolicy getSecurityPolicy(ODatabaseSession session, OSecurityRole role, String resource) {
+  public OSecurityPolicy getSecurityPolicy(
+      ODatabaseSession session, OSecurityRole role, String resource) {
     return delegate.getSecurityPolicy(session, role, resource);
   }
 
   @Override
-  public void setSecurityPolicy(ODatabaseSession session, OSecurityRole role, String resource, OSecurityPolicy policy) {
+  public void setSecurityPolicy(
+      ODatabaseSession session, OSecurityRole role, String resource, OSecurityPolicy policy) {
     delegate.setSecurityPolicy(session, role, resource, policy);
   }
 
@@ -287,13 +344,11 @@ public class OSymmetricKeySecurity implements OSecurityInternal {
   }
 
   @Override
-  public Set<OSecurityResourceProperty> getAllFilteredProperties(ODatabaseDocumentInternal database) {
+  public Set<OSecurityResourceProperty> getAllFilteredProperties(
+      ODatabaseDocumentInternal database) {
     return delegate.getAllFilteredProperties(database);
   }
 
   @Override
-  public void close() {
-
-  }
-
+  public void close() {}
 }

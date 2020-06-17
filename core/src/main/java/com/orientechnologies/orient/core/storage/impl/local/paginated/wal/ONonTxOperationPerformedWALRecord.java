@@ -3,7 +3,8 @@ package com.orientechnologies.orient.core.storage.impl.local.paginated.wal;
 import java.nio.ByteBuffer;
 
 /**
- * @author Andrey Lomakin (a.lomakin-at-orientdb.com) <a href="mailto:lomakin.andrey@gmail.com">Andrey Lomakin</a>
+ * @author Andrey Lomakin (a.lomakin-at-orientdb.com) <a
+ *     href="mailto:lomakin.andrey@gmail.com">Andrey Lomakin</a>
  * @since 12/12/14
  */
 public class ONonTxOperationPerformedWALRecord extends OAbstractWALRecord {
@@ -13,8 +14,7 @@ public class ONonTxOperationPerformedWALRecord extends OAbstractWALRecord {
   }
 
   @Override
-  public void toStream(final ByteBuffer buffer) {
-  }
+  public void toStream(final ByteBuffer buffer) {}
 
   @Override
   public int fromStream(byte[] content, int offset) {

@@ -3,12 +3,13 @@ package com.orientechnologies.orient.core.storage.impl.local.paginated.wal;
 import java.nio.ByteBuffer;
 
 /**
- * Keep partial changes of a page for a transaction and original values of chunks of page which were changed using this container.
+ * Keep partial changes of a page for a transaction and original values of chunks of page which were
+ * changed using this container.
  *
- * use get* to access to the original content decorated with the changes.
- * use set* to add a change.
+ * <p>use get* to access to the original content decorated with the changes. use set* to add a
+ * change.
  *
- * Created by tglman on 24/12/15.
+ * <p>Created by tglman on 24/12/15.
  */
 public interface OWALChanges {
 
@@ -51,12 +52,11 @@ public interface OWALChanges {
   int serializedSize();
 
   /**
-   * Serialize the changes to a stream.
-   * needed for write the changes to the WAL
+   * Serialize the changes to a stream. needed for write the changes to the WAL
    *
    * @param offset starting writing offset for the provided buffer.
-   * @param stream buffer where write the content, should be of minimal size of offset+ @{link @serializedSize()}
-   *
+   * @param stream buffer where write the content, should be of minimal size of
+   *     offset+ @{link @serializedSize()}
    * @return the number of written bytes + the offset, can be used as offset of the next operation.
    */
   int toStream(int offset, byte[] stream);
@@ -64,12 +64,10 @@ public interface OWALChanges {
   void toStream(ByteBuffer byteBuffer);
 
   /**
-   * Read changes from a stream.
-   * Needed from restore from WAL.
+   * Read changes from a stream. Needed from restore from WAL.
    *
    * @param offset the offset in the buffer where start to read.
    * @param stream the buffer to read.
-   *
    * @return the offset+read bytes.
    */
   int fromStream(int offset, byte[] stream);

@@ -31,8 +31,6 @@ import com.orientechnologies.orient.server.distributed.ODistributedRequestId;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
 import com.orientechnologies.orient.server.distributed.ORemoteTaskFactory;
 import com.orientechnologies.orient.server.distributed.task.OAbstractRemoteTask;
-import com.orientechnologies.orient.server.hazelcast.OHazelcastDistributedMap;
-
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
@@ -45,15 +43,14 @@ import java.io.IOException;
 public class OUpdateDatabaseStatusTask extends OAbstractRemoteTask {
   public static final int FACTORYID = 25;
 
-  private String             databaseName;
-  private String             status;
+  private String databaseName;
+  private String status;
   private OLogSequenceNumber lsn;
 
   public static class OUpdateResult implements OStreamable {
     private OLogSequenceNumber sequenceNumber;
 
-    public OUpdateResult() {
-    }
+    public OUpdateResult() {}
 
     public OUpdateResult(OLogSequenceNumber sequenceNumber) {
       this.sequenceNumber = sequenceNumber;
@@ -74,18 +71,22 @@ public class OUpdateDatabaseStatusTask extends OAbstractRemoteTask {
     }
   }
 
-  public OUpdateDatabaseStatusTask() {
-  }
+  public OUpdateDatabaseStatusTask() {}
 
-  public OUpdateDatabaseStatusTask(final String databaseName, final String status, final OLogSequenceNumber lsn) {
+  public OUpdateDatabaseStatusTask(
+      final String databaseName, final String status, final OLogSequenceNumber lsn) {
     this.databaseName = databaseName;
     this.status = status;
     this.lsn = lsn;
   }
 
   @Override
-  public Object execute(final ODistributedRequestId msgId, final OServer iServer, ODistributedServerManager iManager,
-      final ODatabaseDocumentInternal database) throws Exception {
+  public Object execute(
+      final ODistributedRequestId msgId,
+      final OServer iServer,
+      ODistributedServerManager iManager,
+      final ODatabaseDocumentInternal database)
+      throws Exception {
 
     ODistributedDatabase database1 = iManager.getMessageService().getDatabase(databaseName);
     if (database1 != null && lsn != null) {
@@ -93,7 +94,8 @@ public class OUpdateDatabaseStatusTask extends OAbstractRemoteTask {
     }
     if (database != null) {
       if (((OAbstractPaginatedStorage) database.getStorage().getUnderlying()).getLSN() != null) {
-        return new OUpdateResult(((OAbstractPaginatedStorage) database.getStorage().getUnderlying()).getLSN());
+        return new OUpdateResult(
+            ((OAbstractPaginatedStorage) database.getStorage().getUnderlying()).getLSN());
       }
     }
     return null;
@@ -164,5 +166,4 @@ public class OUpdateDatabaseStatusTask extends OAbstractRemoteTask {
   public String toString() {
     return getName();
   }
-
 }

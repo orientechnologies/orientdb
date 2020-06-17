@@ -8,14 +8,13 @@ import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.sql.executor.AggregationContext;
 import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.executor.OResultInternal;
-
 import java.util.Map;
 import java.util.Set;
 
 public class OLevelZeroIdentifier extends SimpleNode {
   protected OFunctionCall functionCall;
-  protected Boolean       self;
-  protected OCollection   collection;
+  protected Boolean self;
+  protected OCollection collection;
 
   public OLevelZeroIdentifier(int id) {
     super(id);
@@ -70,12 +69,14 @@ public class OLevelZeroIdentifier extends SimpleNode {
 
   public boolean isFunctionAny() {
     if (functionCall != null) {
-      return functionCall.getName().getStringValue().equalsIgnoreCase("any") && functionCall.params.size() == 0;
+      return functionCall.getName().getStringValue().equalsIgnoreCase("any")
+          && functionCall.params.size() == 0;
     }
     return false;
   }
 
-  public long estimateIndexedFunction(OFromClause target, OCommandContext context, OBinaryCompareOperator operator, Object right) {
+  public long estimateIndexedFunction(
+      OFromClause target, OCommandContext context, OBinaryCompareOperator operator, Object right) {
     if (functionCall != null) {
       return functionCall.estimateIndexedFunction(target, context, operator, right);
     }
@@ -83,8 +84,8 @@ public class OLevelZeroIdentifier extends SimpleNode {
     return -1;
   }
 
-  public Iterable<OIdentifiable> executeIndexedFunction(OFromClause target, OCommandContext context,
-      OBinaryCompareOperator operator, Object right) {
+  public Iterable<OIdentifiable> executeIndexedFunction(
+      OFromClause target, OCommandContext context, OBinaryCompareOperator operator, Object right) {
     if (functionCall != null) {
       return functionCall.executeIndexedFunction(target, context, operator, right);
     }
@@ -92,18 +93,18 @@ public class OLevelZeroIdentifier extends SimpleNode {
   }
 
   /**
-   * tests if current expression is an indexed funciton AND that function can also be executed without using the index
+   * tests if current expression is an indexed funciton AND that function can also be executed
+   * without using the index
    *
-   * @param target   the query target
-   * @param context  the execution context
+   * @param target the query target
+   * @param context the execution context
    * @param operator
    * @param right
-   *
-   * @return true if current expression is an indexed funciton AND that function can also be executed without using the index, false
-   * otherwise
+   * @return true if current expression is an indexed funciton AND that function can also be
+   *     executed without using the index, false otherwise
    */
-  public boolean canExecuteIndexedFunctionWithoutIndex(OFromClause target, OCommandContext context, OBinaryCompareOperator operator,
-      Object right) {
+  public boolean canExecuteIndexedFunctionWithoutIndex(
+      OFromClause target, OCommandContext context, OBinaryCompareOperator operator, Object right) {
     if (this.functionCall == null) {
       return false;
     }
@@ -113,15 +114,15 @@ public class OLevelZeroIdentifier extends SimpleNode {
   /**
    * tests if current expression is an indexed function AND that function can be used on this target
    *
-   * @param target   the query target
-   * @param context  the execution context
+   * @param target the query target
+   * @param context the execution context
    * @param operator
    * @param right
-   *
-   * @return true if current expression involves an indexed function AND that function can be used on this target, false otherwise
+   * @return true if current expression involves an indexed function AND that function can be used
+   *     on this target, false otherwise
    */
-  public boolean allowsIndexedFunctionExecutionOnTarget(OFromClause target, OCommandContext context,
-      OBinaryCompareOperator operator, Object right) {
+  public boolean allowsIndexedFunctionExecutionOnTarget(
+      OFromClause target, OCommandContext context, OBinaryCompareOperator operator, Object right) {
     if (this.functionCall == null) {
       return false;
     }
@@ -129,17 +130,18 @@ public class OLevelZeroIdentifier extends SimpleNode {
   }
 
   /**
-   * tests if current expression is an indexed function AND the function has also to be executed after the index search. In some
-   * cases, the index search is accurate, so this condition can be excluded from further evaluation. In other cases the result from
-   * the index is a superset of the expected result, so the function has to be executed anyway for further filtering
+   * tests if current expression is an indexed function AND the function has also to be executed
+   * after the index search. In some cases, the index search is accurate, so this condition can be
+   * excluded from further evaluation. In other cases the result from the index is a superset of the
+   * expected result, so the function has to be executed anyway for further filtering
    *
-   * @param target  the query target
+   * @param target the query target
    * @param context the execution context
-   *
-   * @return true if current expression is an indexed function AND the function has also to be executed after the index search.
+   * @return true if current expression is an indexed function AND the function has also to be
+   *     executed after the index search.
    */
-  public boolean executeIndexedFunctionAfterIndexSearch(OFromClause target, OCommandContext context,
-      OBinaryCompareOperator operator, Object right) {
+  public boolean executeIndexedFunctionAfterIndexSearch(
+      OFromClause target, OCommandContext context, OBinaryCompareOperator operator, Object right) {
     if (this.functionCall == null) {
       return false;
     }
@@ -197,7 +199,8 @@ public class OLevelZeroIdentifier extends SimpleNode {
     return false;
   }
 
-  public SimpleNode splitForAggregation(AggregateProjectionSplit aggregateProj, OCommandContext ctx) {
+  public SimpleNode splitForAggregation(
+      AggregateProjectionSplit aggregateProj, OCommandContext ctx) {
     if (isAggregate()) {
       OLevelZeroIdentifier result = new OLevelZeroIdentifier(-1);
       if (functionCall != null) {
@@ -238,17 +241,14 @@ public class OLevelZeroIdentifier extends SimpleNode {
 
   @Override
   public boolean equals(Object o) {
-    if (this == o)
-      return true;
-    if (o == null || getClass() != o.getClass())
-      return false;
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
 
     OLevelZeroIdentifier that = (OLevelZeroIdentifier) o;
 
     if (functionCall != null ? !functionCall.equals(that.functionCall) : that.functionCall != null)
       return false;
-    if (self != null ? !self.equals(that.self) : that.self != null)
-      return false;
+    if (self != null ? !self.equals(that.self) : that.self != null) return false;
     if (collection != null ? !collection.equals(that.collection) : that.collection != null)
       return false;
 

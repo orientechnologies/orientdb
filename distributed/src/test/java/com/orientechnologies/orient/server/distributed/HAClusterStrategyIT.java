@@ -15,14 +15,13 @@
  */
 package com.orientechnologies.orient.server.distributed;
 
-import com.orientechnologies.orient.core.db.*;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.record.OVertex;
 import org.junit.Assert;
 import org.junit.Test;
 
 public class HAClusterStrategyIT extends AbstractHARemoveNode {
-  private final static int SERVERS = 2;
+  private static final int SERVERS = 2;
 
   @Test
   public void test() throws Exception {
@@ -35,8 +34,9 @@ public class HAClusterStrategyIT extends AbstractHARemoveNode {
 
   @Override
   public void executeTest() throws Exception {
-    final ODatabaseDocument g = serverInstance.get(0).getServerInstance().openDatabase(getDatabaseName(), "admin", "admin");
-    
+    final ODatabaseDocument g =
+        serverInstance.get(0).getServerInstance().openDatabase(getDatabaseName(), "admin", "admin");
+
     g.createVertexClass("Test");
     g.close();
 
@@ -44,13 +44,22 @@ public class HAClusterStrategyIT extends AbstractHARemoveNode {
       // pressing 'return' 2 to 10 times should trigger the described behavior
       Thread.sleep(100);
 
-      final ODatabaseDocument graph = serverInstance.get(0).getServerInstance().openDatabase(getDatabaseName(), "admin", "admin");
+      final ODatabaseDocument graph =
+          serverInstance
+              .get(0)
+              .getServerInstance()
+              .openDatabase(getDatabaseName(), "admin", "admin");
       graph.begin();
 
       // should always be 'local', but eventually changes to 'round-robin'
-      System.out.println("StrategyClassName: " + graph.getClass("Test").getClusterSelection().getClass().getName());
       System.out.println(
-          "ClusterSelectionStrategy for " + graph.getURL() + ": " + graph.getClass("Test").getClusterSelection().getName());
+          "StrategyClassName: "
+              + graph.getClass("Test").getClusterSelection().getClass().getName());
+      System.out.println(
+          "ClusterSelectionStrategy for "
+              + graph.getURL()
+              + ": "
+              + graph.getClass("Test").getClusterSelection().getName());
 
       Assert.assertEquals(graph.getClass("Test").getClusterSelection().getName(), "round-robin");
 
@@ -58,7 +67,7 @@ public class HAClusterStrategyIT extends AbstractHARemoveNode {
       v.setProperty("firstName", "Roger");
       v.setProperty("lastName", "Smith");
       v.save();
-      
+
       graph.commit();
 
       graph.close();

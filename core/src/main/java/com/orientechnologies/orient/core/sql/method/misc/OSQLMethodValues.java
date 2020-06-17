@@ -20,7 +20,6 @@ import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.executor.OResult;
-
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -41,7 +40,12 @@ public class OSQLMethodValues extends OAbstractSQLMethod {
   }
 
   @Override
-  public Object execute(Object iThis, OIdentifiable iCurrentRecord, OCommandContext iContext, Object ioResult, Object[] iParams) {
+  public Object execute(
+      Object iThis,
+      OIdentifiable iCurrentRecord,
+      OCommandContext iContext,
+      Object ioResult,
+      Object[] iParams) {
     if (ioResult instanceof Map) {
       return ((Map<?, ?>) ioResult).values();
     }
@@ -50,7 +54,9 @@ public class OSQLMethodValues extends OAbstractSQLMethod {
     }
     if (ioResult instanceof OResult) {
       OResult res = (OResult) ioResult;
-      return res.getPropertyNames().stream().map(field -> res.getProperty(field)).collect(Collectors.toList());
+      return res.getPropertyNames().stream()
+          .map(field -> res.getProperty(field))
+          .collect(Collectors.toList());
     }
     if (ioResult instanceof Collection) {
       List result = new ArrayList();

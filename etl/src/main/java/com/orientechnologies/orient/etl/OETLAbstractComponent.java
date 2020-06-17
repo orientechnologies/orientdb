@@ -18,6 +18,10 @@
 
 package com.orientechnologies.orient.etl;
 
+import static com.orientechnologies.common.parser.OSystemVariableResolver.VAR_BEGIN;
+import static com.orientechnologies.common.parser.OSystemVariableResolver.VAR_END;
+
+
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.parser.OVariableParser;
 import com.orientechnologies.orient.core.command.OCommandContext;
@@ -27,21 +31,15 @@ import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilter;
 import com.orientechnologies.orient.core.sql.filter.OSQLPredicate;
-
 import java.util.logging.Level;
 
-import static com.orientechnologies.common.parser.OSystemVariableResolver.VAR_BEGIN;
-import static com.orientechnologies.common.parser.OSystemVariableResolver.VAR_END;
-
-/**
- * ETL abstract component.
- */
+/** ETL abstract component. */
 public abstract class OETLAbstractComponent implements OETLComponent {
-  protected OETLProcessor   processor;
+  protected OETLProcessor processor;
   protected OCommandContext context;
-  protected String          output;
-  protected String          ifExpression;
-  protected ODocument       configuration;
+  protected String output;
+  protected String ifExpression;
+  protected ODocument configuration;
 
   @Override
   public ODocument getConfiguration() {
@@ -57,14 +55,11 @@ public abstract class OETLAbstractComponent implements OETLComponent {
 
   @Override
   public void begin(ODatabaseDocument db) {
-    if (configuration.containsField("output"))
-      output = configuration.field("output");
-
+    if (configuration.containsField("output")) output = configuration.field("output");
   }
 
   @Override
-  public void end() {
-  }
+  public void end() {}
 
   @Override
   public void setProcessor(OETLProcessor processor) {
@@ -75,7 +70,6 @@ public abstract class OETLAbstractComponent implements OETLComponent {
     return "{log:{optional:true,description:'Can be any of [NONE, ERROR, INFO, DEBUG]. Default is INFO'}},"
         + "{if:{optional:true,description:'Conditional expression. If true, the block is executed, otherwise is skipped'}},"
         + "{output:{optional:true,description:'Variable name to store the transformer output. If null, the output will be passed to the pipeline as input for the next component.'}}";
-
   }
 
   @Override
@@ -86,14 +80,19 @@ public abstract class OETLAbstractComponent implements OETLComponent {
   protected boolean skip(final Object input) {
     final OSQLFilter ifFilter = getIfFilter();
     if (ifFilter != null) {
-      final ODocument doc = input instanceof OIdentifiable ? (ODocument) ((OIdentifiable) input).getRecord() : null;
+      final ODocument doc =
+          input instanceof OIdentifiable ? (ODocument) ((OIdentifiable) input).getRecord() : null;
 
       log(Level.FINE, "Evaluating conditional expression if=%s...", ifFilter);
 
       final Object result = ifFilter.evaluate(doc, null, context);
       if (!(result instanceof Boolean))
         throw new OConfigurationException(
-            "'if' expression in Transformer " + getName() + " returned '" + result + "' instead of boolean");
+            "'if' expression in Transformer "
+                + getName()
+                + " returned '"
+                + result
+                + "' instead of boolean");
 
       return !(Boolean) result;
     }
@@ -101,8 +100,7 @@ public abstract class OETLAbstractComponent implements OETLComponent {
   }
 
   protected OSQLFilter getIfFilter() {
-    if (ifExpression != null)
-      return new OSQLFilter(ifExpression, context, null);
+    if (ifExpression != null) return new OSQLFilter(ifExpression, context, null);
     return null;
   }
 
@@ -114,9 +112,18 @@ public abstract class OETLAbstractComponent implements OETLComponent {
     final Long extractedNum = context != null ? (Long) context.getVariable("extractedNum") : null;
 
     if (extractedNum != null) {
-      OLogManager.instance().log(this, iLevel, "[" + extractedNum + ":" + getName() + "]  " + iText, exception, true, null, iArgs);
+      OLogManager.instance()
+          .log(
+              this,
+              iLevel,
+              "[" + extractedNum + ":" + getName() + "]  " + iText,
+              exception,
+              true,
+              null,
+              iArgs);
     } else {
-      OLogManager.instance().log(this, iLevel, "[" + getName() + "] " + iText, exception, true, null, iArgs);
+      OLogManager.instance()
+          .log(this, iLevel, "[" + getName() + "] " + iText, exception, true, null, iArgs);
     }
   }
 
@@ -124,8 +131,7 @@ public abstract class OETLAbstractComponent implements OETLComponent {
     final StringBuilder buffer = new StringBuilder(256);
     buffer.append('[');
     for (int i = 0; i < iObject.length; ++i) {
-      if (i > 0)
-        buffer.append(',');
+      if (i > 0) buffer.append(',');
 
       final Object value = iObject[i];
       if (value != null) {
@@ -139,8 +145,7 @@ public abstract class OETLAbstractComponent implements OETLComponent {
   }
 
   protected Object resolve(final Object content) {
-    if (context == null || content == null)
-      return content;
+    if (context == null || content == null) return content;
 
     Object value;
     if (content instanceof String) {
@@ -148,14 +153,17 @@ public abstract class OETLAbstractComponent implements OETLComponent {
       if (contentAsString.startsWith("$") && !contentAsString.startsWith(VAR_BEGIN)) {
         value = context.getVariable(content.toString());
       } else {
-        value = OVariableParser.resolveVariables(contentAsString, VAR_BEGIN, VAR_END, variable -> context.getVariable(variable));
+        value =
+            OVariableParser.resolveVariables(
+                contentAsString, VAR_BEGIN, VAR_END, variable -> context.getVariable(variable));
       }
     } else {
       value = content;
     }
     if (value instanceof String) {
-      value = OVariableParser
-          .resolveVariables((String) value, "={", "}", variable -> new OSQLPredicate(variable).evaluate(context));
+      value =
+          OVariableParser.resolveVariables(
+              (String) value, "={", "}", variable -> new OSQLPredicate(variable).evaluate(context));
     }
     return value;
   }

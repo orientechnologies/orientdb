@@ -25,8 +25,7 @@ public abstract class OException extends RuntimeException {
   private static final long serialVersionUID = 3882447822497861424L;
 
   public static OException wrapException(final OException exception, final Throwable cause) {
-    if (cause instanceof OHighLevelException)
-      return (OException) cause;
+    if (cause instanceof OHighLevelException) return (OException) cause;
 
     exception.initCause(cause);
     return exception;
@@ -37,11 +36,11 @@ public abstract class OException extends RuntimeException {
   }
 
   /**
-   * This constructor is needed to restore and reproduce exception on client side in case of remote storage exception handling.
-   * Please create "copy constructor" for each exception which has current one as a parent.
+   * This constructor is needed to restore and reproduce exception on client side in case of remote
+   * storage exception handling. Please create "copy constructor" for each exception which has
+   * current one as a parent.
    */
   public OException(final OException exception) {
     super(exception.getMessage(), exception.getCause());
   }
-
 }

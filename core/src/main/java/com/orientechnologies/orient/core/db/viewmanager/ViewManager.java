@@ -5,52 +5,86 @@ import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.util.OPair;
 import com.orientechnologies.orient.core.command.OBasicCommandContext;
-import com.orientechnologies.orient.core.db.*;
+import com.orientechnologies.orient.core.db.ODatabase;
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
+import com.orientechnologies.orient.core.db.ODatabaseSession;
+import com.orientechnologies.orient.core.db.OLiveQueryResultListener;
+import com.orientechnologies.orient.core.db.OScenarioThreadLocal;
+import com.orientechnologies.orient.core.db.OrientDBInternal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentEmbedded;
-import com.orientechnologies.orient.core.index.*;
-import com.orientechnologies.orient.core.metadata.schema.*;
+import com.orientechnologies.orient.core.index.OCompositeIndexDefinition;
+import com.orientechnologies.orient.core.index.OIndex;
+import com.orientechnologies.orient.core.index.OIndexDefinition;
+import com.orientechnologies.orient.core.index.OIndexManagerAbstract;
+import com.orientechnologies.orient.core.index.OPropertyIndexDefinition;
+import com.orientechnologies.orient.core.metadata.schema.OImmutableClass;
+import com.orientechnologies.orient.core.metadata.schema.OSchema;
+import com.orientechnologies.orient.core.metadata.schema.OType;
+import com.orientechnologies.orient.core.metadata.schema.OView;
+import com.orientechnologies.orient.core.metadata.schema.OViewConfig;
+import com.orientechnologies.orient.core.metadata.schema.OViewImpl;
 import com.orientechnologies.orient.core.record.OElement;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
-import com.orientechnologies.orient.core.sql.parser.*;
-
-import java.util.*;
-import java.util.concurrent.*;
+import com.orientechnologies.orient.core.sql.parser.OProjection;
+import com.orientechnologies.orient.core.sql.parser.OProjectionItem;
+import com.orientechnologies.orient.core.sql.parser.OSelectStatement;
+import com.orientechnologies.orient.core.sql.parser.OStatement;
+import com.orientechnologies.orient.core.sql.parser.OStatementCache;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.TimerTask;
+import java.util.UUID;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 public class ViewManager {
   private final OrientDBInternal orientDB;
-  private final String           dbName;
+  private final String dbName;
 
   /**
    * To retain clusters that are being used in queries until the queries are closed.
-   * <p>
-   * view -> cluster -> number of visitors
+   *
+   * <p>view -> cluster -> number of visitors
    */
-  private final ConcurrentMap<Integer, AtomicInteger> viewCluserVisitors  = new ConcurrentHashMap<>();
-  private final ConcurrentMap<Integer, String>        oldClustersPerViews = new ConcurrentHashMap<>();
-  private final List<Integer>                         clustersToDrop      = Collections.synchronizedList(new ArrayList<>());
+  private final ConcurrentMap<Integer, AtomicInteger> viewCluserVisitors =
+      new ConcurrentHashMap<>();
+
+  private final ConcurrentMap<Integer, String> oldClustersPerViews = new ConcurrentHashMap<>();
+  private final List<Integer> clustersToDrop = Collections.synchronizedList(new ArrayList<>());
 
   /**
    * To retain indexes that are being used in queries until the queries are closed.
-   * <p>
-   * view -> index -> number of visitors
+   *
+   * <p>view -> index -> number of visitors
    */
-  private final ConcurrentMap<String, AtomicInteger> viewIndexVisitors  = new ConcurrentHashMap<>();
-  private final ConcurrentMap<String, String>        oldIndexesPerViews = new ConcurrentHashMap<>();
-  private final List<String>                         indexesToDrop      = Collections.synchronizedList(new ArrayList<>());
+  private final ConcurrentMap<String, AtomicInteger> viewIndexVisitors = new ConcurrentHashMap<>();
+
+  private final ConcurrentMap<String, String> oldIndexesPerViews = new ConcurrentHashMap<>();
+  private final List<String> indexesToDrop = Collections.synchronizedList(new ArrayList<>());
 
   private final Map<String, Long> lastUpdateTimestampForView = new HashMap<>();
 
   private final Map<String, Long> lastChangePerClass = new ConcurrentHashMap<>();
 
-  private volatile String    lastUpdatedView = null;
+  private volatile String lastUpdatedView = null;
   private volatile TimerTask timerTask;
   private volatile Future<?> lastTask;
-  private volatile boolean   closed          = false;
+  private volatile boolean closed = false;
 
   public ViewManager(OrientDBInternal orientDb, String dbName) {
     this.orientDB = orientDb;
@@ -58,13 +92,15 @@ public class ViewManager {
   }
 
   protected void init() {
-    orientDB.executeNoAuthorization(dbName, (db) -> {
-      // do this to make sure that the storage is already initialized and so is the shared context.
-      // you just don't need the db passed as a param here
-      registerLiveUpdates(db);
-      return null;
-    });
-
+    orientDB.executeNoAuthorization(
+        dbName,
+        (db) -> {
+          // do this to make sure that the storage is already initialized and so is the shared
+          // context.
+          // you just don't need the db passed as a param here
+          registerLiveUpdates(db);
+          return null;
+        });
   }
 
   private synchronized void registerLiveUpdates(ODatabaseSession db) {
@@ -78,7 +114,8 @@ public class ViewManager {
   public synchronized boolean registerLiveUpdateFor(ODatabaseSession db, String viewName) {
     OView view = db.getMetadata().getSchema().getView(viewName);
     boolean registered = false;
-    if (view.getUpdateStrategy() != null && view.getUpdateStrategy().equalsIgnoreCase(OViewConfig.UPDATE_STRATEGY_LIVE)) {
+    if (view.getUpdateStrategy() != null
+        && view.getUpdateStrategy().equalsIgnoreCase(OViewConfig.UPDATE_STRATEGY_LIVE)) {
       db.live(view.getQuery(), new ViewUpdateListener(view.getName()));
       registered = true;
     }
@@ -97,17 +134,20 @@ public class ViewManager {
   }
 
   private void schedule() {
-    this.timerTask = new TimerTask() {
-      @Override
-      public void run() {
-        if (closed)
-          return;
-        lastTask = orientDB.executeNoAuthorization(dbName, (db) -> {
-          ViewManager.this.updateViews((ODatabaseDocumentInternal) db);
-          return null;
-        });
-      }
-    };
+    this.timerTask =
+        new TimerTask() {
+          @Override
+          public void run() {
+            if (closed) return;
+            lastTask =
+                orientDB.executeNoAuthorization(
+                    dbName,
+                    (db) -> {
+                      ViewManager.this.updateViews((ODatabaseDocumentInternal) db);
+                      return null;
+                    });
+          }
+        };
     this.orientDB.scheduleOnce(timerTask, 1000);
   }
 
@@ -119,7 +159,7 @@ public class ViewManager {
       if (view != null) {
         updateView(view, db);
       }
-      //When the run is finished schedule the next run.
+      // When the run is finished schedule the next run.
       schedule();
     } catch (Exception e) {
       OLogManager.instance().warn(this, "Failed to update views");
@@ -141,7 +181,8 @@ public class ViewManager {
         }
 
       } catch (InterruptedException e) {
-        throw OException.wrapException(new OInterruptedException("Terminated while waiting update view to finis"), e);
+        throw OException.wrapException(
+            new OInterruptedException("Terminated while waiting update view to finis"), e);
       } catch (ExecutionException e) {
         OLogManager.instance().warn(this, "Issue terminating view update background operations", e);
       }
@@ -185,7 +226,8 @@ public class ViewManager {
   public synchronized OView getNextViewToUpdate(ODatabase db) {
     OSchema schema = db.getMetadata().getSchema();
 
-    List<String> names = schema.getViews().stream().map(x -> x.getName()).sorted().collect(Collectors.toList());
+    List<String> names =
+        schema.getViews().stream().map(x -> x.getName()).sorted().collect(Collectors.toList());
     if (names.isEmpty()) {
       return null;
     }
@@ -225,10 +267,9 @@ public class ViewManager {
    * Checks if the view could need an update based on watch rules
    *
    * @param name view name
-   * @param db   db instance
-   *
-   * @return true if there are no watch rules for this view; true if there are watch rules and some of them happened since last
-   * update; true if the view was never updated; false otherwise.
+   * @param db db instance
+   * @return true if there are no watch rules for this view; true if there are watch rules and some
+   *     of them happened since last update; true if the view was never updated; false otherwise.
    */
   private boolean needsUpdateBasedOnWatchRules(String name, ODatabase db) {
     OView view = db.getMetadata().getSchema().getView(name);
@@ -281,24 +322,24 @@ public class ViewManager {
 
     List<OIndex> indexes = createNewIndexesForView(view, cluster, db);
 
-    OScenarioThreadLocal.executeAsDistributed(new Callable<Object>() {
-      @Override
-      public Object call() {
+    OScenarioThreadLocal.executeAsDistributed(
+        new Callable<Object>() {
+          @Override
+          public Object call() {
 
-        OResultSet rs = db.query(query);
-        while (rs.hasNext()) {
-          OResult item = rs.next();
-          addItemToView(item, db, originRidField, viewName, clusterName, indexes);
-        }
+            OResultSet rs = db.query(query);
+            while (rs.hasNext()) {
+              OResult item = rs.next();
+              addItemToView(item, db, originRidField, viewName, clusterName, indexes);
+            }
 
-        return null;
-      }
-
-    });
+            return null;
+          }
+        });
 
     view = db.getMetadata().getSchema().getView(view.getName());
     if (view == null) {
-      //the view was dropped in the meantime
+      // the view was dropped in the meantime
       db.dropCluster(clusterName);
       indexes.forEach(x -> x.delete());
       return;
@@ -315,21 +356,28 @@ public class ViewManager {
     }
 
     final OViewImpl viewImpl = ((OViewImpl) view);
-    viewImpl.getInactiveIndexes().forEach(idx -> {
-      indexesToDrop.add(idx);
-      viewIndexVisitors.put(idx, new AtomicInteger(0));
-      oldIndexesPerViews.put(idx, viewName);
-    });
+    viewImpl
+        .getInactiveIndexes()
+        .forEach(
+            idx -> {
+              indexesToDrop.add(idx);
+              viewIndexVisitors.put(idx, new AtomicInteger(0));
+              oldIndexesPerViews.put(idx, viewName);
+            });
     viewImpl.inactivateIndexes();
     viewImpl.addActiveIndexes(indexes.stream().map(x -> x.getName()).collect(Collectors.toList()));
 
     unlockView(view);
     cleanUnusedViewIndexes(db);
     cleanUnusedViewClusters(db);
-
   }
 
-  private void addItemToView(OResult item, ODatabaseDocument db, String originRidField, String viewName, String clusterName,
+  private void addItemToView(
+      OResult item,
+      ODatabaseDocument db,
+      String originRidField,
+      String viewName,
+      String clusterName,
       List<OIndex> indexes) {
     OElement newRow = copyElement(item, db);
     if (originRidField != null) {
@@ -353,7 +401,8 @@ public class ViewManager {
     return idx.getDefinition().createValue(vals);
   }
 
-  private List<OIndex> createNewIndexesForView(OView view, int cluster, ODatabaseDocumentInternal db) {
+  private List<OIndex> createNewIndexesForView(
+      OView view, int cluster, ODatabaseDocumentInternal db) {
     try {
       List<OIndex> result = new ArrayList<>();
       OIndexManagerAbstract idxMgr = db.getMetadata().getIndexManagerInternal();
@@ -362,7 +411,9 @@ public class ViewManager {
         String indexName = view.getName() + "_" + UUID.randomUUID().toString().replaceAll("-", "_");
         String type = cfg.getType();
         String engine = cfg.getEngine();
-        OIndex idx = idxMgr.createIndex(db, indexName, type, definition, new int[] { cluster }, null, null, engine);
+        OIndex idx =
+            idxMgr.createIndex(
+                db, indexName, type, definition, new int[] {cluster}, null, null, engine);
         result.add(idx);
       }
       return result;
@@ -372,9 +423,11 @@ public class ViewManager {
     }
   }
 
-  private OIndexDefinition createIndexDefinition(String viewName, List<OPair<String, OType>> requiredIndexesInfo) {
+  private OIndexDefinition createIndexDefinition(
+      String viewName, List<OPair<String, OType>> requiredIndexesInfo) {
     if (requiredIndexesInfo.size() == 1) {
-      return new OPropertyIndexDefinition(viewName, requiredIndexesInfo.get(0).getKey(), requiredIndexesInfo.get(0).getValue());
+      return new OPropertyIndexDefinition(
+          viewName, requiredIndexesInfo.get(0).getKey(), requiredIndexesInfo.get(0).getValue());
     }
     OCompositeIndexDefinition result = new OCompositeIndexDefinition(viewName);
     for (OPair<String, OType> pair : requiredIndexesInfo) {
@@ -384,11 +437,11 @@ public class ViewManager {
   }
 
   private synchronized void unlockView(OView view) {
-    //TODO
+    // TODO
   }
 
   private void lockView(OView view) {
-    //TODO
+    // TODO
   }
 
   private String getNextClusterNameFor(OView view, ODatabase db) {
@@ -413,23 +466,25 @@ public class ViewManager {
   }
 
   public void updateViewAsync(String name, ViewCreationListener listener) {
-    orientDB.executeNoAuthorization(dbName, (databaseSession) -> {
-      if (!buildOnThisNode(databaseSession, name)) {
-        return null;
-      }
-      try {
-        OView view = databaseSession.getMetadata().getSchema().getView(name);
-        updateView(view, (ODatabaseDocumentInternal) databaseSession);
-        if (listener != null) {
-          listener.afterCreate(databaseSession, name);
-        }
-      } catch (Exception e) {
-        if (listener != null) {
-          listener.onError(name, e);
-        }
-      }
-      return null;
-    });
+    orientDB.executeNoAuthorization(
+        dbName,
+        (databaseSession) -> {
+          if (!buildOnThisNode(databaseSession, name)) {
+            return null;
+          }
+          try {
+            OView view = databaseSession.getMetadata().getSchema().getView(name);
+            updateView(view, (ODatabaseDocumentInternal) databaseSession);
+            if (listener != null) {
+              listener.afterCreate(databaseSession, name);
+            }
+          } catch (Exception e) {
+            if (listener != null) {
+              listener.onError(name, e);
+            }
+          }
+          return null;
+        });
   }
 
   public synchronized void startUsingViewCluster(Integer cluster) {
@@ -449,15 +504,18 @@ public class ViewManager {
     item.decrementAndGet();
   }
 
-  public void recordAdded(OImmutableClass clazz, ODocument doc, ODatabaseDocumentEmbedded oDatabaseDocumentEmbedded) {
+  public void recordAdded(
+      OImmutableClass clazz, ODocument doc, ODatabaseDocumentEmbedded oDatabaseDocumentEmbedded) {
     lastChangePerClass.put(clazz.getName().toLowerCase(Locale.ENGLISH), System.currentTimeMillis());
   }
 
-  public void recordUpdated(OImmutableClass clazz, ODocument doc, ODatabaseDocumentEmbedded oDatabaseDocumentEmbedded) {
+  public void recordUpdated(
+      OImmutableClass clazz, ODocument doc, ODatabaseDocumentEmbedded oDatabaseDocumentEmbedded) {
     lastChangePerClass.put(clazz.getName().toLowerCase(Locale.ENGLISH), System.currentTimeMillis());
   }
 
-  public void recordDeleted(OImmutableClass clazz, ODocument doc, ODatabaseDocumentEmbedded oDatabaseDocumentEmbedded) {
+  public void recordDeleted(
+      OImmutableClass clazz, ODocument doc, ODatabaseDocumentEmbedded oDatabaseDocumentEmbedded) {
     lastChangePerClass.put(clazz.getName().toLowerCase(Locale.ENGLISH), System.currentTimeMillis());
   }
 
@@ -494,7 +552,12 @@ public class ViewManager {
       OView view = db.getMetadata().getSchema().getView(viewName);
       if (view != null) {
         int cluster = view.getClusterIds()[0];
-        addItemToView(data, db, view.getOriginRidField(), view.getName(), db.getClusterNameById(cluster),
+        addItemToView(
+            data,
+            db,
+            view.getOriginRidField(),
+            view.getName(),
+            db.getClusterNameById(cluster),
             new ArrayList<>(view.getIndexes()));
       }
     }
@@ -503,23 +566,31 @@ public class ViewManager {
     public void onUpdate(ODatabaseDocument db, OResult before, OResult after) {
       OView view = db.getMetadata().getSchema().getView(viewName);
       if (view != null && view.getOriginRidField() != null) {
-        try (OResultSet rs = db
-            .query("SELECT FROM " + viewName + " WHERE " + view.getOriginRidField() + " = ?", (Object) after.getProperty("@rid"))) {
+        try (OResultSet rs =
+            db.query(
+                "SELECT FROM " + viewName + " WHERE " + view.getOriginRidField() + " = ?",
+                (Object) after.getProperty("@rid"))) {
           while (rs.hasNext()) {
             OResult row = rs.next();
-            row.getElement().ifPresent(elem -> updateViewRow(elem, after, view, (ODatabaseDocumentInternal) db));
+            row.getElement()
+                .ifPresent(
+                    elem -> updateViewRow(elem, after, view, (ODatabaseDocumentInternal) db));
           }
         }
       }
     }
 
-    private void updateViewRow(OElement viewRow, OResult origin, OView view, ODatabaseDocumentInternal db) {
+    private void updateViewRow(
+        OElement viewRow, OResult origin, OView view, ODatabaseDocumentInternal db) {
       OStatement stm = OStatementCache.get(view.getQuery(), db);
       if (stm instanceof OSelectStatement) {
         OProjection projection = ((OSelectStatement) stm).getProjection();
-        if (projection == null || (projection.getItems().size() == 0 && projection.getItems().get(0).isAll())) {
+        if (projection == null
+            || (projection.getItems().size() == 0 && projection.getItems().get(0).isAll())) {
           for (String s : origin.getPropertyNames()) {
-            if ("@rid".equalsIgnoreCase(s) || "@class".equalsIgnoreCase(s) || "@version".equalsIgnoreCase(s)) {
+            if ("@rid".equalsIgnoreCase(s)
+                || "@class".equalsIgnoreCase(s)
+                || "@version".equalsIgnoreCase(s)) {
               continue;
             }
             Object value = origin.getProperty(s);
@@ -539,8 +610,10 @@ public class ViewManager {
     public void onDelete(ODatabaseDocument db, OResult data) {
       OView view = db.getMetadata().getSchema().getView(viewName);
       if (view != null && view.getOriginRidField() != null) {
-        try (OResultSet rs = db
-            .query("SELECT FROM " + viewName + " WHERE " + view.getOriginRidField() + " = ?", (Object) data.getProperty("@rid"))) {
+        try (OResultSet rs =
+            db.query(
+                "SELECT FROM " + viewName + " WHERE " + view.getOriginRidField() + " = ?",
+                (Object) data.getProperty("@rid"))) {
           while (rs.hasNext()) {
             rs.next().getElement().ifPresent(x -> x.delete());
           }
@@ -554,8 +627,6 @@ public class ViewManager {
     }
 
     @Override
-    public void onEnd(ODatabaseDocument database) {
-
-    }
+    public void onEnd(ODatabaseDocument database) {}
   }
 }

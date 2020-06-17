@@ -20,48 +20,47 @@
 package com.orientechnologies.orient.core.metadata.security;
 
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
-import com.orientechnologies.orient.core.hook.ORecordHook;
 import com.orientechnologies.orient.core.metadata.schema.OImmutableClass;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
-
 import java.util.Set;
 
 /**
- * Checks the access against restricted resources. Restricted resources are those documents of classes that implement ORestricted
- * abstract class.
+ * Checks the access against restricted resources. Restricted resources are those documents of
+ * classes that implement ORestricted abstract class.
  *
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
  */
 public class ORestrictedAccessHook {
 
-  public static boolean onRecordBeforeCreate(final ODocument iDocument, ODatabaseDocumentInternal database) {
+  public static boolean onRecordBeforeCreate(
+      final ODocument iDocument, ODatabaseDocumentInternal database) {
     final OImmutableClass cls = ODocumentInternal.getImmutableSchemaClass(database, iDocument);
     if (cls != null && cls.isRestricted()) {
       String fieldNames = cls.getCustom(OSecurityShared.ONCREATE_FIELD);
-      if (fieldNames == null)
-        fieldNames = ORestrictedOperation.ALLOW_ALL.getFieldName();
+      if (fieldNames == null) fieldNames = ORestrictedOperation.ALLOW_ALL.getFieldName();
       final String[] fields = fieldNames.split(",");
       String identityType = cls.getCustom(OSecurityShared.ONCREATE_IDENTITY_TYPE);
-      if (identityType == null)
-        identityType = "user";
+      if (identityType == null) identityType = "user";
 
       OIdentifiable identity = null;
       if (identityType.equals("user")) {
         final OSecurityUser user = database.getUser();
-        if (user != null)
-          identity = user.getIdentity();
+        if (user != null) identity = user.getIdentity();
       } else if (identityType.equals("role")) {
         final Set<? extends OSecurityRole> roles = database.getUser().getRoles();
-        if (!roles.isEmpty())
-          identity = roles.iterator().next().getIdentity();
+        if (!roles.isEmpty()) identity = roles.iterator().next().getIdentity();
       } else
         throw new OConfigurationException(
-            "Wrong custom field '" + OSecurityShared.ONCREATE_IDENTITY_TYPE + "' in class '" + cls.getName() + "' with value '"
-                + identityType + "'. Supported ones are: 'user', 'role'");
+            "Wrong custom field '"
+                + OSecurityShared.ONCREATE_IDENTITY_TYPE
+                + "' in class '"
+                + cls.getName()
+                + "' with value '"
+                + identityType
+                + "'. Supported ones are: 'user', 'role'");
 
       if (identity != null) {
         for (String f : fields)
@@ -73,16 +72,22 @@ public class ORestrictedAccessHook {
   }
 
   @SuppressWarnings("unchecked")
-  public static boolean isAllowed(ODatabaseDocumentInternal database, final ODocument iDocument,
-      final ORestrictedOperation iAllowOperation, final boolean iReadOriginal) {
+  public static boolean isAllowed(
+      ODatabaseDocumentInternal database,
+      final ODocument iDocument,
+      final ORestrictedOperation iAllowOperation,
+      final boolean iReadOriginal) {
     final OImmutableClass cls = ODocumentInternal.getImmutableSchemaClass(database, iDocument);
     if (cls != null && cls.isRestricted()) {
 
-      if (database.getUser() == null)
-        return true;
+      if (database.getUser() == null) return true;
 
       if (database.getUser().isRuleDefined(ORule.ResourceGeneric.BYPASS_RESTRICTED, null))
-        if (database.getUser().checkIfAllowed(ORule.ResourceGeneric.BYPASS_RESTRICTED, null, ORole.PERMISSION_READ) != null)
+        if (database
+                .getUser()
+                .checkIfAllowed(
+                    ORule.ResourceGeneric.BYPASS_RESTRICTED, null, ORole.PERMISSION_READ)
+            != null)
           // BYPASS RECORD LEVEL SECURITY: ONLY "ADMIN" ROLE CAN BY DEFAULT
           return true;
 
@@ -90,19 +95,19 @@ public class ORestrictedAccessHook {
       if (iReadOriginal)
         // RELOAD TO AVOID HACKING OF "_ALLOW" FIELDS
         doc = (ODocument) database.load(iDocument.getIdentity());
-      else
-        doc = iDocument;
+      else doc = iDocument;
 
       // we even not allowed to read it.
-      if (doc == null)
-        return false;
+      if (doc == null) return false;
 
-      return database.getMetadata().getSecurity()
-          .isAllowed((Set<OIdentifiable>) doc.field(ORestrictedOperation.ALLOW_ALL.getFieldName()),
+      return database
+          .getMetadata()
+          .getSecurity()
+          .isAllowed(
+              (Set<OIdentifiable>) doc.field(ORestrictedOperation.ALLOW_ALL.getFieldName()),
               (Set<OIdentifiable>) doc.field(iAllowOperation.getFieldName()));
     }
 
     return true;
   }
-
 }

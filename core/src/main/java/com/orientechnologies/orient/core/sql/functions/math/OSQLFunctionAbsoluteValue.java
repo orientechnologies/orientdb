@@ -21,27 +21,31 @@ package com.orientechnologies.orient.core.sql.functions.math;
 
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
-
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.List;
 
 /**
- * Evaluates the absolute value for numeric types.  The argument must be a BigDecimal, BigInteger, Integer, Long, Double or a Float,
- * or null.  If null is passed in the result will be null.  Otherwise the result will be the mathematical absolute value of the
- * argument passed in and will be of the same type that was passed in.
+ * Evaluates the absolute value for numeric types. The argument must be a BigDecimal, BigInteger,
+ * Integer, Long, Double or a Float, or null. If null is passed in the result will be null.
+ * Otherwise the result will be the mathematical absolute value of the argument passed in and will
+ * be of the same type that was passed in.
  *
  * @author Michael MacFadden
  */
 public class OSQLFunctionAbsoluteValue extends OSQLFunctionMathAbstract {
   public static final String NAME = "abs";
-  private             Object result;
+  private Object result;
 
   public OSQLFunctionAbsoluteValue() {
     super(NAME, 1, 1);
   }
 
-  public Object execute(Object iThis, final OIdentifiable iRecord, final Object iCurrentResult, final Object[] iParams,
+  public Object execute(
+      Object iThis,
+      final OIdentifiable iRecord,
+      final Object iCurrentResult,
+      final Object[] iParams,
       OCommandContext iContext) {
     Object inputValue = iParams[0];
 

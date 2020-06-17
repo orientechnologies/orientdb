@@ -30,21 +30,25 @@ import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OCommandInterruptedException;
 import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.metadata.security.ORule;
-
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * Abstract implementation of Executor Command interface.
- * 
+ *
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
- * 
  */
 @SuppressWarnings("unchecked")
 public abstract class OCommandExecutorAbstract extends OBaseParser implements OCommandExecutor {
-  protected OProgressListener   progressListener;
-  protected int                 limit = -1;
+  protected OProgressListener progressListener;
+  protected int limit = -1;
   protected Map<Object, Object> parameters;
-  protected OCommandContext     context;
+  protected OCommandContext context;
 
   public static ODatabaseDocumentInternal getDatabase() {
     return ODatabaseRecordThreadLocal.instance().get();
@@ -66,7 +70,8 @@ public abstract class OCommandExecutorAbstract extends OBaseParser implements OC
     return progressListener;
   }
 
-  public <RET extends OCommandExecutor> RET setProgressListener(final OProgressListener progressListener) {
+  public <RET extends OCommandExecutor> RET setProgressListener(
+      final OProgressListener progressListener) {
     this.progressListener = progressListener;
     return (RET) this;
   }
@@ -76,7 +81,9 @@ public abstract class OCommandExecutorAbstract extends OBaseParser implements OC
   }
 
   public long getDistributedTimeout() {
-    return getDatabase().getConfiguration().getValueAsLong(OGlobalConfiguration.DISTRIBUTED_COMMAND_LONG_TASK_SYNCH_TIMEOUT);
+    return getDatabase()
+        .getConfiguration()
+        .getValueAsLong(OGlobalConfiguration.DISTRIBUTED_COMMAND_LONG_TASK_SYNCH_TIMEOUT);
   }
 
   public int getLimit() {
@@ -98,8 +105,7 @@ public abstract class OCommandExecutorAbstract extends OBaseParser implements OC
   }
 
   public OCommandContext getContext() {
-    if (context == null)
-      context = new OBasicCommandContext();
+    if (context == null) context = new OBasicCommandContext();
     return context;
   }
 
@@ -129,8 +135,7 @@ public abstract class OCommandExecutorAbstract extends OBaseParser implements OC
     if (OExecutionThreadLocal.isInterruptCurrentOperation())
       throw new OCommandInterruptedException("The command has been interrupted");
 
-    if (iContext != null && !iContext.checkTimeout())
-      return false;
+    if (iContext != null && !iContext.checkTimeout()) return false;
 
     return true;
   }
@@ -148,7 +153,8 @@ public abstract class OCommandExecutorAbstract extends OBaseParser implements OC
     return result.toString();
   }
 
-  public OCommandDistributedReplicateRequest.DISTRIBUTED_RESULT_MGMT getDistributedResultManagement() {
+  public OCommandDistributedReplicateRequest.DISTRIBUTED_RESULT_MGMT
+      getDistributedResultManagement() {
     return OCommandDistributedReplicateRequest.DISTRIBUTED_RESULT_MGMT.CHECK_FOR_EQUALS;
   }
 
@@ -164,8 +170,7 @@ public abstract class OCommandExecutorAbstract extends OBaseParser implements OC
 
   public Object mergeResults(final Map<String, Object> results) throws Exception {
 
-    if (results.isEmpty())
-      return null;
+    if (results.isEmpty()) return null;
 
     Object aggregatedResult = null;
 
@@ -174,8 +179,7 @@ public abstract class OCommandExecutorAbstract extends OBaseParser implements OC
       final Object nodeResult = entry.getValue();
 
       if (nodeResult instanceof Collection) {
-        if (aggregatedResult == null)
-          aggregatedResult = new ArrayList();
+        if (aggregatedResult == null) aggregatedResult = new ArrayList();
 
         ((List) aggregatedResult).addAll((Collection<?>) nodeResult);
 
@@ -183,18 +187,14 @@ public abstract class OCommandExecutorAbstract extends OBaseParser implements OC
 
         // RECEIVED EXCEPTION
         throw (Exception) nodeResult;
-
       else if (nodeResult instanceof OIdentifiable) {
-        if (aggregatedResult == null)
-          aggregatedResult = new ArrayList();
+        if (aggregatedResult == null) aggregatedResult = new ArrayList();
 
         ((List) aggregatedResult).add(nodeResult);
 
       } else if (nodeResult instanceof Number) {
-        if (aggregatedResult == null)
-          aggregatedResult = nodeResult;
-        else
-          OMultiValue.add(aggregatedResult, nodeResult);
+        if (aggregatedResult == null) aggregatedResult = nodeResult;
+        else OMultiValue.add(aggregatedResult, nodeResult);
       }
     }
 

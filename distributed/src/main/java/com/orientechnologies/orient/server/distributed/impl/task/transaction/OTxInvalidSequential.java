@@ -4,8 +4,8 @@ import com.orientechnologies.orient.core.tx.OTransactionId;
 
 public class OTxInvalidSequential implements OTransactionResultPayload {
 
-  public static final int            ID = 9;
-  private             OTransactionId current;
+  public static final int ID = 9;
+  private OTransactionId current;
 
   public OTxInvalidSequential(OTransactionId current) {
     this.current = current;

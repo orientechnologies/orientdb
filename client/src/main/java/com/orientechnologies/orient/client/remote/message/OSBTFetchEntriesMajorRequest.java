@@ -30,19 +30,23 @@ import com.orientechnologies.orient.core.storage.ridbag.sbtree.OBonsaiCollection
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelDataInput;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelDataOutput;
-
 import java.io.IOException;
 
-public class OSBTFetchEntriesMajorRequest<K, V> implements OBinaryRequest<OSBTFetchEntriesMajorResponse<K, V>> {
-  private boolean                  inclusive;
-  private byte[]                   keyStream;
+public class OSBTFetchEntriesMajorRequest<K, V>
+    implements OBinaryRequest<OSBTFetchEntriesMajorResponse<K, V>> {
+  private boolean inclusive;
+  private byte[] keyStream;
   private OBonsaiCollectionPointer pointer;
-  private int                      pageSize;
-  private OBinarySerializer<K>     keySerializer;
-  private OBinarySerializer<V>     valueSerializer;
+  private int pageSize;
+  private OBinarySerializer<K> keySerializer;
+  private OBinarySerializer<V> valueSerializer;
 
-  public OSBTFetchEntriesMajorRequest(boolean inclusive, byte[] keyStream, OBonsaiCollectionPointer pointer,
-      OBinarySerializer<K> keySerializer, OBinarySerializer<V> valueSerializer) {
+  public OSBTFetchEntriesMajorRequest(
+      boolean inclusive,
+      byte[] keyStream,
+      OBonsaiCollectionPointer pointer,
+      OBinarySerializer<K> keySerializer,
+      OBinarySerializer<V> valueSerializer) {
     this.inclusive = inclusive;
     this.keyStream = keyStream;
     this.pointer = pointer;
@@ -50,8 +54,7 @@ public class OSBTFetchEntriesMajorRequest<K, V> implements OBinaryRequest<OSBTFe
     this.valueSerializer = valueSerializer;
   }
 
-  public OSBTFetchEntriesMajorRequest() {
-  }
+  public OSBTFetchEntriesMajorRequest() {}
 
   @Override
   public void write(OChannelDataOutput network, OStorageRemoteSession session) throws IOException {
@@ -61,14 +64,13 @@ public class OSBTFetchEntriesMajorRequest<K, V> implements OBinaryRequest<OSBTFe
     network.writeInt(128);
   }
 
-  public void read(OChannelDataInput channel, int protocolVersion, ORecordSerializer serializer) throws IOException {
+  public void read(OChannelDataInput channel, int protocolVersion, ORecordSerializer serializer)
+      throws IOException {
     this.pointer = OCollectionNetworkSerializer.INSTANCE.readCollectionPointer(channel);
     this.keyStream = channel.readBytes();
     this.inclusive = channel.readBoolean();
-    if (protocolVersion >= 21)
-      this.pageSize = channel.readInt();
-    else
-      this.pageSize = 128;
+    if (protocolVersion >= 21) this.pageSize = channel.readInt();
+    else this.pageSize = 128;
   }
 
   @Override
@@ -106,5 +108,4 @@ public class OSBTFetchEntriesMajorRequest<K, V> implements OBinaryRequest<OSBTFe
   public OBinaryResponse execute(OBinaryRequestExecutor executor) {
     return executor.executeSBTFetchEntriesMajor(this);
   }
-
 }

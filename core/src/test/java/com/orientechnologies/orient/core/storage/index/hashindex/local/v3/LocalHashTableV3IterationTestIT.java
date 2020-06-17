@@ -9,9 +9,17 @@ import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedSt
 import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperationsManager;
 import com.orientechnologies.orient.core.storage.index.hashindex.local.OHashFunction;
 import com.orientechnologies.orient.core.storage.index.hashindex.local.OHashTable;
-import org.junit.*;
-
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Random;
+import java.util.SortedSet;
+import java.util.TreeSet;
+import org.junit.After;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Ignore;
+import org.junit.Test;
 
 /**
  * @author Andrey Lomakin (a.lomakin-at-orientdb.com)
@@ -23,15 +31,15 @@ public class LocalHashTableV3IterationTestIT {
   private ODatabaseDocumentTx databaseDocumentTx;
 
   private OLocalHashTableV3<Integer, String> localHashTable;
-  private OAtomicOperationsManager           atomicOperationsManager;
+  private OAtomicOperationsManager atomicOperationsManager;
 
   @Before
   public void beforeClass() throws Exception {
     String buildDirectory = System.getProperty("buildDirectory");
-    if (buildDirectory == null)
-      buildDirectory = ".";
+    if (buildDirectory == null) buildDirectory = ".";
 
-    databaseDocumentTx = new ODatabaseDocumentTx("plocal:" + buildDirectory + "/localHashTableV3IterationTest");
+    databaseDocumentTx =
+        new ODatabaseDocumentTx("plocal:" + buildDirectory + "/localHashTableV3IterationTest");
     if (databaseDocumentTx.exists()) {
       databaseDocumentTx.open("admin", "admin");
       databaseDocumentTx.drop();
@@ -41,21 +49,37 @@ public class LocalHashTableV3IterationTestIT {
 
     OHashFunction<Integer> hashFunction = value -> Long.MAX_VALUE / 2 + value;
 
-    localHashTable = new OLocalHashTableV3<>("localHashTableIterationTest", ".imc", ".tsc", ".obf", ".nbh",
-        (OAbstractPaginatedStorage) databaseDocumentTx.getStorage());
+    localHashTable =
+        new OLocalHashTableV3<>(
+            "localHashTableIterationTest",
+            ".imc",
+            ".tsc",
+            ".obf",
+            ".nbh",
+            (OAbstractPaginatedStorage) databaseDocumentTx.getStorage());
 
-    atomicOperationsManager = ((OAbstractPaginatedStorage) ((ODatabaseDocumentInternal) databaseDocumentTx).getStorage())
-        .getAtomicOperationsManager();
-    atomicOperationsManager.executeInsideAtomicOperation(null, atomicOperation -> localHashTable
-        .create(atomicOperation, OIntegerSerializer.INSTANCE,
-            OBinarySerializerFactory.getInstance().<String>getObjectSerializer(OType.STRING), null, null, hashFunction, true));
+    atomicOperationsManager =
+        ((OAbstractPaginatedStorage) ((ODatabaseDocumentInternal) databaseDocumentTx).getStorage())
+            .getAtomicOperationsManager();
+    atomicOperationsManager.executeInsideAtomicOperation(
+        null,
+        atomicOperation ->
+            localHashTable.create(
+                atomicOperation,
+                OIntegerSerializer.INSTANCE,
+                OBinarySerializerFactory.getInstance().<String>getObjectSerializer(OType.STRING),
+                null,
+                null,
+                hashFunction,
+                true));
   }
 
   @After
   public void afterClass() throws Exception {
     doClearTable();
 
-    atomicOperationsManager.executeInsideAtomicOperation(null, atomicOperation -> localHashTable.delete(atomicOperation));
+    atomicOperationsManager.executeInsideAtomicOperation(
+        null, atomicOperation -> localHashTable.delete(atomicOperation));
     databaseDocumentTx.drop();
   }
 
@@ -66,8 +90,8 @@ public class LocalHashTableV3IterationTestIT {
       OHashTable.Entry<Integer, String>[] entries = localHashTable.ceilingEntries(firstEntry.key);
       while (entries.length > 0) {
         for (final OHashTable.Entry<Integer, String> entry : entries) {
-          atomicOperationsManager
-              .executeInsideAtomicOperation(null, atomicOperation -> localHashTable.remove(atomicOperation, entry.key));
+          atomicOperationsManager.executeInsideAtomicOperation(
+              null, atomicOperation -> localHashTable.remove(atomicOperation, entry.key));
         }
 
         entries = localHashTable.higherEntries(entries[entries.length - 1].key);
@@ -75,7 +99,8 @@ public class LocalHashTableV3IterationTestIT {
     }
 
     if (localHashTable.isNullKeyIsSupported()) {
-      atomicOperationsManager.executeInsideAtomicOperation(null, atomicOperation -> localHashTable.remove(atomicOperation, null));
+      atomicOperationsManager.executeInsideAtomicOperation(
+          null, atomicOperation -> localHashTable.remove(atomicOperation, null));
     }
   }
 
@@ -93,8 +118,8 @@ public class LocalHashTableV3IterationTestIT {
       int key = random.nextInt();
 
       if (localHashTable.get(key) == null) {
-        atomicOperationsManager
-            .executeInsideAtomicOperation(null, atomicOperation -> localHashTable.put(atomicOperation, key, String.valueOf(key)));
+        atomicOperationsManager.executeInsideAtomicOperation(
+            null, atomicOperation -> localHashTable.put(atomicOperation, key, String.valueOf(key)));
         keys.add(key);
         Assert.assertEquals(localHashTable.get(key), String.valueOf(key));
       }
@@ -122,8 +147,8 @@ public class LocalHashTableV3IterationTestIT {
       int key = random.nextInt();
 
       if (localHashTable.get(key) == null) {
-        atomicOperationsManager
-            .executeInsideAtomicOperation(null, atomicOperation -> localHashTable.put(atomicOperation, key, String.valueOf(key)));
+        atomicOperationsManager.executeInsideAtomicOperation(
+            null, atomicOperation -> localHashTable.put(atomicOperation, key, String.valueOf(key)));
         keys.add(key);
         Assert.assertEquals(localHashTable.get(key), String.valueOf(key));
       }
@@ -158,8 +183,8 @@ public class LocalHashTableV3IterationTestIT {
       int key = random.nextInt();
 
       if (localHashTable.get(key) == null) {
-        atomicOperationsManager
-            .executeInsideAtomicOperation(null, atomicOperation -> localHashTable.put(atomicOperation, key, String.valueOf(key)));
+        atomicOperationsManager.executeInsideAtomicOperation(
+            null, atomicOperation -> localHashTable.put(atomicOperation, key, String.valueOf(key)));
         keys.add(key);
         Assert.assertEquals(localHashTable.get(key), String.valueOf(key));
       }
@@ -178,5 +203,4 @@ public class LocalHashTableV3IterationTestIT {
       Assert.assertEquals(sKey, (int) keys.get(j + 1));
     }
   }
-
 }

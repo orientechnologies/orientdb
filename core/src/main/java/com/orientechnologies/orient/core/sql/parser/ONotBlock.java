@@ -7,7 +7,6 @@ import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.sql.executor.OResult;
-
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -87,7 +86,8 @@ public class ONotBlock extends OBooleanExpression {
     return sub.getExternalCalculationConditions();
   }
 
-  public List<OBinaryCondition> getIndexedFunctionConditions(OClass iSchemaClass, ODatabaseDocumentInternal database) {
+  public List<OBinaryCondition> getIndexedFunctionConditions(
+      OClass iSchemaClass, ODatabaseDocumentInternal database) {
     if (sub == null) {
       return null;
     }
@@ -130,17 +130,13 @@ public class ONotBlock extends OBooleanExpression {
 
   @Override
   public boolean equals(Object o) {
-    if (this == o)
-      return true;
-    if (o == null || getClass() != o.getClass())
-      return false;
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
 
     ONotBlock oNotBlock = (ONotBlock) o;
 
-    if (negate != oNotBlock.negate)
-      return false;
-    if (sub != null ? !sub.equals(oNotBlock.sub) : oNotBlock.sub != null)
-      return false;
+    if (negate != oNotBlock.negate) return false;
+    if (sub != null ? !sub.equals(oNotBlock.sub) : oNotBlock.sub != null) return false;
 
     return true;
   }

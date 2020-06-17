@@ -15,7 +15,7 @@
  *  *  limitations under the License.
  *  *
  *  * For more information: http://orientdb.com
- *  
+ *
  */
 package com.orientechnologies.orient.core.sql.functions.misc;
 
@@ -25,22 +25,23 @@ import com.orientechnologies.orient.core.exception.OConcurrentModificationExcept
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.sql.functions.OSQLFunctionAbstract;
 
-/**
- * Mostly used for testing purpose. It just throws an OConcurrentModificationException
- */
+/** Mostly used for testing purpose. It just throws an OConcurrentModificationException */
 public class OSQLFunctionThrowCME extends OSQLFunctionAbstract {
   public static final String NAME = "throwCME";
 
-  /**
-   * Get the date at construction to have the same date for all the iteration.
-   */
+  /** Get the date at construction to have the same date for all the iteration. */
   public OSQLFunctionThrowCME() {
     super(NAME, 4, 4);
   }
 
-  public Object execute(Object iThis, final OIdentifiable iCurrentRecord, final Object iCurrentResult, final Object[] iParams,
+  public Object execute(
+      Object iThis,
+      final OIdentifiable iCurrentRecord,
+      final Object iCurrentResult,
+      final Object[] iParams,
       OCommandContext iContext) {
-    throw new OConcurrentModificationException((ORecordId) iParams[0], (int) iParams[1], (int) iParams[2], (int) iParams[3]);
+    throw new OConcurrentModificationException(
+        (ORecordId) iParams[0], (int) iParams[1], (int) iParams[2], (int) iParams[3]);
   }
 
   public boolean aggregateResults(final Object[] configuredParameters) {

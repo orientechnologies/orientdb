@@ -21,22 +21,20 @@ import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.tx.OTransaction.TXTYPE;
-import org.junit.Ignore;
+import java.util.concurrent.atomic.AtomicLong;
 import org.testng.Assert;
 import org.testng.annotations.Optional;
 import org.testng.annotations.Parameters;
 import org.testng.annotations.Test;
 
-import java.util.concurrent.atomic.AtomicLong;
-
 @Test
 public class ConcurrentUpdatesTest extends DocumentDBBaseTest {
 
-  private final static int OPTIMISTIC_CYCLES  = 100;
-  private final static int PESSIMISTIC_CYCLES = 100;
-  private final static int THREADS            = 10;
+  private static final int OPTIMISTIC_CYCLES = 100;
+  private static final int PESSIMISTIC_CYCLES = 100;
+  private static final int THREADS = 10;
 
-  private final AtomicLong counter      = new AtomicLong();
+  private final AtomicLong counter = new AtomicLong();
   private final AtomicLong totalRetries = new AtomicLong();
   private boolean mvccEnabled;
 
@@ -110,10 +108,10 @@ public class ConcurrentUpdatesTest extends DocumentDBBaseTest {
 
   class PessimisticUpdate implements Runnable {
     String fieldValue = null;
-    ORID    rid;
-    String  threadName;
+    ORID rid;
+    String threadName;
     boolean lock;
-    String  url;
+    String url;
 
     public PessimisticUpdate(String url, ORID iRid, String iThreadName, boolean iLock) {
       super();
@@ -131,8 +129,7 @@ public class ConcurrentUpdatesTest extends DocumentDBBaseTest {
 
         for (int i = 0; i < PESSIMISTIC_CYCLES; i++) {
           String cmd = "update " + rid + " increment total = 1";
-          if (lock)
-            cmd += " lock record";
+          if (lock) cmd += " lock record";
 
           int retries = 0;
           while (true) {
@@ -156,7 +153,6 @@ public class ConcurrentUpdatesTest extends DocumentDBBaseTest {
               if (lock) {
                 Assert.fail(ONeedRetryException.class.getSimpleName() + " was encountered");
               }
-
             }
           }
         }
@@ -189,14 +185,11 @@ public class ConcurrentUpdatesTest extends DocumentDBBaseTest {
       ops[i] = new OptimisticUpdateField(url, rid1, rid2, "thread" + i);
 
     Thread[] threads = new Thread[THREADS];
-    for (int i = 0; i < THREADS; ++i)
-      threads[i] = new Thread(ops[i], "ConcurrentTest" + i);
+    for (int i = 0; i < THREADS; ++i) threads[i] = new Thread(ops[i], "ConcurrentTest" + i);
 
-    for (int i = 0; i < THREADS; ++i)
-      threads[i].start();
+    for (int i = 0; i < THREADS; ++i) threads[i].start();
 
-    for (int i = 0; i < THREADS; ++i)
-      threads[i].join();
+    for (int i = 0; i < THREADS; ++i) threads[i].join();
 
     Assert.assertEquals(counter.get(), OPTIMISTIC_CYCLES * THREADS);
 
@@ -240,18 +233,14 @@ public class ConcurrentUpdatesTest extends DocumentDBBaseTest {
     ORID rid1 = doc1.getIdentity();
 
     PessimisticUpdate[] ops = new PessimisticUpdate[THREADS];
-    for (int i = 0; i < THREADS; ++i)
-      ops[i] = new PessimisticUpdate(url, rid1, "thread" + i, lock);
+    for (int i = 0; i < THREADS; ++i) ops[i] = new PessimisticUpdate(url, rid1, "thread" + i, lock);
 
     Thread[] threads = new Thread[THREADS];
-    for (int i = 0; i < THREADS; ++i)
-      threads[i] = new Thread(ops[i], "ConcurrentTest" + i);
+    for (int i = 0; i < THREADS; ++i) threads[i] = new Thread(ops[i], "ConcurrentTest" + i);
 
-    for (int i = 0; i < THREADS; ++i)
-      threads[i].start();
+    for (int i = 0; i < THREADS; ++i) threads[i].start();
 
-    for (int i = 0; i < THREADS; ++i)
-      threads[i].join();
+    for (int i = 0; i < THREADS; ++i) threads[i].join();
 
     Assert.assertEquals(counter.get(), PESSIMISTIC_CYCLES * THREADS);
 
@@ -259,6 +248,5 @@ public class ConcurrentUpdatesTest extends DocumentDBBaseTest {
     Assert.assertEquals(doc1.<Object>field("total"), PESSIMISTIC_CYCLES * THREADS);
 
     database.close();
-
   }
 }

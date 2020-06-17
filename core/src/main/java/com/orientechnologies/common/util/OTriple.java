@@ -21,17 +21,16 @@ package com.orientechnologies.common.util;
 
 /**
  * Structure to handle a triple of values configured as a key and a Pair as value.
- * 
+ *
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
- * 
  * @see OPair
  */
-public class OTriple<K extends Comparable<K>, V extends Comparable<V>, SV> implements Comparable<OTriple<K, V, SV>> {
-  public K            key;
+public class OTriple<K extends Comparable<K>, V extends Comparable<V>, SV>
+    implements Comparable<OTriple<K, V, SV>> {
+  public K key;
   public OPair<V, SV> value;
 
-  public OTriple() {
-  }
+  public OTriple() {}
 
   public OTriple(final K iKey, final V iValue, final SV iSubValue) {
     init(iKey, iValue, iSubValue);
@@ -76,18 +75,13 @@ public class OTriple<K extends Comparable<K>, V extends Comparable<V>, SV> imple
 
   @Override
   public boolean equals(Object obj) {
-    if (this == obj)
-      return true;
-    if (obj == null)
-      return false;
-    if (getClass() != obj.getClass())
-      return false;
+    if (this == obj) return true;
+    if (obj == null) return false;
+    if (getClass() != obj.getClass()) return false;
     OTriple<?, ?, ?> other = (OTriple<?, ?, ?>) obj;
     if (key == null) {
-      if (other.key != null)
-        return false;
-    } else if (!key.equals(other.key))
-      return false;
+      if (other.key != null) return false;
+    } else if (!key.equals(other.key)) return false;
     return true;
   }
 

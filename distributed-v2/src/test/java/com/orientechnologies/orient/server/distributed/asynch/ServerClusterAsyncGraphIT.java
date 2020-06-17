@@ -35,11 +35,9 @@ import com.orientechnologies.orient.server.distributed.ServerRun;
 import junit.framework.Assert;
 import org.junit.Test;
 
-/**
- * Check vertex and edge creation are propagated across all the nodes in asynchronous mode.
- */
+/** Check vertex and edge creation are propagated across all the nodes in asynchronous mode. */
 public class ServerClusterAsyncGraphIT extends AbstractServerClusterTest {
-  final static int SERVERS = 2;
+  static final int SERVERS = 2;
   private OVertex v1;
   private OVertex v2;
   private OVertex v3;
@@ -74,7 +72,8 @@ public class ServerClusterAsyncGraphIT extends AbstractServerClusterTest {
 
         g.newVertex("User").save();
 
-        g.command(new OCommandSQL("insert into Post (content, timestamp) values('test', 1)")).execute();
+        g.command(new OCommandSQL("insert into Post (content, timestamp) values('test', 1)"))
+            .execute();
       } finally {
         g.close();
       }
@@ -102,13 +101,18 @@ public class ServerClusterAsyncGraphIT extends AbstractServerClusterTest {
       orientdb.createIfNotExists(getDatabaseName(), ODatabaseType.PLOCAL);
       ODatabaseDocument g = orientdb.open(getDatabaseName(), "admin", "admin");
       try {
-        g.command(new OCommandSQL("create edge Own from (select from User) to (select from Post)")
-            .onAsyncReplicationError(new OAsyncReplicationError() {
-              @Override
-              public ACTION onAsyncReplicationError(Throwable iException, int iRetry) {
-                return iException instanceof ONeedRetryException && iRetry <= 3 ? ACTION.RETRY : ACTION.IGNORE;
-              }
-            })).execute();
+        g.command(
+                new OCommandSQL("create edge Own from (select from User) to (select from Post)")
+                    .onAsyncReplicationError(
+                        new OAsyncReplicationError() {
+                          @Override
+                          public ACTION onAsyncReplicationError(Throwable iException, int iRetry) {
+                            return iException instanceof ONeedRetryException && iRetry <= 3
+                                ? ACTION.RETRY
+                                : ACTION.IGNORE;
+                          }
+                        }))
+            .execute();
 
       } finally {
         g.close();
@@ -153,6 +157,5 @@ public class ServerClusterAsyncGraphIT extends AbstractServerClusterTest {
         g2.close();
       }
     }
-
   }
 }

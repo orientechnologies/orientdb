@@ -8,11 +8,10 @@ import com.orientechnologies.orient.core.storage.cache.OCacheEntryImpl;
 import com.orientechnologies.orient.core.storage.cache.OCachePointer;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.PageOperationRecord;
 import com.orientechnologies.orient.core.storage.index.sbtree.local.v2.OSBTreeBucketV2;
-import org.junit.Assert;
-import org.junit.Test;
-
 import java.nio.ByteBuffer;
 import java.util.List;
+import org.junit.Assert;
+import org.junit.Test;
 
 public class SBTreeBucketV2SwitchBucketTypePOTest {
   @Test
@@ -30,7 +29,8 @@ public class SBTreeBucketV2SwitchBucketTypePOTest {
       entry.clearPageOperations();
 
       final OPointer restoredPointer = byteBufferPool.acquireDirect(false);
-      final OCachePointer restoredCachePointer = new OCachePointer(restoredPointer, byteBufferPool, 0, 0);
+      final OCachePointer restoredCachePointer =
+          new OCachePointer(restoredPointer, byteBufferPool, 0, 0);
       final OCacheEntry restoredCacheEntry = new OCacheEntryImpl(0, 0, restoredCachePointer);
 
       final ByteBuffer originalBuffer = cachePointer.getBufferDuplicate();
@@ -48,9 +48,11 @@ public class SBTreeBucketV2SwitchBucketTypePOTest {
 
       Assert.assertTrue(operations.get(0) instanceof SBTreeBucketV2SwitchBucketTypePO);
 
-      final SBTreeBucketV2SwitchBucketTypePO pageOperation = (SBTreeBucketV2SwitchBucketTypePO) operations.get(0);
+      final SBTreeBucketV2SwitchBucketTypePO pageOperation =
+          (SBTreeBucketV2SwitchBucketTypePO) operations.get(0);
 
-      OSBTreeBucketV2<Byte, OIdentifiable> restoredBucket = new OSBTreeBucketV2<>(restoredCacheEntry);
+      OSBTreeBucketV2<Byte, OIdentifiable> restoredBucket =
+          new OSBTreeBucketV2<>(restoredCacheEntry);
 
       Assert.assertTrue(restoredBucket.isLeaf());
 
@@ -87,7 +89,8 @@ public class SBTreeBucketV2SwitchBucketTypePOTest {
 
       Assert.assertTrue(operations.get(0) instanceof SBTreeBucketV2SwitchBucketTypePO);
 
-      final SBTreeBucketV2SwitchBucketTypePO pageOperation = (SBTreeBucketV2SwitchBucketTypePO) operations.get(0);
+      final SBTreeBucketV2SwitchBucketTypePO pageOperation =
+          (SBTreeBucketV2SwitchBucketTypePO) operations.get(0);
 
       final OSBTreeBucketV2<Byte, OIdentifiable> restoredBucket = new OSBTreeBucketV2<>(entry);
 

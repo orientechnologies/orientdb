@@ -2,7 +2,6 @@ package com.orientechnologies.orient.distributed.network;
 
 import com.orientechnologies.orient.core.db.config.ONodeIdentity;
 import com.orientechnologies.orient.distributed.impl.log.OLogId;
-
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
@@ -12,9 +11,7 @@ import java.util.List;
 class OBroadcastMessage {
 
   public static class DatabasePing {
-    public DatabasePing() {
-
-    }
+    public DatabasePing() {}
 
     public DatabasePing(String databaseName, OLogId logId) {
       this.databaseName = databaseName;
@@ -45,7 +42,7 @@ class OBroadcastMessage {
   protected String connectionUsername;
   protected String connectionPassword;
 
-  //for ping
+  // for ping
   protected int tcpPort;
 
   // for leader election
@@ -53,7 +50,7 @@ class OBroadcastMessage {
   protected String dbName;
   protected long lastLogId;
 
-  //MASTER INFO
+  // MASTER INFO
 
   protected ONodeIdentity leaderIdentity;
   protected int leaderTerm;
@@ -77,30 +74,30 @@ class OBroadcastMessage {
     output.writeUTF(connectionPassword);
 
     switch (type) {
-    case OBroadcastMessage.TYPE_PING:
-      if (this.leaderIdentity != null) {
-        output.writeByte(1);
-        leaderIdentity.serialize(output);
-        output.writeInt(leaderTerm);
-        output.writeUTF(leaderAddress);
-        output.writeInt(leaderTcpPort);
-        output.writeLong(leaderPing);
-        output.writeUTF(leaderConnectionUsername);
-        output.writeUTF(leaderConnectionPassword);
-      } else {
-        output.writeByte(0);
-      }
-      break;
-    case OBroadcastMessage.TYPE_LEADER_ELECTED:
-      output.writeUTF(connectionPassword);
-      output.writeUTF(connectionUsername);
-      break;
-    case OBroadcastMessage.TYPE_VOTE_LEADER_ELECTION:
-      voteForIdentity.serialize(output);
-      break;
+      case OBroadcastMessage.TYPE_PING:
+        if (this.leaderIdentity != null) {
+          output.writeByte(1);
+          leaderIdentity.serialize(output);
+          output.writeInt(leaderTerm);
+          output.writeUTF(leaderAddress);
+          output.writeInt(leaderTcpPort);
+          output.writeLong(leaderPing);
+          output.writeUTF(leaderConnectionUsername);
+          output.writeUTF(leaderConnectionPassword);
+        } else {
+          output.writeByte(0);
+        }
+        break;
+      case OBroadcastMessage.TYPE_LEADER_ELECTED:
+        output.writeUTF(connectionPassword);
+        output.writeUTF(connectionUsername);
+        break;
+      case OBroadcastMessage.TYPE_VOTE_LEADER_ELECTION:
+        voteForIdentity.serialize(output);
+        break;
     }
 
-    //database pings
+    // database pings
     if (databasePings == null) {
       output.writeInt(0);
     } else {
@@ -110,7 +107,6 @@ class OBroadcastMessage {
         OLogId.serialize(databasePing.logId, output);
       }
     }
-
   }
 
   public void read(DataInput input) throws IOException {
@@ -125,26 +121,26 @@ class OBroadcastMessage {
     connectionUsername = input.readUTF();
     connectionPassword = input.readUTF();
     switch (type) {
-    case OBroadcastMessage.TYPE_PING:
-      byte isThereMaster = input.readByte();
-      if (isThereMaster == 1) {
-        leaderIdentity = new ONodeIdentity();
-        leaderIdentity.deserialize(input);
-        leaderTerm = input.readInt();
-        leaderAddress = input.readUTF();
-        leaderTcpPort = input.readInt();
-        leaderPing = input.readLong();
-        leaderConnectionUsername = input.readUTF();
-        leaderConnectionPassword = input.readUTF();
-      }
-      break;
-    case OBroadcastMessage.TYPE_VOTE_LEADER_ELECTION:
-      voteForIdentity = new ONodeIdentity();
-      voteForIdentity.deserialize(input);
-      break;
+      case OBroadcastMessage.TYPE_PING:
+        byte isThereMaster = input.readByte();
+        if (isThereMaster == 1) {
+          leaderIdentity = new ONodeIdentity();
+          leaderIdentity.deserialize(input);
+          leaderTerm = input.readInt();
+          leaderAddress = input.readUTF();
+          leaderTcpPort = input.readInt();
+          leaderPing = input.readLong();
+          leaderConnectionUsername = input.readUTF();
+          leaderConnectionPassword = input.readUTF();
+        }
+        break;
+      case OBroadcastMessage.TYPE_VOTE_LEADER_ELECTION:
+        voteForIdentity = new ONodeIdentity();
+        voteForIdentity.deserialize(input);
+        break;
     }
 
-    //database pings
+    // database pings
     int nDbPings = input.readInt();
     databasePings = new ArrayList<>();
     for (int i = 0; i < nDbPings; i++) {
@@ -152,15 +148,14 @@ class OBroadcastMessage {
       OLogId logId = OLogId.deserialize(input);
       databasePings.add(new DatabasePing(nextDbName, logId));
     }
-
   }
 
   public ODiscoveryListener.NodeData toNodeData() {
     ODiscoveryListener.NodeData data = new ODiscoveryListener.NodeData();
     data.term = term;
     data.identity = nodeIdentity;
-    //TODO: this should be in the message because can be configured
-    //data.address = fromAddr;
+    // TODO: this should be in the message because can be configured
+    // data.address = fromAddr;
     data.connectionUsername = connectionUsername;
     data.connectionPassword = connectionPassword;
     data.port = tcpPort;
@@ -170,5 +165,4 @@ class OBroadcastMessage {
   public ONodeIdentity getNodeIdentity() {
     return nodeIdentity;
   }
-
 }

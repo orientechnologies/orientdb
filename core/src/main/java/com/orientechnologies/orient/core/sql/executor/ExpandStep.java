@@ -5,22 +5,22 @@ import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.record.ORecord;
-
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Optional;
 
 /**
- * Expands a result-set. The pre-requisite is that the input element contains only one field (no matter the name)
+ * Expands a result-set. The pre-requisite is that the input element contains only one field (no
+ * matter the name)
  */
 public class ExpandStep extends AbstractExecutionStep {
 
   private long cost = 0;
 
-  private OResultSet lastResult      = null;
-  private Iterator   nextSubsequence = null;
-  private OResult    nextElement     = null;
+  private OResultSet lastResult = null;
+  private Iterator nextSubsequence = null;
+  private OResult nextElement = null;
 
   public ExpandStep(OCommandContext ctx, boolean profilingEnabled) {
     super(ctx, profilingEnabled);
@@ -68,9 +68,7 @@ public class ExpandStep extends AbstractExecutionStep {
       }
 
       @Override
-      public void close() {
-
-      }
+      public void close() {}
 
       @Override
       public Optional<OExecutionPlan> getExecutionPlan() {
@@ -157,7 +155,6 @@ public class ExpandStep extends AbstractExecutionStep {
         }
       }
     } while (true);
-
   }
 
   @Override

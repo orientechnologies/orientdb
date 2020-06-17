@@ -16,34 +16,29 @@
 
 package com.orientechnologies.orient.server.distributed.scenariotest;
 
+import static org.junit.Assert.fail;
+
+
 import com.orientechnologies.common.util.OCallable;
-import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.orientechnologies.orient.server.distributed.OModifiableDistributedConfiguration;
 import com.orientechnologies.orient.server.distributed.ServerRun;
 import com.orientechnologies.orient.server.hazelcast.OHazelcastPlugin;
-import org.junit.Test;
-
 import java.util.ArrayList;
 import java.util.List;
-
-import static org.junit.Assert.fail;
+import org.junit.Test;
 
 /**
- * It checks the consistency in the cluster with the following scenario:
- * - 3 server (quorum=1)
- * - server3 is isolated (simulated by shutdown)
- * - 5 threads on both server1 and server2 write 100 records
- * - server3 joins the cluster
- * - server3 receive the delta from the cluster
- * - check consistency
+ * It checks the consistency in the cluster with the following scenario: - 3 server (quorum=1) -
+ * server3 is isolated (simulated by shutdown) - 5 threads on both server1 and server2 write 100
+ * records - server3 joins the cluster - server3 receive the delta from the cluster - check
+ * consistency
  *
  * @author Gabriele Ponzi
  * @email <gabriele.ponzi--at--gmail.com>
  */
-
 public class Quorum1ScenarioIT extends AbstractScenarioTest {
 
   @Test
@@ -74,8 +69,10 @@ public class Quorum1ScenarioIT extends AbstractScenarioTest {
 
     ODocument cfg = null;
     ServerRun server = serverInstance.get(0);
-    OHazelcastPlugin manager = (OHazelcastPlugin) server.getServerInstance().getDistributedManager();
-    OModifiableDistributedConfiguration databaseConfiguration = manager.getDatabaseConfiguration(getDatabaseName()).modify();
+    OHazelcastPlugin manager =
+        (OHazelcastPlugin) server.getServerInstance().getDistributedManager();
+    OModifiableDistributedConfiguration databaseConfiguration =
+        manager.getDatabaseConfiguration(getDatabaseName()).modify();
     cfg = databaseConfiguration.getDocument();
     cfg.field("writeQuorum", 1);
     cfg.field("autoDeploy", true);
@@ -87,7 +84,8 @@ public class Quorum1ScenarioIT extends AbstractScenarioTest {
     executeMultipleWrites(super.executeTestsOnServers, "plocal");
 
     // waiting for propagation
-    waitForMultipleInsertsInClassPropagation(executeTestsOnServers.size() * writerCount * count, "Person", 5000L);
+    waitForMultipleInsertsInClassPropagation(
+        executeTestsOnServers.size() * writerCount * count, "Person", 5000L);
 
     // check consistency
     super.checkWritesAboveCluster(serverInstance, executeTestsOnServers);
@@ -98,25 +96,39 @@ public class Quorum1ScenarioIT extends AbstractScenarioTest {
     // // WAIT UNTIL THE END
     final long e = count * writerCount * executeTestsOnServers.size();
 
-    waitFor(0, new OCallable<Boolean, ODatabaseDocument>() {
-      @Override
-      public Boolean call(ODatabaseDocument db) {
-        final boolean ok = db.countClass("Person") >= e;
-        if (!ok)
-          System.out.println("FOUND " + db.countClass("Person") + " people on server 0 instead of expected " + e);
-        return ok;
-      }
-    }, 10000);
+    waitFor(
+        0,
+        new OCallable<Boolean, ODatabaseDocument>() {
+          @Override
+          public Boolean call(ODatabaseDocument db) {
+            final boolean ok = db.countClass("Person") >= e;
+            if (!ok)
+              System.out.println(
+                  "FOUND "
+                      + db.countClass("Person")
+                      + " people on server 0 instead of expected "
+                      + e);
+            return ok;
+          }
+        },
+        10000);
 
-    waitFor(1, new OCallable<Boolean, ODatabaseDocument>() {
-      @Override
-      public Boolean call(ODatabaseDocument db) {
-        final boolean ok = db.countClass("Person") >= e;
-        if (!ok)
-          System.out.println("FOUND " + db.countClass("Person") + " people on server 1 instead of expected " + e);
-        return ok;
-      }
-    }, 10000);
+    waitFor(
+        1,
+        new OCallable<Boolean, ODatabaseDocument>() {
+          @Override
+          public Boolean call(ODatabaseDocument db) {
+            final boolean ok = db.countClass("Person") >= e;
+            if (!ok)
+              System.out.println(
+                  "FOUND "
+                      + db.countClass("Person")
+                      + " people on server 1 instead of expected "
+                      + e);
+            return ok;
+          }
+        },
+        10000);
 
     Thread.sleep(2000);
   }
@@ -125,16 +137,17 @@ public class Quorum1ScenarioIT extends AbstractScenarioTest {
   protected ODocument retrieveRecord(ServerRun serverRun, String uniqueId) {
     ODatabaseDocument dbServer = getDatabase(serverRun);
     try {
-      List<ODocument> result = dbServer.query(new OSQLSynchQuery<ODocument>("select from Hero where id = '" + uniqueId + "'"));
-      if (result.size() == 0)
-        fail("No record found with id = '" + uniqueId + "'!");
+      List<ODocument> result =
+          dbServer.query(
+              new OSQLSynchQuery<ODocument>("select from Hero where id = '" + uniqueId + "'"));
+      if (result.size() == 0) fail("No record found with id = '" + uniqueId + "'!");
       else if (result.size() > 1)
         fail(result.size() + " records found with id = '" + uniqueId + "'!");
 
       return result.get(0);
     } finally {
-     	dbServer.close();
-    }    
+      dbServer.close();
+    }
   }
 
   @Override

@@ -1,5 +1,9 @@
 package com.orientechnologies.orient.server.distributed;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
+
+
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseSession;
 import com.orientechnologies.orient.core.db.ODatabaseType;
@@ -14,15 +18,12 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
-
 public class SimpleQueryDistributedIT {
 
-  private OServer          server0;
-  private OServer          server1;
-  private OServer          server2;
-  private OrientDB         remote;
+  private OServer server0;
+  private OServer server1;
+  private OServer server2;
+  private OrientDB remote;
   private ODatabaseSession session;
 
   @Before
@@ -75,5 +76,4 @@ public class SimpleQueryDistributedIT {
     server2.shutdown();
     ODatabaseDocumentTx.closeAll();
   }
-
 }

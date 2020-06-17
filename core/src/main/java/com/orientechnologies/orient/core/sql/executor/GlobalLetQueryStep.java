@@ -6,22 +6,24 @@ import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.sql.parser.OIdentifier;
 import com.orientechnologies.orient.core.sql.parser.OLocalResultSet;
 import com.orientechnologies.orient.core.sql.parser.OStatement;
-
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-/**
- * Created by luigidellaquila on 03/08/16.
- */
+/** Created by luigidellaquila on 03/08/16. */
 public class GlobalLetQueryStep extends AbstractExecutionStep {
 
-  private final OIdentifier            varName;
+  private final OIdentifier varName;
   private final OInternalExecutionPlan subExecutionPlan;
 
   private boolean executed = false;
 
-  public GlobalLetQueryStep(OIdentifier varName, OStatement query, OCommandContext ctx, boolean profilingEnabled, List<String> scriptVars) {
+  public GlobalLetQueryStep(
+      OIdentifier varName,
+      OStatement query,
+      OCommandContext ctx,
+      boolean profilingEnabled,
+      List<String> scriptVars) {
     super(ctx, profilingEnabled);
     this.varName = varName;
 
@@ -32,7 +34,8 @@ public class GlobalLetQueryStep extends AbstractExecutionStep {
     subCtx.setDatabase(ctx.getDatabase());
     subCtx.setParent(ctx);
     if (query.toString().contains("?")) {
-      //with positional parameters, you cannot know if a parameter has the same ordinal as the one cached
+      // with positional parameters, you cannot know if a parameter has the same ordinal as the one
+      // cached
       subExecutionPlan = query.createExecutionPlanNoCache(subCtx, profilingEnabled);
     } else {
       subExecutionPlan = query.createExecutionPlan(subCtx, profilingEnabled);
@@ -66,8 +69,13 @@ public class GlobalLetQueryStep extends AbstractExecutionStep {
   @Override
   public String prettyPrint(int depth, int indent) {
     String spaces = OExecutionStepInternal.getIndent(depth, indent);
-    return spaces + "+ LET (once)\n" + spaces + "  " + varName + " = \n" + box(spaces + "    ",
-        this.subExecutionPlan.prettyPrint(0, indent));
+    return spaces
+        + "+ LET (once)\n"
+        + spaces
+        + "  "
+        + varName
+        + " = \n"
+        + box(spaces + "    ", this.subExecutionPlan.prettyPrint(0, indent));
   }
 
   @Override

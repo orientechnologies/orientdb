@@ -13,17 +13,17 @@ import org.junit.runners.JUnit4;
  */
 @RunWith(JUnit4.class)
 public class OrientGraphClassicRemoteTest extends OrientGraphRemoteTest {
-	@Before
-	public void setUp() throws Exception {
-		Assume.assumeThat(getEnvironment(), IsEqual.equalTo(OrientGraphTest.ENV.RELEASE));
-		super.setUp();
-	}
+  @Before
+  public void setUp() throws Exception {
+    Assume.assumeThat(getEnvironment(), IsEqual.equalTo(OrientGraphTest.ENV.RELEASE));
+    super.setUp();
+  }
 
-	public Graph generateGraph(final String graphDirectoryName) {
-		final OrientGraph graph = (OrientGraph) super.generateGraph(graphDirectoryName);
-		graph.setUseLightweightEdges(false);
-		graph.setUseClassForVertexLabel(false);
-		graph.setUseVertexFieldsForEdgeLabels(false);
-		return graph;
-	}
+  public Graph generateGraph(final String graphDirectoryName) {
+    final OrientGraph graph = (OrientGraph) super.generateGraph(graphDirectoryName);
+    graph.setUseLightweightEdges(false);
+    graph.setUseClassForVertexLabel(false);
+    graph.setUseVertexFieldsForEdgeLabels(false);
+    return graph;
+  }
 }

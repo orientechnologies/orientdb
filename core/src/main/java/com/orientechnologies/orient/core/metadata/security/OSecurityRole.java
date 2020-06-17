@@ -2,7 +2,6 @@ package com.orientechnologies.orient.core.metadata.security;
 
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-
 import java.io.Serializable;
 import java.util.Set;
 
@@ -13,18 +12,27 @@ import java.util.Set;
 public interface OSecurityRole extends Serializable {
   @Deprecated
   public enum ALLOW_MODES {
-    @Deprecated DENY_ALL_BUT, @Deprecated ALLOW_ALL_BUT
+    @Deprecated
+    DENY_ALL_BUT,
+    @Deprecated
+    ALLOW_ALL_BUT
   }
 
-  public boolean allow(final ORule.ResourceGeneric resourceGeneric, String resourceSpecific, final int iCRUDOperation);
+  public boolean allow(
+      final ORule.ResourceGeneric resourceGeneric,
+      String resourceSpecific,
+      final int iCRUDOperation);
 
   public boolean hasRule(final ORule.ResourceGeneric resourceGeneric, String resourceSpecific);
 
-  public OSecurityRole addRule(final ORule.ResourceGeneric resourceGeneric, String resourceSpecific, final int iOperation);
+  public OSecurityRole addRule(
+      final ORule.ResourceGeneric resourceGeneric, String resourceSpecific, final int iOperation);
 
-  public OSecurityRole grant(final ORule.ResourceGeneric resourceGeneric, String resourceSpecific, final int iOperation);
+  public OSecurityRole grant(
+      final ORule.ResourceGeneric resourceGeneric, String resourceSpecific, final int iOperation);
 
-  public OSecurityRole revoke(final ORule.ResourceGeneric resourceGeneric, String resourceSpecific, final int iOperation);
+  public OSecurityRole revoke(
+      final ORule.ResourceGeneric resourceGeneric, String resourceSpecific, final int iOperation);
 
   @Deprecated
   public boolean allow(final String iResource, final int iCRUDOperation);

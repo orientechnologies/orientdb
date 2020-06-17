@@ -1,9 +1,18 @@
 package com.orientechnologies.orient.core.metadata.security;
 
-import com.orientechnologies.orient.core.db.*;
+import com.orientechnologies.orient.core.db.ODatabaseInternal;
+import com.orientechnologies.orient.core.db.ODatabaseSession;
+import com.orientechnologies.orient.core.db.ODatabaseType;
+import com.orientechnologies.orient.core.db.OrientDB;
+import com.orientechnologies.orient.core.db.OrientDBConfig;
 import com.orientechnologies.orient.core.record.OElement;
 import com.orientechnologies.orient.core.sql.parser.OBooleanExpression;
-import org.junit.*;
+import org.junit.After;
+import org.junit.AfterClass;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.BeforeClass;
+import org.junit.Test;
 
 public class OSecurityEngineTest {
 
@@ -46,9 +55,9 @@ public class OSecurityEngineTest {
     security.saveSecurityPolicy(db, policy);
     security.setSecurityPolicy(db, security.getRole(db, "admin"), "database.class.*", policy);
 
-
-    OBooleanExpression pred = OSecurityEngine
-            .getPredicateForSecurityResource(db, (OSecurityShared) security, "database.class.Person", OSecurityPolicy.Scope.READ);
+    OBooleanExpression pred =
+        OSecurityEngine.getPredicateForSecurityResource(
+            db, (OSecurityShared) security, "database.class.Person", OSecurityPolicy.Scope.READ);
 
     Assert.assertEquals("name = 'admin'", pred.toString());
   }
@@ -65,9 +74,9 @@ public class OSecurityEngineTest {
     security.saveSecurityPolicy(db, policy);
     security.setSecurityPolicy(db, security.getRole(db, "admin"), "database.class.Person", policy);
 
-
-    OBooleanExpression pred = OSecurityEngine
-            .getPredicateForSecurityResource(db, (OSecurityShared) security, "database.class.Person", OSecurityPolicy.Scope.READ);
+    OBooleanExpression pred =
+        OSecurityEngine.getPredicateForSecurityResource(
+            db, (OSecurityShared) security, "database.class.Person", OSecurityPolicy.Scope.READ);
 
     Assert.assertEquals("name = 'foo'", pred.toString());
   }
@@ -85,9 +94,9 @@ public class OSecurityEngineTest {
     security.saveSecurityPolicy(db, policy);
     security.setSecurityPolicy(db, security.getRole(db, "admin"), "database.class.Person", policy);
 
-
-    OBooleanExpression pred = OSecurityEngine
-            .getPredicateForSecurityResource(db, (OSecurityShared) security, "database.class.Employee", OSecurityPolicy.Scope.READ);
+    OBooleanExpression pred =
+        OSecurityEngine.getPredicateForSecurityResource(
+            db, (OSecurityShared) security, "database.class.Employee", OSecurityPolicy.Scope.READ);
 
     Assert.assertEquals("name = 'foo'", pred.toString());
   }
@@ -109,11 +118,12 @@ public class OSecurityEngineTest {
     policy.setActive(true);
     policy.setReadRule("name = 'bar'");
     security.saveSecurityPolicy(db, policy);
-    security.setSecurityPolicy(db, security.getRole(db, "admin"), "database.class.Employee", policy);
+    security.setSecurityPolicy(
+        db, security.getRole(db, "admin"), "database.class.Employee", policy);
 
-
-    OBooleanExpression pred = OSecurityEngine
-            .getPredicateForSecurityResource(db, (OSecurityShared) security, "database.class.Employee", OSecurityPolicy.Scope.READ);
+    OBooleanExpression pred =
+        OSecurityEngine.getPredicateForSecurityResource(
+            db, (OSecurityShared) security, "database.class.Employee", OSecurityPolicy.Scope.READ);
 
     Assert.assertEquals("name = 'bar'", pred.toString());
   }
@@ -137,13 +147,12 @@ public class OSecurityEngineTest {
     security.saveSecurityPolicy(db, policy);
     security.setSecurityPolicy(db, security.getRole(db, "admin"), "database.class.*", policy);
 
-
-    OBooleanExpression pred = OSecurityEngine
-            .getPredicateForSecurityResource(db, (OSecurityShared) security, "database.class.Employee", OSecurityPolicy.Scope.READ);
+    OBooleanExpression pred =
+        OSecurityEngine.getPredicateForSecurityResource(
+            db, (OSecurityShared) security, "database.class.Employee", OSecurityPolicy.Scope.READ);
 
     Assert.assertEquals("name = 'admin'", pred.toString());
   }
-
 
   @Test
   public void testTwoSuperclasses() {
@@ -165,23 +174,24 @@ public class OSecurityEngineTest {
     security.saveSecurityPolicy(db, policy);
     security.setSecurityPolicy(db, security.getRole(db, "admin"), "database.class.Foo", policy);
 
+    OBooleanExpression pred =
+        OSecurityEngine.getPredicateForSecurityResource(
+            db, (OSecurityShared) security, "database.class.Employee", OSecurityPolicy.Scope.READ);
 
-    OBooleanExpression pred = OSecurityEngine
-            .getPredicateForSecurityResource(db, (OSecurityShared) security, "database.class.Employee", OSecurityPolicy.Scope.READ);
-
-    Assert.assertTrue("name = 'foo' AND surname = 'bar'".equals(pred.toString()) || "surname = 'bar' AND name = 'foo'".equals(pred.toString()));
+    Assert.assertTrue(
+        "name = 'foo' AND surname = 'bar'".equals(pred.toString())
+            || "surname = 'bar' AND name = 'foo'".equals(pred.toString()));
   }
 
   @Test
   public void testTwoRoles() {
 
-    db.command("Update OUser set roles = roles || (select from orole where name = 'reader') where name = 'admin'");
+    db.command(
+        "Update OUser set roles = roles || (select from orole where name = 'reader') where name = 'admin'");
     db.close();
     db = orient.open(DB_NAME, "admin", "admin");
 
-
     OSecurityInternal security = ((ODatabaseInternal) db).getSharedContext().getSecurity();
-
 
     db.createClass("Person");
 
@@ -197,14 +207,14 @@ public class OSecurityEngineTest {
     security.saveSecurityPolicy(db, policy);
     security.setSecurityPolicy(db, security.getRole(db, "reader"), "database.class.Person", policy);
 
+    OBooleanExpression pred =
+        OSecurityEngine.getPredicateForSecurityResource(
+            db, (OSecurityShared) security, "database.class.Person", OSecurityPolicy.Scope.READ);
 
-    OBooleanExpression pred = OSecurityEngine
-            .getPredicateForSecurityResource(db, (OSecurityShared) security, "database.class.Person", OSecurityPolicy.Scope.READ);
-
-
-    Assert.assertTrue("name = 'foo' OR surname = 'bar'".equals(pred.toString()) || "surname = 'bar' OR name = 'foo'".equals(pred.toString()));
+    Assert.assertTrue(
+        "name = 'foo' OR surname = 'bar'".equals(pred.toString())
+            || "surname = 'bar' OR name = 'foo'".equals(pred.toString()));
   }
-
 
   @Test
   public void testRecordFiltering() {
@@ -214,7 +224,6 @@ public class OSecurityEngineTest {
     OElement record1 = db.newElement("Person");
     record1.setProperty("name", "foo");
     record1.save();
-
 
     OElement record2 = db.newElement("Person");
     record2.setProperty("name", "bar");
@@ -226,8 +235,9 @@ public class OSecurityEngineTest {
     security.saveSecurityPolicy(db, policy);
     security.setSecurityPolicy(db, security.getRole(db, "admin"), "database.class.Person", policy);
 
-    OBooleanExpression pred = OSecurityEngine
-            .getPredicateForSecurityResource(db, (OSecurityShared) security, "database.class.Person", OSecurityPolicy.Scope.READ);
+    OBooleanExpression pred =
+        OSecurityEngine.getPredicateForSecurityResource(
+            db, (OSecurityShared) security, "database.class.Person", OSecurityPolicy.Scope.READ);
 
     Assert.assertTrue(OSecurityEngine.evaluateSecuirtyPolicyPredicate(db, pred, record1));
     Assert.assertFalse(OSecurityEngine.evaluateSecuirtyPolicyPredicate(db, pred, record2));

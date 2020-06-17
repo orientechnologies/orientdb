@@ -1,5 +1,10 @@
 package com.orientechnologies.orient.test.database.auto;
 
+import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.assertNotNull;
+import static org.testng.AssertJUnit.assertNull;
+
+
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
@@ -14,17 +19,14 @@ import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
-import org.testng.Assert;
-import org.testng.annotations.AfterMethod;
-import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.Test;
-
 import java.util.Date;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Stream;
-
-import static org.testng.AssertJUnit.*;
+import org.testng.Assert;
+import org.testng.annotations.AfterMethod;
+import org.testng.annotations.BeforeMethod;
+import org.testng.annotations.Test;
 
 /**
  * @author Matan Shukry (matanshukry@gmail.com)
@@ -150,7 +152,6 @@ public class DefaultValuesTrivialTest {
       assertNotNull(doc.field("date"));
       assertEquals((Boolean) true, doc.field("active"));
     }
-
   }
 
   @Test
@@ -171,7 +172,6 @@ public class DefaultValuesTrivialTest {
         assertEquals(1, stream.count());
       }
     }
-
   }
 
   @Test
@@ -234,5 +234,4 @@ public class DefaultValuesTrivialTest {
       assertEquals(0, stream.count());
     }
   }
-
 }

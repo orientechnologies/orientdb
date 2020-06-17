@@ -3,11 +3,10 @@ package com.orientechnologies.orient.core.storage.impl.local.paginated.wal;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.ORecordOperationMetadata;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperationMetadata;
-import org.junit.Assert;
-import org.junit.Test;
-
 import java.util.LinkedHashMap;
 import java.util.Map;
+import org.junit.Assert;
+import org.junit.Test;
 
 public class OAtomicUnitEndRecordTest {
   @Test
@@ -30,9 +29,13 @@ public class OAtomicUnitEndRecordTest {
     final int dEndOffset = atomicUnitEndRecordD.fromStream(content, 1);
     Assert.assertEquals(dEndOffset, content.length);
 
-    Assert.assertEquals(atomicUnitEndRecordD.getOperationUnitId(), atomicUnitEndRecord.getOperationUnitId());
-    ORecordOperationMetadata recordOperationMetadataD = (ORecordOperationMetadata) atomicUnitEndRecordD.getAtomicOperationMetadata()
-        .get(ORecordOperationMetadata.RID_METADATA_KEY);
+    Assert.assertEquals(
+        atomicUnitEndRecordD.getOperationUnitId(), atomicUnitEndRecord.getOperationUnitId());
+    ORecordOperationMetadata recordOperationMetadataD =
+        (ORecordOperationMetadata)
+            atomicUnitEndRecordD
+                .getAtomicOperationMetadata()
+                .get(ORecordOperationMetadata.RID_METADATA_KEY);
 
     Assert.assertEquals(recordOperationMetadataD.getValue(), recordOperationMetadata.getValue());
   }

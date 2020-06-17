@@ -6,19 +6,18 @@ import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.WALRecordTypes;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.PageOperationRecord;
 import com.orientechnologies.orient.core.storage.index.hashindex.local.v2.DirectoryFirstPageV2;
-
 import java.nio.ByteBuffer;
 
-public final class LocalHashTableV2DirectoryFirstPageSetMaxLeftChildDepthPO extends PageOperationRecord {
-  private int  localNodeIndex;
+public final class LocalHashTableV2DirectoryFirstPageSetMaxLeftChildDepthPO
+    extends PageOperationRecord {
+  private int localNodeIndex;
   private byte maxLeftChildDepth;
   private byte pastMaxLeftChildDepth;
 
-  public LocalHashTableV2DirectoryFirstPageSetMaxLeftChildDepthPO() {
-  }
+  public LocalHashTableV2DirectoryFirstPageSetMaxLeftChildDepthPO() {}
 
-  public LocalHashTableV2DirectoryFirstPageSetMaxLeftChildDepthPO(int localNodeIndex, byte maxLeftChildDepth,
-      byte pastMaxLeftChildDepth) {
+  public LocalHashTableV2DirectoryFirstPageSetMaxLeftChildDepthPO(
+      int localNodeIndex, byte maxLeftChildDepth, byte pastMaxLeftChildDepth) {
     this.localNodeIndex = localNodeIndex;
     this.maxLeftChildDepth = maxLeftChildDepth;
     this.pastMaxLeftChildDepth = pastMaxLeftChildDepth;

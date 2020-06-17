@@ -4,9 +4,7 @@ import com.orientechnologies.common.concur.OTimeoutException;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.sql.parser.OLimit;
 
-/**
- * Created by luigidellaquila on 08/07/16.
- */
+/** Created by luigidellaquila on 08/07/16. */
 public class LimitExecutionStep extends AbstractExecutionStep {
   private final OLimit limit;
 
@@ -33,9 +31,7 @@ public class LimitExecutionStep extends AbstractExecutionStep {
   }
 
   @Override
-  public void sendTimeout() {
-
-  }
+  public void sendTimeout() {}
 
   @Override
   public void close() {
@@ -46,5 +42,4 @@ public class LimitExecutionStep extends AbstractExecutionStep {
   public String prettyPrint(int depth, int indent) {
     return OExecutionStepInternal.getIndent(depth, indent) + "+ LIMIT (" + limit.toString() + ")";
   }
-
 }

@@ -9,7 +9,6 @@ import com.orientechnologies.orient.core.sql.executor.OCreateVertexExecutionPlan
 import com.orientechnologies.orient.core.sql.executor.OInsertExecutionPlan;
 import com.orientechnologies.orient.core.sql.executor.OInternalExecutionPlan;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
-
 import java.util.HashMap;
 import java.util.Map;
 
@@ -17,7 +16,7 @@ public class OCreateVertexStatement extends OStatement {
 
   OIdentifier targetClass;
   OIdentifier targetClusterName;
-  OCluster    targetCluster;
+  OCluster targetCluster;
   OProjection returnStatement;
   OInsertBody insertBody;
 
@@ -29,7 +28,9 @@ public class OCreateVertexStatement extends OStatement {
     super(p, id);
   }
 
-  @Override public OResultSet execute(ODatabase db, Map params, OCommandContext parentCtx, boolean usePlanCache) {
+  @Override
+  public OResultSet execute(
+      ODatabase db, Map params, OCommandContext parentCtx, boolean usePlanCache) {
     OBasicCommandContext ctx = new OBasicCommandContext();
     if (parentCtx != null) {
       ctx.setParentWithoutOverridingChild(parentCtx);
@@ -46,7 +47,9 @@ public class OCreateVertexStatement extends OStatement {
     return new OLocalResultSet(executionPlan);
   }
 
-  @Override public OResultSet execute(ODatabase db, Object[] args, OCommandContext parentCtx, boolean usePlanCache) {
+  @Override
+  public OResultSet execute(
+      ODatabase db, Object[] args, OCommandContext parentCtx, boolean usePlanCache) {
     OBasicCommandContext ctx = new OBasicCommandContext();
     if (parentCtx != null) {
       ctx.setParentWithoutOverridingChild(parentCtx);
@@ -69,7 +72,8 @@ public class OCreateVertexStatement extends OStatement {
     return new OLocalResultSet(executionPlan);
   }
 
-  @Override public OInternalExecutionPlan createExecutionPlan(OCommandContext ctx, boolean enableProfiling) {
+  @Override
+  public OInternalExecutionPlan createExecutionPlan(OCommandContext ctx, boolean enableProfiling) {
     OCreateVertexExecutionPlanner planner = new OCreateVertexExecutionPlanner(this);
     OInternalExecutionPlan result = planner.createExecutionPlan(ctx, enableProfiling);
     result.setStatement(this.originalStatement);
@@ -101,7 +105,8 @@ public class OCreateVertexStatement extends OStatement {
     }
   }
 
-  @Override public OCreateVertexStatement copy() {
+  @Override
+  public OCreateVertexStatement copy() {
     OCreateVertexStatement result = null;
     try {
       result = getClass().getConstructor(Integer.TYPE).newInstance(-1);
@@ -116,29 +121,32 @@ public class OCreateVertexStatement extends OStatement {
     return result;
   }
 
-  @Override public boolean equals(Object o) {
-    if (this == o)
-      return true;
-    if (o == null || getClass() != o.getClass())
-      return false;
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
 
     OCreateVertexStatement that = (OCreateVertexStatement) o;
 
     if (targetClass != null ? !targetClass.equals(that.targetClass) : that.targetClass != null)
       return false;
-    if (targetClusterName != null ? !targetClusterName.equals(that.targetClusterName) : that.targetClusterName != null)
-      return false;
-    if (targetCluster != null ? !targetCluster.equals(that.targetCluster) : that.targetCluster != null)
-      return false;
-    if (returnStatement != null ? !returnStatement.equals(that.returnStatement) : that.returnStatement != null)
-      return false;
+    if (targetClusterName != null
+        ? !targetClusterName.equals(that.targetClusterName)
+        : that.targetClusterName != null) return false;
+    if (targetCluster != null
+        ? !targetCluster.equals(that.targetCluster)
+        : that.targetCluster != null) return false;
+    if (returnStatement != null
+        ? !returnStatement.equals(that.returnStatement)
+        : that.returnStatement != null) return false;
     if (insertBody != null ? !insertBody.equals(that.insertBody) : that.insertBody != null)
       return false;
 
     return true;
   }
 
-  @Override public int hashCode() {
+  @Override
+  public int hashCode() {
     int result = targetClass != null ? targetClass.hashCode() : 0;
     result = 31 * result + (targetClusterName != null ? targetClusterName.hashCode() : 0);
     result = 31 * result + (targetCluster != null ? targetCluster.hashCode() : 0);

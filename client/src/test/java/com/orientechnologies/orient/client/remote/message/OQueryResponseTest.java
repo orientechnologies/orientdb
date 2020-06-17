@@ -1,20 +1,19 @@
 package com.orientechnologies.orient.client.remote.message;
 
 import com.orientechnologies.orient.core.serialization.serializer.record.binary.ORecordSerializerNetworkFactory;
-import com.orientechnologies.orient.core.sql.executor.OInternalResultSet;
 import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.executor.OResultInternal;
-import com.orientechnologies.orient.core.sql.parser.OLocalResultSetLifecycleDecorator;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Optional;
 import org.junit.Assert;
 import org.junit.Test;
 
-import java.io.IOException;
-import java.util.*;
-
-/**
- * Created by luigidellaquila on 14/12/16.
- */
+/** Created by luigidellaquila on 14/12/16. */
 public class OQueryResponseTest {
 
   @Test
@@ -27,10 +26,14 @@ public class OQueryResponseTest {
       item.setProperty("counter", i);
       resuls.add(item);
     }
-    OQueryResponse response = new OQueryResponse("query", true, resuls, Optional.empty(), false, new HashMap<>(), true);
+    OQueryResponse response =
+        new OQueryResponse("query", true, resuls, Optional.empty(), false, new HashMap<>(), true);
 
     MockChannel channel = new MockChannel();
-    response.write(channel, OChannelBinaryProtocol.CURRENT_PROTOCOL_VERSION, ORecordSerializerNetworkFactory.INSTANCE.current());
+    response.write(
+        channel,
+        OChannelBinaryProtocol.CURRENT_PROTOCOL_VERSION,
+        ORecordSerializerNetworkFactory.INSTANCE.current());
 
     channel.close();
 
@@ -49,5 +52,4 @@ public class OQueryResponseTest {
     Assert.assertTrue(newResponse.isReloadMetadata());
     Assert.assertTrue(newResponse.isTxChanges());
   }
-
 }

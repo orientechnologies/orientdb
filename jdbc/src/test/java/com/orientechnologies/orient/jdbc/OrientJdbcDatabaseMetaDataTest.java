@@ -1,32 +1,42 @@
 /**
  * Copyright 2010-2016 OrientDB LTD (http://orientdb.com)
- * <p>
- * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- * <p>
- * http://www.apache.org/licenses/LICENSE-2.0
- * <p>
- * Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on an "AS IS"
- * BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the specific language
- * governing permissions and limitations under the License.
- * <p>
- * For more information: http://orientdb.com
+ *
+ * <p>Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file
+ * except in compliance with the License. You may obtain a copy of the License at
+ *
+ * <p>http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * <p>Unless required by applicable law or agreed to in writing, software distributed under the
+ * License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either
+ * express or implied. See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ * <p>For more information: http://orientdb.com
  */
 package com.orientechnologies.orient.jdbc;
 
-import com.orientechnologies.orient.core.OConstants;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 
+
+import com.orientechnologies.orient.core.OConstants;
 import java.sql.DatabaseMetaData;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
-import java.util.*;
-
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.Assert.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Set;
+import org.junit.Before;
+import org.junit.Test;
 
 public class OrientJdbcDatabaseMetaDataTest extends OrientJdbcDbPerClassTemplateTest {
 
@@ -35,13 +45,12 @@ public class OrientJdbcDatabaseMetaDataTest extends OrientJdbcDbPerClassTemplate
   @Before
   public void setup() throws SQLException {
     metaData = conn.getMetaData();
-
   }
 
   @Test
   public void verifyDriverAndDatabaseVersions() throws SQLException {
 
-//    assertEquals("memory:" + name.getMethodName(), metaData.getURL());
+    //    assertEquals("memory:" + name.getMethodName(), metaData.getURL());
     assertEquals("admin", metaData.getUserName());
     assertEquals("OrientDB", metaData.getDatabaseProductName());
     assertEquals(OConstants.getVersion(), metaData.getDatabaseProductVersion());
@@ -49,10 +58,10 @@ public class OrientJdbcDatabaseMetaDataTest extends OrientJdbcDbPerClassTemplate
     assertEquals(1, metaData.getDatabaseMinorVersion());
 
     assertEquals("OrientDB JDBC Driver", metaData.getDriverName());
-    assertEquals("OrientDB " + OConstants.getVersion() + " JDBC Driver", metaData.getDriverVersion());
+    assertEquals(
+        "OrientDB " + OConstants.getVersion() + " JDBC Driver", metaData.getDriverVersion());
     assertEquals(3, metaData.getDriverMajorVersion());
     assertEquals(1, metaData.getDriverMinorVersion());
-
   }
 
   @Test
@@ -68,7 +77,6 @@ public class OrientJdbcDatabaseMetaDataTest extends OrientJdbcDbPerClassTemplate
     assertEquals("stringKey", primaryKeys.getString("COLUMN_NAME"));
     assertEquals("Item.stringKey", primaryKeys.getString("PK_NAME"));
     assertEquals(1, primaryKeys.getInt("KEY_SEQ"));
-
   }
 
   @Test
@@ -76,14 +84,13 @@ public class OrientJdbcDatabaseMetaDataTest extends OrientJdbcDbPerClassTemplate
 
     ResultSet tableTypes = metaData.getTableTypes();
 
-//    Assertions.
+    //    Assertions.
     assertTrue(tableTypes.next());
     assertEquals("TABLE", tableTypes.getString(1));
     assertTrue(tableTypes.next());
     assertEquals("SYSTEM TABLE", tableTypes.getString(1));
 
     assertFalse(tableTypes.next());
-
   }
 
   @Test
@@ -91,14 +98,20 @@ public class OrientJdbcDatabaseMetaDataTest extends OrientJdbcDbPerClassTemplate
 
     final String keywordsStr = metaData.getSQLKeywords();
     assertNotNull(keywordsStr);
-    assertThat(Arrays.asList(keywordsStr.toUpperCase(Locale.ENGLISH).split(",\\s*"))).contains("TRAVERSE");
+    assertThat(Arrays.asList(keywordsStr.toUpperCase(Locale.ENGLISH).split(",\\s*")))
+        .contains("TRAVERSE");
   }
 
   @Test
   public void shouldRetrieveUniqueIndexInfoForTable() throws Exception {
 
-    ResultSet indexInfo = metaData
-        .getIndexInfo("OrientJdbcDatabaseMetaDataTest", "OrientJdbcDatabaseMetaDataTest", "Item", true, false);
+    ResultSet indexInfo =
+        metaData.getIndexInfo(
+            "OrientJdbcDatabaseMetaDataTest",
+            "OrientJdbcDatabaseMetaDataTest",
+            "Item",
+            true,
+            false);
 
     indexInfo.next();
 
@@ -109,7 +122,6 @@ public class OrientJdbcDatabaseMetaDataTest extends OrientJdbcDbPerClassTemplate
 
     assertThat(indexInfo.getString("INDEX_NAME")).isEqualTo("Item.stringKey");
     assertThat(indexInfo.getBoolean("NON_UNIQUE")).isFalse();
-
   }
 
   @Test
@@ -154,8 +166,8 @@ public class OrientJdbcDatabaseMetaDataTest extends OrientJdbcDbPerClassTemplate
     ResultSet rs = metaData.getTables(null, null, null, null);
     int tableCount = sizeOf(rs);
 
-    assertThat(tableCount).isEqualTo(conn.getDatabase().getMetadata().getSchema().getClasses().size());
-
+    assertThat(tableCount)
+        .isEqualTo(conn.getDatabase().getMetadata().getSchema().getClasses().size());
   }
 
   @Test
@@ -166,7 +178,6 @@ public class OrientJdbcDatabaseMetaDataTest extends OrientJdbcDbPerClassTemplate
       assertThat(rs.getString("TABLE_SCHEM")).isEqualTo("perClassTestDatabase");
       assertThat(rs.getString("TABLE_CAT")).isEqualTo("perClassTestDatabase");
     }
-
   }
 
   @Test
@@ -178,7 +189,8 @@ public class OrientJdbcDatabaseMetaDataTest extends OrientJdbcDbPerClassTemplate
     }
     rs = metaData.getTables(null, null, null, tableTypes.toArray(new String[2]));
     int tableCount = sizeOf(rs);
-    assertThat(tableCount).isEqualTo(conn.getDatabase().getMetadata().getSchema().getClasses().size());
+    assertThat(tableCount)
+        .isEqualTo(conn.getDatabase().getMetadata().getSchema().getClasses().size());
   }
 
   @Test
@@ -224,10 +236,9 @@ public class OrientJdbcDatabaseMetaDataTest extends OrientJdbcDbPerClassTemplate
       assertThat(rs.getString("TABLE_NAME")).isEqualTo("Article");
       assertThat(rs.getString("COLUMN_NAME")).isIn("date", "uuid", "author", "title", "content");
 
-//      System.out.println("rs = " + rs.getInt("DATA_TYPE"));
+      //      System.out.println("rs = " + rs.getInt("DATA_TYPE"));
       assertThat(rs.getInt("DATA_TYPE")).isIn(-5, 12, 91, 2000);
       assertThat(rs.getString("TYPE_NAME")).isIn("LONG", "LINK", "DATE", "STRING", "INTEGER");
-
     }
   }
 
@@ -240,7 +251,6 @@ public class OrientJdbcDatabaseMetaDataTest extends OrientJdbcDbPerClassTemplate
     assertThat(rs.getString("COLUMN_NAME")).isEqualTo("uuid");
     assertThat(rs.getString("INDEX_NAME")).isEqualTo("Article.uuid");
     assertThat(rs.getBoolean("NON_UNIQUE")).isFalse();
-
   }
 
   @Test
@@ -252,7 +262,6 @@ public class OrientJdbcDatabaseMetaDataTest extends OrientJdbcDbPerClassTemplate
     assertThat(rs.getString("COLUMN_NAME")).isEqualTo("uuid");
     assertThat(rs.getString("PK_NAME")).isEqualTo("Article.uuid");
     assertThat(rs.getInt("KEY_SEQ")).isEqualTo(1);
-
   }
 
   private int sizeOf(ResultSet rs) throws SQLException {
@@ -263,5 +272,4 @@ public class OrientJdbcDatabaseMetaDataTest extends OrientJdbcDbPerClassTemplate
     }
     return tableCount;
   }
-
 }

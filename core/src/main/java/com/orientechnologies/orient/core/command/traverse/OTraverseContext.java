@@ -26,11 +26,18 @@ import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.record.impl.ODocumentHelper;
-
-import java.util.*;
+import java.util.ArrayDeque;
+import java.util.Collection;
+import java.util.Deque;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Locale;
+import java.util.Map;
+import java.util.NoSuchElementException;
+import java.util.Set;
 
 public class OTraverseContext extends OBasicCommandContext {
-  private Memory    memory  = new StackMemory();
+  private Memory memory = new StackMemory();
   private Set<ORID> history = new HashSet<ORID>();
 
   private OTraverseAbstractProcess<?> currentProcess;
@@ -52,13 +59,13 @@ public class OTraverseContext extends OBasicCommandContext {
   public Object getVariable(final String iName) {
     final String name = iName.trim().toUpperCase(Locale.ENGLISH);
 
-    if ("DEPTH".startsWith(name))
-      return getDepth();
+    if ("DEPTH".startsWith(name)) return getDepth();
     else if (name.startsWith("PATH"))
       return ODocumentHelper.getFieldValue(getPath(), iName.substring("PATH".length()));
     else if (name.startsWith("STACK")) {
 
-      Object result = ODocumentHelper.getFieldValue(memory.getUnderlying(), iName.substring("STACK".length()));
+      Object result =
+          ODocumentHelper.getFieldValue(memory.getUnderlying(), iName.substring("STACK".length()));
       if (result instanceof ArrayDeque) {
         result = ((ArrayDeque) result).clone();
       }
@@ -98,8 +105,7 @@ public class OTraverseContext extends OBasicCommandContext {
   }
 
   public boolean isAlreadyTraversed(final OIdentifiable identity, final int iLevel) {
-    if (history.contains(identity.getIdentity()))
-      return true;
+    if (history.contains(identity.getIdentity())) return true;
 
     // final int[] l = history.get(identity.getIdentity());
     // if (l == null)
@@ -148,10 +154,8 @@ public class OTraverseContext extends OBasicCommandContext {
   }
 
   public void setStrategy(final OTraverse.STRATEGY strategy) {
-    if (strategy == OTraverse.STRATEGY.BREADTH_FIRST)
-      memory = new QueueMemory(memory);
-    else
-      memory = new StackMemory(memory);
+    if (strategy == OTraverse.STRATEGY.BREADTH_FIRST) memory = new QueueMemory(memory);
+    else memory = new StackMemory(memory);
   }
 
   private interface Memory {

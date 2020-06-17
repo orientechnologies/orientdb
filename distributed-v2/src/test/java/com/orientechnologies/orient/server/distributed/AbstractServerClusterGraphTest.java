@@ -15,7 +15,7 @@
  *  *  limitations under the License.
  *  *
  *  * For more information: http://orientdb.com
- *  
+ *
  */
 
 package com.orientechnologies.orient.server.distributed;
@@ -29,23 +29,20 @@ import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.OVertex;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import org.junit.Assert;
-
 import java.util.Date;
 import java.util.UUID;
 import java.util.concurrent.Callable;
+import org.junit.Assert;
 
-/**
- * Test distributed TX
- */
+/** Test distributed TX */
 public abstract class AbstractServerClusterGraphTest extends AbstractServerClusterInsertTest {
   protected ORID rootVertexId;
   protected Object lock = new Object();
   private ODatabasePool dbPool;
 
   class TxWriter implements Callable<Void> {
-    private final int    serverId;
-    private final int    threadId;
+    private final int serverId;
+    private final int threadId;
 
     public TxWriter(final int iServerId, final int iThreadId) {
       serverId = iServerId;
@@ -77,7 +74,8 @@ public abstract class AbstractServerClusterGraphTest extends AbstractServerClust
         graph.begin();
         for (int i = 1; i <= count; i++) {
           if (i % 100 == 0)
-            System.out.println("\nWriter " + graph.getURL() + " managed " + i + "/" + count + " vertices so far");
+            System.out.println(
+                "\nWriter " + graph.getURL() + " managed " + i + "/" + count + " vertices so far");
 
           for (int retry = 0; retry < 100; retry++) {
             try {
@@ -93,8 +91,7 @@ public abstract class AbstractServerClusterGraphTest extends AbstractServerClust
                 graph.commit();
                 graph.begin();
                 itemInTx = 0;
-              } else
-                itemInTx++;
+              } else itemInTx++;
 
               break;
 
@@ -111,8 +108,7 @@ public abstract class AbstractServerClusterGraphTest extends AbstractServerClust
             }
           }
 
-          if (delayWriter > 0)
-            Thread.sleep(delayWriter);
+          if (delayWriter > 0) Thread.sleep(delayWriter);
         }
       } catch (InterruptedException e) {
         Thread.currentThread().interrupt();
@@ -155,16 +151,19 @@ public abstract class AbstractServerClusterGraphTest extends AbstractServerClust
 
     OClass provider = graph.createClass("Provider", personClass.getName());
     provider.createProperty("totalPurchased", OType.DECIMAL);
-
   }
 
-  protected void setFactorySettings(ODatabasePool pool) {
-  }
+  protected void setFactorySettings(ODatabasePool pool) {}
 
   @Override
   public void executeTest() throws Exception {
-    dbPool = new ODatabasePool(serverInstance.get(0).getServerInstance().getContext(), getDatabaseName(), "admin", "admin",
-        OrientDBConfig.defaultConfig());
+    dbPool =
+        new ODatabasePool(
+            serverInstance.get(0).getServerInstance().getContext(),
+            getDatabaseName(),
+            "admin",
+            "admin",
+            OrientDBConfig.defaultConfig());
     setFactorySettings(dbPool);
     super.executeTest();
   }

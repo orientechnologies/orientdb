@@ -13,14 +13,21 @@ import com.orientechnologies.orient.core.storage.cache.local.OBackgroundExceptio
 import com.orientechnologies.orient.core.storage.impl.local.OLowDiskSpaceListener;
 import com.orientechnologies.orient.core.storage.impl.local.OPageIsBrokenListener;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
-import org.junit.Assert;
-import org.junit.Test;
-
 import java.io.IOException;
 import java.nio.file.Path;
-import java.util.*;
-import java.util.concurrent.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.Timer;
+import java.util.TimerTask;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.atomic.AtomicBoolean;
+import org.junit.Assert;
+import org.junit.Test;
 
 public class AsyncReadCacheTestIT {
   @Test
@@ -43,24 +50,29 @@ public class AsyncReadCacheTestIT {
     final Timer timer = new Timer();
 
     final AtomicBoolean memoryAboveLimit = new AtomicBoolean();
-    timer.schedule(new TimerTask() {
-      @Override
-      public void run() {
-        final long memoryConsumption = allocator.getMemoryConsumption();
-        memoryAboveLimit.set(memoryAboveLimit.get() || memoryConsumption > maxMemory * 1.1);
+    timer.schedule(
+        new TimerTask() {
+          @Override
+          public void run() {
+            final long memoryConsumption = allocator.getMemoryConsumption();
+            memoryAboveLimit.set(memoryAboveLimit.get() || memoryConsumption > maxMemory * 1.1);
 
-        if (memoryConsumption > maxMemory * 1.1) {
-          System.out.println("Memory limit is exceeded " + memoryConsumption);
-        }
-      }
-    }, 1000, 1000);
+            if (memoryConsumption > maxMemory * 1.1) {
+              System.out.println("Memory limit is exceeded " + memoryConsumption);
+            }
+          }
+        },
+        1000,
+        1000);
 
     for (int i = 0; i < 4; i++) {
-      futures.add(executor.submit(new PageReader(fileLimit, pageLimit, writeCache, pageCount, readCache)));
+      futures.add(
+          executor.submit(new PageReader(fileLimit, pageLimit, writeCache, pageCount, readCache)));
     }
 
     for (int i = 0; i < 4; i++) {
-      futures.add(executor.submit(new PageWriter(fileLimit, pageLimit, writeCache, pageCount, readCache)));
+      futures.add(
+          executor.submit(new PageWriter(fileLimit, pageLimit, writeCache, pageCount, readCache)));
     }
 
     for (Future<Void> future : futures) {
@@ -70,19 +82,26 @@ public class AsyncReadCacheTestIT {
     readCache.assertSize();
     readCache.assertConsistency();
 
-    Assert.assertEquals(allocator.getMemoryConsumption() - byteBufferPool.getPoolSize() * pageSize, readCache.getUsedMemory());
+    Assert.assertEquals(
+        allocator.getMemoryConsumption() - byteBufferPool.getPoolSize() * pageSize,
+        readCache.getUsedMemory());
 
     Assert.assertFalse(memoryAboveLimit.get());
-    Assert.assertTrue("Invalid cache size " + readCache.getUsedMemory(), readCache.getUsedMemory() <= maxMemory);
+    Assert.assertTrue(
+        "Invalid cache size " + readCache.getUsedMemory(), readCache.getUsedMemory() <= maxMemory);
     System.out.println(
-        "Disk cache size " + readCache.getUsedMemory() / 1024 / 1024 + " megabytes, " + ((long) pageCount * pageSize) / 1024 / 1024
+        "Disk cache size "
+            + readCache.getUsedMemory() / 1024 / 1024
+            + " megabytes, "
+            + ((long) pageCount * pageSize) / 1024 / 1024
             + " megabytes were accessed.");
     System.out.println("Hit rate " + readCache.hitRate());
 
     timer.cancel();
 
     readCache.clear();
-    Assert.assertEquals(0, allocator.getMemoryConsumption() - byteBufferPool.getPoolSize() * pageSize);
+    Assert.assertEquals(
+        0, allocator.getMemoryConsumption() - byteBufferPool.getPoolSize() * pageSize);
     Assert.assertEquals(0, readCache.getUsedMemory());
     readCache.assertSize();
   }
@@ -106,25 +125,30 @@ public class AsyncReadCacheTestIT {
     final Timer timer = new Timer();
 
     final AtomicBoolean memoryAboveLimit = new AtomicBoolean();
-    timer.schedule(new TimerTask() {
-      @Override
-      public void run() {
-        final long memoryConsumption = allocator.getMemoryConsumption();
-        memoryAboveLimit.set(memoryAboveLimit.get() || memoryConsumption > maxMemory * 1.1);
+    timer.schedule(
+        new TimerTask() {
+          @Override
+          public void run() {
+            final long memoryConsumption = allocator.getMemoryConsumption();
+            memoryAboveLimit.set(memoryAboveLimit.get() || memoryConsumption > maxMemory * 1.1);
 
-        if (memoryConsumption > maxMemory * 1.1) {
-          System.out.println("Memory limit is exceeded " + memoryConsumption);
-        }
-      }
-    }, 1000, 1000);
+            if (memoryConsumption > maxMemory * 1.1) {
+              System.out.println("Memory limit is exceeded " + memoryConsumption);
+            }
+          }
+        },
+        1000,
+        1000);
 
     long start = System.nanoTime();
     for (int i = 0; i < 4; i++) {
-      futures.add(executor.submit(new ZiphianPageReader(pageLimit, writeCache, pageCount, readCache)));
+      futures.add(
+          executor.submit(new ZiphianPageReader(pageLimit, writeCache, pageCount, readCache)));
     }
 
     for (int i = 0; i < 4; i++) {
-      futures.add(executor.submit(new ZiphianPageWriter(pageLimit, writeCache, pageCount, readCache)));
+      futures.add(
+          executor.submit(new ZiphianPageWriter(pageLimit, writeCache, pageCount, readCache)));
     }
 
     for (Future<Void> future : futures) {
@@ -135,12 +159,18 @@ public class AsyncReadCacheTestIT {
     readCache.assertSize();
     readCache.assertConsistency();
 
-    Assert.assertEquals(allocator.getMemoryConsumption() - byteBufferPool.getPoolSize() * pageSize, readCache.getUsedMemory());
+    Assert.assertEquals(
+        allocator.getMemoryConsumption() - byteBufferPool.getPoolSize() * pageSize,
+        readCache.getUsedMemory());
 
     Assert.assertFalse(memoryAboveLimit.get());
-    Assert.assertTrue("Invalid cache size " + readCache.getUsedMemory(), readCache.getUsedMemory() <= maxMemory);
+    Assert.assertTrue(
+        "Invalid cache size " + readCache.getUsedMemory(), readCache.getUsedMemory() <= maxMemory);
     System.out.println(
-        "Disk cache size " + readCache.getUsedMemory() / 1024 / 1024 + " megabytes, " + ((long) pageCount) * pageSize / 1024 / 1024
+        "Disk cache size "
+            + readCache.getUsedMemory() / 1024 / 1024
+            + " megabytes, "
+            + ((long) pageCount) * pageSize / 1024 / 1024
             + " megabytes were accessed.");
     System.out.println("Hit rate " + readCache.hitRate());
     final long total = end - start;
@@ -151,20 +181,25 @@ public class AsyncReadCacheTestIT {
     timer.cancel();
 
     readCache.clear();
-    Assert.assertEquals(0, allocator.getMemoryConsumption() - byteBufferPool.getPoolSize() * pageSize);
+    Assert.assertEquals(
+        0, allocator.getMemoryConsumption() - byteBufferPool.getPoolSize() * pageSize);
     Assert.assertEquals(0, readCache.getUsedMemory());
     readCache.assertSize();
   }
 
   private static final class PageWriter implements Callable<Void> {
-    private final int         fileLimit;
-    private final int         pageLimit;
+    private final int fileLimit;
+    private final int pageLimit;
     private final OWriteCache writeCache;
-    private final int         pageCount;
+    private final int pageCount;
 
     private final AsyncReadCache readCache;
 
-    private PageWriter(final int fileLimit, final int pageLimit, final OWriteCache writeCache, final int pageCount,
+    private PageWriter(
+        final int fileLimit,
+        final int pageLimit,
+        final OWriteCache writeCache,
+        final int pageCount,
         final AsyncReadCache readCache) {
       this.fileLimit = fileLimit;
       this.pageLimit = pageLimit;
@@ -182,7 +217,8 @@ public class AsyncReadCacheTestIT {
         final int fileId = random.nextInt(fileLimit);
         final int pageIndex = random.nextInt(pageLimit);
 
-        final OCacheEntry cacheEntry = readCache.loadForWrite(fileId, pageIndex, true, writeCache, true, null);
+        final OCacheEntry cacheEntry =
+            readCache.loadForWrite(fileId, pageIndex, true, writeCache, true, null);
         readCache.releaseFromWrite(cacheEntry, writeCache, true);
         pageCounter++;
       }
@@ -192,14 +228,18 @@ public class AsyncReadCacheTestIT {
   }
 
   private static final class PageReader implements Callable<Void> {
-    private final int         fileLimit;
-    private final int         pageLimit;
+    private final int fileLimit;
+    private final int pageLimit;
     private final OWriteCache writeCache;
-    private final int         pageCount;
+    private final int pageCount;
 
     private final AsyncReadCache readCache;
 
-    private PageReader(final int fileLimit, final int pageLimit, final OWriteCache writeCache, final int pageCount,
+    private PageReader(
+        final int fileLimit,
+        final int pageLimit,
+        final OWriteCache writeCache,
+        final int pageCount,
         final AsyncReadCache readCache) {
       this.fileLimit = fileLimit;
       this.pageLimit = pageLimit;
@@ -217,7 +257,8 @@ public class AsyncReadCacheTestIT {
         final int fileId = random.nextInt(fileLimit);
         final int pageIndex = random.nextInt(pageLimit);
 
-        final OCacheEntry cacheEntry = readCache.loadForRead(fileId, pageIndex, true, writeCache, true);
+        final OCacheEntry cacheEntry =
+            readCache.loadForRead(fileId, pageIndex, true, writeCache, true);
         readCache.releaseFromRead(cacheEntry, writeCache);
         pageCounter++;
       }
@@ -227,13 +268,16 @@ public class AsyncReadCacheTestIT {
   }
 
   private static final class ZiphianPageWriter implements Callable<Void> {
-    private final int         pageLimit;
+    private final int pageLimit;
     private final OWriteCache writeCache;
-    private final int         pageCount;
+    private final int pageCount;
 
     private final AsyncReadCache readCache;
 
-    private ZiphianPageWriter(final int pageLimit, final OWriteCache writeCache, final int pageCount,
+    private ZiphianPageWriter(
+        final int pageLimit,
+        final OWriteCache writeCache,
+        final int pageCount,
         final AsyncReadCache readCache) {
       this.pageLimit = pageLimit;
       this.writeCache = writeCache;
@@ -249,7 +293,8 @@ public class AsyncReadCacheTestIT {
       while (pageCounter < pageCount) {
         final int pageIndex = random.nextInt();
         assert pageIndex < pageLimit;
-        final OCacheEntry cacheEntry = readCache.loadForWrite(0, pageIndex, true, writeCache, true, null);
+        final OCacheEntry cacheEntry =
+            readCache.loadForWrite(0, pageIndex, true, writeCache, true, null);
         readCache.releaseFromWrite(cacheEntry, writeCache, true);
         pageCounter++;
       }
@@ -259,13 +304,16 @@ public class AsyncReadCacheTestIT {
   }
 
   private static final class ZiphianPageReader implements Callable<Void> {
-    private final int         pageLimit;
+    private final int pageLimit;
     private final OWriteCache writeCache;
-    private final int         pageCount;
+    private final int pageCount;
 
     private final AsyncReadCache readCache;
 
-    private ZiphianPageReader(final int pageLimit, final OWriteCache writeCache, final int pageCount,
+    private ZiphianPageReader(
+        final int pageLimit,
+        final OWriteCache writeCache,
+        final int pageCount,
         final AsyncReadCache readCache) {
       this.pageLimit = pageLimit;
       this.writeCache = writeCache;
@@ -298,20 +346,16 @@ public class AsyncReadCacheTestIT {
     }
 
     @Override
-    public void addPageIsBrokenListener(final OPageIsBrokenListener listener) {
-    }
+    public void addPageIsBrokenListener(final OPageIsBrokenListener listener) {}
 
     @Override
-    public void removePageIsBrokenListener(final OPageIsBrokenListener listener) {
-    }
+    public void removePageIsBrokenListener(final OPageIsBrokenListener listener) {}
 
     @Override
-    public void addLowDiskSpaceListener(final OLowDiskSpaceListener listener) {
-    }
+    public void addLowDiskSpaceListener(final OLowDiskSpaceListener listener) {}
 
     @Override
-    public void removeLowDiskSpaceListener(final OLowDiskSpaceListener listener) {
-    }
+    public void removeLowDiskSpaceListener(final OLowDiskSpaceListener listener) {}
 
     @Override
     public long bookFileId(final String fileName) {
@@ -344,13 +388,10 @@ public class AsyncReadCacheTestIT {
     }
 
     @Override
-    public void makeFuzzyCheckpoint(long segmentId, byte[] lastMetadata) throws IOException {
-
-    }
+    public void makeFuzzyCheckpoint(long segmentId, byte[] lastMetadata) throws IOException {}
 
     @Override
-    public void flushTillSegment(final long segmentId) {
-    }
+    public void flushTillSegment(final long segmentId) {}
 
     @Override
     public boolean exists(final String fileName) {
@@ -363,21 +404,16 @@ public class AsyncReadCacheTestIT {
     }
 
     @Override
-    public void restoreModeOn() {
-    }
+    public void restoreModeOn() {}
 
     @Override
-    public void restoreModeOff() {
-    }
+    public void restoreModeOff() {}
 
     @Override
-    public void store(final long fileId, final long pageIndex, final OCachePointer dataPointer) {
-    }
+    public void store(final long fileId, final long pageIndex, final OCachePointer dataPointer) {}
 
     @Override
-    public void checkCacheOverflow() {
-
-    }
+    public void checkCacheOverflow() {}
 
     @Override
     public int allocateNewPage(final long fileId) {
@@ -385,21 +421,23 @@ public class AsyncReadCacheTestIT {
     }
 
     @Override
-    public OCachePointer load(final long fileId, final long startPageIndex, final OModifiableBoolean cacheHit,
+    public OCachePointer load(
+        final long fileId,
+        final long startPageIndex,
+        final OModifiableBoolean cacheHit,
         final boolean verifyChecksums) {
       final OPointer pointer = byteBufferPool.acquireDirect(true);
-      final OCachePointer cachePointer = new OCachePointer(pointer, byteBufferPool, fileId, (int) startPageIndex);
+      final OCachePointer cachePointer =
+          new OCachePointer(pointer, byteBufferPool, fileId, (int) startPageIndex);
       cachePointer.incrementReadersReferrer();
       return cachePointer;
     }
 
     @Override
-    public void flush(final long fileId) {
-    }
+    public void flush(final long fileId) {}
 
     @Override
-    public void flush() {
-    }
+    public void flush() {}
 
     @Override
     public long getFilledUpTo(final long fileId) {
@@ -412,16 +450,13 @@ public class AsyncReadCacheTestIT {
     }
 
     @Override
-    public void deleteFile(final long fileId) {
-    }
+    public void deleteFile(final long fileId) {}
 
     @Override
-    public void truncateFile(final long fileId) {
-    }
+    public void truncateFile(final long fileId) {}
 
     @Override
-    public void renameFile(final long fileId, final String newFileName) {
-    }
+    public void renameFile(final long fileId, final String newFileName) {}
 
     @Override
     public long[] close() {
@@ -429,11 +464,11 @@ public class AsyncReadCacheTestIT {
     }
 
     @Override
-    public void close(final long fileId, final boolean flush) {
-    }
+    public void close(final long fileId, final boolean flush) {}
 
     @Override
-    public OPageDataVerificationError[] checkStoredPages(final OCommandOutputListener commandOutputListener) {
+    public OPageDataVerificationError[] checkStoredPages(
+        final OCommandOutputListener commandOutputListener) {
       return new OPageDataVerificationError[0];
     }
 
@@ -478,12 +513,10 @@ public class AsyncReadCacheTestIT {
     }
 
     @Override
-    public void addBackgroundExceptionListener(final OBackgroundExceptionListener listener) {
-    }
+    public void addBackgroundExceptionListener(final OBackgroundExceptionListener listener) {}
 
     @Override
-    public void removeBackgroundExceptionListener(final OBackgroundExceptionListener listener) {
-    }
+    public void removeBackgroundExceptionListener(final OBackgroundExceptionListener listener) {}
 
     @Override
     public Path getRootDirectory() {
@@ -506,28 +539,26 @@ public class AsyncReadCacheTestIT {
     }
 
     @Override
-    public void updateDirtyPagesTable(final OCachePointer pointer, final OLogSequenceNumber startLSN) {
-    }
+    public void updateDirtyPagesTable(
+        final OCachePointer pointer, final OLogSequenceNumber startLSN) {}
 
     @Override
-    public void create() throws IOException {
-    }
+    public void create() throws IOException {}
 
     @Override
-    public void open() throws IOException {
-    }
+    public void open() throws IOException {}
   }
 
   private static final class ScrambledZipfianGenerator {
     static final long FNV_offset_basis_64 = 0xCBF29CE484222325L;
-    static final long FNV_prime_64        = 1099511628211L;
+    static final long FNV_prime_64 = 1099511628211L;
 
-    static final double ZETAN                 = 26.46902820178302;
+    static final double ZETAN = 26.46902820178302;
     static final double USED_ZIPFIAN_CONSTANT = 0.99;
-    static final long   ITEM_COUNT            = 10000000000L;
+    static final long ITEM_COUNT = 10000000000L;
 
     ZipfianGenerator gen;
-    long             _min, _max, _itemcount;
+    long _min, _max, _itemcount;
 
     ScrambledZipfianGenerator(long _items) {
       this(0, _items - 1);
@@ -559,7 +590,7 @@ public class AsyncReadCacheTestIT {
     }
 
     static long FNVhash64(long val) {
-      //from http://en.wikipedia.org/wiki/Fowler_Noll_Vo_hash
+      // from http://en.wikipedia.org/wiki/Fowler_Noll_Vo_hash
       long hashval = FNV_offset_basis_64;
 
       for (int i = 0; i < 8; i++) {
@@ -638,18 +669,21 @@ public class AsyncReadCacheTestIT {
     }
 
     public long nextLong(long itemcount) {
-      //from "Quickly Generating Billion-Record Synthetic Databases", Jim Gray et al, SIGMOD 1994
+      // from "Quickly Generating Billion-Record Synthetic Databases", Jim Gray et al, SIGMOD 1994
 
       if (itemcount != countforzeta) {
-        //have to recompute zetan and eta, since they depend on itemcount
+        // have to recompute zetan and eta, since they depend on itemcount
         synchronized (this) {
           if (itemcount > countforzeta) {
             zetan = zeta(countforzeta, itemcount, theta, zetan);
             eta = (1 - Math.pow(2.0 / items, 1 - theta)) / (1 - zeta2theta / zetan);
           } else if ((itemcount < countforzeta) && (allowitemcountdecrease)) {
             System.err.println(
-                "WARNING: Recomputing Zipfian distribtion. This is slow and should be avoided. (itemcount=" + itemcount
-                    + " countforzeta=" + countforzeta + ")");
+                "WARNING: Recomputing Zipfian distribtion. This is slow and should be avoided. (itemcount="
+                    + itemcount
+                    + " countforzeta="
+                    + countforzeta
+                    + ")");
 
             zetan = zeta(itemcount, theta);
             eta = (1 - Math.pow(2.0 / items, 1 - theta)) / (1 - zeta2theta / zetan);
@@ -679,5 +713,4 @@ public class AsyncReadCacheTestIT {
       return nextLong(items);
     }
   }
-
 }

@@ -11,7 +11,8 @@ public class OCreateVertexStatementEmptyNoTarget extends OCreateVertexStatement 
     super(p, id);
   }
 
-  @Override public OCreateVertexStatement copy() {
+  @Override
+  public OCreateVertexStatement copy() {
     return super.copy();
   }
 }

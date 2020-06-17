@@ -12,9 +12,14 @@ import com.orientechnologies.orient.core.record.OElement;
 import com.orientechnologies.orient.core.sql.executor.AggregationContext;
 import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.executor.OResultInternal;
-
 import java.math.BigDecimal;
-import java.util.*;
+import java.util.ArrayDeque;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.Deque;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 public class OMathExpression extends SimpleNode {
@@ -71,7 +76,8 @@ public class OMathExpression extends SimpleNode {
         }
         return super.apply(left, right);
       }
-    }, SLASH(10) {
+    },
+    SLASH(10) {
       @Override
       public Number apply(Integer left, Integer right) {
         if (left % right == 0) {
@@ -110,8 +116,8 @@ public class OMathExpression extends SimpleNode {
         }
         return super.apply(left, right);
       }
-
-    }, REM(10) {
+    },
+    REM(10) {
       @Override
       public Number apply(Integer left, Integer right) {
         return left % right;
@@ -144,8 +150,8 @@ public class OMathExpression extends SimpleNode {
         }
         return super.apply(left, right);
       }
-
-    }, PLUS(20) {
+    },
+    PLUS(20) {
       @Override
       public Number apply(Integer left, Integer right) {
         final Integer sum = left + right;
@@ -195,7 +201,8 @@ public class OMathExpression extends SimpleNode {
         }
         return String.valueOf(left) + String.valueOf(right);
       }
-    }, MINUS(20) {
+    },
+    MINUS(20) {
       @Override
       public Number apply(Integer left, Integer right) {
         int result = left - right;
@@ -244,8 +251,8 @@ public class OMathExpression extends SimpleNode {
 
         return result;
       }
-
-    }, LSHIFT(30) {
+    },
+    LSHIFT(30) {
       @Override
       public Number apply(Integer left, Integer right) {
         return left << right;
@@ -278,7 +285,8 @@ public class OMathExpression extends SimpleNode {
         }
         return super.apply(left, right);
       }
-    }, RSHIFT(30) {
+    },
+    RSHIFT(30) {
       @Override
       public Number apply(Integer left, Integer right) {
         return left >> right;
@@ -311,8 +319,8 @@ public class OMathExpression extends SimpleNode {
         }
         return super.apply(left, right);
       }
-
-    }, RUNSIGNEDSHIFT(30) {
+    },
+    RUNSIGNEDSHIFT(30) {
       @Override
       public Number apply(Integer left, Integer right) {
         return left >>> right;
@@ -345,8 +353,8 @@ public class OMathExpression extends SimpleNode {
         }
         return super.apply(left, right);
       }
-
-    }, BIT_AND(40) {
+    },
+    BIT_AND(40) {
       @Override
       public Number apply(Integer left, Integer right) {
         return left & right;
@@ -378,7 +386,8 @@ public class OMathExpression extends SimpleNode {
         }
         return super.apply(left, right);
       }
-    }, XOR(50) {
+    },
+    XOR(50) {
       @Override
       public Number apply(Integer left, Integer right) {
         return left ^ right;
@@ -422,8 +431,8 @@ public class OMathExpression extends SimpleNode {
 
         return null;
       }
-
-    }, BIT_OR(60) {
+    },
+    BIT_OR(60) {
       @Override
       public Number apply(Integer left, Integer right) {
         return left | right;
@@ -455,7 +464,6 @@ public class OMathExpression extends SimpleNode {
         }
         return super.apply(left == null ? 0 : left, right == null ? 0 : right);
       }
-
     };
 
     private static Long toLong(Object left) {
@@ -507,32 +515,30 @@ public class OMathExpression extends SimpleNode {
           return operation.apply(a.intValue(), b.intValue());
         } else if (b instanceof Long) {
           return operation.apply(a.longValue(), b.longValue());
-        } else if (b instanceof Float)
-          return operation.apply(a.floatValue(), b.floatValue());
-        else if (b instanceof Double)
-          return operation.apply(a.doubleValue(), b.doubleValue());
+        } else if (b instanceof Float) return operation.apply(a.floatValue(), b.floatValue());
+        else if (b instanceof Double) return operation.apply(a.doubleValue(), b.doubleValue());
         else if (b instanceof BigDecimal)
           return operation.apply(new BigDecimal((Integer) a), (BigDecimal) b);
       } else if (a instanceof Long) {
         if (b instanceof Integer || b instanceof Long || b instanceof Short)
           return operation.apply(a.longValue(), b.longValue());
-        else if (b instanceof Float)
-          return operation.apply(a.floatValue(), b.floatValue());
-        else if (b instanceof Double)
-          return operation.apply(a.doubleValue(), b.doubleValue());
+        else if (b instanceof Float) return operation.apply(a.floatValue(), b.floatValue());
+        else if (b instanceof Double) return operation.apply(a.doubleValue(), b.doubleValue());
         else if (b instanceof BigDecimal)
           return operation.apply(new BigDecimal((Long) a), (BigDecimal) b);
       } else if (a instanceof Float) {
         if (b instanceof Short || b instanceof Integer || b instanceof Long || b instanceof Float)
           return operation.apply(a.floatValue(), b.floatValue());
-        else if (b instanceof Double)
-          return operation.apply(a.doubleValue(), b.doubleValue());
+        else if (b instanceof Double) return operation.apply(a.doubleValue(), b.doubleValue());
         else if (b instanceof BigDecimal)
           return operation.apply(new BigDecimal((Float) a), (BigDecimal) b);
 
       } else if (a instanceof Double) {
-        if (b instanceof Short || b instanceof Integer || b instanceof Long || b instanceof Float || b instanceof Double)
-          return operation.apply(a.doubleValue(), b.doubleValue());
+        if (b instanceof Short
+            || b instanceof Integer
+            || b instanceof Long
+            || b instanceof Float
+            || b instanceof Double) return operation.apply(a.doubleValue(), b.doubleValue());
         else if (b instanceof BigDecimal)
           return operation.apply(new BigDecimal((Double) a), (BigDecimal) b);
 
@@ -547,13 +553,19 @@ public class OMathExpression extends SimpleNode {
           return operation.apply((BigDecimal) a, new BigDecimal((Float) b));
         else if (b instanceof Double)
           return operation.apply((BigDecimal) a, new BigDecimal((Double) b));
-        else if (b instanceof BigDecimal)
-          return operation.apply((BigDecimal) a, (BigDecimal) b);
+        else if (b instanceof BigDecimal) return operation.apply((BigDecimal) a, (BigDecimal) b);
       }
 
       throw new IllegalArgumentException(
-          "Cannot increment value '" + a + "' (" + a.getClass() + ") with '" + b + "' (" + b.getClass() + ")");
-
+          "Cannot increment value '"
+              + a
+              + "' ("
+              + a.getClass()
+              + ") with '"
+              + b
+              + "' ("
+              + b.getClass()
+              + ")");
     }
 
     public int getPriority() {
@@ -562,7 +574,7 @@ public class OMathExpression extends SimpleNode {
   }
 
   protected List<OMathExpression> childExpressions = new ArrayList<OMathExpression>();
-  protected List<Operator>        operators        = new ArrayList<>();
+  protected List<Operator> operators = new ArrayList<>();
 
   public OMathExpression(int id) {
     super(id);
@@ -627,7 +639,8 @@ public class OMathExpression extends SimpleNode {
       Operator nextOperator = operators.get(i);
       Object rightValue = childExpressions.get(i + 1).execute(iCurrentRecord, ctx);
 
-      if (!operatorsStack.isEmpty() && operatorsStack.peek().getPriority() <= nextOperator.getPriority()) {
+      if (!operatorsStack.isEmpty()
+          && operatorsStack.peek().getPriority() <= nextOperator.getPriority()) {
         Object right = valuesStack.poll();
         right = right == NULL_VALUE ? null : right;
         Object left = valuesStack.poll();
@@ -655,7 +668,8 @@ public class OMathExpression extends SimpleNode {
       Operator nextOperator = operators.get(i);
       Object rightValue = childExpressions.get(i + 1).execute(iCurrentRecord, ctx);
 
-      if (!operatorsStack.isEmpty() && operatorsStack.peek().getPriority() <= nextOperator.getPriority()) {
+      if (!operatorsStack.isEmpty()
+          && operatorsStack.peek().getPriority() <= nextOperator.getPriority()) {
         Object right = valuesStack.poll();
         right = right == NULL_VALUE ? null : right;
         Object left = valuesStack.poll();
@@ -689,7 +703,8 @@ public class OMathExpression extends SimpleNode {
         Operator nextOperator = operators.removeLast();
         Object rightValue = values.removeLast();
 
-        if (!operatorsStack.isEmpty() && operatorsStack.peek().getPriority() <= nextOperator.getPriority()) {
+        if (!operatorsStack.isEmpty()
+            && operatorsStack.peek().getPriority() <= nextOperator.getPriority()) {
           Object right = valuesStack.poll();
           right = right == NULL_VALUE ? null : right;
           Object left = valuesStack.poll();
@@ -731,39 +746,39 @@ public class OMathExpression extends SimpleNode {
       if (i > 0) {
         builder.append(" ");
         switch (operators.get(i - 1)) {
-        case PLUS:
-          builder.append("+");
-          break;
-        case MINUS:
-          builder.append("-");
-          break;
-        case STAR:
-          builder.append("*");
-          break;
-        case SLASH:
-          builder.append("/");
-          break;
-        case REM:
-          builder.append("%");
-          break;
-        case LSHIFT:
-          builder.append("<<");
-          break;
-        case RSHIFT:
-          builder.append(">>");
-          break;
-        case RUNSIGNEDSHIFT:
-          builder.append(">>>");
-          break;
-        case BIT_AND:
-          builder.append("&");
-          break;
-        case BIT_OR:
-          builder.append("|");
-          break;
-        case XOR:
-          builder.append("^");
-          break;
+          case PLUS:
+            builder.append("+");
+            break;
+          case MINUS:
+            builder.append("-");
+            break;
+          case STAR:
+            builder.append("*");
+            break;
+          case SLASH:
+            builder.append("/");
+            break;
+          case REM:
+            builder.append("%");
+            break;
+          case LSHIFT:
+            builder.append("<<");
+            break;
+          case RSHIFT:
+            builder.append(">>");
+            break;
+          case RUNSIGNEDSHIFT:
+            builder.append(">>>");
+            break;
+          case BIT_AND:
+            builder.append("&");
+            break;
+          case BIT_OR:
+            builder.append("|");
+            break;
+          case XOR:
+            builder.append("^");
+            break;
         }
         builder.append(" ");
       }
@@ -787,15 +802,16 @@ public class OMathExpression extends SimpleNode {
     return this.childExpressions.get(0).isIndexedFunctionCall();
   }
 
-  public long estimateIndexedFunction(OFromClause target, OCommandContext context, OBinaryCompareOperator operator, Object right) {
+  public long estimateIndexedFunction(
+      OFromClause target, OCommandContext context, OBinaryCompareOperator operator, Object right) {
     if (this.childExpressions.size() != 1) {
       return -1;
     }
     return this.childExpressions.get(0).estimateIndexedFunction(target, context, operator, right);
   }
 
-  public Iterable<OIdentifiable> executeIndexedFunction(OFromClause target, OCommandContext context,
-      OBinaryCompareOperator operator, Object right) {
+  public Iterable<OIdentifiable> executeIndexedFunction(
+      OFromClause target, OCommandContext context, OBinaryCompareOperator operator, Object right) {
     if (this.childExpressions.size() != 1) {
       return null;
     }
@@ -803,54 +819,61 @@ public class OMathExpression extends SimpleNode {
   }
 
   /**
-   * tests if current expression is an indexed funciton AND that function can also be executed without using the index
+   * tests if current expression is an indexed funciton AND that function can also be executed
+   * without using the index
    *
-   * @param target  the query target
+   * @param target the query target
    * @param context the execution context
-   *
-   * @return true if current expression is an indexed funciton AND that function can also be executed without using the index, false
-   * otherwise
+   * @return true if current expression is an indexed funciton AND that function can also be
+   *     executed without using the index, false otherwise
    */
-  public boolean canExecuteIndexedFunctionWithoutIndex(OFromClause target, OCommandContext context, OBinaryCompareOperator operator,
-      Object right) {
+  public boolean canExecuteIndexedFunctionWithoutIndex(
+      OFromClause target, OCommandContext context, OBinaryCompareOperator operator, Object right) {
     if (this.childExpressions.size() != 1) {
       return false;
     }
-    return this.childExpressions.get(0).canExecuteIndexedFunctionWithoutIndex(target, context, operator, right);
+    return this.childExpressions
+        .get(0)
+        .canExecuteIndexedFunctionWithoutIndex(target, context, operator, right);
   }
 
   /**
    * tests if current expression is an indexed function AND that function can be used on this target
    *
-   * @param target  the query target
+   * @param target the query target
    * @param context the execution context
-   *
-   * @return true if current expression is an indexed function AND that function can be used on this target, false otherwise
+   * @return true if current expression is an indexed function AND that function can be used on this
+   *     target, false otherwise
    */
-  public boolean allowsIndexedFunctionExecutionOnTarget(OFromClause target, OCommandContext context,
-      OBinaryCompareOperator operator, Object right) {
+  public boolean allowsIndexedFunctionExecutionOnTarget(
+      OFromClause target, OCommandContext context, OBinaryCompareOperator operator, Object right) {
     if (this.childExpressions.size() != 1) {
       return false;
     }
-    return this.childExpressions.get(0).allowsIndexedFunctionExecutionOnTarget(target, context, operator, right);
+    return this.childExpressions
+        .get(0)
+        .allowsIndexedFunctionExecutionOnTarget(target, context, operator, right);
   }
 
   /**
-   * tests if current expression is an indexed function AND the function has also to be executed after the index search. In some
-   * cases, the index search is accurate, so this condition can be excluded from further evaluation. In other cases the result from
-   * the index is a superset of the expected result, so the function has to be executed anyway for further filtering
+   * tests if current expression is an indexed function AND the function has also to be executed
+   * after the index search. In some cases, the index search is accurate, so this condition can be
+   * excluded from further evaluation. In other cases the result from the index is a superset of the
+   * expected result, so the function has to be executed anyway for further filtering
    *
-   * @param target  the query target
+   * @param target the query target
    * @param context the execution context
-   *
-   * @return true if current expression is an indexed function AND the function has also to be executed after the index search.
+   * @return true if current expression is an indexed function AND the function has also to be
+   *     executed after the index search.
    */
-  public boolean executeIndexedFunctionAfterIndexSearch(OFromClause target, OCommandContext context,
-      OBinaryCompareOperator operator, Object right) {
+  public boolean executeIndexedFunctionAfterIndexSearch(
+      OFromClause target, OCommandContext context, OBinaryCompareOperator operator, Object right) {
     if (this.childExpressions.size() != 1) {
       return false;
     }
-    return this.childExpressions.get(0).executeIndexedFunctionAfterIndexSearch(target, context, operator, right);
+    return this.childExpressions
+        .get(0)
+        .executeIndexedFunctionAfterIndexSearch(target, context, operator, right);
   }
 
   public boolean isFunctionAny() {
@@ -868,8 +891,7 @@ public class OMathExpression extends SimpleNode {
   }
 
   public OCollate getCollate(OResult currentRecord, OCommandContext ctx) {
-    if (childExpressions.size() == 1)
-      return childExpressions.get(0).getCollate(currentRecord, ctx);
+    if (childExpressions.size() == 1) return childExpressions.get(0).getCollate(currentRecord, ctx);
     return null;
   }
 
@@ -919,7 +941,8 @@ public class OMathExpression extends SimpleNode {
     return this.childExpressions.get(0).isCount();
   }
 
-  public SimpleNode splitForAggregation(AggregateProjectionSplit aggregateProj, OCommandContext ctx) {
+  public SimpleNode splitForAggregation(
+      AggregateProjectionSplit aggregateProj, OCommandContext ctx) {
     if (isAggregate()) {
       OMathExpression result = new OMathExpression(-1);
       int i = 0;
@@ -933,10 +956,13 @@ public class OMathExpression extends SimpleNode {
           if (res.isEarlyCalculated(ctx) || res.isAggregate()) {
             result.childExpressions.add(res);
           } else {
-            throw new OCommandExecutionException("Cannot mix aggregate and single record attribute values in the same projection");
+            throw new OCommandExecutionException(
+                "Cannot mix aggregate and single record attribute values in the same projection");
           }
         } else if (splitResult instanceof OExpression) {
-          result.childExpressions.add(((OExpression) splitResult).mathExpression);//this comes from a splitted aggregate function
+          result.childExpressions.add(
+              ((OExpression) splitResult)
+                  .mathExpression); // this comes from a splitted aggregate function
         }
         i++;
       }
@@ -947,7 +973,8 @@ public class OMathExpression extends SimpleNode {
   }
 
   public AggregationContext getAggregationContext(OCommandContext ctx) {
-    throw new UnsupportedOperationException("multiple math expressions do not allow plain aggregation");
+    throw new UnsupportedOperationException(
+        "multiple math expressions do not allow plain aggregation");
   }
 
   public OMathExpression copy() {
@@ -957,7 +984,8 @@ public class OMathExpression extends SimpleNode {
     } catch (Exception e) {
       throw new RuntimeException(e);
     }
-    result.childExpressions = childExpressions.stream().map(x -> x.copy()).collect(Collectors.toList());
+    result.childExpressions =
+        childExpressions.stream().map(x -> x.copy()).collect(Collectors.toList());
     result.operators.addAll(operators);
     return result;
   }
@@ -985,15 +1013,14 @@ public class OMathExpression extends SimpleNode {
 
   @Override
   public boolean equals(Object o) {
-    if (this == o)
-      return true;
-    if (o == null || getClass() != o.getClass())
-      return false;
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
 
     OMathExpression that = (OMathExpression) o;
 
-    if (childExpressions != null ? !childExpressions.equals(that.childExpressions) : that.childExpressions != null)
-      return false;
+    if (childExpressions != null
+        ? !childExpressions.equals(that.childExpressions)
+        : that.childExpressions != null) return false;
     if (operators != null ? !operators.equals(that.operators) : that.operators != null)
       return false;
 
@@ -1031,23 +1058,27 @@ public class OMathExpression extends SimpleNode {
   public static OMathExpression deserializeFromResult(OResult fromResult) {
     String className = fromResult.getProperty("__class");
     try {
-      OMathExpression result = (OMathExpression) Class.forName(className).getConstructor(Integer.class).newInstance(-1);
+      OMathExpression result =
+          (OMathExpression) Class.forName(className).getConstructor(Integer.class).newInstance(-1);
       result.deserialize(fromResult);
       return result;
     } catch (Exception e) {
       throw OException.wrapException(new OCommandExecutionException(""), e);
     }
-
   }
 
   public OResult serialize() {
     OResultInternal result = new OResultInternal();
     result.setProperty("__class", getClass().getName());
     if (childExpressions != null) {
-      result.setProperty("childExpressions", childExpressions.stream().map(x -> x.serialize()).collect(Collectors.toList()));
+      result.setProperty(
+          "childExpressions",
+          childExpressions.stream().map(x -> x.serialize()).collect(Collectors.toList()));
     }
     if (operators != null) {
-      result.setProperty("operators", operators.stream().map(x -> serializeOperator(x)).collect(Collectors.toList()));
+      result.setProperty(
+          "operators",
+          operators.stream().map(x -> serializeOperator(x)).collect(Collectors.toList()));
     }
     return result;
   }
@@ -1055,13 +1086,12 @@ public class OMathExpression extends SimpleNode {
   public void deserialize(OResult fromResult) {
     if (fromResult.getProperty("childExpressions") != null) {
       List<OResult> ser = fromResult.getProperty("childExpressions");
-      childExpressions = ser.stream().map(x -> deserializeFromResult(x)).collect(Collectors.toList());
-
+      childExpressions =
+          ser.stream().map(x -> deserializeFromResult(x)).collect(Collectors.toList());
     }
     if (fromResult.getProperty("operators") != null) {
       List<String> ser = fromResult.getProperty("operators");
       operators = ser.stream().map(x -> deserializeOperator(x)).collect(Collectors.toList());
-
     }
   }
 

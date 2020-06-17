@@ -1,14 +1,15 @@
 package com.orientechnologies.orient.distributed.network;
 
 import com.orientechnologies.orient.core.db.config.ONodeIdentity;
-
 import java.util.HashSet;
 import java.util.Set;
 
 public class OLeaderElectionStateMachine {
 
   public enum Status {
-    FOLLOWER, CANDIDATE, LEADER;
+    FOLLOWER,
+    CANDIDATE,
+    LEADER;
   }
 
   protected ONodeIdentity nodeIdentity;
@@ -58,7 +59,7 @@ public class OLeaderElectionStateMachine {
   }
 
   public void setStatus(Status status) {
-//    System.out.println(nodeIdentity.getName() + " setting status to " + status);
+    //    System.out.println(nodeIdentity.getName() + " setting status to " + status);
     this.status = status;
   }
 
@@ -69,5 +70,4 @@ public class OLeaderElectionStateMachine {
   public void setQuorum(int quorum) {
     this.quorum = quorum;
   }
-
 }

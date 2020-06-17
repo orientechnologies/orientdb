@@ -5,8 +5,8 @@ import com.orientechnologies.orient.core.id.ORecordId;
 public class OTxUniqueIndex implements OTransactionResultPayload {
   public static final int ID = 3;
   private ORecordId recordId;
-  private String    index;
-  private Object    key;
+  private String index;
+  private Object key;
 
   public OTxUniqueIndex(ORecordId recordId, String index, Object key) {
     this.recordId = recordId;

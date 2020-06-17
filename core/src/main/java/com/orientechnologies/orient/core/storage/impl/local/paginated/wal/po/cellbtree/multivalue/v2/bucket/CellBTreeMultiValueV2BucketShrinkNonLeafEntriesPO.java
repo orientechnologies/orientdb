@@ -8,22 +8,22 @@ import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.WALRecordTypes;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.PageOperationRecord;
 import com.orientechnologies.orient.core.storage.index.sbtree.multivalue.v2.CellBTreeMultiValueV2Bucket;
-
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
 
 public final class CellBTreeMultiValueV2BucketShrinkNonLeafEntriesPO extends PageOperationRecord {
-  private int                                            newSize;
+  private int newSize;
   private List<CellBTreeMultiValueV2Bucket.NonLeafEntry> removedEntries;
-  private OBinarySerializer                              keySerializer;
-  private boolean                                        isEncrypted;
+  private OBinarySerializer keySerializer;
+  private boolean isEncrypted;
 
-  public CellBTreeMultiValueV2BucketShrinkNonLeafEntriesPO() {
-  }
+  public CellBTreeMultiValueV2BucketShrinkNonLeafEntriesPO() {}
 
-  public CellBTreeMultiValueV2BucketShrinkNonLeafEntriesPO(final int newSize,
-      final List<CellBTreeMultiValueV2Bucket.NonLeafEntry> removedEntries, final OBinarySerializer keySerializer,
+  public CellBTreeMultiValueV2BucketShrinkNonLeafEntriesPO(
+      final int newSize,
+      final List<CellBTreeMultiValueV2Bucket.NonLeafEntry> removedEntries,
+      final OBinarySerializer keySerializer,
       final boolean isEncrypted) {
     this.newSize = newSize;
     this.removedEntries = removedEntries;
@@ -113,8 +113,8 @@ public final class CellBTreeMultiValueV2BucketShrinkNonLeafEntriesPO extends Pag
       final byte[] key = new byte[keyLen];
       buffer.get(key);
 
-      final CellBTreeMultiValueV2Bucket.NonLeafEntry nonLeafEntry = new CellBTreeMultiValueV2Bucket.NonLeafEntry(key, leftChild,
-          rightChild);
+      final CellBTreeMultiValueV2Bucket.NonLeafEntry nonLeafEntry =
+          new CellBTreeMultiValueV2Bucket.NonLeafEntry(key, leftChild, rightChild);
       removedEntries.add(nonLeafEntry);
     }
   }

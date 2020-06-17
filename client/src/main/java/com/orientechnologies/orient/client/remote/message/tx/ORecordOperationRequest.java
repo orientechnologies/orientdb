@@ -3,24 +3,28 @@ package com.orientechnologies.orient.client.remote.message.tx;
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
-
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
 
 public class ORecordOperationRequest {
-  private byte    type;
-  private byte    recordType;
-  private ORID    id;
-  private ORID    oldId;
-  private byte[]  record;
-  private int     version;
+  private byte type;
+  private byte recordType;
+  private ORID id;
+  private ORID oldId;
+  private byte[] record;
+  private int version;
   private boolean contentChanged;
 
-  public ORecordOperationRequest() {
-  }
+  public ORecordOperationRequest() {}
 
-  public ORecordOperationRequest(byte type, byte recordType, ORID id, ORID oldId, byte[] record, int version,
+  public ORecordOperationRequest(
+      byte type,
+      byte recordType,
+      ORID id,
+      ORID oldId,
+      byte[] record,
+      int version,
       boolean contentChanged) {
     this.type = type;
     this.recordType = recordType;
@@ -113,5 +117,4 @@ public class ORecordOperationRequest {
     output.writeInt(version);
     output.writeBoolean(contentChanged);
   }
-
 }

@@ -11,7 +11,8 @@ public class ODeleteEdgeVToStatement extends ODeleteEdgeStatement {
     super(p, id);
   }
 
-  @Override public ODeleteEdgeStatement copy() {
+  @Override
+  public ODeleteEdgeStatement copy() {
     return super.copy();
   }
 }

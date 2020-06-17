@@ -1,24 +1,24 @@
 package com.orientechnologies.orient.graph.sql;
 
+import static junit.framework.TestCase.assertEquals;
+import static junit.framework.TestCase.assertTrue;
+
+
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.tinkerpop.blueprints.impls.orient.OrientEdge;
 import com.tinkerpop.blueprints.impls.orient.OrientEdgeType;
 import com.tinkerpop.blueprints.impls.orient.OrientGraph;
 import com.tinkerpop.blueprints.impls.orient.OrientVertex;
+import java.util.HashMap;
+import java.util.Map;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
-import java.util.HashMap;
-import java.util.Map;
-
-import static junit.framework.TestCase.assertEquals;
-import static junit.framework.TestCase.assertTrue;
-
 public class DeleteEdgeTest {
 
-  private OrientGraph    graph;
+  private OrientGraph graph;
   private OrientEdgeType edgeType;
 
   @Before
@@ -56,13 +56,14 @@ public class DeleteEdgeTest {
 
       graph.command(new OCommandSQL("delete edge TestEdge where based_on = '0001'")).execute();
 
-      Iterable<OrientVertex> edges = graph.command(new OCommandSQL("select count(*) from TestEdge where based_on = '0001'")).execute();
+      Iterable<OrientVertex> edges =
+          graph
+              .command(new OCommandSQL("select count(*) from TestEdge where based_on = '0001'"))
+              .execute();
       assertTrue(edges.iterator().hasNext());
       assertEquals(edges.iterator().next().<Object>getProperty("count"), 0l);
     }
-
   }
-
 
   @Test
   public void testDeleteEdgeValidation() {
@@ -82,10 +83,11 @@ public class DeleteEdgeTest {
 
     graph.command(new OCommandSQL("delete edge TestEdge where based_on = '0001'")).execute();
 
-    Iterable<OrientVertex> edges = graph.command(new OCommandSQL("select count(*) from TestEdge where based_on = '0001'")).execute();
+    Iterable<OrientVertex> edges =
+        graph
+            .command(new OCommandSQL("select count(*) from TestEdge where based_on = '0001'"))
+            .execute();
     assertTrue(edges.iterator().hasNext());
     assertEquals(edges.iterator().next().<Object>getProperty("count"), 0l);
-
   }
-
 }

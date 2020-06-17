@@ -3,16 +3,14 @@ package com.orientechnologies.orient.core.sql.executor;
 import com.orientechnologies.orient.core.sql.parser.ORid;
 import com.orientechnologies.orient.core.sql.parser.OWhereClause;
 
-/**
- * Created by luigidellaquila on 20/09/16.
- */
+/** Created by luigidellaquila on 20/09/16. */
 public class EdgeTraversal {
-  protected boolean      out = true;
-  public    PatternEdge  edge;
-  private   String       leftClass;
-  private   String       leftCluster;
-  private   ORid         leftRid;
-  private   OWhereClause leftFilter;
+  protected boolean out = true;
+  public PatternEdge edge;
+  private String leftClass;
+  private String leftCluster;
+  private ORid leftRid;
+  private OWhereClause leftFilter;
 
   public EdgeTraversal(PatternEdge edge, boolean out) {
     this.edge = edge;

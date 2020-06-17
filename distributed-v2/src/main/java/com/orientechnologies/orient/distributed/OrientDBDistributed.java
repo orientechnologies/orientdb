@@ -4,7 +4,14 @@ import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.cache.OCommandCacheSoftRefs;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
-import com.orientechnologies.orient.core.db.*;
+import com.orientechnologies.orient.core.db.ODatabaseDocumentEmbeddedPooled;
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
+import com.orientechnologies.orient.core.db.ODatabasePoolInternal;
+import com.orientechnologies.orient.core.db.ODatabaseType;
+import com.orientechnologies.orient.core.db.OSharedContext;
+import com.orientechnologies.orient.core.db.OSharedContextEmbedded;
+import com.orientechnologies.orient.core.db.OrientDBConfig;
+import com.orientechnologies.orient.core.db.OrientDBEmbedded;
 import com.orientechnologies.orient.core.db.config.ONodeConfiguration;
 import com.orientechnologies.orient.core.db.config.ONodeIdentity;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentEmbedded;
@@ -22,7 +29,12 @@ import com.orientechnologies.orient.distributed.impl.log.OOperationLog;
 import com.orientechnologies.orient.distributed.impl.metadata.ODistributedContext;
 import com.orientechnologies.orient.distributed.impl.metadata.OElectionContext;
 import com.orientechnologies.orient.distributed.impl.metadata.OSharedContextDistributed;
-import com.orientechnologies.orient.distributed.impl.structural.*;
+import com.orientechnologies.orient.distributed.impl.structural.OReadStructuralSharedConfiguration;
+import com.orientechnologies.orient.distributed.impl.structural.OStructuralConfiguration;
+import com.orientechnologies.orient.distributed.impl.structural.OStructuralDistributedContext;
+import com.orientechnologies.orient.distributed.impl.structural.OStructuralNodeConfiguration;
+import com.orientechnologies.orient.distributed.impl.structural.OStructuralNodeDatabase;
+import com.orientechnologies.orient.distributed.impl.structural.OStructuralSharedConfiguration;
 import com.orientechnologies.orient.distributed.impl.structural.operations.ODatabaseLastOpIdRequest;
 import com.orientechnologies.orient.distributed.impl.structural.raft.OStructuralFollower;
 import com.orientechnologies.orient.distributed.impl.structural.submit.OCreateDatabaseSubmitRequest;
@@ -32,33 +44,40 @@ import com.orientechnologies.orient.distributed.impl.structural.submit.OSyncRequ
 import com.orientechnologies.orient.distributed.network.ODistributedNetwork;
 import com.orientechnologies.orient.distributed.network.ODistributedNetworkManager;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinary;
-import com.orientechnologies.orient.server.*;
+import com.orientechnologies.orient.server.OClientConnection;
+import com.orientechnologies.orient.server.OServer;
+import com.orientechnologies.orient.server.OServerAware;
+import com.orientechnologies.orient.server.OServerLifecycleListener;
+import com.orientechnologies.orient.server.OSystemDatabase;
 import com.orientechnologies.orient.server.config.OServerUserConfiguration;
 import com.orientechnologies.orient.server.network.OServerNetworkListener;
 import com.orientechnologies.orient.server.network.protocol.binary.ONetworkProtocolBinary;
-
 import java.io.IOException;
 import java.io.InputStream;
 import java.security.SecureRandom;
-import java.util.*;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
+import java.util.UUID;
 import java.util.concurrent.Callable;
 import java.util.stream.Collectors;
 
-/**
- * Created by tglman on 08/08/17.
- */
-public class OrientDBDistributed extends OrientDBEmbedded implements OServerAware, OServerLifecycleListener {
+/** Created by tglman on 08/08/17. */
+public class OrientDBDistributed extends OrientDBEmbedded
+    implements OServerAware, OServerLifecycleListener {
 
   private static final String DISTRIBUTED_USER = "distributed_replication";
 
-  private       OServer                            server;
-  private       OStructuralDistributedContext      structuralDistributedContext;
-  private       ODistributedNetworkManager         networkManager;
-  private       ONodeConfiguration                 nodeConfiguration;
-  private       OStructuralConfiguration           structuralConfiguration;
-  private final OElectionContext                   elections = new OElectionContext();
-  private       OCoordinatedExecutorMessageHandler requestHandler;
-  private final ODatabasesSync                     syncs     = new ODatabasesSync();
+  private OServer server;
+  private OStructuralDistributedContext structuralDistributedContext;
+  private ODistributedNetworkManager networkManager;
+  private ONodeConfiguration nodeConfiguration;
+  private OStructuralConfiguration structuralConfiguration;
+  private final OElectionContext elections = new OElectionContext();
+  private OCoordinatedExecutorMessageHandler requestHandler;
+  private final ODatabasesSync syncs = new ODatabasesSync();
 
   public OrientDBDistributed(String directoryPath, OrientDBConfig config, Orient instance) {
     super(directoryPath, config, instance);
@@ -76,14 +95,15 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
 
   @Override
   public void init(OServer server) {
-    //Cannot get the plugin from here, is too early, doing it lazy  
+    // Cannot get the plugin from here, is too early, doing it lazy
     this.server = server;
     this.server.registerLifecycleListener(this);
   }
 
   @Override
   public void onAfterActivate() {
-    structuralConfiguration = new OStructuralConfiguration(this.getServer().getSystemDatabase(), this);
+    structuralConfiguration =
+        new OStructuralConfiguration(this.getServer().getSystemDatabase(), this);
     checkPort();
     ONodeInternalConfiguration conf = generateInternalConfiguration();
     requestHandler = new OCoordinatedExecutorMessageHandler(this);
@@ -130,19 +150,18 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
     return new ODatabaseDocumentDistributed(storage, getNodeIdentity());
   }
 
-  protected ODatabaseDocumentEmbedded newPooledSessionInstance(ODatabasePoolInternal pool, OAbstractPaginatedStorage storage) {
+  protected ODatabaseDocumentEmbedded newPooledSessionInstance(
+      ODatabasePoolInternal pool, OAbstractPaginatedStorage storage) {
     if (OSystemDatabase.SYSTEM_DB_NAME.equals(storage.getName())) {
       return new ODatabaseDocumentEmbeddedPooled(pool, storage);
     }
     return new ODatabaseDocumentDistributedPooled(pool, storage, getNodeIdentity());
-
   }
 
   public OStorage fullSync(String dbName, String backupPath, OrientDBConfig config) {
     final ODatabaseDocumentEmbedded embedded;
     OAbstractPaginatedStorage storage = null;
     synchronized (this) {
-
       try {
         storage = storages.get(dbName);
 
@@ -153,8 +172,14 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
           storage.delete();
           storages.remove(dbName);
         }
-        storage = (OAbstractPaginatedStorage) disk
-            .createStorage(buildName(dbName), new HashMap<>(), maxWALSegmentSize, doubleWriteLogMaxSegSize, generateStorageId());
+        storage =
+            (OAbstractPaginatedStorage)
+                disk.createStorage(
+                    buildName(dbName),
+                    new HashMap<>(),
+                    maxWALSegmentSize,
+                    doubleWriteLogMaxSegSize,
+                    generateStorageId());
         embedded = internalCreate(config, storage);
         storages.put(dbName, storage);
       } catch (Exception e) {
@@ -162,11 +187,12 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
           storage.delete();
         }
 
-        throw OException.wrapException(new ODatabaseException("Cannot restore database '" + dbName + "'"), e);
+        throw OException.wrapException(
+            new ODatabaseException("Cannot restore database '" + dbName + "'"), e);
       }
     }
     storage.restoreFromIncrementalBackup(backupPath);
-    //DROP AND CREATE THE SHARED CONTEXT SU HAS CORRECT INFORMATION.
+    // DROP AND CREATE THE SHARED CONTEXT SU HAS CORRECT INFORMATION.
     synchronized (this) {
       OSharedContext context = sharedContexts.remove(dbName);
       context.close();
@@ -177,32 +203,45 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
   }
 
   @Override
-  public void restore(String name, InputStream in, Map<String, Object> options, Callable<Object> callable,
+  public void restore(
+      String name,
+      InputStream in,
+      Map<String, Object> options,
+      Callable<Object> callable,
       OCommandOutputListener iListener) {
     super.restore(name, in, options, callable, iListener);
-    //THIS MAKE SURE THAT THE SHARED CONTEXT IS INITED.
+    // THIS MAKE SURE THAT THE SHARED CONTEXT IS INITED.
     ODatabaseDocumentEmbedded instance = openNoAuthorization(name);
     instance.close();
   }
 
   @Override
-  public void restore(String name, String user, String password, ODatabaseType type, String path, OrientDBConfig config) {
+  public void restore(
+      String name,
+      String user,
+      String password,
+      ODatabaseType type,
+      String path,
+      OrientDBConfig config) {
     super.restore(name, user, password, type, path, config);
-    //THIS MAKE SURE THAT THE SHARED CONTEXT IS INITED.
+    // THIS MAKE SURE THAT THE SHARED CONTEXT IS INITED.
     ODatabaseDocumentEmbedded instance = openNoAuthorization(name);
     instance.close();
   }
 
   @Override
-  public void create(String name, String user, String password, ODatabaseType type, OrientDBConfig config) {
+  public void create(
+      String name, String user, String password, ODatabaseType type, OrientDBConfig config) {
     if (OSystemDatabase.SYSTEM_DB_NAME.equals(name)) {
       super.create(name, user, password, type, config);
       return;
     }
     checkReadyForHandleRequests();
-    //TODO:RESOLVE CONFIGURATION PARAMETERS
-    OCreateDatabaseSubmitResponse created = (OCreateDatabaseSubmitResponse) structuralDistributedContext
-        .forwardAndWait(new OCreateDatabaseSubmitRequest(name, type.name(), new HashMap<>()));
+    // TODO:RESOLVE CONFIGURATION PARAMETERS
+    OCreateDatabaseSubmitResponse created =
+        (OCreateDatabaseSubmitResponse)
+            structuralDistributedContext.forwardAndWait(
+                new OCreateDatabaseSubmitRequest(name, type.name(), new HashMap<>()));
     if (!created.isSuccess()) {
       throw new ODatabaseException(created.getError());
     }
@@ -225,50 +264,49 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
     checkDatabaseReady(name);
     ODatabaseDocumentEmbedded session = super.openNoAuthorization(name);
     return session;
-
   }
 
   @Override
-  public ODatabaseDocumentInternal open(String name, String user, String password, OrientDBConfig config) {
+  public ODatabaseDocumentInternal open(
+      String name, String user, String password, OrientDBConfig config) {
     checkDatabaseReady(name);
     ODatabaseDocumentInternal session = super.open(name, user, password, config);
     return session;
   }
 
   @Override
-  public ODatabaseDocumentInternal poolOpen(String name, String user, String password, ODatabasePoolInternal pool) {
+  public ODatabaseDocumentInternal poolOpen(
+      String name, String user, String password, ODatabasePoolInternal pool) {
     checkDatabaseReady(name);
     ODatabaseDocumentInternal session = super.poolOpen(name, user, password, pool);
     return session;
-
   }
 
   public synchronized void nodeConnected(ONodeIdentity nodeIdentity) {
-    if (this.getNodeIdentity().equals(nodeIdentity))
-      return;
+    if (this.getNodeIdentity().equals(nodeIdentity)) return;
     for (OSharedContext context : sharedContexts.values()) {
-      if (isContextToIgnore(context))
-        continue;
-      ODistributedContext distributed = ((OSharedContextDistributed) context).getDistributedContext();
+      if (isContextToIgnore(context)) continue;
+      ODistributedContext distributed =
+          ((OSharedContextDistributed) context).getDistributedContext();
       distributed.connected(nodeIdentity);
     }
     structuralDistributedContext.connected(nodeIdentity);
   }
 
   public synchronized void nodeDisconnected(ONodeIdentity nodeIdentity) {
-    if (this.getNodeIdentity().equals(nodeIdentity))
-      return;
+    if (this.getNodeIdentity().equals(nodeIdentity)) return;
     structuralDistributedContext.disconnected(nodeIdentity);
     for (OSharedContext context : sharedContexts.values()) {
-      if (isContextToIgnore(context))
-        continue;
-      ODistributedContext distributed = ((OSharedContextDistributed) context).getDistributedContext();
+      if (isContextToIgnore(context)) continue;
+      ODistributedContext distributed =
+          ((OSharedContextDistributed) context).getDistributedContext();
       distributed.disconnected(nodeIdentity);
     }
   }
 
   private boolean isContextToIgnore(OSharedContext context) {
-    return context.getStorage().getName().equals(OSystemDatabase.SYSTEM_DB_NAME) || context.getStorage().isClosed();
+    return context.getStorage().getName().equals(OSystemDatabase.SYSTEM_DB_NAME)
+        || context.getStorage().isClosed();
   }
 
   public Set<ONodeIdentity> getActiveNodes() {
@@ -280,54 +318,64 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
     OLogId lastPersistent = opLog.lastPersistentLog();
     if (lastPersistent != null && lastValid != null) {
       nodeSyncRequest(lastPersistent);
-      //TODO: at the end of the sync, the state should align to the log
+      // TODO: at the end of the sync, the state should align to the log
     } else if (lastValid != null) {
       nodeFirstJoin();
     } else if (lastPersistent != null) {
       // If the leader has nothing and this node something, start from scratch anyway
       nodeFirstJoin();
     } else {
-      //TODO: First join for everyone, do nothing for a while ? and then sync the databases existing on the disc on nodes.
+      // TODO: First join for everyone, do nothing for a while ? and then sync the databases
+      // existing on the disc on nodes.
     }
   }
 
   private void nodeFirstJoin() {
-    // TODO handle eventual database that are in the database folder but not registered in the configuration
-    this.getStructuralDistributedContext().getSubmitContext().send(new OSessionOperationId(), new OSyncRequest(Optional.empty()));
+    // TODO handle eventual database that are in the database folder but not registered in the
+    // configuration
+    this.getStructuralDistributedContext()
+        .getSubmitContext()
+        .send(new OSessionOperationId(), new OSyncRequest(Optional.empty()));
   }
 
   public void nodeSyncRequest(OLogId logId) {
-    this.getStructuralDistributedContext().getSubmitContext().send(new OSessionOperationId(), new OSyncRequest(Optional.of(logId)));
+    this.getStructuralDistributedContext()
+        .getSubmitContext()
+        .send(new OSessionOperationId(), new OSyncRequest(Optional.of(logId)));
   }
 
-  private synchronized void syncDatabase(OStructuralNodeDatabase configuration) {
-  }
+  private synchronized void syncDatabase(OStructuralNodeDatabase configuration) {}
 
   private synchronized void parkDatabase(String database) {
     forceDatabaseClose(database);
-    //TODO: Move The  database folder somewhere else, backup folder?
+    // TODO: Move The  database folder somewhere else, backup folder?
   }
 
   private void triggerParkDatabase(String databaseName) {
-    //TODO: This should make sure that two park do not happen concurrently on the same database
-    executeNoDb(() -> {
-      parkDatabase(databaseName);
-      return null;
-    });
+    // TODO: This should make sure that two park do not happen concurrently on the same database
+    executeNoDb(
+        () -> {
+          parkDatabase(databaseName);
+          return null;
+        });
   }
 
   private void triggerSyncDatabase(OStructuralNodeDatabase db) {
-    //TODO: This should make sure that two sync do not happen concurrently on the same database
-    executeNoDb(() -> {
-      syncDatabase(db);
-      return null;
-    });
+    // TODO: This should make sure that two sync do not happen concurrently on the same database
+    executeNoDb(
+        () -> {
+          syncDatabase(db);
+          return null;
+        });
   }
 
-  public synchronized void syncToConfiguration(OLogId lastId, OReadStructuralSharedConfiguration sharedConfiguration) {
+  public synchronized void syncToConfiguration(
+      OLogId lastId, OReadStructuralSharedConfiguration sharedConfiguration) {
     getStructuralConfiguration().receiveSharedConfiguration(lastId, sharedConfiguration);
-    OStructuralNodeConfiguration nodeConfig = getStructuralConfiguration().readSharedConfiguration().getNode(getNodeIdentity());
-    assert nodeConfig != null : "if arrived here the configuration should have this node configured";
+    OStructuralNodeConfiguration nodeConfig =
+        getStructuralConfiguration().readSharedConfiguration().getNode(getNodeIdentity());
+    assert nodeConfig != null
+        : "if arrived here the configuration should have this node configured";
     super.loadAllDatabases();
     Collection<OStorage> storages = super.getStorages();
     for (OStorage st : storages) {
@@ -341,7 +389,10 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
         }
       }
     }
-    Set<UUID> existingIds = storages.stream().map((s) -> ((OAbstractPaginatedStorage) s).getUuid()).collect(Collectors.toSet());
+    Set<UUID> existingIds =
+        storages.stream()
+            .map((s) -> ((OAbstractPaginatedStorage) s).getUuid())
+            .collect(Collectors.toSet());
     for (OStructuralNodeDatabase db : nodeConfig.getDatabases()) {
       if (!existingIds.contains(db.getUuid())) {
         triggerSyncDatabase(db);
@@ -368,30 +419,39 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
       return;
     }
     checkReadyForHandleRequests();
-    //TODO:RESOLVE CONFIGURATION PARAMETERS
-    structuralDistributedContext.getSubmitContext().sendAndWait(new OSessionOperationId(), new ODropDatabaseSubmitRequest(name));
+    // TODO:RESOLVE CONFIGURATION PARAMETERS
+    structuralDistributedContext
+        .getSubmitContext()
+        .sendAndWait(new OSessionOperationId(), new ODropDatabaseSubmitRequest(name));
   }
 
-  public void coordinatedRequest(OClientConnection connection, int requestType, int clientTxId, OChannelBinary channel)
+  public void coordinatedRequest(
+      OClientConnection connection, int requestType, int clientTxId, OChannelBinary channel)
       throws IOException {
     networkManager.coordinatedRequest(connection, requestType, clientTxId, channel);
   }
 
-  public synchronized void internalCreateDatabase(OSessionOperationId operationId, String database, String type,
+  public synchronized void internalCreateDatabase(
+      OSessionOperationId operationId,
+      String database,
+      String type,
       Map<String, String> configurations) {
-    //TODO:INIT CONFIG
+    // TODO:INIT CONFIG
     super.create(database, null, null, ODatabaseType.valueOf(type), null);
-    OStructuralSharedConfiguration config = getStructuralConfiguration().modifySharedConfiguration();
+    OStructuralSharedConfiguration config =
+        getStructuralConfiguration().modifySharedConfiguration();
     config.addDatabase(database);
     getStructuralConfiguration().update(config);
     electLeader(database);
   }
 
   public void internalDropDatabase(String database) {
-    OSharedContextDistributed context = (OSharedContextDistributed) getOrCreateSharedContext(getStorage(database));
+    OSharedContextDistributed context =
+        (OSharedContextDistributed) getOrCreateSharedContext(getStorage(database));
     context.getDistributedContext().close();
     super.drop(database, null, null);
-    OStructuralSharedConfiguration config = getStructuralConfiguration().modifySharedConfiguration();
+    OStructuralSharedConfiguration config =
+        getStructuralConfiguration().modifySharedConfiguration();
     config.removeDatabase(database);
     getStructuralConfiguration().update(config);
   }
@@ -447,7 +507,8 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
 
   public void triggerDatabaseElections() {
     for (String database : listDatabases(null, null)) {
-      // TODO: It may not be needed to elect a new database leader for some databases, they may already have a valid leader
+      // TODO: It may not be needed to elect a new database leader for some databases, they may
+      // already have a valid leader
       // TODO: now just trigger an election for everyone
       if (database.equals(OSystemDatabase.SYSTEM_DB_NAME)) {
         electLeader(database);

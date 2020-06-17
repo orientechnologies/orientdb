@@ -19,12 +19,9 @@
 package com.orientechnologies.orient.etl.source;
 
 import com.orientechnologies.orient.etl.OETLComponent;
-
 import java.io.Reader;
 
-/**
- * ETL Source interface.
- */
+/** ETL Source interface. */
 public interface OETLSource extends OETLComponent {
   String getUnit();
 

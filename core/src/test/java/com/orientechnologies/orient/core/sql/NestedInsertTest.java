@@ -30,10 +30,11 @@ public class NestedInsertTest {
     OSchema schm = db.getMetadata().getSchema();
     schm.createClass("myClass");
 
-    final ODocument res = db
-        .command(new OCommandSQL(
-            "insert into myClass (name,meta) values (\"claudio\",{\"@type\":\"d\",\"country\":\"italy\", \"date\":\"2013-01-01\",\"@fieldTypes\":\"date=a\"}) return @this"))
-        .execute();
+    final ODocument res =
+        db.command(
+                new OCommandSQL(
+                    "insert into myClass (name,meta) values (\"claudio\",{\"@type\":\"d\",\"country\":\"italy\", \"date\":\"2013-01-01\",\"@fieldTypes\":\"date=a\"}) return @this"))
+            .execute();
 
     final ODocument embedded = res.field("meta");
     Assert.assertNotNull(embedded);
@@ -50,9 +51,11 @@ public class NestedInsertTest {
     OClass linked = schm.createClass("Linked");
     cl.createProperty("some", OType.LINK, linked);
 
-    final ODocument res = db.command(
-        new OCommandSQL("insert into myClass set some ={\"@type\":\"d\",\"@class\":\"Linked\",\"name\":\"a name\"} return @this"))
-        .execute();
+    final ODocument res =
+        db.command(
+                new OCommandSQL(
+                    "insert into myClass set some ={\"@type\":\"d\",\"@class\":\"Linked\",\"name\":\"a name\"} return @this"))
+            .execute();
 
     final ODocument ln = res.field("some");
     Assert.assertNotNull(ln);
@@ -60,5 +63,4 @@ public class NestedInsertTest {
     Assert.assertEquals(ln.fields(), 1);
     Assert.assertEquals(ln.field("name"), "a name");
   }
-
 }

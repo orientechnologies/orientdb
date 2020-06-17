@@ -22,26 +22,23 @@ package com.orientechnologies.orient.core.metadata.function;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.util.OCallable;
-import com.orientechnologies.orient.core.command.OCommandManager;
-import com.orientechnologies.orient.core.command.script.OCommandExecutorFunction;
-import com.orientechnologies.orient.core.command.script.OCommandFunction;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.OMetadataUpdateListener;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
-import com.orientechnologies.orient.core.exception.OValidationException;
-import com.orientechnologies.orient.core.metadata.OMetadataInternal;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
-import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.orientechnologies.orient.core.storage.ORecordDuplicatedException;
-
-import java.util.*;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.regex.Pattern;
@@ -52,12 +49,11 @@ import java.util.regex.Pattern;
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
  */
 public class OFunctionLibraryImpl {
-  public static final String                 CLASSNAME  = "OFunction";
-  protected final     Map<String, OFunction> functions  = new ConcurrentHashMap<String, OFunction>();
-  private             AtomicBoolean          needReload = new AtomicBoolean(false);
+  public static final String CLASSNAME = "OFunction";
+  protected final Map<String, OFunction> functions = new ConcurrentHashMap<String, OFunction>();
+  private AtomicBoolean needReload = new AtomicBoolean(false);
 
-  public OFunctionLibraryImpl() {
-  }
+  public OFunctionLibraryImpl() {}
 
   public void create(ODatabaseDocumentInternal db) {
     init(db);
@@ -69,7 +65,8 @@ public class OFunctionLibraryImpl {
 
   public void load(ODatabaseDocumentInternal db) {
     // COPY CALLBACK IN RAM
-    final Map<String, OCallable<Object, Map<Object, Object>>> callbacks = new HashMap<String, OCallable<Object, Map<Object, Object>>>();
+    final Map<String, OCallable<Object, Map<Object, Object>>> callbacks =
+        new HashMap<String, OCallable<Object, Map<Object, Object>>>();
     for (Map.Entry<String, OFunction> entry : functions.entrySet()) {
       if (entry.getValue().getCallback() != null)
         callbacks.put(entry.getKey(), entry.getValue().getCallback());
@@ -83,9 +80,8 @@ public class OFunctionLibraryImpl {
         while (result.hasNext()) {
           OResult res = result.next();
           ODocument d = (ODocument) res.getElement().get();
-          //skip the function records which do not contain real data
-          if (d.fields() == 0)
-            continue;
+          // skip the function records which do not contain real data
+          if (d.fields() == 0) continue;
 
           final OFunction f = new OFunction(d);
 
@@ -123,7 +119,8 @@ public class OFunctionLibraryImpl {
     throw new UnsupportedOperationException("Use Create function with database on internal api");
   }
 
-  public synchronized OFunction createFunction(ODatabaseDocumentInternal database, final String iName) {
+  public synchronized OFunction createFunction(
+      ODatabaseDocumentInternal database, final String iName) {
     init(database);
     reloadIfNeeded(ODatabaseRecordThreadLocal.instance().get());
 
@@ -134,7 +131,9 @@ public class OFunctionLibraryImpl {
       OLogManager.instance().error(this, "Exception is suppressed, original exception is ", ex);
 
       //noinspection ThrowInsideCatchBlockWhichIgnoresCaughtException
-      throw OException.wrapException(new OFunctionDuplicatedException("Function with name '" + iName + "' already exist"), null);
+      throw OException.wrapException(
+          new OFunctionDuplicatedException("Function with name '" + iName + "' already exist"),
+          null);
     }
     functions.put(iName.toUpperCase(Locale.ENGLISH), f);
     return f;
@@ -148,8 +147,7 @@ public class OFunctionLibraryImpl {
     if (db.getMetadata().getSchema().existsClass("OFunction")) {
       final OClass f = db.getMetadata().getSchema().getClass("OFunction");
       OProperty prop = f.getProperty("name");
-      if (prop.getAllIndexes().isEmpty())
-        prop.createIndex(OClass.INDEX_TYPE.UNIQUE_HASH_INDEX);
+      if (prop.getAllIndexes().isEmpty()) prop.createIndex(OClass.INDEX_TYPE.UNIQUE_HASH_INDEX);
       return;
     }
 

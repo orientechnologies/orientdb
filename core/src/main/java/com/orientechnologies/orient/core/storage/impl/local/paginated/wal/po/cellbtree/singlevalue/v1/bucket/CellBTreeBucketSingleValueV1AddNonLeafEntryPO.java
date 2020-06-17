@@ -6,12 +6,11 @@ import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.WALRecordTypes;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.PageOperationRecord;
 import com.orientechnologies.orient.core.storage.index.sbtree.singlevalue.v1.CellBTreeBucketSingleValueV1;
-
 import java.nio.ByteBuffer;
 
 public final class CellBTreeBucketSingleValueV1AddNonLeafEntryPO extends PageOperationRecord {
-  private int     index;
-  private byte[]  key;
+  private int index;
+  private byte[] key;
   private boolean updateNeighbours;
 
   private int leftChild;
@@ -19,11 +18,15 @@ public final class CellBTreeBucketSingleValueV1AddNonLeafEntryPO extends PageOpe
 
   private int prevChild;
 
-  public CellBTreeBucketSingleValueV1AddNonLeafEntryPO() {
-  }
+  public CellBTreeBucketSingleValueV1AddNonLeafEntryPO() {}
 
-  public CellBTreeBucketSingleValueV1AddNonLeafEntryPO(int index, byte[] key, boolean updateNeighbours, int leftChild,
-      int rightChild, int prevChild) {
+  public CellBTreeBucketSingleValueV1AddNonLeafEntryPO(
+      int index,
+      byte[] key,
+      boolean updateNeighbours,
+      int leftChild,
+      int rightChild,
+      int prevChild) {
     this.index = index;
     this.key = key;
     this.updateNeighbours = updateNeighbours;
@@ -59,7 +62,8 @@ public final class CellBTreeBucketSingleValueV1AddNonLeafEntryPO extends PageOpe
   @Override
   public void redo(OCacheEntry cacheEntry) {
     final CellBTreeBucketSingleValueV1 bucket = new CellBTreeBucketSingleValueV1(cacheEntry);
-    final boolean added = bucket.addNonLeafEntry(index, leftChild, rightChild, key, updateNeighbours);
+    final boolean added =
+        bucket.addNonLeafEntry(index, leftChild, rightChild, key, updateNeighbours);
     if (!added) {
       throw new IllegalStateException("Can not redo operation of addition of non leaf entry.");
     }
@@ -78,7 +82,10 @@ public final class CellBTreeBucketSingleValueV1AddNonLeafEntryPO extends PageOpe
 
   @Override
   public int serializedSize() {
-    return super.serializedSize() + 5 * OIntegerSerializer.INT_SIZE + key.length + OByteSerializer.BYTE_SIZE;
+    return super.serializedSize()
+        + 5 * OIntegerSerializer.INT_SIZE
+        + key.length
+        + OByteSerializer.BYTE_SIZE;
   }
 
   @Override

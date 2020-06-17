@@ -1,16 +1,20 @@
 package com.orientechnologies.orient.core.storage.impl.local;
 
 import com.orientechnologies.orient.core.tx.OTransactionData;
-
-import java.io.*;
+import java.io.DataOutput;
+import java.io.DataOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.PipedInputStream;
+import java.io.PipedOutputStream;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 
 public class OBackgroundNewDelta implements Runnable, OSyncSource {
   private List<OTransactionData> transactions;
-  private PipedOutputStream      outputStream;
-  private InputStream            inputStream;
-  private CountDownLatch         finished = new CountDownLatch(1);
+  private PipedOutputStream outputStream;
+  private InputStream inputStream;
+  private CountDownLatch finished = new CountDownLatch(1);
 
   public OBackgroundNewDelta(List<OTransactionData> transactions) throws IOException {
     this.transactions = transactions;
@@ -36,7 +40,6 @@ public class OBackgroundNewDelta implements Runnable, OSyncSource {
     } finally {
       finished.countDown();
     }
-
   }
 
   @Override
@@ -61,6 +64,6 @@ public class OBackgroundNewDelta implements Runnable, OSyncSource {
 
   @Override
   public void invalidate() {
-    //DO NOTHING IS INVALID BY DEFINITION
+    // DO NOTHING IS INVALID BY DEFINITION
   }
 }

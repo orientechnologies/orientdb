@@ -33,7 +33,8 @@ import com.orientechnologies.orient.core.record.ORecord;
  *
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
  */
-public abstract class OAbstractCommandResultListener implements  SimpleValueFetchPlanCommandListener {
+public abstract class OAbstractCommandResultListener
+    implements SimpleValueFetchPlanCommandListener {
   protected final OCommandResultListener wrappedResultListener;
 
   private OFetchPlan fetchPlan;
@@ -46,8 +47,7 @@ public abstract class OAbstractCommandResultListener implements  SimpleValueFetc
 
   @Override
   public void end() {
-    if (wrappedResultListener != null)
-      wrappedResultListener.end();
+    if (wrappedResultListener != null) wrappedResultListener.end();
   }
 
   public void setFetchPlan(final String iText) {
@@ -55,7 +55,9 @@ public abstract class OAbstractCommandResultListener implements  SimpleValueFetc
   }
 
   protected void fetchRecord(final Object iRecord, final OFetchListener iFetchListener) {
-    if (fetchPlan != null && fetchPlan != OFetchHelper.DEFAULT_FETCHPLAN && iRecord instanceof ORecord) {
+    if (fetchPlan != null
+        && fetchPlan != OFetchHelper.DEFAULT_FETCHPLAN
+        && iRecord instanceof ORecord) {
       final ORecord record = (ORecord) iRecord;
       final OFetchContext context = new ORemoteFetchContext();
       OFetchHelper.fetch(record, record, fetchPlan, iFetchListener, context, "");
@@ -64,10 +66,8 @@ public abstract class OAbstractCommandResultListener implements  SimpleValueFetc
 
   @Override
   public Object getResult() {
-    if (wrappedResultListener != null)
-      return wrappedResultListener.getResult();
+    if (wrappedResultListener != null) return wrappedResultListener.getResult();
 
     return null;
   }
-  
 }

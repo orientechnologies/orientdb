@@ -1,14 +1,14 @@
 package com.orientechnologies.orient.distributed.impl.coordinator.network;
 
+import static com.orientechnologies.orient.distributed.network.binary.OBinaryDistributedMessage.DISTRIBUTED_OPERATION;
+
+
 import com.orientechnologies.orient.core.db.config.ONodeIdentity;
 import com.orientechnologies.orient.distributed.impl.coordinator.OCoordinateMessagesFactory;
 import com.orientechnologies.orient.distributed.impl.structural.operations.OOperation;
-
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
-
-import static com.orientechnologies.orient.distributed.network.binary.OBinaryDistributedMessage.DISTRIBUTED_OPERATION;
 
 public class ONetworkOperation implements ODistributedMessage {
   private OOperation operation;
@@ -17,9 +17,7 @@ public class ONetworkOperation implements ODistributedMessage {
     this.operation = operation;
   }
 
-  public ONetworkOperation() {
-
-  }
+  public ONetworkOperation() {}
 
   @Override
   public void write(DataOutput output) throws IOException {

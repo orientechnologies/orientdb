@@ -7,21 +7,21 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.parser.OExpression;
 import com.orientechnologies.orient.core.sql.parser.OIdentifier;
 import com.orientechnologies.orient.core.sql.parser.OUpdateItem;
-
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
-/**
- * Created by luigidellaquila on 11/08/16.
- */
+/** Created by luigidellaquila on 11/08/16. */
 public class InsertValuesStep extends AbstractExecutionStep {
-  private final List<OIdentifier>       identifiers;
+  private final List<OIdentifier> identifiers;
   private final List<List<OExpression>> values;
 
   private int nextValueSet = 0;
 
-  public InsertValuesStep(List<OIdentifier> identifierList, List<List<OExpression>> valueExpressions, OCommandContext ctx,
+  public InsertValuesStep(
+      List<OIdentifier> identifierList,
+      List<List<OExpression>> valueExpressions,
+      OCommandContext ctx,
       boolean profilingEnabled) {
     super(ctx, profilingEnabled);
     this.identifiers = identifierList;
@@ -42,21 +42,25 @@ public class InsertValuesStep extends AbstractExecutionStep {
         OResult result = upstream.next();
         if (!(result instanceof OResultInternal)) {
           if (!result.isElement()) {
-            throw new OCommandExecutionException("Error executing INSERT, cannot modify element: " + result);
+            throw new OCommandExecutionException(
+                "Error executing INSERT, cannot modify element: " + result);
           }
           result = new OUpdatableResult((ODocument) result.getElement().get());
         }
         List<OExpression> currentValues = values.get(nextValueSet++);
         if (currentValues.size() != identifiers.size()) {
           throw new OCommandExecutionException(
-              "Cannot execute INSERT, the number of fields is different from the number of expressions: " + identifiers + " "
+              "Cannot execute INSERT, the number of fields is different from the number of expressions: "
+                  + identifiers
+                  + " "
                   + currentValues);
         }
         nextValueSet %= values.size();
         for (int i = 0; i < currentValues.size(); i++) {
           OIdentifier identifier = identifiers.get(i);
           Object value = currentValues.get(i).execute(result, ctx);
-          value = OUpdateItem.convertToPropertyType((OResultInternal) result, identifier, value, ctx);
+          value =
+              OUpdateItem.convertToPropertyType((OResultInternal) result, identifier, value, ctx);
           ((OResultInternal) result).setProperty(identifier.getStringValue(), value);
         }
         return result;
@@ -116,7 +120,6 @@ public class InsertValuesStep extends AbstractExecutionStep {
     if (this.values.size() >= 3) {
       result.append(spaces);
       result.append("  ...");
-
     }
     return result.toString();
   }

@@ -1,29 +1,34 @@
 package com.orientechnologies.orient.core.db.document;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+
+
 import com.orientechnologies.orient.core.config.OStorageConfiguration;
-import com.orientechnologies.orient.core.db.*;
+import com.orientechnologies.orient.core.db.ODatabase;
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
+import com.orientechnologies.orient.core.db.ODatabaseSession;
+import com.orientechnologies.orient.core.db.ODatabaseType;
+import com.orientechnologies.orient.core.db.OMetadataUpdateListener;
+import com.orientechnologies.orient.core.db.OrientDB;
+import com.orientechnologies.orient.core.db.OrientDBConfig;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.index.OIndexManagerAbstract;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OSchemaShared;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.metadata.sequence.OSequence;
+import java.util.Locale;
 import org.junit.After;
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
-import java.util.Locale;
-
-import org.junit.Assert;
-
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-
 public class ODatabaseMetadataUpdateListener {
 
-  private OrientDB         orientDB;
+  private OrientDB orientDB;
   private ODatabaseSession session;
-  private int              count;
+  private int count;
 
   @Before
   public void before() {
@@ -31,37 +36,37 @@ public class ODatabaseMetadataUpdateListener {
     orientDB.create("test", ODatabaseType.MEMORY);
     session = orientDB.open("test", "admin", "admin");
     count = 0;
-    OMetadataUpdateListener listener = new OMetadataUpdateListener() {
+    OMetadataUpdateListener listener =
+        new OMetadataUpdateListener() {
 
-      @Override
-      public void onSchemaUpdate(String database, OSchemaShared schema) {
-        count++;
-        assertNotNull(schema);
-      }
+          @Override
+          public void onSchemaUpdate(String database, OSchemaShared schema) {
+            count++;
+            assertNotNull(schema);
+          }
 
-      @Override
-      public void onIndexManagerUpdate(String database, OIndexManagerAbstract indexManager) {
-        count++;
-        assertNotNull(indexManager);
-      }
+          @Override
+          public void onIndexManagerUpdate(String database, OIndexManagerAbstract indexManager) {
+            count++;
+            assertNotNull(indexManager);
+          }
 
-      @Override
-      public void onFunctionLibraryUpdate(String database) {
-        count++;
-      }
+          @Override
+          public void onFunctionLibraryUpdate(String database) {
+            count++;
+          }
 
-      @Override
-      public void onSequenceLibraryUpdate(String database) {
-        count++;
-      }
+          @Override
+          public void onSequenceLibraryUpdate(String database) {
+            count++;
+          }
 
-      @Override
-      public void onStorageConfigurationUpdate(String database, OStorageConfiguration update) {
-        count++;
-        assertNotNull(update);
-
-      }
-    };
+          @Override
+          public void onStorageConfigurationUpdate(String database, OStorageConfiguration update) {
+            count++;
+            assertNotNull(update);
+          }
+        };
 
     ((ODatabaseDocumentInternal) session).getSharedContext().registerListener(listener);
   }
@@ -70,7 +75,6 @@ public class ODatabaseMetadataUpdateListener {
   public void testSchemaUpdateListener() {
     session.createClass("test1");
     assertEquals(count, 1);
-
   }
 
   @Test
@@ -82,7 +86,10 @@ public class ODatabaseMetadataUpdateListener {
   @Test
   public void testSequenceUpdate() {
     try {
-      session.getMetadata().getSequenceLibrary().createSequence("sequence1", OSequence.SEQUENCE_TYPE.ORDERED, null);
+      session
+          .getMetadata()
+          .getSequenceLibrary()
+          .createSequence("sequence1", OSequence.SEQUENCE_TYPE.ORDERED, null);
     } catch (ODatabaseException exc) {
       Assert.assertTrue("Failed to create sequence", false);
     }
@@ -91,7 +98,10 @@ public class ODatabaseMetadataUpdateListener {
 
   @Test
   public void testIndexUpdate() {
-    session.createClass("Some").createProperty("test", OType.STRING).createIndex(OClass.INDEX_TYPE.NOTUNIQUE);
+    session
+        .createClass("Some")
+        .createProperty("test", OType.STRING)
+        .createIndex(OClass.INDEX_TYPE.NOTUNIQUE);
     assertEquals(count, 3);
   }
 
@@ -106,5 +116,4 @@ public class ODatabaseMetadataUpdateListener {
     session.close();
     orientDB.close();
   }
-
 }

@@ -25,13 +25,13 @@ import com.orientechnologies.orient.server.distributed.ODistributedConfiguration
 import com.orientechnologies.orient.server.distributed.ODistributedRequest;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
 import com.orientechnologies.orient.server.distributed.ODistributedStrategy;
-
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
 
 /**
- * Default quorum factory. This is the default for the CE. The EE supports also the concept of data-centers.
+ * Default quorum factory. This is the default for the CE. The EE supports also the concept of
+ * data-centers.
  *
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
  */
@@ -39,27 +39,38 @@ public class ODefaultDistributedStrategy implements ODistributedStrategy {
   @Override
   public void validateConfiguration(ODistributedConfiguration cfg) {
     if (cfg.hasDataCenterConfiguration())
-      throw new OConfigurationException("Data center configuration is supported only in OrientDB Enterprise Edition");
+      throw new OConfigurationException(
+          "Data center configuration is supported only in OrientDB Enterprise Edition");
 
     if (cfg.isLocalDataCenterWriteQuorum())
       throw new OConfigurationException(
-          "Quorum of type '" + ODistributedConfiguration.QUORUM_LOCAL_DC + "' is supported only in OrientDB Enterprise Edition");
+          "Quorum of type '"
+              + ODistributedConfiguration.QUORUM_LOCAL_DC
+              + "' is supported only in OrientDB Enterprise Edition");
   }
 
   @Override
-  public Set<String> getNodesConcurInQuorum(final ODistributedServerManager manager, final ODistributedConfiguration cfg,
-      final ODistributedRequest request, final Collection<String> iNodes, final String databaseName, final Object localResult) {
+  public Set<String> getNodesConcurInQuorum(
+      final ODistributedServerManager manager,
+      final ODistributedConfiguration cfg,
+      final ODistributedRequest request,
+      final Collection<String> iNodes,
+      final String databaseName,
+      final Object localResult) {
 
     final Set<String> nodesConcurToTheQuorum = new HashSet<String>();
     if (request.getTask().getQuorumType() == OCommandDistributedReplicateRequest.QUORUM_TYPE.WRITE
-        || request.getTask().getQuorumType() == OCommandDistributedReplicateRequest.QUORUM_TYPE.WRITE_ALL_MASTERS) {
+        || request.getTask().getQuorumType()
+            == OCommandDistributedReplicateRequest.QUORUM_TYPE.WRITE_ALL_MASTERS) {
       // ONLY MASTER NODES CONCUR TO THE MINIMUM QUORUM
       for (String node : iNodes) {
         if (cfg.getServerRole(node) == ODistributedConfiguration.ROLES.MASTER)
           nodesConcurToTheQuorum.add(node);
       }
 
-      if (localResult != null && cfg.getServerRole(manager.getLocalNodeName()) == ODistributedConfiguration.ROLES.MASTER)
+      if (localResult != null
+          && cfg.getServerRole(manager.getLocalNodeName())
+              == ODistributedConfiguration.ROLES.MASTER)
         // INCLUDE LOCAL NODE TOO
         nodesConcurToTheQuorum.add(manager.getLocalNodeName());
 

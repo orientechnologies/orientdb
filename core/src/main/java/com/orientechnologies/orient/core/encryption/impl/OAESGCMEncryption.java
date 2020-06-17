@@ -1,20 +1,15 @@
 package com.orientechnologies.orient.core.encryption.impl;
 
+import static java.lang.String.format;
+import static javax.crypto.Cipher.DECRYPT_MODE;
+import static javax.crypto.Cipher.ENCRYPT_MODE;
+
+
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.encryption.OEncryption;
 import com.orientechnologies.orient.core.exception.OInvalidStorageEncryptionKeyException;
 import com.orientechnologies.orient.core.exception.OSecurityException;
-
-import javax.crypto.AEADBadTagException;
-import javax.crypto.BadPaddingException;
-import javax.crypto.Cipher;
-import javax.crypto.IllegalBlockSizeException;
-import javax.crypto.NoSuchPaddingException;
-import javax.crypto.SecretKey;
-import javax.crypto.ShortBufferException;
-import javax.crypto.spec.GCMParameterSpec;
-import javax.crypto.spec.SecretKeySpec;
 import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
@@ -26,10 +21,15 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
-
-import static java.lang.String.format;
-import static javax.crypto.Cipher.DECRYPT_MODE;
-import static javax.crypto.Cipher.ENCRYPT_MODE;
+import javax.crypto.AEADBadTagException;
+import javax.crypto.BadPaddingException;
+import javax.crypto.Cipher;
+import javax.crypto.IllegalBlockSizeException;
+import javax.crypto.NoSuchPaddingException;
+import javax.crypto.SecretKey;
+import javax.crypto.ShortBufferException;
+import javax.crypto.spec.GCMParameterSpec;
+import javax.crypto.spec.SecretKeySpec;
 
 /**
  * OEncryption implementation using AES/GCM/NoPadding with a 12 byte nonce and 16 byte tag size.
@@ -39,31 +39,39 @@ import static javax.crypto.Cipher.ENCRYPT_MODE;
  */
 public class OAESGCMEncryption implements OEncryption {
 
-  public static final String               NAME                             = "aes/gcm";
+  public static final String NAME = "aes/gcm";
 
-  private static final String              ALGORITHM_NAME                   = "AES";
-  private static final String              TRANSFORMATION                   = "AES/GCM/NoPadding";
-  // Cipher.getInstance is slow, so we don't want to call it in every encrypt/decrypt call. Instead we reuse existing instances:
-  private static final ThreadLocal<Cipher> CIPHER                           = ThreadLocal
-      .withInitial(OAESGCMEncryption::getCipherInstance);
+  private static final String ALGORITHM_NAME = "AES";
+  private static final String TRANSFORMATION = "AES/GCM/NoPadding";
+  // Cipher.getInstance is slow, so we don't want to call it in every encrypt/decrypt call. Instead
+  // we reuse existing instances:
+  private static final ThreadLocal<Cipher> CIPHER =
+      ThreadLocal.withInitial(OAESGCMEncryption::getCipherInstance);
 
-  private static final int                 GCM_NONCE_SIZE_IN_BYTES          = 12;
-  private static final int                 GCM_TAG_SIZE_IN_BYTES            = 16;
-  private static final int                 MIN_CIPHERTEXT_SIZE              = GCM_NONCE_SIZE_IN_BYTES + GCM_TAG_SIZE_IN_BYTES;
+  private static final int GCM_NONCE_SIZE_IN_BYTES = 12;
+  private static final int GCM_TAG_SIZE_IN_BYTES = 16;
+  private static final int MIN_CIPHERTEXT_SIZE = GCM_NONCE_SIZE_IN_BYTES + GCM_TAG_SIZE_IN_BYTES;
 
-  private static final String              NO_SUCH_CIPHER                   = "AES/GCM/NoPadding not supported.";
-  private static final String              MISSING_KEY_ERROR                = "AESGCMEncryption encryption has been selected, "
-      + "but no key was found. Please configure it by passing the key as property at database create/open. The property key is: '%s'";
-  private static final String              INVALID_KEY_ERROR                = "Failed to initialize AESGCMEncryption. Assure the key is a 128, 192 or 256 bits long BASE64 value";
-  private static final String              ENCRYPTION_NOT_INITIALIZED_ERROR = "OAESGCMEncryption not properly initialized";
-  private static final String              AUTHENTICATION_ERROR             = "Authentication of encrypted data failed. The encrypted data may have been altered or the used key is incorrect";
-  private static final String              INVALID_CIPHERTEXT_SIZE_ERROR    = "Invalid ciphertext size: minimum: %d, actual: %d";
-  private static final String              INVALID_RANGE_ERROR              = "Invalid range: array size: %d, offset: %d, length: %d";
-  private static final String              BLOCKING_SECURE_RANDOM_ERROR     = "SecureRandom blocked while retrieving randomness. This maybe caused by a misconfigured or absent random source on your operating system.";
+  private static final String NO_SUCH_CIPHER = "AES/GCM/NoPadding not supported.";
+  private static final String MISSING_KEY_ERROR =
+      "AESGCMEncryption encryption has been selected, "
+          + "but no key was found. Please configure it by passing the key as property at database create/open. The property key is: '%s'";
+  private static final String INVALID_KEY_ERROR =
+      "Failed to initialize AESGCMEncryption. Assure the key is a 128, 192 or 256 bits long BASE64 value";
+  private static final String ENCRYPTION_NOT_INITIALIZED_ERROR =
+      "OAESGCMEncryption not properly initialized";
+  private static final String AUTHENTICATION_ERROR =
+      "Authentication of encrypted data failed. The encrypted data may have been altered or the used key is incorrect";
+  private static final String INVALID_CIPHERTEXT_SIZE_ERROR =
+      "Invalid ciphertext size: minimum: %d, actual: %d";
+  private static final String INVALID_RANGE_ERROR =
+      "Invalid range: array size: %d, offset: %d, length: %d";
+  private static final String BLOCKING_SECURE_RANDOM_ERROR =
+      "SecureRandom blocked while retrieving randomness. This maybe caused by a misconfigured or absent random source on your operating system.";
 
-  private boolean                          initialized;
-  private SecretKey                        key;
-  private SecureRandom                     csprng;
+  private boolean initialized;
+  private SecretKey key;
+  private SecureRandom csprng;
 
   @Override
   public String name() {
@@ -121,7 +129,8 @@ public class OAESGCMEncryption implements OEncryption {
     Cipher cipher = getAndInitializeCipher(DECRYPT_MODE, nonce);
 
     try {
-      return cipher.doFinal(input, offset + GCM_NONCE_SIZE_IN_BYTES, length - GCM_NONCE_SIZE_IN_BYTES);
+      return cipher.doFinal(
+          input, offset + GCM_NONCE_SIZE_IN_BYTES, length - GCM_NONCE_SIZE_IN_BYTES);
     } catch (AEADBadTagException e) {
       throw OException.wrapException(new OSecurityException(AUTHENTICATION_ERROR), e);
     } catch (IllegalBlockSizeException | BadPaddingException e) {
@@ -131,14 +140,16 @@ public class OAESGCMEncryption implements OEncryption {
 
   private SecretKey createKey(String base64EncodedKey) {
     if (base64EncodedKey == null) {
-      throw new OSecurityException(format(MISSING_KEY_ERROR, OGlobalConfiguration.STORAGE_ENCRYPTION_KEY.getKey()));
+      throw new OSecurityException(
+          format(MISSING_KEY_ERROR, OGlobalConfiguration.STORAGE_ENCRYPTION_KEY.getKey()));
     }
     try {
       final byte[] keyBytes = Base64.getDecoder().decode(base64EncodedKey.getBytes());
       validateKeySize(keyBytes.length);
       return new SecretKeySpec(keyBytes, ALGORITHM_NAME);
     } catch (IllegalArgumentException e) {
-      throw OException.wrapException(new OInvalidStorageEncryptionKeyException(INVALID_KEY_ERROR), e);
+      throw OException.wrapException(
+          new OInvalidStorageEncryptionKeyException(INVALID_KEY_ERROR), e);
     }
   }
 
@@ -168,7 +179,8 @@ public class OAESGCMEncryption implements OEncryption {
 
   private void assertCiphertextSizeIsValid(int size) {
     if (size < MIN_CIPHERTEXT_SIZE) {
-      throw new OSecurityException(format(INVALID_CIPHERTEXT_SIZE_ERROR, MIN_CIPHERTEXT_SIZE, size));
+      throw new OSecurityException(
+          format(INVALID_CIPHERTEXT_SIZE_ERROR, MIN_CIPHERTEXT_SIZE, size));
     }
   }
 
@@ -218,5 +230,4 @@ public class OAESGCMEncryption implements OEncryption {
       throw OException.wrapException(new OSecurityException(NO_SUCH_CIPHER), e);
     }
   }
-
 }

@@ -7,9 +7,7 @@ import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.distributed.ODistributedRequestId;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
 import com.orientechnologies.orient.server.distributed.ORemoteTaskFactory;
-import com.orientechnologies.orient.server.distributed.task.OAbstractRemoteTask;
 import com.orientechnologies.orient.server.distributed.task.OAbstractReplicatedTask;
-
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
@@ -20,8 +18,7 @@ public class ONewSQLCommandTask extends OAbstractReplicatedTask {
 
   private String query;
 
-  public ONewSQLCommandTask() {
-  }
+  public ONewSQLCommandTask() {}
 
   public ONewSQLCommandTask(String query) {
     this.query = query;
@@ -38,12 +35,17 @@ public class ONewSQLCommandTask extends OAbstractReplicatedTask {
   }
 
   @Override
-  public Object execute(ODistributedRequestId requestId, OServer iServer, ODistributedServerManager iManager,
-      ODatabaseDocumentInternal database) throws Exception {
-    OScenarioThreadLocal.executeAsDistributed(() -> {
-      database.command(query);
-      return null;
-    });
+  public Object execute(
+      ODistributedRequestId requestId,
+      OServer iServer,
+      ODistributedServerManager iManager,
+      ODatabaseDocumentInternal database)
+      throws Exception {
+    OScenarioThreadLocal.executeAsDistributed(
+        () -> {
+          database.command(query);
+          return null;
+        });
     return null;
   }
 

@@ -25,15 +25,15 @@ import com.orientechnologies.orient.core.serialization.serializer.OStringSeriali
 
 /**
  * Represent one or more object fields as value in the query condition.
- * 
+ *
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
- * 
  */
 public class OSQLFilterItemFieldAny extends OSQLFilterItemFieldMultiAbstract {
-  public static final String NAME      = "ANY";
+  public static final String NAME = "ANY";
   public static final String FULL_NAME = "ANY()";
 
-  public OSQLFilterItemFieldAny(final OSQLPredicate iQueryCompiled, final String iName, final OClass iClass) {
+  public OSQLFilterItemFieldAny(
+      final OSQLPredicate iQueryCompiled, final String iName, final OClass iClass) {
     super(iQueryCompiled, iName, iClass, OStringSerializerHelper.getParameters(iName));
   }
 
@@ -43,6 +43,5 @@ public class OSQLFilterItemFieldAny extends OSQLFilterItemFieldMultiAbstract {
   }
 
   @Override
-  protected void setRoot(final OBaseParser iQueryToParse, final String iRoot) {
-  }
+  protected void setRoot(final OBaseParser iQueryToParse, final String iRoot) {}
 }

@@ -15,31 +15,24 @@
  */
 package com.orientechnologies.orient.core.sql.method;
 
+import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import java.util.Set;
 
-import com.orientechnologies.orient.core.exception.OCommandExecutionException;
-
-/**
- * 
- * @author Johann Sorel (Geomatys)
- */
+/** @author Johann Sorel (Geomatys) */
 public interface OSQLMethodFactory {
 
   boolean hasMethod(String iName);
 
-  /**
-   * @return Set of supported method names of this factory
-   */
+  /** @return Set of supported method names of this factory */
   Set<String> getMethodNames();
 
   /**
-   * Create method for the given name. returned method may be a new instance each time or a constant.
-   * 
+   * Create method for the given name. returned method may be a new instance each time or a
+   * constant.
+   *
    * @param name
    * @return OSQLMethod : created method
-   * @throws OCommandExecutionException
-   *           : when method creation fail
+   * @throws OCommandExecutionException : when method creation fail
    */
   OSQLMethod createMethod(String name) throws OCommandExecutionException;
-
 }

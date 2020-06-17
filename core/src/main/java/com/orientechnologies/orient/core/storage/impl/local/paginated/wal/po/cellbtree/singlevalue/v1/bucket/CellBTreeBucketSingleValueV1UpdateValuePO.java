@@ -5,7 +5,6 @@ import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.WALRecordTypes;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.PageOperationRecord;
 import com.orientechnologies.orient.core.storage.index.sbtree.singlevalue.v1.CellBTreeBucketSingleValueV1;
-
 import java.nio.ByteBuffer;
 
 public final class CellBTreeBucketSingleValueV1UpdateValuePO extends PageOperationRecord {
@@ -15,10 +14,10 @@ public final class CellBTreeBucketSingleValueV1UpdateValuePO extends PageOperati
   private byte[] prevValue;
   private byte[] value;
 
-  public CellBTreeBucketSingleValueV1UpdateValuePO() {
-  }
+  public CellBTreeBucketSingleValueV1UpdateValuePO() {}
 
-  public CellBTreeBucketSingleValueV1UpdateValuePO(int index, int keySize, byte[] prevValue, byte[] value) {
+  public CellBTreeBucketSingleValueV1UpdateValuePO(
+      int index, int keySize, byte[] prevValue, byte[] value) {
     this.index = index;
     this.keySize = keySize;
     this.prevValue = prevValue;
@@ -60,7 +59,10 @@ public final class CellBTreeBucketSingleValueV1UpdateValuePO extends PageOperati
 
   @Override
   public int serializedSize() {
-    return super.serializedSize() + 4 * OIntegerSerializer.INT_SIZE + prevValue.length + value.length;
+    return super.serializedSize()
+        + 4 * OIntegerSerializer.INT_SIZE
+        + prevValue.length
+        + value.length;
   }
 
   @Override

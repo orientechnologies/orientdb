@@ -2,29 +2,28 @@ package com.orientechnologies.orient.core.storage.impl.local.paginated.atomicope
 
 import com.orientechnologies.common.concur.collection.CASObjectArray;
 import com.orientechnologies.common.concur.lock.ScalableRWLock;
-
 import java.util.ArrayDeque;
 import java.util.concurrent.atomic.AtomicLong;
 
 public class AtomicOperationsTable {
-  private static final OperationInformation ATOMIC_OPERATION_STATUS_PLACE_HOLDER = new OperationInformation(
-      AtomicOperationStatus.NOT_STARTED, -1);
+  private static final OperationInformation ATOMIC_OPERATION_STATUS_PLACE_HOLDER =
+      new OperationInformation(AtomicOperationStatus.NOT_STARTED, -1);
 
-  private long[]                                 idOffsets;
+  private long[] idOffsets;
   private CASObjectArray<OperationInformation>[] tables;
 
   private final ScalableRWLock compactionLock = new ScalableRWLock();
 
   private final int tableCompactionInterval;
 
-  private final    AtomicLong operationsStarted = new AtomicLong();
-  private volatile long       lastCompactionOperation;
+  private final AtomicLong operationsStarted = new AtomicLong();
+  private volatile long lastCompactionOperation;
 
   public AtomicOperationsTable(final int tableCompactionInterval, final long idOffset) {
     this.tableCompactionInterval = tableCompactionInterval;
-    this.idOffsets = new long[] { idOffset };
+    this.idOffsets = new long[] {idOffset};
     //noinspection unchecked
-    tables = new CASObjectArray[] { new CASObjectArray<>() };
+    tables = new CASObjectArray[] {new CASObjectArray<>()};
   }
 
   public void startOperation(final long operationId, final long segment) {
@@ -32,15 +31,18 @@ public class AtomicOperationsTable {
   }
 
   public void commitOperation(final long operationId) {
-    changeOperationStatus(operationId, AtomicOperationStatus.IN_PROGRESS, AtomicOperationStatus.COMMITTED, -1);
+    changeOperationStatus(
+        operationId, AtomicOperationStatus.IN_PROGRESS, AtomicOperationStatus.COMMITTED, -1);
   }
 
   public void rollbackOperation(final long operationId) {
-    changeOperationStatus(operationId, AtomicOperationStatus.IN_PROGRESS, AtomicOperationStatus.ROLLED_BACK, -1);
+    changeOperationStatus(
+        operationId, AtomicOperationStatus.IN_PROGRESS, AtomicOperationStatus.ROLLED_BACK, -1);
   }
 
   public void persistOperation(final long operationId) {
-    changeOperationStatus(operationId, AtomicOperationStatus.COMMITTED, AtomicOperationStatus.PERSISTED, -1);
+    changeOperationStatus(
+        operationId, AtomicOperationStatus.COMMITTED, AtomicOperationStatus.PERSISTED, -1);
   }
 
   public long getSegmentEarliestOperationInProgress() {
@@ -82,8 +84,11 @@ public class AtomicOperationsTable {
     return -1;
   }
 
-  private void changeOperationStatus(final long operationId, final AtomicOperationStatus expectedStatus,
-      final AtomicOperationStatus newStatus, final long segment) {
+  private void changeOperationStatus(
+      final long operationId,
+      final AtomicOperationStatus expectedStatus,
+      final AtomicOperationStatus newStatus,
+      final long segment) {
     if (operationsStarted.get() > lastCompactionOperation + tableCompactionInterval) {
       compactTable();
     }
@@ -91,11 +96,13 @@ public class AtomicOperationsTable {
     compactionLock.sharedLock();
     try {
       if (segment >= 0 && newStatus != AtomicOperationStatus.IN_PROGRESS) {
-        throw new IllegalStateException("Invalid status of atomic operation, expected " + AtomicOperationStatus.IN_PROGRESS);
+        throw new IllegalStateException(
+            "Invalid status of atomic operation, expected " + AtomicOperationStatus.IN_PROGRESS);
       }
 
       if (newStatus == AtomicOperationStatus.IN_PROGRESS && segment < 0) {
-        throw new IllegalStateException("Invalid value of transaction segment for newly started operation");
+        throw new IllegalStateException(
+            "Invalid value of transaction segment for newly started operation");
       }
 
       int currentIndex = 0;
@@ -111,19 +118,28 @@ public class AtomicOperationsTable {
 
           final CASObjectArray<OperationInformation> table = tables[currentIndex];
           if (newStatus == AtomicOperationStatus.IN_PROGRESS) {
-            table.set(itemIndex, new OperationInformation(AtomicOperationStatus.IN_PROGRESS, segment),
+            table.set(
+                itemIndex,
+                new OperationInformation(AtomicOperationStatus.IN_PROGRESS, segment),
                 ATOMIC_OPERATION_STATUS_PLACE_HOLDER);
             operationsStarted.incrementAndGet();
           } else {
             final OperationInformation currentInformation = table.get(itemIndex);
             if (currentInformation.status != expectedStatus) {
               throw new IllegalStateException(
-                  "Invalid state of table of atomic operations, incorrect expected state " + currentInformation.status
-                      + " for upcoming state " + newStatus + " . Expected state was " + expectedStatus + " .");
+                  "Invalid state of table of atomic operations, incorrect expected state "
+                      + currentInformation.status
+                      + " for upcoming state "
+                      + newStatus
+                      + " . Expected state was "
+                      + expectedStatus
+                      + " .");
             }
 
-            if (!table
-                .compareAndSet(itemIndex, currentInformation, new OperationInformation(newStatus, currentInformation.segment))) {
+            if (!table.compareAndSet(
+                itemIndex,
+                currentInformation,
+                new OperationInformation(newStatus, currentInformation.segment))) {
               throw new IllegalStateException("Invalid state of table of atomic operations");
             }
           }
@@ -133,12 +149,14 @@ public class AtomicOperationsTable {
           currentIndex++;
           if (currentIndex >= idOffsets.length) {
             throw new IllegalStateException(
-                "Invalid state of table of atomic operations, entry for the transaction with id " + operationId
+                "Invalid state of table of atomic operations, entry for the transaction with id "
+                    + operationId
                     + " can not be found");
           }
 
           currentOffset = idOffsets[currentIndex];
-          nextOffset = idOffsets.length > currentIndex + 1 ? idOffsets[currentIndex + 1] : Long.MAX_VALUE;
+          nextOffset =
+              idOffsets.length > currentIndex + 1 ? idOffsets[currentIndex + 1] : Long.MAX_VALUE;
         }
       }
     } finally {
@@ -193,18 +211,20 @@ public class AtomicOperationsTable {
         if (newTable.size() == 0) {
           tablesToRemove.push(tableIndex);
         } else {
-          tablesAreFull = (tablesAreFull || tableIndex == 0) && newTable.size() == tableCompactionInterval;
+          tablesAreFull =
+              (tablesAreFull || tableIndex == 0) && newTable.size() == tableCompactionInterval;
         }
       }
 
       if (!tablesToRemove.isEmpty() && tables.length > 1) {
         if (tablesToRemove.size() == tables.length) {
-          this.idOffsets = new long[] { maxId + 1 };
+          this.idOffsets = new long[] {maxId + 1};
           //noinspection unchecked
-          this.tables = new CASObjectArray[] { tables[0] };
+          this.tables = new CASObjectArray[] {tables[0]};
         } else {
           //noinspection unchecked
-          CASObjectArray<OperationInformation>[] newTables = new CASObjectArray[this.tables.length - tablesToRemove.size()];
+          CASObjectArray<OperationInformation>[] newTables =
+              new CASObjectArray[this.tables.length - tablesToRemove.size()];
           long[] newIdOffsets = new long[this.idOffsets.length - tablesToRemove.size()];
 
           int firstSrcIndex = 0;
@@ -233,7 +253,7 @@ public class AtomicOperationsTable {
 
   private static final class OperationInformation {
     private final AtomicOperationStatus status;
-    private final long                  segment;
+    private final long segment;
 
     private OperationInformation(AtomicOperationStatus status, long segment) {
       this.status = status;

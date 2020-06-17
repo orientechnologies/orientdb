@@ -19,8 +19,6 @@
  */
 package com.orientechnologies.orient.client.remote.message;
 
-import java.io.IOException;
-
 import com.orientechnologies.orient.client.binary.OBinaryRequestExecutor;
 import com.orientechnologies.orient.client.remote.OBinaryRequest;
 import com.orientechnologies.orient.client.remote.OBinaryResponse;
@@ -30,22 +28,24 @@ import com.orientechnologies.orient.core.serialization.serializer.record.ORecord
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelDataInput;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelDataOutput;
+import java.io.IOException;
 
-public class OReadRecordIfVersionIsNotLatestRequest implements OBinaryRequest<OReadRecordIfVersionIsNotLatestResponse> {
+public class OReadRecordIfVersionIsNotLatestRequest
+    implements OBinaryRequest<OReadRecordIfVersionIsNotLatestResponse> {
   private ORecordId rid;
-  private int       recordVersion;
-  private String    fetchPlan;
-  private boolean   ignoreCache;
+  private int recordVersion;
+  private String fetchPlan;
+  private boolean ignoreCache;
 
-  public OReadRecordIfVersionIsNotLatestRequest(ORecordId rid, int recordVersion, String fetchPlan, boolean ignoreCache) {
+  public OReadRecordIfVersionIsNotLatestRequest(
+      ORecordId rid, int recordVersion, String fetchPlan, boolean ignoreCache) {
     this.rid = rid;
     this.recordVersion = recordVersion;
     this.fetchPlan = fetchPlan;
     this.ignoreCache = ignoreCache;
   }
 
-  public OReadRecordIfVersionIsNotLatestRequest() {
-  }
+  public OReadRecordIfVersionIsNotLatestRequest() {}
 
   @Override
   public void write(OChannelDataOutput network, OStorageRemoteSession session) throws IOException {
@@ -55,7 +55,8 @@ public class OReadRecordIfVersionIsNotLatestRequest implements OBinaryRequest<OR
     network.writeByte((byte) (ignoreCache ? 1 : 0));
   }
 
-  public void read(OChannelDataInput channel, int protocolVersion, ORecordSerializer serializer) throws IOException {
+  public void read(OChannelDataInput channel, int protocolVersion, ORecordSerializer serializer)
+      throws IOException {
     rid = channel.readRID();
     recordVersion = channel.readVersion();
     fetchPlan = channel.readString();
@@ -97,5 +98,4 @@ public class OReadRecordIfVersionIsNotLatestRequest implements OBinaryRequest<OR
   public OBinaryResponse execute(OBinaryRequestExecutor executor) {
     return executor.executeReadRecordIfNotLastest(this);
   }
-
 }

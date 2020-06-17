@@ -39,13 +39,12 @@ import com.orientechnologies.orient.core.sql.executor.OExecutionPlan;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import com.orientechnologies.orient.core.storage.ORecordCallback;
 import com.orientechnologies.orient.core.storage.OStorage;
-import com.orientechnologies.orient.core.tx.OTransactionData;
 import com.orientechnologies.orient.core.storage.ridbag.sbtree.OBonsaiCollectionPointer;
 import com.orientechnologies.orient.core.storage.ridbag.sbtree.OSBTreeCollectionManager;
 import com.orientechnologies.orient.core.tx.OTransaction;
 import com.orientechnologies.orient.core.tx.OTransactionAbstract;
+import com.orientechnologies.orient.core.tx.OTransactionData;
 import com.orientechnologies.orient.core.tx.OTransactionInternal;
-
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ExecutionException;
@@ -53,32 +52,28 @@ import java.util.concurrent.ExecutionException;
 public interface ODatabaseDocumentInternal extends ODatabaseSession, ODatabaseInternal<ORecord> {
 
   /**
-   * Internal. Returns the factory that defines a set of components that current database should use to be compatible to current
-   * version of storage. So if you open a database create with old version of OrientDB it defines a components that should be used
-   * to provide backward compatibility with that version of database.
+   * Internal. Returns the factory that defines a set of components that current database should use
+   * to be compatible to current version of storage. So if you open a database create with old
+   * version of OrientDB it defines a components that should be used to provide backward
+   * compatibility with that version of database.
    */
   OCurrentStorageComponentsFactory getStorageVersions();
 
-  /**
-   * Internal. Gets an instance of sb-tree collection manager for current database.
-   */
+  /** Internal. Gets an instance of sb-tree collection manager for current database. */
   OSBTreeCollectionManager getSbTreeCollectionManager();
 
-  /**
-   * @return the factory of binary serializers.
-   */
+  /** @return the factory of binary serializers. */
   OBinarySerializerFactory getSerializerFactory();
 
-  /**
-   * @return serializer which is used for document serialization.
-   */
+  /** @return serializer which is used for document serialization. */
   ORecordSerializer getSerializer();
 
   void setSerializer(ORecordSerializer serializer);
 
   int assignAndCheckCluster(ORecord record, String iClusterName);
 
-  <RET extends ORecord> RET loadIfVersionIsNotLatest(final ORID rid, final int recordVersion, String fetchPlan, boolean ignoreCache)
+  <RET extends ORecord> RET loadIfVersionIsNotLatest(
+      final ORID rid, final int recordVersion, String fetchPlan, boolean ignoreCache)
       throws ORecordNotFoundException;
 
   void reloadUser();
@@ -115,11 +110,22 @@ public interface ODatabaseDocumentInternal extends ODatabaseSession, ODatabaseIn
 
   ORecordHook.RESULT callbackHooks(final ORecordHook.TYPE type, final OIdentifiable id);
 
-  <RET extends ORecord> RET executeReadRecord(final ORecordId rid, ORecord iRecord, final int recordVersion, final String fetchPlan,
-      final boolean ignoreCache, final boolean iUpdateCache, final boolean loadTombstones,
-      final OStorage.LOCKING_STRATEGY lockingStrategy, RecordReader recordReader);
+  <RET extends ORecord> RET executeReadRecord(
+      final ORecordId rid,
+      ORecord iRecord,
+      final int recordVersion,
+      final String fetchPlan,
+      final boolean ignoreCache,
+      final boolean iUpdateCache,
+      final boolean loadTombstones,
+      final OStorage.LOCKING_STRATEGY lockingStrategy,
+      RecordReader recordReader);
 
-  void executeDeleteRecord(OIdentifiable record, final int iVersion, final boolean iRequired, final OPERATION_MODE iMode,
+  void executeDeleteRecord(
+      OIdentifiable record,
+      final int iVersion,
+      final boolean iRequired,
+      final OPERATION_MODE iMode,
       boolean prohibitTombstones);
 
   void setDefaultTransactionMode(Map<ORID, OTransactionAbstract.LockedRecordMetadata> noTxLocks);
@@ -168,12 +174,12 @@ public interface ODatabaseDocumentInternal extends ODatabaseSession, ODatabaseIn
   ODatabaseDocumentInternal cleanOutRecord(ORID rid, int version);
 
   default void realClose() {
-    //Only implemented by pooled instances
+    // Only implemented by pooled instances
     throw new UnsupportedOperationException();
   }
 
   default void reuse() {
-    //Only implemented by pooled instances
+    // Only implemented by pooled instances
     throw new UnsupportedOperationException();
   }
 
@@ -186,7 +192,8 @@ public interface ODatabaseDocumentInternal extends ODatabaseSession, ODatabaseIn
     return false;
   }
 
-  default Map<String, Object> getHaStatus(boolean servers, boolean db, boolean latency, boolean messages) {
+  default Map<String, Object> getHaStatus(
+      boolean servers, boolean db, boolean latency, boolean messages) {
     return null;
   }
 
@@ -197,12 +204,13 @@ public interface ODatabaseDocumentInternal extends ODatabaseSession, ODatabaseIn
   /**
    * sends an execution plan to a remote node for a remote query execution
    *
-   * @param nodeName        the node name
-   * @param executionPlan   the execution plan
+   * @param nodeName the node name
+   * @param executionPlan the execution plan
    * @param inputParameters the input parameters for execution
    * @return an OResultSet to fetch the results of the query execution
    */
-  default OResultSet queryOnNode(String nodeName, OExecutionPlan executionPlan, Map<Object, Object> inputParameters) {
+  default OResultSet queryOnNode(
+      String nodeName, OExecutionPlan executionPlan, Map<Object, Object> inputParameters) {
     throw new UnsupportedOperationException();
   }
 
@@ -225,8 +233,13 @@ public interface ODatabaseDocumentInternal extends ODatabaseSession, ODatabaseIn
 
   void internalClose(boolean recycle);
 
-  ORecord saveAll(ORecord iRecord, String iClusterName, OPERATION_MODE iMode, boolean iForceCreate,
-      ORecordCallback<? extends Number> iRecordCreatedCallback, ORecordCallback<Integer> iRecordUpdatedCallback);
+  ORecord saveAll(
+      ORecord iRecord,
+      String iClusterName,
+      OPERATION_MODE iMode,
+      boolean iForceCreate,
+      ORecordCallback<? extends Number> iRecordCreatedCallback,
+      ORecordCallback<Integer> iRecordUpdatedCallback);
 
   String getClusterName(final ORecord record);
 

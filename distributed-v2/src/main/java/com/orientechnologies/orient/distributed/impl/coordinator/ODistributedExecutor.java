@@ -7,7 +7,6 @@ import com.orientechnologies.orient.distributed.impl.database.operations.ODataba
 import com.orientechnologies.orient.distributed.impl.log.OLogId;
 import com.orientechnologies.orient.distributed.impl.log.OOperationLog;
 import com.orientechnologies.orient.distributed.network.ODistributedNetwork;
-
 import java.util.Optional;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -15,13 +14,17 @@ import java.util.concurrent.TimeUnit;
 public class ODistributedExecutor implements AutoCloseable {
 
   private final ODistributedNetwork network;
-  private       OOperationLog       operationLog;
-  private       ExecutorService     executor;
-  private       OrientDBInternal    orientDB;
-  private final String              database;
+  private OOperationLog operationLog;
+  private ExecutorService executor;
+  private OrientDBInternal orientDB;
+  private final String database;
 
-  public ODistributedExecutor(ExecutorService executor, OOperationLog operationLog, OrientDBInternal orientDB,
-      ODistributedNetwork network, String database) {
+  public ODistributedExecutor(
+      ExecutorService executor,
+      OOperationLog operationLog,
+      OrientDBInternal orientDB,
+      ODistributedNetwork network,
+      String database) {
     this.operationLog = operationLog;
     this.executor = executor;
     this.orientDB = orientDB;
@@ -30,18 +33,20 @@ public class ODistributedExecutor implements AutoCloseable {
   }
 
   public void receive(ONodeIdentity member, OLogId opId, ONodeRequest request) {
-    //TODO: sort for opId before execute and execute the operations only if is strictly sequential, otherwise wait.
-    executor.execute(() -> {
-      if (operationLog.logReceived(opId, request)) {
-        ONodeResponse response;
-        try (ODatabaseDocumentInternal session = orientDB.openNoAuthorization(database)) {
-          response = request.execute(member, opId, this, session);
-        }
-        network.sendResponse(member, database, opId, response);
-      } else {
-        resendRequest(member, operationLog.lastPersistentLog());
-      }
-    });
+    // TODO: sort for opId before execute and execute the operations only if is strictly sequential,
+    // otherwise wait.
+    executor.execute(
+        () -> {
+          if (operationLog.logReceived(opId, request)) {
+            ONodeResponse response;
+            try (ODatabaseDocumentInternal session = orientDB.openNoAuthorization(database)) {
+              response = request.execute(member, opId, this, session);
+            }
+            network.sendResponse(member, database, opId, response);
+          } else {
+            resendRequest(member, operationLog.lastPersistentLog());
+          }
+        });
   }
 
   private void resendRequest(ONodeIdentity leader, OLogId opId) {
@@ -60,11 +65,12 @@ public class ODistributedExecutor implements AutoCloseable {
 
   public void notifyLastValidLog(ONodeIdentity leader, OLogId leaderLastValid) {
     // TODO: check leader
-    executor.execute(() -> {
-      OLogId logLast = operationLog.lastPersistentLog();
-      if (logLast.compareTo(leaderLastValid) < 0) {
-        resendRequest(leader, logLast);
-      }
-    });
+    executor.execute(
+        () -> {
+          OLogId logLast = operationLog.lastPersistentLog();
+          if (logLast.compareTo(leaderLastValid) < 0) {
+            resendRequest(leader, logLast);
+          }
+        });
   }
 }

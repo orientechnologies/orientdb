@@ -14,7 +14,6 @@ import com.orientechnologies.orient.core.tx.OTransactionIndexChanges;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelDataInput;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelDataOutput;
-
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -22,13 +21,17 @@ import java.util.Map;
 
 public class OBeginTransactionRequest implements OBinaryRequest<OBeginTransactionResponse> {
 
-  private int                           txId;
-  private boolean                       usingLog;
-  private boolean                       hasContent;
+  private int txId;
+  private boolean usingLog;
+  private boolean hasContent;
   private List<ORecordOperationRequest> operations;
-  private List<IndexChange>             indexChanges;
+  private List<IndexChange> indexChanges;
 
-  public OBeginTransactionRequest(int txId, boolean hasContent, boolean usingLog, Iterable<ORecordOperation> operations,
+  public OBeginTransactionRequest(
+      int txId,
+      boolean hasContent,
+      boolean usingLog,
+      Iterable<ORecordOperation> operations,
       Map<String, OTransactionIndexChanges> indexChanges) {
     super();
     this.txId = txId;
@@ -39,19 +42,18 @@ public class OBeginTransactionRequest implements OBinaryRequest<OBeginTransactio
 
     if (hasContent) {
       for (ORecordOperation txEntry : operations) {
-        if (txEntry.type == ORecordOperation.LOADED)
-          continue;
+        if (txEntry.type == ORecordOperation.LOADED) continue;
         ORecordOperationRequest request = new ORecordOperationRequest();
         request.setType(txEntry.type);
         request.setVersion(txEntry.getRecord().getVersion());
         request.setId(txEntry.getRecord().getIdentity());
         request.setRecordType(ORecordInternal.getRecordType(txEntry.getRecord()));
         switch (txEntry.type) {
-        case ORecordOperation.CREATED:
-        case ORecordOperation.UPDATED:
-          request.setRecord(ORecordSerializerNetworkV37.INSTANCE.toStream(txEntry.getRecord()));
-          request.setContentChanged(ORecordInternal.isContentChanged(txEntry.getRecord()));
-          break;
+          case ORecordOperation.CREATED:
+          case ORecordOperation.UPDATED:
+            request.setRecord(ORecordSerializerNetworkV37.INSTANCE.toStream(txEntry.getRecord()));
+            request.setContentChanged(ORecordInternal.isContentChanged(txEntry.getRecord()));
+            break;
         }
         this.operations.add(request);
       }
@@ -60,15 +62,13 @@ public class OBeginTransactionRequest implements OBinaryRequest<OBeginTransactio
         this.indexChanges.add(new IndexChange(change.getKey(), change.getValue()));
       }
     }
-
   }
 
-  public OBeginTransactionRequest() {
-  }
+  public OBeginTransactionRequest() {}
 
   @Override
   public void write(OChannelDataOutput network, OStorageRemoteSession session) throws IOException {
-    //from 3.0 the the serializer is bound to the protocol
+    // from 3.0 the the serializer is bound to the protocol
     ORecordSerializerNetworkV37 serializer = ORecordSerializerNetworkV37.INSTANCE;
 
     network.writeInt(txId);
@@ -89,7 +89,8 @@ public class OBeginTransactionRequest implements OBinaryRequest<OBeginTransactio
   }
 
   @Override
-  public void read(OChannelDataInput channel, int protocolVersion, ORecordSerializer serializer) throws IOException {
+  public void read(OChannelDataInput channel, int protocolVersion, ORecordSerializer serializer)
+      throws IOException {
     txId = channel.readInt();
     hasContent = channel.readBoolean();
     usingLog = channel.readBoolean();
@@ -105,8 +106,10 @@ public class OBeginTransactionRequest implements OBinaryRequest<OBeginTransactio
       } while (hasEntry == 1);
 
       // RECEIVE MANUAL INDEX CHANGES
-      this.indexChanges = OMessageHelper.readTransactionIndexChanges(channel, (ORecordSerializerNetworkV37) serializer);
-    } else  {
+      this.indexChanges =
+          OMessageHelper.readTransactionIndexChanges(
+              channel, (ORecordSerializerNetworkV37) serializer);
+    } else {
       this.indexChanges = new ArrayList<>();
     }
   }

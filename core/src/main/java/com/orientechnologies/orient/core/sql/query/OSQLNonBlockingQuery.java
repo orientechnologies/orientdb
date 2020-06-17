@@ -19,6 +19,13 @@
  */
 package com.orientechnologies.orient.core.sql.query;
 
+import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.util.OUncaughtExceptionHandler;
+import com.orientechnologies.orient.core.command.OCommandRequestAsynch;
+import com.orientechnologies.orient.core.command.OCommandResultListener;
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
+import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
@@ -29,23 +36,17 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
-import com.orientechnologies.common.log.OLogManager;
-import com.orientechnologies.common.util.OUncaughtExceptionHandler;
-import com.orientechnologies.orient.core.command.OCommandRequestAsynch;
-import com.orientechnologies.orient.core.command.OCommandResultListener;
-import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
-import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
-
 /**
- * SQL asynchronous query. When executed the caller does not wait for the execution, rather the listener will be called for each
- * item found in the query. OSQLAsynchQuery has been built on top of this. NOTE: if you're working with remote databases don't
- * execute any remote call inside the callback function because the network channel is locked until the query command has finished.
+ * SQL asynchronous query. When executed the caller does not wait for the execution, rather the
+ * listener will be called for each item found in the query. OSQLAsynchQuery has been built on top
+ * of this. NOTE: if you're working with remote databases don't execute any remote call inside the
+ * callback function because the network channel is locked until the query command has finished.
  *
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
  * @see com.orientechnologies.orient.core.sql.query.OSQLSynchQuery
  */
-public class OSQLNonBlockingQuery<T extends Object> extends OSQLQuery<T> implements OCommandRequestAsynch {
+public class OSQLNonBlockingQuery<T extends Object> extends OSQLQuery<T>
+    implements OCommandRequestAsynch {
   private static final long serialVersionUID = 1L;
 
   public class ONonBlockingQueryFuture implements Future, List<Future> {
@@ -54,7 +55,7 @@ public class OSQLNonBlockingQuery<T extends Object> extends OSQLQuery<T> impleme
 
     @Override
     public boolean cancel(boolean mayInterruptIfRunning) {
-      return false;// TODO
+      return false; // TODO
     }
 
     @Override
@@ -76,7 +77,8 @@ public class OSQLNonBlockingQuery<T extends Object> extends OSQLQuery<T> impleme
     }
 
     @Override
-    public synchronized Object get(long timeout, TimeUnit unit) throws InterruptedException, ExecutionException, TimeoutException {
+    public synchronized Object get(long timeout, TimeUnit unit)
+        throws InterruptedException, ExecutionException, TimeoutException {
       while (!finished) {
         wait();
       }
@@ -165,9 +167,7 @@ public class OSQLNonBlockingQuery<T extends Object> extends OSQLQuery<T> impleme
     }
 
     @Override
-    public void clear() {
-
-    }
+    public void clear() {}
 
     @Override
     public Future get(int index) {
@@ -187,9 +187,7 @@ public class OSQLNonBlockingQuery<T extends Object> extends OSQLQuery<T> impleme
     }
 
     @Override
-    public void add(int index, Future element) {
-
-    }
+    public void add(int index, Future element) {}
 
     @Override
     public Future remove(int index) {
@@ -222,24 +220,26 @@ public class OSQLNonBlockingQuery<T extends Object> extends OSQLQuery<T> impleme
     }
   }
 
-  /**
-   * Empty constructor for unmarshalling.
-   */
-  public OSQLNonBlockingQuery() {
-  }
+  /** Empty constructor for unmarshalling. */
+  public OSQLNonBlockingQuery() {}
 
   public OSQLNonBlockingQuery(final String iText, final OCommandResultListener iResultListener) {
     this(iText, -1, iResultListener);
   }
 
-  public OSQLNonBlockingQuery(final String iText, final int iLimit, final String iFetchPlan, final Map<Object, Object> iArgs,
+  public OSQLNonBlockingQuery(
+      final String iText,
+      final int iLimit,
+      final String iFetchPlan,
+      final Map<Object, Object> iArgs,
       final OCommandResultListener iResultListener) {
     this(iText, iLimit, iResultListener);
     this.fetchPlan = iFetchPlan;
     this.parameters = iArgs;
   }
 
-  public OSQLNonBlockingQuery(final String iText, final int iLimit, final OCommandResultListener iResultListener) {
+  public OSQLNonBlockingQuery(
+      final String iText, final int iLimit, final OCommandResultListener iResultListener) {
     super(iText);
     limit = iLimit;
     resultListener = iResultListener;
@@ -263,7 +263,8 @@ public class OSQLNonBlockingQuery<T extends Object> extends OSQLQuery<T> impleme
     final ONonBlockingQueryFuture future = new ONonBlockingQueryFuture();
 
     if (database instanceof ODatabaseDocument) {
-      ODatabaseDocumentInternal currentThreadLocal = ODatabaseRecordThreadLocal.instance().getIfDefined();
+      ODatabaseDocumentInternal currentThreadLocal =
+          ODatabaseRecordThreadLocal.instance().getIfDefined();
       final ODatabaseDocumentInternal db = database.copy();
       if (currentThreadLocal != null) {
         currentThreadLocal.activateOnCurrentThread();
@@ -271,44 +272,48 @@ public class OSQLNonBlockingQuery<T extends Object> extends OSQLQuery<T> impleme
         ODatabaseRecordThreadLocal.instance().set(null);
       }
 
-      Thread t = new Thread(() -> {
-        db.activateOnCurrentThread();
-        try {
-          OSQLAsynchQuery<T> query = new OSQLAsynchQuery<T>(OSQLNonBlockingQuery.this.getText(),
-              OSQLNonBlockingQuery.this.getResultListener());
-          query.setFetchPlan(OSQLNonBlockingQuery.this.getFetchPlan());
-          query.setLimit(OSQLNonBlockingQuery.this.getLimit());
-          query.execute(iArgs);
-        } catch (RuntimeException e) {
-          if (getResultListener() != null) {
-            getResultListener().end();
-          }
-          throw e;
-        } finally {
-          if (db != null) {
-            try {
-              db.close();
-            } catch (Exception e) {
-              OLogManager.instance().error(this, "Error during database close", e);
-            }
-          }
-          try {
-            synchronized (future) {
-              future.finished = true;
-              future.notifyAll();
-            }
-          } catch (Exception e) {
-            OLogManager.instance().error(this, "", e);
-          }
-        }
-      });
+      Thread t =
+          new Thread(
+              () -> {
+                db.activateOnCurrentThread();
+                try {
+                  OSQLAsynchQuery<T> query =
+                      new OSQLAsynchQuery<T>(
+                          OSQLNonBlockingQuery.this.getText(),
+                          OSQLNonBlockingQuery.this.getResultListener());
+                  query.setFetchPlan(OSQLNonBlockingQuery.this.getFetchPlan());
+                  query.setLimit(OSQLNonBlockingQuery.this.getLimit());
+                  query.execute(iArgs);
+                } catch (RuntimeException e) {
+                  if (getResultListener() != null) {
+                    getResultListener().end();
+                  }
+                  throw e;
+                } finally {
+                  if (db != null) {
+                    try {
+                      db.close();
+                    } catch (Exception e) {
+                      OLogManager.instance().error(this, "Error during database close", e);
+                    }
+                  }
+                  try {
+                    synchronized (future) {
+                      future.finished = true;
+                      future.notifyAll();
+                    }
+                  } catch (Exception e) {
+                    OLogManager.instance().error(this, "", e);
+                  }
+                }
+              });
 
       t.setUncaughtExceptionHandler(new OUncaughtExceptionHandler());
       t.start();
 
       return (RET) future;
     } else {
-      throw new RuntimeException("cannot run non blocking query with non tx db");// TODO
+      throw new RuntimeException("cannot run non blocking query with non tx db"); // TODO
     }
   }
 

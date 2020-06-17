@@ -44,5 +44,4 @@ public class TestObjectWithDeletedLink {
     ob1 = db.reload(ob1, "", true);
     Assert.assertNull(ob1.getFriend());
   }
-
 }

@@ -21,8 +21,15 @@
 package com.orientechnologies.orient.etl.util;
 
 import com.orientechnologies.orient.core.record.impl.ODocument;
-
-import java.io.*;
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.PrintWriter;
+import java.io.Reader;
 import java.nio.charset.Charset;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
@@ -40,13 +47,13 @@ public class OFileManager {
         }
         currentFile.delete();
       } else {
-        if (!currentFile.delete())
-          throw new IOException();
+        if (!currentFile.delete()) throw new IOException();
       }
     }
   }
 
-  public static void extractAll(String inputArchiveFilePath, String outputFolderPath) throws IOException {
+  public static void extractAll(String inputArchiveFilePath, String outputFolderPath)
+      throws IOException {
 
     File inputArchiveFile = new File(inputArchiveFilePath);
     if (!inputArchiveFile.exists()) {
@@ -58,16 +65,15 @@ public class OFileManager {
 
     // Extracting zip file
     unZipAll(inputArchiveFile, outputFolderPath);
-
   }
 
   public static void unZipAll(File inputZipFile, String destinationFolderPath) throws IOException {
 
     byte[] buffer = new byte[1024];
 
-    //get the zip file content
+    // get the zip file content
     ZipInputStream zipInputStream = new ZipInputStream(new FileInputStream(inputZipFile));
-    //get the zipped file list entry
+    // get the zipped file list entry
     ZipEntry zipEntry = zipInputStream.getNextEntry();
 
     while (zipEntry != null) {
@@ -92,15 +98,12 @@ public class OFileManager {
         dir.mkdir();
       }
 
-      if (fileOutputStream != null)
-        fileOutputStream.close();
+      if (fileOutputStream != null) fileOutputStream.close();
       zipEntry = zipInputStream.getNextEntry();
-
     }
 
     zipInputStream.closeEntry();
     zipInputStream.close();
-
   }
 
   public static String readAllTextFile(Reader rd) throws IOException {
@@ -116,10 +119,9 @@ public class OFileManager {
    * It returns a ODocument starting from a json file.
    *
    * @param filePath
-   *
-   * @return ODocument (null if the file does not exist or problem are encountered during the reading)
+   * @return ODocument (null if the file does not exist or problem are encountered during the
+   *     reading)
    */
-
   public static ODocument buildJsonFromFile(String filePath) throws IOException {
 
     if (filePath == null) {
@@ -137,10 +139,10 @@ public class OFileManager {
     String jsonText = OFileManager.readAllTextFile(rd);
     json.fromJSON(jsonText, "noMap");
     return json;
-
   }
 
-  public static void writeFileFromText(String text, String outFilePath, boolean append) throws IOException {
+  public static void writeFileFromText(String text, String outFilePath, boolean append)
+      throws IOException {
 
     File outFile = new File(outFilePath);
     outFile.getParentFile().mkdirs();

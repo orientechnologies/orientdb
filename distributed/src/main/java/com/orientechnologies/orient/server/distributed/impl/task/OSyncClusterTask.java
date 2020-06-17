@@ -32,12 +32,21 @@ import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.cache.OWriteCache;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.server.OServer;
-import com.orientechnologies.orient.server.distributed.*;
+import com.orientechnologies.orient.server.distributed.ODistributedException;
+import com.orientechnologies.orient.server.distributed.ODistributedRequestId;
+import com.orientechnologies.orient.server.distributed.ODistributedServerLog;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIRECTION;
+import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
+import com.orientechnologies.orient.server.distributed.ORemoteTaskFactory;
 import com.orientechnologies.orient.server.distributed.impl.ODistributedDatabaseChunk;
 import com.orientechnologies.orient.server.distributed.task.OAbstractReplicatedTask;
-
-import java.io.*;
+import java.io.BufferedOutputStream;
+import java.io.DataInput;
+import java.io.DataOutput;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.OutputStream;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.UUID;
@@ -48,20 +57,20 @@ import java.util.UUID;
  * @author Luca Garulli (l.garulli--at--orientdb.com)
  */
 public class OSyncClusterTask extends OAbstractReplicatedTask {
-  public static final int    CHUNK_MAX_SIZE = 4194304;         // 4MB
-  public static final String DEPLOYCLUSTER  = "deploycluster.";
-  public static final int    FACTORYID      = 12;
+  public static final int CHUNK_MAX_SIZE = 4194304; // 4MB
+  public static final String DEPLOYCLUSTER = "deploycluster.";
+  public static final int FACTORYID = 12;
 
   public enum MODE {
-    FULL_REPLACE, MERGE
+    FULL_REPLACE,
+    MERGE
   }
 
-  protected MODE   mode = MODE.FULL_REPLACE;
-  protected long   random;
+  protected MODE mode = MODE.FULL_REPLACE;
+  protected long random;
   protected String clusterName;
 
-  public OSyncClusterTask() {
-  }
+  public OSyncClusterTask() {}
 
   public OSyncClusterTask(final String iClusterName) {
     random = UUID.randomUUID().getLeastSignificantBits();
@@ -69,127 +78,204 @@ public class OSyncClusterTask extends OAbstractReplicatedTask {
   }
 
   @Override
-  public Object execute(ODistributedRequestId requestId, final OServer iServer, final ODistributedServerManager iManager,
-      final ODatabaseDocumentInternal database) throws Exception {
+  public Object execute(
+      ODistributedRequestId requestId,
+      final OServer iServer,
+      final ODistributedServerManager iManager,
+      final ODatabaseDocumentInternal database)
+      throws Exception {
 
     if (getNodeSource() == null || !getNodeSource().equals(iManager.getLocalNodeName())) {
-      if (database == null)
-        throw new ODistributedException("Database instance is null");
+      if (database == null) throw new ODistributedException("Database instance is null");
 
       final String databaseName = database.getName();
 
       try {
 
-        final Long lastDeployment = (Long) iManager.getConfigurationMap().get(DEPLOYCLUSTER + databaseName + "." + clusterName);
+        final Long lastDeployment =
+            (Long)
+                iManager
+                    .getConfigurationMap()
+                    .get(DEPLOYCLUSTER + databaseName + "." + clusterName);
         if (lastDeployment != null && lastDeployment.longValue() == random) {
           // SKIP IT
-          ODistributedServerLog.debug(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.NONE,
-              "Skip deploying cluster '%s' because already executed", clusterName);
+          ODistributedServerLog.debug(
+              this,
+              iManager.getLocalNodeName(),
+              getNodeSource(),
+              DIRECTION.NONE,
+              "Skip deploying cluster '%s' because already executed",
+              clusterName);
           return Boolean.FALSE;
         }
 
-        iManager.getConfigurationMap().put(DEPLOYCLUSTER + databaseName + "." + clusterName, random);
+        iManager
+            .getConfigurationMap()
+            .put(DEPLOYCLUSTER + databaseName + "." + clusterName, random);
 
-        ODistributedServerLog
-            .info(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.OUT, "deploying cluster %s...", databaseName);
+        ODistributedServerLog.info(
+            this,
+            iManager.getLocalNodeName(),
+            getNodeSource(),
+            DIRECTION.OUT,
+            "deploying cluster %s...",
+            databaseName);
 
-        final File backupFile = new File(Orient.getTempPath() + "/backup_" + databaseName + "_" + clusterName + ".zip");
-        if (backupFile.exists())
-          backupFile.delete();
-        else
-          backupFile.getParentFile().mkdirs();
+        final File backupFile =
+            new File(Orient.getTempPath() + "/backup_" + databaseName + "_" + clusterName + ".zip");
+        if (backupFile.exists()) backupFile.delete();
+        else backupFile.getParentFile().mkdirs();
         backupFile.createNewFile();
 
-        ODistributedServerLog.info(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.OUT,
-            "Creating backup of cluster '%s' in directory: %s...", databaseName, backupFile.getAbsolutePath());
+        ODistributedServerLog.info(
+            this,
+            iManager.getLocalNodeName(),
+            getNodeSource(),
+            DIRECTION.OUT,
+            "Creating backup of cluster '%s' in directory: %s...",
+            databaseName,
+            backupFile.getAbsolutePath());
 
         final OStorage storage = database.getStorage();
         switch (mode) {
-        case MERGE:
-          throw new IllegalArgumentException("Merge mode not supported");
+          case MERGE:
+            throw new IllegalArgumentException("Merge mode not supported");
 
-        case FULL_REPLACE:
-          final FileOutputStream fileOutputStream = new FileOutputStream(backupFile);
+          case FULL_REPLACE:
+            final FileOutputStream fileOutputStream = new FileOutputStream(backupFile);
 
-          final File completedFile = new File(backupFile.getAbsolutePath() + ".completed");
-          if (completedFile.exists())
-            completedFile.delete();
+            final File completedFile = new File(backupFile.getAbsolutePath() + ".completed");
+            if (completedFile.exists()) completedFile.delete();
 
-          Thread t = new Thread(new Runnable() {
-            @Override
-            public void run() {
-              Thread.currentThread().setName(
-                  "OrientDB SyncCluster node=" + iManager.getLocalNodeName() + " db=" + databaseName + " cluster=" + clusterName);
+            Thread t =
+                new Thread(
+                    new Runnable() {
+                      @Override
+                      public void run() {
+                        Thread.currentThread()
+                            .setName(
+                                "OrientDB SyncCluster node="
+                                    + iManager.getLocalNodeName()
+                                    + " db="
+                                    + databaseName
+                                    + " cluster="
+                                    + clusterName);
 
-              try {
-                database.activateOnCurrentThread();
-                database.freeze();
+                        try {
+                          database.activateOnCurrentThread();
+                          database.freeze();
 
-                try {
-                  final String dbPath = iServer.getDatabaseDirectory() + databaseName;
+                          try {
+                            final String dbPath = iServer.getDatabaseDirectory() + databaseName;
 
-                  final Map<String, String> fileNames = new LinkedHashMap<>();
+                            final Map<String, String> fileNames = new LinkedHashMap<>();
 
-                  final OAbstractPaginatedStorage paginatedStorage = (OAbstractPaginatedStorage) database.getStorage()
-                      .getUnderlying();
-                  final OWriteCache writeCache = paginatedStorage.getWriteCache();
+                            final OAbstractPaginatedStorage paginatedStorage =
+                                (OAbstractPaginatedStorage) database.getStorage().getUnderlying();
+                            final OWriteCache writeCache = paginatedStorage.getWriteCache();
 
-                  final OutputStream outputStream = new BufferedOutputStream(fileOutputStream, CHUNK_MAX_SIZE);
-                  try {
-                    OZIPCompressionUtil.compressFiles(dbPath, fileNames, outputStream, null,
-                        OGlobalConfiguration.DISTRIBUTED_DEPLOYDB_TASK_COMPRESSION.getValueAsInteger());
-                  } finally {
-                    outputStream.flush();
-                    outputStream.close();
-                  }
-                } catch (IOException e) {
-                  OLogManager.instance()
-                      .error(this, "Cannot execute backup of cluster '%s.%s' for deploy cluster", e, databaseName, clusterName);
-                } finally {
-                  database.release();
-                }
-              } finally {
-                try {
-                  fileOutputStream.close();
-                } catch (IOException e) {
-                }
+                            final OutputStream outputStream =
+                                new BufferedOutputStream(fileOutputStream, CHUNK_MAX_SIZE);
+                            try {
+                              OZIPCompressionUtil.compressFiles(
+                                  dbPath,
+                                  fileNames,
+                                  outputStream,
+                                  null,
+                                  OGlobalConfiguration.DISTRIBUTED_DEPLOYDB_TASK_COMPRESSION
+                                      .getValueAsInteger());
+                            } finally {
+                              outputStream.flush();
+                              outputStream.close();
+                            }
+                          } catch (IOException e) {
+                            OLogManager.instance()
+                                .error(
+                                    this,
+                                    "Cannot execute backup of cluster '%s.%s' for deploy cluster",
+                                    e,
+                                    databaseName,
+                                    clusterName);
+                          } finally {
+                            database.release();
+                          }
+                        } finally {
+                          try {
+                            fileOutputStream.close();
+                          } catch (IOException e) {
+                          }
 
-                try {
-                  completedFile.createNewFile();
-                } catch (IOException e) {
-                  OLogManager.instance().error(this, "Cannot create file of backup completed: %s", e, completedFile);
-                }
-              }
-            }
-          });
+                          try {
+                            completedFile.createNewFile();
+                          } catch (IOException e) {
+                            OLogManager.instance()
+                                .error(
+                                    this,
+                                    "Cannot create file of backup completed: %s",
+                                    e,
+                                    completedFile);
+                          }
+                        }
+                      }
+                    });
 
-          t.setUncaughtExceptionHandler(new OUncaughtExceptionHandler());
-          t.start();
+            t.setUncaughtExceptionHandler(new OUncaughtExceptionHandler());
+            t.start();
 
-          // TODO: SUPPORT BACKUP ON CLUSTER
-          final long fileSize = backupFile.length();
+            // TODO: SUPPORT BACKUP ON CLUSTER
+            final long fileSize = backupFile.length();
 
-          ODistributedServerLog.info(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.OUT,
-              "Sending the compressed cluster '%s.%s' over the NETWORK to node '%s', size=%s...", databaseName, clusterName,
-              getNodeSource(), OFileUtils.getSizeAsString(fileSize));
+            ODistributedServerLog.info(
+                this,
+                iManager.getLocalNodeName(),
+                getNodeSource(),
+                DIRECTION.OUT,
+                "Sending the compressed cluster '%s.%s' over the NETWORK to node '%s', size=%s...",
+                databaseName,
+                clusterName,
+                getNodeSource(),
+                OFileUtils.getSizeAsString(fileSize));
 
-          final ODistributedDatabaseChunk chunk = new ODistributedDatabaseChunk(backupFile, 0, CHUNK_MAX_SIZE, false, false);
+            final ODistributedDatabaseChunk chunk =
+                new ODistributedDatabaseChunk(backupFile, 0, CHUNK_MAX_SIZE, false, false);
 
-          ODistributedServerLog.info(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.OUT,
-              "- transferring chunk #%d offset=%d size=%s...", 1, 0, OFileUtils.getSizeAsNumber(chunk.buffer.length));
+            ODistributedServerLog.info(
+                this,
+                iManager.getLocalNodeName(),
+                getNodeSource(),
+                DIRECTION.OUT,
+                "- transferring chunk #%d offset=%d size=%s...",
+                1,
+                0,
+                OFileUtils.getSizeAsNumber(chunk.buffer.length));
 
-          return chunk;
+            return chunk;
         }
 
       } catch (OLockException e) {
-        ODistributedServerLog.debug(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.NONE,
-            "Skip deploying cluster %s.%s because another node is doing it", databaseName, clusterName);
+        ODistributedServerLog.debug(
+            this,
+            iManager.getLocalNodeName(),
+            getNodeSource(),
+            DIRECTION.NONE,
+            "Skip deploying cluster %s.%s because another node is doing it",
+            databaseName,
+            clusterName);
       } finally {
-        ODistributedServerLog.info(this, iManager.getLocalNodeName(), getNodeSource(), ODistributedServerLog.DIRECTION.OUT,
-            "Deploy cluster %s task completed", clusterName);
+        ODistributedServerLog.info(
+            this,
+            iManager.getLocalNodeName(),
+            getNodeSource(),
+            ODistributedServerLog.DIRECTION.OUT,
+            "Deploy cluster %s task completed",
+            clusterName);
       }
     } else
-      ODistributedServerLog.debug(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.NONE,
+      ODistributedServerLog.debug(
+          this,
+          iManager.getLocalNodeName(),
+          getNodeSource(),
+          DIRECTION.NONE,
           "Skip deploying cluster %s.%s from the same node");
 
     return Boolean.FALSE;
@@ -232,7 +318,8 @@ public class OSyncClusterTask extends OAbstractReplicatedTask {
     return FACTORYID;
   }
 
-  private static void addFileById(Map<String, String> entries, long fileId, OWriteCache writeCache) {
+  private static void addFileById(
+      Map<String, String> entries, long fileId, OWriteCache writeCache) {
     final String nativeFileName = writeCache.nativeFileNameById(fileId);
     if (nativeFileName == null)
       throw new IllegalStateException("unable to resolve native file name of `" + fileId + "`");
@@ -244,7 +331,8 @@ public class OSyncClusterTask extends OAbstractReplicatedTask {
     entries.put(nativeFileName, fileName);
   }
 
-  private static void addFileByName(Map<String, String> entries, String fileName, OWriteCache writeCache) {
+  private static void addFileByName(
+      Map<String, String> entries, String fileName, OWriteCache writeCache) {
     final long fileId = writeCache.fileIdByName(fileName);
     if (fileId == -1)
       throw new IllegalStateException("unable to resolve file id of `" + fileName + "`");
@@ -255,5 +343,4 @@ public class OSyncClusterTask extends OAbstractReplicatedTask {
 
     entries.put(nativeFileName, fileName);
   }
-
 }

@@ -25,8 +25,12 @@ import com.orientechnologies.orient.server.distributed.task.ORemoteTask;
 
 /**
  * Factory of remote tasks.
+ *
  * <p>
- * <ul> <li>V2 (11/09/2017) </li> </ul>
+ *
+ * <ul>
+ *   <li>V2 (11/09/2017)
+ * </ul>
  *
  * @author Luigi Dell'Aquila (l.dellaquila--at--orientdb.com)
  */
@@ -34,76 +38,77 @@ public class ODefaultRemoteTaskFactoryV3 implements ORemoteTaskFactory {
   @Override
   public ORemoteTask createTask(final int code) {
     switch (code) {
-    case OSQLCommandTask.FACTORYID: // 5
-      return new OSQLCommandTask();
+      case OSQLCommandTask.FACTORYID: // 5
+        return new OSQLCommandTask();
 
-    case OScriptTask.FACTORYID: // 6
-      return new OScriptTask();
+      case OScriptTask.FACTORYID: // 6
+        return new OScriptTask();
 
-    case OStopServerTask.FACTORYID: // 9
-      return new OStopServerTask();
+      case OStopServerTask.FACTORYID: // 9
+        return new OStopServerTask();
 
-    case ORestartServerTask.FACTORYID: // 10
-      return new ORestartServerTask();
+      case ORestartServerTask.FACTORYID: // 10
+        return new ORestartServerTask();
 
-    case OSyncClusterTask.FACTORYID: // 12
-      return new OSyncClusterTask();
+      case OSyncClusterTask.FACTORYID: // 12
+        return new OSyncClusterTask();
 
-    case OSyncDatabaseTask.FACTORYID: // 14
-      return new OSyncDatabaseTask();
+      case OSyncDatabaseTask.FACTORYID: // 14
+        return new OSyncDatabaseTask();
 
-    case OCopyDatabaseChunkTask.FACTORYID: // 15
-      return new OCopyDatabaseChunkTask();
+      case OCopyDatabaseChunkTask.FACTORYID: // 15
+        return new OCopyDatabaseChunkTask();
 
-    case OGossipTask.FACTORYID: // 16
-      return new OGossipTask();
+      case OGossipTask.FACTORYID: // 16
+        return new OGossipTask();
 
-    case ODropDatabaseTask.FACTORYID: // 23
-      return new ODropDatabaseTask();
+      case ODropDatabaseTask.FACTORYID: // 23
+        return new ODropDatabaseTask();
 
-    case OUpdateDatabaseConfigurationTask.FACTORYID: // 24
-      return new OUpdateDatabaseConfigurationTask();
+      case OUpdateDatabaseConfigurationTask.FACTORYID: // 24
+        return new OUpdateDatabaseConfigurationTask();
 
-    case OUpdateDatabaseStatusTask.FACTORYID: // 25
-      return new OUpdateDatabaseStatusTask();
+      case OUpdateDatabaseStatusTask.FACTORYID: // 25
+        return new OUpdateDatabaseStatusTask();
 
-    case ORequestDatabaseConfigurationTask.FACTORYID: // 27
-      return new ORequestDatabaseConfigurationTask();
+      case ORequestDatabaseConfigurationTask.FACTORYID: // 27
+        return new ORequestDatabaseConfigurationTask();
 
-    case OUnreachableServerLocalTask.FACTORYID: // 28
-      throw new IllegalArgumentException("Task with code " + code + " is not supported in remote configuration");
+      case OUnreachableServerLocalTask.FACTORYID: // 28
+        throw new IllegalArgumentException(
+            "Task with code " + code + " is not supported in remote configuration");
 
-    case OEnterpriseStatsTask.FACTORYID: // 29
-      return new OEnterpriseStatsTask();
+      case OEnterpriseStatsTask.FACTORYID: // 29
+        return new OEnterpriseStatsTask();
 
-    //--- here starts V2 ----
+        // --- here starts V2 ----
 
-    case ORunQueryExecutionPlanTask.FACTORYID: // 40
-      return new ORunQueryExecutionPlanTask();
+      case ORunQueryExecutionPlanTask.FACTORYID: // 40
+        return new ORunQueryExecutionPlanTask();
 
-    case OFetchQueryPageTask.FACTORYID: // 41
-      return new OFetchQueryPageTask();
+      case OFetchQueryPageTask.FACTORYID: // 41
+        return new OFetchQueryPageTask();
 
-    case OCloseQueryTask.FACTORYID: // 42
-      return new OCloseQueryTask();
+      case OCloseQueryTask.FACTORYID: // 42
+        return new OCloseQueryTask();
 
-    case OTransactionPhase1Task.FACTORYID: // 43
-      return new OTransactionPhase1Task();
+      case OTransactionPhase1Task.FACTORYID: // 43
+        return new OTransactionPhase1Task();
 
-    case OTransactionPhase2Task.FACTORYID: // 44
-      return new OTransactionPhase2Task();
+      case OTransactionPhase2Task.FACTORYID: // 44
+        return new OTransactionPhase2Task();
 
-    case NodeOperationTask.FACTORYID: //55
-      return new NodeOperationTask();
+      case NodeOperationTask.FACTORYID: // 55
+        return new NodeOperationTask();
 
-    case ONewSQLCommandTask.FACTORYID: //56
-      return new ONewSQLCommandTask();
+      case ONewSQLCommandTask.FACTORYID: // 56
+        return new ONewSQLCommandTask();
 
-    case OSyncDatabaseNewDeltaTask.FACTORYID: // 57
-      return new OSyncDatabaseNewDeltaTask();
+      case OSyncDatabaseNewDeltaTask.FACTORYID: // 57
+        return new OSyncDatabaseNewDeltaTask();
 
-    case OUpdateDatabaseSequenceStatusTask.FACTORYID: // 58
-      return new OUpdateDatabaseSequenceStatusTask();
+      case OUpdateDatabaseSequenceStatusTask.FACTORYID: // 58
+        return new OUpdateDatabaseSequenceStatusTask();
     }
 
     throw new IllegalArgumentException("Task with code " + code + " is not supported");

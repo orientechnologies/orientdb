@@ -21,29 +21,20 @@ package com.orientechnologies.orient.core.metadata.security;
 
 /**
  * Enum containing the restricted security (Record Level Security) permissions.
- * 
+ *
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
- * 
  */
 public enum ORestrictedOperation {
-  /**
-   * Allows all RUD rights.
-   */
+  /** Allows all RUD rights. */
   ALLOW_ALL("_allow"),
 
-  /**
-   * Allows Read rights.
-   */
+  /** Allows Read rights. */
   ALLOW_READ("_allowRead"),
 
-  /**
-   * Allows Update rights.
-   */
+  /** Allows Update rights. */
   ALLOW_UPDATE("_allowUpdate"),
 
-  /**
-   * Allows Delete rights.
-   */
+  /** Allows Delete rights. */
   ALLOW_DELETE("_allowDelete");
 
   private final String fieldName;

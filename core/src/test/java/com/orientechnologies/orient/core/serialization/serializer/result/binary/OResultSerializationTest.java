@@ -1,21 +1,25 @@
 package com.orientechnologies.orient.core.serialization.serializer.result.binary;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+
+
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.serialization.serializer.record.binary.BytesContainer;
 import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.executor.OResultInternal;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
-import java.util.*;
-
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-
-/**
- * Created by luigidellaquila on 09/12/16.
- */
+/** Created by luigidellaquila on 09/12/16. */
 public class OResultSerializationTest {
 
   protected OResultSerializerNetwork serializer;
@@ -26,9 +30,7 @@ public class OResultSerializationTest {
   }
 
   @After
-  public void after() {
-
-  }
+  public void after() {}
 
   @Test
   public void testSimpleSerialization() {
@@ -71,7 +73,7 @@ public class OResultSerializationTest {
     return serializer.deserialize(bytes);
   }
 
-  @SuppressWarnings({ "rawtypes", "unchecked" })
+  @SuppressWarnings({"rawtypes", "unchecked"})
   @Test
   public void testSimpleLiteralList() {
 
@@ -232,7 +234,6 @@ public class OResultSerializationTest {
     assertNotNull(emb);
     assertEquals(emb.<String>getProperty("name"), embedded.getProperty("name"));
     assertEquals(emb.<String>getProperty("surname"), embedded.getProperty("surname"));
-
   }
 
   @Test
@@ -255,7 +256,6 @@ public class OResultSerializationTest {
     assertNotNull(emb);
     assertEquals(emb.<String>getProperty("name"), embeddedInMap.getProperty("name"));
     assertEquals(emb.<String>getProperty("surname"), embeddedInMap.getProperty("surname"));
-
   }
 
   @Test
@@ -329,6 +329,5 @@ public class OResultSerializationTest {
     assertEquals(extr.<String>getMetadata("class"), document.getMetadata("class"));
     assertEquals(extr.<String>getMetadata("alive"), document.getMetadata("alive"));
     assertEquals(extr.<String>getMetadata("date"), document.getMetadata("date"));
-
   }
 }

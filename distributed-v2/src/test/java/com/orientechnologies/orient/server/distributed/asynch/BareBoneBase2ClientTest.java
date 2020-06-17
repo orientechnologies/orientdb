@@ -13,31 +13,34 @@ public abstract class BareBoneBase2ClientTest extends BareBoneBase1ClientTest {
     final BareBonesServer[] servers = new BareBonesServer[1];
     try {
       // Start the first DB server.
-      Thread dbServer1 = new Thread() {
-        @Override
-        public void run() {
-          servers[0] = dbServer(DB1_DIR, getDatabaseName(), "asynch-dserver-config-0.xml");
-        }
-      };
+      Thread dbServer1 =
+          new Thread() {
+            @Override
+            public void run() {
+              servers[0] = dbServer(DB1_DIR, getDatabaseName(), "asynch-dserver-config-0.xml");
+            }
+          };
       dbServer1.start();
       dbServer1.join();
 
       // Start the first DB client.
-      Thread dbClient1 = new Thread() {
-        @Override
-        public void run() {
-          dbClient1(servers);
-        }
-      };
+      Thread dbClient1 =
+          new Thread() {
+            @Override
+            public void run() {
+              dbClient1(servers);
+            }
+          };
       dbClient1.start();
 
       // Start the first DB client.
-      Thread dbClient2 = new Thread() {
-        @Override
-        public void run() {
-          dbClient2(servers);
-        }
-      };
+      Thread dbClient2 =
+          new Thread() {
+            @Override
+            public void run() {
+              dbClient2(servers);
+            }
+          };
       dbClient2.start();
 
       dbClient1.join();
@@ -67,5 +70,4 @@ public abstract class BareBoneBase2ClientTest extends BareBoneBase1ClientTest {
       xcpt.printStackTrace();
     }
   }
-
 }

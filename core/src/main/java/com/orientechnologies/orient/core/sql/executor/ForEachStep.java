@@ -6,24 +6,30 @@ import com.orientechnologies.orient.core.command.OBasicCommandContext;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.OExecutionThreadLocal;
 import com.orientechnologies.orient.core.exception.OCommandInterruptedException;
-import com.orientechnologies.orient.core.sql.parser.*;
-
+import com.orientechnologies.orient.core.sql.parser.OExpression;
+import com.orientechnologies.orient.core.sql.parser.OForEachBlock;
+import com.orientechnologies.orient.core.sql.parser.OIdentifier;
+import com.orientechnologies.orient.core.sql.parser.OIfStatement;
+import com.orientechnologies.orient.core.sql.parser.OReturnStatement;
+import com.orientechnologies.orient.core.sql.parser.OStatement;
 import java.util.Iterator;
 import java.util.List;
 
-/**
- * Created by luigidellaquila on 19/09/16.
- */
+/** Created by luigidellaquila on 19/09/16. */
 public class ForEachStep extends AbstractExecutionStep {
-  private final OIdentifier      loopVariable;
-  private final OExpression      source;
-  public        List<OStatement> body;
+  private final OIdentifier loopVariable;
+  private final OExpression source;
+  public List<OStatement> body;
 
-  private Iterator               iterator;
+  private Iterator iterator;
   private OExecutionStepInternal finalResult = null;
-  private boolean                inited      = false;
+  private boolean inited = false;
 
-  public ForEachStep(OIdentifier loopVariable, OExpression oExpression, List<OStatement> statements, OCommandContext ctx,
+  public ForEachStep(
+      OIdentifier loopVariable,
+      OExpression oExpression,
+      List<OStatement> statements,
+      OCommandContext ctx,
       boolean enableProfiling) {
     super(ctx, enableProfiling);
     this.loopVariable = loopVariable;
@@ -52,7 +58,6 @@ public class ForEachStep extends AbstractExecutionStep {
     }
     finalResult = new EmptyStep(ctx, false);
     return finalResult.syncPull(ctx, nRecords);
-
   }
 
   protected void init(OCommandContext ctx) {

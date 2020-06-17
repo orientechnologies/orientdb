@@ -20,16 +20,12 @@ import com.orientechnologies.orient.core.db.ODatabasePool;
 import com.orientechnologies.orient.core.db.OrientDBConfig;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.record.OVertex;
-
+import java.util.HashMap;
+import java.util.Map;
 import org.junit.Assert;
 import org.junit.Test;
 
-import java.util.HashMap;
-import java.util.Map;
-
-/**
- * Tests load balancing at client side.
- */
+/** Tests load balancing at client side. */
 public class ServerClusterRemoteInsertBalancedIT extends AbstractServerClusterTest {
   private static final int ITERATIONS = 10;
 
@@ -45,12 +41,17 @@ public class ServerClusterRemoteInsertBalancedIT extends AbstractServerClusterTe
 
     testRoundRobinOnConnect();
     testRoundRobinOnRequest();
-
   }
 
   private void testRoundRobinOnConnect() {
-    ODatabasePool pool = new ODatabasePool("remote:localhost/" + getDatabaseName(), "admin", "admin",
-        OrientDBConfig.builder().addConfig(OGlobalConfiguration.CLIENT_CONNECTION_STRATEGY, "ROUND_ROBIN_CONNECT").build());
+    ODatabasePool pool =
+        new ODatabasePool(
+            "remote:localhost/" + getDatabaseName(),
+            "admin",
+            "admin",
+            OrientDBConfig.builder()
+                .addConfig(OGlobalConfiguration.CLIENT_CONNECTION_STRATEGY, "ROUND_ROBIN_CONNECT")
+                .build());
 
     ODatabaseDocument graph = pool.acquire();
     graph.createVertexClass("Client");
@@ -64,10 +65,8 @@ public class ServerClusterRemoteInsertBalancedIT extends AbstractServerClusterTe
         final OVertex v = graph.newVertex("Client").save();
 
         Integer value = clusterIds.get(v.getIdentity().getClusterId());
-        if (value == null)
-          value = 1;
-        else
-          value++;
+        if (value == null) value = 1;
+        else value++;
 
         clusterIds.put(v.getIdentity().getClusterId(), value);
 
@@ -81,8 +80,14 @@ public class ServerClusterRemoteInsertBalancedIT extends AbstractServerClusterTe
   }
 
   private void testRoundRobinOnRequest() {
-    ODatabasePool factory = new ODatabasePool("remote:localhost/" + getDatabaseName(), "admin", "admin",
-        OrientDBConfig.builder().addConfig(OGlobalConfiguration.CLIENT_CONNECTION_STRATEGY, "ROUND_ROBIN_CONNECT").build());
+    ODatabasePool factory =
+        new ODatabasePool(
+            "remote:localhost/" + getDatabaseName(),
+            "admin",
+            "admin",
+            OrientDBConfig.builder()
+                .addConfig(OGlobalConfiguration.CLIENT_CONNECTION_STRATEGY, "ROUND_ROBIN_CONNECT")
+                .build());
     ODatabaseDocument graph = factory.acquire();
 
     Map<Integer, Integer> clusterIds = new HashMap<Integer, Integer>();
@@ -92,13 +97,10 @@ public class ServerClusterRemoteInsertBalancedIT extends AbstractServerClusterTe
         final OVertex v = graph.newVertex("Client").save();
 
         Integer value = clusterIds.get(v.getIdentity().getClusterId());
-        if (value == null)
-          value = 1;
-        else
-          value++;
+        if (value == null) value = 1;
+        else value++;
 
         clusterIds.put(v.getIdentity().getClusterId(), value);
-
       }
     } finally {
       graph.close();
@@ -111,5 +113,4 @@ public class ServerClusterRemoteInsertBalancedIT extends AbstractServerClusterTe
   public String getDatabaseName() {
     return "distributed-insert-loadbalancing";
   }
-
 }

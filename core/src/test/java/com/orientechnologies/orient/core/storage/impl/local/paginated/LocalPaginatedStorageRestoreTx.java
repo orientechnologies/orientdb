@@ -15,14 +15,27 @@ import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.tx.OTransaction;
-import org.junit.*;
-
-import java.io.*;
-import java.util.*;
+import java.io.BufferedInputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Random;
+import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import org.junit.After;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Ignore;
+import org.junit.Test;
 
 /**
  * @author Andrey Lomakin (a.lomakin-at-orientdb.com)
@@ -31,7 +44,7 @@ import java.util.concurrent.Future;
 public class LocalPaginatedStorageRestoreTx {
   private ODatabaseDocumentTx testDocumentTx;
   private ODatabaseDocumentTx baseDocumentTx;
-  private File                buildDir;
+  private File buildDir;
 
   private ExecutorService executorService = Executors.newCachedThreadPool();
 
@@ -60,12 +73,13 @@ public class LocalPaginatedStorageRestoreTx {
     buildDirectory += "/localPaginatedStorageRestoreFromTx";
 
     buildDir = new File(buildDirectory);
-    if (buildDir.exists())
-      buildDir.delete();
+    if (buildDir.exists()) buildDir.delete();
 
     buildDir.mkdir();
 
-    baseDocumentTx = new ODatabaseDocumentTx("plocal:" + buildDir.getAbsolutePath() + "/baseLocalPaginatedStorageRestoreFromTx");
+    baseDocumentTx =
+        new ODatabaseDocumentTx(
+            "plocal:" + buildDir.getAbsolutePath() + "/baseLocalPaginatedStorageRestoreFromTx");
     if (baseDocumentTx.exists()) {
       baseDocumentTx.open("admin", "admin");
       baseDocumentTx.drop();
@@ -74,7 +88,6 @@ public class LocalPaginatedStorageRestoreTx {
     baseDocumentTx.create();
 
     createSchema(baseDocumentTx);
-
   }
 
   @After
@@ -95,11 +108,9 @@ public class LocalPaginatedStorageRestoreTx {
 
     baseDocumentTx.declareIntent(new OIntentMassiveInsert());
 
-    for (int i = 0; i < 8; i++)
-      futures.add(executorService.submit(new DataPropagationTask()));
+    for (int i = 0; i < 8; i++) futures.add(executorService.submit(new DataPropagationTask()));
 
-    for (Future<Void> future : futures)
-      future.get();
+    for (Future<Void> future : futures) future.get();
 
     Thread.sleep(1500);
     copyDataFromTestWithoutClose();
@@ -107,17 +118,24 @@ public class LocalPaginatedStorageRestoreTx {
     baseDocumentTx.close();
     storage.close();
 
-    testDocumentTx = new ODatabaseDocumentTx("plocal:" + buildDir.getAbsolutePath() + "/testLocalPaginatedStorageRestoreFromTx");
+    testDocumentTx =
+        new ODatabaseDocumentTx(
+            "plocal:" + buildDir.getAbsolutePath() + "/testLocalPaginatedStorageRestoreFromTx");
     testDocumentTx.open("admin", "admin");
     testDocumentTx.close();
 
-    ODatabaseCompare databaseCompare = new ODatabaseCompare(testDocumentTx.getURL(), baseDocumentTx.getURL(), "admin", "admin",
-        new OCommandOutputListener() {
-          @Override
-          public void onMessage(String text) {
-            System.out.println(text);
-          }
-        });
+    ODatabaseCompare databaseCompare =
+        new ODatabaseCompare(
+            testDocumentTx.getURL(),
+            baseDocumentTx.getURL(),
+            "admin",
+            "admin",
+            new OCommandOutputListener() {
+              @Override
+              public void onMessage(String text) {
+                System.out.println(text);
+              }
+            });
     databaseCompare.setCompareIndexMetadata(true);
 
     Assert.assertTrue(databaseCompare.compare());
@@ -125,7 +143,8 @@ public class LocalPaginatedStorageRestoreTx {
 
   private void copyDataFromTestWithoutClose() throws Exception {
     final String testStoragePath = baseDocumentTx.getURL().substring("plocal:".length());
-    final String copyTo = buildDir.getAbsolutePath() + File.separator + "testLocalPaginatedStorageRestoreFromTx";
+    final String copyTo =
+        buildDir.getAbsolutePath() + File.separator + "testLocalPaginatedStorageRestoreFromTx";
 
     final File testStorageDir = new File(testStoragePath);
     final File copyToDir = new File(copyTo);
@@ -139,32 +158,83 @@ public class LocalPaginatedStorageRestoreTx {
     for (File storageFile : storageFiles) {
       String copyToPath;
       if (storageFile.getAbsolutePath().endsWith("baseLocalPaginatedStorageRestoreFromTx.wmr"))
-        copyToPath = copyToDir.getAbsolutePath() + File.separator + "testLocalPaginatedStorageRestoreFromTx.wmr";
-      else if (storageFile.getAbsolutePath().endsWith("baseLocalPaginatedStorageRestoreFromTx.0.wal"))
-        copyToPath = copyToDir.getAbsolutePath() + File.separator + "testLocalPaginatedStorageRestoreFromTx.0.wal";
-      else if (storageFile.getAbsolutePath().endsWith("baseLocalPaginatedStorageRestoreFromTx.1.wal"))
-        copyToPath = copyToDir.getAbsolutePath() + File.separator + "testLocalPaginatedStorageRestoreFromTx.1.wal";
-      else if (storageFile.getAbsolutePath().endsWith("baseLocalPaginatedStorageRestoreFromTx.2.wal"))
-        copyToPath = copyToDir.getAbsolutePath() + File.separator + "testLocalPaginatedStorageRestoreFromTx.2.wal";
-      else if (storageFile.getAbsolutePath().endsWith("baseLocalPaginatedStorageRestoreFromTx.3.wal"))
-        copyToPath = copyToDir.getAbsolutePath() + File.separator + "testLocalPaginatedStorageRestoreFromTx.3.wal";
-      else if (storageFile.getAbsolutePath().endsWith("baseLocalPaginatedStorageRestoreFromTx.4.wal"))
-        copyToPath = copyToDir.getAbsolutePath() + File.separator + "testLocalPaginatedStorageRestoreFromTx.4.wal";
-      else if (storageFile.getAbsolutePath().endsWith("baseLocalPaginatedStorageRestoreFromTx.5.wal"))
-        copyToPath = copyToDir.getAbsolutePath() + File.separator + "testLocalPaginatedStorageRestoreFromTx.5.wal";
-      else if (storageFile.getAbsolutePath().endsWith("baseLocalPaginatedStorageRestoreFromTx.6.wal"))
-        copyToPath = copyToDir.getAbsolutePath() + File.separator + "testLocalPaginatedStorageRestoreFromTx.6.wal";
-      else if (storageFile.getAbsolutePath().endsWith("baseLocalPaginatedStorageRestoreFromTx.7.wal"))
-        copyToPath = copyToDir.getAbsolutePath() + File.separator + "testLocalPaginatedStorageRestoreFromTx.7.wal";
-      else if (storageFile.getAbsolutePath().endsWith("baseLocalPaginatedStorageRestoreFromTx.8.wal"))
-        copyToPath = copyToDir.getAbsolutePath() + File.separator + "testLocalPaginatedStorageRestoreFromTx.8.wal";
-      else if (storageFile.getAbsolutePath().endsWith("baseLocalPaginatedStorageRestoreFromTx.9.wal"))
-        copyToPath = copyToDir.getAbsolutePath() + File.separator + "testLocalPaginatedStorageRestoreFromTx.9.wal";
-      else
-        copyToPath = copyToDir.getAbsolutePath() + File.separator + storageFile.getName();
+        copyToPath =
+            copyToDir.getAbsolutePath()
+                + File.separator
+                + "testLocalPaginatedStorageRestoreFromTx.wmr";
+      else if (storageFile
+          .getAbsolutePath()
+          .endsWith("baseLocalPaginatedStorageRestoreFromTx.0.wal"))
+        copyToPath =
+            copyToDir.getAbsolutePath()
+                + File.separator
+                + "testLocalPaginatedStorageRestoreFromTx.0.wal";
+      else if (storageFile
+          .getAbsolutePath()
+          .endsWith("baseLocalPaginatedStorageRestoreFromTx.1.wal"))
+        copyToPath =
+            copyToDir.getAbsolutePath()
+                + File.separator
+                + "testLocalPaginatedStorageRestoreFromTx.1.wal";
+      else if (storageFile
+          .getAbsolutePath()
+          .endsWith("baseLocalPaginatedStorageRestoreFromTx.2.wal"))
+        copyToPath =
+            copyToDir.getAbsolutePath()
+                + File.separator
+                + "testLocalPaginatedStorageRestoreFromTx.2.wal";
+      else if (storageFile
+          .getAbsolutePath()
+          .endsWith("baseLocalPaginatedStorageRestoreFromTx.3.wal"))
+        copyToPath =
+            copyToDir.getAbsolutePath()
+                + File.separator
+                + "testLocalPaginatedStorageRestoreFromTx.3.wal";
+      else if (storageFile
+          .getAbsolutePath()
+          .endsWith("baseLocalPaginatedStorageRestoreFromTx.4.wal"))
+        copyToPath =
+            copyToDir.getAbsolutePath()
+                + File.separator
+                + "testLocalPaginatedStorageRestoreFromTx.4.wal";
+      else if (storageFile
+          .getAbsolutePath()
+          .endsWith("baseLocalPaginatedStorageRestoreFromTx.5.wal"))
+        copyToPath =
+            copyToDir.getAbsolutePath()
+                + File.separator
+                + "testLocalPaginatedStorageRestoreFromTx.5.wal";
+      else if (storageFile
+          .getAbsolutePath()
+          .endsWith("baseLocalPaginatedStorageRestoreFromTx.6.wal"))
+        copyToPath =
+            copyToDir.getAbsolutePath()
+                + File.separator
+                + "testLocalPaginatedStorageRestoreFromTx.6.wal";
+      else if (storageFile
+          .getAbsolutePath()
+          .endsWith("baseLocalPaginatedStorageRestoreFromTx.7.wal"))
+        copyToPath =
+            copyToDir.getAbsolutePath()
+                + File.separator
+                + "testLocalPaginatedStorageRestoreFromTx.7.wal";
+      else if (storageFile
+          .getAbsolutePath()
+          .endsWith("baseLocalPaginatedStorageRestoreFromTx.8.wal"))
+        copyToPath =
+            copyToDir.getAbsolutePath()
+                + File.separator
+                + "testLocalPaginatedStorageRestoreFromTx.8.wal";
+      else if (storageFile
+          .getAbsolutePath()
+          .endsWith("baseLocalPaginatedStorageRestoreFromTx.9.wal"))
+        copyToPath =
+            copyToDir.getAbsolutePath()
+                + File.separator
+                + "testLocalPaginatedStorageRestoreFromTx.9.wal";
+      else copyToPath = copyToDir.getAbsolutePath() + File.separator + storageFile.getName();
 
-      if (storageFile.getName().equals("dirty.fl"))
-        continue;
+      if (storageFile.getName().equals("dirty.fl")) continue;
 
       copyFile(storageFile.getAbsolutePath(), copyToPath);
     }
@@ -236,7 +306,6 @@ public class LocalPaginatedStorageRestoreTx {
 
               docTwo.field("stringList", stringList);
               docTwo.save();
-
             }
 
             if (!secondDocs.isEmpty()) {
@@ -276,12 +345,10 @@ public class LocalPaginatedStorageRestoreTx {
 
             db.commit();
 
-            if (deleteIndex >= 0)
-              firstDocs.remove(deleteIndex);
+            if (deleteIndex >= 0) firstDocs.remove(deleteIndex);
 
             firstDocs.add(docOne.getIdentity());
-            if (docTwo != null)
-              secondDocs.add(docTwo.getIdentity());
+            if (docTwo != null) secondDocs.add(docTwo.getIdentity());
 
           } catch (Exception e) {
             db.rollback();

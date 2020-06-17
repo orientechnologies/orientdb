@@ -26,17 +26,17 @@ import com.orientechnologies.orient.server.network.protocol.http.OHttpRequest;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpResponse;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpUtils;
 import com.orientechnologies.orient.server.network.protocol.http.command.OServerCommandDocumentAbstract;
-
 import java.util.Iterator;
 import java.util.stream.Stream;
 
 public class OServerCommandGetIndex extends OServerCommandDocumentAbstract {
-  private static final String[] NAMES = { "GET|index/*" };
+  private static final String[] NAMES = {"GET|index/*"};
 
   @SuppressWarnings("unchecked")
   @Override
   public boolean execute(final OHttpRequest iRequest, OHttpResponse iResponse) throws Exception {
-    final String[] urlParts = checkSyntax(iRequest.getUrl(), 3, "Syntax error: index/<database>/<index-name>/<key>");
+    final String[] urlParts =
+        checkSyntax(iRequest.getUrl(), 3, "Syntax error: index/<database>/<index-name>/<key>");
 
     iRequest.getData().commandInfo = "Index get";
 
@@ -53,9 +53,12 @@ public class OServerCommandGetIndex extends OServerCommandDocumentAbstract {
         final Iterator<ORID> iterator = stream.iterator();
 
         if (!iterator.hasNext())
-          iResponse
-              .send(OHttpUtils.STATUS_NOTFOUND_CODE, OHttpUtils.STATUS_NOTFOUND_DESCRIPTION, OHttpUtils.CONTENT_TEXT_PLAIN, null,
-                  null);
+          iResponse.send(
+              OHttpUtils.STATUS_NOTFOUND_CODE,
+              OHttpUtils.STATUS_NOTFOUND_DESCRIPTION,
+              OHttpUtils.CONTENT_TEXT_PLAIN,
+              null,
+              null);
         else {
           final StringBuilder buffer = new StringBuilder(128);
           buffer.append('[');
@@ -73,18 +76,24 @@ public class OServerCommandGetIndex extends OServerCommandDocumentAbstract {
           buffer.append(']');
 
           if (isJsonResponse(iResponse)) {
-            iResponse.send(OHttpUtils.STATUS_OK_CODE, OHttpUtils.STATUS_OK_DESCRIPTION, OHttpUtils.CONTENT_JSON, buffer.toString(),
+            iResponse.send(
+                OHttpUtils.STATUS_OK_CODE,
+                OHttpUtils.STATUS_OK_DESCRIPTION,
+                OHttpUtils.CONTENT_JSON,
+                buffer.toString(),
                 null);
           } else {
-            iResponse
-                .send(OHttpUtils.STATUS_OK_CODE, OHttpUtils.STATUS_OK_DESCRIPTION, OHttpUtils.CONTENT_TEXT_PLAIN, buffer.toString(),
-                    null);
+            iResponse.send(
+                OHttpUtils.STATUS_OK_CODE,
+                OHttpUtils.STATUS_OK_DESCRIPTION,
+                OHttpUtils.CONTENT_TEXT_PLAIN,
+                buffer.toString(),
+                null);
           }
         }
       }
     } finally {
-      if (db != null)
-        db.close();
+      if (db != null) db.close();
     }
     return false;
   }

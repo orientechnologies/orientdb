@@ -1,34 +1,35 @@
-//package com.orientechnologies.orient.core.storage.impl.local.paginated;
+// package com.orientechnologies.orient.core.storage.impl.local.paginated;
 //
-//import com.orientechnologies.orient.core.config.OGlobalConfiguration;
-//import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
-//import com.orientechnologies.orient.core.storage.OStorage;
-//import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
-//import com.orientechnologies.orient.core.storage.cache.OReadCache;
-//import com.orientechnologies.orient.core.storage.cache.OWriteCache;
-//import com.orientechnologies.orient.core.storage.cache.local.OWOWCache;
-//import com.orientechnologies.orient.core.storage.fs.OFileClassic;
-//import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurablePage;
-//import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.*;
-//import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.cas.CASDiskWriteAheadLog;
-//import org.junit.*;
+// import com.orientechnologies.orient.core.config.OGlobalConfiguration;
+// import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+// import com.orientechnologies.orient.core.storage.OStorage;
+// import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
+// import com.orientechnologies.orient.core.storage.cache.OReadCache;
+// import com.orientechnologies.orient.core.storage.cache.OWriteCache;
+// import com.orientechnologies.orient.core.storage.cache.local.OWOWCache;
+// import com.orientechnologies.orient.core.storage.fs.OFileClassic;
+// import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurablePage;
+// import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.*;
+// import
+// com.orientechnologies.orient.core.storage.impl.local.paginated.wal.cas.CASDiskWriteAheadLog;
+// import org.junit.*;
 //
-//import java.io.File;
-//import java.io.IOException;
-//import java.io.RandomAccessFile;
-//import java.lang.reflect.Array;
-//import java.util.ArrayList;
-//import java.util.Arrays;
-//import java.util.List;
+// import java.io.File;
+// import java.io.IOException;
+// import java.io.RandomAccessFile;
+// import java.lang.reflect.Array;
+// import java.util.ArrayList;
+// import java.util.Arrays;
+// import java.util.List;
 //
-//import static org.assertj.core.api.Assertions.assertThat;
+// import static org.assertj.core.api.Assertions.assertThat;
 //
-///**
+/// **
 // * @author Andrey Lomakin (a.lomakin-at-orientdb.com)
 // * @since 5/8/13
 // */
 //
-//public class LocalPaginatedClusterWithWALTestIT extends LocalPaginatedClusterTestIT {
+// public class LocalPaginatedClusterWithWALTestIT extends LocalPaginatedClusterTestIT {
 //  static {
 //    OGlobalConfiguration.FILE_LOCK.setValue(false);
 //  }
@@ -70,14 +71,16 @@
 //  }
 //
 //  private void createExpectedStorage() {
-//    expectedDatabase = new ODatabaseDocumentTx("plocal:" + buildDirectory + File.separator + "localPaginatedClusterWithWALTestTwo");
+//    expectedDatabase = new ODatabaseDocumentTx("plocal:" + buildDirectory + File.separator +
+// "localPaginatedClusterWithWALTestTwo");
 //    if (expectedDatabase.exists()) {
 //      expectedDatabase.open("admin", "admin");
 //      expectedDatabase.drop();
 //    }
 //
 //    expectedDatabase.create();
-//    OLocalPaginatedStorage expectedStorage = (OLocalPaginatedStorage) expectedDatabase.getStorage();
+//    OLocalPaginatedStorage expectedStorage = (OLocalPaginatedStorage)
+// expectedDatabase.getStorage();
 //    expectedWriteCache = expectedStorage.getWriteCache();
 //    expectedReadCache = expectedStorage.getReadCache();
 //
@@ -106,7 +109,8 @@
 //
 //  private void createPaginatedCluster() throws IOException {
 //    paginatedCluster = new OPaginatedCluster("actualPaginatedClusterWithWALTest", storage);
-//    paginatedCluster.configure(storage, 42, "actualPaginatedClusterWithWALTest", buildDirectory, -1);
+//    paginatedCluster.configure(storage, 42, "actualPaginatedClusterWithWALTest", buildDirectory,
+// -1);
 //    paginatedCluster.create(-1);
 //  }
 //
@@ -322,10 +326,13 @@
 //
 //  private void assertFileRestoreFromWAL() throws IOException {
 //    long actualDataFileId = writeCache.fileIdByName(paginatedCluster.getName() + ".pcl");
-//    String actualDataFileNativeFileName = ((OWOWCache) writeCache).nativeFileNameById(actualDataFileId);
+//    String actualDataFileNativeFileName = ((OWOWCache)
+// writeCache).nativeFileNameById(actualDataFileId);
 //
-//    long actualClusterPositionMapId = writeCache.fileIdByName(paginatedCluster.getName() + ".cpm");
-//    String actualClusterPositionMapName = ((OWOWCache) writeCache).nativeFileNameById(actualClusterPositionMapId);
+//    long actualClusterPositionMapId = writeCache.fileIdByName(paginatedCluster.getName() +
+// ".cpm");
+//    String actualClusterPositionMapName = ((OWOWCache)
+// writeCache).nativeFileNameById(actualClusterPositionMapId);
 //
 //    databaseDocumentTx.activateOnCurrentThread();
 //    OStorage storage = databaseDocumentTx.getStorage();
@@ -334,18 +341,23 @@
 //
 //    restoreClusterFromWAL();
 //
-//    long expectedDataFileId = expectedWriteCache.fileIdByName("expectedPaginatedClusterWithWALTest.pcl");
-//    String expectedDataFileNativeFileName = ((OWOWCache) expectedWriteCache).nativeFileNameById(expectedDataFileId);
+//    long expectedDataFileId =
+// expectedWriteCache.fileIdByName("expectedPaginatedClusterWithWALTest.pcl");
+//    String expectedDataFileNativeFileName = ((OWOWCache)
+// expectedWriteCache).nativeFileNameById(expectedDataFileId);
 //
-//    long expectedClusterPositionMapId = expectedWriteCache.fileIdByName("expectedPaginatedClusterWithWALTest.cpm");
-//    String expectedClusterPositionMapName = ((OWOWCache) expectedWriteCache).nativeFileNameById(expectedClusterPositionMapId);
+//    long expectedClusterPositionMapId =
+// expectedWriteCache.fileIdByName("expectedPaginatedClusterWithWALTest.cpm");
+//    String expectedClusterPositionMapName = ((OWOWCache)
+// expectedWriteCache).nativeFileNameById(expectedClusterPositionMapId);
 //
 //    expectedDatabase.activateOnCurrentThread();
 //    storage = expectedDatabase.getStorage();
 //    expectedDatabase.close();
 //    storage.close(true, false);
 //
-//    assertClusterContentIsTheSame(expectedDataFileNativeFileName, actualDataFileNativeFileName, expectedClusterPositionMapName,
+//    assertClusterContentIsTheSame(expectedDataFileNativeFileName, actualDataFileNativeFileName,
+// expectedClusterPositionMapName,
 //        actualClusterPositionMapName);
 //  }
 //
@@ -370,23 +382,28 @@
 //        atomicChangeIsProcessed = false;
 //
 //        for (OWALRecord restoreRecord : atomicUnit) {
-//          if (restoreRecord instanceof OAtomicUnitStartRecord || restoreRecord instanceof OAtomicUnitEndRecord
+//          if (restoreRecord instanceof OAtomicUnitStartRecord || restoreRecord instanceof
+// OAtomicUnitEndRecord
 //              || restoreRecord instanceof ONonTxOperationPerformedWALRecord)
 //            continue;
 //
 //          if (restoreRecord instanceof OFileCreatedWALRecord) {
-//            final OFileCreatedWALRecord fileCreatedCreatedRecord = (OFileCreatedWALRecord) restoreRecord;
+//            final OFileCreatedWALRecord fileCreatedCreatedRecord = (OFileCreatedWALRecord)
+// restoreRecord;
 //            final String fileName = fileCreatedCreatedRecord.getFileName()
-//                .replace("actualPaginatedClusterWithWALTest", "expectedPaginatedClusterWithWALTest");
+//                .replace("actualPaginatedClusterWithWALTest",
+// "expectedPaginatedClusterWithWALTest");
 //            if (!expectedWriteCache.exists(fileName))
-//              expectedReadCache.addFile(fileName, fileCreatedCreatedRecord.getFileId(), expectedWriteCache);
+//              expectedReadCache.addFile(fileName, fileCreatedCreatedRecord.getFileId(),
+// expectedWriteCache);
 //          } else {
 //            final OUpdatePageRecord updatePageRecord = (OUpdatePageRecord) restoreRecord;
 //
 //            final long fileId = updatePageRecord.getFileId();
 //            final long pageIndex = updatePageRecord.getPageIndex();
 //
-//            OCacheEntry cacheEntry = expectedReadCache.loadForWrite(fileId, pageIndex, true, expectedWriteCache, 1, false);
+//            OCacheEntry cacheEntry = expectedReadCache.loadForWrite(fileId, pageIndex, true,
+// expectedWriteCache, 1, false);
 //            if (cacheEntry == null) {
 //              do {
 //                if (cacheEntry != null)
@@ -420,12 +437,15 @@
 //    log.close();
 //  }
 //
-//  private void assertClusterContentIsTheSame(String expectedDataFileName, String actualDataFileName,
-//      String expectedClusterPositionMapName, String actualClusterPositionMapMap) throws IOException {
+//  private void assertClusterContentIsTheSame(String expectedDataFileName, String
+// actualDataFileName,
+//      String expectedClusterPositionMapName, String actualClusterPositionMapMap) throws
+// IOException {
 //
 //    File expectedDataFile = new File(expectedStorageDir, expectedDataFileName);
 //    RandomAccessFile datFileOne = new RandomAccessFile(expectedDataFile, "r");
-//    RandomAccessFile datFileTwo = new RandomAccessFile(new File(storageDir, actualDataFileName), "r");
+//    RandomAccessFile datFileTwo = new RandomAccessFile(new File(storageDir, actualDataFileName),
+// "r");
 //
 //    assertFileContentIsTheSame(datFileOne, datFileTwo);
 //
@@ -434,7 +454,8 @@
 //
 //    File expectedRIDMapFile = new File(expectedStorageDir, expectedClusterPositionMapName);
 //    RandomAccessFile ridMapOne = new RandomAccessFile(expectedRIDMapFile, "r");
-//    RandomAccessFile ridMapTwo = new RandomAccessFile(new File(storageDir, actualClusterPositionMapMap), "r");
+//    RandomAccessFile ridMapTwo = new RandomAccessFile(new File(storageDir,
+// actualClusterPositionMapMap), "r");
 //
 //    assertFileContentIsTheSame(ridMapOne, ridMapTwo);
 //
@@ -443,7 +464,8 @@
 //
 //  }
 //
-//  private void assertFileContentIsTheSame(RandomAccessFile datFileOne, RandomAccessFile datFileTwo) throws IOException {
+//  private void assertFileContentIsTheSame(RandomAccessFile datFileOne, RandomAccessFile
+// datFileTwo) throws IOException {
 //    Assert.assertEquals(datFileOne.length(), datFileTwo.length());
 //
 //    byte[] expectedContent = new byte[OClusterPage.PAGE_SIZE];
@@ -458,12 +480,14 @@
 //
 //      //      Assert.assertEquals(expectedContent, actualContent);
 //
-//      assertThat(Arrays.copyOfRange(expectedContent, ODurablePage.NEXT_FREE_POSITION, ODurablePage.MAX_PAGE_SIZE_BYTES))
-//          .isEqualTo(Arrays.copyOfRange(actualContent, ODurablePage.NEXT_FREE_POSITION, ODurablePage.MAX_PAGE_SIZE_BYTES));
+//      assertThat(Arrays.copyOfRange(expectedContent, ODurablePage.NEXT_FREE_POSITION,
+// ODurablePage.MAX_PAGE_SIZE_BYTES))
+//          .isEqualTo(Arrays.copyOfRange(actualContent, ODurablePage.NEXT_FREE_POSITION,
+// ODurablePage.MAX_PAGE_SIZE_BYTES));
 //
 //      expectedContent = new byte[OClusterPage.PAGE_SIZE];
 //      actualContent = new byte[OClusterPage.PAGE_SIZE];
 //      bytesRead = datFileOne.read(expectedContent);
 //    }
 //  }
-//}
+// }

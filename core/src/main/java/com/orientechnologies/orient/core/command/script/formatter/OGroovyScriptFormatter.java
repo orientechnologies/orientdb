@@ -36,8 +36,7 @@ public class OGroovyScriptFormatter implements OScriptFormatter {
     int i = 0;
     if (f.getParameters() != null)
       for (String p : f.getParameters()) {
-        if (i++ > 0)
-          fCode.append(',');
+        if (i++ > 0) fCode.append(',');
         fCode.append(p);
       }
     fCode.append(") {\n");
@@ -56,8 +55,7 @@ public class OGroovyScriptFormatter implements OScriptFormatter {
     if (iArgs != null) {
       int i = 0;
       for (Object a : iArgs) {
-        if (i++ > 0)
-          code.append(',');
+        if (i++ > 0) code.append(',');
         code.append(a);
       }
     }

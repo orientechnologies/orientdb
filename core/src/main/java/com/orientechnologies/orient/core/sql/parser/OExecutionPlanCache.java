@@ -12,33 +12,32 @@ import com.orientechnologies.orient.core.index.OIndexManagerAbstract;
 import com.orientechnologies.orient.core.metadata.schema.OSchemaShared;
 import com.orientechnologies.orient.core.sql.executor.OExecutionPlan;
 import com.orientechnologies.orient.core.sql.executor.OInternalExecutionPlan;
-
 import java.util.LinkedHashMap;
 import java.util.Map;
 
 /**
- * This class is an LRU cache for already prepared SQL execution plans. It stores itself in the storage as a resource. It also acts
- * an an entry point for the SQL executor.
+ * This class is an LRU cache for already prepared SQL execution plans. It stores itself in the
+ * storage as a resource. It also acts an an entry point for the SQL executor.
  *
  * @author Luigi Dell'Aquila (l.dellaquila-(at)-orientdb.com)
  */
 public class OExecutionPlanCache implements OMetadataUpdateListener {
 
   Map<String, OInternalExecutionPlan> map;
-  int                                 mapSize;
+  int mapSize;
 
   protected long lastInvalidation = -1;
 
-  /**
-   * @param size the size of the cache
-   */
+  /** @param size the size of the cache */
   public OExecutionPlanCache(int size) {
     this.mapSize = size;
-    map = new LinkedHashMap<String, OInternalExecutionPlan>(size) {
-      protected boolean removeEldestEntry(final Map.Entry<String, OInternalExecutionPlan> eldest) {
-        return super.size() > mapSize;
-      }
-    };
+    map =
+        new LinkedHashMap<String, OInternalExecutionPlan>(size) {
+          protected boolean removeEldestEntry(
+              final Map.Entry<String, OInternalExecutionPlan> eldest) {
+            return super.size() > mapSize;
+          }
+        };
   }
 
   public static long getLastInvalidation(ODatabaseDocumentInternal db) {
@@ -54,7 +53,6 @@ public class OExecutionPlanCache implements OMetadataUpdateListener {
 
   /**
    * @param statement an SQL statement
-   *
    * @return true if the corresponding executor is present in the cache
    */
   public boolean contains(String statement) {
@@ -67,15 +65,16 @@ public class OExecutionPlanCache implements OMetadataUpdateListener {
   }
 
   /**
-   * returns an already prepared SQL execution plan, taking it from the cache if it exists or creating a new one if it doesn't
+   * returns an already prepared SQL execution plan, taking it from the cache if it exists or
+   * creating a new one if it doesn't
    *
    * @param statement the SQL statement
    * @param ctx
-   * @param db        the current DB instance
-   *
+   * @param db the current DB instance
    * @return a statement executor from the cache
    */
-  public static OExecutionPlan get(String statement, OCommandContext ctx, ODatabaseDocumentInternal db) {
+  public static OExecutionPlan get(
+      String statement, OCommandContext ctx, ODatabaseDocumentInternal db) {
     if (db == null) {
       throw new IllegalArgumentException("DB cannot be null");
     }
@@ -114,7 +113,7 @@ public class OExecutionPlanCache implements OMetadataUpdateListener {
       OBasicCommandContext ctx = new OBasicCommandContext();
       ctx.setDatabase(db);
       internal = internal.copy(ctx);
-      //this copy is never used, so it has to be closed to free resources
+      // this copy is never used, so it has to be closed to free resources
       internal.close();
       map.put(statement, internal);
     }
@@ -123,10 +122,10 @@ public class OExecutionPlanCache implements OMetadataUpdateListener {
   /**
    * @param statement an SQL statement
    * @param ctx
-   *
    * @return the corresponding executor, taking it from the internal cache, if it exists
    */
-  public OExecutionPlan getInternal(String statement, OCommandContext ctx, ODatabaseDocumentInternal db) {
+  public OExecutionPlan getInternal(
+      String statement, OCommandContext ctx, ODatabaseDocumentInternal db) {
     OInternalExecutionPlan result;
     if (statement == null) {
       return null;
@@ -135,7 +134,7 @@ public class OExecutionPlanCache implements OMetadataUpdateListener {
       return null;
     }
     synchronized (map) {
-      //LRU
+      // LRU
       result = map.remove(statement);
       if (result != null) {
         map.put(statement, result);

@@ -5,16 +5,14 @@ import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.WALRecordTypes;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.PageOperationRecord;
 import com.orientechnologies.orient.core.storage.index.sbtree.local.v2.OSBTreeBucketV2;
-
 import java.nio.ByteBuffer;
 
 public final class SBTreeBucketV2RemoveLeafEntryPO extends PageOperationRecord {
-  private int    index;
+  private int index;
   private byte[] key;
   private byte[] value;
 
-  public SBTreeBucketV2RemoveLeafEntryPO() {
-  }
+  public SBTreeBucketV2RemoveLeafEntryPO() {}
 
   public SBTreeBucketV2RemoveLeafEntryPO(int index, byte[] key, byte[] value) {
     this.index = index;

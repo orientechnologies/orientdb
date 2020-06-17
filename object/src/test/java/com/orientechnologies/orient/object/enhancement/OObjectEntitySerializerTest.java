@@ -1,11 +1,12 @@
 package com.orientechnologies.orient.object.enhancement;
 
+import static org.junit.Assert.assertTrue;
+
+
 import com.orientechnologies.orient.object.db.OObjectDatabaseTx;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-
-import static org.junit.Assert.*;
 
 /**
  * @author LomakiA <a href="mailto:Andrey.Lomakin@exigenservices.com">Andrey Lomakin</a>
@@ -21,7 +22,6 @@ public class OObjectEntitySerializerTest {
     databaseTx.create();
 
     databaseTx.getEntityManager().registerEntityClass(ExactEntity.class);
-
   }
 
   @After

@@ -25,19 +25,20 @@ import com.orientechnologies.orient.server.network.protocol.http.OHttpRequest;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpResponse;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpUtils;
 import com.orientechnologies.orient.server.network.protocol.http.command.OServerCommandAuthenticatedServerAbstract;
-
 import java.io.IOException;
 
 public class OServerCommandPostServer extends OServerCommandAuthenticatedServerAbstract {
-  private static final String[] NAMES = { "POST|server/*" };
+  private static final String[] NAMES = {"POST|server/*"};
 
   public OServerCommandPostServer() {
     super("server.settings");
   }
 
   @Override
-  public boolean execute(final OHttpRequest iRequest, final OHttpResponse iResponse) throws Exception {
-    final String[] urlParts = checkSyntax(iRequest.getUrl(), 3, "Syntax error: server/<setting-name>/<setting-value>");
+  public boolean execute(final OHttpRequest iRequest, final OHttpResponse iResponse)
+      throws Exception {
+    final String[] urlParts =
+        checkSyntax(iRequest.getUrl(), 3, "Syntax error: server/<setting-name>/<setting-value>");
 
     iRequest.getData().commandInfo = "Change server settings";
 
@@ -49,20 +50,26 @@ public class OServerCommandPostServer extends OServerCommandAuthenticatedServerA
 
     if (settingName.startsWith("configuration.")) {
 
-      changeConfiguration(iResponse, settingName.substring("configuration.".length()), settingValue);
+      changeConfiguration(
+          iResponse, settingName.substring("configuration.".length()), settingValue);
 
     } else if (settingName.startsWith("log.")) {
 
       changeLogLevel(iResponse, settingName.substring("log.".length()), settingValue);
 
     } else
-      iResponse.send(OHttpUtils.STATUS_BADREQ_CODE, OHttpUtils.STATUS_BADREQ_DESCRIPTION, OHttpUtils.CONTENT_TEXT_PLAIN,
-          "setting-name '" + settingName + "' is not supported", null);
+      iResponse.send(
+          OHttpUtils.STATUS_BADREQ_CODE,
+          OHttpUtils.STATUS_BADREQ_DESCRIPTION,
+          OHttpUtils.CONTENT_TEXT_PLAIN,
+          "setting-name '" + settingName + "' is not supported",
+          null);
 
     return false;
   }
 
-  private void changeConfiguration(final OHttpResponse iResponse, final String settingName, final String settingValue)
+  private void changeConfiguration(
+      final OHttpResponse iResponse, final String settingName, final String settingValue)
       throws IOException {
     final OGlobalConfiguration cfg = OGlobalConfiguration.findByKey(settingName);
     if (cfg != null) {
@@ -70,27 +77,46 @@ public class OServerCommandPostServer extends OServerCommandAuthenticatedServerA
 
       cfg.setValue(settingValue);
 
-
-      iResponse.send(OHttpUtils.STATUS_OK_CODE, OHttpUtils.STATUS_OK_DESCRIPTION, OHttpUtils.CONTENT_TEXT_PLAIN,
-          "Server global configuration '" + settingName + "' update successfully. Old value was '" + oldValue + "', new value is '"
-              + settingValue + "'", null);
+      iResponse.send(
+          OHttpUtils.STATUS_OK_CODE,
+          OHttpUtils.STATUS_OK_DESCRIPTION,
+          OHttpUtils.CONTENT_TEXT_PLAIN,
+          "Server global configuration '"
+              + settingName
+              + "' update successfully. Old value was '"
+              + oldValue
+              + "', new value is '"
+              + settingValue
+              + "'",
+          null);
     } else
-      iResponse.send(OHttpUtils.STATUS_BADREQ_CODE, OHttpUtils.STATUS_BADREQ_DESCRIPTION, OHttpUtils.CONTENT_TEXT_PLAIN,
-          "Server global configuration '" + settingName + "' is invalid", null);
+      iResponse.send(
+          OHttpUtils.STATUS_BADREQ_CODE,
+          OHttpUtils.STATUS_BADREQ_DESCRIPTION,
+          OHttpUtils.CONTENT_TEXT_PLAIN,
+          "Server global configuration '" + settingName + "' is invalid",
+          null);
   }
 
-  private void changeLogLevel(final OHttpResponse iResponse, final String settingName, final String settingValue)
+  private void changeLogLevel(
+      final OHttpResponse iResponse, final String settingName, final String settingValue)
       throws IOException {
-    if (settingName.equals("console"))
-      OLogManager.instance().setConsoleLevel(settingValue);
-    else if (settingName.equals("file"))
-      OLogManager.instance().setFileLevel(settingValue);
+    if (settingName.equals("console")) OLogManager.instance().setConsoleLevel(settingValue);
+    else if (settingName.equals("file")) OLogManager.instance().setFileLevel(settingValue);
     else
-      iResponse.send(OHttpUtils.STATUS_BADREQ_CODE, OHttpUtils.STATUS_BADREQ_DESCRIPTION, OHttpUtils.CONTENT_TEXT_PLAIN,
-          "log name '" + settingName + "' is not supported. Use 'console' or 'log'", null);
+      iResponse.send(
+          OHttpUtils.STATUS_BADREQ_CODE,
+          OHttpUtils.STATUS_BADREQ_DESCRIPTION,
+          OHttpUtils.CONTENT_TEXT_PLAIN,
+          "log name '" + settingName + "' is not supported. Use 'console' or 'log'",
+          null);
 
-    iResponse.send(OHttpUtils.STATUS_OK_CODE, OHttpUtils.STATUS_OK_DESCRIPTION, OHttpUtils.CONTENT_TEXT_PLAIN,
-        "Server log configuration '" + settingName + "' update successfully", null);
+    iResponse.send(
+        OHttpUtils.STATUS_OK_CODE,
+        OHttpUtils.STATUS_OK_DESCRIPTION,
+        OHttpUtils.CONTENT_TEXT_PLAIN,
+        "Server log configuration '" + settingName + "' update successfully",
+        null);
   }
 
   @Override

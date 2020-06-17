@@ -18,16 +18,16 @@
 
 package com.orientechnologies.orient.etl.extractor;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+
+
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.etl.OETLBaseTest;
-import org.junit.Test;
-
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
-
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
+import org.junit.Test;
 
 /**
  * Tests ETL XML Extractor.
@@ -38,7 +38,8 @@ public class OETLXmlExtractorTest extends OETLBaseTest {
 
   @Test
   public void testSimpleXml() {
-    configure("{source: { file: { path: 'src/test/resources/simple.xml' } }, extractor : { xml: {} }, loader: { test: {} } }");
+    configure(
+        "{source: { file: { path: 'src/test/resources/simple.xml' } }, extractor : { xml: {} }, loader: { test: {} } }");
     proc.execute();
 
     assertEquals(1, getResult().size());
@@ -65,7 +66,6 @@ public class OETLXmlExtractorTest extends OETLBaseTest {
     assertNotNull(maserati);
     assertEquals("Maserati", maserati.field("name"));
     assertEquals("black", maserati.field("color"));
-
   }
 
   @Test
@@ -78,7 +78,6 @@ public class OETLXmlExtractorTest extends OETLBaseTest {
 
     final List<ODocument> cds = getResult();
     final Iterator<ODocument> it = cds.iterator();
-
 
     final ODocument doc1 = it.next();
     assertNotNull(doc1);

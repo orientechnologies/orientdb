@@ -1,15 +1,15 @@
 package com.orientechnologies.orient.core.sql.executor;
 
 import com.orientechnologies.orient.core.id.ORID;
-
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Set;
 
 /**
- * Special implementation of Java Set&lt;ORID&gt; to efficiently handle memory and performance.
- * It does not store actual RIDs, but it only keeps track that a RID was stored, so the iterator will return new instances.
+ * Special implementation of Java Set&lt;ORID&gt; to efficiently handle memory and performance. It
+ * does not store actual RIDs, but it only keeps track that a RID was stored, so the iterator will
+ * return new instances.
  *
  * @author Luigi Dell'Aquila
  */
@@ -28,27 +28,23 @@ public class ORidSet implements Set<ORID> {
   private long size = 0;
   protected Set<ORID> negatives = new HashSet<>();
 
-
   protected int maxArraySize;
 
-  /**
-   * instantiates an ORidSet with a bucket size of Integer.MAX_VALUE / 10
-   */
+  /** instantiates an ORidSet with a bucket size of Integer.MAX_VALUE / 10 */
   public ORidSet() {
     this(Integer.MAX_VALUE / 10);
   }
 
-  /**
-   *
-   * @param bucketSize
-   */
+  /** @param bucketSize */
   public ORidSet(int bucketSize) {
     maxArraySize = bucketSize;
   }
 
   @Override
   public int size() {
-    return size + negatives.size() <= Integer.MAX_VALUE ? (int) size + negatives.size() : Integer.MAX_VALUE;
+    return size + negatives.size() <= Integer.MAX_VALUE
+        ? (int) size + negatives.size()
+        : Integer.MAX_VALUE;
   }
 
   @Override
@@ -143,7 +139,8 @@ public class ORidSet implements Set<ORID> {
       content[cluster] = expandClusterBlocks(content[cluster], block, blockPositionByteInt);
     }
     if (content[cluster][block] == null) {
-      content[cluster][block] = expandClusterArray(new long[INITIAL_BLOCK_SIZE], blockPositionByteInt);
+      content[cluster][block] =
+          expandClusterArray(new long[INITIAL_BLOCK_SIZE], blockPositionByteInt);
     }
     if (content[cluster][block].length <= blockPositionByteInt) {
       content[cluster][block] = expandClusterArray(content[cluster][block], blockPositionByteInt);
@@ -235,7 +232,6 @@ public class ORidSet implements Set<ORID> {
       size--;
     }
     return existed == 0L;
-
   }
 
   @Override
@@ -276,7 +272,4 @@ public class ORidSet implements Set<ORID> {
     size = 0;
     this.negatives.clear();
   }
-
 }
-
-

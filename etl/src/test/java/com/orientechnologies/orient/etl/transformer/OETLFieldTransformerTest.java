@@ -18,14 +18,15 @@
 
 package com.orientechnologies.orient.etl.transformer;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.Assert.assertEquals;
+
+
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.etl.OETLBaseTest;
 import org.junit.Test;
-
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.Assert.assertEquals;
 
 /**
  * Tests ETL Field Transformer.
@@ -62,6 +63,7 @@ public class OETLFieldTransformerTest extends OETLBaseTest {
     assertEquals("Miner", doc.field("surname"));
     assertEquals("Miner", doc.field("test"));
   }
+
   @Test
   public void testToLowerCase() {
     configure(
@@ -77,8 +79,11 @@ public class OETLFieldTransformerTest extends OETLBaseTest {
 
   @Test
   public void testRemove() {
-    configure("{source: { content: { value: 'name,surname\nJay,Miner' } }, " + "extractor : { csv: {} }, "
-        + "transformers: [ {field: {fieldName:'surname', operation: 'remove'}}], " + "loader: { test: {} } }");
+    configure(
+        "{source: { content: { value: 'name,surname\nJay,Miner' } }, "
+            + "extractor : { csv: {} }, "
+            + "transformers: [ {field: {fieldName:'surname', operation: 'remove'}}], "
+            + "loader: { test: {} } }");
 
     proc.execute();
     assertEquals(1, getResult().size());
@@ -90,10 +95,16 @@ public class OETLFieldTransformerTest extends OETLBaseTest {
 
   @Test
   public void testSave() {
-    configure("{source: { content: { value: 'name,surname\nJay,Miner' } }, " + "extractor : { csv: {} }, " + "transformers: ["
-        + "{field:{log:'DEBUG',fieldName:'@class', value:'Test'}}, "
-        + "{field:{log:'DEBUG', fieldName:'test', value: 33, save:true}}" + "], "
-        + "loader: { orientdb: { dbURL: 'memory:" + name.getMethodName() + "' } } }");
+    configure(
+        "{source: { content: { value: 'name,surname\nJay,Miner' } }, "
+            + "extractor : { csv: {} }, "
+            + "transformers: ["
+            + "{field:{log:'DEBUG',fieldName:'@class', value:'Test'}}, "
+            + "{field:{log:'DEBUG', fieldName:'test', value: 33, save:true}}"
+            + "], "
+            + "loader: { orientdb: { dbURL: 'memory:"
+            + name.getMethodName()
+            + "' } } }");
     proc.execute();
     ODatabaseDocument db = proc.getLoader().getPool().acquire();
 
@@ -103,5 +114,4 @@ public class OETLFieldTransformerTest extends OETLBaseTest {
     assertThat(schema.getClass("Test")).isNotNull();
     assertEquals(1, db.countClass("Test"));
   }
-
 }

@@ -5,16 +5,15 @@ import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.sql.parser.OExpression;
 import com.orientechnologies.orient.core.sql.parser.OIdentifier;
 
-/**
- * Created by luigidellaquila on 03/08/16.
- */
+/** Created by luigidellaquila on 03/08/16. */
 public class GlobalLetExpressionStep extends AbstractExecutionStep {
   private final OIdentifier varname;
   private final OExpression expression;
 
   private boolean executed = false;
 
-  public GlobalLetExpressionStep(OIdentifier varName, OExpression expression, OCommandContext ctx, boolean profilingEnabled) {
+  public GlobalLetExpressionStep(
+      OIdentifier varName, OExpression expression, OCommandContext ctx, boolean profilingEnabled) {
     super(ctx, profilingEnabled);
     this.varname = varName;
     this.expression = expression;

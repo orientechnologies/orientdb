@@ -23,7 +23,6 @@ package com.orientechnologies.common.serialization.types;
 import com.orientechnologies.common.serialization.OBinaryConverter;
 import com.orientechnologies.common.serialization.OBinaryConverterFactory;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALChanges;
-
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 
@@ -32,19 +31,19 @@ import java.nio.ByteOrder;
  * @since 18.01.12
  */
 public class OCharSerializer implements OBinarySerializer<Character> {
-  /**
-   * size of char value in bytes
-   */
-  public static final  int              CHAR_SIZE        = 2;
-  public static final  byte             ID               = 3;
+  /** size of char value in bytes */
+  public static final int CHAR_SIZE = 2;
+
+  public static final byte ID = 3;
   private static final OBinaryConverter BINARY_CONVERTER = OBinaryConverterFactory.getConverter();
-  public static final  OCharSerializer  INSTANCE         = new OCharSerializer();
+  public static final OCharSerializer INSTANCE = new OCharSerializer();
 
   public int getObjectSize(final Character object, Object... hints) {
     return CHAR_SIZE;
   }
 
-  public void serialize(final Character object, final byte[] stream, final int startPosition, final Object... hints) {
+  public void serialize(
+      final Character object, final byte[] stream, final int startPosition, final Object... hints) {
     serializeLiteral(object.charValue(), stream, startPosition);
   }
 
@@ -74,7 +73,8 @@ public class OCharSerializer implements OBinarySerializer<Character> {
   }
 
   @Override
-  public void serializeNativeObject(Character object, byte[] stream, int startPosition, Object... hints) {
+  public void serializeNativeObject(
+      Character object, byte[] stream, int startPosition, Object... hints) {
     checkBoundaries(stream, startPosition);
 
     BINARY_CONVERTER.putChar(stream, startPosition, object, ByteOrder.nativeOrder());
@@ -87,7 +87,8 @@ public class OCharSerializer implements OBinarySerializer<Character> {
     return BINARY_CONVERTER.getChar(stream, startPosition, ByteOrder.nativeOrder());
   }
 
-  public void serializeNative(final char object, final byte[] stream, final int startPosition, final Object... hints) {
+  public void serializeNative(
+      final char object, final byte[] stream, final int startPosition, final Object... hints) {
     checkBoundaries(stream, startPosition);
 
     BINARY_CONVERTER.putChar(stream, startPosition, object, ByteOrder.nativeOrder());
@@ -112,41 +113,32 @@ public class OCharSerializer implements OBinarySerializer<Character> {
     return value;
   }
 
-  /**
-   * {@inheritDoc}
-   */
+  /** {@inheritDoc} */
   @Override
   public void serializeInByteBufferObject(Character object, ByteBuffer buffer, Object... hints) {
     buffer.putChar(object);
   }
 
-  /**
-   * {@inheritDoc}
-   */
+  /** {@inheritDoc} */
   @Override
   public Character deserializeFromByteBufferObject(ByteBuffer buffer) {
     return buffer.getChar();
   }
 
-  /**
-   * {@inheritDoc}
-   */
+  /** {@inheritDoc} */
   @Override
   public int getObjectSizeInByteBuffer(ByteBuffer buffer) {
     return CHAR_SIZE;
   }
 
-  /**
-   * {@inheritDoc}
-   */
+  /** {@inheritDoc} */
   @Override
-  public Character deserializeFromByteBufferObject(ByteBuffer buffer, OWALChanges walChanges, int offset) {
+  public Character deserializeFromByteBufferObject(
+      ByteBuffer buffer, OWALChanges walChanges, int offset) {
     return (char) walChanges.getShortValue(buffer, offset);
   }
 
-  /**
-   * {@inheritDoc}
-   */
+  /** {@inheritDoc} */
   @Override
   public int getObjectSizeInByteBuffer(ByteBuffer buffer, OWALChanges walChanges, int offset) {
     return CHAR_SIZE;
@@ -155,7 +147,10 @@ public class OCharSerializer implements OBinarySerializer<Character> {
   private static void checkBoundaries(byte[] stream, int startPosition) {
     if (startPosition + CHAR_SIZE > stream.length) {
       throw new IllegalStateException(
-          "Requested stream size is " + (startPosition + CHAR_SIZE) + " but provided stream has size " + stream.length);
+          "Requested stream size is "
+              + (startPosition + CHAR_SIZE)
+              + " but provided stream has size "
+              + stream.length);
     }
   }
 }

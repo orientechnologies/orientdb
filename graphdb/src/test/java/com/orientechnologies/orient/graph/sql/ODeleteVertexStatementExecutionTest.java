@@ -10,9 +10,7 @@ import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-/**
- * @author Luigi Dell'Aquila (l.dellaquila-(at)-orientdb.com)
- */
+/** @author Luigi Dell'Aquila (l.dellaquila-(at)-orientdb.com) */
 public class ODeleteVertexStatementExecutionTest {
   static ODatabaseDocument db;
 
@@ -66,7 +64,6 @@ public class ODeleteVertexStatementExecutionTest {
     Assert.assertEquals(0, rs.stream().count());
     rs.close();
   }
-
 
   @Test
   public void testFilterClass() {

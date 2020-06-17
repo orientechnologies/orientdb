@@ -21,7 +21,8 @@ package com.orientechnologies.orient.console;
 
 import com.orientechnologies.common.console.OConsoleApplication;
 
-public abstract class OrientConsole extends OConsoleApplication implements OTableFormatter.OTableOutput {
+public abstract class OrientConsole extends OConsoleApplication
+    implements OTableFormatter.OTableOutput {
 
   public OrientConsole(String[] args) {
     super(args);
@@ -46,8 +47,7 @@ public abstract class OrientConsole extends OConsoleApplication implements OTabl
     printApplicationInfo();
   }
 
-  protected void printApplicationInfo() {
-  }
+  protected void printApplicationInfo() {}
 
   @Override
   protected void onAfter() {
@@ -55,11 +55,9 @@ public abstract class OrientConsole extends OConsoleApplication implements OTabl
   }
 
   protected String format(final String iValue, final int iMaxSize) {
-    if (iValue == null)
-      return null;
+    if (iValue == null) return null;
 
-    if (iValue.length() > iMaxSize)
-      return iValue.substring(0, iMaxSize - 3) + "...";
+    if (iValue.length() > iMaxSize) return iValue.substring(0, iMaxSize - 3) + "...";
     return iValue;
   }
 

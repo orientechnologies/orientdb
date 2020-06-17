@@ -8,17 +8,16 @@ import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.sql.executor.ODeleteExecutionPlan;
 import com.orientechnologies.orient.core.sql.executor.ODeleteExecutionPlanner;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
-
 import java.util.HashMap;
 import java.util.Map;
 
 public class ODeleteStatement extends OStatement {
 
-  public    OFromClause  fromClause;
+  public OFromClause fromClause;
   protected OWhereClause whereClause;
-  protected boolean      returnBefore = false;
-  protected OLimit       limit        = null;
-  protected boolean      unsafe       = false;
+  protected boolean returnBefore = false;
+  protected OLimit limit = null;
+  protected boolean unsafe = false;
 
   public ODeleteStatement(int id) {
     super(id);
@@ -59,23 +58,18 @@ public class ODeleteStatement extends OStatement {
 
   @Override
   public boolean equals(Object o) {
-    if (this == o)
-      return true;
-    if (o == null || getClass() != o.getClass())
-      return false;
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
 
     ODeleteStatement that = (ODeleteStatement) o;
 
-    if (returnBefore != that.returnBefore)
-      return false;
-    if (unsafe != that.unsafe)
-      return false;
+    if (returnBefore != that.returnBefore) return false;
+    if (unsafe != that.unsafe) return false;
     if (fromClause != null ? !fromClause.equals(that.fromClause) : that.fromClause != null)
       return false;
     if (whereClause != null ? !whereClause.equals(that.whereClause) : that.whereClause != null)
       return false;
-    if (limit != null ? !limit.equals(that.limit) : that.limit != null)
-      return false;
+    if (limit != null ? !limit.equals(that.limit) : that.limit != null) return false;
 
     return true;
   }
@@ -91,7 +85,8 @@ public class ODeleteStatement extends OStatement {
   }
 
   @Override
-  public OResultSet execute(ODatabase db, Map params, OCommandContext parentCtx, boolean usePlanCache) {
+  public OResultSet execute(
+      ODatabase db, Map params, OCommandContext parentCtx, boolean usePlanCache) {
     OBasicCommandContext ctx = new OBasicCommandContext();
     if (parentCtx != null) {
       ctx.setParentWithoutOverridingChild(parentCtx);
@@ -109,7 +104,8 @@ public class ODeleteStatement extends OStatement {
   }
 
   @Override
-  public OResultSet execute(ODatabase db, Object[] args, OCommandContext parentCtx, boolean usePlanCache) {
+  public OResultSet execute(
+      ODatabase db, Object[] args, OCommandContext parentCtx, boolean usePlanCache) {
     OBasicCommandContext ctx = new OBasicCommandContext();
     if (parentCtx != null) {
       ctx.setParentWithoutOverridingChild(parentCtx);

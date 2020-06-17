@@ -16,9 +16,7 @@ import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-/**
- * @author Luigi Dell'Aquila (l.dellaquila-(at)-orientdb.com)
- */
+/** @author Luigi Dell'Aquila (l.dellaquila-(at)-orientdb.com) */
 public class OCreateEdgeStatementExecutionTest {
   static ODatabaseDocument db;
 
@@ -59,7 +57,9 @@ public class OCreateEdgeStatementExecutionTest {
     v2.setProperty("name", "v2");
     v2.save();
 
-    OResultSet createREs = db.command("create edge " + eClass + " from " + v1.getIdentity() + " to " + v2.getIdentity());
+    OResultSet createREs =
+        db.command(
+            "create edge " + eClass + " from " + v1.getIdentity() + " to " + v2.getIdentity());
     ExecutionPlanPrintUtils.printExecutionPlan(createREs);
     OResultSet result = db.query("select expand(out()) from " + v1.getIdentity());
     Assert.assertNotNull(result);
@@ -96,8 +96,15 @@ public class OCreateEdgeStatementExecutionTest {
     v2.setProperty("name", "v2");
     v2.save();
 
-    OResultSet createREs = db
-        .command("create edge " + eClass + " from " + v1.getIdentity() + " to " + v2.getIdentity() + " set name = 'theEdge'");
+    OResultSet createREs =
+        db.command(
+            "create edge "
+                + eClass
+                + " from "
+                + v1.getIdentity()
+                + " to "
+                + v2.getIdentity()
+                + " set name = 'theEdge'");
     ExecutionPlanPrintUtils.printExecutionPlan(createREs);
     OResultSet result = db.query("select expand(outE()) from " + v1.getIdentity());
     Assert.assertNotNull(result);
@@ -106,7 +113,6 @@ public class OCreateEdgeStatementExecutionTest {
     Assert.assertNotNull(next);
     Assert.assertEquals("theEdge", next.getProperty("name"));
     result.close();
-
   }
 
   @Test
@@ -125,9 +131,15 @@ public class OCreateEdgeStatementExecutionTest {
       v1.save();
     }
 
-    OResultSet createREs = db.command(
-        "create edge " + eClass + " from (select from " + vClass + " where name in ['v0', 'v1']) to  (select from " + vClass
-            + " where name in ['v2', 'v3'])");
+    OResultSet createREs =
+        db.command(
+            "create edge "
+                + eClass
+                + " from (select from "
+                + vClass
+                + " where name in ['v0', 'v1']) to  (select from "
+                + vClass
+                + " where name in ['v2', 'v3'])");
     ExecutionPlanPrintUtils.printExecutionPlan(createREs);
 
     OResultSet result = db.query("select expand(out()) from " + vClass + " where name = 'v0'");
@@ -181,8 +193,15 @@ public class OCreateEdgeStatementExecutionTest {
       v1.save();
     }
 
-    db.command("CREATE EDGE " + eClass + " from (select from " + vClass1 + " where name = 'v0') to  (select from " + vClass2
-        + " where name = 'v0') SET name = 'foo'").close();
+    db.command(
+            "CREATE EDGE "
+                + eClass
+                + " from (select from "
+                + vClass1
+                + " where name = 'v0') to  (select from "
+                + vClass2
+                + " where name = 'v0') SET name = 'foo'")
+        .close();
 
     OResultSet rs = db.query("SELECT FROM " + eClass);
     Assert.assertTrue(rs.hasNext());
@@ -191,7 +210,13 @@ public class OCreateEdgeStatementExecutionTest {
     rs.close();
 
     db.command(
-        "CREATE EDGE " + eClass + " UPSERT from (select from " + vClass1 + ") to  (select from " + vClass2 + ") SET name = 'bar'")
+            "CREATE EDGE "
+                + eClass
+                + " UPSERT from (select from "
+                + vClass1
+                + ") to  (select from "
+                + vClass2
+                + ") SET name = 'bar'")
         .close();
 
     rs = db.query("SELECT FROM " + eclazz);
@@ -202,7 +227,6 @@ public class OCreateEdgeStatementExecutionTest {
     }
     Assert.assertFalse(rs.hasNext());
     rs.close();
-
   }
 
   @Test
@@ -235,8 +259,15 @@ public class OCreateEdgeStatementExecutionTest {
       v1.save();
     }
 
-    db.command("CREATE EDGE " + eClass + " from (select from " + vClass1 + " where name = 'v0') to  (select from " + vClass2
-        + " where name = 'v0')").close();
+    db.command(
+            "CREATE EDGE "
+                + eClass
+                + " from (select from "
+                + vClass1
+                + " where name = 'v0') to  (select from "
+                + vClass2
+                + " where name = 'v0')")
+        .close();
 
     OResultSet rs = db.query("SELECT FROM " + eClass);
     Assert.assertTrue(rs.hasNext());
@@ -244,7 +275,15 @@ public class OCreateEdgeStatementExecutionTest {
     Assert.assertFalse(rs.hasNext());
     rs.close();
 
-    db.command("CREATE EDGE " + eClass + " UPSERT from (select from " + vClass1 + ") to  (select from " + vClass2 + ")").close();
+    db.command(
+            "CREATE EDGE "
+                + eClass
+                + " UPSERT from (select from "
+                + vClass1
+                + ") to  (select from "
+                + vClass2
+                + ")")
+        .close();
 
     rs = db.query("SELECT FROM " + eclazz);
     for (int i = 0; i < 4; i++) {
@@ -253,7 +292,6 @@ public class OCreateEdgeStatementExecutionTest {
     }
     Assert.assertFalse(rs.hasNext());
     rs.close();
-
   }
 
   @Test
@@ -286,8 +324,15 @@ public class OCreateEdgeStatementExecutionTest {
       v1.save();
     }
 
-    db.command("CREATE EDGE " + eClass + " from (select from " + vClass1 + " where name = 'v0') to  (select from " + vClass2
-        + " where name = 'v0')").close();
+    db.command(
+            "CREATE EDGE "
+                + eClass
+                + " from (select from "
+                + vClass1
+                + " where name = 'v0') to  (select from "
+                + vClass2
+                + " where name = 'v0')")
+        .close();
 
     OResultSet rs = db.query("SELECT FROM " + eClass);
     Assert.assertTrue(rs.hasNext());
@@ -296,7 +341,15 @@ public class OCreateEdgeStatementExecutionTest {
     rs.close();
 
     try {
-      db.command("CREATE EDGE " + eClass + " from (select from " + vClass1 + ") to  (select from " + vClass2 + ")").close();
+      db.command(
+              "CREATE EDGE "
+                  + eClass
+                  + " from (select from "
+                  + vClass1
+                  + ") to  (select from "
+                  + vClass2
+                  + ")")
+          .close();
       Assert.fail();
     } catch (ORecordDuplicatedException | OCommandExecutionException e) {
 
@@ -328,7 +381,15 @@ public class OCreateEdgeStatementExecutionTest {
     }
 
     try {
-      db.command("CREATE EDGE " + eClass + " UPSERT from (select from " + vClass1 + ") to  (select from " + vClass2 + ")").close();
+      db.command(
+              "CREATE EDGE "
+                  + eClass
+                  + " UPSERT from (select from "
+                  + vClass1
+                  + ") to  (select from "
+                  + vClass2
+                  + ")")
+          .close();
       Assert.fail();
     } catch (OCommandExecutionException e) {
 
@@ -350,10 +411,20 @@ public class OCreateEdgeStatementExecutionTest {
       v1.save();
     }
 
-    db.command("CREATE EDGE " + eClass + " from (select from " + vClass1 + " WHERE name = ? ) to  (select from " + vClass1
-        + " WHERE name = ? )", "v0", "v1").close();
+    db.command(
+            "CREATE EDGE "
+                + eClass
+                + " from (select from "
+                + vClass1
+                + " WHERE name = ? ) to  (select from "
+                + vClass1
+                + " WHERE name = ? )",
+            "v0",
+            "v1")
+        .close();
 
-    OResultSet result = db.query("select from " + eClass + " where out.name = 'v0' AND in.name = 'v1'");
+    OResultSet result =
+        db.query("select from " + eClass + " where out.name = 'v0' AND in.name = 'v1'");
     Assert.assertTrue(result.hasNext());
     result.close();
   }

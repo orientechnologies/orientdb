@@ -22,28 +22,24 @@ package com.orientechnologies.orient.etl.context;
 
 import com.orientechnologies.orient.core.command.OBasicCommandContext;
 import com.orientechnologies.orient.output.OPluginMessageHandler;
-
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.io.Writer;
 
 /**
- * OETLContext extends OBasicCommandContext, in order to handle the following additional elements:
- * - message handler for application messages
+ * OETLContext extends OBasicCommandContext, in order to handle the following additional elements: -
+ * message handler for application messages
  *
  * @author Gabriele Ponzi
  * @email gabriele.ponzi--at--gmail.com
  */
-
 public class OETLContext extends OBasicCommandContext {
 
   private OPluginMessageHandler messageHandler;
 
   /**
-   * By default the OETLContext in initialized with a message handler with:
-   * - verbosity level: 0 (NONE) --> nothing will be printed out
-   * - output stream: null
-   * - logging: OLogManager
+   * By default the OETLContext in initialized with a message handler with: - verbosity level: 0
+   * (NONE) --> nothing will be printed out - output stream: null - logging: OLogManager
    */
   public OETLContext() {
     this.messageHandler = new OETLMessageHandler(0);
@@ -58,36 +54,32 @@ public class OETLContext extends OBasicCommandContext {
   }
 
   /**
-   * Prints the error message for a caught exception according to a level passed as argument. It's composed of:
-   * - defined error message
-   * - exception message
+   * Prints the error message for a caught exception according to a level passed as argument. It's
+   * composed of: - defined error message - exception message
    *
    * @param e
    * @param message
    * @param level
-   *
    * @return printedMessage
    */
   public String printExceptionMessage(Exception e, String message, String level) {
 
-    if (e.getMessage() != null)
-      message += "\n" + e.getClass().getName() + " - " + e.getMessage();
-    else
-      message += "\n" + e.getClass().getName();
+    if (e.getMessage() != null) message += "\n" + e.getClass().getName() + " - " + e.getMessage();
+    else message += "\n" + e.getClass().getName();
 
     switch (level) {
-    case "debug":
-      this.messageHandler.debug(this, message);
-      break;
-    case "info":
-      this.messageHandler.info(this, message);
-      break;
-    case "warn":
-      this.messageHandler.warn(this, message);
-      break;
-    case "error":
-      this.messageHandler.error(this, message);
-      break;
+      case "debug":
+        this.messageHandler.debug(this, message);
+        break;
+      case "info":
+        this.messageHandler.info(this, message);
+        break;
+      case "warn":
+        this.messageHandler.warn(this, message);
+        break;
+      case "error":
+        this.messageHandler.error(this, message);
+        break;
     }
 
     return message;
@@ -98,7 +90,6 @@ public class OETLContext extends OBasicCommandContext {
    *
    * @param e
    * @param level
-   *
    * @return printedMessage
    */
   public String printExceptionStackTrace(Exception e, String level) {
@@ -109,21 +100,20 @@ public class OETLContext extends OBasicCommandContext {
     String s = writer.toString();
 
     switch (level) {
-    case "debug":
-      this.messageHandler.debug(this, "\n" + s + "\n");
-      break;
-    case "info":
-      this.messageHandler.info(this, "\n" + s + "\n");
-      break;
-    case "warn":
-      this.messageHandler.warn(this, "\n" + s + "\n");
-      break;
-    case "error":
-      this.messageHandler.error(this, "\n" + s + "\n");
-      break;
+      case "debug":
+        this.messageHandler.debug(this, "\n" + s + "\n");
+        break;
+      case "info":
+        this.messageHandler.info(this, "\n" + s + "\n");
+        break;
+      case "warn":
+        this.messageHandler.warn(this, "\n" + s + "\n");
+        break;
+      case "error":
+        this.messageHandler.error(this, "\n" + s + "\n");
+        break;
     }
 
     return s;
   }
-
 }

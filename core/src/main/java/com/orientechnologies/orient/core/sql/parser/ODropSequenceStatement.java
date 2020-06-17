@@ -11,7 +11,6 @@ import com.orientechnologies.orient.core.metadata.sequence.OSequence;
 import com.orientechnologies.orient.core.sql.executor.OInternalResultSet;
 import com.orientechnologies.orient.core.sql.executor.OResultInternal;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
-
 import java.util.Map;
 
 public class ODropSequenceStatement extends ODDLStatement {
@@ -30,7 +29,8 @@ public class ODropSequenceStatement extends ODDLStatement {
   @Override
   public OResultSet executeDDL(OCommandContext ctx) {
     final ODatabase database = ctx.getDatabase();
-    OSequence sequence = database.getMetadata().getSequenceLibrary().getSequence(this.name.getStringValue());
+    OSequence sequence =
+        database.getMetadata().getSequenceLibrary().getSequence(this.name.getStringValue());
     if (sequence == null) {
       if (ifExists) {
         return new OInternalResultSet();
@@ -74,18 +74,15 @@ public class ODropSequenceStatement extends ODDLStatement {
 
   @Override
   public boolean equals(Object o) {
-    if (this == o)
-      return true;
-    if (o == null || getClass() != o.getClass())
-      return false;
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
 
     ODropSequenceStatement that = (ODropSequenceStatement) o;
 
     if (this.ifExists != that.ifExists) {
       return false;
     }
-    if (name != null ? !name.equals(that.name) : that.name != null)
-      return false;
+    if (name != null ? !name.equals(that.name) : that.name != null) return false;
 
     return true;
   }

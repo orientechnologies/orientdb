@@ -9,9 +9,7 @@ import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-/**
- * @author Luigi Dell'Aquila (l.dellaquila-(at)-orientdb.com)
- */
+/** @author Luigi Dell'Aquila (l.dellaquila-(at)-orientdb.com) */
 public class OCreateClusterStatementExecutionTest {
   static ODatabaseDocument db;
 
@@ -69,7 +67,7 @@ public class OCreateClusterStatementExecutionTest {
     OResultSet result = db.command("create blob cluster " + clusterName);
     Assert.assertTrue(db.getClusterIdByName(clusterName) > 0);
     Assert.assertTrue(((ODatabaseDocumentTx) db).getStorage().getClusterIdByName(clusterName) >= 0);
-    //TODO test that it's a blob cluster
+    // TODO test that it's a blob cluster
     result.close();
   }
 

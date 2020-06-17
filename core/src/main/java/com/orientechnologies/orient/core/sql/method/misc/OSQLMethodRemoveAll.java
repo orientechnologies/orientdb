@@ -23,9 +23,8 @@ import com.orientechnologies.orient.core.db.record.OIdentifiable;
 
 /**
  * Remove all the occurrences of elements from a collection.
- * 
+ *
  * @see OSQLMethodRemove
- * 
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
  */
 public class OSQLMethodRemoveAll extends OAbstractSQLMethod {
@@ -37,19 +36,27 @@ public class OSQLMethodRemoveAll extends OAbstractSQLMethod {
   }
 
   @Override
-  public Object execute(Object iThis, final OIdentifiable iCurrentRecord, final OCommandContext iContext, Object ioResult,
+  public Object execute(
+      Object iThis,
+      final OIdentifiable iCurrentRecord,
+      final OCommandContext iContext,
+      Object ioResult,
       Object[] iParams) {
     if (iParams != null && iParams.length > 0 && iParams[0] != null) {
-      iParams = OMultiValue.array(iParams, Object.class, new OCallable<Object, Object>() {
+      iParams =
+          OMultiValue.array(
+              iParams,
+              Object.class,
+              new OCallable<Object, Object>() {
 
-        @Override
-        public Object call(final Object iArgument) {
-          if (iArgument instanceof String && ((String) iArgument).startsWith("$")) {
-            return iContext.getVariable((String) iArgument);
-          }
-          return iArgument;
-        }
-      });
+                @Override
+                public Object call(final Object iArgument) {
+                  if (iArgument instanceof String && ((String) iArgument).startsWith("$")) {
+                    return iContext.getVariable((String) iArgument);
+                  }
+                  return iArgument;
+                }
+              });
       for (Object o : iParams) {
         ioResult = OMultiValue.remove(ioResult, o, true);
       }

@@ -31,7 +31,6 @@ import com.orientechnologies.orient.server.network.protocol.http.OHttpRequest;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpResponse;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpUtils;
 import com.orientechnologies.orient.server.network.protocol.http.command.OServerCommandAuthenticatedDbAbstract;
-
 import java.io.IOException;
 import java.io.StringWriter;
 import java.util.HashMap;
@@ -40,19 +39,19 @@ import java.util.Map;
 import java.util.Set;
 
 public class OServerCommandGetGephi extends OServerCommandAuthenticatedDbAbstract {
-  private static final String[] NAMES = { "GET|gephi/*" };
+  private static final String[] NAMES = {"GET|gephi/*"};
 
-  public OServerCommandGetGephi() {
-  }
+  public OServerCommandGetGephi() {}
 
-  public OServerCommandGetGephi(final OServerCommandConfiguration iConfig) {
-  }
+  public OServerCommandGetGephi(final OServerCommandConfiguration iConfig) {}
 
   @Override
   public boolean execute(final OHttpRequest iRequest, OHttpResponse iResponse) throws Exception {
-    String[] urlParts = checkSyntax(iRequest.getUrl(),
-        4,
-        "Syntax error: gephi/<database>/<language>/<query-text>[/<limit>][/<fetchPlan>].<br>Limit is optional and is set to 20 by default. Set to 0 to have no limits.");
+    String[] urlParts =
+        checkSyntax(
+            iRequest.getUrl(),
+            4,
+            "Syntax error: gephi/<database>/<language>/<query-text>[/<limit>][/<fetchPlan>].<br>Limit is optional and is set to 20 by default. Set to 0 to have no limits.");
 
     final String language = urlParts[2];
     final String text = urlParts[3];
@@ -71,37 +70,39 @@ public class OServerCommandGetGephi extends OServerCommandAuthenticatedDbAbstrac
       if (language.equals("sql")) {
         resultSet = executeStatement(language, text, new HashMap<>(), db);
       } else if (language.equals("gremlin")) {
-        //TODO use TP3
+        // TODO use TP3
 
-        //EMPTY
+        // EMPTY
         resultSet = null;
-//        List<Object> result = new ArrayList<Object>();
-//        OGremlinHelper.execute(graph, text, null, null, result, null, null);
-//
-//        resultSet = new ArrayList<OElement>(result.size());
-//
-//        for (Object o : result) {
-//          ((ArrayList<OElement>) resultSet).add(db.getVertex(o));
-//        }
+        //        List<Object> result = new ArrayList<Object>();
+        //        OGremlinHelper.execute(graph, text, null, null, result, null, null);
+        //
+        //        resultSet = new ArrayList<OElement>(result.size());
+        //
+        //        for (Object o : result) {
+        //          ((ArrayList<OElement>) resultSet).add(db.getVertex(o));
+        //        }
       } else {
-        throw new IllegalArgumentException("Language '" + language + "' is not supported. Use 'sql' or 'gremlin'");
+        throw new IllegalArgumentException(
+            "Language '" + language + "' is not supported. Use 'sql' or 'gremlin'");
       }
 
       sendRecordsContent(iRequest, iResponse, resultSet, fetchPlan, limit);
 
     } finally {
-      if (db != null)
-        db.close();
+      if (db != null) db.close();
     }
 
     return false;
   }
 
-  protected void sendRecordsContent(final OHttpRequest iRequest,
+  protected void sendRecordsContent(
+      final OHttpRequest iRequest,
       final OHttpResponse iResponse,
       OResultSet resultSet,
       String iFetchPlan,
-      int limit) throws IOException {
+      int limit)
+      throws IOException {
 
     final StringWriter buffer = new StringWriter();
     final OJSONWriter json = new OJSONWriter(buffer, OHttpResponse.JSON_FORMAT);
@@ -109,12 +110,17 @@ public class OServerCommandGetGephi extends OServerCommandAuthenticatedDbAbstrac
 
     generateGraphDbOutput(resultSet, limit, json);
 
-    iResponse.send(OHttpUtils.STATUS_OK_CODE, OHttpUtils.STATUS_OK_DESCRIPTION, OHttpUtils.CONTENT_JSON, buffer.toString(), null);
+    iResponse.send(
+        OHttpUtils.STATUS_OK_CODE,
+        OHttpUtils.STATUS_OK_DESCRIPTION,
+        OHttpUtils.CONTENT_JSON,
+        buffer.toString(),
+        null);
   }
 
-  protected void generateGraphDbOutput(final OResultSet resultSet, int limit, final OJSONWriter json) throws IOException {
-    if (resultSet == null)
-      return;
+  protected void generateGraphDbOutput(
+      final OResultSet resultSet, int limit, final OJSONWriter json) throws IOException {
+    if (resultSet == null) return;
 
     // CREATE A SET TO SPEED UP SEARCHES ON VERTICES
     final Set<OVertex> vertexes = new HashSet<>();
@@ -147,8 +153,7 @@ public class OServerCommandGetGephi extends OServerCommandAuthenticatedDbAbstrac
       // ADD ALL THE PROPERTIES
       for (String field : vertex.getPropertyNames()) {
 
-        if (field.startsWith("in_") || field.startsWith("out_"))
-          continue;
+        if (field.startsWith("in_") || field.startsWith("out_")) continue;
 
         final Object v = vertex.getProperty(field);
         if (v != null) {
@@ -173,8 +178,7 @@ public class OServerCommandGetGephi extends OServerCommandAuthenticatedDbAbstrac
       json.writeAttribute(3, false, "target", edge.getFrom().getIdentity());
 
       for (String field : edge.getPropertyNames()) {
-        if ("in".equalsIgnoreCase(field) || "out".equalsIgnoreCase(field))
-          continue;
+        if ("in".equalsIgnoreCase(field) || "out".equalsIgnoreCase(field)) continue;
 
         final Object v = edge.getProperty(field);
 
@@ -195,7 +199,8 @@ public class OServerCommandGetGephi extends OServerCommandAuthenticatedDbAbstrac
     return NAMES;
   }
 
-  protected OResultSet executeStatement(String language, String text, Object params, ODatabaseDocument db) {
+  protected OResultSet executeStatement(
+      String language, String text, Object params, ODatabaseDocument db) {
     OResultSet result;
     if (params instanceof Map) {
       result = db.command(text, (Map) params);
@@ -206,5 +211,4 @@ public class OServerCommandGetGephi extends OServerCommandAuthenticatedDbAbstrac
     }
     return result;
   }
-
 }

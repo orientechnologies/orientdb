@@ -1,5 +1,8 @@
 package com.orientechnologies.orient.server.distributed;
 
+import static org.junit.Assert.assertEquals;
+
+
 import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseSession;
@@ -9,22 +12,17 @@ import com.orientechnologies.orient.core.db.OrientDBConfig;
 import com.orientechnologies.orient.core.record.OElement;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import com.orientechnologies.orient.server.OServer;
+import java.io.File;
+import java.util.concurrent.CountDownLatch;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
-import java.io.File;
-import java.io.IOException;
-import java.lang.reflect.InvocationTargetException;
-import java.util.concurrent.CountDownLatch;
-
-import static org.junit.Assert.assertEquals;
-
 public class ReinstallDatabaseTestIT {
-  public static final String  DATABASE_NAME = "ReinstallDatabaseTestIT";
-  private             OServer server0;
-  private             OServer server1;
-  private             OServer server2;
+  public static final String DATABASE_NAME = "ReinstallDatabaseTestIT";
+  private OServer server0;
+  private OServer server1;
+  private OServer server2;
 
   @Before
   public void before() throws Exception {
@@ -34,7 +32,8 @@ public class ReinstallDatabaseTestIT {
     server0 = OServer.startFromClasspathConfig("orientdb-simple-dserver-config-0.xml");
     server1 = OServer.startFromClasspathConfig("orientdb-simple-dserver-config-1.xml");
     server2 = OServer.startFromClasspathConfig("orientdb-simple-dserver-config-2.xml");
-    OrientDB remote = new OrientDB("remote:localhost", "root", "test", OrientDBConfig.defaultConfig());
+    OrientDB remote =
+        new OrientDB("remote:localhost", "root", "test", OrientDBConfig.defaultConfig());
     remote.create("ReinstallDatabaseTestIT", ODatabaseType.PLOCAL);
     ODatabaseSession session = remote.open("ReinstallDatabaseTestIT", "admin", "admin");
     session.createClass("Person");
@@ -48,7 +47,9 @@ public class ReinstallDatabaseTestIT {
 
   @Test
   public void testWritingWhileReinstall() throws InterruptedException {
-    OrientDB remote1 = new OrientDB("remote:localhost:2424;localhost:2425", "root", "test", OrientDBConfig.defaultConfig());
+    OrientDB remote1 =
+        new OrientDB(
+            "remote:localhost:2424;localhost:2425", "root", "test", OrientDBConfig.defaultConfig());
     ODatabaseSession session = remote1.open(DATABASE_NAME, "admin", "admin");
     try (OResultSet result = session.query("select from Person")) {
       assertEquals(1, result.stream().count());
@@ -65,14 +66,16 @@ public class ReinstallDatabaseTestIT {
       person.save();
       session.commit();
     }
-    new Thread(() -> {
-      server2.getDistributedManager().installDatabase(false, DATABASE_NAME, true, true);
-      try {
-        Thread.sleep(2000);
-      } catch (InterruptedException e) {
-      }
-      latch.countDown();
-    }).start();
+    new Thread(
+            () -> {
+              server2.getDistributedManager().installDatabase(false, DATABASE_NAME, true, true);
+              try {
+                Thread.sleep(2000);
+              } catch (InterruptedException e) {
+              }
+              latch.countDown();
+            })
+        .start();
     int second = 1000;
     for (int i = 0; i < second; i++) {
       session.begin();
@@ -87,8 +90,10 @@ public class ReinstallDatabaseTestIT {
     latch.await();
     int retry = 0;
     while (true) {
-      ODistributedServerManager.DB_STATUS databaseStatus = server2.getDistributedManager()
-          .getDatabaseStatus(server2.getDistributedManager().getLocalNodeName(), DATABASE_NAME);
+      ODistributedServerManager.DB_STATUS databaseStatus =
+          server2
+              .getDistributedManager()
+              .getDatabaseStatus(server2.getDistributedManager().getLocalNodeName(), DATABASE_NAME);
       if (databaseStatus.equals(ODistributedServerManager.DB_STATUS.ONLINE) || retry > 10) {
         break;
       }
@@ -100,19 +105,23 @@ public class ReinstallDatabaseTestIT {
     }
     session.close();
     remote1.close();
-    //TODO: this case is not yet sorted out, will be in next versions
-//    remote1 = new OrientDB("remote:localhost:2426", "root", "test", OrientDBConfig.defaultConfig());
-//    session = remote1.open(DATABASE_NAME, "admin", "admin");
-//    try (OResultSet result = session.query("select from Person")) {
-//      assertEquals(first + second + 1, result.stream().count());
-//    }
+    // TODO: this case is not yet sorted out, will be in next versions
+    //    remote1 = new OrientDB("remote:localhost:2426", "root", "test",
+    // OrientDBConfig.defaultConfig());
+    //    session = remote1.open(DATABASE_NAME, "admin", "admin");
+    //    try (OResultSet result = session.query("select from Person")) {
+    //      assertEquals(first + second + 1, result.stream().count());
+    //    }
   }
 
   @After
   public void after() {
-    OGlobalConfiguration.DISTRIBUTED_DB_WORKERTHREADS.setValue(OGlobalConfiguration.DISTRIBUTED_DB_WORKERTHREADS.getDefValue());
-    OGlobalConfiguration.DISTRIBUTED_LOCAL_QUEUESIZE.setValue(OGlobalConfiguration.DISTRIBUTED_LOCAL_QUEUESIZE.getDefValue());
-    OrientDB remote = new OrientDB("remote:localhost", "root", "test", OrientDBConfig.defaultConfig());
+    OGlobalConfiguration.DISTRIBUTED_DB_WORKERTHREADS.setValue(
+        OGlobalConfiguration.DISTRIBUTED_DB_WORKERTHREADS.getDefValue());
+    OGlobalConfiguration.DISTRIBUTED_LOCAL_QUEUESIZE.setValue(
+        OGlobalConfiguration.DISTRIBUTED_LOCAL_QUEUESIZE.getDefValue());
+    OrientDB remote =
+        new OrientDB("remote:localhost", "root", "test", OrientDBConfig.defaultConfig());
     remote.drop("ReinstallDatabaseTestIT");
     remote.close();
     server0.shutdown();

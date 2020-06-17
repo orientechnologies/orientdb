@@ -29,13 +29,16 @@ import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.client.binary.OBinaryRequestExecutor;
 import com.orientechnologies.orient.client.remote.OBinaryRequest;
 import com.orientechnologies.orient.client.remote.OBinaryResponse;
-import com.orientechnologies.orient.client.remote.message.*;
+import com.orientechnologies.orient.client.remote.message.OBinaryProtocolHelper;
+import com.orientechnologies.orient.client.remote.message.OBinaryPushRequest;
+import com.orientechnologies.orient.client.remote.message.OBinaryPushResponse;
+import com.orientechnologies.orient.client.remote.message.OError37Response;
+import com.orientechnologies.orient.client.remote.message.OErrorResponse;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OContextConfiguration;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OCoreException;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
@@ -52,16 +55,24 @@ import com.orientechnologies.orient.core.serialization.serializer.record.OSerial
 import com.orientechnologies.orient.core.serialization.serializer.record.binary.ORecordSerializerNetworkFactory;
 import com.orientechnologies.orient.core.serialization.serializer.record.string.ORecordSerializerSchemaAware2CSV;
 import com.orientechnologies.orient.core.storage.ridbag.sbtree.OSBTreeCollectionManager;
-import com.orientechnologies.orient.enterprise.channel.binary.*;
+import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinary;
+import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol;
+import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryServer;
+import com.orientechnologies.orient.enterprise.channel.binary.ONetworkProtocolException;
+import com.orientechnologies.orient.enterprise.channel.binary.OTokenSecurityException;
 import com.orientechnologies.orient.server.OClientConnection;
 import com.orientechnologies.orient.server.OConnectionBinaryExecutor;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.OServerAware;
-import com.orientechnologies.orient.server.distributed.*;
+import com.orientechnologies.orient.server.distributed.ODistributedDatabase;
+import com.orientechnologies.orient.server.distributed.ODistributedException;
+import com.orientechnologies.orient.server.distributed.ODistributedRequest;
+import com.orientechnologies.orient.server.distributed.ODistributedResponse;
+import com.orientechnologies.orient.server.distributed.ODistributedServerLog;
+import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
 import com.orientechnologies.orient.server.network.OServerNetworkListener;
 import com.orientechnologies.orient.server.network.protocol.ONetworkProtocol;
 import com.orientechnologies.orient.server.plugin.OServerPluginHelper;
-
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.ObjectOutputStream;
@@ -77,19 +88,21 @@ import java.util.function.Function;
 import java.util.logging.Level;
 
 public class ONetworkProtocolBinary extends ONetworkProtocol {
-  protected final    Level                              logClientExceptions;
-  protected final    boolean                            logClientFullStackTrace;
-  protected          OChannelBinary                     channel;
-  protected volatile int                                requestType;
-  protected          int                                clientTxId;
-  protected          boolean                            okSent;
-  private            boolean                            tokenConnection = true;
-  private            long                               requests        = 0;
-  private            HandshakeInfo                      handshakeInfo;
-  private volatile   OBinaryPushResponse                expectedPushResponse;
-  private            BlockingQueue<OBinaryPushResponse> pushResponse    = new SynchronousQueue<OBinaryPushResponse>();
+  protected final Level logClientExceptions;
+  protected final boolean logClientFullStackTrace;
+  protected OChannelBinary channel;
+  protected volatile int requestType;
+  protected int clientTxId;
+  protected boolean okSent;
+  private boolean tokenConnection = true;
+  private long requests = 0;
+  private HandshakeInfo handshakeInfo;
+  private volatile OBinaryPushResponse expectedPushResponse;
+  private BlockingQueue<OBinaryPushResponse> pushResponse =
+      new SynchronousQueue<OBinaryPushResponse>();
 
-  private Function<Integer, OBinaryRequest<? extends OBinaryResponse>> factory = ONetworkBinaryProtocolFactory.defaultProtocol();
+  private Function<Integer, OBinaryRequest<? extends OBinaryResponse>> factory =
+      ONetworkBinaryProtocolFactory.defaultProtocol();
 
   public ONetworkProtocolBinary(OServer server) {
     this(server, "OrientDB <- BinaryClient/?");
@@ -97,23 +110,31 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 
   public ONetworkProtocolBinary(OServer server, final String iThreadName) {
     super(server.getThreadGroup(), iThreadName);
-    logClientExceptions = Level
-        .parse(server.getContextConfiguration().getValueAsString(OGlobalConfiguration.SERVER_LOG_DUMP_CLIENT_EXCEPTION_LEVEL));
-    logClientFullStackTrace = server.getContextConfiguration()
-        .getValueAsBoolean(OGlobalConfiguration.SERVER_LOG_DUMP_CLIENT_EXCEPTION_FULLSTACKTRACE);
+    logClientExceptions =
+        Level.parse(
+            server
+                .getContextConfiguration()
+                .getValueAsString(OGlobalConfiguration.SERVER_LOG_DUMP_CLIENT_EXCEPTION_LEVEL));
+    logClientFullStackTrace =
+        server
+            .getContextConfiguration()
+            .getValueAsBoolean(
+                OGlobalConfiguration.SERVER_LOG_DUMP_CLIENT_EXCEPTION_FULLSTACKTRACE);
   }
 
-  /**
-   * Internal varialbe injection useful for testing.
-   */
+  /** Internal varialbe injection useful for testing. */
   public void initVariables(final OServer server, OChannelBinary channel) {
     this.server = server;
     this.channel = channel;
   }
 
   @Override
-  public void config(final OServerNetworkListener iListener, final OServer iServer, final Socket iSocket,
-      final OContextConfiguration iConfig) throws IOException {
+  public void config(
+      final OServerNetworkListener iListener,
+      final OServer iServer,
+      final Socket iSocket,
+      final OContextConfiguration iConfig)
+      throws IOException {
 
     OChannelBinaryServer channel = new OChannelBinaryServer(iSocket, iConfig);
     initVariables(iServer, channel);
@@ -126,7 +147,12 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
     OServerPluginHelper.invokeHandlerCallbackOnSocketAccepted(server, this);
 
     start();
-    setName("OrientDB (" + iSocket.getLocalSocketAddress() + ") <- BinaryClient (" + iSocket.getRemoteSocketAddress() + ")");
+    setName(
+        "OrientDB ("
+            + iSocket.getLocalSocketAddress()
+            + ") <- BinaryClient ("
+            + iSocket.getRemoteSocketAddress()
+            + ")");
   }
 
   @Override
@@ -144,13 +170,16 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
   }
 
   private boolean isHandshaking(int requestType) {
-    return requestType == OChannelBinaryProtocol.REQUEST_CONNECT || requestType == OChannelBinaryProtocol.REQUEST_DB_OPEN
-        || requestType == OChannelBinaryProtocol.REQUEST_SHUTDOWN || requestType == OChannelBinaryProtocol.REQUEST_DB_REOPEN
+    return requestType == OChannelBinaryProtocol.REQUEST_CONNECT
+        || requestType == OChannelBinaryProtocol.REQUEST_DB_OPEN
+        || requestType == OChannelBinaryProtocol.REQUEST_SHUTDOWN
+        || requestType == OChannelBinaryProtocol.REQUEST_DB_REOPEN
         || requestType == OChannelBinaryProtocol.DISTRIBUTED_CONNECT;
   }
 
   private boolean isDistributed(int requestType) {
-    return requestType == OChannelBinaryProtocol.DISTRIBUTED_REQUEST || requestType == OChannelBinaryProtocol.DISTRIBUTED_RESPONSE;
+    return requestType == OChannelBinaryProtocol.DISTRIBUTED_REQUEST
+        || requestType == OChannelBinaryProtocol.DISTRIBUTED_RESPONSE;
   }
 
   private boolean isCoordinated(int requestType) {
@@ -166,8 +195,7 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
       return;
     }
     // do not remove this or we will get deadlock upon shutdown.
-    if (isShutdownFlag())
-      return;
+    if (isShutdownFlag()) return;
 
     clientTxId = 0;
     okSent = false;
@@ -177,9 +205,11 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
       channel.setReadRequestTimeout();
 
       if (server.rejectRequests()) {
-        // MAKE SURE THAT IF THE SERVER IS GOING DOWN THE CONNECTIONS ARE TERMINATED BEFORE HANDLE ANY OPERATIONS
+        // MAKE SURE THAT IF THE SERVER IS GOING DOWN THE CONNECTIONS ARE TERMINATED BEFORE HANDLE
+        // ANY OPERATIONS
         this.softShutdown();
-        if (requestType != OChannelBinaryProtocol.REQUEST_HANDSHAKE && isDistributed(requestType)
+        if (requestType != OChannelBinaryProtocol.REQUEST_HANDSHAKE
+            && isDistributed(requestType)
             && requestType != OChannelBinaryProtocol.REQUEST_OK_PUSH) {
           clientTxId = channel.readInt();
           channel.clearInput();
@@ -199,13 +229,13 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 
       clientTxId = channel.readInt();
       // GET THE CONNECTION IF EXIST
-      OClientConnection connection = server.getClientConnectionManager().getConnection(clientTxId, this);
+      OClientConnection connection =
+          server.getClientConnectionManager().getConnection(clientTxId, this);
       if (isCoordinated(requestType)) {
         coordinatedRequest(connection, requestType, clientTxId);
       } else if (isDistributed(requestType)) {
         distributedRequest(connection, requestType, clientTxId);
-      } else
-        sessionRequest(connection, requestType, clientTxId);
+      } else sessionRequest(connection, requestType, clientTxId);
     } catch (IOException e) {
       // if an exception arrive to this point we need to kill the current socket.
       sendShutdown();
@@ -213,10 +243,12 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
     }
   }
 
-  private void coordinatedRequest(OClientConnection connection, int requestType, int clientTxId) throws IOException {
+  private void coordinatedRequest(OClientConnection connection, int requestType, int clientTxId)
+      throws IOException {
     byte[] tokenBytes = channel.readBytes();
     connection = onBeforeOperationalRequest(connection, tokenBytes);
-    ((OServerAware) server.getDatabases()).coordinatedRequest(connection, requestType, clientTxId, channel);
+    ((OServerAware) server.getDatabases())
+        .coordinatedRequest(connection, requestType, clientTxId, channel);
   }
 
   private void handleHandshake() throws IOException {
@@ -226,7 +258,8 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
     byte encoding = channel.readByte();
     byte errorEncoding = channel.readByte();
     OBinaryProtocolHelper.checkProtocolVersion(this, protocolVersion);
-    this.handshakeInfo = new HandshakeInfo(protocolVersion, driverName, driverVersion, encoding, errorEncoding);
+    this.handshakeInfo =
+        new HandshakeInfo(protocolVersion, driverName, driverVersion, encoding, errorEncoding);
     this.factory = ONetworkBinaryProtocolFactory.matchProtocol(protocolVersion);
   }
 
@@ -239,7 +272,8 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
       return true;
     } else {
       if (connection == null) {
-        return !isHandshaking(requestType) || requestType == OChannelBinaryProtocol.REQUEST_DB_REOPEN;
+        return !isHandshaking(requestType)
+            || requestType == OChannelBinaryProtocol.REQUEST_DB_REOPEN;
       } else {
         return Boolean.TRUE.equals(connection.getTokenBased()) && !isHandshaking(requestType);
       }
@@ -264,8 +298,7 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
           }
           if (isHandshaking(requestType))
             connection = onBeforeHandshakeRequest(connection, tokenBytes);
-          else
-            connection = onBeforeOperationalRequest(connection, tokenBytes);
+          else connection = onBeforeOperationalRequest(connection, tokenBytes);
           if (connection != null) {
             connection.getData().commandInfo = request.getDescription();
             connection.setProtocol(this); // This is need for the request command
@@ -276,7 +309,8 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
         // Also in case of session validation error i read the message from the socket.
         try {
           int protocolVersion = OChannelBinaryProtocol.CURRENT_PROTOCOL_VERSION;
-          ORecordSerializer serializer = ORecordSerializerNetworkFactory.INSTANCE.forProtocol(protocolVersion);
+          ORecordSerializer serializer =
+              ORecordSerializerNetworkFactory.INSTANCE.forProtocol(protocolVersion);
           if (connection != null) {
             protocolVersion = connection.getData().protocolVersion;
             serializer = connection.getData().getSerializer();
@@ -286,7 +320,9 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
           if (connection != null) {
             connection.endOperation();
           }
-          OLogManager.instance().debug(this, "I/O Error on client clientId=%d reqType=%d", clientTxId, requestType, e);
+          OLogManager.instance()
+              .debug(
+                  this, "I/O Error on client clientId=%d reqType=%d", clientTxId, requestType, e);
           sendShutdown();
           return;
         } catch (Exception | Error e) {
@@ -298,7 +334,7 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
           return;
         }
         if (connection == null && requestType == OChannelBinaryProtocol.REQUEST_DB_CLOSE) {
-          //Backward compatible with old clients
+          // Backward compatible with old clients
           return;
         }
 
@@ -309,8 +345,7 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
               checkServerAccess(request.requiredServerRole(), connection);
             }
 
-            if (connection == null)
-              throw new ODatabaseException("Required session");
+            if (connection == null) throw new ODatabaseException("Required session");
 
             if (request.requireDatabaseSession()) {
               if (connection.getDatabase() == null)
@@ -320,9 +355,9 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
           } catch (RuntimeException t) {
             // This should be moved in the execution of the command that manipulate data
             if (connection != null && connection.getDatabase() != null) {
-              final OSBTreeCollectionManager collectionManager = connection.getDatabase().getSbTreeCollectionManager();
-              if (collectionManager != null)
-                collectionManager.clearChangedIds();
+              final OSBTreeCollectionManager collectionManager =
+                  connection.getDatabase().getSbTreeCollectionManager();
+              if (collectionManager != null) collectionManager.clearChangedIds();
             }
             exception = t;
           } catch (Error err) {
@@ -339,7 +374,9 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
             okSent = true;
             sendError(connection, clientTxId, exception);
           } catch (IOException e) {
-            OLogManager.instance().debug(this, "I/O Error on client clientId=%d reqType=%d", clientTxId, requestType, e);
+            OLogManager.instance()
+                .debug(
+                    this, "I/O Error on client clientId=%d reqType=%d", clientTxId, requestType, e);
             sendShutdown();
           } finally {
             afterOperationRequest(connection);
@@ -350,13 +387,18 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
               beginResponse();
               try {
                 sendOk(connection, clientTxId);
-                response.write(channel, connection.getData().protocolVersion, connection.getData().getSerializer());
+                response.write(
+                    channel,
+                    connection.getData().protocolVersion,
+                    connection.getData().getSerializer());
               } finally {
                 endResponse();
               }
             }
           } catch (IOException e) {
-            OLogManager.instance().debug(this, "I/O Error on client clientId=%d reqType=%d", clientTxId, requestType, e);
+            OLogManager.instance()
+                .debug(
+                    this, "I/O Error on client clientId=%d reqType=%d", clientTxId, requestType, e);
             sendShutdown();
           } catch (Exception | Error e) {
             OLogManager.instance().error(this, "Error while binary response serialization", e);
@@ -366,31 +408,40 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
             afterOperationRequest(connection);
           }
         }
-        if (connection != null)
-          tokenConnection = Boolean.TRUE.equals(connection.getTokenBased());
+        if (connection != null) tokenConnection = Boolean.TRUE.equals(connection.getTokenBased());
       } else {
         OLogManager.instance().error(this, "Request not supported. Code: " + requestType, null);
-        handleConnectionError(connection, new ONetworkProtocolException("Request not supported. Code: " + requestType));
+        handleConnectionError(
+            connection,
+            new ONetworkProtocolException("Request not supported. Code: " + requestType));
         sendShutdown();
       }
 
     } finally {
 
-      Orient.instance().getProfiler()
-          .stopChrono("server.network.requests", "Total received requests", timer, "server.network.requests");
+      Orient.instance()
+          .getProfiler()
+          .stopChrono(
+              "server.network.requests",
+              "Total received requests",
+              timer,
+              "server.network.requests");
 
       OSerializationThreadLocal.INSTANCE.get().clear();
     }
-
   }
 
-  private OClientConnection onBeforeHandshakeRequest(OClientConnection connection, byte[] tokenBytes) {
+  private OClientConnection onBeforeHandshakeRequest(
+      OClientConnection connection, byte[] tokenBytes) {
     try {
       if (requestType != OChannelBinaryProtocol.REQUEST_DB_REOPEN) {
-        if (clientTxId >= 0 && connection == null && (requestType == OChannelBinaryProtocol.REQUEST_DB_OPEN
-            || requestType == OChannelBinaryProtocol.REQUEST_CONNECT
-            || requestType == OChannelBinaryProtocol.DISTRIBUTED_CONNECT)) {
-          // THIS EXCEPTION SHULD HAPPEN IN ANY CASE OF OPEN/CONNECT WITH SESSIONID >= 0, BUT FOR COMPATIBILITY IT'S ONLY IF THERE
+        if (clientTxId >= 0
+            && connection == null
+            && (requestType == OChannelBinaryProtocol.REQUEST_DB_OPEN
+                || requestType == OChannelBinaryProtocol.REQUEST_CONNECT
+                || requestType == OChannelBinaryProtocol.DISTRIBUTED_CONNECT)) {
+          // THIS EXCEPTION SHULD HAPPEN IN ANY CASE OF OPEN/CONNECT WITH SESSIONID >= 0, BUT FOR
+          // COMPATIBILITY IT'S ONLY IF THERE
           // IS NO CONNECTION
           shutdown();
           throw new ONetworkProtocolException("Found unknown session " + clientTxId);
@@ -402,7 +453,10 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
       } else {
         connection.validateSession(tokenBytes, server.getTokenHandler(), this);
         server.getClientConnectionManager().disconnect(clientTxId);
-        connection = server.getClientConnectionManager().reConnect(this, connection.getTokenBytes(), connection.getToken());
+        connection =
+            server
+                .getClientConnectionManager()
+                .reConnect(this, connection.getTokenBytes(), connection.getToken());
         connection.acquire();
         waitDistribuedIsOnline(connection);
         connection.init(server);
@@ -412,15 +466,15 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
         }
       }
     } catch (RuntimeException e) {
-      if (connection != null)
-        server.getClientConnectionManager().disconnect(connection);
+      if (connection != null) server.getClientConnectionManager().disconnect(connection);
       ODatabaseRecordThreadLocal.instance().remove();
       throw e;
     }
 
     connection.statsUpdate();
 
-    OServerPluginHelper.invokeHandlerCallbackOnBeforeClientRequest(server, connection, (byte) requestType);
+    OServerPluginHelper.invokeHandlerCallbackOnBeforeClientRequest(
+        server, connection, (byte) requestType);
     return connection;
   }
 
@@ -435,13 +489,13 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 
       try {
         switch (requestType) {
-        case OChannelBinaryProtocol.DISTRIBUTED_REQUEST:
-          executeDistributedRequest(connection);
-          break;
+          case OChannelBinaryProtocol.DISTRIBUTED_REQUEST:
+            executeDistributedRequest(connection);
+            break;
 
-        case OChannelBinaryProtocol.DISTRIBUTED_RESPONSE:
-          executeDistributedResponse(connection);
-          break;
+          case OChannelBinaryProtocol.DISTRIBUTED_RESPONSE:
+            executeDistributedResponse(connection);
+            break;
         }
       } finally {
         requests++;
@@ -450,19 +504,29 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 
     } catch (Exception t) {
       // IN CASE OF DISTRIBUTED ANY EXCEPTION AT THIS POINT CAUSE THIS CONNECTION TO CLOSE
-      OLogManager.instance().warn(this, "I/O Error on distributed channel  clientId=%d reqType=%d", t, clientTxId, requestType);
+      OLogManager.instance()
+          .warn(
+              this,
+              "I/O Error on distributed channel  clientId=%d reqType=%d",
+              t,
+              clientTxId,
+              requestType);
       sendShutdown();
     } finally {
-      Orient.instance().getProfiler()
-          .stopChrono("server.network.requests", "Total received requests", timer, "server.network.requests");
+      Orient.instance()
+          .getProfiler()
+          .stopChrono(
+              "server.network.requests",
+              "Total received requests",
+              timer,
+              "server.network.requests");
     }
-
   }
 
-  private OClientConnection onBeforeOperationalRequest(OClientConnection connection, byte[] tokenBytes) {
+  private OClientConnection onBeforeOperationalRequest(
+      OClientConnection connection, byte[] tokenBytes) {
     try {
-      if (connection == null && requestType == OChannelBinaryProtocol.REQUEST_DB_CLOSE)
-        return null;
+      if (connection == null && requestType == OChannelBinaryProtocol.REQUEST_DB_CLOSE) return null;
 
       if (handshakeInfo != null) {
         if (connection == null) {
@@ -505,7 +569,8 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
       }
 
       connection.statsUpdate();
-      OServerPluginHelper.invokeHandlerCallbackOnBeforeClientRequest(server, connection, (byte) requestType);
+      OServerPluginHelper.invokeHandlerCallbackOnBeforeClientRequest(
+          server, connection, (byte) requestType);
     } catch (RuntimeException e) {
       if (connection != null) {
         connection.endOperation();
@@ -523,11 +588,13 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
       if (manager != null && connection.getDatabase() != null)
         try {
           if (manager.getMessageService() != null) {
-            final ODistributedDatabase dDatabase = manager.getMessageService().getDatabase(connection.getDatabase().getName());
+            final ODistributedDatabase dDatabase =
+                manager.getMessageService().getDatabase(connection.getDatabase().getName());
             if (dDatabase != null) {
               dDatabase.waitForOnline();
             } else
-              manager.waitUntilNodeOnline(manager.getLocalNodeName(), connection.getToken().getDatabase());
+              manager.waitUntilNodeOnline(
+                  manager.getLocalNodeName(), connection.getToken().getDatabase());
           }
         } catch (InterruptedException e) {
           Thread.currentThread().interrupt();
@@ -538,7 +605,8 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 
   protected void afterOperationRequest(OClientConnection connection) {
     requests++;
-    OServerPluginHelper.invokeHandlerCallbackOnAfterClientRequest(server, connection, (byte) requestType);
+    OServerPluginHelper.invokeHandlerCallbackOnAfterClientRequest(
+        server, connection, (byte) requestType);
 
     if (connection != null) {
       setDataCommandInfo(connection, "Listening");
@@ -556,7 +624,10 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 
       if (!server.isAllowed(connection.getServerUser().name, iResource))
         throw new OSecurityAccessException(
-            "User '" + connection.getServerUser().name + "' cannot access to the resource [" + iResource
+            "User '"
+                + connection.getServerUser().name
+                + "' cannot access to the resource ["
+                + iResource
                 + "]. Use another server user or change permission in the file config/orientdb-server-config.xml");
     } else {
       if (!connection.getData().serverUser)
@@ -564,7 +635,10 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 
       if (!server.isAllowed(connection.getData().serverUsername, iResource))
         throw new OSecurityAccessException(
-            "User '" + connection.getData().serverUsername + "' cannot access to the resource [" + iResource
+            "User '"
+                + connection.getData().serverUsername
+                + "' cannot access to the resource ["
+                + iResource
                 + "]. Use another server user or change permission in the file config/orientdb-server-config.xml");
     }
   }
@@ -584,15 +658,15 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
     if (dbName != null) {
       ddb = manager.getMessageService().getDatabase(dbName);
       if (ddb == null && req.getTask().isNodeOnlineRequired())
-        throw new ODistributedException("Database configuration not found for database '" + req.getDatabaseName() + "'");
+        throw new ODistributedException(
+            "Database configuration not found for database '" + req.getDatabaseName() + "'");
     }
 
     // SET THE SENDER IN THE TASK
     String senderNodeName = manager.getNodeNameById(req.getId().getNodeId());
     req.getTask().setNodeSource(senderNodeName);
 
-    if (ddb != null)
-      ddb.processRequest(req, true);
+    if (ddb != null) ddb.processRequest(req, true);
     else {
       manager.executeOnLocalNodeFromRemote(req);
     }
@@ -609,9 +683,13 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
     response.fromStream(channel.getDataInput());
 
     if (ODistributedServerLog.isDebugEnabled())
-      ODistributedServerLog
-          .debug(this, manager.getLocalNodeName(), response.getExecutorNodeName(), ODistributedServerLog.DIRECTION.IN,
-              "Executing distributed response %s", response);
+      ODistributedServerLog.debug(
+          this,
+          manager.getLocalNodeName(),
+          response.getExecutorNodeName(),
+          ODistributedServerLog.DIRECTION.IN,
+          "Executing distributed response %s",
+          response);
 
     // WHILE MSG SERVICE IS UP & RUNNING
     while (manager.getMessageService() == null)
@@ -624,7 +702,9 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
     manager.getMessageService().dispatchResponseToThread(response);
   }
 
-  protected void sendError(final OClientConnection connection, final int iClientTxId, final Throwable t) throws IOException {
+  protected void sendError(
+      final OClientConnection connection, final int iClientTxId, final Throwable t)
+      throws IOException {
     channel.acquireWriteLock();
     try {
 
@@ -641,28 +721,33 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
         channel.writeBytes(renewedToken);
         channel.writeByte((byte) requestType);
       } else {
-        if (tokenConnection && requestType != OChannelBinaryProtocol.REQUEST_CONNECT && (
-            requestType != OChannelBinaryProtocol.REQUEST_DB_OPEN && requestType != OChannelBinaryProtocol.DISTRIBUTED_CONNECT
-                && requestType != OChannelBinaryProtocol.REQUEST_SHUTDOWN || (connection != null && connection.getData() != null
-                && connection.getData().protocolVersion <= OChannelBinaryProtocol.PROTOCOL_VERSION_32))
+        if (tokenConnection
+                && requestType != OChannelBinaryProtocol.REQUEST_CONNECT
+                && (requestType != OChannelBinaryProtocol.REQUEST_DB_OPEN
+                        && requestType != OChannelBinaryProtocol.DISTRIBUTED_CONNECT
+                        && requestType != OChannelBinaryProtocol.REQUEST_SHUTDOWN
+                    || (connection != null
+                        && connection.getData() != null
+                        && connection.getData().protocolVersion
+                            <= OChannelBinaryProtocol.PROTOCOL_VERSION_32))
             || requestType == OChannelBinaryProtocol.REQUEST_DB_REOPEN) {
           // TODO: Check if the token is expiring and if it is send a new token
 
           if (connection != null && connection.getToken() != null) {
             byte[] renewedToken = server.getTokenHandler().renewIfNeeded(connection.getToken());
             channel.writeBytes(renewedToken);
-          } else
-            channel.writeBytes(new byte[] {});
+          } else channel.writeBytes(new byte[] {});
         }
       }
       final Throwable current;
-      if (t instanceof OException && t.getCause() instanceof InterruptedException && !server.isActive()) {
+      if (t instanceof OException
+          && t.getCause() instanceof InterruptedException
+          && !server.isActive()) {
         current = new OOfflineNodeException("Node shutting down");
       } else if (t instanceof OLockException && t.getCause() instanceof ODatabaseException)
         // BYPASS THE DB POOL EXCEPTION TO PROPAGATE THE RIGHT SECURITY ONE
         current = t.getCause();
-      else
-        current = t;
+      else current = t;
 
       Map<String, String> messages = new HashMap<>();
       Throwable it = current;
@@ -671,7 +756,8 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
         it = it.getCause();
       }
       final byte[] result;
-      if (handshakeInfo == null || handshakeInfo.getErrorEncoding() == OChannelBinaryProtocol.ERROR_MESSAGE_JAVA) {
+      if (handshakeInfo == null
+          || handshakeInfo.getErrorEncoding() == OChannelBinaryProtocol.ERROR_MESSAGE_JAVA) {
         ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
         final ObjectOutputStream objectOutputStream = new ObjectOutputStream(outputStream);
         objectOutputStream.writeObject(current);
@@ -690,8 +776,7 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
         OErrorCode code;
         if (current instanceof OCoreException) {
           code = ((OCoreException) current).getErrorCode();
-          if (code == null)
-            code = OErrorCode.GENERIC_ERROR;
+          if (code == null) code = OErrorCode.GENERIC_ERROR;
         } else {
           code = OErrorCode.GENERIC_ERROR;
         }
@@ -710,17 +795,31 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 
       if (OLogManager.instance().isLevelEnabled(logClientExceptions)) {
         if (logClientFullStackTrace)
-          OLogManager.instance().log(this, logClientExceptions, "Sent run-time exception to the client %s: %s", t, true, null,
-              channel.socket.getRemoteSocketAddress(), t.toString());
+          OLogManager.instance()
+              .log(
+                  this,
+                  logClientExceptions,
+                  "Sent run-time exception to the client %s: %s",
+                  t,
+                  true,
+                  null,
+                  channel.socket.getRemoteSocketAddress(),
+                  t.toString());
         else
-          OLogManager.instance().log(this, logClientExceptions, "Sent run-time exception to the client %s: %s", null, true, null,
-              channel.socket.getRemoteSocketAddress(), t.toString());
+          OLogManager.instance()
+              .log(
+                  this,
+                  logClientExceptions,
+                  "Sent run-time exception to the client %s: %s",
+                  null,
+                  true,
+                  null,
+                  channel.socket.getRemoteSocketAddress(),
+                  t.toString());
       }
     } catch (Exception e) {
-      if (e instanceof SocketException)
-        shutdown();
-      else
-        OLogManager.instance().error(this, "Error during sending an error to client", e);
+      if (e instanceof SocketException) shutdown();
+      else OLogManager.instance().error(this, "Error during sending an error to client", e);
     } finally {
       if (channel.getLockWrite().isHeldByCurrentThread())
         // NO EXCEPTION SO FAR: UNLOCK IT
@@ -738,8 +837,7 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
   }
 
   protected void setDataCommandInfo(OClientConnection connection, final String iCommandInfo) {
-    if (connection != null)
-      connection.getData().commandInfo = iCommandInfo;
+    if (connection != null) connection.getData().commandInfo = iCommandInfo;
   }
 
   protected void sendOk(OClientConnection connection, final int iClientTxId) throws IOException {
@@ -757,8 +855,11 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
       channel.writeBytes(renewedToken);
       channel.writeByte((byte) requestType);
     } else {
-      if (connection != null && Boolean.TRUE.equals(connection.getTokenBased()) && connection.getToken() != null
-          && requestType != OChannelBinaryProtocol.REQUEST_CONNECT && requestType != OChannelBinaryProtocol.DISTRIBUTED_CONNECT
+      if (connection != null
+          && Boolean.TRUE.equals(connection.getTokenBased())
+          && connection.getToken() != null
+          && requestType != OChannelBinaryProtocol.REQUEST_CONNECT
+          && requestType != OChannelBinaryProtocol.DISTRIBUTED_CONNECT
           && requestType != OChannelBinaryProtocol.REQUEST_DB_OPEN) {
         // TODO: Check if the token is expiring and if it is send a new token
         byte[] renewedToken = server.getTokenHandler().renewIfNeeded(connection.getToken());
@@ -792,16 +893,20 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
   }
 
   /**
-   * Write a OIdentifiable instance using this format:<br> - 2 bytes: class id [-2=no record, -3=rid, -1=no class id, > -1 = valid]
-   * <br> - 1 byte: record type [d,b,f] <br> - 2 bytes: cluster id <br> - 8 bytes: position in cluster <br> - 4 bytes: record
-   * version <br> - x bytes: record content <br>
+   * Write a OIdentifiable instance using this format:<br>
+   * - 2 bytes: class id [-2=no record, -3=rid, -1=no class id, > -1 = valid] <br>
+   * - 1 byte: record type [d,b,f] <br>
+   * - 2 bytes: cluster id <br>
+   * - 8 bytes: position in cluster <br>
+   * - 4 bytes: record version <br>
+   * - x bytes: record content <br>
    *
    * @param channel TODO
    */
-  public static void writeIdentifiable(OChannelBinary channel, OClientConnection connection, final OIdentifiable o)
+  public static void writeIdentifiable(
+      OChannelBinary channel, OClientConnection connection, final OIdentifiable o)
       throws IOException {
-    if (o == null)
-      channel.writeShort(OChannelBinaryProtocol.RECORD_NULL);
+    if (o == null) channel.writeShort(OChannelBinaryProtocol.RECORD_NULL);
     else if (o instanceof ORecordId) {
       channel.writeShort(OChannelBinaryProtocol.RECORD_RID);
       channel.writeRID((ORID) o);
@@ -814,8 +919,8 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
     return "binary";
   }
 
-  protected void sendErrorOrDropConnection(OClientConnection connection, final int iClientTxId, final Throwable t)
-      throws IOException {
+  protected void sendErrorOrDropConnection(
+      OClientConnection connection, final int iClientTxId, final Throwable t) throws IOException {
     if (okSent || requestType == OChannelBinaryProtocol.REQUEST_DB_CLOSE) {
       handleConnectionError(connection, t);
       sendShutdown();
@@ -829,20 +934,22 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
     final byte[] stream;
     String dbSerializerName = null;
     if (ODatabaseRecordThreadLocal.instance().getIfDefined() != null)
-      dbSerializerName = ((ODatabaseDocumentInternal) iRecord.getDatabase()).getSerializer().toString();
+      dbSerializerName =
+          ((ODatabaseDocumentInternal) iRecord.getDatabase()).getSerializer().toString();
     String name = connection.getData().getSerializationImpl();
-    if (ORecordInternal.getRecordType(iRecord) == ODocument.RECORD_TYPE && (dbSerializerName == null || !dbSerializerName
-        .equals(name))) {
+    if (ORecordInternal.getRecordType(iRecord) == ODocument.RECORD_TYPE
+        && (dbSerializerName == null || !dbSerializerName.equals(name))) {
       ((ODocument) iRecord).deserializeFields();
       ORecordSerializer ser = ORecordSerializerFactory.instance().getFormat(name);
       stream = ser.toStream(iRecord);
-    } else
-      stream = iRecord.toStream();
+    } else stream = iRecord.toStream();
 
     return stream;
   }
 
-  private static void writeRecord(OChannelBinary channel, OClientConnection connection, final ORecord iRecord) throws IOException {
+  private static void writeRecord(
+      OChannelBinary channel, OClientConnection connection, final ORecord iRecord)
+      throws IOException {
     channel.writeShort((short) 0);
     channel.writeByte(ORecordInternal.getRecordType(iRecord));
     channel.writeRID(iRecord.getIdentity());
@@ -850,13 +957,15 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
     try {
       final byte[] stream = getRecordBytes(connection, iRecord);
 
-      // TODO: This Logic should not be here provide an api in the Serializer if asked for trimmed content.
+      // TODO: This Logic should not be here provide an api in the Serializer if asked for trimmed
+      // content.
       int realLength = trimCsvSerializedContent(connection, stream);
 
       channel.writeBytes(stream, realLength);
     } catch (Exception e) {
       channel.writeBytes(null);
-      final String message = "Error on unmarshalling record " + iRecord.getIdentity().toString() + " (" + e + ")";
+      final String message =
+          "Error on unmarshalling record " + iRecord.getIdentity().toString() + " (" + e + ")";
 
       throw OException.wrapException(new OSerializationException(message), e);
     }
@@ -866,15 +975,13 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
     int realLength = stream.length;
     final ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.instance().getIfDefined();
     if (db != null) {
-      if (ORecordSerializerSchemaAware2CSV.NAME.equals(connection.getData().getSerializationImpl())) {
+      if (ORecordSerializerSchemaAware2CSV.NAME.equals(
+          connection.getData().getSerializationImpl())) {
         // TRIM TAILING SPACES (DUE TO OVERSIZE)
         for (int i = stream.length - 1; i > -1; --i) {
-          if (stream[i] == 32)
-            --realLength;
-          else
-            break;
+          if (stream[i] == 32) --realLength;
+          else break;
         }
-
       }
     }
     return realLength;
@@ -923,5 +1030,4 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
     expectedPushResponse.read(channel);
     this.pushResponse.offer(expectedPushResponse);
   }
-
 }

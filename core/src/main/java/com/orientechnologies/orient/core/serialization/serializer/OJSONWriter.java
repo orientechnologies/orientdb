@@ -29,20 +29,28 @@ import com.orientechnologies.orient.core.exception.OSerializationException;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.util.ODateHelper;
-
-import java.io.*;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.ObjectOutputStream;
+import java.io.StringWriter;
+import java.io.Writer;
 import java.lang.reflect.Array;
 import java.math.BigDecimal;
-import java.util.*;
+import java.util.Base64;
+import java.util.Collection;
+import java.util.Date;
+import java.util.Iterator;
+import java.util.Map;
 import java.util.Map.Entry;
 
 @SuppressWarnings("unchecked")
 public class OJSONWriter {
-  private static final String  DEF_FORMAT     = "rid,type,version,class,attribSameRow,indent:2,dateAsLong";
-  private final        String  format;
-  private              Writer  out;
-  private              boolean prettyPrint    = false;
-  private              boolean firstAttribute = true;
+  private static final String DEF_FORMAT =
+      "rid,type,version,class,attribSameRow,indent:2,dateAsLong";
+  private final String format;
+  private Writer out;
+  private boolean prettyPrint = false;
+  private boolean firstAttribute = true;
 
   public OJSONWriter(final Writer out) {
     this(out, DEF_FORMAT);
@@ -51,8 +59,7 @@ public class OJSONWriter {
   public OJSONWriter(final Writer out, final String iJsonFormat) {
     this.out = out;
     this.format = iJsonFormat;
-    if (iJsonFormat.contains("prettyPrint"))
-      prettyPrint = true;
+    if (iJsonFormat.contains("prettyPrint")) prettyPrint = true;
   }
 
   public static String writeValue(final Object iValue) throws IOException {
@@ -63,9 +70,10 @@ public class OJSONWriter {
     return writeValue(iValue, iFormat, 0, null);
   }
 
-  public static String writeValue(Object iValue, final String iFormat, final int iIndentLevel, OType valueType) throws IOException {
-    if (iValue == null)
-      return "null";
+  public static String writeValue(
+      Object iValue, final String iFormat, final int iIndentLevel, OType valueType)
+      throws IOException {
+    if (iValue == null) return "null";
 
     final StringBuilder buffer = new StringBuilder(64);
 
@@ -74,8 +82,7 @@ public class OJSONWriter {
     if (iValue instanceof ORecordLazyMultiValue) {
       oldAutoConvertSettings = ((ORecordLazyMultiValue) iValue).isAutoConvertToRecord();
       ((ORecordLazyMultiValue) iValue).setAutoConvertToRecord(false);
-    } else
-      oldAutoConvertSettings = false;
+    } else oldAutoConvertSettings = false;
 
     if (iValue instanceof Boolean || iValue instanceof Number) {
 
@@ -94,16 +101,16 @@ public class OJSONWriter {
         linked.getIdentity().toString(buffer);
         buffer.append('\"');
       } else {
-        if (iFormat != null && iFormat.contains("shallow"))
-          buffer.append("{}");
+        if (iFormat != null && iFormat.contains("shallow")) buffer.append("{}");
         else {
           final ORecord rec = linked.getRecord();
           if (rec != null) {
             final String embeddedFormat =
-                iFormat != null && iFormat.isEmpty() ? "indent:" + iIndentLevel : iFormat + ",indent:" + iIndentLevel;
+                iFormat != null && iFormat.isEmpty()
+                    ? "indent:" + iIndentLevel
+                    : iFormat + ",indent:" + iIndentLevel;
             buffer.append(rec.toJSON(embeddedFormat));
-          } else
-            buffer.append("null");
+          } else buffer.append("null");
         }
       }
 
@@ -113,17 +120,14 @@ public class OJSONWriter {
         buffer.append('\"');
         final byte[] source = (byte[]) iValue;
 
-        if (iFormat != null && iFormat.contains("shallow"))
-          buffer.append(source.length);
-        else
-          buffer.append(Base64.getEncoder().encodeToString(source));
+        if (iFormat != null && iFormat.contains("shallow")) buffer.append(source.length);
+        else buffer.append(Base64.getEncoder().encodeToString(source));
 
         buffer.append('\"');
       } else {
         buffer.append('[');
         int size = Array.getLength(iValue);
-        if (iFormat != null && iFormat.contains("shallow"))
-          buffer.append(size);
+        if (iFormat != null && iFormat.contains("shallow")) buffer.append(size);
         else {
           for (int i = 0; i < size; ++i) {
             if (i > 0) {
@@ -133,23 +137,17 @@ public class OJSONWriter {
           }
         }
         buffer.append(']');
-
       }
-    } else if (iValue instanceof Iterator<?>)
-      iteratorToJSON((Iterator<?>) iValue, iFormat, buffer);
+    } else if (iValue instanceof Iterator<?>) iteratorToJSON((Iterator<?>) iValue, iFormat, buffer);
     else if (iValue instanceof Iterable<?>)
       iteratorToJSON(((Iterable<?>) iValue).iterator(), iFormat, buffer);
-
-    else if (iValue instanceof Map<?, ?>)
-      mapToJSON((Map<Object, Object>) iValue, iFormat, buffer);
-
+    else if (iValue instanceof Map<?, ?>) mapToJSON((Map<Object, Object>) iValue, iFormat, buffer);
     else if (iValue instanceof Map.Entry<?, ?>) {
       final Map.Entry<?, ?> entry = (Entry<?, ?>) iValue;
       buffer.append('{');
       buffer.append(writeValue(entry.getKey(), iFormat));
       buffer.append(":");
-      if (iFormat.contains("prettyPrint"))
-        buffer.append(' ');
+      if (iFormat.contains("prettyPrint")) buffer.append(' ');
       buffer.append(writeValue(entry.getValue(), iFormat));
       buffer.append('}');
     } else if (iValue instanceof Date) {
@@ -160,14 +158,11 @@ public class OJSONWriter {
         buffer.append(ODateHelper.getDateTimeFormatInstance().format(iValue));
         buffer.append('"');
       }
-    } else if (iValue instanceof BigDecimal)
-      buffer.append(((BigDecimal) iValue).toPlainString());
-
+    } else if (iValue instanceof BigDecimal) buffer.append(((BigDecimal) iValue).toPlainString());
     else if (iValue instanceof ORecordLazyMultiValue)
       iteratorToJSON(((ORecordLazyMultiValue) iValue).rawIterator(), iFormat, buffer);
     else if (iValue instanceof Iterable<?>)
       iteratorToJSON(((Iterable<?>) iValue).iterator(), iFormat, buffer);
-
     else {
       if (valueType == null) {
         valueType = OType.getTypeByValue(iValue);
@@ -196,7 +191,8 @@ public class OJSONWriter {
     return buffer.toString();
   }
 
-  protected static void iteratorToJSON(final Iterator<?> it, final String iFormat, final StringBuilder buffer) throws IOException {
+  protected static void iteratorToJSON(
+      final Iterator<?> it, final String iFormat, final StringBuilder buffer) throws IOException {
     buffer.append('[');
     if (iFormat != null && iFormat.contains("shallow")) {
       if (it instanceof OMultiCollectionIterator<?>)
@@ -204,8 +200,7 @@ public class OJSONWriter {
       else {
         // COUNT THE MULTI VALUE
         int i;
-        for (i = 0; it.hasNext(); ++i)
-          it.next();
+        for (i = 0; it.hasNext(); ++i) it.next();
         buffer.append(i);
       }
     } else {
@@ -223,7 +218,8 @@ public class OJSONWriter {
     return OIOUtils.encode(iValue);
   }
 
-  public static String listToJSON(final Collection<? extends OIdentifiable> iRecords, final String iFormat) {
+  public static String listToJSON(
+      final Collection<? extends OIdentifiable> iRecords, final String iFormat) {
     try {
       final StringWriter buffer = new StringWriter();
       final OJSONWriter json = new OJSONWriter(buffer);
@@ -238,7 +234,8 @@ public class OJSONWriter {
           for (OIdentifiable rec : iRecords) {
             if (rec != null)
               try {
-                objectJson = iFormat != null ? rec.getRecord().toJSON(iFormat) : rec.getRecord().toJSON();
+                objectJson =
+                    iFormat != null ? rec.getRecord().toJSON(iFormat) : rec.getRecord().toJSON();
 
                 if (counter++ > 0) {
                   buffer.append(",");
@@ -246,7 +243,8 @@ public class OJSONWriter {
 
                 buffer.append(objectJson);
               } catch (Exception e) {
-                OLogManager.instance().error(json, "Error transforming record " + rec.getIdentity() + " to JSON", e);
+                OLogManager.instance()
+                    .error(json, "Error transforming record " + rec.getIdentity() + " to JSON", e);
               }
           }
         }
@@ -255,7 +253,8 @@ public class OJSONWriter {
 
       return buffer.toString();
     } catch (IOException e) {
-      throw OException.wrapException(new OSerializationException("Error on serializing collection"), e);
+      throw OException.wrapException(
+          new OSerializationException("Error on serializing collection"), e);
     }
   }
 
@@ -263,7 +262,8 @@ public class OJSONWriter {
     return mapToJSON(iMap, null, new StringBuilder(128));
   }
 
-  public static String mapToJSON(final Map<?, ?> iMap, final String iFormat, final StringBuilder buffer) {
+  public static String mapToJSON(
+      final Map<?, ?> iMap, final String iFormat, final StringBuilder buffer) {
     try {
       buffer.append('{');
       if (iMap != null) {
@@ -301,16 +301,15 @@ public class OJSONWriter {
     return this;
   }
 
-  public OJSONWriter beginObject(final int iIdentLevel, final boolean iNewLine, final Object iName) throws IOException {
-    if (!firstAttribute)
-      out.append(",");
+  public OJSONWriter beginObject(final int iIdentLevel, final boolean iNewLine, final Object iName)
+      throws IOException {
+    if (!firstAttribute) out.append(",");
 
     format(iIdentLevel, iNewLine);
 
     if (iName != null) {
       out.append("\"" + iName.toString() + "\":");
-      if (prettyPrint)
-        out.append(' ');
+      if (prettyPrint) out.append(' ');
     }
 
     out.append('{');
@@ -319,17 +318,16 @@ public class OJSONWriter {
     return this;
   }
 
-  public OJSONWriter writeRecord(final int iIdentLevel, final boolean iNewLine, final Object iName, final ORecord iRecord)
+  public OJSONWriter writeRecord(
+      final int iIdentLevel, final boolean iNewLine, final Object iName, final ORecord iRecord)
       throws IOException {
-    if (!firstAttribute)
-      out.append(",");
+    if (!firstAttribute) out.append(",");
 
     format(iIdentLevel, iNewLine);
 
     if (iName != null) {
       out.append("\"" + iName.toString() + "\":");
-      if (prettyPrint)
-        out.append(' ');
+      if (prettyPrint) out.append(' ');
     }
 
     out.append(iRecord.toJSON(format));
@@ -359,17 +357,16 @@ public class OJSONWriter {
     return beginCollection(-1, false, iName);
   }
 
-  public OJSONWriter beginCollection(final int iIdentLevel, final boolean iNewLine, final String iName) throws IOException {
-    if (!firstAttribute)
-      out.append(",");
+  public OJSONWriter beginCollection(
+      final int iIdentLevel, final boolean iNewLine, final String iName) throws IOException {
+    if (!firstAttribute) out.append(",");
 
     format(iIdentLevel, iNewLine);
 
     if (iName != null && !iName.isEmpty()) {
       out.append(writeValue(iName, format));
       out.append(":");
-      if (prettyPrint)
-        out.append(' ');
+      if (prettyPrint) out.append(' ');
     }
     out.append("[");
 
@@ -381,7 +378,8 @@ public class OJSONWriter {
     return endCollection(-1, false);
   }
 
-  public OJSONWriter endCollection(final int iIdentLevel, final boolean iNewLine) throws IOException {
+  public OJSONWriter endCollection(final int iIdentLevel, final boolean iNewLine)
+      throws IOException {
     format(iIdentLevel, iNewLine);
     firstAttribute = false;
     out.append(']');
@@ -392,7 +390,9 @@ public class OJSONWriter {
     return writeObjects(-1, false, iName, iPairs);
   }
 
-  public OJSONWriter writeObjects(int iIdentLevel, boolean iNewLine, final String iName, Object[]... iPairs) throws IOException {
+  public OJSONWriter writeObjects(
+      int iIdentLevel, boolean iNewLine, final String iName, Object[]... iPairs)
+      throws IOException {
     for (int i = 0; i < iPairs.length; ++i) {
       beginObject(iIdentLevel, true, iName);
       for (int k = 0; k < iPairs[i].length; ) {
@@ -407,52 +407,62 @@ public class OJSONWriter {
     return writeAttribute(-1, false, iName, iValue, format);
   }
 
-  public OJSONWriter writeAttribute(final int iIdentLevel, final boolean iNewLine, final String iName, final Object iValue)
+  public OJSONWriter writeAttribute(
+      final int iIdentLevel, final boolean iNewLine, final String iName, final Object iValue)
       throws IOException {
     return writeAttribute(iIdentLevel, iNewLine, iName, iValue, format, null);
   }
 
-  public OJSONWriter writeAttribute(final int iIdentLevel, final boolean iNewLine, final String iName, final Object iValue,
-      final String iFormat) throws IOException {
+  public OJSONWriter writeAttribute(
+      final int iIdentLevel,
+      final boolean iNewLine,
+      final String iName,
+      final Object iValue,
+      final String iFormat)
+      throws IOException {
     return writeAttribute(iIdentLevel, iNewLine, iName, iValue, iFormat, null);
   }
 
-  public OJSONWriter writeAttribute(final int iIdentLevel, final boolean iNewLine, final String iName, final Object iValue,
-      final String iFormat, OType valueType) throws IOException {
-    if (!firstAttribute)
-      out.append(",");
+  public OJSONWriter writeAttribute(
+      final int iIdentLevel,
+      final boolean iNewLine,
+      final String iName,
+      final Object iValue,
+      final String iFormat,
+      OType valueType)
+      throws IOException {
+    if (!firstAttribute) out.append(",");
 
     format(iIdentLevel, iNewLine);
 
     if (iName != null) {
       out.append(writeValue(iName, iFormat));
       out.append(":");
-      if (prettyPrint)
-        out.append(' ');
+      if (prettyPrint) out.append(' ');
     }
 
-    if (iFormat != null && iFormat.contains("graph") && iName != null && (iName.startsWith("in_") || iName.startsWith("out_")) && (
-        iValue == null || iValue instanceof OIdentifiable)) {
+    if (iFormat != null
+        && iFormat.contains("graph")
+        && iName != null
+        && (iName.startsWith("in_") || iName.startsWith("out_"))
+        && (iValue == null || iValue instanceof OIdentifiable)) {
       // FORCE THE OUTPUT AS COLLECTION
       out.append('[');
       if (iValue instanceof OIdentifiable) {
         final boolean shallow = iFormat != null && iFormat.contains("shallow");
-        if (shallow)
-          out.append("1");
-        else
-          out.append(writeValue(iValue, iFormat));
+        if (shallow) out.append("1");
+        else out.append(writeValue(iValue, iFormat));
       }
       out.append(']');
-    } else
-      out.append(writeValue(iValue, iFormat, iIdentLevel, valueType));
+    } else out.append(writeValue(iValue, iFormat, iIdentLevel, valueType));
 
     firstAttribute = false;
     return this;
   }
 
-  public OJSONWriter writeValue(final int iIdentLevel, final boolean iNewLine, final Object iValue) throws IOException {
-    if (!firstAttribute)
-      out.append(",");
+  public OJSONWriter writeValue(final int iIdentLevel, final boolean iNewLine, final Object iValue)
+      throws IOException {
+    if (!firstAttribute) out.append(",");
 
     format(iIdentLevel, iNewLine);
 
@@ -491,8 +501,7 @@ public class OJSONWriter {
   }
 
   public void newline() throws IOException {
-    if (prettyPrint)
-      out.append("\r\n");
+    if (prettyPrint) out.append("\r\n");
   }
 
   public void resetAttributes() {

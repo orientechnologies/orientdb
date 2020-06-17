@@ -1,20 +1,21 @@
 package com.orientechnologies.orient.client.remote.message;
 
+import static org.junit.Assert.assertArrayEquals;
+import static org.junit.Assert.assertEquals;
+
+
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.serialization.serializer.record.binary.ORecordSerializerNetworkFactory;
 import com.orientechnologies.orient.core.storage.OStorage;
-import org.junit.Test;
-
 import java.io.IOException;
-
-import static org.junit.Assert.assertArrayEquals;
-import static org.junit.Assert.assertEquals;
+import org.junit.Test;
 
 public class OLockMessagesTests {
 
   @Test
   public void testReadWriteLockRequest() throws IOException {
-    OLockRecordRequest request = new OLockRecordRequest(new ORecordId(10, 10), OStorage.LOCKING_STRATEGY.EXCLUSIVE_LOCK, 10);
+    OLockRecordRequest request =
+        new OLockRecordRequest(new ORecordId(10, 10), OStorage.LOCKING_STRATEGY.EXCLUSIVE_LOCK, 10);
     MockChannel channel = new MockChannel();
     request.write(channel, null);
 

@@ -6,7 +6,6 @@ import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.sql.executor.OInternalResultSet;
 import com.orientechnologies.orient.core.sql.executor.OResultInternal;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
-
 import java.util.Map;
 
 public class ORollbackStatement extends OSimpleExecStatement {
@@ -18,7 +17,8 @@ public class ORollbackStatement extends OSimpleExecStatement {
     super(p, id);
   }
 
-  @Override public OResultSet executeSimple(OCommandContext ctx) {
+  @Override
+  public OResultSet executeSimple(OCommandContext ctx) {
     ctx.getDatabase().rollback();
     OInternalResultSet result = new OInternalResultSet();
     OResultInternal item = new OResultInternal();
@@ -27,26 +27,27 @@ public class ORollbackStatement extends OSimpleExecStatement {
     return result;
   }
 
-
-  @Override public void toString(Map<Object, Object> params, StringBuilder builder) {
+  @Override
+  public void toString(Map<Object, Object> params, StringBuilder builder) {
     builder.append("ROLLBACK");
   }
 
-  @Override public ORollbackStatement copy() {
+  @Override
+  public ORollbackStatement copy() {
     ORollbackStatement result = new ORollbackStatement(-1);
     return result;
   }
 
-  @Override public boolean equals(Object o) {
-    if (this == o)
-      return true;
-    if (o == null || getClass() != o.getClass())
-      return false;
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
 
     return true;
   }
 
-  @Override public int hashCode() {
+  @Override
+  public int hashCode() {
     return 0;
   }
 }

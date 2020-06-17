@@ -24,11 +24,10 @@ import com.orientechnologies.orient.server.network.protocol.http.OHttpResponse;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpUtils;
 import com.orientechnologies.orient.server.network.protocol.http.command.OServerCommandAbstract;
 import com.orientechnologies.orient.server.network.protocol.http.command.OServerCommandAuthenticatedDbAbstract;
-
 import java.io.IOException;
 
 public class OServerCommandGetDisconnect extends OServerCommandAbstract {
-  private static final String[] NAMES = { "GET|disconnect" };
+  private static final String[] NAMES = {"GET|disconnect"};
 
   @Override
   public boolean beforeExecute(OHttpRequest iRequest, OHttpResponse iResponse) throws IOException {
@@ -52,10 +51,19 @@ public class OServerCommandGetDisconnect extends OServerCommandAbstract {
     iResponse.setKeepAlive(false);
 
     if (isJsonResponse(iResponse)) {
-      sendJsonError(iResponse, OHttpUtils.STATUS_AUTH_CODE, OHttpUtils.STATUS_AUTH_DESCRIPTION, OHttpUtils.CONTENT_TEXT_PLAIN,
-          "Logged out", null);
+      sendJsonError(
+          iResponse,
+          OHttpUtils.STATUS_AUTH_CODE,
+          OHttpUtils.STATUS_AUTH_DESCRIPTION,
+          OHttpUtils.CONTENT_TEXT_PLAIN,
+          "Logged out",
+          null);
     } else {
-      iResponse.send(OHttpUtils.STATUS_AUTH_CODE, OHttpUtils.STATUS_AUTH_DESCRIPTION, OHttpUtils.CONTENT_TEXT_PLAIN, "Logged out",
+      iResponse.send(
+          OHttpUtils.STATUS_AUTH_CODE,
+          OHttpUtils.STATUS_AUTH_DESCRIPTION,
+          OHttpUtils.CONTENT_TEXT_PLAIN,
+          "Logged out",
           null);
     }
 

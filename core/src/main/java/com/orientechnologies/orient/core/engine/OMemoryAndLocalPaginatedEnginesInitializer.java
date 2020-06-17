@@ -25,30 +25,29 @@ import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.util.OMemory;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.storage.cache.OReadCache;
-
 import java.util.Locale;
 
 /**
- * Manages common initialization logic for memory and plocal engines. These engines are tight together through dependency to {@link
- * com.orientechnologies.common.directmemory.OByteBufferPool}, which is hard to reconfigure if initialization logic is separate.
+ * Manages common initialization logic for memory and plocal engines. These engines are tight
+ * together through dependency to {@link com.orientechnologies.common.directmemory.OByteBufferPool},
+ * which is hard to reconfigure if initialization logic is separate.
  *
  * @author Sergey Sitnikov
  */
 public class OMemoryAndLocalPaginatedEnginesInitializer {
 
-  /**
-   * Shared initializer instance.
-   */
-  public static final OMemoryAndLocalPaginatedEnginesInitializer INSTANCE = new OMemoryAndLocalPaginatedEnginesInitializer();
+  /** Shared initializer instance. */
+  public static final OMemoryAndLocalPaginatedEnginesInitializer INSTANCE =
+      new OMemoryAndLocalPaginatedEnginesInitializer();
 
   private boolean initialized = false;
 
   /**
-   * Initializes common parts of memory and plocal engines if not initialized yet. Does nothing if engines already initialized.
+   * Initializes common parts of memory and plocal engines if not initialized yet. Does nothing if
+   * engines already initialized.
    */
   public void initialize() {
-    if (initialized)
-      return;
+    if (initialized) return;
     initialized = true;
 
     configureDefaults();
@@ -58,8 +57,7 @@ public class OMemoryAndLocalPaginatedEnginesInitializer {
   }
 
   private void configureDefaults() {
-    if (!OGlobalConfiguration.DISK_CACHE_SIZE.isChanged())
-      configureDefaultDiskCacheSize();
+    if (!OGlobalConfiguration.DISK_CACHE_SIZE.isChanged()) configureDefaultDiskCacheSize();
 
     if (!OGlobalConfiguration.WAL_RESTORE_BATCH_SIZE.isChanged())
       configureDefaultWalRestoreBatchSize();
@@ -79,48 +77,81 @@ public class OMemoryAndLocalPaginatedEnginesInitializer {
     final ONative.MemoryLimitResult osMemory = ONative.instance().getMemoryLimit(true);
     if (osMemory == null) {
       OLogManager.instance()
-          .warnNoDb(this, "Can not determine amount of memory installed on machine, default size of disk cache will be used");
+          .warnNoDb(
+              this,
+              "Can not determine amount of memory installed on machine, default size of disk cache will be used");
       return;
     }
 
     final long jvmMaxMemory = OMemory.getCappedRuntimeMaxMemory(2L * 1024 * 1024 * 1024 /* 2GB */);
-    OLogManager.instance().infoNoDb(this, "JVM can use maximum %dMB of heap memory", jvmMaxMemory / (1024 * 1024));
+    OLogManager.instance()
+        .infoNoDb(this, "JVM can use maximum %dMB of heap memory", jvmMaxMemory / (1024 * 1024));
 
     long diskCacheInMB;
     if (osMemory.insideContainer) {
-      OLogManager.instance().infoNoDb(this,
-          "Because OrientDB is running inside a container %s of memory will be left unallocated according to the setting '%s'"
-              + " not taking into account heap memory", OGlobalConfiguration.MEMORY_LEFT_TO_CONTAINER.getValueAsString(),
-          OGlobalConfiguration.MEMORY_LEFT_TO_CONTAINER.getKey());
+      OLogManager.instance()
+          .infoNoDb(
+              this,
+              "Because OrientDB is running inside a container %s of memory will be left unallocated according to the setting '%s'"
+                  + " not taking into account heap memory",
+              OGlobalConfiguration.MEMORY_LEFT_TO_CONTAINER.getValueAsString(),
+              OGlobalConfiguration.MEMORY_LEFT_TO_CONTAINER.getKey());
 
-      diskCacheInMB = (calculateMemoryLeft(osMemory.memoryLimit, OGlobalConfiguration.MEMORY_LEFT_TO_CONTAINER.getKey(),
-          OGlobalConfiguration.MEMORY_LEFT_TO_CONTAINER.getValueAsString()) - jvmMaxMemory) / (1024 * 1024);
+      diskCacheInMB =
+          (calculateMemoryLeft(
+                      osMemory.memoryLimit,
+                      OGlobalConfiguration.MEMORY_LEFT_TO_CONTAINER.getKey(),
+                      OGlobalConfiguration.MEMORY_LEFT_TO_CONTAINER.getValueAsString())
+                  - jvmMaxMemory)
+              / (1024 * 1024);
     } else {
-      OLogManager.instance().infoNoDb(this, "Because OrientDB is running outside a container %s of memory will be left "
-              + "unallocated according to the setting '%s' not taking into account heap memory",
-          OGlobalConfiguration.MEMORY_LEFT_TO_OS.getValueAsString(), OGlobalConfiguration.MEMORY_LEFT_TO_OS.getKey());
+      OLogManager.instance()
+          .infoNoDb(
+              this,
+              "Because OrientDB is running outside a container %s of memory will be left "
+                  + "unallocated according to the setting '%s' not taking into account heap memory",
+              OGlobalConfiguration.MEMORY_LEFT_TO_OS.getValueAsString(),
+              OGlobalConfiguration.MEMORY_LEFT_TO_OS.getKey());
 
-      diskCacheInMB = (calculateMemoryLeft(osMemory.memoryLimit, OGlobalConfiguration.MEMORY_LEFT_TO_OS.getKey(),
-          OGlobalConfiguration.MEMORY_LEFT_TO_OS.getValueAsString()) - jvmMaxMemory) / (1024 * 1024);
+      diskCacheInMB =
+          (calculateMemoryLeft(
+                      osMemory.memoryLimit,
+                      OGlobalConfiguration.MEMORY_LEFT_TO_OS.getKey(),
+                      OGlobalConfiguration.MEMORY_LEFT_TO_OS.getValueAsString())
+                  - jvmMaxMemory)
+              / (1024 * 1024);
     }
 
     if (diskCacheInMB > 0) {
       OLogManager.instance()
-          .infoNoDb(null, "OrientDB auto-config DISKCACHE=%,dMB (heap=%,dMB os=%,dMB)", diskCacheInMB, jvmMaxMemory / 1024 / 1024,
+          .infoNoDb(
+              null,
+              "OrientDB auto-config DISKCACHE=%,dMB (heap=%,dMB os=%,dMB)",
+              diskCacheInMB,
+              jvmMaxMemory / 1024 / 1024,
               osMemory.memoryLimit / 1024 / 1024);
 
       OGlobalConfiguration.DISK_CACHE_SIZE.setValue(diskCacheInMB);
     } else {
       // LOW MEMORY: SET IT TO 256MB ONLY
       diskCacheInMB = OReadCache.MIN_CACHE_SIZE;
-      OLogManager.instance().warnNoDb(null,
-          "Not enough physical memory available for DISKCACHE: %,dMB (heap=%,dMB). Set lower Maximum Heap (-Xmx "
-              + "setting on JVM) and restart OrientDB. Now running with DISKCACHE=" + diskCacheInMB + "MB",
-          osMemory.memoryLimit / 1024 / 1024, jvmMaxMemory / 1024 / 1024);
+      OLogManager.instance()
+          .warnNoDb(
+              null,
+              "Not enough physical memory available for DISKCACHE: %,dMB (heap=%,dMB). Set lower Maximum Heap (-Xmx "
+                  + "setting on JVM) and restart OrientDB. Now running with DISKCACHE="
+                  + diskCacheInMB
+                  + "MB",
+              osMemory.memoryLimit / 1024 / 1024,
+              jvmMaxMemory / 1024 / 1024);
       OGlobalConfiguration.DISK_CACHE_SIZE.setValue(diskCacheInMB);
 
       OLogManager.instance()
-          .infoNoDb(null, "OrientDB config DISKCACHE=%,dMB (heap=%,dMB os=%,dMB)", diskCacheInMB, jvmMaxMemory / 1024 / 1024,
+          .infoNoDb(
+              null,
+              "OrientDB config DISKCACHE=%,dMB (heap=%,dMB os=%,dMB)",
+              diskCacheInMB,
+              jvmMaxMemory / 1024 / 1024,
               osMemory.memoryLimit / 1024 / 1024);
     }
   }
@@ -230,6 +261,10 @@ public class OMemoryAndLocalPaginatedEnginesInitializer {
 
   private void warningInvalidMemoryLeftValue(String parameter, String memoryLeft) {
     OLogManager.instance()
-        .warnNoDb(this, "Invalid value of '%s' parameter ('%s') memory limit will not be decreased", memoryLeft, parameter);
+        .warnNoDb(
+            this,
+            "Invalid value of '%s' parameter ('%s') memory limit will not be decreased",
+            memoryLeft,
+            parameter);
   }
 }

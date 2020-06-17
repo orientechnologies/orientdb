@@ -1,5 +1,8 @@
 package com.orientechnologies.orient.core.db.record.impl;
 
+import static org.junit.Assert.assertEquals;
+
+
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
@@ -11,8 +14,6 @@ import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-
-import static org.junit.Assert.assertEquals;
 
 public class ODirtyManagerRidbagTest {
 
@@ -47,5 +48,4 @@ public class ODirtyManagerRidbagTest {
   public void after() {
     db.drop();
   }
-
 }

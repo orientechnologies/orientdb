@@ -29,28 +29,39 @@ import com.orientechnologies.orient.core.tx.OTransactionIndexChanges;
 import com.orientechnologies.orient.core.tx.OTransactionIndexChangesPerKey;
 import com.orientechnologies.orient.core.tx.OTransactionOptimistic;
 import com.orientechnologies.orient.core.tx.OTransactionRealAbstract;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.NavigableMap;
+import java.util.Set;
+import java.util.TreeMap;
 
-import java.util.*;
-
-/**
- * Created by tglman on 28/12/16.
- */
+/** Created by tglman on 28/12/16. */
 public class OTransactionOptimisticServer extends OTransactionOptimistic {
 
-  protected final Map<ORID, ORecordOperation>   tempEntries    = new LinkedHashMap<ORID, ORecordOperation>();
-  protected final Map<ORecordId, ORecord>       createdRecords = new HashMap<ORecordId, ORecord>();
-  protected final Map<ORecordId, ORecord>       updatedRecords = new HashMap<ORecordId, ORecord>();
-  protected final Set<ORID>                     deletedRecord  = new HashSet<>();
-  protected final int                           clientTxId;
-  protected final List<IndexChange>             indexChanges;
-  protected       Map<ORID, ORecordOperation>   oldTxEntries;
-  protected       List<ORecordOperationRequest> operations;
+  protected final Map<ORID, ORecordOperation> tempEntries =
+      new LinkedHashMap<ORID, ORecordOperation>();
+  protected final Map<ORecordId, ORecord> createdRecords = new HashMap<ORecordId, ORecord>();
+  protected final Map<ORecordId, ORecord> updatedRecords = new HashMap<ORecordId, ORecord>();
+  protected final Set<ORID> deletedRecord = new HashSet<>();
+  protected final int clientTxId;
+  protected final List<IndexChange> indexChanges;
+  protected Map<ORID, ORecordOperation> oldTxEntries;
+  protected List<ORecordOperationRequest> operations;
 
-  public OTransactionOptimisticServer(ODatabaseDocumentInternal database, int txId, boolean usingLong,
-      List<ORecordOperationRequest> operations, List<IndexChange> indexChanges) {
+  public OTransactionOptimisticServer(
+      ODatabaseDocumentInternal database,
+      int txId,
+      boolean usingLong,
+      List<ORecordOperationRequest> operations,
+      List<IndexChange> indexChanges) {
     super(database);
     if (database.getTransaction().isActive()) {
-      this.newObjectCounter = ((OTransactionRealAbstract) database.getTransaction()).getNewObjectCounter();
+      this.newObjectCounter =
+          ((OTransactionRealAbstract) database.getTransaction()).getNewObjectCounter();
     }
     clientTxId = txId;
     this.setUsingLog(usingLong);
@@ -58,7 +69,8 @@ public class OTransactionOptimisticServer extends OTransactionOptimistic {
     this.indexChanges = indexChanges;
     if (database.getTransaction().isActive()) {
       this.oldTxEntries = new HashMap<>();
-      for (ORecordOperation op : ((OTransactionOptimistic) database.getTransaction()).getRecordOperations()) {
+      for (ORecordOperation op :
+          ((OTransactionOptimistic) database.getTransaction()).getRecordOperations()) {
         this.oldTxEntries.put(op.getRID(), op);
       }
     }
@@ -77,67 +89,70 @@ public class OTransactionOptimisticServer extends OTransactionOptimistic {
         final ORecordOperation entry;
 
         switch (recordStatus) {
-        case ORecordOperation.CREATED:
-          ORecord record = Orient.instance().getRecordFactoryManager()
-              .newInstance(operation.getRecordType(), rid.getClusterId(), getDatabase());
-          ORecordSerializerNetworkV37.INSTANCE.fromStream(operation.getRecord(), record);
-          entry = new ORecordOperation(record, ORecordOperation.CREATED);
-          ORecordInternal.setIdentity(record, rid);
-          ORecordInternal.setVersion(record, 0);
-          record.setDirty();
+          case ORecordOperation.CREATED:
+            ORecord record =
+                Orient.instance()
+                    .getRecordFactoryManager()
+                    .newInstance(operation.getRecordType(), rid.getClusterId(), getDatabase());
+            ORecordSerializerNetworkV37.INSTANCE.fromStream(operation.getRecord(), record);
+            entry = new ORecordOperation(record, ORecordOperation.CREATED);
+            ORecordInternal.setIdentity(record, rid);
+            ORecordInternal.setVersion(record, 0);
+            record.setDirty();
 
-          // SAVE THE RECORD TO RETRIEVE THEM FOR THE NEW RID TO SEND BACK TO THE REQUESTER
-          createdRecords.put(rid.copy(), entry.getRecord());
-          break;
+            // SAVE THE RECORD TO RETRIEVE THEM FOR THE NEW RID TO SEND BACK TO THE REQUESTER
+            createdRecords.put(rid.copy(), entry.getRecord());
+            break;
 
-        case ORecordOperation.UPDATED:
-          byte type = operation.getRecordType();
-          if (type == ODocumentSerializerDelta.DELTA_RECORD_TYPE) {
-            int version = operation.getVersion();
-            ORecord updated = database.load(rid);
-            if (updated == null) {
-              updated = new ODocument();
+          case ORecordOperation.UPDATED:
+            byte type = operation.getRecordType();
+            if (type == ODocumentSerializerDelta.DELTA_RECORD_TYPE) {
+              int version = operation.getVersion();
+              ORecord updated = database.load(rid);
+              if (updated == null) {
+                updated = new ODocument();
+              }
+              ((ODocument) updated).deserializeFields();
+              ODocumentInternal.clearTransactionTrackData((ODocument) updated);
+              ODocumentSerializerDelta delta = ODocumentSerializerDelta.instance();
+              delta.deserializeDelta(operation.getRecord(), (ODocument) updated);
+              entry = new ORecordOperation(updated, ORecordOperation.UPDATED);
+              ORecordInternal.setIdentity(updated, rid);
+              ORecordInternal.setVersion(updated, version);
+              updated.setDirty();
+              ORecordInternal.setContentChanged(entry.getRecord(), operation.isContentChanged());
+              updatedRecords.put(rid, updated);
+            } else {
+              int version = operation.getVersion();
+              ORecord updated =
+                  Orient.instance()
+                      .getRecordFactoryManager()
+                      .newInstance(operation.getRecordType(), rid.getClusterId(), getDatabase());
+              ORecordSerializerNetworkV37.INSTANCE.fromStream(operation.getRecord(), updated);
+              entry = new ORecordOperation(updated, ORecordOperation.UPDATED);
+              ORecordInternal.setIdentity(updated, rid);
+              ORecordInternal.setVersion(updated, version);
+              updated.setDirty();
+              ORecordInternal.setContentChanged(entry.getRecord(), operation.isContentChanged());
+              toMergeUpdates.add(entry);
             }
-            ((ODocument) updated).deserializeFields();
-            ODocumentInternal.clearTransactionTrackData((ODocument) updated);
-            ODocumentSerializerDelta delta = ODocumentSerializerDelta.instance();
-            delta.deserializeDelta(operation.getRecord(), (ODocument) updated);
-            entry = new ORecordOperation(updated, ORecordOperation.UPDATED);
-            ORecordInternal.setIdentity(updated, rid);
-            ORecordInternal.setVersion(updated, version);
-            updated.setDirty();
-            ORecordInternal.setContentChanged(entry.getRecord(), operation.isContentChanged());
-            updatedRecords.put(rid, updated);
-          } else {
-            int version = operation.getVersion();
-            ORecord updated = Orient.instance().getRecordFactoryManager()
-                .newInstance(operation.getRecordType(), rid.getClusterId(), getDatabase());
-            ORecordSerializerNetworkV37.INSTANCE.fromStream(operation.getRecord(), updated);
-            entry = new ORecordOperation(updated, ORecordOperation.UPDATED);
-            ORecordInternal.setIdentity(updated, rid);
-            ORecordInternal.setVersion(updated, version);
-            updated.setDirty();
-            ORecordInternal.setContentChanged(entry.getRecord(), operation.isContentChanged());
-            toMergeUpdates.add(entry);
-          }
-          break;
+            break;
 
-        case ORecordOperation.DELETED:
-          // LOAD RECORD TO BE SURE IT HASN'T BEEN DELETED BEFORE + PROVIDE CONTENT FOR ANY HOOK
-          final ORecord rec = rid.getRecord();
-          entry = new ORecordOperation(rec, ORecordOperation.DELETED);
-          int deleteVersion = operation.getVersion();
-          if (rec == null)
-            throw new ORecordNotFoundException(rid.getIdentity());
-          else {
-            ORecordInternal.setVersion(rec, deleteVersion);
-            entry.setRecord(rec);
-          }
-          deletedRecord.add(rec.getIdentity());
-          break;
+          case ORecordOperation.DELETED:
+            // LOAD RECORD TO BE SURE IT HASN'T BEEN DELETED BEFORE + PROVIDE CONTENT FOR ANY HOOK
+            final ORecord rec = rid.getRecord();
+            entry = new ORecordOperation(rec, ORecordOperation.DELETED);
+            int deleteVersion = operation.getVersion();
+            if (rec == null) throw new ORecordNotFoundException(rid.getIdentity());
+            else {
+              ORecordInternal.setVersion(rec, deleteVersion);
+              entry.setRecord(rec);
+            }
+            deletedRecord.add(rec.getIdentity());
+            break;
 
-        default:
-          throw new OTransactionException("Unrecognized tx command: " + recordStatus);
+          default:
+            throw new OTransactionException("Unrecognized tx command: " + recordStatus);
         }
 
         // PUT IN TEMPORARY LIST TO GET FETCHED AFTER ALL FOR CACHE
@@ -145,16 +160,17 @@ public class OTransactionOptimisticServer extends OTransactionOptimistic {
       }
       this.operations = null;
       for (ORecordOperation update : toMergeUpdates) {
-        // SPECIAL CASE FOR UPDATE: WE NEED TO LOAD THE RECORD AND APPLY CHANGES TO GET WORKING HOOKS (LIKE INDEXES)
+        // SPECIAL CASE FOR UPDATE: WE NEED TO LOAD THE RECORD AND APPLY CHANGES TO GET WORKING
+        // HOOKS (LIKE INDEXES)
         final ORecord record = update.record.getRecord();
         final boolean contentChanged = ORecordInternal.isContentChanged(record);
 
         final ORecord loadedRecord = record.getIdentity().copy().getRecord();
-        if (loadedRecord == null)
-          throw new ORecordNotFoundException(record.getIdentity());
+        if (loadedRecord == null) throw new ORecordNotFoundException(record.getIdentity());
 
         if (ORecordInternal.getRecordType(loadedRecord) == ODocument.RECORD_TYPE
-            && ORecordInternal.getRecordType(loadedRecord) == ORecordInternal.getRecordType(record)) {
+            && ORecordInternal.getRecordType(loadedRecord)
+                == ORecordInternal.getRecordType(record)) {
           ((ODocument) loadedRecord).merge((ODocument) record, false, false);
 
           loadedRecord.setDirty();
@@ -176,8 +192,10 @@ public class OTransactionOptimisticServer extends OTransactionOptimistic {
       tempEntries.clear();
 
       for (IndexChange change : indexChanges) {
-        NavigableMap<Object, OTransactionIndexChangesPerKey> changesPerKey = new TreeMap<>(ODefaultComparator.INSTANCE);
-        for (Map.Entry<Object, OTransactionIndexChangesPerKey> keyChange : change.getKeyChanges().changesPerKey.entrySet()) {
+        NavigableMap<Object, OTransactionIndexChangesPerKey> changesPerKey =
+            new TreeMap<>(ODefaultComparator.INSTANCE);
+        for (Map.Entry<Object, OTransactionIndexChangesPerKey> keyChange :
+            change.getKeyChanges().changesPerKey.entrySet()) {
           Object key = keyChange.getKey();
           if (key instanceof OIdentifiable && !((OIdentifiable) key).getIdentity().isPersistent())
             key = ((OIdentifiable) key).getRecord();
@@ -185,11 +203,12 @@ public class OTransactionOptimisticServer extends OTransactionOptimistic {
             key = checkCompositeKeyId((OCompositeKey) key);
           }
           OTransactionIndexChangesPerKey singleChange = new OTransactionIndexChangesPerKey(key);
-          for (OTransactionIndexChangesPerKey.OTransactionIndexEntry entry : keyChange.getValue().entries) {
+          for (OTransactionIndexChangesPerKey.OTransactionIndexEntry entry :
+              keyChange.getValue().entries) {
             OIdentifiable rec = entry.value;
-            if (rec != null && !rec.getIdentity().isPersistent())
-              rec = rec.getRecord();
-            singleChange.entries.add(new OTransactionIndexChangesPerKey.OTransactionIndexEntry(rec, entry.operation));
+            if (rec != null && !rec.getIdentity().isPersistent()) rec = rec.getRecord();
+            singleChange.entries.add(
+                new OTransactionIndexChangesPerKey.OTransactionIndexEntry(rec, entry.operation));
           }
           changesPerKey.put(key, singleChange);
         }
@@ -197,11 +216,12 @@ public class OTransactionOptimisticServer extends OTransactionOptimistic {
 
         if (change.getKeyChanges().nullKeyChanges != null) {
           OTransactionIndexChangesPerKey singleChange = new OTransactionIndexChangesPerKey(null);
-          for (OTransactionIndexChangesPerKey.OTransactionIndexEntry entry : change.getKeyChanges().nullKeyChanges.entries) {
+          for (OTransactionIndexChangesPerKey.OTransactionIndexEntry entry :
+              change.getKeyChanges().nullKeyChanges.entries) {
             OIdentifiable rec = entry.value;
-            if (rec != null && !rec.getIdentity().isPersistent())
-              rec = rec.getRecord();
-            singleChange.entries.add(new OTransactionIndexChangesPerKey.OTransactionIndexEntry(rec, entry.operation));
+            if (rec != null && !rec.getIdentity().isPersistent()) rec = rec.getRecord();
+            singleChange.entries.add(
+                new OTransactionIndexChangesPerKey.OTransactionIndexEntry(rec, entry.operation));
           }
           change.getKeyChanges().nullKeyChanges = singleChange;
         }
@@ -216,13 +236,14 @@ public class OTransactionOptimisticServer extends OTransactionOptimistic {
           ODocumentInternal.autoConvertValueToClass(getDatabase(), (ODocument) record);
         }
       }
-      for (ORecord record : updatedRecords.values())
-        unmarshallRecord(record);
+      for (ORecord record : updatedRecords.values()) unmarshallRecord(record);
       oldTxEntries = null;
     } catch (Exception e) {
       rollback();
-      throw OException
-          .wrapException(new OSerializationException("Cannot read transaction record from the network. Transaction aborted"), e);
+      throw OException.wrapException(
+          new OSerializationException(
+              "Cannot read transaction record from the network. Transaction aborted"),
+          e);
     }
   }
 
@@ -237,8 +258,7 @@ public class OTransactionOptimisticServer extends OTransactionOptimistic {
       if (o instanceof OIdentifiable && !((OIdentifiable) o).getIdentity().isPersistent()) {
         o = ((OIdentifiable) o).getRecord();
       }
-      if (o instanceof OCompositeKey)
-        o = checkCompositeKeyId((OCompositeKey) o);
+      if (o instanceof OCompositeKey) o = checkCompositeKeyId((OCompositeKey) o);
       newKey.addKey(o);
     }
     return newKey;
@@ -247,8 +267,7 @@ public class OTransactionOptimisticServer extends OTransactionOptimistic {
   @Override
   public ORecord getRecord(final ORID rid) {
     ORecord record = super.getRecord(rid);
-    if (record == OBasicTransaction.DELETED_RECORD)
-      return record;
+    if (record == OBasicTransaction.DELETED_RECORD) return record;
     else if (record == null && rid.isNew())
       // SEARCH BETWEEN CREATED RECORDS
       record = createdRecords.get(rid);
@@ -268,9 +287,7 @@ public class OTransactionOptimisticServer extends OTransactionOptimistic {
     return deletedRecord;
   }
 
-  /**
-   * Unmarshalls collections. This prevent temporary RIDs remains stored as are.
-   */
+  /** Unmarshalls collections. This prevent temporary RIDs remains stored as are. */
   protected void unmarshallRecord(final ORecord iRecord) {
     if (iRecord instanceof ODocument) {
       ((ODocument) iRecord).deserializeFields();
@@ -280,8 +297,7 @@ public class OTransactionOptimisticServer extends OTransactionOptimistic {
   private boolean checkCallHooks(Map<ORID, ORecordOperation> oldTx, ORID id, byte type) {
     if (oldTx != null) {
       ORecordOperation entry = oldTx.get(id);
-      if (entry == null || entry.getType() != type)
-        return true;
+      if (entry == null || entry.getType() != type) return true;
       return false;
     } else {
       return true;
@@ -303,41 +319,47 @@ public class OTransactionOptimisticServer extends OTransactionOptimistic {
     return operation;
   }
 
-  public void addRecord(ORecord iRecord, final byte iStatus, final String iClusterName, Map<ORID, ORecordOperation> oldTx) {
+  public void addRecord(
+      ORecord iRecord,
+      final byte iStatus,
+      final String iClusterName,
+      Map<ORID, ORecordOperation> oldTx) {
     changed = true;
     checkTransaction();
 
-    if (iStatus != ORecordOperation.LOADED)
-      changedDocuments.remove(iRecord);
+    if (iStatus != ORecordOperation.LOADED) changedDocuments.remove(iRecord);
 
     boolean callHooks = checkCallHooks(oldTx, iRecord.getIdentity(), iStatus);
 
     try {
       if (callHooks) {
         switch (iStatus) {
-        case ORecordOperation.CREATED: {
-          OIdentifiable res = database.beforeCreateOperations(iRecord, iClusterName);
-          if (res != null) {
-            iRecord = (ORecord) res;
-          }
-        }
-        break;
-        case ORecordOperation.LOADED:
-          /**
-           * Read hooks already invoked in {@link com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx#executeReadRecord}
-           */
-          break;
-        case ORecordOperation.UPDATED: {
-          OIdentifiable res = database.beforeUpdateOperations(iRecord, iClusterName);
-          if (res != null) {
-            iRecord = (ORecord) res;
-          }
-        }
-        break;
+          case ORecordOperation.CREATED:
+            {
+              OIdentifiable res = database.beforeCreateOperations(iRecord, iClusterName);
+              if (res != null) {
+                iRecord = (ORecord) res;
+              }
+            }
+            break;
+          case ORecordOperation.LOADED:
+            /**
+             * Read hooks already invoked in {@link
+             * com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx#executeReadRecord}
+             */
+            break;
+          case ORecordOperation.UPDATED:
+            {
+              OIdentifiable res = database.beforeUpdateOperations(iRecord, iClusterName);
+              if (res != null) {
+                iRecord = (ORecord) res;
+              }
+            }
+            break;
 
-        case ORecordOperation.DELETED:
-          database.beforeDeleteOperations(iRecord, iClusterName);
-          break;
+          case ORecordOperation.DELETED:
+            database.beforeDeleteOperations(iRecord, iClusterName);
+            break;
         }
       }
       try {
@@ -367,77 +389,79 @@ public class OTransactionOptimisticServer extends OTransactionOptimistic {
           txEntry.record = iRecord;
 
           switch (txEntry.type) {
-          case ORecordOperation.LOADED:
-            switch (iStatus) {
+            case ORecordOperation.LOADED:
+              switch (iStatus) {
+                case ORecordOperation.UPDATED:
+                  txEntry.type = ORecordOperation.UPDATED;
+                  break;
+                case ORecordOperation.DELETED:
+                  txEntry.type = ORecordOperation.DELETED;
+                  break;
+              }
+              break;
             case ORecordOperation.UPDATED:
-              txEntry.type = ORecordOperation.UPDATED;
+              switch (iStatus) {
+                case ORecordOperation.DELETED:
+                  txEntry.type = ORecordOperation.DELETED;
+                  break;
+              }
               break;
             case ORecordOperation.DELETED:
-              txEntry.type = ORecordOperation.DELETED;
               break;
-            }
-            break;
-          case ORecordOperation.UPDATED:
-            switch (iStatus) {
-            case ORecordOperation.DELETED:
-              txEntry.type = ORecordOperation.DELETED;
+            case ORecordOperation.CREATED:
+              switch (iStatus) {
+                case ORecordOperation.DELETED:
+                  allEntries.remove(rid);
+                  // txEntry.type = ORecordOperation.DELETED;
+                  break;
+              }
               break;
-            }
-            break;
-          case ORecordOperation.DELETED:
-            break;
-          case ORecordOperation.CREATED:
-            switch (iStatus) {
-            case ORecordOperation.DELETED:
-              allEntries.remove(rid);
-              // txEntry.type = ORecordOperation.DELETED;
-              break;
-            }
-            break;
           }
         }
 
         if (callHooks) {
           switch (iStatus) {
-          case ORecordOperation.CREATED:
-            database.afterCreateOperations(iRecord);
-            break;
-          case ORecordOperation.LOADED:
-            /**
-             * Read hooks already invoked in
-             * {@link com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx#executeReadRecord} .
-             */
-            break;
-          case ORecordOperation.UPDATED:
-            database.afterUpdateOperations(iRecord);
-            break;
-          case ORecordOperation.DELETED:
-            database.afterDeleteOperations(iRecord);
-            break;
+            case ORecordOperation.CREATED:
+              database.afterCreateOperations(iRecord);
+              break;
+            case ORecordOperation.LOADED:
+              /**
+               * Read hooks already invoked in {@link
+               * com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx#executeReadRecord}
+               * .
+               */
+              break;
+            case ORecordOperation.UPDATED:
+              database.afterUpdateOperations(iRecord);
+              break;
+            case ORecordOperation.DELETED:
+              database.afterDeleteOperations(iRecord);
+              break;
           }
         } else {
           switch (iStatus) {
-          case ORecordOperation.CREATED:
-            if (iRecord instanceof ODocument) {
-              OClassIndexManager.checkIndexesAfterCreate((ODocument) iRecord, getDatabase());
-            }
-            break;
-          case ORecordOperation.LOADED:
-            /**
-             * Read hooks already invoked in
-             * {@link com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx#executeReadRecord} .
-             */
-            break;
-          case ORecordOperation.UPDATED:
-            if (iRecord instanceof ODocument) {
-              OClassIndexManager.checkIndexesAfterUpdate((ODocument) iRecord, getDatabase());
-            }
-            break;
-          case ORecordOperation.DELETED:
-            if (iRecord instanceof ODocument) {
-              OClassIndexManager.checkIndexesAfterDelete((ODocument) iRecord, getDatabase());
-            }
-            break;
+            case ORecordOperation.CREATED:
+              if (iRecord instanceof ODocument) {
+                OClassIndexManager.checkIndexesAfterCreate((ODocument) iRecord, getDatabase());
+              }
+              break;
+            case ORecordOperation.LOADED:
+              /**
+               * Read hooks already invoked in {@link
+               * com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx#executeReadRecord}
+               * .
+               */
+              break;
+            case ORecordOperation.UPDATED:
+              if (iRecord instanceof ODocument) {
+                OClassIndexManager.checkIndexesAfterUpdate((ODocument) iRecord, getDatabase());
+              }
+              break;
+            case ORecordOperation.DELETED:
+              if (iRecord instanceof ODocument) {
+                OClassIndexManager.checkIndexesAfterDelete((ODocument) iRecord, getDatabase());
+              }
+              break;
           }
         }
         // RESET TRACKING
@@ -448,32 +472,33 @@ public class OTransactionOptimisticServer extends OTransactionOptimistic {
       } catch (Exception e) {
         if (callHooks) {
           switch (iStatus) {
-          case ORecordOperation.CREATED:
-            database.callbackHooks(ORecordHook.TYPE.CREATE_FAILED, iRecord);
-            break;
-          case ORecordOperation.UPDATED:
-            database.callbackHooks(ORecordHook.TYPE.UPDATE_FAILED, iRecord);
-            break;
-          case ORecordOperation.DELETED:
-            database.callbackHooks(ORecordHook.TYPE.DELETE_FAILED, iRecord);
-            break;
+            case ORecordOperation.CREATED:
+              database.callbackHooks(ORecordHook.TYPE.CREATE_FAILED, iRecord);
+              break;
+            case ORecordOperation.UPDATED:
+              database.callbackHooks(ORecordHook.TYPE.UPDATE_FAILED, iRecord);
+              break;
+            case ORecordOperation.DELETED:
+              database.callbackHooks(ORecordHook.TYPE.DELETE_FAILED, iRecord);
+              break;
           }
         }
 
-        throw OException.wrapException(new ODatabaseException("Error on saving record " + iRecord.getIdentity()), e);
+        throw OException.wrapException(
+            new ODatabaseException("Error on saving record " + iRecord.getIdentity()), e);
       }
     } finally {
       if (callHooks) {
         switch (iStatus) {
-        case ORecordOperation.CREATED:
-          database.callbackHooks(ORecordHook.TYPE.FINALIZE_CREATION, iRecord);
-          break;
-        case ORecordOperation.UPDATED:
-          database.callbackHooks(ORecordHook.TYPE.FINALIZE_UPDATE, iRecord);
-          break;
-        case ORecordOperation.DELETED:
-          database.callbackHooks(ORecordHook.TYPE.FINALIZE_DELETION, iRecord);
-          break;
+          case ORecordOperation.CREATED:
+            database.callbackHooks(ORecordHook.TYPE.FINALIZE_CREATION, iRecord);
+            break;
+          case ORecordOperation.UPDATED:
+            database.callbackHooks(ORecordHook.TYPE.FINALIZE_UPDATE, iRecord);
+            break;
+          case ORecordOperation.DELETED:
+            database.callbackHooks(ORecordHook.TYPE.FINALIZE_DELETION, iRecord);
+            break;
         }
       }
     }
@@ -490,20 +515,28 @@ public class OTransactionOptimisticServer extends OTransactionOptimistic {
         updatedRids.put(rid.copy(), oldRid);
         ORecordInternal.onAfterIdentityChanged(record);
       }
-
     }
   }
 
   @Override
-  public void addIndexEntry(OIndex delegate, String iIndexName, OTransactionIndexChanges.OPERATION iOperation, Object key,
+  public void addIndexEntry(
+      OIndex delegate,
+      String iIndexName,
+      OTransactionIndexChanges.OPERATION iOperation,
+      Object key,
       OIdentifiable iValue) {
     super.addIndexEntry(delegate, iIndexName, iOperation, key, iValue);
     changed = true;
   }
 
   @Override
-  public void addIndexEntry(OIndex delegate, String iIndexName, OTransactionIndexChanges.OPERATION iOperation, Object key,
-      OIdentifiable iValue, boolean clientTrackOnly) {
+  public void addIndexEntry(
+      OIndex delegate,
+      String iIndexName,
+      OTransactionIndexChanges.OPERATION iOperation,
+      Object key,
+      OIdentifiable iValue,
+      boolean clientTrackOnly) {
     super.addIndexEntry(delegate, iIndexName, iOperation, key, iValue, clientTrackOnly);
     changed = true;
   }

@@ -20,17 +20,14 @@ import com.orientechnologies.orient.core.sql.parser.OExecutionPlanCache;
 import com.orientechnologies.orient.core.sql.parser.OStatementCache;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
-
 import java.util.HashMap;
 import java.util.Map;
 
-/**
- * Created by tglman on 13/06/17.
- */
+/** Created by tglman on 13/06/17. */
 public class OSharedContextEmbedded extends OSharedContext {
 
-  private   Map<String, DistributedQueryContext> activeDistributedQueries;
-  protected ViewManager                          viewManager;
+  private Map<String, DistributedQueryContext> activeDistributedQueries;
+  protected ViewManager viewManager;
 
   public OSharedContextEmbedded(OStorage storage, OrientDBEmbedded orientDB) {
     this.orientDB = orientDB;
@@ -44,20 +41,30 @@ public class OSharedContextEmbedded extends OSharedContext {
     liveQueryOps = new OLiveQueryHook.OLiveQueryOps();
     liveQueryOpsV2 = new OLiveQueryHookV2.OLiveQueryOps();
     commandCache = new OCommandCacheSoftRefs(storage.getUnderlying());
-    statementCache = new OStatementCache(
-        storage.getConfiguration().getContextConfiguration().getValueAsInteger(OGlobalConfiguration.STATEMENT_CACHE_SIZE));
+    statementCache =
+        new OStatementCache(
+            storage
+                .getConfiguration()
+                .getContextConfiguration()
+                .getValueAsInteger(OGlobalConfiguration.STATEMENT_CACHE_SIZE));
 
-    executionPlanCache = new OExecutionPlanCache(
-        storage.getConfiguration().getContextConfiguration().getValueAsInteger(OGlobalConfiguration.STATEMENT_CACHE_SIZE));
+    executionPlanCache =
+        new OExecutionPlanCache(
+            storage
+                .getConfiguration()
+                .getContextConfiguration()
+                .getValueAsInteger(OGlobalConfiguration.STATEMENT_CACHE_SIZE));
     this.registerListener(executionPlanCache);
 
     queryStats = new OQueryStats();
     activeDistributedQueries = new HashMap<>();
-    ((OAbstractPaginatedStorage) storage).setStorageConfigurationUpdateListener(update -> {
-      for (OMetadataUpdateListener listener : browseListeners()) {
-        listener.onStorageConfigurationUpdate(storage.getName(), update);
-      }
-    });
+    ((OAbstractPaginatedStorage) storage)
+        .setStorageConfigurationUpdateListener(
+            update -> {
+              for (OMetadataUpdateListener listener : browseListeners()) {
+                listener.onStorageConfigurationUpdate(storage.getName(), update);
+              }
+            });
 
     this.viewManager = new ViewManager(orientDB, storage.getName());
   }
@@ -69,7 +76,8 @@ public class OSharedContextEmbedded extends OSharedContext {
       if (!loaded) {
         schema.load(database);
         indexManager.load(database);
-        //The Immutable snapshot should be after index and schema that require and before everything else that use it
+        // The Immutable snapshot should be after index and schema that require and before
+        // everything else that use it
         schema.forceSnapshot(database);
         security.load(database);
         functionLibrary.load(database);
@@ -80,9 +88,11 @@ public class OSharedContextEmbedded extends OSharedContext {
         loaded = true;
       }
     } finally {
-      PROFILER
-          .stopChrono(PROFILER.getDatabaseMetric(database.getStorage().getName(), "metadata.load"), "Loading of database metadata",
-              timer, "db.*.metadata.load");
+      PROFILER.stopChrono(
+          PROFILER.getDatabaseMetric(database.getStorage().getName(), "metadata.load"),
+          "Loading of database metadata",
+          timer,
+          "db.*.metadata.load");
     }
   }
 
@@ -107,7 +117,8 @@ public class OSharedContextEmbedded extends OSharedContext {
   public synchronized void reload(ODatabaseDocumentInternal database) {
     schema.reload(database);
     indexManager.reload();
-    //The Immutable snapshot should be after index and schema that require and before everything else that use it
+    // The Immutable snapshot should be after index and schema that require and before everything
+    // else that use it
     schema.forceSnapshot(database);
     security.load(database);
     functionLibrary.load(database);
@@ -130,14 +141,14 @@ public class OSharedContextEmbedded extends OSharedContext {
     schema.createClass(database, "V");
     schema.createClass(database, "E");
 
-    //create geospatial classes
+    // create geospatial classes
     try {
       OIndexFactory factory = OIndexes.getFactory(OClass.INDEX_TYPE.SPATIAL.toString(), "LUCENE");
       if (factory != null && factory instanceof ODatabaseLifecycleListener) {
         ((ODatabaseLifecycleListener) factory).onCreate(database);
       }
     } catch (OIndexException x) {
-      //the index does not exist
+      // the index does not exist
     }
 
     loaded = true;
@@ -150,5 +161,4 @@ public class OSharedContextEmbedded extends OSharedContext {
   public ViewManager getViewManager() {
     return viewManager;
   }
-
 }

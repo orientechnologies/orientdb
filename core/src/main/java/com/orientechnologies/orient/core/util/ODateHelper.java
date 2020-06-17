@@ -22,7 +22,6 @@ package com.orientechnologies.orient.core.util;
 
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
-
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
@@ -30,7 +29,7 @@ import java.util.Date;
 import java.util.TimeZone;
 
 public class ODateHelper {
-  public static final String DEF_DATE_FORMAT     = "yyyy-MM-dd";
+  public static final String DEF_DATE_FORMAT = "yyyy-MM-dd";
   public static final String DEF_DATETIME_FORMAT = "yyyy-MM-dd HH:mm:ss:SSS";
 
   public static Calendar getDatabaseCalendar() {
@@ -46,8 +45,7 @@ public class ODateHelper {
   }
 
   public static TimeZone getDatabaseTimeZone(final ODatabaseDocumentInternal db) {
-    if (db != null && !db.isClosed())
-      return db.getStorage().getConfiguration().getTimeZone();
+    if (db != null && !db.isClosed()) return db.getStorage().getConfiguration().getTimeZone();
     return TimeZone.getDefault();
   }
 
@@ -58,8 +56,7 @@ public class ODateHelper {
   public static DateFormat getDateFormatInstance(final ODatabaseDocumentInternal db) {
     if (db != null && !db.isClosed())
       return db.getStorage().getConfiguration().getDateFormatInstance();
-    else
-      return new SimpleDateFormat(DEF_DATE_FORMAT);
+    else return new SimpleDateFormat(DEF_DATE_FORMAT);
   }
 
   public static String getDateFormat() {
@@ -67,10 +64,8 @@ public class ODateHelper {
   }
 
   public static String getDateFormat(final ODatabaseDocumentInternal db) {
-    if (db != null && !db.isClosed())
-      return db.getStorage().getConfiguration().getDateFormat();
-    else
-      return DEF_DATE_FORMAT;
+    if (db != null && !db.isClosed()) return db.getStorage().getConfiguration().getDateFormat();
+    else return DEF_DATE_FORMAT;
   }
 
   public static DateFormat getDateTimeFormatInstance() {
@@ -80,8 +75,7 @@ public class ODateHelper {
   public static DateFormat getDateTimeFormatInstance(final ODatabaseDocumentInternal db) {
     if (db != null && !db.isClosed())
       return db.getStorage().getConfiguration().getDateTimeFormatInstance();
-    else
-      return new SimpleDateFormat(DEF_DATETIME_FORMAT);
+    else return new SimpleDateFormat(DEF_DATETIME_FORMAT);
   }
 
   public static String getDateTimeFormat() {
@@ -89,10 +83,8 @@ public class ODateHelper {
   }
 
   public static String getDateTimeFormat(final ODatabaseDocumentInternal db) {
-    if (db != null && !db.isClosed())
-      return db.getStorage().getConfiguration().getDateTimeFormat();
-    else
-      return DEF_DATETIME_FORMAT;
+    if (db != null && !db.isClosed()) return db.getStorage().getConfiguration().getDateTimeFormat();
+    else return DEF_DATETIME_FORMAT;
   }
 
   public static Date now() {

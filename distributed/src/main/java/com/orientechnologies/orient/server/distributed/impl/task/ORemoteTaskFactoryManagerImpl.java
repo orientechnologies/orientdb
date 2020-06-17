@@ -20,8 +20,11 @@
 package com.orientechnologies.orient.server.distributed.impl.task;
 
 import com.orientechnologies.common.log.OLogManager;
-import com.orientechnologies.orient.server.distributed.*;
-
+import com.orientechnologies.orient.server.distributed.ODistributedException;
+import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
+import com.orientechnologies.orient.server.distributed.ORemoteServerController;
+import com.orientechnologies.orient.server.distributed.ORemoteTaskFactory;
+import com.orientechnologies.orient.server.distributed.ORemoteTaskFactoryManager;
 import java.io.IOException;
 import java.util.Collection;
 
@@ -32,7 +35,7 @@ import java.util.Collection;
  */
 public class ORemoteTaskFactoryManagerImpl implements ORemoteTaskFactoryManager {
   private final ODistributedServerManager dManager;
-  private       ORemoteTaskFactory[]      factories = new ORemoteTaskFactory[1];
+  private ORemoteTaskFactory[] factories = new ORemoteTaskFactory[1];
 
   public ORemoteTaskFactoryManagerImpl(final ODistributedServerManager dManager) {
     this.dManager = dManager;
@@ -42,8 +45,7 @@ public class ORemoteTaskFactoryManagerImpl implements ORemoteTaskFactoryManager 
   @Override
   public ORemoteTaskFactory getFactoryByServerId(final int serverId) {
     final String remoteNodeName = dManager.getNodeNameById(serverId);
-    if (remoteNodeName == null)
-      throw new IllegalArgumentException("Invalid serverId " + serverId);
+    if (remoteNodeName == null) throw new IllegalArgumentException("Invalid serverId " + serverId);
 
     return getFactoryByServerName(remoteNodeName);
   }
@@ -71,7 +73,8 @@ public class ORemoteTaskFactoryManagerImpl implements ORemoteTaskFactoryManager 
 
       final ORemoteTaskFactory factory = getFactoryByVersion(remoteServer.getProtocolVersion());
       if (factory == null)
-        throw new IllegalArgumentException("Cannot find a factory for remote task for server " + serverName);
+        throw new IllegalArgumentException(
+            "Cannot find a factory for remote task for server " + serverName);
 
       return factory;
 
@@ -81,7 +84,13 @@ public class ORemoteTaskFactoryManagerImpl implements ORemoteTaskFactoryManager 
 
     } catch (IOException e) {
       OLogManager.instance()
-          .warn(this, "Cannot determine protocol version for server " + serverName + " error: " + e.getMessage(), e);
+          .warn(
+              this,
+              "Cannot determine protocol version for server "
+                  + serverName
+                  + " error: "
+                  + e.getMessage(),
+              e);
       dManager.removeServer(serverName, true);
       return null;
     }

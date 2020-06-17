@@ -2,7 +2,6 @@ package com.orientechnologies.orient.core.sql.executor;
 
 import com.orientechnologies.common.concur.OTimeoutException;
 import com.orientechnologies.orient.core.command.OCommandContext;
-
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -15,7 +14,8 @@ public class FilterNotMatchPatternStep extends AbstractExecutionStep {
 
   private long cost;
 
-  public FilterNotMatchPatternStep(List<AbstractExecutionStep> steps, OCommandContext ctx, boolean enableProfiling) {
+  public FilterNotMatchPatternStep(
+      List<AbstractExecutionStep> steps, OCommandContext ctx, boolean enableProfiling) {
     super(ctx, enableProfiling);
     this.subSteps = steps;
   }
@@ -129,30 +129,31 @@ public class FilterNotMatchPatternStep extends AbstractExecutionStep {
 
   private OSelectExecutionPlan createExecutionPlan(OResult nextItem, OCommandContext ctx) {
     OSelectExecutionPlan plan = new OSelectExecutionPlan(ctx);
-    plan.chain(new AbstractExecutionStep(ctx, profilingEnabled) {
-      private boolean executed = false;
+    plan.chain(
+        new AbstractExecutionStep(ctx, profilingEnabled) {
+          private boolean executed = false;
 
-      @Override
-      public OResultSet syncPull(OCommandContext ctx, int nRecords) throws OTimeoutException {
-        OInternalResultSet result = new OInternalResultSet();
-        if (!executed) {
-          result.add(copy(nextItem));
-          executed = true;
-        }
-        return result;
-      }
+          @Override
+          public OResultSet syncPull(OCommandContext ctx, int nRecords) throws OTimeoutException {
+            OInternalResultSet result = new OInternalResultSet();
+            if (!executed) {
+              result.add(copy(nextItem));
+              executed = true;
+            }
+            return result;
+          }
 
-      private OResult copy(OResult nextItem) {
-        OResultInternal result = new OResultInternal();
-        for (String prop : nextItem.getPropertyNames()) {
-          result.setProperty(prop, nextItem.getProperty(prop));
-        }
-        for (String md : nextItem.getMetadataKeys()) {
-          result.setMetadata(md, nextItem.getMetadata(md));
-        }
-        return result;
-      }
-    });
+          private OResult copy(OResult nextItem) {
+            OResultInternal result = new OResultInternal();
+            for (String prop : nextItem.getPropertyNames()) {
+              result.setProperty(prop, nextItem.getProperty(prop));
+            }
+            for (String md : nextItem.getMetadataKeys()) {
+              result.setMetadata(md, nextItem.getMetadata(md));
+            }
+            return result;
+          }
+        });
     subSteps.stream().forEach(step -> plan.chain(step));
     return plan;
   }

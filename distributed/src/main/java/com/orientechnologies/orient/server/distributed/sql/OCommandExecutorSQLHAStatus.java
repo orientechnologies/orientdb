@@ -36,7 +36,6 @@ import com.orientechnologies.orient.server.distributed.ODistributedConfiguration
 import com.orientechnologies.orient.server.distributed.impl.ODatabaseDocumentDistributed;
 import com.orientechnologies.orient.server.distributed.impl.ODistributedOutput;
 import com.orientechnologies.orient.server.hazelcast.OHazelcastPlugin;
-
 import java.util.Map;
 
 /**
@@ -45,9 +44,10 @@ import java.util.Map;
  * @author Luca Garulli
  */
 @SuppressWarnings("unchecked")
-public class OCommandExecutorSQLHAStatus extends OCommandExecutorSQLAbstract implements OCommandDistributedReplicateRequest {
-  public static final String NAME           = "HA STATUS";
-  public static final String KEYWORD_HA     = "HA";
+public class OCommandExecutorSQLHAStatus extends OCommandExecutorSQLAbstract
+    implements OCommandDistributedReplicateRequest {
+  public static final String NAME = "HA STATUS";
+  public static final String KEYWORD_HA = "HA";
   public static final String KEYWORD_STATUS = "STATUS";
 
   private OHaStatusStatement parsedStatement;
@@ -65,9 +65,7 @@ public class OCommandExecutorSQLHAStatus extends OCommandExecutorSQLAbstract imp
     return this;
   }
 
-  /**
-   * Execute the command.
-   */
+  /** Execute the command. */
   public Object execute(final Map<Object, Object> iArgs) {
     final ODatabaseDocumentInternal database = getDatabase();
     database.checkSecurity(ORule.ResourceGeneric.SERVER, "status", ORole.PERMISSION_READ);
@@ -76,7 +74,8 @@ public class OCommandExecutorSQLHAStatus extends OCommandExecutorSQLAbstract imp
       throw new OCommandExecutionException("OrientDB is not started in distributed mode");
     }
 
-    final OHazelcastPlugin dManager = (OHazelcastPlugin) ((ODatabaseDocumentDistributed) database).getDistributedManager();
+    final OHazelcastPlugin dManager =
+        (OHazelcastPlugin) ((ODatabaseDocumentDistributed) database).getDistributedManager();
     if (dManager == null || !dManager.isEnabled())
       throw new OCommandExecutionException("OrientDB is not started in distributed mode");
 
@@ -87,13 +86,18 @@ public class OCommandExecutorSQLHAStatus extends OCommandExecutorSQLAbstract imp
     if (parsedStatement.outputText) {
       final StringBuilder output = new StringBuilder();
       if (parsedStatement.servers)
-        output.append(ODistributedOutput.formatServerStatus(dManager, dManager.getClusterConfiguration()));
+        output.append(
+            ODistributedOutput.formatServerStatus(dManager, dManager.getClusterConfiguration()));
       if (parsedStatement.db)
-        output.append(ODistributedOutput.formatClusterTable(dManager, databaseName, cfg, dManager.getTotalNodes(databaseName)));
+        output.append(
+            ODistributedOutput.formatClusterTable(
+                dManager, databaseName, cfg, dManager.getTotalNodes(databaseName)));
       if (parsedStatement.latency)
-        output.append(ODistributedOutput.formatLatency(dManager, dManager.getClusterConfiguration()));
+        output.append(
+            ODistributedOutput.formatLatency(dManager, dManager.getClusterConfiguration()));
       if (parsedStatement.messages)
-        output.append(ODistributedOutput.formatMessages(dManager, dManager.getClusterConfiguration()));
+        output.append(
+            ODistributedOutput.formatMessages(dManager, dManager.getClusterConfiguration()));
       if (parsedStatement.locks) {
         output.append(ODistributedOutput.formatNewRecordLocks(dManager, databaseName));
       }
@@ -103,8 +107,7 @@ public class OCommandExecutorSQLHAStatus extends OCommandExecutorSQLAbstract imp
     final ODocument output = new ODocument();
     if (parsedStatement.servers)
       output.field("servers", dManager.getClusterConfiguration(), OType.EMBEDDED);
-    if (parsedStatement.db)
-      output.field("database", cfg.getDocument(), OType.EMBEDDED);
+    if (parsedStatement.db) output.field("database", cfg.getDocument(), OType.EMBEDDED);
 
     if (parsedStatement.locks) {
       output.field("locks", ODistributedOutput.getRequestsStatus(dManager, databaseName));

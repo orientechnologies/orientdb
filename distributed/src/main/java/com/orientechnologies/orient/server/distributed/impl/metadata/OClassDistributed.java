@@ -22,20 +22,17 @@ import com.orientechnologies.orient.server.distributed.ODistributedServerLog;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
 import com.orientechnologies.orient.server.distributed.OModifiableDistributedConfiguration;
 import com.orientechnologies.orient.server.distributed.impl.ODatabaseDocumentDistributed;
-
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
 import java.util.concurrent.Callable;
 
-/**
- * Created by tglman on 22/06/17.
- */
+/** Created by tglman on 22/06/17. */
 public class OClassDistributed extends OClassEmbedded {
 
   private volatile int[] bestClusterIds;
-  private volatile int   lastVersion;
+  private volatile int lastVersion;
 
   protected OClassDistributed(OSchemaShared iOwner, String iName) {
     super(iOwner, iName);
@@ -59,10 +56,13 @@ public class OClassDistributed extends OClassEmbedded {
     return new OPropertyDistributed(this, global);
   }
 
-  public OProperty addProperty(final String propertyName, final OType type, final OType linkedType, final OClass linkedClass,
+  public OProperty addProperty(
+      final String propertyName,
+      final OType type,
+      final OType linkedType,
+      final OClass linkedClass,
       final boolean unsafe) {
-    if (type == null)
-      throw new OSchemaException("Property type not defined.");
+    if (type == null) throw new OSchemaException("Property type not defined.");
 
     if (propertyName == null || propertyName.length() == 0)
       throw new OSchemaException("Property name is null or empty");
@@ -70,16 +70,15 @@ public class OClassDistributed extends OClassEmbedded {
     final ODatabaseDocumentInternal database = getDatabase();
     validatePropertyName(propertyName);
     if (database.getTransaction().isActive()) {
-      throw new OSchemaException("Cannot create property '" + propertyName + "' inside a transaction");
+      throw new OSchemaException(
+          "Cannot create property '" + propertyName + "' inside a transaction");
     }
 
     database.checkSecurity(ORule.ResourceGeneric.SCHEMA, ORole.PERMISSION_UPDATE);
 
-    if (linkedType != null)
-      OPropertyImpl.checkLinkTypeSupport(type);
+    if (linkedType != null) OPropertyImpl.checkLinkTypeSupport(type);
 
-    if (linkedClass != null)
-      OPropertyImpl.checkSupportLinkedClass(type);
+    if (linkedClass != null) OPropertyImpl.checkSupportLinkedClass(type);
 
     acquireSchemaWriteLock();
     try {
@@ -111,18 +110,20 @@ public class OClassDistributed extends OClassEmbedded {
           cmd.append('`');
         }
 
-        if (unsafe)
-          cmd.append(" unsafe ");
+        if (unsafe) cmd.append(" unsafe ");
         if (!isRunLocal(database)) {
           OScenarioThreadLocal.executeAsDistributed(
-              (Callable<OProperty>) () -> addPropertyInternal(propertyName, type, linkedType, linkedClass, unsafe));
+              (Callable<OProperty>)
+                  () -> addPropertyInternal(propertyName, type, linkedType, linkedClass, unsafe));
         }
 
         owner.sendCommand(database, cmd.toString());
 
       } else
-        return (OProperty) OScenarioThreadLocal.executeAsDistributed(
-            (Callable<OProperty>) () -> addPropertyInternal(propertyName, type, linkedType, linkedClass, unsafe));
+        return (OProperty)
+            OScenarioThreadLocal.executeAsDistributed(
+                (Callable<OProperty>)
+                    () -> addPropertyInternal(propertyName, type, linkedType, linkedClass, unsafe));
 
     } finally {
       releaseSchemaWriteLock();
@@ -142,8 +143,7 @@ public class OClassDistributed extends OClassEmbedded {
         if (!isRunLocal(database)) {
           setEncryptionInternal(database, iValue);
         }
-      } else
-        setEncryptionInternal(database, iValue);
+      } else setEncryptionInternal(database, iValue);
     } finally {
       releaseSchemaWriteLock();
     }
@@ -163,8 +163,7 @@ public class OClassDistributed extends OClassEmbedded {
         if (!isRunLocal(database)) {
           setClusterSelectionInternal(value);
         }
-      } else
-        setClusterSelectionInternal(value);
+      } else setClusterSelectionInternal(value);
 
       return this;
     } finally {
@@ -184,8 +183,7 @@ public class OClassDistributed extends OClassEmbedded {
         if (!isRunLocal(database)) {
           setCustomInternal(name, value);
         }
-      } else
-        setCustomInternal(name, value);
+      } else setCustomInternal(name, value);
 
       return this;
     } finally {
@@ -205,8 +203,7 @@ public class OClassDistributed extends OClassEmbedded {
         if (!isRunLocal(database)) {
           clearCustomInternal();
         }
-      } else
-        clearCustomInternal();
+      } else clearCustomInternal();
 
     } finally {
       releaseSchemaWriteLock();
@@ -231,16 +228,14 @@ public class OClassDistributed extends OClassEmbedded {
             sb.append('`').append(superClass.getName()).append("`,");
           }
           sb.deleteCharAt(sb.length() - 1);
-        } else
-          sb.append("null");
+        } else sb.append("null");
 
         final String cmd = String.format("alter class `%s` superclasses %s", name, sb);
         owner.sendCommand(database, cmd);
         if (!isRunLocal(database)) {
           setSuperClassesInternal(classes);
         }
-      } else
-        setSuperClassesInternal(classes);
+      } else setSuperClassesInternal(classes);
 
     } finally {
       releaseSchemaWriteLock();
@@ -256,14 +251,15 @@ public class OClassDistributed extends OClassEmbedded {
     acquireSchemaWriteLock();
     try {
       if (isDistributedCommand(database)) {
-        final String cmd = String
-            .format("alter class `%s` superclass +`%s`", name, superClass != null ? superClass.getName() : null);
+        final String cmd =
+            String.format(
+                "alter class `%s` superclass +`%s`",
+                name, superClass != null ? superClass.getName() : null);
         owner.sendCommand(database, cmd);
         if (!isRunLocal(database)) {
           addSuperClassInternal(database, superClass);
         }
-      } else
-        addSuperClassInternal(database, superClass);
+      } else addSuperClassInternal(database, superClass);
 
     } finally {
       releaseSchemaWriteLock();
@@ -278,14 +274,15 @@ public class OClassDistributed extends OClassEmbedded {
     acquireSchemaWriteLock();
     try {
       if (isDistributedCommand(database)) {
-        final String cmd = String
-            .format("alter class `%s` superclass -`%s`", name, superClass != null ? superClass.getName() : null);
+        final String cmd =
+            String.format(
+                "alter class `%s` superclass -`%s`",
+                name, superClass != null ? superClass.getName() : null);
         owner.sendCommand(database, cmd);
         if (!isRunLocal(database)) {
           removeSuperClassInternal(superClass);
         }
-      } else
-        removeSuperClassInternal(superClass);
+      } else removeSuperClassInternal(superClass);
 
     } finally {
       releaseSchemaWriteLock();
@@ -294,19 +291,24 @@ public class OClassDistributed extends OClassEmbedded {
   }
 
   public OClass setName(final String name) {
-    if (getName().equals(name))
-      return this;
+    if (getName().equals(name)) return this;
     final ODatabaseDocumentInternal database = getDatabase();
     database.checkSecurity(ORule.ResourceGeneric.SCHEMA, ORole.PERMISSION_UPDATE);
     final Character wrongCharacter = OSchemaShared.checkClassNameIfValid(name);
     OClass oClass = database.getMetadata().getSchema().getClass(name);
     if (oClass != null) {
-      String error = String.format("Cannot rename class %s to %s. A Class with name %s exists", this.name, name, name);
+      String error =
+          String.format(
+              "Cannot rename class %s to %s. A Class with name %s exists", this.name, name, name);
       throw new OSchemaException(error);
     }
     if (wrongCharacter != null)
       throw new OSchemaException(
-          "Invalid class name found. Character '" + wrongCharacter + "' cannot be used in class name '" + name + "'");
+          "Invalid class name found. Character '"
+              + wrongCharacter
+              + "' cannot be used in class name '"
+              + name
+              + "'");
     acquireSchemaWriteLock();
     try {
 
@@ -316,8 +318,7 @@ public class OClassDistributed extends OClassEmbedded {
         if (!isRunLocal(database)) {
           setNameInternal(database, name);
         }
-      } else
-        setNameInternal(database, name);
+      } else setNameInternal(database, name);
 
     } finally {
       releaseSchemaWriteLock();
@@ -329,8 +330,7 @@ public class OClassDistributed extends OClassEmbedded {
   public OClass setShortName(String shortName) {
     if (shortName != null) {
       shortName = shortName.trim();
-      if (shortName.isEmpty())
-        shortName = null;
+      if (shortName.isEmpty()) shortName = null;
     }
     final ODatabaseDocumentInternal database = getDatabase();
     database.checkSecurity(ORule.ResourceGeneric.SCHEMA, ORole.PERMISSION_UPDATE);
@@ -344,8 +344,7 @@ public class OClassDistributed extends OClassEmbedded {
         if (!isRunLocal(database)) {
           setShortNameInternal(database, shortName);
         }
-      } else
-        setShortNameInternal(database, shortName);
+      } else setShortNameInternal(database, shortName);
     } finally {
       releaseSchemaWriteLock();
     }
@@ -366,8 +365,7 @@ public class OClassDistributed extends OClassEmbedded {
         if (!isRunLocal(database)) {
           truncateClusterInternal(clusterName, database);
         }
-      } else
-        truncateClusterInternal(clusterName, database);
+      } else truncateClusterInternal(clusterName, database);
     } finally {
       releaseSchemaReadLock();
     }
@@ -388,8 +386,7 @@ public class OClassDistributed extends OClassEmbedded {
         if (!isRunLocal(database)) {
           setStrictModeInternal(isStrict);
         }
-      } else
-        setStrictModeInternal(isStrict);
+      } else setStrictModeInternal(isStrict);
 
     } finally {
       releaseSchemaWriteLock();
@@ -401,8 +398,7 @@ public class OClassDistributed extends OClassEmbedded {
   public OClass setDescription(String iDescription) {
     if (iDescription != null) {
       iDescription = iDescription.trim();
-      if (iDescription.isEmpty())
-        iDescription = null;
+      if (iDescription.isEmpty()) iDescription = null;
     }
     final ODatabaseDocumentInternal database = getDatabase();
     database.checkSecurity(ORule.ResourceGeneric.SCHEMA, ORole.PERMISSION_UPDATE);
@@ -415,8 +411,7 @@ public class OClassDistributed extends OClassEmbedded {
         if (!isRunLocal(database)) {
           setDescriptionInternal(iDescription);
         }
-      } else
-        setDescriptionInternal(iDescription);
+      } else setDescriptionInternal(iDescription);
     } finally {
       releaseSchemaWriteLock();
     }
@@ -441,8 +436,7 @@ public class OClassDistributed extends OClassEmbedded {
         if (!isRunLocal(database)) {
           addClusterIdInternal(database, clusterId);
         }
-      } else
-        addClusterIdInternal(database, clusterId);
+      } else addClusterIdInternal(database, clusterId);
 
     } finally {
       releaseSchemaWriteLock();
@@ -455,7 +449,10 @@ public class OClassDistributed extends OClassEmbedded {
     database.checkSecurity(ORule.ResourceGeneric.SCHEMA, ORole.PERMISSION_UPDATE);
 
     if (clusterIds.length == 1 && clusterId == clusterIds[0])
-      throw new ODatabaseException(" Impossible to remove the last cluster of class '" + getName() + "' drop the class instead");
+      throw new ODatabaseException(
+          " Impossible to remove the last cluster of class '"
+              + getName()
+              + "' drop the class instead");
 
     acquireSchemaWriteLock();
     try {
@@ -466,8 +463,7 @@ public class OClassDistributed extends OClassEmbedded {
         if (!isRunLocal(database)) {
           removeClusterIdInternal(database, clusterId);
         }
-      } else
-        removeClusterIdInternal(database, clusterId);
+      } else removeClusterIdInternal(database, clusterId);
     } finally {
       releaseSchemaWriteLock();
     }
@@ -485,22 +481,27 @@ public class OClassDistributed extends OClassEmbedded {
     acquireSchemaWriteLock();
     try {
       if (!properties.containsKey(propertyName))
-        throw new OSchemaException("Property '" + propertyName + "' not found in class " + name + "'");
+        throw new OSchemaException(
+            "Property '" + propertyName + "' not found in class " + name + "'");
 
       if (isDistributedCommand(database)) {
         if (!isRunLocal(database)) {
-          OScenarioThreadLocal.executeAsDistributed((Callable<OProperty>) () -> {
-            dropPropertyInternal(database, propertyName);
-            return null;
-          });
+          OScenarioThreadLocal.executeAsDistributed(
+              (Callable<OProperty>)
+                  () -> {
+                    dropPropertyInternal(database, propertyName);
+                    return null;
+                  });
         }
 
         owner.sendCommand(database, "drop property " + name + '.' + propertyName);
       } else
-        OScenarioThreadLocal.executeAsDistributed((Callable<OProperty>) () -> {
-          dropPropertyInternal(database, propertyName);
-          return null;
-        });
+        OScenarioThreadLocal.executeAsDistributed(
+            (Callable<OProperty>)
+                () -> {
+                  dropPropertyInternal(database, propertyName);
+                  return null;
+                });
 
     } finally {
       releaseSchemaWriteLock();
@@ -546,13 +547,13 @@ public class OClassDistributed extends OClassEmbedded {
 
       if (isDistributedCommand(database)) {
         // FORMAT FLOAT LOCALE AGNOSTIC
-        final String cmd = String.format("alter class `%s` oversize %s", name, new Float(overSize).toString());
+        final String cmd =
+            String.format("alter class `%s` oversize %s", name, new Float(overSize).toString());
         owner.sendCommand(database, cmd);
         if (!isRunLocal(database)) {
           setOverSizeInternal(database, overSize);
         }
-      } else
-        setOverSizeInternal(database, overSize);
+      } else setOverSizeInternal(database, overSize);
     } finally {
       releaseSchemaWriteLock();
     }
@@ -573,8 +574,7 @@ public class OClassDistributed extends OClassEmbedded {
         if (!isRunLocal(database)) {
           setAbstractInternal(database, isAbstract);
         }
-      } else
-        setAbstractInternal(database, isAbstract);
+      } else setAbstractInternal(database, isAbstract);
     } finally {
       releaseSchemaWriteLock();
     }
@@ -589,22 +589,27 @@ public class OClassDistributed extends OClassEmbedded {
 
   public int getClusterForNewInstance(ODatabaseDocumentDistributed db, ODocument doc) {
     ODistributedServerManager manager = db.getDistributedManager();
-    if (bestClusterIds == null)
-      readConfiguration(db, manager);
+    if (bestClusterIds == null) readConfiguration(db, manager);
     else {
       ODistributedConfiguration cfg = manager.getDatabaseConfiguration(db.getName());
       if (lastVersion != cfg.getVersion()) {
         // DISTRIBUTED CFG IS CHANGED: GET BEST CLUSTER AGAIN
         readConfiguration(db, manager);
 
-        ODistributedServerLog.info(this, manager.getLocalNodeName(), null, ODistributedServerLog.DIRECTION.NONE,
-            "New cluster list for class '%s': %s (dCfgVersion=%d)", getName(), Arrays.toString(bestClusterIds), lastVersion);
+        ODistributedServerLog.info(
+            this,
+            manager.getLocalNodeName(),
+            null,
+            ODistributedServerLog.DIRECTION.NONE,
+            "New cluster list for class '%s': %s (dCfgVersion=%d)",
+            getName(),
+            Arrays.toString(bestClusterIds),
+            lastVersion);
       }
     }
 
     final int size = bestClusterIds.length;
-    if (size == 0)
-      return -1;
+    if (size == 0) return -1;
 
     if (size == 1)
       // ONLY ONE: RETURN IT
@@ -613,29 +618,39 @@ public class OClassDistributed extends OClassEmbedded {
     final int cluster = super.getClusterSelection().getCluster(this, bestClusterIds, doc);
 
     if (ODistributedServerLog.isDebugEnabled())
-      ODistributedServerLog.debug(this, manager.getLocalNodeName(), null, ODistributedServerLog.DIRECTION.NONE,
-          "Selected cluster %d for class '%s' from %s (threadId=%d dCfgVersion=%d)", cluster, getName(),
-          Arrays.toString(bestClusterIds), Thread.currentThread().getId(), lastVersion);
+      ODistributedServerLog.debug(
+          this,
+          manager.getLocalNodeName(),
+          null,
+          ODistributedServerLog.DIRECTION.NONE,
+          "Selected cluster %d for class '%s' from %s (threadId=%d dCfgVersion=%d)",
+          cluster,
+          getName(),
+          Arrays.toString(bestClusterIds),
+          Thread.currentThread().getId(),
+          lastVersion);
 
     return cluster;
   }
 
-  public ODistributedConfiguration readConfiguration(ODatabaseDocumentDistributed db, ODistributedServerManager manager) {
+  public ODistributedConfiguration readConfiguration(
+      ODatabaseDocumentDistributed db, ODistributedServerManager manager) {
     if (isAbstract())
       throw new IllegalArgumentException("Cannot create a new instance of abstract class");
 
     int[] clusterIds = getClusterIds();
     final List<String> clusterNames = new ArrayList<String>(clusterIds.length);
-    for (int c : clusterIds)
-      clusterNames.add(db.getClusterNameById(c).toLowerCase(Locale.ENGLISH));
+    for (int c : clusterIds) clusterNames.add(db.getClusterNameById(c).toLowerCase(Locale.ENGLISH));
 
     ODistributedConfiguration cfg = manager.getDatabaseConfiguration(db.getName());
 
-    List<String> bestClusters = cfg.getOwnedClustersByServer(clusterNames, manager.getLocalNodeName());
+    List<String> bestClusters =
+        cfg.getOwnedClustersByServer(clusterNames, manager.getLocalNodeName());
     if (bestClusters.isEmpty()) {
       // REBALANCE THE CLUSTERS
       final OModifiableDistributedConfiguration modifiableCfg = cfg.modify();
-      manager.reassignClustersOwnership(manager.getLocalNodeName(), db.getName(), modifiableCfg, true);
+      manager.reassignClustersOwnership(
+          manager.getLocalNodeName(), db.getName(), modifiableCfg, true);
 
       cfg = modifiableCfg;
 
@@ -652,8 +667,7 @@ public class OClassDistributed extends OClassEmbedded {
         // FILL THE MAP CLUSTER/SERVERS
         final StringBuilder buffer = new StringBuilder();
         for (String c : clusterNames) {
-          if (buffer.length() > 0)
-            buffer.append(" ");
+          if (buffer.length() > 0) buffer.append(" ");
 
           buffer.append(" ");
           buffer.append(c);
@@ -661,13 +675,27 @@ public class OClassDistributed extends OClassEmbedded {
           buffer.append(cfg.getServers(c, null));
         }
 
-        ODistributedServerLog.warn(this, manager.getLocalNodeName(), null, ODistributedServerLog.DIRECTION.NONE,
-            "Cannot find best cluster for class '%s'. Configured servers for clusters %s are %s (dCfgVersion=%d)", getName(),
-            clusterNames, buffer.toString(), cfg.getVersion());
+        ODistributedServerLog.warn(
+            this,
+            manager.getLocalNodeName(),
+            null,
+            ODistributedServerLog.DIRECTION.NONE,
+            "Cannot find best cluster for class '%s'. Configured servers for clusters %s are %s (dCfgVersion=%d)",
+            getName(),
+            clusterNames,
+            buffer.toString(),
+            cfg.getVersion());
 
         throw new ODatabaseException(
-            "Cannot find best cluster for class '" + getName() + "' on server '" + manager.getLocalNodeName()
-                + "' (clusterStrategy=" + getName() + " dCfgVersion=" + cfg.getVersion() + ")");
+            "Cannot find best cluster for class '"
+                + getName()
+                + "' on server '"
+                + manager.getLocalNodeName()
+                + "' (clusterStrategy="
+                + getName()
+                + " dCfgVersion="
+                + cfg.getVersion()
+                + ")");
       }
     }
 
@@ -675,8 +703,7 @@ public class OClassDistributed extends OClassEmbedded {
 
     final int[] newBestClusters = new int[bestClusters.size()];
     int i = 0;
-    for (String c : bestClusters)
-      newBestClusters[i++] = db.getClusterIdByName(c);
+    for (String c : bestClusters) newBestClusters[i++] = db.getClusterIdByName(c);
 
     this.bestClusterIds = newBestClusters;
     lastVersion = cfg.getVersion();
@@ -685,11 +712,11 @@ public class OClassDistributed extends OClassEmbedded {
   }
 
   protected boolean isDistributedCommand(ODatabaseDocumentInternal database) {
-    return database.getStorage() instanceof OAutoshardedStorage && !((OAutoshardedStorage) database.getStorage()).isLocalEnv();
+    return database.getStorage() instanceof OAutoshardedStorage
+        && !((OAutoshardedStorage) database.getStorage()).isLocalEnv();
   }
 
   private boolean isRunLocal(ODatabaseDocumentInternal database) {
     return ((OSchemaDistributed) owner).isRunLocal(database);
   }
-
 }

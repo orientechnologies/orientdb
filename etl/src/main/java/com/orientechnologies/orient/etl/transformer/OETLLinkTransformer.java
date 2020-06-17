@@ -27,28 +27,35 @@ import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.etl.OETLProcessHaltedException;
-
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 import java.util.logging.Level;
 
-/**
- * Converts a JOIN in LINK
- */
+/** Converts a JOIN in LINK */
 public class OETLLinkTransformer extends OETLAbstractLookupTransformer {
   private String joinValue;
   private String linkFieldName;
-  private OType  linkFieldType;
+  private OType linkFieldType;
 
   @Override
   public ODocument getConfiguration() {
-    return new ODocument().fromJSON("{parameters:[" + getCommonConfigurationParameters() + ","
-        + "{joinFieldName:{optional:true,description:'field name containing the value to join'}},"
-        + "{joinValue:{optional:true,description:'value to use in lookup query'}},"
-        + "{linkFieldName:{optional:false,description:'field name containing the link to set'}},"
-        + "{linkFieldType:{optional:true,description:'field type containing the link to set. Use LINK for single link and LINKSET or LINKLIST for many'}},"
-        + "{lookup:{optional:false,description:'<Class>.<property> or Query to execute'}},"
-        + "{unresolvedLinkAction:{optional:true,description:'action when a unresolved link is found',values:" + stringArray2Json(
-        ACTION.values()) + "}}]," + "input:['ODocument'],output:'ODocument'}");
+    return new ODocument()
+        .fromJSON(
+            "{parameters:["
+                + getCommonConfigurationParameters()
+                + ","
+                + "{joinFieldName:{optional:true,description:'field name containing the value to join'}},"
+                + "{joinValue:{optional:true,description:'value to use in lookup query'}},"
+                + "{linkFieldName:{optional:false,description:'field name containing the link to set'}},"
+                + "{linkFieldType:{optional:true,description:'field type containing the link to set. Use LINK for single link and LINKSET or LINKLIST for many'}},"
+                + "{lookup:{optional:false,description:'<Class>.<property> or Query to execute'}},"
+                + "{unresolvedLinkAction:{optional:true,description:'action when a unresolved link is found',values:"
+                + stringArray2Json(ACTION.values())
+                + "}}],"
+                + "input:['ODocument'],output:'ODocument'}");
   }
 
   @Override
@@ -69,18 +76,18 @@ public class OETLLinkTransformer extends OETLAbstractLookupTransformer {
   @Override
   public Object executeTransform(ODatabaseDocument db, final Object input) {
     if (!(input instanceof OIdentifiable)) {
-      log(Level.FINE, "skip because input value is not a record, but rather an instance of class: %s", input.getClass());
+      log(
+          Level.FINE,
+          "skip because input value is not a record, but rather an instance of class: %s",
+          input.getClass());
       return null;
     }
 
     final ODocument doc = ((OIdentifiable) input).getRecord();
     final Object joinRuntimeValue;
-    if (joinFieldName != null)
-      joinRuntimeValue = doc.field(joinFieldName);
-    else if (joinValue != null)
-      joinRuntimeValue = resolve(joinValue);
-    else
-      joinRuntimeValue = null;
+    if (joinFieldName != null) joinRuntimeValue = doc.field(joinFieldName);
+    else if (joinValue != null) joinRuntimeValue = resolve(joinValue);
+    else joinRuntimeValue = null;
 
     Object result;
     if (OMultiValue.isMultiValue(joinRuntimeValue)) {
@@ -90,8 +97,7 @@ public class OETLLinkTransformer extends OETLAbstractLookupTransformer {
         singleJoinsResult.add(lookup((ODatabaseDocumentInternal) db, o, true));
       }
       result = singleJoinsResult;
-    } else
-      result = lookup((ODatabaseDocumentInternal) db, joinRuntimeValue, true);
+    } else result = lookup((ODatabaseDocumentInternal) db, joinRuntimeValue, true);
 
     log(Level.FINE, "joinRuntimeValue=%s, lookupResult=%s", joinRuntimeValue, result);
 
@@ -100,10 +106,8 @@ public class OETLLinkTransformer extends OETLAbstractLookupTransformer {
         // CONVERT IT
         if (linkFieldType == OType.LINK) {
           if (result instanceof Collection<?>) {
-            if (!((Collection) result).isEmpty())
-              result = ((Collection) result).iterator().next();
-            else
-              result = null;
+            if (!((Collection) result).isEmpty()) result = ((Collection) result).iterator().next();
+            else result = null;
           }
         } else if (linkFieldType == OType.LINKSET) {
           if (!(result instanceof Collection)) {
@@ -123,31 +127,41 @@ public class OETLLinkTransformer extends OETLAbstractLookupTransformer {
       if (result == null) {
         // APPLY THE STRATEGY DEFINED IN unresolvedLinkAction
         switch (unresolvedLinkAction) {
-        case CREATE:
-          if (lookup != null) {
-            final String[] lookupParts = lookup.split("\\.");
-            final ODocument linkedDoc = new ODocument(lookupParts[0]);
-            linkedDoc.field(lookupParts[1], joinRuntimeValue);
-            linkedDoc.save();
+          case CREATE:
+            if (lookup != null) {
+              final String[] lookupParts = lookup.split("\\.");
+              final ODocument linkedDoc = new ODocument(lookupParts[0]);
+              linkedDoc.field(lookupParts[1], joinRuntimeValue);
+              linkedDoc.save();
 
-            log(Level.FINE, "created new document=%s", linkedDoc.getRecord());
+              log(Level.FINE, "created new document=%s", linkedDoc.getRecord());
 
-            result = linkedDoc;
-          } else
-            throw new OConfigurationException("Cannot create linked document because target class is unknown. Use 'lookup' field");
-          break;
-        case ERROR:
-          processor.getStats().incrementErrors();
-          log(Level.SEVERE, "%s: ERROR Cannot resolve join for value '%s'", getName(), joinRuntimeValue);
-          break;
-        case WARNING:
-          processor.getStats().incrementWarnings();
-          log(Level.INFO, "%s: WARN Cannot resolve join for value '%s'", getName(), joinRuntimeValue);
-          break;
-        case SKIP:
-          return null;
-        case HALT:
-          throw new OETLProcessHaltedException("[Link transformer] Cannot resolve join for value '" + joinRuntimeValue + "'");
+              result = linkedDoc;
+            } else
+              throw new OConfigurationException(
+                  "Cannot create linked document because target class is unknown. Use 'lookup' field");
+            break;
+          case ERROR:
+            processor.getStats().incrementErrors();
+            log(
+                Level.SEVERE,
+                "%s: ERROR Cannot resolve join for value '%s'",
+                getName(),
+                joinRuntimeValue);
+            break;
+          case WARNING:
+            processor.getStats().incrementWarnings();
+            log(
+                Level.INFO,
+                "%s: WARN Cannot resolve join for value '%s'",
+                getName(),
+                joinRuntimeValue);
+            break;
+          case SKIP:
+            return null;
+          case HALT:
+            throw new OETLProcessHaltedException(
+                "[Link transformer] Cannot resolve join for value '" + joinRuntimeValue + "'");
         }
       }
     }

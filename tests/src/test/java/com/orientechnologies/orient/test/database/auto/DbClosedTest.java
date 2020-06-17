@@ -15,20 +15,22 @@
  */
 package com.orientechnologies.orient.test.database.auto;
 
-import com.orientechnologies.orient.core.db.OPartitionedDatabasePool;
-import org.testng.annotations.*;
-
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabase;
+import com.orientechnologies.orient.core.db.OPartitionedDatabasePool;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
-import com.orientechnologies.orient.object.db.OObjectDatabaseTx;
 import com.orientechnologies.orient.test.database.base.SetupTest;
+import org.testng.annotations.AfterClass;
+import org.testng.annotations.BeforeClass;
+import org.testng.annotations.Optional;
+import org.testng.annotations.Parameters;
+import org.testng.annotations.Test;
 
 @Test(groups = "db")
 public class DbClosedTest extends DocumentDBBaseTest {
   private OPartitionedDatabasePool pool;
 
-  @Parameters(value = { "url" })
+  @Parameters(value = {"url"})
   public DbClosedTest(@Optional String url) {
     super(url);
     setAutoManageDatabase(false);
@@ -67,16 +69,14 @@ public class DbClosedTest extends DocumentDBBaseTest {
     db.close();
   }
 
-  @Test(dependsOnMethods = { "testDoubleDb", "testDoubleDbWindowsPath" })
+  @Test(dependsOnMethods = {"testDoubleDb", "testDoubleDbWindowsPath"})
   public void testStorageClosed() {
-    if (SetupTest.instance().isReuseDatabase())
-      return;
+    if (SetupTest.instance().isReuseDatabase()) return;
   }
 
   @Test
   public void testRemoteConns() {
-    if (!url.startsWith("remote:"))
-      return;
+    if (!url.startsWith("remote:")) return;
 
     final int max = OGlobalConfiguration.NETWORK_MAX_CONCURRENT_SESSIONS.getValueAsInteger();
     for (int i = 0; i < max * 2; ++i) {

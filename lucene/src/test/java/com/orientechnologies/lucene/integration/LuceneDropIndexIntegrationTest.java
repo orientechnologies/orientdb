@@ -6,11 +6,6 @@ import com.orientechnologies.orient.core.db.OrientDB;
 import com.orientechnologies.orient.core.db.OrientDBConfig;
 import com.orientechnologies.orient.core.record.OElement;
 import com.orientechnologies.orient.server.OServer;
-import org.junit.After;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
-
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.nio.file.Files;
@@ -18,6 +13,10 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
 import java.util.stream.Collectors;
+import org.junit.After;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Test;
 
 public class LuceneDropIndexIntegrationTest {
   private OServer server0;
@@ -25,9 +24,14 @@ public class LuceneDropIndexIntegrationTest {
 
   @Before
   public void before() throws Exception {
-    server0 = OServer.startFromClasspathConfig("com/orientechnologies/lucene/integration/orientdb-simple-dserver-config-0.xml");
-    server1 = OServer.startFromClasspathConfig("com/orientechnologies/lucene/integration/orientdb-simple-dserver-config-1.xml");
-    final OrientDB remote = new OrientDB("remote:localhost", "root", "test", OrientDBConfig.defaultConfig());
+    server0 =
+        OServer.startFromClasspathConfig(
+            "com/orientechnologies/lucene/integration/orientdb-simple-dserver-config-0.xml");
+    server1 =
+        OServer.startFromClasspathConfig(
+            "com/orientechnologies/lucene/integration/orientdb-simple-dserver-config-1.xml");
+    final OrientDB remote =
+        new OrientDB("remote:localhost", "root", "test", OrientDBConfig.defaultConfig());
     remote.create("LuceneDropIndexIntegrationTest", ODatabaseType.PLOCAL);
     ODatabaseSession session = remote.open("LuceneDropIndexIntegrationTest", "admin", "admin");
 
@@ -49,29 +53,32 @@ public class LuceneDropIndexIntegrationTest {
   @Test
   public void testDropDatabase() throws IOException {
 
-    OrientDB remote = new OrientDB("remote:localhost", "root", "test", OrientDBConfig.defaultConfig());
+    OrientDB remote =
+        new OrientDB("remote:localhost", "root", "test", OrientDBConfig.defaultConfig());
     remote.drop("LuceneDropIndexIntegrationTest");
     remote.close();
 
-    List<Path> paths = Files.walk(Paths.get(server0.getDatabaseDirectory()))
-        .filter(f -> f.toFile().getName().equalsIgnoreCase("LuceneDropIndexIntegrationTest")).collect(Collectors.toList());
+    List<Path> paths =
+        Files.walk(Paths.get(server0.getDatabaseDirectory()))
+            .filter(f -> f.toFile().getName().equalsIgnoreCase("LuceneDropIndexIntegrationTest"))
+            .collect(Collectors.toList());
 
     Assert.assertEquals(0, paths.size());
 
-    paths = Files.walk(Paths.get(server1.getDatabaseDirectory()))
-        .filter(f -> f.toFile().getName().equalsIgnoreCase("LuceneDropIndexIntegrationTest")).collect(Collectors.toList());
+    paths =
+        Files.walk(Paths.get(server1.getDatabaseDirectory()))
+            .filter(f -> f.toFile().getName().equalsIgnoreCase("LuceneDropIndexIntegrationTest"))
+            .collect(Collectors.toList());
 
     Assert.assertEquals(0, paths.size());
-
   }
 
   @After
   public void after()
-      throws InstantiationException, IllegalAccessException, ClassNotFoundException, NoSuchMethodException, IOException,
-      InvocationTargetException {
+      throws InstantiationException, IllegalAccessException, ClassNotFoundException,
+          NoSuchMethodException, IOException, InvocationTargetException {
 
     server0.shutdown();
     server1.shutdown();
   }
-
 }

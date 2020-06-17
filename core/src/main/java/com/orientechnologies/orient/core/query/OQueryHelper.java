@@ -23,10 +23,13 @@ import java.util.Locale;
 
 public class OQueryHelper {
   protected static final String WILDCARD_ANYCHAR = "?";
-  protected static final String WILDCARD_ANY     = "%";
+  protected static final String WILDCARD_ANY = "%";
 
   public static boolean like(String currentValue, String iValue) {
-    if (currentValue == null || currentValue.length() == 0 || iValue == null || iValue.length() == 0)
+    if (currentValue == null
+        || currentValue.length() == 0
+        || iValue == null
+        || iValue.length() == 0)
       // EMPTY/NULL PARAMETERS
       return false;
 

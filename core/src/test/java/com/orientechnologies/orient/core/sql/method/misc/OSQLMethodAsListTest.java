@@ -1,19 +1,19 @@
 package com.orientechnologies.orient.core.sql.method.misc;
 
-import com.orientechnologies.orient.core.record.impl.ODocument;
-import org.junit.Before;
-import org.junit.Test;
+import static org.junit.Assert.assertEquals;
 
+
+import com.orientechnologies.orient.core.record.impl.ODocument;
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.Set;
-
-import static org.junit.Assert.assertEquals;
+import org.junit.Before;
+import org.junit.Test;
 
 /**
- * Tests the "asList()" method implemented by the OSQLMethodAsList class.  Note
- * that the only input to the execute() method from the OSQLMethod interface
- * that is used is the ioResult argument (the 4th argument).
+ * Tests the "asList()" method implemented by the OSQLMethodAsList class. Note that the only input
+ * to the execute() method from the OSQLMethod interface that is used is the ioResult argument (the
+ * 4th argument).
  *
  * @author Michael MacFadden
  */

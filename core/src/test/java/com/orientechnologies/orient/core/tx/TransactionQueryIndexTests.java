@@ -1,5 +1,8 @@
 package com.orientechnologies.orient.core.tx;
 
+import static org.junit.Assert.assertEquals;
+
+
 import com.orientechnologies.orient.core.db.ODatabaseType;
 import com.orientechnologies.orient.core.db.OrientDB;
 import com.orientechnologies.orient.core.db.OrientDBConfig;
@@ -13,14 +16,10 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
-import static org.junit.Assert.assertEquals;
-
-/**
- * Created by tglman on 12/04/17.
- */
+/** Created by tglman on 12/04/17. */
 public class TransactionQueryIndexTests {
 
-  private OrientDB          orientDB;
+  private OrientDB orientDB;
   private ODatabaseDocument database;
 
   @Before
@@ -79,5 +78,4 @@ public class TransactionQueryIndexTests {
     database.close();
     orientDB.close();
   }
-
 }

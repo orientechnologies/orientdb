@@ -27,5 +27,6 @@ import com.orientechnologies.orient.core.security.OInvalidPasswordException;
  * @author S. Colin Leister
  */
 public interface OPasswordValidator extends OSecurityComponent {
-  void validatePassword(final String username, final String password) throws OInvalidPasswordException;
+  void validatePassword(final String username, final String password)
+      throws OInvalidPasswordException;
 }

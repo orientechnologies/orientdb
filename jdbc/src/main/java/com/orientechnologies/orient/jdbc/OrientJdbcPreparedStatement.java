@@ -1,34 +1,48 @@
 /**
  * Copyright 2010-2016 OrientDB LTD (http://orientdb.com)
- * <p>
- * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- * <p>
- * http://www.apache.org/licenses/LICENSE-2.0
- * <p>
- * Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on an "AS IS"
- * BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the specific language
- * governing permissions and limitations under the License.
- * <p>
- * For more information: http://orientdb.com
+ *
+ * <p>Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file
+ * except in compliance with the License. You may obtain a copy of the License at
+ *
+ * <p>http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * <p>Unless required by applicable law or agreed to in writing, software distributed under the
+ * License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either
+ * express or implied. See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ * <p>For more information: http://orientdb.com
  */
 package com.orientechnologies.orient.jdbc;
 
 import com.orientechnologies.common.exception.OException;
-import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.exception.OQueryParsingException;
 import com.orientechnologies.orient.core.record.impl.ORecordBytes;
 import com.orientechnologies.orient.core.sql.executor.OInternalResultSet;
 import com.orientechnologies.orient.core.sql.executor.OResultInternal;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import com.orientechnologies.orient.jdbc.OrientJdbcParameterMetadata.ParameterDefinition;
-
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.Reader;
 import java.math.BigDecimal;
 import java.net.URL;
-import java.sql.*;
+import java.sql.Array;
+import java.sql.Blob;
+import java.sql.Clob;
+import java.sql.Date;
+import java.sql.NClob;
+import java.sql.ParameterMetaData;
+import java.sql.PreparedStatement;
+import java.sql.Ref;
+import java.sql.ResultSet;
+import java.sql.ResultSetMetaData;
+import java.sql.RowId;
+import java.sql.SQLException;
+import java.sql.SQLSyntaxErrorException;
+import java.sql.SQLXML;
+import java.sql.Time;
+import java.sql.Timestamp;
 import java.util.Calendar;
 import java.util.HashMap;
 import java.util.Map;
@@ -43,16 +57,26 @@ public class OrientJdbcPreparedStatement extends OrientJdbcStatement implements 
   protected final Map<Integer, Object> params;
 
   public OrientJdbcPreparedStatement(OrientJdbcConnection iConnection, String sql) {
-    this(iConnection, ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY, ResultSet.HOLD_CURSORS_OVER_COMMIT, sql);
+    this(
+        iConnection,
+        ResultSet.TYPE_FORWARD_ONLY,
+        ResultSet.CONCUR_READ_ONLY,
+        ResultSet.HOLD_CURSORS_OVER_COMMIT,
+        sql);
   }
 
-  public OrientJdbcPreparedStatement(OrientJdbcConnection iConnection, int resultSetType, int resultSetConcurrency, String sql)
+  public OrientJdbcPreparedStatement(
+      OrientJdbcConnection iConnection, int resultSetType, int resultSetConcurrency, String sql)
       throws SQLException {
     this(iConnection, resultSetType, resultSetConcurrency, ResultSet.HOLD_CURSORS_OVER_COMMIT, sql);
   }
 
-  public OrientJdbcPreparedStatement(OrientJdbcConnection iConnection, int resultSetType, int resultSetConcurrency,
-      int resultSetHoldability, String sql) {
+  public OrientJdbcPreparedStatement(
+      OrientJdbcConnection iConnection,
+      int resultSetType,
+      int resultSetConcurrency,
+      int resultSetHoldability,
+      String sql) {
     super(iConnection, resultSetType, resultSetConcurrency, resultSetHoldability);
     this.sql = sql;
     params = new HashMap<>();
@@ -73,19 +97,20 @@ public class OrientJdbcPreparedStatement extends OrientJdbcStatement implements 
       oResultSet = rs;
     } else {
       try {
-//        sql = new OSQLSynchQuery<ODocument>(mayCleanForSpark(sql));
+        //        sql = new OSQLSynchQuery<ODocument>(mayCleanForSpark(sql));
         oResultSet = database.query(sql, params.values().toArray());
 
       } catch (OQueryParsingException e) {
         throw new SQLSyntaxErrorException("Error while parsing query", e);
       } catch (OException e) {
         throw new SQLException("Error while executing query", e);
-
       }
     }
 
     // return super.executeQuery(sql);
-    resultSet = new OrientJdbcResultSet(this, oResultSet, resultSetType, resultSetConcurrency, resultSetHoldability);
+    resultSet =
+        new OrientJdbcResultSet(
+            this, oResultSet, resultSetType, resultSetConcurrency, resultSetHoldability);
     return resultSet;
   }
 
@@ -114,7 +139,6 @@ public class OrientJdbcPreparedStatement extends OrientJdbcStatement implements 
 
   public void setByte(int parameterIndex, byte x) throws SQLException {
     params.put(parameterIndex, x);
-
   }
 
   public void setShort(int parameterIndex, short x) throws SQLException {
@@ -195,7 +219,8 @@ public class OrientJdbcPreparedStatement extends OrientJdbcStatement implements 
     throw new UnsupportedOperationException();
   }
 
-  public void setCharacterStream(int parameterIndex, Reader reader, int length) throws SQLException {
+  public void setCharacterStream(int parameterIndex, Reader reader, int length)
+      throws SQLException {
     throw new UnsupportedOperationException();
   }
 
@@ -216,8 +241,7 @@ public class OrientJdbcPreparedStatement extends OrientJdbcStatement implements 
   }
 
   public ResultSetMetaData getMetaData() throws SQLException {
-    if (resultSet == null)
-      executeQuery();
+    if (resultSet == null) executeQuery();
 
     return getResultSet().getMetaData();
   }
@@ -268,7 +292,8 @@ public class OrientJdbcPreparedStatement extends OrientJdbcStatement implements 
     params.put(parameterIndex, value);
   }
 
-  public void setNCharacterStream(int parameterIndex, Reader value, long length) throws SQLException {
+  public void setNCharacterStream(int parameterIndex, Reader value, long length)
+      throws SQLException {
     throw new UnsupportedOperationException();
   }
 
@@ -280,7 +305,8 @@ public class OrientJdbcPreparedStatement extends OrientJdbcStatement implements 
     throw new UnsupportedOperationException();
   }
 
-  public void setBlob(int parameterIndex, InputStream inputStream, long length) throws SQLException {
+  public void setBlob(int parameterIndex, InputStream inputStream, long length)
+      throws SQLException {
     throw new UnsupportedOperationException();
   }
 
@@ -292,7 +318,8 @@ public class OrientJdbcPreparedStatement extends OrientJdbcStatement implements 
     throw new UnsupportedOperationException();
   }
 
-  public void setObject(int parameterIndex, Object x, int targetSqlType, int scaleOrLength) throws SQLException {
+  public void setObject(int parameterIndex, Object x, int targetSqlType, int scaleOrLength)
+      throws SQLException {
     throw new UnsupportedOperationException();
   }
 
@@ -304,7 +331,8 @@ public class OrientJdbcPreparedStatement extends OrientJdbcStatement implements 
     setBinaryStream(parameterIndex, x);
   }
 
-  public void setCharacterStream(int parameterIndex, Reader reader, long length) throws SQLException {
+  public void setCharacterStream(int parameterIndex, Reader reader, long length)
+      throws SQLException {
     throw new UnsupportedOperationException();
   }
 
@@ -321,7 +349,6 @@ public class OrientJdbcPreparedStatement extends OrientJdbcStatement implements 
     } catch (IOException e) {
       throw new SQLException("unable to store inputStream", e);
     }
-
   }
 
   public void setCharacterStream(int parameterIndex, Reader reader) throws SQLException {

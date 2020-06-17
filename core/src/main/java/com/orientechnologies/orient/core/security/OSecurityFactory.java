@@ -23,9 +23,8 @@ import com.orientechnologies.orient.core.metadata.security.OSecurityInternal;
 
 /**
  * Provides an interface for creating new OSecurity instances.
- * 
+ *
  * @author S. Colin Leister
- * 
  */
 public interface OSecurityFactory {
   OSecurityInternal newSecurity();

@@ -27,12 +27,14 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.sbt
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.sbtree.v1.nullbucket.SBTreeNullBucketV1SetValuePO;
 
 /**
- * Bucket which is intended to save values stored in sbtree under <code>null</code> key. Bucket has following layout:
+ * Bucket which is intended to save values stored in sbtree under <code>null</code> key. Bucket has
+ * following layout:
+ *
  * <ol>
- * <li>First byte is flag which indicates presence of value in bucket</li>
- * <li>Second byte indicates whether value is presented by link to the "bucket list" where actual value is stored or real value
- * passed be user.</li>
- * <li>The rest is serialized value whether link or passed in value.</li>
+ *   <li>First byte is flag which indicates presence of value in bucket
+ *   <li>Second byte indicates whether value is presented by link to the "bucket list" where actual
+ *       value is stored or real value passed be user.
+ *   <li>The rest is serialized value whether link or passed in value.
  * </ol>
  *
  * @author Andrey Lomakin (a.lomakin-at-orientdb.com)
@@ -68,7 +70,8 @@ public final class OSBTreeNullBucketV1<V> extends ODurablePage {
     final boolean isLink = getByteValue(NEXT_FREE_POSITION + 1) == 0;
     assert !isLink;
 
-    return new OSBTreeValue<>(false, -1, deserializeFromDirectMemory(valueSerializer, NEXT_FREE_POSITION + 2));
+    return new OSBTreeValue<>(
+        false, -1, deserializeFromDirectMemory(valueSerializer, NEXT_FREE_POSITION + 2));
   }
 
   public void removeValue(OBinarySerializer<V> valueSerializer) {
@@ -80,12 +83,13 @@ public final class OSBTreeNullBucketV1<V> extends ODurablePage {
   }
 
   public byte[] getRawValue(final OBinarySerializer<V> valueSerializer) {
-    if (getByteValue(NEXT_FREE_POSITION) == 0)
-      return null;
+    if (getByteValue(NEXT_FREE_POSITION) == 0) return null;
 
     final boolean isLink = getByteValue(NEXT_FREE_POSITION + 1) == 0;
     assert !isLink;
 
-    return getBinaryValue(NEXT_FREE_POSITION + 2, getObjectSizeInDirectMemory(valueSerializer, NEXT_FREE_POSITION + 2));
+    return getBinaryValue(
+        NEXT_FREE_POSITION + 2,
+        getObjectSizeInDirectMemory(valueSerializer, NEXT_FREE_POSITION + 2));
   }
 }

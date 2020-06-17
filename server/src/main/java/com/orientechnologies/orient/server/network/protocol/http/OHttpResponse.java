@@ -31,8 +31,6 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.OJSONWriter;
 import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.server.OClientConnection;
-
-import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -40,10 +38,17 @@ import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.StringWriter;
 import java.io.Writer;
-import java.net.Socket;
 import java.nio.charset.Charset;
 import java.text.SimpleDateFormat;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.TimeZone;
 import java.util.zip.GZIPOutputStream;
 
 /**
@@ -52,38 +57,48 @@ import java.util.zip.GZIPOutputStream;
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
  */
 public abstract class OHttpResponse {
-  public static final    String  JSON_FORMAT   = "type,indent:-1,rid,version,attribSameRow,class,keepTypes,alwaysFetchEmbeddedDocuments";
-  public static final    char[]  URL_SEPARATOR = { '/' };
-  protected static final Charset utf8          = Charset.forName("utf8");
+  public static final String JSON_FORMAT =
+      "type,indent:-1,rid,version,attribSameRow,class,keepTypes,alwaysFetchEmbeddedDocuments";
+  public static final char[] URL_SEPARATOR = {'/'};
+  protected static final Charset utf8 = Charset.forName("utf8");
 
-  private final String                httpVersion;
-  private final OutputStream          out;
+  private final String httpVersion;
+  private final OutputStream out;
   private final OContextConfiguration contextConfiguration;
-  private       String                headers;
-  private       String[]              additionalHeaders;
-  private       String                characterSet;
-  private       String                contentType;
-  private       String                serverInfo;
+  private String headers;
+  private String[] additionalHeaders;
+  private String characterSet;
+  private String contentType;
+  private String serverInfo;
 
   private Map<String, String> headersMap = new HashMap<>();
 
-  private String            sessionId;
-  private String            callbackFunction;
-  private String            contentEncoding;
-  private String            staticEncoding;
-  private boolean           sendStarted       = false;
-  private String            content;
-  private int               code;
-  private boolean           keepAlive         = true;
-  private boolean           jsonErrorResponse = true;
-  private boolean           sameSiteCookie    = true;
+  private String sessionId;
+  private String callbackFunction;
+  private String contentEncoding;
+  private String staticEncoding;
+  private boolean sendStarted = false;
+  private String content;
+  private int code;
+  private boolean keepAlive = true;
+  private boolean jsonErrorResponse = true;
+  private boolean sameSiteCookie = true;
   private OClientConnection connection;
-  private boolean           streaming         = OGlobalConfiguration.NETWORK_HTTP_STREAMING.getValueAsBoolean();
+  private boolean streaming = OGlobalConfiguration.NETWORK_HTTP_STREAMING.getValueAsBoolean();
 
-  public OHttpResponse(final OutputStream iOutStream, final String iHttpVersion, final String[] iAdditionalHeaders,
-      final String iResponseCharSet, final String iServerInfo, final String iSessionId, final String iCallbackFunction,
-      final boolean iKeepAlive, OClientConnection connection, OContextConfiguration contextConfiguration) {
-    setStreaming(contextConfiguration.getValueAsBoolean(OGlobalConfiguration.NETWORK_HTTP_STREAMING));
+  public OHttpResponse(
+      final OutputStream iOutStream,
+      final String iHttpVersion,
+      final String[] iAdditionalHeaders,
+      final String iResponseCharSet,
+      final String iServerInfo,
+      final String iSessionId,
+      final String iCallbackFunction,
+      final boolean iKeepAlive,
+      OClientConnection connection,
+      OContextConfiguration contextConfiguration) {
+    setStreaming(
+        contextConfiguration.getValueAsBoolean(OGlobalConfiguration.NETWORK_HTTP_STREAMING));
     out = iOutStream;
     httpVersion = iHttpVersion;
     setAdditionalHeaders(iAdditionalHeaders);
@@ -96,7 +111,9 @@ public abstract class OHttpResponse {
     this.contextConfiguration = contextConfiguration;
   }
 
-  public abstract void send(int iCode, String iReason, String iContentType, Object iContent, String iHeaders) throws IOException;
+  public abstract void send(
+      int iCode, String iReason, String iContentType, Object iContent, String iHeaders)
+      throws IOException;
 
   public abstract void writeStatus(int iStatus, String iReason) throws IOException;
 
@@ -147,17 +164,27 @@ public abstract class OHttpResponse {
     writeResult(iResult, null, null, null);
   }
 
-  public void writeResult(Object iResult, final String iFormat, final String iAccept) throws InterruptedException, IOException {
+  public void writeResult(Object iResult, final String iFormat, final String iAccept)
+      throws InterruptedException, IOException {
     writeResult(iResult, iFormat, iAccept, null);
   }
 
-  public void writeResult(Object iResult, final String iFormat, final String iAccept,
-      final Map<String, Object> iAdditionalProperties) throws InterruptedException, IOException {
+  public void writeResult(
+      Object iResult,
+      final String iFormat,
+      final String iAccept,
+      final Map<String, Object> iAdditionalProperties)
+      throws InterruptedException, IOException {
     writeResult(iResult, iFormat, iAccept, iAdditionalProperties, null);
   }
 
-  public void writeResult(Object iResult, final String iFormat, final String iAccept,
-      final Map<String, Object> iAdditionalProperties, final String mode) throws InterruptedException, IOException {
+  public void writeResult(
+      Object iResult,
+      final String iFormat,
+      final String iAccept,
+      final Map<String, Object> iAdditionalProperties,
+      final String mode)
+      throws InterruptedException, IOException {
     if (iResult == null) {
       send(OHttpUtils.STATUS_OK_NOCONTENT_CODE, "", OHttpUtils.CONTENT_TEXT_PLAIN, null, null);
     } else {
@@ -170,9 +197,10 @@ public abstract class OHttpResponse {
           doc.field(key, entry.getValue());
         }
         newResult = Collections.singleton(doc).iterator();
-      } else if (OMultiValue.isMultiValue(iResult) && (OMultiValue.getSize(iResult) > 0 && !(
-          (OMultiValue.getFirstValue(iResult) instanceof OIdentifiable) || ((OMultiValue
-              .getFirstValue(iResult) instanceof OResult))))) {
+      } else if (OMultiValue.isMultiValue(iResult)
+          && (OMultiValue.getSize(iResult) > 0
+              && !((OMultiValue.getFirstValue(iResult) instanceof OIdentifiable)
+                  || ((OMultiValue.getFirstValue(iResult) instanceof OResult))))) {
         newResult = Collections.singleton(new ODocument().field("value", iResult)).iterator();
       } else if (iResult instanceof OIdentifiable) {
         // CONVERT SINGLE VALUE IN A COLLECTION
@@ -201,17 +229,30 @@ public abstract class OHttpResponse {
     writeRecords(iRecords, iFetchPlan, null, null, null);
   }
 
-  public void writeRecords(final Object iRecords, final String iFetchPlan, String iFormat, final String accept) throws IOException {
+  public void writeRecords(
+      final Object iRecords, final String iFetchPlan, String iFormat, final String accept)
+      throws IOException {
     writeRecords(iRecords, iFetchPlan, iFormat, accept, null);
   }
 
-  public void writeRecords(final Object iRecords, final String iFetchPlan, String iFormat, final String accept,
-      final Map<String, Object> iAdditionalProperties) throws IOException {
+  public void writeRecords(
+      final Object iRecords,
+      final String iFetchPlan,
+      String iFormat,
+      final String accept,
+      final Map<String, Object> iAdditionalProperties)
+      throws IOException {
     writeRecords(iRecords, iFetchPlan, iFormat, accept, iAdditionalProperties, null);
   }
 
-  public void writeRecords(final Object iRecords, final String iFetchPlan, String iFormat, final String accept,
-      final Map<String, Object> iAdditionalProperties, final String mode) throws IOException {
+  public void writeRecords(
+      final Object iRecords,
+      final String iFetchPlan,
+      String iFormat,
+      final String accept,
+      final Map<String, Object> iAdditionalProperties,
+      final String mode)
+      throws IOException {
     if (iRecords == null) {
       send(OHttpUtils.STATUS_OK_NOCONTENT_CODE, "", OHttpUtils.CONTENT_TEXT_PLAIN, null, null);
       return;
@@ -220,7 +261,11 @@ public abstract class OHttpResponse {
     final Iterator<Object> it = OMultiValue.getMultiValueIterator(iRecords);
 
     if (accept != null && accept.contains("text/csv")) {
-      sendStream(OHttpUtils.STATUS_OK_CODE, OHttpUtils.STATUS_OK_DESCRIPTION, OHttpUtils.CONTENT_CSV, "data.csv",
+      sendStream(
+          OHttpUtils.STATUS_OK_CODE,
+          OHttpUtils.STATUS_OK_DESCRIPTION,
+          OHttpUtils.CONTENT_CSV,
+          "data.csv",
           new OCallable<Void, OChunkedResponse>() {
 
             @Override
@@ -262,8 +307,7 @@ public abstract class OHttpResponse {
               try {
                 // WRITE THE HEADER
                 for (int col = 0; col < orderedColumns.size(); ++col) {
-                  if (col > 0)
-                    iArgument.write(',');
+                  if (col > 0) iArgument.write(',');
 
                   iArgument.write(orderedColumns.get(col).getBytes());
                 }
@@ -278,8 +322,7 @@ public abstract class OHttpResponse {
 
                     Object value = doc.getProperty(orderedColumns.get(col));
                     if (value != null) {
-                      if (!(value instanceof Number))
-                        value = "\"" + value + "\"";
+                      if (!(value instanceof Number)) value = "\"" + value + "\"";
 
                       iArgument.write(value.toString().getBytes());
                     }
@@ -297,33 +340,47 @@ public abstract class OHttpResponse {
             }
           });
     } else {
-      if (iFormat == null)
-        iFormat = JSON_FORMAT;
-      else
-        iFormat = JSON_FORMAT + "," + iFormat;
+      if (iFormat == null) iFormat = JSON_FORMAT;
+      else iFormat = JSON_FORMAT + "," + iFormat;
 
       final String sendFormat = iFormat;
       if (isStreaming()) {
-        sendStream(OHttpUtils.STATUS_OK_CODE, OHttpUtils.STATUS_OK_DESCRIPTION, OHttpUtils.CONTENT_JSON, null, iArgument -> {
-          try {
-            OutputStreamWriter writer = new OutputStreamWriter(iArgument);
-            writeRecordsOnStream(iFetchPlan, sendFormat, iAdditionalProperties, it, writer);
-            writer.flush();
-          } catch (IOException e) {
-            OLogManager.instance().error(this, "Error during writing of records to the HTTP response", e);
-          }
-          return null;
-        });
+        sendStream(
+            OHttpUtils.STATUS_OK_CODE,
+            OHttpUtils.STATUS_OK_DESCRIPTION,
+            OHttpUtils.CONTENT_JSON,
+            null,
+            iArgument -> {
+              try {
+                OutputStreamWriter writer = new OutputStreamWriter(iArgument);
+                writeRecordsOnStream(iFetchPlan, sendFormat, iAdditionalProperties, it, writer);
+                writer.flush();
+              } catch (IOException e) {
+                OLogManager.instance()
+                    .error(this, "Error during writing of records to the HTTP response", e);
+              }
+              return null;
+            });
       } else {
         final StringWriter buffer = new StringWriter();
         writeRecordsOnStream(iFetchPlan, iFormat, iAdditionalProperties, it, buffer);
-        send(OHttpUtils.STATUS_OK_CODE, OHttpUtils.STATUS_OK_DESCRIPTION, OHttpUtils.CONTENT_JSON, buffer.toString(), null);
+        send(
+            OHttpUtils.STATUS_OK_CODE,
+            OHttpUtils.STATUS_OK_DESCRIPTION,
+            OHttpUtils.CONTENT_JSON,
+            buffer.toString(),
+            null);
       }
     }
   }
 
-  private void writeRecordsOnStream(String iFetchPlan, String iFormat, Map<String, Object> iAdditionalProperties,
-      Iterator<Object> it, Writer buffer) throws IOException {
+  private void writeRecordsOnStream(
+      String iFetchPlan,
+      String iFormat,
+      Map<String, Object> iAdditionalProperties,
+      Iterator<Object> it,
+      Writer buffer)
+      throws IOException {
     final OJSONWriter json = new OJSONWriter(buffer, iFormat);
     json.beginObject();
 
@@ -342,12 +399,9 @@ public abstract class OHttpResponse {
           json.beginCollection(-1, true, entry.getKey());
           formatMultiValue(OMultiValue.getMultiValueIterator(v), buffer, format);
           json.endCollection(-1, true);
-        } else
-          json.writeAttribute(entry.getKey(), v);
+        } else json.writeAttribute(entry.getKey(), v);
 
-        if (Thread.currentThread().isInterrupted())
-          break;
-
+        if (Thread.currentThread().isInterrupted()) break;
       }
     }
 
@@ -356,7 +410,8 @@ public abstract class OHttpResponse {
 
   protected abstract void checkConnection() throws IOException;
 
-  public void formatMultiValue(final Iterator<?> iIterator, final Writer buffer, final String format) throws IOException {
+  public void formatMultiValue(
+      final Iterator<?> iIterator, final Writer buffer, final String format) throws IOException {
     if (iIterator != null) {
       int counter = 0;
       String objectJson;
@@ -379,7 +434,8 @@ public abstract class OHttpResponse {
 
                 buffer.append(objectJson);
               } catch (Exception e) {
-                OLogManager.instance().error(this, "Error transforming record " + rec.getIdentity() + " to JSON", e);
+                OLogManager.instance()
+                    .error(this, "Error transforming record " + rec.getIdentity() + " to JSON", e);
               }
             }
           } else if (OMultiValue.isMultiValue(entry)) {
@@ -399,29 +455,53 @@ public abstract class OHttpResponse {
     writeRecord(iRecord, null, null);
   }
 
-  public void writeRecord(final ORecord iRecord, final String iFetchPlan, String iFormat) throws IOException {
+  public void writeRecord(final ORecord iRecord, final String iFetchPlan, String iFormat)
+      throws IOException {
     if (iFormat == null) {
       iFormat = JSON_FORMAT;
     }
 
     final String format = iFetchPlan != null ? iFormat + ",fetchPlan:" + iFetchPlan : iFormat;
     if (iRecord != null) {
-      send(OHttpUtils.STATUS_OK_CODE, OHttpUtils.STATUS_OK_DESCRIPTION, OHttpUtils.CONTENT_JSON, iRecord.toJSON(format),
+      send(
+          OHttpUtils.STATUS_OK_CODE,
+          OHttpUtils.STATUS_OK_DESCRIPTION,
+          OHttpUtils.CONTENT_JSON,
+          iRecord.toJSON(format),
           OHttpUtils.HEADER_ETAG + iRecord.getVersion());
     }
   }
 
-  public abstract void sendStream(int iCode, String iReason, String iContentType, InputStream iContent, long iSize)
+  public abstract void sendStream(
+      int iCode, String iReason, String iContentType, InputStream iContent, long iSize)
       throws IOException;
 
-  public abstract void sendStream(int iCode, String iReason, String iContentType, InputStream iContent, long iSize,
-      String iFileName) throws IOException;
+  public abstract void sendStream(
+      int iCode,
+      String iReason,
+      String iContentType,
+      InputStream iContent,
+      long iSize,
+      String iFileName)
+      throws IOException;
 
-  public abstract void sendStream(int iCode, String iReason, String iContentType, InputStream iContent, long iSize,
-      String iFileName, Map<String, String> additionalHeaders) throws IOException;
+  public abstract void sendStream(
+      int iCode,
+      String iReason,
+      String iContentType,
+      InputStream iContent,
+      long iSize,
+      String iFileName,
+      Map<String, String> additionalHeaders)
+      throws IOException;
 
-  public abstract void sendStream(int iCode, String iReason, String iContentType, String iFileName,
-      OCallable<Void, OChunkedResponse> iWriter) throws IOException;
+  public abstract void sendStream(
+      int iCode,
+      String iReason,
+      String iContentType,
+      String iFileName,
+      OCallable<Void, OChunkedResponse> iWriter)
+      throws IOException;
 
   // Compress content string
   public byte[] compress(String jsonStr) {
@@ -453,10 +533,7 @@ public abstract class OHttpResponse {
     return null;
   }
 
-  /**
-   * Stores additional headers to send
-   */
-
+  /** Stores additional headers to send */
   @Deprecated
   public void setHeader(final String iHeader) {
     setHeaders(iHeader);

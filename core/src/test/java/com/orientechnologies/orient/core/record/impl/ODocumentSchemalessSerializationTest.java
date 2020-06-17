@@ -1,5 +1,10 @@
 package com.orientechnologies.orient.core.record.impl;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
+
+
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.id.ORecordId;
@@ -7,19 +12,22 @@ import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializer;
 import com.orientechnologies.orient.core.serialization.serializer.record.string.ORecordSerializerSchemaAware2CSV;
 import com.orientechnologies.orient.core.serialization.serializer.record.string.ORecordSerializerStringAbstract;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
 
-import java.util.*;
-
-import static org.junit.Assert.*;
-
 public class ODocumentSchemalessSerializationTest {
 
   protected ORecordSerializer serializer;
-  private   ORecordSerializer defaultSerializer;
+  private ORecordSerializer defaultSerializer;
 
   @Before
   public void before() {
@@ -69,7 +77,7 @@ public class ODocumentSchemalessSerializationTest {
 
   }
 
-  @SuppressWarnings({ "rawtypes", "unchecked" })
+  @SuppressWarnings({"rawtypes", "unchecked"})
   @Test
   public void testSimpleLiteralList() {
 
@@ -230,7 +238,6 @@ public class ODocumentSchemalessSerializationTest {
     assertNotNull(emb);
     assertEquals(emb.<String>field("name"), embedded.field("name"));
     assertEquals(emb.<String>field("surname"), embedded.field("surname"));
-
   }
 
   @Test
@@ -253,7 +260,6 @@ public class ODocumentSchemalessSerializationTest {
     assertNotNull(emb);
     assertEquals(emb.<String>field("name"), embeddedInMap.field("name"));
     assertEquals(emb.<String>field("surname"), embeddedInMap.field("surname"));
-
   }
 
   @Test

@@ -20,30 +20,35 @@
 package com.orientechnologies.orient.core.sql;
 
 import com.orientechnologies.common.exception.OException;
-import com.orientechnologies.orient.core.db.*;
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
+import com.orientechnologies.orient.core.db.ODatabaseType;
+import com.orientechnologies.orient.core.db.OLiveQueryMonitor;
+import com.orientechnologies.orient.core.db.OLiveQueryResultListener;
+import com.orientechnologies.orient.core.db.OrientDB;
+import com.orientechnologies.orient.core.db.OrientDBConfig;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
-import com.orientechnologies.orient.core.db.record.ORecordOperation;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.executor.OResult;
-import com.orientechnologies.orient.core.sql.query.OLiveQuery;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.Callable;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 import org.junit.Assert;
 import org.junit.Test;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.concurrent.*;
-import java.util.concurrent.atomic.AtomicInteger;
-
-/**
- * @author Luigi Dell'Aquila (l.dellaquila - at - orientdb.com)
- */
-
+/** @author Luigi Dell'Aquila (l.dellaquila - at - orientdb.com) */
 public class OLiveQueryV2Test {
 
   class MyLiveQueryListener implements OLiveQueryResultListener {
@@ -60,32 +65,25 @@ public class OLiveQueryV2Test {
     public void onCreate(ODatabaseDocument database, OResult data) {
       ops.add(data);
       latch.countDown();
-
     }
 
     @Override
     public void onUpdate(ODatabaseDocument database, OResult before, OResult after) {
       ops.add(after);
       latch.countDown();
-
     }
 
     @Override
     public void onDelete(ODatabaseDocument database, OResult data) {
       ops.add(data);
       latch.countDown();
-
     }
 
     @Override
-    public void onError(ODatabaseDocument database, OException exception) {
-
-    }
+    public void onError(ODatabaseDocument database, OException exception) {}
 
     @Override
-    public void onEnd(ODatabaseDocument database) {
-
-    }
+    public void onEnd(ODatabaseDocument database) {}
   }
 
   @Test
@@ -132,14 +130,16 @@ public class OLiveQueryV2Test {
     OrientDB context = new OrientDB("embedded:", OrientDBConfig.defaultConfig());
 
     context.create("testLiveInsertOnCluster", ODatabaseType.MEMORY);
-    try (ODatabaseDocumentInternal db = (ODatabaseDocumentInternal) context.open("testLiveInsertOnCluster", "admin", "admin")) {
+    try (ODatabaseDocumentInternal db =
+        (ODatabaseDocumentInternal) context.open("testLiveInsertOnCluster", "admin", "admin")) {
 
       OClass clazz = db.getMetadata().getSchema().createClass("test");
 
       int defaultCluster = clazz.getDefaultClusterId();
       String clusterName = db.getStorage().getClusterNameById(defaultCluster);
 
-      OLiveQueryV2Test.MyLiveQueryListener listener = new OLiveQueryV2Test.MyLiveQueryListener(new CountDownLatch(1));
+      OLiveQueryV2Test.MyLiveQueryListener listener =
+          new OLiveQueryV2Test.MyLiveQueryListener(new CountDownLatch(1));
 
       db.live(" select from cluster:" + clusterName, listener);
 
@@ -166,14 +166,16 @@ public class OLiveQueryV2Test {
     OrientDB context = new OrientDB("embedded:", OrientDBConfig.defaultConfig());
 
     context.create("testLiveWithWhereCondition", ODatabaseType.MEMORY);
-    try (ODatabaseDocumentInternal db = (ODatabaseDocumentInternal) context.open("testLiveWithWhereCondition", "admin", "admin")) {
+    try (ODatabaseDocumentInternal db =
+        (ODatabaseDocumentInternal) context.open("testLiveWithWhereCondition", "admin", "admin")) {
 
       OClass clazz = db.getMetadata().getSchema().createClass("test");
 
       int defaultCluster = clazz.getDefaultClusterId();
       String clusterName = db.getStorage().getClusterNameById(defaultCluster);
 
-      OLiveQueryV2Test.MyLiveQueryListener listener = new OLiveQueryV2Test.MyLiveQueryListener(new CountDownLatch(1));
+      OLiveQueryV2Test.MyLiveQueryListener listener =
+          new OLiveQueryV2Test.MyLiveQueryListener(new CountDownLatch(1));
 
       db.live("select from V where id = 1", listener);
 
@@ -205,7 +207,8 @@ public class OLiveQueryV2Test {
       schema.createClass("test", oRestricted);
 
       int liveMatch = 2;
-      List<ODocument> query = db.query(new OSQLSynchQuery("select from OUSer where name = 'reader'"));
+      List<ODocument> query =
+          db.query(new OSQLSynchQuery("select from OUSer where name = 'reader'"));
 
       final OIdentifiable reader = query.iterator().next().getIdentity();
       final OIdentifiable current = db.getUser().getIdentity();
@@ -214,62 +217,63 @@ public class OLiveQueryV2Test {
 
       final CountDownLatch latch = new CountDownLatch(1);
       final CountDownLatch dataArrived = new CountDownLatch(liveMatch);
-      Future<Integer> future = executorService.submit(new Callable<Integer>() {
-        @Override
-        public Integer call() throws Exception {
-          ODatabaseDocumentTx db = new ODatabaseDocumentTx("memory:OLiveQueryTest");
-          db.open("reader", "reader");
+      Future<Integer> future =
+          executorService.submit(
+              new Callable<Integer>() {
+                @Override
+                public Integer call() throws Exception {
+                  ODatabaseDocumentTx db = new ODatabaseDocumentTx("memory:OLiveQueryTest");
+                  db.open("reader", "reader");
 
-          final AtomicInteger integer = new AtomicInteger(0);
-          db.live("live select from test", new OLiveQueryResultListener() {
+                  final AtomicInteger integer = new AtomicInteger(0);
+                  db.live(
+                      "live select from test",
+                      new OLiveQueryResultListener() {
 
-            @Override
-            public void onCreate(ODatabaseDocument database, OResult data) {
-              integer.incrementAndGet();
-              dataArrived.countDown();
+                        @Override
+                        public void onCreate(ODatabaseDocument database, OResult data) {
+                          integer.incrementAndGet();
+                          dataArrived.countDown();
+                        }
 
-            }
+                        @Override
+                        public void onUpdate(
+                            ODatabaseDocument database, OResult before, OResult after) {
+                          integer.incrementAndGet();
+                          dataArrived.countDown();
+                        }
 
-            @Override
-            public void onUpdate(ODatabaseDocument database, OResult before, OResult after) {
-              integer.incrementAndGet();
-              dataArrived.countDown();
+                        @Override
+                        public void onDelete(ODatabaseDocument database, OResult data) {
+                          integer.incrementAndGet();
+                          dataArrived.countDown();
+                        }
 
-            }
+                        @Override
+                        public void onError(ODatabaseDocument database, OException exception) {}
 
-            @Override
-            public void onDelete(ODatabaseDocument database, OResult data) {
-              integer.incrementAndGet();
-              dataArrived.countDown();
+                        @Override
+                        public void onEnd(ODatabaseDocument database) {}
+                      });
 
-            }
-
-            @Override
-            public void onError(ODatabaseDocument database, OException exception) {
-
-            }
-
-            @Override
-            public void onEnd(ODatabaseDocument database) {
-
-            }
-          });
-
-          latch.countDown();
-          Assert.assertTrue(dataArrived.await(1, TimeUnit.MINUTES));
-          return integer.get();
-        }
-      });
+                  latch.countDown();
+                  Assert.assertTrue(dataArrived.await(1, TimeUnit.MINUTES));
+                  return integer.get();
+                }
+              });
 
       latch.await();
 
       db.command(new OCommandSQL("insert into test set name = 'foo', surname = 'bar'")).execute();
 
       db.command(new OCommandSQL("insert into test set name = 'foo', surname = 'bar', _allow=?"))
-          .execute(new ArrayList<OIdentifiable>() {{
-            add(current);
-            add(reader);
-          }});
+          .execute(
+              new ArrayList<OIdentifiable>() {
+                {
+                  add(current);
+                  add(reader);
+                }
+              });
 
       Integer integer = future.get();
       Assert.assertEquals(integer.intValue(), liveMatch);
@@ -277,5 +281,4 @@ public class OLiveQueryV2Test {
       db.drop();
     }
   }
-
 }

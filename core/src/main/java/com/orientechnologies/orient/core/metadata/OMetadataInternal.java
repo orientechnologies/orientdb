@@ -24,18 +24,27 @@ import com.orientechnologies.orient.core.metadata.security.OIdentity;
 import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.metadata.security.OSecurity;
 import com.orientechnologies.orient.core.metadata.security.OUser;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Locale;
+import java.util.Set;
 
-import java.util.*;
-
-/**
- * Internal interface to manage metadata snapshots.
- */
+/** Internal interface to manage metadata snapshots. */
 public interface OMetadataInternal extends OMetadata {
 
-  Set<String> SYSTEM_CLUSTER = Collections.unmodifiableSet(new HashSet<String>(Arrays.asList(
-      new String[] { OUser.CLASS_NAME.toLowerCase(Locale.ENGLISH), ORole.CLASS_NAME.toLowerCase(Locale.ENGLISH),
-          OIdentity.CLASS_NAME.toLowerCase(Locale.ENGLISH), OSecurity.RESTRICTED_CLASSNAME.toLowerCase(Locale.ENGLISH),
-          OFunction.CLASS_NAME.toLowerCase(Locale.ENGLISH), "internal" })));
+  Set<String> SYSTEM_CLUSTER =
+      Collections.unmodifiableSet(
+          new HashSet<String>(
+              Arrays.asList(
+                  new String[] {
+                    OUser.CLASS_NAME.toLowerCase(Locale.ENGLISH),
+                    ORole.CLASS_NAME.toLowerCase(Locale.ENGLISH),
+                    OIdentity.CLASS_NAME.toLowerCase(Locale.ENGLISH),
+                    OSecurity.RESTRICTED_CLASSNAME.toLowerCase(Locale.ENGLISH),
+                    OFunction.CLASS_NAME.toLowerCase(Locale.ENGLISH),
+                    "internal"
+                  })));
 
   void makeThreadLocalSchemaSnapshot();
 

@@ -21,43 +21,62 @@ import com.orientechnologies.orient.core.exception.OFetchException;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
-/**
- * @author Luca Molino (molino.luca--at--gmail.com)
- * 
- */
+/** @author Luca Molino (molino.luca--at--gmail.com) */
 public interface OFetchContext {
 
   public void onBeforeFetch(final ODocument iRootRecord) throws OFetchException;
 
   public void onAfterFetch(final ODocument iRootRecord) throws OFetchException;
 
-  public void onBeforeArray(final ODocument iRootRecord, final String iFieldName, final Object iUserObject,
-      final OIdentifiable[] iArray) throws OFetchException;
-
-  public void onAfterArray(final ODocument iRootRecord, final String iFieldName, final Object iUserObject)
+  public void onBeforeArray(
+      final ODocument iRootRecord,
+      final String iFieldName,
+      final Object iUserObject,
+      final OIdentifiable[] iArray)
       throws OFetchException;
 
-  public void onBeforeCollection(final ODocument iRootRecord, final String iFieldName, final Object iUserObject,
-      final Iterable<?> iterable) throws OFetchException;
-
-  public void onAfterCollection(final ODocument iRootRecord, final String iFieldName, final Object iUserObject)
+  public void onAfterArray(
+      final ODocument iRootRecord, final String iFieldName, final Object iUserObject)
       throws OFetchException;
 
-  public void onBeforeMap(final ODocument iRootRecord, final String iFieldName, final Object iUserObject)
+  public void onBeforeCollection(
+      final ODocument iRootRecord,
+      final String iFieldName,
+      final Object iUserObject,
+      final Iterable<?> iterable)
       throws OFetchException;
 
-  public void onAfterMap(final ODocument iRootRecord, final String iFieldName, final Object iUserObject)
+  public void onAfterCollection(
+      final ODocument iRootRecord, final String iFieldName, final Object iUserObject)
       throws OFetchException;
 
-  public void onBeforeDocument(final ODocument iRecord, final ODocument iDocument, final String iFieldName,
-      final Object iUserObject) throws OFetchException;
+  public void onBeforeMap(
+      final ODocument iRootRecord, final String iFieldName, final Object iUserObject)
+      throws OFetchException;
 
-  public void onAfterDocument(final ODocument iRootRecord, final ODocument iDocument, final String iFieldName,
-      final Object iUserObject) throws OFetchException;
+  public void onAfterMap(
+      final ODocument iRootRecord, final String iFieldName, final Object iUserObject)
+      throws OFetchException;
 
-  public void onBeforeStandardField(final Object iFieldValue, final String iFieldName, final Object iUserObject, OType fieldType);
+  public void onBeforeDocument(
+      final ODocument iRecord,
+      final ODocument iDocument,
+      final String iFieldName,
+      final Object iUserObject)
+      throws OFetchException;
 
-  public void onAfterStandardField(final Object iFieldValue, final String iFieldName, final Object iUserObject, OType fieldType);
+  public void onAfterDocument(
+      final ODocument iRootRecord,
+      final ODocument iDocument,
+      final String iFieldName,
+      final Object iUserObject)
+      throws OFetchException;
+
+  public void onBeforeStandardField(
+      final Object iFieldValue, final String iFieldName, final Object iUserObject, OType fieldType);
+
+  public void onAfterStandardField(
+      final Object iFieldValue, final String iFieldName, final Object iUserObject, OType fieldType);
 
   public boolean fetchEmbeddedDocuments();
 }

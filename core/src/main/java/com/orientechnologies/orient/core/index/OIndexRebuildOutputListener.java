@@ -24,15 +24,14 @@ import com.orientechnologies.common.log.OLogManager;
 
 /**
  * Progress listener for index rebuild.
- * 
+ *
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
- * 
  */
 public class OIndexRebuildOutputListener implements OProgressListener {
-  private long    startTime;
-  private long    lastDump;
-  private long    lastCounter = 0;
-  private boolean rebuild     = false;
+  private long startTime;
+  private long lastDump;
+  private long lastCounter = 0;
+  private boolean rebuild = false;
 
   private final OIndex idx;
 
@@ -48,11 +47,21 @@ public class OIndexRebuildOutputListener implements OProgressListener {
     rebuild = (Boolean) iRebuild;
     if (iTotal > 0)
       if (rebuild)
-        OLogManager.instance().info(this, "- Rebuilding index %s.%s (estimated %,d items)...", idx.getDatabaseName(),
-            idx.getName(), iTotal);
+        OLogManager.instance()
+            .info(
+                this,
+                "- Rebuilding index %s.%s (estimated %,d items)...",
+                idx.getDatabaseName(),
+                idx.getName(),
+                iTotal);
       else
-        OLogManager.instance().debug(this, "- Building index %s.%s (estimated %,d items)...", idx.getDatabaseName(), idx.getName(),
-            iTotal);
+        OLogManager.instance()
+            .debug(
+                this,
+                "- Building index %s.%s (estimated %,d items)...",
+                idx.getDatabaseName(),
+                idx.getName(),
+                iTotal);
   }
 
   @Override
@@ -61,11 +70,21 @@ public class OIndexRebuildOutputListener implements OProgressListener {
     if (now - lastDump > 10000) {
       // DUMP EVERY 5 SECONDS FOR LARGE INDEXES
       if (rebuild)
-        OLogManager.instance().info(this, "--> %3.2f%% progress, %,d indexed so far (%,d items/sec)", iPercent, iCounter,
-            ((iCounter - lastCounter) / 10));
+        OLogManager.instance()
+            .info(
+                this,
+                "--> %3.2f%% progress, %,d indexed so far (%,d items/sec)",
+                iPercent,
+                iCounter,
+                ((iCounter - lastCounter) / 10));
       else
-        OLogManager.instance().info(this, "--> %3.2f%% progress, %,d indexed so far (%,d items/sec)", iPercent, iCounter,
-            ((iCounter - lastCounter) / 10));
+        OLogManager.instance()
+            .info(
+                this,
+                "--> %3.2f%% progress, %,d indexed so far (%,d items/sec)",
+                iPercent,
+                iCounter,
+                ((iCounter - lastCounter) / 10));
       lastDump = now;
       lastCounter = iCounter;
     }
@@ -78,9 +97,18 @@ public class OIndexRebuildOutputListener implements OProgressListener {
 
     if (idxSize > 0)
       if (rebuild)
-        OLogManager.instance().info(this, "--> OK, indexed %,d items in %,d ms", idxSize, (System.currentTimeMillis() - startTime));
+        OLogManager.instance()
+            .info(
+                this,
+                "--> OK, indexed %,d items in %,d ms",
+                idxSize,
+                (System.currentTimeMillis() - startTime));
       else
         OLogManager.instance()
-            .debug(this, "--> OK, indexed %,d items in %,d ms", idxSize, (System.currentTimeMillis() - startTime));
+            .debug(
+                this,
+                "--> OK, indexed %,d items in %,d ms",
+                idxSize,
+                (System.currentTimeMillis() - startTime));
   }
 }

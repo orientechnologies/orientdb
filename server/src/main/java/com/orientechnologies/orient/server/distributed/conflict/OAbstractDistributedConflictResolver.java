@@ -15,14 +15,13 @@
  *  *  limitations under the License.
  *  *
  *  * For more information: http://orientdb.com
- *  
+ *
  */
 
 package com.orientechnologies.orient.server.distributed.conflict;
 
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.ORawBuffer;
-
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
@@ -59,14 +58,16 @@ public abstract class OAbstractDistributedConflictResolver implements ODistribut
     return matched;
   }
 
-  protected static Object getBestResult(final Map<Object, List<String>> groupedResult, final List<Object> exclude) {
+  protected static Object getBestResult(
+      final Map<Object, List<String>> groupedResult, final List<Object> exclude) {
     Object bestResult = NOT_FOUND;
     int max = -1;
     for (Map.Entry<Object, List<String>> entry : groupedResult.entrySet()) {
       boolean skip = false;
       if (exclude != null && !exclude.isEmpty()) {
         for (Object ex : exclude) {
-          if (ex == null && entry.getKey() == null || ex != null && entry.getKey() != null && ex.equals(entry.getKey())) {
+          if (ex == null && entry.getKey() == null
+              || ex != null && entry.getKey() != null && ex.equals(entry.getKey())) {
             // SKIP IT
             skip = true;
             break;

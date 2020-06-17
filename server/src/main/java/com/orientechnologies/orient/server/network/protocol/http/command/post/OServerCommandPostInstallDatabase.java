@@ -13,7 +13,7 @@
  *  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  *  * See the License for the specific language governing permissions and
  *  * limitations under the License.
- *  
+ *
  */
 package com.orientechnologies.orient.server.network.protocol.http.command.post;
 
@@ -25,7 +25,6 @@ import com.orientechnologies.orient.server.network.protocol.http.OHttpRequest;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpResponse;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpUtils;
 import com.orientechnologies.orient.server.network.protocol.http.command.OServerCommandAuthenticatedServerAbstract;
-
 import java.net.URL;
 import java.net.URLConnection;
 import java.nio.file.Files;
@@ -33,7 +32,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 
 public class OServerCommandPostInstallDatabase extends OServerCommandAuthenticatedServerAbstract {
-  private static final String[] NAMES = { "POST|installDatabase" };
+  private static final String[] NAMES = {"POST|installDatabase"};
 
   public OServerCommandPostInstallDatabase() {
     super("database.create");
@@ -57,12 +56,19 @@ public class OServerCommandPostInstallDatabase extends OServerCommandAuthenticat
           final URLConnection conn = uri.openConnection();
           conn.setRequestProperty("User-Agent", "OrientDB-Studio");
           conn.setDefaultUseCaches(false);
-          OZIPCompressionUtil.uncompressDirectory(conn.getInputStream(), folder.toString(), new OCommandOutputListener() {
-            @Override
-            public void onMessage(String iText) {
-            }
-          });
-          iResponse.send(OHttpUtils.STATUS_OK_CODE, OHttpUtils.STATUS_OK_DESCRIPTION, OHttpUtils.CONTENT_TEXT_PLAIN, null, null);
+          OZIPCompressionUtil.uncompressDirectory(
+              conn.getInputStream(),
+              folder.toString(),
+              new OCommandOutputListener() {
+                @Override
+                public void onMessage(String iText) {}
+              });
+          iResponse.send(
+              OHttpUtils.STATUS_OK_CODE,
+              OHttpUtils.STATUS_OK_DESCRIPTION,
+              OHttpUtils.CONTENT_TEXT_PLAIN,
+              null,
+              null);
         }
       } else {
         throw new IllegalArgumentException("Could not find database name");
@@ -88,5 +94,4 @@ public class OServerCommandPostInstallDatabase extends OServerCommandAuthenticat
   public String[] getNames() {
     return NAMES;
   }
-
 }

@@ -23,14 +23,13 @@ import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilterCondition;
-
 import java.util.regex.Pattern;
 
 /**
- * MATCHES operator. Matches the left value against the regular expression contained in the second one.
- * 
+ * MATCHES operator. Matches the left value against the regular expression contained in the second
+ * one.
+ *
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
- * 
  */
 public class OQueryOperatorMatches extends OQueryOperatorEqualityNotNulls {
 
@@ -39,8 +38,12 @@ public class OQueryOperatorMatches extends OQueryOperatorEqualityNotNulls {
   }
 
   @Override
-  protected boolean evaluateExpression(final OIdentifiable iRecord, final OSQLFilterCondition iCondition, final Object iLeft,
-      final Object iRight, OCommandContext iContext) {
+  protected boolean evaluateExpression(
+      final OIdentifiable iRecord,
+      final OSQLFilterCondition iCondition,
+      final Object iLeft,
+      final Object iRight,
+      OCommandContext iContext) {
     return this.matches(iLeft.toString(), (String) iRight, iContext);
   }
 
@@ -59,7 +62,8 @@ public class OQueryOperatorMatches extends OQueryOperatorEqualityNotNulls {
     return null;
   }
 
-  private boolean matches(final String iValue, final String iRegex, final OCommandContext iContext) {
+  private boolean matches(
+      final String iValue, final String iRegex, final OCommandContext iContext) {
     final String key = "MATCHES_" + iRegex.hashCode();
     Pattern p = (Pattern) iContext.getVariable(key);
     if (p == null) {

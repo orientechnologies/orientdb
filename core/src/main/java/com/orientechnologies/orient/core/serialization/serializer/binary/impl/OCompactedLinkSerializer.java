@@ -1,5 +1,9 @@
 package com.orientechnologies.orient.core.serialization.serializer.binary.impl;
 
+import static com.orientechnologies.orient.core.serialization.OBinaryProtocol.bytes2short;
+import static com.orientechnologies.orient.core.serialization.OBinaryProtocol.short2bytes;
+
+
 import com.orientechnologies.common.serialization.types.OBinarySerializer;
 import com.orientechnologies.common.serialization.types.OByteSerializer;
 import com.orientechnologies.common.serialization.types.OShortSerializer;
@@ -7,14 +11,10 @@ import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALChanges;
-
 import java.nio.ByteBuffer;
 
-import static com.orientechnologies.orient.core.serialization.OBinaryProtocol.bytes2short;
-import static com.orientechnologies.orient.core.serialization.OBinaryProtocol.short2bytes;
-
 public class OCompactedLinkSerializer implements OBinarySerializer<OIdentifiable> {
-  public static final byte                     ID       = 22;
+  public static final byte ID = 22;
   public static final OCompactedLinkSerializer INSTANCE = new OCompactedLinkSerializer();
 
   @Override
@@ -33,7 +33,9 @@ public class OCompactedLinkSerializer implements OBinarySerializer<OIdentifiable
 
   @Override
   public int getObjectSize(byte[] stream, int startPosition) {
-    return stream[startPosition + OShortSerializer.SHORT_SIZE] + OByteSerializer.BYTE_SIZE + OShortSerializer.SHORT_SIZE;
+    return stream[startPosition + OShortSerializer.SHORT_SIZE]
+        + OByteSerializer.BYTE_SIZE
+        + OShortSerializer.SHORT_SIZE;
   }
 
   @Override
@@ -89,7 +91,8 @@ public class OCompactedLinkSerializer implements OBinarySerializer<OIdentifiable
   }
 
   @Override
-  public void serializeNativeObject(OIdentifiable rid, byte[] stream, int startPosition, Object... hints) {
+  public void serializeNativeObject(
+      OIdentifiable rid, byte[] stream, int startPosition, Object... hints) {
     final ORID r = rid.getIdentity();
 
     OShortSerializer.INSTANCE.serializeNative((short) r.getClusterId(), stream, startPosition);
@@ -127,7 +130,9 @@ public class OCompactedLinkSerializer implements OBinarySerializer<OIdentifiable
 
   @Override
   public int getObjectSizeNative(byte[] stream, int startPosition) {
-    return stream[startPosition + OShortSerializer.SHORT_SIZE] + OByteSerializer.BYTE_SIZE + OShortSerializer.SHORT_SIZE;
+    return stream[startPosition + OShortSerializer.SHORT_SIZE]
+        + OByteSerializer.BYTE_SIZE
+        + OShortSerializer.SHORT_SIZE;
   }
 
   @Override
@@ -175,11 +180,14 @@ public class OCompactedLinkSerializer implements OBinarySerializer<OIdentifiable
 
   @Override
   public int getObjectSizeInByteBuffer(ByteBuffer buffer) {
-    return buffer.get(buffer.position() + OShortSerializer.SHORT_SIZE) + OByteSerializer.BYTE_SIZE + OShortSerializer.SHORT_SIZE;
+    return buffer.get(buffer.position() + OShortSerializer.SHORT_SIZE)
+        + OByteSerializer.BYTE_SIZE
+        + OShortSerializer.SHORT_SIZE;
   }
 
   @Override
-  public OIdentifiable deserializeFromByteBufferObject(ByteBuffer buffer, OWALChanges walChanges, int offset) {
+  public OIdentifiable deserializeFromByteBufferObject(
+      ByteBuffer buffer, OWALChanges walChanges, int offset) {
     final int cluster = walChanges.getShortValue(buffer, offset);
     offset += OShortSerializer.SHORT_SIZE;
 
@@ -198,7 +206,8 @@ public class OCompactedLinkSerializer implements OBinarySerializer<OIdentifiable
 
   @Override
   public int getObjectSizeInByteBuffer(ByteBuffer buffer, OWALChanges walChanges, int offset) {
-    return walChanges.getByteValue(buffer, offset + OShortSerializer.SHORT_SIZE) + OByteSerializer.BYTE_SIZE
+    return walChanges.getByteValue(buffer, offset + OShortSerializer.SHORT_SIZE)
+        + OByteSerializer.BYTE_SIZE
         + OShortSerializer.SHORT_SIZE;
   }
 }

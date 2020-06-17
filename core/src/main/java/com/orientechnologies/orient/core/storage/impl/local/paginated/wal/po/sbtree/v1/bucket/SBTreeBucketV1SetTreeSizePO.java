@@ -5,15 +5,13 @@ import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.WALRecordTypes;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.PageOperationRecord;
 import com.orientechnologies.orient.core.storage.index.sbtree.local.v1.OSBTreeBucketV1;
-
 import java.nio.ByteBuffer;
 
 public final class SBTreeBucketV1SetTreeSizePO extends PageOperationRecord {
   private long prevTreeSize;
   private long treeSize;
 
-  public SBTreeBucketV1SetTreeSizePO() {
-  }
+  public SBTreeBucketV1SetTreeSizePO() {}
 
   public SBTreeBucketV1SetTreeSizePO(long prevTreeSize, long treeSize) {
     this.prevTreeSize = prevTreeSize;

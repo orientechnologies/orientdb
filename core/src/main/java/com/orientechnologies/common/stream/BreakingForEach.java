@@ -19,9 +19,11 @@ public class BreakingForEach {
     Breaker breaker = new Breaker();
 
     while (hadNext && !breaker.shouldBreak) {
-      hadNext = spliterator.tryAdvance(elem -> {
-        consumer.accept(elem, breaker);
-      });
+      hadNext =
+          spliterator.tryAdvance(
+              elem -> {
+                consumer.accept(elem, breaker);
+              });
     }
   }
 }

@@ -7,11 +7,10 @@ import com.orientechnologies.orient.core.storage.cache.OCacheEntryImpl;
 import com.orientechnologies.orient.core.storage.cache.OCachePointer;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.PageOperationRecord;
 import com.orientechnologies.orient.core.storage.index.hashindex.local.v2.DirectoryFirstPageV2;
-import org.junit.Assert;
-import org.junit.Test;
-
 import java.nio.ByteBuffer;
 import java.util.List;
+import org.junit.Assert;
+import org.junit.Test;
 
 public class LocalHashTableV2DirectoryFirstPageSetTreeSizePOTest {
   @Test
@@ -29,7 +28,8 @@ public class LocalHashTableV2DirectoryFirstPageSetTreeSizePOTest {
       entry.clearPageOperations();
 
       final OPointer restoredPointer = byteBufferPool.acquireDirect(false);
-      final OCachePointer restoredCachePointer = new OCachePointer(restoredPointer, byteBufferPool, 0, 0);
+      final OCachePointer restoredCachePointer =
+          new OCachePointer(restoredPointer, byteBufferPool, 0, 0);
       final OCacheEntry restoredCacheEntry = new OCacheEntryImpl(0, 0, restoredCachePointer);
 
       final ByteBuffer originalBuffer = cachePointer.getBufferDuplicate();
@@ -45,10 +45,11 @@ public class LocalHashTableV2DirectoryFirstPageSetTreeSizePOTest {
       final List<PageOperationRecord> operations = entry.getPageOperations();
       Assert.assertEquals(1, operations.size());
 
-      Assert.assertTrue(operations.get(0) instanceof LocalHashTableV2DirectoryFirstPageSetTreeSizePO);
+      Assert.assertTrue(
+          operations.get(0) instanceof LocalHashTableV2DirectoryFirstPageSetTreeSizePO);
 
-      final LocalHashTableV2DirectoryFirstPageSetTreeSizePO pageOperation = (LocalHashTableV2DirectoryFirstPageSetTreeSizePO) operations
-          .get(0);
+      final LocalHashTableV2DirectoryFirstPageSetTreeSizePO pageOperation =
+          (LocalHashTableV2DirectoryFirstPageSetTreeSizePO) operations.get(0);
 
       DirectoryFirstPageV2 restoredPage = new DirectoryFirstPageV2(restoredCacheEntry);
       Assert.assertEquals(12, restoredPage.getTreeSize());
@@ -84,10 +85,11 @@ public class LocalHashTableV2DirectoryFirstPageSetTreeSizePOTest {
       final List<PageOperationRecord> operations = entry.getPageOperations();
       Assert.assertEquals(1, operations.size());
 
-      Assert.assertTrue(operations.get(0) instanceof LocalHashTableV2DirectoryFirstPageSetTreeSizePO);
+      Assert.assertTrue(
+          operations.get(0) instanceof LocalHashTableV2DirectoryFirstPageSetTreeSizePO);
 
-      final LocalHashTableV2DirectoryFirstPageSetTreeSizePO pageOperation = (LocalHashTableV2DirectoryFirstPageSetTreeSizePO) operations
-          .get(0);
+      final LocalHashTableV2DirectoryFirstPageSetTreeSizePO pageOperation =
+          (LocalHashTableV2DirectoryFirstPageSetTreeSizePO) operations.get(0);
 
       final DirectoryFirstPageV2 restoredPage = new DirectoryFirstPageV2(entry);
 
@@ -105,7 +107,8 @@ public class LocalHashTableV2DirectoryFirstPageSetTreeSizePOTest {
 
   @Test
   public void testSerialization() {
-    LocalHashTableV2DirectoryFirstPageSetTreeSizePO operation = new LocalHashTableV2DirectoryFirstPageSetTreeSizePO(12, 42);
+    LocalHashTableV2DirectoryFirstPageSetTreeSizePO operation =
+        new LocalHashTableV2DirectoryFirstPageSetTreeSizePO(12, 42);
 
     operation.setFileId(42);
     operation.setPageIndex(24);
@@ -117,7 +120,8 @@ public class LocalHashTableV2DirectoryFirstPageSetTreeSizePOTest {
 
     Assert.assertEquals(serializedSize + 1, pos);
 
-    LocalHashTableV2DirectoryFirstPageSetTreeSizePO restoredOperation = new LocalHashTableV2DirectoryFirstPageSetTreeSizePO();
+    LocalHashTableV2DirectoryFirstPageSetTreeSizePO restoredOperation =
+        new LocalHashTableV2DirectoryFirstPageSetTreeSizePO();
     restoredOperation.fromStream(stream, 1);
 
     Assert.assertEquals(42, restoredOperation.getFileId());

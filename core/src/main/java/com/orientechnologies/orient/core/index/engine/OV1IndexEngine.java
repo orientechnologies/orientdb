@@ -5,7 +5,6 @@ import com.orientechnologies.orient.core.encryption.OEncryption;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperation;
-
 import java.util.stream.Stream;
 
 public interface OV1IndexEngine extends OBaseIndexEngine {
@@ -20,7 +19,11 @@ public interface OV1IndexEngine extends OBaseIndexEngine {
     return API_VERSION;
   }
 
-  void load(final String name, final int keySize, final OType[] keyTypes, final OBinarySerializer keySerializer,
+  void load(
+      final String name,
+      final int keySize,
+      final OType[] keyTypes,
+      final OBinarySerializer keySerializer,
       final OEncryption encryption);
 
   boolean isMultiValue();

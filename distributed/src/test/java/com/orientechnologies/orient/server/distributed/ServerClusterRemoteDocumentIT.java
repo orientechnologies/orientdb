@@ -24,16 +24,13 @@ import com.orientechnologies.orient.core.db.OrientDB;
 import com.orientechnologies.orient.core.db.OrientDBConfig;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import org.junit.Test;
-
 import java.util.ArrayList;
 import java.util.List;
+import org.junit.Test;
 
-/**
- * Start 3 servers and wait for external commands.
- */
+/** Start 3 servers and wait for external commands. */
 public class ServerClusterRemoteDocumentIT extends AbstractServerClusterTest {
-  final static int SERVERS = 3;
+  static final int SERVERS = 3;
 
   public String getDatabaseName() {
     return "distributed-remote-docs3";
@@ -82,7 +79,8 @@ public class ServerClusterRemoteDocumentIT extends AbstractServerClusterTest {
         if (matter == null) {
           throw new Exception("Matter not found with id" + id);
         }
-        matter.field("client", new ODocument().save(db2.getClusterNameById(db2.getDefaultClusterId())));
+        matter.field(
+            "client", new ODocument().save(db2.getClusterNameById(db2.getDefaultClusterId())));
         matter.save();
         db2.commit();
       } finally {

@@ -1,40 +1,44 @@
 package com.orientechnologies.orient.core.db;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
+
+
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
-import org.junit.Test;
-
 import java.util.List;
 import java.util.TimerTask;
 import java.util.UUID;
-import java.util.concurrent.*;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
+import org.junit.Test;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.Assert.*;
-
-/**
- * Created by tglman on 08/04/16.
- */
+/** Created by tglman on 08/04/16. */
 public class OrientDBEmbeddedTests {
 
   @Test
   public void testCompatibleUrl() {
-    try (OrientDB orientDb = new OrientDB("plocal:", OrientDBConfig.defaultConfig())) {
-    }
-    try (OrientDB orientDb = new OrientDB("memory:", OrientDBConfig.defaultConfig())) {
-    }
+    try (OrientDB orientDb = new OrientDB("plocal:", OrientDBConfig.defaultConfig())) {}
+    try (OrientDB orientDb = new OrientDB("memory:", OrientDBConfig.defaultConfig())) {}
   }
 
   @Test(expected = IllegalArgumentException.class)
   public void testWrongUrlFalure() {
-    try (OrientDB wrong = new OrientDB("wrong", OrientDBConfig.defaultConfig())) {
-    }
+    try (OrientDB wrong = new OrientDB("wrong", OrientDBConfig.defaultConfig())) {}
   }
 
   @Test
@@ -84,34 +88,35 @@ public class OrientDBEmbeddedTests {
 
       ODatabasePool pool = new ODatabasePool(orientDb, "testMultiThread", "admin", "admin");
 
-      //do a query and assert on other thread
-      Runnable acquirer = () -> {
+      // do a query and assert on other thread
+      Runnable acquirer =
+          () -> {
+            ODatabaseSession db = pool.acquire();
 
-        ODatabaseSession db = pool.acquire();
+            try {
+              assertThat(db.isActiveOnCurrentThread()).isTrue();
 
-        try {
-          assertThat(db.isActiveOnCurrentThread()).isTrue();
+              List<ODocument> res = db.query(new OSQLSynchQuery<>("SELECT * FROM OUser"));
 
-          List<ODocument> res = db.query(new OSQLSynchQuery<>("SELECT * FROM OUser"));
+              assertThat(res).hasSize(3);
 
-          assertThat(res).hasSize(3);
+            } finally {
 
-        } finally {
+              db.close();
+            }
+          };
 
-          db.close();
-        }
-
-      };
-
-      //spawn 20 threads
-      List<CompletableFuture<Void>> futures = IntStream.range(0, 19).boxed().map(i -> CompletableFuture.runAsync(acquirer))
-          .collect(Collectors.toList());
+      // spawn 20 threads
+      List<CompletableFuture<Void>> futures =
+          IntStream.range(0, 19)
+              .boxed()
+              .map(i -> CompletableFuture.runAsync(acquirer))
+              .collect(Collectors.toList());
 
       futures.forEach(cf -> cf.join());
 
       pool.close();
     }
-
   }
 
   @Test
@@ -128,7 +133,8 @@ public class OrientDBEmbeddedTests {
 
   @Test
   public void testRegisterDatabase() {
-    OrientDBEmbedded orientDb = (OrientDBEmbedded) new OrientDB("embedded:", OrientDBConfig.defaultConfig()).getInternal();
+    OrientDBEmbedded orientDb =
+        (OrientDBEmbedded) new OrientDB("embedded:", OrientDBConfig.defaultConfig()).getInternal();
     assertEquals(orientDb.listDatabases("", "").size(), 0);
     orientDb.initCustomStorage("database1", "./target/databases/database1", "", "");
     try (ODatabaseSession db = orientDb.open("database1", "admin", "admin")) {
@@ -150,7 +156,8 @@ public class OrientDBEmbeddedTests {
 
       orientDb.create("testCopyOpenedDatabase", ODatabaseType.MEMORY);
       ODatabaseSession db1;
-      try (ODatabaseDocumentInternal db = (ODatabaseDocumentInternal) orientDb.open("testCopyOpenedDatabase", "admin", "admin")) {
+      try (ODatabaseDocumentInternal db =
+          (ODatabaseDocumentInternal) orientDb.open("testCopyOpenedDatabase", "admin", "admin")) {
         db1 = db.copy();
       }
       db1.activateOnCurrentThread();
@@ -211,7 +218,6 @@ public class OrientDBEmbeddedTests {
 
     ODatabasePool pool = new ODatabasePool("embedded:./target/some", "admin", "admin");
     pool.close();
-
   }
 
   @Test
@@ -237,7 +243,8 @@ public class OrientDBEmbeddedTests {
 
   @Test
   public void testPoolFactory() {
-    OrientDBConfig config = OrientDBConfig.builder().addConfig(OGlobalConfiguration.DB_CACHED_POOL_CAPACITY, 2).build();
+    OrientDBConfig config =
+        OrientDBConfig.builder().addConfig(OGlobalConfiguration.DB_CACHED_POOL_CAPACITY, 2).build();
     OrientDB orientDB = new OrientDB("embedded:testdb", config);
     orientDB.createIfNotExists("testdb", ODatabaseType.MEMORY);
 
@@ -262,8 +269,11 @@ public class OrientDBEmbeddedTests {
 
   @Test
   public void testPoolFactoryCleanUp() throws Exception {
-    OrientDBConfig config = OrientDBConfig.builder().addConfig(OGlobalConfiguration.DB_CACHED_POOL_CAPACITY, 2)
-        .addConfig(OGlobalConfiguration.DB_CACHED_POOL_CLEAN_UP_TIMEOUT, 1_000).build();
+    OrientDBConfig config =
+        OrientDBConfig.builder()
+            .addConfig(OGlobalConfiguration.DB_CACHED_POOL_CAPACITY, 2)
+            .addConfig(OGlobalConfiguration.DB_CACHED_POOL_CLEAN_UP_TIMEOUT, 1_000)
+            .build();
     OrientDB orientDB = new OrientDB("embedded:testdb", config);
     orientDB.createIfNotExists("testdb", ODatabaseType.MEMORY);
     orientDB.createIfNotExists("testdb1", ODatabaseType.MEMORY);
@@ -294,7 +304,8 @@ public class OrientDBEmbeddedTests {
 
   @Test
   public void testInvalidatePoolCache() {
-    OrientDBConfig config = OrientDBConfig.builder().addConfig(OGlobalConfiguration.DB_CACHED_POOL_CAPACITY, 2).build();
+    OrientDBConfig config =
+        OrientDBConfig.builder().addConfig(OGlobalConfiguration.DB_CACHED_POOL_CAPACITY, 2).build();
     OrientDB orientDB = new OrientDB("embedded:testdb", config);
     orientDB.createIfNotExists("testdb", ODatabaseType.MEMORY);
 
@@ -315,7 +326,7 @@ public class OrientDBEmbeddedTests {
     try {
       orientDb.open("test", "admin", "admin");
     } catch (Exception e) {
-      //ignore
+      // ignore
     }
     assertFalse(orientDb.exists("test"));
 
@@ -382,12 +393,16 @@ public class OrientDBEmbeddedTests {
 
       orientDb.create("testExecutor", ODatabaseType.MEMORY);
       OrientDBInternal internal = OrientDBInternal.extract(orientDb);
-      Future<Boolean> result = internal.execute("testExecutor", "admin", (session) -> {
-        if (session.isClosed() && session.getUser() == null) {
-          return false;
-        }
-        return true;
-      });
+      Future<Boolean> result =
+          internal.execute(
+              "testExecutor",
+              "admin",
+              (session) -> {
+                if (session.isClosed() && session.getUser() == null) {
+                  return false;
+                }
+                return true;
+              });
 
       assertTrue(result.get());
     }
@@ -399,16 +414,18 @@ public class OrientDBEmbeddedTests {
     try (OrientDB orientDb = new OrientDB("embedded:", OrientDBConfig.defaultConfig())) {
       orientDb.create("testExecutorNoAuthorization", ODatabaseType.MEMORY);
       OrientDBInternal internal = OrientDBInternal.extract(orientDb);
-      Future<Boolean> result = internal.executeNoAuthorization("testExecutorNoAuthorization", (session) -> {
-        if (session.isClosed() && session.getUser() != null) {
-          return false;
-        }
-        return true;
-      });
+      Future<Boolean> result =
+          internal.executeNoAuthorization(
+              "testExecutorNoAuthorization",
+              (session) -> {
+                if (session.isClosed() && session.getUser() != null) {
+                  return false;
+                }
+                return true;
+              });
 
       assertTrue(result.get());
     }
-
   }
 
   @Test
@@ -416,24 +433,27 @@ public class OrientDBEmbeddedTests {
     OrientDB orientDb = new OrientDB("embedded:", OrientDBConfig.defaultConfig());
     OrientDBInternal internal = OrientDBInternal.extract(orientDb);
     CountDownLatch latch = new CountDownLatch(2);
-    internal.schedule(new TimerTask() {
-      @Override
-      public void run() {
-        latch.countDown();
-
-      }
-    }, 10, 10);
+    internal.schedule(
+        new TimerTask() {
+          @Override
+          public void run() {
+            latch.countDown();
+          }
+        },
+        10,
+        10);
 
     assertTrue(latch.await(80, TimeUnit.MILLISECONDS));
 
     CountDownLatch once = new CountDownLatch(1);
-    internal.scheduleOnce(new TimerTask() {
-      @Override
-      public void run() {
-        once.countDown();
-
-      }
-    }, 10);
+    internal.scheduleOnce(
+        new TimerTask() {
+          @Override
+          public void run() {
+            once.countDown();
+          }
+        },
+        10);
 
     assertTrue(once.await(80, TimeUnit.MILLISECONDS));
   }
@@ -443,7 +463,9 @@ public class OrientDBEmbeddedTests {
     try (OrientDB orientDb = new OrientDB("embedded:", OrientDBConfig.defaultConfig())) {
       orientDb.create("testUUID", ODatabaseType.MEMORY);
       ODatabaseSession session = orientDb.open("testUUID", "admin", "admin");
-      assertNotNull(((OAbstractPaginatedStorage) ((ODatabaseDocumentInternal) session).getStorage()).getUuid());
+      assertNotNull(
+          ((OAbstractPaginatedStorage) ((ODatabaseDocumentInternal) session).getStorage())
+              .getUuid());
       session.close();
     }
   }
@@ -453,17 +475,19 @@ public class OrientDBEmbeddedTests {
     OrientDB orientDb = new OrientDB("embedded:./target/", OrientDBConfig.defaultConfig());
     orientDb.create("testPersistentUUID", ODatabaseType.PLOCAL);
     ODatabaseSession session = orientDb.open("testPersistentUUID", "admin", "admin");
-    UUID uuid = ((OAbstractPaginatedStorage) ((ODatabaseDocumentInternal) session).getStorage()).getUuid();
+    UUID uuid =
+        ((OAbstractPaginatedStorage) ((ODatabaseDocumentInternal) session).getStorage()).getUuid();
     assertNotNull(uuid);
     session.close();
     orientDb.close();
     OrientDB orientDb1 = new OrientDB("embedded:./target/", OrientDBConfig.defaultConfig());
     ODatabaseSession session1 = orientDb1.open("testPersistentUUID", "admin", "admin");
-    assertEquals(uuid, ((OAbstractPaginatedStorage) ((ODatabaseDocumentInternal) session1).getStorage()).getUuid());
+    assertEquals(
+        uuid,
+        ((OAbstractPaginatedStorage) ((ODatabaseDocumentInternal) session1).getStorage())
+            .getUuid());
     session1.close();
     orientDb1.drop("testPersistentUUID");
     orientDb1.close();
-
   }
-
 }

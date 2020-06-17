@@ -29,7 +29,6 @@ import com.orientechnologies.orient.stresstest.ODatabaseIdentifier;
 import com.orientechnologies.orient.stresstest.OStressTesterSettings;
 import com.tinkerpop.blueprints.impls.orient.OrientBaseGraph;
 import com.tinkerpop.blueprints.impls.orient.OrientVertex;
-
 import java.util.List;
 import java.util.Locale;
 import java.util.Random;
@@ -41,15 +40,18 @@ import java.util.Random;
  */
 public class OGraphInsertWorkload extends OBaseGraphWorkload {
   private enum STRATEGIES {
-    LAST, RANDOM, SUPERNODE
+    LAST,
+    RANDOM,
+    SUPERNODE
   }
 
-  static final String     INVALID_FORM_MESSAGE = "GRAPH INSERT workload must be in form of <vertices>F<connection-factor>.";
+  static final String INVALID_FORM_MESSAGE =
+      "GRAPH INSERT workload must be in form of <vertices>F<connection-factor>.";
 
-  private int             factor               = 80;
-  private OWorkLoadResult resultVertices       = new OWorkLoadResult();
-  private OWorkLoadResult resultEdges          = new OWorkLoadResult();
-  private STRATEGIES      strategy             = STRATEGIES.LAST;
+  private int factor = 80;
+  private OWorkLoadResult resultVertices = new OWorkLoadResult();
+  private OWorkLoadResult resultEdges = new OWorkLoadResult();
+  private STRATEGIES strategy = STRATEGIES.LAST;
 
   public OGraphInsertWorkload() {
     connectionStrategy = OStorageRemote.CONNECTION_STRATEGY.ROUND_ROBIN_REQUEST;
@@ -71,72 +73,80 @@ public class OGraphInsertWorkload extends OBaseGraphWorkload {
       final char c = ops.charAt(pos);
 
       if (c == ' ' || c == 'V' || c == 'F' || (c == 'S' && !strategy)) {
-        if (c == 'S')
-          strategy = true;
+        if (c == 'S') strategy = true;
         state = assignState(state, value, c);
-      } else
-        value.append(c);
+      } else value.append(c);
     }
     assignState(state, value, ' ');
 
-    if (resultVertices.total == 0)
-      throw new IllegalArgumentException(INVALID_FORM_MESSAGE);
+    if (resultVertices.total == 0) throw new IllegalArgumentException(INVALID_FORM_MESSAGE);
   }
 
   @Override
-  public void execute(final OStressTesterSettings settings, final ODatabaseIdentifier databaseIdentifier) {
+  public void execute(
+      final OStressTesterSettings settings, final ODatabaseIdentifier databaseIdentifier) {
     connectionStrategy = settings.loadBalancing;
 
-    final List<OBaseWorkLoadContext> contexts = executeOperation(databaseIdentifier, resultVertices, settings, new OCallable<Void, OBaseWorkLoadContext>() {
-          @Override
-          public Void call(final OBaseWorkLoadContext context) {
-            final OWorkLoadContext graphContext = ((OWorkLoadContext) context);
-            final OrientBaseGraph graph = graphContext.graph;
+    final List<OBaseWorkLoadContext> contexts =
+        executeOperation(
+            databaseIdentifier,
+            resultVertices,
+            settings,
+            new OCallable<Void, OBaseWorkLoadContext>() {
+              @Override
+              public Void call(final OBaseWorkLoadContext context) {
+                final OWorkLoadContext graphContext = ((OWorkLoadContext) context);
+                final OrientBaseGraph graph = graphContext.graph;
 
-            final OrientVertex v = graph.addVertex(null, "_id", resultVertices.current.get());
+                final OrientVertex v = graph.addVertex(null, "_id", resultVertices.current.get());
 
-            if (graphContext.lastVertexToConnect != null) {
-              v.addEdge("E", graphContext.lastVertexToConnect);
-              resultEdges.current.incrementAndGet();
+                if (graphContext.lastVertexToConnect != null) {
+                  v.addEdge("E", graphContext.lastVertexToConnect);
+                  resultEdges.current.incrementAndGet();
 
-              graphContext.lastVertexEdges++;
+                  graphContext.lastVertexEdges++;
 
-              if (graphContext.lastVertexEdges > factor) {
-                graphContext.lastVertexEdges = 0;
-                if (strategy == STRATEGIES.LAST)
-                  graphContext.lastVertexToConnect = v;
-                else if (strategy == STRATEGIES.RANDOM) {
-                  do {
-                    final int[] totalClusters = graph.getVertexBaseType().getClusterIds();
-                    final int randomCluster = totalClusters[new Random().nextInt(totalClusters.length)];
-                    long totClusterRecords = graph.getRawGraph().countClusterElements(randomCluster);
-                    if (totClusterRecords > 0) {
-                      final ORecordId randomRid = new ORecordId(randomCluster, new Random().nextInt((int) totClusterRecords));
-                      graphContext.lastVertexToConnect = graph.getVertex(randomRid);
-                      break;
+                  if (graphContext.lastVertexEdges > factor) {
+                    graphContext.lastVertexEdges = 0;
+                    if (strategy == STRATEGIES.LAST) graphContext.lastVertexToConnect = v;
+                    else if (strategy == STRATEGIES.RANDOM) {
+                      do {
+                        final int[] totalClusters = graph.getVertexBaseType().getClusterIds();
+                        final int randomCluster =
+                            totalClusters[new Random().nextInt(totalClusters.length)];
+                        long totClusterRecords =
+                            graph.getRawGraph().countClusterElements(randomCluster);
+                        if (totClusterRecords > 0) {
+                          final ORecordId randomRid =
+                              new ORecordId(
+                                  randomCluster, new Random().nextInt((int) totClusterRecords));
+                          graphContext.lastVertexToConnect = graph.getVertex(randomRid);
+                          break;
+                        }
+
+                      } while (true);
+                    } else if (strategy == STRATEGIES.SUPERNODE) {
+                      final int[] totalClusters = graph.getVertexBaseType().getClusterIds();
+                      final int firstCluster = totalClusters[0];
+                      long totClusterRecords =
+                          graph.getRawGraph().countClusterElements(firstCluster);
+                      if (totClusterRecords > 0) {
+                        final ORecordId randomRid = new ORecordId(firstCluster, 0);
+                        graphContext.lastVertexToConnect = graph.getVertex(randomRid);
+                      }
                     }
-
-                  } while (true);
-                } else if (strategy == STRATEGIES.SUPERNODE) {
-                  final int[] totalClusters = graph.getVertexBaseType().getClusterIds();
-                  final int firstCluster = totalClusters[0];
-                  long totClusterRecords = graph.getRawGraph().countClusterElements(firstCluster);
-                  if (totClusterRecords > 0) {
-                    final ORecordId randomRid = new ORecordId(firstCluster, 0);
-                    graphContext.lastVertexToConnect = graph.getVertex(randomRid);
                   }
-                }
+                } else graphContext.lastVertexToConnect = v;
+
+                resultVertices.current.incrementAndGet();
+                return null;
               }
-            } else
-              graphContext.lastVertexToConnect = v;
+            });
 
-            resultVertices.current.incrementAndGet();
-            return null;
-          }
-        });
-
-    final OrientBaseGraph graph = settings.operationsPerTransaction > 0 ? getGraph(databaseIdentifier)
-        : getGraphNoTx(databaseIdentifier);
+    final OrientBaseGraph graph =
+        settings.operationsPerTransaction > 0
+            ? getGraph(databaseIdentifier)
+            : getGraphNoTx(databaseIdentifier);
     try {
       // CONNECTED ALL THE SUB GRAPHS
       OrientVertex lastVertex = null;
@@ -148,8 +158,7 @@ public class OGraphInsertWorkload extends OBaseGraphWorkload {
 
             lastVertex = ((OWorkLoadContext) context).lastVertexToConnect;
           } catch (ONeedRetryException e) {
-            if (lastVertex.getIdentity().isPersistent())
-              lastVertex.reload();
+            if (lastVertex.getIdentity().isPersistent()) lastVertex.reload();
 
             if (((OWorkLoadContext) context).lastVertexToConnect.getIdentity().isPersistent())
               ((OWorkLoadContext) context).lastVertexToConnect.reload();
@@ -167,8 +176,11 @@ public class OGraphInsertWorkload extends OBaseGraphWorkload {
 
   @Override
   public String getPartialResult() {
-    return String.format("%d%% [Vertices: %d - Edges: %d (conflicts=%d)]",
-        ((100 * resultVertices.current.get() / resultVertices.total)), resultVertices.current.get(), resultEdges.current.get(),
+    return String.format(
+        "%d%% [Vertices: %d - Edges: %d (conflicts=%d)]",
+        ((100 * resultVertices.current.get() / resultVertices.total)),
+        resultVertices.current.get(),
+        resultEdges.current.get(),
         resultVertices.conflicts.get());
   }
 
@@ -176,8 +188,12 @@ public class OGraphInsertWorkload extends OBaseGraphWorkload {
   public String getFinalResult() {
     final StringBuilder buffer = new StringBuilder(getErrors());
 
-    buffer.append(String.format("- Created %d vertices and %d edges in %.3f secs", resultVertices.current.get(),
-        resultEdges.current.get(), resultVertices.totalTime / 1000f));
+    buffer.append(
+        String.format(
+            "- Created %d vertices and %d edges in %.3f secs",
+            resultVertices.current.get(),
+            resultEdges.current.get(),
+            resultVertices.totalTime / 1000f));
 
     buffer.append(resultVertices.toOutput(1));
 
@@ -197,13 +213,10 @@ public class OGraphInsertWorkload extends OBaseGraphWorkload {
   }
 
   private char assignState(final char state, final StringBuilder number, final char c) {
-    if (number.length() == 0)
-      number.append("0");
+    if (number.length() == 0) number.append("0");
 
-    if (state == 'V')
-      resultVertices.total = Integer.parseInt(number.toString());
-    else if (state == 'F')
-      factor = Integer.parseInt(number.toString());
+    if (state == 'V') resultVertices.total = Integer.parseInt(number.toString());
+    else if (state == 'F') factor = Integer.parseInt(number.toString());
     else if (state == 'S')
       strategy = STRATEGIES.valueOf(number.toString().toUpperCase(Locale.ENGLISH));
 

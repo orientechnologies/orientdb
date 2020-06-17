@@ -3,11 +3,14 @@ package com.orientechnologies.orient.distributed.impl.coordinator.network;
 import com.orientechnologies.orient.core.db.config.ONodeIdentity;
 import com.orientechnologies.orient.distributed.impl.log.OLogId;
 import com.orientechnologies.orient.distributed.impl.structural.operations.ODatabaseLeaderElected;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
+import java.io.IOException;
+import java.util.Optional;
 import org.junit.Assert;
 import org.junit.Test;
-
-import java.io.*;
-import java.util.Optional;
 
 public class ONetworkOperationTest {
 
@@ -41,5 +44,3 @@ public class ONetworkOperationTest {
     Assert.assertEquals(op.getLeader(), op2.getLeader());
   }
 }
-
-

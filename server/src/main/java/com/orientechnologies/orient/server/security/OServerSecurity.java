@@ -32,20 +32,17 @@ import com.orientechnologies.orient.server.config.OServerUserConfiguration;
 public interface OServerSecurity extends OSecuritySystem {
   OAuditingService getAuditing();
 
-  /**
-   * Returns the authenticator based on name, if one exists.
-   */
+  /** Returns the authenticator based on name, if one exists. */
   OSecurityAuthenticator getAuthenticator(final String authName);
 
-  /**
-   * Returns the first authenticator in the list, which is the primary authenticator.
-   */
+  /** Returns the first authenticator in the list, which is the primary authenticator. */
   OSecurityAuthenticator getPrimaryAuthenticator();
 
   OSyslog getSyslog();
 
   /**
-   * Some authenticators support maintaining a list of users and associated resources (and sometimes passwords).
+   * Some authenticators support maintaining a list of users and associated resources (and sometimes
+   * passwords).
    */
   OServerUserConfiguration getUser(final String username);
 

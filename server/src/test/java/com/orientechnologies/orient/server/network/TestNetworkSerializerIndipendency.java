@@ -1,5 +1,8 @@
 package com.orientechnologies.orient.server.network;
 
+import static org.junit.Assert.assertEquals;
+
+
 import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.orient.client.remote.OServerAdmin;
 import com.orientechnologies.orient.core.Orient;
@@ -12,15 +15,11 @@ import com.orientechnologies.orient.core.serialization.serializer.record.ORecord
 import com.orientechnologies.orient.core.serialization.serializer.record.binary.ORecordSerializerBinary;
 import com.orientechnologies.orient.core.serialization.serializer.record.string.ORecordSerializerSchemaAware2CSV;
 import com.orientechnologies.orient.server.OServer;
-import org.junit.After;
-import org.junit.AfterClass;
-import org.junit.Before;
-import org.junit.Test;
-
 import java.io.File;
 import java.io.IOException;
-
-import static org.junit.Assert.assertEquals;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Test;
 
 public class TestNetworkSerializerIndipendency {
   private OServer server;
@@ -113,17 +112,16 @@ public class TestNetworkSerializerIndipendency {
     Orient.instance().shutdown();
     File directory = new File(server.getDatabaseDirectory());
     OFileUtils.deleteRecursively(directory);
-    ODatabaseDocumentTx.setDefaultSerializer(ORecordSerializerFactory.instance().getFormat(ORecordSerializerBinary.NAME));
+    ODatabaseDocumentTx.setDefaultSerializer(
+        ORecordSerializerFactory.instance().getFormat(ORecordSerializerBinary.NAME));
     Orient.instance().startup();
   }
 
   private void deleteDirectory(File iDirectory) {
     if (iDirectory.isDirectory())
       for (File f : iDirectory.listFiles()) {
-        if (f.isDirectory())
-          deleteDirectory(f);
-        else if (!f.delete())
-          throw new OConfigurationException("Cannot delete the file: " + f);
+        if (f.isDirectory()) deleteDirectory(f);
+        else if (!f.delete()) throw new OConfigurationException("Cannot delete the file: " + f);
       }
   }
 }

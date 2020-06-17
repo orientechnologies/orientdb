@@ -20,15 +20,14 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.orientechnologies.orient.core.util.ODateHelper;
-import org.testng.Assert;
-import org.testng.annotations.Optional;
-import org.testng.annotations.Parameters;
-import org.testng.annotations.Test;
-
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
+import org.testng.Assert;
+import org.testng.annotations.Optional;
+import org.testng.annotations.Parameters;
+import org.testng.annotations.Test;
 
 @Test(groups = "sql-select")
 public class DateTest extends DocumentDBBaseTest {
@@ -58,8 +57,12 @@ public class DateTest extends DocumentDBBaseTest {
     doc2.reload();
     Assert.assertTrue(doc2.field("date", Date.class) instanceof Date);
 
-    List<ODocument> result = database.command(
-        new OSQLSynchQuery<ODocument>("select * from Order where date >= ? and context = 'test'")).execute(begin);
+    List<ODocument> result =
+        database
+            .command(
+                new OSQLSynchQuery<ODocument>(
+                    "select * from Order where date >= ? and context = 'test'"))
+            .execute(begin);
 
     Assert.assertEquals(result.size(), 2);
   }
@@ -68,15 +71,20 @@ public class DateTest extends DocumentDBBaseTest {
   public void testDatePrecision() throws ParseException {
     final long begin = System.currentTimeMillis();
 
-    String dateAsString = database.getStorage().getConfiguration().getDateFormatInstance().format(begin);
+    String dateAsString =
+        database.getStorage().getConfiguration().getDateFormatInstance().format(begin);
 
     ODocument doc = new ODocument("Order");
     doc.field("context", "testPrecision");
     doc.field("date", ODateHelper.now(), OType.DATETIME);
     doc.save();
 
-    List<ODocument> result = database.command(
-        new OSQLSynchQuery<ODocument>("select * from Order where date >= ? and context = 'testPrecision'")).execute(dateAsString);
+    List<ODocument> result =
+        database
+            .command(
+                new OSQLSynchQuery<ODocument>(
+                    "select * from Order where date >= ? and context = 'testPrecision'"))
+            .execute(dateAsString);
 
     Assert.assertEquals(result.size(), 1);
   }
@@ -90,9 +98,7 @@ public class DateTest extends DocumentDBBaseTest {
     Assert.assertTrue(doc.field("date") instanceof Date);
   }
 
-  /**
-   * https://github.com/orientechnologies/orientjs/issues/48
-   */
+  /** https://github.com/orientechnologies/orientjs/issues/48 */
   @Test
   public void testDateGregorianCalendar() throws ParseException {
     database.command(new OCommandSQL("CREATE CLASS TimeTest EXTENDS V")).execute();
@@ -100,9 +106,13 @@ public class DateTest extends DocumentDBBaseTest {
     final SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS");
     final Date date = df.parse("1200-11-11 00:00:00.000");
 
-    database.command(new OCommandSQL("CREATE VERTEX TimeTest SET firstname = ?, birthDate = ?")).execute("Robert", date);
+    database
+        .command(new OCommandSQL("CREATE VERTEX TimeTest SET firstname = ?, birthDate = ?"))
+        .execute("Robert", date);
 
-    final List<ODocument> result = database.query(new OSQLSynchQuery<ODocument>("select from TimeTest where firstname = ?"), "Robert");
+    final List<ODocument> result =
+        database.query(
+            new OSQLSynchQuery<ODocument>("select from TimeTest where firstname = ?"), "Robert");
     Assert.assertEquals(result.size(), 1);
     Assert.assertEquals(result.get(0).field("birthDate"), date);
   }

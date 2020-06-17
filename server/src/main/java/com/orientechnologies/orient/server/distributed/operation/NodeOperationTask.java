@@ -9,8 +9,13 @@ import com.orientechnologies.orient.server.distributed.ODistributedRequestId;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
 import com.orientechnologies.orient.server.distributed.ORemoteTaskFactory;
 import com.orientechnologies.orient.server.distributed.task.ORemoteTask;
-
-import java.io.*;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.DataInput;
+import java.io.DataInputStream;
+import java.io.DataOutput;
+import java.io.DataOutputStream;
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.Callable;
@@ -18,7 +23,7 @@ import java.util.concurrent.Callable;
 public class NodeOperationTask implements ORemoteTask {
   public static final int FACTORYID = 55;
   private NodeOperation task;
-  private String        nodeSource;
+  private String nodeSource;
 
   private Integer messageId;
 
@@ -32,8 +37,7 @@ public class NodeOperationTask implements ORemoteTask {
     this.task = task;
   }
 
-  public NodeOperationTask() {
-  }
+  public NodeOperationTask() {}
 
   @Override
   public boolean hasResponse() {
@@ -51,20 +55,29 @@ public class NodeOperationTask implements ORemoteTask {
   }
 
   @Override
-  public Object execute(ODistributedRequestId requestId, OServer iServer, ODistributedServerManager iManager,
-      ODatabaseDocumentInternal database) throws Exception {
+  public Object execute(
+      ODistributedRequestId requestId,
+      OServer iServer,
+      ODistributedServerManager iManager,
+      ODatabaseDocumentInternal database)
+      throws Exception {
 
     if (task != null) {
       return new NodeOperationTaskResponse(task.getMessageId(), task.execute(iServer, iManager));
     } else {
-      return new NodeOperationTaskResponse(0, new NodeOperationResponseFailed(404,
-          String.format("Handler not found for message with id %d in server %s", messageId, iManager.getLocalNodeName())));
+      return new NodeOperationTaskResponse(
+          0,
+          new NodeOperationResponseFailed(
+              404,
+              String.format(
+                  "Handler not found for message with id %d in server %s",
+                  messageId, iManager.getLocalNodeName())));
     }
   }
 
   @Override
   public int[] getPartitionKey() {
-    //This should be the best number for this use case checking the execution implementation
+    // This should be the best number for this use case checking the execution implementation
     return new int[-2];
   }
 
@@ -163,16 +176,19 @@ public class NodeOperationTask implements ORemoteTask {
 
   private static class NodeOperationFactory {
 
-    private Callable<NodeOperation>         request;
+    private Callable<NodeOperation> request;
     private Callable<NodeOperationResponse> response;
 
-    public NodeOperationFactory(Callable<NodeOperation> request, Callable<NodeOperationResponse> response) {
+    public NodeOperationFactory(
+        Callable<NodeOperation> request, Callable<NodeOperationResponse> response) {
       this.request = request;
       this.response = response;
     }
   }
 
-  public static void register(int messageId, Callable<NodeOperation> requestFactory,
+  public static void register(
+      int messageId,
+      Callable<NodeOperation> requestFactory,
       Callable<NodeOperationResponse> responseFactory) {
     MESSAGES.put(messageId, new NodeOperationFactory(requestFactory, responseFactory));
   }
@@ -183,7 +199,8 @@ public class NodeOperationTask implements ORemoteTask {
       try {
         return factory.response.call();
       } catch (Exception e) {
-        OLogManager.instance().warn(null, "Cannot create node operation response from id %d", messageId);
+        OLogManager.instance()
+            .warn(null, "Cannot create node operation response from id %d", messageId);
         return null;
       }
     } else {

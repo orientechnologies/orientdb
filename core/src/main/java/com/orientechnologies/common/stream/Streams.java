@@ -8,9 +8,10 @@ import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
 public class Streams {
-  public static <T> Stream<T> mergeSortedSpliterators(Stream<T> streamOne, Stream<T> streamTwo, Comparator<? super T> comparator) {
-    final SortedStreamSpliterator<T> spliterator = new SortedStreamSpliterator<>(streamOne.spliterator(), streamTwo.spliterator(),
-        comparator);
+  public static <T> Stream<T> mergeSortedSpliterators(
+      Stream<T> streamOne, Stream<T> streamTwo, Comparator<? super T> comparator) {
+    final SortedStreamSpliterator<T> spliterator =
+        new SortedStreamSpliterator<>(streamOne.spliterator(), streamTwo.spliterator(), comparator);
     @SuppressWarnings("resource")
     final Stream<T> stream = StreamSupport.stream(spliterator, false);
     return stream.onClose(composedClose(streamOne, streamTwo));
@@ -27,7 +28,9 @@ public class Streams {
 
     private final Comparator<? super T> comparator;
 
-    private SortedStreamSpliterator(Spliterator<T> firstSpliterator, Spliterator<T> secondSpliterator,
+    private SortedStreamSpliterator(
+        Spliterator<T> firstSpliterator,
+        Spliterator<T> secondSpliterator,
         Comparator<? super T> comparator) {
       this.firstSpliterator = firstSpliterator;
       this.secondSpliterator = secondSpliterator;
@@ -144,6 +147,4 @@ public class Streams {
       b.close();
     };
   }
-
 }
-

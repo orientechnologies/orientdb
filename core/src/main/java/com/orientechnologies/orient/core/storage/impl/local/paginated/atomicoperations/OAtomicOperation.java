@@ -4,17 +4,18 @@ import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWriteAheadLog;
 import com.orientechnologies.orient.core.storage.index.sbtreebonsai.local.OBonsaiBucketPointer;
-
 import java.io.IOException;
 import java.util.Set;
 
 public interface OAtomicOperation {
   long getOperationUnitId();
 
-  OCacheEntry loadPageForWrite(long fileId, long pageIndex, boolean checkPinnedPages, int pageCount, boolean verifyChecksum)
+  OCacheEntry loadPageForWrite(
+      long fileId, long pageIndex, boolean checkPinnedPages, int pageCount, boolean verifyChecksum)
       throws IOException;
 
-  OCacheEntry loadPageForRead(long fileId, long pageIndex, boolean checkPinnedPages, int pageCount) throws IOException;
+  OCacheEntry loadPageForRead(long fileId, long pageIndex, boolean checkPinnedPages, int pageCount)
+      throws IOException;
 
   void addMetadata(OAtomicOperationMetadata<?> metadata);
 

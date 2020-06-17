@@ -2,7 +2,6 @@ package com.tinkerpop.blueprints.impls.orient;
 
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
 import com.orientechnologies.orient.core.id.ORID;
@@ -11,7 +10,6 @@ import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.tinkerpop.blueprints.Direction;
-
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.HashMap;
@@ -19,8 +17,8 @@ import java.util.HashSet;
 import java.util.Set;
 
 /**
- * Find and repair broken bonsai tree removing the double linked buckets and regenerating the whole tree with data from referring
- * records.
+ * Find and repair broken bonsai tree removing the double linked buckets and regenerating the whole
+ * tree with data from referring records.
  *
  * @author tglman
  */
@@ -51,11 +49,15 @@ public class OBonsaiTreeRepair {
             continue;
           }
 
-          final ODocument inVertex = edge.<OIdentifiable>field(OrientBaseGraph.CONNECTION_IN).getRecord();
-          final ODocument outVertex = edge.<OIdentifiable>field(OrientBaseGraph.CONNECTION_OUT).getRecord();
+          final ODocument inVertex =
+              edge.<OIdentifiable>field(OrientBaseGraph.CONNECTION_IN).getRecord();
+          final ODocument outVertex =
+              edge.<OIdentifiable>field(OrientBaseGraph.CONNECTION_OUT).getRecord();
 
-          final String inVertexName = OrientVertex.getConnectionFieldName(Direction.IN, label, true);
-          final String outVertexName = OrientVertex.getConnectionFieldName(Direction.OUT, label, true);
+          final String inVertexName =
+              OrientVertex.getConnectionFieldName(Direction.IN, label, true);
+          final String outVertexName =
+              OrientVertex.getConnectionFieldName(Direction.OUT, label, true);
 
           Set<ORID> inVertexes = processedVertexes.get(inVertexName);
           if (inVertexes == null) {
@@ -94,12 +96,15 @@ public class OBonsaiTreeRepair {
           counter++;
 
           if (counter > 0 && counter % 1000 == 0)
-            message(outputListener, counter + " edges were processed out of " + countEdges + " \n.");
+            message(
+                outputListener, counter + " edges were processed out of " + countEdges + " \n.");
 
         } catch (Exception e) {
           final StringWriter sw = new StringWriter();
 
-          sw.append("Error during processing of edge with id ").append(edge.getIdentity().toString()).append("\n");
+          sw.append("Error during processing of edge with id ")
+              .append(edge.getIdentity().toString())
+              .append("\n");
           e.printStackTrace(new PrintWriter(sw));
 
           message(outputListener, sw.toString());

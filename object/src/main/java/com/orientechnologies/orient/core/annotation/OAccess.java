@@ -26,9 +26,9 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * Tells the way OrientDB should bind the field. By default OrientDB searches for getter and setter. If they are not present, then
- * the field is accessed directly. Using this annotation, instead, forces the field level access. Use this if you want by-pass
- * getter and setter methods.
+ * Tells the way OrientDB should bind the field. By default OrientDB searches for getter and setter.
+ * If they are not present, then the field is accessed directly. Using this annotation, instead,
+ * forces the field level access. Use this if you want by-pass getter and setter methods.
  */
 @Documented
 @Retention(RetentionPolicy.RUNTIME)
@@ -36,7 +36,8 @@ import java.lang.annotation.Target;
 @Deprecated
 public @interface OAccess {
   enum OAccessType {
-    FIELD, PROPERTY
+    FIELD,
+    PROPERTY
   }
 
   OAccessType value() default OAccessType.PROPERTY;

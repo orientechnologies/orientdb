@@ -1,5 +1,8 @@
 package com.orientechnologies.lucene.tests;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
+
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OType;
@@ -8,11 +11,7 @@ import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import org.junit.Before;
 import org.junit.Test;
 
-import static org.assertj.core.api.Assertions.assertThat;
-
-/**
- * Created by Enrico Risa on 23/09/16.
- */
+/** Created by Enrico Risa on 23/09/16. */
 public class OLuceneFreezeReleaseTest extends OLuceneBaseTest {
 
   @Before
@@ -53,7 +52,6 @@ public class OLuceneFreezeReleaseTest extends OLuceneBaseTest {
     results = db.query("select from Person where search_class('John')=true");
     assertThat(results).hasSize(2);
     results.close();
-
   }
 
   // With double calling freeze/release
@@ -90,6 +88,5 @@ public class OLuceneFreezeReleaseTest extends OLuceneBaseTest {
     results = db.command("select from Person where search_class('John')=true");
     assertThat(results).hasSize(2);
     results.close();
-
   }
 }

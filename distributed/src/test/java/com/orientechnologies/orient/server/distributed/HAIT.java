@@ -19,11 +19,9 @@ import com.orientechnologies.orient.server.hazelcast.OHazelcastPlugin;
 import org.junit.Ignore;
 import org.junit.Test;
 
-/**
- * Distributed TX test against "plocal" protocol + shutdown and restart of a node.
- */
+/** Distributed TX test against "plocal" protocol + shutdown and restart of a node. */
 public class HAIT extends AbstractHARemoveNode {
-  final static int SERVERS = 3;
+  static final int SERVERS = 3;
 
   @Test
   @Ignore
@@ -48,9 +46,15 @@ public class HAIT extends AbstractHARemoveNode {
 
     banner("RESTARTING SERVER " + (SERVERS - 1) + "...");
 
-    serverInstance.get(SERVERS - 1).startServer(getDistributedServerConfiguration(serverInstance.get(SERVERS - 1)));
+    serverInstance
+        .get(SERVERS - 1)
+        .startServer(getDistributedServerConfiguration(serverInstance.get(SERVERS - 1)));
     if (serverInstance.get(SERVERS - 1).server.getPluginByClass(OHazelcastPlugin.class) != null)
-      serverInstance.get(SERVERS - 1).server.getPluginByClass(OHazelcastPlugin.class).waitUntilNodeOnline();
+      serverInstance
+          .get(SERVERS - 1)
+          .server
+          .getPluginByClass(OHazelcastPlugin.class)
+          .waitUntilNodeOnline();
 
     banner("RESTARTING TESTS WITH SERVER " + (SERVERS - 1) + " UP...");
 

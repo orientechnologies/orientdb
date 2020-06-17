@@ -18,6 +18,11 @@
 
 package com.orientechnologies.orient.etl.transformer;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
+
+
 import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.orient.core.db.ODatabasePool;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
@@ -29,15 +34,12 @@ import com.orientechnologies.orient.core.record.OVertex;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import com.orientechnologies.orient.etl.OETLBaseTest;
 import com.orientechnologies.orient.etl.loader.OETLLoader;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
-
 import java.io.File;
 import java.util.Iterator;
 import java.util.Set;
-
-import static org.junit.Assert.*;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Test;
 
 /**
  * Tests ETL Field Transformer.
@@ -49,7 +51,6 @@ public class OETLEdgeTransformerTest extends OETLBaseTest {
   @Before
   public void cleanFs() throws Exception {
     OFileUtils.deleteRecursively(new File("./target/databases/"));
-
   }
 
   @After
@@ -79,9 +80,12 @@ public class OETLEdgeTransformerTest extends OETLBaseTest {
 
   @Test
   public void testNotLightweightEdge() {
-    configure("{source: { content: { value: 'name,surname,friend\nJay,Miner,Luca' } }, extractor : { csv: {} },"
-        + " transformers: [{vertex: {class:'V1'}}, {edge:{class:'Friend',joinFieldName:'friend',lookup:'V2.name'}},"
-        + "], loader: { orientdb: { dbURL: 'memory:" + name.getMethodName() + "', dbType:'graph', useLightweightEdges:false } } }");
+    configure(
+        "{source: { content: { value: 'name,surname,friend\nJay,Miner,Luca' } }, extractor : { csv: {} },"
+            + " transformers: [{vertex: {class:'V1'}}, {edge:{class:'Friend',joinFieldName:'friend',lookup:'V2.name'}},"
+            + "], loader: { orientdb: { dbURL: 'memory:"
+            + name.getMethodName()
+            + "', dbType:'graph', useLightweightEdges:false } } }");
 
     OETLLoader loader = proc.getLoader();
     ODatabasePool pool = loader.getPool();
@@ -96,14 +100,16 @@ public class OETLEdgeTransformerTest extends OETLBaseTest {
     assertEquals(1, db.countClass("V2"));
     assertEquals(1, db.countClass("Friend"));
     db.close();
-
   }
 
   @Test
   public void testLookupMultipleValues() {
-    configure("{source: { content: { value: 'name,surname,friend\nJay,Miner,Luca' } }, extractor : { csv: {} },"
-        + " transformers: [{vertex: {class:'V1'}}, {edge:{class:'Friend',joinFieldName:'friend',lookup:'V2.name'}},"
-        + "], loader: { orientdb: { dbURL: 'memory:" + name.getMethodName() + "', dbType:'graph', useLightweightEdges:false } } }");
+    configure(
+        "{source: { content: { value: 'name,surname,friend\nJay,Miner,Luca' } }, extractor : { csv: {} },"
+            + " transformers: [{vertex: {class:'V1'}}, {edge:{class:'Friend',joinFieldName:'friend',lookup:'V2.name'}},"
+            + "], loader: { orientdb: { dbURL: 'memory:"
+            + name.getMethodName()
+            + "', dbType:'graph', useLightweightEdges:false } } }");
 
     OETLLoader loader = proc.getLoader();
     ODatabasePool pool = loader.getPool();
@@ -124,7 +130,6 @@ public class OETLEdgeTransformerTest extends OETLBaseTest {
     assertEquals(2, db.countClass("Friend"));
     db.close();
     pool.close();
-
   }
 
   @Test
@@ -134,7 +139,8 @@ public class OETLEdgeTransformerTest extends OETLBaseTest {
             + " transformers: [ {vertex: {class:'V1'}}, "
             + "{edge:{unresolvedLinkAction:'CREATE',class:'Friend',joinFieldName:'friendId',lookup:'V2.fid',targetVertexFields:{name:'${input.friendName}',surname:'${input.friendSurname}'},edgeFields:{since:'${input.friendSince}'}}},"
             + "{field:{fieldNames:['friendSince','friendId','friendName','friendSurname'],operation:'remove'}}"
-            + "], loader: { orientdb: { dbURL: 'memory:" + name.getMethodName()
+            + "], loader: { orientdb: { dbURL: 'memory:"
+            + name.getMethodName()
             + "', dbType:'graph', useLightweightEdges:false } } }");
 
     OETLLoader loader = proc.getLoader();
@@ -185,9 +191,12 @@ public class OETLEdgeTransformerTest extends OETLBaseTest {
 
   @Test
   public void testErrorOnDuplicateVertex() {
-    configure("{source: { content: { value: 'name,surname,friend\nJay,Miner,Luca\nJay,Miner,Luca' } }, extractor : { csv: {} },"
-        + " transformers: [{merge: {joinFieldName:'name',lookup:'V1.name'}}, {vertex: {class:'V1'}}, {edge:{class:'Friend',joinFieldName:'friend',lookup:'V2.name'}},"
-        + "], loader: { orientdb: { dbURL: 'memory:" + name.getMethodName() + "', dbType:'graph', useLightweightEdges:false } } }");
+    configure(
+        "{source: { content: { value: 'name,surname,friend\nJay,Miner,Luca\nJay,Miner,Luca' } }, extractor : { csv: {} },"
+            + " transformers: [{merge: {joinFieldName:'name',lookup:'V1.name'}}, {vertex: {class:'V1'}}, {edge:{class:'Friend',joinFieldName:'friend',lookup:'V2.name'}},"
+            + "], loader: { orientdb: { dbURL: 'memory:"
+            + name.getMethodName()
+            + "', dbType:'graph', useLightweightEdges:false } } }");
 
     OETLLoader loader = proc.getLoader();
     ODatabasePool pool = loader.getPool();
@@ -203,10 +212,13 @@ public class OETLEdgeTransformerTest extends OETLBaseTest {
 
   @Test
   public void testSkipDuplicateVertex() {
-    configure("{source: { content: { value: 'name,surname,friend\nJay,Miner,Luca\nJay,Miner,Luca' } }, extractor : { csv: {} },"
-        + " transformers: [ {merge: {joinFieldName:'name',lookup:'V1.name'}}, "
-        + "{vertex: {class:'V1'}}, {edge:{class:'Friend',skipDuplicates:true, joinFieldName:'friend',lookup:'V2.name'}},"
-        + "], loader: { orientdb: { dbURL: 'memory:" + name.getMethodName() + "', dbType:'graph', useLightweightEdges:false } } }");
+    configure(
+        "{source: { content: { value: 'name,surname,friend\nJay,Miner,Luca\nJay,Miner,Luca' } }, extractor : { csv: {} },"
+            + " transformers: [ {merge: {joinFieldName:'name',lookup:'V1.name'}}, "
+            + "{vertex: {class:'V1'}}, {edge:{class:'Friend',skipDuplicates:true, joinFieldName:'friend',lookup:'V2.name'}},"
+            + "], loader: { orientdb: { dbURL: 'memory:"
+            + name.getMethodName()
+            + "', dbType:'graph', useLightweightEdges:false } } }");
 
     OETLLoader loader = proc.getLoader();
     ODatabasePool pool = loader.getPool();
@@ -225,15 +237,17 @@ public class OETLEdgeTransformerTest extends OETLBaseTest {
   @Test
   public void testVertexAndEdgesOnSeparatedFiles() {
     // IMPORT PERSON (VERTICES)
-    configure("{source: { content: { value: 'id,name\n1,Luigi\n2,Luca\n3,Enrico\n4,Franco\n5,Gianni' } }, extractor : { csv: {} },"
-        + " transformers: [ {merge: {joinFieldName:'id',lookup:'PersonMF.id'}}, {vertex: {class:'PersonMF'}}"
-        + "], loader: { orientdb: { dbURL: 'plocal:./target/databases/" + name.getMethodName()
-        + "', dbType:'graph', classes: [{name:'PersonMF',extends:'V'}] } } }");
+    configure(
+        "{source: { content: { value: 'id,name\n1,Luigi\n2,Luca\n3,Enrico\n4,Franco\n5,Gianni' } }, extractor : { csv: {} },"
+            + " transformers: [ {merge: {joinFieldName:'id',lookup:'PersonMF.id'}}, {vertex: {class:'PersonMF'}}"
+            + "], loader: { orientdb: { dbURL: 'plocal:./target/databases/"
+            + name.getMethodName()
+            + "', dbType:'graph', classes: [{name:'PersonMF',extends:'V'}] } } }");
 
     OETLLoader loader = proc.getLoader();
     ODatabasePool pool = loader.getPool();
     ODatabaseDocument db = pool.acquire();
-//    createClasses(db);
+    //    createClasses(db);
     db.close();
     proc.execute();
 
@@ -246,18 +260,27 @@ public class OETLEdgeTransformerTest extends OETLBaseTest {
 
     // IMPORT FRIEND (EDGES)
     configure(
-        "{source: { content: { value: 'friend_from,friend_to,since\n" + "1,2,2005\n" + "1,3,2008\n" + "2,3,2008\n" + "1,4,2015\n"
-            + "2,5,2008\n" + "3,5,2015\n" + "4,5,2015' } }, extractor : { csv: {} }," + " transformers: ["
-            + "{merge: {joinFieldName:'friend_from',lookup:'PersonMF.id'}}," + "{vertex: {class:'PersonMF'}},"
+        "{source: { content: { value: 'friend_from,friend_to,since\n"
+            + "1,2,2005\n"
+            + "1,3,2008\n"
+            + "2,3,2008\n"
+            + "1,4,2015\n"
+            + "2,5,2008\n"
+            + "3,5,2015\n"
+            + "4,5,2015' } }, extractor : { csv: {} },"
+            + " transformers: ["
+            + "{merge: {joinFieldName:'friend_from',lookup:'PersonMF.id'}},"
+            + "{vertex: {class:'PersonMF'}},"
             + "{edge:{class:'FriendMF',joinFieldName:'friend_to',lookup:'PersonMF.id',edgeFields:{since:'${input.since}'} }},"
             + "{field: {operation:'remove', fieldNames:['friend_from','friend_to','since']}}"
-            + "], loader: { orientdb: { dbURL: 'plocal:./target/databases/" + name.getMethodName()
+            + "], loader: { orientdb: { dbURL: 'plocal:./target/databases/"
+            + name.getMethodName()
             + "', dbType:'graph', classes: [{name:'FriendMF',extends:'E'}] } } }");
 
     loader = proc.getLoader();
     pool = loader.getPool();
     db = pool.acquire();
-//    createClasses(db);
+    //    createClasses(db);
     db.close();
 
     proc.execute();

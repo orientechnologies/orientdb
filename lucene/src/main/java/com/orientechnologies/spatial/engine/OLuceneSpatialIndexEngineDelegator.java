@@ -33,6 +33,10 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperation;
 import com.orientechnologies.spatial.shape.OShapeFactory;
+import java.io.IOException;
+import java.util.Map;
+import java.util.Set;
+import java.util.stream.Stream;
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.search.IndexSearcher;
@@ -40,22 +44,17 @@ import org.apache.lucene.search.Query;
 import org.apache.lucene.search.ScoreDoc;
 import org.apache.lucene.spatial.SpatialStrategy;
 
-import java.io.IOException;
-import java.util.Map;
-import java.util.Set;
-import java.util.stream.Stream;
+/** Created by Enrico Risa on 04/09/15. */
+public class OLuceneSpatialIndexEngineDelegator
+    implements OLuceneIndexEngine, OLuceneSpatialIndexContainer {
 
-/**
- * Created by Enrico Risa on 04/09/15.
- */
-public class OLuceneSpatialIndexEngineDelegator implements OLuceneIndexEngine, OLuceneSpatialIndexContainer {
+  private final OStorage storage;
+  private final String indexName;
+  private OLuceneSpatialIndexEngineAbstract delegate;
+  private final int id;
 
-  private final OStorage                          storage;
-  private final String                            indexName;
-  private       OLuceneSpatialIndexEngineAbstract delegate;
-  private final int                               id;
-
-  public OLuceneSpatialIndexEngineDelegator(int id, String name, Boolean durableInNonTxMode, OStorage storage, int version) {
+  public OLuceneSpatialIndexEngineDelegator(
+      int id, String name, Boolean durableInNonTxMode, OStorage storage, int version) {
     this.id = id;
 
     this.indexName = name;
@@ -68,13 +67,20 @@ public class OLuceneSpatialIndexEngineDelegator implements OLuceneIndexEngine, O
   }
 
   @Override
-  public void init(String indexName, String indexType, OIndexDefinition indexDefinition, boolean isAutomatic, ODocument metadata) {
+  public void init(
+      String indexName,
+      String indexType,
+      OIndexDefinition indexDefinition,
+      boolean isAutomatic,
+      ODocument metadata) {
     if (delegate == null) {
       if (OClass.INDEX_TYPE.SPATIAL.name().equalsIgnoreCase(indexType)) {
         if (indexDefinition.getFields().size() > 1) {
-          delegate = new OLuceneLegacySpatialIndexEngine(storage, indexName, id, OShapeFactory.INSTANCE);
+          delegate =
+              new OLuceneLegacySpatialIndexEngine(storage, indexName, id, OShapeFactory.INSTANCE);
         } else {
-          delegate = new OLuceneGeoSpatialIndexEngine(storage, indexName, id, OShapeFactory.INSTANCE);
+          delegate =
+              new OLuceneGeoSpatialIndexEngine(storage, indexName, id, OShapeFactory.INSTANCE);
         }
 
         delegate.init(indexName, indexType, indexDefinition, isAutomatic, metadata);
@@ -82,7 +88,6 @@ public class OLuceneSpatialIndexEngineDelegator implements OLuceneIndexEngine, O
         throw new IllegalStateException("Invalid index type " + indexType);
       }
     }
-
   }
 
   @Override
@@ -91,24 +96,44 @@ public class OLuceneSpatialIndexEngineDelegator implements OLuceneIndexEngine, O
   }
 
   @Override
-  public void create(OAtomicOperation atomicOperation, OBinarySerializer valueSerializer, boolean isAutomatic, OType[] keyTypes, boolean nullPointerSupport,
-      OBinarySerializer keySerializer, int keySize, Map<String, String> engineProperties, OEncryption encryption) {
-
-  }
+  public void create(
+      OAtomicOperation atomicOperation,
+      OBinarySerializer valueSerializer,
+      boolean isAutomatic,
+      OType[] keyTypes,
+      boolean nullPointerSupport,
+      OBinarySerializer keySerializer,
+      int keySize,
+      Map<String, String> engineProperties,
+      OEncryption encryption) {}
 
   @Override
   public void delete(OAtomicOperation atomicOperation) {
-    if (delegate != null)
-      delegate.delete(atomicOperation);
+    if (delegate != null) delegate.delete(atomicOperation);
   }
 
   @Override
-  public void load(String indexName, OBinarySerializer valueSerializer, boolean isAutomatic, OBinarySerializer keySerializer,
-      OType[] keyTypes, boolean nullPointerSupport, int keySize, Map<String, String> engineProperties, OEncryption encryption) {
+  public void load(
+      String indexName,
+      OBinarySerializer valueSerializer,
+      boolean isAutomatic,
+      OBinarySerializer keySerializer,
+      OType[] keyTypes,
+      boolean nullPointerSupport,
+      int keySize,
+      Map<String, String> engineProperties,
+      OEncryption encryption) {
     if (delegate != null)
-      delegate.load(indexName, valueSerializer, isAutomatic, keySerializer, keyTypes, nullPointerSupport, keySize, engineProperties,
+      delegate.load(
+          indexName,
+          valueSerializer,
+          isAutomatic,
+          keySerializer,
+          keyTypes,
+          nullPointerSupport,
+          keySize,
+          engineProperties,
           encryption);
-
   }
 
   @Override
@@ -139,43 +164,56 @@ public class OLuceneSpatialIndexEngineDelegator implements OLuceneIndexEngine, O
     try {
       delegate.put(atomicOperation, key, value);
     } catch (IOException e) {
-      throw OException.wrapException(new OIndexException("Error during insertion of key " + key + " in index " + indexName), e);
+      throw OException.wrapException(
+          new OIndexException("Error during insertion of key " + key + " in index " + indexName),
+          e);
     }
   }
 
   @Override
-  public void update(OAtomicOperation atomicOperation, Object key, OIndexKeyUpdater<Object> updater) {
+  public void update(
+      OAtomicOperation atomicOperation, Object key, OIndexKeyUpdater<Object> updater) {
     try {
       delegate.update(atomicOperation, key, updater);
     } catch (IOException e) {
-      throw OException.wrapException(new OIndexException("Error during update of key " + key + " in index " + indexName), e);
+      throw OException.wrapException(
+          new OIndexException("Error during update of key " + key + " in index " + indexName), e);
     }
   }
 
   @Override
-  public boolean validatedPut(OAtomicOperation atomicOperation, Object key, ORID value, Validator<Object, ORID> validator) {
+  public boolean validatedPut(
+      OAtomicOperation atomicOperation, Object key, ORID value, Validator<Object, ORID> validator) {
     try {
       return delegate.validatedPut(atomicOperation, key, value, validator);
     } catch (IOException e) {
-      throw OException.wrapException(new OIndexException("Error during insertion of key " + key + " in index " + indexName), e);
+      throw OException.wrapException(
+          new OIndexException("Error during insertion of key " + key + " in index " + indexName),
+          e);
     }
   }
 
   @Override
-  public Stream<ORawPair<Object, ORID>> iterateEntriesBetween(Object rangeFrom, boolean fromInclusive, Object rangeTo,
-      boolean toInclusive, boolean ascSortOrder, ValuesTransformer transformer) {
-    return delegate.iterateEntriesBetween(rangeFrom, fromInclusive, rangeTo, toInclusive, ascSortOrder, transformer);
+  public Stream<ORawPair<Object, ORID>> iterateEntriesBetween(
+      Object rangeFrom,
+      boolean fromInclusive,
+      Object rangeTo,
+      boolean toInclusive,
+      boolean ascSortOrder,
+      ValuesTransformer transformer) {
+    return delegate.iterateEntriesBetween(
+        rangeFrom, fromInclusive, rangeTo, toInclusive, ascSortOrder, transformer);
   }
 
   @Override
-  public Stream<ORawPair<Object, ORID>> iterateEntriesMajor(Object fromKey, boolean isInclusive, boolean ascSortOrder,
-      ValuesTransformer transformer) {
+  public Stream<ORawPair<Object, ORID>> iterateEntriesMajor(
+      Object fromKey, boolean isInclusive, boolean ascSortOrder, ValuesTransformer transformer) {
     return delegate.iterateEntriesMajor(fromKey, isInclusive, ascSortOrder, transformer);
   }
 
   @Override
-  public Stream<ORawPair<Object, ORID>> iterateEntriesMinor(Object toKey, boolean isInclusive, boolean ascSortOrder,
-      ValuesTransformer transformer) {
+  public Stream<ORawPair<Object, ORID>> iterateEntriesMinor(
+      Object toKey, boolean isInclusive, boolean ascSortOrder, ValuesTransformer transformer) {
     return delegate.iterateEntriesMinor(toKey, isInclusive, ascSortOrder, transformer);
   }
 
@@ -215,7 +253,10 @@ public class OLuceneSpatialIndexEngineDelegator implements OLuceneIndexEngine, O
   }
 
   @Override
-  public void onRecordAddedToResultSet(OLuceneQueryContext queryContext, OContextualRecordId recordId, Document ret,
+  public void onRecordAddedToResultSet(
+      OLuceneQueryContext queryContext,
+      OContextualRecordId recordId,
+      Document ret,
       ScoreDoc score) {
     delegate.onRecordAddedToResultSet(queryContext, recordId, ret, score);
   }

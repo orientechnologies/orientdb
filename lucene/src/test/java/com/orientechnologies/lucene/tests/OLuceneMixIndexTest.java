@@ -18,17 +18,15 @@
 
 package com.orientechnologies.lucene.tests;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
+
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
+import java.io.InputStream;
 import org.junit.Before;
 import org.junit.Test;
 
-import java.io.InputStream;
-
-import static org.assertj.core.api.Assertions.assertThat;
-
-/**
- * Created by Enrico Risa on 02/09/15.
- */
+/** Created by Enrico Risa on 02/09/15. */
 public class OLuceneMixIndexTest extends OLuceneBaseTest {
 
   @Before
@@ -41,18 +39,20 @@ public class OLuceneMixIndexTest extends OLuceneBaseTest {
     db.command("create index Song.author on Song (author) NOTUNIQUE");
 
     db.command("create index Song.composite on Song (title,lyrics) FULLTEXT ENGINE LUCENE");
-
   }
 
   @Test
   public void testMixQuery() {
 
-    OResultSet docs = db
-        .query("select * from Song where  author = 'Hornsby' and search_index('Song.composite','title:mountain')=true ");
+    OResultSet docs =
+        db.query(
+            "select * from Song where  author = 'Hornsby' and search_index('Song.composite','title:mountain')=true ");
 
     assertThat(docs).hasSize(1);
     docs.close();
-    docs = db.query("select * from Song where  author = 'Hornsby' and search_index('Song.composite','title:ballad')=true");
+    docs =
+        db.query(
+            "select * from Song where  author = 'Hornsby' and search_index('Song.composite','title:ballad')=true");
     assertThat(docs).hasSize(0);
     docs.close();
   }
@@ -60,15 +60,16 @@ public class OLuceneMixIndexTest extends OLuceneBaseTest {
   @Test
   public void testMixCompositeQuery() {
 
-    OResultSet docs = db.query(
-        "select * from Song where  author = 'Hornsby' and search_index('Song.composite','title:mountain')=true ");
+    OResultSet docs =
+        db.query(
+            "select * from Song where  author = 'Hornsby' and search_index('Song.composite','title:mountain')=true ");
     assertThat(docs).hasSize(1);
     docs.close();
-    docs = db.query(
-        "select * from Song where author = 'Hornsby' and search_index('Song.composite','lyrics:happy')=true ");
+    docs =
+        db.query(
+            "select * from Song where author = 'Hornsby' and search_index('Song.composite','lyrics:happy')=true ");
 
     assertThat(docs).hasSize(1);
     docs.close();
   }
-
 }

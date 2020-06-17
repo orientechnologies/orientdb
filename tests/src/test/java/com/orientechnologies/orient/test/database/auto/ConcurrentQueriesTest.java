@@ -21,25 +21,24 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.test.ConcurrentTestHelper;
 import com.orientechnologies.orient.test.TestFactory;
+import java.util.concurrent.Callable;
+import java.util.concurrent.atomic.AtomicLong;
 import org.testng.Assert;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Optional;
 import org.testng.annotations.Parameters;
 import org.testng.annotations.Test;
 
-import java.util.concurrent.Callable;
-import java.util.concurrent.atomic.AtomicLong;
-
 @Test
 public class ConcurrentQueriesTest extends DocumentDBBaseTest {
-  private final static int THREADS      = 10;
-  private final static int CYCLES       = 50;
-  private final static int MAX_RETRIES  = 50;
+  private static final int THREADS = 10;
+  private static final int CYCLES = 50;
+  private static final int MAX_RETRIES = 50;
 
-  private final AtomicLong counter      = new AtomicLong();
+  private final AtomicLong counter = new AtomicLong();
   private final AtomicLong totalRetries = new AtomicLong();
 
-	@Parameters(value = "url")
+  @Parameters(value = "url")
   public ConcurrentQueriesTest(@Optional String url) {
     super(url);
   }
@@ -94,17 +93,20 @@ public class ConcurrentQueriesTest extends DocumentDBBaseTest {
 
   @Test
   public void concurrentCommands() throws Exception {
-//    System.out.println("Spanning " + THREADS + " threads...");
+    //    System.out.println("Spanning " + THREADS + " threads...");
 
-    ConcurrentTestHelper.test(THREADS, new TestFactory<Void>() {
-      @Override
-      public Callable<Void> createWorker() {
-        return new CommandExecutor(url);
-      }
-    });
+    ConcurrentTestHelper.test(
+        THREADS,
+        new TestFactory<Void>() {
+          @Override
+          public Callable<Void> createWorker() {
+            return new CommandExecutor(url);
+          }
+        });
 
-//    System.out.println("Done! Total queries executed in parallel: " + counter.get() + " average retries: "
-//        + ((float) totalRetries.get() / (float) counter.get()));
+    //    System.out.println("Done! Total queries executed in parallel: " + counter.get() + "
+    // average retries: "
+    //        + ((float) totalRetries.get() / (float) counter.get()));
 
     Assert.assertEquals(counter.get(), CYCLES * THREADS);
   }

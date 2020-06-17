@@ -22,21 +22,19 @@ import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
+import java.util.Set;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
-import java.util.Set;
-
-/**
- * Created by Enrico Risa on 14/08/15.
- */
+/** Created by Enrico Risa on 14/08/15. */
 public class LuceneIndexCreateDropTest extends BaseLuceneTest {
   @Before
   public void init() {
     final OClass type = db.createVertexClass("City");
     type.createProperty("name", OType.STRING);
-    db.command(new OCommandSQL("create index City.name on City (name) FULLTEXT ENGINE LUCENE")).execute();
+    db.command(new OCommandSQL("create index City.name on City (name) FULLTEXT ENGINE LUCENE"))
+        .execute();
   }
 
   @Test

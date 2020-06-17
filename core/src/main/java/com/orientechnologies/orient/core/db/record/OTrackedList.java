@@ -19,35 +19,39 @@
  */
 package com.orientechnologies.orient.core.db.record;
 
-import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
 import com.orientechnologies.orient.core.record.impl.OSimpleMultiValueTracker;
-
 import java.io.Serializable;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+import java.util.ListIterator;
 
 /**
- * Implementation of ArrayList bound to a source ORecord object to keep track of changes for literal types. This avoid to call the
- * makeDirty() by hand when the list is changed.
+ * Implementation of ArrayList bound to a source ORecord object to keep track of changes for literal
+ * types. This avoid to call the makeDirty() by hand when the list is changed.
  *
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
  */
-@SuppressWarnings({ "serial" })
-public class OTrackedList<T> extends ArrayList<T> implements ORecordElement, OTrackedMultiValue<Integer, T>, Serializable {
-  protected final ORecordElement                       sourceRecord;
-  protected       Class<?>                             genericClass;
-  private final   boolean                              embeddedCollection;
-  private         boolean                              dirty            = false;
-  private         boolean                              transactionDirty = false;
-  private         OSimpleMultiValueTracker<Integer, T> tracker          = new OSimpleMultiValueTracker<>(this);
+@SuppressWarnings({"serial"})
+public class OTrackedList<T> extends ArrayList<T>
+    implements ORecordElement, OTrackedMultiValue<Integer, T>, Serializable {
+  protected final ORecordElement sourceRecord;
+  protected Class<?> genericClass;
+  private final boolean embeddedCollection;
+  private boolean dirty = false;
+  private boolean transactionDirty = false;
+  private OSimpleMultiValueTracker<Integer, T> tracker = new OSimpleMultiValueTracker<>(this);
 
-  public OTrackedList(final ORecordElement iRecord, final Collection<? extends T> iOrigin, final Class<?> iGenericClass) {
+  public OTrackedList(
+      final ORecordElement iRecord,
+      final Collection<? extends T> iOrigin,
+      final Class<?> iGenericClass) {
     this(iRecord);
     genericClass = iGenericClass;
-    if (iOrigin != null && !iOrigin.isEmpty())
-      addAll(iOrigin);
+    if (iOrigin != null && !iOrigin.isEmpty()) addAll(iOrigin);
   }
 
   public OTrackedList(final ORecordElement iSourceRecord) {
@@ -109,8 +113,7 @@ public class OTrackedList<T> extends ArrayList<T> implements ORecordElement, OTr
     final T oldValue = super.set(index, element);
 
     if (oldValue != null && !oldValue.equals(element)) {
-      if (oldValue instanceof ODocument)
-        ODocumentInternal.removeOwner((ODocument) oldValue, this);
+      if (oldValue instanceof ODocument) ODocumentInternal.removeOwner((ODocument) oldValue, this);
 
       addOwnerToEmbeddedDoc(element);
     }
@@ -132,8 +135,7 @@ public class OTrackedList<T> extends ArrayList<T> implements ORecordElement, OTr
     if (embeddedCollection && e instanceof ODocument && !((ODocument) e).getIdentity().isValid()) {
       ODocumentInternal.addOwner((ODocument) e, this);
     }
-    if (e instanceof ODocument)
-      ORecordInternal.track(sourceRecord, (ODocument) e);
+    if (e instanceof ODocument) ORecordInternal.track(sourceRecord, (ODocument) e);
   }
 
   @Override
@@ -154,8 +156,7 @@ public class OTrackedList<T> extends ArrayList<T> implements ORecordElement, OTr
   }
 
   private void updateEvent(int index, T oldValue, T newValue) {
-    if (oldValue instanceof ODocument)
-      ODocumentInternal.removeOwner((ODocument) oldValue, this);
+    if (oldValue instanceof ODocument) ODocumentInternal.removeOwner((ODocument) oldValue, this);
 
     addOwnerToEmbeddedDoc(newValue);
 
@@ -190,8 +191,7 @@ public class OTrackedList<T> extends ArrayList<T> implements ORecordElement, OTr
   @Override
   public boolean removeAll(Collection<?> c) {
     boolean removed = false;
-    for (Object o : c)
-      removed = removed | remove(o);
+    for (Object o : c) removed = removed | remove(o);
 
     return removed;
   }
@@ -221,30 +221,30 @@ public class OTrackedList<T> extends ArrayList<T> implements ORecordElement, OTr
 
   @Override
   public void setDirtyNoChanged() {
-    if (sourceRecord != null)
-      sourceRecord.setDirtyNoChanged();
+    if (sourceRecord != null) sourceRecord.setDirtyNoChanged();
   }
 
-  public List<T> returnOriginalState(final List<OMultiValueChangeEvent<Integer, T>> multiValueChangeEvents) {
+  public List<T> returnOriginalState(
+      final List<OMultiValueChangeEvent<Integer, T>> multiValueChangeEvents) {
     final List<T> reverted = new ArrayList<T>(this);
 
-    final ListIterator<OMultiValueChangeEvent<Integer, T>> listIterator = multiValueChangeEvents
-        .listIterator(multiValueChangeEvents.size());
+    final ListIterator<OMultiValueChangeEvent<Integer, T>> listIterator =
+        multiValueChangeEvents.listIterator(multiValueChangeEvents.size());
 
     while (listIterator.hasPrevious()) {
       final OMultiValueChangeEvent<Integer, T> event = listIterator.previous();
       switch (event.getChangeType()) {
-      case ADD:
-        reverted.remove(event.getKey().intValue());
-        break;
-      case REMOVE:
-        reverted.add(event.getKey(), event.getOldValue());
-        break;
-      case UPDATE:
-        reverted.set(event.getKey(), event.getOldValue());
-        break;
-      default:
-        throw new IllegalArgumentException("Invalid change type : " + event.getChangeType());
+        case ADD:
+          reverted.remove(event.getKey().intValue());
+          break;
+        case REMOVE:
+          reverted.add(event.getKey(), event.getOldValue());
+          break;
+        case UPDATE:
+          reverted.set(event.getKey(), event.getOldValue());
+          break;
+        default:
+          throw new IllegalArgumentException("Invalid change type : " + event.getChangeType());
       }
     }
 
@@ -316,5 +316,4 @@ public class OTrackedList<T> extends ArrayList<T> implements ORecordElement, OTr
   public OMultiValueChangeTimeLine<Integer, T> getTransactionTimeLine() {
     return tracker.getTransactionTimeLine();
   }
-
 }

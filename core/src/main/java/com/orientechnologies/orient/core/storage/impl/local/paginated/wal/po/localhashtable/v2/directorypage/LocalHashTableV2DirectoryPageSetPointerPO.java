@@ -6,19 +6,18 @@ import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.WALRecordTypes;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.PageOperationRecord;
 import com.orientechnologies.orient.core.storage.index.hashindex.local.v2.DirectoryPageV2;
-
 import java.nio.ByteBuffer;
 
 public final class LocalHashTableV2DirectoryPageSetPointerPO extends PageOperationRecord {
-  private int  localNodeIndex;
-  private int  index;
+  private int localNodeIndex;
+  private int index;
   private long pointer;
   private long pastPointer;
 
-  public LocalHashTableV2DirectoryPageSetPointerPO() {
-  }
+  public LocalHashTableV2DirectoryPageSetPointerPO() {}
 
-  public LocalHashTableV2DirectoryPageSetPointerPO(int localNodeIndex, int index, long pointer, long pastPointer) {
+  public LocalHashTableV2DirectoryPageSetPointerPO(
+      int localNodeIndex, int index, long pointer, long pastPointer) {
     this.localNodeIndex = localNodeIndex;
     this.index = index;
     this.pointer = pointer;
@@ -72,7 +71,6 @@ public final class LocalHashTableV2DirectoryPageSetPointerPO extends PageOperati
 
     buffer.putLong(pointer);
     buffer.putLong(pastPointer);
-
   }
 
   @Override

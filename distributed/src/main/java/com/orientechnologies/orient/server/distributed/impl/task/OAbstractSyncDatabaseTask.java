@@ -30,7 +30,6 @@ import com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIR
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
 import com.orientechnologies.orient.server.distributed.task.OAbstractReplicatedTask;
 import com.orientechnologies.orient.server.distributed.task.ODatabaseIsOldException;
-
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
@@ -43,16 +42,16 @@ import java.util.UUID;
  *
  * @author Luca Garulli (l.garulli--at--orientdb.com)
  */
-public abstract class OAbstractSyncDatabaseTask extends OAbstractReplicatedTask implements OCommandOutputListener {
-  public static final int    CHUNK_MAX_SIZE = 8388608;    // 8MB
-  public static final String DEPLOYDB       = "deploydb.";
-  public static final int    FACTORYID      = 14;
+public abstract class OAbstractSyncDatabaseTask extends OAbstractReplicatedTask
+    implements OCommandOutputListener {
+  public static final int CHUNK_MAX_SIZE = 8388608; // 8MB
+  public static final String DEPLOYDB = "deploydb.";
+  public static final int FACTORYID = 14;
 
   protected long lastOperationTimestamp;
   protected long random;
 
-  public OAbstractSyncDatabaseTask() {
-  }
+  public OAbstractSyncDatabaseTask() {}
 
   protected OAbstractSyncDatabaseTask(final long lastOperationTimestamp) {
     random = UUID.randomUUID().getLeastSignificantBits();
@@ -76,10 +75,8 @@ public abstract class OAbstractSyncDatabaseTask extends OAbstractReplicatedTask 
 
   @Override
   public void onMessage(String iText) {
-    if (iText.startsWith("\r\n"))
-      iText = iText.substring(2);
-    if (iText.startsWith("\n"))
-      iText = iText.substring(1);
+    if (iText.startsWith("\r\n")) iText = iText.substring(2);
+    if (iText.startsWith("\n")) iText = iText.substring(1);
 
     OLogManager.instance().info(this, iText);
   }
@@ -89,31 +86,31 @@ public abstract class OAbstractSyncDatabaseTask extends OAbstractReplicatedTask 
     return false;
   }
 
-
-  protected ODistributedDatabase databaseIsOld(ODistributedServerManager iManager, String databaseName,
-      ODistributedDatabase dDatabase) {
+  protected ODistributedDatabase databaseIsOld(
+      ODistributedServerManager iManager, String databaseName, ODistributedDatabase dDatabase) {
     final SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS");
 
-    final String msg = String.format(
-        "Skip deploying delta database '%s' because the requesting server has a most recent database (requester LastOperationOn=%s current LastOperationOn=%s)",
-        databaseName, df.format(new Date(lastOperationTimestamp)),
-        df.format(new Date(dDatabase.getSyncConfiguration().getLastOperationTimestamp())));
-    ODistributedServerLog.error(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.NONE, msg);
+    final String msg =
+        String.format(
+            "Skip deploying delta database '%s' because the requesting server has a most recent database (requester LastOperationOn=%s current LastOperationOn=%s)",
+            databaseName,
+            df.format(new Date(lastOperationTimestamp)),
+            df.format(new Date(dDatabase.getSyncConfiguration().getLastOperationTimestamp())));
+    ODistributedServerLog.error(
+        this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.NONE, msg);
 
     throw new ODatabaseIsOldException(msg);
   }
 
   protected void readOptionalLSN(DataInput in) throws IOException {
     final boolean lastLSNPresent = in.readBoolean();
-    if (lastLSNPresent)
-      lastLSN = new OLogSequenceNumber(in);
+    if (lastLSNPresent) lastLSN = new OLogSequenceNumber(in);
   }
 
   protected void writeOptionalLSN(DataOutput out) throws IOException {
     if (lastLSN != null) {
       out.writeBoolean(true);
       lastLSN.toStream(out);
-    } else
-      out.writeBoolean(false);
+    } else out.writeBoolean(false);
   }
 }

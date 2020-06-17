@@ -10,7 +10,6 @@ import com.orientechnologies.orient.core.index.OIndexManagerAbstract;
 import com.orientechnologies.orient.core.sql.executor.OInternalResultSet;
 import com.orientechnologies.orient.core.sql.executor.OResultInternal;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
-
 import java.util.Map;
 
 public class ODropIndexStatement extends ODDLStatement {
@@ -78,17 +77,13 @@ public class ODropIndexStatement extends ODDLStatement {
 
   @Override
   public boolean equals(Object o) {
-    if (this == o)
-      return true;
-    if (o == null || getClass() != o.getClass())
-      return false;
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
 
     ODropIndexStatement that = (ODropIndexStatement) o;
 
-    if (all != that.all)
-      return false;
-    if (name != null ? !name.equals(that.name) : that.name != null)
-      return false;
+    if (all != that.all) return false;
+    if (name != null ? !name.equals(that.name) : that.name != null) return false;
 
     return true;
   }

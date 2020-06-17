@@ -21,10 +21,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-/**
- *
- * @author richter
- */
+/** @author richter */
 public class CompositeException extends RuntimeException {
   private static final long serialVersionUID = 1L;
   private final List<Throwable> causes = new ArrayList<Throwable>();
@@ -66,5 +63,4 @@ public class CompositeException extends RuntimeException {
       }
     }
   }
-    
 }

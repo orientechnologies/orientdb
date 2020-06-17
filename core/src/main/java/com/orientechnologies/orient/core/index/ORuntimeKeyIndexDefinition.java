@@ -20,38 +20,38 @@
 package com.orientechnologies.orient.core.index;
 
 import com.orientechnologies.common.serialization.types.OBinarySerializer;
-import com.orientechnologies.orient.core.db.record.ORecordElement;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.binary.OBinarySerializerFactory;
-
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
 /**
- * Index definition that use the serializer specified at run-time not based on type. This is useful to have custom type keys for
- * indexes.
+ * Index definition that use the serializer specified at run-time not based on type. This is useful
+ * to have custom type keys for indexes.
  *
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
  */
 public class ORuntimeKeyIndexDefinition<T> extends OAbstractIndexDefinition {
-  private static final long                 serialVersionUID = -8855918974071833818L;
-  private transient    OBinarySerializer<T> serializer;
+  private static final long serialVersionUID = -8855918974071833818L;
+  private transient OBinarySerializer<T> serializer;
 
   @SuppressWarnings("unchecked")
   public ORuntimeKeyIndexDefinition(final byte iId) {
     super();
 
-    serializer = (OBinarySerializer<T>) OBinarySerializerFactory.getInstance().getObjectSerializer(iId);
+    serializer =
+        (OBinarySerializer<T>) OBinarySerializerFactory.getInstance().getObjectSerializer(iId);
     if (serializer == null)
-      throw new OConfigurationException("Runtime index definition cannot find binary serializer with id=" + iId
-          + ". Assure to plug custom serializer into the server.");
+      throw new OConfigurationException(
+          "Runtime index definition cannot find binary serializer with id="
+              + iId
+              + ". Assure to plug custom serializer into the server.");
   }
 
-  public ORuntimeKeyIndexDefinition() {
-  }
+  public ORuntimeKeyIndexDefinition() {}
 
   public List<String> getFields() {
     return Collections.emptyList();
@@ -108,10 +108,14 @@ public class ORuntimeKeyIndexDefinition<T> extends OAbstractIndexDefinition {
 
     final byte keySerializerId = ((Number) document.field("keySerializerId")).byteValue();
     //noinspection unchecked
-    serializer = (OBinarySerializer<T>) OBinarySerializerFactory.getInstance().getObjectSerializer(keySerializerId);
+    serializer =
+        (OBinarySerializer<T>)
+            OBinarySerializerFactory.getInstance().getObjectSerializer(keySerializerId);
     if (serializer == null)
-      throw new OConfigurationException("Runtime index definition cannot find binary serializer with id=" + keySerializerId
-          + ". Assure to plug custom serializer into the server.");
+      throw new OConfigurationException(
+          "Runtime index definition cannot find binary serializer with id="
+              + keySerializerId
+              + ". Assure to plug custom serializer into the server.");
 
     setNullValuesIgnored(!Boolean.FALSE.equals(document.<Boolean>field("nullValuesIgnored")));
   }
@@ -122,10 +126,8 @@ public class ORuntimeKeyIndexDefinition<T> extends OAbstractIndexDefinition {
 
   @Override
   public boolean equals(final Object o) {
-    if (this == o)
-      return true;
-    if (o == null || getClass() != o.getClass())
-      return false;
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
 
     final ORuntimeKeyIndexDefinition<?> that = (ORuntimeKeyIndexDefinition<?>) o;
     return serializer.equals(that.serializer);
@@ -143,9 +145,7 @@ public class ORuntimeKeyIndexDefinition<T> extends OAbstractIndexDefinition {
     return "ORuntimeKeyIndexDefinition{" + "serializer=" + serializer.getId() + '}';
   }
 
-  /**
-   * {@inheritDoc}
-   */
+  /** {@inheritDoc} */
   public String toCreateIndexDDL(final String indexName, final String indexType, String engine) {
     return "create index `" + indexName + "` " + indexType + ' ' + "runtime " + serializer.getId();
   }

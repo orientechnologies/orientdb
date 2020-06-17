@@ -23,7 +23,6 @@ import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.index.engine.OBaseIndexEngine;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.OStorage;
-
 import java.util.Map;
 import java.util.Set;
 
@@ -31,28 +30,37 @@ public interface OIndexFactory {
 
   int getLastVersion(final String algorithm);
 
-  /**
-   * @return List of supported indexes of this factory
-   */
+  /** @return List of supported indexes of this factory */
   Set<String> getTypes();
 
-  /**
-   * @return List of supported algorithms of this factory
-   */
+  /** @return List of supported algorithms of this factory */
   Set<String> getAlgorithms();
 
   /**
    * Creates an index.
-   * 
-   * @param indexType
-   *          index type
+   *
+   * @param indexType index type
    * @return OIndexInternal
-   * @throws OConfigurationException
-   *           if index creation failed
+   * @throws OConfigurationException if index creation failed
    */
-  OIndexInternal createIndex(String name, OStorage storage, String indexType, String algorithm,
-      String valueContainerAlgorithm, ODocument metadata, int version) throws OConfigurationException;
+  OIndexInternal createIndex(
+      String name,
+      OStorage storage,
+      String indexType,
+      String algorithm,
+      String valueContainerAlgorithm,
+      ODocument metadata,
+      int version)
+      throws OConfigurationException;
 
-  OBaseIndexEngine createIndexEngine(int indexId, String algorithm, String name, Boolean durableInNonTxMode, OStorage storage, int version,
-      int apiVersion, boolean multiValue, Map<String, String> engineProperties);
+  OBaseIndexEngine createIndexEngine(
+      int indexId,
+      String algorithm,
+      String name,
+      Boolean durableInNonTxMode,
+      OStorage storage,
+      int version,
+      int apiVersion,
+      boolean multiValue,
+      Map<String, String> engineProperties);
 }

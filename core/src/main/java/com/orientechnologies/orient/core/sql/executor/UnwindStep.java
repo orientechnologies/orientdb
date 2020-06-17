@@ -6,8 +6,12 @@ import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.parser.OUnwind;
-
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 /**
@@ -17,17 +21,18 @@ import java.util.stream.Collectors;
  */
 public class UnwindStep extends AbstractExecutionStep {
 
-  private final OUnwind      unwind;
-  private       List<String> unwindFields;
+  private final OUnwind unwind;
+  private List<String> unwindFields;
 
-  private OResultSet        lastResult      = null;
+  private OResultSet lastResult = null;
   private Iterator<OResult> nextSubsequence = null;
-  private OResult           nextElement     = null;
+  private OResult nextElement = null;
 
   public UnwindStep(OUnwind unwind, OCommandContext ctx, boolean profilingEnabled) {
     super(ctx, profilingEnabled);
     this.unwind = unwind;
-    unwindFields = unwind.getItems().stream().map(x -> x.getStringValue()).collect(Collectors.toList());
+    unwindFields =
+        unwind.getItems().stream().map(x -> x.getStringValue()).collect(Collectors.toList());
   }
 
   @Override
@@ -72,9 +77,7 @@ public class UnwindStep extends AbstractExecutionStep {
       }
 
       @Override
-      public void close() {
-
-      }
+      public void close() {}
 
       @Override
       public Optional<OExecutionPlan> getExecutionPlan() {
@@ -108,10 +111,10 @@ public class UnwindStep extends AbstractExecutionStep {
       nextSubsequence = unwind(nextAggregateItem, unwindFields, ctx).iterator();
 
     } while (true);
-
   }
 
-  private Collection<OResult> unwind(final OResult doc, final List<String> unwindFields, final OCommandContext iContext) {
+  private Collection<OResult> unwind(
+      final OResult doc, final List<String> unwindFields, final OCommandContext iContext) {
     final List<OResult> result = new ArrayList<>();
 
     if (unwindFields.size() == 0) {

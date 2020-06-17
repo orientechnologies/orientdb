@@ -23,22 +23,35 @@ import com.orientechnologies.orient.core.tx.OTransactionIndexChanges;
 import com.orientechnologies.orient.core.tx.OTransactionIndexChangesPerKey;
 import com.orientechnologies.spatial.engine.OLuceneSpatialIndexContainer;
 import com.orientechnologies.spatial.shape.OShapeFactory;
-import org.locationtech.jts.geom.Geometry;
-import org.locationtech.spatial4j.shape.Shape;
-
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import org.locationtech.jts.geom.Geometry;
+import org.locationtech.spatial4j.shape.Shape;
 
 public class OLuceneSpatialIndex extends OLuceneIndexNotUnique {
 
   private final OShapeFactory shapeFactory = OShapeFactory.INSTANCE;
 
-  public OLuceneSpatialIndex(String name, String typeId, String algorithm, int version, OAbstractPaginatedStorage storage,
-      String valueContainerAlgorithm, ODocument metadata, final int binaryFormatVersion) {
-    super(name, typeId, algorithm, version, storage, valueContainerAlgorithm, metadata, binaryFormatVersion);
-
+  public OLuceneSpatialIndex(
+      String name,
+      String typeId,
+      String algorithm,
+      int version,
+      OAbstractPaginatedStorage storage,
+      String valueContainerAlgorithm,
+      ODocument metadata,
+      final int binaryFormatVersion) {
+    super(
+        name,
+        typeId,
+        algorithm,
+        version,
+        storage,
+        valueContainerAlgorithm,
+        metadata,
+        binaryFormatVersion);
   }
 
   @Override
@@ -54,13 +67,16 @@ public class OLuceneSpatialIndex extends OLuceneIndexNotUnique {
       final OTransactionIndexChangesPerKey changes) {
 
     try {
-      return storage.callIndexEngine(false, indexId, engine -> {
-        if (((OLuceneSpatialIndexContainer) engine).isLegacy()) {
-          return OLuceneSpatialIndex.super.interpretTxKeyChanges(changes);
-        } else {
-          return interpretAsSpatial(changes.entries);
-        }
-      });
+      return storage.callIndexEngine(
+          false,
+          indexId,
+          engine -> {
+            if (((OLuceneSpatialIndexContainer) engine).isLegacy()) {
+              return OLuceneSpatialIndex.super.interpretTxKeyChanges(changes);
+            } else {
+              return interpretAsSpatial(changes.entries);
+            }
+          });
     } catch (OInvalidIndexEngineIdException e) {
       e.printStackTrace();
     }
@@ -103,14 +119,14 @@ public class OLuceneSpatialIndex extends OLuceneIndexNotUnique {
         counter = 0;
       }
       switch (entry.operation) {
-      case PUT:
-        counter++;
-        break;
-      case REMOVE:
-        counter--;
-        break;
-      case CLEAR:
-        break;
+        case PUT:
+          counter++;
+          break;
+        case REMOVE:
+          counter--;
+          break;
+        case CLEAR:
+          break;
       }
       counters.put(entry.value, counter);
     }
@@ -118,17 +134,17 @@ public class OLuceneSpatialIndex extends OLuceneIndexNotUnique {
     for (Map.Entry<OIdentifiable, Integer> entry : counters.entrySet()) {
       OIdentifiable oIdentifiable = entry.getKey();
       switch (entry.getValue()) {
-      case 1:
-
-        newChanges
-            .add(new OTransactionIndexChangesPerKey.OTransactionIndexEntry(oIdentifiable, OTransactionIndexChanges.OPERATION.PUT));
-        break;
-      case -1:
-        newChanges.add(
-            new OTransactionIndexChangesPerKey.OTransactionIndexEntry(oIdentifiable, OTransactionIndexChanges.OPERATION.REMOVE));
-        break;
+        case 1:
+          newChanges.add(
+              new OTransactionIndexChangesPerKey.OTransactionIndexEntry(
+                  oIdentifiable, OTransactionIndexChanges.OPERATION.PUT));
+          break;
+        case -1:
+          newChanges.add(
+              new OTransactionIndexChangesPerKey.OTransactionIndexEntry(
+                  oIdentifiable, OTransactionIndexChanges.OPERATION.REMOVE));
+          break;
       }
-
     }
     return newChanges;
   }

@@ -26,7 +26,6 @@ import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.config.OServerConfigurationManager;
 import com.orientechnologies.orient.server.config.OServerUserConfiguration;
 import com.orientechnologies.orient.server.security.OSecurityAuthenticatorAbstract;
-
 import java.util.List;
 import java.util.Locale;
 import java.util.concurrent.ConcurrentHashMap;
@@ -38,7 +37,8 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 public class ODefaultPasswordAuthenticator extends OSecurityAuthenticatorAbstract {
   // Holds a map of the users specified in the security.json file.
-  private ConcurrentHashMap<String, OServerUserConfiguration> usersMap = new ConcurrentHashMap<String, OServerUserConfiguration>();
+  private ConcurrentHashMap<String, OServerUserConfiguration> usersMap =
+      new ConcurrentHashMap<String, OServerUserConfiguration>();
 
   // OSecurityComponent
   // Called once the Server is running.
@@ -47,7 +47,10 @@ public class ODefaultPasswordAuthenticator extends OSecurityAuthenticatorAbstrac
   }
 
   // OSecurityComponent
-  public void config(final OServer oServer, final OServerConfigurationManager serverCfg, final ODocument jsonConfig) {
+  public void config(
+      final OServer oServer,
+      final OServerConfigurationManager serverCfg,
+      final ODocument jsonConfig) {
     super.config(oServer, serverCfg, jsonConfig);
 
     try {
@@ -61,8 +64,7 @@ public class ODefaultPasswordAuthenticator extends OSecurityAuthenticatorAbstrac
           if (userCfg != null) {
             String checkName = userCfg.name;
 
-            if (!isCaseSensitive())
-              checkName = checkName.toLowerCase(Locale.ENGLISH);
+            if (!isCaseSensitive()) checkName = checkName.toLowerCase(Locale.ENGLISH);
 
             usersMap.put(checkName, userCfg);
           }
@@ -82,8 +84,7 @@ public class ODefaultPasswordAuthenticator extends OSecurityAuthenticatorAbstrac
       final String resources = userDoc.field("resources");
       String password = userDoc.field("password");
 
-      if (password == null)
-        password = "";
+      if (password == null) password = "";
 
       userCfg = new OServerUserConfiguration(user, password, resources);
     }
@@ -123,21 +124,18 @@ public class ODefaultPasswordAuthenticator extends OSecurityAuthenticatorAbstrac
   // OSecurityAuthenticator
   // If not supported by the authenticator, return false.
   public boolean isAuthorized(final String username, final String resource) {
-    if (username == null || resource == null)
-      return false;
+    if (username == null || resource == null) return false;
 
     OServerUserConfiguration userCfg = getUser(username);
 
     if (userCfg != null) {
       // Total Access
-      if (userCfg.resources.equals("*"))
-        return true;
+      if (userCfg.resources.equals("*")) return true;
 
       String[] resourceParts = userCfg.resources.split(",");
 
       for (String r : resourceParts) {
-        if (r.equalsIgnoreCase(resource))
-          return true;
+        if (r.equalsIgnoreCase(resource)) return true;
       }
     }
 
@@ -152,8 +150,7 @@ public class ODefaultPasswordAuthenticator extends OSecurityAuthenticatorAbstrac
       if (username != null) {
         String checkName = username;
 
-        if (!isCaseSensitive())
-          checkName = username.toLowerCase(Locale.ENGLISH);
+        if (!isCaseSensitive()) checkName = username.toLowerCase(Locale.ENGLISH);
 
         if (usersMap.containsKey(checkName)) {
           userCfg = usersMap.get(checkName);

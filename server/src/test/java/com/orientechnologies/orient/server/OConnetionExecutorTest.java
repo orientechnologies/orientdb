@@ -1,5 +1,10 @@
 package com.orientechnologies.orient.server;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
+
+
 import com.orientechnologies.orient.client.remote.OBinaryResponse;
 import com.orientechnologies.orient.client.remote.message.OBatchOperationsRequest;
 import com.orientechnologies.orient.client.remote.message.OBatchOperationsResponse;
@@ -13,6 +18,9 @@ import com.orientechnologies.orient.core.serialization.serializer.record.binary.
 import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import com.orientechnologies.orient.server.network.protocol.ONetworkProtocolData;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.stream.Collectors;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -20,28 +28,15 @@ import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.stream.Collectors;
-
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
-
-/**
- * Created by tglman on 29/12/16.
- */
+/** Created by tglman on 29/12/16. */
 public class OConnetionExecutorTest {
 
-  @Mock
-  private OServer           server;
-  @Mock
-  private OClientConnection connection;
+  @Mock private OServer server;
+  @Mock private OClientConnection connection;
 
-  @Mock
-  private ONetworkProtocolData data;
+  @Mock private ONetworkProtocolData data;
 
-  private OrientDB                  orientDb;
+  private OrientDB orientDb;
   private ODatabaseDocumentInternal database;
 
   @Before
@@ -49,7 +44,9 @@ public class OConnetionExecutorTest {
     MockitoAnnotations.initMocks(this);
     orientDb = new OrientDB("embedded:./", OrientDBConfig.defaultConfig());
     orientDb.create(OConnetionExecutorTest.class.getSimpleName(), ODatabaseType.MEMORY);
-    database = (ODatabaseDocumentInternal) orientDb.open(OConnetionExecutorTest.class.getSimpleName(), "admin", "admin");
+    database =
+        (ODatabaseDocumentInternal)
+            orientDb.open(OConnetionExecutorTest.class.getSimpleName(), "admin", "admin");
     database.createClass("test");
     Mockito.when(connection.getDatabase()).thenReturn(database);
     Mockito.when(connection.getData()).thenReturn(data);

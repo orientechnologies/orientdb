@@ -15,13 +15,13 @@ public class ORawTriple<K, T, V> {
 
   @Override
   public boolean equals(Object o) {
-    if (this == o)
-      return true;
-    if (o == null || getClass() != o.getClass())
-      return false;
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
 
     ORawTriple<?, ?, ?> that = (ORawTriple<?, ?, ?>) o;
-    return Objects.equals(first, that.first) && Objects.equals(second, that.second) && Objects.equals(third, that.third);
+    return Objects.equals(first, that.first)
+        && Objects.equals(second, that.second)
+        && Objects.equals(third, that.third);
   }
 
   @Override

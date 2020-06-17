@@ -6,7 +6,6 @@ import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.executor.OResultInternal;
-
 import java.util.Map;
 
 public class OLimit extends SimpleNode {
@@ -57,23 +56,22 @@ public class OLimit extends SimpleNode {
     return result;
   }
 
-  @Override public boolean equals(Object o) {
-    if (this == o)
-      return true;
-    if (o == null || getClass() != o.getClass())
-      return false;
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
 
     OLimit oLimit = (OLimit) o;
 
-    if (num != null ? !num.equals(oLimit.num) : oLimit.num != null)
-      return false;
+    if (num != null ? !num.equals(oLimit.num) : oLimit.num != null) return false;
     if (inputParam != null ? !inputParam.equals(oLimit.inputParam) : oLimit.inputParam != null)
       return false;
 
     return true;
   }
 
-  @Override public int hashCode() {
+  @Override
+  public int hashCode() {
     int result = num != null ? num.hashCode() : 0;
     result = 31 * result + (inputParam != null ? inputParam.hashCode() : 0);
     return result;

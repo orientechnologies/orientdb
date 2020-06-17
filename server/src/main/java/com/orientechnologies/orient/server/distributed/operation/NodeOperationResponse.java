@@ -13,5 +13,4 @@ public interface NodeOperationResponse {
   default boolean isOk() {
     return true;
   }
-
 }

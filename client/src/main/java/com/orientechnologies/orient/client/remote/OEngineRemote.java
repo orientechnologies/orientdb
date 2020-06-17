@@ -21,7 +21,6 @@ package com.orientechnologies.orient.client.remote;
 
 import com.orientechnologies.orient.core.engine.OEngineAbstract;
 import com.orientechnologies.orient.core.exception.OStorageException;
-
 import java.util.Map;
 
 /**
@@ -30,21 +29,23 @@ import java.util.Map;
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
  */
 public class OEngineRemote extends OEngineAbstract {
-  public static final String NAME   = "remote";
+  public static final String NAME = "remote";
   public static final String PREFIX = NAME + ":";
 
-  public OEngineRemote() {
-  }
+  public OEngineRemote() {}
 
-  public OStorageRemote createStorage(final String iURL, final Map<String, String> iConfiguration, long maxWalSegSize,
-      long doubleWriteLogMaxSegSize, int storageId) {
+  public OStorageRemote createStorage(
+      final String iURL,
+      final Map<String, String> iConfiguration,
+      long maxWalSegSize,
+      long doubleWriteLogMaxSegSize,
+      int storageId) {
     throw new OStorageException("deprecated");
   }
 
   @Override
   public void startup() {
     super.startup();
-
   }
 
   @Override
@@ -60,5 +61,4 @@ public class OEngineRemote extends OEngineAbstract {
   public String getName() {
     return NAME;
   }
-
 }

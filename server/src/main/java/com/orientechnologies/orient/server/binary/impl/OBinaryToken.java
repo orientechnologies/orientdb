@@ -10,19 +10,19 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 
 public class OBinaryToken implements OToken {
 
-  private boolean    valid;
-  private boolean    verified;
-  private String     userName;
-  private String     database;
-  private long       expiry;
-  private ORID       rid;
-  private String     databaseType;
-  private short      protocolVersion;
-  private String     serializer;
-  private String     driverName;
-  private String     driverVersion;
+  private boolean valid;
+  private boolean verified;
+  private String userName;
+  private String database;
+  private long expiry;
+  private ORID rid;
+  private String databaseType;
+  private short protocolVersion;
+  private String serializer;
+  private String driverName;
+  private String driverVersion;
   private OJwtHeader header;
-  private boolean    serverUser;
+  private boolean serverUser;
 
   @Override
   public boolean getIsVerified() {
@@ -62,7 +62,6 @@ public class OBinaryToken implements OToken {
       }
     }
     return null;
-
   }
 
   @Override
@@ -154,5 +153,4 @@ public class OBinaryToken implements OToken {
     long now = System.currentTimeMillis();
     return getExpiry() > now;
   }
-  
 }

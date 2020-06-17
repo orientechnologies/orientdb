@@ -20,23 +20,22 @@
 
 package com.orientechnologies.orient.graph;
 
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
-
 import com.tinkerpop.blueprints.impls.orient.OrientGraph;
-
 import java.util.Locale;
+import org.junit.AfterClass;
 
 /**
  * Base class for tests against transactional Graphs.
- * 
+ *
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
  */
 public abstract class GraphTxAbstractTest {
   protected static OrientGraph graph;
 
   public static enum ENV {
-    DEV, RELEASE, CI
+    DEV,
+    RELEASE,
+    CI
   }
 
   public static ENV getEnvironment() {
@@ -47,15 +46,13 @@ public abstract class GraphTxAbstractTest {
     } catch (IllegalArgumentException e) {
     }
 
-    if (result == null)
-      result = ENV.DEV;
+    if (result == null) result = ENV.DEV;
 
     return result;
   }
 
   public static String getStorageType() {
-    if (getEnvironment().equals(ENV.DEV))
-      return "memory";
+    if (getEnvironment().equals(ENV.DEV)) return "memory";
 
     return "plocal";
   }
@@ -68,21 +65,16 @@ public abstract class GraphTxAbstractTest {
       System.out.println("buildDirectory = " + buildDirectory);
       final String url = System.getProperty("url");
 
-      if (url != null)
-        graph = new OrientGraph(url);
-      else
-        graph = new OrientGraph(storageType + ":" + buildDirectory + "/" + dbName);
+      if (url != null) graph = new OrientGraph(url);
+      else graph = new OrientGraph(storageType + ":" + buildDirectory + "/" + dbName);
 
       if (!graph.getRawGraph().getURL().startsWith("remote:")) {
         graph.drop();
 
-        if (url != null)
-          graph = new OrientGraph(url);
-        else
-          graph = new OrientGraph(storageType + ":" + buildDirectory + "/" + dbName);
+        if (url != null) graph = new OrientGraph(url);
+        else graph = new OrientGraph(storageType + ":" + buildDirectory + "/" + dbName);
       }
     }
-
   }
 
   @AfterClass
@@ -92,5 +84,4 @@ public abstract class GraphTxAbstractTest {
       graph = null;
     }
   }
-
 }

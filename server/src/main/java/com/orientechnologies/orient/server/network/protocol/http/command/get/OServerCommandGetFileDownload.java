@@ -15,9 +15,6 @@
  */
 package com.orientechnologies.orient.server.network.protocol.http.command.get;
 
-import java.io.IOException;
-import java.util.Date;
-
 import com.orientechnologies.common.util.OPatternConst;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.id.ORecordId;
@@ -31,17 +28,21 @@ import com.orientechnologies.orient.server.network.protocol.http.OHttpRequest;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpResponse;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpUtils;
 import com.orientechnologies.orient.server.network.protocol.http.command.OServerCommandAuthenticatedDbAbstract;
+import java.io.IOException;
+import java.util.Date;
 
-/**
- * @author Luca Molino (molino.luca--at--gmail.com)
- */
+/** @author Luca Molino (molino.luca--at--gmail.com) */
 public class OServerCommandGetFileDownload extends OServerCommandAuthenticatedDbAbstract {
 
-  private static final String[] NAMES = { "GET|fileDownload/*" };
+  private static final String[] NAMES = {"GET|fileDownload/*"};
 
   @Override
   public boolean execute(OHttpRequest iRequest, OHttpResponse iResponse) throws Exception {
-    String[] urlParts = checkSyntax(iRequest.getUrl(), 3, "Syntax error: fileDownload/<database>/rid/[/<fileName>][/<fileType>].");
+    String[] urlParts =
+        checkSyntax(
+            iRequest.getUrl(),
+            3,
+            "Syntax error: fileDownload/<database>/rid/[/<fileName>][/<fileType>].");
 
     final String fileName = urlParts.length > 3 ? encodeResponseText(urlParts[3]) : "unknown";
 
@@ -64,36 +65,66 @@ public class OServerCommandGetFileDownload extends OServerCommandAuthenticatedDb
       response = db.load(new ORecordId(rid));
       if (response != null) {
         if (response instanceof OBlob) {
-          sendORecordBinaryFileContent(iRequest, iResponse, OHttpUtils.STATUS_OK_CODE, OHttpUtils.STATUS_OK_DESCRIPTION, fileType,
-              (OBlob) response, fileName);
+          sendORecordBinaryFileContent(
+              iRequest,
+              iResponse,
+              OHttpUtils.STATUS_OK_CODE,
+              OHttpUtils.STATUS_OK_DESCRIPTION,
+              fileType,
+              (OBlob) response,
+              fileName);
         } else if (response instanceof ODocument) {
-          for (OProperty prop : ODocumentInternal.getImmutableSchemaClass(((ODocument) response)).properties()) {
+          for (OProperty prop :
+              ODocumentInternal.getImmutableSchemaClass(((ODocument) response)).properties()) {
             if (prop.getType().equals(OType.BINARY))
-              sendBinaryFieldFileContent(iRequest, iResponse, OHttpUtils.STATUS_OK_CODE, OHttpUtils.STATUS_OK_DESCRIPTION, fileType,
-                  (byte[]) ((ODocument) response).field(prop.getName()), fileName);
+              sendBinaryFieldFileContent(
+                  iRequest,
+                  iResponse,
+                  OHttpUtils.STATUS_OK_CODE,
+                  OHttpUtils.STATUS_OK_DESCRIPTION,
+                  fileType,
+                  (byte[]) ((ODocument) response).field(prop.getName()),
+                  fileName);
           }
         } else {
-          iResponse.send(OHttpUtils.STATUS_INVALIDMETHOD_CODE, "Record requested is not a file nor has a readable schema",
-              OHttpUtils.CONTENT_TEXT_PLAIN, "Record requested is not a file nor has a readable schema", null);
+          iResponse.send(
+              OHttpUtils.STATUS_INVALIDMETHOD_CODE,
+              "Record requested is not a file nor has a readable schema",
+              OHttpUtils.CONTENT_TEXT_PLAIN,
+              "Record requested is not a file nor has a readable schema",
+              null);
         }
       } else {
-        iResponse.send(OHttpUtils.STATUS_INVALIDMETHOD_CODE, "Record requested not exists", OHttpUtils.CONTENT_TEXT_PLAIN,
-            "Record requestes not exists", null);
+        iResponse.send(
+            OHttpUtils.STATUS_INVALIDMETHOD_CODE,
+            "Record requested not exists",
+            OHttpUtils.CONTENT_TEXT_PLAIN,
+            "Record requestes not exists",
+            null);
       }
     } catch (Exception e) {
-      iResponse
-          .send(OHttpUtils.STATUS_INTERNALERROR_CODE, OHttpUtils.STATUS_INTERNALERROR_DESCRIPTION, OHttpUtils.CONTENT_TEXT_PLAIN,
-              e.getMessage(), null);
+      iResponse.send(
+          OHttpUtils.STATUS_INTERNALERROR_CODE,
+          OHttpUtils.STATUS_INTERNALERROR_DESCRIPTION,
+          OHttpUtils.CONTENT_TEXT_PLAIN,
+          e.getMessage(),
+          null);
     } finally {
-      if (db != null)
-        db.close();
+      if (db != null) db.close();
     }
 
     return false;
   }
 
-  protected void sendORecordBinaryFileContent(final OHttpRequest iRequest, final OHttpResponse iResponse, final int iCode,
-      final String iReason, final String iContentType, final OBlob record, final String iFileName) throws IOException {
+  protected void sendORecordBinaryFileContent(
+      final OHttpRequest iRequest,
+      final OHttpResponse iResponse,
+      final int iCode,
+      final String iReason,
+      final String iContentType,
+      final OBlob record,
+      final String iFileName)
+      throws IOException {
     iResponse.writeStatus(iCode, iReason);
     iResponse.writeHeaders(iContentType);
     iResponse.writeLine("Content-Disposition: attachment; filename=" + iFileName);
@@ -106,8 +137,15 @@ public class OServerCommandGetFileDownload extends OServerCommandAuthenticatedDb
     iResponse.flush();
   }
 
-  protected void sendBinaryFieldFileContent(final OHttpRequest iRequest, final OHttpResponse iResponse, final int iCode,
-      final String iReason, final String iContentType, final byte[] record, final String iFileName) throws IOException {
+  protected void sendBinaryFieldFileContent(
+      final OHttpRequest iRequest,
+      final OHttpResponse iResponse,
+      final int iCode,
+      final String iReason,
+      final String iContentType,
+      final byte[] record,
+      final String iFileName)
+      throws IOException {
     iResponse.writeStatus(iCode, iReason);
     iResponse.writeHeaders(iContentType);
     iResponse.writeLine("Content-Disposition: attachment; filename=" + iFileName);
@@ -130,5 +168,4 @@ public class OServerCommandGetFileDownload extends OServerCommandAuthenticatedDb
     iText = OPatternConst.PATTERN_AMP.matcher(iText).replaceAll("%26");
     return iText;
   }
-
 }

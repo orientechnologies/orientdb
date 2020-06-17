@@ -7,11 +7,10 @@ import com.orientechnologies.orient.core.storage.cache.OCacheEntryImpl;
 import com.orientechnologies.orient.core.storage.cache.OCachePointer;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.PageOperationRecord;
 import com.orientechnologies.orient.core.storage.index.sbtree.multivalue.v2.CellBTreeMultiValueV2EntryPoint;
-import org.junit.Assert;
-import org.junit.Test;
-
 import java.nio.ByteBuffer;
 import java.util.List;
+import org.junit.Assert;
+import org.junit.Test;
 
 public class CellBTreeMultiValueV2EntryPointSetPagesSizePOTest {
   @Test
@@ -31,7 +30,8 @@ public class CellBTreeMultiValueV2EntryPointSetPagesSizePOTest {
       entry.clearPageOperations();
 
       final OPointer restoredPointer = byteBufferPool.acquireDirect(false);
-      final OCachePointer restoredCachePointer = new OCachePointer(restoredPointer, byteBufferPool, 0, 0);
+      final OCachePointer restoredCachePointer =
+          new OCachePointer(restoredPointer, byteBufferPool, 0, 0);
       final OCacheEntry restoredCacheEntry = new OCacheEntryImpl(0, 0, restoredCachePointer);
 
       final ByteBuffer originalBuffer = cachePointer.getBufferDuplicate();
@@ -49,10 +49,11 @@ public class CellBTreeMultiValueV2EntryPointSetPagesSizePOTest {
 
       Assert.assertTrue(operations.get(0) instanceof CellBTreeMultiValueV2EntryPointSetPagesSizePO);
 
-      final CellBTreeMultiValueV2EntryPointSetPagesSizePO pageOperation = (CellBTreeMultiValueV2EntryPointSetPagesSizePO) operations
-          .get(0);
+      final CellBTreeMultiValueV2EntryPointSetPagesSizePO pageOperation =
+          (CellBTreeMultiValueV2EntryPointSetPagesSizePO) operations.get(0);
 
-      CellBTreeMultiValueV2EntryPoint restoredBucket = new CellBTreeMultiValueV2EntryPoint(restoredCacheEntry);
+      CellBTreeMultiValueV2EntryPoint restoredBucket =
+          new CellBTreeMultiValueV2EntryPoint(restoredCacheEntry);
 
       Assert.assertEquals(42, restoredBucket.getPagesSize());
 
@@ -89,10 +90,11 @@ public class CellBTreeMultiValueV2EntryPointSetPagesSizePOTest {
       final List<PageOperationRecord> operations = entry.getPageOperations();
 
       Assert.assertTrue(operations.get(0) instanceof CellBTreeMultiValueV2EntryPointSetPagesSizePO);
-      final CellBTreeMultiValueV2EntryPointSetPagesSizePO pageOperation = (CellBTreeMultiValueV2EntryPointSetPagesSizePO) operations
-          .get(0);
+      final CellBTreeMultiValueV2EntryPointSetPagesSizePO pageOperation =
+          (CellBTreeMultiValueV2EntryPointSetPagesSizePO) operations.get(0);
 
-      final CellBTreeMultiValueV2EntryPoint restoredBucket = new CellBTreeMultiValueV2EntryPoint(entry);
+      final CellBTreeMultiValueV2EntryPoint restoredBucket =
+          new CellBTreeMultiValueV2EntryPoint(entry);
 
       Assert.assertEquals(24, restoredBucket.getPagesSize());
 
@@ -108,7 +110,8 @@ public class CellBTreeMultiValueV2EntryPointSetPagesSizePOTest {
 
   @Test
   public void testSerialization() {
-    CellBTreeMultiValueV2EntryPointSetPagesSizePO operation = new CellBTreeMultiValueV2EntryPointSetPagesSizePO(12, 21);
+    CellBTreeMultiValueV2EntryPointSetPagesSizePO operation =
+        new CellBTreeMultiValueV2EntryPointSetPagesSizePO(12, 21);
 
     operation.setFileId(42);
     operation.setPageIndex(24);
@@ -120,7 +123,8 @@ public class CellBTreeMultiValueV2EntryPointSetPagesSizePOTest {
 
     Assert.assertEquals(serializedSize + 1, pos);
 
-    CellBTreeMultiValueV2EntryPointSetPagesSizePO restoredOperation = new CellBTreeMultiValueV2EntryPointSetPagesSizePO();
+    CellBTreeMultiValueV2EntryPointSetPagesSizePO restoredOperation =
+        new CellBTreeMultiValueV2EntryPointSetPagesSizePO();
     restoredOperation.fromStream(stream, 1);
 
     Assert.assertEquals(42, restoredOperation.getFileId());
@@ -130,5 +134,4 @@ public class CellBTreeMultiValueV2EntryPointSetPagesSizePOTest {
     Assert.assertEquals(12, restoredOperation.getPagesSize());
     Assert.assertEquals(21, restoredOperation.getPrevPagesSize());
   }
-
 }

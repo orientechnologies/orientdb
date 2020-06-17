@@ -1,9 +1,8 @@
 package com.orientechnologies.common.comparator;
 
+import java.util.Comparator;
 import org.junit.Assert;
 import org.junit.Test;
-
-import java.util.Comparator;
 
 /**
  * @author Andrey Lomakin (a.lomakin-at-orientdb.com)
@@ -11,13 +10,13 @@ import java.util.Comparator;
  * @since 11.07.12
  */
 public class UnsafeComparatorTest {
-  private OUnsafeByteArrayComparator   comparator   = OUnsafeByteArrayComparator.INSTANCE;
+  private OUnsafeByteArrayComparator comparator = OUnsafeByteArrayComparator.INSTANCE;
   private OUnsafeByteArrayComparatorV2 comparatorV2 = OUnsafeByteArrayComparatorV2.INSTANCE;
 
   @Test
   public void testOneByteArray() {
-    final byte[] keyOne = new byte[] { 1 };
-    final byte[] keyTwo = new byte[] { 2 };
+    final byte[] keyOne = new byte[] {1};
+    final byte[] keyTwo = new byte[] {2};
 
     assertCompareTwoKeys(comparator, keyOne, keyTwo);
     assertCompareTwoKeys(comparatorV2, keyOne, keyTwo);
@@ -25,8 +24,8 @@ public class UnsafeComparatorTest {
 
   @Test
   public void testOneLongArray() {
-    final byte[] keyOne = new byte[] { 0, 1, 0, 0, 0, 0, 0, 0 };
-    final byte[] keyTwo = new byte[] { 1, 0, 0, 0, 0, 0, 0, 0 };
+    final byte[] keyOne = new byte[] {0, 1, 0, 0, 0, 0, 0, 0};
+    final byte[] keyTwo = new byte[] {1, 0, 0, 0, 0, 0, 0, 0};
 
     assertCompareTwoKeys(comparator, keyOne, keyTwo);
     assertCompareTwoKeys(comparatorV2, keyOne, keyTwo);
@@ -34,14 +33,15 @@ public class UnsafeComparatorTest {
 
   @Test
   public void testOneLongArrayAndByte() {
-    final byte[] keyOne = new byte[] { 1, 1, 0, 0, 0, 0, 0, 0, 0 };
-    final byte[] keyTwo = new byte[] { 1, 1, 0, 0, 0, 0, 0, 0, 1 };
+    final byte[] keyOne = new byte[] {1, 1, 0, 0, 0, 0, 0, 0, 0};
+    final byte[] keyTwo = new byte[] {1, 1, 0, 0, 0, 0, 0, 0, 1};
 
     assertCompareTwoKeys(comparator, keyOne, keyTwo);
     assertCompareTwoKeys(comparatorV2, keyOne, keyTwo);
   }
 
-  private void assertCompareTwoKeys(final Comparator<byte[]> comparator, byte[] keyOne, byte[] keyTwo) {
+  private void assertCompareTwoKeys(
+      final Comparator<byte[]> comparator, byte[] keyOne, byte[] keyTwo) {
     Assert.assertTrue(comparator.compare(keyOne, keyTwo) < 0);
     Assert.assertTrue(comparator.compare(keyTwo, keyOne) > 0);
     Assert.assertTrue(comparator.compare(keyTwo, keyTwo) == 0);

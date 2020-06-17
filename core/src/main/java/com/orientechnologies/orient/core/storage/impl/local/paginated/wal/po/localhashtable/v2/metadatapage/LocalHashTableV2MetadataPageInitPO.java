@@ -14,7 +14,7 @@ public final class LocalHashTableV2MetadataPageInitPO extends PageOperationRecor
 
   @Override
   public void undo(OCacheEntry cacheEntry) {
-    //do nothing
+    // do nothing
   }
 
   @Override

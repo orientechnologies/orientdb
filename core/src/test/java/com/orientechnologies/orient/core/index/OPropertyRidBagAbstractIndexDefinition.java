@@ -5,11 +5,14 @@ import com.orientechnologies.orient.core.db.record.OMultiValueChangeEvent;
 import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
-
-import java.util.*;
 
 /**
  * @author Andrey Lomakin (a.lomakin-at-orientdb.com)
@@ -137,8 +140,9 @@ public abstract class OPropertyRidBagAbstractIndexDefinition {
     final Map<Object, Integer> keysToAdd = new HashMap<Object, Integer>();
     final Map<Object, Integer> keysToRemove = new HashMap<Object, Integer>();
 
-    final OMultiValueChangeEvent<OIdentifiable, OIdentifiable> multiValueChangeEvent = new OMultiValueChangeEvent<OIdentifiable, OIdentifiable>(
-        OMultiValueChangeEvent.OChangeType.ADD, new ORecordId("#1:12"), new ORecordId("#1:12"));
+    final OMultiValueChangeEvent<OIdentifiable, OIdentifiable> multiValueChangeEvent =
+        new OMultiValueChangeEvent<OIdentifiable, OIdentifiable>(
+            OMultiValueChangeEvent.OChangeType.ADD, new ORecordId("#1:12"), new ORecordId("#1:12"));
     propertyIndex.processChangeEvent(multiValueChangeEvent, keysToAdd, keysToRemove);
 
     final Map<Object, Integer> addedKeys = new HashMap<Object, Integer>();
@@ -154,10 +158,12 @@ public abstract class OPropertyRidBagAbstractIndexDefinition {
   public void testProcessChangeEventAddTwoTimes() {
     final Map<Object, Integer> keysToAdd = new HashMap<Object, Integer>();
     final Map<Object, Integer> keysToRemove = new HashMap<Object, Integer>();
-    final OMultiValueChangeEvent<OIdentifiable, OIdentifiable> multiValueChangeEventOne = new OMultiValueChangeEvent<OIdentifiable, OIdentifiable>(
-        OMultiValueChangeEvent.OChangeType.ADD, new ORecordId("#1:12"), new ORecordId("#1:12"));
-    final OMultiValueChangeEvent<OIdentifiable, OIdentifiable> multiValueChangeEventTwo = new OMultiValueChangeEvent<OIdentifiable, OIdentifiable>(
-        OMultiValueChangeEvent.OChangeType.ADD, new ORecordId("#1:12"), new ORecordId("#1:12"));
+    final OMultiValueChangeEvent<OIdentifiable, OIdentifiable> multiValueChangeEventOne =
+        new OMultiValueChangeEvent<OIdentifiable, OIdentifiable>(
+            OMultiValueChangeEvent.OChangeType.ADD, new ORecordId("#1:12"), new ORecordId("#1:12"));
+    final OMultiValueChangeEvent<OIdentifiable, OIdentifiable> multiValueChangeEventTwo =
+        new OMultiValueChangeEvent<OIdentifiable, OIdentifiable>(
+            OMultiValueChangeEvent.OChangeType.ADD, new ORecordId("#1:12"), new ORecordId("#1:12"));
 
     propertyIndex.processChangeEvent(multiValueChangeEventOne, keysToAdd, keysToRemove);
     propertyIndex.processChangeEvent(multiValueChangeEventTwo, keysToAdd, keysToRemove);
@@ -175,10 +181,12 @@ public abstract class OPropertyRidBagAbstractIndexDefinition {
   public void testProcessChangeEventAddTwoValues() {
     final Map<Object, Integer> keysToAdd = new HashMap<Object, Integer>();
     final Map<Object, Integer> keysToRemove = new HashMap<Object, Integer>();
-    final OMultiValueChangeEvent<OIdentifiable, OIdentifiable> multiValueChangeEventOne = new OMultiValueChangeEvent<OIdentifiable, OIdentifiable>(
-        OMultiValueChangeEvent.OChangeType.ADD, new ORecordId("#1:12"), new ORecordId("#1:12"));
-    final OMultiValueChangeEvent<OIdentifiable, OIdentifiable> multiValueChangeEventTwo = new OMultiValueChangeEvent<OIdentifiable, OIdentifiable>(
-        OMultiValueChangeEvent.OChangeType.ADD, new ORecordId("#1:13"), new ORecordId("#1:13"));
+    final OMultiValueChangeEvent<OIdentifiable, OIdentifiable> multiValueChangeEventOne =
+        new OMultiValueChangeEvent<OIdentifiable, OIdentifiable>(
+            OMultiValueChangeEvent.OChangeType.ADD, new ORecordId("#1:12"), new ORecordId("#1:12"));
+    final OMultiValueChangeEvent<OIdentifiable, OIdentifiable> multiValueChangeEventTwo =
+        new OMultiValueChangeEvent<OIdentifiable, OIdentifiable>(
+            OMultiValueChangeEvent.OChangeType.ADD, new ORecordId("#1:13"), new ORecordId("#1:13"));
 
     propertyIndex.processChangeEvent(multiValueChangeEventOne, keysToAdd, keysToRemove);
     propertyIndex.processChangeEvent(multiValueChangeEventTwo, keysToAdd, keysToRemove);
@@ -197,8 +205,12 @@ public abstract class OPropertyRidBagAbstractIndexDefinition {
   public void testProcessChangeEventRemoveOnce() {
     final Map<Object, Integer> keysToAdd = new HashMap<Object, Integer>();
     final Map<Object, Integer> keysToRemove = new HashMap<Object, Integer>();
-    final OMultiValueChangeEvent<OIdentifiable, OIdentifiable> multiValueChangeEvent = new OMultiValueChangeEvent<OIdentifiable, OIdentifiable>(
-        OMultiValueChangeEvent.OChangeType.REMOVE, new ORecordId("#1:12"), null, new ORecordId("#1:12"));
+    final OMultiValueChangeEvent<OIdentifiable, OIdentifiable> multiValueChangeEvent =
+        new OMultiValueChangeEvent<OIdentifiable, OIdentifiable>(
+            OMultiValueChangeEvent.OChangeType.REMOVE,
+            new ORecordId("#1:12"),
+            null,
+            new ORecordId("#1:12"));
 
     propertyIndex.processChangeEvent(multiValueChangeEvent, keysToAdd, keysToRemove);
 
@@ -215,10 +227,18 @@ public abstract class OPropertyRidBagAbstractIndexDefinition {
   public void testProcessChangeEventRemoveTwoTimes() {
     final Map<Object, Integer> keysToAdd = new HashMap<Object, Integer>();
     final Map<Object, Integer> keysToRemove = new HashMap<Object, Integer>();
-    final OMultiValueChangeEvent<OIdentifiable, OIdentifiable> multiValueChangeEventOne = new OMultiValueChangeEvent<OIdentifiable, OIdentifiable>(
-        OMultiValueChangeEvent.OChangeType.REMOVE, new ORecordId("#1:12"), null, new ORecordId("#1:12"));
-    final OMultiValueChangeEvent<OIdentifiable, OIdentifiable> multiValueChangeEventTwo = new OMultiValueChangeEvent<OIdentifiable, OIdentifiable>(
-        OMultiValueChangeEvent.OChangeType.REMOVE, new ORecordId("#1:12"), null, new ORecordId("#1:12"));
+    final OMultiValueChangeEvent<OIdentifiable, OIdentifiable> multiValueChangeEventOne =
+        new OMultiValueChangeEvent<OIdentifiable, OIdentifiable>(
+            OMultiValueChangeEvent.OChangeType.REMOVE,
+            new ORecordId("#1:12"),
+            null,
+            new ORecordId("#1:12"));
+    final OMultiValueChangeEvent<OIdentifiable, OIdentifiable> multiValueChangeEventTwo =
+        new OMultiValueChangeEvent<OIdentifiable, OIdentifiable>(
+            OMultiValueChangeEvent.OChangeType.REMOVE,
+            new ORecordId("#1:12"),
+            null,
+            new ORecordId("#1:12"));
 
     propertyIndex.processChangeEvent(multiValueChangeEventOne, keysToAdd, keysToRemove);
     propertyIndex.processChangeEvent(multiValueChangeEventTwo, keysToAdd, keysToRemove);
@@ -236,10 +256,15 @@ public abstract class OPropertyRidBagAbstractIndexDefinition {
   public void testProcessChangeEventAddRemove() {
     final Map<Object, Integer> keysToAdd = new HashMap<Object, Integer>();
     final Map<Object, Integer> keysToRemove = new HashMap<Object, Integer>();
-    final OMultiValueChangeEvent<OIdentifiable, OIdentifiable> multiValueChangeEventOne = new OMultiValueChangeEvent<OIdentifiable, OIdentifiable>(
-        OMultiValueChangeEvent.OChangeType.ADD, new ORecordId("#1:12"), new ORecordId("#1:12"));
-    final OMultiValueChangeEvent<OIdentifiable, OIdentifiable> multiValueChangeEventTwo = new OMultiValueChangeEvent<OIdentifiable, OIdentifiable>(
-        OMultiValueChangeEvent.OChangeType.REMOVE, new ORecordId("#1:12"), null, new ORecordId("#1:12"));
+    final OMultiValueChangeEvent<OIdentifiable, OIdentifiable> multiValueChangeEventOne =
+        new OMultiValueChangeEvent<OIdentifiable, OIdentifiable>(
+            OMultiValueChangeEvent.OChangeType.ADD, new ORecordId("#1:12"), new ORecordId("#1:12"));
+    final OMultiValueChangeEvent<OIdentifiable, OIdentifiable> multiValueChangeEventTwo =
+        new OMultiValueChangeEvent<OIdentifiable, OIdentifiable>(
+            OMultiValueChangeEvent.OChangeType.REMOVE,
+            new ORecordId("#1:12"),
+            null,
+            new ORecordId("#1:12"));
 
     propertyIndex.processChangeEvent(multiValueChangeEventOne, keysToAdd, keysToRemove);
     propertyIndex.processChangeEvent(multiValueChangeEventTwo, keysToAdd, keysToRemove);
@@ -255,10 +280,15 @@ public abstract class OPropertyRidBagAbstractIndexDefinition {
   public void testProcessChangeEventAddRemoveInvValue() {
     final Map<Object, Integer> keysToAdd = new HashMap<Object, Integer>();
     final Map<Object, Integer> keysToRemove = new HashMap<Object, Integer>();
-    final OMultiValueChangeEvent<OIdentifiable, OIdentifiable> multiValueChangeEventOne = new OMultiValueChangeEvent<OIdentifiable, OIdentifiable>(
-        OMultiValueChangeEvent.OChangeType.ADD, new ORecordId("#1:12"), new ORecordId("#1:12"));
-    final OMultiValueChangeEvent<OIdentifiable, OIdentifiable> multiValueChangeEventTwo = new OMultiValueChangeEvent<OIdentifiable, OIdentifiable>(
-        OMultiValueChangeEvent.OChangeType.REMOVE, new ORecordId("#1:13"), null, new ORecordId("#1:13"));
+    final OMultiValueChangeEvent<OIdentifiable, OIdentifiable> multiValueChangeEventOne =
+        new OMultiValueChangeEvent<OIdentifiable, OIdentifiable>(
+            OMultiValueChangeEvent.OChangeType.ADD, new ORecordId("#1:12"), new ORecordId("#1:12"));
+    final OMultiValueChangeEvent<OIdentifiable, OIdentifiable> multiValueChangeEventTwo =
+        new OMultiValueChangeEvent<OIdentifiable, OIdentifiable>(
+            OMultiValueChangeEvent.OChangeType.REMOVE,
+            new ORecordId("#1:13"),
+            null,
+            new ORecordId("#1:13"));
 
     propertyIndex.processChangeEvent(multiValueChangeEventOne, keysToAdd, keysToRemove);
     propertyIndex.processChangeEvent(multiValueChangeEventTwo, keysToAdd, keysToRemove);
@@ -276,12 +306,18 @@ public abstract class OPropertyRidBagAbstractIndexDefinition {
   public void testProcessChangeEventAddTwiceRemoveOnce() {
     final Map<Object, Integer> keysToAdd = new HashMap<Object, Integer>();
     final Map<Object, Integer> keysToRemove = new HashMap<Object, Integer>();
-    final OMultiValueChangeEvent<OIdentifiable, OIdentifiable> multiValueChangeEventOne = new OMultiValueChangeEvent<OIdentifiable, OIdentifiable>(
-        OMultiValueChangeEvent.OChangeType.ADD, new ORecordId("#1:12"), new ORecordId("#1:12"));
-    final OMultiValueChangeEvent<OIdentifiable, OIdentifiable> multiValueChangeEventTwo = new OMultiValueChangeEvent<OIdentifiable, OIdentifiable>(
-        OMultiValueChangeEvent.OChangeType.ADD, new ORecordId("#1:12"), new ORecordId("#1:12"));
-    final OMultiValueChangeEvent<OIdentifiable, OIdentifiable> multiValueChangeEventThree = new OMultiValueChangeEvent<OIdentifiable, OIdentifiable>(
-        OMultiValueChangeEvent.OChangeType.REMOVE, new ORecordId("#1:12"), null, new ORecordId("#1:12"));
+    final OMultiValueChangeEvent<OIdentifiable, OIdentifiable> multiValueChangeEventOne =
+        new OMultiValueChangeEvent<OIdentifiable, OIdentifiable>(
+            OMultiValueChangeEvent.OChangeType.ADD, new ORecordId("#1:12"), new ORecordId("#1:12"));
+    final OMultiValueChangeEvent<OIdentifiable, OIdentifiable> multiValueChangeEventTwo =
+        new OMultiValueChangeEvent<OIdentifiable, OIdentifiable>(
+            OMultiValueChangeEvent.OChangeType.ADD, new ORecordId("#1:12"), new ORecordId("#1:12"));
+    final OMultiValueChangeEvent<OIdentifiable, OIdentifiable> multiValueChangeEventThree =
+        new OMultiValueChangeEvent<OIdentifiable, OIdentifiable>(
+            OMultiValueChangeEvent.OChangeType.REMOVE,
+            new ORecordId("#1:12"),
+            null,
+            new ORecordId("#1:12"));
 
     propertyIndex.processChangeEvent(multiValueChangeEventOne, keysToAdd, keysToRemove);
     propertyIndex.processChangeEvent(multiValueChangeEventTwo, keysToAdd, keysToRemove);
@@ -300,12 +336,21 @@ public abstract class OPropertyRidBagAbstractIndexDefinition {
   public void testProcessChangeEventAddOnceRemoveTwice() {
     final Map<Object, Integer> keysToAdd = new HashMap<Object, Integer>();
     final Map<Object, Integer> keysToRemove = new HashMap<Object, Integer>();
-    final OMultiValueChangeEvent<OIdentifiable, OIdentifiable> multiValueChangeEventOne = new OMultiValueChangeEvent<OIdentifiable, OIdentifiable>(
-        OMultiValueChangeEvent.OChangeType.REMOVE, new ORecordId("#1:12"), null, new ORecordId("#1:12"));
-    final OMultiValueChangeEvent<OIdentifiable, OIdentifiable> multiValueChangeEventTwo = new OMultiValueChangeEvent<OIdentifiable, OIdentifiable>(
-        OMultiValueChangeEvent.OChangeType.ADD, new ORecordId("#1:12"), new ORecordId("#1:12"));
-    final OMultiValueChangeEvent<OIdentifiable, OIdentifiable> multiValueChangeEventThree = new OMultiValueChangeEvent<OIdentifiable, OIdentifiable>(
-        OMultiValueChangeEvent.OChangeType.REMOVE, new ORecordId("#1:12"), null, new ORecordId("#1:12"));
+    final OMultiValueChangeEvent<OIdentifiable, OIdentifiable> multiValueChangeEventOne =
+        new OMultiValueChangeEvent<OIdentifiable, OIdentifiable>(
+            OMultiValueChangeEvent.OChangeType.REMOVE,
+            new ORecordId("#1:12"),
+            null,
+            new ORecordId("#1:12"));
+    final OMultiValueChangeEvent<OIdentifiable, OIdentifiable> multiValueChangeEventTwo =
+        new OMultiValueChangeEvent<OIdentifiable, OIdentifiable>(
+            OMultiValueChangeEvent.OChangeType.ADD, new ORecordId("#1:12"), new ORecordId("#1:12"));
+    final OMultiValueChangeEvent<OIdentifiable, OIdentifiable> multiValueChangeEventThree =
+        new OMultiValueChangeEvent<OIdentifiable, OIdentifiable>(
+            OMultiValueChangeEvent.OChangeType.REMOVE,
+            new ORecordId("#1:12"),
+            null,
+            new ORecordId("#1:12"));
 
     propertyIndex.processChangeEvent(multiValueChangeEventOne, keysToAdd, keysToRemove);
     propertyIndex.processChangeEvent(multiValueChangeEventTwo, keysToAdd, keysToRemove);
@@ -324,12 +369,21 @@ public abstract class OPropertyRidBagAbstractIndexDefinition {
   public void testProcessChangeEventRemoveTwoTimesAddOnce() {
     final Map<Object, Integer> keysToAdd = new HashMap<Object, Integer>();
     final Map<Object, Integer> keysToRemove = new HashMap<Object, Integer>();
-    final OMultiValueChangeEvent<OIdentifiable, OIdentifiable> multiValueChangeEventOne = new OMultiValueChangeEvent<OIdentifiable, OIdentifiable>(
-        OMultiValueChangeEvent.OChangeType.REMOVE, new ORecordId("#1:12"), null, new ORecordId("#1:12"));
-    final OMultiValueChangeEvent<OIdentifiable, OIdentifiable> multiValueChangeEventTwo = new OMultiValueChangeEvent<OIdentifiable, OIdentifiable>(
-        OMultiValueChangeEvent.OChangeType.REMOVE, new ORecordId("#1:12"), null, new ORecordId("#1:12"));
-    final OMultiValueChangeEvent<OIdentifiable, OIdentifiable> multiValueChangeEventThree = new OMultiValueChangeEvent<OIdentifiable, OIdentifiable>(
-        OMultiValueChangeEvent.OChangeType.ADD, new ORecordId("#1:12"), new ORecordId("#1:12"));
+    final OMultiValueChangeEvent<OIdentifiable, OIdentifiable> multiValueChangeEventOne =
+        new OMultiValueChangeEvent<OIdentifiable, OIdentifiable>(
+            OMultiValueChangeEvent.OChangeType.REMOVE,
+            new ORecordId("#1:12"),
+            null,
+            new ORecordId("#1:12"));
+    final OMultiValueChangeEvent<OIdentifiable, OIdentifiable> multiValueChangeEventTwo =
+        new OMultiValueChangeEvent<OIdentifiable, OIdentifiable>(
+            OMultiValueChangeEvent.OChangeType.REMOVE,
+            new ORecordId("#1:12"),
+            null,
+            new ORecordId("#1:12"));
+    final OMultiValueChangeEvent<OIdentifiable, OIdentifiable> multiValueChangeEventThree =
+        new OMultiValueChangeEvent<OIdentifiable, OIdentifiable>(
+            OMultiValueChangeEvent.OChangeType.ADD, new ORecordId("#1:12"), new ORecordId("#1:12"));
 
     propertyIndex.processChangeEvent(multiValueChangeEventOne, keysToAdd, keysToRemove);
     propertyIndex.processChangeEvent(multiValueChangeEventTwo, keysToAdd, keysToRemove);

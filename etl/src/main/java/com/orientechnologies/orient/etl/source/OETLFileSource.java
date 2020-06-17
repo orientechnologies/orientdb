@@ -22,8 +22,12 @@ import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.etl.context.OETLContextWrapper;
-
-import java.io.*;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.RandomAccessFile;
+import java.io.Reader;
 import java.nio.channels.FileChannel;
 import java.nio.channels.FileLock;
 import java.nio.charset.Charset;
@@ -33,17 +37,17 @@ import java.util.zip.GZIPInputStream;
 public class OETLFileSource extends OETLAbstractSource {
   protected String fileName;
   protected String path;
-  protected boolean           lockFile    = false;
-  protected long              byteParsed  = 0;
-  protected long              byteToParse = -1;
-  protected long              skipFirst   = 0;
-  protected long              skipLast    = 0;
-  protected RandomAccessFile  raf         = null;
-  protected FileChannel       channel     = null;
-  protected InputStreamReader fileReader  = null;
-  protected FileInputStream   fis         = null;
-  protected FileLock          lock        = null;
-  private   Charset           encoding    = Charset.forName("UTF-8");
+  protected boolean lockFile = false;
+  protected long byteParsed = 0;
+  protected long byteToParse = -1;
+  protected long skipFirst = 0;
+  protected long skipLast = 0;
+  protected RandomAccessFile raf = null;
+  protected FileChannel channel = null;
+  protected InputStreamReader fileReader = null;
+  protected FileInputStream fis = null;
+  protected FileLock lock = null;
+  private Charset encoding = Charset.forName("UTF-8");
   private File input;
 
   @Override
@@ -60,8 +64,7 @@ public class OETLFileSource extends OETLAbstractSource {
   public void configure(ODocument iConfiguration, OCommandContext iContext) {
     super.configure(iConfiguration, iContext);
 
-    if (iConfiguration.containsField("lock"))
-      lockFile = iConfiguration.<Boolean>field("lock");
+    if (iConfiguration.containsField("lock")) lockFile = iConfiguration.<Boolean>field("lock");
 
     if (iConfiguration.containsField("skipFirst"))
       skipFirst = Long.parseLong(iConfiguration.<String>field("skipFirst"));
@@ -79,7 +82,6 @@ public class OETLFileSource extends OETLAbstractSource {
     if (!input.exists())
       throw new OETLSourceException("[File source] path '" + path + "' not exists");
     fileName = input.getName();
-
   }
 
   @Override
@@ -145,7 +147,9 @@ public class OETLFileSource extends OETLAbstractSource {
       try {
         lock = channel.lock();
       } catch (IOException e) {
-        OETLContextWrapper.getInstance().getMessageHandler().error(this, "Error on locking file: %s", e, fileName);
+        OETLContextWrapper.getInstance()
+            .getMessageHandler()
+            .error(this, "Error on locking file: %s", e, fileName);
       }
 
     log(Level.INFO, "Reading from file " + path + " with encoding " + encoding.displayName());

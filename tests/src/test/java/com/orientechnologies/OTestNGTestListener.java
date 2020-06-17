@@ -28,14 +28,15 @@ import org.testng.ISuiteListener;
 import org.testng.ISuiteResult;
 
 /**
+ *
+ *
  * <ol>
- * <li>Listens for TestNG test run started and prohibits logging of exceptions on storage level.</li>
- * <li>Listens for the
- * TestNG test run finishing and runs the direct memory leaks detector, if no tests failed. If leak detector finds some leaks, it
- * triggers {@link AssertionError} and the build is marked as failed. Java assertions (-ea) must be active for this to work.
- * </li>
- * <li>Triggers {@link AssertionError} if {@link OLogManager} is shutdown before test is finished.
- * We may miss some errors because {@link OLogManager} is shutdown</li>
+ *   <li>Listens for TestNG test run started and prohibits logging of exceptions on storage level.
+ *   <li>Listens for the TestNG test run finishing and runs the direct memory leaks detector, if no
+ *       tests failed. If leak detector finds some leaks, it triggers {@link AssertionError} and the
+ *       build is marked as failed. Java assertions (-ea) must be active for this to work.
+ *   <li>Triggers {@link AssertionError} if {@link OLogManager} is shutdown before test is finished.
+ *       We may miss some errors because {@link OLogManager} is shutdown
  * </ol>
  *
  * @author Sergey Sitnikov
@@ -60,7 +61,7 @@ public class OTestNGTestListener implements ISuiteListener {
       System.out.println("Shutting down engine and checking for direct memory leaks...");
       final Orient orient = Orient.instance();
       if (orient != null) {
-        //state is verified during shutdown
+        // state is verified during shutdown
         orient.shutdown();
       } else {
         OByteBufferPool.instance(null).checkMemoryLeaks();
@@ -69,14 +70,11 @@ public class OTestNGTestListener implements ISuiteListener {
   }
 
   private static boolean isFailed(ISuite suite) {
-    if (suite.getSuiteState().isFailed())
-      return true;
+    if (suite.getSuiteState().isFailed()) return true;
 
     for (ISuiteResult result : suite.getResults().values())
-      if (result.getTestContext().getFailedTests().size() != 0)
-        return true;
+      if (result.getTestContext().getFailedTests().size() != 0) return true;
 
     return false;
   }
-
 }

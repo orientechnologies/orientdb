@@ -1,17 +1,15 @@
 package com.orientechnologies.orient.core;
 
+import static org.junit.Assert.assertEquals;
+
+
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.util.OURLConnection;
 import com.orientechnologies.orient.core.util.OURLHelper;
+import java.io.File;
 import org.junit.Test;
 
-import java.io.File;
-
-import static org.junit.Assert.assertEquals;
-
-/**
- * Created by tglman on 21/02/17.
- */
+/** Created by tglman on 21/02/17. */
 public class OURLHelperTest {
 
   @Test
@@ -23,14 +21,13 @@ public class OURLHelperTest {
 
     parsed = OURLHelper.parse("memory:some");
     assertEquals(parsed.getType(), "memory");
-    //assertEquals(parsed.getPath(), "");
+    // assertEquals(parsed.getPath(), "");
     assertEquals(parsed.getDbName(), "some");
 
     parsed = OURLHelper.parse("remote:localhost/to");
     assertEquals(parsed.getType(), "remote");
     assertEquals(parsed.getPath(), "localhost");
     assertEquals(parsed.getDbName(), "to");
-
   }
 
   @Test
@@ -54,7 +51,6 @@ public class OURLHelperTest {
     assertEquals(parsed.getType(), "remote");
     assertEquals(parsed.getPath(), "localhost");
     assertEquals(parsed.getDbName(), "to");
-
   }
 
   @Test(expected = OConfigurationException.class)
@@ -83,7 +79,5 @@ public class OURLHelperTest {
     assertEquals(parsed.getType(), "remote");
     assertEquals(parsed.getPath(), "localhost:2424");
     assertEquals(parsed.getDbName(), "db1");
-
   }
-
 }

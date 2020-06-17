@@ -23,24 +23,21 @@ import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 
 /**
  * Intents aim to define common use case in order to optimize the execution.
- * 
+ *
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
- * 
  */
 public interface OIntent {
   /**
    * Activate the intent.
-   * 
-   * @param iDatabase
-   *          Database where to activate it
+   *
+   * @param iDatabase Database where to activate it
    */
   public void begin(ODatabaseDocumentInternal iDatabase);
 
   /**
    * Activate the intent.
-   * 
-   * @param iDatabase
-   *          Database where to activate it
+   *
+   * @param iDatabase Database where to activate it
    */
   public void end(ODatabaseDocumentInternal iDatabase);
 

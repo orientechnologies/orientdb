@@ -1,9 +1,10 @@
 package com.orientechnologies.orient.core.sql.parser;
 
+import static org.junit.Assert.fail;
+
+
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
-
-import static org.junit.Assert.fail;
 
 public abstract class OParserTestAbstract {
 
@@ -24,14 +25,14 @@ public abstract class OParserTestAbstract {
     try {
       SimpleNode result = osql.parse();
       if (!isCorrect) {
-//        System.out.println(query);
-//        if (result != null) {
-//          System.out.println("->");
-//          StringBuilder builer = new StringBuilder();
-//          result.toString(null, builer);
-//          System.out.println(builer.toString());
-//          System.out.println("............");
-//        }
+        //        System.out.println(query);
+        //        if (result != null) {
+        //          System.out.println("->");
+        //          StringBuilder builer = new StringBuilder();
+        //          result.toString(null, builer);
+        //          System.out.println(builer.toString());
+        //          System.out.println("............");
+        //        }
 
         fail();
       }
@@ -55,7 +56,6 @@ public abstract class OParserTestAbstract {
     } catch (ParseException e) {
       e.printStackTrace();
     }
-
   }
 
   protected OrientSql getParserFor(String string) {

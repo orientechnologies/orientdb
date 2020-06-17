@@ -26,21 +26,19 @@ import java.util.Map.Entry;
 import java.util.Properties;
 
 /**
- * OrientDB settings. Configurable through com.google.inject.persist.jpa.JpaPersistModule.properties(Properties)
+ * OrientDB settings. Configurable through
+ * com.google.inject.persist.jpa.JpaPersistModule.properties(Properties)
  */
 final class OJPAProperties extends Properties {
   private static final long serialVersionUID = -8158054712863843518L;
 
-  public static final String URL                    = "javax.persistence.jdbc.url";
-  public static final String USER                   = "javax.persistence.jdbc.user";
-  public static final String PASSWORD               = "javax.persistence.jdbc.password";
-  /**
-   * OrientDB specific
-   */
+  public static final String URL = "javax.persistence.jdbc.url";
+  public static final String USER = "javax.persistence.jdbc.user";
+  public static final String PASSWORD = "javax.persistence.jdbc.password";
+  /** OrientDB specific */
   public static final String ENTITY_CLASSES_PACKAGE = "com.orientdb.entityClasses";
 
-  public OJPAProperties() {
-  }
+  public OJPAProperties() {}
 
   /**
    * Checks properties
@@ -55,18 +53,18 @@ final class OJPAProperties extends Properties {
     }
 
     if (!checkContainsValue(URL)) {
-      throw new IllegalStateException("URL propertiy for entity manager should not be null or empty");
+      throw new IllegalStateException(
+          "URL propertiy for entity manager should not be null or empty");
     }
 
     if (!checkContainsValue(USER)) {
-      throw new IllegalStateException("User propertiy for entity manager should not be null or empty");
+      throw new IllegalStateException(
+          "User propertiy for entity manager should not be null or empty");
     }
   }
 
-  /**
-   * @return Unmodifiable Map of properties for use by the persistence provider.
-   */
-  @SuppressWarnings({ "unchecked", "rawtypes" })
+  /** @return Unmodifiable Map of properties for use by the persistence provider. */
+  @SuppressWarnings({"unchecked", "rawtypes"})
   public Map<String, Object> getUnmodifiableProperties() {
     return Collections.unmodifiableMap((Map) this);
   }

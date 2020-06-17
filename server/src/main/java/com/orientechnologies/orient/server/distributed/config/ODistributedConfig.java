@@ -11,8 +11,6 @@ import com.orientechnologies.orient.server.config.distributed.OServerDistributed
 
 public class ODistributedConfig {
 
-
-
   public static OServerDistributedConfiguration fromEnv(OServerDistributedConfiguration distributed)
       throws OConfigurationException {
     final OServerDistributedConfiguration config;
@@ -28,7 +26,8 @@ public class ODistributedConfig {
     return config;
   }
 
-  public static void validateConfiguration(OServerDistributedConfiguration configuration) throws OConfigurationException {
+  public static void validateConfiguration(OServerDistributedConfiguration configuration)
+      throws OConfigurationException {
 
     if (configuration.enabled) {
 
@@ -49,36 +48,45 @@ public class ODistributedConfig {
       if (configuration.network.multicast.enabled) {
 
         if (configuration.network.multicast.ip == null) {
-          throw new OConfigurationException("Address not specified in the configuration of multicast");
+          throw new OConfigurationException(
+              "Address not specified in the configuration of multicast");
         }
 
         if (configuration.network.multicast.port == null) {
-          throw new OConfigurationException("Address not specified in the configuration of multicast");
+          throw new OConfigurationException(
+              "Address not specified in the configuration of multicast");
         }
 
         if (configuration.network.multicast.discoveryPorts == null) {
-          throw new OConfigurationException("Address not specified in the configuration of multicast");
+          throw new OConfigurationException(
+              "Address not specified in the configuration of multicast");
         }
-
       }
     }
   }
 
-  public static OrientDBConfig buildConfig(OContextConfiguration contextConfiguration,
-      OServerDistributedConfiguration distributed) {
+  public static OrientDBConfig buildConfig(
+      OContextConfiguration contextConfiguration, OServerDistributedConfiguration distributed) {
 
     OrientDBConfigBuilder builder = OrientDBConfig.builder().fromContext(contextConfiguration);
 
     ONodeConfigurationBuilder nodeConfigurationBuilder = builder.getNodeConfigurationBuilder();
 
-    nodeConfigurationBuilder.setNodeName(distributed.nodeName).setQuorum(distributed.quorum).setGroupName(distributed.group.name)
+    nodeConfigurationBuilder
+        .setNodeName(distributed.nodeName)
+        .setQuorum(distributed.quorum)
+        .setGroupName(distributed.group.name)
         .setGroupPassword(distributed.group.password);
 
     OServerDistributedNetworkMulticastConfiguration multicast = distributed.network.multicast;
 
     nodeConfigurationBuilder.setMulticast(
-        OMulticastConfguration.builder().setEnabled(multicast.enabled).setIp(multicast.ip).setPort(multicast.port)
-            .setDiscoveryPorts(multicast.discoveryPorts).build());
+        OMulticastConfguration.builder()
+            .setEnabled(multicast.enabled)
+            .setIp(multicast.ip)
+            .setPort(multicast.port)
+            .setDiscoveryPorts(multicast.discoveryPorts)
+            .build());
 
     return builder.build();
   }

@@ -27,7 +27,6 @@ import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
 import com.orientechnologies.orient.core.iterator.OLazyWrapperIterator;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-
 import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -42,18 +41,22 @@ import java.util.Set;
  *
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
  */
-public class OMultiCollectionIterator<T> implements Iterator<T>, Iterable<T>, OResettable, OSizeable, OSupportsContains,
-    OAutoConvertToRecord {
+public class OMultiCollectionIterator<T>
+    implements Iterator<T>,
+        Iterable<T>,
+        OResettable,
+        OSizeable,
+        OSupportsContains,
+        OAutoConvertToRecord {
   private List<Object> sources;
-  private Iterator<?>  sourcesIterator;
-  private Iterator<T>  partialIterator;
+  private Iterator<?> sourcesIterator;
+  private Iterator<T> partialIterator;
 
-  private int          browsed            = 0;
-  private int          skip               = -1;
-  private int          limit              = -1;
-  private boolean      embedded           = false;
-  private boolean      autoConvert2Record = true;
-
+  private int browsed = 0;
+  private int skip = -1;
+  private int limit = -1;
+  private boolean embedded = false;
+  private boolean autoConvert2Record = true;
 
   private int skipped = 0;
 
@@ -80,32 +83,26 @@ public class OMultiCollectionIterator<T> implements Iterator<T>, Iterable<T>, OR
 
   private boolean hasNextInternal() {
     if (sourcesIterator == null) {
-      if (sources == null || sources.isEmpty())
-        return false;
+      if (sources == null || sources.isEmpty()) return false;
 
       // THE FIRST TIME CREATE THE ITERATOR
       sourcesIterator = sources.iterator();
       getNextPartial();
     }
 
-    if (partialIterator == null)
-      return false;
+    if (partialIterator == null) return false;
 
-    if (limit > -1 && browsed >= limit)
-      return false;
+    if (limit > -1 && browsed >= limit) return false;
 
-    if (partialIterator.hasNext())
-      return true;
-    else if (sourcesIterator.hasNext())
-      return getNextPartial();
+    if (partialIterator.hasNext()) return true;
+    else if (sourcesIterator.hasNext()) return getNextPartial();
 
     return false;
   }
 
   @Override
   public T next() {
-    if (!hasNext())
-      throw new NoSuchElementException();
+    if (!hasNext()) throw new NoSuchElementException();
 
     browsed++;
     return partialIterator.next();
@@ -128,7 +125,8 @@ public class OMultiCollectionIterator<T> implements Iterator<T>, Iterable<T>, OR
   public OMultiCollectionIterator<T> add(final Object iValue) {
     if (iValue != null) {
       if (sourcesIterator != null)
-        throw new IllegalStateException("MultiCollection iterator is in use and new collections cannot be added");
+        throw new IllegalStateException(
+            "MultiCollection iterator is in use and new collections cannot be added");
 
       if (iValue instanceof OAutoConvertToRecord)
         ((OAutoConvertToRecord) iValue).setAutoConvertToRecord(autoConvert2Record);
@@ -146,22 +144,17 @@ public class OMultiCollectionIterator<T> implements Iterator<T>, Iterable<T>, OR
       final Object o = sources.get(i);
 
       if (o != null)
-        if (o instanceof Collection<?>)
-          size += ((Collection<?>) o).size();
-        else if (o instanceof Map<?, ?>)
-          size += ((Map<?, ?>) o).size();
-        else if (o instanceof OSizeable)
-          size += ((OSizeable) o).size();
-        else if (o.getClass().isArray())
-          size += Array.getLength(o);
+        if (o instanceof Collection<?>) size += ((Collection<?>) o).size();
+        else if (o instanceof Map<?, ?>) size += ((Map<?, ?>) o).size();
+        else if (o instanceof OSizeable) size += ((OSizeable) o).size();
+        else if (o.getClass().isArray()) size += Array.getLength(o);
         else if (o instanceof Iterator<?> && o instanceof OResettable) {
           while (((Iterator<?>) o).hasNext()) {
             size++;
             ((Iterator<?>) o).next();
           }
           ((OResettable) o).reset();
-        } else
-          size++;
+        } else size++;
     }
     return size;
   }
@@ -205,8 +198,7 @@ public class OMultiCollectionIterator<T> implements Iterator<T>, Iterable<T>, OR
         if (o instanceof Set<?> || o instanceof ORidBag) {
           // OK
         } else if (o instanceof OLazyWrapperIterator) {
-          if (!((OLazyWrapperIterator) o).canUseMultiValueDirectly())
-            return false;
+          if (!((OLazyWrapperIterator) o).canUseMultiValueDirectly()) return false;
         } else {
           return false;
         }
@@ -223,15 +215,12 @@ public class OMultiCollectionIterator<T> implements Iterator<T>, Iterable<T>, OR
       Object o = sources.get(i);
 
       if (o != null) {
-        if (o instanceof OLazyWrapperIterator)
-          o = ((OLazyWrapperIterator) o).getMultiValue();
+        if (o instanceof OLazyWrapperIterator) o = ((OLazyWrapperIterator) o).getMultiValue();
 
         if (o instanceof Collection<?>) {
-          if (((Collection<?>) o).contains(value))
-            return true;
+          if (((Collection<?>) o).contains(value)) return true;
         } else if (o instanceof ORidBag) {
-          if (((ORidBag) o).contains((OIdentifiable) value))
-            return true;
+          if (((ORidBag) o).contains((OIdentifiable) value)) return true;
         }
       }
     }
@@ -253,8 +242,7 @@ public class OMultiCollectionIterator<T> implements Iterator<T>, Iterable<T>, OR
             ((OAutoConvertToRecord) next).setAutoConvertToRecord(autoConvert2Record);
 
           if (next instanceof Iterator<?>) {
-            if (next instanceof OResettable)
-              ((OResettable) next).reset();
+            if (next instanceof OResettable) ((OResettable) next).reset();
 
             if (((Iterator<T>) next).hasNext()) {
               partialIterator = (Iterator<T>) next;
@@ -268,10 +256,8 @@ public class OMultiCollectionIterator<T> implements Iterator<T>, Iterable<T>, OR
           } else if (next.getClass().isArray()) {
             final int arraySize = Array.getLength(next);
             if (arraySize > 0) {
-              if (arraySize == 1)
-                partialIterator = new OIterableObject<T>((T) Array.get(next, 0));
-              else
-                partialIterator = (Iterator<T>) OMultiValue.getMultiValueIterator(next, false);
+              if (arraySize == 1) partialIterator = new OIterableObject<T>((T) Array.get(next, 0));
+              else partialIterator = (Iterator<T>) OMultiValue.getMultiValueIterator(next, false);
               return true;
             }
           } else {

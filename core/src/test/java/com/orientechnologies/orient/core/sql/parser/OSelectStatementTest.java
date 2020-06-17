@@ -1,18 +1,21 @@
 package com.orientechnologies.orient.core.sql.parser;
 
-import com.orientechnologies.orient.core.command.OBasicCommandContext;
-import org.junit.Assert;
-import org.junit.Ignore;
-import org.junit.Test;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
+
+import com.orientechnologies.orient.core.command.OBasicCommandContext;
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-
-import static org.junit.Assert.*;
+import org.junit.Assert;
+import org.junit.Ignore;
+import org.junit.Test;
 
 public class OSelectStatementTest {
 
@@ -32,14 +35,14 @@ public class OSelectStatementTest {
     try {
       SimpleNode result = osql.parse();
       if (!isCorrect) {
-//        System.out.println(query);
-//        if(result!= null ) {
-//          System.out.println("->");
-//          StringBuilder builer = new StringBuilder();
-//          result.toString(null, builer);
-//          System.out.println(builer.toString());
-//          System.out.println("............");
-//        }
+        //        System.out.println(query);
+        //        if(result!= null ) {
+        //          System.out.println("->");
+        //          StringBuilder builer = new StringBuilder();
+        //          result.toString(null, builer);
+        //          System.out.println(builer.toString());
+        //          System.out.println("............");
+        //        }
         fail();
       }
 
@@ -106,7 +109,6 @@ public class OSelectStatementTest {
     checkWrongSyntax("select * from Foo bar");
 
     checkWrongSyntax("select * Foo");
-
   }
 
   @Test
@@ -139,9 +141,8 @@ public class OSelectStatementTest {
     checkWrongSyntax("select Foo where name = 'foo'");
     checkWrongSyntax("select * Foo where name = 'foo'");
 
-    //issue #5221
+    // issue #5221
     checkRightSyntax("select from $1");
-
   }
 
   @Test
@@ -150,51 +151,51 @@ public class OSelectStatementTest {
     // result.dump("    ");
     assertTrue(result instanceof OSelectStatement);
     OSelectStatement select = (OSelectStatement) result;
-
   }
 
   @Test
   public void testNotIn() {
-    SimpleNode result = checkRightSyntax("select count(*) from OFunction where name not in [\"a\"]");
+    SimpleNode result =
+        checkRightSyntax("select count(*) from OFunction where name not in [\"a\"]");
     // result.dump("    ");
     assertTrue(result instanceof OStatement);
     OStatement stm = (OStatement) result;
-
   }
 
   @Test
   public void testMath1() {
-    SimpleNode result = checkRightSyntax("" + "select * from sqlSelectIndexReuseTestClass where prop1 = 1 + 1");
+    SimpleNode result =
+        checkRightSyntax("" + "select * from sqlSelectIndexReuseTestClass where prop1 = 1 + 1");
     // result.dump("    ");
     assertTrue(result instanceof OSelectStatement);
     OSelectStatement select = (OSelectStatement) result;
-
   }
 
   public void testMath2() {
-    SimpleNode result = checkRightSyntax("" + "select * from sqlSelectIndexReuseTestClass where prop1 = foo + 1");
+    SimpleNode result =
+        checkRightSyntax("" + "select * from sqlSelectIndexReuseTestClass where prop1 = foo + 1");
     // result.dump("    ");
     assertTrue(result instanceof OSelectStatement);
     OSelectStatement select = (OSelectStatement) result;
-
   }
 
   @Test
   public void testMath5() {
-    SimpleNode result = checkRightSyntax("" + "select * from sqlSelectIndexReuseTestClass where prop1 = foo + 1 * bar - 5");
+    SimpleNode result =
+        checkRightSyntax(
+            "" + "select * from sqlSelectIndexReuseTestClass where prop1 = foo + 1 * bar - 5");
 
     assertTrue(result instanceof OSelectStatement);
     OSelectStatement select = (OSelectStatement) result;
-
   }
 
   @Test
   public void testFetchPlan1() {
-    SimpleNode result = checkRightSyntax("" + "select 'Ay' as a , 'bEE' as b from Foo fetchplan *:1");
+    SimpleNode result =
+        checkRightSyntax("" + "select 'Ay' as a , 'bEE' as b from Foo fetchplan *:1");
 
     assertTrue(result instanceof OSelectStatement);
     OSelectStatement select = (OSelectStatement) result;
-
   }
 
   @Test
@@ -203,25 +204,24 @@ public class OSelectStatementTest {
 
     assertTrue(result instanceof OSelectWithoutTargetStatement);
     OSelectWithoutTargetStatement select = (OSelectWithoutTargetStatement) result;
-
   }
 
   @Test
   public void testContainsWithCondition() {
-    SimpleNode result = checkRightSyntax("select from Profile where customReferences.values() CONTAINS 'a'");
+    SimpleNode result =
+        checkRightSyntax("select from Profile where customReferences.values() CONTAINS 'a'");
 
     assertTrue(result instanceof OSelectStatement);
     OSelectStatement select = (OSelectStatement) result;
-
   }
 
   @Test
   public void testNamedParam() {
-    SimpleNode result = checkRightSyntax("select from JavaComplexTestClass where enumField = :enumItem");
+    SimpleNode result =
+        checkRightSyntax("select from JavaComplexTestClass where enumField = :enumItem");
 
     assertTrue(result instanceof OSelectStatement);
     OSelectStatement select = (OSelectStatement) result;
-
   }
 
   @Test
@@ -230,7 +230,6 @@ public class OSelectStatementTest {
     // result.dump("    ");
     assertTrue(result instanceof OSelectStatement);
     OSelectStatement select = (OSelectStatement) result;
-
   }
 
   @Test
@@ -239,15 +238,14 @@ public class OSelectStatementTest {
     // result.dump("    ");
     assertTrue(result instanceof OSelectStatement);
     OSelectStatement select = (OSelectStatement) result;
-
   }
 
   @Test
   public void testQuotedFieldNameFrom() {
-    SimpleNode result = checkRightSyntax("select `from` from City where country.@class = 'Country'");
+    SimpleNode result =
+        checkRightSyntax("select `from` from City where country.@class = 'Country'");
     assertTrue(result instanceof OSelectStatement);
     OSelectStatement select = (OSelectStatement) result;
-
   }
 
   @Test
@@ -261,25 +259,24 @@ public class OSelectStatementTest {
   @Test
   public void testQuotedFieldName() {
     checkRightSyntax("select `foo` from City where country.@class = 'Country'");
-
   }
 
   @Test
   public void testLongDotted() {
-    SimpleNode result = checkRightSyntax("select from Profile where location.city.country.name = 'Spain'");
+    SimpleNode result =
+        checkRightSyntax("select from Profile where location.city.country.name = 'Spain'");
     // result.dump("    ");
     assertTrue(result instanceof OSelectStatement);
     OSelectStatement select = (OSelectStatement) result;
-
   }
 
   @Test
   public void testInIsNotAReservedWord() {
-    SimpleNode result = checkRightSyntax("select count(*) from TRVertex where in.type() not in [\"LINKSET\"] ");
+    SimpleNode result =
+        checkRightSyntax("select count(*) from TRVertex where in.type() not in [\"LINKSET\"] ");
     // result.dump("    ");
     assertTrue(result instanceof OSelectStatement);
     OSelectStatement select = (OSelectStatement) result;
-
   }
 
   @Test
@@ -288,14 +285,14 @@ public class OSelectStatementTest {
     // result.dump("    ");
     assertTrue(result instanceof OSelectWithoutTargetStatement);
     OSelectWithoutTargetStatement select = (OSelectWithoutTargetStatement) result;
-
   }
 
   @Test
   public void testEscape1() {
-    SimpleNode result = checkRightSyntax("select from cluster:internal where \"\\u005C\\u005C\" = \"\\u005C\\u005C\" ");
+    SimpleNode result =
+        checkRightSyntax(
+            "select from cluster:internal where \"\\u005C\\u005C\" = \"\\u005C\\u005C\" ");
     assertTrue(result instanceof OSelectStatement);
-
   }
 
   @Test
@@ -318,15 +315,14 @@ public class OSelectStatementTest {
       assertEquals(parsed.toString(), "SELECT FROM bar WHERE name NOT IN []");
     } catch (Exception e) {
       fail();
-
     }
-
   }
 
   @Test
   public void testEscape2() {
     try {
-      SimpleNode result = checkWrongSyntax("select from cluster:internal where \"\\u005C\" = \"\\u005C\" ");
+      SimpleNode result =
+          checkWrongSyntax("select from cluster:internal where \"\\u005C\" = \"\\u005C\" ");
       fail();
     } catch (Error e) {
 
@@ -338,8 +334,8 @@ public class OSelectStatementTest {
 
     checkRightSyntax(
         "select *,$distance from Place where [latitude,longitude,$spatial] NEAR [41.893056,12.482778,{\"maxDistance\": 0.5}]");
-    checkRightSyntax("select * from Place where [latitude,longitude] WITHIN [[51.507222,-0.1275],[55.507222,-0.1275]]");
-
+    checkRightSyntax(
+        "select * from Place where [latitude,longitude] WITHIN [[51.507222,-0.1275],[55.507222,-0.1275]]");
   }
 
   @Test
@@ -351,8 +347,10 @@ public class OSelectStatementTest {
   @Test
   public void testRecordAttributes() {
     // issue #4430
-    checkRightSyntax("SELECT @this, @rid, @rid_id, @rid_pos, @version, @class, @type, @size, @fields, @raw from V");
-    checkRightSyntax("SELECT @THIS, @RID, @RID_ID, @RID_POS, @VERSION, @CLASS, @TYPE, @SIZE, @FIELDS, @RAW from V");
+    checkRightSyntax(
+        "SELECT @this, @rid, @rid_id, @rid_pos, @version, @class, @type, @size, @fields, @raw from V");
+    checkRightSyntax(
+        "SELECT @THIS, @RID, @RID_ID, @RID_POS, @VERSION, @CLASS, @TYPE, @SIZE, @FIELDS, @RAW from V");
   }
 
   @Test
@@ -375,21 +373,23 @@ public class OSelectStatementTest {
   // issue #3718
   public void testComplexTarget1() {
     checkRightSyntax("SELECT $e FROM [#1:1,#1:2] LET $e = (SELECT FROM $current.prop1)");
-    checkRightSyntax("SELECT $e FROM [#1:1,#1:2] let $e = (SELECT FROM (SELECT FROM $parent.$current))");
+    checkRightSyntax(
+        "SELECT $e FROM [#1:1,#1:2] let $e = (SELECT FROM (SELECT FROM $parent.$current))");
   }
 
   @Test
   public void testEval() {
-    checkRightSyntax("  select  sum(weight) , f.name as name from (\n"
-        + "      select weight, if(eval(\"out.name = 'one'\"),out,in) as f  from (\n" + "      select expand(bothE('E')) from V\n"
-        + "  )\n" + "      ) group by name\n");
-
+    checkRightSyntax(
+        "  select  sum(weight) , f.name as name from (\n"
+            + "      select weight, if(eval(\"out.name = 'one'\"),out,in) as f  from (\n"
+            + "      select expand(bothE('E')) from V\n"
+            + "  )\n"
+            + "      ) group by name\n");
   }
 
   @Test
   public void testNewLine() {
     checkRightSyntax("INSERT INTO Country SET name=\"one\\ntwo\" RETURN @rid");
-
   }
 
   @Test
@@ -400,8 +400,11 @@ public class OSelectStatementTest {
   @Test
   public void testGroupBy() {
     // issue #4245
-    checkRightSyntax("select in.name from (  \n" + "select expand(outE()) from V\n" + ")\n" + "group by in.name");
-
+    checkRightSyntax(
+        "select in.name from (  \n"
+            + "select expand(outE()) from V\n"
+            + ")\n"
+            + "group by in.name");
   }
 
   @Test
@@ -410,7 +413,6 @@ public class OSelectStatementTest {
     checkRightSyntax("select from foo where name like  '%'+ :param1 + '%'");
 
     checkRightSyntax("select from foo where name like  'aaa'+ :param1 + 'a'");
-
   }
 
   @Test
@@ -460,7 +462,6 @@ public class OSelectStatementTest {
     checkWrongSyntax("select from cluster:foo where a lucene 'b'");
     checkWrongSyntax("select from #12:0 where a lucene 'b'");
     checkWrongSyntax("select from [#12:0, #12:1] where a lucene 'b'");
-
   }
 
   public void testBacktick() {
@@ -585,36 +586,38 @@ public class OSelectStatementTest {
 
     checkWrongSyntax("select `cluster from foo where `cluster` = 'bar'");
     checkWrongSyntax("select `cluster from foo where cluster` = 'bar'");
-
   }
 
   @Test
   public void testReturn() {
     checkRightSyntax("select from ouser timeout 1 exception");
     checkRightSyntax("select from ouser timeout 1 return");
-
   }
 
   @Test
   public void testFlatten() {
-    OSelectStatement stm = (OSelectStatement) checkRightSyntax("select from ouser where name = 'foo'");
+    OSelectStatement stm =
+        (OSelectStatement) checkRightSyntax("select from ouser where name = 'foo'");
     List<OAndBlock> flattended = stm.whereClause.flatten();
     assertTrue(((OBinaryCondition) flattended.get(0).subBlocks.get(0)).left.isBaseIdentifier());
     assertFalse(((OBinaryCondition) flattended.get(0).subBlocks.get(0)).right.isBaseIdentifier());
-    assertFalse(((OBinaryCondition) flattended.get(0).subBlocks.get(0)).left.isEarlyCalculated(new OBasicCommandContext()));
-    assertTrue(((OBinaryCondition) flattended.get(0).subBlocks.get(0)).right.isEarlyCalculated(new OBasicCommandContext()));
-
+    assertFalse(
+        ((OBinaryCondition) flattended.get(0).subBlocks.get(0))
+            .left.isEarlyCalculated(new OBasicCommandContext()));
+    assertTrue(
+        ((OBinaryCondition) flattended.get(0).subBlocks.get(0))
+            .right.isEarlyCalculated(new OBasicCommandContext()));
   }
 
   @Test
   public void testParamWithMatches() {
-    //issue #5229
+    // issue #5229
     checkRightSyntax("select from Person where name matches :param1");
   }
 
   @Test
   public void testInstanceOfE() {
-    //issue #5212
+    // issue #5212
     checkRightSyntax("select from Friend where @class instanceof 'E'");
   }
 
@@ -625,23 +628,22 @@ public class OSelectStatementTest {
 
   @Test
   public void testReservedWordsAsNamedParams() {
-    //issue #5493
+    // issue #5493
     checkRightSyntax("select from V limit :limit");
   }
 
   @Test
   public void testFetchPlanBracketStar() {
-    //issue #5689
+    // issue #5689
     checkRightSyntax("SELECT FROM Def fetchplan *:2 [*]in_*:-2");
     checkRightSyntax("SELECT FROM Def fetchplan *:2 [1]in_*:-2");
   }
 
   @Test
   public void testJsonQuoting() {
-    //issue #5911
+    // issue #5911
     checkRightSyntax("SELECT '\\/\\/'");
     checkRightSyntax("SELECT \"\\/\\/\"");
-
   }
 
   private void printTree(String s) {
@@ -652,19 +654,20 @@ public class OSelectStatementTest {
     } catch (ParseException e) {
       e.printStackTrace();
     }
-
   }
 
   @Test
   public void testSkipLimitInQueryWithNoTarget() {
-    //issue #5589
-    checkRightSyntax("SELECT eval('$TotalListsQuery[0].Count') AS TotalLists\n"
-        + "   LET $TotalListsQuery = ( SELECT Count(1) AS Count FROM ContactList WHERE Account=#20:1 AND EntityInfo.State=0)\n"
-        + " LIMIT 1");
+    // issue #5589
+    checkRightSyntax(
+        "SELECT eval('$TotalListsQuery[0].Count') AS TotalLists\n"
+            + "   LET $TotalListsQuery = ( SELECT Count(1) AS Count FROM ContactList WHERE Account=#20:1 AND EntityInfo.State=0)\n"
+            + " LIMIT 1");
 
-    checkRightSyntax("SELECT eval('$TotalListsQuery[0].Count') AS TotalLists\n"
-        + "   LET $TotalListsQuery = ( SELECT Count(1) AS Count FROM ContactList WHERE Account=#20:1 AND EntityInfo.State=0)\n"
-        + " SKIP 10 LIMIT 1");
+    checkRightSyntax(
+        "SELECT eval('$TotalListsQuery[0].Count') AS TotalLists\n"
+            + "   LET $TotalListsQuery = ( SELECT Count(1) AS Count FROM ContactList WHERE Account=#20:1 AND EntityInfo.State=0)\n"
+            + " SKIP 10 LIMIT 1");
   }
 
   @Test
@@ -674,7 +677,7 @@ public class OSelectStatementTest {
 
   @Test
   public void testParamConcat() {
-    //issue #6049
+    // issue #6049
     checkRightSyntax("Select * From ACNodeAuthentication where acNodeID like ? ");
     checkRightSyntax("Select * From ACNodeAuthentication where acNodeID like ? + '%'");
     checkRightSyntax("Select * From ACNodeAuthentication where acNodeID like \"%\" + ? + '%'");
@@ -683,13 +686,12 @@ public class OSelectStatementTest {
   @Test
   public void testAppendParams() {
     checkRightSyntax("select from User where Account.Name like :name + '%'");
-
   }
 
   @Test
   public void testLetMatch() {
-    checkRightSyntax("select $a let $a = (MATCH {class:Foo, as:bar, where:(name = 'foo')} return $elements)");
-
+    checkRightSyntax(
+        "select $a let $a = (MATCH {class:Foo, as:bar, where:(name = 'foo')} return $elements)");
   }
 
   @Test
@@ -718,16 +720,17 @@ public class OSelectStatementTest {
 
   @Test
   public void testTranslateLucene() {
-    OSelectStatement stm = (OSelectStatement) checkRightSyntax("select from V where name LUCENE 'foo'");
+    OSelectStatement stm =
+        (OSelectStatement) checkRightSyntax("select from V where name LUCENE 'foo'");
     stm.whereClause.getBaseExpression().translateLuceneOperator();
-    Assert.assertTrue(stm.whereClause.toString().contains("search_fields([\"name\"], 'foo') = true"));
+    Assert.assertTrue(
+        stm.whereClause.toString().contains("search_fields([\"name\"], 'foo') = true"));
     Assert.assertFalse(stm.whereClause.toString().contains("LUCENE"));
   }
 
   @Test
   public void testFromAsNamedParam() {
     checkRightSyntax("select from V where fromDate = :from");
-
   }
 
   @Test
@@ -790,7 +793,6 @@ public class OSelectStatementTest {
     checkRightSyntax("select from index:foo WHERE key > 10");
     checkRightSyntax("select from index:foo WHERE key CONTAINS 'foo'");
     checkRightSyntax("select from index:foo WHERE key BETWEEN 'bar' AND 'foo'");
-
   }
 
   protected OrientSql getParserFor(String string) {

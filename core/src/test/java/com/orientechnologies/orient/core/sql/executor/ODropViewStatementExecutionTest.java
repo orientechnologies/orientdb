@@ -9,9 +9,7 @@ import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-/**
- * @author Luigi Dell'Aquila (l.dellaquila-(at)-orientdb.com)
- */
+/** @author Luigi Dell'Aquila (l.dellaquila-(at)-orientdb.com) */
 public class ODropViewStatementExecutionTest {
   static ODatabaseDocument db;
 
@@ -76,5 +74,4 @@ public class ODropViewStatementExecutionTest {
     schema.reload();
     Assert.assertNull(schema.getView(viewName));
   }
-
 }

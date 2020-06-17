@@ -40,23 +40,33 @@ import com.orientechnologies.orient.core.storage.OBasicTransaction;
 import com.orientechnologies.orient.core.tx.OTransactionIndexChanges;
 import com.orientechnologies.orient.core.tx.OTransactionOptimistic;
 import com.orientechnologies.orient.core.tx.OTransactionRecordIndexOperation;
-
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.Map.Entry;
 
 public class OTransactionOptimisticProxy extends OTransactionOptimistic {
-  private final Map<ORID, ORecordOperation> tempEntries    = new LinkedHashMap<ORID, ORecordOperation>();
-  private final Map<ORecordId, ORecord>     createdRecords = new HashMap<ORecordId, ORecord>();
-  private final Map<ORecordId, ORecord>     updatedRecords = new HashMap<ORecordId, ORecord>();
-  @Deprecated
-  private final int                           clientTxId;
-  private final short                         protocolVersion;
-  private       List<ORecordOperationRequest> operations;
-  private final ODocument                     indexChanges;
-  private       ORecordSerializer             serializer;
+  private final Map<ORID, ORecordOperation> tempEntries =
+      new LinkedHashMap<ORID, ORecordOperation>();
+  private final Map<ORecordId, ORecord> createdRecords = new HashMap<ORecordId, ORecord>();
+  private final Map<ORecordId, ORecord> updatedRecords = new HashMap<ORecordId, ORecord>();
+  @Deprecated private final int clientTxId;
+  private final short protocolVersion;
+  private List<ORecordOperationRequest> operations;
+  private final ODocument indexChanges;
+  private ORecordSerializer serializer;
 
-  public OTransactionOptimisticProxy(ODatabaseDocumentInternal database, int txId, boolean usingLong,
-      List<ORecordOperationRequest> operations, ODocument indexChanges, short protocolVersion, ORecordSerializer serializer) {
+  public OTransactionOptimisticProxy(
+      ODatabaseDocumentInternal database,
+      int txId,
+      boolean usingLong,
+      List<ORecordOperationRequest> operations,
+      ODocument indexChanges,
+      short protocolVersion,
+      ORecordSerializer serializer) {
     super(database);
     clientTxId = id;
     setUsingLog(usingLong);
@@ -78,43 +88,48 @@ public class OTransactionOptimisticProxy extends OTransactionOptimistic {
         final ORecordOperation entry;
 
         switch (recordStatus) {
-        case ORecordOperation.CREATED:
-          ORecord record = Orient.instance().getRecordFactoryManager().newInstance(operation.getRecordType(), rid.getClusterId(), getDatabase());
-          serializer.fromStream(operation.getRecord(), record, null);
-          ORecordInternal.setIdentity(record, rid);
-          ORecordInternal.setVersion(record, 0);
-          entry = new ORecordOperation(record, ORecordOperation.CREATED);
-          record.setDirty();
+          case ORecordOperation.CREATED:
+            ORecord record =
+                Orient.instance()
+                    .getRecordFactoryManager()
+                    .newInstance(operation.getRecordType(), rid.getClusterId(), getDatabase());
+            serializer.fromStream(operation.getRecord(), record, null);
+            ORecordInternal.setIdentity(record, rid);
+            ORecordInternal.setVersion(record, 0);
+            entry = new ORecordOperation(record, ORecordOperation.CREATED);
+            record.setDirty();
 
-          // SAVE THE RECORD TO RETRIEVE THEM FOR THE NEW RID TO SEND BACK TO THE REQUESTER
-          createdRecords.put(rid.copy(), entry.getRecord());
-          break;
+            // SAVE THE RECORD TO RETRIEVE THEM FOR THE NEW RID TO SEND BACK TO THE REQUESTER
+            createdRecords.put(rid.copy(), entry.getRecord());
+            break;
 
-        case ORecordOperation.UPDATED:
-          int version = operation.getVersion();
-          ORecord updated = Orient.instance().getRecordFactoryManager().newInstance(operation.getRecordType(), rid.getClusterId(), getDatabase());
-          ORecordInternal.setIdentity(updated, rid);
-          ORecordInternal.setVersion(updated, version);
-          entry = new ORecordOperation(updated, ORecordOperation.UPDATED);
-          updated.setDirty();
-          ORecordInternal.setContentChanged(entry.getRecord(), operation.isContentChanged());
-          break;
+          case ORecordOperation.UPDATED:
+            int version = operation.getVersion();
+            ORecord updated =
+                Orient.instance()
+                    .getRecordFactoryManager()
+                    .newInstance(operation.getRecordType(), rid.getClusterId(), getDatabase());
+            ORecordInternal.setIdentity(updated, rid);
+            ORecordInternal.setVersion(updated, version);
+            entry = new ORecordOperation(updated, ORecordOperation.UPDATED);
+            updated.setDirty();
+            ORecordInternal.setContentChanged(entry.getRecord(), operation.isContentChanged());
+            break;
 
-        case ORecordOperation.DELETED:
-          // LOAD RECORD TO BE SURE IT HASN'T BEEN DELETED BEFORE + PROVIDE CONTENT FOR ANY HOOK
-          final ORecord rec = rid.getRecord();
-          entry = new ORecordOperation(rec, ORecordOperation.DELETED);
-          int deleteVersion = operation.getVersion();
-          if (rec == null)
-            throw new ORecordNotFoundException(rid.getIdentity());
-          else {
-            ORecordInternal.setVersion(rec, deleteVersion);
-            entry.setRecord(rec);
-          }
-          break;
+          case ORecordOperation.DELETED:
+            // LOAD RECORD TO BE SURE IT HASN'T BEEN DELETED BEFORE + PROVIDE CONTENT FOR ANY HOOK
+            final ORecord rec = rid.getRecord();
+            entry = new ORecordOperation(rec, ORecordOperation.DELETED);
+            int deleteVersion = operation.getVersion();
+            if (rec == null) throw new ORecordNotFoundException(rid.getIdentity());
+            else {
+              ORecordInternal.setVersion(rec, deleteVersion);
+              entry.setRecord(rec);
+            }
+            break;
 
-        default:
-          throw new OTransactionException("Unrecognized tx command: " + recordStatus);
+          default:
+            throw new OTransactionException("Unrecognized tx command: " + recordStatus);
         }
 
         // PUT IN TEMPORARY LIST TO GET FETCHED AFTER ALL FOR CACHE
@@ -129,16 +144,17 @@ public class OTransactionOptimisticProxy extends OTransactionOptimistic {
       for (Entry<ORID, ORecordOperation> entry : tempEntries.entrySet()) {
 
         if (entry.getValue().type == ORecordOperation.UPDATED) {
-          // SPECIAL CASE FOR UPDATE: WE NEED TO LOAD THE RECORD AND APPLY CHANGES TO GET WORKING HOOKS (LIKE INDEXES)
+          // SPECIAL CASE FOR UPDATE: WE NEED TO LOAD THE RECORD AND APPLY CHANGES TO GET WORKING
+          // HOOKS (LIKE INDEXES)
           final ORecord record = entry.getValue().record.getRecord();
           final boolean contentChanged = ORecordInternal.isContentChanged(record);
 
           final ORecord loadedRecord = record.getIdentity().copy().getRecord();
-          if (loadedRecord == null)
-            throw new ORecordNotFoundException(record.getIdentity());
+          if (loadedRecord == null) throw new ORecordNotFoundException(record.getIdentity());
 
           if (ORecordInternal.getRecordType(loadedRecord) == ODocument.RECORD_TYPE
-              && ORecordInternal.getRecordType(loadedRecord) == ORecordInternal.getRecordType(record)) {
+              && ORecordInternal.getRecordType(loadedRecord)
+                  == ORecordInternal.getRecordType(record)) {
             ((ODocument) loadedRecord).merge((ODocument) record, false, false);
 
             loadedRecord.setDirty();
@@ -164,21 +180,21 @@ public class OTransactionOptimisticProxy extends OTransactionOptimistic {
           ODocumentInternal.autoConvertValueToClass(getDatabase(), (ODocument) record);
         }
       }
-      for (ORecord record : updatedRecords.values())
-        unmarshallRecord(record);
+      for (ORecord record : updatedRecords.values()) unmarshallRecord(record);
 
     } catch (Exception e) {
       rollback();
-      throw OException
-          .wrapException(new OSerializationException("Cannot read transaction record from the network. Transaction aborted"), e);
+      throw OException.wrapException(
+          new OSerializationException(
+              "Cannot read transaction record from the network. Transaction aborted"),
+          e);
     }
   }
 
   @Override
   public ORecord getRecord(final ORID rid) {
     ORecord record = super.getRecord(rid);
-    if (record == OBasicTransaction.DELETED_RECORD)
-      return record;
+    if (record == OBasicTransaction.DELETED_RECORD) return record;
     else if (record == null && rid.isNew())
       // SEARCH BETWEEN CREATED RECORDS
       record = createdRecords.get(rid);
@@ -190,8 +206,7 @@ public class OTransactionOptimisticProxy extends OTransactionOptimistic {
     for (Entry<String, Object> indexEntry : remoteIndexEntries) {
       final String indexName = indexEntry.getKey();
       final ODocument indexDoc = (ODocument) indexEntry.getValue();
-      if (indexDoc == null)
-        continue;
+      if (indexDoc == null) continue;
 
       OTransactionIndexChanges transactionIndexChanges = indexEntries.get(indexEntry.getKey());
 
@@ -201,17 +216,14 @@ public class OTransactionOptimisticProxy extends OTransactionOptimistic {
       }
 
       final Boolean clearAll = indexDoc.field("clear");
-      if (clearAll != null && clearAll)
-        transactionIndexChanges.setCleared();
+      if (clearAll != null && clearAll) transactionIndexChanges.setCleared();
 
       final Collection<ODocument> entries = indexDoc.field("entries");
-      if (entries == null)
-        continue;
+      if (entries == null) continue;
 
       for (final ODocument entry : entries) {
         final List<ODocument> operations = entry.field("ops");
-        if (operations == null)
-          continue;
+        if (operations == null) continue;
 
         final Object key;
         ODocument keyContainer = entry.field("k");
@@ -219,20 +231,18 @@ public class OTransactionOptimisticProxy extends OTransactionOptimistic {
           final Object storedKey = keyContainer.field("key");
           if (storedKey instanceof List)
             key = new OCompositeKey((List<? extends Comparable<?>>) storedKey);
-          else
-            key = storedKey;
-        } else
-          key = null;
+          else key = storedKey;
+        } else key = null;
 
         for (final ODocument op : operations) {
           final int operation = (Integer) op.rawField("o");
-          final OTransactionIndexChanges.OPERATION indexOperation = OTransactionIndexChanges.OPERATION.values()[operation];
+          final OTransactionIndexChanges.OPERATION indexOperation =
+              OTransactionIndexChanges.OPERATION.values()[operation];
           final OIdentifiable value = op.field("v");
 
           transactionIndexChanges.getChangesPerKey(key).add(value, indexOperation);
 
-          if (value == null)
-            continue;
+          if (value == null) continue;
 
           final ORID rid = value.getIdentity();
           List<OTransactionRecordIndexOperation> txIndexOperations = recordIndexOperations.get(rid);
@@ -241,7 +251,8 @@ public class OTransactionOptimisticProxy extends OTransactionOptimistic {
             recordIndexOperations.put(rid, txIndexOperations);
           }
 
-          txIndexOperations.add(new OTransactionRecordIndexOperation(indexName, key, indexOperation));
+          txIndexOperations.add(
+              new OTransactionRecordIndexOperation(indexName, key, indexOperation));
         }
       }
     }
@@ -255,9 +266,7 @@ public class OTransactionOptimisticProxy extends OTransactionOptimistic {
     return updatedRecords;
   }
 
-  /**
-   * Unmarshalls collections. This prevent temporary RIDs remains stored as are.
-   */
+  /** Unmarshalls collections. This prevent temporary RIDs remains stored as are. */
   private void unmarshallRecord(final ORecord iRecord) {
     if (iRecord instanceof ODocument) {
       ((ODocument) iRecord).deserializeFields();

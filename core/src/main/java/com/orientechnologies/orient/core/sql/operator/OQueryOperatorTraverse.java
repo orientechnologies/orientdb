@@ -1,22 +1,22 @@
 /*
-  *
-  *  *  Copyright 2010-2016 OrientDB LTD (http://orientdb.com)
-  *  *
-  *  *  Licensed under the Apache License, Version 2.0 (the "License");
-  *  *  you may not use this file except in compliance with the License.
-  *  *  You may obtain a copy of the License at
-  *  *
-  *  *       http://www.apache.org/licenses/LICENSE-2.0
-  *  *
-  *  *  Unless required by applicable law or agreed to in writing, software
-  *  *  distributed under the License is distributed on an "AS IS" BASIS,
-  *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-  *  *  See the License for the specific language governing permissions and
-  *  *  limitations under the License.
-  *  *
-  *  * For more information: http://orientdb.com
-  *
-  */
+ *
+ *  *  Copyright 2010-2016 OrientDB LTD (http://orientdb.com)
+ *  *
+ *  *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  *  you may not use this file except in compliance with the License.
+ *  *  You may obtain a copy of the License at
+ *  *
+ *  *       http://www.apache.org/licenses/LICENSE-2.0
+ *  *
+ *  *  Unless required by applicable law or agreed to in writing, software
+ *  *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  *  See the License for the specific language governing permissions and
+ *  *  limitations under the License.
+ *  *
+ *  * For more information: http://orientdb.com
+ *
+ */
 package com.orientechnologies.orient.core.sql.operator;
 
 import com.orientechnologies.common.collection.OMultiValue;
@@ -29,7 +29,6 @@ import com.orientechnologies.orient.core.query.OQueryRuntimeValueMulti;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilterCondition;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilterItemFieldAny;
-
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -39,20 +38,20 @@ import java.util.Set;
 
 /**
  * TRAVERSE operator.
- * 
+ *
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
- * 
  */
 public class OQueryOperatorTraverse extends OQueryOperatorEqualityNotNulls {
-  private int      startDeepLevel = 0; // FIRST
-  private int      endDeepLevel   = -1; // INFINITE
+  private int startDeepLevel = 0; // FIRST
+  private int endDeepLevel = -1; // INFINITE
   private String[] cfgFields;
 
   public OQueryOperatorTraverse() {
     super("TRAVERSE", 5, false, 1, true);
   }
 
-  public OQueryOperatorTraverse(final int startDeepLevel, final int endDeepLevel, final String[] iFieldList) {
+  public OQueryOperatorTraverse(
+      final int startDeepLevel, final int endDeepLevel, final String[] iFieldList) {
     this();
     this.startDeepLevel = startDeepLevel;
     this.endDeepLevel = endDeepLevel;
@@ -65,8 +64,12 @@ public class OQueryOperatorTraverse extends OQueryOperatorEqualityNotNulls {
   }
 
   @Override
-  protected boolean evaluateExpression(final OIdentifiable iRecord, final OSQLFilterCondition iCondition, final Object iLeft,
-      final Object iRight, final OCommandContext iContext) {
+  protected boolean evaluateExpression(
+      final OIdentifiable iRecord,
+      final OSQLFilterCondition iCondition,
+      final Object iLeft,
+      final Object iRight,
+      final OCommandContext iContext) {
     final OSQLFilterCondition condition;
     final Object target;
 
@@ -83,10 +86,13 @@ public class OQueryOperatorTraverse extends OQueryOperatorEqualityNotNulls {
   }
 
   @SuppressWarnings("unchecked")
-  private boolean traverse(Object iTarget, final OSQLFilterCondition iCondition, final int iLevel,
-      final Set<ORID> iEvaluatedRecords, final OCommandContext iContext) {
-    if (endDeepLevel > -1 && iLevel > endDeepLevel)
-      return false;
+  private boolean traverse(
+      Object iTarget,
+      final OSQLFilterCondition iCondition,
+      final int iLevel,
+      final Set<ORID> iEvaluatedRecords,
+      final OCommandContext iContext) {
+    if (endDeepLevel > -1 && iLevel > endDeepLevel) return false;
 
     if (iTarget instanceof OIdentifiable) {
       if (iEvaluatedRecords.contains(((OIdentifiable) iTarget).getIdentity()))
@@ -110,8 +116,8 @@ public class OQueryOperatorTraverse extends OQueryOperatorEqualityNotNulls {
           return false;
         }
 
-      if (iLevel >= startDeepLevel && (Boolean) iCondition.evaluate(target, null, iContext) == Boolean.TRUE)
-        return true;
+      if (iLevel >= startDeepLevel
+          && (Boolean) iCondition.evaluate(target, null, iContext) == Boolean.TRUE) return true;
 
       // TRAVERSE THE DOCUMENT ITSELF
       if (cfgFields != null)
@@ -119,16 +125,19 @@ public class OQueryOperatorTraverse extends OQueryOperatorEqualityNotNulls {
           if (cfgField.equalsIgnoreCase(OSQLFilterItemFieldAny.FULL_NAME)) {
             // ANY
             for (final String fieldName : target.fieldNames())
-              if (traverse(target.rawField(fieldName), iCondition, iLevel + 1, iEvaluatedRecords, iContext))
+              if (traverse(
+                  target.rawField(fieldName), iCondition, iLevel + 1, iEvaluatedRecords, iContext))
                 return true;
           } else if (cfgField.equalsIgnoreCase(OSQLFilterItemFieldAny.FULL_NAME)) {
             // ALL
             for (final String fieldName : target.fieldNames())
-              if (!traverse(target.rawField(fieldName), iCondition, iLevel + 1, iEvaluatedRecords, iContext))
+              if (!traverse(
+                  target.rawField(fieldName), iCondition, iLevel + 1, iEvaluatedRecords, iContext))
                 return false;
             return true;
           } else {
-            if (traverse(target.rawField(cfgField), iCondition, iLevel + 1, iEvaluatedRecords, iContext))
+            if (traverse(
+                target.rawField(cfgField), iCondition, iLevel + 1, iEvaluatedRecords, iContext))
               return true;
           }
         }
@@ -156,8 +165,8 @@ public class OQueryOperatorTraverse extends OQueryOperatorEqualityNotNulls {
     } else if (iTarget instanceof Iterator) {
       final Iterator iterator = (Iterator) iTarget;
       while (iterator.hasNext()) {
-        if (traverse(iterator.next(), iCondition, iLevel + 1, iEvaluatedRecords, iContext) == Boolean.TRUE)
-          return true;
+        if (traverse(iterator.next(), iCondition, iLevel + 1, iEvaluatedRecords, iContext)
+            == Boolean.TRUE) return true;
       }
     }
 
@@ -166,17 +175,15 @@ public class OQueryOperatorTraverse extends OQueryOperatorEqualityNotNulls {
 
   @Override
   public OQueryOperator configure(final List<String> iParams) {
-    if (iParams == null)
-      return this;
+    if (iParams == null) return this;
 
     final int start = !iParams.isEmpty() ? Integer.parseInt(iParams.get(0)) : startDeepLevel;
     final int end = iParams.size() > 1 ? Integer.parseInt(iParams.get(1)) : endDeepLevel;
 
-    String[] fields = new String[] { "any()" };
+    String[] fields = new String[] {"any()"};
     if (iParams.size() > 2) {
       String f = iParams.get(2);
-      if (f.startsWith("'") || f.startsWith("\""))
-        f = f.substring(1, f.length() - 1);
+      if (f.startsWith("'") || f.startsWith("\"")) f = f.substring(1, f.length() - 1);
       fields = f.split(",");
     }
 
@@ -202,7 +209,8 @@ public class OQueryOperatorTraverse extends OQueryOperatorEqualityNotNulls {
 
   @Override
   public String toString() {
-    return String.format("%s(%d,%d,%s)", keyword, startDeepLevel, endDeepLevel, Arrays.toString(cfgFields));
+    return String.format(
+        "%s(%d,%d,%s)", keyword, startDeepLevel, endDeepLevel, Arrays.toString(cfgFields));
   }
 
   @Override

@@ -1,15 +1,15 @@
 package com.orientechnologies.orient.core.sql.functions.stat;
 
-import org.junit.Before;
-import org.junit.Test;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
+
 
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNull;
+import org.junit.Before;
+import org.junit.Test;
 
 public class OSQLFunctionVarianceTest {
 
@@ -17,12 +17,13 @@ public class OSQLFunctionVarianceTest {
 
   @Before
   public void setup() {
-    variance = new OSQLFunctionVariance() {
-      @Override
-      protected boolean returnDistributedResult() {
-        return false;
-      }
-    };
+    variance =
+        new OSQLFunctionVariance() {
+          @Override
+          protected boolean returnDistributedResult() {
+            return false;
+          }
+        };
   }
 
   @Test
@@ -33,10 +34,10 @@ public class OSQLFunctionVarianceTest {
 
   @Test
   public void testVariance() {
-    Integer[] scores = { 4, 7, 15, 3 };
+    Integer[] scores = {4, 7, 15, 3};
 
     for (Integer s : scores) {
-      variance.execute(null, null, null, new Object[] { s }, null);
+      variance.execute(null, null, null, new Object[] {s}, null);
     }
 
     Object result = variance.getResult();
@@ -45,10 +46,10 @@ public class OSQLFunctionVarianceTest {
 
   @Test
   public void testVariance1() {
-    Integer[] scores = { 4, 7 };
+    Integer[] scores = {4, 7};
 
     for (Integer s : scores) {
-      variance.execute(null, null, null, new Object[] { s }, null);
+      variance.execute(null, null, null, new Object[] {s}, null);
     }
 
     Object result = variance.getResult();
@@ -57,10 +58,10 @@ public class OSQLFunctionVarianceTest {
 
   @Test
   public void testVariance2() {
-    Integer[] scores = { 15, 3 };
+    Integer[] scores = {15, 3};
 
     for (Integer s : scores) {
-      variance.execute(null, null, null, new Object[] { s }, null);
+      variance.execute(null, null, null, new Object[] {s}, null);
     }
 
     Object result = variance.getResult();
@@ -83,11 +84,13 @@ public class OSQLFunctionVarianceTest {
     results.add(doc1);
     results.add(doc2);
 
-    assertEquals(22.1875, new OSQLFunctionVariance() {
-      @Override
-      protected boolean returnDistributedResult() {
-        return true;
-      }
-    }.mergeDistributedResult(results));
+    assertEquals(
+        22.1875,
+        new OSQLFunctionVariance() {
+          @Override
+          protected boolean returnDistributedResult() {
+            return true;
+          }
+        }.mergeDistributedResult(results));
   }
 }

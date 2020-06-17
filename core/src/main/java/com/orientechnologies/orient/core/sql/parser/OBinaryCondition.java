@@ -11,13 +11,17 @@ import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.executor.OResultInternal;
-
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
 
 public class OBinaryCondition extends OBooleanExpression {
-  protected OExpression            left;
+  protected OExpression left;
   protected OBinaryCompareOperator operator;
-  protected OExpression            right;
+  protected OExpression right;
 
   public OBinaryCondition(int id) {
     super(id);
@@ -55,8 +59,8 @@ public class OBinaryCondition extends OBooleanExpression {
       Object leftVal = currentRecord.getProperty(s);
       Object rightVal = right.execute(currentRecord, ctx);
 
-      //TODO collate
-      
+      // TODO collate
+
       if (operator.execute(leftVal, rightVal)) {
         return true;
       }
@@ -77,7 +81,6 @@ public class OBinaryCondition extends OBooleanExpression {
       return false;
     }
     return left.supportsBasicCalculation() && right.supportsBasicCalculation();
-
   }
 
   @Override
@@ -110,7 +113,8 @@ public class OBinaryCondition extends OBooleanExpression {
     return result;
   }
 
-  public OBinaryCondition isIndexedFunctionCondition(OClass iSchemaClass, ODatabaseDocumentInternal database) {
+  public OBinaryCondition isIndexedFunctionCondition(
+      OClass iSchemaClass, ODatabaseDocumentInternal database) {
     if (left.isIndexedFunctionCal()) {
       return this;
     }
@@ -118,53 +122,65 @@ public class OBinaryCondition extends OBooleanExpression {
   }
 
   public long estimateIndexed(OFromClause target, OCommandContext context) {
-    return left.estimateIndexedFunction(target, context, operator, right.execute((OResult) null, context));
+    return left.estimateIndexedFunction(
+        target, context, operator, right.execute((OResult) null, context));
   }
 
-  public Iterable<OIdentifiable> executeIndexedFunction(OFromClause target, OCommandContext context) {
-    return left.executeIndexedFunction(target, context, operator, right.execute((OResult) null, context));
-  }
-
-  /**
-   * tests if current expression involves an indexed funciton AND that function can also be executed without using the index
-   *
-   * @param target  the query target
-   * @param context the execution context
-   *
-   * @return true if current expression involves an indexed function AND that function can be used on this target, false otherwise
-   */
-  public boolean canExecuteIndexedFunctionWithoutIndex(OFromClause target, OCommandContext context) {
-    return left.canExecuteIndexedFunctionWithoutIndex(target, context, operator, right.execute((OResult) null, context));
+  public Iterable<OIdentifiable> executeIndexedFunction(
+      OFromClause target, OCommandContext context) {
+    return left.executeIndexedFunction(
+        target, context, operator, right.execute((OResult) null, context));
   }
 
   /**
-   * tests if current expression involves an indexed function AND that function can be used on this target
+   * tests if current expression involves an indexed funciton AND that function can also be executed
+   * without using the index
    *
-   * @param target  the query target
+   * @param target the query target
    * @param context the execution context
-   *
-   * @return true if current expression involves an indexed function AND that function can be used on this target, false otherwise
+   * @return true if current expression involves an indexed function AND that function can be used
+   *     on this target, false otherwise
    */
-  public boolean allowsIndexedFunctionExecutionOnTarget(OFromClause target, OCommandContext context) {
-    return left.allowsIndexedFunctionExecutionOnTarget(target, context, operator, right.execute((OResult) null, context));
+  public boolean canExecuteIndexedFunctionWithoutIndex(
+      OFromClause target, OCommandContext context) {
+    return left.canExecuteIndexedFunctionWithoutIndex(
+        target, context, operator, right.execute((OResult) null, context));
   }
 
   /**
-   * tests if current expression involves an indexed function AND the function has also to be executed after the index search. In
-   * some cases, the index search is accurate, so this condition can be excluded from further evaluation. In other cases the result
-   * from the index is a superset of the expected result, so the function has to be executed anyway for further filtering
+   * tests if current expression involves an indexed function AND that function can be used on this
+   * target
    *
-   * @param target  the query target
+   * @param target the query target
    * @param context the execution context
-   *
-   * @return true if current expression involves an indexed function AND the function has also to be executed after the index
-   * search.
+   * @return true if current expression involves an indexed function AND that function can be used
+   *     on this target, false otherwise
    */
-  public boolean executeIndexedFunctionAfterIndexSearch(OFromClause target, OCommandContext context) {
-    return left.executeIndexedFunctionAfterIndexSearch(target, context, operator, right.execute((OResult) null, context));
+  public boolean allowsIndexedFunctionExecutionOnTarget(
+      OFromClause target, OCommandContext context) {
+    return left.allowsIndexedFunctionExecutionOnTarget(
+        target, context, operator, right.execute((OResult) null, context));
   }
 
-  public List<OBinaryCondition> getIndexedFunctionConditions(OClass iSchemaClass, ODatabaseDocumentInternal database) {
+  /**
+   * tests if current expression involves an indexed function AND the function has also to be
+   * executed after the index search. In some cases, the index search is accurate, so this condition
+   * can be excluded from further evaluation. In other cases the result from the index is a superset
+   * of the expected result, so the function has to be executed anyway for further filtering
+   *
+   * @param target the query target
+   * @param context the execution context
+   * @return true if current expression involves an indexed function AND the function has also to be
+   *     executed after the index search.
+   */
+  public boolean executeIndexedFunctionAfterIndexSearch(
+      OFromClause target, OCommandContext context) {
+    return left.executeIndexedFunctionAfterIndexSearch(
+        target, context, operator, right.execute((OResult) null, context));
+  }
+
+  public List<OBinaryCondition> getIndexedFunctionConditions(
+      OClass iSchemaClass, ODatabaseDocumentInternal database) {
     if (left.isIndexedFunctionCal()) {
       return Collections.singletonList(this);
     }
@@ -220,11 +236,15 @@ public class OBinaryCondition extends OBooleanExpression {
   }
 
   private boolean checkCanTransformToUpdate() {
-    if (left == null || left.mathExpression == null || !(left.mathExpression instanceof OBaseExpression)) {
+    if (left == null
+        || left.mathExpression == null
+        || !(left.mathExpression instanceof OBaseExpression)) {
       return false;
     }
     OBaseExpression base = (OBaseExpression) left.mathExpression;
-    if (base.identifier == null || base.identifier.suffix == null || base.identifier.suffix.identifier == null) {
+    if (base.identifier == null
+        || base.identifier.suffix == null
+        || base.identifier.suffix.identifier == null) {
       return false;
     }
     return true;
@@ -256,19 +276,14 @@ public class OBinaryCondition extends OBooleanExpression {
 
   @Override
   public boolean equals(Object o) {
-    if (this == o)
-      return true;
-    if (o == null || getClass() != o.getClass())
-      return false;
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
 
     OBinaryCondition that = (OBinaryCondition) o;
 
-    if (left != null ? !left.equals(that.left) : that.left != null)
-      return false;
-    if (operator != null ? !operator.equals(that.operator) : that.operator != null)
-      return false;
-    if (right != null ? !right.equals(that.right) : that.right != null)
-      return false;
+    if (left != null ? !left.equals(that.left) : that.left != null) return false;
+    if (operator != null ? !operator.equals(that.operator) : that.operator != null) return false;
+    if (right != null ? !right.equals(that.right) : that.right != null) return false;
 
     return true;
   }
@@ -335,7 +350,9 @@ public class OBinaryCondition extends OBooleanExpression {
       return result;
     } else if (left.mathExpression instanceof OBaseExpression) {
       OBaseExpression base = (OBaseExpression) left.mathExpression;
-      if (base.identifier != null && base.identifier.levelZero != null && base.identifier.levelZero.collection != null) {
+      if (base.identifier != null
+          && base.identifier.levelZero != null
+          && base.identifier.levelZero.collection != null) {
         OCollection coll = base.identifier.levelZero.collection;
 
         OCollection newColl = new OCollection(-1);
@@ -343,11 +360,13 @@ public class OBinaryCondition extends OBooleanExpression {
 
         for (OExpression exp : coll.expressions) {
           if (exp.isBaseIdentifier()) {
-            OIdentifier identifier = ((OBaseExpression) exp.mathExpression).identifier.suffix.identifier;
+            OIdentifier identifier =
+                ((OBaseExpression) exp.mathExpression).identifier.suffix.identifier;
             OExpression val = identifierToStringExpr(identifier);
             newColl.expressions.add(val);
           } else {
-            throw new OCommandExecutionException("Cannot execute because of invalid LUCENE expression");
+            throw new OCommandExecutionException(
+                "Cannot execute because of invalid LUCENE expression");
           }
         }
         OExpression result = new OExpression(-1);
@@ -382,7 +401,9 @@ public class OBinaryCondition extends OBooleanExpression {
     left = new OExpression(-1);
     left.deserialize(fromResult.getProperty("left"));
     try {
-      operator = (OBinaryCompareOperator) Class.forName(String.valueOf(fromResult.getProperty("operator"))).newInstance();
+      operator =
+          (OBinaryCompareOperator)
+              Class.forName(String.valueOf(fromResult.getProperty("operator"))).newInstance();
     } catch (Exception e) {
       throw OException.wrapException(new OCommandExecutionException(""), e);
     }
@@ -397,26 +418,33 @@ public class OBinaryCondition extends OBooleanExpression {
 
   @Override
   public OBooleanExpression rewriteIndexChainsAsSubqueries(OCommandContext ctx, OClass clazz) {
-    if (operator instanceof OEqualsCompareOperator && right.isEarlyCalculated(ctx) && left.isIndexChain(ctx, clazz)) {
+    if (operator instanceof OEqualsCompareOperator
+        && right.isEarlyCalculated(ctx)
+        && left.isIndexChain(ctx, clazz)) {
       OInCondition result = new OInCondition(-1);
 
       result.left = new OExpression(-1);
       OBaseExpression base = new OBaseExpression(-1);
       base.identifier = new OBaseIdentifier(-1);
       base.identifier.suffix = new OSuffixIdentifier(-1);
-      base.identifier.suffix.identifier = ((OBaseExpression) left.mathExpression).identifier.suffix.identifier;
+      base.identifier.suffix.identifier =
+          ((OBaseExpression) left.mathExpression).identifier.suffix.identifier;
       result.left.mathExpression = base;
 
       result.operator = new OInOperator(-1);
 
-      OClass nextClazz = clazz.getProperty(base.identifier.suffix.identifier.getStringValue()).getLinkedClass();
-      result.rightStatement = indexChainToStatement(((OBaseExpression) left.mathExpression).modifier, nextClazz, right, ctx);
+      OClass nextClazz =
+          clazz.getProperty(base.identifier.suffix.identifier.getStringValue()).getLinkedClass();
+      result.rightStatement =
+          indexChainToStatement(
+              ((OBaseExpression) left.mathExpression).modifier, nextClazz, right, ctx);
       return result;
     }
     return this;
   }
 
-  private OSelectStatement indexChainToStatement(OModifier modifier, OClass clazz, OExpression right, OCommandContext ctx) {
+  private OSelectStatement indexChainToStatement(
+      OModifier modifier, OClass clazz, OExpression right, OCommandContext ctx) {
     OClass queryClass = clazz;
 
     OSelectStatement result = new OSelectStatement(-1);
@@ -432,8 +460,10 @@ public class OBinaryCondition extends OBooleanExpression {
 
     base.left = new OExpression(-1);
     base.left.mathExpression = new OBaseExpression(-1);
-    ((OBaseExpression) base.left.mathExpression).identifier = new OBaseIdentifier(modifier.suffix.identifier);
-    ((OBaseExpression) base.left.mathExpression).modifier = modifier.next == null ? null : modifier.next.copy();
+    ((OBaseExpression) base.left.mathExpression).identifier =
+        new OBaseIdentifier(modifier.suffix.identifier);
+    ((OBaseExpression) base.left.mathExpression).modifier =
+        modifier.next == null ? null : modifier.next.copy();
 
     base.operator = new OEqualsCompareOperator(-1);
     base.right = right.copy();

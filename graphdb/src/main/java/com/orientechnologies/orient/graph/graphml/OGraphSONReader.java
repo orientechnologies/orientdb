@@ -6,7 +6,6 @@ import com.fasterxml.jackson.core.JsonToken;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.MappingJsonFactory;
 import com.orientechnologies.common.io.OFileUtils;
-import com.orientechnologies.orient.core.cache.OLocalRecordCache;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.tool.ODatabaseImportException;
@@ -17,7 +16,6 @@ import com.tinkerpop.blueprints.util.io.graphson.GraphElementFactory;
 import com.tinkerpop.blueprints.util.io.graphson.GraphSONMode;
 import com.tinkerpop.blueprints.util.io.graphson.GraphSONTokens;
 import com.tinkerpop.blueprints.util.wrappers.batch.BatchGraph;
-
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -32,14 +30,11 @@ import java.util.Set;
  */
 public class OGraphSONReader {
   private static final JsonFactory jsonFactory = new MappingJsonFactory();
-  private final Graph              graph;
-  private OCommandOutputListener   output;
-  private long                     inputSize;
+  private final Graph graph;
+  private OCommandOutputListener output;
+  private long inputSize;
 
-  /**
-   * @param graph
-   *          the graph to populate with the JSON data
-   */
+  /** @param graph the graph to populate with the JSON data */
   public OGraphSONReader(final Graph graph) {
     this.graph = graph;
   }
@@ -47,10 +42,8 @@ public class OGraphSONReader {
   /**
    * Input the JSON stream data into the graph. In practice, usually the provided graph is empty.
    *
-   * @param jsonInputStream
-   *          an InputStream of JSON data
-   * @throws IOException
-   *           thrown when the JSON data is not correctly formatted
+   * @param jsonInputStream an InputStream of JSON data
+   * @throws IOException thrown when the JSON data is not correctly formatted
    */
   public void inputGraph(final InputStream jsonInputStream) throws IOException {
     inputGraph(jsonInputStream, 1000);
@@ -59,10 +52,8 @@ public class OGraphSONReader {
   /**
    * Input the JSON stream data into the graph. In practice, usually the provided graph is empty.
    *
-   * @param filename
-   *          name of a file of JSON data
-   * @throws IOException
-   *           thrown when the JSON data is not correctly formatted
+   * @param filename name of a file of JSON data
+   * @throws IOException thrown when the JSON data is not correctly formatted
    */
   public void inputGraph(final String filename) throws IOException {
     inputGraph(filename, 1000);
@@ -77,20 +68,22 @@ public class OGraphSONReader {
   }
 
   /**
-   * Input the JSON stream data into the graph. More control over how data is streamed is provided by this method.
+   * Input the JSON stream data into the graph. More control over how data is streamed is provided
+   * by this method.
    *
-   * @param filename
-   *          name of a file of JSON data
-   * @param bufferSize
-   *          the amount of elements to hold in memory before committing a transactions (only valid for TransactionalGraphs)
-   * @throws IOException
-   *           thrown when the JSON data is not correctly formatted
+   * @param filename name of a file of JSON data
+   * @param bufferSize the amount of elements to hold in memory before committing a transactions
+   *     (only valid for TransactionalGraphs)
+   * @throws IOException thrown when the JSON data is not correctly formatted
    */
-  public void inputGraph(final String filename, int bufferSize, final Set<String> edgePropertyKeys,
-      final Set<String> vertexPropertyKeys) throws IOException {
+  public void inputGraph(
+      final String filename,
+      int bufferSize,
+      final Set<String> edgePropertyKeys,
+      final Set<String> vertexPropertyKeys)
+      throws IOException {
     final File file = new File(filename);
-    if (!file.exists())
-      throw new ODatabaseImportException("File '" + filename + "' not found");
+    if (!file.exists()) throw new ODatabaseImportException("File '" + filename + "' not found");
 
     inputSize = file.length();
     final FileInputStream fis = new FileInputStream(filename);
@@ -102,17 +95,20 @@ public class OGraphSONReader {
   }
 
   /**
-   * Input the JSON stream data into the graph. More control over how data is streamed is provided by this method.
+   * Input the JSON stream data into the graph. More control over how data is streamed is provided
+   * by this method.
    *
-   * @param jsonInputStream
-   *          an InputStream of JSON data
-   * @param bufferSize
-   *          the amount of elements to hold in memory before committing a transactions (only valid for TransactionalGraphs)
-   * @throws IOException
-   *           thrown when the JSON data is not correctly formatted
+   * @param jsonInputStream an InputStream of JSON data
+   * @param bufferSize the amount of elements to hold in memory before committing a transactions
+   *     (only valid for TransactionalGraphs)
+   * @throws IOException thrown when the JSON data is not correctly formatted
    */
-  public void inputGraph(final InputStream jsonInputStream, int bufferSize, final Set<String> edgePropertyKeys,
-      final Set<String> vertexPropertyKeys) throws IOException {
+  public void inputGraph(
+      final InputStream jsonInputStream,
+      int bufferSize,
+      final Set<String> edgePropertyKeys,
+      final Set<String> vertexPropertyKeys)
+      throws IOException {
 
     final JsonParser jp = jsonFactory.createJsonParser(jsonInputStream);
 
@@ -120,7 +116,9 @@ public class OGraphSONReader {
     final BatchGraph batchGraph = BatchGraph.wrap(graph, bufferSize);
 
     final ElementFactory elementFactory = new GraphElementFactory(batchGraph);
-    OGraphSONUtility graphson = new OGraphSONUtility(GraphSONMode.NORMAL, elementFactory, vertexPropertyKeys, edgePropertyKeys);
+    OGraphSONUtility graphson =
+        new OGraphSONUtility(
+            GraphSONMode.NORMAL, elementFactory, vertexPropertyKeys, edgePropertyKeys);
 
     long importedVertices = 0;
     long importedEdges = 0;
@@ -146,8 +144,12 @@ public class OGraphSONReader {
         jp.nextToken();
         while (jp.nextToken() != JsonToken.END_ARRAY) {
           final JsonNode node = jp.readValueAsTree();
-          final Vertex inV = batchGraph.getVertex(OGraphSONUtility.getTypedValueFromJsonNode(node.get(GraphSONTokens._IN_V)));
-          final Vertex outV = batchGraph.getVertex(OGraphSONUtility.getTypedValueFromJsonNode(node.get(GraphSONTokens._OUT_V)));
+          final Vertex inV =
+              batchGraph.getVertex(
+                  OGraphSONUtility.getTypedValueFromJsonNode(node.get(GraphSONTokens._IN_V)));
+          final Vertex outV =
+              batchGraph.getVertex(
+                  OGraphSONUtility.getTypedValueFromJsonNode(node.get(GraphSONTokens._OUT_V)));
           graphson.edgeFromJson(node, outV, inV);
           importedEdges++;
           printStatus(jp, importedVertices, importedEdges);
@@ -172,17 +174,29 @@ public class OGraphSONReader {
     return this;
   }
 
-  protected void printStatus(final JsonParser jp, final long importedVertices, final long importedEdges) {
+  protected void printStatus(
+      final JsonParser jp, final long importedVertices, final long importedEdges) {
     if (output != null && (importedVertices + importedEdges) % 50000 == 0) {
       final long parsed = jp.getCurrentLocation().getByteOffset();
 
       if (inputSize > 0)
-        output.onMessage(String.format("Imported %d graph elements: %d vertices and %d edges. Parsed %s/%s (uncompressed) (%s%%)",
-            importedVertices + importedEdges, importedVertices, importedEdges, OFileUtils.getSizeAsString(parsed),
-            "" + OFileUtils.getSizeAsString(inputSize), "" + parsed * 100 / inputSize));
+        output.onMessage(
+            String.format(
+                "Imported %d graph elements: %d vertices and %d edges. Parsed %s/%s (uncompressed) (%s%%)",
+                importedVertices + importedEdges,
+                importedVertices,
+                importedEdges,
+                OFileUtils.getSizeAsString(parsed),
+                "" + OFileUtils.getSizeAsString(inputSize),
+                "" + parsed * 100 / inputSize));
       else
-        output.onMessage(String.format("Imported %d graph elements: %d vertices and %d edges. Parsed %s (uncompressed)",
-            importedVertices + importedEdges, importedVertices, importedEdges, OFileUtils.getSizeAsString(parsed)));
+        output.onMessage(
+            String.format(
+                "Imported %d graph elements: %d vertices and %d edges. Parsed %s (uncompressed)",
+                importedVertices + importedEdges,
+                importedVertices,
+                importedEdges,
+                OFileUtils.getSizeAsString(parsed)));
     }
   }
 }

@@ -52,7 +52,7 @@ public class OEdgeDocument extends ODocument implements OEdge {
 
   @Override
   public boolean isLightweight() {
-    //LIGHTWEIGHT EDGES MANAGED BY OEdgeDelegate, IN FUTURE MAY BE WE NEED TO HANDLE THEM WITH THIS
+    // LIGHTWEIGHT EDGES MANAGED BY OEdgeDelegate, IN FUTURE MAY BE WE NEED TO HANDLE THEM WITH THIS
     return false;
   }
 

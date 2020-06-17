@@ -13,19 +13,16 @@
  *  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  *  * See the License for the specific language governing permissions and
  *  * limitations under the License.
- *  
+ *
  */
 
 package com.orientechnologies.lucene.collections;
 
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.index.OCompositeKey;
-
 import java.util.List;
 
-/**
- * Created by enricorisa on 02/10/14.
- */
+/** Created by enricorisa on 02/10/14. */
 public class OLuceneCompositeKey extends OCompositeKey {
   private OCommandContext context;
 

@@ -29,7 +29,7 @@ import com.orientechnologies.orient.core.db.record.OIdentifiable;
  */
 public class OSQLFilterItemParameter implements OSQLFilterItem {
   private final String name;
-  private       Object value = NOT_SETTED;
+  private Object value = NOT_SETTED;
 
   private static final String NOT_SETTED = "?";
 
@@ -37,16 +37,15 @@ public class OSQLFilterItemParameter implements OSQLFilterItem {
     this.name = iName;
   }
 
-  public Object getValue(final OIdentifiable iRecord, Object iCurrentResult, OCommandContext iContetx) {
+  public Object getValue(
+      final OIdentifiable iRecord, Object iCurrentResult, OCommandContext iContetx) {
     return value;
   }
 
   @Override
   public String toString() {
-    if (value == NOT_SETTED)
-      return name.equals("?") ? "?" : ":" + name;
-    else
-      return value == null ? "null" : value.toString();
+    if (value == NOT_SETTED) return name.equals("?") ? "?" : ":" + name;
+    else return value == null ? "null" : value.toString();
   }
 
   public String getName() {

@@ -18,6 +18,9 @@
 
 package com.orientechnologies.orient.graph.blueprints;
 
+import static org.junit.Assert.assertFalse;
+
+
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.tinkerpop.blueprints.impls.orient.OrientEdge;
@@ -25,8 +28,6 @@ import com.tinkerpop.blueprints.impls.orient.OrientEdgeType;
 import com.tinkerpop.blueprints.impls.orient.OrientGraph;
 import com.tinkerpop.blueprints.impls.orient.OrientVertex;
 import org.junit.Test;
-
-import static org.junit.Assert.assertFalse;
 
 public class IndexAgainstEdgesTest {
 
@@ -36,14 +37,12 @@ public class IndexAgainstEdgesTest {
   public void indexes() {
     OrientGraph g = new OrientGraph(URL, "admin", "admin");
     try {
-      if (g.getVertexType("Profile") == null)
-        g.createVertexType("Profile");
+      if (g.getVertexType("Profile") == null) g.createVertexType("Profile");
       if (g.getEdgeType("Friend") == null) {
         final OrientEdgeType f = g.createEdgeType("Friend");
         f.createProperty("in", OType.LINK);
         f.createProperty("out", OType.LINK);
         f.createIndex("Friend.in_out", OClass.INDEX_TYPE.UNIQUE, "in", "out");
-
       }
 
       OrientVertex luca = g.addVertex("class:Profile", "name", "Luca");

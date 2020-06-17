@@ -1,14 +1,15 @@
 package com.orientechnologies.orient.object.enumerations;
 
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
+
+
 import com.orientechnologies.orient.object.db.OObjectDatabaseTx;
+import java.util.ArrayList;
+import java.util.List;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-
-import java.util.ArrayList;
-import java.util.List;
-
-import static org.junit.Assert.*;
 
 /**
  * @author JN <a href="mailto:jn@brain-activit.com">Julian Neuhaus</a>
@@ -23,7 +24,6 @@ public class OObjectEnumLazyListTest {
     databaseTx.create();
 
     databaseTx.getEntityManager().registerEntityClass(EntityWithEnumList.class);
-
   }
 
   @After
@@ -103,11 +103,15 @@ public class OObjectEnumLazyListTest {
   }
 
   public enum TESTENUM {
-    TEST_VALUE_1, TEST_VALUE_2, TEST_VALUE_3
+    TEST_VALUE_1,
+    TEST_VALUE_2,
+    TEST_VALUE_3
   }
 
   public enum WRONG_TESTENUM {
-    TEST_VALUE_1, TEST_VALUE_2, TEST_VALUE_3
+    TEST_VALUE_1,
+    TEST_VALUE_2,
+    TEST_VALUE_3
   }
 
   public class EntityWithEnumList {

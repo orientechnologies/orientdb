@@ -15,7 +15,7 @@
  *  *  limitations under the License.
  *  *
  *  * For more information: http://orientdb.com
- *  
+ *
  */
 
 package com.tinkerpop.blueprints.impls.orient;
@@ -24,7 +24,7 @@ import com.tinkerpop.blueprints.Edge;
 
 /**
  * OrientDB Extended Edge implementation of TinkerPop Blueprints standard.
- * 
+ *
  * @author Luca Garulli (l.garulli--(at)--orientdb.com) (http://orientdb.com)
  */
 @SuppressWarnings("unchecked")

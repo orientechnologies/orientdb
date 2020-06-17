@@ -22,13 +22,14 @@ package com.orientechnologies.orient.server.network.protocol.http;
 import java.util.Map;
 
 /**
- * Wrapper to use the HTTP request in functions and scripts. This class mimics the J2EE HTTPRequest class.
+ * Wrapper to use the HTTP request in functions and scripts. This class mimics the J2EE HTTPRequest
+ * class.
  *
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
  */
 public class OHttpRequestWrapper {
   private final OHttpRequest request;
-  private final String[]     args;
+  private final String[] args;
 
   public OHttpRequestWrapper(final OHttpRequest iRequest) {
     this.request = iRequest;
@@ -157,8 +158,7 @@ public class OHttpRequestWrapper {
     int found = 0;
 
     if (iNames != null && request.getParameters() != null)
-      for (String name : iNames)
-        found += request.getParameters().containsKey(name) ? 1 : 0;
+      for (String name : iNames) found += request.getParameters().containsKey(name) ? 1 : 0;
 
     return found;
   }

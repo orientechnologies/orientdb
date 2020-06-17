@@ -26,7 +26,6 @@ import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.distributed.ODistributedRequestId;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
 import com.orientechnologies.orient.server.distributed.ORemoteTaskFactory;
-
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
@@ -35,21 +34,17 @@ import java.io.IOException;
  * Base class for Tasks to be executed remotely.
  *
  * @author Luca Garulli (l.garulli--at--orientdb.com)
- *
  */
 public abstract class OAbstractRemoteTask implements ORemoteTask {
-  public static final    int[] ALL         = new int[] { -1 };
-  protected static final int[] ANY         = new int[] { -2 };
-  protected static final int[] LOCK        = new int[] { -3 };
-  protected static final int[] FAST_NOLOCK = new int[] { -4 };
+  public static final int[] ALL = new int[] {-1};
+  protected static final int[] ANY = new int[] {-2};
+  protected static final int[] LOCK = new int[] {-3};
+  protected static final int[] FAST_NOLOCK = new int[] {-4};
 
   protected transient String nodeSource;
 
-  /**
-   * Constructor used from unmarshalling.
-   */
-  public OAbstractRemoteTask() {
-  }
+  /** Constructor used from unmarshalling. */
+  public OAbstractRemoteTask() {}
 
   @Override
   public abstract String getName();
@@ -57,8 +52,12 @@ public abstract class OAbstractRemoteTask implements ORemoteTask {
   public abstract OCommandDistributedReplicateRequest.QUORUM_TYPE getQuorumType();
 
   @Override
-  public abstract Object execute(ODistributedRequestId requestId, OServer iServer, ODistributedServerManager iManager,
-      ODatabaseDocumentInternal database) throws Exception;
+  public abstract Object execute(
+      ODistributedRequestId requestId,
+      OServer iServer,
+      ODistributedServerManager iManager,
+      ODatabaseDocumentInternal database)
+      throws Exception;
 
   @Override
   public int[] getPartitionKey() {
@@ -72,20 +71,17 @@ public abstract class OAbstractRemoteTask implements ORemoteTask {
 
   @Override
   public long getSynchronousTimeout(final int iSynchNodes) {
-    if (iSynchNodes <= 0)
-      return getDistributedTimeout();
+    if (iSynchNodes <= 0) return getDistributedTimeout();
 
     return getDistributedTimeout() * iSynchNodes;
   }
 
   @Override
-  public void checkIsValid(final ODistributedServerManager dManager) {
-  }
+  public void checkIsValid(final ODistributedServerManager dManager) {}
 
   @Override
   public long getTotalTimeout(final int iTotalNodes) {
-    if (iTotalNodes <= 0)
-      return getDistributedTimeout();
+    if (iTotalNodes <= 0) return getDistributedTimeout();
 
     return getDistributedTimeout() * iTotalNodes;
   }
@@ -131,10 +127,8 @@ public abstract class OAbstractRemoteTask implements ORemoteTask {
   }
 
   @Override
-  public void toStream(DataOutput out) throws IOException {
-  }
+  public void toStream(DataOutput out) throws IOException {}
 
   @Override
-  public void fromStream(DataInput in, ORemoteTaskFactory factory) throws IOException {
-  }
+  public void fromStream(DataInput in, ORemoteTaskFactory factory) throws IOException {}
 }

@@ -1,11 +1,11 @@
 package com.orientechnologies.orient.core.sql.parser;
 
-import org.junit.Test;
+import static org.junit.Assert.fail;
+
 
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
-
-import static org.junit.Assert.fail;
+import org.junit.Test;
 
 public class OCreateVertexStatementTest {
 
@@ -58,7 +58,6 @@ public class OCreateVertexStatementTest {
     checkRightSyntax("create vertex Foo set a = \"1\"");
 
     checkRightSyntax("create vertex Foo set a = 1, b = 2");
-
   }
 
   @Test
@@ -78,7 +77,6 @@ public class OCreateVertexStatementTest {
   public void testInsertIntoCluster() {
     checkRightSyntax(
         "create vertex cluster:default (equaledges, name, list) values ('yes', 'square', ['bottom', 'top','left','right'] )");
-
   }
 
   private void printTree(String s) {
@@ -89,7 +87,6 @@ public class OCreateVertexStatementTest {
     } catch (ParseException e) {
       e.printStackTrace();
     }
-
   }
 
   protected OrientSql getParserFor(String string) {

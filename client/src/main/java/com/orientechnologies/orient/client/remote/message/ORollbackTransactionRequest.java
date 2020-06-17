@@ -5,22 +5,16 @@ import com.orientechnologies.orient.client.remote.OBinaryRequest;
 import com.orientechnologies.orient.client.remote.OBinaryResponse;
 import com.orientechnologies.orient.client.remote.OStorageRemoteSession;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializer;
-import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinary;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelDataInput;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelDataOutput;
-
 import java.io.IOException;
 
-/**
- * Created by tglman on 30/01/17.
- */
+/** Created by tglman on 30/01/17. */
 public class ORollbackTransactionRequest implements OBinaryRequest<ORollbackTransactionResponse> {
   private int txId;
 
-  public ORollbackTransactionRequest() {
-
-  }
+  public ORollbackTransactionRequest() {}
 
   public ORollbackTransactionRequest(int id) {
     this.txId = id;
@@ -32,7 +26,8 @@ public class ORollbackTransactionRequest implements OBinaryRequest<ORollbackTran
   }
 
   @Override
-  public void read(OChannelDataInput channel, int protocolVersion, ORecordSerializer serializer) throws IOException {
+  public void read(OChannelDataInput channel, int protocolVersion, ORecordSerializer serializer)
+      throws IOException {
     txId = channel.readInt();
   }
 

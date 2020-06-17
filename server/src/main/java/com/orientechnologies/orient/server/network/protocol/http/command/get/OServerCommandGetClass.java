@@ -26,15 +26,15 @@ import com.orientechnologies.orient.server.network.protocol.http.OHttpRequest;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpResponse;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpUtils;
 import com.orientechnologies.orient.server.network.protocol.http.command.OServerCommandAuthenticatedDbAbstract;
-
 import java.io.StringWriter;
 
 public class OServerCommandGetClass extends OServerCommandAuthenticatedDbAbstract {
-  private static final String[] NAMES = { "GET|class/*" };
+  private static final String[] NAMES = {"GET|class/*"};
 
   @Override
   public boolean execute(final OHttpRequest iRequest, OHttpResponse iResponse) throws Exception {
-    String[] urlParts = checkSyntax(iRequest.getUrl(), 3, "Syntax error: class/<database>/<class-name>");
+    String[] urlParts =
+        checkSyntax(iRequest.getUrl(), 3, "Syntax error: class/<database>/<class-name>");
 
     iRequest.getData().commandInfo = "Returns the information of a class in the schema";
     iRequest.getData().commandDetail = urlParts[2];
@@ -49,13 +49,16 @@ public class OServerCommandGetClass extends OServerCommandAuthenticatedDbAbstrac
         final StringWriter buffer = new StringWriter();
         final OJSONWriter json = new OJSONWriter(buffer, OHttpResponse.JSON_FORMAT);
         OServerCommandGetDatabase.exportClass(db, json, cls);
-        iResponse.send(OHttpUtils.STATUS_OK_CODE, OHttpUtils.STATUS_OK_DESCRIPTION, OHttpUtils.CONTENT_JSON, buffer.toString(), null);
-      } else
-        iResponse.send(OHttpUtils.STATUS_NOTFOUND_CODE, null, null, null, null);
+        iResponse.send(
+            OHttpUtils.STATUS_OK_CODE,
+            OHttpUtils.STATUS_OK_DESCRIPTION,
+            OHttpUtils.CONTENT_JSON,
+            buffer.toString(),
+            null);
+      } else iResponse.send(OHttpUtils.STATUS_NOTFOUND_CODE, null, null, null, null);
 
     } finally {
-      if (db != null)
-        db.close();
+      if (db != null) db.close();
     }
     return false;
   }

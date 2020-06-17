@@ -4,22 +4,47 @@ import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.util.OCallable;
 import com.orientechnologies.orient.core.config.OContextConfiguration;
 import com.orientechnologies.orient.server.OClientConnection;
-
-import java.io.*;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.net.Socket;
 import java.util.Map;
 
 public class OHttpResponseImpl extends OHttpResponse {
 
-  public OHttpResponseImpl(OutputStream iOutStream, String iHttpVersion, String[] iAdditionalHeaders, String iResponseCharSet,
-      String iServerInfo, String iSessionId, String iCallbackFunction, boolean iKeepAlive, OClientConnection connection,
+  public OHttpResponseImpl(
+      OutputStream iOutStream,
+      String iHttpVersion,
+      String[] iAdditionalHeaders,
+      String iResponseCharSet,
+      String iServerInfo,
+      String iSessionId,
+      String iCallbackFunction,
+      boolean iKeepAlive,
+      OClientConnection connection,
       OContextConfiguration contextConfiguration) {
-    super(iOutStream, iHttpVersion, iAdditionalHeaders, iResponseCharSet, iServerInfo, iSessionId, iCallbackFunction, iKeepAlive,
-        connection, contextConfiguration);
+    super(
+        iOutStream,
+        iHttpVersion,
+        iAdditionalHeaders,
+        iResponseCharSet,
+        iServerInfo,
+        iSessionId,
+        iCallbackFunction,
+        iKeepAlive,
+        connection,
+        contextConfiguration);
   }
 
   @Override
-  public void send(final int iCode, final String iReason, final String iContentType, final Object iContent, final String iHeaders)
+  public void send(
+      final int iCode,
+      final String iReason,
+      final String iContentType,
+      final Object iContent,
+      final String iHeaders)
       throws IOException {
     if (isSendStarted()) {
       // AVOID TO SEND RESPONSE TWICE
@@ -54,12 +79,19 @@ public class OHttpResponseImpl extends OHttpResponse {
 
     if (getSessionId() != null) {
       String sameSite = (isSameSiteCookie() ? "SameSite=Strict;" : "");
-      writeLine("Set-Cookie: " + OHttpUtils.OSESSIONID + "=" + getSessionId() + "; Path=/; HttpOnly;" + sameSite);
+      writeLine(
+          "Set-Cookie: "
+              + OHttpUtils.OSESSIONID
+              + "="
+              + getSessionId()
+              + "; Path=/; HttpOnly;"
+              + sameSite);
     }
 
     byte[] binaryContent = null;
     if (!empty) {
-      if (getContentEncoding() != null && getContentEncoding().equals(OHttpUtils.CONTENT_ACCEPT_GZIP_ENCODED)) {
+      if (getContentEncoding() != null
+          && getContentEncoding().equals(OHttpUtils.CONTENT_ACCEPT_GZIP_ENCODED)) {
         binaryContent = compress(getContent());
       } else {
         binaryContent = getContent().getBytes(utf8);
@@ -83,20 +115,38 @@ public class OHttpResponseImpl extends OHttpResponse {
   }
 
   @Override
-  public void sendStream(final int iCode, final String iReason, final String iContentType, InputStream iContent, long iSize)
+  public void sendStream(
+      final int iCode,
+      final String iReason,
+      final String iContentType,
+      InputStream iContent,
+      long iSize)
       throws IOException {
     sendStream(iCode, iReason, iContentType, iContent, iSize, null, null);
   }
 
   @Override
-  public void sendStream(final int iCode, final String iReason, final String iContentType, InputStream iContent, long iSize,
-      final String iFileName) throws IOException {
+  public void sendStream(
+      final int iCode,
+      final String iReason,
+      final String iContentType,
+      InputStream iContent,
+      long iSize,
+      final String iFileName)
+      throws IOException {
     sendStream(iCode, iReason, iContentType, iContent, iSize, iFileName, null);
   }
 
   @Override
-  public void sendStream(final int iCode, final String iReason, final String iContentType, InputStream iContent, long iSize,
-      final String iFileName, Map<String, String> additionalHeaders) throws IOException {
+  public void sendStream(
+      final int iCode,
+      final String iReason,
+      final String iContentType,
+      InputStream iContent,
+      long iSize,
+      final String iFileName,
+      Map<String, String> additionalHeaders)
+      throws IOException {
     writeStatus(iCode, iReason);
     writeHeaders(iContentType);
     writeLine("Content-Transfer-Encoding: binary");
@@ -140,8 +190,13 @@ public class OHttpResponseImpl extends OHttpResponse {
   }
 
   @Override
-  public void sendStream(final int iCode, final String iReason, final String iContentType, final String iFileName,
-      final OCallable<Void, OChunkedResponse> iWriter) throws IOException {
+  public void sendStream(
+      final int iCode,
+      final String iReason,
+      final String iContentType,
+      final String iFileName,
+      final OCallable<Void, OChunkedResponse> iWriter)
+      throws IOException {
     writeStatus(iCode, iReason);
     writeHeaders(iContentType);
     writeLine("Content-Transfer-Encoding: binary");
@@ -165,11 +220,14 @@ public class OHttpResponseImpl extends OHttpResponse {
     final Socket socket;
     if (getConnection().getProtocol() == null || getConnection().getProtocol().getChannel() == null)
       socket = null;
-    else
-      socket = getConnection().getProtocol().getChannel().socket;
+    else socket = getConnection().getProtocol().getChannel().socket;
     if (socket == null || socket.isClosed() || socket.isInputShutdown()) {
       OLogManager.instance()
-          .debug(this, "[OHttpResponse] found and removed pending closed channel %d (%s)", getConnection(), socket);
+          .debug(
+              this,
+              "[OHttpResponse] found and removed pending closed channel %d (%s)",
+              getConnection(),
+              socket);
       throw new IOException("Connection is closed");
     }
   }

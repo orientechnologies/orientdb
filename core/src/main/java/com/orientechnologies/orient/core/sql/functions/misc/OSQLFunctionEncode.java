@@ -23,27 +23,28 @@ import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.OBlob;
 import com.orientechnologies.orient.core.serialization.OSerializableStream;
 import com.orientechnologies.orient.core.sql.functions.OSQLFunctionAbstract;
-
 import java.util.Base64;
 
 /**
  * Encode a string in various format (only base64 for now)
- * 
+ *
  * @author Johann Sorel (Geomatys)
  */
 public class OSQLFunctionEncode extends OSQLFunctionAbstract {
 
-  public static final String NAME          = "encode";
+  public static final String NAME = "encode";
   public static final String FORMAT_BASE64 = "base64";
 
-  /**
-   * Get the date at construction to have the same date for all the iteration.
-   */
+  /** Get the date at construction to have the same date for all the iteration. */
   public OSQLFunctionEncode() {
     super(NAME, 2, 2);
   }
 
-  public Object execute(Object iThis, OIdentifiable iCurrentRecord, Object iCurrentResult, final Object[] iParams,
+  public Object execute(
+      Object iThis,
+      OIdentifiable iCurrentRecord,
+      Object iCurrentResult,
+      final Object[] iParams,
       OCommandContext iContext) {
 
     final Object candidate = iParams[0];

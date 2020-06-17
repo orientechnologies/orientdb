@@ -2,16 +2,13 @@ package com.orientechnologies.orient.core.sql.executor;
 
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import java.util.List;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import java.util.List;
-
-/**
- * @author Luigi Dell'Aquila (l.dellaquila-(at)-orientdb.com)
- */
+/** @author Luigi Dell'Aquila (l.dellaquila-(at)-orientdb.com) */
 public class ODropUserStatementExecutionTest {
   static ODatabaseDocument db;
 
@@ -47,7 +44,5 @@ public class ODropUserStatementExecutionTest {
     result = db.query("SELECT name, roles.name as roles FROM OUser WHERE name = 'test'");
     Assert.assertFalse(result.hasNext());
     result.close();
-
   }
-
 }

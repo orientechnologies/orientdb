@@ -15,7 +15,7 @@
  *  *  limitations under the License.
  *  *
  *  * For more information: http://orientdb.com
- *  
+ *
  */
 
 package com.orientechnologies.orient.server.distributed.conflict;
@@ -23,16 +23,16 @@ package com.orientechnologies.orient.server.distributed.conflict;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
-
 import java.util.List;
 import java.util.Map;
 
 /**
- * Base interface to manage distributed conflicts. The onConflict() method is responsible to resolve the conflicts by providing the
- * winning result. If it's not able to do that, NULL is returned. You can configure resolver in chain, so for example you can have
- * the majority first, but in case ov even votes you can assign the winner to one data center or to a custom algorithm implemented
- * by the user. If the call chain returns NULL, no operation is done.
- * 
+ * Base interface to manage distributed conflicts. The onConflict() method is responsible to resolve
+ * the conflicts by providing the winning result. If it's not able to do that, NULL is returned. You
+ * can configure resolver in chain, so for example you can have the majority first, but in case ov
+ * even votes you can assign the winner to one data center or to a custom algorithm implemented by
+ * the user. If the call chain returns NULL, no operation is done.
+ *
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
  */
 public interface ODistributedConflictResolver {
@@ -50,23 +50,24 @@ public interface ODistributedConflictResolver {
   void configure(ODocument config);
 
   /**
-   * Called on distributed conflict. It is responsible to resolve the conflicts by providing the winning result. If it's not able to
-   * do that, NULL is returned.
+   * Called on distributed conflict. It is responsible to resolve the conflicts by providing the
+   * winning result. If it's not able to do that, NULL is returned.
    *
    * @param databaseName
    * @param clusterName
-   * @param rid                 RecordID of the record in conflict
-   * @param dManager            Current distributed manager instance
-   * @param groupedServerValues All the values from the servers grouped by value. The key could also be an exception in case the
-   *                            record was not found. @return The winning object
-   *
+   * @param rid RecordID of the record in conflict
+   * @param dManager Current distributed manager instance
+   * @param groupedServerValues All the values from the servers grouped by value. The key could also
+   *     be an exception in case the record was not found. @return The winning object
    * @return The winning result object
    */
-  OConflictResult onConflict(String databaseName, String clusterName, ORecordId rid, ODistributedServerManager dManager,
+  OConflictResult onConflict(
+      String databaseName,
+      String clusterName,
+      ORecordId rid,
+      ODistributedServerManager dManager,
       Map<Object, List<String>> groupedServerValues);
 
-  /**
-   * Name to register in the factory.
-   */
+  /** Name to register in the factory. */
   String getName();
 }

@@ -28,8 +28,9 @@ import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.metadata.security.OToken;
 
 /**
- * Pooled wrapper to the ODatabaseDocumentTx class. Allows to being reused across calls. The close() method does not close the
- * database for real but release it to the owner pool. The database born as opened and will leave open until the pool is closed.
+ * Pooled wrapper to the ODatabaseDocumentTx class. Allows to being reused across calls. The close()
+ * method does not close the database for real but release it to the owner pool. The database born
+ * as opened and will leave open until the pool is closed.
  *
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
  * @see ODatabasePoolBase
@@ -38,9 +39,12 @@ import com.orientechnologies.orient.core.metadata.security.OToken;
 public class ODatabaseDocumentTxPooled extends ODatabaseDocumentTx implements ODatabasePooled {
 
   private ODatabaseDocumentPool ownerPool;
-  private String                userName;
+  private String userName;
 
-  public ODatabaseDocumentTxPooled(final ODatabaseDocumentPool iOwnerPool, final String iURL, final String iUserName,
+  public ODatabaseDocumentTxPooled(
+      final ODatabaseDocumentPool iOwnerPool,
+      final String iURL,
+      final String iUserName,
       final String iUserPassword) {
     super(iURL);
     ownerPool = iOwnerPool;
@@ -96,20 +100,18 @@ public class ODatabaseDocumentTxPooled extends ODatabaseDocumentTx implements OD
   }
 
   /**
-   * @return <code>true</code> if database is obtained from the pool and <code>false</code> otherwise.
+   * @return <code>true</code> if database is obtained from the pool and <code>false</code>
+   *     otherwise.
    */
   @Override
   public boolean isPooled() {
     return true;
   }
 
-  /**
-   * Avoid to close it but rather release itself to the owner pool.
-   */
+  /** Avoid to close it but rather release itself to the owner pool. */
   @Override
   public void close() {
-    if (isClosed())
-      return;
+    if (isClosed()) return;
 
     checkOpenness();
 
@@ -145,12 +147,12 @@ public class ODatabaseDocumentTxPooled extends ODatabaseDocumentTx implements OD
     super.close();
   }
 
-//  @Override
+  //  @Override
   protected void checkOpenness() {
     if (ownerPool == null)
       throw new ODatabaseException(
           "Database instance has been released to the pool. Get another database instance from the pool with the right username and password");
 
-//    super.checkOpenness();
+    //    super.checkOpenness();
   }
 }

@@ -8,11 +8,10 @@ import com.orientechnologies.orient.core.storage.cache.OCacheEntryImpl;
 import com.orientechnologies.orient.core.storage.cache.OCachePointer;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.PageOperationRecord;
 import com.orientechnologies.orient.core.storage.index.sbtree.multivalue.v2.CellBTreeMultiValueV2Bucket;
-import org.junit.Assert;
-import org.junit.Test;
-
 import java.nio.ByteBuffer;
 import java.util.List;
+import org.junit.Assert;
+import org.junit.Test;
 
 public class CellBTreeMultiValueV2BucketRemoveNonLeafEntryPOTest {
   @Test
@@ -27,14 +26,15 @@ public class CellBTreeMultiValueV2BucketRemoveNonLeafEntryPOTest {
       CellBTreeMultiValueV2Bucket<Byte> bucket = new CellBTreeMultiValueV2Bucket<>(entry);
       bucket.init(false);
 
-      bucket.addNonLeafEntry(0, new byte[] { 0 }, 1, 2, true);
-      bucket.addNonLeafEntry(1, new byte[] { 1 }, 2, 3, true);
-      bucket.addNonLeafEntry(2, new byte[] { 2 }, 3, 4, true);
+      bucket.addNonLeafEntry(0, new byte[] {0}, 1, 2, true);
+      bucket.addNonLeafEntry(1, new byte[] {1}, 2, 3, true);
+      bucket.addNonLeafEntry(2, new byte[] {2}, 3, 4, true);
 
       entry.clearPageOperations();
 
       final OPointer restoredPointer = byteBufferPool.acquireDirect(false);
-      final OCachePointer restoredCachePointer = new OCachePointer(restoredPointer, byteBufferPool, 0, 0);
+      final OCachePointer restoredCachePointer =
+          new OCachePointer(restoredPointer, byteBufferPool, 0, 0);
       final OCacheEntry restoredCacheEntry = new OCacheEntryImpl(0, 0, restoredCachePointer);
 
       final ByteBuffer originalBuffer = cachePointer.getBufferDuplicate();
@@ -45,32 +45,35 @@ public class CellBTreeMultiValueV2BucketRemoveNonLeafEntryPOTest {
 
       restoredBuffer.put(originalBuffer);
 
-      bucket.removeNonLeafEntry(1, new byte[] { 1 }, 3);
+      bucket.removeNonLeafEntry(1, new byte[] {1}, 3);
 
       final List<PageOperationRecord> operations = entry.getPageOperations();
       Assert.assertEquals(1, operations.size());
 
-      Assert.assertTrue(operations.get(0) instanceof CellBTreeMultiValueV2BucketRemoveNonLeafEntryPO);
+      Assert.assertTrue(
+          operations.get(0) instanceof CellBTreeMultiValueV2BucketRemoveNonLeafEntryPO);
 
-      final CellBTreeMultiValueV2BucketRemoveNonLeafEntryPO pageOperation = (CellBTreeMultiValueV2BucketRemoveNonLeafEntryPO) operations
-          .get(0);
+      final CellBTreeMultiValueV2BucketRemoveNonLeafEntryPO pageOperation =
+          (CellBTreeMultiValueV2BucketRemoveNonLeafEntryPO) operations.get(0);
 
-      CellBTreeMultiValueV2Bucket<Byte> restoredBucket = new CellBTreeMultiValueV2Bucket<>(restoredCacheEntry);
+      CellBTreeMultiValueV2Bucket<Byte> restoredBucket =
+          new CellBTreeMultiValueV2Bucket<>(restoredCacheEntry);
 
       Assert.assertEquals(3, restoredBucket.size());
 
-      CellBTreeMultiValueV2Bucket.NonLeafEntry nonLeafEntry = restoredBucket.getNonLeafEntry(0, OByteSerializer.INSTANCE, false);
-      Assert.assertArrayEquals(new byte[] { 0 }, nonLeafEntry.key);
+      CellBTreeMultiValueV2Bucket.NonLeafEntry nonLeafEntry =
+          restoredBucket.getNonLeafEntry(0, OByteSerializer.INSTANCE, false);
+      Assert.assertArrayEquals(new byte[] {0}, nonLeafEntry.key);
       Assert.assertEquals(1, nonLeafEntry.leftChild);
       Assert.assertEquals(2, nonLeafEntry.rightChild);
 
       nonLeafEntry = restoredBucket.getNonLeafEntry(1, OByteSerializer.INSTANCE, false);
-      Assert.assertArrayEquals(new byte[] { 1 }, nonLeafEntry.key);
+      Assert.assertArrayEquals(new byte[] {1}, nonLeafEntry.key);
       Assert.assertEquals(2, nonLeafEntry.leftChild);
       Assert.assertEquals(3, nonLeafEntry.rightChild);
 
       nonLeafEntry = restoredBucket.getNonLeafEntry(2, OByteSerializer.INSTANCE, false);
-      Assert.assertArrayEquals(new byte[] { 2 }, nonLeafEntry.key);
+      Assert.assertArrayEquals(new byte[] {2}, nonLeafEntry.key);
       Assert.assertEquals(3, nonLeafEntry.leftChild);
       Assert.assertEquals(4, nonLeafEntry.rightChild);
 
@@ -79,12 +82,12 @@ public class CellBTreeMultiValueV2BucketRemoveNonLeafEntryPOTest {
       Assert.assertEquals(2, restoredBucket.size());
 
       nonLeafEntry = restoredBucket.getNonLeafEntry(0, OByteSerializer.INSTANCE, false);
-      Assert.assertArrayEquals(new byte[] { 0 }, nonLeafEntry.key);
+      Assert.assertArrayEquals(new byte[] {0}, nonLeafEntry.key);
       Assert.assertEquals(1, nonLeafEntry.leftChild);
       Assert.assertEquals(3, nonLeafEntry.rightChild);
 
       nonLeafEntry = restoredBucket.getNonLeafEntry(1, OByteSerializer.INSTANCE, false);
-      Assert.assertArrayEquals(new byte[] { 2 }, nonLeafEntry.key);
+      Assert.assertArrayEquals(new byte[] {2}, nonLeafEntry.key);
       Assert.assertEquals(3, nonLeafEntry.leftChild);
       Assert.assertEquals(4, nonLeafEntry.rightChild);
 
@@ -108,33 +111,36 @@ public class CellBTreeMultiValueV2BucketRemoveNonLeafEntryPOTest {
       CellBTreeMultiValueV2Bucket<Byte> bucket = new CellBTreeMultiValueV2Bucket<>(entry);
       bucket.init(false);
 
-      bucket.addNonLeafEntry(0, new byte[] { 0 }, 1, 2, true);
-      bucket.addNonLeafEntry(1, new byte[] { 1 }, 2, 3, true);
-      bucket.addNonLeafEntry(2, new byte[] { 2 }, 3, 4, true);
+      bucket.addNonLeafEntry(0, new byte[] {0}, 1, 2, true);
+      bucket.addNonLeafEntry(1, new byte[] {1}, 2, 3, true);
+      bucket.addNonLeafEntry(2, new byte[] {2}, 3, 4, true);
 
       entry.clearPageOperations();
 
-      bucket.removeNonLeafEntry(1, new byte[] { 1 }, 3);
+      bucket.removeNonLeafEntry(1, new byte[] {1}, 3);
 
       final List<PageOperationRecord> operations = entry.getPageOperations();
       Assert.assertEquals(1, operations.size());
 
-      Assert.assertTrue(operations.get(0) instanceof CellBTreeMultiValueV2BucketRemoveNonLeafEntryPO);
+      Assert.assertTrue(
+          operations.get(0) instanceof CellBTreeMultiValueV2BucketRemoveNonLeafEntryPO);
 
-      final CellBTreeMultiValueV2BucketRemoveNonLeafEntryPO pageOperation = (CellBTreeMultiValueV2BucketRemoveNonLeafEntryPO) operations
-          .get(0);
+      final CellBTreeMultiValueV2BucketRemoveNonLeafEntryPO pageOperation =
+          (CellBTreeMultiValueV2BucketRemoveNonLeafEntryPO) operations.get(0);
 
-      final CellBTreeMultiValueV2Bucket<Byte> restoredBucket = new CellBTreeMultiValueV2Bucket<>(entry);
+      final CellBTreeMultiValueV2Bucket<Byte> restoredBucket =
+          new CellBTreeMultiValueV2Bucket<>(entry);
 
       Assert.assertEquals(2, restoredBucket.size());
 
-      CellBTreeMultiValueV2Bucket.NonLeafEntry nonLeafEntry = restoredBucket.getNonLeafEntry(0, OByteSerializer.INSTANCE, false);
-      Assert.assertArrayEquals(new byte[] { 0 }, nonLeafEntry.key);
+      CellBTreeMultiValueV2Bucket.NonLeafEntry nonLeafEntry =
+          restoredBucket.getNonLeafEntry(0, OByteSerializer.INSTANCE, false);
+      Assert.assertArrayEquals(new byte[] {0}, nonLeafEntry.key);
       Assert.assertEquals(1, nonLeafEntry.leftChild);
       Assert.assertEquals(3, nonLeafEntry.rightChild);
 
       nonLeafEntry = restoredBucket.getNonLeafEntry(1, OByteSerializer.INSTANCE, false);
-      Assert.assertArrayEquals(new byte[] { 2 }, nonLeafEntry.key);
+      Assert.assertArrayEquals(new byte[] {2}, nonLeafEntry.key);
       Assert.assertEquals(3, nonLeafEntry.leftChild);
       Assert.assertEquals(4, nonLeafEntry.rightChild);
       pageOperation.undo(entry);
@@ -142,17 +148,17 @@ public class CellBTreeMultiValueV2BucketRemoveNonLeafEntryPOTest {
       Assert.assertEquals(3, restoredBucket.size());
 
       nonLeafEntry = restoredBucket.getNonLeafEntry(0, OByteSerializer.INSTANCE, false);
-      Assert.assertArrayEquals(new byte[] { 0 }, nonLeafEntry.key);
+      Assert.assertArrayEquals(new byte[] {0}, nonLeafEntry.key);
       Assert.assertEquals(1, nonLeafEntry.leftChild);
       Assert.assertEquals(2, nonLeafEntry.rightChild);
 
       nonLeafEntry = restoredBucket.getNonLeafEntry(1, OByteSerializer.INSTANCE, false);
-      Assert.assertArrayEquals(new byte[] { 1 }, nonLeafEntry.key);
+      Assert.assertArrayEquals(new byte[] {1}, nonLeafEntry.key);
       Assert.assertEquals(2, nonLeafEntry.leftChild);
       Assert.assertEquals(3, nonLeafEntry.rightChild);
 
       nonLeafEntry = restoredBucket.getNonLeafEntry(2, OByteSerializer.INSTANCE, false);
-      Assert.assertArrayEquals(new byte[] { 2 }, nonLeafEntry.key);
+      Assert.assertArrayEquals(new byte[] {2}, nonLeafEntry.key);
       Assert.assertEquals(3, nonLeafEntry.leftChild);
       Assert.assertEquals(4, nonLeafEntry.rightChild);
 
@@ -164,8 +170,8 @@ public class CellBTreeMultiValueV2BucketRemoveNonLeafEntryPOTest {
 
   @Test
   public void testSerialization() {
-    CellBTreeMultiValueV2BucketRemoveNonLeafEntryPO operation = new CellBTreeMultiValueV2BucketRemoveNonLeafEntryPO(24,
-        new byte[] { 1, 2 }, 12, 21, 54);
+    CellBTreeMultiValueV2BucketRemoveNonLeafEntryPO operation =
+        new CellBTreeMultiValueV2BucketRemoveNonLeafEntryPO(24, new byte[] {1, 2}, 12, 21, 54);
 
     operation.setFileId(42);
     operation.setPageIndex(24);
@@ -177,7 +183,8 @@ public class CellBTreeMultiValueV2BucketRemoveNonLeafEntryPOTest {
 
     Assert.assertEquals(serializedSize + 1, pos);
 
-    CellBTreeMultiValueV2BucketRemoveNonLeafEntryPO restoredOperation = new CellBTreeMultiValueV2BucketRemoveNonLeafEntryPO();
+    CellBTreeMultiValueV2BucketRemoveNonLeafEntryPO restoredOperation =
+        new CellBTreeMultiValueV2BucketRemoveNonLeafEntryPO();
     restoredOperation.fromStream(stream, 1);
 
     Assert.assertEquals(42, restoredOperation.getFileId());
@@ -185,7 +192,7 @@ public class CellBTreeMultiValueV2BucketRemoveNonLeafEntryPOTest {
     Assert.assertEquals(1, restoredOperation.getOperationUnitId());
 
     Assert.assertEquals(24, restoredOperation.getIndex());
-    Assert.assertArrayEquals(new byte[] { 1, 2 }, restoredOperation.getKey());
+    Assert.assertArrayEquals(new byte[] {1, 2}, restoredOperation.getKey());
     Assert.assertEquals(12, restoredOperation.getLeft());
     Assert.assertEquals(21, restoredOperation.getRight());
     Assert.assertEquals(54, restoredOperation.getPrevChild());

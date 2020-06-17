@@ -26,7 +26,6 @@ import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.sql.functions.OSQLFunctionAbstract;
-
 import java.util.stream.Stream;
 
 /**
@@ -41,7 +40,11 @@ public class OSQLFunctionIndexKeySize extends OSQLFunctionAbstract {
     super(NAME, 1, 1);
   }
 
-  public Object execute(Object iThis, final OIdentifiable iCurrentRecord, Object iCurrentResult, final Object[] iParams,
+  public Object execute(
+      Object iThis,
+      final OIdentifiable iCurrentRecord,
+      Object iCurrentResult,
+      final Object[] iParams,
       OCommandContext context) {
     final Object value = iParams[0];
 

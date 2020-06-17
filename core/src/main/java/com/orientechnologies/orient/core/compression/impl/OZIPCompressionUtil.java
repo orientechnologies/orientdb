@@ -24,8 +24,13 @@ import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.common.io.OIOUtils;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
-
-import java.io.*;
+import java.io.BufferedOutputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
@@ -42,17 +47,21 @@ import java.util.zip.ZipOutputStream;
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
  */
 public class OZIPCompressionUtil {
-  public static List<String> compressDirectory(final String sourceFolderName, final ZipOutputStream zos,
-      final String[] iSkipFileExtensions, final OCommandOutputListener iOutput) throws IOException {
+  public static List<String> compressDirectory(
+      final String sourceFolderName,
+      final ZipOutputStream zos,
+      final String[] iSkipFileExtensions,
+      final OCommandOutputListener iOutput)
+      throws IOException {
     final List<String> compressedFiles = new ArrayList<String>();
-    addFolder(zos, sourceFolderName, sourceFolderName, iSkipFileExtensions, iOutput, compressedFiles);
+    addFolder(
+        zos, sourceFolderName, sourceFolderName, iSkipFileExtensions, iOutput, compressedFiles);
     return compressedFiles;
   }
 
-  /***
-   * Extract zipfile to outdir with complete directory structure
-   */
-  public static void uncompressDirectory(final InputStream in, final String out, final OCommandOutputListener iListener)
+  /** * Extract zipfile to outdir with complete directory structure */
+  public static void uncompressDirectory(
+      final InputStream in, final String out, final OCommandOutputListener iListener)
       throws IOException {
     final File outdir = new File(out);
     final String targetDirPath = outdir.getCanonicalPath() + File.separator;
@@ -67,7 +76,12 @@ public class OZIPCompressionUtil {
 
         final File file = new File(outdir, name);
         if (!file.getCanonicalPath().startsWith(targetDirPath))
-          throw new IOException("Expanding '" + entry.getName() + "' would create file outside of directory '" + outdir + "'");
+          throw new IOException(
+              "Expanding '"
+                  + entry.getName()
+                  + "' would create file outside of directory '"
+                  + outdir
+                  + "'");
 
         if (entry.isDirectory()) {
           mkdirs(outdir, name);
@@ -78,8 +92,7 @@ public class OZIPCompressionUtil {
          * this part is necessary because file entry can come before directory entry where is file located i.e.: /foo/foo.txt /foo/
          */
         dir = getDirectoryPart(name);
-        if (dir != null)
-          mkdirs(outdir, dir);
+        if (dir != null) mkdirs(outdir, dir);
 
         extractFile(zin, outdir, name, iListener);
       }
@@ -88,12 +101,16 @@ public class OZIPCompressionUtil {
     }
   }
 
-  private static void extractFile(final ZipInputStream in, final File outdir, final String name,
-      final OCommandOutputListener iListener) throws IOException {
-    if (iListener != null)
-      iListener.onMessage("\n- Uncompressing file " + name + "...");
+  private static void extractFile(
+      final ZipInputStream in,
+      final File outdir,
+      final String name,
+      final OCommandOutputListener iListener)
+      throws IOException {
+    if (iListener != null) iListener.onMessage("\n- Uncompressing file " + name + "...");
 
-    final BufferedOutputStream out = new BufferedOutputStream(new FileOutputStream(new File(outdir, name)));
+    final BufferedOutputStream out =
+        new BufferedOutputStream(new FileOutputStream(new File(outdir, name)));
     try {
       OIOUtils.copyStream(in, out, -1);
     } finally {
@@ -103,28 +120,38 @@ public class OZIPCompressionUtil {
 
   private static void mkdirs(final File outdir, final String path) {
     final File d = new File(outdir, path);
-    if (!d.exists())
-      d.mkdirs();
+    if (!d.exists()) d.mkdirs();
   }
 
   private static String getDirectoryPart(final String name) {
     Path path = Paths.get(name);
     Path parent = path.getParent();
-    if (parent != null)
-      return parent.toString();
+    if (parent != null) return parent.toString();
 
     return null;
   }
 
-  private static void addFolder(ZipOutputStream zos, String path, String baseFolderName, final String[] iSkipFileExtensions,
-      final OCommandOutputListener iOutput, final List<String> iCompressedFiles) throws IOException {
+  private static void addFolder(
+      ZipOutputStream zos,
+      String path,
+      String baseFolderName,
+      final String[] iSkipFileExtensions,
+      final OCommandOutputListener iOutput,
+      final List<String> iCompressedFiles)
+      throws IOException {
 
     File f = new File(path);
     if (f.exists()) {
       if (f.isDirectory()) {
         File[] f2 = f.listFiles();
         for (int i = 0; i < f2.length; i++) {
-          addFolder(zos, f2[i].getAbsolutePath(), baseFolderName, iSkipFileExtensions, iOutput, iCompressedFiles);
+          addFolder(
+              zos,
+              f2[i].getAbsolutePath(),
+              baseFolderName,
+              iSkipFileExtensions,
+              iOutput,
+              iCompressedFiles);
         }
       } else {
         // add file
@@ -132,9 +159,7 @@ public class OZIPCompressionUtil {
         String entryName = path.substring(baseFolderName.length() + 1, path.length());
 
         if (iSkipFileExtensions != null)
-          for (String skip : iSkipFileExtensions)
-            if (entryName.endsWith(skip))
-              return;
+          for (String skip : iSkipFileExtensions) if (entryName.endsWith(skip)) return;
 
         iCompressedFiles.add(path);
 
@@ -146,8 +171,13 @@ public class OZIPCompressionUtil {
     }
   }
 
-  public static void compressFile(final String folderName, final String entryName, final OutputStream output,
-      final OCommandOutputListener iOutput, final int compressionLevel) throws IOException {
+  public static void compressFile(
+      final String folderName,
+      final String entryName,
+      final OutputStream output,
+      final OCommandOutputListener iOutput,
+      final int compressionLevel)
+      throws IOException {
     final ZipOutputStream zos = new ZipOutputStream(output);
     zos.setComment("OrientDB Backup executed on " + new Date());
     try {
@@ -158,8 +188,13 @@ public class OZIPCompressionUtil {
     }
   }
 
-  public static void compressFiles(final String folderName, final String[] entryNames, final OutputStream output,
-      final OCommandOutputListener iOutput, final int compressionLevel) throws IOException {
+  public static void compressFiles(
+      final String folderName,
+      final String[] entryNames,
+      final OutputStream output,
+      final OCommandOutputListener iOutput,
+      final int compressionLevel)
+      throws IOException {
     final ZipOutputStream zos = new ZipOutputStream(output);
     zos.setComment("OrientDB Backup executed on " + new Date());
     try {
@@ -174,15 +209,20 @@ public class OZIPCompressionUtil {
   /**
    * Compresses the given files stored at the given base directory into a zip archive.
    *
-   * @param baseDirectory    the base directory where files are stored.
-   * @param fileNames        the file names map, keys are the file names stored on disk, values are the file names to be stored in a
-   *                         zip archive.
-   * @param output           the output stream.
-   * @param listener         the command listener.
+   * @param baseDirectory the base directory where files are stored.
+   * @param fileNames the file names map, keys are the file names stored on disk, values are the
+   *     file names to be stored in a zip archive.
+   * @param output the output stream.
+   * @param listener the command listener.
    * @param compressionLevel the desired compression level.
    */
-  public static void compressFiles(String baseDirectory, Map<String, String> fileNames, OutputStream output,
-      OCommandOutputListener listener, int compressionLevel) throws IOException {
+  public static void compressFiles(
+      String baseDirectory,
+      Map<String, String> fileNames,
+      OutputStream output,
+      OCommandOutputListener listener,
+      int compressionLevel)
+      throws IOException {
     final ZipOutputStream zipOutputStream = new ZipOutputStream(output);
     zipOutputStream.setComment("OrientDB Backup executed on " + new Date());
     try {
@@ -194,12 +234,15 @@ public class OZIPCompressionUtil {
     }
   }
 
-  private static void addFile(final ZipOutputStream zos, final String folderName, final String entryName,
-      final OCommandOutputListener iOutput) throws IOException {
+  private static void addFile(
+      final ZipOutputStream zos,
+      final String folderName,
+      final String entryName,
+      final OCommandOutputListener iOutput)
+      throws IOException {
     final long begin = System.currentTimeMillis();
 
-    if (iOutput != null)
-      iOutput.onMessage("\n- Compressing file " + entryName + "...");
+    if (iOutput != null) iOutput.onMessage("\n- Compressing file " + entryName + "...");
 
     final ZipEntry ze = new ZipEntry(entryName);
     zos.putNextEntry(ze);
@@ -211,10 +254,10 @@ public class OZIPCompressionUtil {
         in.close();
       }
     } catch (IOException e) {
-      if (iOutput != null)
-        iOutput.onMessage("error: " + e);
+      if (iOutput != null) iOutput.onMessage("error: " + e);
 
-      OLogManager.instance().error(OZIPCompressionUtil.class, "Cannot compress file: %s", e, folderName);
+      OLogManager.instance()
+          .error(OZIPCompressionUtil.class, "Cannot compress file: %s", e, folderName);
       throw e;
     } finally {
       zos.closeEntry();
@@ -224,8 +267,15 @@ public class OZIPCompressionUtil {
       final long ratio = ze.getSize() > 0 ? 100 - (ze.getCompressedSize() * 100 / ze.getSize()) : 0;
 
       iOutput.onMessage(
-          "ok size=" + OFileUtils.getSizeAsString(ze.getSize()) + " compressedSize=" + ze.getCompressedSize() + " ratio=" + ratio
-              + "%% elapsed=" + OIOUtils.getTimeAsString(System.currentTimeMillis() - begin) + "");
+          "ok size="
+              + OFileUtils.getSizeAsString(ze.getSize())
+              + " compressedSize="
+              + ze.getCompressedSize()
+              + " ratio="
+              + ratio
+              + "%% elapsed="
+              + OIOUtils.getTimeAsString(System.currentTimeMillis() - begin)
+              + "");
     }
   }
 }

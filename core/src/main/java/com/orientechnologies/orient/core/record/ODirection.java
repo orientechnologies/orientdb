@@ -19,18 +19,15 @@
  */
 package com.orientechnologies.orient.core.record;
 
-/**
- * @author Luigi Dell'Aquila
- */
+/** @author Luigi Dell'Aquila */
 public enum ODirection {
-  OUT, IN, BOTH;
+  OUT,
+  IN,
+  BOTH;
 
   public ODirection opposite() {
-    if (this.equals(OUT))
-      return IN;
-    else if (this.equals(IN))
-      return OUT;
-    else
-      return BOTH;
+    if (this.equals(OUT)) return IN;
+    else if (this.equals(IN)) return OUT;
+    else return BOTH;
   }
 }

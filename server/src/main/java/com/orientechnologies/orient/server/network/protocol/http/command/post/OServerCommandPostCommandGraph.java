@@ -25,11 +25,9 @@ import com.orientechnologies.orient.server.network.protocol.http.OHttpRequest;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpResponse;
 
 public class OServerCommandPostCommandGraph extends OServerCommandPostCommand {
-  public OServerCommandPostCommandGraph() {
-  }
+  public OServerCommandPostCommandGraph() {}
 
-  public OServerCommandPostCommandGraph(final OServerCommandConfiguration iConfig) {
-  }
+  public OServerCommandPostCommandGraph(final OServerCommandConfiguration iConfig) {}
 
   @Override
   public boolean execute(final OHttpRequest iRequest, OHttpResponse iResponse) throws Exception {

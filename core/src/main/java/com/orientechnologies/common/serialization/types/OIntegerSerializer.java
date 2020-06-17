@@ -23,7 +23,6 @@ package com.orientechnologies.common.serialization.types;
 import com.orientechnologies.common.serialization.OBinaryConverter;
 import com.orientechnologies.common.serialization.OBinaryConverterFactory;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALChanges;
-
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 
@@ -34,19 +33,19 @@ import java.nio.ByteOrder;
  * @since 17.01.12
  */
 public class OIntegerSerializer implements OBinarySerializer<Integer> {
-  public static final  byte               ID        = 8;
-  /**
-   * size of int value in bytes
-   */
-  public static final  int                INT_SIZE  = 4;
-  private static final OBinaryConverter   CONVERTER = OBinaryConverterFactory.getConverter();
-  public static final  OIntegerSerializer INSTANCE  = new OIntegerSerializer();
+  public static final byte ID = 8;
+  /** size of int value in bytes */
+  public static final int INT_SIZE = 4;
+
+  private static final OBinaryConverter CONVERTER = OBinaryConverterFactory.getConverter();
+  public static final OIntegerSerializer INSTANCE = new OIntegerSerializer();
 
   public int getObjectSize(Integer object, Object... hints) {
     return INT_SIZE;
   }
 
-  public void serialize(final Integer object, final byte[] stream, final int startPosition, final Object... hints) {
+  public void serialize(
+      final Integer object, final byte[] stream, final int startPosition, final Object... hints) {
     serializeLiteral(object.intValue(), stream, startPosition);
   }
 
@@ -62,8 +61,10 @@ public class OIntegerSerializer implements OBinarySerializer<Integer> {
   }
 
   public int deserializeLiteral(final byte[] stream, final int startPosition) {
-    return (stream[startPosition]) << 24 | (0xff & stream[startPosition + 1]) << 16 | (0xff & stream[startPosition + 2]) << 8 | ((
-        0xff & stream[startPosition + 3]));
+    return (stream[startPosition]) << 24
+        | (0xff & stream[startPosition + 1]) << 16
+        | (0xff & stream[startPosition + 2]) << 8
+        | ((0xff & stream[startPosition + 3]));
   }
 
   public int getObjectSize(final byte[] stream, final int startPosition) {
@@ -79,7 +80,8 @@ public class OIntegerSerializer implements OBinarySerializer<Integer> {
   }
 
   @Override
-  public void serializeNativeObject(Integer object, byte[] stream, int startPosition, Object... hints) {
+  public void serializeNativeObject(
+      Integer object, byte[] stream, int startPosition, Object... hints) {
     checkBoundaries(stream, startPosition);
 
     CONVERTER.putInt(stream, startPosition, object, ByteOrder.nativeOrder());
@@ -117,41 +119,32 @@ public class OIntegerSerializer implements OBinarySerializer<Integer> {
     return value;
   }
 
-  /**
-   * {@inheritDoc}
-   */
+  /** {@inheritDoc} */
   @Override
   public void serializeInByteBufferObject(Integer object, ByteBuffer buffer, Object... hints) {
     buffer.putInt(object);
   }
 
-  /**
-   * {@inheritDoc}
-   */
+  /** {@inheritDoc} */
   @Override
   public Integer deserializeFromByteBufferObject(ByteBuffer buffer) {
     return buffer.getInt();
   }
 
-  /**
-   * {@inheritDoc}
-   */
+  /** {@inheritDoc} */
   @Override
   public int getObjectSizeInByteBuffer(ByteBuffer buffer) {
     return INT_SIZE;
   }
 
-  /**
-   * {@inheritDoc}
-   */
+  /** {@inheritDoc} */
   @Override
-  public Integer deserializeFromByteBufferObject(ByteBuffer buffer, OWALChanges walChanges, int offset) {
+  public Integer deserializeFromByteBufferObject(
+      ByteBuffer buffer, OWALChanges walChanges, int offset) {
     return walChanges.getIntValue(buffer, offset);
   }
 
-  /**
-   * {@inheritDoc}
-   */
+  /** {@inheritDoc} */
   @Override
   public int getObjectSizeInByteBuffer(ByteBuffer buffer, OWALChanges walChanges, int offset) {
     return INT_SIZE;
@@ -160,7 +153,10 @@ public class OIntegerSerializer implements OBinarySerializer<Integer> {
   private static void checkBoundaries(byte[] stream, int startPosition) {
     if (startPosition + INT_SIZE > stream.length) {
       throw new IllegalStateException(
-          "Requested stream size is " + (startPosition + INT_SIZE) + " but provided stream has size " + stream.length);
+          "Requested stream size is "
+              + (startPosition + INT_SIZE)
+              + " but provided stream has size "
+              + stream.length);
     }
   }
 }

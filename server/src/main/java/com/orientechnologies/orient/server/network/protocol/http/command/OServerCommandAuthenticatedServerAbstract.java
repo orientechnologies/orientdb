@@ -24,35 +24,41 @@ import com.orientechnologies.orient.server.network.protocol.http.OHttpRequest;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpResponse;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpSession;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpUtils;
-
 import java.io.IOException;
 import java.util.Map;
 
 /**
- * Server based authenticated commands. Authenticates against the OrientDB server users found in configuration.
+ * Server based authenticated commands. Authenticates against the OrientDB server users found in
+ * configuration.
  *
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
  */
 public abstract class OServerCommandAuthenticatedServerAbstract extends OServerCommandAbstract {
 
   private static final String SESSIONID_UNAUTHORIZED = "-";
-  private static final String SESSIONID_LOGOUT       = "!";
+  private static final String SESSIONID_LOGOUT = "!";
 
   private final String resource;
-  protected     String serverUser;
-  protected     String serverPassword;
+  protected String serverUser;
+  protected String serverPassword;
 
   protected OServerCommandAuthenticatedServerAbstract(final String iRequiredResource) {
     resource = iRequiredResource;
   }
 
   @Override
-  public boolean beforeExecute(final OHttpRequest iRequest, final OHttpResponse iResponse) throws IOException {
+  public boolean beforeExecute(final OHttpRequest iRequest, final OHttpResponse iResponse)
+      throws IOException {
     super.beforeExecute(iRequest, iResponse);
     return authenticate(iRequest, iResponse, true);
   }
 
-  protected boolean authenticate(final OHttpRequest iRequest, final OHttpResponse iResponse, final boolean iAskForAuthentication, String resource) throws IOException {
+  protected boolean authenticate(
+      final OHttpRequest iRequest,
+      final OHttpResponse iResponse,
+      final boolean iAskForAuthentication,
+      String resource)
+      throws IOException {
     if (checkGuestAccess()) {
       // GUEST ACCESSES TO THE RESOURCE: OK ALSO WITHOUT AN AUTHENTICATION.
       iResponse.setSessionId(null);
@@ -87,20 +93,25 @@ public abstract class OServerCommandAuthenticatedServerAbstract extends OServerC
     return false;
   }
 
-  protected boolean authenticate(final OHttpRequest iRequest, final OHttpResponse iResponse, final boolean iAskForAuthentication)
+  protected boolean authenticate(
+      final OHttpRequest iRequest,
+      final OHttpResponse iResponse,
+      final boolean iAskForAuthentication)
       throws IOException {
-    return authenticate(iRequest,iResponse,iAskForAuthentication,resource);
+    return authenticate(iRequest, iResponse, iAskForAuthentication, resource);
   }
 
   protected boolean checkGuestAccess() {
     return server.isAllowed(OServerConfiguration.GUEST_USER, resource);
   }
 
-  protected void sendNotAuthorizedResponse(final OHttpRequest iRequest, final OHttpResponse iResponse) throws IOException {
+  protected void sendNotAuthorizedResponse(
+      final OHttpRequest iRequest, final OHttpResponse iResponse) throws IOException {
     sendAuthorizationRequest(iRequest, iResponse);
   }
 
-  protected void sendAuthorizationRequest(final OHttpRequest iRequest, final OHttpResponse iResponse) throws IOException {
+  protected void sendAuthorizationRequest(
+      final OHttpRequest iRequest, final OHttpResponse iResponse) throws IOException {
     // UNAUTHORIZED
     iRequest.setSessionId(SESSIONID_UNAUTHORIZED);
 
@@ -115,12 +126,20 @@ public abstract class OServerCommandAuthenticatedServerAbstract extends OServerC
     }
 
     if (isJsonResponse(iResponse)) {
-      sendJsonError(iResponse, OHttpUtils.STATUS_AUTH_CODE, OHttpUtils.STATUS_AUTH_DESCRIPTION, OHttpUtils.CONTENT_TEXT_PLAIN,
-          "401 Unauthorized.", header);
+      sendJsonError(
+          iResponse,
+          OHttpUtils.STATUS_AUTH_CODE,
+          OHttpUtils.STATUS_AUTH_DESCRIPTION,
+          OHttpUtils.CONTENT_TEXT_PLAIN,
+          "401 Unauthorized.",
+          header);
     } else {
-      iResponse
-          .send(OHttpUtils.STATUS_AUTH_CODE, OHttpUtils.STATUS_AUTH_DESCRIPTION, OHttpUtils.CONTENT_TEXT_PLAIN, "401 Unauthorized.",
-              header);
+      iResponse.send(
+          OHttpUtils.STATUS_AUTH_CODE,
+          OHttpUtils.STATUS_AUTH_DESCRIPTION,
+          OHttpUtils.CONTENT_TEXT_PLAIN,
+          "401 Unauthorized.",
+          header);
     }
   }
 
@@ -137,7 +156,6 @@ public abstract class OServerCommandAuthenticatedServerAbstract extends OServerC
       }
     }
     return null;
-
   }
 
   public String getResource() {

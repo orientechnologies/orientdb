@@ -1,6 +1,15 @@
 package com.orientechnologies.orient.core.metadata.schema;
 
-import com.orientechnologies.orient.core.db.record.*;
+import static org.junit.Assert.assertEquals;
+
+
+import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.db.record.ORecordLazyList;
+import com.orientechnologies.orient.core.db.record.ORecordLazyMap;
+import com.orientechnologies.orient.core.db.record.ORecordLazySet;
+import com.orientechnologies.orient.core.db.record.OTrackedList;
+import com.orientechnologies.orient.core.db.record.OTrackedMap;
+import com.orientechnologies.orient.core.db.record.OTrackedSet;
 import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
 import com.orientechnologies.orient.core.exception.OSerializationException;
 import com.orientechnologies.orient.core.id.ORecordId;
@@ -9,14 +18,17 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
 import com.orientechnologies.orient.core.serialization.ODocumentSerializable;
 import com.orientechnologies.orient.core.serialization.OSerializableStream;
-import org.junit.Test;
-
 import java.io.Serializable;
 import java.math.BigDecimal;
 import java.math.BigInteger;
-import java.util.*;
-
-import static org.junit.Assert.assertEquals;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import org.junit.Test;
 
 public class TestOTypeDetection {
 
@@ -114,7 +126,6 @@ public class TestOTypeDetection {
     assertEquals(OType.EMBEDDED, OType.getTypeByClass(DocumentSer.class));
 
     assertEquals(OType.CUSTOM, OType.getTypeByClass(ClassSerializable.class));
-
   }
 
   @Test
@@ -138,7 +149,7 @@ public class TestOTypeDetection {
 
     assertEquals(OType.STRING, OType.getTypeByValue("yaaahooooo"));
 
-    assertEquals(OType.BINARY, OType.getTypeByValue(new byte[] { 0, 1, 2 }));
+    assertEquals(OType.BINARY, OType.getTypeByValue(new byte[] {0, 1, 2}));
 
     assertEquals(OType.DATETIME, OType.getTypeByValue(new Date()));
 
@@ -152,7 +163,8 @@ public class TestOTypeDetection {
 
     assertEquals(OType.EMBEDDEDLIST, OType.getTypeByValue(new ArrayList<Object>()));
 
-    assertEquals(OType.EMBEDDEDLIST, OType.getTypeByValue(new OTrackedList<Object>(new ODocument())));
+    assertEquals(
+        OType.EMBEDDEDLIST, OType.getTypeByValue(new OTrackedList<Object>(new ODocument())));
 
     assertEquals(OType.EMBEDDEDSET, OType.getTypeByValue(new HashSet<Object>()));
 
@@ -219,7 +231,6 @@ public class TestOTypeDetection {
     public OSerializableStream fromStream(byte[] iStream) throws OSerializationException {
       return null;
     }
-
   }
 
   public class DocumentSer implements ODocumentSerializable {
@@ -235,12 +246,9 @@ public class TestOTypeDetection {
       // TODO Auto-generated method stub
 
     }
-
   }
 
   public class ClassSerializable implements Serializable {
     private String aaa;
-
   }
-
 }

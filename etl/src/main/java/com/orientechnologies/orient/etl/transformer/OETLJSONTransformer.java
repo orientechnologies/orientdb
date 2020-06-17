@@ -29,11 +29,10 @@ public class OETLJSONTransformer extends OETLAbstractTransformer {
 
   @Override
   public Object executeTransform(ODatabaseDocument db, final Object input) {
-    if (input instanceof ODocument)
-      return input;
-    else if (input instanceof String)
-      return new ODocument((String) input);
+    if (input instanceof ODocument) return input;
+    else if (input instanceof String) return new ODocument((String) input);
     else
-      throw new OETLTransformException(getName() + ": unknown input '" + input + "' of class '" + input.getClass() + "'");
+      throw new OETLTransformException(
+          getName() + ": unknown input '" + input + "' of class '" + input.getClass() + "'");
   }
 }

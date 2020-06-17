@@ -1,6 +1,10 @@
 package com.orientechnologies.orient.core.metadata.security;
 
-import com.orientechnologies.orient.core.db.*;
+import com.orientechnologies.orient.core.db.ODatabaseInternal;
+import com.orientechnologies.orient.core.db.ODatabaseSession;
+import com.orientechnologies.orient.core.db.ODatabaseType;
+import com.orientechnologies.orient.core.db.OrientDB;
+import com.orientechnologies.orient.core.db.OrientDBConfig;
 import com.orientechnologies.orient.core.exception.OSecurityException;
 import com.orientechnologies.orient.core.index.OIndexException;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
@@ -9,7 +13,12 @@ import com.orientechnologies.orient.core.record.OElement;
 import com.orientechnologies.orient.core.sql.executor.FetchFromIndexStep;
 import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
-import org.junit.*;
+import org.junit.After;
+import org.junit.AfterClass;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.BeforeClass;
+import org.junit.Test;
 
 public class ColumnSecurityTest {
 
@@ -51,7 +60,8 @@ public class ColumnSecurityTest {
     policy.setActive(true);
     policy.setReadRule("name = 'foo'");
     security.saveSecurityPolicy(db, policy);
-    security.setSecurityPolicy(db, security.getRole(db, "reader"), "database.class.Person.name", policy);
+    security.setSecurityPolicy(
+        db, security.getRole(db, "reader"), "database.class.Person.name", policy);
 
     db.command("create index Person.name on Person (name) NOTUNIQUE");
   }
@@ -68,7 +78,8 @@ public class ColumnSecurityTest {
     policy.setActive(true);
     policy.setReadRule("name = 'foo'");
     security.saveSecurityPolicy(db, policy);
-    security.setSecurityPolicy(db, security.getRole(db, "reader"), "database.class.Person.name", policy);
+    security.setSecurityPolicy(
+        db, security.getRole(db, "reader"), "database.class.Person.name", policy);
 
     try {
       db.command("create index Person.name_surname on Person (name, surname) NOTUNIQUE");
@@ -92,7 +103,8 @@ public class ColumnSecurityTest {
     policy.setDeleteRule("name = 'foo'");
 
     security.saveSecurityPolicy(db, policy);
-    security.setSecurityPolicy(db, security.getRole(db, "reader"), "database.class.Person.name", policy);
+    security.setSecurityPolicy(
+        db, security.getRole(db, "reader"), "database.class.Person.name", policy);
 
     db.command("create index Person.name on Person (name) NOTUNIQUE");
   }
@@ -108,7 +120,8 @@ public class ColumnSecurityTest {
     policy.setActive(true);
     policy.setReadRule("name = 'foo'");
     security.saveSecurityPolicy(db, policy);
-    security.setSecurityPolicy(db, security.getRole(db, "reader"), "database.class.Person.surname", policy);
+    security.setSecurityPolicy(
+        db, security.getRole(db, "reader"), "database.class.Person.surname", policy);
 
     db.command("create index Person.name on Person (name) NOTUNIQUE");
   }
@@ -127,7 +140,8 @@ public class ColumnSecurityTest {
     policy.setActive(true);
     policy.setReadRule("name = 'foo'");
     security.saveSecurityPolicy(db, policy);
-    security.setSecurityPolicy(db, security.getRole(db, "reader"), "database.class.Person.surname", policy);
+    security.setSecurityPolicy(
+        db, security.getRole(db, "reader"), "database.class.Person.surname", policy);
   }
 
   @Test
@@ -146,7 +160,8 @@ public class ColumnSecurityTest {
     security.saveSecurityPolicy(db, policy);
 
     try {
-      security.setSecurityPolicy(db, security.getRole(db, "reader"), "database.class.Person.name", policy);
+      security.setSecurityPolicy(
+          db, security.getRole(db, "reader"), "database.class.Person.name", policy);
       Assert.fail();
     } catch (Exception e) {
     }
@@ -165,9 +180,9 @@ public class ColumnSecurityTest {
     policy.setActive(true);
     policy.setReadRule("name = 'foo'");
     security.saveSecurityPolicy(db, policy);
-    security.setSecurityPolicy(db, security.getRole(db, "reader"), "database.class.Person.name", policy);
+    security.setSecurityPolicy(
+        db, security.getRole(db, "reader"), "database.class.Person.name", policy);
   }
-
 
   @Test
   public void testReadFilterOneProperty() {
@@ -179,7 +194,8 @@ public class ColumnSecurityTest {
     policy.setActive(true);
     policy.setReadRule("name = 'foo'");
     security.saveSecurityPolicy(db, policy);
-    security.setSecurityPolicy(db, security.getRole(db, "reader"), "database.class.Person.name", policy);
+    security.setSecurityPolicy(
+        db, security.getRole(db, "reader"), "database.class.Person.name", policy);
 
     OElement elem = db.newElement("Person");
     elem.setProperty("name", "foo");
@@ -225,7 +241,8 @@ public class ColumnSecurityTest {
     policy.setActive(true);
     policy.setReadRule("name = 'foo'");
     security.saveSecurityPolicy(db, policy);
-    security.setSecurityPolicy(db, security.getRole(db, "reader"), "database.class.Person.name", policy);
+    security.setSecurityPolicy(
+        db, security.getRole(db, "reader"), "database.class.Person.name", policy);
 
     OElement elem = db.newElement("Person");
     elem.setProperty("name", "foo");
@@ -245,9 +262,10 @@ public class ColumnSecurityTest {
 
     rs = db.query("select from Person where name = 'bar'");
     Assert.assertFalse(rs.hasNext());
-    Assert.assertTrue(rs.getExecutionPlan().get().getSteps().stream().anyMatch(x -> x instanceof FetchFromIndexStep));
+    Assert.assertTrue(
+        rs.getExecutionPlan().get().getSteps().stream()
+            .anyMatch(x -> x instanceof FetchFromIndexStep));
     rs.close();
-
   }
 
   @Test
@@ -260,7 +278,8 @@ public class ColumnSecurityTest {
     policy.setActive(true);
     policy.setReadRule("name IN (select 'foo' as foo)");
     security.saveSecurityPolicy(db, policy);
-    security.setSecurityPolicy(db, security.getRole(db, "reader"), "database.class.Person.name", policy);
+    security.setSecurityPolicy(
+        db, security.getRole(db, "reader"), "database.class.Person.name", policy);
 
     OElement elem = db.newElement("Person");
     elem.setProperty("name", "foo");
@@ -323,7 +342,8 @@ public class ColumnSecurityTest {
     policy.setActive(true);
     policy.setReadRule("name = 'foo'");
     security.saveSecurityPolicy(db, policy);
-    security.setSecurityPolicy(db, security.getRole(db, "reader"), "database.class.Person.name", policy);
+    security.setSecurityPolicy(
+        db, security.getRole(db, "reader"), "database.class.Person.name", policy);
 
     OElement elem = db.newElement("Person");
     elem.setProperty("name", "foo");
@@ -342,11 +362,9 @@ public class ColumnSecurityTest {
     OResult item = rs.next();
     Assert.assertEquals("foo", item.getProperty("name"));
 
-
     Assert.assertFalse(rs.hasNext());
     rs.close();
   }
-
 
   @Test
   public void testCreate() {
@@ -358,7 +376,8 @@ public class ColumnSecurityTest {
     policy.setActive(true);
     policy.setCreateRule("name = 'foo'");
     security.saveSecurityPolicy(db, policy);
-    security.setSecurityPolicy(db, security.getRole(db, "writer"), "database.class.Person.name", policy);
+    security.setSecurityPolicy(
+        db, security.getRole(db, "writer"), "database.class.Person.name", policy);
 
     db.close();
     this.db = orient.open(DB_NAME, "writer", "writer");
@@ -379,7 +398,6 @@ public class ColumnSecurityTest {
     }
   }
 
-
   @Test
   public void testBeforeUpdate() {
     OSecurityInternal security = ((ODatabaseInternal) db).getSharedContext().getSecurity();
@@ -390,7 +408,8 @@ public class ColumnSecurityTest {
     policy.setActive(true);
     policy.setBeforeUpdateRule("name = 'foo'");
     security.saveSecurityPolicy(db, policy);
-    security.setSecurityPolicy(db, security.getRole(db, "writer"), "database.class.Person.name", policy);
+    security.setSecurityPolicy(
+        db, security.getRole(db, "writer"), "database.class.Person.name", policy);
 
     OElement elem = db.newElement("Person");
     elem.setProperty("name", "foo");
@@ -402,7 +421,6 @@ public class ColumnSecurityTest {
     elem.setProperty("surname", "bar");
     db.save(elem);
 
-
     db.close();
     this.db = orient.open(DB_NAME, "writer", "writer");
 
@@ -413,7 +431,6 @@ public class ColumnSecurityTest {
       rs.next();
       Assert.assertFalse(rs.hasNext());
     }
-
 
     try {
       db.command("UPDATE Person SET name = 'bar1' WHERE name = 'bar'");
@@ -433,7 +450,8 @@ public class ColumnSecurityTest {
     policy.setActive(true);
     policy.setAfterUpdateRule("name <> 'invalid'");
     security.saveSecurityPolicy(db, policy);
-    security.setSecurityPolicy(db, security.getRole(db, "writer"), "database.class.Person.name", policy);
+    security.setSecurityPolicy(
+        db, security.getRole(db, "writer"), "database.class.Person.name", policy);
 
     OElement elem = db.newElement("Person");
     elem.setProperty("name", "foo");
@@ -450,7 +468,6 @@ public class ColumnSecurityTest {
       rs.next();
       Assert.assertFalse(rs.hasNext());
     }
-
 
     try {
       db.command("UPDATE Person SET name = 'invalid'");
@@ -506,9 +523,6 @@ public class ColumnSecurityTest {
       } catch (Exception e) {
 
       }
-
     }
   }
-
-
 }

@@ -16,6 +16,9 @@
 
 package com.orientechnologies.lucene;
 
+import static com.orientechnologies.orient.core.metadata.schema.OClass.INDEX_TYPE.FULLTEXT;
+
+
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.lucene.engine.OLuceneFullTextIndexEngine;
 import com.orientechnologies.lucene.index.OLuceneFullTextIndex;
@@ -30,14 +33,11 @@ import com.orientechnologies.orient.core.index.engine.OBaseIndexEngine;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
-import org.apache.lucene.analysis.standard.StandardAnalyzer;
-
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
-
-import static com.orientechnologies.orient.core.metadata.schema.OClass.INDEX_TYPE.FULLTEXT;
+import org.apache.lucene.analysis.standard.StandardAnalyzer;
 
 public class OLuceneIndexFactory implements OIndexFactory, ODatabaseLifecycleListener {
 
@@ -63,9 +63,7 @@ public class OLuceneIndexFactory implements OIndexFactory, ODatabaseLifecycleLis
   }
 
   public OLuceneIndexFactory(boolean manual) {
-    if (!manual)
-      Orient.instance().addDbLifecycleListener(this);
-
+    if (!manual) Orient.instance().addDbLifecycleListener(this);
   }
 
   @Override
@@ -84,8 +82,15 @@ public class OLuceneIndexFactory implements OIndexFactory, ODatabaseLifecycleLis
   }
 
   @Override
-  public OIndexInternal createIndex(String name, OStorage storage, String indexType, String algorithm,
-      String valueContainerAlgorithm, ODocument metadata, int version) throws OConfigurationException {
+  public OIndexInternal createIndex(
+      String name,
+      OStorage storage,
+      String indexType,
+      String algorithm,
+      String valueContainerAlgorithm,
+      ODocument metadata,
+      int version)
+      throws OConfigurationException {
 
     OAbstractPaginatedStorage pagStorage = (OAbstractPaginatedStorage) storage.getUnderlying();
 
@@ -94,8 +99,16 @@ public class OLuceneIndexFactory implements OIndexFactory, ODatabaseLifecycleLis
 
     if (FULLTEXT.toString().equalsIgnoreCase(indexType)) {
       final int binaryFormatVersion = pagStorage.getConfiguration().getBinaryFormatVersion();
-      OLuceneFullTextIndex index = new OLuceneFullTextIndex(name, indexType, algorithm, version, pagStorage,
-          valueContainerAlgorithm, metadata, binaryFormatVersion);
+      OLuceneFullTextIndex index =
+          new OLuceneFullTextIndex(
+              name,
+              indexType,
+              algorithm,
+              version,
+              pagStorage,
+              valueContainerAlgorithm,
+              metadata,
+              binaryFormatVersion);
 
       return index;
     }
@@ -103,11 +116,18 @@ public class OLuceneIndexFactory implements OIndexFactory, ODatabaseLifecycleLis
   }
 
   @Override
-  public OBaseIndexEngine createIndexEngine(int indexId, String algorithm, String indexName, Boolean durableInNonTxMode,
-      OStorage storage, int version, int apiVersion, boolean multiValue, Map<String, String> engineProperties) {
+  public OBaseIndexEngine createIndexEngine(
+      int indexId,
+      String algorithm,
+      String indexName,
+      Boolean durableInNonTxMode,
+      OStorage storage,
+      int version,
+      int apiVersion,
+      boolean multiValue,
+      Map<String, String> engineProperties) {
 
     return new OLuceneFullTextIndexEngine(storage, indexName, indexId);
-
   }
 
   @Override
@@ -118,13 +138,11 @@ public class OLuceneIndexFactory implements OIndexFactory, ODatabaseLifecycleLis
   @Override
   public void onCreate(ODatabaseInternal db) {
     OLogManager.instance().debug(this, "onCreate");
-
   }
 
   @Override
   public void onOpen(ODatabaseInternal db) {
     OLogManager.instance().debug(this, "onOpen");
-
   }
 
   @Override
@@ -135,15 +153,15 @@ public class OLuceneIndexFactory implements OIndexFactory, ODatabaseLifecycleLis
   @Override
   public void onDrop(final ODatabaseInternal db) {
     try {
-      if (db.isClosed())
-        return;
+      if (db.isClosed()) return;
 
       OLogManager.instance().debug(this, "Dropping Lucene indexes...");
 
       final ODatabaseDocumentInternal internal = (ODatabaseDocumentInternal) db;
       internal.getMetadata().getIndexManagerInternal().getIndexes(internal).stream()
           .filter(idx -> idx.getInternal() instanceof OLuceneFullTextIndex)
-          .peek(idx -> OLogManager.instance().debug(this, "deleting index " + idx.getName())).forEach(idx -> idx.delete());
+          .peek(idx -> OLogManager.instance().debug(this, "deleting index " + idx.getName()))
+          .forEach(idx -> idx.delete());
 
     } catch (Exception e) {
       OLogManager.instance().warn(this, "Error on dropping Lucene indexes", e);
@@ -151,7 +169,5 @@ public class OLuceneIndexFactory implements OIndexFactory, ODatabaseLifecycleLis
   }
 
   @Override
-  public void onLocalNodeConfigurationRequest(ODocument iConfiguration) {
-  }
-
+  public void onLocalNodeConfigurationRequest(ODocument iConfiguration) {}
 }

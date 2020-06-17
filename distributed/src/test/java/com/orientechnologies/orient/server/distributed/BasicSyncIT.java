@@ -1,18 +1,18 @@
 package com.orientechnologies.orient.server.distributed;
 
+import static org.junit.Assert.assertEquals;
+
+
 import com.orientechnologies.orient.core.db.ODatabaseSession;
 import com.orientechnologies.orient.core.db.ODatabaseType;
 import com.orientechnologies.orient.core.db.OrientDB;
 import com.orientechnologies.orient.core.db.OrientDBConfig;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.server.OServer;
+import java.io.IOException;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-
-import java.io.IOException;
-
-import static org.junit.Assert.assertEquals;
 
 public class BasicSyncIT {
 
@@ -25,14 +25,16 @@ public class BasicSyncIT {
     server0 = OServer.startFromClasspathConfig("orientdb-simple-dserver-config-0.xml");
     server1 = OServer.startFromClasspathConfig("orientdb-simple-dserver-config-1.xml");
     server2 = OServer.startFromClasspathConfig("orientdb-simple-dserver-config-2.xml");
-    OrientDB remote = new OrientDB("remote:localhost", "root", "test", OrientDBConfig.defaultConfig());
+    OrientDB remote =
+        new OrientDB("remote:localhost", "root", "test", OrientDBConfig.defaultConfig());
     remote.create("test", ODatabaseType.PLOCAL);
     remote.close();
   }
 
   @Test
   public void sync()
-      throws ClassNotFoundException, InstantiationException, IllegalAccessException, IOException, InterruptedException {
+      throws ClassNotFoundException, InstantiationException, IllegalAccessException, IOException,
+          InterruptedException {
     try (OrientDB remote = new OrientDB("remote:localhost", OrientDBConfig.defaultConfig())) {
       try (ODatabaseSession session = remote.open("test", "admin", "admin")) {
         session.createClass("One");
@@ -68,12 +70,12 @@ public class BasicSyncIT {
         assertEquals(session.countClass("One"), 3);
       }
     }
-
   }
 
   @Test
   public void reverseStartSync()
-      throws ClassNotFoundException, InstantiationException, IllegalAccessException, IOException, InterruptedException {
+      throws ClassNotFoundException, InstantiationException, IllegalAccessException, IOException,
+          InterruptedException {
     try (OrientDB remote = new OrientDB("remote:localhost", OrientDBConfig.defaultConfig())) {
       try (ODatabaseSession session = remote.open("test", "admin", "admin")) {
         session.createClass("One");
@@ -109,13 +111,13 @@ public class BasicSyncIT {
         assertEquals(session.countClass("One"), 3);
       }
     }
-
   }
 
   @After
   public void after() throws InterruptedException {
     System.out.println("shutdown");
-    OrientDB remote = new OrientDB("remote:localhost", "root", "test", OrientDBConfig.defaultConfig());
+    OrientDB remote =
+        new OrientDB("remote:localhost", "root", "test", OrientDBConfig.defaultConfig());
     remote.drop("test");
     remote.close();
 
@@ -124,5 +126,4 @@ public class BasicSyncIT {
     server2.shutdown();
     ODatabaseDocumentTx.closeAll();
   }
-
 }

@@ -4,7 +4,6 @@ package com.orientechnologies.orient.core.sql.parser;
 
 import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.executor.OResultInternal;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -50,15 +49,12 @@ public class OLetClause extends SimpleNode {
 
   @Override
   public boolean equals(Object o) {
-    if (this == o)
-      return true;
-    if (o == null || getClass() != o.getClass())
-      return false;
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
 
     OLetClause that = (OLetClause) o;
 
-    if (items != null ? !items.equals(that.items) : that.items != null)
-      return false;
+    if (items != null ? !items.equals(that.items) : that.items != null) return false;
 
     return true;
   }
@@ -86,7 +82,8 @@ public class OLetClause extends SimpleNode {
   public OResult serialize() {
     OResultInternal result = new OResultInternal();
     if (items != null) {
-      result.setProperty("items", items.stream().map(x -> x.serialize()).collect(Collectors.toList()));
+      result.setProperty(
+          "items", items.stream().map(x -> x.serialize()).collect(Collectors.toList()));
     }
     return result;
   }

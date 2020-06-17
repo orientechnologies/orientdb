@@ -25,19 +25,11 @@ package com.orientechnologies.orient.server;
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
  */
 public interface OServerLifecycleListener {
-  default void onBeforeActivate() {
+  default void onBeforeActivate() {}
 
-  }
+  default void onAfterActivate() {}
 
-  default void onAfterActivate() {
+  default void onBeforeDeactivate() {}
 
-  }
-
-  default void onBeforeDeactivate() {
-
-  }
-
-  default void onAfterDeactivate() {
-
-  }
+  default void onAfterDeactivate() {}
 }

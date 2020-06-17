@@ -2,12 +2,17 @@ package com.orientechnologies.orient.server.security;
 
 import com.orientechnologies.orient.core.db.ODatabaseSession;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
-import com.orientechnologies.orient.core.metadata.security.*;
+import com.orientechnologies.orient.core.metadata.security.ORole;
+import com.orientechnologies.orient.core.metadata.security.ORule;
+import com.orientechnologies.orient.core.metadata.security.OSecurityExternal;
+import com.orientechnologies.orient.core.metadata.security.OSecurityPolicy;
+import com.orientechnologies.orient.core.metadata.security.OSecurityRole;
+import com.orientechnologies.orient.core.metadata.security.OSystemUser;
+import com.orientechnologies.orient.core.metadata.security.OUser;
 import com.orientechnologies.orient.core.record.OElement;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.config.OServerUserConfiguration;
-
 import java.util.HashMap;
 import java.util.Map;
 
@@ -60,9 +65,9 @@ public class OSecurityServerExternal extends OSecurityExternal {
   private void createRoot(ORole role) {
     role.addRule(ORule.ResourceGeneric.BYPASS_RESTRICTED, null, ORole.PERMISSION_ALL);
     role.addRule(ORule.ResourceGeneric.ALL, null, ORole.PERMISSION_ALL);
-//      role.addRule(ORule.ResourceGeneric.ALL_CLASSES, null, ORole.PERMISSION_ALL).save();
+    //      role.addRule(ORule.ResourceGeneric.ALL_CLASSES, null, ORole.PERMISSION_ALL).save();
     role.addRule(ORule.ResourceGeneric.CLASS, null, ORole.PERMISSION_ALL);
-//      role.addRule(ORule.ResourceGeneric.ALL_CLUSTERS, null, ORole.PERMISSION_ALL).save();
+    //      role.addRule(ORule.ResourceGeneric.ALL_CLUSTERS, null, ORole.PERMISSION_ALL).save();
     role.addRule(ORule.ResourceGeneric.CLUSTER, null, ORole.PERMISSION_ALL);
     role.addRule(ORule.ResourceGeneric.SYSTEM_CLUSTERS, null, ORole.PERMISSION_ALL);
     role.addRule(ORule.ResourceGeneric.DATABASE, null, ORole.PERMISSION_ALL);
@@ -73,7 +78,8 @@ public class OSecurityServerExternal extends OSecurityExternal {
     createSecurityPolicyWithBitmask(role, "*", ORole.PERMISSION_ALL);
   }
 
-  public void createSecurityPolicyWithBitmask(OSecurityRole role, String resource, int legacyPolicy) {
+  public void createSecurityPolicyWithBitmask(
+      OSecurityRole role, String resource, int legacyPolicy) {
     String policyName = "default_" + legacyPolicy;
     OSecurityPolicy policy = new OSecurityPolicy(new ODocument().field("name", policyName));
     policy.setCreateRule((legacyPolicy & ORole.PERMISSION_CREATE) > 0 ? "true" : "false");
@@ -96,7 +102,5 @@ public class OSecurityServerExternal extends OSecurityExternal {
       roleDoc.setProperty("policies", policies);
     }
     policies.put(resource, policy.getElement());
-
   }
-
 }

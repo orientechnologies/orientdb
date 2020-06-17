@@ -19,34 +19,37 @@
  */
 package com.orientechnologies.orient.object.db;
 
-import java.io.Serializable;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Set;
-
-import javassist.util.proxy.Proxy;
-import javassist.util.proxy.ProxyObject;
-
 import com.orientechnologies.orient.core.db.object.OLazyObjectMapInterface;
 import com.orientechnologies.orient.core.db.object.OObjectLazyMultivalueElement;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.object.enhancement.OObjectEntitySerializer;
 import com.orientechnologies.orient.object.enhancement.OObjectProxyMethodHandler;
+import java.io.Serializable;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Set;
+import javassist.util.proxy.Proxy;
+import javassist.util.proxy.ProxyObject;
 
 public class OObjectLazyMap<TYPE> extends HashMap<Object, Object>
-    implements Serializable, OObjectLazyMultivalueElement<Map<Object, TYPE>>, OLazyObjectMapInterface<TYPE> {
+    implements Serializable,
+        OObjectLazyMultivalueElement<Map<Object, TYPE>>,
+        OLazyObjectMapInterface<TYPE> {
   private static final long serialVersionUID = -7071023580831419958L;
 
-  private final ProxyObject                sourceRecord;
+  private final ProxyObject sourceRecord;
   private final Map<Object, OIdentifiable> underlying;
-  private       String                     fetchPlan;
-  private       boolean                    converted       = false;
-  private       boolean                    convertToRecord = true;
-  private final boolean                    orphanRemoval;
+  private String fetchPlan;
+  private boolean converted = false;
+  private boolean convertToRecord = true;
+  private final boolean orphanRemoval;
 
-  public OObjectLazyMap(final Object iSourceRecord, final Map<Object, OIdentifiable> iRecordMap, final boolean orphanRemoval) {
+  public OObjectLazyMap(
+      final Object iSourceRecord,
+      final Map<Object, OIdentifiable> iRecordMap,
+      final boolean orphanRemoval) {
     super();
     this.sourceRecord = iSourceRecord instanceof ProxyObject ? (ProxyObject) iSourceRecord : null;
     this.underlying = iRecordMap;
@@ -54,8 +57,11 @@ public class OObjectLazyMap<TYPE> extends HashMap<Object, Object>
     this.orphanRemoval = orphanRemoval;
   }
 
-  public OObjectLazyMap(final Object iSourceRecord, final Map<Object, OIdentifiable> iRecordMap,
-      final Map<Object, Object> iSourceMap, final boolean orphanRemoval) {
+  public OObjectLazyMap(
+      final Object iSourceRecord,
+      final Map<Object, OIdentifiable> iRecordMap,
+      final Map<Object, Object> iSourceMap,
+      final boolean orphanRemoval) {
     this(iSourceRecord, iRecordMap, orphanRemoval);
     putAll(iSourceMap);
   }
@@ -77,8 +83,7 @@ public class OObjectLazyMap<TYPE> extends HashMap<Object, Object>
 
   @Override
   public boolean containsValue(final Object o) {
-    if (o instanceof OIdentifiable)
-      return underlying.containsValue((OIdentifiable) o);
+    if (o instanceof OIdentifiable) return underlying.containsValue((OIdentifiable) o);
     else if (o instanceof Proxy)
       return underlying.containsValue(OObjectEntitySerializer.getDocument((Proxy) o));
     return super.containsValue(o);
@@ -94,21 +99,31 @@ public class OObjectLazyMap<TYPE> extends HashMap<Object, Object>
         OIdentifiable o = underlying.put(iKey, record);
         if (orphanRemoval && sourceRecord != null) {
           if (record != null)
-            ((OObjectProxyMethodHandler) sourceRecord.getHandler()).getOrphans().remove(record.getIdentity());
+            ((OObjectProxyMethodHandler) sourceRecord.getHandler())
+                .getOrphans()
+                .remove(record.getIdentity());
           if (o != null && !o.getIdentity().equals(((OIdentifiable) e).getIdentity()))
-            ((OObjectProxyMethodHandler) sourceRecord.getHandler()).getOrphans().add(o.getIdentity());
+            ((OObjectProxyMethodHandler) sourceRecord.getHandler())
+                .getOrphans()
+                .add(o.getIdentity());
         }
         return o;
       } else {
         record = e != null ? getDatabase().getRecordByUserObject(e, true) : null;
-        // OIdentifiable oldValue = get(iKey) != null ? getDatabase().getRecordByUserObject(get(iKey), true) : null;
+        // OIdentifiable oldValue = get(iKey) != null ?
+        // getDatabase().getRecordByUserObject(get(iKey), true) : null;
         OIdentifiable oldValue = underlying.get(iKey);
         underlying.put(iKey, record);
         if (orphanRemoval && sourceRecord != null) {
           if (record != null)
-            ((OObjectProxyMethodHandler) sourceRecord.getHandler()).getOrphans().remove(record.getIdentity());
-          if (((record == null && oldValue != null) || (oldValue != null && !oldValue.getIdentity().equals(record.getIdentity()))))
-            ((OObjectProxyMethodHandler) sourceRecord.getHandler()).getOrphans().add(oldValue.getIdentity());
+            ((OObjectProxyMethodHandler) sourceRecord.getHandler())
+                .getOrphans()
+                .remove(record.getIdentity());
+          if (((record == null && oldValue != null)
+              || (oldValue != null && !oldValue.getIdentity().equals(record.getIdentity()))))
+            ((OObjectProxyMethodHandler) sourceRecord.getHandler())
+                .getOrphans()
+                .add(oldValue.getIdentity());
         }
         return super.put(iKey, e);
       }
@@ -121,7 +136,9 @@ public class OObjectLazyMap<TYPE> extends HashMap<Object, Object>
   public Object remove(final Object iKey) {
     OIdentifiable record = underlying.remove((String) iKey);
     if (orphanRemoval && record != null && sourceRecord != null)
-      ((OObjectProxyMethodHandler) sourceRecord.getHandler()).getOrphans().add(record.getIdentity());
+      ((OObjectProxyMethodHandler) sourceRecord.getHandler())
+          .getOrphans()
+          .add(record.getIdentity());
     setDirty();
     return super.remove(iKey);
   }
@@ -131,7 +148,9 @@ public class OObjectLazyMap<TYPE> extends HashMap<Object, Object>
     converted = true;
     if (orphanRemoval && sourceRecord != null)
       for (OIdentifiable value : underlying.values())
-        ((OObjectProxyMethodHandler) sourceRecord.getHandler()).getOrphans().add(value.getIdentity());
+        ((OObjectProxyMethodHandler) sourceRecord.getHandler())
+            .getOrphans()
+            .add(value.getIdentity());
     underlying.clear();
     super.clear();
     setDirty();
@@ -178,7 +197,9 @@ public class OObjectLazyMap<TYPE> extends HashMap<Object, Object>
   public Object getOrDefault(Object key, Object defaultValue) {
     String keyAsString = String.valueOf(key);
     Object valueToReturn;
-    return (((valueToReturn = this.get(keyAsString)) != null) || this.containsKey(keyAsString)) ? valueToReturn : defaultValue;
+    return (((valueToReturn = this.get(keyAsString)) != null) || this.containsKey(keyAsString))
+        ? valueToReturn
+        : defaultValue;
   }
 
   @Override
@@ -201,26 +222,20 @@ public class OObjectLazyMap<TYPE> extends HashMap<Object, Object>
   }
 
   public void setDirty() {
-    if (sourceRecord != null)
-      ((OObjectProxyMethodHandler) sourceRecord.getHandler()).setDirty();
+    if (sourceRecord != null) ((OObjectProxyMethodHandler) sourceRecord.getHandler()).setDirty();
   }
 
   public Map<Object, OIdentifiable> getUnderlying() {
     return underlying;
   }
 
-  /**
-   * Assure that the requested key is converted.
-   */
+  /** Assure that the requested key is converted. */
   private void convert(final String iKey) {
-    if (converted || !convertToRecord)
-      return;
+    if (converted || !convertToRecord) return;
 
-    if (super.containsKey(iKey))
-      return;
+    if (super.containsKey(iKey)) return;
     final ORecord record = (ORecord) underlying.get(iKey);
-    if (record == null)
-      return;
+    if (record == null) return;
     TYPE o = (TYPE) getDatabase().getUserObjectByRecord(record, null);
     ((OObjectProxyMethodHandler) (((ProxyObject) o)).getHandler()).setParentObject(sourceRecord);
     super.put(iKey, o);
@@ -234,9 +249,11 @@ public class OObjectLazyMap<TYPE> extends HashMap<Object, Object>
     convertAll();
   }
 
-  public void detachAll(boolean nonProxiedInstance, Map<Object, Object> alreadyDetached, Map<Object, Object> lazyObjects) {
+  public void detachAll(
+      boolean nonProxiedInstance,
+      Map<Object, Object> alreadyDetached,
+      Map<Object, Object> lazyObjects) {
     convertAndDetachAll(nonProxiedInstance, alreadyDetached, lazyObjects);
-
   }
 
   @Override
@@ -247,27 +264,32 @@ public class OObjectLazyMap<TYPE> extends HashMap<Object, Object>
     return map;
   }
 
-  /**
-   * Converts all the items
-   */
+  /** Converts all the items */
   protected void convertAll() {
-    if (converted || !convertToRecord)
-      return;
+    if (converted || !convertToRecord) return;
 
     for (java.util.Map.Entry<Object, OIdentifiable> e : underlying.entrySet())
-      super.put(e.getKey(), getDatabase().getUserObjectByRecord((ORecord) ((OIdentifiable) e.getValue()).getRecord(), null));
+      super.put(
+          e.getKey(),
+          getDatabase()
+              .getUserObjectByRecord((ORecord) ((OIdentifiable) e.getValue()).getRecord(), null));
 
     converted = true;
   }
 
-  protected void convertAndDetachAll(boolean nonProxiedInstance, Map<Object, Object> alreadyDetached,
+  protected void convertAndDetachAll(
+      boolean nonProxiedInstance,
+      Map<Object, Object> alreadyDetached,
       Map<Object, Object> lazyObjects) {
-    if (converted || !convertToRecord)
-      return;
+    if (converted || !convertToRecord) return;
 
     for (java.util.Map.Entry<Object, OIdentifiable> e : underlying.entrySet()) {
-      Object o = getDatabase().getUserObjectByRecord((ORecord) ((OIdentifiable) e.getValue()).getRecord(), null);
-      o = ((OObjectDatabaseTx) getDatabase()).detachAll(o, nonProxiedInstance, alreadyDetached, lazyObjects);
+      Object o =
+          getDatabase()
+              .getUserObjectByRecord((ORecord) ((OIdentifiable) e.getValue()).getRecord(), null);
+      o =
+          ((OObjectDatabaseTx) getDatabase())
+              .detachAll(o, nonProxiedInstance, alreadyDetached, lazyObjects);
       super.put(e.getKey(), o);
     }
 

@@ -21,9 +21,8 @@ package com.orientechnologies.common.parser;
 
 /**
  * Wake up at every variable found.
- * 
+ *
  * @author Luca Garulli (l.garulli--(at)--orientdb.com) (luca.garulli--at--assetdata.it
- * 
  */
 public interface OVariableParserListener {
   Object resolve(String iVariable);

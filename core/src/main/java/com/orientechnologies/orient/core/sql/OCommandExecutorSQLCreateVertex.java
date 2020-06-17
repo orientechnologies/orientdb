@@ -30,18 +30,22 @@ import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.record.OVertex;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.functions.OSQLFunctionRuntime;
-
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * SQL CREATE VERTEX command.
  *
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
  */
-public class OCommandExecutorSQLCreateVertex extends OCommandExecutorSQLSetAware implements OCommandDistributedReplicateRequest {
+public class OCommandExecutorSQLCreateVertex extends OCommandExecutorSQLSetAware
+    implements OCommandDistributedReplicateRequest {
   public static final String NAME = "CREATE VERTEX";
-  private OClass                      clazz;
-  private String                      clusterName;
+  private OClass clazz;
+  private String clusterName;
   private List<OPair<String, Object>> fields;
 
   @SuppressWarnings("unchecked")
@@ -84,14 +88,16 @@ public class OCommandExecutorSQLCreateVertex extends OCommandExecutorSQLSetAware
             className = "V";
 
           // GET/CHECK CLASS NAME
-          clazz = ((OMetadataInternal) database.getMetadata()).getImmutableSchemaSnapshot().getClass(className);
+          clazz =
+              ((OMetadataInternal) database.getMetadata())
+                  .getImmutableSchemaSnapshot()
+                  .getClass(className);
           if (clazz == null)
             throw new OCommandSQLParsingException("Class '" + className + "' was not found");
         }
 
         temp = parserOptionalWord(true);
-        if (parserIsEnded())
-          break;
+        if (parserIsEnded()) break;
       }
 
       if (className == null) {
@@ -99,7 +105,10 @@ public class OCommandExecutorSQLCreateVertex extends OCommandExecutorSQLSetAware
         className = "V";
 
         // GET/CHECK CLASS NAME
-        clazz = ((OMetadataInternal) database.getMetadata()).getImmutableSchemaSnapshot().getClass(className);
+        clazz =
+            ((OMetadataInternal) database.getMetadata())
+                .getImmutableSchemaSnapshot()
+                .getClass(className);
         if (clazz == null)
           throw new OCommandSQLParsingException("Class '" + className + "' was not found");
       }
@@ -109,12 +118,11 @@ public class OCommandExecutorSQLCreateVertex extends OCommandExecutorSQLSetAware
     return this;
   }
 
-  /**
-   * Execute the command and return the ODocument object created.
-   */
+  /** Execute the command and return the ODocument object created. */
   public Object execute(final Map<Object, Object> iArgs) {
     if (clazz == null)
-      throw new OCommandExecutionException("Cannot execute the command because it has not been parsed yet");
+      throw new OCommandExecutionException(
+          "Cannot execute the command because it has not been parsed yet");
 
     // CREATE VERTEX DOES NOT HAVE TO BE IN TX
     final OVertex vertex = getDatabase().newVertex(clazz);
@@ -123,21 +131,18 @@ public class OCommandExecutorSQLCreateVertex extends OCommandExecutorSQLSetAware
       // EVALUATE FIELDS
       for (final OPair<String, Object> f : fields) {
         if (f.getValue() instanceof OSQLFunctionRuntime)
-          f.setValue(((OSQLFunctionRuntime) f.getValue()).getValue(vertex.getRecord(), null, context));
+          f.setValue(
+              ((OSQLFunctionRuntime) f.getValue()).getValue(vertex.getRecord(), null, context));
       }
 
     OSQLHelper.bindParameters(vertex.getRecord(), fields, new OCommandParameters(iArgs), context);
 
-    if (content != null)
-      ((ODocument)vertex.getRecord()).merge(content, true, false);
+    if (content != null) ((ODocument) vertex.getRecord()).merge(content, true, false);
 
-    if (clusterName != null)
-      vertex.save(clusterName);
-    else
-      vertex.save();
+    if (clusterName != null) vertex.save(clusterName);
+    else vertex.save();
 
     return vertex.getRecord();
-
   }
 
   @Override
@@ -153,7 +158,8 @@ public class OCommandExecutorSQLCreateVertex extends OCommandExecutorSQLSetAware
   @Override
   public Set<String> getInvolvedClusters() {
     if (clazz != null)
-      return Collections.singleton(getDatabase().getClusterNameById(clazz.getClusterSelection().getCluster(clazz, null)));
+      return Collections.singleton(
+          getDatabase().getClusterNameById(clazz.getClusterSelection().getCluster(clazz, null)));
     else if (clusterName != null)
       return getInvolvedClustersOfClusters(Collections.singleton(clusterName));
 

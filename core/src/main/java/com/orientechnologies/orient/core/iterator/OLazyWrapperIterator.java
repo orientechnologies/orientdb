@@ -23,29 +23,30 @@ import com.orientechnologies.common.util.OResettable;
 import com.orientechnologies.common.util.OSizeable;
 import com.orientechnologies.orient.core.db.record.OAutoConvertToRecord;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
-
 import java.util.Iterator;
 import java.util.NoSuchElementException;
 
 /**
  * Iterator that created wrapped objects during browsing.
- * 
+ *
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
  */
-public abstract class OLazyWrapperIterator<T> implements OAutoConvertToRecord, Iterator<T>, Iterable<T>, OResettable, OSizeable {
+public abstract class OLazyWrapperIterator<T>
+    implements OAutoConvertToRecord, Iterator<T>, Iterable<T>, OResettable, OSizeable {
   protected final Iterator<?> iterator;
-  protected OIdentifiable     nextRecord;
-  protected T                 nextElement;
-  protected final int         size;                      // -1 = UNKNOWN
-  protected boolean           autoConvertToRecord = true;
-  protected Object            multiValue;
+  protected OIdentifiable nextRecord;
+  protected T nextElement;
+  protected final int size; // -1 = UNKNOWN
+  protected boolean autoConvertToRecord = true;
+  protected Object multiValue;
 
   public OLazyWrapperIterator(final Iterator<?> iterator) {
     this.iterator = iterator;
     this.size = -1;
   }
 
-  public OLazyWrapperIterator(final Iterator<?> iterator, final int iSize, final Object iOriginalValue) {
+  public OLazyWrapperIterator(
+      final Iterator<?> iterator, final int iSize, final Object iOriginalValue) {
     this.iterator = iterator;
     this.size = iSize;
     this.multiValue = iOriginalValue;
@@ -68,11 +69,9 @@ public abstract class OLazyWrapperIterator<T> implements OAutoConvertToRecord, I
   }
 
   public int size() {
-    if (size > -1)
-      return size;
+    if (size > -1) return size;
 
-    if (iterator instanceof OSizeable)
-      return ((OSizeable) iterator).size();
+    if (iterator instanceof OSizeable) return ((OSizeable) iterator).size();
 
     return 0;
   }
@@ -91,8 +90,7 @@ public abstract class OLazyWrapperIterator<T> implements OAutoConvertToRecord, I
       // ACT ON WRAPPER
       while (nextElement == null && iterator.hasNext()) {
         nextElement = createGraphElement(iterator.next());
-        if (nextElement != null && !filter(nextElement))
-          nextElement = null;
+        if (nextElement != null && !filter(nextElement)) nextElement = null;
       }
 
       return nextElement != null;

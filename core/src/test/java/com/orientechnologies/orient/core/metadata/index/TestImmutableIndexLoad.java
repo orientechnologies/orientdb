@@ -1,5 +1,8 @@
 package com.orientechnologies.orient.core.metadata.index;
 
+import static org.junit.Assert.fail;
+
+
 import com.orientechnologies.orient.core.db.ODatabaseSession;
 import com.orientechnologies.orient.core.db.ODatabaseType;
 import com.orientechnologies.orient.core.db.OrientDB;
@@ -11,15 +14,14 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.ORecordDuplicatedException;
 import org.junit.Test;
 
-import static org.junit.Assert.fail;
-
 public class TestImmutableIndexLoad {
 
   @Test
   public void testLoadAndUseIndexOnOpen() {
     OrientDB orientDB = new OrientDB("embedded:./target/", OrientDBConfig.defaultConfig());
     orientDB.create(TestImmutableIndexLoad.class.getSimpleName(), ODatabaseType.PLOCAL);
-    ODatabaseSession db = orientDB.open(TestImmutableIndexLoad.class.getSimpleName(), "admin", "admin");
+    ODatabaseSession db =
+        orientDB.open(TestImmutableIndexLoad.class.getSimpleName(), "admin", "admin");
     OClass one = db.createClass("One");
     OProperty property = one.createProperty("one", OType.STRING);
     property.createIndex(OClass.INDEX_TYPE.UNIQUE);
@@ -37,11 +39,10 @@ public class TestImmutableIndexLoad {
       db.save(doc1);
       fail("It should fail the unique index");
     } catch (ORecordDuplicatedException e) {
-      //EXPEXTED
+      // EXPEXTED
     }
     db.close();
     orientDB.drop(TestImmutableIndexLoad.class.getSimpleName());
     orientDB.close();
   }
-
 }

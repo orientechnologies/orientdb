@@ -22,13 +22,9 @@ import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.security.OSecurity;
 import com.orientechnologies.orient.core.metadata.sequence.OSequenceLibrary;
 import com.orientechnologies.orient.core.schedule.OScheduler;
-
 import java.io.IOException;
 
-/**
- * @author Luca Molino (molino.luca--at--gmail.com)
- * 
- */
+/** @author Luca Molino (molino.luca--at--gmail.com) */
 public interface OMetadata {
 
   @Deprecated
@@ -41,23 +37,17 @@ public interface OMetadata {
 
   OSecurity getSecurity();
 
-  /**
-   * @deprecated Manual indexes are deprecated and will be removed
-   */
+  /** @deprecated Manual indexes are deprecated and will be removed */
   @Deprecated
   OIndexManager getIndexManager();
 
   @Deprecated
   int getSchemaClusterId();
 
-  /**
-   * Reloads the internal objects.
-   */
+  /** Reloads the internal objects. */
   void reload();
 
-  /**
-   * Closes internal objects
-   */
+  /** Closes internal objects */
   @Deprecated
   void close();
 

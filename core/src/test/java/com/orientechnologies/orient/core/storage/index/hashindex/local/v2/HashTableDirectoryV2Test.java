@@ -4,10 +4,14 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperation;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperationsManager;
-import org.assertj.core.api.Assertions;
-import org.junit.*;
-
 import java.io.IOException;
+import org.assertj.core.api.Assertions;
+import org.junit.After;
+import org.junit.AfterClass;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.BeforeClass;
+import org.junit.Test;
 
 /**
  * @author Andrey Lomakin (a.lomakin-at-orientdb.com)
@@ -20,7 +24,8 @@ public class HashTableDirectoryV2Test {
 
   @BeforeClass
   public static void beforeClass() throws IOException {
-    databaseDocumentTx = new ODatabaseDocumentTx("memory:" + HashTableDirectoryV2Test.class.getSimpleName());
+    databaseDocumentTx =
+        new ODatabaseDocumentTx("memory:" + HashTableDirectoryV2Test.class.getSimpleName());
     if (databaseDocumentTx.exists()) {
       databaseDocumentTx.open("admin", "admin");
       databaseDocumentTx.drop();
@@ -29,7 +34,8 @@ public class HashTableDirectoryV2Test {
     databaseDocumentTx.create();
 
     OAbstractPaginatedStorage storage = (OAbstractPaginatedStorage) databaseDocumentTx.getStorage();
-    directory = new HashTableDirectory(".tsc", "hashTableDirectoryTest", "hashTableDirectoryTest", storage);
+    directory =
+        new HashTableDirectory(".tsc", "hashTableDirectoryTest", "hashTableDirectoryTest", storage);
 
     final OAtomicOperation atomicOperation = startTx();
     directory.create(atomicOperation);
@@ -46,8 +52,7 @@ public class HashTableDirectoryV2Test {
   }
 
   @Before
-  public void beforeMethod() {
-  }
+  public void beforeMethod() {}
 
   @After
   public void afterMethod() throws IOException {
@@ -82,8 +87,7 @@ public class HashTableDirectoryV2Test {
     OAtomicOperation atomicOperation = startTx();
 
     long[] level = new long[LocalHashTableV2.MAX_LEVEL_SIZE];
-    for (int i = 0; i < level.length; i++)
-      level[i] = i;
+    for (int i = 0; i < level.length; i++) level[i] = i;
 
     int index = directory.addNewNode((byte) 2, (byte) 3, (byte) 4, level, atomicOperation);
 
@@ -103,13 +107,11 @@ public class HashTableDirectoryV2Test {
   public void changeFirstLevel() throws IOException {
     OAtomicOperation atomicOperation = startTx();
     long[] level = new long[LocalHashTableV2.MAX_LEVEL_SIZE];
-    for (int i = 0; i < level.length; i++)
-      level[i] = i;
+    for (int i = 0; i < level.length; i++) level[i] = i;
 
     directory.addNewNode((byte) 2, (byte) 3, (byte) 4, level, atomicOperation);
 
-    for (int i = 0; i < level.length; i++)
-      directory.setNodePointer(0, i, i + 100, atomicOperation);
+    for (int i = 0; i < level.length; i++) directory.setNodePointer(0, i, i + 100, atomicOperation);
 
     directory.setMaxLeftChildDepth(0, (byte) 100, atomicOperation);
     directory.setMaxRightChildDepth(0, (byte) 101, atomicOperation);
@@ -130,28 +132,24 @@ public class HashTableDirectoryV2Test {
     OAtomicOperation atomicOperation = startTx();
 
     long[] level = new long[LocalHashTableV2.MAX_LEVEL_SIZE];
-    for (int i = 0; i < level.length; i++)
-      level[i] = i;
+    for (int i = 0; i < level.length; i++) level[i] = i;
 
     int index = directory.addNewNode((byte) 2, (byte) 3, (byte) 4, level, atomicOperation);
     Assert.assertEquals(index, 0);
 
-    for (int i = 0; i < level.length; i++)
-      level[i] = i + 100;
+    for (int i = 0; i < level.length; i++) level[i] = i + 100;
 
     index = directory.addNewNode((byte) 2, (byte) 3, (byte) 4, level, atomicOperation);
     Assert.assertEquals(index, 1);
 
-    for (int i = 0; i < level.length; i++)
-      level[i] = i + 200;
+    for (int i = 0; i < level.length; i++) level[i] = i + 200;
 
     index = directory.addNewNode((byte) 2, (byte) 3, (byte) 4, level, atomicOperation);
     Assert.assertEquals(index, 2);
 
     directory.deleteNode(1, atomicOperation);
 
-    for (int i = 0; i < level.length; i++)
-      level[i] = i + 300;
+    for (int i = 0; i < level.length; i++) level[i] = i + 300;
 
     index = directory.addNewNode((byte) 5, (byte) 6, (byte) 7, level, atomicOperation);
     Assert.assertEquals(index, 1);
@@ -171,32 +169,27 @@ public class HashTableDirectoryV2Test {
     OAtomicOperation atomicOperation = startTx();
 
     long[] level = new long[LocalHashTableV2.MAX_LEVEL_SIZE];
-    for (int i = 0; i < level.length; i++)
-      level[i] = i;
+    for (int i = 0; i < level.length; i++) level[i] = i;
 
     int index = directory.addNewNode((byte) 2, (byte) 3, (byte) 4, level, atomicOperation);
     Assert.assertEquals(index, 0);
 
-    for (int i = 0; i < level.length; i++)
-      level[i] = i + 100;
+    for (int i = 0; i < level.length; i++) level[i] = i + 100;
 
     index = directory.addNewNode((byte) 2, (byte) 3, (byte) 4, level, atomicOperation);
     Assert.assertEquals(index, 1);
 
-    for (int i = 0; i < level.length; i++)
-      level[i] = i + 200;
+    for (int i = 0; i < level.length; i++) level[i] = i + 200;
 
     index = directory.addNewNode((byte) 2, (byte) 3, (byte) 4, level, atomicOperation);
     Assert.assertEquals(index, 2);
 
-    for (int i = 0; i < level.length; i++)
-      level[i] = i + 300;
+    for (int i = 0; i < level.length; i++) level[i] = i + 300;
 
     index = directory.addNewNode((byte) 2, (byte) 3, (byte) 4, level, atomicOperation);
     Assert.assertEquals(index, 3);
 
-    for (int i = 0; i < level.length; i++)
-      level[i] = i + 400;
+    for (int i = 0; i < level.length; i++) level[i] = i + 400;
 
     index = directory.addNewNode((byte) 2, (byte) 3, (byte) 4, level, atomicOperation);
     Assert.assertEquals(index, 4);
@@ -204,20 +197,17 @@ public class HashTableDirectoryV2Test {
     directory.deleteNode(1, atomicOperation);
     directory.deleteNode(3, atomicOperation);
 
-    for (int i = 0; i < level.length; i++)
-      level[i] = i + 500;
+    for (int i = 0; i < level.length; i++) level[i] = i + 500;
 
     index = directory.addNewNode((byte) 5, (byte) 6, (byte) 7, level, atomicOperation);
     Assert.assertEquals(index, 3);
 
-    for (int i = 0; i < level.length; i++)
-      level[i] = i + 600;
+    for (int i = 0; i < level.length; i++) level[i] = i + 600;
 
     index = directory.addNewNode((byte) 8, (byte) 9, (byte) 10, level, atomicOperation);
     Assert.assertEquals(index, 1);
 
-    for (int i = 0; i < level.length; i++)
-      level[i] = i + 700;
+    for (int i = 0; i < level.length; i++) level[i] = i + 700;
 
     index = directory.addNewNode((byte) 11, (byte) 12, (byte) 13, level, atomicOperation);
     Assert.assertEquals(index, 5);
@@ -257,63 +247,55 @@ public class HashTableDirectoryV2Test {
     long[] level = new long[LocalHashTableV2.MAX_LEVEL_SIZE];
 
     for (int n = 0; n < DirectoryFirstPageV2.NODES_PER_PAGE; n++) {
-      for (int i = 0; i < level.length; i++)
-        level[i] = i + n * 100;
+      for (int i = 0; i < level.length; i++) level[i] = i + n * 100;
 
       int index = directory.addNewNode((byte) 5, (byte) 6, (byte) 7, level, atomicOperation);
-      if (firsIndex < 0)
-        firsIndex = index;
+      if (firsIndex < 0) firsIndex = index;
     }
 
     for (int n = 0; n < DirectoryPageV2.NODES_PER_PAGE; n++) {
-      for (int i = 0; i < level.length; i++)
-        level[i] = i + n * 100;
+      for (int i = 0; i < level.length; i++) level[i] = i + n * 100;
 
       int index = directory.addNewNode((byte) 5, (byte) 6, (byte) 7, level, atomicOperation);
-      if (secondIndex < 0)
-        secondIndex = index;
+      if (secondIndex < 0) secondIndex = index;
     }
 
     for (int n = 0; n < DirectoryPageV2.NODES_PER_PAGE; n++) {
-      for (int i = 0; i < level.length; i++)
-        level[i] = i + n * 100;
+      for (int i = 0; i < level.length; i++) level[i] = i + n * 100;
 
       int index = directory.addNewNode((byte) 5, (byte) 6, (byte) 7, level, atomicOperation);
-      if (thirdIndex < 0)
-        thirdIndex = index;
+      if (thirdIndex < 0) thirdIndex = index;
     }
 
     Assert.assertEquals(firsIndex, 0);
     Assert.assertEquals(secondIndex, DirectoryFirstPageV2.NODES_PER_PAGE);
-    Assert.assertEquals(thirdIndex, DirectoryFirstPageV2.NODES_PER_PAGE + DirectoryPageV2.NODES_PER_PAGE);
+    Assert.assertEquals(
+        thirdIndex, DirectoryFirstPageV2.NODES_PER_PAGE + DirectoryPageV2.NODES_PER_PAGE);
 
     directory.deleteNode(secondIndex, atomicOperation);
     directory.deleteNode(firsIndex, atomicOperation);
     directory.deleteNode(thirdIndex, atomicOperation);
 
-    for (int i = 0; i < level.length; i++)
-      level[i] = i + 1000;
+    for (int i = 0; i < level.length; i++) level[i] = i + 1000;
 
     int index = directory.addNewNode((byte) 8, (byte) 9, (byte) 10, level, atomicOperation);
     Assert.assertEquals(index, thirdIndex);
 
-    for (int i = 0; i < level.length; i++)
-      level[i] = i + 2000;
+    for (int i = 0; i < level.length; i++) level[i] = i + 2000;
 
     index = directory.addNewNode((byte) 11, (byte) 12, (byte) 13, level, atomicOperation);
     Assert.assertEquals(index, firsIndex);
 
-    for (int i = 0; i < level.length; i++)
-      level[i] = i + 3000;
+    for (int i = 0; i < level.length; i++) level[i] = i + 3000;
 
     index = directory.addNewNode((byte) 14, (byte) 15, (byte) 16, level, atomicOperation);
     Assert.assertEquals(index, secondIndex);
 
-    for (int i = 0; i < level.length; i++)
-      level[i] = i + 4000;
+    for (int i = 0; i < level.length; i++) level[i] = i + 4000;
 
     index = directory.addNewNode((byte) 17, (byte) 18, (byte) 19, level, atomicOperation);
-    Assert.assertEquals(index, DirectoryFirstPageV2.NODES_PER_PAGE + 2 * DirectoryPageV2.NODES_PER_PAGE);
+    Assert.assertEquals(
+        index, DirectoryFirstPageV2.NODES_PER_PAGE + 2 * DirectoryPageV2.NODES_PER_PAGE);
 
     Assert.assertEquals(directory.getMaxLeftChildDepth(thirdIndex, atomicOperation), 8);
     Assert.assertEquals(directory.getMaxRightChildDepth(thirdIndex, atomicOperation), 9);
@@ -354,33 +336,31 @@ public class HashTableDirectoryV2Test {
     long[] level = new long[LocalHashTableV2.MAX_LEVEL_SIZE];
 
     for (int n = 0; n < DirectoryFirstPageV2.NODES_PER_PAGE; n++) {
-      for (int i = 0; i < level.length; i++)
-        level[i] = i + n * 100;
+      for (int i = 0; i < level.length; i++) level[i] = i + n * 100;
 
       directory.addNewNode((byte) 5, (byte) 6, (byte) 7, level, atomicOperation);
     }
 
     for (int n = 0; n < DirectoryPageV2.NODES_PER_PAGE; n++) {
-      for (int i = 0; i < level.length; i++)
-        level[i] = i + n * 100;
+      for (int i = 0; i < level.length; i++) level[i] = i + n * 100;
 
       directory.addNewNode((byte) 5, (byte) 6, (byte) 7, level, atomicOperation);
     }
 
     for (int n = 0; n < DirectoryPageV2.NODES_PER_PAGE; n++) {
-      for (int i = 0; i < level.length; i++)
-        level[i] = i + n * 100;
+      for (int i = 0; i < level.length; i++) level[i] = i + n * 100;
 
       directory.addNewNode((byte) 5, (byte) 6, (byte) 7, level, atomicOperation);
     }
 
-    directory.deleteNode(DirectoryFirstPageV2.NODES_PER_PAGE + DirectoryPageV2.NODES_PER_PAGE - 1, atomicOperation);
+    directory.deleteNode(
+        DirectoryFirstPageV2.NODES_PER_PAGE + DirectoryPageV2.NODES_PER_PAGE - 1, atomicOperation);
 
-    for (int i = 0; i < level.length; i++)
-      level[i] = i + 1000;
+    for (int i = 0; i < level.length; i++) level[i] = i + 1000;
 
     int index = directory.addNewNode((byte) 8, (byte) 9, (byte) 10, level, atomicOperation);
-    Assert.assertEquals(index, DirectoryFirstPageV2.NODES_PER_PAGE + DirectoryPageV2.NODES_PER_PAGE - 1);
+    Assert.assertEquals(
+        index, DirectoryFirstPageV2.NODES_PER_PAGE + DirectoryPageV2.NODES_PER_PAGE - 1);
 
     directory.setMaxLeftChildDepth(index - 1, (byte) 10, atomicOperation);
     directory.setMaxRightChildDepth(index - 1, (byte) 11, atomicOperation);

@@ -12,13 +12,16 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
 import com.orientechnologies.orient.core.serialization.serializer.record.binary.ODocumentSerializerDelta;
 import com.orientechnologies.orient.core.serialization.serializer.record.binary.ORecordSerializerNetworkDistributed;
-
-import java.io.*;
+import java.io.ByteArrayInputStream;
+import java.io.DataInput;
+import java.io.DataInputStream;
+import java.io.DataOutput;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
 public class OTransactionData {
-  private OTransactionId               transactionId;
+  private OTransactionId transactionId;
   private List<OTransactionDataChange> changes = new ArrayList<>();
 
   public OTransactionData(OTransactionId transactionId) {
@@ -37,9 +40,12 @@ public class OTransactionData {
 
   public void addRecord(byte[] record) {
     try {
-      changes.add(OTransactionDataChange.deserialize(new DataInputStream(new ByteArrayInputStream(record))));
+      changes.add(
+          OTransactionDataChange.deserialize(
+              new DataInputStream(new ByteArrayInputStream(record))));
     } catch (IOException e) {
-      throw OException.wrapException(new ODatabaseException("error reading transaction data change record"), e);
+      throw OException.wrapException(
+          new ODatabaseException("error reading transaction data change record"), e);
     }
   }
 
@@ -61,50 +67,66 @@ public class OTransactionData {
     for (OTransactionDataChange change : changes) {
       change.serialize(output);
     }
-
   }
 
   public void fill(OTransactionInternal transaction, ODatabaseDocumentInternal database) {
-    transaction.fill(changes.stream().map((x) -> {
-      ORecordOperation operation = new ORecordOperation(x.getId(), x.getType());
-      // TODO: Handle dirty no changed
-      ORecord record = null;
-      switch (x.getType()) {
-      case ORecordOperation.CREATED: {
-        record = ORecordSerializerNetworkDistributed.INSTANCE.fromStream(x.getRecord().get(), null);
-        ORecordInternal.setRecordSerializer(record, database.getSerializer());
-        break;
-      }
-      case ORecordOperation.UPDATED: {
-        if (x.getRecordType() == ODocument.RECORD_TYPE) {
-          record = database.load(x.getId());
-          if (record == null) {
-            record = new ODocument();
-          }
-          ((ODocument) record).deserializeFields();
-          ODocumentInternal.clearTransactionTrackData((ODocument) record);
-          ODocumentSerializerDelta.instance().deserializeDelta(x.getRecord().get(), (ODocument) record);
-          /// Got record with empty deltas, at this level we mark the record dirty anyway.
-          record.setDirty();
-        } else {
-          record = ORecordSerializerNetworkDistributed.INSTANCE.fromStream(x.getRecord().get(), null);
-          ORecordInternal.setRecordSerializer(record, database.getSerializer());
-        }
-        break;
-      }
-      case ORecordOperation.DELETED: {
-        record = database.load(x.getId());
-        if (record == null) {
-          record = Orient.instance().getRecordFactoryManager().newInstance(x.getRecordType(), x.getId().getClusterId(), database);
-        }
-        break;
-      }
-      }
-      ORecordInternal.setIdentity(record, (ORecordId) x.getId());
-      ORecordInternal.setVersion(record, x.getVersion());
-      operation.setRecord(record);
+    transaction.fill(
+        changes.stream()
+            .map(
+                (x) -> {
+                  ORecordOperation operation = new ORecordOperation(x.getId(), x.getType());
+                  // TODO: Handle dirty no changed
+                  ORecord record = null;
+                  switch (x.getType()) {
+                    case ORecordOperation.CREATED:
+                      {
+                        record =
+                            ORecordSerializerNetworkDistributed.INSTANCE.fromStream(
+                                x.getRecord().get(), null);
+                        ORecordInternal.setRecordSerializer(record, database.getSerializer());
+                        break;
+                      }
+                    case ORecordOperation.UPDATED:
+                      {
+                        if (x.getRecordType() == ODocument.RECORD_TYPE) {
+                          record = database.load(x.getId());
+                          if (record == null) {
+                            record = new ODocument();
+                          }
+                          ((ODocument) record).deserializeFields();
+                          ODocumentInternal.clearTransactionTrackData((ODocument) record);
+                          ODocumentSerializerDelta.instance()
+                              .deserializeDelta(x.getRecord().get(), (ODocument) record);
+                          /// Got record with empty deltas, at this level we mark the record dirty
+                          // anyway.
+                          record.setDirty();
+                        } else {
+                          record =
+                              ORecordSerializerNetworkDistributed.INSTANCE.fromStream(
+                                  x.getRecord().get(), null);
+                          ORecordInternal.setRecordSerializer(record, database.getSerializer());
+                        }
+                        break;
+                      }
+                    case ORecordOperation.DELETED:
+                      {
+                        record = database.load(x.getId());
+                        if (record == null) {
+                          record =
+                              Orient.instance()
+                                  .getRecordFactoryManager()
+                                  .newInstance(
+                                      x.getRecordType(), x.getId().getClusterId(), database);
+                        }
+                        break;
+                      }
+                  }
+                  ORecordInternal.setIdentity(record, (ORecordId) x.getId());
+                  ORecordInternal.setVersion(record, x.getVersion());
+                  operation.setRecord(record);
 
-      return operation;
-    }).iterator());
+                  return operation;
+                })
+            .iterator());
   }
 }

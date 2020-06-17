@@ -29,15 +29,19 @@ import com.orientechnologies.orient.core.tx.OTransaction.TXTYPE;
 import com.tinkerpop.blueprints.impls.orient.OrientBaseGraph;
 import com.tinkerpop.blueprints.impls.orient.OrientGraph;
 import com.tinkerpop.blueprints.impls.orient.OrientVertex;
-import org.testng.Assert;
-import org.testng.annotations.*;
-
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
+import org.testng.Assert;
+import org.testng.annotations.AfterClass;
+import org.testng.annotations.AfterMethod;
+import org.testng.annotations.BeforeMethod;
+import org.testng.annotations.Optional;
+import org.testng.annotations.Parameters;
+import org.testng.annotations.Test;
 
 /**
  * Tests the right calls of all the db's listener API.
@@ -46,16 +50,16 @@ import java.util.concurrent.atomic.AtomicInteger;
  */
 public class DbListenerTest extends DocumentDBBaseTest {
 
-  protected int    onAfterTxCommit    = 0;
-  protected int    onAfterTxRollback  = 0;
-  protected int    onBeforeTxBegin    = 0;
-  protected int    onBeforeTxCommit   = 0;
-  protected int    onBeforeTxRollback = 0;
-  protected int    onClose            = 0;
-  protected int    onCreate           = 0;
-  protected int    onDelete           = 0;
-  protected int    onOpen             = 0;
-  protected int    onCorruption       = 0;
+  protected int onAfterTxCommit = 0;
+  protected int onAfterTxRollback = 0;
+  protected int onBeforeTxBegin = 0;
+  protected int onBeforeTxCommit = 0;
+  protected int onBeforeTxRollback = 0;
+  protected int onClose = 0;
+  protected int onCreate = 0;
+  protected int onDelete = 0;
+  protected int onOpen = 0;
+  protected int onCorruption = 0;
   protected String command;
   protected Object commandResult;
 
@@ -67,27 +71,28 @@ public class DbListenerTest extends DocumentDBBaseTest {
     }
 
     public DocumentChangeListener(final ODatabaseDocument db) {
-      db.registerHook(new ODocumentHookAbstract(db) {
+      db.registerHook(
+          new ODocumentHookAbstract(db) {
 
-        @Override
-        public ORecordHook.DISTRIBUTED_EXECUTION_MODE getDistributedExecutionMode() {
-          return ORecordHook.DISTRIBUTED_EXECUTION_MODE.SOURCE_NODE;
-        }
+            @Override
+            public ORecordHook.DISTRIBUTED_EXECUTION_MODE getDistributedExecutionMode() {
+              return ORecordHook.DISTRIBUTED_EXECUTION_MODE.SOURCE_NODE;
+            }
 
-        @Override
-        public void onRecordAfterUpdate(ODocument iDocument) {
-          List<String> changedFields = new ArrayList<String>();
-          for (String f : iDocument.getDirtyFields()) {
-            changedFields.add(f);
+            @Override
+            public void onRecordAfterUpdate(ODocument iDocument) {
+              List<String> changedFields = new ArrayList<String>();
+              for (String f : iDocument.getDirtyFields()) {
+                changedFields.add(f);
 
-            final Object oldValue = iDocument.getOriginalValue(f);
-            final Object newValue = iDocument.field(f);
+                final Object oldValue = iDocument.getOriginalValue(f);
+                final Object newValue = iDocument.field(f);
 
-            // System.out.println("Field " + f + " Old: " + oldValue + " -> " + newValue);
-          }
-          changes.put(iDocument, changedFields);
-        }
-      });
+                // System.out.println("Field " + f + " Old: " + oldValue + " -> " + newValue);
+              }
+              changes.put(iDocument, changedFields);
+            }
+          });
     }
 
     public Map<ODocument, List<String>> getChanges() {
@@ -132,7 +137,8 @@ public class DbListenerTest extends DocumentDBBaseTest {
     }
 
     @Override
-    public void onAfterCommand(OCommandRequestText iCommand, OCommandExecutor executor, Object result) {
+    public void onAfterCommand(
+        OCommandRequestText iCommand, OCommandExecutor executor, Object result) {
       commandResult = result;
     }
 
@@ -152,7 +158,8 @@ public class DbListenerTest extends DocumentDBBaseTest {
     }
 
     @Override
-    public boolean onCorruptionRepairDatabase(ODatabase iDatabase, final String iReason, String iWhatWillbeFixed) {
+    public boolean onCorruptionRepairDatabase(
+        ODatabase iDatabase, final String iReason, String iWhatWillbeFixed) {
       onCorruption++;
       return true;
     }
@@ -165,26 +172,21 @@ public class DbListenerTest extends DocumentDBBaseTest {
 
   @AfterClass
   @Override
-  public void afterClass() throws Exception {
-  }
+  public void afterClass() throws Exception {}
 
   @BeforeMethod
   @Override
-  public void beforeMethod() throws Exception {
-  }
+  public void beforeMethod() throws Exception {}
 
   @AfterMethod
   @Override
-  public void afterMethod() throws Exception {
-  }
+  public void afterMethod() throws Exception {}
 
   @Test
   public void testEmbeddedDbListeners() throws IOException {
-    if (database.getURL().startsWith("remote:"))
-      return;
+    if (database.getURL().startsWith("remote:")) return;
 
-    if (database.exists())
-      ODatabaseHelper.deleteDatabase(database, getStorageType());
+    if (database.exists()) ODatabaseHelper.deleteDatabase(database, getStorageType());
 
     database.registerListener(new DbListener());
     final int baseOnClose = onClose;
@@ -205,7 +207,9 @@ public class DbListenerTest extends DocumentDBBaseTest {
     database.begin(TXTYPE.OPTIMISTIC);
     Assert.assertEquals(onBeforeTxBegin, baseOnBeforeTxBegin + 1);
 
-    database.<ODocument>newInstance().save(database.getClusterNameById(database.getDefaultClusterId()));
+    database
+        .<ODocument>newInstance()
+        .save(database.getClusterNameById(database.getDefaultClusterId()));
     database.commit();
     Assert.assertEquals(onBeforeTxCommit, baseOnBeforeTxCommit + 1);
     Assert.assertEquals(onAfterTxCommit, baseOnAfterTxCommit + 1);
@@ -213,7 +217,9 @@ public class DbListenerTest extends DocumentDBBaseTest {
     database.begin(TXTYPE.OPTIMISTIC);
     Assert.assertEquals(onBeforeTxBegin, baseOnBeforeTxBegin + 2);
 
-    database.<ODocument>newInstance().save(database.getClusterNameById(database.getDefaultClusterId()));
+    database
+        .<ODocument>newInstance()
+        .save(database.getClusterNameById(database.getDefaultClusterId()));
     database.rollback();
     Assert.assertEquals(onBeforeTxRollback, 1);
     Assert.assertEquals(onAfterTxRollback, 1);
@@ -227,11 +233,9 @@ public class DbListenerTest extends DocumentDBBaseTest {
 
   @Test
   public void testRemoteDbListeners() throws IOException {
-    if (!database.getURL().startsWith("remote:"))
-      return;
+    if (!database.getURL().startsWith("remote:")) return;
 
-    if (database.exists())
-      ODatabaseHelper.deleteDatabase(database, getStorageType());
+    if (database.exists()) ODatabaseHelper.deleteDatabase(database, getStorageType());
     ODatabaseHelper.createDatabase(database, url, getStorageType());
 
     database.registerListener(new DbListener());
@@ -241,7 +245,9 @@ public class DbListenerTest extends DocumentDBBaseTest {
     database.begin(TXTYPE.OPTIMISTIC);
     Assert.assertEquals(onBeforeTxBegin, 1);
 
-    database.<ODocument>newInstance().save(database.getClusterNameById(database.getDefaultClusterId()));
+    database
+        .<ODocument>newInstance()
+        .save(database.getClusterNameById(database.getDefaultClusterId()));
     database.commit();
     Assert.assertEquals(onBeforeTxCommit, 1);
     Assert.assertEquals(onAfterTxCommit, 1);
@@ -249,7 +255,9 @@ public class DbListenerTest extends DocumentDBBaseTest {
     database.begin(TXTYPE.OPTIMISTIC);
     Assert.assertEquals(onBeforeTxBegin, 2);
 
-    database.<ODocument>newInstance().save(database.getClusterNameById(database.getDefaultClusterId()));
+    database
+        .<ODocument>newInstance()
+        .save(database.getClusterNameById(database.getDefaultClusterId()));
     database.rollback();
     Assert.assertEquals(onBeforeTxRollback, 1);
     Assert.assertEquals(onAfterTxRollback, 1);
@@ -260,11 +268,9 @@ public class DbListenerTest extends DocumentDBBaseTest {
 
   @Test
   public void testEmbeddedDbListenersTxRecords() throws IOException {
-    if (database.getURL().startsWith("remote:"))
-      return;
+    if (database.getURL().startsWith("remote:")) return;
 
-    if (database.exists())
-      ODatabaseHelper.deleteDatabase(database, getStorageType());
+    if (database.exists()) ODatabaseHelper.deleteDatabase(database, getStorageType());
     ODatabaseHelper.createDatabase(database, url, getStorageType());
 
     final AtomicInteger recordedChanges = new AtomicInteger();
@@ -272,7 +278,11 @@ public class DbListenerTest extends DocumentDBBaseTest {
     database.open("admin", "admin");
 
     database.begin(TXTYPE.OPTIMISTIC);
-    ODocument rec = database.<ODocument>newInstance().field("name", "Jay").save(database.getClusterNameById(database.getDefaultClusterId()));
+    ODocument rec =
+        database
+            .<ODocument>newInstance()
+            .field("name", "Jay")
+            .save(database.getClusterNameById(database.getDefaultClusterId()));
     database.commit();
 
     final DocumentChangeListener cl = new DocumentChangeListener(database);
@@ -289,11 +299,9 @@ public class DbListenerTest extends DocumentDBBaseTest {
 
   @Test
   public void testEmbeddedDbListenersGraph() throws IOException {
-    if (database.getURL().startsWith("remote:"))
-      return;
+    if (database.getURL().startsWith("remote:")) return;
 
-    if (database.exists())
-      ODatabaseHelper.deleteDatabase(database, getStorageType());
+    if (database.exists()) ODatabaseHelper.deleteDatabase(database, getStorageType());
     ODatabaseHelper.createDatabase(database, url, getStorageType());
 
     database.open("admin", "admin");
@@ -316,11 +324,9 @@ public class DbListenerTest extends DocumentDBBaseTest {
   @Test
   public void testEmbeddedDbListenersCommands() throws IOException {
 
-    if (database.getURL().startsWith("remote:"))
-      return;
+    if (database.getURL().startsWith("remote:")) return;
 
-    if (database.exists())
-      ODatabaseHelper.deleteDatabase(database, getStorageType());
+    if (database.exists()) ODatabaseHelper.deleteDatabase(database, getStorageType());
     ODatabaseHelper.createDatabase(database, url, getStorageType());
 
     final AtomicInteger recordedChanges = new AtomicInteger();
@@ -336,6 +342,5 @@ public class DbListenerTest extends DocumentDBBaseTest {
     Assert.assertEquals(iText, command);
     ODatabaseHelper.deleteDatabase(database, getStorageType());
     ODatabaseHelper.createDatabase(database, url, getStorageType());
-
   }
 }

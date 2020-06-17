@@ -1,14 +1,17 @@
 package com.orientechnologies.orient.server.distributed.impl.task.transaction;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
+
+
 import com.orientechnologies.orient.core.tx.OTransactionId;
 import com.orientechnologies.orient.core.tx.OTransactionSequenceStatus;
-import org.junit.Test;
-
 import java.io.IOException;
 import java.util.List;
 import java.util.Optional;
-
-import static org.junit.Assert.*;
+import org.junit.Test;
 
 public class OTransactionSequenceManagerTest {
 
@@ -51,7 +54,8 @@ public class OTransactionSequenceManagerTest {
 
     List<OTransactionId> list = sequenceManagerRecv.checkSelfStatus(status);
     assertNotNull(list);
-    assertTrue(list.contains(new OTransactionId(Optional.empty(), two.getPosition(), two.getSequence())));
+    assertTrue(
+        list.contains(new OTransactionId(Optional.empty(), two.getPosition(), two.getSequence())));
   }
 
   @Test
@@ -75,7 +79,8 @@ public class OTransactionSequenceManagerTest {
 
     List<OTransactionId> list = sequenceManagerRecv.checkSelfStatus(status);
     assertNotNull(list);
-    assertTrue(list.contains(new OTransactionId(Optional.empty(), two.getPosition(), two.getSequence())));
+    assertTrue(
+        list.contains(new OTransactionId(Optional.empty(), two.getPosition(), two.getSequence())));
     assertEquals(list.size(), 1);
   }
 
@@ -97,15 +102,19 @@ public class OTransactionSequenceManagerTest {
     // This may fail in some cases as early detection
     List<OTransactionId> res = sequenceManagerRecv.notifySuccess(three);
     assertNotNull(res);
-    assertTrue(res.contains(new OTransactionId(Optional.empty(), two.getPosition(), two.getSequence())));
+    assertTrue(
+        res.contains(new OTransactionId(Optional.empty(), two.getPosition(), two.getSequence())));
 
     OTransactionSequenceStatus status = sequenceManager.currentStatus();
 
     // this will for sure contain two, it may even cantain three
     List<OTransactionId> list = sequenceManagerRecv.checkSelfStatus(status);
     assertNotNull(list);
-    assertTrue(list.contains(new OTransactionId(Optional.empty(), two.getPosition(), two.getSequence())));
-    assertTrue(list.contains(new OTransactionId(Optional.empty(), three.getPosition(), three.getSequence())));
+    assertTrue(
+        list.contains(new OTransactionId(Optional.empty(), two.getPosition(), two.getSequence())));
+    assertTrue(
+        list.contains(
+            new OTransactionId(Optional.empty(), three.getPosition(), three.getSequence())));
   }
 
   @Test
@@ -162,16 +171,19 @@ public class OTransactionSequenceManagerTest {
     // This may fail in some cases as early detection
     List<OTransactionId> res = sequenceManagerRecv.notifySuccess(three);
     assertNotNull(res);
-    assertTrue(res.contains(new OTransactionId(Optional.empty(), three.getPosition(), three.getSequence())));
+    assertTrue(
+        res.contains(
+            new OTransactionId(Optional.empty(), three.getPosition(), three.getSequence())));
 
     OTransactionSequenceStatus status = sequenceManager.currentStatus();
 
     // this will for sure contain two, it may even cantain three
     List<OTransactionId> list = sequenceManagerRecv.checkSelfStatus(status);
     assertNotNull(list);
-    //assertTrue(list.contains(two));
-    assertTrue(list.contains(new OTransactionId(Optional.empty(), three.getPosition(), three.getSequence())));
-
+    // assertTrue(list.contains(two));
+    assertTrue(
+        list.contains(
+            new OTransactionId(Optional.empty(), three.getPosition(), three.getSequence())));
   }
 
   @Test
@@ -186,7 +198,6 @@ public class OTransactionSequenceManagerTest {
     readSequenceManager.fill(OTransactionSequenceStatus.read(bytes));
 
     assertEquals(sequenceManager.currentStatus(), readSequenceManager.currentStatus());
-
   }
 
   @Test
@@ -216,7 +227,8 @@ public class OTransactionSequenceManagerTest {
 
     OTransactionId otherThree = sequenceManagerOther.nextAt(1);
 
-    OTransactionSequenceManager sequenceManagerRecv = new OTransactionSequenceManager("three", 1000);
+    OTransactionSequenceManager sequenceManagerRecv =
+        new OTransactionSequenceManager("three", 1000);
     assertFalse(sequenceManagerRecv.validateTransactionId(one).isPresent());
     assertTrue(sequenceManagerRecv.notifySuccess(one).isEmpty());
     assertFalse(sequenceManagerRecv.validateTransactionId(two).isPresent());
@@ -227,5 +239,4 @@ public class OTransactionSequenceManagerTest {
     assertTrue(sequenceManagerRecv.notifyFailure(three));
     assertFalse(sequenceManagerRecv.validateTransactionId(otherThree).isPresent());
   }
-
 }

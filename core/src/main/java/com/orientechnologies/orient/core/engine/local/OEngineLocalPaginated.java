@@ -37,11 +37,10 @@ import com.orientechnologies.orient.core.storage.cache.OReadCache;
 import com.orientechnologies.orient.core.storage.cache.chm.AsyncReadCache;
 import com.orientechnologies.orient.core.storage.disk.OLocalPaginatedStorage;
 import com.orientechnologies.orient.core.storage.fs.OFile;
-import jnr.posix.POSIXFactory;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import jnr.posix.POSIXFactory;
 
 /**
  * @author Andrey Lomakin (a.lomakin-at-orientdb.com)
@@ -52,15 +51,18 @@ public class OEngineLocalPaginated extends OEngineAbstract {
 
   private volatile OReadCache readCache;
 
-  protected final OClosableLinkedContainer<Long, OFile> files = new OClosableLinkedContainer<>(getOpenFilesLimit());
+  protected final OClosableLinkedContainer<Long, OFile> files =
+      new OClosableLinkedContainer<>(getOpenFilesLimit());
 
-  public OEngineLocalPaginated() {
-  }
+  public OEngineLocalPaginated() {}
 
   private static int getOpenFilesLimit() {
     if (OGlobalConfiguration.OPEN_FILES_LIMIT.getValueAsInteger() > 0) {
-      OLogManager.instance().infoNoDb(OEngineLocalPaginated.class, "Limit of open files for disk cache will be set to %d.",
-          OGlobalConfiguration.OPEN_FILES_LIMIT.getValueAsInteger());
+      OLogManager.instance()
+          .infoNoDb(
+              OEngineLocalPaginated.class,
+              "Limit of open files for disk cache will be set to %d.",
+              OGlobalConfiguration.OPEN_FILES_LIMIT.getValueAsInteger());
       return OGlobalConfiguration.OPEN_FILES_LIMIT.getValueAsInteger();
     }
 
@@ -73,16 +75,23 @@ public class OEngineLocalPaginated extends OEngineAbstract {
   @Override
   public void startup() {
     final String userName = System.getProperty("user.name", "unknown");
-    OLogManager.instance().infoNoDb(this, "System is started under an effective user : `%s`", userName);
-    if (Platform.getPlatform().getOS() == Platform.OS.LINUX && POSIXFactory.getPOSIX().getegid() == 0) {
-      OLogManager.instance().warnNoDb(this, "You are running under the \"root\" user privileges that introduces security risks. "
-          + "Please consider to run under a user dedicated to be used to run current server instance.");
+    OLogManager.instance()
+        .infoNoDb(this, "System is started under an effective user : `%s`", userName);
+    if (Platform.getPlatform().getOS() == Platform.OS.LINUX
+        && POSIXFactory.getPOSIX().getegid() == 0) {
+      OLogManager.instance()
+          .warnNoDb(
+              this,
+              "You are running under the \"root\" user privileges that introduces security risks. "
+                  + "Please consider to run under a user dedicated to be used to run current server instance.");
     }
 
     OMemoryAndLocalPaginatedEnginesInitializer.INSTANCE.initialize();
     super.startup();
 
-    final long diskCacheSize = calculateReadCacheMaxMemory(OGlobalConfiguration.DISK_CACHE_SIZE.getValueAsLong() * 1024 * 1024);
+    final long diskCacheSize =
+        calculateReadCacheMaxMemory(
+            OGlobalConfiguration.DISK_CACHE_SIZE.getValueAsLong() * 1024 * 1024);
     final int pageSize = OGlobalConfiguration.DISK_CACHE_PAGE_SIZE.getValueAsInteger() * 1024;
 
     if (OGlobalConfiguration.DIRECT_MEMORY_PREALLOCATE.getValueAsBoolean()) {
@@ -104,34 +113,48 @@ public class OEngineLocalPaginated extends OEngineAbstract {
     }
 
     readCache = new AsyncReadCache(OByteBufferPool.instance(null), diskCacheSize, pageSize, false);
-
   }
 
   private static long calculateReadCacheMaxMemory(final long cacheSize) {
-    return (long) (cacheSize * ((100 - OGlobalConfiguration.DISK_WRITE_CACHE_PART.getValueAsInteger()) / 100.0));
+    return (long)
+        (cacheSize
+            * ((100 - OGlobalConfiguration.DISK_WRITE_CACHE_PART.getValueAsInteger()) / 100.0));
   }
 
   /**
    * @param cacheSize Cache size in bytes.
-   *
    * @see OReadCache#changeMaximumAmountOfMemory(long)
    */
   public void changeCacheSize(final long cacheSize) {
     if (readCache != null)
       readCache.changeMaximumAmountOfMemory(calculateReadCacheMaxMemory(cacheSize));
 
-    //otherwise memory size will be set during cache initialization.
+    // otherwise memory size will be set during cache initialization.
   }
 
-  public OStorage createStorage(final String dbName, final Map<String, String> configuration, long maxWalSegSize,
-      long doubleWriteLogMaxSegSize, int storageId) {
+  public OStorage createStorage(
+      final String dbName,
+      final Map<String, String> configuration,
+      long maxWalSegSize,
+      long doubleWriteLogMaxSegSize,
+      int storageId) {
     try {
 
-      return new OLocalPaginatedStorage(dbName, dbName, getMode(configuration), storageId, readCache, files, maxWalSegSize,
+      return new OLocalPaginatedStorage(
+          dbName,
+          dbName,
+          getMode(configuration),
+          storageId,
+          readCache,
+          files,
+          maxWalSegSize,
           doubleWriteLogMaxSegSize);
     } catch (Exception e) {
       final String message =
-          "Error on opening database: " + dbName + ". Current location is: " + new java.io.File(".").getAbsolutePath();
+          "Error on opening database: "
+              + dbName
+              + ". Current location is: "
+              + new java.io.File(".").getAbsolutePath();
       OLogManager.instance().error(this, message, e);
 
       throw OException.wrapException(new ODatabaseException(message), e);

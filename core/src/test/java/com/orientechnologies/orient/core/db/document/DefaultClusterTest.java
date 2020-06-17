@@ -26,7 +26,6 @@ public class DefaultClusterTest {
 
       ODocument embedded = v.getProperty("embedded");
       Assert.assertFalse("Found: " + embedded.getIdentity(), embedded.getIdentity().isValid());
-
     }
   }
 }

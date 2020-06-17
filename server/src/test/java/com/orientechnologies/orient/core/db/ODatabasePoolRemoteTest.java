@@ -1,18 +1,18 @@
 package com.orientechnologies.orient.core.db;
 
+import static org.junit.Assert.assertEquals;
+
+
 import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.server.OServer;
+import java.io.File;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-
-import java.io.File;
-
-import static org.junit.Assert.assertEquals;
 
 public class ODatabasePoolRemoteTest {
   private static final String SERVER_DIRECTORY = "./target/poolRemote";
@@ -24,15 +24,21 @@ public class ODatabasePoolRemoteTest {
     server = new OServer(false);
     server.setServerRootDirectory(SERVER_DIRECTORY);
     server.startup(
-        getClass().getClassLoader().getResourceAsStream("com/orientechnologies/orient/server/network/orientdb-server-config.xml"));
+        getClass()
+            .getClassLoader()
+            .getResourceAsStream(
+                "com/orientechnologies/orient/server/network/orientdb-server-config.xml"));
     server.activate();
-
   }
 
   @Test
   public void testPoolCloseTx() {
-    OrientDB orientDb = new OrientDB("remote:localhost:", "root", "root",
-        OrientDBConfig.builder().addConfig(OGlobalConfiguration.DB_POOL_MAX, 1).build());
+    OrientDB orientDb =
+        new OrientDB(
+            "remote:localhost:",
+            "root",
+            "root",
+            OrientDBConfig.builder().addConfig(OGlobalConfiguration.DB_POOL_MAX, 1).build());
 
     if (!orientDb.exists("test")) {
       orientDb.create("test", ODatabaseType.MEMORY);
@@ -53,7 +59,10 @@ public class ODatabasePoolRemoteTest {
 
   @Test
   public void testPoolDoubleClose() {
-    OrientDB orientDb = new OrientDB("embedded:", OrientDBConfig.builder().addConfig(OGlobalConfiguration.DB_POOL_MAX, 1).build());
+    OrientDB orientDb =
+        new OrientDB(
+            "embedded:",
+            OrientDBConfig.builder().addConfig(OGlobalConfiguration.DB_POOL_MAX, 1).build());
 
     if (!orientDb.exists("test")) {
       orientDb.create("test", ODatabaseType.MEMORY);

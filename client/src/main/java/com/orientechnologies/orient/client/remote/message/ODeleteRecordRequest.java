@@ -19,8 +19,6 @@
  */
 package com.orientechnologies.orient.client.remote.message;
 
-import java.io.IOException;
-
 import com.orientechnologies.orient.client.binary.OBinaryRequestExecutor;
 import com.orientechnologies.orient.client.remote.OBinaryAsyncRequest;
 import com.orientechnologies.orient.client.remote.OBinaryResponse;
@@ -30,19 +28,19 @@ import com.orientechnologies.orient.core.serialization.serializer.record.ORecord
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelDataInput;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelDataOutput;
+import java.io.IOException;
 
 public class ODeleteRecordRequest implements OBinaryAsyncRequest<ODeleteRecordResponse> {
   private ORecordId rid;
-  private int       version;
-  private byte      mode;
+  private int version;
+  private byte mode;
 
   public ODeleteRecordRequest(ORecordId iRid, int iVersion) {
     this.rid = iRid;
     this.version = iVersion;
   }
 
-  public ODeleteRecordRequest() {
-  }
+  public ODeleteRecordRequest() {}
 
   @Override
   public byte getCommand() {
@@ -54,7 +52,8 @@ public class ODeleteRecordRequest implements OBinaryAsyncRequest<ODeleteRecordRe
     return "Delete Record";
   }
 
-  public void read(OChannelDataInput channel, int protocolVersion, ORecordSerializer serializer) throws IOException {
+  public void read(OChannelDataInput channel, int protocolVersion, ORecordSerializer serializer)
+      throws IOException {
     rid = channel.readRID();
     version = channel.readVersion();
     mode = channel.readByte();
@@ -93,5 +92,4 @@ public class ODeleteRecordRequest implements OBinaryAsyncRequest<ODeleteRecordRe
   public OBinaryResponse execute(OBinaryRequestExecutor executor) {
     return executor.executeDeleteRecord(this);
   }
-
 }

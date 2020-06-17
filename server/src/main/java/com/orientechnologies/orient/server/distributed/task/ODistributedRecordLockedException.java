@@ -29,24 +29,42 @@ import com.orientechnologies.orient.server.distributed.ODistributedRequestId;
  * @author Luca Garulli (l.garulli--at--orientdb.com)
  */
 public class ODistributedRecordLockedException extends ONeedRetryException {
-  protected ORID                  rid;
+  protected ORID rid;
   protected ODistributedRequestId lockHolder;
-  protected String                node;
+  protected String node;
 
   public ODistributedRecordLockedException(final ODistributedRecordLockedException exception) {
     super(exception);
   }
 
-  public ODistributedRecordLockedException(final String localNodeName, final ORID iRid, long timeout) {
-    super("Timeout (" + timeout + "ms) on acquiring lock on record " + iRid + " on server '" + localNodeName + "'. ");
+  public ODistributedRecordLockedException(
+      final String localNodeName, final ORID iRid, long timeout) {
+    super(
+        "Timeout ("
+            + timeout
+            + "ms) on acquiring lock on record "
+            + iRid
+            + " on server '"
+            + localNodeName
+            + "'. ");
     this.rid = iRid;
     this.node = localNodeName;
   }
 
-  public ODistributedRecordLockedException(final String localNodeName, final ORID iRid,
-      final ODistributedRequestId iLockingRequestId, long timeout) {
-    super("Timeout (" + timeout + "ms) on acquiring lock on record " + iRid + " on server '" + localNodeName
-        + "'. It is locked by request " + iLockingRequestId);
+  public ODistributedRecordLockedException(
+      final String localNodeName,
+      final ORID iRid,
+      final ODistributedRequestId iLockingRequestId,
+      long timeout) {
+    super(
+        "Timeout ("
+            + timeout
+            + "ms) on acquiring lock on record "
+            + iRid
+            + " on server '"
+            + localNodeName
+            + "'. It is locked by request "
+            + iLockingRequestId);
     this.rid = iRid;
     this.lockHolder = iLockingRequestId;
     this.node = localNodeName;
@@ -66,8 +84,7 @@ public class ODistributedRecordLockedException extends ONeedRetryException {
 
   @Override
   public boolean equals(final Object obj) {
-    if (!(obj instanceof ODistributedRecordLockedException))
-      return false;
+    if (!(obj instanceof ODistributedRecordLockedException)) return false;
 
     return rid.equals(((ODistributedRecordLockedException) obj).rid);
   }

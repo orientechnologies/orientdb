@@ -1,20 +1,20 @@
 package com.orientechnologies.orient.distributed.impl.structural.operations;
 
+import static com.orientechnologies.orient.distributed.impl.coordinator.OCoordinateMessagesFactory.DATABASE_LAST_OPLOG_ID_RESPONSE;
+
+
 import com.orientechnologies.orient.core.db.config.ONodeIdentity;
 import com.orientechnologies.orient.distributed.OrientDBDistributed;
 import com.orientechnologies.orient.distributed.impl.log.OLogId;
-
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
 import java.util.Optional;
 import java.util.UUID;
 
-import static com.orientechnologies.orient.distributed.impl.coordinator.OCoordinateMessagesFactory.DATABASE_LAST_OPLOG_ID_RESPONSE;
-
 public class ODatabaseLastOpIdResponse implements OOperation {
-  private String           database;
-  private UUID             electionId;
+  private String database;
+  private UUID electionId;
   private Optional<OLogId> id;
 
   public ODatabaseLastOpIdResponse(String database, UUID electionId, Optional<OLogId> id) {
@@ -23,16 +23,17 @@ public class ODatabaseLastOpIdResponse implements OOperation {
     this.id = id;
   }
 
-  public ODatabaseLastOpIdResponse() {
-
-  }
+  public ODatabaseLastOpIdResponse() {}
 
   @Override
   public void apply(ONodeIdentity sender, OrientDBDistributed context) {
     Optional<OLogId> electedId = context.getElections().received(sender, database, electionId, id);
     if (electedId.isPresent()) {
-      context.getNetworkManager()
-          .sendAll(context.getActiveNodes(), new ODatabaseLastValidRequest(this.database, this.electionId, electedId.get()));
+      context
+          .getNetworkManager()
+          .sendAll(
+              context.getActiveNodes(),
+              new ODatabaseLastValidRequest(this.database, this.electionId, electedId.get()));
     }
   }
 

@@ -10,19 +10,18 @@ import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.WALRecordTypes;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.PageOperationRecord;
 import com.orientechnologies.orient.core.storage.index.sbtree.multivalue.v2.CellBTreeMultiValueV2Bucket;
-
 import java.nio.ByteBuffer;
 
 public final class CellBTreeMultiValueV2BucketCreateMainLeafEntryPO extends PageOperationRecord {
-  private int    index;
+  private int index;
   private byte[] key;
-  private ORID   value;
-  private long   mId;
+  private ORID value;
+  private long mId;
 
-  public CellBTreeMultiValueV2BucketCreateMainLeafEntryPO() {
-  }
+  public CellBTreeMultiValueV2BucketCreateMainLeafEntryPO() {}
 
-  public CellBTreeMultiValueV2BucketCreateMainLeafEntryPO(int index, byte[] key, ORID value, long mId) {
+  public CellBTreeMultiValueV2BucketCreateMainLeafEntryPO(
+      int index, byte[] key, ORID value, long mId) {
     this.index = index;
     this.key = key;
     this.value = value;
@@ -67,7 +66,11 @@ public final class CellBTreeMultiValueV2BucketCreateMainLeafEntryPO extends Page
 
   @Override
   public int serializedSize() {
-    int size = 2 * OIntegerSerializer.INT_SIZE + key.length + OLongSerializer.LONG_SIZE + OByteSerializer.BYTE_SIZE;
+    int size =
+        2 * OIntegerSerializer.INT_SIZE
+            + key.length
+            + OLongSerializer.LONG_SIZE
+            + OByteSerializer.BYTE_SIZE;
     if (value != null) {
       size += OLongSerializer.LONG_SIZE + OShortSerializer.SHORT_SIZE;
     }

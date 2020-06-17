@@ -1,19 +1,17 @@
 /**
  * Copyright 2010-2016 OrientDB LTD (http://orientdb.com)
- * <p>
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- * <p>
- * http://www.apache.org/licenses/LICENSE-2.0
- * <p>
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
+ *
+ * <p>Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file
+ * except in compliance with the License. You may obtain a copy of the License at
+ *
+ * <p>http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * <p>Unless required by applicable law or agreed to in writing, software distributed under the
+ * License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either
+ * express or implied. See the License for the specific language governing permissions and
  * limitations under the License.
- * <p>
- * For more information: http://orientdb.com
+ *
+ * <p>For more information: http://orientdb.com
  */
 package com.orientechnologies.orient.jdbc;
 
@@ -28,13 +26,17 @@ import com.orientechnologies.orient.core.record.OVertex;
 import com.orientechnologies.orient.core.record.impl.OBlob;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ORecordBytes;
-
 import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.math.BigDecimal;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Date;
+import java.util.List;
+import java.util.Random;
+import java.util.TimeZone;
 
 public class OrientDbCreationHelper {
 
@@ -47,7 +49,6 @@ public class OrientDbCreationHelper {
       doc.setClassName("Item");
       doc = createItem(i, doc);
       db.save(doc, "Item");
-
     }
 
     db.declareIntent(null);
@@ -90,7 +91,8 @@ public class OrientDbCreationHelper {
     return doc;
   }
 
-  public static void createAuthorAndArticles(ODatabaseDocument db, int totAuthors, int totArticles) throws IOException {
+  public static void createAuthorAndArticles(ODatabaseDocument db, int totAuthors, int totArticles)
+      throws IOException {
     int articleSerial = 0;
     for (int a = 1; a <= totAuthors; ++a) {
       ODocument author = new ODocument("Author");
@@ -120,7 +122,8 @@ public class OrientDbCreationHelper {
     }
   }
 
-  public static ODocument createArticleWithAttachmentSplitted(ODatabaseDocument db) throws IOException {
+  public static ODocument createArticleWithAttachmentSplitted(ODatabaseDocument db)
+      throws IOException {
 
     ODocument article = new ODocument("Article");
     Calendar instance = Calendar.getInstance(TimeZone.getTimeZone("UTC"));
@@ -137,7 +140,8 @@ public class OrientDbCreationHelper {
     return article;
   }
 
-  public static void createWriterAndPosts(ODatabaseDocument db, int totAuthors, int totArticles) throws IOException {
+  public static void createWriterAndPosts(ODatabaseDocument db, int totAuthors, int totArticles)
+      throws IOException {
     int articleSerial = 0;
     for (int a = 1; a <= totAuthors; ++a) {
       OVertex writer = db.newVertex("Writer");
@@ -159,10 +163,9 @@ public class OrientDbCreationHelper {
 
         db.newEdge(writer, post, "Writes");
       }
-
     }
 
-    //additional wrong data
+    // additional wrong data
     OVertex writer = db.newVertex("Writer");
     writer.setProperty("uuid", totAuthors * 2);
     writer.setProperty("name", "happy writer");
@@ -171,14 +174,13 @@ public class OrientDbCreationHelper {
 
     OVertex post = db.newVertex("Post");
 
-    //no date!!
+    // no date!!
 
     post.setProperty("uuid", articleSerial * 2);
     post.setProperty("title", "the title");
     post.setProperty("content", "the content");
 
     db.newEdge(writer, post, "Writes");
-
   }
 
   private static OBlob loadFile(ODatabaseDocument database, String filePath) throws IOException {
@@ -193,13 +195,13 @@ public class OrientDbCreationHelper {
     return null;
   }
 
-  private static List<ORID> loadFile(ODatabaseDocument database, String filePath, int bufferSize) throws IOException {
+  private static List<ORID> loadFile(ODatabaseDocument database, String filePath, int bufferSize)
+      throws IOException {
     File binaryFile = new File(filePath);
     long binaryFileLength = binaryFile.length();
     int numberOfRecords = (int) (binaryFileLength / bufferSize);
     int remainder = (int) (binaryFileLength % bufferSize);
-    if (remainder > 0)
-      numberOfRecords++;
+    if (remainder > 0) numberOfRecords++;
     List<ORID> binaryChuncks = new ArrayList<>(numberOfRecords);
     BufferedInputStream binaryStream = new BufferedInputStream(new FileInputStream(binaryFile));
     byte[] chunk;
@@ -207,10 +209,8 @@ public class OrientDbCreationHelper {
     database.declareIntent(new OIntentMassiveInsert());
     OBlob recordChunk;
     for (int i = 0; i < numberOfRecords; i++) {
-      if (i == numberOfRecords - 1)
-        chunk = new byte[remainder];
-      else
-        chunk = new byte[bufferSize];
+      if (i == numberOfRecords - 1) chunk = new byte[remainder];
+      else chunk = new byte[bufferSize];
       binaryStream.read(chunk);
       recordChunk = new ORecordBytes(chunk);
       database.save(recordChunk);
@@ -260,7 +260,7 @@ public class OrientDbCreationHelper {
     // link article-->author
     article.createProperty("author", OType.LINK, author);
 
-    //Graph
+    // Graph
 
     OClass v = schema.getClass("V");
     if (v == null) {
@@ -287,7 +287,5 @@ public class OrientDbCreationHelper {
     schema.createClass("Writes", e);
 
     schema.reload();
-
   }
-
 }

@@ -7,7 +7,11 @@ import com.orientechnologies.orient.core.db.OSchedulerInternal;
 import com.orientechnologies.orient.core.db.config.ONodeConfiguration;
 import com.orientechnologies.orient.core.db.config.ONodeIdentity;
 import com.orientechnologies.orient.distributed.impl.ONodeInternalConfiguration;
-import com.orientechnologies.orient.distributed.impl.coordinator.*;
+import com.orientechnologies.orient.distributed.impl.coordinator.ODistributedChannel;
+import com.orientechnologies.orient.distributed.impl.coordinator.ONodeRequest;
+import com.orientechnologies.orient.distributed.impl.coordinator.ONodeResponse;
+import com.orientechnologies.orient.distributed.impl.coordinator.OSubmitRequest;
+import com.orientechnologies.orient.distributed.impl.coordinator.OSubmitResponse;
 import com.orientechnologies.orient.distributed.impl.coordinator.network.OCoordinatedExecutor;
 import com.orientechnologies.orient.distributed.impl.coordinator.network.ODistributedExecutable;
 import com.orientechnologies.orient.distributed.impl.coordinator.transaction.OSessionOperationId;
@@ -23,7 +27,6 @@ import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinary;
 import com.orientechnologies.orient.server.OClientConnection;
 import com.orientechnologies.orient.server.distributed.ORemoteServerAvailabilityCheck;
 import com.orientechnologies.orient.server.distributed.ORemoteServerController;
-
 import java.io.IOException;
 import java.util.Collection;
 import java.util.Set;
@@ -32,15 +35,19 @@ import java.util.concurrent.ConcurrentMap;
 
 public class ODistributedNetworkManager implements ODiscoveryListener, ODistributedNetwork {
 
-  private final ConcurrentMap<ONodeIdentity, ODistributedChannelBinaryProtocol> remoteServers = new ConcurrentHashMap<>();
-  private final ONodeConfiguration                                              config;
-  private final ONodeInternalConfiguration                                      internalConfiguration;
-  private final OSchedulerInternal                                              scheduler;
-  private       ONodeManager                                                    discoveryManager;
-  private       OCoordinatedExecutor                                            requestHandler;
+  private final ConcurrentMap<ONodeIdentity, ODistributedChannelBinaryProtocol> remoteServers =
+      new ConcurrentHashMap<>();
+  private final ONodeConfiguration config;
+  private final ONodeInternalConfiguration internalConfiguration;
+  private final OSchedulerInternal scheduler;
+  private ONodeManager discoveryManager;
+  private OCoordinatedExecutor requestHandler;
 
-  public ODistributedNetworkManager(OCoordinatedExecutor requestHandler, ONodeConfiguration config,
-      ONodeInternalConfiguration internalConfiguration, OSchedulerInternal scheduler) {
+  public ODistributedNetworkManager(
+      OCoordinatedExecutor requestHandler,
+      ONodeConfiguration config,
+      ONodeInternalConfiguration internalConfiguration,
+      OSchedulerInternal scheduler) {
     this.config = config;
     this.internalConfiguration = internalConfiguration;
     this.requestHandler = requestHandler;
@@ -51,23 +58,32 @@ public class ODistributedNetworkManager implements ODiscoveryListener, ODistribu
     return remoteServers.get(rNodeName);
   }
 
-  private ODistributedChannelBinaryProtocol connectRemoteServer(final ONodeIdentity nodeIdentity, String host, String user,
-      String password) throws IOException {
+  private ODistributedChannelBinaryProtocol connectRemoteServer(
+      final ONodeIdentity nodeIdentity, String host, String user, String password)
+      throws IOException {
     // OK
-    ORemoteServerController remoteServer = new ORemoteServerController(new ORemoteServerAvailabilityCheck() {
-      @Override
-      public boolean isNodeAvailable(String nodeIdToString) {
-        return true;
-      }
+    ORemoteServerController remoteServer =
+        new ORemoteServerController(
+            new ORemoteServerAvailabilityCheck() {
+              @Override
+              public boolean isNodeAvailable(String nodeIdToString) {
+                return true;
+              }
 
-      @Override
-      public void nodeDisconnected(String nodeIdToString) {
-        //TODO: Integrate with the discovery manager.
-        ODistributedNetworkManager.this.requestHandler.nodeDisconnected(nodeIdentity);
-      }
-    }, internalConfiguration.getNodeIdentity().toString(), nodeIdentity.toString(), host, user, password);
-    ODistributedChannelBinaryProtocol channel = new ODistributedChannelBinaryProtocol(internalConfiguration.getNodeIdentity(),
-        remoteServer);
+              @Override
+              public void nodeDisconnected(String nodeIdToString) {
+                // TODO: Integrate with the discovery manager.
+                ODistributedNetworkManager.this.requestHandler.nodeDisconnected(nodeIdentity);
+              }
+            },
+            internalConfiguration.getNodeIdentity().toString(),
+            nodeIdentity.toString(),
+            host,
+            user,
+            password);
+    ODistributedChannelBinaryProtocol channel =
+        new ODistributedChannelBinaryProtocol(
+            internalConfiguration.getNodeIdentity(), remoteServer);
     final ODistributedChannelBinaryProtocol old = remoteServers.putIfAbsent(nodeIdentity, channel);
     if (old != null) {
       channel.close();
@@ -78,36 +94,37 @@ public class ODistributedNetworkManager implements ODiscoveryListener, ODistribu
 
   public void closeRemoteServer(final ONodeIdentity node) {
     final ODistributedChannelBinaryProtocol c = remoteServers.remove(node);
-    if (c != null)
-      c.close();
+    if (c != null) c.close();
   }
 
   private void closeAll() {
-    for (ODistributedChannelBinaryProtocol server : remoteServers.values())
-      server.close();
+    for (ODistributedChannelBinaryProtocol server : remoteServers.values()) server.close();
     remoteServers.clear();
   }
 
   public void startup(OOperationLog structuralLog) {
-    //TODO different strategies for different infrastructures, eg. AWS
-    discoveryManager = new OUDPMulticastNodeManager(config, internalConfiguration, this, scheduler, structuralLog);
+    // TODO different strategies for different infrastructures, eg. AWS
+    discoveryManager =
+        new OUDPMulticastNodeManager(config, internalConfiguration, this, scheduler, structuralLog);
     discoveryManager.start();
   }
 
   public void shutdown() {
     discoveryManager.stop();
     closeAll();
-    //TODO
+    // TODO
   }
 
   @Override
   public void nodeConnected(NodeData data) {
-    if (data.getNodeIdentity().equals(internalConfiguration.getNodeIdentity()))
-      return;
+    if (data.getNodeIdentity().equals(internalConfiguration.getNodeIdentity())) return;
     ODistributedChannelBinaryProtocol channel = getRemoteServer(data.getNodeIdentity());
     if (channel == null) {
       try {
-        connectRemoteServer(data.getNodeIdentity(), data.address + ":" + data.port, data.connectionUsername,
+        connectRemoteServer(
+            data.getNodeIdentity(),
+            data.address + ":" + data.port,
+            data.connectionUsername,
             data.connectionPassword);
 
       } catch (IOException e) {
@@ -119,12 +136,12 @@ public class ODistributedNetworkManager implements ODiscoveryListener, ODistribu
 
   public void nodeDisconnected(NodeData data) {
     requestHandler.nodeDisconnected(data.getNodeIdentity());
-    //TODO: Disconnect binary sockets
+    // TODO: Disconnect binary sockets
   }
 
   @Override
   public void leaderElected(NodeData data) {
-    //TODO: Come from a term
+    // TODO: Come from a term
     OLogId lastValid = null;
     requestHandler.setLeader(data.getNodeIdentity(), lastValid);
   }
@@ -137,13 +154,14 @@ public class ODistributedNetworkManager implements ODiscoveryListener, ODistribu
     return remoteServers.keySet();
   }
 
-  public void coordinatedRequest(OClientConnection connection, int requestType, int clientTxId, OChannelBinary channel)
+  public void coordinatedRequest(
+      OClientConnection connection, int requestType, int clientTxId, OChannelBinary channel)
       throws IOException {
     OBinaryRequest<OBinaryResponse> request = new OBinaryDistributedMessage();
     try {
       request.read(channel, 0, null);
     } catch (IOException e) {
-      //impossible to read request ... probably need to notify this back.
+      // impossible to read request ... probably need to notify this back.
       throw e;
     }
     ODistributedExecutable executable = (ODistributedExecutable) request;
@@ -169,7 +187,8 @@ public class ODistributedNetworkManager implements ODiscoveryListener, ODistribu
     getChannel(member).ack(logId);
   }
 
-  public void submit(ONodeIdentity leader, OSessionOperationId operationId, OStructuralSubmitRequest request) {
+  public void submit(
+      ONodeIdentity leader, OSessionOperationId operationId, OStructuralSubmitRequest request) {
     if (isSelf(leader)) {
       this.requestHandler.executeStructuralSubmitRequest(leader, operationId, request);
     } else {
@@ -177,7 +196,8 @@ public class ODistributedNetworkManager implements ODiscoveryListener, ODistribu
     }
   }
 
-  public void reply(ONodeIdentity identity, OSessionOperationId operationId, OStructuralSubmitResponse response) {
+  public void reply(
+      ONodeIdentity identity, OSessionOperationId operationId, OStructuralSubmitResponse response) {
     if (isSelf(identity)) {
       this.requestHandler.executeStructuralSubmitResponse(identity, operationId, response);
     } else {
@@ -185,7 +205,11 @@ public class ODistributedNetworkManager implements ODiscoveryListener, ODistribu
     }
   }
 
-  public void submit(ONodeIdentity leader, String database, OSessionOperationId operationId, OSubmitRequest request) {
+  public void submit(
+      ONodeIdentity leader,
+      String database,
+      OSessionOperationId operationId,
+      OSubmitRequest request) {
     if (isSelf(leader)) {
       this.requestHandler.executeSubmitRequest(leader, database, operationId, request);
     } else {
@@ -197,7 +221,11 @@ public class ODistributedNetworkManager implements ODiscoveryListener, ODistribu
     return this.internalConfiguration.getNodeIdentity().equals(leader);
   }
 
-  public void replay(ONodeIdentity to, String database, OSessionOperationId operationId, OSubmitResponse response) {
+  public void replay(
+      ONodeIdentity to,
+      String database,
+      OSessionOperationId operationId,
+      OSubmitResponse response) {
     if (isSelf(to)) {
       this.requestHandler.executeSubmitResponse(to, database, operationId, response);
     } else {
@@ -205,7 +233,8 @@ public class ODistributedNetworkManager implements ODiscoveryListener, ODistribu
     }
   }
 
-  public void sendResponse(ONodeIdentity member, String database, OLogId opId, ONodeResponse response) {
+  public void sendResponse(
+      ONodeIdentity member, String database, OLogId opId, ONodeResponse response) {
     if (isSelf(member)) {
       this.requestHandler.executeOperationResponse(member, database, opId, response);
     } else {
@@ -213,7 +242,8 @@ public class ODistributedNetworkManager implements ODiscoveryListener, ODistribu
     }
   }
 
-  public void sendRequest(Collection<ONodeIdentity> members, String database, OLogId id, ONodeRequest nodeRequest) {
+  public void sendRequest(
+      Collection<ONodeIdentity> members, String database, OLogId id, ONodeRequest nodeRequest) {
     for (ONodeIdentity member : members) {
       if (isSelf(member)) {
         this.requestHandler.executeOperationRequest(member, database, id, nodeRequest);
@@ -237,7 +267,6 @@ public class ODistributedNetworkManager implements ODiscoveryListener, ODistribu
         getChannel(member).send(operation);
       }
     }
-
   }
 
   @Override
@@ -247,7 +276,7 @@ public class ODistributedNetworkManager implements ODiscoveryListener, ODistribu
 
   @Override
   public void notifyLastStructuralOperation(ONodeIdentity leader, OLogId leaderLastValid) {
-    //TODO
+    // TODO
   }
 
   @Override

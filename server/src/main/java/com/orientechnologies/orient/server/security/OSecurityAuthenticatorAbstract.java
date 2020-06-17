@@ -23,21 +23,19 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.config.OServerConfigurationManager;
 import com.orientechnologies.orient.server.config.OServerUserConfiguration;
-
 import javax.security.auth.Subject;
 
 /**
  * Provides an abstract implementation of OSecurityAuthenticator.
- * 
+ *
  * @author S. Colin Leister
- * 
  */
 public abstract class OSecurityAuthenticatorAbstract implements OSecurityAuthenticator {
-  private String                      name          = "";
-  private boolean                     debug         = false;
-  private boolean                     enabled       = true;
-  private boolean                     caseSensitive = true;
-  private OServer                     server;
+  private String name = "";
+  private boolean debug = false;
+  private boolean enabled = true;
+  private boolean caseSensitive = true;
+  private OServer server;
   private OServerConfigurationManager serverConfig;
 
   protected OServer getServer() {
@@ -57,11 +55,13 @@ public abstract class OSecurityAuthenticatorAbstract implements OSecurityAuthent
   }
 
   // OSecurityComponent
-  public void active() {
-  }
+  public void active() {}
 
   // OSecurityComponent
-  public void config(final OServer oServer, final OServerConfigurationManager serverCfg, final ODocument jsonConfig) {
+  public void config(
+      final OServer oServer,
+      final OServerConfigurationManager serverCfg,
+      final ODocument jsonConfig) {
     server = oServer;
     serverConfig = serverCfg;
 
@@ -83,8 +83,7 @@ public abstract class OSecurityAuthenticatorAbstract implements OSecurityAuthent
   }
 
   // OSecurityComponent
-  public void dispose() {
-  }
+  public void dispose() {}
 
   // OSecurityComponent
   public boolean isEnabled() {
@@ -99,8 +98,7 @@ public abstract class OSecurityAuthenticatorAbstract implements OSecurityAuthent
     // Default to Basic.
     if (databaseName != null)
       header = "WWW-Authenticate: Basic realm=\"OrientDB db-" + databaseName + "\"";
-    else
-      header = "WWW-Authenticate: Basic realm=\"OrientDB Server\"";
+    else header = "WWW-Authenticate: Basic realm=\"OrientDB Server\"";
 
     return header;
   }

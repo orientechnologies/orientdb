@@ -23,8 +23,8 @@ import com.orientechnologies.orient.core.sql.OCommandSQLParsingException;
 
 public class OQueryParsingException extends OCommandSQLParsingException {
 
-  private String            text;
-  private int               position         = -1;
+  private String text;
+  private int position = -1;
   private static final long serialVersionUID = -7430575036316163711L;
 
   private static String makeMessage(int position, String text, String message) {
@@ -41,8 +41,7 @@ public class OQueryParsingException extends OCommandSQLParsingException {
       buffer.append("\nQuery: ");
       buffer.append(text);
       buffer.append("\n------");
-      for (int i = 0; i < position - 1; ++i)
-        buffer.append("-");
+      for (int i = 0; i < position - 1; ++i) buffer.append("-");
 
       buffer.append("^");
     }
@@ -70,5 +69,4 @@ public class OQueryParsingException extends OCommandSQLParsingException {
   public String getText() {
     return text;
   }
-
 }

@@ -1,7 +1,6 @@
 package com.orientechnologies.common.serialization.types;
 
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALChanges;
-
 import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
@@ -10,7 +9,7 @@ public class OUTF8Serializer implements OBinarySerializer<String> {
   private static final int INT_MASK = 0xFFFF;
 
   public static final OUTF8Serializer INSTANCE = new OUTF8Serializer();
-  public static final byte            ID       = 25;
+  public static final byte ID = 25;
 
   @Override
   public int getObjectSize(String object, Object... hints) {
@@ -20,7 +19,8 @@ public class OUTF8Serializer implements OBinarySerializer<String> {
 
   @Override
   public int getObjectSize(byte[] stream, int startPosition) {
-    return (OShortSerializer.INSTANCE.deserialize(stream, startPosition) & INT_MASK) + OShortSerializer.SHORT_SIZE;
+    return (OShortSerializer.INSTANCE.deserialize(stream, startPosition) & INT_MASK)
+        + OShortSerializer.SHORT_SIZE;
   }
 
   @Override
@@ -58,7 +58,8 @@ public class OUTF8Serializer implements OBinarySerializer<String> {
   }
 
   @Override
-  public void serializeNativeObject(String object, byte[] stream, int startPosition, Object... hints) {
+  public void serializeNativeObject(
+      String object, byte[] stream, int startPosition, Object... hints) {
     final byte[] encoded = object.getBytes(StandardCharsets.UTF_8);
     OShortSerializer.INSTANCE.serializeNative((short) encoded.length, stream, startPosition);
     startPosition += OShortSerializer.SHORT_SIZE;
@@ -68,7 +69,8 @@ public class OUTF8Serializer implements OBinarySerializer<String> {
 
   @Override
   public String deserializeNativeObject(byte[] stream, int startPosition) {
-    final int encodedSize = OShortSerializer.INSTANCE.deserializeNative(stream, startPosition) & INT_MASK;
+    final int encodedSize =
+        OShortSerializer.INSTANCE.deserializeNative(stream, startPosition) & INT_MASK;
     startPosition += OShortSerializer.SHORT_SIZE;
 
     final byte[] encoded = new byte[encodedSize];
@@ -78,7 +80,8 @@ public class OUTF8Serializer implements OBinarySerializer<String> {
 
   @Override
   public int getObjectSizeNative(byte[] stream, int startPosition) {
-    return (OShortSerializer.INSTANCE.deserializeNative(stream, startPosition) & INT_MASK) + OShortSerializer.SHORT_SIZE;
+    return (OShortSerializer.INSTANCE.deserializeNative(stream, startPosition) & INT_MASK)
+        + OShortSerializer.SHORT_SIZE;
   }
 
   @Override
@@ -109,7 +112,8 @@ public class OUTF8Serializer implements OBinarySerializer<String> {
   }
 
   @Override
-  public String deserializeFromByteBufferObject(ByteBuffer buffer, OWALChanges walChanges, int offset) {
+  public String deserializeFromByteBufferObject(
+      ByteBuffer buffer, OWALChanges walChanges, int offset) {
     final int encodedSize = walChanges.getShortValue(buffer, offset) & INT_MASK;
     offset += OShortSerializer.SHORT_SIZE;
 

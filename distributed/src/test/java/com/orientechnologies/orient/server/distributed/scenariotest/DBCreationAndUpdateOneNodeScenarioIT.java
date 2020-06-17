@@ -16,28 +16,26 @@
 
 package com.orientechnologies.orient.server.distributed.scenariotest;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.fail;
+
+
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
+import java.util.List;
 import org.junit.Test;
 
-import java.util.List;
-
-import static org.junit.Assert.*;
-
 /**
- * It checks the consistency in the cluster with the following scenario:
- * - 3 server
- * - db creation on server1
- * - check the new db is present both on server2 and server3
- * - 5 threads write 100 records on server1
- * - check consistency: db with all the records are consistent
+ * It checks the consistency in the cluster with the following scenario: - 3 server - db creation on
+ * server1 - check the new db is present both on server2 and server3 - 5 threads write 100 records
+ * on server1 - check consistency: db with all the records are consistent
  *
  * @author Gabriele Ponzi
  * @email <gabriele.ponzi--at--gmail.com>
  */
-
 public class DBCreationAndUpdateOneNodeScenarioIT extends AbstractScenarioTest {
 
   @Test
@@ -61,7 +59,8 @@ public class DBCreationAndUpdateOneNodeScenarioIT extends AbstractScenarioTest {
     ODatabaseDocument dbServer2 = getDatabase(1);
     try {
       assertNotNull(dbServer2);
-      List<ODocument> result = dbServer2.query(new OSQLSynchQuery<OIdentifiable>("select from Person"));
+      List<ODocument> result =
+          dbServer2.query(new OSQLSynchQuery<OIdentifiable>("select from Person"));
       assertEquals(0, result.size());
     } catch (Exception e) {
       e.printStackTrace();
@@ -73,7 +72,8 @@ public class DBCreationAndUpdateOneNodeScenarioIT extends AbstractScenarioTest {
     ODatabaseDocument dbServer3 = getDatabase(2);
     try {
       assertNotNull(dbServer3);
-      List<ODocument> result = dbServer3.query(new OSQLSynchQuery<OIdentifiable>("select from Person"));
+      List<ODocument> result =
+          dbServer3.query(new OSQLSynchQuery<OIdentifiable>("select from Person"));
       assertEquals(0, result.size());
     } catch (Exception e) {
       e.printStackTrace();
@@ -95,5 +95,4 @@ public class DBCreationAndUpdateOneNodeScenarioIT extends AbstractScenarioTest {
   public String getDatabaseName() {
     return "distributed-dbcreation-update";
   }
-
 }

@@ -19,9 +19,7 @@
  */
 package com.orientechnologies.common.exception;
 
-/**
- * Exception is thrown if it is impossible to allocate new piece of direct memory from OS
- */
+/** Exception is thrown if it is impossible to allocate new piece of direct memory from OS */
 public class ODirectMemoryAllocationFailedException extends OSystemException {
   public ODirectMemoryAllocationFailedException(ODirectMemoryAllocationFailedException exception) {
     super(exception);

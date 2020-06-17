@@ -15,27 +15,28 @@
  */
 package com.orientechnologies.orient.object.serialization;
 
+import com.orientechnologies.orient.core.record.ORecord;
+import com.orientechnologies.orient.object.enhancement.OObjectEntitySerializer;
 import java.io.Serializable;
 import java.util.Iterator;
 
-import com.orientechnologies.orient.core.record.ORecord;
-import com.orientechnologies.orient.object.enhancement.OObjectEntitySerializer;
-
 /**
- * Lazy implementation of Iterator that load the records only when accessed. It keep also track of changes to the source record
- * avoiding to call setDirty() by hand.
+ * Lazy implementation of Iterator that load the records only when accessed. It keep also track of
+ * changes to the source record avoiding to call setDirty() by hand.
  *
  * @author Luca Molino (molino.luca--at--gmail.com)
  */
-@SuppressWarnings({ "unchecked" })
+@SuppressWarnings({"unchecked"})
 public class OObjectCustomSerializerIterator<TYPE> implements Iterator<TYPE>, Serializable {
   private static final long serialVersionUID = -4012483076050044405L;
 
-  private final ORecord                    sourceRecord;
+  private final ORecord sourceRecord;
   private final Iterator<? extends Object> underlying;
-  private final Class<?>                   deserializeClass;
+  private final Class<?> deserializeClass;
 
-  public OObjectCustomSerializerIterator(final Class<?> iDeserializeClass, final ORecord iSourceRecord,
+  public OObjectCustomSerializerIterator(
+      final Class<?> iDeserializeClass,
+      final ORecord iSourceRecord,
       final Iterator<? extends Object> iIterator) {
     this.sourceRecord = iSourceRecord;
     this.underlying = iIterator;
@@ -53,8 +54,6 @@ public class OObjectCustomSerializerIterator<TYPE> implements Iterator<TYPE>, Se
 
   public void remove() {
     underlying.remove();
-    if (sourceRecord != null)
-      sourceRecord.setDirty();
+    if (sourceRecord != null) sourceRecord.setDirty();
   }
-
 }

@@ -7,33 +7,32 @@ import com.orientechnologies.orient.core.config.OStorageEntryConfiguration;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelDataInput;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelDataOutput;
-
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.TimeZone;
 
 public class OStorageConfigurationPayload {
-  private String                             dateFormat;
-  private String                             dateTimeFormat;
-  private String                             name;
-  private int                                version;
-  private String                             directory;
-  private List<OStorageEntryConfiguration>   properties;
-  private ORecordId                          schemaRecordId;
-  private ORecordId                          indexMgrRecordId;
-  private String                             clusterSelection;
-  private String                             conflictStrategy;
-  private boolean                            validationEnabled;
-  private String                             localeLanguage;
-  private int                                minimumClusters;
-  private boolean                            strictSql;
-  private String                             charset;
-  private TimeZone                           timeZone;
-  private String                             localeCountry;
-  private String                             recordSerializer;
-  private int                                recordSerializerVersion;
-  private int                                binaryFormatVersion;
+  private String dateFormat;
+  private String dateTimeFormat;
+  private String name;
+  private int version;
+  private String directory;
+  private List<OStorageEntryConfiguration> properties;
+  private ORecordId schemaRecordId;
+  private ORecordId indexMgrRecordId;
+  private String clusterSelection;
+  private String conflictStrategy;
+  private boolean validationEnabled;
+  private String localeLanguage;
+  private int minimumClusters;
+  private boolean strictSql;
+  private String charset;
+  private TimeZone timeZone;
+  private String localeCountry;
+  private String recordSerializer;
+  private int recordSerializerVersion;
+  private int binaryFormatVersion;
   private List<OStorageClusterConfiguration> clusters;
 
   public OStorageConfigurationPayload(OStorageConfiguration configuration) {
@@ -65,9 +64,7 @@ public class OStorageConfigurationPayload {
     }
   }
 
-  public OStorageConfigurationPayload() {
-
-  }
+  public OStorageConfigurationPayload() {}
 
   public void write(OChannelDataOutput channel) throws IOException {
     channel.writeString(this.dateFormat);
@@ -220,5 +217,4 @@ public class OStorageConfigurationPayload {
   public List<OStorageClusterConfiguration> getClusters() {
     return clusters;
   }
-
 }

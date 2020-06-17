@@ -6,7 +6,6 @@ import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.executor.OResultInternal;
-
 import java.util.Map;
 
 public class OSkip extends SimpleNode {
@@ -59,15 +58,12 @@ public class OSkip extends SimpleNode {
 
   @Override
   public boolean equals(Object o) {
-    if (this == o)
-      return true;
-    if (o == null || getClass() != o.getClass())
-      return false;
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
 
     OSkip oSkip = (OSkip) o;
 
-    if (num != null ? !num.equals(oSkip.num) : oSkip.num != null)
-      return false;
+    if (num != null ? !num.equals(oSkip.num) : oSkip.num != null) return false;
     if (inputParam != null ? !inputParam.equals(oSkip.inputParam) : oSkip.inputParam != null)
       return false;
 

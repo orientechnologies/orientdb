@@ -20,13 +20,10 @@ package com.orientechnologies.orient.etl.extractor;
 
 import com.orientechnologies.orient.etl.OETLComponent;
 import com.orientechnologies.orient.etl.OETLExtractedItem;
-
 import java.io.Reader;
 import java.util.Iterator;
 
-/**
- * ETL Extractor.
- */
+/** ETL Extractor. */
 public interface OETLExtractor extends OETLComponent, Iterator<OETLExtractedItem> {
   void extract(final Reader iReader);
 

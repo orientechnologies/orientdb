@@ -20,8 +20,11 @@
 
 package com.orientechnologies.orient.server.distributed;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+
+
 import com.orientechnologies.common.io.OFileUtils;
-import com.orientechnologies.orient.client.remote.OServerAdmin;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabasePool;
@@ -37,19 +40,14 @@ import com.orientechnologies.orient.core.record.OVertex;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import com.orientechnologies.orient.server.OServer;
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
-import org.junit.Test;
-
 import java.io.File;
-import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
-
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
+import org.junit.AfterClass;
+import org.junit.BeforeClass;
+import org.junit.Test;
 
 public class OrientdbEdgeIT {
   private static OServer server;
@@ -58,13 +56,11 @@ public class OrientdbEdgeIT {
     System.setProperty("ORIENTDB_ROOT_PASSWORD", "root");
   }
 
-  public OrientdbEdgeIT() {
-  }
+  public OrientdbEdgeIT() {}
 
   @AfterClass
   public static void tearDownClass() {
-    if (server != null)
-      server.shutdown();
+    if (server != null) server.shutdown();
 
     ODatabaseDocumentTx.closeAll();
 
@@ -72,8 +68,7 @@ public class OrientdbEdgeIT {
     Orient.instance().startup();
 
     File file = new File("./target/databases/");
-    if (file.exists())
-      OFileUtils.deleteRecursively(file);
+    if (file.exists()) OFileUtils.deleteRecursively(file);
   }
 
   protected static ODatabasePool getGraphFactory() throws Exception {
@@ -88,7 +83,8 @@ public class OrientdbEdgeIT {
 
     OGlobalConfiguration.CLIENT_CONNECT_POOL_WAIT_TIMEOUT.setValue(15000);
 
-    OrientDB orientDB = new OrientDB("remote:localhost", "root", "root", OrientDBConfig.defaultConfig());
+    OrientDB orientDB =
+        new OrientDB("remote:localhost", "root", "root", OrientDBConfig.defaultConfig());
     if (!orientDB.exists("test")) {
       orientDB.create("test", ODatabaseType.PLOCAL);
     }
@@ -110,47 +106,73 @@ public class OrientdbEdgeIT {
 
     orientDB.close();
 
-    ODatabasePool pool = new ODatabasePool(conf.get("storage.url") + "/" + conf.get("db.name"), (String) conf.get("storage.user"),
-        (String) conf.get("storage.password"), OrientDBConfig.defaultConfig());
+    ODatabasePool pool =
+        new ODatabasePool(
+            conf.get("storage.url") + "/" + conf.get("db.name"),
+            (String) conf.get("storage.user"),
+            (String) conf.get("storage.password"),
+            OrientDBConfig.defaultConfig());
     return pool;
   }
 
   @BeforeClass
   public static void setup() throws Exception {
     File file = new File("./target/databases/");
-    if (file.exists())
-      OFileUtils.deleteRecursively(file);
+    if (file.exists()) OFileUtils.deleteRecursively(file);
     file.mkdirs();
 
     server = new OServer(false);
-    server.startup("<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>\n" + "<orient-server>\n" + "    <handlers>\n"
-//        + "        <!-- GRAPH PLUGIN -->\n"
-//        + "        <handler class=\"com.orientechnologies.orient.graph.handler.OGraphServerHandler\">\n"
-//        + "            <parameters>\n" + "                <parameter name=\"enabled\" value=\"true\"/>\n"
-//        + "                <parameter name=\"graph.pool.max\" value=\"50\"/>\n" + "            </parameters>\n"
-//        + "        </handler>\n" + "       \n"
-        + "<handler class=\"com.orientechnologies.orient.distributed.hazelcast.OHazelcastPlugin\">\n" + "            <parameters>\n"
-        + "                <parameter name=\"nodeName\" value=\"unittest\" />\n"
-        + "                <parameter name=\"enabled\" value=\"true\"/>\n"
-        + "                <parameter name=\"configuration.db.default\"\n"
-        + "                           value=\"src/test/resources/default-distributed-db-config.json\"/>\n"
-        + "                <parameter name=\"configuration.hazelcast\" value=\"config/hazelcast.xml\"/>\n" + "\n"
-        + "            </parameters>\n" + "        </handler>" + "    </handlers>\n" + "    <network>\n" + "        <protocols>\n"
-        + "            <protocol name=\"binary\"\n"
-        + "                      implementation=\"com.orientechnologies.orient.server.network.protocol.binary.ONetworkProtocolBinary\"/>\n"
-        + "        </protocols>\n" + "        <listeners>\n"
-        + "            <listener protocol=\"binary\" ip-address=\"0.0.0.0\" port-range=\"2424-2430\"/>\n" + "        </listeners>\n"
-        + "        <cluster>\n" + "        </cluster>\n" + "    </network>\n" + "    <storages>\n" + "    </storages>\n"
-        + "    <users>\n" + "      <user name=\"root\" password=\"root\" resources=\"*\"/>\n" + "    </users>\n"
-        + "    <properties>\n" + "\n"
-        + "<entry name=\"server.database.path\" value=\"target/databases\" />"
-        + "        <!-- PROFILER: configures the profiler as <seconds-for-snapshot>,<archive-snapshot-size>,<summary-size>  -->\n"
-        + "        <entry name=\"profiler.enabled\" value=\"true\"/>\n"
-        + "        <!-- <entry name=\"profiler.config\" value=\"30,10,10\" />  -->\n" + "\n"
-        + "        <!-- LOG: enable/Disable logging. Levels are: finer, fine, finest, info, warning -->\n"
-        + "        <entry name=\"log.console.level\" value=\"info\"/>\n"
-        + "        <entry name=\"log.file.level\" value=\"info\"/>\n" + "    </properties>\n"
-        + " <isAfterFirstTime>true</isAfterFirstTime></orient-server>");
+    server.startup(
+        "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>\n"
+            + "<orient-server>\n"
+            + "    <handlers>\n"
+            //        + "        <!-- GRAPH PLUGIN -->\n"
+            //        + "        <handler
+            // class=\"com.orientechnologies.orient.graph.handler.OGraphServerHandler\">\n"
+            //        + "            <parameters>\n" + "                <parameter name=\"enabled\"
+            // value=\"true\"/>\n"
+            //        + "                <parameter name=\"graph.pool.max\" value=\"50\"/>\n" + "
+            //         </parameters>\n"
+            //        + "        </handler>\n" + "       \n"
+            + "<handler class=\"com.orientechnologies.orient.distributed.hazelcast.OHazelcastPlugin\">\n"
+            + "            <parameters>\n"
+            + "                <parameter name=\"nodeName\" value=\"unittest\" />\n"
+            + "                <parameter name=\"enabled\" value=\"true\"/>\n"
+            + "                <parameter name=\"configuration.db.default\"\n"
+            + "                           value=\"src/test/resources/default-distributed-db-config.json\"/>\n"
+            + "                <parameter name=\"configuration.hazelcast\" value=\"config/hazelcast.xml\"/>\n"
+            + "\n"
+            + "            </parameters>\n"
+            + "        </handler>"
+            + "    </handlers>\n"
+            + "    <network>\n"
+            + "        <protocols>\n"
+            + "            <protocol name=\"binary\"\n"
+            + "                      implementation=\"com.orientechnologies.orient.server.network.protocol.binary.ONetworkProtocolBinary\"/>\n"
+            + "        </protocols>\n"
+            + "        <listeners>\n"
+            + "            <listener protocol=\"binary\" ip-address=\"0.0.0.0\" port-range=\"2424-2430\"/>\n"
+            + "        </listeners>\n"
+            + "        <cluster>\n"
+            + "        </cluster>\n"
+            + "    </network>\n"
+            + "    <storages>\n"
+            + "    </storages>\n"
+            + "    <users>\n"
+            + "      <user name=\"root\" password=\"root\" resources=\"*\"/>\n"
+            + "    </users>\n"
+            + "    <properties>\n"
+            + "\n"
+            + "<entry name=\"server.database.path\" value=\"target/databases\" />"
+            + "        <!-- PROFILER: configures the profiler as <seconds-for-snapshot>,<archive-snapshot-size>,<summary-size>  -->\n"
+            + "        <entry name=\"profiler.enabled\" value=\"true\"/>\n"
+            + "        <!-- <entry name=\"profiler.config\" value=\"30,10,10\" />  -->\n"
+            + "\n"
+            + "        <!-- LOG: enable/Disable logging. Levels are: finer, fine, finest, info, warning -->\n"
+            + "        <entry name=\"log.console.level\" value=\"info\"/>\n"
+            + "        <entry name=\"log.file.level\" value=\"info\"/>\n"
+            + "    </properties>\n"
+            + " <isAfterFirstTime>true</isAfterFirstTime></orient-server>");
 
     server.activate();
   }
@@ -164,16 +186,14 @@ public class OrientdbEdgeIT {
       try {
         g.createEdgeClass("some-label");
       } catch (OSchemaException ex) {
-        if (!ex.getMessage().contains("exists"))
-          throw (ex);
+        if (!ex.getMessage().contains("exists")) throw (ex);
         g.command(new OCommandSQL("delete edge `some-label`")).execute();
       }
 
       try {
         g.createVertexClass("some-v-label");
       } catch (OSchemaException ex) {
-        if (!ex.getMessage().contains("exists"))
-          throw (ex);
+        if (!ex.getMessage().contains("exists")) throw (ex);
         g.command(new OCommandSQL("delete vertex `some-v-label`")).execute();
       }
     } finally {
@@ -210,9 +230,16 @@ public class OrientdbEdgeIT {
       t.begin();
 
       // works
-      assertEquals(1, count(getVertices(t, "_id", "v1").iterator().next().getEdges(ODirection.BOTH, "some-label")));
+      assertEquals(
+          1,
+          count(
+              getVertices(t, "_id", "v1")
+                  .iterator()
+                  .next()
+                  .getEdges(ODirection.BOTH, "some-label")));
       // NoSuchElementException
-//      assertNotNull(t.getVertices("_id", "v1").iterator().next()..labels("some-label").edges().iterator().next());//TODO what...?
+      //      assertNotNull(t.getVertices("_id",
+      // "v1").iterator().next()..labels("some-label").edges().iterator().next());//TODO what...?
 
       t.commit();
     } finally {

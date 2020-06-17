@@ -32,17 +32,13 @@ public final class ORawPair<V1, V2> {
 
   @Override
   public boolean equals(Object o) {
-    if (this == o)
-      return true;
-    if (o == null || getClass() != o.getClass())
-      return false;
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
 
     ORawPair<?, ?> oRawPair = (ORawPair<?, ?>) o;
 
-    if (!first.equals(oRawPair.first))
-      return false;
+    if (!first.equals(oRawPair.first)) return false;
     return second.equals(oRawPair.second);
-
   }
 
   @Override

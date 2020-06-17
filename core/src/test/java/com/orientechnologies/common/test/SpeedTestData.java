@@ -6,31 +6,30 @@ import java.lang.management.MemoryUsage;
 import java.math.BigDecimal;
 
 public class SpeedTestData {
-  protected static final int TIME_WAIT           = 200;
-  protected final static int DUMP_PERCENT        = 10;
-  protected long             cycles              = 1;
-  protected long             cyclesDone          = 0;
-  protected String           currentTestName;
-  protected long             currentTestTimer;
+  protected static final int TIME_WAIT = 200;
+  protected static final int DUMP_PERCENT = 10;
+  protected long cycles = 1;
+  protected long cyclesDone = 0;
+  protected String currentTestName;
+  protected long currentTestTimer;
 
-  protected long             currentTestHeapCommittedMemory;
-  protected long             currentTestHeapUsedMemory;
-  protected long             currentTestHeapMaxMemory;
+  protected long currentTestHeapCommittedMemory;
+  protected long currentTestHeapUsedMemory;
+  protected long currentTestHeapMaxMemory;
 
-  protected long             currentTestNonHeapCommittedMemory;
-  protected long             currentTestNonHeapUsedMemory;
-  protected long             currentTestNonHeapMaxMemory;
+  protected long currentTestNonHeapCommittedMemory;
+  protected long currentTestNonHeapUsedMemory;
+  protected long currentTestNonHeapMaxMemory;
 
-  protected SpeedTestGroup   testGroup;
-  protected Object[]         configuration;
-  protected boolean          printResults        = true;
+  protected SpeedTestGroup testGroup;
+  protected Object[] configuration;
+  protected boolean printResults = true;
 
-  protected long             partialTimer        = 0;
-  protected int              partialTimerCounter = 0;
-  private long               cyclesElapsed;
+  protected long partialTimer = 0;
+  protected int partialTimerCounter = 0;
+  private long cyclesElapsed;
 
-  protected SpeedTestData() {
-  }
+  protected SpeedTestData() {}
 
   protected SpeedTestData(final long iCycles) {
     cycles = iCycles;
@@ -45,7 +44,8 @@ public class SpeedTestData {
       iTarget.init();
       return true;
     } catch (Throwable t) {
-      System.err.println("Exception caught when executing INIT: " + iTarget.getClass().getSimpleName());
+      System.err.println(
+          "Exception caught when executing INIT: " + iTarget.getClass().getSimpleName());
       t.printStackTrace();
       return false;
     }
@@ -55,7 +55,8 @@ public class SpeedTestData {
     try {
       iTarget.deinit();
     } catch (Throwable t) {
-      System.err.println("Exception caught when executing DEINIT: " + iTarget.getClass().getSimpleName());
+      System.err.println(
+          "Exception caught when executing DEINIT: " + iTarget.getClass().getSimpleName());
       t.printStackTrace();
     }
   }
@@ -69,8 +70,7 @@ public class SpeedTestData {
     currentTestName = iTarget.getClass().getSimpleName();
 
     try {
-      if (SpeedTestData.executeInit(iTarget, configuration))
-        executeTest(iTarget, configuration);
+      if (SpeedTestData.executeInit(iTarget, configuration)) executeTest(iTarget, configuration);
     } finally {
       collectResults(takeTimer());
 
@@ -80,7 +80,7 @@ public class SpeedTestData {
 
   /*
    * (non-Javadoc)
-   * 
+   *
    * @see com.orientechnologies.common.test.SpeedTest#startTimer(java.lang.String)
    */
   public void startTimer(final String iName) {
@@ -113,7 +113,7 @@ public class SpeedTestData {
 
   /*
    * (non-Javadoc)
-   * 
+   *
    * @see com.orientechnologies.common.test.SpeedTest#takeTimer()
    */
   public long takeTimer() {
@@ -122,7 +122,7 @@ public class SpeedTestData {
 
   /*
    * (non-Javadoc)
-   * 
+   *
    * @see com.orientechnologies.common.test.SpeedTest#collectResults(long)
    */
   public void collectResults(final long elapsed) {
@@ -146,34 +146,84 @@ public class SpeedTestData {
     final long nowNonHeapUsedMemory = nonHeapMemoryUsage.getUsed();
     final long nowNonHeapMaxMemory = nonHeapMemoryUsage.getMax();
 
-    final long nonHeapCommittedMemory = nowNonHeapCommittedMemory - currentTestNonHeapCommittedMemory;
+    final long nonHeapCommittedMemory =
+        nowNonHeapCommittedMemory - currentTestNonHeapCommittedMemory;
     final long nonHeapUsedMemory = nowNonHeapUsedMemory - currentTestNonHeapUsedMemory;
     final long nonHeapMaxMemory = nowNonHeapMaxMemory - currentTestNonHeapMaxMemory;
 
     if (printResults) {
       System.out.println();
-      System.out.println("   Completed the test of '" + currentTestName + "' in " + elapsed + " ms. Heap memory used: "
-          + nowHeapUsedMemory + " bytes. Non heap memory used: " + nowNonHeapUsedMemory + " .");
+      System.out.println(
+          "   Completed the test of '"
+              + currentTestName
+              + "' in "
+              + elapsed
+              + " ms. Heap memory used: "
+              + nowHeapUsedMemory
+              + " bytes. Non heap memory used: "
+              + nowNonHeapUsedMemory
+              + " .");
       System.out.println("   Cycles done.......................: " + cyclesDone + "/" + cycles);
       System.out.println("   Cycles Elapsed....................: " + cyclesElapsed + " ms");
       System.out.println("   Elapsed...........................: " + elapsed + " ms");
-      System.out.println("   Medium cycle elapsed:.............: "
-          + (cyclesDone > 0 && elapsed > 0 ? new BigDecimal((float) elapsed / cyclesDone).toPlainString() : 0));
-      System.out.println("   Cycles per second.................: "
-          + new BigDecimal((float) cyclesDone / elapsed * 1000).toPlainString());
-      System.out.println("   Committed heap memory diff........: " + heapCommittedMemory + " (" + currentTestHeapCommittedMemory
-          + "->" + nowHeapCommittedMemory + ")");
-      System.out.println("   Used heap memory diff.............: " + heapUsedMemory + " (" + currentTestHeapUsedMemory + "->"
-          + nowHeapUsedMemory + ")");
-      System.out.println("   Max heap memory diff..............: " + heapMaxMemory + " (" + currentTestHeapMaxMemory + "->"
-          + nowHeapMaxMemory + ")");
-      System.out.println("   Committed non heap memory diff....: " + nonHeapCommittedMemory + " ("
-          + currentTestNonHeapCommittedMemory + "->" + nowNonHeapCommittedMemory + ")");
-      System.out.println("   Used non heap memory diff.........: " + nonHeapUsedMemory + " (" + currentTestNonHeapUsedMemory + "->"
-          + nowNonHeapUsedMemory + ")");
-      System.out.println("   Max non heap memory diff..........: " + nonHeapMaxMemory + " (" + currentTestNonHeapMaxMemory + "->"
-          + nowNonHeapMaxMemory + ")");
-      System.out.println("   Objects pending finalization......: " + objectsPendingFinalizationCount);
+      System.out.println(
+          "   Medium cycle elapsed:.............: "
+              + (cyclesDone > 0 && elapsed > 0
+                  ? new BigDecimal((float) elapsed / cyclesDone).toPlainString()
+                  : 0));
+      System.out.println(
+          "   Cycles per second.................: "
+              + new BigDecimal((float) cyclesDone / elapsed * 1000).toPlainString());
+      System.out.println(
+          "   Committed heap memory diff........: "
+              + heapCommittedMemory
+              + " ("
+              + currentTestHeapCommittedMemory
+              + "->"
+              + nowHeapCommittedMemory
+              + ")");
+      System.out.println(
+          "   Used heap memory diff.............: "
+              + heapUsedMemory
+              + " ("
+              + currentTestHeapUsedMemory
+              + "->"
+              + nowHeapUsedMemory
+              + ")");
+      System.out.println(
+          "   Max heap memory diff..............: "
+              + heapMaxMemory
+              + " ("
+              + currentTestHeapMaxMemory
+              + "->"
+              + nowHeapMaxMemory
+              + ")");
+      System.out.println(
+          "   Committed non heap memory diff....: "
+              + nonHeapCommittedMemory
+              + " ("
+              + currentTestNonHeapCommittedMemory
+              + "->"
+              + nowNonHeapCommittedMemory
+              + ")");
+      System.out.println(
+          "   Used non heap memory diff.........: "
+              + nonHeapUsedMemory
+              + " ("
+              + currentTestNonHeapUsedMemory
+              + "->"
+              + nowNonHeapUsedMemory
+              + ")");
+      System.out.println(
+          "   Max non heap memory diff..........: "
+              + nonHeapMaxMemory
+              + " ("
+              + currentTestNonHeapMaxMemory
+              + "->"
+              + nowNonHeapMaxMemory
+              + ")");
+      System.out.println(
+          "   Objects pending finalization......: " + objectsPendingFinalizationCount);
 
       System.out.println();
     }
@@ -194,7 +244,7 @@ public class SpeedTestData {
 
   /*
    * (non-Javadoc)
-   * 
+   *
    * @see com.orientechnologies.common.test.SpeedTest#printSnapshot()
    */
   public long printSnapshot() {
@@ -269,10 +319,20 @@ public class SpeedTestData {
 
           cyclesElapsed += lapTimerElapsed;
 
-          delta = (int) (previousLapTimerElapsed > 0 ? lapTimerElapsed * 100 / previousLapTimerElapsed - 100 : 0);
+          delta =
+              (int)
+                  (previousLapTimerElapsed > 0
+                      ? lapTimerElapsed * 100 / previousLapTimerElapsed - 100
+                      : 0);
 
-          System.out.print(String.format("\n%3d%% lap elapsed: %7dms, total: %7dms, delta: %+3d%%, forecast: %7dms",
-              (cyclesDone + 1) * 100 / cycles, lapTimerElapsed, cyclesElapsed, delta, cyclesElapsed * cycles / cyclesDone));
+          System.out.print(
+              String.format(
+                  "\n%3d%% lap elapsed: %7dms, total: %7dms, delta: %+3d%%, forecast: %7dms",
+                  (cyclesDone + 1) * 100 / cycles,
+                  lapTimerElapsed,
+                  cyclesElapsed,
+                  delta,
+                  cyclesElapsed * cycles / cyclesDone));
 
           previousLapTimerElapsed = lapTimerElapsed;
           lapTimerElapsed = System.nanoTime();
@@ -282,7 +342,8 @@ public class SpeedTestData {
       return takeTimer();
 
     } catch (Throwable t) {
-      System.err.println("Exception caught when executing CYCLE test: " + iTarget.getClass().getSimpleName());
+      System.err.println(
+          "Exception caught when executing CYCLE test: " + iTarget.getClass().getSimpleName());
       t.printStackTrace();
     }
     return -1;

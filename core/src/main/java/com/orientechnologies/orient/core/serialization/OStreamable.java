@@ -25,9 +25,8 @@ import java.io.IOException;
 
 /**
  * Base interface of serialization that uses DataOutput and DataInput Java interfaces.
- * 
+ *
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
- * 
  */
 public interface OStreamable {
   void toStream(DataOutput out) throws IOException;

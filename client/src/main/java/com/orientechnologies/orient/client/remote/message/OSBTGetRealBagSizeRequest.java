@@ -34,20 +34,20 @@ import com.orientechnologies.orient.core.storage.ridbag.sbtree.OBonsaiCollection
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelDataInput;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelDataOutput;
-
 import java.io.IOException;
 import java.util.Map;
 
 public class OSBTGetRealBagSizeRequest implements OBinaryRequest<OSBTGetRealBagSizeResponse> {
 
-  private OBonsaiCollectionPointer         collectionPointer;
-  private Map<OIdentifiable, Change>       changes;
+  private OBonsaiCollectionPointer collectionPointer;
+  private Map<OIdentifiable, Change> changes;
   private OBinarySerializer<OIdentifiable> keySerializer;
 
-  public OSBTGetRealBagSizeRequest() {
-  }
+  public OSBTGetRealBagSizeRequest() {}
 
-  public OSBTGetRealBagSizeRequest(OBinarySerializer<OIdentifiable> keySerializer, OBonsaiCollectionPointer collectionPointer,
+  public OSBTGetRealBagSizeRequest(
+      OBinarySerializer<OIdentifiable> keySerializer,
+      OBonsaiCollectionPointer collectionPointer,
       Map<OIdentifiable, Change> changes) {
     this.collectionPointer = collectionPointer;
     this.changes = changes;
@@ -58,12 +58,16 @@ public class OSBTGetRealBagSizeRequest implements OBinaryRequest<OSBTGetRealBagS
   public void write(OChannelDataOutput network, OStorageRemoteSession session) throws IOException {
     OCollectionNetworkSerializer.INSTANCE.writeCollectionPointer(network, collectionPointer);
     final ChangeSerializationHelper changeSerializer = ChangeSerializationHelper.INSTANCE;
-    final byte[] stream = new byte[OIntegerSerializer.INT_SIZE + changeSerializer.getChangesSerializedSize(changes.size())];
+    final byte[] stream =
+        new byte
+            [OIntegerSerializer.INT_SIZE
+                + changeSerializer.getChangesSerializedSize(changes.size())];
     changeSerializer.serializeChanges(changes, keySerializer, stream, 0);
     network.writeBytes(stream);
   }
 
-  public void read(OChannelDataInput channel, int protocolVersion, ORecordSerializer serializer) throws IOException {
+  public void read(OChannelDataInput channel, int protocolVersion, ORecordSerializer serializer)
+      throws IOException {
     collectionPointer = OCollectionNetworkSerializer.INSTANCE.readCollectionPointer(channel);
     byte[] stream = channel.readBytes();
     final ChangeSerializationHelper changeSerializer = ChangeSerializationHelper.INSTANCE;
@@ -97,5 +101,4 @@ public class OSBTGetRealBagSizeRequest implements OBinaryRequest<OSBTGetRealBagS
   public OBinaryResponse execute(OBinaryRequestExecutor executor) {
     return executor.executeSBTGetRealSize(this);
   }
-
 }

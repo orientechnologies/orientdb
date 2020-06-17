@@ -5,14 +5,20 @@ import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.index.OIndexManagerAbstract;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 public abstract class OViewImpl extends OClassImpl implements OView {
 
-  private OViewConfig  cfg;
-  private Set<String>  activeIndexNames   = new HashSet<>();
+  private OViewConfig cfg;
+  private Set<String> activeIndexNames = new HashSet<>();
   private List<String> inactiveIndexNames = new ArrayList<>();
 
   protected OViewImpl(OSchemaShared iOwner, String iName, OViewConfig cfg, int[] iClusterIds) {
@@ -36,7 +42,8 @@ public abstract class OViewImpl extends OClassImpl implements OView {
       String type = (String) idx.get("type");
       String engine = (String) idx.get("engine");
       OViewConfig.OViewIndexConfig indexConfig = this.cfg.addIndex(type, engine);
-      for (Map.Entry<String, String> prop : ((Map<String, String>) idx.get("properties")).entrySet()) {
+      for (Map.Entry<String, String> prop :
+          ((Map<String, String>) idx.get("properties")).entrySet()) {
         indexConfig.addProperty(prop.getKey(), OType.valueOf(prop.getValue()));
       }
     }
@@ -61,7 +68,6 @@ public abstract class OViewImpl extends OClassImpl implements OView {
     if (document.getProperty("inactiveIndexNames") instanceof List) {
       inactiveIndexNames = document.getProperty("inactiveIndexNames");
     }
-
   }
 
   @Override
@@ -178,10 +184,11 @@ public abstract class OViewImpl extends OClassImpl implements OView {
 
       final ODatabaseDocumentInternal database = getDatabase();
       final OIndexManagerAbstract idxManager = database.getMetadata().getIndexManagerInternal();
-      if (idxManager == null)
-        return new HashSet<>();
+      if (idxManager == null) return new HashSet<>();
 
-      return activeIndexNames.stream().map(name -> idxManager.getIndex(database, name)).filter(Objects::nonNull)
+      return activeIndexNames.stream()
+          .map(name -> idxManager.getIndex(database, name))
+          .filter(Objects::nonNull)
           .collect(Collectors.toSet());
     } finally {
       releaseSchemaReadLock();
@@ -194,10 +201,11 @@ public abstract class OViewImpl extends OClassImpl implements OView {
     try {
       final ODatabaseDocumentInternal database = getDatabase();
       final OIndexManagerAbstract idxManager = database.getMetadata().getIndexManagerInternal();
-      if (idxManager == null)
-        return;
+      if (idxManager == null) return;
 
-      activeIndexNames.stream().map(name -> idxManager.getIndex(database, name)).filter(Objects::nonNull)
+      activeIndexNames.stream()
+          .map(name -> idxManager.getIndex(database, name))
+          .filter(Objects::nonNull)
           .forEach(indexes::add);
       idxManager.getClassIndexes(database, name, indexes);
     } finally {
@@ -237,5 +245,4 @@ public abstract class OViewImpl extends OClassImpl implements OView {
       releaseSchemaReadLock();
     }
   }
-
 }

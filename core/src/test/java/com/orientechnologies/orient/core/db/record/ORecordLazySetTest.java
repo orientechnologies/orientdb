@@ -1,39 +1,47 @@
 package com.orientechnologies.orient.core.db.record;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
+
+
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import java.util.Iterator;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
 
-import java.util.Iterator;
-
-import static org.junit.Assert.*;
-
 public class ORecordLazySetTest {
 
   private ODatabaseDocumentTx db;
-  private ODocument           doc1;
-  private ODocument           doc2;
-  private ODocument           doc3;
-  private ORID                rid1;
-  private ORID                rid2;
-  private ORID                rid3;
+  private ODocument doc1;
+  private ODocument doc2;
+  private ODocument doc3;
+  private ORID rid1;
+  private ORID rid2;
+  private ORID rid3;
 
   @Before
   public void before() {
     db = new ODatabaseDocumentTx("memory:" + ORecordLazySet.class.getSimpleName());
     db.create();
-    doc1 = db.save(new ODocument().field("doc1", "doc1"), db.getClusterNameById(db.getDefaultClusterId()));
+    doc1 =
+        db.save(
+            new ODocument().field("doc1", "doc1"), db.getClusterNameById(db.getDefaultClusterId()));
     rid1 = doc1.getIdentity();
-    doc2 = db.save(new ODocument().field("doc2", "doc2"), db.getClusterNameById(db.getDefaultClusterId()));
+    doc2 =
+        db.save(
+            new ODocument().field("doc2", "doc2"), db.getClusterNameById(db.getDefaultClusterId()));
     rid2 = doc2.getIdentity();
-    doc3 = db.save(new ODocument().field("doc3", "doc3"), db.getClusterNameById(db.getDefaultClusterId()));
+    doc3 =
+        db.save(
+            new ODocument().field("doc3", "doc3"), db.getClusterNameById(db.getDefaultClusterId()));
     rid3 = doc3.getIdentity();
   }
 
@@ -135,7 +143,8 @@ public class ORecordLazySetTest {
 
   @Test
   public void testSetWithNotExistentRecordWithValidation() {
-    ODatabaseDocumentTx db = new ODatabaseDocumentTx("memory:testSetWithNotExistentRecordWithValidation");
+    ODatabaseDocumentTx db =
+        new ODatabaseDocumentTx("memory:testSetWithNotExistentRecordWithValidation");
     db.create();
     OClass test = db.getMetadata().getSchema().createClass("test");
     OClass test1 = db.getMetadata().getSchema().createClass("test1");
@@ -152,5 +161,4 @@ public class ORecordLazySetTest {
       db.drop();
     }
   }
-
 }

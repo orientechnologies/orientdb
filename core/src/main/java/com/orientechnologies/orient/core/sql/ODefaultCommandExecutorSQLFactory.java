@@ -20,7 +20,6 @@ import com.orientechnologies.orient.core.command.OCommandExecutor;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.sql.parser.OMatchStatement;
 import com.orientechnologies.orient.core.sql.parser.OProfileStorageStatement;
-
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
@@ -38,8 +37,12 @@ public class ODefaultCommandExecutorSQLFactory implements OCommandExecutorSQLFac
   static {
 
     // COMMANDS
-    final Map<String, Class<? extends OCommandExecutor>> commands = new HashMap<String, Class<? extends OCommandExecutor>>();
-    commands.put(OCommandExecutorSQLAlterDatabase.KEYWORD_ALTER + " " + OCommandExecutorSQLAlterDatabase.KEYWORD_DATABASE,
+    final Map<String, Class<? extends OCommandExecutor>> commands =
+        new HashMap<String, Class<? extends OCommandExecutor>>();
+    commands.put(
+        OCommandExecutorSQLAlterDatabase.KEYWORD_ALTER
+            + " "
+            + OCommandExecutorSQLAlterDatabase.KEYWORD_DATABASE,
         OCommandExecutorSQLAlterDatabase.class);
     commands.put(OCommandExecutorSQLSelect.KEYWORD_SELECT, OCommandExecutorSQLSelect.class);
     commands.put(OCommandExecutorSQLTraverse.KEYWORD_TRAVERSE, OCommandExecutorSQLTraverse.class);
@@ -49,63 +52,135 @@ public class ODefaultCommandExecutorSQLFactory implements OCommandExecutorSQLFac
     commands.put(OCommandExecutorSQLCreateFunction.NAME, OCommandExecutorSQLCreateFunction.class);
     commands.put(OCommandExecutorSQLGrant.KEYWORD_GRANT, OCommandExecutorSQLGrant.class);
     commands.put(OCommandExecutorSQLRevoke.KEYWORD_REVOKE, OCommandExecutorSQLRevoke.class);
-    commands.put(OCommandExecutorSQLCreateLink.KEYWORD_CREATE + " " + OCommandExecutorSQLCreateLink.KEYWORD_LINK,
+    commands.put(
+        OCommandExecutorSQLCreateLink.KEYWORD_CREATE
+            + " "
+            + OCommandExecutorSQLCreateLink.KEYWORD_LINK,
         OCommandExecutorSQLCreateLink.class);
-    commands.put(OCommandExecutorSQLCreateIndex.KEYWORD_CREATE + " " + OCommandExecutorSQLCreateIndex.KEYWORD_INDEX,
+    commands.put(
+        OCommandExecutorSQLCreateIndex.KEYWORD_CREATE
+            + " "
+            + OCommandExecutorSQLCreateIndex.KEYWORD_INDEX,
         OCommandExecutorSQLCreateIndex.class);
-    commands.put(OCommandExecutorSQLDropIndex.KEYWORD_DROP + " " + OCommandExecutorSQLDropIndex.KEYWORD_INDEX,
+    commands.put(
+        OCommandExecutorSQLDropIndex.KEYWORD_DROP
+            + " "
+            + OCommandExecutorSQLDropIndex.KEYWORD_INDEX,
         OCommandExecutorSQLDropIndex.class);
-    commands.put(OCommandExecutorSQLRebuildIndex.KEYWORD_REBUILD + " " + OCommandExecutorSQLRebuildIndex.KEYWORD_INDEX,
+    commands.put(
+        OCommandExecutorSQLRebuildIndex.KEYWORD_REBUILD
+            + " "
+            + OCommandExecutorSQLRebuildIndex.KEYWORD_INDEX,
         OCommandExecutorSQLRebuildIndex.class);
-    commands.put(OCommandExecutorSQLCreateClass.KEYWORD_CREATE + " " + OCommandExecutorSQLCreateClass.KEYWORD_CLASS,
+    commands.put(
+        OCommandExecutorSQLCreateClass.KEYWORD_CREATE
+            + " "
+            + OCommandExecutorSQLCreateClass.KEYWORD_CLASS,
         OCommandExecutorSQLCreateClass.class);
-    commands.put(OCommandExecutorSQLCreateCluster.KEYWORD_CREATE + " " + OCommandExecutorSQLCreateCluster.KEYWORD_CLUSTER,
-        OCommandExecutorSQLCreateCluster.class);
-    commands.put(OCommandExecutorSQLCreateCluster.KEYWORD_CREATE + " " + OCommandExecutorSQLCreateCluster.KEYWORD_BLOB + " "
+    commands.put(
+        OCommandExecutorSQLCreateCluster.KEYWORD_CREATE
+            + " "
             + OCommandExecutorSQLCreateCluster.KEYWORD_CLUSTER,
         OCommandExecutorSQLCreateCluster.class);
-    commands.put(OCommandExecutorSQLAlterClass.KEYWORD_ALTER + " " + OCommandExecutorSQLAlterClass.KEYWORD_CLASS,
+    commands.put(
+        OCommandExecutorSQLCreateCluster.KEYWORD_CREATE
+            + " "
+            + OCommandExecutorSQLCreateCluster.KEYWORD_BLOB
+            + " "
+            + OCommandExecutorSQLCreateCluster.KEYWORD_CLUSTER,
+        OCommandExecutorSQLCreateCluster.class);
+    commands.put(
+        OCommandExecutorSQLAlterClass.KEYWORD_ALTER
+            + " "
+            + OCommandExecutorSQLAlterClass.KEYWORD_CLASS,
         OCommandExecutorSQLAlterClass.class);
-    commands.put(OCommandExecutorSQLCreateProperty.KEYWORD_CREATE + " " + OCommandExecutorSQLCreateProperty.KEYWORD_PROPERTY,
+    commands.put(
+        OCommandExecutorSQLCreateProperty.KEYWORD_CREATE
+            + " "
+            + OCommandExecutorSQLCreateProperty.KEYWORD_PROPERTY,
         OCommandExecutorSQLCreateProperty.class);
-    commands.put(OCommandExecutorSQLAlterProperty.KEYWORD_ALTER + " " + OCommandExecutorSQLAlterProperty.KEYWORD_PROPERTY,
+    commands.put(
+        OCommandExecutorSQLAlterProperty.KEYWORD_ALTER
+            + " "
+            + OCommandExecutorSQLAlterProperty.KEYWORD_PROPERTY,
         OCommandExecutorSQLAlterProperty.class);
-    commands.put(OCommandExecutorSQLDropCluster.KEYWORD_DROP + " " + OCommandExecutorSQLDropCluster.KEYWORD_CLUSTER,
+    commands.put(
+        OCommandExecutorSQLDropCluster.KEYWORD_DROP
+            + " "
+            + OCommandExecutorSQLDropCluster.KEYWORD_CLUSTER,
         OCommandExecutorSQLDropCluster.class);
-    commands.put(OCommandExecutorSQLDropClass.KEYWORD_DROP + " " + OCommandExecutorSQLDropClass.KEYWORD_CLASS,
+    commands.put(
+        OCommandExecutorSQLDropClass.KEYWORD_DROP
+            + " "
+            + OCommandExecutorSQLDropClass.KEYWORD_CLASS,
         OCommandExecutorSQLDropClass.class);
-    commands.put(OCommandExecutorSQLDropProperty.KEYWORD_DROP + " " + OCommandExecutorSQLDropProperty.KEYWORD_PROPERTY,
+    commands.put(
+        OCommandExecutorSQLDropProperty.KEYWORD_DROP
+            + " "
+            + OCommandExecutorSQLDropProperty.KEYWORD_PROPERTY,
         OCommandExecutorSQLDropProperty.class);
-    commands.put(OCommandExecutorSQLFindReferences.KEYWORD_FIND + " " + OCommandExecutorSQLFindReferences.KEYWORD_REFERENCES,
+    commands.put(
+        OCommandExecutorSQLFindReferences.KEYWORD_FIND
+            + " "
+            + OCommandExecutorSQLFindReferences.KEYWORD_REFERENCES,
         OCommandExecutorSQLFindReferences.class);
-    commands.put(OCommandExecutorSQLTruncateClass.KEYWORD_TRUNCATE + " " + OCommandExecutorSQLTruncateClass.KEYWORD_CLASS,
+    commands.put(
+        OCommandExecutorSQLTruncateClass.KEYWORD_TRUNCATE
+            + " "
+            + OCommandExecutorSQLTruncateClass.KEYWORD_CLASS,
         OCommandExecutorSQLTruncateClass.class);
-    commands.put(OCommandExecutorSQLTruncateCluster.KEYWORD_TRUNCATE + " " + OCommandExecutorSQLTruncateCluster.KEYWORD_CLUSTER,
+    commands.put(
+        OCommandExecutorSQLTruncateCluster.KEYWORD_TRUNCATE
+            + " "
+            + OCommandExecutorSQLTruncateCluster.KEYWORD_CLUSTER,
         OCommandExecutorSQLTruncateCluster.class);
-    commands.put(OCommandExecutorSQLTruncateRecord.KEYWORD_TRUNCATE + " " + OCommandExecutorSQLTruncateRecord.KEYWORD_RECORD,
+    commands.put(
+        OCommandExecutorSQLTruncateRecord.KEYWORD_TRUNCATE
+            + " "
+            + OCommandExecutorSQLTruncateRecord.KEYWORD_RECORD,
         OCommandExecutorSQLTruncateRecord.class);
-    commands.put(OCommandExecutorSQLAlterCluster.KEYWORD_ALTER + " " + OCommandExecutorSQLAlterCluster.KEYWORD_CLUSTER,
+    commands.put(
+        OCommandExecutorSQLAlterCluster.KEYWORD_ALTER
+            + " "
+            + OCommandExecutorSQLAlterCluster.KEYWORD_CLUSTER,
         OCommandExecutorSQLAlterCluster.class);
-    commands.put(OCommandExecutorSQLCreateSequence.KEYWORD_CREATE + " " + OCommandExecutorSQLCreateSequence.KEYWORD_SEQUENCE,
+    commands.put(
+        OCommandExecutorSQLCreateSequence.KEYWORD_CREATE
+            + " "
+            + OCommandExecutorSQLCreateSequence.KEYWORD_SEQUENCE,
         OCommandExecutorSQLCreateSequence.class);
-    commands.put(OCommandExecutorSQLAlterSequence.KEYWORD_ALTER + " " + OCommandExecutorSQLAlterSequence.KEYWORD_SEQUENCE,
+    commands.put(
+        OCommandExecutorSQLAlterSequence.KEYWORD_ALTER
+            + " "
+            + OCommandExecutorSQLAlterSequence.KEYWORD_SEQUENCE,
         OCommandExecutorSQLAlterSequence.class);
-    commands.put(OCommandExecutorSQLDropSequence.KEYWORD_DROP + " " + OCommandExecutorSQLDropSequence.KEYWORD_SEQUENCE,
+    commands.put(
+        OCommandExecutorSQLDropSequence.KEYWORD_DROP
+            + " "
+            + OCommandExecutorSQLDropSequence.KEYWORD_SEQUENCE,
         OCommandExecutorSQLDropSequence.class);
-    commands.put(OCommandExecutorSQLCreateUser.KEYWORD_CREATE + " " + OCommandExecutorSQLCreateUser.KEYWORD_USER,
+    commands.put(
+        OCommandExecutorSQLCreateUser.KEYWORD_CREATE
+            + " "
+            + OCommandExecutorSQLCreateUser.KEYWORD_USER,
         OCommandExecutorSQLCreateUser.class);
-    commands.put(OCommandExecutorSQLDropUser.KEYWORD_DROP + " " + OCommandExecutorSQLDropUser.KEYWORD_USER,
+    commands.put(
+        OCommandExecutorSQLDropUser.KEYWORD_DROP + " " + OCommandExecutorSQLDropUser.KEYWORD_USER,
         OCommandExecutorSQLDropUser.class);
     commands.put(OCommandExecutorSQLExplain.KEYWORD_EXPLAIN, OCommandExecutorSQLExplain.class);
-    commands.put(OCommandExecutorSQLTransactional.KEYWORD_TRANSACTIONAL, OCommandExecutorSQLTransactional.class);
+    commands.put(
+        OCommandExecutorSQLTransactional.KEYWORD_TRANSACTIONAL,
+        OCommandExecutorSQLTransactional.class);
 
     commands.put(OMatchStatement.KEYWORD_MATCH, OMatchStatement.class);
-    commands.put(OCommandExecutorSQLOptimizeDatabase.KEYWORD_OPTIMIZE, OCommandExecutorSQLOptimizeDatabase.class);
+    commands.put(
+        OCommandExecutorSQLOptimizeDatabase.KEYWORD_OPTIMIZE,
+        OCommandExecutorSQLOptimizeDatabase.class);
 
-    commands.put(OProfileStorageStatement.KEYWORD_PROFILE, OCommandExecutorToOStatementWrapper.class);
+    commands.put(
+        OProfileStorageStatement.KEYWORD_PROFILE, OCommandExecutorToOStatementWrapper.class);
 
-
-    //GRAPH
+    // GRAPH
 
     commands.put(OCommandExecutorSQLCreateEdge.NAME, OCommandExecutorSQLCreateEdge.class);
     commands.put(OCommandExecutorSQLDeleteEdge.NAME, OCommandExecutorSQLDeleteEdge.class);
@@ -116,16 +191,12 @@ public class ODefaultCommandExecutorSQLFactory implements OCommandExecutorSQLFac
     COMMANDS = Collections.unmodifiableMap(commands);
   }
 
-  /**
-   * {@inheritDoc}
-   */
+  /** {@inheritDoc} */
   public Set<String> getCommandNames() {
     return COMMANDS.keySet();
   }
 
-  /**
-   * {@inheritDoc}
-   */
+  /** {@inheritDoc} */
   public OCommandExecutor createCommand(final String name) throws OCommandExecutionException {
     final Class<? extends OCommandExecutor> clazz = COMMANDS.get(name);
 
@@ -136,9 +207,12 @@ public class ODefaultCommandExecutorSQLFactory implements OCommandExecutorSQLFac
     try {
       return clazz.newInstance();
     } catch (Exception e) {
-      throw OException.wrapException(new OCommandExecutionException("Error in creation of command " + name
-          + "(). Probably there is not an empty constructor or the constructor generates errors"), e);
+      throw OException.wrapException(
+          new OCommandExecutionException(
+              "Error in creation of command "
+                  + name
+                  + "(). Probably there is not an empty constructor or the constructor generates errors"),
+          e);
     }
   }
-
 }

@@ -1,24 +1,26 @@
 package com.orientechnologies.orient.server.token;
 
-
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
+import static junit.framework.TestCase.assertTrue;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
 
 
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.server.binary.impl.OBinaryToken;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import org.junit.Test;
-
-import static junit.framework.TestCase.assertTrue;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNull;
 
 public class OBinaryTokenSerializerTest {
 
-  private OBinaryTokenSerializer ser = new OBinaryTokenSerializer(new String[] { "plocal", "memory" }, new String[] { "key" },
-                                         new String[] { "HmacSHA256" }, new String[] { "OrientDB" });
+  private OBinaryTokenSerializer ser =
+      new OBinaryTokenSerializer(
+          new String[] {"plocal", "memory"},
+          new String[] {"key"},
+          new String[] {"HmacSHA256"},
+          new String[] {"OrientDB"});
 
   @Test
   public void testSerializerDeserializeToken() throws IOException {
@@ -55,7 +57,6 @@ public class OBinaryTokenSerializerTest {
     assertEquals("ser", tok.getSerializer());
     assertEquals("aa", tok.getDriverName());
     assertEquals("aa", tok.getDriverVersion());
-
   }
 
   @Test
@@ -138,7 +139,5 @@ public class OBinaryTokenSerializerTest {
     assertEquals("ser", tok.getSerializer());
     assertEquals("aa", tok.getDriverName());
     assertEquals("aa", tok.getDriverVersion());
-
   }
-
 }

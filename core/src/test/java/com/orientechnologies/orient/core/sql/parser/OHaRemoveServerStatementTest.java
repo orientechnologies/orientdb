@@ -11,6 +11,4 @@ public class OHaRemoveServerStatementTest extends OParserTestAbstract {
 
     checkWrongSyntax("ha remove server");
   }
-
-
 }

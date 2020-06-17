@@ -4,8 +4,7 @@ package com.orientechnologies.orient.core.sql.parser;
 
 import java.util.Map;
 
-public
-class OAlias extends SimpleNode {
+public class OAlias extends SimpleNode {
   public OAlias(int id) {
     super(id);
   }
@@ -14,9 +13,6 @@ class OAlias extends SimpleNode {
     super(p, id);
   }
 
-
-  public void toString(Map<Object, Object> params, StringBuilder builder) {
-
-  }
+  public void toString(Map<Object, Object> params, StringBuilder builder) {}
 }
 /* JavaCC - OriginalChecksum=c0c2ff315abe152a8ea5f2ecafd0f853 (do not edit this line) */

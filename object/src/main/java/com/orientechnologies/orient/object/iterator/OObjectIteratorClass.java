@@ -19,26 +19,29 @@
  */
 package com.orientechnologies.orient.object.iterator;
 
-import java.util.Iterator;
-
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.object.ODatabaseObject;
 import com.orientechnologies.orient.core.iterator.ORecordIteratorClass;
 import com.orientechnologies.orient.core.iterator.object.OObjectIteratorClassInterface;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.object.db.OObjectDatabaseTx;
+import java.util.Iterator;
 
 @SuppressWarnings("unchecked")
 public class OObjectIteratorClass<T> implements OObjectIteratorClassInterface<T> {
-  private ODatabaseObject                 database;
+  private ODatabaseObject database;
   private ORecordIteratorClass<ODocument> underlying;
-  private String                          fetchPlan;
+  private String fetchPlan;
 
-  public OObjectIteratorClass(final OObjectDatabaseTx iDatabase, final ODatabaseDocumentInternal iUnderlyingDatabase,
-      final String iClusterName, final boolean iPolymorphic) {
+  public OObjectIteratorClass(
+      final OObjectDatabaseTx iDatabase,
+      final ODatabaseDocumentInternal iUnderlyingDatabase,
+      final String iClusterName,
+      final boolean iPolymorphic) {
     database = iDatabase;
-    underlying = new ORecordIteratorClass<ODocument>(iDatabase.getUnderlying(), iClusterName, iPolymorphic,
-        true);
+    underlying =
+        new ORecordIteratorClass<ODocument>(
+            iDatabase.getUnderlying(), iClusterName, iPolymorphic, true);
   }
 
   public boolean hasNext() {
@@ -69,5 +72,4 @@ public class OObjectIteratorClass<T> implements OObjectIteratorClassInterface<T>
     this.fetchPlan = fetchPlan;
     return this;
   }
-
 }

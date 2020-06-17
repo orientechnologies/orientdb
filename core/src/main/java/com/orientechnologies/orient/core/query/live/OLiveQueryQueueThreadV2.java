@@ -21,9 +21,7 @@ package com.orientechnologies.orient.core.query.live;
 
 import com.orientechnologies.common.log.OLogManager;
 
-/**
- * @author Luigi Dell'Aquila (l.dellaquila-(at)-orientdb.com)
- */
+/** @author Luigi Dell'Aquila (l.dellaquila-(at)-orientdb.com) */
 public class OLiveQueryQueueThreadV2 extends Thread {
 
   private final OLiveQueryHookV2.OLiveQueryOps ops;
@@ -58,7 +56,6 @@ public class OLiveQueryQueueThreadV2 extends Thread {
         } catch (Exception e) {
           OLogManager.instance().warn(this, "Error executing live query subscriber.", e);
         }
-
       }
     }
   }
@@ -67,5 +64,4 @@ public class OLiveQueryQueueThreadV2 extends Thread {
     this.stopped = true;
     this.interrupt();
   }
-
 }

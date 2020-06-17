@@ -30,7 +30,6 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.metadata.schema.OClassImpl;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -41,12 +40,13 @@ import java.util.Map;
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
  */
 @SuppressWarnings("unchecked")
-public class OCommandExecutorSQLDropProperty extends OCommandExecutorSQLAbstract implements OCommandDistributedReplicateRequest {
-  public static final String KEYWORD_DROP     = "DROP";
+public class OCommandExecutorSQLDropProperty extends OCommandExecutorSQLAbstract
+    implements OCommandDistributedReplicateRequest {
+  public static final String KEYWORD_DROP = "DROP";
   public static final String KEYWORD_PROPERTY = "PROPERTY";
 
-  private String  className;
-  private String  fieldName;
+  private String className;
+  private String fieldName;
   private boolean ifExists;
   private boolean force = false;
 
@@ -66,19 +66,23 @@ public class OCommandExecutorSQLDropProperty extends OCommandExecutorSQLAbstract
       int oldPos = 0;
       int pos = nextWord(parserText, parserTextUpperCase, oldPos, word, true);
       if (pos == -1 || !word.toString().equals(KEYWORD_DROP))
-        throw new OCommandSQLParsingException("Keyword " + KEYWORD_DROP + " not found. Use " + getSyntax(), parserText, oldPos);
+        throw new OCommandSQLParsingException(
+            "Keyword " + KEYWORD_DROP + " not found. Use " + getSyntax(), parserText, oldPos);
 
       pos = nextWord(parserText, parserTextUpperCase, pos, word, true);
       if (pos == -1 || !word.toString().equals(KEYWORD_PROPERTY))
-        throw new OCommandSQLParsingException("Keyword " + KEYWORD_PROPERTY + " not found. Use " + getSyntax(), parserText, oldPos);
+        throw new OCommandSQLParsingException(
+            "Keyword " + KEYWORD_PROPERTY + " not found. Use " + getSyntax(), parserText, oldPos);
 
       pos = nextWord(parserText, parserTextUpperCase, pos, word, false);
       if (pos == -1)
-        throw new OCommandSQLParsingException("Expected <class>.<property>. Use " + getSyntax(), parserText, pos);
+        throw new OCommandSQLParsingException(
+            "Expected <class>.<property>. Use " + getSyntax(), parserText, pos);
 
       String[] parts = word.toString().split("\\.");
       if (parts.length != 2)
-        throw new OCommandSQLParsingException("Expected <class>.<property>. Use " + getSyntax(), parserText, pos);
+        throw new OCommandSQLParsingException(
+            "Expected <class>.<property>. Use " + getSyntax(), parserText, pos);
 
       className = decodeClassName(parts[0]);
       if (className == null)
@@ -95,7 +99,8 @@ public class OCommandExecutorSQLDropProperty extends OCommandExecutorSQLAbstract
           if ("EXISTS".equals(word.toString())) {
             this.ifExists = true;
           } else {
-            throw new OCommandSQLParsingException("Wrong query parameter, expecting EXISTS after IF", parserText, pos);
+            throw new OCommandSQLParsingException(
+                "Wrong query parameter, expecting EXISTS after IF", parserText, pos);
           }
         } else {
           throw new OCommandSQLParsingException("Wrong query parameter", parserText, pos);
@@ -108,15 +113,15 @@ public class OCommandExecutorSQLDropProperty extends OCommandExecutorSQLAbstract
     return this;
   }
 
-  /**
-   * Execute the CREATE PROPERTY.
-   */
+  /** Execute the CREATE PROPERTY. */
   public Object execute(final Map<Object, Object> iArgs) {
     if (fieldName == null)
-      throw new OCommandExecutionException("Cannot execute the command because it has not yet been parsed");
+      throw new OCommandExecutionException(
+          "Cannot execute the command because it has not yet been parsed");
 
     final ODatabaseDocument database = getDatabase();
-    final OClassImpl sourceClass = (OClassImpl) database.getMetadata().getSchema().getClass(className);
+    final OClassImpl sourceClass =
+        (OClassImpl) database.getMetadata().getSchema().getClass(className);
     if (sourceClass == null)
       throw new OCommandExecutionException("Source class '" + className + "' not found");
 
@@ -141,8 +146,10 @@ public class OCommandExecutorSQLDropProperty extends OCommandExecutorSQLAbstract
           indexNames.append(index.getName());
         }
 
-        throw new OCommandExecutionException("Property used in indexes (" + indexNames.toString()
-            + "). Please drop these indexes before removing property or use FORCE parameter.");
+        throw new OCommandExecutionException(
+            "Property used in indexes ("
+                + indexNames.toString()
+                + "). Please drop these indexes before removing property or use FORCE parameter.");
       }
     }
 
@@ -154,7 +161,9 @@ public class OCommandExecutorSQLDropProperty extends OCommandExecutorSQLAbstract
 
   @Override
   public long getDistributedTimeout() {
-    return getDatabase().getConfiguration().getValueAsLong(OGlobalConfiguration.DISTRIBUTED_COMMAND_TASK_SYNCH_TIMEOUT);
+    return getDatabase()
+        .getConfiguration()
+        .getValueAsLong(OGlobalConfiguration.DISTRIBUTED_COMMAND_TASK_SYNCH_TIMEOUT);
   }
 
   @Override
@@ -173,8 +182,11 @@ public class OCommandExecutorSQLDropProperty extends OCommandExecutorSQLAbstract
     final List<OIndex> result = new ArrayList<OIndex>();
 
     final ODatabaseDocumentInternal database = getDatabase();
-    for (final OIndex oIndex : database.getMetadata().getIndexManagerInternal().getClassIndexes(database, className)) {
-      if (OCollections.indexOf(oIndex.getDefinition().getFields(), fieldName, new OCaseInsentiveComparator()) > -1) {
+    for (final OIndex oIndex :
+        database.getMetadata().getIndexManagerInternal().getClassIndexes(database, className)) {
+      if (OCollections.indexOf(
+              oIndex.getDefinition().getFields(), fieldName, new OCaseInsentiveComparator())
+          > -1) {
         result.add(oIndex);
       }
     }

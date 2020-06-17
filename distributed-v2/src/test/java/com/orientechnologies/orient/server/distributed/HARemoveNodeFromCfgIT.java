@@ -18,16 +18,13 @@ package com.orientechnologies.orient.server.distributed;
 import com.orientechnologies.common.util.OCallable;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
+import java.util.concurrent.atomic.AtomicBoolean;
 import org.junit.Assert;
 import org.junit.Test;
 
-import java.util.concurrent.atomic.AtomicBoolean;
-
-/**
- * Distributed TX test against "plocal" protocol + shutdown and restart of a node.
- */
+/** Distributed TX test against "plocal" protocol + shutdown and restart of a node. */
 public class HARemoveNodeFromCfgIT extends AbstractServerClusterTxTest {
-  final static int      SERVERS      = 3;
+  static final int SERVERS = 3;
   private AtomicBoolean lastNodeIsUp = new AtomicBoolean(true);
 
   @Test
@@ -44,28 +41,41 @@ public class HARemoveNodeFromCfgIT extends AbstractServerClusterTxTest {
     } finally {
       OGlobalConfiguration.DISTRIBUTED_AUTO_REMOVE_OFFLINE_SERVERS.setValue(100);
     }
-
   }
 
   @Override
   protected void onAfterExecution() throws Exception {
-    final String removedServer = serverInstance.get(SERVERS - 1).getServerInstance().getDistributedManager().getLocalNodeName();
+    final String removedServer =
+        serverInstance
+            .get(SERVERS - 1)
+            .getServerInstance()
+            .getDistributedManager()
+            .getLocalNodeName();
 
-    Assert.assertTrue(serverInstance.get(0).getServerInstance().getDistributedManager().getDatabaseConfiguration(getDatabaseName())
-        .getAllConfiguredServers().contains(removedServer));
+    Assert.assertTrue(
+        serverInstance
+            .get(0)
+            .getServerInstance()
+            .getDistributedManager()
+            .getDatabaseConfiguration(getDatabaseName())
+            .getAllConfiguredServers()
+            .contains(removedServer));
 
-    Assert.assertTrue(serverInstance.get(0).getServerInstance().getDistributedManager().getConfigurationMap()
-        .containsKey("dbstatus." + removedServer + "." + getDatabaseName()));
+    Assert.assertTrue(
+        serverInstance
+            .get(0)
+            .getServerInstance()
+            .getDistributedManager()
+            .getConfigurationMap()
+            .containsKey("dbstatus." + removedServer + "." + getDatabaseName()));
 
     banner("SIMULATE SOFT SHUTDOWN OF SERVER " + (SERVERS - 1));
-    
-//    ODatabaseDocument database = serverInstance.get(SERVERS - 1).getEmbeddedDatabase(getDatabaseName());
-    
-// System.out.println("---- database isClosed = " + database.isClosed());
 
+    //    ODatabaseDocument database = serverInstance.get(SERVERS -
+    // 1).getEmbeddedDatabase(getDatabaseName());
 
-    
-    
+    // System.out.println("---- database isClosed = " + database.isClosed());
+
     serverInstance.get(SERVERS - 1).shutdownServer();
 
     lastNodeIsUp.set(false);
@@ -78,13 +88,27 @@ public class HARemoveNodeFromCfgIT extends AbstractServerClusterTxTest {
 
     banner("RESTARTING SERVER " + (SERVERS - 1) + "...");
 
-    Assert.assertFalse(serverInstance.get(0).getServerInstance().getDistributedManager().getDatabaseConfiguration(getDatabaseName())
-        .getAllConfiguredServers().contains(removedServer));
+    Assert.assertFalse(
+        serverInstance
+            .get(0)
+            .getServerInstance()
+            .getDistributedManager()
+            .getDatabaseConfiguration(getDatabaseName())
+            .getAllConfiguredServers()
+            .contains(removedServer));
 
-    Assert.assertEquals(serverInstance.get(0).getServerInstance().getDistributedManager().getConfigurationMap()
-        .get("dbstatus." + removedServer + "." + getDatabaseName()), ODistributedServerManager.DB_STATUS.NOT_AVAILABLE);
+    Assert.assertEquals(
+        serverInstance
+            .get(0)
+            .getServerInstance()
+            .getDistributedManager()
+            .getConfigurationMap()
+            .get("dbstatus." + removedServer + "." + getDatabaseName()),
+        ODistributedServerManager.DB_STATUS.NOT_AVAILABLE);
 
-    serverInstance.get(SERVERS - 1).startServer(getDistributedServerConfiguration(serverInstance.get(SERVERS - 1)));
+    serverInstance
+        .get(SERVERS - 1)
+        .startServer(getDistributedServerConfiguration(serverInstance.get(SERVERS - 1)));
 
     lastNodeIsUp.set(true);
 
@@ -98,27 +122,39 @@ public class HARemoveNodeFromCfgIT extends AbstractServerClusterTxTest {
   @Override
   protected void onBeforeChecks() throws InterruptedException {
     // // WAIT UNTIL THE END
-    waitFor(0, new OCallable<Boolean, ODatabaseDocument>() {
-      @Override
-      public Boolean call(ODatabaseDocument db) {
-        final boolean ok = db.countClass("Person") >= expected;
-        if (!ok)
-          System.out.println("FOUND " + db.countClass("Person") + " people instead of expected " + expected);
-        return ok;
-      }
-    }, 10000);
+    waitFor(
+        0,
+        new OCallable<Boolean, ODatabaseDocument>() {
+          @Override
+          public Boolean call(ODatabaseDocument db) {
+            final boolean ok = db.countClass("Person") >= expected;
+            if (!ok)
+              System.out.println(
+                  "FOUND " + db.countClass("Person") + " people instead of expected " + expected);
+            return ok;
+          }
+        },
+        10000);
 
-    waitFor(2, new OCallable<Boolean, ODatabaseDocument>() {
-      @Override
-      public Boolean call(ODatabaseDocument db) {
-        final long node2Expected = lastNodeIsUp.get() ? expected : expected - (count * writerCount * (SERVERS - 1));
+    waitFor(
+        2,
+        new OCallable<Boolean, ODatabaseDocument>() {
+          @Override
+          public Boolean call(ODatabaseDocument db) {
+            final long node2Expected =
+                lastNodeIsUp.get() ? expected : expected - (count * writerCount * (SERVERS - 1));
 
-        final boolean ok = db.countClass("Person") >= node2Expected;
-        if (!ok)
-          System.out.println("FOUND " + db.countClass("Person") + " people instead of expected " + node2Expected);
-        return ok;
-      }
-    }, 10000);
+            final boolean ok = db.countClass("Person") >= node2Expected;
+            if (!ok)
+              System.out.println(
+                  "FOUND "
+                      + db.countClass("Person")
+                      + " people instead of expected "
+                      + node2Expected);
+            return ok;
+          }
+        },
+        10000);
   }
 
   protected String getDatabaseURL(final ServerRun server) {

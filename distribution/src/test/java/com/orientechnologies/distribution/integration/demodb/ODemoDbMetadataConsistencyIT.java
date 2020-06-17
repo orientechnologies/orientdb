@@ -1,56 +1,54 @@
 package com.orientechnologies.distribution.integration.demodb;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.Assert.assertEquals;
+
+
 import com.orientechnologies.distribution.integration.OIntegrationTestTemplate;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
-import org.junit.Test;
-
 import java.util.List;
 import java.util.stream.Collectors;
+import org.junit.Test;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.Assert.assertEquals;
-
-/**
- * Created by frank on 15/03/2017.
- */
+/** Created by frank on 15/03/2017. */
 public class ODemoDbMetadataConsistencyIT extends OIntegrationTestTemplate {
 
-  private int vCount              = 7275;
-  private int locationsCount      = 3541;
-  private int attractionsCount    = 436;
-  private int archSitesCount      = 55;
-  private int castlesCount        = 127;
-  private int monumentsCount      = 137;
-  private int theatresCount       = 117;
-  private int ServicesCount       = 3105;
-  private int hotelsCount         = 1154;
-  private int restaurantsCount    = 1951;
-  private int profilesCount       = 1000;
-  private int customersCount      = 400;
-  private int countriesCount      = 249;
-  private int ordersCount         = 812;
-  private int reviewsCount        = 1273;
+  private int vCount = 7275;
+  private int locationsCount = 3541;
+  private int attractionsCount = 436;
+  private int archSitesCount = 55;
+  private int castlesCount = 127;
+  private int monumentsCount = 137;
+  private int theatresCount = 117;
+  private int ServicesCount = 3105;
+  private int hotelsCount = 1154;
+  private int restaurantsCount = 1951;
+  private int profilesCount = 1000;
+  private int customersCount = 400;
+  private int countriesCount = 249;
+  private int ordersCount = 812;
+  private int reviewsCount = 1273;
 
-  private int eCount              = 14872;
-  private int hasCustomerCount    = 812;
-  private int hasEatenCount       = 2479;
-  private int hasFriendCount      = 1617;
-  private int hasProfileCount     = 400;
-  private int hasReviewCount      = 1273;
-  private int hasStayedCount      = 1645;
+  private int eCount = 14872;
+  private int hasCustomerCount = 812;
+  private int hasEatenCount = 2479;
+  private int hasFriendCount = 1617;
+  private int hasProfileCount = 400;
+  private int hasReviewCount = 1273;
+  private int hasStayedCount = 1645;
   private int hasUsedServiceCount = 4124;
-  private int hasVisitedCount     = 4973;
-  private int isFromCountryCount  = 400;
-  private int madeReviewCount  = 1273;
+  private int hasVisitedCount = 4973;
+  private int isFromCountryCount = 400;
+  private int madeReviewCount = 1273;
 
   @Test
   public void testMetadata() throws Exception {
 
     OSchema schema = db.getMetadata().getSchema();
 
-    //todo: properties & indices
+    // todo: properties & indices
 
     // vertices
     assertThat(schema.getClass("V")).isNotNull();
@@ -70,7 +68,8 @@ public class ODemoDbMetadataConsistencyIT extends OIntegrationTestTemplate {
 
     assertThat(schema.getClass("ArchaeologicalSites")).isNotNull();
     assertEquals("V", schema.getClass("ArchaeologicalSites").getSuperClassesNames().get(0));
-    assertEquals("Attractions", schema.getClass("ArchaeologicalSites").getSuperClassesNames().get(1));
+    assertEquals(
+        "Attractions", schema.getClass("ArchaeologicalSites").getSuperClassesNames().get(1));
     assertThat(schema.getClass("ArchaeologicalSites").count()).isEqualTo(archSitesCount);
 
     assertThat(schema.getClass("Castles")).isNotNull();
@@ -159,12 +158,16 @@ public class ODemoDbMetadataConsistencyIT extends OIntegrationTestTemplate {
     assertThat(schema.getClass("HasUsedService").getSubclasses()).hasSize(2);
     assertThat(schema.getClass("HasUsedService").count()).isEqualTo(hasUsedServiceCount);
 
-    //other way to check inheritance
-    List<OResult> results = db.query("SELECT DISTINCT(@class) AS className from `HasUsedService` ORDER BY className ASC").stream()
-        .collect(Collectors.toList());
-      assertEquals(2, results.size());
-      assertEquals("HasEaten", results.get(0).getProperty("className"));
-      assertEquals("HasStayed", results.get(1).getProperty("className"));
+    // other way to check inheritance
+    List<OResult> results =
+        db
+            .query(
+                "SELECT DISTINCT(@class) AS className from `HasUsedService` ORDER BY className ASC")
+            .stream()
+            .collect(Collectors.toList());
+    assertEquals(2, results.size());
+    assertEquals("HasEaten", results.get(0).getProperty("className"));
+    assertEquals("HasStayed", results.get(1).getProperty("className"));
     //
 
     assertThat(schema.getClass("HasVisited")).isNotNull();
@@ -186,30 +189,36 @@ public class ODemoDbMetadataConsistencyIT extends OIntegrationTestTemplate {
   public void testDataModel() throws Exception {
 
     // all customers have a country
-    OResultSet resultSet = db
-        .query("MATCH {class: Customers, as: customer}-IsFromCountry->{class: Countries, as: country} RETURN  customer");
+    OResultSet resultSet =
+        db.query(
+            "MATCH {class: Customers, as: customer}-IsFromCountry->{class: Countries, as: country} RETURN  customer");
     assertThat(resultSet).hasSize(customersCount);
     resultSet.close();
 
     // all customers have a profile
-    resultSet = db.query("MATCH {class: Customers, as: customer}-HasProfile->{class: Profiles, as: profile} RETURN customer");
+    resultSet =
+        db.query(
+            "MATCH {class: Customers, as: customer}-HasProfile->{class: Profiles, as: profile} RETURN customer");
     assertThat(resultSet).hasSize(customersCount);
     resultSet.close();
 
     // all customers have at least 1 order
-    resultSet = db.query("MATCH {class: Orders, as: order}-HasCustomer->{class: Customers, as:customer} RETURN order");
+    resultSet =
+        db.query(
+            "MATCH {class: Orders, as: order}-HasCustomer->{class: Customers, as:customer} RETURN order");
     assertThat(resultSet.stream().count()).isGreaterThan(customersCount);
     resultSet.close();
-
   }
 
   @Test
   public void testMatchWithConditionInBackTraversal() throws Exception {
-    OResultSet resultSet = db.query("MATCH \n"
-        + "{class:Profiles, as:profileA} <-HasProfile- {as:customerA} -MadeReview-> {as:reviewA} <-HasReview- {as:restaurant},\n"
-        + "{as:profileB, where:($matched.profileA != $currentMatch)} <-HasProfile- {as:customerB} -MadeReview-> {as:reviewB} <-HasReview- {as:restaurant}\n"
-        + "return  profileA.Id as idA, profileA.Name, profileA.Surname, profileB.Id as idA, profileB.Name, profileB.Surname\n"
-        + "limit 10\n");
+    OResultSet resultSet =
+        db.query(
+            "MATCH \n"
+                + "{class:Profiles, as:profileA} <-HasProfile- {as:customerA} -MadeReview-> {as:reviewA} <-HasReview- {as:restaurant},\n"
+                + "{as:profileB, where:($matched.profileA != $currentMatch)} <-HasProfile- {as:customerB} -MadeReview-> {as:reviewB} <-HasReview- {as:restaurant}\n"
+                + "return  profileA.Id as idA, profileA.Name, profileA.Surname, profileB.Id as idA, profileB.Name, profileB.Surname\n"
+                + "limit 10\n");
 
     int size = 0;
     while (resultSet.hasNext()) {

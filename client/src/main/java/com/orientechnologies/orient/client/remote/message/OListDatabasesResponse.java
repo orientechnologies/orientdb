@@ -7,7 +7,6 @@ import com.orientechnologies.orient.core.serialization.serializer.record.ORecord
 import com.orientechnologies.orient.core.serialization.serializer.record.binary.ORecordSerializerNetworkFactory;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelDataInput;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelDataOutput;
-
 import java.io.IOException;
 import java.util.Map;
 
@@ -18,11 +17,11 @@ public class OListDatabasesResponse implements OBinaryResponse {
     this.databases = databases;
   }
 
-  public OListDatabasesResponse() {
-  }
+  public OListDatabasesResponse() {}
 
   @Override
-  public void write(OChannelDataOutput channel, int protocolVersion, ORecordSerializer serializer) throws IOException {
+  public void write(OChannelDataOutput channel, int protocolVersion, ORecordSerializer serializer)
+      throws IOException {
     final ODocument result = new ODocument();
     result.field("databases", databases);
     byte[] toSend = serializer.toStream(result);

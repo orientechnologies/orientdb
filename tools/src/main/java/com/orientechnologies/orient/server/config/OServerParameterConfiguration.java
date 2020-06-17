@@ -24,16 +24,13 @@ import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.bind.annotation.XmlType;
 
 @XmlRootElement(name = "parameter")
-@XmlType(propOrder = { "value", "name" })
+@XmlType(propOrder = {"value", "name"})
 public class OServerParameterConfiguration {
-  @XmlAttribute
-  public String name;
+  @XmlAttribute public String name;
 
-  @XmlAttribute
-  public String value;
+  @XmlAttribute public String value;
 
-  public OServerParameterConfiguration() {
-  }
+  public OServerParameterConfiguration() {}
 
   public OServerParameterConfiguration(final String iName, final String iValue) {
     name = iName;

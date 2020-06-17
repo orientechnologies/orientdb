@@ -1,7 +1,5 @@
 package com.orientechnologies.orient.graph;
 
-import com.orientechnologies.orient.core.command.OCommandManager;
-import com.orientechnologies.orient.core.command.script.OCommandExecutorScript;
 import com.orientechnologies.orient.core.command.script.OCommandScript;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
@@ -13,17 +11,16 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.orientechnologies.orient.core.storage.ORecordDuplicatedException;
+import java.util.List;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
-import java.util.List;
-
 public class GraphTransactionOnBatchTest {
   private ODatabaseDocument db;
-  private OClass            V;
-  private OClass            E;
+  private OClass V;
+  private OClass E;
 
   @Before
   public void before() {
@@ -45,16 +42,20 @@ public class GraphTransactionOnBatchTest {
     clazz.setSuperClass(V);
     clazz.createProperty("id", OType.STRING).createIndex(INDEX_TYPE.UNIQUE);
     try {
-      db.command(new OCommandScript("sql",
-          "BEGIN \n LET a = create vertex Test SET id = \"12345678\" \n LET b = create vertex Test SET id = \"4kkrPhGe\" \n LET c =create vertex Test SET id = \"4kkrPhGe\" \n COMMIT \n RETURN $b "))
+      db.command(
+              new OCommandScript(
+                  "sql",
+                  "BEGIN \n LET a = create vertex Test SET id = \"12345678\" \n LET b = create vertex Test SET id = \"4kkrPhGe\" \n LET c =create vertex Test SET id = \"4kkrPhGe\" \n COMMIT \n RETURN $b "))
           .execute();
       Assert.fail("expected record duplicate exception");
     } catch (ORecordDuplicatedException ex) {
 
     }
     try {
-      db.command(new OCommandScript("sql",
-          "BEGIN \n LET a = create vertex Test content {\"id\": \"12345678\"} \n LET b = create vertex Test content {\"id\": \"4kkrPhGe\"} \n LET c =create vertex Test content { \"id\": \"4kkrPhGe\"} \n COMMIT \n RETURN $b "))
+      db.command(
+              new OCommandScript(
+                  "sql",
+                  "BEGIN \n LET a = create vertex Test content {\"id\": \"12345678\"} \n LET b = create vertex Test content {\"id\": \"4kkrPhGe\"} \n LET c =create vertex Test content { \"id\": \"4kkrPhGe\"} \n COMMIT \n RETURN $b "))
           .execute();
       Assert.fail("expected record duplicate exception");
     } catch (ORecordDuplicatedException ex) {
@@ -72,7 +73,11 @@ public class GraphTransactionOnBatchTest {
     clazz.createProperty("id", OType.STRING).createIndex(INDEX_TYPE.UNIQUE);
     db.command(new OCommandSQL("create vertex Test SET id = \"12345678\"")).execute();
     try {
-      db.command(new OCommandScript("sql", "BEGIN \n LET a = create vertex Test SET id = \"12345678\" \n COMMIT\n" + " RETURN $a"))
+      db.command(
+              new OCommandScript(
+                  "sql",
+                  "BEGIN \n LET a = create vertex Test SET id = \"12345678\" \n COMMIT\n"
+                      + " RETURN $a"))
           .execute();
       Assert.fail("expected record duplicate exception");
     } catch (ORecordDuplicatedException ex) {
@@ -88,9 +93,12 @@ public class GraphTransactionOnBatchTest {
     clazz.setSuperClass(E);
     clazz.createProperty("aKey", OType.STRING).createIndex(INDEX_TYPE.UNIQUE);
     try {
-      db.command(new OCommandScript("sql",
-          "BEGIN \n LET a = create vertex V \n LET b = create vertex V \n LET c =create edge Test from $a to $b SET aKey = \"12345\" \n LET d =create edge Test from $a to $b SET aKey = \"12345\"  \n COMMIT \n"
-              + " RETURN $c")).execute();
+      db.command(
+              new OCommandScript(
+                  "sql",
+                  "BEGIN \n LET a = create vertex V \n LET b = create vertex V \n LET c =create edge Test from $a to $b SET aKey = \"12345\" \n LET d =create edge Test from $a to $b SET aKey = \"12345\"  \n COMMIT \n"
+                      + " RETURN $c"))
+          .execute();
       Assert.fail("expected record duplicate exception");
     } catch (ORecordDuplicatedException ex) {
 
@@ -107,9 +115,12 @@ public class GraphTransactionOnBatchTest {
     clazz.createProperty("out", OType.LINK);
     clazz.createIndex("Unique", INDEX_TYPE.UNIQUE, "in", "out");
     try {
-      db.command(new OCommandScript("sql",
-          "BEGIN \n LET a = create vertex V \n LET b = create vertex V \n LET c =create edge Test from $a to $b  \n LET d =create edge Test from $a to $b  \n COMMIT \n"
-              + " RETURN $c")).execute();
+      db.command(
+              new OCommandScript(
+                  "sql",
+                  "BEGIN \n LET a = create vertex V \n LET b = create vertex V \n LET c =create edge Test from $a to $b  \n LET d =create edge Test from $a to $b  \n COMMIT \n"
+                      + " RETURN $c"))
+          .execute();
       Assert.fail("expected record duplicate exception");
     } catch (ORecordDuplicatedException ex) {
 
@@ -126,13 +137,19 @@ public class GraphTransactionOnBatchTest {
     clazz.createProperty("out", OType.LINK);
     clazz.createIndex("Unique", INDEX_TYPE.UNIQUE, "in", "out");
     try {
-      db.command(new OCommandScript("sql",
-          "BEGIN \n LET a = create vertex V set name='a' \n LET b = create vertex V  set name='b' \n LET c =create edge Test from $a to $b  \n LET d =create edge Test from $a to $b \n COMMIT \n"
-              + " RETURN $c")).execute();
+      db.command(
+              new OCommandScript(
+                  "sql",
+                  "BEGIN \n LET a = create vertex V set name='a' \n LET b = create vertex V  set name='b' \n LET c =create edge Test from $a to $b  \n LET d =create edge Test from $a to $b \n COMMIT \n"
+                      + " RETURN $c"))
+          .execute();
 
-      db.command(new OCommandScript("sql",
-          "BEGIN \n LET c =create edge Test from (select from V  where name='a') to (select from V where name='b')  \n COMMIT \n"
-              + " RETURN $c")).execute();
+      db.command(
+              new OCommandScript(
+                  "sql",
+                  "BEGIN \n LET c =create edge Test from (select from V  where name='a') to (select from V where name='b')  \n COMMIT \n"
+                      + " RETURN $c"))
+          .execute();
       Assert.fail("expected record duplicate exception");
     } catch (ORecordDuplicatedException ex) {
 
@@ -146,13 +163,19 @@ public class GraphTransactionOnBatchTest {
     OClass clazz = db.getMetadata().getSchema().createClass("Test");
     clazz.setSuperClass(E);
     clazz.createProperty("aKey", OType.STRING).createIndex(INDEX_TYPE.UNIQUE);
-    db.command(new OCommandScript("sql",
-        "BEGIN \n LET a = create vertex V \n LET b = create vertex V \n LET c =create edge Test from $a to $b SET aKey = \"12345\"  \n commit  \n"
-            + " RETURN $c")).execute();
+    db.command(
+            new OCommandScript(
+                "sql",
+                "BEGIN \n LET a = create vertex V \n LET b = create vertex V \n LET c =create edge Test from $a to $b SET aKey = \"12345\"  \n commit  \n"
+                    + " RETURN $c"))
+        .execute();
     try {
-      db.command(new OCommandScript("sql",
-          "BEGIN \n LET a = create vertex V \n LET b = create vertex V \n LET c =create edge Test from $a to $b SET aKey = \"12345\"\n COMMIT \n"
-              + " RETURN $c")).execute();
+      db.command(
+              new OCommandScript(
+                  "sql",
+                  "BEGIN \n LET a = create vertex V \n LET b = create vertex V \n LET c =create edge Test from $a to $b SET aKey = \"12345\"\n COMMIT \n"
+                      + " RETURN $c"))
+          .execute();
       Assert.fail("expected record duplicate exception");
     } catch (ORecordDuplicatedException ex) {
 
@@ -165,9 +188,13 @@ public class GraphTransactionOnBatchTest {
   public void testReferInTxDeleteVertex() {
     try {
       db.command(new OCommandSQL("create vertex V set Mid = '1' ")).execute();
-      db.command(new OCommandScript("sql", "begin \n LET t0 = select from V where Mid='1' \n"
-          + "LET t1 = delete vertex V where Mid = '1' \n LET t2 = create vertex V set Mid = '2' \n"
-          + "LET t4 = create edge E from $t2 to $t0 \n commit \n return [$t4] ")).execute();
+      db.command(
+              new OCommandScript(
+                  "sql",
+                  "begin \n LET t0 = select from V where Mid='1' \n"
+                      + "LET t1 = delete vertex V where Mid = '1' \n LET t2 = create vertex V set Mid = '2' \n"
+                      + "LET t4 = create edge E from $t2 to $t0 \n commit \n return [$t4] "))
+          .execute();
       Assert.fail("it should go in exception because referring to a in transaction delete vertex");
     } catch (Exception ex) {
     }
@@ -180,9 +207,13 @@ public class GraphTransactionOnBatchTest {
   public void testReferToInTxCreatedAndDeletedVertex() {
 
     try {
-      db.command(new OCommandScript("sql", "begin \n LET t0 = create vertex V set Mid = '1' \n"
-          + "LET t1 = delete vertex V where Mid = '1' \n LET t2 = create vertex V set Mid = '2' \n"
-          + "LET t4 = create edge E from $t2 to $t0 \n commit \n return [$t4] ")).execute();
+      db.command(
+              new OCommandScript(
+                  "sql",
+                  "begin \n LET t0 = create vertex V set Mid = '1' \n"
+                      + "LET t1 = delete vertex V where Mid = '1' \n LET t2 = create vertex V set Mid = '2' \n"
+                      + "LET t4 = create edge E from $t2 to $t0 \n commit \n return [$t4] "))
+          .execute();
       Assert.fail("it should go in exception because referring to a in transaction delete vertex");
     } catch (Exception ex) {
     }
@@ -192,15 +223,19 @@ public class GraphTransactionOnBatchTest {
   }
 
   /**
-   * This test is different from the original reported, because in case of empty query result the 'create edge ' command just don't
-   * create edges without failing
+   * This test is different from the original reported, because in case of empty query result the
+   * 'create edge ' command just don't create edges without failing
    */
   @Test
   public void testReferToNotExistingVertex() {
     try {
-      db.command(new OCommandScript("sql", "begin \n \n LET t2 = create vertex V set Mid = \"2\" \n"
-          + "LET t5 = select from V where Mid = '123456789' \n LET t3 = create edge E from $t5 to $t2 \n"
-          + "\n commit \n return [$t3] ")).execute();
+      db.command(
+              new OCommandScript(
+                  "sql",
+                  "begin \n \n LET t2 = create vertex V set Mid = \"2\" \n"
+                      + "LET t5 = select from V where Mid = '123456789' \n LET t3 = create edge E from $t5 to $t2 \n"
+                      + "\n commit \n return [$t3] "))
+          .execute();
       Assert.fail();
     } catch (OCommandExecutionException e) {
     }
@@ -217,8 +252,10 @@ public class GraphTransactionOnBatchTest {
     Assert.assertEquals(1, res.size());
     Assert.assertFalse(db.getTransaction().isActive());
     try {
-      db.command(new OCommandScript("sql",
-          "begin \n Let t0 = delete vertex V where Mid='2' \n LET t1 = create edge E from $t2 to $t3 \n commit \n return $t1 "))
+      db.command(
+              new OCommandScript(
+                  "sql",
+                  "begin \n Let t0 = delete vertex V where Mid='2' \n LET t1 = create edge E from $t2 to $t3 \n commit \n return $t1 "))
           .execute();
       Assert.fail("it should go in exception because referring to not existing variable");
     } catch (Exception ex) {
@@ -229,5 +266,4 @@ public class GraphTransactionOnBatchTest {
     res = db.query(new OSQLSynchQuery("select from V"));
     Assert.assertEquals(1, res.size());
   }
-
 }

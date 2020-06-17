@@ -13,10 +13,10 @@ public class OrientJwtPayload implements OJwtPayload {
   public String sub;
   public String aud;
   public String jti;
-  public long   exp;
-  public long   iat;
-  public long   nbf;
-  public ORID   userRid;
+  public long exp;
+  public long iat;
+  public long nbf;
+  public ORID userRid;
   public String database;
   public String databaseType;
 
@@ -115,5 +115,4 @@ public class OrientJwtPayload implements OJwtPayload {
   public void setDatabaseType(String databaseType) {
     this.databaseType = databaseType;
   }
-
 }

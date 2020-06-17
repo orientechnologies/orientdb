@@ -3,17 +3,15 @@ package com.orientechnologies.orient.core.sql.executor;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * Created by luigidellaquila on 19/12/16.
- */
+/** Created by luigidellaquila on 19/12/16. */
 public class OInfoExecutionStep implements OExecutionStep {
 
-  private String               name;
-  private String               type;
-  private String               javaType;
-  private String               targetNode;
-  private String               description;
-  private long                 cost;
+  private String name;
+  private String type;
+  private String javaType;
+  private String targetNode;
+  private String description;
+  private long cost;
   private List<OExecutionStep> subSteps = new ArrayList<>();
 
   @Override

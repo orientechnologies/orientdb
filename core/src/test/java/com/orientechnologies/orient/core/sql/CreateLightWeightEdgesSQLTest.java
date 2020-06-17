@@ -1,16 +1,20 @@
 package com.orientechnologies.orient.core.sql;
 
-import com.orientechnologies.orient.core.db.*;
+import static org.junit.Assert.assertEquals;
+
+
+import com.orientechnologies.orient.core.db.ODatabasePool;
+import com.orientechnologies.orient.core.db.ODatabaseSession;
+import com.orientechnologies.orient.core.db.ODatabaseType;
+import com.orientechnologies.orient.core.db.OrientDB;
+import com.orientechnologies.orient.core.db.OrientDBConfig;
 import com.orientechnologies.orient.core.exception.OConcurrentModificationException;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
+import java.util.concurrent.CountDownLatch;
+import java.util.stream.IntStream;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-
-import java.util.concurrent.CountDownLatch;
-import java.util.stream.IntStream;
-
-import static org.junit.Assert.assertEquals;
 
 public class CreateLightWeightEdgesSQLTest {
 
@@ -24,12 +28,14 @@ public class CreateLightWeightEdgesSQLTest {
 
   @Test
   public void test() {
-    ODatabaseSession session = orientDB.open(CreateLightWeightEdgesSQLTest.class.getSimpleName(), "admin", "admin");
+    ODatabaseSession session =
+        orientDB.open(CreateLightWeightEdgesSQLTest.class.getSimpleName(), "admin", "admin");
 
     session.command("ALTER DATABASE CUSTOM useLightweightEdges = true");
     session.command("create vertex v set name='a' ");
     session.command("create vertex v set name='b' ");
-    session.command("create edge e from (select from v where name='a') to (select from v where name='a') ");
+    session.command(
+        "create edge e from (select from v where name='a') to (select from v where name='a') ");
     try (OResultSet res = session.query("select expand(out()) from v where name='a' ")) {
       assertEquals(res.stream().count(), 1);
     }
@@ -39,7 +45,9 @@ public class CreateLightWeightEdgesSQLTest {
   @Test
   public void mtTest() throws InterruptedException {
 
-    ODatabasePool pool = new ODatabasePool(orientDB, CreateLightWeightEdgesSQLTest.class.getSimpleName(), "admin", "admin");
+    ODatabasePool pool =
+        new ODatabasePool(
+            orientDB, CreateLightWeightEdgesSQLTest.class.getSimpleName(), "admin", "admin");
 
     ODatabaseSession session = pool.acquire();
 
@@ -51,28 +59,30 @@ public class CreateLightWeightEdgesSQLTest {
 
     CountDownLatch latch = new CountDownLatch(10);
 
-    IntStream.range(0, 10).forEach((i) -> {
-      new Thread(() -> {
+    IntStream.range(0, 10)
+        .forEach(
+            (i) -> {
+              new Thread(
+                      () -> {
+                        ODatabaseSession session1 = pool.acquire();
 
-        ODatabaseSession session1 = pool.acquire();
+                        try {
+                          for (int j = 0; j < 100; j++) {
 
-        try {
-          for (int j = 0; j < 100; j++) {
+                            try {
+                              session1.command(
+                                  "create edge e from (select from v where id=1) to (select from v where id=2) ");
+                            } catch (OConcurrentModificationException e) {
 
-
-            try {
-              session1.command("create edge e from (select from v where id=1) to (select from v where id=2) ");
-            } catch (OConcurrentModificationException e) {
-
-            }
-          }
-        } finally {
-          session1.close();
-          latch.countDown();
-        }
-
-      }).start();
-    });
+                            }
+                          }
+                        } finally {
+                          session1.close();
+                          latch.countDown();
+                        }
+                      })
+                  .start();
+            });
 
     latch.await();
 
@@ -88,12 +98,10 @@ public class CreateLightWeightEdgesSQLTest {
       session.close();
       pool.close();
     }
-
   }
 
   @After
   public void after() {
     orientDB.close();
   }
-
 }

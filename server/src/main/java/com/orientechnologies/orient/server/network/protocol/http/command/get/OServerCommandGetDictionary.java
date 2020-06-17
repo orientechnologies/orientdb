@@ -27,13 +27,14 @@ import com.orientechnologies.orient.server.network.protocol.http.OHttpResponse;
 import com.orientechnologies.orient.server.network.protocol.http.command.OServerCommandAuthenticatedDbAbstract;
 
 public class OServerCommandGetDictionary extends OServerCommandAuthenticatedDbAbstract {
-  private static final String[] NAMES = { "GET|dictionary/*" };
+  private static final String[] NAMES = {"GET|dictionary/*"};
 
   @Override
   public boolean execute(final OHttpRequest iRequest, OHttpResponse iResponse) throws Exception {
     iRequest.getData().commandInfo = "Dictionary lookup";
 
-    String[] urlParts = checkSyntax(iRequest.getUrl(), 3, "Syntax error: dictionary/<database>/<key>");
+    String[] urlParts =
+        checkSyntax(iRequest.getUrl(), 3, "Syntax error: dictionary/<database>/<key>");
 
     ODatabaseDocument db = null;
 
@@ -42,13 +43,13 @@ public class OServerCommandGetDictionary extends OServerCommandAuthenticatedDbAb
 
       final ORecord record = db.getDictionary().get(urlParts[2]);
       if (record == null)
-        throw new ORecordNotFoundException(null, "Key '" + urlParts[2] + "' was not found in the database dictionary");
+        throw new ORecordNotFoundException(
+            null, "Key '" + urlParts[2] + "' was not found in the database dictionary");
 
       iResponse.writeRecord(record);
 
     } finally {
-      if (db != null)
-        db.close();
+      if (db != null) db.close();
     }
     return false;
   }

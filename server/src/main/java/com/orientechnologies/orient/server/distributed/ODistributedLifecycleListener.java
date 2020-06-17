@@ -32,7 +32,6 @@ public interface ODistributedLifecycleListener {
    * Called when a node is joining the cluster. Return false to deny the join.
    *
    * @param iNode Node name that is joining
-   *
    * @return true to allow the join, otherwise false
    */
   boolean onNodeJoining(String iNode);
@@ -52,42 +51,29 @@ public interface ODistributedLifecycleListener {
   void onNodeLeft(String iNode);
 
   /**
-   * Called upon change of database status on a node. Available statuses are defined in ODistributedServerManager.DB_STATUS.
+   * Called upon change of database status on a node. Available statuses are defined in
+   * ODistributedServerManager.DB_STATUS.
    *
-   * @param iNode         The node name
+   * @param iNode The node name
    * @param iDatabaseName Database name
-   * @param iNewStatus    The new status
-   *
+   * @param iNewStatus The new status
    * @since 2.2.0
    */
-  void onDatabaseChangeStatus(String iNode, String iDatabaseName, ODistributedServerManager.DB_STATUS iNewStatus);
+  void onDatabaseChangeStatus(
+      String iNode, String iDatabaseName, ODistributedServerManager.DB_STATUS iNewStatus);
 
-  default void onMessageReceived(ODistributedRequest request) {
+  default void onMessageReceived(ODistributedRequest request) {}
 
-  }
+  default void onMessagePartitionCalculated(
+      ODistributedRequest request, Set<Integer> involvedWorkerQueues) {}
 
-  default void onMessagePartitionCalculated(ODistributedRequest request, Set<Integer> involvedWorkerQueues) {
+  default void onMessageBeforeOp(String op, ODistributedRequestId requestId) {}
 
-  }
+  default void onMessageAfterOp(String op, ODistributedRequestId requestId) {}
 
-  default void onMessageBeforeOp(String op, ODistributedRequestId requestId) {
+  default void onMessageProcessStart(ODistributedRequest message) {}
 
-  }
+  default void onMessageCurrentPayload(ODistributedRequestId requestId, Object responsePayload) {}
 
-  default void onMessageAfterOp(String op, ODistributedRequestId requestId) {
-
-  }
-
-  default void onMessageProcessStart(ODistributedRequest message) {
-
-  }
-
-  default void onMessageCurrentPayload(ODistributedRequestId requestId, Object responsePayload) {
-
-  }
-
-  default void onMessageProcessEnd(ODistributedRequest iRequest, Object responsePayload) {
-
-  }
-
+  default void onMessageProcessEnd(ODistributedRequest iRequest, Object responsePayload) {}
 }

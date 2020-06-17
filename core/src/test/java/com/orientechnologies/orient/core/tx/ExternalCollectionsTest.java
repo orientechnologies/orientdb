@@ -21,21 +21,23 @@ package com.orientechnologies.orient.core.tx;
 
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import org.junit.*;
-
 import java.util.ArrayList;
 import java.util.List;
+import org.junit.After;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Ignore;
+import org.junit.Test;
 
-/**
- * @author Sergey Sitnikov
- */
+/** @author Sergey Sitnikov */
 public class ExternalCollectionsTest {
 
   private ODatabaseDocumentTx db;
 
   @Before
   public void before() {
-    db = new ODatabaseDocumentTx("memory:" + ExternalCollectionsTest.class.getSimpleName()).create();
+    db =
+        new ODatabaseDocumentTx("memory:" + ExternalCollectionsTest.class.getSimpleName()).create();
   }
 
   @After

@@ -4,13 +4,12 @@ import com.orientechnologies.orient.core.db.OrientDB;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
+import java.util.Collections;
 import org.junit.Assert;
 import org.junit.Test;
 
-import java.util.Collections;
-
 public class DistributedAggregateCollectionIT extends AbstractServerClusterTest {
-  private final static int SERVERS = 1;
+  private static final int SERVERS = 1;
 
   @Override
   public String getDatabaseName() {
@@ -39,16 +38,20 @@ public class DistributedAggregateCollectionIT extends AbstractServerClusterTest 
     try {
       db.command(new OCommandSQL("INSERT into Item (name) values ('foo')")).execute();
 
-      Iterable<ODocument> result = db.command(new OCommandSQL("select set(name) as names from Item")).execute();
+      Iterable<ODocument> result =
+          db.command(new OCommandSQL("select set(name) as names from Item")).execute();
       Assert.assertEquals(Collections.singleton("foo"), result.iterator().next().field("names"));
 
       result = db.command(new OCommandSQL("select list(name) as names from Item")).execute();
-      Assert.assertEquals(Collections.singletonList("foo"), result.iterator().next().field("names"));
+      Assert.assertEquals(
+          Collections.singletonList("foo"), result.iterator().next().field("names"));
 
-      db.command(new OCommandSQL("INSERT into Item (map) values ({'a':'b'}) return @this")).execute();
+      db.command(new OCommandSQL("INSERT into Item (map) values ({'a':'b'}) return @this"))
+          .execute();
 
       result = db.command(new OCommandSQL("select map(map) as names from Item")).execute();
-      Assert.assertEquals(Collections.singletonMap("a", "b"), result.iterator().next().field("names"));
+      Assert.assertEquals(
+          Collections.singletonMap("a", "b"), result.iterator().next().field("names"));
 
     } finally {
       db.close();

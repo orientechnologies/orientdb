@@ -24,7 +24,6 @@ import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.index.OIndexInternal;
 import com.orientechnologies.orient.core.index.OIndexManagerAbstract;
-
 import java.util.NavigableMap;
 import java.util.TreeMap;
 
@@ -36,11 +35,13 @@ import java.util.TreeMap;
 public class OTransactionIndexChanges {
 
   public enum OPERATION {
-    PUT, REMOVE, CLEAR
+    PUT,
+    REMOVE,
+    CLEAR
   }
 
-  public NavigableMap<Object, OTransactionIndexChangesPerKey> changesPerKey = new TreeMap<Object, OTransactionIndexChangesPerKey>(
-      ODefaultComparator.INSTANCE);
+  public NavigableMap<Object, OTransactionIndexChangesPerKey> changesPerKey =
+      new TreeMap<Object, OTransactionIndexChangesPerKey>(ODefaultComparator.INSTANCE);
 
   public OTransactionIndexChangesPerKey nullKeyChanges = new OTransactionIndexChangesPerKey(null);
 
@@ -49,8 +50,7 @@ public class OTransactionIndexChanges {
   private OIndexInternal resolvedIndex = null;
 
   public OTransactionIndexChangesPerKey getChangesPerKey(final Object key) {
-    if (key == null)
-      return nullKeyChanges;
+    if (key == null) return nullKeyChanges;
 
     return changesPerKey.computeIfAbsent(key, OTransactionIndexChangesPerKey::new);
   }
@@ -82,7 +82,8 @@ public class OTransactionIndexChanges {
     return changesPerKey.ceilingKey(key);
   }
 
-  public Object[] firstAndLastKeys(Object from, boolean fromInclusive, Object to, boolean toInclusive) {
+  public Object[] firstAndLastKeys(
+      Object from, boolean fromInclusive, Object to, boolean toInclusive) {
     final NavigableMap<Object, OTransactionIndexChangesPerKey> interval;
     if (from != null && to != null) {
       interval = changesPerKey.subMap(from, fromInclusive, to, toInclusive);
@@ -97,7 +98,7 @@ public class OTransactionIndexChanges {
     if (interval.isEmpty()) {
       return new Object[0];
     } else {
-      return new Object[] { interval.firstKey(), interval.lastKey() };
+      return new Object[] {interval.firstKey(), interval.lastKey()};
     }
   }
 
@@ -105,11 +106,11 @@ public class OTransactionIndexChanges {
     return changesPerKey.floorKey(key);
   }
 
-  public OIndexInternal resolveAssociatedIndex(String indexName, OIndexManagerAbstract indexManager, ODatabaseDocumentInternal db) {
+  public OIndexInternal resolveAssociatedIndex(
+      String indexName, OIndexManagerAbstract indexManager, ODatabaseDocumentInternal db) {
     if (resolvedIndex == null) {
       final OIndex index = indexManager.getIndex(db, indexName);
-      if (index != null)
-        resolvedIndex = index.getInternal();
+      if (index != null) resolvedIndex = index.getInternal();
     }
 
     return resolvedIndex;

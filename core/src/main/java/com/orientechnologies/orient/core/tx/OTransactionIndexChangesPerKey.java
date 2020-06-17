@@ -23,8 +23,14 @@ import com.orientechnologies.common.collection.OMultiCollectionIterator;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.tx.OTransactionIndexChanges.OPERATION;
-
-import java.util.*;
+import java.util.ArrayDeque;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Deque;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Set;
 
 /**
  * Collects the changes to an index for a certain key
@@ -35,13 +41,13 @@ import java.util.*;
 public class OTransactionIndexChangesPerKey {
   /* internal */ static final int SET_ADD_THRESHOLD = 8;
 
-  public final Object                       key;
+  public final Object key;
   public final List<OTransactionIndexEntry> entries;
 
   public boolean clientTrackOnly;
 
   public static class OTransactionIndexEntry {
-    public OPERATION     operation;
+    public OPERATION operation;
     public OIdentifiable value;
 
     public OTransactionIndexEntry(final OIdentifiable iValue, final OPERATION iOperation) {
@@ -51,17 +57,15 @@ public class OTransactionIndexChangesPerKey {
 
     @Override
     public boolean equals(Object obj) {
-      // equality intentionally established by the value only, operation is ignored, see interpretAs* methods for details
+      // equality intentionally established by the value only, operation is ignored, see
+      // interpretAs* methods for details
 
-      if (this == obj)
-        return true;
+      if (this == obj) return true;
 
-      if (obj == null || obj.getClass() != OTransactionIndexEntry.class)
-        return false;
+      if (obj == null || obj.getClass() != OTransactionIndexEntry.class) return false;
       final OTransactionIndexEntry other = (OTransactionIndexEntry) obj;
 
-      if (this.value != null)
-        return this.value.equals(other.value);
+      if (this.value != null) return this.value.equals(other.value);
 
       return other.value == null;
     }
@@ -82,12 +86,14 @@ public class OTransactionIndexChangesPerKey {
       Iterator<OTransactionIndexEntry> iter = entries.iterator();
       while (iter.hasNext()) {
         OTransactionIndexEntry entry = iter.next();
-        if (((entry.value == iValue) || (entry.value != null && entry.value.equals(iValue))) && !entry.operation.equals(iOperation)) {
+        if (((entry.value == iValue) || (entry.value != null && entry.value.equals(iValue)))
+            && !entry.operation.equals(iOperation)) {
           iter.remove();
           return;
         }
       }
-      entries.add(new OTransactionIndexEntry(iValue != null ? iValue.getIdentity() : null, iOperation));
+      entries.add(
+          new OTransactionIndexEntry(iValue != null ? iValue.getIdentity() : null, iOperation));
     }
   }
 
@@ -100,14 +106,14 @@ public class OTransactionIndexChangesPerKey {
   public Iterable<OTransactionIndexEntry> interpret(Interpretation interpretation) {
     synchronized (this) {
       switch (interpretation) {
-      case Unique:
-        return interpretAsUnique();
-      case Dictionary:
-        return interpretAsDictionary();
-      case NonUnique:
-        return interpretAsNonUnique();
-      default:
-        throw new IllegalStateException("Unexpected interpretation '" + interpretation + "'");
+        case Unique:
+          return interpretAsUnique();
+        case Dictionary:
+          return interpretAsDictionary();
+        case NonUnique:
+          return interpretAsNonUnique();
+        default:
+          throw new IllegalStateException("Unexpected interpretation '" + interpretation + "'");
       }
     }
   }
@@ -124,10 +130,8 @@ public class OTransactionIndexChangesPerKey {
     builder.append(key).append(" [");
     boolean first = true;
     for (OTransactionIndexEntry entry : entries) {
-      if (first)
-        first = false;
-      else
-        builder.append(',');
+      if (first) first = false;
+      else builder.append(',');
 
       builder.append(entry.value).append(" (").append(entry.operation).append(")");
     }
@@ -138,8 +142,7 @@ public class OTransactionIndexChangesPerKey {
   private Iterable<OTransactionIndexEntry> interpretAsUnique() {
     // 1. Handle common fast paths.
 
-    if (entries.size() < 2)
-      return new ArrayList<OTransactionIndexEntry>(entries);
+    if (entries.size() < 2) return new ArrayList<OTransactionIndexEntry>(entries);
 
     if (entries.size() == 2) {
       final OTransactionIndexEntry entryA = entries.get(0);
@@ -153,9 +156,10 @@ public class OTransactionIndexChangesPerKey {
 
       if (ridA != null && ridA.equals(ridB)) {
         if (entryA.operation == entryB.operation) // both operations do the same on the same RID
-          return Collections.singletonList(entryA);
+        return Collections.singletonList(entryA);
 
-        return new ArrayList<OTransactionIndexEntry>(entries); // don't optimize remove-put on the same RID for safety
+        return new ArrayList<OTransactionIndexEntry>(
+            entries); // don't optimize remove-put on the same RID for safety
       }
 
       /* latest key removal wins */
@@ -172,51 +176,50 @@ public class OTransactionIndexChangesPerKey {
 
     // 2. Calculate observable changes to index.
 
-    final Set<OTransactionIndexEntry> interpretation = new HashSet<OTransactionIndexEntry>(entries.size());
+    final Set<OTransactionIndexEntry> interpretation =
+        new HashSet<OTransactionIndexEntry>(entries.size());
     OTransactionIndexEntry firstExternalRemove = null;
     for (OTransactionIndexEntry entry : entries) {
       final OIdentifiable value = entry.value;
 
       switch (entry.operation) {
-      case PUT:
-        assert value != null;
-        interpretation.add(entry);
-        break;
-      case REMOVE:
-        if (!interpretation.remove(entry)) {
-          if (firstExternalRemove == null)
-            firstExternalRemove = entry; // record only first external removal, it makes key ready for any put anyway
-          if (value == null)
-            interpretation.clear();
-        }
-        break;
-      case CLEAR:
-      default:
-        assert false;
-        break;
+        case PUT:
+          assert value != null;
+          interpretation.add(entry);
+          break;
+        case REMOVE:
+          if (!interpretation.remove(entry)) {
+            if (firstExternalRemove == null)
+              firstExternalRemove =
+                  entry; // record only first external removal, it makes key ready for any put
+            // anyway
+            if (value == null) interpretation.clear();
+          }
+          break;
+        case CLEAR:
+        default:
+          assert false;
+          break;
       }
     }
 
     // 3. Build resulting equivalent operation sequence.
 
     if (interpretation.isEmpty()) { // no observable changes except maybe some removal
-      if (firstExternalRemove != null)
-        return Collections.singletonList(firstExternalRemove);
+      if (firstExternalRemove != null) return Collections.singletonList(firstExternalRemove);
 
       return Collections.emptyList();
     }
 
-    final List<OTransactionIndexEntry> changes = new ArrayList<OTransactionIndexEntry>(
-        1 /* for removal, if any */ + 2 /* for puts */);
-    if (firstExternalRemove != null)
-      changes.add(firstExternalRemove);
+    final List<OTransactionIndexEntry> changes =
+        new ArrayList<OTransactionIndexEntry>(1 /* for removal, if any */ + 2 /* for puts */);
+    if (firstExternalRemove != null) changes.add(firstExternalRemove);
 
     int counter = 0;
     for (OTransactionIndexEntry entry : interpretation) {
       changes.add(entry);
 
-      if (++counter == 2)
-        break; // unique constraint already violated, stop
+      if (++counter == 2) break; // unique constraint already violated, stop
     }
 
     return changes;
@@ -225,8 +228,7 @@ public class OTransactionIndexChangesPerKey {
   private Iterable<OTransactionIndexEntry> interpretAsDictionary() {
     // 1. Handle common fast paths.
 
-    if (entries.size() < 2)
-      return new ArrayList<OTransactionIndexEntry>(entries);
+    if (entries.size() < 2) return new ArrayList<OTransactionIndexEntry>(entries);
 
     if (entries.size() == 2) {
       final OTransactionIndexEntry entryA = entries.get(0);
@@ -240,7 +242,7 @@ public class OTransactionIndexChangesPerKey {
 
       if (ridA != null && ridA.equals(ridB)) {
         if (entryA.operation == entryB.operation) // both operations do the same on the same RID
-          return Collections.singletonList(entryA);
+        return Collections.singletonList(entryA);
 
         return new ArrayList<OTransactionIndexEntry>(entries);
       }
@@ -259,58 +261,62 @@ public class OTransactionIndexChangesPerKey {
 
     // 2. Calculate observable changes to index.
 
-    // XXX: We need to return only *latest observable* put, it always wins to other puts and removals. Unfortunately, there
-    // is no lightweight way to find it out using standard Java data structures, thanks to Josh Bloch for not exposing the
-    // LinkedHashMap's "doubly-linked list" interface to the public, but mentioning it in the clever javadoc. So we have to
+    // XXX: We need to return only *latest observable* put, it always wins to other puts and
+    // removals. Unfortunately, there
+    // is no lightweight way to find it out using standard Java data structures, thanks to Josh
+    // Bloch for not exposing the
+    // LinkedHashMap's "doubly-linked list" interface to the public, but mentioning it in the clever
+    // javadoc. So we have to
     // maintain our own queue.
-    final Deque<OTransactionIndexEntry> lastObservedPuts = new ArrayDeque<OTransactionIndexEntry>(entries.size());
+    final Deque<OTransactionIndexEntry> lastObservedPuts =
+        new ArrayDeque<OTransactionIndexEntry>(entries.size());
 
-    final Set<OTransactionIndexEntry> interpretation = new HashSet<OTransactionIndexEntry>(entries.size());
+    final Set<OTransactionIndexEntry> interpretation =
+        new HashSet<OTransactionIndexEntry>(entries.size());
     OTransactionIndexEntry firstExternalRemove = null;
     for (OTransactionIndexEntry entry : entries) {
       final OIdentifiable value = entry.value;
 
       switch (entry.operation) {
-      case PUT:
-        assert value != null;
-
-        interpretation.add(entry);
-        lastObservedPuts.addLast(entry);
-        break;
-      case REMOVE:
-        if (interpretation.remove(entry)) { // the put of this RID is no longer observable
+        case PUT:
           assert value != null;
 
-          // Recalculate last visible put.
+          interpretation.add(entry);
+          lastObservedPuts.addLast(entry);
+          break;
+        case REMOVE:
+          if (interpretation.remove(entry)) { // the put of this RID is no longer observable
+            assert value != null;
 
-          if (entry.equals(lastObservedPuts.peekLast()))
-            lastObservedPuts.removeLast();
+            // Recalculate last visible put.
 
-          OTransactionIndexEntry last;
-          while ((last = lastObservedPuts.peekLast()) != null && !interpretation.contains(last)) // prune all unobservable puts
+            if (entry.equals(lastObservedPuts.peekLast())) lastObservedPuts.removeLast();
+
+            OTransactionIndexEntry last;
+            while ((last = lastObservedPuts.peekLast()) != null
+                && !interpretation.contains(last)) // prune all unobservable puts
             lastObservedPuts.removeLast();
-        } else {
-          if (firstExternalRemove == null) // save only first external remove
+          } else {
+            if (firstExternalRemove == null) // save only first external remove
             firstExternalRemove = entry;
-          if (value == null) { // start from the scratch
-            interpretation.clear();
-            lastObservedPuts.clear();
+            if (value == null) { // start from the scratch
+              interpretation.clear();
+              lastObservedPuts.clear();
+            }
           }
-        }
-        break;
+          break;
 
-      case CLEAR:
-      default:
-        assert false;
-        break;
+        case CLEAR:
+        default:
+          assert false;
+          break;
       }
     }
 
     // 3. Build resulting equivalent operation sequence.
 
     if (interpretation.isEmpty()) { // no observable changes except maybe some removal
-      if (firstExternalRemove != null)
-        return Collections.singletonList(firstExternalRemove);
+      if (firstExternalRemove != null) return Collections.singletonList(firstExternalRemove);
 
       return Collections.emptyList();
     }
@@ -321,8 +327,7 @@ public class OTransactionIndexChangesPerKey {
   private Iterable<OTransactionIndexEntry> interpretAsNonUnique() {
     // 1. Handle common fast paths.
 
-    if (entries.size() < 2)
-      return new ArrayList<OTransactionIndexEntry>(entries);
+    if (entries.size() < 2) return new ArrayList<OTransactionIndexEntry>(entries);
 
     if (entries.size() == 2) {
       final OTransactionIndexEntry entryA = entries.get(0);
@@ -348,7 +353,7 @@ public class OTransactionIndexChangesPerKey {
 
       if (ridA.equals(ridB)) {
         if (entryA.operation == entryB.operation) // both operations do the same on the same RID
-          return Collections.singletonList(entryA);
+        return Collections.singletonList(entryA);
 
         return new ArrayList<OTransactionIndexEntry>(entries);
       }
@@ -360,51 +365,57 @@ public class OTransactionIndexChangesPerKey {
 
     final Set<OTransactionIndexEntry> changes = new HashSet<OTransactionIndexEntry>(entries.size());
 
-    final Set<OTransactionIndexEntry> interpretation = new HashSet<OTransactionIndexEntry>(entries.size());
+    final Set<OTransactionIndexEntry> interpretation =
+        new HashSet<OTransactionIndexEntry>(entries.size());
     boolean seenKeyRemoval = false;
     for (OTransactionIndexEntry entry : entries) {
       final OIdentifiable value = entry.value;
       final ORID rid = value == null ? null : value.getIdentity();
 
       switch (entry.operation) {
-      case PUT:
-        assert rid != null;
+        case PUT:
+          assert rid != null;
 
-        interpretation.add(entry);
-        break;
-      case REMOVE:
-        if (rid == null) {
-          interpretation.clear();
+          interpretation.add(entry);
+          break;
+        case REMOVE:
+          if (rid == null) {
+            interpretation.clear();
 
-          changes.clear();
-          changes.add(entry); // save key removal as it affects the key regardless of the RID
-          seenKeyRemoval = true;
-        } else {
-          if (!interpretation.remove(entry))
-            if (!seenKeyRemoval) // no point in removing a RID from the removed key
-              changes.add(entry); // save that operation to remove the RID potentially created outside of a transaction
-        }
-        break;
+            changes.clear();
+            changes.add(entry); // save key removal as it affects the key regardless of the RID
+            seenKeyRemoval = true;
+          } else {
+            if (!interpretation.remove(entry))
+              if (!seenKeyRemoval) // no point in removing a RID from the removed key
+              changes.add(
+                    entry); // save that operation to remove the RID potentially created outside of
+            // a transaction
+          }
+          break;
 
-      case CLEAR:
-      default:
-        assert false;
-        break;
+        case CLEAR:
+        default:
+          assert false;
+          break;
       }
     }
 
     // 3. Build resulting equivalent operation sequence.
 
-    changes.removeAll(interpretation); // remove any removal which has a corresponding put, put is enough
+    changes.removeAll(
+        interpretation); // remove any removal which has a corresponding put, put is enough
 
     if (interpretation.isEmpty()) // no observable changes except maybe some removals
-      return changes; // it's either single key removal or one or more RID removals
+    return changes; // it's either single key removal or one or more RID removals
 
-    if (!seenKeyRemoval /* since key removal is an ordered operation */ && interpretation.size() < SET_ADD_THRESHOLD) {
+    if (!seenKeyRemoval /* since key removal is an ordered operation */
+        && interpretation.size() < SET_ADD_THRESHOLD) {
       changes.addAll(interpretation);
       return changes;
     } else {
-      final OMultiCollectionIterator<OTransactionIndexEntry> result = new OMultiCollectionIterator<OTransactionIndexEntry>();
+      final OMultiCollectionIterator<OTransactionIndexEntry> result =
+          new OMultiCollectionIterator<OTransactionIndexEntry>();
       result.setAutoConvertToRecord(false);
       result.add(changes);
       result.add(interpretation);
@@ -420,24 +431,15 @@ public class OTransactionIndexChangesPerKey {
     return result;
   }
 
-  /**
-   * Defines interpretations supported by {@link #interpret(Interpretation)}.
-   */
+  /** Defines interpretations supported by {@link #interpret(Interpretation)}. */
   public enum Interpretation {
-    /**
-     * Interpret changes like they was done for unique index.
-     */
+    /** Interpret changes like they was done for unique index. */
     Unique,
 
-    /**
-     * Interpret changes like they was done for dictionary index.
-     */
+    /** Interpret changes like they was done for dictionary index. */
     Dictionary,
 
-    /**
-     * Interpret changes like they was done for non-unique index.
-     */
+    /** Interpret changes like they was done for non-unique index. */
     NonUnique
   }
-
 }

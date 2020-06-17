@@ -24,7 +24,6 @@ import com.orientechnologies.common.util.OPatternConst;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.network.protocol.http.command.OServerCommand;
-
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -36,13 +35,17 @@ public class OHttpNetworkCommandManager {
 
   private static final String URL_PART_PATTERN = "([a-zA-Z0-9%:\\\\+]*)";
 
-  private final Map<String, OServerCommand> exactCommands    = new ConcurrentHashMap<String, OServerCommand>();
-  private final Map<String, OServerCommand> wildcardCommands = new ConcurrentHashMap<String, OServerCommand>();
-  private final Map<String, OServerCommand> restCommands     = new ConcurrentHashMap<String, OServerCommand>();
-  private final OHttpNetworkCommandManager  parent;
-  private final OServer                     server;
+  private final Map<String, OServerCommand> exactCommands =
+      new ConcurrentHashMap<String, OServerCommand>();
+  private final Map<String, OServerCommand> wildcardCommands =
+      new ConcurrentHashMap<String, OServerCommand>();
+  private final Map<String, OServerCommand> restCommands =
+      new ConcurrentHashMap<String, OServerCommand>();
+  private final OHttpNetworkCommandManager parent;
+  private final OServer server;
 
-  public OHttpNetworkCommandManager(final OServer iServer, final OHttpNetworkCommandManager iParent) {
+  public OHttpNetworkCommandManager(
+      final OServer iServer, final OHttpNetworkCommandManager iParent) {
     server = iServer;
     parent = iParent;
   }
@@ -74,8 +77,7 @@ public class OHttpNetworkCommandManager {
       }
     }
 
-    if (cmd == null && parent != null)
-      cmd = (OServerCommand) parent.getCommand(iName);
+    if (cmd == null && parent != null) cmd = (OServerCommand) parent.getCommand(iName);
 
     return cmd;
   }
@@ -91,8 +93,7 @@ public class OHttpNetworkCommandManager {
         restCommands.put(name, iServerCommandInstance);
       } else if (OStringSerializerHelper.contains(name, '*'))
         wildcardCommands.put(name, iServerCommandInstance);
-      else
-        exactCommands.put(name, iServerCommandInstance);
+      else exactCommands.put(name, iServerCommandInstance);
     iServerCommandInstance.configure(server);
   }
 
@@ -102,7 +103,8 @@ public class OHttpNetworkCommandManager {
     if (urlPattern == null) {
       return result;
     }
-    String matcherUrl = OPatternConst.PATTERN_REST_URL.matcher(urlPattern).replaceAll(URL_PART_PATTERN);
+    String matcherUrl =
+        OPatternConst.PATTERN_REST_URL.matcher(urlPattern).replaceAll(URL_PART_PATTERN);
 
     matcherUrl = matcherUrl.substring(matcherUrl.indexOf('|') + 1);
     requestUrl = requestUrl.substring(requestUrl.indexOf('|') + 1);
@@ -138,9 +140,12 @@ public class OHttpNetworkCommandManager {
   }
 
   private boolean matches(String urlPattern, String requestUrl) {
-    String matcherUrl = OPatternConst.PATTERN_REST_URL.matcher(urlPattern).replaceAll(URL_PART_PATTERN);
+    String matcherUrl =
+        OPatternConst.PATTERN_REST_URL.matcher(urlPattern).replaceAll(URL_PART_PATTERN);
 
-    if (!matcherUrl.substring(0, matcherUrl.indexOf('|') + 1).equals(requestUrl.substring(0, requestUrl.indexOf('|') + 1))) {
+    if (!matcherUrl
+        .substring(0, matcherUrl.indexOf('|') + 1)
+        .equals(requestUrl.substring(0, requestUrl.indexOf('|') + 1))) {
       return false;
     }
     matcherUrl = matcherUrl.substring(matcherUrl.indexOf('|') + 1);

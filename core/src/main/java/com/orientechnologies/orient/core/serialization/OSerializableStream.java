@@ -19,36 +19,33 @@
  */
 package com.orientechnologies.orient.core.serialization;
 
-import java.io.Serializable;
-
 import com.orientechnologies.orient.core.exception.OSerializationException;
+import java.io.Serializable;
 
 /**
  * Base interface of serialization.
- * 
+ *
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
- * 
  */
 public interface OSerializableStream extends Serializable {
   /**
-   * Marshalls the object. Transforms the current object in byte[] form to being stored or transferred over the network.
-   * 
+   * Marshalls the object. Transforms the current object in byte[] form to being stored or
+   * transferred over the network.
+   *
    * @return The byte array representation of the object
    * @see #fromStream(byte[])
-   * @throws OSerializationException
-   *           if the marshalling does not succeed
+   * @throws OSerializationException if the marshalling does not succeed
    */
   byte[] toStream() throws OSerializationException;
 
   /**
-   * Unmarshalls the object. Fills the current object with the values contained in the byte array representation restoring a
-   * previous state. Usually byte[] comes from the storage or network.
-   * 
-   * @param iStream
-   *          byte array representation of the object
-   * @return The Object instance itself giving a "fluent interface". Useful to call multiple methods in chain.
-   * @throws OSerializationException
-   *           if the unmarshalling does not succeed
+   * Unmarshalls the object. Fills the current object with the values contained in the byte array
+   * representation restoring a previous state. Usually byte[] comes from the storage or network.
+   *
+   * @param iStream byte array representation of the object
+   * @return The Object instance itself giving a "fluent interface". Useful to call multiple methods
+   *     in chain.
+   * @throws OSerializationException if the unmarshalling does not succeed
    */
   OSerializableStream fromStream(byte[] iStream) throws OSerializationException;
 }

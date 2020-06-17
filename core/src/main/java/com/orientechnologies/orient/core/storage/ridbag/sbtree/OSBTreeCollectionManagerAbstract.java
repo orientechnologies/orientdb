@@ -30,39 +30,41 @@ import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperation;
 import com.orientechnologies.orient.core.storage.index.sbtreebonsai.local.OSBTreeBonsai;
-
 import java.io.IOException;
 import java.util.UUID;
 
-/**
- * @author Artem Orobets (enisher-at-gmail.com)
- */
+/** @author Artem Orobets (enisher-at-gmail.com) */
 public abstract class OSBTreeCollectionManagerAbstract
-    implements OCloseable, OSBTreeCollectionManager, OOrientStartupListener, OOrientShutdownListener {
-  public static final String FILE_NAME_PREFIX  = "collections_";
+    implements OCloseable,
+        OSBTreeCollectionManager,
+        OOrientStartupListener,
+        OOrientShutdownListener {
+  public static final String FILE_NAME_PREFIX = "collections_";
   public static final String DEFAULT_EXTENSION = ".sbc";
 
   /**
    * Generates a lock name for the given cluster ID.
    *
    * @param clusterId the cluster ID to generate the lock name for.
-   *
    * @return the generated lock name.
    */
   public static String generateLockName(int clusterId) {
     return FILE_NAME_PREFIX + clusterId + DEFAULT_EXTENSION;
   }
 
-  private static final ConcurrentLinkedHashMap<CacheKey, SBTreeBonsaiContainer> GLOBAL_TREE_CACHE = new ConcurrentLinkedHashMap.Builder<CacheKey, SBTreeBonsaiContainer>()
-      .maximumWeightedCapacity(Long.MAX_VALUE).build();
+  private static final ConcurrentLinkedHashMap<CacheKey, SBTreeBonsaiContainer> GLOBAL_TREE_CACHE =
+      new ConcurrentLinkedHashMap.Builder<CacheKey, SBTreeBonsaiContainer>()
+          .maximumWeightedCapacity(Long.MAX_VALUE)
+          .build();
 
-  private static final int GLOBAL_EVICTION_THRESHOLD = OGlobalConfiguration.SBTREEBONSAI_LINKBAG_CACHE_EVICTION_SIZE
-      .getValueAsInteger();
-  private static final int GLOBAL_CACHE_MAX_SIZE     = OGlobalConfiguration.SBTREEBONSAI_LINKBAG_CACHE_SIZE.getValueAsInteger();
+  private static final int GLOBAL_EVICTION_THRESHOLD =
+      OGlobalConfiguration.SBTREEBONSAI_LINKBAG_CACHE_EVICTION_SIZE.getValueAsInteger();
+  private static final int GLOBAL_CACHE_MAX_SIZE =
+      OGlobalConfiguration.SBTREEBONSAI_LINKBAG_CACHE_SIZE.getValueAsInteger();
 
   private static final Object[] GLOBAL_LOCKS;
-  private static final int      GLOBAL_SHIFT;
-  private static final int      GLOBAL_MASK;
+  private static final int GLOBAL_SHIFT;
+  private static final int GLOBAL_MASK;
 
   static {
     final int concurrencyLevel = Runtime.getRuntime().availableProcessors() * 8;
@@ -85,26 +87,38 @@ public abstract class OSBTreeCollectionManagerAbstract
     GLOBAL_LOCKS = locks;
   }
 
-  private final   int                                                      evictionThreshold;
-  private final   int                                                      cacheMaxSize;
-  private final   int                                                      shift;
-  private final   int                                                      mask;
-  private final   Object[]                                                 locks;
+  private final int evictionThreshold;
+  private final int cacheMaxSize;
+  private final int shift;
+  private final int mask;
+  private final Object[] locks;
   protected final ConcurrentLinkedHashMap<CacheKey, SBTreeBonsaiContainer> treeCache;
-  private final   OStorage                                                 storage;
+  private final OStorage storage;
 
   public OSBTreeCollectionManagerAbstract(OStorage storage) {
-    this(GLOBAL_TREE_CACHE, storage, GLOBAL_EVICTION_THRESHOLD, GLOBAL_CACHE_MAX_SIZE, GLOBAL_LOCKS);
+    this(
+        GLOBAL_TREE_CACHE, storage, GLOBAL_EVICTION_THRESHOLD, GLOBAL_CACHE_MAX_SIZE, GLOBAL_LOCKS);
   }
 
   // for testing purposes
-  /* internal */ OSBTreeCollectionManagerAbstract(OStorage storage, int evictionThreshold, int cacheMaxSize) {
-    this(new ConcurrentLinkedHashMap.Builder<CacheKey, SBTreeBonsaiContainer>().maximumWeightedCapacity(Long.MAX_VALUE).build(),
-        storage, evictionThreshold, cacheMaxSize, null);
+  /* internal */ OSBTreeCollectionManagerAbstract(
+      OStorage storage, int evictionThreshold, int cacheMaxSize) {
+    this(
+        new ConcurrentLinkedHashMap.Builder<CacheKey, SBTreeBonsaiContainer>()
+            .maximumWeightedCapacity(Long.MAX_VALUE)
+            .build(),
+        storage,
+        evictionThreshold,
+        cacheMaxSize,
+        null);
   }
 
-  private OSBTreeCollectionManagerAbstract(ConcurrentLinkedHashMap<CacheKey, SBTreeBonsaiContainer> treeCache, OStorage storage,
-      int evictionThreshold, int cacheMaxSize, Object[] locks) {
+  private OSBTreeCollectionManagerAbstract(
+      ConcurrentLinkedHashMap<CacheKey, SBTreeBonsaiContainer> treeCache,
+      OStorage storage,
+      int evictionThreshold,
+      int cacheMaxSize,
+      Object[] locks) {
     this.treeCache = treeCache;
     this.storage = storage;
 
@@ -150,18 +164,21 @@ public abstract class OSBTreeCollectionManagerAbstract
   }
 
   @Override
-  public OSBTreeBonsai<OIdentifiable, Integer> createAndLoadTree(OAtomicOperation atomicOperation, int clusterId) throws IOException {
+  public OSBTreeBonsai<OIdentifiable, Integer> createAndLoadTree(
+      OAtomicOperation atomicOperation, int clusterId) throws IOException {
     return loadSBTree(createSBTree(clusterId, atomicOperation, null));
   }
 
   @Override
-  public OBonsaiCollectionPointer createSBTree(int clusterId, OAtomicOperation atomicOperation, UUID ownerUUID) throws IOException {
+  public OBonsaiCollectionPointer createSBTree(
+      int clusterId, OAtomicOperation atomicOperation, UUID ownerUUID) throws IOException {
     OSBTreeBonsai<OIdentifiable, Integer> tree = createEdgeTree(atomicOperation, clusterId);
     return tree.getCollectionPointer();
   }
 
   @Override
-  public OSBTreeBonsai<OIdentifiable, Integer> loadSBTree(OBonsaiCollectionPointer collectionPointer) {
+  public OSBTreeBonsai<OIdentifiable, Integer> loadSBTree(
+      OBonsaiCollectionPointer collectionPointer) {
     final CacheKey cacheKey = new CacheKey(storage, collectionPointer);
     final Object lock = treesSubsetLock(cacheKey);
 
@@ -186,7 +203,6 @@ public abstract class OSBTreeCollectionManagerAbstract
           treeCache.put(cacheKey, container);
         }
       }
-
     }
 
     evict();
@@ -220,7 +236,8 @@ public abstract class OSBTreeCollectionManagerAbstract
       assert container != null;
 
       if (container.usagesCounter != 0) {
-        throw new IllegalStateException("Cannot delete SBTreeBonsai instance because it is used in other thread.");
+        throw new IllegalStateException(
+            "Cannot delete SBTreeBonsai instance because it is used in other thread.");
       }
 
       treeCache.remove(cacheKey);
@@ -254,25 +271,33 @@ public abstract class OSBTreeCollectionManagerAbstract
   }
 
   void clearClusterCache(final long fileId, String fileName) {
-    treeCache.entrySet().removeIf(entry -> {
-      final CacheKey key = entry.getKey();
+    treeCache
+        .entrySet()
+        .removeIf(
+            entry -> {
+              final CacheKey key = entry.getKey();
 
-      if (key.storage == storage && key.pointer.getFileId() == fileId) {
-        final SBTreeBonsaiContainer container = entry.getValue();
-        if (container.usagesCounter > 0) {
-          throw new IllegalStateException("Ridbags of file " + fileName + " can not be cleared because some of them are in use");
-        }
+              if (key.storage == storage && key.pointer.getFileId() == fileId) {
+                final SBTreeBonsaiContainer container = entry.getValue();
+                if (container.usagesCounter > 0) {
+                  throw new IllegalStateException(
+                      "Ridbags of file "
+                          + fileName
+                          + " can not be cleared because some of them are in use");
+                }
 
-        return true;
-      }
+                return true;
+              }
 
-      return false;
-    });
+              return false;
+            });
   }
 
-  protected abstract OSBTreeBonsai<OIdentifiable, Integer> createEdgeTree(OAtomicOperation atomicOperation, int clusterId) throws IOException;
+  protected abstract OSBTreeBonsai<OIdentifiable, Integer> createEdgeTree(
+      OAtomicOperation atomicOperation, int clusterId) throws IOException;
 
-  protected abstract OSBTreeBonsai<OIdentifiable, Integer> loadTree(OBonsaiCollectionPointer collectionPointer);
+  protected abstract OSBTreeBonsai<OIdentifiable, Integer> loadTree(
+      OBonsaiCollectionPointer collectionPointer);
 
   int size() {
     return treeCache.size();
@@ -286,9 +311,9 @@ public abstract class OSBTreeCollectionManagerAbstract
   }
 
   protected static final class SBTreeBonsaiContainer {
-    private final      OSBTreeBonsai<OIdentifiable, Integer> tree;
-    protected volatile int                                   usagesCounter  = 0;
-    protected volatile long                                  lastAccessTime = 0;
+    private final OSBTreeBonsai<OIdentifiable, Integer> tree;
+    protected volatile int usagesCounter = 0;
+    protected volatile long lastAccessTime = 0;
 
     private SBTreeBonsaiContainer(OSBTreeBonsai<OIdentifiable, Integer> tree) {
       this.tree = tree;
@@ -296,7 +321,7 @@ public abstract class OSBTreeCollectionManagerAbstract
   }
 
   protected static final class CacheKey {
-    private final OStorage                 storage;
+    private final OStorage storage;
     private final OBonsaiCollectionPointer pointer;
 
     CacheKey(OStorage storage, OBonsaiCollectionPointer pointer) {
@@ -309,7 +334,8 @@ public abstract class OSBTreeCollectionManagerAbstract
       return storage.hashCode() ^ pointer.hashCode();
     }
 
-    @SuppressWarnings("EqualsWhichDoesntCheckParameterClass") // it's a private class used in a private context
+    @SuppressWarnings(
+        "EqualsWhichDoesntCheckParameterClass") // it's a private class used in a private context
     @Override
     public boolean equals(Object obj) {
       final CacheKey other = (CacheKey) obj;

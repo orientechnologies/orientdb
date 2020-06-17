@@ -16,28 +16,27 @@ import com.orientechnologies.orient.core.tx.OTransactionIndexChanges;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelDataInput;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelDataOutput;
-
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-/**
- * Created by tglman on 30/12/16.
- */
+/** Created by tglman on 30/12/16. */
 public class OCommit38Request implements OBinaryRequest<OCommit37Response> {
 
-  private int                           txId;
-  private boolean                       hasContent;
-  private boolean                       usingLog;
+  private int txId;
+  private boolean hasContent;
+  private boolean usingLog;
   private List<ORecordOperationRequest> operations;
-  private List<IndexChange>             indexChanges;
+  private List<IndexChange> indexChanges;
 
-  public OCommit38Request() {
+  public OCommit38Request() {}
 
-  }
-
-  public OCommit38Request(int txId, boolean hasContent, boolean usingLong, Iterable<ORecordOperation> operations,
+  public OCommit38Request(
+      int txId,
+      boolean hasContent,
+      boolean usingLong,
+      Iterable<ORecordOperation> operations,
       Map<String, OTransactionIndexChanges> indexChanges) {
     this.txId = txId;
     this.hasContent = hasContent;
@@ -46,30 +45,29 @@ public class OCommit38Request implements OBinaryRequest<OCommit37Response> {
       this.indexChanges = new ArrayList<>();
       List<ORecordOperationRequest> netOperations = new ArrayList<>();
       for (ORecordOperation txEntry : operations) {
-        if (txEntry.type == ORecordOperation.LOADED)
-          continue;
+        if (txEntry.type == ORecordOperation.LOADED) continue;
         ORecordOperationRequest request = new ORecordOperationRequest();
         request.setType(txEntry.type);
         request.setVersion(txEntry.getRecord().getVersion());
         request.setId(txEntry.getRecord().getIdentity());
         switch (txEntry.type) {
-        case ORecordOperation.CREATED:
-          request.setRecordType(ORecordInternal.getRecordType(txEntry.getRecord()));
-          request.setRecord(ORecordSerializerNetworkV37.INSTANCE.toStream(txEntry.getRecord()));
-          request.setContentChanged(ORecordInternal.isContentChanged(txEntry.getRecord()));
-          break;
-        case ORecordOperation.UPDATED:
-          if (ODocument.RECORD_TYPE == ORecordInternal.getRecordType(txEntry.getRecord())) {
-            request.setRecordType(ODocumentSerializerDelta.DELTA_RECORD_TYPE);
-            ODocumentSerializerDelta delta = ODocumentSerializerDelta.instance();
-            request.setRecord(delta.serializeDelta((ODocument) txEntry.getRecord()));
-            request.setContentChanged(ORecordInternal.isContentChanged(txEntry.getRecord()));
-          } else {
+          case ORecordOperation.CREATED:
             request.setRecordType(ORecordInternal.getRecordType(txEntry.getRecord()));
             request.setRecord(ORecordSerializerNetworkV37.INSTANCE.toStream(txEntry.getRecord()));
             request.setContentChanged(ORecordInternal.isContentChanged(txEntry.getRecord()));
-          }
-          break;
+            break;
+          case ORecordOperation.UPDATED:
+            if (ODocument.RECORD_TYPE == ORecordInternal.getRecordType(txEntry.getRecord())) {
+              request.setRecordType(ODocumentSerializerDelta.DELTA_RECORD_TYPE);
+              ODocumentSerializerDelta delta = ODocumentSerializerDelta.instance();
+              request.setRecord(delta.serializeDelta((ODocument) txEntry.getRecord()));
+              request.setContentChanged(ORecordInternal.isContentChanged(txEntry.getRecord()));
+            } else {
+              request.setRecordType(ORecordInternal.getRecordType(txEntry.getRecord()));
+              request.setRecord(ORecordSerializerNetworkV37.INSTANCE.toStream(txEntry.getRecord()));
+              request.setContentChanged(ORecordInternal.isContentChanged(txEntry.getRecord()));
+            }
+            break;
         }
         netOperations.add(request);
       }
@@ -83,7 +81,7 @@ public class OCommit38Request implements OBinaryRequest<OCommit37Response> {
 
   @Override
   public void write(OChannelDataOutput network, OStorageRemoteSession session) throws IOException {
-    //from 3.0 the the serializer is bound to the protocol
+    // from 3.0 the the serializer is bound to the protocol
     ORecordSerializerNetworkV37 serializer = ORecordSerializerNetworkV37.INSTANCE;
     network.writeInt(txId);
     network.writeBoolean(hasContent);
@@ -103,7 +101,8 @@ public class OCommit38Request implements OBinaryRequest<OCommit37Response> {
   }
 
   @Override
-  public void read(OChannelDataInput channel, int protocolVersion, ORecordSerializer serializer) throws IOException {
+  public void read(OChannelDataInput channel, int protocolVersion, ORecordSerializer serializer)
+      throws IOException {
     txId = channel.readInt();
     hasContent = channel.readBoolean();
     usingLog = channel.readBoolean();
@@ -119,7 +118,9 @@ public class OCommit38Request implements OBinaryRequest<OCommit37Response> {
       } while (hasEntry == 1);
 
       // RECEIVE MANUAL INDEX CHANGES
-      this.indexChanges = OMessageHelper.readTransactionIndexChanges(channel, (ORecordSerializerNetworkV37) serializer);
+      this.indexChanges =
+          OMessageHelper.readTransactionIndexChanges(
+              channel, (ORecordSerializerNetworkV37) serializer);
     }
   }
 

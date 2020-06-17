@@ -5,7 +5,6 @@ package com.orientechnologies.orient.core.sql.parser;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.sql.executor.OUpdateExecutionPlan;
 import com.orientechnologies.orient.core.sql.executor.OUpdateExecutionPlanner;
-
 import java.util.stream.Collectors;
 
 public class OUpdateEdgeStatement extends OUpdateStatement {
@@ -33,7 +32,10 @@ public class OUpdateEdgeStatement extends OUpdateStatement {
   public OUpdateEdgeStatement copy() {
     OUpdateEdgeStatement result = new OUpdateEdgeStatement(-1);
     result.target = target == null ? null : target.copy();
-    result.operations = operations == null ? null : operations.stream().map(x -> x.copy()).collect(Collectors.toList());
+    result.operations =
+        operations == null
+            ? null
+            : operations.stream().map(x -> x.copy()).collect(Collectors.toList());
     result.upsert = upsert;
     result.returnBefore = returnBefore;
     result.returnAfter = returnAfter;
@@ -44,6 +46,5 @@ public class OUpdateEdgeStatement extends OUpdateStatement {
     result.timeout = timeout == null ? null : timeout.copy();
     return result;
   }
-
 }
 /* JavaCC - OriginalChecksum=496f32976ee84e3a3a89d1410dc134c5 (do not edit this line) */

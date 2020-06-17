@@ -24,13 +24,10 @@ public class DiffChange implements Change {
   @Override
   public int applyTo(Integer value) {
     int result;
-    if (value == null)
-      result = delta;
-    else
-      result = value + delta;
+    if (value == null) result = delta;
+    else result = value + delta;
 
-    if (result < 0)
-      result = 0;
+    if (result < 0) result = 0;
 
     return result;
   }

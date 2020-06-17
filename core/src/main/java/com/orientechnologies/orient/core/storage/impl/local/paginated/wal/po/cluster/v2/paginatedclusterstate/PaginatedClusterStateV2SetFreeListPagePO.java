@@ -5,7 +5,6 @@ import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
 import com.orientechnologies.orient.core.storage.cluster.v2.OPaginatedClusterStateV2;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.WALRecordTypes;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.PageOperationRecord;
-
 import java.nio.ByteBuffer;
 
 public final class PaginatedClusterStateV2SetFreeListPagePO extends PageOperationRecord {
@@ -14,8 +13,7 @@ public final class PaginatedClusterStateV2SetFreeListPagePO extends PageOperatio
   private int oldPageIndex;
   private int newPageIndex;
 
-  public PaginatedClusterStateV2SetFreeListPagePO() {
-  }
+  public PaginatedClusterStateV2SetFreeListPagePO() {}
 
   public PaginatedClusterStateV2SetFreeListPagePO(int index, int oldPageIndex, int newPageIndex) {
     this.index = index;
@@ -37,13 +35,15 @@ public final class PaginatedClusterStateV2SetFreeListPagePO extends PageOperatio
 
   @Override
   public void redo(OCacheEntry cacheEntry) {
-    final OPaginatedClusterStateV2 paginatedClusterStateV2 = new OPaginatedClusterStateV2(cacheEntry);
+    final OPaginatedClusterStateV2 paginatedClusterStateV2 =
+        new OPaginatedClusterStateV2(cacheEntry);
     paginatedClusterStateV2.setFreeListPage(index, newPageIndex);
   }
 
   @Override
   public void undo(OCacheEntry cacheEntry) {
-    final OPaginatedClusterStateV2 paginatedClusterStateV2 = new OPaginatedClusterStateV2(cacheEntry);
+    final OPaginatedClusterStateV2 paginatedClusterStateV2 =
+        new OPaginatedClusterStateV2(cacheEntry);
     paginatedClusterStateV2.setFreeListPage(index, oldPageIndex);
   }
 

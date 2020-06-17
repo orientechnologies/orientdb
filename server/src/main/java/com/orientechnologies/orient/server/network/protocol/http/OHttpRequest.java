@@ -23,16 +23,12 @@ import com.orientechnologies.orient.core.config.OContextConfiguration;
 import com.orientechnologies.orient.core.metadata.security.OToken;
 import com.orientechnologies.orient.server.network.protocol.ONetworkProtocolData;
 import com.orientechnologies.orient.server.network.protocol.http.multipart.OHttpMultipartBaseInputStream;
-
 import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
-import java.net.InetSocketAddress;
 import java.net.URLDecoder;
 import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Set;
 
 /**
  * Maintains information about current HTTP request.
@@ -41,16 +37,19 @@ import java.util.Set;
  */
 public abstract class OHttpRequest {
   private final OContextConfiguration configuration;
-  private final InputStream           in;
-  private final ONetworkProtocolData  data;
-  private final ONetworkHttpExecutor  executor;
-  protected     String                content;
-  protected     Map<String, String>   parameters;
-  private       String                sessionId;
-  protected     String                authorization;
-  private       String                databaseName;
+  private final InputStream in;
+  private final ONetworkProtocolData data;
+  private final ONetworkHttpExecutor executor;
+  protected String content;
+  protected Map<String, String> parameters;
+  private String sessionId;
+  protected String authorization;
+  private String databaseName;
 
-  public OHttpRequest(final ONetworkHttpExecutor iExecutor, final InputStream iInStream, final ONetworkProtocolData iData,
+  public OHttpRequest(
+      final ONetworkHttpExecutor iExecutor,
+      final InputStream iInStream,
+      final ONetworkProtocolData iData,
       final OContextConfiguration iConfiguration) {
     executor = iExecutor;
     in = iInStream;
@@ -59,7 +58,9 @@ public abstract class OHttpRequest {
   }
 
   public String getUser() {
-    return getAuthorization() != null ? getAuthorization().substring(0, getAuthorization().indexOf(":")) : null;
+    return getAuthorization() != null
+        ? getAuthorization().substring(0, getAuthorization().indexOf(":"))
+        : null;
   }
 
   public InputStream getInputStream() {
@@ -71,12 +72,12 @@ public abstract class OHttpRequest {
   }
 
   public void addHeader(final String h) {
-    if (getHeaders() == null)
-      setHeaders(new HashMap<String, String>());
+    if (getHeaders() == null) setHeaders(new HashMap<String, String>());
 
     final int pos = h.indexOf(':');
     if (pos > -1) {
-      getHeaders().put(h.substring(0, pos).trim().toLowerCase(Locale.ENGLISH), h.substring(pos + 1).trim());
+      getHeaders()
+          .put(h.substring(0, pos).trim().toLowerCase(Locale.ENGLISH), h.substring(pos + 1).trim());
     }
   }
 
@@ -118,8 +119,7 @@ public abstract class OHttpRequest {
   public abstract Map<String, String> getHeaders();
 
   public String getRemoteAddress() {
-    if (getData().caller != null)
-      return getData().caller;
+    if (getData().caller != null) return getData().caller;
     return getExecutor().getRemoteAddress();
   }
 

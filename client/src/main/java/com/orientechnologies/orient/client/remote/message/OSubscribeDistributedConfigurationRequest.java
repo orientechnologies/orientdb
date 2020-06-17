@@ -8,22 +8,17 @@ import com.orientechnologies.orient.core.serialization.serializer.record.ORecord
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelDataInput;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelDataOutput;
-
 import java.io.IOException;
 
-/**
- * Created by tglman on 11/01/17.
- */
-public class OSubscribeDistributedConfigurationRequest implements OBinaryRequest<OSubscribeDistributedConfigurationResponse> {
+/** Created by tglman on 11/01/17. */
+public class OSubscribeDistributedConfigurationRequest
+    implements OBinaryRequest<OSubscribeDistributedConfigurationResponse> {
   @Override
-  public void write(OChannelDataOutput network, OStorageRemoteSession session) throws IOException {
-
-  }
+  public void write(OChannelDataOutput network, OStorageRemoteSession session) throws IOException {}
 
   @Override
-  public void read(OChannelDataInput channel, int protocolVersion, ORecordSerializer serializer) throws IOException {
-
-  }
+  public void read(OChannelDataInput channel, int protocolVersion, ORecordSerializer serializer)
+      throws IOException {}
 
   @Override
   public byte getCommand() {

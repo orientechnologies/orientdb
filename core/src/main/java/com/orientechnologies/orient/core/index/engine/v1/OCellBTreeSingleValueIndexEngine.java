@@ -15,27 +15,32 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoper
 import com.orientechnologies.orient.core.storage.index.sbtree.singlevalue.OCellBTreeSingleValue;
 import com.orientechnologies.orient.core.storage.index.sbtree.singlevalue.v1.CellBTreeSingleValueV1;
 import com.orientechnologies.orient.core.storage.index.sbtree.singlevalue.v3.CellBTreeSingleValueV3;
-
 import java.io.IOException;
 import java.util.Map;
 import java.util.stream.Stream;
 
-public final class OCellBTreeSingleValueIndexEngine implements OSingleValueIndexEngine, OCellBTreeIndexEngine {
-  private static final String DATA_FILE_EXTENSION        = ".cbt";
+public final class OCellBTreeSingleValueIndexEngine
+    implements OSingleValueIndexEngine, OCellBTreeIndexEngine {
+  private static final String DATA_FILE_EXTENSION = ".cbt";
   private static final String NULL_BUCKET_FILE_EXTENSION = ".nbt";
 
   private final OCellBTreeSingleValue<Object> sbTree;
-  private final String                        name;
-  private final int                           id;
+  private final String name;
+  private final int id;
 
-  public OCellBTreeSingleValueIndexEngine(int id, String name, OAbstractPaginatedStorage storage, int version) {
+  public OCellBTreeSingleValueIndexEngine(
+      int id, String name, OAbstractPaginatedStorage storage, int version) {
     this.name = name;
     this.id = id;
 
     if (version < 3) {
-      this.sbTree = new CellBTreeSingleValueV1<>(name, DATA_FILE_EXTENSION, NULL_BUCKET_FILE_EXTENSION, storage);
+      this.sbTree =
+          new CellBTreeSingleValueV1<>(
+              name, DATA_FILE_EXTENSION, NULL_BUCKET_FILE_EXTENSION, storage);
     } else if (version == 3 || version == 4) {
-      this.sbTree = new CellBTreeSingleValueV3<>(name, DATA_FILE_EXTENSION, NULL_BUCKET_FILE_EXTENSION, storage);
+      this.sbTree =
+          new CellBTreeSingleValueV3<>(
+              name, DATA_FILE_EXTENSION, NULL_BUCKET_FILE_EXTENSION, storage);
     } else {
       throw new IllegalStateException("Invalid tree version " + version);
     }
@@ -47,12 +52,15 @@ public final class OCellBTreeSingleValueIndexEngine implements OSingleValueIndex
   }
 
   @Override
-  public void init(String indexName, String indexType, OIndexDefinition indexDefinition, boolean isAutomatic, ODocument metadata) {
-  }
+  public void init(
+      String indexName,
+      String indexType,
+      OIndexDefinition indexDefinition,
+      boolean isAutomatic,
+      ODocument metadata) {}
 
   @Override
-  public void flush() {
-  }
+  public void flush() {}
 
   @Override
   public String getName() {
@@ -60,8 +68,15 @@ public final class OCellBTreeSingleValueIndexEngine implements OSingleValueIndex
   }
 
   @Override
-  public void create(OAtomicOperation atomicOperation, OBinarySerializer valueSerializer, boolean isAutomatic, OType[] keyTypes,
-      boolean nullPointerSupport, OBinarySerializer keySerializer, int keySize, Map<String, String> engineProperties,
+  public void create(
+      OAtomicOperation atomicOperation,
+      OBinarySerializer valueSerializer,
+      boolean isAutomatic,
+      OType[] keyTypes,
+      boolean nullPointerSupport,
+      OBinarySerializer keySerializer,
+      int keySize,
+      Map<String, String> engineProperties,
       OEncryption encryption) {
     try {
       //noinspection unchecked
@@ -78,26 +93,32 @@ public final class OCellBTreeSingleValueIndexEngine implements OSingleValueIndex
 
       sbTree.delete(atomicOperation);
     } catch (IOException e) {
-      throw OException.wrapException(new OIndexException("Error during deletion of index " + name), e);
+      throw OException.wrapException(
+          new OIndexException("Error during deletion of index " + name), e);
     }
   }
 
   private void doClearTree(OAtomicOperation atomicOperation) throws IOException {
     try (Stream<Object> stream = sbTree.keyStream()) {
-      stream.forEach((key) -> {
-        try {
-          sbTree.remove(atomicOperation, key);
-        } catch (IOException e) {
-          throw OException.wrapException(new OIndexException("Can not clear index"), e);
-        }
-      });
+      stream.forEach(
+          (key) -> {
+            try {
+              sbTree.remove(atomicOperation, key);
+            } catch (IOException e) {
+              throw OException.wrapException(new OIndexException("Can not clear index"), e);
+            }
+          });
     }
 
     sbTree.remove(atomicOperation, null);
   }
 
   @Override
-  public void load(String indexName, final int keySize, final OType[] keyTypes, final OBinarySerializer keySerializer,
+  public void load(
+      String indexName,
+      final int keySize,
+      final OType[] keyTypes,
+      final OBinarySerializer keySerializer,
       final OEncryption encryption) {
     //noinspection unchecked
     sbTree.load(indexName, keySize, keyTypes, keySerializer, encryption);
@@ -108,7 +129,8 @@ public final class OCellBTreeSingleValueIndexEngine implements OSingleValueIndex
     try {
       return sbTree.remove(atomicOperation, key) != null;
     } catch (IOException e) {
-      throw OException.wrapException(new OIndexException("Error during removal of key " + key + " from index " + name), e);
+      throw OException.wrapException(
+          new OIndexException("Error during removal of key " + key + " from index " + name), e);
     }
   }
 
@@ -166,34 +188,43 @@ public final class OCellBTreeSingleValueIndexEngine implements OSingleValueIndex
     try {
       sbTree.put(atomicOperation, key, value);
     } catch (IOException e) {
-      throw OException.wrapException(new OIndexException("Error during insertion of key " + key + " into index " + name), e);
+      throw OException.wrapException(
+          new OIndexException("Error during insertion of key " + key + " into index " + name), e);
     }
   }
 
   @Override
-  public boolean validatedPut(OAtomicOperation atomicOperation, Object key, ORID value, Validator<Object, ORID> validator) {
+  public boolean validatedPut(
+      OAtomicOperation atomicOperation, Object key, ORID value, Validator<Object, ORID> validator) {
     try {
       return sbTree.validatedPut(atomicOperation, key, value, validator);
     } catch (IOException e) {
-      throw OException.wrapException(new OIndexException("Error during insertion of key " + key + " into index " + name), e);
+      throw OException.wrapException(
+          new OIndexException("Error during insertion of key " + key + " into index " + name), e);
     }
   }
 
   @Override
-  public Stream<ORawPair<Object, ORID>> iterateEntriesBetween(Object rangeFrom, boolean fromInclusive, Object rangeTo,
-      boolean toInclusive, boolean ascSortOrder, ValuesTransformer transformer) {
-    return sbTree.iterateEntriesBetween(rangeFrom, fromInclusive, rangeTo, toInclusive, ascSortOrder);
+  public Stream<ORawPair<Object, ORID>> iterateEntriesBetween(
+      Object rangeFrom,
+      boolean fromInclusive,
+      Object rangeTo,
+      boolean toInclusive,
+      boolean ascSortOrder,
+      ValuesTransformer transformer) {
+    return sbTree.iterateEntriesBetween(
+        rangeFrom, fromInclusive, rangeTo, toInclusive, ascSortOrder);
   }
 
   @Override
-  public Stream<ORawPair<Object, ORID>> iterateEntriesMajor(Object fromKey, boolean isInclusive, boolean ascSortOrder,
-      ValuesTransformer transformer) {
+  public Stream<ORawPair<Object, ORID>> iterateEntriesMajor(
+      Object fromKey, boolean isInclusive, boolean ascSortOrder, ValuesTransformer transformer) {
     return sbTree.iterateEntriesMajor(fromKey, isInclusive, ascSortOrder);
   }
 
   @Override
-  public Stream<ORawPair<Object, ORID>> iterateEntriesMinor(Object toKey, boolean isInclusive, boolean ascSortOrder,
-      ValuesTransformer transformer) {
+  public Stream<ORawPair<Object, ORID>> iterateEntriesMinor(
+      Object toKey, boolean isInclusive, boolean ascSortOrder, ValuesTransformer transformer) {
     return sbTree.iterateEntriesMinor(toKey, isInclusive, ascSortOrder);
   }
 

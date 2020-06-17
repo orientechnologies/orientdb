@@ -1,13 +1,13 @@
 package com.orientechnologies.orient.distributed.impl.coordinator.network;
 
+import static com.orientechnologies.orient.distributed.network.binary.OBinaryDistributedMessage.DISTRIBUTED_ACK_RESPONSE;
+
+
 import com.orientechnologies.orient.core.db.config.ONodeIdentity;
 import com.orientechnologies.orient.distributed.impl.log.OLogId;
-
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
-
-import static com.orientechnologies.orient.distributed.network.binary.OBinaryDistributedMessage.DISTRIBUTED_ACK_RESPONSE;
 
 public class ONetworkAck implements ODistributedMessage {
   private OLogId logId;
@@ -16,8 +16,7 @@ public class ONetworkAck implements ODistributedMessage {
     this.logId = logId;
   }
 
-  public ONetworkAck() {
-  }
+  public ONetworkAck() {}
 
   @Override
   public void write(DataOutput output) throws IOException {
@@ -42,5 +41,4 @@ public class ONetworkAck implements ODistributedMessage {
   public OLogId getLogId() {
     return logId;
   }
-
 }

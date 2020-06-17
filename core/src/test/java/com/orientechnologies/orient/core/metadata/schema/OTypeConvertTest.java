@@ -1,12 +1,18 @@
 package com.orientechnologies.orient.core.metadata.schema;
 
-import org.junit.Test;
-
-import java.math.BigDecimal;
-import java.util.*;
-
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
+
+
+import java.math.BigDecimal;
+import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Collection;
+import java.util.Date;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+import org.junit.Test;
 
 /**
  * Test the covert method of the OType class.
@@ -444,5 +450,4 @@ public class OTypeConvertTest {
     assertEquals(result.size(), 1);
     assertTrue(result.contains(1));
   }
-
 }

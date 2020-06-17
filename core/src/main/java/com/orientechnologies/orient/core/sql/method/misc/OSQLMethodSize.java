@@ -21,7 +21,6 @@ import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 
 /**
- * 
  * @author Johann Sorel (Geomatys)
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
  */
@@ -34,8 +33,13 @@ public class OSQLMethodSize extends OAbstractSQLMethod {
   }
 
   @Override
-  public Object execute(Object iThis, final OIdentifiable iCurrentRecord, final OCommandContext iContext, final Object ioResult, final Object[] iParams) {
-    
+  public Object execute(
+      Object iThis,
+      final OIdentifiable iCurrentRecord,
+      final OCommandContext iContext,
+      final Object ioResult,
+      final Object[] iParams) {
+
     final Number size;
     if (ioResult != null) {
       if (ioResult instanceof OIdentifiable) {

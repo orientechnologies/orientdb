@@ -4,39 +4,32 @@ import com.orientechnologies.orient.core.storage.cache.chm.LRUList;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALChanges;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.PageOperationRecord;
-
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
-/**
- * Created by tglman on 23/06/16.
- */
+/** Created by tglman on 23/06/16. */
 public final class OCacheEntryImpl implements OCacheEntry {
   private static final int FROZEN = -1;
-  private static final int DEAD   = -2;
+  private static final int DEAD = -2;
 
-  private       OCachePointer dataPointer;
-  private final long          fileId;
-  private final int           pageIndex;
+  private OCachePointer dataPointer;
+  private final long fileId;
+  private final int pageIndex;
 
   private final AtomicInteger usagesCount = new AtomicInteger();
-  private final AtomicInteger state       = new AtomicInteger();
+  private final AtomicInteger state = new AtomicInteger();
 
   private OCacheEntry next;
   private OCacheEntry prev;
 
   private LRUList container;
 
-  /**
-   * Protected by page lock inside disk cache
-   */
+  /** Protected by page lock inside disk cache */
   private boolean allocatedPage;
 
-  /**
-   * Protected by page lock inside disk cache
-   */
+  /** Protected by page lock inside disk cache */
   private List<PageOperationRecord> pageOperationRecords;
 
   private int hash;
@@ -197,7 +190,8 @@ public final class OCacheEntryImpl implements OCacheEntry {
 
     while (true) {
       if (state <= 0) {
-        throw new IllegalStateException("Cache entry " + fileId + ":" + pageIndex + " has invalid state " + state);
+        throw new IllegalStateException(
+            "Cache entry " + fileId + ":" + pageIndex + " has invalid state " + state);
       }
 
       if (this.state.compareAndSet(state, state - 1)) {
@@ -249,7 +243,8 @@ public final class OCacheEntryImpl implements OCacheEntry {
       state = this.state.get();
     }
 
-    throw new IllegalStateException("Cache entry " + fileId + ":" + pageIndex + " has invalid state " + state);
+    throw new IllegalStateException(
+        "Cache entry " + fileId + ":" + pageIndex + " has invalid state " + state);
   }
 
   @Override
@@ -289,15 +284,12 @@ public final class OCacheEntryImpl implements OCacheEntry {
 
   @Override
   public boolean equals(Object o) {
-    if (this == o)
-      return true;
-    if (o == null || getClass() != o.getClass())
-      return false;
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
 
     OCacheEntryImpl that = (OCacheEntryImpl) o;
 
-    if (fileId != that.fileId)
-      return false;
+    if (fileId != that.fileId) return false;
     return pageIndex == that.pageIndex;
   }
 
@@ -317,7 +309,15 @@ public final class OCacheEntryImpl implements OCacheEntry {
 
   @Override
   public String toString() {
-    return "OCacheEntryImpl{" + "dataPointer=" + dataPointer + ", fileId=" + fileId + ", pageIndex=" + pageIndex + ", usagesCount="
-        + usagesCount + '}';
+    return "OCacheEntryImpl{"
+        + "dataPointer="
+        + dataPointer
+        + ", fileId="
+        + fileId
+        + ", pageIndex="
+        + pageIndex
+        + ", usagesCount="
+        + usagesCount
+        + '}';
   }
 }

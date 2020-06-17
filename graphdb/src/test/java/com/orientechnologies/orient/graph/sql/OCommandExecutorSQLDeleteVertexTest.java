@@ -24,22 +24,22 @@ import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
-import org.junit.*;
-import org.junit.runner.RunWith;
-import org.junit.runners.JUnit4;
-
 import java.util.List;
+import org.junit.After;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Test;
 
-/**
- * @author Luigi Dell'Aquila (l.dellaquila-(at)-orientdb.com)
- */
+/** @author Luigi Dell'Aquila (l.dellaquila-(at)-orientdb.com) */
 public class OCommandExecutorSQLDeleteVertexTest {
 
   private ODatabaseDocumentTx db;
 
   @Before
   public void init() throws Exception {
-    db = new ODatabaseDocumentTx("memory:" + OCommandExecutorSQLDeleteVertexTest.class.getSimpleName());
+    db =
+        new ODatabaseDocumentTx(
+            "memory:" + OCommandExecutorSQLDeleteVertexTest.class.getSimpleName());
     db.create();
     final OSchema schema = db.getMetadata().getSchema();
     schema.createClass("User", schema.getClass("V"));
@@ -63,7 +63,6 @@ public class OCommandExecutorSQLDeleteVertexTest {
 
     List<?> result = db.query(new OSQLSynchQuery("select from User"));
     Assert.assertEquals(result.size(), 6);
-
   }
 
   @Test
@@ -78,20 +77,21 @@ public class OCommandExecutorSQLDeleteVertexTest {
 
     List<?> result = db.query(new OSQLSynchQuery("select from User"));
     Assert.assertEquals(result.size(), 0);
-
   }
 
   @Test
   public void testDeleteVertexWithEdgeRid() throws Exception {
     List<ODocument> edges = db.command(new OCommandSQL("select from e limit 1")).execute();
     try {
-      final int res = (Integer) db.command(new OCommandSQL("delete vertex [" + edges.get(0).getIdentity() + "]")).execute();
+      final int res =
+          (Integer)
+              db.command(new OCommandSQL("delete vertex [" + edges.get(0).getIdentity() + "]"))
+                  .execute();
       Assert.fail("Error on deleting a vertex with a rid of an edge");
     } catch (Exception e) {
       // OK
     }
   }
-
 
   @Test
   public void testDeleteVertexFromSubquery() throws Exception {
@@ -101,7 +101,8 @@ public class OCommandExecutorSQLDeleteVertexTest {
       db.command(new OCommandSQL("create vertex User set name = 'foo" + i + "'")).execute();
     }
 
-    final int res = (Integer) db.command(new OCommandSQL("delete vertex from (select from User)")).execute();
+    final int res =
+        (Integer) db.command(new OCommandSQL("delete vertex from (select from User)")).execute();
     List<?> result = db.query(new OSQLSynchQuery("select from User"));
     Assert.assertEquals(result.size(), 0);
   }
@@ -114,12 +115,13 @@ public class OCommandExecutorSQLDeleteVertexTest {
       db.command(new OCommandSQL("create vertex User set name = 'foo" + i + "'")).execute();
     }
 
-    final int res = (Integer) db.command(new OCommandSQL("delete vertex from (select from User where name = 'foo10')")).execute();
+    final int res =
+        (Integer)
+            db.command(
+                    new OCommandSQL("delete vertex from (select from User where name = 'foo10')"))
+                .execute();
 
     List<?> result = db.query(new OSQLSynchQuery("select from User"));
     Assert.assertEquals(result.size(), 99);
-
   }
-
-
 }

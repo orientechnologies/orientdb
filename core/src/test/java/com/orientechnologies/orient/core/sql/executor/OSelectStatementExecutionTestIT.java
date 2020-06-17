@@ -4,16 +4,13 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
+import java.util.List;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import java.util.List;
-
-/**
- * Created by tglman on 09/06/17.
- */
+/** Created by tglman on 09/06/17. */
 public class OSelectStatementExecutionTestIT {
   static ODatabaseDocument db;
 
@@ -68,7 +65,10 @@ public class OSelectStatementExecutionTestIT {
     }
     for (int run = 0; run < 5; run++) {
       long begin = System.nanoTime();
-      List<ODocument> r = db.query(new OSQLSynchQuery<ODocument>("select name from " + className + " where name <> 'name1' "));
+      List<ODocument> r =
+          db.query(
+              new OSQLSynchQuery<ODocument>(
+                  "select name from " + className + " where name <> 'name1' "));
       //      Iterator<ODocument> result = r.iterator();
       for (int i = 0; i < 999999; i++) {
         //        Assert.assertTrue(result.hasNext());
@@ -84,5 +84,4 @@ public class OSelectStatementExecutionTestIT {
       System.out.println("old: " + ((end - begin) / 1000000));
     }
   }
-
 }

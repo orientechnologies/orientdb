@@ -22,9 +22,7 @@ package com.orientechnologies.orient.core.db;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentEmbedded;
 import com.orientechnologies.orient.core.storage.OStorage;
 
-/**
- * Created by tglman on 07/07/16.
- */
+/** Created by tglman on 07/07/16. */
 public class ODatabaseDocumentEmbeddedPooled extends ODatabaseDocumentEmbedded {
 
   private ODatabasePoolInternal pool;
@@ -36,8 +34,7 @@ public class ODatabaseDocumentEmbeddedPooled extends ODatabaseDocumentEmbedded {
 
   @Override
   public void close() {
-    if (isClosed())
-      return;
+    if (isClosed()) return;
     internalClose(true);
     pool.release(this);
   }
@@ -65,5 +62,4 @@ public class ODatabaseDocumentEmbeddedPooled extends ODatabaseDocumentEmbedded {
       }
     }
   }
-
 }

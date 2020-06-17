@@ -27,11 +27,11 @@ import com.orientechnologies.orient.core.security.OCredentialInterceptor;
 
 /**
  * Provides a symmetric key credential interceptor.
- * <p>
- * The "password" parameter should be a JSON document specifying "keyAlgorithm" and
- * "key", "keyFile", or "keyStore".
- * <p>
- * The method getPassword() will return a Base64-encoded JSON document with the encrypted
+ *
+ * <p>The "password" parameter should be a JSON document specifying "keyAlgorithm" and "key",
+ * "keyFile", or "keyStore".
+ *
+ * <p>The method getPassword() will return a Base64-encoded JSON document with the encrypted
  * "username" as its payload.
  *
  * @author S. Colin Leister
@@ -48,10 +48,9 @@ public class OSymmetricKeyCI implements OCredentialInterceptor {
     return this.encodedJSON;
   }
 
-  /**
-   * The usual password field should be a JSON representation.
-   */
-  public void intercept(final String url, final String username, final String password) throws OSecurityException {
+  /** The usual password field should be a JSON representation. */
+  public void intercept(final String url, final String username, final String password)
+      throws OSecurityException {
     if (username == null || username.isEmpty())
       throw new OSecurityException("OSymmetricKeyCI username is not valid!");
     if (password == null || password.isEmpty())
@@ -73,23 +72,22 @@ public class OSymmetricKeyCI implements OCredentialInterceptor {
     try {
       jsonDoc = new ODocument().fromJSON(password, "noMap");
     } catch (Exception ex) {
-      throw OException.wrapException(new OSecurityException("OSymmetricKeyCI.intercept() Exception: " + ex.getMessage()), ex);
+      throw OException.wrapException(
+          new OSecurityException("OSymmetricKeyCI.intercept() Exception: " + ex.getMessage()), ex);
     }
 
     // Override algorithm and transform, if they exist in the JSON document.
-    if (jsonDoc.containsField("algorithm"))
-      algorithm = jsonDoc.field("algorithm");
-    if (jsonDoc.containsField("transform"))
-      transform = jsonDoc.field("transform");
+    if (jsonDoc.containsField("algorithm")) algorithm = jsonDoc.field("algorithm");
+    if (jsonDoc.containsField("transform")) transform = jsonDoc.field("transform");
 
     // Just in case the default configuration gets changed, check it.
     if (transform == null || transform.isEmpty())
       throw new OSecurityException("OSymmetricKeyCI.intercept() cipher transformation is required");
 
-    // If the algorithm is not set, either as a default in the global configuration or in the JSON document,
+    // If the algorithm is not set, either as a default in the global configuration or in the JSON
+    // document,
     // then determine the algorithm from the cipher transformation.
-    if (algorithm == null)
-      algorithm = OSymmetricKey.separateAlgorithm(transform);
+    if (algorithm == null) algorithm = OSymmetricKey.separateAlgorithm(transform);
 
     OSymmetricKey key = null;
 
@@ -100,36 +98,35 @@ public class OSymmetricKeyCI implements OCredentialInterceptor {
       key = OSymmetricKey.fromString(algorithm, base64Key);
       key.setDefaultCipherTransform(transform);
     } else // "keyFile" has priority over "keyStore".
-      if (jsonDoc.containsField("keyFile")) {
-        key = OSymmetricKey.fromFile(algorithm, (String) jsonDoc.field("keyFile"));
-        key.setDefaultCipherTransform(transform);
-      } else if (jsonDoc.containsField("keyStore")) {
-        ODocument ksDoc = jsonDoc.field("keyStore");
+    if (jsonDoc.containsField("keyFile")) {
+      key = OSymmetricKey.fromFile(algorithm, (String) jsonDoc.field("keyFile"));
+      key.setDefaultCipherTransform(transform);
+    } else if (jsonDoc.containsField("keyStore")) {
+      ODocument ksDoc = jsonDoc.field("keyStore");
 
-        if (ksDoc.containsField("file"))
-          keystoreFile = ksDoc.field("file");
+      if (ksDoc.containsField("file")) keystoreFile = ksDoc.field("file");
 
-        if (keystoreFile == null || keystoreFile.isEmpty())
-          throw new OSecurityException("OSymmetricKeyCI.intercept() keystore file is required");
+      if (keystoreFile == null || keystoreFile.isEmpty())
+        throw new OSecurityException("OSymmetricKeyCI.intercept() keystore file is required");
 
-        // Specific to Keystore, but override if present in the JSON document.
-        if (ksDoc.containsField("password"))
-          keystorePassword = ksDoc.field("password");
+      // Specific to Keystore, but override if present in the JSON document.
+      if (ksDoc.containsField("password")) keystorePassword = ksDoc.field("password");
 
-        String keyAlias = ksDoc.field("keyAlias");
+      String keyAlias = ksDoc.field("keyAlias");
 
-        if (keyAlias == null || keyAlias.isEmpty())
-          throw new OSecurityException("OSymmetricKeyCI.intercept() keystore key alias is required");
+      if (keyAlias == null || keyAlias.isEmpty())
+        throw new OSecurityException("OSymmetricKeyCI.intercept() keystore key alias is required");
 
-        // keyPassword may be null.
-        String keyPassword = ksDoc.field("keyPassword");
+      // keyPassword may be null.
+      String keyPassword = ksDoc.field("keyPassword");
 
-        // keystorePassword may be null.
-        key = OSymmetricKey.fromKeystore(keystoreFile, keystorePassword, keyAlias, keyPassword);
-        key.setDefaultCipherTransform(transform);
-      } else {
-        throw new OSecurityException("OSymmetricKeyCI.intercept() No suitable symmetric key property exists");
-      }
+      // keystorePassword may be null.
+      key = OSymmetricKey.fromKeystore(keystoreFile, keystorePassword, keyAlias, keyPassword);
+      key.setDefaultCipherTransform(transform);
+    } else {
+      throw new OSecurityException(
+          "OSymmetricKeyCI.intercept() No suitable symmetric key property exists");
+    }
 
     // This should never happen, but...
     if (key == null)

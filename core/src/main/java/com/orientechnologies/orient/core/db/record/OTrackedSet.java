@@ -20,32 +20,38 @@
 
 package com.orientechnologies.orient.core.db.record;
 
-import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
 import com.orientechnologies.orient.core.record.impl.OSimpleMultiValueTracker;
-
 import java.io.Serializable;
-import java.util.*;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.ListIterator;
+import java.util.Set;
 
 /**
- * Implementation of Set bound to a source ORecord object to keep track of changes. This avoid to call the makeDirty() by hand when
- * the set is changed.
+ * Implementation of Set bound to a source ORecord object to keep track of changes. This avoid to
+ * call the makeDirty() by hand when the set is changed.
  *
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
  */
 @SuppressWarnings("serial")
-public class OTrackedSet<T> extends LinkedHashSet<T> implements ORecordElement, OTrackedMultiValue<T, T>, Serializable {
+public class OTrackedSet<T> extends LinkedHashSet<T>
+    implements ORecordElement, OTrackedMultiValue<T, T>, Serializable {
   protected final ORecordElement sourceRecord;
-  private final   boolean        embeddedCollection;
-  protected       Class<?>       genericClass;
-  private         boolean        dirty            = false;
-  private         boolean        transactionDirty = false;
+  private final boolean embeddedCollection;
+  protected Class<?> genericClass;
+  private boolean dirty = false;
+  private boolean transactionDirty = false;
 
   private OSimpleMultiValueTracker<T, T> tracker = new OSimpleMultiValueTracker<>(this);
 
-  public OTrackedSet(final ORecordElement iRecord, final Collection<? extends T> iOrigin, final Class<?> cls) {
+  public OTrackedSet(
+      final ORecordElement iRecord, final Collection<? extends T> iOrigin, final Class<?> cls) {
     this(iRecord);
     genericClass = cls;
     if (iOrigin != null && !iOrigin.isEmpty()) {
@@ -194,23 +200,24 @@ public class OTrackedSet<T> extends LinkedHashSet<T> implements ORecordElement, 
     }
   }
 
-  public Set<T> returnOriginalState(final List<OMultiValueChangeEvent<T, T>> multiValueChangeEvents) {
+  public Set<T> returnOriginalState(
+      final List<OMultiValueChangeEvent<T, T>> multiValueChangeEvents) {
     final Set<T> reverted = new HashSet<T>(this);
 
-    final ListIterator<OMultiValueChangeEvent<T, T>> listIterator = multiValueChangeEvents
-        .listIterator(multiValueChangeEvents.size());
+    final ListIterator<OMultiValueChangeEvent<T, T>> listIterator =
+        multiValueChangeEvents.listIterator(multiValueChangeEvents.size());
 
     while (listIterator.hasPrevious()) {
       final OMultiValueChangeEvent<T, T> event = listIterator.previous();
       switch (event.getChangeType()) {
-      case ADD:
-        reverted.remove(event.getKey());
-        break;
-      case REMOVE:
-        reverted.add(event.getOldValue());
-        break;
-      default:
-        throw new IllegalArgumentException("Invalid change type : " + event.getChangeType());
+        case ADD:
+          reverted.remove(event.getKey());
+          break;
+        case REMOVE:
+          reverted.add(event.getOldValue());
+          break;
+        default:
+          throw new IllegalArgumentException("Invalid change type : " + event.getChangeType());
       }
     }
 

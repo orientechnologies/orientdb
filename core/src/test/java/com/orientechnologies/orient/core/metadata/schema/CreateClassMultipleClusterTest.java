@@ -1,13 +1,14 @@
 package com.orientechnologies.orient.core.metadata.schema;
 
+import static org.junit.Assert.assertEquals;
+
+
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-
-import static org.junit.Assert.assertEquals;
 
 public class CreateClassMultipleClusterTest {
 
@@ -35,7 +36,6 @@ public class CreateClassMultipleClusterTest {
 
     final OClass clazzX = db.getMetadata().getSchema().getClass("X");
     assertEquals(32, clazzX.getClusterIds().length);
-
   }
 
   @Test

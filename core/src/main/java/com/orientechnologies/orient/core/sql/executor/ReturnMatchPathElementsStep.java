@@ -2,14 +2,11 @@ package com.orientechnologies.orient.core.sql.executor;
 
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
-
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-/**
- * Created by luigidellaquila on 12/10/16.
- */
+/** Created by luigidellaquila on 12/10/16. */
 public class ReturnMatchPathElementsStep extends AbstractUnrollStep {
 
   public ReturnMatchPathElementsStep(OCommandContext context, boolean profilingEnabled) {
@@ -29,7 +26,7 @@ public class ReturnMatchPathElementsStep extends AbstractUnrollStep {
       if (elem instanceof OResult) {
         result.add((OResult) elem);
       }
-      //else...? TODO
+      // else...? TODO
     }
     return result;
   }

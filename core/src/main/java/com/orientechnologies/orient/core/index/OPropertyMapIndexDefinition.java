@@ -22,8 +22,11 @@ package com.orientechnologies.orient.core.index;
 import com.orientechnologies.orient.core.db.record.OMultiValueChangeEvent;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
 
 /**
  * Index implementation bound to one schema class property that presents {@link com.orientechnologies.orient.core.metadata.schema.OType#EMBEDDEDMAP
@@ -35,23 +38,23 @@ public class OPropertyMapIndexDefinition extends OAbstractIndexDefinitionMultiVa
 
   private static final long serialVersionUID = 275241019910834466L;
 
-  /**
-   * Indicates whether Map will be indexed using its keys or values.
-   */
+  /** Indicates whether Map will be indexed using its keys or values. */
   public static enum INDEX_BY {
-    KEY, VALUE
+    KEY,
+    VALUE
   }
 
   private INDEX_BY indexBy = INDEX_BY.KEY;
 
-  public OPropertyMapIndexDefinition() {
-  }
+  public OPropertyMapIndexDefinition() {}
 
-  public OPropertyMapIndexDefinition(final String iClassName, final String iField, final OType iType, final INDEX_BY indexBy) {
+  public OPropertyMapIndexDefinition(
+      final String iClassName, final String iField, final OType iType, final INDEX_BY indexBy) {
     super(iClassName, iField, iType);
 
     if (indexBy == null)
-      throw new NullPointerException("You have to provide way by which map entries should be mapped");
+      throw new NullPointerException(
+          "You have to provide way by which map entries should be mapped");
 
     this.indexBy = indexBy;
   }
@@ -63,8 +66,7 @@ public class OPropertyMapIndexDefinition extends OAbstractIndexDefinitionMultiVa
 
   @Override
   public Object createValue(List<?> params) {
-    if (!(params.get(0) instanceof Map))
-      return null;
+    if (!(params.get(0) instanceof Map)) return null;
 
     final Collection<?> mapParams = extractMapParams((Map<?, ?>) params.get(0));
     final List<Object> result = new ArrayList<Object>(mapParams.size());
@@ -77,8 +79,7 @@ public class OPropertyMapIndexDefinition extends OAbstractIndexDefinitionMultiVa
 
   @Override
   public Object createValue(Object... params) {
-    if (!(params[0] instanceof Map))
-      return null;
+    if (!(params[0] instanceof Map)) return null;
 
     final Collection<?> mapParams = extractMapParams((Map<?, ?>) params[0]);
 
@@ -110,24 +111,19 @@ public class OPropertyMapIndexDefinition extends OAbstractIndexDefinitionMultiVa
   }
 
   private Collection<?> extractMapParams(Map<?, ?> map) {
-    if (indexBy == INDEX_BY.KEY)
-      return map.keySet();
+    if (indexBy == INDEX_BY.KEY) return map.keySet();
     return map.values();
   }
 
   @Override
   public boolean equals(Object o) {
-    if (this == o)
-      return true;
-    if (o == null || getClass() != o.getClass())
-      return false;
-    if (!super.equals(o))
-      return false;
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+    if (!super.equals(o)) return false;
 
     OPropertyMapIndexDefinition that = (OPropertyMapIndexDefinition) o;
 
-    if (indexBy != that.indexBy)
-      return false;
+    if (indexBy != that.indexBy) return false;
 
     return true;
   }
@@ -136,54 +132,58 @@ public class OPropertyMapIndexDefinition extends OAbstractIndexDefinitionMultiVa
     return OType.convert(param[0], keyType.getDefaultJavaType());
   }
 
-  public void processChangeEvent(final OMultiValueChangeEvent<?, ?> changeEvent, final Map<Object, Integer> keysToAdd,
+  public void processChangeEvent(
+      final OMultiValueChangeEvent<?, ?> changeEvent,
+      final Map<Object, Integer> keysToAdd,
       final Map<Object, Integer> keysToRemove) {
     final boolean result;
     if (indexBy.equals(INDEX_BY.KEY))
       result = processKeyChangeEvent(changeEvent, keysToAdd, keysToRemove);
-    else
-      result = processValueChangeEvent(changeEvent, keysToAdd, keysToRemove);
+    else result = processValueChangeEvent(changeEvent, keysToAdd, keysToRemove);
 
     if (!result)
       throw new IllegalArgumentException("Invalid change type :" + changeEvent.getChangeType());
   }
 
-  private boolean processKeyChangeEvent(final OMultiValueChangeEvent<?, ?> changeEvent, final Map<Object, Integer> keysToAdd,
+  private boolean processKeyChangeEvent(
+      final OMultiValueChangeEvent<?, ?> changeEvent,
+      final Map<Object, Integer> keysToAdd,
       final Map<Object, Integer> keysToRemove) {
     switch (changeEvent.getChangeType()) {
-    case ADD:
-      processAdd(createSingleValue(changeEvent.getKey()), keysToAdd, keysToRemove);
-      return true;
-    case REMOVE:
-      processRemoval(createSingleValue(changeEvent.getKey()), keysToAdd, keysToRemove);
-      return true;
-    case UPDATE:
-      return true;
+      case ADD:
+        processAdd(createSingleValue(changeEvent.getKey()), keysToAdd, keysToRemove);
+        return true;
+      case REMOVE:
+        processRemoval(createSingleValue(changeEvent.getKey()), keysToAdd, keysToRemove);
+        return true;
+      case UPDATE:
+        return true;
     }
     return false;
   }
 
-  private boolean processValueChangeEvent(final OMultiValueChangeEvent<?, ?> changeEvent, final Map<Object, Integer> keysToAdd,
+  private boolean processValueChangeEvent(
+      final OMultiValueChangeEvent<?, ?> changeEvent,
+      final Map<Object, Integer> keysToAdd,
       final Map<Object, Integer> keysToRemove) {
     switch (changeEvent.getChangeType()) {
-    case ADD:
-      processAdd(createSingleValue(changeEvent.getValue()), keysToAdd, keysToRemove);
-      return true;
-    case REMOVE:
-      processRemoval(createSingleValue(changeEvent.getOldValue()), keysToAdd, keysToRemove);
-      return true;
-    case UPDATE:
-      processRemoval(createSingleValue(changeEvent.getOldValue()), keysToAdd, keysToRemove);
-      processAdd(createSingleValue(changeEvent.getValue()), keysToAdd, keysToRemove);
-      return true;
+      case ADD:
+        processAdd(createSingleValue(changeEvent.getValue()), keysToAdd, keysToRemove);
+        return true;
+      case REMOVE:
+        processRemoval(createSingleValue(changeEvent.getOldValue()), keysToAdd, keysToRemove);
+        return true;
+      case UPDATE:
+        processRemoval(createSingleValue(changeEvent.getOldValue()), keysToAdd, keysToRemove);
+        processAdd(createSingleValue(changeEvent.getValue()), keysToAdd, keysToRemove);
+        return true;
     }
     return false;
   }
 
   @Override
   public List<String> getFieldsToIndex() {
-    if (indexBy == INDEX_BY.KEY)
-      return Collections.singletonList(field + " by key");
+    if (indexBy == INDEX_BY.KEY) return Collections.singletonList(field + " by key");
     return Collections.singletonList(field + " by value");
   }
 
@@ -206,10 +206,8 @@ public class OPropertyMapIndexDefinition extends OAbstractIndexDefinitionMultiVa
     ddl.append(indexName).append("` on `");
     ddl.append(className).append("` ( `").append(field).append("`");
 
-    if (indexBy == INDEX_BY.KEY)
-      ddl.append(" by key");
-    else
-      ddl.append(" by value");
+    if (indexBy == INDEX_BY.KEY) ddl.append(" by key");
+    else ddl.append(" by value");
 
     ddl.append(" ) ");
     ddl.append(indexType);

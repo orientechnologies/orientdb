@@ -9,8 +9,12 @@ import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.sql.executor.AggregationContext;
 import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.executor.OResultInternal;
-
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 public class OArrayConcatExpression extends SimpleNode {
@@ -138,7 +142,8 @@ public class OArrayConcatExpression extends SimpleNode {
   }
 
   public AggregationContext getAggregationContext(OCommandContext ctx) {
-    throw new UnsupportedOperationException("array concatenation expressions do not allow plain aggregation");
+    throw new UnsupportedOperationException(
+        "array concatenation expressions do not allow plain aggregation");
   }
 
   public OArrayConcatExpression copy() {
@@ -187,14 +192,14 @@ public class OArrayConcatExpression extends SimpleNode {
 
   @Override
   public boolean equals(Object o) {
-    if (this == o)
-      return true;
-    if (o == null || getClass() != o.getClass())
-      return false;
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
 
     OArrayConcatExpression that = (OArrayConcatExpression) o;
 
-    return childExpressions != null ? childExpressions.equals(that.childExpressions) : that.childExpressions == null;
+    return childExpressions != null
+        ? childExpressions.equals(that.childExpressions)
+        : that.childExpressions == null;
   }
 
   @Override
@@ -205,7 +210,9 @@ public class OArrayConcatExpression extends SimpleNode {
   public OResult serialize() {
     OResultInternal result = new OResultInternal();
     if (childExpressions != null) {
-      result.setProperty("childExpressions", childExpressions.stream().map(x -> x.serialize()).collect(Collectors.toList()));
+      result.setProperty(
+          "childExpressions",
+          childExpressions.stream().map(x -> x.serialize()).collect(Collectors.toList()));
     }
     return result;
   }

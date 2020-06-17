@@ -21,13 +21,10 @@ package com.orientechnologies.orient.core.record;
 
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OType;
-
 import java.util.Optional;
 import java.util.Set;
 
-/**
- * @author Luigi Dell'Aquila
- */
+/** @author Luigi Dell'Aquila */
 public interface OElement extends ORecord {
 
   /**
@@ -40,9 +37,8 @@ public interface OElement extends ORecord {
   /**
    * Gets a property given its name
    *
-   * @param name  the property name
+   * @param name the property name
    * @param <RET>
-   *
    * @return Returns the property value
    */
   <RET> RET getProperty(String name);
@@ -51,7 +47,6 @@ public interface OElement extends ORecord {
    * Check if a property exists in the Element
    *
    * @param propertyName
-   *
    * @return true if exists otherwise false.
    */
   boolean hasProperty(final String propertyName);
@@ -59,7 +54,7 @@ public interface OElement extends ORecord {
   /**
    * Sets a property value
    *
-   * @param name  the property name
+   * @param name the property name
    * @param value the property value
    */
   void setProperty(String name, Object value);
@@ -67,8 +62,8 @@ public interface OElement extends ORecord {
   /**
    * Sets a property value
    *
-   * @param name      the property name
-   * @param value     the property value
+   * @param name the property name
+   * @param value the property value
    * @param fieldType Forced type (not auto-determined)
    */
   void setProperty(String name, Object value, OType... fieldType);
@@ -83,14 +78,16 @@ public interface OElement extends ORecord {
   /**
    * Returns an instance of OVertex representing current element
    *
-   * @return An OVertex that represents the current element. An empty optional if the current element is not a vertex
+   * @return An OVertex that represents the current element. An empty optional if the current
+   *     element is not a vertex
    */
   Optional<OVertex> asVertex();
 
   /**
    * Returns an instance of OEdge representing current element
    *
-   * @return An OEdge that represents the current element. An empty optional if the current element is not an edge
+   * @return An OEdge that represents the current element. An empty optional if the current element
+   *     is not an edge
    */
   Optional<OEdge> asEdge();
 
@@ -111,7 +108,8 @@ public interface OElement extends ORecord {
   /**
    * Returns the type of current element, ie the class in the schema (if any)
    *
-   * @return the type of current element. An empty optional is returned if current element does not have a schema
+   * @return the type of current element. An empty optional is returned if current element does not
+   *     have a schema
    */
   Optional<OClass> getSchemaType();
 }

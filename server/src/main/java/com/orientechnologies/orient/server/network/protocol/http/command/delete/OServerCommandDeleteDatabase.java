@@ -25,7 +25,7 @@ import com.orientechnologies.orient.server.network.protocol.http.OHttpUtils;
 import com.orientechnologies.orient.server.network.protocol.http.command.OServerCommandAuthenticatedServerAbstract;
 
 public class OServerCommandDeleteDatabase extends OServerCommandAuthenticatedServerAbstract {
-  private static final String[] NAMES = { "DELETE|database/*" };
+  private static final String[] NAMES = {"DELETE|database/*"};
 
   public OServerCommandDeleteDatabase() {
     super("database.drop");
@@ -40,8 +40,12 @@ public class OServerCommandDeleteDatabase extends OServerCommandAuthenticatedSer
 
     server.dropDatabase(urlParts[1]);
 
-    iResponse.send(OHttpUtils.STATUS_OK_NOCONTENT_CODE, OHttpUtils.STATUS_OK_NOCONTENT_DESCRIPTION, OHttpUtils.CONTENT_TEXT_PLAIN,
-        null, null);
+    iResponse.send(
+        OHttpUtils.STATUS_OK_NOCONTENT_CODE,
+        OHttpUtils.STATUS_OK_NOCONTENT_DESCRIPTION,
+        OHttpUtils.CONTENT_TEXT_PLAIN,
+        null,
+        null);
     return false;
   }
 

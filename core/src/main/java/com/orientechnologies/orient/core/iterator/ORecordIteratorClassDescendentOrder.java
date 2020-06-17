@@ -15,7 +15,7 @@
  *  *  limitations under the License.
  *  *
  *  * For more information: http://orientdb.com
- *  
+ *
  */
 package com.orientechnologies.orient.core.iterator;
 
@@ -25,18 +25,26 @@ import com.orientechnologies.orient.core.storage.OStorage;
 
 /**
  * Record iterator to browse records in inverse order: from last to the first.
- * 
+ *
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
  */
-public class ORecordIteratorClassDescendentOrder<REC extends ORecord> extends ORecordIteratorClass<REC> {
-  public ORecordIteratorClassDescendentOrder(ODatabaseDocumentInternal iDatabase, ODatabaseDocumentInternal iLowLevelDatabase,
-      String iClassName, boolean iPolymorphic) {
+public class ORecordIteratorClassDescendentOrder<REC extends ORecord>
+    extends ORecordIteratorClass<REC> {
+  public ORecordIteratorClassDescendentOrder(
+      ODatabaseDocumentInternal iDatabase,
+      ODatabaseDocumentInternal iLowLevelDatabase,
+      String iClassName,
+      boolean iPolymorphic) {
     this(iDatabase, iLowLevelDatabase, iClassName, iPolymorphic, OStorage.LOCKING_STRATEGY.NONE);
   }
 
   @Deprecated
-  public ORecordIteratorClassDescendentOrder(ODatabaseDocumentInternal iDatabase, ODatabaseDocumentInternal iLowLevelDatabase,
-      String iClassName, boolean iPolymorphic, OStorage.LOCKING_STRATEGY iLockingStrategy) {
+  public ORecordIteratorClassDescendentOrder(
+      ODatabaseDocumentInternal iDatabase,
+      ODatabaseDocumentInternal iLowLevelDatabase,
+      String iClassName,
+      boolean iPolymorphic,
+      OStorage.LOCKING_STRATEGY iLockingStrategy) {
     super(iDatabase, iClassName, iPolymorphic, iLockingStrategy);
 
     currentClusterIdx = clusterIds.length - 1; // START FROM THE LAST CLUSTER

@@ -24,7 +24,6 @@ import com.orientechnologies.orient.core.command.OCommandExecutorAbstract;
 import com.orientechnologies.orient.core.command.OCommandPredicate;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
-
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -33,34 +32,34 @@ import java.util.List;
 
 /**
  * Base class for traversing.
- * 
+ *
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
  */
 public class OTraverse implements OCommand, Iterable<OIdentifiable>, Iterator<OIdentifiable> {
-  private OCommandPredicate                 predicate;
+  private OCommandPredicate predicate;
   private Iterator<? extends OIdentifiable> target;
-  private List<Object>                      fields      = new ArrayList<Object>();
-  private long                              resultCount = 0;
-  private long                              limit       = 0;
-  private OIdentifiable                     lastTraversed;
-  private STRATEGY                          strategy    = STRATEGY.DEPTH_FIRST;
-  private OTraverseContext                  context     = new OTraverseContext();
-  private int                               maxDepth    = -1;
+  private List<Object> fields = new ArrayList<Object>();
+  private long resultCount = 0;
+  private long limit = 0;
+  private OIdentifiable lastTraversed;
+  private STRATEGY strategy = STRATEGY.DEPTH_FIRST;
+  private OTraverseContext context = new OTraverseContext();
+  private int maxDepth = -1;
 
   public enum STRATEGY {
-    DEPTH_FIRST, BREADTH_FIRST
+    DEPTH_FIRST,
+    BREADTH_FIRST
   }
 
   /*
    * Executes a traverse collecting all the result in the returning List<OIdentifiable>. This could be memory expensive because for
    * large results the list could be huge. it's always better to use it as an Iterable and lazy fetch each result on next() call.
-   * 
+   *
    * @see com.orientechnologies.orient.core.command.OCommand#execute()
    */
   public List<OIdentifiable> execute() {
     final List<OIdentifiable> result = new ArrayList<OIdentifiable>();
-    while (hasNext())
-      result.add(next());
+    while (hasNext()) result.add(next());
     return result;
   }
 
@@ -69,8 +68,7 @@ public class OTraverse implements OCommand, Iterable<OIdentifiable>, Iterator<OI
   }
 
   public boolean hasNext() {
-    if (limit > 0 && resultCount >= limit)
-      return false;
+    if (limit > 0 && resultCount >= limit) return false;
 
     if (lastTraversed == null)
       // GET THE NEXT
@@ -79,8 +77,7 @@ public class OTraverse implements OCommand, Iterable<OIdentifiable>, Iterator<OI
     if (lastTraversed == null && !context.isEmpty())
       throw new IllegalStateException("Traverse ended abnormally");
 
-    if (!OCommandExecutorAbstract.checkInterruption(context))
-      return false;
+    if (!OCommandExecutorAbstract.checkInterruption(context)) return false;
 
     // BROWSE ALL THE RECORDS
     return lastTraversed != null;
@@ -97,8 +94,7 @@ public class OTraverse implements OCommand, Iterable<OIdentifiable>, Iterator<OI
       return result;
     }
 
-    if (limit > 0 && resultCount >= limit)
-      return null;
+    if (limit > 0 && resultCount >= limit) return null;
 
     OIdentifiable result;
     OTraverseAbstractProcess<?> toProcess;
@@ -158,20 +154,17 @@ public class OTraverse implements OCommand, Iterable<OIdentifiable>, Iterator<OI
   }
 
   public OTraverse field(final Object iField) {
-    if (!fields.contains(iField))
-      fields.add(iField);
+    if (!fields.contains(iField)) fields.add(iField);
     return this;
   }
 
   public OTraverse fields(final Collection<Object> iFields) {
-    for (Object f : iFields)
-      field(f);
+    for (Object f : iFields) field(f);
     return this;
   }
 
   public OTraverse fields(final String... iFields) {
-    for (String f : iFields)
-      field(f);
+    for (String f : iFields) field(f);
     return this;
   }
 
@@ -184,15 +177,16 @@ public class OTraverse implements OCommand, Iterable<OIdentifiable>, Iterator<OI
   }
 
   public OTraverse limit(final long iLimit) {
-    if (iLimit < -1)
-      throw new IllegalArgumentException("Limit cannot be negative. 0 = infinite");
+    if (iLimit < -1) throw new IllegalArgumentException("Limit cannot be negative. 0 = infinite");
     this.limit = iLimit;
     return this;
   }
 
   @Override
   public String toString() {
-    return String.format("OTraverse.target(%s).fields(%s).limit(%d).predicate(%s)", target, fields, limit, predicate);
+    return String.format(
+        "OTraverse.target(%s).fields(%s).limit(%d).predicate(%s)",
+        target, fields, limit, predicate);
   }
 
   public long getResultCount() {

@@ -1,5 +1,9 @@
 package com.orientechnologies.orient.core.db.graph;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
+
+
 import com.orientechnologies.orient.core.db.ODatabaseSession;
 import com.orientechnologies.orient.core.db.ODatabaseType;
 import com.orientechnologies.orient.core.db.OrientDB;
@@ -9,19 +13,15 @@ import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.OVertex;
 import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
+import java.util.ArrayList;
+import java.util.List;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
-import java.util.ArrayList;
-import java.util.List;
-
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
-
 public class LightWeightEdgesTest {
 
-  private OrientDB         orientDB;
+  private OrientDB orientDB;
   private ODatabaseSession session;
 
   @Before
@@ -47,18 +47,19 @@ public class LightWeightEdgesTest {
     v1.setProperty("in_Edge", in);
     v1.setProperty("name", "bName");
     session.save(v);
-    try (OResultSet res = session.query(" select expand(out('Edge')) from `Vertex` where name = 'aName'")) {
+    try (OResultSet res =
+        session.query(" select expand(out('Edge')) from `Vertex` where name = 'aName'")) {
       assertTrue(res.hasNext());
       OResult r = res.next();
       assertEquals(r.getProperty("name"), "bName");
     }
 
-    try (OResultSet res = session.query(" select expand(in('Edge')) from `Vertex` where name = 'bName'")) {
+    try (OResultSet res =
+        session.query(" select expand(in('Edge')) from `Vertex` where name = 'bName'")) {
       assertTrue(res.hasNext());
       OResult r = res.next();
       assertEquals(r.getProperty("name"), "aName");
     }
-
   }
 
   @Test
@@ -74,23 +75,24 @@ public class LightWeightEdgesTest {
     v1.setProperty("in_Edgea", in);
     v1.setProperty("name", "bName");
     session.save(v);
-    try (OResultSet res = session.query(" select expand(out('Edgea')) from `Vertex` where name = 'aName'")) {
+    try (OResultSet res =
+        session.query(" select expand(out('Edgea')) from `Vertex` where name = 'aName'")) {
       assertTrue(res.hasNext());
       OResult r = res.next();
       assertEquals(r.getProperty("name"), "bName");
     }
 
-    try (OResultSet res = session.query(" select expand(in('Edgea')) from `Vertex` where name = 'bName'")) {
+    try (OResultSet res =
+        session.query(" select expand(in('Edgea')) from `Vertex` where name = 'bName'")) {
       assertTrue(res.hasNext());
       OResult r = res.next();
       assertEquals(r.getProperty("name"), "aName");
     }
-
   }
 
   @Test
   public void testRegularBySchema() {
-//    session.command("alter database custom useLightweightEdges = true;");
+    //    session.command("alter database custom useLightweightEdges = true;");
     String vClazz = "VtestRegularBySchema";
     OClass vClass = session.createVertexClass(vClazz);
 
@@ -107,16 +109,30 @@ public class LightWeightEdgesTest {
     v1.setProperty("name", "b");
     v1.save();
 
-    session.command("create edge " + eClazz + " from (select from " + vClazz + " where name = 'a') to (select from " + vClazz
-        + " where name = 'b') set name = 'foo'");
+    session.command(
+        "create edge "
+            + eClazz
+            + " from (select from "
+            + vClazz
+            + " where name = 'a') to (select from "
+            + vClazz
+            + " where name = 'b') set name = 'foo'");
 
-    session.execute("sql", ""
-        +
-        "begin;"+
-        "delete edge "+eClazz+";"+
-        "create edge " + eClazz + " from (select from " + vClazz + " where name = 'a') to (select from " + vClazz + " where name = 'b') set name = 'foo';"+
-        "commit;");
-
+    session.execute(
+        "sql",
+        ""
+            + "begin;"
+            + "delete edge "
+            + eClazz
+            + ";"
+            + "create edge "
+            + eClazz
+            + " from (select from "
+            + vClazz
+            + " where name = 'a') to (select from "
+            + vClazz
+            + " where name = 'b') set name = 'foo';"
+            + "commit;");
   }
 
   @After
@@ -124,5 +140,4 @@ public class LightWeightEdgesTest {
     session.close();
     orientDB.close();
   }
-
 }

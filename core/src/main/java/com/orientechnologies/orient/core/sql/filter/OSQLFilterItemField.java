@@ -39,7 +39,6 @@ import com.orientechnologies.orient.core.serialization.serializer.record.binary.
 import com.orientechnologies.orient.core.serialization.serializer.record.binary.ORecordSerializerBinary;
 import com.orientechnologies.orient.core.sql.method.OSQLMethodRuntime;
 import com.orientechnologies.orient.core.sql.method.misc.OSQLMethodField;
-
 import java.util.Set;
 
 /**
@@ -50,18 +49,18 @@ import java.util.Set;
 public class OSQLFilterItemField extends OSQLFilterItemAbstract {
 
   protected Set<String> preLoadedFields;
-  protected String[]    preLoadedFieldsArray;
-  protected String      name;
-  protected OCollate    collate;
-  private   boolean     collatePreset = false;
-  private   String      stringValue;
+  protected String[] preLoadedFieldsArray;
+  protected String name;
+  protected OCollate collate;
+  private boolean collatePreset = false;
+  private String stringValue;
 
   /**
-   * Represents filter item as chain of fields. Provide interface to work with this chain like with sequence of field names.
+   * Represents filter item as chain of fields. Provide interface to work with this chain like with
+   * sequence of field names.
    */
   public class FieldChain {
-    private FieldChain() {
-    }
+    private FieldChain() {}
 
     public String getItemName(int fieldIndex) {
       if (fieldIndex == 0) {
@@ -101,7 +100,8 @@ public class OSQLFilterItemField extends OSQLFilterItemAbstract {
     }
   }
 
-  public OSQLFilterItemField(final OBaseParser iQueryToParse, final String iName, final OClass iClass) {
+  public OSQLFilterItemField(
+      final OBaseParser iQueryToParse, final String iName, final OClass iClass) {
     super(iQueryToParse, iName);
     collate = getCollateForField(iClass, iName);
     if (iClass != null) {
@@ -109,26 +109,30 @@ public class OSQLFilterItemField extends OSQLFilterItemAbstract {
     }
   }
 
-  public Object getValue(final OIdentifiable iRecord, final Object iCurrentResult, final OCommandContext iContext) {
+  public Object getValue(
+      final OIdentifiable iRecord, final Object iCurrentResult, final OCommandContext iContext) {
     if (iRecord == null)
-      throw new OCommandExecutionException("expression item '" + name + "' cannot be resolved because current record is NULL");
+      throw new OCommandExecutionException(
+          "expression item '" + name + "' cannot be resolved because current record is NULL");
 
     if (preLoadedFields != null && preLoadedFields.size() == 1) {
-      if ("@rid".equalsIgnoreCase(preLoadedFields.iterator().next()))
-        return iRecord.getIdentity();
+      if ("@rid".equalsIgnoreCase(preLoadedFields.iterator().next())) return iRecord.getIdentity();
     }
 
     final ODocument doc = (ODocument) iRecord.getRecord();
 
-    if (preLoadedFieldsArray == null && preLoadedFields != null && preLoadedFields.size() > 0 && preLoadedFields.size() < 5) {
-      // TRANSFORM THE SET IN ARRAY ONLY THE FIRST TIME AND IF FIELDS ARE MORE THAN ONE, OTHERWISE GO WITH THE DEFAULT BEHAVIOR
+    if (preLoadedFieldsArray == null
+        && preLoadedFields != null
+        && preLoadedFields.size() > 0
+        && preLoadedFields.size() < 5) {
+      // TRANSFORM THE SET IN ARRAY ONLY THE FIRST TIME AND IF FIELDS ARE MORE THAN ONE, OTHERWISE
+      // GO WITH THE DEFAULT BEHAVIOR
       preLoadedFieldsArray = new String[preLoadedFields.size()];
       preLoadedFields.toArray(preLoadedFieldsArray);
     }
 
     // UNMARSHALL THE SINGLE FIELD
-    if (preLoadedFieldsArray != null && !doc.deserializeFields(preLoadedFieldsArray))
-      return null;
+    if (preLoadedFieldsArray != null && !doc.deserializeFields(preLoadedFieldsArray)) return null;
 
     final Object v = stringValue == null ? doc.rawField(name) : stringValue;
 
@@ -144,7 +148,8 @@ public class OSQLFilterItemField extends OSQLFilterItemAbstract {
 
   public OBinaryField getBinaryField(final OIdentifiable iRecord) {
     if (iRecord == null)
-      throw new OCommandExecutionException("expression item '" + name + "' cannot be resolved because current record is NULL");
+      throw new OCommandExecutionException(
+          "expression item '" + name + "' cannot be resolved because current record is NULL");
 
     if (operationsChain != null && operationsChain.size() > 0)
       // CANNOT USE BINARY FIELDS
@@ -157,10 +162,14 @@ public class OSQLFilterItemField extends OSQLFilterItemAbstract {
     ODocumentSerializer serializer = ORecordSerializerBinary.INSTANCE.getSerializer(version);
     ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.instance().get();
 
-    //check for embedded objects, they have invalid ID and they are serialized with class name
-    return serializer
-        .deserializeField(serialized, rec instanceof ODocument ? ((ODocument) rec).getSchemaClass() : null, name, rec.isEmbedded(),
-            db.getMetadata().getImmutableSchemaSnapshot(), encryption);
+    // check for embedded objects, they have invalid ID and they are serialized with class name
+    return serializer.deserializeField(
+        serialized,
+        rec instanceof ODocument ? ((ODocument) rec).getSchemaClass() : null,
+        name,
+        rec.isEmbedded(),
+        db.getMetadata().getImmutableSchemaSnapshot(),
+        encryption);
   }
 
   public String getRoot() {
@@ -171,7 +180,7 @@ public class OSQLFilterItemField extends OSQLFilterItemAbstract {
     if (isStringLiteral(iRoot)) {
       this.stringValue = OIOUtils.getStringContent(iRoot);
     }
-    //TODO support all the basic types
+    // TODO support all the basic types
     this.name = OIOUtils.getStringContent(iRoot);
   }
 
@@ -186,9 +195,10 @@ public class OSQLFilterItemField extends OSQLFilterItemAbstract {
   }
 
   /**
-   * Check whether or not this filter item is chain of fields (e.g. "field1.field2.field3"). Return true if filter item contains
-   * only field projections operators, if field item contains any other projection operator the method returns false. When filter
-   * item does not contains any chain operator, it is also field chain consist of one field.
+   * Check whether or not this filter item is chain of fields (e.g. "field1.field2.field3"). Return
+   * true if filter item contains only field projections operators, if field item contains any other
+   * projection operator the method returns false. When filter item does not contains any chain
+   * operator, it is also field chain consist of one field.
    *
    * @return whether or not this filter item can be represented as chain of fields.
    */
@@ -210,7 +220,6 @@ public class OSQLFilterItemField extends OSQLFilterItemAbstract {
    * Creates {@code FieldChain} in case when filter item can have such representation.
    *
    * @return {@code FieldChain} representation of this filter item.
-   *
    * @throws IllegalStateException if this filter item cannot be represented as {@code FieldChain}.
    */
   public FieldChain getFieldChain() {
@@ -230,10 +239,10 @@ public class OSQLFilterItemField extends OSQLFilterItemAbstract {
   }
 
   /**
-   * get the collate of this expression, based on the fully evaluated field chain starting from the passed object.
+   * get the collate of this expression, based on the fully evaluated field chain starting from the
+   * passed object.
    *
    * @param doc the root element (document?) of this field chain
-   *
    * @return the collate, null if no collate is defined
    */
   public OCollate getCollate(Object doc) {

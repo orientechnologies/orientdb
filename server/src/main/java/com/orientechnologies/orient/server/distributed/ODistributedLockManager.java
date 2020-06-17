@@ -21,9 +21,8 @@ package com.orientechnologies.orient.server.distributed;
 
 /**
  * Distributed Lock Manager interface.
- * 
- * @author Luca Garulli (l.garulli--at--orientdb.com)
  *
+ * @author Luca Garulli (l.garulli--at--orientdb.com)
  */
 public interface ODistributedLockManager {
 

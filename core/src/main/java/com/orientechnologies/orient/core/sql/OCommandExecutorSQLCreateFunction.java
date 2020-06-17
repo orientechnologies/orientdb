@@ -27,7 +27,6 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.metadata.function.OFunction;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -43,7 +42,7 @@ public class OCommandExecutorSQLCreateFunction extends OCommandExecutorSQLAbstra
   private String name;
   private String code;
   private String language;
-  private boolean      idempotent = false;
+  private boolean idempotent = false;
   private List<String> parameters = null;
 
   @SuppressWarnings("unchecked")
@@ -77,12 +76,12 @@ public class OCommandExecutorSQLCreateFunction extends OCommandExecutorSQLAbstra
           parameters = new ArrayList<String>();
           OStringSerializerHelper.getCollection(parserGetLastWord(), 0, parameters);
           if (parameters.size() == 0)
-            throw new OCommandExecutionException("Syntax Error. Missing function parameter(s): " + getSyntax());
+            throw new OCommandExecutionException(
+                "Syntax Error. Missing function parameter(s): " + getSyntax());
         }
 
         temp = parserOptionalWord(true);
-        if (parserIsEnded())
-          break;
+        if (parserIsEnded()) break;
       }
     } finally {
       textRequest.setText(originalQuery);
@@ -93,28 +92,29 @@ public class OCommandExecutorSQLCreateFunction extends OCommandExecutorSQLAbstra
 
   @Override
   public long getDistributedTimeout() {
-    return getDatabase().getConfiguration().getValueAsLong(OGlobalConfiguration.DISTRIBUTED_COMMAND_QUICK_TASK_SYNCH_TIMEOUT);
+    return getDatabase()
+        .getConfiguration()
+        .getValueAsLong(OGlobalConfiguration.DISTRIBUTED_COMMAND_QUICK_TASK_SYNCH_TIMEOUT);
   }
 
-  /**
-   * Execute the command and return the ODocument object created.
-   */
+  /** Execute the command and return the ODocument object created. */
   public Object execute(final Map<Object, Object> iArgs) {
     if (name == null)
-      throw new OCommandExecutionException("Cannot execute the command because it has not been parsed yet");
+      throw new OCommandExecutionException(
+          "Cannot execute the command because it has not been parsed yet");
     if (name.isEmpty())
-      throw new OCommandExecutionException("Syntax Error. You must specify a function name: " + getSyntax());
+      throw new OCommandExecutionException(
+          "Syntax Error. You must specify a function name: " + getSyntax());
     if (code == null || code.isEmpty())
-      throw new OCommandExecutionException("Syntax Error. You must specify the function code: " + getSyntax());
+      throw new OCommandExecutionException(
+          "Syntax Error. You must specify the function code: " + getSyntax());
 
     ODatabaseDocument database = getDatabase();
     final OFunction f = database.getMetadata().getFunctionLibrary().createFunction(name);
     f.setCode(code);
     f.setIdempotent(idempotent);
-    if (parameters != null)
-      f.setParameters(parameters);
-    if (language != null)
-      f.setLanguage(language);
+    if (parameters != null) f.setParameters(parameters);
+    if (language != null) f.setLanguage(language);
     f.save();
     return f.getId();
   }
@@ -123,5 +123,4 @@ public class OCommandExecutorSQLCreateFunction extends OCommandExecutorSQLAbstra
   public String getSyntax() {
     return "CREATE FUNCTION <name> <code> [PARAMETERS [<comma-separated list of parameters' name>]] [IDEMPOTENT true|false] [LANGUAGE <language>]";
   }
-
 }

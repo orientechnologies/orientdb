@@ -8,11 +8,10 @@ import com.orientechnologies.orient.core.storage.cache.OCachePointer;
 import com.orientechnologies.orient.core.storage.cluster.OClusterPage;
 import com.orientechnologies.orient.core.storage.cluster.v1.OPaginatedClusterStateV1;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.PageOperationRecord;
-import org.junit.Assert;
-import org.junit.Test;
-
 import java.nio.ByteBuffer;
 import java.util.List;
+import org.junit.Assert;
+import org.junit.Test;
 
 public class PaginatedClusterStateV1SetSizePOTest {
   @Test
@@ -30,7 +29,8 @@ public class PaginatedClusterStateV1SetSizePOTest {
       entry.clearPageOperations();
 
       final OPointer restoredPointer = byteBufferPool.acquireDirect(false);
-      final OCachePointer restoredCachePointer = new OCachePointer(restoredPointer, byteBufferPool, 0, 0);
+      final OCachePointer restoredCachePointer =
+          new OCachePointer(restoredPointer, byteBufferPool, 0, 0);
       final OCacheEntry restoredCacheEntry = new OCacheEntryImpl(0, 0, restoredCachePointer);
 
       final ByteBuffer originalBuffer = cachePointer.getBufferDuplicate();
@@ -47,7 +47,8 @@ public class PaginatedClusterStateV1SetSizePOTest {
       Assert.assertEquals(1, operations.size());
 
       Assert.assertTrue(operations.get(0) instanceof PaginatedClusterStateV1SetSizePO);
-      final PaginatedClusterStateV1SetSizePO pageOperation = (PaginatedClusterStateV1SetSizePO) operations.get(0);
+      final PaginatedClusterStateV1SetSizePO pageOperation =
+          (PaginatedClusterStateV1SetSizePO) operations.get(0);
 
       OPaginatedClusterStateV1 restoredPage = new OPaginatedClusterStateV1(restoredCacheEntry);
       Assert.assertEquals(12, restoredPage.getSize());
@@ -85,7 +86,8 @@ public class PaginatedClusterStateV1SetSizePOTest {
 
       Assert.assertTrue(operations.get(0) instanceof PaginatedClusterStateV1SetSizePO);
 
-      final PaginatedClusterStateV1SetSizePO pageOperation = (PaginatedClusterStateV1SetSizePO) operations.get(0);
+      final PaginatedClusterStateV1SetSizePO pageOperation =
+          (PaginatedClusterStateV1SetSizePO) operations.get(0);
 
       final OPaginatedClusterStateV1 restoredPage = new OPaginatedClusterStateV1(entry);
 

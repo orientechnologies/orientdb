@@ -7,11 +7,10 @@ import com.orientechnologies.orient.core.storage.cache.OCacheEntryImpl;
 import com.orientechnologies.orient.core.storage.cache.OCachePointer;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.PageOperationRecord;
 import com.orientechnologies.orient.core.storage.index.sbtree.singlevalue.v1.CellBTreeSingleValueEntryPointV1;
-import org.junit.Assert;
-import org.junit.Test;
-
 import java.nio.ByteBuffer;
 import java.util.List;
+import org.junit.Assert;
+import org.junit.Test;
 
 public class CellBTreeEntryPointSingleValueV1SetPagesSizePOTest {
   @Test
@@ -31,7 +30,8 @@ public class CellBTreeEntryPointSingleValueV1SetPagesSizePOTest {
       entry.clearPageOperations();
 
       final OPointer restoredPointer = byteBufferPool.acquireDirect(false);
-      final OCachePointer restoredCachePointer = new OCachePointer(restoredPointer, byteBufferPool, 0, 0);
+      final OCachePointer restoredCachePointer =
+          new OCachePointer(restoredPointer, byteBufferPool, 0, 0);
       final OCacheEntry restoredCacheEntry = new OCacheEntryImpl(0, 0, restoredCachePointer);
 
       final ByteBuffer originalBuffer = cachePointer.getBufferDuplicate();
@@ -47,12 +47,14 @@ public class CellBTreeEntryPointSingleValueV1SetPagesSizePOTest {
       final List<PageOperationRecord> operations = entry.getPageOperations();
       Assert.assertEquals(1, operations.size());
 
-      Assert.assertTrue(operations.get(0) instanceof CellBTreeEntryPointSingleValueV1SetPagesSizePO);
+      Assert.assertTrue(
+          operations.get(0) instanceof CellBTreeEntryPointSingleValueV1SetPagesSizePO);
 
-      final CellBTreeEntryPointSingleValueV1SetPagesSizePO pageOperation = (CellBTreeEntryPointSingleValueV1SetPagesSizePO) operations
-          .get(0);
+      final CellBTreeEntryPointSingleValueV1SetPagesSizePO pageOperation =
+          (CellBTreeEntryPointSingleValueV1SetPagesSizePO) operations.get(0);
 
-      CellBTreeSingleValueEntryPointV1 restoredBucket = new CellBTreeSingleValueEntryPointV1(restoredCacheEntry);
+      CellBTreeSingleValueEntryPointV1 restoredBucket =
+          new CellBTreeSingleValueEntryPointV1(restoredCacheEntry);
       Assert.assertEquals(42, restoredBucket.getPagesSize());
 
       pageOperation.redo(restoredCacheEntry);
@@ -88,12 +90,14 @@ public class CellBTreeEntryPointSingleValueV1SetPagesSizePOTest {
       final List<PageOperationRecord> operations = entry.getPageOperations();
       Assert.assertEquals(1, operations.size());
 
-      Assert.assertTrue(operations.get(0) instanceof CellBTreeEntryPointSingleValueV1SetPagesSizePO);
+      Assert.assertTrue(
+          operations.get(0) instanceof CellBTreeEntryPointSingleValueV1SetPagesSizePO);
 
-      final CellBTreeEntryPointSingleValueV1SetPagesSizePO pageOperation = (CellBTreeEntryPointSingleValueV1SetPagesSizePO) operations
-          .get(0);
+      final CellBTreeEntryPointSingleValueV1SetPagesSizePO pageOperation =
+          (CellBTreeEntryPointSingleValueV1SetPagesSizePO) operations.get(0);
 
-      final CellBTreeSingleValueEntryPointV1 restoredBucket = new CellBTreeSingleValueEntryPointV1(entry);
+      final CellBTreeSingleValueEntryPointV1 restoredBucket =
+          new CellBTreeSingleValueEntryPointV1(entry);
 
       Assert.assertEquals(24, restoredBucket.getPagesSize());
 
@@ -109,7 +113,8 @@ public class CellBTreeEntryPointSingleValueV1SetPagesSizePOTest {
 
   @Test
   public void testSerialization() {
-    CellBTreeEntryPointSingleValueV1SetPagesSizePO operation = new CellBTreeEntryPointSingleValueV1SetPagesSizePO(42, 24);
+    CellBTreeEntryPointSingleValueV1SetPagesSizePO operation =
+        new CellBTreeEntryPointSingleValueV1SetPagesSizePO(42, 24);
 
     operation.setFileId(42);
     operation.setPageIndex(24);
@@ -121,7 +126,8 @@ public class CellBTreeEntryPointSingleValueV1SetPagesSizePOTest {
 
     Assert.assertEquals(serializedSize + 1, pos);
 
-    CellBTreeEntryPointSingleValueV1SetPagesSizePO restoredOperation = new CellBTreeEntryPointSingleValueV1SetPagesSizePO();
+    CellBTreeEntryPointSingleValueV1SetPagesSizePO restoredOperation =
+        new CellBTreeEntryPointSingleValueV1SetPagesSizePO();
     restoredOperation.fromStream(stream, 1);
 
     Assert.assertEquals(42, restoredOperation.getFileId());

@@ -5,14 +5,13 @@ import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.index.OIndex;
 
-/**
- * Created by luigidellaquila on 02/08/16.
- */
+/** Created by luigidellaquila on 02/08/16. */
 public class FetchFromIndexValuesStep extends FetchFromIndexStep {
 
   private boolean asc;
 
-  public FetchFromIndexValuesStep(OIndex index, boolean asc, OCommandContext ctx, boolean profilingEnabled) {
+  public FetchFromIndexValuesStep(
+      OIndex index, boolean asc, OCommandContext ctx, boolean profilingEnabled) {
     super(index, null, null, ctx, profilingEnabled);
     this.asc = asc;
   }
@@ -25,9 +24,13 @@ public class FetchFromIndexValuesStep extends FetchFromIndexStep {
   @Override
   public String prettyPrint(int depth, int indent) {
     if (isOrderAsc()) {
-      return OExecutionStepInternal.getIndent(depth, indent) + "+ FETCH FROM INDEX VAUES ASC " + index.getName();
+      return OExecutionStepInternal.getIndent(depth, indent)
+          + "+ FETCH FROM INDEX VAUES ASC "
+          + index.getName();
     } else {
-      return OExecutionStepInternal.getIndent(depth, indent) + "+ FETCH FROM INDEX VAUES DESC " + index.getName();
+      return OExecutionStepInternal.getIndent(depth, indent)
+          + "+ FETCH FROM INDEX VAUES DESC "
+          + index.getName();
     }
   }
 

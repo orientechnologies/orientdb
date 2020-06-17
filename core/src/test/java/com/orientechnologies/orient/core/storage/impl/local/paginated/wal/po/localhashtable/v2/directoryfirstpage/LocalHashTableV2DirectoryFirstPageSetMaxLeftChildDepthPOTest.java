@@ -8,11 +8,10 @@ import com.orientechnologies.orient.core.storage.cache.OCachePointer;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.PageOperationRecord;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.localhashtable.v2.directorypage.LocalHashTableV2DirectoryPageSetMaxLeftChildDepthPO;
 import com.orientechnologies.orient.core.storage.index.hashindex.local.v2.DirectoryFirstPageV2;
-import org.junit.Assert;
-import org.junit.Test;
-
 import java.nio.ByteBuffer;
 import java.util.List;
+import org.junit.Assert;
+import org.junit.Test;
 
 public class LocalHashTableV2DirectoryFirstPageSetMaxLeftChildDepthPOTest {
   @Test
@@ -30,7 +29,8 @@ public class LocalHashTableV2DirectoryFirstPageSetMaxLeftChildDepthPOTest {
       entry.clearPageOperations();
 
       final OPointer restoredPointer = byteBufferPool.acquireDirect(false);
-      final OCachePointer restoredCachePointer = new OCachePointer(restoredPointer, byteBufferPool, 0, 0);
+      final OCachePointer restoredCachePointer =
+          new OCachePointer(restoredPointer, byteBufferPool, 0, 0);
       final OCacheEntry restoredCacheEntry = new OCacheEntryImpl(0, 0, restoredCachePointer);
 
       final ByteBuffer originalBuffer = cachePointer.getBufferDuplicate();
@@ -46,10 +46,11 @@ public class LocalHashTableV2DirectoryFirstPageSetMaxLeftChildDepthPOTest {
       final List<PageOperationRecord> operations = entry.getPageOperations();
       Assert.assertEquals(1, operations.size());
 
-      Assert.assertTrue(operations.get(0) instanceof LocalHashTableV2DirectoryFirstPageSetMaxLeftChildDepthPO);
+      Assert.assertTrue(
+          operations.get(0) instanceof LocalHashTableV2DirectoryFirstPageSetMaxLeftChildDepthPO);
 
-      final LocalHashTableV2DirectoryFirstPageSetMaxLeftChildDepthPO pageOperation = (LocalHashTableV2DirectoryFirstPageSetMaxLeftChildDepthPO) operations
-          .get(0);
+      final LocalHashTableV2DirectoryFirstPageSetMaxLeftChildDepthPO pageOperation =
+          (LocalHashTableV2DirectoryFirstPageSetMaxLeftChildDepthPO) operations.get(0);
 
       DirectoryFirstPageV2 restoredPage = new DirectoryFirstPageV2(restoredCacheEntry);
       Assert.assertEquals(24, restoredPage.getMaxLeftChildDepth(2));
@@ -85,10 +86,11 @@ public class LocalHashTableV2DirectoryFirstPageSetMaxLeftChildDepthPOTest {
       final List<PageOperationRecord> operations = entry.getPageOperations();
       Assert.assertEquals(1, operations.size());
 
-      Assert.assertTrue(operations.get(0) instanceof LocalHashTableV2DirectoryFirstPageSetMaxLeftChildDepthPO);
+      Assert.assertTrue(
+          operations.get(0) instanceof LocalHashTableV2DirectoryFirstPageSetMaxLeftChildDepthPO);
 
-      final LocalHashTableV2DirectoryFirstPageSetMaxLeftChildDepthPO pageOperation = (LocalHashTableV2DirectoryFirstPageSetMaxLeftChildDepthPO) operations
-          .get(0);
+      final LocalHashTableV2DirectoryFirstPageSetMaxLeftChildDepthPO pageOperation =
+          (LocalHashTableV2DirectoryFirstPageSetMaxLeftChildDepthPO) operations.get(0);
 
       final DirectoryFirstPageV2 restoredPage = new DirectoryFirstPageV2(entry);
 
@@ -106,8 +108,8 @@ public class LocalHashTableV2DirectoryFirstPageSetMaxLeftChildDepthPOTest {
 
   @Test
   public void testSerialization() {
-    LocalHashTableV2DirectoryFirstPageSetMaxLeftChildDepthPO operation = new LocalHashTableV2DirectoryFirstPageSetMaxLeftChildDepthPO(
-        2, (byte) 12, (byte) 21);
+    LocalHashTableV2DirectoryFirstPageSetMaxLeftChildDepthPO operation =
+        new LocalHashTableV2DirectoryFirstPageSetMaxLeftChildDepthPO(2, (byte) 12, (byte) 21);
 
     operation.setFileId(42);
     operation.setPageIndex(24);
@@ -119,7 +121,8 @@ public class LocalHashTableV2DirectoryFirstPageSetMaxLeftChildDepthPOTest {
 
     Assert.assertEquals(serializedSize + 1, pos);
 
-    LocalHashTableV2DirectoryPageSetMaxLeftChildDepthPO restoredOperation = new LocalHashTableV2DirectoryPageSetMaxLeftChildDepthPO();
+    LocalHashTableV2DirectoryPageSetMaxLeftChildDepthPO restoredOperation =
+        new LocalHashTableV2DirectoryPageSetMaxLeftChildDepthPO();
     restoredOperation.fromStream(stream, 1);
 
     Assert.assertEquals(42, restoredOperation.getFileId());

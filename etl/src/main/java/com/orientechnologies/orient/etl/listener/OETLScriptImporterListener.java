@@ -23,7 +23,6 @@ import com.orientechnologies.orient.core.command.script.OCommandScript;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-
 import java.util.HashMap;
 import java.util.Map;
 
@@ -52,8 +51,7 @@ public class OETLScriptImporterListener implements OETLImporterListener {
   @Override
   public boolean onBeforeLine(final ODatabaseDocument db, final OCommandContext iContext) {
     final Object ret = executeEvent(db, "onBeforeLine", iContext);
-    if (ret != null && ret instanceof Boolean)
-      return (Boolean) ret;
+    if (ret != null && ret instanceof Boolean) return (Boolean) ret;
     return true;
   }
 
@@ -68,17 +66,17 @@ public class OETLScriptImporterListener implements OETLImporterListener {
   }
 
   @Override
-  public void onJoinNotFound(ODatabaseDocument db, OCommandContext iContext, OIndex iIndex, Object iKey) {
+  public void onJoinNotFound(
+      ODatabaseDocument db, OCommandContext iContext, OIndex iIndex, Object iKey) {
     executeEvent(db, "onJoinNotFound", iContext);
   }
 
   @Override
-  public void validate(ODatabaseDocument db, OCommandContext iContext, ODocument iRecord) {
-  }
+  public void validate(ODatabaseDocument db, OCommandContext iContext, ODocument iRecord) {}
 
-  private Object executeEvent(final ODatabaseDocument db, final String iEventName, final OCommandContext iContext) {
-    if (events == null)
-      return null;
+  private Object executeEvent(
+      final ODatabaseDocument db, final String iEventName, final OCommandContext iContext) {
+    if (events == null) return null;
 
     OCommandScript script = scripts.get(iEventName);
 
@@ -100,5 +98,4 @@ public class OETLScriptImporterListener implements OETLImporterListener {
     }
     return null;
   }
-
 }

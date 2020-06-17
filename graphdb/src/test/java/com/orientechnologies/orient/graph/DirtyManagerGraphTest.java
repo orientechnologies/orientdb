@@ -1,21 +1,13 @@
 package com.orientechnologies.orient.graph;
 
+import static org.junit.Assert.assertTrue;
+
+
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
-import com.orientechnologies.orient.core.db.record.OIdentifiable;
-import com.orientechnologies.orient.core.record.ORecordInternal;
-import com.orientechnologies.orient.core.record.impl.ODirtyManager;
-import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.tinkerpop.blueprints.impls.orient.OrientEdge;
 import com.tinkerpop.blueprints.impls.orient.OrientGraph;
 import com.tinkerpop.blueprints.impls.orient.OrientVertex;
-import org.junit.Ignore;
 import org.junit.Test;
-
-import java.util.List;
-
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
 
 public class DirtyManagerGraphTest {
 
@@ -34,7 +26,7 @@ public class DirtyManagerGraphTest {
       OrientEdge edge3 = (OrientEdge) vertex2.addEdge("next", vertex3);
       OrientEdge edge4 = (OrientEdge) vertex3.addEdge("next", vertex);
       graph.commit();
-      
+
       assertTrue(vertex.getIdentity().isPersistent());
       assertTrue(vertex1.getIdentity().isPersistent());
       assertTrue(vertex2.getIdentity().isPersistent());
@@ -81,5 +73,4 @@ public class DirtyManagerGraphTest {
       graph.drop();
     }
   }
-
 }

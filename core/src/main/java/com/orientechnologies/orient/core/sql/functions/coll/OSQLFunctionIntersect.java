@@ -25,12 +25,18 @@ import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilterItemVariable;
-
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Set;
 
 /**
- * This operator can work as aggregate or inline. If only one argument is passed than aggregates, otherwise executes, and returns,
- * the INTERSECTION of the collections received as parameters.
+ * This operator can work as aggregate or inline. If only one argument is passed than aggregates,
+ * otherwise executes, and returns, the INTERSECTION of the collections received as parameters.
  *
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
  */
@@ -41,15 +47,18 @@ public class OSQLFunctionIntersect extends OSQLFunctionMultiValueAbstract<Object
     super(NAME, 1, -1);
   }
 
-  public Object execute(Object iThis, final OIdentifiable iCurrentRecord, Object iCurrentResult, final Object[] iParams,
+  public Object execute(
+      Object iThis,
+      final OIdentifiable iCurrentRecord,
+      Object iCurrentResult,
+      final Object[] iParams,
       OCommandContext iContext) {
     Object value = iParams[0];
 
     if (value instanceof OSQLFilterItemVariable)
       value = ((OSQLFilterItemVariable) value).getValue(iCurrentRecord, iCurrentResult, iContext);
 
-    if (value == null)
-      return Collections.emptySet();
+    if (value == null) return Collections.emptySet();
 
     if (iParams.length == 1) {
       // AGGREGATION MODE (STATEFUL)
@@ -108,20 +117,19 @@ public class OSQLFunctionIntersect extends OSQLFunctionMultiValueAbstract<Object
   static Collection intersectWith(final Iterator current, Object value) {
     final HashSet tempSet = new HashSet();
 
-    if (!(value instanceof Set) && (!(value instanceof OSupportsContains) || !((OSupportsContains) value).supportsFastContains()))
+    if (!(value instanceof Set)
+        && (!(value instanceof OSupportsContains)
+            || !((OSupportsContains) value).supportsFastContains()))
       value = OMultiValue.toSet(value);
 
     for (Iterator it = current; it.hasNext(); ) {
       final Object curr = it.next();
       if (value instanceof ORidBag) {
-        if (((ORidBag) value).contains((OIdentifiable) curr))
-          tempSet.add(curr);
+        if (((ORidBag) value).contains((OIdentifiable) curr)) tempSet.add(curr);
       } else if (value instanceof Collection) {
-        if (((Collection) value).contains(curr))
-          tempSet.add(curr);
+        if (((Collection) value).contains(curr)) tempSet.add(curr);
       } else if (value instanceof OSupportsContains) {
-        if (((OSupportsContains) value).contains(curr))
-          tempSet.add(curr);
+        if (((OSupportsContains) value).contains(curr)) tempSet.add(curr);
       }
     }
 

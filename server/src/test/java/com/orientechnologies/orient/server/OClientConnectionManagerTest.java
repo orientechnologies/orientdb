@@ -1,33 +1,32 @@
 package com.orientechnologies.orient.server;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNotSame;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertSame;
+
+
 import com.orientechnologies.orient.core.metadata.security.OToken;
 import com.orientechnologies.orient.server.network.protocol.binary.ONetworkProtocolBinary;
-
 import java.io.IOException;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
-
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
 
-import static org.junit.Assert.*;
-
 public class OClientConnectionManagerTest {
 
-  @Mock
-  private ONetworkProtocolBinary protocol;
+  @Mock private ONetworkProtocolBinary protocol;
 
-  @Mock
-  private OToken token;
+  @Mock private OToken token;
 
-  @Mock
-  private OTokenHandler handler;
+  @Mock private OTokenHandler handler;
 
-  @Mock
-  private OServer server;
+  @Mock private OServer server;
 
   @Before
   public void before() throws NoSuchAlgorithmException, InvalidKeyException, IOException {
@@ -76,5 +75,4 @@ public class OClientConnectionManagerTest {
     OClientConnection ret4 = manager.getConnection(ret2.getId(), protocol);
     assertNull(ret4);
   }
-
 }

@@ -1,5 +1,8 @@
 package com.orientechnologies.orient.core.sql.fetch;
 
+import static org.junit.Assert.assertEquals;
+
+
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.fetch.OFetchContext;
@@ -10,13 +13,12 @@ import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import org.junit.Test;
 
-import static org.junit.Assert.assertEquals;
-
 public class DepthFetchPlanTest {
 
   @Test
   public void testFetchPlanDepth() {
-    ODatabaseDocument database = new ODatabaseDocumentTx("memory:" + DepthFetchPlanTest.class.getSimpleName());
+    ODatabaseDocument database =
+        new ODatabaseDocumentTx("memory:" + DepthFetchPlanTest.class.getSimpleName());
     database.create();
     try {
       database.getMetadata().getSchema().createClass("Test");
@@ -34,7 +36,8 @@ public class DepthFetchPlanTest {
       database.save(doc2);
       OFetchContext context = new ORemoteFetchContext();
       CountFetchListener listener = new CountFetchListener();
-      OFetchHelper.fetch(doc2, doc2, OFetchHelper.buildFetchPlan("ref:1 *:-2"), listener, context, "");
+      OFetchHelper.fetch(
+          doc2, doc2, OFetchHelper.buildFetchPlan("ref:1 *:-2"), listener, context, "");
 
       assertEquals(1, listener.count);
     } finally {
@@ -44,7 +47,8 @@ public class DepthFetchPlanTest {
 
   @Test
   public void testFullDepthFetchPlan() {
-    ODatabaseDocument database = new ODatabaseDocumentTx("memory:" + DepthFetchPlanTest.class.getSimpleName());
+    ODatabaseDocument database =
+        new ODatabaseDocumentTx("memory:" + DepthFetchPlanTest.class.getSimpleName());
     database.create();
     try {
       database.getMetadata().getSchema().createClass("Test");
@@ -66,7 +70,8 @@ public class DepthFetchPlanTest {
       database.save(doc3);
       OFetchContext context = new ORemoteFetchContext();
       CountFetchListener listener = new CountFetchListener();
-      OFetchHelper.fetch(doc3, doc3, OFetchHelper.buildFetchPlan("[*]ref:-1"), listener, context, "");
+      OFetchHelper.fetch(
+          doc3, doc3, OFetchHelper.buildFetchPlan("[*]ref:-1"), listener, context, "");
       assertEquals(3, listener.count);
     } finally {
       database.drop();
@@ -86,5 +91,4 @@ public class DepthFetchPlanTest {
       count++;
     }
   }
-
 }

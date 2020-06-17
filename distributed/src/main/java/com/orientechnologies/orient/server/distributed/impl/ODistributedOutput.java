@@ -24,19 +24,23 @@ import com.orientechnologies.common.log.OAnsiCode;
 import com.orientechnologies.orient.console.OTableFormatter;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
-import com.orientechnologies.orient.core.id.ORID;
-import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.util.ODateHelper;
 import com.orientechnologies.orient.server.distributed.ODistributedConfiguration;
 import com.orientechnologies.orient.server.distributed.ODistributedRequestId;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
 import com.orientechnologies.orient.server.distributed.ODistributedTxContext;
-
 import java.text.SimpleDateFormat;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Date;
+import java.util.HashSet;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
@@ -47,27 +51,25 @@ import java.util.stream.Collectors;
  */
 public class ODistributedOutput {
 
-  public static String formatServerStatus(final ODistributedServerManager manager, final ODocument distribCfg) {
+  public static String formatServerStatus(
+      final ODistributedServerManager manager, final ODocument distribCfg) {
     final List<OIdentifiable> rows = new ArrayList<OIdentifiable>();
 
     final Collection<ODocument> members = distribCfg.field("members");
 
     if (members != null)
       for (ODocument m : members) {
-        if (m == null)
-          continue;
+        if (m == null) continue;
 
         final ODocument serverRow = new ODocument();
 
         final String serverName = m.field("name");
 
         String serverLabel = serverName;
-        if (manager.getLocalNodeName().equals(serverName))
-          serverLabel += "(*)";
+        if (manager.getLocalNodeName().equals(serverName)) serverLabel += "(*)";
 
         final String lockManagerServer = manager.getLockManagerServer();
-        if (lockManagerServer != null && lockManagerServer.equals(serverName))
-          serverLabel += "(@)";
+        if (lockManagerServer != null && lockManagerServer.equals(serverName)) serverLabel += "(@)";
 
         serverRow.field("Name", serverLabel);
         serverRow.field("Status", (Object) m.field("status"));
@@ -102,8 +104,12 @@ public class ODistributedOutput {
         if (usedMem != null) {
           final long maxMem = m.field("maxMemory");
 
-          serverRow.field("UsedMemory", String
-              .format("%s/%s (%.2f%%)", OFileUtils.getSizeAsString(usedMem), OFileUtils.getSizeAsString(maxMem),
+          serverRow.field(
+              "UsedMemory",
+              String.format(
+                  "%s/%s (%.2f%%)",
+                  OFileUtils.getSizeAsString(usedMem),
+                  OFileUtils.getSizeAsString(maxMem),
                   ((float) usedMem / (float) maxMem) * 100));
         }
         rows.add(serverRow);
@@ -115,8 +121,7 @@ public class ODistributedOutput {
             final StringBuilder buffer = new StringBuilder();
 
             final ODistributedConfiguration dbCfg = manager.getDatabaseConfiguration(dbName, false);
-            if (dbCfg == null)
-              continue;
+            if (dbCfg == null) continue;
 
             buffer.append(dbName);
             buffer.append("=");
@@ -136,31 +141,36 @@ public class ODistributedOutput {
       }
 
     final StringBuilder buffer = new StringBuilder();
-    final OTableFormatter table = new OTableFormatter(new OTableFormatter.OTableOutput() {
-      @Override
-      public void onMessage(final String text, final Object... args) {
-        buffer.append(String.format(text, args));
-      }
-    });
+    final OTableFormatter table =
+        new OTableFormatter(
+            new OTableFormatter.OTableOutput() {
+              @Override
+              public void onMessage(final String text, final Object... args) {
+                buffer.append(String.format(text, args));
+              }
+            });
     table.setColumnHidden("#");
     table.writeRecords(rows, -1);
     buffer.append("\n");
     return buffer.toString();
   }
 
-  public static String formatLatency(final ODistributedAbstractPlugin manager, final ODocument distribCfg) {
+  public static String formatLatency(
+      final ODistributedAbstractPlugin manager, final ODocument distribCfg) {
     final List<OIdentifiable> rows = new ArrayList<OIdentifiable>();
 
     final List<ODocument> members = distribCfg.field("members");
 
     final StringBuilder buffer = new StringBuilder();
     buffer.append("\nREPLICATION LATENCY AVERAGE (in milliseconds)");
-    final OTableFormatter table = new OTableFormatter(new OTableFormatter.OTableOutput() {
-      @Override
-      public void onMessage(final String text, final Object... args) {
-        buffer.append(String.format(text, args));
-      }
-    });
+    final OTableFormatter table =
+        new OTableFormatter(
+            new OTableFormatter.OTableOutput() {
+              @Override
+              public void onMessage(final String text, final Object... args) {
+                buffer.append(String.format(text, args));
+              }
+            });
     table.setColumnHidden("#");
 
     if (members != null) {
@@ -171,7 +181,8 @@ public class ODistributedOutput {
           String serverName = fromMember.field("name");
           orderedServers.add(serverName);
 
-          table.setColumnAlignment(formatServerName(manager, serverName), OTableFormatter.ALIGNMENT.RIGHT);
+          table.setColumnAlignment(
+              formatServerName(manager, serverName), OTableFormatter.ALIGNMENT.RIGHT);
         }
       }
       Collections.sort(orderedServers);
@@ -196,8 +207,7 @@ public class ODistributedOutput {
         row.field("Servers", formatServerName(manager, fromServer));
 
         final ODocument latencies = fromMember.field("latencies");
-        if (latencies == null)
-          continue;
+        if (latencies == null) continue;
 
         for (String toServer : orderedServers) {
           String value = "";
@@ -217,23 +227,29 @@ public class ODistributedOutput {
     return buffer.toString();
   }
 
-  public static String formatMessages(final ODistributedAbstractPlugin manager, final ODocument distribCfg) {
-    return formatMessageBetweenServers(manager, distribCfg) + formatMessageStats(manager, distribCfg);
+  public static String formatMessages(
+      final ODistributedAbstractPlugin manager, final ODocument distribCfg) {
+    return formatMessageBetweenServers(manager, distribCfg)
+        + formatMessageStats(manager, distribCfg);
   }
 
-  public static String formatMessageBetweenServers(final ODistributedAbstractPlugin manager, final ODocument distribCfg) {
+  public static String formatMessageBetweenServers(
+      final ODistributedAbstractPlugin manager, final ODocument distribCfg) {
     final List<OIdentifiable> rows = new ArrayList<OIdentifiable>();
 
     final List<ODocument> members = distribCfg.field("members");
 
     final StringBuilder buffer = new StringBuilder();
-    buffer.append("\nREPLICATION MESSAGE COUNTERS (servers: source on the row and destination on the column)");
-    final OTableFormatter table = new OTableFormatter(new OTableFormatter.OTableOutput() {
-      @Override
-      public void onMessage(final String text, final Object... args) {
-        buffer.append(String.format(text, args));
-      }
-    });
+    buffer.append(
+        "\nREPLICATION MESSAGE COUNTERS (servers: source on the row and destination on the column)");
+    final OTableFormatter table =
+        new OTableFormatter(
+            new OTableFormatter.OTableOutput() {
+              @Override
+              public void onMessage(final String text, final Object... args) {
+                buffer.append(String.format(text, args));
+              }
+            });
     table.setColumnHidden("#");
 
     if (members != null) {
@@ -244,7 +260,8 @@ public class ODistributedOutput {
           String serverName = fromMember.field("name");
           orderedServers.add(serverName);
 
-          table.setColumnAlignment(formatServerName(manager, serverName), OTableFormatter.ALIGNMENT.RIGHT);
+          table.setColumnAlignment(
+              formatServerName(manager, serverName), OTableFormatter.ALIGNMENT.RIGHT);
         }
       }
       Collections.sort(orderedServers);
@@ -271,8 +288,7 @@ public class ODistributedOutput {
         row.field("Servers", formatServerName(manager, fromServer));
 
         final ODocument latencies = fromMember.field("latencies");
-        if (latencies == null)
-          continue;
+        if (latencies == null) continue;
 
         long total = 0;
         for (String toServer : orderedServers) {
@@ -316,19 +332,22 @@ public class ODistributedOutput {
     return buffer.toString();
   }
 
-  public static String formatMessageStats(final ODistributedAbstractPlugin manager, final ODocument distribCfg) {
+  public static String formatMessageStats(
+      final ODistributedAbstractPlugin manager, final ODocument distribCfg) {
     final List<OIdentifiable> rows = new ArrayList<OIdentifiable>();
 
     final List<ODocument> members = distribCfg.field("members");
 
     final StringBuilder buffer = new StringBuilder();
     buffer.append("\nREPLICATION MESSAGE CURRENT NODE STATS");
-    final OTableFormatter table = new OTableFormatter(new OTableFormatter.OTableOutput() {
-      @Override
-      public void onMessage(final String text, final Object... args) {
-        buffer.append(String.format(text, args));
-      }
-    });
+    final OTableFormatter table =
+        new OTableFormatter(
+            new OTableFormatter.OTableOutput() {
+              @Override
+              public void onMessage(final String text, final Object... args) {
+                buffer.append(String.format(text, args));
+              }
+            });
     table.setColumnHidden("#");
 
     if (members != null) {
@@ -374,8 +393,7 @@ public class ODistributedOutput {
         row.field("Servers", formatServerName(manager, server));
 
         final ODocument messages = member.field("messages");
-        if (messages == null)
-          continue;
+        if (messages == null) continue;
 
         long total = 0;
         for (String opName : operations) {
@@ -414,13 +432,11 @@ public class ODistributedOutput {
     table.writeRecords(rows, -1);
     buffer.append("\n");
     return buffer.toString();
-
   }
 
   protected static void sumTotal(final ODocument rowTotals, final String column, long total) {
     Long totValue = rowTotals.field(column);
-    if (totValue == null)
-      totValue = 0l;
+    if (totValue == null) totValue = 0l;
     rowTotals.field(column, total + totValue);
   }
 
@@ -429,10 +445,10 @@ public class ODistributedOutput {
    *
    * @param manager
    * @param distribCfg
-   *
    * @return
    */
-  public static String getCompactServerStatus(final ODistributedServerManager manager, final ODocument distribCfg) {
+  public static String getCompactServerStatus(
+      final ODistributedServerManager manager, final ODocument distribCfg) {
     final StringBuilder buffer = new StringBuilder();
 
     final Collection<ODocument> members = distribCfg.field("members");
@@ -443,11 +459,9 @@ public class ODistributedOutput {
 
       int memberCount = 0;
       for (ODocument m : members) {
-        if (m == null)
-          continue;
+        if (m == null) continue;
 
-        if (memberCount++ > 0)
-          buffer.append(",");
+        if (memberCount++ > 0) buffer.append(",");
 
         final String serverName = m.field("name");
         buffer.append(serverName);
@@ -460,11 +474,9 @@ public class ODistributedOutput {
           for (String dbName : databases) {
             final ODistributedConfiguration dbCfg = manager.getDatabaseConfiguration(dbName, false);
 
-            if (dbCfg == null)
-              continue;
+            if (dbCfg == null) continue;
 
-            if (dbCount++ > 0)
-              buffer.append(",");
+            if (dbCount++ > 0) buffer.append(",");
 
             buffer.append(dbName);
             buffer.append("=");
@@ -482,18 +494,23 @@ public class ODistributedOutput {
     return buffer.toString();
   }
 
-  public static String formatClusterTable(final ODistributedServerManager manager, final String databaseName,
-      final ODistributedConfiguration cfg, final int totalConfiguredServers) {
+  public static String formatClusterTable(
+      final ODistributedServerManager manager,
+      final String databaseName,
+      final ODistributedConfiguration cfg,
+      final int totalConfiguredServers) {
     final StringBuilder buffer = new StringBuilder();
 
     if (cfg.hasDataCenterConfiguration()) {
       buffer.append("\n\nDATA CENTER CONFIGURATION");
-      final OTableFormatter table = new OTableFormatter(new OTableFormatter.OTableOutput() {
-        @Override
-        public void onMessage(final String text, final Object... args) {
-          buffer.append(String.format(text, args));
-        }
-      });
+      final OTableFormatter table =
+          new OTableFormatter(
+              new OTableFormatter.OTableOutput() {
+                @Override
+                public void onMessage(final String text, final Object... args) {
+                  buffer.append(String.format(text, args));
+                }
+              });
       table.setColumnSorting("NAME", true);
       table.setColumnHidden("#");
       table.setColumnAlignment("SERVERS", OTableFormatter.ALIGNMENT.LEFT);
@@ -516,24 +533,26 @@ public class ODistributedOutput {
     }
 
     buffer.append(
-        "\n\nCLUSTER CONFIGURATION [wQuorum: " + manager.isWriteQuorumPresent(databaseName) + "] (LEGEND: X = Owner, o = Copy)");
+        "\n\nCLUSTER CONFIGURATION [wQuorum: "
+            + manager.isWriteQuorumPresent(databaseName)
+            + "] (LEGEND: X = Owner, o = Copy)");
 
-    final OTableFormatter table = new OTableFormatter(new OTableFormatter.OTableOutput() {
+    final OTableFormatter table =
+        new OTableFormatter(
+            new OTableFormatter.OTableOutput() {
 
-      @Override
-      public void onMessage(final String text, final Object... args) {
-        buffer.append(String.format(text, args));
-      }
-    });
+              @Override
+              public void onMessage(final String text, final Object... args) {
+                buffer.append(String.format(text, args));
+              }
+            });
 
     ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.instance().getIfDefined();
-    if (db != null && db.isClosed())
-      db = null;
+    if (db != null && db.isClosed()) db = null;
 
     table.setColumnSorting("CLUSTER", true);
     table.setColumnHidden("#");
-    if (db != null)
-      table.setColumnAlignment("id", OTableFormatter.ALIGNMENT.RIGHT);
+    if (db != null) table.setColumnAlignment("id", OTableFormatter.ALIGNMENT.RIGHT);
     table.setColumnAlignment("writeQuorum", OTableFormatter.ALIGNMENT.CENTER);
     table.setColumnAlignment("readQuorum", OTableFormatter.ALIGNMENT.CENTER);
 
@@ -544,11 +563,17 @@ public class ODistributedOutput {
     if (cfg.isLocalDataCenterWriteQuorum()) {
       defaultWQ = ODistributedConfiguration.QUORUM_LOCAL_DC;
     } else {
-      defaultWQ = "" + cfg.getWriteQuorum(ODistributedConfiguration.ALL_WILDCARD, totalConfiguredServers, localNodeName);
+      defaultWQ =
+          ""
+              + cfg.getWriteQuorum(
+                  ODistributedConfiguration.ALL_WILDCARD, totalConfiguredServers, localNodeName);
     }
-    final int defaultRQ = cfg.getReadQuorum(ODistributedConfiguration.ALL_WILDCARD, totalConfiguredServers, localNodeName);
+    final int defaultRQ =
+        cfg.getReadQuorum(
+            ODistributedConfiguration.ALL_WILDCARD, totalConfiguredServers, localNodeName);
     final String defaultOwner = "" + cfg.getClusterOwner(ODistributedConfiguration.ALL_WILDCARD);
-    final List<String> defaultServers = cfg.getConfiguredServers(ODistributedConfiguration.ALL_WILDCARD);
+    final List<String> defaultServers =
+        cfg.getConfiguredServers(ODistributedConfiguration.ALL_WILDCARD);
 
     final List<OIdentifiable> rows = new ArrayList<OIdentifiable>();
     final Set<String> allServers = new HashSet<String>();
@@ -564,8 +589,12 @@ public class ODistributedOutput {
       final String owner = cfg.getClusterOwner(cluster);
       final List<String> servers = cfg.getConfiguredServers(cluster);
 
-      if (!cluster.equals(ODistributedConfiguration.ALL_WILDCARD) && defaultWQ.equals(wQ) && defaultRQ == rQ && defaultOwner
-          .equals(owner) && defaultServers.size() == servers.size() && defaultServers.containsAll(servers))
+      if (!cluster.equals(ODistributedConfiguration.ALL_WILDCARD)
+          && defaultWQ.equals(wQ)
+          && defaultRQ == rQ
+          && defaultOwner.equals(owner)
+          && defaultServers.size() == servers.size()
+          && defaultServers.containsAll(servers))
         // SAME CFG AS THE DEFAULT: DON'T DISPLAY IT
         continue;
 
@@ -582,8 +611,7 @@ public class ODistributedOutput {
 
       if (servers != null)
         for (String server : servers) {
-          if (server.equalsIgnoreCase("<NEW_NODE>"))
-            continue;
+          if (server.equalsIgnoreCase("<NEW_NODE>")) continue;
 
           allServers.add(server);
 
@@ -595,9 +623,11 @@ public class ODistributedOutput {
     final Set<String> registeredServers = cfg.getRegisteredServers();
 
     for (String server : allServers) {
-      table.setColumnMetadata(server, "CFG", registeredServers.contains(server) ? "static" : "dynamic");
+      table.setColumnMetadata(
+          server, "CFG", registeredServers.contains(server) ? "static" : "dynamic");
       table.setColumnMetadata(server, "ROLE", cfg.getServerRole(server).toString());
-      table.setColumnMetadata(server, "STATUS", manager.getDatabaseStatus(server, databaseName).toString());
+      table.setColumnMetadata(
+          server, "STATUS", manager.getDatabaseStatus(server, databaseName).toString());
       if (cfg.hasDataCenterConfiguration())
         table.setColumnMetadata(server, "DC", "DC(" + cfg.getDataCenterOfServer(server) + ")");
     }
@@ -609,22 +639,25 @@ public class ODistributedOutput {
     return buffer.toString();
   }
 
-
-  protected static String formatServerName(final ODistributedAbstractPlugin manager, final String fromServer) {
+  protected static String formatServerName(
+      final ODistributedAbstractPlugin manager, final String fromServer) {
     return fromServer + (manager.getLocalNodeName().equals(fromServer) ? "*" : "");
   }
 
-  public static Object formatNewRecordLocks(final ODistributedAbstractPlugin manager, final String db) {
+  public static Object formatNewRecordLocks(
+      final ODistributedAbstractPlugin manager, final String db) {
     final List<ODocument> rows = getRequestsStatus(manager, db);
 
     final StringBuilder buffer = new StringBuilder();
     buffer.append("HA RECORD LOCKS FOR DATABASE '" + db + "'");
-    final OTableFormatter table = new OTableFormatter(new OTableFormatter.OTableOutput() {
-      @Override
-      public void onMessage(final String text, final Object... args) {
-        buffer.append(String.format(text, args));
-      }
-    });
+    final OTableFormatter table =
+        new OTableFormatter(
+            new OTableFormatter.OTableOutput() {
+              @Override
+              public void onMessage(final String text, final Object... args) {
+                buffer.append(String.format(text, args));
+              }
+            });
     table.setColumnHidden("#");
 
     table.writeRecords(rows, -1);
@@ -633,14 +666,16 @@ public class ODistributedOutput {
     return buffer.toString();
   }
 
-  public static List<ODocument> getRequestsStatus(final ODistributedAbstractPlugin manager, final String db) {
+  public static List<ODocument> getRequestsStatus(
+      final ODistributedAbstractPlugin manager, final String db) {
     final List<ODocument> rows = new ArrayList<ODocument>();
 
-    ConcurrentHashMap<ODistributedRequestId, ODistributedTxContext> activeTxContexts = manager.getMessageService().getDatabase(db)
-        .getActiveTxContexts();
+    ConcurrentHashMap<ODistributedRequestId, ODistributedTxContext> activeTxContexts =
+        manager.getMessageService().getDatabase(db).getActiveTxContexts();
 
     if (activeTxContexts != null) {
-      for (Map.Entry<ODistributedRequestId, ODistributedTxContext> entries : activeTxContexts.entrySet()) {
+      for (Map.Entry<ODistributedRequestId, ODistributedTxContext> entries :
+          activeTxContexts.entrySet()) {
 
         SimpleDateFormat dateFormat = new SimpleDateFormat(ODateHelper.DEF_DATETIME_FORMAT);
 
@@ -656,11 +691,12 @@ public class ODistributedOutput {
           row.field("requestID", entries.getKey().getMessageId());
           row.field("startedOn", dateFormat.format(new Date(entries.getValue().getStartedOn())));
           row.field("status", context.getStatus().toString());
-          row.field("records", context.getLockedRids().stream().map(Object::toString).collect(Collectors.toList()));
+          row.field(
+              "records",
+              context.getLockedRids().stream().map(Object::toString).collect(Collectors.toList()));
 
           rows.add(row);
         }
-
       }
     }
     return rows;

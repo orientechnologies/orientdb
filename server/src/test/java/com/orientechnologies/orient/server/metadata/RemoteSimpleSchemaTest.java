@@ -1,5 +1,9 @@
 package com.orientechnologies.orient.server.metadata;
 
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
+
+
 import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.ODatabaseType;
@@ -7,20 +11,16 @@ import com.orientechnologies.orient.core.db.OrientDB;
 import com.orientechnologies.orient.core.db.OrientDBConfig;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.server.OServer;
+import java.io.File;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
-import java.io.File;
-
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
-
 public class RemoteSimpleSchemaTest {
 
   private static final String SERVER_DIRECTORY = "./target/metadata-push";
-  private OServer           server;
-  private OrientDB          orientDB;
+  private OServer server;
+  private OrientDB orientDB;
   private ODatabaseDocument database;
 
   @Before
@@ -33,7 +33,6 @@ public class RemoteSimpleSchemaTest {
     orientDB = new OrientDB("remote:localhost", "root", "root", OrientDBConfig.defaultConfig());
     orientDB.create(RemoteSimpleSchemaTest.class.getSimpleName(), ODatabaseType.MEMORY);
     database = orientDB.open(RemoteSimpleSchemaTest.class.getSimpleName(), "admin", "admin");
-
   }
 
   @Test
@@ -53,7 +52,6 @@ public class RemoteSimpleSchemaTest {
     assertFalse(database.getMetadata().getSchema().existsClass("test"));
   }
 
-
   @Test
   public void testWithSpecialCharacters() {
     database.createClass("test-foo");
@@ -61,7 +59,6 @@ public class RemoteSimpleSchemaTest {
     database.getMetadata().getSchema().dropClass("test-foo");
     assertFalse(database.getMetadata().getSchema().existsClass("test-foo"));
   }
-
 
   @After
   public void after() {

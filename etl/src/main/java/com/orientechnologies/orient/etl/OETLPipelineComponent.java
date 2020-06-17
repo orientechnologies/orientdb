@@ -20,11 +20,8 @@ package com.orientechnologies.orient.etl;
 
 import com.orientechnologies.orient.core.command.OCommandContext;
 
-/**
- * ETL basic component.
- */
+/** ETL basic component. */
 public interface OETLPipelineComponent extends OETLComponent {
-
 
   void setContext(OCommandContext context);
 }

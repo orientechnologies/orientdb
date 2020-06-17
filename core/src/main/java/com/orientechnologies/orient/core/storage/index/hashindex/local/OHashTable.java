@@ -25,32 +25,37 @@ import com.orientechnologies.orient.core.encryption.OEncryption;
 import com.orientechnologies.orient.core.index.engine.OBaseIndexEngine;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperation;
-
 import java.io.IOException;
 import java.util.Comparator;
 
-/**
- * Created by lomak_000 on 15.04.2015.
- */
+/** Created by lomak_000 on 15.04.2015. */
 public interface OHashTable<K, V> {
-  void create(OAtomicOperation atomicOperation, OBinarySerializer<K> keySerializer, OBinarySerializer<V> valueSerializer, OType[] keyTypes, OEncryption encryption,
-      OHashFunction<K> keyHashFunction, boolean nullKeyIsSupported) throws IOException;
+  void create(
+      OAtomicOperation atomicOperation,
+      OBinarySerializer<K> keySerializer,
+      OBinarySerializer<V> valueSerializer,
+      OType[] keyTypes,
+      OEncryption encryption,
+      OHashFunction<K> keyHashFunction,
+      boolean nullKeyIsSupported)
+      throws IOException;
 
   V get(K key);
 
   /**
-   * Puts the given value under the given key into this hash table. Validates the operation using the provided validator.
+   * Puts the given value under the given key into this hash table. Validates the operation using
+   * the provided validator.
    *
    * @param atomicOperation
-   * @param key       the key to put the value under.
-   * @param value     the value to put.
+   * @param key the key to put the value under.
+   * @param value the value to put.
    * @param validator the operation validator.
-   *
    * @return {@code true} if the validator allowed the put, {@code false} otherwise.
-   *
    * @see OBaseIndexEngine.Validator#validate(Object, Object, Object)
    */
-  boolean validatedPut(OAtomicOperation atomicOperation, K key, V value, OBaseIndexEngine.Validator<K, V> validator) throws IOException;
+  boolean validatedPut(
+      OAtomicOperation atomicOperation, K key, V value, OBaseIndexEngine.Validator<K, V> validator)
+      throws IOException;
 
   void put(OAtomicOperation atomicOperation, K key, V value) throws IOException;
 
@@ -60,8 +65,14 @@ public interface OHashTable<K, V> {
 
   Entry<K, V>[] higherEntries(K key, int limit);
 
-  void load(String name, OType[] keyTypes, boolean nullKeyIsSupported, OEncryption encryption, OHashFunction<K> keyHashFunction,
-      final OBinarySerializer<K> keySerializer, final OBinarySerializer<V> valueSerializer);
+  void load(
+      String name,
+      OType[] keyTypes,
+      boolean nullKeyIsSupported,
+      OEncryption encryption,
+      OHashFunction<K> keyHashFunction,
+      final OBinarySerializer<K> keySerializer,
+      final OBinarySerializer<V> valueSerializer);
 
   Entry<K, V>[] ceilingEntries(K key);
 
@@ -84,7 +95,8 @@ public interface OHashTable<K, V> {
   boolean isNullKeyIsSupported();
 
   /**
-   * Acquires exclusive lock in the active atomic operation running on the current thread for this hash table.
+   * Acquires exclusive lock in the active atomic operation running on the current thread for this
+   * hash table.
    */
   void acquireAtomicExclusiveLock();
 
@@ -92,13 +104,19 @@ public interface OHashTable<K, V> {
 
   public static final class BucketPath {
     public final BucketPath parent;
-    public final int        hashMapOffset;
-    public final int        itemIndex;
-    public final int        nodeIndex;
-    public final int        nodeGlobalDepth;
-    public final int        nodeLocalDepth;
+    public final int hashMapOffset;
+    public final int itemIndex;
+    public final int nodeIndex;
+    public final int nodeGlobalDepth;
+    public final int nodeLocalDepth;
 
-    public BucketPath(BucketPath parent, int hashMapOffset, int itemIndex, int nodeIndex, int nodeLocalDepth, int nodeGlobalDepth) {
+    public BucketPath(
+        BucketPath parent,
+        int hashMapOffset,
+        int itemIndex,
+        int nodeIndex,
+        int nodeLocalDepth,
+        int nodeGlobalDepth) {
       this.parent = parent;
       this.hashMapOffset = hashMapOffset;
       this.itemIndex = itemIndex;
@@ -111,7 +129,7 @@ public interface OHashTable<K, V> {
   public static final class BucketSplitResult {
     public final long updatedBucketPointer;
     public final long newBucketPointer;
-    public final int  newDepth;
+    public final int newDepth;
 
     public BucketSplitResult(long updatedBucketPointer, long newBucketPointer, int newDepth) {
       this.updatedBucketPointer = updatedBucketPointer;
@@ -121,11 +139,12 @@ public interface OHashTable<K, V> {
   }
 
   public static final class NodeSplitResult {
-    public final long[]  newNode;
+    public final long[] newNode;
     public final boolean allLeftHashMapsEqual;
     public final boolean allRightHashMapsEqual;
 
-    public NodeSplitResult(long[] newNode, boolean allLeftHashMapsEqual, boolean allRightHashMapsEqual) {
+    public NodeSplitResult(
+        long[] newNode, boolean allLeftHashMapsEqual, boolean allRightHashMapsEqual) {
       this.newNode = newNode;
       this.allLeftHashMapsEqual = allLeftHashMapsEqual;
       this.allRightHashMapsEqual = allRightHashMapsEqual;
@@ -146,10 +165,8 @@ public interface OHashTable<K, V> {
       final long hashCodeOne = keyHashFunction.hashCode(keyOne);
       final long hashCodeTwo = keyHashFunction.hashCode(keyTwo);
 
-      if (greaterThanUnsigned(hashCodeOne, hashCodeTwo))
-        return 1;
-      if (lessThanUnsigned(hashCodeOne, hashCodeTwo))
-        return -1;
+      if (greaterThanUnsigned(hashCodeOne, hashCodeTwo)) return 1;
+      if (lessThanUnsigned(hashCodeOne, hashCodeTwo)) return -1;
 
       return comparator.compare(keyOne, keyTwo);
     }
@@ -166,7 +183,7 @@ public interface OHashTable<K, V> {
   class RawEntry {
     public final byte[] key;
     public final byte[] value;
-    public final long   hashCode;
+    public final long hashCode;
 
     public RawEntry(byte[] key, byte[] value, long hashCode) {
       this.key = key;
@@ -176,8 +193,8 @@ public interface OHashTable<K, V> {
   }
 
   class Entry<K, V> {
-    public final K    key;
-    public final V    value;
+    public final K key;
+    public final V value;
     public final long hashCode;
 
     public Entry(K key, V value, long hashCode) {

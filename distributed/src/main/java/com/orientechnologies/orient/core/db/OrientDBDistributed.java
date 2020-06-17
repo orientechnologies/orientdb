@@ -18,61 +18,66 @@ import com.orientechnologies.orient.server.distributed.impl.ODatabaseDocumentDis
 import com.orientechnologies.orient.server.distributed.impl.ODistributedStorage;
 import com.orientechnologies.orient.server.distributed.impl.metadata.OSharedContextDistributed;
 import com.orientechnologies.orient.server.hazelcast.OHazelcastPlugin;
-
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.HashMap;
 import java.util.Iterator;
 
-/**
- * Created by tglman on 08/08/17.
- */
+/** Created by tglman on 08/08/17. */
 public class OrientDBDistributed extends OrientDBEmbedded implements OServerAware {
 
-  private          OServer          server;
+  private OServer server;
   private volatile OHazelcastPlugin plugin;
 
   public OrientDBDistributed(String directoryPath, OrientDBConfig config, Orient instance) {
     super(directoryPath, config, instance);
-    //This now si simple but should be replaced by a factory depending to the protocol version
+    // This now si simple but should be replaced by a factory depending to the protocol version
   }
 
   @Override
   public void init(OServer server) {
-    //Cannot get the plugin from here, is too early, doing it lazy  
+    // Cannot get the plugin from here, is too early, doing it lazy
     this.server = server;
   }
 
   public synchronized OHazelcastPlugin getPlugin() {
     if (plugin == null) {
-      if (server != null && server.isActive())
-        plugin = server.getPlugin("cluster");
+      if (server != null && server.isActive()) plugin = server.getPlugin("cluster");
     }
     return plugin;
   }
 
   protected OSharedContext createSharedContext(OAbstractPaginatedStorage storage) {
-    if (OSystemDatabase.SYSTEM_DB_NAME.equals(storage.getName()) || getPlugin() == null || !getPlugin().isRunning()) {
+    if (OSystemDatabase.SYSTEM_DB_NAME.equals(storage.getName())
+        || getPlugin() == null
+        || !getPlugin().isRunning()) {
       return new OSharedContextEmbedded(storage, this);
     }
     return new OSharedContextDistributed(storage, this);
   }
 
   protected ODatabaseDocumentEmbedded newSessionInstance(OAbstractPaginatedStorage storage) {
-    if (OSystemDatabase.SYSTEM_DB_NAME.equals(storage.getName()) || getPlugin() == null || !getPlugin().isRunning()) {
+    if (OSystemDatabase.SYSTEM_DB_NAME.equals(storage.getName())
+        || getPlugin() == null
+        || !getPlugin().isRunning()) {
       return new ODatabaseDocumentEmbedded(storage);
     }
-    plugin.registerNewDatabaseIfNeeded(storage.getName(), plugin.getDatabaseConfiguration(storage.getName()));
+    plugin.registerNewDatabaseIfNeeded(
+        storage.getName(), plugin.getDatabaseConfiguration(storage.getName()));
     return new ODatabaseDocumentDistributed(plugin.getStorage(storage.getName(), storage), plugin);
   }
 
-  protected ODatabaseDocumentEmbedded newPooledSessionInstance(ODatabasePoolInternal pool, OAbstractPaginatedStorage storage) {
-    if (OSystemDatabase.SYSTEM_DB_NAME.equals(storage.getName()) || getPlugin() == null || !getPlugin().isRunning()) {
+  protected ODatabaseDocumentEmbedded newPooledSessionInstance(
+      ODatabasePoolInternal pool, OAbstractPaginatedStorage storage) {
+    if (OSystemDatabase.SYSTEM_DB_NAME.equals(storage.getName())
+        || getPlugin() == null
+        || !getPlugin().isRunning()) {
       return new ODatabaseDocumentEmbeddedPooled(pool, storage);
     }
-    plugin.registerNewDatabaseIfNeeded(storage.getName(), plugin.getDatabaseConfiguration(storage.getName()));
-    return new ODatabaseDocumentDistributedPooled(pool, plugin.getStorage(storage.getName(), storage), plugin);
-
+    plugin.registerNewDatabaseIfNeeded(
+        storage.getName(), plugin.getDatabaseConfiguration(storage.getName()));
+    return new ODatabaseDocumentDistributedPooled(
+        pool, plugin.getStorage(storage.getName(), storage), plugin);
   }
 
   public void setPlugin(OHazelcastPlugin plugin) {
@@ -83,7 +88,6 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
     final ODatabaseDocumentEmbedded embedded;
     OAbstractPaginatedStorage storage = null;
     synchronized (this) {
-
       try {
         storage = storages.get(dbName);
 
@@ -95,8 +99,14 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
           storage.delete();
           storages.remove(dbName);
         }
-        storage = (OAbstractPaginatedStorage) disk
-            .createStorage(buildName(dbName), new HashMap<>(), maxWALSegmentSize, doubleWriteLogMaxSegSize, generateStorageId());
+        storage =
+            (OAbstractPaginatedStorage)
+                disk.createStorage(
+                    buildName(dbName),
+                    new HashMap<>(),
+                    maxWALSegmentSize,
+                    doubleWriteLogMaxSegSize,
+                    generateStorageId());
         embedded = internalCreate(config, storage);
         storages.put(dbName, storage);
       } catch (Exception e) {
@@ -104,7 +114,8 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
           storage.delete();
         }
 
-        throw OException.wrapException(new ODatabaseException("Cannot restore database '" + dbName + "'"), e);
+        throw OException.wrapException(
+            new ODatabaseException("Cannot restore database '" + dbName + "'"), e);
       }
     }
     try {
@@ -113,7 +124,7 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
       storage.delete();
       throw e;
     }
-    //DROP AND CREATE THE SHARED CONTEXT SU HAS CORRECT INFORMATION.
+    // DROP AND CREATE THE SHARED CONTEXT SU HAS CORRECT INFORMATION.
     synchronized (this) {
       OSharedContext context = sharedContexts.remove(dbName);
       context.close();
@@ -123,7 +134,8 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
   }
 
   @Override
-  public ODatabaseDocumentInternal poolOpen(String name, String user, String password, ODatabasePoolInternal pool) {
+  public ODatabaseDocumentInternal poolOpen(
+      String name, String user, String password, ODatabasePoolInternal pool) {
     ODatabaseDocumentInternal session = super.poolOpen(name, user, password, pool);
     return session;
   }
@@ -132,7 +144,8 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
   public void drop(String name, String user, String password) {
     synchronized (this) {
       checkOpen();
-      //This is a temporary fix for distributed drop that avoid scheduled view update to re-open the distributed database while is dropped
+      // This is a temporary fix for distributed drop that avoid scheduled view update to re-open
+      // the distributed database while is dropped
       OSharedContext sharedContext = sharedContexts.get(name);
       if (sharedContext != null) {
         sharedContext.getViewManager().close();
@@ -142,7 +155,8 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
     ODatabaseDocumentInternal current = ODatabaseRecordThreadLocal.instance().getIfDefined();
     try {
       ODatabaseDocumentInternal db = openNoAuthenticate(name, user);
-      for (Iterator<ODatabaseLifecycleListener> it = orient.getDbLifecycleListeners(); it.hasNext(); ) {
+      for (Iterator<ODatabaseLifecycleListener> it = orient.getDbLifecycleListeners();
+          it.hasNext(); ) {
         it.next().onDrop(db);
       }
       db.close();
@@ -154,8 +168,7 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
       if (exists(name, user, password)) {
         OAbstractPaginatedStorage storage = getOrInitStorage(name);
         OSharedContext sharedContext = sharedContexts.get(name);
-        if (sharedContext != null)
-          sharedContext.close();
+        if (sharedContext != null) sharedContext.close();
         storage.delete();
         storages.remove(name);
         sharedContexts.remove(name);
@@ -164,9 +177,9 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
   }
 
   @Override
-  public void coordinatedRequest(OClientConnection connection, int requestType, int clientTxId, OChannelBinary channel)
+  public void coordinatedRequest(
+      OClientConnection connection, int requestType, int clientTxId, OChannelBinary channel)
       throws IOException {
     throw new UnsupportedOperationException("old implementation do not support new flow");
   }
-
 }

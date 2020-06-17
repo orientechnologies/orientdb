@@ -13,17 +13,26 @@ import com.orientechnologies.orient.core.sql.executor.OResultInternal;
 import com.orientechnologies.orient.core.sql.functions.OSQLFunction;
 import com.orientechnologies.orient.core.sql.functions.OSQLFunctionFiltered;
 import com.orientechnologies.orient.core.sql.method.OSQLMethod;
-
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 public class OMethodCall extends SimpleNode {
 
-  static Set<String> graphMethods = new HashSet<String>(
-      Arrays.asList(new String[] { "out", "in", "both", "outE", "inE", "bothE", "bothV", "outV", "inV" }));
+  static Set<String> graphMethods =
+      new HashSet<String>(
+          Arrays.asList(
+              new String[] {"out", "in", "both", "outE", "inE", "bothE", "bothV", "outV", "inV"}));
 
-  static Set<String> bidirectionalMethods = new HashSet<String>(
-      Arrays.asList(new String[] { "out", "in", "both", "oute", "ine", "inv", "outv", "bothe", "bothv" }));
+  static Set<String> bidirectionalMethods =
+      new HashSet<String>(
+          Arrays.asList(
+              new String[] {"out", "in", "both", "oute", "ine", "inv", "outv", "bothe", "bothv"}));
 
   protected OIdentifier methodName;
   protected List<OExpression> params = new ArrayList<OExpression>();
@@ -61,11 +70,16 @@ public class OMethodCall extends SimpleNode {
     return execute(targetObjects, ctx, methodName.getStringValue(), params, null);
   }
 
-  public Object execute(Object targetObjects, Iterable<OIdentifiable> iPossibleResults, OCommandContext ctx) {
+  public Object execute(
+      Object targetObjects, Iterable<OIdentifiable> iPossibleResults, OCommandContext ctx) {
     return execute(targetObjects, ctx, methodName.getStringValue(), params, iPossibleResults);
   }
 
-  private Object execute(Object targetObjects, OCommandContext ctx, String name, List<OExpression> iParams,
+  private Object execute(
+      Object targetObjects,
+      OCommandContext ctx,
+      String name,
+      List<OExpression> iParams,
       Iterable<OIdentifiable> iPossibleResults) {
     List<Object> paramValues = new ArrayList<Object>();
     Object val = ctx.getVariable("$current");
@@ -93,28 +107,40 @@ public class OMethodCall extends SimpleNode {
           current = ((OResult) current).getElement().orElse(null);
         }
         return ((OSQLFunctionFiltered) function)
-            .execute(targetObjects, (OIdentifiable) current, null, paramValues.toArray(), iPossibleResults, ctx);
+            .execute(
+                targetObjects,
+                (OIdentifiable) current,
+                null,
+                paramValues.toArray(),
+                iPossibleResults,
+                ctx);
       } else {
         Object current = ctx.getVariable("$current");
         if (current instanceof OIdentifiable) {
-          return function.execute(targetObjects, (OIdentifiable) current, null, paramValues.toArray(), ctx);
+          return function.execute(
+              targetObjects, (OIdentifiable) current, null, paramValues.toArray(), ctx);
         } else if (current instanceof OResult) {
-          return function.execute(targetObjects, ((OResult) current).getElement().orElse(null), null, paramValues.toArray(), ctx);
+          return function.execute(
+              targetObjects,
+              ((OResult) current).getElement().orElse(null),
+              null,
+              paramValues.toArray(),
+              ctx);
         } else {
           return function.execute(targetObjects, null, null, paramValues.toArray(), ctx);
         }
       }
-
     }
     OSQLMethod method = OSQLEngine.getMethod(name);
     if (method != null) {
       if (val instanceof OResult) {
         val = ((OResult) val).getElement().orElse(null);
       }
-      return method.execute(targetObjects, (OIdentifiable) val, ctx, targetObjects, paramValues.toArray());
+      return method.execute(
+          targetObjects, (OIdentifiable) val, ctx, targetObjects, paramValues.toArray());
     }
-    throw new UnsupportedOperationException("OMethod call, something missing in the implementation...?");
-
+    throw new UnsupportedOperationException(
+        "OMethod call, something missing in the implementation...?");
   }
 
   public Object executeReverse(Object targetObjects, OCommandContext ctx) {
@@ -183,17 +209,14 @@ public class OMethodCall extends SimpleNode {
 
   @Override
   public boolean equals(Object o) {
-    if (this == o)
-      return true;
-    if (o == null || getClass() != o.getClass())
-      return false;
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
 
     OMethodCall that = (OMethodCall) o;
 
     if (methodName != null ? !methodName.equals(that.methodName) : that.methodName != null)
       return false;
-    if (params != null ? !params.equals(that.params) : that.params != null)
-      return false;
+    if (params != null ? !params.equals(that.params) : that.params != null) return false;
 
     return true;
   }
@@ -230,7 +253,8 @@ public class OMethodCall extends SimpleNode {
       result.setProperty("methodName", methodName.serialize());
     }
     if (params != null) {
-      result.setProperty("items", params.stream().map(x -> x.serialize()).collect(Collectors.toList()));
+      result.setProperty(
+          "items", params.stream().map(x -> x.serialize()).collect(Collectors.toList()));
     }
     return result;
   }
@@ -254,7 +278,7 @@ public class OMethodCall extends SimpleNode {
     if (isGraphFunction()) {
       return true;
     }
-    return false;//TODO
+    return false; // TODO
   }
 
   private boolean isGraphFunction() {

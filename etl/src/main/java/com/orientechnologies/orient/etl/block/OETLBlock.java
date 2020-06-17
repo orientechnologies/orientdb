@@ -21,9 +21,7 @@ package com.orientechnologies.orient.etl.block;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.etl.OETLComponent;
 
-/**
- * ETL Generic Block.
- */
+/** ETL Generic Block. */
 public interface OETLBlock extends OETLComponent {
   Object execute();
 

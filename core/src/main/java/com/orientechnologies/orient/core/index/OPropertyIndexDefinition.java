@@ -21,22 +21,18 @@ package com.orientechnologies.orient.core.index;
 
 import com.orientechnologies.orient.core.collate.ODefaultCollate;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
-import com.orientechnologies.orient.core.db.record.ORecordElement;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandExecutorSQLCreateIndex;
-
 import java.util.Collections;
 import java.util.List;
 
-/**
- * Index implementation bound to one schema class property.
- */
+/** Index implementation bound to one schema class property. */
 public class OPropertyIndexDefinition extends OAbstractIndexDefinition {
-  private static final long   serialVersionUID = 7395728581151922197L;
-  protected            String className;
-  protected            String field;
-  protected            OType  keyType;
+  private static final long serialVersionUID = 7395728581151922197L;
+  protected String className;
+  protected String field;
+  protected OType keyType;
 
   public OPropertyIndexDefinition(final String iClassName, final String iField, final OType iType) {
     super();
@@ -45,11 +41,8 @@ public class OPropertyIndexDefinition extends OAbstractIndexDefinition {
     keyType = iType;
   }
 
-  /**
-   * Constructor used for index unmarshalling.
-   */
-  public OPropertyIndexDefinition() {
-  }
+  /** Constructor used for index unmarshalling. */
+  public OPropertyIndexDefinition() {}
 
   public String getClassName() {
     return className;
@@ -69,32 +62,24 @@ public class OPropertyIndexDefinition extends OAbstractIndexDefinition {
   public Object getDocumentValueToIndex(final ODocument iDocument) {
     if (OType.LINK.equals(keyType)) {
       final OIdentifiable identifiable = iDocument.field(field);
-      if (identifiable != null)
-        return createValue(identifiable.getIdentity());
-      else
-        return null;
+      if (identifiable != null) return createValue(identifiable.getIdentity());
+      else return null;
     }
     return createValue(iDocument.<Object>field(field));
   }
 
   @Override
   public boolean equals(final Object o) {
-    if (this == o)
-      return true;
-    if (o == null || getClass() != o.getClass())
-      return false;
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
 
-    if (!super.equals(o))
-      return false;
+    if (!super.equals(o)) return false;
 
     final OPropertyIndexDefinition that = (OPropertyIndexDefinition) o;
 
-    if (!className.equals(that.className))
-      return false;
-    if (!field.equals(that.field))
-      return false;
-    if (keyType != that.keyType)
-      return false;
+    if (!className.equals(that.className)) return false;
+    if (!field.equals(that.field)) return false;
+    if (keyType != that.keyType) return false;
 
     return true;
   }
@@ -110,17 +95,27 @@ public class OPropertyIndexDefinition extends OAbstractIndexDefinition {
 
   @Override
   public String toString() {
-    return "OPropertyIndexDefinition{" + "className='" + className + '\'' + ", field='" + field + '\'' + ", keyType=" + keyType
-        + ", collate=" + collate + ", null values ignored = " + isNullValuesIgnored() + '}';
+    return "OPropertyIndexDefinition{"
+        + "className='"
+        + className
+        + '\''
+        + ", field='"
+        + field
+        + '\''
+        + ", keyType="
+        + keyType
+        + ", collate="
+        + collate
+        + ", null values ignored = "
+        + isNullValuesIgnored()
+        + '}';
   }
 
   public Object createValue(final List<?> params) {
     return OType.convert(params.get(0), keyType.getDefaultJavaType());
   }
 
-  /**
-   * {@inheritDoc}
-   */
+  /** {@inheritDoc} */
   public Object createValue(final Object... params) {
     return OType.convert(params[0], keyType.getDefaultJavaType());
   }
@@ -130,7 +125,7 @@ public class OPropertyIndexDefinition extends OAbstractIndexDefinition {
   }
 
   public OType[] getTypes() {
-    return new OType[] { keyType };
+    return new OType[] {keyType};
   }
 
   @Override
@@ -173,17 +168,20 @@ public class OPropertyIndexDefinition extends OAbstractIndexDefinition {
    * @param indexName
    * @param indexType
    */
-  public String toCreateIndexDDL(final String indexName, final String indexType, final String engine) {
+  public String toCreateIndexDDL(
+      final String indexName, final String indexType, final String engine) {
     return createIndexDDLWithFieldType(indexName, indexType, engine).toString();
   }
 
-  protected StringBuilder createIndexDDLWithFieldType(String indexName, String indexType, String engine) {
+  protected StringBuilder createIndexDDLWithFieldType(
+      String indexName, String indexType, String engine) {
     final StringBuilder ddl = createIndexDDLWithoutFieldType(indexName, indexType, engine);
     ddl.append(' ').append(keyType.name());
     return ddl;
   }
 
-  protected StringBuilder createIndexDDLWithoutFieldType(final String indexName, final String indexType, final String engine) {
+  protected StringBuilder createIndexDDLWithoutFieldType(
+      final String indexName, final String indexType, final String engine) {
     final StringBuilder ddl = new StringBuilder("create index `");
 
     ddl.append(indexName).append("` on `");

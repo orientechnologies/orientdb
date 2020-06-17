@@ -13,7 +13,7 @@
  *  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  *  * See the License for the specific language governing permissions and
  *  * limitations under the License.
- *  
+ *
  */
 
 package com.orientechnologies.lucene.tests;
@@ -24,15 +24,12 @@ import com.orientechnologies.orient.core.record.OVertex;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
+import java.util.List;
 import org.assertj.core.api.Assertions;
 import org.junit.Before;
 import org.junit.Test;
 
-import java.util.List;
-
-/**
- * Created by enricorisa on 03/09/14.
- */
+/** Created by enricorisa on 03/09/14. */
 public class OLuceneGraphEmbeddedTest extends OLuceneBaseTest {
 
   @Before
@@ -50,7 +47,7 @@ public class OLuceneGraphEmbeddedTest extends OLuceneBaseTest {
   @Test
   public void embeddedTx() {
 
-    //THIS WON'T USE LUCENE INDEXES!!!! see #6997
+    // THIS WON'T USE LUCENE INDEXES!!!! see #6997
 
     db.begin();
     OVertex city = db.newVertex("City");
@@ -64,8 +61,8 @@ public class OLuceneGraphEmbeddedTest extends OLuceneBaseTest {
 
     db.begin();
 
-    List<ODocument> docs
-        = db.query(new OSQLSynchQuery<ODocument>("SELECT from City where name = 'London / a' "));
+    List<ODocument> docs =
+        db.query(new OSQLSynchQuery<ODocument>("SELECT from City where name = 'London / a' "));
 
     Assertions.assertThat(docs).hasSize(1);
 
@@ -105,7 +102,5 @@ public class OLuceneGraphEmbeddedTest extends OLuceneBaseTest {
     resultSet.getExecutionPlan().ifPresent(x -> System.out.println(x.prettyPrint(0, 2)));
     Assertions.assertThat(resultSet).hasSize(1);
     resultSet.close();
-
   }
-
 }

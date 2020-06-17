@@ -6,19 +6,17 @@ import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
 import com.orientechnologies.orient.core.storage.cluster.OClusterPage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.WALRecordTypes;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.PageOperationRecord;
-
 import java.nio.ByteBuffer;
 import java.util.Collections;
 
 public final class ClusterPageAppendRecordPO extends PageOperationRecord {
-  private int     recordVersion;
-  private byte[]  record;
-  private int     requestedPosition;
-  private int     recordPosition;
+  private int recordVersion;
+  private byte[] record;
+  private int requestedPosition;
+  private int recordPosition;
   private boolean allocatedFromFreeList;
 
-  public ClusterPageAppendRecordPO() {
-  }
+  public ClusterPageAppendRecordPO() {}
 
   public int getRecordVersion() {
     return recordVersion;
@@ -40,7 +38,11 @@ public final class ClusterPageAppendRecordPO extends PageOperationRecord {
     return allocatedFromFreeList;
   }
 
-  public ClusterPageAppendRecordPO(int recordVersion, byte[] record, int requestedPosition, int recordPosition,
+  public ClusterPageAppendRecordPO(
+      int recordVersion,
+      byte[] record,
+      int requestedPosition,
+      int recordPosition,
       boolean allocatedFromFreeList) {
     this.recordVersion = recordVersion;
     this.record = record;
@@ -54,9 +56,12 @@ public final class ClusterPageAppendRecordPO extends PageOperationRecord {
     final OClusterPage clusterPage = new OClusterPage(cacheEntry);
     int allocatedPosition;
     if (requestedPosition < 0) {
-      allocatedPosition = clusterPage.appendRecord(recordVersion, record, recordPosition, Collections.emptySet());
+      allocatedPosition =
+          clusterPage.appendRecord(recordVersion, record, recordPosition, Collections.emptySet());
     } else {
-      allocatedPosition = clusterPage.appendRecord(recordVersion, record, requestedPosition, Collections.emptySet());
+      allocatedPosition =
+          clusterPage.appendRecord(
+              recordVersion, record, requestedPosition, Collections.emptySet());
     }
 
     if (allocatedPosition < 0) {
@@ -80,7 +85,10 @@ public final class ClusterPageAppendRecordPO extends PageOperationRecord {
 
   @Override
   public int serializedSize() {
-    return super.serializedSize() + 4 * OIntegerSerializer.INT_SIZE + record.length + OByteSerializer.BYTE_SIZE;
+    return super.serializedSize()
+        + 4 * OIntegerSerializer.INT_SIZE
+        + record.length
+        + OByteSerializer.BYTE_SIZE;
   }
 
   @Override

@@ -38,5 +38,4 @@ public class OObjectNotDetachedException extends RuntimeException {
   public OObjectNotDetachedException(Throwable cause) {
     super(cause);
   }
-
 }

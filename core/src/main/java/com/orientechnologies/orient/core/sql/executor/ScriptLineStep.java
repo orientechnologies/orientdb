@@ -9,15 +9,15 @@ import com.orientechnologies.orient.core.sql.parser.OStatement;
 
 /**
  * @author Luigi Dell'Aquila (l.dellaquila-(at)-orientdb.com)
- * <p>
- * This step represents the execution plan of an instruciton instide a batch script
+ *     <p>This step represents the execution plan of an instruciton instide a batch script
  */
 public class ScriptLineStep extends AbstractExecutionStep {
   protected final OInternalExecutionPlan plan;
 
   private boolean executed = false;
 
-  public ScriptLineStep(OInternalExecutionPlan nextPlan, OCommandContext ctx, boolean profilingEnabled) {
+  public ScriptLineStep(
+      OInternalExecutionPlan nextPlan, OCommandContext ctx, boolean profilingEnabled) {
     super(ctx, profilingEnabled);
     this.plan = nextPlan;
   }

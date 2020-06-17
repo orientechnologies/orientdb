@@ -7,10 +7,9 @@ import com.orientechnologies.orient.core.storage.cache.OCacheEntryImpl;
 import com.orientechnologies.orient.core.storage.cache.OCachePointer;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.PageOperationRecord;
 import com.orientechnologies.orient.core.storage.index.sbtree.singlevalue.v3.CellBTreeSingleValueEntryPointV3;
+import java.util.List;
 import org.junit.Assert;
 import org.junit.Test;
-
-import java.util.List;
 
 public class CellBTreeEntryPointSingleValueV3InitPOTest {
   @Test
@@ -30,15 +29,18 @@ public class CellBTreeEntryPointSingleValueV3InitPOTest {
 
       Assert.assertTrue(operations.get(0) instanceof CellBTreeEntryPointSingleValueV3InitPO);
 
-      final CellBTreeEntryPointSingleValueV3InitPO pageOperation = (CellBTreeEntryPointSingleValueV3InitPO) operations.get(0);
+      final CellBTreeEntryPointSingleValueV3InitPO pageOperation =
+          (CellBTreeEntryPointSingleValueV3InitPO) operations.get(0);
 
       final OPointer restoredPointer = byteBufferPool.acquireDirect(false);
-      final OCachePointer restoredCachePointer = new OCachePointer(restoredPointer, byteBufferPool, 0, 0);
+      final OCachePointer restoredCachePointer =
+          new OCachePointer(restoredPointer, byteBufferPool, 0, 0);
       final OCacheEntry restoredCacheEntry = new OCacheEntryImpl(0, 0, restoredCachePointer);
 
       pageOperation.redo(restoredCacheEntry);
 
-      CellBTreeSingleValueEntryPointV3 restoredPage = new CellBTreeSingleValueEntryPointV3(restoredCacheEntry);
+      CellBTreeSingleValueEntryPointV3 restoredPage =
+          new CellBTreeSingleValueEntryPointV3(restoredCacheEntry);
 
       Assert.assertEquals(1, restoredPage.getPagesSize());
       Assert.assertEquals(0, restoredPage.getTreeSize());
@@ -49,5 +51,4 @@ public class CellBTreeEntryPointSingleValueV3InitPOTest {
       byteBufferPool.clear();
     }
   }
-
 }

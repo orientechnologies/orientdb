@@ -1,5 +1,8 @@
 package com.orientechnologies.orient.core.sql;
 
+import static org.junit.Assert.assertEquals;
+
+
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
@@ -8,13 +11,10 @@ import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
+import java.util.List;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-
-import java.util.List;
-
-import static org.junit.Assert.assertEquals;
 
 public class OChainIndexFetchTest {
 
@@ -47,15 +47,14 @@ public class OChainIndexFetchTest {
 
     db.save(doc1);
 
-    List<ODocument> res = db.query(new OSQLSynchQuery(" select from BaseClass where ref.id ='wrong_referred' "));
+    List<ODocument> res =
+        db.query(new OSQLSynchQuery(" select from BaseClass where ref.id ='wrong_referred' "));
 
     assertEquals(0, res.size());
-
   }
 
   @After
   public void after() {
     db.drop();
   }
-
 }

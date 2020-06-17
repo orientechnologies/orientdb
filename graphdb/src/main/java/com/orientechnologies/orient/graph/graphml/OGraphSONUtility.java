@@ -1,5 +1,8 @@
 package com.orientechnologies.orient.graph.graphml;
 
+import static com.tinkerpop.blueprints.util.io.graphson.ElementPropertyConfig.ElementPropertiesRule;
+
+
 import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -16,16 +19,20 @@ import com.tinkerpop.blueprints.util.io.graphson.ElementFactory;
 import com.tinkerpop.blueprints.util.io.graphson.ElementPropertyConfig;
 import com.tinkerpop.blueprints.util.io.graphson.GraphSONMode;
 import com.tinkerpop.blueprints.util.io.graphson.GraphSONTokens;
-import org.codehaus.jettison.json.JSONException;
-import org.codehaus.jettison.json.JSONObject;
-import org.codehaus.jettison.json.JSONTokener;
-
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.Array;
-import java.util.*;
-
-import static com.tinkerpop.blueprints.util.io.graphson.ElementPropertyConfig.ElementPropertiesRule;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import org.codehaus.jettison.json.JSONException;
+import org.codehaus.jettison.json.JSONObject;
+import org.codehaus.jettison.json.JSONTokener;
 
 /**
  * Helps write individual graph elements to TinkerPop JSON format known as GraphSON.
@@ -36,19 +43,19 @@ import static com.tinkerpop.blueprints.util.io.graphson.ElementPropertyConfig.El
 public class OGraphSONUtility {
 
   private static final JsonNodeFactory jsonNodeFactory = JsonNodeFactory.instance;
-  private static final JsonFactory     jsonFactory     = new MappingJsonFactory();
-  private static final String          EMPTY_STRING    = "";
+  private static final JsonFactory jsonFactory = new MappingJsonFactory();
+  private static final String EMPTY_STRING = "";
 
   private static final ObjectMapper mapper = new ObjectMapper();
 
-  private final GraphSONMode          mode;
-  private final List<String>          vertexPropertyKeys;
-  private final List<String>          edgePropertyKeys;
-  private final ElementFactory        factory;
-  private final boolean               hasEmbeddedTypes;
+  private final GraphSONMode mode;
+  private final List<String> vertexPropertyKeys;
+  private final List<String> edgePropertyKeys;
+  private final ElementFactory factory;
+  private final boolean hasEmbeddedTypes;
   private final ElementPropertiesRule vertexPropertiesRule;
   private final ElementPropertiesRule edgePropertiesRule;
-  private final boolean               normalized;
+  private final boolean normalized;
 
   private final boolean includeReservedVertexId;
   private final boolean includeReservedEdgeId;
@@ -58,22 +65,25 @@ public class OGraphSONUtility {
   private final boolean includeReservedEdgeOutV;
   private final boolean includeReservedEdgeInV;
 
-  /**
-   * A GraphSONUtiltiy that includes all properties of vertices and edges.
-   */
+  /** A GraphSONUtiltiy that includes all properties of vertices and edges. */
   public OGraphSONUtility(final GraphSONMode mode, final ElementFactory factory) {
     this(mode, factory, ElementPropertyConfig.AllProperties);
   }
 
-  /**
-   * A GraphSONUtility that includes the specified properties.
-   */
-  public OGraphSONUtility(final GraphSONMode mode, final ElementFactory factory, final Set<String> vertexPropertyKeys,
+  /** A GraphSONUtility that includes the specified properties. */
+  public OGraphSONUtility(
+      final GraphSONMode mode,
+      final ElementFactory factory,
+      final Set<String> vertexPropertyKeys,
       final Set<String> edgePropertyKeys) {
-    this(mode, factory, ElementPropertyConfig.includeProperties(vertexPropertyKeys, edgePropertyKeys));
+    this(
+        mode,
+        factory,
+        ElementPropertyConfig.includeProperties(vertexPropertyKeys, edgePropertyKeys));
   }
 
-  public OGraphSONUtility(final GraphSONMode mode, final ElementFactory factory, final ElementPropertyConfig config) {
+  public OGraphSONUtility(
+      final GraphSONMode mode, final ElementFactory factory, final ElementPropertyConfig config) {
     this.vertexPropertyKeys = config.getVertexPropertyKeys();
     this.edgePropertyKeys = config.getEdgePropertyKeys();
     this.vertexPropertiesRule = config.getVertexPropertiesRule();
@@ -84,43 +94,43 @@ public class OGraphSONUtility {
     this.factory = factory;
     this.hasEmbeddedTypes = mode == GraphSONMode.EXTENDED;
 
-    this.includeReservedVertexId = includeReservedKey(mode, GraphSONTokens._ID, vertexPropertyKeys, this.vertexPropertiesRule);
-    this.includeReservedEdgeId = includeReservedKey(mode, GraphSONTokens._ID, edgePropertyKeys, this.edgePropertiesRule);
-    this.includeReservedVertexType = includeReservedKey(mode, GraphSONTokens._TYPE, vertexPropertyKeys, this.vertexPropertiesRule);
-    this.includeReservedEdgeType = includeReservedKey(mode, GraphSONTokens._TYPE, edgePropertyKeys, this.edgePropertiesRule);
-    this.includeReservedEdgeLabel = includeReservedKey(mode, GraphSONTokens._LABEL, edgePropertyKeys, this.edgePropertiesRule);
-    this.includeReservedEdgeOutV = includeReservedKey(mode, GraphSONTokens._OUT_V, edgePropertyKeys, this.edgePropertiesRule);
-    this.includeReservedEdgeInV = includeReservedKey(mode, GraphSONTokens._IN_V, edgePropertyKeys, this.edgePropertiesRule);
+    this.includeReservedVertexId =
+        includeReservedKey(mode, GraphSONTokens._ID, vertexPropertyKeys, this.vertexPropertiesRule);
+    this.includeReservedEdgeId =
+        includeReservedKey(mode, GraphSONTokens._ID, edgePropertyKeys, this.edgePropertiesRule);
+    this.includeReservedVertexType =
+        includeReservedKey(
+            mode, GraphSONTokens._TYPE, vertexPropertyKeys, this.vertexPropertiesRule);
+    this.includeReservedEdgeType =
+        includeReservedKey(mode, GraphSONTokens._TYPE, edgePropertyKeys, this.edgePropertiesRule);
+    this.includeReservedEdgeLabel =
+        includeReservedKey(mode, GraphSONTokens._LABEL, edgePropertyKeys, this.edgePropertiesRule);
+    this.includeReservedEdgeOutV =
+        includeReservedKey(mode, GraphSONTokens._OUT_V, edgePropertyKeys, this.edgePropertiesRule);
+    this.includeReservedEdgeInV =
+        includeReservedKey(mode, GraphSONTokens._IN_V, edgePropertyKeys, this.edgePropertiesRule);
   }
 
-  /**
-   * Creates a vertex from GraphSON using settings supplied in the constructor.
-   */
+  /** Creates a vertex from GraphSON using settings supplied in the constructor. */
   public Vertex vertexFromJson(final JSONObject json) throws IOException {
     return this.vertexFromJson(json.toString());
   }
 
-  /**
-   * Creates a vertex from GraphSON using settings supplied in the constructor.
-   */
+  /** Creates a vertex from GraphSON using settings supplied in the constructor. */
   public Vertex vertexFromJson(final String json) throws IOException {
     final JsonParser jp = jsonFactory.createParser(json);
     final JsonNode node = jp.readValueAsTree();
     return this.vertexFromJson(node);
   }
 
-  /**
-   * Creates a vertex from GraphSON using settings supplied in the constructor.
-   */
+  /** Creates a vertex from GraphSON using settings supplied in the constructor. */
   public Vertex vertexFromJson(final InputStream json) throws IOException {
     final JsonParser jp = jsonFactory.createParser(json);
     final JsonNode node = jp.readValueAsTree();
     return this.vertexFromJson(node);
   }
 
-  /**
-   * Creates a vertex from GraphSON using settings supplied in the constructor.
-   */
+  /** Creates a vertex from GraphSON using settings supplied in the constructor. */
   public Vertex vertexFromJson(final JsonNode json) throws IOException {
     final Map<String, Object> props = readProperties(json, true, this.hasEmbeddedTypes);
 
@@ -137,42 +147,41 @@ public class OGraphSONUtility {
     return v;
   }
 
-  /**
-   * Creates an edge from GraphSON using settings supplied in the constructor.
-   */
-  public Edge edgeFromJson(final JSONObject json, final Vertex out, final Vertex in) throws IOException {
+  /** Creates an edge from GraphSON using settings supplied in the constructor. */
+  public Edge edgeFromJson(final JSONObject json, final Vertex out, final Vertex in)
+      throws IOException {
     return this.edgeFromJson(json.toString(), out, in);
   }
 
-  /**
-   * Creates an edge from GraphSON using settings supplied in the constructor.
-   */
-  public Edge edgeFromJson(final String json, final Vertex out, final Vertex in) throws IOException {
+  /** Creates an edge from GraphSON using settings supplied in the constructor. */
+  public Edge edgeFromJson(final String json, final Vertex out, final Vertex in)
+      throws IOException {
     final JsonParser jp = jsonFactory.createParser(json);
     final JsonNode node = jp.readValueAsTree();
     return this.edgeFromJson(node, out, in);
   }
 
-  /**
-   * Creates an edge from GraphSON using settings supplied in the constructor.
-   */
-  public Edge edgeFromJson(final InputStream json, final Vertex out, final Vertex in) throws IOException {
+  /** Creates an edge from GraphSON using settings supplied in the constructor. */
+  public Edge edgeFromJson(final InputStream json, final Vertex out, final Vertex in)
+      throws IOException {
     final JsonParser jp = jsonFactory.createParser(json);
     final JsonNode node = jp.readValueAsTree();
     return this.edgeFromJson(node, out, in);
   }
 
-  /**
-   * Creates an edge from GraphSON using settings supplied in the constructor.
-   */
-  public Edge edgeFromJson(final JsonNode json, final Vertex out, final Vertex in) throws IOException {
-    final Map<String, Object> props = OGraphSONUtility.readProperties(json, true, this.hasEmbeddedTypes);
+  /** Creates an edge from GraphSON using settings supplied in the constructor. */
+  public Edge edgeFromJson(final JsonNode json, final Vertex out, final Vertex in)
+      throws IOException {
+    final Map<String, Object> props =
+        OGraphSONUtility.readProperties(json, true, this.hasEmbeddedTypes);
 
     final Object edgeId = getTypedValueFromJsonNode(json.get(GraphSONTokens._ID));
     final JsonNode nodeLabel = json.get(GraphSONTokens._LABEL);
 
-    // assigned an empty string edge label in cases where one does not exist. this gets around the requirement
-    // that blueprints graphs have a non-null label while ensuring that GraphSON can stay flexible in parsing
+    // assigned an empty string edge label in cases where one does not exist. this gets around the
+    // requirement
+    // that blueprints graphs have a non-null label while ensuring that GraphSON can stay flexible
+    // in parsing
     // partial bits from the JSON. Not sure if there is any gotchas developing out of this.
     final String label = nodeLabel == null ? EMPTY_STRING : nodeLabel.textValue();
 
@@ -188,9 +197,7 @@ public class OGraphSONUtility {
     return e;
   }
 
-  /**
-   * Creates GraphSON for a single graph element.
-   */
+  /** Creates GraphSON for a single graph element. */
   public JSONObject jsonFromElement(final Element element) throws JSONException {
     final ObjectNode objectNode = this.objectNodeFromElement(element);
 
@@ -203,23 +210,26 @@ public class OGraphSONUtility {
     }
   }
 
-  /**
-   * Creates GraphSON for a single graph element.
-   */
+  /** Creates GraphSON for a single graph element. */
   public ObjectNode objectNodeFromElement(final Element element) {
     final boolean isEdge = element instanceof Edge;
     final boolean showTypes = mode == GraphSONMode.EXTENDED;
     final List<String> propertyKeys = isEdge ? this.edgePropertyKeys : this.vertexPropertyKeys;
-    final ElementPropertiesRule elementPropertyConfig = isEdge ? this.edgePropertiesRule : this.vertexPropertiesRule;
+    final ElementPropertiesRule elementPropertyConfig =
+        isEdge ? this.edgePropertiesRule : this.vertexPropertiesRule;
 
-    final ObjectNode jsonElement = createJSONMap(createPropertyMap(element, propertyKeys, elementPropertyConfig, normalized),
-        propertyKeys, showTypes);
+    final ObjectNode jsonElement =
+        createJSONMap(
+            createPropertyMap(element, propertyKeys, elementPropertyConfig, normalized),
+            propertyKeys,
+            showTypes);
 
     if ((isEdge && this.includeReservedEdgeId) || (!isEdge && this.includeReservedVertexId)) {
       putObject(jsonElement, GraphSONTokens._ID, element.getId());
     }
 
-    // it's important to keep the order of these straight. check Edge first and then Vertex because there
+    // it's important to keep the order of these straight. check Edge first and then Vertex because
+    // there
     // are graph implementations that have Edge extend from Vertex
     if (element instanceof Edge) {
       final Edge edge = (Edge) element;
@@ -259,13 +269,17 @@ public class OGraphSONUtility {
   /**
    * Reads an individual Vertex from JSON. The vertex must match the accepted GraphSON format.
    *
-   * @param json         a single vertex in GraphSON format as Jettison JSONObject
-   * @param factory      the factory responsible for constructing graph elements
-   * @param mode         the mode of the GraphSON
+   * @param json a single vertex in GraphSON format as Jettison JSONObject
+   * @param factory the factory responsible for constructing graph elements
+   * @param mode the mode of the GraphSON
    * @param propertyKeys a list of keys to include on reading of element properties
    */
-  public static Vertex vertexFromJson(final JSONObject json, final ElementFactory factory, final GraphSONMode mode,
-      final Set<String> propertyKeys) throws IOException {
+  public static Vertex vertexFromJson(
+      final JSONObject json,
+      final ElementFactory factory,
+      final GraphSONMode mode,
+      final Set<String> propertyKeys)
+      throws IOException {
     final OGraphSONUtility graphson = new OGraphSONUtility(mode, factory, propertyKeys, null);
     return graphson.vertexFromJson(json);
   }
@@ -273,13 +287,17 @@ public class OGraphSONUtility {
   /**
    * Reads an individual Vertex from JSON. The vertex must match the accepted GraphSON format.
    *
-   * @param json         a single vertex in GraphSON format as a String.
-   * @param factory      the factory responsible for constructing graph elements
-   * @param mode         the mode of the GraphSON
+   * @param json a single vertex in GraphSON format as a String.
+   * @param factory the factory responsible for constructing graph elements
+   * @param mode the mode of the GraphSON
    * @param propertyKeys a list of keys to include on reading of element properties
    */
-  public static Vertex vertexFromJson(final String json, final ElementFactory factory, final GraphSONMode mode,
-      final Set<String> propertyKeys) throws IOException {
+  public static Vertex vertexFromJson(
+      final String json,
+      final ElementFactory factory,
+      final GraphSONMode mode,
+      final Set<String> propertyKeys)
+      throws IOException {
     final OGraphSONUtility graphson = new OGraphSONUtility(mode, factory, propertyKeys, null);
     return graphson.vertexFromJson(json);
   }
@@ -287,13 +305,17 @@ public class OGraphSONUtility {
   /**
    * Reads an individual Vertex from JSON. The vertex must match the accepted GraphSON format.
    *
-   * @param json         a single vertex in GraphSON format as an InputStream.
-   * @param factory      the factory responsible for constructing graph elements
-   * @param mode         the mode of the GraphSON
+   * @param json a single vertex in GraphSON format as an InputStream.
+   * @param factory the factory responsible for constructing graph elements
+   * @param mode the mode of the GraphSON
    * @param propertyKeys a list of keys to include on reading of element properties
    */
-  public static Vertex vertexFromJson(final InputStream json, final ElementFactory factory, final GraphSONMode mode,
-      final Set<String> propertyKeys) throws IOException {
+  public static Vertex vertexFromJson(
+      final InputStream json,
+      final ElementFactory factory,
+      final GraphSONMode mode,
+      final Set<String> propertyKeys)
+      throws IOException {
     final OGraphSONUtility graphson = new OGraphSONUtility(mode, factory, propertyKeys, null);
     return graphson.vertexFromJson(json);
   }
@@ -301,13 +323,17 @@ public class OGraphSONUtility {
   /**
    * Reads an individual Vertex from JSON. The vertex must match the accepted GraphSON format.
    *
-   * @param json         a single vertex in GraphSON format as Jackson JsonNode
-   * @param factory      the factory responsible for constructing graph elements
-   * @param mode         the mode of the GraphSON
+   * @param json a single vertex in GraphSON format as Jackson JsonNode
+   * @param factory the factory responsible for constructing graph elements
+   * @param mode the mode of the GraphSON
    * @param propertyKeys a list of keys to include on reading of element properties
    */
-  public static Vertex vertexFromJson(final JsonNode json, final ElementFactory factory, final GraphSONMode mode,
-      final Set<String> propertyKeys) throws IOException {
+  public static Vertex vertexFromJson(
+      final JsonNode json,
+      final ElementFactory factory,
+      final GraphSONMode mode,
+      final Set<String> propertyKeys)
+      throws IOException {
     final OGraphSONUtility graphson = new OGraphSONUtility(mode, factory, propertyKeys, null);
     return graphson.vertexFromJson(json);
   }
@@ -315,13 +341,19 @@ public class OGraphSONUtility {
   /**
    * Reads an individual Edge from JSON. The edge must match the accepted GraphSON format.
    *
-   * @param json         a single edge in GraphSON format as a Jettison JSONObject
-   * @param factory      the factory responsible for constructing graph elements
-   * @param mode         the mode of the GraphSON
+   * @param json a single edge in GraphSON format as a Jettison JSONObject
+   * @param factory the factory responsible for constructing graph elements
+   * @param mode the mode of the GraphSON
    * @param propertyKeys a list of keys to include when reading of element properties
    */
-  public static Edge edgeFromJson(final JSONObject json, final Vertex out, final Vertex in, final ElementFactory factory,
-      final GraphSONMode mode, final Set<String> propertyKeys) throws IOException {
+  public static Edge edgeFromJson(
+      final JSONObject json,
+      final Vertex out,
+      final Vertex in,
+      final ElementFactory factory,
+      final GraphSONMode mode,
+      final Set<String> propertyKeys)
+      throws IOException {
     final OGraphSONUtility graphson = new OGraphSONUtility(mode, factory, null, propertyKeys);
     return graphson.edgeFromJson(json, out, in);
   }
@@ -329,13 +361,19 @@ public class OGraphSONUtility {
   /**
    * Reads an individual Edge from JSON. The edge must match the accepted GraphSON format.
    *
-   * @param json         a single edge in GraphSON format as a String
-   * @param factory      the factory responsible for constructing graph elements
-   * @param mode         the mode of the GraphSON
+   * @param json a single edge in GraphSON format as a String
+   * @param factory the factory responsible for constructing graph elements
+   * @param mode the mode of the GraphSON
    * @param propertyKeys a list of keys to include when reading of element properties
    */
-  public static Edge edgeFromJson(final String json, final Vertex out, final Vertex in, final ElementFactory factory,
-      final GraphSONMode mode, final Set<String> propertyKeys) throws IOException {
+  public static Edge edgeFromJson(
+      final String json,
+      final Vertex out,
+      final Vertex in,
+      final ElementFactory factory,
+      final GraphSONMode mode,
+      final Set<String> propertyKeys)
+      throws IOException {
     final OGraphSONUtility graphson = new OGraphSONUtility(mode, factory, null, propertyKeys);
     return graphson.edgeFromJson(json, out, in);
   }
@@ -343,13 +381,19 @@ public class OGraphSONUtility {
   /**
    * Reads an individual Edge from JSON. The edge must match the accepted GraphSON format.
    *
-   * @param json         a single edge in GraphSON format as an InputStream
-   * @param factory      the factory responsible for constructing graph elements
-   * @param mode         the mode of the GraphSON
+   * @param json a single edge in GraphSON format as an InputStream
+   * @param factory the factory responsible for constructing graph elements
+   * @param mode the mode of the GraphSON
    * @param propertyKeys a list of keys to include when reading of element properties
    */
-  public static Edge edgeFromJson(final InputStream json, final Vertex out, final Vertex in, final ElementFactory factory,
-      final GraphSONMode mode, final Set<String> propertyKeys) throws IOException {
+  public static Edge edgeFromJson(
+      final InputStream json,
+      final Vertex out,
+      final Vertex in,
+      final ElementFactory factory,
+      final GraphSONMode mode,
+      final Set<String> propertyKeys)
+      throws IOException {
     final OGraphSONUtility graphson = new OGraphSONUtility(mode, factory, null, propertyKeys);
     return graphson.edgeFromJson(json, out, in);
   }
@@ -357,18 +401,25 @@ public class OGraphSONUtility {
   /**
    * Reads an individual Edge from JSON. The edge must match the accepted GraphSON format.
    *
-   * @param json         a single edge in GraphSON format as a Jackson JsonNode
-   * @param factory      the factory responsible for constructing graph elements
-   * @param mode         the mode of the GraphSON
+   * @param json a single edge in GraphSON format as a Jackson JsonNode
+   * @param factory the factory responsible for constructing graph elements
+   * @param mode the mode of the GraphSON
    * @param propertyKeys a list of keys to include when reading of element properties
    */
-  public static Edge edgeFromJson(final JsonNode json, final Vertex out, final Vertex in, final ElementFactory factory,
-      final GraphSONMode mode, final Set<String> propertyKeys) throws IOException {
+  public static Edge edgeFromJson(
+      final JsonNode json,
+      final Vertex out,
+      final Vertex in,
+      final ElementFactory factory,
+      final GraphSONMode mode,
+      final Set<String> propertyKeys)
+      throws IOException {
     final OGraphSONUtility graphson = new OGraphSONUtility(mode, factory, null, propertyKeys);
     return graphson.edgeFromJson(json, out, in);
   }
 
-  private static ObjectNode objectNodeFromElement(final Element element, final List<String> propertyKeys, final GraphSONMode mode) {
+  private static ObjectNode objectNodeFromElement(
+      final Element element, final List<String> propertyKeys, final GraphSONMode mode) {
     final OGraphSONUtility graphson;
     if (element instanceof Edge) {
       graphson = new OGraphSONUtility(mode, null, null, new HashSet<String>(propertyKeys));
@@ -378,7 +429,8 @@ public class OGraphSONUtility {
     return graphson.objectNodeFromElement(element);
   }
 
-  static Map<String, Object> readProperties(final JsonNode node, final boolean ignoreReservedKeys, final boolean hasEmbeddedTypes) {
+  static Map<String, Object> readProperties(
+      final JsonNode node, final boolean ignoreReservedKeys, final boolean hasEmbeddedTypes) {
     final Map<String, Object> map = new HashMap<String, Object>();
 
     final Iterator<Map.Entry<String, JsonNode>> iterator = node.fields();
@@ -386,7 +438,8 @@ public class OGraphSONUtility {
       final Map.Entry<String, JsonNode> entry = iterator.next();
 
       if (!ignoreReservedKeys || !isReservedKey(entry.getKey())) {
-        // it generally shouldn't be as such but graphson containing null values can't be shoved into
+        // it generally shouldn't be as such but graphson containing null values can't be shoved
+        // into
         // element property keys or it will result in error
         final Object o = readProperty(entry.getValue(), hasEmbeddedTypes);
         if (o != null) {
@@ -398,14 +451,19 @@ public class OGraphSONUtility {
     return map;
   }
 
-  private static boolean includeReservedKey(final GraphSONMode mode, final String key, final List<String> propertyKeys,
+  private static boolean includeReservedKey(
+      final GraphSONMode mode,
+      final String key,
+      final List<String> propertyKeys,
       final ElementPropertiesRule rule) {
-    // the key is always included in modes other than compact. if it is compact, then validate that the
+    // the key is always included in modes other than compact. if it is compact, then validate that
+    // the
     // key is in the property key list
     return mode != GraphSONMode.COMPACT || includeKey(key, propertyKeys, rule);
   }
 
-  private static boolean includeKey(final String key, final List<String> propertyKeys, final ElementPropertiesRule rule) {
+  private static boolean includeKey(
+      final String key, final List<String> propertyKeys, final ElementPropertiesRule rule) {
     if (propertyKeys == null) {
       // when null always include the key and shortcut this piece
       return true;
@@ -416,20 +474,23 @@ public class OGraphSONUtility {
     boolean keySituation = rule == ElementPropertiesRule.INCLUDE;
 
     switch (rule) {
-    case INCLUDE:
-      keySituation = propertyKeys.contains(key);
-      break;
-    case EXCLUDE:
-      keySituation = !propertyKeys.contains(key);
-      break;
+      case INCLUDE:
+        keySituation = propertyKeys.contains(key);
+        break;
+      case EXCLUDE:
+        keySituation = !propertyKeys.contains(key);
+        break;
     }
 
     return keySituation;
   }
 
   private static boolean isReservedKey(final String key) {
-    return key.equals(GraphSONTokens._ID) || key.equals(GraphSONTokens._TYPE) || key.equals(GraphSONTokens._LABEL) || key
-        .equals(GraphSONTokens._OUT_V) || key.equals(GraphSONTokens._IN_V);
+    return key.equals(GraphSONTokens._ID)
+        || key.equals(GraphSONTokens._TYPE)
+        || key.equals(GraphSONTokens._LABEL)
+        || key.equals(GraphSONTokens._OUT_V)
+        || key.equals(GraphSONTokens._IN_V);
   }
 
   private static Object readProperty(final JsonNode node, final boolean hasEmbeddedTypes) {
@@ -486,7 +547,8 @@ public class OGraphSONUtility {
     return propertyValue;
   }
 
-  private static List readProperties(final Iterator<JsonNode> listOfNodes, final boolean hasEmbeddedTypes) {
+  private static List readProperties(
+      final Iterator<JsonNode> listOfNodes, final boolean hasEmbeddedTypes) {
     final List array = new ArrayList();
 
     while (listOfNodes.hasNext()) {
@@ -496,11 +558,16 @@ public class OGraphSONUtility {
     return array;
   }
 
-  private static ArrayNode createJSONList(final List list, final List<String> propertyKeys, final boolean showTypes) {
+  private static ArrayNode createJSONList(
+      final List list, final List<String> propertyKeys, final boolean showTypes) {
     final ArrayNode jsonList = jsonNodeFactory.arrayNode();
     for (Object item : list) {
       if (item instanceof Element) {
-        jsonList.add(objectNodeFromElement((Element) item, propertyKeys, showTypes ? GraphSONMode.EXTENDED : GraphSONMode.NORMAL));
+        jsonList.add(
+            objectNodeFromElement(
+                (Element) item,
+                propertyKeys,
+                showTypes ? GraphSONMode.EXTENDED : GraphSONMode.NORMAL));
       } else if (item instanceof List) {
         jsonList.add(createJSONList((List) item, propertyKeys, showTypes));
       } else if (item instanceof Map) {
@@ -514,7 +581,8 @@ public class OGraphSONUtility {
     return jsonList;
   }
 
-  private static ObjectNode createJSONMap(final Map map, final List<String> propertyKeys, final boolean showTypes) {
+  private static ObjectNode createJSONMap(
+      final Map map, final List<String> propertyKeys, final boolean showTypes) {
     final ObjectNode jsonMap = jsonNodeFactory.objectNode();
     for (Object key : map.keySet()) {
       Object value = map.get(key);
@@ -524,7 +592,11 @@ public class OGraphSONUtility {
         } else if (value instanceof Map) {
           value = createJSONMap((Map) value, propertyKeys, showTypes);
         } else if (value instanceof Element) {
-          value = objectNodeFromElement((Element) value, propertyKeys, showTypes ? GraphSONMode.EXTENDED : GraphSONMode.NORMAL);
+          value =
+              objectNodeFromElement(
+                  (Element) value,
+                  propertyKeys,
+                  showTypes ? GraphSONMode.EXTENDED : GraphSONMode.NORMAL);
         } else if (value.getClass().isArray()) {
           value = createJSONList(convertArrayToList(value), propertyKeys, showTypes);
         }
@@ -533,7 +605,6 @@ public class OGraphSONUtility {
       putObject(jsonMap, key.toString(), getValue(value, showTypes));
     }
     return jsonMap;
-
   }
 
   private static void addObject(final ArrayNode jsonList, final Object value) {
@@ -592,7 +663,10 @@ public class OGraphSONUtility {
     }
   }
 
-  private static Map createPropertyMap(final Element element, final List<String> propertyKeys, final ElementPropertiesRule rule,
+  private static Map createPropertyMap(
+      final Element element,
+      final List<String> propertyKeys,
+      final ElementPropertiesRule rule,
       final boolean normalized) {
     final Map map = new HashMap<String, Object>();
     final List<String> propertyKeyList;
@@ -600,8 +674,7 @@ public class OGraphSONUtility {
       final List<String> sorted = new ArrayList<String>(element.getPropertyKeys());
       Collections.sort(sorted);
       propertyKeyList = sorted;
-    } else
-      propertyKeyList = new ArrayList<String>(element.getPropertyKeys());
+    } else propertyKeyList = new ArrayList<String>(element.getPropertyKeys());
 
     if (propertyKeys == null) {
       for (String key : propertyKeyList) {

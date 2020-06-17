@@ -14,17 +14,29 @@ import com.orientechnologies.orient.distributed.impl.structural.submit.OStructur
 
 public interface OCoordinatedExecutor {
 
-  void executeOperationRequest(ONodeIdentity sender, String database, OLogId id, ONodeRequest request);
+  void executeOperationRequest(
+      ONodeIdentity sender, String database, OLogId id, ONodeRequest request);
 
-  void executeOperationResponse(ONodeIdentity sender, String database, OLogId id, ONodeResponse response);
+  void executeOperationResponse(
+      ONodeIdentity sender, String database, OLogId id, ONodeResponse response);
 
-  void executeSubmitResponse(ONodeIdentity sender, String database, OSessionOperationId operationId, OSubmitResponse response);
+  void executeSubmitResponse(
+      ONodeIdentity sender,
+      String database,
+      OSessionOperationId operationId,
+      OSubmitResponse response);
 
-  void executeSubmitRequest(ONodeIdentity sender, String database, OSessionOperationId operationId, OSubmitRequest request);
+  void executeSubmitRequest(
+      ONodeIdentity sender,
+      String database,
+      OSessionOperationId operationId,
+      OSubmitRequest request);
 
-  void executeStructuralSubmitRequest(ONodeIdentity sender, OSessionOperationId id, OStructuralSubmitRequest request);
+  void executeStructuralSubmitRequest(
+      ONodeIdentity sender, OSessionOperationId id, OStructuralSubmitRequest request);
 
-  void executeStructuralSubmitResponse(ONodeIdentity sender, OSessionOperationId id, OStructuralSubmitResponse response);
+  void executeStructuralSubmitResponse(
+      ONodeIdentity sender, OSessionOperationId id, OStructuralSubmitResponse response);
 
   void executePropagate(ONodeIdentity sender, OLogId id, ORaftOperation operation);
 

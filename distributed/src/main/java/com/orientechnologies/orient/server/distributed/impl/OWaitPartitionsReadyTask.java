@@ -9,8 +9,8 @@ import com.orientechnologies.orient.server.distributed.task.OAbstractRemoteTask;
 import com.orientechnologies.orient.server.distributed.task.ORemoteTask;
 
 public class OWaitPartitionsReadyTask extends OAbstractRemoteTask {
-  private volatile boolean      hasResponse = false;
-  private final    OExecuteOnce execute;
+  private volatile boolean hasResponse = false;
+  private final OExecuteOnce execute;
 
   public OWaitPartitionsReadyTask(OExecuteOnce execute) {
     this.execute = execute;
@@ -27,8 +27,12 @@ public class OWaitPartitionsReadyTask extends OAbstractRemoteTask {
   }
 
   @Override
-  public Object execute(ODistributedRequestId requestId, OServer iServer, ODistributedServerManager iManager,
-      ODatabaseDocumentInternal database) throws Exception {
+  public Object execute(
+      ODistributedRequestId requestId,
+      OServer iServer,
+      ODistributedServerManager iManager,
+      ODatabaseDocumentInternal database)
+      throws Exception {
     if (execute.execute(requestId, iServer, iManager, database)) {
       this.hasResponse = execute.getToRun().hasResponse();
       return execute.getResult();

@@ -5,14 +5,14 @@ package com.orientechnologies.orient.core.sql.parser;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.executor.OResultInternal;
-
 import java.util.Map;
 
 /**
- * This class is used to represent all the indentifies in the SQL grammar, ie. class names, property names, index names, variables
- * and so on so forth.
- * <p>
- * Instances of this class are immutable and can be recycled multiple times in the same or in different queries.
+ * This class is used to represent all the indentifies in the SQL grammar, ie. class names, property
+ * names, index names, variables and so on so forth.
+ *
+ * <p>Instances of this class are immutable and can be recycled multiple times in the same or in
+ * different queries.
  */
 public class OIdentifier extends SimpleNode {
 
@@ -20,7 +20,8 @@ public class OIdentifier extends SimpleNode {
   protected boolean quoted = false;
 
   /**
-   * set to true by the query executor/optimizer for internally generated aliases for query optimization
+   * set to true by the query executor/optimizer for internally generated aliases for query
+   * optimization
    */
   protected boolean internalAlias = false;
 
@@ -69,7 +70,8 @@ public class OIdentifier extends SimpleNode {
   }
 
   /**
-   * returns the plain string representation of this identifier, with quoting removed from back-ticks
+   * returns the plain string representation of this identifier, with quoting removed from
+   * back-ticks
    *
    * @return
    */
@@ -84,8 +86,8 @@ public class OIdentifier extends SimpleNode {
   }
 
   /**
-   * sets the value of the identifier. It can contain any values, this method can manage back-ticks (internally quote them), so
-   * back-ticks have not to be quoted when passed as a parameter
+   * sets the value of the identifier. It can contain any values, this method can manage back-ticks
+   * (internally quote them), so back-ticks have not to be quoted when passed as a parameter
    *
    * @param s
    */
@@ -97,7 +99,6 @@ public class OIdentifier extends SimpleNode {
     } else {
       value = s;
     }
-
   }
 
   @Override
@@ -126,27 +127,22 @@ public class OIdentifier extends SimpleNode {
 
   public OIdentifier copy() {
     return this;
-//    OIdentifier result = new OIdentifier(-1);
-//    result.value = value;
-//    result.quoted = quoted;
-//    return result;
+    //    OIdentifier result = new OIdentifier(-1);
+    //    result.value = value;
+    //    result.quoted = quoted;
+    //    return result;
   }
 
   @Override
   public boolean equals(Object o) {
-    if (this == o)
-      return true;
-    if (o == null || getClass() != o.getClass())
-      return false;
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
 
     OIdentifier that = (OIdentifier) o;
 
-    if (quoted != that.quoted)
-      return false;
-    if (internalAlias != that.internalAlias)
-      return false;
-    if (value != null ? !value.equals(that.value) : that.value != null)
-      return false;
+    if (quoted != that.quoted) return false;
+    if (internalAlias != that.internalAlias) return false;
+    if (value != null ? !value.equals(that.value) : that.value != null) return false;
 
     return true;
   }
@@ -172,7 +168,7 @@ public class OIdentifier extends SimpleNode {
     }
     String stringVal = getStringValue();
     if (ctx.isScriptVariableDeclared(stringVal)) {
-      return true;//context variable, for batch scripts
+      return true; // context variable, for batch scripts
     }
     return false;
   }

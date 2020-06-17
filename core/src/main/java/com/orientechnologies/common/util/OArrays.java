@@ -20,9 +20,8 @@
 
 package com.orientechnologies.common.util;
 
-import java.lang.reflect.Array;
-
 import com.orientechnologies.common.log.OLogManager;
+import java.lang.reflect.Array;
 
 @SuppressWarnings("unchecked")
 public class OArrays {
@@ -30,7 +29,8 @@ public class OArrays {
     return (T[]) copyOf(iSource, iNewSize, iSource.getClass());
   }
 
-  public static <T, U> T[] copyOf(final U[] iSource, final int iNewSize, final Class<? extends T[]> iNewType) {
+  public static <T, U> T[] copyOf(
+      final U[] iSource, final int iNewSize, final Class<? extends T[]> iNewType) {
     final T[] copy;
     if ((Object) iNewType == (Object) Object[].class) {
       copy = (T[]) new Object[iNewSize];
@@ -45,10 +45,10 @@ public class OArrays {
     return copyOfRange(iSource, iBegin, iEnd, (Class<S[]>) iSource.getClass());
   }
 
-  public static <D, S> D[] copyOfRange(final S[] iSource, final int iBegin, final int iEnd, final Class<? extends D[]> iClass) {
+  public static <D, S> D[] copyOfRange(
+      final S[] iSource, final int iBegin, final int iEnd, final Class<? extends D[]> iClass) {
     final int newLength = iEnd - iBegin;
-    if (newLength < 0)
-      throw new IllegalArgumentException(iBegin + " > " + iEnd);
+    if (newLength < 0) throw new IllegalArgumentException(iBegin + " > " + iEnd);
 
     final D[] copy;
     if ((Object) iClass == (Object) Object[].class) {
@@ -62,8 +62,7 @@ public class OArrays {
 
   public static byte[] copyOfRange(final byte[] iSource, final int iBegin, final int iEnd) {
     final int newLength = iEnd - iBegin;
-    if (newLength < 0)
-      throw new IllegalArgumentException(iBegin + " > " + iEnd);
+    if (newLength < 0) throw new IllegalArgumentException(iBegin + " > " + iEnd);
 
     try {
       final byte[] copy = new byte[newLength];
@@ -81,30 +80,20 @@ public class OArrays {
     return copy;
   }
 
-  /**
-   * Returns true if an arrays contains a value, otherwise false
-   */
+  /** Returns true if an arrays contains a value, otherwise false */
   public static boolean contains(final int[] iArray, final int iToFind) {
-    if (iArray == null || iArray.length == 0)
-      return false;
+    if (iArray == null || iArray.length == 0) return false;
 
-    for (int e : iArray)
-      if (e == iToFind)
-        return true;
+    for (int e : iArray) if (e == iToFind) return true;
 
     return false;
   }
 
-  /**
-   * Returns true if an arrays contains a value, otherwise false
-   */
+  /** Returns true if an arrays contains a value, otherwise false */
   public static <T> boolean contains(final T[] iArray, final T iToFind) {
-    if (iArray == null || iArray.length == 0)
-      return false;
+    if (iArray == null || iArray.length == 0) return false;
 
-    for (T e : iArray)
-      if (e != null && e.equals(iToFind))
-        return true;
+    for (T e : iArray) if (e != null && e.equals(iToFind)) return true;
 
     return false;
   }
@@ -112,10 +101,8 @@ public class OArrays {
   public static int hash(final Object[] iArray) {
     int hash = 0;
     for (Object o : iArray) {
-      if (o != null)
-        hash += o.hashCode();
+      if (o != null) hash += o.hashCode();
     }
     return hash;
   }
-
 }

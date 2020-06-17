@@ -5,20 +5,19 @@ import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.WALRecordTypes;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.PageOperationRecord;
 import com.orientechnologies.orient.core.storage.index.sbtree.multivalue.v2.CellBTreeMultiValueV2Bucket;
-
 import java.nio.ByteBuffer;
 
 public final class CellBTreeMultiValueV2BucketRemoveNonLeafEntryPO extends PageOperationRecord {
-  private int    index;
+  private int index;
   private byte[] key;
-  private int    left;
-  private int    right;
-  private int    prevChild;
+  private int left;
+  private int right;
+  private int prevChild;
 
-  public CellBTreeMultiValueV2BucketRemoveNonLeafEntryPO() {
-  }
+  public CellBTreeMultiValueV2BucketRemoveNonLeafEntryPO() {}
 
-  public CellBTreeMultiValueV2BucketRemoveNonLeafEntryPO(int index, byte[] key, int left, int right, int prevChild) {
+  public CellBTreeMultiValueV2BucketRemoveNonLeafEntryPO(
+      int index, byte[] key, int left, int right, int prevChild) {
     this.index = index;
     this.key = key;
     this.left = left;

@@ -24,7 +24,7 @@ import java.io.Serializable;
 @SuppressWarnings("serial")
 public class OStorageEntryConfiguration implements Serializable {
   public final String name;
-  public       String value;
+  public String value;
 
   public OStorageEntryConfiguration(final String iName, final String iValue) {
     name = iName;

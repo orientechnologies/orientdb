@@ -8,11 +8,10 @@ import com.orientechnologies.orient.core.storage.cache.OCachePointer;
 import com.orientechnologies.orient.core.storage.cluster.OClusterPage;
 import com.orientechnologies.orient.core.storage.cluster.v0.OPaginatedClusterStateV0;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.PageOperationRecord;
-import org.junit.Assert;
-import org.junit.Test;
-
 import java.nio.ByteBuffer;
 import java.util.List;
+import org.junit.Assert;
+import org.junit.Test;
 
 public class PaginatedClusterStateV0SetFreeListPagePOTest {
   @Test
@@ -32,7 +31,8 @@ public class PaginatedClusterStateV0SetFreeListPagePOTest {
       entry.clearPageOperations();
 
       final OPointer restoredPointer = byteBufferPool.acquireDirect(false);
-      final OCachePointer restoredCachePointer = new OCachePointer(restoredPointer, byteBufferPool, 0, 0);
+      final OCachePointer restoredCachePointer =
+          new OCachePointer(restoredPointer, byteBufferPool, 0, 0);
       final OCacheEntry restoredCacheEntry = new OCacheEntryImpl(0, 0, restoredCachePointer);
 
       final ByteBuffer originalBuffer = cachePointer.getBufferDuplicate();
@@ -49,7 +49,8 @@ public class PaginatedClusterStateV0SetFreeListPagePOTest {
       Assert.assertEquals(1, operations.size());
 
       Assert.assertTrue(operations.get(0) instanceof PaginatedClusterStateV0SetFreeListPagePO);
-      final PaginatedClusterStateV0SetFreeListPagePO pageOperation = (PaginatedClusterStateV0SetFreeListPagePO) operations.get(0);
+      final PaginatedClusterStateV0SetFreeListPagePO pageOperation =
+          (PaginatedClusterStateV0SetFreeListPagePO) operations.get(0);
 
       OPaginatedClusterStateV0 restoredPage = new OPaginatedClusterStateV0(restoredCacheEntry);
 
@@ -94,7 +95,8 @@ public class PaginatedClusterStateV0SetFreeListPagePOTest {
 
       Assert.assertTrue(operations.get(0) instanceof PaginatedClusterStateV0SetFreeListPagePO);
 
-      final PaginatedClusterStateV0SetFreeListPagePO pageOperation = (PaginatedClusterStateV0SetFreeListPagePO) operations.get(0);
+      final PaginatedClusterStateV0SetFreeListPagePO pageOperation =
+          (PaginatedClusterStateV0SetFreeListPagePO) operations.get(0);
 
       final OPaginatedClusterStateV0 restoredPage = new OPaginatedClusterStateV0(entry);
 
@@ -116,7 +118,8 @@ public class PaginatedClusterStateV0SetFreeListPagePOTest {
 
   @Test
   public void testSerialization() {
-    PaginatedClusterStateV0SetFreeListPagePO operation = new PaginatedClusterStateV0SetFreeListPagePO(12, 42, 24);
+    PaginatedClusterStateV0SetFreeListPagePO operation =
+        new PaginatedClusterStateV0SetFreeListPagePO(12, 42, 24);
 
     operation.setFileId(42);
     operation.setPageIndex(24);
@@ -128,7 +131,8 @@ public class PaginatedClusterStateV0SetFreeListPagePOTest {
 
     Assert.assertEquals(serializedSize + 1, pos);
 
-    PaginatedClusterStateV0SetFreeListPagePO restoredOperation = new PaginatedClusterStateV0SetFreeListPagePO();
+    PaginatedClusterStateV0SetFreeListPagePO restoredOperation =
+        new PaginatedClusterStateV0SetFreeListPagePO();
     restoredOperation.fromStream(stream, 1);
 
     Assert.assertEquals(42, restoredOperation.getFileId());
@@ -139,5 +143,4 @@ public class PaginatedClusterStateV0SetFreeListPagePOTest {
     Assert.assertEquals(42, restoredOperation.getOldPageIndex());
     Assert.assertEquals(24, restoredOperation.getNewPageIndex());
   }
-
 }

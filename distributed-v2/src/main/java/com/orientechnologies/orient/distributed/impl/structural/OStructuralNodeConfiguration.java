@@ -1,15 +1,17 @@
 package com.orientechnologies.orient.distributed.impl.structural;
 
 import com.orientechnologies.orient.core.db.config.ONodeIdentity;
-
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
-import java.util.*;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.UUID;
 
 public class OStructuralNodeConfiguration implements Cloneable {
 
-  private ONodeIdentity                      identity;
+  private ONodeIdentity identity;
   private Map<UUID, OStructuralNodeDatabase> databases;
 
   public OStructuralNodeConfiguration(ONodeIdentity identity) {
@@ -17,9 +19,7 @@ public class OStructuralNodeConfiguration implements Cloneable {
     this.databases = new HashMap<>();
   }
 
-  protected OStructuralNodeConfiguration() {
-
-  }
+  protected OStructuralNodeConfiguration() {}
 
   public void deserialize(DataInput input) throws IOException {
     identity = new ONodeIdentity();

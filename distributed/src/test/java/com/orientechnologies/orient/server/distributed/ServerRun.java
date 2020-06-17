@@ -29,7 +29,6 @@ import com.orientechnologies.orient.server.OServerMain;
 import com.orientechnologies.orient.server.hazelcast.OHazelcastPlugin;
 import com.orientechnologies.orient.server.network.OServerNetworkListener;
 import com.orientechnologies.orient.server.network.protocol.binary.ONetworkProtocolBinary;
-
 import java.io.File;
 import java.io.IOException;
 
@@ -39,9 +38,9 @@ import java.io.IOException;
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
  */
 public class ServerRun {
-  protected final String  serverId;
-  protected       String  rootPath;
-  protected       OServer server;
+  protected final String serverId;
+  protected String rootPath;
+  protected OServer server;
 
   public ServerRun(final String iRootPath, final String serverId) {
     this.rootPath = iRootPath;
@@ -67,8 +66,7 @@ public class ServerRun {
 
   public String getBinaryProtocolAddress() {
     final OServerNetworkListener prot = server.getListenerByProtocol(ONetworkProtocolBinary.class);
-    if (prot == null)
-      return null;
+    if (prot == null) return null;
     return prot.getListeningAddress(true);
   }
 
@@ -84,28 +82,43 @@ public class ServerRun {
   public void crashServer() {
     if (server != null) {
       server.getClientConnectionManager().killAllChannels();
-      ((OHazelcastPlugin) server.getDistributedManager()).getHazelcastInstance().getLifecycleService().terminate();
+      ((OHazelcastPlugin) server.getDistributedManager())
+          .getHazelcastInstance()
+          .getLifecycleService()
+          .terminate();
       server.shutdown();
     }
   }
 
   public void disconnectFrom(final ServerRun... serverIds) {
-    final Node currentNode = getHazelcastNode(((OHazelcastPlugin) server.getDistributedManager()).getHazelcastInstance());
+    final Node currentNode =
+        getHazelcastNode(
+            ((OHazelcastPlugin) server.getDistributedManager()).getHazelcastInstance());
     for (ServerRun s : serverIds) {
-      ((OHazelcastPlugin) server.getDistributedManager()).closeRemoteServer(s.server.getDistributedManager().getLocalNodeName());
-      ((OHazelcastPlugin) s.server.getDistributedManager()).closeRemoteServer(server.getDistributedManager().getLocalNodeName());
+      ((OHazelcastPlugin) server.getDistributedManager())
+          .closeRemoteServer(s.server.getDistributedManager().getLocalNodeName());
+      ((OHazelcastPlugin) s.server.getDistributedManager())
+          .closeRemoteServer(server.getDistributedManager().getLocalNodeName());
 
-      final Node otherNode = getHazelcastNode(((OHazelcastPlugin) s.server.getDistributedManager()).getHazelcastInstance());
+      final Node otherNode =
+          getHazelcastNode(
+              ((OHazelcastPlugin) s.server.getDistributedManager()).getHazelcastInstance());
 
-      currentNode.clusterService.suspectMember(currentNode.clusterService.getMember(otherNode.address), "test", true);
-//      otherNode.clusterService.suspectMember(currentNode.clusterService.getMember(currentNode.address), "test", true);
+      currentNode.clusterService.suspectMember(
+          currentNode.clusterService.getMember(otherNode.address), "test", true);
+      //
+      // otherNode.clusterService.suspectMember(currentNode.clusterService.getMember(currentNode.address), "test", true);
     }
   }
 
   public void rejoin(final ServerRun... serverIds) {
-    final Node currentNode = getHazelcastNode(((OHazelcastPlugin) server.getDistributedManager()).getHazelcastInstance());
+    final Node currentNode =
+        getHazelcastNode(
+            ((OHazelcastPlugin) server.getDistributedManager()).getHazelcastInstance());
     for (ServerRun s : serverIds) {
-      final Node otherNode = getHazelcastNode(((OHazelcastPlugin) s.server.getDistributedManager()).getHazelcastInstance());
+      final Node otherNode =
+          getHazelcastNode(
+              ((OHazelcastPlugin) s.server.getDistributedManager()).getHazelcastInstance());
 
       final ClusterServiceImpl clusterService = currentNode.getClusterService();
       clusterService.merge(otherNode.address);
@@ -131,37 +144,41 @@ public class ServerRun {
     server.createDatabase(iName, ODatabaseType.PLOCAL, OrientDBConfig.defaultConfig());
     return server.openDatabase(iName, "admin", "admin");
   }
-  
-/*
-  protected ODatabaseDocument getEmbeddedDatabase(final String dbName) {
-    String databasesPath = getServerHome() + "/databases";
 
-  	 orientDB = new OrientDB("embedded:" + databasesPath, OrientDBConfig.defaultConfig());
-  	 
-System.out.println("----- dbPath = " + databasesPath + ", dbName = " + dbName);
-System.out.println("----- dbPath exists() = " + new File(databasesPath + "/fred/" + dbName).exists());
+  /*
+    protected ODatabaseDocument getEmbeddedDatabase(final String dbName) {
+      String databasesPath = getServerHome() + "/databases";
 
-System.out.println("----- db exists = " + orientDB.exists(dbName));
-  	 
-  	 return orientDB.open(dbName, "admin", "admin");
-  }*/
+    	 orientDB = new OrientDB("embedded:" + databasesPath, OrientDBConfig.defaultConfig());
 
-  public void copyDatabase(final String iDatabaseName, final String iDestinationDirectory) throws IOException {
+  System.out.println("----- dbPath = " + databasesPath + ", dbName = " + dbName);
+  System.out.println("----- dbPath exists() = " + new File(databasesPath + "/fred/" + dbName).exists());
+
+  System.out.println("----- db exists = " + orientDB.exists(dbName));
+
+    	 return orientDB.open(dbName, "admin", "admin");
+    }*/
+
+  public void copyDatabase(final String iDatabaseName, final String iDestinationDirectory)
+      throws IOException {
     // COPY THE DATABASE TO OTHER DIRECTORIES
-    System.out.println("Dropping any previous database '" + iDatabaseName + "' under: " + iDatabaseName + "...");
+    System.out.println(
+        "Dropping any previous database '" + iDatabaseName + "' under: " + iDatabaseName + "...");
     OFileUtils.deleteRecursively(new File(iDestinationDirectory));
 
-    System.out.println("Copying database folder " + iDatabaseName + " to " + iDestinationDirectory + "...");
-    OFileUtils.copyDirectory(new File(getDatabasePath(iDatabaseName)), new File(iDestinationDirectory));
+    System.out.println(
+        "Copying database folder " + iDatabaseName + " to " + iDestinationDirectory + "...");
+    OFileUtils.copyDirectory(
+        new File(getDatabasePath(iDatabaseName)), new File(iDestinationDirectory));
   }
 
   public OServer startServer(final String iServerConfigFile) throws Exception {
-    System.out.println("Starting server with serverId " + serverId + " from " + getServerHome() + "...");
+    System.out.println(
+        "Starting server with serverId " + serverId + " from " + getServerHome() + "...");
 
     System.setProperty("ORIENTDB_HOME", getServerHome());
 
-    if (server == null)
-      server = OServerMain.create(false);
+    if (server == null) server = OServerMain.create(false);
 
     server.setServerRootDirectory(getServerHome());
     server.startup(getClass().getClassLoader().getResourceAsStream(iServerConfigFile));
@@ -186,7 +203,7 @@ System.out.println("----- db exists = " + orientDB.exists(dbName));
       }
     }
 
-//    closeStorages();
+    //    closeStorages();
   }
 
   public void terminateServer() {
@@ -211,7 +228,7 @@ System.out.println("----- db exists = " + orientDB.exists(dbName));
       }
     }
 
-//    closeStorages();
+    //    closeStorages();
   }
 
   public void closeStorages() {

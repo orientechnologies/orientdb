@@ -19,8 +19,6 @@
  */
 package com.orientechnologies.orient.client.remote.message;
 
-import java.io.IOException;
-
 import com.orientechnologies.orient.client.binary.OBinaryRequestExecutor;
 import com.orientechnologies.orient.client.remote.OBinaryRequest;
 import com.orientechnologies.orient.client.remote.OBinaryResponse;
@@ -30,9 +28,11 @@ import com.orientechnologies.orient.core.storage.OPhysicalPosition;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelDataInput;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelDataOutput;
+import java.io.IOException;
 
-public class OHigherPhysicalPositionsRequest implements OBinaryRequest<OHigherPhysicalPositionsResponse> {
-  private int               clusterId;
+public class OHigherPhysicalPositionsRequest
+    implements OBinaryRequest<OHigherPhysicalPositionsResponse> {
+  private int clusterId;
   private OPhysicalPosition clusterPosition;
 
   public OHigherPhysicalPositionsRequest(int iClusterId, OPhysicalPosition iClusterPosition) {
@@ -40,17 +40,16 @@ public class OHigherPhysicalPositionsRequest implements OBinaryRequest<OHigherPh
     this.clusterPosition = iClusterPosition;
   }
 
-  public OHigherPhysicalPositionsRequest() {
-  }
+  public OHigherPhysicalPositionsRequest() {}
 
   @Override
   public void write(OChannelDataOutput network, OStorageRemoteSession session) throws IOException {
     network.writeInt(clusterId);
     network.writeLong(clusterPosition.clusterPosition);
-
   }
 
-  public void read(OChannelDataInput channel, int protocolVersion, ORecordSerializer serializer) throws IOException {
+  public void read(OChannelDataInput channel, int protocolVersion, ORecordSerializer serializer)
+      throws IOException {
     clusterId = channel.readInt();
     clusterPosition = new OPhysicalPosition(channel.readLong());
   }
@@ -82,5 +81,4 @@ public class OHigherPhysicalPositionsRequest implements OBinaryRequest<OHigherPh
   public OBinaryResponse execute(OBinaryRequestExecutor executor) {
     return executor.executeHigherPosition(this);
   }
-
 }

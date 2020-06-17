@@ -32,16 +32,21 @@ import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
-
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
 
 /**
  * Helper class to find reference in records.
- * 
+ *
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
  * @author Luca Molino
- * 
  */
 public class OFindReferenceHelper {
 
@@ -61,7 +66,11 @@ public class OFindReferenceHelper {
       final List<String> classes = OStringSerializerHelper.smartSplit(classList, ',');
       for (String clazz : classes) {
         if (clazz.startsWith("CLUSTER:")) {
-          browseCluster(db, iRecordIds, map, clazz.substring(clazz.indexOf("CLUSTER:") + "CLUSTER:".length()));
+          browseCluster(
+              db,
+              iRecordIds,
+              map,
+              clazz.substring(clazz.indexOf("CLUSTER:") + "CLUSTER:".length()));
         } else {
           browseClass(db, iRecordIds, map, clazz);
         }
@@ -80,7 +89,10 @@ public class OFindReferenceHelper {
     return result;
   }
 
-  private static void browseCluster(final ODatabaseDocument iDatabase, final Set<ORID> iSourceRIDs, final Map<ORID, Set<ORID>> map,
+  private static void browseCluster(
+      final ODatabaseDocument iDatabase,
+      final Set<ORID> iSourceRIDs,
+      final Map<ORID, Set<ORID>> map,
       final String iClusterName) {
     for (ORecord record : iDatabase.browseCluster(iClusterName)) {
       if (record instanceof ODocument) {
@@ -96,9 +108,13 @@ public class OFindReferenceHelper {
     }
   }
 
-  private static void browseClass(final ODatabaseDocument db, Set<ORID> iSourceRIDs, final Map<ORID, Set<ORID>> map,
+  private static void browseClass(
+      final ODatabaseDocument db,
+      Set<ORID> iSourceRIDs,
+      final Map<ORID, Set<ORID>> map,
       final String iClassName) {
-    final OClass clazz = ((OMetadataInternal)db.getMetadata()).getImmutableSchemaSnapshot().getClass(iClassName);
+    final OClass clazz =
+        ((OMetadataInternal) db.getMetadata()).getImmutableSchemaSnapshot().getClass(iClassName);
 
     if (clazz == null)
       throw new OCommandExecutionException("Class '" + iClassName + "' was not found");
@@ -108,7 +124,10 @@ public class OFindReferenceHelper {
     }
   }
 
-  private static void checkObject(final Set<ORID> iSourceRIDs, final Map<ORID, Set<ORID>> map, final Object value,
+  private static void checkObject(
+      final Set<ORID> iSourceRIDs,
+      final Map<ORID, Set<ORID>> map,
+      final Object value,
       final ORecord iRootObject) {
     if (value instanceof OIdentifiable) {
       checkRecord(iSourceRIDs, map, (OIdentifiable) value, iRootObject);
@@ -119,7 +138,10 @@ public class OFindReferenceHelper {
     }
   }
 
-  private static void checkCollection(final Set<ORID> iSourceRIDs, final Map<ORID, Set<ORID>> map, final Collection<?> values,
+  private static void checkCollection(
+      final Set<ORID> iSourceRIDs,
+      final Map<ORID, Set<ORID>> map,
+      final Collection<?> values,
       final ORecord iRootObject) {
     final Iterator<?> it;
     if (values instanceof ORecordLazyMultiValue) {
@@ -132,7 +154,10 @@ public class OFindReferenceHelper {
     }
   }
 
-  private static void checkMap(final Set<ORID> iSourceRIDs, final Map<ORID, Set<ORID>> map, final Map<?, ?> values,
+  private static void checkMap(
+      final Set<ORID> iSourceRIDs,
+      final Map<ORID, Set<ORID>> map,
+      final Map<?, ?> values,
       final ORecord iRootObject) {
     final Iterator<?> it;
     if (values instanceof ORecordLazyMap) {
@@ -145,12 +170,15 @@ public class OFindReferenceHelper {
     }
   }
 
-  private static void checkRecord(final Set<ORID> iSourceRIDs, final Map<ORID, Set<ORID>> map, final OIdentifiable value,
+  private static void checkRecord(
+      final Set<ORID> iSourceRIDs,
+      final Map<ORID, Set<ORID>> map,
+      final OIdentifiable value,
       final ORecord iRootObject) {
     if (iSourceRIDs.contains(value.getIdentity())) {
       map.get(value.getIdentity()).add(iRootObject.getIdentity());
     } else if (!value.getIdentity().isValid() && value.getRecord() instanceof ODocument) {
-      //embedded document
+      // embedded document
       ODocument doc = value.getRecord();
       for (String fieldName : doc.fieldNames()) {
         Object fieldValue = doc.field(fieldName);

@@ -1,5 +1,9 @@
 package com.orientechnologies.orient.core.db.document;
 
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
+
+
 import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
@@ -16,18 +20,14 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
-import org.junit.After;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
-
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
-
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
+import org.junit.After;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Test;
 
 public class ODatabaseDocumentTxTest {
 
@@ -37,7 +37,6 @@ public class ODatabaseDocumentTxTest {
   public void setUp() throws Exception {
     String url = "memory:" + ODatabaseDocumentTxTest.class.getSimpleName();
     db = new ODatabaseDocumentTx(url).create();
-
   }
 
   @After
@@ -80,7 +79,6 @@ public class ODatabaseDocumentTxTest {
     } finally {
       db.commit();
     }
-
   }
 
   @Test
@@ -126,7 +124,6 @@ public class ODatabaseDocumentTxTest {
     List<OClass> sub_superclasses = subclazz.getSuperClasses();
     Assert.assertEquals(1, sub_superclasses.size());
     Assert.assertEquals("TestCreateClass", sub_superclasses.get(0).getName());
-
   }
 
   @Test
@@ -158,13 +155,22 @@ public class ODatabaseDocumentTxTest {
     ODocument doc = new ODocument("testDocFromJsonEmbedded_Class1");
 
     doc.fromJSON(
-        "{\n" + "    \"account\": \"#25:0\",\n" + "    " + "\"meta\": {" + "   \"created\": \"2016-10-03T21:10:21.77-07:00\",\n"
-            + "        \"ip\": \"0:0:0:0:0:0:0:1\",\n" + "   \"contentType\": \"application/x-www-form-urlencoded\","
-            + "   \"userAgent\": \"PostmanRuntime/2.5.2\"" + "}," + "\"data\": \"firstName=Jessica&lastName=Smith\"\n" + "}");
+        "{\n"
+            + "    \"account\": \"#25:0\",\n"
+            + "    "
+            + "\"meta\": {"
+            + "   \"created\": \"2016-10-03T21:10:21.77-07:00\",\n"
+            + "        \"ip\": \"0:0:0:0:0:0:0:1\",\n"
+            + "   \"contentType\": \"application/x-www-form-urlencoded\","
+            + "   \"userAgent\": \"PostmanRuntime/2.5.2\""
+            + "},"
+            + "\"data\": \"firstName=Jessica&lastName=Smith\"\n"
+            + "}");
 
     db.save(doc);
 
-    List<ODocument> result = db.query(new OSQLSynchQuery<Object>("select from testDocFromJsonEmbedded_Class0"));
+    List<ODocument> result =
+        db.query(new OSQLSynchQuery<Object>("select from testDocFromJsonEmbedded_Class0"));
     Assert.assertEquals(result.size(), 0);
 
     result = db.query(new OSQLSynchQuery<Object>("select from testDocFromJsonEmbedded_Class1"));
@@ -173,7 +179,6 @@ public class ODatabaseDocumentTxTest {
     ODocument meta = item.field("meta");
     Assert.assertEquals(meta.getClassName(), "testDocFromJsonEmbedded_Class0");
     Assert.assertEquals(meta.field("ip"), "0:0:0:0:0:0:0:1");
-
   }
 
   @Test
@@ -274,24 +279,27 @@ public class ODatabaseDocumentTxTest {
     int nThreads = 4;
     List<Thread> threads = new ArrayList<>();
     for (int i = 0; i < nThreads; i++) {
-      Thread thread = new Thread() {
-        @Override
-        public void run() {
-          ODatabaseDocumentTx dbCopy = db.copy();
-          dbCopy.activateOnCurrentThread();
-          dbCopy.executeWithRetry(10, (db) -> {
-            OElement vCopy = (OElement) db.load(v.getIdentity());
-            try {
-              Thread.sleep(1000);
-            } catch (InterruptedException e) {
+      Thread thread =
+          new Thread() {
+            @Override
+            public void run() {
+              ODatabaseDocumentTx dbCopy = db.copy();
+              dbCopy.activateOnCurrentThread();
+              dbCopy.executeWithRetry(
+                  10,
+                  (db) -> {
+                    OElement vCopy = (OElement) db.load(v.getIdentity());
+                    try {
+                      Thread.sleep(1000);
+                    } catch (InterruptedException e) {
+                    }
+                    vCopy.setProperty("count", (int) vCopy.getProperty("count") + 1);
+                    db.save(vCopy);
+                    return vCopy;
+                  });
+              dbCopy.close();
             }
-            vCopy.setProperty("count", (int) vCopy.getProperty("count") + 1);
-            db.save(vCopy);
-            return vCopy;
-          });
-          dbCopy.close();
-        }
-      };
+          };
       threads.add(thread);
       thread.start();
     }
@@ -313,26 +321,29 @@ public class ODatabaseDocumentTxTest {
     int nThreads = 4;
     List<Thread> threads = new ArrayList<>();
     for (int i = 0; i < nThreads; i++) {
-      Thread thread = new Thread() {
-        @Override
-        public void run() {
-          ODatabaseDocumentTx dbCopy = db.copy();
-          dbCopy.activateOnCurrentThread();
-          dbCopy.begin();
-          dbCopy.executeWithRetry(10, (db) -> {
-            OElement vCopy = (OElement) db.load(v.getIdentity());
-            try {
-              Thread.sleep(1000);
-            } catch (InterruptedException e) {
+      Thread thread =
+          new Thread() {
+            @Override
+            public void run() {
+              ODatabaseDocumentTx dbCopy = db.copy();
+              dbCopy.activateOnCurrentThread();
+              dbCopy.begin();
+              dbCopy.executeWithRetry(
+                  10,
+                  (db) -> {
+                    OElement vCopy = (OElement) db.load(v.getIdentity());
+                    try {
+                      Thread.sleep(1000);
+                    } catch (InterruptedException e) {
+                    }
+                    vCopy.setProperty("count", (int) vCopy.getProperty("count") + 1);
+                    db.save(vCopy);
+                    return vCopy;
+                  });
+              dbCopy.commit();
+              dbCopy.close();
             }
-            vCopy.setProperty("count", (int) vCopy.getProperty("count") + 1);
-            db.save(vCopy);
-            return vCopy;
-          });
-          dbCopy.commit();
-          dbCopy.close();
-        }
-      };
+          };
       threads.add(thread);
       thread.start();
     }
@@ -362,12 +373,11 @@ public class ODatabaseDocumentTxTest {
 
       Object linkedVal = res.getProperty("linked");
       Assert.assertTrue(linkedVal instanceof OIdentifiable);
-      Assert.assertTrue(db.load(((OIdentifiable) linkedVal).getIdentity()) instanceof OIdentifiable);
+      Assert.assertTrue(
+          db.load(((OIdentifiable) linkedVal).getIdentity()) instanceof OIdentifiable);
 
       Assert.assertTrue(res.toElement().getProperty("linked") instanceof OVertex);
-
     }
-
   }
 
   @Test
@@ -395,7 +405,6 @@ public class ODatabaseDocumentTxTest {
       Assert.assertTrue(linkedVal instanceof Collection);
       Assert.assertEquals(((Collection) linkedVal).size(), 1);
     }
-
   }
 
   @Test
@@ -429,7 +438,6 @@ public class ODatabaseDocumentTxTest {
       Assert.assertTrue(linkedVal instanceof Collection);
       Assert.assertEquals(((Collection) linkedVal).size(), 2);
     }
-
   }
 
   @Test(expected = ODatabaseException.class)
@@ -467,15 +475,15 @@ public class ODatabaseDocumentTxTest {
 
     ODocument document = new ODocument(className);
     document.save();
-    ORecordIteratorClassDescendentOrder<ODocument> reverseIterator = new ORecordIteratorClassDescendentOrder<ODocument>(db, db,
-        className, true);
+    ORecordIteratorClassDescendentOrder<ODocument> reverseIterator =
+        new ORecordIteratorClassDescendentOrder<ODocument>(db, db, className, true);
     Assert.assertTrue(reverseIterator.hasNext());
     Assert.assertEquals(document, reverseIterator.next());
     db.close();
   }
 
   @Test
-  public void testDeleteVertexWithLinkset(){
+  public void testDeleteVertexWithLinkset() {
     String V = "testv";
     String E = "teste";
 
@@ -486,7 +494,7 @@ public class ODatabaseDocumentTxTest {
     OVertex v1 = db.newVertex(V);
     v1.setProperty("name", "root");
     v1.save();
-    
+
     for (int i = 0; i < 10; i++) {
       OVertex v2 = db.newVertex(V);
       v2.setProperty("name", "foo");
@@ -512,7 +520,6 @@ public class ODatabaseDocumentTxTest {
       in.add(edge);
       v2.setProperty("in_" + E, in);
       v2.save();
-
     }
 
     db.begin();
@@ -523,6 +530,5 @@ public class ODatabaseDocumentTxTest {
     }
     rs.close();
     db.commit();
-
   }
 }

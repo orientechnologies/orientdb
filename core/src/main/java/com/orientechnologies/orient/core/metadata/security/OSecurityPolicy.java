@@ -7,7 +7,12 @@ import com.orientechnologies.orient.core.sql.OSQLEngine;
 public class OSecurityPolicy {
 
   public enum Scope {
-    CREATE, READ, BEFORE_UPDATE, AFTER_UPDATE, DELETE, EXECUTE
+    CREATE,
+    READ,
+    BEFORE_UPDATE,
+    AFTER_UPDATE,
+    DELETE,
+    EXECUTE
   }
 
   private OElement element;
@@ -96,20 +101,20 @@ public class OSecurityPolicy {
 
   public String get(Scope scope) {
     switch (scope) {
-    case CREATE:
-      return getCreateRule();
-    case READ:
-      return getReadRule();
-    case BEFORE_UPDATE:
-      return getBeforeUpdateRule();
-    case AFTER_UPDATE:
-      return getAfterUpdateRule();
-    case DELETE:
-      return getDeleteRule();
-    case EXECUTE:
-      return getExecuteRule();
-    default:
-      throw new IllegalArgumentException();
+      case CREATE:
+        return getCreateRule();
+      case READ:
+        return getReadRule();
+      case BEFORE_UPDATE:
+        return getBeforeUpdateRule();
+      case AFTER_UPDATE:
+        return getAfterUpdateRule();
+      case DELETE:
+        return getDeleteRule();
+      case EXECUTE:
+        return getExecuteRule();
+      default:
+        throw new IllegalArgumentException();
     }
   }
 

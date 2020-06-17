@@ -20,9 +20,7 @@ import com.orientechnologies.common.io.OIOUtils;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 
-/**
- * @author Luca Garulli (l.garulli--(at)--orientdb.com)
- */
+/** @author Luca Garulli (l.garulli--(at)--orientdb.com) */
 public class OSQLMethodLastIndexOf extends OAbstractSQLMethod {
 
   public static final String NAME = "lastindexof";
@@ -32,7 +30,12 @@ public class OSQLMethodLastIndexOf extends OAbstractSQLMethod {
   }
 
   @Override
-  public Object execute(Object iThis, OIdentifiable iCurrentRecord, OCommandContext iContext, Object ioResult, Object[] iParams) {
+  public Object execute(
+      Object iThis,
+      OIdentifiable iCurrentRecord,
+      OCommandContext iContext,
+      Object ioResult,
+      Object[] iParams) {
     final String toFind = OIOUtils.getStringContent(iParams[0].toString());
     if (iParams.length > 1) {
       return iThis.toString().lastIndexOf(toFind, Integer.parseInt(iParams[1].toString()));

@@ -19,11 +19,6 @@
  */
 package com.orientechnologies.orient.server.distributed.impl.task;
 
-import java.io.DataInput;
-import java.io.DataOutput;
-import java.io.IOException;
-import java.util.Map;
-
 import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
 import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
@@ -34,37 +29,49 @@ import com.orientechnologies.orient.core.serialization.OStreamableHelper;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.distributed.ODistributedRequestId;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog;
+import com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIRECTION;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
 import com.orientechnologies.orient.server.distributed.ORemoteTaskFactory;
-import com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIRECTION;
 import com.orientechnologies.orient.server.distributed.task.OAbstractCommandTask;
+import java.io.DataInput;
+import java.io.DataOutput;
+import java.io.IOException;
+import java.util.Map;
 
 /**
  * Executes a script on distributed servers.
- * 
+ *
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
- * 
  */
 public class OScriptTask extends OAbstractCommandTask {
-  private static final long     serialVersionUID = 1L;
-  public static final int       FACTORYID        = 6;
+  private static final long serialVersionUID = 1L;
+  public static final int FACTORYID = 6;
 
-  protected String              text;
+  protected String text;
   protected Map<Object, Object> params;
-  protected RESULT_STRATEGY     resultStrategy;
+  protected RESULT_STRATEGY resultStrategy;
 
-  public OScriptTask() {
-  }
+  public OScriptTask() {}
 
   public OScriptTask(final OCommandRequestText iCommand) {
     text = iCommand.getText();
     params = iCommand.getParameters();
   }
 
-  public Object execute(ODistributedRequestId requestId, final OServer iServer, ODistributedServerManager iManager,
-      final ODatabaseDocumentInternal database) throws Exception {
-    ODistributedServerLog.debug(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.IN, "execute command=%s db=%s",
-        text.toString(), database.getName());
+  public Object execute(
+      ODistributedRequestId requestId,
+      final OServer iServer,
+      ODistributedServerManager iManager,
+      final ODatabaseDocumentInternal database)
+      throws Exception {
+    ODistributedServerLog.debug(
+        this,
+        iManager.getLocalNodeName(),
+        getNodeSource(),
+        DIRECTION.IN,
+        "execute command=%s db=%s",
+        text.toString(),
+        database.getName());
 
     final OCommandRequest cmd = database.command(new OCommandScript(text));
 
@@ -72,8 +79,7 @@ public class OScriptTask extends OAbstractCommandTask {
     if (params != null)
       // EXECUTE WITH PARAMETERS
       res = cmd.execute(params);
-    else
-      res = cmd.execute();
+    else res = cmd.execute();
 
     return res;
   }
@@ -123,5 +129,4 @@ public class OScriptTask extends OAbstractCommandTask {
   public int getFactoryId() {
     return FACTORYID;
   }
-
 }

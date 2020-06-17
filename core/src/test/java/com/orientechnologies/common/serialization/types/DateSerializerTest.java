@@ -16,22 +16,23 @@
 
 package com.orientechnologies.common.serialization.types;
 
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALChanges;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALChangesTree;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.util.Calendar;
 import java.util.Date;
+import org.junit.Assert;
+import org.junit.Before;
 
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALChanges;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALChangesTree;
-import org.junit.Assert;import org.junit.Before; import org.junit.Test;
 /**
  * @author Ilya Bershadskiy (ibersh20-at-gmail.com)
  * @since 20.01.12
  */
 public class DateSerializerTest {
-  private final static int    FIELD_SIZE = 8;
-  private final        byte[] stream     = new byte[FIELD_SIZE];
-  private final        Date   OBJECT     = new Date();
+  private static final int FIELD_SIZE = 8;
+  private final byte[] stream = new byte[FIELD_SIZE];
+  private final Date OBJECT = new Date();
   private ODateSerializer dateSerializer;
 
   @Before
@@ -111,7 +112,8 @@ public class DateSerializerTest {
 
   public void testSerializeWALChanges() {
     final int serializationOffset = 5;
-    final ByteBuffer buffer = ByteBuffer.allocateDirect(FIELD_SIZE + serializationOffset).order(ByteOrder.nativeOrder());
+    final ByteBuffer buffer =
+        ByteBuffer.allocateDirect(FIELD_SIZE + serializationOffset).order(ByteOrder.nativeOrder());
     final byte[] data = new byte[FIELD_SIZE];
     dateSerializer.serializeNativeObject(OBJECT, data, 0);
     final OWALChanges walChanges = new OWALChangesTree();
@@ -124,8 +126,11 @@ public class DateSerializerTest {
     calendar.set(Calendar.SECOND, 0);
     calendar.set(Calendar.MILLISECOND, 0);
 
-    Assert.assertEquals(dateSerializer.getObjectSizeInByteBuffer(buffer, walChanges, serializationOffset), FIELD_SIZE);
-    Assert
-        .assertEquals(dateSerializer.deserializeFromByteBufferObject(buffer, walChanges, serializationOffset), calendar.getTime());
+    Assert.assertEquals(
+        dateSerializer.getObjectSizeInByteBuffer(buffer, walChanges, serializationOffset),
+        FIELD_SIZE);
+    Assert.assertEquals(
+        dateSerializer.deserializeFromByteBufferObject(buffer, walChanges, serializationOffset),
+        calendar.getTime());
   }
 }

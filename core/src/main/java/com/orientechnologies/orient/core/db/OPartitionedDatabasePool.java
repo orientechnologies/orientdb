@@ -29,7 +29,6 @@ import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.exception.OStorageExistsException;
 import com.orientechnologies.orient.core.metadata.security.OToken;
 import com.orientechnologies.orient.core.storage.OStorage;
-
 import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
@@ -40,62 +39,62 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
- * <p>
- * Database pool which has good multicore scalability characteristics because of creation of several partitions for each logical
- * thread group which drastically decrease thread contention when we acquire new connection to database.
- * </p>
- * <p>
- * To acquire connection from the pool call {@link #acquire()} method but to release connection you just need to call
- * {@link com.orientechnologies.orient.core.db.document.ODatabaseDocument#close()} method.
- * </p>
- * <p>
- * In case of remote storage database pool will keep connections to the remote storage till you close pool. So in case of remote
- * storage you should close pool at the end of it's usage, it also may be closed on application shutdown but you should not rely on
- * this behaviour.
- * </p>
- * <p>
- * This pool has one noticeable difference from other pools. If you perform several subsequent acquire calls in the same thread the
- * <b>same</b> instance of database will be returned, but amount of calls to close method should match to amount of acquire calls to
- * release database back in the pool. It will allow you to use such feature as transaction propagation when you perform call of one
- * service from another one.
- * </p>
- * <p>
- * Given pool has two parameters now, amount of maximum connections for single partition and total amount of connections
- * which may be hold by pool. When you start to use pool it will automatically split by several partitions, each partition is
- * independent from other which gives us very good multicore scalability.
- * Amount of partitions will be close to amount of cores but it is not mandatory and depends how much application is
- * loaded. Amount of connections which may be hold by single partition is defined by user but we suggest to use default parameters
- * if your application load is not extremely high.
- * <p>
- * If total amount of connections which allowed to be hold by this pool is reached thread will wait till free connection will be
- * available. If total amount of connection is set to value 0 or less it means that there is no connection limit.
- * </p>
+ * Database pool which has good multicore scalability characteristics because of creation of several
+ * partitions for each logical thread group which drastically decrease thread contention when we
+ * acquire new connection to database.
+ *
+ * <p>To acquire connection from the pool call {@link #acquire()} method but to release connection
+ * you just need to call {@link
+ * com.orientechnologies.orient.core.db.document.ODatabaseDocument#close()} method.
+ *
+ * <p>In case of remote storage database pool will keep connections to the remote storage till you
+ * close pool. So in case of remote storage you should close pool at the end of it's usage, it also
+ * may be closed on application shutdown but you should not rely on this behaviour.
+ *
+ * <p>This pool has one noticeable difference from other pools. If you perform several subsequent
+ * acquire calls in the same thread the <b>same</b> instance of database will be returned, but
+ * amount of calls to close method should match to amount of acquire calls to release database back
+ * in the pool. It will allow you to use such feature as transaction propagation when you perform
+ * call of one service from another one.
+ *
+ * <p>Given pool has two parameters now, amount of maximum connections for single partition and
+ * total amount of connections which may be hold by pool. When you start to use pool it will
+ * automatically split by several partitions, each partition is independent from other which gives
+ * us very good multicore scalability. Amount of partitions will be close to amount of cores but it
+ * is not mandatory and depends how much application is loaded. Amount of connections which may be
+ * hold by single partition is defined by user but we suggest to use default parameters if your
+ * application load is not extremely high.
+ *
+ * <p>If total amount of connections which allowed to be hold by this pool is reached thread will
+ * wait till free connection will be available. If total amount of connection is set to value 0 or
+ * less it means that there is no connection limit.
  *
  * @author Andrey Lomakin (a.lomakin-at-orientdb.com)
  * @since 06/11/14
  */
 public class OPartitionedDatabasePool extends OOrientListenerAbstract {
-  private static final int                 HASH_INCREMENT = 0x61c88647;
-  private static final int                 MIN_POOL_SIZE  = 2;
-  private static final AtomicInteger       nextHashCode   = new AtomicInteger();
-  protected final      Map<String, Object> properties     = new HashMap<String, Object>();
+  private static final int HASH_INCREMENT = 0x61c88647;
+  private static final int MIN_POOL_SIZE = 2;
+  private static final AtomicInteger nextHashCode = new AtomicInteger();
+  protected final Map<String, Object> properties = new HashMap<String, Object>();
   private final String url;
   private final String userName;
   private final String password;
-  private final int    maxPartitonSize;
-  private final AtomicBoolean poolBusy      = new AtomicBoolean();
-  private       int           maxPartitions = Runtime.getRuntime().availableProcessors();
+  private final int maxPartitonSize;
+  private final AtomicBoolean poolBusy = new AtomicBoolean();
+  private int maxPartitions = Runtime.getRuntime().availableProcessors();
   private final Semaphore connectionsCounter;
   private volatile ThreadLocal<PoolData> poolData = new ThreadPoolData();
   private volatile PoolPartition[] partitions;
-  private volatile boolean closed     = false;
-  private          boolean autoCreate = false;
+  private volatile boolean closed = false;
+  private boolean autoCreate = false;
 
   public OPartitionedDatabasePool(String url, String userName, String password) {
     this(url, userName, password, Runtime.getRuntime().availableProcessors(), -1);
   }
 
-  public OPartitionedDatabasePool(String url, String userName, String password, int maxPartitionSize, int maxPoolSize) {
+  public OPartitionedDatabasePool(
+      String url, String userName, String password, int maxPartitionSize, int maxPoolSize) {
     this.url = url;
     this.userName = userName;
     this.password = password;
@@ -150,8 +149,7 @@ public class OPartitionedDatabasePool extends OOrientListenerAbstract {
       }
     }
 
-    if (result < 0)
-      return 0;
+    if (result < 0) return 0;
 
     return result;
   }
@@ -167,8 +165,7 @@ public class OPartitionedDatabasePool extends OOrientListenerAbstract {
       }
     }
 
-    if (result < 0)
-      return 0;
+    if (result < 0) return 0;
 
     return result;
   }
@@ -191,10 +188,10 @@ public class OPartitionedDatabasePool extends OOrientListenerAbstract {
     }
 
     try {
-      if (connectionsCounter != null)
-        connectionsCounter.acquire();
+      if (connectionsCounter != null) connectionsCounter.acquire();
     } catch (InterruptedException ie) {
-      throw OException.wrapException(new OInterruptedException("Acquiring of new connection was interrupted"), ie);
+      throw OException.wrapException(
+          new OInterruptedException("Acquiring of new connection was interrupted"), ie);
     }
 
     boolean acquired = false;
@@ -239,7 +236,8 @@ public class OPartitionedDatabasePool extends OOrientListenerAbstract {
               continue;
             } else {
               if (partition.currentSize.get() >= maxPartitonSize)
-                throw new IllegalStateException("You have reached maximum pool size for given partition");
+                throw new IllegalStateException(
+                    "You have reached maximum pool size for given partition");
 
               final DatabaseDocumentTxPooled newDb = new DatabaseDocumentTxPooled(url);
               properties.entrySet().forEach(p -> newDb.setProperty(p.getKey(), p.getValue()));
@@ -272,8 +270,7 @@ public class OPartitionedDatabasePool extends OOrientListenerAbstract {
         }
       }
     } finally {
-      if (!acquired && connectionsCounter != null)
-        connectionsCounter.release();
+      if (!acquired && connectionsCounter != null) connectionsCounter.release();
     }
   }
 
@@ -296,7 +293,11 @@ public class OPartitionedDatabasePool extends OOrientListenerAbstract {
         try {
           db.create();
         } catch (OStorageExistsException ex) {
-          OLogManager.instance().debug(this, "Can not create storage " + db.getStorage() + " because it already exists.", ex);
+          OLogManager.instance()
+              .debug(
+                  this,
+                  "Can not create storage " + db.getStorage() + " because it already exists.",
+                  ex);
           db.internalOpen();
         }
       } else {
@@ -314,19 +315,16 @@ public class OPartitionedDatabasePool extends OOrientListenerAbstract {
 
   @Override
   public void onStartup() {
-    if (poolData == null)
-      poolData = new ThreadPoolData();
+    if (poolData == null) poolData = new ThreadPoolData();
   }
 
   public void close() {
-    if (closed)
-      return;
+    if (closed) return;
 
     closed = true;
 
     for (PoolPartition partition : partitions) {
-      if (partition == null)
-        continue;
+      if (partition == null) continue;
 
       final Queue<DatabaseDocumentTxPooled> queue = partition.queue;
 
@@ -356,16 +354,14 @@ public class OPartitionedDatabasePool extends OOrientListenerAbstract {
   }
 
   private void checkForClose() {
-    if (closed)
-      throw new IllegalStateException("Pool is closed");
+    if (closed) throw new IllegalStateException("Pool is closed");
   }
 
   /**
    * Sets a property value
    *
-   * @param iName  Property name
+   * @param iName Property name
    * @param iValue new value to set
-   *
    * @return The previous value if any, otherwise null
    */
   public Object setProperty(final String iName, final Object iValue) {
@@ -380,7 +376,6 @@ public class OPartitionedDatabasePool extends OOrientListenerAbstract {
    * Gets the property value.
    *
    * @param iName Property name
-   *
    * @return The previous value if any, otherwise null
    */
   public Object getProperty(final String iName) {
@@ -388,9 +383,9 @@ public class OPartitionedDatabasePool extends OOrientListenerAbstract {
   }
 
   private static final class PoolData {
-    private final int                      hashCode;
-    private       int                      acquireCount;
-    private       DatabaseDocumentTxPooled acquiredDatabase;
+    private final int hashCode;
+    private int acquireCount;
+    private DatabaseDocumentTxPooled acquiredDatabase;
 
     private PoolData() {
       hashCode = nextHashCode();
@@ -398,9 +393,10 @@ public class OPartitionedDatabasePool extends OOrientListenerAbstract {
   }
 
   private static final class PoolPartition {
-    private final AtomicInteger                                   currentSize         = new AtomicInteger();
-    private final AtomicInteger                                   acquiredConnections = new AtomicInteger();
-    private final ConcurrentLinkedQueue<DatabaseDocumentTxPooled> queue               = new ConcurrentLinkedQueue<DatabaseDocumentTxPooled>();
+    private final AtomicInteger currentSize = new AtomicInteger();
+    private final AtomicInteger acquiredConnections = new AtomicInteger();
+    private final ConcurrentLinkedQueue<DatabaseDocumentTxPooled> queue =
+        new ConcurrentLinkedQueue<DatabaseDocumentTxPooled>();
   }
 
   private static class ThreadPoolData extends ThreadLocal<PoolData> {
@@ -428,7 +424,8 @@ public class OPartitionedDatabasePool extends OOrientListenerAbstract {
     }
 
     /**
-     * @return <code>true</code> if database is obtained from the pool and <code>false</code> otherwise.
+     * @return <code>true</code> if database is obtained from the pool and <code>false</code>
+     *     otherwise.
      */
     @Override
     public boolean isPooled() {
@@ -442,30 +439,27 @@ public class OPartitionedDatabasePool extends OOrientListenerAbstract {
         internal.activateOnCurrentThread();
         internal.setStatus(STATUS.OPEN);
       }
-      if (getMetadata().getSchema().countClasses() == 0)
-        getMetadata().reload();
+      if (getMetadata().getSchema().countClasses() == 0) getMetadata().reload();
     }
 
     @Override
     public void close() {
       if (poolData != null) {
         final PoolData data = poolData.get();
-        if (data.acquireCount == 0)
-          return;
+        if (data.acquireCount == 0) return;
 
         data.acquireCount--;
 
-        if (data.acquireCount > 0)
-          return;
+        if (data.acquireCount > 0) return;
 
         PoolPartition p = partition;
         partition = null;
 
         final OStorage storage = getStorage();
-        if (storage == null)
-          return;
+        if (storage == null) return;
 
-        //if connection is lost and storage is closed as result we should not put closed connection back to the pool
+        // if connection is lost and storage is closed as result we should not put closed connection
+        // back to the pool
         if (!storage.isClosed()) {
           activateOnCurrentThread();
           super.internal.internalClose(true);
@@ -474,23 +468,28 @@ public class OPartitionedDatabasePool extends OOrientListenerAbstract {
 
           p.queue.offer(this);
         } else {
-          //close database instance but be ready that it will throw exception because of storage is closed
+          // close database instance but be ready that it will throw exception because of storage is
+          // closed
           try {
             super.close();
           } catch (Exception e) {
-            OLogManager.instance().error(this, "Error during closing of database % when storage %s was already closed", e, getUrl(),
-                storage.getName());
+            OLogManager.instance()
+                .error(
+                    this,
+                    "Error during closing of database % when storage %s was already closed",
+                    e,
+                    getUrl(),
+                    storage.getName());
           }
 
           data.acquiredDatabase = null;
 
-          //we create new connection instead of old one
+          // we create new connection instead of old one
           final DatabaseDocumentTxPooled db = new DatabaseDocumentTxPooled(url);
           p.queue.offer(db);
         }
 
-        if (connectionsCounter != null)
-          connectionsCounter.release();
+        if (connectionsCounter != null) connectionsCounter.release();
 
         p.acquiredConnections.decrementAndGet();
       } else {
@@ -498,5 +497,4 @@ public class OPartitionedDatabasePool extends OOrientListenerAbstract {
       }
     }
   }
-
 }

@@ -18,15 +18,15 @@
 
 package com.orientechnologies.orient.core.sql;
 
+import static org.junit.Assert.assertEquals;
+
+
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
-import org.junit.Test;
-
 import java.util.List;
-
-import static org.junit.Assert.assertEquals;
+import org.junit.Test;
 
 public class OCommandExecutorSQLSelectTestIndex {
 
@@ -38,13 +38,24 @@ public class OCommandExecutorSQLSelectTestIndex {
     try {
 
       databaseDocumentTx.command(new OCommandSQL("create class Foo")).execute();
-      databaseDocumentTx.command(new OCommandSQL("create property Foo.bar EMBEDDEDLIST STRING")).execute();
-      databaseDocumentTx.command(new OCommandSQL("create index Foo.bar on Foo (bar) NOTUNIQUE")).execute();
+      databaseDocumentTx
+          .command(new OCommandSQL("create property Foo.bar EMBEDDEDLIST STRING"))
+          .execute();
+      databaseDocumentTx
+          .command(new OCommandSQL("create index Foo.bar on Foo (bar) NOTUNIQUE"))
+          .execute();
       databaseDocumentTx.command(new OCommandSQL("insert into Foo set bar = ['yep']")).execute();
-      List<ODocument> results = databaseDocumentTx.command(new OCommandSQL("select from Foo where bar = 'yep'")).execute();
+      List<ODocument> results =
+          databaseDocumentTx
+              .command(new OCommandSQL("select from Foo where bar = 'yep'"))
+              .execute();
       assertEquals(results.size(), 1);
 
-      final OIndex index = databaseDocumentTx.getMetadata().getIndexManagerInternal().getIndex(databaseDocumentTx, "Foo.bar");
+      final OIndex index =
+          databaseDocumentTx
+              .getMetadata()
+              .getIndexManagerInternal()
+              .getIndex(databaseDocumentTx, "Foo.bar");
       assertEquals(index.getInternal().size(), 1);
     } finally {
       databaseDocumentTx.drop();
@@ -53,21 +64,33 @@ public class OCommandExecutorSQLSelectTestIndex {
 
   @Test
   public void testIndexOnHierarchyChange() {
-    //issue #5743
-    ODatabaseDocumentTx databaseDocumentTx = new ODatabaseDocumentTx(
-        "memory:OCommandExecutorSQLSelectTestIndex_testIndexOnHierarchyChange");
+    // issue #5743
+    ODatabaseDocumentTx databaseDocumentTx =
+        new ODatabaseDocumentTx(
+            "memory:OCommandExecutorSQLSelectTestIndex_testIndexOnHierarchyChange");
     databaseDocumentTx.create();
     try {
 
       databaseDocumentTx.command(new OCommandSQL("CREATE CLASS Main ABSTRACT")).execute();
       databaseDocumentTx.command(new OCommandSQL("CREATE PROPERTY Main.uuid String")).execute();
-      databaseDocumentTx.command(new OCommandSQL("CREATE INDEX Main.uuid UNIQUE_HASH_INDEX")).execute();
-      databaseDocumentTx.command(new OCommandSQL("CREATE CLASS Base EXTENDS Main ABSTRACT")).execute();
+      databaseDocumentTx
+          .command(new OCommandSQL("CREATE INDEX Main.uuid UNIQUE_HASH_INDEX"))
+          .execute();
+      databaseDocumentTx
+          .command(new OCommandSQL("CREATE CLASS Base EXTENDS Main ABSTRACT"))
+          .execute();
       databaseDocumentTx.command(new OCommandSQL("CREATE CLASS Derived EXTENDS Main")).execute();
-      databaseDocumentTx.command(new OCommandSQL("INSERT INTO Derived SET uuid='abcdef'")).execute();
-      databaseDocumentTx.command(new OCommandSQL("ALTER CLASS Derived SUPERCLASSES Base")).execute();
+      databaseDocumentTx
+          .command(new OCommandSQL("INSERT INTO Derived SET uuid='abcdef'"))
+          .execute();
+      databaseDocumentTx
+          .command(new OCommandSQL("ALTER CLASS Derived SUPERCLASSES Base"))
+          .execute();
 
-      List<ODocument> results = databaseDocumentTx.command(new OCommandSQL("SELECT * FROM Derived WHERE uuid='abcdef'")).execute();
+      List<ODocument> results =
+          databaseDocumentTx
+              .command(new OCommandSQL("SELECT * FROM Derived WHERE uuid='abcdef'"))
+              .execute();
       assertEquals(results.size(), 1);
 
     } finally {
@@ -77,31 +100,40 @@ public class OCommandExecutorSQLSelectTestIndex {
 
   @Test
   public void testListContainsField() {
-    ODatabaseDocumentTx databaseDocumentTx = new ODatabaseDocumentTx(
-        "memory:OCommandExecutorSQLSelectTestIndex_testListContainsField");
+    ODatabaseDocumentTx databaseDocumentTx =
+        new ODatabaseDocumentTx("memory:OCommandExecutorSQLSelectTestIndex_testListContainsField");
     databaseDocumentTx.create();
     try {
       databaseDocumentTx.command(new OCommandSQL("CREATE CLASS Foo")).execute();
       databaseDocumentTx.command(new OCommandSQL("CREATE PROPERTY Foo.name String")).execute();
       databaseDocumentTx.command(new OCommandSQL("INSERT INTO Foo SET name = 'foo'")).execute();
 
-      List<?> result = databaseDocumentTx.query(new OSQLSynchQuery<Object>("SELECT * FROM Foo WHERE ['foo', 'bar'] CONTAINS name"));
+      List<?> result =
+          databaseDocumentTx.query(
+              new OSQLSynchQuery<Object>("SELECT * FROM Foo WHERE ['foo', 'bar'] CONTAINS name"));
       assertEquals(result.size(), 1);
 
-      result = databaseDocumentTx.query(new OSQLSynchQuery<Object>("SELECT * FROM Foo WHERE name IN ['foo', 'bar']"));
+      result =
+          databaseDocumentTx.query(
+              new OSQLSynchQuery<Object>("SELECT * FROM Foo WHERE name IN ['foo', 'bar']"));
       assertEquals(result.size(), 1);
 
-      databaseDocumentTx.command(new OCommandSQL("CREATE INDEX Foo.name UNIQUE_HASH_INDEX")).execute();
+      databaseDocumentTx
+          .command(new OCommandSQL("CREATE INDEX Foo.name UNIQUE_HASH_INDEX"))
+          .execute();
 
-      result = databaseDocumentTx.query(new OSQLSynchQuery<Object>("SELECT * FROM Foo WHERE ['foo', 'bar'] CONTAINS name"));
+      result =
+          databaseDocumentTx.query(
+              new OSQLSynchQuery<Object>("SELECT * FROM Foo WHERE ['foo', 'bar'] CONTAINS name"));
       assertEquals(result.size(), 1);
 
-      result = databaseDocumentTx.query(new OSQLSynchQuery<Object>("SELECT * FROM Foo WHERE name IN ['foo', 'bar']"));
+      result =
+          databaseDocumentTx.query(
+              new OSQLSynchQuery<Object>("SELECT * FROM Foo WHERE name IN ['foo', 'bar']"));
       assertEquals(result.size(), 1);
 
     } finally {
       databaseDocumentTx.drop();
     }
-
   }
 }

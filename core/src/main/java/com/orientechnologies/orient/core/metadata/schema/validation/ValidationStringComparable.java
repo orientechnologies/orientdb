@@ -12,5 +12,4 @@ public class ValidationStringComparable implements Comparable<Object> {
   public int compareTo(Object o) {
     return size - o.toString().length();
   }
-
 }

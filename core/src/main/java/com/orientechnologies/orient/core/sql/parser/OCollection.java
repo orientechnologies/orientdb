@@ -8,7 +8,6 @@ import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.executor.OResultInternal;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -84,14 +83,16 @@ public class OCollection extends SimpleNode {
     return false;
   }
 
-  public OCollection splitForAggregation(AggregateProjectionSplit aggregateProj, OCommandContext ctx) {
+  public OCollection splitForAggregation(
+      AggregateProjectionSplit aggregateProj, OCommandContext ctx) {
     if (isAggregate()) {
       OCollection result = new OCollection(-1);
       for (OExpression exp : this.expressions) {
         if (exp.isAggregate() || exp.isEarlyCalculated(ctx)) {
           result.expressions.add(exp.splitForAggregation(aggregateProj, ctx));
         } else {
-          throw new OCommandExecutionException("Cannot mix aggregate and non-aggregate operations in a collection: " + toString());
+          throw new OCommandExecutionException(
+              "Cannot mix aggregate and non-aggregate operations in a collection: " + toString());
         }
       }
       return result;
@@ -111,16 +112,17 @@ public class OCollection extends SimpleNode {
 
   public OCollection copy() {
     OCollection result = new OCollection(-1);
-    result.expressions = expressions == null ? null : expressions.stream().map(x -> x.copy()).collect(Collectors.toList());
+    result.expressions =
+        expressions == null
+            ? null
+            : expressions.stream().map(x -> x.copy()).collect(Collectors.toList());
     return result;
   }
 
   @Override
   public boolean equals(Object o) {
-    if (this == o)
-      return true;
-    if (o == null || getClass() != o.getClass())
-      return false;
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
 
     OCollection that = (OCollection) o;
 
@@ -149,7 +151,8 @@ public class OCollection extends SimpleNode {
   public OResult serialize() {
     OResultInternal result = new OResultInternal();
     if (expressions != null) {
-      result.setProperty("expressions", expressions.stream().map(x -> x.serialize()).collect(Collectors.toList()));
+      result.setProperty(
+          "expressions", expressions.stream().map(x -> x.serialize()).collect(Collectors.toList()));
     }
     return result;
   }

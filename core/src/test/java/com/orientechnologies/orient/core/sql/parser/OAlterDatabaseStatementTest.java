@@ -1,6 +1,7 @@
 package com.orientechnologies.orient.core.sql.parser;
 
 import org.junit.Test;
+
 public class OAlterDatabaseStatementTest extends OParserTestAbstract {
 
   @Test
@@ -12,7 +13,5 @@ public class OAlterDatabaseStatementTest extends OParserTestAbstract {
 
     checkWrongSyntax("alter database ");
     checkWrongSyntax("alter database bar baz zz");
-
   }
-
 }

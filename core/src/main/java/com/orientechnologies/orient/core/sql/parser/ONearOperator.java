@@ -13,7 +13,8 @@ public class ONearOperator extends SimpleNode implements OBinaryCompareOperator 
 
   @Override
   public boolean execute(Object left, Object right) {
-    throw new UnsupportedOperationException(toString() + " operator cannot be evaluated in this context");
+    throw new UnsupportedOperationException(
+        toString() + " operator cannot be evaluated in this context");
   }
 
   @Override
@@ -21,19 +22,23 @@ public class ONearOperator extends SimpleNode implements OBinaryCompareOperator 
     return "NEAR";
   }
 
-  @Override public boolean supportsBasicCalculation() {
+  @Override
+  public boolean supportsBasicCalculation() {
     return false;
   }
 
-  @Override public ONearOperator copy() {
+  @Override
+  public ONearOperator copy() {
     return this;
   }
 
-  @Override public boolean equals(Object obj) {
+  @Override
+  public boolean equals(Object obj) {
     return obj != null && obj.getClass().equals(this.getClass());
   }
 
-  @Override public int hashCode() {
+  @Override
+  public int hashCode() {
     return getClass().hashCode();
   }
 }

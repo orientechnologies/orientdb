@@ -29,12 +29,14 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.cel
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.cellbtree.singlevalue.v3.nullbucket.CellBTreeNullBucketSingleValueV3SetValuePO;
 
 /**
- * Bucket which is intended to save values stored in sbtree under <code>null</code> key. Bucket has following layout:
+ * Bucket which is intended to save values stored in sbtree under <code>null</code> key. Bucket has
+ * following layout:
+ *
  * <ol>
- * <li>First byte is flag which indicates presence of value in bucket</li>
- * <li>Second byte indicates whether value is presented by link to the "bucket list" where actual value is stored or real value
- * passed be user.</li>
- * <li>The rest is serialized value whether link or passed in value.</li>
+ *   <li>First byte is flag which indicates presence of value in bucket
+ *   <li>Second byte indicates whether value is presented by link to the "bucket list" where actual
+ *       value is stored or real value passed be user.
+ *   <li>The rest is serialized value whether link or passed in value.
  * </ol>
  *
  * @author Andrey Lomakin (a.lomakin-at-orientdb.com)

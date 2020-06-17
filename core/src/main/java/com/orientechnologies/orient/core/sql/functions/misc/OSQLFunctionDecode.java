@@ -19,27 +19,28 @@ import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.sql.functions.OSQLFunctionAbstract;
-
 import java.util.Base64;
 
 /**
  * Encode a string in various format (only base64 for now)
- * 
+ *
  * @author Johann Sorel (Geomatys)
  */
 public class OSQLFunctionDecode extends OSQLFunctionAbstract {
 
   public static final String NAME = "decode";
 
-  /**
-   * Get the date at construction to have the same date for all the iteration.
-   */
+  /** Get the date at construction to have the same date for all the iteration. */
   public OSQLFunctionDecode() {
     super(NAME, 2, 2);
   }
 
   @Override
-  public Object execute(Object iThis, OIdentifiable iCurrentRecord, Object iCurrentResult, final Object[] iParams,
+  public Object execute(
+      Object iThis,
+      OIdentifiable iCurrentRecord,
+      Object iCurrentResult,
+      final Object[] iParams,
       OCommandContext iContext) {
 
     final String candidate = iParams[0].toString();

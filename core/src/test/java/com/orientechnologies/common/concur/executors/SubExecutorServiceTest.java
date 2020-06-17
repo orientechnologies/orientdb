@@ -20,18 +20,25 @@
 
 package com.orientechnologies.common.concur.executors;
 
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
+
+
+import java.util.concurrent.Callable;
+import java.util.concurrent.CancellationException;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.RejectedExecutionException;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
-import java.util.concurrent.*;
-import java.util.concurrent.atomic.AtomicBoolean;
-
-import static org.junit.Assert.*;
-
-/**
- * @author Sergey Sitnikov
- */
+/** @author Sergey Sitnikov */
 public class SubExecutorServiceTest {
 
   private ExecutorService executor;
@@ -58,13 +65,17 @@ public class SubExecutorServiceTest {
   public void testSubmitCallable() throws ExecutionException, InterruptedException {
     final AtomicBoolean ran = new AtomicBoolean(false);
 
-    final Boolean result = subExecutor.submit(new Callable<Boolean>() {
-      @Override
-      public Boolean call() throws Exception {
-        ran.set(true);
-        return true;
-      }
-    }).get();
+    final Boolean result =
+        subExecutor
+            .submit(
+                new Callable<Boolean>() {
+                  @Override
+                  public Boolean call() throws Exception {
+                    ran.set(true);
+                    return true;
+                  }
+                })
+            .get();
 
     assertTrue(result);
     assertTrue(ran.get());
@@ -74,12 +85,17 @@ public class SubExecutorServiceTest {
   public void testSubmitRunnableWithResult() throws ExecutionException, InterruptedException {
     final AtomicBoolean ran = new AtomicBoolean(false);
 
-    final Boolean result = subExecutor.submit(new Runnable() {
-      @Override
-      public void run() {
-        ran.set(true);
-      }
-    }, true).get();
+    final Boolean result =
+        subExecutor
+            .submit(
+                new Runnable() {
+                  @Override
+                  public void run() {
+                    ran.set(true);
+                  }
+                },
+                true)
+            .get();
 
     assertTrue(result);
     assertTrue(ran.get());
@@ -89,12 +105,16 @@ public class SubExecutorServiceTest {
   public void testSubmitRunnable() throws ExecutionException, InterruptedException {
     final AtomicBoolean ran = new AtomicBoolean(false);
 
-    final Object result = subExecutor.submit(new Runnable() {
-      @Override
-      public void run() {
-        ran.set(true);
-      }
-    }).get();
+    final Object result =
+        subExecutor
+            .submit(
+                new Runnable() {
+                  @Override
+                  public void run() {
+                    ran.set(true);
+                  }
+                })
+            .get();
 
     assertNull(result);
     assertTrue(ran.get());
@@ -104,19 +124,22 @@ public class SubExecutorServiceTest {
   public void testExecute() throws Exception {
     final AtomicBoolean ran = new AtomicBoolean(false);
 
-    subExecutor.execute(new Runnable() {
-      @Override
-      public void run() {
-        ran.set(true);
-      }
-    });
+    subExecutor.execute(
+        new Runnable() {
+          @Override
+          public void run() {
+            ran.set(true);
+          }
+        });
 
-    assertTrue(busyWait(new Callable<Boolean>() {
-      @Override
-      public Boolean call() throws Exception {
-        return ran.get();
-      }
-    }));
+    assertTrue(
+        busyWait(
+            new Callable<Boolean>() {
+              @Override
+              public Boolean call() throws Exception {
+                return ran.get();
+              }
+            }));
   }
 
   @Test(expected = CancellationException.class)
@@ -124,28 +147,34 @@ public class SubExecutorServiceTest {
     final AtomicBoolean started = new AtomicBoolean(false);
     final AtomicBoolean stop = new AtomicBoolean(false);
 
-    final Future<Boolean> future = subExecutor.submit(new Callable<Boolean>() {
-      @Override
-      public Boolean call() throws Exception {
-        started.set(true);
+    final Future<Boolean> future =
+        subExecutor.submit(
+            new Callable<Boolean>() {
+              @Override
+              public Boolean call() throws Exception {
+                started.set(true);
 
-        assertTrue(busyWait(new Callable<Boolean>() {
-          @Override
-          public Boolean call() throws Exception {
-            return stop.get();
-          }
-        }));
+                assertTrue(
+                    busyWait(
+                        new Callable<Boolean>() {
+                          @Override
+                          public Boolean call() throws Exception {
+                            return stop.get();
+                          }
+                        }));
 
-        return true;
-      }
-    });
+                return true;
+              }
+            });
 
-    assertTrue(busyWait(new Callable<Boolean>() {
-      @Override
-      public Boolean call() throws Exception {
-        return started.get();
-      }
-    }));
+    assertTrue(
+        busyWait(
+            new Callable<Boolean>() {
+              @Override
+              public Boolean call() throws Exception {
+                return started.get();
+              }
+            }));
 
     assertFalse(future.isCancelled());
     assertFalse(future.isDone());
@@ -161,30 +190,35 @@ public class SubExecutorServiceTest {
   public void testShutdown() throws Exception {
     final AtomicBoolean shutdown = new AtomicBoolean(false);
 
-    subExecutor.submit(new Callable<Boolean>() {
-      @Override
-      public Boolean call() throws Exception {
-        assertTrue(busyWait(new Callable<Boolean>() {
+    subExecutor.submit(
+        new Callable<Boolean>() {
           @Override
           public Boolean call() throws Exception {
-            return shutdown.get();
+            assertTrue(
+                busyWait(
+                    new Callable<Boolean>() {
+                      @Override
+                      public Boolean call() throws Exception {
+                        return shutdown.get();
+                      }
+                    }));
+            return true;
           }
-        }));
-        return true;
-      }
-    });
+        });
 
     subExecutor.shutdown();
     assertTrue(subExecutor.isShutdown());
     assertFalse(subExecutor.isTerminated());
     shutdown.set(true);
 
-    assertTrue(busyWait(new Callable<Boolean>() {
-      @Override
-      public Boolean call() throws Exception {
-        return subExecutor.isTerminated();
-      }
-    }));
+    assertTrue(
+        busyWait(
+            new Callable<Boolean>() {
+              @Override
+              public Boolean call() throws Exception {
+                return subExecutor.isTerminated();
+              }
+            }));
 
     assertTrue(subExecutor.isShutdown());
     assertTrue(subExecutor.isTerminated());
@@ -196,23 +230,26 @@ public class SubExecutorServiceTest {
   public void testRejected() {
     subExecutor.shutdown();
 
-    subExecutor.submit(new Runnable() {
-      @Override
-      public void run() {
-      }
-    });
+    subExecutor.submit(
+        new Runnable() {
+          @Override
+          public void run() {}
+        });
   }
 
   @Test
   public void testTaskFailure() throws InterruptedException {
     boolean thrown;
     try {
-      subExecutor.submit(new Runnable() {
-        @Override
-        public void run() {
-          throw new TaskFailureException();
-        }
-      }).get();
+      subExecutor
+          .submit(
+              new Runnable() {
+                @Override
+                public void run() {
+                  throw new TaskFailureException();
+                }
+              })
+          .get();
       thrown = false;
     } catch (ExecutionException e) {
       assertTrue(e.getCause() instanceof TaskFailureException);
@@ -223,22 +260,17 @@ public class SubExecutorServiceTest {
   }
 
   private static boolean busyWait(Callable<Boolean> condition) throws Exception {
-    if (condition.call())
-      return true;
+    if (condition.call()) return true;
 
     final long start = System.currentTimeMillis();
     do {
       Thread.sleep(20);
 
-      if (condition.call())
-        return true;
+      if (condition.call()) return true;
 
-      if (System.currentTimeMillis() - start >= 5000)
-        return false;
+      if (System.currentTimeMillis() - start >= 5000) return false;
     } while (true);
   }
 
-  private static class TaskFailureException extends RuntimeException {
-  }
-
+  private static class TaskFailureException extends RuntimeException {}
 }

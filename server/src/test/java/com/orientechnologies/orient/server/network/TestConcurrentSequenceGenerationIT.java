@@ -1,27 +1,30 @@
 package com.orientechnologies.orient.server.network;
 
+import static org.junit.Assert.assertNotNull;
+
+
 import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.orient.core.Orient;
-import com.orientechnologies.orient.core.db.*;
+import com.orientechnologies.orient.core.db.ODatabasePool;
+import com.orientechnologies.orient.core.db.ODatabaseSession;
+import com.orientechnologies.orient.core.db.ODatabaseType;
+import com.orientechnologies.orient.core.db.OrientDB;
+import com.orientechnologies.orient.core.db.OrientDBConfig;
 import com.orientechnologies.orient.core.record.OVertex;
 import com.orientechnologies.orient.server.OServer;
-import org.junit.After;
-import org.junit.AfterClass;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
-
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicLong;
-
-import static org.junit.Assert.assertNotNull;
+import org.junit.After;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Test;
 
 public class TestConcurrentSequenceGenerationIT {
-  static final         int    THREADS          = 20;
-  static final         int    RECORDS          = 100;
-  private OServer  server;
+  static final int THREADS = 20;
+  static final int RECORDS = 100;
+  private OServer server;
   private OrientDB orientDB;
 
   @Before
@@ -31,9 +34,12 @@ public class TestConcurrentSequenceGenerationIT {
     server.activate();
     orientDB = new OrientDB("remote:localhost", "root", "root", OrientDBConfig.defaultConfig());
     orientDB.create(TestConcurrentSequenceGenerationIT.class.getSimpleName(), ODatabaseType.MEMORY);
-    ODatabaseSession databaseSession = orientDB.open(TestConcurrentSequenceGenerationIT.class.getSimpleName(), "admin", "admin");
-    databaseSession.execute("sql",
-        "CREATE CLASS TestSequence EXTENDS V;\n" + " CREATE SEQUENCE TestSequenceIdSequence TYPE ORDERED;\n"
+    ODatabaseSession databaseSession =
+        orientDB.open(TestConcurrentSequenceGenerationIT.class.getSimpleName(), "admin", "admin");
+    databaseSession.execute(
+        "sql",
+        "CREATE CLASS TestSequence EXTENDS V;\n"
+            + " CREATE SEQUENCE TestSequenceIdSequence TYPE ORDERED;\n"
             + "CREATE PROPERTY TestSequence.id LONG (MANDATORY TRUE, default \"sequence('TestSequenceIdSequence').next()\");\n"
             + "CREATE INDEX TestSequence_id_index ON TestSequence (id BY VALUE) UNIQUE;");
     databaseSession.close();
@@ -42,27 +48,30 @@ public class TestConcurrentSequenceGenerationIT {
   @Test
   public void test() throws InterruptedException {
     AtomicLong failures = new AtomicLong(0);
-    ODatabasePool pool = new ODatabasePool(orientDB, TestConcurrentSequenceGenerationIT.class.getSimpleName(), "admin", "admin");
+    ODatabasePool pool =
+        new ODatabasePool(
+            orientDB, TestConcurrentSequenceGenerationIT.class.getSimpleName(), "admin", "admin");
     List<Thread> threads = new ArrayList<>();
     for (int i = 0; i < THREADS; i++) {
-      Thread thread = new Thread() {
-        @Override
-        public void run() {
-          ODatabaseSession db = pool.acquire();
-          try {
-            for (int j = 0; j < RECORDS; j++) {
-              OVertex vert = db.newVertex("TestSequence");
-              assertNotNull(vert.getProperty("id"));
-              db.save(vert);
+      Thread thread =
+          new Thread() {
+            @Override
+            public void run() {
+              ODatabaseSession db = pool.acquire();
+              try {
+                for (int j = 0; j < RECORDS; j++) {
+                  OVertex vert = db.newVertex("TestSequence");
+                  assertNotNull(vert.getProperty("id"));
+                  db.save(vert);
+                }
+              } catch (Exception e) {
+                failures.incrementAndGet();
+                e.printStackTrace();
+              } finally {
+                db.close();
+              }
             }
-          } catch (Exception e) {
-            failures.incrementAndGet();
-            e.printStackTrace();
-          } finally {
-            db.close();
-          }
-        }
-      };
+          };
       threads.add(thread);
       thread.start();
     }

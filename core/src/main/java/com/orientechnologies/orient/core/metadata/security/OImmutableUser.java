@@ -6,7 +6,6 @@ import com.orientechnologies.orient.core.exception.OSecurityAccessException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.security.OSecurityManager;
-
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -17,17 +16,17 @@ import java.util.Set;
  * @since 03/11/14
  */
 public class OImmutableUser implements OSecurityUser {
-  private static final long         serialVersionUID = 1L;
-  private final long                version;
+  private static final long serialVersionUID = 1L;
+  private final long version;
 
-  private final String              name;
-  private final String              password;
+  private final String name;
+  private final String password;
 
-  private final Set<OImmutableRole> roles            = new HashSet<OImmutableRole>();
+  private final Set<OImmutableRole> roles = new HashSet<OImmutableRole>();
 
-  private final STATUSES            status;
-  private final ORID                rid;
-  private final OUser               user;
+  private final STATUSES status;
+  private final ORID rid;
+  private final OUser user;
 
   public OImmutableUser(long version, OUser user) {
     this.version = version;
@@ -42,39 +41,57 @@ public class OImmutableUser implements OSecurityUser {
     }
   }
 
-  public OSecurityRole allow(final ORule.ResourceGeneric resourceGeneric, final String resourceSpecific, final int iOperation) {
+  public OSecurityRole allow(
+      final ORule.ResourceGeneric resourceGeneric,
+      final String resourceSpecific,
+      final int iOperation) {
     if (roles.isEmpty())
       throw new OSecurityAccessException(getName(), "User '" + getName() + "' has no role defined");
 
     final OSecurityRole role = checkIfAllowed(resourceGeneric, resourceSpecific, iOperation);
 
     if (role == null)
-      throw new OSecurityAccessException(getName(), "User '" + getName() + "' does not have permission to execute the operation '"
-          + ORole.permissionToString(iOperation) + "' against the resource: " + resourceGeneric + "." + resourceSpecific);
+      throw new OSecurityAccessException(
+          getName(),
+          "User '"
+              + getName()
+              + "' does not have permission to execute the operation '"
+              + ORole.permissionToString(iOperation)
+              + "' against the resource: "
+              + resourceGeneric
+              + "."
+              + resourceSpecific);
 
     return role;
   }
 
-  public OSecurityRole checkIfAllowed(final ORule.ResourceGeneric resourceGeneric, final String resourceSpecific,
+  public OSecurityRole checkIfAllowed(
+      final ORule.ResourceGeneric resourceGeneric,
+      final String resourceSpecific,
       final int iOperation) {
     for (OImmutableRole r : roles) {
       if (r == null)
-        OLogManager.instance().warn(this,
-            "User '%s' has a null role, ignoring it.  Consider fixing this user's roles before continuing", getName());
-      else if (r.allow(resourceGeneric, resourceSpecific, iOperation))
-        return r;
+        OLogManager.instance()
+            .warn(
+                this,
+                "User '%s' has a null role, ignoring it.  Consider fixing this user's roles before continuing",
+                getName());
+      else if (r.allow(resourceGeneric, resourceSpecific, iOperation)) return r;
     }
 
     return null;
   }
 
-  public boolean isRuleDefined(final ORule.ResourceGeneric resourceGeneric, String resourceSpecific) {
+  public boolean isRuleDefined(
+      final ORule.ResourceGeneric resourceGeneric, String resourceSpecific) {
     for (OImmutableRole r : roles)
       if (r == null)
-        OLogManager.instance().warn(this,
-            "User '%s' has a null role, ignoring it.  Consider fixing this user's roles before continuing", getName());
-      else if (r.hasRule(resourceGeneric, resourceSpecific))
-        return true;
+        OLogManager.instance()
+            .warn(
+                this,
+                "UseOSecurityAuthenticatorr '%s' has a null role, ignoring it.  Consider fixing this user's roles before continuing",
+                getName());
+      else if (r.hasRule(resourceGeneric, resourceSpecific)) return true;
 
     return false;
   }
@@ -83,7 +100,8 @@ public class OImmutableUser implements OSecurityUser {
   @Deprecated
   public OSecurityRole allow(String iResource, int iOperation) {
     final String resourceSpecific = ORule.mapLegacyResourceToSpecificResource(iResource);
-    final ORule.ResourceGeneric resourceGeneric = ORule.mapLegacyResourceToGenericResource(iResource);
+    final ORule.ResourceGeneric resourceGeneric =
+        ORule.mapLegacyResourceToGenericResource(iResource);
 
     if (resourceSpecific == null || resourceSpecific.equals("*"))
       return allow(resourceGeneric, null, iOperation);
@@ -95,7 +113,8 @@ public class OImmutableUser implements OSecurityUser {
   @Deprecated
   public OSecurityRole checkIfAllowed(String iResource, int iOperation) {
     final String resourceSpecific = ORule.mapLegacyResourceToSpecificResource(iResource);
-    final ORule.ResourceGeneric resourceGeneric = ORule.mapLegacyResourceToGenericResource(iResource);
+    final ORule.ResourceGeneric resourceGeneric =
+        ORule.mapLegacyResourceToGenericResource(iResource);
 
     if (resourceSpecific == null || resourceSpecific.equals("*"))
       return checkIfAllowed(resourceGeneric, null, iOperation);
@@ -107,7 +126,8 @@ public class OImmutableUser implements OSecurityUser {
   @Deprecated
   public boolean isRuleDefined(String iResource) {
     final String resourceSpecific = ORule.mapLegacyResourceToSpecificResource(iResource);
-    final ORule.ResourceGeneric resourceGeneric = ORule.mapLegacyResourceToGenericResource(iResource);
+    final ORule.ResourceGeneric resourceGeneric =
+        ORule.mapLegacyResourceToGenericResource(iResource);
 
     if (resourceSpecific == null || resourceSpecific.equals("*"))
       return isRuleDefined(resourceGeneric, null);
@@ -160,16 +180,14 @@ public class OImmutableUser implements OSecurityUser {
   }
 
   public boolean hasRole(final String iRoleName, final boolean iIncludeInherited) {
-    for (Iterator<OImmutableRole> it = roles.iterator(); it.hasNext();) {
+    for (Iterator<OImmutableRole> it = roles.iterator(); it.hasNext(); ) {
       final OSecurityRole role = it.next();
-      if (role.getName().equals(iRoleName))
-        return true;
+      if (role.getName().equals(iRoleName)) return true;
 
       if (iIncludeInherited) {
         OSecurityRole r = role.getParentRole();
         while (r != null) {
-          if (r.getName().equals(iRoleName))
-            return true;
+          if (r.getName().equals(iRoleName)) return true;
           r = r.getParentRole();
         }
       }

@@ -30,14 +30,15 @@ import com.orientechnologies.orient.server.network.protocol.http.OHttpUtils;
 import com.orientechnologies.orient.server.network.protocol.http.command.OServerCommandDocumentAbstract;
 
 public class OServerCommandDeleteDocument extends OServerCommandDocumentAbstract {
-  private static final String[] NAMES = { "DELETE|document/*" };
+  private static final String[] NAMES = {"DELETE|document/*"};
 
   @Override
   public boolean execute(final OHttpRequest iRequest, OHttpResponse iResponse) throws Exception {
     ODatabaseDocument db = null;
 
     try {
-      final String[] urlParts = checkSyntax(iRequest.getUrl(), 3, "Syntax error: document/<database>/<record-id>");
+      final String[] urlParts =
+          checkSyntax(iRequest.getUrl(), 3, "Syntax error: document/<database>/<record-id>");
 
       iRequest.getData().commandInfo = "Delete document";
 
@@ -75,19 +76,23 @@ public class OServerCommandDeleteDocument extends OServerCommandDocumentAbstract
           // DELETE IT AS EDGE
           db.command("DELETE EDGE ?", recordId).close();
         else {
-          doc.reload(null,true);
+          doc.reload(null, true);
           doc.delete();
         }
       } else {
-        doc.reload(null,true);
+        doc.reload(null, true);
         doc.delete();
       }
 
-      iResponse.send(OHttpUtils.STATUS_OK_NOCONTENT_CODE, OHttpUtils.STATUS_OK_NOCONTENT_DESCRIPTION, OHttpUtils.CONTENT_TEXT_PLAIN, null, null);
+      iResponse.send(
+          OHttpUtils.STATUS_OK_NOCONTENT_CODE,
+          OHttpUtils.STATUS_OK_NOCONTENT_DESCRIPTION,
+          OHttpUtils.CONTENT_TEXT_PLAIN,
+          null,
+          null);
 
     } finally {
-      if (db != null)
-        db.close();
+      if (db != null) db.close();
     }
     return false;
   }

@@ -44,17 +44,33 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
 import com.orientechnologies.orient.core.storage.OBasicTransaction;
 import com.orientechnologies.orient.core.storage.ORecordCallback;
-import com.orientechnologies.orient.core.tx.*;
-
+import com.orientechnologies.orient.core.tx.OTransaction;
+import com.orientechnologies.orient.core.tx.OTransactionAbstract;
+import com.orientechnologies.orient.core.tx.OTransactionDataChange;
+import com.orientechnologies.orient.core.tx.OTransactionIndexChanges;
+import com.orientechnologies.orient.core.tx.OTransactionIndexChangesPerKey;
+import com.orientechnologies.orient.core.tx.OTransactionInternal;
+import com.orientechnologies.orient.core.tx.OTransactionRecordIndexOperation;
+import com.orientechnologies.orient.core.tx.OTxMetadataHolder;
 import java.io.ByteArrayOutputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
- * The special micro transaction used to wrap non-transactional operations into implicit transactions. Such transactions are not
- * visible on the database level.
+ * The special micro transaction used to wrap non-transactional operations into implicit
+ * transactions. Such transactions are not visible on the database level.
  *
  * @author Sergey Sitnikov
  */
@@ -62,45 +78,42 @@ public final class OMicroTransaction implements OBasicTransaction, OTransactionI
 
   private static final AtomicInteger transactionSerial = new AtomicInteger(0);
 
-  private       ODatabaseDocumentInternal database;
+  private ODatabaseDocumentInternal database;
   private final OAbstractPaginatedStorage storage;
 
   private final int id;
 
-  /**
-   * All the record/cluster operations known to this micro-transactions, mapped by {@link ORID}.
-   */
+  /** All the record/cluster operations known to this micro-transactions, mapped by {@link ORID}. */
   private final Map<ORID, ORecordOperation> recordOperations = new LinkedHashMap<>();
 
-  /**
-   * All the index operations known to this micro-transaction, mapped by index name.
-   */
+  /** All the index operations known to this micro-transaction, mapped by index name. */
   private final Map<String, OTransactionIndexChanges> indexOperations = new LinkedHashMap<>();
 
   /**
-   * All the index operations known to this micro-transaction affecting index values containing records with certain {@link ORID}s,
-   * mapped by the record {@link ORID}.
+   * All the index operations known to this micro-transaction affecting index values containing
+   * records with certain {@link ORID}s, mapped by the record {@link ORID}.
    */
-  private final Map<ORID, List<OTransactionRecordIndexOperation>> recordIndexOperations = new HashMap<>();
+  private final Map<ORID, List<OTransactionRecordIndexOperation>> recordIndexOperations =
+      new HashMap<>();
 
-  private final Map<ORID, ORID> updatedRids      = new HashMap<>();
-  private final Set<ODocument>  changedDocuments = new HashSet<>();
+  private final Map<ORID, ORID> updatedRids = new HashMap<>();
+  private final Set<ODocument> changedDocuments = new HashSet<>();
 
   private final Map<String, Object> customData = new HashMap<>();
 
-  private boolean active       = false;
-  private int     level        = 0;
-  private int     recordSerial = -2;
+  private boolean active = false;
+  private int level = 0;
+  private int recordSerial = -2;
 
   private Map<ORID, OTransactionAbstract.LockedRecordMetadata> noTxLocks;
 
-  private Optional<OTxMetadataHolder> metadata             = Optional.empty();
-  private Optional<List<byte[]>>      serializedOperations = Optional.empty();
+  private Optional<OTxMetadataHolder> metadata = Optional.empty();
+  private Optional<List<byte[]>> serializedOperations = Optional.empty();
 
   /**
    * Instantiates a new micro-transaction.
    *
-   * @param storage  the micro-transaction's storage.
+   * @param storage the micro-transaction's storage.
    * @param database the micro-transaction's database.
    */
   public OMicroTransaction(OAbstractPaginatedStorage storage, ODatabaseDocumentInternal database) {
@@ -110,9 +123,7 @@ public final class OMicroTransaction implements OBasicTransaction, OTransactionI
     this.id = transactionSerial.incrementAndGet();
   }
 
-  /**
-   * @return the unique id of this micro-transaction.
-   */
+  /** @return the unique id of this micro-transaction. */
   public int getId() {
     return id;
   }
@@ -127,46 +138,33 @@ public final class OMicroTransaction implements OBasicTransaction, OTransactionI
     updateIdentityAfterRecordCommit(oldRID, rid);
   }
 
-  /**
-   * @return the micro-transaction's database.
-   */
+  /** @return the micro-transaction's database. */
   public ODatabaseDocumentInternal getDatabase() {
     return database;
   }
 
-  /**
-   * @return the record operations done in the context of this micro-transaction.
-   */
+  /** @return the record operations done in the context of this micro-transaction. */
   public Collection<ORecordOperation> getRecordOperations() { // ordered by operation time
     return recordOperations.values();
   }
 
-  /**
-   * @return the index operations done in the context of this micro-transaction.
-   */
+  /** @return the index operations done in the context of this micro-transaction. */
   public Map<String, OTransactionIndexChanges> getIndexOperations() {
     return indexOperations;
   }
 
-  /**
-   * Begins the micro-transaction. Micro-transactions may be nested.
-   */
+  /** Begins the micro-transaction. Micro-transactions may be nested. */
   public void begin() {
-    if (level < 0)
-      throw error("Unbalanced micro-transaction, level = " + level);
+    if (level < 0) throw error("Unbalanced micro-transaction, level = " + level);
 
     ++level;
     active = true;
   }
 
-  /**
-   * Commits the micro-transaction if it's a top-level micro-transaction.
-   */
+  /** Commits the micro-transaction if it's a top-level micro-transaction. */
   public void commit() {
-    if (!active)
-      throw error("Inactive micro-transaction on commit");
-    if (level < 1)
-      throw error("Unbalanced micro-transaction, level = " + level);
+    if (!active) throw error("Inactive micro-transaction on commit");
+    if (level < 1) throw error("Unbalanced micro-transaction, level = " + level);
 
     --level;
 
@@ -176,14 +174,10 @@ public final class OMicroTransaction implements OBasicTransaction, OTransactionI
     }
   }
 
-  /**
-   * Rollbacks the micro-transaction if it's a top-level micro-transaction.
-   */
+  /** Rollbacks the micro-transaction if it's a top-level micro-transaction. */
   public void rollback() {
-    if (!active)
-      throw error("Inactive micro-transaction on rollback");
-    if (level < 1)
-      throw error("Unbalanced micro-transaction, level = " + level);
+    if (!active) throw error("Inactive micro-transaction on rollback");
+    if (level < 1) throw error("Unbalanced micro-transaction, level = " + level);
 
     --level;
 
@@ -193,26 +187,20 @@ public final class OMicroTransaction implements OBasicTransaction, OTransactionI
     }
   }
 
-  /**
-   * Rollbacks the micro-transaction after failed commit attempt.
-   */
+  /** Rollbacks the micro-transaction after failed commit attempt. */
   public void rollbackAfterFailedCommit() {
-    if (active)
-      throw error("Active micro-transaction on rollback after failed commit");
-    if (level != 0)
-      throw error("Unbalanced micro-transaction, level = " + level);
+    if (active) throw error("Active micro-transaction on rollback after failed commit");
+    if (level != 0) throw error("Unbalanced micro-transaction, level = " + level);
 
     doRollback();
   }
 
-  /**
-   * Updates the record identity after its successful commit.
-   */
+  /** Updates the record identity after its successful commit. */
   public void updateIdentityAfterRecordCommit(final ORID oldRid, final ORID newRid) {
-    if (oldRid.equals(newRid))
-      return; // no change, ignore
+    if (oldRid.equals(newRid)) return; // no change, ignore
 
-    // XXX: Identity update may mutate the index keys, so we have to identify and reinsert potentially affected index keys to keep
+    // XXX: Identity update may mutate the index keys, so we have to identify and reinsert
+    // potentially affected index keys to keep
     // the OTransactionIndexChanges.changesPerKey in a consistent state.
 
     final List<KeyChangesUpdateRecord> keyRecordsToReinsert = new ArrayList<>();
@@ -221,15 +209,16 @@ public final class OMicroTransaction implements OBasicTransaction, OTransactionI
     for (Map.Entry<String, OTransactionIndexChanges> entry : indexOperations.entrySet()) {
       final OIndex index = indexManager.getIndex(database, entry.getKey());
       if (index == null)
-        throw new OTransactionException("Cannot find index '" + entry.getValue() + "' while committing transaction");
+        throw new OTransactionException(
+            "Cannot find index '" + entry.getValue() + "' while committing transaction");
 
       final Dependency[] fieldRidDependencies = getIndexFieldRidDependencies(index);
-      if (!isIndexMayDependOnRids(fieldRidDependencies))
-        continue;
+      if (!isIndexMayDependOnRids(fieldRidDependencies)) continue;
 
       final OTransactionIndexChanges indexChanges = entry.getValue();
-      for (final Iterator<OTransactionIndexChangesPerKey> iterator = indexChanges.changesPerKey.values().iterator(); iterator
-          .hasNext(); ) {
+      for (final Iterator<OTransactionIndexChangesPerKey> iterator =
+              indexChanges.changesPerKey.values().iterator();
+          iterator.hasNext(); ) {
         final OTransactionIndexChangesPerKey keyChanges = iterator.next();
         if (isIndexKeyMayDependOnRid(keyChanges.key, oldRid, fieldRidDependencies)) {
           keyRecordsToReinsert.add(new KeyChangesUpdateRecord(keyChanges, indexChanges));
@@ -266,27 +255,24 @@ public final class OMicroTransaction implements OBasicTransaction, OTransactionI
 
     // Update the indexes.
 
-    final List<OTransactionRecordIndexOperation> transactionIndexOperations = recordIndexOperations.get(translateRid(oldRid));
+    final List<OTransactionRecordIndexOperation> transactionIndexOperations =
+        recordIndexOperations.get(translateRid(oldRid));
     if (transactionIndexOperations != null) {
       for (final OTransactionRecordIndexOperation indexOperation : transactionIndexOperations) {
         OTransactionIndexChanges indexEntryChanges = indexOperations.get(indexOperation.index);
-        if (indexEntryChanges == null)
-          continue;
+        if (indexEntryChanges == null) continue;
         final OTransactionIndexChangesPerKey keyChanges;
         if (indexOperation.key == null) {
           keyChanges = indexEntryChanges.nullKeyChanges;
         } else {
           keyChanges = indexEntryChanges.changesPerKey.get(indexOperation.key);
         }
-        if (keyChanges != null)
-          updateChangesIdentity(oldRid, newRid, keyChanges);
+        if (keyChanges != null) updateChangesIdentity(oldRid, newRid, keyChanges);
       }
     }
   }
 
-  /**
-   * Updates the record cache after unsuccessful micro-transaction commit.
-   */
+  /** Updates the record cache after unsuccessful micro-transaction commit. */
   public void updateRecordCacheAfterRollback() {
     final OLocalRecordCache databaseLocalCache = database.getLocalCache();
 
@@ -300,28 +286,28 @@ public final class OMicroTransaction implements OBasicTransaction, OTransactionI
   }
 
   @Override
-  public ORecord saveRecord(ORecord record, String clusterName, ODatabase.OPERATION_MODE operationMode, boolean forceCreation,
-      ORecordCallback<? extends Number> createdCallback, ORecordCallback<Integer> updatedCallback) {
-    if (!active)
-      throw error("Inactive micro-transaction on record save");
+  public ORecord saveRecord(
+      ORecord record,
+      String clusterName,
+      ODatabase.OPERATION_MODE operationMode,
+      boolean forceCreation,
+      ORecordCallback<? extends Number> createdCallback,
+      ORecordCallback<Integer> updatedCallback) {
+    if (!active) throw error("Inactive micro-transaction on record save");
 
-    if (record == null)
-      return null;
-    if (!record.isDirty())
-      return record;
+    if (record == null) return null;
+    if (!record.isDirty()) return record;
 
     final ORecordOperation recordOperation;
     if (forceCreation || !record.getIdentity().isValid())
       recordOperation = addRecordOperation(record, ORecordOperation.CREATED, clusterName);
-    else
-      recordOperation = addRecordOperation(record, ORecordOperation.UPDATED, clusterName);
+    else recordOperation = addRecordOperation(record, ORecordOperation.UPDATED, clusterName);
 
     if (recordOperation != null) {
       if (createdCallback != null)
         //noinspection unchecked
         recordOperation.createdCallback = (ORecordCallback<Long>) createdCallback;
-      if (updatedCallback != null)
-        recordOperation.updatedCallback = updatedCallback;
+      if (updatedCallback != null) recordOperation.updatedCallback = updatedCallback;
     }
 
     return record;
@@ -329,8 +315,7 @@ public final class OMicroTransaction implements OBasicTransaction, OTransactionI
 
   @Override
   public void deleteRecord(ORecord record, ODatabase.OPERATION_MODE mode) {
-    if (!record.getIdentity().isValid())
-      return;
+    if (!record.getIdentity().isValid()) return;
 
     addRecordOperation(record, ORecordOperation.DELETED, null);
   }
@@ -338,10 +323,11 @@ public final class OMicroTransaction implements OBasicTransaction, OTransactionI
   @Override
   public ORecord getRecord(ORID rid) {
     final ORecordOperation recordOperation = resolveRecordOperation(rid);
-    if (recordOperation == null)
-      return null;
+    if (recordOperation == null) return null;
 
-    return recordOperation.type == ORecordOperation.DELETED ? DELETED_RECORD : recordOperation.record.getRecord();
+    return recordOperation.type == ORecordOperation.DELETED
+        ? DELETED_RECORD
+        : recordOperation.record.getRecord();
   }
 
   @Override
@@ -388,12 +374,9 @@ public final class OMicroTransaction implements OBasicTransaction, OTransactionI
       if (record.isDirty() && record instanceof ODocument) {
         final ODocument document = (ODocument) record;
 
-        if (document.isTrackingChanges())
-          document.undo();
-        else
-          document.unload();
-      } else
-        record.unload();
+        if (document.isTrackingChanges()) document.undo();
+        else document.unload();
+      } else record.unload();
     }
 
     reset();
@@ -404,9 +387,12 @@ public final class OMicroTransaction implements OBasicTransaction, OTransactionI
       final ORecord record = recordOperation.getRecord();
       final ORID identity = record.getIdentity();
 
-      if (recordOperation.type == ORecordOperation.CREATED && recordOperation.createdCallback != null)
-        recordOperation.createdCallback.call(new ORecordId(identity), identity.getClusterPosition());
-      else if (recordOperation.type == ORecordOperation.UPDATED && recordOperation.updatedCallback != null)
+      if (recordOperation.type == ORecordOperation.CREATED
+          && recordOperation.createdCallback != null)
+        recordOperation.createdCallback.call(
+            new ORecordId(identity), identity.getClusterPosition());
+      else if (recordOperation.type == ORecordOperation.UPDATED
+          && recordOperation.updatedCallback != null)
         recordOperation.updatedCallback.call(new ORecordId(identity), record.getVersion());
     }
   }
@@ -418,15 +404,13 @@ public final class OMicroTransaction implements OBasicTransaction, OTransactionI
       if (record instanceof ODocument) {
         final ODocument document = (ODocument) record;
 
-        if (document.isDirty())
-          document.undo();
+        if (document.isDirty()) document.undo();
 
         changedDocuments.remove(document);
       }
     }
 
-    for (ODocument changedDocument : changedDocuments)
-      changedDocument.undo();
+    for (ODocument changedDocument : changedDocuments) changedDocument.undo();
 
     changedDocuments.clear();
     updatedRids.clear();
@@ -445,8 +429,7 @@ public final class OMicroTransaction implements OBasicTransaction, OTransactionI
   private ORID translateRid(ORID rid) {
     while (true) {
       final ORID translatedRid = updatedRids.get(rid);
-      if (translatedRid == null)
-        break;
+      if (translatedRid == null) break;
 
       rid = translatedRid;
     }
@@ -464,42 +447,44 @@ public final class OMicroTransaction implements OBasicTransaction, OTransactionI
 
     try {
       switch (type) {
-      case ORecordOperation.CREATED: {
-        OIdentifiable newRec = database.beforeCreateOperations(record, clusterName);
-        if (newRec != null) {
-          record = (ORecord) newRec;
-          reSave(record);
-        }
-      }
-      break;
+        case ORecordOperation.CREATED:
+          {
+            OIdentifiable newRec = database.beforeCreateOperations(record, clusterName);
+            if (newRec != null) {
+              record = (ORecord) newRec;
+              reSave(record);
+            }
+          }
+          break;
 
-      case ORecordOperation.UPDATED: {
-        OIdentifiable newRec = database.beforeUpdateOperations(record, clusterName);
-        if (newRec != null) {
-          record = (ORecord) newRec;
-          reSave(record);
-        }
-      }
-      break;
+        case ORecordOperation.UPDATED:
+          {
+            OIdentifiable newRec = database.beforeUpdateOperations(record, clusterName);
+            if (newRec != null) {
+              record = (ORecord) newRec;
+              reSave(record);
+            }
+          }
+          break;
 
-      case ORecordOperation.DELETED:
-        database.beforeDeleteOperations(record, clusterName);
-        break;
+        case ORecordOperation.DELETED:
+          database.beforeDeleteOperations(record, clusterName);
+          break;
       }
 
       try {
         ORecordOperation recordOperation = internalAddRecord(record, type, clusterName);
 
         switch (type) {
-        case ORecordOperation.CREATED:
-          database.afterCreateOperations(record);
-          break;
-        case ORecordOperation.UPDATED:
-          database.afterUpdateOperations(record);
-          break;
-        case ORecordOperation.DELETED:
-          database.afterDeleteOperations(record);
-          break;
+          case ORecordOperation.CREATED:
+            database.afterCreateOperations(record);
+            break;
+          case ORecordOperation.UPDATED:
+            database.afterUpdateOperations(record);
+            break;
+          case ORecordOperation.DELETED:
+            database.afterDeleteOperations(record);
+            break;
         }
 
         if (record instanceof ODocument && ((ODocument) record).isTrackingChanges())
@@ -509,30 +494,31 @@ public final class OMicroTransaction implements OBasicTransaction, OTransactionI
 
       } catch (Exception e) {
         switch (type) {
-        case ORecordOperation.CREATED:
-          database.callbackHooks(ORecordHook.TYPE.CREATE_FAILED, record);
-          break;
-        case ORecordOperation.UPDATED:
-          database.callbackHooks(ORecordHook.TYPE.UPDATE_FAILED, record);
-          break;
-        case ORecordOperation.DELETED:
-          database.callbackHooks(ORecordHook.TYPE.DELETE_FAILED, record);
-          break;
+          case ORecordOperation.CREATED:
+            database.callbackHooks(ORecordHook.TYPE.CREATE_FAILED, record);
+            break;
+          case ORecordOperation.UPDATED:
+            database.callbackHooks(ORecordHook.TYPE.UPDATE_FAILED, record);
+            break;
+          case ORecordOperation.DELETED:
+            database.callbackHooks(ORecordHook.TYPE.DELETE_FAILED, record);
+            break;
         }
 
-        throw OException.wrapException(new ODatabaseException("Error on saving record " + record.getIdentity()), e);
+        throw OException.wrapException(
+            new ODatabaseException("Error on saving record " + record.getIdentity()), e);
       }
     } finally {
       switch (type) {
-      case ORecordOperation.CREATED:
-        database.callbackHooks(ORecordHook.TYPE.FINALIZE_CREATION, record);
-        break;
-      case ORecordOperation.UPDATED:
-        database.callbackHooks(ORecordHook.TYPE.FINALIZE_UPDATE, record);
-        break;
-      case ORecordOperation.DELETED:
-        database.callbackHooks(ORecordHook.TYPE.FINALIZE_DELETION, record);
-        break;
+        case ORecordOperation.CREATED:
+          database.callbackHooks(ORecordHook.TYPE.FINALIZE_CREATION, record);
+          break;
+        case ORecordOperation.UPDATED:
+          database.callbackHooks(ORecordHook.TYPE.FINALIZE_UPDATE, record);
+          break;
+        case ORecordOperation.DELETED:
+          database.callbackHooks(ORecordHook.TYPE.FINALIZE_DELETION, record);
+          break;
       }
     }
   }
@@ -560,37 +546,39 @@ public final class OMicroTransaction implements OBasicTransaction, OTransactionI
       recordOperation.record = record;
 
       switch (recordOperation.type) {
-      case ORecordOperation.CREATED:
-        if (type == ORecordOperation.DELETED)
-          recordOperations.remove(recordId);
-        break;
-      case ORecordOperation.UPDATED:
-        if (type == ORecordOperation.DELETED)
-          recordOperation.type = ORecordOperation.DELETED;
-        break;
-      case ORecordOperation.DELETED:
-        break; // do nothing
+        case ORecordOperation.CREATED:
+          if (type == ORecordOperation.DELETED) recordOperations.remove(recordId);
+          break;
+        case ORecordOperation.UPDATED:
+          if (type == ORecordOperation.DELETED) recordOperation.type = ORecordOperation.DELETED;
+          break;
+        case ORecordOperation.DELETED:
+          break; // do nothing
       }
     }
     return recordOperation;
   }
 
   @Override
-  public void addIndexEntry(OIndex index, String indexName, OTransactionIndexChanges.OPERATION type, Object key,
+  public void addIndexEntry(
+      OIndex index,
+      String indexName,
+      OTransactionIndexChanges.OPERATION type,
+      Object key,
       OIdentifiable value) {
-    final OTransactionIndexChanges indexOperation = indexOperations.computeIfAbsent(indexName, k -> new OTransactionIndexChanges());
+    final OTransactionIndexChanges indexOperation =
+        indexOperations.computeIfAbsent(indexName, k -> new OTransactionIndexChanges());
 
-    if (type == OTransactionIndexChanges.OPERATION.CLEAR)
-      indexOperation.setCleared();
+    if (type == OTransactionIndexChanges.OPERATION.CLEAR) indexOperation.setCleared();
     else {
       final OTransactionIndexChangesPerKey changesPerKey = indexOperation.getChangesPerKey(key);
       changesPerKey.clientTrackOnly = false;
       changesPerKey.add(value, type);
 
-      if (value == null)
-        return;
+      if (value == null) return;
 
-      List<OTransactionRecordIndexOperation> transactionIndexOperations = recordIndexOperations.get(value.getIdentity());
+      List<OTransactionRecordIndexOperation> transactionIndexOperations =
+          recordIndexOperations.get(value.getIdentity());
       if (transactionIndexOperations == null) {
         transactionIndexOperations = new ArrayList<>();
         recordIndexOperations.put(value.getIdentity().copy(), transactionIndexOperations);
@@ -602,8 +590,7 @@ public final class OMicroTransaction implements OBasicTransaction, OTransactionI
 
   @Override
   public void addChangedDocument(ODocument document) {
-    if (getRecord(document.getIdentity()) == null)
-      changedDocuments.add(document);
+    if (getRecord(document.getIdentity()) == null) changedDocuments.add(document);
   }
 
   private void reSave(ORecord record) {
@@ -627,78 +614,78 @@ public final class OMicroTransaction implements OBasicTransaction, OTransactionI
     }
   }
 
-  private void updateChangesIdentity(ORID oldRid, ORID newRid, OTransactionIndexChangesPerKey changesPerKey) {
-    if (changesPerKey == null)
-      return;
+  private void updateChangesIdentity(
+      ORID oldRid, ORID newRid, OTransactionIndexChangesPerKey changesPerKey) {
+    if (changesPerKey == null) return;
 
-    for (final OTransactionIndexChangesPerKey.OTransactionIndexEntry indexEntry : changesPerKey.entries)
-      if (indexEntry.value.getIdentity().equals(oldRid))
-        indexEntry.value = newRid;
+    for (final OTransactionIndexChangesPerKey.OTransactionIndexEntry indexEntry :
+        changesPerKey.entries)
+      if (indexEntry.value.getIdentity().equals(oldRid)) indexEntry.value = newRid;
   }
 
   private static Dependency[] getIndexFieldRidDependencies(OIndex index) {
     final OIndexDefinition definition = index.getDefinition();
 
     if (definition == null) // type for untyped index is still not resolved
-      return null;
+    return null;
 
     final OType[] types = definition.getTypes();
     final Dependency[] dependencies = new Dependency[types.length];
 
-    for (int i = 0; i < types.length; ++i)
-      dependencies[i] = getTypeRidDependency(types[i]);
+    for (int i = 0; i < types.length; ++i) dependencies[i] = getTypeRidDependency(types[i]);
 
     return dependencies;
   }
 
   private static Dependency getTypeRidDependency(OType type) {
     switch (type) {
-    case CUSTOM:
-    case ANY:
-      return Dependency.Unknown;
+      case CUSTOM:
+      case ANY:
+        return Dependency.Unknown;
 
-    case EMBEDDED:
-    case LINK:
-      return Dependency.Yes;
+      case EMBEDDED:
+      case LINK:
+        return Dependency.Yes;
 
-    case LINKLIST:
-    case LINKSET:
-    case LINKMAP:
-    case LINKBAG:
-    case EMBEDDEDLIST:
-    case EMBEDDEDSET:
-    case EMBEDDEDMAP:
-      assert false; // under normal conditions, collection field type is already resolved to its component type
-      return Dependency.Unknown; // fallback to the safest variant, just in case
+      case LINKLIST:
+      case LINKSET:
+      case LINKMAP:
+      case LINKBAG:
+      case EMBEDDEDLIST:
+      case EMBEDDEDSET:
+      case EMBEDDEDMAP:
+        assert false; // under normal conditions, collection field type is already resolved to its
+        // component type
+        return Dependency.Unknown; // fallback to the safest variant, just in case
 
-    default: // all other primitive types which doesn't depend on rids
-      return Dependency.No;
+      default: // all other primitive types which doesn't depend on rids
+        return Dependency.No;
     }
   }
 
   private static boolean isIndexMayDependOnRids(Dependency[] fieldDependencies) {
-    if (fieldDependencies == null)
-      return true;
+    if (fieldDependencies == null) return true;
 
     for (Dependency dependency : fieldDependencies)
       switch (dependency) {
-      case Unknown:
-        return true;
-      case Yes:
-        return true;
-      case No:
-        break; // do nothing
+        case Unknown:
+          return true;
+        case Yes:
+          return true;
+        case No:
+          break; // do nothing
       }
 
     return false;
   }
 
-  private static boolean isIndexKeyMayDependOnRid(Object key, ORID rid, Dependency[] keyDependencies) {
+  private static boolean isIndexKeyMayDependOnRid(
+      Object key, ORID rid, Dependency[] keyDependencies) {
     if (key instanceof OCompositeKey) {
       final List<Object> subKeys = ((OCompositeKey) key).getKeys();
       for (int i = 0; i < subKeys.size(); ++i)
-        if (isIndexKeyMayDependOnRid(subKeys.get(i), rid, keyDependencies == null ? null : keyDependencies[i]))
-          return true;
+        if (isIndexKeyMayDependOnRid(
+            subKeys.get(i), rid, keyDependencies == null ? null : keyDependencies[i])) return true;
       return false;
     }
 
@@ -706,29 +693,30 @@ public final class OMicroTransaction implements OBasicTransaction, OTransactionI
   }
 
   private static boolean isIndexKeyMayDependOnRid(Object key, ORID rid, Dependency dependency) {
-    if (dependency == Dependency.No)
-      return false;
+    if (dependency == Dependency.No) return false;
 
-    if (key instanceof OIdentifiable)
-      return key.equals(rid);
+    if (key instanceof OIdentifiable) return key.equals(rid);
 
     return dependency == Dependency.Unknown || dependency == null;
   }
 
   @Override
   public void setStatus(OTransaction.TXSTATUS iStatus) {
-    //IGNORE
+    // IGNORE
   }
 
   private enum Dependency {
-    Unknown, Yes, No
+    Unknown,
+    Yes,
+    No
   }
 
   private static class KeyChangesUpdateRecord {
     private final OTransactionIndexChangesPerKey keyChanges;
-    private final OTransactionIndexChanges       indexChanges;
+    private final OTransactionIndexChanges indexChanges;
 
-    public KeyChangesUpdateRecord(OTransactionIndexChangesPerKey keyChanges, OTransactionIndexChanges indexChanges) {
+    public KeyChangesUpdateRecord(
+        OTransactionIndexChangesPerKey keyChanges, OTransactionIndexChanges indexChanges) {
       this.keyChanges = keyChanges;
       this.indexChanges = indexChanges;
     }
@@ -796,5 +784,4 @@ public final class OMicroTransaction implements OBasicTransaction, OTransactionI
       return Collections.emptyIterator();
     }
   }
-
 }

@@ -20,7 +20,6 @@ import com.orientechnologies.orient.core.sql.operator.math.OQueryOperatorMinus;
 import com.orientechnologies.orient.core.sql.operator.math.OQueryOperatorMod;
 import com.orientechnologies.orient.core.sql.operator.math.OQueryOperatorMultiply;
 import com.orientechnologies.orient.core.sql.operator.math.OQueryOperatorPlus;
-
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
@@ -66,11 +65,8 @@ public class ODefaultQueryOperatorFactory implements OQueryOperatorFactory {
     OPERATORS = Collections.unmodifiableSet(operators);
   }
 
-  /**
-   * {@inheritDoc}
-   */
+  /** {@inheritDoc} */
   public Set<OQueryOperator> getOperators() {
     return OPERATORS;
   }
-
 }

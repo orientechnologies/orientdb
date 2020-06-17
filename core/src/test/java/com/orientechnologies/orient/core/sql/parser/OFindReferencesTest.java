@@ -1,6 +1,5 @@
 package com.orientechnologies.orient.core.sql.parser;
 
-import org.junit.Test;
 public class OFindReferencesTest extends OParserTestAbstract {
 
   public void testSyntax() {
@@ -17,5 +16,4 @@ public class OFindReferencesTest extends OParserTestAbstract {
     checkWrongSyntax("FIND REFERENCES [#12:0, #12:1]");
     checkWrongSyntax("FIND REFERENCES foo");
   }
-
 }

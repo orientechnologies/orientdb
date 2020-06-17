@@ -27,7 +27,6 @@ import com.orientechnologies.orient.core.serialization.serializer.record.ORecord
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelDataInput;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelDataOutput;
-
 import java.io.IOException;
 
 public final class OCloseQueryRequest implements OBinaryRequest<OCloseQueryResponse> {
@@ -38,15 +37,15 @@ public final class OCloseQueryRequest implements OBinaryRequest<OCloseQueryRespo
     this.queryId = queryId;
   }
 
-  public OCloseQueryRequest() {
-  }
+  public OCloseQueryRequest() {}
 
   @Override
   public void write(OChannelDataOutput network, OStorageRemoteSession session) throws IOException {
     network.writeString(queryId);
   }
 
-  public void read(OChannelDataInput channel, int protocolVersion, ORecordSerializer serializer) throws IOException {
+  public void read(OChannelDataInput channel, int protocolVersion, ORecordSerializer serializer)
+      throws IOException {
     this.queryId = channel.readString();
   }
 

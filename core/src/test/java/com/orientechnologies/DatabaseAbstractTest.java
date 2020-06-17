@@ -1,10 +1,9 @@
 package com.orientechnologies;
 
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import java.util.Locale;
 import org.junit.After;
 import org.junit.Before;
-
-import java.util.Locale;
 
 /**
  * @author Andrey Lomakin (a.lomakin-at-orientdb.com)
@@ -21,15 +20,13 @@ public abstract class DatabaseAbstractTest {
     } catch (IllegalArgumentException e) {
     }
 
-    if (result == null)
-      result = ENV.DEV;
+    if (result == null) result = ENV.DEV;
 
     return result;
   }
 
   public static String getStorageType() {
-    if (getEnvironment().equals(ENV.DEV))
-      return "memory";
+    if (getEnvironment().equals(ENV.DEV)) return "memory";
 
     return "plocal";
   }
@@ -55,6 +52,8 @@ public abstract class DatabaseAbstractTest {
   }
 
   public static enum ENV {
-    DEV, RELEASE, CI
+    DEV,
+    RELEASE,
+    CI
   }
 }

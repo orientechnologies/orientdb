@@ -1,5 +1,9 @@
 package com.tinkerpop.blueprints.impls.orient;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+
+
 import com.orientechnologies.orient.client.remote.OServerAdmin;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
@@ -8,36 +12,34 @@ import com.orientechnologies.orient.core.intent.OIntentMassiveInsert;
 import com.orientechnologies.orient.server.OServer;
 import com.tinkerpop.blueprints.Vertex;
 import com.tinkerpop.gremlin.java.GremlinPipeline;
-import org.junit.*;
-
-import javax.management.InstanceAlreadyExistsException;
-import javax.management.MBeanRegistrationException;
-import javax.management.MalformedObjectNameException;
-import javax.management.NotCompliantMBeanException;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.util.HashMap;
 import java.util.Map;
+import javax.management.InstanceAlreadyExistsException;
+import javax.management.MBeanRegistrationException;
+import javax.management.MalformedObjectNameException;
+import javax.management.NotCompliantMBeanException;
+import org.junit.After;
+import org.junit.AfterClass;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Test;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-
-/**
- * Created by tglman on 04/05/16.
- */
+/** Created by tglman on 04/05/16. */
 public class DirtyTrackingTreeRidBagRemoteTest {
 
   private OServer server;
-  private String  serverHome;
-  private String  oldOrientDBHome;
+  private String serverHome;
+  private String oldOrientDBHome;
 
   @Before
   public void before()
-      throws ClassNotFoundException, MalformedObjectNameException, InstanceAlreadyExistsException, NotCompliantMBeanException,
-      MBeanRegistrationException, InvocationTargetException, NoSuchMethodException, InstantiationException, IOException,
-      IllegalAccessException {
+      throws ClassNotFoundException, MalformedObjectNameException, InstanceAlreadyExistsException,
+          NotCompliantMBeanException, MBeanRegistrationException, InvocationTargetException,
+          NoSuchMethodException, InstantiationException, IOException, IllegalAccessException {
     final String buildDirectory = System.getProperty("buildDirectory", ".");
     serverHome = buildDirectory + "/" + DirtyTrackingTreeRidBagRemoteTest.class.getSimpleName();
 
@@ -50,11 +52,13 @@ public class DirtyTrackingTreeRidBagRemoteTest {
     System.setProperty("ORIENTDB_HOME", serverHome);
 
     server = new OServer(false);
-    server.startup(OrientGraphRemoteTest.class.getResourceAsStream("/embedded-server-config-single-run.xml"));
+    server.startup(
+        OrientGraphRemoteTest.class.getResourceAsStream("/embedded-server-config-single-run.xml"));
     server.activate();
     OServerAdmin admin = new OServerAdmin("remote:localhost:3064");
     admin.connect("root", "root");
-    admin.createDatabase(DirtyTrackingTreeRidBagRemoteTest.class.getSimpleName(), "graph", "memory");
+    admin.createDatabase(
+        DirtyTrackingTreeRidBagRemoteTest.class.getSimpleName(), "graph", "memory");
     admin.close();
   }
 
@@ -71,11 +75,15 @@ public class DirtyTrackingTreeRidBagRemoteTest {
 
   @Test
   public void test() {
-    OGlobalConfiguration.RID_BAG_EMBEDDED_TO_SBTREEBONSAI_THRESHOLD
-        .setValue(OGlobalConfiguration.RID_BAG_EMBEDDED_TO_SBTREEBONSAI_THRESHOLD.getDefValue());
-    final int max = OGlobalConfiguration.RID_BAG_EMBEDDED_TO_SBTREEBONSAI_THRESHOLD.getValueAsInteger() * 2;
-    OrientGraph graph = new OrientGraph("remote:localhost:3064/" + DirtyTrackingTreeRidBagRemoteTest.class.getSimpleName(), "root",
-        "root");
+    OGlobalConfiguration.RID_BAG_EMBEDDED_TO_SBTREEBONSAI_THRESHOLD.setValue(
+        OGlobalConfiguration.RID_BAG_EMBEDDED_TO_SBTREEBONSAI_THRESHOLD.getDefValue());
+    final int max =
+        OGlobalConfiguration.RID_BAG_EMBEDDED_TO_SBTREEBONSAI_THRESHOLD.getValueAsInteger() * 2;
+    OrientGraph graph =
+        new OrientGraph(
+            "remote:localhost:3064/" + DirtyTrackingTreeRidBagRemoteTest.class.getSimpleName(),
+            "root",
+            "root");
 
     try {
       graph.getRawGraph().declareIntent(new OIntentMassiveInsert());
@@ -87,8 +95,7 @@ public class DirtyTrackingTreeRidBagRemoteTest {
         v.setProperty("key", "foo" + i);
         graph.commit();
         vertices.put(v.getProperty("key"), v);
-        if (i == max / 2 + 1)
-          oneVertex = ((OrientVertex) v).getIdentity();
+        if (i == max / 2 + 1) oneVertex = ((OrientVertex) v).getIdentity();
       }
       graph.commit();
       // Add the edges
@@ -103,7 +110,11 @@ public class DirtyTrackingTreeRidBagRemoteTest {
           Vertex med2 = (Vertex) vertices.get(key);
           // ((OrientVertex)med2).getRecord().reload();
           OrientEdge eInteraction = graph.addEdge(null, med1, med2, "Edge");
-          assertNotNull(graph.getRawGraph().getTransaction().getRecordEntry(((OrientVertex) med2).getIdentity()));
+          assertNotNull(
+              graph
+                  .getRawGraph()
+                  .getTransaction()
+                  .getRecordEntry(((OrientVertex) med2).getIdentity()));
         }
         // COMMIT
         graph.commit();
@@ -121,13 +132,10 @@ public class DirtyTrackingTreeRidBagRemoteTest {
     if (f.isDirectory()) {
       final File[] files = f.listFiles();
       if (files != null) {
-        for (File c : files)
-          deleteDirectory(c);
+        for (File c : files) deleteDirectory(c);
       }
     }
 
-    if (f.exists() && !f.delete())
-      throw new FileNotFoundException("Failed to delete file: " + f);
+    if (f.exists() && !f.delete()) throw new FileNotFoundException("Failed to delete file: " + f);
   }
-
 }

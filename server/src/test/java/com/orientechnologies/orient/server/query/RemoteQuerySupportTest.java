@@ -1,5 +1,11 @@
 package com.orientechnologies.orient.server.query;
 
+import static com.orientechnologies.orient.core.config.OGlobalConfiguration.QUERY_REMOTE_RESULTSET_PAGE_SIZE;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
+
+
 import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
@@ -12,17 +18,11 @@ import com.orientechnologies.orient.core.exception.OSerializationException;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.ORecord;
-import com.orientechnologies.orient.core.record.OVertex;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import com.orientechnologies.orient.server.OClientConnection;
 import com.orientechnologies.orient.server.OServer;
-import org.junit.After;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
-
 import java.io.File;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -30,15 +30,12 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import org.junit.After;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Test;
 
-import static com.orientechnologies.orient.core.config.OGlobalConfiguration.QUERY_REMOTE_RESULTSET_PAGE_SIZE;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
-
-/**
- * Created by tglman on 03/01/17.
- */
+/** Created by tglman on 03/01/17. */
 public class RemoteQuerySupportTest {
 
   private static final String SERVER_DIRECTORY = "./target/query";
@@ -199,7 +196,8 @@ public class RemoteQuerySupportTest {
     OResult item = res.next();
     assertNotNull(item.getProperty("set"));
     assertEquals(((Set<OResult>) item.getProperty("set")).size(), 1);
-    assertEquals(((Set<OResult>) item.getProperty("set")).iterator().next().getProperty("one"), "value");
+    assertEquals(
+        ((Set<OResult>) item.getProperty("set")).iterator().next().getProperty("one"), "value");
   }
 
   @Test
@@ -217,7 +215,8 @@ public class RemoteQuerySupportTest {
     OResult item = res.next();
     assertNotNull(item.getProperty("map"));
     assertEquals(((Map<String, OResult>) item.getProperty("map")).size(), 1);
-    assertEquals(((Map<String, OResult>) item.getProperty("map")).get("key").getProperty("one"), "value");
+    assertEquals(
+        ((Map<String, OResult>) item.getProperty("map")).get("key").getProperty("one"), "value");
   }
 
   @Test
@@ -236,7 +235,6 @@ public class RemoteQuerySupportTest {
     session.commit();
 
     Assert.assertTrue(record.getIdentity().isPersistent());
-
   }
 
   @Test(expected = OSerializationException.class)
@@ -244,7 +242,7 @@ public class RemoteQuerySupportTest {
     try {
       session.query("select from Some where prop= ?", new Object()).close();
     } catch (RuntimeException e) {
-      //should be possible to run a query after without getting the server stuck
+      // should be possible to run a query after without getting the server stuck
       session.query("select from Some where prop= ?", new ORecordId(10, 10)).close();
       throw e;
     }
@@ -257,8 +255,8 @@ public class RemoteQuerySupportTest {
     session.command("create vertex testScriptWithRidbagsV set name = 'a'");
     session.command("create vertex testScriptWithRidbagsV set name = 'b'");
 
-    session.command("create edge testScriptWithRidbagsE from (select from testScriptWithRidbagsV where name = 'a') TO (select from testScriptWithRidbagsV where name = 'b');");
-
+    session.command(
+        "create edge testScriptWithRidbagsE from (select from testScriptWithRidbagsV where name = 'a') TO (select from testScriptWithRidbagsV where name = 'b');");
 
     String script = "";
     script += "BEGIN;";
@@ -284,5 +282,4 @@ public class RemoteQuerySupportTest {
     OFileUtils.deleteRecursively(new File(SERVER_DIRECTORY));
     Orient.instance().startup();
   }
-
 }

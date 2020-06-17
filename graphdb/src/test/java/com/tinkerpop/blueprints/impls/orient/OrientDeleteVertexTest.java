@@ -1,18 +1,18 @@
 package com.tinkerpop.blueprints.impls.orient;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNull;
+
+
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.tinkerpop.blueprints.Direction;
 import com.tinkerpop.blueprints.Edge;
+import java.util.Iterator;
 import org.junit.After;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
-
-import java.util.Iterator;
-
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNull;
 
 @RunWith(JUnit4.class)
 public class OrientDeleteVertexTest {
@@ -43,7 +43,7 @@ public class OrientDeleteVertexTest {
     long total = g.countVertices();
     g.getVertex(v2.getId()).remove();
 
-    assertEquals(total-1, g.countVertices());
+    assertEquals(total - 1, g.countVertices());
 
     // the v1 out_edgeType1 property should not contain a reference to
     // deleted node v2
@@ -51,9 +51,7 @@ public class OrientDeleteVertexTest {
     Iterable<OrientEdge> out_edge = g.getVertex(v1.getId()).getProperty("out_edgeType1");
 
     boolean contains = false;
-    for (OIdentifiable id : out_edge)
-      if (id.equals(v2.getId()))
-        contains = true;
+    for (OIdentifiable id : out_edge) if (id.equals(v2.getId())) contains = true;
 
     assertFalse(contains);
     g.shutdown();
@@ -73,9 +71,7 @@ public class OrientDeleteVertexTest {
     out_edge = g.getVertex(v1.getId()).getProperty("out_edgeType1");
 
     contains = false;
-    for (OIdentifiable id : out_edge)
-      if (id.equals(v2.getId()))
-        contains = true;
+    for (OIdentifiable id : out_edge) if (id.equals(v2.getId())) contains = true;
 
     assertFalse(contains);
     g.shutdown();
@@ -84,7 +80,9 @@ public class OrientDeleteVertexTest {
   int getEdgeCount(Object vid) {
     OrientGraph g = createGraph();
     int n = 0;
-    for (Iterator<Edge> it = g.getVertex(vid).getEdges(Direction.BOTH).iterator(); it.hasNext(); n++) {
+    for (Iterator<Edge> it = g.getVertex(vid).getEdges(Direction.BOTH).iterator();
+        it.hasNext();
+        n++) {
       it.next();
     }
     g.shutdown();
@@ -92,7 +90,8 @@ public class OrientDeleteVertexTest {
   }
 
   private OrientGraph createGraph() {
-    return (OrientGraph) new OrientGraph("memory:" + OrientDeleteVertexTest.class.getSimpleName()).setWarnOnForceClosingTx(false);
+    return (OrientGraph)
+        new OrientGraph("memory:" + OrientDeleteVertexTest.class.getSimpleName())
+            .setWarnOnForceClosingTx(false);
   }
-
 }

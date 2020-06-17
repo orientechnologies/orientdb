@@ -20,12 +20,10 @@
 
 package com.orientechnologies.orient.etl;
 
-/**
- * Immutable Object representing extracted item.
- */
+/** Immutable Object representing extracted item. */
 public class OETLExtractedItem {
-  public final long    num;
-  public final Object  payload;
+  public final long num;
+  public final Object payload;
   public final boolean finished;
 
   public OETLExtractedItem(final long iCurrent, final Object iPayload) {

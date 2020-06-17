@@ -1,7 +1,6 @@
 package com.orientechnologies.common.concur.lock;
 
 import com.orientechnologies.common.exception.OException;
-
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
@@ -13,10 +12,10 @@ import java.util.concurrent.locks.ReentrantLock;
 
 public class OSimpleLockManagerImpl<T> implements OSimpleLockManager<T> {
 
-  private final Lock              lock = new ReentrantLock();
-  private final Map<T, Condition> map  = new ConcurrentHashMap<>();
-  private final long              timeout;
-  private       Set<T>            resetted;
+  private final Lock lock = new ReentrantLock();
+  private final Map<T, Condition> map = new ConcurrentHashMap<>();
+  private final long timeout;
+  private Set<T> resetted;
 
   public OSimpleLockManagerImpl(long timeout) {
     this.timeout = timeout;
@@ -42,7 +41,8 @@ public class OSimpleLockManagerImpl<T> implements OSimpleLockManager<T> {
               c.await();
             } else {
               if (!c.await(timeout, TimeUnit.MILLISECONDS)) {
-                throw new OLockException(String.format("Time out acquire lock for resource: '%s' ", key));
+                throw new OLockException(
+                    String.format("Time out acquire lock for resource: '%s' ", key));
               }
             }
           }
@@ -55,7 +55,6 @@ public class OSimpleLockManagerImpl<T> implements OSimpleLockManager<T> {
     } finally {
       lock.unlock();
     }
-
   }
 
   @Override
@@ -80,10 +79,12 @@ public class OSimpleLockManagerImpl<T> implements OSimpleLockManager<T> {
     lock.lock();
     try {
       resetted = new HashSet<>(map.keySet());
-      map.entrySet().removeIf((c) -> {
-        c.getValue().signalAll();
-        return true;
-      });
+      map.entrySet()
+          .removeIf(
+              (c) -> {
+                c.getValue().signalAll();
+                return true;
+              });
     } finally {
       lock.unlock();
     }

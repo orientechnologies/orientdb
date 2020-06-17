@@ -49,7 +49,8 @@ public class OSBTreeNullBucketV1Test {
     OSBTreeNullBucketV1<String> bucket = new OSBTreeNullBucketV1<>(cacheEntry);
     bucket.init();
 
-    bucket.setValue(OStringSerializer.INSTANCE.serializeNativeAsWhole("test"), OStringSerializer.INSTANCE);
+    bucket.setValue(
+        OStringSerializer.INSTANCE.serializeNativeAsWhole("test"), OStringSerializer.INSTANCE);
     OSBTreeValue<String> treeValue = bucket.getValue(OStringSerializer.INSTANCE);
     Assert.assertNotNull(treeValue);
     Assert.assertEquals(treeValue.getValue(), "test");
@@ -73,7 +74,8 @@ public class OSBTreeNullBucketV1Test {
     OSBTreeNullBucketV1<String> bucket = new OSBTreeNullBucketV1<>(cacheEntry);
     bucket.init();
 
-    bucket.setValue(OStringSerializer.INSTANCE.serializeNativeAsWhole("test"), OStringSerializer.INSTANCE);
+    bucket.setValue(
+        OStringSerializer.INSTANCE.serializeNativeAsWhole("test"), OStringSerializer.INSTANCE);
     bucket.removeValue(OStringSerializer.INSTANCE);
 
     OSBTreeValue<String> treeValue = bucket.getValue(OStringSerializer.INSTANCE);
@@ -98,13 +100,15 @@ public class OSBTreeNullBucketV1Test {
     OSBTreeNullBucketV1<String> bucket = new OSBTreeNullBucketV1<>(cacheEntry);
     bucket.init();
 
-    bucket.setValue(OStringSerializer.INSTANCE.serializeNativeAsWhole("test"), OStringSerializer.INSTANCE);
+    bucket.setValue(
+        OStringSerializer.INSTANCE.serializeNativeAsWhole("test"), OStringSerializer.INSTANCE);
     bucket.removeValue(OStringSerializer.INSTANCE);
 
     OSBTreeValue<String> treeValue = bucket.getValue(OStringSerializer.INSTANCE);
     Assert.assertNull(treeValue);
 
-    bucket.setValue(OStringSerializer.INSTANCE.serializeNativeAsWhole("testOne"), OStringSerializer.INSTANCE);
+    bucket.setValue(
+        OStringSerializer.INSTANCE.serializeNativeAsWhole("testOne"), OStringSerializer.INSTANCE);
 
     treeValue = bucket.getValue(OStringSerializer.INSTANCE);
     Assert.assertNotNull(treeValue);
@@ -114,5 +118,4 @@ public class OSBTreeNullBucketV1Test {
     cachePointer.decrementReferrer();
     bufferPool.clear();
   }
-
 }

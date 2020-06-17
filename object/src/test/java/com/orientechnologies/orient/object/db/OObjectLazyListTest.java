@@ -1,22 +1,19 @@
 package com.orientechnologies.orient.object.db;
 
-import com.orientechnologies.orient.core.sql.parser.OInteger;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+
+
+import java.util.ArrayList;
+import java.util.List;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
-import java.util.ArrayList;
-import java.util.List;
-
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-
-/**
- * Created by Anders Heintz on 20/06/15.
- */
+/** Created by Anders Heintz on 20/06/15. */
 public class OObjectLazyListTest {
   private OObjectDatabaseTx databaseTx;
-  private int               count;
+  private int count;
 
   @Before
   public void setUp() throws Exception {
@@ -25,7 +22,6 @@ public class OObjectLazyListTest {
 
     databaseTx.getEntityManager().registerEntityClass(EntityObject.class);
     databaseTx.getEntityManager().registerEntityClass(EntityObjectWithList.class);
-
   }
 
   @After
@@ -50,10 +46,16 @@ public class OObjectLazyListTest {
     listObject = databaseTx.save(listObject);
 
     assert (listObject.getEntityObjects().get(0).getFieldValue().equals("NewObject"));
-    assert (listObject.getEntityObjects().get(listObject.getEntityObjects().size() - 1).getFieldValue().equals("NewObject2"));
-    listObject.getEntityObjects().stream().forEach((entityObject) -> {
-      assertNotNull(entityObject);
-    });
+    assert (listObject
+        .getEntityObjects()
+        .get(listObject.getEntityObjects().size() - 1)
+        .getFieldValue()
+        .equals("NewObject2"));
+    listObject.getEntityObjects().stream()
+        .forEach(
+            (entityObject) -> {
+              assertNotNull(entityObject);
+            });
   }
 
   @Test
@@ -71,10 +73,12 @@ public class OObjectLazyListTest {
 
     listObject = databaseTx.save(listObject);
     count = 0;
-    listObject.getEntityObjects().stream().forEach((entityObject) -> {
-      assertNotNull(entityObject);
-      count++;
-    });
+    listObject.getEntityObjects().stream()
+        .forEach(
+            (entityObject) -> {
+              assertNotNull(entityObject);
+              count++;
+            });
 
     assertEquals(listObject.getEntityObjects().size(), count);
   }
@@ -105,8 +109,7 @@ public class OObjectLazyListTest {
   private static class EntityObjectWithList {
     private List<EntityObject> entityObjects = new ArrayList<EntityObject>();
 
-    public EntityObjectWithList() {
-    }
+    public EntityObjectWithList() {}
 
     public List<EntityObject> getEntityObjects() {
       return entityObjects;
@@ -120,8 +123,7 @@ public class OObjectLazyListTest {
   private static class EntityObject {
     private String fieldValue = null;
 
-    public EntityObject() {
-    }
+    public EntityObject() {}
 
     public String getFieldValue() {
       return fieldValue;
@@ -131,5 +133,4 @@ public class OObjectLazyListTest {
       this.fieldValue = fieldValue;
     }
   }
-
 }

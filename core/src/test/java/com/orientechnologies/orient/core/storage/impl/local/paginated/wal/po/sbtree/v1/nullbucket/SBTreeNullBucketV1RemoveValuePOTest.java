@@ -9,11 +9,10 @@ import com.orientechnologies.orient.core.storage.cache.OCachePointer;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.PageOperationRecord;
 import com.orientechnologies.orient.core.storage.index.sbtree.local.v1.OSBTreeNullBucketV1;
 import com.orientechnologies.orient.core.storage.index.sbtree.local.v1.OSBTreeValue;
-import org.junit.Assert;
-import org.junit.Test;
-
 import java.nio.ByteBuffer;
 import java.util.List;
+import org.junit.Assert;
+import org.junit.Test;
 
 public class SBTreeNullBucketV1RemoveValuePOTest {
   @Test
@@ -28,12 +27,13 @@ public class SBTreeNullBucketV1RemoveValuePOTest {
       OSBTreeNullBucketV1<Byte> bucket = new OSBTreeNullBucketV1<>(entry);
       bucket.init();
 
-      bucket.setValue(new byte[] { 2 }, OByteSerializer.INSTANCE);
+      bucket.setValue(new byte[] {2}, OByteSerializer.INSTANCE);
 
       entry.clearPageOperations();
 
       final OPointer restoredPointer = byteBufferPool.acquireDirect(false);
-      final OCachePointer restoredCachePointer = new OCachePointer(restoredPointer, byteBufferPool, 0, 0);
+      final OCachePointer restoredCachePointer =
+          new OCachePointer(restoredPointer, byteBufferPool, 0, 0);
       final OCacheEntry restoredCacheEntry = new OCacheEntryImpl(0, 0, restoredCachePointer);
 
       final ByteBuffer originalBuffer = cachePointer.getBufferDuplicate();
@@ -51,7 +51,8 @@ public class SBTreeNullBucketV1RemoveValuePOTest {
 
       Assert.assertTrue(operations.get(0) instanceof SBTreeNullBucketV1RemoveValuePO);
 
-      final SBTreeNullBucketV1RemoveValuePO pageOperation = (SBTreeNullBucketV1RemoveValuePO) operations.get(0);
+      final SBTreeNullBucketV1RemoveValuePO pageOperation =
+          (SBTreeNullBucketV1RemoveValuePO) operations.get(0);
 
       OSBTreeNullBucketV1<Byte> restoredBucket = new OSBTreeNullBucketV1<>(restoredCacheEntry);
 
@@ -83,7 +84,7 @@ public class SBTreeNullBucketV1RemoveValuePOTest {
       OSBTreeNullBucketV1<Byte> bucket = new OSBTreeNullBucketV1<>(entry);
       bucket.init();
 
-      bucket.setValue(new byte[] { 2 }, OByteSerializer.INSTANCE);
+      bucket.setValue(new byte[] {2}, OByteSerializer.INSTANCE);
 
       entry.clearPageOperations();
 
@@ -94,7 +95,8 @@ public class SBTreeNullBucketV1RemoveValuePOTest {
 
       Assert.assertTrue(operations.get(0) instanceof SBTreeNullBucketV1RemoveValuePO);
 
-      final SBTreeNullBucketV1RemoveValuePO pageOperation = (SBTreeNullBucketV1RemoveValuePO) operations.get(0);
+      final SBTreeNullBucketV1RemoveValuePO pageOperation =
+          (SBTreeNullBucketV1RemoveValuePO) operations.get(0);
 
       final OSBTreeNullBucketV1<Byte> restoredBucket = new OSBTreeNullBucketV1<>(entry);
 
@@ -114,8 +116,8 @@ public class SBTreeNullBucketV1RemoveValuePOTest {
 
   @Test
   public void testSerialization() {
-    SBTreeNullBucketV1RemoveValuePO operation = new SBTreeNullBucketV1RemoveValuePO(new byte[] { 1, 2, 3 },
-        OByteSerializer.INSTANCE);
+    SBTreeNullBucketV1RemoveValuePO operation =
+        new SBTreeNullBucketV1RemoveValuePO(new byte[] {1, 2, 3}, OByteSerializer.INSTANCE);
 
     operation.setFileId(42);
     operation.setPageIndex(24);
@@ -134,7 +136,7 @@ public class SBTreeNullBucketV1RemoveValuePOTest {
     Assert.assertEquals(24, restoredOperation.getPageIndex());
     Assert.assertEquals(1, restoredOperation.getOperationUnitId());
 
-    Assert.assertArrayEquals(new byte[] { 1, 2, 3}, restoredOperation.getValue());
+    Assert.assertArrayEquals(new byte[] {1, 2, 3}, restoredOperation.getValue());
     Assert.assertSame(OByteSerializer.INSTANCE, restoredOperation.getValueSerializer());
   }
 }

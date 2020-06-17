@@ -36,5 +36,4 @@ public class OAbstractWriteCache {
     final int intId = extractFileId(fileId);
     return composeFileId(storageId, intId);
   }
-
 }

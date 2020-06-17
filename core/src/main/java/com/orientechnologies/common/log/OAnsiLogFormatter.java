@@ -20,12 +20,13 @@
 
 package com.orientechnologies.common.log;
 
+import static java.util.logging.Level.SEVERE;
+
+
 import java.time.LocalDateTime;
 import java.util.IllegalFormatException;
 import java.util.logging.Level;
 import java.util.logging.LogRecord;
-
-import static java.util.logging.Level.SEVERE;
 
 /**
  * Log formatter that uses ANSI code if they are available and enabled.
@@ -48,29 +49,21 @@ public class OAnsiLogFormatter extends OLogFormatter {
     buffer.append("}");
 
     if (OAnsiCode.isSupportsColors()) {
-      if (level == SEVERE)
-        buffer.append("$ANSI{red ");
-      else if (level == Level.WARNING)
-        buffer.append("$ANSI{yellow ");
-      else if (level == Level.INFO)
-        buffer.append("$ANSI{green ");
-      else if (level == Level.CONFIG)
-        buffer.append("$ANSI{green ");
-      else if (level == Level.CONFIG)
-        buffer.append("$ANSI{white ");
+      if (level == SEVERE) buffer.append("$ANSI{red ");
+      else if (level == Level.WARNING) buffer.append("$ANSI{yellow ");
+      else if (level == Level.INFO) buffer.append("$ANSI{green ");
+      else if (level == Level.CONFIG) buffer.append("$ANSI{green ");
+      else if (level == Level.CONFIG) buffer.append("$ANSI{white ");
     }
 
     buffer.append(String.format(" %-5.5s ", level.getName()));
 
-    if (OAnsiCode.isSupportsColors())
-      buffer.append("}");
+    if (OAnsiCode.isSupportsColors()) buffer.append("}");
 
     // FORMAT THE MESSAGE
     try {
-      if (additionalArgs != null)
-        buffer.append(String.format(message, additionalArgs));
-      else
-        buffer.append(message);
+      if (additionalArgs != null) buffer.append(String.format(message, additionalArgs));
+      else buffer.append(message);
     } catch (IllegalFormatException ignore) {
       buffer.append(message);
     }

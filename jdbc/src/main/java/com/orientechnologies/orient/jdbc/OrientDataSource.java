@@ -1,16 +1,17 @@
 /**
  * Copyright 2010-2016 OrientDB LTD (http://orientdb.com)
- * <p>
- * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- * <p>
- * http://www.apache.org/licenses/LICENSE-2.0
- * <p>
- * Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on an "AS IS"
- * BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the specific language
- * governing permissions and limitations under the License.
- * <p>
- * For more information: http://orientdb.com
+ *
+ * <p>Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file
+ * except in compliance with the License. You may obtain a copy of the License at
+ *
+ * <p>http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * <p>Unless required by applicable law or agreed to in writing, software distributed under the
+ * License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either
+ * express or implied. See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ * <p>For more information: http://orientdb.com
  */
 package com.orientechnologies.orient.jdbc;
 
@@ -21,14 +22,13 @@ import com.orientechnologies.orient.core.db.OrientDB;
 import com.orientechnologies.orient.core.db.OrientDBConfig;
 import com.orientechnologies.orient.core.util.OURLConnection;
 import com.orientechnologies.orient.core.util.OURLHelper;
-
-import javax.sql.DataSource;
 import java.io.PrintWriter;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.SQLFeatureNotSupportedException;
 import java.util.Properties;
 import java.util.logging.Logger;
+import javax.sql.DataSource;
 
 public class OrientDataSource implements DataSource {
 
@@ -41,14 +41,14 @@ public class OrientDataSource implements DataSource {
   }
 
   private PrintWriter logger;
-  private int         loginTimeout;
-  private String      dbUrl;
-  private String      username;
-  private String      password;
-  private Properties  info;
+  private int loginTimeout;
+  private String dbUrl;
+  private String username;
+  private String password;
+  private Properties info;
 
   private OrientDB orientDB;
-  private String   dbName;
+  private String dbName;
 
   private ODatabasePool pool;
 
@@ -72,7 +72,6 @@ public class OrientDataSource implements DataSource {
     this.username = username;
     this.password = password;
     this.info = info;
-
   }
 
   @Deprecated
@@ -93,7 +92,6 @@ public class OrientDataSource implements DataSource {
   @Override
   public void setLogWriter(PrintWriter out) throws SQLException {
     this.logger = out;
-
   }
 
   @Override
@@ -126,21 +124,34 @@ public class OrientDataSource implements DataSource {
       String orientDbUrl = dbUrl.replace("jdbc:orient:", "");
 
       OURLConnection connUrl = OURLHelper.parseNew(orientDbUrl);
-      OrientDBConfig settings = OrientDBConfig.builder()
-          .addConfig(OGlobalConfiguration.DB_POOL_MIN, Integer.valueOf(info.getProperty("db.pool.min", "1")))
-          .addConfig(OGlobalConfiguration.DB_POOL_MAX, Integer.valueOf(info.getProperty("db.pool.max", "10"))).build();
+      OrientDBConfig settings =
+          OrientDBConfig.builder()
+              .addConfig(
+                  OGlobalConfiguration.DB_POOL_MIN,
+                  Integer.valueOf(info.getProperty("db.pool.min", "1")))
+              .addConfig(
+                  OGlobalConfiguration.DB_POOL_MAX,
+                  Integer.valueOf(info.getProperty("db.pool.max", "10")))
+              .build();
 
-      orientDB = new OrientDB(connUrl.getType() + ":" + connUrl.getPath(), serverUsername, serverPassword, settings);
+      orientDB =
+          new OrientDB(
+              connUrl.getType() + ":" + connUrl.getPath(),
+              serverUsername,
+              serverPassword,
+              settings);
 
       if (!serverUsername.isEmpty() && !serverPassword.isEmpty())
-        orientDB.createIfNotExists(connUrl.getDbName(), connUrl.getDbType().orElse(ODatabaseType.MEMORY));
+        orientDB.createIfNotExists(
+            connUrl.getDbName(), connUrl.getDbType().orElse(ODatabaseType.MEMORY));
 
       pool = new ODatabasePool(orientDB, connUrl.getDbName(), username, password);
     } else if (pool == null) {
       pool = new ODatabasePool(orientDB, this.dbName, username, password);
     }
 
-    return new OrientJdbcConnection(pool.acquire(), orientDB, info == null ? new Properties() : info);
+    return new OrientJdbcConnection(
+        pool.acquire(), orientDB, info == null ? new Properties() : info);
   }
 
   public void setDbUrl(String dbUrl) {
@@ -149,12 +160,10 @@ public class OrientDataSource implements DataSource {
 
   public void setUsername(String username) {
     this.username = username;
-
   }
 
   public void setPassword(String password) {
     this.password = password;
-
   }
 
   public void setInfo(Properties info) {
@@ -169,7 +178,6 @@ public class OrientDataSource implements DataSource {
   @Override
   public void setLoginTimeout(int seconds) throws SQLException {
     this.loginTimeout = seconds;
-
   }
 
   @Override

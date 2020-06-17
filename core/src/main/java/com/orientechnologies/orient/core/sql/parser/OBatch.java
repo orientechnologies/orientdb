@@ -4,7 +4,6 @@ package com.orientechnologies.orient.core.sql.parser;
 
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
-
 import java.util.Map;
 
 public class OBatch extends SimpleNode {
@@ -54,23 +53,22 @@ public class OBatch extends SimpleNode {
     return result;
   }
 
-  @Override public boolean equals(Object o) {
-    if (this == o)
-      return true;
-    if (o == null || getClass() != o.getClass())
-      return false;
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
 
     OBatch oBatch = (OBatch) o;
 
-    if (num != null ? !num.equals(oBatch.num) : oBatch.num != null)
-      return false;
+    if (num != null ? !num.equals(oBatch.num) : oBatch.num != null) return false;
     if (inputParam != null ? !inputParam.equals(oBatch.inputParam) : oBatch.inputParam != null)
       return false;
 
     return true;
   }
 
-  @Override public int hashCode() {
+  @Override
+  public int hashCode() {
     int result = num != null ? num.hashCode() : 0;
     result = 31 * result + (inputParam != null ? inputParam.hashCode() : 0);
     return result;

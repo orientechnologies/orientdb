@@ -25,14 +25,13 @@ import com.orientechnologies.orient.core.serialization.serializer.record.ORecord
 import com.orientechnologies.orient.core.storage.ridbag.sbtree.OBonsaiCollectionPointer;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelDataInput;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelDataOutput;
-
 import java.io.IOException;
 import java.util.Map;
 import java.util.UUID;
 
 public class OUpdateRecordResponse implements OBinaryResponse {
 
-  private int                                 version;
+  private int version;
   private Map<UUID, OBonsaiCollectionPointer> changes;
 
   public OUpdateRecordResponse(int version, Map<UUID, OBonsaiCollectionPointer> changes) {
@@ -40,13 +39,12 @@ public class OUpdateRecordResponse implements OBinaryResponse {
     this.changes = changes;
   }
 
-  public OUpdateRecordResponse() {
-  }
+  public OUpdateRecordResponse() {}
 
-  public void write(OChannelDataOutput channel, int protocolVersion, ORecordSerializer serializer) throws IOException {
+  public void write(OChannelDataOutput channel, int protocolVersion, ORecordSerializer serializer)
+      throws IOException {
     channel.writeVersion(version);
-    if (protocolVersion >= 20)
-      OMessageHelper.writeCollectionChanges(channel, changes);
+    if (protocolVersion >= 20) OMessageHelper.writeCollectionChanges(channel, changes);
   }
 
   @Override
@@ -62,5 +60,4 @@ public class OUpdateRecordResponse implements OBinaryResponse {
   public Map<UUID, OBonsaiCollectionPointer> getChanges() {
     return changes;
   }
-
 }

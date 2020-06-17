@@ -1,22 +1,22 @@
 /*
-  *
-  *  *  Copyright 2010-2016 OrientDB LTD (http://orientdb.com)
-  *  *
-  *  *  Licensed under the Apache License, Version 2.0 (the "License");
-  *  *  you may not use this file except in compliance with the License.
-  *  *  You may obtain a copy of the License at
-  *  *
-  *  *       http://www.apache.org/licenses/LICENSE-2.0
-  *  *
-  *  *  Unless required by applicable law or agreed to in writing, software
-  *  *  distributed under the License is distributed on an "AS IS" BASIS,
-  *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-  *  *  See the License for the specific language governing permissions and
-  *  *  limitations under the License.
-  *  *
-  *  * For more information: http://orientdb.com
-  *
-  */
+ *
+ *  *  Copyright 2010-2016 OrientDB LTD (http://orientdb.com)
+ *  *
+ *  *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  *  you may not use this file except in compliance with the License.
+ *  *  You may obtain a copy of the License at
+ *  *
+ *  *       http://www.apache.org/licenses/LICENSE-2.0
+ *  *
+ *  *  Unless required by applicable law or agreed to in writing, software
+ *  *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  *  See the License for the specific language governing permissions and
+ *  *  limitations under the License.
+ *  *
+ *  * For more information: http://orientdb.com
+ *
+ */
 
 package com.orientechnologies.orient.object.jpa.parsing;
 
@@ -24,13 +24,12 @@ import static com.orientechnologies.orient.object.jpa.parsing.PersistenceXml.ATT
 import static com.orientechnologies.orient.object.jpa.parsing.PersistenceXml.TAG_PERSISTENCE;
 import static javax.xml.XMLConstants.W3C_XML_SCHEMA_NS_URI;
 
+
 import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
 import java.util.Collection;
-import java.util.EnumSet;
-
 import javax.persistence.PersistenceException;
 import javax.persistence.spi.PersistenceUnitInfo;
 import javax.xml.parsers.ParserConfigurationException;
@@ -39,46 +38,42 @@ import javax.xml.parsers.SAXParserFactory;
 import javax.xml.transform.stream.StreamSource;
 import javax.xml.validation.Schema;
 import javax.xml.validation.SchemaFactory;
-
 import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
 import org.xml.sax.helpers.DefaultHandler;
 
-/**
- * Simple handler for persistence.xml files.
- */
+/** Simple handler for persistence.xml files. */
 public final class PersistenceXmlUtil {
-  /**
-   * URI for the JPA persistence namespace
-   */
-  public static final String            PERSISTENCE_NS_URI        = "http://java.sun.com/xml/ns/persistence";
+  /** URI for the JPA persistence namespace */
+  public static final String PERSISTENCE_NS_URI = "http://java.sun.com/xml/ns/persistence";
 
-  private static final SchemaFactory    schemaFactory             = SchemaFactory.newInstance(W3C_XML_SCHEMA_NS_URI);
-  private static final SAXParserFactory parserFactory             = SAXParserFactory.newInstance();
+  private static final SchemaFactory schemaFactory =
+      SchemaFactory.newInstance(W3C_XML_SCHEMA_NS_URI);
+  private static final SAXParserFactory parserFactory = SAXParserFactory.newInstance();
 
   static {
     parserFactory.setNamespaceAware(true);
   }
 
   /** The persistence xml root */
-  public static final String            PERSISTENCE_XML_ROOT      = "META-INF/";
+  public static final String PERSISTENCE_XML_ROOT = "META-INF/";
 
-  public static final String            PERSISTENCE_XML_BASE_NAME = "persistence.xml";
+  public static final String PERSISTENCE_XML_BASE_NAME = "persistence.xml";
   /** The persistence XSD location */
-  public static final String            PERSISTENCE_XSD_DIR       = PERSISTENCE_XML_ROOT + "persistence/";
+  public static final String PERSISTENCE_XSD_DIR = PERSISTENCE_XML_ROOT + "persistence/";
   /** The persistence XML location */
-  public static final String            PERSISTENCE_XML           = PERSISTENCE_XML_ROOT + PERSISTENCE_XML_BASE_NAME;
+  public static final String PERSISTENCE_XML = PERSISTENCE_XML_ROOT + PERSISTENCE_XML_BASE_NAME;
 
-  private PersistenceXmlUtil() {
-  }
+  private PersistenceXmlUtil() {}
 
   /**
    * Parse the persistence.xml files referenced by the URLs in the collection
-   * 
+   *
    * @param persistenceXml
    * @return A collection of parsed persistence units, or null if nothing has been found
    */
-  public static PersistenceUnitInfo findPersistenceUnit(String unitName, Collection<? extends PersistenceUnitInfo> units) {
+  public static PersistenceUnitInfo findPersistenceUnit(
+      String unitName, Collection<? extends PersistenceUnitInfo> units) {
     if (units == null || unitName == null) {
       return null;
     }
@@ -93,7 +88,7 @@ public final class PersistenceXmlUtil {
 
   /**
    * Parse the persistence.xml files referenced by the URLs in the collection
-   * 
+   *
    * @param persistenceXml
    * @return A collection of parsed persistence units.
    * @throws IOException
@@ -139,32 +134,34 @@ public final class PersistenceXmlUtil {
 
   public static Schema getSchema(JPAVersion version) throws SAXException {
     String schemaPath = PERSISTENCE_XSD_DIR + version.getFilename();
-    InputStream inputStream = PersistenceXmlUtil.class.getClassLoader().getResourceAsStream(schemaPath);
+    InputStream inputStream =
+        PersistenceXmlUtil.class.getClassLoader().getResourceAsStream(schemaPath);
     return schemaFactory.newSchema(new StreamSource(inputStream));
   }
 
-  public static JPAVersion getSchemaVersion(InputStream is) throws ParserConfigurationException, SAXException, IOException {
+  public static JPAVersion getSchemaVersion(InputStream is)
+      throws ParserConfigurationException, SAXException, IOException {
     SchemaLocatingHandler schemaHandler = parse(is, new SchemaLocatingHandler());
     return JPAVersion.parse(schemaHandler.getVersion());
   }
 
-  public static Collection<? extends PersistenceUnitInfo> getPersistenceUnits(InputStream is, URL xmlRoot, JPAVersion version)
+  public static Collection<? extends PersistenceUnitInfo> getPersistenceUnits(
+      InputStream is, URL xmlRoot, JPAVersion version)
       throws ParserConfigurationException, SAXException, IOException {
     JPAHandler handler = new JPAHandler(xmlRoot, version);
     return parse(is, handler).getPersistenceUnits();
   }
 
   /**
-   * @param is
-   *          - xml file to be validated
+   * @param is - xml file to be validated
    * @param handler
    * @return handler for chained calls
    * @throws ParserConfigurationException
    * @throws SAXException
    * @throws IOException
    */
-  protected static <T extends DefaultHandler> T parse(InputStream is, T handler) throws ParserConfigurationException, SAXException,
-      IOException {
+  protected static <T extends DefaultHandler> T parse(InputStream is, T handler)
+      throws ParserConfigurationException, SAXException, IOException {
     try {
       SAXParser parser = parserFactory.newSAXParser();
       parser.parse(is, handler);
@@ -182,11 +179,11 @@ public final class PersistenceXmlUtil {
    * @return XML Schema Version or null
    * @throws SAXException
    */
-  public static String parseSchemaVersion(String uri, PersistenceXml element, Attributes attributes) throws SAXException {
+  public static String parseSchemaVersion(String uri, PersistenceXml element, Attributes attributes)
+      throws SAXException {
     if (PERSISTENCE_NS_URI.equals(uri) && TAG_PERSISTENCE == element) {
       return attributes.getValue(ATTR_SCHEMA_VERSION.toString());
     }
     return null;
   }
 }
-

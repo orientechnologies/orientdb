@@ -24,17 +24,15 @@ import com.orientechnologies.orient.core.metadata.schema.OType;
 
 /**
  * Compares types at binary level: super fast, using of literals as much as it can.
- * 
+ *
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
  */
 public interface OBinaryComparator {
   /**
    * Compares if two binary values are the same.
    *
-   * @param iFirstValue
-   *          First value to compare
-   * @param iSecondValue
-   *          Second value to compare
+   * @param iFirstValue First value to compare
+   * @param iSecondValue Second value to compare
    * @return true if they match, otherwise false
    */
   boolean isEqual(OBinaryField iFirstValue, OBinaryField iSecondValue);
@@ -42,17 +40,15 @@ public interface OBinaryComparator {
   /**
    * Compares two binary values executing also conversion between types.
    *
-   * @param iValue1
-   *          First value to compare
-   * @param iValue2
-   *          Second value to compare
+   * @param iValue1 First value to compare
+   * @param iValue2 Second value to compare
    * @return 0 if they matches, >0 if first value is major than second, <0 in case is minor
    */
   int compare(OBinaryField iValue1, OBinaryField iValue2);
 
   /**
    * Returns true if the type is binary comparable
-   * 
+   *
    * @param iType
    * @return
    */

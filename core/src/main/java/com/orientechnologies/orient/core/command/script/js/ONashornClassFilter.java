@@ -13,6 +13,10 @@ public class ONashornClassFilter implements ClassFilter {
 
   @Override
   public boolean exposeToScripts(String s) {
-    return factory.getPackages().stream().map(e -> s.matches(e)).filter(f -> f).findFirst().isPresent();
+    return factory.getPackages().stream()
+        .map(e -> s.matches(e))
+        .filter(f -> f)
+        .findFirst()
+        .isPresent();
   }
 }

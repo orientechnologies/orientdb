@@ -13,7 +13,7 @@
  *  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  *  * See the License for the specific language governing permissions and
  *  * limitations under the License.
- *  
+ *
  */
 
 package com.orientechnologies.orient.etl.extractor;
@@ -25,9 +25,13 @@ import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.etl.OETLExtractedItem;
-
 import java.io.Reader;
-import java.sql.*;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
+import java.sql.Types;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.NoSuchElementException;
@@ -39,16 +43,16 @@ public class OETLJDBCExtractor extends OETLAbstractExtractor {
   protected String query;
   protected String queryCount;
 
-  protected String     driverClass;
+  protected String driverClass;
   protected Connection conn;
-  protected Statement  stm;
-  protected ResultSet  rs;
+  protected Statement stm;
+  protected ResultSet rs;
   protected boolean didNext = false;
   protected boolean hasNext = false;
   protected int rsColumns;
   protected List<String> columnNames = null;
-  protected List<OType>  columnTypes = null;
-  protected int          fetchSize   = 10000;
+  protected List<OType> columnTypes = null;
+  protected int fetchSize = 10000;
 
   @Override
   public void configure(ODocument iConfiguration, OCommandContext iContext) {
@@ -66,15 +70,22 @@ public class OETLJDBCExtractor extends OETLAbstractExtractor {
     try {
       Class.forName(driverClass).newInstance();
     } catch (Exception e) {
-      throw OException.wrapException(new OConfigurationException("[JDBC extractor] JDBC Driver " + driverClass + " not found"), e);
+      throw OException.wrapException(
+          new OConfigurationException("[JDBC extractor] JDBC Driver " + driverClass + " not found"),
+          e);
     }
 
     try {
       conn = DriverManager.getConnection(url, userName, userPassword);
     } catch (Exception e) {
 
-      throw OException.wrapException(new OConfigurationException(
-              "[JDBC extractor] error on connecting to JDBC url '" + url + "' using user '" + userName + "' and the password provided"),
+      throw OException.wrapException(
+          new OConfigurationException(
+              "[JDBC extractor] error on connecting to JDBC url '"
+                  + url
+                  + "' using user '"
+                  + userName
+                  + "' and the password provided"),
           e);
     }
   }
@@ -88,8 +99,7 @@ public class OETLJDBCExtractor extends OETLAbstractExtractor {
         // GET THE TOTAL COUNTER
         final ResultSet countRs = stm.executeQuery(query);
         try {
-          if (countRs != null && countRs.next())
-            total = countRs.getInt(1);
+          if (countRs != null && countRs.next()) total = countRs.getInt(1);
         } finally {
           if (countRs != null)
             try {
@@ -111,53 +121,54 @@ public class OETLJDBCExtractor extends OETLAbstractExtractor {
         OType type = OType.ANY;
         final int sqlType = rs.getMetaData().getColumnType(i);
         switch (sqlType) {
-        case Types.BIT:
-        case Types.BOOLEAN:
-          type = OType.BOOLEAN;
-          break;
-        case Types.SMALLINT:
-          type = OType.SHORT;
-          break;
-        case Types.INTEGER:
-          type = OType.INTEGER;
-          break;
-        case Types.FLOAT:
-          type = OType.FLOAT;
-          break;
-        case Types.DOUBLE:
-          type = OType.DOUBLE;
-          break;
-        case Types.BIGINT:
-          type = OType.LONG;
-          break;
-        case Types.DECIMAL:
-          type = OType.DECIMAL;
-          break;
-        case Types.DATE:
-          type = OType.DATE;
-          break;
-        case Types.TIMESTAMP:
-          type = OType.DATETIME;
-          break;
-        case Types.VARCHAR:
-        case Types.LONGNVARCHAR:
-        case Types.LONGVARCHAR:
-          type = OType.STRING;
-          break;
-        case Types.BINARY:
-        case Types.BLOB:
-          type = OType.BINARY;
-          break;
-        case Types.CHAR:
-        case Types.TINYINT:
-          type = OType.BYTE;
-          break;
+          case Types.BIT:
+          case Types.BOOLEAN:
+            type = OType.BOOLEAN;
+            break;
+          case Types.SMALLINT:
+            type = OType.SHORT;
+            break;
+          case Types.INTEGER:
+            type = OType.INTEGER;
+            break;
+          case Types.FLOAT:
+            type = OType.FLOAT;
+            break;
+          case Types.DOUBLE:
+            type = OType.DOUBLE;
+            break;
+          case Types.BIGINT:
+            type = OType.LONG;
+            break;
+          case Types.DECIMAL:
+            type = OType.DECIMAL;
+            break;
+          case Types.DATE:
+            type = OType.DATE;
+            break;
+          case Types.TIMESTAMP:
+            type = OType.DATETIME;
+            break;
+          case Types.VARCHAR:
+          case Types.LONGNVARCHAR:
+          case Types.LONGVARCHAR:
+            type = OType.STRING;
+            break;
+          case Types.BINARY:
+          case Types.BLOB:
+            type = OType.BINARY;
+            break;
+          case Types.CHAR:
+          case Types.TINYINT:
+            type = OType.BYTE;
+            break;
         }
         columnTypes.add(type);
       }
 
     } catch (SQLException e) {
-      throw new OETLExtractorException("[JDBC extractor] error on executing query '" + query + "'", e);
+      throw new OETLExtractorException(
+          "[JDBC extractor] error on executing query '" + query + "'", e);
     }
   }
 
@@ -181,8 +192,7 @@ public class OETLJDBCExtractor extends OETLAbstractExtractor {
   }
 
   @Override
-  public void extract(final Reader iReader) {
-  }
+  public void extract(final Reader iReader) {}
 
   @Override
   public String getUnit() {
@@ -200,7 +210,11 @@ public class OETLJDBCExtractor extends OETLAbstractExtractor {
       return hasNext;
     } catch (SQLException e) {
       throw new OETLExtractorException(
-          "[JDBC extractor] error on moving forward in resultset of query '" + query + "'. Previous position was " + current, e);
+          "[JDBC extractor] error on moving forward in resultset of query '"
+              + query
+              + "'. Previous position was "
+              + current,
+          e);
     }
   }
 
@@ -224,19 +238,26 @@ public class OETLJDBCExtractor extends OETLAbstractExtractor {
 
     } catch (SQLException e) {
       throw new OETLExtractorException(
-          "[JDBC extractor] error on moving forward in resultset of query '" + query + "'. Previous position was " + current, e);
+          "[JDBC extractor] error on moving forward in resultset of query '"
+              + query
+              + "'. Previous position was "
+              + current,
+          e);
     }
   }
 
   @Override
   public ODocument getConfiguration() {
-    return new ODocument().fromJSON("{parameters:[{driver:{optional:false,description:'JDBC Driver class'}},"
-        + "{url:{optional:false,description:'Connection URL'}}," + "{userName:{optional:false,description:'User name'}},"
-        + "{userPassword:{optional:false,description:'User password'}},"
-        + "{fetchSize:{optional:true,description:'JDBC stream fetch size. Default is 10000'}},"
-        + "{query:{optional:false,description:'Query that extract records'}},"
-        + "{queryCount:{optional:true,description:'Query that returns the count to have a correct progress status'}}],"
-        + "output:'ODocument'}");
+    return new ODocument()
+        .fromJSON(
+            "{parameters:[{driver:{optional:false,description:'JDBC Driver class'}},"
+                + "{url:{optional:false,description:'Connection URL'}},"
+                + "{userName:{optional:false,description:'User name'}},"
+                + "{userPassword:{optional:false,description:'User password'}},"
+                + "{fetchSize:{optional:true,description:'JDBC stream fetch size. Default is 10000'}},"
+                + "{query:{optional:false,description:'Query that extract records'}},"
+                + "{queryCount:{optional:true,description:'Query that returns the count to have a correct progress status'}}],"
+                + "output:'ODocument'}");
   }
 
   @Override

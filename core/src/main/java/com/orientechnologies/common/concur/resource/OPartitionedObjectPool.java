@@ -2,7 +2,6 @@ package com.orientechnologies.common.concur.resource;
 
 import com.orientechnologies.orient.core.OOrientListenerAbstract;
 import com.orientechnologies.orient.core.Orient;
-
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -11,7 +10,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 /**
  * This is internal API, do not use it.
  *
- * @author Andrey Lomakin (a.lomakin-at-orientdb.com) <a href="mailto:lomakin.andrey@gmail.com">Andrey Lomakin</a>
+ * @author Andrey Lomakin (a.lomakin-at-orientdb.com) <a
+ *     href="mailto:lomakin.andrey@gmail.com">Andrey Lomakin</a>
  * @since 15/12/14
  */
 public class OPartitionedObjectPool<T> extends OOrientListenerAbstract {
@@ -28,7 +28,8 @@ public class OPartitionedObjectPool<T> extends OOrientListenerAbstract {
   private volatile PoolPartition[] partitions;
   private volatile boolean closed = false;
 
-  public OPartitionedObjectPool(final ObjectFactory factory, final int maxSize, final int maxPartitions) {
+  public OPartitionedObjectPool(
+      final ObjectFactory factory, final int maxSize, final int maxPartitions) {
     this.factory = factory;
     this.maxSize = maxSize;
     this.maxPartitions = maxPartitions;
@@ -92,7 +93,8 @@ public class OPartitionedObjectPool<T> extends OOrientListenerAbstract {
             continue;
           } else {
             if (partition.currentSize.get() >= maxSize)
-              throw new IllegalStateException("You have reached maximum pool size for given partition");
+              throw new IllegalStateException(
+                  "You have reached maximum pool size for given partition");
 
             object = factory.create();
 
@@ -128,14 +130,12 @@ public class OPartitionedObjectPool<T> extends OOrientListenerAbstract {
   }
 
   public void close() {
-    if (closed)
-      return;
+    if (closed) return;
 
     closed = true;
 
     for (PoolPartition partition : partitions) {
-      if (partition == null)
-        continue;
+      if (partition == null) continue;
 
       final Queue<T> queue = partition.queue;
 
@@ -143,7 +143,6 @@ public class OPartitionedObjectPool<T> extends OOrientListenerAbstract {
         final T object = queue.poll();
         factory.close(object);
       }
-
     }
 
     threadHashCode = null;
@@ -157,8 +156,7 @@ public class OPartitionedObjectPool<T> extends OOrientListenerAbstract {
 
   @Override
   public void onStartup() {
-    if (threadHashCode == null)
-      threadHashCode = new ThreadHashCodeThreadLocal();
+    if (threadHashCode == null) threadHashCode = new ThreadHashCodeThreadLocal();
   }
 
   public int getAvailableObjects() {
@@ -172,8 +170,7 @@ public class OPartitionedObjectPool<T> extends OOrientListenerAbstract {
       }
     }
 
-    if (result < 0)
-      return 0;
+    if (result < 0) return 0;
 
     return result;
   }
@@ -204,8 +201,7 @@ public class OPartitionedObjectPool<T> extends OOrientListenerAbstract {
   }
 
   private void checkForClose() {
-    if (closed)
-      throw new IllegalStateException("Pool is closed");
+    if (closed) throw new IllegalStateException("Pool is closed");
   }
 
   private static int nextHashCode() {

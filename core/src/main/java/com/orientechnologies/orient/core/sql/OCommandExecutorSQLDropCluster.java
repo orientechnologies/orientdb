@@ -27,7 +27,6 @@ import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
-
 import java.util.Map;
 
 /**
@@ -36,11 +35,12 @@ import java.util.Map;
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
  */
 @SuppressWarnings("unchecked")
-public class OCommandExecutorSQLDropCluster extends OCommandExecutorSQLAbstract implements OCommandDistributedReplicateRequest {
-  public static final String KEYWORD_DROP    = "DROP";
+public class OCommandExecutorSQLDropCluster extends OCommandExecutorSQLAbstract
+    implements OCommandDistributedReplicateRequest {
+  public static final String KEYWORD_DROP = "DROP";
   public static final String KEYWORD_CLUSTER = "CLUSTER";
 
-  private String             clusterName;
+  private String clusterName;
 
   public OCommandExecutorSQLDropCluster parse(final OCommandRequest iRequest) {
     final OCommandRequestText textRequest = (OCommandRequestText) iRequest;
@@ -58,19 +58,23 @@ public class OCommandExecutorSQLDropCluster extends OCommandExecutorSQLAbstract 
       int oldPos = 0;
       int pos = nextWord(parserText, parserTextUpperCase, oldPos, word, true);
       if (pos == -1 || !word.toString().equals(KEYWORD_DROP))
-        throw new OCommandSQLParsingException("Keyword " + KEYWORD_DROP + " not found. Use " + getSyntax(), parserText, oldPos);
+        throw new OCommandSQLParsingException(
+            "Keyword " + KEYWORD_DROP + " not found. Use " + getSyntax(), parserText, oldPos);
 
       pos = nextWord(parserText, parserTextUpperCase, pos, word, true);
       if (pos == -1 || !word.toString().equals(KEYWORD_CLUSTER))
-        throw new OCommandSQLParsingException("Keyword " + KEYWORD_CLUSTER + " not found. Use " + getSyntax(), parserText, oldPos);
+        throw new OCommandSQLParsingException(
+            "Keyword " + KEYWORD_CLUSTER + " not found. Use " + getSyntax(), parserText, oldPos);
 
       pos = nextWord(parserText, parserTextUpperCase, pos, word, false);
       if (pos == -1)
-        throw new OCommandSQLParsingException("Expected <cluster>. Use " + getSyntax(), parserText, pos);
+        throw new OCommandSQLParsingException(
+            "Expected <cluster>. Use " + getSyntax(), parserText, pos);
 
       clusterName = word.toString();
       if (clusterName == null)
-        throw new OCommandSQLParsingException("Cluster is null. Use " + getSyntax(), parserText, pos);
+        throw new OCommandSQLParsingException(
+            "Cluster is null. Use " + getSyntax(), parserText, pos);
 
       clusterName = decodeClassName(clusterName);
     } finally {
@@ -80,12 +84,11 @@ public class OCommandExecutorSQLDropCluster extends OCommandExecutorSQLAbstract 
     return this;
   }
 
-  /**
-   * Execute the DROP CLUSTER.
-   */
+  /** Execute the DROP CLUSTER. */
   public Object execute(final Map<Object, Object> iArgs) {
     if (clusterName == null)
-      throw new OCommandExecutionException("Cannot execute the command because it has not been parsed yet");
+      throw new OCommandExecutionException(
+          "Cannot execute the command because it has not been parsed yet");
 
     final ODatabaseDocumentInternal database = getDatabase();
 
@@ -111,7 +114,9 @@ public class OCommandExecutorSQLDropCluster extends OCommandExecutorSQLAbstract 
     if (clusterName != null && getDatabase().existsCluster(clusterName))
       return 10 * getDatabase().countClusterElements(clusterName);
 
-    return getDatabase().getConfiguration().getValueAsLong(OGlobalConfiguration.DISTRIBUTED_COMMAND_LONG_TASK_SYNCH_TIMEOUT);
+    return getDatabase()
+        .getConfiguration()
+        .getValueAsLong(OGlobalConfiguration.DISTRIBUTED_COMMAND_LONG_TASK_SYNCH_TIMEOUT);
   }
 
   @Override
@@ -123,8 +128,7 @@ public class OCommandExecutorSQLDropCluster extends OCommandExecutorSQLAbstract 
     final ODatabaseDocument database = getDatabase();
     for (OClass iClass : database.getMetadata().getSchema().getClasses()) {
       for (int i : iClass.getClusterIds()) {
-        if (i == clusterId)
-          return false;
+        if (i == clusterId) return false;
       }
     }
     return true;

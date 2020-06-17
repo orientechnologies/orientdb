@@ -26,32 +26,31 @@ import com.orientechnologies.orient.core.serialization.serializer.record.ORecord
 import com.orientechnologies.orient.core.storage.ridbag.sbtree.OBonsaiCollectionPointer;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelDataInput;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelDataOutput;
-
 import java.io.IOException;
 import java.util.Map;
 import java.util.UUID;
 
 public class OCreateRecordResponse implements OBinaryResponse {
 
-  private ORecordId                           identity;
-  private int                                 version;
+  private ORecordId identity;
+  private int version;
   private Map<UUID, OBonsaiCollectionPointer> changedIds;
 
-  public OCreateRecordResponse() {
-  }
+  public OCreateRecordResponse() {}
 
-  public OCreateRecordResponse(ORecordId identity, int version, Map<UUID, OBonsaiCollectionPointer> changedIds) {
+  public OCreateRecordResponse(
+      ORecordId identity, int version, Map<UUID, OBonsaiCollectionPointer> changedIds) {
     this.identity = identity;
     this.version = version;
     this.changedIds = changedIds;
   }
 
-  public void write(OChannelDataOutput channel, int protocolVersion, ORecordSerializer serializer) throws IOException {
+  public void write(OChannelDataOutput channel, int protocolVersion, ORecordSerializer serializer)
+      throws IOException {
     channel.writeShort((short) this.identity.getClusterId());
     channel.writeLong(this.identity.getClusterPosition());
     channel.writeInt(version);
-    if (protocolVersion >= 20)
-      OMessageHelper.writeCollectionChanges(channel, changedIds);
+    if (protocolVersion >= 20) OMessageHelper.writeCollectionChanges(channel, changedIds);
   }
 
   @Override
@@ -74,5 +73,4 @@ public class OCreateRecordResponse implements OBinaryResponse {
   public Map<UUID, OBonsaiCollectionPointer> getChangedIds() {
     return changedIds;
   }
-
 }

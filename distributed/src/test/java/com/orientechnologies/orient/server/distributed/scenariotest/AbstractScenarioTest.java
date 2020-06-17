@@ -16,9 +16,13 @@
 
 package com.orientechnologies.orient.server.distributed.scenariotest;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
+
+
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.util.OCallable;
-//import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORecordId;
@@ -27,11 +31,22 @@ import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.orientechnologies.orient.server.distributed.AbstractServerClusterInsertTest;
 import com.orientechnologies.orient.server.distributed.ServerRun;
 import com.orientechnologies.orient.server.distributed.impl.ODistributedStorageEventListener;
-
-import java.util.*;
-import java.util.concurrent.*;
-
-import static org.junit.Assert.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Date;
+import java.util.LinkedHashMap;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.Timer;
+import java.util.TimerTask;
+import java.util.concurrent.Callable;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 
 /**
  * It represents an abstract scenario test.
@@ -39,26 +54,28 @@ import static org.junit.Assert.*;
  * @author Gabriele Ponzi
  * @email <gabriele.ponzi--at--gmail.com>
  */
-
 public abstract class AbstractScenarioTest extends AbstractServerClusterInsertTest {
 
-  protected final static int       SERVERS          = 3;
-  protected final static ODocument MISSING_DOCUMENT = new ODocument();
+  protected static final int SERVERS = 3;
+  protected static final ODocument MISSING_DOCUMENT = new ODocument();
 
-  // FIXME: these should be parameters read from configuration file (or, if missing, defaulted to some values)
-  private final   long PROPAGATION_DOCUMENT_RETRIEVE_TIMEOUT = 15000;
-  protected final long DOCUMENT_WRITE_TIMEOUT                = 10000;
+  // FIXME: these should be parameters read from configuration file (or, if missing, defaulted to
+  // some values)
+  private final long PROPAGATION_DOCUMENT_RETRIEVE_TIMEOUT = 15000;
+  protected final long DOCUMENT_WRITE_TIMEOUT = 10000;
 
   protected ODocument loadRecord(ODatabaseDocument database, int serverId, int threadId, int i) {
     final String uniqueId = serverId + "-" + threadId + "-" + i;
     database.activateOnCurrentThread();
-    List<ODocument> result = database
-        .query(new OSQLSynchQuery<ODocument>("select from Person where name = 'Billy" + uniqueId + "'"));
+    List<ODocument> result =
+        database.query(
+            new OSQLSynchQuery<ODocument>(
+                "select from Person where name = 'Billy" + uniqueId + "'"));
     if (result.size() == 0)
       assertTrue("No record found with name = 'Billy" + uniqueId + "'!", false);
     else if (result.size() > 1)
       assertTrue(result.size() + " records found with name = 'Billy" + uniqueId + "'!", false);
-//    ODatabaseRecordThreadLocal.instance().set(null);
+    //    ODatabaseRecordThreadLocal.instance().set(null);
     return result.get(0);
   }
 
@@ -67,7 +84,8 @@ public abstract class AbstractScenarioTest extends AbstractServerClusterInsertTe
     executeMultipleWrites(executeOnServers, storageType, null, serverInstance);
   }
 
-  protected void executeMultipleWrites(List<ServerRun> executeOnServers, String storageType, List<ServerRun> checkOnServers)
+  protected void executeMultipleWrites(
+      List<ServerRun> executeOnServers, String storageType, List<ServerRun> checkOnServers)
       throws InterruptedException, ExecutionException {
     executeMultipleWrites(executeOnServers, storageType, null, checkOnServers);
   }
@@ -78,8 +96,12 @@ public abstract class AbstractScenarioTest extends AbstractServerClusterInsertTe
    * it. Tha target db is passed as parameter, otherwise is kept the default one on servers.
    */
 
-  protected void executeMultipleWrites(final List<ServerRun> executeOnServers, final String storageType, final String dbURL,
-      final List<ServerRun> checkOnServers) throws InterruptedException, ExecutionException {
+  protected void executeMultipleWrites(
+      final List<ServerRun> executeOnServers,
+      final String storageType,
+      final String dbURL,
+      final List<ServerRun> checkOnServers)
+      throws InterruptedException, ExecutionException {
 
     ODatabaseDocument database;
     if (checkOnServers == null || checkOnServers.isEmpty()) {
@@ -89,11 +111,11 @@ public abstract class AbstractScenarioTest extends AbstractServerClusterInsertTe
     }
 
     try {
-      List<ODocument> result = database.query(new OSQLSynchQuery<OIdentifiable>("select count(*) from Person"));
+      List<ODocument> result =
+          database.query(new OSQLSynchQuery<OIdentifiable>("select count(*) from Person"));
       baseCount = ((Number) result.get(0).field("count")).intValue();
     } finally {
-      if (database != null)
-        database.close();
+      if (database != null) database.close();
     }
 
     System.out.println("Creating Writers and Readers threads...");
@@ -170,7 +192,8 @@ public abstract class AbstractScenarioTest extends AbstractServerClusterInsertTe
   }
 
   // checks the consistency in the cluster after the writes in a simple distributed scenario
-  protected void checkWritesAboveCluster(List<ServerRun> checkConsistencyOnServers, List<ServerRun> writerServer) {
+  protected void checkWritesAboveCluster(
+      List<ServerRun> checkConsistencyOnServers, List<ServerRun> writerServer) {
 
     String checkOnServer = "";
     for (ServerRun server : checkConsistencyOnServers) {
@@ -205,15 +228,19 @@ public abstract class AbstractScenarioTest extends AbstractServerClusterInsertTe
     serverIndex = 0;
 
     for (ServerRun server : writerServer) {
-      serverIndex2serverName.put(serverIndex, server.getServerInstance().getDistributedManager().getLocalNodeName());
+      serverIndex2serverName.put(
+          serverIndex, server.getServerInstance().getDistributedManager().getLocalNodeName());
       serverIndex++;
     }
 
     List<ODocument> docsToCompare = new LinkedList<ODocument>();
 
     super.banner(
-        "Checking consistency among servers...\nChecking on servers {" + checkOnServer + "} that all the records written on {"
-            + writtenServer + "} are consistent.");
+        "Checking consistency among servers...\nChecking on servers {"
+            + checkOnServer
+            + "} that all the records written on {"
+            + writtenServer
+            + "} are consistent.");
 
     try {
 
@@ -227,10 +254,8 @@ public abstract class AbstractScenarioTest extends AbstractServerClusterInsertTe
 
         // checking records inserted on server0
         int i;
-        if (serverId == 0)
-          i = 0;
-        else
-          i = serverIndex2thresholdThread.get(serverId - 1);
+        if (serverId == 0) i = 0;
+        else i = serverIndex2thresholdThread.get(serverId - 1);
 
         while (i < serverIndex2thresholdThread.get(serverId)) {
           for (int j = 0; j < 100; j++) {
@@ -245,24 +270,55 @@ public abstract class AbstractScenarioTest extends AbstractServerClusterInsertTe
               assertTrue(doc != null);
             }
 
-            // checking that all the records have the same version and values (each record is equal to the next one)
+            // checking that all the records have the same version and values (each record is equal
+            // to the next one)
             int k = 0;
             while (k <= docsToCompare.size() - 2) {
               assertEquals(
-                  "Inconsistency detected. Record: " + docsToCompare.get(k).toString() + " ; Servers: " + (k + 1) + "," + (k + 2),
-                  (Integer) docsToCompare.get(k).field("@version"), (Integer) docsToCompare.get(k + 1).field("@version"));
+                  "Inconsistency detected. Record: "
+                      + docsToCompare.get(k).toString()
+                      + " ; Servers: "
+                      + (k + 1)
+                      + ","
+                      + (k + 2),
+                  (Integer) docsToCompare.get(k).field("@version"),
+                  (Integer) docsToCompare.get(k + 1).field("@version"));
               assertEquals(
-                  "Inconsistency detected. Record: " + docsToCompare.get(k).toString() + " ; Servers: " + (k + 1) + "," + (k + 2),
-                  (String) docsToCompare.get(k).field("name"), (String) docsToCompare.get(k + 1).field("name"));
+                  "Inconsistency detected. Record: "
+                      + docsToCompare.get(k).toString()
+                      + " ; Servers: "
+                      + (k + 1)
+                      + ","
+                      + (k + 2),
+                  (String) docsToCompare.get(k).field("name"),
+                  (String) docsToCompare.get(k + 1).field("name"));
               assertEquals(
-                  "Inconsistency detected. Record: " + docsToCompare.get(k).toString() + " ; Servers: " + (k + 1) + "," + (k + 2),
-                  (String) docsToCompare.get(k).field("surname"), (String) docsToCompare.get(k + 1).field("surname"));
+                  "Inconsistency detected. Record: "
+                      + docsToCompare.get(k).toString()
+                      + " ; Servers: "
+                      + (k + 1)
+                      + ","
+                      + (k + 2),
+                  (String) docsToCompare.get(k).field("surname"),
+                  (String) docsToCompare.get(k + 1).field("surname"));
               assertEquals(
-                  "Inconsistency detected. Record: " + docsToCompare.get(k).toString() + " ; Servers: " + (k + 1) + "," + (k + 2),
-                  (Date) docsToCompare.get(k).field("birthday"), (Date) docsToCompare.get(k + 1).field("birthday"));
+                  "Inconsistency detected. Record: "
+                      + docsToCompare.get(k).toString()
+                      + " ; Servers: "
+                      + (k + 1)
+                      + ","
+                      + (k + 2),
+                  (Date) docsToCompare.get(k).field("birthday"),
+                  (Date) docsToCompare.get(k + 1).field("birthday"));
               assertEquals(
-                  "Inconsistency detected. Record: " + docsToCompare.get(k).toString() + " ; Servers: " + (k + 1) + "," + (k + 2),
-                  (String) docsToCompare.get(k).field("children"), (String) docsToCompare.get(k + 1).field("children"));
+                  "Inconsistency detected. Record: "
+                      + docsToCompare.get(k).toString()
+                      + " ; Servers: "
+                      + (k + 1)
+                      + ","
+                      + (k + 2),
+                  (String) docsToCompare.get(k).field("children"),
+                  (String) docsToCompare.get(k + 1).field("children"));
               k++;
             }
             docsToCompare.clear();
@@ -270,7 +326,10 @@ public abstract class AbstractScenarioTest extends AbstractServerClusterInsertTe
           i++;
         }
 
-        System.out.println("All records originally inserted on server " + serverName + " are consistent in the cluster.");
+        System.out.println(
+            "All records originally inserted on server "
+                + serverName
+                + " are consistent in the cluster.");
         index++;
       }
 
@@ -281,32 +340,35 @@ public abstract class AbstractScenarioTest extends AbstractServerClusterInsertTe
       for (ODatabaseDocument db : dbs) {
         db.activateOnCurrentThread();
         db.close();
-//        ODatabaseRecordThreadLocal.instance().set(db);
-//        db.close();
-//        ODatabaseRecordThreadLocal.instance().set(null);
+        //        ODatabaseRecordThreadLocal.instance().set(db);
+        //        db.close();
+        //        ODatabaseRecordThreadLocal.instance().set(null);
       }
     }
-
   }
 
-  // waiting for all the records' inserts in the cluster are propagated in the cluster inside a specific timebox passed as timeout
+  // waiting for all the records' inserts in the cluster are propagated in the cluster inside a
+  // specific timebox passed as timeout
   // parameter
-  protected void waitForMultipleInsertsInClassPropagation(final long expectedCount, final String className, final long timeout) {
+  protected void waitForMultipleInsertsInClassPropagation(
+      final long expectedCount, final String className, final long timeout) {
 
-    waitFor(timeout, new OCallable<Boolean, Void>() {
+    waitFor(
+        timeout,
+        new OCallable<Boolean, Void>() {
 
-      @Override
-      public Boolean call(Void iArgument) {
+          @Override
+          public Boolean call(Void iArgument) {
 
-        for (ServerRun server : serverInstance) {
-          if (selectCountInClass(server, className) != expectedCount) {
-            return false;
+            for (ServerRun server : serverInstance) {
+              if (selectCountInClass(server, className) != expectedCount) {
+                return false;
+              }
+            }
+            return true;
           }
-        }
-        return true;
-      }
-    }, String.format("Expected %s records in class %s", expectedCount, className));
-
+        },
+        String.format("Expected %s records in class %s", expectedCount, className));
   }
 
   protected void waitForInsertedRecordPropagation(final String recordId) {
@@ -319,66 +381,92 @@ public abstract class AbstractScenarioTest extends AbstractServerClusterInsertTe
 
   protected void waitForRecordPropagation(final String recordId, final boolean hasToBePresent) {
 
-    waitFor(PROPAGATION_DOCUMENT_RETRIEVE_TIMEOUT, new OCallable<Boolean, Void>() {
+    waitFor(
+        PROPAGATION_DOCUMENT_RETRIEVE_TIMEOUT,
+        new OCallable<Boolean, Void>() {
 
-      @Override
-      public Boolean call(Void iArgument) {
+          @Override
+          public Boolean call(Void iArgument) {
 
-        for (ServerRun server : serverInstance) {
-          if ((retrieveRecordOrReturnMissing(server, recordId) == MISSING_DOCUMENT) == hasToBePresent) {
-            return false;
+            for (ServerRun server : serverInstance) {
+              if ((retrieveRecordOrReturnMissing(server, recordId) == MISSING_DOCUMENT)
+                  == hasToBePresent) {
+                return false;
+              }
+            }
+            return true;
           }
-        }
-        return true;
-      }
-    }, String.format("Waiting for %s propagation of record %s", hasToBePresent ? "insert" : "delete", recordId));
-
+        },
+        String.format(
+            "Waiting for %s propagation of record %s",
+            hasToBePresent ? "insert" : "delete", recordId));
   }
 
-  protected void waitForUpdatedRecordPropagation(final String recordId, final String fieldName, final String expectedFieldValue) {
+  protected void waitForUpdatedRecordPropagation(
+      final String recordId, final String fieldName, final String expectedFieldValue) {
 
-    waitFor(PROPAGATION_DOCUMENT_RETRIEVE_TIMEOUT, new OCallable<Boolean, Void>() {
+    waitFor(
+        PROPAGATION_DOCUMENT_RETRIEVE_TIMEOUT,
+        new OCallable<Boolean, Void>() {
 
-      @Override
-      public Boolean call(Void iArgument) {
+          @Override
+          public Boolean call(Void iArgument) {
 
-        if (fieldName == null)
-          return false;
+            if (fieldName == null) return false;
 
-        for (ServerRun server : serverInstance) {
+            for (ServerRun server : serverInstance) {
 
-          ODocument document = retrieveRecordOrReturnMissing(server, recordId);
-          final String storedValue = document.field(fieldName);
+              ODocument document = retrieveRecordOrReturnMissing(server, recordId);
+              final String storedValue = document.field(fieldName);
 
-          OLogManager.instance()
-              .debug(this, "Read record [%s] from server%s - %s: %s ", recordId, server.getServerId(), fieldName, storedValue);
+              OLogManager.instance()
+                  .debug(
+                      this,
+                      "Read record [%s] from server%s - %s: %s ",
+                      recordId,
+                      server.getServerId(),
+                      fieldName,
+                      storedValue);
 
-          if (document == MISSING_DOCUMENT) {
-            return false;
+              if (document == MISSING_DOCUMENT) {
+                return false;
+              }
+
+              OLogManager.instance()
+                  .info(
+                      this,
+                      "Waiting for updated document propagation on record %s. Found %s=%s, expected %s",
+                      recordId,
+                      fieldName,
+                      storedValue,
+                      expectedFieldValue);
+
+              if (storedValue != null && !storedValue.equals(expectedFieldValue)
+                  || storedValue == null && expectedFieldValue != null) return false;
+            }
+            return true;
           }
-
-          OLogManager.instance()
-              .info(this, "Waiting for updated document propagation on record %s. Found %s=%s, expected %s", recordId, fieldName,
-                  storedValue, expectedFieldValue);
-
-          if (storedValue != null && !storedValue.equals(expectedFieldValue) || storedValue == null && expectedFieldValue != null)
-            return false;
-        }
-        return true;
-      }
-    }, String.format("Expected value %s for field %s on record %s on all servers.", expectedFieldValue, fieldName, recordId));
+        },
+        String.format(
+            "Expected value %s for field %s on record %s on all servers.",
+            expectedFieldValue, fieldName, recordId));
   }
 
-  protected ODocument retrieveRecord(ServerRun serverRun, String uniqueId, boolean returnsMissingDocument,
+  protected ODocument retrieveRecord(
+      ServerRun serverRun,
+      String uniqueId,
+      boolean returnsMissingDocument,
       OCallable<ODocument, ODocument> assertion) {
     ODatabaseDocument dbServer = getDatabase(serverRun);
     // dbServer.getLocalCache().invalidate();
-//    ODatabaseRecordThreadLocal.instance().set(dbServer);
+    //    ODatabaseRecordThreadLocal.instance().set(dbServer);
 
     dbServer.getMetadata().getSchema().reload();
 
     try {
-      List<ODocument> result = dbServer.query(new OSQLSynchQuery<ODocument>("select from Person where id = '" + uniqueId + "'"));
+      List<ODocument> result =
+          dbServer.query(
+              new OSQLSynchQuery<ODocument>("select from Person where id = '" + uniqueId + "'"));
       if (result.size() == 0) {
         if (returnsMissingDocument) {
           return MISSING_DOCUMENT;
@@ -395,28 +483,28 @@ public abstract class AbstractScenarioTest extends AbstractServerClusterInsertTe
       //// e.printStackTrace();
       // }
 
-      if (assertion != null)
-        assertion.call(doc);
+      if (assertion != null) assertion.call(doc);
 
       return doc;
     } finally {
       dbServer.close();
-//      ODatabaseRecordThreadLocal.instance().set(null);
+      //      ODatabaseRecordThreadLocal.instance().set(null);
     }
   }
 
   private long selectCountInClass(ServerRun serverRun, String className) {
     ODatabaseDocument dbServer = getDatabase(serverRun);
-//    ODatabaseRecordThreadLocal.instance().set(dbServer);
+    //    ODatabaseRecordThreadLocal.instance().set(dbServer);
     long numberOfRecords = 0L;
     try {
-      List<ODocument> result = dbServer.query(new OSQLSynchQuery<OIdentifiable>("select count(*) from " + className));
+      List<ODocument> result =
+          dbServer.query(new OSQLSynchQuery<OIdentifiable>("select count(*) from " + className));
       numberOfRecords = ((Number) result.get(0).field("count")).longValue();
     } catch (Exception e) {
       e.printStackTrace();
     } finally {
       dbServer.close();
-//      ODatabaseRecordThreadLocal.instance().set(null);
+      //      ODatabaseRecordThreadLocal.instance().set(null);
     }
 
     return numberOfRecords;
@@ -445,40 +533,41 @@ public abstract class AbstractScenarioTest extends AbstractServerClusterInsertTe
 
   protected String getDatabaseURL(final ServerRun server, String storageType) {
 
-    if (storageType.equals("plocal"))
-      return this.getPlocalDatabaseURL(server);
-    else if (storageType.equals("remote"))
-      return this.getRemoteDatabaseURL(server);
+    if (storageType.equals("plocal")) return this.getPlocalDatabaseURL(server);
+    else if (storageType.equals("remote")) return this.getRemoteDatabaseURL(server);
     return null;
   }
 
   protected void simulateServerFault(ServerRun serverRun, String faultName) {
 
-    if (faultName.equals("shutdown"))
-      serverRun.terminateServer();
+    if (faultName.equals("shutdown")) serverRun.terminateServer();
     else if (faultName.equals("net-fault")) {
       serverRun.crashServer();
     }
   }
 
   protected void startCountMonitorTask(final String iClassName) {
-    new Timer(true).schedule(new TimerTask() {
-      @Override
-      public void run() {
-        try {
-          ODatabaseDocument db = getDatabase();
-          try {
-            totalVertices.set(db.countClass(iClassName));
-          } catch (Exception e) {
-            e.printStackTrace();
-          } finally {
-            db.close();
-          }
-        } catch (Exception e) {
-          // IGNORE IT
-        }
-      }
-    }, 1000, 1000);
+    new Timer(true)
+        .schedule(
+            new TimerTask() {
+              @Override
+              public void run() {
+                try {
+                  ODatabaseDocument db = getDatabase();
+                  try {
+                    totalVertices.set(db.countClass(iClassName));
+                  } catch (Exception e) {
+                    e.printStackTrace();
+                  } finally {
+                    db.close();
+                  }
+                } catch (Exception e) {
+                  // IGNORE IT
+                }
+              }
+            },
+            1000,
+            1000);
   }
 
   @Override
@@ -489,18 +578,25 @@ public abstract class AbstractScenarioTest extends AbstractServerClusterInsertTe
   private void printStats(final ServerRun serverRun) {
     final ODatabaseDocument database = getDatabase(serverRun);
     try {
-      //database.reload();
-      List<ODocument> result = database.query(new OSQLSynchQuery<OIdentifiable>("select count(*) from Person"));
+      // database.reload();
+      List<ODocument> result =
+          database.query(new OSQLSynchQuery<OIdentifiable>("select count(*) from Person"));
 
       final String name = database.getURL();
 
-      System.out.println("\nReader " + name + "  sql count: " + result.get(0) + " counting class: " + database.countClass("Person")
-          + " counting cluster: " + database.countClusterElements("Person"));
+      System.out.println(
+          "\nReader "
+              + name
+              + "  sql count: "
+              + result.get(0)
+              + " counting class: "
+              + database.countClass("Person")
+              + " counting cluster: "
+              + database.countClusterElements("Person"));
 
     } finally {
       database.close();
     }
-
   }
 
   protected void waitFor(final int serverId, OCallable<Boolean, ODatabaseDocument> condition) {
@@ -524,8 +620,8 @@ public abstract class AbstractScenarioTest extends AbstractServerClusterInsertTe
         db.activateOnCurrentThread();
         db.close();
 
-//        ODatabaseRecordThreadLocal.instance().set(db);
-//        db.close();
+        //        ODatabaseRecordThreadLocal.instance().set(db);
+        //        db.close();
         //       ODatabaseRecordThreadLocal.instance().set(null);
       }
     }
@@ -546,19 +642,26 @@ public abstract class AbstractScenarioTest extends AbstractServerClusterInsertTe
    */
   protected class RecordUpdater implements Callable<Void> {
 
-    private ServerRun           serverRun;
-    private ODocument           recordToUpdate;
+    private ServerRun serverRun;
+    private ODocument recordToUpdate;
     private Map<String, Object> fields;
-    private boolean             useTransaction;
+    private boolean useTransaction;
 
-    protected RecordUpdater(ServerRun serverRun, ODocument recordToUpdate, Map<String, Object> fields, boolean useTransaction) {
+    protected RecordUpdater(
+        ServerRun serverRun,
+        ODocument recordToUpdate,
+        Map<String, Object> fields,
+        boolean useTransaction) {
       this.serverRun = serverRun;
       this.recordToUpdate = recordToUpdate;
       this.fields = fields;
       this.useTransaction = useTransaction;
     }
 
-    protected RecordUpdater(final ServerRun serverRun, final String rid, final Map<String, Object> fields,
+    protected RecordUpdater(
+        final ServerRun serverRun,
+        final String rid,
+        final Map<String, Object> fields,
         final boolean useTransaction) {
       this.serverRun = serverRun;
       this.useTransaction = useTransaction;
@@ -585,8 +688,7 @@ public abstract class AbstractScenarioTest extends AbstractServerClusterInsertTe
           dbServer.commit();
         }
       } finally {
-        if (dbServer != null)
-          dbServer.close();
+        if (dbServer != null) dbServer.close();
       }
 
       return null;
@@ -600,7 +702,7 @@ public abstract class AbstractScenarioTest extends AbstractServerClusterInsertTe
 
     private ServerRun serverRun;
     private ODocument recordToDelete;
-    private boolean   useTransaction;
+    private boolean useTransaction;
 
     protected RecordDeleter(ServerRun serverRun, ODocument recordToDelete, boolean useTransaction) {
       this.serverRun = serverRun;
@@ -631,8 +733,7 @@ public abstract class AbstractScenarioTest extends AbstractServerClusterInsertTe
           dbServer.commit();
         }
       } finally {
-        if (dbServer != null)
-          dbServer.close();
+        if (dbServer != null) dbServer.close();
       }
 
       return null;
@@ -642,20 +743,28 @@ public abstract class AbstractScenarioTest extends AbstractServerClusterInsertTe
   class AfterRecordLockDelayer implements ODistributedStorageEventListener {
 
     private String serverName;
-    private long   delay;
+    private long delay;
 
     public AfterRecordLockDelayer(String serverName, long delay) {
       this.serverName = serverName;
       this.delay = delay;
       OLogManager.instance()
-          .info(this, "Thread [%s-%d] delayer created with " + delay + "ms of delay", serverName, Thread.currentThread().getId());
+          .info(
+              this,
+              "Thread [%s-%d] delayer created with " + delay + "ms of delay",
+              serverName,
+              Thread.currentThread().getId());
     }
 
     public AfterRecordLockDelayer(String serverName) {
       this.serverName = serverName;
       this.delay = DOCUMENT_WRITE_TIMEOUT;
       OLogManager.instance()
-          .info(this, "Thread [%s-%d] delayer created with " + delay + "ms of delay", serverName, Thread.currentThread().getId());
+          .info(
+              this,
+              "Thread [%s-%d] delayer created with " + delay + "ms of delay",
+              serverName,
+              Thread.currentThread().getId());
     }
 
     @Override
@@ -663,12 +772,23 @@ public abstract class AbstractScenarioTest extends AbstractServerClusterInsertTe
       if (delay > 0)
         try {
           OLogManager.instance()
-              .info(this, "Thread [%s-%d] waiting for %dms with locked record [%s]", serverName, Thread.currentThread().getId(),
-                  delay, rid.toString());
+              .info(
+                  this,
+                  "Thread [%s-%d] waiting for %dms with locked record [%s]",
+                  serverName,
+                  Thread.currentThread().getId(),
+                  delay,
+                  rid.toString());
           Thread.sleep(delay);
 
-          OLogManager.instance().info(this, "Thread [%s-%d] finished waiting for %dms with locked record [%s]", serverName,
-              Thread.currentThread().getId(), delay, rid.toString());
+          OLogManager.instance()
+              .info(
+                  this,
+                  "Thread [%s-%d] finished waiting for %dms with locked record [%s]",
+                  serverName,
+                  Thread.currentThread().getId(),
+                  delay,
+                  rid.toString());
 
           // RESET THE DELAY FOR FURTHER TIMES
           delay = 0;
@@ -678,8 +798,6 @@ public abstract class AbstractScenarioTest extends AbstractServerClusterInsertTe
     }
 
     @Override
-    public void onAfterRecordUnlock(ORecordId rid) {
-    }
+    public void onAfterRecordUnlock(ORecordId rid) {}
   }
-
 }

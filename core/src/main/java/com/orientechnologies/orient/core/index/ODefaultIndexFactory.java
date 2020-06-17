@@ -27,27 +27,28 @@ import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.storage.index.engine.ORemoteIndexEngine;
 import com.orientechnologies.orient.core.storage.index.engine.OSBTreeIndexEngine;
-
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
 /**
- * Default OrientDB index factory for indexes based on SBTree.<br> Supports index types:
+ * Default OrientDB index factory for indexes based on SBTree.<br>
+ * Supports index types:
+ *
  * <ul>
- * <li>UNIQUE</li>
- * <li>NOTUNIQUE</li>
- * <li>FULLTEXT</li>
- * <li>DICTIONARY</li>
+ *   <li>UNIQUE
+ *   <li>NOTUNIQUE
+ *   <li>FULLTEXT
+ *   <li>DICTIONARY
  * </ul>
  */
 public class ODefaultIndexFactory implements OIndexFactory {
 
-  private static final String SBTREE_ALGORITHM              = "SBTREE";
-  static final         String SBTREE_BONSAI_VALUE_CONTAINER = "SBTREEBONSAISET";
-  public static final  String NONE_VALUE_CONTAINER          = "NONE";
-  static final         String CELL_BTREE_ALGORITHM          = "CELL_BTREE";
+  private static final String SBTREE_ALGORITHM = "SBTREE";
+  static final String SBTREE_BONSAI_VALUE_CONTAINER = "SBTREEBONSAISET";
+  public static final String NONE_VALUE_CONTAINER = "NONE";
+  static final String CELL_BTREE_ALGORITHM = "CELL_BTREE";
 
   private static final Set<String> TYPES;
   private static final Set<String> ALGORITHMS;
@@ -71,11 +72,11 @@ public class ODefaultIndexFactory implements OIndexFactory {
 
   static boolean isMultiValueIndex(final String indexType) {
     switch (OClass.INDEX_TYPE.valueOf(indexType)) {
-    case UNIQUE:
-    case UNIQUE_HASH_INDEX:
-    case DICTIONARY:
-    case DICTIONARY_HASH_INDEX:
-      return false;
+      case UNIQUE:
+      case UNIQUE_HASH_INDEX:
+      case DICTIONARY:
+      case DICTIONARY_HASH_INDEX:
+        return false;
     }
 
     return true;
@@ -83,11 +84,12 @@ public class ODefaultIndexFactory implements OIndexFactory {
 
   /**
    * Index types :
+   *
    * <ul>
-   * <li>UNIQUE</li>
-   * <li>NOTUNIQUE</li>
-   * <li>FULLTEXT</li>
-   * <li>DICTIONARY</li>
+   *   <li>UNIQUE
+   *   <li>NOTUNIQUE
+   *   <li>FULLTEXT
+   *   <li>DICTIONARY
    * </ul>
    */
   public Set<String> getTypes() {
@@ -98,8 +100,15 @@ public class ODefaultIndexFactory implements OIndexFactory {
     return ALGORITHMS;
   }
 
-  public OIndexInternal createIndex(String name, OStorage storage, String indexType, String algorithm,
-      String valueContainerAlgorithm, ODocument metadata, int version) throws OConfigurationException {
+  public OIndexInternal createIndex(
+      String name,
+      OStorage storage,
+      String indexType,
+      String algorithm,
+      String valueContainerAlgorithm,
+      ODocument metadata,
+      int version)
+      throws OConfigurationException {
     if (valueContainerAlgorithm == null) {
       valueContainerAlgorithm = NONE_VALUE_CONTAINER;
     }
@@ -108,27 +117,71 @@ public class ODefaultIndexFactory implements OIndexFactory {
       version = getLastVersion(algorithm);
     }
 
-    return createSBTreeIndex(name, indexType, valueContainerAlgorithm, metadata,
-        (OAbstractPaginatedStorage) storage.getUnderlying(), version, algorithm);
+    return createSBTreeIndex(
+        name,
+        indexType,
+        valueContainerAlgorithm,
+        metadata,
+        (OAbstractPaginatedStorage) storage.getUnderlying(),
+        version,
+        algorithm);
   }
 
-  private static OIndexInternal createSBTreeIndex(String name, String indexType, String valueContainerAlgorithm, ODocument metadata,
-      OAbstractPaginatedStorage storage, int version, String algorithm) {
+  private static OIndexInternal createSBTreeIndex(
+      String name,
+      String indexType,
+      String valueContainerAlgorithm,
+      ODocument metadata,
+      OAbstractPaginatedStorage storage,
+      int version,
+      String algorithm) {
 
     final int binaryFormatVersion = storage.getConfiguration().getBinaryFormatVersion();
 
     if (OClass.INDEX_TYPE.UNIQUE.toString().equals(indexType)) {
-      return new OIndexUnique(name, indexType, algorithm, version, storage, valueContainerAlgorithm, metadata, binaryFormatVersion);
+      return new OIndexUnique(
+          name,
+          indexType,
+          algorithm,
+          version,
+          storage,
+          valueContainerAlgorithm,
+          metadata,
+          binaryFormatVersion);
     } else if (OClass.INDEX_TYPE.NOTUNIQUE.toString().equals(indexType)) {
-      return new OIndexNotUnique(name, indexType, algorithm, version, storage, valueContainerAlgorithm, metadata,
+      return new OIndexNotUnique(
+          name,
+          indexType,
+          algorithm,
+          version,
+          storage,
+          valueContainerAlgorithm,
+          metadata,
           binaryFormatVersion);
     } else if (OClass.INDEX_TYPE.FULLTEXT.toString().equals(indexType)) {
-      OLogManager.instance().warnNoDb(ODefaultIndexFactory.class, "You are creating native full text index instance. "
-          + "That is unsafe because this type of index is deprecated and will be removed in future.");
-      return new OIndexFullText(name, indexType, algorithm, version, storage, valueContainerAlgorithm, metadata,
+      OLogManager.instance()
+          .warnNoDb(
+              ODefaultIndexFactory.class,
+              "You are creating native full text index instance. "
+                  + "That is unsafe because this type of index is deprecated and will be removed in future.");
+      return new OIndexFullText(
+          name,
+          indexType,
+          algorithm,
+          version,
+          storage,
+          valueContainerAlgorithm,
+          metadata,
           binaryFormatVersion);
     } else if (OClass.INDEX_TYPE.DICTIONARY.toString().equals(indexType)) {
-      return new OIndexDictionary(name, indexType, algorithm, version, storage, valueContainerAlgorithm, metadata,
+      return new OIndexDictionary(
+          name,
+          indexType,
+          algorithm,
+          version,
+          storage,
+          valueContainerAlgorithm,
+          metadata,
           binaryFormatVersion);
     }
 
@@ -138,18 +191,25 @@ public class ODefaultIndexFactory implements OIndexFactory {
   @Override
   public int getLastVersion(final String algorithm) {
     switch (algorithm) {
-    case SBTREE_ALGORITHM:
-      return OSBTreeIndexEngine.VERSION;
-    case CELL_BTREE_ALGORITHM:
-      return OCellBTreeIndexEngine.VERSION;
+      case SBTREE_ALGORITHM:
+        return OSBTreeIndexEngine.VERSION;
+      case CELL_BTREE_ALGORITHM:
+        return OCellBTreeIndexEngine.VERSION;
     }
 
     throw new IllegalStateException("Invalid algorithm name " + algorithm);
   }
 
   @Override
-  public OBaseIndexEngine createIndexEngine(int indexId, String algorithm, String name, Boolean durableInNonTxMode,
-      OStorage storage, int version, int apiVersion, @SuppressWarnings("SpellCheckingInspection") boolean multiValue,
+  public OBaseIndexEngine createIndexEngine(
+      int indexId,
+      String algorithm,
+      String name,
+      Boolean durableInNonTxMode,
+      OStorage storage,
+      int version,
+      int apiVersion,
+      @SuppressWarnings("SpellCheckingInspection") boolean multiValue,
       Map<String, String> engineProperties) {
 
     if (algorithm == null) {
@@ -164,28 +224,33 @@ public class ODefaultIndexFactory implements OIndexFactory {
     }
 
     switch (storageType) {
-    case "memory":
-    case "plocal":
-      switch (algorithm) {
-      case SBTREE_ALGORITHM:
-        indexEngine = new OSBTreeIndexEngine(indexId, name, (OAbstractPaginatedStorage) storage, version);
-        break;
-      case CELL_BTREE_ALGORITHM:
-        if (multiValue) {
-          indexEngine = new OCellBTreeMultiValueIndexEngine(indexId, name, (OAbstractPaginatedStorage) storage, version);
-        } else {
-          indexEngine = new OCellBTreeSingleValueIndexEngine(indexId, name, (OAbstractPaginatedStorage) storage, version);
+      case "memory":
+      case "plocal":
+        switch (algorithm) {
+          case SBTREE_ALGORITHM:
+            indexEngine =
+                new OSBTreeIndexEngine(indexId, name, (OAbstractPaginatedStorage) storage, version);
+            break;
+          case CELL_BTREE_ALGORITHM:
+            if (multiValue) {
+              indexEngine =
+                  new OCellBTreeMultiValueIndexEngine(
+                      indexId, name, (OAbstractPaginatedStorage) storage, version);
+            } else {
+              indexEngine =
+                  new OCellBTreeSingleValueIndexEngine(
+                      indexId, name, (OAbstractPaginatedStorage) storage, version);
+            }
+            break;
+          default:
+            throw new IllegalStateException("Invalid name of algorithm :'" + "'");
         }
         break;
+      case "remote":
+        indexEngine = new ORemoteIndexEngine(indexId, name);
+        break;
       default:
-        throw new IllegalStateException("Invalid name of algorithm :'" + "'");
-      }
-      break;
-    case "remote":
-      indexEngine = new ORemoteIndexEngine(indexId, name);
-      break;
-    default:
-      throw new OIndexException("Unsupported storage type: " + storageType);
+        throw new OIndexException("Unsupported storage type: " + storageType);
     }
 
     return indexEngine;

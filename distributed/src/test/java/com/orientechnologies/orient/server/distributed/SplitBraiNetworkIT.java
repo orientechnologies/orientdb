@@ -16,17 +16,16 @@
 package com.orientechnologies.orient.server.distributed;
 
 import com.orientechnologies.common.log.OLogManager;
+import java.util.Map;
 import org.junit.Assert;
 import org.junit.Test;
 
-import java.util.Map;
-
 /**
- * Distributed test with 3 servers running and after a while the server 2 is isolated from the network (using a proxy) and then it
- * re-merges the cluster again.
+ * Distributed test with 3 servers running and after a while the server 2 is isolated from the
+ * network (using a proxy) and then it re-merges the cluster again.
  */
 public class SplitBraiNetworkIT extends AbstractHARemoveNode {
-  final static int SERVERS = 3;
+  static final int SERVERS = 3;
 
   @Test
   public void test() throws Exception {
@@ -44,21 +43,33 @@ public class SplitBraiNetworkIT extends AbstractHARemoveNode {
 
     serverInstance.get(2).disconnectFrom(serverInstance.get(0), serverInstance.get(1));
 
-    banner("SERVER " + (SERVERS - 1) + " HAS BEEN ISOLATED, WAITING FOR THE DATABASE ON SERVER 2 TO BE OFFLINE...");
+    banner(
+        "SERVER "
+            + (SERVERS - 1)
+            + " HAS BEEN ISOLATED, WAITING FOR THE DATABASE ON SERVER 2 TO BE OFFLINE...");
 
     // CHECK THE SPLIT
-    waitForDatabaseStatus(0, "europe-2", getDatabaseName(), ODistributedServerManager.DB_STATUS.NOT_AVAILABLE, 90000);
-    waitForDatabaseStatus(2, "europe-0", getDatabaseName(), ODistributedServerManager.DB_STATUS.NOT_AVAILABLE, 90000);
-    waitForDatabaseStatus(2, "europe-1", getDatabaseName(), ODistributedServerManager.DB_STATUS.NOT_AVAILABLE, 90000);
+    waitForDatabaseStatus(
+        0, "europe-2", getDatabaseName(), ODistributedServerManager.DB_STATUS.NOT_AVAILABLE, 90000);
+    waitForDatabaseStatus(
+        2, "europe-0", getDatabaseName(), ODistributedServerManager.DB_STATUS.NOT_AVAILABLE, 90000);
+    waitForDatabaseStatus(
+        2, "europe-1", getDatabaseName(), ODistributedServerManager.DB_STATUS.NOT_AVAILABLE, 90000);
 
-    assertDatabaseStatusEquals(0, "europe-2", getDatabaseName(), ODistributedServerManager.DB_STATUS.NOT_AVAILABLE);
+    assertDatabaseStatusEquals(
+        0, "europe-2", getDatabaseName(), ODistributedServerManager.DB_STATUS.NOT_AVAILABLE);
 
-    waitForDatabaseStatus(1, "europe-2", getDatabaseName(), ODistributedServerManager.DB_STATUS.NOT_AVAILABLE, 90000);
-    assertDatabaseStatusEquals(1, "europe-2", getDatabaseName(), ODistributedServerManager.DB_STATUS.NOT_AVAILABLE);
+    waitForDatabaseStatus(
+        1, "europe-2", getDatabaseName(), ODistributedServerManager.DB_STATUS.NOT_AVAILABLE, 90000);
+    assertDatabaseStatusEquals(
+        1, "europe-2", getDatabaseName(), ODistributedServerManager.DB_STATUS.NOT_AVAILABLE);
 
-    assertDatabaseStatusEquals(2, "europe-2", getDatabaseName(), ODistributedServerManager.DB_STATUS.ONLINE);
-    assertDatabaseStatusEquals(2, "europe-1", getDatabaseName(), ODistributedServerManager.DB_STATUS.NOT_AVAILABLE);
-    assertDatabaseStatusEquals(2, "europe-0", getDatabaseName(), ODistributedServerManager.DB_STATUS.NOT_AVAILABLE);
+    assertDatabaseStatusEquals(
+        2, "europe-2", getDatabaseName(), ODistributedServerManager.DB_STATUS.ONLINE);
+    assertDatabaseStatusEquals(
+        2, "europe-1", getDatabaseName(), ODistributedServerManager.DB_STATUS.NOT_AVAILABLE);
+    assertDatabaseStatusEquals(
+        2, "europe-0", getDatabaseName(), ODistributedServerManager.DB_STATUS.NOT_AVAILABLE);
 
     banner("RUN TEST WITHOUT THE OFFLINE SERVER " + (SERVERS - 1) + "...");
 
@@ -71,15 +82,20 @@ public class SplitBraiNetworkIT extends AbstractHARemoveNode {
     } catch (AssertionError e) {
       final String message = e.getMessage();
       Assert.assertTrue(
-          message.contains("Server 2 count is not what was expected expected:<" + expected + "> but was:<" + currentRecords + ">"));
+          message.contains(
+              "Server 2 count is not what was expected expected:<"
+                  + expected
+                  + "> but was:<"
+                  + currentRecords
+                  + ">"));
     }
 
     banner("TEST WITH THE ISOLATED NODE FINISHED, REJOIN THE SERVER " + (SERVERS - 1) + "...");
 
     for (ServerRun s : serverInstance) {
       OLogManager.instance().info(this, "MAP SERVER %s", s.getServerId());
-      for (Map.Entry<String, Object> entry : s.server.getDistributedManager().getConfigurationMap()
-          .entrySet()) {
+      for (Map.Entry<String, Object> entry :
+          s.server.getDistributedManager().getConfigurationMap().entrySet()) {
         OLogManager.instance().info(this, " %s=%s", entry.getKey(), entry.getValue());
       }
     }
@@ -90,16 +106,19 @@ public class SplitBraiNetworkIT extends AbstractHARemoveNode {
 
     for (ServerRun s : serverInstance) {
       OLogManager.instance().info(this, "MAP SERVER %s", s.getServerId());
-      for (Map.Entry<String, Object> entry : s.server.getDistributedManager().getConfigurationMap()
-          .entrySet()) {
+      for (Map.Entry<String, Object> entry :
+          s.server.getDistributedManager().getConfigurationMap().entrySet()) {
         OLogManager.instance().info(this, " %s=%s", entry.getKey(), entry.getValue());
       }
     }
 
     waitForDatabaseIsOnline(0, "europe-2", getDatabaseName(), 90000);
-    assertDatabaseStatusEquals(0, "europe-2", getDatabaseName(), ODistributedServerManager.DB_STATUS.ONLINE);
-    assertDatabaseStatusEquals(1, "europe-2", getDatabaseName(), ODistributedServerManager.DB_STATUS.ONLINE);
-    assertDatabaseStatusEquals(2, "europe-2", getDatabaseName(), ODistributedServerManager.DB_STATUS.ONLINE);
+    assertDatabaseStatusEquals(
+        0, "europe-2", getDatabaseName(), ODistributedServerManager.DB_STATUS.ONLINE);
+    assertDatabaseStatusEquals(
+        1, "europe-2", getDatabaseName(), ODistributedServerManager.DB_STATUS.ONLINE);
+    assertDatabaseStatusEquals(
+        2, "europe-2", getDatabaseName(), ODistributedServerManager.DB_STATUS.ONLINE);
 
     banner("NETWORK FOR THE ISOLATED NODE " + (SERVERS - 1) + " HAS BEEN RESTORED");
 

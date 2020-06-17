@@ -25,18 +25,13 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.record.OElement;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
-import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
-
 import java.util.List;
 import java.util.Locale;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
-/**
- * Executes a command.
- */
+/** Executes a command. */
 public class OETLCommandTransformer extends OETLAbstractTransformer {
   private String language = "sql";
   private boolean newSqlExecutor = false;
@@ -45,9 +40,14 @@ public class OETLCommandTransformer extends OETLAbstractTransformer {
 
   @Override
   public ODocument getConfiguration() {
-    return new ODocument().fromJSON("{parameters:[" + getCommonConfigurationParameters() + ","
-            + "{language:{optional:true,description:'Command language, SQL by default'}},"
-            + "{command:{optional:false,description:'Command to execute'}}]," + "input:['ODocument'],output:'ODocument'}");
+    return new ODocument()
+        .fromJSON(
+            "{parameters:["
+                + getCommonConfigurationParameters()
+                + ","
+                + "{language:{optional:true,description:'Command language, SQL by default'}},"
+                + "{command:{optional:false,description:'Command to execute'}}],"
+                + "input:['ODocument'],output:'ODocument'}");
   }
 
   @Override
@@ -78,7 +78,8 @@ public class OETLCommandTransformer extends OETLAbstractTransformer {
       } else {
         result = db.execute(language, runtimeCommand);
       }
-      List<OElement> finalResult = result.stream().map(x -> x.toElement()).collect(Collectors.toList());
+      List<OElement> finalResult =
+          result.stream().map(x -> x.toElement()).collect(Collectors.toList());
       result.close();
 
       if (returnInput) {
@@ -107,7 +108,6 @@ public class OETLCommandTransformer extends OETLAbstractTransformer {
             input = db.reload(((OElement) input).getRecord(), null, true);
           }
           return input;
-
         }
         return result;
       } catch (Exception e) {
@@ -118,5 +118,4 @@ public class OETLCommandTransformer extends OETLAbstractTransformer {
       }
     }
   }
-
 }

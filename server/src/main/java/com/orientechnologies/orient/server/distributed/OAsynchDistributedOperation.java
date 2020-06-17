@@ -15,14 +15,13 @@
  *  *  limitations under the License.
  *  *
  *  * For more information: http://orientdb.com
- *  
+ *
  */
 package com.orientechnologies.orient.server.distributed;
 
 import com.orientechnologies.common.util.OCallable;
 import com.orientechnologies.common.util.OPair;
 import com.orientechnologies.orient.server.distributed.task.ORemoteTask;
-
 import java.util.Collection;
 import java.util.Set;
 
@@ -32,17 +31,22 @@ import java.util.Set;
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
  */
 public class OAsynchDistributedOperation {
-  private final String                                                  databaseName;
-  private final Set<String>                                             clusterNames;
-  private final Collection<String>                                      nodes;
-  private final ORemoteTask                                             task;
-  private final long                                                    messageId;
+  private final String databaseName;
+  private final Set<String> clusterNames;
+  private final Collection<String> nodes;
+  private final ORemoteTask task;
+  private final long messageId;
   private final OCallable<Object, OPair<ODistributedRequestId, Object>> callback;
-  private final Object                                                  localResult;
-  private final OCallable<Void, ODistributedRequestId>                  afterRequestCallback;
+  private final Object localResult;
+  private final OCallable<Void, ODistributedRequestId> afterRequestCallback;
 
-  public OAsynchDistributedOperation(final String iDatabaseName, final Set<String> iClusterNames, final Collection<String> iNodes,
-      final ORemoteTask iTask, final long iMessageId, final Object iLocalResult,
+  public OAsynchDistributedOperation(
+      final String iDatabaseName,
+      final Set<String> iClusterNames,
+      final Collection<String> iNodes,
+      final ORemoteTask iTask,
+      final long iMessageId,
+      final Object iLocalResult,
       final OCallable<Void, ODistributedRequestId> iAfterRequestCallback,
       final OCallable<Object, OPair<ODistributedRequestId, Object>> iCallback) {
     databaseName = iDatabaseName;

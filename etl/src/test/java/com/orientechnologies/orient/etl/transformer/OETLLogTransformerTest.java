@@ -18,22 +18,22 @@
 
 package com.orientechnologies.orient.etl.transformer;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
+
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.etl.OETLBaseTest;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
-
 import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
 import java.util.logging.ConsoleHandler;
 import java.util.logging.Logger;
-
-import static org.assertj.core.api.Assertions.assertThat;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Test;
 
 public class OETLLogTransformerTest extends OETLBaseTest {
 
-  private PrintStream           sysOut;
+  private PrintStream sysOut;
   private ByteArrayOutputStream output;
 
   @Before
@@ -43,10 +43,10 @@ public class OETLLogTransformerTest extends OETLBaseTest {
     output = new ByteArrayOutputStream();
     System.setErr(new PrintStream(output, true));
 
-    //install a new console handler that writes on byteArray
+    // install a new console handler that writes on byteArray
     Logger.getLogger("").addHandler(new ConsoleHandler());
 
-    //install custom formatter for new handler
+    // install custom formatter for new handler
     OLogManager.instance().installCustomFormatter();
   }
 
@@ -57,8 +57,11 @@ public class OETLLogTransformerTest extends OETLBaseTest {
 
   @Test
   public void testPrefix() throws Exception {
-    String cfgJson = "{source: { content: { value: 'id,text\n1,Hello\n2,Bye'} }, " + "extractor : { csv: {} }, "
-        + "transformers : [{ log : {prefix:'-> '}}], " + "loader : { test: {} } }";
+    String cfgJson =
+        "{source: { content: { value: 'id,text\n1,Hello\n2,Bye'} }, "
+            + "extractor : { csv: {} }, "
+            + "transformers : [{ log : {prefix:'-> '}}], "
+            + "loader : { test: {} } }";
     configure(cfgJson);
     proc.execute();
 
@@ -66,20 +69,20 @@ public class OETLLogTransformerTest extends OETLBaseTest {
 
     assertThat(out).contains("-> {id:1,text:Hello}");
     assertThat(out).contains("-> {id:2,text:Bye}");
-
   }
 
   @Test
   public void testPostfix() throws Exception {
-    String cfgJson = "{source: { content: { value: 'id,text\n1,Hello\n2,Bye'} }, " + "extractor : { csv : {} }, "
-        + "transformers : [{ log : {postfix:'-> '}}], " + "loader : { test: {} } }";
+    String cfgJson =
+        "{source: { content: { value: 'id,text\n1,Hello\n2,Bye'} }, "
+            + "extractor : { csv : {} }, "
+            + "transformers : [{ log : {postfix:'-> '}}], "
+            + "loader : { test: {} } }";
     configure(cfgJson);
     proc.execute();
     String out = output.toString();
 
     assertThat(out).contains("{id:1,text:Hello}->");
     assertThat(out).contains("{id:2,text:Bye}->");
-
   }
-
 }

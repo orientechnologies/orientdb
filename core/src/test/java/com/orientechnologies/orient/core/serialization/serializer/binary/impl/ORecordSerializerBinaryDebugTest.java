@@ -1,5 +1,9 @@
 package com.orientechnologies.orient.core.serialization.serializer.binary.impl;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+
+
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OType;
@@ -11,9 +15,6 @@ import com.orientechnologies.orient.core.serialization.serializer.record.binary.
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
 
 public class ORecordSerializerBinaryDebugTest {
 
@@ -33,7 +34,8 @@ public class ORecordSerializerBinaryDebugTest {
   @Test
   public void testSimpleDocumentDebug() {
 
-    ODatabaseDocumentTx db = new ODatabaseDocumentTx("memory:" + ORecordSerializerBinaryDebugTest.class.getSimpleName());
+    ODatabaseDocumentTx db =
+        new ODatabaseDocumentTx("memory:" + ORecordSerializerBinaryDebugTest.class.getSimpleName());
     db.create();
     try {
       ODocument doc = new ODocument();
@@ -65,7 +67,8 @@ public class ORecordSerializerBinaryDebugTest {
 
   @Test
   public void testSchemaFullDocumentDebug() {
-    ODatabaseDocumentTx db = new ODatabaseDocumentTx("memory:" + ORecordSerializerBinaryDebugTest.class.getSimpleName());
+    ODatabaseDocumentTx db =
+        new ODatabaseDocumentTx("memory:" + ORecordSerializerBinaryDebugTest.class.getSimpleName());
     db.create();
     try {
       OClass clazz = db.getMetadata().getSchema().createClass("some");
@@ -96,12 +99,12 @@ public class ORecordSerializerBinaryDebugTest {
     } finally {
       db.drop();
     }
-
   }
 
   @Test
   public void testSimpleBrokenDocumentDebug() {
-    ODatabaseDocumentTx db = new ODatabaseDocumentTx("memory:" + ORecordSerializerBinaryDebugTest.class.getSimpleName());
+    ODatabaseDocumentTx db =
+        new ODatabaseDocumentTx("memory:" + ORecordSerializerBinaryDebugTest.class.getSimpleName());
     db.create();
     try {
       ODocument doc = new ODocument();
@@ -138,7 +141,8 @@ public class ORecordSerializerBinaryDebugTest {
 
   @Test
   public void testBrokenSchemaFullDocumentDebug() {
-    ODatabaseDocumentTx db = new ODatabaseDocumentTx("memory:" + ORecordSerializerBinaryDebugTest.class.getSimpleName());
+    ODatabaseDocumentTx db =
+        new ODatabaseDocumentTx("memory:" + ORecordSerializerBinaryDebugTest.class.getSimpleName());
     db.create();
     try {
       OClass clazz = db.getMetadata().getSchema().createClass("some");
@@ -174,7 +178,5 @@ public class ORecordSerializerBinaryDebugTest {
     } finally {
       db.drop();
     }
-
   }
-
 }

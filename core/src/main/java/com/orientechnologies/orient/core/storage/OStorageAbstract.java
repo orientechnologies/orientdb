@@ -27,7 +27,6 @@ import com.orientechnologies.orient.core.config.OStorageConfiguration;
 import com.orientechnologies.orient.core.db.record.OCurrentStorageComponentsFactory;
 import com.orientechnologies.orient.core.record.ORecordVersionHelper;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
-
 import java.util.concurrent.Callable;
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -46,29 +45,25 @@ public abstract class OStorageAbstract implements OStorage, OSharedContainer {
         parentThreadGroup = parentThreadGroup.getParent();
         found = true;
         break;
-      } else
-        parentThreadGroup = parentThreadGroup.getParent();
+      } else parentThreadGroup = parentThreadGroup.getParent();
     }
 
-    if (!found)
-      parentThreadGroup = parentThreadGroupBackup;
+    if (!found) parentThreadGroup = parentThreadGroupBackup;
 
     storageThreadGroup = new ThreadGroup(parentThreadGroup, "OrientDB Storage");
   }
 
-  protected final String                 url;
-  protected final String                 mode;
+  protected final String url;
+  protected final String mode;
   protected final OReadersWriterSpinLock stateLock;
 
-  protected volatile OStorageConfiguration            configuration;
+  protected volatile OStorageConfiguration configuration;
   protected volatile OCurrentStorageComponentsFactory componentsFactory;
-  protected          String                           name;
-  private final      AtomicLong version = new AtomicLong();
-  protected volatile STATUS     status  = STATUS.CLOSED;
+  protected String name;
+  private final AtomicLong version = new AtomicLong();
+  protected volatile STATUS status = STATUS.CLOSED;
 
-  /**
-   * This field is used in EE version, do not make it private
-   */
+  /** This field is used in EE version, do not make it private */
   @SuppressWarnings("WeakerAccess")
   protected final OSharedContainerImpl sharedContainer = new OSharedContainerImpl();
 
@@ -90,16 +85,14 @@ public abstract class OStorageAbstract implements OStorage, OSharedContainer {
 
       if (OStringSerializerHelper.contains(name, '\\'))
         return name.substring(name.lastIndexOf("\\") + 1);
-      else
-        return name;
+      else return name;
 
     } else if (OStringSerializerHelper.contains(name, '\\')) {
       name = name.substring(name.lastIndexOf("\\") + 1);
 
       if (OStringSerializerHelper.contains(name, '/'))
         return name.substring(name.lastIndexOf("/") + 1);
-      else
-        return name;
+      else return name;
     } else {
       return name;
     }
@@ -160,9 +153,7 @@ public abstract class OStorageAbstract implements OStorage, OSharedContainer {
     return sharedContainer.getResource(iName, iCallback);
   }
 
-  /**
-   * Returns current storage's version as serial.
-   */
+  /** Returns current storage's version as serial. */
   @Override
   public long getVersion() {
     return version.get();
@@ -178,8 +169,7 @@ public abstract class OStorageAbstract implements OStorage, OSharedContainer {
     long tot = 0;
 
     for (OCluster c : getClusterInstances())
-      if (c != null)
-        tot += c.getEntries() - c.getTombstonesCount();
+      if (c != null) tot += c.getEntries() - c.getTombstonesCount();
 
     return tot;
   }
@@ -213,5 +203,4 @@ public abstract class OStorageAbstract implements OStorage, OSharedContainer {
   public void shutdown() {
     close(true, false);
   }
-
 }

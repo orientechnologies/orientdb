@@ -1,15 +1,14 @@
 package com.orientechnologies.orient.graph;
 
 import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
-
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.tinkerpop.blueprints.Vertex;
 import com.tinkerpop.blueprints.impls.orient.OrientEdge;
 import com.tinkerpop.blueprints.impls.orient.OrientGraph;
 import com.tinkerpop.blueprints.impls.orient.OrientVertex;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Test;
 
 public class FailOperationOnRemovedElementTest {
   private OrientGraph grap;
@@ -141,5 +140,4 @@ public class FailOperationOnRemovedElementTest {
     e.remove();
     e.setProperty("test", "test", OType.STRING);
   }
-
 }

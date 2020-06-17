@@ -1,5 +1,8 @@
 package com.orientechnologies.orient.object.db;
 
+import static org.junit.Assert.assertEquals;
+
+
 import com.orientechnologies.orient.core.db.object.ODatabaseObject;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.schema.OType;
@@ -12,11 +15,7 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
-import static org.junit.Assert.assertEquals;
-
-/**
- * Created by tglman on 17/02/17.
- */
+/** Created by tglman on 17/02/17. */
 public class SimpleParentChildTest {
 
   private ODatabaseObject database;
@@ -74,5 +73,4 @@ public class SimpleParentChildTest {
     retrievedParent = this.database.load(new ORecordId(parentId));
     Assert.assertEquals("child2", retrievedParent.getFriends().iterator().next().getName());
   }
-
 }

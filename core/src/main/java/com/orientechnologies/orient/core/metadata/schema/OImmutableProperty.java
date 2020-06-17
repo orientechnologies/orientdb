@@ -1,61 +1,72 @@
 /*
-  *
-  *  *  Copyright 2010-2016 OrientDB LTD (http://orientdb.com)
-  *  *
-  *  *  Licensed under the Apache License, Version 2.0 (the "License");
-  *  *  you may not use this file except in compliance with the License.
-  *  *  You may obtain a copy of the License at
-  *  *
-  *  *       http://www.apache.org/licenses/LICENSE-2.0
-  *  *
-  *  *  Unless required by applicable law or agreed to in writing, software
-  *  *  distributed under the License is distributed on an "AS IS" BASIS,
-  *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-  *  *  See the License for the specific language governing permissions and
-  *  *  limitations under the License.
-  *  *
-  *  * For more information: http://orientdb.com
-  *
-  */
+ *
+ *  *  Copyright 2010-2016 OrientDB LTD (http://orientdb.com)
+ *  *
+ *  *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  *  you may not use this file except in compliance with the License.
+ *  *  You may obtain a copy of the License at
+ *  *
+ *  *       http://www.apache.org/licenses/LICENSE-2.0
+ *  *
+ *  *  Unless required by applicable law or agreed to in writing, software
+ *  *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  *  See the License for the specific language governing permissions and
+ *  *  limitations under the License.
+ *  *
+ *  * For more information: http://orientdb.com
+ *
+ */
 package com.orientechnologies.orient.core.metadata.schema;
 
 import com.orientechnologies.orient.core.collate.OCollate;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.index.OIndexDefinition;
-import com.orientechnologies.orient.core.metadata.schema.validation.*;
+import com.orientechnologies.orient.core.metadata.schema.validation.ValidationBinaryComparable;
+import com.orientechnologies.orient.core.metadata.schema.validation.ValidationCollectionComparable;
+import com.orientechnologies.orient.core.metadata.schema.validation.ValidationLinkbagComparable;
+import com.orientechnologies.orient.core.metadata.schema.validation.ValidationMapComparable;
+import com.orientechnologies.orient.core.metadata.schema.validation.ValidationStringComparable;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-
-import java.util.*;
+import java.util.Calendar;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * @author Andrey Lomakin (a.lomakin-at-orientdb.com)
  * @since 10/21/14
  */
 public class OImmutableProperty implements OProperty {
-  private final String              name;
-  private final String              fullName;
-  private final OType               type;
-  private final String              description;
+  private final String name;
+  private final String fullName;
+  private final OType type;
+  private final String description;
 
   // do not make it volatile it is already thread safe.
-  private OClass                    linkedClass = null;
+  private OClass linkedClass = null;
 
-  private final String              linkedClassName;
+  private final String linkedClassName;
 
-  private final OType               linkedType;
-  private final boolean             notNull;
-  private final OCollate            collate;
-  private final boolean             mandatory;
-  private final String              min;
-  private final String              max;
-  private final String              defaultValue;
-  private final String              regexp;
+  private final OType linkedType;
+  private final boolean notNull;
+  private final OCollate collate;
+  private final boolean mandatory;
+  private final String min;
+  private final String max;
+  private final String defaultValue;
+  private final String regexp;
   private final Map<String, String> customProperties;
-  private final OClass              owner;
-  private final Integer             id;
-  private final boolean             readOnly;
-  private final Comparable<Object>  minComparable;
-  private final Comparable<Object>  maxComparable;
+  private final OClass owner;
+  private final Integer id;
+  private final boolean readOnly;
+  private final Comparable<Object> minComparable;
+  private final Comparable<Object> maxComparable;
 
   public OImmutableProperty(OProperty property, OImmutableClass owner) {
     name = property.getName();
@@ -63,10 +74,8 @@ public class OImmutableProperty implements OProperty {
     type = property.getType();
     description = property.getDescription();
 
-    if (property.getLinkedClass() != null)
-      linkedClassName = property.getLinkedClass().getName();
-    else
-      linkedClassName = null;
+    if (property.getLinkedClass() != null) linkedClassName = property.getLinkedClass().getName();
+    else linkedClassName = null;
 
     linkedType = property.getLinkedType();
     notNull = property.isNotNull();
@@ -78,8 +87,7 @@ public class OImmutableProperty implements OProperty {
     regexp = property.getRegexp();
     customProperties = new HashMap<String, String>();
 
-    for (String key : property.getCustomKeys())
-      customProperties.put(key, property.getCustom(key));
+    for (String key : property.getCustomKeys()) customProperties.put(key, property.getCustom(key));
 
     this.owner = owner;
     id = property.getId();
@@ -90,21 +98,29 @@ public class OImmutableProperty implements OProperty {
         minComparable = new ValidationStringComparable((Integer) OType.convert(min, Integer.class));
       else if (type.equals(OType.BINARY))
         minComparable = new ValidationBinaryComparable((Integer) OType.convert(min, Integer.class));
-      else if (type.equals(OType.DATE) || type.equals(OType.BYTE) || type.equals(OType.SHORT) || type.equals(OType.INTEGER)
-          || type.equals(OType.LONG) || type.equals(OType.FLOAT) || type.equals(OType.DOUBLE) || type.equals(OType.DECIMAL)
+      else if (type.equals(OType.DATE)
+          || type.equals(OType.BYTE)
+          || type.equals(OType.SHORT)
+          || type.equals(OType.INTEGER)
+          || type.equals(OType.LONG)
+          || type.equals(OType.FLOAT)
+          || type.equals(OType.DOUBLE)
+          || type.equals(OType.DECIMAL)
           || type.equals(OType.DATETIME))
         minComparable = (Comparable<Object>) OType.convert(min, type.getDefaultJavaType());
-      else if (type.equals(OType.EMBEDDEDLIST) || type.equals(OType.EMBEDDEDSET) || type.equals(OType.LINKLIST)
+      else if (type.equals(OType.EMBEDDEDLIST)
+          || type.equals(OType.EMBEDDEDSET)
+          || type.equals(OType.LINKLIST)
           || type.equals(OType.LINKSET))
-        minComparable = new ValidationCollectionComparable((Integer) OType.convert(min, Integer.class));
+        minComparable =
+            new ValidationCollectionComparable((Integer) OType.convert(min, Integer.class));
       else if (type.equals(OType.LINKBAG))
-        minComparable = new ValidationLinkbagComparable((Integer) OType.convert(min, Integer.class));
+        minComparable =
+            new ValidationLinkbagComparable((Integer) OType.convert(min, Integer.class));
       else if (type.equals(OType.EMBEDDEDMAP) || type.equals(OType.LINKMAP))
         minComparable = new ValidationMapComparable((Integer) OType.convert(min, Integer.class));
-      else
-        minComparable = null;
-    } else
-      minComparable = null;
+      else minComparable = null;
+    } else minComparable = null;
 
     if (max != null) {
       if (type.equals(OType.STRING))
@@ -119,18 +135,27 @@ public class OImmutableProperty implements OProperty {
         cal.add(Calendar.DAY_OF_MONTH, 1);
         maxDate = new Date(cal.getTime().getTime() - 1);
         maxComparable = (Comparable) maxDate;
-      } else if (type.equals(OType.BYTE) || type.equals(OType.SHORT) || type.equals(OType.INTEGER) || type.equals(OType.LONG)
-          || type.equals(OType.FLOAT) || type.equals(OType.DOUBLE) || type.equals(OType.DECIMAL) || type.equals(OType.DATETIME))
+      } else if (type.equals(OType.BYTE)
+          || type.equals(OType.SHORT)
+          || type.equals(OType.INTEGER)
+          || type.equals(OType.LONG)
+          || type.equals(OType.FLOAT)
+          || type.equals(OType.DOUBLE)
+          || type.equals(OType.DECIMAL)
+          || type.equals(OType.DATETIME))
         maxComparable = (Comparable<Object>) OType.convert(max, type.getDefaultJavaType());
-      else if (type.equals(OType.EMBEDDEDLIST) || type.equals(OType.EMBEDDEDSET) || type.equals(OType.LINKLIST)
+      else if (type.equals(OType.EMBEDDEDLIST)
+          || type.equals(OType.EMBEDDEDSET)
+          || type.equals(OType.LINKLIST)
           || type.equals(OType.LINKSET))
-        maxComparable = new ValidationCollectionComparable((Integer) OType.convert(max, Integer.class));
+        maxComparable =
+            new ValidationCollectionComparable((Integer) OType.convert(max, Integer.class));
       else if (type.equals(OType.LINKBAG))
-        maxComparable = new ValidationLinkbagComparable((Integer) OType.convert(max, Integer.class));
+        maxComparable =
+            new ValidationLinkbagComparable((Integer) OType.convert(max, Integer.class));
       else if (type.equals(OType.EMBEDDEDMAP) || type.equals(OType.LINKMAP))
         maxComparable = new ValidationMapComparable((Integer) OType.convert(max, Integer.class));
-      else
-        maxComparable = null;
+      else maxComparable = null;
     } else {
       maxComparable = null;
     }
@@ -145,7 +170,6 @@ public class OImmutableProperty implements OProperty {
   public String getFullName() {
     return fullName;
   }
-  
 
   @Override
   public OProperty setName(String iName) {
@@ -156,7 +180,7 @@ public class OImmutableProperty implements OProperty {
   public String getDescription() {
     return description;
   }
-  
+
   @Override
   public OProperty setDescription(String iDescription) {
     throw new UnsupportedOperationException();
@@ -174,11 +198,9 @@ public class OImmutableProperty implements OProperty {
 
   @Override
   public OClass getLinkedClass() {
-    if (linkedClassName == null)
-      return null;
+    if (linkedClassName == null) return null;
 
-    if (linkedClass != null)
-      return linkedClass;
+    if (linkedClass != null) return linkedClass;
 
     OSchema schema = ((OImmutableClass) owner).getSchema();
     linkedClass = schema.getClass(linkedClassName);
@@ -309,10 +331,8 @@ public class OImmutableProperty implements OProperty {
   @Override
   public OIndex getIndex() {
     Set<OIndex> indexes = owner.getInvolvedIndexes(name);
-    if (indexes != null && !indexes.isEmpty())
-      return indexes.iterator().next();
+    if (indexes != null && !indexes.isEmpty()) return indexes.iterator().next();
     return null;
-
   }
 
   @Override
@@ -321,8 +341,7 @@ public class OImmutableProperty implements OProperty {
     final List<OIndex> indexList = new LinkedList<OIndex>();
     for (final OIndex index : indexes) {
       final OIndexDefinition indexDefinition = index.getDefinition();
-      if (indexDefinition.getFields().contains(name))
-        indexList.add(index);
+      if (indexDefinition.getFields().contains(name)) indexList.add(index);
     }
 
     return indexList;
@@ -380,36 +399,35 @@ public class OImmutableProperty implements OProperty {
 
   @Override
   public Object get(ATTRIBUTES attribute) {
-    if (attribute == null)
-      throw new IllegalArgumentException("attribute is null");
+    if (attribute == null) throw new IllegalArgumentException("attribute is null");
 
     switch (attribute) {
-    case LINKEDCLASS:
-      return getLinkedClass();
-    case LINKEDTYPE:
-      return getLinkedType();
-    case MIN:
-      return getMin();
-    case MANDATORY:
-      return isMandatory();
-    case READONLY:
-      return isReadonly();
-    case MAX:
-      return getMax();
-    case DEFAULT:
-      return getDefaultValue();
-    case NAME:
-      return getName();
-    case NOTNULL:
-      return isNotNull();
-    case REGEXP:
-      return getRegexp();
-    case TYPE:
-      return getType();
-    case COLLATE:
-      return getCollate();
-    case DESCRIPTION:
-      return getDescription();
+      case LINKEDCLASS:
+        return getLinkedClass();
+      case LINKEDTYPE:
+        return getLinkedType();
+      case MIN:
+        return getMin();
+      case MANDATORY:
+        return isMandatory();
+      case READONLY:
+        return isReadonly();
+      case MAX:
+        return getMax();
+      case DEFAULT:
+        return getDefaultValue();
+      case NAME:
+        return getName();
+      case NOTNULL:
+        return isNotNull();
+      case REGEXP:
+        return getRegexp();
+      case TYPE:
+        return getType();
+      case COLLATE:
+        return getCollate();
+      case DESCRIPTION:
+        return getDescription();
     }
 
     throw new IllegalArgumentException("Cannot find attribute '" + attribute + "'");
@@ -435,18 +453,13 @@ public class OImmutableProperty implements OProperty {
 
   @Override
   public boolean equals(final Object obj) {
-    if (this == obj)
-      return true;
-    if (!super.equals(obj))
-      return false;
-    if (!OProperty.class.isAssignableFrom(obj.getClass()))
-      return false;
+    if (this == obj) return true;
+    if (!super.equals(obj)) return false;
+    if (!OProperty.class.isAssignableFrom(obj.getClass())) return false;
     OProperty other = (OProperty) obj;
     if (owner == null) {
-      if (other.getOwnerClass() != null)
-        return false;
-    } else if (!owner.equals(other.getOwnerClass()))
-      return false;
+      if (other.getOwnerClass() != null) return false;
+    } else if (!owner.equals(other.getOwnerClass())) return false;
     return true;
   }
 

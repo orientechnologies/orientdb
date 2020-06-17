@@ -1,16 +1,19 @@
 package com.orientechnologies.orient.core.metadata.schema;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
+
+
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.exception.OSchemaException;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
+import java.util.Arrays;
+import java.util.List;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-
-import java.util.Arrays;
-import java.util.List;
-
-import static org.junit.Assert.*;
 
 public class TestMultiSuperClasses {
   private ODatabaseDocumentTx db;
@@ -20,8 +23,7 @@ public class TestMultiSuperClasses {
     db = new ODatabaseDocumentTx("memory:" + TestMultiSuperClasses.class.getSimpleName());
     if (db.exists()) {
       db.open("admin", "admin");
-    } else
-      db.create();
+    } else db.create();
   }
 
   @After
@@ -118,7 +120,8 @@ public class TestMultiSuperClasses {
     assertTrue(cClass.isSubClassOf(bClass));
   }
 
-  @Test(expected = OSchemaException.class)//, expectedExceptionsMessageRegExp = "(?s).*recursion.*"
+  @Test(
+      expected = OSchemaException.class) // , expectedExceptionsMessageRegExp = "(?s).*recursion.*"
   // )
   public void testPreventionOfCycles() {
     final OSchema oSchema = db.getMetadata().getSchema();
@@ -140,7 +143,8 @@ public class TestMultiSuperClasses {
     assertTrue(cClass.existsProperty("property"));
   }
 
-  @Test(expected = OSchemaException.class)//}, expectedExceptionsMessageRegExp = "(?s).*conflict.*")
+  @Test(
+      expected = OSchemaException.class) // }, expectedExceptionsMessageRegExp = "(?s).*conflict.*")
   public void testParametersImpactBadScenario() {
     final OSchema oSchema = db.getMetadata().getSchema();
     OClass aClass = oSchema.createAbstractClass("impactBadA");

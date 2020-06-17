@@ -7,7 +7,6 @@ import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.sql.executor.OResult;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -106,7 +105,8 @@ public class OAndBlock extends OBooleanExpression {
     return result;
   }
 
-  public List<OBinaryCondition> getIndexedFunctionConditions(OClass iSchemaClass, ODatabaseDocumentInternal database) {
+  public List<OBinaryCondition> getIndexedFunctionConditions(
+      OClass iSchemaClass, ODatabaseDocumentInternal database) {
     if (subBlocks == null) {
       return null;
     }
@@ -130,8 +130,7 @@ public class OAndBlock extends OBooleanExpression {
       for (OAndBlock subAndItem : subFlattened) {
         if (first) {
           result.add(subAndItem);
-        } else {
-          ;
+        } else {;
           for (OAndBlock oldResultItem : oldResult) {
             OAndBlock block = new OAndBlock(-1);
             block.subBlocks.addAll(oldResultItem.subBlocks);
@@ -176,10 +175,8 @@ public class OAndBlock extends OBooleanExpression {
 
   @Override
   public boolean equals(Object o) {
-    if (this == o)
-      return true;
-    if (o == null || getClass() != o.getClass())
-      return false;
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
 
     OAndBlock andBlock = (OAndBlock) o;
 

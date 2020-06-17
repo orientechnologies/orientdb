@@ -27,17 +27,14 @@ import com.orientechnologies.orient.core.metadata.OMetadataInternal;
 import com.orientechnologies.orient.core.metadata.security.OUser;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
-import org.junit.Assert;
-import org.junit.Test;
-
 import java.io.File;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.List;
+import org.junit.Assert;
+import org.junit.Test;
 
-/**
- * Created by Enrico Risa on 25/11/15.
- */
+/** Created by Enrico Risa on 25/11/15. */
 public class OCommandCacheTest {
 
   @Test
@@ -45,7 +42,8 @@ public class OCommandCacheTest {
 
     OGlobalConfiguration.COMMAND_CACHE_ENABLED.setValue(true);
     OGlobalConfiguration.COMMAND_CACHE_MIN_EXECUTION_TIME.setValue(1);
-    ODatabaseDocument db = new ODatabaseDocumentTx("memory:" + OCommandCacheTest.class.getSimpleName());
+    ODatabaseDocument db =
+        new ODatabaseDocumentTx("memory:" + OCommandCacheTest.class.getSimpleName());
     db.create();
 
     try {
@@ -55,12 +53,14 @@ public class OCommandCacheTest {
         ODocument doc = new ODocument("OCommandCache");
         db.save(doc);
       }
-      OSQLSynchQuery<List<ODocument>> query = new OSQLSynchQuery<List<ODocument>>("select from OCommandCache");
+      OSQLSynchQuery<List<ODocument>> query =
+          new OSQLSynchQuery<List<ODocument>>("select from OCommandCache");
       query.setCacheableResult(true);
       List<ODocument> results = db.query(query);
 
-      OCommandCache commandCache = ((OMetadataInternal)db.getMetadata()).getCommandCache();
-      Collection cachedResults = (Collection) commandCache.get(new OUser("admin"), "select from OCommandCache", -1);
+      OCommandCache commandCache = ((OMetadataInternal) db.getMetadata()).getCommandCache();
+      Collection cachedResults =
+          (Collection) commandCache.get(new OUser("admin"), "select from OCommandCache", -1);
 
       Assert.assertNotNull(cachedResults);
       Assert.assertEquals(results.size(), cachedResults.size());
@@ -75,21 +75,26 @@ public class OCommandCacheTest {
     OGlobalConfiguration.COMMAND_CACHE_ENABLED.setValue(true);
     OGlobalConfiguration.COMMAND_CACHE_MIN_EXECUTION_TIME.setValue(1);
     OGlobalConfiguration.COMMAND_CACHE_MAX_RESULSET_SIZE.setValue(10);
-    OGlobalConfiguration.COMMAND_CACHE_EVICT_STRATEGY.setValue(OCommandCache.STRATEGY.INVALIDATE_ALL);
+    OGlobalConfiguration.COMMAND_CACHE_EVICT_STRATEGY.setValue(
+        OCommandCache.STRATEGY.INVALIDATE_ALL);
 
     String buildDirectory = System.getProperty("buildDirectory");
-    if (buildDirectory == null)
-      buildDirectory = ".";
+    if (buildDirectory == null) buildDirectory = ".";
 
-    String dbPath = "plocal:" + buildDirectory + File.separator + OCommandCacheTest.class.getSimpleName();
+    String dbPath =
+        "plocal:" + buildDirectory + File.separator + OCommandCacheTest.class.getSimpleName();
     ODatabaseDocument db = new ODatabaseDocumentTx(dbPath);
 
     db.create();
 
     try {
 
-      File commandCacheCfg = new File(
-          buildDirectory + File.separator + OCommandCacheTest.class.getSimpleName() + "/command-cache.json");
+      File commandCacheCfg =
+          new File(
+              buildDirectory
+                  + File.separator
+                  + OCommandCacheTest.class.getSimpleName()
+                  + "/command-cache.json");
       final String configurationContent = OIOUtils.readFileAsString(commandCacheCfg);
       ODocument cfg = new ODocument().fromJSON(configurationContent);
 
@@ -99,9 +104,15 @@ public class OCommandCacheTest {
       int minExecutionTime = cfg.field("minExecutionTime");
       int maxResultsetSize = cfg.field("maxResultsetSize");
       Assert.assertEquals(enabled, OGlobalConfiguration.COMMAND_CACHE_ENABLED.getValue());
-      Assert.assertEquals(evictStrategy.toString(), OGlobalConfiguration.COMMAND_CACHE_EVICT_STRATEGY.getValue().toString());
-      Assert.assertEquals((Object) minExecutionTime, OGlobalConfiguration.COMMAND_CACHE_MIN_EXECUTION_TIME.getValue());
-      Assert.assertEquals((Object) maxResultsetSize, OGlobalConfiguration.COMMAND_CACHE_MAX_RESULSET_SIZE.getValue());
+      Assert.assertEquals(
+          evictStrategy.toString(),
+          OGlobalConfiguration.COMMAND_CACHE_EVICT_STRATEGY.getValue().toString());
+      Assert.assertEquals(
+          (Object) minExecutionTime,
+          OGlobalConfiguration.COMMAND_CACHE_MIN_EXECUTION_TIME.getValue());
+      Assert.assertEquals(
+          (Object) maxResultsetSize,
+          OGlobalConfiguration.COMMAND_CACHE_MAX_RESULSET_SIZE.getValue());
 
     } catch (IOException e) {
       Assert.fail("Cannot find file configuration");

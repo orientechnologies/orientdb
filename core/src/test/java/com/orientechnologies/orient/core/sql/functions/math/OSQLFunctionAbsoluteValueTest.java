@@ -1,21 +1,23 @@
 package com.orientechnologies.orient.core.sql.functions.math;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
+
+
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
-import org.junit.Before;
-import org.junit.Test;
-
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.List;
-
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.Assert.*;
+import org.junit.Before;
+import org.junit.Test;
 
 /**
- * Tests the absolute value function.  The key is that the mathematical abs
- * function is correctly applied and that values retain their types.
+ * Tests the absolute value function. The key is that the mathematical abs function is correctly
+ * applied and that values retain their types.
  *
  * @author Michael MacFadden
  */
@@ -36,14 +38,14 @@ public class OSQLFunctionAbsoluteValueTest {
 
   @Test
   public void testNull() {
-    function.execute(null, null, null, new Object[] { null }, null);
+    function.execute(null, null, null, new Object[] {null}, null);
     Object result = function.getResult();
     assertNull(result);
   }
 
   @Test
   public void testPositiveInteger() {
-    function.execute(null, null, null, new Object[] { 10 }, null);
+    function.execute(null, null, null, new Object[] {10}, null);
     Object result = function.getResult();
     assertTrue(result instanceof Integer);
     assertEquals(result, 10);
@@ -51,7 +53,7 @@ public class OSQLFunctionAbsoluteValueTest {
 
   @Test
   public void testNegativeInteger() {
-    function.execute(null, null, null, new Object[] { -10 }, null);
+    function.execute(null, null, null, new Object[] {-10}, null);
     Object result = function.getResult();
     assertTrue(result instanceof Integer);
     assertEquals(result, 10);
@@ -59,7 +61,7 @@ public class OSQLFunctionAbsoluteValueTest {
 
   @Test
   public void testPositiveLong() {
-    function.execute(null, null, null, new Object[] { 10L }, null);
+    function.execute(null, null, null, new Object[] {10L}, null);
     Object result = function.getResult();
     assertTrue(result instanceof Long);
     assertEquals(result, 10L);
@@ -67,7 +69,7 @@ public class OSQLFunctionAbsoluteValueTest {
 
   @Test
   public void testNegativeLong() {
-    function.execute(null, null, null, new Object[] { -10L }, null);
+    function.execute(null, null, null, new Object[] {-10L}, null);
     Object result = function.getResult();
     assertTrue(result instanceof Long);
     assertEquals(result, 10L);
@@ -75,7 +77,7 @@ public class OSQLFunctionAbsoluteValueTest {
 
   @Test
   public void testPositiveShort() {
-    function.execute(null, null, null, new Object[] { (short) 10 }, null);
+    function.execute(null, null, null, new Object[] {(short) 10}, null);
     Object result = function.getResult();
     assertTrue(result instanceof Short);
     assertEquals(result, (short) 10);
@@ -83,7 +85,7 @@ public class OSQLFunctionAbsoluteValueTest {
 
   @Test
   public void testNegativeShort() {
-    function.execute(null, null, null, new Object[] { (short) -10 }, null);
+    function.execute(null, null, null, new Object[] {(short) -10}, null);
     Object result = function.getResult();
     assertTrue(result instanceof Short);
     assertEquals(result, (short) 10);
@@ -91,7 +93,7 @@ public class OSQLFunctionAbsoluteValueTest {
 
   @Test
   public void testPositiveDouble() {
-    function.execute(null, null, null, new Object[] { 10.5D }, null);
+    function.execute(null, null, null, new Object[] {10.5D}, null);
     Object result = function.getResult();
     assertTrue(result instanceof Double);
     assertEquals(result, 10.5D);
@@ -99,7 +101,7 @@ public class OSQLFunctionAbsoluteValueTest {
 
   @Test
   public void testNegativeDouble() {
-    function.execute(null, null, null, new Object[] { -10.5D }, null);
+    function.execute(null, null, null, new Object[] {-10.5D}, null);
     Object result = function.getResult();
     assertTrue(result instanceof Double);
     assertEquals(result, 10.5D);
@@ -107,7 +109,7 @@ public class OSQLFunctionAbsoluteValueTest {
 
   @Test
   public void testPositiveFloat() {
-    function.execute(null, null, null, new Object[] { 10.5F }, null);
+    function.execute(null, null, null, new Object[] {10.5F}, null);
     Object result = function.getResult();
     assertTrue(result instanceof Float);
     assertEquals(result, 10.5F);
@@ -115,7 +117,7 @@ public class OSQLFunctionAbsoluteValueTest {
 
   @Test
   public void testNegativeFloat() {
-    function.execute(null, null, null, new Object[] { -10.5F }, null);
+    function.execute(null, null, null, new Object[] {-10.5F}, null);
     Object result = function.getResult();
     assertTrue(result instanceof Float);
     assertEquals(result, 10.5F);
@@ -123,7 +125,7 @@ public class OSQLFunctionAbsoluteValueTest {
 
   @Test
   public void testPositiveBigDecimal() {
-    function.execute(null, null, null, new Object[] { new BigDecimal(10.5D) }, null);
+    function.execute(null, null, null, new Object[] {new BigDecimal(10.5D)}, null);
     Object result = function.getResult();
     assertTrue(result instanceof BigDecimal);
     assertEquals(result, new BigDecimal(10.5D));
@@ -131,7 +133,7 @@ public class OSQLFunctionAbsoluteValueTest {
 
   @Test
   public void testNegativeBigDecimal() {
-    function.execute(null, null, null, new Object[] { new BigDecimal(-10.5D) }, null);
+    function.execute(null, null, null, new Object[] {new BigDecimal(-10.5D)}, null);
     Object result = function.getResult();
     assertTrue(result instanceof BigDecimal);
     assertEquals(result, new BigDecimal(10.5D));
@@ -139,7 +141,7 @@ public class OSQLFunctionAbsoluteValueTest {
 
   @Test
   public void testPositiveBigInteger() {
-    function.execute(null, null, null, new Object[] { new BigInteger("10") }, null);
+    function.execute(null, null, null, new Object[] {new BigInteger("10")}, null);
     Object result = function.getResult();
     assertTrue(result instanceof BigInteger);
     assertEquals(result, new BigInteger("10"));
@@ -147,7 +149,7 @@ public class OSQLFunctionAbsoluteValueTest {
 
   @Test
   public void testNegativeBigInteger() {
-    function.execute(null, null, null, new Object[] { new BigInteger("-10") }, null);
+    function.execute(null, null, null, new Object[] {new BigInteger("-10")}, null);
     Object result = function.getResult();
     assertTrue(result instanceof BigInteger);
     assertEquals(result, new BigInteger("10"));
@@ -155,7 +157,7 @@ public class OSQLFunctionAbsoluteValueTest {
 
   @Test(expected = IllegalArgumentException.class)
   public void testNonNumber() {
-    function.execute(null, null, null, new Object[] { "abc" }, null);
+    function.execute(null, null, null, new Object[] {"abc"}, null);
   }
 
   @Test

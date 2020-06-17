@@ -17,16 +17,22 @@ import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.orientechnologies.orient.core.storage.OStorage;
-import org.junit.Assert;
-import org.junit.Ignore;
-import org.junit.Test;
-
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
-import java.util.concurrent.*;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
+import org.junit.Assert;
+import org.junit.Ignore;
+import org.junit.Test;
 
 /**
  * @author Andrey Lomakin (a.lomakin-at-orientdb.com) <lomakin.andrey@gmail.com>.
@@ -40,13 +46,14 @@ public class StorageBackupMTStateTest {
 
   private final OReadersWriterSpinLock flowLock = new OReadersWriterSpinLock();
 
-  private final ConcurrentMap<String, AtomicInteger> classInstancesCounters = new ConcurrentHashMap<String, AtomicInteger>();
+  private final ConcurrentMap<String, AtomicInteger> classInstancesCounters =
+      new ConcurrentHashMap<String, AtomicInteger>();
 
   private final AtomicInteger classCounter = new AtomicInteger();
 
   private final String CLASS_PREFIX = "StorageBackupMTStateTest";
   private String dbURL;
-  private File   backupDir;
+  private File backupDir;
   private volatile boolean stop = false;
 
   private volatile OPartitionedDatabasePool pool;
@@ -55,20 +62,22 @@ public class StorageBackupMTStateTest {
   @Ignore
   public void testRun() throws Exception {
     String buildDirectory = System.getProperty("buildDirectory", ".");
-    String dbDirectory = buildDirectory + File.separator + StorageBackupMTStateTest.class.getSimpleName();
+    String dbDirectory =
+        buildDirectory + File.separator + StorageBackupMTStateTest.class.getSimpleName();
 
     System.out.println("Clean up old data");
 
     OFileUtils.deleteRecursively(new File(dbDirectory));
 
-    final String backedUpDbDirectory = buildDirectory + File.separator + StorageBackupMTStateTest.class.getSimpleName() + "BackUp";
+    final String backedUpDbDirectory =
+        buildDirectory + File.separator + StorageBackupMTStateTest.class.getSimpleName() + "BackUp";
     OFileUtils.deleteRecursively(new File(backedUpDbDirectory));
 
-    backupDir = new File(buildDirectory, StorageBackupMTStateTest.class.getSimpleName() + "BackupDir");
+    backupDir =
+        new File(buildDirectory, StorageBackupMTStateTest.class.getSimpleName() + "BackupDir");
     OFileUtils.deleteRecursively(backupDir);
 
-    if (!backupDir.exists())
-      Assert.assertTrue(backupDir.mkdirs());
+    if (!backupDir.exists()) Assert.assertTrue(backupDir.mkdirs());
 
     dbURL = "plocal:" + dbDirectory;
 
@@ -90,8 +99,10 @@ public class StorageBackupMTStateTest {
     System.out.println("Start data modification");
     final ExecutorService executor = Executors.newFixedThreadPool(5);
     final ScheduledExecutorService backupExecutor = Executors.newSingleThreadScheduledExecutor();
-    final ScheduledExecutorService classCreatorExecutor = Executors.newSingleThreadScheduledExecutor();
-    final ScheduledExecutorService classDeleterExecutor = Executors.newSingleThreadScheduledExecutor();
+    final ScheduledExecutorService classCreatorExecutor =
+        Executors.newSingleThreadScheduledExecutor();
+    final ScheduledExecutorService classDeleterExecutor =
+        Executors.newSingleThreadScheduledExecutor();
 
     classDeleterExecutor.scheduleWithFixedDelay(new ClassDeleter(), 10, 10, TimeUnit.MINUTES);
     backupExecutor.scheduleWithFixedDelay(new IncrementalBackupThread(), 5, 5, TimeUnit.MINUTES);
@@ -128,8 +139,7 @@ public class StorageBackupMTStateTest {
 
     System.out.println("Stop data threads");
 
-    for (Future<Void> future : futures)
-      future.get();
+    for (Future<Void> future : futures) future.get();
 
     System.out.println("All threads are stopped");
 
@@ -156,13 +166,18 @@ public class StorageBackupMTStateTest {
 
     System.out.println("Compare databases");
 
-    final ODatabaseCompare compare = new ODatabaseCompare("plocal:" + dbDirectory, "plocal:" + backedUpDbDirectory, "admin",
-        "admin", new OCommandOutputListener() {
-      @Override
-      public void onMessage(String iText) {
-        System.out.println(iText);
-      }
-    });
+    final ODatabaseCompare compare =
+        new ODatabaseCompare(
+            "plocal:" + dbDirectory,
+            "plocal:" + backedUpDbDirectory,
+            "admin",
+            "admin",
+            new OCommandOutputListener() {
+              @Override
+              public void onMessage(String iText) {
+                System.out.println(iText);
+              }
+            });
 
     Assert.assertTrue(compare.compare());
 
@@ -186,7 +201,8 @@ public class StorageBackupMTStateTest {
     cls.createProperty("linkedDocuments", OType.LINKBAG);
 
     cls.createIndex(cls.getName() + "IdIndex", OClass.INDEX_TYPE.UNIQUE, "id");
-    cls.createIndex(cls.getName() + "IntValueIndex", OClass.INDEX_TYPE.NOTUNIQUE_HASH_INDEX, "intValue");
+    cls.createIndex(
+        cls.getName() + "IntValueIndex", OClass.INDEX_TYPE.NOTUNIQUE_HASH_INDEX, "intValue");
 
     classInstancesCounters.put(cls.getName(), new AtomicInteger());
 
@@ -296,8 +312,7 @@ public class StorageBackupMTStateTest {
       do {
         linkedClassName = CLASS_PREFIX + random.nextInt(classes);
 
-        if (linkedClassName.equalsIgnoreCase(className))
-          continue;
+        if (linkedClassName.equalsIgnoreCase(className)) continue;
 
         linkedClassCounter = classInstancesCounters.get(linkedClassName);
       } while (linkedClassCounter == null);
@@ -308,16 +323,19 @@ public class StorageBackupMTStateTest {
       long tCount = 0;
 
       while (linkedDocuments.size() < 5 && linkedDocuments.size() < linkedClassCount) {
-        List<ODocument> docs = db.query(new OSQLSynchQuery<ODocument>(
-            "select * from " + linkedClassName + " where id=" + random.nextInt(linkedClassCounter.get())));
+        List<ODocument> docs =
+            db.query(
+                new OSQLSynchQuery<ODocument>(
+                    "select * from "
+                        + linkedClassName
+                        + " where id="
+                        + random.nextInt(linkedClassCounter.get())));
 
-        if (docs.size() > 0)
-          linkedDocuments.add(docs.get(0));
+        if (docs.size() > 0) linkedDocuments.add(docs.get(0));
 
         tCount++;
 
-        if (tCount % 10 == 0)
-          linkedClassCount = db.countClass(linkedClassName);
+        if (tCount % 10 == 0) linkedClassCount = db.countClass(linkedClassName);
       }
 
       doc.field("linkedDocuments", linkedDocuments);
@@ -394,16 +412,19 @@ public class StorageBackupMTStateTest {
                 className = CLASS_PREFIX + random.nextInt(classes);
                 classCounter = classInstancesCounters.get(className);
 
-                if (classCounter != null)
-                  countClasses = databaseDocumentTx.countClass(className);
-                else
-                  countClasses = 0;
+                if (classCounter != null) countClasses = databaseDocumentTx.countClass(className);
+                else countClasses = 0;
               } while (classCounter == null || countClasses == 0);
 
               boolean deleted = false;
               do {
-                List<ODocument> docs = databaseDocumentTx.query(new OSQLSynchQuery<ODocument>(
-                    "select * from " + className + " where id=" + random.nextInt(classCounter.get())));
+                List<ODocument> docs =
+                    databaseDocumentTx.query(
+                        new OSQLSynchQuery<ODocument>(
+                            "select * from "
+                                + className
+                                + " where id="
+                                + random.nextInt(classCounter.get())));
 
                 if (docs.size() > 0) {
                   final ODocument document = docs.get(0);

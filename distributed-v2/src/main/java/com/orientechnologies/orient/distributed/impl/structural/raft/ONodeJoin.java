@@ -1,18 +1,17 @@
 package com.orientechnologies.orient.distributed.impl.structural.raft;
 
+import static com.orientechnologies.orient.distributed.impl.coordinator.OCoordinateMessagesFactory.NODE_JOIN_REQUEST;
+
+
 import com.orientechnologies.orient.core.db.config.ONodeIdentity;
 import com.orientechnologies.orient.distributed.OrientDBDistributed;
 import com.orientechnologies.orient.distributed.impl.coordinator.transaction.OSessionOperationId;
-import com.orientechnologies.orient.distributed.impl.structural.OReadStructuralSharedConfiguration;
 import com.orientechnologies.orient.distributed.impl.structural.OStructuralNodeConfiguration;
 import com.orientechnologies.orient.distributed.impl.structural.OStructuralSharedConfiguration;
-
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
 import java.util.Optional;
-
-import static com.orientechnologies.orient.distributed.impl.coordinator.OCoordinateMessagesFactory.NODE_JOIN_REQUEST;
 
 public class ONodeJoin implements ORaftOperation {
   private ONodeIdentity nodeIdentity;
@@ -21,13 +20,12 @@ public class ONodeJoin implements ORaftOperation {
     this.nodeIdentity = identity;
   }
 
-  public ONodeJoin() {
-
-  }
+  public ONodeJoin() {}
 
   @Override
   public void apply(OrientDBDistributed context) {
-    OStructuralSharedConfiguration config = context.getStructuralConfiguration().modifySharedConfiguration();
+    OStructuralSharedConfiguration config =
+        context.getStructuralConfiguration().modifySharedConfiguration();
     config.addNode(new OStructuralNodeConfiguration(nodeIdentity));
     context.getStructuralConfiguration().update(config);
   }

@@ -3,15 +3,16 @@ package com.orientechnologies.orient.core.storage.impl.local.paginated;
 import com.orientechnologies.common.serialization.types.OIntegerSerializer;
 import com.orientechnologies.common.serialization.types.OLongSerializer;
 import com.orientechnologies.common.serialization.types.OStringSerializer;
-import com.orientechnologies.orient.core.db.*;
+import com.orientechnologies.orient.core.db.ODatabase;
+import com.orientechnologies.orient.core.db.ODatabaseInternal;
+import com.orientechnologies.orient.core.db.ODatabaseType;
+import com.orientechnologies.orient.core.db.OrientDB;
+import com.orientechnologies.orient.core.db.OrientDBConfig;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.cache.OWriteCache;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
-import org.junit.Assert;
-import org.junit.Test;
-
 import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
@@ -19,6 +20,8 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+import org.junit.Assert;
+import org.junit.Test;
 
 public class InvalidRemovedFileIdsIT {
 
@@ -30,7 +33,8 @@ public class InvalidRemovedFileIdsIT {
 
     deleteDirectory(new File(dbPath));
 
-    final OrientDBConfig config = OrientDBConfig.builder().addAttribute(ODatabase.ATTRIBUTES.MINIMUMCLUSTERS, 1).build();
+    final OrientDBConfig config =
+        OrientDBConfig.builder().addAttribute(ODatabase.ATTRIBUTES.MINIMUMCLUSTERS, 1).build();
 
     OrientDB orientDB = new OrientDB("plocal:" + buildDirectory, config);
     orientDB.create(dbName, ODatabaseType.PLOCAL);
@@ -49,9 +53,10 @@ public class InvalidRemovedFileIdsIT {
     db.close();
     orientDB.close();
 
-    //create file map of v1 binary format because but with incorrect negative file ids is present only there
+    // create file map of v1 binary format because but with incorrect negative file ids is present
+    // only there
     final RandomAccessFile fileMap = new RandomAccessFile(new File(dbPath, "name_id_map.cm"), "rw");
-    //write all existing files so map will be regenerated on open
+    // write all existing files so map will be regenerated on open
     for (Map.Entry<String, Integer> entry : filesWithIntIds.entrySet()) {
       writeNameIdEntry(fileMap, entry.getKey(), entry.getValue());
     }
@@ -99,12 +104,14 @@ public class InvalidRemovedFileIdsIT {
     final Long c2_cpm_id = files.get("c2.cpm");
     Assert.assertNotNull(c2_cpm_id);
     Assert.assertTrue(ids.add(c2_cpm_id));
-    Assert.assertEquals(200, writeCache.internalFileId(c2_cpm_id)); //check that updated file map has been read
+    Assert.assertEquals(
+        200, writeCache.internalFileId(c2_cpm_id)); // check that updated file map has been read
 
     final Long c2_pcl_id = files.get("c2.pcl");
     Assert.assertNotNull(c2_pcl_id);
     Assert.assertTrue(ids.add(c2_pcl_id));
-    Assert.assertEquals(400, writeCache.internalFileId(c2_pcl_id)); //check that updated file map has been read
+    Assert.assertEquals(
+        400, writeCache.internalFileId(c2_pcl_id)); // check that updated file map has been read
 
     final Long c3_cpm_id = files.get("c3.cpm");
     Assert.assertNotNull(c3_cpm_id);
@@ -130,13 +137,16 @@ public class InvalidRemovedFileIdsIT {
     orientDB.close();
   }
 
-  private static void writeNameIdEntry(RandomAccessFile file, String name, int fileId) throws IOException {
+  private static void writeNameIdEntry(RandomAccessFile file, String name, int fileId)
+      throws IOException {
     final int nameSize = OStringSerializer.INSTANCE.getObjectSize(name);
 
-    byte[] serializedRecord = new byte[OIntegerSerializer.INT_SIZE + nameSize + OLongSerializer.LONG_SIZE];
+    byte[] serializedRecord =
+        new byte[OIntegerSerializer.INT_SIZE + nameSize + OLongSerializer.LONG_SIZE];
     OIntegerSerializer.INSTANCE.serializeLiteral(nameSize, serializedRecord, 0);
     OStringSerializer.INSTANCE.serialize(name, serializedRecord, OIntegerSerializer.INT_SIZE);
-    OLongSerializer.INSTANCE.serializeLiteral(fileId, serializedRecord, OIntegerSerializer.INT_SIZE + nameSize);
+    OLongSerializer.INSTANCE.serializeLiteral(
+        fileId, serializedRecord, OIntegerSerializer.INT_SIZE + nameSize);
 
     file.write(serializedRecord);
   }
@@ -156,8 +166,6 @@ public class InvalidRemovedFileIdsIT {
 
         Assert.assertTrue(directory.delete());
       }
-
     }
   }
 }
-

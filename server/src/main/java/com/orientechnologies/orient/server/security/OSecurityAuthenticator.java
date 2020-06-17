@@ -19,15 +19,10 @@
  */
 package com.orientechnologies.orient.server.security;
 
-import javax.security.auth.Subject;
-
-//import com.orientechnologies.orient.core.record.impl.ODocument;
-//import com.orientechnologies.orient.server.OServer;
-//import com.orientechnologies.orient.server.config.OServerConfigurationManager;
 import com.orientechnologies.orient.server.config.OServerUserConfiguration;
-
 import java.util.HashMap;
 import java.util.Map;
+import javax.security.auth.Subject;
 
 /**
  * Provides an interface for creating security authenticators.
@@ -36,7 +31,8 @@ import java.util.Map;
  */
 public interface OSecurityAuthenticator extends OSecurityComponent {
   // Returns the actual username if successful, null otherwise.
-  // Some token-based authentication (e.g., SPNEGO tokens have the user's name embedded in the service ticket).
+  // Some token-based authentication (e.g., SPNEGO tokens have the user's name embedded in the
+  // service ticket).
   String authenticate(final String username, final String password);
 
   String getAuthenticationHeader(final String databaseName);

@@ -22,10 +22,10 @@ package com.orientechnologies.orient.server.distributed.task;
 import com.orientechnologies.orient.server.distributed.ODistributedException;
 
 /**
- * Exception thrown when a database is requested but it is older then the one owned by the requester.
- * 
+ * Exception thrown when a database is requested but it is older then the one owned by the
+ * requester.
+ *
  * @author Luca Garulli (l.garulli--at--orientdb.com)
- * 
  */
 public class ODatabaseIsOldException extends ODistributedException {
   public ODatabaseIsOldException(final ODatabaseIsOldException exception) {
@@ -38,8 +38,7 @@ public class ODatabaseIsOldException extends ODistributedException {
 
   @Override
   public boolean equals(Object obj) {
-    if (!(obj instanceof ODatabaseIsOldException))
-      return false;
+    if (!(obj instanceof ODatabaseIsOldException)) return false;
 
     return getMessage().equals(((ODatabaseIsOldException) obj).getMessage());
   }

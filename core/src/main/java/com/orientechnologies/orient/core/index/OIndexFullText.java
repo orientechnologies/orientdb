@@ -30,7 +30,6 @@ import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedSt
 import com.orientechnologies.orient.core.storage.ridbag.sbtree.OIndexRIDContainer;
 import com.orientechnologies.orient.core.storage.ridbag.sbtree.OIndexRIDContainerSBTree;
 import com.orientechnologies.orient.core.storage.ridbag.sbtree.OMixedIndexRIDContainer;
-
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -45,26 +44,43 @@ import java.util.concurrent.atomic.AtomicLong;
 @Deprecated
 public class OIndexFullText extends OIndexMultiValues {
 
-  private static final String  CONFIG_STOP_WORDS      = "stopWords";
-  private static final String  CONFIG_SEPARATOR_CHARS = "separatorChars";
-  private static final String  CONFIG_IGNORE_CHARS    = "ignoreChars";
-  private static final String  CONFIG_INDEX_RADIX     = "indexRadix";
-  private static final String  CONFIG_MIN_WORD_LEN    = "minWordLength";
-  private static final boolean DEF_INDEX_RADIX        = true;
-  private static final String  DEF_SEPARATOR_CHARS    = " \r\n\t:;,.|+*/\\=!?[]()";
-  private static final String  DEF_IGNORE_CHARS       = "'\"";
-  private static final String  DEF_STOP_WORDS         =
-      "the in a at as and or for his her " + "him this that what which while " + "up with be was were is";
-  private              boolean indexRadix;
-  private              String  separatorChars;
-  private              String  ignoreChars;
-  private              int     minWordLength;
+  private static final String CONFIG_STOP_WORDS = "stopWords";
+  private static final String CONFIG_SEPARATOR_CHARS = "separatorChars";
+  private static final String CONFIG_IGNORE_CHARS = "ignoreChars";
+  private static final String CONFIG_INDEX_RADIX = "indexRadix";
+  private static final String CONFIG_MIN_WORD_LEN = "minWordLength";
+  private static final boolean DEF_INDEX_RADIX = true;
+  private static final String DEF_SEPARATOR_CHARS = " \r\n\t:;,.|+*/\\=!?[]()";
+  private static final String DEF_IGNORE_CHARS = "'\"";
+  private static final String DEF_STOP_WORDS =
+      "the in a at as and or for his her "
+          + "him this that what which while "
+          + "up with be was were is";
+  private boolean indexRadix;
+  private String separatorChars;
+  private String ignoreChars;
+  private int minWordLength;
 
   private Set<String> stopWords;
 
-  public OIndexFullText(String name, String typeId, String algorithm, int version, OAbstractPaginatedStorage storage,
-      String valueContainerAlgorithm, ODocument metadata, int binaryFormatVersion) {
-    super(name, typeId, algorithm, version, storage, valueContainerAlgorithm, metadata, binaryFormatVersion);
+  public OIndexFullText(
+      String name,
+      String typeId,
+      String algorithm,
+      int version,
+      OAbstractPaginatedStorage storage,
+      String valueContainerAlgorithm,
+      ODocument metadata,
+      int binaryFormatVersion) {
+    super(
+        name,
+        typeId,
+        algorithm,
+        version,
+        storage,
+        valueContainerAlgorithm,
+        metadata,
+        binaryFormatVersion);
     acquireExclusiveLock();
     try {
       config();
@@ -75,8 +91,8 @@ public class OIndexFullText extends OIndexMultiValues {
   }
 
   /**
-   * Indexes a value and save the index. Splits the value in single words and index each one. Save of the index is responsibility of
-   * the caller.
+   * Indexes a value and save the index. Splits the value in single words and index each one. Save
+   * of the index is responsibility of the caller.
    */
   @Override
   public OIndexFullText put(Object key, final OIdentifiable value) {
@@ -125,29 +141,33 @@ public class OIndexFullText extends OIndexMultiValues {
     // SAVE THE INDEX ENTRY
     while (true) {
       try {
-        storage.updateIndexEntry(indexId, word, (oldValue, bonsayFileId) -> {
-          Set<OIdentifiable> result;
+        storage.updateIndexEntry(
+            indexId,
+            word,
+            (oldValue, bonsayFileId) -> {
+              Set<OIdentifiable> result;
 
-          if (refsc == null) {
-            // WORD NOT EXISTS: CREATE THE KEYWORD CONTAINER THE FIRST TIME THE WORD IS FOUND
-            if (ODefaultIndexFactory.SBTREE_BONSAI_VALUE_CONTAINER.equals(valueContainerAlgorithm)) {
-              if (binaryFormatVersion >= 13) {
-                result = new OMixedIndexRIDContainer(getName(), bonsayFileId);
+              if (refsc == null) {
+                // WORD NOT EXISTS: CREATE THE KEYWORD CONTAINER THE FIRST TIME THE WORD IS FOUND
+                if (ODefaultIndexFactory.SBTREE_BONSAI_VALUE_CONTAINER.equals(
+                    valueContainerAlgorithm)) {
+                  if (binaryFormatVersion >= 13) {
+                    result = new OMixedIndexRIDContainer(getName(), bonsayFileId);
+                  } else {
+                    result = new OIndexRIDContainer(getName(), true, bonsayFileId);
+                  }
+                } else {
+                  throw new IllegalStateException("MBRBTreeContainer is not supported any more");
+                }
               } else {
-                result = new OIndexRIDContainer(getName(), true, bonsayFileId);
+                result = refsc;
               }
-            } else {
-              throw new IllegalStateException("MBRBTreeContainer is not supported any more");
-            }
-          } else {
-            result = refsc;
-          }
 
-          // ADD THE CURRENT DOCUMENT AS REF FOR THAT WORD
-          result.add(singleValue);
+              // ADD THE CURRENT DOCUMENT AS REF FOR THAT WORD
+              result.add(singleValue);
 
-          return OIndexUpdateAction.changed(result);
-        });
+              return OIndexUpdateAction.changed(result);
+            });
 
         break;
       } catch (OInvalidIndexEngineIdException ignore) {
@@ -168,12 +188,11 @@ public class OIndexFullText extends OIndexMultiValues {
   }
 
   /**
-   * Splits passed in key on several words and remove records with keys equals to any item of split result and values equals to
-   * passed in value.
+   * Splits passed in key on several words and remove records with keys equals to any item of split
+   * result and values equals to passed in value.
    *
-   * @param key   Key to remove.
+   * @param key Key to remove.
    * @param rid Value to remove.
-   *
    * @return <code>true</code> if at least one record is removed.
    */
   @Override
@@ -225,7 +244,6 @@ public class OIndexFullText extends OIndexMultiValues {
         } catch (OInvalidIndexEngineIdException ignore) {
           doReloadIndexEngine();
         }
-
       }
     }
   }
@@ -243,30 +261,48 @@ public class OIndexFullText extends OIndexMultiValues {
   }
 
   @Override
-  public OIndexInternal create(OIndexDefinition indexDefinition, String clusterIndexName, Set<String> clustersToIndex,
-      boolean rebuild, OProgressListener progressListener, OBinarySerializer valueSerializer) {
+  public OIndexInternal create(
+      OIndexDefinition indexDefinition,
+      String clusterIndexName,
+      Set<String> clustersToIndex,
+      boolean rebuild,
+      OProgressListener progressListener,
+      OBinarySerializer valueSerializer) {
 
     if (indexDefinition.getFields().size() > 1) {
       throw new OIndexException(type + " indexes cannot be used as composite ones.");
     }
 
-    return super.create(indexDefinition, clusterIndexName, clustersToIndex, rebuild, progressListener, valueSerializer);
+    return super.create(
+        indexDefinition,
+        clusterIndexName,
+        clustersToIndex,
+        rebuild,
+        progressListener,
+        valueSerializer);
   }
 
   @Override
-  public OIndexMultiValues create(String name, OIndexDefinition indexDefinition, String clusterIndexName,
-      Set<String> clustersToIndex, boolean rebuild, OProgressListener progressListener) {
+  public OIndexMultiValues create(
+      String name,
+      OIndexDefinition indexDefinition,
+      String clusterIndexName,
+      Set<String> clustersToIndex,
+      boolean rebuild,
+      OProgressListener progressListener) {
     if (indexDefinition.getFields().size() > 1) {
       throw new OIndexException(type + " indexes cannot be used as composite ones.");
     }
-    return super.create(name, indexDefinition, clusterIndexName, clustersToIndex, rebuild, progressListener);
+    return super.create(
+        name, indexDefinition, clusterIndexName, clustersToIndex, rebuild, progressListener);
   }
 
   @Override
   public ODocument updateConfiguration() {
     super.updateConfiguration();
     return ((FullTextIndexConfiguration) configuration)
-        .updateFullTextIndexConfiguration(separatorChars, ignoreChars, stopWords, minWordLength, indexRadix);
+        .updateFullTextIndexConfiguration(
+            separatorChars, ignoreChars, stopWords, minWordLength, indexRadix);
   }
 
   @Override
@@ -304,7 +340,6 @@ public class OIndexFullText extends OIndexMultiValues {
         stopWords = new HashSet<>(metadata.field(CONFIG_STOP_WORDS));
       }
     }
-
   }
 
   private void config() {
@@ -369,7 +404,7 @@ public class OIndexFullText extends OIndexMultiValues {
   }
 
   private static class EntityRemover implements OIndexKeyUpdater<Object> {
-    private final OIdentifiable      value;
+    private final OIdentifiable value;
     private final OModifiableBoolean removed;
 
     private EntityRemover(OIdentifiable value, OModifiableBoolean removed) {
@@ -395,7 +430,6 @@ public class OIndexFullText extends OIndexMultiValues {
         } else {
           return OIndexUpdateAction.changed(recs);
         }
-
       }
 
       return OIndexUpdateAction.changed(recs);
@@ -407,8 +441,12 @@ public class OIndexFullText extends OIndexMultiValues {
       super(document);
     }
 
-    private synchronized ODocument updateFullTextIndexConfiguration(String separatorChars, String ignoreChars,
-        Set<String> stopWords, int minWordLength, boolean indexRadix) {
+    private synchronized ODocument updateFullTextIndexConfiguration(
+        String separatorChars,
+        String ignoreChars,
+        Set<String> stopWords,
+        int minWordLength,
+        boolean indexRadix) {
       document.field(CONFIG_SEPARATOR_CHARS, separatorChars);
       document.field(CONFIG_IGNORE_CHARS, ignoreChars);
       document.field(CONFIG_STOP_WORDS, stopWords);
@@ -417,6 +455,5 @@ public class OIndexFullText extends OIndexMultiValues {
 
       return document;
     }
-
   }
 }

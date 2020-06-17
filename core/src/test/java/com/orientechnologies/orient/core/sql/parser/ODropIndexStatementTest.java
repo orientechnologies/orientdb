@@ -1,6 +1,7 @@
 package com.orientechnologies.orient.core.sql.parser;
 
 import org.junit.Test;
+
 public class ODropIndexStatementTest extends OParserTestAbstract {
 
   @Test
@@ -14,5 +15,4 @@ public class ODropIndexStatementTest extends OParserTestAbstract {
     checkRightSyntax("DROP INDEX Foo.bar.baz IF EXISTS");
     checkWrongSyntax("DROP INDEX Foo.bar foo");
   }
-
 }

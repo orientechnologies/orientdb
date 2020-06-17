@@ -23,11 +23,9 @@ package com.orientechnologies.orient.server.distributed.task;
  * Base class for Replicated command tasks.
  *
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
- *
  */
 public abstract class OAbstractCommandTask extends OAbstractReplicatedTask {
   public abstract RESULT_STRATEGY getResultStrategy();
 
   public abstract void setResultStrategy(RESULT_STRATEGY resultStrategy);
-
 }

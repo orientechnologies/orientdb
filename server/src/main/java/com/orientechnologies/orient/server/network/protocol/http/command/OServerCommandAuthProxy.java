@@ -21,22 +21,18 @@ import com.orientechnologies.orient.server.config.OServerEntryConfiguration;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpRequest;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpResponse;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpUtils;
-
 import java.util.Arrays;
 
-/**
- * @author Luca Molino (molino.luca--at--gmail.com)
- * 
- */
+/** @author Luca Molino (molino.luca--at--gmail.com) */
 public class OServerCommandAuthProxy extends OServerCommandPatternAbstract {
 
-  public static final String DATABASE_CONF     = "database";
-  public static final String USERNAME_CONF     = "username";
+  public static final String DATABASE_CONF = "database";
+  public static final String USERNAME_CONF = "username";
   public static final String USERPASSWORD_CONF = "userpassword";
-  private final String       authentication;
-  private String             databaseName;
-  private String             userName;
-  private String             userPassword;
+  private final String authentication;
+  private String databaseName;
+  private String userName;
+  private String userPassword;
 
   public OServerCommandAuthProxy(OServerCommandConfiguration iConfig) {
     super(iConfig);
@@ -46,12 +42,9 @@ public class OServerCommandAuthProxy extends OServerCommandPatternAbstract {
     userName = "";
     userPassword = "";
     for (OServerEntryConfiguration conf : iConfig.parameters) {
-      if (conf.name.equals(USERNAME_CONF))
-        userName = conf.value;
-      else if (conf.name.equals(USERPASSWORD_CONF))
-        userPassword = conf.value;
-      else if (conf.name.equals(DATABASE_CONF))
-        databaseName = conf.value;
+      if (conf.name.equals(USERNAME_CONF)) userName = conf.value;
+      else if (conf.name.equals(USERPASSWORD_CONF)) userPassword = conf.value;
+      else if (conf.name.equals(DATABASE_CONF)) databaseName = conf.value;
     }
     authentication = userName + ":" + userPassword;
   }
@@ -59,14 +52,18 @@ public class OServerCommandAuthProxy extends OServerCommandPatternAbstract {
   @Override
   public boolean execute(final OHttpRequest iRequest, OHttpResponse iResponse) throws Exception {
     iRequest.setAuthorization(authentication);
-    checkSyntax(iRequest.getUrl(), 3, "Syntax error: " + Arrays.toString(getNames()) + "/<nextCommand>/");
+    checkSyntax(
+        iRequest.getUrl(), 3, "Syntax error: " + Arrays.toString(getNames()) + "/<nextCommand>/");
     iRequest.setUrl(OHttpUtils.nextChainUrl(iRequest.getUrl()));
 
     // CHECK THE SESSION VALIDITY
-    if (iRequest.getSessionId() == null || OServerCommandAuthenticatedDbAbstract.SESSIONID_LOGOUT.equals(iRequest.getSessionId())
-        || iRequest.getSessionId().length() > 1 && server.getHttpSessionManager().getSession(iRequest.getSessionId()) == null)
+    if (iRequest.getSessionId() == null
+        || OServerCommandAuthenticatedDbAbstract.SESSIONID_LOGOUT.equals(iRequest.getSessionId())
+        || iRequest.getSessionId().length() > 1
+            && server.getHttpSessionManager().getSession(iRequest.getSessionId()) == null)
       // AUTHENTICATED: CREATE THE SESSION
-      iRequest.setSessionId(server.getHttpSessionManager().createSession(databaseName, userName, userPassword));
+      iRequest.setSessionId(
+          server.getHttpSessionManager().createSession(databaseName, userName, userPassword));
 
     return true;
   }

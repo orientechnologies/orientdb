@@ -2,7 +2,6 @@ package com.orientechnologies.orient.server.distributed.asynch;
 
 import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.orient.core.Orient;
-
 import java.io.File;
 
 public abstract class BareBoneBase2ServerTest extends BareBoneBase2ClientTest {
@@ -30,7 +29,7 @@ public abstract class BareBoneBase2ServerTest extends BareBoneBase2ClientTest {
     super.tearDown();
 
     // delete the folder should be enough if shutdown is done correctly
-    //new ODatabaseDocumentTx(getLocalURL2()).open("admin", "admin").drop();
+    // new ODatabaseDocumentTx(getLocalURL2()).open("admin", "admin").drop();
     OFileUtils.deleteRecursively(new File(DB2_DIR));
   }
 
@@ -38,38 +37,42 @@ public abstract class BareBoneBase2ServerTest extends BareBoneBase2ClientTest {
     Orient.setRegisterDatabaseByPath(true);
 
     final BareBonesServer[] servers = new BareBonesServer[2];
-    Thread dbServer1 = new Thread() {
-      @Override
-      public void run() {
-        servers[0] = dbServer(DB1_DIR, getDatabaseName(), "asynch-dserver-config-0.xml");
-      }
-    };
+    Thread dbServer1 =
+        new Thread() {
+          @Override
+          public void run() {
+            servers[0] = dbServer(DB1_DIR, getDatabaseName(), "asynch-dserver-config-0.xml");
+          }
+        };
     dbServer1.start();
     dbServer1.join();
 
-    Thread dbServer2 = new Thread() {
-      @Override
-      public void run() {
-        servers[1] = dbServer(DB2_DIR, getDatabaseName(), "asynch-dserver-config-1.xml");
-      }
-    };
+    Thread dbServer2 =
+        new Thread() {
+          @Override
+          public void run() {
+            servers[1] = dbServer(DB2_DIR, getDatabaseName(), "asynch-dserver-config-1.xml");
+          }
+        };
     dbServer2.start();
     dbServer2.join();
 
-    Thread dbClient1 = new Thread() {
-      @Override
-      public void run() {
-        dbClient1(servers);
-      }
-    };
+    Thread dbClient1 =
+        new Thread() {
+          @Override
+          public void run() {
+            dbClient1(servers);
+          }
+        };
     dbClient1.start();
 
-    Thread dbClient2 = new Thread() {
-      @Override
-      public void run() {
-        dbClient2(servers);
-      }
-    };
+    Thread dbClient2 =
+        new Thread() {
+          @Override
+          public void run() {
+            dbClient2(servers);
+          }
+        };
     dbClient2.start();
 
     dbClient1.join();
@@ -77,5 +80,4 @@ public abstract class BareBoneBase2ServerTest extends BareBoneBase2ClientTest {
 
     endTest(servers);
   }
-
 }

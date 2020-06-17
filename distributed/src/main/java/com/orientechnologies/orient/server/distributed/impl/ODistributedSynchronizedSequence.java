@@ -1,15 +1,16 @@
 package com.orientechnologies.orient.server.distributed.impl;
 
-import com.orientechnologies.orient.core.tx.*;
+import com.orientechnologies.orient.core.tx.OTransactionId;
+import com.orientechnologies.orient.core.tx.OTransactionSequenceStatus;
+import com.orientechnologies.orient.core.tx.OTxMetadataHolderImpl;
 import com.orientechnologies.orient.server.distributed.impl.task.transaction.OTransactionSequenceManager;
-
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CountDownLatch;
 
 public class ODistributedSynchronizedSequence {
   private final OTransactionSequenceManager sequenceManager;
-  private       CountDownLatch              request;
+  private CountDownLatch request;
 
   public ODistributedSynchronizedSequence(String node, int size) {
     sequenceManager = new OTransactionSequenceManager(node, size);
@@ -49,7 +50,8 @@ public class ODistributedSynchronizedSequence {
   }
 
   public void fill(Optional<byte[]> lastMetadata) {
-    lastMetadata.ifPresent((data) -> sequenceManager.fill(OTxMetadataHolderImpl.read(data).getStatus()));
+    lastMetadata.ifPresent(
+        (data) -> sequenceManager.fill(OTxMetadataHolderImpl.read(data).getStatus()));
   }
 
   public OTransactionSequenceStatus currentStatus() {

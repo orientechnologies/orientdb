@@ -21,13 +21,11 @@ package com.orientechnologies.orient.core.sql.parser.operators;
 
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.sql.parser.OEqualsCompareOperator;
-import org.junit.Assert; import org.junit.Test;
-
 import java.math.BigDecimal;
+import org.junit.Assert;
+import org.junit.Test;
 
-/**
- * @author Luigi Dell'Aquila (l.dellaquila-(at)-orientdb.com)
- */
+/** @author Luigi Dell'Aquila (l.dellaquila-(at)-orientdb.com) */
 public class OEqualsCompareOperatorTest {
   @Test
   public void test() {
@@ -64,6 +62,5 @@ public class OEqualsCompareOperatorTest {
     Assert.assertFalse(op.execute(new ORecordId(1, 10), new ORecordId((short) 1, 20)));
 
     Assert.assertFalse(op.execute(new Object(), new Object()));
-
   }
 }

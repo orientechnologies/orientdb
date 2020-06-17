@@ -1,5 +1,9 @@
 package com.orientechnologies.orient.core.db.record.impl;
 
+import static junit.framework.TestCase.assertTrue;
+import static org.junit.Assert.assertEquals;
+
+
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ORecordLazySet;
 import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
@@ -8,18 +12,18 @@ import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODirtyManager;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import org.junit.Ignore;
 import org.junit.Test;
 
-import java.util.*;
-
-import static junit.framework.TestCase.assertTrue;
-import static org.junit.Assert.assertEquals;
-
 public class ODirtyManagerTest {
 
-  public ODirtyManagerTest() {
-  }
+  public ODirtyManagerTest() {}
 
   @Test
   public void testBasic() {
@@ -346,7 +350,10 @@ public class ODirtyManagerTest {
     ODocument link = new ODocument();
     list.add(link);
     doc.field("list", list, OType.LINKLIST);
-    ODocument[] linkeds = new ODocument[] { new ODocument().field("name", "linked2"), new ODocument().field("name", "linked3") };
+    ODocument[] linkeds =
+        new ODocument[] {
+          new ODocument().field("name", "linked2"), new ODocument().field("name", "linked3")
+        };
     doc.field("linkeds", linkeds, OType.LINKLIST);
 
     ODocumentInternal.convertAllMultiValuesToTrackedVersions(doc);
@@ -386,5 +393,4 @@ public class ODirtyManagerTest {
     ODirtyManager manager = ORecordInternal.getDirtyManager(doc);
     assertEquals(2, manager.getNewRecords().size());
   }
-
 }

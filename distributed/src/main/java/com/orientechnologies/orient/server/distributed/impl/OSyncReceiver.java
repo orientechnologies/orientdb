@@ -9,22 +9,29 @@ import com.orientechnologies.orient.server.distributed.ODistributedRequest;
 import com.orientechnologies.orient.server.distributed.ODistributedResponse;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog;
 import com.orientechnologies.orient.server.distributed.impl.task.OCopyDatabaseChunkTask;
-
-import java.io.*;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.io.PipedInputStream;
+import java.io.PipedOutputStream;
 import java.util.concurrent.CountDownLatch;
 
 public class OSyncReceiver implements Runnable {
-  private       ODistributedAbstractPlugin            distributed;
-  private final String                                databaseName;
-  private final ODistributedDatabaseChunk             firstChunk;
-  private final String                                iNode;
-  private final String                                dbPath;
-  private final CountDownLatch                        done    = new CountDownLatch(1);
-  private final CountDownLatch                        started = new CountDownLatch(1);
-  private       PipedOutputStream                     output;
-  private       PipedInputStream                      inputStream;
+  private ODistributedAbstractPlugin distributed;
+  private final String databaseName;
+  private final ODistributedDatabaseChunk firstChunk;
+  private final String iNode;
+  private final String dbPath;
+  private final CountDownLatch done = new CountDownLatch(1);
+  private final CountDownLatch started = new CountDownLatch(1);
+  private PipedOutputStream output;
+  private PipedInputStream inputStream;
 
-  public OSyncReceiver(ODistributedAbstractPlugin distributed, String databaseName, ODistributedDatabaseChunk firstChunk, String iNode, String dbPath) {
+  public OSyncReceiver(
+      ODistributedAbstractPlugin distributed,
+      String databaseName,
+      ODistributedDatabaseChunk firstChunk,
+      String iNode,
+      String dbPath) {
     this.distributed = distributed;
     this.databaseName = databaseName;
     this.firstChunk = firstChunk;
@@ -38,16 +45,24 @@ public class OSyncReceiver implements Runnable {
       t.setUncaughtExceptionHandler(new OUncaughtExceptionHandler());
       t.start();
     } catch (Exception e) {
-      ODistributedServerLog
-          .error(this, iNode, null, ODistributedServerLog.DIRECTION.NONE, "Error on transferring database '%s' ", e, databaseName);
-      throw OException.wrapException(new ODistributedException("Error on transferring database"), e);
+      ODistributedServerLog.error(
+          this,
+          iNode,
+          null,
+          ODistributedServerLog.DIRECTION.NONE,
+          "Error on transferring database '%s' ",
+          e,
+          databaseName);
+      throw OException.wrapException(
+          new ODistributedException("Error on transferring database"), e);
     }
   }
 
   @Override
   public void run() {
     try {
-      Thread.currentThread().setName("OrientDB installDatabase node=" + distributed.nodeName + " db=" + databaseName);
+      Thread.currentThread()
+          .setName("OrientDB installDatabase node=" + distributed.nodeName + " db=" + databaseName);
       ODistributedDatabaseChunk chunk = firstChunk;
 
       output = new PipedOutputStream();
@@ -57,9 +72,18 @@ public class OSyncReceiver implements Runnable {
 
         long fileSize = writeDatabaseChunk(1, chunk, output);
         for (int chunkNum = 2; !chunk.last; chunkNum++) {
-          final ODistributedResponse response = distributed.sendRequest(databaseName, null, OMultiValue.getSingletonList(iNode),
-              new OCopyDatabaseChunkTask(chunk.filePath, chunkNum, chunk.offset + chunk.buffer.length, false),
-              distributed.getNextMessageIdCounter(), ODistributedRequest.EXECUTION_MODE.RESPONSE, null, null, null);
+          final ODistributedResponse response =
+              distributed.sendRequest(
+                  databaseName,
+                  null,
+                  OMultiValue.getSingletonList(iNode),
+                  new OCopyDatabaseChunkTask(
+                      chunk.filePath, chunkNum, chunk.offset + chunk.buffer.length, false),
+                  distributed.getNextMessageIdCounter(),
+                  ODistributedRequest.EXECUTION_MODE.RESPONSE,
+                  null,
+                  null,
+                  null);
 
           if (response == null) {
             output.close();
@@ -67,11 +91,18 @@ public class OSyncReceiver implements Runnable {
             return;
           } else {
             final Object result = response.getPayload();
-            if (result instanceof Boolean)
-              continue;
+            if (result instanceof Boolean) continue;
             else if (result instanceof Exception) {
-              ODistributedServerLog.error(this, distributed.nodeName, iNode, ODistributedServerLog.DIRECTION.IN,
-                  "error on installing database %s in %s (chunk #%d)", (Exception) result, databaseName, dbPath, chunkNum);
+              ODistributedServerLog.error(
+                  this,
+                  distributed.nodeName,
+                  iNode,
+                  ODistributedServerLog.DIRECTION.IN,
+                  "error on installing database %s in %s (chunk #%d)",
+                  (Exception) result,
+                  databaseName,
+                  dbPath,
+                  chunkNum);
             } else if (result instanceof ODistributedDatabaseChunk) {
               chunk = (ODistributedDatabaseChunk) result;
               fileSize += writeDatabaseChunk(chunkNum, chunk, output);
@@ -79,9 +110,13 @@ public class OSyncReceiver implements Runnable {
           }
         }
 
-        ODistributedServerLog
-            .info(this, distributed.nodeName, null, ODistributedServerLog.DIRECTION.NONE, "Database copied correctly, size=%s",
-                OFileUtils.getSizeAsString(fileSize));
+        ODistributedServerLog.info(
+            this,
+            distributed.nodeName,
+            null,
+            ODistributedServerLog.DIRECTION.NONE,
+            "Database copied correctly, size=%s",
+            OFileUtils.getSizeAsString(fileSize));
 
       } finally {
         try {
@@ -89,26 +124,43 @@ public class OSyncReceiver implements Runnable {
           output.close();
           done.countDown();
         } catch (IOException e) {
-          ODistributedServerLog
-              .warn(this, distributed.nodeName, null, ODistributedServerLog.DIRECTION.NONE, "Error on closing sync piped stream ",
-                  e);
-
+          ODistributedServerLog.warn(
+              this,
+              distributed.nodeName,
+              null,
+              ODistributedServerLog.DIRECTION.NONE,
+              "Error on closing sync piped stream ",
+              e);
         }
       }
 
     } catch (Exception e) {
-      ODistributedServerLog
-          .error(this, distributed.nodeName, null, ODistributedServerLog.DIRECTION.NONE, "Error on transferring database '%s' ", e,
-              databaseName);
-      throw OException.wrapException(new ODistributedException("Error on transferring database"), e);
+      ODistributedServerLog.error(
+          this,
+          distributed.nodeName,
+          null,
+          ODistributedServerLog.DIRECTION.NONE,
+          "Error on transferring database '%s' ",
+          e,
+          databaseName);
+      throw OException.wrapException(
+          new ODistributedException("Error on transferring database"), e);
     }
   }
 
-  protected long writeDatabaseChunk(final int iChunkId, final ODistributedDatabaseChunk chunk, final OutputStream out)
+  protected long writeDatabaseChunk(
+      final int iChunkId, final ODistributedDatabaseChunk chunk, final OutputStream out)
       throws IOException {
 
-    ODistributedServerLog.info(this, distributed.getLocalNodeName(), null, ODistributedServerLog.DIRECTION.NONE,
-        "- writing chunk #%d offset=%d size=%s", iChunkId, chunk.offset, OFileUtils.getSizeAsString(chunk.buffer.length));
+    ODistributedServerLog.info(
+        this,
+        distributed.getLocalNodeName(),
+        null,
+        ODistributedServerLog.DIRECTION.NONE,
+        "- writing chunk #%d offset=%d size=%s",
+        iChunkId,
+        chunk.offset,
+        OFileUtils.getSizeAsString(chunk.buffer.length));
     try {
       out.write(chunk.buffer);
     } catch (IOException e) {

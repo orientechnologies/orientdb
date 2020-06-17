@@ -5,9 +5,7 @@ import com.orientechnologies.orient.core.command.script.transformer.resultset.OR
 import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
 
-/**
- * Created by Enrico Risa on 27/01/17.
- */
+/** Created by Enrico Risa on 27/01/17. */
 public interface OScriptTransformer {
   OResultSet toResultSet(Object value);
 
@@ -17,5 +15,5 @@ public interface OScriptTransformer {
 
   void registerResultTransformer(Class clazz, OResultTransformer resultTransformer);
 
-  void registerResultSetTransformer(Class clazz, OResultSetTransformer transformer) ;
+  void registerResultSetTransformer(Class clazz, OResultSetTransformer transformer);
 }

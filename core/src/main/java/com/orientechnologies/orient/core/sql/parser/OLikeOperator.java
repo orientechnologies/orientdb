@@ -16,8 +16,7 @@ public class OLikeOperator extends SimpleNode implements OBinaryCompareOperator 
 
   @Override
   public boolean execute(Object iLeft, Object iRight) {
-    if (OMultiValue.isMultiValue(iLeft) || OMultiValue.isMultiValue(iRight))
-      return false;
+    if (OMultiValue.isMultiValue(iLeft) || OMultiValue.isMultiValue(iRight)) return false;
 
     if (iLeft == null || iRight == null) {
       return false;

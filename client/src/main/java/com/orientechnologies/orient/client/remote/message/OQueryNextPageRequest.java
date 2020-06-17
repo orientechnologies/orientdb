@@ -27,21 +27,19 @@ import com.orientechnologies.orient.core.serialization.serializer.record.ORecord
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelDataInput;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelDataOutput;
-
 import java.io.IOException;
 
 public final class OQueryNextPageRequest implements OBinaryRequest<OQueryResponse> {
 
   private String queryId;
-  private int    recordsPerPage;
+  private int recordsPerPage;
 
   public OQueryNextPageRequest(String queryId, int recordsPerPage) {
     this.queryId = queryId;
     this.recordsPerPage = recordsPerPage;
   }
 
-  public OQueryNextPageRequest() {
-  }
+  public OQueryNextPageRequest() {}
 
   @Override
   public void write(OChannelDataOutput network, OStorageRemoteSession session) throws IOException {
@@ -49,7 +47,8 @@ public final class OQueryNextPageRequest implements OBinaryRequest<OQueryRespons
     network.writeInt(recordsPerPage);
   }
 
-  public void read(OChannelDataInput channel, int protocolVersion, ORecordSerializer serializer) throws IOException {
+  public void read(OChannelDataInput channel, int protocolVersion, ORecordSerializer serializer)
+      throws IOException {
     this.queryId = channel.readString();
     this.recordsPerPage = channel.readInt();
   }

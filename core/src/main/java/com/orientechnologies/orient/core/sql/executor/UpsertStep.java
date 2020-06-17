@@ -8,19 +8,17 @@ import com.orientechnologies.orient.core.sql.parser.OAndBlock;
 import com.orientechnologies.orient.core.sql.parser.OBooleanExpression;
 import com.orientechnologies.orient.core.sql.parser.OFromClause;
 import com.orientechnologies.orient.core.sql.parser.OWhereClause;
-
 import java.util.List;
 
-/**
- * @author Luigi Dell'Aquila (l.dellaquila-(at)-orientdb.com)
- */
+/** @author Luigi Dell'Aquila (l.dellaquila-(at)-orientdb.com) */
 public class UpsertStep extends AbstractExecutionStep {
-  private final OFromClause  commandTarget;
+  private final OFromClause commandTarget;
   private final OWhereClause initialFilter;
 
   private boolean applied = false;
 
-  public UpsertStep(OFromClause target, OWhereClause where, OCommandContext ctx, boolean profilingEnabled) {
+  public UpsertStep(
+      OFromClause target, OWhereClause where, OCommandContext ctx, boolean profilingEnabled) {
     super(ctx, profilingEnabled);
     this.commandTarget = target;
     this.initialFilter = where;
@@ -43,7 +41,8 @@ public class UpsertStep extends AbstractExecutionStep {
 
   private OResult createNewRecord(OFromClause commandTarget, OWhereClause initialFilter) {
     if (commandTarget.getItem().getIdentifier() == null) {
-      throw new OCommandExecutionException("Cannot execute UPSERT on target '" + commandTarget + "'");
+      throw new OCommandExecutionException(
+          "Cannot execute UPSERT on target '" + commandTarget + "'");
     }
 
     ODocument doc = new ODocument(commandTarget.getItem().getIdentifier().getStringValue());

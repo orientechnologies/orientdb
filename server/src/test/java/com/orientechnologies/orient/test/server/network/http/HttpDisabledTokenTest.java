@@ -3,9 +3,9 @@ package com.orientechnologies.orient.test.server.network.http;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
+
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-
 import org.apache.http.HttpEntity;
 import org.apache.http.client.ClientProtocolException;
 import org.apache.http.client.methods.CloseableHttpResponse;
@@ -32,12 +32,10 @@ public class HttpDisabledTokenTest extends BaseHttpDatabaseTest {
     ByteArrayOutputStream out = new ByteArrayOutputStream();
     entity.writeTo(out);
     assertTrue(out.toString().toString().contains("unsupported_grant_type"));
-
   }
 
   @Override
   protected String getDatabaseName() {
     return "token_test";
   }
-
 }

@@ -1,22 +1,21 @@
 package com.orientechnologies.orient.distributed.impl.coordinator.network;
 
+import static com.orientechnologies.orient.distributed.network.binary.OBinaryDistributedMessage.DISTRIBUTED_PROPAGATE_REQUEST;
+
+
 import com.orientechnologies.orient.core.db.config.ONodeIdentity;
 import com.orientechnologies.orient.distributed.impl.coordinator.OCoordinateMessagesFactory;
 import com.orientechnologies.orient.distributed.impl.log.OLogId;
 import com.orientechnologies.orient.distributed.impl.structural.raft.ORaftOperation;
-
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
 
-import static com.orientechnologies.orient.distributed.network.binary.OBinaryDistributedMessage.DISTRIBUTED_PROPAGATE_REQUEST;
-
 public class ONetworkPropagate implements ODistributedMessage {
-  private OLogId         id;
+  private OLogId id;
   private ORaftOperation operation;
 
-  public ONetworkPropagate() {
-  }
+  public ONetworkPropagate() {}
 
   public ONetworkPropagate(OLogId id, ORaftOperation operation) {
     this.id = id;
@@ -36,7 +35,6 @@ public class ONetworkPropagate implements ODistributedMessage {
     int requestType = input.readInt();
     operation = OCoordinateMessagesFactory.createRaftOperation(requestType);
     operation.deserialize(input);
-
   }
 
   @Override
@@ -56,5 +54,4 @@ public class ONetworkPropagate implements ODistributedMessage {
   public ORaftOperation getOperation() {
     return operation;
   }
-
 }

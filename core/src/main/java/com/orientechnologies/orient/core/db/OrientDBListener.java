@@ -1,10 +1,6 @@
 package com.orientechnologies.orient.core.db;
 
-import com.orientechnologies.orient.core.record.impl.ODocument;
-
-/**
- * Created by tglman on 20/01/17.
- */
+/** Created by tglman on 20/01/17. */
 public interface OrientDBListener {
 
   void onCreate(ODatabase database);
@@ -14,5 +10,4 @@ public interface OrientDBListener {
   void onClose(ODatabase database);
 
   void onDrop(ODatabase database);
-
 }

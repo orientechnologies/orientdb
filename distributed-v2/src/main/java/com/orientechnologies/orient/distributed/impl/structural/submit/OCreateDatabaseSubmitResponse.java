@@ -1,7 +1,6 @@
 package com.orientechnologies.orient.distributed.impl.structural.submit;
 
 import com.orientechnologies.orient.distributed.impl.coordinator.OCoordinateMessagesFactory;
-
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
@@ -9,11 +8,9 @@ import java.io.IOException;
 public class OCreateDatabaseSubmitResponse implements OStructuralSubmitResponse {
 
   private boolean success;
-  private String  error;
+  private String error;
 
-  public OCreateDatabaseSubmitResponse() {
-    
-  }
+  public OCreateDatabaseSubmitResponse() {}
 
   public OCreateDatabaseSubmitResponse(boolean success, String error) {
     this.success = success;

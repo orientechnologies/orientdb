@@ -33,7 +33,6 @@ import com.orientechnologies.orient.core.exception.OStorageException;
 import com.orientechnologies.orient.core.metadata.schema.OClassImpl;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-
 import java.util.Random;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
@@ -43,45 +42,48 @@ import java.util.concurrent.ExecutionException;
  * @since 3/2/2015
  */
 public abstract class OSequence {
-  public static final long    DEFAULT_START            = 0;
-  public static final int     DEFAULT_INCREMENT        = 1;
-  public static final int     DEFAULT_CACHE            = 20;
-  public static final Long    DEFAULT_LIMIT_VALUE      = null;
+  public static final long DEFAULT_START = 0;
+  public static final int DEFAULT_INCREMENT = 1;
+  public static final int DEFAULT_CACHE = 20;
+  public static final Long DEFAULT_LIMIT_VALUE = null;
   public static final boolean DEFAULT_RECYCLABLE_VALUE = false;
 
-  protected static final int    DEF_MAX_RETRY = OGlobalConfiguration.SEQUENCE_MAX_RETRY.getValueAsInteger();
-  public static final    String CLASS_NAME    = "OSequence";
+  protected static final int DEF_MAX_RETRY =
+      OGlobalConfiguration.SEQUENCE_MAX_RETRY.getValueAsInteger();
+  public static final String CLASS_NAME = "OSequence";
 
-  private static final String FIELD_START       = "start";
-  private static final String FIELD_INCREMENT   = "incr";
-  private static final String FIELD_VALUE       = "value";
+  private static final String FIELD_START = "start";
+  private static final String FIELD_INCREMENT = "incr";
+  private static final String FIELD_VALUE = "value";
   private static final String FIELD_LIMIT_VALUE = "lvalue";
-  private static final String FIELD_ORDER_TYPE  = "otype";
-  private static final String FIELD_RECYCLABLE  = "recycle";
-  //initialy set this value to true, so those one who read it can pull upper limit value from document  
+  private static final String FIELD_ORDER_TYPE = "otype";
+  private static final String FIELD_RECYCLABLE = "recycle";
+  // initialy set this value to true, so those one who read it can pull upper limit value from
+  // document
 
   private static final String FIELD_NAME = "name";
   private static final String FIELD_TYPE = "type";
 
-  private   ODocument              document;
+  private ODocument document;
   protected ThreadLocal<ODocument> tlDocument = new ThreadLocal<ODocument>();
 
   private boolean cruacialValueChanged = false;
 
   public static final SequenceOrderType DEFAULT_ORDER_TYPE = SequenceOrderType.ORDER_POSITIVE;
 
-  protected static int replicationProtocolVersion = OGlobalConfiguration.DISTRIBUTED_REPLICATION_PROTOCOL_VERSION.getValue();
+  protected static int replicationProtocolVersion =
+      OGlobalConfiguration.DISTRIBUTED_REPLICATION_PROTOCOL_VERSION.getValue();
 
   public static class CreateParams {
-    protected Long              start        = DEFAULT_START;
-    protected Integer           increment    = DEFAULT_INCREMENT;
-    //significant only for cached sequences
-    protected Integer           cacheSize    = DEFAULT_CACHE;
-    protected Long              limitValue   = DEFAULT_LIMIT_VALUE;
-    protected SequenceOrderType orderType    = DEFAULT_ORDER_TYPE;
-    protected Boolean           recyclable   = DEFAULT_RECYCLABLE_VALUE;
-    protected Boolean           turnLimitOff = false;
-    protected Long              currentValue = null;
+    protected Long start = DEFAULT_START;
+    protected Integer increment = DEFAULT_INCREMENT;
+    // significant only for cached sequences
+    protected Integer cacheSize = DEFAULT_CACHE;
+    protected Long limitValue = DEFAULT_LIMIT_VALUE;
+    protected SequenceOrderType orderType = DEFAULT_ORDER_TYPE;
+    protected Boolean recyclable = DEFAULT_RECYCLABLE_VALUE;
+    protected Boolean turnLimitOff = false;
+    protected Long currentValue = null;
 
     public CreateParams setStart(Long start) {
       this.start = start;
@@ -123,8 +125,7 @@ public abstract class OSequence {
       return this;
     }
 
-    public CreateParams() {
-    }
+    public CreateParams() {}
 
     public CreateParams resetNull() {
       start = null;
@@ -181,11 +182,11 @@ public abstract class OSequence {
     public Long getCurrentValue() {
       return currentValue;
     }
-
   }
 
   public enum SEQUENCE_TYPE {
-    CACHED((byte) 0), ORDERED((byte) 1);
+    CACHED((byte) 0),
+    ORDERED((byte) 1);
 
     private byte val;
 
@@ -199,12 +200,12 @@ public abstract class OSequence {
 
     public static SEQUENCE_TYPE fromVal(byte val) {
       switch (val) {
-      case 0:
-        return CACHED;
-      case 1:
-        return ORDERED;
-      default:
-        return null;
+        case 0:
+          return CACHED;
+        case 1:
+          return ORDERED;
+        default:
+          return null;
       }
     }
   }
@@ -267,7 +268,8 @@ public abstract class OSequence {
     return tlDocument.get();
   }
 
-  private <T> T sendSequenceActionOverCluster(int actionType, CreateParams params) throws ExecutionException, InterruptedException {
+  private <T> T sendSequenceActionOverCluster(int actionType, CreateParams params)
+      throws ExecutionException, InterruptedException {
     OSequenceAction action = new OSequenceAction(actionType, getName(), params, getSequenceType());
     return tlDocument.get().getDatabase().sendSequenceAction(action);
   }
@@ -300,7 +302,8 @@ public abstract class OSequence {
     return tlDocument.get().getDatabase().isDistributed();
   }
 
-  synchronized boolean updateParams(CreateParams params, boolean executeViaDistributed) throws ODatabaseException {
+  synchronized boolean updateParams(CreateParams params, boolean executeViaDistributed)
+      throws ODatabaseException {
     if (executeViaDistributed) {
       try {
         return sendSequenceActionOverCluster(OSequenceAction.UPDATE, params);
@@ -448,8 +451,7 @@ public abstract class OSequence {
 
   public static SEQUENCE_TYPE getSequenceType(final ODocument document) {
     String sequenceTypeStr = document.field(FIELD_TYPE);
-    if (sequenceTypeStr != null)
-      return SEQUENCE_TYPE.valueOf(sequenceTypeStr);
+    if (sequenceTypeStr != null) return SEQUENCE_TYPE.valueOf(sequenceTypeStr);
 
     return null;
   }
@@ -476,7 +478,8 @@ public abstract class OSequence {
     return next(shouldGoOverDistributted);
   }
 
-  long next(boolean executeViaDistributed) throws OSequenceLimitReachedException, ODatabaseException {
+  long next(boolean executeViaDistributed)
+      throws OSequenceLimitReachedException, ODatabaseException {
     long retVal;
     if (executeViaDistributed) {
       try {
@@ -498,8 +501,8 @@ public abstract class OSequence {
    */
   @OApi
   public long current() throws ODatabaseException {
-    //boolean shouldGoOverDistributted = shouldGoOverDistrtibute();
-    //current should never go through distributed
+    // boolean shouldGoOverDistributted = shouldGoOverDistrtibute();
+    // current should never go through distributed
     return current(false);
   }
 
@@ -554,7 +557,8 @@ public abstract class OSequence {
     tlDocument.set(tlDocument.get().reload(null, true));
   }
 
-  protected <T> T callRetry(boolean reloadSequence, final Callable<T> callable, final String method) {
+  protected <T> T callRetry(
+      boolean reloadSequence, final Callable<T> callable, final String method) {
     for (int retry = 0; retry < maxRetry; ++retry) {
       try {
         if (reloadSequence) {
@@ -563,8 +567,13 @@ public abstract class OSequence {
         return callable.call();
       } catch (OConcurrentModificationException ignore) {
         try {
-          Thread.sleep(1 + new Random()
-              .nextInt(getDatabase().getConfiguration().getValueAsInteger(OGlobalConfiguration.SEQUENCE_RETRY_DELAY)));
+          Thread.sleep(
+              1
+                  + new Random()
+                      .nextInt(
+                          getDatabase()
+                              .getConfiguration()
+                              .getValueAsInteger(OGlobalConfiguration.SEQUENCE_RETRY_DELAY)));
         } catch (InterruptedException ignored) {
           Thread.currentThread().interrupt();
           break;
@@ -574,16 +583,20 @@ public abstract class OSequence {
         if (e.getCause() instanceof OConcurrentModificationException) {
           reloadSequence();
         } else {
-          throw OException
-              .wrapException(new OSequenceException("Error in transactional processing of " + getName() + "." + method + "()"), e);
+          throw OException.wrapException(
+              new OSequenceException(
+                  "Error in transactional processing of " + getName() + "." + method + "()"),
+              e);
         }
       } catch (OSequenceLimitReachedException exc) {
         throw exc;
       } catch (OException ignore) {
         reloadSequence();
       } catch (Exception e) {
-        throw OException
-            .wrapException(new OSequenceException("Error in transactional processing of " + getName() + "." + method + "()"), e);
+        throw OException.wrapException(
+            new OSequenceException(
+                "Error in transactional processing of " + getName() + "." + method + "()"),
+            e);
       }
     }
 
@@ -594,9 +607,10 @@ public abstract class OSequence {
         //noinspection ThrowInsideCatchBlockWhichIgnoresCaughtException
         throw ((OConcurrentModificationException) e.getCause());
       }
-      throw OException
-          .wrapException(new OSequenceException("Error in transactional processing of " + getName() + "." + method + "()"), e);
+      throw OException.wrapException(
+          new OSequenceException(
+              "Error in transactional processing of " + getName() + "." + method + "()"),
+          e);
     }
   }
-
 }

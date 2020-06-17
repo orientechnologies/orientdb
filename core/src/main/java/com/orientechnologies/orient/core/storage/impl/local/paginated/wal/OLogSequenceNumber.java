@@ -21,7 +21,7 @@ import java.io.IOException;
 
 /**
  * Immutable number representing the position in WAL file (LSN).
- * 
+ *
  * @author Andrey Lomakin (a.lomakin-at-orientdb.com)
  * @since 29.04.13
  */
@@ -49,17 +49,13 @@ public class OLogSequenceNumber implements Comparable<OLogSequenceNumber> {
 
   @Override
   public boolean equals(final Object o) {
-    if (this == o)
-      return true;
-    if (o == null || getClass() != o.getClass())
-      return false;
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
 
     final OLogSequenceNumber that = (OLogSequenceNumber) o;
 
-    if (position != that.position)
-      return false;
-    if (segment != that.segment)
-      return false;
+    if (position != that.position) return false;
+    if (segment != that.segment) return false;
 
     return true;
   }
@@ -73,15 +69,11 @@ public class OLogSequenceNumber implements Comparable<OLogSequenceNumber> {
 
   @Override
   public int compareTo(final OLogSequenceNumber otherNumber) {
-    if (segment > otherNumber.segment)
-      return 1;
-    if (segment < otherNumber.segment)
-      return -1;
+    if (segment > otherNumber.segment) return 1;
+    if (segment < otherNumber.segment) return -1;
 
-    if (position > otherNumber.position)
-      return 1;
-    else if (position < otherNumber.position)
-      return -1;
+    if (position > otherNumber.position) return 1;
+    else if (position < otherNumber.position) return -1;
 
     return 0;
   }

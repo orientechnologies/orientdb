@@ -12,22 +12,21 @@ import com.orientechnologies.orient.server.config.OServerParameterConfiguration;
 import com.orientechnologies.orient.server.network.protocol.ONetworkProtocolData;
 import com.orientechnologies.orient.server.plugin.OServerPlugin;
 import com.orientechnologies.orient.server.plugin.OServerPluginAbstract;
-
-import javax.crypto.Mac;
 import java.security.NoSuchAlgorithmException;
+import javax.crypto.Mac;
 
 /**
  * Created by emrul on 27/10/2014.
  *
  * @author Emrul Islam <emrul@emrul.com> Copyright 2014 Emrul Islam
  */
-public class OrientTokenHandler extends OServerPluginAbstract implements OTokenHandler, OServerPlugin {
-  public static final String SIGN_KEY_PAR             = "oAuth2Key";
-  public static final String SESSION_LENGTH_PAR       = "sessionLength";
+public class OrientTokenHandler extends OServerPluginAbstract
+    implements OTokenHandler, OServerPlugin {
+  public static final String SIGN_KEY_PAR = "oAuth2Key";
+  public static final String SESSION_LENGTH_PAR = "sessionLength";
   public static final String ENCRYPTION_ALGORITHM_PAR = "encryptionAlgorithm";
 
-  public OrientTokenHandler() {
-  }
+  public OrientTokenHandler() {}
 
   @Override
   public void config(final OServer iServer, final OServerParameterConfiguration[] iParams) {
@@ -36,8 +35,7 @@ public class OrientTokenHandler extends OServerPluginAbstract implements OTokenH
     String algorithm = null;
     for (OServerParameterConfiguration param : iParams) {
       if (param.name.equalsIgnoreCase("enabled")) {
-        if (!Boolean.parseBoolean(param.value))
-          return;
+        if (!Boolean.parseBoolean(param.value)) return;
       } else if (param.name.equalsIgnoreCase(SIGN_KEY_PAR)) {
         key = param.value;
       } else if (param.name.equalsIgnoreCase(SESSION_LENGTH_PAR)) {
@@ -47,17 +45,16 @@ public class OrientTokenHandler extends OServerPluginAbstract implements OTokenH
         try {
           Mac.getInstance(algorithm);
         } catch (NoSuchAlgorithmException nsa) {
-          throw new IllegalArgumentException("Cannot find encryption algorithm '" + algorithm + "'", nsa);
+          throw new IllegalArgumentException(
+              "Cannot find encryption algorithm '" + algorithm + "'", nsa);
         }
       }
     }
-    if (key != null)
-      OGlobalConfiguration.NETWORK_TOKEN_SECRETKEY.setValue(key);
+    if (key != null) OGlobalConfiguration.NETWORK_TOKEN_SECRETKEY.setValue(key);
     if (baseSession != null)
       OGlobalConfiguration.NETWORK_TOKEN_EXPIRE_TIMEOUT.setValue(baseSession);
     if (algorithm != null)
       OGlobalConfiguration.NETWORK_TOKEN_ENCRYPTION_ALGORITHM.setValue(algorithm);
-
   }
 
   @Override
@@ -79,12 +76,15 @@ public class OrientTokenHandler extends OServerPluginAbstract implements OTokenH
     throw new UnsupportedOperationException();
   }
 
-  public byte[] getSignedBinaryToken(final ODatabaseDocumentInternal db, final OSecurityUser user,
+  public byte[] getSignedBinaryToken(
+      final ODatabaseDocumentInternal db,
+      final OSecurityUser user,
       final ONetworkProtocolData data) {
     throw new UnsupportedOperationException();
   }
 
-  public ONetworkProtocolData getProtocolDataFromToken(OClientConnection oClientConnection, final OToken token) {
+  public ONetworkProtocolData getProtocolDataFromToken(
+      OClientConnection oClientConnection, final OToken token) {
     throw new UnsupportedOperationException();
   }
 

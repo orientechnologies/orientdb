@@ -17,18 +17,19 @@ package com.orientechnologies.orient.core.metadata.schema.clusterselection;
 
 import static com.orientechnologies.common.util.OClassLoaderHelper.lookupProviderWithOrientClassLoader;
 
-import java.lang.reflect.Method;
-import java.util.Iterator;
 
 import com.orientechnologies.common.factory.OConfigurableStatefulFactory;
 import com.orientechnologies.common.log.OLogManager;
+import java.lang.reflect.Method;
+import java.util.Iterator;
 
 /**
  * Factory to get the cluster selection strategy.
  *
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
  */
-public class OClusterSelectionFactory extends OConfigurableStatefulFactory<String, OClusterSelectionStrategy> {
+public class OClusterSelectionFactory
+    extends OConfigurableStatefulFactory<String, OClusterSelectionStrategy> {
   public OClusterSelectionFactory() {
     setDefaultClass(ORoundRobinClusterSelectionStrategy.class);
     this.registerStrategy();
@@ -37,8 +38,8 @@ public class OClusterSelectionFactory extends OConfigurableStatefulFactory<Strin
   private static ClassLoader orientClassLoader = OClusterSelectionFactory.class.getClassLoader();
 
   private void registerStrategy() {
-    final Iterator<OClusterSelectionStrategy> ite = lookupProviderWithOrientClassLoader(OClusterSelectionStrategy.class,
-        orientClassLoader);
+    final Iterator<OClusterSelectionStrategy> ite =
+        lookupProviderWithOrientClassLoader(OClusterSelectionStrategy.class, orientClassLoader);
     while (ite.hasNext()) {
       OClusterSelectionStrategy strategy = ite.next();
       Class clz = strategy.getClass();
@@ -47,8 +48,7 @@ public class OClusterSelectionFactory extends OConfigurableStatefulFactory<Strin
         if (method != null) {
           String key = (String) method.invoke(clz.newInstance());
           register(key, clz);
-        } else
-          OLogManager.instance().error(this, "getName() funciton missing", null);
+        } else OLogManager.instance().error(this, "getName() funciton missing", null);
       } catch (Exception ex) {
         OLogManager.instance().error(this, "failed to register class - " + clz.getName(), ex);
       }

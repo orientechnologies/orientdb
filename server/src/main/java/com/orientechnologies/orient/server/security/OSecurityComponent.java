@@ -32,7 +32,10 @@ public interface OSecurityComponent {
   // Called once the Server is running.
   void active();
 
-  void config(final OServer oServer, final OServerConfigurationManager serverCfg, final ODocument jsonConfig);
+  void config(
+      final OServer oServer,
+      final OServerConfigurationManager serverCfg,
+      final ODocument jsonConfig);
 
   // Called on removal of the component.
   void dispose();

@@ -4,20 +4,17 @@ import com.orientechnologies.common.concur.OTimeoutException;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.sql.parser.OFieldMatchPathItem;
 import com.orientechnologies.orient.core.sql.parser.OMultiMatchPathItem;
-
 import java.util.Map;
 import java.util.Optional;
 
-/**
- * @author Luigi Dell'Aquila
- */
+/** @author Luigi Dell'Aquila */
 public class MatchStep extends AbstractExecutionStep {
   protected final EdgeTraversal edge;
 
-  private OResultSet         upstream;
-  private OResult            lastUpstreamRecord;
+  private OResultSet upstream;
+  private OResult lastUpstreamRecord;
   private MatchEdgeTraverser traverser;
-  private OResult            nextResult;
+  private OResult nextResult;
 
   public MatchStep(OCommandContext context, EdgeTraversal edge, boolean profilingEnabled) {
     super(context, profilingEnabled);
@@ -70,9 +67,7 @@ public class MatchStep extends AbstractExecutionStep {
       }
 
       @Override
-      public void close() {
-
-      }
+      public void close() {}
 
       @Override
       public Optional<OExecutionPlan> getExecutionPlan() {

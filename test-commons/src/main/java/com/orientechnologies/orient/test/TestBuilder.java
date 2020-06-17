@@ -21,7 +21,6 @@ import java.util.List;
 import java.util.concurrent.Callable;
 
 /**
- *
  * @author richter
  * @param <T> see {@link TestFactory}
  */
@@ -36,5 +35,4 @@ public class TestBuilder<T> {
   public Collection<T> go() {
     return ConcurrentTestHelper.go(workers);
   }
-    
 }

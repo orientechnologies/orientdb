@@ -19,6 +19,7 @@
  */
 package com.orientechnologies.common.concur.resource;
 
+import com.orientechnologies.common.concur.OTimeoutException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.lang.reflect.Field;
@@ -29,17 +30,14 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
-import com.orientechnologies.common.concur.OTimeoutException;
-
 /**
  * Shared resource. Sub classes can acquire and release shared and exclusive locks.
- * 
+ *
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
- * 
  */
 public abstract class OSharedResourceTimeout {
   private final ReadWriteLock lock = new ReentrantReadWriteLock();
-  protected int               timeout;
+  protected int timeout;
 
   public OSharedResourceTimeout(final int timeout) {
     this.timeout = timeout;
@@ -86,8 +84,12 @@ public abstract class OSharedResourceTimeout {
   private void throwTimeoutException(Lock lock) {
     final String owner = extractLockOwnerStackTrace(lock);
 
-    throw new OTimeoutException("Timeout on acquiring exclusive lock against resource of class: " + getClass() + " with timeout="
-        + timeout + (owner != null ? "\n" + owner : ""));
+    throw new OTimeoutException(
+        "Timeout on acquiring exclusive lock against resource of class: "
+            + getClass()
+            + " with timeout="
+            + timeout
+            + (owner != null ? "\n" + owner : ""));
   }
 
   private String extractLockOwnerStackTrace(Lock lock) {
@@ -100,8 +102,7 @@ public abstract class OSharedResourceTimeout {
       getOwner.setAccessible(true);
 
       final Thread owner = (Thread) getOwner.invoke(sync);
-      if (owner == null)
-        return null;
+      if (owner == null) return null;
 
       StringWriter stringWriter = new StringWriter();
       PrintWriter printWriter = new PrintWriter(stringWriter);
@@ -109,14 +110,16 @@ public abstract class OSharedResourceTimeout {
       printWriter.append("Owner thread : ").append(owner.toString()).append("\n");
 
       StackTraceElement[] stackTrace = owner.getStackTrace();
-      for (StackTraceElement traceElement : stackTrace)
-        printWriter.println("\tat " + traceElement);
+      for (StackTraceElement traceElement : stackTrace) printWriter.println("\tat " + traceElement);
 
       printWriter.flush();
       return stringWriter.toString();
-    } catch (RuntimeException | NoSuchFieldException | IllegalAccessException | NoSuchMethodException | InvocationTargetException ignore) {
+    } catch (RuntimeException
+        | NoSuchFieldException
+        | IllegalAccessException
+        | NoSuchMethodException
+        | InvocationTargetException ignore) {
       return null;
     }
   }
-
 }

@@ -3,14 +3,11 @@ package com.orientechnologies.orient.core.sql.executor;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
-/**
- * Created by luigidellaquila on 06/07/16.
- */
+/** Created by luigidellaquila on 06/07/16. */
 public class OSelectExecutionPlan implements OInternalExecutionPlan {
 
   private String location;
@@ -66,7 +63,7 @@ public class OSelectExecutionPlan implements OInternalExecutionPlan {
 
   @Override
   public List<OExecutionStep> getSteps() {
-    //TODO do a copy of the steps
+    // TODO do a copy of the steps
     return (List) steps;
   }
 
@@ -86,7 +83,9 @@ public class OSelectExecutionPlan implements OInternalExecutionPlan {
     result.setProperty(JAVA_TYPE, getClass().getName());
     result.setProperty("cost", getCost());
     result.setProperty("prettyPrint", prettyPrint(0, 2));
-    result.setProperty("steps", steps == null ? null : steps.stream().map(x -> x.toResult()).collect(Collectors.toList()));
+    result.setProperty(
+        "steps",
+        steps == null ? null : steps.stream().map(x -> x.toResult()).collect(Collectors.toList()));
     return result;
   }
 
@@ -101,7 +100,9 @@ public class OSelectExecutionPlan implements OInternalExecutionPlan {
     result.setProperty(JAVA_TYPE, getClass().getName());
     result.setProperty("cost", getCost());
     result.setProperty("prettyPrint", prettyPrint(0, 2));
-    result.setProperty("steps", steps == null ? null : steps.stream().map(x -> x.serialize()).collect(Collectors.toList()));
+    result.setProperty(
+        "steps",
+        steps == null ? null : steps.stream().map(x -> x.serialize()).collect(Collectors.toList()));
     return result;
   }
 
@@ -110,11 +111,14 @@ public class OSelectExecutionPlan implements OInternalExecutionPlan {
     for (OResult serializedStep : serializedSteps) {
       try {
         String className = serializedStep.getProperty(JAVA_TYPE);
-        OExecutionStepInternal step = (OExecutionStepInternal) Class.forName(className).newInstance();
+        OExecutionStepInternal step =
+            (OExecutionStepInternal) Class.forName(className).newInstance();
         step.deserialize(serializedStep);
         chain(step);
       } catch (Exception e) {
-        throw OException.wrapException(new OCommandExecutionException("Cannot deserialize execution step:" + serializedStep), e);
+        throw OException.wrapException(
+            new OCommandExecutionException("Cannot deserialize execution step:" + serializedStep),
+            e);
       }
     }
   }
@@ -129,7 +133,8 @@ public class OSelectExecutionPlan implements OInternalExecutionPlan {
   protected void copyOn(OSelectExecutionPlan copy, OCommandContext ctx) {
     OExecutionStep lastStep = null;
     for (OExecutionStep step : this.steps) {
-      OExecutionStepInternal newStep = (OExecutionStepInternal) ((OExecutionStepInternal) step).copy(ctx);
+      OExecutionStepInternal newStep =
+          (OExecutionStepInternal) ((OExecutionStepInternal) step).copy(ctx);
       newStep.setPrevious((OExecutionStepInternal) lastStep);
       if (lastStep != null) {
         ((OExecutionStepInternal) lastStep).setNext(newStep);
@@ -162,4 +167,3 @@ public class OSelectExecutionPlan implements OInternalExecutionPlan {
     this.statement = statement;
   }
 }
-

@@ -7,9 +7,7 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
-/**
- * Created by tglman on 02/02/16.
- */
+/** Created by tglman on 02/02/16. */
 public class CreateIndexCommandTest {
 
   private ODatabaseDocument database;
@@ -28,7 +26,8 @@ public class CreateIndexCommandTest {
   @Test(expected = OIndexException.class)
   public void testCreateIndexOnMissingPropertyWithCollate() {
     database.getMetadata().getSchema().createClass("Test");
-    database.command(new OCommandSQL(" create index Test.test on Test(test collate ci) UNIQUE")).execute();
+    database
+        .command(new OCommandSQL(" create index Test.test on Test(test collate ci) UNIQUE"))
+        .execute();
   }
-
 }

@@ -13,7 +13,8 @@ public class OContainsKeyOperator extends SimpleNode implements OBinaryCompareOp
     super(p, id);
   }
 
-  @Override public boolean execute(Object left, Object right) {
+  @Override
+  public boolean execute(Object left, Object right) {
     if (left == null) {
       return false;
     }
@@ -24,11 +25,13 @@ public class OContainsKeyOperator extends SimpleNode implements OBinaryCompareOp
     return false;
   }
 
-  @Override public String toString() {
+  @Override
+  public String toString() {
     return "CONTAINSKEY";
   }
 
-  @Override public boolean supportsBasicCalculation() {
+  @Override
+  public boolean supportsBasicCalculation() {
     return true;
   }
 
@@ -36,11 +39,13 @@ public class OContainsKeyOperator extends SimpleNode implements OBinaryCompareOp
     return this;
   }
 
-  @Override public boolean equals(Object obj) {
+  @Override
+  public boolean equals(Object obj) {
     return obj != null && obj.getClass().equals(this.getClass());
   }
 
-  @Override public int hashCode() {
+  @Override
+  public int hashCode() {
     return getClass().hashCode();
   }
 }

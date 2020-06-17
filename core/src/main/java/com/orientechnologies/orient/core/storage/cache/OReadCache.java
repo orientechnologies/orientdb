@@ -20,24 +20,25 @@
 package com.orientechnologies.orient.core.storage.cache;
 
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
-
 import java.io.IOException;
 
 /**
- * This class is heart of OrientDB storage model it presents disk backed data cache which works with direct memory.
- * <p>
- * Model of this cache is based on page model. All direct memory area is mapped to disk files and each file is split on pages. Page
- * is smallest unit of work. The amount of RAM which can be used for data manipulation is limited so only a subset of data will be
- * really loaded into RAM on demand, if there is not enough RAM to store all data, part of them will by flushed to the disk. If disk
- * cache is closed all changes will be flushed to the disk.
+ * This class is heart of OrientDB storage model it presents disk backed data cache which works with
+ * direct memory.
+ *
+ * <p>Model of this cache is based on page model. All direct memory area is mapped to disk files and
+ * each file is split on pages. Page is smallest unit of work. The amount of RAM which can be used
+ * for data manipulation is limited so only a subset of data will be really loaded into RAM on
+ * demand, if there is not enough RAM to store all data, part of them will by flushed to the disk.
+ * If disk cache is closed all changes will be flushed to the disk.
  *
  * @author Andrey Lomakin (a.lomakin-at-orientdb.com)
  * @since 14.03.13
  */
 public interface OReadCache {
   /**
-   * Minimum size of memory which may be allocated by cache (in pages). This parameter is used only if related flag is set in
-   * constrictor of cache.
+   * Minimum size of memory which may be allocated by cache (in pages). This parameter is used only
+   * if related flag is set in constrictor of cache.
    */
   int MIN_CACHE_SIZE = 256;
 
@@ -45,17 +46,29 @@ public interface OReadCache {
 
   long addFile(String fileName, long fileId, OWriteCache writeCache) throws IOException;
 
-  OCacheEntry loadForWrite(long fileId, long pageIndex, boolean checkPinnedPages, OWriteCache writeCache, boolean verifyChecksums,
-      OLogSequenceNumber startLSN) throws IOException;
+  OCacheEntry loadForWrite(
+      long fileId,
+      long pageIndex,
+      boolean checkPinnedPages,
+      OWriteCache writeCache,
+      boolean verifyChecksums,
+      OLogSequenceNumber startLSN)
+      throws IOException;
 
-  OCacheEntry loadForRead(long fileId, long pageIndex, boolean checkPinnedPages, OWriteCache writeCache, boolean verifyChecksums)
+  OCacheEntry loadForRead(
+      long fileId,
+      long pageIndex,
+      boolean checkPinnedPages,
+      OWriteCache writeCache,
+      boolean verifyChecksums)
       throws IOException;
 
   void releaseFromRead(OCacheEntry cacheEntry, OWriteCache writeCache);
 
   void releaseFromWrite(OCacheEntry cacheEntry, OWriteCache writeCache, boolean changed);
 
-  OCacheEntry allocateNewPage(long fileId, OWriteCache writeCache, OLogSequenceNumber startLSN) throws IOException;
+  OCacheEntry allocateNewPage(long fileId, OWriteCache writeCache, OLogSequenceNumber startLSN)
+      throws IOException;
 
   long getUsedMemory();
 

@@ -40,7 +40,6 @@ import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProt
 import com.orientechnologies.orient.server.OClientConnection;
 import com.orientechnologies.orient.server.OClientSessions;
 import com.orientechnologies.orient.server.OServer;
-
 import java.io.ByteArrayOutputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
@@ -50,19 +49,23 @@ import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
- * Asynchronous command result manager. As soon as a record is returned by the command is sent over the wire.
+ * Asynchronous command result manager. As soon as a record is returned by the command is sent over
+ * the wire.
  *
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
  */
-public class OLiveCommandResultListener extends OAbstractCommandResultListener implements OLiveResultListener {
+public class OLiveCommandResultListener extends OAbstractCommandResultListener
+    implements OLiveResultListener {
 
-  private OClientConnection   connection;
-  private final AtomicBoolean empty       = new AtomicBoolean(true);
-  private final int           sessionId;
-  private final Set<ORID>     alreadySent = new HashSet<ORID>();
-  private OClientSessions     session;
+  private OClientConnection connection;
+  private final AtomicBoolean empty = new AtomicBoolean(true);
+  private final int sessionId;
+  private final Set<ORID> alreadySent = new HashSet<ORID>();
+  private OClientSessions session;
 
-  public OLiveCommandResultListener(OServer server, final OClientConnection connection,
+  public OLiveCommandResultListener(
+      OServer server,
+      final OClientConnection connection,
       OCommandResultListener wrappedResultListener) {
     super(wrappedResultListener);
     this.connection = connection;
@@ -78,33 +81,39 @@ public class OLiveCommandResultListener extends OAbstractCommandResultListener i
         protocol.channel.writeByte(OChannelBinaryProtocol.RESPONSE_STATUS_OK);
         protocol.channel.writeInt(protocol.clientTxId);
         protocol.okSent = true;
-        if (connection != null && Boolean.TRUE.equals(connection.getTokenBased()) && connection.getToken() != null
+        if (connection != null
+            && Boolean.TRUE.equals(connection.getTokenBased())
+            && connection.getToken() != null
             && protocol.requestType != OChannelBinaryProtocol.REQUEST_CONNECT
             && protocol.requestType != OChannelBinaryProtocol.REQUEST_DB_OPEN) {
           // TODO: Check if the token is expiring and if it is send a new token
-          byte[] renewedToken = protocol.getServer().getTokenHandler().renewIfNeeded(connection.getToken());
+          byte[] renewedToken =
+              protocol.getServer().getTokenHandler().renewIfNeeded(connection.getToken());
           protocol.channel.writeBytes(renewedToken);
         }
       } catch (IOException ignored) {
       }
     try {
-      fetchRecord(iRecord, new ORemoteFetchListener() {
-        @Override
-        protected void sendRecord(ORecord iLinked) {
-          if (!alreadySent.contains(iLinked.getIdentity())) {
-            alreadySent.add(iLinked.getIdentity());
-            try {
-              protocol.channel.writeByte((byte) 2); // CACHE IT ON THE CLIENT
-              protocol.writeIdentifiable(protocol.channel, connection, iLinked);
-            } catch (IOException e) {
-              OLogManager.instance().error(this, "Cannot write against channel", e);
+      fetchRecord(
+          iRecord,
+          new ORemoteFetchListener() {
+            @Override
+            protected void sendRecord(ORecord iLinked) {
+              if (!alreadySent.contains(iLinked.getIdentity())) {
+                alreadySent.add(iLinked.getIdentity());
+                try {
+                  protocol.channel.writeByte((byte) 2); // CACHE IT ON THE CLIENT
+                  protocol.writeIdentifiable(protocol.channel, connection, iLinked);
+                } catch (IOException e) {
+                  OLogManager.instance().error(this, "Cannot write against channel", e);
+                }
+              }
             }
-          }
-        }
-      });
+          });
       alreadySent.add(((OIdentifiable) iRecord).getIdentity());
       protocol.channel.writeByte((byte) 1); // ONE MORE RECORD
-      protocol.writeIdentifiable(protocol.channel, connection, ((OIdentifiable) iRecord).getRecord());
+      protocol.writeIdentifiable(
+          protocol.channel, connection, ((OIdentifiable) iRecord).getRecord());
       protocol.channel.flush();
     } catch (IOException e) {
       return false;
@@ -123,10 +132,12 @@ public class OLiveCommandResultListener extends OAbstractCommandResultListener i
       if (connections.size() == 0) {
         try {
           ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.instance().get();
-          OLogManager.instance().warn(this, "Unsubscribing live query for connection " + connection);
+          OLogManager.instance()
+              .warn(this, "Unsubscribing live query for connection " + connection);
           OLiveQueryHook.unsubscribe(iToken, db);
         } catch (Exception e) {
-          OLogManager.instance().warn(this, "Unsubscribing live query for connection " + connection, e);
+          OLogManager.instance()
+              .warn(this, "Unsubscribing live query for connection " + connection, e);
         }
         break;
       }
@@ -167,7 +178,12 @@ public class OLiveCommandResultListener extends OAbstractCommandResultListener i
           break;
         }
       } catch (Exception e) {
-        OLogManager.instance().warn(this, "Cannot push cluster configuration to the client %s", e, protocol.getRemoteAddress());
+        OLogManager.instance()
+            .warn(
+                this,
+                "Cannot push cluster configuration to the client %s",
+                e,
+                protocol.getRemoteAddress());
         protocol.getServer().getClientConnectionManager().disconnect(connection);
         OLiveQueryHook.unsubscribe(iToken, connection.getDatabase());
         break;
@@ -177,9 +193,7 @@ public class OLiveCommandResultListener extends OAbstractCommandResultListener i
   }
 
   @Override
-  public void onError(int iLiveToken) {
-
-  }
+  public void onError(int iLiveToken) {}
 
   @Override
   public void onUnsubscribe(int iLiveToken) {
@@ -217,7 +231,12 @@ public class OLiveCommandResultListener extends OAbstractCommandResultListener i
           break;
         }
       } catch (Exception e) {
-        OLogManager.instance().warn(this, "Cannot push cluster configuration to the client %s", e, protocol.getRemoteAddress());
+        OLogManager.instance()
+            .warn(
+                this,
+                "Cannot push cluster configuration to the client %s",
+                e,
+                protocol.getRemoteAddress());
         protocol.getServer().getClientConnectionManager().disconnect(connection);
         break;
       }
@@ -238,9 +257,7 @@ public class OLiveCommandResultListener extends OAbstractCommandResultListener i
     out.writeInt(bytes.length);
     out.write(bytes);
   }
-  
+
   @Override
-  public void linkdedBySimpleValue(ODocument doc) {
-    
-  }
+  public void linkdedBySimpleValue(ODocument doc) {}
 }

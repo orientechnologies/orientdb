@@ -5,15 +5,13 @@ import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.WALRecordTypes;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.PageOperationRecord;
 import com.orientechnologies.orient.core.storage.index.sbtree.local.v1.OSBTreeBucketV1;
-
 import java.nio.ByteBuffer;
 
 public final class SBTreeBucketV1SetRightSiblingPO extends PageOperationRecord {
   private int prevRightSibling;
   private int rightSibling;
 
-  public SBTreeBucketV1SetRightSiblingPO() {
-  }
+  public SBTreeBucketV1SetRightSiblingPO() {}
 
   public SBTreeBucketV1SetRightSiblingPO(int prevRightSibling, int rightSibling) {
     this.prevRightSibling = prevRightSibling;

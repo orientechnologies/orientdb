@@ -8,16 +8,13 @@ import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OView;
 import com.orientechnologies.orient.core.metadata.schema.OViewConfig;
 import com.orientechnologies.orient.core.record.OElement;
+import java.util.concurrent.CountDownLatch;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import java.util.concurrent.CountDownLatch;
-
-/**
- * @author Luigi Dell'Aquila (l.dellaquila-(at)-orientdb.com)
- */
+/** @author Luigi Dell'Aquila (l.dellaquila-(at)-orientdb.com) */
 public class OCreateViewStatementExecutionTest {
   static ODatabaseDocument db;
 
@@ -56,17 +53,21 @@ public class OCreateViewStatementExecutionTest {
     OViewConfig cfg = new OViewConfig(viewName, "SELECT FROM " + className);
     cfg.setOriginRidField("origin");
     CountDownLatch latch = new CountDownLatch(1);
-    db.getMetadata().getSchema().createView(cfg, new ViewCreationListener() {
-      @Override
-      public void afterCreate(ODatabaseSession database, String viewName) {
-        latch.countDown();
-      }
+    db.getMetadata()
+        .getSchema()
+        .createView(
+            cfg,
+            new ViewCreationListener() {
+              @Override
+              public void afterCreate(ODatabaseSession database, String viewName) {
+                latch.countDown();
+              }
 
-      @Override
-      public void onError(String viewName, Exception exception) {
-        latch.countDown();
-      }
-    });
+              @Override
+              public void onError(String viewName, Exception exception) {
+                latch.countDown();
+              }
+            });
 
     latch.await();
 
@@ -85,9 +86,10 @@ public class OCreateViewStatementExecutionTest {
     String viewName = "testMetadata";
     db.createClass(className);
 
-    String statement = "CREATE VIEW " + viewName + " FROM (SELECT FROM " + className + ") METADATA {";
+    String statement =
+        "CREATE VIEW " + viewName + " FROM (SELECT FROM " + className + ") METADATA {";
     statement += "updatable:true, ";
-//    statement+="indexes...";
+    //    statement+="indexes...";
     statement += "updateStrategy: '" + OViewConfig.UPDATE_STRATEGY_LIVE + "', ";
     statement += "watchClasses:['foo', 'bar'], ";
     statement += "nodes:['baz','xx'], ";
@@ -99,7 +101,7 @@ public class OCreateViewStatementExecutionTest {
 
     OView view = db.getMetadata().getSchema().getView(viewName);
     Assert.assertTrue(view.isUpdatable());
-//    Assert.assertEquals(OViewConfig.UPDATE_STRATEGY_LIVE, view.get());
+    //    Assert.assertEquals(OViewConfig.UPDATE_STRATEGY_LIVE, view.get());
     Assert.assertTrue(view.getWatchClasses().contains("foo"));
     Assert.assertTrue(view.getWatchClasses().contains("bar"));
     Assert.assertEquals(2, view.getWatchClasses().size());
@@ -123,7 +125,8 @@ public class OCreateViewStatementExecutionTest {
       elem.save();
     }
 
-    String statement = "CREATE VIEW " + viewName + " FROM (SELECT FROM " + className + ") METADATA {";
+    String statement =
+        "CREATE VIEW " + viewName + " FROM (SELECT FROM " + className + ") METADATA {";
     statement += "indexes: [{type:'NOTUNIQUE', properties:{name:'STRING', surname:'STRING'}}]";
     statement += "}";
 
@@ -132,7 +135,8 @@ public class OCreateViewStatementExecutionTest {
     Thread.sleep(1000);
 
     OResultSet result = db.query("SELECT FROM " + viewName + " WHERE name = 'name4'");
-    result.getExecutionPlan().get().getSteps().stream().anyMatch(x -> x instanceof FetchFromIndexStep);
+    result.getExecutionPlan().get().getSteps().stream()
+        .anyMatch(x -> x instanceof FetchFromIndexStep);
     Assert.assertTrue(result.hasNext());
     result.next();
     Assert.assertFalse(result.hasNext());
@@ -152,7 +156,8 @@ public class OCreateViewStatementExecutionTest {
       elem.save();
     }
 
-    String statement = "CREATE VIEW " + viewName + " FROM (SELECT FROM " + className + ") METADATA {";
+    String statement =
+        "CREATE VIEW " + viewName + " FROM (SELECT FROM " + className + ") METADATA {";
     statement += "updateStrategy:\"live\",";
     statement += "originRidField:\"origin\"";
     statement += "}";
@@ -160,7 +165,7 @@ public class OCreateViewStatementExecutionTest {
     db.command(statement);
 
     Thread.sleep(1000);
-    
+
     db.command("UPDATE " + className + " SET surname = 'changed' WHERE name = 'name3'");
 
     Thread.sleep(1000);
@@ -191,7 +196,8 @@ public class OCreateViewStatementExecutionTest {
       elem.save();
     }
 
-    String statement = "CREATE VIEW " + viewName + " FROM (SELECT FROM " + className + ") METADATA {";
+    String statement =
+        "CREATE VIEW " + viewName + " FROM (SELECT FROM " + className + ") METADATA {";
     statement += "updateStrategy:\"live\"";
     statement += "}";
 
@@ -224,7 +230,8 @@ public class OCreateViewStatementExecutionTest {
       elem.save();
     }
 
-    String statement = "CREATE VIEW " + viewName + " FROM (SELECT FROM " + className + ") METADATA {";
+    String statement =
+        "CREATE VIEW " + viewName + " FROM (SELECT FROM " + className + ") METADATA {";
     statement += "updateStrategy:\"live\",";
     statement += "originRidField:\"origin\"";
     statement += "}";
@@ -248,5 +255,4 @@ public class OCreateViewStatementExecutionTest {
     }
     result.close();
   }
-
 }

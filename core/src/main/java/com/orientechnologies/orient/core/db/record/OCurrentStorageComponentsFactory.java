@@ -20,15 +20,16 @@ import com.orientechnologies.orient.core.config.OStorageConfiguration;
 import com.orientechnologies.orient.core.serialization.serializer.binary.OBinarySerializerFactory;
 
 /**
- * The factory that defines a set of components that current database should use to be compatible to current version of storage. So
- * if you open a database create with old version of OrientDB it defines a components that should be used to provide backward
- * compatibility with that version of database.
- * 
+ * The factory that defines a set of components that current database should use to be compatible to
+ * current version of storage. So if you open a database create with old version of OrientDB it
+ * defines a components that should be used to provide backward compatibility with that version of
+ * database.
+ *
  * @author Andrey Lomakin (a.lomakin-at-orientdb.com)
  * @since 2/14/14
  */
 public class OCurrentStorageComponentsFactory {
-  public final int                      binaryFormatVersion;
+  public final int binaryFormatVersion;
   public final OBinarySerializerFactory binarySerializerFactory;
 
   public OCurrentStorageComponentsFactory(OStorageConfiguration configuration) {
@@ -38,7 +39,8 @@ public class OCurrentStorageComponentsFactory {
   }
 
   /**
-   * @return Whether class of is detected by cluster id or it is taken from documents serialized content.
+   * @return Whether class of is detected by cluster id or it is taken from documents serialized
+   *     content.
    * @since 1.7
    */
   public boolean classesAreDetectedByClusterId() {

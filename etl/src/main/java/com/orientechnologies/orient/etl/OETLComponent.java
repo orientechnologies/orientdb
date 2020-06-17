@@ -22,14 +22,10 @@ import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
-/**
- * ETL basic component. Each ETL component must implement this interface.
- */
+/** ETL basic component. Each ETL component must implement this interface. */
 public interface OETLComponent {
 
-  /**
-   * @return
-   */
+  /** @return */
   ODocument getConfiguration();
 
   /**

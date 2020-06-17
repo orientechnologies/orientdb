@@ -31,7 +31,6 @@ import com.orientechnologies.orient.core.metadata.security.OToken;
 import com.orientechnologies.orient.core.storage.OBasicTransaction;
 import com.orientechnologies.orient.core.storage.ORecordMetadata;
 import com.orientechnologies.orient.core.storage.OStorage;
-
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -43,8 +42,9 @@ import java.util.Map.Entry;
 import java.util.concurrent.Callable;
 
 @SuppressWarnings("unchecked")
-public abstract class ODatabaseWrapperAbstract<DB extends ODatabaseInternal, T> implements ODatabaseInternal<T> {
-  protected DB                   underlying;
+public abstract class ODatabaseWrapperAbstract<DB extends ODatabaseInternal, T>
+    implements ODatabaseInternal<T> {
+  protected DB underlying;
   protected ODatabaseInternal<?> databaseOwner;
 
   public ODatabaseWrapperAbstract(final DB iDatabase) {
@@ -52,7 +52,8 @@ public abstract class ODatabaseWrapperAbstract<DB extends ODatabaseInternal, T> 
     databaseOwner = this;
   }
 
-  public <THISDB extends ODatabase> THISDB open(final String iUserName, final String iUserPassword) {
+  public <THISDB extends ODatabase> THISDB open(
+      final String iUserName, final String iUserPassword) {
     underlying.open(iUserName, iUserPassword);
     return (THISDB) this;
   }
@@ -81,7 +82,8 @@ public abstract class ODatabaseWrapperAbstract<DB extends ODatabaseInternal, T> 
     return (THISDB) underlying.create(incrementalBackupPath);
   }
 
-  public <THISDB extends ODatabase> THISDB create(final Map<OGlobalConfiguration, Object> iInitialSettings) {
+  public <THISDB extends ODatabase> THISDB create(
+      final Map<OGlobalConfiguration, Object> iInitialSettings) {
     underlying.create(iInitialSettings);
     return (THISDB) this;
   }
@@ -100,39 +102,52 @@ public abstract class ODatabaseWrapperAbstract<DB extends ODatabaseInternal, T> 
   }
 
   /**
-   * Executes a backup of the database. During the backup the database will be frozen in read-only mode.
+   * Executes a backup of the database. During the backup the database will be frozen in read-only
+   * mode.
    *
-   * @param out              OutputStream used to write the backup content. Use a FileOutputStream to make the backup persistent on
-   *                         disk
-   * @param options          Backup options as Map<String, Object> object
-   * @param callable         Callback to execute when the database is locked
-   * @param iListener        Listener called for backup messages
-   * @param compressionLevel ZIP Compression level between 0 (no compression) and 9 (maximum). The bigger is the compression, the
-   *                         smaller will be the final backup content, but will consume more CPU and time to execute
-   * @param bufferSize       Buffer size in bytes, the bigger is the buffer, the more efficient will be the compression
-   *
+   * @param out OutputStream used to write the backup content. Use a FileOutputStream to make the
+   *     backup persistent on disk
+   * @param options Backup options as Map<String, Object> object
+   * @param callable Callback to execute when the database is locked
+   * @param iListener Listener called for backup messages
+   * @param compressionLevel ZIP Compression level between 0 (no compression) and 9 (maximum). The
+   *     bigger is the compression, the smaller will be the final backup content, but will consume
+   *     more CPU and time to execute
+   * @param bufferSize Buffer size in bytes, the bigger is the buffer, the more efficient will be
+   *     the compression
    * @throws IOException
    */
   @Override
-  public List<String> backup(OutputStream out, Map<String, Object> options, Callable<Object> callable,
-      final OCommandOutputListener iListener, int compressionLevel, int bufferSize) throws IOException {
+  public List<String> backup(
+      OutputStream out,
+      Map<String, Object> options,
+      Callable<Object> callable,
+      final OCommandOutputListener iListener,
+      int compressionLevel,
+      int bufferSize)
+      throws IOException {
     return underlying.backup(out, options, callable, iListener, compressionLevel, bufferSize);
   }
 
   /**
-   * Executes a restore of a database backup. During the restore the database will be frozen in read-only mode.
+   * Executes a restore of a database backup. During the restore the database will be frozen in
+   * read-only mode.
    *
-   * @param in        InputStream used to read the backup content. Use a FileInputStream to read a backup on a disk
-   * @param options   Backup options as Map<String, Object> object
-   * @param callable  Callback to execute when the database is locked
+   * @param in InputStream used to read the backup content. Use a FileInputStream to read a backup
+   *     on a disk
+   * @param options Backup options as Map<String, Object> object
+   * @param callable Callback to execute when the database is locked
    * @param iListener Listener called for backup messages
-   *
    * @throws IOException
    * @see ODatabaseImport
    */
   @Override
-  public void restore(InputStream in, Map<String, Object> options, Callable<Object> callable,
-      final OCommandOutputListener iListener) throws IOException {
+  public void restore(
+      InputStream in,
+      Map<String, Object> options,
+      Callable<Object> callable,
+      final OCommandOutputListener iListener)
+      throws IOException {
     underlying.restore(in, options, callable, iListener);
   }
 
@@ -187,9 +202,7 @@ public abstract class ODatabaseWrapperAbstract<DB extends ODatabaseInternal, T> 
     return underlying.countClusterElements(iClusterId);
   }
 
-  /**
-   * {@inheritDoc}
-   */
+  /** {@inheritDoc} */
   @Override
   public void truncateCluster(String clusterName) {
     checkOpenness();
@@ -300,8 +313,7 @@ public abstract class ODatabaseWrapperAbstract<DB extends ODatabaseInternal, T> 
 
   @Override
   public boolean equals(final Object iOther) {
-    if (!(iOther instanceof ODatabase))
-      return false;
+    if (!(iOther instanceof ODatabase)) return false;
 
     final ODatabase other = (ODatabase) iOther;
 
@@ -367,7 +379,6 @@ public abstract class ODatabaseWrapperAbstract<DB extends ODatabaseInternal, T> 
   }
 
   protected void checkOpenness() {
-    if (isClosed())
-      throw new ODatabaseException("Database '" + getURL() + "' is closed");
+    if (isClosed()) throw new ODatabaseException("Database '" + getURL() + "' is closed");
   }
 }

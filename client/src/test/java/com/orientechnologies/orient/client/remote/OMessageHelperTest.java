@@ -1,5 +1,8 @@
 package com.orientechnologies.orient.client.remote;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
+
 import com.orientechnologies.orient.client.remote.message.MockChannel;
 import com.orientechnologies.orient.client.remote.message.OMessageHelper;
 import com.orientechnologies.orient.client.remote.message.tx.ORecordOperationRequest;
@@ -15,16 +18,16 @@ import com.orientechnologies.orient.core.record.impl.ODirtyManager;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
 import com.orientechnologies.orient.core.serialization.serializer.record.binary.ORecordSerializerNetworkFactory;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.DataInputStream;
+import java.io.DataOutput;
+import java.io.DataOutputStream;
+import java.io.IOException;
 import org.junit.Assert;
 import org.junit.Test;
 
-import java.io.*;
-
-import static org.assertj.core.api.Assertions.assertThat;
-
-/**
- * Created by Enrico Risa on 06/06/2017.
- */
+/** Created by Enrico Risa on 06/06/2017. */
 public class OMessageHelperTest {
 
   @Test
@@ -47,10 +50,14 @@ public class OMessageHelperTest {
       ORecordInternal.setIdentity(doc, new ORecordId(id, 1));
       ORecordInternal.setVersion(doc, 1);
 
-      OMessageHelper.writeIdentifiable(channel, doc, ORecordSerializerNetworkFactory.INSTANCE.current());
+      OMessageHelper.writeIdentifiable(
+          channel, doc, ORecordSerializerNetworkFactory.INSTANCE.current());
       channel.close();
 
-      ODocument newDoc = (ODocument) OMessageHelper.readIdentifiable(channel, ORecordSerializerNetworkFactory.INSTANCE.current());
+      ODocument newDoc =
+          (ODocument)
+              OMessageHelper.readIdentifiable(
+                  channel, ORecordSerializerNetworkFactory.INSTANCE.current());
 
       assertThat(newDoc.getClassName()).isEqualTo("Test");
       assertThat((ORidBag) newDoc.field("bag")).hasSize(1);
@@ -62,27 +69,25 @@ public class OMessageHelperTest {
       open.close();
       orientDB.close();
     }
-
   }
 
   @Test
-  public void testReadWriteTransactionEntry(){
+  public void testReadWriteTransactionEntry() {
     ORecordOperationRequest request = new ORecordOperationRequest();
 
     request.setType(ORecordOperation.UPDATED);
     request.setRecordType(ORecordOperation.UPDATED);
-    request.setId(new ORecordId(25,50));
-    request.setRecord(new byte[]{10, 20, 30});
+    request.setId(new ORecordId(25, 50));
+    request.setRecord(new byte[] {10, 20, 30});
     request.setVersion(100);
     request.setContentChanged(true);
-
 
     ByteArrayOutputStream outArray = new ByteArrayOutputStream();
     DataOutput out = new DataOutputStream(outArray);
 
     try {
       OMessageHelper.writeTransactionEntry(out, request);
-    }catch (Exception e ){
+    } catch (Exception e) {
       e.printStackTrace();
       Assert.fail();
     }
@@ -98,10 +103,9 @@ public class OMessageHelperTest {
       Assert.assertArrayEquals(request.getRecord(), result.getRecord());
       Assert.assertEquals(request.getVersion(), result.getVersion());
       Assert.assertEquals(request.isContentChanged(), result.isContentChanged());
-    }catch (Exception e ){
+    } catch (Exception e) {
       e.printStackTrace();
       Assert.fail();
     }
-
   }
 }

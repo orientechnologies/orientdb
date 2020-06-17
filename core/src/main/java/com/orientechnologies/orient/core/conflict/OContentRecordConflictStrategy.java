@@ -15,7 +15,7 @@
  *  *  limitations under the License.
  *  *
  *  * For more information: http://orientdb.com
- *  
+ *
  */
 
 package com.orientechnologies.orient.core.conflict;
@@ -29,21 +29,26 @@ import com.orientechnologies.orient.core.record.impl.ODocumentHelper;
 import com.orientechnologies.orient.core.storage.ORawBuffer;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.OStorageOperationResult;
-
 import java.util.Arrays;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
- * Record conflict strategy that check the records content: if content is the same, se the higher version number.
- * 
+ * Record conflict strategy that check the records content: if content is the same, se the higher
+ * version number.
+ *
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
  */
 public class OContentRecordConflictStrategy extends OVersionRecordConflictStrategy {
   public static final String NAME = "content";
 
   @Override
-  public byte[] onUpdate(OStorage storage, final byte iRecordType, final ORecordId rid, final int iRecordVersion,
-      final byte[] iRecordContent, final AtomicInteger iDatabaseVersion) {
+  public byte[] onUpdate(
+      OStorage storage,
+      final byte iRecordType,
+      final ORecordId rid,
+      final int iRecordVersion,
+      final byte[] iRecordContent,
+      final AtomicInteger iDatabaseVersion) {
 
     final boolean hasSameContent;
 
@@ -54,7 +59,9 @@ public class OContentRecordConflictStrategy extends OVersionRecordConflictStrate
       final ODocument newRecord = new ODocument().fromStream(iRecordContent);
 
       final ODatabaseDocumentInternal currentDb = ODatabaseRecordThreadLocal.instance().get();
-      hasSameContent = ODocumentHelper.hasSameContentOf(storedRecord, currentDb, newRecord, currentDb, null, false);
+      hasSameContent =
+          ODocumentHelper.hasSameContentOf(
+              storedRecord, currentDb, newRecord, currentDb, null, false);
     } else {
       // CHECK BYTE PER BYTE
       final ORecordAbstract storedRecord = rid.getRecord();

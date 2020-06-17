@@ -21,10 +21,14 @@ package com.orientechnologies.orient.core.sql;
 
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.types.OModifiableBoolean;
-import com.orientechnologies.orient.core.command.*;
+import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
+import com.orientechnologies.orient.core.command.OCommandExecutor;
+import com.orientechnologies.orient.core.command.OCommandRequest;
+import com.orientechnologies.orient.core.command.OCommandRequestInternal;
+import com.orientechnologies.orient.core.command.OCommandRequestText;
+import com.orientechnologies.orient.core.command.OCommandResultListener;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.id.ORecordId;
@@ -38,8 +42,11 @@ import com.orientechnologies.orient.core.record.OVertex;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 import com.orientechnologies.orient.core.sql.query.OSQLAsynchQuery;
-
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * SQL DELETE VERTEX command.
@@ -48,17 +55,17 @@ import java.util.*;
  */
 public class OCommandExecutorSQLDeleteVertex extends OCommandExecutorSQLAbstract
     implements OCommandDistributedReplicateRequest, OCommandResultListener {
-  public static final  String                    NAME          = "DELETE VERTEX";
-  private static final String                    KEYWORD_BATCH = "BATCH";
-  private              ORecordId                 rid;
-  private              int                       removed       = 0;
-  private              ODatabaseDocumentInternal database;
-  private              OCommandRequest           query;
-  private              String                    returning     = "COUNT";
-  private              List<ORecord>             allDeletedRecords;
-  private              OModifiableBoolean        shutdownFlag  = new OModifiableBoolean();
-  private              boolean                   txAlreadyBegun;
-  private              int                       batch         = 100;
+  public static final String NAME = "DELETE VERTEX";
+  private static final String KEYWORD_BATCH = "BATCH";
+  private ORecordId rid;
+  private int removed = 0;
+  private ODatabaseDocumentInternal database;
+  private OCommandRequest query;
+  private String returning = "COUNT";
+  private List<ORecord> allDeletedRecords;
+  private OModifiableBoolean shutdownFlag = new OModifiableBoolean();
+  private boolean txAlreadyBegun;
+  private int batch = 100;
 
   @SuppressWarnings("unchecked")
   public OCommandExecutorSQLDeleteVertex parse(final OCommandRequest iRequest) {
@@ -88,7 +95,8 @@ public class OCommandExecutorSQLDeleteVertex extends OCommandExecutorSQLAbstract
 
         } else if (word.equalsIgnoreCase("from")) {
           final StringBuilder q = new StringBuilder();
-          final int newPos = OStringSerializerHelper.getEmbedded(parserText, parserGetCurrentPosition(), -1, q);
+          final int newPos =
+              OStringSerializerHelper.getEmbedded(parserText, parserGetCurrentPosition(), -1, q);
 
           query = database.command(new OSQLAsynchQuery<ODocument>(q.toString(), this));
 
@@ -97,10 +105,19 @@ public class OCommandExecutorSQLDeleteVertex extends OCommandExecutorSQLAbstract
         } else if (word.equals(KEYWORD_WHERE)) {
           if (clazz == null)
             // ASSIGN DEFAULT CLASS
-            clazz = ((OMetadataInternal) database.getMetadata()).getImmutableSchemaSnapshot().getClass("V");
+            clazz =
+                ((OMetadataInternal) database.getMetadata())
+                    .getImmutableSchemaSnapshot()
+                    .getClass("V");
 
-          where = parserGetCurrentPosition() > -1 ? " " + parserText.substring(parserGetPreviousPosition()) : "";
-          query = database.command(new OSQLAsynchQuery<ODocument>("select from `" + clazz.getName() + "`" + where, this));
+          where =
+              parserGetCurrentPosition() > -1
+                  ? " " + parserText.substring(parserGetPreviousPosition())
+                  : "";
+          query =
+              database.command(
+                  new OSQLAsynchQuery<ODocument>(
+                      "select from `" + clazz.getName() + "`" + where, this));
           break;
 
         } else if (word.equals(KEYWORD_LIMIT)) {
@@ -108,32 +125,32 @@ public class OCommandExecutorSQLDeleteVertex extends OCommandExecutorSQLAbstract
           try {
             limit = Integer.parseInt(word);
           } catch (Exception e) {
-            throw OException.wrapException(new OCommandSQLParsingException("Invalid LIMIT: " + word), e);
+            throw OException.wrapException(
+                new OCommandSQLParsingException("Invalid LIMIT: " + word), e);
           }
         } else if (word.equals(KEYWORD_RETURN)) {
           returning = parseReturn();
 
         } else if (word.equals(KEYWORD_BATCH)) {
           word = parserNextWord(true);
-          if (word != null)
-            batch = Integer.parseInt(word);
+          if (word != null) batch = Integer.parseInt(word);
 
         } else if (word.length() > 0) {
           // GET/CHECK CLASS NAME
-          clazz = ((OMetadataInternal) database.getMetadata()).getImmutableSchemaSnapshot().getClass(word);
+          clazz =
+              ((OMetadataInternal) database.getMetadata())
+                  .getImmutableSchemaSnapshot()
+                  .getClass(word);
           if (clazz == null)
             throw new OCommandSQLParsingException("Class '" + word + "' was not found");
         }
 
         word = parseOptionalWord(true);
-        if (parserIsEnded())
-          break;
+        if (parserIsEnded()) break;
       }
 
-      if (where == null)
-        where = "";
-      else
-        where = " WHERE " + where;
+      if (where == null) where = "";
+      else where = " WHERE " + where;
 
       if (query == null && rid == null) {
         StringBuilder queryString = new StringBuilder();
@@ -158,15 +175,13 @@ public class OCommandExecutorSQLDeleteVertex extends OCommandExecutorSQLAbstract
     return this;
   }
 
-  /**
-   * Execute the command and return the ODocument object created.
-   */
+  /** Execute the command and return the ODocument object created. */
   public Object execute(final Map<Object, Object> iArgs) {
     if (rid == null && query == null)
-      throw new OCommandExecutionException("Cannot execute the command because it has not been parsed yet");
+      throw new OCommandExecutionException(
+          "Cannot execute the command because it has not been parsed yet");
 
-    if (!returning.equalsIgnoreCase("COUNT"))
-      allDeletedRecords = new ArrayList<ORecord>();
+    if (!returning.equalsIgnoreCase("COUNT")) allDeletedRecords = new ArrayList<ORecord>();
 
     txAlreadyBegun = getDatabase().getTransaction().isActive();
 
@@ -190,8 +205,7 @@ public class OCommandExecutorSQLDeleteVertex extends OCommandExecutorSQLAbstract
       query.execute(iArgs);
       db.commit();
 
-    } else
-      throw new OCommandExecutionException("Invalid target");
+    } else throw new OCommandExecutionException("Invalid target");
 
     if (returning.equalsIgnoreCase("COUNT"))
       // RETURNS ONLY THE COUNT
@@ -201,9 +215,7 @@ public class OCommandExecutorSQLDeleteVertex extends OCommandExecutorSQLAbstract
       return allDeletedRecords;
   }
 
-  /**
-   * Delete the current vertex.
-   */
+  /** Delete the current vertex. */
   public boolean result(final Object iRecord) {
     final OIdentifiable id = (OIdentifiable) iRecord;
     if (id.getIdentity().isValid()) {
@@ -219,15 +231,13 @@ public class OCommandExecutorSQLDeleteVertex extends OCommandExecutorSQLAbstract
           db.begin();
         }
 
-        if (returning.equalsIgnoreCase("BEFORE"))
-          allDeletedRecords.add(record);
+        if (returning.equalsIgnoreCase("BEFORE")) allDeletedRecords.add(record);
 
         removed++;
       }
     }
 
     return true;
-
   }
 
   @Override
@@ -253,16 +263,19 @@ public class OCommandExecutorSQLDeleteVertex extends OCommandExecutorSQLAbstract
     return ORole.PERMISSION_DELETE;
   }
 
-  /**
-   * Parses the returning keyword if found.
-   */
+  /** Parses the returning keyword if found. */
   protected String parseReturn() throws OCommandSQLParsingException {
     final String returning = parserNextWord(true);
 
     if (!returning.equalsIgnoreCase("COUNT") && !returning.equalsIgnoreCase("BEFORE"))
       throwParsingException(
-          "Invalid " + KEYWORD_RETURN + " value set to '" + returning + "' but it should be COUNT (default), BEFORE. Example: "
-              + KEYWORD_RETURN + " BEFORE");
+          "Invalid "
+              + KEYWORD_RETURN
+              + " value set to '"
+              + returning
+              + "' but it should be COUNT (default), BEFORE. Example: "
+              + KEYWORD_RETURN
+              + " BEFORE");
 
     return returning;
   }
@@ -283,11 +296,15 @@ public class OCommandExecutorSQLDeleteVertex extends OCommandExecutorSQLAbstract
   @Override
   public Set<String> getInvolvedClusters() {
     final HashSet<String> result = new HashSet<String>();
-    if (rid != null)
-      result.add(database.getClusterNameById(rid.getClusterId()));
+    if (rid != null) result.add(database.getClusterNameById(rid.getClusterId()));
     else if (query != null) {
-      final OCommandExecutor executor = database.getSharedContext().getOrientDB().getScriptManager().getCommandManager()
-          .getExecutor((OCommandRequestInternal) query);
+      final OCommandExecutor executor =
+          database
+              .getSharedContext()
+              .getOrientDB()
+              .getScriptManager()
+              .getCommandManager()
+              .getExecutor((OCommandRequestInternal) query);
       // COPY THE CONTEXT FROM THE REQUEST
       executor.setContext(context);
       executor.parse(query);
@@ -309,11 +326,9 @@ public class OCommandExecutorSQLDeleteVertex extends OCommandExecutorSQLAbstract
     }
   }
 
-  /**
-   * setLimit() for DELETE VERTEX is ignored. Please use LIMIT keyword in the SQL statement
-   */
+  /** setLimit() for DELETE VERTEX is ignored. Please use LIMIT keyword in the SQL statement */
   public <RET extends OCommandExecutor> RET setLimit(final int iLimit) {
-    //do nothing
+    // do nothing
     return (RET) this;
   }
 
@@ -340,5 +355,4 @@ public class OCommandExecutorSQLDeleteVertex extends OCommandExecutorSQLAbstract
     }
     return null;
   }
-
 }

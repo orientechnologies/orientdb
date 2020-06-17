@@ -1,7 +1,6 @@
 package com.orientechnologies.common.thread;
 
 import com.orientechnologies.common.log.OLogManager;
-
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutionException;
@@ -12,29 +11,49 @@ import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
 /**
- * The same as thread {@link ThreadPoolExecutor} but also logs all exceptions happened inside of the tasks which caused tasks to
- * stop.
+ * The same as thread {@link ThreadPoolExecutor} but also logs all exceptions happened inside of the
+ * tasks which caused tasks to stop.
  */
 public class OThreadPoolExecutorWithLogging extends ThreadPoolExecutor {
-  public OThreadPoolExecutorWithLogging(int corePoolSize, int maximumPoolSize, long keepAliveTime, TimeUnit unit,
+  public OThreadPoolExecutorWithLogging(
+      int corePoolSize,
+      int maximumPoolSize,
+      long keepAliveTime,
+      TimeUnit unit,
       BlockingQueue<Runnable> workQueue) {
     super(corePoolSize, maximumPoolSize, keepAliveTime, unit, workQueue);
   }
 
-  public OThreadPoolExecutorWithLogging(int corePoolSize, int maximumPoolSize, long keepAliveTime, TimeUnit unit,
-      BlockingQueue<Runnable> workQueue, ThreadFactory threadFactory) {
+  public OThreadPoolExecutorWithLogging(
+      int corePoolSize,
+      int maximumPoolSize,
+      long keepAliveTime,
+      TimeUnit unit,
+      BlockingQueue<Runnable> workQueue,
+      ThreadFactory threadFactory) {
     super(corePoolSize, maximumPoolSize, keepAliveTime, unit, workQueue, threadFactory);
   }
 
   @SuppressWarnings("unused")
-  public OThreadPoolExecutorWithLogging(int corePoolSize, int maximumPoolSize, long keepAliveTime, TimeUnit unit,
-      BlockingQueue<Runnable> workQueue, RejectedExecutionHandler handler) {
+  public OThreadPoolExecutorWithLogging(
+      int corePoolSize,
+      int maximumPoolSize,
+      long keepAliveTime,
+      TimeUnit unit,
+      BlockingQueue<Runnable> workQueue,
+      RejectedExecutionHandler handler) {
     super(corePoolSize, maximumPoolSize, keepAliveTime, unit, workQueue, handler);
   }
 
   @SuppressWarnings("unused")
-  public OThreadPoolExecutorWithLogging(int corePoolSize, int maximumPoolSize, long keepAliveTime, TimeUnit unit,
-      BlockingQueue<Runnable> workQueue, ThreadFactory threadFactory, RejectedExecutionHandler handler) {
+  public OThreadPoolExecutorWithLogging(
+      int corePoolSize,
+      int maximumPoolSize,
+      long keepAliveTime,
+      TimeUnit unit,
+      BlockingQueue<Runnable> workQueue,
+      ThreadFactory threadFactory,
+      RejectedExecutionHandler handler) {
     super(corePoolSize, maximumPoolSize, keepAliveTime, unit, workQueue, threadFactory, handler);
   }
 
@@ -47,7 +66,7 @@ public class OThreadPoolExecutorWithLogging extends ThreadPoolExecutor {
       try {
         future.get();
       } catch (CancellationException ce) {
-        //ignore it we cancel tasks on shutdown that is normal
+        // ignore it we cancel tasks on shutdown that is normal
       } catch (ExecutionException ee) {
         t = ee.getCause();
       } catch (InterruptedException ie) {

@@ -15,14 +15,14 @@
  *  *  limitations under the License.
  *  *
  *  * For more information: http://orientdb.com
- *  
+ *
  */
 
 package com.orientechnologies.orient.server.distributed;
 
 import com.orientechnologies.common.concur.ONeedRetryException;
 import com.orientechnologies.common.log.OLogManager;
-import com.orientechnologies.orient.core.db.*;
+import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
@@ -31,25 +31,22 @@ import com.orientechnologies.orient.core.record.OVertex;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.server.distributed.task.ODistributedRecordLockedException;
-import org.junit.Assert;
-
 import java.util.Date;
 import java.util.Random;
 import java.util.UUID;
 import java.util.concurrent.Callable;
 import java.util.concurrent.atomic.AtomicLong;
+import org.junit.Assert;
 
-/**
- * Test distributed TX
- */
+/** Test distributed TX */
 public abstract class AbstractDistributedConcurrentTxTest extends AbstractDistributedWriteTest {
-//  protected ODatabasePool pool;
-  protected ORID          v;
-  protected AtomicLong lockExceptions              = new AtomicLong(0l);
-  protected boolean    expectedConcurrentException = true;
+  //  protected ODatabasePool pool;
+  protected ORID v;
+  protected AtomicLong lockExceptions = new AtomicLong(0l);
+  protected boolean expectedConcurrentException = true;
 
   class TxWriter implements Callable<Void> {
-    private final int    serverId;
+    private final int serverId;
 
     public TxWriter(final int iServerId) {
       serverId = iServerId;
@@ -66,7 +63,14 @@ public abstract class AbstractDistributedConcurrentTxTest extends AbstractDistri
 
         try {
           if ((i + 1) % 100 == 0)
-            System.out.println("\nWriter " + graph.getURL() + " managed " + (i + 1) + "/" + count + " vertices so far");
+            System.out.println(
+                "\nWriter "
+                    + graph.getURL()
+                    + " managed "
+                    + (i + 1)
+                    + "/"
+                    + count
+                    + " vertices so far");
 
           int retry = 0;
           boolean success = false;
@@ -80,7 +84,8 @@ public abstract class AbstractDistributedConcurrentTxTest extends AbstractDistri
 
             } catch (ODistributedRecordLockedException e) {
               lockExceptions.incrementAndGet();
-              OLogManager.instance().info(this, "increment lockExceptions %d", lockExceptions.get());
+              OLogManager.instance()
+                  .info(this, "increment lockExceptions %d", lockExceptions.get());
 
             } catch (ONeedRetryException e) {
               OLogManager.instance().debug(this, "Concurrent Exceptions " + e);
@@ -94,10 +99,22 @@ public abstract class AbstractDistributedConcurrentTxTest extends AbstractDistri
 
             localVertex.reload();
 
-            OLogManager.instance().info(this, "Retry %d with reloaded vertex v=%d", retry, localVertex.getRecord().getVersion());
+            OLogManager.instance()
+                .info(
+                    this,
+                    "Retry %d with reloaded vertex v=%d",
+                    retry,
+                    localVertex.getRecord().getVersion());
           }
 
-          Assert.assertTrue("Unable to complete the transaction (last=" + i + "/" + count + "), even after " + retry + " retries",
+          Assert.assertTrue(
+              "Unable to complete the transaction (last="
+                  + i
+                  + "/"
+                  + count
+                  + "), even after "
+                  + retry
+                  + " retries",
               success);
 
         } catch (InterruptedException e) {
@@ -113,7 +130,8 @@ public abstract class AbstractDistributedConcurrentTxTest extends AbstractDistri
         }
       }
 
-      System.out.println("\nWriter " + name + " END. count = " + count + " lockExceptions: " + lockExceptions);
+      System.out.println(
+          "\nWriter " + name + " END. count = " + count + " lockExceptions: " + lockExceptions);
       return null;
     }
   }
@@ -127,12 +145,9 @@ public abstract class AbstractDistributedConcurrentTxTest extends AbstractDistri
 
     final long totalLockExceptions = lockExceptions.get();
 
-    if (expectedConcurrentException)
-    {
+    if (expectedConcurrentException) {
       Assert.assertTrue("lockExceptions are " + totalLockExceptions, totalLockExceptions > 0);
-    }
-    else
-    {
+    } else {
       Assert.assertTrue("lockExceptions are " + totalLockExceptions, totalLockExceptions == 0);
     }
   }
@@ -157,7 +172,8 @@ public abstract class AbstractDistributedConcurrentTxTest extends AbstractDistri
     OClass provider = graph.createClass("Provider", person.getName());
     provider.createProperty("totalPurchased", OType.DECIMAL);
 
-//    pool = new ODatabasePool(graph.getURL(), "admin", "admin", OrientDBConfig.defaultConfig());
+    //    pool = new ODatabasePool(graph.getURL(), "admin", "admin",
+    // OrientDBConfig.defaultConfig());
 
     v = createVertex(graph, 0, 0, 0).getIdentity();
   }
@@ -170,13 +186,29 @@ public abstract class AbstractDistributedConcurrentTxTest extends AbstractDistri
   protected OVertex createVertex(ODatabaseDocument graph, int serverId, int threadId, int i) {
     final String uniqueId = serverId + "-" + threadId + "-" + i;
 
-    final Object result = graph.command(new OCommandSQL(
-        "create vertex Provider content {'id': '" + UUID.randomUUID().toString() + "', 'name': 'Billy" + uniqueId
-            + "', 'surname': 'Mayes" + uniqueId + "', 'birthday': '" + ODatabaseRecordThreadLocal.instance().get().getStorage()
-            .getConfiguration().getDateFormatInstance().format(new Date()) + "', 'children': '" + uniqueId + "', 'saved': 0}"))
-        .execute();
-        
-    return getVertex((ODocument)result);
+    final Object result =
+        graph
+            .command(
+                new OCommandSQL(
+                    "create vertex Provider content {'id': '"
+                        + UUID.randomUUID().toString()
+                        + "', 'name': 'Billy"
+                        + uniqueId
+                        + "', 'surname': 'Mayes"
+                        + uniqueId
+                        + "', 'birthday': '"
+                        + ODatabaseRecordThreadLocal.instance()
+                            .get()
+                            .getStorage()
+                            .getConfiguration()
+                            .getDateFormatInstance()
+                            .format(new Date())
+                        + "', 'children': '"
+                        + uniqueId
+                        + "', 'saved': 0}"))
+            .execute();
+
+    return getVertex((ODocument) result);
   }
 
   protected void updateVertex(OVertex v) {

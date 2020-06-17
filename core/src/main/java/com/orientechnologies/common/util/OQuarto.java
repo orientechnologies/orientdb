@@ -17,13 +17,13 @@ public final class OQuarto<T1, T2, T3, T4> {
 
   @Override
   public boolean equals(Object o) {
-    if (this == o)
-      return true;
-    if (o == null || getClass() != o.getClass())
-      return false;
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
     OQuarto<?, ?, ?, ?> oQuarto = (OQuarto<?, ?, ?, ?>) o;
-    return Objects.equals(one, oQuarto.one) && Objects.equals(two, oQuarto.two) && Objects.equals(three, oQuarto.three) && Objects
-        .equals(four, oQuarto.four);
+    return Objects.equals(one, oQuarto.one)
+        && Objects.equals(two, oQuarto.two)
+        && Objects.equals(three, oQuarto.three)
+        && Objects.equals(four, oQuarto.four);
   }
 
   @Override

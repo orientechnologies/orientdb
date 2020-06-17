@@ -23,7 +23,6 @@ import com.orientechnologies.common.profiler.OAbstractProfiler.OProfilerHookValu
 import com.orientechnologies.common.util.OPair;
 import com.orientechnologies.common.util.OService;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-
 import java.io.PrintStream;
 import java.util.Date;
 import java.util.List;
@@ -32,7 +31,12 @@ import java.util.Map;
 public interface OProfiler extends OService {
 
   enum METRIC_TYPE {
-    CHRONO, COUNTER, STAT, SIZE, ENABLED, TEXT
+    CHRONO,
+    COUNTER,
+    STAT,
+    SIZE,
+    ENABLED,
+    TEXT
   }
 
   METRIC_TYPE getType(String k);
@@ -59,9 +63,16 @@ public interface OProfiler extends OService {
 
   long stopChrono(String iName, String iDescription, long iStartTime, String iDictionary);
 
-  long stopChrono(String iName, String iDescription, long iStartTime, String iDictionary, String payload);
+  long stopChrono(
+      String iName, String iDescription, long iStartTime, String iDictionary, String payload);
 
-  long stopChrono(String iName, String iDescription, long iStartTime, String iDictionary, String payload, String user);
+  long stopChrono(
+      String iName,
+      String iDescription,
+      long iStartTime,
+      String iDictionary,
+      String payload,
+      String user);
 
   String dumpChronos();
 
@@ -89,9 +100,15 @@ public interface OProfiler extends OService {
 
   Object getHookValue(String iName);
 
-  void registerHookValue(String iName, String iDescription, METRIC_TYPE iType, OProfilerHookValue iHookValue);
+  void registerHookValue(
+      String iName, String iDescription, METRIC_TYPE iType, OProfilerHookValue iHookValue);
 
-  void registerHookValue(String iName, String iDescription, METRIC_TYPE iType, OProfilerHookValue iHookValue, String iMetadataName);
+  void registerHookValue(
+      String iName,
+      String iDescription,
+      METRIC_TYPE iType,
+      OProfilerHookValue iHookValue,
+      String iMetadataName);
 
   String getSystemMetric(String iMetricName);
 

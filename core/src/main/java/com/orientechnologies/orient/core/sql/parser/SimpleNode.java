@@ -4,18 +4,17 @@ package com.orientechnologies.orient.core.sql.parser;
 
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
-
 import java.util.Map;
 
 public class SimpleNode implements Node {
 
-  protected Node      parent;
-  protected Node[]    children;
-  protected int       id;
-  protected Object    value;
+  protected Node parent;
+  protected Node[] children;
+  protected int id;
+  protected Object value;
   protected OrientSql parser;
-  protected Token     firstToken;
-  protected Token     lastToken;
+  protected Token firstToken;
+  protected Token lastToken;
 
   public SimpleNode() {
     id = -1;
@@ -30,11 +29,9 @@ public class SimpleNode implements Node {
     parser = p;
   }
 
-  public void jjtOpen() {
-  }
+  public void jjtOpen() {}
 
-  public void jjtClose() {
-  }
+  public void jjtClose() {}
 
   public void jjtSetParent(Node n) {
     parent = n;
@@ -87,16 +84,12 @@ public class SimpleNode implements Node {
     this.lastToken = token;
   }
 
-  /**
-   * Accept the visitor.
-   **/
+  /** Accept the visitor. */
   public Object jjtAccept(OrientSqlVisitor visitor, Object data) {
     return visitor.visit(this, data);
   }
 
-  /**
-   * Accept the visitor.
-   **/
+  /** Accept the visitor. */
   public Object childrenAccept(OrientSqlVisitor visitor, Object data) {
     if (children != null) {
       for (int i = 0; i < children.length; ++i) {
@@ -149,7 +142,7 @@ public class SimpleNode implements Node {
     return value;
   }
 
-  public SimpleNode copy(){
+  public SimpleNode copy() {
     throw new UnsupportedOperationException();
   }
 }

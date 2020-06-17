@@ -19,18 +19,16 @@
 
 package com.orientechnologies.common.concur.lock;
 
-import org.junit.Before;
-import org.junit.Test;
+import static org.junit.Assert.assertEquals;
+
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.locks.Lock;
+import org.junit.Before;
+import org.junit.Test;
 
-import static org.junit.Assert.assertEquals;
-
-/**
- * @author Sergey Sitnikov
- */
+/** @author Sergey Sitnikov */
 public class OneEntryPerKeyLockManagerNullKeysTest {
 
   private OOneEntryPerKeyLockManager<String> manager;
@@ -53,8 +51,7 @@ public class OneEntryPerKeyLockManagerNullKeysTest {
     assertEquals(2, wrapper(locks[1]).getLockCount());
     assertEquals(1, wrapper(locks[2]).getLockCount());
 
-    for (Lock lock : locks)
-      lock.unlock();
+    for (Lock lock : locks) lock.unlock();
     assertEquals(0, wrapper(locks[0]).getLockCount());
     assertEquals(0, wrapper(locks[1]).getLockCount());
     assertEquals(0, wrapper(locks[2]).getLockCount());
@@ -62,7 +59,7 @@ public class OneEntryPerKeyLockManagerNullKeysTest {
 
   @Test
   public void testNullKeysInArrayBatch() {
-    final String[] keys = new String[] { null, "key", null };
+    final String[] keys = new String[] {null, "key", null};
 
     final Lock[] locks = manager.acquireExclusiveLocksInBatch(keys);
     assertEquals(keys.length, locks.length);
@@ -70,8 +67,7 @@ public class OneEntryPerKeyLockManagerNullKeysTest {
     assertEquals(2, wrapper(locks[1]).getLockCount());
     assertEquals(1, wrapper(locks[2]).getLockCount());
 
-    for (Lock lock : locks)
-      lock.unlock();
+    for (Lock lock : locks) lock.unlock();
     assertEquals(0, wrapper(locks[0]).getLockCount());
     assertEquals(0, wrapper(locks[1]).getLockCount());
     assertEquals(0, wrapper(locks[2]).getLockCount());
@@ -102,5 +98,4 @@ public class OneEntryPerKeyLockManagerNullKeysTest {
   private static OOneEntryPerKeyLockManager.CountableLockWrapper wrapper(Lock lock) {
     return (OOneEntryPerKeyLockManager.CountableLockWrapper) lock;
   }
-
 }

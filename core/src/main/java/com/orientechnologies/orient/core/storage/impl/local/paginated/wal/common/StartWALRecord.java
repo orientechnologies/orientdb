@@ -17,12 +17,10 @@ public final class StartWALRecord implements OWALRecord {
   }
 
   @Override
-  public void setDistance(int distance) {
-  }
+  public void setDistance(int distance) {}
 
   @Override
-  public void setDiskSize(int diskSize) {
-  }
+  public void setDiskSize(int diskSize) {}
 
   @Override
   public int getDistance() {

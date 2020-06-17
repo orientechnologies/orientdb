@@ -22,11 +22,9 @@ package com.orientechnologies.orient.core.index;
 
 import com.orientechnologies.orient.core.collate.OCollate;
 import com.orientechnologies.orient.core.collate.ODefaultCollate;
-import com.orientechnologies.orient.core.db.record.ORecordElement;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OSQLEngine;
-
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -41,8 +39,7 @@ public class OSimpleKeyIndexDefinition extends OAbstractIndexDefinition {
     this.keyTypes = keyTypes;
   }
 
-  public OSimpleKeyIndexDefinition() {
-  }
+  public OSimpleKeyIndexDefinition() {}
 
   public OSimpleKeyIndexDefinition(OType[] keyTypes2, List<OCollate> collatesList) {
     super();
@@ -64,7 +61,6 @@ public class OSimpleKeyIndexDefinition extends OAbstractIndexDefinition {
       }
       this.collate = collate;
     }
-
   }
 
   public List<String> getFields() {
@@ -84,19 +80,17 @@ public class OSimpleKeyIndexDefinition extends OAbstractIndexDefinition {
   }
 
   public Object createValue(final Object... params) {
-    if (params == null || params.length == 0)
-      return null;
+    if (params == null || params.length == 0) return null;
 
-    if (keyTypes.length == 1)
-      return OType.convert(params[0], keyTypes[0].getDefaultJavaType());
+    if (keyTypes.length == 1) return OType.convert(params[0], keyTypes[0].getDefaultJavaType());
 
     final OCompositeKey compositeKey = new OCompositeKey();
 
     for (int i = 0; i < params.length; ++i) {
-      final Comparable<?> paramValue = (Comparable<?>) OType.convert(params[i], keyTypes[i].getDefaultJavaType());
+      final Comparable<?> paramValue =
+          (Comparable<?>) OType.convert(params[i], keyTypes[i].getDefaultJavaType());
 
-      if (paramValue == null)
-        return null;
+      if (paramValue == null) return null;
       compositeKey.addKey(paramValue);
     }
 
@@ -115,7 +109,6 @@ public class OSimpleKeyIndexDefinition extends OAbstractIndexDefinition {
   public ODocument toStream() {
     serializeToStream();
     return document;
-
   }
 
   @Override
@@ -124,8 +117,7 @@ public class OSimpleKeyIndexDefinition extends OAbstractIndexDefinition {
 
     final List<String> keyTypeNames = new ArrayList<>(keyTypes.length);
 
-    for (final OType keyType : keyTypes)
-      keyTypeNames.add(keyType.toString());
+    for (final OType keyType : keyTypes) keyTypeNames.add(keyType.toString());
 
     document.field("keyTypes", keyTypeNames, OType.EMBEDDEDLIST);
     if (collate instanceof OCompositeCollate) {
@@ -133,8 +125,7 @@ public class OSimpleKeyIndexDefinition extends OAbstractIndexDefinition {
       for (OCollate curCollate : ((OCompositeCollate) this.collate).getCollates())
         collatesNames.add(curCollate.getName());
       document.field("collates", collatesNames, OType.EMBEDDEDLIST);
-    } else
-      document.field("collate", collate.getName());
+    } else document.field("collate", collate.getName());
 
     document.field("nullValuesIgnored", isNullValuesIgnored());
   }
@@ -179,10 +170,8 @@ public class OSimpleKeyIndexDefinition extends OAbstractIndexDefinition {
 
   @Override
   public boolean equals(final Object o) {
-    if (this == o)
-      return true;
-    if (o == null || getClass() != o.getClass())
-      return false;
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
 
     final OSimpleKeyIndexDefinition that = (OSimpleKeyIndexDefinition) o;
     return Arrays.equals(keyTypes, that.keyTypes);
@@ -197,7 +186,10 @@ public class OSimpleKeyIndexDefinition extends OAbstractIndexDefinition {
 
   @Override
   public String toString() {
-    return "OSimpleKeyIndexDefinition{" + "keyTypes=" + (keyTypes == null ? null : Arrays.asList(keyTypes)) + '}';
+    return "OSimpleKeyIndexDefinition{"
+        + "keyTypes="
+        + (keyTypes == null ? null : Arrays.asList(keyTypes))
+        + '}';
   }
 
   /**
@@ -206,7 +198,8 @@ public class OSimpleKeyIndexDefinition extends OAbstractIndexDefinition {
    * @param indexName
    * @param indexType
    */
-  public String toCreateIndexDDL(final String indexName, final String indexType, final String engine) {
+  public String toCreateIndexDDL(
+      final String indexName, final String indexType, final String engine) {
     final StringBuilder ddl = new StringBuilder("create index `");
     ddl.append(indexName).append("` ").append(indexType).append(' ');
 

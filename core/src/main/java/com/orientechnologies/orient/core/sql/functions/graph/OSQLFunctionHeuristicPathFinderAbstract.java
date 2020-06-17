@@ -24,7 +24,6 @@ import com.orientechnologies.orient.core.metadata.function.OFunction;
 import com.orientechnologies.orient.core.record.ODirection;
 import com.orientechnologies.orient.core.record.OVertex;
 import com.orientechnologies.orient.core.sql.functions.math.OSQLFunctionMathAbstract;
-
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
@@ -35,39 +34,40 @@ import java.util.Set;
 /**
  * Abstract class to find paths between nodes using heuristic .
  *
- * @author Saeed Tabrizi (saeed a_t  nowcando.com)
+ * @author Saeed Tabrizi (saeed a_t nowcando.com)
  */
 public abstract class OSQLFunctionHeuristicPathFinderAbstract extends OSQLFunctionMathAbstract {
-  public static final String PARAM_DIRECTION                = "direction";
-  public static final String PARAM_EDGE_TYPE_NAMES          = "edgeTypeNames";
-  public static final String PARAM_VERTEX_AXIS_NAMES        = "vertexAxisNames";
-  public static final String PARAM_PARALLEL                 = "parallel";
-  public static final String PARAM_MAX_DEPTH                = "maxDepth";
-  public static final String PARAM_HEURISTIC_FORMULA        = "heuristicFormula";
+  public static final String PARAM_DIRECTION = "direction";
+  public static final String PARAM_EDGE_TYPE_NAMES = "edgeTypeNames";
+  public static final String PARAM_VERTEX_AXIS_NAMES = "vertexAxisNames";
+  public static final String PARAM_PARALLEL = "parallel";
+  public static final String PARAM_MAX_DEPTH = "maxDepth";
+  public static final String PARAM_HEURISTIC_FORMULA = "heuristicFormula";
   public static final String PARAM_CUSTOM_HEURISTIC_FORMULA = "customHeuristicFormula";
-  public static final String PARAM_D_FACTOR                 = "dFactor";
-  public static final String PARAM_TIE_BREAKER              = "tieBreaker";
-  public static final String PARAM_EMPTY_IF_MAX_DEPTH       = "emptyIfMaxDepth";
-  protected static    Random rnd                            = new Random();
+  public static final String PARAM_D_FACTOR = "dFactor";
+  public static final String PARAM_TIE_BREAKER = "tieBreaker";
+  public static final String PARAM_EMPTY_IF_MAX_DEPTH = "emptyIfMaxDepth";
+  protected static Random rnd = new Random();
 
-  protected Boolean          paramParallel               = false;
-  protected Boolean          paramTieBreaker             = true;
-  protected Boolean          paramEmptyIfMaxDepth        = false;
-  protected String[]         paramEdgeTypeNames          = new String[] {};
-  protected String[]         paramVertexAxisNames        = new String[] {};
-  protected OVertex          paramSourceVertex;
-  protected OVertex          paramDestinationVertex;
-  protected HeuristicFormula paramHeuristicFormula       = HeuristicFormula.MANHATAN;
-  protected ODirection       paramDirection              = ODirection.OUT;
-  protected long             paramMaxDepth               = Long.MAX_VALUE;
-  protected double           paramDFactor                = 1.0;
-  protected String           paramCustomHeuristicFormula = "";
+  protected Boolean paramParallel = false;
+  protected Boolean paramTieBreaker = true;
+  protected Boolean paramEmptyIfMaxDepth = false;
+  protected String[] paramEdgeTypeNames = new String[] {};
+  protected String[] paramVertexAxisNames = new String[] {};
+  protected OVertex paramSourceVertex;
+  protected OVertex paramDestinationVertex;
+  protected HeuristicFormula paramHeuristicFormula = HeuristicFormula.MANHATAN;
+  protected ODirection paramDirection = ODirection.OUT;
+  protected long paramMaxDepth = Long.MAX_VALUE;
+  protected double paramDFactor = 1.0;
+  protected String paramCustomHeuristicFormula = "";
 
-  protected              OCommandContext context;
-  protected              List<OVertex>   route = new LinkedList<OVertex>();
-  protected static final float           MIN   = 0f;
+  protected OCommandContext context;
+  protected List<OVertex> route = new LinkedList<OVertex>();
+  protected static final float MIN = 0f;
 
-  public OSQLFunctionHeuristicPathFinderAbstract(final String iName, final int iMinParams, final int iMaxParams) {
+  public OSQLFunctionHeuristicPathFinderAbstract(
+      final String iName, final int iMinParams, final int iMaxParams) {
     super(iName, iMinParams, iMaxParams);
   }
 
@@ -75,10 +75,11 @@ public abstract class OSQLFunctionHeuristicPathFinderAbstract extends OSQLFuncti
     return false;
   }
 
-  protected abstract double getDistance(final OVertex node, final OVertex parent, final OVertex target);
+  protected abstract double getDistance(
+      final OVertex node, final OVertex parent, final OVertex target);
 
-  protected abstract double getHeuristicCost(final OVertex node, final OVertex parent, final OVertex target,
-      OCommandContext iContext);
+  protected abstract double getHeuristicCost(
+      final OVertex node, final OVertex parent, final OVertex target, OCommandContext iContext);
 
   protected LinkedList<OVertex> getPath() {
     final LinkedList<OVertex> path = new LinkedList<OVertex>(route);
@@ -92,8 +93,7 @@ public abstract class OSQLFunctionHeuristicPathFinderAbstract extends OSQLFuncti
     if (node != null) {
       for (OVertex v : node.getVertices(paramDirection, paramEdgeTypeNames)) {
         final OVertex ov = (OVertex) v;
-        if (ov != null)
-          neighbors.add(ov);
+        if (ov != null) neighbors.add(ov);
       }
     }
     return neighbors;
@@ -106,20 +106,23 @@ public abstract class OSQLFunctionHeuristicPathFinderAbstract extends OSQLFuncti
   }
 
   // obtains from http://theory.stanford.edu/~amitp/GameProgramming/Heuristics.html
-  protected double getManhatanHeuristicCost(double x, double y, double gx, double gy, double dFactor) {
+  protected double getManhatanHeuristicCost(
+      double x, double y, double gx, double gy, double dFactor) {
     double dx = Math.abs(x - gx);
     double dy = Math.abs(y - gy);
     return dFactor * (dx + dy);
   }
 
-  protected double getMaxAxisHeuristicCost(double x, double y, double gx, double gy, double dFactor) {
+  protected double getMaxAxisHeuristicCost(
+      double x, double y, double gx, double gy, double dFactor) {
     double dx = Math.abs(x - gx);
     double dy = Math.abs(y - gy);
     return dFactor * Math.max(dx, dy);
   }
 
   // obtains from http://theory.stanford.edu/~amitp/GameProgramming/Heuristics.html
-  protected double getDiagonalHeuristicCost(double x, double y, double gx, double gy, double dFactor) {
+  protected double getDiagonalHeuristicCost(
+      double x, double y, double gx, double gy, double dFactor) {
     double dx = Math.abs(x - gx);
     double dy = Math.abs(y - gy);
     double hDiagonal = Math.min(dx, dy);
@@ -128,27 +131,39 @@ public abstract class OSQLFunctionHeuristicPathFinderAbstract extends OSQLFuncti
   }
 
   // obtains from http://theory.stanford.edu/~amitp/GameProgramming/Heuristics.html
-  protected double getEuclideanHeuristicCost(double x, double y, double gx, double gy, double dFactor) {
+  protected double getEuclideanHeuristicCost(
+      double x, double y, double gx, double gy, double dFactor) {
     double dx = Math.abs(x - gx);
     double dy = Math.abs(y - gy);
 
     return (dFactor * Math.sqrt(Math.pow(dx, 2) + Math.pow(dy, 2)));
   }
 
-  protected double getEuclideanNoSQRHeuristicCost(double x, double y, double gx, double gy, double dFactor) {
+  protected double getEuclideanNoSQRHeuristicCost(
+      double x, double y, double gx, double gy, double dFactor) {
     double dx = Math.abs(x - gx);
     double dy = Math.abs(y - gy);
 
     return (dFactor * (Math.pow(dx, 2) + Math.pow(dy, 2)));
   }
 
-  protected double getCustomHeuristicCost(final String functionName, final String[] vertextAxisNames, final OVertex start,
-      final OVertex goal, final OVertex current, final OVertex parent, final long depth, double dFactor, OCommandContext ctx) {
+  protected double getCustomHeuristicCost(
+      final String functionName,
+      final String[] vertextAxisNames,
+      final OVertex start,
+      final OVertex goal,
+      final OVertex current,
+      final OVertex parent,
+      final long depth,
+      double dFactor,
+      OCommandContext ctx) {
 
     double heuristic = 0.0;
 
     OFunction func = ctx.getDatabase().getMetadata().getFunctionLibrary().getFunction(functionName);
-    Object fValue = func.executeInContext(context, vertextAxisNames, start, goal, current, parent, depth, dFactor);
+    Object fValue =
+        func.executeInContext(
+            context, vertextAxisNames, start, goal, current, parent, depth, dFactor);
     if (fValue != null && fValue instanceof Number) {
       heuristic = doubleOrDefault(fValue, heuristic);
     }
@@ -156,7 +171,8 @@ public abstract class OSQLFunctionHeuristicPathFinderAbstract extends OSQLFuncti
   }
 
   // obtains from http://theory.stanford.edu/~amitp/GameProgramming/Heuristics.html
-  protected double getTieBreakingHeuristicCost(double x, double y, double sx, double sy, double gx, double gy, double heuristic) {
+  protected double getTieBreakingHeuristicCost(
+      double x, double y, double sx, double sy, double gx, double gy, double heuristic) {
     double dx1 = x - gx;
     double dy1 = y - gy;
     double dx2 = sx - gx;
@@ -166,8 +182,8 @@ public abstract class OSQLFunctionHeuristicPathFinderAbstract extends OSQLFuncti
     return heuristic;
   }
 
-  protected double getTieBreakingRandomHeuristicCost(double x, double y, double sx, double sy, double gx, double gy,
-      double heuristic) {
+  protected double getTieBreakingRandomHeuristicCost(
+      double x, double y, double sx, double sy, double gx, double gy, double heuristic) {
     double dx1 = x - gx;
     double dy1 = y - gy;
     double dx2 = sx - gx;
@@ -177,81 +193,135 @@ public abstract class OSQLFunctionHeuristicPathFinderAbstract extends OSQLFuncti
     return heuristic;
   }
 
-  protected double getManhatanHeuristicCost(final String[] axisNames, final Map<String, Double> slist,
-      final Map<String, Double> clist, final Map<String, Double> plist, final Map<String, Double> glist, long depth,
+  protected double getManhatanHeuristicCost(
+      final String[] axisNames,
+      final Map<String, Double> slist,
+      final Map<String, Double> clist,
+      final Map<String, Double> plist,
+      final Map<String, Double> glist,
+      long depth,
       double dFactor) {
     Double heuristic = 0.0;
     double res = 0.0;
     for (String str : axisNames) {
-      res += Math.abs((clist.get(str) != null ? clist.get(str) : 0.0) - (glist.get(str) != null ? glist.get(str) : 0.0));
+      res +=
+          Math.abs(
+              (clist.get(str) != null ? clist.get(str) : 0.0)
+                  - (glist.get(str) != null ? glist.get(str) : 0.0));
     }
     heuristic = dFactor * res;
     return heuristic;
   }
 
-  protected double getMaxAxisHeuristicCost(final String[] axisNames, final Map<String, Double> slist,
-      final Map<String, Double> clist, final Map<String, Double> plist, final Map<String, Double> glist, long depth,
+  protected double getMaxAxisHeuristicCost(
+      final String[] axisNames,
+      final Map<String, Double> slist,
+      final Map<String, Double> clist,
+      final Map<String, Double> plist,
+      final Map<String, Double> glist,
+      long depth,
       double dFactor) {
     Double heuristic = 0.0;
     double res = 0.0;
     for (String str : axisNames) {
-      res = Math
-          .max(Math.abs((clist.get(str) != null ? clist.get(str) : 0.0) - (glist.get(str) != null ? glist.get(str) : 0.0)), res);
+      res =
+          Math.max(
+              Math.abs(
+                  (clist.get(str) != null ? clist.get(str) : 0.0)
+                      - (glist.get(str) != null ? glist.get(str) : 0.0)),
+              res);
     }
     heuristic = dFactor * res;
     return heuristic;
   }
 
-  protected double getDiagonalHeuristicCost(final String[] axisNames, final Map<String, Double> slist,
-      final Map<String, Double> clist, final Map<String, Double> plist, final Map<String, Double> glist, long depth,
+  protected double getDiagonalHeuristicCost(
+      final String[] axisNames,
+      final Map<String, Double> slist,
+      final Map<String, Double> clist,
+      final Map<String, Double> plist,
+      final Map<String, Double> glist,
+      long depth,
       double dFactor) {
 
     Double heuristic = 0.0;
     double hDiagonal = 0.0;
     double hStraight = 0.0;
     for (String str : axisNames) {
-      hDiagonal = Math
-          .min(Math.abs((clist.get(str) != null ? clist.get(str) : 0.0) - (glist.get(str) != null ? glist.get(str) : 0.0)),
+      hDiagonal =
+          Math.min(
+              Math.abs(
+                  (clist.get(str) != null ? clist.get(str) : 0.0)
+                      - (glist.get(str) != null ? glist.get(str) : 0.0)),
               hDiagonal);
-      hStraight += Math.abs((clist.get(str) != null ? clist.get(str) : 0.0) - (glist.get(str) != null ? glist.get(str) : 0.0));
+      hStraight +=
+          Math.abs(
+              (clist.get(str) != null ? clist.get(str) : 0.0)
+                  - (glist.get(str) != null ? glist.get(str) : 0.0));
     }
     heuristic = (dFactor * 2) * hDiagonal + dFactor * (hStraight - 2 * hDiagonal);
     return heuristic;
   }
 
-  protected double getEuclideanHeuristicCost(final String[] axisNames, final Map<String, Double> slist,
-      final Map<String, Double> clist, final Map<String, Double> plist, final Map<String, Double> glist, long depth,
+  protected double getEuclideanHeuristicCost(
+      final String[] axisNames,
+      final Map<String, Double> slist,
+      final Map<String, Double> clist,
+      final Map<String, Double> plist,
+      final Map<String, Double> glist,
+      long depth,
       double dFactor) {
     Double heuristic = 0.0;
     double res = 0.0;
     for (String str : axisNames) {
-      res += Math
-          .pow(Math.abs((clist.get(str) != null ? clist.get(str) : 0.0) - (glist.get(str) != null ? glist.get(str) : 0.0)), 2);
+      res +=
+          Math.pow(
+              Math.abs(
+                  (clist.get(str) != null ? clist.get(str) : 0.0)
+                      - (glist.get(str) != null ? glist.get(str) : 0.0)),
+              2);
     }
     heuristic = Math.sqrt(res);
     return heuristic;
   }
 
-  protected double getEuclideanNoSQRHeuristicCost(final String[] axisNames, final Map<String, Double> slist,
-      final Map<String, Double> clist, final Map<String, Double> plist, final Map<String, Double> glist, long depth,
+  protected double getEuclideanNoSQRHeuristicCost(
+      final String[] axisNames,
+      final Map<String, Double> slist,
+      final Map<String, Double> clist,
+      final Map<String, Double> plist,
+      final Map<String, Double> glist,
+      long depth,
       double dFactor) {
     Double heuristic = 0.0;
     double res = 0.0;
     for (String str : axisNames) {
-      res += Math
-          .pow(Math.abs((clist.get(str) != null ? clist.get(str) : 0.0) - (glist.get(str) != null ? glist.get(str) : 0.0)), 2);
+      res +=
+          Math.pow(
+              Math.abs(
+                  (clist.get(str) != null ? clist.get(str) : 0.0)
+                      - (glist.get(str) != null ? glist.get(str) : 0.0)),
+              2);
     }
     heuristic = dFactor * res;
     return heuristic;
   }
 
-  protected double getTieBreakingHeuristicCost(final String[] axisNames, final Map<String, Double> slist,
-      final Map<String, Double> clist, final Map<String, Double> plist, final Map<String, Double> glist, long depth,
+  protected double getTieBreakingHeuristicCost(
+      final String[] axisNames,
+      final Map<String, Double> slist,
+      final Map<String, Double> clist,
+      final Map<String, Double> plist,
+      final Map<String, Double> glist,
+      long depth,
       double heuristic) {
 
     double res = 0.0;
     for (String str : axisNames) {
-      res += Math.abs((clist.get(str) != null ? clist.get(str) : 0.0) - (glist.get(str) != null ? glist.get(str) : 0.0));
+      res +=
+          Math.abs(
+              (clist.get(str) != null ? clist.get(str) : 0.0)
+                  - (glist.get(str) != null ? glist.get(str) : 0.0));
     }
     double cross = res;
     heuristic += (cross * 0.0001);
@@ -340,5 +410,4 @@ public abstract class OSQLFunctionHeuristicPathFinderAbstract extends OSQLFuncti
     }
     return defaultValue;
   }
-
 }

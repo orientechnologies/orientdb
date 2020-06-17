@@ -26,17 +26,16 @@ import com.orientechnologies.orient.core.command.OCommandExecutorNotFoundExcepti
 import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
-
 import java.util.Map;
 import java.util.Set;
 
 /**
  * SQL UPDATE command.
- * 
+ *
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
- * 
  */
-public class OCommandExecutorSQLDelegate extends OCommandExecutorSQLAbstract implements OCommandDistributedReplicateRequest {
+public class OCommandExecutorSQLDelegate extends OCommandExecutorSQLAbstract
+    implements OCommandDistributedReplicateRequest {
   protected OCommandExecutor delegate;
 
   @SuppressWarnings("unchecked")
@@ -44,24 +43,24 @@ public class OCommandExecutorSQLDelegate extends OCommandExecutorSQLAbstract imp
     if (iCommand instanceof OCommandRequestText) {
       final OCommandRequestText textRequest = (OCommandRequestText) iCommand;
       final String text = textRequest.getText();
-      if (text == null)
-        throw new IllegalArgumentException("Command text is null");
+      if (text == null) throw new IllegalArgumentException("Command text is null");
 
       final String textUpperCase = upperCase(text);
 
       delegate = OSQLEngine.getInstance().getCommand(textUpperCase);
       if (delegate == null)
-        throw new OCommandExecutorNotFoundException("Cannot find a command executor for the command request: " + iCommand);
+        throw new OCommandExecutorNotFoundException(
+            "Cannot find a command executor for the command request: " + iCommand);
 
       delegate.setContext(context);
       delegate.setLimit(iCommand.getLimit());
       delegate.parse(iCommand);
       delegate.setProgressListener(progressListener);
-      if (delegate.getFetchPlan() != null)
-        textRequest.setFetchPlan(delegate.getFetchPlan());
+      if (delegate.getFetchPlan() != null) textRequest.setFetchPlan(delegate.getFetchPlan());
 
     } else
-      throw new OCommandExecutionException("Cannot find a command executor for the command request: " + iCommand);
+      throw new OCommandExecutionException(
+          "Cannot find a command executor for the command request: " + iCommand);
     return this;
   }
 

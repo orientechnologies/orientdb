@@ -8,7 +8,8 @@ public class OSecurityResourceProperty extends OSecurityResource {
   private final boolean allClasses;
   private final String propertyName;
 
-  public static final OSecurityResourceProperty ALL_PROPERTIES = new OSecurityResourceProperty("database.class.*.*", "*");
+  public static final OSecurityResourceProperty ALL_PROPERTIES =
+      new OSecurityResourceProperty("database.class.*.*", "*");
 
   public OSecurityResourceProperty(String resourceString, String className, String propertyName) {
     super(resourceString);
@@ -23,7 +24,6 @@ public class OSecurityResourceProperty extends OSecurityResource {
     this.className = null;
     this.propertyName = propertyName;
   }
-
 
   public String getClassName() {
     return className;
@@ -43,8 +43,8 @@ public class OSecurityResourceProperty extends OSecurityResource {
     if (o == null || getClass() != o.getClass()) return false;
     OSecurityResourceProperty that = (OSecurityResourceProperty) o;
     return allClasses == that.allClasses
-            && Objects.equals(className, that.className)
-            && Objects.equals(propertyName, that.propertyName);
+        && Objects.equals(className, that.className)
+        && Objects.equals(propertyName, that.propertyName);
   }
 
   @Override

@@ -9,21 +9,18 @@ import com.orientechnologies.orient.etl.context.OETLMessageHandler;
 import com.orientechnologies.orient.etl.util.OMigrationConfigManager;
 import com.orientechnologies.orient.output.OPluginMessageHandler;
 import com.orientechnologies.orient.server.OServer;
-
 import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
 import java.io.UnsupportedEncodingException;
 
-/**
- * Created by gabriele on 27/02/17.
- */
+/** Created by gabriele on 27/02/17. */
 public class OETLJob implements Runnable {
 
-  private final ODocument    cfg;
-  private       OETLListener listener;
-  public        Status       status;
+  private final ODocument cfg;
+  private OETLListener listener;
+  public Status status;
 
-  public  PrintStream           stream;
+  public PrintStream stream;
   private ByteArrayOutputStream baos;
   private OPluginMessageHandler messageHandler;
 
@@ -42,7 +39,8 @@ public class OETLJob implements Runnable {
   @Override
   public void run() {
 
-    final ODocument jsonConfig = new ODocument().fromJSON((String) cfg.field("jsonConfig"), "noMap");
+    final ODocument jsonConfig =
+        new ODocument().fromJSON((String) cfg.field("jsonConfig"), "noMap");
     int logLevel = cfg.field("logLevel");
     final String configName = cfg.field("configName");
     final String outDBName = cfg.field("outDBName");
@@ -59,11 +57,15 @@ public class OETLJob implements Runnable {
 
     String outDBConfigPath = null;
     try {
-      outDBConfigPath = OMigrationConfigManager.writeConfigurationInTargetDB(jsonConfig, outOrientGraphUri, configName);
+      outDBConfigPath =
+          OMigrationConfigManager.writeConfigurationInTargetDB(
+              jsonConfig, outOrientGraphUri, configName);
     } catch (Exception e) {
       ((OETLContext) OETLContextWrapper.getInstance().getContext())
-          .printExceptionMessage(e, "Impossible to write etl configuration in the specified path.", "error");
-      ((OETLContext) OETLContextWrapper.getInstance().getContext()).printExceptionStackTrace(e, "error");
+          .printExceptionMessage(
+              e, "Impossible to write etl configuration in the specified path.", "error");
+      ((OETLContext) OETLContextWrapper.getInstance().getContext())
+          .printExceptionStackTrace(e, "error");
     }
 
     try {
@@ -83,9 +85,7 @@ public class OETLJob implements Runnable {
     }
   }
 
-  public void validate() {
-
-  }
+  public void validate() {}
 
   /**
    * Single Job Status
@@ -110,7 +110,6 @@ public class OETLJob implements Runnable {
       }
       return status;
     }
-
   }
 
   private String extractBatchLog() {
@@ -137,6 +136,8 @@ public class OETLJob implements Runnable {
   }
 
   public enum Status {
-    STARTED, RUNNING, FINISHED
+    STARTED,
+    RUNNING,
+    FINISHED
   }
 }

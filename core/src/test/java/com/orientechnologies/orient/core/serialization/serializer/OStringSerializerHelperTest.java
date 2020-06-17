@@ -1,26 +1,38 @@
 package com.orientechnologies.orient.core.serialization.serializer;
 
-import com.orientechnologies.common.io.OIOUtils;
-import org.junit.Test;
+import static com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper.decode;
+import static com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper.encode;
+import static com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper.indexOf;
+import static com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper.smartSplit;
+import static com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper.smartTrim;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 
+
+import com.orientechnologies.common.io.OIOUtils;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-
-import static com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper.*;
-import static org.junit.Assert.*;
+import org.junit.Test;
 
 public class OStringSerializerHelperTest {
 
   @Test
   public void test() {
     final List<String> stringItems = new ArrayList<String>();
-    final String text = "['f\\\'oo', 'don\\\'t can\\\'t', \"\\\"bar\\\"\", 'b\\\"a\\\'z', \"q\\\"u\\'x\"]";
+    final String text =
+        "['f\\\'oo', 'don\\\'t can\\\'t', \"\\\"bar\\\"\", 'b\\\"a\\\'z', \"q\\\"u\\'x\"]";
     final int startPos = 0;
 
-    OStringSerializerHelper
-        .getCollection(text, startPos, stringItems, OStringSerializerHelper.LIST_BEGIN, OStringSerializerHelper.LIST_END,
-            OStringSerializerHelper.COLLECTION_SEPARATOR);
+    OStringSerializerHelper.getCollection(
+        text,
+        startPos,
+        stringItems,
+        OStringSerializerHelper.LIST_BEGIN,
+        OStringSerializerHelper.LIST_END,
+        OStringSerializerHelper.COLLECTION_SEPARATOR);
 
     assertEquals(OIOUtils.getStringContent(stringItems.get(0)), "f'oo");
     assertEquals(OIOUtils.getStringContent(stringItems.get(1)), "don't can't");
@@ -58,8 +70,17 @@ public class OStringSerializerHelperTest {
 
   @Test
   public void testEncodeAndDecode() {
-    String[] values = { "test", "test\"", "test\"test", "test\\test", "test\\\\test", "test\\\\\"test", "\\\\\\\\", "\"\"\"\"",
-        "\\\"\\\"\\\"" };
+    String[] values = {
+      "test",
+      "test\"",
+      "test\"test",
+      "test\\test",
+      "test\\\\test",
+      "test\\\\\"test",
+      "\\\\\\\\",
+      "\"\"\"\"",
+      "\\\"\\\"\\\""
+    };
     for (String value : values) {
       String encoded = encode(value);
       String decoded = decode(encoded);
@@ -138,7 +159,9 @@ public class OStringSerializerHelperTest {
     assertEquals(OStringSerializerHelper.getLowerIndexOfKeywords("from", 0, "from"), 0);
     assertEquals(OStringSerializerHelper.getLowerIndexOfKeywords("select from", 0, "from"), 7);
     assertEquals(OStringSerializerHelper.getLowerIndexOfKeywords("select from foo", 0, "from"), 7);
-    assertEquals(OStringSerializerHelper.getLowerIndexOfKeywords("select out[' from '] from foo", 0, "from"), 21);
+    assertEquals(
+        OStringSerializerHelper.getLowerIndexOfKeywords("select out[' from '] from foo", 0, "from"),
+        21);
 
     assertEquals(OStringSerializerHelper.getLowerIndexOfKeywords("select from", 7, "from"), 7);
     assertEquals(OStringSerializerHelper.getLowerIndexOfKeywords("select from foo", 7, "from"), 7);
@@ -147,23 +170,46 @@ public class OStringSerializerHelperTest {
     assertEquals(OStringSerializerHelper.getLowerIndexOfKeywords("select from foo", 8, "from"), -1);
 
     assertEquals(OStringSerializerHelper.getLowerIndexOfKeywords("select\tfrom", 0, "from"), 7);
-    assertEquals(OStringSerializerHelper.getLowerIndexOfKeywords("select\tfrom\tfoo", 0, "from"), 7);
-    assertEquals(OStringSerializerHelper.getLowerIndexOfKeywords("select\tout[' from ']\tfrom\tfoo", 0, "from"), 21);
+    assertEquals(
+        OStringSerializerHelper.getLowerIndexOfKeywords("select\tfrom\tfoo", 0, "from"), 7);
+    assertEquals(
+        OStringSerializerHelper.getLowerIndexOfKeywords(
+            "select\tout[' from ']\tfrom\tfoo", 0, "from"),
+        21);
 
     assertEquals(OStringSerializerHelper.getLowerIndexOfKeywords("select\nfrom", 0, "from"), 7);
-    assertEquals(OStringSerializerHelper.getLowerIndexOfKeywords("select\nfrom\nfoo", 0, "from"), 7);
-    assertEquals(OStringSerializerHelper.getLowerIndexOfKeywords("select\nout[' from ']\nfrom\nfoo", 0, "from"), 21);
+    assertEquals(
+        OStringSerializerHelper.getLowerIndexOfKeywords("select\nfrom\nfoo", 0, "from"), 7);
+    assertEquals(
+        OStringSerializerHelper.getLowerIndexOfKeywords(
+            "select\nout[' from ']\nfrom\nfoo", 0, "from"),
+        21);
 
-    assertEquals(OStringSerializerHelper.getLowerIndexOfKeywords("select from", 0, "let", "from"), 7);
-    assertEquals(OStringSerializerHelper.getLowerIndexOfKeywords("select from foo", 0, "let", "from"), 7);
-    assertEquals(OStringSerializerHelper.getLowerIndexOfKeywords("select out[' from '] from foo", 0, "let", "from"), 21);
+    assertEquals(
+        OStringSerializerHelper.getLowerIndexOfKeywords("select from", 0, "let", "from"), 7);
+    assertEquals(
+        OStringSerializerHelper.getLowerIndexOfKeywords("select from foo", 0, "let", "from"), 7);
+    assertEquals(
+        OStringSerializerHelper.getLowerIndexOfKeywords(
+            "select out[' from '] from foo", 0, "let", "from"),
+        21);
 
-    assertEquals(OStringSerializerHelper.getLowerIndexOfKeywords("select from", 0, "let", "from"), 7);
-    assertEquals(OStringSerializerHelper.getLowerIndexOfKeywords("select from foo", 0, "let", "from"), 7);
-    assertEquals(OStringSerializerHelper.getLowerIndexOfKeywords("select out[' from '] from foo let a = 1", 0, "let", "from"), 21);
-    assertEquals(OStringSerializerHelper.getLowerIndexOfKeywords("select out[' from '] from foo let a = 1", 0, "from", "let"), 21);
+    assertEquals(
+        OStringSerializerHelper.getLowerIndexOfKeywords("select from", 0, "let", "from"), 7);
+    assertEquals(
+        OStringSerializerHelper.getLowerIndexOfKeywords("select from foo", 0, "let", "from"), 7);
+    assertEquals(
+        OStringSerializerHelper.getLowerIndexOfKeywords(
+            "select out[' from '] from foo let a = 1", 0, "let", "from"),
+        21);
+    assertEquals(
+        OStringSerializerHelper.getLowerIndexOfKeywords(
+            "select out[' from '] from foo let a = 1", 0, "from", "let"),
+        21);
 
-    assertEquals(OStringSerializerHelper.getLowerIndexOfKeywords("select (select from foo) as bar from foo", 0, "let", "from"), 32);
+    assertEquals(
+        OStringSerializerHelper.getLowerIndexOfKeywords(
+            "select (select from foo) as bar from foo", 0, "let", "from"),
+        32);
   }
-
 }

@@ -1,27 +1,27 @@
 package com.orientechnologies.orient.distributed.impl.coordinator.network;
 
+import static com.orientechnologies.orient.distributed.network.binary.OBinaryDistributedMessage.DISTRIBUTED_STRUCTURAL_SUBMIT_RESPONSE;
+
+
 import com.orientechnologies.orient.core.db.config.ONodeIdentity;
 import com.orientechnologies.orient.distributed.impl.coordinator.OCoordinateMessagesFactory;
 import com.orientechnologies.orient.distributed.impl.coordinator.transaction.OSessionOperationId;
 import com.orientechnologies.orient.distributed.impl.structural.submit.OStructuralSubmitResponse;
-
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
 
-import static com.orientechnologies.orient.distributed.network.binary.OBinaryDistributedMessage.DISTRIBUTED_STRUCTURAL_SUBMIT_RESPONSE;
-
 public class ONetworkStructuralSubmitResponse implements ODistributedMessage {
-  private OSessionOperationId       operationId;
+  private OSessionOperationId operationId;
   private OStructuralSubmitResponse response;
 
-  public ONetworkStructuralSubmitResponse(OSessionOperationId operationId, OStructuralSubmitResponse response) {
+  public ONetworkStructuralSubmitResponse(
+      OSessionOperationId operationId, OStructuralSubmitResponse response) {
     this.operationId = operationId;
     this.response = response;
   }
 
-  public ONetworkStructuralSubmitResponse() {
-  }
+  public ONetworkStructuralSubmitResponse() {}
 
   @Override
   public void write(DataOutput output) throws IOException {

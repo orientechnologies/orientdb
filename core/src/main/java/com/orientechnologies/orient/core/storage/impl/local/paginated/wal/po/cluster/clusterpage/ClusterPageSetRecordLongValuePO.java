@@ -6,7 +6,6 @@ import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
 import com.orientechnologies.orient.core.storage.cluster.OClusterPage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.WALRecordTypes;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.PageOperationRecord;
-
 import java.nio.ByteBuffer;
 
 public final class ClusterPageSetRecordLongValuePO extends PageOperationRecord {
@@ -16,10 +15,10 @@ public final class ClusterPageSetRecordLongValuePO extends PageOperationRecord {
   private long value;
   private long oldValue;
 
-  public ClusterPageSetRecordLongValuePO() {
-  }
+  public ClusterPageSetRecordLongValuePO() {}
 
-  public ClusterPageSetRecordLongValuePO(int recordPosition, int offset, long value, long oldValue) {
+  public ClusterPageSetRecordLongValuePO(
+      int recordPosition, int offset, long value, long oldValue) {
     this.recordPosition = recordPosition;
     this.offset = offset;
     this.value = value;

@@ -31,12 +31,12 @@ import com.orientechnologies.orient.server.network.protocol.http.OHttpResponse;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpResponseWrapper;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpUtils;
 import com.orientechnologies.orient.server.network.protocol.http.command.OServerCommandAuthenticatedDbAbstract;
-
 import java.io.IOException;
 
 public abstract class OServerCommandAbstractLogic extends OServerCommandAuthenticatedDbAbstract {
   @Override
-  public boolean execute(final OHttpRequest iRequest, final OHttpResponse iResponse) throws Exception {
+  public boolean execute(final OHttpRequest iRequest, final OHttpResponse iResponse)
+      throws Exception {
     final String[] parts = init(iRequest, iResponse);
     ODatabaseDocument db = null;
 
@@ -48,19 +48,24 @@ public abstract class OServerCommandAbstractLogic extends OServerCommandAuthenti
         throw new IllegalArgumentException("Function '" + parts[2] + "' is not configured");
 
       if (iRequest.getHttpMethod().equalsIgnoreCase("GET") && !f.isIdempotent()) {
-        iResponse.send(OHttpUtils.STATUS_BADREQ_CODE, OHttpUtils.STATUS_BADREQ_DESCRIPTION, OHttpUtils.CONTENT_TEXT_PLAIN,
-            "GET method is not allowed to execute function '" + parts[2]
-                + "' because has been declared as non idempotent. Use POST instead.", null);
+        iResponse.send(
+            OHttpUtils.STATUS_BADREQ_CODE,
+            OHttpUtils.STATUS_BADREQ_DESCRIPTION,
+            OHttpUtils.CONTENT_TEXT_PLAIN,
+            "GET method is not allowed to execute function '"
+                + parts[2]
+                + "' because has been declared as non idempotent. Use POST instead.",
+            null);
         return false;
       }
 
       Object[] args = new String[parts.length - 3];
-      for (int i = 3; i < parts.length; ++i)
-        args[i - 3] = parts[i];
+      for (int i = 3; i < parts.length; ++i) args[i - 3] = parts[i];
 
       // BIND CONTEXT VARIABLES
       final OBasicCommandContext context = new OBasicCommandContext();
-      context.setVariable("session", server.getHttpSessionManager().getSession(iRequest.getSessionId()));
+      context.setVariable(
+          "session", server.getHttpSessionManager().getSession(iRequest.getSessionId()));
       context.setVariable("request", new OHttpRequestWrapper(iRequest, (String[]) args));
       context.setVariable("response", new OHttpResponseWrapper(iResponse));
 
@@ -71,10 +76,10 @@ public abstract class OServerCommandAbstractLogic extends OServerCommandAuthenti
           final ODocument params = new ODocument().fromJSON(iRequest.getContent());
           functionResult = f.executeInContext(context, params.toMap());
         } catch (Exception e) {
-          throw OException.wrapException(new OCommandScriptException("Error on parsing parameters from request body"), e);
+          throw OException.wrapException(
+              new OCommandScriptException("Error on parsing parameters from request body"), e);
         }
-      } else
-        functionResult = f.executeInContext(context, args);
+      } else functionResult = f.executeInContext(context, args);
 
       handleResult(iRequest, iResponse, functionResult);
 
@@ -82,23 +87,32 @@ public abstract class OServerCommandAbstractLogic extends OServerCommandAuthenti
       // EXCEPTION
 
       final StringBuilder msg = new StringBuilder(256);
-      for (Exception currentException = e; currentException != null; currentException = (Exception) currentException.getCause()) {
-        if (msg.length() > 0)
-          msg.append("\n");
+      for (Exception currentException = e;
+          currentException != null;
+          currentException = (Exception) currentException.getCause()) {
+        if (msg.length() > 0) msg.append("\n");
         msg.append(currentException.getMessage());
       }
 
       if (isJsonResponse(iResponse)) {
-        sendJsonError(iResponse, OHttpUtils.STATUS_BADREQ_CODE, OHttpUtils.STATUS_BADREQ_DESCRIPTION,
-            OHttpUtils.CONTENT_TEXT_PLAIN, msg.toString(), null);
+        sendJsonError(
+            iResponse,
+            OHttpUtils.STATUS_BADREQ_CODE,
+            OHttpUtils.STATUS_BADREQ_DESCRIPTION,
+            OHttpUtils.CONTENT_TEXT_PLAIN,
+            msg.toString(),
+            null);
       } else {
-        iResponse.send(OHttpUtils.STATUS_BADREQ_CODE, OHttpUtils.STATUS_BADREQ_DESCRIPTION, OHttpUtils.CONTENT_TEXT_PLAIN,
-            msg.toString(), null);
+        iResponse.send(
+            OHttpUtils.STATUS_BADREQ_CODE,
+            OHttpUtils.STATUS_BADREQ_DESCRIPTION,
+            OHttpUtils.CONTENT_TEXT_PLAIN,
+            msg.toString(),
+            null);
       }
 
     } finally {
-      if (db != null)
-        db.close();
+      if (db != null) db.close();
     }
 
     return false;
@@ -106,6 +120,7 @@ public abstract class OServerCommandAbstractLogic extends OServerCommandAuthenti
 
   protected abstract String[] init(OHttpRequest iRequest, OHttpResponse iResponse);
 
-  protected abstract void handleResult(OHttpRequest iRequest, OHttpResponse iResponse, Object iResult) throws InterruptedException,
-      IOException;
+  protected abstract void handleResult(
+      OHttpRequest iRequest, OHttpResponse iResponse, Object iResult)
+      throws InterruptedException, IOException;
 }

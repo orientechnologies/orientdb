@@ -13,10 +13,13 @@
  *  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  *  * See the License for the specific language governing permissions and
  *  * limitations under the License.
- *  
+ *
  */
 
 package com.orientechnologies.lucene.tests;
+
+import static org.assertj.core.api.Assertions.assertThat;
+
 
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
@@ -24,17 +27,12 @@ import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.OEdge;
 import com.orientechnologies.orient.core.record.OVertex;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
+import java.util.HashMap;
+import java.util.Map;
 import org.junit.Ignore;
 import org.junit.Test;
 
-import java.util.HashMap;
-import java.util.Map;
-
-import static org.assertj.core.api.Assertions.assertThat;
-
-/**
- * Created by Enrico Risa on 18/09/15.
- */
+/** Created by Enrico Risa on 18/09/15. */
 public class OLuceneMiscTest extends OLuceneBaseTest {
 
   @Test
@@ -49,26 +47,29 @@ public class OLuceneMiscTest extends OLuceneBaseTest {
     db.command("insert into Test set attr1='foo', attr2='bar'");
     db.command("insert into Test set attr1='bar', attr2='foo'");
 
-    OResultSet results = db
-        .query("select from Test where search_index('Test.attr1',\"foo*\") =true OR search_index('Test.attr2', \"foo*\")=true  ");
+    OResultSet results =
+        db.query(
+            "select from Test where search_index('Test.attr1',\"foo*\") =true OR search_index('Test.attr2', \"foo*\")=true  ");
     assertThat(results).hasSize(2);
     results.close();
 
-    results = db
-        .query("select from Test where SEARCH_FIELDS( ['attr1'], 'bar') = true OR SEARCH_FIELDS(['attr2'], 'bar*' )= true ");
+    results =
+        db.query(
+            "select from Test where SEARCH_FIELDS( ['attr1'], 'bar') = true OR SEARCH_FIELDS(['attr2'], 'bar*' )= true ");
     assertThat(results).hasSize(2);
     results.close();
 
-    results = db
-        .query("select from Test where SEARCH_FIELDS( ['attr1'], 'foo*') = true AND SEARCH_FIELDS(['attr2'], 'bar*') = true");
+    results =
+        db.query(
+            "select from Test where SEARCH_FIELDS( ['attr1'], 'foo*') = true AND SEARCH_FIELDS(['attr2'], 'bar*') = true");
     assertThat(results).hasSize(1);
     results.close();
 
-    results = db
-        .query("select from Test where SEARCH_FIELDS( ['attr1'], 'bar*') = true AND SEARCH_FIELDS(['attr2'], 'foo*')= true");
+    results =
+        db.query(
+            "select from Test where SEARCH_FIELDS( ['attr1'], 'bar*') = true AND SEARCH_FIELDS(['attr2'], 'foo*')= true");
     assertThat(results).hasSize(1);
     results.close();
-
   }
 
   @Test
@@ -82,7 +83,8 @@ public class OLuceneMiscTest extends OLuceneBaseTest {
 
     db.command("insert into Person set name='Enrico', age=18");
 
-    String query = "select  from (select from Person where age = 18) where search_fields(['name'],'Enrico') = true";
+    String query =
+        "select  from (select from Person where age = 18) where search_fields(['name'],'Enrico') = true";
     OResultSet results = db.query(query);
 
     assertThat(results).hasSize(1);
@@ -90,11 +92,11 @@ public class OLuceneMiscTest extends OLuceneBaseTest {
 
     // WITH PROJECTION it works using index directly
 
-    query = "select  from (select name from Person where age = 18) where search_index('Person.name','Enrico') = true";
+    query =
+        "select  from (select name from Person where age = 18) where search_index('Person.name','Enrico') = true";
     results = db.query(query);
     assertThat(results).hasSize(1);
     results.close();
-
   }
 
   @Test
@@ -156,5 +158,4 @@ public class OLuceneMiscTest extends OLuceneBaseTest {
     assertThat(results).hasSize(1);
     results.close();
   }
-
 }

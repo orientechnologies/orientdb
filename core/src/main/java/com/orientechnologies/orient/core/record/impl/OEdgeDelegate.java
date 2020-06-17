@@ -36,20 +36,17 @@ import com.orientechnologies.orient.core.record.OVertex;
 import com.orientechnologies.orient.core.serialization.OSerializableStream;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 import com.orientechnologies.orient.core.storage.OStorage;
-
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Optional;
 import java.util.Set;
 
-/**
- * @author Luigi Dell'Aquila
- */
+/** @author Luigi Dell'Aquila */
 public class OEdgeDelegate implements OEdge {
   protected OVertex vOut;
   protected OVertex vIn;
-  protected OClass  lightweightEdgeType;
-  protected String  lightwightEdgeLabel;
+  protected OClass lightweightEdgeType;
+  protected String lightwightEdgeLabel;
 
   protected ODocument element;
 
@@ -71,8 +68,7 @@ public class OEdgeDelegate implements OEdge {
       return vOut;
 
     final ODocument doc = getRecord();
-    if (doc == null)
-      return null;
+    if (doc == null) return null;
 
     Object result = doc.getProperty(DIRECTION_OUT);
     if (!(result instanceof OElement)) {
@@ -80,7 +76,7 @@ public class OEdgeDelegate implements OEdge {
     }
     OElement v = (OElement) result;
     if (!v.isVertex()) {
-      return null;//TODO optional...?
+      return null; // TODO optional...?
     }
     return v.asVertex().get();
   }
@@ -92,8 +88,7 @@ public class OEdgeDelegate implements OEdge {
       return vIn;
 
     final ODocument doc = getRecord();
-    if (doc == null)
-      return null;
+    if (doc == null) return null;
 
     Object result = doc.getProperty(DIRECTION_IN);
     if (!(result instanceof OElement)) {
@@ -101,7 +96,7 @@ public class OEdgeDelegate implements OEdge {
     }
     OElement v = (OElement) result;
     if (!v.isVertex()) {
-      return null;//TODO optional...?
+      return null; // TODO optional...?
     }
     return v.asVertex().get();
   }
@@ -171,8 +166,11 @@ public class OEdgeDelegate implements OEdge {
     OVertex to = getTo();
     OVertexDelegate.detachOutgointEdge(from, this);
     OVertexDelegate.detachIncomingEdge(to, this);
-    this.element = ((ODatabaseDocumentInternal) db)
-        .newRegularEdge(lightweightEdgeType == null ? "E" : lightweightEdgeType.getName(), from, to).getRecord();
+    this.element =
+        ((ODatabaseDocumentInternal) db)
+            .newRegularEdge(
+                lightweightEdgeType == null ? "E" : lightweightEdgeType.getName(), from, to)
+            .getRecord();
     this.lightweightEdgeType = null;
     this.vOut = null;
     this.vIn = null;
@@ -223,12 +221,12 @@ public class OEdgeDelegate implements OEdge {
     Optional<OClass> typeClass = getSchemaType();
     if (typeClass.isPresent()) {
       types.add(typeClass.get().getName());
-      typeClass.get().getAllSuperClasses().stream().map(x -> x.getName()).forEach(name -> types.add(name));
+      typeClass.get().getAllSuperClasses().stream()
+          .map(x -> x.getName())
+          .forEach(name -> types.add(name));
     } else {
-      if (lightwightEdgeLabel != null)
-        types.add(lightwightEdgeLabel);
-      else
-        types.add("E");
+      if (lightwightEdgeLabel != null) types.add(lightwightEdgeLabel);
+      else types.add("E");
     }
     for (String s : labels) {
       for (String type : types) {
@@ -260,28 +258,24 @@ public class OEdgeDelegate implements OEdge {
 
   @Override
   public void lock(boolean iExclusive) {
-    if (element != null)
-      element.lock(iExclusive);
+    if (element != null) element.lock(iExclusive);
   }
 
   @Override
   public boolean isLocked() {
-    if (element != null)
-      return element.isLocked();
+    if (element != null) return element.isLocked();
     return false;
   }
 
   @Override
   public OStorage.LOCKING_STRATEGY lockingStrategy() {
-    if (element != null)
-      return element.lockingStrategy();
+    if (element != null) return element.lockingStrategy();
     return OStorage.LOCKING_STRATEGY.NONE;
   }
 
   @Override
   public void unlock() {
-    if (element != null)
-      element.unlock();
+    if (element != null) element.unlock();
   }
 
   @Override
@@ -298,7 +292,7 @@ public class OEdgeDelegate implements OEdge {
   public boolean equals(Object obj) {
     if (element == null) {
       return this == obj;
-      //TODO double-check this logic for lightweight edges
+      // TODO double-check this logic for lightweight edges
     }
     if (!(obj instanceof OIdentifiable)) {
       return false;
@@ -329,69 +323,59 @@ public class OEdgeDelegate implements OEdge {
 
   @Override
   public void setInternalStatus(STATUS iStatus) {
-    if (element != null)
-      element.setInternalStatus(iStatus);
+    if (element != null) element.setInternalStatus(iStatus);
   }
 
   @Override
   public <RET> RET setDirty() {
-    if (element != null)
-      element.setDirty();
+    if (element != null) element.setDirty();
     return (RET) this;
   }
 
   @Override
   public void setDirtyNoChanged() {
-    if (element != null)
-      element.setDirtyNoChanged();
+    if (element != null) element.setDirtyNoChanged();
   }
 
   @Override
   public ORecordElement getOwner() {
-    if (element != null)
-      return element.getOwner();
+    if (element != null) return element.getOwner();
     return null;
   }
 
   @Override
   public byte[] toStream() throws OSerializationException {
-    if (element != null)
-      return element.toStream();
+    if (element != null) return element.toStream();
     return null;
   }
 
   @Override
   public OSerializableStream fromStream(byte[] iStream) throws OSerializationException {
-    if (element != null)
-      return element.fromStream(iStream);
+    if (element != null) return element.fromStream(iStream);
     return null;
   }
 
   @Override
   public boolean detach() {
-    if (element != null)
-      return element.detach();
+    if (element != null) return element.detach();
     return true;
   }
 
   @Override
   public <RET extends ORecord> RET reset() {
-    if (element != null)
-      element.reset();
+    if (element != null) element.reset();
     return (RET) this;
   }
 
   @Override
   public OEdge unload() {
-    if (element != null)
-      element.unload();
+    if (element != null) element.unload();
     return this;
   }
 
   @Override
   public OEdge clear() {
-    if (element != null)
-      element.clear();
+    if (element != null) element.clear();
     return this;
   }
 
@@ -401,14 +385,12 @@ public class OEdgeDelegate implements OEdge {
       return new OEdgeDelegate(element.copy());
     } else {
       return new OEdgeDelegate(vOut, vIn, lightweightEdgeType, lightwightEdgeLabel);
-
     }
   }
 
   @Override
   public int getVersion() {
-    if (element != null)
-      return element.getVersion();
+    if (element != null) return element.getVersion();
     return 1;
   }
 
@@ -423,8 +405,7 @@ public class OEdgeDelegate implements OEdge {
 
   @Override
   public boolean isDirty() {
-    if (element != null)
-      return element.isDirty();
+    if (element != null) return element.isDirty();
     return false;
   }
 
@@ -435,15 +416,14 @@ public class OEdgeDelegate implements OEdge {
 
   @Override
   public <RET extends ORecord> RET reload() throws ORecordNotFoundException {
-    if (element != null)
-      element.reload();
+    if (element != null) element.reload();
     return (RET) this;
   }
 
   @Override
-  public <RET extends ORecord> RET reload(String fetchPlan, boolean ignoreCache, boolean force) throws ORecordNotFoundException {
-    if (element != null)
-      element.reload(fetchPlan, ignoreCache, force);
+  public <RET extends ORecord> RET reload(String fetchPlan, boolean ignoreCache, boolean force)
+      throws ORecordNotFoundException {
+    if (element != null) element.reload(fetchPlan, ignoreCache, force);
     return (RET) this;
   }
 
@@ -501,8 +481,13 @@ public class OEdgeDelegate implements OEdge {
     if (element != null) {
       return element.toJSON();
     } else {
-      return "{\"out\":\"" + vOut.getIdentity() + "\", \"in\":\"" + vIn.getIdentity() + "\", \"@class\":\""
-          + OStringSerializerHelper.encode(lightweightEdgeType.getName()) + "\"}";
+      return "{\"out\":\""
+          + vOut.getIdentity()
+          + "\", \"in\":\""
+          + vIn.getIdentity()
+          + "\", \"@class\":\""
+          + OStringSerializerHelper.encode(lightweightEdgeType.getName())
+          + "\"}";
     }
   }
 
@@ -511,15 +496,19 @@ public class OEdgeDelegate implements OEdge {
     if (element != null) {
       return element.toJSON(iFormat);
     } else {
-      return "{\"out\":\"" + vOut.getIdentity() + "\", \"in\":\"" + vIn.getIdentity() + "\", \"@class\":\""
-          + OStringSerializerHelper.encode(lightweightEdgeType.getName()) + "\"}";
+      return "{\"out\":\""
+          + vOut.getIdentity()
+          + "\", \"in\":\""
+          + vIn.getIdentity()
+          + "\", \"@class\":\""
+          + OStringSerializerHelper.encode(lightweightEdgeType.getName())
+          + "\"}";
     }
   }
 
   @Override
   public int getSize() {
-    if (element != null)
-      return element.getSize();
+    if (element != null) return element.getSize();
     return 0;
   }
 

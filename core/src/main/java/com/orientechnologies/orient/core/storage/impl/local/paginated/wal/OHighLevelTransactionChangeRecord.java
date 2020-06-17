@@ -1,17 +1,15 @@
 package com.orientechnologies.orient.core.storage.impl.local.paginated.wal;
 
-import com.orientechnologies.common.serialization.types.OIntegerSerializer;
-
-import java.nio.ByteBuffer;
-
 import static com.orientechnologies.orient.core.storage.impl.local.paginated.wal.WALRecordTypes.HIGH_LEVEL_TRANSACTION_CHANGE_RECORD;
+
+
+import com.orientechnologies.common.serialization.types.OIntegerSerializer;
+import java.nio.ByteBuffer;
 
 public class OHighLevelTransactionChangeRecord extends OOperationUnitRecord {
   private byte[] data;
 
-  public OHighLevelTransactionChangeRecord() {
-
-  }
+  public OHighLevelTransactionChangeRecord() {}
 
   public OHighLevelTransactionChangeRecord(long operationUnitId, byte[] data) {
     super(operationUnitId);

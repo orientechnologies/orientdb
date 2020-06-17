@@ -16,6 +16,12 @@
 
 package com.orientechnologies.orient.server.distributed.scenariotest;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
+
+
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.OrientDB;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
@@ -23,31 +29,29 @@ import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.orientechnologies.orient.server.distributed.ServerRun;
-import org.junit.Ignore;
-import org.junit.Test;
-
 import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
-
-import static org.junit.Assert.*;
+import org.junit.Ignore;
+import org.junit.Test;
 
 /**
- * It checks the consistency in the cluster with the following scenario: - 3 server (quorum=2) - network fault on server2 and
- * server3 - 5 threads for each running server write 100 records: writes on server2 and server3 are redirected on server1, writes on
- * server1 don't succeed (due to the quorum) - restart server2 - 5 threads for each running server write 100 records: writes server3
- * are redirected on server1 or server2, writes on server1 and server2 succeed - check consistency - restart server3 - 5 threads on
- * server3 write 100 records - check consistency - changing quorum (quorum=1) - network fault on server2 and server3 - 3 writes on
- * server1 checking they succeed - restart server2 - 5 threads for each running server write 100 records - restart server3 - 5
- * threads on server3 write 100 records - check consistency
+ * It checks the consistency in the cluster with the following scenario: - 3 server (quorum=2) -
+ * network fault on server2 and server3 - 5 threads for each running server write 100 records:
+ * writes on server2 and server3 are redirected on server1, writes on server1 don't succeed (due to
+ * the quorum) - restart server2 - 5 threads for each running server write 100 records: writes
+ * server3 are redirected on server1 or server2, writes on server1 and server2 succeed - check
+ * consistency - restart server3 - 5 threads on server3 write 100 records - check consistency -
+ * changing quorum (quorum=1) - network fault on server2 and server3 - 3 writes on server1 checking
+ * they succeed - restart server2 - 5 threads for each running server write 100 records - restart
+ * server3 - 5 threads on server3 write 100 records - check consistency
  *
  * @author Gabriele Ponzi
  * @email <gabriele.ponzi--at--gmail.com>
  */
-
 public class IncrementalRestartScenarioIT extends AbstractScenarioTest {
 
   @Ignore
@@ -95,14 +99,13 @@ public class IncrementalRestartScenarioIT extends AbstractScenarioTest {
     } catch (Exception e) {
       e.printStackTrace();
     }
-
   }
 
   private class TestQuorum2 implements Callable<Void> {
 
-    private final String          databaseUrl;
-    private       List<ServerRun> serverInstances;
-    private       List<ServerRun> executeWritesOnServers;
+    private final String databaseUrl;
+    private List<ServerRun> serverInstances;
+    private List<ServerRun> executeWritesOnServers;
     private int initialCount = 0;
 
     public TestQuorum2(List<ServerRun> serverInstances) {
@@ -158,7 +161,9 @@ public class IncrementalRestartScenarioIT extends AbstractScenarioTest {
         // restarting server2
         try {
           System.out.println("Restarting server 2...");
-          serverInstance.get(1).startServer(getDistributedServerConfiguration(serverInstance.get(1)));
+          serverInstance
+              .get(1)
+              .startServer(getDistributedServerConfiguration(serverInstance.get(1)));
           System.out.println("Server 2 restarted.");
           assertTrue(serverInstance.get(1).isActive());
         } catch (Exception e) {
@@ -175,7 +180,9 @@ public class IncrementalRestartScenarioIT extends AbstractScenarioTest {
         // restarting server3
         try {
           System.out.println("Restarting server 3...");
-          serverInstance.get(2).startServer(getDistributedServerConfiguration(serverInstance.get(2)));
+          serverInstance
+              .get(2)
+              .startServer(getDistributedServerConfiguration(serverInstance.get(2)));
           System.out.println("Server 3 restarted.");
           assertTrue(serverInstance.get(2).isActive());
         } catch (Exception e) {
@@ -210,10 +217,10 @@ public class IncrementalRestartScenarioIT extends AbstractScenarioTest {
 
   private class TestQuorum1 implements Callable<Void> {
 
-    private final String          databaseUrl1;
-    private final String          databaseUrl2;
-    private       List<ServerRun> serverInstances;
-    private       List<ServerRun> executeWritesOnServers;
+    private final String databaseUrl1;
+    private final String databaseUrl2;
+    private List<ServerRun> serverInstances;
+    private List<ServerRun> executeWritesOnServers;
     private int initialCount = 0;
 
     public TestQuorum1(List<ServerRun> serverInstances) {
@@ -273,7 +280,9 @@ public class IncrementalRestartScenarioIT extends AbstractScenarioTest {
         // restarting server2
         try {
           System.out.println("Restarting server 2...");
-          serverInstance.get(1).startServer(getDistributedServerConfiguration(serverInstance.get(1)));
+          serverInstance
+              .get(1)
+              .startServer(getDistributedServerConfiguration(serverInstance.get(1)));
           System.out.println("Server 2 restarted.");
           assertTrue(serverInstance.get(1).isActive());
         } catch (Exception e) {
@@ -290,7 +299,9 @@ public class IncrementalRestartScenarioIT extends AbstractScenarioTest {
         // restarting server3
         try {
           System.out.println("Restarting server 3...");
-          serverInstance.get(2).startServer(getDistributedServerConfiguration(serverInstance.get(2)));
+          serverInstance
+              .get(2)
+              .startServer(getDistributedServerConfiguration(serverInstance.get(2)));
           System.out.println("Server 3 restarted.");
           assertTrue(serverInstance.get(2).isActive());
         } catch (Exception e) {
@@ -324,5 +335,4 @@ public class IncrementalRestartScenarioIT extends AbstractScenarioTest {
   public String getDatabaseName() {
     return "distributed-incremental-restart";
   }
-
 }

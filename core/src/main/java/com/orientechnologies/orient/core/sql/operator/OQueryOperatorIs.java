@@ -23,12 +23,15 @@ import com.orientechnologies.common.util.ORawPair;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORID;
-import com.orientechnologies.orient.core.index.*;
+import com.orientechnologies.orient.core.index.OCompositeIndexDefinition;
+import com.orientechnologies.orient.core.index.OIndex;
+import com.orientechnologies.orient.core.index.OIndexDefinition;
+import com.orientechnologies.orient.core.index.OIndexDefinitionMultiValue;
+import com.orientechnologies.orient.core.index.OIndexInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OSQLHelper;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilterCondition;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilterItemField;
-
 import java.util.List;
 import java.util.stream.Stream;
 
@@ -44,26 +47,26 @@ public class OQueryOperatorIs extends OQueryOperatorEquality {
   }
 
   @Override
-  protected boolean evaluateExpression(final OIdentifiable iRecord, final OSQLFilterCondition iCondition, final Object iLeft,
-      Object iRight, OCommandContext iContext) {
+  protected boolean evaluateExpression(
+      final OIdentifiable iRecord,
+      final OSQLFilterCondition iCondition,
+      final Object iLeft,
+      Object iRight,
+      OCommandContext iContext) {
     if (iCondition.getLeft() instanceof OSQLFilterItemField) {
       if (OSQLHelper.DEFINED.equals(iCondition.getRight()))
         return evaluateDefined(iRecord, "" + iCondition.getLeft());
 
-      if (iCondition.getRight() instanceof OSQLFilterItemField && "not defined".equalsIgnoreCase("" + iCondition.getRight()))
+      if (iCondition.getRight() instanceof OSQLFilterItemField
+          && "not defined".equalsIgnoreCase("" + iCondition.getRight()))
         return !evaluateDefined(iRecord, "" + iCondition.getLeft());
     }
 
-    if (OSQLHelper.NOT_NULL.equals(iRight))
-      return iLeft != null;
-    else if (OSQLHelper.NOT_NULL.equals(iLeft))
-      return iRight != null;
-    else if (OSQLHelper.DEFINED.equals(iLeft))
-      return evaluateDefined(iRecord, (String) iRight);
-    else if (OSQLHelper.DEFINED.equals(iRight))
-      return evaluateDefined(iRecord, (String) iLeft);
-    else
-      return iLeft == iRight;
+    if (OSQLHelper.NOT_NULL.equals(iRight)) return iLeft != null;
+    else if (OSQLHelper.NOT_NULL.equals(iLeft)) return iRight != null;
+    else if (OSQLHelper.DEFINED.equals(iLeft)) return evaluateDefined(iRecord, (String) iRight);
+    else if (OSQLHelper.DEFINED.equals(iRight)) return evaluateDefined(iRecord, (String) iLeft);
+    else return iLeft == iRight;
   }
 
   protected boolean evaluateDefined(final OIdentifiable iRecord, final String iFieldName) {
@@ -75,36 +78,34 @@ public class OQueryOperatorIs extends OQueryOperatorEquality {
 
   @Override
   public OIndexReuseType getIndexReuseType(final Object iLeft, final Object iRight) {
-    if (iRight == null)
-      return OIndexReuseType.INDEX_METHOD;
+    if (iRight == null) return OIndexReuseType.INDEX_METHOD;
 
     return OIndexReuseType.NO_INDEX;
   }
 
   @Override
-  public Stream<ORawPair<Object, ORID>> executeIndexQuery(OCommandContext iContext, OIndex index, List<Object> keyParams,
-      boolean ascSortOrder) {
+  public Stream<ORawPair<Object, ORID>> executeIndexQuery(
+      OCommandContext iContext, OIndex index, List<Object> keyParams, boolean ascSortOrder) {
 
     final OIndexDefinition indexDefinition = index.getDefinition();
 
     final OIndexInternal internalIndex = index.getInternal();
     Stream<ORawPair<Object, ORID>> stream;
-    if (!internalIndex.canBeUsedInEqualityOperators())
-      return null;
+    if (!internalIndex.canBeUsedInEqualityOperators()) return null;
 
     if (indexDefinition.getParamCount() == 1) {
       final Object key;
       if (indexDefinition instanceof OIndexDefinitionMultiValue)
         key = ((OIndexDefinitionMultiValue) indexDefinition).createSingleValue(keyParams.get(0));
-      else
-        key = indexDefinition.createValue(keyParams);
+      else key = indexDefinition.createValue(keyParams);
 
       stream = index.getInternal().getRids(key).map((rid) -> new ORawPair<>(key, rid));
     } else {
       // in case of composite keys several items can be returned in case we perform search
       // using part of composite key stored in index
 
-      final OCompositeIndexDefinition compositeIndexDefinition = (OCompositeIndexDefinition) indexDefinition;
+      final OCompositeIndexDefinition compositeIndexDefinition =
+          (OCompositeIndexDefinition) indexDefinition;
 
       final Object keyOne = compositeIndexDefinition.createSingleValue(keyParams);
       final Object keyTwo = compositeIndexDefinition.createSingleValue(keyParams);
@@ -114,8 +115,7 @@ public class OQueryOperatorIs extends OQueryOperatorEquality {
       } else {
         if (indexDefinition.getParamCount() == keyParams.size()) {
           stream = index.getInternal().getRids(keyOne).map((rid) -> new ORawPair<>(keyOne, rid));
-        } else
-          return null;
+        } else return null;
       }
     }
 
@@ -132,5 +132,4 @@ public class OQueryOperatorIs extends OQueryOperatorEquality {
   public ORID getEndRidRange(Object iLeft, Object iRight) {
     return null;
   }
-
 }

@@ -22,22 +22,23 @@ package com.orientechnologies.orient.core.storage;
 import com.orientechnologies.orient.core.exception.OSerializationException;
 import com.orientechnologies.orient.core.serialization.OBinaryProtocol;
 import com.orientechnologies.orient.core.serialization.OSerializableStream;
-
 import java.io.Externalizable;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 
 public class OPhysicalPosition implements OSerializableStream, Externalizable {
-  private static final int binarySize = OBinaryProtocol.SIZE_LONG + OBinaryProtocol.SIZE_BYTE + OBinaryProtocol.SIZE_INT
-      + OBinaryProtocol.SIZE_INT;
-  public long             clusterPosition;
-  public byte             recordType;
-  public int              recordVersion = 0;
-  public int              recordSize;
+  private static final int binarySize =
+      OBinaryProtocol.SIZE_LONG
+          + OBinaryProtocol.SIZE_BYTE
+          + OBinaryProtocol.SIZE_INT
+          + OBinaryProtocol.SIZE_INT;
+  public long clusterPosition;
+  public byte recordType;
+  public int recordVersion = 0;
+  public int recordSize;
 
-  public OPhysicalPosition() {
-  }
+  public OPhysicalPosition() {}
 
   public OPhysicalPosition(final long iClusterPosition) {
     clusterPosition = iClusterPosition;
@@ -65,7 +66,15 @@ public class OPhysicalPosition implements OSerializableStream, Externalizable {
 
   @Override
   public String toString() {
-    return "rid(?:" + clusterPosition + ") record(type:" + recordType + " size:" + recordSize + " v:" + recordVersion + ")";
+    return "rid(?:"
+        + clusterPosition
+        + ") record(type:"
+        + recordType
+        + " size:"
+        + recordSize
+        + " v:"
+        + recordVersion
+        + ")";
   }
 
   @Override
@@ -106,12 +115,13 @@ public class OPhysicalPosition implements OSerializableStream, Externalizable {
 
   @Override
   public boolean equals(Object obj) {
-    if (obj == null || !(obj instanceof OPhysicalPosition))
-      return false;
+    if (obj == null || !(obj instanceof OPhysicalPosition)) return false;
 
     final OPhysicalPosition other = (OPhysicalPosition) obj;
 
-    return clusterPosition == other.clusterPosition && recordType == other.recordType && recordVersion == other.recordVersion
+    return clusterPosition == other.clusterPosition
+        && recordType == other.recordType
+        && recordVersion == other.recordVersion
         && recordSize == other.recordSize;
   }
 

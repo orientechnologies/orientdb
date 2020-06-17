@@ -28,17 +28,15 @@ import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.config.OServerParameterConfiguration;
 import com.orientechnologies.orient.server.plugin.OServerPluginAbstract;
-
+import java.lang.management.ManagementFactory;
 import javax.management.MBeanServer;
 import javax.management.ObjectName;
-import java.lang.management.ManagementFactory;
 
 public class OJMXPlugin extends OServerPluginAbstract {
   private ObjectName onProfiler;
-  private boolean    profilerManaged;
+  private boolean profilerManaged;
 
-  public OJMXPlugin() {
-  }
+  public OJMXPlugin() {}
 
   @Override
   public void config(final OServer oServer, final OServerParameterConfiguration[] iParams) {
@@ -51,7 +49,8 @@ public class OJMXPlugin extends OServerPluginAbstract {
         profilerManaged = Boolean.parseBoolean(param.value);
     }
 
-    OLogManager.instance().info(this, "JMX plugin installed and active: profilerManaged=%s", profilerManaged);
+    OLogManager.instance()
+        .info(this, "JMX plugin installed and active: profilerManaged=%s", profilerManaged);
 
     final MBeanServer mBeanServer = ManagementFactory.getPlatformMBeanServer();
 
@@ -59,19 +58,19 @@ public class OJMXPlugin extends OServerPluginAbstract {
       if (profilerManaged) {
         // REGISTER THE PROFILER
         onProfiler = new ObjectName("com.orientechnologies.common.profiler:type=OProfilerMXBean");
-        if (mBeanServer.isRegistered(onProfiler))
-          mBeanServer.unregisterMBean(onProfiler);
+        if (mBeanServer.isRegistered(onProfiler)) mBeanServer.unregisterMBean(onProfiler);
         mBeanServer.registerMBean(Orient.instance().getProfiler(), onProfiler);
       }
 
     } catch (Exception e) {
-      throw OException.wrapException(new OConfigurationException("Cannot initialize JMX server"), e);
+      throw OException.wrapException(
+          new OConfigurationException("Cannot initialize JMX server"), e);
     }
   }
 
   /*
    * (non-Javadoc)
-   * 
+   *
    * @see com.orientechnologies.orient.server.handler.OServerHandlerAbstract#shutdown()
    */
   @Override
@@ -79,13 +78,12 @@ public class OJMXPlugin extends OServerPluginAbstract {
     try {
       MBeanServer mBeanServer = ManagementFactory.getPlatformMBeanServer();
       if (onProfiler != null)
-        if (mBeanServer.isRegistered(onProfiler))
-          mBeanServer.unregisterMBean(onProfiler);
+        if (mBeanServer.isRegistered(onProfiler)) mBeanServer.unregisterMBean(onProfiler);
 
     } catch (Exception e) {
-      OLogManager.instance().error(this, "OrientDB Server v" + OConstants.getVersion() + " unregisterMBean error", e);
+      OLogManager.instance()
+          .error(this, "OrientDB Server v" + OConstants.getVersion() + " unregisterMBean error", e);
     }
-
   }
 
   @Override

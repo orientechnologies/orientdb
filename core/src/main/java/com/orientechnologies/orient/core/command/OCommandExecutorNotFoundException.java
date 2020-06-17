@@ -32,5 +32,4 @@ public class OCommandExecutorNotFoundException extends OCommandExecutionExceptio
   public OCommandExecutorNotFoundException(String message) {
     super(message);
   }
-
 }

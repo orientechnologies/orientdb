@@ -20,18 +20,16 @@
 
 package com.orientechnologies.orient.graph.sql;
 
-import com.orientechnologies.orient.core.command.OCommandManager;
-import com.orientechnologies.orient.core.command.script.OCommandExecutorScript;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
+
+
 import com.orientechnologies.orient.core.command.script.OCommandScript;
 import com.orientechnologies.orient.graph.GraphNoTxAbstractTest;
 import com.tinkerpop.blueprints.impls.orient.OrientElement;
+import java.util.Iterator;
 import org.junit.BeforeClass;
 import org.junit.Test;
-
-import java.util.Iterator;
-
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
 
 public class SQLGraphBatchTest extends GraphNoTxAbstractTest {
 
@@ -44,7 +42,8 @@ public class SQLGraphBatchTest extends GraphNoTxAbstractTest {
     script.append("CREATE EDGE E FROM $v1 TO $v2; ");
     script.append("TRAVERSE * FROM $v1; ");
 
-    Iterable<OrientElement> qResult = graph.command(new OCommandScript("sql", script.toString())).execute();
+    Iterable<OrientElement> qResult =
+        graph.command(new OCommandScript("sql", script.toString())).execute();
 
     final Iterator<OrientElement> it = qResult.iterator();
 

@@ -37,31 +37,36 @@ import com.orientechnologies.orient.core.storage.OStorageProxy;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.ORecordSerializationContext;
 import com.orientechnologies.orient.core.storage.ridbag.sbtree.Change;
 import com.orientechnologies.orient.core.storage.ridbag.sbtree.OBonsaiCollectionPointer;
-
-import java.util.*;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Iterator;
+import java.util.List;
+import java.util.ListIterator;
+import java.util.NavigableMap;
+import java.util.NoSuchElementException;
+import java.util.UUID;
 import java.util.concurrent.ConcurrentSkipListMap;
 
 public class ORemoteTreeRidBag implements ORidBagDelegate {
-  /**
-   * Entries with not valid id.
-   */
+  /** Entries with not valid id. */
   private int size;
 
-  private OSimpleMultiValueTracker<OIdentifiable, OIdentifiable> tracker = new OSimpleMultiValueTracker<>(this);
+  private OSimpleMultiValueTracker<OIdentifiable, OIdentifiable> tracker =
+      new OSimpleMultiValueTracker<>(this);
 
   private boolean autoConvertToRecord = true;
 
-  private transient ORecordElement           owner;
-  private           boolean                  dirty;
-  private           boolean                  transactionDirty = false;
-  private           ORecordId                ownerRecord;
-  private           String                   fieldName;
-  private           OBonsaiCollectionPointer collectionPointer;
+  private transient ORecordElement owner;
+  private boolean dirty;
+  private boolean transactionDirty = false;
+  private ORecordId ownerRecord;
+  private String fieldName;
+  private OBonsaiCollectionPointer collectionPointer;
 
   private class RemovableIterator implements Iterator<OIdentifiable> {
     private Iterator<OIdentifiable> iter;
-    private OIdentifiable           next;
-    private OIdentifiable           removeNext;
+    private OIdentifiable next;
+    private OIdentifiable removeNext;
 
     public RemovableIterator(Iterator<OIdentifiable> iterator) {
       this.iter = iterator;
@@ -121,16 +126,18 @@ public class ORemoteTreeRidBag implements ORidBagDelegate {
   @Override
   public void setOwner(ORecordElement owner) {
     if (owner != null && this.owner != null && !this.owner.equals(owner)) {
-      throw new IllegalStateException("This data structure is owned by document " + owner
-          + " if you want to use it in other document create new rid bag instance and copy content of current one.");
+      throw new IllegalStateException(
+          "This data structure is owned by document "
+              + owner
+              + " if you want to use it in other document create new rid bag instance and copy content of current one.");
     }
     this.owner = owner;
     if (this.owner != null && tracker.getTimeLine() != null) {
       for (OMultiValueChangeEvent event : tracker.getTimeLine().getMultiValueChangeEvents()) {
         switch (event.getChangeType()) {
-        case ADD:
-          ORecordInternal.track(this.owner, (OIdentifiable) event.getKey());
-          break;
+          case ADD:
+            ORecordInternal.track(this.owner, (OIdentifiable) event.getKey());
+            break;
         }
       }
     }
@@ -140,9 +147,13 @@ public class ORemoteTreeRidBag implements ORidBagDelegate {
   public Iterator<OIdentifiable> iterator() {
     List<OIdentifiable> set = loadElements();
     if (this.isAutoConvertToRecord()) {
-      return new RemovableIterator(set.stream().map((x) -> {
-        return (OIdentifiable) x.getRecord();
-      }).iterator());
+      return new RemovableIterator(
+          set.stream()
+              .map(
+                  (x) -> {
+                    return (OIdentifiable) x.getRecord();
+                  })
+              .iterator());
     } else {
       return new RemovableIterator(set.iterator());
     }
@@ -157,7 +168,8 @@ public class ORemoteTreeRidBag implements ORidBagDelegate {
   private List<OIdentifiable> loadElements() {
     ODatabaseDocumentInternal database = ODatabaseRecordThreadLocal.instance().get();
     List<OIdentifiable> set;
-    try (OResultSet result = database.query("select list(@this.field(?)) as elements from ?", fieldName, ownerRecord)) {
+    try (OResultSet result =
+        database.query("select list(@this.field(?)) as elements from ?", fieldName, ownerRecord)) {
       if (result.hasNext()) {
         set = (result.next().getProperty("elements"));
       } else {
@@ -167,12 +179,12 @@ public class ORemoteTreeRidBag implements ORidBagDelegate {
     if (tracker.getTimeLine() != null) {
       for (OMultiValueChangeEvent event : tracker.getTimeLine().getMultiValueChangeEvents()) {
         switch (event.getChangeType()) {
-        case ADD:
-          set.add((OIdentifiable) event.getKey());
-          break;
-        case REMOVE:
-          set.remove(event.getKey());
-          break;
+          case ADD:
+            set.add((OIdentifiable) event.getKey());
+            break;
+          case REMOVE:
+            set.remove(event.getKey());
+            break;
         }
       }
     }
@@ -180,8 +192,7 @@ public class ORemoteTreeRidBag implements ORidBagDelegate {
   }
 
   @Override
-  public void convertLinks2Records() {
-  }
+  public void convertLinks2Records() {}
 
   @Override
   public boolean convertRecords2Links() {
@@ -265,26 +276,27 @@ public class ORemoteTreeRidBag implements ORidBagDelegate {
   }
 
   @Override
-  public Object returnOriginalState(List<OMultiValueChangeEvent<OIdentifiable, OIdentifiable>> multiValueChangeEvents) {
+  public Object returnOriginalState(
+      List<OMultiValueChangeEvent<OIdentifiable, OIdentifiable>> multiValueChangeEvents) {
     final ORemoteTreeRidBag reverted = new ORemoteTreeRidBag(this.collectionPointer);
     for (OIdentifiable identifiable : this) {
       reverted.add(identifiable);
     }
 
-    final ListIterator<OMultiValueChangeEvent<OIdentifiable, OIdentifiable>> listIterator = multiValueChangeEvents
-        .listIterator(multiValueChangeEvents.size());
+    final ListIterator<OMultiValueChangeEvent<OIdentifiable, OIdentifiable>> listIterator =
+        multiValueChangeEvents.listIterator(multiValueChangeEvents.size());
 
     while (listIterator.hasPrevious()) {
       final OMultiValueChangeEvent<OIdentifiable, OIdentifiable> event = listIterator.previous();
       switch (event.getChangeType()) {
-      case ADD:
-        reverted.remove(event.getKey());
-        break;
-      case REMOVE:
-        reverted.add(event.getOldValue());
-        break;
-      default:
-        throw new IllegalArgumentException("Invalid change type : " + event.getChangeType());
+        case ADD:
+          reverted.remove(event.getKey());
+          break;
+        case REMOVE:
+          reverted.add(event.getOldValue());
+          break;
+        default:
+          throw new IllegalArgumentException("Invalid change type : " + event.getChangeType());
       }
     }
 
@@ -337,7 +349,7 @@ public class ORemoteTreeRidBag implements ORidBagDelegate {
 
   @Override
   public void replace(OMultiValueChangeEvent<Object, Object> event, Object newValue) {
-    //do nothing not needed
+    // do nothing not needed
   }
 
   private void addEvent(OIdentifiable key, OIdentifiable identifiable) {
@@ -415,8 +427,7 @@ public class ORemoteTreeRidBag implements ORidBagDelegate {
 
   @Override
   public void setDirtyNoChanged() {
-    if (owner != null)
-      owner.setDirtyNoChanged();
+    if (owner != null) owner.setDirtyNoChanged();
     this.dirty = true;
     this.transactionDirty = true;
   }
@@ -444,5 +455,4 @@ public class ORemoteTreeRidBag implements ORidBagDelegate {
   public OBonsaiCollectionPointer getCollectionPointer() {
     return collectionPointer;
   }
-
 }

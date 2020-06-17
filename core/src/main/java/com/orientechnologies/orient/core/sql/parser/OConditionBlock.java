@@ -10,6 +10,5 @@ public class OConditionBlock extends SimpleNode {
   public OConditionBlock(OrientSql p, int id) {
     super(p, id);
   }
-
 }
 /* JavaCC - OriginalChecksum=d3e0589119a7b64cf9891d6baaf9e449 (do not edit this line) */

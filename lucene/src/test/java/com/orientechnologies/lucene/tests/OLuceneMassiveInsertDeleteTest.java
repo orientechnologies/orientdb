@@ -30,9 +30,7 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
-/**
- * Created by enricorisa on 23/09/14.
- */
+/** Created by enricorisa on 23/09/14. */
 public class OLuceneMassiveInsertDeleteTest extends OLuceneBaseTest {
 
   @Before
@@ -42,7 +40,6 @@ public class OLuceneMassiveInsertDeleteTest extends OLuceneBaseTest {
     song.createProperty("name", OType.STRING);
 
     db.command("create index City.name on City (name) FULLTEXT ENGINE LUCENE");
-
   }
 
   @Test
@@ -78,5 +75,4 @@ public class OLuceneMassiveInsertDeleteTest extends OLuceneBaseTest {
     OIndex idx = db.getMetadata().getSchema().getClass("City").getClassIndex("City.name");
     Assert.assertEquals(0, idx.getInternal().size());
   }
-
 }

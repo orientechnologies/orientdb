@@ -28,7 +28,6 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.query.OSQLQuery;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.orientechnologies.orient.etl.context.OETLContextWrapper;
-
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -36,16 +35,14 @@ import java.util.Locale;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-/**
- * Merges two records. Useful when a record needs to be updated rather than created.
- */
+/** Merges two records. Useful when a record needs to be updated rather than created. */
 public abstract class OETLAbstractLookupTransformer extends OETLAbstractTransformer {
-  protected String               joinFieldName;
-  protected Object               joinValue;
-  protected String               lookup;
-  protected ACTION               unresolvedLinkAction = ACTION.NOTHING;
-  private   OSQLQuery<ODocument> sqlQuery;
-  private   OIndex               index;
+  protected String joinFieldName;
+  protected Object joinValue;
+  protected String lookup;
+  protected ACTION unresolvedLinkAction = ACTION.NOTHING;
+  private OSQLQuery<ODocument> sqlQuery;
+  private OIndex index;
 
   @Override
   public void configure(final ODocument iConfiguration, OCommandContext iContext) {
@@ -53,17 +50,18 @@ public abstract class OETLAbstractLookupTransformer extends OETLAbstractTransfor
 
     joinFieldName = iConfiguration.field("joinFieldName");
 
-    if (iConfiguration.containsField("joinValue"))
-      joinValue = iConfiguration.field("joinValue");
+    if (iConfiguration.containsField("joinValue")) joinValue = iConfiguration.field("joinValue");
 
-    if (iConfiguration.containsField("lookup"))
-      lookup = iConfiguration.field("lookup");
+    if (iConfiguration.containsField("lookup")) lookup = iConfiguration.field("lookup");
 
     if (iConfiguration.containsField("unresolvedLinkAction"))
-      unresolvedLinkAction = ACTION.valueOf(iConfiguration.field("unresolvedLinkAction").toString().toUpperCase(Locale.ENGLISH));
+      unresolvedLinkAction =
+          ACTION.valueOf(
+              iConfiguration.field("unresolvedLinkAction").toString().toUpperCase(Locale.ENGLISH));
   }
 
-  protected Object lookup(ODatabaseDocumentInternal db, Object joinValue, final boolean iReturnRIDS) {
+  protected Object lookup(
+      ODatabaseDocumentInternal db, Object joinValue, final boolean iReturnRIDS) {
     Object result = null;
 
     if (joinValue != null) {
@@ -74,10 +72,13 @@ public abstract class OETLAbstractLookupTransformer extends OETLAbstractTransfor
         else {
           index = db.getMetadata().getIndexManagerInternal().getIndex(db, lookup);
           if (index == null) {
-            OETLContextWrapper.getInstance().getMessageHandler()
+            OETLContextWrapper.getInstance()
+                .getMessageHandler()
                 .warn(this, "WARNING: index %s not found. Lookups could be really slow", lookup);
             final String[] parts = lookup.split("\\.");
-            sqlQuery = new OSQLSynchQuery<ODocument>("SELECT FROM " + parts[0] + " WHERE " + parts[1] + " = ?");
+            sqlQuery =
+                new OSQLSynchQuery<ODocument>(
+                    "SELECT FROM " + parts[0] + " WHERE " + parts[1] + " = ?");
           }
         }
       }
@@ -88,8 +89,7 @@ public abstract class OETLAbstractLookupTransformer extends OETLAbstractTransfor
         //noinspection resource
         result = index.getInternal().getRids(joinValue);
       } else {
-        if (sqlQuery instanceof OSQLSynchQuery)
-          ((OSQLSynchQuery) sqlQuery).resetPagination();
+        if (sqlQuery instanceof OSQLSynchQuery) ((OSQLSynchQuery) sqlQuery).resetPagination();
 
         result = db.query(sqlQuery, joinValue);
       }
@@ -111,18 +111,14 @@ public abstract class OETLAbstractLookupTransformer extends OETLAbstractTransfor
             // CONVERT COLLECTION OF RECORDS IN RIDS
             final List<ORID> resultRIDs = new ArrayList<ORID>(coll.size());
             for (Object o : coll) {
-              if (o instanceof OIdentifiable)
-                resultRIDs.add(((OIdentifiable) o).getIdentity());
+              if (o instanceof OIdentifiable) resultRIDs.add(((OIdentifiable) o).getIdentity());
             }
             result = resultRIDs;
           }
-        } else
-          result = null;
+        } else result = null;
       } else if (result instanceof OIdentifiable) {
-        if (iReturnRIDS)
-          result = ((OIdentifiable) result).getIdentity();
-        else
-          result = ((OIdentifiable) result).getRecord();
+        if (iReturnRIDS) result = ((OIdentifiable) result).getIdentity();
+        else result = ((OIdentifiable) result).getRecord();
       }
     }
 
@@ -130,6 +126,11 @@ public abstract class OETLAbstractLookupTransformer extends OETLAbstractTransfor
   }
 
   protected enum ACTION {
-    NOTHING, WARNING, ERROR, HALT, SKIP, CREATE
+    NOTHING,
+    WARNING,
+    ERROR,
+    HALT,
+    SKIP,
+    CREATE
   }
 }

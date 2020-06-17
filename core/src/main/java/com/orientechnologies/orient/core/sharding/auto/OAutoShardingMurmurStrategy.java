@@ -19,10 +19,11 @@
  */
 package com.orientechnologies.orient.core.sharding.auto;
 
+import static java.lang.Math.abs;
+
+
 import com.orientechnologies.common.serialization.types.OBinarySerializer;
 import com.orientechnologies.orient.core.storage.index.hashindex.local.OMurmurHash3HashFunction;
-
-import static java.lang.Math.abs;
 
 /**
  * Auto-sharding strategy implementation that uses Murmur hashing.

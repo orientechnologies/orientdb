@@ -1,8 +1,10 @@
 package com.orientechnologies.orient.distributed.impl.structural.raft;
 
+import static com.orientechnologies.orient.distributed.impl.coordinator.OCoordinateMessagesFactory.CREATE_DATABASE_REQUEST;
+
+
 import com.orientechnologies.orient.distributed.OrientDBDistributed;
 import com.orientechnologies.orient.distributed.impl.coordinator.transaction.OSessionOperationId;
-
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
@@ -10,25 +12,25 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 
-import static com.orientechnologies.orient.distributed.impl.coordinator.OCoordinateMessagesFactory.CREATE_DATABASE_REQUEST;
-
 public class OCreateDatabase implements ORaftOperation {
 
   private OSessionOperationId operationId;
-  private String              database;
-  private String              type;
+  private String database;
+  private String type;
   private Map<String, String> configurations;
 
-  public OCreateDatabase(OSessionOperationId operationId, String database, String type, Map<String, String> configurations) {
+  public OCreateDatabase(
+      OSessionOperationId operationId,
+      String database,
+      String type,
+      Map<String, String> configurations) {
     this.operationId = operationId;
     this.database = database;
     this.type = type;
     this.configurations = configurations;
   }
 
-  public OCreateDatabase() {
-
-  }
+  public OCreateDatabase() {}
 
   @Override
   public void apply(OrientDBDistributed context) {

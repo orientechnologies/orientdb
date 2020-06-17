@@ -1,21 +1,21 @@
 package com.orientechnologies.orient.distributed.impl.structural.operations;
 
+import static com.orientechnologies.orient.distributed.impl.coordinator.OCoordinateMessagesFactory.DATABASE_LAST_VALID_OPLOG_ID_RESPONSE;
+
+
 import com.orientechnologies.orient.core.db.config.ONodeIdentity;
 import com.orientechnologies.orient.distributed.OrientDBDistributed;
 import com.orientechnologies.orient.distributed.impl.log.OLogId;
 import com.orientechnologies.orient.distributed.impl.metadata.OElectionReply;
-
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
 import java.util.Optional;
 import java.util.UUID;
 
-import static com.orientechnologies.orient.distributed.impl.coordinator.OCoordinateMessagesFactory.DATABASE_LAST_VALID_OPLOG_ID_RESPONSE;
-
 public class ODatabaseLastValidResponse implements OOperation {
-  private String           database;
-  private UUID             electionId;
+  private String database;
+  private UUID electionId;
   private Optional<OLogId> id;
 
   public ODatabaseLastValidResponse(String database, UUID electionId, Optional<OLogId> id) {
@@ -24,16 +24,19 @@ public class ODatabaseLastValidResponse implements OOperation {
     this.id = id;
   }
 
-  public ODatabaseLastValidResponse() {
-  }
+  public ODatabaseLastValidResponse() {}
 
   @Override
   public void apply(ONodeIdentity sender, OrientDBDistributed context) {
-    Optional<OElectionReply> elected = context.getElections().receivedLastLog(sender, electionId, database, id);
+    Optional<OElectionReply> elected =
+        context.getElections().receivedLastLog(sender, electionId, database, id);
     if (elected.isPresent()) {
       OElectionReply val = elected.get();
-      context.getNetworkManager()
-          .sendAll(context.getActiveNodes(), new ODatabaseLeaderElected(this.database, val.getSender(), val.getId()));
+      context
+          .getNetworkManager()
+          .sendAll(
+              context.getActiveNodes(),
+              new ODatabaseLeaderElected(this.database, val.getSender(), val.getId()));
     }
   }
 

@@ -13,7 +13,7 @@
  *  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  *  * See the License for the specific language governing permissions and
  *  * limitations under the License.
- *  
+ *
  */
 
 package com.orientechnologies.lucene.test;
@@ -22,27 +22,23 @@ import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
+import java.util.List;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
-import java.util.List;
-
-/**
- * Created by enricorisa on 03/09/14.
- */
+/** Created by enricorisa on 03/09/14. */
 public class DocumentEmbeddedTest extends BaseLuceneTest {
 
-  public DocumentEmbeddedTest() {
-
-  }
+  public DocumentEmbeddedTest() {}
 
   @Before
   public void init() {
     OClass type = db.getMetadata().getSchema().createClass("City");
     type.createProperty("name", OType.STRING);
 
-    db.command(new OCommandSQL("create index City.name on City (name) FULLTEXT ENGINE LUCENE")).execute();
+    db.command(new OCommandSQL("create index City.name on City (name) FULLTEXT ENGINE LUCENE"))
+        .execute();
   }
 
   @Test
@@ -58,7 +54,8 @@ public class DocumentEmbeddedTest extends BaseLuceneTest {
 
     db.save(doc);
 
-    List<ODocument> results = db.command(new OCommandSQL("select from City where name lucene 'London'")).execute();
+    List<ODocument> results =
+        db.command(new OCommandSQL("select from City where name lucene 'London'")).execute();
 
     Assert.assertEquals(results.size(), 1);
   }
@@ -75,9 +72,9 @@ public class DocumentEmbeddedTest extends BaseLuceneTest {
 
     db.commit();
 
-    List<ODocument> results = db.command(new OCommandSQL("select from City where name lucene 'Berlin'")).execute();
+    List<ODocument> results =
+        db.command(new OCommandSQL("select from City where name lucene 'Berlin'")).execute();
 
     Assert.assertEquals(results.size(), 1);
   }
-
 }

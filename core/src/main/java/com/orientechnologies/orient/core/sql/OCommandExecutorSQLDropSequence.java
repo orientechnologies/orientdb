@@ -8,15 +8,15 @@ import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
-
 import java.util.Map;
 
 /**
  * @author Matan Shukry (matanshukry@gmail.com)
  * @since 2/28/2015
  */
-public class OCommandExecutorSQLDropSequence extends OCommandExecutorSQLAbstract implements OCommandDistributedReplicateRequest {
-  public static final String KEYWORD_DROP     = "DROP";
+public class OCommandExecutorSQLDropSequence extends OCommandExecutorSQLAbstract
+    implements OCommandDistributedReplicateRequest {
+  public static final String KEYWORD_DROP = "DROP";
   public static final String KEYWORD_SEQUENCE = "SEQUENCE";
 
   private String sequenceName;
@@ -49,7 +49,8 @@ public class OCommandExecutorSQLDropSequence extends OCommandExecutorSQLAbstract
   @Override
   public Object execute(Map<Object, Object> iArgs) {
     if (this.sequenceName == null) {
-      throw new OCommandExecutionException("Cannot execute the command because it has not been parsed yet");
+      throw new OCommandExecutionException(
+          "Cannot execute the command because it has not been parsed yet");
     }
 
     final ODatabaseDocument database = getDatabase();

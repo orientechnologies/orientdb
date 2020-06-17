@@ -1,32 +1,28 @@
 package com.orientechnologies.orient.object.db;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
+
+
 import com.orientechnologies.orient.core.db.ODatabaseType;
 import com.orientechnologies.orient.core.db.object.ODatabaseObject;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
-import com.orientechnologies.orient.core.exception.OStorageExistsException;
+import java.util.List;
 import org.junit.Test;
 
-import java.util.List;
-import java.util.Set;
-
-import static org.junit.Assert.*;
-
-/**
- * Created by tglman on 13/01/17.
- */
+/** Created by tglman on 13/01/17. */
 public class OrientDBObjectTests {
 
   @Test
   public void createAndUseEmbeddedDatabase() {
     OrientDBObject factory = new OrientDBObject("embedded:.", null);
 
-    if (!factory.exists("test"))
-      factory.create("test", ODatabaseType.MEMORY);
+    if (!factory.exists("test")) factory.create("test", ODatabaseType.MEMORY);
 
     ODatabaseObject db = factory.open("test", "admin", "admin");
     db.close();
     factory.close();
-
   }
 
   @Test(expected = ODatabaseException.class)
@@ -57,8 +53,7 @@ public class OrientDBObjectTests {
   public void testPool() {
     OrientDBObject factory = new OrientDBObject("embedded:.", null);
 
-    if (!factory.exists("test"))
-      factory.create("test", ODatabaseType.MEMORY);
+    if (!factory.exists("test")) factory.create("test", ODatabaseType.MEMORY);
 
     ODatabaseObjectPool pool = new ODatabaseObjectPool(factory, "test", "admin", "admin");
     ODatabaseObject db = pool.acquire();
@@ -77,5 +72,4 @@ public class OrientDBObjectTests {
     assertTrue(databases.contains("test"));
     factory.close();
   }
-
 }

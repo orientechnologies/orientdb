@@ -6,10 +6,13 @@ import com.orientechnologies.orient.core.db.config.ONodeConfiguration;
 import com.orientechnologies.orient.core.db.config.ONodeIdentity;
 import com.orientechnologies.orient.distributed.impl.ONodeInternalConfiguration;
 import com.orientechnologies.orient.distributed.impl.coordinator.MockOperationLog;
+import java.util.LinkedHashMap;
+import java.util.Map;
+import java.util.Timer;
+import java.util.TimerTask;
+import java.util.UUID;
 import org.junit.Assert;
 import org.junit.Test;
-
-import java.util.*;
 
 public class OUDPMulticastNodeManagerIT {
 
@@ -34,25 +37,26 @@ public class OUDPMulticastNodeManagerIT {
       testMasterElectionWith(3, 2);
       testMasterElectionWith(5, 3);
       testMasterElectionWith(5, 5);
-//      testMasterElectionWith(10, 6);
+      //      testMasterElectionWith(10, 6);
     }
   }
 
   protected void testMasterElectionWith(int nNodes, int quorum) throws InterruptedException {
 
-    OSchedulerInternal scheduler = new OSchedulerInternal() {
-      Timer timer = new Timer(true);
+    OSchedulerInternal scheduler =
+        new OSchedulerInternal() {
+          Timer timer = new Timer(true);
 
-      @Override
-      public void schedule(TimerTask task, long delay, long period) {
-        timer.schedule(task, delay, period);
-      }
+          @Override
+          public void schedule(TimerTask task, long delay, long period) {
+            timer.schedule(task, delay, period);
+          }
 
-      @Override
-      public void scheduleOnce(TimerTask task, long delay) {
-        timer.schedule(task, delay);
-      }
-    };
+          @Override
+          public void scheduleOnce(TimerTask task, long delay) {
+            timer.schedule(task, delay);
+          }
+        };
 
     int[] multicastPorts = new int[nNodes];
     for (int j = 0; j < nNodes; j++) {
@@ -65,17 +69,30 @@ public class OUDPMulticastNodeManagerIT {
       int port = 4321 + i;
 
       ODiscoveryListener discoveryListener = new MockDiscoveryListener();
-      ONodeConfiguration config = ONodeConfiguration.builder().setNodeName(nodeName)
-              .setGroupName("testMasterElectionWith_default_" + nNodes + "_" + quorum).setTcpPort(port).setQuorum(quorum).setMulticast(
-                      OMulticastConfguration.builder().setEnabled(true).setPort(port).setIp("235.1.1.1").setDiscoveryPorts(multicastPorts)
-                              .build()).build();
+      ONodeConfiguration config =
+          ONodeConfiguration.builder()
+              .setNodeName(nodeName)
+              .setGroupName("testMasterElectionWith_default_" + nNodes + "_" + quorum)
+              .setTcpPort(port)
+              .setQuorum(quorum)
+              .setMulticast(
+                  OMulticastConfguration.builder()
+                      .setEnabled(true)
+                      .setPort(port)
+                      .setIp("235.1.1.1")
+                      .setDiscoveryPorts(multicastPorts)
+                      .build())
+              .build();
 
-      ONodeInternalConfiguration internalConfiguration = new ONodeInternalConfiguration(new ONodeIdentity(UUID.randomUUID().toString(), nodeName), "", "");
+      ONodeInternalConfiguration internalConfiguration =
+          new ONodeInternalConfiguration(
+              new ONodeIdentity(UUID.randomUUID().toString(), nodeName), "", "");
 
-      OUDPMulticastNodeManager node = new OUDPMulticastNodeManager(config, internalConfiguration, discoveryListener, scheduler, new MockOperationLog(0));
+      OUDPMulticastNodeManager node =
+          new OUDPMulticastNodeManager(
+              config, internalConfiguration, discoveryListener, scheduler, new MockOperationLog(0));
       node.start();
       nodes.put(nodeName, node);
-
     }
 
     Thread.sleep(10000);
@@ -98,8 +115,12 @@ public class OUDPMulticastNodeManagerIT {
 
     for (int i = 0; i < nNodes - quorum; i++) {
 
-      String leader = nodes.values().stream().filter(x -> x.leaderStatus.getStatus() == OLeaderElectionStateMachine.Status.LEADER)
-              .map(x -> x.getInternalConfiguration().getNodeIdentity().getName()).findFirst().orElse(null);
+      String leader =
+          nodes.values().stream()
+              .filter(x -> x.leaderStatus.getStatus() == OLeaderElectionStateMachine.Status.LEADER)
+              .map(x -> x.getInternalConfiguration().getNodeIdentity().getName())
+              .findFirst()
+              .orElse(null);
       Assert.assertNotNull(leader);
       nodes.remove(leader).stop();
 
@@ -136,19 +157,20 @@ public class OUDPMulticastNodeManagerIT {
 
   protected void testJoinAfterMasterElection(int nNodes, int quorum) throws InterruptedException {
 
-    OSchedulerInternal scheduler = new OSchedulerInternal() {
-      Timer timer = new Timer(true);
+    OSchedulerInternal scheduler =
+        new OSchedulerInternal() {
+          Timer timer = new Timer(true);
 
-      @Override
-      public void schedule(TimerTask task, long delay, long period) {
-        timer.schedule(task, delay, period);
-      }
+          @Override
+          public void schedule(TimerTask task, long delay, long period) {
+            timer.schedule(task, delay, period);
+          }
 
-      @Override
-      public void scheduleOnce(TimerTask task, long delay) {
-        timer.schedule(task, delay);
-      }
-    };
+          @Override
+          public void scheduleOnce(TimerTask task, long delay) {
+            timer.schedule(task, delay);
+          }
+        };
 
     int[] multicastPorts = new int[nNodes];
     for (int j = 0; j < nNodes; j++) {
@@ -161,18 +183,30 @@ public class OUDPMulticastNodeManagerIT {
       int port = 4321 + i;
 
       ODiscoveryListener discoveryListener = new MockDiscoveryListener();
-      ONodeConfiguration config = ONodeConfiguration.builder().setNodeName(nodeName)
-              .setGroupName("testJoinAfterMasterElection_default_" + nNodes + "_" + quorum).setTcpPort(port).setQuorum(quorum)
+      ONodeConfiguration config =
+          ONodeConfiguration.builder()
+              .setNodeName(nodeName)
+              .setGroupName("testJoinAfterMasterElection_default_" + nNodes + "_" + quorum)
+              .setTcpPort(port)
+              .setQuorum(quorum)
               .setMulticast(
-                      OMulticastConfguration.builder().setEnabled(true).setPort(port).setIp("235.1.1.1").setDiscoveryPorts(multicastPorts)
-                              .build()).build();
+                  OMulticastConfguration.builder()
+                      .setEnabled(true)
+                      .setPort(port)
+                      .setIp("235.1.1.1")
+                      .setDiscoveryPorts(multicastPorts)
+                      .build())
+              .build();
 
-      ONodeInternalConfiguration internalConfiguration = new ONodeInternalConfiguration(new ONodeIdentity(UUID.randomUUID().toString(), nodeName), "", "");
+      ONodeInternalConfiguration internalConfiguration =
+          new ONodeInternalConfiguration(
+              new ONodeIdentity(UUID.randomUUID().toString(), nodeName), "", "");
 
-      OUDPMulticastNodeManager node = new OUDPMulticastNodeManager(config, internalConfiguration, discoveryListener, scheduler, new MockOperationLog(0));
+      OUDPMulticastNodeManager node =
+          new OUDPMulticastNodeManager(
+              config, internalConfiguration, discoveryListener, scheduler, new MockOperationLog(0));
       node.start();
       nodes.put(nodeName, node);
-
     }
 
     Thread.sleep(10000);
@@ -198,15 +232,28 @@ public class OUDPMulticastNodeManagerIT {
       int port = 4321 + i;
 
       ODiscoveryListener discoveryListener = new MockDiscoveryListener();
-      ONodeConfiguration config = ONodeConfiguration.builder().setNodeName(nodeName)
-              .setGroupName("testJoinAfterMasterElection_default_" + nNodes + "_" + quorum).setQuorum(quorum).setTcpPort(port)
+      ONodeConfiguration config =
+          ONodeConfiguration.builder()
+              .setNodeName(nodeName)
+              .setGroupName("testJoinAfterMasterElection_default_" + nNodes + "_" + quorum)
+              .setQuorum(quorum)
+              .setTcpPort(port)
               .setMulticast(
-                      OMulticastConfguration.builder().setEnabled(true).setPort(port).setIp("235.1.1.1").setDiscoveryPorts(multicastPorts)
-                              .build()).build();
+                  OMulticastConfguration.builder()
+                      .setEnabled(true)
+                      .setPort(port)
+                      .setIp("235.1.1.1")
+                      .setDiscoveryPorts(multicastPorts)
+                      .build())
+              .build();
 
-      ONodeInternalConfiguration internalConfiguration = new ONodeInternalConfiguration(new ONodeIdentity(UUID.randomUUID().toString(), nodeName), "", "");
+      ONodeInternalConfiguration internalConfiguration =
+          new ONodeInternalConfiguration(
+              new ONodeIdentity(UUID.randomUUID().toString(), nodeName), "", "");
 
-      OUDPMulticastNodeManager node = new OUDPMulticastNodeManager(config, internalConfiguration, discoveryListener, scheduler, new MockOperationLog(0));
+      OUDPMulticastNodeManager node =
+          new OUDPMulticastNodeManager(
+              config, internalConfiguration, discoveryListener, scheduler, new MockOperationLog(0));
       node.start();
       nodes.put(nodeName, node);
 
@@ -233,5 +280,3 @@ public class OUDPMulticastNodeManagerIT {
     Thread.sleep(2000);
   }
 }
-
-

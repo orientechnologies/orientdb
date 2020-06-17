@@ -27,11 +27,9 @@ public abstract class OEngineAbstract implements OEngine {
 
   protected String getMode(Map<String, String> iConfiguration) {
     String dbMode = null;
-    if (iConfiguration != null)
-      dbMode = iConfiguration.get("mode");
+    if (iConfiguration != null) dbMode = iConfiguration.get("mode");
 
-    if (dbMode == null)
-      dbMode = "rw";
+    if (dbMode == null) dbMode = "rw";
     return dbMode;
   }
 

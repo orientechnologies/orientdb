@@ -19,14 +19,13 @@
  */
 package com.orientechnologies.orient.client.remote.message;
 
-import java.io.IOException;
-
 import com.orientechnologies.orient.client.remote.OBinaryResponse;
 import com.orientechnologies.orient.client.remote.OStorageRemoteSession;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializer;
 import com.orientechnologies.orient.core.storage.OPhysicalPosition;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelDataInput;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelDataOutput;
+import java.io.IOException;
 
 public class OCeilingPhysicalPositionsResponse implements OBinaryResponse {
 
@@ -36,10 +35,10 @@ public class OCeilingPhysicalPositionsResponse implements OBinaryResponse {
     this.positions = positions;
   }
 
-  public OCeilingPhysicalPositionsResponse() {
-  }
+  public OCeilingPhysicalPositionsResponse() {}
 
-  public void write(OChannelDataOutput channel, int protocolVersion, ORecordSerializer serializer) throws IOException {
+  public void write(OChannelDataOutput channel, int protocolVersion, ORecordSerializer serializer)
+      throws IOException {
     OMessageHelper.writePhysicalPositions(channel, positions);
   }
 
@@ -51,5 +50,4 @@ public class OCeilingPhysicalPositionsResponse implements OBinaryResponse {
   public OPhysicalPosition[] getPositions() {
     return positions;
   }
-
 }

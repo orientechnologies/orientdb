@@ -1,16 +1,15 @@
 package com.tinkerpop.blueprints.impls.orient;
 
+import static org.junit.Assert.assertEquals;
+
+
 import com.orientechnologies.orient.core.hook.ORecordHook;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.tinkerpop.blueprints.Vertex;
 import org.junit.Test;
 
-import static org.junit.Assert.assertEquals;
-
-/**
- * Created by tglman on 04/01/16.
- */
+/** Created by tglman on 04/01/16. */
 public class OrientGraphHookCall {
   private static int vertexCreatedCnt;
   private static int vertexUpdatedCnt;
@@ -20,41 +19,50 @@ public class OrientGraphHookCall {
   @Test
   public void testHook() {
     OrientBaseGraph graph = new OrientGraph("memory:" + OrientGraphHookCall.class.getSimpleName());
-    graph.getRawGraph().registerHook(new ORecordHook() {
-      @Override
-      public void onUnregister() {
-      }
+    graph
+        .getRawGraph()
+        .registerHook(
+            new ORecordHook() {
+              @Override
+              public void onUnregister() {}
 
-      @Override
-      public RESULT onTrigger(TYPE iType, ORecord iRecord) {
-        switch (iType) {
-        case AFTER_CREATE: {
-          if (((ODocument) iRecord).getSchemaClass().isSubClassOf(OrientEdgeType.CLASS_NAME)) {
-            edgeCreatedCnt++;
-          } else {
-            vertexCreatedCnt++;
-          }
-          break;
-        }
-        case AFTER_UPDATE: {
-          if (((ODocument) iRecord).getSchemaClass().isSubClassOf(OrientEdgeType.CLASS_NAME)) {
-            edgeUpdatedCnt++;
-          } else {
-            vertexUpdatedCnt++;
-          }
-          break;
-        }
-        default: {
-        }
-        }
-        return null;
-      }
+              @Override
+              public RESULT onTrigger(TYPE iType, ORecord iRecord) {
+                switch (iType) {
+                  case AFTER_CREATE:
+                    {
+                      if (((ODocument) iRecord)
+                          .getSchemaClass()
+                          .isSubClassOf(OrientEdgeType.CLASS_NAME)) {
+                        edgeCreatedCnt++;
+                      } else {
+                        vertexCreatedCnt++;
+                      }
+                      break;
+                    }
+                  case AFTER_UPDATE:
+                    {
+                      if (((ODocument) iRecord)
+                          .getSchemaClass()
+                          .isSubClassOf(OrientEdgeType.CLASS_NAME)) {
+                        edgeUpdatedCnt++;
+                      } else {
+                        vertexUpdatedCnt++;
+                      }
+                      break;
+                    }
+                  default:
+                    {
+                    }
+                }
+                return null;
+              }
 
-      @Override
-      public DISTRIBUTED_EXECUTION_MODE getDistributedExecutionMode() {
-        return null;
-      }
-    });
+              @Override
+              public DISTRIBUTED_EXECUTION_MODE getDistributedExecutionMode() {
+                return null;
+              }
+            });
     try {
       Vertex v1 = graph.addVertex("v", (String) null);
       graph.commit();

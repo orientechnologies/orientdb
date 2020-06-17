@@ -22,7 +22,7 @@ import com.orientechnologies.orient.core.sql.method.misc.OAbstractSQLMethod;
 
 /**
  * Returns the first characters from the end of the string.
- * 
+ *
  * @author Johann Sorel (Geomatys)
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
  */
@@ -40,7 +40,12 @@ public class OSQLMethodRight extends OAbstractSQLMethod {
   }
 
   @Override
-  public Object execute(Object iThis, OIdentifiable iCurrentRecord, OCommandContext iContext, Object ioResult, Object[] iParams) {
+  public Object execute(
+      Object iThis,
+      OIdentifiable iCurrentRecord,
+      OCommandContext iContext,
+      Object ioResult,
+      Object[] iParams) {
     if (iThis == null || iParams[0] == null) {
       return null;
     }
@@ -48,7 +53,7 @@ public class OSQLMethodRight extends OAbstractSQLMethod {
     final String valueAsString = iThis.toString();
 
     final int offset = Integer.parseInt(iParams[0].toString());
-    return valueAsString.substring(offset < valueAsString.length() ? valueAsString.length() - offset : 0);
+    return valueAsString.substring(
+        offset < valueAsString.length() ? valueAsString.length() - offset : 0);
   }
-
 }

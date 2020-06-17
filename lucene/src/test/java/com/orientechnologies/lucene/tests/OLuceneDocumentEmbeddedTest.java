@@ -13,7 +13,7 @@
  *  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  *  * See the License for the specific language governing permissions and
  *  * limitations under the License.
- *  
+ *
  */
 
 package com.orientechnologies.lucene.tests;
@@ -23,15 +23,10 @@ import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import org.assertj.core.api.Assertions;
-import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
-import java.util.List;
-
-/**
- * Created by enricorisa on 03/09/14.
- */
+/** Created by enricorisa on 03/09/14. */
 public class OLuceneDocumentEmbeddedTest extends OLuceneBaseTest {
 
   @Before
@@ -55,7 +50,8 @@ public class OLuceneDocumentEmbeddedTest extends OLuceneBaseTest {
 
     db.save(doc);
 
-    OResultSet results = db.command("select from City where SEARCH_FIELDS(['name'] ,'London') = true ");
+    OResultSet results =
+        db.command("select from City where SEARCH_FIELDS(['name'] ,'London') = true ");
 
     Assertions.assertThat(results).hasSize(1);
   }
@@ -72,10 +68,9 @@ public class OLuceneDocumentEmbeddedTest extends OLuceneBaseTest {
 
     db.commit();
 
-    OResultSet results = db.command("select from City where SEARCH_FIELDS(['name'] ,'Berlin')=true ");
+    OResultSet results =
+        db.command("select from City where SEARCH_FIELDS(['name'] ,'Berlin')=true ");
 
     Assertions.assertThat(results).hasSize(1);
-
   }
-
 }

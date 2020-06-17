@@ -22,15 +22,15 @@ package com.orientechnologies.orient.core.config;
 public class OStorageClusterHoleConfiguration extends OStorageFileConfiguration {
   private static final long serialVersionUID = 1L;
 
-  private static final String DEF_EXTENSION      = ".och";
+  private static final String DEF_EXTENSION = ".och";
   private static final String DEF_INCREMENT_SIZE = "50%";
 
   public OStorageClusterHoleConfiguration() {
     super();
   }
 
-  public OStorageClusterHoleConfiguration(OStorageSegmentConfiguration iParent, String iPath, String iType, String iMaxSize) {
+  public OStorageClusterHoleConfiguration(
+      OStorageSegmentConfiguration iParent, String iPath, String iType, String iMaxSize) {
     super(iParent, iPath + DEF_EXTENSION, iType, iMaxSize, DEF_INCREMENT_SIZE);
   }
-
 }

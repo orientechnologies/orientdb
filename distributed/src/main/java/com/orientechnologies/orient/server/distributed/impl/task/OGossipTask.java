@@ -30,7 +30,6 @@ import com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIR
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
 import com.orientechnologies.orient.server.distributed.ORemoteTaskFactory;
 import com.orientechnologies.orient.server.distributed.task.OAbstractRemoteTask;
-
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
@@ -38,12 +37,13 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 
 /**
- * Task to manage the end of distributed transaction when no fix is needed (OFixTxTask) and all the locks must be released. Locks
- * are necessary to prevent concurrent modification of records before the transaction is finished. <br>
- * This task uses the same partition keys used by TxTask to avoid synchronizing all the worker threads (and queues).
+ * Task to manage the end of distributed transaction when no fix is needed (OFixTxTask) and all the
+ * locks must be released. Locks are necessary to prevent concurrent modification of records before
+ * the transaction is finished. <br>
+ * This task uses the same partition keys used by TxTask to avoid synchronizing all the worker
+ * threads (and queues).
  *
  * @author Luca Garulli (l.garulli--at--orientdb.com)
- *
  */
 public class OGossipTask extends OAbstractRemoteTask {
   public static final int FACTORYID = 16;
@@ -51,23 +51,32 @@ public class OGossipTask extends OAbstractRemoteTask {
   private long timestamp = System.currentTimeMillis();
   private String lockManagerServer;
 
-  private static final SimpleDateFormat dateFormat = new SimpleDateFormat(ODateHelper.DEF_DATETIME_FORMAT);
+  private static final SimpleDateFormat dateFormat =
+      new SimpleDateFormat(ODateHelper.DEF_DATETIME_FORMAT);
 
-  public OGossipTask() {
-  }
+  public OGossipTask() {}
 
   public OGossipTask(final String lockManagerServer) {
     this.lockManagerServer = lockManagerServer;
   }
 
   @Override
-  public Object execute(final ODistributedRequestId msgId, final OServer iServer, ODistributedServerManager iManager,
-      final ODatabaseDocumentInternal database) throws Exception {
+  public Object execute(
+      final ODistributedRequestId msgId,
+      final OServer iServer,
+      ODistributedServerManager iManager,
+      final ODatabaseDocumentInternal database)
+      throws Exception {
 
     if (ODistributedServerLog.isDebugEnabled())
       synchronized (dateFormat) {
-        ODistributedServerLog.debug(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.IN,
-            "Received gossip message (sourceTimeStamp=%s lockManagerServer=%s)", dateFormat.format(new Date(timestamp)),
+        ODistributedServerLog.debug(
+            this,
+            iManager.getLocalNodeName(),
+            getNodeSource(),
+            DIRECTION.IN,
+            "Received gossip message (sourceTimeStamp=%s lockManagerServer=%s)",
+            dateFormat.format(new Date(timestamp)),
             lockManagerServer);
       }
 
@@ -75,9 +84,7 @@ public class OGossipTask extends OAbstractRemoteTask {
     return lockManagerServer;
   }
 
-  /**
-   * Uses the UNLOCK queue that is never blocked.
-   */
+  /** Uses the UNLOCK queue that is never blocked. */
   @Override
   public int[] getPartitionKey() {
     return FAST_NOLOCK;
@@ -149,5 +156,4 @@ public class OGossipTask extends OAbstractRemoteTask {
   public String toString() {
     return getName() + " timestamp: " + timestamp + " lockManagerServer: " + lockManagerServer;
   }
-
 }

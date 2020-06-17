@@ -19,6 +19,9 @@
  */
 package com.orientechnologies.orient.core.query.live;
 
+import static com.orientechnologies.orient.core.config.OGlobalConfiguration.QUERY_LIVE_SUPPORT;
+
+
 import com.orientechnologies.common.concur.resource.OCloseable;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.db.ODatabaseInternal;
@@ -30,14 +33,15 @@ import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.executor.OResultInternal;
-
-import java.util.*;
+import java.util.ArrayList;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.LinkedBlockingQueue;
-
-import static com.orientechnologies.orient.core.config.OGlobalConfiguration.QUERY_LIVE_SUPPORT;
 
 public class OLiveQueryHookV2 {
 
@@ -57,12 +61,14 @@ public class OLiveQueryHookV2 {
 
   public static class OLiveQueryOps implements OCloseable {
 
-    protected Map<ODatabaseDocument, List<OLiveQueryOp>> pendingOps = new ConcurrentHashMap<ODatabaseDocument, List<OLiveQueryOp>>();
+    protected Map<ODatabaseDocument, List<OLiveQueryOp>> pendingOps =
+        new ConcurrentHashMap<ODatabaseDocument, List<OLiveQueryOp>>();
     private OLiveQueryQueueThreadV2 queueThread = new OLiveQueryQueueThreadV2(this);
     private Object threadLock = new Object();
 
     private BlockingQueue<OLiveQueryOp> queue = new LinkedBlockingQueue<OLiveQueryOp>();
-    private ConcurrentMap<Integer, OLiveQueryListenerV2> subscribers = new ConcurrentHashMap<Integer, OLiveQueryListenerV2>();
+    private ConcurrentMap<Integer, OLiveQueryListenerV2> subscribers =
+        new ConcurrentHashMap<Integer, OLiveQueryListenerV2>();
 
     @Override
     public void close() {
@@ -112,9 +118,12 @@ public class OLiveQueryHookV2 {
     return db.getSharedContext().getLiveQueryOpsV2();
   }
 
-  public static Integer subscribe(Integer token, OLiveQueryListenerV2 iListener, ODatabaseInternal db) {
+  public static Integer subscribe(
+      Integer token, OLiveQueryListenerV2 iListener, ODatabaseInternal db) {
     if (Boolean.FALSE.equals(db.getConfiguration().getValue(QUERY_LIVE_SUPPORT))) {
-      OLogManager.instance().warn(db,
+      OLogManager.instance()
+          .warn(
+              db,
               "Live query support is disabled impossible to subscribe a listener, set '%s' to true for enable the live query support",
               QUERY_LIVE_SUPPORT.getKey());
       return -1;
@@ -132,7 +141,9 @@ public class OLiveQueryHookV2 {
 
   public static void unsubscribe(Integer id, ODatabaseInternal db) {
     if (Boolean.FALSE.equals(db.getConfiguration().getValue(QUERY_LIVE_SUPPORT))) {
-      OLogManager.instance().warn(db,
+      OLogManager.instance()
+          .warn(
+              db,
               "Live query support is disabled impossible to unsubscribe a listener, set '%s' to true for enable the live query support",
               QUERY_LIVE_SUPPORT.getKey());
       return;
@@ -148,8 +159,7 @@ public class OLiveQueryHookV2 {
   }
 
   public static void notifyForTxChanges(ODatabaseDocument database) {
-    if (Boolean.FALSE.equals(database.getConfiguration().getValue(QUERY_LIVE_SUPPORT)))
-      return;
+    if (Boolean.FALSE.equals(database.getConfiguration().getValue(QUERY_LIVE_SUPPORT))) return;
     OLiveQueryOps ops = getOpsReference((ODatabaseInternal) database);
     List<OLiveQueryOp> list;
     synchronized (ops.pendingOps) {
@@ -166,25 +176,23 @@ public class OLiveQueryHookV2 {
 
   public static void removePendingDatabaseOps(ODatabaseDocument database) {
     try {
-      if (database.isClosed() || Boolean.FALSE.equals(database.getConfiguration().getValue(QUERY_LIVE_SUPPORT)))
-        return;
+      if (database.isClosed()
+          || Boolean.FALSE.equals(database.getConfiguration().getValue(QUERY_LIVE_SUPPORT))) return;
       OLiveQueryOps ops = getOpsReference((ODatabaseInternal) database);
       synchronized (ops.pendingOps) {
         ops.pendingOps.remove(database);
       }
     } catch (ODatabaseException ex) {
-      //This catch and log the exception because in some case is suppressing the real exception
+      // This catch and log the exception because in some case is suppressing the real exception
       OLogManager.instance().error(database, "Error cleaning the live query resources", ex);
     }
   }
 
   public static void addOp(ODocument iDocument, byte iType, ODatabaseDocument database) {
-    if (Boolean.FALSE.equals(database.getConfiguration().getValue(QUERY_LIVE_SUPPORT)))
-      return;
+    if (Boolean.FALSE.equals(database.getConfiguration().getValue(QUERY_LIVE_SUPPORT))) return;
     ODatabaseDocument db = database;
     OLiveQueryOps ops = getOpsReference((ODatabaseInternal) db);
-    if (!ops.hasListeners())
-      return;
+    if (!ops.hasListeners()) return;
 
     OResult before = iType == ORecordOperation.CREATED ? null : calculateBefore(iDocument);
     OResult after = iType == ORecordOperation.DELETED ? null : calculateAfter(iDocument);
@@ -253,7 +261,7 @@ public class OLiveQueryHookV2 {
   }
 
   public static Object unboxRidbags(Object value) {
-    //TODO move it to some helper class
+    // TODO move it to some helper class
     if (value instanceof ORidBag) {
       List<OIdentifiable> result = new ArrayList<>(((ORidBag) value).size());
       for (OIdentifiable oIdentifiable : (ORidBag) value) {
@@ -263,5 +271,4 @@ public class OLiveQueryHookV2 {
     }
     return value;
   }
-
 }

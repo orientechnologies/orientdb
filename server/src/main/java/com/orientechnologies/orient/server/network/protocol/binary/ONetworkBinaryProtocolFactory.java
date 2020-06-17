@@ -21,31 +21,92 @@ package com.orientechnologies.orient.server.network.protocol.binary;
 
 import com.orientechnologies.orient.client.remote.OBinaryRequest;
 import com.orientechnologies.orient.client.remote.OBinaryResponse;
-import com.orientechnologies.orient.client.remote.message.*;
+import com.orientechnologies.orient.client.remote.message.OAddClusterRequest;
+import com.orientechnologies.orient.client.remote.message.OBatchOperationsRequest;
+import com.orientechnologies.orient.client.remote.message.OBeginTransaction38Request;
+import com.orientechnologies.orient.client.remote.message.OBeginTransactionRequest;
+import com.orientechnologies.orient.client.remote.message.OCeilingPhysicalPositionsRequest;
+import com.orientechnologies.orient.client.remote.message.OCleanOutRecordRequest;
+import com.orientechnologies.orient.client.remote.message.OCloseQueryRequest;
+import com.orientechnologies.orient.client.remote.message.OCloseRequest;
+import com.orientechnologies.orient.client.remote.message.OCommandRequest;
+import com.orientechnologies.orient.client.remote.message.OCommit37Request;
+import com.orientechnologies.orient.client.remote.message.OCommit38Request;
+import com.orientechnologies.orient.client.remote.message.OCommitRequest;
+import com.orientechnologies.orient.client.remote.message.OConnect37Request;
+import com.orientechnologies.orient.client.remote.message.OConnectRequest;
+import com.orientechnologies.orient.client.remote.message.OCountRecordsRequest;
+import com.orientechnologies.orient.client.remote.message.OCountRequest;
+import com.orientechnologies.orient.client.remote.message.OCreateDatabaseRequest;
+import com.orientechnologies.orient.client.remote.message.OCreateRecordRequest;
+import com.orientechnologies.orient.client.remote.message.ODeleteRecordRequest;
+import com.orientechnologies.orient.client.remote.message.ODistributedConnectRequest;
+import com.orientechnologies.orient.client.remote.message.ODistributedStatusRequest;
+import com.orientechnologies.orient.client.remote.message.ODropClusterRequest;
+import com.orientechnologies.orient.client.remote.message.ODropDatabaseRequest;
+import com.orientechnologies.orient.client.remote.message.OExistsDatabaseRequest;
+import com.orientechnologies.orient.client.remote.message.OExperimentalRequest;
+import com.orientechnologies.orient.client.remote.message.OFetchTransaction38Request;
+import com.orientechnologies.orient.client.remote.message.OFetchTransactionRequest;
+import com.orientechnologies.orient.client.remote.message.OFloorPhysicalPositionsRequest;
+import com.orientechnologies.orient.client.remote.message.OFreezeDatabaseRequest;
+import com.orientechnologies.orient.client.remote.message.OGetClusterDataRangeRequest;
+import com.orientechnologies.orient.client.remote.message.OGetGlobalConfigurationRequest;
+import com.orientechnologies.orient.client.remote.message.OGetRecordMetadataRequest;
+import com.orientechnologies.orient.client.remote.message.OGetSizeRequest;
+import com.orientechnologies.orient.client.remote.message.OHigherPhysicalPositionsRequest;
+import com.orientechnologies.orient.client.remote.message.OImportRequest;
+import com.orientechnologies.orient.client.remote.message.OIncrementalBackupRequest;
+import com.orientechnologies.orient.client.remote.message.OListDatabasesRequest;
+import com.orientechnologies.orient.client.remote.message.OListGlobalConfigurationsRequest;
+import com.orientechnologies.orient.client.remote.message.OLowerPhysicalPositionsRequest;
+import com.orientechnologies.orient.client.remote.message.OOpen37Request;
+import com.orientechnologies.orient.client.remote.message.OOpenRequest;
+import com.orientechnologies.orient.client.remote.message.OQueryNextPageRequest;
+import com.orientechnologies.orient.client.remote.message.OQueryRequest;
+import com.orientechnologies.orient.client.remote.message.OReadRecordIfVersionIsNotLatestRequest;
+import com.orientechnologies.orient.client.remote.message.OReadRecordRequest;
+import com.orientechnologies.orient.client.remote.message.ORebeginTransaction38Request;
+import com.orientechnologies.orient.client.remote.message.ORebeginTransactionRequest;
+import com.orientechnologies.orient.client.remote.message.OReleaseDatabaseRequest;
+import com.orientechnologies.orient.client.remote.message.OReloadRequest;
+import com.orientechnologies.orient.client.remote.message.OReloadRequest37;
+import com.orientechnologies.orient.client.remote.message.OReopenRequest;
+import com.orientechnologies.orient.client.remote.message.ORollbackTransactionRequest;
+import com.orientechnologies.orient.client.remote.message.OSBTCreateTreeRequest;
+import com.orientechnologies.orient.client.remote.message.OSBTFetchEntriesMajorRequest;
+import com.orientechnologies.orient.client.remote.message.OSBTFirstKeyRequest;
+import com.orientechnologies.orient.client.remote.message.OSBTGetRealBagSizeRequest;
+import com.orientechnologies.orient.client.remote.message.OSBTGetRequest;
+import com.orientechnologies.orient.client.remote.message.OServerInfoRequest;
+import com.orientechnologies.orient.client.remote.message.OSetGlobalConfigurationRequest;
+import com.orientechnologies.orient.client.remote.message.OShutdownRequest;
+import com.orientechnologies.orient.client.remote.message.OSubscribeRequest;
+import com.orientechnologies.orient.client.remote.message.OUnsubscribeRequest;
+import com.orientechnologies.orient.client.remote.message.OUpdateRecordRequest;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol;
-
 import java.util.function.Function;
 
-/**
- * Created by Enrico Risa on 05/04/17.
- */
+/** Created by Enrico Risa on 05/04/17. */
 public class ONetworkBinaryProtocolFactory {
 
-  private static Function<Integer, OBinaryRequest<? extends OBinaryResponse>> defaultProtocol = ONetworkBinaryProtocolFactory::createRequest;
+  private static Function<Integer, OBinaryRequest<? extends OBinaryResponse>> defaultProtocol =
+      ONetworkBinaryProtocolFactory::createRequest;
 
   public static Function<Integer, OBinaryRequest<? extends OBinaryResponse>> defaultProtocol() {
     return defaultProtocol;
   }
 
-  public static Function<Integer, OBinaryRequest<? extends OBinaryResponse>> matchProtocol(short protocolVersion) {
+  public static Function<Integer, OBinaryRequest<? extends OBinaryResponse>> matchProtocol(
+      short protocolVersion) {
     switch (protocolVersion) {
-    case 37:
-      return ONetworkBinaryProtocolFactory::createRequest37;
-    case 38:
-      return ONetworkBinaryProtocolFactory::createRequest38;
-    default:
-      return ONetworkBinaryProtocolFactory::createRequest;
+      case 37:
+        return ONetworkBinaryProtocolFactory::createRequest37;
+      case 38:
+        return ONetworkBinaryProtocolFactory::createRequest38;
+      default:
+        return ONetworkBinaryProtocolFactory::createRequest;
     }
   }
 
@@ -57,147 +118,147 @@ public class ONetworkBinaryProtocolFactory {
    */
   private static OBinaryRequest<? extends OBinaryResponse> createRequest(int requestType) {
     switch (requestType) {
-    case OChannelBinaryProtocol.REQUEST_DB_OPEN:
-      return new OOpenRequest();
+      case OChannelBinaryProtocol.REQUEST_DB_OPEN:
+        return new OOpenRequest();
 
-    case OChannelBinaryProtocol.REQUEST_CONNECT:
-      return new OConnectRequest();
+      case OChannelBinaryProtocol.REQUEST_CONNECT:
+        return new OConnectRequest();
 
-    case OChannelBinaryProtocol.REQUEST_DB_REOPEN:
-      return new OReopenRequest();
+      case OChannelBinaryProtocol.REQUEST_DB_REOPEN:
+        return new OReopenRequest();
 
-    case OChannelBinaryProtocol.REQUEST_SHUTDOWN:
-      return new OShutdownRequest();
+      case OChannelBinaryProtocol.REQUEST_SHUTDOWN:
+        return new OShutdownRequest();
 
-    case OChannelBinaryProtocol.REQUEST_DB_LIST:
-      return new OListDatabasesRequest();
+      case OChannelBinaryProtocol.REQUEST_DB_LIST:
+        return new OListDatabasesRequest();
 
-    case OChannelBinaryProtocol.REQUEST_SERVER_INFO:
-      return new OServerInfoRequest();
+      case OChannelBinaryProtocol.REQUEST_SERVER_INFO:
+        return new OServerInfoRequest();
 
-    case OChannelBinaryProtocol.REQUEST_DB_RELOAD:
-      return new OReloadRequest();
+      case OChannelBinaryProtocol.REQUEST_DB_RELOAD:
+        return new OReloadRequest();
 
-    case OChannelBinaryProtocol.REQUEST_DB_CREATE:
-      return new OCreateDatabaseRequest();
+      case OChannelBinaryProtocol.REQUEST_DB_CREATE:
+        return new OCreateDatabaseRequest();
 
-    case OChannelBinaryProtocol.REQUEST_DB_CLOSE:
-      return new OCloseRequest();
+      case OChannelBinaryProtocol.REQUEST_DB_CLOSE:
+        return new OCloseRequest();
 
-    case OChannelBinaryProtocol.REQUEST_DB_EXIST:
-      return new OExistsDatabaseRequest();
+      case OChannelBinaryProtocol.REQUEST_DB_EXIST:
+        return new OExistsDatabaseRequest();
 
-    case OChannelBinaryProtocol.REQUEST_DB_DROP:
-      return new ODropDatabaseRequest();
+      case OChannelBinaryProtocol.REQUEST_DB_DROP:
+        return new ODropDatabaseRequest();
 
-    case OChannelBinaryProtocol.REQUEST_DB_SIZE:
-      return new OGetSizeRequest();
+      case OChannelBinaryProtocol.REQUEST_DB_SIZE:
+        return new OGetSizeRequest();
 
-    case OChannelBinaryProtocol.REQUEST_DB_COUNTRECORDS:
-      return new OCountRecordsRequest();
+      case OChannelBinaryProtocol.REQUEST_DB_COUNTRECORDS:
+        return new OCountRecordsRequest();
 
-    case OChannelBinaryProtocol.REQUEST_CLUSTER:
-      return new ODistributedStatusRequest();
+      case OChannelBinaryProtocol.REQUEST_CLUSTER:
+        return new ODistributedStatusRequest();
 
-    case OChannelBinaryProtocol.REQUEST_CLUSTER_COUNT:
-      return new OCountRequest();
+      case OChannelBinaryProtocol.REQUEST_CLUSTER_COUNT:
+        return new OCountRequest();
 
-    case OChannelBinaryProtocol.REQUEST_CLUSTER_DATARANGE:
-      return new OGetClusterDataRangeRequest();
+      case OChannelBinaryProtocol.REQUEST_CLUSTER_DATARANGE:
+        return new OGetClusterDataRangeRequest();
 
-    case OChannelBinaryProtocol.REQUEST_CLUSTER_ADD:
-      return new OAddClusterRequest();
+      case OChannelBinaryProtocol.REQUEST_CLUSTER_ADD:
+        return new OAddClusterRequest();
 
-    case OChannelBinaryProtocol.REQUEST_CLUSTER_DROP:
-      return new ODropClusterRequest();
+      case OChannelBinaryProtocol.REQUEST_CLUSTER_DROP:
+        return new ODropClusterRequest();
 
-    case OChannelBinaryProtocol.REQUEST_RECORD_METADATA:
-      return new OGetRecordMetadataRequest();
+      case OChannelBinaryProtocol.REQUEST_RECORD_METADATA:
+        return new OGetRecordMetadataRequest();
 
-    case OChannelBinaryProtocol.REQUEST_RECORD_LOAD:
-      return new OReadRecordRequest();
+      case OChannelBinaryProtocol.REQUEST_RECORD_LOAD:
+        return new OReadRecordRequest();
 
-    case OChannelBinaryProtocol.REQUEST_RECORD_LOAD_IF_VERSION_NOT_LATEST:
-      return new OReadRecordIfVersionIsNotLatestRequest();
+      case OChannelBinaryProtocol.REQUEST_RECORD_LOAD_IF_VERSION_NOT_LATEST:
+        return new OReadRecordIfVersionIsNotLatestRequest();
 
-    case OChannelBinaryProtocol.REQUEST_RECORD_CREATE:
-      return new OCreateRecordRequest();
+      case OChannelBinaryProtocol.REQUEST_RECORD_CREATE:
+        return new OCreateRecordRequest();
 
-    case OChannelBinaryProtocol.REQUEST_RECORD_UPDATE:
-      return new OUpdateRecordRequest();
+      case OChannelBinaryProtocol.REQUEST_RECORD_UPDATE:
+        return new OUpdateRecordRequest();
 
-    case OChannelBinaryProtocol.REQUEST_RECORD_DELETE:
-      return new ODeleteRecordRequest();
+      case OChannelBinaryProtocol.REQUEST_RECORD_DELETE:
+        return new ODeleteRecordRequest();
 
-    case OChannelBinaryProtocol.REQUEST_POSITIONS_HIGHER:
-      return new OHigherPhysicalPositionsRequest();
+      case OChannelBinaryProtocol.REQUEST_POSITIONS_HIGHER:
+        return new OHigherPhysicalPositionsRequest();
 
-    case OChannelBinaryProtocol.REQUEST_POSITIONS_CEILING:
-      return new OCeilingPhysicalPositionsRequest();
+      case OChannelBinaryProtocol.REQUEST_POSITIONS_CEILING:
+        return new OCeilingPhysicalPositionsRequest();
 
-    case OChannelBinaryProtocol.REQUEST_POSITIONS_LOWER:
-      return new OLowerPhysicalPositionsRequest();
+      case OChannelBinaryProtocol.REQUEST_POSITIONS_LOWER:
+        return new OLowerPhysicalPositionsRequest();
 
-    case OChannelBinaryProtocol.REQUEST_POSITIONS_FLOOR:
-      return new OFloorPhysicalPositionsRequest();
+      case OChannelBinaryProtocol.REQUEST_POSITIONS_FLOOR:
+        return new OFloorPhysicalPositionsRequest();
 
-    case OChannelBinaryProtocol.REQUEST_COMMAND:
-      return new OCommandRequest();
+      case OChannelBinaryProtocol.REQUEST_COMMAND:
+        return new OCommandRequest();
 
-    case OChannelBinaryProtocol.REQUEST_QUERY:
-      return new OQueryRequest();
+      case OChannelBinaryProtocol.REQUEST_QUERY:
+        return new OQueryRequest();
 
-    case OChannelBinaryProtocol.REQUEST_CLOSE_QUERY:
-      return new OCloseQueryRequest();
+      case OChannelBinaryProtocol.REQUEST_CLOSE_QUERY:
+        return new OCloseQueryRequest();
 
-    case OChannelBinaryProtocol.REQUEST_QUERY_NEXT_PAGE:
-      return new OQueryNextPageRequest();
+      case OChannelBinaryProtocol.REQUEST_QUERY_NEXT_PAGE:
+        return new OQueryNextPageRequest();
 
-    case OChannelBinaryProtocol.REQUEST_TX_COMMIT:
-      return new OCommitRequest();
+      case OChannelBinaryProtocol.REQUEST_TX_COMMIT:
+        return new OCommitRequest();
 
-    case OChannelBinaryProtocol.REQUEST_CONFIG_GET:
-      return new OGetGlobalConfigurationRequest();
+      case OChannelBinaryProtocol.REQUEST_CONFIG_GET:
+        return new OGetGlobalConfigurationRequest();
 
-    case OChannelBinaryProtocol.REQUEST_CONFIG_SET:
-      return new OSetGlobalConfigurationRequest();
+      case OChannelBinaryProtocol.REQUEST_CONFIG_SET:
+        return new OSetGlobalConfigurationRequest();
 
-    case OChannelBinaryProtocol.REQUEST_CONFIG_LIST:
-      return new OListGlobalConfigurationsRequest();
+      case OChannelBinaryProtocol.REQUEST_CONFIG_LIST:
+        return new OListGlobalConfigurationsRequest();
 
-    case OChannelBinaryProtocol.REQUEST_DB_FREEZE:
-      return new OFreezeDatabaseRequest();
+      case OChannelBinaryProtocol.REQUEST_DB_FREEZE:
+        return new OFreezeDatabaseRequest();
 
-    case OChannelBinaryProtocol.REQUEST_DB_RELEASE:
-      return new OReleaseDatabaseRequest();
+      case OChannelBinaryProtocol.REQUEST_DB_RELEASE:
+        return new OReleaseDatabaseRequest();
 
-    case OChannelBinaryProtocol.REQUEST_RECORD_CLEAN_OUT:
-      return new OCleanOutRecordRequest();
+      case OChannelBinaryProtocol.REQUEST_RECORD_CLEAN_OUT:
+        return new OCleanOutRecordRequest();
 
-    case OChannelBinaryProtocol.REQUEST_CREATE_SBTREE_BONSAI:
-      return new OSBTCreateTreeRequest();
+      case OChannelBinaryProtocol.REQUEST_CREATE_SBTREE_BONSAI:
+        return new OSBTCreateTreeRequest();
 
-    case OChannelBinaryProtocol.REQUEST_SBTREE_BONSAI_GET:
-      return new OSBTGetRequest();
+      case OChannelBinaryProtocol.REQUEST_SBTREE_BONSAI_GET:
+        return new OSBTGetRequest();
 
-    case OChannelBinaryProtocol.REQUEST_SBTREE_BONSAI_FIRST_KEY:
-      return new OSBTFirstKeyRequest();
+      case OChannelBinaryProtocol.REQUEST_SBTREE_BONSAI_FIRST_KEY:
+        return new OSBTFirstKeyRequest();
 
-    case OChannelBinaryProtocol.REQUEST_SBTREE_BONSAI_GET_ENTRIES_MAJOR:
-      return new OSBTFetchEntriesMajorRequest<>();
+      case OChannelBinaryProtocol.REQUEST_SBTREE_BONSAI_GET_ENTRIES_MAJOR:
+        return new OSBTFetchEntriesMajorRequest<>();
 
-    case OChannelBinaryProtocol.REQUEST_RIDBAG_GET_SIZE:
-      return new OSBTGetRealBagSizeRequest();
+      case OChannelBinaryProtocol.REQUEST_RIDBAG_GET_SIZE:
+        return new OSBTGetRealBagSizeRequest();
 
-    case OChannelBinaryProtocol.REQUEST_INCREMENTAL_BACKUP:
-      return new OIncrementalBackupRequest();
+      case OChannelBinaryProtocol.REQUEST_INCREMENTAL_BACKUP:
+        return new OIncrementalBackupRequest();
 
-    case OChannelBinaryProtocol.REQUEST_DB_IMPORT:
-      return new OImportRequest();
-    case OChannelBinaryProtocol.DISTRIBUTED_CONNECT:
-      return new ODistributedConnectRequest();
-    default:
-      throw new ODatabaseException("binary protocol command with code: " + requestType);
+      case OChannelBinaryProtocol.REQUEST_DB_IMPORT:
+        return new OImportRequest();
+      case OChannelBinaryProtocol.DISTRIBUTED_CONNECT:
+        return new ODistributedConnectRequest();
+      default:
+        throw new ODatabaseException("binary protocol command with code: " + requestType);
     }
   }
 
@@ -209,172 +270,172 @@ public class ONetworkBinaryProtocolFactory {
    */
   public static OBinaryRequest<? extends OBinaryResponse> createRequest37(int requestType) {
     switch (requestType) {
+      case OChannelBinaryProtocol.SUBSCRIBE_PUSH:
+        return new OSubscribeRequest();
 
-    case OChannelBinaryProtocol.SUBSCRIBE_PUSH:
-      return new OSubscribeRequest();
+      case OChannelBinaryProtocol.EXPERIMENTAL:
+        return new OExperimentalRequest();
 
-    case OChannelBinaryProtocol.EXPERIMENTAL:
-      return new OExperimentalRequest();
+      case OChannelBinaryProtocol.UNSUBSCRIBE_PUSH:
+        return new OUnsubscribeRequest();
 
-    case OChannelBinaryProtocol.UNSUBSCRIBE_PUSH:
-      return new OUnsubscribeRequest();
+      case OChannelBinaryProtocol.REQUEST_TX_FETCH:
+        return new OFetchTransactionRequest();
 
-    case OChannelBinaryProtocol.REQUEST_TX_FETCH:
-      return new OFetchTransactionRequest();
+      case OChannelBinaryProtocol.REQUEST_TX_REBEGIN:
+        return new ORebeginTransactionRequest();
 
-    case OChannelBinaryProtocol.REQUEST_TX_REBEGIN:
-      return new ORebeginTransactionRequest();
+      case OChannelBinaryProtocol.REQUEST_TX_BEGIN:
+        return new OBeginTransactionRequest();
 
-    case OChannelBinaryProtocol.REQUEST_TX_BEGIN:
-      return new OBeginTransactionRequest();
+      case OChannelBinaryProtocol.REQUEST_TX_COMMIT:
+        return new OCommit37Request();
 
-    case OChannelBinaryProtocol.REQUEST_TX_COMMIT:
-      return new OCommit37Request();
+      case OChannelBinaryProtocol.REQUEST_TX_ROLLBACK:
+        return new ORollbackTransactionRequest();
 
-    case OChannelBinaryProtocol.REQUEST_TX_ROLLBACK:
-      return new ORollbackTransactionRequest();
+      case OChannelBinaryProtocol.REQUEST_BATCH_OPERATIONS:
+        return new OBatchOperationsRequest();
 
-    case OChannelBinaryProtocol.REQUEST_BATCH_OPERATIONS:
-      return new OBatchOperationsRequest();
+      case OChannelBinaryProtocol.REQUEST_DB_OPEN:
+        return new OOpen37Request();
 
-    case OChannelBinaryProtocol.REQUEST_DB_OPEN:
-      return new OOpen37Request();
+      case OChannelBinaryProtocol.REQUEST_CONNECT:
+        return new OConnect37Request();
 
-    case OChannelBinaryProtocol.REQUEST_CONNECT:
-      return new OConnect37Request();
+      case OChannelBinaryProtocol.REQUEST_DB_REOPEN:
+        return new OReopenRequest();
 
-    case OChannelBinaryProtocol.REQUEST_DB_REOPEN:
-      return new OReopenRequest();
+      case OChannelBinaryProtocol.REQUEST_SHUTDOWN:
+        return new OShutdownRequest();
 
-    case OChannelBinaryProtocol.REQUEST_SHUTDOWN:
-      return new OShutdownRequest();
+      case OChannelBinaryProtocol.REQUEST_DB_LIST:
+        return new OListDatabasesRequest();
 
-    case OChannelBinaryProtocol.REQUEST_DB_LIST:
-      return new OListDatabasesRequest();
+      case OChannelBinaryProtocol.REQUEST_SERVER_INFO:
+        return new OServerInfoRequest();
 
-    case OChannelBinaryProtocol.REQUEST_SERVER_INFO:
-      return new OServerInfoRequest();
+      case OChannelBinaryProtocol.REQUEST_DB_RELOAD:
+        return new OReloadRequest37();
 
-    case OChannelBinaryProtocol.REQUEST_DB_RELOAD:
-      return new OReloadRequest37();
+      case OChannelBinaryProtocol.REQUEST_DB_CREATE:
+        return new OCreateDatabaseRequest();
 
-    case OChannelBinaryProtocol.REQUEST_DB_CREATE:
-      return new OCreateDatabaseRequest();
+      case OChannelBinaryProtocol.REQUEST_DB_CLOSE:
+        return new OCloseRequest();
 
-    case OChannelBinaryProtocol.REQUEST_DB_CLOSE:
-      return new OCloseRequest();
+      case OChannelBinaryProtocol.REQUEST_DB_EXIST:
+        return new OExistsDatabaseRequest();
 
-    case OChannelBinaryProtocol.REQUEST_DB_EXIST:
-      return new OExistsDatabaseRequest();
+      case OChannelBinaryProtocol.REQUEST_DB_DROP:
+        return new ODropDatabaseRequest();
 
-    case OChannelBinaryProtocol.REQUEST_DB_DROP:
-      return new ODropDatabaseRequest();
+      case OChannelBinaryProtocol.REQUEST_DB_SIZE:
+        return new OGetSizeRequest();
 
-    case OChannelBinaryProtocol.REQUEST_DB_SIZE:
-      return new OGetSizeRequest();
+      case OChannelBinaryProtocol.REQUEST_DB_COUNTRECORDS:
+        return new OCountRecordsRequest();
 
-    case OChannelBinaryProtocol.REQUEST_DB_COUNTRECORDS:
-      return new OCountRecordsRequest();
+      case OChannelBinaryProtocol.REQUEST_CLUSTER:
+        return new ODistributedStatusRequest();
 
-    case OChannelBinaryProtocol.REQUEST_CLUSTER:
-      return new ODistributedStatusRequest();
+      case OChannelBinaryProtocol.REQUEST_CLUSTER_COUNT:
+        return new OCountRequest();
 
-    case OChannelBinaryProtocol.REQUEST_CLUSTER_COUNT:
-      return new OCountRequest();
+      case OChannelBinaryProtocol.REQUEST_CLUSTER_DATARANGE:
+        return new OGetClusterDataRangeRequest();
 
-    case OChannelBinaryProtocol.REQUEST_CLUSTER_DATARANGE:
-      return new OGetClusterDataRangeRequest();
+      case OChannelBinaryProtocol.REQUEST_CLUSTER_ADD:
+        return new OAddClusterRequest();
 
-    case OChannelBinaryProtocol.REQUEST_CLUSTER_ADD:
-      return new OAddClusterRequest();
+      case OChannelBinaryProtocol.REQUEST_CLUSTER_DROP:
+        return new ODropClusterRequest();
 
-    case OChannelBinaryProtocol.REQUEST_CLUSTER_DROP:
-      return new ODropClusterRequest();
+      case OChannelBinaryProtocol.REQUEST_RECORD_METADATA:
+        return new OGetRecordMetadataRequest();
 
-    case OChannelBinaryProtocol.REQUEST_RECORD_METADATA:
-      return new OGetRecordMetadataRequest();
+      case OChannelBinaryProtocol.REQUEST_RECORD_LOAD:
+        return new OReadRecordRequest();
 
-    case OChannelBinaryProtocol.REQUEST_RECORD_LOAD:
-      return new OReadRecordRequest();
+      case OChannelBinaryProtocol.REQUEST_RECORD_LOAD_IF_VERSION_NOT_LATEST:
+        return new OReadRecordIfVersionIsNotLatestRequest();
 
-    case OChannelBinaryProtocol.REQUEST_RECORD_LOAD_IF_VERSION_NOT_LATEST:
-      return new OReadRecordIfVersionIsNotLatestRequest();
+      case OChannelBinaryProtocol.REQUEST_RECORD_CREATE:
+        return new OCreateRecordRequest();
 
-    case OChannelBinaryProtocol.REQUEST_RECORD_CREATE:
-      return new OCreateRecordRequest();
+      case OChannelBinaryProtocol.REQUEST_RECORD_UPDATE:
+        return new OUpdateRecordRequest();
 
-    case OChannelBinaryProtocol.REQUEST_RECORD_UPDATE:
-      return new OUpdateRecordRequest();
+      case OChannelBinaryProtocol.REQUEST_RECORD_DELETE:
+        return new ODeleteRecordRequest();
 
-    case OChannelBinaryProtocol.REQUEST_RECORD_DELETE:
-      return new ODeleteRecordRequest();
+      case OChannelBinaryProtocol.REQUEST_POSITIONS_HIGHER:
+        return new OHigherPhysicalPositionsRequest();
 
-    case OChannelBinaryProtocol.REQUEST_POSITIONS_HIGHER:
-      return new OHigherPhysicalPositionsRequest();
+      case OChannelBinaryProtocol.REQUEST_POSITIONS_CEILING:
+        return new OCeilingPhysicalPositionsRequest();
 
-    case OChannelBinaryProtocol.REQUEST_POSITIONS_CEILING:
-      return new OCeilingPhysicalPositionsRequest();
+      case OChannelBinaryProtocol.REQUEST_POSITIONS_LOWER:
+        return new OLowerPhysicalPositionsRequest();
 
-    case OChannelBinaryProtocol.REQUEST_POSITIONS_LOWER:
-      return new OLowerPhysicalPositionsRequest();
+      case OChannelBinaryProtocol.REQUEST_POSITIONS_FLOOR:
+        return new OFloorPhysicalPositionsRequest();
 
-    case OChannelBinaryProtocol.REQUEST_POSITIONS_FLOOR:
-      return new OFloorPhysicalPositionsRequest();
+      case OChannelBinaryProtocol.REQUEST_COMMAND:
+        return new OCommandRequest();
 
-    case OChannelBinaryProtocol.REQUEST_COMMAND:
-      return new OCommandRequest();
+      case OChannelBinaryProtocol.REQUEST_QUERY:
+        return new OQueryRequest();
 
-    case OChannelBinaryProtocol.REQUEST_QUERY:
-      return new OQueryRequest();
+      case OChannelBinaryProtocol.REQUEST_CLOSE_QUERY:
+        return new OCloseQueryRequest();
 
-    case OChannelBinaryProtocol.REQUEST_CLOSE_QUERY:
-      return new OCloseQueryRequest();
+      case OChannelBinaryProtocol.REQUEST_QUERY_NEXT_PAGE:
+        return new OQueryNextPageRequest();
 
-    case OChannelBinaryProtocol.REQUEST_QUERY_NEXT_PAGE:
-      return new OQueryNextPageRequest();
+      case OChannelBinaryProtocol.REQUEST_CONFIG_GET:
+        return new OGetGlobalConfigurationRequest();
 
-    case OChannelBinaryProtocol.REQUEST_CONFIG_GET:
-      return new OGetGlobalConfigurationRequest();
+      case OChannelBinaryProtocol.REQUEST_CONFIG_SET:
+        return new OSetGlobalConfigurationRequest();
 
-    case OChannelBinaryProtocol.REQUEST_CONFIG_SET:
-      return new OSetGlobalConfigurationRequest();
+      case OChannelBinaryProtocol.REQUEST_CONFIG_LIST:
+        return new OListGlobalConfigurationsRequest();
 
-    case OChannelBinaryProtocol.REQUEST_CONFIG_LIST:
-      return new OListGlobalConfigurationsRequest();
+      case OChannelBinaryProtocol.REQUEST_DB_FREEZE:
+        return new OFreezeDatabaseRequest();
 
-    case OChannelBinaryProtocol.REQUEST_DB_FREEZE:
-      return new OFreezeDatabaseRequest();
+      case OChannelBinaryProtocol.REQUEST_DB_RELEASE:
+        return new OReleaseDatabaseRequest();
 
-    case OChannelBinaryProtocol.REQUEST_DB_RELEASE:
-      return new OReleaseDatabaseRequest();
+      case OChannelBinaryProtocol.REQUEST_RECORD_CLEAN_OUT:
+        return new OCleanOutRecordRequest();
 
-    case OChannelBinaryProtocol.REQUEST_RECORD_CLEAN_OUT:
-      return new OCleanOutRecordRequest();
+      case OChannelBinaryProtocol.REQUEST_CREATE_SBTREE_BONSAI:
+        return new OSBTCreateTreeRequest();
 
-    case OChannelBinaryProtocol.REQUEST_CREATE_SBTREE_BONSAI:
-      return new OSBTCreateTreeRequest();
+      case OChannelBinaryProtocol.REQUEST_SBTREE_BONSAI_GET:
+        return new OSBTGetRequest();
 
-    case OChannelBinaryProtocol.REQUEST_SBTREE_BONSAI_GET:
-      return new OSBTGetRequest();
+      case OChannelBinaryProtocol.REQUEST_SBTREE_BONSAI_FIRST_KEY:
+        return new OSBTFirstKeyRequest();
 
-    case OChannelBinaryProtocol.REQUEST_SBTREE_BONSAI_FIRST_KEY:
-      return new OSBTFirstKeyRequest();
+      case OChannelBinaryProtocol.REQUEST_SBTREE_BONSAI_GET_ENTRIES_MAJOR:
+        return new OSBTFetchEntriesMajorRequest<>();
 
-    case OChannelBinaryProtocol.REQUEST_SBTREE_BONSAI_GET_ENTRIES_MAJOR:
-      return new OSBTFetchEntriesMajorRequest<>();
+      case OChannelBinaryProtocol.REQUEST_RIDBAG_GET_SIZE:
+        return new OSBTGetRealBagSizeRequest();
 
-    case OChannelBinaryProtocol.REQUEST_RIDBAG_GET_SIZE:
-      return new OSBTGetRealBagSizeRequest();
+      case OChannelBinaryProtocol.REQUEST_INCREMENTAL_BACKUP:
+        return new OIncrementalBackupRequest();
 
-    case OChannelBinaryProtocol.REQUEST_INCREMENTAL_BACKUP:
-      return new OIncrementalBackupRequest();
-
-    case OChannelBinaryProtocol.REQUEST_DB_IMPORT:
-      return new OImportRequest();
-    case OChannelBinaryProtocol.DISTRIBUTED_CONNECT:
-      return new ODistributedConnectRequest();
-    default:
-      throw new ODatabaseException("binary protocol command with code: " + requestType + " for protocol version 37");
+      case OChannelBinaryProtocol.REQUEST_DB_IMPORT:
+        return new OImportRequest();
+      case OChannelBinaryProtocol.DISTRIBUTED_CONNECT:
+        return new ODistributedConnectRequest();
+      default:
+        throw new ODatabaseException(
+            "binary protocol command with code: " + requestType + " for protocol version 37");
     }
   }
 
@@ -386,21 +447,20 @@ public class ONetworkBinaryProtocolFactory {
    */
   public static OBinaryRequest<? extends OBinaryResponse> createRequest38(int requestType) {
     switch (requestType) {
+      case OChannelBinaryProtocol.REQUEST_TX_FETCH:
+        return new OFetchTransaction38Request();
 
-    case OChannelBinaryProtocol.REQUEST_TX_FETCH:
-      return new OFetchTransaction38Request();
+      case OChannelBinaryProtocol.REQUEST_TX_REBEGIN:
+        return new ORebeginTransaction38Request();
 
-    case OChannelBinaryProtocol.REQUEST_TX_REBEGIN:
-      return new ORebeginTransaction38Request();
+      case OChannelBinaryProtocol.REQUEST_TX_BEGIN:
+        return new OBeginTransaction38Request();
 
-    case OChannelBinaryProtocol.REQUEST_TX_BEGIN:
-      return new OBeginTransaction38Request();
+      case OChannelBinaryProtocol.REQUEST_TX_COMMIT:
+        return new OCommit38Request();
 
-    case OChannelBinaryProtocol.REQUEST_TX_COMMIT:
-      return new OCommit38Request();
-
-    default:
-      return createRequest37(requestType);
+      default:
+        return createRequest37(requestType);
     }
   }
 }

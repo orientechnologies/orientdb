@@ -5,28 +5,21 @@ package com.orientechnologies.orient.core.sql.parser;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.command.OCommandContext;
-import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
-import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.executor.OInternalResultSet;
-import com.orientechnologies.orient.core.sql.executor.OIteratorResultSet;
 import com.orientechnologies.orient.core.sql.executor.OResultInternal;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
-
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 public class OHaStatusStatement extends OSimpleExecStatement {
 
-  public boolean servers    = false;
-  public boolean db         = false;
-  public boolean latency    = false;
-  public boolean messages   = false;
+  public boolean servers = false;
+  public boolean db = false;
+  public boolean latency = false;
+  public boolean messages = false;
   public boolean outputText = false;
-  public boolean locks      = false;
+  public boolean locks = false;
 
   public OHaStatusStatement(int id) {
     super(id);

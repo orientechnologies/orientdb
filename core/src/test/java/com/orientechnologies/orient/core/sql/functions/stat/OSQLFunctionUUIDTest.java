@@ -15,10 +15,15 @@
  *  *  limitations under the License.
  *  *
  *  * For more information: http://orientdb.com
- *  
+ *
  */
 
 package com.orientechnologies.orient.core.sql.functions.stat;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+
 
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -27,8 +32,6 @@ import com.orientechnologies.orient.core.sql.functions.misc.OSQLFunctionUUID;
 import com.orientechnologies.orient.core.sql.query.OLegacyResultSet;
 import org.junit.Before;
 import org.junit.Test;
-
-import static org.junit.Assert.*;
 
 public class OSQLFunctionUUIDTest {
 
@@ -55,7 +58,8 @@ public class OSQLFunctionUUIDTest {
   public void testQuery() {
     ODatabaseDocumentTx db = new ODatabaseDocumentTx("memory:OSQLFunctionUUIDTest").create();
     try {
-      final OLegacyResultSet<ODocument> result = db.command(new OCommandSQL("select uuid()")).execute();
+      final OLegacyResultSet<ODocument> result =
+          db.command(new OCommandSQL("select uuid()")).execute();
       assertNotNull(result);
       assertEquals(result.size(), 1);
       assertNotNull(result.get(0).field("uuid"));
@@ -64,5 +68,4 @@ public class OSQLFunctionUUIDTest {
       db.drop();
     }
   }
-
 }

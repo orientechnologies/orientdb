@@ -4,8 +4,12 @@ package com.orientechnologies.orient.core.sql.parser;
 
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
-
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 public class OMultiMatchPathItem extends OMatchPathItem {
@@ -34,7 +38,9 @@ public class OMultiMatchPathItem extends OMatchPathItem {
     }
   }
 
-  protected Iterable<OIdentifiable> traversePatternEdge(OMatchStatement.MatchContext matchContext, OIdentifiable startingPoint,
+  protected Iterable<OIdentifiable> traversePatternEdge(
+      OMatchStatement.MatchContext matchContext,
+      OIdentifiable startingPoint,
       OCommandContext iCommandContext) {
     Set<OIdentifiable> result = new HashSet<OIdentifiable>();
     result.add(startingPoint);
@@ -42,7 +48,8 @@ public class OMultiMatchPathItem extends OMatchPathItem {
       Set<OIdentifiable> startingPoints = result;
       result = new HashSet<OIdentifiable>();
       for (OIdentifiable sp : startingPoints) {
-        Iterable<OIdentifiable> subResult = subItem.executeTraversal(matchContext, iCommandContext, sp, 0);
+        Iterable<OIdentifiable> subResult =
+            subItem.executeTraversal(matchContext, iCommandContext, sp, 0);
         if (subResult instanceof Collection) {
           result.addAll((Collection) subResult);
         } else {
@@ -55,29 +62,29 @@ public class OMultiMatchPathItem extends OMatchPathItem {
     return result;
   }
 
-  @Override public OMultiMatchPathItem copy() {
+  @Override
+  public OMultiMatchPathItem copy() {
     OMultiMatchPathItem result = (OMultiMatchPathItem) super.copy();
-    result.items = items == null ? null : items.stream().map(x -> x.copy()).collect(Collectors.toList());
+    result.items =
+        items == null ? null : items.stream().map(x -> x.copy()).collect(Collectors.toList());
     return result;
   }
 
-  @Override public boolean equals(Object o) {
-    if (this == o)
-      return true;
-    if (o == null || getClass() != o.getClass())
-      return false;
-    if (!super.equals(o))
-      return false;
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+    if (!super.equals(o)) return false;
 
     OMultiMatchPathItem that = (OMultiMatchPathItem) o;
 
-    if (items != null ? !items.equals(that.items) : that.items != null)
-      return false;
+    if (items != null ? !items.equals(that.items) : that.items != null) return false;
 
     return true;
   }
 
-  @Override public int hashCode() {
+  @Override
+  public int hashCode() {
     int result = super.hashCode();
     result = 31 * result + (items != null ? items.hashCode() : 0);
     return result;

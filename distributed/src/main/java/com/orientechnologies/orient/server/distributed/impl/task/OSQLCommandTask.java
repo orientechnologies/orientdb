@@ -19,7 +19,11 @@
  */
 package com.orientechnologies.orient.server.distributed.impl.task;
 
-import com.orientechnologies.orient.core.command.*;
+import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
+import com.orientechnologies.orient.core.command.OCommandExecutor;
+import com.orientechnologies.orient.core.command.OCommandRequest;
+import com.orientechnologies.orient.core.command.OCommandRequestInternal;
+import com.orientechnologies.orient.core.command.OCommandRequestText;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.exception.ORetryQueryException;
@@ -36,7 +40,6 @@ import com.orientechnologies.orient.server.distributed.ODistributedServerManager
 import com.orientechnologies.orient.server.distributed.ORemoteTaskFactory;
 import com.orientechnologies.orient.server.distributed.task.OAbstractCommandTask;
 import com.orientechnologies.orient.server.distributed.task.ORemoteTask;
-
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
@@ -52,21 +55,22 @@ import java.util.Map;
  */
 public class OSQLCommandTask extends OAbstractCommandTask {
   private static final long serialVersionUID = 1L;
-  public static final  int  FACTORYID        = 5;
+  public static final int FACTORYID = 5;
 
-  protected String                                          text;
-  protected Map<Object, Object>                             params;
-  protected RESULT_STRATEGY                                 resultStrategy;
-  protected Collection<String>                              clusters;
+  protected String text;
+  protected Map<Object, Object> params;
+  protected RESULT_STRATEGY resultStrategy;
+  protected Collection<String> clusters;
   protected OCommandDistributedReplicateRequest.QUORUM_TYPE quorumType;
-  protected long                                            timeout;
-  protected boolean                                         idempotent;
+  protected long timeout;
+  protected boolean idempotent;
 
   public OSQLCommandTask() {
     clusters = new HashSet<String>();
   }
 
-  public OSQLCommandTask(final OCommandRequestText iCommand, final Collection<String> iClusterNames) {
+  public OSQLCommandTask(
+      final OCommandRequestText iCommand, final Collection<String> iClusterNames) {
     clusters = iClusterNames;
 
     text = iCommand.getText();
@@ -74,8 +78,12 @@ public class OSQLCommandTask extends OAbstractCommandTask {
 
     ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.instance().get();
 
-    final OCommandExecutor executor = db.getSharedContext().getOrientDB().getScriptManager().getCommandManager()
-        .getExecutor(iCommand);
+    final OCommandExecutor executor =
+        db.getSharedContext()
+            .getOrientDB()
+            .getScriptManager()
+            .getCommandManager()
+            .getExecutor(iCommand);
     executor.parse(iCommand);
 
     quorumType = ((OCommandDistributedReplicateRequest) executor).getQuorumType();
@@ -83,13 +91,22 @@ public class OSQLCommandTask extends OAbstractCommandTask {
     idempotent = executor.isIdempotent();
   }
 
-  public Object execute(ODistributedRequestId requestId, final OServer iServer, ODistributedServerManager iManager,
-      final ODatabaseDocumentInternal database) throws Exception {
+  public Object execute(
+      ODistributedRequestId requestId,
+      final OServer iServer,
+      ODistributedServerManager iManager,
+      final ODatabaseDocumentInternal database)
+      throws Exception {
 
     if (ODistributedServerLog.isDebugEnabled())
-      ODistributedServerLog
-          .debug(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.IN, "Execute command=%s db=%s", text.toString(),
-              database.getName());
+      ODistributedServerLog.debug(
+          this,
+          iManager.getLocalNodeName(),
+          getNodeSource(),
+          DIRECTION.IN,
+          "Execute command=%s db=%s",
+          text.toString(),
+          database.getName());
 
     Object res;
 
@@ -97,8 +114,13 @@ public class OSQLCommandTask extends OAbstractCommandTask {
       try {
         final OCommandRequest cmd = database.command(new OCommandSQL(text));
 
-        OCommandExecutor executor = database.getSharedContext().getOrientDB().getScriptManager().getCommandManager()
-            .getExecutor((OCommandRequestInternal) cmd);
+        OCommandExecutor executor =
+            database
+                .getSharedContext()
+                .getOrientDB()
+                .getScriptManager()
+                .getCommandManager()
+                .getExecutor((OCommandRequestInternal) cmd);
         executor.parse(cmd);
 
         final OCommandExecutor exec;
@@ -113,20 +135,19 @@ public class OSQLCommandTask extends OAbstractCommandTask {
           final StringBuilder buffer = new StringBuilder("cluster:[");
           int i = 0;
           for (String c : clusters) {
-            if (i++ > 0)
-              buffer.append(',');
+            if (i++ > 0) buffer.append(',');
             buffer.append(c);
           }
           buffer.append("]");
 
-          ((OCommandExecutorSQLSelect) exec).setParsedTarget(new OSQLTarget(buffer.toString(), exec.getContext()));
+          ((OCommandExecutorSQLSelect) exec)
+              .setParsedTarget(new OSQLTarget(buffer.toString(), exec.getContext()));
         }
 
         if (params != null)
           // EXECUTE WITH PARAMETERS
           res = executor.execute(params);
-        else
-          res = executor.execute(null);
+        else res = executor.execute(null);
 
         break;
       } catch (ORetryQueryException e) {
@@ -160,8 +181,7 @@ public class OSQLCommandTask extends OAbstractCommandTask {
     out.writeUTF(text);
     OStreamableHelper.toStream(out, params);
     out.writeInt(clusters.size());
-    for (String c : clusters)
-      out.writeUTF(c);
+    for (String c : clusters) out.writeUTF(c);
   }
 
   @Override
@@ -171,8 +191,7 @@ public class OSQLCommandTask extends OAbstractCommandTask {
 
     final int cSize = in.readInt();
     clusters = new HashSet<String>(cSize);
-    for (int i = 0; i < cSize; ++i)
-      clusters.add(in.readUTF());
+    for (int i = 0; i < cSize; ++i) clusters.add(in.readUTF());
   }
 
   @Override
@@ -186,11 +205,16 @@ public class OSQLCommandTask extends OAbstractCommandTask {
   }
 
   @Override
-  public ORemoteTask getUndoTask(ODistributedServerManager dManager, final ODistributedRequestId reqId, List<String> servers) {
+  public ORemoteTask getUndoTask(
+      ODistributedServerManager dManager, final ODistributedRequestId reqId, List<String> servers) {
     ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.instance().get();
     final OCommandRequest cmd = db.command(new OCommandSQL(text));
-    OCommandExecutor executor = db.getSharedContext().getOrientDB().getScriptManager().getCommandManager()
-        .getExecutor((OCommandRequestInternal) cmd);
+    OCommandExecutor executor =
+        db.getSharedContext()
+            .getOrientDB()
+            .getScriptManager()
+            .getCommandManager()
+            .getExecutor((OCommandRequestInternal) cmd);
     executor.parse(cmd);
 
     if (executor instanceof OCommandExecutorSQLDelegate)
@@ -199,7 +223,8 @@ public class OSQLCommandTask extends OAbstractCommandTask {
     if (executor instanceof OCommandDistributedReplicateRequest) {
       final String undoCommand = ((OCommandDistributedReplicateRequest) executor).getUndoCommand();
       if (undoCommand != null) {
-        final OSQLCommandTask undoTask = new OSQLCommandTask(new OCommandSQL(undoCommand), clusters);
+        final OSQLCommandTask undoTask =
+            new OSQLCommandTask(new OCommandSQL(undoCommand), clusters);
         undoTask.setResultStrategy(resultStrategy);
         return undoTask;
       }

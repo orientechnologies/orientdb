@@ -25,16 +25,14 @@ import com.orientechnologies.orient.core.serialization.serializer.record.ORecord
 import com.orientechnologies.orient.core.storage.OPhysicalPosition;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelDataInput;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelDataOutput;
-
 import java.io.IOException;
 
 public class OLowerPhysicalPositionsResponse implements OBinaryResponse {
 
   private OPhysicalPosition[] previousPositions;
 
-  public OLowerPhysicalPositionsResponse() {
-  }
-  
+  public OLowerPhysicalPositionsResponse() {}
+
   public OLowerPhysicalPositionsResponse(OPhysicalPosition[] previousPositions) {
     this.previousPositions = previousPositions;
   }
@@ -44,12 +42,12 @@ public class OLowerPhysicalPositionsResponse implements OBinaryResponse {
     this.previousPositions = OMessageHelper.readPhysicalPositions(network);
   }
 
-  public void write(OChannelDataOutput channel, int protocolVersion, ORecordSerializer serializer) throws IOException {
+  public void write(OChannelDataOutput channel, int protocolVersion, ORecordSerializer serializer)
+      throws IOException {
     OMessageHelper.writePhysicalPositions(channel, previousPositions);
   }
 
   public OPhysicalPosition[] getPreviousPositions() {
     return previousPositions;
   }
-
 }

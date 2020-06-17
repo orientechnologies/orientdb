@@ -7,13 +7,19 @@ import com.orientechnologies.orient.core.index.OIndexKeyUpdater;
 import com.orientechnologies.orient.core.index.engine.OBaseIndexEngine;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperation;
-
 import java.io.IOException;
 import java.util.stream.Stream;
 
 public interface OSBTree<K, V> {
-  void create(OAtomicOperation atomicOperation, OBinarySerializer<K> keySerializer, OBinarySerializer<V> valueSerializer, OType[] keyTypes, int keySize,
-      boolean nullPointerSupport, OEncryption encryption) throws IOException;
+  void create(
+      OAtomicOperation atomicOperation,
+      OBinarySerializer<K> keySerializer,
+      OBinarySerializer<V> valueSerializer,
+      OType[] keyTypes,
+      int keySize,
+      boolean nullPointerSupport,
+      OEncryption encryption)
+      throws IOException;
 
   boolean isNullPointerSupport();
 
@@ -21,9 +27,16 @@ public interface OSBTree<K, V> {
 
   void put(OAtomicOperation atomicOperation, K key, V value) throws IOException;
 
-  boolean validatedPut(OAtomicOperation atomicOperation, K key, V value, OBaseIndexEngine.Validator<K, V> validator) throws IOException;
+  boolean validatedPut(
+      OAtomicOperation atomicOperation, K key, V value, OBaseIndexEngine.Validator<K, V> validator)
+      throws IOException;
 
-  boolean update(OAtomicOperation atomicOperation, K key, OIndexKeyUpdater<V> updater, OBaseIndexEngine.Validator<K, V> validator) throws IOException;
+  boolean update(
+      OAtomicOperation atomicOperation,
+      K key,
+      OIndexKeyUpdater<V> updater,
+      OBaseIndexEngine.Validator<K, V> validator)
+      throws IOException;
 
   void close(boolean flush);
 
@@ -31,8 +44,14 @@ public interface OSBTree<K, V> {
 
   void delete(OAtomicOperation atomicOperation) throws IOException;
 
-  void load(String name, OBinarySerializer<K> keySerializer, OBinarySerializer<V> valueSerializer, OType[] keyTypes, int keySize,
-      boolean nullPointerSupport, OEncryption encryption);
+  void load(
+      String name,
+      OBinarySerializer<K> keySerializer,
+      OBinarySerializer<V> valueSerializer,
+      OType[] keyTypes,
+      int keySize,
+      boolean nullPointerSupport,
+      OEncryption encryption);
 
   long size();
 
@@ -48,8 +67,8 @@ public interface OSBTree<K, V> {
 
   Stream<K> keyStream();
 
-  Stream<ORawPair<K, V>> iterateEntriesBetween(K keyFrom, boolean fromInclusive, K keyTo, boolean toInclusive,
-      boolean ascSortOrder);
+  Stream<ORawPair<K, V>> iterateEntriesBetween(
+      K keyFrom, boolean fromInclusive, K keyTo, boolean toInclusive, boolean ascSortOrder);
 
   void flush();
 

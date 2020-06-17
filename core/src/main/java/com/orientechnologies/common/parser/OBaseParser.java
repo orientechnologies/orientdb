@@ -23,52 +23,58 @@ import java.util.Arrays;
 
 /**
  * Abstract generic command to parse.
- * 
+ *
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
- * 
  */
 public abstract class OBaseParser {
-  public String                   parserText;
-  public String                   parserTextUpperCase;
+  public String parserText;
+  public String parserTextUpperCase;
 
-  private transient StringBuilder parserLastWord            = new StringBuilder(256);
-  private transient int           parserEscapeSequenceCount = 0;
-  private transient int           parserCurrentPos          = 0;
-  private transient int           parserPreviousPos         = 0;
-  private transient char          parserLastSeparator       = ' ';
+  private transient StringBuilder parserLastWord = new StringBuilder(256);
+  private transient int parserEscapeSequenceCount = 0;
+  private transient int parserCurrentPos = 0;
+  private transient int parserPreviousPos = 0;
+  private transient char parserLastSeparator = ' ';
 
-  public static int nextWord(final String iText, final String iTextUpperCase, int ioCurrentPosition, final StringBuilder ioWord,
+  public static int nextWord(
+      final String iText,
+      final String iTextUpperCase,
+      int ioCurrentPosition,
+      final StringBuilder ioWord,
       final boolean iForceUpperCase) {
     return nextWord(iText, iTextUpperCase, ioCurrentPosition, ioWord, iForceUpperCase, " =><(),");
   }
 
-  public static int nextWord(final String iText, final String iTextUpperCase, int ioCurrentPosition, final StringBuilder ioWord,
-      final boolean iForceUpperCase, final String iSeparatorChars) {
+  public static int nextWord(
+      final String iText,
+      final String iTextUpperCase,
+      int ioCurrentPosition,
+      final StringBuilder ioWord,
+      final boolean iForceUpperCase,
+      final String iSeparatorChars) {
     ioWord.setLength(0);
 
     ioCurrentPosition = OStringParser.jumpWhiteSpaces(iText, ioCurrentPosition, -1);
-    if (ioCurrentPosition < 0)
-      return -1;
+    if (ioCurrentPosition < 0) return -1;
 
-    getWordStatic(iForceUpperCase ? iTextUpperCase : iText, ioCurrentPosition, iSeparatorChars, ioWord);
+    getWordStatic(
+        iForceUpperCase ? iTextUpperCase : iText, ioCurrentPosition, iSeparatorChars, ioWord);
 
-    if (ioWord.length() > 0)
-      ioCurrentPosition += ioWord.length();
+    if (ioWord.length() > 0) ioCurrentPosition += ioWord.length();
 
     return ioCurrentPosition;
   }
 
   /**
-   * @param iText
-   *          Text where to search
-   * @param iBeginIndex
-   *          Begin index
-   * @param iSeparatorChars
-   *          Separators as a String of multiple characters
-   * @param ioBuffer
-   *          StringBuilder object with the word found
+   * @param iText Text where to search
+   * @param iBeginIndex Begin index
+   * @param iSeparatorChars Separators as a String of multiple characters
+   * @param ioBuffer StringBuilder object with the word found
    */
-  public static void getWordStatic(final CharSequence iText, int iBeginIndex, final String iSeparatorChars,
+  public static void getWordStatic(
+      final CharSequence iText,
+      int iBeginIndex,
+      final String iSeparatorChars,
       final StringBuilder ioBuffer) {
     ioBuffer.setLength(0);
 
@@ -85,8 +91,7 @@ public abstract class OBaseParser {
           break;
         }
       }
-      if (!found)
-        break;
+      if (!found) break;
 
       iBeginIndex++;
     }
@@ -122,23 +127,19 @@ public abstract class OBaseParser {
     return "?";
   }
 
-  /**
-   * Returns the last separator encountered, otherwise returns a blank (' ').
-   */
+  /** Returns the last separator encountered, otherwise returns a blank (' '). */
   public char parserGetLastSeparator() {
     return parserLastSeparator;
   }
 
-  /**
-   * Overwrites the last separator. To ignore it set it to blank (' ').
-   */
+  /** Overwrites the last separator. To ignore it set it to blank (' '). */
   public void parserSetLastSeparator(final char iSeparator) {
     parserLastSeparator = iSeparator;
   }
 
   /**
    * Returns the stream position before last parsing.
-   * 
+   *
    * @return Offset from the beginning
    */
   public int parserGetPreviousPosition() {
@@ -147,7 +148,7 @@ public abstract class OBaseParser {
 
   /**
    * Tells if the parsing has reached the end of the content.
-   * 
+   *
    * @return True if is ended, otherwise false
    */
   public boolean parserIsEnded() {
@@ -156,7 +157,7 @@ public abstract class OBaseParser {
 
   /**
    * Returns the current stream position.
-   * 
+   *
    * @return Offset from the beginning
    */
   public int parserGetCurrentPosition() {
@@ -165,18 +166,18 @@ public abstract class OBaseParser {
 
   /**
    * Returns the current character in the current stream position
-   * 
-   * @return The current character in the current stream position. If the end is reached, then a blank (' ') is returned
+   *
+   * @return The current character in the current stream position. If the end is reached, then a
+   *     blank (' ') is returned
    */
   public char parserGetCurrentChar() {
-    if (parserCurrentPos < 0)
-      return ' ';
+    if (parserCurrentPos < 0) return ' ';
     return parserText.charAt(parserCurrentPos);
   }
 
   /**
    * Returns the last parsed word.
-   * 
+   *
    * @return Last parsed word as String
    */
   public String parserGetLastWord() {
@@ -189,42 +190,38 @@ public abstract class OBaseParser {
 
   /**
    * Throws a syntax error exception.
-   * 
-   * @param iText
-   *          Text about the problem.
+   *
+   * @param iText Text about the problem.
    */
   protected abstract void throwSyntaxErrorException(final String iText);
 
   /**
    * Parses the next word. It returns the word parsed if any.
-   * 
-   * @param iUpperCase
-   *          True if must return UPPERCASE, otherwise false
+   *
+   * @param iUpperCase True if must return UPPERCASE, otherwise false
    * @return The word parsed if any, otherwise null
    */
   protected String parserOptionalWord(final boolean iUpperCase) {
     parserPreviousPos = parserCurrentPos;
 
     parserNextWord(iUpperCase);
-    if (parserLastWord.length() == 0)
-      return null;
+    if (parserLastWord.length() == 0) return null;
     return parserLastWord.toString();
   }
 
   /**
-   * Parses the next word. If any word is parsed it's checked against the word array received as parameter. If the parsed word is
-   * not enlisted in it a SyntaxError exception is thrown. It returns the word parsed if any.
-   * 
-   * @param iUpperCase
-   *          True if must return UPPERCASE, otherwise false
+   * Parses the next word. If any word is parsed it's checked against the word array received as
+   * parameter. If the parsed word is not enlisted in it a SyntaxError exception is thrown. It
+   * returns the word parsed if any.
+   *
+   * @param iUpperCase True if must return UPPERCASE, otherwise false
    * @return The word parsed if any, otherwise null
    */
   protected String parseOptionalWord(final boolean iUpperCase, final String... iWords) {
     parserNextWord(iUpperCase);
 
     if (iWords.length > 0) {
-      if (parserLastWord.length() == 0)
-        return null;
+      if (parserLastWord.length() == 0) return null;
 
       boolean found = false;
       for (String w : iWords) {
@@ -235,11 +232,17 @@ public abstract class OBaseParser {
       }
 
       if (!found)
-        throwSyntaxErrorException("Found unexpected keyword '" + parserLastWord + "' while it was expected '"
-            + Arrays.toString(iWords) + "'");
+        throwSyntaxErrorException(
+            "Found unexpected keyword '"
+                + parserLastWord
+                + "' while it was expected '"
+                + Arrays.toString(iWords)
+                + "'");
     }
 
-    if (parserLastWord.length() > 1 && parserLastWord.charAt(0) == '`' && parserLastWord.charAt(parserLastWord.length() - 1) == '`') {
+    if (parserLastWord.length() > 1
+        && parserLastWord.charAt(0) == '`'
+        && parserLastWord.charAt(parserLastWord.length() - 1) == '`') {
       return parserLastWord.substring(1, parserLastWord.length() - 1);
     }
 
@@ -248,7 +251,7 @@ public abstract class OBaseParser {
 
   /**
    * Goes back to the previous position.
-   * 
+   *
    * @return The previous position
    */
   protected int parserGoBack() {
@@ -257,10 +260,10 @@ public abstract class OBaseParser {
   }
 
   /**
-   * Parses the next word. If no word is found an SyntaxError exception is thrown It returns the word parsed if any.
-   * 
-   * @param iUpperCase
-   *          True if must return UPPERCASE, otherwise false
+   * Parses the next word. If no word is found an SyntaxError exception is thrown It returns the
+   * word parsed if any.
+   *
+   * @param iUpperCase True if must return UPPERCASE, otherwise false
    * @return The word parsed
    */
   protected String parserRequiredWord(final boolean iUpperCase) {
@@ -268,13 +271,11 @@ public abstract class OBaseParser {
   }
 
   /**
-   * Parses the next word. If no word is found an SyntaxError exception with the custom message received as parameter is thrown It
-   * returns the word parsed if any.
-   * 
-   * @param iUpperCase
-   *          True if must return UPPERCASE, otherwise false
-   * @param iCustomMessage
-   *          Custom message to include in case of SyntaxError exception
+   * Parses the next word. If no word is found an SyntaxError exception with the custom message
+   * received as parameter is thrown It returns the word parsed if any.
+   *
+   * @param iUpperCase True if must return UPPERCASE, otherwise false
+   * @param iCustomMessage Custom message to include in case of SyntaxError exception
    * @return The word parsed
    */
   protected String parserRequiredWord(final boolean iUpperCase, final String iCustomMessage) {
@@ -282,36 +283,33 @@ public abstract class OBaseParser {
   }
 
   /**
-   * Parses the next word. If no word is found or the parsed word is not present in the word array received as parameter then a
-   * SyntaxError exception with the custom message received as parameter is thrown. It returns the word parsed if any.
-   * 
-   * @param iUpperCase
-   *          True if must return UPPERCASE, otherwise false
-   * @param iCustomMessage
-   *          Custom message to include in case of SyntaxError exception
-   * @param iSeparators
-   *          Separator characters
+   * Parses the next word. If no word is found or the parsed word is not present in the word array
+   * received as parameter then a SyntaxError exception with the custom message received as
+   * parameter is thrown. It returns the word parsed if any.
+   *
+   * @param iUpperCase True if must return UPPERCASE, otherwise false
+   * @param iCustomMessage Custom message to include in case of SyntaxError exception
+   * @param iSeparators Separator characters
    * @return The word parsed
    */
-  protected String parserRequiredWord(final boolean iUpperCase, final String iCustomMessage, String iSeparators) {
-    if (iSeparators == null)
-      iSeparators = " ()=><,\r\n";
+  protected String parserRequiredWord(
+      final boolean iUpperCase, final String iCustomMessage, String iSeparators) {
+    if (iSeparators == null) iSeparators = " ()=><,\r\n";
 
     parserNextWord(iUpperCase, iSeparators);
-    if (parserLastWord.length() == 0)
-      throwSyntaxErrorException(iCustomMessage);
-    if (parserLastWord.charAt(0) == '`' && parserLastWord.charAt(parserLastWord.length() - 1) == '`') {
+    if (parserLastWord.length() == 0) throwSyntaxErrorException(iCustomMessage);
+    if (parserLastWord.charAt(0) == '`'
+        && parserLastWord.charAt(parserLastWord.length() - 1) == '`') {
       return parserLastWord.substring(1, parserLastWord.length() - 1);
     }
     return parserLastWord.toString();
   }
 
   /**
-   * Parses the next word. If no word is found or the parsed word is not present in the word array received as parameter then a
-   * SyntaxError exception is thrown.
-   * 
-   * @param iWords
-   *          Array of expected keywords
+   * Parses the next word. If no word is found or the parsed word is not present in the word array
+   * received as parameter then a SyntaxError exception is thrown.
+   *
+   * @param iWords Array of expected keywords
    */
   protected void parserRequiredKeyword(final String... iWords) {
     parserNextWord(true, " \r\n,()");
@@ -327,16 +325,22 @@ public abstract class OBaseParser {
     }
 
     if (!found)
-      throwSyntaxErrorException("Found unexpected keyword '" + parserLastWord + "' while it was expected '"
-          + Arrays.toString(iWords) + "'");
+      throwSyntaxErrorException(
+          "Found unexpected keyword '"
+              + parserLastWord
+              + "' while it was expected '"
+              + Arrays.toString(iWords)
+              + "'");
   }
 
   /**
    * Parses the next sequence of chars.
-   * 
-   * @return The position of the word matched if any, otherwise -1 or an exception if iMandatory is true
+   *
+   * @return The position of the word matched if any, otherwise -1 or an exception if iMandatory is
+   *     true
    */
-  protected int parserNextChars(final boolean iUpperCase, final boolean iMandatory, final String... iCandidateWords) {
+  protected int parserNextChars(
+      final boolean iUpperCase, final boolean iMandatory, final String... iCandidateWords) {
     parserPreviousPos = parserCurrentPos;
     parserSkipWhiteSpaces();
 
@@ -354,8 +358,7 @@ public abstract class OBaseParser {
     for (int i = 0; parserCurrentPos <= max; ++i) {
       final char ch = parserCurrentPos < max ? text2Use.charAt(parserCurrentPos) : '\n';
       final boolean separator = ch == ' ' || ch == '\r' || ch == '\n' || ch == '\t' || ch == '(';
-      if (!separator)
-        parserLastWord.append(ch);
+      if (!separator) parserLastWord.append(ch);
 
       // CLEAR CANDIDATES
       int candidatesWordsCount = 0;
@@ -364,7 +367,8 @@ public abstract class OBaseParser {
         final String w = processedWords[c];
         if (w != null) {
           final int wordSize = w.length();
-          if ((separator && wordSize > i) || (!separator && (i > wordSize - 1 || w.charAt(i) != ch)))
+          if ((separator && wordSize > i)
+              || (!separator && (i > wordSize - 1 || w.charAt(i) != ch)))
             // DISCARD IT
             processedWords[c] = null;
           else {
@@ -384,30 +388,33 @@ public abstract class OBaseParser {
           return candidatesWordsPos;
       }
 
-      if (candidatesWordsCount == 0 || separator)
-        break;
+      if (candidatesWordsCount == 0 || separator) break;
 
       parserCurrentPos++;
     }
 
     if (iMandatory)
-      throwSyntaxErrorException("Found unexpected keyword '" + parserLastWord + "' while it was expected '"
-          + Arrays.toString(iCandidateWords) + "'");
+      throwSyntaxErrorException(
+          "Found unexpected keyword '"
+              + parserLastWord
+              + "' while it was expected '"
+              + Arrays.toString(iCandidateWords)
+              + "'");
 
     return -1;
   }
 
   /**
-   * Parses optional keywords between the iWords. If a keyword is found but doesn't match with iWords then a SyntaxError is raised.
-   * 
-   * @param iWords
-   *          Optional words to match as keyword. If at least one is passed, then the check is made
+   * Parses optional keywords between the iWords. If a keyword is found but doesn't match with
+   * iWords then a SyntaxError is raised.
+   *
+   * @param iWords Optional words to match as keyword. If at least one is passed, then the check is
+   *     made
    * @return true if a keyword was found, otherwise false
    */
   protected boolean parserOptionalKeyword(final String... iWords) {
     parserNextWord(true, " \r\n,");
-    if (parserLastWord.length() == 0)
-      return false;
+    if (parserLastWord.length() == 0) return false;
 
     // FOUND: CHECK IF IT'S IN RANGE
     boolean found = iWords.length == 0;
@@ -419,20 +426,23 @@ public abstract class OBaseParser {
     }
 
     if (!found)
-      throwSyntaxErrorException("Found unexpected keyword '" + parserLastWord + "' while it was expected '"
-          + Arrays.toString(iWords) + "'");
+      throwSyntaxErrorException(
+          "Found unexpected keyword '"
+              + parserLastWord
+              + "' while it was expected '"
+              + Arrays.toString(iWords)
+              + "'");
 
     return true;
   }
 
   /**
    * Skips not valid characters like spaces and line feeds.
-   * 
+   *
    * @return True if the string is not ended, otherwise false
    */
   protected boolean parserSkipWhiteSpaces() {
-    if (parserCurrentPos == -1)
-      return false;
+    if (parserCurrentPos == -1) return false;
 
     parserCurrentPos = OStringParser.jumpWhiteSpaces(parserText, parserCurrentPos, -1);
     return parserCurrentPos > -1;
@@ -440,9 +450,8 @@ public abstract class OBaseParser {
 
   /**
    * Overwrites the current stream position.
-   * 
-   * @param iPosition
-   *          New position
+   *
+   * @param iPosition New position
    * @return True if the string is not ended, otherwise false
    */
   protected boolean parserSetCurrentPosition(final int iPosition) {
@@ -453,31 +462,26 @@ public abstract class OBaseParser {
     return parserCurrentPos > -1;
   }
 
-  /**
-   * Sets the end of text as position
-   */
+  /** Sets the end of text as position */
   protected void parserSetEndOfText() {
     parserCurrentPos = -1;
   }
 
   /**
    * Moves the current stream position forward or backward of iOffset characters
-   * 
-   * @param iOffset
-   *          Number of characters to move. Negative numbers means backwards
+   *
+   * @param iOffset Number of characters to move. Negative numbers means backwards
    * @return True if the string is not ended, otherwise false
    */
   protected boolean parserMoveCurrentPosition(final int iOffset) {
-    if (parserCurrentPos < 0)
-      return false;
+    if (parserCurrentPos < 0) return false;
     return parserSetCurrentPosition(parserCurrentPos + iOffset);
   }
 
   /**
    * Parses the next word.
    *
-   * @param iForceUpperCase
-   *          True if must return UPPERCASE, otherwise false
+   * @param iForceUpperCase True if must return UPPERCASE, otherwise false
    */
   protected String parserNextWord(final boolean iForceUpperCase) {
     return parserNextWord(iForceUpperCase, " =><(),\r\n");
@@ -485,23 +489,22 @@ public abstract class OBaseParser {
 
   /**
    * Parses the next word.
-   * 
-   * @param iForceUpperCase
-   *          True if must return UPPERCASE, otherwise false
+   *
+   * @param iForceUpperCase True if must return UPPERCASE, otherwise false
    * @param iSeparatorChars
    */
   protected String parserNextWord(final boolean iForceUpperCase, final String iSeparatorChars) {
     return parserNextWord(iForceUpperCase, iSeparatorChars, false);
   }
 
-  protected String parserNextWord(final boolean iForceUpperCase, final String iSeparatorChars, boolean preserveEscapes) {
+  protected String parserNextWord(
+      final boolean iForceUpperCase, final String iSeparatorChars, boolean preserveEscapes) {
     parserPreviousPos = parserCurrentPos;
     parserLastWord.setLength(0);
     parserEscapeSequenceCount = 0;
 
     parserSkipWhiteSpaces();
-    if (parserCurrentPos == -1)
-      return null;
+    if (parserCurrentPos == -1) return null;
 
     char stringBeginChar = ' ';
 
@@ -517,8 +520,7 @@ public abstract class OBaseParser {
           break;
         }
       }
-      if (!found)
-        break;
+      if (!found) break;
 
       parserCurrentPos++;
     }
@@ -536,7 +538,6 @@ public abstract class OBaseParser {
         if (escapePos == -1 && c == '\\' && ((parserCurrentPos + 1) < text2Use.length())) {
           // ESCAPE CHARS
 
-
           if (openGraph == 0) {
             final char nextChar = text2Use.charAt(parserCurrentPos + 1);
             if (preserveEscapes) {
@@ -546,19 +547,15 @@ public abstract class OBaseParser {
             } else {
 
               if (nextChar == 'u') {
-                parserCurrentPos = OStringParser.readUnicode(text2Use, parserCurrentPos + 2, parserLastWord);
+                parserCurrentPos =
+                    OStringParser.readUnicode(text2Use, parserCurrentPos + 2, parserLastWord);
                 parserEscapeSequenceCount += 5;
               } else {
-                if (nextChar == 'n')
-                  parserLastWord.append('\n');
-                else if (nextChar == 'r')
-                  parserLastWord.append('\r');
-                else if (nextChar == 't')
-                  parserLastWord.append('\t');
-                else if (nextChar == 'b')
-                  parserLastWord.append('\b');
-                else if (nextChar == 'f')
-                  parserLastWord.append('\f');
+                if (nextChar == 'n') parserLastWord.append('\n');
+                else if (nextChar == 'r') parserLastWord.append('\r');
+                else if (nextChar == 't') parserLastWord.append('\t');
+                else if (nextChar == 'b') parserLastWord.append('\b');
+                else if (nextChar == 'f') parserLastWord.append('\f');
                 else {
                   parserLastWord.append(nextChar);
                   parserEscapeSequenceCount++;
@@ -568,8 +565,7 @@ public abstract class OBaseParser {
               }
             }
             continue;
-          } else
-            escapePos = parserCurrentPos;
+          } else escapePos = parserCurrentPos;
         }
 
         if (escapePos == -1 && (c == '\'' || c == '"')) {
@@ -591,41 +587,43 @@ public abstract class OBaseParser {
         }
 
         if (stringBeginChar == ' ') {
-          if (openBracket == 0 && openGraph == 0 && openParenthesis == 0 && parserCheckSeparator(c, iSeparatorChars)) {
+          if (openBracket == 0
+              && openGraph == 0
+              && openParenthesis == 0
+              && parserCheckSeparator(c, iSeparatorChars)) {
             // SEPARATOR FOUND!
             break;
-          } else if (c == '(')
-            openParenthesis++;
-          else if (c == ')' && openParenthesis > 0)
-            openParenthesis--;
-          else if (c == '[')
-            openBracket++;
-          else if (c == ']' && openBracket > 0)
-            openBracket--;
-          else if (c == '{')
-            openGraph++;
-          else if (c == '}' && openGraph > 0)
-            openGraph--;
+          } else if (c == '(') openParenthesis++;
+          else if (c == ')' && openParenthesis > 0) openParenthesis--;
+          else if (c == '[') openBracket++;
+          else if (c == ']' && openBracket > 0) openBracket--;
+          else if (c == '{') openGraph++;
+          else if (c == '}' && openGraph > 0) openGraph--;
         }
 
-        if (escapePos != -1)
-          parserEscapeSequenceCount++;
+        if (escapePos != -1) parserEscapeSequenceCount++;
 
-        if (escapePos != parserCurrentPos)
-          escapePos = -1;
+        if (escapePos != parserCurrentPos) escapePos = -1;
 
         parserLastWord.append(c);
       }
 
       // CHECK MISSING CHARACTER
       if (stringBeginChar != ' ')
-        throw new IllegalStateException("Missing closed string character: '" + stringBeginChar + "', position: " + parserCurrentPos);
+        throw new IllegalStateException(
+            "Missing closed string character: '"
+                + stringBeginChar
+                + "', position: "
+                + parserCurrentPos);
       if (openBracket > 0)
-        throw new IllegalStateException("Missing closed braket character: ']', position: " + parserCurrentPos);
+        throw new IllegalStateException(
+            "Missing closed braket character: ']', position: " + parserCurrentPos);
       if (openGraph > 0)
-        throw new IllegalStateException("Missing closed graph character: '}', position: " + parserCurrentPos);
+        throw new IllegalStateException(
+            "Missing closed graph character: '}', position: " + parserCurrentPos);
       if (openParenthesis > 0)
-        throw new IllegalStateException("Missing closed parenthesis character: ')', position: " + parserCurrentPos);
+        throw new IllegalStateException(
+            "Missing closed parenthesis character: ')', position: " + parserCurrentPos);
 
     } finally {
       if (parserCurrentPos >= text2Use.length()) {
@@ -640,7 +638,7 @@ public abstract class OBaseParser {
 
   /**
    * Check for a separator
-   * 
+   *
    * @param c
    * @param iSeparatorChars
    * @return

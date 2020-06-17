@@ -16,10 +16,10 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
  */
 public class JsonWebToken implements OJsonWebToken, OToken {
 
-  public final OJwtHeader  header;
+  public final OJwtHeader header;
   public final OJwtPayload payload;
-  private boolean          isVerified;
-  private boolean          isValid;
+  private boolean isVerified;
+  private boolean isValid;
 
   public JsonWebToken() {
     this(new OrientJwtHeader(), new OrientJwtPayload());
@@ -96,18 +96,16 @@ public class JsonWebToken implements OJsonWebToken, OToken {
       result = null;
     }
     return new OUser(result);
-
   }
 
   @Override
   public void setExpiry(long expiry) {
     this.payload.setExpiry(expiry);
   }
-  
+
   @Override
   public boolean isNowValid() {
     long now = System.currentTimeMillis();
     return getExpiry() > now && payload.getNotBefore() < now;
   }
-  
 }

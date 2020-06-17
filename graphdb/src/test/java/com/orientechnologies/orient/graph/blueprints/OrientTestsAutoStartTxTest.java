@@ -5,16 +5,20 @@ import com.tinkerpop.blueprints.Vertex;
 import com.tinkerpop.blueprints.impls.orient.OrientGraph;
 import com.tinkerpop.blueprints.impls.orient.OrientGraphFactory;
 import com.tinkerpop.blueprints.impls.orient.OrientVertex;
-import org.junit.*;
+import org.junit.After;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Test;
 
 public class OrientTestsAutoStartTxTest {
-  private final static String STORAGE_ENGINE = "memory";
-  private final static String DATABASE_URL   = STORAGE_ENGINE + ":" + OrientTestsAutoStartTxTest.class.getSimpleName();
+  private static final String STORAGE_ENGINE = "memory";
+  private static final String DATABASE_URL =
+      STORAGE_ENGINE + ":" + OrientTestsAutoStartTxTest.class.getSimpleName();
 
-  private final static String PROPERTY_NAME = "pn";
+  private static final String PROPERTY_NAME = "pn";
 
   OrientGraphFactory graphFactory;
-  OrientGraph        graph;
+  OrientGraph graph;
 
   @Before
   public void setUpGraph() {
@@ -43,7 +47,9 @@ public class OrientTestsAutoStartTxTest {
     secondVertexHandle.setProperty(PROPERTY_NAME, secondValue);
     graph.commit();
 
-    Assert.assertEquals("Both queries should return " + secondValue, (Integer) firstVertexHandle.getProperty(PROPERTY_NAME),
+    Assert.assertEquals(
+        "Both queries should return " + secondValue,
+        (Integer) firstVertexHandle.getProperty(PROPERTY_NAME),
         secondVertexHandle.getProperty(PROPERTY_NAME));
   }
 
@@ -97,5 +103,4 @@ public class OrientTestsAutoStartTxTest {
     graph.getVertices("some property", "some string").iterator().hasNext();
     graph.commit();
   }
-
 }

@@ -24,12 +24,12 @@ import com.orientechnologies.orient.server.distributed.ODistributedException;
 
 /**
  * Exception thrown when a delta backup is not possible.
- * 
+ *
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
- * 
  */
 public class ODistributedDatabaseDeltaSyncException extends ODistributedException {
-  public ODistributedDatabaseDeltaSyncException(final ODistributedDatabaseDeltaSyncException exception) {
+  public ODistributedDatabaseDeltaSyncException(
+      final ODistributedDatabaseDeltaSyncException exception) {
     super(exception);
   }
 
@@ -37,8 +37,10 @@ public class ODistributedDatabaseDeltaSyncException extends ODistributedExceptio
     super("Requested database delta sync with LSN=" + requested + " but not found in database");
   }
 
-  public ODistributedDatabaseDeltaSyncException(final OLogSequenceNumber requested, final String reason) {
-    super("Requested delta sync with LSN=" + requested + " but found the following error: " + reason);
+  public ODistributedDatabaseDeltaSyncException(
+      final OLogSequenceNumber requested, final String reason) {
+    super(
+        "Requested delta sync with LSN=" + requested + " but found the following error: " + reason);
   }
 
   public ODistributedDatabaseDeltaSyncException(final String iMessage) {
@@ -47,8 +49,7 @@ public class ODistributedDatabaseDeltaSyncException extends ODistributedExceptio
 
   @Override
   public boolean equals(Object obj) {
-    if (!(obj instanceof ODistributedDatabaseDeltaSyncException))
-      return false;
+    if (!(obj instanceof ODistributedDatabaseDeltaSyncException)) return false;
 
     return getMessage().equals(((ODistributedDatabaseDeltaSyncException) obj).getMessage());
   }

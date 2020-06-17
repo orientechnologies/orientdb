@@ -1,5 +1,8 @@
 package com.orientechnologies.orient.core.metadata;
 
+import static org.junit.Assert.assertEquals;
+
+
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OImmutableSchema;
@@ -12,19 +15,16 @@ import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.cache.OWriteCache;
 import com.orientechnologies.orient.core.storage.cluster.OPaginatedCluster;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
+import java.util.List;
+import java.util.Locale;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
-import java.util.List;
-import java.util.Locale;
-
-import static org.junit.Assert.assertEquals;
-
 public class ClassTest {
-  public static final String              SHORTNAME_CLASS_NAME = "TestShortName";
-  private static      ODatabaseDocumentTx db                   = null;
+  public static final String SHORTNAME_CLASS_NAME = "TestShortName";
+  private static ODatabaseDocumentTx db = null;
 
   @Before
   public void setUp() throws Exception {
@@ -38,8 +38,7 @@ public class ClassTest {
 
   @After
   public void tearDown() throws Exception {
-    if (db.isClosed())
-      db.open("admin", "admin");
+    if (db.isClosed()) db.open("admin", "admin");
 
     db.drop();
   }
@@ -56,7 +55,9 @@ public class ClassTest {
     if (storage instanceof OAbstractPaginatedStorage) {
       final OAbstractPaginatedStorage paginatedStorage = (OAbstractPaginatedStorage) storage;
       final OWriteCache writeCache = paginatedStorage.getWriteCache();
-      Assert.assertTrue(writeCache.exists(SHORTNAME_CLASS_NAME.toLowerCase(Locale.ENGLISH) + OPaginatedCluster.DEF_EXTENSION));
+      Assert.assertTrue(
+          writeCache.exists(
+              SHORTNAME_CLASS_NAME.toLowerCase(Locale.ENGLISH) + OPaginatedCluster.DEF_EXTENSION));
     }
 
     String shortName = "shortname";
@@ -77,7 +78,6 @@ public class ClassTest {
     oClass.setShortName("");
     Assert.assertNull(oClass.getShortName());
     Assert.assertNull(queryShortName());
-
   }
 
   @Test
@@ -97,7 +97,6 @@ public class ClassTest {
     shorted = immSchema.getClass(shortName);
     Assert.assertNotNull(shorted);
     assertEquals(shortName, shorted.getShortName());
-
   }
 
   @Test
@@ -183,7 +182,9 @@ public class ClassTest {
 
   private String queryShortName() {
     String selectShortNameSQL =
-        "select shortName from ( select flatten(classes) from cluster:internal )" + " where name = \"" + SHORTNAME_CLASS_NAME
+        "select shortName from ( select flatten(classes) from cluster:internal )"
+            + " where name = \""
+            + SHORTNAME_CLASS_NAME
             + "\"";
     List<ODocument> result = db.command(new OCommandSQL(selectShortNameSQL)).execute();
     assertEquals(1, result.size());

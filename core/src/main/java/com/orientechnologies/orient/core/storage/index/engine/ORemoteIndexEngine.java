@@ -29,7 +29,6 @@ import com.orientechnologies.orient.core.index.engine.OIndexEngine;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperation;
-
 import java.util.Map;
 import java.util.stream.Stream;
 
@@ -39,7 +38,7 @@ import java.util.stream.Stream;
  */
 public class ORemoteIndexEngine implements OIndexEngine {
   private final String name;
-  private final int    id;
+  private final int id;
 
   public ORemoteIndexEngine(int id, String name) {
     this.id = id;
@@ -62,26 +61,42 @@ public class ORemoteIndexEngine implements OIndexEngine {
   }
 
   @Override
-  public void init(String indexName, String indexType, OIndexDefinition indexDefinition, boolean isAutomatic, ODocument metadata) {
-  }
+  public void init(
+      String indexName,
+      String indexType,
+      OIndexDefinition indexDefinition,
+      boolean isAutomatic,
+      ODocument metadata) {}
 
   @Override
-  public void flush() {
-  }
+  public void flush() {}
 
   @Override
-  public void create(OAtomicOperation atomicOperation, OBinarySerializer valueSerializer, boolean isAutomatic, OType[] keyTypes, boolean nullPointerSupport,
-      OBinarySerializer keySerializer, int keySize, Map<String, String> engineProperties, OEncryption encryption) {
-  }
+  public void create(
+      OAtomicOperation atomicOperation,
+      OBinarySerializer valueSerializer,
+      boolean isAutomatic,
+      OType[] keyTypes,
+      boolean nullPointerSupport,
+      OBinarySerializer keySerializer,
+      int keySize,
+      Map<String, String> engineProperties,
+      OEncryption encryption) {}
 
   @Override
-  public void delete(OAtomicOperation atomicOperation) {
-  }
+  public void delete(OAtomicOperation atomicOperation) {}
 
   @Override
-  public void load(String indexName, OBinarySerializer valueSerializer, boolean isAutomatic, OBinarySerializer keySerializer,
-      OType[] keyTypes, boolean nullPointerSupport, int keySize, Map<String, String> engineProperties, OEncryption encryption) {
-  }
+  public void load(
+      String indexName,
+      OBinarySerializer valueSerializer,
+      boolean isAutomatic,
+      OBinarySerializer keySerializer,
+      OType[] keyTypes,
+      boolean nullPointerSupport,
+      int keySize,
+      Map<String, String> engineProperties,
+      OEncryption encryption) {}
 
   @Override
   public boolean remove(OAtomicOperation atomicOperation, Object key) {
@@ -89,12 +104,10 @@ public class ORemoteIndexEngine implements OIndexEngine {
   }
 
   @Override
-  public void clear(OAtomicOperation atomicOperation) {
-  }
+  public void clear(OAtomicOperation atomicOperation) {}
 
   @Override
-  public void close() {
-  }
+  public void close() {}
 
   @Override
   public Object get(Object key) {
@@ -102,34 +115,38 @@ public class ORemoteIndexEngine implements OIndexEngine {
   }
 
   @Override
-  public void put(OAtomicOperation atomicOperation, Object key, Object value) {
-  }
+  public void put(OAtomicOperation atomicOperation, Object key, Object value) {}
 
   @Override
-  public void update(OAtomicOperation atomicOperation, Object key, OIndexKeyUpdater<Object> updater) {
-
-  }
+  public void update(
+      OAtomicOperation atomicOperation, Object key, OIndexKeyUpdater<Object> updater) {}
 
   @Override
-  public boolean validatedPut(OAtomicOperation atomicOperation, Object key, ORID value, Validator<Object, ORID> validator) {
+  public boolean validatedPut(
+      OAtomicOperation atomicOperation, Object key, ORID value, Validator<Object, ORID> validator) {
     return false;
   }
 
   @Override
-  public Stream<ORawPair<Object, ORID>> iterateEntriesBetween(Object rangeFrom, boolean fromInclusive, Object rangeTo,
-      boolean toInclusive, boolean ascSortOrder, ValuesTransformer transformer) {
-    throw new UnsupportedOperationException("stream");
-  }
-
-  @Override
-  public Stream<ORawPair<Object, ORID>> iterateEntriesMajor(Object fromKey, boolean isInclusive, boolean ascSortOrder,
+  public Stream<ORawPair<Object, ORID>> iterateEntriesBetween(
+      Object rangeFrom,
+      boolean fromInclusive,
+      Object rangeTo,
+      boolean toInclusive,
+      boolean ascSortOrder,
       ValuesTransformer transformer) {
     throw new UnsupportedOperationException("stream");
   }
 
   @Override
-  public Stream<ORawPair<Object, ORID>> iterateEntriesMinor(Object toKey, boolean isInclusive, boolean ascSortOrder,
-      ValuesTransformer transformer) {
+  public Stream<ORawPair<Object, ORID>> iterateEntriesMajor(
+      Object fromKey, boolean isInclusive, boolean ascSortOrder, ValuesTransformer transformer) {
+    throw new UnsupportedOperationException("stream");
+  }
+
+  @Override
+  public Stream<ORawPair<Object, ORID>> iterateEntriesMinor(
+      Object toKey, boolean isInclusive, boolean ascSortOrder, ValuesTransformer transformer) {
     throw new UnsupportedOperationException("stream");
   }
 
@@ -160,6 +177,7 @@ public class ORemoteIndexEngine implements OIndexEngine {
 
   @Override
   public boolean acquireAtomicExclusiveLock(Object key) {
-    throw new UnsupportedOperationException("atomic locking is not supported by remote index engine");
+    throw new UnsupportedOperationException(
+        "atomic locking is not supported by remote index engine");
   }
 }

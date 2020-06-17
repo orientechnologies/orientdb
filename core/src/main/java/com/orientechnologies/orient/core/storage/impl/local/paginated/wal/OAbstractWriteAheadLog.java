@@ -21,7 +21,6 @@
 package com.orientechnologies.orient.core.storage.impl.local.paginated.wal;
 
 import com.orientechnologies.orient.core.exception.OStorageException;
-
 import java.io.IOException;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
@@ -31,17 +30,19 @@ import java.util.concurrent.locks.ReentrantLock;
  * @since 6/25/14
  */
 public abstract class OAbstractWriteAheadLog implements OWriteAheadLog {
-  private       boolean            closed;
-  private final Lock               syncObject = new ReentrantLock();
-  private       OLogSequenceNumber lastCheckpoint;
+  private boolean closed;
+  private final Lock syncObject = new ReentrantLock();
+  private OLogSequenceNumber lastCheckpoint;
 
   @Override
-  public OLogSequenceNumber logFuzzyCheckPointStart(OLogSequenceNumber flushedLsn) throws IOException {
+  public OLogSequenceNumber logFuzzyCheckPointStart(OLogSequenceNumber flushedLsn)
+      throws IOException {
     syncObject.lock();
     try {
       checkForClose();
 
-      OFuzzyCheckpointStartRecord record = new OFuzzyCheckpointStartRecord(lastCheckpoint, flushedLsn);
+      OFuzzyCheckpointStartRecord record =
+          new OFuzzyCheckpointStartRecord(lastCheckpoint, flushedLsn);
       log(record);
       return record.getLsn();
     } finally {
@@ -93,7 +94,6 @@ public abstract class OAbstractWriteAheadLog implements OWriteAheadLog {
   }
 
   protected void checkForClose() {
-    if (closed)
-      throw new OStorageException("WAL has been closed");
+    if (closed) throw new OStorageException("WAL has been closed");
   }
 }

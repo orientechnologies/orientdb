@@ -23,7 +23,6 @@ import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.sql.functions.OSQLFunctionAbstract;
-
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -31,15 +30,15 @@ import java.util.List;
 
 /**
  * Computes the percentile for a field. Nulls are ignored in the calculation.
- * 
+ *
  * @author Fabrizio Fortino
  */
 public class OSQLFunctionPercentile extends OSQLFunctionAbstract {
 
-  public static final String NAME      = "percentile";
+  public static final String NAME = "percentile";
 
-  protected List<Double>     quantiles = new ArrayList<Double>();
-  private List<Number>       values    = new ArrayList<Number>();
+  protected List<Double> quantiles = new ArrayList<Double>();
+  private List<Number> values = new ArrayList<Number>();
 
   public OSQLFunctionPercentile() {
     this(NAME, 2, -1);
@@ -50,7 +49,11 @@ public class OSQLFunctionPercentile extends OSQLFunctionAbstract {
   }
 
   @Override
-  public Object execute(Object iThis, OIdentifiable iCurrentRecord, Object iCurrentResult, Object[] iParams,
+  public Object execute(
+      Object iThis,
+      OIdentifiable iCurrentRecord,
+      Object iCurrentResult,
+      Object[] iParams,
       OCommandContext iContext) {
 
     if (quantiles.isEmpty()) { // set quantiles once
@@ -94,8 +97,7 @@ public class OSQLFunctionPercentile extends OSQLFunctionAbstract {
       return this.evaluate(dValues);
     }
 
-    if (!resultsToMerge.isEmpty())
-      return resultsToMerge.get(0);
+    if (!resultsToMerge.isEmpty()) return resultsToMerge.get(0);
 
     return null;
   }
@@ -127,14 +129,16 @@ public class OSQLFunctionPercentile extends OSQLFunctionAbstract {
   }
 
   private Number evaluate(List<Number> iValues, double iQuantile) {
-    Collections.sort(iValues, new Comparator<Number>() {
-      @Override
-      public int compare(Number o1, Number o2) {
-        Double d1 = o1.doubleValue();
-        Double d2 = o2.doubleValue();
-        return d1.compareTo(d2);
-      }
-    });
+    Collections.sort(
+        iValues,
+        new Comparator<Number>() {
+          @Override
+          public int compare(Number o1, Number o2) {
+            Double d1 = o1.doubleValue();
+            Double d2 = o2.doubleValue();
+            return d1.compareTo(d2);
+          }
+        });
 
     double n = iValues.size();
     double pos = iQuantile * (n + 1);
@@ -154,5 +158,4 @@ public class OSQLFunctionPercentile extends OSQLFunctionAbstract {
     double upper = iValues.get(intPos).doubleValue();
     return lower + dif * (upper - lower);
   }
-
 }

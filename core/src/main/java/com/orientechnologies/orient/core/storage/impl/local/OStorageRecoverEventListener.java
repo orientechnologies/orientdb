@@ -5,7 +5,7 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 
 /**
  * Event Listener interface invoked during storage recovering.
- * 
+ *
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
  */
 public interface OStorageRecoverEventListener {

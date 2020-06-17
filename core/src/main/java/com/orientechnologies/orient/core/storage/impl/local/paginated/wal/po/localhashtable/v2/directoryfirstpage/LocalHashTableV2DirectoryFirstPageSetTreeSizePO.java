@@ -5,15 +5,13 @@ import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.WALRecordTypes;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.PageOperationRecord;
 import com.orientechnologies.orient.core.storage.index.hashindex.local.v2.DirectoryFirstPageV2;
-
 import java.nio.ByteBuffer;
 
 public final class LocalHashTableV2DirectoryFirstPageSetTreeSizePO extends PageOperationRecord {
   private int size;
   private int pastSize;
 
-  public LocalHashTableV2DirectoryFirstPageSetTreeSizePO() {
-  }
+  public LocalHashTableV2DirectoryFirstPageSetTreeSizePO() {}
 
   public LocalHashTableV2DirectoryFirstPageSetTreeSizePO(int size, int pastSize) {
     this.size = size;

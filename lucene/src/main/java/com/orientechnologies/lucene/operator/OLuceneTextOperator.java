@@ -37,12 +37,16 @@ import com.orientechnologies.orient.core.sql.filter.OSQLFilterItemField;
 import com.orientechnologies.orient.core.sql.operator.OIndexReuseType;
 import com.orientechnologies.orient.core.sql.operator.OQueryTargetOperator;
 import com.orientechnologies.orient.core.sql.parser.ParseException;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+import java.util.Set;
+import java.util.stream.Stream;
 import org.apache.lucene.index.IndexableField;
 import org.apache.lucene.index.memory.MemoryIndex;
-
-import java.io.IOException;
-import java.util.*;
-import java.util.stream.Stream;
 
 public class OLuceneTextOperator extends OQueryTargetOperator {
 
@@ -66,16 +70,20 @@ public class OLuceneTextOperator extends OQueryTargetOperator {
   }
 
   @Override
-  public OIndexSearchResult getOIndexSearchResult(OClass iSchemaClass, OSQLFilterCondition iCondition,
-      List<OIndexSearchResult> iIndexSearchResults, OCommandContext context) {
+  public OIndexSearchResult getOIndexSearchResult(
+      OClass iSchemaClass,
+      OSQLFilterCondition iCondition,
+      List<OIndexSearchResult> iIndexSearchResults,
+      OCommandContext context) {
 
-    //FIXME questo non trova l'indice se l'ordine e' errato
-    return OLuceneOperatorUtil.buildOIndexSearchResult(iSchemaClass, iCondition, iIndexSearchResults, context);
+    // FIXME questo non trova l'indice se l'ordine e' errato
+    return OLuceneOperatorUtil.buildOIndexSearchResult(
+        iSchemaClass, iCondition, iIndexSearchResults, context);
   }
 
   @Override
-  public Stream<ORawPair<Object, ORID>> executeIndexQuery(OCommandContext iContext, OIndex index, List<Object> keyParams,
-      boolean ascSortOrder) {
+  public Stream<ORawPair<Object, ORID>> executeIndexQuery(
+      OCommandContext iContext, OIndex index, List<Object> keyParams, boolean ascSortOrder) {
     if (!index.getType().toLowerCase().contains("fulltext")) {
       return null;
     }
@@ -84,8 +92,11 @@ public class OLuceneTextOperator extends OQueryTargetOperator {
     }
 
     //noinspection resource
-    return index.getInternal()
-        .getRids(new OLuceneKeyAndMetadata(new OLuceneCompositeKey(keyParams).setContext(iContext), new ODocument()))
+    return index
+        .getInternal()
+        .getRids(
+            new OLuceneKeyAndMetadata(
+                new OLuceneCompositeKey(keyParams).setContext(iContext), new ODocument()))
         .map((rid) -> new ORawPair<>(new OLuceneCompositeKey(keyParams), rid));
   }
 
@@ -105,12 +116,19 @@ public class OLuceneTextOperator extends OQueryTargetOperator {
   }
 
   @Override
-  public Object evaluateRecord(OIdentifiable iRecord, ODocument iCurrentResult, OSQLFilterCondition iCondition, Object iLeft,
-      Object iRight, OCommandContext iContext, final ODocumentSerializer serializer) {
+  public Object evaluateRecord(
+      OIdentifiable iRecord,
+      ODocument iCurrentResult,
+      OSQLFilterCondition iCondition,
+      Object iLeft,
+      Object iRight,
+      OCommandContext iContext,
+      final ODocumentSerializer serializer) {
 
     OLuceneFullTextIndex index = involvedIndex(iRecord, iCurrentResult, iCondition, iLeft, iRight);
     if (index == null) {
-      throw new OCommandExecutionException("Cannot evaluate lucene condition without index configuration.");
+      throw new OCommandExecutionException(
+          "Cannot evaluate lucene condition without index configuration.");
     }
 
     MemoryIndex memoryIndex = (MemoryIndex) iContext.getVariable(MEMORY_INDEX);
@@ -134,12 +152,12 @@ public class OLuceneTextOperator extends OQueryTargetOperator {
 
     } catch (IOException e) {
       OLogManager.instance().error(this, "error occurred while building memory index", e);
-
     }
     return null;
   }
 
-  private boolean matchField(Object iLeft, Object iRight, OLuceneFullTextIndex index, MemoryIndex memoryIndex)
+  private boolean matchField(
+      Object iLeft, Object iRight, OLuceneFullTextIndex index, MemoryIndex memoryIndex)
       throws IOException, ParseException {
     for (IndexableField field : index.buildDocument(iLeft).getFields()) {
       memoryIndex.addField(field, index.indexAnalyzer());
@@ -147,7 +165,8 @@ public class OLuceneTextOperator extends OQueryTargetOperator {
     return memoryIndex.search(index.buildQuery(iRight)) > 0.0f;
   }
 
-  private boolean matchCollectionIndex(List iLeft, Object iRight, OLuceneFullTextIndex index, MemoryIndex memoryIndex)
+  private boolean matchCollectionIndex(
+      List iLeft, Object iRight, OLuceneFullTextIndex index, MemoryIndex memoryIndex)
       throws IOException, ParseException {
     boolean match = false;
     List<Object> collections = transformInput(iLeft, iRight, index, memoryIndex);
@@ -161,7 +180,8 @@ public class OLuceneTextOperator extends OQueryTargetOperator {
     return match;
   }
 
-  private List<Object> transformInput(List iLeft, Object iRight, OLuceneFullTextIndex index, MemoryIndex memoryIndex) {
+  private List<Object> transformInput(
+      List iLeft, Object iRight, OLuceneFullTextIndex index, MemoryIndex memoryIndex) {
 
     Integer collectionIndex = getCollectionIndex(iLeft);
     if (collectionIndex == -1) {
@@ -204,8 +224,12 @@ public class OLuceneTextOperator extends OQueryTargetOperator {
     return -1;
   }
 
-  protected OLuceneFullTextIndex involvedIndex(OIdentifiable iRecord, ODocument iCurrentResult, OSQLFilterCondition iCondition,
-      Object iLeft, Object iRight) {
+  protected OLuceneFullTextIndex involvedIndex(
+      OIdentifiable iRecord,
+      ODocument iCurrentResult,
+      OSQLFilterCondition iCondition,
+      Object iLeft,
+      Object iRight) {
 
     ODocument doc = iRecord.getRecord();
     OClass cls = getDatabase().getMetadata().getSchema().getClass(doc.getClassName());
@@ -243,7 +267,7 @@ public class OLuceneTextOperator extends OQueryTargetOperator {
     return false;
   }
 
-  //returns a list of field names
+  // returns a list of field names
   protected Collection<String> fields(OSQLFilterCondition iCondition) {
 
     Object left = iCondition.getLeft();

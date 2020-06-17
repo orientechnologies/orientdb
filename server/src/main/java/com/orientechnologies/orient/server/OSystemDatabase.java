@@ -22,23 +22,28 @@ package com.orientechnologies.orient.server;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.util.OCallable;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
-import com.orientechnologies.orient.core.db.*;
+import com.orientechnologies.orient.core.db.ODatabase;
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
+import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
+import com.orientechnologies.orient.core.db.ODatabaseSession;
+import com.orientechnologies.orient.core.db.ODatabaseType;
+import com.orientechnologies.orient.core.db.OrientDBConfig;
+import com.orientechnologies.orient.core.db.OrientDBInternal;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.record.OElement;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
-
 import java.util.UUID;
 
 public class OSystemDatabase {
   public static final String SYSTEM_DB_NAME = "OSystem";
 
-  public static final String SERVER_INFO_CLASS  = "ServerInfo";
+  public static final String SERVER_INFO_CLASS = "ServerInfo";
   public static final String SERVER_ID_PROPERTY = "serverId";
 
   private final OrientDBInternal context;
-  private       String           serverId;
+  private String serverId;
 
   public OSystemDatabase(final OrientDBInternal context) {
     this.context = context;
@@ -49,11 +54,10 @@ public class OSystemDatabase {
     return OSystemDatabase.SYSTEM_DB_NAME;
   }
 
-  /**
-   * Adds the specified cluster to the class, if it doesn't already exist.
-   */
+  /** Adds the specified cluster to the class, if it doesn't already exist. */
   public void createCluster(final String className, final String clusterName) {
-    final ODatabaseDocumentInternal currentDB = ODatabaseRecordThreadLocal.instance().getIfDefined();
+    final ODatabaseDocumentInternal currentDB =
+        ODatabaseRecordThreadLocal.instance().getIfDefined();
     try {
       final ODatabaseDocumentInternal sysdb = openSystemDatabase();
       try {
@@ -65,7 +69,8 @@ public class OSystemDatabase {
           if (cls != null) {
             cls.addCluster(clusterName);
           } else {
-            OLogManager.instance().error(this, "createCluster() Class name %s does not exist", null, className);
+            OLogManager.instance()
+                .error(this, "createCluster() Class name %s does not exist", null, className);
           }
         }
 
@@ -74,43 +79,40 @@ public class OSystemDatabase {
       }
 
     } finally {
-      if (currentDB != null)
-        ODatabaseRecordThreadLocal.instance().set(currentDB);
-      else
-        ODatabaseRecordThreadLocal.instance().remove();
+      if (currentDB != null) ODatabaseRecordThreadLocal.instance().set(currentDB);
+      else ODatabaseRecordThreadLocal.instance().remove();
     }
   }
 
   /**
-   * Opens the System Database and returns an ODatabaseDocumentInternal object. The caller is responsible for retrieving any
-   * ThreadLocal-stored database before openSystemDatabase() is called and restoring it after the database is closed.
+   * Opens the System Database and returns an ODatabaseDocumentInternal object. The caller is
+   * responsible for retrieving any ThreadLocal-stored database before openSystemDatabase() is
+   * called and restoring it after the database is closed.
    */
   public ODatabaseDocumentInternal openSystemDatabase() {
     return context.openNoAuthorization(getSystemDatabaseName());
   }
 
-  public Object execute(final OCallable<Object, OResultSet> callback, final String sql, final Object... args) {
-    final ODatabaseDocumentInternal currentDB = ODatabaseRecordThreadLocal.instance().getIfDefined();
+  public Object execute(
+      final OCallable<Object, OResultSet> callback, final String sql, final Object... args) {
+    final ODatabaseDocumentInternal currentDB =
+        ODatabaseRecordThreadLocal.instance().getIfDefined();
     try {
       // BYPASS SECURITY
       final ODatabase<?> db = openSystemDatabase();
       try {
         final OResultSet result = db.command(sql, args);
 
-        if (callback != null)
-          return callback.call(result);
-        else
-          return result;
+        if (callback != null) return callback.call(result);
+        else return result;
 
       } finally {
         db.close();
       }
 
     } finally {
-      if (currentDB != null)
-        ODatabaseRecordThreadLocal.instance().set(currentDB);
-      else
-        ODatabaseRecordThreadLocal.instance().remove();
+      if (currentDB != null) ODatabaseRecordThreadLocal.instance().set(currentDB);
+      else ODatabaseRecordThreadLocal.instance().remove();
     }
   }
 
@@ -119,24 +121,21 @@ public class OSystemDatabase {
   }
 
   public ODocument save(final ODocument document, final String clusterName) {
-    final ODatabaseDocumentInternal currentDB = ODatabaseRecordThreadLocal.instance().getIfDefined();
+    final ODatabaseDocumentInternal currentDB =
+        ODatabaseRecordThreadLocal.instance().getIfDefined();
     try {
       // BYPASS SECURITY
       final ODatabaseDocumentInternal db = openSystemDatabase();
       try {
-        if (clusterName != null)
-          return (ODocument) db.save(document, clusterName);
-        else
-          return (ODocument) db.save(document);
+        if (clusterName != null) return (ODocument) db.save(document, clusterName);
+        else return (ODocument) db.save(document);
       } finally {
         db.close();
       }
 
     } finally {
-      if (currentDB != null)
-        ODatabaseRecordThreadLocal.instance().set(currentDB);
-      else
-        ODatabaseRecordThreadLocal.instance().remove();
+      if (currentDB != null) ODatabaseRecordThreadLocal.instance().set(currentDB);
+      else ODatabaseRecordThreadLocal.instance().remove();
     }
   }
 
@@ -145,10 +144,14 @@ public class OSystemDatabase {
     final ODatabaseDocumentInternal oldDbInThread = tl != null ? tl.getIfDefined() : null;
     try {
       if (!exists()) {
-        OLogManager.instance().info(this, "Creating the system database '%s' for current server", SYSTEM_DB_NAME);
+        OLogManager.instance()
+            .info(this, "Creating the system database '%s' for current server", SYSTEM_DB_NAME);
 
-        OrientDBConfig config = OrientDBConfig.builder().addConfig(OGlobalConfiguration.CREATE_DEFAULT_USERS, false)
-            .addConfig(OGlobalConfiguration.CLASS_MINIMUM_CLUSTERS, 1).build();
+        OrientDBConfig config =
+            OrientDBConfig.builder()
+                .addConfig(OGlobalConfiguration.CREATE_DEFAULT_USERS, false)
+                .addConfig(OGlobalConfiguration.CLASS_MINIMUM_CLUSTERS, 1)
+                .build();
         context.create(SYSTEM_DB_NAME, null, null, ODatabaseType.PLOCAL, config);
       }
       checkServerId();
@@ -191,18 +194,16 @@ public class OSystemDatabase {
   }
 
   public <T> T executeWithDB(OCallable<T, ODatabaseSession> callback) {
-    final ODatabaseDocumentInternal currentDB = ODatabaseRecordThreadLocal.instance().getIfDefined();
+    final ODatabaseDocumentInternal currentDB =
+        ODatabaseRecordThreadLocal.instance().getIfDefined();
     try {
       try (final ODatabaseSession db = openSystemDatabase()) {
         return callback.call(db);
       }
     } finally {
-      if (currentDB != null)
-        ODatabaseRecordThreadLocal.instance().set(currentDB);
-      else
-        ODatabaseRecordThreadLocal.instance().remove();
+      if (currentDB != null) ODatabaseRecordThreadLocal.instance().set(currentDB);
+      else ODatabaseRecordThreadLocal.instance().remove();
     }
-
   }
 
   public boolean exists() {

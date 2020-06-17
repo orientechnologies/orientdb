@@ -19,7 +19,6 @@
  */
 package com.orientechnologies.orient.core.iterator;
 
-import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.exception.OSystemException;
 
 public class OIterationException extends OSystemException {

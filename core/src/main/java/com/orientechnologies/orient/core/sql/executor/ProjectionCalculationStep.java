@@ -3,19 +3,17 @@ package com.orientechnologies.orient.core.sql.executor;
 import com.orientechnologies.common.concur.OTimeoutException;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.sql.parser.OProjection;
-
 import java.util.Map;
 import java.util.Optional;
 
-/**
- * Created by luigidellaquila on 12/07/16.
- */
+/** Created by luigidellaquila on 12/07/16. */
 public class ProjectionCalculationStep extends AbstractExecutionStep {
   protected final OProjection projection;
 
   protected long cost = 0;
 
-  public ProjectionCalculationStep(OProjection projection, OCommandContext ctx, boolean profilingEnabled) {
+  public ProjectionCalculationStep(
+      OProjection projection, OCommandContext ctx, boolean profilingEnabled) {
     super(ctx, profilingEnabled);
     this.projection = projection;
   }

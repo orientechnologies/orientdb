@@ -1,29 +1,30 @@
 package com.orientechnologies.orient.core.db;
 
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
-import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
-import org.junit.*;
-import org.junit.rules.TestName;
-
-import java.util.List;
-import java.util.concurrent.CompletableFuture;
-import java.util.stream.Collectors;
-import java.util.stream.IntStream;
-
 import static com.orientechnologies.orient.core.config.OGlobalConfiguration.STORAGE_ENCRYPTION_KEY;
 import static com.orientechnologies.orient.core.config.OGlobalConfiguration.STORAGE_ENCRYPTION_METHOD;
 import static org.assertj.core.api.Assertions.assertThat;
 
-/**
- * Created by frank on 29/06/2016.
- */
+
+import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
+import java.util.List;
+import java.util.concurrent.CompletableFuture;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
+import org.junit.After;
+import org.junit.Assume;
+import org.junit.Before;
+import org.junit.Rule;
+import org.junit.Test;
+import org.junit.rules.TestName;
+
+/** Created by frank on 29/06/2016. */
 public class OPartitionedDatabasePoolTest {
 
-  @Rule
-  public TestName name = new TestName();
+  @Rule public TestName name = new TestName();
 
-  private ODatabaseDocumentTx      db;
+  private ODatabaseDocumentTx db;
   private OPartitionedDatabasePool pool;
 
   @Before
@@ -37,7 +38,6 @@ public class OPartitionedDatabasePoolTest {
 
     db.activateOnCurrentThread();
     db.drop();
-
   }
 
   @Test
@@ -52,7 +52,6 @@ public class OPartitionedDatabasePoolTest {
     assertThat(db.isClosed()).isTrue();
 
     pool.close();
-
   }
 
   @Test(expected = IllegalStateException.class)
@@ -61,7 +60,6 @@ public class OPartitionedDatabasePoolTest {
     pool.close();
 
     pool.acquire();
-
   }
 
   @Test
@@ -74,7 +72,7 @@ public class OPartitionedDatabasePoolTest {
 
     db1.close();
 
-    //same instances!!!
+    // same instances!!!
     assertThat(db1.isClosed()).isFalse();
     assertThat(db2.isClosed()).isFalse();
 
@@ -82,35 +80,36 @@ public class OPartitionedDatabasePoolTest {
     assertThat(db2.isClosed()).isTrue();
 
     pool.close();
-
   }
 
   @Test
   public void testMultiThread() {
 
     Assume.assumeTrue(Runtime.getRuntime().availableProcessors() > 2);
-    //do a query and assert on other thread
-    Runnable acquirer = () -> {
+    // do a query and assert on other thread
+    Runnable acquirer =
+        () -> {
+          ODatabaseDocumentTx db = pool.acquire();
 
-      ODatabaseDocumentTx db = pool.acquire();
+          try {
+            assertThat(db.isActiveOnCurrentThread()).isTrue();
 
-      try {
-        assertThat(db.isActiveOnCurrentThread()).isTrue();
+            List<ODocument> res = db.query(new OSQLSynchQuery<>("SELECT * FROM OUser"));
 
-        List<ODocument> res = db.query(new OSQLSynchQuery<>("SELECT * FROM OUser"));
+            assertThat(res).hasSize(3);
 
-        assertThat(res).hasSize(3);
+          } finally {
 
-      } finally {
+            db.close();
+          }
+        };
 
-        db.close();
-      }
-
-    };
-
-    //spawn 20 threads
-    List<CompletableFuture<Void>> futures = IntStream.range(0, 19).boxed().map(i -> CompletableFuture.runAsync(acquirer))
-        .collect(Collectors.toList());
+    // spawn 20 threads
+    List<CompletableFuture<Void>> futures =
+        IntStream.range(0, 19)
+            .boxed()
+            .map(i -> CompletableFuture.runAsync(acquirer))
+            .collect(Collectors.toList());
 
     futures.forEach(cf -> cf.join());
   }
@@ -124,8 +123,7 @@ public class OPartitionedDatabasePoolTest {
     ODatabaseDocumentTx dbFromPool = pool.acquire();
 
     assertThat(dbFromPool.getProperty(STORAGE_ENCRYPTION_METHOD.getKey())).isEqualTo("aes");
-    assertThat(dbFromPool.getProperty(STORAGE_ENCRYPTION_KEY.getKey())).isEqualTo("T1JJRU5UREJfSVNfQ09PTA==");
-
+    assertThat(dbFromPool.getProperty(STORAGE_ENCRYPTION_KEY.getKey()))
+        .isEqualTo("T1JJRU5UREJfSVNfQ09PTA==");
   }
-
 }

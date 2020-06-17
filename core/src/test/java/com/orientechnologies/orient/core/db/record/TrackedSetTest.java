@@ -3,14 +3,17 @@ package com.orientechnologies.orient.core.db.record;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.OMemoryStream;
-import org.junit.Assert;
-import org.junit.Test;
-
-import java.io.*;
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.io.NotSerializableException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import org.junit.Assert;
+import org.junit.Test;
 
 public class TrackedSetTest {
   @Test
@@ -21,8 +24,9 @@ public class TrackedSetTest {
 
     final OTrackedSet<String> trackedSet = new OTrackedSet<String>(doc);
     trackedSet.enableTracking(doc);
-    OMultiValueChangeEvent<Object, Object> event = new OMultiValueChangeEvent<Object, Object>(
-        OMultiValueChangeEvent.OChangeType.ADD, "value1", "value1", null);
+    OMultiValueChangeEvent<Object, Object> event =
+        new OMultiValueChangeEvent<Object, Object>(
+            OMultiValueChangeEvent.OChangeType.ADD, "value1", "value1", null);
     trackedSet.add("value1");
     Assert.assertEquals(event, trackedSet.getTimeLine().getMultiValueChangeEvents().get(0));
     Assert.assertTrue(trackedSet.isModified());
@@ -92,8 +96,9 @@ public class TrackedSetTest {
 
     trackedSet.enableTracking(doc);
     trackedSet.remove("value2");
-    OMultiValueChangeEvent<Object, Object> event = new OMultiValueChangeEvent<Object, Object>(
-        OMultiValueChangeEvent.OChangeType.REMOVE, "value2", null, "value2");
+    OMultiValueChangeEvent<Object, Object> event =
+        new OMultiValueChangeEvent<Object, Object>(
+            OMultiValueChangeEvent.OChangeType.REMOVE, "value2", null, "value2");
     Assert.assertEquals(trackedSet.getTimeLine().getMultiValueChangeEvents().get(0), event);
     Assert.assertTrue(trackedSet.isModified());
     Assert.assertTrue(doc.isDirty());
@@ -153,12 +158,15 @@ public class TrackedSetTest {
     Assert.assertFalse(doc.isDirty());
 
     final List<OMultiValueChangeEvent<String, String>> firedEvents = new ArrayList<>();
-    firedEvents
-        .add(new OMultiValueChangeEvent<String, String>(OMultiValueChangeEvent.OChangeType.REMOVE, "value1", null, "value1"));
-    firedEvents
-        .add(new OMultiValueChangeEvent<String, String>(OMultiValueChangeEvent.OChangeType.REMOVE, "value2", null, "value2"));
-    firedEvents
-        .add(new OMultiValueChangeEvent<String, String>(OMultiValueChangeEvent.OChangeType.REMOVE, "value3", null, "value3"));
+    firedEvents.add(
+        new OMultiValueChangeEvent<String, String>(
+            OMultiValueChangeEvent.OChangeType.REMOVE, "value1", null, "value1"));
+    firedEvents.add(
+        new OMultiValueChangeEvent<String, String>(
+            OMultiValueChangeEvent.OChangeType.REMOVE, "value2", null, "value2"));
+    firedEvents.add(
+        new OMultiValueChangeEvent<String, String>(
+            OMultiValueChangeEvent.OChangeType.REMOVE, "value3", null, "value3"));
 
     trackedSet.enableTracking(doc);
     trackedSet.clear();
@@ -209,13 +217,13 @@ public class TrackedSetTest {
     trackedSet.add("value9");
     trackedSet.add("value10");
 
-    Assert.assertEquals(original, trackedSet.returnOriginalState((List) trackedSet.getTimeLine().getMultiValueChangeEvents()));
+    Assert.assertEquals(
+        original,
+        trackedSet.returnOriginalState(
+            (List) trackedSet.getTimeLine().getMultiValueChangeEvents()));
   }
 
-  /**
-   * Test that {@link OTrackedSet} is serialised correctly.
-   */
-
+  /** Test that {@link OTrackedSet} is serialised correctly. */
   @Test
   public void testSetSerialization() throws Exception {
 
@@ -227,7 +235,8 @@ public class TrackedSetTest {
       }
     }
 
-    final OTrackedSet<String> beforeSerialization = new OTrackedSet<String>(new NotSerializableDocument());
+    final OTrackedSet<String> beforeSerialization =
+        new OTrackedSet<String>(new NotSerializableDocument());
     beforeSerialization.add("firstVal");
     beforeSerialization.add("secondVal");
 
@@ -236,7 +245,8 @@ public class TrackedSetTest {
     out.writeObject(beforeSerialization);
     out.close();
 
-    final ObjectInputStream input = new ObjectInputStream(new ByteArrayInputStream(memoryStream.copy()));
+    final ObjectInputStream input =
+        new ObjectInputStream(new ByteArrayInputStream(memoryStream.copy()));
     @SuppressWarnings("unchecked")
     final Set<String> afterSerialization = (Set<String>) input.readObject();
 

@@ -1,7 +1,7 @@
 package com.orientechnologies.orient.distributed.impl.log;
 
 public class OOperationLogEntry {
-  protected OLogId      logId;
+  protected OLogId logId;
   protected OLogRequest request;
 
   public OOperationLogEntry(OLogId logId, OLogRequest request) {

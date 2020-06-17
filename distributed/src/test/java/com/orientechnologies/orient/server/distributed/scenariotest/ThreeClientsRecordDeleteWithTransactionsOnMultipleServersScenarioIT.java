@@ -16,13 +16,13 @@
 
 package com.orientechnologies.orient.server.distributed.scenariotest;
 
+import static org.junit.Assert.assertTrue;
+
+
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.server.distributed.impl.ODistributedStorage;
-import org.junit.Ignore;
-import org.junit.Test;
-
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
@@ -30,29 +30,27 @@ import java.util.Map;
 import java.util.concurrent.Callable;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
-
-import static org.junit.Assert.assertTrue;
+import org.junit.Ignore;
+import org.junit.Test;
 
 /**
- * Checks for consistency on the cluster with these steps:
- * - 3 server (quorum=2)
- * - record1 is inserted on server1
- * - record1 (version 1) is propagated to the other two servers
- * - introduce a delay after record locking for all servers (different for each one)
- * - the three clients at the same time delete the same record
- *
+ * Checks for consistency on the cluster with these steps: - 3 server (quorum=2) - record1 is
+ * inserted on server1 - record1 (version 1) is propagated to the other two servers - introduce a
+ * delay after record locking for all servers (different for each one) - the three clients at the
+ * same time delete the same record
  */
+public class ThreeClientsRecordDeleteWithTransactionsOnMultipleServersScenarioIT
+    extends AbstractScenarioTest {
 
-public class ThreeClientsRecordDeleteWithTransactionsOnMultipleServersScenarioIT extends AbstractScenarioTest {
-
-  private final String        RECORD_ID = "R001";
-  private Map<String, Object> hanFields = new HashMap<String, Object>() {
-                                          {
-                                            put("id", RECORD_ID);
-                                            put("firstName", "Han");
-                                            put("lastName", "Solo");
-                                          }
-                                        };
+  private final String RECORD_ID = "R001";
+  private Map<String, Object> hanFields =
+      new HashMap<String, Object>() {
+        {
+          put("id", RECORD_ID);
+          put("firstName", "Han");
+          put("lastName", "Solo");
+        }
+      };
 
   @Test
   @Ignore
@@ -80,10 +78,13 @@ public class ThreeClientsRecordDeleteWithTransactionsOnMultipleServersScenarioIT
 
     try {
       // sets a delay for operations on distributed storage of all servers
-      ((ODistributedStorage) ((ODatabaseDocumentInternal)dbServer1).getStorage()).setEventListener(new AfterRecordLockDelayer("server1", DOCUMENT_WRITE_TIMEOUT));
-      ((ODistributedStorage) ((ODatabaseDocumentInternal)dbServer2).getStorage()).setEventListener(new AfterRecordLockDelayer("server2", DOCUMENT_WRITE_TIMEOUT / 4));
-      ((ODistributedStorage) ((ODatabaseDocumentInternal)dbServer3).getStorage()).setEventListener(new AfterRecordLockDelayer("server3", DOCUMENT_WRITE_TIMEOUT / 2));
-  
+      ((ODistributedStorage) ((ODatabaseDocumentInternal) dbServer1).getStorage())
+          .setEventListener(new AfterRecordLockDelayer("server1", DOCUMENT_WRITE_TIMEOUT));
+      ((ODistributedStorage) ((ODatabaseDocumentInternal) dbServer2).getStorage())
+          .setEventListener(new AfterRecordLockDelayer("server2", DOCUMENT_WRITE_TIMEOUT / 4));
+      ((ODistributedStorage) ((ODatabaseDocumentInternal) dbServer3).getStorage())
+          .setEventListener(new AfterRecordLockDelayer("server3", DOCUMENT_WRITE_TIMEOUT / 2));
+
       // updates the same record from three different clients, each calling a different server
       List<Callable<Void>> clients = new LinkedList<Callable<Void>>();
       clients.add(new RecordDeleter(serverInstance.get(0), RECORD_ID, true));
@@ -91,19 +92,22 @@ public class ThreeClientsRecordDeleteWithTransactionsOnMultipleServersScenarioIT
       clients.add(new RecordDeleter(serverInstance.get(2), RECORD_ID, true));
       List<Future<Void>> futures = Executors.newCachedThreadPool().invokeAll(clients);
       executeFutures(futures);
-  
+
       waitForDeletedRecordPropagation(RECORD_ID);
-  
-      assertTrue(retrieveRecordOrReturnMissing(serverInstance.get(0), RECORD_ID) == MISSING_DOCUMENT);
-      assertTrue(retrieveRecordOrReturnMissing(serverInstance.get(1), RECORD_ID) == MISSING_DOCUMENT);
-      assertTrue(retrieveRecordOrReturnMissing(serverInstance.get(2), RECORD_ID) == MISSING_DOCUMENT);
+
+      assertTrue(
+          retrieveRecordOrReturnMissing(serverInstance.get(0), RECORD_ID) == MISSING_DOCUMENT);
+      assertTrue(
+          retrieveRecordOrReturnMissing(serverInstance.get(1), RECORD_ID) == MISSING_DOCUMENT);
+      assertTrue(
+          retrieveRecordOrReturnMissing(serverInstance.get(2), RECORD_ID) == MISSING_DOCUMENT);
     } finally {
       dbServer1.activateOnCurrentThread();
-     	dbServer1.close();
-     	dbServer2.activateOnCurrentThread();
-     	dbServer2.close();
-     	dbServer3.activateOnCurrentThread();
-     	dbServer3.close();
+      dbServer1.close();
+      dbServer2.activateOnCurrentThread();
+      dbServer2.close();
+      dbServer3.activateOnCurrentThread();
+      dbServer3.close();
     }
   }
 
@@ -111,5 +115,4 @@ public class ThreeClientsRecordDeleteWithTransactionsOnMultipleServersScenarioIT
   public String getDatabaseName() {
     return "distributed-three-simultaneous-delete";
   }
-
 }

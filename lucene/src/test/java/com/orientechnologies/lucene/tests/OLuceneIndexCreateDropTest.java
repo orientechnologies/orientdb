@@ -18,21 +18,19 @@
 
 package com.orientechnologies.lucene.tests;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
+
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import org.junit.Before;
 import org.junit.Test;
 
-import static org.assertj.core.api.Assertions.assertThat;
-
-/**
- * Created by Enrico Risa on 14/08/15.
- */
+/** Created by Enrico Risa on 14/08/15. */
 public class OLuceneIndexCreateDropTest extends OLuceneBaseTest {
 
-  public OLuceneIndexCreateDropTest() {
-  }
+  public OLuceneIndexCreateDropTest() {}
 
   @Before
   public void init() {
@@ -51,5 +49,4 @@ public class OLuceneIndexCreateDropTest extends OLuceneBaseTest {
 
     assertThat(index).isNull();
   }
-
 }

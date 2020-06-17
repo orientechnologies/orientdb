@@ -2,14 +2,14 @@ package com.orientechnologies.orient.core.sql;
 
 import static org.junit.Assert.assertEquals;
 
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
 
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Test;
 
 public class OCommandExecutorSQLTruncateTest {
 
@@ -17,7 +17,8 @@ public class OCommandExecutorSQLTruncateTest {
 
   @Before
   public void before() {
-    database = new ODatabaseDocumentTx("memory:" + OCommandExecutorSQLTruncateTest.class.getSimpleName());
+    database =
+        new ODatabaseDocumentTx("memory:" + OCommandExecutorSQLTruncateTest.class.getSimpleName());
     database.create();
   }
 
@@ -38,7 +39,6 @@ public class OCommandExecutorSQLTruncateTest {
     Number ret = database.command(new OCommandSQL("truncate class A ")).execute();
 
     assertEquals(ret.intValue(), 1);
-
   }
 
   @Test
@@ -53,7 +53,5 @@ public class OCommandExecutorSQLTruncateTest {
     Number ret = database.command(new OCommandSQL("truncate class A POLYMORPHIC")).execute();
 
     assertEquals(ret.intValue(), 2);
-
   }
-
 }

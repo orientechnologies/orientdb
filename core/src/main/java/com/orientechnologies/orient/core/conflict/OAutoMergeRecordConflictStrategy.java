@@ -15,12 +15,10 @@
  *  *  limitations under the License.
  *  *
  *  * For more information: http://orientdb.com
- *  
+ *
  */
 
 package com.orientechnologies.orient.core.conflict;
-
-import java.util.concurrent.atomic.AtomicInteger;
 
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -28,18 +26,24 @@ import com.orientechnologies.orient.core.serialization.serializer.record.ORecord
 import com.orientechnologies.orient.core.storage.ORawBuffer;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.OStorageOperationResult;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * Auto merges new record with the existent. Collections are also merged, item by item.
- * 
+ *
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
  */
 public class OAutoMergeRecordConflictStrategy extends OVersionRecordConflictStrategy {
   public static final String NAME = "automerge";
 
   @Override
-  public byte[] onUpdate(OStorage storage, byte iRecordType, final ORecordId rid, final int iRecordVersion,
-      final byte[] iRecordContent, final AtomicInteger iDatabaseVersion) {
+  public byte[] onUpdate(
+      OStorage storage,
+      byte iRecordType,
+      final ORecordId rid,
+      final int iRecordVersion,
+      final byte[] iRecordContent,
+      final AtomicInteger iDatabaseVersion) {
 
     if (iRecordType == ODocument.RECORD_TYPE) {
       // No need lock, is already inside a lock. Use database to read temporary objects too

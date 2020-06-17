@@ -3,23 +3,23 @@ package com.orientechnologies.orient.core.sql.executor;
 import com.orientechnologies.common.concur.OTimeoutException;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
-
 import java.util.Map;
 import java.util.Optional;
 
-/**
- * Created by luigidellaquila on 08/05/17.
- */
+/** Created by luigidellaquila on 08/05/17. */
 public class DistributedExecutionStep extends AbstractExecutionStep {
 
   private final OSelectExecutionPlan subExecuitonPlan;
-  private final String               nodeName;
+  private final String nodeName;
 
   private boolean inited;
 
   private OResultSet remoteResultSet;
 
-  public DistributedExecutionStep(OSelectExecutionPlan subExecutionPlan, String nodeName, OCommandContext ctx,
+  public DistributedExecutionStep(
+      OSelectExecutionPlan subExecutionPlan,
+      String nodeName,
+      OCommandContext ctx,
       boolean profilingEnabled) {
     super(ctx, profilingEnabled);
     this.subExecuitonPlan = subExecutionPlan;
@@ -65,7 +65,8 @@ public class DistributedExecutionStep extends AbstractExecutionStep {
     }
   }
 
-  private OResultSet sendSerializedExecutionPlan(String nodeName, OExecutionPlan serializedExecutionPlan, OCommandContext ctx) {
+  private OResultSet sendSerializedExecutionPlan(
+      String nodeName, OExecutionPlan serializedExecutionPlan, OCommandContext ctx) {
     ODatabaseDocumentInternal db = (ODatabaseDocumentInternal) ctx.getDatabase();
     return db.queryOnNode(nodeName, serializedExecutionPlan, ctx.getInputParameters());
   }

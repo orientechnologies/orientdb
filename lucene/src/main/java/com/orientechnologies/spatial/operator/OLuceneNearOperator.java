@@ -1,16 +1,17 @@
 /**
  * Copyright 2010-2016 OrientDB LTD (http://orientdb.com)
- * <p>
- * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- * <p>
- * http://www.apache.org/licenses/LICENSE-2.0
- * <p>
- * Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on an "AS IS"
- * BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the specific language
- * governing permissions and limitations under the License.
- * <p>
- * For more information: http://www.orientdb.com
+ *
+ * <p>Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file
+ * except in compliance with the License. You may obtain a copy of the License at
+ *
+ * <p>http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * <p>Unless required by applicable law or agreed to in writing, software distributed under the
+ * License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either
+ * express or implied. See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ * <p>For more information: http://www.orientdb.com
  */
 package com.orientechnologies.spatial.operator;
 
@@ -32,16 +33,15 @@ import com.orientechnologies.orient.core.sql.operator.OIndexReuseType;
 import com.orientechnologies.orient.core.sql.operator.OQueryTargetOperator;
 import com.orientechnologies.spatial.collections.OSpatialCompositeKey;
 import com.orientechnologies.spatial.shape.OShapeFactory;
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Stream;
 import org.locationtech.spatial4j.distance.DistanceUtils;
 import org.locationtech.spatial4j.shape.Circle;
 import org.locationtech.spatial4j.shape.Point;
 import org.locationtech.spatial4j.shape.Shape;
 import org.locationtech.spatial4j.shape.SpatialRelation;
-
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
-import java.util.stream.Stream;
 
 public class OLuceneNearOperator extends OQueryTargetOperator {
 
@@ -52,8 +52,14 @@ public class OLuceneNearOperator extends OQueryTargetOperator {
   }
 
   @Override
-  public Object evaluateRecord(OIdentifiable iRecord, ODocument iCurrentResult, OSQLFilterCondition iCondition, Object iLeft,
-      Object iRight, OCommandContext iContext, final ODocumentSerializer serializer) {
+  public Object evaluateRecord(
+      OIdentifiable iRecord,
+      ODocument iCurrentResult,
+      OSQLFilterCondition iCondition,
+      Object iLeft,
+      Object iRight,
+      OCommandContext iContext,
+      final ODocumentSerializer serializer) {
 
     List<Number> left = (List<Number>) iLeft;
 
@@ -75,10 +81,16 @@ public class OLuceneNearOperator extends OQueryTargetOperator {
       distance = n.doubleValue();
     }
     Point p = (Point) shape1;
-    Circle circle = factory.context()
-        .makeCircle(p.getX(), p.getY(), DistanceUtils.dist2Degrees(distance, DistanceUtils.EARTH_MEAN_RADIUS_KM));
+    Circle circle =
+        factory
+            .context()
+            .makeCircle(
+                p.getX(),
+                p.getY(),
+                DistanceUtils.dist2Degrees(distance, DistanceUtils.EARTH_MEAN_RADIUS_KM));
     double docDistDEG = factory.context().getDistCalc().distance((Point) shape, p);
-    final double docDistInKM = DistanceUtils.degrees2Dist(docDistDEG, DistanceUtils.EARTH_EQUATORIAL_RADIUS_KM);
+    final double docDistInKM =
+        DistanceUtils.degrees2Dist(docDistDEG, DistanceUtils.EARTH_EQUATORIAL_RADIUS_KM);
     iContext.setVariable("distance", docDistInKM);
     return shape.relate(circle) == SpatialRelation.WITHIN;
   }
@@ -108,8 +120,8 @@ public class OLuceneNearOperator extends OQueryTargetOperator {
   }
 
   @Override
-  public Stream<ORawPair<Object, ORID>> executeIndexQuery(OCommandContext iContext, OIndex index, List<Object> keyParams,
-      boolean ascSortOrder) {
+  public Stream<ORawPair<Object, ORID>> executeIndexQuery(
+      OCommandContext iContext, OIndex index, List<Object> keyParams, boolean ascSortOrder) {
     OIndexDefinition definition = index.getDefinition();
     int idxSize = definition.getFields().size();
     int paramsSize = keyParams.size();
@@ -131,7 +143,9 @@ public class OLuceneNearOperator extends OQueryTargetOperator {
 
     iContext.setVariable("$luceneIndex", true);
 
-    return index.getInternal().getRids(new OSpatialCompositeKey(keyParams).setMaxDistance(distance).setContext(iContext))
+    return index
+        .getInternal()
+        .getRids(new OSpatialCompositeKey(keyParams).setMaxDistance(distance).setContext(iContext))
         .map((rid) -> new ORawPair<>(new OSpatialCompositeKey(keyParams), rid));
   }
 
@@ -156,9 +170,12 @@ public class OLuceneNearOperator extends OQueryTargetOperator {
   }
 
   @Override
-  public OIndexSearchResult getOIndexSearchResult(OClass iSchemaClass, OSQLFilterCondition iCondition,
-      List<OIndexSearchResult> iIndexSearchResults, OCommandContext context) {
-    return OLuceneOperatorUtil.buildOIndexSearchResult(iSchemaClass, iCondition, iIndexSearchResults, context);
+  public OIndexSearchResult getOIndexSearchResult(
+      OClass iSchemaClass,
+      OSQLFilterCondition iCondition,
+      List<OIndexSearchResult> iIndexSearchResults,
+      OCommandContext context) {
+    return OLuceneOperatorUtil.buildOIndexSearchResult(
+        iSchemaClass, iCondition, iIndexSearchResults, context);
   }
-
 }

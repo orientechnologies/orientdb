@@ -22,8 +22,8 @@ package com.orientechnologies.orient.core.db.document;
 import com.orientechnologies.orient.core.db.ODatabasePoolBase;
 
 /**
- * @deprecated use {@link com.orientechnologies.orient.core.db.OPartitionedDatabasePool} or
- *             {@link com.orientechnologies.orient.core.db.OPartitionedDatabasePoolFactory} instead.
+ * @deprecated use {@link com.orientechnologies.orient.core.db.OPartitionedDatabasePool} or {@link
+ *     com.orientechnologies.orient.core.db.OPartitionedDatabasePoolFactory} instead.
  */
 @Deprecated
 public class ODatabaseDocumentPool extends ODatabasePoolBase<ODatabaseDocumentTx> {
@@ -34,7 +34,8 @@ public class ODatabaseDocumentPool extends ODatabasePoolBase<ODatabaseDocumentTx
     super();
   }
 
-  public ODatabaseDocumentPool(final String iURL, final String iUserName, final String iUserPassword) {
+  public ODatabaseDocumentPool(
+      final String iURL, final String iUserName, final String iUserPassword) {
     super(iURL, iUserName, iUserPassword);
   }
 
@@ -49,8 +50,12 @@ public class ODatabaseDocumentPool extends ODatabasePoolBase<ODatabaseDocumentTx
   }
 
   @Override
-  protected ODatabaseDocumentTx createResource(Object owner, String iDatabaseName, Object... iAdditionalArgs) {
-    return new ODatabaseDocumentTxPooled((ODatabaseDocumentPool) owner, iDatabaseName, (String) iAdditionalArgs[0],
+  protected ODatabaseDocumentTx createResource(
+      Object owner, String iDatabaseName, Object... iAdditionalArgs) {
+    return new ODatabaseDocumentTxPooled(
+        (ODatabaseDocumentPool) owner,
+        iDatabaseName,
+        (String) iAdditionalArgs[0],
         (String) iAdditionalArgs[1]);
   }
 }

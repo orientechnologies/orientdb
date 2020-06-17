@@ -21,9 +21,8 @@ package com.orientechnologies.orient.core.exception;
 
 /**
  * Storage key is invalid. Used in cryptography.
- * 
+ *
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
- * 
  */
 @SuppressWarnings("serial")
 public class OInvalidStorageEncryptionKeyException extends OSecurityException {

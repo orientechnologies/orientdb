@@ -7,15 +7,14 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class OIndexOperationRequest {
-  private String                indexName;
-  private boolean               cleanIndexValues;
+  private String indexName;
+  private boolean cleanIndexValues;
   private List<OIndexKeyChange> indexKeyChanges;
 
-  public OIndexOperationRequest() {
+  public OIndexOperationRequest() {}
 
-  }
-
-  public OIndexOperationRequest(String indexName, boolean cleanIndexValues, List<OIndexKeyChange> indexKeyChanges) {
+  public OIndexOperationRequest(
+      String indexName, boolean cleanIndexValues, List<OIndexKeyChange> indexKeyChanges) {
     this.indexName = indexName;
     this.cleanIndexValues = cleanIndexValues;
     this.indexKeyChanges = indexKeyChanges;
@@ -53,5 +52,4 @@ public class OIndexOperationRequest {
   public boolean isCleanIndexValues() {
     return cleanIndexValues;
   }
-
 }

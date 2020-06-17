@@ -1,26 +1,28 @@
 package com.orientechnologies.orient.distributed.impl.coordinator.transaction;
 
-import com.orientechnologies.orient.distributed.impl.coordinator.ONodeResponse;
+import static com.orientechnologies.orient.distributed.impl.coordinator.OCoordinateMessagesFactory.TRANSACTION_SECOND_PHASE_RESPONSE;
 
+
+import com.orientechnologies.orient.distributed.impl.coordinator.ONodeResponse;
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-import static com.orientechnologies.orient.distributed.impl.coordinator.OCoordinateMessagesFactory.TRANSACTION_SECOND_PHASE_RESPONSE;
-
 public class OTransactionSecondPhaseResponse implements ONodeResponse {
-  private boolean                      success;
+  private boolean success;
   private List<OCreatedRecordResponse> createdRecords;
   private List<OUpdatedRecordResponse> updatedRecords;
   private List<ODeletedRecordResponse> deletedRecords;
 
-  public OTransactionSecondPhaseResponse() {
-  }
+  public OTransactionSecondPhaseResponse() {}
 
-  public OTransactionSecondPhaseResponse(boolean success, List<OCreatedRecordResponse> createdRecords,
-      List<OUpdatedRecordResponse> updatedRecords, List<ODeletedRecordResponse> deletedRecords) {
+  public OTransactionSecondPhaseResponse(
+      boolean success,
+      List<OCreatedRecordResponse> createdRecords,
+      List<OUpdatedRecordResponse> updatedRecords,
+      List<ODeletedRecordResponse> deletedRecords) {
     this.success = success;
     this.createdRecords = createdRecords;
     this.updatedRecords = updatedRecords;

@@ -2,18 +2,15 @@ package com.orientechnologies.orient.core.sql.executor;
 
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
-
 import java.util.Iterator;
 
-/**
- * Created by luigidellaquila on 25/10/16.
- */
+/** Created by luigidellaquila on 25/10/16. */
 public class ORidSetIterator implements Iterator<ORID> {
 
   private final Iterator<ORID> negativesIterator;
   private ORidSet set;
-  private int     currentCluster = -1;
-  private long    currentId      = -1;
+  private int currentCluster = -1;
+  private long currentId = -1;
 
   protected ORidSetIterator(ORidSet set) {
     this.set = set;
@@ -53,7 +50,8 @@ public class ORidSetIterator implements Iterator<ORID> {
 
     while (currentCluster < set.content.length) {
       while (set.content[currentCluster] != null && block < set.content[currentCluster].length) {
-        while (set.content[currentCluster][block] != null && blockPositionByteInt < set.content[currentCluster][block].length) {
+        while (set.content[currentCluster][block] != null
+            && blockPositionByteInt < set.content[currentCluster][block].length) {
           if (currentBit == 0 && set.content[currentCluster][block][blockPositionByteInt] == 0L) {
             blockPositionByteInt++;
             currentArrayPos++;
@@ -71,7 +69,8 @@ public class ORidSetIterator implements Iterator<ORID> {
             }
           }
         }
-        if (set.content[currentCluster][block] == null && set.content[currentCluster].length >= block) {
+        if (set.content[currentCluster][block] == null
+            && set.content[currentCluster].length >= block) {
           currentArrayPos += set.maxArraySize;
         }
         block++;
@@ -87,5 +86,4 @@ public class ORidSetIterator implements Iterator<ORID> {
 
     currentCluster = -1;
   }
-
 }

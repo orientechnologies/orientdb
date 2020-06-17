@@ -1,5 +1,11 @@
 package com.orientechnologies.orient.core.metadata.schema;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.fail;
+
+
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.exception.OSchemaException;
@@ -8,8 +14,6 @@ import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
-
-import static org.junit.Assert.*;
 
 public class AlterPropertyTest {
 
@@ -102,7 +106,9 @@ public class AlterPropertyTest {
     OClass classLinked = schema.createClass("LinkedClass");
     OProperty prop = classA.createProperty("propertyLink", OType.LINK, classLinked);
     assertNotNull(prop.getLinkedClass());
-    db.command(new OCommandSQL("alter property TestRemoveLinkedClass.propertyLink linkedclass null")).execute();
+    db.command(
+            new OCommandSQL("alter property TestRemoveLinkedClass.propertyLink linkedclass null"))
+        .execute();
     assertNull(prop.getLinkedClass());
   }
 
@@ -119,7 +125,6 @@ public class AlterPropertyTest {
       Assert.fail();
     } catch (Exception e) {
     }
-
   }
 
   @Test
@@ -148,5 +153,4 @@ public class AlterPropertyTest {
     property.setCustom("custom.attribute", "value2");
     assertEquals("value2", property.getCustom("custom.attribute"));
   }
-
 }

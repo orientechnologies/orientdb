@@ -27,18 +27,23 @@ import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurablePage;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.cellbtree.multivalue.v2.nullbucket.*;
-
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.cellbtree.multivalue.v2.nullbucket.CellBTreeMultiValueV2NullBucketAddValuePO;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.cellbtree.multivalue.v2.nullbucket.CellBTreeMultiValueV2NullBucketDecrementSizePO;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.cellbtree.multivalue.v2.nullbucket.CellBTreeMultiValueV2NullBucketIncrementSizePO;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.cellbtree.multivalue.v2.nullbucket.CellBTreeMultiValueV2NullBucketInitPO;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.cellbtree.multivalue.v2.nullbucket.CellBTreeMultiValueV2NullBucketRemoveValuePO;
 import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Bucket which is intended to save values stored in sbtree under <code>null</code> key. Bucket has following layout:
+ * Bucket which is intended to save values stored in sbtree under <code>null</code> key. Bucket has
+ * following layout:
+ *
  * <ol>
- * <li>First byte is flag which indicates presence of value in bucket</li>
- * <li>Second byte indicates whether value is presented by link to the "bucket list" where actual value is stored or real value
- * passed be user.</li>
- * <li>The rest is serialized value whether link or passed in value.</li>
+ *   <li>First byte is flag which indicates presence of value in bucket
+ *   <li>Second byte indicates whether value is presented by link to the "bucket list" where actual
+ *       value is stored or real value passed be user.
+ *   <li>The rest is serialized value whether link or passed in value.
  * </ol>
  *
  * @author Andrey Lomakin (a.lomakin-at-orientdb.com)
@@ -49,10 +54,10 @@ public final class CellBTreeMultiValueV2NullBucket extends ODurablePage {
 
   private static final int RID_SIZE = OShortSerializer.SHORT_SIZE + OLongSerializer.LONG_SIZE;
 
-  private static final int M_ID_OFFSET               = NEXT_FREE_POSITION;
+  private static final int M_ID_OFFSET = NEXT_FREE_POSITION;
   private static final int EMBEDDED_RIDS_SIZE_OFFSET = M_ID_OFFSET + OLongSerializer.LONG_SIZE;
-  private static final int RIDS_SIZE_OFFSET          = EMBEDDED_RIDS_SIZE_OFFSET + OByteSerializer.BYTE_SIZE;
-  private static final int RIDS_OFFSET               = RIDS_SIZE_OFFSET + OIntegerSerializer.INT_SIZE;
+  private static final int RIDS_SIZE_OFFSET = EMBEDDED_RIDS_SIZE_OFFSET + OByteSerializer.BYTE_SIZE;
+  private static final int RIDS_OFFSET = RIDS_SIZE_OFFSET + OIntegerSerializer.INT_SIZE;
 
   public CellBTreeMultiValueV2NullBucket(final OCacheEntry cacheEntry) {
     super(cacheEntry);
@@ -143,7 +148,9 @@ public final class CellBTreeMultiValueV2NullBucket extends ODurablePage {
         setByteValue(EMBEDDED_RIDS_SIZE_OFFSET, (byte) (embeddedSize - 1));
         setIntValue(RIDS_SIZE_OFFSET, size - 1);
 
-        addPageOperation(new CellBTreeMultiValueV2NullBucketRemoveValuePO(new ORecordId(clusterId, clusterPosition)));
+        addPageOperation(
+            new CellBTreeMultiValueV2NullBucketRemoveValuePO(
+                new ORecordId(clusterId, clusterPosition)));
         return 1;
       }
     }

@@ -4,7 +4,6 @@ package com.orientechnologies.orient.core.sql.parser;
 
 import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.executor.OResultInternal;
-
 import java.util.Map;
 
 public class OLetItem extends SimpleNode {
@@ -55,10 +54,8 @@ public class OLetItem extends SimpleNode {
 
   @Override
   public boolean equals(Object o) {
-    if (this == o)
-      return true;
-    if (o == null || getClass() != o.getClass())
-      return false;
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
 
     OLetItem oLetItem = (OLetItem) o;
 
@@ -66,8 +63,7 @@ public class OLetItem extends SimpleNode {
       return false;
     if (expression != null ? !expression.equals(oLetItem.expression) : oLetItem.expression != null)
       return false;
-    if (query != null ? !query.equals(oLetItem.query) : oLetItem.query != null)
-      return false;
+    if (query != null ? !query.equals(oLetItem.query) : oLetItem.query != null) return false;
 
     return true;
   }
@@ -103,7 +99,8 @@ public class OLetItem extends SimpleNode {
   }
 
   public void extractSubQueries(SubQueryCollector collector) {
-    //this is to transform LET expressions with subqueries in simple LET, plus LET with query only, so the direct query is ignored
+    // this is to transform LET expressions with subqueries in simple LET, plus LET with query only,
+    // so the direct query is ignored
     if (expression != null) {
       expression.extractSubQueries(varName, collector);
     }

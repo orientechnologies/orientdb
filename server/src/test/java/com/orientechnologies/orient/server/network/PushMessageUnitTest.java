@@ -1,7 +1,10 @@
 package com.orientechnologies.orient.server.network;
 
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
+
+
 import com.orientechnologies.orient.client.remote.ORemotePushHandler;
-import com.orientechnologies.orient.client.remote.OStorageRemote;
 import com.orientechnologies.orient.client.remote.OStorageRemotePushThread;
 import com.orientechnologies.orient.client.remote.message.OBinaryPushRequest;
 import com.orientechnologies.orient.client.remote.message.OBinaryPushResponse;
@@ -10,32 +13,24 @@ import com.orientechnologies.orient.enterprise.channel.binary.OChannelDataInput;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelDataOutput;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.network.protocol.binary.ONetworkProtocolBinary;
+import java.io.IOException;
+import java.io.PipedInputStream;
+import java.io.PipedOutputStream;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
 
-import java.io.IOException;
-import java.io.PipedInputStream;
-import java.io.PipedOutputStream;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
-
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
-
-/**
- * Created by tglman on 10/05/17.
- */
+/** Created by tglman on 10/05/17. */
 public class PushMessageUnitTest {
 
   public class MockPushResponse implements OBinaryPushResponse {
 
     @Override
-    public void write(OChannelDataOutput network) throws IOException {
-
-    }
+    public void write(OChannelDataOutput network) throws IOException {}
 
     @Override
     public void read(OChannelDataInput channel) throws IOException {
@@ -55,9 +50,7 @@ public class PushMessageUnitTest {
     }
 
     @Override
-    public void read(OChannelDataInput network) throws IOException {
-
-    }
+    public void read(OChannelDataInput network) throws IOException {}
 
     @Override
     public OBinaryPushResponse execute(ORemotePushHandler remote) {
@@ -83,9 +76,7 @@ public class PushMessageUnitTest {
     }
 
     @Override
-    public void read(OChannelDataInput network) throws IOException {
-
-    }
+    public void read(OChannelDataInput network) throws IOException {}
 
     @Override
     public OBinaryPushResponse execute(ORemotePushHandler remote) {
@@ -99,16 +90,14 @@ public class PushMessageUnitTest {
     }
   }
 
-  private CountDownLatch  requestWritten;
-  private CountDownLatch  responseRead;
-  private CountDownLatch  executed;
+  private CountDownLatch requestWritten;
+  private CountDownLatch responseRead;
+  private CountDownLatch executed;
   private MockPipeChannel channelBinaryServer;
   private MockPipeChannel channelBinaryClient;
-  @Mock
-  private OServer         server;
+  @Mock private OServer server;
 
-  @Mock
-  private ORemotePushHandler remote;
+  @Mock private ORemotePushHandler remote;
 
   @Before
   public void before() throws IOException {
@@ -132,13 +121,15 @@ public class PushMessageUnitTest {
   public void testPushMessage() throws IOException, InterruptedException {
     ONetworkProtocolBinary binary = new ONetworkProtocolBinary(server);
     binary.initVariables(server, channelBinaryServer);
-    new Thread(() -> {
-      try {
-        binary.push(new MockPushRequest());
-      } catch (IOException e) {
-        e.printStackTrace();
-      }
-    }).start();
+    new Thread(
+            () -> {
+              try {
+                binary.push(new MockPushRequest());
+              } catch (IOException e) {
+                e.printStackTrace();
+              }
+            })
+        .start();
     binary.start();
     assertTrue(requestWritten.await(10, TimeUnit.SECONDS));
     OStorageRemotePushThread pushThread = new OStorageRemotePushThread(remote, "none", 10, 1000);
@@ -149,24 +140,25 @@ public class PushMessageUnitTest {
     Mockito.verify(remote).createPush((byte) 100);
     pushThread.shutdown();
     binary.shutdown();
-
   }
 
   @Test
   public void testPushMessageNoResponse() throws IOException, InterruptedException {
     ONetworkProtocolBinary binary = new ONetworkProtocolBinary(server);
     binary.initVariables(server, channelBinaryServer);
-    Thread thread = new Thread(() -> {
-      try {
-        assertNull(binary.push(new MockPushRequestNoResponse()));
-      } catch (IOException e) {
-        e.printStackTrace();
-      }
-    });
+    Thread thread =
+        new Thread(
+            () -> {
+              try {
+                assertNull(binary.push(new MockPushRequestNoResponse()));
+              } catch (IOException e) {
+                e.printStackTrace();
+              }
+            });
     thread.start();
     binary.start();
     assertTrue(requestWritten.await(10, TimeUnit.SECONDS));
-    OStorageRemotePushThread pushThread = new OStorageRemotePushThread(remote, "none", 10, 1000 );
+    OStorageRemotePushThread pushThread = new OStorageRemotePushThread(remote, "none", 10, 1000);
     pushThread.start();
 
     assertTrue(executed.await(10, TimeUnit.SECONDS));
@@ -175,7 +167,5 @@ public class PushMessageUnitTest {
     pushThread.shutdown();
     pushThread.join(1000);
     binary.shutdown();
-
   }
-
 }

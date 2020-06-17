@@ -8,13 +8,18 @@ import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.executor.OResultInternal;
 import com.orientechnologies.orient.core.sql.operator.OQueryOperatorEquals;
-
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 public class OContainsCondition extends OBooleanExpression {
 
-  protected OExpression        left;
-  protected OExpression        right;
+  protected OExpression left;
+  protected OExpression right;
   protected OBooleanExpression condition;
 
   public OContainsCondition(int id) {
@@ -31,7 +36,8 @@ public class OContainsCondition extends OBooleanExpression {
         if (((Collection) right).size() == 1) {
           Object item = ((Collection) right).iterator().next();
           if (item instanceof OResult && ((OResult) item).getPropertyNames().size() == 1) {
-            Object propValue = ((OResult) item).getProperty(((OResult) item).getPropertyNames().iterator().next());
+            Object propValue =
+                ((OResult) item).getProperty(((OResult) item).getPropertyNames().iterator().next());
             if (((Collection) left).contains(propValue)) {
               return true;
             }
@@ -90,20 +96,21 @@ public class OContainsCondition extends OBooleanExpression {
         boolean found = false;
         while (leftIterator.hasNext()) {
           Object rightItem = leftIterator.next();
-          if ((leftItem != null && leftItem.equals(rightItem)) ||
-              (leftItem == null && rightItem == null)){
+          if ((leftItem != null && leftItem.equals(rightItem))
+              || (leftItem == null && rightItem == null)) {
             found = true;
             break;
           }
         }
-        
+
         if (!found) {
           return false;
         }
-        
-        //here left iterator should go from beginning, that can be done only for iterable
-        //if left at input is iterator result can be invalid 
-        //TODO what if left is Iterator!!!???, should we make temporary Collection , to be able to iterate from beginning
+
+        // here left iterator should go from beginning, that can be done only for iterable
+        // if left at input is iterator result can be invalid
+        // TODO what if left is Iterator!!!???, should we make temporary Collection , to be able to
+        // iterate from beginning
         if (left instanceof Iterable) {
           leftIterator = ((Iterable) left).iterator();
         }
@@ -163,7 +170,9 @@ public class OContainsCondition extends OBooleanExpression {
           return true;
         } else if (item instanceof Map) {
           OResultInternal res = new OResultInternal();
-          ((Map<String, Object>) item).entrySet().forEach(x -> res.setProperty(x.getKey(), x.getValue()));
+          ((Map<String, Object>) item)
+              .entrySet()
+              .forEach(x -> res.setProperty(x.getKey(), x.getValue()));
           if (condition.evaluate(res, ctx)) {
             return true;
           }
@@ -252,7 +261,6 @@ public class OContainsCondition extends OBooleanExpression {
     result.right = right == null ? null : right.copy();
     result.condition = condition == null ? null : condition.copy();
     return result;
-
   }
 
   @Override
@@ -284,17 +292,13 @@ public class OContainsCondition extends OBooleanExpression {
 
   @Override
   public boolean equals(Object o) {
-    if (this == o)
-      return true;
-    if (o == null || getClass() != o.getClass())
-      return false;
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
 
     OContainsCondition that = (OContainsCondition) o;
 
-    if (left != null ? !left.equals(that.left) : that.left != null)
-      return false;
-    if (right != null ? !right.equals(that.right) : that.right != null)
-      return false;
+    if (left != null ? !left.equals(that.left) : that.left != null) return false;
+    if (right != null ? !right.equals(that.right) : that.right != null) return false;
     if (condition != null ? !condition.equals(that.condition) : that.condition != null)
       return false;
 
@@ -342,6 +346,5 @@ public class OContainsCondition extends OBooleanExpression {
     }
     return true;
   }
-
 }
 /* JavaCC - OriginalChecksum=bad1118296ea74860e88d66bfe9fa222 (do not edit this line) */

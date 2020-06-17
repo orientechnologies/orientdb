@@ -14,7 +14,7 @@ public final class ClusterPositionMapBucketInitPO extends PageOperationRecord {
 
   @Override
   public void undo(OCacheEntry cacheEntry) {
-    //do nothing
+    // do nothing
   }
 
   @Override

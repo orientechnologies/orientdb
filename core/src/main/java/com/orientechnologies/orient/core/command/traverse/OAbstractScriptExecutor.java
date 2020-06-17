@@ -3,7 +3,6 @@ package com.orientechnologies.orient.core.command.traverse;
 import com.orientechnologies.orient.core.command.OScriptExecutor;
 import com.orientechnologies.orient.core.command.OScriptInterceptor;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
-
 import java.util.ArrayList;
 import java.util.List;
 

@@ -24,6 +24,5 @@ public class OArrayConcatExpressionElement extends OExpression {
 
     return result;
   }
-
 }
 /* JavaCC - OriginalChecksum=a37b12bac47f1771db27ce370d09f2f5 (do not edit this line) */
