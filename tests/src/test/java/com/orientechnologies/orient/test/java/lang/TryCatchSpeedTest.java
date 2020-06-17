@@ -15,26 +15,24 @@
  */
 package com.orientechnologies.orient.test.java.lang;
 
-import java.io.IOException;
-
-import org.testng.annotations.Test;
-
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.test.SpeedTestMonoThread;
+import java.io.IOException;
+import org.testng.annotations.Test;
 
 public class TryCatchSpeedTest extends SpeedTestMonoThread {
 
-	public TryCatchSpeedTest() {
-		super(1000000);
-	}
+  public TryCatchSpeedTest() {
+    super(1000000);
+  }
 
-	@Override
-	@Test(enabled = false)
-	public void cycle() throws IOException {
-		try {
-		} catch (Throwable t) {
-			OLogManager.instance().error(this, "test", t);
-		} finally {
-		}
-	}
+  @Override
+  @Test(enabled = false)
+  public void cycle() throws IOException {
+    try {
+    } catch (Throwable t) {
+      OLogManager.instance().error(this, "test", t);
+    } finally {
+    }
+  }
 }

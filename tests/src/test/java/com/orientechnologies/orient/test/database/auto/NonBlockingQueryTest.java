@@ -6,13 +6,16 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.query.OSQLNonBlockingQuery;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
-import org.testng.Assert;
-import org.testng.annotations.*;
-
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicInteger;
+import org.testng.Assert;
+import org.testng.annotations.BeforeClass;
+import org.testng.annotations.BeforeMethod;
+import org.testng.annotations.Optional;
+import org.testng.annotations.Parameters;
+import org.testng.annotations.Test;
 
 public class NonBlockingQueryTest extends DocumentDBBaseTest {
   @Parameters(value = "url")
@@ -57,23 +60,25 @@ public class NonBlockingQueryTest extends DocumentDBBaseTest {
     for (int i = 0; i < 1000; i++) {
       db.command(new OCommandSQL("insert into Foo (a) values ('bar')")).execute();
     }
-    Future future = db.query(new OSQLNonBlockingQuery<Object>("select from Foo", new OCommandResultListener() {
-      @Override
-      public boolean result(Object iRecord) {
-        counter.incrementAndGet();
-        return true;
-      }
+    Future future =
+        db.query(
+            new OSQLNonBlockingQuery<Object>(
+                "select from Foo",
+                new OCommandResultListener() {
+                  @Override
+                  public boolean result(Object iRecord) {
+                    counter.incrementAndGet();
+                    return true;
+                  }
 
-      @Override
-      public void end() {
+                  @Override
+                  public void end() {}
 
-      }
-
-      @Override
-      public Object getResult() {
-        return null;
-      }
-    }));
+                  @Override
+                  public Object getResult() {
+                    return null;
+                  }
+                }));
     Assert.assertFalse(counter.get() == 1000);
     try {
       future.get();
@@ -91,30 +96,35 @@ public class NonBlockingQueryTest extends DocumentDBBaseTest {
   public void testNonBlockingQueryWithCompositeIndex() {
     database.command(new OCommandSQL("create property Foo.x integer")).execute();
     database.command(new OCommandSQL("create property Foo.y integer")).execute();
-    database.command(new OCommandSQL("create index Foo_xy_index on Foo (x, y) notunique")).execute();
+    database
+        .command(new OCommandSQL("create index Foo_xy_index on Foo (x, y) notunique"))
+        .execute();
 
     ODatabaseDocumentInternal db = database;
     final AtomicInteger counter = new AtomicInteger(0); // db.begin();
     for (int i = 0; i < 1000; i++) {
-      db.command(new OCommandSQL("insert into Foo (a, x, y) values ('bar', ?, ?)")).execute(i, 1000 - i);
+      db.command(new OCommandSQL("insert into Foo (a, x, y) values ('bar', ?, ?)"))
+          .execute(i, 1000 - i);
     }
-    Future future = db
-        .query(new OSQLNonBlockingQuery<Object>("select from Foo where x=500 and y=500", new OCommandResultListener() {
-          @Override
-          public boolean result(Object iRecord) {
-            counter.incrementAndGet();
-            return true;
-          }
+    Future future =
+        db.query(
+            new OSQLNonBlockingQuery<Object>(
+                "select from Foo where x=500 and y=500",
+                new OCommandResultListener() {
+                  @Override
+                  public boolean result(Object iRecord) {
+                    counter.incrementAndGet();
+                    return true;
+                  }
 
-          @Override
-          public void end() {
-          }
+                  @Override
+                  public void end() {}
 
-          @Override
-          public Object getResult() {
-            return null;
-          }
-        }));
+                  @Override
+                  public Object getResult() {
+                    return null;
+                  }
+                }));
     Assert.assertFalse(counter.get() == 1);
     try {
       future.get();
@@ -127,5 +137,4 @@ public class NonBlockingQueryTest extends DocumentDBBaseTest {
       e.printStackTrace();
     }
   }
-
 }

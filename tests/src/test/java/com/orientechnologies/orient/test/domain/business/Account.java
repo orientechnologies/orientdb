@@ -15,38 +15,34 @@
  */
 package com.orientechnologies.orient.test.domain.business;
 
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
-
-import javax.persistence.Id;
-import javax.persistence.OneToMany;
-
 import com.orientechnologies.orient.core.annotation.OAfterDeserialization;
 import com.orientechnologies.orient.core.annotation.OBeforeSerialization;
 import com.orientechnologies.orient.core.record.impl.OBlob;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ORecordBytes;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
+import javax.persistence.Id;
+import javax.persistence.OneToMany;
 
 public class Account {
-  @Id
-  private Object            rid;
+  @Id private Object rid;
 
-  private int               id;
-  private String            name;
-  private String            surname;
-  private Date              birthDate;
-  private float             salary;
+  private int id;
+  private String name;
+  private String surname;
+  private Date birthDate;
+  private float salary;
 
   @OneToMany(orphanRemoval = true)
-  private List<Address>     addresses   = new ArrayList<Address>();
+  private List<Address> addresses = new ArrayList<Address>();
 
-  private byte[]            thumbnail;
-  private transient byte[]  photo;
+  private byte[] thumbnail;
+  private transient byte[] photo;
   private transient boolean initialized = false;
 
-  public Account() {
-  }
+  public Account() {}
 
   public Account(int iId, String iName, String iSurname) {
     this.id = iId;

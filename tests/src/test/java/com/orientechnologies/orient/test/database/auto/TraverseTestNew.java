@@ -21,29 +21,32 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import com.tinkerpop.blueprints.impls.orient.OrientGraph;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import org.testng.Assert;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Optional;
 import org.testng.annotations.Parameters;
 import org.testng.annotations.Test;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
-//TODO re-enable when the new executor is implemented in remote
-@Test(enabled = false) @SuppressWarnings("unused") public class TraverseTestNew extends DocumentDBBaseTest {
+// TODO re-enable when the new executor is implemented in remote
+@Test(enabled = false)
+@SuppressWarnings("unused")
+public class TraverseTestNew extends DocumentDBBaseTest {
   private int totalElements = 0;
   private ODocument tomCruise;
   private ODocument megRyan;
   private ODocument nicoleKidman;
 
-  @Parameters(value = "url") public TraverseTestNew(@Optional String url) {
+  @Parameters(value = "url")
+  public TraverseTestNew(@Optional String url) {
     super(url);
   }
 
-  @BeforeClass public void init() {
+  @BeforeClass
+  public void init() {
     OrientGraph graph = new OrientGraph(database);
     graph.setUseLightweightEdges(false);
 
@@ -54,14 +57,19 @@ import java.util.Map;
     totalElements++;
     megRyan = graph.addVertex("class:Actor", "name", "Meg Ryan").getRecord();
     totalElements++;
-    nicoleKidman = graph.addVertex("class:Actor", "name", "Nicole Kidman", "attributeWithDotValue", "a.b").getRecord();
+    nicoleKidman =
+        graph
+            .addVertex("class:Actor", "name", "Nicole Kidman", "attributeWithDotValue", "a.b")
+            .getRecord();
     totalElements++;
 
     ODocument topGun = graph.addVertex("class:Movie", "name", "Top Gun", "year", 1986).getRecord();
     totalElements++;
-    ODocument missionImpossible = graph.addVertex("class:Movie", "name", "Mission: Impossible", "year", 1996).getRecord();
+    ODocument missionImpossible =
+        graph.addVertex("class:Movie", "name", "Mission: Impossible", "year", 1996).getRecord();
     totalElements++;
-    ODocument youHaveGotMail = graph.addVertex("class:Movie", "name", "You've Got Mail", "year", 1998).getRecord();
+    ODocument youHaveGotMail =
+        graph.addVertex("class:Movie", "name", "You've Got Mail", "year", 1998).getRecord();
     totalElements++;
 
     graph.addEdge(null, graph.getVertex(tomCruise), graph.getVertex(topGun), "actorIn");
@@ -75,14 +83,17 @@ import java.util.Map;
 
     graph.addEdge(null, graph.getVertex(tomCruise), graph.getVertex(megRyan), "friend");
     totalElements++;
-    graph.addEdge(null, graph.getVertex(tomCruise), graph.getVertex(nicoleKidman), "married").setProperty("year", 1990);
+    graph
+        .addEdge(null, graph.getVertex(tomCruise), graph.getVertex(nicoleKidman), "married")
+        .setProperty("year", 1990);
     totalElements++;
 
     graph.commit();
   }
 
   public void traverseSQLAllFromActorNoWhereBreadthFrirst() {
-    OResultSet result1 = database.query("traverse * from " + tomCruise.getIdentity() + " strategy BREADTH_FIRST");
+    OResultSet result1 =
+        database.query("traverse * from " + tomCruise.getIdentity() + " strategy BREADTH_FIRST");
 
     for (int i = 0; i < totalElements; i++) {
       Assert.assertTrue(result1.hasNext());
@@ -92,7 +103,8 @@ import java.util.Map;
   }
 
   public void traverseSQLAllFromActorNoWhereDepthFrirst() {
-    OResultSet result1 = database.query("traverse * from " + tomCruise.getIdentity() + " strategy DEPTH_FIRST");
+    OResultSet result1 =
+        database.query("traverse * from " + tomCruise.getIdentity() + " strategy DEPTH_FIRST");
 
     for (int i = 0; i < totalElements; i++) {
       Assert.assertTrue(result1.hasNext());
@@ -101,15 +113,19 @@ import java.util.Map;
     result1.close();
   }
 
-  @Test public void traverseSQLOutFromActor1Depth() {
-    OResultSet result1 = database.query("traverse out_ from " + tomCruise.getIdentity() + " while $depth <= 1");
+  @Test
+  public void traverseSQLOutFromActor1Depth() {
+    OResultSet result1 =
+        database.query("traverse out_ from " + tomCruise.getIdentity() + " while $depth <= 1");
 
     Assert.assertTrue(result1.hasNext());
     result1.close();
   }
 
-  @Test public void traverseSQLMoviesOnly() {
-    OResultSet result1 = database.query("select from ( traverse * from Movie ) where @class = 'Movie'");
+  @Test
+  public void traverseSQLMoviesOnly() {
+    OResultSet result1 =
+        database.query("select from ( traverse * from Movie ) where @class = 'Movie'");
     Assert.assertTrue(result1.hasNext());
     while (result1.hasNext()) {
       OResult d = result1.next();
@@ -119,9 +135,13 @@ import java.util.Map;
     result1.close();
   }
 
-  @Test public void traverseSQLPerClassFields() {
-    OResultSet result1 = database
-        .query("select from ( traverse out() from " + tomCruise.getIdentity() + ") where @class = 'Movie'");
+  @Test
+  public void traverseSQLPerClassFields() {
+    OResultSet result1 =
+        database.query(
+            "select from ( traverse out() from "
+                + tomCruise.getIdentity()
+                + ") where @class = 'Movie'");
     Assert.assertTrue(result1.hasNext());
     while (result1.hasNext()) {
       OResult d = result1.next();
@@ -130,13 +150,20 @@ import java.util.Map;
     result1.close();
   }
 
-  @Test public void traverseSQLMoviesOnlyDepth() {
-    OResultSet result1 = database
-        .query("select from ( traverse * from " + tomCruise.getIdentity() + " while $depth <= 1 ) where @class = 'Movie'");
+  @Test
+  public void traverseSQLMoviesOnlyDepth() {
+    OResultSet result1 =
+        database.query(
+            "select from ( traverse * from "
+                + tomCruise.getIdentity()
+                + " while $depth <= 1 ) where @class = 'Movie'");
     Assert.assertFalse(result1.hasNext());
     result1.close();
-    OResultSet result2 = database
-        .query("select from ( traverse * from " + tomCruise.getIdentity() + " while $depth <= 2 ) where @class = 'Movie'");
+    OResultSet result2 =
+        database.query(
+            "select from ( traverse * from "
+                + tomCruise.getIdentity()
+                + " while $depth <= 2 ) where @class = 'Movie'");
     Assert.assertTrue(result2.hasNext());
     int size2 = 0;
     while (result2.hasNext()) {
@@ -145,8 +172,11 @@ import java.util.Map;
       size2++;
     }
     result2.close();
-    OResultSet result3 = database
-        .query("select from ( traverse * from " + tomCruise.getIdentity() + " ) where @class = 'Movie'");
+    OResultSet result3 =
+        database.query(
+            "select from ( traverse * from "
+                + tomCruise.getIdentity()
+                + " ) where @class = 'Movie'");
     Assert.assertTrue(result3.hasNext());
     int size3 = 0;
     while (result3.hasNext()) {
@@ -158,7 +188,8 @@ import java.util.Map;
     result3.close();
   }
 
-  @Test public void traverseSelect() {
+  @Test
+  public void traverseSelect() {
     OResultSet result1 = database.query("traverse * from ( select from Movie )");
     int tot = 0;
     while (result1.hasNext()) {
@@ -170,9 +201,13 @@ import java.util.Map;
     result1.close();
   }
 
-  @Test public void traverseSQLSelectAndTraverseNested() {
-    OResultSet result1 = database.query("traverse * from ( select from ( traverse * from " + tomCruise.getIdentity()
-        + " while $depth <= 2 ) where @class = 'Movie' )");
+  @Test
+  public void traverseSQLSelectAndTraverseNested() {
+    OResultSet result1 =
+        database.query(
+            "traverse * from ( select from ( traverse * from "
+                + tomCruise.getIdentity()
+                + " while $depth <= 2 ) where @class = 'Movie' )");
 
     int tot = 0;
     while (result1.hasNext()) {
@@ -184,9 +219,13 @@ import java.util.Map;
     result1.close();
   }
 
-  @Test public void traverseAPISelectAndTraverseNested() {
-    OResultSet result1 = database.command("traverse * from ( select from ( traverse * from " + tomCruise.getIdentity()
-        + " while $depth <= 2 ) where @class = 'Movie' )");
+  @Test
+  public void traverseAPISelectAndTraverseNested() {
+    OResultSet result1 =
+        database.command(
+            "traverse * from ( select from ( traverse * from "
+                + tomCruise.getIdentity()
+                + " while $depth <= 2 ) where @class = 'Movie' )");
     int tot = 0;
     while (result1.hasNext()) {
       result1.next();
@@ -195,9 +234,13 @@ import java.util.Map;
     Assert.assertEquals(tot, totalElements);
   }
 
-  @Test public void traverseAPISelectAndTraverseNestedDepthFirst() {
-    OResultSet result1 = database.query("traverse * from ( select from ( traverse * from " + tomCruise.getIdentity()
-        + " while $depth <= 2 strategy depth_first ) where @class = 'Movie' )");
+  @Test
+  public void traverseAPISelectAndTraverseNestedDepthFirst() {
+    OResultSet result1 =
+        database.query(
+            "traverse * from ( select from ( traverse * from "
+                + tomCruise.getIdentity()
+                + " while $depth <= 2 strategy depth_first ) where @class = 'Movie' )");
     int tot = 0;
     while (result1.hasNext()) {
       result1.next();
@@ -207,9 +250,13 @@ import java.util.Map;
     result1.close();
   }
 
-  @Test public void traverseAPISelectAndTraverseNestedBreadthFirst() {
-    OResultSet result1 = database.command("traverse * from ( select from ( traverse * from " + tomCruise.getIdentity()
-        + " while $depth <= 2 strategy breadth_first ) where @class = 'Movie' )");
+  @Test
+  public void traverseAPISelectAndTraverseNestedBreadthFirst() {
+    OResultSet result1 =
+        database.command(
+            "traverse * from ( select from ( traverse * from "
+                + tomCruise.getIdentity()
+                + " while $depth <= 2 strategy breadth_first ) where @class = 'Movie' )");
     int tot = 0;
     while (result1.hasNext()) {
       result1.next();
@@ -218,7 +265,8 @@ import java.util.Map;
     Assert.assertEquals(tot, totalElements);
   }
 
-  @Test public void traverseSelectNoInfluence() {
+  @Test
+  public void traverseSelectNoInfluence() {
     OResultSet result1 = database.query("traverse * from Movie while $depth < 2");
     List<OResult> list1 = new ArrayList<>();
     while (result1.hasNext()) {
@@ -231,14 +279,16 @@ import java.util.Map;
       list2.add(result2.next());
     }
     result2.close();
-    OResultSet result3 = database.query("select from ( traverse * from Movie while $depth < 2 ) where true");
+    OResultSet result3 =
+        database.query("select from ( traverse * from Movie while $depth < 2 ) where true");
     List<OResult> list3 = new ArrayList<>();
     while (result3.hasNext()) {
       list3.add(result3.next());
     }
     result3.close();
-    OResultSet result4 = database
-        .query("select from ( traverse * from Movie while $depth < 2 and ( true = true ) ) where true");
+    OResultSet result4 =
+        database.query(
+            "select from ( traverse * from Movie while $depth < 2 and ( true = true ) ) where true");
 
     List<OResult> list4 = new ArrayList<>();
     while (result4.hasNext()) {
@@ -251,17 +301,22 @@ import java.util.Map;
     result4.close();
   }
 
-  @Test public void traverseNoConditionLimit1() {
+  @Test
+  public void traverseNoConditionLimit1() {
     OResultSet result1 = database.query("traverse * from Movie limit 1");
     Assert.assertTrue(result1.hasNext());
     result1.next();
     Assert.assertFalse(result1.hasNext());
   }
 
-  @Test public void traverseAndFilterByAttributeThatContainsDotInValue() {
+  @Test
+  public void traverseAndFilterByAttributeThatContainsDotInValue() {
     // issue #4952
-    OResultSet result1 = database
-        .query("select from ( traverse out_married, in[attributeWithDotValue = 'a.b']  from " + tomCruise.getIdentity() + ")");
+    OResultSet result1 =
+        database.query(
+            "select from ( traverse out_married, in[attributeWithDotValue = 'a.b']  from "
+                + tomCruise.getIdentity()
+                + ")");
     Assert.assertTrue(result1.hasNext());
     boolean found = false;
     while (result1.hasNext()) {
@@ -276,12 +331,16 @@ import java.util.Map;
     result1.close();
   }
 
-  @Test public void traverseAndFilterWithNamedParam() {
+  @Test
+  public void traverseAndFilterWithNamedParam() {
     // issue #5225
     Map<String, Object> params = new HashMap<String, Object>();
     params.put("param1", "a.b");
-    OResultSet result1 = database
-        .query("select from (traverse out_married, in[attributeWithDotValue = :param1]  from " + tomCruise.getIdentity() + ")",
+    OResultSet result1 =
+        database.query(
+            "select from (traverse out_married, in[attributeWithDotValue = :param1]  from "
+                + tomCruise.getIdentity()
+                + ")",
             params);
     Assert.assertTrue(result1.hasNext());
     boolean found = false;
@@ -296,9 +355,13 @@ import java.util.Map;
     Assert.assertTrue(found);
   }
 
-  @Test public void traverseAndCheckDepthInSelect() {
-    OResultSet result1 = database
-        .query("select *, $depth as d from ( traverse out_married  from " + tomCruise.getIdentity() + " while $depth < 2)");
+  @Test
+  public void traverseAndCheckDepthInSelect() {
+    OResultSet result1 =
+        database.query(
+            "select *, $depth as d from ( traverse out_married  from "
+                + tomCruise.getIdentity()
+                + " while $depth < 2)");
     boolean found = false;
     Integer i = 0;
     while (result1.hasNext()) {
@@ -310,7 +373,8 @@ import java.util.Map;
     result1.close();
   }
 
-  @Test public void traverseAndCheckReturn() {
+  @Test
+  public void traverseAndCheckReturn() {
 
     try {
 
@@ -331,7 +395,5 @@ import java.util.Map;
     } finally {
       ODatabaseRecordThreadLocal.instance().set(database);
     }
-
   }
-
 }

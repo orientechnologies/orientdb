@@ -16,60 +16,48 @@
  */
 package com.orientechnologies.orient.test.domain.base;
 
+import com.orientechnologies.orient.core.record.impl.OBlob;
+import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.test.domain.business.Child;
+import com.orientechnologies.orient.test.domain.business.IdentityChild;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-
 import javax.persistence.Embedded;
 import javax.persistence.Id;
 import javax.persistence.Version;
 
-import com.orientechnologies.orient.core.record.impl.OBlob;
-import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.test.domain.business.Child;
-import com.orientechnologies.orient.test.domain.business.IdentityChild;
-
-/**
- * @author Luca Molino (molino.luca--at--gmail.com)
- * 
- */
+/** @author Luca Molino (molino.luca--at--gmail.com) */
 public class JavaComplexTestClass {
-  @Id
-  private String                    id;
-  @Version
-  private Object                    version;
+  @Id private String id;
+  @Version private Object version;
 
-  @Embedded
-  private ODocument                 embeddedDocument;
-  private ODocument                 document;
-  private OBlob                     byteArray;
-  private String                    name;
-  private EnumTest                  enumField;
-  private Child                     child;
-  private Map<String, String>       stringMap          = new HashMap<String, String>();
-  private Map<String, List<String>> stringListMap      = new HashMap<String, List<String>>();
-  private List<Child>               list               = new ArrayList<Child>();
-  private Set<Child>                set                = new HashSet<Child>();
-  private Set<IdentityChild>        duplicationTestSet = new HashSet<IdentityChild>();
-  private Map<String, Child>        children           = new HashMap<String, Child>();
-  private Map<String, Object>       mapObject          = new HashMap<String, Object>();
-  private List<EnumTest>            enumList           = new ArrayList<EnumTest>();
-  private Set<EnumTest>             enumSet            = new HashSet<EnumTest>();
-  private Set<String>               stringSet          = new HashSet<String>();
-  private Map<String, EnumTest>     enumMap            = new HashMap<String, EnumTest>();
+  @Embedded private ODocument embeddedDocument;
+  private ODocument document;
+  private OBlob byteArray;
+  private String name;
+  private EnumTest enumField;
+  private Child child;
+  private Map<String, String> stringMap = new HashMap<String, String>();
+  private Map<String, List<String>> stringListMap = new HashMap<String, List<String>>();
+  private List<Child> list = new ArrayList<Child>();
+  private Set<Child> set = new HashSet<Child>();
+  private Set<IdentityChild> duplicationTestSet = new HashSet<IdentityChild>();
+  private Map<String, Child> children = new HashMap<String, Child>();
+  private Map<String, Object> mapObject = new HashMap<String, Object>();
+  private List<EnumTest> enumList = new ArrayList<EnumTest>();
+  private Set<EnumTest> enumSet = new HashSet<EnumTest>();
+  private Set<String> stringSet = new HashSet<String>();
+  private Map<String, EnumTest> enumMap = new HashMap<String, EnumTest>();
 
-  @Embedded
-  private List<Child>               embeddedList       = new ArrayList<Child>();
-  @Embedded
-  private Set<Child>                embeddedSet        = new HashSet<Child>();
-  @Embedded
-  private Map<String, Child>        embeddedChildren   = new HashMap<String, Child>();
+  @Embedded private List<Child> embeddedList = new ArrayList<Child>();
+  @Embedded private Set<Child> embeddedSet = new HashSet<Child>();
+  @Embedded private Map<String, Child> embeddedChildren = new HashMap<String, Child>();
 
-  @Embedded
-  private Map<String, Object>       embeddedObjectMap  = new HashMap<String, Object>();
+  @Embedded private Map<String, Object> embeddedObjectMap = new HashMap<String, Object>();
 
   public String getName() {
     return name;

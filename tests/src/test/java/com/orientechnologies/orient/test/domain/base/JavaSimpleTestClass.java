@@ -17,36 +17,31 @@
 package com.orientechnologies.orient.test.domain.base;
 
 import java.util.Date;
-
 import javax.persistence.Id;
 import javax.persistence.Version;
 
-/**
- * @author Luca Molino (molino.luca--at--gmail.com)
- * 
- */
+/** @author Luca Molino (molino.luca--at--gmail.com) */
 public class JavaSimpleTestClass {
-  @Id
-  private Object            id;
-  @Version
-  private Object            version;
+  @Id private Object id;
+  @Version private Object version;
 
-  private String            text          = "initTest";
-  private EnumTest          enumeration;
-  private int               numberSimple  = 0;
-  private long              longSimple    = 0l;
-  private double            doubleSimple  = 0d;
-  private float             floatSimple   = 0f;
-  private byte              byteSimple    = 0;
-  private boolean           flagSimple    = false;
-  private Date              dateField;
-  private JavaTestInterface testAnonymous = new JavaTestInterface() {
+  private String text = "initTest";
+  private EnumTest enumeration;
+  private int numberSimple = 0;
+  private long longSimple = 0l;
+  private double doubleSimple = 0d;
+  private float floatSimple = 0f;
+  private byte byteSimple = 0;
+  private boolean flagSimple = false;
+  private Date dateField;
+  private JavaTestInterface testAnonymous =
+      new JavaTestInterface() {
 
-                                            public int getNumber() {
-                                              // TODO Auto-generated method stub
-                                              return -1;
-                                            }
-                                          };
+        public int getNumber() {
+          // TODO Auto-generated method stub
+          return -1;
+        }
+      };
 
   public Object getId() {
     return id;
@@ -143,5 +138,4 @@ public class JavaSimpleTestClass {
   public void setDateField(Date dateField) {
     this.dateField = dateField;
   }
-
 }

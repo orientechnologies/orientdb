@@ -15,12 +15,10 @@
  */
 package com.orientechnologies.orient.test.database.base;
 
+import com.orientechnologies.orient.core.exception.OConfigurationException;
 import java.io.File;
-
 import org.testng.annotations.Parameters;
 import org.testng.annotations.Test;
-
-import com.orientechnologies.orient.core.exception.OConfigurationException;
 
 @Test
 public class DeleteDirectory {
@@ -28,20 +26,15 @@ public class DeleteDirectory {
   public DeleteDirectory(String iPath) {
     final File f = new File(iPath);
 
-    if (f.exists())
-      deleteDirectory(f);
-    else
-      System.err.println("Directory: " + f.getAbsolutePath() + " not found");
+    if (f.exists()) deleteDirectory(f);
+    else System.err.println("Directory: " + f.getAbsolutePath() + " not found");
   }
 
   private void deleteDirectory(File iDirectory) {
     if (iDirectory.isDirectory())
       for (File f : iDirectory.listFiles()) {
-        if (f.isDirectory())
-          deleteDirectory(f);
-        else if (!f.delete())
-          throw new OConfigurationException("Cannot delete the file: " + f);
+        if (f.isDirectory()) deleteDirectory(f);
+        else if (!f.delete()) throw new OConfigurationException("Cannot delete the file: " + f);
       }
-
   }
 }

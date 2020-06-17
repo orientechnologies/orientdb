@@ -15,10 +15,6 @@
  */
 package com.orientechnologies.orient.test.java.lang;
 
-import java.util.List;
-
-import org.testng.Assert;
-
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
@@ -26,6 +22,8 @@ import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
+import java.util.List;
+import org.testng.Assert;
 
 public class MathTest {
   public static final void main(String[] args) {
@@ -43,6 +41,5 @@ public class MathTest {
 
     Assert.assertEquals(new Double(28.23), new Float(28.23).doubleValue());
     Assert.assertEquals(new Float(28.23), new Double(28.23).floatValue());
-
   }
 }

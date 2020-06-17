@@ -15,20 +15,19 @@
  */
 package com.orientechnologies.orient.test.database.auto;
 
-import java.util.List;
-
-import org.testng.Assert;
-import org.testng.annotations.*;
-
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
-import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.sql.OCommandSQL;
+import org.testng.annotations.AfterMethod;
+import org.testng.annotations.BeforeClass;
+import org.testng.annotations.BeforeMethod;
+import org.testng.annotations.Optional;
+import org.testng.annotations.Parameters;
+import org.testng.annotations.Test;
 
 @Test(groups = "sql-select")
 public class SQLEscapingTest {
   private ODatabaseDocument database;
-  private String            url;
+  private String url;
 
   public SQLEscapingTest() {
     database = new ODatabaseDocumentTx("memory:testescaping");
@@ -43,8 +42,7 @@ public class SQLEscapingTest {
 
   @BeforeClass
   public void beforeClass() {
-    if (database == null)
-      database = new ODatabaseDocumentTx(url);
+    if (database == null) database = new ODatabaseDocumentTx(url);
   }
 
   @BeforeMethod
@@ -57,43 +55,50 @@ public class SQLEscapingTest {
     database.close();
   }
 
-  //TODO re-enable this with new parser. this test was broken!!!
-//  public void testEscaping() {
-//    database.getMetadata().getSchema().createClass("Thing");
-//
-//    List result = database.command(new OCommandSQL("select from cluster:internal")).execute();
-//
-//    List result0 = database.command(new OCommandSQL("select from cluster:internal where \"\\u005C\\u005C\" = \"\\u005C\\u005C\"")).execute();
-//    Assert.assertEquals(result.size(), result0.size());
-//
-//    ODocument document0 = database.command(new OCommandSQL("insert into Thing set value = \"\\u005C\\u005C\"")).execute();
-//    Assert.assertEquals("\\", document0.field("value"));
-//
-//    ODocument document1 = database.command(new OCommandSQL("insert into Thing set value = \"\\\\\"")).execute();
-//    Assert.assertEquals("\\", document1.field("value"));
-//
-//    List list1 = database.command(new OCommandSQL("select from cluster:internal where \"\\u005C\\u005C\" == \"\\\\\"")).execute();
-//    Assert.assertEquals(result.size(), list1.size());
-//
-//    try {
-//      ODocument document2 = database.command(new OCommandSQL("insert into Thing set value = \"\\\"")).execute();
-//      Assert.assertTrue(false);
-//    } catch (Exception e) {
-//      Assert.assertTrue(true);
-//    }
-//
-//    try {
-//      List list2 = database.command(new OCommandSQL("select from cluster:internal where \"\\u005C\" == \"\\\"")).execute();
-//      Assert.assertTrue(false);
-//    } catch (Exception e) {
-//      Assert.assertTrue(true);
-//    }
-//
-//    try {
-//      List list3 = database.command(new OCommandSQL("select from cluster:internal where \"\\\" == \"\\u005C\"")).execute();
-//      Assert.assertTrue(false);
-//    } catch (Exception e) {
-//      Assert.assertTrue(true);
-//    }
-//  }
+  // TODO re-enable this with new parser. this test was broken!!!
+  //  public void testEscaping() {
+  //    database.getMetadata().getSchema().createClass("Thing");
+  //
+  //    List result = database.command(new OCommandSQL("select from cluster:internal")).execute();
+  //
+  //    List result0 = database.command(new OCommandSQL("select from cluster:internal where
+  // \"\\u005C\\u005C\" = \"\\u005C\\u005C\"")).execute();
+  //    Assert.assertEquals(result.size(), result0.size());
+  //
+  //    ODocument document0 = database.command(new OCommandSQL("insert into Thing set value =
+  // \"\\u005C\\u005C\"")).execute();
+  //    Assert.assertEquals("\\", document0.field("value"));
+  //
+  //    ODocument document1 = database.command(new OCommandSQL("insert into Thing set value =
+  // \"\\\\\"")).execute();
+  //    Assert.assertEquals("\\", document1.field("value"));
+  //
+  //    List list1 = database.command(new OCommandSQL("select from cluster:internal where
+  // \"\\u005C\\u005C\" == \"\\\\\"")).execute();
+  //    Assert.assertEquals(result.size(), list1.size());
+  //
+  //    try {
+  //      ODocument document2 = database.command(new OCommandSQL("insert into Thing set value =
+  // \"\\\"")).execute();
+  //      Assert.assertTrue(false);
+  //    } catch (Exception e) {
+  //      Assert.assertTrue(true);
+  //    }
+  //
+  //    try {
+  //      List list2 = database.command(new OCommandSQL("select from cluster:internal where
+  // \"\\u005C\" == \"\\\"")).execute();
+  //      Assert.assertTrue(false);
+  //    } catch (Exception e) {
+  //      Assert.assertTrue(true);
+  //    }
+  //
+  //    try {
+  //      List list3 = database.command(new OCommandSQL("select from cluster:internal where \"\\\"
+  // == \"\\u005C\"")).execute();
+  //      Assert.assertTrue(false);
+  //    } catch (Exception e) {
+  //      Assert.assertTrue(true);
+  //    }
+  //  }
 }

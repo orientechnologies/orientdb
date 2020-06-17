@@ -19,17 +19,13 @@ package com.orientechnologies.orient.test.domain.base;
 import java.util.HashSet;
 import java.util.Set;
 
-/**
- * @author Luca Molino (molino.luca--at--gmail.com)
- * 
- */
+/** @author Luca Molino (molino.luca--at--gmail.com) */
 public class PersonTest {
-  private String      firstname;
+  private String firstname;
 
   private Set<PersonTest> friends = new HashSet<PersonTest>();
 
-  public PersonTest() {
-  }
+  public PersonTest() {}
 
   public String getFirstname() {
     return firstname;

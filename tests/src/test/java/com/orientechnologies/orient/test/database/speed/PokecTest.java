@@ -12,12 +12,14 @@ public class PokecTest {
     databaseDocumentTx.open("admin", "admin");
 
     //    for (int i = 0; i < 100; i++) {
-    //      databaseDocumentTx.query(new OSQLSynchQuery<ODocument>("select AGE, count(*) from Profile group by AGE limit -1"));
+    //      databaseDocumentTx.query(new OSQLSynchQuery<ODocument>("select AGE, count(*) from
+    // Profile group by AGE limit -1"));
     //    }
 
     long start = System.nanoTime();
     //    for (int i = 0; i < 100; i++) {
-      databaseDocumentTx.query(new OSQLSynchQuery<ODocument>("select AGE, count(*) from Profile group by AGE limit -1"));
+    databaseDocumentTx.query(
+        new OSQLSynchQuery<ODocument>("select AGE, count(*) from Profile group by AGE limit -1"));
     //    }
     long end = System.nanoTime();
 

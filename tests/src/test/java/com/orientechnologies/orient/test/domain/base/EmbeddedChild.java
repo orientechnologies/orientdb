@@ -16,23 +16,20 @@
  */
 package com.orientechnologies.orient.test.domain.base;
 
-/**
- * @author Luca Molino (molino.luca--at--gmail.com)
- * 
- */
+/** @author Luca Molino (molino.luca--at--gmail.com) */
 public class EmbeddedChild {
-	private String	name;
+  private String name;
 
-	public String getName() {
-		return name;
-	}
+  public String getName() {
+    return name;
+  }
 
-	public void setName(String name) {
-		this.name = name;
-	}
+  public void setName(String name) {
+    this.name = name;
+  }
 
-	@Override
-	public String toString() {
-		return "EmbeddedChild [getName()=" + getName() + "]";
-	}
+  @Override
+  public String toString() {
+    return "EmbeddedChild [getName()=" + getName() + "]";
+  }
 }

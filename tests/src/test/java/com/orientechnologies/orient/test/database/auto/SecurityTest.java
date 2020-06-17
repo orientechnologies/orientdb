@@ -15,35 +15,28 @@
  */
 package com.orientechnologies.orient.test.database.auto;
 
-import java.io.IOException;
-import java.util.Date;
-import java.util.List;
-
-import com.orientechnologies.orient.core.exception.OValidationException;
-import org.testng.Assert;
-import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.Optional;
-import org.testng.annotations.Parameters;
-import org.testng.annotations.Test;
-
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.orient.core.exception.OSecurityAccessException;
 import com.orientechnologies.orient.core.exception.OSecurityException;
-import com.orientechnologies.orient.core.metadata.security.*;
+import com.orientechnologies.orient.core.exception.OValidationException;
+import com.orientechnologies.orient.core.metadata.security.ORole;
+import com.orientechnologies.orient.core.metadata.security.OSecurity;
+import com.orientechnologies.orient.core.metadata.security.OSecurityRole;
+import com.orientechnologies.orient.core.metadata.security.OSecurityUser;
+import com.orientechnologies.orient.core.metadata.security.OUser;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.orientechnologies.orient.core.storage.OStorageProxy;
 import com.orientechnologies.orient.graph.gremlin.OCommandGremlin;
+import java.io.IOException;
+import java.util.Date;
+import java.util.List;
 import org.testng.Assert;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Optional;
 import org.testng.annotations.Parameters;
 import org.testng.annotations.Test;
-
-import java.io.IOException;
-import java.util.Date;
-import java.util.List;
 
 @Test(groups = "security")
 public class SecurityTest extends DocumentDBBaseTest {
@@ -65,8 +58,14 @@ public class SecurityTest extends DocumentDBBaseTest {
     try {
       database.open("reader", "swdsds");
     } catch (OException e) {
-      Assert.assertTrue(e instanceof OSecurityAccessException || e.getCause() != null
-          && e.getCause().toString().indexOf("com.orientechnologies.orient.core.exception.OSecurityAccessException") > -1);
+      Assert.assertTrue(
+          e instanceof OSecurityAccessException
+              || e.getCause() != null
+                  && e.getCause()
+                          .toString()
+                          .indexOf(
+                              "com.orientechnologies.orient.core.exception.OSecurityAccessException")
+                      > -1);
     }
   }
 
@@ -89,7 +88,16 @@ public class SecurityTest extends DocumentDBBaseTest {
 
     try {
       new ODocument("Profile")
-          .fields("nick", "error", "password", "I don't know", "lastAccessOn", new Date(), "registeredOn", new Date()).save();
+          .fields(
+              "nick",
+              "error",
+              "password",
+              "I don't know",
+              "lastAccessOn",
+              new Date(),
+              "registeredOn",
+              new Date())
+          .save();
     } catch (OSecurityAccessException e) {
       Assert.assertTrue(true);
     } finally {
@@ -101,14 +109,21 @@ public class SecurityTest extends DocumentDBBaseTest {
   public void testEncryptPassword() throws IOException {
     database.open("admin", "admin");
 
-    Integer updated = database.command(new OCommandSQL("update ouser set password = 'test' where name = 'reader'")).execute();
+    Integer updated =
+        database
+            .command(new OCommandSQL("update ouser set password = 'test' where name = 'reader'"))
+            .execute();
     Assert.assertEquals(updated.intValue(), 1);
 
-    List<ODocument> result = database.query(new OSQLSynchQuery<Object>("select from ouser where name = 'reader'"));
+    List<ODocument> result =
+        database.query(new OSQLSynchQuery<Object>("select from ouser where name = 'reader'"));
     Assert.assertFalse(result.get(0).field("password").equals("test"));
 
     // RESET OLD PASSWORD
-    updated = database.command(new OCommandSQL("update ouser set password = 'reader' where name = 'reader'")).execute();
+    updated =
+        database
+            .command(new OCommandSQL("update ouser set password = 'reader' where name = 'reader'"))
+            .execute();
     Assert.assertEquals(updated.intValue(), 1);
 
     result = database.query(new OSQLSynchQuery<Object>("select from ouser where name = 'reader'"));
@@ -123,11 +138,14 @@ public class SecurityTest extends DocumentDBBaseTest {
     OSecurity security = database.getMetadata().getSecurity();
     ORole writer = security.getRole("writer");
 
-    ORole writerChild = security.createRole("writerChild", writer, OSecurityRole.ALLOW_MODES.ALLOW_ALL_BUT);
+    ORole writerChild =
+        security.createRole("writerChild", writer, OSecurityRole.ALLOW_MODES.ALLOW_ALL_BUT);
     writerChild.save();
 
     try {
-      ORole writerGrandChild = security.createRole("writerGrandChild", writerChild, OSecurityRole.ALLOW_MODES.ALLOW_ALL_BUT);
+      ORole writerGrandChild =
+          security.createRole(
+              "writerGrandChild", writerChild, OSecurityRole.ALLOW_MODES.ALLOW_ALL_BUT);
       writerGrandChild.save();
 
       try {
@@ -279,8 +297,7 @@ public class SecurityTest extends DocumentDBBaseTest {
 
   @Test
   public void testGremlinExecution() throws IOException {
-    if (!database.getURL().startsWith("remote:"))
-      return;
+    if (!database.getURL().startsWith("remote:")) return;
 
     database.open("admin", "admin");
     try {
@@ -321,7 +338,6 @@ public class SecurityTest extends DocumentDBBaseTest {
         Assert.assertTrue(false);
       } catch (OValidationException ve) {
         Assert.assertTrue(true);
-
       }
       Assert.assertNull(security.getUser(userName));
     } finally {
@@ -342,7 +358,6 @@ public class SecurityTest extends DocumentDBBaseTest {
         Assert.assertTrue(false);
       } catch (OValidationException ve) {
         Assert.assertTrue(true);
-
       }
       Assert.assertNull(security.getUser(userName));
     } finally {
@@ -363,7 +378,6 @@ public class SecurityTest extends DocumentDBBaseTest {
         Assert.assertTrue(false);
       } catch (OValidationException ve) {
         Assert.assertTrue(true);
-
       }
       Assert.assertNull(security.getUser(userName));
     } finally {
@@ -384,7 +398,6 @@ public class SecurityTest extends DocumentDBBaseTest {
         Assert.assertTrue(false);
       } catch (OValidationException ve) {
         Assert.assertTrue(true);
-
       }
       Assert.assertNull(security.getUser(userName));
     } finally {
@@ -405,7 +418,6 @@ public class SecurityTest extends DocumentDBBaseTest {
         Assert.assertTrue(false);
       } catch (OValidationException ve) {
         Assert.assertTrue(true);
-
       }
       Assert.assertNull(security.getUser(userName));
     } finally {

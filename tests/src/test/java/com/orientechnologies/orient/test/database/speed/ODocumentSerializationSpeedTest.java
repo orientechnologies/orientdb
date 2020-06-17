@@ -15,10 +15,9 @@
  */
 package com.orientechnologies.orient.test.database.speed;
 
-import org.testng.annotations.Test;
-
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.test.database.base.OrientMonoThreadTest;
+import org.testng.annotations.Test;
 
 @Test(enabled = false)
 public class ODocumentSerializationSpeedTest extends OrientMonoThreadTest {
@@ -39,8 +38,7 @@ public class ODocumentSerializationSpeedTest extends OrientMonoThreadTest {
   public void cycle() {
     record.reset();
     record.field("id", data.getCyclesDone());
-    for (int i = 0; i < 15; ++i)
-      record.field("name" + i, "Luca" + i);
+    for (int i = 0; i < 15; ++i) record.field("name" + i, "Luca" + i);
     // record.field("surname", "Garulli");
     // record.field("salary", 3000f);
     // record.field("double", 3343434d);

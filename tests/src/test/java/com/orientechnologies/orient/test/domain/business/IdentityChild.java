@@ -19,15 +19,10 @@ package com.orientechnologies.orient.test.domain.business;
 import javax.persistence.Id;
 import javax.persistence.Version;
 
-/**
- * @author Luca Molino (molino.luca--at--gmail.com)
- * 
- */
+/** @author Luca Molino (molino.luca--at--gmail.com) */
 public class IdentityChild {
-  @Id
-  private Object id;
-  @Version
-  private Object version;
+  @Id private Object id;
+  @Version private Object version;
   private String name;
 
   public String getName() {
@@ -55,5 +50,4 @@ public class IdentityChild {
   public boolean equals(Object obj) {
     return true;
   }
-
 }

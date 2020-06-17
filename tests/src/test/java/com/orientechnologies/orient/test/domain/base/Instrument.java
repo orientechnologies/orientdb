@@ -16,32 +16,35 @@
  */
 package com.orientechnologies.orient.test.domain.base;
 
-/**
- * @author Luca Molino (molino.luca--at--gmail.com)
- * 
- */
+/** @author Luca Molino (molino.luca--at--gmail.com) */
 public class Instrument extends IdObject {
-	private String	name;
+  private String name;
 
-	public Instrument() {
-		super();
-	}
+  public Instrument() {
+    super();
+  }
 
-	public Instrument(String aName) {
-		this();
-		this.setName(aName);
-	}
+  public Instrument(String aName) {
+    this();
+    this.setName(aName);
+  }
 
-	public String getName() {
-		return name;
-	}
+  public String getName() {
+    return name;
+  }
 
-	public void setName(String name) {
-		this.name = name;
-	}
+  public void setName(String name) {
+    this.name = name;
+  }
 
-	@Override
-	public String toString() {
-		return "Instrument [id=" + this.getId() + ", version=" + this.getVersion() + ", name=" + this.getName() + "]";
-	}
+  @Override
+  public String toString() {
+    return "Instrument [id="
+        + this.getId()
+        + ", version="
+        + this.getVersion()
+        + ", name="
+        + this.getName()
+        + "]";
+  }
 }

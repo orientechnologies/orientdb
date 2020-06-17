@@ -16,18 +16,17 @@
 package com.orientechnologies.orient.test.java.serialization;
 
 public class StringContainsSpeedTest {
-	private static final String	TEXT	= "Ciao, questa, e, una, prova. Che ne pensi?";
-	private static final int		MAX		= 10000000;
+  private static final String TEXT = "Ciao, questa, e, una, prova. Che ne pensi?";
+  private static final int MAX = 10000000;
 
-	public static void main(String[] iArgs) {
-		System.out.println("Start testing cycle X " + MAX);
+  public static void main(String[] iArgs) {
+    System.out.println("Start testing cycle X " + MAX);
 
-		long time = System.currentTimeMillis();
-		for (int i = 0; i < MAX; ++i) {
-			TEXT.contains(",");
-			if (i % (MAX / 10) == 0)
-				System.out.print(".");
-		}
-		System.out.println("\nElapsed: " + (System.currentTimeMillis() - time));
-	}
+    long time = System.currentTimeMillis();
+    for (int i = 0; i < MAX; ++i) {
+      TEXT.contains(",");
+      if (i % (MAX / 10) == 0) System.out.print(".");
+    }
+    System.out.println("\nElapsed: " + (System.currentTimeMillis() - time));
+  }
 }

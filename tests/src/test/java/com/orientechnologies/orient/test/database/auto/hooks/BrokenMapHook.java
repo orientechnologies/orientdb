@@ -6,7 +6,6 @@ import com.orientechnologies.orient.core.hook.ORecordHook;
 import com.orientechnologies.orient.core.hook.ORecordHookAbstract;
 import com.orientechnologies.orient.core.record.OElement;
 import com.orientechnologies.orient.core.record.ORecord;
-
 import java.text.SimpleDateFormat;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -58,21 +57,23 @@ public class BrokenMapHook extends ORecordHookAbstract implements ORecordHook {
         HashMap<String, Object> newFieldValue = newElement.getProperty("myMap");
         HashMap<String, Object> oldFieldValue = new HashMap<>(oldElement.getProperty("myMap"));
 
-        String newDate = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
+        String newDate =
+            LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
 
         Set<String> newKeys = new HashSet(newFieldValue.keySet());
 
-        newKeys.forEach(k -> {
-          newFieldValue.remove(k);
-          newFieldValue.put(k, newDate);
-        });
+        newKeys.forEach(
+            k -> {
+              newFieldValue.remove(k);
+              newFieldValue.put(k, newDate);
+            });
 
-        oldFieldValue.forEach((k, v) -> {
-          if (!newFieldValue.containsKey(k)) {
-            newFieldValue.put(k, v);
-          }
-        });
-
+        oldFieldValue.forEach(
+            (k, v) -> {
+              if (!newFieldValue.containsKey(k)) {
+                newFieldValue.put(k, v);
+              }
+            });
       }
       return RESULT.RECORD_CHANGED;
     } else {

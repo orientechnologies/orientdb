@@ -15,7 +15,7 @@
  *  *  limitations under the License.
  *  *
  *  * For more information: http://orientdb.com
- *  
+ *
  */
 package com.orientechnologies.orient.test.java.collection;
 
@@ -23,19 +23,17 @@ import java.util.HashMap;
 import java.util.UUID;
 
 public class HashMapGetSpeedTest {
-  private final static int MAX_ENTRIES = 32;
-  private final static int MAX_LOOP    = 10000000;
-  private final static int TOT_LAPS    = 10;
+  private static final int MAX_ENTRIES = 32;
+  private static final int MAX_LOOP = 10000000;
+  private static final int TOT_LAPS = 10;
 
   public static void main(String[] args) {
     final HashMap<String, String> map = new HashMap<String, String>(MAX_ENTRIES);
 
     final String[] values = new String[MAX_ENTRIES];
-    for (int i = 0; i < MAX_ENTRIES; ++i)
-      values[i] = UUID.randomUUID().toString();
+    for (int i = 0; i < MAX_ENTRIES; ++i) values[i] = UUID.randomUUID().toString();
 
-    for (int i = 0; i < MAX_ENTRIES; ++i)
-      map.put(values[i], "test" + i);
+    for (int i = 0; i < MAX_ENTRIES; ++i) map.put(values[i], "test" + i);
 
     long totalTime = 0;
     for (int test = 0; test < TOT_LAPS; test++) {

@@ -15,10 +15,6 @@
  */
 package com.orientechnologies.orient.test.database.speed;
 
-import java.util.Date;
-
-import org.testng.annotations.Test;
-
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
@@ -26,12 +22,14 @@ import com.orientechnologies.orient.core.intent.OIntentMassiveInsert;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.tx.OTransaction.TXTYPE;
 import com.orientechnologies.orient.test.database.base.OrientMonoThreadTest;
+import java.util.Date;
+import org.testng.annotations.Test;
 
 @Test(enabled = false)
 public class LocalCreateFlatDocumentSpeedTest extends OrientMonoThreadTest {
   private ODatabaseDocument database;
-  private ODocument         record;
-  private Date              date = new Date();
+  private ODocument record;
+  private Date date = new Date();
 
   public static void main(String[] iArgs) throws InstantiationException, IllegalAccessException {
     LocalCreateFlatDocumentSpeedTest test = new LocalCreateFlatDocumentSpeedTest();
@@ -48,10 +46,8 @@ public class LocalCreateFlatDocumentSpeedTest extends OrientMonoThreadTest {
     Orient.instance().getProfiler().startRecording();
 
     database = new ODatabaseDocumentTx(System.getProperty("url"));
-    if (!database.exists())
-      database.create();
-    else
-      database.open("admin", "admin");
+    if (!database.exists()) database.create();
+    else database.open("admin", "admin");
 
     record = database.newInstance();
 
@@ -64,19 +60,24 @@ public class LocalCreateFlatDocumentSpeedTest extends OrientMonoThreadTest {
   public void cycle() {
     record.reset();
     record.setClassName("Account");
-    record.fromString(new String("Account@id:" + data.getCyclesDone() + ",name:'Luca',surname:'Garulli',birthDate:"
-        + date.getTime() + "d,salary:" + 3000f + data.getCyclesDone()));
+    record.fromString(
+        new String(
+            "Account@id:"
+                + data.getCyclesDone()
+                + ",name:'Luca',surname:'Garulli',birthDate:"
+                + date.getTime()
+                + "d,salary:"
+                + 3000f
+                + data.getCyclesDone()));
     record.save();
 
-    if (data.getCyclesDone() == data.getCycles() - 1)
-      database.commit();
+    if (data.getCyclesDone() == data.getCycles() - 1) database.commit();
   }
 
   @Override
   @Test(enabled = false)
   public void deinit() {
-    if (database != null)
-      database.drop();
+    if (database != null) database.drop();
     super.deinit();
   }
 }

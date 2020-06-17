@@ -15,12 +15,10 @@
  */
 package com.orientechnologies.orient.test.java.lang;
 
-import java.io.IOException;
-
-import org.testng.annotations.Test;
-
 import com.orientechnologies.common.test.SpeedTestMonoThread;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import java.io.IOException;
+import org.testng.annotations.Test;
 
 public class NewGenSpeedTest extends SpeedTestMonoThread {
 

@@ -21,50 +21,49 @@ import java.util.Calendar;
 import java.util.Date;
 
 public class DateConversionSpeedTest {
-	private static final long	MAX	= 100000000;
+  private static final long MAX = 100000000;
 
-	public static final void main(String[] args) throws ParseException {
+  public static final void main(String[] args) throws ParseException {
 
-		long begin = System.currentTimeMillis();
+    long begin = System.currentTimeMillis();
 
-		String timer = String.valueOf(begin);
-		String timer2 = String.valueOf(timer + 1000000);
+    String timer = String.valueOf(begin);
+    String timer2 = String.valueOf(timer + 1000000);
 
-		for (int i = 0; i < MAX; ++i) {
-			int result = timer.compareTo(timer2);
-		}
-		System.out.println("String: " + (System.currentTimeMillis() - begin));
-		// ------------------------------------------------------------------------
+    for (int i = 0; i < MAX; ++i) {
+      int result = timer.compareTo(timer2);
+    }
+    System.out.println("String: " + (System.currentTimeMillis() - begin));
+    // ------------------------------------------------------------------------
 
-		begin = System.currentTimeMillis();
-		final Date d = new Date(begin);
-		for (int i = 0; i < MAX; ++i) {
-			final long timerLong = Long.parseLong(timer);
-			int result = d.compareTo(new Date(timerLong));
-		}
-		System.out.println("Date: " + (System.currentTimeMillis() - begin));
-		// ------------------------------------------------------------------------
+    begin = System.currentTimeMillis();
+    final Date d = new Date(begin);
+    for (int i = 0; i < MAX; ++i) {
+      final long timerLong = Long.parseLong(timer);
+      int result = d.compareTo(new Date(timerLong));
+    }
+    System.out.println("Date: " + (System.currentTimeMillis() - begin));
+    // ------------------------------------------------------------------------
 
-		begin = System.currentTimeMillis();
-		final String today = "20110526165400";
-		final SimpleDateFormat df = new SimpleDateFormat("yyyyMMddHHmmss");
-		for (int i = 0; i < MAX; ++i) {
-			int result = d.compareTo(df.parse(today));
-		}
-		System.out.println("String: " + (System.currentTimeMillis() - begin));
-		// ------------------------------------------------------------------------
+    begin = System.currentTimeMillis();
+    final String today = "20110526165400";
+    final SimpleDateFormat df = new SimpleDateFormat("yyyyMMddHHmmss");
+    for (int i = 0; i < MAX; ++i) {
+      int result = d.compareTo(df.parse(today));
+    }
+    System.out.println("String: " + (System.currentTimeMillis() - begin));
+    // ------------------------------------------------------------------------
 
-		Calendar c = Calendar.getInstance();
-		c.setTimeInMillis(begin);
-		c.set(Calendar.HOUR_OF_DAY, 0);
-		c.set(Calendar.MINUTE, 0);
-		c.set(Calendar.SECOND, 0);
-		c.set(Calendar.MILLISECOND, 0);
+    Calendar c = Calendar.getInstance();
+    c.setTimeInMillis(begin);
+    c.set(Calendar.HOUR_OF_DAY, 0);
+    c.set(Calendar.MINUTE, 0);
+    c.set(Calendar.SECOND, 0);
+    c.set(Calendar.MILLISECOND, 0);
 
-		final long roundedTime = c.getTimeInMillis();
+    final long roundedTime = c.getTimeInMillis();
 
-		System.out.println("original time.: " + begin);
-		System.out.println("rounded time..: " + roundedTime);
-		
-	}
+    System.out.println("original time.: " + begin);
+    System.out.println("rounded time..: " + roundedTime);
+  }
 }

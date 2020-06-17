@@ -26,8 +26,8 @@ import org.testng.annotations.Test;
 @Test(enabled = false)
 public class DictionaryPutDocumentSpeedTest extends OrientMonoThreadTest {
   private ODatabaseDocumentTx database;
-  private ODocument           record;
-  private long                startNum;
+  private ODocument record;
+  private long startNum;
 
   public static void main(String[] iArgs) throws InstantiationException, IllegalAccessException {
     // System.setProperty("url", "remote:localhost:2424/demo");
@@ -72,10 +72,10 @@ public class DictionaryPutDocumentSpeedTest extends OrientMonoThreadTest {
 
   @Override
   public void deinit() {
-    System.out.println("Total element in the dictionary at the end: " + database.getDictionary().size());
+    System.out.println(
+        "Total element in the dictionary at the end: " + database.getDictionary().size());
 
     database.close();
     super.deinit();
   }
-
 }

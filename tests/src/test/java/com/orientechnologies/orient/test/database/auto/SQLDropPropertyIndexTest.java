@@ -23,12 +23,15 @@ import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
-import org.testng.Assert;
-import org.testng.annotations.*;
-
 import java.util.Arrays;
+import org.testng.Assert;
+import org.testng.annotations.AfterMethod;
+import org.testng.annotations.BeforeMethod;
+import org.testng.annotations.Optional;
+import org.testng.annotations.Parameters;
+import org.testng.annotations.Test;
 
-@Test(groups = { "index" })
+@Test(groups = {"index"})
 public class SQLDropPropertyIndexTest extends DocumentDBBaseTest {
 
   private static final OType EXPECTED_PROP1_TYPE = OType.DOUBLE;
@@ -59,67 +62,105 @@ public class SQLDropPropertyIndexTest extends DocumentDBBaseTest {
 
   @Test
   public void testForcePropertyEnabled() throws Exception {
-    database.command(
-        new OCommandSQL("CREATE INDEX DropPropertyIndexCompositeIndex ON DropPropertyIndexTestClass (prop2, prop1) UNIQUE"))
+    database
+        .command(
+            new OCommandSQL(
+                "CREATE INDEX DropPropertyIndexCompositeIndex ON DropPropertyIndexTestClass (prop2, prop1) UNIQUE"))
         .execute();
     database.getMetadata().getIndexManagerInternal().reload();
 
-    OIndex index = database.getMetadata().getSchema().getClass("DropPropertyIndexTestClass")
-        .getClassIndex("DropPropertyIndexCompositeIndex");
+    OIndex index =
+        database
+            .getMetadata()
+            .getSchema()
+            .getClass("DropPropertyIndexTestClass")
+            .getClassIndex("DropPropertyIndexCompositeIndex");
     Assert.assertNotNull(index);
 
-    database.command(new OCommandSQL("DROP PROPERTY DropPropertyIndexTestClass.prop1 FORCE")).execute();
+    database
+        .command(new OCommandSQL("DROP PROPERTY DropPropertyIndexTestClass.prop1 FORCE"))
+        .execute();
     database.getMetadata().getIndexManagerInternal().reload();
 
-    index = database.getMetadata().getSchema().getClass("DropPropertyIndexTestClass")
-        .getClassIndex("DropPropertyIndexCompositeIndex");
+    index =
+        database
+            .getMetadata()
+            .getSchema()
+            .getClass("DropPropertyIndexTestClass")
+            .getClassIndex("DropPropertyIndexCompositeIndex");
 
     Assert.assertNull(index);
   }
 
   @Test
   public void testForcePropertyEnabledBrokenCase() throws Exception {
-    database.command(
-        new OCommandSQL("CREATE INDEX DropPropertyIndexCompositeIndex ON DropPropertyIndexTestClass (prop2, prop1) UNIQUE"))
+    database
+        .command(
+            new OCommandSQL(
+                "CREATE INDEX DropPropertyIndexCompositeIndex ON DropPropertyIndexTestClass (prop2, prop1) UNIQUE"))
         .execute();
     database.getMetadata().getIndexManagerInternal().reload();
 
-    OIndex index = database.getMetadata().getSchema().getClass("DropPropertyIndexTestClass")
-        .getClassIndex("DropPropertyIndexCompositeIndex");
+    OIndex index =
+        database
+            .getMetadata()
+            .getSchema()
+            .getClass("DropPropertyIndexTestClass")
+            .getClassIndex("DropPropertyIndexCompositeIndex");
     Assert.assertNotNull(index);
 
-    database.command(new OCommandSQL("DROP PROPERTY DropPropertyIndextestclasS.prop1 FORCE")).execute();
+    database
+        .command(new OCommandSQL("DROP PROPERTY DropPropertyIndextestclasS.prop1 FORCE"))
+        .execute();
     database.getMetadata().getIndexManagerInternal().reload();
 
-    index = database.getMetadata().getSchema().getClass("DropPropertyIndexTestClass")
-        .getClassIndex("DropPropertyIndexCompositeIndex");
+    index =
+        database
+            .getMetadata()
+            .getSchema()
+            .getClass("DropPropertyIndexTestClass")
+            .getClassIndex("DropPropertyIndexCompositeIndex");
 
     Assert.assertNull(index);
   }
 
   @Test
   public void testForcePropertyDisabled() throws Exception {
-    database.command(
-        new OCommandSQL("CREATE INDEX DropPropertyIndexCompositeIndex ON DropPropertyIndexTestClass (prop1, prop2) UNIQUE"))
+    database
+        .command(
+            new OCommandSQL(
+                "CREATE INDEX DropPropertyIndexCompositeIndex ON DropPropertyIndexTestClass (prop1, prop2) UNIQUE"))
         .execute();
     database.getMetadata().getIndexManagerInternal().reload();
 
-    OIndex index = database.getMetadata().getSchema().getClass("DropPropertyIndexTestClass")
-        .getClassIndex("DropPropertyIndexCompositeIndex");
+    OIndex index =
+        database
+            .getMetadata()
+            .getSchema()
+            .getClass("DropPropertyIndexTestClass")
+            .getClassIndex("DropPropertyIndexCompositeIndex");
     Assert.assertNotNull(index);
 
     try {
       database.command(new OCommandSQL("DROP PROPERTY DropPropertyIndexTestClass.prop1")).execute();
       Assert.fail();
     } catch (OCommandExecutionException e) {
-      Assert.assertTrue(e.getMessage().contains("Property used in indexes (" + "DropPropertyIndexCompositeIndex"
-          + "). Please drop these indexes before removing property or use FORCE parameter."));
+      Assert.assertTrue(
+          e.getMessage()
+              .contains(
+                  "Property used in indexes ("
+                      + "DropPropertyIndexCompositeIndex"
+                      + "). Please drop these indexes before removing property or use FORCE parameter."));
     }
 
     database.getMetadata().getIndexManagerInternal().reload();
 
-    index = database.getMetadata().getSchema().getClass("DropPropertyIndexTestClass")
-        .getClassIndex("DropPropertyIndexCompositeIndex");
+    index =
+        database
+            .getMetadata()
+            .getSchema()
+            .getClass("DropPropertyIndexTestClass")
+            .getClassIndex("DropPropertyIndexCompositeIndex");
 
     Assert.assertNotNull(index);
 
@@ -127,27 +168,38 @@ public class SQLDropPropertyIndexTest extends DocumentDBBaseTest {
 
     Assert.assertTrue(indexDefinition instanceof OCompositeIndexDefinition);
     Assert.assertEquals(indexDefinition.getFields(), Arrays.asList("prop1", "prop2"));
-    Assert.assertEquals(indexDefinition.getTypes(), new OType[] { EXPECTED_PROP1_TYPE, EXPECTED_PROP2_TYPE });
+    Assert.assertEquals(
+        indexDefinition.getTypes(), new OType[] {EXPECTED_PROP1_TYPE, EXPECTED_PROP2_TYPE});
     Assert.assertEquals(index.getType(), "UNIQUE");
   }
 
   @Test
   public void testForcePropertyDisabledBrokenCase() throws Exception {
-    database.command(
-        new OCommandSQL("CREATE INDEX DropPropertyIndexCompositeIndex ON DropPropertyIndexTestClass (prop1, prop2) UNIQUE"))
+    database
+        .command(
+            new OCommandSQL(
+                "CREATE INDEX DropPropertyIndexCompositeIndex ON DropPropertyIndexTestClass (prop1, prop2) UNIQUE"))
         .execute();
 
     try {
       database.command(new OCommandSQL("DROP PROPERTY DropPropertyIndextestclass.prop1")).execute();
       Assert.fail();
     } catch (OCommandExecutionException e) {
-      Assert.assertTrue(e.getMessage().contains("Property used in indexes (" + "DropPropertyIndexCompositeIndex"
-          + "). Please drop these indexes before removing property or use FORCE parameter."));
+      Assert.assertTrue(
+          e.getMessage()
+              .contains(
+                  "Property used in indexes ("
+                      + "DropPropertyIndexCompositeIndex"
+                      + "). Please drop these indexes before removing property or use FORCE parameter."));
     }
 
     database.getMetadata().getIndexManagerInternal().reload();
-    final OIndex index = database.getMetadata().getSchema().getClass("DropPropertyIndexTestClass")
-        .getClassIndex("DropPropertyIndexCompositeIndex");
+    final OIndex index =
+        database
+            .getMetadata()
+            .getSchema()
+            .getClass("DropPropertyIndexTestClass")
+            .getClassIndex("DropPropertyIndexCompositeIndex");
 
     Assert.assertNotNull(index);
 
@@ -155,7 +207,8 @@ public class SQLDropPropertyIndexTest extends DocumentDBBaseTest {
 
     Assert.assertTrue(indexDefinition instanceof OCompositeIndexDefinition);
     Assert.assertEquals(indexDefinition.getFields(), Arrays.asList("prop1", "prop2"));
-    Assert.assertEquals(indexDefinition.getTypes(), new OType[] { EXPECTED_PROP1_TYPE, EXPECTED_PROP2_TYPE });
+    Assert.assertEquals(
+        indexDefinition.getTypes(), new OType[] {EXPECTED_PROP1_TYPE, EXPECTED_PROP2_TYPE});
     Assert.assertEquals(index.getType(), "UNIQUE");
   }
 }

@@ -24,12 +24,18 @@ import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
 import com.orientechnologies.orient.core.engine.memory.OEngineMemory;
-import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.OStorageProxy;
 import com.orientechnologies.orient.core.storage.cache.local.OWOWCache;
 import com.orientechnologies.orient.core.storage.disk.OLocalPaginatedStorage;
 import com.orientechnologies.orient.core.storage.ridbag.sbtree.OSBTreeCollectionManagerShared;
+import java.io.File;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 import org.testng.Assert;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeClass;
@@ -38,19 +44,7 @@ import org.testng.annotations.Optional;
 import org.testng.annotations.Parameters;
 import org.testng.annotations.Test;
 
-import java.io.File;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-
-/**
- * @author Artem Orobets (enisher-at-gmail.com)
- */
+/** @author Artem Orobets (enisher-at-gmail.com) */
 @Test
 public class OSBTreeRidBagTest extends ORidBagTest {
   private int topThreshold;
@@ -70,13 +64,19 @@ public class OSBTreeRidBagTest extends ORidBagTest {
 
   @BeforeMethod
   public void beforeMethod() throws IOException {
-    topThreshold = OGlobalConfiguration.RID_BAG_EMBEDDED_TO_SBTREEBONSAI_THRESHOLD.getValueAsInteger();
-    bottomThreshold = OGlobalConfiguration.RID_BAG_SBTREEBONSAI_TO_EMBEDDED_THRESHOLD.getValueAsInteger();
+    topThreshold =
+        OGlobalConfiguration.RID_BAG_EMBEDDED_TO_SBTREEBONSAI_THRESHOLD.getValueAsInteger();
+    bottomThreshold =
+        OGlobalConfiguration.RID_BAG_SBTREEBONSAI_TO_EMBEDDED_THRESHOLD.getValueAsInteger();
 
     if (database.getStorage() instanceof OStorageProxy) {
-      OServerAdmin server = new OServerAdmin(database.getURL()).connect("root", ODatabaseHelper.getServerRootPassword());
-      server.setGlobalConfiguration(OGlobalConfiguration.RID_BAG_EMBEDDED_TO_SBTREEBONSAI_THRESHOLD, -1);
-      server.setGlobalConfiguration(OGlobalConfiguration.RID_BAG_SBTREEBONSAI_TO_EMBEDDED_THRESHOLD, -1);
+      OServerAdmin server =
+          new OServerAdmin(database.getURL())
+              .connect("root", ODatabaseHelper.getServerRootPassword());
+      server.setGlobalConfiguration(
+          OGlobalConfiguration.RID_BAG_EMBEDDED_TO_SBTREEBONSAI_THRESHOLD, -1);
+      server.setGlobalConfiguration(
+          OGlobalConfiguration.RID_BAG_SBTREEBONSAI_TO_EMBEDDED_THRESHOLD, -1);
       server.close();
     }
 
@@ -90,16 +90,20 @@ public class OSBTreeRidBagTest extends ORidBagTest {
     OGlobalConfiguration.RID_BAG_SBTREEBONSAI_TO_EMBEDDED_THRESHOLD.setValue(bottomThreshold);
 
     if (database.getStorage() instanceof OStorageProxy) {
-      OServerAdmin server = new OServerAdmin(database.getURL()).connect("root", ODatabaseHelper.getServerRootPassword());
-      server.setGlobalConfiguration(OGlobalConfiguration.RID_BAG_EMBEDDED_TO_SBTREEBONSAI_THRESHOLD, topThreshold);
-      server.setGlobalConfiguration(OGlobalConfiguration.RID_BAG_SBTREEBONSAI_TO_EMBEDDED_THRESHOLD, bottomThreshold);
+      OServerAdmin server =
+          new OServerAdmin(database.getURL())
+              .connect("root", ODatabaseHelper.getServerRootPassword());
+      server.setGlobalConfiguration(
+          OGlobalConfiguration.RID_BAG_EMBEDDED_TO_SBTREEBONSAI_THRESHOLD, topThreshold);
+      server.setGlobalConfiguration(
+          OGlobalConfiguration.RID_BAG_SBTREEBONSAI_TO_EMBEDDED_THRESHOLD, bottomThreshold);
       server.close();
     }
   }
 
   public void testRidBagClusterDistribution() {
-    if (database.getStorage().getType().equals(OEngineRemote.NAME) || database.getStorage().getType().equals(OEngineMemory.NAME))
-      return;
+    if (database.getStorage().getType().equals(OEngineRemote.NAME)
+        || database.getStorage().getType().equals(OEngineMemory.NAME)) return;
 
     final int clusterIdOne = database.addCluster("clusterOne");
 
@@ -110,18 +114,33 @@ public class OSBTreeRidBagTest extends ORidBagTest {
 
     final String directory = database.getStorage().getConfiguration().getDirectory();
 
-    final OWOWCache wowCache = (OWOWCache) ((OLocalPaginatedStorage) (database.getStorage())).getWriteCache();
+    final OWOWCache wowCache =
+        (OWOWCache) ((OLocalPaginatedStorage) (database.getStorage())).getWriteCache();
 
-    final File ridBagOneFile = new File(directory, wowCache.nativeFileNameById(wowCache.fileIdByName(
-        OSBTreeCollectionManagerShared.FILE_NAME_PREFIX + clusterIdOne + OSBTreeCollectionManagerShared.DEFAULT_EXTENSION)));
+    final File ridBagOneFile =
+        new File(
+            directory,
+            wowCache.nativeFileNameById(
+                wowCache.fileIdByName(
+                    OSBTreeCollectionManagerShared.FILE_NAME_PREFIX
+                        + clusterIdOne
+                        + OSBTreeCollectionManagerShared.DEFAULT_EXTENSION)));
     Assert.assertTrue(ridBagOneFile.exists());
   }
 
   public void testIteratorOverAfterRemove() {
-    ODocument scuti = new ODocument().field("name", "UY Scuti").save(database.getClusterNameById(database.getDefaultClusterId()));
-    ODocument cygni = new ODocument().field("name", "NML Cygni").save(database.getClusterNameById(database.getDefaultClusterId()));
-    ODocument scorpii = new ODocument().field("name", "AH Scorpii")
-        .save(database.getClusterNameById(database.getDefaultClusterId()));
+    ODocument scuti =
+        new ODocument()
+            .field("name", "UY Scuti")
+            .save(database.getClusterNameById(database.getDefaultClusterId()));
+    ODocument cygni =
+        new ODocument()
+            .field("name", "NML Cygni")
+            .save(database.getClusterNameById(database.getDefaultClusterId()));
+    ODocument scorpii =
+        new ODocument()
+            .field("name", "AH Scorpii")
+            .save(database.getClusterNameById(database.getDefaultClusterId()));
 
     HashSet<ODocument> expectedResult = new HashSet<ODocument>();
     expectedResult.addAll(Arrays.asList(scuti, scorpii));
@@ -146,7 +165,8 @@ public class OSBTreeRidBagTest extends ORidBagTest {
   }
 
   public void testRidBagConversion() {
-    final int oldThreshold = OGlobalConfiguration.RID_BAG_EMBEDDED_TO_SBTREEBONSAI_THRESHOLD.getValueAsInteger();
+    final int oldThreshold =
+        OGlobalConfiguration.RID_BAG_EMBEDDED_TO_SBTREEBONSAI_THRESHOLD.getValueAsInteger();
     OGlobalConfiguration.RID_BAG_EMBEDDED_TO_SBTREEBONSAI_THRESHOLD.setValue(5);
 
     ODocument doc_1 = new ODocument();
@@ -199,8 +219,7 @@ public class OSBTreeRidBagTest extends ORidBagTest {
     docs.add(doc_5.getIdentity());
     docs.add(doc_6.getIdentity());
 
-    for (OIdentifiable rid : bag)
-      Assert.assertTrue(docs.remove(rid));
+    for (OIdentifiable rid : bag) Assert.assertTrue(docs.remove(rid));
 
     Assert.assertTrue(docs.isEmpty());
 
@@ -208,10 +227,11 @@ public class OSBTreeRidBagTest extends ORidBagTest {
   }
 
   public void testRidBagDelete() {
-    if (database.getStorage().getType().equals(OEngineRemote.NAME) || database.getStorage().getType().equals(OEngineMemory.NAME))
-      return;
+    if (database.getStorage().getType().equals(OEngineRemote.NAME)
+        || database.getStorage().getType().equals(OEngineMemory.NAME)) return;
 
-    float reuseTrigger = OGlobalConfiguration.SBTREEBOSAI_FREE_SPACE_REUSE_TRIGGER.getValueAsFloat();
+    float reuseTrigger =
+        OGlobalConfiguration.SBTREEBOSAI_FREE_SPACE_REUSE_TRIGGER.getValueAsFloat();
     OGlobalConfiguration.SBTREEBOSAI_FREE_SPACE_REUSE_TRIGGER.setValue(Float.MIN_VALUE);
 
     ODocument realDoc = new ODocument();
@@ -234,8 +254,12 @@ public class OSBTreeRidBagTest extends ORidBagTest {
 
     final String directory = database.getStorage().getConfiguration().getDirectory();
 
-    File testRidBagFile = new File(directory,
-        OSBTreeCollectionManagerShared.FILE_NAME_PREFIX + clusterId + OSBTreeCollectionManagerShared.DEFAULT_EXTENSION);
+    File testRidBagFile =
+        new File(
+            directory,
+            OSBTreeCollectionManagerShared.FILE_NAME_PREFIX
+                + clusterId
+                + OSBTreeCollectionManagerShared.DEFAULT_EXTENSION);
     long testRidBagSize = testRidBagFile.length();
 
     for (int i = 0; i < 100; i++) {
@@ -249,8 +273,12 @@ public class OSBTreeRidBagTest extends ORidBagTest {
     database.release();
 
     OGlobalConfiguration.SBTREEBOSAI_FREE_SPACE_REUSE_TRIGGER.setValue(reuseTrigger);
-    testRidBagFile = new File(directory,
-        OSBTreeCollectionManagerShared.FILE_NAME_PREFIX + clusterId + OSBTreeCollectionManagerShared.DEFAULT_EXTENSION);
+    testRidBagFile =
+        new File(
+            directory,
+            OSBTreeCollectionManagerShared.FILE_NAME_PREFIX
+                + clusterId
+                + OSBTreeCollectionManagerShared.DEFAULT_EXTENSION);
 
     Assert.assertEquals(testRidBagFile.length(), testRidBagSize);
 

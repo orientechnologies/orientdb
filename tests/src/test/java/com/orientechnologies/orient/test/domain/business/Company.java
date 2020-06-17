@@ -16,20 +16,19 @@
 package com.orientechnologies.orient.test.domain.business;
 
 public class Company extends Account {
-	private int	employees;
+  private int employees;
 
-	public Company() {
-	}
+  public Company() {}
 
-	public Company(Integer iId, String iName) {
-		super(iId, iName, null);
-	}
+  public Company(Integer iId, String iName) {
+    super(iId, iName, null);
+  }
 
-	public int getEmployees() {
-		return employees;
-	}
+  public int getEmployees() {
+    return employees;
+  }
 
-	public void setEmployees(int employees) {
-		this.employees = employees;
-	}
+  public void setEmployees(int employees) {
+    this.employees = employees;
+  }
 }

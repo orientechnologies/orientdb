@@ -15,37 +15,34 @@
  */
 package com.orientechnologies.orient.test.java.lang;
 
-import java.io.IOException;
-
-import org.testng.annotations.Test;
-
 import com.orientechnologies.common.test.SpeedTestAbstract;
 import com.orientechnologies.common.test.SpeedTestMonoThread;
+import java.io.IOException;
+import org.testng.annotations.Test;
 
 /**
  * CAST: 74651ms NO CAST:
- * 
+ *
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
- * 
  */
 public class RuntimeCastSpeedTest extends SpeedTestMonoThread {
-	private SpeedTestAbstract	instance;
-	private int								counter;
+  private SpeedTestAbstract instance;
+  private int counter;
 
-	public RuntimeCastSpeedTest() {
-		super(1000000000);
-		instance = this;
-	}
+  public RuntimeCastSpeedTest() {
+    super(1000000000);
+    instance = this;
+  }
 
-	@Override
-	@Test(enabled = false)
-	public void cycle() throws IOException {
-		((RuntimeCastSpeedTest) instance).dummy();
+  @Override
+  @Test(enabled = false)
+  public void cycle() throws IOException {
+    ((RuntimeCastSpeedTest) instance).dummy();
 
-		// this.dummy();
-	}
+    // this.dummy();
+  }
 
-	public void dummy() {
-		counter++;
-	}
+  public void dummy() {
+    counter++;
+  }
 }

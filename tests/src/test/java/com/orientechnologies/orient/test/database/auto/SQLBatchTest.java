@@ -21,12 +21,11 @@ import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
+import java.util.List;
 import org.testng.Assert;
 import org.testng.annotations.Optional;
 import org.testng.annotations.Parameters;
 import org.testng.annotations.Test;
-
-import java.util.List;
 
 @Test
 public class SQLBatchTest extends DocumentDBBaseTest {
@@ -36,19 +35,22 @@ public class SQLBatchTest extends DocumentDBBaseTest {
     super(url);
   }
 
-  /**
-   * Issue #4349 (https://github.com/orientechnologies/orientdb/issues/4349)
-   */
+  /** Issue #4349 (https://github.com/orientechnologies/orientdb/issues/4349) */
   public void createEdgeFailIfNoSourceOrTargetVertices() {
     try {
-      executeBatch("BEGIN\n" + "LET credential = INSERT INTO V SET email = '123', password = '123'\n"
-          + "LET order = SELECT FROM V WHERE cannotFindThisAttribute = true\n"
-          + "LET edge = CREATE EDGE E FROM $credential TO $order set crazyName = 'yes'\n" + "COMMIT\n" + "RETURN $credential");
+      executeBatch(
+          "BEGIN\n"
+              + "LET credential = INSERT INTO V SET email = '123', password = '123'\n"
+              + "LET order = SELECT FROM V WHERE cannotFindThisAttribute = true\n"
+              + "LET edge = CREATE EDGE E FROM $credential TO $order set crazyName = 'yes'\n"
+              + "COMMIT\n"
+              + "RETURN $credential");
 
       Assert.fail("Tx has been committed while a rollback was expected");
     } catch (OCommandExecutionException e) {
 
-      List<OIdentifiable> result = database.query(new OSQLSynchQuery<Object>("select from V where email = '123'"));
+      List<OIdentifiable> result =
+          database.query(new OSQLSynchQuery<Object>("select from V where email = '123'"));
       Assert.assertTrue(result.isEmpty());
 
       result = database.query(new OSQLSynchQuery<Object>("select from E where crazyName = 'yes'"));
@@ -60,19 +62,36 @@ public class SQLBatchTest extends DocumentDBBaseTest {
   }
 
   public void testInlineArray() {
-    //issue #7435
+    // issue #7435
     String className1 = "SQLBatchTest_testInlineArray1";
     String className2 = "SQLBatchTest_testInlineArray2";
     database.command(new OCommandSQL("CREATE CLASS " + className1 + " EXTENDS V")).execute();
     database.command(new OCommandSQL("CREATE CLASS " + className2 + " EXTENDS V")).execute();
-    database.command(new OCommandSQL("CREATE PROPERTY " + className2 + ".foos LinkList " + className1)).execute();
+    database
+        .command(new OCommandSQL("CREATE PROPERTY " + className2 + ".foos LinkList " + className1))
+        .execute();
 
-    String script = "" + "BEGIN;" + "LET a = CREATE VERTEX " + className1 + ";" + "LET b = CREATE VERTEX " + className1 + ";"
-        + "LET c = CREATE VERTEX " + className1 + ";" + "CREATE VERTEX " + className2 + " SET foos=[$a,$b,$c];" + "COMMIT";
+    String script =
+        ""
+            + "BEGIN;"
+            + "LET a = CREATE VERTEX "
+            + className1
+            + ";"
+            + "LET b = CREATE VERTEX "
+            + className1
+            + ";"
+            + "LET c = CREATE VERTEX "
+            + className1
+            + ";"
+            + "CREATE VERTEX "
+            + className2
+            + " SET foos=[$a,$b,$c];"
+            + "COMMIT";
 
     database.command(new OCommandScript(script)).execute();
 
-    List<ODocument> result = database.query(new OSQLSynchQuery<Object>("select from " + className2));
+    List<ODocument> result =
+        database.query(new OSQLSynchQuery<Object>("select from " + className2));
     Assert.assertEquals(result.size(), 1);
     List foos = result.get(0).field("foos");
     Assert.assertEquals(foos.size(), 3);
@@ -82,21 +101,37 @@ public class SQLBatchTest extends DocumentDBBaseTest {
   }
 
   public void testInlineArray2() {
-    //issue #7435
+    // issue #7435
     String className1 = "SQLBatchTest_testInlineArray21";
     String className2 = "SQLBatchTest_testInlineArray22";
     database.command(new OCommandSQL("CREATE CLASS " + className1 + " EXTENDS V")).execute();
     database.command(new OCommandSQL("CREATE CLASS " + className2 + " EXTENDS V")).execute();
-    database.command(new OCommandSQL("CREATE PROPERTY " + className2 + ".foos LinkList " + className1)).execute();
+    database
+        .command(new OCommandSQL("CREATE PROPERTY " + className2 + ".foos LinkList " + className1))
+        .execute();
 
-    String script = "" + "BEGIN;" + "LET a = CREATE VERTEX " + className1 + ";" + "LET b = CREATE VERTEX " + className1 + ";"
-        + "LET c = CREATE VERTEX " + className1 + ";" +
-        "LET foos = [$a,$b,$c];"+
-        "CREATE VERTEX " + className2 + " SET foos= $foos;" + "COMMIT";
+    String script =
+        ""
+            + "BEGIN;"
+            + "LET a = CREATE VERTEX "
+            + className1
+            + ";"
+            + "LET b = CREATE VERTEX "
+            + className1
+            + ";"
+            + "LET c = CREATE VERTEX "
+            + className1
+            + ";"
+            + "LET foos = [$a,$b,$c];"
+            + "CREATE VERTEX "
+            + className2
+            + " SET foos= $foos;"
+            + "COMMIT";
 
     database.command(new OCommandScript(script)).execute();
 
-    List<ODocument> result = database.query(new OSQLSynchQuery<Object>("select from " + className2));
+    List<ODocument> result =
+        database.query(new OSQLSynchQuery<Object>("select from " + className2));
     Assert.assertEquals(result.size(), 1);
     List foos = result.get(0).field("foos");
     Assert.assertEquals(foos.size(), 3);

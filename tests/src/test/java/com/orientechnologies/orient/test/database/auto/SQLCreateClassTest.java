@@ -22,7 +22,8 @@ import org.testng.Assert;
 import org.testng.annotations.Test;
 
 public class SQLCreateClassTest {
-  @Test public void testSimpleCreate() {
+  @Test
+  public void testSimpleCreate() {
     ODatabaseDocument db = new ODatabaseDocumentTx("memory:" + SQLCreateClassTest.class.getName());
     db.create();
     try {
@@ -34,8 +35,10 @@ public class SQLCreateClassTest {
     }
   }
 
-  @Test public void testIfNotExists() {
-    ODatabaseDocument db = new ODatabaseDocumentTx("memory:" + SQLCreateClassTest.class.getName() + "_ifNotExists");
+  @Test
+  public void testIfNotExists() {
+    ODatabaseDocument db =
+        new ODatabaseDocumentTx("memory:" + SQLCreateClassTest.class.getName() + "_ifNotExists");
     db.create();
     try {
       Assert.assertFalse(db.getMetadata().getSchema().existsClass("testIfNotExists"));

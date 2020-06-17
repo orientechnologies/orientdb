@@ -21,25 +21,21 @@ package com.orientechnologies.orient.test.object;
 
 import static org.testng.Assert.assertTrue;
 
-import java.io.IOException;
-
-import javax.persistence.Id;
-import javax.persistence.Version;
-
-import org.testng.annotations.Test;
 
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.object.db.OObjectDatabaseTx;
 import com.tinkerpop.blueprints.impls.orient.OrientBaseGraph;
 import com.tinkerpop.blueprints.impls.orient.OrientGraphFactory;
+import java.io.IOException;
+import javax.persistence.Id;
+import javax.persistence.Version;
+import org.testng.annotations.Test;
 
-/**
- * Created by luigidellaquila on 01/07/15.
- */
+/** Created by luigidellaquila on 01/07/15. */
 public class MultipleObjectDbInstancesTest {
   /**
-   * Scenario: create database, register Pojos, create another database, register Pojos again. Check in both if Pojos exist in
-   * Schema.
+   * Scenario: create database, register Pojos, create another database, register Pojos again. Check
+   * in both if Pojos exist in Schema.
    *
    * @throws java.io.IOException
    */
@@ -64,10 +60,8 @@ public class MultipleObjectDbInstancesTest {
   }
 
   public class V {
-    @Id
-    private Object graphId;
-    @Version
-    private Object graphVersion;
+    @Id private Object graphId;
+    @Version private Object graphVersion;
 
     public Object getGraphId() {
       return graphId;
@@ -78,15 +72,15 @@ public class MultipleObjectDbInstancesTest {
     }
   }
 
-  public class X extends V {
-  }
+  public class X extends V {}
 
   private class Connection {
-    OrientBaseGraph   graph;
+    OrientBaseGraph graph;
     OObjectDatabaseTx objectDb;
 
     public Connection(String databaseName) {
-      OrientGraphFactory graphFactory = new OrientGraphFactory("memory:" + databaseName, "admin", "admin");
+      OrientGraphFactory graphFactory =
+          new OrientGraphFactory("memory:" + databaseName, "admin", "admin");
 
       // Create graph API access
       graph = graphFactory.getNoTx();

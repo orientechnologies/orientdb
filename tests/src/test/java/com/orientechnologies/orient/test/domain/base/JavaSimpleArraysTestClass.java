@@ -17,29 +17,23 @@
 package com.orientechnologies.orient.test.domain.base;
 
 import java.util.Date;
-
 import javax.persistence.Id;
 import javax.persistence.Version;
 
-/**
- * @author Luca Molino (molino.luca--at--gmail.com)
- * 
- */
+/** @author Luca Molino (molino.luca--at--gmail.com) */
 public class JavaSimpleArraysTestClass {
-  @Id
-  private Object     id;
-  @Version
-  private Object     version;
+  @Id private Object id;
+  @Version private Object version;
 
-  private String[]   text = new String[] { "initTest" };
+  private String[] text = new String[] {"initTest"};
   private EnumTest[] enumeration;
-  private int[]      numberSimple;
-  private long[]     longSimple;
-  private double[]   doubleSimple;
-  private float[]    floatSimple;
-  private byte[]     byteSimple;
-  private boolean[]  flagSimple;
-  private Date[]     dateField;
+  private int[] numberSimple;
+  private long[] longSimple;
+  private double[] doubleSimple;
+  private float[] floatSimple;
+  private byte[] byteSimple;
+  private boolean[] flagSimple;
+  private Date[] dateField;
 
   public Object getId() {
     return id;
@@ -128,5 +122,4 @@ public class JavaSimpleArraysTestClass {
   public void setDateField(Date[] dateField) {
     this.dateField = dateField;
   }
-
 }

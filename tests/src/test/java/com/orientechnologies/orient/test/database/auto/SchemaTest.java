@@ -35,16 +35,15 @@ import com.orientechnologies.orient.core.sql.OCommandSQLParsingException;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.orientechnologies.orient.core.storage.cluster.OOfflineClusterException;
-import org.testng.Assert;
-import org.testng.annotations.Optional;
-import org.testng.annotations.Parameters;
-import org.testng.annotations.Test;
-
 import java.io.IOException;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Set;
+import org.testng.Assert;
+import org.testng.annotations.Optional;
+import org.testng.annotations.Parameters;
+import org.testng.annotations.Test;
 
 @Test(groups = "schema")
 public class SchemaTest extends DocumentDBBaseTest {
@@ -55,8 +54,7 @@ public class SchemaTest extends DocumentDBBaseTest {
 
   public void createSchema() throws IOException {
 
-    if (database.getMetadata().getSchema().existsClass("Account"))
-      return;
+    if (database.getMetadata().getSchema().existsClass("Account")) return;
 
     createBasicTestSchema();
   }
@@ -76,15 +74,24 @@ public class SchemaTest extends DocumentDBBaseTest {
 
     assert schema.getClass("Whiz") != null;
     assert schema.getClass("whiz").getProperty("account").getType() == OType.LINK;
-    assert schema.getClass("whiz").getProperty("account").getLinkedClass().getName().equalsIgnoreCase("Account");
+    assert schema
+        .getClass("whiz")
+        .getProperty("account")
+        .getLinkedClass()
+        .getName()
+        .equalsIgnoreCase("Account");
     assert schema.getClass("WHIZ").getProperty("date").getType() == OType.DATE;
     assert schema.getClass("WHIZ").getProperty("text").getType() == OType.STRING;
     assert schema.getClass("WHIZ").getProperty("text").isMandatory();
     assert schema.getClass("WHIZ").getProperty("text").getMin().equals("1");
     assert schema.getClass("WHIZ").getProperty("text").getMax().equals("140");
     assert schema.getClass("whiz").getProperty("replyTo").getType() == OType.LINK;
-    assert schema.getClass("Whiz").getProperty("replyTo").getLinkedClass().getName().equalsIgnoreCase("Account");
-
+    assert schema
+        .getClass("Whiz")
+        .getProperty("replyTo")
+        .getLinkedClass()
+        .getName()
+        .equalsIgnoreCase("Account");
   }
 
   @Test(dependsOnMethods = "checkSchema")
@@ -100,7 +107,6 @@ public class SchemaTest extends DocumentDBBaseTest {
     Assert.assertNotNull(schema.getClass("TestInvalid Name"));
     schema.createClass("TestInvalid.Name");
     Assert.assertNotNull(schema.getClass("TestInvalid.Name"));
-
   }
 
   @Test(dependsOnMethods = "checkSchema")
@@ -112,56 +118,51 @@ public class SchemaTest extends DocumentDBBaseTest {
       Assert.assertNull(schema.getClass("Animal33"));
     } catch (OSchemaException e) {
     }
-
   }
 
   @Test(dependsOnMethods = "checkSchemaApi")
   public void checkClusters() {
 
     for (OClass cls : database.getMetadata().getSchema().getClasses()) {
-      if (!cls.isAbstract())
-        assert database.getClusterNameById(cls.getDefaultClusterId()) != null;
+      if (!cls.isAbstract()) assert database.getClusterNameById(cls.getDefaultClusterId()) != null;
     }
-
   }
 
   @Test(dependsOnMethods = "createSchema")
   public void checkDatabaseSize() {
 
     Assert.assertTrue(database.getSize() > 0);
-
   }
 
   @Test(dependsOnMethods = "createSchema")
   public void checkTotalRecords() {
 
     Assert.assertTrue(database.getStorage().countRecords() > 0);
-
   }
 
   @Test(expectedExceptions = OValidationException.class)
   public void checkErrorOnUserNoPasswd() {
 
     database.getMetadata().getSecurity().createUser("error", null, (String) null);
-
   }
 
   @Test
   public void testMultiThreadSchemaCreation() throws InterruptedException {
 
-    Thread thread = new Thread(new Runnable() {
+    Thread thread =
+        new Thread(
+            new Runnable() {
 
-      @Override
-      public void run() {
-        ODatabaseRecordThreadLocal.instance().set(database);
-        ODocument doc = new ODocument("NewClass");
-        database.save(doc);
+              @Override
+              public void run() {
+                ODatabaseRecordThreadLocal.instance().set(database);
+                ODocument doc = new ODocument("NewClass");
+                database.save(doc);
 
-        doc.delete();
-        database.getMetadata().getSchema().dropClass("NewClass");
-
-      }
-    });
+                doc.delete();
+                database.getMetadata().getSchema().dropClass("NewClass");
+              }
+            });
 
     thread.start();
     thread.join();
@@ -195,7 +196,6 @@ public class SchemaTest extends DocumentDBBaseTest {
     Assert.assertNull(dropTestClass);
     Assert.assertEquals(database.getStorage().getClusterIdByName(testClassName), -1);
     Assert.assertNull(database.getClusterNameById(clusterId));
-
   }
 
   @Test
@@ -226,47 +226,110 @@ public class SchemaTest extends DocumentDBBaseTest {
     Assert.assertNull(dropTestClass);
     Assert.assertEquals(database.getStorage().getClusterIdByName(testClassName), -1);
     Assert.assertNull(database.getClusterNameById(clusterId));
-
   }
 
   @Test(dependsOnMethods = "createSchema")
   public void customAttributes() {
 
     // TEST CUSTOM PROPERTY CREATION
-    database.getMetadata().getSchema().getClass("Profile").getProperty("nick").setCustom("stereotype", "icon");
+    database
+        .getMetadata()
+        .getSchema()
+        .getClass("Profile")
+        .getProperty("nick")
+        .setCustom("stereotype", "icon");
 
-    Assert.assertEquals(database.getMetadata().getSchema().getClass("Profile").getProperty("nick").getCustom("stereotype"), "icon");
+    Assert.assertEquals(
+        database
+            .getMetadata()
+            .getSchema()
+            .getClass("Profile")
+            .getProperty("nick")
+            .getCustom("stereotype"),
+        "icon");
 
     // TEST CUSTOM PROPERTY EXISTS EVEN AFTER REOPEN
 
-    Assert.assertEquals(database.getMetadata().getSchema().getClass("Profile").getProperty("nick").getCustom("stereotype"), "icon");
+    Assert.assertEquals(
+        database
+            .getMetadata()
+            .getSchema()
+            .getClass("Profile")
+            .getProperty("nick")
+            .getCustom("stereotype"),
+        "icon");
 
     // TEST CUSTOM PROPERTY REMOVAL
-    database.getMetadata().getSchema().getClass("Profile").getProperty("nick").setCustom("stereotype", null);
-    Assert.assertEquals(database.getMetadata().getSchema().getClass("Profile").getProperty("nick").getCustom("stereotype"), null);
+    database
+        .getMetadata()
+        .getSchema()
+        .getClass("Profile")
+        .getProperty("nick")
+        .setCustom("stereotype", null);
+    Assert.assertEquals(
+        database
+            .getMetadata()
+            .getSchema()
+            .getClass("Profile")
+            .getProperty("nick")
+            .getCustom("stereotype"),
+        null);
 
     // TEST CUSTOM PROPERTY UPDATE
-    database.getMetadata().getSchema().getClass("Profile").getProperty("nick").setCustom("stereotype", "polygon");
-    Assert.assertEquals(database.getMetadata().getSchema().getClass("Profile").getProperty("nick").getCustom("stereotype"),
+    database
+        .getMetadata()
+        .getSchema()
+        .getClass("Profile")
+        .getProperty("nick")
+        .setCustom("stereotype", "polygon");
+    Assert.assertEquals(
+        database
+            .getMetadata()
+            .getSchema()
+            .getClass("Profile")
+            .getProperty("nick")
+            .getCustom("stereotype"),
         "polygon");
 
     // TEST CUSTOM PROPERTY UDPATED EVEN AFTER REOPEN
 
-    Assert.assertEquals(database.getMetadata().getSchema().getClass("Profile").getProperty("nick").getCustom("stereotype"),
+    Assert.assertEquals(
+        database
+            .getMetadata()
+            .getSchema()
+            .getClass("Profile")
+            .getProperty("nick")
+            .getCustom("stereotype"),
         "polygon");
 
     // TEST CUSTOM PROPERTY WITH =
 
-    database.getMetadata().getSchema().getClass("Profile").getProperty("nick").setCustom("equal", "this = that");
+    database
+        .getMetadata()
+        .getSchema()
+        .getClass("Profile")
+        .getProperty("nick")
+        .setCustom("equal", "this = that");
 
-    Assert
-        .assertEquals(database.getMetadata().getSchema().getClass("Profile").getProperty("nick").getCustom("equal"), "this = that");
+    Assert.assertEquals(
+        database
+            .getMetadata()
+            .getSchema()
+            .getClass("Profile")
+            .getProperty("nick")
+            .getCustom("equal"),
+        "this = that");
 
     // TEST CUSTOM PROPERTY WITH = AFTER REOPEN
 
-    Assert
-        .assertEquals(database.getMetadata().getSchema().getClass("Profile").getProperty("nick").getCustom("equal"), "this = that");
-
+    Assert.assertEquals(
+        database
+            .getMetadata()
+            .getSchema()
+            .getClass("Profile")
+            .getProperty("nick")
+            .getCustom("equal"),
+        "this = that");
   }
 
   @Test(dependsOnMethods = "createSchema")
@@ -291,7 +354,11 @@ public class SchemaTest extends DocumentDBBaseTest {
       Assert.assertNotSame(c, company);
     }
 
-    database.command(new OCommandSQL("alter class " + company.getName() + " superclass " + superClass.getName())).execute();
+    database
+        .command(
+            new OCommandSQL(
+                "alter class " + company.getName() + " superclass " + superClass.getName()))
+        .execute();
 
     database.getMetadata().getSchema().reload();
     company = database.getMetadata().getSchema().getClass("Company");
@@ -306,7 +373,6 @@ public class SchemaTest extends DocumentDBBaseTest {
       }
     }
     Assert.assertEquals(found, true);
-
   }
 
   @Test
@@ -356,7 +422,8 @@ public class SchemaTest extends DocumentDBBaseTest {
     document.setClassName("RenameClassTest");
     document.save();
 
-    List<ODocument> result = database.query(new OSQLSynchQuery<ODocument>("select from RenameClassTest"));
+    List<ODocument> result =
+        database.query(new OSQLSynchQuery<ODocument>("select from RenameClassTest"));
     Assert.assertEquals(result.size(), 2);
 
     oClass.set(OClass.ATTRIBUTES.NAME, "RenameClassTest2");
@@ -365,7 +432,6 @@ public class SchemaTest extends DocumentDBBaseTest {
 
     result = database.query(new OSQLSynchQuery<ODocument>("select from RenameClassTest2"));
     Assert.assertEquals(result.size(), 2);
-
   }
 
   public void testMinimumClustersAndClusterSelection() {
@@ -388,17 +454,22 @@ public class SchemaTest extends DocumentDBBaseTest {
       }
 
       // CHECK THERE ARE 2 RECORDS IN EACH CLUSTER (ROUND-ROBIN STRATEGY)
-      Assert.assertEquals(database.countClusterElements(database.getClusterIdByName("multipleclusters")), 2);
+      Assert.assertEquals(
+          database.countClusterElements(database.getClusterIdByName("multipleclusters")), 2);
       for (int i = 1; i < 3; ++i) {
-        Assert.assertEquals(database.countClusterElements(database.getClusterIdByName("multipleclusters_" + i)), 2);
+        Assert.assertEquals(
+            database.countClusterElements(database.getClusterIdByName("multipleclusters_" + i)), 2);
       }
 
       // DELETE ALL THE RECORDS
-      int deleted = database.command(new OCommandSQL("delete from cluster:multipleclusters_2")).execute();
+      int deleted =
+          database.command(new OCommandSQL("delete from cluster:multipleclusters_2")).execute();
       Assert.assertEquals(deleted, 2);
 
       // CHANGE CLASS STRATEGY to BALANCED
-      database.command(new OCommandSQL("alter class multipleclusters clusterselection balanced")).execute();
+      database
+          .command(new OCommandSQL("alter class multipleclusters clusterselection balanced"))
+          .execute();
       database.reload();
       database.getMetadata().getSchema().reload();
 
@@ -406,19 +477,21 @@ public class SchemaTest extends DocumentDBBaseTest {
         new ODocument("multipleclusters").field("num", i).save();
       }
 
-      Assert.assertEquals(database.countClusterElements(database.getClusterIdByName("multipleclusters_2")), 2);
+      Assert.assertEquals(
+          database.countClusterElements(database.getClusterIdByName("multipleclusters_2")), 2);
 
     } finally {
       // RESTORE DEFAULT
       database.command(new OCommandSQL("alter database minimumclusters 0")).execute();
-
     }
   }
 
   public void testExchangeCluster() {
 
     try {
-      database.command(new OCommandSQL("CREATE CLASS TestRenameClusterOriginal clusters 2")).execute();
+      database
+          .command(new OCommandSQL("CREATE CLASS TestRenameClusterOriginal clusters 2"))
+          .execute();
 
       swapClusters(database, 1);
       swapClusters(database, 2);
@@ -432,18 +505,21 @@ public class SchemaTest extends DocumentDBBaseTest {
     database.command(new OCommandSQL("create class TestOffline")).execute();
     database.command(new OCommandSQL("insert into TestOffline set status = 'offline'")).execute();
 
-    List<OIdentifiable> result = database.command(new OCommandSQL("select from TestOffline")).execute();
+    List<OIdentifiable> result =
+        database.command(new OCommandSQL("select from TestOffline")).execute();
     Assert.assertNotNull(result);
     Assert.assertFalse(result.isEmpty());
 
     ODocument record = result.get(0).getRecord();
 
     // TEST NO EFFECTS
-    Boolean changed = database.command(new OCommandSQL("alter cluster TestOffline status online")).execute();
+    Boolean changed =
+        database.command(new OCommandSQL("alter cluster TestOffline status online")).execute();
     Assert.assertFalse(changed);
 
     // PUT IT OFFLINE
-    changed = database.command(new OCommandSQL("alter cluster TestOffline* status offline")).execute();
+    changed =
+        database.command(new OCommandSQL("alter cluster TestOffline* status offline")).execute();
     Assert.assertTrue(changed);
 
     // NO DATA?
@@ -452,28 +528,34 @@ public class SchemaTest extends DocumentDBBaseTest {
     Assert.assertTrue(result.isEmpty());
 
     // TEST NO EFFECTS
-    changed = database.command(new OCommandSQL("alter cluster TestOffline* status offline")).execute();
+    changed =
+        database.command(new OCommandSQL("alter cluster TestOffline* status offline")).execute();
     Assert.assertFalse(changed);
 
     // TEST SAVING OF OFFLINE STATUS
 
     // TEST UPDATE - NO EFFECT
-    Assert.assertEquals(database.command(new OCommandSQL("update TestOffline set name = 'yeah'")).<Object>execute(), 0);
+    Assert.assertEquals(
+        database.command(new OCommandSQL("update TestOffline set name = 'yeah'")).<Object>execute(),
+        0);
 
     // TEST DELETE - NO EFFECT
-    Assert.assertEquals(database.command(new OCommandSQL("delete from TestOffline")).<Object>execute(), 0);
+    Assert.assertEquals(
+        database.command(new OCommandSQL("delete from TestOffline")).<Object>execute(), 0);
 
     // TEST CREATE -> EXCEPTION
     try {
-      Object res = database
-          .command(new OCommandSQL("insert into TestOffline set name = 'offline', password = 'offline', status = 'ACTIVE'"))
-          .execute();
+      Object res =
+          database
+              .command(
+                  new OCommandSQL(
+                      "insert into TestOffline set name = 'offline', password = 'offline', status = 'ACTIVE'"))
+              .execute();
       Assert.assertTrue(false);
     } catch (OException e) {
 
       Throwable cause = e;
-      while (cause.getCause() != null)
-        cause = cause.getCause();
+      while (cause.getCause() != null) cause = cause.getCause();
 
       Assert.assertTrue(cause instanceof OOfflineClusterException);
     }
@@ -484,8 +566,7 @@ public class SchemaTest extends DocumentDBBaseTest {
       Assert.assertTrue(false);
     } catch (OException e) {
       Throwable cause = e;
-      while (cause.getCause() != null)
-        cause = cause.getCause();
+      while (cause.getCause() != null) cause = cause.getCause();
 
       Assert.assertTrue(cause instanceof OOfflineClusterException);
     }
@@ -507,13 +588,13 @@ public class SchemaTest extends DocumentDBBaseTest {
     }
 
     // RESTORE IT ONLINE
-    changed = database.command(new OCommandSQL("alter cluster TestOffline status online")).execute();
+    changed =
+        database.command(new OCommandSQL("alter cluster TestOffline status online")).execute();
     Assert.assertTrue(changed);
 
     result = database.command(new OCommandSQL("select from TestOffline")).execute();
     Assert.assertNotNull(result);
     Assert.assertFalse(result.isEmpty());
-
   }
 
   public void testExistsProperty() {
@@ -532,38 +613,37 @@ public class SchemaTest extends DocumentDBBaseTest {
 
     Assert.assertNotNull(classB.getProperty("property"));
     Assert.assertTrue(classB.existsProperty("property"));
-
   }
 
   public void testWrongClassNameWithAt() {
-//    try {
+    //    try {
     database.command(new OCommandSQL("create class `Ant@ni`")).execute();
-//      Assert.fail();
-    //why...? it can be allowed now with backtick quoting...
-    //TODO review this
-//    } catch (Exception e) {
-//      Assert.assertTrue(e instanceof OSchemaException);
-//    }
+    //      Assert.fail();
+    // why...? it can be allowed now with backtick quoting...
+    // TODO review this
+    //    } catch (Exception e) {
+    //      Assert.assertTrue(e instanceof OSchemaException);
+    //    }
   }
 
   public void testWrongClassNameWithSpace() {
-//    try {
+    //    try {
     database.getMetadata().getSchema().createClass("Anta ni");
-//      Assert.fail();
-    //TODO review//
-//    } catch (Exception e) {
-//      Assert.assertTrue(e instanceof OSchemaException);
-//    }
+    //      Assert.fail();
+    // TODO review//
+    //    } catch (Exception e) {
+    //      Assert.assertTrue(e instanceof OSchemaException);
+    //    }
   }
 
   public void testWrongClassNameWithComma() {
-//    try {
+    //    try {
     database.getMetadata().getSchema().createClass("Anta,ni");
-//      Assert.fail();
-//    TODO review
-//    } catch (Exception e) {
-//      Assert.assertTrue(e instanceof OSchemaException);
-//    }
+    //      Assert.fail();
+    //    TODO review
+    //    } catch (Exception e) {
+    //      Assert.assertTrue(e instanceof OSchemaException);
+    //    }
   }
 
   public void testRenameWithSameNameIsNop() {
@@ -602,38 +682,98 @@ public class SchemaTest extends DocumentDBBaseTest {
     String className = "TestCaseSensitivePropNames";
     String propertyName = "propName";
     database.command("create class " + className);
-    database.command("create property " + className + "." + propertyName.toUpperCase(Locale.ENGLISH) + " STRING");
-    database.command("create property " + className + "." + propertyName.toLowerCase(Locale.ENGLISH) + " STRING");
+    database.command(
+        "create property "
+            + className
+            + "."
+            + propertyName.toUpperCase(Locale.ENGLISH)
+            + " STRING");
+    database.command(
+        "create property "
+            + className
+            + "."
+            + propertyName.toLowerCase(Locale.ENGLISH)
+            + " STRING");
 
     database.command(
-        "create index " + className + "." + propertyName.toLowerCase(Locale.ENGLISH) + " on " + className + "(" + propertyName.toLowerCase(Locale.ENGLISH)
+        "create index "
+            + className
+            + "."
+            + propertyName.toLowerCase(Locale.ENGLISH)
+            + " on "
+            + className
+            + "("
+            + propertyName.toLowerCase(Locale.ENGLISH)
             + ") NOTUNIQUE");
     database.command(
-        "create index " + className + "." + propertyName.toUpperCase(Locale.ENGLISH) + " on " + className + "(" + propertyName.toUpperCase(Locale.ENGLISH)
+        "create index "
+            + className
+            + "."
+            + propertyName.toUpperCase(Locale.ENGLISH)
+            + " on "
+            + className
+            + "("
+            + propertyName.toUpperCase(Locale.ENGLISH)
             + ") NOTUNIQUE");
 
     database.command(
-        "insert into " + className + " set " + propertyName.toUpperCase(Locale.ENGLISH) + " = 'FOO', " + propertyName.toLowerCase(Locale.ENGLISH) + " = 'foo'");
+        "insert into "
+            + className
+            + " set "
+            + propertyName.toUpperCase(Locale.ENGLISH)
+            + " = 'FOO', "
+            + propertyName.toLowerCase(Locale.ENGLISH)
+            + " = 'foo'");
     database.command(
-        "insert into " + className + " set " + propertyName.toUpperCase(Locale.ENGLISH) + " = 'BAR', " + propertyName.toLowerCase(Locale.ENGLISH) + " = 'bar'");
+        "insert into "
+            + className
+            + " set "
+            + propertyName.toUpperCase(Locale.ENGLISH)
+            + " = 'BAR', "
+            + propertyName.toLowerCase(Locale.ENGLISH)
+            + " = 'bar'");
 
-    try (OResultSet rs = database.command("select from " + className + " where " + propertyName.toLowerCase(Locale.ENGLISH) + " = 'foo'")) {
+    try (OResultSet rs =
+        database.command(
+            "select from "
+                + className
+                + " where "
+                + propertyName.toLowerCase(Locale.ENGLISH)
+                + " = 'foo'")) {
       Assert.assertTrue(rs.hasNext());
       rs.next();
       Assert.assertFalse(rs.hasNext());
     }
 
-    try (OResultSet rs = database.command("select from " + className + " where " + propertyName.toLowerCase(Locale.ENGLISH) + " = 'FOO'")) {
+    try (OResultSet rs =
+        database.command(
+            "select from "
+                + className
+                + " where "
+                + propertyName.toLowerCase(Locale.ENGLISH)
+                + " = 'FOO'")) {
       Assert.assertFalse(rs.hasNext());
     }
 
-    try (OResultSet rs = database.command("select from " + className + " where " + propertyName.toUpperCase(Locale.ENGLISH) + " = 'FOO'")) {
+    try (OResultSet rs =
+        database.command(
+            "select from "
+                + className
+                + " where "
+                + propertyName.toUpperCase(Locale.ENGLISH)
+                + " = 'FOO'")) {
       Assert.assertTrue(rs.hasNext());
       rs.next();
       Assert.assertFalse(rs.hasNext());
     }
 
-    try (OResultSet rs = database.command("select from " + className + " where " + propertyName.toUpperCase(Locale.ENGLISH) + " = 'foo'")) {
+    try (OResultSet rs =
+        database.command(
+            "select from "
+                + className
+                + " where "
+                + propertyName.toUpperCase(Locale.ENGLISH)
+                + " = 'foo'")) {
       Assert.assertFalse(rs.hasNext());
     }
 
@@ -653,21 +793,42 @@ public class SchemaTest extends DocumentDBBaseTest {
   }
 
   private void swapClusters(ODatabaseDocumentInternal databaseDocumentTx, int i) {
-    databaseDocumentTx.command(new OCommandSQL("CREATE CLASS TestRenameClusterNew extends TestRenameClusterOriginal clusters 2")).execute();
-
-    databaseDocumentTx.command(new OCommandSQL("INSERT INTO TestRenameClusterNew (iteration) VALUES(" + i + ")")).execute();
-
-    databaseDocumentTx.command(new OCommandSQL("ALTER CLASS TestRenameClusterOriginal removecluster TestRenameClusterOriginal"))
+    databaseDocumentTx
+        .command(
+            new OCommandSQL(
+                "CREATE CLASS TestRenameClusterNew extends TestRenameClusterOriginal clusters 2"))
         .execute();
-    databaseDocumentTx.command(new OCommandSQL("ALTER CLASS TestRenameClusterNew removecluster TestRenameClusterNew")).execute();
+
+    databaseDocumentTx
+        .command(new OCommandSQL("INSERT INTO TestRenameClusterNew (iteration) VALUES(" + i + ")"))
+        .execute();
+
+    databaseDocumentTx
+        .command(
+            new OCommandSQL(
+                "ALTER CLASS TestRenameClusterOriginal removecluster TestRenameClusterOriginal"))
+        .execute();
+    databaseDocumentTx
+        .command(
+            new OCommandSQL("ALTER CLASS TestRenameClusterNew removecluster TestRenameClusterNew"))
+        .execute();
     databaseDocumentTx.command(new OCommandSQL("DROP CLASS TestRenameClusterNew")).execute();
-    databaseDocumentTx.command(new OCommandSQL("ALTER CLASS TestRenameClusterOriginal addcluster TestRenameClusterNew")).execute();
+    databaseDocumentTx
+        .command(
+            new OCommandSQL(
+                "ALTER CLASS TestRenameClusterOriginal addcluster TestRenameClusterNew"))
+        .execute();
     databaseDocumentTx.command(new OCommandSQL("DROP CLUSTER TestRenameClusterOriginal")).execute();
-    databaseDocumentTx.command(new OCommandSQL("ALTER CLUSTER TestRenameClusterNew name TestRenameClusterOriginal")).execute();
+    databaseDocumentTx
+        .command(
+            new OCommandSQL("ALTER CLUSTER TestRenameClusterNew name TestRenameClusterOriginal"))
+        .execute();
 
     databaseDocumentTx.getLocalCache().clear();
 
-    List<ODocument> result = databaseDocumentTx.query(new OSQLSynchQuery<ODocument>("select * from TestRenameClusterOriginal"));
+    List<ODocument> result =
+        databaseDocumentTx.query(
+            new OSQLSynchQuery<ODocument>("select * from TestRenameClusterOriginal"));
     Assert.assertEquals(result.size(), 1);
 
     ODocument document = result.get(0);

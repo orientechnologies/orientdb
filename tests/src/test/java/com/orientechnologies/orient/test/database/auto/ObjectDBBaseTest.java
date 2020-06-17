@@ -11,21 +11,20 @@ import org.testng.annotations.Test;
  */
 @Test
 public class ObjectDBBaseTest extends BaseTest<OObjectDatabaseTx> {
-	public ObjectDBBaseTest() {
-	}
+  public ObjectDBBaseTest() {}
 
-	@Parameters(value = "url")
-	public ObjectDBBaseTest(@Optional String url) {
-		super(url);
-	}
+  @Parameters(value = "url")
+  public ObjectDBBaseTest(@Optional String url) {
+    super(url);
+  }
 
-	@Parameters(value = "url")
-	public ObjectDBBaseTest(@Optional String url, String prefix) {
-		super(url, prefix);
-	}
+  @Parameters(value = "url")
+  public ObjectDBBaseTest(@Optional String url, String prefix) {
+    super(url, prefix);
+  }
 
-	@Override
-	protected OObjectDatabaseTx createDatabaseInstance(String url) {
-		return new OObjectDatabaseTx(url);
-	}
+  @Override
+  protected OObjectDatabaseTx createDatabaseInstance(String url) {
+    return new OObjectDatabaseTx(url);
+  }
 }

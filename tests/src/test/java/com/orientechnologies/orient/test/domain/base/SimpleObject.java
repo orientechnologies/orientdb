@@ -1,16 +1,14 @@
 package com.orientechnologies.orient.test.domain.base;
 
+import java.util.Map;
 import javax.persistence.Id;
 import javax.persistence.Version;
-import java.util.Map;
 
-public class SimpleObject{
+public class SimpleObject {
 
-  @Id
-  private Object rid;
+  @Id private Object rid;
 
-  @Version
-  private Object version;
+  @Version private Object version;
 
   private String objectId;
 

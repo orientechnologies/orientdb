@@ -12,17 +12,16 @@ public class RunServerTest {
   @BeforeSuite
   public void before() throws Exception {
     server = new OServer(false);
-    server.startup(RunServerTest.class.getClassLoader().getResourceAsStream("orientdb-server-config.xml"));
+    server.startup(
+        RunServerTest.class.getClassLoader().getResourceAsStream("orientdb-server-config.xml"));
     server.activate();
   }
 
   @Test
-  public void test(){
+  public void test() {}
 
-  }
   @AfterSuite
   public void after() {
     server.shutdown();
   }
-
 }

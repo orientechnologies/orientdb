@@ -16,11 +16,9 @@
 
 package com.orientechnologies.orient.test.database.speed;
 
-import java.util.Random;
-
 import com.orientechnologies.common.comparator.OUnsafeByteArrayComparator;
 import com.orientechnologies.orient.test.database.base.OrientMonoThreadTest;
-
+import java.util.Random;
 import org.testng.annotations.Test;
 
 /**
@@ -29,10 +27,11 @@ import org.testng.annotations.Test;
  */
 @Test
 public class UnsafeByteArrayComparatorSpeedTest extends OrientMonoThreadTest {
-  private final OUnsafeByteArrayComparator unsafeByteArrayComparator = new OUnsafeByteArrayComparator();
-  private final Random                     random                    = new Random();
-  private final byte[]                     bytesOne                  = new byte[256];
-  private final byte[]                     bytesTwo                  = new byte[256];
+  private final OUnsafeByteArrayComparator unsafeByteArrayComparator =
+      new OUnsafeByteArrayComparator();
+  private final Random random = new Random();
+  private final byte[] bytesOne = new byte[256];
+  private final byte[] bytesTwo = new byte[256];
 
   public UnsafeByteArrayComparatorSpeedTest() {
     super(10000000);
@@ -50,7 +49,6 @@ public class UnsafeByteArrayComparatorSpeedTest extends OrientMonoThreadTest {
 
     bytesOne[eqBorder] = 2;
     bytesTwo[eqBorder] = 3;
-
   }
 
   @Override

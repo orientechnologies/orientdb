@@ -2,7 +2,6 @@ package com.orientechnologies.orient.test.internal;
 
 import com.tinkerpop.blueprints.impls.orient.OrientGraphFactory;
 import com.tinkerpop.blueprints.impls.orient.OrientGraphNoTx;
-
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -10,9 +9,7 @@ import java.io.OutputStream;
 import java.util.Enumeration;
 import java.util.zip.ZipFile;
 
-/**
- * Created by luca on 03/04/14.
- */
+/** Created by luca on 03/04/14. */
 public class BackupTest {
   public static void main(String[] args) throws IOException {
     File backupFile = new File("testbackup.zip");
@@ -30,6 +27,5 @@ public class BackupTest {
       System.out.format("  Entry : %s%n", entry);
     }
     factory.close();
-
   }
 }
