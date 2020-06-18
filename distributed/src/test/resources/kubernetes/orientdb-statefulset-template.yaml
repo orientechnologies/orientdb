@@ -1,0 +1,62 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: orientdb
+  labels:
+    app: orientdb
+spec:
+  ports:
+  - port: 2480
+    name: http
+  - port: 2424
+    name: binary
+  - port: 2434
+    name: hazelcast
+  clusterIP: None
+  selector:
+    app: orientdb
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: orientdb
+spec:
+  selector:
+    matchLabels:
+      app: orientdb
+  replicas: 1
+  serviceName: orientdb
+  template:
+    metadata:
+      labels:
+        app: orientdb
+        orientdb-cluster-member: "true"
+    spec:
+      terminationGracePeriodSeconds: 10
+      containers:
+        - args:
+            - dserver.sh
+          name: orientdb
+          image: 192.168.2.119:5000/pxsalehi/orientdb:3.1.1
+          imagePullPolicy: Always
+          env:
+            - name: ENABLE_KUBERNETES_DISCOVERY
+              value: "true"
+          ports:
+            - containerPort: 2480
+              protocol: TCP
+            - containerPort: 2424
+              protocol: TCP
+            - containerPort: 2434
+              protocol: TCP
+          volumeMounts:
+            - name: databases
+              mountPath: /orientdb/databases
+  volumeClaimTemplates:
+    - metadata:
+        name: databases
+      spec:
+        accessModes: ["ReadWriteOnce"]
+        resources:
+          requests:
+            storage: 2Gi
