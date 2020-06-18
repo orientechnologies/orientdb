@@ -477,10 +477,11 @@ public class OImmutableClass implements OClass {
   public long count(boolean isPolymorphic) {
     if (isPolymorphic)
       return getDatabase()
-          .countClusterElements(OClassImpl.readableClusters(getDatabase(), polymorphicClusterIds));
+          .countClusterElements(
+              OClassImpl.readableClusters(getDatabase(), polymorphicClusterIds, name));
 
     return getDatabase()
-        .countClusterElements(OClassImpl.readableClusters(getDatabase(), clusterIds));
+        .countClusterElements(OClassImpl.readableClusters(getDatabase(), clusterIds, name));
   }
 
   @Override

@@ -131,20 +131,16 @@ public abstract class OClassImpl implements OClass {
     owner = iOwner;
   }
 
-  public static int[] readableClusters(final ODatabaseDocument db, final int[] iClusterIds) {
+  public static int[] readableClusters(
+      final ODatabaseDocument db, final int[] iClusterIds, String className) {
     List<Integer> listOfReadableIds = new ArrayList<Integer>();
 
     boolean all = true;
     for (int clusterId : iClusterIds) {
       try {
-        //////////
         // This will exclude (filter out) any specific classes without explicit read permission.
-        // getMetadata().getImmutableSchemaSnapshot()?
-        final OClass clazz = db.getMetadata().getSchema().getClassByClusterId(clusterId);
-
-        if (clazz != null)
-          db.checkSecurity(ORule.ResourceGeneric.CLASS, ORole.PERMISSION_READ, clazz.getName());
-        //////////
+        if (className != null)
+          db.checkSecurity(ORule.ResourceGeneric.CLASS, ORole.PERMISSION_READ, className);
 
         final String clusterName = db.getClusterNameById(clusterId);
         db.checkSecurity(ORule.ResourceGeneric.CLUSTER, ORole.PERMISSION_READ, clusterName);
