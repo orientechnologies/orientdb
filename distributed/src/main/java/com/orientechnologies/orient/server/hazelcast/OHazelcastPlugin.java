@@ -21,6 +21,7 @@ package com.orientechnologies.orient.server.hazelcast;
 
 import com.hazelcast.config.Config;
 import com.hazelcast.config.FileSystemXmlConfig;
+import com.hazelcast.config.JoinConfig;
 import com.hazelcast.core.EntryEvent;
 import com.hazelcast.core.EntryListener;
 import com.hazelcast.core.Hazelcast;
@@ -36,8 +37,6 @@ import com.hazelcast.core.Member;
 import com.hazelcast.core.MemberAttributeEvent;
 import com.hazelcast.core.MembershipEvent;
 import com.hazelcast.core.MembershipListener;
-import com.hazelcast.config.JoinConfig;
-import com.hazelcast.config.NetworkConfig;
 import com.hazelcast.spi.exception.RetryableHazelcastException;
 import com.orientechnologies.common.concur.OOfflineNodeException;
 import com.orientechnologies.common.concur.lock.OInterruptedException;
@@ -854,12 +853,16 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
     if (enableKubernetesDiscoveryEnvVar) {
       JoinConfig joinConfig = hazelcastConfig.getNetworkConfig().getJoin();
       if (joinConfig.getKubernetesConfig() == null) {
-        ODistributedServerLog.warn(this, nodeName, null, DIRECTION.NONE,
-                "No Kubernetes join config found in %s. Ignore enabling Hazelcast Kubernetes discovery.",
-                hazelcastConfigFile);
+        ODistributedServerLog.warn(
+            this,
+            nodeName,
+            null,
+            DIRECTION.NONE,
+            "No Kubernetes join config found in %s. Ignore enabling Hazelcast Kubernetes discovery.",
+            hazelcastConfigFile);
       } else {
-        ODistributedServerLog.info(this, nodeName, null, DIRECTION.NONE,
-                "Enabling Hazelcast Kubernetes discovery.");
+        ODistributedServerLog.info(
+            this, nodeName, null, DIRECTION.NONE, "Enabling Hazelcast Kubernetes discovery.");
         joinConfig.getMulticastConfig().setEnabled(false);
         joinConfig.getKubernetesConfig().setEnabled(true);
       }
