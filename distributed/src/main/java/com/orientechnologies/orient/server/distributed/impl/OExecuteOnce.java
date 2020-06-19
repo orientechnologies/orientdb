@@ -2,6 +2,7 @@ package com.orientechnologies.orient.server.distributed.impl;
 
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.server.OServer;
+import com.orientechnologies.orient.server.distributed.ODistributedDatabase;
 import com.orientechnologies.orient.server.distributed.ODistributedRequestId;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
 import com.orientechnologies.orient.server.distributed.task.ORemoteTask;
@@ -50,8 +51,8 @@ public class OExecuteOnce {
     return toRun;
   }
 
-  public synchronized void finished() {
+  public synchronized void finished(ODistributedDatabase distributedDatabase) {
     this.finished = true;
-    toRun.finished();
+    toRun.finished(distributedDatabase);
   }
 }

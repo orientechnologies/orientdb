@@ -195,7 +195,7 @@ public class ODistributedWorker extends Thread {
         }
       } finally {
         if (currentExecuting != null) {
-          currentExecuting.getTask().finished();
+          currentExecuting.getTask().finished(distributed);
         }
       }
     }
@@ -578,7 +578,7 @@ public class ODistributedWorker extends Thread {
       do {
         el = localQueue.poll();
         if (el != null && el.getTask() != null) {
-          el.getTask().finished();
+          el.getTask().finished(distributed);
         }
       } while (el != null);
 
@@ -591,7 +591,7 @@ public class ODistributedWorker extends Thread {
       }
       ODistributedRequest process = currentExecuting;
       if (process != null) {
-        process.getTask().finished();
+        process.getTask().finished(distributed);
       }
       if (database != null) {
         database.activateOnCurrentThread();

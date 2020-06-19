@@ -432,12 +432,18 @@ public class OTransactionPhase1Task extends OAbstractReplicatedTask implements O
                   getDistributedTimeout(),
                   getDistributedTimeout());
     }
+    if (distributedDatabase instanceof ODistributedDatabaseImpl) {
+      ((ODistributedDatabaseImpl) distributedDatabase).trackTransactions(transactionId);
+    }
   }
 
   @Override
-  public void finished() {
+  public void finished(ODistributedDatabase distributedDatabase) {
     if (notYetFinishedTask != null) {
       notYetFinishedTask.cancel();
+    }
+    if (distributedDatabase instanceof ODistributedDatabaseImpl) {
+      ((ODistributedDatabaseImpl) distributedDatabase).untrackTransactions(transactionId);
     }
   }
 
