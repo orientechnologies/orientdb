@@ -1,19 +1,17 @@
 /**
  * Copyright 2010-2016 OrientDB LTD (http://orientdb.com)
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
+ * <p>Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file
+ * except in compliance with the License. You may obtain a copy of the License at
  *
- * 	http://www.apache.org/licenses/LICENSE-2.0
+ * <p>http://www.apache.org/licenses/LICENSE-2.0
  *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
+ * <p>Unless required by applicable law or agreed to in writing, software distributed under the
+ * License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either
+ * express or implied. See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * For more information: http://www.orientdb.com
+ * <p>For more information: http://www.orientdb.com
  */
 package com.orientechnologies.security.syslog;
 
@@ -30,15 +28,14 @@ import com.orientechnologies.orient.server.security.OSyslog;
 
 /**
  * Provides a default implementation for syslog access.
- * 
+ *
  * @author S. Colin Leister
- * 
  */
 public class ODefaultSyslog extends OServerPluginAbstract implements OSyslog {
-  private boolean                debug    = false;
-  private String                 hostname = "localhost";
-  private int                    port     = 514;        // Default syslog UDP port.
-  private String                 appName  = "OrientDB";
+  private boolean debug = false;
+  private String hostname = "localhost";
+  private int port = 514; // Default syslog UDP port.
+  private String appName = "OrientDB";
 
   private UdpSyslogMessageSender messageSender;
 
@@ -105,7 +102,8 @@ public class ODefaultSyslog extends OServerPluginAbstract implements OSyslog {
   }
 
   // OSyslog
-  public void log(final String operation, final String dbName, final String username, final String message) {
+  public void log(
+      final String operation, final String dbName, final String username, final String message) {
     try {
       if (messageSender != null) {
         SyslogMessage sysMsg = new SyslogMessage();
