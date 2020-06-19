@@ -3,6 +3,7 @@ package com.orientechnologies.orient.server.distributed.impl;
 import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.server.OServer;
+import com.orientechnologies.orient.server.distributed.ODistributedDatabase;
 import com.orientechnologies.orient.server.distributed.ODistributedRequestId;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
 import com.orientechnologies.orient.server.distributed.task.OAbstractRemoteTask;
@@ -65,7 +66,7 @@ public class OWaitPartitionsReadyTask extends OAbstractRemoteTask {
   }
 
   @Override
-  public void finished() {
-    execute.finished();
+  public void finished(ODistributedDatabase distributedDatabase) {
+    execute.finished(distributedDatabase);
   }
 }

@@ -86,5 +86,5 @@ public interface ORemoteTask {
 
   void fromStream(DataInput in, ORemoteTaskFactory factory) throws IOException;
 
-  default void finished() {}
+  default void finished(ODistributedDatabase distributedDatabase) {}
 }

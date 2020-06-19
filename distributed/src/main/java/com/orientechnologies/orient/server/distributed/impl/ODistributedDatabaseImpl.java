@@ -21,6 +21,7 @@ package com.orientechnologies.orient.server.distributed.impl;
 
 import static com.orientechnologies.orient.core.config.OGlobalConfiguration.DISTRIBUTED_ATOMIC_LOCK_TIMEOUT;
 import static com.orientechnologies.orient.core.config.OGlobalConfiguration.DISTRIBUTED_TRANSACTION_SEQUENCE_SET_SIZE;
+import static com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIRECTION.OUT;
 
 import com.orientechnologies.common.concur.OOfflineNodeException;
 import com.orientechnologies.common.concur.lock.OSimpleLockManager;
@@ -105,7 +106,7 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
   protected ODistributedSyncConfiguration syncConfiguration;
 
   protected Map<ODistributedRequestId, ODistributedTxContext> activeTxContexts =
-      new ConcurrentHashMap<ODistributedRequestId, ODistributedTxContext>(64);
+      new ConcurrentHashMap<>(64);
 
   private AtomicLong totalSentRequests = new AtomicLong();
   private AtomicLong totalReceivedRequests = new AtomicLong();
@@ -122,6 +123,7 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
   private final AtomicLong pending = new AtomicLong();
   private ThreadPoolExecutor requestExecutor;
   private OLockManager lockManager = new OLockManagerImpl();
+  private Set<OTransactionId> inQueue = Collections.newSetFromMap(new ConcurrentHashMap<>());
 
   public static boolean sendResponseBack(
       final Object current,
@@ -133,36 +135,30 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
       // INTERNAL MSG
       return true;
 
-    final String localNodeName = manager.getLocalNodeName();
+    final String local = manager.getLocalNodeName();
 
-    final String senderNodeName = manager.getNodeNameById(iRequestId.getNodeId());
+    final String sender = manager.getNodeNameById(iRequestId.getNodeId());
 
     final ODistributedResponse response =
-        new ODistributedResponse(null, iRequestId, localNodeName, senderNodeName, responsePayload);
+        new ODistributedResponse(null, iRequestId, local, sender, responsePayload);
 
     // TODO: check if using remote channel for local node still makes sense
     //    if (!senderNodeName.equalsIgnoreCase(manager.getLocalNodeName()))
     try {
       // GET THE SENDER'S RESPONSE QUEUE
-      final ORemoteServerController remoteSenderServer = manager.getRemoteServer(senderNodeName);
+      final ORemoteServerController remoteSenderServer = manager.getRemoteServer(sender);
 
       ODistributedServerLog.debug(
-          current,
-          localNodeName,
-          senderNodeName,
-          DIRECTION.OUT,
-          "Sending response %s back (reqId=%s)",
-          response,
-          iRequestId);
+          current, local, sender, OUT, "Sending response %s back (reqId=%s)", response, iRequestId);
 
       remoteSenderServer.sendResponse(response);
 
     } catch (Exception e) {
       ODistributedServerLog.debug(
           current,
-          localNodeName,
-          senderNodeName,
-          DIRECTION.OUT,
+          local,
+          sender,
+          OUT,
           "Error on sending response '%s' back (reqId=%s err=%s)",
           response,
           iRequestId,
@@ -383,7 +379,7 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
                       }
                     });
               } catch (RejectedExecutionException e) {
-                task.finished();
+                task.finished(this);
                 this.lockManager.unlock(guards);
                 throw e;
               }
@@ -395,11 +391,19 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
                 execute(request);
               });
         } catch (RejectedExecutionException e) {
-          task.finished();
+          task.finished(this);
           throw e;
         }
       }
     }
+  }
+
+  public void trackTransactions(OTransactionId id) {
+    inQueue.add(id);
+  }
+
+  public void untrackTransactions(OTransactionId id) {
+    inQueue.remove(id);
   }
 
   private void execute(ODistributedRequest request) {
@@ -421,7 +425,7 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
       }
       manager.messageProcessEnd(request, response);
     } finally {
-      task.finished();
+      task.finished(this);
     }
   }
 
@@ -497,7 +501,7 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
             this,
             localNodeName,
             null,
-            DIRECTION.OUT,
+            OUT,
             "No nodes configured for database '%s' request: %s",
             databaseName,
             iRequest);
@@ -582,12 +586,7 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
 
       if (ODistributedServerLog.isDebugEnabled())
         ODistributedServerLog.debug(
-            this,
-            localNodeName,
-            iNodes.toString(),
-            DIRECTION.OUT,
-            "Sending request %s...",
-            iRequest);
+            this, localNodeName, iNodes.toString(), OUT, "Sending request %s...", iRequest);
 
       for (String node : iNodes) {
         // CATCH ANY EXCEPTION LOG IT AND IGNORE TO CONTINUE SENDING REQUESTS TO OTHER NODES
@@ -624,7 +623,7 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
                 this,
                 localNodeName,
                 node,
-                ODistributedServerLog.DIRECTION.OUT,
+                OUT,
                 "Error on sending distributed request %s. The target node is not available. Active nodes: %s",
                 e,
                 iRequest,
@@ -634,7 +633,7 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
                 this,
                 localNodeName,
                 node,
-                ODistributedServerLog.DIRECTION.OUT,
+                OUT,
                 "Error on sending distributed request %s (err=%s). Active nodes: %s",
                 iRequest,
                 reason,
@@ -655,7 +654,7 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
 
       if (ODistributedServerLog.isDebugEnabled())
         ODistributedServerLog.debug(
-            this, localNodeName, iNodes.toString(), DIRECTION.OUT, "Sent request %s", iRequest);
+            this, localNodeName, iNodes.toString(), OUT, "Sent request %s", iRequest);
 
       totalSentRequests.incrementAndGet();
 
@@ -696,7 +695,7 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
           this,
           localNodeName,
           iNodes.toString(),
-          DIRECTION.OUT,
+          OUT,
           "Adjusted timeouts by adding +%dms because this is the maximum latency recorded against servers %s (reqId=%s)",
           delta,
           iNodes,
@@ -994,7 +993,7 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
           this,
           localNodeName,
           null,
-          DIRECTION.OUT,
+          OUT,
           "Local server is not online (status='%s'). Request %s will be ignored",
           srvStatus,
           iRequest);
@@ -1332,6 +1331,7 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
   @Override
   public void validateStatus(OTransactionSequenceStatus status) {
     List<OTransactionId> res = sequenceManager.checkSelfStatus(status);
+    res.removeAll(this.inQueue);
     if (!res.isEmpty()) {
       manager.installDatabase(false, databaseName, true, true);
     }
