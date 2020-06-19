@@ -107,7 +107,6 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
 
   protected Map<ODistributedRequestId, ODistributedTxContext> activeTxContexts =
       new ConcurrentHashMap<>(64);
-
   private AtomicLong totalSentRequests = new AtomicLong();
   private AtomicLong totalReceivedRequests = new AtomicLong();
   private TimerTask txTimeoutTask = null;
