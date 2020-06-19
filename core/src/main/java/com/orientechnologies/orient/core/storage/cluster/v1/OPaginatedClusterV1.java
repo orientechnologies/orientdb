@@ -586,7 +586,8 @@ public final class OPaginatedClusterV1 extends OPaginatedCluster {
       acquireSharedLock();
       try {
         final OAtomicOperation atomicOperation = OAtomicOperationsManager.getCurrentOperation();
-        final OClusterPositionMapBucket.PositionEntry positionEntry = clusterPositionMap.get(clusterPosition, 1, atomicOperation);
+        final OClusterPositionMapBucket.PositionEntry positionEntry =
+            clusterPositionMap.get(clusterPosition, 1, atomicOperation);
 
         if (positionEntry == null) {
           throw new ORecordNotFoundException(new ORecordId(id, clusterPosition),
