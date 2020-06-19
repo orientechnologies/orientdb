@@ -2,6 +2,8 @@ package com.orientechnologies.tinkerpop;
 
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.id.ORecordId;
+import java.util.*;
+import java.util.stream.Collectors;
 import org.apache.tinkerpop.gremlin.orientdb.OrientEdge;
 import org.apache.tinkerpop.gremlin.orientdb.OrientGraph;
 import org.apache.tinkerpop.gremlin.orientdb.OrientVertex;
@@ -12,12 +14,7 @@ import org.apache.tinkerpop.gremlin.structure.Vertex;
 import org.junit.Assert;
 import org.junit.Test;
 
-import java.util.*;
-import java.util.stream.Collectors;
-
-/**
- * Created by Enrico Risa on 26/01/17.
- */
+/** Created by Enrico Risa on 26/01/17. */
 public class OrientGraphExecuteQueryRemoteGraphFactoryTest extends AbstractRemoteGraphFactoryTest {
 
   @Test
@@ -48,7 +45,6 @@ public class OrientGraphExecuteQueryRemoteGraphFactoryTest extends AbstractRemot
     OGremlinResult result = iterator.next();
     Long count = result.getProperty("value");
     Assert.assertEquals(new Long(2), count);
-
   }
 
   @Test
@@ -59,7 +55,8 @@ public class OrientGraphExecuteQueryRemoteGraphFactoryTest extends AbstractRemot
     noTx.addVertex(T.label, "Person", "name", "John");
     noTx.addVertex(T.label, "Person", "name", "Luke");
 
-    OGremlinResultSet gremlin = noTx.execute("gremlin", "g.V().hasLabel('Person').has('name','Luke')", null);
+    OGremlinResultSet gremlin =
+        noTx.execute("gremlin", "g.V().hasLabel('Person').has('name','Luke')", null);
 
     List<OGremlinResult> collected = gremlin.stream().collect(Collectors.toList());
     Assert.assertEquals(1, collected.size());
@@ -67,7 +64,6 @@ public class OrientGraphExecuteQueryRemoteGraphFactoryTest extends AbstractRemot
     OGremlinResult result = collected.iterator().next();
     OrientVertex vertex = result.getVertex().get();
     Assert.assertEquals("Luke", vertex.value("name"));
-
   }
 
   @Test
@@ -88,7 +84,6 @@ public class OrientGraphExecuteQueryRemoteGraphFactoryTest extends AbstractRemot
     OGremlinResult result = collected.iterator().next();
     OrientEdge vertex = result.getEdge().get();
     Assert.assertNotNull(vertex.value("since"));
-
   }
 
   @Test
@@ -101,9 +96,11 @@ public class OrientGraphExecuteQueryRemoteGraphFactoryTest extends AbstractRemot
 
     v1.addEdge("HasFriend", v2, "since", new Date());
 
-    OGremlinResultSet gremlin = noTx.execute("gremlin",
-        "g.V().hasLabel('Person').has('name','Luke').as('luke').branch{it.get().label()}.option('Person',__.in('HasFriend').aggregate('friends')).select('luke','friends')",
-        null);
+    OGremlinResultSet gremlin =
+        noTx.execute(
+            "gremlin",
+            "g.V().hasLabel('Person').has('name','Luke').as('luke').branch{it.get().label()}.option('Person',__.in('HasFriend').aggregate('friends')).select('luke','friends')",
+            null);
 
     List<OGremlinResult> collected = gremlin.stream().collect(Collectors.toList());
     Assert.assertEquals(1, collected.size());
@@ -121,7 +118,6 @@ public class OrientGraphExecuteQueryRemoteGraphFactoryTest extends AbstractRemot
     Object john = friends.iterator().next();
 
     Assert.assertTrue(john instanceof ORecordId);
-
   }
 
   @Test(expected = OCommandExecutionException.class)
@@ -129,12 +125,11 @@ public class OrientGraphExecuteQueryRemoteGraphFactoryTest extends AbstractRemot
 
     OrientGraph noTx = factory.getNoTx();
 
-    try (OGremlinResultSet gremlin = noTx.execute("gremlin",
-        "g.V().hasLabel('Person').has('name','Luke').as('luke').branch{it.get().label()}.option('Person',__.in('HasFriend').aggregate('friends')).select('luke','friends').",
-        null)) {
-
-    }
-
+    try (OGremlinResultSet gremlin =
+        noTx.execute(
+            "gremlin",
+            "g.V().hasLabel('Person').has('name','Luke').as('luke').branch{it.get().label()}.option('Person',__.in('HasFriend').aggregate('friends')).select('luke','friends').",
+            null)) {}
   }
 
   @Test(expected = OCommandExecutionException.class)
@@ -144,10 +139,6 @@ public class OrientGraphExecuteQueryRemoteGraphFactoryTest extends AbstractRemot
 
     Map<String, String> params = new HashMap<>();
 
-    try (OGremlinResultSet gremlin = noTx.execute("gremlin", "g.V().select($test)", params)) {
-
-    }
-
+    try (OGremlinResultSet gremlin = noTx.execute("gremlin", "g.V().select($test)", params)) {}
   }
-
 }

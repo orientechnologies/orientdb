@@ -3,6 +3,9 @@ package com.orientechnologies.tinkerpop.http;
 import com.orientechnologies.common.io.OIOUtils;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.tinkerpop.AbstractRemoteGraphFactoryTest;
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.Optional;
 import org.apache.http.HttpHost;
 import org.apache.http.HttpResponse;
 import org.apache.http.auth.AuthScope;
@@ -19,22 +22,17 @@ import org.apache.http.impl.client.BasicCredentialsProvider;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.util.Optional;
-
-/**
- * Created by Enrico Risa on 07/02/17.
- */
+/** Created by Enrico Risa on 07/02/17. */
 public abstract class BaseGremlinHttpGraphFactoryTest extends AbstractRemoteGraphFactoryTest {
 
-  private String protocol     = "http";
-  private String host         = "localhost";
-  private int    port         = 2480;
-  private String userName     = "admin";
+  private String protocol = "http";
+  private String host = "localhost";
+  private int port = 2480;
+  private String userName = "admin";
   private String userPassword = "admin";
 
-  protected HttpResponse postWithBody(final String url, Optional<ODocument> body) throws IOException {
+  protected HttpResponse postWithBody(final String url, Optional<ODocument> body)
+      throws IOException {
     return post(url, body.map(d -> d.toJSON()));
   }
 
@@ -52,7 +50,9 @@ public abstract class BaseGremlinHttpGraphFactoryTest extends AbstractRemoteGrap
     final HttpHost targetHost = new HttpHost(getHost(), getPort(), getProtocol());
 
     CredentialsProvider credsProvider = new BasicCredentialsProvider();
-    credsProvider.setCredentials(new AuthScope(targetHost), new UsernamePasswordCredentials(getUserName(), getUserPassword()));
+    credsProvider.setCredentials(
+        new AuthScope(targetHost),
+        new UsernamePasswordCredentials(getUserName(), getUserPassword()));
 
     // Create AuthCache instance
     AuthCache authCache = new BasicAuthCache();
@@ -103,6 +103,7 @@ public abstract class BaseGremlinHttpGraphFactoryTest extends AbstractRemoteGrap
   protected ODocument asDocument(InputStream stream) throws IOException {
     return new ODocument().fromJSON(stream);
   }
+
   protected ODocument asDocument(String body) throws IOException {
     return new ODocument().fromJSON(body);
   }

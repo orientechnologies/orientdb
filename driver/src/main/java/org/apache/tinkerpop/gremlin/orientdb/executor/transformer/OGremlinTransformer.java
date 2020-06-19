@@ -5,17 +5,14 @@ import com.orientechnologies.orient.core.command.script.transformer.result.OResu
 import com.orientechnologies.orient.core.command.script.transformer.resultset.OResultSetTransformer;
 import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
-import org.apache.tinkerpop.gremlin.orientdb.OrientElement;
-
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Spliterator;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
+import org.apache.tinkerpop.gremlin.orientdb.OrientElement;
 
-/**
- * Created by Enrico Risa on 14/06/2018.
- */
+/** Created by Enrico Risa on 14/06/2018. */
 public class OGremlinTransformer implements OScriptTransformer {
 
   OScriptTransformer transformer;
@@ -24,9 +21,9 @@ public class OGremlinTransformer implements OScriptTransformer {
     this.transformer = transformer;
 
     this.transformer.registerResultTransformer(HashMap.class, new OGremlinMapTransformer(this));
-    this.transformer.registerResultTransformer(LinkedHashMap.class, new OGremlinMapTransformer(this));
+    this.transformer.registerResultTransformer(
+        LinkedHashMap.class, new OGremlinMapTransformer(this));
   }
-
 
   @Override
   public OResultSet toResultSet(Object value) {
@@ -38,19 +35,22 @@ public class OGremlinTransformer implements OScriptTransformer {
 
     if (value instanceof Iterable) {
       Spliterator spliterator = ((Iterable) value).spliterator();
-      Object collect = StreamSupport.stream(spliterator, false).map((e) -> {
-        if (e instanceof OrientElement) {
-          return this.transformer.toResult(e);
-        } else {
-          return e;
-        }
-      }).collect(Collectors.toList());
+      Object collect =
+          StreamSupport.stream(spliterator, false)
+              .map(
+                  (e) -> {
+                    if (e instanceof OrientElement) {
+                      return this.transformer.toResult(e);
+                    } else {
+                      return e;
+                    }
+                  })
+              .collect(Collectors.toList());
 
       return this.transformer.toResult(collect);
-    }else {
+    } else {
       return this.transformer.toResult(value);
     }
-
   }
 
   @Override
@@ -65,6 +65,6 @@ public class OGremlinTransformer implements OScriptTransformer {
 
   @Override
   public void registerResultSetTransformer(Class clazz, OResultSetTransformer transformer) {
-    this.transformer.registerResultSetTransformer(clazz,transformer);
+    this.transformer.registerResultSetTransformer(clazz, transformer);
   }
 }

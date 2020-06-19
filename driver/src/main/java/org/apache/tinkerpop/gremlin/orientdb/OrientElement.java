@@ -1,27 +1,25 @@
 package org.apache.tinkerpop.gremlin.orientdb;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.record.OElement;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.OStorage;
-import org.apache.tinkerpop.gremlin.structure.*;
-import org.apache.tinkerpop.gremlin.structure.util.ElementHelper;
-
 import java.util.Arrays;
 import java.util.Iterator;
-
-import static com.google.common.base.Preconditions.checkNotNull;
+import org.apache.tinkerpop.gremlin.structure.*;
+import org.apache.tinkerpop.gremlin.structure.util.ElementHelper;
 
 public abstract class OrientElement implements Element, OIdentifiable {
 
   protected OElement rawElement;
-  protected OGraph   graph;
+  protected OGraph graph;
 
   public OrientElement(final OGraph graph, final OElement rawElement) {
-    if (rawElement == null)
-      throw new IllegalArgumentException("rawElement must not be null!");
+    if (rawElement == null) throw new IllegalArgumentException("rawElement must not be null!");
     this.graph = checkNotNull(graph);
     this.rawElement = checkNotNull(rawElement);
   }
@@ -47,12 +45,9 @@ public abstract class OrientElement implements Element, OIdentifiable {
   }
 
   private <V> Property<V> property(final String key, final V value, boolean saveDocument) {
-    if (key == null)
-      throw Property.Exceptions.propertyKeyCanNotBeNull();
-    if (value == null)
-      throw Property.Exceptions.propertyValueCanNotBeNull();
-    if (Graph.Hidden.isHidden(key))
-      throw Property.Exceptions.propertyKeyCanNotBeAHiddenKey(key);
+    if (key == null) throw Property.Exceptions.propertyKeyCanNotBeNull();
+    if (value == null) throw Property.Exceptions.propertyValueCanNotBeNull();
+    if (Graph.Hidden.isHidden(key)) throw Property.Exceptions.propertyKeyCanNotBeAHiddenKey(key);
 
     this.graph.tx().readWrite();
 
@@ -63,8 +58,7 @@ public abstract class OrientElement implements Element, OIdentifiable {
     // them in the end
     // for performance reasons and so that the schema checker only kicks in
     // at the end
-    if (saveDocument)
-      doc.save();
+    if (saveDocument) doc.save();
     return new OrientProperty<>(key, value, this);
   }
 
@@ -96,13 +90,15 @@ public abstract class OrientElement implements Element, OIdentifiable {
     this.graph.tx().readWrite();
     ODocument record = rawElement.getRecord();
     if (propertyKeys.length > 0) {
-      return Arrays.asList(propertyKeys).stream().filter((p) -> record.containsField(p))
-          .map(entry -> new OrientProperty<V>(entry, rawElement.getProperty(entry), this)).iterator();
+      return Arrays.asList(propertyKeys).stream()
+          .filter((p) -> record.containsField(p))
+          .map(entry -> new OrientProperty<V>(entry, rawElement.getProperty(entry), this))
+          .iterator();
     } else {
-      return record.getPropertyNames().stream().map(entry -> new OrientProperty<V>(entry, rawElement.getProperty(entry), this))
+      return record.getPropertyNames().stream()
+          .map(entry -> new OrientProperty<V>(entry, rawElement.getProperty(entry), this))
           .iterator();
     }
-
   }
 
   @Override

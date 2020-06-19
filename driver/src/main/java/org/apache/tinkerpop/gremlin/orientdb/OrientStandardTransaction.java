@@ -2,16 +2,12 @@ package org.apache.tinkerpop.gremlin.orientdb;
 
 import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentAbstract;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentEmbedded;
+import java.util.function.Consumer;
 import org.apache.tinkerpop.gremlin.structure.Transaction;
 import org.apache.tinkerpop.gremlin.structure.util.AbstractTransaction;
 import org.apache.tinkerpop.gremlin.structure.util.TransactionException;
 
-import java.util.function.Consumer;
-
-/**
- * Created by Enrico Risa on 30/08/2017.
- */
+/** Created by Enrico Risa on 30/08/2017. */
 public class OrientStandardTransaction extends AbstractTransaction {
 
   private OrientStandardGraph g;
@@ -42,7 +38,6 @@ public class OrientStandardTransaction extends AbstractTransaction {
     db.internalClose(true);
     db.activateOnCurrentThread();
     db.setStatus(ODatabase.STATUS.OPEN);
-
   }
 
   @Override

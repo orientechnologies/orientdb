@@ -3,6 +3,8 @@ package org.apache.tinkerpop.gremlin.orientdb.traversal.step.map;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
+import java.util.List;
+import java.util.NoSuchElementException;
 import org.apache.tinkerpop.gremlin.orientdb.OGraph;
 import org.apache.tinkerpop.gremlin.process.traversal.Step;
 import org.apache.tinkerpop.gremlin.process.traversal.Traversal;
@@ -10,16 +12,11 @@ import org.apache.tinkerpop.gremlin.process.traversal.Traverser;
 import org.apache.tinkerpop.gremlin.process.traversal.step.util.AbstractStep;
 import org.apache.tinkerpop.gremlin.process.traversal.util.FastNoSuchElementException;
 
-import java.util.List;
-import java.util.NoSuchElementException;
-
-/**
- * @author Enrico Risa
- */
+/** @author Enrico Risa */
 public class OrientClassCountStep<S> extends AbstractStep<S, Long> {
 
-  private final boolean      vertexStep;
-  private       List<String> klasses;
+  private final boolean vertexStep;
+  private List<String> klasses;
 
   protected boolean done = false;
 
@@ -34,7 +31,11 @@ public class OrientClassCountStep<S> extends AbstractStep<S, Long> {
     if (!done) {
       done = true;
       ODatabaseDocument db = getDatabase();
-      Long v = klasses.stream().filter(this::filterClass).mapToLong((klass) -> db.countClass(klass)).reduce(0, (a, b) -> a + b);
+      Long v =
+          klasses.stream()
+              .filter(this::filterClass)
+              .mapToLong((klass) -> db.countClass(klass))
+              .reduce(0, (a, b) -> a + b);
       return this.traversal.getTraverserGenerator().generate(v, (Step) this, 1L);
     } else {
       throw FastNoSuchElementException.instance();

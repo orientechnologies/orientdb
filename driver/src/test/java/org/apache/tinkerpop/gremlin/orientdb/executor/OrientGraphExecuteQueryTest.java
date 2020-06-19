@@ -19,6 +19,8 @@
 
 package org.apache.tinkerpop.gremlin.orientdb.executor;
 
+import java.util.*;
+import java.util.stream.Collectors;
 import org.apache.tinkerpop.gremlin.orientdb.OrientEdge;
 import org.apache.tinkerpop.gremlin.orientdb.OrientGraph;
 import org.apache.tinkerpop.gremlin.orientdb.OrientGraphBaseTest;
@@ -28,12 +30,7 @@ import org.apache.tinkerpop.gremlin.structure.Vertex;
 import org.junit.Assert;
 import org.junit.Test;
 
-import java.util.*;
-import java.util.stream.Collectors;
-
-/**
- * Created by Enrico Risa on 14/11/16.
- */
+/** Created by Enrico Risa on 14/11/16. */
 public class OrientGraphExecuteQueryTest extends OrientGraphBaseTest {
 
   @Test
@@ -47,7 +44,6 @@ public class OrientGraphExecuteQueryTest extends OrientGraphBaseTest {
     OGremlinResultSet gremlin = noTx.execute("gremlin", "g.V()", null);
 
     Assert.assertEquals(2, gremlin.stream().count());
-
   }
 
   @Test
@@ -65,7 +61,6 @@ public class OrientGraphExecuteQueryTest extends OrientGraphBaseTest {
     OGremlinResult result = iterator.next();
     Long count = result.getProperty("value");
     Assert.assertEquals(new Long(2), count);
-
   }
 
   @Test
@@ -76,7 +71,8 @@ public class OrientGraphExecuteQueryTest extends OrientGraphBaseTest {
     noTx.addVertex(T.label, "Person", "name", "John");
     noTx.addVertex(T.label, "Person", "name", "Luke");
 
-    OGremlinResultSet gremlin = noTx.execute("gremlin", "g.V().hasLabel('Person').has('name','Luke')", null);
+    OGremlinResultSet gremlin =
+        noTx.execute("gremlin", "g.V().hasLabel('Person').has('name','Luke')", null);
 
     List<OGremlinResult> collected = gremlin.stream().collect(Collectors.toList());
     Assert.assertEquals(1, collected.size());
@@ -84,7 +80,6 @@ public class OrientGraphExecuteQueryTest extends OrientGraphBaseTest {
     OGremlinResult result = collected.iterator().next();
     OrientVertex vertex = result.getVertex().get();
     Assert.assertEquals("Luke", vertex.value("name"));
-
   }
 
   @Test
@@ -105,7 +100,6 @@ public class OrientGraphExecuteQueryTest extends OrientGraphBaseTest {
     OGremlinResult result = collected.iterator().next();
     OrientEdge vertex = result.getEdge().get();
     Assert.assertNotNull(vertex.value("since"));
-
   }
 
   @Test
@@ -114,14 +108,24 @@ public class OrientGraphExecuteQueryTest extends OrientGraphBaseTest {
     OrientGraph noTx = factory.getNoTx();
 
     Vertex v1 = noTx.addVertex(T.label, "Person", "name", "John");
-    Vertex v2 = noTx.addVertex(T.label, "Person", "name", "Luke", "values", new ArrayList<String>() {{
-      add("first");
-      add("second");
-    }});
+    Vertex v2 =
+        noTx.addVertex(
+            T.label,
+            "Person",
+            "name",
+            "Luke",
+            "values",
+            new ArrayList<String>() {
+              {
+                add("first");
+                add("second");
+              }
+            });
 
     v1.addEdge("HasFriend", v2, "since", new Date());
 
-    OGremlinResultSet gremlin = noTx.execute("gremlin", "g.V().has('name','John').out().values('values').path()", null);
+    OGremlinResultSet gremlin =
+        noTx.execute("gremlin", "g.V().has('name','John').out().values('values').path()", null);
 
     List<OGremlinResult> collected = gremlin.stream().collect(Collectors.toList());
     Assert.assertEquals(1, collected.size());
@@ -147,6 +151,5 @@ public class OrientGraphExecuteQueryTest extends OrientGraphBaseTest {
     List coll = (List) results.get(2);
 
     Assert.assertEquals(2, coll.size());
-
   }
 }

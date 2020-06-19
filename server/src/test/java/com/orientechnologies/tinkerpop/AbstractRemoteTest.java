@@ -8,6 +8,11 @@ import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.OServerMain;
 import com.orientechnologies.orient.server.plugin.OServerPluginInfo;
 import com.orientechnologies.tinkerpop.server.OGremlinServerPlugin;
+import java.io.ByteArrayInputStream;
+import java.io.FileNotFoundException;
+import java.io.InputStream;
+import java.util.HashMap;
+import java.util.Map;
 import org.apache.commons.configuration.BaseConfiguration;
 import org.apache.tinkerpop.gremlin.orientdb.OrientGraph;
 import org.junit.After;
@@ -15,23 +20,14 @@ import org.junit.Before;
 import org.junit.Rule;
 import org.junit.rules.TestName;
 
-import java.io.ByteArrayInputStream;
-import java.io.FileNotFoundException;
-import java.io.InputStream;
-import java.util.HashMap;
-import java.util.Map;
-
-/**
- * Created by Enrico Risa on 14/03/17.
- */
+/** Created by Enrico Risa on 14/03/17. */
 public class AbstractRemoteTest {
 
   protected static final String SERVER_DIRECTORY = "./target";
 
   protected OServer server;
 
-  @Rule
-  public TestName name = new TestName();
+  @Rule public TestName name = new TestName();
 
   public InputStream getInputConfig() {
     return ClassLoader.getSystemResourceAsStream("orientdb-server-config.xml");
@@ -48,27 +44,31 @@ public class AbstractRemoteTest {
     server.startup(stream);
     server.activate();
 
-    server.createDatabase(name.getMethodName(), ODatabaseType.MEMORY, OrientDBConfig.defaultConfig());
-
+    server.createDatabase(
+        name.getMethodName(), ODatabaseType.MEMORY, OrientDBConfig.defaultConfig());
   }
 
   protected void installGremlinServer() {
-    OGremlinServerPlugin gremlinServer = new OGremlinServerPlugin() {
+    OGremlinServerPlugin gremlinServer =
+        new OGremlinServerPlugin() {
 
-      @Override
-      public InputStream getServerConfig() throws FileNotFoundException {
-        return ClassLoader.getSystemResourceAsStream("gremlin-server.yaml");
-      }
+          @Override
+          public InputStream getServerConfig() throws FileNotFoundException {
+            return ClassLoader.getSystemResourceAsStream("gremlin-server.yaml");
+          }
 
-      @Override
-      public InputStream getGraphsConfig() throws FileNotFoundException {
-        ODocument doc = createGraphConfig();
-        return new ByteArrayInputStream(doc.toJSON().getBytes());
-      }
-    };
+          @Override
+          public InputStream getGraphsConfig() throws FileNotFoundException {
+            ODocument doc = createGraphConfig();
+            return new ByteArrayInputStream(doc.toJSON().getBytes());
+          }
+        };
 
-    server.getPluginManager()
-        .registerPlugin(new OServerPluginInfo(gremlinServer.getName(), null, null, null, gremlinServer, null, 0, null));
+    server
+        .getPluginManager()
+        .registerPlugin(
+            new OServerPluginInfo(
+                gremlinServer.getName(), null, null, null, gremlinServer, null, 0, null));
     gremlinServer.config(server, null);
 
     gremlinServer.onAfterActivate();
@@ -79,9 +79,7 @@ public class AbstractRemoteTest {
     gremlinServer.installCustomGraph(configuration, "graph", "g");
   }
 
-  protected void onConfiguration(BaseConfiguration configuration) {
-
-  }
+  protected void onConfiguration(BaseConfiguration configuration) {}
 
   protected ODocument createGraphConfig() {
     ODocument doc = new ODocument();

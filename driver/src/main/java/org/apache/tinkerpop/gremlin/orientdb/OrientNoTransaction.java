@@ -27,5 +27,4 @@ public class OrientNoTransaction extends OrientTransaction {
   protected void doRollback() throws TransactionException {
     // do nothing, no transaction
   }
-
 }

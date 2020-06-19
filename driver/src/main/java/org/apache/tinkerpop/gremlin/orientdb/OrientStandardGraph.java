@@ -1,8 +1,14 @@
 package org.apache.tinkerpop.gremlin.orientdb;
 
+import static org.apache.tinkerpop.gremlin.orientdb.OrientGraph.CONFIG_TRANSACTIONAL;
+
 import com.google.common.collect.Maps;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.index.OIndex;
+import java.util.Iterator;
+import java.util.Map;
+import java.util.Set;
+import java.util.stream.Stream;
 import org.apache.commons.configuration.Configuration;
 import org.apache.tinkerpop.gremlin.orientdb.executor.OGremlinResultSet;
 import org.apache.tinkerpop.gremlin.orientdb.io.OrientIoRegistry;
@@ -14,16 +20,7 @@ import org.apache.tinkerpop.gremlin.process.traversal.TraversalStrategies;
 import org.apache.tinkerpop.gremlin.structure.*;
 import org.apache.tinkerpop.gremlin.structure.io.Io;
 
-import java.util.Iterator;
-import java.util.Map;
-import java.util.Set;
-import java.util.stream.Stream;
-
-import static org.apache.tinkerpop.gremlin.orientdb.OrientGraph.CONFIG_TRANSACTIONAL;
-
-/**
- * Created by Enrico Risa on 30/08/2017.
- */
+/** Created by Enrico Risa on 30/08/2017. */
 @Graph.OptIn(Graph.OptIn.SUITE_STRUCTURE_STANDARD)
 @Graph.OptIn(Graph.OptIn.SUITE_STRUCTURE_INTEGRATE)
 @Graph.OptIn(Graph.OptIn.SUITE_PROCESS_STANDARD)
@@ -32,20 +29,24 @@ import static org.apache.tinkerpop.gremlin.orientdb.OrientGraph.CONFIG_TRANSACTI
 public class OrientStandardGraph implements OGraph {
 
   static {
-    TraversalStrategies.GlobalCache.registerStrategies(OrientStandardGraph.class,
-        TraversalStrategies.GlobalCache.getStrategies(Graph.class).clone()
-            .addStrategies(OrientGraphStepStrategy.instance(), OrientGraphCountStrategy.instance(),
+    TraversalStrategies.GlobalCache.registerStrategies(
+        OrientStandardGraph.class,
+        TraversalStrategies.GlobalCache.getStrategies(Graph.class)
+            .clone()
+            .addStrategies(
+                OrientGraphStepStrategy.instance(),
+                OrientGraphCountStrategy.instance(),
                 OrientGraphMatchStepStrategy.instance()));
   }
 
   protected final ThreadLocal<OrientGraph> graphInternal = new ThreadLocal<>();
-  private final   Map<Thread, OrientGraph> graphs        = Maps.newConcurrentMap();
+  private final Map<Thread, OrientGraph> graphs = Maps.newConcurrentMap();
 
-  private final Configuration          config;
-  private       OrientGraphBaseFactory factory;
-  private       boolean                transactional = true;
-  private       Transaction            tx;
-  private       OElementFactory        elementFactory;
+  private final Configuration config;
+  private OrientGraphBaseFactory factory;
+  private boolean transactional = true;
+  private Transaction tx;
+  private OElementFactory elementFactory;
 
   public OrientStandardGraph(OrientGraphBaseFactory factory, Configuration config) {
     this.factory = factory;
@@ -63,7 +64,8 @@ public class OrientStandardGraph implements OGraph {
   }
 
   @Override
-  public <C extends GraphComputer> C compute(Class<C> graphComputerClass) throws IllegalArgumentException {
+  public <C extends GraphComputer> C compute(Class<C> graphComputerClass)
+      throws IllegalArgumentException {
     return graph().compute(graphComputerClass);
   }
 
@@ -130,7 +132,8 @@ public class OrientStandardGraph implements OGraph {
 
   @Override
   public <I extends Io> I io(Io.Builder<I> builder) {
-    return (I) OGraph.super.io(builder.onMapper(mb -> mb.addRegistry(OrientIoRegistry.getInstance())));
+    return (I)
+        OGraph.super.io(builder.onMapper(mb -> mb.addRegistry(OrientIoRegistry.getInstance())));
   }
 
   public void drop() {

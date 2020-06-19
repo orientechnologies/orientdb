@@ -1,18 +1,15 @@
 package com.orientechnologies.tinkerpop.server;
 
+import java.util.Set;
+import java.util.function.Function;
+import javax.script.Bindings;
 import org.apache.tinkerpop.gremlin.process.traversal.TraversalSource;
 import org.apache.tinkerpop.gremlin.server.GraphManager;
 import org.apache.tinkerpop.gremlin.server.Settings;
 import org.apache.tinkerpop.gremlin.server.util.DefaultGraphManager;
 import org.apache.tinkerpop.gremlin.structure.Graph;
 
-import javax.script.Bindings;
-import java.util.Set;
-import java.util.function.Function;
-
-/**
- * Created by Enrico Risa on 06/09/2017.
- */
+/** Created by Enrico Risa on 06/09/2017. */
 public class OrientGremlinGraphManager implements GraphManager {
 
   private DefaultGraphManager delegate;
@@ -90,5 +87,4 @@ public class OrientGremlinGraphManager implements GraphManager {
   public Graph removeGraph(String s) throws Exception {
     return delegate.removeGraph(s);
   }
-
 }

@@ -1,18 +1,15 @@
 package org.apache.tinkerpop.gremlin.orientdb.executor;
 
 import com.orientechnologies.orient.core.sql.executor.OResult;
-import org.apache.tinkerpop.gremlin.orientdb.OrientEdge;
-import org.apache.tinkerpop.gremlin.orientdb.OrientGraph;
-import org.apache.tinkerpop.gremlin.orientdb.OrientVertex;
-
 import java.util.Optional;
 import java.util.Spliterator;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
+import org.apache.tinkerpop.gremlin.orientdb.OrientEdge;
+import org.apache.tinkerpop.gremlin.orientdb.OrientGraph;
+import org.apache.tinkerpop.gremlin.orientdb.OrientVertex;
 
-/**
- * Created by Enrico Risa on 05/06/2017.
- */
+/** Created by Enrico Risa on 05/06/2017. */
 public class OGremlinResult {
 
   private OrientGraph graph;
@@ -27,14 +24,17 @@ public class OGremlinResult {
     Object value = inner.getProperty(name);
     if (value instanceof Iterable) {
       Spliterator spliterator = ((Iterable) value).spliterator();
-      value = StreamSupport.stream(spliterator, false).map((e) -> {
-        if (e instanceof OResult) {
-          return new OGremlinResult(this.graph, (OResult) e);
-        } else {
-          return e;
-        }
-      }).collect(Collectors.toList());
-
+      value =
+          StreamSupport.stream(spliterator, false)
+              .map(
+                  (e) -> {
+                    if (e instanceof OResult) {
+                      return new OGremlinResult(this.graph, (OResult) e);
+                    } else {
+                      return e;
+                    }
+                  })
+              .collect(Collectors.toList());
     }
     return (T) value;
   }

@@ -5,9 +5,7 @@ import org.apache.tinkerpop.gremlin.structure.Vertex;
 import org.junit.Assert;
 import org.junit.Test;
 
-/**
- * Created by Enrico Risa on 11/08/2017.
- */
+/** Created by Enrico Risa on 11/08/2017. */
 public class OrientGraphQueryTest extends OrientGraphBaseTest {
 
   @Test
@@ -54,7 +52,15 @@ public class OrientGraphQueryTest extends OrientGraphBaseTest {
 
     // More Complex Count
 
-    count = graph.traversal().V().has("Person", "name", "Jon").out("HasFriend", "HasAnimal").count().toList().get(0);
+    count =
+        graph
+            .traversal()
+            .V()
+            .has("Person", "name", "Jon")
+            .out("HasFriend", "HasAnimal")
+            .count()
+            .toList()
+            .get(0);
     Assert.assertEquals(new Long(2), count);
 
     // With Polymorphism
@@ -78,7 +84,6 @@ public class OrientGraphQueryTest extends OrientGraphBaseTest {
 
     count = graph.traversal().V().has("marker", 10).count().toList().get(0);
     Assert.assertEquals(new Long(0), count);
-
   }
 
   @Test
@@ -104,7 +109,6 @@ public class OrientGraphQueryTest extends OrientGraphBaseTest {
     Assert.assertEquals(new Long(0), count);
 
     graph.close();
-
   }
 
   @Test
@@ -129,7 +133,6 @@ public class OrientGraphQueryTest extends OrientGraphBaseTest {
     Assert.assertEquals(new Long(0), count);
 
     graph.close();
-
   }
 
   @Test
@@ -153,7 +156,6 @@ public class OrientGraphQueryTest extends OrientGraphBaseTest {
     } finally {
       graph.close();
     }
-
   }
 
   @Test
@@ -205,7 +207,6 @@ public class OrientGraphQueryTest extends OrientGraphBaseTest {
     Assert.assertEquals(new Long(1), count);
 
     graph.close();
-
   }
 
   @Test
@@ -222,13 +223,21 @@ public class OrientGraphQueryTest extends OrientGraphBaseTest {
 
     graph.addVertex(T.label, "Person", "name", "Jon");
 
-    count = graph.traversal().V().hasLabel("Person").has("name", "Jon").hasLabel("Person").has("name", "Jon").count().toList()
-        .get(0);
+    count =
+        graph
+            .traversal()
+            .V()
+            .hasLabel("Person")
+            .has("name", "Jon")
+            .hasLabel("Person")
+            .has("name", "Jon")
+            .count()
+            .toList()
+            .get(0);
 
     Assert.assertEquals(new Long(1), count);
 
     graph.close();
-
   }
 
   protected void initGraph(OrientGraph graph) {
@@ -248,7 +257,5 @@ public class OrientGraphQueryTest extends OrientGraphBaseTest {
 
     v1.addEdge("HasAnimal", v3, "marker", 10);
     v2.addEdge("HasAnimal", v4);
-
   }
-
 }

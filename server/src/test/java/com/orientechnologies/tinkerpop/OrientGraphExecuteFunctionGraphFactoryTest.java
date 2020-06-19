@@ -2,6 +2,10 @@ package com.orientechnologies.tinkerpop;
 
 import com.orientechnologies.orient.core.metadata.function.OFunction;
 import com.orientechnologies.orient.core.metadata.function.OFunctionLibrary;
+import java.util.Collection;
+import java.util.Iterator;
+import java.util.List;
+import java.util.stream.Collectors;
 import org.apache.tinkerpop.gremlin.orientdb.OrientGraph;
 import org.apache.tinkerpop.gremlin.orientdb.OrientVertex;
 import org.apache.tinkerpop.gremlin.orientdb.StreamUtils;
@@ -12,14 +16,7 @@ import org.junit.Assert;
 import org.junit.Ignore;
 import org.junit.Test;
 
-import java.util.Collection;
-import java.util.Iterator;
-import java.util.List;
-import java.util.stream.Collectors;
-
-/**
- * Created by Enrico Risa on 14/11/16.
- */
+/** Created by Enrico Risa on 14/11/16. */
 public class OrientGraphExecuteFunctionGraphFactoryTest extends AbstractRemoteGraphFactoryTest {
 
   @Test
@@ -43,7 +40,6 @@ public class OrientGraphExecuteFunctionGraphFactoryTest extends AbstractRemoteGr
     Iterator gremlin = (Iterator) testGremlin.execute();
 
     Assert.assertEquals(2, StreamUtils.asStream(gremlin).count());
-
   }
 
   @Test
@@ -69,7 +65,6 @@ public class OrientGraphExecuteFunctionGraphFactoryTest extends AbstractRemoteGr
     Assert.assertEquals(true, gremlin.hasNext());
     Object result = gremlin.next();
     Assert.assertEquals(new Long(2), result);
-
   }
 
   // Still Not supported
@@ -102,8 +97,6 @@ public class OrientGraphExecuteFunctionGraphFactoryTest extends AbstractRemoteGr
     Assert.assertEquals(2, value.size());
   }
 
-
-
   @Test
   public void testExecuteGremlinSqlExpandFunctionInvokeTest() {
 
@@ -126,13 +119,15 @@ public class OrientGraphExecuteFunctionGraphFactoryTest extends AbstractRemoteGr
 
     Assert.assertEquals(2, collect.size());
 
-    collect.stream().forEach((res) -> {
-      Assert.assertEquals(true, res.isVertex());
+    collect.stream()
+        .forEach(
+            (res) -> {
+              Assert.assertEquals(true, res.isVertex());
 
-      OrientVertex oVertex = res.getVertex().get();
+              OrientVertex oVertex = res.getVertex().get();
 
-      Assert.assertEquals("Person", oVertex.getRawElement().getSchemaType().get().getName());
-    });
-
+              Assert.assertEquals(
+                  "Person", oVertex.getRawElement().getSchemaType().get().getName());
+            });
   }
 }

@@ -1,8 +1,13 @@
 package org.apache.tinkerpop.gremlin.orientdb.gremlintest;
 
+import static java.util.Arrays.asList;
+import static org.junit.Assume.assumeFalse;
+
 import com.google.common.collect.Sets;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
+import java.io.File;
+import java.util.*;
 import org.apache.commons.configuration.Configuration;
 import org.apache.tinkerpop.gremlin.AbstractGraphProvider;
 import org.apache.tinkerpop.gremlin.LoadGraphWith;
@@ -14,12 +19,6 @@ import org.apache.tinkerpop.gremlin.structure.GraphTest;
 import org.apache.tinkerpop.gremlin.structure.SerializationTest;
 import org.apache.tinkerpop.gremlin.structure.io.IoCustomTest;
 import org.junit.AssumptionViolatedException;
-
-import java.io.File;
-import java.util.*;
-
-import static java.util.Arrays.asList;
-import static org.junit.Assume.assumeFalse;
 
 public class OrientGraphProvider extends AbstractGraphProvider {
 
@@ -33,33 +32,38 @@ public class OrientGraphProvider extends AbstractGraphProvider {
 
   static {
     IGNORED_TESTS = new HashMap<>();
-    IGNORED_TESTS.put(GraphTest.class,
-        asList("shouldNotMixTypesForGettingSpecificEdgesWithStringFirst", "shouldNotMixTypesForGettingSpecificEdgesWithEdgeFirst",
+    IGNORED_TESTS.put(
+        GraphTest.class,
+        asList(
+            "shouldNotMixTypesForGettingSpecificEdgesWithStringFirst",
+            "shouldNotMixTypesForGettingSpecificEdgesWithEdgeFirst",
             "shouldNotMixTypesForGettingSpecificVerticesWithStringFirst",
             "shouldNotMixTypesForGettingSpecificVerticesWithVertexFirst"));
 
     // OrientDB can not modify schema when the transaction is on, which
     // break the tests
-    IGNORED_TESTS.put(GraphFunctionalityTest.class, asList("shouldSupportTransactionsIfAGraphConstructsATx"));
+    IGNORED_TESTS.put(
+        GraphFunctionalityTest.class, asList("shouldSupportTransactionsIfAGraphConstructsATx"));
 
-    //This tests become broken after gremlin 3.2.4
-    IGNORED_TESTS.put(SerializationTest.GraphSONV3d0Test.class, asList("shouldSerializeTraversalMetrics"));
+    // This tests become broken after gremlin 3.2.4
+    IGNORED_TESTS.put(
+        SerializationTest.GraphSONV3d0Test.class, asList("shouldSerializeTraversalMetrics"));
 
-    //This tests become broken after gremlin 3.2.0
+    // This tests become broken after gremlin 3.2.0
     IGNORED_TESTS.put(SerializationTest.GryoV1d0Test.class, asList("shouldSerializeTree"));
     IGNORED_TESTS.put(SerializationTest.GryoV3d0Test.class, asList("shouldSerializeTree"));
 
-
     IGNORED_TESTS.put(IoCustomTest.class, asList("shouldSerializeTree"));
-
   }
 
   @Override
-  public Map<String, Object> getBaseConfiguration(String graphName, Class<?> test, String testMethodName,
+  public Map<String, Object> getBaseConfiguration(
+      String graphName,
+      Class<?> test,
+      String testMethodName,
       LoadGraphWith.GraphData loadGraphWith) {
     if (IGNORED_TESTS.containsKey(test) && IGNORED_TESTS.get(test).contains(testMethodName))
       throw new AssumptionViolatedException("We allow mixed ids");
-
 
     if (testMethodName.contains("graphson-v1-embedded"))
       throw new AssumptionViolatedException("graphson-v1-embedded support not implemented");
@@ -68,18 +72,29 @@ public class OrientGraphProvider extends AbstractGraphProvider {
     configs.put(Graph.GRAPH, OrientGraph.class.getName());
     configs.put("name", graphName);
     if (testMethodName.equals("shouldPersistDataOnClose"))
-      configs.put(OrientGraph.CONFIG_URL,
-          "plocal:./target/databases/test-" + graphName + "-" + test.getSimpleName() + "-" + testMethodName);
+      configs.put(
+          OrientGraph.CONFIG_URL,
+          "plocal:./target/databases/test-"
+              + graphName
+              + "-"
+              + test.getSimpleName()
+              + "-"
+              + testMethodName);
 
     configs.put(OrientGraph.CONFIG_POOL_SIZE, 20);
 
     return configs;
   }
 
-  @SuppressWarnings({ "rawtypes" })
+  @SuppressWarnings({"rawtypes"})
   @Override
   public Set<Class> getImplementations() {
-    return Sets.newHashSet(OrientEdge.class, OrientElement.class, OrientGraph.class, OrientProperty.class, OrientVertex.class,
+    return Sets.newHashSet(
+        OrientEdge.class,
+        OrientElement.class,
+        OrientGraph.class,
+        OrientProperty.class,
+        OrientVertex.class,
         OrientVertexProperty.class);
   }
 
@@ -91,7 +106,6 @@ public class OrientGraphProvider extends AbstractGraphProvider {
         g.drop();
       }
     }
-
   }
 
   @Override
@@ -123,5 +137,4 @@ public class OrientGraphProvider extends AbstractGraphProvider {
 
     return new MockORID("Invalid id: " + id + " for " + c);
   }
-
 }

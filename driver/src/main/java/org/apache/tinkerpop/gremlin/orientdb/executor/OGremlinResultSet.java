@@ -21,14 +21,11 @@ package org.apache.tinkerpop.gremlin.orientdb.executor;
 
 import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
-import org.apache.tinkerpop.gremlin.orientdb.OrientGraph;
-
 import java.util.Iterator;
 import java.util.stream.Stream;
+import org.apache.tinkerpop.gremlin.orientdb.OrientGraph;
 
-/**
- * Created by Enrico Risa on 05/06/2017.
- */
+/** Created by Enrico Risa on 05/06/2017. */
 public class OGremlinResultSet implements Iterable<OGremlinResult>, AutoCloseable {
 
   private OrientGraph graph;
@@ -57,7 +54,6 @@ public class OGremlinResultSet implements Iterable<OGremlinResult>, AutoCloseabl
         OResult next = inner.next();
         return new OGremlinResult(graph, next);
       }
-
     };
   }
 

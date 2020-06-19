@@ -1,20 +1,17 @@
 package com.orientechnologies.tinkerpop.http;
 
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import java.io.IOException;
+import java.util.Collection;
+import java.util.Map;
+import java.util.Optional;
 import org.apache.http.HttpResponse;
 import org.apache.tinkerpop.gremlin.orientdb.OrientGraph;
 import org.apache.tinkerpop.gremlin.structure.T;
 import org.junit.Assert;
 import org.junit.Test;
 
-import java.io.IOException;
-import java.util.Collection;
-import java.util.Map;
-import java.util.Optional;
-
-/**
- * Created by Enrico Risa on 07/02/17.
- */
+/** Created by Enrico Risa on 07/02/17. */
 public class GremlinQueryHttpGraphFactoryTest extends BaseGremlinHttpGraphFactoryTest {
 
   @Test
@@ -36,7 +33,6 @@ public class GremlinQueryHttpGraphFactoryTest extends BaseGremlinHttpGraphFactor
     final Collection<ODocument> res = entry.field("result");
 
     Assert.assertEquals(res.size(), 2);
-
   }
 
   @Test
@@ -47,7 +43,8 @@ public class GremlinQueryHttpGraphFactoryTest extends BaseGremlinHttpGraphFactor
     noTx.addVertex(T.label, "Person", "name", "John");
     noTx.addVertex(T.label, "Person", "name", "Luke");
 
-    HttpResponse post = post("command/" + getDatabaseName() + "/gremlin/", Optional.of("g.V().count()"));
+    HttpResponse post =
+        post("command/" + getDatabaseName() + "/gremlin/", Optional.of("g.V().count()"));
 
     String body = asString(post.getEntity().getContent());
 
@@ -61,8 +58,6 @@ public class GremlinQueryHttpGraphFactoryTest extends BaseGremlinHttpGraphFactor
 
     Map next = res.iterator().next();
 
-    Assert.assertEquals(new Long(2).intValue(),next.get("value"));
-
+    Assert.assertEquals(new Long(2).intValue(), next.get("value"));
   }
-
 }

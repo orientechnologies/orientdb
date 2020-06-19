@@ -2,6 +2,7 @@ package org.apache.tinkerpop.gremlin.orientdb.io;
 
 import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
 import com.orientechnologies.orient.core.id.ORecordId;
+import java.util.Map;
 import org.apache.tinkerpop.gremlin.orientdb.io.graphson.OrientGraphSONV3;
 import org.apache.tinkerpop.gremlin.orientdb.io.kryo.ORecordIdKryoSerializer;
 import org.apache.tinkerpop.gremlin.orientdb.io.kryo.ORidBagKryoSerializer;
@@ -9,12 +10,10 @@ import org.apache.tinkerpop.gremlin.structure.io.AbstractIoRegistry;
 import org.apache.tinkerpop.gremlin.structure.io.graphson.GraphSONIo;
 import org.apache.tinkerpop.gremlin.structure.io.gryo.GryoIo;
 
-import java.util.Map;
-
 @SuppressWarnings("serial")
 public class OrientIoRegistry extends AbstractIoRegistry {
 
-  public static final String CLUSTER_ID       = "clusterId";
+  public static final String CLUSTER_ID = "clusterId";
   public static final String CLUSTER_POSITION = "clusterPosition";
 
   private static final OrientIoRegistry INSTANCE = new OrientIoRegistry();
@@ -44,11 +43,12 @@ public class OrientIoRegistry extends AbstractIoRegistry {
     }
 
     if (obj instanceof Map) {
-      @SuppressWarnings({ "unchecked", "rawtypes" })
+      @SuppressWarnings({"unchecked", "rawtypes"})
       final Map<String, Number> map = (Map) obj;
       return new ORecordId(map.get(CLUSTER_ID).intValue(), map.get(CLUSTER_POSITION).longValue());
     }
-    throw new IllegalArgumentException("Unable to convert unknow type to ORecordId " + obj.getClass());
+    throw new IllegalArgumentException(
+        "Unable to convert unknow type to ORecordId " + obj.getClass());
   }
 
   public static boolean isORecord(final Object result) {

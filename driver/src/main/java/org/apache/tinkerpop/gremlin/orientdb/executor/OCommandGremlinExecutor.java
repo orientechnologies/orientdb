@@ -34,6 +34,12 @@ import com.orientechnologies.orient.core.sql.executor.OInternalResultSet;
 import com.orientechnologies.orient.core.sql.executor.OResultInternal;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import groovy.lang.MissingPropertyException;
+import java.util.HashMap;
+import java.util.Map;
+import javax.script.Bindings;
+import javax.script.ScriptContext;
+import javax.script.ScriptEngine;
+import javax.script.ScriptException;
 import org.apache.commons.configuration.BaseConfiguration;
 import org.apache.tinkerpop.gremlin.groovy.jsr223.GremlinGroovyScriptEngineFactory;
 import org.apache.tinkerpop.gremlin.jsr223.CachedGremlinScriptEngineManager;
@@ -47,23 +53,17 @@ import org.apache.tinkerpop.gremlin.process.traversal.util.DefaultTraversalMetri
 import org.apache.tinkerpop.gremlin.process.traversal.util.TraversalExplanation;
 import org.codehaus.groovy.control.MultipleCompilationErrorsException;
 
-import javax.script.Bindings;
-import javax.script.ScriptContext;
-import javax.script.ScriptEngine;
-import javax.script.ScriptException;
-import java.util.HashMap;
-import java.util.Map;
-
 /**
  * Executes a GREMLIN command.
  *
  * @author Enrico Risa (e.risa-(at)--orientdb.com)
  */
-public class OCommandGremlinExecutor extends OAbstractScriptExecutor implements OScriptInjection, OScriptResultHandler {
+public class OCommandGremlinExecutor extends OAbstractScriptExecutor
+    implements OScriptInjection, OScriptResultHandler {
 
-  public static final String                           GREMLIN_GROOVY = "gremlin-groovy";
-  private final       OScriptManager                   scriptManager;
-  private             GremlinGroovyScriptEngineFactory factory;
+  public static final String GREMLIN_GROOVY = "gremlin-groovy";
+  private final OScriptManager scriptManager;
+  private GremlinGroovyScriptEngineFactory factory;
 
   private OScriptTransformer transformer;
 
@@ -86,11 +86,13 @@ public class OCommandGremlinExecutor extends OAbstractScriptExecutor implements 
 
   private void initCustomTransformer(OScriptTransformer transformer) {
 
-    transformer.registerResultTransformer(DefaultTraversalMetrics.class, new OTraversalMetricTransformer());
+    transformer.registerResultTransformer(
+        DefaultTraversalMetrics.class, new OTraversalMetricTransformer());
     transformer.registerResultTransformer(OrientEdge.class, new OElementTransformer());
     transformer.registerResultTransformer(OrientVertex.class, new OElementTransformer());
     transformer.registerResultTransformer(OrientElement.class, new OElementTransformer());
-    transformer.registerResultTransformer(OrientVertexProperty.class, new OrientPropertyTransformer(transformer));
+    transformer.registerResultTransformer(
+        OrientVertexProperty.class, new OrientPropertyTransformer(transformer));
   }
 
   @Override
@@ -106,7 +108,8 @@ public class OCommandGremlinExecutor extends OAbstractScriptExecutor implements 
   }
 
   @Override
-  public OResultSet execute(final ODatabaseDocumentInternal iDatabase, final String iText, final Map params) {
+  public OResultSet execute(
+      final ODatabaseDocumentInternal iDatabase, final String iText, final Map params) {
     preExecute(iDatabase, iText, params);
     OPartitionedObjectPool.PoolEntry<ScriptEngine> entry = null;
     try {
@@ -140,10 +143,12 @@ public class OCommandGremlinExecutor extends OAbstractScriptExecutor implements 
       if (isGroovyException(e)) {
         throw new OCommandExecutionException(e.getMessage());
       } else {
-        throw OException.wrapException(new OCommandExecutionException("Error on execution of the GREMLIN script"), e);
+        throw OException.wrapException(
+            new OCommandExecutionException("Error on execution of the GREMLIN script"), e);
       }
     } catch (Exception e) {
-      throw OException.wrapException(new OCommandExecutionException("Error on execution of the GREMLIN script"), e);
+      throw OException.wrapException(
+          new OCommandExecutionException("Error on execution of the GREMLIN script"), e);
     } finally {
       if (entry != null) {
         releaseGremlinEngine(iDatabase.getName(), entry);
@@ -153,8 +158,7 @@ public class OCommandGremlinExecutor extends OAbstractScriptExecutor implements 
 
   protected boolean isGroovyException(Throwable throwable) {
 
-    if (throwable == null)
-      return false;
+    if (throwable == null) return false;
 
     if (throwable instanceof MultipleCompilationErrorsException) {
       return true;
@@ -167,17 +171,19 @@ public class OCommandGremlinExecutor extends OAbstractScriptExecutor implements 
     return isGroovyException(throwable.getCause());
   }
 
-  protected final OPartitionedObjectPool.PoolEntry<ScriptEngine> acquireGremlinEngine(final OrientGraph graph) {
+  protected final OPartitionedObjectPool.PoolEntry<ScriptEngine> acquireGremlinEngine(
+      final OrientGraph graph) {
 
-    final OPartitionedObjectPool.PoolEntry<ScriptEngine> entry = scriptManager
-        .acquireDatabaseEngine(graph.getRawDatabase().getName(), GREMLIN_GROOVY);
+    final OPartitionedObjectPool.PoolEntry<ScriptEngine> entry =
+        scriptManager.acquireDatabaseEngine(graph.getRawDatabase().getName(), GREMLIN_GROOVY);
     final ScriptEngine engine = entry.object;
     Bindings bindings = engine.getBindings(ScriptContext.ENGINE_SCOPE);
     bindGraph(graph, bindings);
     return entry;
   }
 
-  protected void releaseGremlinEngine(String dbName, OPartitionedObjectPool.PoolEntry<ScriptEngine> engine) {
+  protected void releaseGremlinEngine(
+      String dbName, OPartitionedObjectPool.PoolEntry<ScriptEngine> engine) {
     scriptManager.releaseDatabaseEngine(GREMLIN_GROOVY, dbName, engine);
   }
 
@@ -193,21 +199,26 @@ public class OCommandGremlinExecutor extends OAbstractScriptExecutor implements 
 
   public void bindParameters(final ScriptEngine iEngine, final Map<Object, Object> iParameters) {
     if (iParameters != null && !iParameters.isEmpty())
-      // Every call to the function is a execution itself. Therefore, it requires a fresh set of input parameters.
+      // Every call to the function is a execution itself. Therefore, it requires a fresh set of
+      // input parameters.
       // Therefore, clone the parameters map trying to recycle previous instances
       for (Map.Entry<Object, Object> param : iParameters.entrySet()) {
         final String paramName = param.getKey().toString().trim();
         iEngine.getBindings(ScriptContext.ENGINE_SCOPE).put(paramName, param.getValue());
       }
-
   }
 
   public OrientGraph acquireGraph(final ODatabaseDocument database) {
-    return new OrientGraph(null, database, new BaseConfiguration() {
-      {
-        setProperty(OrientGraph.CONFIG_TRANSACTIONAL, database.getTransaction().isActive());
-      }
-    }, null, null);
+    return new OrientGraph(
+        null,
+        database,
+        new BaseConfiguration() {
+          {
+            setProperty(OrientGraph.CONFIG_TRANSACTIONAL, database.getTransaction().isActive());
+          }
+        },
+        null,
+        null);
   }
 
   public String getEngineVersion() {
@@ -228,12 +239,13 @@ public class OCommandGremlinExecutor extends OAbstractScriptExecutor implements 
   }
 
   @Override
-  public Object handle(Object result, ScriptEngine engine, Bindings binding, ODatabaseDocument database) {
+  public Object handle(
+      Object result, ScriptEngine engine, Bindings binding, ODatabaseDocument database) {
 
     //        if(result instanceof Traversal){
-    //            return new OGremlinResultSet((Traversal) result, scriptManager.getTransformer(), false);
+    //            return new OGremlinResultSet((Traversal) result, scriptManager.getTransformer(),
+    // false);
     //        }
     return result;
-
   }
 }

@@ -2,7 +2,6 @@ package org.apache.tinkerpop.gremlin.orientdb;
 
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.record.OElement;
-
 import java.util.*;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
@@ -11,7 +10,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public class VertexEdgeListWrapper implements List {
-  private final List          wrapped;
+  private final List wrapped;
   private final OrientElement parent;
 
   public VertexEdgeListWrapper(List wrapped, OrientElement parentElement) {
@@ -69,7 +68,6 @@ public class VertexEdgeListWrapper implements List {
       public Object next() {
         return box(baseIter.next());
       }
-
     };
   }
 
@@ -118,7 +116,8 @@ public class VertexEdgeListWrapper implements List {
   }
 
   public boolean retainAll(Collection c) {
-    return wrapped.retainAll((Collection<?>) c.stream().map(x -> unbox(x)).collect(Collectors.toList()));
+    return wrapped.retainAll(
+        (Collection<?>) c.stream().map(x -> unbox(x)).collect(Collectors.toList()));
   }
 
   public void replaceAll(UnaryOperator operator) {
@@ -206,7 +205,6 @@ public class VertexEdgeListWrapper implements List {
         baseIter.add(unbox(o));
       }
     };
-
   }
 
   public ListIterator listIterator(int index) {
@@ -258,7 +256,6 @@ public class VertexEdgeListWrapper implements List {
         baseIter.add(unbox(o));
       }
     };
-
   }
 
   public List subList(int fromIndex, int toIndex) {
@@ -267,7 +264,6 @@ public class VertexEdgeListWrapper implements List {
 
   public Spliterator spliterator() {
     throw new UnsupportedOperationException();
-
   }
 
   public boolean removeIf(Predicate filter) {

@@ -1,38 +1,26 @@
 package org.apache.tinkerpop.gremlin.orientdb;
 
-import com.orientechnologies.common.concur.lock.OLockException;
-import com.orientechnologies.orient.core.db.ODatabaseType;
-import com.orientechnologies.orient.core.db.OrientDB;
-import com.orientechnologies.orient.core.db.OrientDBConfig;
+import static org.hamcrest.Matchers.*;
+import static org.junit.Assert.*;
+
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.storage.ORecordDuplicatedException;
-import org.apache.commons.configuration.BaseConfiguration;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.*;
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversalSource;
 import org.apache.tinkerpop.gremlin.structure.*;
-import org.junit.Assert;
 import org.junit.Test;
-
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.*;
-
-import static com.google.common.collect.Lists.newArrayList;
-import static java.util.stream.Collectors.toMap;
-import static org.apache.tinkerpop.gremlin.structure.Transaction.CLOSE_BEHAVIOR.COMMIT;
-import static org.apache.tinkerpop.gremlin.structure.Transaction.CLOSE_BEHAVIOR.ROLLBACK;
-import static org.apache.tinkerpop.gremlin.structure.VertexProperty.Cardinality.single;
-import static org.hamcrest.Matchers.*;
-import static org.junit.Assert.*;
 
 public class OrientGraphPoolTest {
 
   protected OrientGraphFactory graphFactory() {
-    return new OrientGraphFactory("memory:tinkerpop-" + ThreadLocalRandom.current().nextInt(Integer.MAX_VALUE)).setupPool(1, 10);
+    return new OrientGraphFactory(
+            "memory:tinkerpop-" + ThreadLocalRandom.current().nextInt(Integer.MAX_VALUE))
+        .setupPool(1, 10);
   }
 
   public static final String TEST_VALUE = "SomeValue";
@@ -61,7 +49,8 @@ public class OrientGraphPoolTest {
   @Test
   public void testConcurrentSave() throws Exception {
 
-    ExecutorService service = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
+    ExecutorService service =
+        Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
 
     OrientGraphFactory factory = graphFactory();
 
@@ -71,7 +60,6 @@ public class OrientGraphPoolTest {
       OClass testData = db.createVertexClass("TestData");
       OProperty id = testData.createProperty("id", OType.STRING);
       id.createIndex(OClass.INDEX_TYPE.UNIQUE);
-
     }
 
     List<TestData> ts = new ArrayList<>();
@@ -85,26 +73,33 @@ public class OrientGraphPoolTest {
     CountDownLatch countDownLatch = new CountDownLatch(count);
     for (int i = 0; i < count; i++) {
       int finalI = i;
-      CompletableFuture.supplyAsync(() -> {
+      CompletableFuture.supplyAsync(
+              () -> {
+                try (OrientGraph graph = factory.getNoTx()) {
+                  GraphTraversalSource traversal = graph.traversal();
+                  for (TestData t : ts) {
+                    try {
+                      traversal
+                          .addV("TestData")
+                          .property("id", t.getId())
+                          .property("str", t.getStr())
+                          .next();
+                    } catch (ORecordDuplicatedException e) {
 
-        try (OrientGraph graph = factory.getNoTx()) {
-          GraphTraversalSource traversal = graph.traversal();
-          for (TestData t : ts) {
-            try {
-              traversal.addV("TestData").property("id", t.getId()).property("str", t.getStr()).next();
-            } catch (ORecordDuplicatedException e) {
-
-            }
-          }
-          return finalI;
-        }
-      }, service).whenComplete((exeTask, throwable) -> {
-        System.out.println(exeTask);
-        countDownLatch.countDown();
-        if (throwable != null) {
-          throwable.printStackTrace();
-        }
-      });
+                    }
+                  }
+                  return finalI;
+                }
+              },
+              service)
+          .whenComplete(
+              (exeTask, throwable) -> {
+                System.out.println(exeTask);
+                countDownLatch.countDown();
+                if (throwable != null) {
+                  throwable.printStackTrace();
+                }
+              });
     }
     countDownLatch.await();
 

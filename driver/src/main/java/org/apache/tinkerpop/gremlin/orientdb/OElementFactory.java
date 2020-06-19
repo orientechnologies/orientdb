@@ -3,9 +3,7 @@ package org.apache.tinkerpop.gremlin.orientdb;
 import com.orientechnologies.orient.core.record.OEdge;
 import com.orientechnologies.orient.core.record.OVertex;
 
-/**
- * Created by Enrico Risa on 31/08/2017.
- */
+/** Created by Enrico Risa on 31/08/2017. */
 public class OElementFactory {
 
   private final OGraph graph;
@@ -22,7 +20,7 @@ public class OElementFactory {
     return new OrientVertex(graph, vertex);
   }
 
-  public OrientVertex createVertex(String label){
+  public OrientVertex createVertex(String label) {
     return new OrientVertex(graph, label);
   }
 }

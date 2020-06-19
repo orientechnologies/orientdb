@@ -6,25 +6,29 @@ import com.orientechnologies.orient.core.db.ODatabaseType;
 import com.orientechnologies.orient.core.db.OrientDB;
 import com.orientechnologies.orient.core.db.OrientDBConfig;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
-import jdk.nashorn.internal.runtime.options.Option;
-
 import java.util.Optional;
 
 public class OPartitionedReCreatableDatabasePool {
-  private final OrientDB                orientdb;
+  private final OrientDB orientdb;
   private final Optional<ODatabaseType> type;
-  private       ODatabasePool           pool;
-  private final String                  dbName;
-  private final String                  userName;
-  private final String                  password;
-  private final int                     maxSize;
+  private ODatabasePool pool;
+  private final String dbName;
+  private final String userName;
+  private final String password;
+  private final int maxSize;
 
-  public OPartitionedReCreatableDatabasePool(OrientDB orientdb, String dbName, String userName, String password, int maxSize) {
+  public OPartitionedReCreatableDatabasePool(
+      OrientDB orientdb, String dbName, String userName, String password, int maxSize) {
     this(orientdb, dbName, Optional.empty(), userName, password, maxSize);
   }
 
-  public OPartitionedReCreatableDatabasePool(OrientDB orientdb, String dbName, Optional<ODatabaseType> type, String userName,
-      String password, int maxSize) {
+  public OPartitionedReCreatableDatabasePool(
+      OrientDB orientdb,
+      String dbName,
+      Optional<ODatabaseType> type,
+      String userName,
+      String password,
+      int maxSize) {
     this.orientdb = orientdb;
     this.dbName = dbName;
     this.type = type;
@@ -33,7 +37,6 @@ public class OPartitionedReCreatableDatabasePool {
     this.maxSize = maxSize;
 
     reCreatePool();
-
   }
 
   public void reCreatePool() {
@@ -52,15 +55,13 @@ public class OPartitionedReCreatableDatabasePool {
   }
 
   public void close() {
-    if (this.pool != null)
-      this.pool.close();
+    if (this.pool != null) this.pool.close();
 
     this.pool = null;
   }
 
   public ODatabaseDocument acquire() {
-    if (this.pool != null)
-      return this.pool.acquire();
+    if (this.pool != null) return this.pool.acquire();
     return null;
   }
 }

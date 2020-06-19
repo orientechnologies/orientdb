@@ -1,22 +1,21 @@
 package org.apache.tinkerpop.gremlin.orientdb;
 
+import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Strings.isNullOrEmpty;
+import static org.apache.tinkerpop.gremlin.orientdb.StreamUtils.asStream;
+
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.record.OEdge;
 import com.orientechnologies.orient.core.record.OVertex;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import org.apache.tinkerpop.gremlin.structure.*;
-import org.apache.tinkerpop.gremlin.structure.util.ElementHelper;
-import org.apache.tinkerpop.gremlin.structure.util.StringFactory;
-
 import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-
-import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Strings.isNullOrEmpty;
-import static org.apache.tinkerpop.gremlin.orientdb.StreamUtils.asStream;
+import org.apache.tinkerpop.gremlin.structure.*;
+import org.apache.tinkerpop.gremlin.structure.util.ElementHelper;
+import org.apache.tinkerpop.gremlin.structure.util.StringFactory;
 
 public final class OrientVertex extends OrientElement implements Vertex {
 
@@ -27,8 +26,14 @@ public final class OrientVertex extends OrientElement implements Vertex {
   }
 
   public OrientVertex(OGraph graph, OIdentifiable identifiable) {
-    this(graph, new ODocument(identifiable.getIdentity()).asVertex()
-        .orElseThrow(() -> new IllegalArgumentException(String.format("Cannot get a Vertex for identity %s", identifiable))));
+    this(
+        graph,
+        new ODocument(identifiable.getIdentity())
+            .asVertex()
+            .orElseThrow(
+                () ->
+                    new IllegalArgumentException(
+                        String.format("Cannot get a Vertex for identity %s", identifiable))));
   }
 
   public OrientVertex(OGraph graph, String label) {
@@ -42,10 +47,13 @@ public final class OrientVertex extends OrientElement implements Vertex {
 
   public Iterator<Vertex> vertices(final Direction direction, final String... labels) {
     this.graph.tx().readWrite();
-    Stream<Vertex> vertexStream = asStream(getRawElement().getVertices(OrientGraphUtils.mapDirection(direction), labels).iterator())
-        .map(v -> graph.elementFactory().wrapVertex(v));
+    Stream<Vertex> vertexStream =
+        asStream(
+                getRawElement()
+                    .getVertices(OrientGraphUtils.mapDirection(direction), labels)
+                    .iterator())
+            .map(v -> graph.elementFactory().wrapVertex(v));
     return vertexStream.iterator();
-
   }
 
   @Override
@@ -60,15 +68,26 @@ public final class OrientVertex extends OrientElement implements Vertex {
 
   public <V> Iterator<VertexProperty<V>> properties(final String... propertyKeys) {
     Iterator<? extends Property<V>> properties = super.properties(propertyKeys);
-    return StreamUtils.asStream(properties).filter(p -> !INTERNAL_FIELDS.contains(p.key())).filter(p -> !p.key().startsWith("out_"))
-        .filter(p -> !p.key().startsWith("in_")).filter(p -> !p.key().startsWith("_meta_"))
-        .map(p -> (VertexProperty<V>) new OrientVertexProperty<>(p.key(), p.value(), (OrientVertex) p.element())).iterator();
+    return StreamUtils.asStream(properties)
+        .filter(p -> !INTERNAL_FIELDS.contains(p.key()))
+        .filter(p -> !p.key().startsWith("out_"))
+        .filter(p -> !p.key().startsWith("in_"))
+        .filter(p -> !p.key().startsWith("_meta_"))
+        .map(
+            p ->
+                (VertexProperty<V>)
+                    new OrientVertexProperty<>(p.key(), p.value(), (OrientVertex) p.element()))
+        .iterator();
   }
 
   @Override
   public OVertex getRawElement() {
-    return rawElement.asVertex()
-        .orElseThrow(() -> new IllegalArgumentException(String.format("Cannot get a Vertex for element %s", rawElement)));
+    return rawElement
+        .asVertex()
+        .orElseThrow(
+            () ->
+                new IllegalArgumentException(
+                    String.format("Cannot get a Vertex for element %s", rawElement)));
   }
 
   @Override
@@ -77,7 +96,8 @@ public final class OrientVertex extends OrientElement implements Vertex {
   }
 
   @Override
-  public <V> VertexProperty<V> property(final String key, final V value, final Object... keyValues) {
+  public <V> VertexProperty<V> property(
+      final String key, final V value, final Object... keyValues) {
     VertexProperty<V> vertexProperty = this.property(key, value);
 
     if (ElementHelper.getIdValue(keyValues).isPresent())
@@ -89,7 +109,10 @@ public final class OrientVertex extends OrientElement implements Vertex {
   }
 
   @Override
-  public <V> VertexProperty<V> property(final VertexProperty.Cardinality cardinality, final String key, final V value,
+  public <V> VertexProperty<V> property(
+      final VertexProperty.Cardinality cardinality,
+      final String key,
+      final V value,
       final Object... keyValues) {
     return this.property(key, value, keyValues);
   }
@@ -101,15 +124,13 @@ public final class OrientVertex extends OrientElement implements Vertex {
 
   @Override
   public Edge addEdge(String label, Vertex inVertex, Object... keyValues) {
-    if (inVertex == null)
-      throw new IllegalArgumentException("destination vertex is null");
+    if (inVertex == null) throw new IllegalArgumentException("destination vertex is null");
     checkArgument(!isNullOrEmpty(label), "label is invalid");
 
     ElementHelper.legalPropertyKeyValueArray(keyValues);
     if (ElementHelper.getIdValue(keyValues).isPresent())
       throw Vertex.Exceptions.userSuppliedIdsNotSupported();
-    if (Graph.Hidden.isHidden(label))
-      throw Element.Exceptions.labelCanNotBeAHiddenKey(label);
+    if (Graph.Hidden.isHidden(label)) throw Element.Exceptions.labelCanNotBeAHiddenKey(label);
 
     graph.createEdgeClass(label);
 
@@ -126,11 +147,15 @@ public final class OrientVertex extends OrientElement implements Vertex {
   public Iterator<Edge> edges(final Direction direction, String... edgeLabels) {
     this.graph.tx().readWrite();
     // It should not collect but instead iterating through the relations.
-    // But necessary in order to avoid loop in EdgeTest#shouldNotHaveAConcurrentModificationExceptionWhenIteratingAndRemovingAddingEdges
-    Stream<Edge> edgeStream = asStream(getRawElement().getEdges(OrientGraphUtils.mapDirection(direction), edgeLabels).iterator())
-        .map(e -> graph.elementFactory().wrapEdge(e));
+    // But necessary in order to avoid loop in
+    // EdgeTest#shouldNotHaveAConcurrentModificationExceptionWhenIteratingAndRemovingAddingEdges
+    Stream<Edge> edgeStream =
+        asStream(
+                getRawElement()
+                    .getEdges(OrientGraphUtils.mapDirection(direction), edgeLabels)
+                    .iterator())
+            .map(e -> graph.elementFactory().wrapEdge(e));
 
     return edgeStream.collect(Collectors.toList()).iterator();
   }
-
 }

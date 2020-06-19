@@ -27,13 +27,11 @@ import org.junit.runner.RunWith;
 /**
  * Executes the Gremlin Structure Performance Test Suite using OrientGraph.
  *
- * Extracted from TinkerGraph tests
- * 
+ * <p>Extracted from TinkerGraph tests
+ *
  * @author Stephen Mallette (http://stephen.genoprime.com)
  * @author Marvin Froeder (about.me/velo)
  */
 @RunWith(StructureIntegrateSuite.class)
 @GraphProviderClass(provider = OrientGraphProvider.class, graph = OrientGraph.class)
-public class OrientGraphStructureIT {
-
-}
+public class OrientGraphStructureIT {}

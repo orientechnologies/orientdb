@@ -2,7 +2,6 @@ package org.apache.tinkerpop.gremlin.orientdb;
 
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.record.OElement;
-
 import java.util.*;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
@@ -10,7 +9,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public class VertexEdgeSetWrapper implements Set {
-  private final Set           wrapped;
+  private final Set wrapped;
   private final OrientElement parent;
 
   public VertexEdgeSetWrapper(Set wrapped, OrientElement parentElement) {
@@ -68,7 +67,6 @@ public class VertexEdgeSetWrapper implements Set {
       public Object next() {
         return box(baseIter.next());
       }
-
     };
   }
 
@@ -115,12 +113,12 @@ public class VertexEdgeSetWrapper implements Set {
   }
 
   public boolean retainAll(Collection c) {
-    return wrapped.retainAll((Collection<?>) c.stream().map(x -> unbox(x)).collect(Collectors.toList()));
+    return wrapped.retainAll(
+        (Collection<?>) c.stream().map(x -> unbox(x)).collect(Collectors.toList()));
   }
 
   public Spliterator spliterator() {
     throw new UnsupportedOperationException();
-
   }
 
   public boolean removeIf(Predicate filter) {

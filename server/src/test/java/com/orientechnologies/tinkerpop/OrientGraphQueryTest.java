@@ -6,9 +6,7 @@ import org.apache.tinkerpop.gremlin.structure.Vertex;
 import org.junit.Assert;
 import org.junit.Test;
 
-/**
- * Created by Enrico Risa on 11/08/2017.
- */
+/** Created by Enrico Risa on 11/08/2017. */
 public class OrientGraphQueryTest extends AbstractRemoteGraphFactoryTest {
 
   @Test
@@ -55,7 +53,15 @@ public class OrientGraphQueryTest extends AbstractRemoteGraphFactoryTest {
 
     // More Complex Count
 
-    count = graph.traversal().V().has("Person", "name", "Jon").out("HasFriend", "HasAnimal").count().toList().get(0);
+    count =
+        graph
+            .traversal()
+            .V()
+            .has("Person", "name", "Jon")
+            .out("HasFriend", "HasAnimal")
+            .count()
+            .toList()
+            .get(0);
     Assert.assertEquals(new Long(2), count);
 
     // With Polymorphism
@@ -79,7 +85,6 @@ public class OrientGraphQueryTest extends AbstractRemoteGraphFactoryTest {
 
     count = graph.traversal().V().has("marker", 10).count().toList().get(0);
     Assert.assertEquals(new Long(0), count);
-
   }
 
   @Test
@@ -105,7 +110,6 @@ public class OrientGraphQueryTest extends AbstractRemoteGraphFactoryTest {
     Assert.assertEquals(new Long(0), count);
 
     graph.close();
-
   }
 
   @Test
@@ -130,7 +134,6 @@ public class OrientGraphQueryTest extends AbstractRemoteGraphFactoryTest {
     Assert.assertEquals(new Long(0), count);
 
     graph.close();
-
   }
 
   @Test
@@ -154,7 +157,6 @@ public class OrientGraphQueryTest extends AbstractRemoteGraphFactoryTest {
     } finally {
       graph.close();
     }
-
   }
 
   @Test
@@ -206,7 +208,6 @@ public class OrientGraphQueryTest extends AbstractRemoteGraphFactoryTest {
     Assert.assertEquals(new Long(1), count);
 
     graph.close();
-
   }
 
   protected void initGraph(OrientGraph graph) {
@@ -226,7 +227,5 @@ public class OrientGraphQueryTest extends AbstractRemoteGraphFactoryTest {
 
     v1.addEdge("HasAnimal", v3, "marker", 10);
     v2.addEdge("HasAnimal", v4);
-
   }
-
 }

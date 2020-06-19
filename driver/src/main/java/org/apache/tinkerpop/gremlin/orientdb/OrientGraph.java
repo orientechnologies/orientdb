@@ -1,5 +1,7 @@
 package org.apache.tinkerpop.gremlin.orientdb;
 
+import static org.apache.tinkerpop.gremlin.orientdb.StreamUtils.asStream;
+
 import com.orientechnologies.common.concur.ONeedRetryException;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
@@ -24,6 +26,18 @@ import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.Map;
+import java.util.NoSuchElementException;
+import java.util.Set;
+import java.util.concurrent.ThreadLocalRandom;
+import java.util.function.BiFunction;
+import java.util.function.Function;
+import java.util.stream.Stream;
 import org.apache.commons.configuration.BaseConfiguration;
 import org.apache.commons.configuration.Configuration;
 import org.apache.commons.lang.NotImplementedException;
@@ -43,22 +57,6 @@ import org.apache.tinkerpop.gremlin.structure.io.Io;
 import org.apache.tinkerpop.gremlin.structure.util.ElementHelper;
 import org.apache.tinkerpop.gremlin.structure.util.StringFactory;
 
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.Map;
-import java.util.NoSuchElementException;
-import java.util.Set;
-import java.util.concurrent.ThreadLocalRandom;
-import java.util.function.BiFunction;
-import java.util.function.Function;
-import java.util.function.Supplier;
-import java.util.stream.Stream;
-
-import static org.apache.tinkerpop.gremlin.orientdb.StreamUtils.asStream;
-
 @Graph.OptIn(Graph.OptIn.SUITE_STRUCTURE_STANDARD)
 @Graph.OptIn(Graph.OptIn.SUITE_STRUCTURE_INTEGRATE)
 @Graph.OptIn(Graph.OptIn.SUITE_PROCESS_STANDARD)
@@ -66,9 +64,13 @@ import static org.apache.tinkerpop.gremlin.orientdb.StreamUtils.asStream;
 @Graph.OptIn("org.apache.tinkerpop.gremlin.orientdb.gremlintest.suite.OrientDBDebugSuite")
 public final class OrientGraph implements OGraph {
   static {
-    TraversalStrategies.GlobalCache.registerStrategies(OrientGraph.class,
-        TraversalStrategies.GlobalCache.getStrategies(Graph.class).clone()
-            .addStrategies(OrientGraphStepStrategy.instance(), OrientGraphCountStrategy.instance(),
+    TraversalStrategies.GlobalCache.registerStrategies(
+        OrientGraph.class,
+        TraversalStrategies.GlobalCache.getStrategies(Graph.class)
+            .clone()
+            .addStrategies(
+                OrientGraphStepStrategy.instance(),
+                OrientGraphCountStrategy.instance(),
                 OrientGraphMatchStepStrategy.instance()));
   }
 
@@ -80,30 +82,33 @@ public final class OrientGraph implements OGraph {
     INTERNAL_CLASSES_TO_TINKERPOP_CLASSES.put(OClass.EDGE_CLASS_NAME, Edge.DEFAULT_LABEL);
   }
 
-  public static final String CONFIG_URL                = "orient-url";
-  public static final String CONFIG_DB_NAME            = "orient-db-name";
-  public static final String CONFIG_DB_TYPE            = "orient-db-type";
-  public static final String CONFIG_USER               = "orient-user";
-  public static final String CONFIG_PASS               = "orient-pass";
-  public static final String CONFIG_CREATE             = "orient-create";
-  public static final String CONFIG_OPEN               = "orient-open";
-  public static final String CONFIG_TRANSACTIONAL      = "orient-transactional";
-  public static final String CONFIG_POOL_SIZE          = "orient-max-poolsize";
+  public static final String CONFIG_URL = "orient-url";
+  public static final String CONFIG_DB_NAME = "orient-db-name";
+  public static final String CONFIG_DB_TYPE = "orient-db-type";
+  public static final String CONFIG_USER = "orient-user";
+  public static final String CONFIG_PASS = "orient-pass";
+  public static final String CONFIG_CREATE = "orient-create";
+  public static final String CONFIG_OPEN = "orient-open";
+  public static final String CONFIG_TRANSACTIONAL = "orient-transactional";
+  public static final String CONFIG_POOL_SIZE = "orient-max-poolsize";
   public static final String CONFIG_MAX_PARTITION_SIZE = "orient-max-partitionsize";
   public static final String CONFIG_LABEL_AS_CLASSNAME = "orient-label-as-classname";
 
-  protected       ODatabaseDocument      database;
-  protected final Features               features;
-  protected final Configuration          configuration;
-  protected final String                 user;
-  protected final String                 password;
-  protected       OrientGraphBaseFactory factory;
-  protected       boolean                shouldCloseFactory = false;
-  protected       OElementFactory        elementFactory;
-  protected       OrientTransaction      tx;
+  protected ODatabaseDocument database;
+  protected final Features features;
+  protected final Configuration configuration;
+  protected final String user;
+  protected final String password;
+  protected OrientGraphBaseFactory factory;
+  protected boolean shouldCloseFactory = false;
+  protected OElementFactory elementFactory;
+  protected OrientTransaction tx;
 
   public static OrientGraph open() {
-    return open("memory:orientdb-" + ThreadLocalRandom.current().nextInt(Integer.MAX_VALUE), "admin", "admin");
+    return open(
+        "memory:orientdb-" + ThreadLocalRandom.current().nextInt(Integer.MAX_VALUE),
+        "admin",
+        "admin");
   }
 
   public static OrientGraph open(String url) {
@@ -117,19 +122,23 @@ public final class OrientGraph implements OGraph {
     configuration.setProperty(CONFIG_PASS, password);
 
     return open(configuration);
-
   }
 
   public static OrientGraph open(final Configuration config) {
     OrientGraphFactory factory = new OrientGraphFactory(config);
     if (config.containsKey(CONFIG_POOL_SIZE))
-      factory.setupPool(config.getInt(CONFIG_MAX_PARTITION_SIZE, 64), config.getInt(CONFIG_POOL_SIZE));
+      factory.setupPool(
+          config.getInt(CONFIG_MAX_PARTITION_SIZE, 64), config.getInt(CONFIG_POOL_SIZE));
 
     return new OrientGraph(factory, config, true);
   }
 
-  public OrientGraph(OrientGraphBaseFactory factory, final ODatabaseDocument database, final Configuration configuration,
-      final String user, final String password) {
+  public OrientGraph(
+      OrientGraphBaseFactory factory,
+      final ODatabaseDocument database,
+      final Configuration configuration,
+      final String user,
+      final String password) {
     this.factory = factory;
     this.user = user;
     this.password = password;
@@ -150,7 +159,10 @@ public final class OrientGraph implements OGraph {
     this(factory, configuration, false);
   }
 
-  public OrientGraph(final OrientGraphBaseFactory factory, final Configuration configuration, boolean closeFactory) {
+  public OrientGraph(
+      final OrientGraphBaseFactory factory,
+      final Configuration configuration,
+      boolean closeFactory) {
     this.factory = factory;
     this.database = factory.getDatabase(true, true);
     this.user = "";
@@ -263,7 +275,8 @@ public final class OrientGraph implements OGraph {
   }
 
   @Override
-  public <C extends GraphComputer> C compute(Class<C> graphComputerClass) throws IllegalArgumentException {
+  public <C extends GraphComputer> C compute(Class<C> graphComputerClass)
+      throws IllegalArgumentException {
     throw new NotImplementedException();
   }
 
@@ -281,13 +294,21 @@ public final class OrientGraph implements OGraph {
   public Iterator<Vertex> vertices(Object... vertexIds) {
     this.tx().readWrite();
     makeActive();
-    return elements(OClass.VERTEX_CLASS_NAME, r -> elementFactory().wrapVertex(getRawDocument(r).asVertex()
-        .orElseThrow(() -> new IllegalArgumentException(String.format("Cannot get a Vertex from document %s", r)))), vertexIds);
+    return elements(
+        OClass.VERTEX_CLASS_NAME,
+        r ->
+            elementFactory()
+                .wrapVertex(
+                    getRawDocument(r)
+                        .asVertex()
+                        .orElseThrow(
+                            () ->
+                                new IllegalArgumentException(
+                                    String.format("Cannot get a Vertex from document %s", r)))),
+        vertexIds);
   }
 
-  /**
-   * Convert a label to orientdb class name
-   */
+  /** Convert a label to orientdb class name */
   public String labelToClassName(String label, String prefix) {
     if (configuration.getBoolean(CONFIG_LABEL_AS_CLASSNAME, true)) {
       return label;
@@ -295,9 +316,7 @@ public final class OrientGraph implements OGraph {
     return label.equals(prefix) ? prefix : prefix + "_" + label;
   }
 
-  /**
-   * Convert a orientdb class name to label
-   */
+  /** Convert a orientdb class name to label */
   public String classNameToLabel(String className) {
     if (INTERNAL_CLASSES_TO_TINKERPOP_CLASSES.containsKey(className)) {
       return INTERNAL_CLASSES_TO_TINKERPOP_CLASSES.get(className);
@@ -310,21 +329,20 @@ public final class OrientGraph implements OGraph {
 
   /**
    * Tries to execute a lambda in a transaction, retrying it if an ONeedRetryException is thrown.
-   * <p>
-   * If the Graph has an active transaction, then the transaction has to be empty (no operations executed yet) and after the
-   * execution you will be in a new transaction.
+   *
+   * <p>If the Graph has an active transaction, then the transaction has to be empty (no operations
+   * executed yet) and after the execution you will be in a new transaction.
    *
    * @param nRetries the maximum number of retries (> 0)
    * @param function a lambda containing application code to execute in a commit/retry loop
-   * @param <T>      the return type of the lambda
-   *
+   * @param <T> the return type of the lambda
    * @return The result of the execution of the lambda
-   *
-   * @throws IllegalStateException         if there are operations in the current transaction
-   * @throws ONeedRetryException           if the maximum number of retries is executed and all failed with an ONeedRetryException
-   * @throws IllegalArgumentException      if nRetries is <= 0
-   * @throws UnsupportedOperationException if this type of graph does not support automatic commit/retry or does not support
-   *                                       transactions
+   * @throws IllegalStateException if there are operations in the current transaction
+   * @throws ONeedRetryException if the maximum number of retries is executed and all failed with an
+   *     ONeedRetryException
+   * @throws IllegalArgumentException if nRetries is <= 0
+   * @throws UnsupportedOperationException if this type of graph does not support automatic
+   *     commit/retry or does not support transactions
    */
   public <T> T executeWithRetry(int nRetries, Function<OrientGraph, T> function) {
 
@@ -338,10 +356,8 @@ public final class OrientGraph implements OGraph {
   protected Object convertValue(final OIndex idx, Object iValue) {
     if (iValue != null) {
       final OType[] types = idx.getKeyTypes();
-      if (types.length == 0)
-        iValue = iValue.toString();
-      else
-        iValue = OType.convert(iValue, types[0].getDefaultJavaType());
+      if (types.length == 0) iValue = iValue.toString();
+      else iValue = OType.convert(iValue, types[0].getDefaultJavaType());
     }
     return iValue;
   }
@@ -354,7 +370,9 @@ public final class OrientGraph implements OGraph {
     return getIndexedElements(index, valueIter, OrientEdge::new);
   }
 
-  private <ElementType extends OrientElement> Stream<ElementType> getIndexedElements(OIndex index, Iterator<Object> valuesIter,
+  private <ElementType extends OrientElement> Stream<ElementType> getIndexedElements(
+      OIndex index,
+      Iterator<Object> valuesIter,
       BiFunction<OrientGraph, OIdentifiable, ElementType> newElement) {
     makeActive();
 
@@ -364,8 +382,10 @@ public final class OrientGraph implements OGraph {
       if (!valuesIter.hasNext()) {
         return index.getInternal().stream().map(id -> newElement.apply(this, id.second));
       } else {
-        Stream<Object> convertedValues = StreamUtils.asStream(valuesIter).map(value -> convertValue(index, value));
-        Stream<OIdentifiable> ids = convertedValues.flatMap(v -> lookupInIndex(index, v)).filter(r -> r != null);
+        Stream<Object> convertedValues =
+            StreamUtils.asStream(valuesIter).map(value -> convertValue(index, value));
+        Stream<OIdentifiable> ids =
+            convertedValues.flatMap(v -> lookupInIndex(index, v)).filter(r -> r != null);
         Stream<ORecord> records = ids.map(id -> id.getRecord());
         return records.map(r -> newElement.apply(this, getRawDocument(r)));
       }
@@ -376,8 +396,7 @@ public final class OrientGraph implements OGraph {
     Object fromIndex = index.get(value);
     if (fromIndex instanceof Iterable)
       return StreamUtils.asStream(((Iterable<OIdentifiable>) fromIndex).iterator());
-    else
-      return Stream.of((OIdentifiable) fromIndex);
+    else return Stream.of((OIdentifiable) fromIndex);
   }
 
   private OIndexManager getIndexManager() {
@@ -391,9 +410,10 @@ public final class OrientGraph implements OGraph {
   public Set<String> getIndexedKeys(String className) {
     Iterator<OIndex> indexes = getIndexManager().getClassIndexes(className).iterator();
     HashSet<String> indexedKeys = new HashSet<>();
-    indexes.forEachRemaining(index -> {
-      index.getDefinition().getFields().forEach(indexedKeys::add);
-    });
+    indexes.forEachRemaining(
+        index -> {
+          index.getDefinition().getFields().forEach(indexedKeys::add);
+        });
     return indexedKeys;
   }
 
@@ -439,11 +459,22 @@ public final class OrientGraph implements OGraph {
   public Iterator<Edge> edges(Object... edgeIds) {
     this.tx().readWrite();
     makeActive();
-    return elements(OClass.EDGE_CLASS_NAME, r -> elementFactory().wrapEdge(getRawDocument(r).asEdge()
-        .orElseThrow(() -> new IllegalArgumentException(String.format("Cannot get an Edge from document %s", r)))), edgeIds);
+    return elements(
+        OClass.EDGE_CLASS_NAME,
+        r ->
+            elementFactory()
+                .wrapEdge(
+                    getRawDocument(r)
+                        .asEdge()
+                        .orElseThrow(
+                            () ->
+                                new IllegalArgumentException(
+                                    String.format("Cannot get an Edge from document %s", r)))),
+        edgeIds);
   }
 
-  protected <A extends Element> Iterator<A> elements(String elementClass, Function<ORecord, A> toA, Object... elementIds) {
+  protected <A extends Element> Iterator<A> elements(
+      String elementClass, Function<ORecord, A> toA, Object... elementIds) {
     boolean polymorphic = true;
     if (elementIds.length == 0) {
       // return all vertices as stream
@@ -452,7 +483,8 @@ public final class OrientGraph implements OGraph {
       return asStream(itty).map(toA).iterator();
     } else {
       Stream<ORID> ids = Stream.of(elementIds).map(OrientGraph::createRecordId);
-      Stream<ORecord> records = ids.filter(ORID::isValid).map(id -> getRecord(id)).filter(r -> r != null);
+      Stream<ORecord> records =
+          ids.filter(ORID::isValid).map(id -> getRecord(id)).filter(r -> r != null);
       return records.map(toA).iterator();
     }
   }
@@ -462,35 +494,35 @@ public final class OrientGraph implements OGraph {
       return id.getRecord();
     } catch (ORecordNotFoundException e) {
       throw new NoSuchElementException(
-          "The " + getClass().getSimpleName().toLowerCase() + " with id " + id + " of type " + id.getClass().getSimpleName()
+          "The "
+              + getClass().getSimpleName().toLowerCase()
+              + " with id "
+              + id
+              + " of type "
+              + id.getClass().getSimpleName()
               + " does not exist in the graph");
     }
   }
 
   private ORID checkId(ORID id) {
-    if (!id.isValid())
-      throw new IllegalArgumentException("Invalid id " + id);
+    if (!id.isValid()) throw new IllegalArgumentException("Invalid id " + id);
     return id;
   }
 
   protected static ORID createRecordId(Object id) {
-    if (id instanceof ORecordId)
-      return (ORecordId) id;
-    if (id instanceof String)
-      return new ORecordId((String) id);
-    if (id instanceof OrientElement)
-      return ((OrientElement) id).id();
+    if (id instanceof ORecordId) return (ORecordId) id;
+    if (id instanceof String) return new ORecordId((String) id);
+    if (id instanceof OrientElement) return ((OrientElement) id).id();
 
-    throw new IllegalArgumentException("Orient IDs have to be a String or ORecordId - you provided a " + id.getClass());
+    throw new IllegalArgumentException(
+        "Orient IDs have to be a String or ORecordId - you provided a " + id.getClass());
   }
 
   protected OElement getRawDocument(ORecord record) {
-    if (record == null)
-      throw new NoSuchElementException();
+    if (record == null) throw new NoSuchElementException();
     record = record.getRecord();
     ODocument currentDocument = (ODocument) record;
-    if (currentDocument.getInternalStatus() == ODocument.STATUS.NOT_LOADED)
-      currentDocument.load();
+    if (currentDocument.getInternalStatus() == ODocument.STATUS.NOT_LOADED) currentDocument.load();
     if (ODocumentInternal.getImmutableSchemaClass(currentDocument) == null)
       throw new IllegalArgumentException(
           "Cannot determine the graph element type because the document class is null. Probably this is a projection, use the EXPAND() function");
@@ -503,9 +535,7 @@ public final class OrientGraph implements OGraph {
     return this.tx;
   }
 
-  /**
-   * (Blueprints Extension) Drops the database
-   */
+  /** (Blueprints Extension) Drops the database */
   public void drop() {
     factory.drop();
   }
@@ -585,7 +615,8 @@ public final class OrientGraph implements OGraph {
     OClass superClass = database.getMetadata().getSchema().getClass(superClassName);
     if (superClass == null) {
       Collection<OClass> allClasses = database.getMetadata().getSchema().getClasses();
-      throw new IllegalArgumentException("unable to find class " + superClassName + ". Available classes: " + allClasses);
+      throw new IllegalArgumentException(
+          "unable to find class " + superClassName + ". Available classes: " + allClasses);
     }
     createClass(className, superClass);
   }
@@ -604,21 +635,26 @@ public final class OrientGraph implements OGraph {
     OClass cls = schema.getClass(className);
     if (cls == null) {
       try {
-        executeOutsideTx((db) -> {
-          OSchema s = db.getMetadata().getSchema();
-          s.createClass(className, superClass);
-          return null;
-        });
-        if (this.tx().isOpen())
-          schema.reload();
+        executeOutsideTx(
+            (db) -> {
+              OSchema s = db.getMetadata().getSchema();
+              s.createClass(className, superClass);
+              return null;
+            });
+        if (this.tx().isOpen()) schema.reload();
       } catch (OException e) {
         throw new IllegalArgumentException(e);
       }
-      OLogManager.instance().info(this, "created class '" + className + "' as subclass of '" + superClass + "'");
+      OLogManager.instance()
+          .info(this, "created class '" + className + "' as subclass of '" + superClass + "'");
     } else {
       if (!cls.isSubClassOf(superClass)) {
         throw new IllegalArgumentException(
-            "unable to create class '" + className + "' as subclass of '" + superClass + "'. different super class.");
+            "unable to create class '"
+                + className
+                + "' as subclass of '"
+                + superClass
+                + "'. different super class.");
       }
     }
   }
@@ -629,11 +665,10 @@ public final class OrientGraph implements OGraph {
   }
 
   protected <E> String getClassName(final Class<T> elementClass) {
-    if (elementClass.isAssignableFrom(Vertex.class))
-      return OClass.VERTEX_CLASS_NAME;
-    else if (elementClass.isAssignableFrom(Edge.class))
-      return OClass.EDGE_CLASS_NAME;
-    throw new IllegalArgumentException("Class '" + elementClass + "' is neither a Vertex, nor an Edge");
+    if (elementClass.isAssignableFrom(Vertex.class)) return OClass.VERTEX_CLASS_NAME;
+    else if (elementClass.isAssignableFrom(Edge.class)) return OClass.EDGE_CLASS_NAME;
+    throw new IllegalArgumentException(
+        "Class '" + elementClass + "' is neither a Vertex, nor an Edge");
   }
 
   protected void prepareIndexConfiguration(Configuration config) {
@@ -643,71 +678,77 @@ public final class OrientGraph implements OGraph {
     String defaultCollate = null;
     ODocument defaultMetadata = null;
 
-    if (!config.containsKey("type"))
-      config.setProperty("type", defaultIndexType);
-    if (!config.containsKey("keytype"))
-      config.setProperty("keytype", defaultKeyType);
-    if (!config.containsKey("class"))
-      config.setProperty("class", defaultClassName);
-    if (!config.containsKey("collate"))
-      config.setProperty("collate", defaultCollate);
-    if (!config.containsKey("metadata"))
-      config.setProperty("metadata", defaultMetadata);
+    if (!config.containsKey("type")) config.setProperty("type", defaultIndexType);
+    if (!config.containsKey("keytype")) config.setProperty("keytype", defaultKeyType);
+    if (!config.containsKey("class")) config.setProperty("class", defaultClassName);
+    if (!config.containsKey("collate")) config.setProperty("collate", defaultCollate);
+    if (!config.containsKey("metadata")) config.setProperty("metadata", defaultMetadata);
   }
 
-  public <E extends Element> void createVertexIndex(final String key, final String label, final Configuration configuration) {
+  public <E extends Element> void createVertexIndex(
+      final String key, final String label, final Configuration configuration) {
     String className = labelToClassName(label, OClass.VERTEX_CLASS_NAME);
     createVertexClass(label);
     createIndex(key, className, configuration);
   }
 
-  public <E extends Element> void createEdgeIndex(final String key, final String label, final Configuration configuration) {
+  public <E extends Element> void createEdgeIndex(
+      final String key, final String label, final Configuration configuration) {
     String className = labelToClassName(label, OClass.EDGE_CLASS_NAME);
     createEdgeClass(label);
     createIndex(key, className, configuration);
   }
 
-  private <E extends Element> void createIndex(final String key, String className, final Configuration configuration) {
+  private <E extends Element> void createIndex(
+      final String key, String className, final Configuration configuration) {
     makeActive();
 
     prepareIndexConfiguration(configuration);
 
-    OCallable<OClass, OrientGraph> callable = new OCallable<OClass, OrientGraph>() {
-      @Override
-      public OClass call(final OrientGraph g) {
+    OCallable<OClass, OrientGraph> callable =
+        new OCallable<OClass, OrientGraph>() {
+          @Override
+          public OClass call(final OrientGraph g) {
 
-        String indexType = configuration.getString("type");
-        OType keyType = (OType) configuration.getProperty("keytype");
-        String collate = configuration.getString("collate");
-        ODocument metadata = (ODocument) configuration.getProperty("metadata");
+            String indexType = configuration.getString("type");
+            OType keyType = (OType) configuration.getProperty("keytype");
+            String collate = configuration.getString("collate");
+            ODocument metadata = (ODocument) configuration.getProperty("metadata");
 
-        final ODatabaseDocument db = getRawDatabase();
-        final OSchema schema = db.getMetadata().getSchema();
+            final ODatabaseDocument db = getRawDatabase();
+            final OSchema schema = db.getMetadata().getSchema();
 
-        final OClass cls = schema.getClass(className);
-        final OProperty property = cls.getProperty(key);
-        if (property != null)
-          keyType = property.getType();
+            final OClass cls = schema.getClass(className);
+            final OProperty property = cls.getProperty(key);
+            if (property != null) keyType = property.getType();
 
-        OPropertyIndexDefinition indexDefinition = new OPropertyIndexDefinition(className, key, keyType);
-        if (collate != null)
-          indexDefinition.setCollate(collate);
-        db.getMetadata().getIndexManager()
-            .createIndex(className + "." + key, indexType, indexDefinition, cls.getPolymorphicClusterIds(), null, metadata);
-        return null;
-      }
-    };
+            OPropertyIndexDefinition indexDefinition =
+                new OPropertyIndexDefinition(className, key, keyType);
+            if (collate != null) indexDefinition.setCollate(collate);
+            db.getMetadata()
+                .getIndexManager()
+                .createIndex(
+                    className + "." + key,
+                    indexType,
+                    indexDefinition,
+                    cls.getPolymorphicClusterIds(),
+                    null,
+                    metadata);
+            return null;
+          }
+        };
     execute(callable, "create key index on '", className, ".", key, "'");
   }
 
-  public <RET> RET execute(final OCallable<RET, OrientGraph> iCallable, final String... iOperationStrings) throws RuntimeException {
+  public <RET> RET execute(
+      final OCallable<RET, OrientGraph> iCallable, final String... iOperationStrings)
+      throws RuntimeException {
     makeActive();
 
     if (OLogManager.instance().isWarnEnabled() && iOperationStrings.length > 0) {
       // COMPOSE THE MESSAGE
       final StringBuilder msg = new StringBuilder(256);
-      for (String s : iOperationStrings)
-        msg.append(s);
+      for (String s : iOperationStrings) msg.append(s);
 
       // ASSURE PENDING TX IF ANY IS COMMITTED
       OLogManager.instance().warn(this, msg.toString());
@@ -717,7 +758,8 @@ public final class OrientGraph implements OGraph {
 
   @Override
   public <I extends Io> I io(Io.Builder<I> builder) {
-    return (I) OGraph.super.io(builder.onMapper(mb -> mb.addRegistry(OrientIoRegistry.getInstance())));
+    return (I)
+        OGraph.super.io(builder.onMapper(mb -> mb.addRegistry(OrientIoRegistry.getInstance())));
   }
 
   @Override

@@ -2,22 +2,21 @@ package org.apache.tinkerpop.gremlin.orientdb;
 
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.tx.OTransaction;
-import org.apache.tinkerpop.gremlin.structure.Transaction;
-import org.apache.tinkerpop.gremlin.structure.util.AbstractTransaction;
-import org.apache.tinkerpop.gremlin.structure.util.TransactionException;
-
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.function.Consumer;
+import org.apache.tinkerpop.gremlin.structure.Transaction;
+import org.apache.tinkerpop.gremlin.structure.util.AbstractTransaction;
+import org.apache.tinkerpop.gremlin.structure.util.TransactionException;
 
 public class OrientTransaction extends AbstractTransaction {
 
   protected OrientGraph graph;
 
-  protected       Consumer<Transaction>  readWriteConsumerInternal = READ_WRITE_BEHAVIOR.AUTO;
-  protected       Consumer<Transaction>  closeConsumerInternal     = CLOSE_BEHAVIOR.ROLLBACK;
-  protected final List<Consumer<Status>> transactionListeners      = new CopyOnWriteArrayList<>();
+  protected Consumer<Transaction> readWriteConsumerInternal = READ_WRITE_BEHAVIOR.AUTO;
+  protected Consumer<Transaction> closeConsumerInternal = CLOSE_BEHAVIOR.ROLLBACK;
+  protected final List<Consumer<Status>> transactionListeners = new CopyOnWriteArrayList<>();
 
   public OrientTransaction(OrientGraph graph) {
     super(graph);
@@ -31,14 +30,17 @@ public class OrientTransaction extends AbstractTransaction {
 
   @Override
   public Transaction onReadWrite(Consumer<Transaction> consumer) {
-    this.readWriteConsumerInternal = Optional.ofNullable(consumer)
-        .orElseThrow(Transaction.Exceptions::onReadWriteBehaviorCannotBeNull);
+    this.readWriteConsumerInternal =
+        Optional.ofNullable(consumer)
+            .orElseThrow(Transaction.Exceptions::onReadWriteBehaviorCannotBeNull);
     return this;
   }
 
   @Override
   public Transaction onClose(Consumer<Transaction> consumer) {
-    this.closeConsumerInternal = Optional.ofNullable(consumer).orElseThrow(Transaction.Exceptions::onReadWriteBehaviorCannotBeNull);
+    this.closeConsumerInternal =
+        Optional.ofNullable(consumer)
+            .orElseThrow(Transaction.Exceptions::onReadWriteBehaviorCannotBeNull);
     return this;
   }
 

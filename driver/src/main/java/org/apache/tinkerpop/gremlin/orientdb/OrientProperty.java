@@ -2,20 +2,19 @@ package org.apache.tinkerpop.gremlin.orientdb;
 
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.record.OElement;
+import java.util.Collection;
+import java.util.List;
+import java.util.NoSuchElementException;
+import java.util.Set;
 import org.apache.tinkerpop.gremlin.structure.Element;
 import org.apache.tinkerpop.gremlin.structure.Property;
 import org.apache.tinkerpop.gremlin.structure.util.ElementHelper;
 import org.apache.tinkerpop.gremlin.structure.util.StringFactory;
 
-import java.util.Collection;
-import java.util.List;
-import java.util.NoSuchElementException;
-import java.util.Set;
-
 public class OrientProperty<V> implements Property<V> {
-  protected String        key;
-  protected V             value;
-  protected Object        wrappedValue;
+  protected String key;
+  protected V value;
+  protected Object wrappedValue;
   protected OrientElement element;
 
   public OrientProperty(String key, V value, OrientElement element) {
@@ -23,7 +22,6 @@ public class OrientProperty<V> implements Property<V> {
     this.value = value;
     this.element = element;
     this.wrappedValue = wrapIntoGraphElement(value);
-
   }
 
   private Object wrapIntoGraphElement(V value) {
@@ -33,7 +31,8 @@ public class OrientProperty<V> implements Property<V> {
     }
     if (result instanceof OElement) {
       if (((OElement) result).isVertex()) {
-        result = element.getGraph().elementFactory().wrapVertex(((OElement) result).asVertex().get());
+        result =
+            element.getGraph().elementFactory().wrapVertex(((OElement) result).asVertex().get());
       } else if (((OElement) value).isEdge()) {
         result = element.getGraph().elementFactory().wrapEdge(((OElement) result).asEdge().get());
       }
@@ -102,5 +101,4 @@ public class OrientProperty<V> implements Property<V> {
   public int hashCode() {
     return ElementHelper.hashCode(this);
   }
-
 }

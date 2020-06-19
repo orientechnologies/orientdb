@@ -6,9 +6,7 @@ import org.apache.tinkerpop.gremlin.structure.Vertex;
 import org.junit.Assert;
 import org.junit.Test;
 
-/**
- * Created by Enrico Risa on 19/05/2017.
- */
+/** Created by Enrico Risa on 19/05/2017. */
 public class OrientGraphRemoteTxTest extends AbstractRemoteGraphFactoryTest {
 
   @Override
@@ -19,7 +17,8 @@ public class OrientGraphRemoteTxTest extends AbstractRemoteGraphFactoryTest {
     noTx.executeSql("CREATE CLASS Person EXTENDS V");
     noTx.executeSql("CREATE CLASS HasFriend EXTENDS E");
     noTx.executeSql("CREATE SEQUENCE personIdSequence TYPE ORDERED;");
-    noTx.executeSql("CREATE PROPERTY Person.id LONG (MANDATORY TRUE, default \"sequence('personIdSequence').next()\");");
+    noTx.executeSql(
+        "CREATE PROPERTY Person.id LONG (MANDATORY TRUE, default \"sequence('personIdSequence').next()\");");
     noTx.executeSql("CREATE INDEX Person.id ON Person (id) UNIQUE");
 
     noTx.close();
@@ -37,7 +36,5 @@ public class OrientGraphRemoteTxTest extends AbstractRemoteGraphFactoryTest {
     tx.commit();
 
     Assert.assertEquals(11, tx.getRawDatabase().countClass("Person"));
-
   }
-
 }

@@ -8,29 +8,29 @@ import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.util.OURLConnection;
 import com.orientechnologies.orient.core.util.OURLHelper;
+import java.util.Optional;
+import java.util.concurrent.ThreadLocalRandom;
 import org.apache.commons.configuration.BaseConfiguration;
 import org.apache.commons.configuration.Configuration;
 import org.apache.tinkerpop.gremlin.structure.Graph;
 
-import java.util.Optional;
-import java.util.concurrent.ThreadLocalRandom;
-
 public final class OrientGraphFactory implements AutoCloseable, OrientGraphBaseFactory {
-  public static final String                              ADMIN = "admin";
-  protected           String                              connectionURI;
-  protected           String                              dbName;
-  protected final     String                              user;
-  protected final     String                              password;
-  protected           Configuration                       configuration;
-  protected volatile  OPartitionedReCreatableDatabasePool pool;
-  protected           boolean                             labelAsClassName;
-  protected           Optional<ODatabaseType>             type;
+  public static final String ADMIN = "admin";
+  protected String connectionURI;
+  protected String dbName;
+  protected final String user;
+  protected final String password;
+  protected Configuration configuration;
+  protected volatile OPartitionedReCreatableDatabasePool pool;
+  protected boolean labelAsClassName;
+  protected Optional<ODatabaseType> type;
 
   protected OrientDB factory;
 
   protected boolean shouldCloseOrientDB = false;
 
-  public OrientGraphFactory(OrientDB orientdb, String dbName, ODatabaseType type, String user, String password) {
+  public OrientGraphFactory(
+      OrientDB orientdb, String dbName, ODatabaseType type, String user, String password) {
     this.factory = orientdb;
     this.dbName = dbName;
     this.user = user;
@@ -40,8 +40,12 @@ public final class OrientGraphFactory implements AutoCloseable, OrientGraphBaseF
   }
 
   public OrientGraphFactory() {
-    this(new OrientDB("embedded:.", OrientDBConfig.defaultConfig()), "memory_" + System.currentTimeMillis(), ODatabaseType.MEMORY,
-        ADMIN, ADMIN);
+    this(
+        new OrientDB("embedded:.", OrientDBConfig.defaultConfig()),
+        "memory_" + System.currentTimeMillis(),
+        ODatabaseType.MEMORY,
+        ADMIN,
+        ADMIN);
     this.shouldCloseOrientDB = true;
   }
 
@@ -59,17 +63,21 @@ public final class OrientGraphFactory implements AutoCloseable, OrientGraphBaseF
   }
 
   public OrientGraphFactory(Configuration config) {
-    this(config.getString(OrientGraph.CONFIG_URL, "memory:test-" + ThreadLocalRandom.current().nextInt(Integer.MAX_VALUE)),
-        config.getString(OrientGraph.CONFIG_USER, ADMIN), config.getString(OrientGraph.CONFIG_PASS, ADMIN));
+    this(
+        config.getString(
+            OrientGraph.CONFIG_URL,
+            "memory:test-" + ThreadLocalRandom.current().nextInt(Integer.MAX_VALUE)),
+        config.getString(OrientGraph.CONFIG_USER, ADMIN),
+        config.getString(OrientGraph.CONFIG_PASS, ADMIN));
     this.configuration = config;
   }
 
   /**
-   * Gets transactional graph with the database from pool if pool is configured. Otherwise creates a graph with new db instance. The
-   * Graph instance inherits the factory's configuration.
+   * Gets transactional graph with the database from pool if pool is configured. Otherwise creates a
+   * graph with new db instance. The Graph instance inherits the factory's configuration.
    *
    * @param create if true automatically creates database if database with given URL does not exist
-   * @param open   if true automatically opens the database
+   * @param open if true automatically opens the database
    */
   // TODO: allow to open with these properties
   public OrientGraph getNoTx(boolean create, boolean open) {
@@ -113,8 +121,7 @@ public final class OrientGraphFactory implements AutoCloseable, OrientGraphBaseF
     OSchema schema = db.getMetadata().getSchema();
     if (!schema.existsClass(OClass.VERTEX_CLASS_NAME))
       schema.createClass(OClass.VERTEX_CLASS_NAME).setOverSize(2);
-    if (!schema.existsClass(OClass.EDGE_CLASS_NAME))
-      schema.createClass(OClass.EDGE_CLASS_NAME);
+    if (!schema.existsClass(OClass.EDGE_CLASS_NAME)) schema.createClass(OClass.EDGE_CLASS_NAME);
 
     if (txActive) {
       // REOPEN IT AGAIN
@@ -123,8 +130,7 @@ public final class OrientGraphFactory implements AutoCloseable, OrientGraphBaseF
   }
 
   protected Configuration getConfiguration(boolean create, boolean open, boolean transactional) {
-    if (configuration != null)
-      return configuration;
+    if (configuration != null) return configuration;
     else
       return new BaseConfiguration() {
         {
@@ -143,7 +149,7 @@ public final class OrientGraphFactory implements AutoCloseable, OrientGraphBaseF
 
   /**
    * @param create if true automatically creates database if database with given URL does not exist
-   * @param open   if true automatically opens the database
+   * @param open if true automatically opens the database
    */
   public ODatabaseDocument getDatabase(boolean create, boolean open) {
 
@@ -151,12 +157,11 @@ public final class OrientGraphFactory implements AutoCloseable, OrientGraphBaseF
       this.factory.createIfNotExists(dbName, type.get());
     }
     return this.factory.open(dbName, user, password);
-
   }
 
   /**
    * @param create if true automatically creates database if database with given URL does not exist
-   * @param open   if true automatically opens the database
+   * @param open if true automatically opens the database
    */
   protected ODatabaseDocument acquireFromPool(boolean create, boolean open) {
 
@@ -171,13 +176,14 @@ public final class OrientGraphFactory implements AutoCloseable, OrientGraphBaseF
     }
 
     return databaseDocument;
-
   }
 
   /**
-   * Enable or disable the prefixing of class names with V_&lt;label&gt; for vertices or E_&lt;label&gt; for edges.
+   * Enable or disable the prefixing of class names with V_&lt;label&gt; for vertices or
+   * E_&lt;label&gt; for edges.
    *
-   * @param is if true classname equals label, if false classname is prefixed with V_ or E_ (default)
+   * @param is if true classname equals label, if false classname is prefixed with V_ or E_
+   *     (default)
    */
   public OrientGraphBaseFactory setLabelAsClassName(boolean is) {
     this.labelAsClassName = is;
@@ -185,7 +191,8 @@ public final class OrientGraphFactory implements AutoCloseable, OrientGraphBaseF
   }
 
   /**
-   * Setting up the factory to use database pool instead of creation a new instance of database connection each time.
+   * Setting up the factory to use database pool instead of creation a new instance of database
+   * connection each time.
    */
   public OrientGraphBaseFactory setupPool(final int max) {
     pool = new OPartitionedReCreatableDatabasePool(this.factory, dbName, type, user, password, max);
@@ -201,12 +208,9 @@ public final class OrientGraphFactory implements AutoCloseable, OrientGraphBaseF
     return pool;
   }
 
-  /**
-   * Closes all pooled databases and clear the pool.
-   */
+  /** Closes all pooled databases and clear the pool. */
   public void close() {
-    if (pool != null)
-      pool.close();
+    if (pool != null) pool.close();
 
     pool = null;
     if (shouldCloseOrientDB) {

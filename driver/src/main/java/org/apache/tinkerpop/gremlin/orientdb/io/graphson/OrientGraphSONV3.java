@@ -1,6 +1,12 @@
 package org.apache.tinkerpop.gremlin.orientdb.io.graphson;
 
+import static org.apache.tinkerpop.gremlin.orientdb.io.OrientIoRegistry.isORecord;
+import static org.apache.tinkerpop.gremlin.orientdb.io.OrientIoRegistry.newORecordId;
+
 import com.orientechnologies.orient.core.id.ORecordId;
+import java.util.Collections;
+import java.util.LinkedHashMap;
+import java.util.Map;
 import org.apache.tinkerpop.gremlin.structure.Edge;
 import org.apache.tinkerpop.gremlin.structure.Vertex;
 import org.apache.tinkerpop.gremlin.structure.io.graphson.AbstractObjectDeserializer;
@@ -9,25 +15,18 @@ import org.apache.tinkerpop.gremlin.structure.util.detached.DetachedEdge;
 import org.apache.tinkerpop.gremlin.structure.util.detached.DetachedVertex;
 import org.apache.tinkerpop.shaded.jackson.databind.JsonDeserializer;
 
-import java.util.Collections;
-import java.util.LinkedHashMap;
-import java.util.Map;
-
-import static org.apache.tinkerpop.gremlin.orientdb.io.OrientIoRegistry.isORecord;
-import static org.apache.tinkerpop.gremlin.orientdb.io.OrientIoRegistry.newORecordId;
-
-/**
- * Created by Enrico Risa on 06/09/2017.
- */
+/** Created by Enrico Risa on 06/09/2017. */
 public class OrientGraphSONV3 extends OrientGraphSON {
 
   public static final OrientGraphSONV3 INSTANCE = new OrientGraphSONV3();
 
-  protected static final Map<Class, String> TYPES = Collections.unmodifiableMap(new LinkedHashMap<Class, String>() {
-    {
-      put(ORecordId.class, "ORecordId");
-    }
-  });
+  protected static final Map<Class, String> TYPES =
+      Collections.unmodifiableMap(
+          new LinkedHashMap<Class, String>() {
+            {
+              put(ORecordId.class, "ORecordId");
+            }
+          });
 
   public OrientGraphSONV3() {
     super("orient-graphson-v3");
@@ -44,28 +43,28 @@ public class OrientGraphSONV3 extends OrientGraphSON {
     return TYPES;
   }
 
-  /**
-   * Created by Enrico Risa on 06/09/2017.
-   */
+  /** Created by Enrico Risa on 06/09/2017. */
   public static class EdgeJacksonDeserializer extends AbstractObjectDeserializer<Edge> {
 
     public EdgeJacksonDeserializer() {
       super(Edge.class);
     }
 
-    @SuppressWarnings({ "unchecked", "rawtypes" })
+    @SuppressWarnings({"unchecked", "rawtypes"})
     @Override
     public Edge createObject(final Map<String, Object> edgeData) {
-      return new DetachedEdge(newORecordId(edgeData.get(GraphSONTokens.ID)), edgeData.get(GraphSONTokens.LABEL).toString(),
-          (Map) edgeData.get(GraphSONTokens.PROPERTIES), newORecordId(edgeData.get(GraphSONTokens.OUT)),
-          edgeData.get(GraphSONTokens.OUT_LABEL).toString(), newORecordId(edgeData.get(GraphSONTokens.IN)),
+      return new DetachedEdge(
+          newORecordId(edgeData.get(GraphSONTokens.ID)),
+          edgeData.get(GraphSONTokens.LABEL).toString(),
+          (Map) edgeData.get(GraphSONTokens.PROPERTIES),
+          newORecordId(edgeData.get(GraphSONTokens.OUT)),
+          edgeData.get(GraphSONTokens.OUT_LABEL).toString(),
+          newORecordId(edgeData.get(GraphSONTokens.IN)),
           edgeData.get(GraphSONTokens.IN_LABEL).toString());
     }
   }
 
-  /**
-   * Created by Enrico Risa on 06/09/2017.
-   */
+  /** Created by Enrico Risa on 06/09/2017. */
   public static class VertexJacksonDeserializer extends AbstractObjectDeserializer<Vertex> {
 
     public VertexJacksonDeserializer() {
@@ -75,7 +74,9 @@ public class OrientGraphSONV3 extends OrientGraphSON {
     @SuppressWarnings("unchecked")
     @Override
     public Vertex createObject(final Map<String, Object> vertexData) {
-      return new DetachedVertex(newORecordId(vertexData.get(GraphSONTokens.ID)), vertexData.get(GraphSONTokens.LABEL).toString(),
+      return new DetachedVertex(
+          newORecordId(vertexData.get(GraphSONTokens.ID)),
+          vertexData.get(GraphSONTokens.LABEL).toString(),
           (Map<String, Object>) vertexData.get(GraphSONTokens.PROPERTIES));
     }
   }
@@ -94,6 +95,5 @@ public class OrientGraphSONV3 extends OrientGraphSON {
       }
       return data;
     }
-
   }
 }

@@ -9,6 +9,9 @@ import com.orientechnologies.orient.server.config.OServerParameterConfiguration;
 import com.orientechnologies.orient.server.plugin.OServerPluginAbstract;
 import com.orientechnologies.orient.server.plugin.OServerPluginConfigurable;
 import com.orientechnologies.tinkerpop.server.config.OGraphConfig;
+import java.io.*;
+import java.util.concurrent.CompletableFuture;
+import javax.script.Bindings;
 import org.apache.commons.configuration.BaseConfiguration;
 import org.apache.tinkerpop.gremlin.orientdb.OrientEmbeddedFactory;
 import org.apache.tinkerpop.gremlin.orientdb.OrientStandardGraph;
@@ -17,20 +20,15 @@ import org.apache.tinkerpop.gremlin.server.GremlinServer;
 import org.apache.tinkerpop.gremlin.server.Settings;
 import org.apache.tinkerpop.gremlin.server.util.ServerGremlinExecutor;
 
-import javax.script.Bindings;
-import java.io.*;
-import java.util.concurrent.CompletableFuture;
+/** Created by Enrico Risa on 06/09/2017. */
+public class OGremlinServerPlugin extends OServerPluginAbstract
+    implements OServerPluginConfigurable, OServerLifecycleListener {
 
-/**
- * Created by Enrico Risa on 06/09/2017.
- */
-public class OGremlinServerPlugin extends OServerPluginAbstract implements OServerPluginConfigurable, OServerLifecycleListener {
-
-  protected GremlinServer             gremlinServer;
-  protected OServer                   oServer;
+  protected GremlinServer gremlinServer;
+  protected OServer oServer;
   protected OrientGremlinGraphManager graphManager;
-  protected ServerGremlinExecutor     executor;
-  protected OGraphConfig              config;
+  protected ServerGremlinExecutor executor;
+  protected OGraphConfig config;
 
   @Override
   public String getName() {
@@ -43,16 +41,18 @@ public class OGremlinServerPlugin extends OServerPluginAbstract implements OServ
     this.oServer = oServer;
     this.oServer.registerLifecycleListener(this);
     this.config = new OGraphConfig(new ODocument());
-
   }
 
   public InputStream getServerConfig() throws FileNotFoundException {
-    String configFile = OSystemVariableResolver.resolveSystemVariables("${ORIENTDB_HOME}/config/gremlin-server.yaml");
+    String configFile =
+        OSystemVariableResolver.resolveSystemVariables(
+            "${ORIENTDB_HOME}/config/gremlin-server.yaml");
     return new FileInputStream(new File(configFile));
   }
 
   public InputStream getGraphsConfig() throws FileNotFoundException {
-    String aliasConfig = OSystemVariableResolver.resolveSystemVariables("${ORIENTDB_HOME}/config/graph-config.json");
+    String aliasConfig =
+        OSystemVariableResolver.resolveSystemVariables("${ORIENTDB_HOME}/config/graph-config.json");
     return new FileInputStream(new File(aliasConfig));
   }
 
@@ -67,9 +67,7 @@ public class OGremlinServerPlugin extends OServerPluginAbstract implements OServ
   }
 
   @Override
-  public void onBeforeActivate() {
-
-  }
+  public void onBeforeActivate() {}
 
   @Override
   public void onAfterActivate() {
@@ -90,7 +88,7 @@ public class OGremlinServerPlugin extends OServerPluginAbstract implements OServ
     } catch (Exception e) {
       OLogManager.instance().error(this, "Error on Gremlin Server startup", e);
     } finally {
-      if(cfg!=null){
+      if (cfg != null) {
         try {
           cfg.close();
         } catch (IOException e) {
@@ -109,11 +107,10 @@ public class OGremlinServerPlugin extends OServerPluginAbstract implements OServ
   }
 
   @Override
-  public void onAfterDeactivate() {
+  public void onAfterDeactivate() {}
 
-  }
-
-  public void installCustomGraph(BaseConfiguration configuration, String graphName, String traversalName) {
+  public void installCustomGraph(
+      BaseConfiguration configuration, String graphName, String traversalName) {
     OrientStandardGraph graph = OrientEmbeddedFactory.open(configuration);
     Bindings bindings = executor.getGremlinExecutor().getScriptEngineManager().getBindings();
     GraphTraversalSource traversal = graph.traversal();

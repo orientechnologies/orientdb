@@ -1,7 +1,13 @@
 package com.orientechnologies.tinkerpop.server;
 
+import static org.hamcrest.CoreMatchers.instanceOf;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertThat;
+import static org.junit.Assert.assertTrue;
+
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.tinkerpop.AbstractRemoteTest;
+import java.util.concurrent.ExecutionException;
 import org.apache.commons.configuration.BaseConfiguration;
 import org.apache.tinkerpop.gremlin.driver.Client;
 import org.apache.tinkerpop.gremlin.driver.Cluster;
@@ -15,16 +21,7 @@ import org.apache.tinkerpop.gremlin.structure.io.gryo.GryoMapper;
 import org.junit.Assert;
 import org.junit.Test;
 
-import java.util.concurrent.ExecutionException;
-
-import static org.hamcrest.CoreMatchers.instanceOf;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertThat;
-import static org.junit.Assert.assertTrue;
-
-/**
- * Created by Enrico Risa on 07/09/2017.
- */
+/** Created by Enrico Risa on 07/09/2017. */
 public class OGremlinServerPluginTest extends AbstractRemoteTest {
 
   @Override
@@ -36,8 +33,11 @@ public class OGremlinServerPluginTest extends AbstractRemoteTest {
   @Test
   public void shouldAuthenticateWithPlainText() throws Exception {
 
-    MessageSerializer serializer = new GryoMessageSerializerV3d0(GryoMapper.build().addRegistry(OrientIoRegistry.getInstance()));
-    final Cluster cluster = Cluster.build().credentials("root", "root").serializer(serializer).create();
+    MessageSerializer serializer =
+        new GryoMessageSerializerV3d0(
+            GryoMapper.build().addRegistry(OrientIoRegistry.getInstance()));
+    final Cluster cluster =
+        Cluster.build().credentials("root", "root").serializer(serializer).create();
     final Client client = cluster.connect();
 
     try {
@@ -69,13 +69,15 @@ public class OGremlinServerPluginTest extends AbstractRemoteTest {
     final Cluster cluster = Cluster.build().credentials("root", "root").create();
     final Client client = cluster.connect();
     try {
-      assertEquals(2, client.submit("graph.addVertex(T.label,'Person')").all().get().get(0).getInt());
+      assertEquals(
+          2, client.submit("graph.addVertex(T.label,'Person')").all().get().get(0).getInt());
       Assert.fail();
     } catch (ExecutionException e) {
       Assert.assertTrue(e.getCause() instanceof ResponseException);
       Assert.assertEquals(
           "User 'reader' does not have permission to execute the operation 'Create' against the resource: ResourceGeneric [name=SCHEMA, legacyName=database.schema].null\r\n"
-              + "\tDB name=\"shouldUseReaderAndGiveExceptionOnWrite\"", e.getCause().getMessage());
+              + "\tDB name=\"shouldUseReaderAndGiveExceptionOnWrite\"",
+          e.getCause().getMessage());
     } finally {
       cluster.close();
     }
@@ -83,11 +85,20 @@ public class OGremlinServerPluginTest extends AbstractRemoteTest {
 
   @Test
   public void shouldCreateAVertexPerson() throws Exception {
-    MessageSerializer serializer = new GryoMessageSerializerV3d0(GryoMapper.build().addRegistry(OrientIoRegistry.getInstance()));
-    final Cluster cluster = Cluster.build().credentials("root", "root").serializer(serializer).create();
+    MessageSerializer serializer =
+        new GryoMessageSerializerV3d0(
+            GryoMapper.build().addRegistry(OrientIoRegistry.getInstance()));
+    final Cluster cluster =
+        Cluster.build().credentials("root", "root").serializer(serializer).create();
     final Client client = cluster.connect();
     try {
-      Vertex vertex = client.submit("v = graph.addVertex(T.label,'Person','name','John');graph.tx().commit();v").all().get().get(0).getVertex();
+      Vertex vertex =
+          client
+              .submit("v = graph.addVertex(T.label,'Person','name','John');graph.tx().commit();v")
+              .all()
+              .get()
+              .get(0)
+              .getVertex();
       assertEquals("John", vertex.property("name").value());
       assertThat(vertex.id(), instanceOf(ORecordId.class));
       ORecordId id = (ORecordId) vertex.id();

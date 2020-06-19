@@ -22,15 +22,14 @@ package com.orientechnologies.tinkerpop.command;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import com.orientechnologies.orient.server.network.protocol.http.command.post.OServerCommandPostCommandGraph;
-
 import java.util.Map;
 
 public class OServerCommandPostCommandGremlin extends OServerCommandPostCommandGraph {
-  public OServerCommandPostCommandGremlin() {
-  }
+  public OServerCommandPostCommandGremlin() {}
 
   @Override
-  protected OResultSet executeStatement(String language, String text, Object params, ODatabaseDocument db) {
+  protected OResultSet executeStatement(
+      String language, String text, Object params, ODatabaseDocument db) {
 
     if ("gremlin".equalsIgnoreCase(language)) {
 

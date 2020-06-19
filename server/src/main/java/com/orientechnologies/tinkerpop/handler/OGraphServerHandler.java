@@ -21,7 +21,6 @@
 package com.orientechnologies.tinkerpop.handler;
 
 import com.orientechnologies.common.log.OLogManager;
-import com.orientechnologies.orient.core.command.OCommandManager;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.OrientDBInternal;
 import com.orientechnologies.orient.server.OClientConnection;
@@ -35,12 +34,13 @@ import org.apache.tinkerpop.gremlin.orientdb.executor.OCommandGremlinExecutor;
 
 public class OGraphServerHandler extends OServerPluginAbstract {
   private boolean enabled = true;
-  private int     graphPoolMax;
+  private int graphPoolMax;
   private OServer server;
 
   @Override
   public void config(final OServer server, OServerParameterConfiguration[] iParams) {
-    graphPoolMax = server.getContextConfiguration().getValueAsInteger(OGlobalConfiguration.DB_POOL_MAX);
+    graphPoolMax =
+        server.getContextConfiguration().getValueAsInteger(OGlobalConfiguration.DB_POOL_MAX);
     for (OServerParameterConfiguration param : iParams) {
       if (param.name.equalsIgnoreCase("enabled")) {
         if (!Boolean.parseBoolean(param.value))
@@ -50,11 +50,19 @@ public class OGraphServerHandler extends OServerPluginAbstract {
         graphPoolMax = Integer.parseInt(param.value);
     }
 
-    OCommandGremlinExecutor executor = (OCommandGremlinExecutor) OrientDBInternal.extract(server.getContext()).getScriptManager()
-        .getCommandManager().getScriptExecutor("gremlin");
+    OCommandGremlinExecutor executor =
+        (OCommandGremlinExecutor)
+            OrientDBInternal.extract(server.getContext())
+                .getScriptManager()
+                .getCommandManager()
+                .getScriptExecutor("gremlin");
     enabled = true;
     OLogManager.instance()
-        .info(this, "Installed GREMLIN language v.%s - graph.pool.max=%d", executor.getEngineVersion(), graphPoolMax);
+        .info(
+            this,
+            "Installed GREMLIN language v.%s - graph.pool.max=%d",
+            executor.getEngineVersion(),
+            graphPoolMax);
 
     this.server = server;
   }
@@ -66,25 +74,20 @@ public class OGraphServerHandler extends OServerPluginAbstract {
 
   @Override
   public void startup() {
-    final OServerNetworkListener listener = server.getListenerByProtocol(ONetworkProtocolHttpAbstract.class);
+    final OServerNetworkListener listener =
+        server.getListenerByProtocol(ONetworkProtocolHttpAbstract.class);
 
-    if (!enabled)
-      return;
-    if (listener != null)
-      listener.registerStatelessCommand(new OServerCommandPostCommandGremlin());
-
+    if (!enabled) return;
+    if (listener != null) listener.registerStatelessCommand(new OServerCommandPostCommandGremlin());
   }
 
   @Override
   public void shutdown() {
-    if (!enabled)
-      return;
-
+    if (!enabled) return;
   }
 
   @Override
   public void onAfterClientRequest(OClientConnection connection, byte requestType) {
     super.onAfterClientRequest(connection, requestType);
-
   }
 }
