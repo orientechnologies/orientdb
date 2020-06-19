@@ -42,6 +42,8 @@ spec:
           env:
             - name: ENABLE_KUBERNETES_DISCOVERY
               value: "true"
+            - name: ORIENTDB_NODE_NAME
+              value: orientdb-eu-0
           ports:
             - containerPort: 2480
               protocol: TCP
@@ -52,6 +54,45 @@ spec:
           volumeMounts:
             - name: databases
               mountPath: /orientdb/databases
+            - name: config
+              mountPath: /orientdb/config
+      initContainers:
+        - name: copy-configs
+          image: busybox:1.31
+          command: ['sh', '-c']
+          args:
+            - cp -v /orientdb-config/* /orientdb/config/
+          volumeMounts:
+            - name: config
+              mountPath: /orientdb/config
+            - name: orientdb-configmap
+              mountPath: /orientdb-config
+#            - name: server-configmap
+#              mountPath: /orientdb-config/server
+#            - name: hazelcast-configmap
+#              mountPath: /orientdb-config/hazelcast
+#            - name: distributed-db-configmap
+#              mountPath: /orientdb-config/distributed
+      volumes:
+        - name: orientdb-configmap
+          configMap:
+            name: orientdb-config
+#        - name: server-configmap
+#          configMap:
+#            name: orientdb-server-config
+#            items:
+#            - key: orientdb-server-config.xml
+#              path: orientdb-server-config.xml
+#        - name: hazelcast-configmap
+#          configMap:
+#            name: hazelcast-config
+#            items:
+#              - key: hazelcast.xml
+#                path: hazelcast.xml
+#        - name: distributed-db-configmap
+#          configMap:
+#            name: default-distributed-db-config
+#            items:
   volumeClaimTemplates:
     - metadata:
         name: databases
@@ -60,3 +101,10 @@ spec:
         resources:
           requests:
             storage: 2Gi
+    - metadata:
+        name: config
+      spec:
+        accessModes: ["ReadWriteOnce"]
+        resources:
+          requests:
+            storage: 1Gi
