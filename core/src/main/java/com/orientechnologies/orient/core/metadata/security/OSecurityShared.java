@@ -1830,6 +1830,11 @@ public class OSecurityShared implements OSecurityInternal {
               }
               return null;
             }));
+    try {
+      Thread.sleep(50);
+    } catch (InterruptedException e) {
+      e.printStackTrace();
+    }
   }
 
   protected Set<OSecurityResourceProperty> calculateAllFilteredProperties(
