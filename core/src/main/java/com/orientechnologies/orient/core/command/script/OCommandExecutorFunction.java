@@ -111,6 +111,11 @@ public class OCommandExecutorFunction extends OCommandExecutorAbstract {
                 " Result is " + (result == null ? "null" : result.getClass().getName()) + " " +
                 " Handled result is " + (finalResult == null ? "null" : finalResult.getClass().getName()), e);
         throw OException.wrapException(new OCommandScriptException("Error on execution of the script", request.getText(), 0), e);
+      } catch (ClassCastException e) {
+        OLogManager.instance().error(this, "Error on execution of " + f.getLanguage() + " script." +
+                " Result is " + (result == null ? "null" : result.getClass().getName()) + " " +
+                " Handled result is " + (finalResult == null ? "null" : finalResult.getClass().getName()), e);
+        throw OException.wrapException(new OCommandScriptException("Error on execution of the script", request.getText(), 0), e);
       } catch (OCommandScriptException e) {
         // PASS THROUGH
         throw e;
