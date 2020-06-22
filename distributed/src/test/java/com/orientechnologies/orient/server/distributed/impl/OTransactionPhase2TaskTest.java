@@ -2,6 +2,7 @@ package com.orientechnologies.orient.server.distributed.impl;
 
 import static org.junit.Assert.assertEquals;
 
+import com.orientechnologies.common.util.OPair;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseSession;
 import com.orientechnologies.orient.core.db.ODatabaseType;
@@ -21,6 +22,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.SortedSet;
 import java.util.TreeSet;
 import javax.management.InstanceAlreadyExistsException;
 import javax.management.MBeanRegistrationException;
@@ -60,14 +62,18 @@ public class OTransactionPhase2TaskTest {
     TreeSet<ORID> ids = new TreeSet<ORID>();
     ids.add(rec1.getIdentity());
     operations.add(new ORecordOperation(rec1, ORecordOperation.UPDATED));
-
+    SortedSet<OPair<String, Object>> uniqueIndexKeys = new TreeSet<>();
     OTransactionPhase1Task task =
         new OTransactionPhase1Task(operations, new OTransactionId(Optional.empty(), 0, 1));
     task.execute(
         new ODistributedRequestId(10, 20), server, null, (ODatabaseDocumentInternal) session);
     OTransactionPhase2Task task2 =
         new OTransactionPhase2Task(
-            new ODistributedRequestId(10, 20), true, ids, new OLogSequenceNumber(0, 1));
+            new ODistributedRequestId(10, 20),
+            true,
+            ids,
+            uniqueIndexKeys,
+            new OLogSequenceNumber(0, 1));
     task2.execute(
         new ODistributedRequestId(10, 21), server, null, (ODatabaseDocumentInternal) session);
 
