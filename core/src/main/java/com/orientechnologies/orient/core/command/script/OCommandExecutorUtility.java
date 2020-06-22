@@ -56,9 +56,7 @@ public class OCommandExecutorUtility {
     }
     // PATCH BY MAT ABOUT NASHORN RETURNING VALUE FOR ARRAYS.
     try {
-      if(result instanceof Map) {
-        return result;
-      } else if ((Boolean) java8MethodIsArray.invoke(result)) {
+      if (java8MethodIsArray.getDeclaringClass().isInstance(result) && (Boolean) java8MethodIsArray.invoke(result)) {
         List<?> partial = new ArrayList(((Map) result).values());
         List<Object> finalResult = new ArrayList<Object>();
         for (Object o : partial) {
