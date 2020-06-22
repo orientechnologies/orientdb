@@ -56,6 +56,9 @@ spec:
               mountPath: /orientdb/databases
             - name: config
               mountPath: /orientdb/config
+#          resources:
+#            requests:
+#            limits:
       initContainers:
         - name: copy-configs
           image: busybox:1.31
