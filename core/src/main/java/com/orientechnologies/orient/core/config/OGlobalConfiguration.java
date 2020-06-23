@@ -1092,7 +1092,9 @@ public enum OGlobalConfiguration {// ENVIRONMENT
   CLIENT_CHANNEL_IDLE_CLOSE("client.channel.idleAutoClose", "Enable the automatic close of idle sockets after a specific timeout",
       Boolean.class, false),
 
-  CLIENT_CHANNEL_IDLE_TIMEOUT("client.channel.idleTimeout", "sockets maximum time idle in seconds", Integer.class, 900);
+  CLIENT_CHANNEL_IDLE_TIMEOUT("client.channel.idleTimeout", "sockets maximum time idle in seconds", Integer.class, 900),
+  
+  DISTRIBUTED_AUTO_CREATE_CLUSTERS("distributed.autoCreateClusters", "If true enable auto creation of cluster when a new node join", Boolean.class, true);
 
   static {
     readConfiguration();
