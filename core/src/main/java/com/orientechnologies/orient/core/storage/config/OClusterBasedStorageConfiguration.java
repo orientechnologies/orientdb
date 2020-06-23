@@ -335,9 +335,7 @@ public final class OClusterBasedStorageConfiguration implements OStorageConfigur
     }
   }
 
-  /**
-   * Added version used for managed Network Versioning.
-   */
+  /** Added version used for managed Network Versioning. */
   public byte[] toStream(final int iNetworkVersion, final Charset charset)
       throws OSerializationException {
     lock.acquireReadLock();
@@ -1048,8 +1046,8 @@ public final class OClusterBasedStorageConfiguration implements OStorageConfigur
       final String key = PROPERTY_PREFIX_PROPERTY + name;
       updateStringProperty(atomicOperation, key, value, false);
 
-      @SuppressWarnings("unchecked") final Map<String, String> properties =
-          (Map<String, String>) cache.get(PROPERTIES);
+      @SuppressWarnings("unchecked")
+      final Map<String, String> properties = (Map<String, String>) cache.get(PROPERTIES);
       properties.put(name, value);
     } finally {
       lock.releaseWriteLock();
@@ -1083,8 +1081,8 @@ public final class OClusterBasedStorageConfiguration implements OStorageConfigur
   public String getProperty(final String name) {
     lock.acquireReadLock();
     try {
-      @SuppressWarnings("unchecked") final Map<String, String> properties =
-          (Map<String, String>) cache.get(PROPERTIES);
+      @SuppressWarnings("unchecked")
+      final Map<String, String> properties = (Map<String, String>) cache.get(PROPERTIES);
       return properties.get(name);
     } finally {
       lock.releaseReadLock();
@@ -1095,8 +1093,8 @@ public final class OClusterBasedStorageConfiguration implements OStorageConfigur
   public List<OStorageEntryConfiguration> getProperties() {
     lock.acquireReadLock();
     try {
-      @SuppressWarnings("unchecked") final Map<String, String> properties =
-          (Map<String, String>) cache.get(PROPERTIES);
+      @SuppressWarnings("unchecked")
+      final Map<String, String> properties = (Map<String, String>) cache.get(PROPERTIES);
 
       final List<OStorageEntryConfiguration> result = new ArrayList<>(8);
 
@@ -1196,8 +1194,8 @@ public final class OClusterBasedStorageConfiguration implements OStorageConfigur
         cluster.deleteRecord(atomicOperation, rid.getClusterPosition());
       }
 
-      @SuppressWarnings("unchecked") final Map<String, String> properties =
-          (Map<String, String>) cache.get(PROPERTIES);
+      @SuppressWarnings("unchecked")
+      final Map<String, String> properties = (Map<String, String>) cache.get(PROPERTIES);
       properties.clear();
     } finally {
       lock.releaseWriteLock();
@@ -1310,7 +1308,8 @@ public final class OClusterBasedStorageConfiguration implements OStorageConfigur
       OAtomicOperation atomicOperation, final OStorageClusterConfiguration config) {
     lock.acquireWriteLock();
     try {
-      @SuppressWarnings("unchecked") final List<OStorageClusterConfiguration> clusters =
+      @SuppressWarnings("unchecked")
+      final List<OStorageClusterConfiguration> clusters =
           (List<OStorageClusterConfiguration>) cache.get(CLUSTERS);
       if (config.getId() < clusters.size()) {
         clusters.set(config.getId(), config);
@@ -1340,7 +1339,8 @@ public final class OClusterBasedStorageConfiguration implements OStorageConfigur
       final OStorageClusterConfiguration.STATUS status) {
     lock.acquireWriteLock();
     try {
-      @SuppressWarnings("unchecked") final List<OStorageClusterConfiguration> clusters =
+      @SuppressWarnings("unchecked")
+      final List<OStorageClusterConfiguration> clusters =
           (List<OStorageClusterConfiguration>) cache.get(CLUSTERS);
 
       if (clusterId < clusters.size()) {
@@ -1422,7 +1422,8 @@ public final class OClusterBasedStorageConfiguration implements OStorageConfigur
   public void dropCluster(final OAtomicOperation atomicOperation, final int clusterId) {
     lock.acquireWriteLock();
     try {
-      @SuppressWarnings("unchecked") final List<OStorageClusterConfiguration> clusters =
+      @SuppressWarnings("unchecked")
+      final List<OStorageClusterConfiguration> clusters =
           (List<OStorageClusterConfiguration>) cache.get(CLUSTERS);
       if (clusterId < clusters.size()) {
         clusters.set(clusterId, null);
@@ -1967,8 +1968,8 @@ public final class OClusterBasedStorageConfiguration implements OStorageConfigur
   private void autoInitClusters() {
     if (getContextConfiguration().getValueAsInteger(OGlobalConfiguration.CLASS_MINIMUM_CLUSTERS)
         == 0) {
-      @SuppressWarnings("SpellCheckingInspection") final int cpus =
-          Runtime.getRuntime().availableProcessors();
+      @SuppressWarnings("SpellCheckingInspection")
+      final int cpus = Runtime.getRuntime().availableProcessors();
       getContextConfiguration()
           .setValue(OGlobalConfiguration.CLASS_MINIMUM_CLUSTERS, cpus > 64 ? 64 : cpus);
     }
