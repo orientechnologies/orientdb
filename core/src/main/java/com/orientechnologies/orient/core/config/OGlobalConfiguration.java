@@ -1928,7 +1928,13 @@ public enum OGlobalConfiguration { // ENVIRONMENT
       false),
 
   CLIENT_CHANNEL_IDLE_TIMEOUT(
-      "client.channel.idleTimeout", "sockets maximum time idle in seconds", Integer.class, 900);
+      "client.channel.idleTimeout", "sockets maximum time idle in seconds", Integer.class, 900),
+
+  DISTRIBUTED_AUTO_CREATE_CLUSTERS(
+      "distributed.autoCreateClusters",
+      "if true enable auto creation of cluster when a new node join",
+      Boolean.class,
+      true);
 
   static {
     readConfiguration();
