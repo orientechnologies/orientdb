@@ -6,15 +6,21 @@ import com.orientechnologies.orient.core.db.OrientDB;
 import com.orientechnologies.orient.core.db.OrientDBConfig;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.server.OServer;
+import com.orientechnologies.orient.testutil.StatefulSetTemplateKeys;
 import io.kubernetes.client.openapi.ApiClient;
 import io.kubernetes.client.openapi.ApiException;
 import io.kubernetes.client.openapi.Configuration;
 import io.kubernetes.client.openapi.StringUtil;
+import io.kubernetes.client.openapi.apis.AppsV1Api;
 import io.kubernetes.client.openapi.apis.CoreV1Api;
 import io.kubernetes.client.openapi.models.V1ConfigMap;
 import io.kubernetes.client.openapi.models.V1ConfigMapBuilder;
+import io.kubernetes.client.openapi.models.V1Service;
+import io.kubernetes.client.openapi.models.V1StatefulSet;
 import io.kubernetes.client.util.ClientBuilder;
 import io.kubernetes.client.util.KubeConfig;
+import io.kubernetes.client.util.Yaml;
+import org.apache.commons.text.StringSubstitutor;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.BeforeClass;
@@ -25,8 +31,10 @@ import java.io.IOException;
 import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
@@ -36,6 +44,7 @@ public class BasicSyncIT {
   private OServer server0;
   private OServer server1;
   private OServer server2;
+  private List<String> PvcToDelete = new ArrayList<>();
 
   @BeforeClass
   public static void setupKubernetesClient() throws IOException {
@@ -48,35 +57,48 @@ public class BasicSyncIT {
 
   @Before
   public void before() throws Exception {
-    CoreV1Api api = new CoreV1Api();
-    V1ConfigMap cm =
-        new V1ConfigMapBuilder()
-            .withApiVersion("v1")
-            .withKind("ConfigMap")
-            .withNewMetadata()
-            .withName("orientdb-config")
-            .withNamespace("default")
-            .endMetadata()
-            .withData(
-                new HashMap<String, String>() {
-                  {
-                    put("hazelcast.xml", getEscapedFileContent("/kubernetes/hazelcast-0.xml"));
-                    put(
-                        "default-distributed-db-config.json",
-                        getEscapedFileContent("/kubernetes/default-distributed-db-config.json"));
-                    put(
-                        "orientdb-server-config.xml",
-                        getEscapedFileContent("/kubernetes/orientdb-simple-dserver-config-0.xml"));
-                  }
-                })
-            .build();
-    try {
-      cm = api.createNamespacedConfigMap("default", cm, null, null, null);
-    } catch (ApiException e) {
-      System.out.println("error creating ConfigMap: " + e.getResponseBody());
-      e.printStackTrace();
-      fail("Cannot create ConfigMap");
-    }
+    CoreV1Api coreV1Api = new CoreV1Api();
+
+    Map<String, String> valuesMapEu0 =
+        new HashMap<String, String>() {
+          {
+            put(StatefulSetTemplateKeys.ORIENTDB_NODE_NAME, "orientdb-eu0");
+            put(StatefulSetTemplateKeys.ORIENTDB_LABEL, "orientdb");
+            put(StatefulSetTemplateKeys.ORIENTDB_HTTP_PORT, "2480");
+            put(StatefulSetTemplateKeys.ORIENTDB_BINARY_PORT, "2424");
+            put(StatefulSetTemplateKeys.ORIENTDB_HAZELCAST_PORT, "2434");
+            put(
+                StatefulSetTemplateKeys.ORIENTDB_DOCKER_IMAGE,
+                "192.168.2.119:5000/pxsalehi/orientdb:3.1.1");
+            put(StatefulSetTemplateKeys.ORIENTDB_CONFIG_CM, "orientdb-eu0-cm");
+            put(StatefulSetTemplateKeys.ORIENTDB_DB_VOL_SIZE, "2");
+            put(StatefulSetTemplateKeys.ORIENTDB_HAZELCAST_CONFIG, "/kubernetes/hazelcast-0.xml");
+            put(
+                StatefulSetTemplateKeys.ORIENTDB_DISTRIBUTED_DB_CONFIG,
+                "/kubernetes/default-distributed-db-config.json");
+            put(
+                StatefulSetTemplateKeys.ORIENTDB_SERVER_CONFIG,
+                "/kubernetes/orientdb-simple-dserver-config-0.xml");
+          }
+        };
+
+    Map<String, String> valuesMapEu1 =
+        new HashMap<String, String>(valuesMapEu0) {
+          {
+            put(StatefulSetTemplateKeys.ORIENTDB_NODE_NAME, "orientdb-eu1");
+            put(StatefulSetTemplateKeys.ORIENTDB_CONFIG_CM, "orientdb-eu1-cm");
+          }
+        };
+    Map<String, String> valuesMapEu2 =
+        new HashMap<String, String>(valuesMapEu0) {
+          {
+            put(StatefulSetTemplateKeys.ORIENTDB_NODE_NAME, "orientdb-eu2");
+            put(StatefulSetTemplateKeys.ORIENTDB_CONFIG_CM, "orientdb-eu2-cm");
+          }
+        };
+    deployOrientDB("default", valuesMapEu0);
+    deployOrientDB("default", valuesMapEu1);
+    deployOrientDB("default", valuesMapEu2);
 
     server0 = OServer.startFromClasspathConfig("orientdb-simple-dserver-config-0.xml");
     server1 = OServer.startFromClasspathConfig("orientdb-simple-dserver-config-1.xml");
@@ -169,7 +191,6 @@ public class BasicSyncIT {
     }
   }
 
-
   @After
   public void after() throws InterruptedException {
     System.out.println("shutdown");
@@ -185,8 +206,62 @@ public class BasicSyncIT {
   }
 
   private String getEscapedFileContent(String fileName) throws URISyntaxException, IOException {
-    List<String> lines = Files.readAllLines(Paths.get(getClass().getResource(fileName).toURI()));
-    String content = StringUtil.join(lines.toArray(new String[] {}), "\r\n");
+    String content = readAllLines(fileName);
     return content.replaceAll("\"", "\\\"");
+  }
+
+  private String readAllLines(String resourceFileName) throws URISyntaxException, IOException {
+    List<String> lines =
+        Files.readAllLines(Paths.get(getClass().getResource(resourceFileName).toURI()));
+    return StringUtil.join(lines.toArray(new String[] {}), "\r\n");
+  }
+
+  private void deployOrientDB(String namespace, Map<String, String> params)
+      throws IOException, URISyntaxException, ApiException {
+    V1ConfigMap configMap =
+        new V1ConfigMapBuilder()
+            .withApiVersion("v1")
+            .withKind("ConfigMap")
+            .withNewMetadata()
+            .withName(params.get(StatefulSetTemplateKeys.ORIENTDB_CONFIG_CM))
+            .withNamespace(namespace)
+            .endMetadata()
+            .withData(
+                new HashMap<String, String>() {
+                  {
+                    put(
+                        "hazelcast.xml",
+                        getEscapedFileContent(
+                            params.get(StatefulSetTemplateKeys.ORIENTDB_HAZELCAST_CONFIG)));
+                    put(
+                        "default-distributed-db-config.json",
+                        getEscapedFileContent(
+                            params.get(StatefulSetTemplateKeys.ORIENTDB_DISTRIBUTED_DB_CONFIG)));
+                    put(
+                        "orientdb-server-config.xml",
+                        getEscapedFileContent(
+                            params.get(StatefulSetTemplateKeys.ORIENTDB_SERVER_CONFIG)));
+                  }
+                })
+            .build();
+    CoreV1Api coreV1Api = new CoreV1Api();
+    coreV1Api.createNamespacedConfigMap(namespace, configMap, null, null, null);
+    StringSubstitutor substitutor = new StringSubstitutor(params);
+    String statefulSetTemplate = readAllLines("/kubernetes/orientdb-statefulset-template.yaml");
+    String statefulSetYamlStr = substitutor.replace(statefulSetTemplate);
+    List<Object> objects = Yaml.loadAll(statefulSetYamlStr);
+    if (!(objects.get(0) instanceof V1Service)) {
+      fail("First object in template YAML must be a service.");
+    }
+    V1Service service = (V1Service) objects.get(0);
+
+    if (!(objects.get(1) instanceof V1StatefulSet)) {
+      fail("Second object in template YAML must be a statefulSet.");
+    }
+    V1StatefulSet statefulSet = (V1StatefulSet) objects.get(1);
+    coreV1Api.createNamespacedService(namespace, service, null, null, null);
+    AppsV1Api appsV1Api = new AppsV1Api();
+    appsV1Api.createNamespacedStatefulSet(namespace, statefulSet, null, null, null);
+    // must also remove PVCs
   }
 }

@@ -74,7 +74,7 @@ spec:
       volumes:
         - name: orientdb-config-cm-vol
           configMap:
-            name: ${orientdb-config-cm}
+            name: ${orientdbConfigCm}
   volumeClaimTemplates:
     - metadata:
         name: databases
@@ -82,7 +82,7 @@ spec:
         accessModes: ["ReadWriteOnce"]
         resources:
           requests:
-            storage: ${database-vol-size}Gi
+            storage: ${databaseVolSize}Gi
     - metadata:
         name: config
       spec:
