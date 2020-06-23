@@ -1,64 +1,65 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: orientdb
+  name: ${orientdbNodeName}
   labels:
-    app: orientdb
+    app: ${orientdbLabel}
 spec:
   ports:
-  - port: 2480
-    name: http
-  - port: 2424
-    name: binary
-  - port: 2434
-    name: hazelcast
+    - port: ${orientdbHttpPort}
+      name: http
+    - port: ${orientdbBinaryPort}
+      name: binary
+    - port: ${orientdbHazelcastPort}
+      name: hazelcast
   clusterIP: None
   selector:
-    app: orientdb
+    app: ${orientdbLabel}
 ---
 apiVersion: apps/v1
 kind: StatefulSet
 metadata:
-  name: orientdb
+  name: ${orientdbNodeName}
 spec:
   selector:
     matchLabels:
-      app: orientdb
+      app: ${orientdbLabel}
   replicas: 1
-  serviceName: orientdb
+  serviceName: ${orientdbNodeName}
   template:
     metadata:
       labels:
-        app: orientdb
+        app: ${orientdbLabel}
         orientdb-cluster-member: "true"
     spec:
-      terminationGracePeriodSeconds: 10
+      terminationGracePeriodSeconds: 30
       containers:
         - args:
             - dserver.sh
           name: orientdb
-          image: 192.168.2.119:5000/pxsalehi/orientdb:3.1.1
+          image: ${orientdbDockerImage}
           imagePullPolicy: Always
           env:
             - name: ENABLE_KUBERNETES_DISCOVERY
               value: "true"
             - name: ORIENTDB_NODE_NAME
-              value: orientdb-eu-0
+              value: ${orientdbNodeName}
           ports:
-            - containerPort: 2480
+            - containerPort: ${orientdbHttpPort}
               protocol: TCP
-            - containerPort: 2424
+            - containerPort: ${orientdbBinaryPort}
               protocol: TCP
-            - containerPort: 2434
+            - containerPort: ${orientdbHazelcastPort}
               protocol: TCP
           volumeMounts:
             - name: databases
               mountPath: /orientdb/databases
             - name: config
               mountPath: /orientdb/config
-#          resources:
-#            requests:
-#            limits:
+      # At some point, it would be better to fix resources.
+      #    resources:
+      #      requests:
+      #      limits:
       initContainers:
         - name: copy-configs
           image: busybox:1.31
@@ -68,34 +69,12 @@ spec:
           volumeMounts:
             - name: config
               mountPath: /orientdb/config
-            - name: orientdb-configmap
+            - name: orientdb-config-cm-vol
               mountPath: /orientdb-config
-#            - name: server-configmap
-#              mountPath: /orientdb-config/server
-#            - name: hazelcast-configmap
-#              mountPath: /orientdb-config/hazelcast
-#            - name: distributed-db-configmap
-#              mountPath: /orientdb-config/distributed
       volumes:
-        - name: orientdb-configmap
+        - name: orientdb-config-cm-vol
           configMap:
-            name: orientdb-config
-#        - name: server-configmap
-#          configMap:
-#            name: orientdb-server-config
-#            items:
-#            - key: orientdb-server-config.xml
-#              path: orientdb-server-config.xml
-#        - name: hazelcast-configmap
-#          configMap:
-#            name: hazelcast-config
-#            items:
-#              - key: hazelcast.xml
-#                path: hazelcast.xml
-#        - name: distributed-db-configmap
-#          configMap:
-#            name: default-distributed-db-config
-#            items:
+            name: ${orientdb-config-cm}
   volumeClaimTemplates:
     - metadata:
         name: databases
@@ -103,7 +82,7 @@ spec:
         accessModes: ["ReadWriteOnce"]
         resources:
           requests:
-            storage: 2Gi
+            storage: ${database-vol-size}Gi
     - metadata:
         name: config
       spec:
