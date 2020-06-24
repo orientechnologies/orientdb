@@ -2,7 +2,7 @@ name := "orientdb-tp3-test"
 organization := "com.orientechnologies"
 version := "1.0.0-SNAPSHOT"
 scalaVersion := "2.11.8"
-val orientDBVersion = "3.1.0-SNAPSHOT"
+val orientDBVersion = "3.2.0-SNAPSHOT"
 
 fork := true // if OrientDb version > 2.1-RC5
 
