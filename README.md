@@ -26,6 +26,6 @@ When creating a pull request in https://github.wdf.sap.corp/final-assembly/orien
 Note that when fixing the build, select `No Bug Report` as `Type` and check `Not Patch Relevant`!
 In `Application Component` set our BCP component `BC-DB-ODB`.
 
-Then `Next` and select the correct branch e.g. `fa/rel-3.1` and patch level e.g. `000`.
+Then `Next` and select the correct branch e.g. `fa/rel-3.2` and patch level e.g. `000`.
 
 Copy the `ID` of the correction request to the initial comment in your PR e.g. `CR-Id: 002075125900001706292020`. After that the CWB voter will vote successfully.
