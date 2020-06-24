@@ -73,14 +73,24 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
   }
 
   public void begin() {
-    if (txStartCounter < 0) throw new OTransactionException("Invalid value of TX counter.");
-
-    if (txStartCounter == 0) status = TXSTATUS.BEGUN;
-
+    if (txStartCounter < 0) {
+      throw new OTransactionException("Invalid value of TX counter: " + txStartCounter);
+    }
+    if (txStartCounter == 0) {
+      status = TXSTATUS.BEGUN;
+    }
     txStartCounter++;
 
-    if (txStartCounter > 1)
-      OLogManager.instance().debug(this, "Transaction was already started and will be reused.");
+    if (txStartCounter > 1) {
+      OLogManager.instance()
+          .debug(
+              this,
+              "Transaction with ID "
+                  + txSerial
+                  + " was already started "
+                  + txStartCounter
+                  + " times, and will be reused.");
+    }
   }
 
   public void commit() {
@@ -95,20 +105,24 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
    */
   @Override
   public void commit(final boolean force) {
-    checkTransaction();
-
-    if (txStartCounter < 0) throw new OStorageException("Invalid value of tx counter");
-
-    if (force) txStartCounter = 0;
-    else txStartCounter--;
+    checkTransactionValid();
+    if (txStartCounter < 0) {
+      throw new OStorageException("Invalid value of tx counter: " + txStartCounter);
+    }
+    if (force) {
+      txStartCounter = 0;
+    } else {
+      txStartCounter--;
+    }
 
     if (txStartCounter == 0) {
       doCommit();
-    } else if (txStartCounter > 0)
+    } else if (txStartCounter > 0) {
       OLogManager.instance()
           .debug(this, "Nested transaction was closed but transaction itself was not committed.");
-    else
-      throw new OTransactionException("Transaction was committed more times than it is started.");
+    } else {
+      throw new OTransactionException("Transaction was committed more times than it was started.");
+    }
   }
 
   @Override
@@ -130,17 +144,16 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
       final ORecord rec = v.getRecord();
       rec.unload();
     }
-
     close();
-
     status = TXSTATUS.ROLLED_BACK;
   }
 
   @Override
   public void rollback(boolean force, int commitLevelDiff) {
-    if (txStartCounter < 0) throw new OStorageException("Invalid value of TX counter");
-
-    checkTransaction();
+    if (txStartCounter < 0) {
+      throw new OStorageException("Invalid value of TX counter");
+    }
+    checkTransactionValid();
 
     txStartCounter += commitLevelDiff;
     status = TXSTATUS.ROLLBACKING;
@@ -153,15 +166,15 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
       return;
     }
 
-    if (txStartCounter < 0)
+    if (txStartCounter < 0) {
       throw new OTransactionException(
           "Transaction was rolled back more times than it was started.");
+    }
 
     final OStorage storage = database.getStorage();
     if (storage instanceof OStorageProxy) {
       storage.rollback(OTransactionOptimistic.this);
     }
-
     internalRollback();
   }
 
@@ -183,26 +196,30 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
       final boolean iUpdateCache,
       final boolean loadTombstone,
       final OStorage.LOCKING_STRATEGY lockingStrategy) {
-    checkTransaction();
+    checkTransactionValid();
 
     final ORecord txRecord = getRecord(rid);
-    if (txRecord == OBasicTransaction.DELETED_RECORD)
+    if (txRecord == OBasicTransaction.DELETED_RECORD) {
       // DELETED IN TX
       return null;
+    }
 
     if (txRecord != null) {
-      if (iRecord != null && txRecord != iRecord)
+      if (iRecord != null && txRecord != iRecord) {
         OLogManager.instance()
             .warn(
                 this,
                 "Found record in transaction with the same RID %s but different instance. "
                     + "Probably the record has been loaded from another transaction and reused on the current one: reload it "
-                    + "from current transaction before to update or delete it",
+                    + "from current transaction before to update or delete it.",
                 iRecord.getIdentity());
+      }
       return txRecord;
     }
 
-    if (rid.isTemporary()) return null;
+    if (rid.isTemporary()) {
+      return null;
+    }
 
     // DELEGATE TO THE STORAGE, NO TOMBSTONES SUPPORT IN TX MODE
     final ORecord record =
@@ -217,10 +234,10 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
             lockingStrategy,
             new SimpleRecordReader(database.isPrefetchRecords()));
 
-    if (record != null && isolationLevel == ISOLATION_LEVEL.REPEATABLE_READ)
+    if (record != null && isolationLevel == ISOLATION_LEVEL.REPEATABLE_READ) {
       // KEEP THE RECORD IN TX TO ASSURE REPEATABLE READS
       addRecord(record, ORecordOperation.LOADED, null);
-
+    }
     return record;
   }
 
@@ -228,19 +245,24 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
   public ORecord loadRecordIfVersionIsNotLatest(
       ORID rid, final int recordVersion, String fetchPlan, boolean ignoreCache)
       throws ORecordNotFoundException {
-    checkTransaction();
+    checkTransactionValid();
 
     final ORecord txRecord = getRecord(rid);
-    if (txRecord == OBasicTransaction.DELETED_RECORD)
+    if (txRecord == OBasicTransaction.DELETED_RECORD) {
       // DELETED IN TX
       throw new ORecordNotFoundException(rid);
-
-    if (txRecord != null) {
-      if (txRecord.getVersion() > recordVersion) return txRecord;
-      else return null;
     }
 
-    if (rid.isTemporary()) throw new ORecordNotFoundException(rid);
+    if (txRecord != null) {
+      if (txRecord.getVersion() > recordVersion) {
+        return txRecord;
+      } else {
+        return null;
+      }
+    }
+    if (rid.isTemporary()) {
+      throw new ORecordNotFoundException(rid);
+    }
 
     // DELEGATE TO THE STORAGE, NO TOMBSTONES SUPPORT IN TX MODE
     final ORecord record =
@@ -255,10 +277,10 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
             OStorage.LOCKING_STRATEGY.NONE,
             new SimpleRecordReader(database.isPrefetchRecords()));
 
-    if (record != null && isolationLevel == ISOLATION_LEVEL.REPEATABLE_READ)
+    if (record != null && isolationLevel == ISOLATION_LEVEL.REPEATABLE_READ) {
       // KEEP THE RECORD IN TX TO ASSURE REPEATABLE READS
       addRecord(record, ORecordOperation.LOADED, null);
-
+    }
     return record;
   }
 
@@ -270,15 +292,16 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
   @Override
   public ORecord reloadRecord(
       ORID rid, ORecord passedRecord, String fetchPlan, boolean ignoreCache, boolean force) {
-    checkTransaction();
+    checkTransactionValid();
 
     final ORecord txRecord = getRecord(rid);
-    if (txRecord == OBasicTransaction.DELETED_RECORD)
+    if (txRecord == OBasicTransaction.DELETED_RECORD) {
       // DELETED IN TX
       return null;
+    }
 
     if (txRecord != null) {
-      if (passedRecord != null && txRecord != passedRecord)
+      if (passedRecord != null && txRecord != passedRecord) {
         OLogManager.instance()
             .warn(
                 this,
@@ -286,10 +309,13 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
                     + "Probably the record has been loaded from another transaction and reused on the current one: reload it "
                     + "from current transaction before to update or delete it",
                 passedRecord.getIdentity());
+      }
       return txRecord;
     }
 
-    if (rid.isTemporary()) return null;
+    if (rid.isTemporary()) {
+      return null;
+    }
 
     // DELEGATE TO THE STORAGE, NO TOMBSTONES SUPPORT IN TX MODE
     final ORecord record;
@@ -301,7 +327,7 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
         recordReader = new LatestVersionRecordReader();
       }
 
-      ORecord loadedRecord =
+      final ORecord loadedRecord =
           database.executeReadRecord(
               (ORecordId) rid,
               passedRecord,
@@ -316,18 +342,20 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
       if (force) {
         record = loadedRecord;
       } else {
-        if (loadedRecord == null) record = passedRecord;
-        else record = loadedRecord;
+        if (loadedRecord == null) {
+          record = passedRecord;
+        } else {
+          record = loadedRecord;
+        }
       }
-
-    } catch (ORecordNotFoundException ignore) {
+    } catch (final ORecordNotFoundException ignore) {
       return null;
     }
 
-    if (record != null && isolationLevel == ISOLATION_LEVEL.REPEATABLE_READ)
+    if (record != null && isolationLevel == ISOLATION_LEVEL.REPEATABLE_READ) {
       // KEEP THE RECORD IN TX TO ASSURE REPEATABLE READS
       addRecord(record, ORecordOperation.LOADED, null);
-
+    }
     return record;
   }
 
@@ -340,18 +368,17 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
     if (!iRecord.getIdentity().isValid()) return;
     Set<ORecord> records = ORecordInternal.getDirtyManager(iRecord).getUpdateRecords();
     if (records != null) {
-      for (ORecord rec : records) {
+      for (final ORecord rec : records) {
         saveRecord(rec, null, ODatabase.OPERATION_MODE.SYNCHRONOUS, false, null, null);
       }
     }
 
-    Set<ORecord> newRecords = ORecordInternal.getDirtyManager(iRecord).getNewRecords();
+    final Set<ORecord> newRecords = ORecordInternal.getDirtyManager(iRecord).getNewRecords();
     if (newRecords != null) {
-      for (ORecord rec : newRecords) {
+      for (final ORecord rec : newRecords) {
         saveRecord(rec, null, ODatabase.OPERATION_MODE.SYNCHRONOUS, false, null, null);
       }
     }
-
     addRecord(iRecord, ORecordOperation.DELETED, null);
   }
 
@@ -362,14 +389,15 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
       final boolean iForceCreate,
       final ORecordCallback<? extends Number> iRecordCreatedCallback,
       final ORecordCallback<Integer> iRecordUpdatedCallback) {
-
-    if (iRecord == null) return null;
+    if (iRecord == null) {
+      return null;
+    }
     ORecordOperation recordOperation = null;
     boolean originalSaved = false;
     final ODirtyManager dirtyManager = ORecordInternal.getDirtyManager(iRecord);
     do {
-      Set<ORecord> newRecord = dirtyManager.getNewRecords();
-      Set<ORecord> updatedRecord = dirtyManager.getUpdateRecords();
+      final Set<ORecord> newRecord = dirtyManager.getNewRecords();
+      final Set<ORecord> updatedRecord = dirtyManager.getUpdateRecords();
       dirtyManager.clear();
       if (newRecord != null) {
         for (ORecord rec : newRecord) {
@@ -448,12 +476,14 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
 
   public ORecordOperation addRecord(ORecord iRecord, byte iStatus, String iClusterName) {
     changed = true;
-    checkTransaction();
+    checkTransactionValid();
 
-    if (iClusterName == null)
+    if (iClusterName == null) {
       iClusterName = database.getClusterNameById(iRecord.getIdentity().getClusterId());
-
-    if (iStatus != ORecordOperation.LOADED) changedDocuments.remove(iRecord);
+    }
+    if (iStatus != ORecordOperation.LOADED) {
+      changedDocuments.remove(iRecord);
+    }
 
     try {
       final ORecordId rid = (ORecordId) iRecord.getIdentity();
@@ -481,14 +511,12 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
             }
           }
           break;
-
         case ORecordOperation.DELETED:
           database.beforeDeleteOperations(iRecord, iClusterName);
           break;
       }
 
       try {
-
         if (!rid.isValid()) {
           ORecordInternal.onBeforeIdentityChanged(iRecord);
           database.assignAndCheckCluster(iRecord, iClusterName);
@@ -558,10 +586,8 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
         if (iRecord instanceof ODocument && ((ODocument) iRecord).isTrackingChanges()) {
           ODocumentInternal.clearTrackData(((ODocument) iRecord));
         }
-
         return txEntry;
-
-      } catch (Exception e) {
+      } catch (final Exception e) {
         switch (iStatus) {
           case ORecordOperation.CREATED:
             database.callbackHooks(TYPE.CREATE_FAILED, iRecord);
@@ -573,7 +599,6 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
             database.callbackHooks(TYPE.DELETE_FAILED, iRecord);
             break;
         }
-
         throw OException.wrapException(
             new ODatabaseException("Error on saving record " + iRecord.getIdentity()), e);
       }
@@ -593,34 +618,33 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
   }
 
   private void doCommit() {
-    if (status == TXSTATUS.ROLLED_BACK || status == TXSTATUS.ROLLBACKING)
-      throw new ORollbackException("Given transaction was rolled back and cannot be used.");
-
+    if (status == TXSTATUS.ROLLED_BACK || status == TXSTATUS.ROLLBACKING) {
+      throw new ORollbackException(
+          "Given transaction was rolled back, and thus cannot be committed.");
+    }
     status = TXSTATUS.COMMITTING;
 
     if (sentToServer || !allEntries.isEmpty() || !indexEntries.isEmpty()) {
       database.internalCommit(this);
     }
-
     invokeCallbacks();
-
     close();
-
     status = TXSTATUS.COMPLETED;
   }
 
   private void invokeCallbacks() {
-    for (ORecordOperation recordOperation : allEntries.values()) {
+    for (final ORecordOperation recordOperation : allEntries.values()) {
       final ORecord record = recordOperation.getRecord();
       final ORID identity = record.getIdentity();
       locks.keySet();
       if (recordOperation.type == ORecordOperation.CREATED
-          && recordOperation.createdCallback != null)
+          && recordOperation.createdCallback != null) {
         recordOperation.createdCallback.call(
             new ORecordId(identity), identity.getClusterPosition());
-      else if (recordOperation.type == ORecordOperation.UPDATED
-          && recordOperation.updatedCallback != null)
+      } else if (recordOperation.type == ORecordOperation.UPDATED
+          && recordOperation.updatedCallback != null) {
         recordOperation.updatedCallback.call(new ORecordId(identity), record.getVersion());
+      }
     }
   }
 
@@ -651,7 +675,7 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
 
   public Set<ORID> getLockedRecords() {
     if (getNoTxLocks() != null) {
-      HashSet<ORID> rids = new HashSet<ORID>(getNoTxLocks().keySet());
+      final Set<ORID> rids = new HashSet<ORID>(getNoTxLocks().keySet());
       rids.addAll(locks.keySet());
       return rids;
     } else {
@@ -667,7 +691,7 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
     return sentToServer;
   }
 
-  public void fill(Iterator<ORecordOperation> operations) {
+  public void fill(final Iterator<ORecordOperation> operations) {
     while (operations.hasNext()) {
       ORecordOperation change = operations.next();
       allEntries.put(change.getRID(), change);
@@ -675,16 +699,16 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
     }
   }
 
-  protected void resolveTracking(ORecordOperation change) {
-    List<OClassIndexManager.IndexChange> changes = new ArrayList<>();
-    ODocument rec = (ODocument) change.getRecord();
+  protected void resolveTracking(final ORecordOperation change) {
+    final List<OClassIndexManager.IndexChange> changes = new ArrayList<>();
+    final ODocument rec = (ODocument) change.getRecord();
     switch (change.getType()) {
       case ORecordOperation.CREATED:
         {
-          ODocument doc = (ODocument) change.getRecord();
+          final ODocument doc = (ODocument) change.getRecord();
           OLiveQueryHook.addOp(doc, ORecordOperation.CREATED, database);
           OLiveQueryHookV2.addOp(doc, ORecordOperation.CREATED, database);
-          OImmutableClass clazz = ODocumentInternal.getImmutableSchemaClass(doc);
+          final OImmutableClass clazz = ODocumentInternal.getImmutableSchemaClass(doc);
           if (clazz != null) {
             OClassIndexManager.processIndexOnCreate(database, rec, changes);
             if (clazz.isFunction()) {
@@ -708,12 +732,12 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
         break;
       case ORecordOperation.UPDATED:
         {
-          OIdentifiable updateRecord = change.getRecord();
+          final OIdentifiable updateRecord = change.getRecord();
           if (updateRecord instanceof ODocument) {
-            ODocument updateDoc = (ODocument) updateRecord;
+            final ODocument updateDoc = (ODocument) updateRecord;
             OLiveQueryHook.addOp(updateDoc, ORecordOperation.UPDATED, database);
             OLiveQueryHookV2.addOp(updateDoc, ORecordOperation.UPDATED, database);
-            OImmutableClass clazz = ODocumentInternal.getImmutableSchemaClass(updateDoc);
+            final OImmutableClass clazz = ODocumentInternal.getImmutableSchemaClass(updateDoc);
             if (clazz != null) {
               OClassIndexManager.processIndexOnUpdate(database, updateDoc, changes);
               if (clazz.isFunction()) {
@@ -735,8 +759,8 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
         break;
       case ORecordOperation.DELETED:
         {
-          ODocument doc = (ODocument) change.getRecord();
-          OImmutableClass clazz = ODocumentInternal.getImmutableSchemaClass(doc);
+          final ODocument doc = (ODocument) change.getRecord();
+          final OImmutableClass clazz = ODocumentInternal.getImmutableSchemaClass(doc);
           if (clazz != null) {
             OClassIndexManager.processIndexOnDelete(database, rec, changes);
             if (clazz.isFunction()) {
@@ -762,12 +786,11 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
         }
         break;
       case ORecordOperation.LOADED:
-        break;
       default:
         break;
     }
 
-    for (OClassIndexManager.IndexChange indexChange : changes) {
+    for (final OClassIndexManager.IndexChange indexChange : changes) {
       addIndexEntry(
           indexChange.index,
           indexChange.index.getName(),

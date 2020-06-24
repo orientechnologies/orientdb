@@ -546,7 +546,7 @@ public class ODatabaseDocumentRemote extends ODatabaseDocumentAbstract {
     OTransactionOptimisticClient tx =
         new OTransactionOptimisticClient(this) {
           @Override
-          protected void checkTransaction() {}
+          protected void checkTransactionValid() {}
         };
     tx.begin();
     Set<ORecord> records = ORecordInternal.getDirtyManager((ORecord) record).getUpdateRecords();
@@ -678,7 +678,7 @@ public class ODatabaseDocumentRemote extends ODatabaseDocumentAbstract {
     OTransactionOptimisticClient tx =
         new OTransactionOptimisticClient(this) {
           @Override
-          protected void checkTransaction() {}
+          protected void checkTransactionValid() {}
         };
     tx.begin();
     tx.saveRecord(

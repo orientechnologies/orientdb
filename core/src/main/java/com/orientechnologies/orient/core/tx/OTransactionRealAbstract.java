@@ -75,7 +75,7 @@ public abstract class OTransactionRealAbstract extends OTransactionAbstract
 
   private Optional<List<byte[]>> serializedOperations = Optional.empty();
 
-  protected OTransactionRealAbstract(ODatabaseDocumentInternal database, int id) {
+  protected OTransactionRealAbstract(final ODatabaseDocumentInternal database, final int id) {
     super(database);
     this.id = id;
   }
@@ -89,24 +89,22 @@ public abstract class OTransactionRealAbstract extends OTransactionAbstract
 
   public void close() {
     super.close();
-
     for (final ORecordOperation recordOperation : getRecordOperations()) {
       final ORecord record = recordOperation.getRecord();
       if (record instanceof ODocument) {
         final ODocument document = (ODocument) record;
-
         if (document.isDirty()) {
           document.undo();
         }
-
         changedDocuments.remove(document);
       }
     }
 
     for (ODocument changedDocument : changedDocuments) {
-      if (!changedDocument.isEmbedded()) changedDocument.undo();
+      if (!changedDocument.isEmbedded()) {
+        changedDocument.undo();
+      }
     }
-
     changedDocuments.clear();
     updatedRids.clear();
     allEntries.clear();
@@ -116,7 +114,6 @@ public abstract class OTransactionRealAbstract extends OTransactionAbstract
     status = TXSTATUS.INVALID;
 
     database.setDefaultTransactionMode(getNoTxLocks());
-
     userData.clear();
   }
 
@@ -397,10 +394,11 @@ public abstract class OTransactionRealAbstract extends OTransactionAbstract
     }
   }
 
-  protected void checkTransaction() {
-    if (status == TXSTATUS.INVALID)
+  protected void checkTransactionValid() {
+    if (status == TXSTATUS.INVALID) {
       throw new OTransactionException(
           "Invalid state of the transaction. The transaction must be begun.");
+    }
   }
 
   protected ODocument serializeIndexChangeEntry(

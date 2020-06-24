@@ -325,7 +325,7 @@ public class OTransactionOptimisticServer extends OTransactionOptimistic {
       final String iClusterName,
       Map<ORID, ORecordOperation> oldTx) {
     changed = true;
-    checkTransaction();
+    checkTransactionValid();
 
     if (iStatus != ORecordOperation.LOADED) changedDocuments.remove(iRecord);
 

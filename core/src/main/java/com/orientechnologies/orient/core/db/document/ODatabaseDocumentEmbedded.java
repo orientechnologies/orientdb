@@ -1614,11 +1614,11 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract
   }
 
   @Override
-  public void syncCommit(OTransactionData data) {
+  public void syncCommit(final OTransactionData data) {
     OScenarioThreadLocal.executeAsDistributed(
         () -> {
           assert !this.getTransaction().isActive();
-          OTransactionOptimistic tx = new OTransactionOptimistic(this);
+          final OTransactionOptimistic tx = new OTransactionOptimistic(this);
           data.fill(tx, this);
           this.rawBegin(tx);
           this.commit();

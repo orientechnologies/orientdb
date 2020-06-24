@@ -1,5 +1,6 @@
 package com.orientechnologies.orient.core.tx;
 
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 import com.orientechnologies.orient.core.db.ODatabaseType;
@@ -13,7 +14,6 @@ import org.junit.Test;
 
 /** Created by tglman on 02/01/17. */
 public class TransactionChangesDetectionTest {
-
   private OrientDB factory;
   private ODatabaseDocument database;
 
@@ -36,10 +36,15 @@ public class TransactionChangesDetectionTest {
   @Test
   public void testTransactionChangeTracking() {
     database.begin();
-    OTransactionOptimistic currentTx = (OTransactionOptimistic) database.getTransaction();
+    final OTransactionOptimistic currentTx = (OTransactionOptimistic) database.getTransaction();
     database.save(new ODocument("test"));
+    assertTrue(currentTx.isChanged());
+    assertFalse(currentTx.isAlreadyCleared());
+    assertTrue(currentTx.isUsingLog());
+
     currentTx.resetChangesTracking();
     database.save(new ODocument("test"));
     assertTrue(currentTx.isChanged());
+    assertTrue(currentTx.isAlreadyCleared());
   }
 }

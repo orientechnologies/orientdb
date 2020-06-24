@@ -2133,15 +2133,16 @@ public class ODocument extends ORecordAbstract
    * methods.
    */
   public ODocument undo() {
-    if (!trackingChanges)
+    if (!trackingChanges) {
       throw new OConfigurationException(
           "Cannot undo the document because tracking of changes is disabled");
+    }
 
     if (fields != null) {
-      Iterator<Entry<String, ODocumentEntry>> vals = fields.entrySet().iterator();
+      final Iterator<Entry<String, ODocumentEntry>> vals = fields.entrySet().iterator();
       while (vals.hasNext()) {
-        Entry<String, ODocumentEntry> next = vals.next();
-        ODocumentEntry val = next.getValue();
+        final Entry<String, ODocumentEntry> next = vals.next();
+        final ODocumentEntry val = next.getValue();
         if (val.isCreated()) {
           vals.remove();
         } else {
@@ -2150,7 +2151,6 @@ public class ODocument extends ORecordAbstract
       }
       fieldSize = fields.size();
     }
-
     return this;
   }
 
