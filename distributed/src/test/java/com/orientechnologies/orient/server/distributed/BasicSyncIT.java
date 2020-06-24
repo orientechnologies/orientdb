@@ -1,5 +1,6 @@
 package com.orientechnologies.orient.server.distributed;
 
+import com.google.gson.JsonSyntaxException;
 import com.orientechnologies.orient.core.db.ODatabaseSession;
 import com.orientechnologies.orient.core.db.ODatabaseType;
 import com.orientechnologies.orient.core.db.OrientDB;
@@ -13,10 +14,7 @@ import io.kubernetes.client.openapi.Configuration;
 import io.kubernetes.client.openapi.StringUtil;
 import io.kubernetes.client.openapi.apis.AppsV1Api;
 import io.kubernetes.client.openapi.apis.CoreV1Api;
-import io.kubernetes.client.openapi.models.V1ConfigMap;
-import io.kubernetes.client.openapi.models.V1ConfigMapBuilder;
-import io.kubernetes.client.openapi.models.V1Service;
-import io.kubernetes.client.openapi.models.V1StatefulSet;
+import io.kubernetes.client.openapi.models.*;
 import io.kubernetes.client.util.ClientBuilder;
 import io.kubernetes.client.util.KubeConfig;
 import io.kubernetes.client.util.Yaml;
@@ -31,10 +29,7 @@ import java.io.IOException;
 import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
@@ -44,7 +39,8 @@ public class BasicSyncIT {
   private OServer server0;
   private OServer server1;
   private OServer server2;
-  private List<String> PvcToDelete = new ArrayList<>();
+  private List<String> PVCsToDelete = new ArrayList<>();
+  private List<Map<String, String>> nodeParams = new ArrayList<>();
 
   @BeforeClass
   public static void setupKubernetesClient() throws IOException {
@@ -97,8 +93,16 @@ public class BasicSyncIT {
           }
         };
     deployOrientDB("default", valuesMapEu0);
+    nodeParams.add(valuesMapEu0);
     deployOrientDB("default", valuesMapEu1);
+    nodeParams.add(valuesMapEu1);
     deployOrientDB("default", valuesMapEu2);
+    nodeParams.add(valuesMapEu2);
+
+    //    coreV1Api.connectPostNamespacedPodPortforward(String.format("%s-0",
+    // valuesMapEu0.get(StatefulSetTemplateKeys.ORIENTDB_NODE_NAME))
+    //        , "default", 2424);
+    //    System.out.println("created port-forward");
 
     server0 = OServer.startFromClasspathConfig("orientdb-simple-dserver-config-0.xml");
     server1 = OServer.startFromClasspathConfig("orientdb-simple-dserver-config-1.xml");
@@ -154,6 +158,9 @@ public class BasicSyncIT {
   public void reverseStartSync()
       throws ClassNotFoundException, InstantiationException, IllegalAccessException, IOException,
           InterruptedException {
+    //    System.out.println("waiting...");
+    //    Thread.sleep(5 * 60 * 1000);
+
     try (OrientDB remote = new OrientDB("remote:localhost", OrientDBConfig.defaultConfig())) {
       try (ODatabaseSession session = remote.open("test", "admin", "admin")) {
         session.createClass("One");
@@ -192,7 +199,7 @@ public class BasicSyncIT {
   }
 
   @After
-  public void after() throws InterruptedException {
+  public void after() throws InterruptedException, ApiException {
     System.out.println("shutdown");
     OrientDB remote =
         new OrientDB("remote:localhost", "root", "test", OrientDBConfig.defaultConfig());
@@ -203,6 +210,42 @@ public class BasicSyncIT {
     server1.shutdown();
     server2.shutdown();
     ODatabaseDocumentTx.closeAll();
+
+    CoreV1Api coreV1Api = new CoreV1Api();
+    AppsV1Api appsV1Api = new AppsV1Api();
+    for (Map<String, String> nodeParam : nodeParams) {
+      String configMapName = nodeParam.get(StatefulSetTemplateKeys.ORIENTDB_CONFIG_CM);
+      String nodeName = nodeParam.get(StatefulSetTemplateKeys.ORIENTDB_NODE_NAME);
+      coreV1Api.deleteNamespacedConfigMap(
+          configMapName, "default", null, null, null, null, null, null);
+      System.out.printf("deleted ConfigMap %s\n", configMapName);
+      appsV1Api.deleteNamespacedStatefulSet(
+          nodeName, "default", null, null, null, null, null, null);
+      System.out.printf("deleted StatefulSet %s\n", nodeName);
+      coreV1Api.deleteNamespacedService(
+          nodeParam.get(StatefulSetTemplateKeys.ORIENTDB_NODE_NAME),
+          "default",
+          null,
+          null,
+          null,
+          null,
+          null,
+          null);
+      System.out.printf("deleted Service %s\n", nodeName);
+    }
+    for (String pvc : PVCsToDelete) {
+      // There is a known bug with the auto-generated 'official' Kubernetes client for Java which
+      // can lead to
+      // the following call throwing an exception, although it succeeds!
+      // https://github.com/kubernetes-client/java/issues/86
+      try {
+        coreV1Api.deleteNamespacedPersistentVolumeClaim(
+            pvc, "default", null, null, null, null, null, new V1DeleteOptions());
+      } catch (JsonSyntaxException e) {
+        System.out.println("Error while deleting PVC: " + e.getMessage());
+      }
+      System.out.printf("deleted PVC %s\n", pvc);
+    }
   }
 
   private String getEscapedFileContent(String fileName) throws URISyntaxException, IOException {
@@ -245,6 +288,7 @@ public class BasicSyncIT {
                 })
             .build();
     CoreV1Api coreV1Api = new CoreV1Api();
+    System.out.printf("created ConfigMap %s\n", configMap.getMetadata().getName());
     coreV1Api.createNamespacedConfigMap(namespace, configMap, null, null, null);
     StringSubstitutor substitutor = new StringSubstitutor(params);
     String statefulSetTemplate = readAllLines("/kubernetes/orientdb-statefulset-template.yaml");
@@ -259,9 +303,16 @@ public class BasicSyncIT {
       fail("Second object in template YAML must be a statefulSet.");
     }
     V1StatefulSet statefulSet = (V1StatefulSet) objects.get(1);
+    System.out.printf("created Service %s\n", statefulSet.getMetadata().getName());
     coreV1Api.createNamespacedService(namespace, service, null, null, null);
     AppsV1Api appsV1Api = new AppsV1Api();
     appsV1Api.createNamespacedStatefulSet(namespace, statefulSet, null, null, null);
+    System.out.printf("created StatefulSet %s\n", statefulSet.getMetadata().getName());
     // must also remove PVCs
+    for (V1PersistentVolumeClaim pvc : statefulSet.getSpec().getVolumeClaimTemplates()) {
+      PVCsToDelete.add(
+          String.format(
+              "%s-%s-0", pvc.getMetadata().getName(), statefulSet.getMetadata().getName()));
+    }
   }
 }
