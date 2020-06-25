@@ -67,7 +67,7 @@ public class ColumnSecurityTest {
   }
 
   @Test
-  public void testIndexWithPolicy1() {
+  public void testIndexWithPolicy1() throws InterruptedException {
     OSecurityInternal security = ((ODatabaseInternal) db).getSharedContext().getSecurity();
 
     OClass person = db.createClass("Person");
@@ -81,10 +81,12 @@ public class ColumnSecurityTest {
     security.setSecurityPolicy(
         db, security.getRole(db, "reader"), "database.class.Person.name", policy);
 
+    Thread.sleep(100);
     try {
       db.command("create index Person.name_surname on Person (name, surname) NOTUNIQUE");
       Assert.fail();
     } catch (OIndexException e) {
+
     }
   }
 
