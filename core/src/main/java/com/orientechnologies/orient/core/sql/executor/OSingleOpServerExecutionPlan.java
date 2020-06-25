@@ -1,27 +1,22 @@
 package com.orientechnologies.orient.core.sql.executor;
 
-import com.orientechnologies.orient.core.command.OBasicCommandContext;
 import com.orientechnologies.orient.core.command.OBasicServerCommandContext;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.command.OServerCommandContext;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.sql.parser.OSimpleExecServerStatement;
-import com.orientechnologies.orient.core.sql.parser.OSimpleExecStatement;
-
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
-/**
- * @author Luigi Dell'Aquila (l.dellaquila-(at)-orientdb.com)
- */
+/** @author Luigi Dell'Aquila (l.dellaquila-(at)-orientdb.com) */
 public class OSingleOpServerExecutionPlan implements OInternalExecutionPlan {
 
   protected final OSimpleExecServerStatement statement;
-  private         OServerCommandContext      ctx;
+  private OServerCommandContext ctx;
 
-  private boolean    executed = false;
+  private boolean executed = false;
   private OResultSet result;
 
   public OSingleOpServerExecutionPlan(OServerCommandContext ctx, OSimpleExecServerStatement stm) {
@@ -30,9 +25,7 @@ public class OSingleOpServerExecutionPlan implements OInternalExecutionPlan {
   }
 
   @Override
-  public void close() {
-
-  }
+  public void close() {}
 
   @Override
   public OResultSet fetchNext(int n) {
@@ -94,9 +87,11 @@ public class OSingleOpServerExecutionPlan implements OInternalExecutionPlan {
     return false;
   }
 
-  public OResultSet executeInternal(OBasicServerCommandContext ctx) throws OCommandExecutionException {
+  public OResultSet executeInternal(OBasicServerCommandContext ctx)
+      throws OCommandExecutionException {
     if (executed) {
-      throw new OCommandExecutionException("Trying to execute a result-set twice. Please use reset()");
+      throw new OCommandExecutionException(
+          "Trying to execute a result-set twice. Please use reset()");
     }
     executed = true;
     result = statement.executeSimple(this.ctx);

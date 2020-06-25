@@ -1,4 +1,3 @@
 package com.orientechnologies.orient.core.command;
 
-public interface OServerCommandContext extends OCommandContext {
-}
+public interface OServerCommandContext extends OCommandContext {}
