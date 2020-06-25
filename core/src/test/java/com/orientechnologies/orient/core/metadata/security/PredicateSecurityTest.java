@@ -194,7 +194,7 @@ public class PredicateSecurityTest {
   }
 
   @Test
-  public void testBeforeUpdateCreate() {
+  public void testBeforeUpdateCreate() throws InterruptedException {
     OSecurityInternal security = ((ODatabaseInternal) db).getSharedContext().getSecurity();
 
     db.createClass("Person");
