@@ -31,6 +31,7 @@ import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.URISyntaxException;
+import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.*;
@@ -45,13 +46,16 @@ public class BasicSyncIT {
   private OServer server2;
   private List<String> PVCsToDelete = new ArrayList<>();
   private List<Map<String, String>> nodeParams = new ArrayList<>();
+  private static String nodeAddress;
 
   @BeforeClass
   public static void setupKubernetesClient() throws IOException {
     String kubeConfigFilePath = "/home/pxsalehi/.kube/config";
-    ApiClient client =
-        ClientBuilder.kubeconfig(KubeConfig.loadKubeConfig(new FileReader(kubeConfigFilePath)))
-            .build();
+    KubeConfig kubeConfig = KubeConfig.loadKubeConfig(new FileReader(kubeConfigFilePath));
+    String serverAddress = kubeConfig.getServer();
+    nodeAddress = new URL(serverAddress).getHost();
+    System.out.println("node address: " + nodeAddress);
+    ApiClient client = ClientBuilder.kubeconfig(kubeConfig).build();
     Configuration.setDefaultApiClient(client);
   }
 
@@ -103,10 +107,8 @@ public class BasicSyncIT {
     deployOrientDB("default", valuesMapEu2);
     nodeParams.add(valuesMapEu2);
 
-    System.out.println("waiting...");
-    Thread.sleep(60 * 1000);
-    NodePortForward.create("default", String.format("%s-0",
-        valuesMapEu0.get(StatefulSetTemplateKeys.ORIENTDB_NODE_NAME)), 2424, 2424);
+//    NodePortForward.create("default", String.format("%s-0",
+//        valuesMapEu0.get(StatefulSetTemplateKeys.ORIENTDB_NODE_NAME)), 2424, 2424);
 
 //    int localPort = 2424, remotePort = 2424;
 //    PortForward forward = new PortForward();
@@ -120,22 +122,28 @@ public class BasicSyncIT {
 //    final Socket s = ss.accept();
 //    System.out.println("Connected!");
 
-    System.out.println("created port-forward");
+    System.out.println("wait till instance is ready");
+    Thread.sleep(90 * 1000);
 
 //    server0 = OServer.startFromClasspathConfig("orientdb-simple-dserver-config-0.xml");
 //    server1 = OServer.startFromClasspathConfig("orientdb-simple-dserver-config-1.xml");
 //    server2 = OServer.startFromClasspathConfig("orientdb-simple-dserver-config-2.xml");
+//    OrientDB remote =
+//        new OrientDB("remote:localhost", "root", "test", OrientDBConfig.defaultConfig());
     OrientDB remote =
-        new OrientDB("remote:localhost", "root", "test", OrientDBConfig.defaultConfig());
+        new OrientDB("remote:" + valuesMapEu0.get(StatefulSetTemplateKeys.ORIENTDB_BINARY_ADDRESS), "root", "test", OrientDBConfig.defaultConfig());
     remote.create("test", ODatabaseType.PLOCAL);
     remote.close();
+    System.out.println("created database 'test'");
   }
 
   @Test
   public void sync()
       throws ClassNotFoundException, InstantiationException, IllegalAccessException, IOException,
           InterruptedException {
-    try (OrientDB remote = new OrientDB("remote:localhost", OrientDBConfig.defaultConfig())) {
+//    String remoteAddress = "remote:localhost";
+    String remoteAddress = "remote:" + nodeParams.get(0).get(StatefulSetTemplateKeys.ORIENTDB_BINARY_ADDRESS);
+    try (OrientDB remote = new OrientDB(remoteAddress, OrientDBConfig.defaultConfig())) {
       try (ODatabaseSession session = remote.open("test", "admin", "admin")) {
         session.createClass("One");
         session.save(session.newElement("One"));
@@ -323,8 +331,8 @@ public class BasicSyncIT {
       fail("Second object in template YAML must be a statefulSet.");
     }
     V1StatefulSet statefulSet = (V1StatefulSet) objects.get(1);
-    System.out.printf("created Service %s\n", statefulSet.getMetadata().getName());
     coreV1Api.createNamespacedService(namespace, service, null, null, null);
+    System.out.printf("created Service %s\n", statefulSet.getMetadata().getName());
     AppsV1Api appsV1Api = new AppsV1Api();
     appsV1Api.createNamespacedStatefulSet(namespace, statefulSet, null, null, null);
     System.out.printf("created StatefulSet %s\n", statefulSet.getMetadata().getName());
@@ -334,5 +342,29 @@ public class BasicSyncIT {
           String.format(
               "%s-%s-0", pvc.getMetadata().getName(), statefulSet.getMetadata().getName()));
     }
+
+    if(!(objects.get(2) instanceof V1Service)) {
+      fail("Third object in template YAML must be a NodePort service.");
+    }
+    final V1Service nodePortService = coreV1Api.createNamespacedService(namespace, (V1Service) objects.get(2), null, null, null);
+    System.out.printf("created node port Service %s\n", nodePortService.getMetadata().getName());
+    System.out.println("base path: " + Configuration.getDefaultApiClient().getBasePath());
+    nodePortService
+        .getSpec()
+        .getPorts()
+        .forEach(
+            port -> {
+              System.out.printf("  %s=%d\n", port.getName(), port.getNodePort());
+              if (port.getName().equalsIgnoreCase("http")) {
+                params.put(
+                    StatefulSetTemplateKeys.ORIENTDB_HTTP_ADDRESS,
+                    String.format("%s:%d", nodeAddress, port.getNodePort()));
+                System.out.println(StatefulSetTemplateKeys.ORIENTDB_HTTP_ADDRESS + " is " + params.get(StatefulSetTemplateKeys.ORIENTDB_HTTP_ADDRESS));
+              } else if (port.getName().equalsIgnoreCase("binary")) {
+                params.put(
+                    StatefulSetTemplateKeys.ORIENTDB_BINARY_ADDRESS,
+                    String.format("%s:%d", nodeAddress, port.getNodePort()));
+              }
+            });
   }
 }
