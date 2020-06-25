@@ -57,7 +57,6 @@ import com.orientechnologies.orient.core.storage.cache.local.doublewritelog.Doub
 import com.orientechnologies.orient.core.storage.fs.AsyncFile;
 import com.orientechnologies.orient.core.storage.fs.IOResult;
 import com.orientechnologies.orient.core.storage.fs.OFile;
-import com.orientechnologies.orient.core.storage.fs.OFileClassic;
 import com.orientechnologies.orient.core.storage.impl.local.OLowDiskSpaceInformation;
 import com.orientechnologies.orient.core.storage.impl.local.OLowDiskSpaceListener;
 import com.orientechnologies.orient.core.storage.impl.local.OPageIsBrokenListener;
@@ -387,14 +386,22 @@ public final class OWOWCache extends OAbstractWriteCache
 
   private volatile OChecksumMode checksumMode;
 
-  /** Error thrown during data flush. Once error registered no more write operations are allowed. */
+  /**
+   * Error thrown during data flush. Once error registered no more write operations are allowed.
+   */
   private Throwable flushError;
 
-  /** IV is used for AES encryption */
+  /**
+   * IV is used for AES encryption
+   */
   private final byte[] iv;
 
-  /** Key is used for AES encryption */
+  /**
+   * Key is used for AES encryption
+   */
   private final byte[] aesKey;
+
+  private final boolean useNativeOsAPI;
 
   private final int exclusiveWriteCacheMaxSize;
 
@@ -420,8 +427,6 @@ public final class OWOWCache extends OAbstractWriteCache
    */
   private final DoubleWriteLog doubleWriteLog;
 
-  private final boolean useAsyncIO;
-
   public OWOWCache(
       final int pageSize,
       final OByteBufferPool bufferPool,
@@ -439,7 +444,7 @@ public final class OWOWCache extends OAbstractWriteCache
       final byte[] iv,
       final byte[] aesKey,
       final boolean callFsync,
-      final boolean useAsyncIO) {
+      boolean useNativeOsAPI) {
 
     if (aesKey != null && aesKey.length != 16 && aesKey.length != 24 && aesKey.length != 32) {
       throw new OInvalidStorageEncryptionKeyException(
@@ -450,8 +455,7 @@ public final class OWOWCache extends OAbstractWriteCache
       throw new OInvalidStorageEncryptionKeyException("IV can not be null");
     }
 
-    this.useAsyncIO = useAsyncIO;
-
+    this.useNativeOsAPI = useNativeOsAPI;
     this.shutdownTimeout = shutdownTimeout;
     this.pagesFlushInterval = pagesFlushInterval;
     this.iv = iv;
@@ -1865,11 +1869,7 @@ public final class OWOWCache extends OAbstractWriteCache
 
   private OFile createFileInstance(final String fileName, final int fileId) {
     final String internalFileName = createInternalFileName(fileName, fileId);
-    if (useAsyncIO) {
-      return new AsyncFile(storagePath.resolve(internalFileName));
-    }
-
-    return new OFileClassic(storagePath.resolve(internalFileName));
+    return new AsyncFile(storagePath.resolve(internalFileName), useNativeOsAPI);
   }
 
   private static String createInternalFileName(final String fileName, final int fileId) {
@@ -1944,11 +1944,11 @@ public final class OWOWCache extends OAbstractWriteCache
 
         if (files.get(externalId) == null) {
           final Path path = storagePath.resolve(idFileNameMap.get((nameIdEntry.getValue())));
-          final OFile fileClassic = new OFileClassic(path);
+          final AsyncFile file = new AsyncFile(path, useNativeOsAPI);
 
-          if (fileClassic.exists()) {
-            fileClassic.open();
-            files.add(externalId, fileClassic);
+          if (file.exists()) {
+            file.open();
+            files.add(externalId, file);
           } else {
             idNameMap.remove(fileId);
 
@@ -2017,7 +2017,8 @@ public final class OWOWCache extends OAbstractWriteCache
         final long externalId = composeFileId(id, nameIdEntry.getValue());
 
         if (files.get(externalId) == null) {
-          final OFile fileClassic = new OFileClassic(storagePath.resolve(nameIdEntry.getKey()));
+          final OFile fileClassic =
+              new AsyncFile(storagePath.resolve(nameIdEntry.getKey()), useNativeOsAPI);
 
           if (fileClassic.exists()) {
             fileClassic.open();
