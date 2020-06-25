@@ -12,4 +12,6 @@ public class StatefulSetTemplateKeys {
   public static final String ORIENTDB_HAZELCAST_CONFIG = "hazelcastConfig";
   public static final String ORIENTDB_DISTRIBUTED_DB_CONFIG = "distributedDBConfig";
   public static final String ORIENTDB_SERVER_CONFIG = "serverConfig";
+  public static final String ORIENTDB_BINARY_ADDRESS = "binaryAddress";
+  public static final String ORIENTDB_HTTP_ADDRESS = "httpAddress";
 }
