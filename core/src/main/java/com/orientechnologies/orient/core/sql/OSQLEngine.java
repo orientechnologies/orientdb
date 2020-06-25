@@ -32,6 +32,7 @@ import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.command.OCommandExecutor;
 import com.orientechnologies.orient.core.command.OCommandExecutorAbstract;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
+import com.orientechnologies.orient.core.db.OrientDBInternal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
@@ -46,12 +47,7 @@ import com.orientechnologies.orient.core.sql.method.OSQLMethod;
 import com.orientechnologies.orient.core.sql.method.OSQLMethodFactory;
 import com.orientechnologies.orient.core.sql.operator.OQueryOperator;
 import com.orientechnologies.orient.core.sql.operator.OQueryOperatorFactory;
-import com.orientechnologies.orient.core.sql.parser.OOrBlock;
-import com.orientechnologies.orient.core.sql.parser.OSecurityResourceSegment;
-import com.orientechnologies.orient.core.sql.parser.OStatement;
-import com.orientechnologies.orient.core.sql.parser.OStatementCache;
-import com.orientechnologies.orient.core.sql.parser.OrientSql;
-import com.orientechnologies.orient.core.sql.parser.ParseException;
+import com.orientechnologies.orient.core.sql.parser.*;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
@@ -78,6 +74,10 @@ public class OSQLEngine {
 
   public static OStatement parse(String query, ODatabaseDocumentInternal db) {
     return OStatementCache.get(query, db);
+  }
+
+  public static OServerStatement parseServerStatement(String query, OrientDBInternal db) {
+    return OStatementCache.getServerStatement(query, db);
   }
 
   public static List<OStatement> parseScript(String script, ODatabaseDocumentInternal db) {

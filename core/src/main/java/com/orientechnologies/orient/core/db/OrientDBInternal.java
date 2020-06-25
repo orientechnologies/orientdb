@@ -25,6 +25,7 @@ import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.command.script.OScriptManager;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
+import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import com.orientechnologies.orient.core.storage.OStorage;
 import java.io.InputStream;
 import java.lang.reflect.Constructor;
@@ -315,6 +316,14 @@ public interface OrientDBInternal extends AutoCloseable, OSchedulerInternal {
   }
 
   default void networkRestore(String databaseName, InputStream in, Callable<Object> callback) {
+    throw new UnsupportedOperationException();
+  }
+
+  default OResultSet executeServerStatement(String script, Map<String, Object> params) {
+    throw new UnsupportedOperationException();
+  }
+
+  default OResultSet executeServerStatement(String script, Object... params) {
     throw new UnsupportedOperationException();
   }
 }

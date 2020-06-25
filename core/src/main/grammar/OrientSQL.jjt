@@ -704,6 +704,14 @@ List<OStatement> parseScript() :
   { return result; }
 }
 
+OServerStatement parseServerStatement() :
+{OServerStatement result;}
+{
+  result = ServerStatement() <EOF>
+  { return result; }
+}
+
+
 java.lang.String String():
 {
 Token token = null;
@@ -1004,6 +1012,19 @@ ONumber Number():
         result = FloatingPoint()
     )
     { return result; }
+}
+
+OServerStatement ServerStatement():
+{
+    OServerStatement result = null;
+}
+{
+    /*(
+        result = CreateDatabaseStatement()
+    )*/
+	{
+	    return result;
+	}
 }
 
 OStatement Statement():
