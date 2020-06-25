@@ -271,7 +271,7 @@ public class ColumnSecurityTest {
   }
 
   @Test
-  public void testReadWithPredicateAndQuery() {
+  public void testReadWithPredicateAndQuery() throws InterruptedException {
     OSecurityInternal security = ((ODatabaseInternal) db).getSharedContext().getSecurity();
 
     db.createClass("Person");
@@ -312,6 +312,7 @@ public class ColumnSecurityTest {
     Assert.assertTrue(barFound);
 
     db.close();
+    Thread.sleep(200);
     this.db = orient.open(DB_NAME, "reader", "reader");
     rs = db.query("select from Person");
     fooFound = false;
