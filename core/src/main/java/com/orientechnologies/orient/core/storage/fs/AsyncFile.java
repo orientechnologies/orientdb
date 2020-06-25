@@ -26,6 +26,7 @@ import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicLong;
 
 public final class AsyncFile implements OFile {
+
   private static final int ALLOCATION_THRESHOLD = 1024 * 1024;
 
   private final ScalableRWLock lock = new ScalableRWLock();
@@ -37,11 +38,14 @@ public final class AsyncFile implements OFile {
   private final AtomicLong size = new AtomicLong();
   private final AtomicLong committedSize = new AtomicLong();
 
+  private final boolean useNativeOsAPI;
+
   private AsynchronousFileChannel fileChannel;
   private int fd = -1;
 
-  public AsyncFile(Path osFile) {
+  public AsyncFile(final Path osFile, final boolean useNativeOsAPI) {
     this.osFile = osFile;
+    this.useNativeOsAPI = useNativeOsAPI;
   }
 
   @Override
@@ -104,7 +108,7 @@ public final class AsyncFile implements OFile {
 
     fileChannel =
         AsynchronousFileChannel.open(osFile, StandardOpenOption.READ, StandardOpenOption.WRITE);
-    if (Platform.getPlatform().getOS() == Platform.OS.LINUX) {
+    if (useNativeOsAPI && Platform.getPlatform().getOS() == Platform.OS.LINUX) {
       try {
         fd =
             ONative.instance()

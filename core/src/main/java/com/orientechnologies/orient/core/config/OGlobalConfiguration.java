@@ -197,9 +197,16 @@ public enum OGlobalConfiguration { // ENVIRONMENT
       Integer.class,
       5),
 
+  @Deprecated
   DISK_WRITE_CACHE_USE_ASYNC_IO(
       "storage.diskCache.useAsyncIO",
       "Use asynchronous IO API to facilitate abilities of SSD to parallelize IO requests",
+      Boolean.class,
+      true),
+
+  DISK_USE_NATIVE_OS_API(
+      "storage.disk.useNativeOsAPI",
+      "Allows to call native OS methods if possible",
       Boolean.class,
       true),
 
