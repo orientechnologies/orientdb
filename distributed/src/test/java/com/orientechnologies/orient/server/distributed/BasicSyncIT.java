@@ -7,7 +7,9 @@ import com.orientechnologies.orient.core.db.OrientDB;
 import com.orientechnologies.orient.core.db.OrientDBConfig;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.server.OServer;
+import com.orientechnologies.orient.testutil.NodePortForward;
 import com.orientechnologies.orient.testutil.StatefulSetTemplateKeys;
+import io.kubernetes.client.PortForward;
 import io.kubernetes.client.openapi.ApiClient;
 import io.kubernetes.client.openapi.ApiException;
 import io.kubernetes.client.openapi.Configuration;
@@ -26,6 +28,8 @@ import org.junit.Test;
 
 import java.io.FileReader;
 import java.io.IOException;
+import java.net.ServerSocket;
+import java.net.Socket;
 import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
@@ -99,14 +103,28 @@ public class BasicSyncIT {
     deployOrientDB("default", valuesMapEu2);
     nodeParams.add(valuesMapEu2);
 
-    //    coreV1Api.connectPostNamespacedPodPortforward(String.format("%s-0",
-    // valuesMapEu0.get(StatefulSetTemplateKeys.ORIENTDB_NODE_NAME))
-    //        , "default", 2424);
-    //    System.out.println("created port-forward");
+    System.out.println("waiting...");
+    Thread.sleep(60 * 1000);
+    NodePortForward.create("default", String.format("%s-0",
+        valuesMapEu0.get(StatefulSetTemplateKeys.ORIENTDB_NODE_NAME)), 2424, 2424);
 
-    server0 = OServer.startFromClasspathConfig("orientdb-simple-dserver-config-0.xml");
-    server1 = OServer.startFromClasspathConfig("orientdb-simple-dserver-config-1.xml");
-    server2 = OServer.startFromClasspathConfig("orientdb-simple-dserver-config-2.xml");
+//    int localPort = 2424, remotePort = 2424;
+//    PortForward forward = new PortForward();
+//    List<Integer> ports = new ArrayList<>();
+//    ports.add(localPort);
+//    ports.add(remotePort);
+//    final PortForward.PortForwardResult result = forward.forward("default", String.format("%s-0", valuesMapEu0.get(StatefulSetTemplateKeys.ORIENTDB_NODE_NAME)), ports);
+//
+//    ServerSocket ss = new ServerSocket(localPort);
+//
+//    final Socket s = ss.accept();
+//    System.out.println("Connected!");
+
+    System.out.println("created port-forward");
+
+//    server0 = OServer.startFromClasspathConfig("orientdb-simple-dserver-config-0.xml");
+//    server1 = OServer.startFromClasspathConfig("orientdb-simple-dserver-config-1.xml");
+//    server2 = OServer.startFromClasspathConfig("orientdb-simple-dserver-config-2.xml");
     OrientDB remote =
         new OrientDB("remote:localhost", "root", "test", OrientDBConfig.defaultConfig());
     remote.create("test", ODatabaseType.PLOCAL);
@@ -123,93 +141,95 @@ public class BasicSyncIT {
         session.save(session.newElement("One"));
         session.save(session.newElement("One"));
       }
-      server2.shutdown();
-      try (ODatabaseSession session = remote.open("test", "admin", "admin")) {
-        session.save(session.newElement("One"));
-      }
+      System.out.println("check db with admin admin!");
+      Thread.sleep(5 * 60 * 1000);
+//      server2.shutdown();
+//      try (ODatabaseSession session = remote.open("test", "admin", "admin")) {
+//        session.save(session.newElement("One"));
+//      }
     }
-    server0.shutdown();
-    server1.shutdown();
-    // Starting the servers in reverse shutdown order to trigger miss sync
-    server0 = OServer.startFromClasspathConfig("orientdb-simple-dserver-config-0.xml");
-    server1 = OServer.startFromClasspathConfig("orientdb-simple-dserver-config-1.xml");
-    server2 = OServer.startFromClasspathConfig("orientdb-simple-dserver-config-2.xml");
-    // Test server 0
-    try (OrientDB remote = new OrientDB("remote:localhost", OrientDBConfig.defaultConfig())) {
-      try (ODatabaseSession session = remote.open("test", "admin", "admin")) {
-        assertEquals(session.countClass("One"), 3);
-      }
-    }
-    // Test server 1
-    try (OrientDB remote = new OrientDB("remote:localhost:2425", OrientDBConfig.defaultConfig())) {
-      try (ODatabaseSession session = remote.open("test", "admin", "admin")) {
-        assertEquals(session.countClass("One"), 3);
-      }
-    }
-    // Test server 2
-    try (OrientDB remote = new OrientDB("remote:localhost:2426", OrientDBConfig.defaultConfig())) {
-      try (ODatabaseSession session = remote.open("test", "admin", "admin")) {
-        assertEquals(session.countClass("One"), 3);
-      }
-    }
+//    server0.shutdown();
+//    server1.shutdown();
+//    // Starting the servers in reverse shutdown order to trigger miss sync
+//    server0 = OServer.startFromClasspathConfig("orientdb-simple-dserver-config-0.xml");
+//    server1 = OServer.startFromClasspathConfig("orientdb-simple-dserver-config-1.xml");
+//    server2 = OServer.startFromClasspathConfig("orientdb-simple-dserver-config-2.xml");
+//    // Test server 0
+//    try (OrientDB remote = new OrientDB("remote:localhost", OrientDBConfig.defaultConfig())) {
+//      try (ODatabaseSession session = remote.open("test", "admin", "admin")) {
+//        assertEquals(session.countClass("One"), 3);
+//      }
+//    }
+//    // Test server 1
+//    try (OrientDB remote = new OrientDB("remote:localhost:2425", OrientDBConfig.defaultConfig())) {
+//      try (ODatabaseSession session = remote.open("test", "admin", "admin")) {
+//        assertEquals(session.countClass("One"), 3);
+//      }
+//    }
+//    // Test server 2
+//    try (OrientDB remote = new OrientDB("remote:localhost:2426", OrientDBConfig.defaultConfig())) {
+//      try (ODatabaseSession session = remote.open("test", "admin", "admin")) {
+//        assertEquals(session.countClass("One"), 3);
+//      }
+//    }
   }
 
-  @Test
-  public void reverseStartSync()
-      throws ClassNotFoundException, InstantiationException, IllegalAccessException, IOException,
-          InterruptedException {
-    //    System.out.println("waiting...");
-    //    Thread.sleep(5 * 60 * 1000);
-
-    try (OrientDB remote = new OrientDB("remote:localhost", OrientDBConfig.defaultConfig())) {
-      try (ODatabaseSession session = remote.open("test", "admin", "admin")) {
-        session.createClass("One");
-        session.save(session.newElement("One"));
-        session.save(session.newElement("One"));
-      }
-      server2.shutdown();
-      try (ODatabaseSession session = remote.open("test", "admin", "admin")) {
-        session.save(session.newElement("One"));
-      }
-    }
-    server0.shutdown();
-    server1.shutdown();
-    // Starting the servers in reverse shutdown order to trigger miss sync
-    server2 = OServer.startFromClasspathConfig("orientdb-simple-dserver-config-2.xml");
-    server1 = OServer.startFromClasspathConfig("orientdb-simple-dserver-config-1.xml");
-    server0 = OServer.startFromClasspathConfig("orientdb-simple-dserver-config-0.xml");
-    // Test server 0
-    try (OrientDB remote = new OrientDB("remote:localhost", OrientDBConfig.defaultConfig())) {
-      try (ODatabaseSession session = remote.open("test", "admin", "admin")) {
-        assertEquals(session.countClass("One"), 3);
-      }
-    }
-    // Test server 1
-    try (OrientDB remote = new OrientDB("remote:localhost:2425", OrientDBConfig.defaultConfig())) {
-      try (ODatabaseSession session = remote.open("test", "admin", "admin")) {
-        assertEquals(session.countClass("One"), 3);
-      }
-    }
-    // Test server 2
-    try (OrientDB remote = new OrientDB("remote:localhost:2426", OrientDBConfig.defaultConfig())) {
-      try (ODatabaseSession session = remote.open("test", "admin", "admin")) {
-        assertEquals(session.countClass("One"), 3);
-      }
-    }
-  }
+//  @Test
+//  public void reverseStartSync()
+//      throws ClassNotFoundException, InstantiationException, IllegalAccessException, IOException,
+//          InterruptedException {
+//    //    System.out.println("waiting...");
+//    //    Thread.sleep(5 * 60 * 1000);
+//
+//    try (OrientDB remote = new OrientDB("remote:localhost", OrientDBConfig.defaultConfig())) {
+//      try (ODatabaseSession session = remote.open("test", "admin", "admin")) {
+//        session.createClass("One");
+//        session.save(session.newElement("One"));
+//        session.save(session.newElement("One"));
+//      }
+//      server2.shutdown();
+//      try (ODatabaseSession session = remote.open("test", "admin", "admin")) {
+//        session.save(session.newElement("One"));
+//      }
+//    }
+//    server0.shutdown();
+//    server1.shutdown();
+//    // Starting the servers in reverse shutdown order to trigger miss sync
+//    server2 = OServer.startFromClasspathConfig("orientdb-simple-dserver-config-2.xml");
+//    server1 = OServer.startFromClasspathConfig("orientdb-simple-dserver-config-1.xml");
+//    server0 = OServer.startFromClasspathConfig("orientdb-simple-dserver-config-0.xml");
+//    // Test server 0
+//    try (OrientDB remote = new OrientDB("remote:localhost", OrientDBConfig.defaultConfig())) {
+//      try (ODatabaseSession session = remote.open("test", "admin", "admin")) {
+//        assertEquals(session.countClass("One"), 3);
+//      }
+//    }
+//    // Test server 1
+//    try (OrientDB remote = new OrientDB("remote:localhost:2425", OrientDBConfig.defaultConfig())) {
+//      try (ODatabaseSession session = remote.open("test", "admin", "admin")) {
+//        assertEquals(session.countClass("One"), 3);
+//      }
+//    }
+//    // Test server 2
+//    try (OrientDB remote = new OrientDB("remote:localhost:2426", OrientDBConfig.defaultConfig())) {
+//      try (ODatabaseSession session = remote.open("test", "admin", "admin")) {
+//        assertEquals(session.countClass("One"), 3);
+//      }
+//    }
+//  }
 
   @After
   public void after() throws InterruptedException, ApiException {
-    System.out.println("shutdown");
-    OrientDB remote =
-        new OrientDB("remote:localhost", "root", "test", OrientDBConfig.defaultConfig());
-    remote.drop("test");
-    remote.close();
-
-    server0.shutdown();
-    server1.shutdown();
-    server2.shutdown();
-    ODatabaseDocumentTx.closeAll();
+//    System.out.println("shutdown");
+//    OrientDB remote =
+//        new OrientDB("remote:localhost", "root", "test", OrientDBConfig.defaultConfig());
+//    remote.drop("test");
+//    remote.close();
+//
+//    server0.shutdown();
+//    server1.shutdown();
+//    server2.shutdown();
+//    ODatabaseDocumentTx.closeAll();
 
     CoreV1Api coreV1Api = new CoreV1Api();
     AppsV1Api appsV1Api = new AppsV1Api();
@@ -288,8 +308,8 @@ public class BasicSyncIT {
                 })
             .build();
     CoreV1Api coreV1Api = new CoreV1Api();
-    System.out.printf("created ConfigMap %s\n", configMap.getMetadata().getName());
     coreV1Api.createNamespacedConfigMap(namespace, configMap, null, null, null);
+    System.out.printf("created ConfigMap %s\n", configMap.getMetadata().getName());
     StringSubstitutor substitutor = new StringSubstitutor(params);
     String statefulSetTemplate = readAllLines("/kubernetes/orientdb-statefulset-template.yaml");
     String statefulSetYamlStr = substitutor.replace(statefulSetTemplate);
