@@ -386,19 +386,13 @@ public final class OWOWCache extends OAbstractWriteCache
 
   private volatile OChecksumMode checksumMode;
 
-  /**
-   * Error thrown during data flush. Once error registered no more write operations are allowed.
-   */
+  /** Error thrown during data flush. Once error registered no more write operations are allowed. */
   private Throwable flushError;
 
-  /**
-   * IV is used for AES encryption
-   */
+  /** IV is used for AES encryption */
   private final byte[] iv;
 
-  /**
-   * Key is used for AES encryption
-   */
+  /** Key is used for AES encryption */
   private final byte[] aesKey;
 
   private final boolean useNativeOsAPI;
