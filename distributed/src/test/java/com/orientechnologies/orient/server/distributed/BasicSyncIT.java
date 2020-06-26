@@ -100,12 +100,18 @@ public class BasicSyncIT {
             put(StatefulSetTemplateKeys.ORIENTDB_CONFIG_CM, "orientdb-eu2-cm");
           }
         };
-    deployOrientDB("default", valuesMapEu0);
-    nodeParams.add(valuesMapEu0);
-    deployOrientDB("default", valuesMapEu1);
-    nodeParams.add(valuesMapEu1);
-    deployOrientDB("default", valuesMapEu2);
-    nodeParams.add(valuesMapEu2);
+    try {
+      deployOrientDB("default", valuesMapEu0);
+      nodeParams.add(valuesMapEu0);
+      deployOrientDB("default", valuesMapEu1);
+      nodeParams.add(valuesMapEu1);
+      deployOrientDB("default", valuesMapEu2);
+      nodeParams.add(valuesMapEu2);
+    } catch (ApiException e) {
+      System.out.println("Error while deploying instances: " + e.getMessage());
+      System.out.println(e.getResponseBody());
+      fail();
+    }
 
 //    NodePortForward.create("default", String.format("%s-0",
 //        valuesMapEu0.get(StatefulSetTemplateKeys.ORIENTDB_NODE_NAME)), 2424, 2424);
@@ -124,12 +130,14 @@ public class BasicSyncIT {
 
     System.out.println("wait till instance is ready");
     Thread.sleep(90 * 1000);
+    System.out.println("creating database...");
 
 //    server0 = OServer.startFromClasspathConfig("orientdb-simple-dserver-config-0.xml");
 //    server1 = OServer.startFromClasspathConfig("orientdb-simple-dserver-config-1.xml");
 //    server2 = OServer.startFromClasspathConfig("orientdb-simple-dserver-config-2.xml");
 //    OrientDB remote =
 //        new OrientDB("remote:localhost", "root", "test", OrientDBConfig.defaultConfig());
+
     OrientDB remote =
         new OrientDB("remote:" + valuesMapEu0.get(StatefulSetTemplateKeys.ORIENTDB_BINARY_ADDRESS), "root", "test", OrientDBConfig.defaultConfig());
     remote.create("test", ODatabaseType.PLOCAL);
@@ -137,25 +145,47 @@ public class BasicSyncIT {
     System.out.println("created database 'test'");
   }
 
+  private void shutdownInstance(Map<String, String> param) throws ApiException {
+    AppsV1Api appsV1Api = new AppsV1Api();
+    String name = param.get(StatefulSetTemplateKeys.ORIENTDB_NODE_NAME);
+    try {
+      System.out.println("fetching current scale...");
+      V1Scale scale = appsV1Api.readNamespacedStatefulSetScale(name, "default", null);
+      System.out.println("Got: " + scale);
+      //    V1StatefulSet sset = appsV1Api.readNamespacedStatefulSet(name, "default", null, null,
+      // null);
+      V1Scale newScale = new V1ScaleBuilder(scale).withNewSpec().withReplicas(0).endSpec().build();
+      System.out.println("setting new scale...");
+      // Could also use patch
+      appsV1Api.replaceNamespacedStatefulSetScale(name, "default", newScale, null, null, null);
+    } catch(ApiException e) {
+      System.out.println("Error scaling down: " + e.getResponseBody());
+      throw e;
+    }
+  }
+
   @Test
   public void sync()
-      throws ClassNotFoundException, InstantiationException, IllegalAccessException, IOException,
-          InterruptedException {
+      throws ClassNotFoundException, InstantiationException, IllegalAccessException, IOException, InterruptedException,
+      ApiException {
 //    String remoteAddress = "remote:localhost";
     String remoteAddress = "remote:" + nodeParams.get(0).get(StatefulSetTemplateKeys.ORIENTDB_BINARY_ADDRESS);
-    try (OrientDB remote = new OrientDB(remoteAddress, OrientDBConfig.defaultConfig())) {
-      try (ODatabaseSession session = remote.open("test", "admin", "admin")) {
-        session.createClass("One");
-        session.save(session.newElement("One"));
-        session.save(session.newElement("One"));
-      }
-      System.out.println("check db with admin admin!");
-      Thread.sleep(5 * 60 * 1000);
+//    try (OrientDB remote = new OrientDB(remoteAddress, OrientDBConfig.defaultConfig())) {
+//      try (ODatabaseSession session = remote.open("test", "admin", "admin")) {
+//        session.createClass("One");
+//        session.save(session.newElement("One"));
+//        session.save(session.newElement("One"));
+//      }
 //      server2.shutdown();
 //      try (ODatabaseSession session = remote.open("test", "admin", "admin")) {
 //        session.save(session.newElement("One"));
 //      }
-    }
+//      System.out.println("saved session.");
+//    }
+    System.out.println("taking down instance 2");
+    shutdownInstance(nodeParams.get(1));
+    System.out.println("waiting for scale down to settle!");
+    Thread.sleep(90 * 1000);
 //    server0.shutdown();
 //    server1.shutdown();
 //    // Starting the servers in reverse shutdown order to trigger miss sync
@@ -260,6 +290,16 @@ public class BasicSyncIT {
           null,
           null);
       System.out.printf("deleted Service %s\n", nodeName);
+      coreV1Api.deleteNamespacedService(
+          nodeParam.get(StatefulSetTemplateKeys.ORIENTDB_NODE_NAME) + "-service",
+          "default",
+          null,
+          null,
+          null,
+          null,
+          null,
+          null);
+      System.out.printf("deleted Node Port Service %s\n", nodeName);
     }
     for (String pvc : PVCsToDelete) {
       // There is a known bug with the auto-generated 'official' Kubernetes client for Java which
