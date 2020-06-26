@@ -298,13 +298,11 @@ public class ODatabaseDocumentRemote extends ODatabaseDocumentAbstract {
   public ODatabaseDocumentAbstract begin(final OTransaction.TXTYPE iType) {
     checkOpenness();
     checkIfActive();
-
     if (currentTx.isActive()) {
       if (iType == OTransaction.TXTYPE.OPTIMISTIC && currentTx instanceof OTransactionOptimistic) {
         currentTx.begin();
         return this;
       }
-
       currentTx.rollback(true, 0);
     }
 
@@ -327,15 +325,12 @@ public class ODatabaseDocumentRemote extends ODatabaseDocumentAbstract {
       case NOTX:
         setDefaultTransactionMode(null);
         break;
-
       case OPTIMISTIC:
         currentTx = new OTransactionOptimisticClient(this);
         break;
-
       case PESSIMISTIC:
         throw new UnsupportedOperationException("Pessimistic transaction");
     }
-
     currentTx.begin();
     return this;
   }

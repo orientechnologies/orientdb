@@ -428,7 +428,7 @@ public abstract class OTransactionRealAbstract extends OTransactionAbstract
       for (OTransactionIndexEntry e : entry.entries) {
 
         final ODocument changeDoc = new ODocument().setAllowChainedAccess(false);
-        ODocumentInternal.addOwner((ODocument) changeDoc, indexDoc);
+        ODocumentInternal.addOwner(changeDoc, indexDoc);
 
         // SERIALIZE OPERATION
         changeDoc.field("o", e.operation.ordinal());
@@ -490,7 +490,6 @@ public abstract class OTransactionRealAbstract extends OTransactionAbstract
     for (Dependency dependency : fieldDependencies)
       switch (dependency) {
         case Unknown:
-          return true;
         case Yes:
           return true;
         case No:

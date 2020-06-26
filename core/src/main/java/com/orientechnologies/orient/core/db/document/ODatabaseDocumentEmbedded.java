@@ -1037,8 +1037,8 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract
 
   public void afterCreateOperations(final OIdentifiable id) {
     if (id instanceof ODocument) {
-      ODocument doc = (ODocument) id;
-      OImmutableClass clazz = ODocumentInternal.getImmutableSchemaClass(this, doc);
+      final ODocument doc = (ODocument) id;
+      final OImmutableClass clazz = ODocumentInternal.getImmutableSchemaClass(this, doc);
       if (clazz != null) {
         OClassIndexManager.checkIndexesAfterCreate(doc, this);
         if (clazz.isFunction()) {
@@ -1061,10 +1061,8 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract
         if (clazz.isTriggered()) {
           OClassTrigger.onRecordAfterCreate(doc, this);
         }
-
         getSharedContext().getViewManager().recordAdded(clazz, doc, this);
       }
-
       OLiveQueryHook.addOp(doc, ORecordOperation.CREATED, this);
       OLiveQueryHookV2.addOp(doc, ORecordOperation.CREATED, this);
     }

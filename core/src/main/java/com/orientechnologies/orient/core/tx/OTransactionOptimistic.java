@@ -86,7 +86,7 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
           .debug(
               this,
               "Transaction with ID "
-                  + txSerial
+                  + getId()
                   + " was already started "
                   + txStartCounter
                   + " times, and will be reused.");
@@ -140,7 +140,7 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
     database.getLocalCache().clear();
 
     // REMOVE ALL THE DIRTY ENTRIES AND UNDO ANY DIRTY DOCUMENT IF POSSIBLE.
-    for (ORecordOperation v : allEntries.values()) {
+    for (final ORecordOperation v : allEntries.values()) {
       final ORecord rec = v.getRecord();
       rec.unload();
     }
@@ -525,7 +525,6 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
 
           ORecordInternal.onAfterIdentityChanged(iRecord);
         }
-
         if (txEntry == null) {
           if (!(rid.isTemporary() && iStatus != ORecordOperation.CREATED)) {
             // NEW ENTRY: JUST REGISTER IT
@@ -798,5 +797,9 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
           indexChange.key,
           indexChange.value);
     }
+  }
+
+  protected int getTxStartCounter() {
+    return txStartCounter;
   }
 }
