@@ -2,6 +2,7 @@ package com.orientechnologies.orient.server.distributed.impl.lock;
 
 import com.orientechnologies.common.util.OPair;
 import com.orientechnologies.orient.core.id.ORID;
+import com.orientechnologies.orient.core.tx.OTransactionId;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -31,7 +32,10 @@ public class OLockManagerImpl implements OLockManager {
   }
 
   public synchronized void lock(
-      SortedSet<ORID> rids, SortedSet<OPair<String, Object>> indexKeys, OnLocksAcquired acquired) {
+      SortedSet<ORID> rids,
+      SortedSet<OPair<String, Object>> indexKeys,
+      OTransactionId transactionId,
+      OnLocksAcquired acquired) {
     List<OLockGuard> guards = new ArrayList<>();
     OWaitingTracker waitingTracker = new OWaitingTracker(acquired);
     for (ORID rid : rids) {
@@ -45,6 +49,10 @@ public class OLockManagerImpl implements OLockManager {
       lock(key, waitingTracker);
       guards.add(new OLockGuard(key));
     }
+    OTransactionIdLockKey key = new OTransactionIdLockKey(transactionId);
+    lock(key, waitingTracker);
+    guards.add(new OLockGuard(key));
+
     waitingTracker.setGuards(guards);
     waitingTracker.acquireIfNoWaiting();
   }

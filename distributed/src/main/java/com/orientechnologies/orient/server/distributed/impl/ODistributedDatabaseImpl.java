@@ -364,9 +364,11 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
       if (task instanceof OLockKeySource) {
         SortedSet<ORID> rids = ((OLockKeySource) task).getRids();
         SortedSet<OPair<String, Object>> uniqueKeys = ((OLockKeySource) task).getUniqueKeys();
+        OTransactionId txId = ((OLockKeySource) task).getTransactionId();
         this.lockManager.lock(
             rids,
             uniqueKeys,
+            txId,
             (guards) -> {
               try {
                 this.requestExecutor.submit(
