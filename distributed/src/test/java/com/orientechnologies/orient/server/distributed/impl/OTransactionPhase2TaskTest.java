@@ -63,8 +63,8 @@ public class OTransactionPhase2TaskTest {
     ids.add(rec1.getIdentity());
     operations.add(new ORecordOperation(rec1, ORecordOperation.UPDATED));
     SortedSet<OPair<String, Object>> uniqueIndexKeys = new TreeSet<>();
-    OTransactionPhase1Task task =
-        new OTransactionPhase1Task(operations, new OTransactionId(Optional.empty(), 0, 1));
+    OTransactionId transactionId = new OTransactionId(Optional.empty(), 0, 1);
+    OTransactionPhase1Task task = new OTransactionPhase1Task(operations, transactionId);
     task.execute(
         new ODistributedRequestId(10, 20), server, null, (ODatabaseDocumentInternal) session);
     OTransactionPhase2Task task2 =
@@ -73,7 +73,8 @@ public class OTransactionPhase2TaskTest {
             true,
             ids,
             uniqueIndexKeys,
-            new OLogSequenceNumber(0, 1));
+            new OLogSequenceNumber(0, 1),
+            transactionId);
     task2.execute(
         new ODistributedRequestId(10, 21), server, null, (ODatabaseDocumentInternal) session);
 
