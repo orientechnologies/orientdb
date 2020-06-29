@@ -43,6 +43,7 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSe
 import com.orientechnologies.orient.core.tx.OTransactionId;
 import com.orientechnologies.orient.core.tx.OTransactionSequenceStatus;
 import com.orientechnologies.orient.core.tx.OTxMetadataHolder;
+import com.orientechnologies.orient.core.tx.ValidationResult;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.OSystemDatabase;
 import com.orientechnologies.orient.server.distributed.ODistributedConfiguration;
@@ -763,7 +764,7 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
     }
   }
 
-  public Optional<OTransactionId> validate(OTransactionId id) {
+  public ValidationResult validate(OTransactionId id) {
     // this check should happen only of destination nodes
     return sequenceManager.validateTransactionId(id);
   }

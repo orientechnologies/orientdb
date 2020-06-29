@@ -55,6 +55,7 @@ import com.orientechnologies.orient.core.tx.OTransactionIndexChanges;
 import com.orientechnologies.orient.core.tx.OTransactionIndexChangesPerKey;
 import com.orientechnologies.orient.core.tx.OTransactionInternal;
 import com.orientechnologies.orient.core.tx.OTransactionOptimistic;
+import com.orientechnologies.orient.core.tx.ValidationResult;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.distributed.ODistributedConfiguration;
 import com.orientechnologies.orient.server.distributed.ODistributedDatabase;
@@ -82,7 +83,6 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.Random;
 import java.util.Set;
 import java.util.TreeSet;
@@ -647,10 +647,15 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
               }
             }
             boolean valid = true;
-            Optional<OTransactionId> validateResult =
+            ValidationResult validateResult =
                 localDistributedDatabase.validate(txContext.getTransactionId());
-            if (validateResult.isPresent()) {
-              valid = validateResult.get().getNodeOwner().isPresent();
+            if (validateResult != ValidationResult.ALREADY_PROMISED
+                && validateResult != ValidationResult.VALID
+                && validateResult != ValidationResult.ALREADY_PRESENT) {
+              valid = false;
+            } else if (validateResult == ValidationResult.ALREADY_PRESENT) {
+              // Already present do nothing.
+              return true;
             }
             if (valid) {
               internalBegin2pc(txContext, local);
