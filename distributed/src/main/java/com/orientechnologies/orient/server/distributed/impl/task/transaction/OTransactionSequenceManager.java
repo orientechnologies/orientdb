@@ -53,37 +53,30 @@ public class OTransactionSequenceManager {
     return id;
   }
 
-  public synchronized List<OTransactionId> notifySuccess(OTransactionId transactionId) {
+  public synchronized ValidationResult notifySuccess(OTransactionId transactionId) {
     if (this.promisedSequential[transactionId.getPosition()] != null) {
       if (this.promisedSequential[transactionId.getPosition()].getSequence()
           == transactionId.getSequence()) {
         this.sequentials[transactionId.getPosition()] = transactionId.getSequence();
         this.promisedSequential[transactionId.getPosition()] = null;
+      } else if (this.promisedSequential[transactionId.getPosition()].getSequence()
+          > transactionId.getSequence()) {
+        return ValidationResult.ALREADY_PRESENT;
       } else {
-        List<OTransactionId> missing = new ArrayList<>();
-        for (long x = this.promisedSequential[transactionId.getPosition()].getSequence() + 1;
-            x <= transactionId.getSequence();
-            x++) {
-          missing.add(new OTransactionId(Optional.empty(), transactionId.getPosition(), x));
-        }
-        return missing;
+        return ValidationResult.MISSING_PREVIOUS;
       }
     } else {
       if (this.sequentials[transactionId.getPosition()] + 1 == transactionId.getSequence()) {
         // Not promised but valid, accept it
         // TODO: may need to return this information somehow
         this.sequentials[transactionId.getPosition()] = transactionId.getSequence();
+      } else if (this.sequentials[transactionId.getPosition()] + 1 > transactionId.getSequence()) {
+        return ValidationResult.ALREADY_PRESENT;
       } else {
-        List<OTransactionId> missing = new ArrayList<>();
-        for (long x = this.sequentials[transactionId.getPosition()] + 1;
-            x <= transactionId.getSequence();
-            x++) {
-          missing.add(new OTransactionId(Optional.empty(), transactionId.getPosition(), x));
-        }
-        return missing;
+        return ValidationResult.MISSING_PREVIOUS;
       }
     }
-    return Collections.emptyList();
+    return ValidationResult.VALID;
   }
 
   public synchronized ValidationResult validateTransactionId(OTransactionId transactionId) {
