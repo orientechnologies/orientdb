@@ -28,11 +28,11 @@ public class OTransactionSequenceManagerTest {
     assertEquals(sequenceManagerRecv.validateTransactionId(one), VALID);
     assertEquals(sequenceManagerRecv.validateTransactionId(two), VALID);
 
-    assertTrue(sequenceManager.notifySuccess(one).isEmpty());
-    assertTrue(sequenceManager.notifySuccess(two).isEmpty());
+    assertEquals(sequenceManager.notifySuccess(one), VALID);
+    assertEquals(sequenceManager.notifySuccess(two), VALID);
 
-    assertTrue(sequenceManagerRecv.notifySuccess(one).isEmpty());
-    assertTrue(sequenceManagerRecv.notifySuccess(two).isEmpty());
+    assertEquals(sequenceManagerRecv.notifySuccess(one), VALID);
+    assertEquals(sequenceManagerRecv.notifySuccess(two), VALID);
   }
 
   @Test
@@ -46,12 +46,12 @@ public class OTransactionSequenceManagerTest {
     assertEquals(sequenceManagerRecv.validateTransactionId(one), VALID);
     assertEquals(sequenceManagerRecv.validateTransactionId(three), VALID);
 
-    assertTrue(sequenceManager.notifySuccess(one).isEmpty());
-    assertTrue(sequenceManager.notifySuccess(two).isEmpty());
-    assertTrue(sequenceManager.notifySuccess(three).isEmpty());
+    assertEquals(sequenceManager.notifySuccess(one), VALID);
+    assertEquals(sequenceManager.notifySuccess(two), VALID);
+    assertEquals(sequenceManager.notifySuccess(three), VALID);
 
-    assertTrue(sequenceManagerRecv.notifySuccess(one).isEmpty());
-    assertTrue(sequenceManagerRecv.notifySuccess(three).isEmpty());
+    assertEquals(sequenceManagerRecv.notifySuccess(one), VALID);
+    assertEquals(sequenceManagerRecv.notifySuccess(three), VALID);
 
     OTransactionSequenceStatus status = sequenceManager.currentStatus();
 
@@ -72,11 +72,11 @@ public class OTransactionSequenceManagerTest {
     assertEquals(sequenceManagerRecv.validateTransactionId(one), VALID);
     assertEquals(sequenceManagerRecv.validateTransactionId(three), VALID);
 
-    assertTrue(sequenceManager.notifySuccess(one).isEmpty());
-    assertTrue(sequenceManager.notifySuccess(two).isEmpty());
-    assertTrue(sequenceManager.notifySuccess(three).isEmpty());
+    assertEquals(sequenceManager.notifySuccess(one), VALID);
+    assertEquals(sequenceManager.notifySuccess(two), VALID);
+    assertEquals(sequenceManager.notifySuccess(three), VALID);
 
-    assertTrue(sequenceManagerRecv.notifySuccess(one).isEmpty());
+    assertEquals(sequenceManagerRecv.notifySuccess(one), VALID);
 
     OTransactionSequenceStatus status = sequenceManager.currentStatus();
 
@@ -91,22 +91,19 @@ public class OTransactionSequenceManagerTest {
   public void sequenceMissingSameSpot() {
     OTransactionSequenceManager sequenceManager = new OTransactionSequenceManager("one", 1000);
     OTransactionId one = sequenceManager.nextAt(1);
-    assertTrue(sequenceManager.notifySuccess(one).isEmpty());
+    assertEquals(sequenceManager.notifySuccess(one), VALID);
     OTransactionId two = sequenceManager.nextAt(1);
-    assertTrue(sequenceManager.notifySuccess(two).isEmpty());
+    assertEquals(sequenceManager.notifySuccess(two), VALID);
     OTransactionId three = sequenceManager.nextAt(1);
-    assertTrue(sequenceManager.notifySuccess(three).isEmpty());
+    assertEquals(sequenceManager.notifySuccess(three), VALID);
 
     OTransactionSequenceManager sequenceManagerRecv = new OTransactionSequenceManager("two", 1000);
     assertEquals(sequenceManagerRecv.validateTransactionId(one), VALID);
     assertEquals(sequenceManagerRecv.validateTransactionId(three), MISSING_PREVIOUS);
 
-    assertTrue(sequenceManagerRecv.notifySuccess(one).isEmpty());
+    assertEquals(sequenceManagerRecv.notifySuccess(one), VALID);
     // This may fail in some cases as early detection
-    List<OTransactionId> res = sequenceManagerRecv.notifySuccess(three);
-    assertNotNull(res);
-    assertTrue(
-        res.contains(new OTransactionId(Optional.empty(), two.getPosition(), two.getSequence())));
+    assertEquals(sequenceManagerRecv.notifySuccess(three), MISSING_PREVIOUS);
 
     OTransactionSequenceStatus status = sequenceManager.currentStatus();
 
@@ -124,22 +121,19 @@ public class OTransactionSequenceManagerTest {
   public void sequenceAlreadyPresentSameSpot() {
     OTransactionSequenceManager sequenceManager = new OTransactionSequenceManager("one", 1000);
     OTransactionId one = sequenceManager.nextAt(1);
-    assertTrue(sequenceManager.notifySuccess(one).isEmpty());
+    assertEquals(sequenceManager.notifySuccess(one), VALID);
     OTransactionId two = sequenceManager.nextAt(1);
-    assertTrue(sequenceManager.notifySuccess(two).isEmpty());
+    assertEquals(sequenceManager.notifySuccess(two), VALID);
     OTransactionId three = sequenceManager.nextAt(1);
-    assertTrue(sequenceManager.notifySuccess(three).isEmpty());
+    assertEquals(sequenceManager.notifySuccess(three), VALID);
 
     OTransactionSequenceManager sequenceManagerRecv = new OTransactionSequenceManager("two", 1000);
     assertEquals(sequenceManagerRecv.validateTransactionId(one), VALID);
     assertEquals(sequenceManagerRecv.validateTransactionId(three), MISSING_PREVIOUS);
 
-    assertTrue(sequenceManagerRecv.notifySuccess(one).isEmpty());
+    assertEquals(sequenceManagerRecv.notifySuccess(one), VALID);
     // This may fail in some cases as early detection
-    List<OTransactionId> res = sequenceManagerRecv.notifySuccess(three);
-    assertNotNull(res);
-    assertTrue(
-        res.contains(new OTransactionId(Optional.empty(), two.getPosition(), two.getSequence())));
+    assertEquals(sequenceManagerRecv.notifySuccess(three), MISSING_PREVIOUS);
 
     OTransactionSequenceStatus status = sequenceManager.currentStatus();
 
@@ -157,15 +151,15 @@ public class OTransactionSequenceManagerTest {
   public void sequenceMissingSameSpotValidation() {
     OTransactionSequenceManager sequenceManager = new OTransactionSequenceManager("one", 1000);
     OTransactionId one = sequenceManager.nextAt(1);
-    assertTrue(sequenceManager.notifySuccess(one).isEmpty());
+    assertEquals(sequenceManager.notifySuccess(one), VALID);
     OTransactionId two = sequenceManager.nextAt(1);
-    assertTrue(sequenceManager.notifySuccess(two).isEmpty());
+    assertEquals(sequenceManager.notifySuccess(two), VALID);
     OTransactionId three = sequenceManager.nextAt(1);
-    assertTrue(sequenceManager.notifySuccess(three).isEmpty());
+    assertEquals(sequenceManager.notifySuccess(three), VALID);
 
     OTransactionSequenceManager sequenceManagerRecv = new OTransactionSequenceManager("two", 1000);
     assertEquals(sequenceManagerRecv.validateTransactionId(one), VALID);
-    assertTrue(sequenceManagerRecv.notifySuccess(one).isEmpty());
+    assertEquals(sequenceManagerRecv.notifySuccess(one), VALID);
     assertEquals(sequenceManagerRecv.validateTransactionId(three), MISSING_PREVIOUS);
   }
 
@@ -173,19 +167,19 @@ public class OTransactionSequenceManagerTest {
   public void sequenceMissingSameSpotValidationBack() {
     OTransactionSequenceManager sequenceManager = new OTransactionSequenceManager("one", 1000);
     OTransactionId one = sequenceManager.nextAt(1);
-    assertTrue(sequenceManager.notifySuccess(one).isEmpty());
+    assertEquals(sequenceManager.notifySuccess(one), VALID);
     OTransactionId two = sequenceManager.nextAt(1);
-    assertTrue(sequenceManager.notifySuccess(two).isEmpty());
+    assertEquals(sequenceManager.notifySuccess(two), VALID);
 
     OTransactionSequenceManager sequenceManagerOther = new OTransactionSequenceManager("one", 1000);
     OTransactionId otherOne = sequenceManagerOther.nextAt(1);
-    assertTrue(sequenceManager.notifySuccess(one).isEmpty());
+    assertEquals(sequenceManager.notifySuccess(one), ALREADY_PRESENT);
 
     OTransactionSequenceManager sequenceManagerRecv = new OTransactionSequenceManager("two", 1000);
     assertEquals(sequenceManagerRecv.validateTransactionId(one), VALID);
-    assertTrue(sequenceManagerRecv.notifySuccess(one).isEmpty());
+    assertEquals(sequenceManagerRecv.notifySuccess(one), VALID);
     assertEquals(sequenceManagerRecv.validateTransactionId(two), VALID);
-    assertTrue(sequenceManagerRecv.notifySuccess(two).isEmpty());
+    assertEquals(sequenceManagerRecv.notifySuccess(two), VALID);
 
     assertEquals(sequenceManagerRecv.validateTransactionId(otherOne), ALREADY_PRESENT);
   }
@@ -194,22 +188,18 @@ public class OTransactionSequenceManagerTest {
   public void sequenceMissingSameSpotMissing() {
     OTransactionSequenceManager sequenceManager = new OTransactionSequenceManager("one", 1000);
     OTransactionId one = sequenceManager.nextAt(1);
-    assertTrue(sequenceManager.notifySuccess(one).isEmpty());
+    assertEquals(sequenceManager.notifySuccess(one), VALID);
     OTransactionId two = sequenceManager.nextAt(1);
-    assertTrue(sequenceManager.notifySuccess(two).isEmpty());
+    assertEquals(sequenceManager.notifySuccess(two), VALID);
     OTransactionId three = sequenceManager.nextAt(1);
-    assertTrue(sequenceManager.notifySuccess(three).isEmpty());
+    assertEquals(sequenceManager.notifySuccess(three), VALID);
 
     OTransactionSequenceManager sequenceManagerRecv = new OTransactionSequenceManager("two", 1000);
     assertEquals(sequenceManagerRecv.validateTransactionId(one), VALID);
-    assertTrue(sequenceManagerRecv.notifySuccess(one).isEmpty());
+    assertEquals(sequenceManagerRecv.notifySuccess(one), VALID);
     assertEquals(sequenceManagerRecv.validateTransactionId(two), VALID);
     // This may fail in some cases as early detection
-    List<OTransactionId> res = sequenceManagerRecv.notifySuccess(three);
-    assertNotNull(res);
-    assertTrue(
-        res.contains(
-            new OTransactionId(Optional.empty(), three.getPosition(), three.getSequence())));
+    assertEquals(sequenceManagerRecv.notifySuccess(three), MISSING_PREVIOUS);
 
     OTransactionSequenceStatus status = sequenceManager.currentStatus();
 
@@ -227,8 +217,8 @@ public class OTransactionSequenceManagerTest {
     OTransactionSequenceManager sequenceManager = new OTransactionSequenceManager("one", 1000);
     OTransactionId one = sequenceManager.next().get();
     OTransactionId two = sequenceManager.next().get();
-    assertTrue(sequenceManager.notifySuccess(one).isEmpty());
-    assertTrue(sequenceManager.notifySuccess(two).isEmpty());
+    assertEquals(sequenceManager.notifySuccess(one), VALID);
+    assertEquals(sequenceManager.notifySuccess(two), VALID);
     byte[] bytes = sequenceManager.currentStatus().store();
     OTransactionSequenceManager readSequenceManager = new OTransactionSequenceManager("two", 1000);
     readSequenceManager.fill(OTransactionSequenceStatus.read(bytes));
@@ -249,26 +239,26 @@ public class OTransactionSequenceManagerTest {
   public void testNotificationFailure() {
     OTransactionSequenceManager sequenceManager = new OTransactionSequenceManager("one", 1000);
     OTransactionId one = sequenceManager.nextAt(1);
-    assertTrue(sequenceManager.notifySuccess(one).isEmpty());
+    assertEquals(sequenceManager.notifySuccess(one), VALID);
     OTransactionId two = sequenceManager.nextAt(1);
-    assertTrue(sequenceManager.notifySuccess(two).isEmpty());
+    assertEquals(sequenceManager.notifySuccess(two), VALID);
     OTransactionId three = sequenceManager.nextAt(1);
-    assertTrue(sequenceManager.notifySuccess(three).isEmpty());
+    assertEquals(sequenceManager.notifySuccess(three), VALID);
 
     OTransactionSequenceManager sequenceManagerOther = new OTransactionSequenceManager("two", 1000);
     assertEquals(sequenceManagerOther.validateTransactionId(one), VALID);
-    assertTrue(sequenceManagerOther.notifySuccess(one).isEmpty());
+    assertEquals(sequenceManagerOther.notifySuccess(one), VALID);
     assertEquals(sequenceManagerOther.validateTransactionId(two), VALID);
-    assertTrue(sequenceManagerOther.notifySuccess(two).isEmpty());
+    assertEquals(sequenceManagerOther.notifySuccess(two), VALID);
 
     OTransactionId otherThree = sequenceManagerOther.nextAt(1);
 
     OTransactionSequenceManager sequenceManagerRecv =
         new OTransactionSequenceManager("three", 1000);
     assertEquals(sequenceManagerRecv.validateTransactionId(one), VALID);
-    assertTrue(sequenceManagerRecv.notifySuccess(one).isEmpty());
+    assertEquals(sequenceManagerRecv.notifySuccess(one), VALID);
     assertEquals(sequenceManagerRecv.validateTransactionId(two), VALID);
-    assertTrue(sequenceManagerRecv.notifySuccess(two).isEmpty());
+    assertEquals(sequenceManagerRecv.notifySuccess(two), VALID);
     assertEquals(sequenceManagerRecv.validateTransactionId(three), VALID);
     assertEquals(sequenceManagerRecv.validateTransactionId(otherThree), ALREADY_PROMISED);
     assertFalse(sequenceManagerRecv.notifyFailure(otherThree));
