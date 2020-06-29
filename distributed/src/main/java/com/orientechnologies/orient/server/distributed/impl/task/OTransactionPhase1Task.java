@@ -24,6 +24,7 @@ import com.orientechnologies.orient.core.storage.ORecordDuplicatedException;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
 import com.orientechnologies.orient.core.tx.OTransactionId;
 import com.orientechnologies.orient.core.tx.OTransactionInternal;
+import com.orientechnologies.orient.core.tx.ValidationResult;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.distributed.ODistributedDatabase;
 import com.orientechnologies.orient.server.distributed.ODistributedRequest;
@@ -52,7 +53,6 @@ import java.io.DataOutput;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 import java.util.Set;
 import java.util.SortedSet;
 import java.util.TimerTask;
@@ -212,14 +212,19 @@ public class OTransactionPhase1Task extends OAbstractReplicatedTask implements O
       if (!local) {
         ODistributedDatabase localDistributedDatabase =
             database.getStorageDistributed().getLocalDistributedDatabase();
-        Optional<OTransactionId> result = localDistributedDatabase.validate(id);
-        if (result.isPresent()) {
+        ValidationResult result = localDistributedDatabase.validate(id);
+        if (result == ValidationResult.ALREADY_PROMISED
+            || result == ValidationResult.MISSING_PREVIOUS) {
           ONewDistributedTxContextImpl txContext =
               new ONewDistributedTxContextImpl(
                   (ODistributedDatabaseImpl) localDistributedDatabase, requestId, tx, id);
           txContext.setStatus(TIMEDOUT);
           database.register(requestId, localDistributedDatabase, txContext);
-          return new OTxInvalidSequential(result.get());
+          return new OTxInvalidSequential(null);
+        } else if (result == ValidationResult.ALREADY_PRESENT) {
+          // This send OK to the sender even if already present, the second phase will skip the
+          // apply if already present
+          return new OTxSuccess();
         }
       }
       if (database.beginDistributedTx(requestId, id, tx, local, retryCount)) {

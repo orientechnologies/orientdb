@@ -24,6 +24,7 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSe
 import com.orientechnologies.orient.core.tx.OTransactionId;
 import com.orientechnologies.orient.core.tx.OTransactionSequenceStatus;
 import com.orientechnologies.orient.core.tx.OTxMetadataHolder;
+import com.orientechnologies.orient.core.tx.ValidationResult;
 import com.orientechnologies.orient.server.distributed.task.ORemoteTask;
 import java.io.IOException;
 import java.util.Collection;
@@ -73,7 +74,7 @@ public interface ODistributedDatabase {
 
   void processRequest(ODistributedRequest request, boolean waitForAcceptingRequests);
 
-  Optional<OTransactionId> validate(OTransactionId id);
+  ValidationResult validate(OTransactionId id);
 
   Optional<OTransactionSequenceStatus> status();
 
