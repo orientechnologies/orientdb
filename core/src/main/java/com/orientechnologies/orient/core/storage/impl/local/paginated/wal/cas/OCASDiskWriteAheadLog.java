@@ -25,6 +25,7 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.*;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.cas.deque.Cursor;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.cas.deque.MPSCFAAArrayDequeue;
 import com.sun.jna.Platform;
+import jdk.internal.net.http.frame.WindowUpdateFrame;
 import net.jpountz.xxhash.XXHash64;
 import net.jpountz.xxhash.XXHashFactory;
 
@@ -1446,20 +1447,17 @@ public final class OCASDiskWriteAheadLog implements OWriteAheadLog {
     segments.clear();
     fileCloseQueue.clear();
 
-    for (int i  = 0; i < 2; i++) {
-      try {
-        final OPointer pointer = pointersPool.poll(1, TimeUnit.MINUTES);
-        if (pointer == null) {
-          throw new OStorageException("Can not clear memory allocated by WAL buffer");
+    while (!pointersPool.isEmpty()) {
+        final OPointer pointer = pointersPool.poll();
+
+        if (pointer != null) {
+          allocator.deallocate(pointer);
         }
-        allocator.deallocate(pointer);
-      } catch (InterruptedException interruptedException) {
-        throw OException.wrapException(new OInterruptedException("WAL close was interrupted"),
-            interruptedException);
-      }
     }
 
     if (writeBufferPointer != null) {
+      allocator.deallocate(writeBufferPointer);
+
       writeBufferPointer = null;
       writeBuffer = null;
       writeBufferPageIndex = -1;
@@ -1907,6 +1905,9 @@ public final class OCASDiskWriteAheadLog implements OWriteAheadLog {
                             lastLSN, checkPointLSN);
                       }
 
+                      writeBufferPointer = null;
+                      writeBuffer = null;
+
                       try {
                         writeBufferPointer = pointersPool.take();
                       } catch (InterruptedException interruptedException) {
@@ -2202,7 +2203,7 @@ public final class OCASDiskWriteAheadLog implements OWriteAheadLog {
             bytesWrittenTime += (endTs - startTs);
           }
 
-          final boolean added = pointersPool.offer(writeBufferPointer);
+          final boolean added = pointersPool.offer(bufferPointer);
           if (!added) {
             throw new OStorageException("Can not return byte buffer back to the pool.");
           }
