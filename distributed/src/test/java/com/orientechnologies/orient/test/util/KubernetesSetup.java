@@ -54,8 +54,17 @@ public class KubernetesSetup implements TestSetup {
     if (params == null) {
       throw new OTestSetupException("Cannot get server parameters for " + serverId);
     }
+    AppsV1Api appsV1Api = new AppsV1Api();
     try {
-      doStartServer(serverId, params);
+      // If server already exists, scale it up.
+      String statefulSetName = params.get(TemplateKeys.ORIENTDB_NODE_NAME);
+      V1StatefulSet statefulSet =
+          appsV1Api.readNamespacedStatefulSet(statefulSetName, namespace, null, null, null);
+      if (statefulSet != null) {
+        scaleStatefulSet(statefulSetName, 1);
+      } else {
+        doStartServer(serverId, params);
+      }
       waitForInstances(90, null); // TODO: wait until server is ready
     } catch (ApiException e) {
       throw new OTestSetupException(e.getResponseBody(), e);
@@ -96,25 +105,25 @@ public class KubernetesSetup implements TestSetup {
 
   @Override
   public void shutdownServer(String serverId) throws OTestSetupException {
-    AppsV1Api appsV1Api = new AppsV1Api();
     Map<String, String> param = testConfig.getK8sConfigParams(serverId);
     String name = param.get(TemplateKeys.ORIENTDB_NODE_NAME);
     try {
-      System.out.println("fetching current scale...");
-      V1Scale scale = appsV1Api.readNamespacedStatefulSetScale(name, "default", null);
-      System.out.println("Got: " + scale);
-      //    V1StatefulSet sset = appsV1Api.readNamespacedStatefulSet(name, "default", null, null,
-      // null);
-      V1Scale newScale = new V1ScaleBuilder(scale).withNewSpec().withReplicas(0).endSpec().build();
-      System.out.println("setting new scale...");
-      // Could also use patch
-      appsV1Api.replaceNamespacedStatefulSetScale(name, "default", newScale, null, null, null);
+      scaleStatefulSet(name, 0);
     } catch (ApiException e) {
       throw new OTestSetupException(e.getResponseBody(), e);
     }
   }
 
-  private void scaleStatefulSet(String statefulSetName, int newReplicaCount) {}
+  private void scaleStatefulSet(String statefulSetName, int newReplicaCount) throws ApiException {
+    System.out.printf("Scaling %s to %d replicas.\n", statefulSetName, newReplicaCount);
+    AppsV1Api appsV1Api = new AppsV1Api();
+    V1Scale scale = appsV1Api.readNamespacedStatefulSetScale(statefulSetName, namespace, null);
+    V1Scale newScale =
+        new V1ScaleBuilder(scale).withNewSpec().withReplicas(newReplicaCount).endSpec().build();
+    // Could also use patch
+    appsV1Api.replaceNamespacedStatefulSetScale(
+        statefulSetName, namespace, newScale, null, null, null);
+  }
 
   @Override
   public void teardown() throws OTestSetupException {
@@ -124,7 +133,7 @@ public class KubernetesSetup implements TestSetup {
     for (String serverId : testConfig.getServerIds()) {
       Map<String, String> nodeParam = testConfig.getK8sConfigParams(serverId);
       String configMapName = nodeParam.get(TemplateKeys.ORIENTDB_CONFIG_CM);
-      String nodeName = nodeParam.get(TemplateKeys.ORIENTDB_NODE_NAME);
+      String statefulSetName = nodeParam.get(TemplateKeys.ORIENTDB_NODE_NAME);
       try {
         coreV1Api.deleteNamespacedConfigMap(
             configMapName, "default", null, null, null, null, null, null);
@@ -134,10 +143,11 @@ public class KubernetesSetup implements TestSetup {
       }
       try {
         appsV1Api.deleteNamespacedStatefulSet(
-            nodeName, "default", null, null, null, null, null, null);
-        System.out.printf("deleted StatefulSet %s\n", nodeName);
+            statefulSetName, "default", null, null, null, null, null, null);
+        System.out.printf("deleted StatefulSet %s\n", statefulSetName);
       } catch (ApiException e) {
-        System.out.printf("Error deleting StatefulSet %s: %s\n", nodeName, e.getResponseBody());
+        System.out.printf(
+            "Error deleting StatefulSet %s: %s\n", statefulSetName, e.getResponseBody());
       }
       String serviceName = nodeParam.get(TemplateKeys.ORIENTDB_NODE_NAME);
       try {
@@ -151,12 +161,13 @@ public class KubernetesSetup implements TestSetup {
       try {
         coreV1Api.deleteNamespacedService(
             serviceName, "default", null, null, null, null, null, null);
-        System.out.printf("Deleted Service %s\n", nodeName);
+        System.out.printf("Deleted Service %s\n", serviceName);
       } catch (ApiException e) {
         System.out.printf("Error deleting Service %s: %s\n", serviceName, e.getResponseBody());
       }
     }
-    for (String pvc : PVCsToDelete) {
+    for (Iterator<String> it = PVCsToDelete.iterator(); it.hasNext(); ) {
+      String pvc = it.next();
       try {
         coreV1Api.deleteNamespacedPersistentVolumeClaim(
             pvc, "default", null, null, null, null, null, new V1DeleteOptions());
@@ -169,7 +180,7 @@ public class KubernetesSetup implements TestSetup {
         System.out.printf("Error deleting PVC %s: %s\n", pvc, e.getResponseBody());
       } finally {
         // TODO: to work-around the bug, double-check that PVC is gone here!
-        PVCsToDelete.remove(pvc);
+        it.remove();
       }
     }
   }
