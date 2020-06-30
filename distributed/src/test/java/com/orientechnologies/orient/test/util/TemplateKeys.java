@@ -1,6 +1,6 @@
-package com.orientechnologies.orient.testutil;
+package com.orientechnologies.orient.test.util;
 
-public class StatefulSetTemplateKeys {
+public class TemplateKeys {
   public static final String ORIENTDB_NODE_NAME = "orientdbNodeName";
   public static final String ORIENTDB_LABEL = "orientdbLabel";
   public static final String ORIENTDB_HTTP_PORT = "orientdbHttpPort";
