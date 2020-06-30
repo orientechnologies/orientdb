@@ -31,8 +31,8 @@ import java.util.concurrent.Callable;
  */
 public class OSequenceCached extends OSequence {
   private static final String FIELD_CACHE = "cache";
-  private              long   cacheStart  = 0L;
-  private              long   cacheEnd    = 0L;
+  private long cacheStart = 0L;
+  private long cacheEnd = 0L;
 
   public OSequenceCached() {
     super();
@@ -78,7 +78,12 @@ public class OSequenceCached extends OSequence {
           @Override
           public Long call() throws Exception {
             synchronized (OSequenceCached.this) {
+              long val = getValue();
               int increment = getIncrement();
+
+              if (cacheStart == 0L && val > cacheStart + getCacheSize()) {
+                cacheStart = val - getCacheSize();
+              }
               if (cacheStart + increment >= cacheEnd) {
                 allocateCache(getCacheSize(), finalDb);
               }
@@ -102,11 +107,18 @@ public class OSequenceCached extends OSequence {
 
   @Override
   public synchronized long current() {
+    long currentVal = getValue();
+    if (cacheStart == 0L && currentVal > cacheStart + getCacheSize()) {
+      cacheStart = currentVal - getCacheSize();
+    }
     return this.cacheStart;
   }
 
   @Override
   public long reset() {
+    cacheStart = 0L;
+    cacheEnd = 0L;
+
     ODatabaseDocumentInternal mainDb = getDatabase();
     boolean tx = mainDb.getTransaction().isActive();
     try {
