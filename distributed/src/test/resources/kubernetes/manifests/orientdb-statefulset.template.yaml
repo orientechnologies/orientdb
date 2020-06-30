@@ -1,21 +1,3 @@
-apiVersion: v1
-kind: Service
-metadata:
-  name: ${orientdbNodeName}
-  labels:
-    app: ${orientdbLabel}
-spec:
-  ports:
-    - port: ${orientdbHttpPort}
-      name: http
-    - port: ${orientdbBinaryPort}
-      name: binary
-    - port: ${orientdbHazelcastPort}
-      name: hazelcast
-  clusterIP: None
-  selector:
-    app: ${orientdbLabel}
----
 apiVersion: apps/v1
 kind: StatefulSet
 metadata:
@@ -80,7 +62,6 @@ spec:
         name: databases
       spec:
         accessModes: ["ReadWriteOnce"]
-#        storageClassName: "nfs-client"
         resources:
           requests:
             storage: ${databaseVolSize}Gi
@@ -92,20 +73,3 @@ spec:
         resources:
           requests:
             storage: 100Mi
----
-# A service that exposes the OrientDB instance to clients
-apiVersion: v1
-kind: Service
-metadata:
-  name: ${orientdbNodeName}-service
-  labels:
-    app: ${orientdbLabel}
-spec:
-  type: NodePort
-  ports:
-    - name: binary
-      port: ${orientdbBinaryPort}
-    - name: http
-      port: ${orientdbHttpPort}
-  selector:
-    app: ${orientdbLabel}

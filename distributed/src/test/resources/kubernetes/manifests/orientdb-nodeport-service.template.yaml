@@ -1,0 +1,16 @@
+# A service that exposes the OrientDB instance to clients
+apiVersion: v1
+kind: Service
+metadata:
+  name: ${orientdbNodeName}-service
+  labels:
+    app: ${orientdbLabel}
+spec:
+  type: NodePort
+  ports:
+    - name: binary
+      port: ${orientdbBinaryPort}
+    - name: http
+      port: ${orientdbHttpPort}
+  selector:
+    app: ${orientdbLabel}
