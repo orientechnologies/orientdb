@@ -1,0 +1,18 @@
+{
+  "autoDeploy": true,
+  "readQuorum": 1,
+  "writeQuorum": 1,
+  "readYourWrites": true,
+  "newNodeStrategy": "dynamic",
+  "servers": {
+    "europe-0": "master",
+    "*": "replica"
+  },
+  "clusters": {
+    "internal": {
+    },
+    "*": {
+      "servers": ["<NEW_NODE>"]
+    }
+  }
+}
