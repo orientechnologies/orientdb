@@ -260,7 +260,7 @@ public class ONewDistributedTransactionManager {
           }
         case OTxInvalidSequential.ID:
           // This never happen in local only, keep the management anyway
-          throw new OInvalidSequentialException(((OTxInvalidSequential) localResult).getCurrent());
+          throw new OInvalidSequentialException();
       }
       return;
     }
@@ -399,8 +399,7 @@ public class ONewDistributedTransactionManager {
         case OTxInvalidSequential.ID:
           sendPhase2Task(involvedClusters, nodes, newSecondPhase(requestId, txTask, false));
           localKo(requestId, database);
-          throw new OInvalidSequentialException(
-              ((OTxInvalidSequential) resultPayload).getCurrent());
+          throw new OInvalidSequentialException();
       }
 
       for (OTransactionResultPayload result : responseManager.getAllResponses()) {
@@ -473,7 +472,7 @@ public class ONewDistributedTransactionManager {
           case OTxInvalidSequential.ID:
             sendPhase2Task(involvedClusters, nodes, newSecondPhase(requestId, txTask, false));
             localKo(requestId, database);
-            throw new OInvalidSequentialException(((OTxInvalidSequential) result).getCurrent());
+            throw new OInvalidSequentialException();
         }
       }
       sendPhase2Task(involvedClusters, nodes, newSecondPhase(requestId, txTask, false));
