@@ -2,6 +2,8 @@ apiVersion: apps/v1
 kind: StatefulSet
 metadata:
   name: ${orientdbNodeName}
+  labels:
+    app: ${orientdbLabel}
 spec:
   selector:
     matchLabels:
@@ -33,6 +35,18 @@ spec:
               protocol: TCP
             - containerPort: ${orientdbHazelcastPort}
               protocol: TCP
+          livenessProbe:
+            tcpSocket:
+              port: ${orientdbBinaryPort}
+            initialDelaySeconds: 15
+            periodSeconds: 20
+            failureThreshold: 5
+          readinessProbe:
+            tcpSocket:
+              port: ${orientdbBinaryPort}
+            initialDelaySeconds: 10
+            periodSeconds: 20
+            failureThreshold: 5
           volumeMounts:
             - name: databases
               mountPath: /orientdb/databases

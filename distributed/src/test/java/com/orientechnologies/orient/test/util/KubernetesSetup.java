@@ -1,6 +1,7 @@
 package com.orientechnologies.orient.test.util;
 
 import com.google.gson.JsonSyntaxException;
+import com.google.gson.reflect.TypeToken;
 import io.kubernetes.client.openapi.ApiClient;
 import io.kubernetes.client.openapi.ApiException;
 import io.kubernetes.client.openapi.Configuration;
@@ -10,7 +11,9 @@ import io.kubernetes.client.openapi.apis.CoreV1Api;
 import io.kubernetes.client.openapi.models.*;
 import io.kubernetes.client.util.ClientBuilder;
 import io.kubernetes.client.util.KubeConfig;
+import io.kubernetes.client.util.Watch;
 import io.kubernetes.client.util.Yaml;
+import okhttp3.OkHttpClient;
 import org.apache.commons.text.StringSubstitutor;
 
 import java.io.FileReader;
@@ -20,6 +23,7 @@ import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.*;
+import java.util.concurrent.TimeUnit;
 
 public class KubernetesSetup implements TestSetup {
   public static final String ORIENTDB_HEADLESS_SERVICE_TEMPLATE =
@@ -65,10 +69,15 @@ public class KubernetesSetup implements TestSetup {
       } else {
         doStartServer(serverId, params);
       }
-      waitForInstances(90, null); // TODO: wait until server is ready
+      waitForInstances(
+          90,
+          Collections.singletonList(serverId),
+          String.format(
+              "app=%s",
+              params.get(TemplateKeys.ORIENTDB_LABEL))); // TODO: wait until server is ready
     } catch (ApiException e) {
       throw new OTestSetupException(e.getResponseBody(), e);
-    } catch (IOException | URISyntaxException | InterruptedException e) {
+    } catch (IOException | URISyntaxException e) {
       throw new OTestSetupException(e);
     }
   }
@@ -89,18 +98,87 @@ public class KubernetesSetup implements TestSetup {
       }
     }
     // TODO: wait until all servers are ready
+    String label =
+        testConfig
+            .getK8sConfigParams(testConfig.getServerIds().get(0))
+            .get(TemplateKeys.ORIENTDB_LABEL);
     try {
-      waitForInstances(90, null);
-    } catch (InterruptedException e) {
+      waitForInstances(90, testConfig.getServerIds(), String.format("app=%s", label));
+    } catch (IOException e) {
       throw new OTestSetupException("Error waiting for server to start", e);
+    } catch (ApiException e) {
+      throw new OTestSetupException(e.getResponseBody(), e);
     }
   }
 
-  private void waitForInstances(long timeoutSecond, List<String> serverIds)
-      throws InterruptedException {
-    System.out.println("wait till instance is ready");
-    Thread.sleep(timeoutSecond * 1000);
+  private void waitForInstances(int timeoutSecond, List<String> serverIds, String labelSelector)
+      throws ApiException, IOException {
+    System.out.printf("wait till instances %s re ready\n", serverIds);
+    Set<String> ids = new HashSet<>(serverIds);
+
+    ApiClient client = Configuration.getDefaultApiClient();
+    // infinite timeout
+    OkHttpClient httpClient =
+        client.getHttpClient().newBuilder().readTimeout(0, TimeUnit.SECONDS).build();
+    client.setHttpClient(httpClient);
+    Configuration.setDefaultApiClient(client);
+
+    AppsV1Api appsV1Api = new AppsV1Api();
+    Watch<V1StatefulSet> watch =
+        Watch.createWatch(
+            Configuration.getDefaultApiClient(),
+            appsV1Api.listNamespacedStatefulSetCall(
+                namespace,
+                null,
+                null,
+                null,
+                null,
+                labelSelector, // TODO: does timeout work? w/ wrong label?
+                null,
+                null,
+                timeoutSecond,
+                true,
+                null),
+            new TypeToken<Watch.Response<V1StatefulSet>>() {}.getType());
+    final long started = System.currentTimeMillis();
+    try {
+      // TODO: do we need another timer to get out of the watch loop?
+      for (Watch.Response<V1StatefulSet> item : watch) {
+        if (item.type.equalsIgnoreCase("ERROR")) {
+          System.out.printf("Got error from watch: %s\n", item.status.getMessage());
+        } else {
+          String id = item.object.getMetadata().getName();
+          System.out.printf("Got watch update for %s, type=%s.\n", id, item.type);
+          if (areThereReadyReplicas(item.object) && ids.contains(id)) {
+            System.out.printf("Server %s has at least one ready replica.\n", id);
+            ids.remove(id);
+            if (ids.isEmpty()) {
+              System.out.println("All instances are ready. Exit watch.");
+              break;
+            }
+          } else {
+            System.out.printf("Server %s is still not ready!\n", id);
+          }
+        }
+      }
+    } finally {
+      System.out.println("Closing watch.");
+      watch.close();
+    }
+    if (System.currentTimeMillis() > (started + timeoutSecond * 1000) && !ids.isEmpty()) {
+      throw new OTestSetupException("Timed out waiting for instances to get ready.");
+    }
+    //    Thread.sleep(timeoutSecond * 1000);
     System.out.println("creating database...");
+  }
+
+  private boolean areThereReadyReplicas(V1StatefulSet statefulSet) {
+    if (statefulSet.getStatus() != null
+        && statefulSet.getStatus().getReadyReplicas() != null
+        && statefulSet.getStatus().getReadyReplicas() > 0) {
+      return true;
+    }
+    return false;
   }
 
   @Override
@@ -186,11 +264,14 @@ public class KubernetesSetup implements TestSetup {
   }
 
   @Override
-  public String getRemoteAddress() {
-    String serverId = testConfig.getServerIds().get(0);
-    String address =
-        testConfig.getK8sConfigParams(serverId).get(TemplateKeys.ORIENTDB_BINARY_ADDRESS);
-    return "remote:" + address;
+  public String getAddress(String serverId, PortType port) {
+    switch (port) {
+    case HTTP:
+      return testConfig.getK8sConfigParams(serverId).get(TemplateKeys.ORIENTDB_HTTP_ADDRESS);
+    case BINARY:
+      return testConfig.getK8sConfigParams(serverId).get(TemplateKeys.ORIENTDB_BINARY_ADDRESS);
+    }
+    return null;
   }
 
   @Override
