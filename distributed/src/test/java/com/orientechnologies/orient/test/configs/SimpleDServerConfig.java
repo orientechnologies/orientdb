@@ -3,12 +3,10 @@ package com.orientechnologies.orient.test.configs;
 import com.orientechnologies.orient.test.util.TemplateKeys;
 import com.orientechnologies.orient.test.util.TestConfig;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class SimpleDServerConfig implements TestConfig {
+  private static List<String> serverIds = Arrays.asList("server0", "server1", "server2");
   private static Map<String, String> serverConfigFiles =
       new HashMap<String, String>() {
         {
@@ -44,7 +42,7 @@ public class SimpleDServerConfig implements TestConfig {
 
   @Override
   public List<String> getServerIds() {
-    return new ArrayList<>(serverConfigFiles.keySet());
+    return serverIds;
   }
 
   @Override
