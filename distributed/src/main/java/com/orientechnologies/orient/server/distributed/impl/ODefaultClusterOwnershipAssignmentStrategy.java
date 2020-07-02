@@ -20,6 +20,7 @@
 package com.orientechnologies.orient.server.distributed.impl;
 
 import com.orientechnologies.common.util.OPair;
+import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseInternal;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OClassImpl;
@@ -83,9 +84,9 @@ public class ODefaultClusterOwnershipAssignmentStrategy implements OClusterOwner
 
     Collection<String> allClusterNames = iDatabase.getClusterNames();
 
-    final List<String> serversToCreateANewCluster = new ArrayList<String>();
-
-    if (canCreateNewClusters)
+    boolean enabledCreateCluster = iDatabase.getConfiguration().getValueAsBoolean(OGlobalConfiguration.DISTRIBUTED_AUTO_CREATE_CLUSTERS);
+    if (canCreateNewClusters && enabledCreateCluster) {
+      final List<String> serversToCreateANewCluster = new ArrayList<String>();
       for (String server : availableNodes) {
         final List<String> ownedClusters = cfg.getOwnedClustersByServer(clusterNames, server);
         if (ownedClusters.isEmpty()) {
@@ -101,7 +102,10 @@ public class ODefaultClusterOwnershipAssignmentStrategy implements OClusterOwner
           assignClusterOwnership(iDatabase, cfg, iClass, newClusterName, server);
         }
       }
-    return serversToCreateANewCluster;
+      return serversToCreateANewCluster;
+    } else {
+      return Collections.emptyList();
+    }
   }
 
   protected Map<String, String> reassignClusters(final ODistributedConfiguration cfg, final Set<String> availableNodes,
