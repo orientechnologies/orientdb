@@ -113,7 +113,7 @@ public class KubernetesSetup implements TestSetup {
 
   private void waitForInstances(int timeoutSecond, List<String> serverIds, String labelSelector)
       throws ApiException, IOException {
-    System.out.printf("wait till instances %s re ready\n", serverIds);
+    System.out.printf("Wait till instances %s are ready\n", serverIds);
     Set<String> ids = new HashSet<>(serverIds);
 
     ApiClient client = Configuration.getDefaultApiClient();
@@ -148,28 +148,27 @@ public class KubernetesSetup implements TestSetup {
           System.out.printf("Got error from watch: %s\n", item.status.getMessage());
         } else {
           String id = item.object.getMetadata().getName();
-          System.out.printf("Got watch update for %s, type=%s.\n", id, item.type);
+//          System.out.printf("Got watch update for %s, type=%s.\n", id, item.type);
           if (areThereReadyReplicas(item.object) && ids.contains(id)) {
-            System.out.printf("Server %s has at least one ready replica.\n", id);
+            System.out.printf("  Server %s has at least one ready replica.\n", id);
             ids.remove(id);
             if (ids.isEmpty()) {
-              System.out.println("All instances are ready. Exit watch.");
+              System.out.printf("  All instances %s are ready.\n", serverIds);
               break;
             }
-          } else {
-            System.out.printf("Server %s is still not ready!\n", id);
           }
+//          else {
+//            System.out.printf("Server %s is still not ready!\n", id);
+//          }
         }
       }
     } finally {
-      System.out.println("Closing watch.");
+//      System.out.println("Closing watch.");
       watch.close();
     }
     if (System.currentTimeMillis() > (started + timeoutSecond * 1000) && !ids.isEmpty()) {
       throw new OTestSetupException("Timed out waiting for instances to get ready.");
     }
-    //    Thread.sleep(timeoutSecond * 1000);
-    System.out.println("creating database...");
   }
 
   private boolean areThereReadyReplicas(V1StatefulSet statefulSet) {

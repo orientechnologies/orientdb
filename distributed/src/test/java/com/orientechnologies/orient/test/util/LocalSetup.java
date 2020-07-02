@@ -1,8 +1,5 @@
 package com.orientechnologies.orient.test.util;
 
-import com.orientechnologies.orient.core.db.OrientDB;
-import com.orientechnologies.orient.core.db.OrientDBConfig;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.network.protocol.binary.ONetworkProtocolBinary;
 import com.orientechnologies.orient.server.network.protocol.http.ONetworkProtocolHttpDb;
@@ -64,13 +61,7 @@ public class LocalSetup implements TestSetup {
   @Override
   public void teardown() {
     System.out.println("shutdown");
-    // todo: pass custom teardown
-    String address = "remote:" + getAddress(config.getServerIds().get(0), PortType.BINARY);
-    OrientDB remote = new OrientDB(address, "root", "test", OrientDBConfig.defaultConfig());
-    remote.drop("test");
-    remote.close();
     for (OServer server : servers.values()) server.shutdown();
-    ODatabaseDocumentTx.closeAll();
   }
 
   @Override
