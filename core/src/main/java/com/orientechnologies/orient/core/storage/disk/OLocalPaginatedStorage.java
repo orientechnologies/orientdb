@@ -81,7 +81,7 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage {
       OHashTableIndexEngine.TREE_FILE_EXTENSION, OHashTableIndexEngine.NULL_BUCKET_FILE_EXTENSION,
       OClusterPositionMap.DEF_EXTENSION, OSBTreeIndexEngine.DATA_FILE_EXTENSION, OIndexRIDContainer.INDEX_FILE_EXTENSION,
       OSBTreeCollectionManagerShared.DEFAULT_EXTENSION, OSBTreeIndexEngine.NULL_BUCKET_FILE_EXTENSION,
-      O2QCache.CACHE_STATISTIC_FILE_EXTENSION, OClusterBasedStorageConfiguration.MAP_FILE_EXTENSION,
+      OClusterBasedStorageConfiguration.MAP_FILE_EXTENSION,
       OClusterBasedStorageConfiguration.DATA_FILE_EXTENSION, OClusterBasedStorageConfiguration.TREE_DATA_FILE_EXTENSION,
       OClusterBasedStorageConfiguration.TREE_NULL_FILE_EXTENSION, OCellBTreeMultiValueIndexEngine.DATA_FILE_EXTENSION,
       OCellBTreeMultiValueIndexEngine.M_CONTAINER_EXTENSION };
@@ -220,7 +220,7 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage {
               zos.setLevel(compressionLevel);
 
               final List<String> names = OZIPCompressionUtil.compressDirectory(storagePath.toString(), zos,
-                  new String[] { ".fl", O2QCache.CACHE_STATISTIC_FILE_EXTENSION, ".lock" }, iOutput);
+                  new String[] { ".fl", ".lock" }, iOutput);
               OPaginatedStorageDirtyFlag.addFileToArchive(zos, "dirty.fl");
               names.add("dirty.fl");
               return names;
@@ -287,24 +287,6 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage {
               String ending = walName.substring(segmentIndex);
               f.renameTo(new File(f.getParent(), getName() + ending));
             }
-          }
-        }
-
-        final Path cacheStateFile = storagePath.resolve(O2QCache.CACHE_STATE_FILE);
-        if (Files.exists(cacheStateFile)) {
-          String message = "the cache state file (" + O2QCache.CACHE_STATE_FILE + ") is found in the backup, deleting the file";
-          OLogManager.instance().warn(this, message);
-          if (iListener != null)
-            iListener.onMessage('\n' + message);
-
-          try {
-            Files.deleteIfExists(cacheStateFile); // delete it, if it still exists
-          } catch (final IOException e) {
-            message =
-                "unable to delete the backed up cache state file (" + O2QCache.CACHE_STATE_FILE + "), please delete it manually";
-            OLogManager.instance().warn(this, message, e);
-            if (iListener != null)
-              iListener.onMessage('\n' + message);
           }
         }
 

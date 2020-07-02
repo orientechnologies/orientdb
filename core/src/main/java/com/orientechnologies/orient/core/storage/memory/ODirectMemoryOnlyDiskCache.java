@@ -198,6 +198,12 @@ public final class ODirectMemoryOnlyDiskCache extends OAbstractWriteCache implem
   }
 
   @Override
+  public OCacheEntry silentLoadForRead(long fileId, int pageIndex,
+      OWriteCache writeCache, boolean verifyChecksums) {
+    return loadForRead(fileId, pageIndex, true, writeCache, 1, verifyChecksums);
+  }
+
+  @Override
   public final OCacheEntry loadForRead(final long fileId, final long pageIndex, final boolean checkPinnedPages,
       final OWriteCache writeCache, final int pageCount, final boolean verifyChecksums) {
 

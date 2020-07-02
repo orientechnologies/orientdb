@@ -204,6 +204,12 @@ public final class O2QCache implements OReadCache {
   }
 
   @Override
+  public OCacheEntry silentLoadForRead(long fileId, int pageIndex,
+      OWriteCache writeCache, boolean verifyChecksums) {
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
   public final long addFile(final String fileName, long fileId, final OWriteCache writeCache) throws IOException {
     fileId = OAbstractWriteCache.checkFileIdCompatibility(writeCache.getId(), fileId);
 

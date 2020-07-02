@@ -71,6 +71,14 @@ public interface OReadCache {
   OCacheEntry loadForRead(long fileId, long pageIndex, boolean checkPinnedPages, OWriteCache writeCache, int pageCount,
       boolean verifyChecksums) throws IOException;
 
+  /**
+   * Loads page from the disk cache if it is already loaded otherwise loads it from disk but does
+   * not put it the disk cache. In some scenarios usage of this method can lead to concurrency
+   * issues so please use it carefully.
+   */
+  OCacheEntry silentLoadForRead(final long fileId,final int pageIndex,
+      final OWriteCache writeCache,final boolean verifyChecksums);
+
   void releaseFromRead(OCacheEntry cacheEntry, OWriteCache writeCache);
 
   void releaseFromWrite(OCacheEntry cacheEntry, OWriteCache writeCache);
