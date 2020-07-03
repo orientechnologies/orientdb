@@ -1332,14 +1332,17 @@ public class OSecurityShared implements OSecurityInternal {
       return;
     }
     OSecurityUser user = session.getUser();
-    if (user != null) {
-      ((ODatabaseDocumentInternal) session).setUser(null);
-    }
+    try {
+      if (user != null) {
+        ((ODatabaseDocumentInternal) session).setUser(null);
+      }
 
-    initPredicateSecurityOptimizationsInternal(session);
+      initPredicateSecurityOptimizationsInternal(session);
+    } finally {
 
-    if (user != null) {
-      ((ODatabaseDocumentInternal) session).setUser(user);
+      if (user != null) {
+        ((ODatabaseDocumentInternal) session).setUser(user);
+      }
     }
   }
 
@@ -1815,16 +1818,19 @@ public class OSecurityShared implements OSecurityInternal {
 
   protected void updateAllFilteredPropertiesInternal(ODatabaseDocumentInternal session) {
     OSecurityUser user = session.getUser();
-    if (user != null) {
-      session.setUser(null);
-    }
+    try {
+      if (user != null) {
+        session.setUser(null);
+      }
 
-    synchronized (OSecurityShared.this) {
-      filteredProperties.clear();
-      filteredProperties.addAll(calculateAllFilteredProperties(session));
-    }
-    if (user != null) {
-      session.setUser(user);
+      synchronized (OSecurityShared.this) {
+        filteredProperties.clear();
+        filteredProperties.addAll(calculateAllFilteredProperties(session));
+      }
+    } finally {
+      if (user != null) {
+        session.setUser(user);
+      }
     }
   }
 
