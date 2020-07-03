@@ -924,10 +924,14 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
     }
     return onlineNodes;
   }
-
   @Override
-  public boolean installDatabase(final boolean iStartup, final String databaseName, final boolean forceDeployment,
+  public boolean installDatabase(final boolean backup, final String databaseName, final boolean forceDeployment,
       final boolean tryWithDeltaFirst) {
+    return installDatabase(backup, databaseName, forceDeployment, tryWithDeltaFirst, false);
+  }
+
+  public boolean installDatabase(final boolean backup, final String databaseName, final boolean forceDeployment,
+      final boolean tryWithDeltaFirst,boolean manualSync) {
     if (getDatabaseStatus(getLocalNodeName(), databaseName) == DB_STATUS.OFFLINE)
       // OFFLINE: AVOID TO INSTALL IT
       return false;
@@ -940,8 +944,15 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
       return false;
     }
 
+    if(!manualSync && messageService.getDatabases().contains(databaseName)) {
+      if (!serverInstance.getContextConfiguration().getValueAsBoolean(OGlobalConfiguration.DISTRIBUTED_AUTO_SYNC)) {
+        setDatabaseStatus(getLocalNodeName(), databaseName, DB_STATUS.OFFLINE);
+        return false;
+      }
+    }
+      
     final ODistributedDatabaseImpl distrDatabase = messageService.registerDatabase(databaseName, null);
-
+    
     try {
       installingDatabases.add(databaseName);
       return executeInDistributedDatabaseLock(databaseName, 20000, null,
@@ -994,7 +1005,7 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
                   }
 
                   // FIRST TIME, ASK FOR FULL REPLICA
-                  databaseInstalled = requestFullDatabase(distrDatabase, databaseName, iStartup, cfg);
+                  databaseInstalled = requestFullDatabase(distrDatabase, databaseName, backup, cfg);
 
                 } else {
                   if (tryWithDeltaFirst) {
@@ -1015,11 +1026,11 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
                         return false;
                       }
 
-                      databaseInstalled = requestFullDatabase(distrDatabase, databaseName, iStartup, cfg);
+                      databaseInstalled = requestFullDatabase(distrDatabase, databaseName, backup, cfg);
                     }
                   } else
                     // SKIP DELTA AND EXECUTE FULL BACKUP
-                    databaseInstalled = requestFullDatabase(distrDatabase, databaseName, iStartup, cfg);
+                    databaseInstalled = requestFullDatabase(distrDatabase, databaseName, backup, cfg);
                 }
 
                 if (databaseInstalled) {
