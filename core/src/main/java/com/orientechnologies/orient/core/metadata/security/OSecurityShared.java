@@ -1331,19 +1331,15 @@ public class OSecurityShared implements OSecurityInternal {
     if (skipRoleHasPredicateSecurityForClassUpdate) {
       return;
     }
+    OSecurityUser user = session.getUser();
+    if (user != null) {
+      ((ODatabaseDocumentInternal) session).setUser(null);
+    }
 
-    if (session.getUser() == null) {
-      initPredicateSecurityOptimizationsInternal(session);
-    } else {
-      ((ODatabaseDocumentInternal) session)
-          .getSharedContext()
-          .getOrientDB()
-          .executeNoAuthorization(
-              session.getName(),
-              (db -> {
-                initPredicateSecurityOptimizationsInternal(db);
-                return null;
-              }));
+    initPredicateSecurityOptimizationsInternal(session);
+
+    if (user != null) {
+      ((ODatabaseDocumentInternal) session).setUser(user);
     }
   }
 
@@ -1818,22 +1814,17 @@ public class OSecurityShared implements OSecurityInternal {
   }
 
   protected void updateAllFilteredPropertiesInternal(ODatabaseDocumentInternal session) {
-    session
-        .getSharedContext()
-        .getOrientDB()
-        .executeNoAuthorization(
-            session.getName(),
-            (db -> {
-              synchronized (OSecurityShared.this) {
-                filteredProperties.clear();
-                filteredProperties.addAll(calculateAllFilteredProperties(db));
-              }
-              return null;
-            }));
-    try {
-      Thread.sleep(50);
-    } catch (InterruptedException e) {
-      e.printStackTrace();
+    OSecurityUser user = session.getUser();
+    if (user != null) {
+      session.setUser(null);
+    }
+
+    synchronized (OSecurityShared.this) {
+      filteredProperties.clear();
+      filteredProperties.addAll(calculateAllFilteredProperties(session));
+    }
+    if (user != null) {
+      session.setUser(user);
     }
   }
 
