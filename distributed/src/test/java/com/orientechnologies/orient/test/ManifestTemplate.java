@@ -1,6 +1,5 @@
-package com.orientechnologies.orient.test.util;
+package com.orientechnologies.orient.test;
 
-import com.orientechnologies.orient.test.configs.K8sConfigs;
 import org.apache.commons.text.StringSubstitutor;
 
 import java.io.IOException;
@@ -25,34 +24,34 @@ public class ManifestTemplate {
   public static final String ORIENTDB_STATEFULSET_TEMPLATE =
       "/kubernetes/manifests/orientdb-statefulset.template.yaml";
 
-  public static String generateStatefulSet(K8sConfigs configs)
+  public static String generateStatefulSet(K8sServerConfig configs)
       throws IOException, URISyntaxException {
     return generateManifest(configs, ORIENTDB_STATEFULSET_TEMPLATE);
   }
 
-  public static String generateHeadlessService(K8sConfigs configs)
+  public static String generateHeadlessService(K8sServerConfig configs)
       throws IOException, URISyntaxException {
     return generateManifest(configs, ORIENTDB_HEADLESS_SERVICE_TEMPLATE);
   }
 
-  public static String generateNodePortService(K8sConfigs configs)
+  public static String generateNodePortService(K8sServerConfig configs)
       throws IOException, URISyntaxException {
     return generateManifest(configs, ORIENTDB_NODEPORT_SERVICE_TEMPLATE);
   }
 
-  public static String generateManifest(K8sConfigs configs, String templateFile)
+  public static String generateManifest(K8sServerConfig configs, String templateFile)
       throws IOException, URISyntaxException {
     StringSubstitutor substitutor = new StringSubstitutor(createSubstitutorValueMap(configs));
     String template = TestSetupUtil.readAllLines(templateFile);
     return substitutor.replace(template);
   }
 
-  public static Map<String, String> createSubstitutorValueMap(K8sConfigs config) {
+  public static Map<String, String> createSubstitutorValueMap(K8sServerConfig config) {
     return new HashMap<String, String>() {
       {
         put(ORIENTDB_NODE_NAME, config.getNodeName());
         put(ORIENTDB_DB_VOL_SIZE, config.getDbVolumeSize());
-        put(ORIENTDB_LABEL, config.getLabel());
+        put(ORIENTDB_LABEL, TestSetupUtil.getOrientDBKubernetesLabel());
         put(ORIENTDB_HTTP_PORT, config.getHttpPort());
         put(ORIENTDB_BINARY_PORT, config.getBinaryPort());
         put(ORIENTDB_HAZELCAST_PORT, config.getHazelcastPort());

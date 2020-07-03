@@ -1,11 +1,9 @@
-package com.orientechnologies.orient.test.util;
+package com.orientechnologies.orient.test;
 
 import com.google.gson.JsonSyntaxException;
 import com.google.gson.reflect.TypeToken;
 import com.orientechnologies.orient.core.db.OrientDB;
 import com.orientechnologies.orient.core.db.OrientDBConfig;
-import com.orientechnologies.orient.test.OrientDBIT;
-import com.orientechnologies.orient.test.configs.K8sConfigs;
 import io.kubernetes.client.openapi.ApiClient;
 import io.kubernetes.client.openapi.ApiException;
 import io.kubernetes.client.openapi.Configuration;
@@ -26,16 +24,18 @@ import java.util.*;
 import java.util.concurrent.TimeUnit;
 
 public class KubernetesSetup implements TestSetup {
+  // Used for listing OrientDB stateful sets.
+  private static final String statefulSetLabelSelector =
+      String.format("app=%s", TestSetupUtil.getOrientDBKubernetesLabel());
+  private static final int readyReplicaTimeoutSeconds = 90;
+
   private String nodeAddress;
   private TestConfig testConfig;
   // TODO: fetch namespace from env/mvn
-  // TODO: should I use an execution profile? Exclude those not possible to setup on K8s.
   private String namespace = "default";
   private Set<String> PVCsToDelete = new HashSet<>();
 
-  public KubernetesSetup(
-      String kubeConfigFile, com.orientechnologies.orient.test.util.TestConfig config)
-      throws IOException {
+  public KubernetesSetup(String kubeConfigFile, TestConfig config) throws IOException {
     this.testConfig = config;
     KubeConfig kubeConfig = KubeConfig.loadKubeConfig(new FileReader(kubeConfigFile));
     String serverAddress = kubeConfig.getServer();
@@ -46,56 +46,52 @@ public class KubernetesSetup implements TestSetup {
   }
 
   @Override
-  public void startServer(String serverId) throws OTestSetupException {
-    K8sConfigs params = testConfig.getK8sConfigs(serverId);
-    if (params == null) {
-      throw new OTestSetupException("Cannot get server parameters for " + serverId);
-    }
-    // todo: validate params
+  public void startServer(String serverId) throws TestSetupException {
+    K8sServerConfig serverConfig = testConfig.getK8sConfigs(serverId);
+    serverConfig.validate();
     AppsV1Api appsV1Api = new AppsV1Api();
     try {
       // If server already exists, scale it up.
-      String statefulSetName = params.getNodeName();
+      String statefulSetName = serverConfig.getNodeName();
       V1StatefulSet statefulSet =
           appsV1Api.readNamespacedStatefulSet(statefulSetName, namespace, null, null, null);
       if (statefulSet != null) {
         scaleStatefulSet(statefulSetName, 1);
       } else {
-        doStartServer(serverId, params);
+        doStartServer(serverId, serverConfig);
       }
       waitForInstances(
-          90, Collections.singletonList(serverId), String.format("app=%s", params.getLabel()));
+          readyReplicaTimeoutSeconds,
+          Collections.singletonList(serverId),
+          statefulSetLabelSelector);
     } catch (ApiException e) {
-      throw new OTestSetupException(e.getResponseBody(), e);
+      throw new TestSetupException(e.getResponseBody(), e);
     } catch (IOException | URISyntaxException e) {
-      throw new OTestSetupException(e);
+      throw new TestSetupException(e);
     }
   }
 
   @Override
-  public void start() throws OTestSetupException {
+  public void start() throws TestSetupException {
     for (String serverId : testConfig.getServerIds()) {
-      K8sConfigs params = testConfig.getK8sConfigs(serverId);
-      if (params == null) {
-        throw new OTestSetupException("Cannot get server parameters for " + serverId);
-      }
-      // todo: validate params
+      K8sServerConfig serverConfig = testConfig.getK8sConfigs(serverId);
+      serverConfig.validate();
       try {
-        doStartServer(serverId, params);
+        doStartServer(serverId, serverConfig);
       } catch (ApiException e) {
-        throw new OTestSetupException(e.getResponseBody(), e);
+        throw new TestSetupException(e.getResponseBody(), e);
       } catch (IOException | URISyntaxException e) {
-        throw new OTestSetupException(e);
+        throw new TestSetupException(e);
       }
     }
 
-    String label = testConfig.getK8sConfigs(testConfig.getServerIds().get(0)).getLabel();
     try {
-      waitForInstances(90, testConfig.getServerIds(), String.format("app=%s", label));
+      waitForInstances(
+          readyReplicaTimeoutSeconds, testConfig.getServerIds(), statefulSetLabelSelector);
     } catch (IOException e) {
-      throw new OTestSetupException("Error waiting for server to start", e);
+      throw new TestSetupException("Error waiting for server to start", e);
     } catch (ApiException e) {
-      throw new OTestSetupException(e.getResponseBody(), e);
+      throw new TestSetupException(e.getResponseBody(), e);
     }
   }
 
@@ -105,9 +101,8 @@ public class KubernetesSetup implements TestSetup {
     Set<String> ids = new HashSet<>(serverIds);
 
     ApiClient client = Configuration.getDefaultApiClient();
-    // infinite timeout
     OkHttpClient httpClient =
-        client.getHttpClient().newBuilder().readTimeout(0, TimeUnit.SECONDS).build();
+        client.getHttpClient().newBuilder().readTimeout(300, TimeUnit.SECONDS).build();
     client.setHttpClient(httpClient);
     Configuration.setDefaultApiClient(client);
 
@@ -121,7 +116,7 @@ public class KubernetesSetup implements TestSetup {
                 null,
                 null,
                 null,
-                labelSelector, // TODO: does timeout work? w/ wrong label?
+                labelSelector,
                 null,
                 null,
                 timeoutSecond,
@@ -130,13 +125,11 @@ public class KubernetesSetup implements TestSetup {
             new TypeToken<Watch.Response<V1StatefulSet>>() {}.getType());
     final long started = System.currentTimeMillis();
     try {
-      // TODO: do we need another timer to get out of the watch loop?
       for (Watch.Response<V1StatefulSet> item : watch) {
         if (item.type.equalsIgnoreCase("ERROR")) {
           System.out.printf("Got error from watch: %s\n", item.status.getMessage());
         } else {
           String id = item.object.getMetadata().getName();
-          //          System.out.printf("Got watch update for %s, type=%s.\n", id, item.type);
           if (areThereReadyReplicas(item.object) && ids.contains(id)) {
             System.out.printf("  Server %s has at least one ready replica.\n", id);
             ids.remove(id);
@@ -145,17 +138,13 @@ public class KubernetesSetup implements TestSetup {
               break;
             }
           }
-          //          else {
-          //            System.out.printf("Server %s is still not ready!\n", id);
-          //          }
         }
       }
     } finally {
-      //      System.out.println("Closing watch.");
       watch.close();
     }
     if (System.currentTimeMillis() > (started + timeoutSecond * 1000) && !ids.isEmpty()) {
-      throw new OTestSetupException("Timed out waiting for instances to get ready.");
+      throw new TestSetupException("Timed out waiting for instances to get ready.");
     }
   }
 
@@ -169,18 +158,13 @@ public class KubernetesSetup implements TestSetup {
   }
 
   @Override
-  public void shutdownServer(String serverId) throws OTestSetupException {
-    try {
-      Thread.sleep(10000);
-    } catch (InterruptedException e) {
-      e.printStackTrace();
-    }
-    K8sConfigs param = testConfig.getK8sConfigs(serverId);
-    String name = param.getNodeName();
+  public void shutdownServer(String serverId) throws TestSetupException {
+    K8sServerConfig config = testConfig.getK8sConfigs(serverId);
+    String name = config.getNodeName();
     try {
       scaleStatefulSet(name, 0);
     } catch (ApiException e) {
-      throw new OTestSetupException(e.getResponseBody(), e);
+      throw new TestSetupException(e.getResponseBody(), e);
     }
   }
 
@@ -196,58 +180,60 @@ public class KubernetesSetup implements TestSetup {
   }
 
   @Override
-  public void teardown() throws OTestSetupException {
+  public void teardown() throws TestSetupException {
     CoreV1Api coreV1Api = new CoreV1Api();
     AppsV1Api appsV1Api = new AppsV1Api();
 
     for (String serverId : testConfig.getServerIds()) {
-      K8sConfigs nodeParam = testConfig.getK8sConfigs(serverId);
-      String configMapName = nodeParam.getConfigMapName();
-      String statefulSetName = nodeParam.getNodeName();
+      System.out.printf("Tearing down node %s.\n", serverId);
+      K8sServerConfig config = testConfig.getK8sConfigs(serverId);
+      String configMapName = config.getConfigMapName();
+      String statefulSetName = config.getNodeName();
       try {
         coreV1Api.deleteNamespacedConfigMap(
             configMapName, "default", null, null, null, null, null, null);
-        System.out.printf("deleted ConfigMap %s\n", configMapName);
+        System.out.printf("  Deleted ConfigMap %s\n", configMapName);
       } catch (ApiException e) {
-        System.out.printf("Error deleting ConfigMap %s: %s\n", configMapName, e.getResponseBody());
+        System.out.printf("  Error deleting ConfigMap %s: %s\n", configMapName, e.getResponseBody());
       }
       try {
         appsV1Api.deleteNamespacedStatefulSet(
             statefulSetName, "default", null, null, null, null, null, null);
-        System.out.printf("deleted StatefulSet %s\n", statefulSetName);
+        System.out.printf("  Deleted StatefulSet %s\n", statefulSetName);
       } catch (ApiException e) {
         System.out.printf(
-            "Error deleting StatefulSet %s: %s\n", statefulSetName, e.getResponseBody());
+            "  Error deleting StatefulSet %s: %s\n", statefulSetName, e.getResponseBody());
       }
-      String serviceName = nodeParam.getNodeName();
+      String serviceName = config.getNodeName();
       try {
         coreV1Api.deleteNamespacedService(
             serviceName, "default", null, null, null, null, null, null);
-        System.out.printf("deleted Service %s\n", serviceName);
+        System.out.printf("  Deleted Service %s\n", serviceName);
       } catch (ApiException e) {
-        System.out.printf("Error deleting Service %s: %s\n", serviceName, e.getResponseBody());
+        System.out.printf("  Error deleting Service %s: %s\n", serviceName, e.getResponseBody());
       }
-      serviceName = nodeParam.getNodeName() + "-service";
+      serviceName = config.getNodeName() + "-service";
       try {
         coreV1Api.deleteNamespacedService(
             serviceName, "default", null, null, null, null, null, null);
-        System.out.printf("Deleted Service %s\n", serviceName);
+        System.out.printf("  Deleted Service %s\n", serviceName);
       } catch (ApiException e) {
-        System.out.printf("Error deleting Service %s: %s\n", serviceName, e.getResponseBody());
+        System.out.printf("  Error deleting Service %s: %s\n", serviceName, e.getResponseBody());
       }
     }
+    System.out.println("Removing PVCs.");
     for (Iterator<String> it = PVCsToDelete.iterator(); it.hasNext(); ) {
       String pvc = it.next();
       try {
         coreV1Api.deleteNamespacedPersistentVolumeClaim(
             pvc, "default", null, null, null, null, null, new V1DeleteOptions());
-        System.out.printf("Deleted PVC %s\n", pvc);
+        System.out.printf("  Deleted PVC %s\n", pvc);
       } catch (JsonSyntaxException e) {
         // There is a known bug with the auto-generated 'official' Kubernetes client for Java which
         // can lead to the following call throwing an exception, although it succeeds!
         // https://github.com/kubernetes-client/java/issues/86
       } catch (ApiException e) {
-        System.out.printf("Error deleting PVC %s: %s\n", pvc, e.getResponseBody());
+        System.out.printf("  Error deleting PVC %s: %s\n", pvc, e.getResponseBody());
       } finally {
         // TODO: to work-around the bug, double-check that PVC is gone here!
         it.remove();
@@ -278,7 +264,7 @@ public class KubernetesSetup implements TestSetup {
         "remote:" + getAddress(serverId, PortType.BINARY), serverUser, serverPassword, config);
   }
 
-  private V1ConfigMap createConfigMap(String serverId, K8sConfigs serverParams)
+  private V1ConfigMap createConfigMap(String serverId, K8sServerConfig config)
       throws ApiException, IOException, URISyntaxException {
     CoreV1Api coreV1Api = new CoreV1Api();
     V1ConfigMap configMap =
@@ -286,69 +272,69 @@ public class KubernetesSetup implements TestSetup {
             .withApiVersion("v1")
             .withKind("ConfigMap")
             .withNewMetadata()
-            .withName(serverParams.getConfigMapName())
+            .withName(config.getConfigMapName())
             .withNamespace(namespace)
             .endMetadata()
             .withData(
                 new HashMap<String, String>() {
                   {
-                    put("hazelcast.xml", getEscapedFileContent(serverParams.getHazelcastConfig()));
+                    put("hazelcast.xml", getEscapedFileContent(config.getHazelcastConfig()));
                     put(
                         "default-distributed-db-config.json",
-                        getEscapedFileContent(serverParams.getDistributedDBConfig()));
+                        getEscapedFileContent(config.getDistributedDBConfig()));
                     put(
                         "orientdb-server-config.xml",
-                        getEscapedFileContent(serverParams.getServerConfig()));
+                        getEscapedFileContent(config.getServerConfig()));
                   }
                 })
             .build();
     return coreV1Api.createNamespacedConfigMap(namespace, configMap, null, null, null);
   }
 
-  private V1Service createHeadlessService(String serverId, K8sConfigs serverParams)
+  private V1Service createHeadlessService(String serverId, K8sServerConfig config)
       throws IOException, URISyntaxException, ApiException {
     CoreV1Api coreV1Api = new CoreV1Api();
-    String manifest = ManifestTemplate.generateHeadlessService(serverParams);
+    String manifest = ManifestTemplate.generateHeadlessService(config);
     V1Service service = (V1Service) Yaml.load(manifest);
     return coreV1Api.createNamespacedService(namespace, service, null, null, null);
   }
 
-  private V1Service createNodePortService(String serverId, K8sConfigs serverParams)
+  private V1Service createNodePortService(String serverId, K8sServerConfig config)
       throws IOException, URISyntaxException, ApiException {
     CoreV1Api coreV1Api = new CoreV1Api();
-    String manifest = ManifestTemplate.generateNodePortService(serverParams);
+    String manifest = ManifestTemplate.generateNodePortService(config);
     V1Service service = (V1Service) Yaml.load(manifest);
     return coreV1Api.createNamespacedService(namespace, service, null, null, null);
   }
 
-  private V1StatefulSet createStatefulSet(String serverId, K8sConfigs serverParams)
+  private V1StatefulSet createStatefulSet(String serverId, K8sServerConfig config)
       throws IOException, URISyntaxException, ApiException {
     AppsV1Api appsV1Api = new AppsV1Api();
-    String manifest = ManifestTemplate.generateStatefulSet(serverParams);
+    String manifest = ManifestTemplate.generateStatefulSet(config);
     V1StatefulSet statefulSet = (V1StatefulSet) Yaml.load(manifest);
     return appsV1Api.createNamespacedStatefulSet(namespace, statefulSet, null, null, null);
   }
 
-  private void doStartServer(String serverId, K8sConfigs serverConfigs)
+  private void doStartServer(String serverId, K8sServerConfig config)
       throws ApiException, IOException, URISyntaxException {
     System.out.printf("Starting instance %s.\n", serverId);
-    V1ConfigMap cm = createConfigMap(serverId, serverConfigs);
-    System.out.printf("Created ConfigMap %s for %s.\n", cm.getMetadata().getName(), serverId);
-    V1Service headless = createHeadlessService(serverId, serverConfigs);
+    V1ConfigMap cm = createConfigMap(serverId, config);
+    System.out.printf("  Created ConfigMap %s for %s.\n", cm.getMetadata().getName(), serverId);
+    V1Service headless = createHeadlessService(serverId, config);
     System.out.printf(
-        "Created Headless Service %s for %s.\n", headless.getMetadata().getName(), serverId);
-    V1StatefulSet statefulSet = createStatefulSet(serverId, serverConfigs);
+        "  Created Headless Service %s for %s.\n", headless.getMetadata().getName(), serverId);
+    V1StatefulSet statefulSet = createStatefulSet(serverId, config);
     System.out.printf(
-        "Created StatefulSet %s for %s.\n", statefulSet.getMetadata().getName(), serverId);
+        "  Created StatefulSet %s for %s.\n", statefulSet.getMetadata().getName(), serverId);
     // must also keep track of PVCs to remove later
     for (V1PersistentVolumeClaim pvc : statefulSet.getSpec().getVolumeClaimTemplates()) {
       PVCsToDelete.add(
           String.format(
               "%s-%s-0", pvc.getMetadata().getName(), statefulSet.getMetadata().getName()));
     }
-    V1Service nodePort = createNodePortService(serverId, serverConfigs);
+    V1Service nodePort = createNodePortService(serverId, config);
     System.out.printf(
-        "Created NodePort Service %s for %s.\n", nodePort.getMetadata().getName(), serverId);
+        "  Created NodePort Service %s for %s.\n", nodePort.getMetadata().getName(), serverId);
     nodePort
         .getSpec()
         .getPorts()
@@ -356,12 +342,12 @@ public class KubernetesSetup implements TestSetup {
             port -> {
               if (port.getName().equalsIgnoreCase("http")) {
                 String httpAddress = String.format("%s:%d", nodeAddress, port.getNodePort());
-                serverConfigs.setHttpAddress(httpAddress);
-                System.out.printf("HTTP address for %s: %s\n", serverId, httpAddress);
+                config.setHttpAddress(httpAddress);
+                System.out.printf("  HTTP address for %s: %s\n", serverId, httpAddress);
               } else if (port.getName().equalsIgnoreCase("binary")) {
                 String binaryAddress = String.format("%s:%d", nodeAddress, port.getNodePort());
-                serverConfigs.setBinaryAddress(binaryAddress);
-                System.out.printf("Binary address for %s: %s\n", serverId, binaryAddress);
+                config.setBinaryAddress(binaryAddress);
+                System.out.printf("  Binary address for %s: %s\n", serverId, binaryAddress);
               }
             });
   }

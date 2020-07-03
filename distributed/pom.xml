@@ -103,15 +103,25 @@
         </profile>
         <profile>
             <id>it-k8s</id>
-            <properties>
-                <kubeConfig></kubeConfig>
-                <orientdbLabel>orientdb</orientdbLabel>
-                <orientdbHttpPort>2480</orientdbHttpPort>
-                <orientdbBinaryPort>2424</orientdbBinaryPort>
-                <orientdbHazelcastPort>2434</orientdbHazelcastPort>
-                <orientdbDockerImage>192.168.2.119:5000/pxsalehi/orientdb:3.1.1</orientdbDockerImage>
-                <orientdbVolumeSize>2</orientdbVolumeSize>
-            </properties>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-surefire-plugin</artifactId>
+                        <configuration>
+                            <systemPropertyVariables>
+                                <kubeConfig></kubeConfig>
+                                <orientdbLabel>orientdb</orientdbLabel>
+                                <orientdbHttpPort>2480</orientdbHttpPort>
+                                <orientdbBinaryPort>2424</orientdbBinaryPort>
+                                <orientdbHazelcastPort>2434</orientdbHazelcastPort>
+                                <orientdbDockerImage></orientdbDockerImage>
+                                <orientdbVolumeSize>2</orientdbVolumeSize>
+                            </systemPropertyVariables>
+                        </configuration>
+                    </plugin>
+                </plugins>
+            </build>
         </profile>
     </profiles>
 
@@ -212,9 +222,6 @@
                 <configuration>
                     <reuseForks>false</reuseForks>
                     <forkCount>1</forkCount>
-                    <systemPropertyVariables>
-                        <kube.config>/home/pxsalehi/.kube/config</kube.config>
-                    </systemPropertyVariables>
                 </configuration>
             </plugin>
         </plugins>

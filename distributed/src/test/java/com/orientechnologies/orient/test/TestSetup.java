@@ -1,4 +1,4 @@
-package com.orientechnologies.orient.test.util;
+package com.orientechnologies.orient.test;
 
 import com.orientechnologies.orient.core.db.OrientDB;
 import com.orientechnologies.orient.core.db.OrientDBConfig;
@@ -9,13 +9,13 @@ public interface TestSetup {
     BINARY
   }
 
-  void startServer(String serverId) throws OTestSetupException;
+  void startServer(String serverId) throws TestSetupException;
 
-  void start() throws OTestSetupException;
+  void start() throws TestSetupException;
 
-  void shutdownServer(String serverId) throws OTestSetupException;
+  void shutdownServer(String serverId) throws TestSetupException;
 
-  void teardown() throws OTestSetupException;
+  void teardown() throws TestSetupException;
 
   String getAddress(String serverId, PortType port);
 

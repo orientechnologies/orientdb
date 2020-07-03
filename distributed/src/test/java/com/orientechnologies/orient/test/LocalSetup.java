@@ -1,4 +1,4 @@
-package com.orientechnologies.orient.test.util;
+package com.orientechnologies.orient.test;
 
 import com.orientechnologies.orient.core.db.OrientDB;
 import com.orientechnologies.orient.core.db.OrientDBConfig;
@@ -11,17 +11,17 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class LocalSetup implements TestSetup {
-  private final Map<String, OServer> servers       = new HashMap<>();
-  private final Map<String, String> httpRemotes   = new HashMap<>();
+  private final Map<String, OServer> servers = new HashMap<>();
+  private final Map<String, String> httpRemotes = new HashMap<>();
   private final Map<String, String> binaryRemotes = new HashMap<>();
-  private final TestConfig          config;
+  private final TestConfig config;
 
   public LocalSetup(TestConfig config) {
     this.config = config;
   }
 
   @Override
-  public void startServer(String serverId) throws OTestSetupException {
+  public void startServer(String serverId) throws TestSetupException {
     OServer server;
     try {
       server = OServer.startFromClasspathConfig(config.getLocalConfigFile(serverId));
@@ -29,7 +29,7 @@ public class LocalSetup implements TestSetup {
         | InstantiationException
         | IOException
         | IllegalAccessException e) {
-      throw new OTestSetupException(e);
+      throw new TestSetupException(e);
     }
     servers.put(serverId, server);
     server
@@ -79,12 +79,13 @@ public class LocalSetup implements TestSetup {
 
   @Override
   public OrientDB createRemote(String serverId, OrientDBConfig config) {
-    return createRemote("remote:" + getAddress(serverId, PortType.BINARY), null, null, config);
+    return createRemote(serverId, null, null, config);
   }
 
   @Override
   public OrientDB createRemote(
       String serverId, String serverUser, String serverPassword, OrientDBConfig config) {
-    return new OrientDB("remote:" + getAddress(serverId, PortType.BINARY), null, null, config);
+    return new OrientDB(
+        "remote:" + getAddress(serverId, PortType.BINARY), serverUser, serverPassword, config);
   }
 }
