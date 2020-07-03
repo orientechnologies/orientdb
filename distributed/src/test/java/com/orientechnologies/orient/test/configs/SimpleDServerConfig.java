@@ -1,64 +1,51 @@
 package com.orientechnologies.orient.test.configs;
 
-import com.orientechnologies.orient.test.util.TemplateKeys;
 import com.orientechnologies.orient.test.util.TestConfig;
+import com.orientechnologies.orient.test.util.TestSetupUtil;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 public class SimpleDServerConfig implements TestConfig {
-  private static List<String> serverIds = Arrays.asList("server0", "server1", "server2");
-  private static Map<String, String> serverConfigFiles =
-      new HashMap<String, String>() {
-        {
-          put("server0", "orientdb-simple-dserver-config-0.xml");
-          put("server1", "orientdb-simple-dserver-config-1.xml");
-          put("server2", "orientdb-simple-dserver-config-2.xml");
-        }
-      };
+  public static final String SERVER0 = "server0";
+  public static final String SERVER1 = "server1";
+  public static final String SERVER2 = "server2";
 
-  private static Map<String, String> serverK8sParams =
+  // Server config files used for each instance when using a local setup.
+  private static Map<String, String> localServerConfigFiles =
       new HashMap<String, String>() {
         {
-          put(TemplateKeys.ORIENTDB_NODE_NAME, "");
-          put(TemplateKeys.ORIENTDB_LABEL, "orientdb");
-          put(TemplateKeys.ORIENTDB_HTTP_PORT, "2480");
-          put(TemplateKeys.ORIENTDB_BINARY_PORT, "2424");
-          put(TemplateKeys.ORIENTDB_HAZELCAST_PORT, "2434");
-          put(
-              TemplateKeys.ORIENTDB_DOCKER_IMAGE,
-              "192.168.2.119:5000/pxsalehi/orientdb:3.1.1");
-          put(TemplateKeys.ORIENTDB_CONFIG_CM, "");
-          put(TemplateKeys.ORIENTDB_DB_VOL_SIZE, "2");
-          put(TemplateKeys.ORIENTDB_HAZELCAST_CONFIG, "/kubernetes/hazelcast-0.xml");
-          put(
-              TemplateKeys.ORIENTDB_DISTRIBUTED_DB_CONFIG,
-              "/kubernetes/default-distributed-db-config.json");
-          put(
-              TemplateKeys.ORIENTDB_SERVER_CONFIG,
-              "/kubernetes/orientdb-simple-dserver-config-0.xml");
+          put(SERVER0, "orientdb-simple-dserver-config-0.xml");
+          put(SERVER1, "orientdb-simple-dserver-config-1.xml");
+          put(SERVER2, "orientdb-simple-dserver-config-2.xml");
         }
       };
-  private Map<String, Map<String, String>> nodeParams = new HashMap<>();
+  // Configurations used for the deployment of each instance on Kubernetes
+  private Map<String, K8sConfigs>    serverK8sConfigs       = new HashMap<>();
 
   @Override
   public List<String> getServerIds() {
-    return serverIds;
+    return Arrays.asList(SERVER0, SERVER1, SERVER2);
   }
 
   @Override
   public String getLocalConfigFile(String serverId) {
-    return serverConfigFiles.get(serverId);
+    return localServerConfigFiles.get(serverId);
   }
 
   @Override
-  public Map<String, String> getK8sConfigParams(String serverId) {
-    Map<String, String> params = nodeParams.get(serverId);
-    if (params == null) {
-      params = new HashMap<>(serverK8sParams);
-      params.put(TemplateKeys.ORIENTDB_NODE_NAME, serverId);
-      params.put(TemplateKeys.ORIENTDB_CONFIG_CM, serverId + "-cm");
-      nodeParams.put(serverId, params);
+  public K8sConfigs getK8sConfigs(String serverId) {
+    K8sConfigs config = serverK8sConfigs.get(serverId);
+    if (config == null) {
+      config = TestSetupUtil.newK8sConfigs();
+      config.setNodeName(serverId);
+      config.setHazelcastConfig("/kubernetes/hazelcast.xml");
+      config.setServerConfig("/kubernetes/orientdb-simple-dserver-config.xml");
+      config.setDistributedDBConfig("/kubernetes/default-distributed-db-config.json");
+      serverK8sConfigs.put(serverId, config);
     }
-    return params;
+    return config;
   }
 }

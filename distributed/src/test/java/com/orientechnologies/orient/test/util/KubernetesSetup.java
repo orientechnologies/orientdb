@@ -2,10 +2,13 @@ package com.orientechnologies.orient.test.util;
 
 import com.google.gson.JsonSyntaxException;
 import com.google.gson.reflect.TypeToken;
+import com.orientechnologies.orient.core.db.OrientDB;
+import com.orientechnologies.orient.core.db.OrientDBConfig;
+import com.orientechnologies.orient.test.OrientDBIT;
+import com.orientechnologies.orient.test.configs.K8sConfigs;
 import io.kubernetes.client.openapi.ApiClient;
 import io.kubernetes.client.openapi.ApiException;
 import io.kubernetes.client.openapi.Configuration;
-import io.kubernetes.client.openapi.StringUtil;
 import io.kubernetes.client.openapi.apis.AppsV1Api;
 import io.kubernetes.client.openapi.apis.CoreV1Api;
 import io.kubernetes.client.openapi.models.*;
@@ -14,25 +17,15 @@ import io.kubernetes.client.util.KubeConfig;
 import io.kubernetes.client.util.Watch;
 import io.kubernetes.client.util.Yaml;
 import okhttp3.OkHttpClient;
-import org.apache.commons.text.StringSubstitutor;
 
 import java.io.FileReader;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.net.URL;
-import java.nio.file.Files;
-import java.nio.file.Paths;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 
 public class KubernetesSetup implements TestSetup {
-  public static final String ORIENTDB_HEADLESS_SERVICE_TEMPLATE =
-      "/kubernetes/manifests/orientdb-headless-service.template.yaml";
-  public static final String ORIENTDB_NODEPORT_SERVICE_TEMPLATE =
-      "/kubernetes/manifests/orientdb-nodeport-service.template.yaml";
-  public static final String ORIENTDB_STATEFULSET_TEMPLATE =
-      "/kubernetes/manifests/orientdb-statefulset.template.yaml";
-
   private String nodeAddress;
   private TestConfig testConfig;
   // TODO: fetch namespace from env/mvn
@@ -54,14 +47,15 @@ public class KubernetesSetup implements TestSetup {
 
   @Override
   public void startServer(String serverId) throws OTestSetupException {
-    Map<String, String> params = testConfig.getK8sConfigParams(serverId);
+    K8sConfigs params = testConfig.getK8sConfigs(serverId);
     if (params == null) {
       throw new OTestSetupException("Cannot get server parameters for " + serverId);
     }
+    // todo: validate params
     AppsV1Api appsV1Api = new AppsV1Api();
     try {
       // If server already exists, scale it up.
-      String statefulSetName = params.get(TemplateKeys.ORIENTDB_NODE_NAME);
+      String statefulSetName = params.getNodeName();
       V1StatefulSet statefulSet =
           appsV1Api.readNamespacedStatefulSet(statefulSetName, namespace, null, null, null);
       if (statefulSet != null) {
@@ -70,11 +64,7 @@ public class KubernetesSetup implements TestSetup {
         doStartServer(serverId, params);
       }
       waitForInstances(
-          90,
-          Collections.singletonList(serverId),
-          String.format(
-              "app=%s",
-              params.get(TemplateKeys.ORIENTDB_LABEL))); // TODO: wait until server is ready
+          90, Collections.singletonList(serverId), String.format("app=%s", params.getLabel()));
     } catch (ApiException e) {
       throw new OTestSetupException(e.getResponseBody(), e);
     } catch (IOException | URISyntaxException e) {
@@ -85,10 +75,11 @@ public class KubernetesSetup implements TestSetup {
   @Override
   public void start() throws OTestSetupException {
     for (String serverId : testConfig.getServerIds()) {
-      Map<String, String> params = testConfig.getK8sConfigParams(serverId);
+      K8sConfigs params = testConfig.getK8sConfigs(serverId);
       if (params == null) {
         throw new OTestSetupException("Cannot get server parameters for " + serverId);
       }
+      // todo: validate params
       try {
         doStartServer(serverId, params);
       } catch (ApiException e) {
@@ -97,11 +88,8 @@ public class KubernetesSetup implements TestSetup {
         throw new OTestSetupException(e);
       }
     }
-    // TODO: wait until all servers are ready
-    String label =
-        testConfig
-            .getK8sConfigParams(testConfig.getServerIds().get(0))
-            .get(TemplateKeys.ORIENTDB_LABEL);
+
+    String label = testConfig.getK8sConfigs(testConfig.getServerIds().get(0)).getLabel();
     try {
       waitForInstances(90, testConfig.getServerIds(), String.format("app=%s", label));
     } catch (IOException e) {
@@ -148,7 +136,7 @@ public class KubernetesSetup implements TestSetup {
           System.out.printf("Got error from watch: %s\n", item.status.getMessage());
         } else {
           String id = item.object.getMetadata().getName();
-//          System.out.printf("Got watch update for %s, type=%s.\n", id, item.type);
+          //          System.out.printf("Got watch update for %s, type=%s.\n", id, item.type);
           if (areThereReadyReplicas(item.object) && ids.contains(id)) {
             System.out.printf("  Server %s has at least one ready replica.\n", id);
             ids.remove(id);
@@ -157,13 +145,13 @@ public class KubernetesSetup implements TestSetup {
               break;
             }
           }
-//          else {
-//            System.out.printf("Server %s is still not ready!\n", id);
-//          }
+          //          else {
+          //            System.out.printf("Server %s is still not ready!\n", id);
+          //          }
         }
       }
     } finally {
-//      System.out.println("Closing watch.");
+      //      System.out.println("Closing watch.");
       watch.close();
     }
     if (System.currentTimeMillis() > (started + timeoutSecond * 1000) && !ids.isEmpty()) {
@@ -182,8 +170,13 @@ public class KubernetesSetup implements TestSetup {
 
   @Override
   public void shutdownServer(String serverId) throws OTestSetupException {
-    Map<String, String> param = testConfig.getK8sConfigParams(serverId);
-    String name = param.get(TemplateKeys.ORIENTDB_NODE_NAME);
+    try {
+      Thread.sleep(10000);
+    } catch (InterruptedException e) {
+      e.printStackTrace();
+    }
+    K8sConfigs param = testConfig.getK8sConfigs(serverId);
+    String name = param.getNodeName();
     try {
       scaleStatefulSet(name, 0);
     } catch (ApiException e) {
@@ -208,9 +201,9 @@ public class KubernetesSetup implements TestSetup {
     AppsV1Api appsV1Api = new AppsV1Api();
 
     for (String serverId : testConfig.getServerIds()) {
-      Map<String, String> nodeParam = testConfig.getK8sConfigParams(serverId);
-      String configMapName = nodeParam.get(TemplateKeys.ORIENTDB_CONFIG_CM);
-      String statefulSetName = nodeParam.get(TemplateKeys.ORIENTDB_NODE_NAME);
+      K8sConfigs nodeParam = testConfig.getK8sConfigs(serverId);
+      String configMapName = nodeParam.getConfigMapName();
+      String statefulSetName = nodeParam.getNodeName();
       try {
         coreV1Api.deleteNamespacedConfigMap(
             configMapName, "default", null, null, null, null, null, null);
@@ -226,7 +219,7 @@ public class KubernetesSetup implements TestSetup {
         System.out.printf(
             "Error deleting StatefulSet %s: %s\n", statefulSetName, e.getResponseBody());
       }
-      String serviceName = nodeParam.get(TemplateKeys.ORIENTDB_NODE_NAME);
+      String serviceName = nodeParam.getNodeName();
       try {
         coreV1Api.deleteNamespacedService(
             serviceName, "default", null, null, null, null, null, null);
@@ -234,7 +227,7 @@ public class KubernetesSetup implements TestSetup {
       } catch (ApiException e) {
         System.out.printf("Error deleting Service %s: %s\n", serviceName, e.getResponseBody());
       }
-      serviceName = nodeParam.get(TemplateKeys.ORIENTDB_NODE_NAME) + "-service";
+      serviceName = nodeParam.getNodeName() + "-service";
       try {
         coreV1Api.deleteNamespacedService(
             serviceName, "default", null, null, null, null, null, null);
@@ -265,20 +258,27 @@ public class KubernetesSetup implements TestSetup {
   @Override
   public String getAddress(String serverId, PortType port) {
     switch (port) {
-    case HTTP:
-      return testConfig.getK8sConfigParams(serverId).get(TemplateKeys.ORIENTDB_HTTP_ADDRESS);
-    case BINARY:
-      return testConfig.getK8sConfigParams(serverId).get(TemplateKeys.ORIENTDB_BINARY_ADDRESS);
+      case HTTP:
+        return testConfig.getK8sConfigs(serverId).getHttpAddress();
+      case BINARY:
+        return testConfig.getK8sConfigs(serverId).getBinaryAddress();
     }
     return null;
   }
 
   @Override
-  public TestConfig getSetupConfig() {
-    return testConfig;
+  public OrientDB createRemote(String serverId, OrientDBConfig config) {
+    return createRemote(serverId, null, null, config);
   }
 
-  private V1ConfigMap createConfigMap(String serverId, Map<String, String> serverParams)
+  @Override
+  public OrientDB createRemote(
+      String serverId, String serverUser, String serverPassword, OrientDBConfig config) {
+    return new OrientDBIT(
+        "remote:" + getAddress(serverId, PortType.BINARY), serverUser, serverPassword, config);
+  }
+
+  private V1ConfigMap createConfigMap(String serverId, K8sConfigs serverParams)
       throws ApiException, IOException, URISyntaxException {
     CoreV1Api coreV1Api = new CoreV1Api();
     V1ConfigMap configMap =
@@ -286,70 +286,58 @@ public class KubernetesSetup implements TestSetup {
             .withApiVersion("v1")
             .withKind("ConfigMap")
             .withNewMetadata()
-            .withName(serverParams.get(TemplateKeys.ORIENTDB_CONFIG_CM))
+            .withName(serverParams.getConfigMapName())
             .withNamespace(namespace)
             .endMetadata()
             .withData(
                 new HashMap<String, String>() {
                   {
-                    put(
-                        "hazelcast.xml",
-                        getEscapedFileContent(
-                            serverParams.get(TemplateKeys.ORIENTDB_HAZELCAST_CONFIG)));
+                    put("hazelcast.xml", getEscapedFileContent(serverParams.getHazelcastConfig()));
                     put(
                         "default-distributed-db-config.json",
-                        getEscapedFileContent(
-                            serverParams.get(TemplateKeys.ORIENTDB_DISTRIBUTED_DB_CONFIG)));
+                        getEscapedFileContent(serverParams.getDistributedDBConfig()));
                     put(
                         "orientdb-server-config.xml",
-                        getEscapedFileContent(
-                            serverParams.get(TemplateKeys.ORIENTDB_SERVER_CONFIG)));
+                        getEscapedFileContent(serverParams.getServerConfig()));
                   }
                 })
             .build();
     return coreV1Api.createNamespacedConfigMap(namespace, configMap, null, null, null);
   }
 
-  private V1Service createHeadlessService(String serverId, Map<String, String> serverParams)
-      throws IOException, URISyntaxException, ApiException {
-    return createService(serverId, serverParams, ORIENTDB_HEADLESS_SERVICE_TEMPLATE);
-  }
-
-  private V1Service createNodePortService(String serverId, Map<String, String> serverParams)
-      throws IOException, URISyntaxException, ApiException {
-    return createService(serverId, serverParams, ORIENTDB_NODEPORT_SERVICE_TEMPLATE);
-  }
-
-  private V1Service createService(
-      String serverId, Map<String, String> serverParams, String templateFile)
+  private V1Service createHeadlessService(String serverId, K8sConfigs serverParams)
       throws IOException, URISyntaxException, ApiException {
     CoreV1Api coreV1Api = new CoreV1Api();
-    StringSubstitutor substitutor = new StringSubstitutor(serverParams);
-    String template = readAllLines(templateFile);
-    String manifest = substitutor.replace(template);
+    String manifest = ManifestTemplate.generateHeadlessService(serverParams);
     V1Service service = (V1Service) Yaml.load(manifest);
     return coreV1Api.createNamespacedService(namespace, service, null, null, null);
   }
 
-  private V1StatefulSet createStatefulSet(String serverId, Map<String, String> serverParams)
+  private V1Service createNodePortService(String serverId, K8sConfigs serverParams)
+      throws IOException, URISyntaxException, ApiException {
+    CoreV1Api coreV1Api = new CoreV1Api();
+    String manifest = ManifestTemplate.generateNodePortService(serverParams);
+    V1Service service = (V1Service) Yaml.load(manifest);
+    return coreV1Api.createNamespacedService(namespace, service, null, null, null);
+  }
+
+  private V1StatefulSet createStatefulSet(String serverId, K8sConfigs serverParams)
       throws IOException, URISyntaxException, ApiException {
     AppsV1Api appsV1Api = new AppsV1Api();
-    StringSubstitutor substitutor = new StringSubstitutor(serverParams);
-    String template = readAllLines(ORIENTDB_STATEFULSET_TEMPLATE);
-    String manifest = substitutor.replace(template);
+    String manifest = ManifestTemplate.generateStatefulSet(serverParams);
     V1StatefulSet statefulSet = (V1StatefulSet) Yaml.load(manifest);
     return appsV1Api.createNamespacedStatefulSet(namespace, statefulSet, null, null, null);
   }
 
-  private void doStartServer(String serverId, Map<String, String> serverParams)
+  private void doStartServer(String serverId, K8sConfigs serverConfigs)
       throws ApiException, IOException, URISyntaxException {
     System.out.printf("Starting instance %s.\n", serverId);
-    V1ConfigMap cm = createConfigMap(serverId, serverParams);
+    V1ConfigMap cm = createConfigMap(serverId, serverConfigs);
     System.out.printf("Created ConfigMap %s for %s.\n", cm.getMetadata().getName(), serverId);
-    V1Service headless = createHeadlessService(serverId, serverParams);
+    V1Service headless = createHeadlessService(serverId, serverConfigs);
     System.out.printf(
         "Created Headless Service %s for %s.\n", headless.getMetadata().getName(), serverId);
-    V1StatefulSet statefulSet = createStatefulSet(serverId, serverParams);
+    V1StatefulSet statefulSet = createStatefulSet(serverId, serverConfigs);
     System.out.printf(
         "Created StatefulSet %s for %s.\n", statefulSet.getMetadata().getName(), serverId);
     // must also keep track of PVCs to remove later
@@ -358,7 +346,7 @@ public class KubernetesSetup implements TestSetup {
           String.format(
               "%s-%s-0", pvc.getMetadata().getName(), statefulSet.getMetadata().getName()));
     }
-    V1Service nodePort = createNodePortService(serverId, serverParams);
+    V1Service nodePort = createNodePortService(serverId, serverConfigs);
     System.out.printf(
         "Created NodePort Service %s for %s.\n", nodePort.getMetadata().getName(), serverId);
     nodePort
@@ -368,24 +356,19 @@ public class KubernetesSetup implements TestSetup {
             port -> {
               if (port.getName().equalsIgnoreCase("http")) {
                 String httpAddress = String.format("%s:%d", nodeAddress, port.getNodePort());
-                serverParams.put(TemplateKeys.ORIENTDB_HTTP_ADDRESS, httpAddress);
+                serverConfigs.setHttpAddress(httpAddress);
                 System.out.printf("HTTP address for %s: %s\n", serverId, httpAddress);
               } else if (port.getName().equalsIgnoreCase("binary")) {
                 String binaryAddress = String.format("%s:%d", nodeAddress, port.getNodePort());
-                serverParams.put(TemplateKeys.ORIENTDB_BINARY_ADDRESS, binaryAddress);
+                serverConfigs.setBinaryAddress(binaryAddress);
                 System.out.printf("Binary address for %s: %s\n", serverId, binaryAddress);
               }
             });
   }
 
-  private String getEscapedFileContent(String fileName) throws URISyntaxException, IOException {
-    String content = readAllLines(fileName);
+  public static String getEscapedFileContent(String fileName)
+      throws URISyntaxException, IOException {
+    String content = TestSetupUtil.readAllLines(fileName);
     return content.replaceAll("\"", "\\\"");
-  }
-
-  private String readAllLines(String resourceFileName) throws URISyntaxException, IOException {
-    List<String> lines =
-        Files.readAllLines(Paths.get(getClass().getResource(resourceFileName).toURI()));
-    return StringUtil.join(lines.toArray(new String[] {}), "\r\n");
   }
 }
