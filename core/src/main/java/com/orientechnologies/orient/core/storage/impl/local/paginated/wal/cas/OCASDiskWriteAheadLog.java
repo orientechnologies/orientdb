@@ -25,7 +25,6 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.*;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.cas.deque.Cursor;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.cas.deque.MPSCFAAArrayDequeue;
 import com.sun.jna.Platform;
-import jdk.internal.net.http.frame.WindowUpdateFrame;
 import net.jpountz.xxhash.XXHash64;
 import net.jpountz.xxhash.XXHashFactory;
 
