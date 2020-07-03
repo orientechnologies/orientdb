@@ -1335,15 +1335,22 @@ public class OSecurityShared implements OSecurityInternal {
     if (session.getUser() == null) {
       initPredicateSecurityOptimizationsInternal(session);
     } else {
-      ((ODatabaseDocumentInternal) session)
-          .getSharedContext()
-          .getOrientDB()
-          .executeNoAuthorization(
-              session.getName(),
-              (db -> {
-                initPredicateSecurityOptimizationsInternal(db);
-                return null;
-              }));
+      try {
+        ODatabaseDocumentInternal newSession =
+            ((ODatabaseDocumentInternal) session)
+                .getSharedContext()
+                .getOrientDB()
+                .openNoAuthorization(session.getName());
+        try {
+          newSession.activateOnCurrentThread();
+          initPredicateSecurityOptimizations(newSession);
+        } finally {
+          newSession.close();
+        }
+
+      } finally {
+        session.activateOnCurrentThread();
+      }
     }
   }
 
@@ -1818,22 +1825,19 @@ public class OSecurityShared implements OSecurityInternal {
   }
 
   protected void updateAllFilteredPropertiesInternal(ODatabaseDocumentInternal session) {
-    session
-        .getSharedContext()
-        .getOrientDB()
-        .executeNoAuthorization(
-            session.getName(),
-            (db -> {
-              synchronized (OSecurityShared.this) {
-                filteredProperties.clear();
-                filteredProperties.addAll(calculateAllFilteredProperties(db));
-              }
-              return null;
-            }));
     try {
-      Thread.sleep(50);
-    } catch (InterruptedException e) {
-      e.printStackTrace();
+      ODatabaseDocumentInternal newSession =
+          session.getSharedContext().getOrientDB().openNoAuthorization(session.getName());
+      try {
+        newSession.activateOnCurrentThread();
+        filteredProperties.clear();
+        filteredProperties.addAll(calculateAllFilteredProperties(newSession));
+      } finally {
+        newSession.close();
+      }
+
+    } finally {
+      session.activateOnCurrentThread();
     }
   }
 
