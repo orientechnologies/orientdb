@@ -250,7 +250,7 @@ public class PredicateSecurityTest {
   }
 
   @Test
-  public void testAfterUpdate() {
+  public void testAfterUpdate() throws InterruptedException {
     OSecurityInternal security = ((ODatabaseInternal) db).getSharedContext().getSecurity();
 
     db.createClass("Person");
@@ -262,6 +262,7 @@ public class PredicateSecurityTest {
     security.setSecurityPolicy(db, security.getRole(db, "writer"), "database.class.Person", policy);
 
     db.close();
+    Thread.sleep(300);
     this.db = orient.open(DB_NAME, "writer", "writer");
 
     OElement elem = db.newElement("Person");

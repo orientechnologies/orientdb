@@ -232,6 +232,11 @@ public class ODefaultClusterOwnershipAssignmentStrategy
         cluster,
         iDatabase.getClusterIdByName(cluster),
         node);
-    cfg.setServerOwner(cluster, node);
+    try {
+      cfg.setServerOwner(cluster, node);
+    } catch (Exception e) {
+      e.printStackTrace();
+      throw e;
+    }
   }
 }
