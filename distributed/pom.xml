@@ -101,6 +101,18 @@
                 </plugins>
             </build>
         </profile>
+        <profile>
+            <id>it-k8s</id>
+            <properties>
+                <kubeConfig></kubeConfig>
+                <orientdbLabel>orientdb</orientdbLabel>
+                <orientdbHttpPort>2480</orientdbHttpPort>
+                <orientdbBinaryPort>2424</orientdbBinaryPort>
+                <orientdbHazelcastPort>2434</orientdbHazelcastPort>
+                <orientdbDockerImage>192.168.2.119:5000/pxsalehi/orientdb:3.1.1</orientdbDockerImage>
+                <orientdbVolumeSize>2</orientdbVolumeSize>
+            </properties>
+        </profile>
     </profiles>
 
     <dependencies>

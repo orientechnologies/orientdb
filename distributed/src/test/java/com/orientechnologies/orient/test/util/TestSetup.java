@@ -1,8 +1,12 @@
 package com.orientechnologies.orient.test.util;
 
+import com.orientechnologies.orient.core.db.OrientDB;
+import com.orientechnologies.orient.core.db.OrientDBConfig;
+
 public interface TestSetup {
   enum PortType {
-    HTTP, BINARY
+    HTTP,
+    BINARY
   }
 
   void startServer(String serverId) throws OTestSetupException;
@@ -15,5 +19,8 @@ public interface TestSetup {
 
   String getAddress(String serverId, PortType port);
 
-  TestConfig getSetupConfig();
+  OrientDB createRemote(String serverId, OrientDBConfig config);
+
+  OrientDB createRemote(
+      String serverId, String serverUser, String serverPassword, OrientDBConfig config);
 }

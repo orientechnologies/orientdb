@@ -1,5 +1,7 @@
 package com.orientechnologies.orient.test.util;
 
+import com.orientechnologies.orient.core.db.OrientDB;
+import com.orientechnologies.orient.core.db.OrientDBConfig;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.network.protocol.binary.ONetworkProtocolBinary;
 import com.orientechnologies.orient.server.network.protocol.http.ONetworkProtocolHttpDb;
@@ -9,10 +11,10 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class LocalSetup implements TestSetup {
-  private Map<String, OServer> servers = new HashMap<>();
-  private Map<String, String> httpRemotes = new HashMap<>();
-  private Map<String, String> binaryRemotes = new HashMap<>();
-  private TestConfig config;
+  private final Map<String, OServer> servers       = new HashMap<>();
+  private final Map<String, String> httpRemotes   = new HashMap<>();
+  private final Map<String, String> binaryRemotes = new HashMap<>();
+  private final TestConfig          config;
 
   public LocalSetup(TestConfig config) {
     this.config = config;
@@ -76,7 +78,13 @@ public class LocalSetup implements TestSetup {
   }
 
   @Override
-  public TestConfig getSetupConfig() {
-    return config;
+  public OrientDB createRemote(String serverId, OrientDBConfig config) {
+    return createRemote("remote:" + getAddress(serverId, PortType.BINARY), null, null, config);
+  }
+
+  @Override
+  public OrientDB createRemote(
+      String serverId, String serverUser, String serverPassword, OrientDBConfig config) {
+    return new OrientDB("remote:" + getAddress(serverId, PortType.BINARY), null, null, config);
   }
 }

@@ -1,10 +1,13 @@
 package com.orientechnologies.orient.test.util;
 
+import com.orientechnologies.orient.test.configs.K8sConfigs;
+
 import java.util.List;
-import java.util.Map;
 
 public interface TestConfig {
   List<String> getServerIds();
+
   String getLocalConfigFile(String serverId);
-  Map<String, String> getK8sConfigParams(String serverId);
+
+  K8sConfigs getK8sConfigs(String serverId);
 }
