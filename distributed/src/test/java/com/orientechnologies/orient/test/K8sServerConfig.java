@@ -1,8 +1,8 @@
-package com.orientechnologies.orient.test.configs;
+package com.orientechnologies.orient.test;
 
-public class K8sConfigs {
+public class K8sServerConfig {
+
   private String nodeName;
-  private String label;
   private String httpPort;
   private String binaryPort;
   private String hazelcastPort;
@@ -11,14 +11,35 @@ public class K8sConfigs {
   private String hazelcastConfig;
   private String distributedDBConfig;
   private String dbVolumeSize;
+  // Following two are set after successful deployment.
   private String httpAddress;
   private String binaryAddress;
 
-  public K8sConfigs() {}
+  public void validate() throws TestSetupException {
+    String missingField = null;
+    if (notSet(nodeName)) missingField = "nodeName";
+    if (notSet(httpPort)) missingField = "httpPort";
+    if (notSet(binaryPort)) missingField = "binaryPort";
+    if (notSet(hazelcastPort)) missingField = "hazelcastPort";
+    if (notSet(dockerImage)) missingField = "dockerImage";
+    if (notSet(serverConfig)) missingField = "serverConfig";
+    if (notSet(hazelcastConfig)) missingField = "hazelcastConfig";
+    if (notSet(distributedDBConfig)) missingField = "distributedDBConfig";
+    if (notSet(dbVolumeSize)) missingField = "dbVolumeSize";
+    if (missingField != null) {
+      throw new TestSetupException(
+          "Missing value '" + missingField + "' in Kubernetes configuration for server.");
+    }
+  }
 
-  public K8sConfigs(K8sConfigs configs) {
+  private boolean notSet(String s) {
+    return s == null || s.trim().equals("");
+  }
+
+  public K8sServerConfig() {}
+
+  public K8sServerConfig(K8sServerConfig configs) {
     this.nodeName = configs.nodeName;
-    this.label = configs.label;
     this.httpPort = configs.httpPort;
     this.binaryPort = configs.binaryPort;
     this.hazelcastPort = configs.hazelcastPort;
@@ -37,14 +58,6 @@ public class K8sConfigs {
 
   public void setNodeName(String nodeName) {
     this.nodeName = nodeName;
-  }
-
-  public String getLabel() {
-    return label;
-  }
-
-  public void setLabel(String label) {
-    this.label = label;
   }
 
   public String getHttpPort() {
