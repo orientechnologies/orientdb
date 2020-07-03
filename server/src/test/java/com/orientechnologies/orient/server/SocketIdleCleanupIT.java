@@ -27,7 +27,8 @@ public class SocketIdleCleanupIT {
       throws IOException, InstantiationException, InvocationTargetException, NoSuchMethodException, MBeanRegistrationException,
       IllegalAccessException, InstanceAlreadyExistsException, NotCompliantMBeanException, ClassNotFoundException,
       MalformedObjectNameException {
-    server = OServer.startFromStreamConfig(this.getClass().getResourceAsStream("orientdb-server-config.xml"));
+    server = OServer.startFromStreamConfig(
+        this.getClass().getResourceAsStream("orientdb-server-config.xml"));
   }
 
   @Test
