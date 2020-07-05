@@ -7,7 +7,6 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.Pag
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-
 import java.util.concurrent.atomic.AtomicIntegerFieldUpdater;
 
 public final class OCacheEntryImpl implements OCacheEntry {
