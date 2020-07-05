@@ -1922,7 +1922,7 @@ public final class OCASDiskWriteAheadLog implements OWriteAheadLog {
                         writeBuffer = writeBufferTwo;
                       }
 
-                      writeBuffer.limit(writeBuffer.capacity());
+                      writeBuffer.limit((writeBuffer.capacity() / pageSize) * pageSize);
                       writeBuffer.rewind();
                       useFirstBuffer = !useFirstBuffer;
 
