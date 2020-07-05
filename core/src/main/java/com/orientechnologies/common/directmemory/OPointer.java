@@ -1,20 +1,20 @@
 package com.orientechnologies.common.directmemory;
 
 import com.sun.jna.Pointer;
-
+import java.lang.ref.WeakReference;
 import java.nio.ByteBuffer;
 import java.util.Objects;
 
 public final class OPointer {
-  private final Pointer    pointer;
-  private final int        size;
-  private final ByteBuffer byteBuffer;
-  private       int        hash = 0;
+
+  private final Pointer pointer;
+  private final int size;
+  private WeakReference<ByteBuffer> byteBuffer;
+  private int hash = 0;
 
   OPointer(Pointer pointer, int size) {
     this.pointer = pointer;
     this.size = size;
-    this.byteBuffer = pointer.getByteBuffer(0, size);
   }
 
   public void clear() {
@@ -22,7 +22,20 @@ public final class OPointer {
   }
 
   public ByteBuffer getNativeByteBuffer() {
-    return byteBuffer;
+    ByteBuffer buffer;
+
+    if (byteBuffer == null) {
+      buffer = pointer.getByteBuffer(0, size);
+      byteBuffer = new WeakReference<>(buffer);
+    } else {
+      buffer = byteBuffer.get();
+      if (buffer == null) {
+        buffer = pointer.getByteBuffer(0, size);
+        byteBuffer = new WeakReference<>(buffer);
+      }
+    }
+
+    return buffer;
   }
 
   Pointer getNativePointer() {
@@ -35,13 +48,20 @@ public final class OPointer {
 
   @Override
   public boolean equals(Object o) {
-    if (this == o)
+    if (this == o) {
       return true;
-    if (o == null || getClass() != o.getClass())
+    }
+    if (o == null || getClass() != o.getClass()) {
       return false;
-    OPointer other = (OPointer) o;
+    }
 
-    return size == other.size && Objects.equals(pointer, other.pointer);
+    final OPointer otherPointer = (OPointer) o;
+
+    if (size != otherPointer.size) {
+      return false;
+    }
+
+    return Objects.equals(pointer, otherPointer.pointer);
   }
 
   @Override
@@ -50,7 +70,12 @@ public final class OPointer {
       return hash;
     }
 
-    hash = Objects.hash(pointer, size);
+    @SuppressWarnings("ConditionalCanBeOptional")
+    int result = pointer != null ? pointer.hashCode() : 0;
+    result = 31 * result + size;
+
+    hash = result;
+
     return hash;
   }
 }

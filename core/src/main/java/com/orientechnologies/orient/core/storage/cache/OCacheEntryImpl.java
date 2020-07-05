@@ -3,22 +3,31 @@ package com.orientechnologies.orient.core.storage.cache;
 import com.orientechnologies.orient.core.storage.cache.chm.LRUList;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALChanges;
-
-import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicIntegerFieldUpdater;
 
 /**
  * Created by tglman on 23/06/16.
  */
 public class OCacheEntryImpl implements OCacheEntry {
+
+  private static final AtomicIntegerFieldUpdater<OCacheEntryImpl> USAGES_COUNT_UPDATER;
+  private static final AtomicIntegerFieldUpdater<OCacheEntryImpl> STATE_UPDATER;
+
+  static {
+    USAGES_COUNT_UPDATER =
+        AtomicIntegerFieldUpdater.newUpdater(OCacheEntryImpl.class, "usagesCount");
+    STATE_UPDATER = AtomicIntegerFieldUpdater.newUpdater(OCacheEntryImpl.class, "state");
+  }
+
   private static final int FROZEN = -1;
-  private static final int DEAD   = -2;
+  private static final int DEAD = -2;
 
-  private       OCachePointer dataPointer;
-  private final long          fileId;
-  private final long          pageIndex;
+  private OCachePointer dataPointer;
+  private final long fileId;
+  private final long pageIndex;
 
-  private final AtomicInteger usagesCount = new AtomicInteger();
-  private final AtomicInteger state       = new AtomicInteger();
+  private volatile int usagesCount = 0;
+  private volatile int state = 0;
 
   private OCacheEntry next;
   private OCacheEntry prev;
@@ -79,12 +88,12 @@ public class OCacheEntryImpl implements OCacheEntry {
 
   @Override
   public int getUsagesCount() {
-    return usagesCount.get();
+    return USAGES_COUNT_UPDATER.get(this);
   }
 
   @Override
   public void incrementUsages() {
-    usagesCount.incrementAndGet();
+    USAGES_COUNT_UPDATER.incrementAndGet(this);
   }
 
   /**
@@ -99,7 +108,7 @@ public class OCacheEntryImpl implements OCacheEntry {
 
   @Override
   public void decrementUsages() {
-    usagesCount.decrementAndGet();
+    USAGES_COUNT_UPDATER.decrementAndGet(this);
   }
 
   @Override
@@ -119,14 +128,14 @@ public class OCacheEntryImpl implements OCacheEntry {
 
   @Override
   public boolean acquireEntry() {
-    int state = this.state.get();
+    int state = STATE_UPDATER.get(this);
 
     while (state >= 0) {
-      if (this.state.compareAndSet(state, state + 1)) {
+      if (STATE_UPDATER.compareAndSet(this, state, state + 1)) {
         return true;
       }
 
-      state = this.state.get();
+      state = STATE_UPDATER.get(this);
     }
 
     return false;
@@ -134,40 +143,40 @@ public class OCacheEntryImpl implements OCacheEntry {
 
   @Override
   public void releaseEntry() {
-    int state = this.state.get();
+    int state = STATE_UPDATER.get(this);
 
     while (true) {
       if (state <= 0) {
         throw new IllegalStateException("Cache entry " + fileId + ":" + pageIndex + " has invalid state " + state);
       }
 
-      if (this.state.compareAndSet(state, state - 1)) {
+      if (STATE_UPDATER.compareAndSet(this, state, state - 1)) {
         return;
       }
 
-      state = this.state.get();
+      state = STATE_UPDATER.get(this);
     }
   }
 
   @Override
   public boolean isReleased() {
-    return state.get() == 0;
+    return STATE_UPDATER.get(this) == 0;
   }
 
   @Override
   public boolean isAlive() {
-    return state.get() >= 0;
+    return STATE_UPDATER.get(this) >= 0;
   }
 
   @Override
   public boolean freeze() {
-    int state = this.state.get();
+    int state = STATE_UPDATER.get(this);
     while (state == 0) {
-      if (this.state.compareAndSet(state, FROZEN)) {
+      if (STATE_UPDATER.compareAndSet(this, state, FROZEN)) {
         return true;
       }
 
-      state = this.state.get();
+      state = STATE_UPDATER.get(this);
     }
 
     return false;
@@ -175,19 +184,19 @@ public class OCacheEntryImpl implements OCacheEntry {
 
   @Override
   public boolean isFrozen() {
-    return this.state.get() == FROZEN;
+    return STATE_UPDATER.get(this) == FROZEN;
   }
 
   @Override
   public void makeDead() {
-    int state = this.state.get();
+    int state = STATE_UPDATER.get(this);
 
     while (state == FROZEN) {
-      if (this.state.compareAndSet(state, DEAD)) {
+      if (STATE_UPDATER.compareAndSet(this, state, DEAD)) {
         return;
       }
 
-      state = this.state.get();
+      state = STATE_UPDATER.get(this);
     }
 
     throw new IllegalStateException("Cache entry " + fileId + ":" + pageIndex + " has invalid state " + state);
@@ -195,7 +204,7 @@ public class OCacheEntryImpl implements OCacheEntry {
 
   @Override
   public boolean isDead() {
-    return this.state.get() == DEAD;
+    return STATE_UPDATER.get(this) == DEAD;
   }
 
   @Override
