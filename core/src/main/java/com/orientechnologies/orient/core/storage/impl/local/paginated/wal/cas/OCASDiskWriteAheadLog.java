@@ -1,6 +1,5 @@
 package com.orientechnologies.orient.core.storage.impl.local.paginated.wal.cas;
 
-import com.orientechnologies.common.concur.lock.OInterruptedException;
 import com.orientechnologies.common.concur.lock.ScalableRWLock;
 import com.orientechnologies.common.directmemory.ODirectMemoryAllocator;
 import com.orientechnologies.common.directmemory.OPointer;
@@ -21,14 +20,19 @@ import com.orientechnologies.orient.core.storage.impl.local.OCheckpointRequestLi
 import com.orientechnologies.orient.core.storage.impl.local.OLowDiskSpaceInformation;
 import com.orientechnologies.orient.core.storage.impl.local.OLowDiskSpaceListener;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperationMetadata;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.*;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OAtomicUnitEndRecordV2;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OAtomicUnitStartRecordV2;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OCheckpointEndRecord;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OFullCheckpointStartRecord;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OFuzzyCheckpointEndRecord;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OFuzzyCheckpointStartRecord;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALRecord;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALRecordsFactory;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWriteAheadLog;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.cas.deque.Cursor;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.cas.deque.MPSCFAAArrayDequeue;
 import com.sun.jna.Platform;
-import jdk.internal.net.http.frame.WindowUpdateFrame;
-import net.jpountz.xxhash.XXHash64;
-import net.jpountz.xxhash.XXHashFactory;
-
 import java.io.EOFException;
 import java.io.File;
 import java.io.IOException;
@@ -40,8 +44,27 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
 import java.nio.file.attribute.BasicFileAttributes;
-import java.util.*;
-import java.util.concurrent.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Iterator;
+import java.util.List;
+import java.util.ListIterator;
+import java.util.Locale;
+import java.util.Map;
+import java.util.NavigableSet;
+import java.util.TreeMap;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.ConcurrentNavigableMap;
+import java.util.concurrent.ConcurrentSkipListMap;
+import java.util.concurrent.ConcurrentSkipListSet;
+import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
@@ -50,6 +73,8 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Stream;
 import java.util.zip.CRC32;
+import net.jpountz.xxhash.XXHash64;
+import net.jpountz.xxhash.XXHashFactory;
 
 public final class OCASDiskWriteAheadLog implements OWriteAheadLog {
   private final static XXHashFactory xxHashFactory = XXHashFactory.fastestInstance();
@@ -72,14 +97,15 @@ public final class OCASDiskWriteAheadLog implements OWriteAheadLog {
       return thread;
     });
 
-    writeExecutor = new OThreadPoolExecutorWithLogging(1, 1,
-        60L, TimeUnit.SECONDS, new LinkedBlockingQueue<>(), r -> {
-      final Thread thread = new Thread(OStorageAbstract.storageThreadGroup, r);
-      thread.setDaemon(true);
-      thread.setName("OrientDB WAL Write Task Thread)");
-      thread.setUncaughtExceptionHandler(new OUncaughtExceptionHandler());
-      return thread;
-    });
+    writeExecutor =
+        new OThreadPoolExecutorWithLogging(1, 1, 60L, TimeUnit.SECONDS, new LinkedBlockingQueue<>(),
+            r -> {
+              final Thread thread = new Thread(OStorageAbstract.storageThreadGroup, r);
+              thread.setDaemon(true);
+              thread.setName("OrientDB WAL Write Task Thread)");
+              thread.setUncaughtExceptionHandler(new OUncaughtExceptionHandler());
+              return thread;
+            });
 
     commitExecutor.setMaximumPoolSize(1);
   }
@@ -151,34 +177,41 @@ public final class OCASDiskWriteAheadLog implements OWriteAheadLog {
   private final ConcurrentLinkedQueue<OPair<Long, OWALFile>> fileCloseQueue     = new ConcurrentLinkedQueue<>();
   private final AtomicInteger                                fileCloseQueueSize = new AtomicInteger();
 
-  private final    AtomicReference<CountDownLatch> flushLatch        = new AtomicReference<>(new CountDownLatch(0));
-  private volatile Future<?> latestWriteFuture = null;
+  private final AtomicReference<CountDownLatch> flushLatch =
+      new AtomicReference<>(new CountDownLatch(0));
+  private volatile Future<?> writeFuture = null;
   //not volatile because used only inside of write thread.
-  private          OLogSequenceNumber              writtenCheckpoint = null;
+  private OLogSequenceNumber writtenCheckpoint = null;
 
-  private          long lastFSyncTs = -1;
-  private final    int  fsyncInterval;
+  private long lastFSyncTs = -1;
+  private final int fsyncInterval;
   private volatile long segmentAdditionTs;
 
   private final int commitDelay;
 
   private long currentPosition = 0;
 
-  private ByteBuffer writeBuffer          = null;
-  private OPointer   writeBufferPointer   = null;
-  private int        writeBufferPageIndex = -1;
+  private boolean useFirstBuffer = true;
 
-  private final ArrayBlockingQueue<OPointer> pointersPool = new ArrayBlockingQueue<>(2);
+  private ByteBuffer writeBuffer = null;
+  private OPointer writeBufferPointer = null;
+  private int writeBufferPageIndex = -1;
 
-  private OLogSequenceNumber lastLSN       = null;
+  private final ByteBuffer writeBufferOne;
+  private final OPointer writeBufferPointerOne;
+
+  private final ByteBuffer writeBufferTwo;
+  private final OPointer writeBufferPointerTwo;
+
+  private OLogSequenceNumber lastLSN = null;
   private OLogSequenceNumber checkPointLSN = null;
 
   private final boolean callFsync;
 
   private final boolean printPerformanceStatistic;
-  private final int     statisticPrintInterval;
+  private final int statisticPrintInterval;
 
-  private volatile long bytesWrittenSum  = 0;
+  private volatile long bytesWrittenSum = 0;
   private volatile long bytesWrittenTime = 0;
 
   private volatile long fsyncTime  = 0;
@@ -197,7 +230,7 @@ public final class OCASDiskWriteAheadLog implements OWriteAheadLog {
       boolean keepSingleWALSegment, boolean callFsync, boolean printPerformanceStatistic, int statisticPrintInterval)
       throws IOException {
 
-    final int bufferSizeInBytes = bufferSize * 1024 * 1024;
+    int bufferSize1 = bufferSize * 1024 * 1024;
 
     this.segmentsInterval = segmentsInterval;
     this.keepSingleWALSegment = keepSingleWALSegment;
@@ -245,7 +278,8 @@ public final class OCASDiskWriteAheadLog implements OWriteAheadLog {
 
     OLogManager.instance().infoNoDb(this, "Page size for WAL located in %s is set to %d bytes.", walLocation.toString(), pageSize);
 
-    this.maxCacheSize = multiplyIntsWithOverflowDefault(maxPagesCacheSize, pageSize);
+    this.maxCacheSize =
+        multiplyIntsWithOverflowDefault(maxPagesCacheSize, pageSize, DEFAULT_MAX_CACHE_SIZE);
 
     masterRecordPath = walLocation.resolve(storageName + MASTER_RECORD_EXTENSION);
     masterRecordLSNHolder = FileChannel
@@ -281,29 +315,26 @@ public final class OCASDiskWriteAheadLog implements OWriteAheadLog {
 
     this.commitDelay = commitDelay;
 
-    for (int i = 0; i < 2; i++) {
-      try {
-        pointersPool.put(allocator.allocate(bufferSizeInBytes, blockSize));
-      } catch (final InterruptedException interruptedException) {
-        throw OException.wrapException(
-            new OInterruptedException("WAL initialization was interrupted"), interruptedException);
-      }
-    }
+    writeBufferPointerOne = allocator.allocate(bufferSize1, blockSize);
+    writeBufferOne = writeBufferPointerOne.getNativeByteBuffer().order(ByteOrder.nativeOrder());
 
+    writeBufferPointerTwo = allocator.allocate(bufferSize1, blockSize);
+    writeBufferTwo = writeBufferPointerTwo.getNativeByteBuffer().order(ByteOrder.nativeOrder());
 
     log(new OEmptyWALRecord());
 
-    this.recordsWriterFuture = commitExecutor.schedule(new RecordsWriter(false, false, true), commitDelay, TimeUnit.MILLISECONDS);
+    this.recordsWriterFuture = commitExecutor
+        .schedule(new RecordsWriter(false, false, true), commitDelay, TimeUnit.MILLISECONDS);
     flush();
   }
 
-  private static int multiplyIntsWithOverflowDefault(final int maxPagesCacheSize,
-      final int pageSize) {
-    long maxCacheSize = (long)maxPagesCacheSize * (long)pageSize;
-    if ((int)maxCacheSize != maxCacheSize) {
-      return OCASDiskWriteAheadLog.DEFAULT_MAX_CACHE_SIZE;
+  private int multiplyIntsWithOverflowDefault(final int maxPagesCacheSize, final int pageSize,
+      final int defaultValue) {
+    long maxCacheSize = (long) maxPagesCacheSize * (long) pageSize;
+    if ((int) maxCacheSize != maxCacheSize) {
+      return defaultValue;
     }
-    return (int)maxCacheSize;
+    return (int) maxCacheSize;
   }
 
   public int pageSize() {
@@ -478,44 +509,28 @@ public final class OCASDiskWriteAheadLog implements OWriteAheadLog {
   }
 
   private long initSegmentSet(final boolean filterWALFiles, final Locale locale) throws IOException {
-    Stream<Path> walFiles = null;
+    final Stream<Path> walFiles;
 
     final OModifiableLong walSize = new OModifiableLong();
-    try{
-      if (filterWALFiles) {
-        //noinspection resource
-        walFiles =
-            Files.find(
-                walLocation,
-                1,
-                (Path path, BasicFileAttributes attributes) ->
-                    validateName(path.getFileName().toString(), storageName, locale));
-      } else {
-        //noinspection resource
-        walFiles =
-            Files.find(
-                walLocation,
-                1,
-                (Path path, BasicFileAttributes attrs) ->
-                    validateSimpleName(path.getFileName().toString(), locale));
-      }
-
-      if (walFiles == null) {
-        throw new IllegalStateException(
-            "Location passed in WAL does not exist, or IO error was happened. "
-                + "DB cannot work in durable mode in such case");
-      }
-
-      walFiles.forEach((Path path) -> {
-        segments.add(extractSegmentId(path.getFileName().toString()));
-        walSize.increment(path.toFile().length());
-      });
-    } finally{
-      if (walFiles != null) {
-        walFiles.close();
-      }
+    if (filterWALFiles) {
+      walFiles = Files.find(walLocation, 1,
+          (Path path, BasicFileAttributes attributes) -> validateName(path.getFileName().toString(),
+              storageName, locale));
+    } else {
+      walFiles = Files.find(walLocation, 1,
+          (Path path, BasicFileAttributes attrs) -> validateSimpleName(
+              path.getFileName().toString(), locale));
     }
 
+    if (walFiles == null) {
+      throw new IllegalStateException(
+          "Location passed in WAL does not exist, or IO error was happened. DB cannot work in durable mode in such case");
+    }
+
+    walFiles.forEach((Path path) -> {
+      segments.add(extractSegmentId(path.getFileName().toString()));
+      walSize.increment(path.toFile().length());
+    });
 
     return walSize.value;
   }
@@ -667,7 +682,7 @@ public final class OCASDiskWriteAheadLog implements OWriteAheadLog {
   }
 
   private void waitTillWriteWillBeFinished() {
-    final Future<?> wf = latestWriteFuture;
+    final Future<?> wf = writeFuture;
     if (wf != null) {
       try {
         wf.get();
@@ -1397,11 +1412,13 @@ public final class OCASDiskWriteAheadLog implements OWriteAheadLog {
       }
     }
 
-    if (latestWriteFuture != null) {
+    if (writeFuture != null) {
       try {
-        latestWriteFuture.get();
+        writeFuture.get();
       } catch (InterruptedException | ExecutionException e) {
-        throw OException.wrapException(new OStorageException("Error during writing of WAL records in storage " + storageName), e);
+        throw OException.wrapException(
+            new OStorageException("Error during writing of WAL records in storage " + storageName),
+            e);
       }
     }
 
@@ -1415,8 +1432,8 @@ public final class OCASDiskWriteAheadLog implements OWriteAheadLog {
     }
 
     try {
-      if (latestWriteFuture != null) {
-        latestWriteFuture.get();
+      if (writeFuture != null) {
+        writeFuture.get();
       }
 
     } catch (final InterruptedException e) {
@@ -1447,17 +1464,10 @@ public final class OCASDiskWriteAheadLog implements OWriteAheadLog {
     segments.clear();
     fileCloseQueue.clear();
 
-    while (!pointersPool.isEmpty()) {
-        final OPointer pointer = pointersPool.poll();
-
-        if (pointer != null) {
-          allocator.deallocate(pointer);
-        }
-    }
+    allocator.deallocate(writeBufferPointerOne);
+    allocator.deallocate(writeBufferPointerTwo);
 
     if (writeBufferPointer != null) {
-      allocator.deallocate(writeBufferPointer);
-
       writeBufferPointer = null;
       writeBuffer = null;
       writeBufferPageIndex = -1;
@@ -1851,7 +1861,7 @@ public final class OCASDiskWriteAheadLog implements OWriteAheadLog {
                 if (segmentId != lsn.getSegment()) {
                   if (walFile != null) {
                     if (writeBufferPointer != null) {
-                      writeBuffer(walFile, writeBuffer, writeBufferPointer, lastLSN, checkPointLSN);
+                      writeBuffer(walFile, writeBuffer, lastLSN, checkPointLSN);
                     }
 
                     writeBufferPointer = null;
@@ -1862,8 +1872,8 @@ public final class OCASDiskWriteAheadLog implements OWriteAheadLog {
                     lastLSN = null;
 
                     try {
-                      if (latestWriteFuture != null) {
-                        latestWriteFuture.get();
+                      if (writeFuture != null) {
+                        writeFuture.get();
                       }
                     } catch (final InterruptedException e) {
                       OLogManager.instance().errorNoDb(this, "WAL write was interrupted", e);
@@ -1901,27 +1911,20 @@ public final class OCASDiskWriteAheadLog implements OWriteAheadLog {
                     if (writeBuffer == null || writeBuffer.remaining() == 0) {
                       if (writeBufferPointer != null) {
                         assert writeBuffer != null;
-                        writeBuffer(walFile, writeBuffer,  writeBufferPointer,
-                            lastLSN, checkPointLSN);
+                        writeBuffer(walFile, writeBuffer, lastLSN, checkPointLSN);
                       }
 
-                      writeBufferPointer = null;
-                      writeBuffer = null;
-
-                      try {
-                        writeBufferPointer = pointersPool.take();
-                      } catch (InterruptedException interruptedException) {
-                        throw
-                            OException.wrapException(
-                                new OInterruptedException(
-                                    "Writing of data into the WAL was interrupted"),
-                                interruptedException);
+                      if (useFirstBuffer) {
+                        writeBufferPointer = writeBufferPointerOne;
+                        writeBuffer = writeBufferOne;
+                      } else {
+                        writeBufferPointer = writeBufferPointerTwo;
+                        writeBuffer = writeBufferTwo;
                       }
-                      writeBuffer = writeBufferPointer.getNativeByteBuffer();
 
-                      writeBuffer.limit((writeBuffer.capacity() / pageSize) * pageSize);
-
+                      writeBuffer.limit(writeBuffer.capacity());
                       writeBuffer.rewind();
+                      useFirstBuffer = !useFirstBuffer;
 
                       writeBufferPageIndex = -1;
 
@@ -1996,7 +1999,7 @@ public final class OCASDiskWriteAheadLog implements OWriteAheadLog {
             }
 
             if ((makeFSync || fullWrite) && writeBufferPointer != null) {
-              writeBuffer(walFile, writeBuffer, writeBufferPointer, lastLSN, checkPointLSN);
+              writeBuffer(walFile, writeBuffer, lastLSN, checkPointLSN);
 
               writeBufferPointer = null;
               writeBuffer = null;
@@ -2019,8 +2022,8 @@ public final class OCASDiskWriteAheadLog implements OWriteAheadLog {
         if (makeFSync) {
           try {
             try {
-              if (latestWriteFuture != null) {
-                latestWriteFuture.get();
+              if (writeFuture != null) {
+                writeFuture.get();
               }
             } catch (final InterruptedException e) {
               OLogManager.instance().errorNoDb(this, "WAL write was interrupted", e);
@@ -2028,7 +2031,7 @@ public final class OCASDiskWriteAheadLog implements OWriteAheadLog {
 
             assert walFile.position() == currentPosition;
 
-            latestWriteFuture = writeExecutor.submit((Callable<?>) () -> {
+            writeFuture = writeExecutor.submit((Callable<?>) () -> {
               try {
                 long startTs = 0;
                 if (printPerformanceStatistic) {
@@ -2042,7 +2045,7 @@ public final class OCASDiskWriteAheadLog implements OWriteAheadLog {
                   while (counter < cqSize) {
                     final OPair<Long, OWALFile> pair = fileCloseQueue.poll();
                     if (pair != null) {
-                      final OWALFile file = pair.value;
+                      @SuppressWarnings("resource") final OWALFile file = pair.value;
 
                       assert file.position() % pageSize == 0;
 
@@ -2103,9 +2106,7 @@ public final class OCASDiskWriteAheadLog implements OWriteAheadLog {
       }
     }
 
-    private void writeBuffer(final OWALFile file,
-        final ByteBuffer buffer,
-        final OPointer bufferPointer,
+    private void writeBuffer(final OWALFile file, final ByteBuffer buffer,
         final OLogSequenceNumber lastLSN,
         final OLogSequenceNumber checkpointLSN) throws IOException {
 
@@ -2149,12 +2150,23 @@ public final class OCASDiskWriteAheadLog implements OWriteAheadLog {
       final int limit = maxPage * pageSize;
       buffer.limit(limit);
 
+      try {
+        if (writeFuture != null) {
+          writeFuture.get();
+        }
+      } catch (final InterruptedException e) {
+        OLogManager.instance().errorNoDb(this, "WAL write was interrupted", e);
+      } catch (final Exception e) {
+        OLogManager.instance().errorNoDb(this, "Error during WAL write", e);
+        throw OException.wrapException(new OStorageException("Error during WAL data write"), e);
+      }
+
       assert file.position() == currentPosition;
       currentPosition += buffer.limit();
 
       final long expectedPosition = currentPosition;
 
-      latestWriteFuture = writeExecutor.submit((Callable<?>) () -> {
+      writeFuture = writeExecutor.submit((Callable<?>) () -> {
         try {
           long startTs = 0;
           if (printPerformanceStatistic) {
@@ -2201,11 +2213,6 @@ public final class OCASDiskWriteAheadLog implements OWriteAheadLog {
             bytesWrittenSum += buffer.limit();
             //noinspection NonAtomicOperationOnVolatileField
             bytesWrittenTime += (endTs - startTs);
-          }
-
-          final boolean added = pointersPool.offer(bufferPointer);
-          if (!added) {
-            throw new OStorageException("Can not return byte buffer back to the pool.");
           }
         } catch (final IOException e) {
           OLogManager.instance().errorNoDb(this, "Error during WAL data write", e);
