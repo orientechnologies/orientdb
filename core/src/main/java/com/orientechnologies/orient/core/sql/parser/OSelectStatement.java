@@ -426,6 +426,10 @@ public class OSelectStatement extends OStatement {
     this.unwind = unwind;
   }
 
+  public OTimeout getTimeout() {
+    return timeout;
+  }
+
   public void setTimeout(OTimeout timeout) {
     this.timeout = timeout;
   }
