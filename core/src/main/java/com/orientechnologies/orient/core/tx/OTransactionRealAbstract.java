@@ -570,4 +570,16 @@ public abstract class OTransactionRealAbstract extends OTransactionAbstract impl
   public void setDatabase(ODatabaseDocumentInternal database) {
     this.database = database;
   }
+  
+  @Override
+  public void resetAllocatedIds() {
+    for (Map.Entry<ORID, ORecordOperation> op : allEntries.entrySet()) {
+      if (op.getValue().type == ORecordOperation.CREATED) {
+        ORecordInternal.setIdentity(
+            (ORecord) op.getValue().record,
+            new ORecordId(op.getKey().getClusterId(), op.getKey().getClusterPosition()));
+      }
+    }
+  }
 }
+
