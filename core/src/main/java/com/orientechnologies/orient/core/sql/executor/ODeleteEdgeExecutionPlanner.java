@@ -104,7 +104,7 @@ public class ODeleteEdgeExecutionPlanner {
 
   private void handleWhere(ODeleteExecutionPlan result, OCommandContext ctx, OWhereClause whereClause, boolean profilingEnabled) {
     if (whereClause != null) {
-      result.chain(new FilterStep(whereClause, ctx, profilingEnabled));
+      result.chain(new FilterStep(whereClause, ctx, -1, profilingEnabled));
     }
   }
 

@@ -53,6 +53,7 @@ public class OSelectExecutionPlanner {
     info.skip = this.statement.getSkip();
     info.limit = this.statement.getLimit();
     info.lockRecord = this.statement.getLockRecord();
+    info.timeout = this.statement.getTimeout() == null ? null : this.statement.getTimeout().copy();
 
   }
 
@@ -1355,7 +1356,7 @@ public class OSelectExecutionPlanner {
       if (ridCondition != null) {
         OWhereClause where = new OWhereClause(-1);
         where.setBaseExpression(ridCondition);
-        result.chain(new FilterStep(where, ctx, profilingEnabled));
+        result.chain(new FilterStep(where, ctx, this.info.timeout != null ? this.info.timeout.getVal().longValue() : -1, profilingEnabled));
       }
       break;
     case VALUES:
@@ -1517,10 +1518,10 @@ public class OSelectExecutionPlanner {
   private void handleWhere(OSelectExecutionPlan plan, QueryPlanningInfo info, OCommandContext ctx, boolean profilingEnabled) {
     if (info.whereClause != null) {
       if (info.distributedPlanCreated) {
-        plan.chain(new FilterStep(info.whereClause, ctx, profilingEnabled));
+        plan.chain(new FilterStep(info.whereClause, ctx, this.info.timeout != null ? this.info.timeout.getVal().longValue() : -1, profilingEnabled));
       } else {
         for (OSelectExecutionPlan shardedPlan : info.distributedFetchExecutionPlans.values()) {
-          shardedPlan.chain(new FilterStep(info.whereClause.copy(), ctx, profilingEnabled));
+          shardedPlan.chain(new FilterStep(info.whereClause.copy(), ctx, this.info.timeout != null ? this.info.timeout.getVal().longValue() : -1, profilingEnabled));
         }
       }
     }
@@ -1637,7 +1638,7 @@ public class OSelectExecutionPlanner {
             if ((info.perRecordLetClause != null && refersToLet(block.getSubBlocks()))) {
               handleLet(subPlan, info, ctx, profilingEnabled);
             }
-            subPlan.chain(new FilterStep(createWhereFrom(block), ctx, profilingEnabled));
+            subPlan.chain(new FilterStep(createWhereFrom(block), ctx, this.info.timeout != null ? this.info.timeout.getVal().longValue() : -1, profilingEnabled));
           }
           resultSubPlans.add(subPlan);
         } else {
@@ -1649,7 +1650,7 @@ public class OSelectExecutionPlanner {
             if ((info.perRecordLetClause != null && refersToLet(block.getSubBlocks()))) {
               handleLet(subPlan, info, ctx, profilingEnabled);
             }
-            subPlan.chain(new FilterStep(createWhereFrom(block), ctx, profilingEnabled));
+            subPlan.chain(new FilterStep(createWhereFrom(block), ctx, this.info.timeout != null ? this.info.timeout.getVal().longValue() : -1, profilingEnabled));
           }
           resultSubPlans.add(subPlan);
         }
@@ -1698,13 +1699,13 @@ public class OSelectExecutionPlanner {
             if ((info.perRecordLetClause != null && refersToLet(block.getSubBlocks()))) {
               handleLet(plan, info, ctx, profilingEnabled);
             }
-            plan.chain(new FilterStep(createWhereFrom(block), ctx, profilingEnabled));
+            plan.chain(new FilterStep(createWhereFrom(block), ctx, this.info.timeout != null ? this.info.timeout.getVal().longValue() : -1, profilingEnabled));
           }
         } else {
           OSelectExecutionPlan subPlan = new OSelectExecutionPlan(ctx);
           subPlan.chain(step);
           if (!block.getSubBlocks().isEmpty()) {
-            subPlan.chain(new FilterStep(createWhereFrom(block), ctx, profilingEnabled));
+            subPlan.chain(new FilterStep(createWhereFrom(block), ctx, this.info.timeout != null ? this.info.timeout.getVal().longValue() : -1, profilingEnabled));
           }
           resultSubPlans.add(subPlan);
         }
@@ -1980,7 +1981,7 @@ public class OSelectExecutionPlanner {
           }
           info.distributedPlanCreated = prevCreatedDist;
         }
-        result.add(new FilterStep(createWhereFrom(desc.remainingCondition), ctx, profilingEnabled));
+        result.add(new FilterStep(createWhereFrom(desc.remainingCondition), ctx, this.info.timeout != null ? this.info.timeout.getVal().longValue() : -1, profilingEnabled));
       }
     } else {
       result = new ArrayList<>();
@@ -2100,7 +2101,7 @@ public class OSelectExecutionPlanner {
         subPlan.chain(new DistinctExecutionStep(ctx, profilingEnabled));
       }
       if (desc.remainingCondition != null && !desc.remainingCondition.isEmpty()) {
-        subPlan.chain(new FilterStep(createWhereFrom(desc.remainingCondition), ctx, profilingEnabled));
+        subPlan.chain(new FilterStep(createWhereFrom(desc.remainingCondition), ctx, this.info.timeout != null ? this.info.timeout.getVal().longValue() : -1, profilingEnabled));
       }
       subPlans.add(subPlan);
     }

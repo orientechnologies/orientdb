@@ -439,6 +439,10 @@ public class OSelectStatement extends OStatement {
     this.timeout = timeout;
   }
 
+  public OTimeout getTimeout() {
+    return timeout;
+  }
+
   public void setParallel(Boolean parallel) {
     this.parallel = parallel;
   }

@@ -99,7 +99,7 @@ public class ODeleteExecutionPlanner {
       if (ridCondition != null) {
         OWhereClause where = new OWhereClause(-1);
         where.setBaseExpression(ridCondition);
-        result.chain(new FilterStep(where, ctx, profilingEnabled));
+        result.chain(new FilterStep(where, ctx, -1, profilingEnabled));
       }
       return true;
     case VALUES:

@@ -74,6 +74,10 @@ public class FetchFromIndexStep extends AbstractExecutionStep {
 
       @Override
       public boolean hasNext() {
+        if (timedOut) {
+          throw new OTimeoutException("Command execution timeout");
+        }
+
         if (localCount >= nRecords) {
           return false;
         }
