@@ -124,6 +124,10 @@ public class ONewDistributedTransactionManager {
           | ODistributedKeyLockedException
           | OInvalidSequentialException ex) {
 
+        if (ex instanceof OConcurrentCreateException) {
+          iTx.resetAllocatedIds();
+        }
+
         // Nothing just retry
         if (count > nretry) {
           ODistributedTxContext context = localDistributedDatabase.getTxContext(requestId);
