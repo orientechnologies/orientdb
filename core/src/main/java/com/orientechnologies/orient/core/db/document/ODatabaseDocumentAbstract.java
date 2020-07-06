@@ -1294,42 +1294,15 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
         }
       }
 
-      if (record == null && !ignoreCache) {
+      if (record == null && !ignoreCache)
         // SEARCH INTO THE CACHE
-        record = localCache.findRecord(rid);
-      }
+        record = getLocalCache().findRecord(rid);
 
       if (record != null) {
         if (iRecord != null) {
           iRecord.fromStream(record.toStream());
           ORecordInternal.setVersion(iRecord, record.getVersion());
           record = iRecord;
-        } else {
-          final OStorage storage = getStorage();
-
-          //if version of record kept in cache is not latest we need to update it
-          //to the latest version
-          if (!record.isDirty() && storage.isRemote() && rid.isPersistent()) {
-            try{
-              final ORawBuffer buffer =
-                  storage.readRecordIfVersionIsNotLatest(rid, null, true,
-                      record.getVersion()).getResult();
-              if (buffer != null) {
-                final int recordType = ORecordInternal.getRecordType(record);
-                if (recordType != buffer.recordType) {
-                  throw new IllegalStateException("Record type contained inside of"
-                      + " the client cache " +recordType + " differs from record type returned from "
-                      + "the storage " + buffer.recordType + " , rid of the record " + rid);
-                }
-
-                record.fromStream(buffer.buffer);
-                ORecordInternal.setVersion(record, buffer.version);
-              }
-            } catch (ORecordNotFoundException e) {
-              localCache.deleteRecord(rid);
-              return null;
-            }
-          }
         }
 
         OFetchHelper.checkFetchPlanValid(fetchPlan);
@@ -1393,7 +1366,7 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
 
       afterReadOperations(iRecord);
       if (iUpdateCache)
-        localCache.updateRecord(iRecord);
+        getLocalCache().updateRecord(iRecord);
 
       return (RET) iRecord;
     } catch (OOfflineClusterException t) {
