@@ -69,6 +69,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.atomic.LongAdder;
+import java.util.concurrent.locks.ReentrantLock;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Stream;
@@ -193,13 +194,16 @@ public final class OCASDiskWriteAheadLog implements OWriteAheadLog {
 
   private boolean useFirstBuffer = true;
 
+  private ReentrantLock writeBufferLock = null;
   private ByteBuffer writeBuffer = null;
   private OPointer writeBufferPointer = null;
   private int writeBufferPageIndex = -1;
 
+  private final ReentrantLock writeBufferOneLock = new ReentrantLock();
   private final ByteBuffer writeBufferOne;
   private final OPointer writeBufferPointerOne;
 
+  private final ReentrantLock writeBufferTwoLock = new ReentrantLock();
   private final ByteBuffer writeBufferTwo;
   private final OPointer writeBufferPointerTwo;
 
@@ -279,7 +283,7 @@ public final class OCASDiskWriteAheadLog implements OWriteAheadLog {
     OLogManager.instance().infoNoDb(this, "Page size for WAL located in %s is set to %d bytes.", walLocation.toString(), pageSize);
 
     this.maxCacheSize =
-        multiplyIntsWithOverflowDefault(maxPagesCacheSize, pageSize, DEFAULT_MAX_CACHE_SIZE);
+        multiplyIntsWithOverflowDefault(maxPagesCacheSize, pageSize);
 
     masterRecordPath = walLocation.resolve(storageName + MASTER_RECORD_EXTENSION);
     masterRecordLSNHolder = FileChannel
@@ -328,11 +332,11 @@ public final class OCASDiskWriteAheadLog implements OWriteAheadLog {
     flush();
   }
 
-  private int multiplyIntsWithOverflowDefault(final int maxPagesCacheSize, final int pageSize,
-      final int defaultValue) {
+  private static int multiplyIntsWithOverflowDefault(final int maxPagesCacheSize,
+      final int pageSize) {
     long maxCacheSize = (long) maxPagesCacheSize * (long) pageSize;
     if ((int) maxCacheSize != maxCacheSize) {
-      return defaultValue;
+      return OCASDiskWriteAheadLog.DEFAULT_MAX_CACHE_SIZE;
     }
     return (int) maxCacheSize;
   }
@@ -513,10 +517,12 @@ public final class OCASDiskWriteAheadLog implements OWriteAheadLog {
 
     final OModifiableLong walSize = new OModifiableLong();
     if (filterWALFiles) {
+      //noinspection resource
       walFiles = Files.find(walLocation, 1,
           (Path path, BasicFileAttributes attributes) -> validateName(path.getFileName().toString(),
               storageName, locale));
     } else {
+      //noinspection resource
       walFiles = Files.find(walLocation, 1,
           (Path path, BasicFileAttributes attrs) -> validateSimpleName(
               path.getFileName().toString(), locale));
@@ -531,6 +537,8 @@ public final class OCASDiskWriteAheadLog implements OWriteAheadLog {
       segments.add(extractSegmentId(path.getFileName().toString()));
       walSize.increment(path.toFile().length());
     });
+
+    walFiles.close();
 
     return walSize.value;
   }
@@ -1861,9 +1869,10 @@ public final class OCASDiskWriteAheadLog implements OWriteAheadLog {
                 if (segmentId != lsn.getSegment()) {
                   if (walFile != null) {
                     if (writeBufferPointer != null) {
-                      writeBuffer(walFile, writeBuffer, lastLSN, checkPointLSN);
+                      writeBuffer(walFile, writeBuffer, writeBufferLock, lastLSN, checkPointLSN);
                     }
 
+                    writeBufferLock = null;
                     writeBufferPointer = null;
                     writeBuffer = null;
                     writeBufferPageIndex = -1;
@@ -1911,16 +1920,20 @@ public final class OCASDiskWriteAheadLog implements OWriteAheadLog {
                     if (writeBuffer == null || writeBuffer.remaining() == 0) {
                       if (writeBufferPointer != null) {
                         assert writeBuffer != null;
-                        writeBuffer(walFile, writeBuffer, lastLSN, checkPointLSN);
+                        writeBuffer(walFile, writeBuffer, writeBufferLock, lastLSN, checkPointLSN);
                       }
 
                       if (useFirstBuffer) {
                         writeBufferPointer = writeBufferPointerOne;
                         writeBuffer = writeBufferOne;
+                        writeBufferLock = writeBufferOneLock;
                       } else {
                         writeBufferPointer = writeBufferPointerTwo;
                         writeBuffer = writeBufferTwo;
+                        writeBufferLock = writeBufferTwoLock;
                       }
+
+                      writeBufferLock.lock();
 
                       writeBuffer.limit((writeBuffer.capacity() / pageSize) * pageSize);
                       writeBuffer.rewind();
@@ -1999,8 +2012,9 @@ public final class OCASDiskWriteAheadLog implements OWriteAheadLog {
             }
 
             if ((makeFSync || fullWrite) && writeBufferPointer != null) {
-              writeBuffer(walFile, writeBuffer, lastLSN, checkPointLSN);
+              writeBuffer(walFile, writeBuffer, writeBufferLock, lastLSN, checkPointLSN);
 
+              writeBufferLock = null;
               writeBufferPointer = null;
               writeBuffer = null;
               writeBufferPageIndex = -1;
@@ -2021,12 +2035,20 @@ public final class OCASDiskWriteAheadLog implements OWriteAheadLog {
 
         if (makeFSync) {
           try {
+            if (writeBufferLock != null) {
+              writeBufferLock.unlock();
+            }
+
             try {
               if (writeFuture != null) {
                 writeFuture.get();
               }
             } catch (final InterruptedException e) {
               OLogManager.instance().errorNoDb(this, "WAL write was interrupted", e);
+            }
+
+            if (writeBufferLock != null) {
+              writeBufferLock.lock();
             }
 
             assert walFile.position() == currentPosition;
@@ -2045,7 +2067,7 @@ public final class OCASDiskWriteAheadLog implements OWriteAheadLog {
                   while (counter < cqSize) {
                     final OPair<Long, OWALFile> pair = fileCloseQueue.poll();
                     if (pair != null) {
-                      @SuppressWarnings("resource") final OWALFile file = pair.value;
+                     final OWALFile file = pair.value;
 
                       assert file.position() % pageSize == 0;
 
@@ -2106,10 +2128,15 @@ public final class OCASDiskWriteAheadLog implements OWriteAheadLog {
       }
     }
 
-    private void writeBuffer(final OWALFile file, final ByteBuffer buffer,
+    private void writeBuffer(
+        final OWALFile file,
+        final ByteBuffer buffer,
+        final ReentrantLock writeBufferLock,
         final OLogSequenceNumber lastLSN,
-        final OLogSequenceNumber checkpointLSN) throws IOException {
+        final OLogSequenceNumber checkpointLSN)
+        throws IOException {
 
+      final int limit;
       if (buffer.position() <= OCASWALPage.RECORDS_OFFSET) {
         return;
       }
@@ -2147,9 +2174,10 @@ public final class OCASDiskWriteAheadLog implements OWriteAheadLog {
       }
 
       buffer.position(0);
-      final int limit = maxPage * pageSize;
+      limit = maxPage * pageSize;
       buffer.limit(limit);
 
+      writeBufferLock.unlock();
       try {
         if (writeFuture != null) {
           writeFuture.get();
@@ -2167,6 +2195,7 @@ public final class OCASDiskWriteAheadLog implements OWriteAheadLog {
       final long expectedPosition = currentPosition;
 
       writeFuture = writeExecutor.submit((Callable<?>) () -> {
+        writeBufferLock.lock();
         try {
           long startTs = 0;
           if (printPerformanceStatistic) {
@@ -2217,6 +2246,8 @@ public final class OCASDiskWriteAheadLog implements OWriteAheadLog {
         } catch (final IOException e) {
           OLogManager.instance().errorNoDb(this, "Error during WAL data write", e);
           throw e;
+        } finally {
+          writeBufferLock.unlock();
         }
 
         return null;
