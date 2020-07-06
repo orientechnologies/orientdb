@@ -1,15 +1,6 @@
 package com.orientechnologies.orient.core.sql.executor;
 
-import com.orientechnologies.orient.core.sql.parser.OAndBlock;
-import com.orientechnologies.orient.core.sql.parser.OFromClause;
-import com.orientechnologies.orient.core.sql.parser.OGroupBy;
-import com.orientechnologies.orient.core.sql.parser.OLetClause;
-import com.orientechnologies.orient.core.sql.parser.OLimit;
-import com.orientechnologies.orient.core.sql.parser.OOrderBy;
-import com.orientechnologies.orient.core.sql.parser.OProjection;
-import com.orientechnologies.orient.core.sql.parser.OSkip;
-import com.orientechnologies.orient.core.sql.parser.OUnwind;
-import com.orientechnologies.orient.core.sql.parser.OWhereClause;
+import com.orientechnologies.orient.core.sql.parser.*;
 import com.orientechnologies.orient.core.storage.OStorage;
 import java.util.List;
 import java.util.Map;
@@ -18,6 +9,7 @@ import java.util.Set;
 /** Created by luigidellaquila on 19/06/17. */
 public class QueryPlanningInfo {
 
+  protected OTimeout timeout;
   protected boolean distinct = false;
   protected boolean expand = false;
 
