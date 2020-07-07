@@ -331,6 +331,9 @@ public class ONetworkBinaryProtocolFactory {
       case OChannelBinaryProtocol.REQUEST_QUERY:
         return new OQueryRequest();
 
+      case OChannelBinaryProtocol.REQUEST_CLOSE_QUERY:
+        return new OCloseQueryRequest();
+
       case OChannelBinaryProtocol.REQUEST_QUERY_NEXT_PAGE:
         return new OQueryNextPageRequest();
 

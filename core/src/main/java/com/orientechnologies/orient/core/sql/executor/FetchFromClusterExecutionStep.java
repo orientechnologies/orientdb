@@ -75,6 +75,9 @@ public class FetchFromClusterExecutionStep extends AbstractExecutionStep {
 
             @Override
             public boolean hasNext() {
+              if (timedOut) {
+                throw new OTimeoutException("Command execution timeout");
+              }
               long begin = profilingEnabled ? System.nanoTime() : 0;
               try {
                 if (nFetched >= nRecords) {
@@ -94,6 +97,10 @@ public class FetchFromClusterExecutionStep extends AbstractExecutionStep {
 
             @Override
             public OResult next() {
+              if (timedOut) {
+                throw new OTimeoutException("Command execution timeout");
+              }
+
               if (nFetched % 100 == 0 && OExecutionThreadLocal.isInterruptCurrentOperation()) {
                 throw new OCommandInterruptedException("The command has been interrupted");
               }

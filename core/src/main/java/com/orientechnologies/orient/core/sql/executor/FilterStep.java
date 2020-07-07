@@ -10,15 +10,18 @@ import java.util.Optional;
 
 /** Created by luigidellaquila on 12/07/16. */
 public class FilterStep extends AbstractExecutionStep {
+  private final long timeoutMillis;
   private OWhereClause whereClause;
 
   private OResultSet prevResult = null;
 
   private long cost;
 
-  public FilterStep(OWhereClause whereClause, OCommandContext ctx, boolean profilingEnabled) {
+  public FilterStep(
+      OWhereClause whereClause, OCommandContext ctx, long timeoutMillis, boolean profilingEnabled) {
     super(ctx, profilingEnabled);
     this.whereClause = whereClause;
+    this.timeoutMillis = timeoutMillis;
   }
 
   @Override
@@ -35,6 +38,7 @@ public class FilterStep extends AbstractExecutionStep {
       private int fetched = 0;
 
       private void fetchNextItem() {
+        long timeoutBegin = System.currentTimeMillis();
         nextItem = null;
         if (finished) {
           return;
@@ -66,6 +70,9 @@ public class FilterStep extends AbstractExecutionStep {
             if (profilingEnabled) {
               cost += (System.nanoTime() - begin);
             }
+          }
+          if (timeoutMillis > 0 && timeoutBegin + timeoutMillis < System.currentTimeMillis()) {
+            sendTimeout();
           }
         }
       }
@@ -168,6 +175,6 @@ public class FilterStep extends AbstractExecutionStep {
 
   @Override
   public OExecutionStep copy(OCommandContext ctx) {
-    return new FilterStep(this.whereClause.copy(), ctx, profilingEnabled);
+    return new FilterStep(this.whereClause.copy(), ctx, timeoutMillis, profilingEnabled);
   }
 }
