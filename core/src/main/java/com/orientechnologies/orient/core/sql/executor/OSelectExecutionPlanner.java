@@ -563,7 +563,7 @@ public class OSelectExecutionPlanner {
         indexCond.setOperator(new OEqualsCompareOperator(-1));
         indexCond.setRight(((OBinaryCondition) condition).getRight().copy());
         result.chain(new FetchFromIndexStep(classIndex, indexCond, null, ctx, profilingEnabled));
-        result.chain(new AggregateProjectionCalculationStep(info.aggregateProjection, info.groupBy, ctx, profilingEnabled));
+        result.chain(new AggregateProjectionCalculationStep(info.aggregateProjection, info.groupBy, ctx, info.timeout != null ? this.info.timeout.getVal().longValue() : -1, profilingEnabled));
         result.chain(new GuaranteeEmptyCountStep(info.aggregateProjection.getItems().get(0), ctx, profilingEnabled));
         result.chain(new ProjectionCalculationStep(info.projection, ctx, profilingEnabled));
         return true;
@@ -658,7 +658,7 @@ public class OSelectExecutionPlanner {
         result.chain(new ProjectionCalculationStep(info.preAggregateProjection, ctx, profilingEnabled));
       }
       if (info.aggregateProjection != null) {
-        result.chain(new AggregateProjectionCalculationStep(info.aggregateProjection, info.groupBy, ctx, profilingEnabled));
+        result.chain(new AggregateProjectionCalculationStep(info.aggregateProjection, info.groupBy, ctx, info.timeout != null ? info.timeout.getVal().longValue() : -1, profilingEnabled));
         if (isCountOnly(info) && info.groupBy == null) {
           result.chain(new GuaranteeEmptyCountStep(info.aggregateProjection.getItems().get(0), ctx, profilingEnabled));
         }
@@ -1542,7 +1542,7 @@ public class OSelectExecutionPlanner {
       maxResults = null;
     }
     if (!info.orderApplied && info.orderBy != null && info.orderBy.getItems() != null && info.orderBy.getItems().size() > 0) {
-      plan.chain(new OrderByStep(info.orderBy, maxResults, ctx, profilingEnabled));
+      plan.chain(new OrderByStep(info.orderBy, maxResults, ctx, info.timeout != null ? info.timeout.getVal().longValue() : -1, profilingEnabled));
       if (info.projectionAfterOrderBy != null) {
         plan.chain(new ProjectionCalculationStep(info.projectionAfterOrderBy, ctx, profilingEnabled));
       }

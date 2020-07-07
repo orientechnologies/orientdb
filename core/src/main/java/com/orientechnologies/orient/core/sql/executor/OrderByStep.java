@@ -13,6 +13,7 @@ import java.util.*;
  */
 public class OrderByStep extends AbstractExecutionStep {
   private final OOrderBy orderBy;
+  private final long timeoutMillis;
   private       Integer  maxResults;
 
   private long cost = 0;
@@ -20,17 +21,18 @@ public class OrderByStep extends AbstractExecutionStep {
   List<OResult> cachedResult = null;
   int           nextElement  = 0;
 
-  public OrderByStep(OOrderBy orderBy, OCommandContext ctx, boolean profilingEnabled) {
-    this(orderBy, null, ctx, profilingEnabled);
+  public OrderByStep(OOrderBy orderBy, OCommandContext ctx, long timeoutMillis, boolean profilingEnabled) {
+    this(orderBy, null, ctx, timeoutMillis, profilingEnabled);
   }
 
-  public OrderByStep(OOrderBy orderBy, Integer maxResults, OCommandContext ctx, boolean profilingEnabled) {
+  public OrderByStep(OOrderBy orderBy, Integer maxResults, OCommandContext ctx, long timeoutMillis, boolean profilingEnabled) {
     super(ctx, profilingEnabled);
     this.orderBy = orderBy;
     this.maxResults = maxResults;
     if (this.maxResults != null && this.maxResults < 0) {
       this.maxResults = null;
     }
+    this.timeoutMillis = timeoutMillis;
   }
 
   @Override
@@ -94,6 +96,7 @@ public class OrderByStep extends AbstractExecutionStep {
   }
 
   private void init(OExecutionStepInternal p, OCommandContext ctx) {
+    long timeoutBegin = System.currentTimeMillis();
     final long maxElementsAllowed = OGlobalConfiguration.QUERY_MAX_HEAP_ELEMENTS_ALLOWED_PER_OP.getValueAsLong();
     boolean sorted = true;
     do {
@@ -102,6 +105,10 @@ public class OrderByStep extends AbstractExecutionStep {
         break;
       }
       while (lastBatch.hasNext()) {
+        if (timeoutMillis > 0 && timeoutBegin + timeoutMillis < System.currentTimeMillis()) {
+          sendTimeout();
+        }
+
         if (this.timedOut) {
           break;
         }
