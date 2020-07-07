@@ -15,7 +15,7 @@
     <artifactId>orientdb-gremlin-server</artifactId>
 
     <properties>
-        <tinkerpop.version>3.4.6</tinkerpop.version>
+        <tinkerpop.version>3.4.7</tinkerpop.version>
         <slf4j.version>1.7.21</slf4j.version>
         <project.rootdir>${project.basedir}/../</project.rootdir>
     </properties>
