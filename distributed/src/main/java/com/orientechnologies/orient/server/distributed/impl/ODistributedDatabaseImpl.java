@@ -40,7 +40,6 @@ import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.exception.OSecurityAccessException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
 import com.orientechnologies.orient.core.tx.OTransactionId;
 import com.orientechnologies.orient.core.tx.OTransactionSequenceStatus;
 import com.orientechnologies.orient.core.tx.OTxMetadataHolder;
@@ -848,7 +847,7 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
               + DISTRIBUTED_SYNC_JSON_FILENAME;
       final File cfgFile = new File(path);
       try {
-        syncConfiguration = new ODistributedSyncConfiguration(manager, databaseName, cfgFile);
+        syncConfiguration = new ODistributedSyncConfiguration(cfgFile);
       } catch (IOException e) {
         throw OException.wrapException(
             new ODistributedException(
@@ -1194,18 +1193,6 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
                 }
               });
     }
-  }
-
-  @Override
-  public void setLSN(
-      final String sourceNodeName,
-      final OLogSequenceNumber taskLastLSN,
-      final boolean updateLastOperationTimestamp)
-      throws IOException {
-    if (taskLastLSN == null) return;
-
-    final ODistributedSyncConfiguration cfg = getSyncConfiguration();
-    cfg.setLastLSN(sourceNodeName, taskLastLSN, updateLastOperationTimestamp);
   }
 
   private void startTxTimeoutTimerTask() {

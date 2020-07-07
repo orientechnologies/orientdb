@@ -63,7 +63,6 @@ import com.orientechnologies.orient.core.storage.cluster.OClusterPositionMap;
 import com.orientechnologies.orient.core.storage.cluster.OPaginatedCluster;
 import com.orientechnologies.orient.core.storage.disk.OLocalPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
 import com.orientechnologies.orient.core.tx.OTxMetadataHolder;
 import com.orientechnologies.orient.core.tx.OTxMetadataHolderImpl;
 import com.orientechnologies.orient.server.OClientConnection;
@@ -696,31 +695,6 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
                     (Throwable) result,
                     reqId,
                     task);
-              else {
-                // OK
-                final String sourceNodeName = task.getNodeSource();
-
-                if (database != null) {
-                  final ODistributedDatabaseImpl ddb =
-                      getMessageService().getDatabase(database.getName());
-
-                  if (ddb != null
-                      && !(result instanceof Throwable)
-                      && task instanceof OAbstractReplicatedTask
-                      && !task.isIdempotent()) {
-
-                    // UPDATE LSN WITH LAST OPERATION
-                    ddb.setLSN(sourceNodeName, ((OAbstractReplicatedTask) task).getLastLSN(), true);
-
-                    // UPDATE LSN WITH LAST LOCAL OPERATION
-                    ddb.setLSN(
-                        getLocalNodeName(),
-                        ((OAbstractPaginatedStorage) database.getStorage().getUnderlying())
-                            .getLSN(),
-                        true);
-                  }
-                }
-              }
 
               return result;
 
@@ -1105,35 +1079,7 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
                         requestFullDatabase(distrDatabase, databaseName, iStartup, cfg);
                 }
 
-                if (databaseInstalled) {
-                  // OVERWRITE THE LSN
-                  ODatabaseDocumentInternal current =
-                      ODatabaseRecordThreadLocal.instance().getIfDefined();
-                  final ODatabaseDocumentInternal db = distrDatabase.getDatabaseInstance();
-                  try {
-                    try {
-                      distrDatabase
-                          .getSyncConfiguration()
-                          .setLastLSN(
-                              nodeName,
-                              ((OLocalPaginatedStorage) db.getStorage().getUnderlying()).getLSN(),
-                              true);
-                    } catch (IOException e) {
-                      ODistributedServerLog.error(
-                          this,
-                          nodeName,
-                          null,
-                          DIRECTION.NONE,
-                          "Error on setting LSN after the installation of database '%s'",
-                          databaseName);
-                    }
-                  } finally {
-                    db.close();
-                    if (current != null) {
-                      current.activateOnCurrentThread();
-                    }
-                  }
-                } else {
+                if (!databaseInstalled) {
                   setDatabaseStatus(getLocalNodeName(), databaseName, DB_STATUS.NOT_AVAILABLE);
                 }
 
@@ -1215,7 +1161,7 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
                 null);
 
         if (response == null)
-          throw new ODistributedDatabaseDeltaSyncException((OLogSequenceNumber) null);
+          throw new ODistributedDatabaseDeltaSyncException("Error requesting delta sync");
 
         databaseInstalledCorrectly =
             installResponseNewDeltaSync(
@@ -1237,9 +1183,7 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
             "Error on asking delta backup of database '%s' (err=%s)",
             databaseName,
             e.getMessage());
-        // TODO: remove lsn from this exception
-        throw OException.wrapException(
-            new ODistributedDatabaseDeltaSyncException(null, e.toString()), e);
+        throw OException.wrapException(new ODistributedDatabaseDeltaSyncException(e.toString()), e);
       }
 
       if (databaseInstalledCorrectly) {
@@ -1419,11 +1363,8 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
         "Requesting deploy of database '%s' on local server...",
         databaseName);
     for (String noteToSend : selectedNodes) {
-      final OLogSequenceNumber lastLSN =
-          distrDatabase.getSyncConfiguration().getLastLSN(noteToSend);
       final OAbstractReplicatedTask deployTask =
-          new OSyncDatabaseTask(
-              lastLSN, distrDatabase.getSyncConfiguration().getLastOperationTimestamp());
+          new OSyncDatabaseTask(distrDatabase.getSyncConfiguration().getLastOperationTimestamp());
       List<String> singleNode = new ArrayList<>();
       singleNode.add(noteToSend);
       final Map<String, Object> results =
@@ -1720,7 +1661,6 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
         firstChunk.incremental,
         receiver);
 
-    // OVERWRITE THE MOMENTUM FROM THE ORIGINAL SERVER AND ADD LAST LOCAL LSN
     distrDatabase.setOnline();
 
     // ASK FOR INDIVIDUAL CLUSTERS IN CASE OF SHARDING AND NO LOCAL COPY
@@ -2192,7 +2132,8 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
                             ODistributedRequest.EXECUTION_MODE.RESPONSE,
                             null);
                     if (response == null)
-                      throw new ODistributedDatabaseDeltaSyncException((OLogSequenceNumber) null);
+                      throw new ODistributedDatabaseDeltaSyncException(
+                          "Error Requesting delta sync");
                     installResponseNewDeltaSync(
                         distrDatabase,
                         databaseName,

@@ -26,9 +26,7 @@ import com.orientechnologies.common.util.OUncaughtExceptionHandler;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
-import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.OSyncSource;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.distributed.ODistributedDatabase;
 import com.orientechnologies.orient.server.distributed.ODistributedException;
@@ -55,9 +53,8 @@ public class OSyncDatabaseTask extends OAbstractSyncDatabaseTask {
 
   public OSyncDatabaseTask() {}
 
-  public OSyncDatabaseTask(final OLogSequenceNumber lastLSN, final long lastOperationTimestamp) {
+  public OSyncDatabaseTask(final long lastOperationTimestamp) {
     super(lastOperationTimestamp);
-    this.lastLSN = lastLSN;
   }
 
   @Override
@@ -236,16 +233,6 @@ public class OSyncDatabaseTask extends OAbstractSyncDatabaseTask {
       ODatabaseDocumentInternal database) {
     final ODistributedDatabase dDatabase = iManager.getMessageService().getDatabase(databaseName);
 
-    if (lastLSN != null) {
-      final OLogSequenceNumber currentLSN =
-          ((OAbstractPaginatedStorage) database.getStorage().getUnderlying()).getLSN();
-      if (currentLSN != null) {
-        // LOCAL AND REMOTE LSN PRESENT
-        if (lastLSN.compareTo(currentLSN) <= 0)
-          // REQUESTED LSN IS <= LOCAL LSN
-          return dDatabase;
-      }
-    }
     if (lastOperationTimestamp > -1) {
       if (lastOperationTimestamp <= dDatabase.getSyncConfiguration().getLastOperationTimestamp())
         // NO LSN, BUT LOCAL DATABASE HAS BEEN WRITTEN AFTER THE REQUESTER, STILL OK
@@ -264,14 +251,12 @@ public class OSyncDatabaseTask extends OAbstractSyncDatabaseTask {
 
   @Override
   public void toStream(final DataOutput out) throws IOException {
-    writeOptionalLSN(out);
     out.writeLong(random);
     out.writeLong(lastOperationTimestamp);
   }
 
   @Override
   public void fromStream(final DataInput in, final ORemoteTaskFactory factory) throws IOException {
-    readOptionalLSN(in);
     random = in.readLong();
     lastOperationTimestamp = in.readLong();
   }

@@ -23,16 +23,12 @@ import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
 import com.orientechnologies.orient.server.distributed.ODistributedDatabase;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIRECTION;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
 import com.orientechnologies.orient.server.distributed.task.OAbstractReplicatedTask;
 import com.orientechnologies.orient.server.distributed.task.ODatabaseIsOldException;
-import java.io.DataInput;
-import java.io.DataOutput;
-import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.UUID;
@@ -100,17 +96,5 @@ public abstract class OAbstractSyncDatabaseTask extends OAbstractReplicatedTask
         this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.NONE, msg);
 
     throw new ODatabaseIsOldException(msg);
-  }
-
-  protected void readOptionalLSN(DataInput in) throws IOException {
-    final boolean lastLSNPresent = in.readBoolean();
-    if (lastLSNPresent) lastLSN = new OLogSequenceNumber(in);
-  }
-
-  protected void writeOptionalLSN(DataOutput out) throws IOException {
-    if (lastLSN != null) {
-      out.writeBoolean(true);
-      lastLSN.toStream(out);
-    } else out.writeBoolean(false);
   }
 }

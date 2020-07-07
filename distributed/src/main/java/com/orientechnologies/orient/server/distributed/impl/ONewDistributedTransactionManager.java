@@ -32,8 +32,6 @@ import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.storage.ORecordDuplicatedException;
-import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
 import com.orientechnologies.orient.core.tx.OTransaction;
 import com.orientechnologies.orient.core.tx.OTransactionId;
 import com.orientechnologies.orient.core.tx.OTransactionInternal;
@@ -41,7 +39,6 @@ import com.orientechnologies.orient.server.distributed.ODistributedConfiguration
 import com.orientechnologies.orient.server.distributed.ODistributedDatabase;
 import com.orientechnologies.orient.server.distributed.ODistributedRequest.EXECUTION_MODE;
 import com.orientechnologies.orient.server.distributed.ODistributedRequestId;
-import com.orientechnologies.orient.server.distributed.ODistributedServerLog;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
 import com.orientechnologies.orient.server.distributed.ODistributedTxContext;
 import com.orientechnologies.orient.server.distributed.impl.lock.OLockGuard;
@@ -60,7 +57,6 @@ import com.orientechnologies.orient.server.distributed.impl.task.transaction.OTx
 import com.orientechnologies.orient.server.distributed.task.ODistributedKeyLockedException;
 import com.orientechnologies.orient.server.distributed.task.ODistributedOperationException;
 import com.orientechnologies.orient.server.distributed.task.ODistributedRecordLockedException;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -196,20 +192,6 @@ public class ONewDistributedTransactionManager {
           dManager.getLocalNodeName(), ((OTxKeyLockTimeout) localResult).getKey(), timeout);
     }
 
-    try {
-      localDistributedDatabase
-          .getSyncConfiguration()
-          .setLastLSN(
-              localNodeName, ((OAbstractPaginatedStorage) storage.getUnderlying()).getLSN(), true);
-    } catch (IOException e) {
-      ODistributedServerLog.debug(
-          this,
-          dManager != null ? dManager.getLocalNodeName() : "?",
-          null,
-          ODistributedServerLog.DIRECTION.NONE,
-          "Error on updating local LSN configuration for database '%s'",
-          storage.getName());
-    }
     if (nodes.isEmpty()) {
       switch (localResult.getResponseType()) {
         case OTxSuccess.ID:
@@ -272,9 +254,6 @@ public class ONewDistributedTransactionManager {
     }
     final OTransactionPhase1Task txTask = createTxTask(txId, iTx, nodes);
 
-    // TODO:check the lsn
-    txTask.setLastLSN(getLsn());
-
     final Set sentNodes = new HashSet(nodes);
 
     iTx.setStatus(OTransaction.TXSTATUS.COMMITTING);
@@ -313,10 +292,6 @@ public class ONewDistributedTransactionManager {
 
     // OK, DISTRIBUTED COMMIT SUCCEED
     return;
-  }
-
-  public OLogSequenceNumber getLsn() {
-    return ((OAbstractPaginatedStorage) storage.getUnderlying()).getLSN();
   }
 
   private void handleResponse(
@@ -501,12 +476,7 @@ public class ONewDistributedTransactionManager {
   private OTransactionPhase2Task newSecondPhase(
       ODistributedRequestId requestId, OTransactionPhase1Task txTask, boolean success) {
     return new OTransactionPhase2Task(
-        requestId,
-        success,
-        txTask.getRids(),
-        txTask.getUniqueKeys(),
-        getLsn(),
-        txTask.getTransactionId());
+        requestId, success, txTask.getRids(), txTask.getUniqueKeys(), txTask.getTransactionId());
   }
 
   private void localKo(

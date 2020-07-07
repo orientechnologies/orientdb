@@ -6,7 +6,6 @@ import com.orientechnologies.common.util.OPair;
 import com.orientechnologies.orient.client.remote.message.OMessageHelper;
 import com.orientechnologies.orient.core.index.OCompositeKey;
 import com.orientechnologies.orient.core.serialization.serializer.record.binary.ORecordSerializerNetworkDistributed;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
 import com.orientechnologies.orient.core.tx.OTransactionId;
 import com.orientechnologies.orient.server.distributed.impl.task.OTransactionPhase1Task;
 import java.io.ByteArrayInputStream;
@@ -43,7 +42,6 @@ public class OTransactionPhase1TaskSerializationTest {
 
     txId.write(out);
     out.writeInt(0);
-    new OLogSequenceNumber(-1, -1).toStream(out);
     OPair<String, Object> keyChange1 = new OPair<>("idx1", null);
     OPair<String, Object> keyChange2 = new OPair<>("idx2", "k2");
     OPair<String, Object> keyChange3 = new OPair<>("idx3", 5);

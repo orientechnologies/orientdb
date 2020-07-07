@@ -19,7 +19,6 @@
  */
 package com.orientechnologies.orient.server.distributed.task;
 
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
 import com.orientechnologies.orient.server.distributed.ODistributedException;
 
 /**
@@ -31,16 +30,6 @@ public class ODistributedDatabaseDeltaSyncException extends ODistributedExceptio
   public ODistributedDatabaseDeltaSyncException(
       final ODistributedDatabaseDeltaSyncException exception) {
     super(exception);
-  }
-
-  public ODistributedDatabaseDeltaSyncException(final OLogSequenceNumber requested) {
-    super("Requested database delta sync with LSN=" + requested + " but not found in database");
-  }
-
-  public ODistributedDatabaseDeltaSyncException(
-      final OLogSequenceNumber requested, final String reason) {
-    super(
-        "Requested delta sync with LSN=" + requested + " but found the following error: " + reason);
   }
 
   public ODistributedDatabaseDeltaSyncException(final String iMessage) {

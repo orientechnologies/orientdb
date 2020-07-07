@@ -11,7 +11,6 @@ import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
 import com.orientechnologies.orient.core.tx.OTransactionId;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.distributed.ODistributedRequestId;
@@ -69,12 +68,7 @@ public class OTransactionPhase2TaskTest {
         new ODistributedRequestId(10, 20), server, null, (ODatabaseDocumentInternal) session);
     OTransactionPhase2Task task2 =
         new OTransactionPhase2Task(
-            new ODistributedRequestId(10, 20),
-            true,
-            ids,
-            uniqueIndexKeys,
-            new OLogSequenceNumber(0, 1),
-            transactionId);
+            new ODistributedRequestId(10, 20), true, ids, uniqueIndexKeys, transactionId);
     task2.execute(
         new ODistributedRequestId(10, 21), server, null, (ODatabaseDocumentInternal) session);
 

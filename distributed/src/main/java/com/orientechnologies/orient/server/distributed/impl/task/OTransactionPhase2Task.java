@@ -12,7 +12,6 @@ import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.serialization.serializer.record.binary.ORecordSerializerNetworkDistributed;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
 import com.orientechnologies.orient.core.tx.OTransactionId;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.distributed.ODistributedRequestId;
@@ -43,13 +42,11 @@ public class OTransactionPhase2Task extends OAbstractReplicatedTask implements O
       boolean success,
       SortedSet<ORID> rids,
       SortedSet<OPair<String, Object>> uniqueIndexKeys,
-      OLogSequenceNumber lsn,
       OTransactionId transactionId) {
     this.firstPhaseId = firstPhaseId;
     this.success = success;
     this.involvedRids = rids;
     this.uniqueIndexKeys = uniqueIndexKeys;
-    this.lastLSN = lsn;
     this.transactionId = transactionId;
   }
 
@@ -78,10 +75,6 @@ public class OTransactionPhase2Task extends OAbstractReplicatedTask implements O
       involvedRids.add(ORecordId.deserialize(in));
     }
     this.success = in.readBoolean();
-    this.lastLSN = new OLogSequenceNumber(in);
-    if (lastLSN.getSegment() == -1 && lastLSN.getSegment() == -1) {
-      lastLSN = null;
-    }
     ORecordSerializerNetworkDistributed serializer = ORecordSerializerNetworkDistributed.INSTANCE;
     OMessageHelper.readTxUniqueIndexKeys(uniqueIndexKeys, serializer, in);
   }
@@ -96,11 +89,6 @@ public class OTransactionPhase2Task extends OAbstractReplicatedTask implements O
       ORecordId.serialize(id, out);
     }
     out.writeBoolean(success);
-    if (lastLSN == null) {
-      new OLogSequenceNumber(-1, -1).toStream(out);
-    } else {
-      lastLSN.toStream(out);
-    }
     ORecordSerializerNetworkDistributed serializer = ORecordSerializerNetworkDistributed.INSTANCE;
     OMessageHelper.writeTxUniqueIndexKeys(uniqueIndexKeys, serializer, out);
   }
@@ -196,11 +184,6 @@ public class OTransactionPhase2Task extends OAbstractReplicatedTask implements O
 
   public ODistributedRequestId getFirstPhaseId() {
     return firstPhaseId;
-  }
-
-  @Override
-  public OLogSequenceNumber getLastLSN() {
-    return super.getLastLSN();
   }
 
   @Override

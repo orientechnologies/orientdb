@@ -21,7 +21,6 @@ import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
 import com.orientechnologies.orient.core.serialization.serializer.record.binary.ODocumentSerializerDeltaDistributed;
 import com.orientechnologies.orient.core.serialization.serializer.record.binary.ORecordSerializerNetworkDistributed;
 import com.orientechnologies.orient.core.storage.ORecordDuplicatedException;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
 import com.orientechnologies.orient.core.tx.OTransactionId;
 import com.orientechnologies.orient.core.tx.OTransactionInternal;
 import com.orientechnologies.orient.core.tx.ValidationResult;
@@ -63,7 +62,6 @@ import java.util.stream.Collectors;
 public class OTransactionPhase1Task extends OAbstractReplicatedTask implements OLockKeySource {
   public static final int FACTORYID = 43;
   private volatile boolean hasResponse;
-  private OLogSequenceNumber lastLSN;
   private List<ORecordOperation> ops;
   private List<ORecordOperationRequest> operations;
   // Contains the set of <index-name, index-key> for keys (belonging to a unique index) that are
@@ -263,11 +261,6 @@ public class OTransactionPhase1Task extends OAbstractReplicatedTask implements O
       operations.add(req);
     }
 
-    lastLSN = new OLogSequenceNumber(in);
-    if (lastLSN.getSegment() == -1 && lastLSN.getSegment() == -1) {
-      lastLSN = null;
-    }
-
     ORecordSerializerNetworkDistributed serializer = ORecordSerializerNetworkDistributed.INSTANCE;
     OMessageHelper.readTxUniqueIndexKeys(uniqueIndexKeys, serializer, in);
   }
@@ -339,11 +332,6 @@ public class OTransactionPhase1Task extends OAbstractReplicatedTask implements O
     for (ORecordOperationRequest operation : operations) {
       OMessageHelper.writeTransactionEntry(out, operation);
     }
-    if (lastLSN == null) {
-      new OLogSequenceNumber(-1, -1).toStream(out);
-    } else {
-      lastLSN.toStream(out);
-    }
 
     ORecordSerializerNetworkDistributed serializer = ORecordSerializerNetworkDistributed.INSTANCE;
     OMessageHelper.writeTxUniqueIndexKeys(uniqueIndexKeys, serializer, out);
@@ -376,15 +364,6 @@ public class OTransactionPhase1Task extends OAbstractReplicatedTask implements O
             });
     this.ops = new ArrayList<>(operations.getRecordOperations());
     genOps(this.ops);
-  }
-
-  public void setLastLSN(OLogSequenceNumber lastLSN) {
-    this.lastLSN = lastLSN;
-  }
-
-  @Override
-  public OLogSequenceNumber getLastLSN() {
-    return lastLSN;
   }
 
   @Override

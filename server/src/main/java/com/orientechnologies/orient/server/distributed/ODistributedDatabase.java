@@ -20,13 +20,11 @@
 package com.orientechnologies.orient.server.distributed;
 
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
 import com.orientechnologies.orient.core.tx.OTransactionId;
 import com.orientechnologies.orient.core.tx.OTransactionSequenceStatus;
 import com.orientechnologies.orient.core.tx.OTxMetadataHolder;
 import com.orientechnologies.orient.core.tx.ValidationResult;
 import com.orientechnologies.orient.server.distributed.task.ORemoteTask;
-import java.io.IOException;
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
@@ -98,9 +96,6 @@ public interface ODistributedDatabase {
   long getProcessedRequests();
 
   void checkNodeInConfiguration(ODistributedConfiguration cfg, String serverName);
-
-  void setLSN(String sourceNodeName, OLogSequenceNumber taskLastLSN, boolean writeLastOperation)
-      throws IOException;
 
   Optional<OTransactionId> nextId();
 

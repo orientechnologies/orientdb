@@ -36,20 +36,14 @@ import java.util.concurrent.ConcurrentHashMap;
  * @author Luca Garulli (l.garulli--at--orientdb.com)
  */
 public class ODistributedSyncConfiguration {
-  private final ODistributedServerManager dManager;
   private final Map<String, OLogSequenceNumber> lastLSN =
       new ConcurrentHashMap<String, OLogSequenceNumber>();
-  private final String databaseName;
   private final ODistributedMomentum momentum;
   private File file;
   private long lastOperationTimestamp = -1;
   private long lastLSNWrittenOnDisk = 0l;
 
-  public ODistributedSyncConfiguration(
-      final ODistributedServerManager manager, final String databaseName, final File file)
-      throws IOException {
-    this.dManager = manager;
-    this.databaseName = databaseName;
+  public ODistributedSyncConfiguration(final File file) throws IOException {
     momentum = new ODistributedMomentum();
     this.file = file;
 
@@ -64,29 +58,6 @@ public class ODistributedSyncConfiguration {
   public ODistributedMomentum getMomentum() {
     updateInternalDocument();
     return momentum;
-  }
-
-  public OLogSequenceNumber getLastLSN(final String server) {
-    return lastLSN.get(server);
-  }
-
-  public void setLastLSN(
-      final String server, final OLogSequenceNumber lsn, final boolean updateLastOperationTimestamp)
-      throws IOException {
-    if (lsn == null) lastLSN.put(server, new OLogSequenceNumber(-1, -1));
-    else lastLSN.put(server, lsn);
-
-    if (updateLastOperationTimestamp) {
-      final long clusterTime = dManager.getClusterTime();
-      if (clusterTime > -1) lastOperationTimestamp = clusterTime;
-    }
-
-    // if (updateLastOperationTimestamp)
-    // ODistributedServerLog.debug(this, dManager.getLocalNodeName(), server,
-    // ODistributedServerLog.DIRECTION.IN,
-    // "Updating LSN %s lastOperationTimestamp=%d", lsn, lastOperationTimestamp);
-
-    if (System.currentTimeMillis() - lastLSNWrittenOnDisk > 2000) save();
   }
 
   public void load() throws IOException {
