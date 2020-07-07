@@ -213,7 +213,9 @@ public class ServerRun {
         if (dm != null) {
           HazelcastInstance hz = dm.getHazelcastInstance();
           final Node node = getHazelcastNode(hz);
-          node.getConnectionManager().shutdown();
+          if (node.getNetworkingService() != null) {
+            node.getNetworkingService().shutdown();
+          }
           node.shutdown(true);
           hz.getLifecycleService().terminate();
         }
