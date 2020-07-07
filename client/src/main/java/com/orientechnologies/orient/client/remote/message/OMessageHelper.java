@@ -551,6 +551,8 @@ public class OMessageHelper {
         out.writeInt(bytes.length);
         out.write(bytes);
       }
+      // Placeholder for future use for version
+      out.writeInt(0);
     }
   }
 
@@ -577,6 +579,9 @@ public class OMessageHelper {
         in.readFully(bytes);
         v = serializer.deserializeValue(bytes, type);
       }
+      // Placeholder for future use for version
+      in.readInt();
+
       uniqueIndexKeys.add(new OPair<>(k, v));
     }
   }
