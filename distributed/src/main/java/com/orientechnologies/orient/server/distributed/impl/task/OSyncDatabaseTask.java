@@ -53,10 +53,6 @@ public class OSyncDatabaseTask extends OAbstractSyncDatabaseTask {
 
   public OSyncDatabaseTask() {}
 
-  public OSyncDatabaseTask(final long lastOperationTimestamp) {
-    super(lastOperationTimestamp);
-  }
-
   @Override
   public Object execute(
       final ODistributedRequestId requestId,
@@ -69,9 +65,7 @@ public class OSyncDatabaseTask extends OAbstractSyncDatabaseTask {
       if (database == null) throw new ODistributedException("Database instance is null");
 
       final String databaseName = database.getName();
-
-      final ODistributedDatabase dDatabase =
-          checkIfCurrentDatabaseIsNotOlder(iManager, databaseName, database);
+      final ODistributedDatabase dDatabase = iManager.getMessageService().getDatabase(databaseName);
 
       try {
         final Long lastDeployment =
@@ -227,23 +221,6 @@ public class OSyncDatabaseTask extends OAbstractSyncDatabaseTask {
     return Boolean.FALSE;
   }
 
-  protected ODistributedDatabase checkIfCurrentDatabaseIsNotOlder(
-      final ODistributedServerManager iManager,
-      final String databaseName,
-      ODatabaseDocumentInternal database) {
-    final ODistributedDatabase dDatabase = iManager.getMessageService().getDatabase(databaseName);
-
-    if (lastOperationTimestamp > -1) {
-      if (lastOperationTimestamp <= dDatabase.getSyncConfiguration().getLastOperationTimestamp())
-        // NO LSN, BUT LOCAL DATABASE HAS BEEN WRITTEN AFTER THE REQUESTER, STILL OK
-        return dDatabase;
-    } else
-      // NO LSN, NO TIMESTAMP, C'MON, CAN'T BE NEWER THAN THIS
-      return dDatabase;
-
-    return databaseIsOld(iManager, databaseName, dDatabase);
-  }
-
   @Override
   public String getName() {
     return "deploy_db";
@@ -252,13 +229,11 @@ public class OSyncDatabaseTask extends OAbstractSyncDatabaseTask {
   @Override
   public void toStream(final DataOutput out) throws IOException {
     out.writeLong(random);
-    out.writeLong(lastOperationTimestamp);
   }
 
   @Override
   public void fromStream(final DataInput in, final ORemoteTaskFactory factory) throws IOException {
     random = in.readLong();
-    lastOperationTimestamp = in.readLong();
   }
 
   @Override

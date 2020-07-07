@@ -1024,8 +1024,9 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
               try {
 
                 // CREATE THE DISTRIBUTED QUEUE
-                if (!distrDatabase.exists()
-                    || distrDatabase.getSyncConfiguration().getMomentum().isEmpty()) {
+                // TODO: This should check also but can't do it now
+                // storage.getLastMetadata().isPresent();
+                if (!distrDatabase.exists()) {
 
                   if (deploy == null || !deploy) {
                     // NO AUTO DEPLOY
@@ -1363,8 +1364,7 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
         "Requesting deploy of database '%s' on local server...",
         databaseName);
     for (String noteToSend : selectedNodes) {
-      final OAbstractReplicatedTask deployTask =
-          new OSyncDatabaseTask(distrDatabase.getSyncConfiguration().getLastOperationTimestamp());
+      final OAbstractReplicatedTask deployTask = new OSyncDatabaseTask();
       List<String> singleNode = new ArrayList<>();
       singleNode.add(noteToSend);
       final Map<String, Object> results =
@@ -2088,7 +2088,6 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
                 ODistributedStorage distributedStorage = getStorage(databaseName);
                 distributedStorage.replaceIfNeeded((OAbstractPaginatedStorage) storage);
                 distributedStorage.saveDatabaseConfiguration();
-                distributedStorage.getLocalDistributedDatabase().getSyncConfiguration().save();
                 if (uniqueClustersBackupDirectory != null
                     && uniqueClustersBackupDirectory.exists()) {
                   // RESTORE UNIQUE FILES FROM THE BACKUP FOLDERS. THOSE FILES ARE THE CLUSTERS

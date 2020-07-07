@@ -23,14 +23,7 @@ import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
-import com.orientechnologies.orient.server.distributed.ODistributedDatabase;
-import com.orientechnologies.orient.server.distributed.ODistributedServerLog;
-import com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIRECTION;
-import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
 import com.orientechnologies.orient.server.distributed.task.OAbstractReplicatedTask;
-import com.orientechnologies.orient.server.distributed.task.ODatabaseIsOldException;
-import java.text.SimpleDateFormat;
-import java.util.Date;
 import java.util.UUID;
 
 /**
@@ -44,14 +37,10 @@ public abstract class OAbstractSyncDatabaseTask extends OAbstractReplicatedTask
   public static final String DEPLOYDB = "deploydb.";
   public static final int FACTORYID = 14;
 
-  protected long lastOperationTimestamp;
   protected long random;
 
-  public OAbstractSyncDatabaseTask() {}
-
-  protected OAbstractSyncDatabaseTask(final long lastOperationTimestamp) {
+  public OAbstractSyncDatabaseTask() {
     random = UUID.randomUUID().getLeastSignificantBits();
-    this.lastOperationTimestamp = lastOperationTimestamp;
   }
 
   @Override
@@ -80,21 +69,5 @@ public abstract class OAbstractSyncDatabaseTask extends OAbstractReplicatedTask
   @Override
   public boolean isNodeOnlineRequired() {
     return false;
-  }
-
-  protected ODistributedDatabase databaseIsOld(
-      ODistributedServerManager iManager, String databaseName, ODistributedDatabase dDatabase) {
-    final SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS");
-
-    final String msg =
-        String.format(
-            "Skip deploying delta database '%s' because the requesting server has a most recent database (requester LastOperationOn=%s current LastOperationOn=%s)",
-            databaseName,
-            df.format(new Date(lastOperationTimestamp)),
-            df.format(new Date(dDatabase.getSyncConfiguration().getLastOperationTimestamp())));
-    ODistributedServerLog.error(
-        this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.NONE, msg);
-
-    throw new ODatabaseIsOldException(msg);
   }
 }

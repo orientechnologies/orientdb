@@ -58,8 +58,6 @@ public interface ODistributedDatabase {
    */
   void handleUnreachableNode(String nodeName);
 
-  ODistributedSyncConfiguration getSyncConfiguration();
-
   void waitForOnline();
 
   void reEnqueue(

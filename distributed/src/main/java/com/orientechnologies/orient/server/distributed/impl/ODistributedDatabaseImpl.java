@@ -57,7 +57,6 @@ import com.orientechnologies.orient.server.distributed.ODistributedResponseManag
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIRECTION;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
-import com.orientechnologies.orient.server.distributed.ODistributedSyncConfiguration;
 import com.orientechnologies.orient.server.distributed.ODistributedTxContext;
 import com.orientechnologies.orient.server.distributed.OModifiableDistributedConfiguration;
 import com.orientechnologies.orient.server.distributed.ORemoteServerController;
@@ -69,7 +68,6 @@ import com.orientechnologies.orient.server.distributed.impl.task.OUnreachableSer
 import com.orientechnologies.orient.server.distributed.task.OAbstractRemoteTask;
 import com.orientechnologies.orient.server.distributed.task.ORemoteTask;
 import com.orientechnologies.orient.server.hazelcast.OHazelcastPlugin;
-import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -105,7 +103,6 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
   protected final ODistributedAbstractPlugin manager;
   protected final ODistributedMessageServiceImpl msgService;
   protected final String databaseName;
-  protected ODistributedSyncConfiguration syncConfiguration;
 
   protected Map<ODistributedRequestId, ODistributedTxContext> activeTxContexts =
       new ConcurrentHashMap<>(64);
@@ -838,27 +835,6 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
     return manager.getServerInstance().existsDatabase(databaseName);
   }
 
-  public ODistributedSyncConfiguration getSyncConfiguration() {
-    if (syncConfiguration == null) {
-      final String path =
-          manager.getServerInstance().getDatabaseDirectory()
-              + databaseName
-              + "/"
-              + DISTRIBUTED_SYNC_JSON_FILENAME;
-      final File cfgFile = new File(path);
-      try {
-        syncConfiguration = new ODistributedSyncConfiguration(cfgFile);
-      } catch (IOException e) {
-        throw OException.wrapException(
-            new ODistributedException(
-                "Cannot open database distributed sync configuration file: " + cfgFile),
-            e);
-      }
-    }
-
-    return syncConfiguration;
-  }
-
   @Override
   public void handleUnreachableNode(final String nodeName) {
     if (!running) {
@@ -923,20 +899,6 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
         } catch (InterruptedException e) {
         }
       }
-
-      // SAVE SYNC CONFIGURATION
-      try {
-        getSyncConfiguration().save();
-      } catch (IOException e) {
-        ODistributedServerLog.warn(
-            this,
-            localNodeName,
-            null,
-            DIRECTION.NONE,
-            "Error on saving distributed LSN table for database '%s'",
-            databaseName);
-      }
-      syncConfiguration = null;
 
       activeTxContexts.clear();
 
