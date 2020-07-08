@@ -460,9 +460,9 @@ public class OTransactionPhase1Task extends OAbstractReplicatedTask implements O
   public SortedSet<ORID> getRids() {
     Set<ORID> set;
     if (operations.size() > 0) {
-      set = operations.stream().map((x) -> x.getId()).collect(Collectors.toSet());
+      set = operations.stream().map((x) -> x.getId().copy()).collect(Collectors.toSet());
     } else {
-      set = ops.stream().map((x) -> x.getRID()).collect(Collectors.toSet());
+      set = ops.stream().map((x) -> x.getRID().copy()).collect(Collectors.toSet());
     }
     return new TreeSet<ORID>(set);
   }
