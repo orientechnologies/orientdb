@@ -10,6 +10,8 @@ public class K8sServerConfig {
   private String serverConfig;
   private String hazelcastConfig;
   private String distributedDBConfig;
+  private String serverLogConfig;
+  private String clientLogConfig;
   private String dbVolumeSize;
   // Following two are set after successful deployment.
   private String httpAddress;
@@ -26,6 +28,7 @@ public class K8sServerConfig {
     if (notSet(hazelcastConfig)) missingField = "hazelcastConfig";
     if (notSet(distributedDBConfig)) missingField = "distributedDBConfig";
     if (notSet(dbVolumeSize)) missingField = "dbVolumeSize";
+    // server and client log property files are not mandatory.
     if (missingField != null) {
       throw new TestSetupException(
           "Missing value '" + missingField + "' in Kubernetes configuration for server.");
@@ -47,6 +50,8 @@ public class K8sServerConfig {
     this.serverConfig = configs.serverConfig;
     this.hazelcastConfig = configs.hazelcastConfig;
     this.distributedDBConfig = configs.distributedDBConfig;
+    this.serverLogConfig = configs.serverLogConfig;
+    this.clientLogConfig = configs.clientLogConfig;
     this.dbVolumeSize = configs.dbVolumeSize;
     this.httpAddress = configs.httpAddress;
     this.binaryAddress = configs.binaryAddress;
@@ -118,6 +123,22 @@ public class K8sServerConfig {
 
   public void setDistributedDBConfig(String distributedDBConfig) {
     this.distributedDBConfig = distributedDBConfig;
+  }
+
+  public String getServerLogConfig() {
+    return serverLogConfig;
+  }
+
+  public void setServerLogConfig(String serverLogConfig) {
+    this.serverLogConfig = serverLogConfig;
+  }
+
+  public String getClientLogConfig() {
+    return clientLogConfig;
+  }
+
+  public void setClientLogConfig(String clientLogConfig) {
+    this.clientLogConfig = clientLogConfig;
   }
 
   public String getDbVolumeSize() {

@@ -194,7 +194,8 @@ public class KubernetesSetup implements TestSetup {
             configMapName, "default", null, null, null, null, null, null);
         System.out.printf("  Deleted ConfigMap %s\n", configMapName);
       } catch (ApiException e) {
-        System.out.printf("  Error deleting ConfigMap %s: %s\n", configMapName, e.getResponseBody());
+        System.out.printf(
+            "  Error deleting ConfigMap %s: %s\n", configMapName, e.getResponseBody());
       }
       try {
         appsV1Api.deleteNamespacedStatefulSet(
@@ -285,6 +286,12 @@ public class KubernetesSetup implements TestSetup {
                     put(
                         "orientdb-server-config.xml",
                         getEscapedFileContent(config.getServerConfig()));
+                    put(
+                        "orientdb-server-log.properties",
+                        getEscapedFileContent(config.getServerLogConfig()));
+                    put(
+                        "orientdb-client-log.properties",
+                        getEscapedFileContent(config.getClientLogConfig()));
                   }
                 })
             .build();
