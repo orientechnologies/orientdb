@@ -161,6 +161,7 @@
             <groupId>com.hazelcast</groupId>
             <artifactId>hazelcast-kubernetes</artifactId>
             <version>1.5.3</version>
+            <scope>runtime</scope>
         </dependency>
         <dependency>
             <groupId>io.kubernetes</groupId>
