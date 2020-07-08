@@ -45,6 +45,8 @@ public class SimpleDServerConfig implements TestConfig {
       config.setHazelcastConfig("/kubernetes/hazelcast.xml");
       config.setServerConfig("/kubernetes/orientdb-simple-dserver-config.xml");
       config.setDistributedDBConfig("/kubernetes/default-distributed-db-config.json");
+      config.setServerLogConfig("/kubernetes/orientdb-server-log.properties");
+      config.setClientLogConfig("/kubernetes/orientdb-client-log.properties");
       serverK8sConfigs.put(serverId, config);
     }
     return config;
