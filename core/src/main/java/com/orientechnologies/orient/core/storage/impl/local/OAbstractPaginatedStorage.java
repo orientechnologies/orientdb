@@ -2328,7 +2328,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
               clusterOverrides.put(recordOperation, clusterId);
             }
           }
-
           clustersToLock.put(clusterId, doGetAndCheckCluster(clusterId));
         }
       }
