@@ -38,7 +38,7 @@
                 <multicast-port>2434</multicast-port>
                 <multicast-timeout-seconds>1</multicast-timeout-seconds>
             </multicast>
-            <kubernetes enabled="false">
+            <kubernetes enabled="true">
                 <pod-label-name>orientdb-cluster-member</pod-label-name>
                 <pod-label-value>true</pod-label-value>
                 <service-port>2434</service-port>

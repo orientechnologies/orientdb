@@ -24,8 +24,6 @@ spec:
           image: ${orientdbDockerImage}
           imagePullPolicy: Always
           env:
-            - name: ENABLE_KUBERNETES_DISCOVERY
-              value: "true"
             - name: ORIENTDB_NODE_NAME
               value: ${orientdbNodeName}
           ports:
