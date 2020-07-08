@@ -24,6 +24,7 @@ import static com.orientechnologies.orient.core.config.OGlobalConfiguration.DIST
 import static com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIRECTION.OUT;
 
 import com.orientechnologies.common.concur.OOfflineNodeException;
+import com.orientechnologies.common.concur.lock.OInterruptedException;
 import com.orientechnologies.common.concur.lock.OSimpleLockManager;
 import com.orientechnologies.common.concur.lock.OSimpleLockManagerImpl;
 import com.orientechnologies.common.exception.OException;
@@ -61,6 +62,7 @@ import com.orientechnologies.orient.server.distributed.ODistributedSyncConfigura
 import com.orientechnologies.orient.server.distributed.ODistributedTxContext;
 import com.orientechnologies.orient.server.distributed.OModifiableDistributedConfiguration;
 import com.orientechnologies.orient.server.distributed.ORemoteServerController;
+import com.orientechnologies.orient.server.distributed.impl.lock.OLockGuard;
 import com.orientechnologies.orient.server.distributed.impl.lock.OLockManager;
 import com.orientechnologies.orient.server.distributed.impl.lock.OLockManagerImpl;
 import com.orientechnologies.orient.server.distributed.impl.task.OLockKeySource;
@@ -1358,5 +1360,32 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
               })
           .start();
     }
+  }
+
+  public List<OLockGuard> localLock(OLockKeySource keySource) {
+    SortedSet<ORID> rids = keySource.getRids();
+    SortedSet<OPair<String, Object>> uniqueKeys = keySource.getUniqueKeys();
+    OTransactionId txId = keySource.getTransactionId();
+    LinkedBlockingQueue<List<OLockGuard>> latch = new LinkedBlockingQueue<List<OLockGuard>>(1);
+    this.lockManager.lock(
+        rids,
+        uniqueKeys,
+        txId,
+        (guards) -> {
+          try {
+            latch.put(guards);
+          } catch (InterruptedException e) {
+            throw new OInterruptedException(e.getMessage());
+          }
+        });
+    try {
+      return latch.take();
+    } catch (InterruptedException e) {
+      throw new OInterruptedException(e.getMessage());
+    }
+  }
+
+  public void localUnlock(List<OLockGuard> guards) {
+    this.lockManager.unlock(guards);
   }
 }
