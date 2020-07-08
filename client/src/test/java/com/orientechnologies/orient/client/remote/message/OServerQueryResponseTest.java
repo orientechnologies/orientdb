@@ -4,15 +4,12 @@ import com.orientechnologies.orient.core.serialization.serializer.record.binary.
 import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.executor.OResultInternal;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol;
+import java.io.IOException;
+import java.util.*;
 import org.junit.Assert;
 import org.junit.Test;
 
-import java.io.IOException;
-import java.util.*;
-
-/**
- * Created by luigidellaquila on 14/12/16.
- */
+/** Created by luigidellaquila on 14/12/16. */
 public class OServerQueryResponseTest {
 
   @Test
@@ -25,10 +22,15 @@ public class OServerQueryResponseTest {
       item.setProperty("counter", i);
       resuls.add(item);
     }
-    OServerQueryResponse response = new OServerQueryResponse("query", true, resuls, Optional.empty(), false, new HashMap<>(), true);
+    OServerQueryResponse response =
+        new OServerQueryResponse(
+            "query", true, resuls, Optional.empty(), false, new HashMap<>(), true);
 
     MockChannel channel = new MockChannel();
-    response.write(channel, OChannelBinaryProtocol.CURRENT_PROTOCOL_VERSION, ORecordSerializerNetworkFactory.INSTANCE.current());
+    response.write(
+        channel,
+        OChannelBinaryProtocol.CURRENT_PROTOCOL_VERSION,
+        ORecordSerializerNetworkFactory.INSTANCE.current());
 
     channel.close();
 
@@ -47,5 +49,4 @@ public class OServerQueryResponseTest {
     Assert.assertTrue(newResponse.isReloadMetadata());
     Assert.assertTrue(newResponse.isTxChanges());
   }
-
 }
