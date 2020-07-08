@@ -159,7 +159,7 @@ public class OMatchExecutionPlanner {
       }
 
       if (this.orderBy != null) {
-        result.chain(new OrderByStep(orderBy, context, enableProfiling));
+        result.chain(new OrderByStep(orderBy, context, -1, enableProfiling));
       }
 
       if (this.unwind != null) {

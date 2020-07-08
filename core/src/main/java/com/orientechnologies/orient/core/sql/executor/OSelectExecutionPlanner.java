@@ -696,7 +696,11 @@ public class OSelectExecutionPlanner {
         result.chain(new FetchFromIndexStep(classIndex, indexCond, null, ctx, profilingEnabled));
         result.chain(
             new AggregateProjectionCalculationStep(
-                info.aggregateProjection, info.groupBy, ctx, profilingEnabled));
+                info.aggregateProjection,
+                info.groupBy,
+                ctx,
+                info.timeout != null ? info.timeout.getVal().longValue() : -1,
+                profilingEnabled));
         result.chain(
             new GuaranteeEmptyCountStep(
                 info.aggregateProjection.getItems().get(0), ctx, profilingEnabled));
@@ -826,7 +830,11 @@ public class OSelectExecutionPlanner {
       if (info.aggregateProjection != null) {
         result.chain(
             new AggregateProjectionCalculationStep(
-                info.aggregateProjection, info.groupBy, ctx, profilingEnabled));
+                info.aggregateProjection,
+                info.groupBy,
+                ctx,
+                info.timeout != null ? info.timeout.getVal().longValue() : -1,
+                profilingEnabled));
         if (isCountOnly(info) && info.groupBy == null) {
           result.chain(
               new GuaranteeEmptyCountStep(
@@ -1844,7 +1852,13 @@ public class OSelectExecutionPlanner {
         && info.orderBy != null
         && info.orderBy.getItems() != null
         && info.orderBy.getItems().size() > 0) {
-      plan.chain(new OrderByStep(info.orderBy, maxResults, ctx, profilingEnabled));
+      plan.chain(
+          new OrderByStep(
+              info.orderBy,
+              maxResults,
+              ctx,
+              info.timeout != null ? info.timeout.getVal().longValue() : -1,
+              profilingEnabled));
       if (info.projectionAfterOrderBy != null) {
         plan.chain(
             new ProjectionCalculationStep(info.projectionAfterOrderBy, ctx, profilingEnabled));

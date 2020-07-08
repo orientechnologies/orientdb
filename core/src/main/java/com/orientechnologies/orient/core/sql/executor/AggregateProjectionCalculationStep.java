@@ -17,6 +17,7 @@ import java.util.Optional;
 public class AggregateProjectionCalculationStep extends ProjectionCalculationStep {
 
   private final OGroupBy groupBy;
+  private final long timeoutMillis;
 
   // the key is the GROUP BY key, the value is the (partially) aggregated value
   private Map<List, OResultInternal> aggregateResults = new LinkedHashMap<>();
@@ -26,9 +27,14 @@ public class AggregateProjectionCalculationStep extends ProjectionCalculationSte
   private long cost = 0;
 
   public AggregateProjectionCalculationStep(
-      OProjection projection, OGroupBy groupBy, OCommandContext ctx, boolean profilingEnabled) {
+      OProjection projection,
+      OGroupBy groupBy,
+      OCommandContext ctx,
+      long timeoutMillis,
+      boolean profilingEnabled) {
     super(projection, ctx, profilingEnabled);
     this.groupBy = groupBy;
+    this.timeoutMillis = timeoutMillis;
   }
 
   @Override
@@ -75,6 +81,7 @@ public class AggregateProjectionCalculationStep extends ProjectionCalculationSte
   }
 
   private void executeAggregation(OCommandContext ctx, int nRecords) {
+    long timeoutBegin = System.currentTimeMillis();
     if (!prev.isPresent()) {
       throw new OCommandExecutionException(
           "Cannot execute an aggregation or a GROUP BY without a previous result");
@@ -82,6 +89,9 @@ public class AggregateProjectionCalculationStep extends ProjectionCalculationSte
     OExecutionStepInternal prevStep = prev.get();
     OResultSet lastRs = prevStep.syncPull(ctx, nRecords);
     while (lastRs.hasNext()) {
+      if (timeoutMillis > 0 && timeoutBegin + timeoutMillis < System.currentTimeMillis()) {
+        sendTimeout();
+      }
       aggregate(lastRs.next(), ctx);
       if (!lastRs.hasNext()) {
         lastRs = prevStep.syncPull(ctx, nRecords);
@@ -91,6 +101,9 @@ public class AggregateProjectionCalculationStep extends ProjectionCalculationSte
     finalResults.addAll(aggregateResults.values());
     aggregateResults.clear();
     for (OResultInternal item : finalResults) {
+      if (timeoutMillis > 0 && timeoutBegin + timeoutMillis < System.currentTimeMillis()) {
+        sendTimeout();
+      }
       for (String name : item.getTemporaryProperties()) {
         Object prevVal = item.getTemporaryProperty(name);
         if (prevVal instanceof AggregationContext) {
@@ -151,6 +164,16 @@ public class AggregateProjectionCalculationStep extends ProjectionCalculationSte
             + ""
             + (groupBy == null ? "" : (spaces + "\n  " + groupBy.toString()));
     return result;
+  }
+
+  @Override
+  public OExecutionStep copy(OCommandContext ctx) {
+    return new AggregateProjectionCalculationStep(
+        projection.copy(),
+        groupBy == null ? null : groupBy.copy(),
+        ctx,
+        timeoutMillis,
+        profilingEnabled);
   }
 
   @Override
