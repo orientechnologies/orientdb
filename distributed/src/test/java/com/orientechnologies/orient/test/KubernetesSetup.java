@@ -76,7 +76,6 @@ public class KubernetesSetup implements TestSetup {
     for (String serverId : testConfig.getServerIds()) {
       K8sServerConfig serverConfig = testConfig.getK8sConfigs(serverId);
       serverConfig.validate();
-      System.out.println("Config is valid");
       try {
         doStartServer(serverId, serverConfig);
       } catch (ApiException e) {

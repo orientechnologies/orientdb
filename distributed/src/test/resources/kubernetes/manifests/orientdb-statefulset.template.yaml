@@ -16,11 +16,11 @@ spec:
         app: ${orientdbLabel}
         orientdb-cluster-member: "true"
     spec:
+      serviceAccountName: hazelcast-k8s
       terminationGracePeriodSeconds: 30
       containers:
-        - args:
-            - dserver.sh
-          name: orientdb
+        - name: orientdb
+          command: ["dserver.sh"]
           image: ${orientdbDockerImage}
           imagePullPolicy: Always
           env:
@@ -48,23 +48,26 @@ spec:
           volumeMounts:
             - name: databases
               mountPath: /orientdb/databases
-            - name: orientdb-config-cm-vol
+            - name: config
               mountPath: /orientdb/config
       # At some point, it would be better to fix resources.
       #    resources:
       #      requests:
       #      limits:
-#      initContainers:
-#        - name: copy-configs
-#          image: busybox:1.31
-#          command: ['sh', '-c']
-#          args:
-#            - cp -v /orientdb-config/* /orientdb/config/
-#          volumeMounts:
-#            - name: config
-#              mountPath: /orientdb/config
-#            - name: orientdb-config-cm-vol
-#              mountPath: /orientdb-config
+      #
+      # OrientDB needs the config files (at leaset server config) to be modifiable. Mounting directly from the configMap
+      # would result in a read-only config folder which can crash the server.
+      initContainers:
+        - name: copy-configs
+          image: busybox:1.31
+          command: ['sh', '-c']
+          args:
+            - cp -v /orientdb-config/* /orientdb/config/
+          volumeMounts:
+            - name: config
+              mountPath: /orientdb/config
+            - name: orientdb-config-cm-vol
+              mountPath: /orientdb-config
       volumes:
         - name: orientdb-config-cm-vol
           configMap:
@@ -77,11 +80,11 @@ spec:
         resources:
           requests:
             storage: ${databaseVolSize}Gi
-#    - metadata:
-#        name: config
-#      spec:
-#        accessModes: ["ReadWriteOnce"]
-#        storageClassName: "nfs-client"
-#        resources:
-#          requests:
-#            storage: 100Mi
+    - metadata:
+        name: config
+      spec:
+        accessModes: ["ReadWriteOnce"]
+        storageClassName: "nfs-client"
+        resources:
+          requests:
+            storage: 100Mi
