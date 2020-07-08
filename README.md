@@ -29,3 +29,5 @@ In `Application Component` set our BCP component `BC-DB-ODB`.
 Then `Next` and select the correct branch e.g. `fa/rel-3.2` and patch level e.g. `000`.
 
 Copy the `ID` of the correction request to the initial comment in your PR e.g. `CR-Id: 002075125900001706292020`. After that the CWB voter will vote successfully.
+
+For patches do not check `Not Patch Relevant`! If you get a validity issue with the note, go into it, edit validity and save.
