@@ -35,4 +35,27 @@ public class TimeoutStep extends AbstractExecutionStep {
       throw new OTimeoutException("Timeout expired");
     }
   }
+
+  @Override
+  public String prettyPrint(int depth, int indent) {
+    return OExecutionStepInternal.getIndent(depth, indent)
+        + "+ TIMEOUT ("
+        + timeout.getVal().toString()
+        + " millis)";
+  }
+
+  @Override
+  public void reset() {
+    expiryTime = null;
+  }
+
+  @Override
+  public boolean canBeCached() {
+    return true;
+  }
+
+  @Override
+  public OExecutionStep copy(OCommandContext ctx) {
+    return new TimeoutStep(this.timeout.copy(), ctx, profilingEnabled);
+  }
 }

@@ -163,6 +163,10 @@ public class OSelectExecutionPlanner {
 
     handleProjectionsBlock(result, info, ctx, enableProfiling);
 
+    if (info.timeout != null) {
+      result.chain(new AccumulatingTimeoutStep(info.timeout, ctx, enableProfiling));
+    }
+
     if (useCache
         && !enableProfiling
         && statement.executinPlanCanBeCached()
