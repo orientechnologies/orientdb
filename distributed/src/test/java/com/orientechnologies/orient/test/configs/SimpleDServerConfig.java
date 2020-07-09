@@ -25,7 +25,7 @@ public class SimpleDServerConfig implements TestConfig {
 
   @Override
   public Set<String> getServerIds() {
-    return Arrays.asList(SERVER0, SERVER1, SERVER2);
+    return new HashSet<>(Arrays.asList(SERVER0, SERVER1, SERVER2));
   }
 
   @Override
