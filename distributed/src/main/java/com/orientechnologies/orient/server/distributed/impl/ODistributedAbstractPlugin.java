@@ -47,6 +47,7 @@ import com.orientechnologies.orient.core.db.ODatabaseLifecycleListener;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.OScenarioThreadLocal;
 import com.orientechnologies.orient.core.db.OrientDBConfig;
+import com.orientechnologies.orient.core.db.OrientDBEmbedded;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
@@ -1545,24 +1546,25 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
   }
 
   private void replaceStorageInSessions(final OStorage storage) {
-    ODatabaseDocumentInternal current = ODatabaseRecordThreadLocal.instance().getIfDefined();
-    try {
-      for (OClientConnection conn : serverInstance.getClientConnectionManager().getConnections()) {
-        final ODatabaseDocumentInternal connDb = conn.getDatabase();
-        if (connDb != null && connDb.getName().equals(storage.getName())) {
-          conn.acquire();
-          try {
-            connDb.activateOnCurrentThread();
-            connDb.replaceStorage(storage);
-            connDb.getMetadata().reload();
-          } finally {
-            conn.release();
-          }
-        }
-      }
-    } finally {
-      ODatabaseRecordThreadLocal.instance().set(current);
-    }
+    ((OrientDBEmbedded) serverInstance.getDatabases())
+        .executeNoDb(
+            () -> {
+              for (OClientConnection conn :
+                  serverInstance.getClientConnectionManager().getConnections()) {
+                final ODatabaseDocumentInternal connDb = conn.getDatabase();
+                if (connDb != null && connDb.getName().equals(storage.getName())) {
+                  conn.acquire();
+                  try {
+                    connDb.activateOnCurrentThread();
+                    connDb.replaceStorage(storage);
+                    connDb.getMetadata().reload();
+                  } finally {
+                    conn.release();
+                  }
+                }
+              }
+              return null;
+            });
   }
 
   protected File getClusterOwnedExclusivelyByCurrentNode(
