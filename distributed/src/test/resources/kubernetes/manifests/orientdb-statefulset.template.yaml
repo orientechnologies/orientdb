@@ -77,6 +77,7 @@ spec:
         name: databases
       spec:
         accessModes: ["ReadWriteOnce"]
+        storageClassName: ${databaseVolumeStorageClass}
         resources:
           requests:
             storage: ${databaseVolSize}Gi
@@ -84,7 +85,7 @@ spec:
         name: config
       spec:
         accessModes: ["ReadWriteOnce"]
-        storageClassName: "nfs-client"
+        storageClassName: ${configVolumeStorageClass}
         resources:
           requests:
             storage: 100Mi

@@ -117,6 +117,8 @@
                                 <orientdbHazelcastPort>2434</orientdbHazelcastPort>
                                 <orientdbDockerImage></orientdbDockerImage>
                                 <orientdbVolumeSize>2</orientdbVolumeSize>
+                                <databaseVolumeStorageClass></databaseVolumeStorageClass>
+                                <configVolumeStorageClass>nfs-client</configVolumeStorageClass>
                             </systemPropertyVariables>
                         </configuration>
                     </plugin>
