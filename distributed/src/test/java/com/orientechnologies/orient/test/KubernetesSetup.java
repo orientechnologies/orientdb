@@ -9,6 +9,7 @@ import io.kubernetes.client.openapi.ApiException;
 import io.kubernetes.client.openapi.Configuration;
 import io.kubernetes.client.openapi.apis.AppsV1Api;
 import io.kubernetes.client.openapi.apis.CoreV1Api;
+import io.kubernetes.client.openapi.apis.RbacAuthorizationV1Api;
 import io.kubernetes.client.openapi.models.*;
 import io.kubernetes.client.util.ClientBuilder;
 import io.kubernetes.client.util.KubeConfig;
@@ -16,8 +17,10 @@ import io.kubernetes.client.util.Watch;
 import io.kubernetes.client.util.Yaml;
 import okhttp3.OkHttpClient;
 
+import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
+import java.net.MalformedURLException;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.*;
@@ -31,18 +34,25 @@ public class KubernetesSetup implements TestSetup {
 
   private String nodeAddress;
   private TestConfig testConfig;
-  // TODO: fetch namespace from env/mvn
-  private String namespace = "default";
+  private String namespace = TestSetupUtil.getKubernetesNamespace();
   private Set<String> PVCsToDelete = new HashSet<>();
 
-  public KubernetesSetup(String kubeConfigFile, TestConfig config) throws IOException {
+  public KubernetesSetup(String kubeConfigFile, TestConfig config) throws TestSetupException {
+    try {
     this.testConfig = config;
     KubeConfig kubeConfig = KubeConfig.loadKubeConfig(new FileReader(kubeConfigFile));
     String serverAddress = kubeConfig.getServer();
     nodeAddress = new URL(serverAddress).getHost();
-    System.out.println("node address: " + nodeAddress);
     ApiClient client = ClientBuilder.kubeconfig(kubeConfig).build();
     Configuration.setDefaultApiClient(client);
+    createRBAC();
+    } catch (URISyntaxException | IOException e) {
+      e.printStackTrace();
+      throw new TestSetupException(e);
+    } catch (ApiException e) {
+      e.printStackTrace();
+      throw new TestSetupException(e.getResponseBody(), e);
+    }
   }
 
   @Override
@@ -193,7 +203,7 @@ public class KubernetesSetup implements TestSetup {
       String statefulSetName = config.getNodeName();
       try {
         coreV1Api.deleteNamespacedConfigMap(
-            configMapName, "default", null, null, null, null, null, null);
+            configMapName, namespace, null, null, null, null, null, null);
         System.out.printf("  Deleted ConfigMap %s\n", configMapName);
       } catch (ApiException e) {
         System.out.printf(
@@ -201,7 +211,7 @@ public class KubernetesSetup implements TestSetup {
       }
       try {
         appsV1Api.deleteNamespacedStatefulSet(
-            statefulSetName, "default", null, null, null, null, null, null);
+            statefulSetName, namespace, null, null, null, null, null, null);
         System.out.printf("  Deleted StatefulSet %s\n", statefulSetName);
       } catch (ApiException e) {
         System.out.printf(
@@ -210,7 +220,7 @@ public class KubernetesSetup implements TestSetup {
       String serviceName = config.getNodeName();
       try {
         coreV1Api.deleteNamespacedService(
-            serviceName, "default", null, null, null, null, null, null);
+            serviceName, namespace, null, null, null, null, null, null);
         System.out.printf("  Deleted Service %s\n", serviceName);
       } catch (ApiException e) {
         System.out.printf("  Error deleting Service %s: %s\n", serviceName, e.getResponseBody());
@@ -218,7 +228,7 @@ public class KubernetesSetup implements TestSetup {
       serviceName = config.getNodeName() + "-service";
       try {
         coreV1Api.deleteNamespacedService(
-            serviceName, "default", null, null, null, null, null, null);
+            serviceName, namespace, null, null, null, null, null, null);
         System.out.printf("  Deleted Service %s\n", serviceName);
       } catch (ApiException e) {
         System.out.printf("  Error deleting Service %s: %s\n", serviceName, e.getResponseBody());
@@ -229,7 +239,7 @@ public class KubernetesSetup implements TestSetup {
       String pvc = it.next();
       try {
         coreV1Api.deleteNamespacedPersistentVolumeClaim(
-            pvc, "default", null, null, null, null, null, new V1DeleteOptions());
+            pvc, namespace, null, null, null, null, null, new V1DeleteOptions());
         System.out.printf("  Deleted PVC %s\n", pvc);
       } catch (JsonSyntaxException e) {
         // There is a known bug with the auto-generated 'official' Kubernetes client for Java which
@@ -322,6 +332,23 @@ public class KubernetesSetup implements TestSetup {
     String manifest = ManifestTemplate.generateStatefulSet(config);
     V1StatefulSet statefulSet = (V1StatefulSet) Yaml.load(manifest);
     return appsV1Api.createNamespacedStatefulSet(namespace, statefulSet, null, null, null);
+  }
+
+  private void createRBAC() throws IOException, URISyntaxException, ApiException {
+    CoreV1Api coreV1Api = new CoreV1Api();
+    RbacAuthorizationV1Api rbacV1Api = new RbacAuthorizationV1Api();
+    String manifests = ManifestTemplate.generateRBAC();
+    for (Object obj : Yaml.loadAll(manifests)) {
+      if (obj instanceof V1ServiceAccount) {
+        coreV1Api.createNamespacedServiceAccount(namespace, (V1ServiceAccount) obj, null, null, null);
+      } else if (obj instanceof V1Role) {
+        rbacV1Api.createNamespacedRole(namespace, (V1Role)obj, null, null, null);
+      } else if (obj instanceof V1RoleBinding) {
+        rbacV1Api.createNamespacedRoleBinding(namespace, (V1RoleBinding)obj, null, null, null);
+      } else {
+        System.out.printf("Ignoring Kubernetes object %s when creating RBAC.\n", obj.getClass().getSimpleName());
+      }
+    }
   }
 
   private void doStartServer(String serverId, K8sServerConfig config)

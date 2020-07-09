@@ -28,13 +28,11 @@ public class BasicSyncIT {
     server1 = SimpleDServerConfig.SERVER1;
     server2 = SimpleDServerConfig.SERVER2;
     setup = TestSetupUtil.create(config);
-    System.out.println("created config");
     setup.start();
 
     OrientDB remote = setup.createRemote(server0, "root", "test", OrientDBConfig.defaultConfig());
     remote.create("test", ODatabaseType.PLOCAL);
     remote.close();
-    System.out.println("Created database 'test'.");
   }
 
   @Test
@@ -45,11 +43,11 @@ public class BasicSyncIT {
         session.save(session.newElement("One"));
         session.save(session.newElement("One"));
       }
-//      // TODO: Without this sleep, test fails in a distributed setup!
-//      try {
-//        Thread.sleep(10000);
-//      } catch (InterruptedException e) {
-//      }
+      //      // TODO: Without this sleep, test fails in a distributed setup!
+      //      try {
+      //        Thread.sleep(10000);
+      //      } catch (InterruptedException e) {
+      //      }
       setup.shutdownServer(server2);
       try (ODatabaseSession session = remote.open("test", "admin", "admin")) {
         session.save(session.newElement("One"));
@@ -126,7 +124,6 @@ public class BasicSyncIT {
       OrientDB remote = setup.createRemote(server0, "root", "test", OrientDBConfig.defaultConfig());
       remote.drop("test");
       remote.close();
-      System.out.println("dropped and closed!");
     } finally {
       setup.teardown();
       ODatabaseDocumentTx.closeAll();

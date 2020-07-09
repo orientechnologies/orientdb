@@ -13,12 +13,14 @@ public class TestSetupUtil {
   private static final String orientDBKubernetesLabel;
   private static final String configVolumeStorageClass;
   private static final String databaseVolumeStorageClass;
+  private static final String kubernetesNamespace;
 
   static {
     templateConfigs = readTemplateConfigs();
     orientDBKubernetesLabel = System.getProperty("orientdbLabel", "");
     configVolumeStorageClass = System.getProperty("configVolumeStorageClass", "");
     databaseVolumeStorageClass = System.getProperty("databaseVolumeStorageClass", "");
+    kubernetesNamespace = System.getProperty("kubernetesNamespace", "default");
   }
 
   public static TestSetup create(TestConfig TestConfig) throws IOException {
@@ -55,6 +57,10 @@ public class TestSetupUtil {
 
   public static String getDatabaseVolumeStorageClass() {
     return databaseVolumeStorageClass;
+  }
+
+  public static String getKubernetesNamespace() {
+    return kubernetesNamespace;
   }
 
   public static String readAllLines(String resourceFileName)
