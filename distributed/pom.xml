@@ -118,7 +118,7 @@
                                 <orientdbDockerImage></orientdbDockerImage>
                                 <orientdbVolumeSize>2</orientdbVolumeSize>
                                 <databaseVolumeStorageClass></databaseVolumeStorageClass>
-                                <configVolumeStorageClass>nfs-client</configVolumeStorageClass>
+                                <configVolumeStorageClass></configVolumeStorageClass>
                                 <kubernetesNamespace>default</kubernetesNamespace>
                             </systemPropertyVariables>
                         </configuration>
