@@ -222,6 +222,11 @@ public class OTransactionPhase1Task extends OAbstractReplicatedTask implements O
           database.register(requestId, localDistributedDatabase, txContext);
           return new OTxInvalidSequential();
         } else if (result == ValidationResult.ALREADY_PRESENT) {
+          ONewDistributedTxContextImpl txContext =
+              new ONewDistributedTxContextImpl(
+                  (ODistributedDatabaseImpl) localDistributedDatabase, requestId, tx, id);
+          txContext.setStatus(TIMEDOUT);
+          database.register(requestId, localDistributedDatabase, txContext);
           // This send OK to the sender even if already present, the second phase will skip the
           // apply if already present
           return new OTxInvalidSequential();
