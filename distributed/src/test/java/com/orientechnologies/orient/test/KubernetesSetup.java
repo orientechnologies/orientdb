@@ -108,7 +108,7 @@ public class KubernetesSetup implements TestSetup {
     }
   }
 
-  private void waitForInstances(int timeoutSecond, List<String> serverIds, String labelSelector)
+  private void waitForInstances(int timeoutSecond, Collection<String> serverIds, String labelSelector)
       throws ApiException, IOException {
     System.out.printf("Wait till instances %s are ready\n", serverIds);
     Set<String> ids = new HashSet<>(serverIds);
