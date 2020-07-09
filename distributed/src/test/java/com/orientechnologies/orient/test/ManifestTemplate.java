@@ -16,6 +16,8 @@ public class ManifestTemplate {
   public static final String ORIENTDB_HAZELCAST_PORT = "orientdbHazelcastPort";
   public static final String ORIENTDB_DOCKER_IMAGE = "orientdbDockerImage";
   public static final String ORIENTDB_CONFIGMAP_NAME = "orientdbConfigCm";
+  public static final String CONFIG_VOLUME_STORAGE_CLASS = "configVolumeStorageClass";
+  public static final String DATABASE_VOLUME_STORAGE_CLASS = "databaseVolumeStorageClass";
 
   public static final String ORIENTDB_HEADLESS_SERVICE_TEMPLATE =
       "/kubernetes/manifests/orientdb-headless-service.template.yaml";
@@ -57,6 +59,8 @@ public class ManifestTemplate {
         put(ORIENTDB_HAZELCAST_PORT, config.getHazelcastPort());
         put(ORIENTDB_DOCKER_IMAGE, config.getDockerImage());
         put(ORIENTDB_CONFIGMAP_NAME, config.getConfigMapName());
+        put(CONFIG_VOLUME_STORAGE_CLASS, TestSetupUtil.getConfigVolumeStorageClass());
+        put(DATABASE_VOLUME_STORAGE_CLASS, TestSetupUtil.getDatabaseVolumeStorageClass());
       }
     };
   }

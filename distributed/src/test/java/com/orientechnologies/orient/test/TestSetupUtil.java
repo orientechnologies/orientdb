@@ -10,11 +10,15 @@ import java.util.List;
 
 public class TestSetupUtil {
   private static final K8sServerConfig templateConfigs;
-  private static final String          orientDBKubernetesLabel;
+  private static final String orientDBKubernetesLabel;
+  private static final String configVolumeStorageClass;
+  private static final String databaseVolumeStorageClass;
 
   static {
     templateConfigs = readTemplateConfigs();
-    orientDBKubernetesLabel = System.getProperty("orientdbLabel");
+    orientDBKubernetesLabel = System.getProperty("orientdbLabel", "");
+    configVolumeStorageClass = System.getProperty("configVolumeStorageClass", "");
+    databaseVolumeStorageClass = System.getProperty("databaseVolumeStorageClass", "");
   }
 
   public static TestSetup create(TestConfig TestConfig) throws IOException {
@@ -43,6 +47,14 @@ public class TestSetupUtil {
 
   public static String getOrientDBKubernetesLabel() {
     return orientDBKubernetesLabel;
+  }
+
+  public static String getConfigVolumeStorageClass() {
+    return configVolumeStorageClass;
+  }
+
+  public static String getDatabaseVolumeStorageClass() {
+    return databaseVolumeStorageClass;
   }
 
   public static String readAllLines(String resourceFileName)

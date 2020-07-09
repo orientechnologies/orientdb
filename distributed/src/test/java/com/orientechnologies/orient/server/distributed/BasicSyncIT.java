@@ -45,12 +45,11 @@ public class BasicSyncIT {
         session.save(session.newElement("One"));
         session.save(session.newElement("One"));
       }
-      // TODO: Without this sleep, test fails in a distributed setup!
-      try {
-        Thread.sleep(5000);
-      } catch (InterruptedException e) {
-      }
-
+//      // TODO: Without this sleep, test fails in a distributed setup!
+//      try {
+//        Thread.sleep(10000);
+//      } catch (InterruptedException e) {
+//      }
       setup.shutdownServer(server2);
       try (ODatabaseSession session = remote.open("test", "admin", "admin")) {
         session.save(session.newElement("One"));
