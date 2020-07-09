@@ -8,6 +8,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class ManifestTemplate {
+  // list of keys used in the manifest templates.
   public static final String ORIENTDB_NODE_NAME = "orientdbNodeName";
   public static final String ORIENTDB_DB_VOL_SIZE = "databaseVolSize";
   public static final String ORIENTDB_LABEL = "orientdbLabel";

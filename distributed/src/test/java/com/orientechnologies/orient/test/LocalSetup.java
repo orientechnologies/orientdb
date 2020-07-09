@@ -62,7 +62,6 @@ public class LocalSetup implements TestSetup {
 
   @Override
   public void teardown() {
-    System.out.println("shutdown");
     for (OServer server : servers.values()) server.shutdown();
   }
 

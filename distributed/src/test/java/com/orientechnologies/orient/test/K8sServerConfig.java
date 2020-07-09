@@ -1,5 +1,6 @@
 package com.orientechnologies.orient.test;
 
+// Configurations required to deploy an instance of OrientDB on Kubernetes.
 public class K8sServerConfig {
 
   private String nodeName;
@@ -7,11 +8,13 @@ public class K8sServerConfig {
   private String binaryPort;
   private String hazelcastPort;
   private String dockerImage;
+  // Path to the config files (the config folder of OrientDB) that are mounted via a configMap.
   private String serverConfig;
   private String hazelcastConfig;
   private String distributedDBConfig;
   private String serverLogConfig;
   private String clientLogConfig;
+  // Requested volume size for the database volume e.g. 2Gi
   private String dbVolumeSize;
   // Following two are set after successful deployment.
   private String httpAddress;
