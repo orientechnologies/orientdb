@@ -34,6 +34,7 @@ public class KubernetesSetup implements TestSetup {
 
   private String nodeAddress;
   private TestConfig testConfig;
+  // The namespace to setup the cluster and run tests. It must already exist.
   private String namespace = TestSetupUtil.getKubernetesNamespace();
   private Set<String> PVCsToDelete = new HashSet<>();
 

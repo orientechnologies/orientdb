@@ -4,10 +4,7 @@ import com.orientechnologies.orient.test.K8sServerConfig;
 import com.orientechnologies.orient.test.TestConfig;
 import com.orientechnologies.orient.test.TestSetupUtil;
 
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class SimpleDServerConfig implements TestConfig {
   public static final String SERVER0 = "server0";
@@ -27,7 +24,7 @@ public class SimpleDServerConfig implements TestConfig {
   private Map<String, K8sServerConfig> serverK8sConfigs       = new HashMap<>();
 
   @Override
-  public List<String> getServerIds() {
+  public Set<String> getServerIds() {
     return Arrays.asList(SERVER0, SERVER1, SERVER2);
   }
 
