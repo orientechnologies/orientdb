@@ -83,10 +83,6 @@ public class ONewDistributedTransactionManager {
       try {
         return retriedCommit(database, iTx, requestId);
       } catch (OConcurrentCreateException | ODistributedRecordLockedException | ODistributedKeyLockedException ex) {
-
-        if (ex instanceof OConcurrentCreateException) {
-          iTx.resetAllocatedIds();
-        }
         // Nothing just retry
         if (count > nretry) {
           ODistributedTxContext context = localDistributedDatabase.getTxContext(requestId);

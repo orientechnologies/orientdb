@@ -732,16 +732,4 @@ public final class OMicroTransaction implements OBasicTransaction, OTransactionI
   public void setDatabase(ODatabaseDocumentInternal database) {
     this.database = database;
   }
-
-  @Override
-  public void resetAllocatedIds() {
-    for (Map.Entry<ORID, ORecordOperation> op : recordOperations.entrySet()) {
-      if (op.getValue().type == ORecordOperation.CREATED) {
-        ORecordInternal.setIdentity(
-            (ORecord) op.getValue().record,
-            new ORecordId(op.getKey().getClusterId(), op.getKey().getClusterPosition()));
-      }
-    }
-  }
-  
 }

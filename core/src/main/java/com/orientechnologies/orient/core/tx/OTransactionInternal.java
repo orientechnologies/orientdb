@@ -86,6 +86,4 @@ public interface OTransactionInternal extends OBasicTransaction {
   ORecordOperation getRecordEntry(ORID currentRid);
 
   void setDatabase(ODatabaseDocumentInternal database);
-
-  void resetAllocatedIds();
 }
