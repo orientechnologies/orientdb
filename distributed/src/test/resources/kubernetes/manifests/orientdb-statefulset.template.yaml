@@ -2,6 +2,7 @@ apiVersion: apps/v1
 kind: StatefulSet
 metadata:
   name: ${orientdbNodeName}
+  namespace: ${testNamespace}
   labels:
     app: ${orientdbLabel}
 spec:
@@ -20,7 +21,7 @@ spec:
       terminationGracePeriodSeconds: 30
       containers:
         - name: orientdb
-          command: ["dserver.sh"]
+          command: ["dserver.sh", "-DkubernetesNamespace=${testNamespace}"]
           image: ${orientdbDockerImage}
           imagePullPolicy: Always
           env:

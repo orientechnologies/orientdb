@@ -42,6 +42,7 @@
                 <pod-label-name>orientdb-cluster-member</pod-label-name>
                 <pod-label-value>true</pod-label-value>
                 <service-port>2434</service-port>
+                <namespace>${kubernetesNamespace}</namespace>
             </kubernetes>
         </join>
     </network>

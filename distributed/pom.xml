@@ -119,6 +119,7 @@
                                 <orientdbVolumeSize>2</orientdbVolumeSize>
                                 <databaseVolumeStorageClass></databaseVolumeStorageClass>
                                 <configVolumeStorageClass>nfs-client</configVolumeStorageClass>
+                                <kubernetesNamespace>default</kubernetesNamespace>
                             </systemPropertyVariables>
                         </configuration>
                     </plugin>

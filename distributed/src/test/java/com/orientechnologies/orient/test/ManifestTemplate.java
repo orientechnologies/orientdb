@@ -18,6 +18,7 @@ public class ManifestTemplate {
   public static final String ORIENTDB_CONFIGMAP_NAME = "orientdbConfigCm";
   public static final String CONFIG_VOLUME_STORAGE_CLASS = "configVolumeStorageClass";
   public static final String DATABASE_VOLUME_STORAGE_CLASS = "databaseVolumeStorageClass";
+  public static final String KUBERNETES_NAMESPACE = "testNamespace";
 
   public static final String ORIENTDB_HEADLESS_SERVICE_TEMPLATE =
       "/kubernetes/manifests/orientdb-headless-service.template.yaml";
@@ -25,6 +26,7 @@ public class ManifestTemplate {
       "/kubernetes/manifests/orientdb-nodeport-service.template.yaml";
   public static final String ORIENTDB_STATEFULSET_TEMPLATE =
       "/kubernetes/manifests/orientdb-statefulset.template.yaml";
+  public static final String ORIENTDB_RBAC_TEMPLATE = "/kubernetes/manifests/rbac.template.yaml";
 
   public static String generateStatefulSet(K8sServerConfig configs)
       throws IOException, URISyntaxException {
@@ -39,6 +41,10 @@ public class ManifestTemplate {
   public static String generateNodePortService(K8sServerConfig configs)
       throws IOException, URISyntaxException {
     return generateManifest(configs, ORIENTDB_NODEPORT_SERVICE_TEMPLATE);
+  }
+
+  public static String generateRBAC() throws IOException, URISyntaxException {
+    return TestSetupUtil.readAllLines(ORIENTDB_RBAC_TEMPLATE);
   }
 
   public static String generateManifest(K8sServerConfig configs, String templateFile)
@@ -61,6 +67,7 @@ public class ManifestTemplate {
         put(ORIENTDB_CONFIGMAP_NAME, config.getConfigMapName());
         put(CONFIG_VOLUME_STORAGE_CLASS, TestSetupUtil.getConfigVolumeStorageClass());
         put(DATABASE_VOLUME_STORAGE_CLASS, TestSetupUtil.getDatabaseVolumeStorageClass());
+        put(KUBERNETES_NAMESPACE, TestSetupUtil.getKubernetesNamespace());
       }
     };
   }
