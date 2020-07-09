@@ -27,7 +27,7 @@ import java.util.stream.Collectors;
 public class OSelectExecutionPlanner {
 
   QueryPlanningInfo info;
-  OSelectStatement  statement;
+  OSelectStatement statement;
 
   public OSelectExecutionPlanner(OSelectStatement oSelectStatement) {
     this.statement = oSelectStatement;
@@ -103,8 +103,12 @@ public class OSelectExecutionPlanner {
 
     handleProjectionsBlock(result, info, ctx, enableProfiling);
 
+    if (info.timeout != null) {
+      result.chain(new AccumulatingTimeoutStep(info.timeout, ctx, enableProfiling));
+    }
+
     if (useCache && !enableProfiling && statement.executinPlanCanBeCached() && result.canBeCached()
-        && OExecutionPlanCache.getLastInvalidation(db) < planningStart) {
+            && OExecutionPlanCache.getLastInvalidation(db) < planningStart) {
       OExecutionPlanCache.put(statement.getOriginalStatement(), result, (ODatabaseDocumentInternal) ctx.getDatabase());
     }
     return result;
@@ -117,7 +121,7 @@ public class OSelectExecutionPlanner {
   }
 
   public static void handleProjectionsBlock(OSelectExecutionPlan result, QueryPlanningInfo info, OCommandContext ctx,
-      boolean enableProfiling) {
+                                            boolean enableProfiling) {
     handleProjectionsBeforeOrderBy(result, info, ctx, enableProfiling);
 
     if (info.expand || info.unwind != null || info.groupBy != null) {
@@ -156,7 +160,7 @@ public class OSelectExecutionPlanner {
   }
 
   private void buildDistributedExecutionPlan(OSelectExecutionPlan result, QueryPlanningInfo info, OCommandContext ctx,
-      boolean enableProfiling) {
+                                             boolean enableProfiling) {
     if (info.distributedFetchExecutionPlans == null) {
       return;
     }
@@ -219,7 +223,7 @@ public class OSelectExecutionPlanner {
 //    if (serversWithAllTheClusers.isEmpty()) {
     // sharded query
     Map<String, Set<String>> minimalSetOfNodes = getMinimalSetOfNodesForShardedQuery(db.getLocalNodeName(), clusterMap,
-        queryClusters);
+            queryClusters);
     if (minimalSetOfNodes == null) {
       throw new OCommandExecutionException("Cannot execute sharded query");
     }
@@ -243,11 +247,10 @@ public class OSelectExecutionPlanner {
    *
    * @param clusterMap
    * @param queryClusters
-   *
    * @return a map that has node names as a key and clusters (data files) for each node as a value
    */
   private Map<String, Set<String>> getMinimalSetOfNodesForShardedQuery(String localNode, Map<String, Set<String>> clusterMap,
-      Set<String> queryClusters) {
+                                                                       Set<String> queryClusters) {
     //approximate algorithm, the problem is NP-complete
     Map<String, Set<String>> result = new LinkedHashMap<>();
     Set<String> uncovered = new HashSet<>();
@@ -273,10 +276,10 @@ public class OSelectExecutionPlanner {
       nextNodeClusters.retainAll(uncovered);
       if (nextNodeClusters.size() == 0) {
         throw new OCommandExecutionException(
-            "Cannot execute a sharded query: clusters [" + uncovered.stream().collect(Collectors.joining(", "))
-                + "] are not present on any node" + "\n [" + clusterMap.entrySet().stream()
-                .map(x -> "" + x.getKey() + ":(" + x.getValue().stream().collect(Collectors.joining(",")) + ")")
-                .collect(Collectors.joining(", ")) + "]");
+                "Cannot execute a sharded query: clusters [" + uncovered.stream().collect(Collectors.joining(", "))
+                        + "] are not present on any node" + "\n [" + clusterMap.entrySet().stream()
+                        .map(x -> "" + x.getKey() + ":(" + x.getValue().stream().collect(Collectors.joining(",")) + ")")
+                        .collect(Collectors.joining(", ")) + "]");
       }
       result.put(nextNode, nextNodeClusters);
       uncovered.removeAll(nextNodeClusters);
@@ -304,7 +307,6 @@ public class OSelectExecutionPlanner {
   /**
    * @param clusterMap    the cluster map for current sharding configuration
    * @param queryClusters the clusters that are target of the query
-   *
    * @return
    */
   private Set<String> getServersThatHasAllClusters(Map<String, Set<String>> clusterMap, Set<String> queryClusters) {
@@ -324,7 +326,6 @@ public class OSelectExecutionPlanner {
    *
    * @param info
    * @param ctx
-   *
    * @return a set of cluster names this query will fetch from
    */
   private Set<String> calculateTargetClusters(QueryPlanningInfo info, OCommandContext ctx) {
@@ -433,7 +434,7 @@ public class OSelectExecutionPlanner {
         projection = projection.copy();
         OProjectionItem item = projection.getItems().get(0);
         OFunctionCall function = ((OBaseExpression) item.getExpression().getMathExpression()).getIdentifier().getLevelZero()
-            .getFunctionCall();
+                .getFunctionCall();
         OExpression exp = function.getParams().get(0);
         OProjectionItem resultItem = new OProjectionItem(-1);
         resultItem.setAlias(item.getAlias());
@@ -453,7 +454,6 @@ public class OSelectExecutionPlanner {
    * translated to "DISTINCT expr"
    *
    * @param item the projection
-   *
    * @return
    */
   private static boolean isDistinct(OProjectionItem item) {
@@ -494,7 +494,7 @@ public class OSelectExecutionPlanner {
   }
 
   private boolean handleHardwiredCountOnClass(OSelectExecutionPlan result, QueryPlanningInfo info, OCommandContext ctx,
-      boolean profilingEnabled) {
+                                              boolean profilingEnabled) {
     OIdentifier targetClass = info.target == null ? null : info.target.getItem().getIdentifier();
     if (targetClass == null) {
       return false;
@@ -516,7 +516,7 @@ public class OSelectExecutionPlanner {
   }
 
   private boolean handleHardwiredCountOnClassUsingIndex(OSelectExecutionPlan result, QueryPlanningInfo info, OCommandContext ctx,
-      boolean profilingEnabled) {
+                                                        boolean profilingEnabled) {
     OIdentifier targetClass = info.target == null ? null : info.target.getItem().getIdentifier();
     if (targetClass == null) {
       return false;
@@ -531,7 +531,7 @@ public class OSelectExecutionPlanner {
       return false;
     }
     if (info.projectionAfterOrderBy != null || info.globalLetClause != null || info.perRecordLetClause != null
-        || info.groupBy != null || info.orderBy != null || info.unwind != null || info.skip != null) {
+            || info.groupBy != null || info.orderBy != null || info.unwind != null || info.skip != null) {
       return false;
     }
     OClass clazz = ctx.getDatabase().getClass(targetClass.getStringValue());
@@ -574,7 +574,7 @@ public class OSelectExecutionPlanner {
   }
 
   private boolean handleHardwiredCountOnIndex(OSelectExecutionPlan result, QueryPlanningInfo info, OCommandContext ctx,
-      boolean profilingEnabled) {
+                                              boolean profilingEnabled) {
     OIndexIdentifier targetIndex = info.target == null ? null : info.target.getItem().getIndex();
     if (targetIndex == null) {
       return false;
@@ -602,13 +602,13 @@ public class OSelectExecutionPlanner {
    */
   private boolean isMinimalQuery(QueryPlanningInfo info) {
     return info.projectionAfterOrderBy == null && info.globalLetClause == null && info.perRecordLetClause == null
-        && info.whereClause == null && info.flattenedWhereClause == null && info.groupBy == null && info.orderBy == null
-        && info.unwind == null && info.skip == null;
+            && info.whereClause == null && info.flattenedWhereClause == null && info.groupBy == null && info.orderBy == null
+            && info.unwind == null && info.skip == null;
   }
 
   private static boolean isCountStar(QueryPlanningInfo info) {
     if (info.aggregateProjection == null || info.projection == null || info.aggregateProjection.getItems().size() != 1
-        || info.projection.getItems().size() != 1) {
+            || info.projection.getItems().size() != 1) {
       return false;
     }
     OProjectionItem item = info.aggregateProjection.getItems().get(0);
@@ -617,8 +617,8 @@ public class OSelectExecutionPlanner {
 
   private static boolean isCountOnly(QueryPlanningInfo info) {
     if (info.aggregateProjection == null || info.projection == null || info.aggregateProjection.getItems().size() != 1 ||
-        info.projection.getItems().stream().filter(x -> !x.getProjectionAliasAsString().startsWith("_$$$ORDER_BY_ALIAS$$$_"))
-            .count() != 1) {
+            info.projection.getItems().stream().filter(x -> !x.getProjectionAliasAsString().startsWith("_$$$ORDER_BY_ALIAS$$$_"))
+                    .count() != 1) {
       return false;
     }
     OProjectionItem item = info.aggregateProjection.getItems().get(0);
@@ -631,28 +631,28 @@ public class OSelectExecutionPlanner {
   }
 
   public static void handleUnwind(OSelectExecutionPlan result, QueryPlanningInfo info, OCommandContext ctx,
-      boolean profilingEnabled) {
+                                  boolean profilingEnabled) {
     if (info.unwind != null) {
       result.chain(new UnwindStep(info.unwind, ctx, profilingEnabled));
     }
   }
 
   private static void handleDistinct(OSelectExecutionPlan result, QueryPlanningInfo info, OCommandContext ctx,
-      boolean profilingEnabled) {
+                                     boolean profilingEnabled) {
     if (info.distinct) {
       result.chain(new DistinctExecutionStep(ctx, profilingEnabled));
     }
   }
 
   private static void handleProjectionsBeforeOrderBy(OSelectExecutionPlan result, QueryPlanningInfo info, OCommandContext ctx,
-      boolean profilingEnabled) {
+                                                     boolean profilingEnabled) {
     if (info.orderBy != null) {
       handleProjections(result, info, ctx, profilingEnabled);
     }
   }
 
   private static void handleProjections(OSelectExecutionPlan result, QueryPlanningInfo info, OCommandContext ctx,
-      boolean profilingEnabled) {
+                                        boolean profilingEnabled) {
     if (!info.projectionsCalculated && info.projection != null) {
       if (info.preAggregateProjection != null) {
         result.chain(new ProjectionCalculationStep(info.preAggregateProjection, ctx, profilingEnabled));
@@ -709,7 +709,7 @@ public class OSelectExecutionPlanner {
       while (iterator.hasNext()) {
         OLetItem item = iterator.next();
         if (item.getExpression() != null && (item.getExpression().isEarlyCalculated(ctx) || isUnionAllOfQueries(info,
-            item.getVarName(), item.getExpression()))) {
+                item.getVarName(), item.getExpression()))) {
           iterator.remove();
           addGlobalLet(info, item.getVarName(), item.getExpression());
         } else if (item.getQuery() != null && !item.getQuery().refersToParent()) {
@@ -724,7 +724,7 @@ public class OSelectExecutionPlanner {
     if (expression.getMathExpression() instanceof OBaseExpression) {
       OBaseExpression exp = (OBaseExpression) expression.getMathExpression();
       if (exp.getIdentifier() != null && exp.getModifier() == null && exp.getIdentifier().getLevelZero() != null
-          && exp.getIdentifier().getLevelZero().getFunctionCall() != null) {
+              && exp.getIdentifier().getLevelZero().getFunctionCall() != null) {
         OFunctionCall fc = exp.getIdentifier().getLevelZero().getFunctionCall();
         if (fc.getName().getStringValue().equalsIgnoreCase("unionall")) {
           for (OExpression param : fc.getParams()) {
@@ -743,7 +743,6 @@ public class OSelectExecutionPlanner {
    * re-writes a list of flat AND conditions, moving left all the equality operations
    *
    * @param flattenedWhereClause
-   *
    * @return
    */
   private static List<OAndBlock> moveFlattededEqualitiesLeft(List<OAndBlock> flattenedWhereClause) {
@@ -781,14 +780,14 @@ public class OSelectExecutionPlanner {
    */
   private static void addOrderByProjections(QueryPlanningInfo info) {
     if (info.orderApplied || info.expand || info.unwind != null || info.orderBy == null || info.orderBy.getItems().size() == 0
-        || info.projection == null || info.projection.getItems() == null || (info.projection.getItems().size() == 1
-        && info.projection.getItems().get(0).isAll())) {
+            || info.projection == null || info.projection.getItems() == null || (info.projection.getItems().size() == 1
+            && info.projection.getItems().get(0).isAll())) {
       return;
     }
 
     OOrderBy newOrderBy = info.orderBy == null ? null : info.orderBy.copy();
     List<OProjectionItem> additionalOrderByProjections = calculateAdditionalOrderByProjections(info.projection.getAllAliases(),
-        newOrderBy);
+            newOrderBy);
     if (additionalOrderByProjections.size() > 0) {
       info.orderBy = newOrderBy;//the ORDER BY has changed
     }
@@ -817,7 +816,6 @@ public class OSelectExecutionPlanner {
    *
    * @param allAliases existing aliases in the projection
    * @param orderBy    sorting clause
-   *
    * @return a list of additional projections to add to the existing projections to allow ORDER BY calculation (empty if nothing has
    * to be added).
    */
@@ -1058,7 +1056,7 @@ public class OSelectExecutionPlanner {
   }
 
   private void handleFetchFromTarger(OSelectExecutionPlan result, QueryPlanningInfo info, OCommandContext ctx,
-      boolean profilingEnabled) {
+                                     boolean profilingEnabled) {
 
     OFromItem target = info.target == null ? null : info.target.getItem();
     for (Map.Entry<String, OSelectExecutionPlan> shardedPlan : info.distributedFetchExecutionPlans.entrySet()) {
@@ -1075,7 +1073,7 @@ public class OSelectExecutionPlanner {
           if (ridRangeConditions != null && !ridRangeConditions.isEmpty()) {
             info.ridRangeConditions = ridRangeConditions;
             filterClusters = filterClusters.stream()
-                .filter(x -> clusterMatchesRidRange(x, ridRangeConditions, ctx.getDatabase(), ctx)).collect(Collectors.toSet());
+                    .filter(x -> clusterMatchesRidRange(x, ridRangeConditions, ctx.getDatabase(), ctx)).collect(Collectors.toSet());
           }
 
           handleClassAsTarget(shardedPlan.getValue(), filterClusters, info, ctx, profilingEnabled);
@@ -1102,7 +1100,7 @@ public class OSelectExecutionPlanner {
         throw new OCommandExecutionException("function call as target is not supported yet");
       } else if (target.getInputParam() != null) {
         handleInputParamAsTarget(shardedPlan.getValue(), info.serverToClusters.get(shardedPlan.getKey()), info,
-            target.getInputParam(), ctx, profilingEnabled);
+                target.getInputParam(), ctx, profilingEnabled);
       } else if (target.getInputParams() != null && target.getInputParams().size() > 0) {
         List<OInternalExecutionPlan> plans = new ArrayList<>();
         for (OInputParameter param : target.getInputParams()) {
@@ -1115,7 +1113,7 @@ public class OSelectExecutionPlanner {
         handleIndexAsTarget(shardedPlan.getValue(), info, target.getIndex(), null, ctx, profilingEnabled);
         if (info.serverToClusters.size() > 1) {
           shardedPlan.getValue()
-              .chain(new FilterByClustersStep(info.serverToClusters.get(shardedPlan.getKey()), ctx, profilingEnabled));
+                  .chain(new FilterByClustersStep(info.serverToClusters.get(shardedPlan.getKey()), ctx, profilingEnabled));
         }
       } else if (target.getMetadata() != null) {
         handleMetadataAsTarget(shardedPlan.getValue(), target.getMetadata(), ctx, profilingEnabled);
@@ -1139,12 +1137,12 @@ public class OSelectExecutionPlanner {
   }
 
   private void handleVariableAsTarget(OSelectExecutionPlan plan, QueryPlanningInfo info, OCommandContext ctx,
-      boolean profilingEnabled) {
+                                      boolean profilingEnabled) {
     plan.chain(new FetchFromVariableStep(info.target.getItem().getIdentifier().getStringValue(), ctx, profilingEnabled));
   }
 
   private boolean clusterMatchesRidRange(String clusterName, OAndBlock ridRangeConditions, ODatabase database,
-      OCommandContext ctx) {
+                                         OCommandContext ctx) {
     int thisClusterId = database.getClusterIdByName(clusterName);
     for (OBooleanExpression ridRangeCondition : ridRangeConditions.getSubBlocks()) {
       if (ridRangeCondition instanceof OBinaryCondition) {
@@ -1213,11 +1211,11 @@ public class OSelectExecutionPlanner {
 
   private boolean isRangeOperator(OBinaryCompareOperator operator) {
     return operator instanceof OLtOperator || operator instanceof OLeOperator || operator instanceof OGtOperator
-        || operator instanceof OGeOperator;
+            || operator instanceof OGeOperator;
   }
 
   private void handleInputParamAsTarget(OSelectExecutionPlan result, Set<String> filterClusters, QueryPlanningInfo info,
-      OInputParameter inputParam, OCommandContext ctx, boolean profilingEnabled) {
+                                        OInputParameter inputParam, OCommandContext ctx, boolean profilingEnabled) {
     Object paramValue = inputParam.getValue(ctx.getInputParameters());
     if (paramValue == null) {
       result.chain(new EmptyStep(ctx, profilingEnabled));//nothing to return
@@ -1288,7 +1286,6 @@ public class OSelectExecutionPlanner {
    * @param rid
    * @param filterClusters
    * @param database
-   *
    * @return
    */
   private boolean isFromClusters(ORid rid, Set<String> filterClusters, ODatabase database) {
@@ -1304,7 +1301,7 @@ public class OSelectExecutionPlanner {
   }
 
   private void handleIndexAsTarget(OSelectExecutionPlan result, QueryPlanningInfo info, OIndexIdentifier indexIdentifier,
-      Set<String> filterClusters, OCommandContext ctx, boolean profilingEnabled) {
+                                   Set<String> filterClusters, OCommandContext ctx, boolean profilingEnabled) {
     String indexName = indexIdentifier.getIndexName();
     OIndex<?> index = ctx.getDatabase().getMetadata().getIndexManager().getIndex(indexName);
     if (index == null) {
@@ -1326,7 +1323,7 @@ public class OSelectExecutionPlanner {
         }
       } else if (info.flattenedWhereClause.size() > 1) {
         throw new OCommandExecutionException(
-            "Index queries with this kind of condition are not supported yet: " + info.whereClause);
+                "Index queries with this kind of condition are not supported yet: " + info.whereClause);
       } else {
         OAndBlock andBlock = info.flattenedWhereClause.get(0);
         if (andBlock.getSubBlocks().size() == 1) {
@@ -1336,7 +1333,7 @@ public class OSelectExecutionPlanner {
           keyCondition = getKeyCondition(andBlock);
           if (keyCondition == null) {
             throw new OCommandExecutionException(
-                "Index queries with this kind of condition are not supported yet: " + info.whereClause);
+                    "Index queries with this kind of condition are not supported yet: " + info.whereClause);
           }
         } else if (andBlock.getSubBlocks().size() == 2) {
           info.whereClause = null;//The WHERE clause won't be used anymore, the index does all the filtering
@@ -1345,11 +1342,11 @@ public class OSelectExecutionPlanner {
           ridCondition = getRidCondition(andBlock);
           if (keyCondition == null || ridCondition == null) {
             throw new OCommandExecutionException(
-                "Index queries with this kind of condition are not supported yet: " + info.whereClause);
+                    "Index queries with this kind of condition are not supported yet: " + info.whereClause);
           }
         } else {
           throw new OCommandExecutionException(
-              "Index queries with this kind of condition are not supported yet: " + info.whereClause);
+                  "Index queries with this kind of condition are not supported yet: " + info.whereClause);
         }
       }
       result.chain(new FetchFromIndexStep(index, keyCondition, null, ctx, profilingEnabled));
@@ -1405,7 +1402,7 @@ public class OSelectExecutionPlanner {
   }
 
   private void handleMetadataAsTarget(OSelectExecutionPlan plan, OMetadataIdentifier metadata, OCommandContext ctx,
-      boolean profilingEnabled) {
+                                      boolean profilingEnabled) {
     ODatabaseInternal db = (ODatabaseInternal) ctx.getDatabase();
     String schemaRecordIdAsString = null;
     if (metadata.getName().equalsIgnoreCase(OCommandExecutorSQLAbstract.METADATA_SCHEMA)) {
@@ -1435,7 +1432,7 @@ public class OSelectExecutionPlanner {
   }
 
   private static void handleExpand(OSelectExecutionPlan result, QueryPlanningInfo info, OCommandContext ctx,
-      boolean profilingEnabled) {
+                                   boolean profilingEnabled) {
     if (info.expand) {
       result.chain(new ExpandStep(ctx, profilingEnabled));
     }
@@ -1479,7 +1476,7 @@ public class OSelectExecutionPlanner {
           for (OLetItem item : items) {
             if (item.getExpression() != null) {
               shardedPlan
-                  .chain(new LetExpressionStep(item.getVarName().copy(), item.getExpression().copy(), ctx, profilingEnabled));
+                      .chain(new LetExpressionStep(item.getVarName().copy(), item.getExpression().copy(), ctx, profilingEnabled));
             } else {
               shardedPlan.chain(new LetQueryStep(item.getVarName().copy(), item.getQuery().copy(), ctx, profilingEnabled));
             }
@@ -1528,7 +1525,7 @@ public class OSelectExecutionPlanner {
   }
 
   public static void handleOrderBy(OSelectExecutionPlan plan, QueryPlanningInfo info, OCommandContext ctx,
-      boolean profilingEnabled) {
+                                   boolean profilingEnabled) {
     int skipSize = info.skip == null ? 0 : info.skip.getValue(ctx);
     if (skipSize < 0) {
       throw new OCommandExecutionException("Cannot execute a query with a negative SKIP");
@@ -1557,12 +1554,12 @@ public class OSelectExecutionPlanner {
    * @param profilingEnabled
    */
   private void handleClassAsTarget(OSelectExecutionPlan plan, Set<String> filterClusters, QueryPlanningInfo info,
-      OCommandContext ctx, boolean profilingEnabled) {
+                                   OCommandContext ctx, boolean profilingEnabled) {
     handleClassAsTarget(plan, filterClusters, info.target, info, ctx, profilingEnabled);
   }
 
   private void handleClassAsTarget(OSelectExecutionPlan plan, Set<String> filterClusters, OFromClause from, QueryPlanningInfo info,
-      OCommandContext ctx, boolean profilingEnabled) {
+                                   OCommandContext ctx, boolean profilingEnabled) {
     OIdentifier identifier = from.getItem().getIdentifier();
     if (handleClassAsTargetWithIndexedFunction(plan, filterClusters, identifier, info, ctx, profilingEnabled)) {
       plan.chain(new FilterByClassStep(identifier, ctx, profilingEnabled));
@@ -1586,7 +1583,7 @@ public class OSelectExecutionPlanner {
       orderByRidAsc = false;
     }
     FetchFromClassExecutionStep fetcher = new FetchFromClassExecutionStep(identifier.getStringValue(), filterClusters, info, ctx,
-        orderByRidAsc, profilingEnabled);
+            orderByRidAsc, profilingEnabled);
     if (orderByRidAsc != null && info.serverToClusters.size() == 1) {
       info.orderApplied = true;
     }
@@ -1594,7 +1591,7 @@ public class OSelectExecutionPlanner {
   }
 
   private boolean handleClassAsTargetWithIndexedFunction(OSelectExecutionPlan plan, Set<String> filterClusters,
-      OIdentifier queryTarget, QueryPlanningInfo info, OCommandContext ctx, boolean profilingEnabled) {
+                                                         OIdentifier queryTarget, QueryPlanningInfo info, OCommandContext ctx, boolean profilingEnabled) {
     if (queryTarget == null) {
       return false;
     }
@@ -1612,7 +1609,7 @@ public class OSelectExecutionPlanner {
 
     for (OAndBlock block : info.flattenedWhereClause) {
       List<OBinaryCondition> indexedFunctionConditions = block
-          .getIndexedFunctionConditions(clazz, (ODatabaseDocumentInternal) ctx.getDatabase());
+              .getIndexedFunctionConditions(clazz, (ODatabaseDocumentInternal) ctx.getDatabase());
 
       indexedFunctionConditions = filterIndexedFunctionsWithoutIndex(indexedFunctionConditions, info.target, ctx);
 
@@ -1621,14 +1618,14 @@ public class OSelectExecutionPlanner {
         if (bestIndex != null) {
 
           FetchFromIndexStep step = new FetchFromIndexStep(bestIndex.idx, bestIndex.keyCondition,
-              bestIndex.additionalRangeCondition, true, ctx, profilingEnabled);
+                  bestIndex.additionalRangeCondition, true, ctx, profilingEnabled);
 
           OSelectExecutionPlan subPlan = new OSelectExecutionPlan(ctx);
           subPlan.chain(step);
           int[] filterClusterIds = null;
           if (filterClusters != null) {
             filterClusterIds = filterClusters.stream().map(name -> ctx.getDatabase().getClusterIdByName(name)).mapToInt(i -> i)
-                .toArray();
+                    .toArray();
           }
           subPlan.chain(new GetValueFromIndexEntryStep(ctx, filterClusterIds, profilingEnabled));
           if (requiresMultipleIndexLookups(bestIndex.keyCondition)) {
@@ -1643,7 +1640,7 @@ public class OSelectExecutionPlanner {
           resultSubPlans.add(subPlan);
         } else {
           FetchFromClassExecutionStep step = new FetchFromClassExecutionStep(clazz.getName(), filterClusters, ctx, true,
-              profilingEnabled);
+                  profilingEnabled);
           OSelectExecutionPlan subPlan = new OSelectExecutionPlan(ctx);
           subPlan.chain(step);
           if (!block.getSubBlocks().isEmpty()) {
@@ -1670,8 +1667,8 @@ public class OSelectExecutionPlanner {
             if (!thisAllowsNoIndex && !prevAllowsNoIndex) {
               //none of the functions allow execution without index, so cannot choose one
               throw new OCommandExecutionException(
-                  "Cannot choose indexed function between " + cond + " and " + blockCandidateFunction
-                      + ". Both require indexed execution");
+                      "Cannot choose indexed function between " + cond + " and " + blockCandidateFunction
+                              + ". Both require indexed execution");
             } else if (thisAllowsNoIndex && prevAllowsNoIndex) {
               //both can be calculated without index, choose the best one for index execution
               long thisEstimate = cond.estimateIndexed(info.target, ctx);
@@ -1687,7 +1684,7 @@ public class OSelectExecutionPlanner {
         }
 
         FetchFromIndexedFunctionStep step = new FetchFromIndexedFunctionStep(blockCandidateFunction, info.target, ctx,
-            profilingEnabled);
+                profilingEnabled);
         if (!blockCandidateFunction.executeIndexedFunctionAfterIndexSearch(info.target, ctx)) {
           block = block.copy();
           block.getSubBlocks().remove(blockCandidateFunction);
@@ -1741,7 +1738,7 @@ public class OSelectExecutionPlanner {
   }
 
   private List<OBinaryCondition> filterIndexedFunctionsWithoutIndex(List<OBinaryCondition> indexedFunctionConditions,
-      OFromClause fromClause, OCommandContext ctx) {
+                                                                    OFromClause fromClause, OCommandContext ctx) {
     if (indexedFunctionConditions == null) {
       return null;
     }
@@ -1762,12 +1759,11 @@ public class OSelectExecutionPlanner {
    * @param plan current execution plan
    * @param info the query planning information
    * @param ctx  the current context
-   *
    * @return true if it succeeded to use an index to sort, false otherwise.
    */
 
   private boolean handleClassWithIndexForSortOnly(OSelectExecutionPlan plan, OIdentifier queryTarget, Set<String> filterClusters,
-      QueryPlanningInfo info, OCommandContext ctx, boolean profilingEnabled) {
+                                                  QueryPlanningInfo info, OCommandContext ctx, boolean profilingEnabled) {
 
     OClass clazz = ctx.getDatabase().getMetadata().getSchema().getClass(queryTarget.getStringValue());
     if (clazz == null) {
@@ -1775,7 +1771,7 @@ public class OSelectExecutionPlanner {
     }
 
     for (OIndex idx : clazz.getIndexes().stream().filter(i -> i.supportsOrderedIterations()).filter(i -> i.getDefinition() != null)
-        .collect(Collectors.toList())) {
+            .collect(Collectors.toList())) {
       List<String> indexFields = idx.getDefinition().getFields();
       if (indexFields.size() < info.orderBy.getItems().size()) {
         continue;
@@ -1806,7 +1802,7 @@ public class OSelectExecutionPlanner {
         int[] filterClusterIds = null;
         if (filterClusters != null) {
           filterClusterIds = filterClusters.stream().map(name -> ctx.getDatabase().getClusterIdByName(name)).mapToInt(i -> i)
-              .toArray();
+                  .toArray();
         }
         plan.chain(new GetValueFromIndexEntryStep(ctx, filterClusterIds, profilingEnabled));
         if (info.serverToClusters.size() == 1) {
@@ -1827,14 +1823,14 @@ public class OSelectExecutionPlanner {
 
     }
     return info.projection.getItems().stream().filter(proj -> proj.getExpression().toString().equals(indexField))
-        .filter(proj -> proj.getAlias() != null).anyMatch(proj -> proj.getAlias().getStringValue().equals(alias));
+            .filter(proj -> proj.getAlias() != null).anyMatch(proj -> proj.getAlias().getStringValue().equals(alias));
   }
 
   private boolean handleClassAsTargetWithIndex(OSelectExecutionPlan plan, OIdentifier targetClass, Set<String> filterClusters,
-      QueryPlanningInfo info, OCommandContext ctx, boolean profilingEnabled) {
+                                               QueryPlanningInfo info, OCommandContext ctx, boolean profilingEnabled) {
 
     List<OExecutionStepInternal> result = handleClassAsTargetWithIndex(targetClass.getStringValue(), filterClusters, info, ctx,
-        profilingEnabled);
+            profilingEnabled);
     if (result != null) {
       result.stream().forEach(x -> plan.chain(x));
       info.whereClause = null;
@@ -1855,7 +1851,7 @@ public class OSelectExecutionPlanner {
     List<OInternalExecutionPlan> subclassPlans = new ArrayList<>();
     for (OClass subClass : subclasses) {
       List<OExecutionStepInternal> subSteps = handleClassAsTargetWithIndexRecursive(subClass.getName(), filterClusters, info, ctx,
-          profilingEnabled);
+              profilingEnabled);
       if (subSteps == null || subSteps.size() == 0) {
         return false;
       }
@@ -1874,7 +1870,6 @@ public class OSelectExecutionPlanner {
    * checks if a class is the top of a diamond hierarchy
    *
    * @param clazz
-   *
    * @return
    */
   private boolean isDiamondHierarchy(OClass clazz) {
@@ -1896,7 +1891,7 @@ public class OSelectExecutionPlanner {
   }
 
   private List<OExecutionStepInternal> handleClassAsTargetWithIndexRecursive(String targetClass, Set<String> filterClusters,
-      QueryPlanningInfo info, OCommandContext ctx, boolean profilingEnabled) {
+                                                                             QueryPlanningInfo info, OCommandContext ctx, boolean profilingEnabled) {
     List<OExecutionStepInternal> result = handleClassAsTargetWithIndex(targetClass, filterClusters, info, ctx, profilingEnabled);
     if (result == null) {
       result = new ArrayList<>();
@@ -1913,7 +1908,7 @@ public class OSelectExecutionPlanner {
       List<OInternalExecutionPlan> subclassPlans = new ArrayList<>();
       for (OClass subClass : subclasses) {
         List<OExecutionStepInternal> subSteps = handleClassAsTargetWithIndexRecursive(subClass.getName(), filterClusters, info, ctx,
-            profilingEnabled);
+                profilingEnabled);
         if (subSteps == null || subSteps.size() == 0) {
           return null;
         }
@@ -1929,7 +1924,7 @@ public class OSelectExecutionPlanner {
   }
 
   private List<OExecutionStepInternal> handleClassAsTargetWithIndex(String targetClass, Set<String> filterClusters,
-      QueryPlanningInfo info, OCommandContext ctx, boolean profilingEnabled) {
+                                                                    QueryPlanningInfo info, OCommandContext ctx, boolean profilingEnabled) {
     if (info.flattenedWhereClause == null || info.flattenedWhereClause.size() == 0) {
       return null;
     }
@@ -1942,7 +1937,7 @@ public class OSelectExecutionPlanner {
     Set<OIndex<?>> indexes = clazz.getIndexes();
 
     List<IndexSearchDescriptor> indexSearchDescriptors = info.flattenedWhereClause.stream()
-        .map(x -> findBestIndexFor(ctx, indexes, x, clazz)).filter(Objects::nonNull).collect(Collectors.toList());
+            .map(x -> findBestIndexFor(ctx, indexes, x, clazz)).filter(Objects::nonNull).collect(Collectors.toList());
     if (indexSearchDescriptors.size() != info.flattenedWhereClause.size()) {
       return null; //some blocks could not be managed with an index
     }
@@ -1955,19 +1950,19 @@ public class OSelectExecutionPlanner {
       result = new ArrayList<>();
       Boolean orderAsc = getOrderDirection(info);
       result.add(
-          new FetchFromIndexStep(desc.idx, desc.keyCondition, desc.additionalRangeCondition, !Boolean.FALSE.equals(orderAsc), ctx,
-              profilingEnabled));
+              new FetchFromIndexStep(desc.idx, desc.keyCondition, desc.additionalRangeCondition, !Boolean.FALSE.equals(orderAsc), ctx,
+                      profilingEnabled));
       int[] filterClusterIds = null;
       if (filterClusters != null) {
         filterClusterIds = filterClusters.stream().map(name -> ctx.getDatabase().getClusterIdByName(name)).mapToInt(i -> i)
-            .toArray();
+                .toArray();
       }
       result.add(new GetValueFromIndexEntryStep(ctx, filterClusterIds, profilingEnabled));
       if (requiresMultipleIndexLookups(desc.keyCondition)) {
         result.add(new DistinctExecutionStep(ctx, profilingEnabled));
       }
       if (orderAsc != null && info.orderBy != null && fullySorted(info.orderBy, desc.keyCondition, desc.idx)
-          && info.serverToClusters.size() == 1) {
+              && info.serverToClusters.size() == 1) {
         info.orderApplied = true;
       }
       if (desc.remainingCondition != null && !desc.remainingCondition.isEmpty()) {
@@ -2086,7 +2081,7 @@ public class OSelectExecutionPlanner {
   }
 
   private OExecutionStepInternal createParallelIndexFetch(List<IndexSearchDescriptor> indexSearchDescriptors,
-      Set<String> filterClusters, OCommandContext ctx, boolean profilingEnabled) {
+                                                          Set<String> filterClusters, OCommandContext ctx, boolean profilingEnabled) {
     List<OInternalExecutionPlan> subPlans = new ArrayList<>();
     for (IndexSearchDescriptor desc : indexSearchDescriptors) {
       OSelectExecutionPlan subPlan = new OSelectExecutionPlan(ctx);
@@ -2094,7 +2089,7 @@ public class OSelectExecutionPlanner {
       int[] filterClusterIds = null;
       if (filterClusters != null) {
         filterClusterIds = filterClusters.stream().map(name -> ctx.getDatabase().getClusterIdByName(name)).mapToInt(i -> i)
-            .toArray();
+                .toArray();
       }
       subPlan.chain(new GetValueFromIndexEntryStep(ctx, filterClusterIds, profilingEnabled));
       if (requiresMultipleIndexLookups(desc.keyCondition)) {
@@ -2112,7 +2107,6 @@ public class OSelectExecutionPlanner {
    * checks whether the condition has CONTAINSANY or similar expressions, that require multiple index evaluations
    *
    * @param keyCondition
-   *
    * @return
    */
   private boolean requiresMultipleIndexLookups(OAndBlock keyCondition) {
@@ -2137,19 +2131,18 @@ public class OSelectExecutionPlanner {
    * @param ctx
    * @param indexes
    * @param block
-   *
    * @return
    */
   private IndexSearchDescriptor findBestIndexFor(OCommandContext ctx, Set<OIndex<?>> indexes, OAndBlock block, OClass clazz) {
     //get all valid index descriptors
     List<IndexSearchDescriptor> descriptors = indexes.stream().filter(x -> x.getInternal().canBeUsedInEqualityOperators())
-        .map(index -> buildIndexSearchDescriptor(ctx, index, block, clazz)).filter(Objects::nonNull)
-        .filter(x -> x.keyCondition != null).filter(x -> x.keyCondition.getSubBlocks().size() > 0).collect(Collectors.toList());
+            .map(index -> buildIndexSearchDescriptor(ctx, index, block, clazz)).filter(Objects::nonNull)
+            .filter(x -> x.keyCondition != null).filter(x -> x.keyCondition.getSubBlocks().size() > 0).collect(Collectors.toList());
 
     List<IndexSearchDescriptor> fullTextIndexDescriptors = indexes.stream()
-        .filter(idx -> idx.getType().equalsIgnoreCase("FULLTEXT")).filter(idx -> !idx.getAlgorithm().equalsIgnoreCase("LUCENE"))
-        .map(idx -> buildIndexSearchDescriptorForFulltext(ctx, idx, block, clazz)).filter(Objects::nonNull)
-        .filter(x -> x.keyCondition != null).filter(x -> x.keyCondition.getSubBlocks().size() > 0).collect(Collectors.toList());
+            .filter(idx -> idx.getType().equalsIgnoreCase("FULLTEXT")).filter(idx -> !idx.getAlgorithm().equalsIgnoreCase("LUCENE"))
+            .map(idx -> buildIndexSearchDescriptorForFulltext(ctx, idx, block, clazz)).filter(Objects::nonNull)
+            .filter(x -> x.keyCondition != null).filter(x -> x.keyCondition.getSubBlocks().size() > 0).collect(Collectors.toList());
 
     descriptors.addAll(fullTextIndexDescriptors);
 
@@ -2158,17 +2151,17 @@ public class OSelectExecutionPlanner {
 
     //sort by cost
     List<OPair<Integer, IndexSearchDescriptor>> sortedDescriptors = descriptors.stream()
-        .map(x -> (OPair<Integer, IndexSearchDescriptor>) new OPair(x.cost(ctx), x)).sorted().collect(Collectors.toList());
+            .map(x -> (OPair<Integer, IndexSearchDescriptor>) new OPair(x.cost(ctx), x)).sorted().collect(Collectors.toList());
 
     //get only the descriptors with the lowest cost
     descriptors = sortedDescriptors.isEmpty()
-        ? Collections.emptyList()
-        : sortedDescriptors.stream().filter(x -> x.key.equals(sortedDescriptors.get(0).key)).map(x -> x.value)
+            ? Collections.emptyList()
+            : sortedDescriptors.stream().filter(x -> x.key.equals(sortedDescriptors.get(0).key)).map(x -> x.value)
             .collect(Collectors.toList());
 
     //sort remaining by the number of indexed fields
     descriptors = descriptors.stream().sorted(Comparator.comparingInt(x -> x.keyCondition.getSubBlocks().size()))
-        .collect(Collectors.toList());
+            .collect(Collectors.toList());
 
     //get the one that has more indexed fields
     return descriptors.isEmpty() ? null : descriptors.get(descriptors.size() - 1);
@@ -2209,7 +2202,6 @@ public class OSelectExecutionPlanner {
    *
    * @param desc
    * @param descriptors
-   *
    * @return
    */
   private List<IndexSearchDescriptor> findPrefixes(IndexSearchDescriptor desc, List<IndexSearchDescriptor> descriptors) {
@@ -2228,7 +2220,6 @@ public class OSelectExecutionPlanner {
    *
    * @param item
    * @param desc
-   *
    * @return
    */
   private boolean isPrefixOf(IndexSearchDescriptor item, IndexSearchDescriptor desc) {
@@ -2253,7 +2244,6 @@ public class OSelectExecutionPlanner {
    * @param index
    * @param block
    * @param clazz
-   *
    * @return
    */
   private IndexSearchDescriptor buildIndexSearchDescriptor(OCommandContext ctx, OIndex<?> index, OAndBlock block, OClass clazz) {
@@ -2330,7 +2320,7 @@ public class OSelectExecutionPlanner {
             }
           }
         } else if (singleExp instanceof OContainsValueCondition && ((OContainsValueCondition) singleExp).getExpression() != null
-            && isMap(clazz, indexField) && isIndexByValue(index, indexField)) {
+                && isMap(clazz, indexField) && isIndexByValue(index, indexField)) {
           OExpression left = ((OContainsValueCondition) singleExp).getLeft();
           if (left.isBaseIdentifier()) {
             String fieldName = left.getDefaultAlias().getStringValue();
@@ -2402,7 +2392,7 @@ public class OSelectExecutionPlanner {
     }
 
     if (result.keyCondition.getSubBlocks().size() < index.getDefinition().getFields().size() && !index
-        .supportsOrderedIterations()) {
+            .supportsOrderedIterations()) {
       //hash indexes do not support partial key match
       return null;
     }
@@ -2422,11 +2412,10 @@ public class OSelectExecutionPlanner {
    * @param index
    * @param block
    * @param clazz
-   *
    * @return
    */
   private IndexSearchDescriptor buildIndexSearchDescriptorForFulltext(OCommandContext ctx, OIndex<?> index, OAndBlock block,
-      OClass clazz) {
+                                                                      OClass clazz) {
     List<String> indexFields = index.getDefinition().getFields();
     OBinaryCondition keyCondition = new OBinaryCondition(-1);
     OIdentifier key = new OIdentifier("key");
@@ -2469,7 +2458,7 @@ public class OSelectExecutionPlanner {
     }
 
     if (result.keyCondition.getSubBlocks().size() < index.getDefinition().getFields().size() && !index
-        .supportsOrderedIterations()) {
+            .supportsOrderedIterations()) {
       //hash indexes do not support partial key match
       return null;
     }
@@ -2536,7 +2525,6 @@ public class OSelectExecutionPlanner {
    * aggregates multiple index conditions that refer to the same key search
    *
    * @param indexSearchDescriptors
-   *
    * @return
    */
   private List<IndexSearchDescriptor> commonFactor(List<IndexSearchDescriptor> indexSearchDescriptors) {
@@ -2561,14 +2549,14 @@ public class OSelectExecutionPlanner {
     for (Map.Entry<OIndex, Map<IndexCondPair, OOrBlock>> item : aggregation.entrySet()) {
       for (Map.Entry<IndexCondPair, OOrBlock> filters : item.getValue().entrySet()) {
         result.add(new IndexSearchDescriptor(item.getKey(), filters.getKey().mainCondition, filters.getKey().additionalRange,
-            filters.getValue()));
+                filters.getValue()));
       }
     }
     return result;
   }
 
   private void handleClustersAsTarget(OSelectExecutionPlan plan, QueryPlanningInfo info, List<OCluster> clusters,
-      OCommandContext ctx, boolean profilingEnabled) {
+                                      OCommandContext ctx, boolean profilingEnabled) {
     ODatabase db = ctx.getDatabase();
 
     OClass candidateClass = null;
@@ -2664,7 +2652,7 @@ public class OSelectExecutionPlanner {
   }
 
   private void handleSubqueryAsTarget(OSelectExecutionPlan plan, OStatement subQuery, OCommandContext ctx,
-      boolean profilingEnabled) {
+                                      boolean profilingEnabled) {
     OBasicCommandContext subCtx = new OBasicCommandContext();
     subCtx.setDatabase(ctx.getDatabase());
     subCtx.setParent(ctx);
@@ -2700,7 +2688,7 @@ public class OSelectExecutionPlanner {
       OOrderByItem item = info.orderBy.getItems().get(0);
       String recordAttr = item.getRecordAttr();
       return recordAttr != null && recordAttr.equalsIgnoreCase("@rid") && (item.getType() == null || OOrderByItem.ASC
-          .equals(item.getType()));
+              .equals(item.getType()));
     }
     return false;
   }
