@@ -1,18 +1,15 @@
 package com.orientechnologies.agent.services.backup.log;
 
 import com.orientechnologies.orient.core.record.impl.ODocument;
-
 import java.util.Map;
 
-/**
- * Created by Enrico Risa on 18/10/2017.
- */
+/** Created by Enrico Risa on 18/10/2017. */
 public class OBackupUploadFinishedLog extends OBackupLog {
 
   protected String uploadType;
   protected String fileName;
   protected long elapsedTime = 0;
-  protected long fileSize    = 0;
+  protected long fileSize = 0;
   protected Map<String, String> metadata;
 
   public OBackupUploadFinishedLog(long unitId, long txId, String uuid, String dbName, String mode) {

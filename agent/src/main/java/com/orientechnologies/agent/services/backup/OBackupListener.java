@@ -21,19 +21,14 @@ package com.orientechnologies.agent.services.backup;
 import com.orientechnologies.agent.services.backup.log.OBackupLog;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
-/**
- * Created by Enrico Risa on 25/03/16.
- */
+/** Created by Enrico Risa on 25/03/16. */
 public interface OBackupListener {
 
   /**
    * Listener on backup event
-   * 
-   * @param cfg
-   *          Configuration of the backup
-   * @param log
-   *          Event Logged
+   *
+   * @param cfg Configuration of the backup
+   * @param log Event Logged
    */
   public Boolean onEvent(ODocument cfg, OBackupLog log);
-
 }

@@ -26,15 +26,12 @@ import com.orientechnologies.orient.server.OServerInfo;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpRequest;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpResponse;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpUtils;
-
 import java.io.IOException;
 
-/**
- * Created by Enrico Risa on 20/11/15.
- */
+/** Created by Enrico Risa on 20/11/15. */
 public class OServerCommandGetNode extends OServerCommandDistributedScope {
 
-  private static final String[] NAMES = { "GET|node/*", "POST|node/*" };
+  private static final String[] NAMES = {"GET|node/*", "POST|node/*"};
 
   public OServerCommandGetNode(OEnterpriseServer server) {
     super(EnterprisePermissions.SERVER_DISTRIBUTED.toString(), server);
@@ -66,16 +63,22 @@ public class OServerCommandGetNode extends OServerCommandDistributedScope {
       } else if ("INTERRUPT".equalsIgnoreCase(parts[2])) {
         server.getClientConnectionManager().interrupt(Integer.parseInt(parts[3]));
       } else {
-        throw new IllegalArgumentException("Connection command '" + parts[2] + "' is unknown. Supported are: kill, interrupt");
+        throw new IllegalArgumentException(
+            "Connection command '" + parts[2] + "' is unknown. Supported are: kill, interrupt");
       }
-      iResponse.send(OHttpUtils.STATUS_OK_NOCONTENT_CODE, OHttpUtils.STATUS_OK_NOCONTENT_DESCRIPTION, OHttpUtils.CONTENT_TEXT_PLAIN,
-          null, null);
+      iResponse.send(
+          OHttpUtils.STATUS_OK_NOCONTENT_CODE,
+          OHttpUtils.STATUS_OK_NOCONTENT_DESCRIPTION,
+          OHttpUtils.CONTENT_TEXT_PLAIN,
+          null,
+          null);
     } else {
       throw new IllegalArgumentException(" Command '" + command + "' is unknown.");
     }
   }
 
-  private void doGet(OHttpRequest iRequest, OHttpResponse iResponse, String command) throws IOException {
+  private void doGet(OHttpRequest iRequest, OHttpResponse iResponse, String command)
+      throws IOException {
     if (command.equalsIgnoreCase("info")) {
       iRequest.getData().commandInfo = "Server status";
       final String result = OServerInfo.getServerInfo(server);
@@ -83,7 +86,12 @@ public class OServerCommandGetNode extends OServerCommandDistributedScope {
     } else if (command.equalsIgnoreCase("threadDump")) {
       ODocument doc = new ODocument();
       doc.field("threadDump", Orient.instance().getProfiler().threadDump());
-      iResponse.send(OHttpUtils.STATUS_OK_CODE, OHttpUtils.STATUS_OK_DESCRIPTION, OHttpUtils.CONTENT_JSON, doc.toJSON(), null);
+      iResponse.send(
+          OHttpUtils.STATUS_OK_CODE,
+          OHttpUtils.STATUS_OK_DESCRIPTION,
+          OHttpUtils.CONTENT_JSON,
+          doc.toJSON(),
+          null);
     } else {
       throw new IllegalArgumentException(" Command '" + command + "' is unknown.");
     }

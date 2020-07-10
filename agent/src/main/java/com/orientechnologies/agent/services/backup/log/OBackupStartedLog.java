@@ -18,9 +18,7 @@
 
 package com.orientechnologies.agent.services.backup.log;
 
-/**
- * Created by Enrico Risa on 25/03/16.
- */
+/** Created by Enrico Risa on 25/03/16. */
 public class OBackupStartedLog extends OBackupLog {
 
   public OBackupStartedLog(long unitId, long opsId, String uuid, String dbName, String mode) {

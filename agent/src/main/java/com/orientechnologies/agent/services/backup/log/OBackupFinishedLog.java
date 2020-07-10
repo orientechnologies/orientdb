@@ -22,17 +22,15 @@ import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
-/**
- * Created by Enrico Risa on 25/03/16.
- */
+/** Created by Enrico Risa on 25/03/16. */
 public class OBackupFinishedLog extends OBackupLog {
 
   OBackupLogFactory factory = new OBackupLogFactory();
   private String fileName;
   private String path;
   private long elapsedTime = 0;
-  private long fileSize    = 0;
-  private Boolean                  prevChange;
+  private long fileSize = 0;
+  private Boolean prevChange;
   private OBackupUploadFinishedLog upload;
 
   public OBackupFinishedLog(long unitId, long opsId, String uuid, String dbName, String mode) {
@@ -122,5 +120,4 @@ public class OBackupFinishedLog extends OBackupLog {
   public void setPrevChange(Boolean prevChange) {
     this.prevChange = prevChange;
   }
-
 }

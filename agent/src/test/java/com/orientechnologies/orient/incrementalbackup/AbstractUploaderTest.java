@@ -26,26 +26,23 @@ import com.tinkerpop.blueprints.impls.orient.OrientBaseGraph;
 import com.tinkerpop.blueprints.impls.orient.OrientEdgeType;
 import com.tinkerpop.blueprints.impls.orient.OrientGraphNoTx;
 import com.tinkerpop.blueprints.impls.orient.OrientVertexType;
+import java.io.File;
 import org.junit.Before;
 
-import java.io.File;
-
-/**
- * It test the behaviour of a LocalBackupUploader.
- */
+/** It test the behaviour of a LocalBackupUploader. */
 public abstract class AbstractUploaderTest extends AbstractBackupTest {
 
   protected OrientBaseGraph graph;
   //  protected final String dbPath =  "target/db_upload";
   protected final String dbURL = "plocal:target/" + this.getDatabaseName();
-  protected final String backupPath =  "target/backup/";
-  protected final String downloadedBackupPath =  "target/downloaded-backup/";
+  protected final String backupPath = "target/backup/";
+  protected final String downloadedBackupPath = "target/downloaded-backup/";
 
   @Before
   public void setUp() {
 
     incrementalVerticesIdForThread = new int[numberOfThreads];
-    for(int i=0; i < this.numberOfThreads; i++) {
+    for (int i = 0; i < this.numberOfThreads; i++) {
       this.incrementalVerticesIdForThread[i] = 0;
     }
 
@@ -72,7 +69,7 @@ public abstract class AbstractUploaderTest extends AbstractBackupTest {
       this.banner("1st op. - Inserting 5000 triples (10000 vertices, 5000 edges)");
       executeWrites(this.dbURL, 1000);
 
-    } catch(Exception e) {
+    } catch (Exception e) {
       OLogManager.instance().error(this, "", e);
       // cleaning all the directories
       this.cleanDirectories();
@@ -86,5 +83,4 @@ public abstract class AbstractUploaderTest extends AbstractBackupTest {
     OFileUtils.deleteRecursively(new File(this.backupPath));
     OFileUtils.deleteRecursively(new File(this.downloadedBackupPath));
   }
-
 }

@@ -8,13 +8,11 @@ import com.orientechnologies.agent.services.metrics.server.network.OrientDBServe
 import com.orientechnologies.agent.services.metrics.server.resources.OrientDBServerResourcesMetrics;
 import com.orientechnologies.enterprise.server.OEnterpriseServer;
 
-/**
- * Created by Enrico Risa on 16/07/2018.
- */
+/** Created by Enrico Risa on 16/07/2018. */
 public class OrientDBServerMetrics implements OrientDBMetric {
 
   private final OEnterpriseServer server;
-  private final OMetricsRegistry  registry;
+  private final OMetricsRegistry registry;
 
   private OrientDBMetricSupport metricSupport = new OrientDBMetricSupport();
 
@@ -27,7 +25,6 @@ public class OrientDBServerMetrics implements OrientDBMetric {
   }
 
   @Override
-
   public void start() {
     metricSupport.start();
   }

@@ -4,12 +4,9 @@ import com.orientechnologies.enterprise.server.OEnterpriseServer;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.metadata.security.ORule;
-
 import java.util.Optional;
 
-/**
- * Created by Enrico Risa on 23/07/2018.
- */
+/** Created by Enrico Risa on 23/07/2018. */
 public class ListQueriesFunction extends OSQLEnterpriseFunction {
 
   private OEnterpriseServer server;
@@ -21,11 +18,14 @@ public class ListQueriesFunction extends OSQLEnterpriseFunction {
   }
 
   @Override
-  public Object exec(Object iThis, OIdentifiable iCurrentRecord, Object iCurrentResult, Object[] iParams,
+  public Object exec(
+      Object iThis,
+      OIdentifiable iCurrentRecord,
+      Object iCurrentResult,
+      Object[] iParams,
       OCommandContext iContext) {
 
     return server.listQueries(Optional.of((c) -> sameDatabase(c, iContext)));
-
   }
 
   @Override

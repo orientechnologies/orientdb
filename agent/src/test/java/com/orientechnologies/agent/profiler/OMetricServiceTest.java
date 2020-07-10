@@ -18,54 +18,33 @@
 
 package com.orientechnologies.agent.profiler;
 
+import static org.junit.Assert.*;
+
 import com.orientechnologies.agent.OEnterpriseAgent;
 import com.orientechnologies.agent.profiler.metrics.OGauge;
 import com.orientechnologies.agent.profiler.metrics.OMeter;
 import com.orientechnologies.agent.profiler.metrics.OMetric;
-import com.orientechnologies.agent.services.backup.OBackupService;
-import com.orientechnologies.agent.services.backup.OBackupTask;
-import com.orientechnologies.agent.services.backup.log.OBackupLogType;
 import com.orientechnologies.agent.services.metrics.OGlobalMetrics;
 import com.orientechnologies.agent.services.metrics.OrientDBMetricsService;
 import com.orientechnologies.agent.services.metrics.OrientDBMetricsSettings;
-import com.orientechnologies.common.io.OFileUtils;
-import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.ODatabaseSession;
 import com.orientechnologies.orient.core.db.ODatabaseType;
 import com.orientechnologies.orient.core.db.OrientDB;
 import com.orientechnologies.orient.core.record.OVertex;
-import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.OServerMain;
+import java.io.InputStream;
+import java.util.Map;
 import org.junit.*;
 import org.junit.rules.TestName;
 
-import java.io.File;
-import java.io.InputStream;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.CountDownLatch;
-import java.util.stream.Collectors;
-
-import static junit.framework.Assert.assertNotNull;
-import static junit.framework.Assert.fail;
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.Assert.*;
-
-/**
- * Created by Enrico Risa on 22/03/16.
- */
-
+/** Created by Enrico Risa on 22/03/16. */
 public class OMetricServiceTest {
 
   private OServer server;
 
-  @Rule
-  public        TestName testName = new TestName();
-  private final String   DB_NAME  = "backupDBTest";
+  @Rule public TestName testName = new TestName();
+  private final String DB_NAME = "backupDBTest";
 
   private OrientDBMetricsService metricsService;
 
@@ -78,8 +57,7 @@ public class OMetricServiceTest {
 
     OrientDB orientDB = server.getContext();
 
-    if (orientDB.exists(testName.getMethodName()))
-      orientDB.drop(testName.getMethodName());
+    if (orientDB.exists(testName.getMethodName())) orientDB.drop(testName.getMethodName());
 
     orientDB.create(testName.getMethodName(), ODatabaseType.PLOCAL);
 
@@ -113,10 +91,13 @@ public class OMetricServiceTest {
 
     v.delete();
 
-    String create = String.format(OGlobalMetrics.DATABASE_CREATE_OPS.name, testName.getMethodName());
+    String create =
+        String.format(OGlobalMetrics.DATABASE_CREATE_OPS.name, testName.getMethodName());
     String read = String.format(OGlobalMetrics.DATABASE_READ_OPS.name, testName.getMethodName());
-    String update = String.format(OGlobalMetrics.DATABASE_UPDATE_OPS.name, testName.getMethodName());
-    String delete = String.format(OGlobalMetrics.DATABASE_DELETE_OPS.name, testName.getMethodName());
+    String update =
+        String.format(OGlobalMetrics.DATABASE_UPDATE_OPS.name, testName.getMethodName());
+    String delete =
+        String.format(OGlobalMetrics.DATABASE_DELETE_OPS.name, testName.getMethodName());
 
     Map<String, OMetric> metrics = metricsService.getRegistry().getMetrics();
 
@@ -141,9 +122,11 @@ public class OMetricServiceTest {
     OGauge createMetrics = (OGauge) metrics.get(OGlobalMetrics.SERVER_RUNTIME_CPU.name);
     Assert.assertNotNull(createMetrics.getValue());
 
-    OGauge diskCacheTotal = (OGauge) metrics.get(OGlobalMetrics.SERVER_RUNTIME_DISK_CACHE.name + ".total");
+    OGauge diskCacheTotal =
+        (OGauge) metrics.get(OGlobalMetrics.SERVER_RUNTIME_DISK_CACHE.name + ".total");
 
-    OGauge diskCacheUsed = (OGauge) metrics.get(OGlobalMetrics.SERVER_RUNTIME_DISK_CACHE.name + ".used");
+    OGauge diskCacheUsed =
+        (OGauge) metrics.get(OGlobalMetrics.SERVER_RUNTIME_DISK_CACHE.name + ".used");
 
     Assert.assertNotNull(diskCacheTotal.getValue());
 
@@ -153,7 +136,8 @@ public class OMetricServiceTest {
 
     OGauge diskFree = (OGauge) metrics.get(OGlobalMetrics.SERVER_DISK_SPACE.name + ".freeSpace");
 
-    OGauge diskUsable = (OGauge) metrics.get(OGlobalMetrics.SERVER_DISK_SPACE.name + ".usableSpace");
+    OGauge diskUsable =
+        (OGauge) metrics.get(OGlobalMetrics.SERVER_DISK_SPACE.name + ".usableSpace");
 
     Assert.assertNotNull(diskTotal.getValue());
 
@@ -165,12 +149,8 @@ public class OMetricServiceTest {
   @After
   public void tearDownOrientDB() {
     OrientDB orientDB = server.getContext();
-    if (orientDB.exists(testName.getMethodName()))
-      orientDB.drop(testName.getMethodName());
+    if (orientDB.exists(testName.getMethodName())) orientDB.drop(testName.getMethodName());
 
-    if (server != null)
-      server.shutdown();
-
+    if (server != null) server.shutdown();
   }
-
 }

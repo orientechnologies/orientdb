@@ -11,13 +11,10 @@ import com.orientechnologies.common.profiler.OProfilerStub;
 import com.orientechnologies.enterprise.server.OEnterpriseServer;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.sql.functions.OSQLFunction;
-
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * Created by Enrico Risa on 23/07/2018.
- */
+/** Created by Enrico Risa on 23/07/2018. */
 public class OAgentProfilerService implements OEnterpriseService {
 
   private OEnterpriseServer server;
@@ -26,9 +23,7 @@ public class OAgentProfilerService implements OEnterpriseService {
 
   OEnterpriseProfiler profiler;
 
-  public OAgentProfilerService() {
-
-  }
+  public OAgentProfilerService() {}
 
   @Override
   public void init(OEnterpriseServer server) {
@@ -49,7 +44,6 @@ public class OAgentProfilerService implements OEnterpriseService {
     this.server.registerStatelessCommand(new OServerCommandGetProfiler());
 
     this.server.registerStatelessCommand(new OServerCommandGetNode(this.server));
-
   }
 
   protected void installProfiler() {
@@ -62,7 +56,6 @@ public class OAgentProfilerService implements OEnterpriseService {
       profiler.startRecording();
     }
     currentProfiler.shutdown();
-
   }
 
   private void uninstallProfiler() {

@@ -21,13 +21,12 @@ package com.orientechnologies.backup.uploader;
 import com.orientechnologies.agent.services.backup.log.OBackupUploadFinishedLog;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-
 import java.util.Optional;
 
 /**
- * It has the responsibility to upload a local backup to a remote destination according to a certain strategy.
+ * It has the responsibility to upload a local backup to a remote destination according to a certain
+ * strategy.
  */
-
 public class OLocalBackupUploader {
 
   private OUploadingStrategy uploadingStrategy;
@@ -43,7 +42,8 @@ public class OLocalBackupUploader {
     }
     String uploadStrategy = cfg.field("strategy");
     if (uploadStrategy == null) {
-      OLogManager.instance().warn(null, "Cannot configure the cloud uploader, strategy parameters is missing", null);
+      OLogManager.instance()
+          .warn(null, "Cannot configure the cloud uploader, strategy parameters is missing", null);
       return Optional.empty();
     }
     OLocalBackupUploader uploader = new OLocalBackupUploader(uploadStrategy);
@@ -58,12 +58,15 @@ public class OLocalBackupUploader {
 
   /*
 
-   */
-  public boolean executeUpload(String sourceBackupDirectory, String destinationDirectoryPath, String... accessParameters) {
-    return this.uploadingStrategy.executeUpload(sourceBackupDirectory, destinationDirectoryPath, accessParameters);
+  */
+  public boolean executeUpload(
+      String sourceBackupDirectory, String destinationDirectoryPath, String... accessParameters) {
+    return this.uploadingStrategy.executeUpload(
+        sourceBackupDirectory, destinationDirectoryPath, accessParameters);
   }
 
-  public OUploadMetadata executeUpload(String sourceFile, String fname, String destinationDirectoryPath) {
+  public OUploadMetadata executeUpload(
+      String sourceFile, String fname, String destinationDirectoryPath) {
     return this.uploadingStrategy.executeUpload(sourceFile, fname, destinationDirectoryPath);
   }
 
@@ -74,5 +77,4 @@ public class OLocalBackupUploader {
   public String executeDownload(OBackupUploadFinishedLog upload) {
     return this.uploadingStrategy.executeDownload(upload);
   }
-
 }

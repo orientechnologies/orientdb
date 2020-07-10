@@ -19,13 +19,10 @@
 package com.orientechnologies.agent.services.backup.log;
 
 import com.orientechnologies.orient.core.record.impl.ODocument;
-
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-/**
- * Created by Enrico Risa on 31/03/16.
- */
+/** Created by Enrico Risa on 31/03/16. */
 public class OBackupUnit {
 
   protected Map<Long, OBackupTxGroup> groups = new LinkedHashMap<Long, OBackupTxGroup>();

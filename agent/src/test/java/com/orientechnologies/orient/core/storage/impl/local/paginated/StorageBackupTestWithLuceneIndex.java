@@ -27,36 +27,40 @@ import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.OStorage;
+import java.io.File;
+import java.io.IOException;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 
-import java.io.File;
-import java.io.IOException;
-
 /**
- * Disabled for now. Re-enable it when this is implemented https://github.com/orientechnologies/orientdb/issues/5958
- * 
+ * Disabled for now. Re-enable it when this is implemented
+ * https://github.com/orientechnologies/orientdb/issues/5958
+ *
  * @author Enrico Risa <e.risa@orientdb.com>.
  * @since 4/4/2016
  */
-
 public class StorageBackupTestWithLuceneIndex {
-  private String              buildDirectory;
+  private String buildDirectory;
 
   private ODatabaseDocumentTx db;
-  private String              dbDirectory;
-  private String              backedUpDbDirectory;
+  private String dbDirectory;
+  private String backedUpDbDirectory;
 
   @Before
   public void before() {
     buildDirectory = System.getProperty("buildDirectory", ".");
-    dbDirectory = buildDirectory + File.separator + StorageBackupTestWithLuceneIndex.class.getSimpleName();
+    dbDirectory =
+        buildDirectory + File.separator + StorageBackupTestWithLuceneIndex.class.getSimpleName();
     OFileUtils.deleteRecursively(new File(dbDirectory));
     db = new ODatabaseDocumentTx("plocal:" + dbDirectory);
     db.create();
 
-    backedUpDbDirectory = buildDirectory + File.separator + StorageBackupTestWithLuceneIndex.class.getSimpleName() + "BackUp";
+    backedUpDbDirectory =
+        buildDirectory
+            + File.separator
+            + StorageBackupTestWithLuceneIndex.class.getSimpleName()
+            + "BackUp";
   }
 
   @After
@@ -78,7 +82,6 @@ public class StorageBackupTestWithLuceneIndex {
 
     OFileUtils.deleteRecursively(new File(dbDirectory));
     OFileUtils.deleteRecursively(new File(buildDirectory, "backupDir"));
-
   }
 
   // @Test
@@ -89,8 +92,13 @@ public class StorageBackupTestWithLuceneIndex {
     backupClass.createProperty("num", OType.INTEGER);
     backupClass.createProperty("name", OType.STRING);
 
-    backupClass.createIndex("backupLuceneIndex", OClass.INDEX_TYPE.FULLTEXT.toString(), null, null, "LUCENE",
-        new String[] { "name" });
+    backupClass.createIndex(
+        "backupLuceneIndex",
+        OClass.INDEX_TYPE.FULLTEXT.toString(),
+        null,
+        null,
+        "LUCENE",
+        new String[] {"name"});
 
     final ODocument document = new ODocument("BackupClass");
     document.field("num", 1);
@@ -100,8 +108,7 @@ public class StorageBackupTestWithLuceneIndex {
     final File backupDir = new File(buildDirectory, "backupDir");
     OFileUtils.deleteRecursively(backupDir);
 
-    if (!backupDir.exists())
-      Assert.assertTrue(backupDir.mkdirs());
+    if (!backupDir.exists()) Assert.assertTrue(backupDir.mkdirs());
 
     db.incrementalBackup(backupDir.getAbsolutePath());
     final OStorage storage = db.getStorage();
@@ -119,16 +126,20 @@ public class StorageBackupTestWithLuceneIndex {
 
     backupStorage.close(true, false);
 
-    final ODatabaseCompare compare = new ODatabaseCompare("plocal:" + dbDirectory, "plocal:" + backedUpDbDirectory, "admin",
-        "admin", new OCommandOutputListener() {
-          @Override
-          public void onMessage(String iText) {
-            System.out.println(iText);
-          }
-        });
+    final ODatabaseCompare compare =
+        new ODatabaseCompare(
+            "plocal:" + dbDirectory,
+            "plocal:" + backedUpDbDirectory,
+            "admin",
+            "admin",
+            new OCommandOutputListener() {
+              @Override
+              public void onMessage(String iText) {
+                System.out.println(iText);
+              }
+            });
 
     Assert.assertTrue(compare.compare());
-
   }
 
   // @Test
@@ -139,14 +150,18 @@ public class StorageBackupTestWithLuceneIndex {
     backupClass.createProperty("num", OType.INTEGER);
     backupClass.createProperty("name", OType.STRING);
 
-    backupClass.createIndex("backupLuceneIndex", OClass.INDEX_TYPE.FULLTEXT.toString(), null, null, "LUCENE",
-        new String[] { "name" });
+    backupClass.createIndex(
+        "backupLuceneIndex",
+        OClass.INDEX_TYPE.FULLTEXT.toString(),
+        null,
+        null,
+        "LUCENE",
+        new String[] {"name"});
 
     final File backupDir = new File(buildDirectory, "backupDir");
     OFileUtils.deleteRecursively(backupDir);
 
-    if (!backupDir.exists())
-      Assert.assertTrue(backupDir.mkdirs());
+    if (!backupDir.exists()) Assert.assertTrue(backupDir.mkdirs());
 
     ODocument document = new ODocument("BackupClass");
     document.field("num", 1);
@@ -167,8 +182,11 @@ public class StorageBackupTestWithLuceneIndex {
 
     storage.close(true, false);
 
-    final String backedUpDbDirectory = buildDirectory + File.separator + StorageBackupTestWithLuceneIndex.class.getSimpleName()
-        + "BackUp";
+    final String backedUpDbDirectory =
+        buildDirectory
+            + File.separator
+            + StorageBackupTestWithLuceneIndex.class.getSimpleName()
+            + "BackUp";
     OFileUtils.deleteRecursively(new File(backedUpDbDirectory));
 
     final ODatabaseDocumentTx backedUpDb = new ODatabaseDocumentTx("plocal:" + backedUpDbDirectory);
@@ -179,16 +197,19 @@ public class StorageBackupTestWithLuceneIndex {
 
     backupStorage.close(true, false);
 
-    final ODatabaseCompare compare = new ODatabaseCompare("plocal:" + dbDirectory, "plocal:" + backedUpDbDirectory, "admin",
-        "admin", new OCommandOutputListener() {
-          @Override
-          public void onMessage(String iText) {
-            System.out.println(iText);
-          }
-        });
+    final ODatabaseCompare compare =
+        new ODatabaseCompare(
+            "plocal:" + dbDirectory,
+            "plocal:" + backedUpDbDirectory,
+            "admin",
+            "admin",
+            new OCommandOutputListener() {
+              @Override
+              public void onMessage(String iText) {
+                System.out.println(iText);
+              }
+            });
 
     Assert.assertTrue(compare.compare());
-
   }
-
 }

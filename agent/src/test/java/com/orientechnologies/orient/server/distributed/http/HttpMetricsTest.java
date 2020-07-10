@@ -1,12 +1,11 @@
 package com.orientechnologies.orient.server.distributed.http;
 
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import java.util.Map;
 import org.apache.http.HttpResponse;
 import org.apache.http.util.EntityUtils;
 import org.junit.Assert;
 import org.junit.Test;
-
-import java.util.Map;
 
 public class HttpMetricsTest extends EEBaseDistributedHttpTest {
 
@@ -25,6 +24,5 @@ public class HttpMetricsTest extends EEBaseDistributedHttpTest {
 
     Assert.assertEquals(3, clusterStats.size());
     Assert.assertTrue(entries.containsField("databasesStatus"));
-
   }
 }

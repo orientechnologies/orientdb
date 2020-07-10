@@ -5,11 +5,10 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.network.OServerNetworkListener;
 import com.orientechnologies.orient.server.network.protocol.http.ONetworkProtocolHttpAbstract;
+import java.util.Set;
 import org.junit.Assert;
 import org.junit.Ignore;
 import org.junit.Test;
-
-import java.util.Set;
 
 /**
  * Tests Enterprise Profiler Stats
@@ -17,7 +16,7 @@ import java.util.Set;
  * @author Enrico Risa
  */
 public class EnterpriseProfilerTest extends AbstractServerClusterTest {
-  private final static int SERVERS = 3;
+  private static final int SERVERS = 3;
 
   @Override
   public String getDatabaseName() {
@@ -28,7 +27,7 @@ public class EnterpriseProfilerTest extends AbstractServerClusterTest {
   protected void executeTest() throws Exception {
 
     // wait for the first stats push from each node
-//    waitAllServersForPush();
+    //    waitAllServersForPush();
     // check stats for each nodes
     for (ServerRun serverRun : serverInstance) {
       checkStatsOnServer(serverRun);
@@ -45,7 +44,7 @@ public class EnterpriseProfilerTest extends AbstractServerClusterTest {
     serverInstance.remove(serverRun);
 
     // wait for the first stats push from each node
-//    waitAllServersForPush();
+    //    waitAllServersForPush();
 
     waitForDatabaseIsOffline(name, getDatabaseName(), 2000);
 
@@ -53,9 +52,8 @@ public class EnterpriseProfilerTest extends AbstractServerClusterTest {
 
       // check again stats on single server. The removed server {{name}} should not be in the config
 
-      checkStatsOnServer(sr, new String[] { name });
+      checkStatsOnServer(sr, new String[] {name});
     }
-
   }
 
   private void checkStatsOnServer(ServerRun s) {
@@ -69,25 +67,28 @@ public class EnterpriseProfilerTest extends AbstractServerClusterTest {
 
     Set<String> availableNodeNames = dm.getAvailableNodeNames(getDatabaseName());
 
-    final OServerNetworkListener listener = server.getListenerByProtocol(ONetworkProtocolHttpAbstract.class);
+    final OServerNetworkListener listener =
+        server.getListenerByProtocol(ONetworkProtocolHttpAbstract.class);
 
-    OServerCommandDistributedManager command = (OServerCommandDistributedManager) listener
-        .getCommand(OServerCommandDistributedManager.class);
+    OServerCommandDistributedManager command =
+        (OServerCommandDistributedManager)
+            listener.getCommand(OServerCommandDistributedManager.class);
 
     ODocument clusterStats = command.getClusterConfig(dm);
 
     Assert.assertNotNull(clusterStats);
 
     for (String nodeName : availableNodeNames) {
-      Assert.assertNotNull(String.format("Stats for server [%s] should't miss", nodeName),
+      Assert.assertNotNull(
+          String.format("Stats for server [%s] should't miss", nodeName),
           clusterStats.eval("clusterStats." + nodeName));
     }
 
     for (String node : nodes) {
-      Assert
-          .assertNull(String.format("Stats for server [%s] should't be in stats", node), clusterStats.eval("clusterStats." + node));
+      Assert.assertNull(
+          String.format("Stats for server [%s] should't be in stats", node),
+          clusterStats.eval("clusterStats." + node));
     }
-
   }
 
   @Test

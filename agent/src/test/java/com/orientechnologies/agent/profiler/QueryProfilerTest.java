@@ -8,20 +8,16 @@ import com.orientechnologies.orient.core.db.ODatabaseType;
 import com.orientechnologies.orient.core.db.OrientDB;
 import com.orientechnologies.orient.core.db.OrientDBConfig;
 import com.orientechnologies.orient.core.sql.executor.OResult;
-import com.orientechnologies.orient.core.sql.executor.OResultInternal;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
-import com.orientechnologies.orient.core.sql.parser.OLocalResultSet;
 import com.orientechnologies.orient.server.OServer;
+import java.util.Collection;
+import java.util.List;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.atomic.AtomicReference;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
-
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.List;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.atomic.AtomicReference;
 
 public class QueryProfilerTest {
 
@@ -50,41 +46,45 @@ public class QueryProfilerTest {
 
     AtomicReference<String> queryId = new AtomicReference<>();
 
-    new Thread(() -> {
-      ODatabaseSession local = context.open(QueryProfilerTest.class.getSimpleName(), "admin", "admin");
+    new Thread(
+            () -> {
+              ODatabaseSession local =
+                  context.open(QueryProfilerTest.class.getSimpleName(), "admin", "admin");
 
-      OResultSet result = local.query("select from OUser");
+              OResultSet result = local.query("select from OUser");
 
-      startLatch.countDown();
+              startLatch.countDown();
 
-      try {
-        endLatch.await();
-        result.close();
-      } catch (InterruptedException e) {
-        OLogManager.instance().warn(this, "Thread interrupted: " + e.getMessage(), e);
-      }
+              try {
+                endLatch.await();
+                result.close();
+              } catch (InterruptedException e) {
+                OLogManager.instance().warn(this, "Thread interrupted: " + e.getMessage(), e);
+              }
+            })
+        .start();
 
-    }).start();
+    new Thread(
+            () -> {
+              ODatabaseSession local =
+                  context.open(QueryProfilerTest.class.getSimpleName(), "admin", "admin");
 
-    new Thread(() -> {
-      ODatabaseSession local = context.open(QueryProfilerTest.class.getSimpleName(), "admin", "admin");
+              OResultSet result = local.query("select from OUser");
 
-      OResultSet result = local.query("select from OUser");
+              ORemoteResultSet remote = (ORemoteResultSet) result;
 
-      ORemoteResultSet remote = (ORemoteResultSet) result;
+              queryId.set(remote.getQueryId());
 
-      queryId.set(remote.getQueryId());
+              startLatch.countDown();
 
-      startLatch.countDown();
-
-      try {
-        endLatch.await();
-        result.close();
-      } catch (InterruptedException e) {
-        OLogManager.instance().warn(this, "Thread interrupted: " + e.getMessage(), e);
-      }
-
-    }).start();
+              try {
+                endLatch.await();
+                result.close();
+              } catch (InterruptedException e) {
+                OLogManager.instance().warn(this, "Thread interrupted: " + e.getMessage(), e);
+              }
+            })
+        .start();
 
     ODatabaseSession db = context.open(QueryProfilerTest.class.getSimpleName(), "admin", "admin");
 
@@ -92,7 +92,8 @@ public class QueryProfilerTest {
 
     OResultSet resultSet = db.command("select listQueries() as queries");
 
-    Collection<OResult> queries = (Collection) resultSet.stream().findFirst().map((r) -> r.getProperty("queries")).get();
+    Collection<OResult> queries =
+        (Collection) resultSet.stream().findFirst().map((r) -> r.getProperty("queries")).get();
 
     resultSet.close();
 
@@ -102,7 +103,8 @@ public class QueryProfilerTest {
 
     resultSet = db.command("select listQueries() as queries");
 
-    queries = (Collection) resultSet.stream().findFirst().map((r) -> r.getProperty("queries")).get();
+    queries =
+        (Collection) resultSet.stream().findFirst().map((r) -> r.getProperty("queries")).get();
 
     resultSet.close();
 
@@ -116,13 +118,16 @@ public class QueryProfilerTest {
 
     OrientDB context = new OrientDB("remote:localhost", OrientDBConfig.defaultConfig());
 
-    ODatabaseSession local = context.open(QueryProfilerTest.class.getSimpleName(), "admin", "admin");
+    ODatabaseSession local =
+        context.open(QueryProfilerTest.class.getSimpleName(), "admin", "admin");
 
     Integer sessionId = -1;
 
     try (OResultSet resultSet = local.command("select listSessions() as sessions")) {
 
-      List<OResult> sessions = (List<OResult>) resultSet.stream().findFirst().map((r) -> r.getProperty("sessions")).get();
+      List<OResult> sessions =
+          (List<OResult>)
+              resultSet.stream().findFirst().map((r) -> r.getProperty("sessions")).get();
 
       Assert.assertEquals(1, sessions.size());
 
@@ -147,7 +152,8 @@ public class QueryProfilerTest {
 
     try (OResultSet resultSet = local.command("select listSessions() as sessions")) {
 
-      Collection sessions = (Collection) resultSet.stream().findFirst().map((r) -> r.getProperty("sessions")).get();
+      Collection sessions =
+          (Collection) resultSet.stream().findFirst().map((r) -> r.getProperty("sessions")).get();
 
       // one is not connected
       Assert.assertEquals(2, sessions.size());

@@ -18,6 +18,8 @@
 
 package com.orientechnologies.orient.incrementalbackup;
 
+import static org.junit.Assert.fail;
+
 import com.orientechnologies.common.concur.ONeedRetryException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
@@ -27,7 +29,6 @@ import com.tinkerpop.blueprints.impls.orient.OrientBaseGraph;
 import com.tinkerpop.blueprints.impls.orient.OrientEdge;
 import com.tinkerpop.blueprints.impls.orient.OrientGraphFactory;
 import com.tinkerpop.blueprints.impls.orient.OrientVertex;
-
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -36,11 +37,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 
-import static org.junit.Assert.fail;
-
-/**
- * Abstract class for all test cases about the incremental backup.
- */
+/** Abstract class for all test cases about the incremental backup. */
 public abstract class AbstractBackupTest {
 
   protected final int numberOfThreads = 5;
@@ -51,10 +48,10 @@ public abstract class AbstractBackupTest {
 
   public class VertexWriter implements Callable<Void> {
     protected final String databaseUrl;
-    protected int          threadId;
-    protected int          maxRetries;
-    protected int          count;
-    protected int          delayWriter;
+    protected int threadId;
+    protected int maxRetries;
+    protected int count;
+    protected int delayWriter;
 
     protected VertexWriter(final String db, final int iThreadId, int count) {
       this.databaseUrl = db;
@@ -83,25 +80,42 @@ public abstract class AbstractBackupTest {
               createVerticesWithEdge(graph, this.threadId);
 
               if (i % 1000 == 0)
-                System.out.println("\nWriter (threadId=" + this.threadId + ") " + graph.getRawGraph().getURL() + " managed " + i + "/" + count + " triples so far");
+                System.out.println(
+                    "\nWriter (threadId="
+                        + this.threadId
+                        + ") "
+                        + graph.getRawGraph().getURL()
+                        + " managed "
+                        + i
+                        + "/"
+                        + count
+                        + " triples so far");
 
-              if (delayWriter > 0)
-                Thread.sleep(delayWriter);
+              if (delayWriter > 0) Thread.sleep(delayWriter);
 
               // OK
               break;
 
             } catch (InterruptedException e) {
-              System.out.println("Writer (threadId=" + this.threadId + ") received interrupt (db=" + graph.getRawGraph().getURL() + ")");
+              System.out.println(
+                  "Writer (threadId="
+                      + this.threadId
+                      + ") received interrupt (db="
+                      + graph.getRawGraph().getURL()
+                      + ")");
               Thread.currentThread().interrupt();
               break;
             } catch (ORecordDuplicatedException e) {
               // IGNORE IT
             } catch (ONeedRetryException e) {
-              System.out.println("Writer (threadId=" + this.threadId + ") received exception (db=" + graph.getRawGraph().getURL() + ")");
+              System.out.println(
+                  "Writer (threadId="
+                      + this.threadId
+                      + ") received exception (db="
+                      + graph.getRawGraph().getURL()
+                      + ")");
 
-              if (retry >= maxRetries)
-                OLogManager.instance().error(this, "max retries reached", e);
+              if (retry >= maxRetries) OLogManager.instance().error(this, "max retries reached", e);
 
               break;
             } catch (ODistributedException e) {
@@ -110,17 +124,21 @@ public abstract class AbstractBackupTest {
                 throw e;
               }
             } catch (Throwable e) {
-              System.out.println("Writer (threadId=" + this.threadId + ") received exception (db=" + graph.getRawGraph().getURL() + ")");
+              System.out.println(
+                  "Writer (threadId="
+                      + this.threadId
+                      + ") received exception (db="
+                      + graph.getRawGraph().getURL()
+                      + ")");
               return null;
             }
           }
-
         }
 
         graph.getRawGraph().close();
 
         System.out.println("\nWriter " + name + " END");
-      }catch (Exception e) {
+      } catch (Exception e) {
         OLogManager.instance().error(this, "", e);
       }
       return null;
@@ -130,8 +148,10 @@ public abstract class AbstractBackupTest {
   // Atomic operations on the primaryGraph database
   protected OrientVertex createVerticesWithEdge(OrientBaseGraph graph, int threadId) {
 
-    final String accountUniqueId = "User-t" + threadId + "-v" + incrementalVerticesIdForThread[threadId];
-    final String productUniqueId = "Product-t" + threadId + "-v" + incrementalVerticesIdForThread[threadId];
+    final String accountUniqueId =
+        "User-t" + threadId + "-v" + incrementalVerticesIdForThread[threadId];
+    final String productUniqueId =
+        "Product-t" + threadId + "-v" + incrementalVerticesIdForThread[threadId];
 
     OrientVertex account = graph.addVertex("class:User");
     account.setProperties("name", accountUniqueId, "updated", false);
@@ -166,13 +186,16 @@ public abstract class AbstractBackupTest {
 
   // Increments the vertices id written from a thread identified through a threadId.
   protected synchronized void incrementThreadCount(int threadId) {
-    this.incrementalVerticesIdForThread[threadId] = this.incrementalVerticesIdForThread[threadId]+1;
+    this.incrementalVerticesIdForThread[threadId] =
+        this.incrementalVerticesIdForThread[threadId] + 1;
   }
 
   protected void banner(final String message) {
-    System.out.println("\n**********************************************************************************************************");
+    System.out.println(
+        "\n**********************************************************************************************************");
     System.out.println(message);
-    System.out.println("**********************************************************************************************************\n");
+    System.out.println(
+        "**********************************************************************************************************\n");
     System.out.flush();
   }
 
@@ -204,11 +227,10 @@ public abstract class AbstractBackupTest {
       writerExecutors.shutdown();
       System.out.println("All writer threads have finished, shutting down readers");
 
-    } catch(Exception e) {
+    } catch (Exception e) {
       OLogManager.instance().error(this, "", e);
     }
   }
 
   protected abstract String getDatabaseName();
-
 }

@@ -27,7 +27,6 @@ import com.amazonaws.services.s3.model.*;
 import com.orientechnologies.agent.services.backup.log.OBackupUploadFinishedLog;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
@@ -41,21 +40,19 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
- * This strategy performs an upload to a S3 bucket. The upload of the delta between the local backup directory and the remote one is
- * performed.
+ * This strategy performs an upload to a S3 bucket. The upload of the delta between the local backup
+ * directory and the remote one is performed.
  *
  * @param
  */
-
 public class OS3DeltaUploadingStrategy implements OUploadingStrategy {
 
   private final String suffix = "/";
-  private       String bucketName;
-  private       String accessKey;
-  private       String secretKey;
+  private String bucketName;
+  private String accessKey;
+  private String secretKey;
 
-  public OS3DeltaUploadingStrategy() {
-  }
+  public OS3DeltaUploadingStrategy() {}
 
   //
 
@@ -64,11 +61,11 @@ public class OS3DeltaUploadingStrategy implements OUploadingStrategy {
    *
    * @param sourceBackupDirectory
    * @param destinationDirectoryPath
-   * @param accessParameters         (String bucketName, String accessKey, String secretKey)
-   *
+   * @param accessParameters (String bucketName, String accessKey, String secretKey)
    * @return success
    */
-  public boolean executeUpload(String sourceBackupDirectory, String destinationDirectoryPath, String... accessParameters) {
+  public boolean executeUpload(
+      String sourceBackupDirectory, String destinationDirectoryPath, String... accessParameters) {
 
     String bucketName = accessParameters[0];
     String accessKey = accessParameters[1];
@@ -97,7 +94,6 @@ public class OS3DeltaUploadingStrategy implements OUploadingStrategy {
       if (!alreadyPresent) {
         s3client.createBucket(bucketName);
       }
-
 
       /*
        * uploading file to the bucket
@@ -139,24 +135,37 @@ public class OS3DeltaUploadingStrategy implements OUploadingStrategy {
 
       // upload each file contained in the filesToUpload list
       for (File currentFile : localFileName2File.values()) {
-        s3client
-            .putObject(new PutObjectRequest(bucketName, destinationDirectoryPath + suffix + currentFile.getName(), currentFile));
+        s3client.putObject(
+            new PutObjectRequest(
+                bucketName,
+                destinationDirectoryPath + suffix + currentFile.getName(),
+                currentFile));
       }
 
       success = true;
 
     } catch (AmazonServiceException ase) {
-      OLogManager.instance().info(this, "Caught an AmazonServiceException, which " + "means your request made it "
-          + "to Amazon S3, but was rejected with an error response" + " for some reason.");
+      OLogManager.instance()
+          .info(
+              this,
+              "Caught an AmazonServiceException, which "
+                  + "means your request made it "
+                  + "to Amazon S3, but was rejected with an error response"
+                  + " for some reason.");
       OLogManager.instance().info(this, "Error Message:    %s", ase.getMessage());
       OLogManager.instance().info(this, "HTTP Status Code: %s", ase.getStatusCode());
       OLogManager.instance().info(this, "AWS Error Code:   %s", ase.getErrorCode());
       OLogManager.instance().info(this, "Error Type:       %s", ase.getErrorType());
       OLogManager.instance().info(this, "Request ID:       %s", ase.getRequestId());
     } catch (AmazonClientException ace) {
-      OLogManager.instance().info(this,
-          "Caught an AmazonClientException, which " + "means the client encountered " + "an internal error while trying to "
-              + "communicate with S3, " + "such as not being able to access the network.");
+      OLogManager.instance()
+          .info(
+              this,
+              "Caught an AmazonClientException, which "
+                  + "means the client encountered "
+                  + "an internal error while trying to "
+                  + "communicate with S3, "
+                  + "such as not being able to access the network.");
       OLogManager.instance().info(this, "Error Message: %s", ace.getMessage());
     } catch (Exception e) {
       OLogManager.instance().info(this, "Caught an exception client side.");
@@ -167,7 +176,8 @@ public class OS3DeltaUploadingStrategy implements OUploadingStrategy {
   }
 
   @Override
-  public OUploadMetadata executeUpload(String sourceFile, String fName, String destinationDirectoryPath) {
+  public OUploadMetadata executeUpload(
+      String sourceFile, String fName, String destinationDirectoryPath) {
 
     long start = System.currentTimeMillis();
 
@@ -204,7 +214,8 @@ public class OS3DeltaUploadingStrategy implements OUploadingStrategy {
     this.secretKey = System.getenv("BACKUP_AWS_SECRET_KEY");
 
     if (this.bucketName == null || this.accessKey == null || this.secretKey == null) {
-      throw new IllegalArgumentException("Cannot configure the backup in s3. Parameters are missing");
+      throw new IllegalArgumentException(
+          "Cannot configure the backup in s3. Parameters are missing");
     }
   }
 
@@ -218,11 +229,11 @@ public class OS3DeltaUploadingStrategy implements OUploadingStrategy {
     InputStream emptyContent = new ByteArrayInputStream(new byte[0]);
 
     // create a PutObjectRequest passing the folder name suffixed by /
-    PutObjectRequest putObjectRequest = new PutObjectRequest(bucketName, folderName + suffix, emptyContent, metadata);
+    PutObjectRequest putObjectRequest =
+        new PutObjectRequest(bucketName, folderName + suffix, emptyContent, metadata);
 
     // send request to S3 to create folder
     s3Client.putObject(putObjectRequest);
-
   }
 
   @Override
@@ -248,7 +259,6 @@ public class OS3DeltaUploadingStrategy implements OUploadingStrategy {
           S3Object object = s3client.getObject(bucketName, s3ObjectSummary.getKey());
           Files.copy(object.getObjectContent(), tempDir.resolve(strings[1]));
         }
-
       }
       return tempDir.toString();
     } catch (IOException e) {
@@ -257,5 +267,4 @@ public class OS3DeltaUploadingStrategy implements OUploadingStrategy {
 
     return null;
   }
-
 }

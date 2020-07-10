@@ -27,11 +27,10 @@ import com.orientechnologies.orient.server.network.protocol.http.OHttpResponse;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpUtils;
 import com.orientechnologies.orient.server.network.protocol.http.command.OServerCommandAuthenticatedServerAbstract;
 import com.orientechnologies.orient.server.security.OServerSecurity;
-
 import java.io.IOException;
 
 public class OServerCommandPostSecurityReload extends OServerCommandAuthenticatedServerAbstract {
-  private static final String[] NAMES = { "POST|security/reload" };
+  private static final String[] NAMES = {"POST|security/reload"};
 
   private OServerSecurity serverSecurity;
 
@@ -47,14 +46,17 @@ public class OServerCommandPostSecurityReload extends OServerCommandAuthenticate
   }
 
   @Override
-  public boolean beforeExecute(final OHttpRequest iRequest, final OHttpResponse iResponse) throws IOException {
+  public boolean beforeExecute(final OHttpRequest iRequest, final OHttpResponse iResponse)
+      throws IOException {
     return authenticate(iRequest, iResponse, false);
   }
 
   @Override
-  public boolean execute(final OHttpRequest iRequest, final OHttpResponse iResponse) throws Exception {
+  public boolean execute(final OHttpRequest iRequest, final OHttpResponse iResponse)
+      throws Exception {
     if (iRequest.getContent() == null) {
-      writeError(iResponse, "OServerCommandPostSecurityReload.execute()", "Request Content is null");
+      writeError(
+          iResponse, "OServerCommandPostSecurityReload.execute()", "Request Content is null");
       return false;
     }
 
@@ -71,9 +73,11 @@ public class OServerCommandPostSecurityReload extends OServerCommandAuthenticate
 
       // "configFile" and "config"/"module" are mutually exclusive properties.
       if (jsonParams.containsField("configFile")) {
-        final String configName = OSystemVariableResolver.resolveSystemVariables((String) jsonParams.field("configFile"));
+        final String configName =
+            OSystemVariableResolver.resolveSystemVariables((String) jsonParams.field("configFile"));
 
-        OLogManager.instance().info(this, "OServerCommandPostSecurityReload.execute() configName = %s", configName);
+        OLogManager.instance()
+            .info(this, "OServerCommandPostSecurityReload.execute() configName = %s", configName);
 
         serverSecurity.reload(user, configName);
       } else if (jsonParams.containsField("config")) {
@@ -87,11 +91,15 @@ public class OServerCommandPostSecurityReload extends OServerCommandAuthenticate
           serverSecurity.reload(user, jsonDoc);
         }
       } else {
-        writeError(iResponse, "OServerCommandPostSecurityReload.execute()", "/security/reload keyword is missing");
+        writeError(
+            iResponse,
+            "OServerCommandPostSecurityReload.execute()",
+            "/security/reload keyword is missing");
         return false;
       }
     } catch (Exception ex) {
-      writeError(iResponse, "OServerCommandPostSecurityReload.execute()", "Exception: " + ex.getMessage());
+      writeError(
+          iResponse, "OServerCommandPostSecurityReload.execute()", "Exception: " + ex.getMessage());
       return false;
     }
 
@@ -100,7 +108,8 @@ public class OServerCommandPostSecurityReload extends OServerCommandAuthenticate
     return false;
   }
 
-  protected void writeError(final OHttpResponse iResponse, final String method, final String reason) {
+  protected void writeError(
+      final OHttpResponse iResponse, final String method, final String reason) {
     try {
       OLogManager.instance().error(this, "%s %s", null, method, reason);
 
@@ -110,7 +119,12 @@ public class OServerCommandPostSecurityReload extends OServerCommandAuthenticate
       json.append(reason);
       json.append("\" }");
 
-      iResponse.send(OHttpUtils.STATUS_INVALIDMETHOD_CODE, "Error", OHttpUtils.CONTENT_JSON, json.toString(), null);
+      iResponse.send(
+          OHttpUtils.STATUS_INVALIDMETHOD_CODE,
+          "Error",
+          OHttpUtils.CONTENT_JSON,
+          json.toString(),
+          null);
     } catch (IOException ex) {
       OLogManager.instance().error(this, "OServerCommandPostSecurityReload.writeJSON()", ex);
     }
@@ -118,8 +132,12 @@ public class OServerCommandPostSecurityReload extends OServerCommandAuthenticate
 
   protected void writeJSON(final OHttpResponse iResponse, final String json) {
     try {
-      iResponse
-          .send(OHttpUtils.STATUS_OK_CODE, "OK", OHttpUtils.CONTENT_JSON, new ODocument().field("message", json).toJSON(), null);
+      iResponse.send(
+          OHttpUtils.STATUS_OK_CODE,
+          "OK",
+          OHttpUtils.CONTENT_JSON,
+          new ODocument().field("message", json).toJSON(),
+          null);
     } catch (IOException ex) {
       OLogManager.instance().error(this, "OServerCommandPostSecurityReload.writeJSON", ex);
     }

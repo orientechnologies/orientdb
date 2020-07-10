@@ -4,14 +4,11 @@ import com.codahale.metrics.Histogram;
 import com.orientechnologies.agent.profiler.metrics.OHistogram;
 import com.orientechnologies.agent.profiler.metrics.OSnapshot;
 
-/**
- * Created by Enrico Risa on 11/07/2018.
- */
+/** Created by Enrico Risa on 11/07/2018. */
 public class DropWizardHistogram extends DropWizardGeneric<Histogram> implements OHistogram {
 
   public DropWizardHistogram(Histogram histogram, String name, String description) {
     super(histogram, name, description);
-
   }
 
   public void update(int value) {

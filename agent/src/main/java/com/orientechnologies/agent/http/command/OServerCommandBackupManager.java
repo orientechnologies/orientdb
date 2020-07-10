@@ -19,25 +19,26 @@
 package com.orientechnologies.agent.http.command;
 
 import com.orientechnologies.agent.EnterprisePermissions;
-import com.orientechnologies.agent.operation.OperationResponseFromNode;
 import com.orientechnologies.agent.services.backup.OBackupService;
 import com.orientechnologies.enterprise.server.OEnterpriseServer;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpRequest;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpResponse;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpUtils;
-
 import java.io.IOException;
-import java.util.List;
 
-/**
- * Created by Enrico Risa on 22/03/16.
- */
+/** Created by Enrico Risa on 22/03/16. */
 public class OServerCommandBackupManager extends OServerCommandDistributedScope {
 
   OBackupService backupManager;
-  private static final String[] NAMES = { "GET|backupManager", "GET|backupManager/*", "POST|backupManager", "POST|backupManager/*",
-      "PUT|backupManager/*", "DELETE|backupManager/*" };
+  private static final String[] NAMES = {
+    "GET|backupManager",
+    "GET|backupManager/*",
+    "POST|backupManager",
+    "POST|backupManager/*",
+    "PUT|backupManager/*",
+    "DELETE|backupManager/*"
+  };
 
   public OServerCommandBackupManager(OBackupService manager, OEnterpriseServer server) {
     super(EnterprisePermissions.SERVER_BACKUP.toString(), server);
@@ -52,12 +53,14 @@ public class OServerCommandBackupManager extends OServerCommandDistributedScope 
   @Override
   protected void doPost(OHttpRequest iRequest, OHttpResponse iResponse) throws IOException {
 
-    if (super.authenticate(iRequest, iResponse, true, EnterprisePermissions.SERVER_BACKUP_EDIT.toString())) {
+    if (super.authenticate(
+        iRequest, iResponse, true, EnterprisePermissions.SERVER_BACKUP_EDIT.toString())) {
       final String[] parts = checkSyntax(iRequest.getUrl(), 1, "Syntax error: backupManager");
       if (parts.length == 1) {
         ODocument body = new ODocument().fromJSON(iRequest.getContent(), "noMap");
         ODocument doc = backupManager.addBackup(body);
-        iResponse.send(OHttpUtils.STATUS_OK_CODE, "OK", OHttpUtils.CONTENT_JSON, doc.toJSON(""), null);
+        iResponse.send(
+            OHttpUtils.STATUS_OK_CODE, "OK", OHttpUtils.CONTENT_JSON, doc.toJSON(""), null);
       } else if (parts.length == 3) {
 
         String uuid = parts[1];
@@ -77,11 +80,13 @@ public class OServerCommandBackupManager extends OServerCommandDistributedScope 
 
   @Override
   protected void doPut(OHttpRequest iRequest, OHttpResponse iResponse) throws IOException {
-    if (super.authenticate(iRequest, iResponse, true, EnterprisePermissions.SERVER_BACKUP_EDIT.toString())) {
+    if (super.authenticate(
+        iRequest, iResponse, true, EnterprisePermissions.SERVER_BACKUP_EDIT.toString())) {
       final String[] parts = checkSyntax(iRequest.getUrl(), 2, "Syntax error: backupManager");
       ODocument body = new ODocument().fromJSON(iRequest.getContent(), "noMap");
       backupManager.changeBackup(parts[1], body);
-      iResponse.send(OHttpUtils.STATUS_OK_CODE, "OK", OHttpUtils.CONTENT_JSON, body.toJSON(""), null);
+      iResponse.send(
+          OHttpUtils.STATUS_OK_CODE, "OK", OHttpUtils.CONTENT_JSON, body.toJSON(""), null);
     } else {
       throw new IllegalArgumentException("cannot execute post put ");
     }
@@ -93,14 +98,16 @@ public class OServerCommandBackupManager extends OServerCommandDistributedScope 
 
     if (parts.length == 1) {
       ODocument doc = backupManager.getConfiguration();
-      iResponse.send(OHttpUtils.STATUS_OK_CODE, "OK", OHttpUtils.CONTENT_JSON, doc.toJSON(""), null);
+      iResponse.send(
+          OHttpUtils.STATUS_OK_CODE, "OK", OHttpUtils.CONTENT_JSON, doc.toJSON(""), null);
     } else if (parts.length >= 3) {
       String uuid = parts[1];
       String command = parts[2];
 
       if (command.equalsIgnoreCase("status")) {
         ODocument status = backupManager.logs(uuid, 0, 1, iRequest.getParameters());
-        iResponse.send(OHttpUtils.STATUS_OK_CODE, "OK", OHttpUtils.CONTENT_JSON, status.toJSON(""), null);
+        iResponse.send(
+            OHttpUtils.STATUS_OK_CODE, "OK", OHttpUtils.CONTENT_JSON, status.toJSON(""), null);
       } else if (command.equalsIgnoreCase("log")) {
 
         String pagePize = iRequest.getParameter("pageSize");
@@ -114,7 +121,8 @@ public class OServerCommandBackupManager extends OServerCommandDistributedScope 
         } else {
           history = backupManager.logs(uuid, p, pSize, iRequest.getParameters());
         }
-        iResponse.send(OHttpUtils.STATUS_OK_CODE, "OK", OHttpUtils.CONTENT_JSON, history.toJSON(""), null);
+        iResponse.send(
+            OHttpUtils.STATUS_OK_CODE, "OK", OHttpUtils.CONTENT_JSON, history.toJSON(""), null);
       } else {
         throw new IllegalArgumentException("cannot find executor for command:" + command);
       }

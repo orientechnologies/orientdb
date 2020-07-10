@@ -19,14 +19,11 @@
 package com.orientechnologies.agent.services.backup.log;
 
 import com.orientechnologies.enterprise.server.OEnterpriseServer;
-
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 
-/**
- * Created by Enrico Risa on 25/03/16.
- */
+/** Created by Enrico Risa on 25/03/16. */
 public interface OBackupLogger {
 
   OBackupLog log(OBackupLog log);
@@ -37,9 +34,11 @@ public interface OBackupLogger {
 
   OBackupLog findLast(OBackupLogType op, String uuid, Long unitId) throws IOException;
 
-  List<OBackupLog> findByUUID(String uuid, int page, int pageSize, Map<String, String> params) throws IOException;
+  List<OBackupLog> findByUUID(String uuid, int page, int pageSize, Map<String, String> params)
+      throws IOException;
 
-  List<OBackupLog> findByUUIDAndUnitId(String uuid, Long unitId, int page, int pageSize, Map<String, String> params)
+  List<OBackupLog> findByUUIDAndUnitId(
+      String uuid, Long unitId, int page, int pageSize, Map<String, String> params)
       throws IOException;
 
   void deleteByUUIDAndUnitIdAndTx(String uuid, Long unitId, Long tx) throws IOException;

@@ -1,30 +1,7 @@
 package com.orientechnologies.security;
 
 import com.orientechnologies.common.io.OFileUtils;
-import com.orientechnologies.orient.client.remote.OServerAdmin;
-import com.orientechnologies.orient.core.Orient;
-import com.orientechnologies.orient.core.command.script.OCommandScript;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
-import com.orientechnologies.orient.core.exception.OConfigurationException;
-import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.security.OInvalidPasswordException;
-import com.orientechnologies.orient.core.sql.OCommandSQL;
-import com.orientechnologies.orient.server.OServer;
-
-import org.junit.After;
-import org.junit.AfterClass;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.Test;
-
 import java.io.*;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-
-import static org.junit.Assert.assertTrue;
-import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * @author sdipro
@@ -32,10 +9,11 @@ import static org.assertj.core.api.Assertions.assertThat;
  */
 public abstract class AbstractSecurityTest {
 
-  protected static final String SERVER_DIRECTORY = "./target"; ///security_tests";
-  protected static final String ROOT_PASSWORD    = "D2AFD02F20640EC8B7A5140F34FCA49D2289DB1F0D0598BB9DE8AAA75A0792F3";
-  protected static       String prevOrientHome;
-//  private static OServer server;
+  protected static final String SERVER_DIRECTORY = "./target"; // /security_tests";
+  protected static final String ROOT_PASSWORD =
+      "D2AFD02F20640EC8B7A5140F34FCA49D2289DB1F0D0598BB9DE8AAA75A0792F3";
+  protected static String prevOrientHome;
+  //  private static OServer server;
 
   public static void setup(final String dbName) throws Exception {
     prevOrientHome = System.setProperty("ORIENTDB_HOME", SERVER_DIRECTORY);
@@ -43,14 +21,13 @@ public abstract class AbstractSecurityTest {
     // This is a "just in case".
     OFileUtils.deleteRecursively(new File(SERVER_DIRECTORY + "/databases/" + dbName));
 
-//  	 createDirectory(SERVER_DIRECTORY);
+    //  	 createDirectory(SERVER_DIRECTORY);
     createDirectory(SERVER_DIRECTORY + "/config");
     createDirectory(SERVER_DIRECTORY + "/databases");
   }
 
   public static void cleanup(final String dbName) {
-    if (prevOrientHome != null)
-      System.setProperty("ORIENTDB_HOME", prevOrientHome);
+    if (prevOrientHome != null) System.setProperty("ORIENTDB_HOME", prevOrientHome);
 
     OFileUtils.deleteRecursively(new File(SERVER_DIRECTORY + "/databases/" + dbName));
 

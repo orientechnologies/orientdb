@@ -13,29 +13,34 @@ public class HttpEEBackupTest extends EEBaseServerHttpTest {
     HttpResponse response = get("/backupManager").getResponse();
 
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
-
   }
 
   @Test
   public void postPutDelBackup() throws Exception {
 
-    ODocument backup = new ODocument().fromJSON(Thread.currentThread().getContextClassLoader().getResourceAsStream("backup.json"));
+    ODocument backup =
+        new ODocument()
+            .fromJSON(
+                Thread.currentThread().getContextClassLoader().getResourceAsStream("backup.json"));
 
     backup.field("dbName", name.getMethodName());
 
-    HttpResponse response = post("/backupManager").payload(backup.toJSON(), CONTENT.JSON).getResponse();
+    HttpResponse response =
+        post("/backupManager").payload(backup.toJSON(), CONTENT.JSON).getResponse();
 
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
 
     ODocument saved = new ODocument().fromJSON(response.getEntity().getContent());
 
-    response = put("/backupManager/" + saved.field("uuid")).payload(saved.toJSON(), CONTENT.JSON).getResponse();
+    response =
+        put("/backupManager/" + saved.field("uuid"))
+            .payload(saved.toJSON(), CONTENT.JSON)
+            .getResponse();
 
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
 
     response = delete("/backupManager/" + saved.field("uuid")).getResponse();
 
     Assert.assertEquals(204, response.getStatusLine().getStatusCode());
-
   }
 }

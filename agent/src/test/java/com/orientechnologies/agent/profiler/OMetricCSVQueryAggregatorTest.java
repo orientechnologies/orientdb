@@ -18,44 +18,29 @@
 
 package com.orientechnologies.agent.profiler;
 
-import com.codahale.metrics.CsvReporter;
 import com.opencsv.CSVReader;
 import com.orientechnologies.agent.OEnterpriseAgent;
-import com.orientechnologies.agent.profiler.metrics.OGauge;
-import com.orientechnologies.agent.profiler.metrics.OMeter;
-import com.orientechnologies.agent.profiler.metrics.OMetric;
 import com.orientechnologies.agent.profiler.source.CSVAggregateReporter;
-import com.orientechnologies.agent.services.metrics.OGlobalMetrics;
 import com.orientechnologies.agent.services.metrics.OrientDBMetricsService;
 import com.orientechnologies.agent.services.metrics.OrientDBMetricsSettings;
 import com.orientechnologies.enterprise.server.OEnterpriseServer;
 import com.orientechnologies.orient.core.db.ODatabaseSession;
 import com.orientechnologies.orient.core.db.ODatabaseType;
-import com.orientechnologies.orient.core.db.OrientDB;
-import com.orientechnologies.orient.core.record.OVertex;
-import com.orientechnologies.orient.server.OServer;
-import com.orientechnologies.orient.server.OServerMain;
 import com.orientechnologies.orient.server.distributed.http.EEBaseServerHttpTest;
-import org.junit.*;
-import org.junit.rules.TestName;
-
-import java.io.File;
 import java.io.FileReader;
-import java.io.IOException;
-import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
+import org.junit.*;
+import org.junit.rules.TestName;
 
 public class OMetricCSVQueryAggregatorTest extends EEBaseServerHttpTest {
 
   private OEnterpriseServer eeServer;
 
-  @Rule
-  public TestName testName = new TestName();
+  @Rule public TestName testName = new TestName();
 
   private OrientDBMetricsService metricsService;
 
@@ -88,10 +73,14 @@ public class OMetricCSVQueryAggregatorTest extends EEBaseServerHttpTest {
 
     CountDownLatch latch = new CountDownLatch(1);
 
-    CSVAggregateReporter reporter = CSVAggregateReporter.forRegistry(eeServer, registry.getInternal()).withCallback(() -> {
-      latch.countDown();
-      return null;
-    }).build(path.toFile());
+    CSVAggregateReporter reporter =
+        CSVAggregateReporter.forRegistry(eeServer, registry.getInternal())
+            .withCallback(
+                () -> {
+                  latch.countDown();
+                  return null;
+                })
+            .build(path.toFile());
 
     reporter.start(5000, TimeUnit.MILLISECONDS);
 
@@ -116,7 +105,6 @@ public class OMetricCSVQueryAggregatorTest extends EEBaseServerHttpTest {
     Assert.assertEquals("select from OUser", first[3]);
 
     reader.close();
-
   }
 
   @Override

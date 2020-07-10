@@ -25,7 +25,6 @@ import com.orientechnologies.orient.server.hazelcast.OHazelcastPlugin;
 import com.orientechnologies.orient.server.network.protocol.binary.ONetworkProtocolBinary;
 import com.tinkerpop.blueprints.impls.orient.OrientBaseGraph;
 import com.tinkerpop.blueprints.impls.orient.OrientGraphFactory;
-
 import java.io.File;
 import java.io.IOException;
 
@@ -36,8 +35,8 @@ import java.io.IOException;
  */
 public class ServerRun {
   protected final String serverId;
-  protected String       rootPath;
-  protected OServer      server;
+  protected String rootPath;
+  protected OServer server;
 
   public ServerRun(final String iRootPath, final String serverId) {
     this.rootPath = iRootPath;
@@ -76,7 +75,10 @@ public class ServerRun {
   public void crashServer() {
     if (server != null) {
       server.getClientConnectionManager().killAllChannels();
-      ((OHazelcastPlugin) server.getDistributedManager()).getHazelcastInstance().getLifecycleService().terminate();
+      ((OHazelcastPlugin) server.getDistributedManager())
+          .getHazelcastInstance()
+          .getLifecycleService()
+          .terminate();
       server.shutdown();
     }
   }
@@ -85,7 +87,8 @@ public class ServerRun {
     return createDatabase(iName, null);
   }
 
-  public OrientBaseGraph createDatabase(final String iName, final OCallable<Object, OrientGraphFactory> iCfgCallback) {
+  public OrientBaseGraph createDatabase(
+      final String iName, final OCallable<Object, OrientGraphFactory> iCfgCallback) {
     String dbPath = getDatabasePath(iName);
 
     new File(dbPath).mkdirs();
@@ -100,29 +103,32 @@ public class ServerRun {
       factory = new OrientGraphFactory("plocal:" + dbPath);
     }
 
-    if (iCfgCallback != null)
-      iCfgCallback.call(factory);
+    if (iCfgCallback != null) iCfgCallback.call(factory);
 
     System.out.println("Creating database '" + iName + "' under: " + dbPath + "...");
     return factory.getNoTx();
   }
 
-  public void copyDatabase(final String iDatabaseName, final String iDestinationDirectory) throws IOException {
+  public void copyDatabase(final String iDatabaseName, final String iDestinationDirectory)
+      throws IOException {
     // COPY THE DATABASE TO OTHER DIRECTORIES
-    System.out.println("Dropping any previous database '" + iDatabaseName + "' under: " + iDatabaseName + "...");
+    System.out.println(
+        "Dropping any previous database '" + iDatabaseName + "' under: " + iDatabaseName + "...");
     OFileUtils.deleteRecursively(new File(iDestinationDirectory));
 
-    System.out.println("Copying database folder " + iDatabaseName + " to " + iDestinationDirectory + "...");
-    OFileUtils.copyDirectory(new File(getDatabasePath(iDatabaseName)), new File(iDestinationDirectory));
+    System.out.println(
+        "Copying database folder " + iDatabaseName + " to " + iDestinationDirectory + "...");
+    OFileUtils.copyDirectory(
+        new File(getDatabasePath(iDatabaseName)), new File(iDestinationDirectory));
   }
 
   public OServer startServer(final String iServerConfigFile) throws Exception {
-    System.out.println("Starting server with serverId " + serverId + " from " + getServerHome() + "...");
+    System.out.println(
+        "Starting server with serverId " + serverId + " from " + getServerHome() + "...");
 
     System.setProperty("ORIENTDB_HOME", getServerHome());
 
-    if (server == null)
-      server = OServerMain.create(false);
+    if (server == null) server = OServerMain.create(false);
 
     server.setServerRootDirectory(getServerHome());
     server.startup(getClass().getClassLoader().getResourceAsStream(iServerConfigFile));
@@ -149,8 +155,14 @@ public class ServerRun {
   public void terminateServer() {
     if (server != null) {
       try {
-        if (((OHazelcastPlugin) server.getDistributedManager()).getHazelcastInstance().getLifecycleService().isRunning())
-          ((OHazelcastPlugin) server.getDistributedManager()).getHazelcastInstance().getLifecycleService().terminate();
+        if (((OHazelcastPlugin) server.getDistributedManager())
+            .getHazelcastInstance()
+            .getLifecycleService()
+            .isRunning())
+          ((OHazelcastPlugin) server.getDistributedManager())
+              .getHazelcastInstance()
+              .getLifecycleService()
+              .terminate();
       } catch (Exception e) {
       }
       server.shutdown();
@@ -175,7 +187,7 @@ public class ServerRun {
     return new File(getServerHome(iServerId) + "/databases/" + iDatabaseName).getAbsolutePath();
   }
 
-  public String getNodeName(){
+  public String getNodeName() {
     return server.getDistributedManager().getLocalNodeName();
   }
 }

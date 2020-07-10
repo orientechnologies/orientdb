@@ -21,17 +21,15 @@ package com.orientechnologies.backup.uploader;
 import com.orientechnologies.agent.services.backup.log.OBackupUploadFinishedLog;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
-/**
- * Interface that represents a specific approach of upload.
- */
+/** Interface that represents a specific approach of upload. */
 public interface OUploadingStrategy {
 
-  boolean executeUpload(String sourceBackupDirectory, String destinationDirectoryPath, String... accessParameters);
+  boolean executeUpload(
+      String sourceBackupDirectory, String destinationDirectoryPath, String... accessParameters);
 
-  OUploadMetadata executeUpload(String sourceFile,String fName, String destinationDirectoryPath);
+  OUploadMetadata executeUpload(String sourceFile, String fName, String destinationDirectoryPath);
 
   void config(ODocument cfg);
 
   String executeDownload(OBackupUploadFinishedLog upload);
-
 }

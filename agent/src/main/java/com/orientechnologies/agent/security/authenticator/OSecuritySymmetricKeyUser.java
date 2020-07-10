@@ -19,21 +19,20 @@
  */
 package com.orientechnologies.agent.security.authenticator;
 
-import com.orientechnologies.common.log.OLogManager;
-import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.security.symmetrickey.OSymmetricKeyConfig;
 import com.orientechnologies.orient.server.config.OServerUserConfiguration;
 import com.orientechnologies.orient.server.security.OSecurityAuthenticatorException;
 
 /**
- * Implements the OSymmetricKeyConfig interface for OServerUserConfiguration users. The constructor takes the user's JSON document
- * and looks for a "properties" field. The "properties" field should be a JSON document containing the OSymmetricKey-specific
- * fields.
+ * Implements the OSymmetricKeyConfig interface for OServerUserConfiguration users. The constructor
+ * takes the user's JSON document and looks for a "properties" field. The "properties" field should
+ * be a JSON document containing the OSymmetricKey-specific fields.
  *
  * @author S. Colin Leister
  */
-public class OSecuritySymmetricKeyUser extends OServerUserConfiguration implements OSymmetricKeyConfig {
+public class OSecuritySymmetricKeyUser extends OServerUserConfiguration
+    implements OSymmetricKeyConfig {
   private String keyString;
   private String keyFile;
   private String keyAlgorithm;
@@ -73,7 +72,10 @@ public class OSecuritySymmetricKeyUser extends OServerUserConfiguration implemen
 
   // OSymmetricKeyConfig
   public boolean usesKeyString() {
-    return keyString != null && !keyString.isEmpty() && keyAlgorithm != null && !keyAlgorithm.isEmpty();
+    return keyString != null
+        && !keyString.isEmpty()
+        && keyAlgorithm != null
+        && !keyAlgorithm.isEmpty();
   }
 
   public boolean usesKeyFile() {
@@ -81,12 +83,14 @@ public class OSecuritySymmetricKeyUser extends OServerUserConfiguration implemen
   }
 
   public boolean usesKeystore() {
-    return keystoreFile != null && !keystoreFile.isEmpty() && keystoreKeyAlias != null && !keystoreKeyAlias.isEmpty();
+    return keystoreFile != null
+        && !keystoreFile.isEmpty()
+        && keystoreKeyAlias != null
+        && !keystoreKeyAlias.isEmpty();
   }
   //////////
 
-  public OSecuritySymmetricKeyUser() {
-  }
+  public OSecuritySymmetricKeyUser() {}
 
   public OSecuritySymmetricKeyUser(final ODocument userDoc) {
     if (userDoc == null)
@@ -104,8 +108,7 @@ public class OSecuritySymmetricKeyUser extends OServerUserConfiguration implemen
     super.resources = resources;
 
     String password = userDoc.field("password");
-    if (password == null)
-      super.password = "";
+    if (password == null) super.password = "";
 
     ODocument props = userDoc.field("properties");
 
@@ -120,23 +123,26 @@ public class OSecuritySymmetricKeyUser extends OServerUserConfiguration implemen
       this.keyAlgorithm = props.field("keyAlgorithm");
 
       if (this.keyAlgorithm == null)
-        throw new OSecurityAuthenticatorException("OSecuritySymmetricKeyUser() keyAlgorithm is required with key");
+        throw new OSecurityAuthenticatorException(
+            "OSecuritySymmetricKeyUser() keyAlgorithm is required with key");
     } else {
       this.keyFile = props.field("keyFile");
 
-      // "keyFile" has priority over "keyStore".      
+      // "keyFile" has priority over "keyStore".
 
       if (this.keyFile != null) {
         // If "keyFile" is used, "keyAlgorithm" is also required.
         this.keyAlgorithm = props.field("keyAlgorithm");
 
         if (this.keyAlgorithm == null)
-          throw new OSecurityAuthenticatorException("OSecuritySymmetricKeyUser() keyAlgorithm is required with keyFile");
+          throw new OSecurityAuthenticatorException(
+              "OSecuritySymmetricKeyUser() keyAlgorithm is required with keyFile");
       } else {
         ODocument ksDoc = props.field("keyStore");
 
         if (ksDoc == null)
-          throw new OSecurityAuthenticatorException("OSecuritySymmetricKeyUser() key, keyFile, and keyStore cannot all be null");
+          throw new OSecurityAuthenticatorException(
+              "OSecuritySymmetricKeyUser() key, keyFile, and keyStore cannot all be null");
 
         this.keystoreFile = ksDoc.field("file");
         this.keystorePassword = ksDoc.field("passsword");
@@ -144,9 +150,11 @@ public class OSecuritySymmetricKeyUser extends OServerUserConfiguration implemen
         this.keystoreKeyPassword = ksDoc.field("keyPassword");
 
         if (this.keystoreFile == null)
-          throw new OSecurityAuthenticatorException("OSecuritySymmetricKeyUser() keyStore.file is required");
+          throw new OSecurityAuthenticatorException(
+              "OSecuritySymmetricKeyUser() keyStore.file is required");
         if (this.keystoreKeyAlias == null)
-          throw new OSecurityAuthenticatorException("OSecuritySymmetricKeyUser() keyStore.keyAlias is required");
+          throw new OSecurityAuthenticatorException(
+              "OSecuritySymmetricKeyUser() keyStore.keyAlias is required");
       }
     }
   }

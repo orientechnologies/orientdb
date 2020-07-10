@@ -19,17 +19,14 @@
 package com.orientechnologies.agent.services.backup.log;
 
 import com.orientechnologies.orient.core.record.impl.ODocument;
-
 import java.util.Map;
 
-/**
- * Created by Enrico Risa on 25/03/16.
- */
+/** Created by Enrico Risa on 25/03/16. */
 public class ORestoreFinishedLog extends OBackupLog {
 
   private long elapsedTime = 0;
   private String targetDB;
-  private Long   restoreUnitId;
+  private Long restoreUnitId;
   private String path;
 
   protected Map<String, String> metadata;

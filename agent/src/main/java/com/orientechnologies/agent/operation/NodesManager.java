@@ -7,7 +7,6 @@ import com.orientechnologies.orient.server.distributed.ODistributedRequest;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
 import com.orientechnologies.orient.server.distributed.operation.NodeOperation;
 import com.orientechnologies.orient.server.distributed.operation.NodeOperationTask;
-
 import java.io.IOException;
 import java.util.HashSet;
 import java.util.List;
@@ -23,15 +22,17 @@ public class NodesManager {
   }
 
   private void initCommands() {
-    NodeOperationTask.register(2, () -> new NewEnterpriseStatsTask(), () -> new EnterpriseStatsResponse());
+    NodeOperationTask.register(
+        2, () -> new NewEnterpriseStatsTask(), () -> new EnterpriseStatsResponse());
   }
 
   public List<OperationResponseFromNode> sendAll(NodeOperation task) {
     Set<String> servers = manager.getActiveServers();
     long requestId = manager.getNextMessageIdCounter();
     OperationResponseManager responseManager = new OperationResponseManager(servers);
-    ODistributedRequest req = new ODistributedRequest(manager, manager.getLocalNodeId(), requestId, null,
-        new NodeOperationTask(task));
+    ODistributedRequest req =
+        new ODistributedRequest(
+            manager, manager.getLocalNodeId(), requestId, null, new NodeOperationTask(task));
     for (String server : servers) {
       try {
         manager.getRemoteServer(server).sendRequest(req);
@@ -54,8 +55,9 @@ public class NodesManager {
     OperationResponseManager responseManager = new OperationResponseManager(nodes);
     try {
       long requestId = manager.getNextMessageIdCounter();
-      ODistributedRequest req = new ODistributedRequest(manager, manager.getLocalNodeId(), requestId, null,
-          new NodeOperationTask(task));
+      ODistributedRequest req =
+          new ODistributedRequest(
+              manager, manager.getLocalNodeId(), requestId, null, new NodeOperationTask(task));
       manager.getRemoteServer(nodeName).sendRequest(req);
 
       manager.getMessageService().registerRequest(requestId, responseManager);

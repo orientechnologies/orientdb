@@ -9,7 +9,8 @@ import com.orientechnologies.orient.server.security.OPasswordValidator;
 public class EnterprisePasswordValidator implements OPasswordValidator {
 
   @Override
-  public void validatePassword(final String username, final String password) throws OInvalidPasswordException {
+  public void validatePassword(final String username, final String password)
+      throws OInvalidPasswordException {
 
     if (username.equalsIgnoreCase(password)) {
       throw new OInvalidPasswordException("Password should not be equals to username");
@@ -17,19 +18,14 @@ public class EnterprisePasswordValidator implements OPasswordValidator {
   }
 
   @Override
-  public void active() {
-
-  }
+  public void active() {}
 
   @Override
-  public void config(OServer oServer, OServerConfigurationManager serverCfg, ODocument jsonConfig) {
-
-  }
+  public void config(
+      OServer oServer, OServerConfigurationManager serverCfg, ODocument jsonConfig) {}
 
   @Override
-  public void dispose() {
-
-  }
+  public void dispose() {}
 
   @Override
   public boolean isEnabled() {

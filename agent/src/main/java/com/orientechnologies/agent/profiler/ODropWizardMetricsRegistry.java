@@ -19,7 +19,6 @@ import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.enterprise.server.OEnterpriseServer;
 import io.prometheus.client.CollectorRegistry;
 import io.prometheus.client.dropwizard.DropwizardExports;
-
 import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
@@ -31,20 +30,18 @@ import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
-/**
- * Created by Enrico Risa on 09/07/2018.
- */
+/** Created by Enrico Risa on 09/07/2018. */
 public class ODropWizardMetricsRegistry implements OMetricsRegistry {
 
-  private final MetricRegistry                                          registry        = new MetricRegistry();
-  private       ConcurrentMap<String, OMetric>                          metrics         = new ConcurrentHashMap<>();
-  private       ConsoleReporter                                         consoleReporter = null;
-  private       CsvReporter                                             csvReporter     = null;
-  private       JmxReporter                                             jmxReporter     = null;
-  private       CSVAggregateReporter                                    csvAggregates   = null;
-  private       OEnterpriseServer                                       server;
-  private       OrientDBMetricsSettings                                 settings;
-  private       Map<Class<? extends OMetric>, Function<String, Metric>> metricFactory   = new HashMap<>();
+  private final MetricRegistry registry = new MetricRegistry();
+  private ConcurrentMap<String, OMetric> metrics = new ConcurrentHashMap<>();
+  private ConsoleReporter consoleReporter = null;
+  private CsvReporter csvReporter = null;
+  private JmxReporter jmxReporter = null;
+  private CSVAggregateReporter csvAggregates = null;
+  private OEnterpriseServer server;
+  private OrientDBMetricsSettings settings;
+  private Map<Class<? extends OMetric>, Function<String, Metric>> metricFactory = new HashMap<>();
 
   private transient ObjectMapper mapper;
 
@@ -67,12 +64,16 @@ public class ODropWizardMetricsRegistry implements OMetricsRegistry {
     final TimeUnit durationUnit = TimeUnit.SECONDS;
     final boolean showSamples = false;
     MetricFilter filter = MetricFilter.ALL;
-    this.mapper = new ObjectMapper().registerModule(new MetricsModule(rateUnit, durationUnit, showSamples, filter));
+    this.mapper =
+        new ObjectMapper()
+            .registerModule(new MetricsModule(rateUnit, durationUnit, showSamples, filter));
   }
 
   private void initFactories(OrientDBMetricsSettings settings) {
     metricFactory.put(GCMetric.class, (s) -> registry.register(s, new GarbageCollectorMetricSet()));
-    metricFactory.put(ThreadsMetric.class, (s) -> registry.register(s, new CachedThreadStatesGaugeSet(10, TimeUnit.SECONDS)));
+    metricFactory.put(
+        ThreadsMetric.class,
+        (s) -> registry.register(s, new CachedThreadStatesGaugeSet(10, TimeUnit.SECONDS)));
     metricFactory.put(MemoryMetric.class, (s) -> registry.register(s, new MemoryUsageGaugeSet()));
   }
 
@@ -100,11 +101,9 @@ public class ODropWizardMetricsRegistry implements OMetricsRegistry {
 
     if (jmxConfig.enabled) {
       jmxReporter.start();
-
     }
 
     return jmxReporter;
-
   }
 
   private ConsoleReporter configureConsoleReporter(ConsoleReporterConfig consoleConfig) {
@@ -118,10 +117,8 @@ public class ODropWizardMetricsRegistry implements OMetricsRegistry {
 
     if (enabled && interval != null) {
       jmxReporter.start(interval.longValue(), TimeUnit.MILLISECONDS);
-
     }
     return jmxReporter;
-
   }
 
   private CsvReporter configureCsvReporter(CSVReporter csvConfig) {
@@ -136,7 +133,8 @@ public class ODropWizardMetricsRegistry implements OMetricsRegistry {
       File outputDir = new File(directory);
       if (!outputDir.exists()) {
         if (!outputDir.mkdirs()) {
-          OLogManager.instance().warn(this, "Failed to create CSV Aggregates metrics dir {}", outputDir);
+          OLogManager.instance()
+              .warn(this, "Failed to create CSV Aggregates metrics dir {}", outputDir);
         }
       }
 
@@ -146,10 +144,10 @@ public class ODropWizardMetricsRegistry implements OMetricsRegistry {
       csvReporter.start(interval.longValue(), TimeUnit.MILLISECONDS);
     }
     return csvReporter;
-
   }
 
-  private CSVAggregateReporter configureCsvAggregatesReporter(OEnterpriseServer server, CSVReporter csvConfig) {
+  private CSVAggregateReporter configureCsvAggregatesReporter(
+      OEnterpriseServer server, CSVReporter csvConfig) {
 
     Boolean enabled = csvConfig.enabled;
     Number interval = csvConfig.interval;
@@ -169,11 +167,9 @@ public class ODropWizardMetricsRegistry implements OMetricsRegistry {
       csvReporter.start(interval.longValue(), TimeUnit.MILLISECONDS);
     }
     return csvReporter;
-
   }
 
   @Override
-
   public String name(String name, String... names) {
     return MetricRegistry.name(name, names);
   }
@@ -185,7 +181,8 @@ public class ODropWizardMetricsRegistry implements OMetricsRegistry {
 
   @Override
   public OCounter counter(String name, String description) {
-    return registerOrGetMetric(name, (key) -> new DropWizardCounter(registry.counter(key), key, description));
+    return registerOrGetMetric(
+        name, (key) -> new DropWizardCounter(registry.counter(key), key, description));
   }
 
   @Override
@@ -195,7 +192,8 @@ public class ODropWizardMetricsRegistry implements OMetricsRegistry {
 
   @Override
   public OMeter meter(String name, String description, String unitOfMeasure) {
-    return registerOrGetMetric(name, (k) -> new DropWizardMeter(registry.meter(k), k, description, unitOfMeasure));
+    return registerOrGetMetric(
+        name, (k) -> new DropWizardMeter(registry.meter(k), k, description, unitOfMeasure));
   }
 
   @Override
@@ -204,9 +202,13 @@ public class ODropWizardMetricsRegistry implements OMetricsRegistry {
   }
 
   @Override
-  public <T> OGauge<T> gauge(String name, String description, String unitOfMeasure, Supplier<T> valueFunction) {
-    return registerOrGetMetric(name,
-        (k) -> new DropWizardGauge<T>(registry.register(k, () -> valueFunction.get()), k, description, unitOfMeasure));
+  public <T> OGauge<T> gauge(
+      String name, String description, String unitOfMeasure, Supplier<T> valueFunction) {
+    return registerOrGetMetric(
+        name,
+        (k) ->
+            new DropWizardGauge<T>(
+                registry.register(k, () -> valueFunction.get()), k, description, unitOfMeasure));
   }
 
   @Override
@@ -215,13 +217,15 @@ public class ODropWizardMetricsRegistry implements OMetricsRegistry {
   }
 
   @Override
-  public <T> OGauge<T> newGauge(String name, String description, String unitOfMeasure, Supplier<T> valueFunction) {
+  public <T> OGauge<T> newGauge(
+      String name, String description, String unitOfMeasure, Supplier<T> valueFunction) {
     return new DropWizardGauge<T>(valueFunction::get, name, description, unitOfMeasure);
   }
 
   @Override
   public OHistogram histogram(String name, String description) {
-    return registerOrGetMetric(name, (k) -> new DropWizardHistogram(registry.histogram(k), k, description));
+    return registerOrGetMetric(
+        name, (k) -> new DropWizardHistogram(registry.histogram(k), k, description));
   }
 
   @Override
@@ -240,20 +244,21 @@ public class ODropWizardMetricsRegistry implements OMetricsRegistry {
 
   @Override
   public <T extends OMetric> T register(String name, String description, Class<T> klass) {
-    return registerOrGetMetric(name, (k) -> {
-
-      Function<String, Metric> function = metricFactory.get(klass);
-      if (function != null) {
-        Metric apply = function.apply(k);
-        if (apply instanceof MetricSet) {
-          return new DropWizardGenericSet((MetricSet) apply, k, description);
-        } else {
-          return new DropWizardGeneric(apply, k, description);
-        }
-      } else {
-        return null;
-      }
-    });
+    return registerOrGetMetric(
+        name,
+        (k) -> {
+          Function<String, Metric> function = metricFactory.get(klass);
+          if (function != null) {
+            Metric apply = function.apply(k);
+            if (apply instanceof MetricSet) {
+              return new DropWizardGenericSet((MetricSet) apply, k, description);
+            } else {
+              return new DropWizardGeneric(apply, k, description);
+            }
+          } else {
+            return null;
+          }
+        });
   }
 
   @Override
@@ -289,9 +294,12 @@ public class ODropWizardMetricsRegistry implements OMetricsRegistry {
 
     if (oMetric instanceof OMetricSet) {
       String prefix = ((OMetricSet) oMetric).prefix();
-      ((OMetricSet) oMetric).getMetrics().forEach((k, v) -> {
-        remove(prefix + "." + k);
-      });
+      ((OMetricSet) oMetric)
+          .getMetrics()
+          .forEach(
+              (k, v) -> {
+                remove(prefix + "." + k);
+              });
     }
     return registry.remove(name);
   }
@@ -301,7 +309,8 @@ public class ODropWizardMetricsRegistry implements OMetricsRegistry {
     return getMetrics(OHistogram.class, filter);
   }
 
-  private <T extends OMetric> SortedMap<String, T> getMetrics(Class<T> klass, BiFunction<String, OMetric, Boolean> filter) {
+  private <T extends OMetric> SortedMap<String, T> getMetrics(
+      Class<T> klass, BiFunction<String, OMetric, Boolean> filter) {
     final TreeMap<String, T> timers = new TreeMap<>();
     for (Map.Entry<String, OMetric> entry : metrics.entrySet()) {
       if (klass.isInstance(entry.getValue()) && filter.apply(entry.getKey(), entry.getValue())) {

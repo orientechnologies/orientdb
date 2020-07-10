@@ -2,9 +2,7 @@ package com.orientechnologies.agent.services.backup.log;
 
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
-/**
- * Created by Enrico Risa on 18/10/2017.
- */
+/** Created by Enrico Risa on 18/10/2017. */
 public class OBackupUploadStartedLog extends OBackupLog {
 
   public String fileName;

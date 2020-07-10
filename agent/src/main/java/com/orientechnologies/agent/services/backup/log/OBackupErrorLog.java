@@ -20,9 +20,7 @@ package com.orientechnologies.agent.services.backup.log;
 
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
-/**
- * Created by Enrico Risa on 25/03/16.
- */
+/** Created by Enrico Risa on 25/03/16. */
 public class OBackupErrorLog extends OBackupLog {
 
   protected String message;

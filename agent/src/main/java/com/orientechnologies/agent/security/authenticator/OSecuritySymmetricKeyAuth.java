@@ -23,21 +23,14 @@ import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.security.OSecurityManager;
 import com.orientechnologies.orient.core.security.symmetrickey.OSymmetricKey;
-import com.orientechnologies.orient.server.OServer;
-import com.orientechnologies.orient.server.config.OServerConfigurationManager;
 import com.orientechnologies.orient.server.config.OServerUserConfiguration;
 import com.orientechnologies.orient.server.security.authenticator.ODefaultPasswordAuthenticator;
 
-
-import java.util.List;
-import java.util.concurrent.ConcurrentHashMap;
-
 /**
- * Provides a symmetric key authenticator derived from ODefaultPasswordAuthenticator.
- * This is used in security.json.
- * 
+ * Provides a symmetric key authenticator derived from ODefaultPasswordAuthenticator. This is used
+ * in security.json.
+ *
  * @author S. Colin Leister
- * 
  */
 public class OSecuritySymmetricKeyAuth extends ODefaultPasswordAuthenticator {
   // OSecurityComponent
@@ -51,11 +44,11 @@ public class OSecuritySymmetricKeyAuth extends ODefaultPasswordAuthenticator {
   @Override
   protected OServerUserConfiguration createServerUser(final ODocument userDoc) {
     OServerUserConfiguration userCfg = null;
-    
+
     try {
-    	userCfg = new OSecuritySymmetricKeyUser(userDoc);
+      userCfg = new OSecuritySymmetricKeyUser(userDoc);
     } catch (Exception ex) {
-    	OLogManager.instance().error(this, "createServerUser()", ex);
+      OLogManager.instance().error(this, "createServerUser()", ex);
     }
 
     return userCfg;
@@ -67,23 +60,23 @@ public class OSecuritySymmetricKeyAuth extends ODefaultPasswordAuthenticator {
     String principal = null;
 
     OServerUserConfiguration serverUser = getUser(username);
-    
-    if(serverUser != null && serverUser instanceof OSecuritySymmetricKeyUser) {
+
+    if (serverUser != null && serverUser instanceof OSecuritySymmetricKeyUser) {
       try {
-        OSecuritySymmetricKeyUser user = (OSecuritySymmetricKeyUser)serverUser;
+        OSecuritySymmetricKeyUser user = (OSecuritySymmetricKeyUser) serverUser;
 
         OSymmetricKey sk = OSymmetricKey.fromConfig(user);
 
         String decryptedUsername = sk.decryptAsString(password);
-        
+
         if (OSecurityManager.instance().checkPassword(username, decryptedUsername)) {
           principal = username; // user.name;
-        }        
+        }
       } catch (Exception ex) {
         OLogManager.instance().error(this, "authenticate()", ex);
-      }      
+      }
     }
-  
+
     return principal;
   }
 }

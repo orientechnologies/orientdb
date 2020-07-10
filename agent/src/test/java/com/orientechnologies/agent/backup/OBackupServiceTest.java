@@ -18,6 +18,11 @@
 
 package com.orientechnologies.agent.backup;
 
+import static junit.framework.Assert.assertNotNull;
+import static junit.framework.Assert.fail;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.Assert.*;
+
 import com.orientechnologies.agent.OEnterpriseAgent;
 import com.orientechnologies.agent.services.backup.OBackupService;
 import com.orientechnologies.agent.services.backup.OBackupTask;
@@ -32,11 +37,6 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.OServerMain;
-import org.junit.After;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
-
 import java.io.File;
 import java.io.InputStream;
 import java.util.ArrayList;
@@ -45,30 +45,34 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.stream.Collectors;
+import org.junit.After;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Test;
 
-import static junit.framework.Assert.assertNotNull;
-import static junit.framework.Assert.fail;
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.Assert.*;
-
-/**
- * Created by Enrico Risa on 22/03/16.
- */
-
+/** Created by Enrico Risa on 22/03/16. */
 public class OBackupServiceTest {
 
   private OServer server;
 
-  private final String DB_NAME          = "backupDBTest";
+  private final String DB_NAME = "backupDBTest";
   private final String DB_NAME_RESTORED = "backupDBTestRestored";
-  private final String BACKUP_PATH      =
-      System.getProperty("buildDirectory", "target") + File.separator + "databases" + File.separator + DB_NAME;
+  private final String BACKUP_PATH =
+      System.getProperty("buildDirectory", "target")
+          + File.separator
+          + "databases"
+          + File.separator
+          + DB_NAME;
 
   private final String BACKUP_CONF =
-      System.getProperty("buildDirectory", "target") + File.separator + "config" + File.separator + "backups.json";
+      System.getProperty("buildDirectory", "target")
+          + File.separator
+          + "config"
+          + File.separator
+          + "backups.json";
 
   private OBackupService manager;
-  private OrientDB       orientDB;
+  private OrientDB orientDB;
 
   @Before
   public void bootOrientDB() throws Exception {
@@ -88,11 +92,13 @@ public class OBackupServiceTest {
 
     server.activate();
 
-    server.getSystemDatabase().executeInDBScope(iArgument -> {
-
-      iArgument.command("delete from OBackupLog");
-      return null;
-    });
+    server
+        .getSystemDatabase()
+        .executeInDBScope(
+            iArgument -> {
+              iArgument.command("delete from OBackupLog");
+              return null;
+            });
 
     OEnterpriseAgent agent = server.getPluginByClass(OEnterpriseAgent.class);
 
@@ -101,20 +107,16 @@ public class OBackupServiceTest {
     ODocument configuration = manager.getConfiguration();
 
     configuration.field("backups", new ArrayList<>());
-
   }
 
   @After
   public void tearDownOrientDB() {
     OrientDB orientDB = server.getContext();
-    if (orientDB.exists(DB_NAME))
-      orientDB.drop(DB_NAME);
+    if (orientDB.exists(DB_NAME)) orientDB.drop(DB_NAME);
 
-    if (orientDB.exists(DB_NAME_RESTORED))
-      orientDB.drop(DB_NAME_RESTORED);
+    if (orientDB.exists(DB_NAME_RESTORED)) orientDB.drop(DB_NAME_RESTORED);
 
-    if (server != null)
-      server.shutdown();
+    if (server != null) server.shutdown();
 
     Orient.instance().shutdown();
     Orient.instance().startup();
@@ -150,11 +152,11 @@ public class OBackupServiceTest {
       final OBackupTask task = manager.getTask(uuid);
 
       final CountDownLatch latch = new CountDownLatch(17);
-      task.registerListener((cfg1, log) -> {
-        latch.countDown();
-        return latch.getCount() > 0;
-
-      });
+      task.registerListener(
+          (cfg1, log) -> {
+            latch.countDown();
+            return latch.getCount() > 0;
+          });
       latch.await();
       ODocument logs = manager.logs(uuid, 1, 50, new HashMap<>());
       assertNotNull(logs);
@@ -169,10 +171,10 @@ public class OBackupServiceTest {
     } finally {
       manager.removeBackup(uuid);
     }
-
   }
 
-  private int calculateToDelete(List<ODocument> list, @SuppressWarnings("SameParameterValue") int start) {
+  private int calculateToDelete(
+      List<ODocument> list, @SuppressWarnings("SameParameterValue") int start) {
 
     int counter = 0;
     Long last = null;
@@ -215,11 +217,11 @@ public class OBackupServiceTest {
       final OBackupTask task = manager.getTask(uuid);
 
       final CountDownLatch latch = new CountDownLatch(5);
-      task.registerListener((cfg1, log) -> {
-        latch.countDown();
-        return latch.getCount() > 0;
-
-      });
+      task.registerListener(
+          (cfg1, log) -> {
+            latch.countDown();
+            return latch.getCount() > 0;
+          });
       latch.await();
       ODocument logs = manager.logs(uuid, 1, 50, new HashMap<>());
       assertNotNull(logs);
@@ -258,7 +260,6 @@ public class OBackupServiceTest {
 
         assertFalse(f.exists());
       }
-
     }
   }
 
@@ -295,11 +296,11 @@ public class OBackupServiceTest {
       OBackupTask task = manager.getTask(uuid);
 
       final CountDownLatch latch = new CountDownLatch(5);
-      task.registerListener((cfg1, log) -> {
-        latch.countDown();
-        return latch.getCount() > 0;
-
-      });
+      task.registerListener(
+          (cfg1, log) -> {
+            latch.countDown();
+            return latch.getCount() > 0;
+          });
       latch.await();
 
       ODocument logs = manager.logs(uuid, 1, 50, new HashMap<>());
@@ -346,11 +347,11 @@ public class OBackupServiceTest {
       OBackupTask task = manager.getTask(uuid);
 
       final CountDownLatch latch = new CountDownLatch(5);
-      task.registerListener((cfg1, log) -> {
-        latch.countDown();
-        return latch.getCount() > 0;
-
-      });
+      task.registerListener(
+          (cfg1, log) -> {
+            latch.countDown();
+            return latch.getCount() > 0;
+          });
       latch.await();
       task.stop();
 
@@ -367,14 +368,16 @@ public class OBackupServiceTest {
 
       CountDownLatch restoreLatch = new CountDownLatch(2);
 
-      task.registerListener((cfg1, log) -> {
-        restoreLatch.countDown();
-        return true;
-      });
+      task.registerListener(
+          (cfg1, log) -> {
+            restoreLatch.countDown();
+            return true;
+          });
 
       long unitId = list.get(0).field("unitId");
 
-      ODocument restoreCfg = new ODocument().field("target", DB_NAME_RESTORED).field("unitId", unitId);
+      ODocument restoreCfg =
+          new ODocument().field("target", DB_NAME_RESTORED).field("unitId", unitId);
 
       task.restore(restoreCfg);
 
@@ -410,8 +413,11 @@ public class OBackupServiceTest {
       query = "select count(*) as count from OBackupLog";
     }
     @SuppressWarnings("unchecked")
-    List<OResult> execute = (List<OResult>) server.getSystemDatabase()
-        .execute(iArgument -> iArgument.stream().collect(Collectors.toList()), query, uuid);
+    List<OResult> execute =
+        (List<OResult>)
+            server
+                .getSystemDatabase()
+                .execute(iArgument -> iArgument.stream().collect(Collectors.toList()), query, uuid);
     assertThat(execute.get(0).<Long>getProperty("count")).isEqualTo(expected);
   }
 

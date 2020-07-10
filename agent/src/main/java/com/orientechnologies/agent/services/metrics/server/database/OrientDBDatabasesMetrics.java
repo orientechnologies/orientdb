@@ -7,40 +7,36 @@ import com.orientechnologies.enterprise.server.listener.OEnterpriseStorageListen
 import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.OEnterpriseLocalPaginatedStorage;
-
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
-/**
- * Created by Enrico Risa on 20/07/2018.
- */
+/** Created by Enrico Risa on 20/07/2018. */
 public class OrientDBDatabasesMetrics implements OrientDBMetric, OEnterpriseStorageListener {
 
   private final OEnterpriseServer server;
-  private final OMetricsRegistry  registry;
+  private final OMetricsRegistry registry;
 
   private final Map<String, OrientDBSingleDatabaseMetrics> storages = new ConcurrentHashMap<>();
-  private final Map<String, OrientDBDatabaseQueryMetrics>  queries  = new ConcurrentHashMap<>();
+  private final Map<String, OrientDBDatabaseQueryMetrics> queries = new ConcurrentHashMap<>();
 
   public OrientDBDatabasesMetrics(OEnterpriseServer server, OMetricsRegistry registry) {
     this.server = server;
     this.registry = registry;
     server.registerDatabaseListener(this);
-
   }
 
   @Override
-  public void start() {
-
-  }
+  public void start() {}
 
   @Override
   public void onOpen(OEnterpriseLocalPaginatedStorage database) {
-    OrientDBSingleDatabaseMetrics metrics = new OrientDBSingleDatabaseMetrics(this.server, this.registry, database);
+    OrientDBSingleDatabaseMetrics metrics =
+        new OrientDBSingleDatabaseMetrics(this.server, this.registry, database);
     if (storages.putIfAbsent(database.getName(), metrics) == null) {
       metrics.start();
     }
-    OrientDBDatabaseQueryMetrics queryMetrics = new OrientDBDatabaseQueryMetrics(this.server, this.registry, database.getName());
+    OrientDBDatabaseQueryMetrics queryMetrics =
+        new OrientDBDatabaseQueryMetrics(this.server, this.registry, database.getName());
     if (queries.putIfAbsent(database.getName(), queryMetrics) == null) {
       queryMetrics.start();
     }
@@ -70,10 +66,7 @@ public class OrientDBDatabasesMetrics implements OrientDBMetric, OEnterpriseStor
   }
 
   @Override
-  public void onCommandStart(ODatabase database, OResultSet result) {
-
-
-  }
+  public void onCommandStart(ODatabase database, OResultSet result) {}
 
   @Override
   public void onCommandEnd(ODatabase database, OResultSet result) {
@@ -81,7 +74,6 @@ public class OrientDBDatabasesMetrics implements OrientDBMetric, OEnterpriseStor
     if (queryMetrics != null) {
 
       queryMetrics.onResultSet(result);
-
     }
   }
 }

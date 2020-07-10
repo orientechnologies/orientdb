@@ -19,14 +19,11 @@
 package com.orientechnologies.agent.services.backup.log;
 
 import com.orientechnologies.orient.core.record.impl.ODocument;
-
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 
-/**
- * Created by Enrico Risa on 11/04/16.
- */
+/** Created by Enrico Risa on 11/04/16. */
 public class OBackupTxGroup {
 
   protected List<OBackupLog> logs = new LinkedList<OBackupLog>();

@@ -12,22 +12,20 @@ import com.orientechnologies.orient.server.distributed.operation.NodeOperation;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpRequest;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpResponse;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpUtils;
-
 import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
 
-/**
- * Created by Enrico Risa on 16/11/15.
- */
-public abstract class OServerCommandDistributedScope extends OServerCommandDistributedAuthenticated {
+/** Created by Enrico Risa on 16/11/15. */
+public abstract class OServerCommandDistributedScope
+    extends OServerCommandDistributedAuthenticated {
 
   protected final OEnterpriseServer enterpriseServer;
 
-  protected OServerCommandDistributedScope(String iRequiredResource, OEnterpriseServer enterpriseServer) {
+  protected OServerCommandDistributedScope(
+      String iRequiredResource, OEnterpriseServer enterpriseServer) {
     super(iRequiredResource);
     this.enterpriseServer = enterpriseServer;
-
   }
 
   private List<OperationResponseFromNode> sendTask(OHttpRequest iRequest, NodeOperation op) {
@@ -38,7 +36,6 @@ public abstract class OServerCommandDistributedScope extends OServerCommandDistr
     } else {
       return Collections.singletonList(enterpriseServer.getNodesManager().send(node, op));
     }
-
   }
 
   List<OperationResponseFromNode> proxyRequest(OHttpRequest iRequest, NodeOperation op) {
@@ -48,8 +45,10 @@ public abstract class OServerCommandDistributedScope extends OServerCommandDistr
     return sendTask(iRequest, op);
   }
 
-  protected ODatabaseDocumentInternal getProfiledDatabaseInstance(final OHttpRequest iRequest) throws InterruptedException {
-    // after authentication, if current login user is different compare with current DB user, reset DB user to login user
+  protected ODatabaseDocumentInternal getProfiledDatabaseInstance(final OHttpRequest iRequest)
+      throws InterruptedException {
+    // after authentication, if current login user is different compare with current DB user, reset
+    // DB user to login user
     ODatabaseDocumentInternal localDatabase = ODatabaseRecordThreadLocal.instance().getIfDefined();
 
     if (localDatabase == null) {
@@ -58,7 +57,10 @@ public abstract class OServerCommandDistributedScope extends OServerCommandDistr
     } else {
 
       String currentUserId = iRequest.getData().currentUserId;
-      if (currentUserId != null && currentUserId.length() > 0 && localDatabase != null && localDatabase.getUser() != null) {
+      if (currentUserId != null
+          && currentUserId.length() > 0
+          && localDatabase != null
+          && localDatabase.getUser() != null) {
         if (!currentUserId.equals(localDatabase.getUser().getIdentity().toString())) {
           ODocument userDoc = localDatabase.load(new ORecordId(currentUserId));
           localDatabase.setUser(new OUser(userDoc));
@@ -67,7 +69,8 @@ public abstract class OServerCommandDistributedScope extends OServerCommandDistr
     }
 
     iRequest.getData().lastDatabase = localDatabase.getName();
-    iRequest.getData().lastUser = localDatabase.getUser() != null ? localDatabase.getUser().getName() : null;
+    iRequest.getData().lastUser =
+        localDatabase.getUser() != null ? localDatabase.getUser().getName() : null;
     return (ODatabaseDocumentInternal) localDatabase.getDatabaseOwner();
   }
 
@@ -89,24 +92,21 @@ public abstract class OServerCommandDistributedScope extends OServerCommandDistr
         proxyRequest(iRequest, null);
       }
     } catch (Exception e) {
-      iResponse.send(OHttpUtils.STATUS_BADREQ_CODE, OHttpUtils.STATUS_BADREQ_DESCRIPTION, OHttpUtils.CONTENT_TEXT_PLAIN, e, null);
+      iResponse.send(
+          OHttpUtils.STATUS_BADREQ_CODE,
+          OHttpUtils.STATUS_BADREQ_DESCRIPTION,
+          OHttpUtils.CONTENT_TEXT_PLAIN,
+          e,
+          null);
     }
     return false;
   }
 
-  protected void doGet(OHttpRequest iRequest, OHttpResponse iResponse) throws IOException {
+  protected void doGet(OHttpRequest iRequest, OHttpResponse iResponse) throws IOException {}
 
-  }
+  protected void doDelete(OHttpRequest iRequest, OHttpResponse iResponse) throws IOException {}
 
-  protected void doDelete(OHttpRequest iRequest, OHttpResponse iResponse) throws IOException {
+  protected void doPost(OHttpRequest iRequest, OHttpResponse iResponse) throws IOException {}
 
-  }
-
-  protected void doPost(OHttpRequest iRequest, OHttpResponse iResponse) throws IOException {
-
-  }
-
-  protected void doPut(OHttpRequest iRequest, OHttpResponse iResponse) throws IOException {
-
-  }
+  protected void doPut(OHttpRequest iRequest, OHttpResponse iResponse) throws IOException {}
 }

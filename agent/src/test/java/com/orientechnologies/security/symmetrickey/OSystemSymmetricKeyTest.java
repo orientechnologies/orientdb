@@ -6,20 +6,17 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.security.symmetrickey.OSymmetricKey;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.security.AbstractSecurityTest;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-
-/**
- * @author S. Colin Leister
- */
+/** @author S. Colin Leister */
 public class OSystemSymmetricKeyTest extends AbstractSecurityTest {
 
-  private static final String TESTDB       = "OSystemSymmetricKeyTestDB";
+  private static final String TESTDB = "OSystemSymmetricKeyTestDB";
   private static final String DATABASE_URL = "remote:localhost/" + TESTDB;
 
   private static OServer server;
@@ -29,14 +26,22 @@ public class OSystemSymmetricKeyTest extends AbstractSecurityTest {
     cleanup("OSystem");
     setup(TESTDB);
 
-    createFile(SERVER_DIRECTORY + "/config/orientdb-server-config.xml", OSystemSymmetricKeyTest.class
-        .getResourceAsStream("/com/orientechnologies/security/symmetrickey/orientdb-server-config.xml"));
-    createFile(SERVER_DIRECTORY + "/config/security.json",
-        OSystemSymmetricKeyTest.class.getResourceAsStream("/com/orientechnologies/security/symmetrickey/security.json"));
+    createFile(
+        SERVER_DIRECTORY + "/config/orientdb-server-config.xml",
+        OSystemSymmetricKeyTest.class.getResourceAsStream(
+            "/com/orientechnologies/security/symmetrickey/orientdb-server-config.xml"));
+    createFile(
+        SERVER_DIRECTORY + "/config/security.json",
+        OSystemSymmetricKeyTest.class.getResourceAsStream(
+            "/com/orientechnologies/security/symmetrickey/security.json"));
 
     // Create a default AES 128-bit key.
     OSymmetricKey sk = new OSymmetricKey("AES", "AES/CBC/PKCS5Padding", 128);
-    sk.saveToKeystore(new FileOutputStream(SERVER_DIRECTORY + "/config/test.jks"), "password", "keyAlias", "password");
+    sk.saveToKeystore(
+        new FileOutputStream(SERVER_DIRECTORY + "/config/test.jks"),
+        "password",
+        "keyAlias",
+        "password");
     sk.saveToStream(new FileOutputStream(SERVER_DIRECTORY + "/config/AES.key"));
 
     server = new OServer(false);
@@ -49,7 +54,9 @@ public class OSystemSymmetricKeyTest extends AbstractSecurityTest {
     serverAd.createDatabase(TESTDB, "graph", "plocal");
     serverAd.close();
 
-    server.getSystemDatabase().execute(null, "UPDATE ORole set dbFilter = ['*'] WHERE name = ?", "admin");
+    server
+        .getSystemDatabase()
+        .execute(null, "UPDATE ORole set dbFilter = ['*'] WHERE name = ?", "admin");
   }
 
   @AfterClass
@@ -67,11 +74,19 @@ public class OSystemSymmetricKeyTest extends AbstractSecurityTest {
 
     final String sysuser = "sysuser";
 
-    server.getSystemDatabase().execute(null,
-        "insert into OUser set name=?, password='password', status='ACTIVE', roles=(SELECT FROM ORole WHERE name = ?)", sysuser,
-        "admin");
-    server.getSystemDatabase().execute(null,
-        "update OUser set properties={'@type':'d', 'key':'8BC7LeGkFbmHEYNTz5GwDw==','keyAlgorithm':'AES'} where name = ?", sysuser);
+    server
+        .getSystemDatabase()
+        .execute(
+            null,
+            "insert into OUser set name=?, password='password', status='ACTIVE', roles=(SELECT FROM ORole WHERE name = ?)",
+            sysuser,
+            "admin");
+    server
+        .getSystemDatabase()
+        .execute(
+            null,
+            "update OUser set properties={'@type':'d', 'key':'8BC7LeGkFbmHEYNTz5GwDw==','keyAlgorithm':'AES'} where name = ?",
+            sysuser);
 
     OSymmetricKey sk = new OSymmetricKey("AES", "8BC7LeGkFbmHEYNTz5GwDw==");
 
@@ -87,14 +102,22 @@ public class OSystemSymmetricKeyTest extends AbstractSecurityTest {
 
     final String sysuser = "sysuser2";
 
-    server.getSystemDatabase().execute(null,
-        "insert into OUser set name=?, password='password', status='ACTIVE', roles=(SELECT FROM ORole WHERE name = ?)", sysuser,
-        "admin");
-    server.getSystemDatabase().execute(null,
-        "update OUser set properties={'@type':'d', 'keyFile':'${ORIENTDB_HOME}/config/AES.key','keyAlgorithm':'AES'} where name = ?",
-        sysuser);
+    server
+        .getSystemDatabase()
+        .execute(
+            null,
+            "insert into OUser set name=?, password='password', status='ACTIVE', roles=(SELECT FROM ORole WHERE name = ?)",
+            sysuser,
+            "admin");
+    server
+        .getSystemDatabase()
+        .execute(
+            null,
+            "update OUser set properties={'@type':'d', 'keyFile':'${ORIENTDB_HOME}/config/AES.key','keyAlgorithm':'AES'} where name = ?",
+            sysuser);
 
-    OSymmetricKey sk = OSymmetricKey.fromStream("AES", new FileInputStream(SERVER_DIRECTORY + "/config/AES.key"));
+    OSymmetricKey sk =
+        OSymmetricKey.fromStream("AES", new FileInputStream(SERVER_DIRECTORY + "/config/AES.key"));
 
     // "sysuser" is the username.  We just created it in OSystem.
     ODatabaseDocumentTx db = new ODatabaseDocumentTx(DATABASE_URL);
@@ -108,15 +131,26 @@ public class OSystemSymmetricKeyTest extends AbstractSecurityTest {
 
     final String sysuser = "sysuser3";
 
-    server.getSystemDatabase().execute(null,
-        "insert into OUser set name=?, password='password', status='ACTIVE', roles=(SELECT FROM ORole WHERE name = ?)", sysuser,
-        "admin");
-    server.getSystemDatabase().execute(null,
-        "update OUser set properties={'@type':'d', 'keyStore':{'file':'${ORIENTDB_HOME}/config/test.jks','password':'password','keyAlias':'keyAlias','keyPassword':'password'}} where name = ?",
-        sysuser);
+    server
+        .getSystemDatabase()
+        .execute(
+            null,
+            "insert into OUser set name=?, password='password', status='ACTIVE', roles=(SELECT FROM ORole WHERE name = ?)",
+            sysuser,
+            "admin");
+    server
+        .getSystemDatabase()
+        .execute(
+            null,
+            "update OUser set properties={'@type':'d', 'keyStore':{'file':'${ORIENTDB_HOME}/config/test.jks','password':'password','keyAlias':'keyAlias','keyPassword':'password'}} where name = ?",
+            sysuser);
 
-    OSymmetricKey sk = OSymmetricKey
-        .fromKeystore(new FileInputStream(SERVER_DIRECTORY + "/config/test.jks"), "password", "keyAlias", "password");
+    OSymmetricKey sk =
+        OSymmetricKey.fromKeystore(
+            new FileInputStream(SERVER_DIRECTORY + "/config/test.jks"),
+            "password",
+            "keyAlias",
+            "password");
 
     // "sysuser" is the username.  We just created it in OSystem.
     ODatabaseDocumentTx db = new ODatabaseDocumentTx(DATABASE_URL);

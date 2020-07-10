@@ -12,7 +12,6 @@ public class HttpEEOldProfilerTest extends EEBaseServerHttpTest {
     HttpResponse response = get("/profiler/realtime").getResponse();
 
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
-
   }
 
   @Test
@@ -21,6 +20,5 @@ public class HttpEEOldProfilerTest extends EEBaseServerHttpTest {
     HttpResponse response = get("/profiler/metadata").getResponse();
 
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
-
   }
 }

@@ -26,14 +26,11 @@ import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.schedule.OCronExpression;
 import com.orientechnologies.orient.server.handler.OAutomaticBackup;
-
 import java.io.File;
 import java.text.ParseException;
 import java.util.Date;
 
-/**
- * Created by Enrico Risa on 25/03/16.
- */
+/** Created by Enrico Risa on 25/03/16. */
 public class OBackupStrategyFullBackup extends OBackupStrategy {
 
   public OBackupStrategyFullBackup(ODocument cfg, OBackupLogger logger) {
@@ -52,7 +49,6 @@ public class OBackupStrategyFullBackup extends OBackupStrategy {
 
     String dbName = cfg.field(OBackupConfig.DBNAME);
     return basePath + File.separator + dbName + "-" + begin;
-
   }
 
   @Override
@@ -61,13 +57,15 @@ public class OBackupStrategyFullBackup extends OBackupStrategy {
     OBackupScheduledLog last = lastUnfiredSchedule();
 
     if (last == null) {
-      ODocument full = (ODocument) cfg.eval(OBackupConfig.MODES + "." + OAutomaticBackup.MODE.FULL_BACKUP);
+      ODocument full =
+          (ODocument) cfg.eval(OBackupConfig.MODES + "." + OAutomaticBackup.MODE.FULL_BACKUP);
       String when = full.field(OBackupConfig.WHEN);
       try {
         OCronExpression expression = new OCronExpression(when);
         Date nextExecution = expression.getNextValidTimeAfter(new Date());
-        OBackupScheduledLog log = new OBackupScheduledLog(logger.nextOpId(), logger.nextOpId(), getUUID(), getDbName(),
-            getMode().toString());
+        OBackupScheduledLog log =
+            new OBackupScheduledLog(
+                logger.nextOpId(), logger.nextOpId(), getUUID(), getDbName(), getMode().toString());
         log.nextExecution = nextExecution.getTime();
         getLogger().log(log);
 
@@ -83,6 +81,5 @@ public class OBackupStrategyFullBackup extends OBackupStrategy {
     }
 
     return null;
-
   }
 }

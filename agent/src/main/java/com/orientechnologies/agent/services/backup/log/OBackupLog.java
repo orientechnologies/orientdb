@@ -19,31 +19,28 @@
 package com.orientechnologies.agent.services.backup.log;
 
 import com.orientechnologies.orient.core.record.impl.ODocument;
-
 import java.util.Date;
 
-/**
- * Created by Enrico Risa on 25/03/16.
- */
+/** Created by Enrico Risa on 25/03/16. */
 public abstract class OBackupLog {
 
-  public static final String INTERNAL_ID    = "internalId";
-  public static final String OP             = "op";
-  public static final String UNITID         = "unitId";
-  public static final String TXID           = "txId";
-  public static final String UUID           = "uuid";
-  public static final String DBNAME         = "dbName";
-  public static final String MODE           = "mode";
-  public static final String TIMESTAMP      = "timestamp";
+  public static final String INTERNAL_ID = "internalId";
+  public static final String OP = "op";
+  public static final String UNITID = "unitId";
+  public static final String TXID = "txId";
+  public static final String UUID = "uuid";
+  public static final String DBNAME = "dbName";
+  public static final String MODE = "mode";
+  public static final String TIMESTAMP = "timestamp";
   public static final String TIMESTAMP_UNIX = "timestampUnix";
 
   private String internalId;
-  private long   unitId;
+  private long unitId;
   private String mode;
-  private long   txId;
+  private long txId;
   private String uuid;
   private String dbName;
-  private Date   timestamp;
+  private Date timestamp;
 
   public OBackupLog(long unitId, long txId, String uuid, String dbName, String mode) {
     this.txId = txId;

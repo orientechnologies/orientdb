@@ -14,13 +14,10 @@ import com.orientechnologies.orient.server.OSystemDatabase;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
 import com.orientechnologies.orient.server.network.protocol.http.command.OServerCommand;
 import com.orientechnologies.orient.server.security.OServerSecurity;
-
 import java.util.*;
 import java.util.function.Function;
 
-/**
- * Created by Enrico Risa on 16/07/2018.
- */
+/** Created by Enrico Risa on 16/07/2018. */
 public interface OEnterpriseServer {
 
   void registerConnectionListener(OEnterpriseConnectionListener listener);

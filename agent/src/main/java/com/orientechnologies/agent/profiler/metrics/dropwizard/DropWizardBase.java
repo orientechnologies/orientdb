@@ -2,9 +2,7 @@ package com.orientechnologies.agent.profiler.metrics.dropwizard;
 
 import com.orientechnologies.agent.profiler.metrics.OMetric;
 
-/**
- * Created by Enrico Risa on 11/07/2018.
- */
+/** Created by Enrico Risa on 11/07/2018. */
 public class DropWizardBase implements OMetric {
   private final String unitOfMeasure;
   String name;

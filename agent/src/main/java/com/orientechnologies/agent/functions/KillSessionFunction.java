@@ -8,9 +8,7 @@ import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.metadata.security.ORule;
 import com.orientechnologies.orient.core.sql.executor.OResultInternal;
 
-/**
- * Created by Enrico Risa on 23/07/2018.
- */
+/** Created by Enrico Risa on 23/07/2018. */
 public class KillSessionFunction extends OSQLEnterpriseFunction {
 
   private OEnterpriseServer server;
@@ -22,7 +20,11 @@ public class KillSessionFunction extends OSQLEnterpriseFunction {
   }
 
   @Override
-  public Object exec(Object iThis, OIdentifiable iCurrentRecord, Object iCurrentResult, Object[] iParams,
+  public Object exec(
+      Object iThis,
+      OIdentifiable iCurrentRecord,
+      Object iCurrentResult,
+      Object[] iParams,
       OCommandContext iContext) {
     if (iParams[0] instanceof Number) {
       Number connectionId = (Number) iParams[0];
@@ -53,5 +55,4 @@ public class KillSessionFunction extends OSQLEnterpriseFunction {
   public String specificPermission() {
     return "killSession";
   }
-
 }

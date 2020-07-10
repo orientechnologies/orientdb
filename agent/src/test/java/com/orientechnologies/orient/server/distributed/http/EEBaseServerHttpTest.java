@@ -4,6 +4,7 @@ import com.orientechnologies.orient.core.db.ODatabaseType;
 import com.orientechnologies.orient.core.db.OrientDB;
 import com.orientechnologies.orient.core.db.OrientDBConfig;
 import com.orientechnologies.orient.server.OServer;
+import java.io.IOException;
 import org.apache.http.Consts;
 import org.apache.http.Header;
 import org.apache.http.HttpHost;
@@ -27,27 +28,23 @@ import org.junit.Before;
 import org.junit.Rule;
 import org.junit.rules.TestName;
 
-import java.io.IOException;
-
 public abstract class EEBaseServerHttpTest {
 
-  @Rule
-  public TestName name = new TestName();
+  @Rule public TestName name = new TestName();
 
   protected OServer server;
 
-  private String  realm        = "OrientDB-";
-  private String  userName     = "root";
-  private String  userPassword = "root";
-  private Boolean keepAlive    = null;
+  private String realm = "OrientDB-";
+  private String userName = "root";
+  private String userPassword = "root";
+  private Boolean keepAlive = null;
 
-  private   HttpRequestBase    request;
-  private   AbstractHttpEntity payload;
-  private   HttpResponse       response;
-  protected OrientDB           remote;
+  private HttpRequestBase request;
+  private AbstractHttpEntity payload;
+  private HttpResponse response;
+  protected OrientDB remote;
 
   @Before
-
   public void init() throws Exception {
 
     server = OServer.startFromClasspathConfig("orientdb-server-simple-config.xml");
@@ -69,11 +66,16 @@ public abstract class EEBaseServerHttpTest {
   }
 
   public enum CONTENT {
-    TEXT, JSON
+    TEXT,
+    JSON
   }
 
   public EEBaseServerHttpTest payload(final String s, final CONTENT iContent) {
-    payload = new StringEntity(s, ContentType.create(iContent == CONTENT.JSON ? "application/json" : "plain/text", Consts.UTF_8));
+    payload =
+        new StringEntity(
+            s,
+            ContentType.create(
+                iContent == CONTENT.JSON ? "application/json" : "plain/text", Consts.UTF_8));
     return this;
   }
 
@@ -86,7 +88,9 @@ public abstract class EEBaseServerHttpTest {
     final HttpHost targetHost = new HttpHost(getHost(), getPort(), getProtocol());
 
     CredentialsProvider credsProvider = new BasicCredentialsProvider();
-    credsProvider.setCredentials(new AuthScope(targetHost), new UsernamePasswordCredentials(getUserName(), getUserPassword()));
+    credsProvider.setCredentials(
+        new AuthScope(targetHost),
+        new UsernamePasswordCredentials(getUserName(), getUserPassword()));
 
     // Create AuthCache instance
     AuthCache authCache = new BasicAuthCache();
@@ -99,8 +103,7 @@ public abstract class EEBaseServerHttpTest {
     context.setCredentialsProvider(credsProvider);
     context.setAuthCache(authCache);
 
-    if (keepAlive != null)
-      request.addHeader("Connection", keepAlive ? "Keep-Alive" : "Close");
+    if (keepAlive != null) request.addHeader("Connection", keepAlive ? "Keep-Alive" : "Close");
 
     if (payload != null && request instanceof HttpEntityEnclosingRequestBase)
       ((HttpEntityEnclosingRequestBase) request).setEntity(payload);

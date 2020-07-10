@@ -20,7 +20,5 @@ public class HttpEEDistributedManagerTest extends EEBaseDistributedHttpTest {
     response = get("/distributed/stats").getResponse();
 
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
-
   }
-
 }

@@ -22,10 +22,9 @@ import com.orientechnologies.orient.server.distributed.ODistributedServerManager
 import com.orientechnologies.orient.server.network.protocol.http.OHttpRequest;
 import com.orientechnologies.orient.server.network.protocol.http.command.OServerCommandAuthenticatedServerAbstract;
 
-/**
- * Created by Enrico Risa on 19/02/16.
- */
-public abstract class OServerCommandDistributedAuthenticated extends OServerCommandAuthenticatedServerAbstract {
+/** Created by Enrico Risa on 19/02/16. */
+public abstract class OServerCommandDistributedAuthenticated
+    extends OServerCommandAuthenticatedServerAbstract {
 
   protected OServerCommandDistributedAuthenticated(String iRequiredResource) {
     super(iRequiredResource);
@@ -41,5 +40,4 @@ public abstract class OServerCommandDistributedAuthenticated extends OServerComm
     }
     return distributedManager.getLocalNodeName().equalsIgnoreCase(node);
   }
-
 }

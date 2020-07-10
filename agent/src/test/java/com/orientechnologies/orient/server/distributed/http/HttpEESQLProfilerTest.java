@@ -20,7 +20,5 @@ public class HttpEESQLProfilerTest extends EEBaseServerHttpTest {
     response = get("/sqlProfiler/running").getResponse();
 
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
-
   }
-
 }

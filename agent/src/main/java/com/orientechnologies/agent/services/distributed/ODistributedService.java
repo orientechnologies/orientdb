@@ -18,11 +18,14 @@ public class ODistributedService implements OEnterpriseService {
   @Override
   public void start() {
 
-    server.getServiceByClass(OAgentProfilerService.class).ifPresent((e) -> {
-      if (this.server.getDistributedManager() != null) {
-        this.server.getDistributedManager().registerLifecycleListener(e.getProfiler());
-      }
-    });
+    server
+        .getServiceByClass(OAgentProfilerService.class)
+        .ifPresent(
+            (e) -> {
+              if (this.server.getDistributedManager() != null) {
+                this.server.getDistributedManager().registerLifecycleListener(e.getProfiler());
+              }
+            });
   }
 
   @Override

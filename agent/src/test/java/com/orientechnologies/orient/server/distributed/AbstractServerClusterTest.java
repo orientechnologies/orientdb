@@ -28,28 +28,28 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.tinkerpop.blueprints.impls.orient.OrientBaseGraph;
 import com.tinkerpop.blueprints.impls.orient.OrientGraphFactory;
-import org.junit.Assert;
-
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.atomic.AtomicLong;
+import org.junit.Assert;
 
 /**
- * Test class that creates and executes distributed operations against a cluster of servers created in the same JVM.
+ * Test class that creates and executes distributed operations against a cluster of servers created
+ * in the same JVM.
  */
 public abstract class AbstractServerClusterTest {
-  protected int             delayServerStartup     = 0;
-  protected int             delayServerAlign       = 0;
-  protected boolean         startupNodesInSequence = true;
-  protected boolean         terminateAtShutdown    = true;
+  protected int delayServerStartup = 0;
+  protected int delayServerAlign = 0;
+  protected boolean startupNodesInSequence = true;
+  protected boolean terminateAtShutdown = true;
 
-  protected String          rootDirectory          = "target/servers/";
-  protected AtomicLong      totalVertices          = new AtomicLong(0);
+  protected String rootDirectory = "target/servers/";
+  protected AtomicLong totalVertices = new AtomicLong(0);
 
-  protected List<ServerRun> serverInstance         = new ArrayList<ServerRun>();
+  protected List<ServerRun> serverInstance = new ArrayList<ServerRun>();
 
   protected AbstractServerClusterTest() {
     OGlobalConfiguration.STORAGE_TRACK_CHANGED_RECORDS_IN_WAL.setValue(true);
@@ -63,34 +63,27 @@ public abstract class AbstractServerClusterTest {
 
     if (args.length > 0)
       testClass = (Class<? extends AbstractServerClusterTest>) Class.forName(args[0]);
-    else
-      syntaxError();
+    else syntaxError();
 
-    if (args.length > 1)
-      command = args[1];
-    else
-      syntaxError();
+    if (args.length > 1) command = args[1];
+    else syntaxError();
 
-    if (args.length > 2)
-      servers = Integer.parseInt(args[2]);
+    if (args.length > 2) servers = Integer.parseInt(args[2]);
 
     final AbstractServerClusterTest main = testClass.newInstance();
     main.init(servers);
 
-    if (command.equals("prepare"))
-      main.prepare(true);
-    else if (command.equals("execute"))
-      main.execute();
+    if (command.equals("prepare")) main.prepare(true);
+    else if (command.equals("execute")) main.execute();
     else if (command.equals("prepare+execute")) {
       main.prepare(true);
       main.execute();
-    } else
-      System.out.println("Usage: prepare, execute or prepare+execute ...");
+    } else System.out.println("Usage: prepare, execute or prepare+execute ...");
   }
 
   private static void syntaxError() {
-    System.err
-        .println("Syntax error. Usage: <class> <operation> [<servers>]\nWhere <operation> can be: prepare|execute|prepare+execute");
+    System.err.println(
+        "Syntax error. Usage: <class> <operation> [<servers>]\nWhere <operation> can be: prepare|execute|prepare+execute");
     System.exit(1);
   }
 
@@ -100,8 +93,7 @@ public abstract class AbstractServerClusterTest {
     GroupProperty.WAIT_SECONDS_BEFORE_JOIN.setSystemProperty("1");
 
     Orient.setRegisterDatabaseByPath(true);
-    for (int i = 0; i < servers; ++i)
-      serverInstance.add(new ServerRun(rootDirectory, "" + i));
+    for (int i = 0; i < servers; ++i) serverInstance.add(new ServerRun(rootDirectory, "" + i));
   }
 
   public void execute() throws Exception {
@@ -125,19 +117,21 @@ public abstract class AbstractServerClusterTest {
         }
       } else {
         for (final ServerRun server : serverInstance) {
-          final Thread thread = new Thread(new Runnable() {
-            @Override
-            public void run() {
-              banner("STARTING SERVER -> " + server.getServerId() + "...");
-              try {
-                onServerStarting(server);
-                server.startServer(getDistributedServerConfiguration(server));
-                onServerStarted(server);
-              } catch (Exception e) {
-                OLogManager.instance().error(this, "", e);
-              }
-            }
-          });
+          final Thread thread =
+              new Thread(
+                  new Runnable() {
+                    @Override
+                    public void run() {
+                      banner("STARTING SERVER -> " + server.getServerId() + "...");
+                      try {
+                        onServerStarting(server);
+                        server.startServer(getDistributedServerConfiguration(server));
+                        onServerStarted(server);
+                      } catch (Exception e) {
+                        OLogManager.instance().error(this, "", e);
+                      }
+                    }
+                  });
           thread.start();
         }
       }
@@ -145,7 +139,9 @@ public abstract class AbstractServerClusterTest {
       if (delayServerAlign > 0)
         try {
           System.out.println(
-              "Server started, waiting for synchronization (" + (delayServerAlign * serverInstance.size() / 1000) + "secs)...");
+              "Server started, waiting for synchronization ("
+                  + (delayServerAlign * serverInstance.size() / 1000)
+                  + "secs)...");
           Thread.sleep(delayServerAlign * serverInstance.size());
         } catch (InterruptedException e) {
         }
@@ -176,10 +172,8 @@ public abstract class AbstractServerClusterTest {
       banner("Shutting down nodes...");
       for (ServerRun server : serverInstance) {
         log("Shutting down node " + server.getServerId() + "...");
-        if (terminateAtShutdown)
-          server.terminateServer();
-        else
-          server.shutdownServer();
+        if (terminateAtShutdown) server.terminateServer();
+        else server.shutdownServer();
       }
 
       onTestEnded();
@@ -197,22 +191,23 @@ public abstract class AbstractServerClusterTest {
       banner("Clean server directories...");
       Orient.setRegisterDatabaseByPath(false);
       deleteServers();
-
     }
-
   }
 
-  protected void executeOnMultipleThreads(final int numOfThreads, final OCallable<Void, Integer> callback) {
+  protected void executeOnMultipleThreads(
+      final int numOfThreads, final OCallable<Void, Integer> callback) {
     final Thread[] threads = new Thread[numOfThreads];
 
     for (int s = 0; s < numOfThreads; ++s) {
       final int serverId = s;
-      threads[s] = new Thread(new Runnable() {
-        @Override
-        public void run() {
-          callback.call(serverId);
-        }
-      });
+      threads[s] =
+          new Thread(
+              new Runnable() {
+                @Override
+                public void run() {
+                  callback.call(serverId);
+                }
+              });
       threads[s].start();
     }
 
@@ -226,39 +221,40 @@ public abstract class AbstractServerClusterTest {
   }
 
   protected void banner(final String iMessage) {
-    OLogManager.instance().error(this,
-        "\n**********************************************************************************************************",null);
-    OLogManager.instance().error(this, iMessage,null);
-    OLogManager.instance().error(this,
-        "**********************************************************************************************************\n",null);
+    OLogManager.instance()
+        .error(
+            this,
+            "\n**********************************************************************************************************",
+            null);
+    OLogManager.instance().error(this, iMessage, null);
+    OLogManager.instance()
+        .error(
+            this,
+            "**********************************************************************************************************\n",
+            null);
   }
 
   protected void log(final String iMessage) {
     OLogManager.instance().info(this, iMessage);
   }
 
-  protected void onServerStarting(ServerRun server) {
-  }
+  protected void onServerStarting(ServerRun server) {}
 
-  protected void onServerStarted(ServerRun server) {
-  }
+  protected void onServerStarted(ServerRun server) {}
 
-  protected void onTestEnded() {
-  }
+  protected void onTestEnded() {}
 
-  protected void onAfterExecution() throws Exception {
-  }
+  protected void onAfterExecution() throws Exception {}
 
   protected abstract String getDatabaseName();
 
   /**
-   * Event called right after the database has been created and right before to be replicated to the X servers
-   * 
-   * @param db
-   *          Current database
+   * Event called right after the database has been created and right before to be replicated to the
+   * X servers
+   *
+   * @param db Current database
    */
-  protected void onAfterDatabaseCreation(final OrientBaseGraph db) {
-  }
+  protected void onAfterDatabaseCreation(final OrientBaseGraph db) {}
 
   protected abstract void executeTest() throws Exception;
 
@@ -271,7 +267,8 @@ public abstract class AbstractServerClusterTest {
    *
    * @throws IOException
    */
-  protected void prepare(final boolean iCopyDatabaseToNodes, final boolean iCreateDatabase) throws IOException {
+  protected void prepare(final boolean iCopyDatabaseToNodes, final boolean iCreateDatabase)
+      throws IOException {
     prepare(iCopyDatabaseToNodes, iCreateDatabase, null);
   }
 
@@ -280,8 +277,11 @@ public abstract class AbstractServerClusterTest {
    *
    * @throws IOException
    */
-  protected void prepare(final boolean iCopyDatabaseToNodes, final boolean iCreateDatabase,
-      final OCallable<Object, OrientGraphFactory> iCfgCallback) throws IOException {
+  protected void prepare(
+      final boolean iCopyDatabaseToNodes,
+      final boolean iCreateDatabase,
+      final OCallable<Object, OrientGraphFactory> iCfgCallback)
+      throws IOException {
     // CREATE THE DATABASE
     final Iterator<ServerRun> it = serverInstance.iterator();
     final ServerRun master = it.next();
@@ -308,15 +308,15 @@ public abstract class AbstractServerClusterTest {
   }
 
   protected void deleteServers() {
-    for (ServerRun s : serverInstance)
-      s.deleteNode();
+    for (ServerRun s : serverInstance) s.deleteNode();
   }
 
   protected String getDistributedServerConfiguration(final ServerRun server) {
     return "orientdb-dserver-config-" + server.getServerId() + ".xml";
   }
 
-  protected void executeWhen(final Callable<Boolean> condition, final Callable action) throws Exception {
+  protected void executeWhen(final Callable<Boolean> condition, final Callable action)
+      throws Exception {
     while (true) {
       if (condition.call()) {
         action.call();
@@ -331,9 +331,14 @@ public abstract class AbstractServerClusterTest {
     }
   }
 
-  protected void executeWhen(int serverId, OCallable<Boolean, ODatabaseDocumentTx> condition,
-      OCallable<Boolean, ODatabaseDocumentTx> action) throws Exception {
-    final ODatabaseDocumentTx db = new ODatabaseDocumentTx(getDatabaseURL(serverInstance.get(serverId))).open("admin", "admin");
+  protected void executeWhen(
+      int serverId,
+      OCallable<Boolean, ODatabaseDocumentTx> condition,
+      OCallable<Boolean, ODatabaseDocumentTx> action)
+      throws Exception {
+    final ODatabaseDocumentTx db =
+        new ODatabaseDocumentTx(getDatabaseURL(serverInstance.get(serverId)))
+            .open("admin", "admin");
     try {
       executeWhen(db, condition, action);
     } finally {
@@ -345,7 +350,9 @@ public abstract class AbstractServerClusterTest {
     }
   }
 
-  protected void executeWhen(final ODatabaseDocumentTx db, OCallable<Boolean, ODatabaseDocumentTx> condition,
+  protected void executeWhen(
+      final ODatabaseDocumentTx db,
+      OCallable<Boolean, ODatabaseDocumentTx> condition,
       OCallable<Boolean, ODatabaseDocumentTx> action) {
     while (true) {
       db.activateOnCurrentThread();
@@ -362,12 +369,21 @@ public abstract class AbstractServerClusterTest {
     }
   }
 
-  protected void waitForDatabaseIsOffline(final String serverName, final String dbName, final long timeout) {
+  protected void waitForDatabaseIsOffline(
+      final String serverName, final String dbName, final long timeout) {
     final long startTime = System.currentTimeMillis();
-    while (serverInstance.get(0).getServerInstance().getDistributedManager().isNodeOnline(serverName, dbName)) {
+    while (serverInstance
+        .get(0)
+        .getServerInstance()
+        .getDistributedManager()
+        .isNodeOnline(serverName, dbName)) {
 
       if (timeout > 0 && System.currentTimeMillis() - startTime > timeout) {
-        OLogManager.instance().error(this, "TIMEOUT on waitForDatabaseIsOffline condition (timeout=" + timeout + ")",null);
+        OLogManager.instance()
+            .error(
+                this,
+                "TIMEOUT on waitForDatabaseIsOffline condition (timeout=" + timeout + ")",
+                null);
         break;
       }
 
@@ -377,15 +393,20 @@ public abstract class AbstractServerClusterTest {
         // IGNORE IT
       }
     }
-
   }
 
-  protected void waitForDatabaseIsOnline(final String serverName, final String dbName, final long timeout) {
+  protected void waitForDatabaseIsOnline(
+      final String serverName, final String dbName, final long timeout) {
     final long startTime = System.currentTimeMillis();
-    while (!serverInstance.get(0).getServerInstance().getDistributedManager().isNodeOnline(serverName, dbName)) {
+    while (!serverInstance
+        .get(0)
+        .getServerInstance()
+        .getDistributedManager()
+        .isNodeOnline(serverName, dbName)) {
 
       if (timeout > 0 && System.currentTimeMillis() - startTime > timeout) {
-        OLogManager.instance().error(this, "TIMEOUT on waitForDatabaseIsOnLine (timeout=" + timeout + ")",null);
+        OLogManager.instance()
+            .error(this, "TIMEOUT on waitForDatabaseIsOnLine (timeout=" + timeout + ")", null);
         break;
       }
 
@@ -395,12 +416,16 @@ public abstract class AbstractServerClusterTest {
         // IGNORE IT
       }
     }
-
   }
 
-  protected void waitFor(final int serverId, final OCallable<Boolean, ODatabaseDocumentTx> condition, final long timeout) {
+  protected void waitFor(
+      final int serverId,
+      final OCallable<Boolean, ODatabaseDocumentTx> condition,
+      final long timeout) {
     try {
-      ODatabaseDocumentTx db = new ODatabaseDocumentTx(getDatabaseURL(serverInstance.get(serverId))).open("admin", "admin");
+      ODatabaseDocumentTx db =
+          new ODatabaseDocumentTx(getDatabaseURL(serverInstance.get(serverId)))
+              .open("admin", "admin");
       try {
 
         final long startTime = System.currentTimeMillis();
@@ -411,7 +436,8 @@ public abstract class AbstractServerClusterTest {
           }
 
           if (timeout > 0 && System.currentTimeMillis() - startTime > timeout) {
-            OLogManager.instance().error(this, "TIMEOUT on wait-for condition (timeout=" + timeout + ")",null);
+            OLogManager.instance()
+                .error(this, "TIMEOUT on wait-for condition (timeout=" + timeout + ")", null);
             break;
           }
 
@@ -434,7 +460,8 @@ public abstract class AbstractServerClusterTest {
     }
   }
 
-  protected void waitFor(final long timeout, final OCallable<Boolean, Void> condition, final String message) {
+  protected void waitFor(
+      final long timeout, final OCallable<Boolean, Void> condition, final String message) {
     final long startTime = System.currentTimeMillis();
 
     while (true) {
@@ -457,5 +484,4 @@ public abstract class AbstractServerClusterTest {
   protected String getDatabaseURL(ServerRun server) {
     return null;
   }
-
 }

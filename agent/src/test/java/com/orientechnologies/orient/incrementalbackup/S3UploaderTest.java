@@ -18,6 +18,8 @@
 
 package com.orientechnologies.orient.incrementalbackup;
 
+import static org.junit.Assert.assertTrue;
+
 import com.amazonaws.AmazonClientException;
 import com.amazonaws.AmazonServiceException;
 import com.amazonaws.auth.AWSCredentials;
@@ -29,35 +31,25 @@ import com.orientechnologies.backup.uploader.OLocalBackupUploader;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.tinkerpop.blueprints.impls.orient.OrientGraphNoTx;
-
 import java.io.File;
 import java.util.LinkedList;
 import java.util.List;
 
-import static org.junit.Assert.assertTrue;
-
 /**
- * It test the behaviour of the S3 Uploader with the following scenario:
- *  - inserting 1000 triples in the db (set up)
- *  - inserting 1000 triples in the db
- *  - 1st incremental backup of the db
- *  - inserting 1000 triples in the db
- *  - 2nd incremental backup of the db
- *  - 1st backup upload on S3 bucket
- *  - deleting on S3 the first "incremental-backup" file
- *  - inserting 1000 triples in the db
- *  - 3rd incremental backup of the db
- *  - 2nd backup upload on S3 bucket
- *  - checking the files in local folder and the S3 bucket
+ * It test the behaviour of the S3 Uploader with the following scenario: - inserting 1000 triples in
+ * the db (set up) - inserting 1000 triples in the db - 1st incremental backup of the db - inserting
+ * 1000 triples in the db - 2nd incremental backup of the db - 1st backup upload on S3 bucket -
+ * deleting on S3 the first "incremental-backup" file - inserting 1000 triples in the db - 3rd
+ * incremental backup of the db - 2nd backup upload on S3 bucket - checking the files in local
+ * folder and the S3 bucket
  */
 public class S3UploaderTest extends AbstractUploaderTest {
 
-  private final String               destinationDirectoryPath = "/orientdb-backups/";
-  private final String               bucketName        = "orientdb-databases-backup";
-  private final String               ACCESS_KEY        = "AKIAJLSQXFYNUAEP5EIA";
-  private final String               SECRET_ACCESS_KEY = "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";
-  private       OLocalBackupUploader uploader          = new OLocalBackupUploader("s3");
-
+  private final String destinationDirectoryPath = "/orientdb-backups/";
+  private final String bucketName = "orientdb-databases-backup";
+  private final String ACCESS_KEY = "AKIAJLSQXFYNUAEP5EIA";
+  private final String SECRET_ACCESS_KEY = "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";
+  private OLocalBackupUploader uploader = new OLocalBackupUploader("s3");
 
   public void testIncrementalBackup() {
 
@@ -84,24 +76,30 @@ public class S3UploaderTest extends AbstractUploaderTest {
 
       // upload backup on AWS S3
       this.banner("1st backup upload on S3");
-      assertTrue(uploader.executeUpload(backupPath, this.destinationDirectoryPath, this.bucketName, this.ACCESS_KEY, this.SECRET_ACCESS_KEY));
+      assertTrue(
+          uploader.executeUpload(
+              backupPath,
+              this.destinationDirectoryPath,
+              this.bucketName,
+              this.ACCESS_KEY,
+              this.SECRET_ACCESS_KEY));
       System.out.println("Done.");
 
       // deleting on S3 the second "incremental-backup" file
       this.banner("Deleting on S3 the first \"incremental-backup\" file");
-      int lastIndex = this.backupPath.length()-1;
+      int lastIndex = this.backupPath.length() - 1;
       String backupRelativePath;
-      if(this.backupPath.charAt(lastIndex) == '/') {
+      if (this.backupPath.charAt(lastIndex) == '/') {
         backupRelativePath = this.backupPath.substring(0, lastIndex);
-      }
-      else {
+      } else {
         backupRelativePath = this.backupPath;
       }
-      String remoteFolderName = backupRelativePath.substring(backupRelativePath.lastIndexOf("/") + 1);
+      String remoteFolderName =
+          backupRelativePath.substring(backupRelativePath.lastIndexOf("/") + 1);
 
       File backupDirectory = new File(backupPath);
       File[] backupFiles = backupDirectory.listFiles();
-      String keyName = remoteFolderName + "/" + backupFiles[backupFiles.length-1].getName();
+      String keyName = remoteFolderName + "/" + backupFiles[backupFiles.length - 1].getName();
       assertTrue(deleteFileOnS3(this.bucketName, keyName));
       System.out.println("Done.");
 
@@ -116,7 +114,13 @@ public class S3UploaderTest extends AbstractUploaderTest {
 
       // upload backup on AWS S3
       this.banner("2nd backup upload on S3");
-      assertTrue(uploader.executeUpload(backupPath, this.destinationDirectoryPath, this.bucketName, this.ACCESS_KEY, this.SECRET_ACCESS_KEY));
+      assertTrue(
+          uploader.executeUpload(
+              backupPath,
+              this.destinationDirectoryPath,
+              this.bucketName,
+              this.ACCESS_KEY,
+              this.SECRET_ACCESS_KEY));
       System.out.println("Done.");
 
       // checking consistency between local and remote backups
@@ -130,7 +134,6 @@ public class S3UploaderTest extends AbstractUploaderTest {
       // cleaning all the directories
       this.cleanDirectories();
     }
-
   }
 
   private boolean checkConsistency() {
@@ -139,16 +142,19 @@ public class S3UploaderTest extends AbstractUploaderTest {
 
     try {
 
-      AWSCredentials awsCredentials = new BasicAWSCredentials(this.ACCESS_KEY, this.SECRET_ACCESS_KEY);
+      AWSCredentials awsCredentials =
+          new BasicAWSCredentials(this.ACCESS_KEY, this.SECRET_ACCESS_KEY);
       AmazonS3Client s3client = new AmazonS3Client(awsCredentials);
-      List<S3ObjectSummary> filesInBucket = s3client.listObjects(this.bucketName).getObjectSummaries();
+      List<S3ObjectSummary> filesInBucket =
+          s3client.listObjects(this.bucketName).getObjectSummaries();
       List<String> remoteFileNames = new LinkedList<String>();
 
       String currentRemoteFileName;
-      for(S3ObjectSummary currentRemoteFile: filesInBucket) {
+      for (S3ObjectSummary currentRemoteFile : filesInBucket) {
         currentRemoteFileName = currentRemoteFile.getKey();
-        currentRemoteFileName = currentRemoteFileName.substring(currentRemoteFileName.lastIndexOf("/")+1);
-        if(currentRemoteFileName.length() > 1) {
+        currentRemoteFileName =
+            currentRemoteFileName.substring(currentRemoteFileName.lastIndexOf("/") + 1);
+        if (currentRemoteFileName.length() > 1) {
           remoteFileNames.add(currentRemoteFileName);
         }
       }
@@ -156,13 +162,13 @@ public class S3UploaderTest extends AbstractUploaderTest {
       File localBackupDirectory = new File(this.backupPath);
       File[] localBackupFiles = localBackupDirectory.listFiles();
       List<String> localFileNames = new LinkedList<String>();
-      for(File currentLocalFile: localBackupFiles) {
+      for (File currentLocalFile : localBackupFiles) {
         localFileNames.add(currentLocalFile.getName());
       }
 
       // comparing files
-      for(String fileName: localFileNames) {
-        if(!remoteFileNames.contains(fileName)) {
+      for (String fileName : localFileNames) {
+        if (!remoteFileNames.contains(fileName)) {
           consistent = false;
           break;
         }
@@ -170,27 +176,33 @@ public class S3UploaderTest extends AbstractUploaderTest {
 
     } catch (AmazonServiceException ase) {
       consistent = false;
-      OLogManager.instance().info(this,"Caught an AmazonServiceException, which " +
-          "means your request made it " +
-          "to Amazon S3, but was rejected with an error response" +
-          " for some reason.");
-      OLogManager.instance().info(this,"Error Message:    %s", ase.getMessage());
-      OLogManager.instance().info(this,"HTTP Status Code: %s", ase.getStatusCode());
-      OLogManager.instance().info(this,"AWS Error Code:   %s", ase.getErrorCode());
-      OLogManager.instance().info(this,"Error Type:       %s", ase.getErrorType());
-      OLogManager.instance().info(this,"Request ID:       %s", ase.getRequestId());
+      OLogManager.instance()
+          .info(
+              this,
+              "Caught an AmazonServiceException, which "
+                  + "means your request made it "
+                  + "to Amazon S3, but was rejected with an error response"
+                  + " for some reason.");
+      OLogManager.instance().info(this, "Error Message:    %s", ase.getMessage());
+      OLogManager.instance().info(this, "HTTP Status Code: %s", ase.getStatusCode());
+      OLogManager.instance().info(this, "AWS Error Code:   %s", ase.getErrorCode());
+      OLogManager.instance().info(this, "Error Type:       %s", ase.getErrorType());
+      OLogManager.instance().info(this, "Request ID:       %s", ase.getRequestId());
     } catch (AmazonClientException ace) {
       consistent = false;
-      OLogManager.instance().info(this,"Caught an AmazonClientException, which " +
-          "means the client encountered " +
-          "an internal error while trying to " +
-          "communicate with S3, " +
-          "such as not being able to access the network.");
-      OLogManager.instance().info(this,"Error Message: %s", ace.getMessage());
+      OLogManager.instance()
+          .info(
+              this,
+              "Caught an AmazonClientException, which "
+                  + "means the client encountered "
+                  + "an internal error while trying to "
+                  + "communicate with S3, "
+                  + "such as not being able to access the network.");
+      OLogManager.instance().info(this, "Error Message: %s", ace.getMessage());
     } catch (Exception e) {
       consistent = false;
-      OLogManager.instance().info(this,"Caught an exception client side.");
-      OLogManager.instance().info(this,"Error Message: %s", e.getMessage());
+      OLogManager.instance().info(this, "Caught an exception client side.");
+      OLogManager.instance().info(this, "Error Message: %s", e.getMessage());
     }
 
     return consistent;
@@ -202,41 +214,46 @@ public class S3UploaderTest extends AbstractUploaderTest {
 
     try {
 
-      AWSCredentials awsCredentials = new BasicAWSCredentials(this.ACCESS_KEY, this.SECRET_ACCESS_KEY);
+      AWSCredentials awsCredentials =
+          new BasicAWSCredentials(this.ACCESS_KEY, this.SECRET_ACCESS_KEY);
       AmazonS3Client s3client = new AmazonS3Client(awsCredentials);
       s3client.deleteObject(new DeleteObjectRequest(bucketName, keyName));
 
-      success =  true;
+      success = true;
 
     } catch (AmazonServiceException ase) {
-      OLogManager.instance().info(this,"Caught an AmazonServiceException, which " +
-          "means your request made it " +
-          "to Amazon S3, but was rejected with an error response" +
-          " for some reason.");
-      OLogManager.instance().info(this,"Error Message:    %s", ase.getMessage());
-      OLogManager.instance().info(this,"HTTP Status Code: %s", ase.getStatusCode());
-      OLogManager.instance().info(this,"AWS Error Code:   %s", ase.getErrorCode());
-      OLogManager.instance().info(this,"Error Type:       %s", ase.getErrorType());
-      OLogManager.instance().info(this,"Request ID:       %s", ase.getRequestId());
+      OLogManager.instance()
+          .info(
+              this,
+              "Caught an AmazonServiceException, which "
+                  + "means your request made it "
+                  + "to Amazon S3, but was rejected with an error response"
+                  + " for some reason.");
+      OLogManager.instance().info(this, "Error Message:    %s", ase.getMessage());
+      OLogManager.instance().info(this, "HTTP Status Code: %s", ase.getStatusCode());
+      OLogManager.instance().info(this, "AWS Error Code:   %s", ase.getErrorCode());
+      OLogManager.instance().info(this, "Error Type:       %s", ase.getErrorType());
+      OLogManager.instance().info(this, "Request ID:       %s", ase.getRequestId());
     } catch (AmazonClientException ace) {
-      OLogManager.instance().info(this,"Caught an AmazonClientException, which " +
-          "means the client encountered " +
-          "an internal error while trying to " +
-          "communicate with S3, " +
-          "such as not being able to access the network.");
-      OLogManager.instance().info(this,"Error Message: %s", ace.getMessage());
+      OLogManager.instance()
+          .info(
+              this,
+              "Caught an AmazonClientException, which "
+                  + "means the client encountered "
+                  + "an internal error while trying to "
+                  + "communicate with S3, "
+                  + "such as not being able to access the network.");
+      OLogManager.instance().info(this, "Error Message: %s", ace.getMessage());
     } catch (Exception e) {
-      OLogManager.instance().info(this,"Caught an exception client side.");
-      OLogManager.instance().info(this,"Error Message: %s", e.getMessage());
+      OLogManager.instance().info(this, "Caught an exception client side.");
+      OLogManager.instance().info(this, "Error Message: %s", e.getMessage());
     }
 
     return success;
-
   }
 
   @Override
   protected String getDatabaseName() {
     return "db-upload-s3";
   }
-
 }

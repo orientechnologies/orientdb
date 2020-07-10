@@ -1,19 +1,15 @@
 package com.orientechnologies.agent.profiler;
 
-import com.orientechnologies.agent.profiler.metrics.*;
-import org.junit.Assert;
-import org.junit.Test;
+import static org.assertj.core.api.Assertions.assertThat;
 
+import com.orientechnologies.agent.profiler.metrics.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
+import org.junit.Assert;
+import org.junit.Test;
 
-import static org.assertj.core.api.Assertions.assertThat;
-
-/**
- * Created by Enrico Risa on 11/07/2018.
- */
-
+/** Created by Enrico Risa on 11/07/2018. */
 public class OrientDBEnterpriseProfilerTest {
 
   @Test
@@ -68,7 +64,6 @@ public class OrientDBEnterpriseProfilerTest {
     meter.mark(10);
 
     Assert.assertEquals(20, meter.getCount());
-
   }
 
   @Test
@@ -132,6 +127,5 @@ public class OrientDBEnterpriseProfilerTest {
     Assert.assertEquals(1, timer.getCount());
 
     assertThat(TimeUnit.NANOSECONDS.toMillis(finalTime)).isGreaterThanOrEqualTo(1000);
-
   }
 }

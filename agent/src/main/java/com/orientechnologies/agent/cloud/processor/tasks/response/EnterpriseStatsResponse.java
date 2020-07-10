@@ -1,7 +1,6 @@
 package com.orientechnologies.agent.cloud.processor.tasks.response;
 
 import com.orientechnologies.orient.server.distributed.operation.NodeOperationResponse;
-
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
@@ -9,8 +8,7 @@ import java.io.IOException;
 public class EnterpriseStatsResponse implements NodeOperationResponse {
   private String stats;
 
-  public EnterpriseStatsResponse() {
-  }
+  public EnterpriseStatsResponse() {}
 
   public EnterpriseStatsResponse(String stats) {
     this.stats = stats;

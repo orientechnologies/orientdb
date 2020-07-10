@@ -12,7 +12,6 @@ public class HttpEENodeTest extends EEBaseServerHttpTest {
     HttpResponse response = get("/node/info").getResponse();
 
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
-
   }
 
   @Test
@@ -21,6 +20,5 @@ public class HttpEENodeTest extends EEBaseServerHttpTest {
     HttpResponse response = get("/node/threadDump").getResponse();
 
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
-
   }
 }

@@ -16,14 +16,21 @@ public class HttpEEAuditingTest extends EEBaseServerHttpTest {
 
     ODocument auditing = new ODocument().fromJSON(response.getEntity().getContent());
 
-    ODocument backup = new ODocument()
-        .fromJSON(Thread.currentThread().getContextClassLoader().getResourceAsStream("security-auditing.json"));
+    ODocument backup =
+        new ODocument()
+            .fromJSON(
+                Thread.currentThread()
+                    .getContextClassLoader()
+                    .getResourceAsStream("security-auditing.json"));
 
     response = post("/security/reload").payload(backup.toJSON(), CONTENT.JSON).getResponse();
 
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
 
-    response = post("/auditing/" + getDatabaseName() + "/config").payload(auditing.toJSON(), CONTENT.JSON).getResponse();
+    response =
+        post("/auditing/" + getDatabaseName() + "/config")
+            .payload(auditing.toJSON(), CONTENT.JSON)
+            .getResponse();
 
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
 
@@ -33,9 +40,11 @@ public class HttpEEAuditingTest extends EEBaseServerHttpTest {
 
     ODocument query = new ODocument().field("db", getDatabaseName()).field("limit", 1);
 
-    response = post("/auditing/" + getDatabaseName() + "/query").payload(query.toJSON(), CONTENT.JSON).getResponse();
+    response =
+        post("/auditing/" + getDatabaseName() + "/query")
+            .payload(query.toJSON(), CONTENT.JSON)
+            .getResponse();
 
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
-
   }
 }

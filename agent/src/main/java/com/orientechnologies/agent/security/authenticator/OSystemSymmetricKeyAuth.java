@@ -20,26 +20,18 @@
 package com.orientechnologies.agent.security.authenticator;
 
 import com.orientechnologies.common.log.OLogManager;
-import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.metadata.security.OSecurityUser;
 import com.orientechnologies.orient.core.metadata.security.OUser;
-import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.security.OSecurityManager;
 import com.orientechnologies.orient.core.security.symmetrickey.OSymmetricKey;
 import com.orientechnologies.orient.core.security.symmetrickey.OUserSymmetricKeyConfig;
-import com.orientechnologies.orient.server.OServer;
-import com.orientechnologies.orient.server.config.OServerConfigurationManager;
-import com.orientechnologies.orient.server.config.OServerUserConfiguration;
-//import com.orientechnologies.orient.server.security.OSecurityAuthenticatorAbstract;
 import com.orientechnologies.orient.server.security.authenticator.OSystemUserAuthenticator;
 
-
 /**
- * Provides an OSystem user symmetric key authenticator, derived from OSystemUserAuthenticator.
- * This is used in security.json.
- * 
+ * Provides an OSystem user symmetric key authenticator, derived from OSystemUserAuthenticator. This
+ * is used in security.json.
+ *
  * @author S. Colin Leister
- * 
  */
 public class OSystemSymmetricKeyAuth extends OSystemUserAuthenticator {
 
@@ -56,21 +48,21 @@ public class OSystemSymmetricKeyAuth extends OSystemUserAuthenticator {
     String principal = null;
 
     try {
-      if(getServer() != null) {	
-    	  // dbName parameter is null because we don't need to filter any roles for this.
-    	  OUser user = getServer().getSecurity().getSystemUser(username, null);
+      if (getServer() != null) {
+        // dbName parameter is null because we don't need to filter any roles for this.
+        OUser user = getServer().getSecurity().getSystemUser(username, null);
 
-    	  if(user != null && user.getAccountStatus() == OSecurityUser.STATUSES.ACTIVE) {    	  	   
+        if (user != null && user.getAccountStatus() == OSecurityUser.STATUSES.ACTIVE) {
           OUserSymmetricKeyConfig userConfig = new OUserSymmetricKeyConfig(user);
-    	  	   
+
           OSymmetricKey sk = OSymmetricKey.fromConfig(userConfig);
 
           String decryptedUsername = sk.decryptAsString(password);
-            
-          if(OSecurityManager.instance().checkPassword(username, decryptedUsername)) {
+
+          if (OSecurityManager.instance().checkPassword(username, decryptedUsername)) {
             principal = username;
           }
-    	  }
+        }
       }
     } catch (Exception ex) {
       OLogManager.instance().error(this, "authenticate()", ex);

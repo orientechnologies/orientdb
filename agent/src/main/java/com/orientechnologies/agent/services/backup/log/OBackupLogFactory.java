@@ -20,9 +20,7 @@ package com.orientechnologies.agent.services.backup.log;
 
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
-/**
- * Created by Enrico Risa on 31/03/16.
- */
+/** Created by Enrico Risa on 31/03/16. */
 public class OBackupLogFactory {
 
   public OBackupLog fromDoc(ODocument doc) {
@@ -37,48 +35,48 @@ public class OBackupLogFactory {
 
     OBackupLog log = null;
     switch (op) {
-    case BACKUP_STARTED:
-      log = new OBackupStartedLog(unitId, txId, uuid, dbName, mode);
-      log.fromDoc(doc);
-      break;
-    case BACKUP_ERROR:
-      log = new OBackupErrorLog(unitId, txId, uuid, dbName, mode);
-      log.fromDoc(doc);
-      break;
-    case BACKUP_FINISHED:
-      log = new OBackupFinishedLog(unitId, txId, uuid, dbName, mode);
-      log.fromDoc(doc);
-      break;
-    case BACKUP_SCHEDULED:
-      log = new OBackupScheduledLog(unitId, txId, uuid, dbName, mode);
-      log.fromDoc(doc);
-      break;
-    case RESTORE_ERROR:
-      log = new ORestoreErrorLog(unitId, txId, uuid, dbName, mode);
-      log.fromDoc(doc);
-      break;
-    case RESTORE_FINISHED:
-      log = new ORestoreFinishedLog(unitId, txId, uuid, dbName, mode);
-      log.fromDoc(doc);
-      break;
-    case RESTORE_STARTED:
-      log = new ORestoreStartedLog(unitId, txId, uuid, dbName, mode);
-      log.fromDoc(doc);
-      break;
-    case UPLOAD_ERROR:
-      log = new OBackupUploadErrorLog(unitId, txId, uuid, dbName, mode);
-      log.fromDoc(doc);
-      break;
-    case UPLOAD_STARTED:
-      log = new OBackupUploadStartedLog(unitId, txId, uuid, dbName, mode);
-      log.fromDoc(doc);
-      break;
-    case UPLOAD_FINISHED:
-      log = new OBackupUploadFinishedLog(unitId, txId, uuid, dbName, mode);
-      log.fromDoc(doc);
-      break;
-    default:
-      throw new IllegalStateException("Cannot deserialize passed in log record.");
+      case BACKUP_STARTED:
+        log = new OBackupStartedLog(unitId, txId, uuid, dbName, mode);
+        log.fromDoc(doc);
+        break;
+      case BACKUP_ERROR:
+        log = new OBackupErrorLog(unitId, txId, uuid, dbName, mode);
+        log.fromDoc(doc);
+        break;
+      case BACKUP_FINISHED:
+        log = new OBackupFinishedLog(unitId, txId, uuid, dbName, mode);
+        log.fromDoc(doc);
+        break;
+      case BACKUP_SCHEDULED:
+        log = new OBackupScheduledLog(unitId, txId, uuid, dbName, mode);
+        log.fromDoc(doc);
+        break;
+      case RESTORE_ERROR:
+        log = new ORestoreErrorLog(unitId, txId, uuid, dbName, mode);
+        log.fromDoc(doc);
+        break;
+      case RESTORE_FINISHED:
+        log = new ORestoreFinishedLog(unitId, txId, uuid, dbName, mode);
+        log.fromDoc(doc);
+        break;
+      case RESTORE_STARTED:
+        log = new ORestoreStartedLog(unitId, txId, uuid, dbName, mode);
+        log.fromDoc(doc);
+        break;
+      case UPLOAD_ERROR:
+        log = new OBackupUploadErrorLog(unitId, txId, uuid, dbName, mode);
+        log.fromDoc(doc);
+        break;
+      case UPLOAD_STARTED:
+        log = new OBackupUploadStartedLog(unitId, txId, uuid, dbName, mode);
+        log.fromDoc(doc);
+        break;
+      case UPLOAD_FINISHED:
+        log = new OBackupUploadFinishedLog(unitId, txId, uuid, dbName, mode);
+        log.fromDoc(doc);
+        break;
+      default:
+        throw new IllegalStateException("Cannot deserialize passed in log record.");
     }
     return log;
   }

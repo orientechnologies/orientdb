@@ -2,8 +2,8 @@ package com.orientechnologies.agent.services.metrics;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.orientechnologies.agent.EnterprisePermissions;
-import com.orientechnologies.agent.cloud.processor.tasks.response.EnterpriseStatsResponse;
 import com.orientechnologies.agent.cloud.processor.tasks.request.NewEnterpriseStatsTask;
+import com.orientechnologies.agent.cloud.processor.tasks.response.EnterpriseStatsResponse;
 import com.orientechnologies.agent.operation.NodeResponse;
 import com.orientechnologies.agent.operation.OperationResponseFromNode;
 import com.orientechnologies.agent.operation.ResponseOk;
@@ -21,26 +21,28 @@ import com.orientechnologies.orient.server.network.protocol.http.OHttpUtils;
 import com.orientechnologies.orient.server.network.protocol.http.command.OServerCommandAuthenticatedServerAbstract;
 import io.prometheus.client.CollectorRegistry;
 import io.prometheus.client.exporter.common.TextFormat;
-
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.StringWriter;
 import java.util.*;
 import java.util.stream.Collectors;
 
-/**
- * Created by Enrico Risa on 06/08/2018.
- */
+/** Created by Enrico Risa on 06/08/2018. */
 public class OrientDBMetricsCommand extends OServerCommandAuthenticatedServerAbstract {
 
-  private static final String[] NAMES = { "GET|metrics", "GET|metrics/*", "POST|metrics/config", "POST|metrics/config" };
+  private static final String[] NAMES = {
+    "GET|metrics", "GET|metrics/*", "POST|metrics/config", "POST|metrics/config"
+  };
 
-  private OEnterpriseServer      enterpriseServer;
-  private OMetricsRegistry       registry;
+  private OEnterpriseServer enterpriseServer;
+  private OMetricsRegistry registry;
   private OrientDBMetricsService service;
-  private ObjectMapper           mapper = new ObjectMapper();
+  private ObjectMapper mapper = new ObjectMapper();
 
-  public OrientDBMetricsCommand(OEnterpriseServer enterpriseServer, OMetricsRegistry registry, OrientDBMetricsService settings) {
+  public OrientDBMetricsCommand(
+      OEnterpriseServer enterpriseServer,
+      OMetricsRegistry registry,
+      OrientDBMetricsService settings) {
     super(EnterprisePermissions.SERVER_METRICS.toString());
     this.enterpriseServer = enterpriseServer;
     this.registry = registry;
@@ -55,7 +57,8 @@ public class OrientDBMetricsCommand extends OServerCommandAuthenticatedServerAbs
       doGet(iResponse, parts);
     } else if (iRequest.getHttpMethod().equalsIgnoreCase("POST")) {
 
-      if (super.authenticate(iRequest, iResponse, true, EnterprisePermissions.SERVER_METRICS_EDIT.toString())) {
+      if (super.authenticate(
+          iRequest, iResponse, true, EnterprisePermissions.SERVER_METRICS_EDIT.toString())) {
         doPost(iRequest, iResponse, parts);
       } else {
         throw new IllegalArgumentException("cannot execute post request ");
@@ -65,7 +68,8 @@ public class OrientDBMetricsCommand extends OServerCommandAuthenticatedServerAbs
     return false;
   }
 
-  private ODocument calculateDBStatus(final ODistributedServerManager manager, final ODocument cfg) {
+  private ODocument calculateDBStatus(
+      final ODistributedServerManager manager, final ODocument cfg) {
 
     final ODocument doc = new ODocument();
     final Collection<ODocument> members = cfg.field("members");
@@ -88,7 +92,8 @@ public class OrientDBMetricsCommand extends OServerCommandAuthenticatedServerAbs
     final ODistributedConfiguration dbCfg = manager.getDatabaseConfiguration(database, false);
     final Set<String> servers = dbCfg.getAllConfiguredServers();
     for (String serverName : servers) {
-      final ODistributedServerManager.DB_STATUS databaseStatus = manager.getDatabaseStatus(serverName, database);
+      final ODistributedServerManager.DB_STATUS databaseStatus =
+          manager.getDatabaseStatus(serverName, database);
       entries.field(serverName, databaseStatus.toString());
     }
     return entries;
@@ -104,8 +109,7 @@ public class OrientDBMetricsCommand extends OServerCommandAuthenticatedServerAbs
         metrics = manager.getClusterConfiguration();
         final Collection<ODocument> documents = metrics.field("members");
         List<String> servers = new ArrayList<String>(documents.size());
-        for (ODocument document : documents)
-          servers.add(document.field("name"));
+        for (ODocument document : documents) servers.add(document.field("name"));
 
         Set<String> databases = manager.getServerInstance().listDatabases();
         if (databases.isEmpty()) {
@@ -113,16 +117,21 @@ public class OrientDBMetricsCommand extends OServerCommandAuthenticatedServerAbs
 
         } else {
 
-          Map<String, ODocument> responses = enterpriseServer.getNodesManager().sendAll(new NewEnterpriseStatsTask()).stream()
-              .collect(Collectors.toMap(OperationResponseFromNode::getSenderNodeName, (r) -> {
-                NodeResponse node = r.getNodeResponse();
-                if (node != null && node.getResponseType() == 1) {
-                  ResponseOk ok = (ResponseOk) node;
-                  EnterpriseStatsResponse response = (EnterpriseStatsResponse) ok.getPayload();
-                  return new ODocument().fromJSON(response.getStats());
-                }
-                return new ODocument();
-              }));
+          Map<String, ODocument> responses =
+              enterpriseServer.getNodesManager().sendAll(new NewEnterpriseStatsTask()).stream()
+                  .collect(
+                      Collectors.toMap(
+                          OperationResponseFromNode::getSenderNodeName,
+                          (r) -> {
+                            NodeResponse node = r.getNodeResponse();
+                            if (node != null && node.getResponseType() == 1) {
+                              ResponseOk ok = (ResponseOk) node;
+                              EnterpriseStatsResponse response =
+                                  (EnterpriseStatsResponse) ok.getPayload();
+                              return new ODocument().fromJSON(response.getStats());
+                            }
+                            return new ODocument();
+                          }));
 
           metrics.field("clusterStats", responses);
 
@@ -138,42 +147,65 @@ public class OrientDBMetricsCommand extends OServerCommandAuthenticatedServerAbs
       }
       metrics.setProperty("distributed", manager != null);
       metrics.setProperty("nodeName", manager != null ? manager.getLocalNodeName() : "orientdb");
-      iResponse
-          .send(OHttpUtils.STATUS_OK_CODE, OHttpUtils.STATUS_OK_DESCRIPTION, OHttpUtils.CONTENT_JSON, metrics.toJSON(""), null);
+      iResponse.send(
+          OHttpUtils.STATUS_OK_CODE,
+          OHttpUtils.STATUS_OK_DESCRIPTION,
+          OHttpUtils.CONTENT_JSON,
+          metrics.toJSON(""),
+          null);
     } else {
       String command = parts[1];
 
       OrientDBMetricsSettings settings = service.getSettings();
       switch (command) {
-      case "prometheus":
-        if (settings.reporters.prometheus.enabled) {
-          StringWriter writer = new StringWriter();
-          try {
-            TextFormat.write004(writer, CollectorRegistry.defaultRegistry.filteredMetricFamilySamples(Collections.emptySet()));
-            iResponse
-                .send(OHttpUtils.STATUS_OK_CODE, OHttpUtils.STATUS_OK_DESCRIPTION, OHttpUtils.CONTENT_TEXT_PLAIN, writer.toString(),
-                    null);
-          } finally {
+        case "prometheus":
+          if (settings.reporters.prometheus.enabled) {
+            StringWriter writer = new StringWriter();
             try {
-              writer.close();
-            } catch (Exception e) {
-              OLogManager.instance().warn(this, "Failed to close resource " + writer);
+              TextFormat.write004(
+                  writer,
+                  CollectorRegistry.defaultRegistry.filteredMetricFamilySamples(
+                      Collections.emptySet()));
+              iResponse.send(
+                  OHttpUtils.STATUS_OK_CODE,
+                  OHttpUtils.STATUS_OK_DESCRIPTION,
+                  OHttpUtils.CONTENT_TEXT_PLAIN,
+                  writer.toString(),
+                  null);
+            } finally {
+              try {
+                writer.close();
+              } catch (Exception e) {
+                OLogManager.instance().warn(this, "Failed to close resource " + writer);
+              }
             }
           }
-        }
-        break;
-      case "config":
-        String valueAsString = mapper.writeValueAsString(settings);
-        iResponse.send(OHttpUtils.STATUS_OK_CODE, OHttpUtils.STATUS_OK_DESCRIPTION, OHttpUtils.CONTENT_JSON, valueAsString, null);
-        break;
-      case "list":
-        Map<String, MetricInfo> metrics = getMetricsLists(registry.getMetrics(), "");
-        String metricsAsString = mapper
-            .writeValueAsString(new MetricList(metrics.entrySet().stream().map(v -> v.getValue()).collect(Collectors.toList())));
-        iResponse.send(OHttpUtils.STATUS_OK_CODE, OHttpUtils.STATUS_OK_DESCRIPTION, OHttpUtils.CONTENT_JSON, metricsAsString, null);
-        break;
+          break;
+        case "config":
+          String valueAsString = mapper.writeValueAsString(settings);
+          iResponse.send(
+              OHttpUtils.STATUS_OK_CODE,
+              OHttpUtils.STATUS_OK_DESCRIPTION,
+              OHttpUtils.CONTENT_JSON,
+              valueAsString,
+              null);
+          break;
+        case "list":
+          Map<String, MetricInfo> metrics = getMetricsLists(registry.getMetrics(), "");
+          String metricsAsString =
+              mapper.writeValueAsString(
+                  new MetricList(
+                      metrics.entrySet().stream()
+                          .map(v -> v.getValue())
+                          .collect(Collectors.toList())));
+          iResponse.send(
+              OHttpUtils.STATUS_OK_CODE,
+              OHttpUtils.STATUS_OK_DESCRIPTION,
+              OHttpUtils.CONTENT_JSON,
+              metricsAsString,
+              null);
+          break;
       }
-
     }
   }
 
@@ -228,27 +260,35 @@ public class OrientDBMetricsCommand extends OServerCommandAuthenticatedServerAbs
   private Map<String, MetricInfo> getMetricsLists(Map<String, OMetric> metrics, String prefix) {
 
     Map<String, MetricInfo> infos = new HashMap<>();
-    metrics.forEach((k, v) -> {
-      if (v instanceof OMetricSet) {
-        infos.putAll(getMetricsLists(((OMetricSet) v).getMetrics(), ((OMetricSet) v).prefix()));
-      } else {
-        if (prefix != null && !prefix.isEmpty()) {
-          infos.put(prefix + "." + k, new MetricInfo(prefix + "." + k, v.getDescription(), v.getUnitOfMeasure()));
-        } else {
-          infos.put(k, new MetricInfo(k, v.getDescription(), v.getUnitOfMeasure()));
-
-        }
-      }
-    });
+    metrics.forEach(
+        (k, v) -> {
+          if (v instanceof OMetricSet) {
+            infos.putAll(getMetricsLists(((OMetricSet) v).getMetrics(), ((OMetricSet) v).prefix()));
+          } else {
+            if (prefix != null && !prefix.isEmpty()) {
+              infos.put(
+                  prefix + "." + k,
+                  new MetricInfo(prefix + "." + k, v.getDescription(), v.getUnitOfMeasure()));
+            } else {
+              infos.put(k, new MetricInfo(k, v.getDescription(), v.getUnitOfMeasure()));
+            }
+          }
+        });
     return infos;
-
   }
 
-  private void doPost(OHttpRequest iRequest, OHttpResponse iResponse, String[] parts) throws IOException {
+  private void doPost(OHttpRequest iRequest, OHttpResponse iResponse, String[] parts)
+      throws IOException {
 
-    OrientDBMetricsSettings settings = mapper.readValue(iRequest.getContent(), OrientDBMetricsSettings.class);
+    OrientDBMetricsSettings settings =
+        mapper.readValue(iRequest.getContent(), OrientDBMetricsSettings.class);
     service.changeSettings(settings);
-    iResponse.send(OHttpUtils.STATUS_OK_CODE, OHttpUtils.STATUS_OK_DESCRIPTION, OHttpUtils.CONTENT_JSON, null, null);
+    iResponse.send(
+        OHttpUtils.STATUS_OK_CODE,
+        OHttpUtils.STATUS_OK_DESCRIPTION,
+        OHttpUtils.CONTENT_JSON,
+        null,
+        null);
   }
 
   @Override

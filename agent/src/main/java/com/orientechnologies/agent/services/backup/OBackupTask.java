@@ -24,18 +24,15 @@ import com.orientechnologies.agent.services.backup.strategy.OBackupStrategy;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-
 import java.io.IOException;
 import java.util.Date;
 import java.util.TimerTask;
 
-/**
- * Created by Enrico Risa on 25/03/16.
- */
+/** Created by Enrico Risa on 25/03/16. */
 public class OBackupTask implements OBackupListener {
 
   private OBackupStrategy strategy;
-  private TimerTask       task;
+  private TimerTask task;
   private OBackupListener listener;
 
   public OBackupTask(OBackupStrategy strategy) {
@@ -48,23 +45,35 @@ public class OBackupTask implements OBackupListener {
     if (strategy.isEnabled()) {
       Date nextExecution = strategy.scheduleNextExecution(this);
 
-      task = Orient.instance().scheduleTask(() -> {
-        Orient.instance().submit(() -> {
-          try {
-            strategy.doBackup(OBackupTask.this);
-          } catch (IOException e) {
-            OLogManager.instance().error(this, "Error " + e.getMessage(), e);
-          }
-        });
-      }, nextExecution, 0);
+      task =
+          Orient.instance()
+              .scheduleTask(
+                  () -> {
+                    Orient.instance()
+                        .submit(
+                            () -> {
+                              try {
+                                strategy.doBackup(OBackupTask.this);
+                              } catch (IOException e) {
+                                OLogManager.instance().error(this, "Error " + e.getMessage(), e);
+                              }
+                            });
+                  },
+                  nextExecution,
+                  0);
 
-      OLogManager.instance().info(this,
-          "Scheduled [" + strategy.getMode() + "] task : " + strategy.getUUID() + ". Next execution will be " + nextExecution);
-
+      OLogManager.instance()
+          .info(
+              this,
+              "Scheduled ["
+                  + strategy.getMode()
+                  + "] task : "
+                  + strategy.getUUID()
+                  + ". Next execution will be "
+                  + nextExecution);
     }
 
     strategy.retainLogs();
-
   }
 
   public OBackupStrategy getStrategy() {
@@ -105,7 +114,8 @@ public class OBackupTask implements OBackupListener {
       try {
         return listener.onEvent(cfg, log);
       } catch (Exception e) {
-        OLogManager.instance().info(this, "Error invoking listener on event  [" + log.getType() + "] ");
+        OLogManager.instance()
+            .info(this, "Error invoking listener on event  [" + log.getType() + "] ");
       }
     }
     return true;
@@ -114,7 +124,8 @@ public class OBackupTask implements OBackupListener {
   public void stop() {
     if (task != null) {
       task.cancel();
-      OLogManager.instance().info(this, "Cancelled schedule backup on database  [" + strategy.getDbName() + "] ");
+      OLogManager.instance()
+          .info(this, "Cancelled schedule backup on database  [" + strategy.getDbName() + "] ");
     }
   }
 

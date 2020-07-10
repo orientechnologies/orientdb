@@ -5,15 +5,14 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.tinkerpop.blueprints.impls.orient.OrientBaseGraph;
+import java.util.Collections;
+import java.util.List;
 import org.junit.Assert;
 import org.junit.Ignore;
 import org.junit.Test;
 
-import java.util.Collections;
-import java.util.List;
-
 public class HAMultiDCCrudTest extends AbstractServerClusterTest {
-  private final static int SERVERS = 3;
+  private static final int SERVERS = 3;
 
   @Override
   public String getDatabaseName() {
@@ -38,8 +37,12 @@ public class HAMultiDCCrudTest extends AbstractServerClusterTest {
   @Override
   protected void executeTest() throws Exception {
     OGlobalConfiguration.NETWORK_SOCKET_RETRY_STRATEGY.setValue("same-dc");
-    final ODistributedConfiguration cfg = serverInstance.get(0).getServerInstance().getDistributedManager()
-        .getDatabaseConfiguration(getDatabaseName());
+    final ODistributedConfiguration cfg =
+        serverInstance
+            .get(0)
+            .getServerInstance()
+            .getDistributedManager()
+            .getDatabaseConfiguration(getDatabaseName());
 
     Assert.assertTrue(cfg.hasDataCenterConfiguration());
     Assert.assertTrue(cfg.isLocalDataCenterWriteQuorum());
@@ -74,16 +77,20 @@ public class HAMultiDCCrudTest extends AbstractServerClusterTest {
     db = new ODatabaseDocumentTx("remote:localhost:2425/" + getDatabaseName());
     db.open("admin", "admin");
     try {
-      Iterable<ODocument> result = db.command(new OCommandSQL("select set(name) as names from Item")).execute();
+      Iterable<ODocument> result =
+          db.command(new OCommandSQL("select set(name) as names from Item")).execute();
       Assert.assertEquals(Collections.singleton("foo"), result.iterator().next().field("names"));
 
       result = db.command(new OCommandSQL("select list(name) as names from Item")).execute();
-      Assert.assertEquals(Collections.singletonList("foo"), result.iterator().next().field("names"));
+      Assert.assertEquals(
+          Collections.singletonList("foo"), result.iterator().next().field("names"));
 
-      db.command(new OCommandSQL("INSERT into Item (map) values ({'a':'b'}) return @this")).execute();
+      db.command(new OCommandSQL("INSERT into Item (map) values ({'a':'b'}) return @this"))
+          .execute();
 
       result = db.command(new OCommandSQL("select map(map) as names from Item")).execute();
-      Assert.assertEquals(Collections.singletonMap("a", "b"), result.iterator().next().field("names"));
+      Assert.assertEquals(
+          Collections.singletonMap("a", "b"), result.iterator().next().field("names"));
 
     } finally {
       db.close();
@@ -93,7 +100,8 @@ public class HAMultiDCCrudTest extends AbstractServerClusterTest {
     db = new ODatabaseDocumentTx("remote:localhost:2426/" + getDatabaseName());
     db.open("admin", "admin");
     try {
-      db.command(new OCommandSQL("INSERT into Item (map) values ({'a':'b'}) return @this")).execute();
+      db.command(new OCommandSQL("INSERT into Item (map) values ({'a':'b'}) return @this"))
+          .execute();
       Assert.fail("Quorum not reached, but no failure has been caught");
     } catch (Exception e) {
       Assert.assertTrue(e.getCause().toString().contains("Quorum"));
@@ -108,7 +116,8 @@ public class HAMultiDCCrudTest extends AbstractServerClusterTest {
     db = new ODatabaseDocumentTx("remote:localhost:2425/" + getDatabaseName());
     db.open("admin", "admin");
     try {
-      db.command(new OCommandSQL("INSERT into Item (map) values ({'a':'b'}) return @this")).execute();
+      db.command(new OCommandSQL("INSERT into Item (map) values ({'a':'b'}) return @this"))
+          .execute();
       Assert.fail("Quorum not reached, but no failure has been caught");
     } catch (Exception e) {
       Assert.assertTrue(e.getCause().toString().contains("Quorum"));
@@ -119,14 +128,17 @@ public class HAMultiDCCrudTest extends AbstractServerClusterTest {
     // RESTART THE FIRST SERVER DOWN
     serverInstance.get(0).getServerInstance().restart();
 
-    waitForDatabaseIsOnline(serverInstance.get(0).getServerInstance().getDistributedManager().getLocalNodeName(), getDatabaseName(),
+    waitForDatabaseIsOnline(
+        serverInstance.get(0).getServerInstance().getDistributedManager().getLocalNodeName(),
+        getDatabaseName(),
         30000);
 
     // RETRY AN INSERT AND CHECK IT DOESN'T FAILS (QUORUM REACHED)
     db = new ODatabaseDocumentTx("remote:localhost:2425/" + getDatabaseName());
     db.open("admin", "admin");
     try {
-      db.command(new OCommandSQL("INSERT into Item (map) values ({'a':'b'}) return @this")).execute();
+      db.command(new OCommandSQL("INSERT into Item (map) values ({'a':'b'}) return @this"))
+          .execute();
     } finally {
       db.close();
     }

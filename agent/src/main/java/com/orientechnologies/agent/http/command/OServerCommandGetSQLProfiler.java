@@ -22,13 +22,12 @@ import com.orientechnologies.enterprise.server.OEnterpriseServer;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpRequest;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpResponse;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpUtils;
-
 import java.io.IOException;
 import java.util.Optional;
 
 public class OServerCommandGetSQLProfiler extends OServerCommandDistributedScope {
-  private static final String[]          NAMES = { "GET|sqlProfiler/*" };
-  private final        OEnterpriseServer eeServer;
+  private static final String[] NAMES = {"GET|sqlProfiler/*"};
+  private final OEnterpriseServer eeServer;
 
   public OServerCommandGetSQLProfiler(OEnterpriseServer server) {
     super(EnterprisePermissions.SERVER_METRICS.toString(), server);
@@ -54,7 +53,12 @@ public class OServerCommandGetSQLProfiler extends OServerCommandDistributedScope
       }
 
     } catch (Exception e) {
-      iResponse.send(OHttpUtils.STATUS_BADREQ_CODE, OHttpUtils.STATUS_BADREQ_DESCRIPTION, OHttpUtils.CONTENT_TEXT_PLAIN, e, null);
+      iResponse.send(
+          OHttpUtils.STATUS_BADREQ_CODE,
+          OHttpUtils.STATUS_BADREQ_DESCRIPTION,
+          OHttpUtils.CONTENT_TEXT_PLAIN,
+          e,
+          null);
     }
     return false;
   }
@@ -63,23 +67,23 @@ public class OServerCommandGetSQLProfiler extends OServerCommandDistributedScope
       throws IOException, InterruptedException {
     String db = iRequest.getParameter("db");
     switch (command) {
-    case "running":
+      case "running":
+        if (db != null) {
+          iResponse.writeResult(
+              eeServer.listQueries(
+                  Optional.of((c -> c.getDatabase().getName().equalsIgnoreCase(db)))));
+        } else {
+          iResponse.writeResult(eeServer.listQueries(Optional.empty()));
+        }
 
-      if (db != null) {
-        iResponse.writeResult(eeServer.listQueries(Optional.of((c -> c.getDatabase().getName().equalsIgnoreCase(db)))));
-      } else {
-        iResponse.writeResult(eeServer.listQueries(Optional.empty()));
-      }
-
-      break;
-    case "stats":
-      Optional database = Optional.ofNullable(db);
-      iResponse.writeResult(eeServer.getQueryStats(database));
-      break;
-    default:
-      throw new UnsupportedOperationException();
+        break;
+      case "stats":
+        Optional database = Optional.ofNullable(db);
+        iResponse.writeResult(eeServer.getQueryStats(database));
+        break;
+      default:
+        throw new UnsupportedOperationException();
     }
-
   }
 
   @Override

@@ -8,9 +8,7 @@ import com.orientechnologies.orient.core.sql.executor.OResultInternal;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import com.orientechnologies.orient.server.OClientConnection;
 
-/**
- * Created by Enrico Risa on 23/07/2018.
- */
+/** Created by Enrico Risa on 23/07/2018. */
 public class KillQueryFunction extends OSQLEnterpriseFunction {
 
   private OEnterpriseServer server;
@@ -22,15 +20,22 @@ public class KillQueryFunction extends OSQLEnterpriseFunction {
   }
 
   @Override
-  public Object exec(Object iThis, OIdentifiable iCurrentRecord, Object iCurrentResult, Object[] iParams,
+  public Object exec(
+      Object iThis,
+      OIdentifiable iCurrentRecord,
+      Object iCurrentResult,
+      Object[] iParams,
       OCommandContext iContext) {
     String queryId = iParams[0].toString();
 
     OResultInternal internal = new OResultInternal();
     String message = String.format("Query %s not found", queryId);
     for (OClientConnection connection : server.getConnections()) {
-      if (connection.getDatabase() != null && connection.getDatabase().getName()
-          .equalsIgnoreCase(iContext.getDatabase().getName())) {
+      if (connection.getDatabase() != null
+          && connection
+              .getDatabase()
+              .getName()
+              .equalsIgnoreCase(iContext.getDatabase().getName())) {
         OResultSet resultSet = connection.getDatabase().getActiveQuery(queryId);
         if (resultSet != null) {
           resultSet.close();

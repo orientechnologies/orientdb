@@ -31,32 +31,28 @@ import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.schedule.OCronExpression;
 import com.orientechnologies.orient.server.handler.OAutomaticBackup;
-
 import java.io.File;
 import java.io.IOException;
 import java.text.ParseException;
 import java.util.*;
-import java.util.function.BiFunction;
 
-/**
- * Created by Enrico Risa on 22/03/16.
- */
+/** Created by Enrico Risa on 22/03/16. */
 public class OBackupConfig {
 
-  public static final String                 BACKUPS = "backups";
-  private             ODocument              configuration;
-  private             Map<String, ODocument> configs = new HashMap<String, ODocument>();
+  public static final String BACKUPS = "backups";
+  private ODocument configuration;
+  private Map<String, ODocument> configs = new HashMap<String, ODocument>();
 
-  public static final String DBNAME         = "dbName";
+  public static final String DBNAME = "dbName";
   public static final String RETENTION_DAYS = "retentionDays";
-  public static final String ENABLED        = "enabled";
-  public static final String WHEN           = "when";
-  public static final String DIRECTORY      = "directory";
-  public static final String MODES          = "modes";
-  public static final String ID             = "uuid";
+  public static final String ENABLED = "enabled";
+  public static final String WHEN = "when";
+  public static final String DIRECTORY = "directory";
+  public static final String MODES = "modes";
+  public static final String ID = "uuid";
 
   private static final String configFile = "${ORIENTDB_HOME}/config/backups.json";
-  private              String filePath   = null;
+  private String filePath = null;
 
   public OBackupConfig() {
     this.configuration = new ODocument();
@@ -74,13 +70,18 @@ public class OBackupConfig {
         final String configurationContent = OIOUtils.readFileAsString(f);
         configuration = new ODocument().fromJSON(configurationContent, "noMap");
       } catch (IOException e) {
-        throw OException.wrapException(new OConfigurationException(
-            "Cannot load Backups configuration file '" + filePath + "'. Backups  Plugin will be disabled"), e);
+        throw OException.wrapException(
+            new OConfigurationException(
+                "Cannot load Backups configuration file '"
+                    + filePath
+                    + "'. Backups  Plugin will be disabled"),
+            e);
       }
     } else {
       try {
         if (!f.getParentFile().mkdirs()) {
-          OLogManager.instance().warn(this, "Error creating directories '%s'", f.getParentFile().getName());
+          OLogManager.instance()
+              .warn(this, "Error creating directories '%s'", f.getParentFile().getName());
         }
         if (!f.createNewFile()) {
           OLogManager.instance().warn(this, "Error creating file '%s'", f.getName());
@@ -89,8 +90,12 @@ public class OBackupConfig {
 
         OLogManager.instance().info(this, "Backups plugin: created configuration to file '%s'", f);
       } catch (IOException e) {
-        throw OException.wrapException(new OConfigurationException(
-            "Backups create Events plugin configuration file '" + filePath + "'. Backups Plugin will be disabled"), e);
+        throw OException.wrapException(
+            new OConfigurationException(
+                "Backups create Events plugin configuration file '"
+                    + filePath
+                    + "'. Backups Plugin will be disabled"),
+            e);
       }
     }
 
@@ -112,7 +117,6 @@ public class OBackupConfig {
   public ODocument addBackup(ODocument doc) {
 
     synchronized (this) {
-
       String uuid = UUID.randomUUID().toString();
       doc.field(ID, uuid);
       validateBackup(doc);
@@ -147,7 +151,8 @@ public class OBackupConfig {
     ODocument full = modes.field(OAutomaticBackup.MODE.FULL_BACKUP.toString());
 
     if (incremental == null && full == null) {
-      throw new OConfigurationException("Field mode is invalid: supported mode are FULL_BACKUP,INCREMENTAL_BACKUP");
+      throw new OConfigurationException(
+          "Field mode is invalid: supported mode are FULL_BACKUP,INCREMENTAL_BACKUP");
     }
 
     if (incremental != null) {
@@ -171,9 +176,7 @@ public class OBackupConfig {
     } else {
       ODocument modes = doc.field(MODES);
       validateModes(modes);
-
     }
-
   }
 
   public ODocument changeBackup(String uuid, ODocument doc) {
@@ -203,9 +206,11 @@ public class OBackupConfig {
 
   public OBackupStrategy strategy(ODocument cfg, OBackupLogger logger) {
 
-    ODocument full = (ODocument) cfg.eval(OBackupConfig.MODES + "." + OAutomaticBackup.MODE.FULL_BACKUP);
+    ODocument full =
+        (ODocument) cfg.eval(OBackupConfig.MODES + "." + OAutomaticBackup.MODE.FULL_BACKUP);
 
-    ODocument incremental = (ODocument) cfg.eval(OBackupConfig.MODES + "." + OAutomaticBackup.MODE.INCREMENTAL_BACKUP);
+    ODocument incremental =
+        (ODocument) cfg.eval(OBackupConfig.MODES + "." + OAutomaticBackup.MODE.INCREMENTAL_BACKUP);
 
     OBackupStrategy strategy;
     if (full != null && incremental != null) {
@@ -223,9 +228,10 @@ public class OBackupConfig {
       final File f = new File(filePath);
       OIOUtils.writeFile(f, configuration.toJSON("prettyPrint"));
     } catch (IOException e) {
-      throw OException
-          .wrapException(new OConfigurationException("Cannot save Backup configuration file '" + configFile + "'. "), e);
+      throw OException.wrapException(
+          new OConfigurationException(
+              "Cannot save Backup configuration file '" + configFile + "'. "),
+          e);
     }
   }
-
 }

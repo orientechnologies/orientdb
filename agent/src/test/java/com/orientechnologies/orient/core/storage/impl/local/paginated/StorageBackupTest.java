@@ -28,19 +28,17 @@ import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
-
 import java.io.File;
 import java.io.IOException;
 import java.util.Random;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Test;
 
 /**
  * @author Andrey Lomakin <lomakin.andrey@gmail.com>.
  * @since 9/9/2015
  */
-
 public class StorageBackupTest {
   private String buildDirectory;
 
@@ -85,8 +83,7 @@ public class StorageBackupTest {
     final File backupDir = new File(buildDirectory, "backupDir");
     OFileUtils.deleteRecursively(backupDir);
 
-    if (!backupDir.exists())
-      Assert.assertTrue(backupDir.mkdirs());
+    if (!backupDir.exists()) Assert.assertTrue(backupDir.mkdirs());
 
     db.incrementalBackup(backupDir.getAbsolutePath());
     orientDB.close();
@@ -96,12 +93,25 @@ public class StorageBackupTest {
 
     OFileUtils.deleteRecursively(new File(backedUpDbDirectory));
 
-    OrientDBEmbedded embedded = (OrientDBEmbedded) OrientDBInternal.embedded(buildDirectory, OrientDBConfig.defaultConfig());
-    embedded.restore(backupDbName, null, null, null, backupDir.getAbsolutePath(), OrientDBConfig.defaultConfig());
+    OrientDBEmbedded embedded =
+        (OrientDBEmbedded)
+            OrientDBInternal.embedded(buildDirectory, OrientDBConfig.defaultConfig());
+    embedded.restore(
+        backupDbName,
+        null,
+        null,
+        null,
+        backupDir.getAbsolutePath(),
+        OrientDBConfig.defaultConfig());
     embedded.close();
 
-    final ODatabaseCompare compare = new ODatabaseCompare("plocal:" + dbDirectory, "plocal:" + backedUpDbDirectory, "admin",
-        "admin", System.out::println);
+    final ODatabaseCompare compare =
+        new ODatabaseCompare(
+            "plocal:" + dbDirectory,
+            "plocal:" + backedUpDbDirectory,
+            "admin",
+            "admin",
+            System.out::println);
 
     Assert.assertTrue(compare.compare());
 
@@ -118,7 +128,8 @@ public class StorageBackupTest {
 
   @Test
   public void testSingeThreadIncrementalBackup() throws IOException {
-    final String dbDirectory = buildDirectory + File.separator + StorageBackupTest.class.getSimpleName();
+    final String dbDirectory =
+        buildDirectory + File.separator + StorageBackupTest.class.getSimpleName();
     OFileUtils.deleteRecursively(new File(dbDirectory));
 
     OrientDB orientDB = new OrientDB("embedded:" + buildDirectory, OrientDBConfig.defaultConfig());
@@ -152,8 +163,7 @@ public class StorageBackupTest {
     final File backupDir = new File(buildDirectory, "backupDir");
     OFileUtils.deleteRecursively(backupDir);
 
-    if (!backupDir.exists())
-      Assert.assertTrue(backupDir.mkdirs());
+    if (!backupDir.exists()) Assert.assertTrue(backupDir.mkdirs());
 
     db.incrementalBackup(backupDir.getAbsolutePath());
 
@@ -184,12 +194,25 @@ public class StorageBackupTest {
     final String backedUpDbDirectory = buildDirectory + File.separator + backupDbName;
     OFileUtils.deleteRecursively(new File(backedUpDbDirectory));
 
-    OrientDBEmbedded embedded = (OrientDBEmbedded) OrientDBInternal.embedded(buildDirectory, OrientDBConfig.defaultConfig());
-    embedded.restore(backupDbName, null, null, null, backupDir.getAbsolutePath(), OrientDBConfig.defaultConfig());
+    OrientDBEmbedded embedded =
+        (OrientDBEmbedded)
+            OrientDBInternal.embedded(buildDirectory, OrientDBConfig.defaultConfig());
+    embedded.restore(
+        backupDbName,
+        null,
+        null,
+        null,
+        backupDir.getAbsolutePath(),
+        OrientDBConfig.defaultConfig());
     embedded.close();
 
-    final ODatabaseCompare compare = new ODatabaseCompare("plocal:" + dbDirectory, "plocal:" + backedUpDbDirectory, "admin",
-        "admin", System.out::println);
+    final ODatabaseCompare compare =
+        new ODatabaseCompare(
+            "plocal:" + dbDirectory,
+            "plocal:" + backedUpDbDirectory,
+            "admin",
+            "admin",
+            System.out::println);
 
     Assert.assertTrue(compare.compare());
 
@@ -206,11 +229,14 @@ public class StorageBackupTest {
 
   @Test
   public void testSingeThreadIncrementalBackupEncryption() throws IOException {
-    final String dbDirectory = buildDirectory + File.separator + StorageBackupTest.class.getSimpleName();
+    final String dbDirectory =
+        buildDirectory + File.separator + StorageBackupTest.class.getSimpleName();
     OFileUtils.deleteRecursively(new File(dbDirectory));
 
-    final OrientDBConfig config = OrientDBConfig.builder()
-        .addConfig(OGlobalConfiguration.STORAGE_ENCRYPTION_KEY, "T1JJRU5UREJfSVNfQ09PTA==").build();
+    final OrientDBConfig config =
+        OrientDBConfig.builder()
+            .addConfig(OGlobalConfiguration.STORAGE_ENCRYPTION_KEY, "T1JJRU5UREJfSVNfQ09PTA==")
+            .build();
     OrientDB orientDB = new OrientDB("embedded:" + buildDirectory, config);
 
     final String dbName = StorageBackupTest.class.getSimpleName();
@@ -242,8 +268,7 @@ public class StorageBackupTest {
     final File backupDir = new File(buildDirectory, "backupDir");
     OFileUtils.deleteRecursively(backupDir);
 
-    if (!backupDir.exists())
-      Assert.assertTrue(backupDir.mkdirs());
+    if (!backupDir.exists()) Assert.assertTrue(backupDir.mkdirs());
 
     db.incrementalBackup(backupDir.getAbsolutePath());
 
@@ -274,13 +299,19 @@ public class StorageBackupTest {
     final String backedUpDbDirectory = buildDirectory + File.separator + backupDbName;
     OFileUtils.deleteRecursively(new File(backedUpDbDirectory));
 
-    OrientDBEmbedded embedded = (OrientDBEmbedded) OrientDBInternal.embedded(buildDirectory, config);
+    OrientDBEmbedded embedded =
+        (OrientDBEmbedded) OrientDBInternal.embedded(buildDirectory, config);
     embedded.restore(backupDbName, null, null, null, backupDir.getAbsolutePath(), config);
     embedded.close();
 
     OGlobalConfiguration.STORAGE_ENCRYPTION_KEY.setValue("T1JJRU5UREJfSVNfQ09PTA==");
-    final ODatabaseCompare compare = new ODatabaseCompare("plocal:" + dbDirectory, "plocal:" + backedUpDbDirectory, "admin",
-        "admin", System.out::println);
+    final ODatabaseCompare compare =
+        new ODatabaseCompare(
+            "plocal:" + dbDirectory,
+            "plocal:" + backedUpDbDirectory,
+            "admin",
+            "admin",
+            System.out::println);
 
     Assert.assertTrue(compare.compare());
 

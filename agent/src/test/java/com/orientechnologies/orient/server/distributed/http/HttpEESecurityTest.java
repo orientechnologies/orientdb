@@ -13,10 +13,11 @@ public class HttpEESecurityTest extends EEBaseServerHttpTest {
 
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
 
-    response = get("/security/config").payload("{ \"module\" : \"auditing\" }", CONTENT.JSON).getResponse();
+    response =
+        get("/security/config")
+            .payload("{ \"module\" : \"auditing\" }", CONTENT.JSON)
+            .getResponse();
 
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
-
   }
-
 }

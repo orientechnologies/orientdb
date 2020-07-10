@@ -1,7 +1,6 @@
 package com.orientechnologies.agent.profiler;
 
 import com.orientechnologies.agent.profiler.metrics.*;
-
 import java.io.IOException;
 import java.io.OutputStream;
 import java.util.Map;
@@ -9,9 +8,7 @@ import java.util.SortedMap;
 import java.util.function.BiFunction;
 import java.util.function.Supplier;
 
-/**
- * Created by Enrico Risa on 09/07/2018.
- */
+/** Created by Enrico Risa on 09/07/2018. */
 public interface OMetricsRegistry {
 
   default String name(String name, String... names) {
@@ -26,15 +23,17 @@ public interface OMetricsRegistry {
 
   OMeter meter(String name, String description);
 
-  OMeter meter(String name, String description,String unitOfMeasure);
+  OMeter meter(String name, String description, String unitOfMeasure);
 
   <T> OGauge<T> gauge(String name, String description, Supplier<T> valueFunction);
 
-  <T> OGauge<T> gauge(String name, String description,String unitOfMeasure, Supplier<T> valueFunction);
+  <T> OGauge<T> gauge(
+      String name, String description, String unitOfMeasure, Supplier<T> valueFunction);
 
   <T> OGauge<T> newGauge(String name, String description, Supplier<T> valueFunction);
 
-  <T> OGauge<T> newGauge(String name, String description,String unitOfMeasure, Supplier<T> valueFunction);
+  <T> OGauge<T> newGauge(
+      String name, String description, String unitOfMeasure, Supplier<T> valueFunction);
 
   OHistogram histogram(String name, String description);
 
@@ -50,7 +49,7 @@ public interface OMetricsRegistry {
 
   void registerAll(String prefix, OMetricSet metricSet);
 
-  SortedMap<String,OHistogram> getHistograms(BiFunction<String,OMetric,Boolean> filter);
+  SortedMap<String, OHistogram> getHistograms(BiFunction<String, OMetric, Boolean> filter);
 
   boolean remove(String name);
 

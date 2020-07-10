@@ -5,13 +5,14 @@
     <parent>
         <groupId>com.orientechnologies</groupId>
         <artifactId>orientdb-enterprise-parent</artifactId>
-        <version>3.1.0-SNAPSHOT</version>
+        <version>3.2.0-SNAPSHOT</version>
         <relativePath>../</relativePath>
     </parent>
     <artifactId>agent</artifactId>
     <packaging>jar</packaging>
 
     <properties>
+        <orientdb.version>3.2.0-SNAPSHOT</orientdb.version>
         <surefire.version>2.19.1</surefire.version>
         <metrics.version>4.1.6</metrics.version>
         <jackson.version>2.10.3</jackson.version>
@@ -184,43 +185,43 @@
         <dependency>
             <groupId>com.orientechnologies</groupId>
             <artifactId>orientdb-core</artifactId>
-            <version>${project.parent.version}</version>
+            <version>${orientdb.version}</version>
             <scope>provided</scope>
         </dependency>
         <dependency>
             <groupId>com.orientechnologies</groupId>
             <artifactId>orientdb-client</artifactId>
-            <version>${project.parent.version}</version>
+            <version>${orientdb.version}</version>
             <scope>provided</scope>
         </dependency>
         <dependency>
             <groupId>com.orientechnologies</groupId>
             <artifactId>orientdb-server</artifactId>
-            <version>${project.parent.version}</version>
+            <version>${orientdb.version}</version>
             <scope>provided</scope>
         </dependency>
         <dependency>
             <groupId>com.orientechnologies</groupId>
             <artifactId>orientdb-distributed</artifactId>
-            <version>${project.parent.version}</version>
+            <version>${orientdb.version}</version>
             <scope>provided</scope>
         </dependency>
         <dependency>
             <groupId>com.orientechnologies</groupId>
             <artifactId>orientdb-lucene</artifactId>
-            <version>${project.parent.version}</version>
+            <version>${orientdb.version}</version>
             <scope>provided</scope>
         </dependency>
         <dependency>
             <groupId>com.orientechnologies</groupId>
             <artifactId>orientdb-tools</artifactId>
-            <version>${project.parent.version}</version>
+            <version>${orientdb.version}</version>
             <scope>provided</scope>
         </dependency>
         <dependency>
             <groupId>com.orientechnologies</groupId>
             <artifactId>orientdb-security</artifactId>
-            <version>${project.parent.version}</version>
+            <version>${orientdb.version}</version>
         </dependency>
 
         <!-- utils -->
@@ -230,27 +231,27 @@
         <dependency>
             <groupId>com.orientechnologies</groupId>
             <artifactId>orientdb-test-commons</artifactId>
-            <version>${project.parent.version}</version>
+            <version>${orientdb.version}</version>
             <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>com.orientechnologies</groupId>
             <artifactId>orientdb-core</artifactId>
-            <version>${project.version}</version>
+            <version>${orientdb.version}</version>
             <type>test-jar</type>
             <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>com.orientechnologies</groupId>
             <artifactId>orientdb-lucene</artifactId>
-            <version>${project.version}</version>
+            <version>${orientdb.version}</version>
             <type>test-jar</type>
             <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>com.orientechnologies</groupId>
             <artifactId>orientdb-graphdb</artifactId>
-            <version>${project.parent.version}</version>
+            <version>${orientdb.version}</version>
             <scope>test</scope>
         </dependency>
     </dependencies>

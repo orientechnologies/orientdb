@@ -1,7 +1,6 @@
 package com.orientechnologies.agent;
 
 import com.orientechnologies.common.log.OLogManager;
-
 import java.io.Closeable;
 
 public class Utils {
@@ -19,5 +18,4 @@ public class Utils {
       }
     }
   }
-
 }

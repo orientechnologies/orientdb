@@ -7,7 +7,6 @@ import com.orientechnologies.orient.server.distributed.ODistributedResponse;
 import com.orientechnologies.orient.server.distributed.ODistributedResponseManager;
 import com.orientechnologies.orient.server.distributed.operation.NodeOperationResponse;
 import com.orientechnologies.orient.server.distributed.operation.NodeOperationTaskResponse;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
@@ -18,7 +17,7 @@ import java.util.stream.Collectors;
 public class OperationResponseManager implements ODistributedResponseManager {
 
   private final List<OperationResponseFromNode> responses = new ArrayList<>();
-  private final Set<String>    servers;
+  private final Set<String> servers;
   private final CountDownLatch waitingFor;
   private final long sentOn = System.currentTimeMillis();
 
@@ -51,7 +50,9 @@ public class OperationResponseManager implements ODistributedResponseManager {
 
   @Override
   public boolean waitForSynchronousResponses() throws InterruptedException {
-    return waitingFor.await(OGlobalConfiguration.DISTRIBUTED_HEARTBEAT_TIMEOUT.getValueAsInteger(), TimeUnit.MILLISECONDS);
+    return waitingFor.await(
+        OGlobalConfiguration.DISTRIBUTED_HEARTBEAT_TIMEOUT.getValueAsInteger(),
+        TimeUnit.MILLISECONDS);
   }
 
   @Override
@@ -61,8 +62,7 @@ public class OperationResponseManager implements ODistributedResponseManager {
 
   @Override
   public void cancel() {
-    while (waitingFor.getCount() > 0)
-      waitingFor.countDown();
+    while (waitingFor.getCount() > 0) waitingFor.countDown();
   }
 
   @Override
@@ -75,14 +75,10 @@ public class OperationResponseManager implements ODistributedResponseManager {
     return responses.stream().map((a) -> a.getSenderNodeName()).collect(Collectors.toList());
   }
 
-
-
   @Override
   public Set<String> getServersWithoutFollowup() {
     throw new UnsupportedOperationException();
   }
-
-
 
   @Override
   public ODistributedRequestId getMessageId() {
@@ -94,22 +90,22 @@ public class OperationResponseManager implements ODistributedResponseManager {
     throw new UnsupportedOperationException();
   }
 
-
-
   @Override
   public int getQuorum() {
     throw new UnsupportedOperationException();
   }
 
-  
-
   @Override
   public synchronized boolean collectResponse(ODistributedResponse response) {
     NodeOperationTaskResponse nodeResponse = (NodeOperationTaskResponse) response.getPayload();
     if (nodeResponse.getResponse().isOk()) {
-      responses.add(new OperationResponseFromNode(response.getExecutorNodeName(), new ResponseOk(nodeResponse.getResponse())));
+      responses.add(
+          new OperationResponseFromNode(
+              response.getExecutorNodeName(), new ResponseOk(nodeResponse.getResponse())));
     } else {
-      responses.add(new OperationResponseFromNode(response.getExecutorNodeName(), new ResponseFailed(nodeResponse.getResponse())));
+      responses.add(
+          new OperationResponseFromNode(
+              response.getExecutorNodeName(), new ResponseFailed(nodeResponse.getResponse())));
     }
     waitingFor.countDown();
     return waitingFor.getCount() == 0;

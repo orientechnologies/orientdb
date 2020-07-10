@@ -18,9 +18,7 @@
 
 package com.orientechnologies.agent.services.backup;
 
-/**
- * Created by Enrico Risa on 22/03/16.
- */
+/** Created by Enrico Risa on 22/03/16. */
 public class OMemoryBackUpConfig extends OBackupConfig {
 
   @Override
@@ -29,6 +27,5 @@ public class OMemoryBackUpConfig extends OBackupConfig {
   }
 
   @Override
-  public void writeConfiguration()  {
-  }
+  public void writeConfiguration() {}
 }

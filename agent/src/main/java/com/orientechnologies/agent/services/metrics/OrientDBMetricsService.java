@@ -2,7 +2,6 @@ package com.orientechnologies.agent.services.metrics;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.orientechnologies.agent.Utils;
 import com.orientechnologies.agent.profiler.OMetricsRegistry;
 import com.orientechnologies.agent.profiler.OMetricsRegistryFactory;
 import com.orientechnologies.agent.services.OEnterpriseService;
@@ -17,66 +16,75 @@ import com.orientechnologies.orient.core.record.OElement;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
-
 import java.io.ByteArrayOutputStream;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.Optional;
 
-/**
- * Created by Enrico Risa on 13/07/2018.
- */
+/** Created by Enrico Risa on 13/07/2018. */
 public class OrientDBMetricsService implements OEnterpriseService {
   private static String PROFILER_SCHEMA = "ProfilerConfig";
 
-  OEnterpriseServer       server;
+  OEnterpriseServer server;
   OrientDBMetricsSettings settings;
-  OMetricsRegistry        registry;
+  OMetricsRegistry registry;
 
   OrientDBMetricSupport metricSupport = new OrientDBMetricSupport();
 
-  public OrientDBMetricsService() {
-
-  }
+  public OrientDBMetricsService() {}
 
   @Override
   public void init(OEnterpriseServer server) {
     this.server = server;
 
-    String jsonConfig = server.getSystemDatabase().executeWithDB((db) -> {
-      OSchema schema = db.getMetadata().getSchema();
-      if (!schema.existsClass(PROFILER_SCHEMA)) {
-        schema.createClass(PROFILER_SCHEMA);
-      }
+    String jsonConfig =
+        server
+            .getSystemDatabase()
+            .executeWithDB(
+                (db) -> {
+                  OSchema schema = db.getMetadata().getSchema();
+                  if (!schema.existsClass(PROFILER_SCHEMA)) {
+                    schema.createClass(PROFILER_SCHEMA);
+                  }
 
-      try (OResultSet resultSet = db.query("select from " + PROFILER_SCHEMA + " limit 1")) {
-        OElement element = resultSet.stream().map((r) -> r.getElement().get()).findFirst().orElseGet(() -> {
-          String configFile = OSystemVariableResolver.resolveSystemVariables("${ORIENTDB_HOME}/config/profiler.json");
-          String content;
-          try {
-            content = loadContent(configFile);
-          } catch (IOException e) {
-            OLogManager.instance()
-                .warn(this, "OEnterpriseProfilerFactory.loadConfig() Could not access the profiler JSON file: %s", null,
-                    configFile);
-            content = "{ \"enabled\" : false}";
-          }
-          if (content == null) {
-            content = "{ \"enabled\" : false}";
-          }
-          ODocument document = new ODocument(PROFILER_SCHEMA).fromJSON(content);
-          return (OElement) db.save(document);
-        });
+                  try (OResultSet resultSet =
+                      db.query("select from " + PROFILER_SCHEMA + " limit 1")) {
+                    OElement element =
+                        resultSet.stream()
+                            .map((r) -> r.getElement().get())
+                            .findFirst()
+                            .orElseGet(
+                                () -> {
+                                  String configFile =
+                                      OSystemVariableResolver.resolveSystemVariables(
+                                          "${ORIENTDB_HOME}/config/profiler.json");
+                                  String content;
+                                  try {
+                                    content = loadContent(configFile);
+                                  } catch (IOException e) {
+                                    OLogManager.instance()
+                                        .warn(
+                                            this,
+                                            "OEnterpriseProfilerFactory.loadConfig() Could not access the profiler JSON file: %s",
+                                            null,
+                                            configFile);
+                                    content = "{ \"enabled\" : false}";
+                                  }
+                                  if (content == null) {
+                                    content = "{ \"enabled\" : false}";
+                                  }
+                                  ODocument document =
+                                      new ODocument(PROFILER_SCHEMA).fromJSON(content);
+                                  return (OElement) db.save(document);
+                                });
 
-        return element.toJSON();
-      }
-    });
+                    return element.toJSON();
+                  }
+                });
     this.settings = deserializeConfig(jsonConfig);
     registry = OMetricsRegistryFactory.createRegistryFor(server, this.settings);
 
     config();
-
   }
 
   @Override
@@ -85,7 +93,6 @@ public class OrientDBMetricsService implements OEnterpriseService {
     metricSupport.start();
 
     server.registerStatelessCommand(new OrientDBMetricsCommand(server, registry, this));
-
   }
 
   private void config() {
@@ -98,7 +105,6 @@ public class OrientDBMetricsService implements OEnterpriseService {
       if (settings.database.enabled) {
         metricSupport.add(new OrientDBDatabasesMetrics(server, registry));
       }
-
     }
   }
 
@@ -128,7 +134,8 @@ public class OrientDBMetricsService implements OEnterpriseService {
     try {
       return mapper.readValue(cfg, OrientDBMetricsSettings.class);
     } catch (IOException e) {
-      OLogManager.instance().warn(this, "OEnterpriseProfilerFactory.loadConfig() the profiler will be disabled", e);
+      OLogManager.instance()
+          .warn(this, "OEnterpriseProfilerFactory.loadConfig() the profiler will be disabled", e);
     }
 
     OrientDBMetricsSettings settings = new OrientDBMetricsSettings();
@@ -152,25 +159,26 @@ public class OrientDBMetricsService implements OEnterpriseService {
 
   private void saveSettings(OrientDBMetricsSettings settings) {
 
-    server.getSystemDatabase().executeInDBScope((db) -> {
+    server
+        .getSystemDatabase()
+        .executeInDBScope(
+            (db) -> {
+              try (OResultSet resultSet = db.query("select from " + PROFILER_SCHEMA + " limit 1")) {
+                Optional<OResult> first = resultSet.stream().findFirst();
 
-      try (OResultSet resultSet = db.query("select from " + PROFILER_SCHEMA + " limit 1")) {
-        Optional<OResult> first = resultSet.stream().findFirst();
+                if (first.isPresent()) {
+                  ObjectMapper mapper = new ObjectMapper();
+                  OElement element = first.get().getElement().get();
+                  String s = mapper.writeValueAsString(settings);
+                  element = element.fromJSON(s);
+                  db.save(element);
+                }
+              } catch (JsonProcessingException e) {
+                OLogManager.instance().warn(this, "Error saving profiler config");
+              }
 
-        if (first.isPresent()) {
-          ObjectMapper mapper = new ObjectMapper();
-          OElement element = first.get().getElement().get();
-          String s = mapper.writeValueAsString(settings);
-          element = element.fromJSON(s);
-          db.save(element);
-        }
-      } catch (JsonProcessingException e) {
-        OLogManager.instance().warn(this, "Error saving profiler config");
-      }
-
-      return null;
-    });
-
+              return null;
+            });
   }
 
   public String toJson() {

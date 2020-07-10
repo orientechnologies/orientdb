@@ -18,7 +18,6 @@
 package com.orientechnologies.agent.http.command;
 
 import com.orientechnologies.agent.EnterprisePermissions;
-import com.orientechnologies.agent.operation.OperationResponseFromNode;
 import com.orientechnologies.enterprise.server.OEnterpriseServer;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -27,7 +26,6 @@ import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpRequest;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpResponse;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpUtils;
-
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -35,7 +33,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 public class OServerCommandAuditing extends OServerCommandDistributedScope {
-  private static final String[] NAMES = { "GET|auditing/*", "POST|auditing/*" };
+  private static final String[] NAMES = {"GET|auditing/*", "POST|auditing/*"};
 
   public OServerCommandAuditing(OEnterpriseServer server) {
     super(EnterprisePermissions.SERVER_SECURITY.toString(), server);
@@ -43,7 +41,8 @@ public class OServerCommandAuditing extends OServerCommandDistributedScope {
 
   @Override
   public boolean execute(final OHttpRequest iRequest, OHttpResponse iResponse) throws Exception {
-    final String[] parts = checkSyntax(iRequest.getUrl(), 3, "Syntax error: auditing/<db>/<action>");
+    final String[] parts =
+        checkSyntax(iRequest.getUrl(), 3, "Syntax error: auditing/<db>/<action>");
 
     iRequest.getData().commandInfo = "Auditing information";
 
@@ -61,7 +60,6 @@ public class OServerCommandAuditing extends OServerCommandDistributedScope {
           doPost(iRequest, iResponse, db);
         } else if (action.equalsIgnoreCase("query")) {
           doGetData(iRequest, iResponse, db);
-
         }
       }
     } else {
@@ -70,23 +68,30 @@ public class OServerCommandAuditing extends OServerCommandDistributedScope {
     return false;
   }
 
-  private void doGetData(OHttpRequest iRequest, OHttpResponse iResponse, String db) throws IOException, InterruptedException {
+  private void doGetData(OHttpRequest iRequest, OHttpResponse iResponse, String db)
+      throws IOException, InterruptedException {
 
     ODocument params = new ODocument().fromJSON(iRequest.getContent());
 
     String query = buildQuery(params);
 
-    Collection<OResult> documents = server.getSystemDatabase().executeWithDB((session) -> {
-      try (OResultSet results = session.query(query, params.toMap())) {
-        return results.stream().collect(Collectors.toList());
-      }
-    });
+    Collection<OResult> documents =
+        server
+            .getSystemDatabase()
+            .executeWithDB(
+                (session) -> {
+                  try (OResultSet results = session.query(query, params.toMap())) {
+                    return results.stream().collect(Collectors.toList());
+                  }
+                });
 
     iResponse.writeResult(documents);
   }
 
   private String buildQuery(ODocument params) {
-    String query = String.format("select user as username,* from OAuditingLog :where order by date desc limit :limit");
+    String query =
+        String.format(
+            "select user as username,* from OAuditingLog :where order by date desc limit :limit");
 
     List<String> whereConditions = new ArrayList<String>();
     Integer limit = params.field("limit");
@@ -126,7 +131,6 @@ public class OServerCommandAuditing extends OServerCommandDistributedScope {
 
   private boolean isNull(ODocument params, String db) {
     return params.containsField(db) && params.field(db) == null;
-
   }
 
   private boolean isNotNullNotEmpty(ODocument params, String field) {
@@ -157,7 +161,8 @@ public class OServerCommandAuditing extends OServerCommandDistributedScope {
     return where;
   }
 
-  private void doPost(OHttpRequest iRequest, OHttpResponse iResponse, String db) throws InterruptedException, IOException {
+  private void doPost(OHttpRequest iRequest, OHttpResponse iResponse, String db)
+      throws InterruptedException, IOException {
 
     ODocument config = new ODocument().fromJSON(iRequest.getContent(), "noMap");
     iRequest.setDatabaseName(db);
@@ -170,10 +175,14 @@ public class OServerCommandAuditing extends OServerCommandDistributedScope {
       if (server.getSecurity().getAuditing() != null)
         server.getSecurity().getAuditing().changeConfig(dbDoc.getUser(), db, config);
 
-      iResponse.send(OHttpUtils.STATUS_OK_CODE, "OK", OHttpUtils.CONTENT_JSON, config.toJSON("prettyPrint"), null);
+      iResponse.send(
+          OHttpUtils.STATUS_OK_CODE,
+          "OK",
+          OHttpUtils.CONTENT_JSON,
+          config.toJSON("prettyPrint"),
+          null);
     } finally {
-      if (dbDoc != null)
-        dbDoc.close();
+      if (dbDoc != null) dbDoc.close();
     }
   }
 
@@ -187,7 +196,12 @@ public class OServerCommandAuditing extends OServerCommandDistributedScope {
       config = new ODocument();
     }
 
-    iResponse.send(OHttpUtils.STATUS_OK_CODE, "OK", OHttpUtils.CONTENT_JSON, config.toJSON("prettyPrint"), null);
+    iResponse.send(
+        OHttpUtils.STATUS_OK_CODE,
+        "OK",
+        OHttpUtils.CONTENT_JSON,
+        config.toJSON("prettyPrint"),
+        null);
   }
 
   @Override

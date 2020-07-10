@@ -2,7 +2,6 @@ package com.orientechnologies.orient.server.distributed;
 
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.db.ODatabaseSession;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.tinkerpop.blueprints.impls.orient.OrientBaseGraph;
 import org.junit.Assert;
@@ -28,11 +27,9 @@ import org.junit.Test;
  *
  */
 
-/**
- * @author Luca Garulli
- */
+/** @author Luca Garulli */
 public class HaSetTest extends AbstractServerClusterTest {
-  private final static int SERVERS = 2;
+  private static final int SERVERS = 2;
 
   public String getDatabaseName() {
     return "HaSetTest";
@@ -49,7 +46,8 @@ public class HaSetTest extends AbstractServerClusterTest {
   protected void executeTest() {
     ServerRun firstServer = serverInstance.get(0);
 
-    ODistributedServerManager distributedManager = firstServer.getServerInstance().getDistributedManager();
+    ODistributedServerManager distributedManager =
+        firstServer.getServerInstance().getDistributedManager();
 
     ODatabaseSession db = firstServer.getServerInstance().openDatabase(getDatabaseName());
 
@@ -57,31 +55,39 @@ public class HaSetTest extends AbstractServerClusterTest {
 
       db.command("HA set role `europe-0`=REPLICA");
       Thread.sleep(1000);
-      Assert.assertEquals(ODistributedConfiguration.ROLES.REPLICA,
+      Assert.assertEquals(
+          ODistributedConfiguration.ROLES.REPLICA,
           distributedManager.getDatabaseConfiguration(getDatabaseName()).getServerRole("europe-0"));
 
       db.command("HA set role `europe-1`=REPLICA");
       Thread.sleep(1000);
-      Assert.assertEquals(ODistributedConfiguration.ROLES.REPLICA,
+      Assert.assertEquals(
+          ODistributedConfiguration.ROLES.REPLICA,
           distributedManager.getDatabaseConfiguration(getDatabaseName()).getServerRole("europe-1"));
 
       db.command("HA set role `europe-0`=MASTER");
       Thread.sleep(1000);
-      Assert.assertEquals(ODistributedConfiguration.ROLES.MASTER,
+      Assert.assertEquals(
+          ODistributedConfiguration.ROLES.MASTER,
           distributedManager.getDatabaseConfiguration(getDatabaseName()).getServerRole("europe-0"));
 
       db.command("HA set role `europe-1`=MASTER");
       Thread.sleep(1000);
-      Assert.assertEquals(ODistributedConfiguration.ROLES.MASTER,
+      Assert.assertEquals(
+          ODistributedConfiguration.ROLES.MASTER,
           distributedManager.getDatabaseConfiguration(getDatabaseName()).getServerRole("europe-1"));
 
       db.command("HA set owner `*`=`europe-1`");
       Thread.sleep(1000);
-      Assert.assertEquals("europe-1", distributedManager.getDatabaseConfiguration(getDatabaseName()).getClusterOwner("*"));
+      Assert.assertEquals(
+          "europe-1",
+          distributedManager.getDatabaseConfiguration(getDatabaseName()).getClusterOwner("*"));
 
       db.command("HA set owner `*`=`europe-0`");
       Thread.sleep(1000);
-      Assert.assertEquals("europe-0", distributedManager.getDatabaseConfiguration(getDatabaseName()).getClusterOwner("*"));
+      Assert.assertEquals(
+          "europe-0",
+          distributedManager.getDatabaseConfiguration(getDatabaseName()).getClusterOwner("*"));
 
     } catch (InterruptedException e) {
       OLogManager.instance().error(this, "", e);
@@ -98,5 +104,4 @@ public class HaSetTest extends AbstractServerClusterTest {
   protected String getDistributedServerConfiguration(ServerRun server) {
     return "dc-server-config-" + server.getServerId() + ".xml";
   }
-
 }

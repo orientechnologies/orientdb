@@ -27,19 +27,16 @@ import com.orientechnologies.agent.services.backup.strategy.OBackupStrategy;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.enterprise.server.OEnterpriseServer;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-
 import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
-/**
- * Created by Enrico Risa on 22/03/16.
- */
+/** Created by Enrico Risa on 22/03/16. */
 public class OBackupService implements OEnterpriseService {
 
-  private   OEnterpriseServer        server;
-  private   OBackupConfig            config;
-  private   OBackupLogger            logger;
+  private OEnterpriseServer server;
+  private OBackupConfig config;
+  private OBackupLogger logger;
   protected Map<String, OBackupTask> tasks = new ConcurrentHashMap<String, OBackupTask>();
 
   private void initTasks() {
@@ -55,13 +52,12 @@ public class OBackupService implements OEnterpriseService {
       logger = new OBackupDBLogger(server);
     } else {
 
-      throw new UnsupportedOperationException("Cannot use Enterprise incremental backup without a system database");
+      throw new UnsupportedOperationException(
+          "Cannot use Enterprise incremental backup without a system database");
     }
   }
 
-  public OBackupService() {
-
-  }
+  public OBackupService() {}
 
   public ODocument getConfiguration() {
     return config.getConfig();
@@ -79,7 +75,6 @@ public class OBackupService implements OEnterpriseService {
     OBackupTask oBackupTask = tasks.get(uuid);
 
     oBackupTask.restore(doc);
-
   }
 
   public OBackupTask getTask(String uuid) {
@@ -101,7 +96,6 @@ public class OBackupService implements OEnterpriseService {
     removeBackup(uuid);
     OBackupTask task = tasks.get(uuid);
     task.stop();
-
   }
 
   public ODocument logs(String uuid, int page, int pageSize, Map<String, String> params) {
@@ -120,7 +114,8 @@ public class OBackupService implements OEnterpriseService {
     return history;
   }
 
-  public List<OBackupLog> findLogs(String uuid, int page, int pageSize, Map<String, String> params) {
+  public List<OBackupLog> findLogs(
+      String uuid, int page, int pageSize, Map<String, String> params) {
     try {
       return logger.findByUUID(uuid, page, pageSize, params);
     } catch (IOException e) {
@@ -129,7 +124,8 @@ public class OBackupService implements OEnterpriseService {
     }
   }
 
-  public List<OBackupLog> findLogs(String uuid, Long unitId, int page, int pageSize, Map<String, String> params) {
+  public List<OBackupLog> findLogs(
+      String uuid, Long unitId, int page, int pageSize, Map<String, String> params) {
     try {
       return logger.findByUUIDAndUnitId(uuid, unitId, page, pageSize, params);
     } catch (IOException e) {
@@ -138,7 +134,8 @@ public class OBackupService implements OEnterpriseService {
     }
   }
 
-  public ODocument logs(String uuid, Long unitId, int page, int pageSize, Map<String, String> params) {
+  public ODocument logs(
+      String uuid, Long unitId, int page, int pageSize, Map<String, String> params) {
     ODocument history = new ODocument();
     try {
       List<OBackupLog> byUUID = logger.findByUUIDAndUnitId(uuid, unitId, page, pageSize, params);

@@ -2,9 +2,7 @@ package com.orientechnologies.agent.profiler.metrics.dropwizard;
 
 import com.codahale.metrics.Metric;
 
-/**
- * Created by Enrico Risa on 11/07/2018.
- */
+/** Created by Enrico Risa on 11/07/2018. */
 public class DropWizardGeneric<T extends Metric> extends DropWizardBase {
 
   protected final T metric;
@@ -21,5 +19,4 @@ public class DropWizardGeneric<T extends Metric> extends DropWizardBase {
   public T getMetric() {
     return metric;
   }
-
 }

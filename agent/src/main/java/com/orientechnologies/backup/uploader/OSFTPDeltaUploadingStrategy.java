@@ -23,7 +23,6 @@ import com.orientechnologies.agent.Utils;
 import com.orientechnologies.agent.services.backup.log.OBackupUploadFinishedLog;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-
 import java.io.File;
 import java.io.FileInputStream;
 import java.nio.file.Files;
@@ -32,21 +31,19 @@ import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
- * This strategy performs an upload to a SFTP server. The upload of the delta between the local backup directory and the remote one
- * is performed.
+ * This strategy performs an upload to a SFTP server. The upload of the delta between the local
+ * backup directory and the remote one is performed.
  */
-
 public class OSFTPDeltaUploadingStrategy implements OUploadingStrategy {
 
-  private String  host;
+  private String host;
   private Integer port;
-  private String  username;
-  private String  password;
-  private String  key;
-  private String  path;
+  private String username;
+  private String password;
+  private String key;
+  private String path;
 
-  public OSFTPDeltaUploadingStrategy() {
-  }
+  public OSFTPDeltaUploadingStrategy() {}
 
   //
 
@@ -55,11 +52,11 @@ public class OSFTPDeltaUploadingStrategy implements OUploadingStrategy {
    *
    * @param sourceBackupDirectory
    * @param destinationDirectoryPath
-   * @param accessParameters         (String host, String port, String username, String password)
-   *
+   * @param accessParameters (String host, String port, String username, String password)
    * @return success
    */
-  public boolean executeUpload(String sourceBackupDirectory, String destinationDirectoryPath, String... accessParameters) {
+  public boolean executeUpload(
+      String sourceBackupDirectory, String destinationDirectoryPath, String... accessParameters) {
 
     boolean success = false;
     Session session = null;
@@ -152,7 +149,8 @@ public class OSFTPDeltaUploadingStrategy implements OUploadingStrategy {
   }
 
   @Override
-  public OUploadMetadata executeUpload(String sourceFile, String fName, String destinationDirectoryPath) {
+  public OUploadMetadata executeUpload(
+      String sourceFile, String fName, String destinationDirectoryPath) {
 
     boolean success = false;
     Session session = null;
@@ -217,7 +215,6 @@ public class OSFTPDeltaUploadingStrategy implements OUploadingStrategy {
     password = System.getenv("BACKUP_SFTP_PASSWORD");
     path = cfg.field("path");
     key = System.getenv("BACKUP_SFTP_KEY");
-
   }
 
   @Override
@@ -267,5 +264,4 @@ public class OSFTPDeltaUploadingStrategy implements OUploadingStrategy {
     }
     return null;
   }
-
 }

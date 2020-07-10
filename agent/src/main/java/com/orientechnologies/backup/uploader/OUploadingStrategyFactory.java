@@ -20,9 +20,7 @@ package com.orientechnologies.backup.uploader;
 
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 
-/**
- * Factory used to instantiate the chosen strategy for the uploading of he local backup.
- */
+/** Factory used to instantiate the chosen strategy for the uploading of he local backup. */
 public class OUploadingStrategyFactory {
 
   public OUploadingStrategy buildStrategy(String uploadingStrategyName) {
@@ -34,10 +32,10 @@ public class OUploadingStrategyFactory {
     } else if (uploadingStrategyName.equals("sftp")) {
       uploadingStrategy = new OSFTPDeltaUploadingStrategy();
     } else {
-      throw new OConfigurationException("Uploading strategy no supported. Accepted values: s3, sftp.");
+      throw new OConfigurationException(
+          "Uploading strategy no supported. Accepted values: s3, sftp.");
     }
 
     return uploadingStrategy;
-
   }
 }

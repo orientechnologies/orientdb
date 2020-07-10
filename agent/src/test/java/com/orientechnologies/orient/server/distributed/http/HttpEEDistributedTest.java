@@ -9,9 +9,7 @@ import com.orientechnologies.orient.server.network.protocol.http.ONetworkProtoco
 import org.junit.Assert;
 import org.junit.Test;
 
-/**
- * Created by Enrico Risa on 04/08/16.
- */
+/** Created by Enrico Risa on 04/08/16. */
 public class HttpEEDistributedTest extends AbstractServerClusterTest {
 
   @Override
@@ -25,21 +23,23 @@ public class HttpEEDistributedTest extends AbstractServerClusterTest {
     init(2);
     prepare(true);
     execute();
-
   }
 
   @Override
   protected void executeTest() throws Exception {
     ServerRun s = serverInstance.iterator().next();
 
-    OServerNetworkListener listener = s.getServerInstance().getListenerByProtocol(ONetworkProtocolHttpAbstract.class);
+    OServerNetworkListener listener =
+        s.getServerInstance().getListenerByProtocol(ONetworkProtocolHttpAbstract.class);
 
-    OServerCommandDistributedManager distributedManager = (OServerCommandDistributedManager) listener
-        .getCommand(OServerCommandDistributedManager.class);
+    OServerCommandDistributedManager distributedManager =
+        (OServerCommandDistributedManager)
+            listener.getCommand(OServerCommandDistributedManager.class);
 
     OServerCommandDistributedManager first = distributedManager;
 
-    ODocument document = distributedManager.doGetDatabaseInfo(s.getServerInstance(), getDatabaseName());
+    ODocument document =
+        distributedManager.doGetDatabaseInfo(s.getServerInstance(), getDatabaseName());
 
     document.field("writeQuorum", "all");
 
@@ -47,17 +47,19 @@ public class HttpEEDistributedTest extends AbstractServerClusterTest {
 
     for (ServerRun serverRun : serverInstance) {
 
-      listener = serverRun.getServerInstance().getListenerByProtocol(ONetworkProtocolHttpAbstract.class);
+      listener =
+          serverRun.getServerInstance().getListenerByProtocol(ONetworkProtocolHttpAbstract.class);
 
-      distributedManager = (OServerCommandDistributedManager) listener.getCommand(OServerCommandDistributedManager.class);
+      distributedManager =
+          (OServerCommandDistributedManager)
+              listener.getCommand(OServerCommandDistributedManager.class);
 
       document = distributedManager.doGetDatabaseInfo(s.getServerInstance(), getDatabaseName());
       Assert.assertEquals("all", document.field("writeQuorum"));
     }
 
-
     first.configure(s.getServerInstance());
-    
+
     ODocument config = first.doGetNodeConfig(s.getServerInstance().getDistributedManager());
 
     Assert.assertNotNull(config);
@@ -65,7 +67,6 @@ public class HttpEEDistributedTest extends AbstractServerClusterTest {
     config = first.doGetNodeConfig(null);
 
     Assert.assertNotNull(config);
-
   }
 
   @Override

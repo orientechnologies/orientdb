@@ -8,22 +8,20 @@ import com.orientechnologies.orient.core.db.ODatabaseSession;
 import com.orientechnologies.orient.core.db.ODatabaseType;
 import com.orientechnologies.orient.core.db.OrientDB;
 import com.orientechnologies.orient.core.db.OrientDBConfig;
-import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import com.orientechnologies.orient.server.OServer;
+import java.util.Optional;
+import java.util.SortedMap;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
-import java.util.Optional;
-import java.util.SortedMap;
-
 public class QueryProfilerFilterTest {
 
   private OServer server;
 
-  private Integer                pageSize;
-  private OEnterpriseAgent       agent;
+  private Integer pageSize;
+  private OEnterpriseAgent agent;
   private OrientDBMetricsService metricsService;
 
   @Before
@@ -33,7 +31,8 @@ public class QueryProfilerFilterTest {
 
     agent = server.getPluginByClass(OEnterpriseAgent.class);
 
-    Optional<OrientDBMetricsService> serviceByClass = agent.getServiceByClass(OrientDBMetricsService.class);
+    Optional<OrientDBMetricsService> serviceByClass =
+        agent.getServiceByClass(OrientDBMetricsService.class);
 
     OrientDBMetricsSettings settings = new OrientDBMetricsSettings();
 
@@ -52,20 +51,23 @@ public class QueryProfilerFilterTest {
 
     OrientDB context = new OrientDB("remote:localhost", OrientDBConfig.defaultConfig());
 
-    ODatabaseSession local = context.open(QueryProfilerFilterTest.class.getSimpleName(), "admin", "admin");
+    ODatabaseSession local =
+        context.open(QueryProfilerFilterTest.class.getSimpleName(), "admin", "admin");
 
     local.query("select from OUser \n where name = 'admin'").close();
 
     local.close();
 
-    SortedMap<String, OHistogram> histograms = metricsService.getRegistry()
-        .getHistograms((name, f) -> name.matches("(?s)db.*.query.*"));
+    SortedMap<String, OHistogram> histograms =
+        metricsService.getRegistry().getHistograms((name, f) -> name.matches("(?s)db.*.query.*"));
 
-    OHistogram histogram = histograms.get(
-        String.format("db.%s.query.sql.select from OUser \n where name = 'admin'", QueryProfilerFilterTest.class.getSimpleName()));
+    OHistogram histogram =
+        histograms.get(
+            String.format(
+                "db.%s.query.sql.select from OUser \n where name = 'admin'",
+                QueryProfilerFilterTest.class.getSimpleName()));
 
     Assert.assertNotNull(histogram);
-
   }
 
   @After

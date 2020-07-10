@@ -4,6 +4,7 @@ import com.orientechnologies.orient.core.db.ODatabaseType;
 import com.orientechnologies.orient.core.db.OrientDB;
 import com.orientechnologies.orient.core.db.OrientDBConfig;
 import com.orientechnologies.orient.server.OServer;
+import java.io.IOException;
 import org.apache.http.Consts;
 import org.apache.http.Header;
 import org.apache.http.HttpHost;
@@ -27,31 +28,27 @@ import org.junit.Before;
 import org.junit.Rule;
 import org.junit.rules.TestName;
 
-import java.io.IOException;
-
 public abstract class EEBaseDistributedHttpTest {
 
-  @Rule
-  public TestName name = new TestName();
+  @Rule public TestName name = new TestName();
 
   private OServer server0;
   private OServer server1;
   private OServer server2;
 
-  private String  realm        = "OrientDB-";
-  private String  userName     = "root";
-  private String  userPassword = "root";
-  private String  databaseName;
-  private Boolean keepAlive    = null;
+  private String realm = "OrientDB-";
+  private String userName = "root";
+  private String userPassword = "root";
+  private String databaseName;
+  private Boolean keepAlive = null;
 
-  private HttpRequestBase    request;
+  private HttpRequestBase request;
   private AbstractHttpEntity payload;
-  private HttpResponse       response;
-  private int                retry = 1;
-  private OrientDB           remote;
+  private HttpResponse response;
+  private int retry = 1;
+  private OrientDB remote;
 
   @Before
-
   public void init() throws Exception {
 
     server0 = OServer.startFromClasspathConfig("orientdb-simple-dserver-config-0.xml");
@@ -74,11 +71,16 @@ public abstract class EEBaseDistributedHttpTest {
   }
 
   public enum CONTENT {
-    TEXT, JSON
+    TEXT,
+    JSON
   }
 
   public EEBaseDistributedHttpTest payload(final String s, final CONTENT iContent) {
-    payload = new StringEntity(s, ContentType.create(iContent == CONTENT.JSON ? "application/json" : "plain/text", Consts.UTF_8));
+    payload =
+        new StringEntity(
+            s,
+            ContentType.create(
+                iContent == CONTENT.JSON ? "application/json" : "plain/text", Consts.UTF_8));
     return this;
   }
 
@@ -91,7 +93,9 @@ public abstract class EEBaseDistributedHttpTest {
     final HttpHost targetHost = new HttpHost(getHost(), getPort(), getProtocol());
 
     CredentialsProvider credsProvider = new BasicCredentialsProvider();
-    credsProvider.setCredentials(new AuthScope(targetHost), new UsernamePasswordCredentials(getUserName(), getUserPassword()));
+    credsProvider.setCredentials(
+        new AuthScope(targetHost),
+        new UsernamePasswordCredentials(getUserName(), getUserPassword()));
 
     // Create AuthCache instance
     AuthCache authCache = new BasicAuthCache();
@@ -104,8 +108,7 @@ public abstract class EEBaseDistributedHttpTest {
     context.setCredentialsProvider(credsProvider);
     context.setAuthCache(authCache);
 
-    if (keepAlive != null)
-      request.addHeader("Connection", keepAlive ? "Keep-Alive" : "Close");
+    if (keepAlive != null) request.addHeader("Connection", keepAlive ? "Keep-Alive" : "Close");
 
     if (payload != null && request instanceof HttpEntityEnclosingRequestBase)
       ((HttpEntityEnclosingRequestBase) request).setEntity(payload);
@@ -225,5 +228,4 @@ public abstract class EEBaseDistributedHttpTest {
     this.realm = realm;
     return this;
   }
-
 }
