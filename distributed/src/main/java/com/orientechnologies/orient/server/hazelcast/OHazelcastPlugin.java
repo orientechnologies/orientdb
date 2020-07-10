@@ -848,7 +848,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
             this, nodeName, null, DIRECTION.NONE, "Opening database '%s'...", databaseName);
 
         // INIT THE STORAGE
-        final ODistributedStorage stg = getStorage(databaseName);
+        final ODistributedDatabaseImpl ddb = messageService.registerDatabase(databaseName);
 
         executeInDistributedDatabaseLock(
             databaseName,
@@ -866,8 +866,6 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
                     cfg.getServerRole(nodeName),
                     databaseName);
 
-                final ODistributedDatabaseImpl ddb =
-                    messageService.registerDatabase(databaseName, cfg);
                 ddb.resume();
 
                 // 1ST NODE TO HAVE THE DATABASE

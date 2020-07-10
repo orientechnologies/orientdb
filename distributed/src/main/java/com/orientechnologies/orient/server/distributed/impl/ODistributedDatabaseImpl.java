@@ -188,7 +188,6 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
       final OHazelcastPlugin manager,
       final ODistributedMessageServiceImpl msgService,
       final String iDatabaseName,
-      final ODistributedConfiguration cfg,
       OServer server) {
     this.manager = manager;
     this.msgService = msgService;
@@ -1335,5 +1334,16 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
 
   public void localUnlock(List<OLockGuard> guards) {
     this.lockManager.unlock(guards);
+  }
+
+  public ODistributedConfiguration getDistributedConfiguration() {
+    ODistributedStorage storage = manager.getStorage(databaseName);
+    return storage.getDistributedConfiguration();
+  }
+
+  public void setDistributedConfiguration(
+      final OModifiableDistributedConfiguration distributedConfiguration) {
+    ODistributedStorage storage = manager.getStorage(databaseName);
+    storage.setDistributedConfiguration(distributedConfiguration);
   }
 }

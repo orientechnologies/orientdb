@@ -355,7 +355,7 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
     ODistributedDatabaseImpl distribDatabase = getMessageService().getDatabase(dbName);
     if (distribDatabase == null) {
       // CHECK TO PUBLISH IT TO THE CLUSTER
-      distribDatabase = messageService.registerDatabase(dbName, cfg);
+      distribDatabase = messageService.registerDatabase(dbName);
       distribDatabase.checkNodeInConfiguration(cfg, getLocalNodeName());
       distribDatabase.resume();
       distribDatabase.setOnline();
@@ -419,10 +419,10 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
 
   public boolean updateCachedDatabaseConfiguration(
       final String iDatabaseName, final OModifiableDistributedConfiguration cfg) {
-    final ODistributedStorage stg = storages.get(iDatabaseName);
-    if (stg == null) return false;
+    ODistributedDatabaseImpl local = getMessageService().getDatabase(iDatabaseName);
+    if (local == null) return false;
 
-    final ODistributedConfiguration dCfg = stg.getDistributedConfiguration();
+    final ODistributedConfiguration dCfg = local.getDistributedConfiguration();
 
     ODocument oldCfg = dCfg != null ? dCfg.getDocument() : null;
     Integer oldVersion = oldCfg != null ? (Integer) oldCfg.field("version") : null;
@@ -444,7 +444,7 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
     }
 
     // SAVE IN NODE'S LOCAL RAM
-    stg.setDistributedConfiguration(cfg);
+    local.setDistributedConfiguration(cfg);
 
     ODistributedServerLog.info(
         this,
@@ -464,12 +464,12 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
 
   public ODistributedConfiguration getDatabaseConfiguration(
       final String iDatabaseName, final boolean createIfNotPresent) {
-    final ODistributedStorage stg =
-        createIfNotPresent ? getStorage(iDatabaseName) : getStorageIfExists(iDatabaseName);
+    ODistributedDatabaseImpl local = getMessageService().getDatabase(iDatabaseName);
+    if (local == null) {
+      return null;
+    }
 
-    if (stg == null) return null;
-
-    return stg.getDistributedConfiguration();
+    return local.getDistributedConfiguration();
   }
 
   public OServer getServerInstance() {
@@ -968,8 +968,7 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
       return false;
     }
 
-    final ODistributedDatabaseImpl distrDatabase =
-        messageService.registerDatabase(databaseName, null);
+    final ODistributedDatabaseImpl distrDatabase = messageService.registerDatabase(databaseName);
 
     try {
       installingDatabases.add(databaseName);
@@ -1011,8 +1010,7 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
                 return false;
 
               // INIT STORAGE + UPDATE LOCAL FILE ONLY
-              final ODistributedStorage stg = getStorage(databaseName);
-              stg.setDistributedConfiguration(cfg);
+              distrDatabase.setDistributedConfiguration(cfg);
 
               // DISCARD MESSAGES DURING THE REQUEST OF DATABASE INSTALLATION
               distrDatabase.suspend();
@@ -1714,7 +1712,7 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
     if (iClass.isAbstract()) return false;
 
     // INIT THE DATABASE IF NEEDED
-    getMessageService().registerDatabase(databaseName, cfg);
+    getMessageService().registerDatabase(databaseName);
 
     return executeInDistributedDatabaseLock(
         databaseName,

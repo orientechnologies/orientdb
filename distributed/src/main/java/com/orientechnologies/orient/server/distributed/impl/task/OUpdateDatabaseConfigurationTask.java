@@ -24,12 +24,12 @@ import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.server.OServer;
+import com.orientechnologies.orient.server.distributed.ODistributedDatabase;
 import com.orientechnologies.orient.server.distributed.ODistributedRequestId;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
 import com.orientechnologies.orient.server.distributed.OModifiableDistributedConfiguration;
 import com.orientechnologies.orient.server.distributed.ORemoteTaskFactory;
-import com.orientechnologies.orient.server.distributed.impl.ODistributedStorage;
 import com.orientechnologies.orient.server.distributed.task.OAbstractRemoteTask;
 import java.io.DataInput;
 import java.io.DataOutput;
@@ -62,8 +62,8 @@ public class OUpdateDatabaseConfigurationTask extends OAbstractRemoteTask {
       final ODatabaseDocumentInternal database)
       throws Exception {
 
-    final ODistributedStorage stg = (ODistributedStorage) iManager.getStorage(databaseName);
-    if (stg != null) {
+    ODistributedDatabase local = iManager.getMessageService().getDatabase(databaseName);
+    if (local != null) {
       ODistributedServerLog.debug(
           this,
           iManager.getLocalNodeName(),
@@ -73,7 +73,7 @@ public class OUpdateDatabaseConfigurationTask extends OAbstractRemoteTask {
           databaseName,
           configuration);
 
-      stg.setDistributedConfiguration(new OModifiableDistributedConfiguration(configuration));
+      local.setDistributedConfiguration(new OModifiableDistributedConfiguration(configuration));
     }
 
     return true;

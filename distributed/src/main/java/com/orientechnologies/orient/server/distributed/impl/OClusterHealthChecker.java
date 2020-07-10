@@ -143,10 +143,10 @@ public class OClusterHealthChecker implements Runnable {
 
               if (cfg.getVersion() < mostUpdatedServerVersion) {
                 // OVERWRITE DB VERSION
-                ((ODistributedStorage) manager.getStorage(databaseName))
-                    .setDistributedConfiguration(
-                        new OModifiableDistributedConfiguration(
-                            (ODocument) responses.get(mostUpdatedServer)));
+                ODistributedDatabase local = manager.getMessageService().getDatabase(databaseName);
+                local.setDistributedConfiguration(
+                    new OModifiableDistributedConfiguration(
+                        (ODocument) responses.get(mostUpdatedServer)));
               }
             }
 
@@ -257,8 +257,9 @@ public class OClusterHealthChecker implements Runnable {
           // ONLY ONLINE NODE CAN TRY TO RECOVER FOR SINGLE DB STATUS
           return;
 
-        final ODistributedConfiguration dCfg =
-            ((ODistributedStorage) manager.getStorage(dbName)).getDistributedConfiguration();
+        ODistributedDatabase ddImpl = manager.getMessageService().getDatabase(dbName);
+
+        final ODistributedConfiguration dCfg = ddImpl.getDistributedConfiguration();
         if (dCfg != null) {
           final boolean result =
               manager.installDatabase(

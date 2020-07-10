@@ -422,15 +422,16 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
           if (record instanceof ODocument) ((ODocument) record).validate();
         }
       }
-      final ODistributedConfiguration dbCfg = getStorageDistributed().getDistributedConfiguration();
+      ODistributedDatabase localDistributedDatabase =
+          getStorageDistributed().getLocalDistributedDatabase();
+      final ODistributedConfiguration dbCfg =
+          localDistributedDatabase.getDistributedConfiguration();
       ODistributedServerManager dManager = getStorageDistributed().getDistributedManager();
       final String localNodeName = dManager.getLocalNodeName();
       getStorageDistributed().checkNodeIsMaster(localNodeName, dbCfg, "Transaction Commit");
       ONewDistributedTransactionManager txManager =
           new ONewDistributedTransactionManager(
-              getStorageDistributed(),
-              dManager,
-              getStorageDistributed().getLocalDistributedDatabase());
+              getStorageDistributed(), dManager, localDistributedDatabase);
       int quorum = 0;
       for (String clusterName : txManager.getInvolvedClusters(iTx.getRecordOperations())) {
         final List<String> clusterServers = dbCfg.getServers(clusterName, null);
@@ -931,7 +932,8 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
   }
 
   public ODistributedConfiguration getDistributedConfiguration() {
-    return getStorageDistributed().getDistributedConfiguration();
+    ODistributedDatabaseImpl local = distributedManager.getMessageService().getDatabase(getName());
+    return local.getDistributedConfiguration();
   }
 
   public void sendDDLCommand(String command, boolean excludeLocal) {

@@ -102,4 +102,9 @@ public interface ODistributedDatabase {
   void validateStatus(OTransactionSequenceStatus status);
 
   void checkReverseSync(OTransactionSequenceStatus lastState);
+
+  public ODistributedConfiguration getDistributedConfiguration();
+
+  public void setDistributedConfiguration(
+      final OModifiableDistributedConfiguration distributedConfiguration);
 }
