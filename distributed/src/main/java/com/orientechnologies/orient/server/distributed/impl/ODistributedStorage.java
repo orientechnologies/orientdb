@@ -32,7 +32,6 @@ import com.orientechnologies.orient.core.conflict.ORecordConflictStrategy;
 import com.orientechnologies.orient.core.db.OScenarioThreadLocal;
 import com.orientechnologies.orient.core.db.record.OCurrentStorageComponentsFactory;
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
-import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
 import com.orientechnologies.orient.core.exception.OStorageException;
 import com.orientechnologies.orient.core.id.ORID;
@@ -55,15 +54,13 @@ import com.orientechnologies.orient.core.storage.ridbag.sbtree.OSBTreeCollection
 import com.orientechnologies.orient.core.tx.OTransactionInternal;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.distributed.ODistributedConfiguration;
+import com.orientechnologies.orient.server.distributed.ODistributedConfigurationManager;
 import com.orientechnologies.orient.server.distributed.ODistributedDatabase;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
 import com.orientechnologies.orient.server.distributed.OModifiableDistributedConfiguration;
 import com.orientechnologies.orient.server.distributed.OWriteOperationNotPermittedException;
-import com.orientechnologies.orient.server.hazelcast.OHazelcastPlugin;
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -90,13 +87,14 @@ public class ODistributedStorage
   private ODistributedDatabase localDistributedDatabase;
   private ODistributedStorageEventListener eventListener;
 
-  private volatile ODistributedConfiguration distributedConfiguration;
   private volatile OSyncSource lastValidBackup = null;
+  private final ODistributedConfigurationManager configurationManager;
 
   public ODistributedStorage(final OServer iServer, final String dbName) {
     this.serverInstance = iServer;
     this.dManager = iServer.getDistributedManager();
     this.name = dbName;
+    this.configurationManager = new ODistributedConfigurationManager(dManager, name);
   }
 
   public synchronized void replaceIfNeeded(final OAbstractPaginatedStorage wrapped) {
@@ -159,7 +157,6 @@ public class ODistributedStorage
   public boolean isLocalEnv() {
     return localDistributedDatabase == null
         || dManager == null
-        || distributedConfiguration == null
         || OScenarioThreadLocal.INSTANCE.isRunModeDistributed();
   }
 
@@ -544,71 +541,12 @@ public class ODistributedStorage
   }
 
   public ODistributedConfiguration getDistributedConfiguration() {
-    if (distributedConfiguration == null) {
-      final Map<String, Object> map = dManager.getConfigurationMap();
-      if (map == null) return null;
-
-      ODocument doc = (ODocument) map.get(OHazelcastPlugin.CONFIG_DATABASE_PREFIX + getName());
-      if (doc != null) {
-        // DISTRIBUTED CFG AVAILABLE: COPY IT TO THE LOCAL DIRECTORY
-        ODistributedServerLog.info(
-            this,
-            dManager.getLocalNodeName(),
-            null,
-            ODistributedServerLog.DIRECTION.NONE,
-            "Downloaded configuration for database '%s' from the cluster",
-            getName());
-        setDistributedConfiguration(new OModifiableDistributedConfiguration(doc));
-      } else {
-        doc = loadDatabaseConfiguration(getDistributedConfigFile());
-        if (doc == null) {
-          // LOOK FOR THE STD FILE
-          doc = loadDatabaseConfiguration(dManager.getDefaultDatabaseConfigFile());
-          if (doc == null)
-            throw new OConfigurationException(
-                "Cannot load default distributed for database '"
-                    + getName()
-                    + "' config file: "
-                    + dManager.getDefaultDatabaseConfigFile());
-
-          // SAVE THE GENERIC FILE AS DATABASE FILE
-          setDistributedConfiguration(new OModifiableDistributedConfiguration(doc));
-        } else
-          // JUST LOAD THE FILE IN MEMORY
-          distributedConfiguration = new ODistributedConfiguration(doc);
-
-        // LOADED FILE, PUBLISH IT IN THE CLUSTER
-        dManager.updateCachedDatabaseConfiguration(
-            getName(), new OModifiableDistributedConfiguration(doc), true);
-      }
-    }
-    return distributedConfiguration;
+    return configurationManager.getDistributedConfiguration();
   }
 
   public void setDistributedConfiguration(
       final OModifiableDistributedConfiguration distributedConfiguration) {
-    if (this.distributedConfiguration == null
-        || distributedConfiguration.getVersion() > this.distributedConfiguration.getVersion()) {
-      this.distributedConfiguration =
-          new ODistributedConfiguration(distributedConfiguration.getDocument().copy());
-
-      // PRINT THE NEW CONFIGURATION
-      final String cfgOutput =
-          ODistributedOutput.formatClusterTable(
-              dManager, getName(), distributedConfiguration, dManager.getTotalNodes(getName()));
-
-      ODistributedServerLog.info(
-          this,
-          dManager.getLocalNodeName(),
-          null,
-          ODistributedServerLog.DIRECTION.NONE,
-          "Setting new distributed configuration for database: %s (version=%d)%s\n",
-          getName(),
-          distributedConfiguration.getVersion(),
-          cfgOutput);
-
-      saveDatabaseConfiguration();
-    }
+    configurationManager.setDistributedConfiguration(distributedConfiguration);
   }
 
   @Override
@@ -827,93 +765,11 @@ public class ODistributedStorage
   }
 
   public ODocument loadDatabaseConfiguration(final File file) {
-    if (!file.exists() || file.length() == 0) return null;
-
-    ODistributedServerLog.info(
-        this,
-        dManager.getLocalNodeName(),
-        null,
-        ODistributedServerLog.DIRECTION.NONE,
-        "Loaded configuration for database '%s' from disk: %s",
-        getName(),
-        file);
-
-    FileInputStream f = null;
-    try {
-      f = new FileInputStream(file);
-      final byte[] buffer = new byte[(int) file.length()];
-      f.read(buffer);
-
-      final ODocument doc = new ODocument().fromJSON(new String(buffer), "noMap");
-      doc.field("version", 1);
-      return doc;
-
-    } catch (Exception e) {
-      ODistributedServerLog.error(
-          this,
-          dManager.getLocalNodeName(),
-          null,
-          ODistributedServerLog.DIRECTION.NONE,
-          "Error on loading distributed configuration file in: %s",
-          e,
-          file.getAbsolutePath());
-    } finally {
-      if (f != null)
-        try {
-          f.close();
-        } catch (IOException e) {
-        }
-    }
-    return null;
+    return configurationManager.loadDatabaseConfiguration(file);
   }
 
   protected void saveDatabaseConfiguration() {
-    // SAVE THE CONFIGURATION TO DISK
-    FileOutputStream f = null;
-    try {
-      File file = getDistributedConfigFile();
-
-      ODistributedServerLog.debug(
-          this,
-          dManager.getLocalNodeName(),
-          null,
-          ODistributedServerLog.DIRECTION.NONE,
-          "Saving distributed configuration file for database '%s' to: %s",
-          getName(),
-          file);
-
-      if (!file.exists()) {
-        file.getParentFile().mkdirs();
-        file.createNewFile();
-      }
-
-      f = new FileOutputStream(file);
-      f.write(distributedConfiguration.getDocument().toJSON().getBytes());
-      f.flush();
-    } catch (Exception e) {
-      ODistributedServerLog.error(
-          this,
-          dManager.getLocalNodeName(),
-          null,
-          ODistributedServerLog.DIRECTION.NONE,
-          "Error on saving distributed configuration file",
-          e);
-
-    } finally {
-      if (f != null)
-        try {
-          f.close();
-        } catch (IOException e) {
-        }
-    }
-  }
-
-  protected File getDistributedConfigFile() {
-    return new File(
-        serverInstance.getDatabaseDirectory()
-            + getName()
-            + "/"
-            + ODistributedServerManager.FILE_DISTRIBUTED_DB_CONFIG);
+    configurationManager.saveDatabaseConfiguration();
   }
 
   public ODistributedDatabase getLocalDistributedDatabase() {

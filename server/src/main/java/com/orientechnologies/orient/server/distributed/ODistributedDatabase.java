@@ -93,7 +93,7 @@ public interface ODistributedDatabase {
 
   long getProcessedRequests();
 
-  void checkNodeInConfiguration(ODistributedConfiguration cfg, String serverName);
+  void checkNodeInConfiguration(String serverName);
 
   Optional<OTransactionId> nextId();
 

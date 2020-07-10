@@ -1076,9 +1076,7 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
     return currentResponseMgr.getFinalResponse();
   }
 
-  @Override
-  public void checkNodeInConfiguration(
-      final ODistributedConfiguration cfg, final String serverName) {
+  public void checkNodeInConfiguration(final String serverName, ODistributedConfiguration cfg) {
     manager.executeInDistributedDatabaseLock(
         databaseName,
         20000,
@@ -1103,6 +1101,12 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
             return null;
           }
         });
+  }
+
+  @Override
+  public void checkNodeInConfiguration(final String serverName) {
+    ODistributedConfiguration cfg = getDistributedConfiguration();
+    checkNodeInConfiguration(serverName, cfg);
   }
 
   protected String getLocalNodeName() {

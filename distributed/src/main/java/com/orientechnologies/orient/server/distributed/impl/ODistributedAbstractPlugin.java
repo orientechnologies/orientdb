@@ -351,12 +351,12 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
     }
   }
 
-  public void registerNewDatabaseIfNeeded(String dbName, ODistributedConfiguration cfg) {
+  public void registerNewDatabaseIfNeeded(String dbName) {
     ODistributedDatabaseImpl distribDatabase = getMessageService().getDatabase(dbName);
     if (distribDatabase == null) {
       // CHECK TO PUBLISH IT TO THE CLUSTER
       distribDatabase = messageService.registerDatabase(dbName);
-      distribDatabase.checkNodeInConfiguration(cfg, getLocalNodeName());
+      distribDatabase.checkNodeInConfiguration(getLocalNodeName());
       distribDatabase.resume();
       distribDatabase.setOnline();
     }
@@ -980,7 +980,7 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
             @Override
             public Boolean call(OModifiableDistributedConfiguration cfg) {
 
-              distrDatabase.checkNodeInConfiguration(cfg, nodeName);
+              distrDatabase.checkNodeInConfiguration(nodeName, cfg);
 
               // GET ALL THE OTHER SERVERS
               final Collection<String> nodes = cfg.getServers(null, nodeName);

@@ -63,8 +63,7 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
         || !getPlugin().isRunning()) {
       return new ODatabaseDocumentEmbedded(storage);
     }
-    plugin.registerNewDatabaseIfNeeded(
-        storage.getName(), plugin.getDatabaseConfiguration(storage.getName()));
+    plugin.registerNewDatabaseIfNeeded(storage.getName());
     return new ODatabaseDocumentDistributed(plugin.getStorage(storage.getName(), storage), plugin);
   }
 
@@ -75,8 +74,7 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
         || !getPlugin().isRunning()) {
       return new ODatabaseDocumentEmbeddedPooled(pool, storage);
     }
-    plugin.registerNewDatabaseIfNeeded(
-        storage.getName(), plugin.getDatabaseConfiguration(storage.getName()));
+    plugin.registerNewDatabaseIfNeeded(storage.getName());
     return new ODatabaseDocumentDistributedPooled(
         pool, plugin.getStorage(storage.getName(), storage), plugin);
   }
