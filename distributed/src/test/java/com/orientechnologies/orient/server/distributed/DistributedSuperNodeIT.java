@@ -28,13 +28,11 @@ import com.orientechnologies.orient.core.record.OVertex;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.server.OServer;
 import org.junit.Assert;
-import org.junit.Ignore;
 import org.junit.Test;
 
 /** Distributed TX test against "plocal" protocol. */
 public class DistributedSuperNodeIT extends AbstractServerClusterGraphTest {
   @Test
-  @Ignore
   public void test() throws Exception {
     final long timeout = OGlobalConfiguration.DISTRIBUTED_ATOMIC_LOCK_TIMEOUT.getValueAsLong();
     OGlobalConfiguration.DISTRIBUTED_ATOMIC_LOCK_TIMEOUT.setValue(1);

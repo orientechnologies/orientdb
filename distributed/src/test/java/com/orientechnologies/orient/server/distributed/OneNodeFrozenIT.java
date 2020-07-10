@@ -22,7 +22,6 @@ import java.util.ArrayList;
 import java.util.concurrent.Callable;
 import java.util.concurrent.atomic.AtomicInteger;
 import org.junit.Assert;
-import org.junit.Ignore;
 import org.junit.Test;
 
 /**
@@ -37,7 +36,6 @@ public class OneNodeFrozenIT extends AbstractServerClusterTxTest {
   final AtomicInteger nodeLefts = new AtomicInteger();
 
   @Test
-  @Ignore
   public void test() throws Exception {
     startupNodesInSequence = true;
     count = 1500;
