@@ -2297,7 +2297,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
    *
    * @return The list of operations applied by the transaction
    */
-  private List<ORecordOperation> commit(final OTransactionInternal transaction, final boolean allocated) {
+  protected List<ORecordOperation> commit(final OTransactionInternal transaction, final boolean allocated) {
     // XXX: At this moment, there are two implementations of the commit method. One for regular client transactions and one for
     // implicit micro-transactions. The implementations are quite identical, but operate on slightly different data. If you change
     // this method don't forget to change its counterpart:
