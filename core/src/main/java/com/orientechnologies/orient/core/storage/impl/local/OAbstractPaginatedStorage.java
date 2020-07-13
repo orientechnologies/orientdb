@@ -6508,6 +6508,9 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       } else if (walRecord instanceof OAtomicUnitEndRecord) {
         //noinspection UnnecessaryContinue
         continue;
+      } else if (walRecord instanceof OHighLevelTransactionChangeRecord) {
+        //noinspection UnnecessaryContinue
+        continue;
       } else {
         OLogManager.instance()
             .error(
