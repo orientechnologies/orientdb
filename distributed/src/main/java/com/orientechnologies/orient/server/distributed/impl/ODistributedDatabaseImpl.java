@@ -414,7 +414,6 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
     ORemoteTask task = request.getTask();
     try {
       manager.messageProcessStart(request);
-      waitIsReady(task);
       Object response;
       if (task.isUsingDatabase()) {
         try (ODatabaseDocumentInternal db =
