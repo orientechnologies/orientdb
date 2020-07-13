@@ -439,10 +439,14 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
 
   protected boolean isRunLocal() {
     return isDistributeVersionTwo()
-        && getStorage() instanceof OAutoshardedStorage
-        && !((OAutoshardedStorage) getStorage()).isLocalEnv();
+        && !isLocalEnv();
   }
 
+  public boolean isLocalEnv() {
+    return getStorage() instanceof OAutoshardedStorage
+    && ((OAutoshardedStorage) getStorage()).isLocalEnv();
+  }
+  
   public void sendDDLCommand(String command) {
     ODistributedContext distributed =
         ((OSharedContextDistributed) getSharedContext()).getDistributedContext();

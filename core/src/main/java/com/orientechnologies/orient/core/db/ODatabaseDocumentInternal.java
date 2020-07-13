@@ -268,4 +268,8 @@ public interface ODatabaseDocumentInternal extends ODatabaseSession, ODatabaseIn
   default void syncCommit(OTransactionData data) {
     throw new UnsupportedOperationException();
   }
+
+  default boolean isLocalEnv() {
+    return true;
+  }
 }

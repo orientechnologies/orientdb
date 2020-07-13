@@ -57,7 +57,6 @@ import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.metadata.schema.OView;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.storage.OAutoshardedStorage;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.cluster.OClusterPositionMap;
 import com.orientechnologies.orient.core.storage.cluster.OPaginatedCluster;
@@ -747,8 +746,7 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
 
   @Override
   public void onCreateClass(final ODatabaseInternal iDatabase, final OClass iClass) {
-    if (iDatabase.getStorage() instanceof OAutoshardedStorage
-        && ((OAutoshardedStorage) iDatabase.getStorage()).isLocalEnv()) return;
+    if (((ODatabaseDocumentInternal) iDatabase).isLocalEnv()) return;
 
     if (isOffline() && status != NODE_STATUS.STARTING) return;
 

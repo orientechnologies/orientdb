@@ -62,7 +62,6 @@ import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.storage.OAutoshardedStorage;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.OSystemDatabase;
 import com.orientechnologies.orient.server.config.OServerParameterConfiguration;
@@ -1457,8 +1456,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
     ODistributedServerLog.info(
         this, getLocalNodeName(), null, DIRECTION.NONE, "Dropping database %s...", dbName);
 
-    if (iDatabase.getStorage() instanceof OAutoshardedStorage
-        && !((OAutoshardedStorage) iDatabase.getStorage()).isLocalEnv()) {
+    if (!((ODatabaseDocumentInternal) iDatabase).isLocalEnv()) {
       executeInDistributedDatabaseLock(
           dbName,
           20000,

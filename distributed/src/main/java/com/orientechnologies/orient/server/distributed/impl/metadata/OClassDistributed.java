@@ -16,7 +16,6 @@ import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.metadata.security.ORule;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.storage.OAutoshardedStorage;
 import com.orientechnologies.orient.server.distributed.ODistributedConfiguration;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
@@ -712,8 +711,7 @@ public class OClassDistributed extends OClassEmbedded {
   }
 
   protected boolean isDistributedCommand(ODatabaseDocumentInternal database) {
-    return database.getStorage() instanceof OAutoshardedStorage
-        && !((OAutoshardedStorage) database.getStorage()).isLocalEnv();
+    return !database.isLocalEnv();
   }
 
   private boolean isRunLocal(ODatabaseDocumentInternal database) {
