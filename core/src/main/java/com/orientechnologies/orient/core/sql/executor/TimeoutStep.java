@@ -38,4 +38,10 @@ public class TimeoutStep extends AbstractExecutionStep {
     }
   }
 
+  @Override
+  public String prettyPrint(int depth, int indent) {
+    return OExecutionStepInternal.getIndent(depth, indent) + "+ TIMEOUT (" + timeout.getVal().toString() + " millis)";
+  }
+
+
 }

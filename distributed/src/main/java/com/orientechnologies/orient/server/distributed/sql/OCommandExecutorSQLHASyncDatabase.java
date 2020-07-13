@@ -35,7 +35,6 @@ import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.server.distributed.ODistributedException;
 import com.orientechnologies.orient.server.distributed.impl.ODistributedStorage;
 import com.orientechnologies.orient.server.hazelcast.OHazelcastPlugin;
-
 import java.util.Map;
 
 /**
@@ -82,7 +81,7 @@ public class OCommandExecutorSQLHASyncDatabase extends OCommandExecutorSQLAbstra
 
     final String databaseName = database.getName();
 
-    return dManager.installDatabase(true, databaseName, parsedStatement.isForce(), !parsedStatement.isFull());
+    return dManager.installDatabase(true, databaseName, parsedStatement.isForce(), !parsedStatement.isFull(), true);
   }
 
   @Override

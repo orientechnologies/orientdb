@@ -24,16 +24,15 @@ import com.orientechnologies.orient.core.record.impl.ODocumentHelper;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.orientechnologies.orient.object.db.OObjectDatabaseTx;
-import org.testng.Assert;
-import org.testng.annotations.Optional;
-import org.testng.annotations.Parameters;
-import org.testng.annotations.Test;
-
 import java.io.IOException;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Set;
+import org.testng.Assert;
+import org.testng.annotations.Optional;
+import org.testng.annotations.Parameters;
+import org.testng.annotations.Test;
 
 @Test(groups = "sql-select")
 public class SQLSelectProjectionsTest extends DocumentDBBaseTest {
@@ -367,6 +366,33 @@ public class SQLSelectProjectionsTest extends DocumentDBBaseTest {
     } finally {
       database.command(new OCommandSQL("drop class A unsafe ")).execute();
       database.command(new OCommandSQL("drop class B unsafe ")).execute();
+    }
+  }
+
+  @Test
+  public void testSimpleExpandExclude() {
+    try {
+      database.command(new OCommandSQL("create class A extends V")).execute();
+      database.command(new OCommandSQL("create class B extends E")).execute();
+      database.command(new OCommandSQL("create class C extends E")).execute();
+      OIdentifiable id = database.command(new OCommandSQL("insert into A (a,b) values ('a1','b1')")).execute();
+      OIdentifiable id2 = database.command(new OCommandSQL("insert into A (a,b) values ('a2','b2')")).execute();
+      OIdentifiable id3 = database.command(new OCommandSQL("insert into A (a,b) values ('a3','b3')")).execute();
+      database.command(new OCommandSQL("create edge B from " + id.getIdentity() + " to " + id2.getIdentity())).execute();
+      database.command(new OCommandSQL("create edge C from " + id2.getIdentity() + " to " + id3.getIdentity())).execute();
+
+      List<ODocument> res = database.query(new OSQLSynchQuery<Object>("select out.exclude('in_B') from (select expand(in_C) from "
+          + id3.getIdentity() + " )"));
+      Assert.assertEquals(res.size(), 1);
+      ODocument ele = res.get(0);
+      Assert.assertNotNull(ele.field("out"));
+      Assert.assertEquals(((ODocument) ele.field("out")).field("a"), "a2");
+      Assert.assertNull(((ODocument) ele.field("out")).field("in_B"));
+
+    } finally {
+      database.command(new OCommandSQL("drop class A unsafe ")).execute();
+      database.command(new OCommandSQL("drop class B unsafe ")).execute();
+      database.command(new OCommandSQL("drop class C unsafe ")).execute();
     }
   }
 

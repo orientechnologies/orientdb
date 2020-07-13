@@ -19,6 +19,11 @@
  */
 package com.orientechnologies.orient.server.distributed.impl;
 
+import static com.orientechnologies.orient.core.config.OGlobalConfiguration.DISTRIBUTED_CHECKINTEGRITY_LAST_TX;
+import static com.orientechnologies.orient.core.config.OGlobalConfiguration.DISTRIBUTED_MAX_STARTUP_DELAY;
+import static com.orientechnologies.orient.server.distributed.impl.ODistributedDatabaseImpl.DISTRIBUTED_SYNC_JSON_FILENAME;
+
+
 import com.hazelcast.core.HazelcastException;
 import com.hazelcast.core.HazelcastInstanceNotActiveException;
 import com.hazelcast.core.Member;
@@ -99,11 +104,9 @@ import com.orientechnologies.orient.server.distributed.task.ODistributedDatabase
 import com.orientechnologies.orient.server.distributed.task.ORemoteTask;
 import com.orientechnologies.orient.server.network.OServerNetworkListener;
 import com.orientechnologies.orient.server.plugin.OServerPluginAbstract;
-
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -126,11 +129,6 @@ import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
-import java.util.stream.Collectors;
-
-import static com.orientechnologies.orient.core.config.OGlobalConfiguration.DISTRIBUTED_CHECKINTEGRITY_LAST_TX;
-import static com.orientechnologies.orient.core.config.OGlobalConfiguration.DISTRIBUTED_MAX_STARTUP_DELAY;
-import static com.orientechnologies.orient.server.distributed.impl.ODistributedDatabaseImpl.DISTRIBUTED_SYNC_JSON_FILENAME;
 
 /**
  * Abstract plugin to manage the distributed environment.
@@ -924,10 +922,14 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
     }
     return onlineNodes;
   }
-
   @Override
-  public boolean installDatabase(final boolean iStartup, final String databaseName, final boolean forceDeployment,
+  public boolean installDatabase(final boolean backup, final String databaseName, final boolean forceDeployment,
       final boolean tryWithDeltaFirst) {
+    return installDatabase(backup, databaseName, forceDeployment, tryWithDeltaFirst, false);
+  }
+
+  public boolean installDatabase(final boolean backup, final String databaseName, final boolean forceDeployment,
+      final boolean tryWithDeltaFirst,boolean manualSync) {
     if (getDatabaseStatus(getLocalNodeName(), databaseName) == DB_STATUS.OFFLINE)
       // OFFLINE: AVOID TO INSTALL IT
       return false;
@@ -940,8 +942,15 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
       return false;
     }
 
+    if(!manualSync && messageService.getDatabases().contains(databaseName)) {
+      if (!serverInstance.getContextConfiguration().getValueAsBoolean(OGlobalConfiguration.DISTRIBUTED_AUTO_SYNC)) {
+        setDatabaseStatus(getLocalNodeName(), databaseName, DB_STATUS.OFFLINE);
+        return false;
+      }
+    }
+      
     final ODistributedDatabaseImpl distrDatabase = messageService.registerDatabase(databaseName, null);
-
+    
     try {
       installingDatabases.add(databaseName);
       return executeInDistributedDatabaseLock(databaseName, 20000, null,
@@ -994,7 +1003,7 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
                   }
 
                   // FIRST TIME, ASK FOR FULL REPLICA
-                  databaseInstalled = requestFullDatabase(distrDatabase, databaseName, iStartup, cfg);
+                  databaseInstalled = requestFullDatabase(distrDatabase, databaseName, backup, cfg);
 
                 } else {
                   if (tryWithDeltaFirst) {
@@ -1015,11 +1024,11 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
                         return false;
                       }
 
-                      databaseInstalled = requestFullDatabase(distrDatabase, databaseName, iStartup, cfg);
+                      databaseInstalled = requestFullDatabase(distrDatabase, databaseName, backup, cfg);
                     }
                   } else
                     // SKIP DELTA AND EXECUTE FULL BACKUP
-                    databaseInstalled = requestFullDatabase(distrDatabase, databaseName, iStartup, cfg);
+                    databaseInstalled = requestFullDatabase(distrDatabase, databaseName, backup, cfg);
                 }
 
                 if (databaseInstalled) {

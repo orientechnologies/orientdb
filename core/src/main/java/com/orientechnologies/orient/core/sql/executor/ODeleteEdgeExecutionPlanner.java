@@ -3,8 +3,18 @@ package com.orientechnologies.orient.core.sql.executor;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
-import com.orientechnologies.orient.core.sql.parser.*;
-
+import com.orientechnologies.orient.core.sql.parser.OBatch;
+import com.orientechnologies.orient.core.sql.parser.ODeleteEdgeStatement;
+import com.orientechnologies.orient.core.sql.parser.OExecutionPlanCache;
+import com.orientechnologies.orient.core.sql.parser.OExpression;
+import com.orientechnologies.orient.core.sql.parser.OFromClause;
+import com.orientechnologies.orient.core.sql.parser.OFromItem;
+import com.orientechnologies.orient.core.sql.parser.OIdentifier;
+import com.orientechnologies.orient.core.sql.parser.OIndexIdentifier;
+import com.orientechnologies.orient.core.sql.parser.OLimit;
+import com.orientechnologies.orient.core.sql.parser.ORid;
+import com.orientechnologies.orient.core.sql.parser.OSelectStatement;
+import com.orientechnologies.orient.core.sql.parser.OWhereClause;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -104,7 +114,7 @@ public class ODeleteEdgeExecutionPlanner {
 
   private void handleWhere(ODeleteExecutionPlan result, OCommandContext ctx, OWhereClause whereClause, boolean profilingEnabled) {
     if (whereClause != null) {
-      result.chain(new FilterStep(whereClause, ctx, profilingEnabled));
+      result.chain(new FilterStep(whereClause, ctx, -1, profilingEnabled));
     }
   }
 
