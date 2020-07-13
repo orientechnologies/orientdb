@@ -1461,44 +1461,14 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
 
     if (iDatabase.getStorage() instanceof OAutoshardedStorage
         && !((OAutoshardedStorage) iDatabase.getStorage()).isLocalEnv()) {
-      // DROP THE DATABASE ON ALL THE SERVERS
-      final ODistributedConfiguration dCfg = getDatabaseConfiguration(dbName);
-
-      final Set<String> servers = dCfg.getAllConfiguredServers();
-      servers.remove(nodeName);
-
-      final long start = System.currentTimeMillis();
-
-      // WAIT ALL THE SERVERS BECOME ONLINE
-      boolean allServersAreOnline = false;
-      while (!allServersAreOnline && System.currentTimeMillis() - start < 5000) {
-        allServersAreOnline = true;
-        for (String s : servers) {
-          final DB_STATUS st = getDatabaseStatus(s, dbName);
-          if (st == DB_STATUS.NOT_AVAILABLE
-              || st == DB_STATUS.SYNCHRONIZING
-              || st == DB_STATUS.BACKUP) {
-            allServersAreOnline = false;
-            try {
-              Thread.sleep(300);
-            } catch (InterruptedException e) {
-              Thread.currentThread().interrupt();
-              break;
-            }
-          }
-        }
-      }
-
-      if (!servers.isEmpty() && messageService.getDatabase(dbName) != null) {
-        sendRequest(
-            dbName,
-            null,
-            servers,
-            new ODropDatabaseTask(),
-            getNextMessageIdCounter(),
-            ODistributedRequest.EXECUTION_MODE.RESPONSE,
-            null);
-      }
+      executeInDistributedDatabaseLock(
+          dbName,
+          20000,
+          null,
+          (cfg) -> {
+            distributeDrop(dbName);
+            return null;
+          });
     }
 
     super.onDrop(iDatabase);
@@ -1518,6 +1488,47 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
             "Dropped last copy of database '%s', removing it from the cluster",
             dbName);
       }
+    }
+  }
+
+  private void distributeDrop(final String dbName) {
+    // DROP THE DATABASE ON ALL THE SERVERS
+    final ODistributedConfiguration dCfg = getDatabaseConfiguration(dbName);
+
+    final Set<String> servers = dCfg.getAllConfiguredServers();
+    servers.remove(nodeName);
+
+    final long start = System.currentTimeMillis();
+
+    // WAIT ALL THE SERVERS BECOME ONLINE
+    boolean allServersAreOnline = false;
+    while (!allServersAreOnline && System.currentTimeMillis() - start < 5000) {
+      allServersAreOnline = true;
+      for (String s : servers) {
+        final DB_STATUS st = getDatabaseStatus(s, dbName);
+        if (st == DB_STATUS.NOT_AVAILABLE
+            || st == DB_STATUS.SYNCHRONIZING
+            || st == DB_STATUS.BACKUP) {
+          allServersAreOnline = false;
+          try {
+            Thread.sleep(300);
+          } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            break;
+          }
+        }
+      }
+    }
+
+    if (!servers.isEmpty() && messageService.getDatabase(dbName) != null) {
+      sendRequest(
+          dbName,
+          null,
+          servers,
+          new ODropDatabaseTask(),
+          getNextMessageIdCounter(),
+          ODistributedRequest.EXECUTION_MODE.RESPONSE,
+          null);
     }
   }
 
