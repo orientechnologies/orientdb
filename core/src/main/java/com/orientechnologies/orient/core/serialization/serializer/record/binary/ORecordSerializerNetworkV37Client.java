@@ -31,14 +31,13 @@ public class ORecordSerializerNetworkV37Client extends ORecordSerializerNetworkV
       if (size > 0) {
         for (int i = 0; i < size; i++) {
           OIdentifiable id = readOptimizedLink(bytes);
-          if (id.equals(NULL_RECORD_ID))
-            bag.add(null);
-          else
-            bag.add(id);
+          if (id.equals(NULL_RECORD_ID)) bag.add(null);
+          else bag.add(id);
         }
 
         // The bag will mark the elements we just added as new events
-        // and marking the entire bag as a dirty transaction {@link OEmbeddedRidBag#transactionDirty}
+        // and marking the entire bag as a dirty transaction {@link
+        // OEmbeddedRidBag#transactionDirty}
         // although we just deserialized it so there are no changes and the transaction isn't dirty
         bag.transactionClear();
       }
