@@ -1,5 +1,7 @@
 package com.orientechnologies.orient.core.sql.functions.graph;
 
+import static java.util.stream.Collectors.toList;
+
 import com.orientechnologies.common.collection.OMultiCollectionIterator;
 import com.orientechnologies.common.util.ORawPair;
 import com.orientechnologies.orient.core.command.OCommandContext;
@@ -18,6 +20,7 @@ import com.orientechnologies.orient.core.sql.OSQLHelper;
 import com.orientechnologies.orient.core.sql.functions.math.OSQLFunctionMathAbstract;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -129,7 +132,14 @@ public class OSQLFunctionShortestPath extends OSQLFunctionMathAbstract {
     if (iParams.length > 3) {
       ctx.edgeType = iParams[3] == null ? null : "" + iParams[3];
     }
-    ctx.edgeTypeParam = new String[] {ctx.edgeType};
+
+    if (iParams.length > 2 && iParams[3] instanceof Collection) {
+      Collection<?> coll = (Collection<?>) iParams[3];
+      ctx.edgeTypeParam =
+          coll.stream().map(String::valueOf).collect(toList()).toArray(new String[] {});
+    } else {
+      ctx.edgeTypeParam = new String[] {ctx.edgeType};
+    }
 
     if (iParams.length > 4) {
       bindAdditionalParams(iParams[4], ctx);
