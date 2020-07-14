@@ -1,4 +1,4 @@
-package org.apache.tinkerpop.gremlin.orientdb.io.kryo;
+package org.apache.tinkerpop.gremlin.orientdb.io.gryo;
 
 import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
 import com.orientechnologies.orient.core.id.ORecordId;
@@ -8,7 +8,7 @@ import org.apache.tinkerpop.shaded.kryo.io.Input;
 import org.apache.tinkerpop.shaded.kryo.io.Output;
 
 /** Created by Enrico Risa on 06/09/2017. */
-public class ORidBagKryoSerializer extends Serializer<ORidBag> {
+public class ORidBagGyroSerializer extends Serializer<ORidBag> {
   @Override
   public ORidBag read(final Kryo kryo, final Input input, final Class<ORidBag> tinkerGraphClass) {
     final ORidBag bag = new ORidBag();
