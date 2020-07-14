@@ -40,6 +40,7 @@ import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.exception.OSecurityAccessException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
+import com.orientechnologies.orient.core.storage.impl.local.OSyncSource;
 import com.orientechnologies.orient.core.tx.OTransactionId;
 import com.orientechnologies.orient.core.tx.OTransactionSequenceStatus;
 import com.orientechnologies.orient.core.tx.OTxMetadataHolder;
@@ -122,6 +123,7 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
   private ThreadPoolExecutor requestExecutor;
   private OLockManager lockManager = new OLockManagerImpl();
   private Set<OTransactionId> inQueue = Collections.newSetFromMap(new ConcurrentHashMap<>());
+  private OSyncSource lastValidBackup;
 
   public static boolean sendResponseBack(
       final Object current,
@@ -1349,5 +1351,25 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
       final OModifiableDistributedConfiguration distributedConfiguration) {
     ODistributedStorage storage = manager.getStorage(databaseName);
     storage.setDistributedConfiguration(distributedConfiguration);
+  }
+
+  public OSyncSource getLastValidBackup() {
+    return lastValidBackup;
+  }
+
+  public void setLastValidBackup(final OSyncSource lastValidBackup) {
+    this.lastValidBackup = lastValidBackup;
+  }
+
+  public void resetLastValidBackup() {
+    if (lastValidBackup != null) {
+      lastValidBackup.invalidate();
+    }
+  }
+
+  public void clearLastValidBackup() {
+    if (lastValidBackup != null) {
+      lastValidBackup = null;
+    }
   }
 }

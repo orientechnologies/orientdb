@@ -272,4 +272,6 @@ public interface ODatabaseDocumentInternal extends ODatabaseSession, ODatabaseIn
   default boolean isLocalEnv() {
     return true;
   }
+
+  public boolean dropClusterInternal(int clusterId);
 }

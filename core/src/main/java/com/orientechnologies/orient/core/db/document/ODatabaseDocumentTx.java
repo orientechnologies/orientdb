@@ -1650,4 +1650,9 @@ public class ODatabaseDocumentTx implements ODatabaseDocumentInternal {
   public OStorageInfo getStorageInfo() {
     return getStorage();
   }
+
+  @Override
+  public boolean dropClusterInternal(int clusterId) {
+    return internal.dropClusterInternal(clusterId);
+  }
 }

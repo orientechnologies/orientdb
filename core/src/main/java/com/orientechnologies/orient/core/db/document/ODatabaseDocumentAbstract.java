@@ -895,7 +895,7 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
     return dropClusterInternal(clusterId);
   }
 
-  protected boolean dropClusterInternal(int clusterId) {
+  public boolean dropClusterInternal(int clusterId) {
     return getStorage().dropCluster(clusterId);
   }
 

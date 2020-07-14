@@ -753,7 +753,7 @@ public class OSchemaEmbedded extends OSchemaShared {
           document.delete();
         }
 
-        db.getStorage().dropCluster(clusterId);
+        db.dropClusterInternal(clusterId);
       }
     }
 

@@ -48,7 +48,6 @@ import com.orientechnologies.orient.core.storage.cluster.OPaginatedCluster;
 import com.orientechnologies.orient.core.storage.disk.OLocalPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.OFreezableStorageComponent;
-import com.orientechnologies.orient.core.storage.impl.local.OSyncSource;
 import com.orientechnologies.orient.core.storage.ridbag.sbtree.OSBTreeCollectionManager;
 import com.orientechnologies.orient.core.tx.OTransactionInternal;
 import com.orientechnologies.orient.server.OServer;
@@ -85,7 +84,6 @@ public class ODistributedStorage
   private ODistributedDatabase localDistributedDatabase;
   private ODistributedStorageEventListener eventListener;
 
-  private volatile OSyncSource lastValidBackup = null;
   private final ODistributedConfigurationManager configurationManager;
 
   public ODistributedStorage(final OServer iServer, final String dbName) {
@@ -371,13 +369,11 @@ public class ODistributedStorage
   }
 
   public boolean dropCluster(final String iClusterName) {
-    resetLastValidBackup();
     return wrapped.dropCluster(iClusterName);
   }
 
   @Override
   public boolean dropCluster(final int iId) {
-    resetLastValidBackup();
     return wrapped.dropCluster(iId);
   }
 
@@ -646,14 +642,6 @@ public class ODistributedStorage
               + "' because is non a master");
   }
 
-  public OSyncSource getLastValidBackup() {
-    return lastValidBackup;
-  }
-
-  public void setLastValidBackup(final OSyncSource lastValidBackup) {
-    this.lastValidBackup = lastValidBackup;
-  }
-
   protected void handleDistributedException(
       final String iMessage, final Exception e, final Object... iParams) {
     if (e != null) {
@@ -672,18 +660,6 @@ public class ODistributedStorage
     else
       throw new UnsupportedOperationException(
           "Storage engine " + wrapped.getType() + " does not support freeze operation");
-  }
-
-  public void resetLastValidBackup() {
-    if (lastValidBackup != null) {
-      lastValidBackup.invalidate();
-    }
-  }
-
-  public void clearLastValidBackup() {
-    if (lastValidBackup != null) {
-      lastValidBackup = null;
-    }
   }
 
   protected void dropStorageFiles() {
