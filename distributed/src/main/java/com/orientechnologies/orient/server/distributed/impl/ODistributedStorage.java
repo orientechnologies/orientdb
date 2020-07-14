@@ -20,7 +20,6 @@
 package com.orientechnologies.orient.server.distributed.impl;
 
 import com.orientechnologies.common.exception.OException;
-import com.orientechnologies.common.io.OIOException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.util.OCallable;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
@@ -603,37 +602,7 @@ public class ODistributedStorage
       final int compressionLevel,
       final int bufferSize)
       throws IOException {
-    // THIS CAUSES DEADLOCK
-    // try {
-    // return (List<String>) executeOperationInLock(new OCallable<Object, Void>() {
-    // @Override
-    // public Object call(Void iArgument) {
-    final String localNode = dManager.getLocalNodeName();
-
-    final ODistributedServerManager.DB_STATUS prevStatus =
-        dManager.getDatabaseStatus(localNode, getName());
-    if (prevStatus == ODistributedServerManager.DB_STATUS.ONLINE)
-      // SET STATUS = BACKUP
-      dManager.setDatabaseStatus(localNode, getName(), ODistributedServerManager.DB_STATUS.BACKUP);
-
-    try {
-
-      return wrapped.backup(out, options, callable, iListener, compressionLevel, bufferSize);
-
-    } catch (IOException e) {
-      throw OException.wrapException(new OIOException("Error on executing backup"), e);
-    } finally {
-      if (prevStatus == ODistributedServerManager.DB_STATUS.ONLINE) {
-        // RESTORE PREVIOUS STATUS
-        dManager.getMessageService().getDatabase(getName()).setOnline();
-      }
-    }
-    // }
-    // });
-    // } catch (InterruptedException e) {
-    // Thread.currentThread().interrupt();
-    // throw OException.wrapException(new OIOException("Backup interrupted"), e);
-    // }
+    return wrapped.backup(out, options, callable, iListener, compressionLevel, bufferSize);
   }
 
   @Override
