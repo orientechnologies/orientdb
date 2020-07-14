@@ -1316,29 +1316,7 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
   /** {@inheritDoc} */
   @Override
   public void freeze() {
-    checkOpenness();
-    if (!(getStorage() instanceof OFreezableStorageComponent)) {
-      OLogManager.instance()
-          .error(
-              this,
-              "Only local paginated storage supports freeze. "
-                  + "If you use remote client please use OServerAdmin instead",
-              null);
-
-      return;
-    }
-
-    final long startTime = Orient.instance().getProfiler().startChrono();
-
-    final OFreezableStorageComponent storage = getFreezableStorage();
-    if (storage != null) {
-      storage.freeze(false);
-    }
-
-    Orient.instance()
-        .getProfiler()
-        .stopChrono(
-            "db." + getName() + ".freeze", "Time to freeze the database", startTime, "db.*.freeze");
+    freeze(false);
   }
 
   /** {@inheritDoc} */

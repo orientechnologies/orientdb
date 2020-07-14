@@ -83,7 +83,6 @@ public class ODistributedStorage
   private final ODistributedServerManager dManager;
   private volatile OAbstractPaginatedStorage wrapped;
 
-  private ODistributedServerManager.DB_STATUS prevStatus;
   private ODistributedDatabase localDistributedDatabase;
   private ODistributedStorageEventListener eventListener;
 
@@ -587,23 +586,11 @@ public class ODistributedStorage
 
   @Override
   public void freeze(final boolean throwException) {
-    final String localNode = dManager.getLocalNodeName();
-
-    prevStatus = dManager.getDatabaseStatus(localNode, getName());
-    if (prevStatus == ODistributedServerManager.DB_STATUS.ONLINE)
-      // SET STATUS = BACKUP
-      dManager.setDatabaseStatus(localNode, getName(), ODistributedServerManager.DB_STATUS.BACKUP);
-
     getFreezableStorage().freeze(throwException);
   }
 
   @Override
   public void release() {
-    if (prevStatus == ODistributedServerManager.DB_STATUS.ONLINE) {
-      // RESTORE PREVIOUS STATUS
-      getLocalDistributedDatabase().setOnline();
-    }
-
     getFreezableStorage().release();
   }
 
