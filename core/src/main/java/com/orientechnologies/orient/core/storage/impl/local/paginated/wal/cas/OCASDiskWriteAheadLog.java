@@ -54,6 +54,7 @@ import java.util.Map;
 import java.util.NavigableSet;
 import java.util.TreeMap;
 import java.util.concurrent.Callable;
+import java.util.concurrent.CancellationException;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ConcurrentNavigableMap;
 import java.util.concurrent.ConcurrentSkipListMap;
@@ -1417,6 +1418,8 @@ public final class OCASDiskWriteAheadLog implements OWriteAheadLog {
 
     try {
       recordsWriterFuture.get();
+    } catch (CancellationException e) {
+      //ignoring, we cancelled scheduled task few lines above
     } catch (InterruptedException | ExecutionException e) {
       throw OException.wrapException(
           new OStorageException("Error during writing of WAL records in storage " + storageName),
