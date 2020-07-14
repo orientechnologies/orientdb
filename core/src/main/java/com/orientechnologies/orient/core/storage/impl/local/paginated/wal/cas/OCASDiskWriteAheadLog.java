@@ -157,7 +157,7 @@ public final class OCASDiskWriteAheadLog implements OWriteAheadLog {
   private final AtomicReference<WrittenUpTo> writtenUpTo = new AtomicReference<>();
   private       long                         segmentId   = -1;
 
-  private volatile ScheduledFuture<?> recordsWriterFuture;
+  private final ScheduledFuture<?> recordsWriterFuture;
 
   private final Path masterRecordPath;
 
@@ -186,8 +186,6 @@ public final class OCASDiskWriteAheadLog implements OWriteAheadLog {
   private long lastFSyncTs = -1;
   private final int fsyncInterval;
   private volatile long segmentAdditionTs;
-
-  private final int commitDelay;
 
   private long currentPosition = 0;
 
@@ -221,8 +219,6 @@ public final class OCASDiskWriteAheadLog implements OWriteAheadLog {
   private final LongAdder threadsWaitingCount = new LongAdder();
 
   private long reportTs = -1;
-
-  private volatile boolean stopWrite = false;
 
   public OCASDiskWriteAheadLog(final String storageName, final Path storagePath, final Path walPath, final int maxPagesCacheSize,
       final int bufferSize, long segmentsInterval, final long maxSegmentSize, final int commitDelay, final boolean filterWALFiles,
@@ -279,7 +275,7 @@ public final class OCASDiskWriteAheadLog implements OWriteAheadLog {
     OLogManager.instance().infoNoDb(this, "Page size for WAL located in %s is set to %d bytes.", walLocation.toString(), pageSize);
 
     this.maxCacheSize =
-        multiplyIntsWithOverflowDefault(maxPagesCacheSize, pageSize, DEFAULT_MAX_CACHE_SIZE);
+        multiplyIntsWithOverflowDefault(maxPagesCacheSize, pageSize);
 
     masterRecordPath = walLocation.resolve(storageName + MASTER_RECORD_EXTENSION);
     masterRecordLSNHolder = FileChannel
@@ -313,8 +309,6 @@ public final class OCASDiskWriteAheadLog implements OWriteAheadLog {
 
     writtenUpTo.set(new WrittenUpTo(new OLogSequenceNumber(currentSegment, 0), 0));
 
-    this.commitDelay = commitDelay;
-
     writeBufferPointerOne = allocator.allocate(bufferSize1, blockSize);
     writeBufferOne = writeBufferPointerOne.getNativeByteBuffer().order(ByteOrder.nativeOrder());
 
@@ -324,15 +318,16 @@ public final class OCASDiskWriteAheadLog implements OWriteAheadLog {
     log(new OEmptyWALRecord());
 
     this.recordsWriterFuture = commitExecutor
-        .schedule(new RecordsWriter(false, false, true), commitDelay, TimeUnit.MILLISECONDS);
+        .scheduleWithFixedDelay(new RecordsWriter(false, false),
+            commitDelay, commitDelay, TimeUnit.MILLISECONDS);
     flush();
   }
 
-  private int multiplyIntsWithOverflowDefault(final int maxPagesCacheSize, final int pageSize,
-      final int defaultValue) {
+  private static int multiplyIntsWithOverflowDefault(final int maxPagesCacheSize,
+      final int pageSize) {
     long maxCacheSize = (long) maxPagesCacheSize * (long) pageSize;
     if ((int) maxCacheSize != maxCacheSize) {
-      return defaultValue;
+      return OCASDiskWriteAheadLog.DEFAULT_MAX_CACHE_SIZE;
     }
     return (int) maxCacheSize;
   }
@@ -513,13 +508,21 @@ public final class OCASDiskWriteAheadLog implements OWriteAheadLog {
 
     final OModifiableLong walSize = new OModifiableLong();
     if (filterWALFiles) {
-      walFiles = Files.find(walLocation, 1,
-          (Path path, BasicFileAttributes attributes) -> validateName(path.getFileName().toString(),
-              storageName, locale));
+      //noinspection resource
+      walFiles =
+          Files.find(
+              walLocation,
+              1,
+              (Path path, BasicFileAttributes attributes) ->
+                  validateName(path.getFileName().toString(), storageName, locale));
     } else {
-      walFiles = Files.find(walLocation, 1,
-          (Path path, BasicFileAttributes attrs) -> validateSimpleName(
-              path.getFileName().toString(), locale));
+      //noinspection resource
+      walFiles =
+          Files.find(
+              walLocation,
+              1,
+              (Path path, BasicFileAttributes attrs) ->
+                  validateSimpleName(path.getFileName().toString(), locale));
     }
 
     if (walFiles == null) {
@@ -527,10 +530,15 @@ public final class OCASDiskWriteAheadLog implements OWriteAheadLog {
           "Location passed in WAL does not exist, or IO error was happened. DB cannot work in durable mode in such case");
     }
 
-    walFiles.forEach((Path path) -> {
-      segments.add(extractSegmentId(path.getFileName().toString()));
-      walSize.increment(path.toFile().length());
-    });
+    try {
+      walFiles.forEach(
+          (Path path) -> {
+            segments.add(extractSegmentId(path.getFileName().toString()));
+            walSize.increment(path.toFile().length());
+          });
+    } finally {
+      walFiles.close();
+    }
 
     return walSize.value;
   }
@@ -1402,14 +1410,17 @@ public final class OCASDiskWriteAheadLog implements OWriteAheadLog {
       doFlush(true);
     }
 
-    stopWrite = true;
+    if (!recordsWriterFuture.cancel(false) && !recordsWriterFuture.isDone()) {
+      throw new OStorageException(
+          "Can not cancel background " + "WAL task which writes records to the disk");
+    }
 
-    if (recordsWriterFuture != null) {
-      try {
-        recordsWriterFuture.get();
-      } catch (InterruptedException | ExecutionException e) {
-        throw OException.wrapException(new OStorageException("Error during writing of WAL records in storage " + storageName), e);
-      }
+    try {
+      recordsWriterFuture.get();
+    } catch (InterruptedException | ExecutionException e) {
+      throw OException.wrapException(
+          new OStorageException("Error during writing of WAL records in storage " + storageName),
+          e);
     }
 
     if (writeFuture != null) {
@@ -1531,7 +1542,7 @@ public final class OCASDiskWriteAheadLog implements OWriteAheadLog {
   }
 
   private void doFlush(final boolean forceSync) {
-    final Future<?> future = commitExecutor.submit(new RecordsWriter(forceSync, true, false));
+    final Future<?> future = commitExecutor.submit(new RecordsWriter(forceSync, true));
     try {
       future.get();
     } catch (final Exception e) {
@@ -1783,21 +1794,18 @@ public final class OCASDiskWriteAheadLog implements OWriteAheadLog {
   }
 
   private final class RecordsWriter implements Runnable {
+
     private final boolean forceSync;
     private final boolean fullWrite;
-    private final boolean reschedule;
 
-    private RecordsWriter(final boolean forceSync, final boolean fullWrite, boolean reschedule) {
+
+    private RecordsWriter(final boolean forceSync, final boolean fullWrite) {
       this.forceSync = forceSync;
       this.fullWrite = fullWrite;
-      this.reschedule = reschedule;
     }
 
     @Override
     public void run() {
-      if (stopWrite) {
-        return;
-      }
       try {
         if (printPerformanceStatistic) {
           printReport();
@@ -2045,7 +2053,7 @@ public final class OCASDiskWriteAheadLog implements OWriteAheadLog {
                   while (counter < cqSize) {
                     final OPair<Long, OWALFile> pair = fileCloseQueue.poll();
                     if (pair != null) {
-                      @SuppressWarnings("resource") final OWALFile file = pair.value;
+                      final OWALFile file = pair.value;
 
                       assert file.position() % pageSize == 0;
 
@@ -2099,10 +2107,6 @@ public final class OCASDiskWriteAheadLog implements OWriteAheadLog {
       } catch (final RuntimeException | Error e) {
         OLogManager.instance().errorNoDb(this, "Error during WAL writing", e);
         throw e;
-      } finally {
-        if (reschedule && !stopWrite) {
-          recordsWriterFuture = commitExecutor.schedule(this, commitDelay, TimeUnit.MILLISECONDS);
-        }
       }
     }
 
