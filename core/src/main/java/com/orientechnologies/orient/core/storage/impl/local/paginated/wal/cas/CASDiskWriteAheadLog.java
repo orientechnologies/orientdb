@@ -64,6 +64,7 @@ import java.util.Map;
 import java.util.NavigableSet;
 import java.util.TreeMap;
 import java.util.concurrent.Callable;
+import java.util.concurrent.CancellationException;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ConcurrentNavigableMap;
 import java.util.concurrent.ConcurrentSkipListMap;
@@ -191,7 +192,7 @@ public final class CASDiskWriteAheadLog implements OWriteAheadLog {
   private final AtomicReference<WrittenUpTo> writtenUpTo = new AtomicReference<>();
   private long segmentId = -1;
 
-  private volatile ScheduledFuture<?> recordsWriterFuture;
+  private final ScheduledFuture<?> recordsWriterFuture;
 
   private final Path masterRecordPath;
 
@@ -222,8 +223,6 @@ public final class CASDiskWriteAheadLog implements OWriteAheadLog {
   private long lastFSyncTs = -1;
   private final int fsyncInterval;
   private volatile long segmentAdditionTs;
-
-  private final int commitDelay;
 
   private long currentPosition = 0;
 
@@ -260,8 +259,6 @@ public final class CASDiskWriteAheadLog implements OWriteAheadLog {
   private final LongAdder threadsWaitingCount = new LongAdder();
 
   private long reportTs = -1;
-
-  private volatile boolean stopWrite = false;
 
   public CASDiskWriteAheadLog(
       final String storageName,
@@ -393,8 +390,6 @@ public final class CASDiskWriteAheadLog implements OWriteAheadLog {
 
     writtenUpTo.set(new WrittenUpTo(new OLogSequenceNumber(currentSegment, 0), 0));
 
-    this.commitDelay = commitDelay;
-
     writeBufferPointerOne = allocator.allocate(bufferSize1, blockSize, false);
     writeBufferOne = writeBufferPointerOne.getNativeByteBuffer().order(ByteOrder.nativeOrder());
     assert writeBufferOne.position() == 0;
@@ -406,8 +401,8 @@ public final class CASDiskWriteAheadLog implements OWriteAheadLog {
     log(new EmptyWALRecord());
 
     this.recordsWriterFuture =
-        commitExecutor.schedule(
-            new RecordsWriter(false, false, true), commitDelay, TimeUnit.MILLISECONDS);
+        commitExecutor.scheduleWithFixedDelay(
+            new RecordsWriter(false, false), commitDelay, commitDelay, TimeUnit.MILLISECONDS);
 
     flush();
   }
@@ -1511,16 +1506,18 @@ public final class CASDiskWriteAheadLog implements OWriteAheadLog {
       doFlush(true);
     }
 
-    stopWrite = true;
+    if (!recordsWriterFuture.cancel(false) && !recordsWriterFuture.isDone()) {
+      throw new OStorageException("Can not cancel background write thread in WAL");
+    }
 
-    if (recordsWriterFuture != null) {
-      try {
-        recordsWriterFuture.get();
-      } catch (InterruptedException | ExecutionException e) {
-        throw OException.wrapException(
-            new OStorageException("Error during writing of WAL records in storage " + storageName),
-            e);
-      }
+    try {
+      recordsWriterFuture.get();
+    } catch (CancellationException e) {
+      // ignore, we canceled scheduled execution
+    } catch (InterruptedException | ExecutionException e) {
+      throw OException.wrapException(
+          new OStorageException("Error during writing of WAL records in storage " + storageName),
+          e);
     }
 
     if (writeFuture != null) {
@@ -1641,7 +1638,7 @@ public final class CASDiskWriteAheadLog implements OWriteAheadLog {
   }
 
   private void doFlush(final boolean forceSync) {
-    final Future<?> future = commitExecutor.submit(new RecordsWriter(forceSync, true, false));
+    final Future<?> future = commitExecutor.submit(new RecordsWriter(forceSync, true));
     try {
       future.get();
     } catch (final Exception e) {
@@ -1942,19 +1939,14 @@ public final class CASDiskWriteAheadLog implements OWriteAheadLog {
   private final class RecordsWriter implements Runnable {
     private final boolean forceSync;
     private final boolean fullWrite;
-    private final boolean reschedule;
 
-    private RecordsWriter(final boolean forceSync, final boolean fullWrite, boolean reschedule) {
+    private RecordsWriter(final boolean forceSync, final boolean fullWrite) {
       this.forceSync = forceSync;
       this.fullWrite = fullWrite;
-      this.reschedule = reschedule;
     }
 
     @Override
     public void run() {
-      if (stopWrite) {
-        return;
-      }
       try {
         if (printPerformanceStatistic) {
           printReport();
@@ -2280,10 +2272,6 @@ public final class CASDiskWriteAheadLog implements OWriteAheadLog {
       } catch (final RuntimeException | Error e) {
         OLogManager.instance().errorNoDb(this, "Error during WAL writing", e);
         throw e;
-      } finally {
-        if (reschedule && !stopWrite) {
-          recordsWriterFuture = commitExecutor.schedule(this, commitDelay, TimeUnit.MILLISECONDS);
-        }
       }
     }
 
