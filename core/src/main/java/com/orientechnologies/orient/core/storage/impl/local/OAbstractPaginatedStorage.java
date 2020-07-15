@@ -2265,7 +2265,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
    * @param allocated true if the operation is pre-allocated commit
    * @return The list of operations applied by the transaction
    */
-  private List<ORecordOperation> commit(
+  protected List<ORecordOperation> commit(
       final OTransactionInternal transaction, final boolean allocated) {
     // XXX: At this moment, there are two implementations of the commit method. One for regular
     // client transactions and one for
@@ -6506,6 +6506,9 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
         //noinspection UnnecessaryContinue
         continue;
       } else if (walRecord instanceof OAtomicUnitEndRecord) {
+        //noinspection UnnecessaryContinue
+        continue;
+      } else if (walRecord instanceof OHighLevelTransactionChangeRecord) {
         //noinspection UnnecessaryContinue
         continue;
       } else {

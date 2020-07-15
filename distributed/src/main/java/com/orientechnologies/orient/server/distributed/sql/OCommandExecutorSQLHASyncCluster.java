@@ -164,8 +164,6 @@ public class OCommandExecutorSQLHASyncCluster extends OCommandExecutorSQLAbstrac
             task,
             dManager.getNextMessageIdCounter(),
             ODistributedRequest.EXECUTION_MODE.RESPONSE,
-            null,
-            null,
             null);
 
     final Map<String, Object> results = (Map<String, Object>) response.getPayload();
@@ -220,12 +218,11 @@ public class OCommandExecutorSQLHASyncCluster extends OCommandExecutorSQLAbstrac
                         chunk.filePath, chunkNum, chunk.offset + chunk.buffer.length, false),
                     dManager.getNextMessageIdCounter(),
                     ODistributedRequest.EXECUTION_MODE.RESPONSE,
-                    null,
-                    null,
                     null);
 
-            if (result instanceof Boolean) continue;
-            else if (result instanceof Exception) {
+            if (result instanceof Boolean) {
+              continue;
+            } else if (result instanceof Exception) {
               ODistributedServerLog.error(
                   null,
                   nodeName,

@@ -20,8 +20,14 @@
 package com.orientechnologies.orient.core.index;
 
 import com.orientechnologies.common.comparator.ODefaultComparator;
+import com.orientechnologies.orient.core.exception.OSerializationException;
+import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.ODocumentSerializable;
+import com.orientechnologies.orient.core.serialization.serializer.record.binary.ORecordSerializerNetworkV37;
+import java.io.DataInput;
+import java.io.DataOutput;
+import java.io.IOException;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -187,5 +193,42 @@ public class OCompositeKey
 
     keys.clear();
     keys.addAll(keyMap.values());
+  }
+
+  // Alternative (de)serialization methods that avoid converting the OCompositeKey to a document.
+  public void toStream(ORecordSerializerNetworkV37 serializer, DataOutput out) throws IOException {
+    int l = keys.size();
+    out.writeInt(l);
+    for (Object key : keys) {
+      if (key instanceof OCompositeKey) {
+        throw new OSerializationException("Cannot serialize unflattened nested composite key.");
+      }
+      if (key == null) {
+        out.writeByte((byte) -1);
+      } else {
+        OType type = OType.getTypeByValue(key);
+        byte[] bytes = serializer.serializeValue(key, type);
+        out.writeByte((byte) type.getId());
+        out.writeInt(bytes.length);
+        out.write(bytes);
+      }
+    }
+  }
+
+  public void fromStream(ORecordSerializerNetworkV37 serializer, DataInput in) throws IOException {
+    int l = in.readInt();
+    for (int i = 0; i < l; i++) {
+      byte b = in.readByte();
+      if (b == -1) {
+        addKey(null);
+      } else {
+        int len = in.readInt();
+        byte[] bytes = new byte[len];
+        in.readFully(bytes);
+        OType type = OType.getById(b);
+        Object k = serializer.deserializeValue(bytes, type);
+        addKey(k);
+      }
+    }
   }
 }

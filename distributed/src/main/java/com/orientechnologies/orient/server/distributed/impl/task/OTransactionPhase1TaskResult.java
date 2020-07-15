@@ -24,7 +24,6 @@ import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.serialization.OStreamable;
 import com.orientechnologies.orient.core.serialization.OStreamableHelper;
 import com.orientechnologies.orient.core.serialization.serializer.record.binary.ORecordSerializerNetworkDistributed;
-import com.orientechnologies.orient.core.tx.OTransactionId;
 import com.orientechnologies.orient.server.distributed.impl.task.transaction.OTransactionResultPayload;
 import com.orientechnologies.orient.server.distributed.impl.task.transaction.OTxConcurrentCreation;
 import com.orientechnologies.orient.server.distributed.impl.task.transaction.OTxConcurrentModification;
@@ -109,8 +108,6 @@ public class OTransactionPhase1TaskResult implements OStreamable {
       case OTxStillRunning.ID:
         break;
       case OTxInvalidSequential.ID:
-        OTxInvalidSequential txInvalid = (OTxInvalidSequential) resultPayload;
-        txInvalid.getCurrent().write(out);
         break;
     }
   }
@@ -172,8 +169,7 @@ public class OTransactionPhase1TaskResult implements OStreamable {
         this.resultPayload = new OTxStillRunning();
         break;
       case OTxInvalidSequential.ID:
-        OTransactionId current = OTransactionId.read(in);
-        this.resultPayload = new OTxInvalidSequential(current);
+        this.resultPayload = new OTxInvalidSequential();
         break;
     }
   }

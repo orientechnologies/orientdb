@@ -151,9 +151,7 @@ public abstract class OrientGraphTest extends GraphTest {
 
   public Graph generateGraph(final String graphDirectoryName) {
     final String url = getStorageType() + ":" + getWorkingDirectory() + "/" + graphDirectoryName;
-
     OrientGraph graph = currentGraphs.get(url);
-
     if (graph != null) {
       if (graph.isClosed()) currentGraphs.remove(url);
       else {
@@ -161,19 +159,16 @@ public abstract class OrientGraphTest extends GraphTest {
         return graph;
       }
     }
-
     graph = new OrientGraph(url);
     graph.setWarnOnForceClosingTx(false);
     graph.setStandardExceptions(true);
-
     currentGraphs.put(url, graph);
-
     return graph;
   }
 
   public void doTestSuite(final TestSuite testSuite) throws Exception {
     dropGraph("graph");
-    for (Method method : testSuite.getClass().getDeclaredMethods()) {
+    for (final Method method : testSuite.getClass().getDeclaredMethods()) {
       if (method.getName().startsWith("test")) {
         System.out.println("Testing " + method.getName() + "...");
         method.invoke(testSuite);
@@ -186,18 +181,17 @@ public abstract class OrientGraphTest extends GraphTest {
   public void dropGraph(final String graphDirectoryName) {
     // this is necessary on windows systems: deleting the directory is not enough because it takes a
     // while to unlock files
-
     final String graphDirectory = getWorkingDirectory() + "/" + graphDirectoryName;
     final String url = getStorageType() + ":" + graphDirectory;
     try {
       OrientGraph graph = currentGraphs.remove(url);
-      if (graph == null || graph.isClosed()) graph = new OrientGraph(url);
-
+      if (graph == null || graph.isClosed()) {
+        graph = new OrientGraph(url);
+      }
       graph.drop();
     } catch (Exception e) {
       e.printStackTrace();
     }
-
     deleteDirectory(new File(graphDirectory));
   }
 
@@ -212,21 +206,23 @@ public abstract class OrientGraphTest extends GraphTest {
   }
 
   public static ENV getEnvironment() {
-    String envName = System.getProperty("orientdb.test.env", "dev").toUpperCase(Locale.ENGLISH);
+    final String envName =
+        System.getProperty("orientdb.test.env", "dev").toUpperCase(Locale.ENGLISH);
     ENV result = null;
     try {
       result = ENV.valueOf(envName);
-    } catch (IllegalArgumentException e) {
+    } catch (final IllegalArgumentException e) {
     }
-
-    if (result == null) result = ENV.DEV;
-
+    if (result == null) {
+      result = ENV.DEV;
+    }
     return result;
   }
 
   public static String getStorageType() {
-    if (getEnvironment().equals(ENV.DEV)) return "memory";
-
+    if (getEnvironment().equals(ENV.DEV)) {
+      return "memory";
+    }
     return "plocal";
   }
 }

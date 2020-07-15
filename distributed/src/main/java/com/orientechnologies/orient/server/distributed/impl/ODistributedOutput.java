@@ -41,7 +41,6 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
 /**
@@ -670,7 +669,7 @@ public class ODistributedOutput {
       final ODistributedAbstractPlugin manager, final String db) {
     final List<ODocument> rows = new ArrayList<ODocument>();
 
-    ConcurrentHashMap<ODistributedRequestId, ODistributedTxContext> activeTxContexts =
+    Map<ODistributedRequestId, ODistributedTxContext> activeTxContexts =
         manager.getMessageService().getDatabase(db).getActiveTxContexts();
 
     if (activeTxContexts != null) {

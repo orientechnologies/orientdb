@@ -123,31 +123,37 @@ public class ONative {
   public int getOpenFilesLimit(boolean verbose, int recommended, int defLimit) {
     final Platform.OS os = Platform.getPlatform().getOS();
     if (os == Platform.OS.LINUX) {
-      RLimit rLimit = posix.getrlimit(OCLibrary.RLIMIT_NOFILE);
+      try {
+        final RLimit rLimit = posix.getrlimit(OCLibrary.RLIMIT_NOFILE);
 
-      if (rLimit.rlimCur() > 0) {
-        if (verbose) {
-          OLogManager.instance()
-              .infoNoDb(
-                  this,
-                  "Detected limit of amount of simultaneously open files is %d, "
-                      + " limit of open files for disk cache will be set to %d",
-                  rLimit.rlimCur(),
-                  rLimit.rlimCur() / 2 - 512);
+        if (rLimit.rlimCur() > 0) {
+          if (verbose) {
+            OLogManager.instance()
+                .infoNoDb(
+                    this,
+                    "Detected limit of amount of simultaneously open files is %d, "
+                        + " limit of open files for disk cache will be set to %d",
+                    rLimit.rlimCur(),
+                    rLimit.rlimCur() / 2 - 512);
+          }
+
+          if (rLimit.rlimCur() < recommended) {
+            OLogManager.instance()
+                .warnNoDb(
+                    this,
+                    "Value of limit of simultaneously open files is too small, recommended value is %d",
+                    recommended);
+          }
+
+          return (int) rLimit.rlimCur() / 2 - 512;
+        } else {
+          if (verbose) {
+            OLogManager.instance().infoNoDb(this, "Can not detect value of limit of open files.");
+          }
         }
-
-        if (rLimit.rlimCur() < recommended) {
-          OLogManager.instance()
-              .warnNoDb(
-                  this,
-                  "Value of limit of simultaneously open files is too small, recommended value is %d",
-                  recommended);
-        }
-
-        return (int) rLimit.rlimCur() / 2 - 512;
-      } else {
+      } catch (final Exception e) {
         if (verbose) {
-          OLogManager.instance().infoNoDb(this, "Can not detect value of limit of open files.");
+          OLogManager.instance().infoNoDb(this, "Can not detect value of limit of open files.", e);
         }
       }
     } else if (os == Platform.OS.WINDOWS) {
@@ -200,32 +206,36 @@ public class ONative {
 
     final Platform.OS os = Platform.getPlatform().getOS();
     if (os == Platform.OS.LINUX) {
-      RLimit rLimit = posix.getrlimit(OCLibrary.RLIMIT_AS);
+      try {
+        final RLimit rLimit = posix.getrlimit(OCLibrary.RLIMIT_AS);
+        if (printSteps)
+          OLogManager.instance()
+              .infoNoDb(
+                  this,
+                  "Soft memory limit for this process is set to %d B/%d MB/%d GB",
+                  rLimit.rlimCur(),
+                  convertToMB(rLimit.rlimCur()),
+                  convertToGB(rLimit.rlimCur()));
 
-      if (printSteps)
-        OLogManager.instance()
-            .infoNoDb(
-                this,
-                "Soft memory limit for this process is set to %d B/%d MB/%d GB",
-                rLimit.rlimCur(),
-                convertToMB(rLimit.rlimCur()),
-                convertToGB(rLimit.rlimCur()));
+        memoryLimit = updateMemoryLimit(memoryLimit, rLimit.rlimCur());
 
-      memoryLimit = updateMemoryLimit(memoryLimit, rLimit.rlimCur());
+        if (printSteps)
+          OLogManager.instance()
+              .infoNoDb(
+                  this,
+                  "Hard memory limit for this process is set to %d B/%d MB/%d GB",
+                  rLimit.rlimMax(),
+                  convertToMB(rLimit.rlimMax()),
+                  convertToGB(rLimit.rlimMax()));
 
-      if (printSteps)
-        OLogManager.instance()
-            .infoNoDb(
-                this,
-                "Hard memory limit for this process is set to %d B/%d MB/%d GB",
-                rLimit.rlimMax(),
-                convertToMB(rLimit.rlimMax()),
-                convertToGB(rLimit.rlimMax()));
-
-      memoryLimit = updateMemoryLimit(memoryLimit, rLimit.rlimMax());
+        memoryLimit = updateMemoryLimit(memoryLimit, rLimit.rlimMax());
+      } catch (final Exception e) {
+        if (printSteps) {
+          OLogManager.instance().infoNoDb(this, "Can not detect memory limit value.", e);
+        }
+      }
 
       final String memoryCGroupPath = findMemoryGCGroupPath();
-
       if (memoryCGroupPath != null) {
         if (printSteps)
           OLogManager.instance()

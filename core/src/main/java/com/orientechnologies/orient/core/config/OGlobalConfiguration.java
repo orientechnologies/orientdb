@@ -2024,18 +2024,21 @@ public enum OGlobalConfiguration { // ENVIRONMENT
     out.println(" configuration dump:");
 
     String lastSection = "";
-    for (OGlobalConfiguration v : values()) {
-      final String section = v.key.substring(0, v.key.indexOf('.'));
-
+    for (final OGlobalConfiguration value : values()) {
+      final int index = value.key.indexOf('.');
+      String section = value.key;
+      if (index >= 0) {
+        section = value.key.substring(0, index);
+      }
       if (!lastSection.equals(section)) {
         out.print("- ");
         out.println(section.toUpperCase(Locale.ENGLISH));
         lastSection = section;
       }
       out.print("  + ");
-      out.print(v.key);
+      out.print(value.key);
       out.print(" = ");
-      out.println(v.isHidden() ? "<hidden>" : String.valueOf((Object) v.getValue()));
+      out.println(value.isHidden() ? "<hidden>" : String.valueOf((Object) value.getValue()));
     }
   }
 

@@ -47,6 +47,7 @@ import com.orientechnologies.orient.core.db.ODatabaseLifecycleListener;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.OScenarioThreadLocal;
 import com.orientechnologies.orient.core.db.OrientDBConfig;
+import com.orientechnologies.orient.core.db.OrientDBEmbedded;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
@@ -79,7 +80,6 @@ import com.orientechnologies.orient.server.distributed.ODistributedMessageServic
 import com.orientechnologies.orient.server.distributed.ODistributedRequest;
 import com.orientechnologies.orient.server.distributed.ODistributedRequestId;
 import com.orientechnologies.orient.server.distributed.ODistributedResponse;
-import com.orientechnologies.orient.server.distributed.ODistributedResponseManager;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIRECTION;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
@@ -583,9 +583,7 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
       final ORemoteTask iTask,
       final long reqId,
       final ODistributedRequest.EXECUTION_MODE iExecutionMode,
-      final Object localResult,
-      final OCallable<Void, ODistributedRequestId> iAfterSentCallback,
-      final OCallable<Void, ODistributedResponseManager> endCallback) {
+      final Object localResult) {
     return sendRequest(
         iDatabaseName,
         iClusterNames,
@@ -594,8 +592,6 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
         reqId,
         iExecutionMode,
         localResult,
-        iAfterSentCallback,
-        endCallback,
         null);
   }
 
@@ -607,8 +603,6 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
       final long reqId,
       final ODistributedRequest.EXECUTION_MODE iExecutionMode,
       final Object localResult,
-      final OCallable<Void, ODistributedRequestId> iAfterSentCallback,
-      final OCallable<Void, ODistributedResponseManager> endCallback,
       ODistributedResponseManagerFactory responseManagerFactory) {
 
     final ODistributedRequest req =
@@ -657,30 +651,16 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
     messageService.updateMessageStats(iTask.getName());
     if (responseManagerFactory != null) {
       return db.send2Nodes(
-          req,
-          iClusterNames,
-          iTargetNodes,
-          iExecutionMode,
-          localResult,
-          iAfterSentCallback,
-          endCallback,
-          responseManagerFactory);
+          req, iClusterNames, iTargetNodes, iExecutionMode, localResult, responseManagerFactory);
     } else {
-      return db.send2Nodes(
-          req,
-          iClusterNames,
-          iTargetNodes,
-          iExecutionMode,
-          localResult,
-          iAfterSentCallback,
-          endCallback);
+      return db.send2Nodes(req, iClusterNames, iTargetNodes, iExecutionMode, localResult);
     }
   }
 
   @Override
   public void executeOnLocalNodeFromRemote(ODistributedRequest request) {
     Object response = executeOnLocalNode(request.getId(), request.getTask(), null);
-    ODistributedWorker.sendResponseBack(this, this, request, response);
+    ODistributedDatabaseImpl.sendResponseBack(this, this, request.getId(), response);
   }
 
   /** Executes the request on local node. In case of error returns the Exception itself */
@@ -1232,8 +1212,6 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
                 deployTask,
                 getNextMessageIdCounter(),
                 ODistributedRequest.EXECUTION_MODE.RESPONSE,
-                null,
-                null,
                 null);
 
         if (response == null)
@@ -1457,8 +1435,6 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
                       deployTask,
                       getNextMessageIdCounter(),
                       ODistributedRequest.EXECUTION_MODE.RESPONSE,
-                      null,
-                      null,
                       null)
                   .getPayload();
 
@@ -1545,24 +1521,25 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
   }
 
   private void replaceStorageInSessions(final OStorage storage) {
-    ODatabaseDocumentInternal current = ODatabaseRecordThreadLocal.instance().getIfDefined();
-    try {
-      for (OClientConnection conn : serverInstance.getClientConnectionManager().getConnections()) {
-        final ODatabaseDocumentInternal connDb = conn.getDatabase();
-        if (connDb != null && connDb.getName().equals(storage.getName())) {
-          conn.acquire();
-          try {
-            connDb.activateOnCurrentThread();
-            connDb.replaceStorage(storage);
-            connDb.getMetadata().reload();
-          } finally {
-            conn.release();
-          }
-        }
-      }
-    } finally {
-      ODatabaseRecordThreadLocal.instance().set(current);
-    }
+    ((OrientDBEmbedded) serverInstance.getDatabases())
+        .executeNoDb(
+            () -> {
+              for (OClientConnection conn :
+                  serverInstance.getClientConnectionManager().getConnections()) {
+                final ODatabaseDocumentInternal connDb = conn.getDatabase();
+                if (connDb != null && connDb.getName().equals(storage.getName())) {
+                  conn.acquire();
+                  try {
+                    connDb.activateOnCurrentThread();
+                    connDb.replaceStorage(storage);
+                    connDb.getMetadata().reload();
+                  } finally {
+                    conn.release();
+                  }
+                }
+              }
+              return null;
+            });
   }
 
   protected File getClusterOwnedExclusivelyByCurrentNode(
@@ -2192,7 +2169,6 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
 
                   uniqueClustersBackupDirectory.delete();
                 }
-
                 ODistributedDatabaseImpl distrDatabase = messageService.getDatabase(databaseName);
 
                 try (ODatabaseDocumentInternal inst = distrDatabase.getDatabaseInstance()) {
@@ -2214,10 +2190,7 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
                             deployTask,
                             getNextMessageIdCounter(),
                             ODistributedRequest.EXECUTION_MODE.RESPONSE,
-                            null,
-                            null,
                             null);
-
                     if (response == null)
                       throw new ODistributedDatabaseDeltaSyncException((OLogSequenceNumber) null);
                     installResponseNewDeltaSync(
@@ -2228,12 +2201,10 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
                         (ONewDeltaTaskResponse) response.getPayload());
                   }
                 }
-
               } else if (delta) {
                 try (InputStream in = receiver.getInputStream()) {
                   new OIncrementalServerSync().importDelta(serverInstance, databaseName, in, iNode);
                 }
-
               } else {
 
                 // USES A CUSTOM WRAPPER OF IS TO WAIT FOR FILE IS WRITTEN (ASYNCH)

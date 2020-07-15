@@ -228,7 +228,6 @@ public final class OMicroTransaction implements OBasicTransaction, OTransactionI
     }
 
     // Update the identity.
-
     final ORecordOperation rec = resolveRecordOperation(oldRid);
     if (rec != null) {
       updatedRids.put(newRid.copy(), oldRid.copy());
@@ -254,7 +253,6 @@ public final class OMicroTransaction implements OBasicTransaction, OTransactionI
       record.indexChanges.changesPerKey.put(record.keyChanges.key, record.keyChanges);
 
     // Update the indexes.
-
     final List<OTransactionRecordIndexOperation> transactionIndexOperations =
         recordIndexOperations.get(translateRid(oldRid));
     if (transactionIndexOperations != null) {
@@ -782,6 +780,18 @@ public final class OMicroTransaction implements OBasicTransaction, OTransactionI
       return serializedOperations.get().iterator();
     } else {
       return Collections.emptyIterator();
+    }
+  }
+
+  @Override
+  public void resetAllocatedIds() {
+    for (Map.Entry<ORID, ORecordOperation> op : recordOperations.entrySet()) {
+      if (op.getValue().type == ORecordOperation.CREATED) {
+        ORecordId oldNew =
+            new ORecordId(op.getKey().getClusterId(), op.getKey().getClusterPosition());
+        updatedRids.remove(op.getValue().getRID());
+        updateIdentityAfterRecordCommit(op.getValue().getRID(), oldNew);
+      }
     }
   }
 }
