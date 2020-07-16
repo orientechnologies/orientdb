@@ -290,7 +290,8 @@ public enum OGlobalConfiguration {// ENVIRONMENT
   WAL_SHUTDOWN_TIMEOUT("storage.wal.shutdownTimeout", "Maximum wait interval between events, when the background flush thread"
       + "receives a shutdown command and when the background flush will be stopped (in ms.)", Integer.class, 10000),
 
-  WAL_FUZZY_CHECKPOINT_INTERVAL("storage.wal.fuzzyCheckpointInterval", "Interval between fuzzy checkpoints (in seconds)",
+  WAL_FUZZY_CHECKPOINT_INTERVAL("storage.wal.fuzzyCheckpointInterval",
+      "Interval between fuzzy checkpoints (in seconds)",
       Integer.class, 300),
 
   WAL_REPORT_AFTER_OPERATIONS_DURING_RESTORE("storage.wal.reportAfterOperationsDuringRestore",
@@ -298,15 +299,23 @@ public enum OGlobalConfiguration {// ENVIRONMENT
       Integer.class, 10000),
 
   WAL_RESTORE_BATCH_SIZE("storage.wal.restore.batchSize",
-      "Amount of WAL records, which are read at once in a single batch during a restore procedure", Integer.class, 1000),
+      "Amount of WAL records, which are read at once in a single batch during a restore procedure",
+      Integer.class, 1000),
 
-  @Deprecated WAL_READ_CACHE_SIZE("storage.wal.readCacheSize", "Size of WAL read cache in amount of pages", Integer.class, 1000),
+  WAL_MIN_COMPRESSED_RECORD_SIZE("storage.wal.minCompressedRecordSize",
+      "Minimum size of record which is needed to be compressed before stored on disk",
+      Integer.class, 8 * 1024),
+
+  @Deprecated WAL_READ_CACHE_SIZE("storage.wal.readCacheSize",
+      "Size of WAL read cache in amount of pages", Integer.class, 1000),
 
   WAL_FUZZY_CHECKPOINT_SHUTDOWN_TIMEOUT("storage.wal.fuzzyCheckpointShutdownWait",
-      "The amount of time the DB should wait until it shuts down (in seconds)", Integer.class, 60 * 10),
+      "The amount of time the DB should wait until it shuts down (in seconds)", Integer.class,
+      60 * 10),
 
   WAL_FULL_CHECKPOINT_SHUTDOWN_TIMEOUT("storage.wal.fullCheckpointShutdownTimeout",
-      "The amount of time the DB will wait, until a checkpoint is finished, during a DB shutdown (in seconds)", Integer.class,
+      "The amount of time the DB will wait, until a checkpoint is finished, during a DB shutdown (in seconds)",
+      Integer.class,
       60 * 10),
 
   WAL_LOCATION("storage.wal.path", "Path to the WAL file on the disk. By default, it is placed in the DB directory, but"
