@@ -1,0 +1,11 @@
+{
+
+  "@class": "Address", 
+
+  "type": "Residence", 
+
+  "street": "Piazza di Spagna", 
+
+  "city": "14:0"
+
+}
