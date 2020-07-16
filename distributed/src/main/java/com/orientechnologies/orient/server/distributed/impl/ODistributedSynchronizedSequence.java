@@ -3,6 +3,9 @@ package com.orientechnologies.orient.server.distributed.impl;
 import com.orientechnologies.orient.core.tx.OTransactionId;
 import com.orientechnologies.orient.core.tx.OTransactionSequenceStatus;
 import com.orientechnologies.orient.core.tx.OTxMetadataHolderImpl;
+import com.orientechnologies.orient.core.tx.ValidationResult;
+import com.orientechnologies.orient.server.distributed.ODistributedException;
+import com.orientechnologies.orient.server.distributed.exception.OTransactionAlreadyPresentException;
 import com.orientechnologies.orient.server.distributed.impl.task.transaction.OTransactionSequenceManager;
 import java.util.List;
 import java.util.Optional;
@@ -18,7 +21,7 @@ public class ODistributedSynchronizedSequence {
     request.countDown();
   }
 
-  public Optional<OTransactionId> validateTransactionId(OTransactionId id) {
+  public ValidationResult validateTransactionId(OTransactionId id) {
     return sequenceManager.validateTransactionId(id);
   }
 
@@ -36,12 +39,14 @@ public class ODistributedSynchronizedSequence {
     } catch (InterruptedException e) {
       e.printStackTrace();
     }
-    List<OTransactionId> data = sequenceManager.notifySuccess(id);
-    if (data.isEmpty()) {
+    ValidationResult status = sequenceManager.notifySuccess(id);
+    if (status == ValidationResult.ALREADY_PRESENT) {
+      throw new OTransactionAlreadyPresentException("Tx Already present in the current context");
+    } else if (status == ValidationResult.VALID) {
       request = new CountDownLatch(1);
       return new OTxMetadataHolderImpl(request, id, sequenceManager.currentStatus());
     } else {
-      throw new RuntimeException("");
+      throw new ODistributedException("Failed transaction sequence need a reinstall");
     }
   }
 

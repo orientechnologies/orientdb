@@ -19,7 +19,6 @@
  */
 package com.orientechnologies.orient.server.distributed.task;
 
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
 import com.orientechnologies.orient.server.distributed.ODistributedRequest;
 import com.orientechnologies.orient.server.distributed.ODistributedRequestId;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
@@ -31,7 +30,6 @@ import java.util.List;
  * @author Luca Garulli (l.garulli--at--orientdb.com)
  */
 public abstract class OAbstractReplicatedTask extends OAbstractRemoteTask {
-  protected OLogSequenceNumber lastLSN;
 
   public ORemoteTask getFixTask(
       final ODistributedRequest iRequest,
@@ -48,9 +46,5 @@ public abstract class OAbstractReplicatedTask extends OAbstractRemoteTask {
       final ODistributedRequestId reqId,
       final List<String> servers) {
     return null;
-  }
-
-  public OLogSequenceNumber getLastLSN() {
-    return lastLSN;
   }
 }

@@ -7,8 +7,14 @@ import static org.junit.Assert.assertTrue;
 
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.binary.impl.index.OCompositeKeySerializer;
+import com.orientechnologies.orient.core.serialization.serializer.record.binary.ORecordSerializerNetworkV37;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALChanges;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALChangesTree;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
+import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import org.junit.Test;
@@ -319,5 +325,21 @@ public class OCompositeKeyTest {
         OCompositeKeySerializer.INSTANCE.deserializeFromByteBufferObject(
             buffer, walChanges, serializationOffset),
         compositeKey);
+  }
+
+  @Test
+  public void testNetworkSerialization() throws IOException {
+    String k1 = "key";
+    OCompositeKey k2 = new OCompositeKey(null, new OCompositeKey("user1", 12.5));
+    OCompositeKey compositeKey = new OCompositeKey(k1, k2);
+    ORecordSerializerNetworkV37 serializer = ORecordSerializerNetworkV37.INSTANCE;
+    ByteArrayOutputStream outStream = new ByteArrayOutputStream();
+    DataOutputStream out = new DataOutputStream(outStream);
+    compositeKey.toStream(serializer, out);
+    ByteArrayInputStream inStream = new ByteArrayInputStream(outStream.toByteArray());
+    DataInputStream in = new DataInputStream(inStream);
+    OCompositeKey deserializedCompositeKey = new OCompositeKey();
+    deserializedCompositeKey.fromStream(serializer, in);
+    assertEquals(compositeKey, deserializedCompositeKey);
   }
 }

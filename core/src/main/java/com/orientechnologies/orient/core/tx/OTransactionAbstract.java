@@ -69,7 +69,7 @@ public abstract class OTransactionAbstract implements OTransaction {
         dbCache.deleteRecord(txEntry.getRecord().getIdentity());
       } else if (txEntry.type == ORecordOperation.UPDATED
           || txEntry.type == ORecordOperation.CREATED) {
-        // UDPATE OR CREATE
+        // UPDATE OR CREATE
         dbCache.updateRecord(txEntry.getRecord());
       }
       if (txEntry.getRecord() instanceof ODocument) {

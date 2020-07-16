@@ -26,9 +26,7 @@ import com.orientechnologies.common.util.OUncaughtExceptionHandler;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
-import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.OSyncSource;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.distributed.ODistributedDatabase;
 import com.orientechnologies.orient.server.distributed.ODistributedException;
@@ -55,11 +53,6 @@ public class OSyncDatabaseTask extends OAbstractSyncDatabaseTask {
 
   public OSyncDatabaseTask() {}
 
-  public OSyncDatabaseTask(final OLogSequenceNumber lastLSN, final long lastOperationTimestamp) {
-    super(lastOperationTimestamp);
-    this.lastLSN = lastLSN;
-  }
-
   @Override
   public Object execute(
       final ODistributedRequestId requestId,
@@ -72,9 +65,7 @@ public class OSyncDatabaseTask extends OAbstractSyncDatabaseTask {
       if (database == null) throw new ODistributedException("Database instance is null");
 
       final String databaseName = database.getName();
-
-      final ODistributedDatabase dDatabase =
-          checkIfCurrentDatabaseIsNotOlder(iManager, databaseName, database);
+      final ODistributedDatabase dDatabase = iManager.getMessageService().getDatabase(databaseName);
 
       try {
         final Long lastDeployment =
@@ -230,33 +221,6 @@ public class OSyncDatabaseTask extends OAbstractSyncDatabaseTask {
     return Boolean.FALSE;
   }
 
-  protected ODistributedDatabase checkIfCurrentDatabaseIsNotOlder(
-      final ODistributedServerManager iManager,
-      final String databaseName,
-      ODatabaseDocumentInternal database) {
-    final ODistributedDatabase dDatabase = iManager.getMessageService().getDatabase(databaseName);
-
-    if (lastLSN != null) {
-      final OLogSequenceNumber currentLSN =
-          ((OAbstractPaginatedStorage) database.getStorage().getUnderlying()).getLSN();
-      if (currentLSN != null) {
-        // LOCAL AND REMOTE LSN PRESENT
-        if (lastLSN.compareTo(currentLSN) <= 0)
-          // REQUESTED LSN IS <= LOCAL LSN
-          return dDatabase;
-      }
-    }
-    if (lastOperationTimestamp > -1) {
-      if (lastOperationTimestamp <= dDatabase.getSyncConfiguration().getLastOperationTimestamp())
-        // NO LSN, BUT LOCAL DATABASE HAS BEEN WRITTEN AFTER THE REQUESTER, STILL OK
-        return dDatabase;
-    } else
-      // NO LSN, NO TIMESTAMP, C'MON, CAN'T BE NEWER THAN THIS
-      return dDatabase;
-
-    return databaseIsOld(iManager, databaseName, dDatabase);
-  }
-
   @Override
   public String getName() {
     return "deploy_db";
@@ -264,16 +228,12 @@ public class OSyncDatabaseTask extends OAbstractSyncDatabaseTask {
 
   @Override
   public void toStream(final DataOutput out) throws IOException {
-    writeOptionalLSN(out);
     out.writeLong(random);
-    out.writeLong(lastOperationTimestamp);
   }
 
   @Override
   public void fromStream(final DataInput in, final ORemoteTaskFactory factory) throws IOException {
-    readOptionalLSN(in);
     random = in.readLong();
-    lastOperationTimestamp = in.readLong();
   }
 
   @Override

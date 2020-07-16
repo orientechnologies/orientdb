@@ -63,7 +63,6 @@ import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.OAutoshardedStorage;
-import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.OSystemDatabase;
 import com.orientechnologies.orient.server.config.OServerParameterConfiguration;
@@ -284,8 +283,6 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
 
       messageService = new ODistributedMessageServiceImpl(this);
 
-      initSystemDatabase();
-
       ODistributedServerLog.info(
           this,
           localNodeName,
@@ -369,20 +366,6 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
     }
 
     dumpServersStatus();
-  }
-
-  /** Protecte system database from being replicated */
-  protected void initSystemDatabase() {
-    final ODocument defaultCfg =
-        getStorage(OSystemDatabase.SYSTEM_DB_NAME)
-            .loadDatabaseConfiguration(getDefaultDatabaseConfigFile());
-    defaultCfg.field("autoDeploy", false);
-    final OModifiableDistributedConfiguration sysCfg =
-        new OModifiableDistributedConfiguration(defaultCfg);
-    sysCfg.removeServer("<NEW_NODE>");
-
-    messageService.registerDatabase(OSystemDatabase.SYSTEM_DB_NAME, sysCfg);
-    sysCfg.addNewNodeInServerList(getLocalNodeName());
   }
 
   private void initRegisteredNodeIds() {
@@ -893,22 +876,6 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
                 // COLLECT ALL THE CLUSTERS WITH REMOVED NODE AS OWNER
                 reassignClustersOwnership(nodeName, databaseName, cfg, true);
 
-                try {
-                  ddb.getSyncConfiguration()
-                      .setLastLSN(
-                          nodeName,
-                          ((OAbstractPaginatedStorage) stg.getUnderlying()).getLSN(),
-                          false);
-                } catch (IOException e) {
-                  ODistributedServerLog.error(
-                      this,
-                      nodeName,
-                      null,
-                      DIRECTION.NONE,
-                      "Error on saving distributed LSN for database '%s' (err=%s).",
-                      databaseName,
-                      e.getMessage());
-                }
                 ddb.setOnline();
 
                 return null;
@@ -953,6 +920,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
         servers.remove(nodeName);
 
         if (!servers.isEmpty() && messageService.getDatabase(databaseName) != null) {
+
           final ODistributedResponse dResponse =
               sendRequest(
                   databaseName,
@@ -961,8 +929,6 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
                   new OUpdateDatabaseConfigurationTask(databaseName, document),
                   getNextMessageIdCounter(),
                   ODistributedRequest.EXECUTION_MODE.NO_RESPONSE,
-                  null,
-                  null,
                   null);
         }
 
@@ -1495,45 +1461,14 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
 
     if (iDatabase.getStorage() instanceof OAutoshardedStorage
         && !((OAutoshardedStorage) iDatabase.getStorage()).isLocalEnv()) {
-      // DROP THE DATABASE ON ALL THE SERVERS
-      final ODistributedConfiguration dCfg = getDatabaseConfiguration(dbName);
-
-      final Set<String> servers = dCfg.getAllConfiguredServers();
-      servers.remove(nodeName);
-
-      final long start = System.currentTimeMillis();
-
-      // WAIT ALL THE SERVERS BECOME ONLINE
-      boolean allServersAreOnline = false;
-      while (!allServersAreOnline && System.currentTimeMillis() - start < 5000) {
-        allServersAreOnline = true;
-        for (String s : servers) {
-          final DB_STATUS st = getDatabaseStatus(s, dbName);
-          if (st == DB_STATUS.NOT_AVAILABLE
-              || st == DB_STATUS.SYNCHRONIZING
-              || st == DB_STATUS.BACKUP) {
-            allServersAreOnline = false;
-            try {
-              Thread.sleep(300);
-            } catch (InterruptedException e) {
-              Thread.currentThread().interrupt();
-              break;
-            }
-          }
-        }
-      }
-
-      if (!servers.isEmpty() && messageService.getDatabase(dbName) != null)
-        sendRequest(
-            dbName,
-            null,
-            servers,
-            new ODropDatabaseTask(),
-            getNextMessageIdCounter(),
-            ODistributedRequest.EXECUTION_MODE.RESPONSE,
-            null,
-            null,
-            null);
+      executeInDistributedDatabaseLock(
+          dbName,
+          20000,
+          null,
+          (cfg) -> {
+            distributeDrop(dbName);
+            return null;
+          });
     }
 
     super.onDrop(iDatabase);
@@ -1553,6 +1488,47 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
             "Dropped last copy of database '%s', removing it from the cluster",
             dbName);
       }
+    }
+  }
+
+  private void distributeDrop(final String dbName) {
+    // DROP THE DATABASE ON ALL THE SERVERS
+    final ODistributedConfiguration dCfg = getDatabaseConfiguration(dbName);
+
+    final Set<String> servers = dCfg.getAllConfiguredServers();
+    servers.remove(nodeName);
+
+    final long start = System.currentTimeMillis();
+
+    // WAIT ALL THE SERVERS BECOME ONLINE
+    boolean allServersAreOnline = false;
+    while (!allServersAreOnline && System.currentTimeMillis() - start < 5000) {
+      allServersAreOnline = true;
+      for (String s : servers) {
+        final DB_STATUS st = getDatabaseStatus(s, dbName);
+        if (st == DB_STATUS.NOT_AVAILABLE
+            || st == DB_STATUS.SYNCHRONIZING
+            || st == DB_STATUS.BACKUP) {
+          allServersAreOnline = false;
+          try {
+            Thread.sleep(300);
+          } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            break;
+          }
+        }
+      }
+    }
+
+    if (!servers.isEmpty() && messageService.getDatabase(dbName) != null) {
+      sendRequest(
+          dbName,
+          null,
+          servers,
+          new ODropDatabaseTask(),
+          getNextMessageIdCounter(),
+          ODistributedRequest.EXECUTION_MODE.RESPONSE,
+          null);
     }
   }
 

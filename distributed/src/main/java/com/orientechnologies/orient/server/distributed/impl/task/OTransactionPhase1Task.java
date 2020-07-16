@@ -2,6 +2,7 @@ package com.orientechnologies.orient.server.distributed.impl.task;
 
 import static com.orientechnologies.orient.server.distributed.impl.ONewDistributedTxContextImpl.Status.TIMEDOUT;
 
+import com.orientechnologies.common.util.OPair;
 import com.orientechnologies.orient.client.remote.message.OMessageHelper;
 import com.orientechnologies.orient.client.remote.message.tx.ORecordOperationRequest;
 import com.orientechnologies.orient.core.Orient;
@@ -11,6 +12,7 @@ import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
 import com.orientechnologies.orient.core.exception.OConcurrentCreateException;
 import com.orientechnologies.orient.core.exception.OConcurrentModificationException;
+import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
@@ -19,10 +21,9 @@ import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
 import com.orientechnologies.orient.core.serialization.serializer.record.binary.ODocumentSerializerDeltaDistributed;
 import com.orientechnologies.orient.core.serialization.serializer.record.binary.ORecordSerializerNetworkDistributed;
 import com.orientechnologies.orient.core.storage.ORecordDuplicatedException;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
 import com.orientechnologies.orient.core.tx.OTransactionId;
-import com.orientechnologies.orient.core.tx.OTransactionIndexChanges;
 import com.orientechnologies.orient.core.tx.OTransactionInternal;
+import com.orientechnologies.orient.core.tx.ValidationResult;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.distributed.ODistributedDatabase;
 import com.orientechnologies.orient.server.distributed.ODistributedRequest;
@@ -31,7 +32,6 @@ import com.orientechnologies.orient.server.distributed.ODistributedServerManager
 import com.orientechnologies.orient.server.distributed.ORemoteTaskFactory;
 import com.orientechnologies.orient.server.distributed.impl.ODatabaseDocumentDistributed;
 import com.orientechnologies.orient.server.distributed.impl.ODistributedDatabaseImpl;
-import com.orientechnologies.orient.server.distributed.impl.ODistributedWorker;
 import com.orientechnologies.orient.server.distributed.impl.ONewDistributedTxContextImpl;
 import com.orientechnologies.orient.server.distributed.impl.OTransactionOptimisticDistributed;
 import com.orientechnologies.orient.server.distributed.impl.task.transaction.OTransactionResultPayload;
@@ -52,18 +52,22 @@ import java.io.DataOutput;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.Set;
+import java.util.SortedSet;
 import java.util.TimerTask;
+import java.util.TreeSet;
+import java.util.stream.Collectors;
 
-/** @author Luigi Dell'Aquila (l.dellaquila - at - orientdb.com) */
-public class OTransactionPhase1Task extends OAbstractReplicatedTask {
+/** @author luigi dell'aquila (l.dellaquila - at - orientdb.com) */
+public class OTransactionPhase1Task extends OAbstractReplicatedTask implements OLockKeySource {
   public static final int FACTORYID = 43;
-
   private volatile boolean hasResponse;
-  private OLogSequenceNumber lastLSN;
   private List<ORecordOperation> ops;
   private List<ORecordOperationRequest> operations;
+  // Contains the set of <index-name, index-key> for keys (belonging to a unique index) that are
+  // changed with this tx.
+  // If a null key is allowed by the index, index-key could be null.
+  private SortedSet<OPair<String, Object>> uniqueIndexKeys;
   private OCommandDistributedReplicateRequest.QUORUM_TYPE quorumType =
       OCommandDistributedReplicateRequest.QUORUM_TYPE.WRITE;
   private transient int retryCount = 0;
@@ -74,11 +78,13 @@ public class OTransactionPhase1Task extends OAbstractReplicatedTask {
   public OTransactionPhase1Task() {
     ops = new ArrayList<>();
     operations = new ArrayList<>();
+    uniqueIndexKeys = new TreeSet<>();
   }
 
   public OTransactionPhase1Task(List<ORecordOperation> ops, OTransactionId transactionId) {
     this.ops = ops;
     operations = new ArrayList<>();
+    uniqueIndexKeys = new TreeSet<>();
     this.transactionId = transactionId;
     genOps(ops);
   }
@@ -204,14 +210,24 @@ public class OTransactionPhase1Task extends OAbstractReplicatedTask {
       if (!local) {
         ODistributedDatabase localDistributedDatabase =
             database.getStorageDistributed().getLocalDistributedDatabase();
-        Optional<OTransactionId> result = localDistributedDatabase.validate(id);
-        if (result.isPresent()) {
+        ValidationResult result = localDistributedDatabase.validate(id);
+        if (result == ValidationResult.ALREADY_PROMISED
+            || result == ValidationResult.MISSING_PREVIOUS) {
           ONewDistributedTxContextImpl txContext =
               new ONewDistributedTxContextImpl(
                   (ODistributedDatabaseImpl) localDistributedDatabase, requestId, tx, id);
           txContext.setStatus(TIMEDOUT);
           database.register(requestId, localDistributedDatabase, txContext);
-          return new OTxInvalidSequential(result.get());
+          return new OTxInvalidSequential();
+        } else if (result == ValidationResult.ALREADY_PRESENT) {
+          ONewDistributedTxContextImpl txContext =
+              new ONewDistributedTxContextImpl(
+                  (ODistributedDatabaseImpl) localDistributedDatabase, requestId, tx, id);
+          txContext.setStatus(TIMEDOUT);
+          database.register(requestId, localDistributedDatabase, txContext);
+          // This send OK to the sender even if already present, the second phase will skip the
+          // apply if already present
+          return new OTxInvalidSequential();
         }
       }
       if (database.beginDistributedTx(requestId, id, tx, local, retryCount)) {
@@ -245,10 +261,8 @@ public class OTransactionPhase1Task extends OAbstractReplicatedTask {
       operations.add(req);
     }
 
-    lastLSN = new OLogSequenceNumber(in);
-    if (lastLSN.getSegment() == -1 && lastLSN.getSegment() == -1) {
-      lastLSN = null;
-    }
+    ORecordSerializerNetworkDistributed serializer = ORecordSerializerNetworkDistributed.INSTANCE;
+    OMessageHelper.readTxUniqueIndexKeys(uniqueIndexKeys, serializer, in);
   }
 
   private void convert(ODatabaseDocumentInternal database) {
@@ -318,11 +332,9 @@ public class OTransactionPhase1Task extends OAbstractReplicatedTask {
     for (ORecordOperationRequest operation : operations) {
       OMessageHelper.writeTransactionEntry(out, operation);
     }
-    if (lastLSN == null) {
-      new OLogSequenceNumber(-1, -1).toStream(out);
-    } else {
-      lastLSN.toStream(out);
-    }
+
+    ORecordSerializerNetworkDistributed serializer = ORecordSerializerNetworkDistributed.INSTANCE;
+    OMessageHelper.writeTxUniqueIndexKeys(uniqueIndexKeys, serializer, out);
   }
 
   @Override
@@ -332,29 +344,26 @@ public class OTransactionPhase1Task extends OAbstractReplicatedTask {
 
   public void init(OTransactionId transactionId, OTransactionInternal operations) {
     this.transactionId = transactionId;
-    for (Map.Entry<String, OTransactionIndexChanges> indexOp :
-        operations.getIndexOperations().entrySet()) {
-      final ODatabaseDocumentInternal database = operations.getDatabase();
-      if (indexOp
-          .getValue()
-          .resolveAssociatedIndex(
-              indexOp.getKey(), database.getMetadata().getIndexManagerInternal(), database)
-          .isUnique()) {
-        quorumType = OCommandDistributedReplicateRequest.QUORUM_TYPE.WRITE_ALL_MASTERS;
-        break;
-      }
-    }
+    final ODatabaseDocumentInternal database = operations.getDatabase();
+    operations
+        .getIndexOperations()
+        .forEach(
+            (index, changes) -> {
+              if (changes
+                  .resolveAssociatedIndex(
+                      index, database.getMetadata().getIndexManagerInternal(), database)
+                  .isUnique()) {
+                quorumType = OCommandDistributedReplicateRequest.QUORUM_TYPE.WRITE_ALL_MASTERS;
+                for (Object keyWithChange : changes.changesPerKey.keySet()) {
+                  uniqueIndexKeys.add(new OPair<>(index, keyWithChange));
+                }
+                if (!changes.nullKeyChanges.entries.isEmpty()) {
+                  uniqueIndexKeys.add(new OPair<>(index, null));
+                }
+              }
+            });
     this.ops = new ArrayList<>(operations.getRecordOperations());
     genOps(this.ops);
-  }
-
-  public void setLastLSN(OLogSequenceNumber lastLSN) {
-    this.lastLSN = lastLSN;
-  }
-
-  @Override
-  public OLogSequenceNumber getLastLSN() {
-    return lastLSN;
   }
 
   @Override
@@ -400,10 +409,10 @@ public class OTransactionPhase1Task extends OAbstractReplicatedTask {
                           .submit(
                               () -> {
                                 if (!finished) {
-                                  ODistributedWorker.sendResponseBack(
+                                  ODistributedDatabaseImpl.sendResponseBack(
                                       this,
                                       distributedDatabase.getManager(),
-                                      request,
+                                      request.getId(),
                                       new OTransactionPhase1TaskResult(new OTxStillRunning()));
                                 }
                               });
@@ -412,16 +421,38 @@ public class OTransactionPhase1Task extends OAbstractReplicatedTask {
                   getDistributedTimeout(),
                   getDistributedTimeout());
     }
+    if (distributedDatabase instanceof ODistributedDatabaseImpl) {
+      ((ODistributedDatabaseImpl) distributedDatabase).trackTransactions(transactionId);
+    }
   }
 
   @Override
-  public void finished() {
+  public void finished(ODistributedDatabase distributedDatabase) {
     if (notYetFinishedTask != null) {
       notYetFinishedTask.cancel();
+    }
+    if (distributedDatabase instanceof ODistributedDatabaseImpl) {
+      ((ODistributedDatabaseImpl) distributedDatabase).untrackTransactions(transactionId);
     }
   }
 
   public OTransactionId getTransactionId() {
     return transactionId;
+  }
+
+  @Override
+  public SortedSet<ORID> getRids() {
+    Set<ORID> set;
+    if (operations.size() > 0) {
+      set = operations.stream().map((x) -> x.getId().copy()).collect(Collectors.toSet());
+    } else {
+      set = ops.stream().map((x) -> x.getRID().copy()).collect(Collectors.toSet());
+    }
+    return new TreeSet<ORID>(set);
+  }
+
+  @Override
+  public SortedSet<OPair<String, Object>> getUniqueKeys() {
+    return uniqueIndexKeys;
   }
 }

@@ -744,7 +744,7 @@ public final class OConnectionBinaryExecutor implements OBinaryRequestExecutor {
   }
 
   @Override
-  public OBinaryResponse executeCommit(OCommitRequest request) {
+  public OBinaryResponse executeCommit(final OCommitRequest request) {
     final OTransactionOptimisticProxy tx =
         new OTransactionOptimisticProxy(
             connection.getDatabase(),
@@ -754,7 +754,6 @@ public final class OConnectionBinaryExecutor implements OBinaryRequestExecutor {
             request.getIndexChanges(),
             connection.getData().protocolVersion,
             connection.getData().getSerializer());
-
     try {
       try {
         connection.getDatabase().rawBegin(tx);
@@ -763,7 +762,6 @@ public final class OConnectionBinaryExecutor implements OBinaryRequestExecutor {
             ? (OOfflineClusterException) e.getCause()
             : e;
       }
-
       try {
         try {
           connection.getDatabase().commit();
@@ -772,7 +770,7 @@ public final class OConnectionBinaryExecutor implements OBinaryRequestExecutor {
               ? (OOfflineClusterException) e.getCause()
               : e;
         }
-        List<OCreatedRecordResponse> createdRecords =
+        final List<OCreatedRecordResponse> createdRecords =
             new ArrayList<>(tx.getCreatedRecords().size());
         for (Entry<ORecordId, ORecord> entry : tx.getCreatedRecords().entrySet()) {
           createdRecords.add(
@@ -784,21 +782,20 @@ public final class OConnectionBinaryExecutor implements OBinaryRequestExecutor {
             tx.getUpdatedRecords()
                 .put((ORecordId) entry.getValue().getIdentity(), entry.getValue());
         }
-
-        List<OUpdatedRecordResponse> updatedRecords =
+        final List<OUpdatedRecordResponse> updatedRecords =
             new ArrayList<>(tx.getUpdatedRecords().size());
         for (Entry<ORecordId, ORecord> entry : tx.getUpdatedRecords().entrySet()) {
           updatedRecords.add(
               new OUpdatedRecordResponse(entry.getKey(), entry.getValue().getVersion()));
         }
-        OSBTreeCollectionManager collectionManager =
+        final OSBTreeCollectionManager collectionManager =
             connection.getDatabase().getSbTreeCollectionManager();
         Map<UUID, OBonsaiCollectionPointer> changedIds = null;
         if (collectionManager != null) {
           changedIds = collectionManager.changedIds();
         }
         return new OCommitResponse(createdRecords, updatedRecords, changedIds);
-      } catch (RuntimeException e) {
+      } catch (final RuntimeException e) {
         if (connection != null && connection.getDatabase() != null) {
           if (connection.getDatabase().getTransaction().isActive())
             connection.getDatabase().rollback(true);
@@ -807,10 +804,9 @@ public final class OConnectionBinaryExecutor implements OBinaryRequestExecutor {
               connection.getDatabase().getSbTreeCollectionManager();
           if (collectionManager != null) collectionManager.clearChangedIds();
         }
-
         throw e;
       }
-    } catch (RuntimeException e) {
+    } catch (final RuntimeException e) {
       // Error during TX initialization, possibly index constraints violation.
       if (tx.isActive()) tx.rollback(true, -1);
       throw e;

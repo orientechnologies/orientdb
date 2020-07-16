@@ -1,12 +1,10 @@
 package com.orientechnologies.orient.core.record.impl;
 
 import com.orientechnologies.orient.core.db.ODatabaseSession;
-import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.record.OEdge;
 import com.orientechnologies.orient.core.record.OElement;
 import com.orientechnologies.orient.core.record.OVertex;
-import java.util.Optional;
 
 public class OEdgeDocument extends ODocument implements OEdge {
 
@@ -28,30 +26,28 @@ public class OEdgeDocument extends ODocument implements OEdge {
 
   @Override
   public OVertex getFrom() {
-    final Object result = getProperty(DIRECTION_OUT);
-    return convertToVertex(result);
+    Object result = getProperty(DIRECTION_OUT);
+    if (!(result instanceof OElement)) {
+      return null;
+    }
+    OElement v = (OElement) result;
+    if (!v.isVertex()) {
+      return null;
+    }
+    return v.asVertex().get();
   }
 
   @Override
   public OVertex getTo() {
-    final Object result = getProperty(DIRECTION_IN);
-    return convertToVertex(result);
-  }
-
-  private static OVertex convertToVertex(final Object result) {
-    if (!(result instanceof OIdentifiable)) {
+    Object result = getProperty(DIRECTION_IN);
+    if (!(result instanceof OElement)) {
       return null;
     }
-
-    final OIdentifiable identifiable = (OIdentifiable) result;
-    final OElement element;
-    if (identifiable instanceof OElement) {
-      element = (OElement) identifiable;
-    } else {
-      element = identifiable.getRecord();
+    OElement v = (OElement) result;
+    if (!v.isVertex()) {
+      return null;
     }
-
-    return Optional.ofNullable(element).flatMap(OElement::asVertex).orElse(null);
+    return v.asVertex().get();
   }
 
   @Override

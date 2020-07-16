@@ -81,8 +81,6 @@ public class OSyncReceiver implements Runnable {
                       chunk.filePath, chunkNum, chunk.offset + chunk.buffer.length, false),
                   distributed.getNextMessageIdCounter(),
                   ODistributedRequest.EXECUTION_MODE.RESPONSE,
-                  null,
-                  null,
                   null);
 
           if (response == null) {

@@ -2,6 +2,8 @@ package com.orientechnologies.orient.core.sql.executor;
 
 import static com.orientechnologies.orient.core.sql.executor.ExecutionPlanPrintUtils.printExecutionPlan;
 
+import com.orientechnologies.common.concur.OTimeoutException;
+import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseSession;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
@@ -20,6 +22,8 @@ import com.orientechnologies.orient.core.record.OElement;
 import com.orientechnologies.orient.core.record.OVertex;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
+import com.orientechnologies.orient.core.sql.OSQLEngine;
+import com.orientechnologies.orient.core.sql.functions.OSQLFunction;
 import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -4061,5 +4065,107 @@ public class OSelectStatementExecutionTest {
     Assert.assertEquals(10L, (long) item.getProperty("count"));
     Assert.assertFalse(result.hasNext());
     result.close();
+  }
+
+  @Test
+  public void testTimeout() {
+    String className = "testTimeout";
+    final String funcitonName = getClass().getSimpleName() + "_sleep";
+    db.getMetadata().getSchema().createClass(className);
+
+    OSQLEngine.getInstance()
+        .registerFunction(
+            funcitonName,
+            new OSQLFunction() {
+
+              @Override
+              public Object execute(
+                  Object iThis,
+                  OIdentifiable iCurrentRecord,
+                  Object iCurrentResult,
+                  Object[] iParams,
+                  OCommandContext iContext) {
+                try {
+                  Thread.sleep(5);
+                } catch (InterruptedException e) {
+                }
+                return null;
+              }
+
+              @Override
+              public void config(Object[] configuredParameters) {}
+
+              @Override
+              public boolean aggregateResults() {
+                return false;
+              }
+
+              @Override
+              public boolean filterResult() {
+                return false;
+              }
+
+              @Override
+              public String getName() {
+                return funcitonName;
+              }
+
+              @Override
+              public int getMinParams() {
+                return 0;
+              }
+
+              @Override
+              public int getMaxParams() {
+                return 0;
+              }
+
+              @Override
+              public String getSyntax() {
+                return "";
+              }
+
+              @Override
+              public Object getResult() {
+                return null;
+              }
+
+              @Override
+              public void setResult(Object iResult) {}
+
+              @Override
+              public boolean shouldMergeDistributedResult() {
+                return false;
+              }
+
+              @Override
+              public Object mergeDistributedResult(List<Object> resultsToMerge) {
+                return null;
+              }
+            });
+    for (int i = 0; i < 3; i++) {
+      ODocument doc = db.newInstance(className);
+      doc.setProperty("type", i % 2 == 0 ? "even" : "odd");
+      doc.setProperty("val", i);
+      doc.save();
+    }
+    try (OResultSet result =
+        db.query("select " + funcitonName + "(), * from " + className + " timeout 10")) {
+      while (result.hasNext()) {
+        result.next();
+      }
+      Assert.fail();
+    } catch (OTimeoutException ex) {
+
+    }
+
+    try (OResultSet result =
+        db.query("select " + funcitonName + "(), * from " + className + " timeout 100")) {
+      while (result.hasNext()) {
+        result.next();
+      }
+    } catch (OTimeoutException ex) {
+      Assert.fail();
+    }
   }
 }

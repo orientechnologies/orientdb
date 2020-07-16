@@ -121,4 +121,6 @@ public interface OTransactionInternal extends OBasicTransaction {
   default void fill(Iterator<ORecordOperation> operations) {
     throw new UnsupportedOperationException();
   }
+
+  void resetAllocatedIds();
 }

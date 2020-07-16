@@ -36,12 +36,11 @@ public class OTxMetadataHolderImpl implements OTxMetadataHolder {
     return outputStream.toByteArray();
   }
 
-  public static OTxMetadataHolder read(byte[] data) {
-    ByteArrayInputStream inputStream = new ByteArrayInputStream(data);
-    DataInput input = new DataInputStream(inputStream);
-    OTransactionId txId = null;
+  public static OTxMetadataHolder read(final byte[] data) {
+    final ByteArrayInputStream inputStream = new ByteArrayInputStream(data);
+    final DataInput input = new DataInputStream(inputStream);
     try {
-      txId = OTransactionId.read(input);
+      final OTransactionId txId = OTransactionId.read(input);
       int size = input.readInt();
       byte[] status = new byte[size];
       input.readFully(status);

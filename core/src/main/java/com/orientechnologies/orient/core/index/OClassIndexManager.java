@@ -433,9 +433,11 @@ public class OClassIndexManager {
     final OIndexDefinition indexDefinition = index.getDefinition();
     final Object key = indexDefinition.getDocumentValueToIndex(document);
     if (key instanceof Collection) {
-      for (final Object keyItem : (Collection<?>) key)
-        if (!indexDefinition.isNullValuesIgnored() || keyItem != null)
+      for (final Object keyItem : (Collection<?>) key) {
+        if (!indexDefinition.isNullValuesIgnored() || keyItem != null) {
           addPut(changes, index, keyItem, rid);
+        }
+      }
     } else if (!indexDefinition.isNullValuesIgnored() || key != null)
       addPut(changes, index, key, rid);
   }

@@ -21,14 +21,18 @@ package com.orientechnologies.orient.server.distributed.impl;
 
 import static com.orientechnologies.orient.core.config.OGlobalConfiguration.DISTRIBUTED_ATOMIC_LOCK_TIMEOUT;
 import static com.orientechnologies.orient.core.config.OGlobalConfiguration.DISTRIBUTED_TRANSACTION_SEQUENCE_SET_SIZE;
+import static com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIRECTION.OUT;
 
 import com.orientechnologies.common.concur.OOfflineNodeException;
+import com.orientechnologies.common.concur.lock.OInterruptedException;
 import com.orientechnologies.common.concur.lock.OSimpleLockManager;
 import com.orientechnologies.common.concur.lock.OSimpleLockManagerImpl;
 import com.orientechnologies.common.exception.OException;
+import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.profiler.OAbstractProfiler;
 import com.orientechnologies.common.profiler.OProfiler;
 import com.orientechnologies.common.util.OCallable;
+import com.orientechnologies.common.util.OPair;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
@@ -36,10 +40,10 @@ import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.exception.OSecurityAccessException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
 import com.orientechnologies.orient.core.tx.OTransactionId;
 import com.orientechnologies.orient.core.tx.OTransactionSequenceStatus;
 import com.orientechnologies.orient.core.tx.OTxMetadataHolder;
+import com.orientechnologies.orient.core.tx.ValidationResult;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.OSystemDatabase;
 import com.orientechnologies.orient.server.distributed.ODistributedConfiguration;
@@ -53,29 +57,36 @@ import com.orientechnologies.orient.server.distributed.ODistributedResponseManag
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIRECTION;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
-import com.orientechnologies.orient.server.distributed.ODistributedSyncConfiguration;
 import com.orientechnologies.orient.server.distributed.ODistributedTxContext;
 import com.orientechnologies.orient.server.distributed.OModifiableDistributedConfiguration;
 import com.orientechnologies.orient.server.distributed.ORemoteServerController;
+import com.orientechnologies.orient.server.distributed.impl.lock.OLockGuard;
+import com.orientechnologies.orient.server.distributed.impl.lock.OLockManager;
+import com.orientechnologies.orient.server.distributed.impl.lock.OLockManagerImpl;
+import com.orientechnologies.orient.server.distributed.impl.task.OLockKeySource;
 import com.orientechnologies.orient.server.distributed.impl.task.OUnreachableServerLocalTask;
 import com.orientechnologies.orient.server.distributed.task.OAbstractRemoteTask;
 import com.orientechnologies.orient.server.distributed.task.ORemoteTask;
 import com.orientechnologies.orient.server.hazelcast.OHazelcastPlugin;
-import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.SortedSet;
 import java.util.TimerTask;
-import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.RejectedExecutionException;
+import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Collectors;
@@ -92,14 +103,9 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
   protected final ODistributedAbstractPlugin manager;
   protected final ODistributedMessageServiceImpl msgService;
   protected final String databaseName;
-  protected ODistributedSyncConfiguration syncConfiguration;
 
-  protected ConcurrentHashMap<ODistributedRequestId, ODistributedTxContext> activeTxContexts =
-      new ConcurrentHashMap<ODistributedRequestId, ODistributedTxContext>(64);
-  protected final List<ODistributedWorker> workerThreads = new ArrayList<ODistributedWorker>();
-  protected ODistributedWorker lockThread;
-  protected ODistributedWorker nowaitThread;
-
+  protected Map<ODistributedRequestId, ODistributedTxContext> activeTxContexts =
+      new ConcurrentHashMap<>(64);
   private AtomicLong totalSentRequests = new AtomicLong();
   private AtomicLong totalReceivedRequests = new AtomicLong();
   private TimerTask txTimeoutTask = null;
@@ -113,6 +119,53 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
   private AtomicLong operationsRunnig = new AtomicLong(0);
   private ODistributedSynchronizedSequence sequenceManager;
   private final AtomicLong pending = new AtomicLong();
+  private ThreadPoolExecutor requestExecutor;
+  private OLockManager lockManager = new OLockManagerImpl();
+  private Set<OTransactionId> inQueue = Collections.newSetFromMap(new ConcurrentHashMap<>());
+
+  public static boolean sendResponseBack(
+      final Object current,
+      final ODistributedServerManager manager,
+      final ODistributedRequestId iRequestId,
+      Object responsePayload) {
+
+    if (iRequestId.getMessageId() < 0)
+      // INTERNAL MSG
+      return true;
+
+    final String local = manager.getLocalNodeName();
+
+    final String sender = manager.getNodeNameById(iRequestId.getNodeId());
+
+    final ODistributedResponse response =
+        new ODistributedResponse(null, iRequestId, local, sender, responsePayload);
+
+    // TODO: check if using remote channel for local node still makes sense
+    //    if (!senderNodeName.equalsIgnoreCase(manager.getLocalNodeName()))
+    try {
+      // GET THE SENDER'S RESPONSE QUEUE
+      final ORemoteServerController remoteSenderServer = manager.getRemoteServer(sender);
+
+      ODistributedServerLog.debug(
+          current, local, sender, OUT, "Sending response %s back (reqId=%s)", response, iRequestId);
+
+      remoteSenderServer.sendResponse(response);
+
+    } catch (Exception e) {
+      ODistributedServerLog.debug(
+          current,
+          local,
+          sender,
+          OUT,
+          "Error on sending response '%s' back (reqId=%s err=%s)",
+          response,
+          iRequestId,
+          e.toString());
+      return false;
+    }
+
+    return true;
+  }
 
   public OSimpleLockManager<ORID> getRecordLockManager() {
     return recordLockManager;
@@ -210,7 +263,7 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
             new OAbstractProfiler.OProfilerHookValue() {
               @Override
               public Object getValue() {
-                return (long) workerThreads.size();
+                return (long) requestExecutor.getPoolSize();
               }
             },
             "distributed.db.*.workerThreads");
@@ -307,130 +360,71 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
       manager.messageReceived(request);
 
       totalReceivedRequests.incrementAndGet();
-
-      final int[] partitionKeys = task.getPartitionKey();
-
-      if (ODistributedServerLog.isDebugEnabled())
-        ODistributedServerLog.debug(
-            this,
-            localNodeName,
-            task.getNodeSource(),
-            DIRECTION.IN,
-            "Request %s on database '%s' partitionKeys=%s task=%s",
-            request,
-            databaseName,
-            Arrays.toString(partitionKeys),
-            task);
-
-      if (partitionKeys.length > 1 || partitionKeys[0] == -1) {
-
-        final Set<Integer> involvedWorkerQueues;
-        if (partitionKeys.length > 1)
-          involvedWorkerQueues = getInvolvedQueuesByPartitionKeys(partitionKeys);
-        else
-          // LOCK ALL THE QUEUES
-          involvedWorkerQueues = ALL_QUEUES;
-
-        manager.messagePartitionCalculate(request, involvedWorkerQueues);
-
-        // if (ODistributedServerLog.isDebugEnabled())
-        ODistributedServerLog.debug(
-            this,
-            localNodeName,
-            null,
-            DIRECTION.NONE,
-            "Request %s on database '%s' involvedQueues=%s",
-            request,
-            databaseName,
-            involvedWorkerQueues);
-
-        if (involvedWorkerQueues.size() == 1)
-          // JUST ONE QUEUE INVOLVED: PROCESS IT IMMEDIATELY
-          processRequest(involvedWorkerQueues.iterator().next(), request);
-        else {
-          // INVOLVING MULTIPLE QUEUES
-
-          // if (ODistributedServerLog.isDebugEnabled())
-          ODistributedServerLog.debug(
-              this,
-              localNodeName,
-              null,
-              DIRECTION.NONE,
-              "Request %s on database '%s' waiting for all the previous requests to be completed",
-              request,
-              databaseName);
-          CountDownLatch started = new CountDownLatch(involvedWorkerQueues.size());
-          OExecuteOnce once = new OExecuteOnce(started, task);
-          // WAIT ALL THE INVOLVED QUEUES ARE FREE AND SYNCHRONIZED
-          for (int queue : involvedWorkerQueues) {
-            ODistributedWorker worker = workerThreads.get(queue);
-            OWaitPartitionsReadyTask waitRequest = new OWaitPartitionsReadyTask(once);
-
-            final ODistributedRequest syncRequest =
-                new ODistributedRequest(
-                    null,
-                    request.getId().getNodeId(),
-                    request.getId().getMessageId(),
-                    databaseName,
-                    waitRequest);
-            worker.processRequest(syncRequest);
-          }
-        }
-      } else if (partitionKeys.length == 1 && partitionKeys[0] == -2) {
-        // ANY PARTITION: USE THE FIRST EMPTY IF ANY, OTHERWISE THE FIRST IN THE LIST
-        boolean found = false;
-
-        for (ODistributedWorker q : workerThreads) {
-          if (q.isWaitingForNextRequest() && q.localQueue.isEmpty()) {
-            q.processRequest(request);
-            found = true;
-            break;
-          }
-        }
-
-        if (!found)
-          // ALL THE THREADS ARE BUSY, SELECT THE FIRST EMPTY ONE
-          for (ODistributedWorker q : workerThreads) {
-            if (q.localQueue.isEmpty()) {
-              q.processRequest(request);
-              found = true;
-              break;
-            }
-          }
-
-        if (!found)
-          // EXEC ON THE FIRST QUEUE
-          workerThreads.get(0).processRequest(request);
-
-      } else if (partitionKeys.length == 1 && partitionKeys[0] == -3) {
-        // SERVICE - LOCK
-        ODistributedServerLog.debug(
-            this,
-            localNodeName,
-            request.getTask().getNodeSource(),
-            DIRECTION.IN,
-            "Request %s on database '%s' dispatched to the lock worker",
-            request,
-            databaseName);
-
-        lockThread.processRequest(request);
-
-      } else if (partitionKeys.length == 1 && partitionKeys[0] == -4) {
-        // SERVICE - FAST_NOLOCK
-        ODistributedServerLog.debug(
-            this,
-            localNodeName,
-            request.getTask().getNodeSource(),
-            DIRECTION.IN,
-            "Request %s on database '%s' dispatched to the nowait worker",
-            request,
-            databaseName);
-
-        nowaitThread.processRequest(request);
-
+      if (task instanceof OLockKeySource) {
+        SortedSet<ORID> rids = ((OLockKeySource) task).getRids();
+        SortedSet<OPair<String, Object>> uniqueKeys = ((OLockKeySource) task).getUniqueKeys();
+        OTransactionId txId = ((OLockKeySource) task).getTransactionId();
+        this.lockManager.lock(
+            rids,
+            uniqueKeys,
+            txId,
+            (guards) -> {
+              try {
+                this.requestExecutor.submit(
+                    () -> {
+                      try {
+                        execute(request);
+                      } finally {
+                        this.lockManager.unlock(guards);
+                      }
+                    });
+              } catch (RejectedExecutionException e) {
+                task.finished(this);
+                this.lockManager.unlock(guards);
+                throw e;
+              }
+            });
       } else {
-        processRequest(partitionKeys[0], request);
+        try {
+          this.requestExecutor.submit(
+              () -> {
+                execute(request);
+              });
+        } catch (RejectedExecutionException e) {
+          task.finished(this);
+          throw e;
+        }
       }
+    }
+  }
+
+  public void trackTransactions(OTransactionId id) {
+    inQueue.add(id);
+  }
+
+  public void untrackTransactions(OTransactionId id) {
+    inQueue.remove(id);
+  }
+
+  private void execute(ODistributedRequest request) {
+    ORemoteTask task = request.getTask();
+    try {
+      manager.messageProcessStart(request);
+      Object response;
+      if (task.isUsingDatabase()) {
+        try (ODatabaseDocumentInternal db =
+            this.manager.getServerInstance().getDatabases().openNoAuthorization(databaseName)) {
+          response = this.manager.executeOnLocalNode(request.getId(), task, db);
+        }
+      } else {
+        response = this.manager.executeOnLocalNode(request.getId(), task, null);
+      }
+      if (task.hasResponse()) {
+        sendResponseBack(this, this.manager, request.getId(), response);
+      }
+      manager.messageProcessEnd(request, response);
+    } finally {
+      task.finished(this);
     }
   }
 
@@ -451,58 +445,21 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
     }
   }
 
-  protected Set<Integer> getInvolvedQueuesByPartitionKeys(final int[] partitionKeys) {
-    final Set<Integer> involvedWorkerQueues = new HashSet<Integer>(partitionKeys.length);
-    for (int pk : partitionKeys) {
-      if (pk >= 0) involvedWorkerQueues.add(pk % workerThreads.size());
-    }
-    return involvedWorkerQueues;
-  }
-
-  protected void processRequest(final int partitionKey, final ODistributedRequest request) {
-    if (workerThreads.isEmpty())
-      throw new ODistributedException("There are no worker threads to process request " + request);
-
-    final int partition = partitionKey % workerThreads.size();
-
-    Set<Integer> partitions = new HashSet<>();
-    partitions.add(partition);
-
-    manager.messagePartitionCalculate(request, partitions);
-
-    ODistributedServerLog.debug(
-        this,
-        localNodeName,
-        request.getTask().getNodeSource(),
-        DIRECTION.IN,
-        "Request %s on database '%s' dispatched to the worker %d",
-        request,
-        databaseName,
-        partition);
-
-    workerThreads.get(partition).processRequest(request);
-  }
-
   @Override
   public ODistributedResponse send2Nodes(
       final ODistributedRequest iRequest,
       final Collection<String> iClusterNames,
       Collection<String> iNodes,
       final ODistributedRequest.EXECUTION_MODE iExecutionMode,
-      final Object localResult,
-      final OCallable<Void, ODistributedRequestId> iAfterSentCallback,
-      final OCallable<Void, ODistributedResponseManager> endCallback) {
+      final Object localResult) {
     return send2Nodes(
         iRequest,
         iClusterNames,
         iNodes,
         iExecutionMode,
         localResult,
-        iAfterSentCallback,
-        endCallback,
         (iRequest1,
             iNodes1,
-            endCallback1,
             task,
             nodesConcurToTheQuorum,
             availableNodes,
@@ -522,8 +479,7 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
                   iNodes, task.getSynchronousTimeout(expectedResponses), iRequest.getId()),
               adjustTimeoutWithLatency(
                   iNodes, task.getTotalTimeout(availableNodes), iRequest.getId()),
-              groupByResponse,
-              endCallback);
+              groupByResponse);
         });
   }
 
@@ -533,10 +489,7 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
       Collection<String> iNodes,
       final ODistributedRequest.EXECUTION_MODE iExecutionMode,
       final Object localResult,
-      final OCallable<Void, ODistributedRequestId> iAfterSentCallback,
-      final OCallable<Void, ODistributedResponseManager> endCallback,
       ODistributedResponseManagerFactory responseManagerFactory) {
-    boolean afterSendCallBackCalled = false;
     try {
       checkForServerOnline(iRequest);
 
@@ -547,7 +500,7 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
             this,
             localNodeName,
             null,
-            DIRECTION.OUT,
+            OUT,
             "No nodes configured for database '%s' request: %s",
             databaseName,
             iRequest);
@@ -611,7 +564,6 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
           responseManagerFactory.newResponseManager(
               iRequest,
               iNodes,
-              endCallback,
               task,
               nodesConcurToTheQuorum,
               availableNodes,
@@ -633,12 +585,7 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
 
       if (ODistributedServerLog.isDebugEnabled())
         ODistributedServerLog.debug(
-            this,
-            localNodeName,
-            iNodes.toString(),
-            DIRECTION.OUT,
-            "Sending request %s...",
-            iRequest);
+            this, localNodeName, iNodes.toString(), OUT, "Sending request %s...", iRequest);
 
       for (String node : iNodes) {
         // CATCH ANY EXCEPTION LOG IT AND IGNORE TO CONTINUE SENDING REQUESTS TO OTHER NODES
@@ -675,7 +622,7 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
                 this,
                 localNodeName,
                 node,
-                ODistributedServerLog.DIRECTION.OUT,
+                OUT,
                 "Error on sending distributed request %s. The target node is not available. Active nodes: %s",
                 e,
                 iRequest,
@@ -685,7 +632,7 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
                 this,
                 localNodeName,
                 node,
-                ODistributedServerLog.DIRECTION.OUT,
+                OUT,
                 "Error on sending distributed request %s (err=%s). Active nodes: %s",
                 iRequest,
                 reason,
@@ -706,13 +653,9 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
 
       if (ODistributedServerLog.isDebugEnabled())
         ODistributedServerLog.debug(
-            this, localNodeName, iNodes.toString(), DIRECTION.OUT, "Sent request %s", iRequest);
+            this, localNodeName, iNodes.toString(), OUT, "Sent request %s", iRequest);
 
       totalSentRequests.incrementAndGet();
-
-      afterSendCallBackCalled = true;
-
-      if (iAfterSentCallback != null) iAfterSentCallback.call(iRequest.getId());
 
       if (iExecutionMode == ODistributedRequest.EXECUTION_MODE.RESPONSE)
         return waitForResponse(iRequest, currentResponseMgr);
@@ -733,36 +676,7 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
                   + "' to nodes "
                   + iNodes),
           e);
-    } finally {
-      if (iAfterSentCallback != null && !afterSendCallBackCalled)
-        iAfterSentCallback.call(iRequest.getId());
     }
-  }
-
-  public ODistributedResponseManager newResponseManager(
-      ODistributedRequest iRequest,
-      Collection<String> iNodes,
-      OCallable<Void, ODistributedResponseManager> endCallback,
-      ORemoteTask task,
-      Set<String> nodesConcurToTheQuorum,
-      int availableNodes,
-      int expectedResponses,
-      int quorum,
-      boolean groupByResponse,
-      boolean waitLocalNode) {
-    return new ODistributedResponseManagerImpl(
-        manager,
-        iRequest,
-        iNodes,
-        nodesConcurToTheQuorum,
-        expectedResponses,
-        quorum,
-        waitLocalNode,
-        adjustTimeoutWithLatency(
-            iNodes, task.getSynchronousTimeout(expectedResponses), iRequest.getId()),
-        adjustTimeoutWithLatency(iNodes, task.getTotalTimeout(availableNodes), iRequest.getId()),
-        groupByResponse,
-        endCallback);
   }
 
   private long adjustTimeoutWithLatency(
@@ -780,7 +694,7 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
           this,
           localNodeName,
           iNodes.toString(),
-          DIRECTION.OUT,
+          OUT,
           "Adjusted timeouts by adding +%dms because this is the maximum latency recorded against servers %s (reqId=%s)",
           delta,
           iNodes,
@@ -847,7 +761,7 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
     }
   }
 
-  public Optional<OTransactionId> validate(OTransactionId id) {
+  public ValidationResult validate(OTransactionId id) {
     // this check should happen only of destination nodes
     return sequenceManager.validateTransactionId(id);
   }
@@ -921,27 +835,6 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
     return manager.getServerInstance().existsDatabase(databaseName);
   }
 
-  public ODistributedSyncConfiguration getSyncConfiguration() {
-    if (syncConfiguration == null) {
-      final String path =
-          manager.getServerInstance().getDatabaseDirectory()
-              + databaseName
-              + "/"
-              + DISTRIBUTED_SYNC_JSON_FILENAME;
-      final File cfgFile = new File(path);
-      try {
-        syncConfiguration = new ODistributedSyncConfiguration(manager, databaseName, cfgFile);
-      } catch (IOException e) {
-        throw OException.wrapException(
-            new ODistributedException(
-                "Cannot open database distributed sync configuration file: " + cfgFile),
-            e);
-      }
-    }
-
-    return syncConfiguration;
-  }
-
   @Override
   public void handleUnreachableNode(final String nodeName) {
     if (!running) {
@@ -981,71 +874,31 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
 
   @Override
   public long getProcessedRequests() {
-    long total = 0;
+    return requestExecutor.getCompletedTaskCount();
+  }
 
-    if (lockThread != null) total += lockThread.getProcessedRequests();
-
-    if (nowaitThread != null) total += nowaitThread.getProcessedRequests();
-
-    for (ODistributedWorker workerThread : workerThreads) {
-      if (workerThread != null) total += workerThread.getProcessedRequests();
-    }
-
-    return total;
+  public void onDropShutdown() {
+    // Drop is often called directly from the exeutor so it cannot wait itself to finish
+    shutdown(false);
   }
 
   public void shutdown() {
+    shutdown(true);
+  }
+
+  public void shutdown(boolean wait) {
     waitPending();
     running = false;
 
     try {
       if (txTimeoutTask != null) txTimeoutTask.cancel();
-
-      // SEND THE SHUTDOWN TO ALL THE WORKER THREADS
-      if (lockThread != null) lockThread.sendShutdown();
-      if (nowaitThread != null) nowaitThread.sendShutdown();
-      for (ODistributedWorker workerThread : workerThreads) {
-        if (workerThread != null) workerThread.sendShutdown();
-      }
-
-      // WAIT A BIT FOR PROPER SHUTDOWN
-      if (lockThread != null)
+      requestExecutor.shutdown();
+      if (wait) {
         try {
-          lockThread.join(2000);
+          requestExecutor.awaitTermination(1, TimeUnit.MINUTES);
         } catch (InterruptedException e) {
         }
-
-      if (nowaitThread != null)
-        try {
-          nowaitThread.join(2000);
-        } catch (InterruptedException e) {
-        }
-
-      for (ODistributedWorker workerThread : workerThreads) {
-        if (workerThread != null) {
-          try {
-            workerThread.join(2000);
-          } catch (InterruptedException e) {
-          }
-        }
       }
-      lockThread = null;
-      nowaitThread = null;
-      workerThreads.clear();
-
-      // SAVE SYNC CONFIGURATION
-      try {
-        getSyncConfiguration().save();
-      } catch (IOException e) {
-        ODistributedServerLog.warn(
-            this,
-            localNodeName,
-            null,
-            DIRECTION.NONE,
-            "Error on saving distributed LSN table for database '%s'",
-            databaseName);
-      }
-      syncConfiguration = null;
 
       activeTxContexts.clear();
 
@@ -1104,7 +957,7 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
           this,
           localNodeName,
           null,
-          DIRECTION.OUT,
+          OUT,
           "Local server is not online (status='%s'). Request %s will be ignored",
           srvStatus,
           iRequest);
@@ -1274,31 +1127,34 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
       if (totalWorkers == 0) totalWorkers = 1;
     }
 
-    lockThread = new ODistributedWorker(this, databaseName, -3, false);
-    lockThread.start();
-
-    nowaitThread = new ODistributedWorker(this, databaseName, -4, true);
-    nowaitThread.start();
-
-    for (int i = 0; i < totalWorkers; ++i) {
-      final ODistributedWorker workerThread = new ODistributedWorker(this, databaseName, i, true);
-      workerThreads.add(workerThread);
-      workerThread.start();
-
-      ALL_QUEUES.add(i);
+    synchronized (this) {
+      this.requestExecutor =
+          new ThreadPoolExecutor(
+              0,
+              totalWorkers,
+              1,
+              TimeUnit.HOURS,
+              new LinkedBlockingQueue<>(),
+              new ThreadFactory() {
+                @Override
+                public Thread newThread(Runnable r) {
+                  Thread thread = new Thread(r);
+                  thread.setName(
+                      "OrientDB DistributedWorker node="
+                          + getLocalNodeName()
+                          + " db="
+                          + databaseName);
+                  thread.setUncaughtExceptionHandler(
+                      new Thread.UncaughtExceptionHandler() {
+                        @Override
+                        public void uncaughtException(Thread t, Throwable e) {
+                          OLogManager.instance().error(t, "Exception in distributed executor", e);
+                        }
+                      });
+                  return thread;
+                }
+              });
     }
-  }
-
-  @Override
-  public void setLSN(
-      final String sourceNodeName,
-      final OLogSequenceNumber taskLastLSN,
-      final boolean updateLastOperationTimestamp)
-      throws IOException {
-    if (taskLastLSN == null) return;
-
-    final ODistributedSyncConfiguration cfg = getSyncConfiguration();
-    cfg.setLastLSN(sourceNodeName, taskLastLSN, updateLastOperationTimestamp);
   }
 
   private void startTxTimeoutTimerTask() {
@@ -1388,15 +1244,6 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
 
   public void suspend() {
     boolean parsing = this.parsing.get();
-    if (parsing) {
-      // RESET THE DATABASE
-      if (lockThread != null) lockThread.reset();
-      if (nowaitThread != null) nowaitThread.reset();
-      for (ODistributedWorker w : workerThreads) {
-        if (w != null) w.reset();
-      }
-    }
-
     this.parsing.set(false);
     if (parsing) {
       while (operationsRunnig.get() != 0) {
@@ -1424,59 +1271,19 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
         "\n\nDATABASE '" + databaseName + "' ON SERVER '" + manager.getLocalNodeName() + "'");
 
     buffer.append("\n- MESSAGES IN QUEUES");
-    buffer.append(" (" + (workerThreads != null ? workerThreads.size() : 0) + " WORKERS):");
-
-    if (lockThread != null) {
-      final ODistributedRequest processing = lockThread.getProcessing();
-      final ArrayBlockingQueue<ODistributedRequest> queue = lockThread.localQueue;
-
-      if (processing != null || !queue.isEmpty()) {
-        buffer.append("\n - QUEUE LOCK EXECUTING: " + processing);
-        int i = 0;
-        for (ODistributedRequest m : queue) {
-          if (m != null) buffer.append("\n  - " + i + " = " + m.toString());
-        }
-      }
-    }
-
-    if (nowaitThread != null) {
-      final ODistributedRequest processing = nowaitThread.getProcessing();
-      final ArrayBlockingQueue<ODistributedRequest> queue = nowaitThread.localQueue;
-
-      if (processing != null || !queue.isEmpty()) {
-        buffer.append("\n - QUEUE UNLOCK EXECUTING: " + processing);
-        int i = 0;
-        for (ODistributedRequest m : queue) {
-          if (m != null) buffer.append("\n  - " + i + " = " + m.toString());
-        }
-      }
-    }
-
-    if (workerThreads != null) {
-      for (ODistributedWorker t : workerThreads) {
-        final ODistributedRequest processing = t.getProcessing();
-        final ArrayBlockingQueue<ODistributedRequest> queue = t.localQueue;
-
-        if (processing != null || !queue.isEmpty()) {
-          buffer.append("\n  - QUEUE " + t.id + " EXECUTING: " + processing);
-          int i = 0;
-          for (ODistributedRequest m : queue) {
-            if (m != null) buffer.append("\n   - " + (i++) + " = " + m.toString());
-          }
-        }
-      }
-    }
+    buffer.append(" (" + (requestExecutor.getPoolSize()) + " WORKERS):");
 
     return buffer.toString();
   }
 
-  public ConcurrentHashMap<ODistributedRequestId, ODistributedTxContext> getActiveTxContexts() {
+  public Map<ODistributedRequestId, ODistributedTxContext> getActiveTxContexts() {
     return activeTxContexts;
   }
 
   @Override
   public void validateStatus(OTransactionSequenceStatus status) {
     List<OTransactionId> res = sequenceManager.checkSelfStatus(status);
+    res.removeAll(this.inQueue);
     if (!res.isEmpty()) {
       manager.installDatabase(false, databaseName, true, true);
     }
@@ -1501,5 +1308,32 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
               })
           .start();
     }
+  }
+
+  public List<OLockGuard> localLock(OLockKeySource keySource) {
+    SortedSet<ORID> rids = keySource.getRids();
+    SortedSet<OPair<String, Object>> uniqueKeys = keySource.getUniqueKeys();
+    OTransactionId txId = keySource.getTransactionId();
+    LinkedBlockingQueue<List<OLockGuard>> latch = new LinkedBlockingQueue<List<OLockGuard>>(1);
+    this.lockManager.lock(
+        rids,
+        uniqueKeys,
+        txId,
+        (guards) -> {
+          try {
+            latch.put(guards);
+          } catch (InterruptedException e) {
+            throw new OInterruptedException(e.getMessage());
+          }
+        });
+    try {
+      return latch.take();
+    } catch (InterruptedException e) {
+      throw new OInterruptedException(e.getMessage());
+    }
+  }
+
+  public void localUnlock(List<OLockGuard> guards) {
+    this.lockManager.unlock(guards);
   }
 }

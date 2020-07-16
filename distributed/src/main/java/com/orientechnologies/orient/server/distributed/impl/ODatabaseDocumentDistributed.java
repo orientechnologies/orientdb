@@ -55,6 +55,7 @@ import com.orientechnologies.orient.core.tx.OTransactionIndexChanges;
 import com.orientechnologies.orient.core.tx.OTransactionIndexChangesPerKey;
 import com.orientechnologies.orient.core.tx.OTransactionInternal;
 import com.orientechnologies.orient.core.tx.OTransactionOptimistic;
+import com.orientechnologies.orient.core.tx.ValidationResult;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.distributed.ODistributedConfiguration;
 import com.orientechnologies.orient.server.distributed.ODistributedDatabase;
@@ -65,6 +66,7 @@ import com.orientechnologies.orient.server.distributed.ODistributedResponse;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
 import com.orientechnologies.orient.server.distributed.ODistributedTxContext;
+import com.orientechnologies.orient.server.distributed.exception.OTransactionAlreadyPresentException;
 import com.orientechnologies.orient.server.distributed.impl.metadata.OClassDistributed;
 import com.orientechnologies.orient.server.distributed.impl.metadata.OSharedContextDistributed;
 import com.orientechnologies.orient.server.distributed.impl.task.ONewSQLCommandTask;
@@ -74,6 +76,7 @@ import com.orientechnologies.orient.server.distributed.task.ODistributedRecordLo
 import com.orientechnologies.orient.server.distributed.task.ORemoteTask;
 import com.orientechnologies.orient.server.hazelcast.OHazelcastPlugin;
 import com.orientechnologies.orient.server.plugin.OServerPluginInfo;
+import java.util.*;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
@@ -81,7 +84,6 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.Random;
 import java.util.Set;
 import java.util.TreeSet;
@@ -314,8 +316,6 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
         task,
         distributedManager.getNextMessageIdCounter(),
         ODistributedRequest.EXECUTION_MODE.RESPONSE,
-        null,
-        null,
         null);
   }
 
@@ -616,13 +616,16 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
             manager.messageBeforeOp("commit", requestId);
           }
           txContext.commit(this);
-          if (manager != null) {
-            manager.messageAfterOp("commit", requestId);
-          }
           localDistributedDatabase.popTxContext(transactionId);
           OLiveQueryHook.notifyForTxChanges(this);
           OLiveQueryHookV2.notifyForTxChanges(this);
+        } catch (OTransactionAlreadyPresentException e) {
+          // DO Nothing already present
+          txContext.destroy();
+          localDistributedDatabase.popTxContext(transactionId);
         } catch (RuntimeException | Error e) {
+          txContext.destroy();
+          localDistributedDatabase.popTxContext(transactionId);
           Orient.instance()
               .submit(
                   () -> {
@@ -630,6 +633,9 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
                   });
           throw e;
         } finally {
+          if (manager != null) {
+            manager.messageAfterOp("commit", requestId);
+          }
           OLiveQueryHook.removePendingDatabaseOps(this);
           OLiveQueryHookV2.removePendingDatabaseOps(this);
         }
@@ -647,13 +653,15 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
                 OException.wrapException(new OInterruptedException(e.getMessage()), e);
               }
             }
-            boolean valid = true;
-            Optional<OTransactionId> validateResult =
+            ValidationResult validateResult =
                 localDistributedDatabase.validate(txContext.getTransactionId());
-            if (validateResult.isPresent()) {
-              valid = validateResult.get().getNodeOwner().isPresent();
-            }
-            if (valid) {
+
+            if (validateResult == ValidationResult.ALREADY_PRESENT) {
+              // Already present do nothing.
+              txContext.destroy();
+              localDistributedDatabase.popTxContext(transactionId);
+              return true;
+            } else if (validateResult != ValidationResult.MISSING_PREVIOUS) {
               internalBegin2pc(txContext, local);
               txContext.setStatus(SUCCESS);
               break;
@@ -677,7 +685,13 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
             OLiveQueryHook.notifyForTxChanges(this);
             OLiveQueryHookV2.notifyForTxChanges(this);
             return true;
+          } catch (OTransactionAlreadyPresentException e) {
+            // DO Nothing already present
+            txContext.destroy();
+            localDistributedDatabase.popTxContext(transactionId);
           } catch (RuntimeException | Error e) {
+            txContext.destroy();
+            localDistributedDatabase.popTxContext(transactionId);
             Orient.instance()
                 .submit(
                     () -> {
@@ -943,8 +957,6 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
               task,
               dManager.getNextMessageIdCounter(),
               ODistributedRequest.EXECUTION_MODE.RESPONSE,
-              null,
-              null,
               null);
 
     } catch (Exception e) {

@@ -1111,13 +1111,11 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
       currentTx.begin();
       return;
     }
-
     Map<ORID, OTransactionAbstract.LockedRecordMetadata> noTxLockedRecords = null;
 
     if (!currentTx.isActive() && iTx instanceof OTransactionOptimistic) {
       noTxLockedRecords = ((OTransactionAbstract) currentTx).getInternalLocks();
     }
-
     currentTx.rollback(true, 0);
 
     // WAKE UP LISTENERS
@@ -1251,7 +1249,6 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
         currentTx.begin();
         return this;
       }
-
       currentTx.rollback(true, 0);
     }
 
@@ -2096,9 +2093,7 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
       // WAKE UP LISTENERS
       afterRollbackOperations();
     }
-
     getLocalCache().clear();
-
     return this;
   }
 

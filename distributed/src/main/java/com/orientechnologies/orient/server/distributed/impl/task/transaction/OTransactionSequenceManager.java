@@ -2,6 +2,7 @@ package com.orientechnologies.orient.server.distributed.impl.task.transaction;
 
 import com.orientechnologies.orient.core.tx.OTransactionId;
 import com.orientechnologies.orient.core.tx.OTransactionSequenceStatus;
+import com.orientechnologies.orient.core.tx.ValidationResult;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -52,54 +53,55 @@ public class OTransactionSequenceManager {
     return id;
   }
 
-  public synchronized List<OTransactionId> notifySuccess(OTransactionId transactionId) {
+  public synchronized ValidationResult notifySuccess(OTransactionId transactionId) {
     if (this.promisedSequential[transactionId.getPosition()] != null) {
       if (this.promisedSequential[transactionId.getPosition()].getSequence()
           == transactionId.getSequence()) {
         this.sequentials[transactionId.getPosition()] = transactionId.getSequence();
         this.promisedSequential[transactionId.getPosition()] = null;
+      } else if (this.promisedSequential[transactionId.getPosition()].getSequence()
+          > transactionId.getSequence()) {
+        return ValidationResult.ALREADY_PRESENT;
       } else {
-        List<OTransactionId> missing = new ArrayList<>();
-        for (long x = this.promisedSequential[transactionId.getPosition()].getSequence() + 1;
-            x <= transactionId.getSequence();
-            x++) {
-          missing.add(new OTransactionId(Optional.empty(), transactionId.getPosition(), x));
-        }
-        return missing;
+        return ValidationResult.MISSING_PREVIOUS;
       }
     } else {
       if (this.sequentials[transactionId.getPosition()] + 1 == transactionId.getSequence()) {
         // Not promised but valid, accept it
         // TODO: may need to return this information somehow
         this.sequentials[transactionId.getPosition()] = transactionId.getSequence();
+      } else if (this.sequentials[transactionId.getPosition()] + 1 > transactionId.getSequence()) {
+        return ValidationResult.ALREADY_PRESENT;
       } else {
-        List<OTransactionId> missing = new ArrayList<>();
-        for (long x = this.sequentials[transactionId.getPosition()] + 1;
-            x <= transactionId.getSequence();
-            x++) {
-          missing.add(new OTransactionId(Optional.empty(), transactionId.getPosition(), x));
-        }
-        return missing;
+        return ValidationResult.MISSING_PREVIOUS;
       }
     }
-    return Collections.emptyList();
+    return ValidationResult.VALID;
   }
 
-  public synchronized Optional<OTransactionId> validateTransactionId(OTransactionId transactionId) {
-    if (this.promisedSequential[transactionId.getPosition()] == null
-        && this.sequentials[transactionId.getPosition()] + 1 == transactionId.getSequence()) {
-      this.promisedSequential[transactionId.getPosition()] = transactionId;
-      return Optional.empty();
-    } else {
-      Optional<String> owner;
-      if (this.promisedSequential[transactionId.getPosition()] != null) {
-        owner = this.promisedSequential[transactionId.getPosition()].getNodeOwner();
+  public synchronized ValidationResult validateTransactionId(OTransactionId transactionId) {
+    if (this.promisedSequential[transactionId.getPosition()] == null) {
+      if (this.sequentials[transactionId.getPosition()] + 1 == transactionId.getSequence()) {
+        this.promisedSequential[transactionId.getPosition()] = transactionId;
+        return ValidationResult.VALID;
+      } else if (this.sequentials[transactionId.getPosition()] + 1 < transactionId.getSequence()) {
+        return ValidationResult.MISSING_PREVIOUS;
       } else {
-        owner = Optional.empty();
+        return ValidationResult.ALREADY_PRESENT;
       }
-      return Optional.of(
-          new OTransactionId(
-              owner, transactionId.getPosition(), this.sequentials[transactionId.getPosition()]));
+    } else {
+      if (this.sequentials[transactionId.getPosition()] + 1 == transactionId.getSequence()) {
+        if (this.promisedSequential[transactionId.getPosition()].getNodeOwner()
+            == transactionId.getNodeOwner()) {
+          return ValidationResult.VALID;
+        } else {
+          return ValidationResult.ALREADY_PROMISED;
+        }
+      } else if (this.sequentials[transactionId.getPosition()] + 1 < transactionId.getSequence()) {
+        return ValidationResult.MISSING_PREVIOUS;
+      } else {
+        return ValidationResult.ALREADY_PRESENT;
+      }
     }
   }
 

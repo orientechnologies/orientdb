@@ -1,6 +1,5 @@
 package com.orientechnologies.orient.server.distributed.impl;
 
-import com.orientechnologies.common.util.OCallable;
 import com.orientechnologies.orient.server.distributed.ODistributedRequest;
 import com.orientechnologies.orient.server.distributed.ODistributedResponseManager;
 import com.orientechnologies.orient.server.distributed.task.ORemoteTask;
@@ -12,7 +11,6 @@ public interface ODistributedResponseManagerFactory {
   ODistributedResponseManager newResponseManager(
       ODistributedRequest iRequest,
       Collection<String> iNodes,
-      OCallable<Void, ODistributedResponseManager> endCallback,
       ORemoteTask task,
       Set<String> nodesConcurToTheQuorum,
       int availableNodes,

@@ -75,7 +75,7 @@ public abstract class OTransactionRealAbstract extends OTransactionAbstract
 
   private Optional<List<byte[]>> serializedOperations = Optional.empty();
 
-  protected OTransactionRealAbstract(ODatabaseDocumentInternal database, int id) {
+  protected OTransactionRealAbstract(final ODatabaseDocumentInternal database, final int id) {
     super(database);
     this.id = id;
   }
@@ -89,24 +89,22 @@ public abstract class OTransactionRealAbstract extends OTransactionAbstract
 
   public void close() {
     super.close();
-
     for (final ORecordOperation recordOperation : getRecordOperations()) {
       final ORecord record = recordOperation.getRecord();
       if (record instanceof ODocument) {
         final ODocument document = (ODocument) record;
-
         if (document.isDirty()) {
           document.undo();
         }
-
         changedDocuments.remove(document);
       }
     }
 
     for (ODocument changedDocument : changedDocuments) {
-      if (!changedDocument.isEmbedded()) changedDocument.undo();
+      if (!changedDocument.isEmbedded()) {
+        changedDocument.undo();
+      }
     }
-
     changedDocuments.clear();
     updatedRids.clear();
     allEntries.clear();
@@ -116,7 +114,6 @@ public abstract class OTransactionRealAbstract extends OTransactionAbstract
     status = TXSTATUS.INVALID;
 
     database.setDefaultTransactionMode(getNoTxLocks());
-
     userData.clear();
   }
 
@@ -397,10 +394,11 @@ public abstract class OTransactionRealAbstract extends OTransactionAbstract
     }
   }
 
-  protected void checkTransaction() {
-    if (status == TXSTATUS.INVALID)
+  protected void checkTransactionValid() {
+    if (status == TXSTATUS.INVALID) {
       throw new OTransactionException(
           "Invalid state of the transaction. The transaction must be begun.");
+    }
   }
 
   protected ODocument serializeIndexChangeEntry(
@@ -430,7 +428,7 @@ public abstract class OTransactionRealAbstract extends OTransactionAbstract
       for (OTransactionIndexEntry e : entry.entries) {
 
         final ODocument changeDoc = new ODocument().setAllowChainedAccess(false);
-        ODocumentInternal.addOwner((ODocument) changeDoc, indexDoc);
+        ODocumentInternal.addOwner(changeDoc, indexDoc);
 
         // SERIALIZE OPERATION
         changeDoc.field("o", e.operation.ordinal());
@@ -492,7 +490,6 @@ public abstract class OTransactionRealAbstract extends OTransactionAbstract
     for (Dependency dependency : fieldDependencies)
       switch (dependency) {
         case Unknown:
-          return true;
         case Yes:
           return true;
         case No:
@@ -616,6 +613,18 @@ public abstract class OTransactionRealAbstract extends OTransactionAbstract
       return serializedOperations.get().iterator();
     } else {
       return Collections.emptyIterator();
+    }
+  }
+
+  @Override
+  public void resetAllocatedIds() {
+    for (Map.Entry<ORID, ORecordOperation> op : allEntries.entrySet()) {
+      if (op.getValue().type == ORecordOperation.CREATED) {
+        ORecordId oldNew =
+            new ORecordId(op.getKey().getClusterId(), op.getKey().getClusterPosition());
+        updatedRids.remove(op.getValue().getRID());
+        updateIdentityAfterCommit(op.getValue().getRID(), oldNew);
+      }
     }
   }
 }
