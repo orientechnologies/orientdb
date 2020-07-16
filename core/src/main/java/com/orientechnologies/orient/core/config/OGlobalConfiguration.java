@@ -515,6 +515,12 @@ public enum OGlobalConfiguration { // ENVIRONMENT
       Integer.class,
       6 * 1024),
 
+  WAL_MIN_COMPRESSED_RECORD_SIZE(
+      "storage.wal.minCompressedRecordSize",
+      "Minimum size of record which is needed to be compressed before stored on disk",
+      Integer.class,
+      8 * 1024),
+
   WAL_MAX_SIZE(
       "storage.wal.maxSize", "Maximum size of WAL on disk (in megabytes)", Integer.class, -1),
 

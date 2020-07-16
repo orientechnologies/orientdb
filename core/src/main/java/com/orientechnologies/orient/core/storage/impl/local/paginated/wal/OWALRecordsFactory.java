@@ -164,9 +164,11 @@ import static com.orientechnologies.orient.core.storage.impl.local.paginated.wal
 import static com.orientechnologies.orient.core.storage.impl.local.paginated.wal.WALRecordTypes.TX_METADATA;
 import static com.orientechnologies.orient.core.storage.impl.local.paginated.wal.WALRecordTypes.UPDATE_PAGE_RECORD;
 
+
 import com.orientechnologies.common.serialization.types.OIntegerSerializer;
 import com.orientechnologies.common.serialization.types.OShortSerializer;
 import com.orientechnologies.common.util.OPair;
+import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.common.EmptyWALRecord;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.common.WriteableWALRecord;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.cellbtree.multivalue.v2.bucket.CellBTreeMultiValueV2BucketAddAllLeafEntriesPO;
@@ -316,12 +318,14 @@ import net.jpountz.lz4.LZ4FastDecompressor;
  * @since 25.04.13
  */
 public final class OWALRecordsFactory {
+
   private final Map<Integer, Class> idToTypeMap = new HashMap<>();
 
   public static final OWALRecordsFactory INSTANCE = new OWALRecordsFactory();
 
   private static final LZ4Factory factory = LZ4Factory.fastestInstance();
-  private static final int MIN_COMPRESSED_RECORD_SIZE = 8 * 1024;
+  private static final int MIN_COMPRESSED_RECORD_SIZE =
+      OGlobalConfiguration.WAL_MIN_COMPRESSED_RECORD_SIZE.getValueAsInteger();
 
   public static OPair<ByteBuffer, Long> toStream(final WriteableWALRecord walRecord) {
     final int contentSize = walRecord.serializedSize() + 2;
