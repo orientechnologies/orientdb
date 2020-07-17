@@ -19,6 +19,12 @@
  */
 package com.orientechnologies.orient.core.storage.fs;
 
+import static com.orientechnologies.common.io.OIOUtils.readByteBuffer;
+import static com.orientechnologies.common.io.OIOUtils.readByteBuffers;
+import static com.orientechnologies.common.io.OIOUtils.writeByteBuffer;
+import static com.orientechnologies.common.io.OIOUtils.writeByteBuffers;
+
+
 import com.orientechnologies.common.collection.closabledictionary.OClosableItem;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.io.OIOException;
@@ -31,20 +37,20 @@ import com.sun.jna.LastErrorException;
 import com.sun.jna.Native;
 import com.sun.jna.Platform;
 import com.sun.jna.Pointer;
-
-import java.io.*;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.PrintWriter;
+import java.io.RandomAccessFile;
+import java.io.StringWriter;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.util.Arrays;
-import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
-
-import static com.orientechnologies.common.io.OIOUtils.*;
 
 public final class OFileClassic implements OClosableItem {
   public final static  String NAME            = "classic";
@@ -59,16 +65,18 @@ public final class OFileClassic implements OClosableItem {
 
   private volatile Path osFile;
 
-  private          FileChannel      channel;
-  private          RandomAccessFile frnd;
-  private volatile boolean          dirty;
-  private volatile boolean          headerDirty;
-  private          int              version;
+  private FileChannel channel;
+  private RandomAccessFile frnd;
+  private volatile boolean dirty;
+  private volatile boolean headerDirty;
+  private int version;
 
   private volatile long size;
 
   private AllocationMode allocationMode;
-  private int            fd;
+  private int fd;
+
+  private final int pageSize;
 
   /**
    * Map which calculates which files are opened and how many users they have
@@ -78,15 +86,17 @@ public final class OFileClassic implements OClosableItem {
   /**
    * Whether only single file user is allowed.
    */
-  private final boolean exclusiveFileAccess = OGlobalConfiguration.STORAGE_EXCLUSIVE_FILE_ACCESS.getValueAsBoolean();
+  private final boolean exclusiveFileAccess =
+      OGlobalConfiguration.STORAGE_EXCLUSIVE_FILE_ACCESS.getValueAsBoolean();
 
   /**
    * Whether it should be tracked which thread opened file in exclusive mode.
    */
   private final boolean trackFileOpen = OGlobalConfiguration.STORAGE_TRACK_FILE_ACCESS.getValueAsBoolean();
 
-  public OFileClassic(final Path osFile) {
+  public OFileClassic(final Path osFile, final int pageSize) {
     this.osFile = osFile;
+    this.pageSize = pageSize;
   }
 
   public long allocateSpace(final int size) throws IOException {
@@ -159,7 +169,6 @@ public final class OFileClassic implements OClosableItem {
   public void shrink(final long size) throws IOException {
     acquireWriteLock();
     try {
-      //noinspection resource
       channel.truncate(HEADER_SIZE + size);
       this.size = size;
 
@@ -200,7 +209,6 @@ public final class OFileClassic implements OClosableItem {
     try {
       offset += HEADER_SIZE;
 
-      //noinspection resource
       channel.position(offset);
       readByteBuffers(buffers, channel, buffers.length * buffers[0].limit(), throwOnEof);
     } finally {
@@ -224,7 +232,6 @@ public final class OFileClassic implements OClosableItem {
     acquireWriteLock();
     try {
       offset += HEADER_SIZE;
-      //noinspection resource
       channel.position(offset);
       writeByteBuffers(buffers, channel, buffers.length * buffers[0].limit());
 
@@ -646,6 +653,19 @@ public final class OFileClassic implements OClosableItem {
 
   private void init() throws IOException {
     size = channel.size() - HEADER_SIZE;
+
+    if (size % pageSize != 0) {
+      final long initialSize = size;
+
+      //noinspection NonAtomicOperationOnVolatileField
+      size = (size / pageSize) * pageSize;
+      channel.truncate(size + HEADER_SIZE);
+
+      OLogManager.instance().warnNoDb(this,
+          "Data page in file {} was partially written and will be truncated, "
+              + "initial size {}, truncated size {}", osFile, initialSize, size);
+    }
+
     assert size >= 0;
 
     final ByteBuffer buffer = ByteBuffer.allocate(1);
@@ -792,7 +812,7 @@ public final class OFileClassic implements OClosableItem {
       }
     }
     builder.append(", stored=");
-    builder.append(getFileSize());
+    builder.append(size);
     return builder.toString();
   }
 
@@ -806,31 +826,35 @@ public final class OFileClassic implements OClosableItem {
     private final int                 users;
     private final StackTraceElement[] openStackTrace;
 
-    FileUser(final int users, final StackTraceElement[] openStackTrace) {
+    private FileUser(final int users, final StackTraceElement[] openStackTrace) {
       this.users = users;
       this.openStackTrace = openStackTrace;
     }
 
     @Override
-    public boolean equals(final Object o) {
+    public boolean equals(Object o) {
       if (this == o) {
         return true;
       }
       if (o == null || getClass() != o.getClass()) {
         return false;
       }
-      final FileUser fileUser = (FileUser) o;
-      return users == fileUser.users && Arrays.equals(openStackTrace, fileUser.openStackTrace);
+
+      FileUser fileUser = (FileUser) o;
+
+      if (users != fileUser.users) {
+        return false;
+      }
+      // Probably incorrect - comparing Object[] arrays with Arrays.equals
+      return Arrays.equals(openStackTrace, fileUser.openStackTrace);
     }
 
     @Override
     public int hashCode() {
-
-      int result = Objects.hash(users);
+      int result = users;
       result = 31 * result + Arrays.hashCode(openStackTrace);
       return result;
     }
-
   }
 
   private enum AllocationMode {

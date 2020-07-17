@@ -55,7 +55,6 @@ import com.orientechnologies.orient.core.storage.impl.local.OLowDiskSpaceListene
 import com.orientechnologies.orient.core.storage.impl.local.OPageIsBrokenListener;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWriteAheadLog;
-
 import java.io.EOFException;
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -76,6 +75,7 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Random;
 import java.util.Set;
 import java.util.TreeMap;
@@ -1814,7 +1814,7 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
 
   private OFileClassic createFileInstance(final String fileName, final int fileId) {
     final String internalFileName = createInternalFileName(fileName, fileId);
-    return new OFileClassic(storagePath.resolve(internalFileName));
+    return new OFileClassic(storagePath.resolve(internalFileName), pageSize);
   }
 
   private static String createInternalFileName(final String fileName, final int fileId) {
@@ -1884,7 +1884,7 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
 
         if (files.get(externalId) == null) {
           final Path path = storagePath.resolve(idFileNameMap.get((nameIdEntry.getValue())));
-          final OFileClassic fileClassic = new OFileClassic(path);
+          final OFileClassic fileClassic = new OFileClassic(path, pageSize);
 
           if (fileClassic.exists()) {
             fileClassic.open();
@@ -1956,7 +1956,8 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
         final long externalId = composeFileId(id, nameIdEntry.getValue());
 
         if (files.get(externalId) == null) {
-          final OFileClassic fileClassic = new OFileClassic(storagePath.resolve(nameIdEntry.getKey()));
+          final OFileClassic fileClassic =
+              new OFileClassic(storagePath.resolve(nameIdEntry.getKey()), pageSize);
 
           if (fileClassic.exists()) {
             fileClassic.open();
@@ -2415,15 +2416,22 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
                 + "data threads were waiting because of cache overflow %d times, avg. wait time is %d ms., "
                 + "avg. chunk size %d, avg, chunk flush time %d ms., WAL begin %s, WAL end %s, %d percent of exclusive write cache is filled, "
                 + "LSN flush interval boundary %d ms", storageName, lsnPagesSum, exclusivePagesSum,
-            entry == null ? -1 : entry.getKey().intValue(), entry == null ? -1 : entry.getValue().size(),
+            Optional.ofNullable(entry).map(treeSetEntry -> treeSetEntry.getKey().intValue())
+                .orElse(-1),
+            Optional.ofNullable(entry).map(longTreeSetEntry -> longTreeSetEntry.getValue().size())
+                .orElse(-1),
             lsnFlushIntervalSum / lsnFlushIntervalCount / 1_000_000, flushedPagesSum,
             1_000_000_000L * flushedPagesSum / flushedPagesTime,
             1_000_000_000L * flushedPagesSum / flushedPagesTime * pageSize / 1024, walFlushCount,
             walFlushCount > 0 ? walFlushTime / walFlushCount / 1_000_000 : 0, loadedPages,
-            1_000_000_000L * loadedPages / loadedPagesTime, 1_000_000_000L * loadedPages / loadedPagesTime * pageSize / 1024,
-            cacheOverflowCount, cacheOverflowCount > 0 ? cacheOverflowTime / cacheOverflowCount / 1_000_000 : 0,
-            chunkSizeSum / chunkSizeCountSum, chunkSizeTimeSum / chunkSizeCountSum / 1_000_000, walBegin, walEnd,
-            100 * exclusiveWriteCacheSize.get() / exclusiveWriteCacheMaxSize, lsnFlushIntervalBoundary / 1_000_000);
+            1_000_000_000L * loadedPages / loadedPagesTime,
+            1_000_000_000L * loadedPages / loadedPagesTime * pageSize / 1024,
+            cacheOverflowCount,
+            cacheOverflowCount > 0 ? cacheOverflowTime / cacheOverflowCount / 1_000_000 : 0,
+            chunkSizeSum / chunkSizeCountSum, chunkSizeTimeSum / chunkSizeCountSum / 1_000_000,
+            walBegin, walEnd,
+            100 * exclusiveWriteCacheSize.get() / exclusiveWriteCacheMaxSize,
+            lsnFlushIntervalBoundary / 1_000_000);
 
         statisticTs = ts;
 

@@ -20,14 +20,6 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OAbstr
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALRecordsFactory;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.cas.OCASDiskWriteAheadLog;
-import org.assertj.core.api.Assertions;
-import org.junit.AfterClass;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.Ignore;
-import org.junit.Test;
-
 import java.io.File;
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -40,6 +32,13 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
 import java.util.Random;
+import org.assertj.core.api.Assertions;
+import org.junit.AfterClass;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.BeforeClass;
+import org.junit.Ignore;
+import org.junit.Test;
 
 public class ReadWriteDiskCacheTest {
   private static final int                   userDataSize            = 8;
@@ -135,7 +134,7 @@ public class ReadWriteDiskCacheTest {
     seed = (byte) (random.nextInt() & 0xFF);
   }
 
-  private void closeBufferAndDeleteFile() throws IOException {
+  private static void closeBufferAndDeleteFile() throws IOException {
     long fileId = -1;
 
     if (writeBuffer != null) {
@@ -191,11 +190,14 @@ public class ReadWriteDiskCacheTest {
     }
   }
 
-  private void initBuffer() throws IOException, InterruptedException {
-    writeAheadLog = new OCASDiskWriteAheadLog(storageName, storagePath, storagePath, 12_000, 128, Integer.MAX_VALUE,
-        Integer.MAX_VALUE, 25, true, Locale.US, -1, 1024L * 1024 * 1024, 1000, true, false, false, true, 10);
+  private static void initBuffer() throws IOException, InterruptedException {
+    writeAheadLog = new OCASDiskWriteAheadLog(storageName, storagePath, storagePath, 12_000, 128,
+        Integer.MAX_VALUE,
+        Integer.MAX_VALUE, 25, true, Locale.US, -1, 1024L * 1024 * 1024, 1000, true, false, false,
+        true, 10);
 
-    writeBuffer = new OWOWCache(PAGE_SIZE, BUFFER_POOL, writeAheadLog, -1, 10, WRITE_CACHE_MAX_SIZE, storagePath, storageName,
+    writeBuffer = new OWOWCache(PAGE_SIZE, BUFFER_POOL, writeAheadLog, -1, 10, WRITE_CACHE_MAX_SIZE,
+        storagePath, storageName,
         OStringSerializer.INSTANCE, files, 1, OChecksumMode.StoreAndThrow, false, true, 10);
     writeBuffer.loadRegisteredFiles();
 
@@ -246,7 +248,8 @@ public class ReadWriteDiskCacheTest {
     }
   }
 
-  private void addFileName(String fileName, List<Long> fileIds, List<String> nativeFileNames) throws IOException {
+  private static void addFileName(String fileName, List<Long> fileIds, List<String> nativeFileNames)
+      throws IOException {
     final long fileId = readBuffer.addFile(fileName, writeBuffer);
     final String nativeFileName = writeBuffer.nativeFileNameById(fileId);
 
@@ -1163,21 +1166,25 @@ public class ReadWriteDiskCacheTest {
     }
   }
 
-  private void assertFile(long pageIndex, byte[] value, OLogSequenceNumber lsn, String fileName) throws IOException {
-    OFileClassic fileClassic = new OFileClassic(storagePath.resolve(fileName));
+  private static void assertFile(long pageIndex, byte[] value, OLogSequenceNumber lsn,
+      String fileName) throws IOException {
+    OFileClassic fileClassic = new OFileClassic(storagePath.resolve(fileName), PAGE_SIZE);
     fileClassic.open();
     byte[] content = new byte[userDataSize + systemOffset];
     final ByteBuffer byteBuffer = ByteBuffer.wrap(content);
 
     fileClassic.read(pageIndex * (userDataSize + systemOffset), byteBuffer, true);
 
-    Assertions.assertThat(Arrays.copyOfRange(content, systemOffset, userDataSize + systemOffset)).isEqualTo(value);
+    Assertions.assertThat(Arrays.copyOfRange(content, systemOffset, userDataSize + systemOffset))
+        .isEqualTo(value);
 
     long magicNumber = OLongSerializer.INSTANCE.deserializeNative(content, 0);
     Assert.assertEquals(magicNumber, OWOWCache.MAGIC_NUMBER_WITH_CHECKSUM);
 
-    long segment = OLongSerializer.INSTANCE.deserializeNative(content, ODurablePage.WAL_SEGMENT_OFFSET);
-    long position = OLongSerializer.INSTANCE.deserializeNative(content, ODurablePage.WAL_POSITION_OFFSET);
+    long segment =
+        OLongSerializer.INSTANCE.deserializeNative(content, ODurablePage.WAL_SEGMENT_OFFSET);
+    long position =
+        OLongSerializer.INSTANCE.deserializeNative(content, ODurablePage.WAL_POSITION_OFFSET);
 
     OLogSequenceNumber readLsn = new OLogSequenceNumber(segment, position);
 
@@ -1186,15 +1193,17 @@ public class ReadWriteDiskCacheTest {
     fileClassic.close();
   }
 
-  private OCacheEntry generateEntry(long fileId, long pageIndex, OPointer pointer, OByteBufferPool bufferPool) {
-    return new OCacheEntryImpl(fileId, pageIndex, new OCachePointer(pointer, bufferPool, fileId, pageIndex));
+  private static OCacheEntry generateEntry(long fileId, long pageIndex, OPointer pointer,
+      OByteBufferPool bufferPool) {
+    return new OCacheEntryImpl(fileId, pageIndex,
+        new OCachePointer(pointer, bufferPool, fileId, pageIndex));
   }
 
-  private OCacheEntry generateRemovedEntry(long fileId, long pageIndex) {
+  private static OCacheEntry generateRemovedEntry(long fileId, long pageIndex) {
     return new OCacheEntryImpl(fileId, pageIndex, null);
   }
 
-  private void setLsn(ByteBuffer buffer, OLogSequenceNumber lsn) {
+  private static void setLsn(ByteBuffer buffer, OLogSequenceNumber lsn) {
     buffer.position(OIntegerSerializer.INT_SIZE + OLongSerializer.LONG_SIZE);
 
     buffer.putLong(lsn.getSegment());

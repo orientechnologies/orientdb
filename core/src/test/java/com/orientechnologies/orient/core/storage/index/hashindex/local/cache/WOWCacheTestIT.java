@@ -16,12 +16,6 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OAbstr
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALRecordsFactory;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.cas.OCASDiskWriteAheadLog;
-import org.junit.AfterClass;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.Test;
-
 import java.io.File;
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -34,6 +28,11 @@ import java.util.Map;
 import java.util.NavigableMap;
 import java.util.Random;
 import java.util.TreeMap;
+import org.junit.AfterClass;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.BeforeClass;
+import org.junit.Test;
 
 /**
  * @author Andrey Lomakin (a.lomakin-at-orientdb.com)
@@ -355,7 +354,7 @@ public class WOWCacheTestIT {
     final String nativeFileName = wowCache.nativeFileNameById(fileId);
     assert nativeFileName != null;
     final Path path = storagePath.resolve(nativeFileName);
-    final OFileClassic file = new OFileClassic(path);
+    final OFileClassic file = new OFileClassic(path, pageSize);
     file.open();
     file.writeByte(systemOffset, (byte) 1);
     file.close();
@@ -391,7 +390,7 @@ public class WOWCacheTestIT {
     final String nativeFileName = wowCache.nativeFileNameById(fileId);
     assert nativeFileName != null;
     final Path path = storagePath.resolve(nativeFileName);
-    final OFileClassic file = new OFileClassic(path);
+    final OFileClassic file = new OFileClassic(path, pageSize);
     file.open();
     file.writeByte(0, (byte) 1);
     file.close();
@@ -427,7 +426,7 @@ public class WOWCacheTestIT {
     final String nativeFileName = wowCache.nativeFileNameById(fileId);
     assert nativeFileName != null;
     final Path path = storagePath.resolve(nativeFileName);
-    final OFileClassic file = new OFileClassic(path);
+    final OFileClassic file = new OFileClassic(path, pageSize);
     file.open();
     file.writeByte(systemOffset, (byte) 1);
     file.close();
@@ -458,7 +457,7 @@ public class WOWCacheTestIT {
     final String nativeFileName = wowCache.nativeFileNameById(fileId);
     assert nativeFileName != null;
     final Path path = storagePath.resolve(nativeFileName);
-    final OFileClassic file = new OFileClassic(path);
+    final OFileClassic file = new OFileClassic(path, pageSize);
     file.open();
     file.writeByte(systemOffset, (byte) 1);
     file.close();
@@ -489,7 +488,7 @@ public class WOWCacheTestIT {
     final String nativeFileName = wowCache.nativeFileNameById(fileId);
     assert nativeFileName != null;
     final Path path = storagePath.resolve(nativeFileName);
-    final OFileClassic file = new OFileClassic(path);
+    final OFileClassic file = new OFileClassic(path, pageSize);
     file.open();
     file.writeByte(systemOffset, (byte) 1);
     file.close();
@@ -520,7 +519,7 @@ public class WOWCacheTestIT {
     final String nativeFileName = wowCache.nativeFileNameById(fileId);
     assert nativeFileName != null;
     final Path path = storagePath.resolve(nativeFileName);
-    final OFileClassic file = new OFileClassic(path);
+    final OFileClassic file = new OFileClassic(path, pageSize);
     file.open();
     file.writeByte(systemOffset, (byte) 1);
     file.close();
@@ -529,8 +528,9 @@ public class WOWCacheTestIT {
     wowCache.load(fileId, 0, 1, new OModifiableBoolean(), true)[0].decrementReadersReferrer();
   }
 
-  private void assertFile(long pageIndex, byte[] value, OLogSequenceNumber lsn, String fileName) throws IOException {
-    OFileClassic fileClassic = new OFileClassic(storagePath.resolve(fileName));
+  private static void assertFile(long pageIndex, byte[] value, OLogSequenceNumber lsn,
+      String fileName) throws IOException {
+    OFileClassic fileClassic = new OFileClassic(storagePath.resolve(fileName), pageSize);
     fileClassic.open();
     byte[] content = new byte[8 + systemOffset];
     fileClassic.read(pageIndex * (8 + systemOffset), content, 8 + systemOffset);
@@ -540,7 +540,8 @@ public class WOWCacheTestIT {
     long magicNumber = OLongSerializer.INSTANCE.deserializeNative(content, 0);
     Assert.assertEquals(magicNumber, OWOWCache.MAGIC_NUMBER_WITH_CHECKSUM);
 
-    int segment = OIntegerSerializer.INSTANCE.deserializeNative(content, OLongSerializer.LONG_SIZE + OIntegerSerializer.INT_SIZE);
+    int segment = OIntegerSerializer.INSTANCE
+        .deserializeNative(content, OLongSerializer.LONG_SIZE + OIntegerSerializer.INT_SIZE);
     long position = OLongSerializer.INSTANCE
         .deserializeNative(content, OLongSerializer.LONG_SIZE + 2 * OIntegerSerializer.INT_SIZE);
 
