@@ -36,9 +36,18 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.record.string.ORecordSerializerSchemaAware2CSV;
 import com.orientechnologies.orient.core.serialization.serializer.string.OStringSerializerAnyStreamable;
 import com.orientechnologies.orient.core.sql.OCommandSQLParsingException;
-
 import java.math.BigDecimal;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Base64;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 public abstract class OStringSerializerHelper {
   public static final char RECORD_SEPARATOR = ',';
@@ -76,71 +85,128 @@ public abstract class OStringSerializerHelper {
       iType = OType.EMBEDDED;
 
     switch (iType) {
-    case STRING:
-      if (iValue instanceof String) {
-        final String s = (String) iValue;
-        return decode(OIOUtils.getStringContent(s));
-      }
-      return iValue.toString();
-
-    case INTEGER:
-      if (iValue instanceof Integer)
-        return iValue;
-      return new Integer(OIOUtils.getStringContent(iValue));
-
-    case BOOLEAN:
-      if (iValue instanceof Boolean)
-        return iValue;
-      return new Boolean(OIOUtils.getStringContent(iValue));
-
-    case DECIMAL:
-      if (iValue instanceof BigDecimal)
-        return iValue;
-      return new BigDecimal(OIOUtils.getStringContent(iValue));
-
-    case FLOAT:
-      if (iValue instanceof Float)
-        return iValue;
-      return new Float(OIOUtils.getStringContent(iValue));
-
-    case LONG:
-      if (iValue instanceof Long)
-        return iValue;
-      return new Long(OIOUtils.getStringContent(iValue));
-
-    case DOUBLE:
-      if (iValue instanceof Double)
-        return iValue;
-      return new Double(OIOUtils.getStringContent(iValue));
-
-    case SHORT:
-      if (iValue instanceof Short)
-        return iValue;
-      return new Short(OIOUtils.getStringContent(iValue));
-
-    case BYTE:
-      if (iValue instanceof Byte)
-        return iValue;
-      return new Byte(OIOUtils.getStringContent(iValue));
-
-    case BINARY:
-      return getBinaryContent(iValue);
-
-    case DATE:
-    case DATETIME:
-      if (iValue instanceof Date)
-        return iValue;
-      return new Date(Long.parseLong(OIOUtils.getStringContent(iValue)));
-
-    case LINK:
-      if (iValue instanceof ORID)
+      case STRING:
+        if (iValue instanceof String) {
+          final String s = (String) iValue;
+          return decode(OIOUtils.getStringContent(s));
+        }
         return iValue.toString();
-      else if (iValue instanceof String)
-        return new ORecordId((String) iValue);
-      else
-        return ((ORecord) iValue).getIdentity().toString();
 
-    case EMBEDDED:
+      case INTEGER: {
+        if (iValue instanceof Integer) {
+          return iValue;
+        }
+        final String valueString = OIOUtils.getStringContent(iValue);
+        if (valueString.isEmpty()) {
+          return null;
+        }
+
+        return Integer.parseInt(valueString);
+      }
+
+      case BOOLEAN: {
+        if (iValue instanceof Boolean) {
+          return iValue;
+        }
+        final String valueString = OIOUtils.getStringContent(iValue);
+        if (valueString.isEmpty()) {
+          return null;
+        }
+        return Boolean.parseBoolean(valueString);
+      }
+
+      case DECIMAL: {
+        if (iValue instanceof BigDecimal) {
+          return iValue;
+        }
+        final String valueString = OIOUtils.getStringContent(iValue);
+        if (valueString.isEmpty()) {
+          return null;
+        }
+
+        return new BigDecimal(valueString);
+      }
+
+      case FLOAT: {
+        if (iValue instanceof Float) {
+          return iValue;
+        }
+        final String valueString = OIOUtils.getStringContent(iValue);
+        if (valueString.isEmpty()) {
+          return null;
+        }
+        return Float.parseFloat(valueString);
+      }
+
+      case LONG: {
+        if (iValue instanceof Long) {
+          return iValue;
+        }
+        final String valueString = OIOUtils.getStringContent(iValue);
+        if (valueString.isEmpty()) {
+          return null;
+        }
+        return Long.parseLong(valueString);
+      }
+
+      case DOUBLE: {
+        if (iValue instanceof Double) {
+          return iValue;
+        }
+        final String valueString = OIOUtils.getStringContent(iValue);
+        if (valueString.isEmpty()) {
+          return null;
+        }
+        return Double.parseDouble(valueString);
+      }
+
+      case SHORT: {
+        if (iValue instanceof Short) {
+          return iValue;
+        }
+        final String valueString = OIOUtils.getStringContent(iValue);
+        if (valueString.isEmpty()) {
+          return null;
+        }
+        return Short.parseShort(valueString);
+      }
+
+      case BYTE: {
+        if (iValue instanceof Byte) {
+          return iValue;
+        }
+        final String valueString = OIOUtils.getStringContent(iValue);
+        if (valueString.isEmpty()) {
+          return null;
+        }
+        return Byte.parseByte(valueString);
+      }
+
+      case BINARY:
+        return getBinaryContent(iValue);
+
+      case DATE:
+      case DATETIME: {
+        if (iValue instanceof Date) {
+          return iValue;
+        }
+        final String valueString = OIOUtils.getStringContent(iValue);
+        if (valueString.isEmpty()) {
+          return null;
+        }
+        return new Date(Long.parseLong(valueString));
+      }
+
+      case LINK:
+        if (iValue instanceof ORID) {
+          return iValue.toString();
+        } else if (iValue instanceof String) {
+          return new ORecordId((String) iValue);
+        } else {
+          return ((ORecord) iValue).getIdentity().toString();
+        }
+
+      case EMBEDDED:
       // EMBEDDED
       return OStringSerializerAnyStreamable.INSTANCE.fromStream((String) iValue);
 
