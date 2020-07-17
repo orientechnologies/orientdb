@@ -15,16 +15,13 @@ import io.kubernetes.client.util.ClientBuilder;
 import io.kubernetes.client.util.KubeConfig;
 import io.kubernetes.client.util.Watch;
 import io.kubernetes.client.util.Yaml;
-import okhttp3.OkHttpClient;
-
-import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
-import java.net.MalformedURLException;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
+import okhttp3.OkHttpClient;
 
 public class KubernetesSetup implements TestSetup {
   // Used for listing OrientDB stateful sets.
@@ -40,13 +37,13 @@ public class KubernetesSetup implements TestSetup {
 
   public KubernetesSetup(String kubeConfigFile, TestConfig config) throws TestSetupException {
     try {
-    this.testConfig = config;
-    KubeConfig kubeConfig = KubeConfig.loadKubeConfig(new FileReader(kubeConfigFile));
-    String serverAddress = kubeConfig.getServer();
-    nodeAddress = new URL(serverAddress).getHost();
-    ApiClient client = ClientBuilder.kubeconfig(kubeConfig).build();
-    Configuration.setDefaultApiClient(client);
-    createRBAC();
+      this.testConfig = config;
+      KubeConfig kubeConfig = KubeConfig.loadKubeConfig(new FileReader(kubeConfigFile));
+      String serverAddress = kubeConfig.getServer();
+      nodeAddress = new URL(serverAddress).getHost();
+      ApiClient client = ClientBuilder.kubeconfig(kubeConfig).build();
+      Configuration.setDefaultApiClient(client);
+      createRBAC();
     } catch (URISyntaxException | IOException e) {
       e.printStackTrace();
       throw new TestSetupException(e);
@@ -108,7 +105,8 @@ public class KubernetesSetup implements TestSetup {
     }
   }
 
-  private void waitForInstances(int timeoutSecond, Collection<String> serverIds, String labelSelector)
+  private void waitForInstances(
+      int timeoutSecond, Collection<String> serverIds, String labelSelector)
       throws ApiException, IOException {
     System.out.printf("Wait till instances %s are ready\n", serverIds);
     Set<String> ids = new HashSet<>(serverIds);
@@ -341,13 +339,15 @@ public class KubernetesSetup implements TestSetup {
     String manifests = ManifestTemplate.generateRBAC();
     for (Object obj : Yaml.loadAll(manifests)) {
       if (obj instanceof V1ServiceAccount) {
-        coreV1Api.createNamespacedServiceAccount(namespace, (V1ServiceAccount) obj, null, null, null);
+        coreV1Api.createNamespacedServiceAccount(
+            namespace, (V1ServiceAccount) obj, null, null, null);
       } else if (obj instanceof V1Role) {
-        rbacV1Api.createNamespacedRole(namespace, (V1Role)obj, null, null, null);
+        rbacV1Api.createNamespacedRole(namespace, (V1Role) obj, null, null, null);
       } else if (obj instanceof V1RoleBinding) {
-        rbacV1Api.createNamespacedRoleBinding(namespace, (V1RoleBinding)obj, null, null, null);
+        rbacV1Api.createNamespacedRoleBinding(namespace, (V1RoleBinding) obj, null, null, null);
       } else {
-        System.out.printf("Ignoring Kubernetes object %s when creating RBAC.\n", obj.getClass().getSimpleName());
+        System.out.printf(
+            "Ignoring Kubernetes object %s when creating RBAC.\n", obj.getClass().getSimpleName());
       }
     }
   }
