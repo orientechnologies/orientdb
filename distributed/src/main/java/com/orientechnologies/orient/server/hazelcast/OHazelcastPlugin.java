@@ -82,7 +82,6 @@ import com.orientechnologies.orient.server.distributed.impl.ODistributedAbstract
 import com.orientechnologies.orient.server.distributed.impl.ODistributedDatabaseImpl;
 import com.orientechnologies.orient.server.distributed.impl.ODistributedMessageServiceImpl;
 import com.orientechnologies.orient.server.distributed.impl.ODistributedOutput;
-import com.orientechnologies.orient.server.distributed.impl.ODistributedStorage;
 import com.orientechnologies.orient.server.distributed.impl.task.OAbstractSyncDatabaseTask;
 import com.orientechnologies.orient.server.distributed.impl.task.ODropDatabaseTask;
 import com.orientechnologies.orient.server.distributed.impl.task.OUpdateDatabaseConfigurationTask;
@@ -1152,11 +1151,6 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
 
       } else if (key.startsWith(CONFIG_DATABASE_PREFIX)) {
         final String dbName = key.substring(CONFIG_DATABASE_PREFIX.length());
-        final ODistributedStorage stg = storages.remove(dbName);
-        if (stg != null) {
-          stg.close(true, false);
-        }
-
         updateLastClusterChange();
 
       } else if (key.startsWith(CONFIG_DBSTATUS_PREFIX)) {
@@ -1385,9 +1379,6 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
       //            "Cannot create the new database '" + dbName + "' because it is already present
       // in distributed configuration");
       //      }
-
-      // INIT THE STORAGE
-      getStorage(dbName);
 
       final ODistributedConfiguration cfg = getDatabaseConfiguration(dbName);
 

@@ -37,6 +37,7 @@ import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
+import com.orientechnologies.orient.core.db.OrientDBDistributed;
 import com.orientechnologies.orient.core.exception.OSecurityAccessException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
@@ -710,7 +711,11 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
   @Override
   public void setOnline() {
     OAbstractPaginatedStorage storage =
-        ((OAbstractPaginatedStorage) manager.getStorage(databaseName).getUnderlying());
+        (OAbstractPaginatedStorage)
+            ((OrientDBDistributed) manager.getServerInstance().getDatabases())
+                .getStorage(databaseName)
+                .getUnderlying();
+
     if (storage != null) {
       sequenceManager.fill(storage.getLastMetadata());
     }

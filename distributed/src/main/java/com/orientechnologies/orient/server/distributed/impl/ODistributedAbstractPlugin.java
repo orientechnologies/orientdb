@@ -143,8 +143,6 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
   protected String nodeName = null;
   protected int nodeId = -1;
   protected File defaultDatabaseConfigFile;
-  protected final ConcurrentMap<String, ODistributedStorage> storages =
-      new ConcurrentHashMap<String, ODistributedStorage>();
   protected volatile NODE_STATUS status = NODE_STATUS.OFFLINE;
   protected long lastClusterChangeOn;
   protected List<ODistributedLifecycleListener> listeners =
@@ -312,14 +310,6 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
     setNodeStatus(NODE_STATUS.OFFLINE);
 
     Orient.instance().removeDbLifecycleListener(this);
-
-    // CLOSE AND FREE ALL THE STORAGES
-    for (ODistributedStorage s : storages.values())
-      try {
-        s.close();
-      } catch (Exception e) {
-      }
-    storages.clear();
   }
 
   /** Auto register myself as hook. */
@@ -370,16 +360,6 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
     final ODistributedMessageService msgService = getMessageService();
     if (msgService != null) {
       msgService.unregisterDatabase(iDatabase.getName());
-    }
-    removeStorage(iDatabase.getName());
-  }
-
-  public void removeStorage(final String name) {
-    synchronized (storages) {
-      final ODistributedStorage storage = storages.remove(name);
-      if (storage != null) {
-        storage.closeOnDrop();
-      }
     }
   }
 
@@ -667,12 +647,6 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
       final ODistributedRequestId reqId,
       final ORemoteTask task,
       final ODatabaseDocumentInternal database) {
-    if (database != null && !(database.getStorage() instanceof ODistributedStorage))
-      throw new ODistributedException(
-          "Distributed storage was not installed for database '"
-              + database.getName()
-              + "'. Implementation found: "
-              + database.getStorage().getClass().getName());
 
     final ODistributedAbstractPlugin manager = this;
 
@@ -1441,8 +1415,6 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
             return false;
           }
 
-          OStorage storage = storages.get(databaseName);
-          replaceStorageInSessions(storage);
           distrDatabase.resume();
 
           return true;
@@ -2081,8 +2053,6 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
                             databaseName,
                             receiver.getInputStream(),
                             OrientDBConfig.defaultConfig());
-                ODistributedStorage distributedStorage = getStorage(databaseName);
-                distributedStorage.replaceIfNeeded((OAbstractPaginatedStorage) storage);
                 ODistributedDatabaseImpl distrDatabase = messageService.getDatabase(databaseName);
                 distrDatabase.saveDatabaseConfiguration();
                 if (uniqueClustersBackupDirectory != null
@@ -2285,38 +2255,6 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
           getLockManagerServer(),
           ODistributedOutput.formatServerStatus(this, cfg));
     }
-  }
-
-  public ODistributedStorage getStorageIfExists(final String dbName) {
-    return storages.get(dbName);
-  }
-
-  public ODistributedStorage getStorage(final String dbName) {
-    ODistributedStorage storage = storages.get(dbName);
-    if (storage == null) {
-      storage = new ODistributedStorage(serverInstance, dbName);
-
-      final ODistributedStorage oldStorage = storages.putIfAbsent(dbName, storage);
-      if (oldStorage != null) storage = oldStorage;
-    }
-    return storage;
-  }
-
-  public ODistributedStorage getStorage(final String dbName, OAbstractPaginatedStorage wrapped) {
-    ODistributedStorage storage = storages.get(dbName);
-    if (storage == null) {
-      storage = new ODistributedStorage(serverInstance, dbName);
-
-      final ODistributedStorage oldStorage = storages.putIfAbsent(dbName, storage);
-      if (oldStorage != null) storage = oldStorage;
-    }
-    if (storage.getUnderlying() == null) {
-      storage.wrap(wrapped);
-    }
-    if (storage.getUnderlying() != wrapped) {
-      storage.replaceIfNeeded(wrapped);
-    }
-    return storage;
   }
 
   @Override

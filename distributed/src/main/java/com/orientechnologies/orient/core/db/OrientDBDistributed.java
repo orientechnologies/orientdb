@@ -66,7 +66,7 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
       return new ODatabaseDocumentEmbedded(storage);
     }
     plugin.registerNewDatabaseIfNeeded(storage.getName());
-    return new ODatabaseDocumentDistributed(plugin.getStorage(storage.getName(), storage), plugin);
+    return new ODatabaseDocumentDistributed(storage, plugin);
   }
 
   protected ODatabaseDocumentEmbedded newPooledSessionInstance(
@@ -77,8 +77,7 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
       return new ODatabaseDocumentEmbeddedPooled(pool, storage);
     }
     plugin.registerNewDatabaseIfNeeded(storage.getName());
-    return new ODatabaseDocumentDistributedPooled(
-        pool, plugin.getStorage(storage.getName(), storage), plugin);
+    return new ODatabaseDocumentDistributedPooled(pool, storage, plugin);
   }
 
   public void setPlugin(OHazelcastPlugin plugin) {

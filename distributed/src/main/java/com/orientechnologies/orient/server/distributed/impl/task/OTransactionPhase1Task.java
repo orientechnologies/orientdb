@@ -172,8 +172,7 @@ public class OTransactionPhase1Task extends OAbstractReplicatedTask implements O
           OGlobalConfiguration.DISTRIBUTED_CONCURRENT_TX_AUTORETRY_DELAY.getValueAsInteger();
       retryCount++;
       ((ODatabaseDocumentDistributed) database)
-          .getStorageDistributed()
-          .getLocalDistributedDatabase()
+          .getDistributedShared()
           .reEnqueue(
               requestId.getNodeId(),
               requestId.getMessageId(),
@@ -208,8 +207,7 @@ public class OTransactionPhase1Task extends OAbstractReplicatedTask implements O
     OTransactionResultPayload payload;
     try {
       if (!local) {
-        ODistributedDatabase localDistributedDatabase =
-            database.getStorageDistributed().getLocalDistributedDatabase();
+        ODistributedDatabase localDistributedDatabase = database.getDistributedShared();
         ValidationResult result = localDistributedDatabase.validate(id);
         if (result == ValidationResult.ALREADY_PROMISED
             || result == ValidationResult.MISSING_PREVIOUS) {

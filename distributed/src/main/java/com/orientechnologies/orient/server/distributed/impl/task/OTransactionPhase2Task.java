@@ -114,8 +114,7 @@ public class OTransactionPhase2Task extends OAbstractReplicatedTask implements O
                   OTransactionPhase2Task.this,
                   "Received second phase but not yet first phase, re-enqueue second phase");
           ((ODatabaseDocumentDistributed) database)
-              .getStorageDistributed()
-              .getLocalDistributedDatabase()
+              .getDistributedShared()
               .reEnqueue(
                   requestId.getNodeId(),
                   requestId.getMessageId(),
@@ -155,8 +154,7 @@ public class OTransactionPhase2Task extends OAbstractReplicatedTask implements O
                   OTransactionPhase2Task.this,
                   "Received second phase but not yet first phase, re-enqueue second phase");
           ((ODatabaseDocumentDistributed) database)
-              .getStorageDistributed()
-              .getLocalDistributedDatabase()
+              .getDistributedShared()
               .reEnqueue(
                   requestId.getNodeId(),
                   requestId.getMessageId(),

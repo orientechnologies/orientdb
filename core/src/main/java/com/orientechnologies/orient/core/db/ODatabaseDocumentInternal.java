@@ -273,5 +273,9 @@ public interface ODatabaseDocumentInternal extends ODatabaseSession, ODatabaseIn
     return true;
   }
 
-  public boolean dropClusterInternal(int clusterId);
+  boolean dropClusterInternal(int clusterId);
+
+  default String getStorageId() {
+    return getName();
+  }
 }
