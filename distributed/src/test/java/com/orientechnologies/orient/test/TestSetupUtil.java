@@ -1,7 +1,6 @@
 package com.orientechnologies.orient.test;
 
 import io.kubernetes.client.openapi.StringUtil;
-
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.nio.file.Files;
