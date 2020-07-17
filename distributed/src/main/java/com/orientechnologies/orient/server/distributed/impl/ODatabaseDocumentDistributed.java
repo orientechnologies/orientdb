@@ -32,6 +32,7 @@ import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.exception.OLowDiskSpaceException;
 import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
 import com.orientechnologies.orient.core.exception.OSchemaException;
+import com.orientechnologies.orient.core.exception.OStorageException;
 import com.orientechnologies.orient.core.exception.OValidationException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
@@ -71,6 +72,7 @@ import com.orientechnologies.orient.server.distributed.ODistributedServerLog;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager.DB_STATUS;
 import com.orientechnologies.orient.server.distributed.ODistributedTxContext;
+import com.orientechnologies.orient.server.distributed.OWriteOperationNotPermittedException;
 import com.orientechnologies.orient.server.distributed.exception.OTransactionAlreadyPresentException;
 import com.orientechnologies.orient.server.distributed.impl.metadata.OClassDistributed;
 import com.orientechnologies.orient.server.distributed.impl.metadata.OSharedContextDistributed;
@@ -436,7 +438,7 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
           localDistributedDatabase.getDistributedConfiguration();
       ODistributedServerManager dManager = getStorageDistributed().getDistributedManager();
       final String localNodeName = dManager.getLocalNodeName();
-      getStorageDistributed().checkNodeIsMaster(localNodeName, dbCfg, "Transaction Commit");
+      checkNodeIsMaster(localNodeName, dbCfg, "Transaction Commit");
       ONewDistributedTransactionManager txManager =
           new ONewDistributedTransactionManager(
               getStorageDistributed(), dManager, localDistributedDatabase);
@@ -465,8 +467,8 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
     } catch (HazelcastException e) {
       throw new OOfflineNodeException("Hazelcast instance is not available");
     } catch (Exception e) {
-      getStorageDistributed()
-          .handleDistributedException("Cannot route TX operation against distributed node", e);
+
+      handleDistributedException("Cannot route TX operation against distributed node", e);
     }
   }
 
@@ -956,9 +958,8 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
         (ODistributedDatabaseImpl) getStorageDistributed().getLocalDistributedDatabase();
     localDb.resetLastValidBackup();
 
-    getStorageDistributed()
-        .checkNodeIsMaster(
-            getLocalNodeName(), getDistributedConfiguration(), "Command '" + command + "'");
+    checkNodeIsMaster(
+        getLocalNodeName(), getDistributedConfiguration(), "Command '" + command + "'");
 
     ONewSQLCommandTask task = new ONewSQLCommandTask(command);
     ODistributedServerManager dManager = getDistributedManager();
@@ -1110,5 +1111,30 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
     } finally {
       distributedManager.setDatabaseStatus(localNode, getName(), prevStatus);
     }
+  }
+
+  protected void checkNodeIsMaster(
+      final String localNodeName, final ODistributedConfiguration dbCfg, final String operation) {
+    final ODistributedConfiguration.ROLES nodeRole = dbCfg.getServerRole(localNodeName);
+    if (nodeRole != ODistributedConfiguration.ROLES.MASTER)
+      throw new OWriteOperationNotPermittedException(
+          "Cannot execute write operation ("
+              + operation
+              + ") on node '"
+              + localNodeName
+              + "' because is non a master");
+  }
+
+  protected void handleDistributedException(
+      final String iMessage, final Exception e, final Object... iParams) {
+    if (e != null) {
+      if (e instanceof OException) throw (OException) e;
+      else if (e.getCause() instanceof OException) throw (OException) e.getCause();
+      else if (e.getCause() != null && e.getCause().getCause() instanceof OException)
+        throw (OException) e.getCause().getCause();
+    }
+
+    OLogManager.instance().error(this, iMessage, e, iParams);
+    throw OException.wrapException(new OStorageException(String.format(iMessage, iParams)), e);
   }
 }

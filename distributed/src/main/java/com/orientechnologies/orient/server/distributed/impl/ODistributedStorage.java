@@ -19,8 +19,6 @@
  */
 package com.orientechnologies.orient.server.distributed.impl;
 
-import com.orientechnologies.common.exception.OException;
-import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.util.OCallable;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
@@ -29,13 +27,12 @@ import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.config.OStorageConfiguration;
 import com.orientechnologies.orient.core.conflict.ORecordConflictStrategy;
 import com.orientechnologies.orient.core.db.OScenarioThreadLocal;
+import com.orientechnologies.orient.core.db.OrientDBDistributed;
 import com.orientechnologies.orient.core.db.record.OCurrentStorageComponentsFactory;
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
 import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
-import com.orientechnologies.orient.core.exception.OStorageException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
-import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.OAutoshardedStorage;
 import com.orientechnologies.orient.core.storage.OCluster;
 import com.orientechnologies.orient.core.storage.OPhysicalPosition;
@@ -51,14 +48,9 @@ import com.orientechnologies.orient.core.storage.impl.local.OFreezableStorageCom
 import com.orientechnologies.orient.core.storage.ridbag.sbtree.OSBTreeCollectionManager;
 import com.orientechnologies.orient.core.tx.OTransactionInternal;
 import com.orientechnologies.orient.server.OServer;
-import com.orientechnologies.orient.server.distributed.ODistributedConfiguration;
-import com.orientechnologies.orient.server.distributed.ODistributedConfigurationManager;
 import com.orientechnologies.orient.server.distributed.ODistributedDatabase;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
-import com.orientechnologies.orient.server.distributed.OModifiableDistributedConfiguration;
-import com.orientechnologies.orient.server.distributed.OWriteOperationNotPermittedException;
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -84,13 +76,10 @@ public class ODistributedStorage
   private ODistributedDatabase localDistributedDatabase;
   private ODistributedStorageEventListener eventListener;
 
-  private final ODistributedConfigurationManager configurationManager;
-
   public ODistributedStorage(final OServer iServer, final String dbName) {
     this.serverInstance = iServer;
     this.dManager = iServer.getDistributedManager();
     this.name = dbName;
-    this.configurationManager = new ODistributedConfigurationManager(dManager, name);
   }
 
   public synchronized void replaceIfNeeded(final OAbstractPaginatedStorage wrapped) {
@@ -534,15 +523,6 @@ public class ODistributedStorage
     return dManager;
   }
 
-  public ODistributedConfiguration getDistributedConfiguration() {
-    return configurationManager.getDistributedConfiguration();
-  }
-
-  public void setDistributedConfiguration(
-      final OModifiableDistributedConfiguration distributedConfiguration) {
-    configurationManager.setDistributedConfiguration(distributedConfiguration);
-  }
-
   @Override
   public OPhysicalPosition[] ceilingPhysicalPositions(
       int clusterId, OPhysicalPosition physicalPosition) {
@@ -630,31 +610,6 @@ public class ODistributedStorage
     close(true, false);
   }
 
-  protected void checkNodeIsMaster(
-      final String localNodeName, final ODistributedConfiguration dbCfg, final String operation) {
-    final ODistributedConfiguration.ROLES nodeRole = dbCfg.getServerRole(localNodeName);
-    if (nodeRole != ODistributedConfiguration.ROLES.MASTER)
-      throw new OWriteOperationNotPermittedException(
-          "Cannot execute write operation ("
-              + operation
-              + ") on node '"
-              + localNodeName
-              + "' because is non a master");
-  }
-
-  protected void handleDistributedException(
-      final String iMessage, final Exception e, final Object... iParams) {
-    if (e != null) {
-      if (e instanceof OException) throw (OException) e;
-      else if (e.getCause() instanceof OException) throw (OException) e.getCause();
-      else if (e.getCause() != null && e.getCause().getCause() instanceof OException)
-        throw (OException) e.getCause().getCause();
-    }
-
-    OLogManager.instance().error(this, iMessage, e, iParams);
-    throw OException.wrapException(new OStorageException(String.format(iMessage, iParams)), e);
-  }
-
   private OFreezableStorageComponent getFreezableStorage() {
     if (wrapped instanceof OFreezableStorageComponent) return wrapped;
     else
@@ -663,45 +618,7 @@ public class ODistributedStorage
   }
 
   protected void dropStorageFiles() {
-    dropStorageFiles((OLocalPaginatedStorage) wrapped);
-  }
-
-  public static void dropStorageFiles(OLocalPaginatedStorage storage) {
-    // REMOVE distributed-config.json and distributed-sync.json files to allow removal of directory
-    final File dCfg =
-        new File(
-            storage.getStoragePath() + "/" + ODistributedServerManager.FILE_DISTRIBUTED_DB_CONFIG);
-
-    try {
-      if (dCfg.exists()) {
-        for (int i = 0; i < 10; ++i) {
-          if (dCfg.delete()) break;
-          Thread.sleep(100);
-        }
-      }
-
-      final File dCfg2 =
-          new File(
-              storage.getStoragePath()
-                  + "/"
-                  + ODistributedDatabaseImpl.DISTRIBUTED_SYNC_JSON_FILENAME);
-      if (dCfg2.exists()) {
-        for (int i = 0; i < 10; ++i) {
-          if (dCfg2.delete()) break;
-          Thread.sleep(100);
-        }
-      }
-    } catch (InterruptedException e) {
-      // IGNORE IT
-    }
-  }
-
-  public ODocument loadDatabaseConfiguration(final File file) {
-    return configurationManager.loadDatabaseConfiguration(file);
-  }
-
-  protected void saveDatabaseConfiguration() {
-    configurationManager.saveDatabaseConfiguration();
+    OrientDBDistributed.dropStorageFiles((OLocalPaginatedStorage) wrapped);
   }
 
   public ODistributedDatabase getLocalDistributedDatabase() {

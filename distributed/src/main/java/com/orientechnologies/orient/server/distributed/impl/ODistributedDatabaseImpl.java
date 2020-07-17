@@ -48,6 +48,7 @@ import com.orientechnologies.orient.core.tx.ValidationResult;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.OSystemDatabase;
 import com.orientechnologies.orient.server.distributed.ODistributedConfiguration;
+import com.orientechnologies.orient.server.distributed.ODistributedConfigurationManager;
 import com.orientechnologies.orient.server.distributed.ODistributedDatabase;
 import com.orientechnologies.orient.server.distributed.ODistributedException;
 import com.orientechnologies.orient.server.distributed.ODistributedRequest;
@@ -124,6 +125,7 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
   private OLockManager lockManager = new OLockManagerImpl();
   private Set<OTransactionId> inQueue = Collections.newSetFromMap(new ConcurrentHashMap<>());
   private OSyncSource lastValidBackup;
+  private final ODistributedConfigurationManager configurationManager;
 
   public static boolean sendResponseBack(
       final Object current,
@@ -195,6 +197,7 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
     this.msgService = msgService;
     this.databaseName = iDatabaseName;
     this.localNodeName = manager.getLocalNodeName();
+    this.configurationManager = new ODistributedConfigurationManager(manager, iDatabaseName);
 
     // SELF REGISTERING ITSELF HERE BECAUSE IT'S NEEDED FURTHER IN THE CALL CHAIN
     final ODistributedDatabaseImpl prev = msgService.databases.put(iDatabaseName, this);
@@ -1343,14 +1346,12 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
   }
 
   public ODistributedConfiguration getDistributedConfiguration() {
-    ODistributedStorage storage = manager.getStorage(databaseName);
-    return storage.getDistributedConfiguration();
+    return configurationManager.getDistributedConfiguration();
   }
 
   public void setDistributedConfiguration(
       final OModifiableDistributedConfiguration distributedConfiguration) {
-    ODistributedStorage storage = manager.getStorage(databaseName);
-    storage.setDistributedConfiguration(distributedConfiguration);
+    configurationManager.setDistributedConfiguration(distributedConfiguration);
   }
 
   public OSyncSource getLastValidBackup() {
@@ -1371,5 +1372,9 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
     if (lastValidBackup != null) {
       lastValidBackup = null;
     }
+  }
+
+  public void saveDatabaseConfiguration() {
+    configurationManager.saveDatabaseConfiguration();
   }
 }

@@ -14,12 +14,12 @@ public class ODistributedConfigurationManager {
 
   private final ODistributedServerManager distributedManager;
   private volatile ODistributedConfiguration distributedConfiguration;
-  private String name;
+  private String databaseName;
 
   public ODistributedConfigurationManager(
       ODistributedServerManager distributedManager, String name) {
     this.distributedManager = distributedManager;
-    this.name = name;
+    this.databaseName = name;
   }
 
   public ODistributedConfiguration getDistributedConfiguration() {
@@ -27,7 +27,7 @@ public class ODistributedConfigurationManager {
       final Map<String, Object> map = distributedManager.getConfigurationMap();
       if (map == null) return null;
 
-      ODocument doc = (ODocument) map.get(OHazelcastPlugin.CONFIG_DATABASE_PREFIX + name);
+      ODocument doc = (ODocument) map.get(OHazelcastPlugin.CONFIG_DATABASE_PREFIX + databaseName);
       if (doc != null) {
         // DISTRIBUTED CFG AVAILABLE: COPY IT TO THE LOCAL DIRECTORY
         ODistributedServerLog.info(
@@ -36,7 +36,7 @@ public class ODistributedConfigurationManager {
             null,
             ODistributedServerLog.DIRECTION.NONE,
             "Downloaded configuration for database '%s' from the cluster",
-            name);
+            databaseName);
         setDistributedConfiguration(new OModifiableDistributedConfiguration(doc));
       } else {
         doc = loadDatabaseConfiguration(getDistributedConfigFile());
@@ -46,7 +46,7 @@ public class ODistributedConfigurationManager {
           if (doc == null)
             throw new OConfigurationException(
                 "Cannot load default distributed for database '"
-                    + name
+                    + databaseName
                     + "' config file: "
                     + distributedManager.getDefaultDatabaseConfigFile());
 
@@ -58,7 +58,7 @@ public class ODistributedConfigurationManager {
 
         // LOADED FILE, PUBLISH IT IN THE CLUSTER
         distributedManager.updateCachedDatabaseConfiguration(
-            name, new OModifiableDistributedConfiguration(doc), true);
+            databaseName, new OModifiableDistributedConfiguration(doc), true);
       }
     }
     return distributedConfiguration;
@@ -75,9 +75,9 @@ public class ODistributedConfigurationManager {
       final String cfgOutput =
           ODistributedOutput.formatClusterTable(
               distributedManager,
-              name,
+              databaseName,
               distributedConfiguration,
-              distributedManager.getTotalNodes(name));
+              distributedManager.getTotalNodes(databaseName));
 
       ODistributedServerLog.info(
           this,
@@ -85,7 +85,7 @@ public class ODistributedConfigurationManager {
           null,
           ODistributedServerLog.DIRECTION.NONE,
           "Setting new distributed configuration for database: %s (version=%d)%s\n",
-          name,
+          databaseName,
           distributedConfiguration.getVersion(),
           cfgOutput);
 
@@ -102,7 +102,7 @@ public class ODistributedConfigurationManager {
         null,
         ODistributedServerLog.DIRECTION.NONE,
         "Loaded configuration for database '%s' from disk: %s",
-        name,
+        databaseName,
         file);
 
     FileInputStream f = null;
@@ -146,7 +146,7 @@ public class ODistributedConfigurationManager {
           null,
           ODistributedServerLog.DIRECTION.NONE,
           "Saving distributed configuration file for database '%s' to: %s",
-          name,
+          databaseName,
           file);
 
       if (!file.exists()) {
@@ -178,7 +178,7 @@ public class ODistributedConfigurationManager {
   protected File getDistributedConfigFile() {
     return new File(
         distributedManager.getServerInstance().getDatabaseDirectory()
-            + name
+            + databaseName
             + "/"
             + ODistributedServerManager.FILE_DISTRIBUTED_DB_CONFIG);
   }

@@ -2083,7 +2083,8 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
                             OrientDBConfig.defaultConfig());
                 ODistributedStorage distributedStorage = getStorage(databaseName);
                 distributedStorage.replaceIfNeeded((OAbstractPaginatedStorage) storage);
-                distributedStorage.saveDatabaseConfiguration();
+                ODistributedDatabaseImpl distrDatabase = messageService.getDatabase(databaseName);
+                distrDatabase.saveDatabaseConfiguration();
                 if (uniqueClustersBackupDirectory != null
                     && uniqueClustersBackupDirectory.exists()) {
                   // RESTORE UNIQUE FILES FROM THE BACKUP FOLDERS. THOSE FILES ARE THE CLUSTERS
@@ -2104,7 +2105,6 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
 
                   uniqueClustersBackupDirectory.delete();
                 }
-                ODistributedDatabaseImpl distrDatabase = messageService.getDatabase(databaseName);
 
                 try (ODatabaseDocumentInternal inst = distrDatabase.getDatabaseInstance()) {
                   Optional<byte[]> read =
