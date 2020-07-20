@@ -60,6 +60,7 @@ import com.orientechnologies.orient.server.distributed.ODistributedResponseManag
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIRECTION;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
+import com.orientechnologies.orient.server.distributed.ODistributedServerManager.DB_STATUS;
 import com.orientechnologies.orient.server.distributed.ODistributedTxContext;
 import com.orientechnologies.orient.server.distributed.OModifiableDistributedConfiguration;
 import com.orientechnologies.orient.server.distributed.ORemoteServerController;
@@ -127,6 +128,7 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
   private Set<OTransactionId> inQueue = Collections.newSetFromMap(new ConcurrentHashMap<>());
   private OSyncSource lastValidBackup;
   private final ODistributedConfigurationManager configurationManager;
+  private volatile DB_STATUS freezePrevStatus;
 
   public static boolean sendResponseBack(
       final Object current,
@@ -1381,5 +1383,21 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
 
   public void saveDatabaseConfiguration() {
     configurationManager.saveDatabaseConfiguration();
+  }
+
+  public synchronized void freezeStatus() {
+    final String localNode = manager.getLocalNodeName();
+    freezePrevStatus = manager.getDatabaseStatus(localNode, databaseName);
+    if (freezePrevStatus == ODistributedServerManager.DB_STATUS.ONLINE)
+      // SET STATUS = BACKUP
+      manager.setDatabaseStatus(
+          localNode, databaseName, ODistributedServerManager.DB_STATUS.BACKUP);
+  }
+
+  public synchronized void releaseStatus() {
+    if (freezePrevStatus != null) {
+      final String localNode = manager.getLocalNodeName();
+      manager.setDatabaseStatus(localNode, databaseName, freezePrevStatus);
+    }
   }
 }

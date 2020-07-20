@@ -69,7 +69,6 @@ import com.orientechnologies.orient.server.distributed.ODistributedRequestId;
 import com.orientechnologies.orient.server.distributed.ODistributedResponse;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
-import com.orientechnologies.orient.server.distributed.ODistributedServerManager.DB_STATUS;
 import com.orientechnologies.orient.server.distributed.ODistributedTxContext;
 import com.orientechnologies.orient.server.distributed.OWriteOperationNotPermittedException;
 import com.orientechnologies.orient.server.distributed.exception.OTransactionAlreadyPresentException;
@@ -103,7 +102,6 @@ import java.util.stream.Stream;
 public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
 
   private final OHazelcastPlugin distributedManager;
-  private DB_STATUS freezePrevStatus;
 
   public ODatabaseDocumentDistributed(OStorage storage, OHazelcastPlugin hazelcastPlugin) {
     super(storage);
@@ -1025,21 +1023,13 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
   /** {@inheritDoc} */
   @Override
   public void freeze(final boolean throwException) {
-    final String localNode = distributedManager.getLocalNodeName();
-
-    freezePrevStatus = distributedManager.getDatabaseStatus(localNode, getName());
-    if (freezePrevStatus == ODistributedServerManager.DB_STATUS.ONLINE)
-      // SET STATUS = BACKUP
-      distributedManager.setDatabaseStatus(
-          localNode, getName(), ODistributedServerManager.DB_STATUS.BACKUP);
-
+    ((ODistributedDatabaseImpl) getDistributedShared()).freezeStatus();
     super.freeze(throwException);
   }
 
   @Override
   public void release() {
-    final String localNode = distributedManager.getLocalNodeName();
-    distributedManager.setDatabaseStatus(localNode, getName(), freezePrevStatus);
+    ((ODistributedDatabaseImpl) getDistributedShared()).releaseStatus();
     super.release();
   }
 

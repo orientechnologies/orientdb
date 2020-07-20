@@ -169,8 +169,12 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
       if (exists(name, user, password)) {
         OAbstractPaginatedStorage storage = getOrInitStorage(name);
         OSharedContext sharedContext = sharedContexts.get(name);
-        if (sharedContext != null) sharedContext.close();
-        dropStorageFiles((OLocalPaginatedStorage) storage);
+        if (sharedContext != null) {
+          sharedContext.close();
+        }
+        if (storage instanceof OLocalPaginatedStorage) {
+          dropStorageFiles((OLocalPaginatedStorage) storage);
+        }
         storage.delete();
         storages.remove(name);
         sharedContexts.remove(name);

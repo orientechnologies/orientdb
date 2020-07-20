@@ -1,0 +1,347 @@
+2020-07-18 13:40:01
+Full thread dump OpenJDK 64-Bit Server VM (25.252-b09 mixed mode):
+
+"Attach Listener" #304 daemon prio=9 os_prio=0 tid=0x00007fb26c003800 nid=0x2c55a2 waiting on condition [0x0000000000000000]
+   java.lang.Thread.State: RUNNABLE
+
+"pool-1-thread-8" #233 prio=5 os_prio=0 tid=0x00007fb244022000 nid=0x1904b2 waiting on condition [0x00007fb0eb5f3000]
+   java.lang.Thread.State: WAITING (parking)
+	at sun.misc.Unsafe.park(Native Method)
+	- parking to wait for  <0x0000000083e038e8> (a java.util.concurrent.locks.AbstractQueuedSynchronizer$ConditionObject)
+	at java.util.concurrent.locks.LockSupport.park(LockSupport.java:175)
+	at java.util.concurrent.locks.AbstractQueuedSynchronizer$ConditionObject.await(AbstractQueuedSynchronizer.java:2039)
+	at java.util.concurrent.LinkedBlockingQueue.take(LinkedBlockingQueue.java:442)
+	at java.util.concurrent.ThreadPoolExecutor.getTask(ThreadPoolExecutor.java:1074)
+	at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1134)
+	at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:624)
+	at java.lang.Thread.run(Thread.java:748)
+
+"pool-1-thread-7" #232 prio=5 os_prio=0 tid=0x00007fb244020800 nid=0x1904b1 waiting on condition [0x00007fb0eb6f4000]
+   java.lang.Thread.State: WAITING (parking)
+	at sun.misc.Unsafe.park(Native Method)
+	- parking to wait for  <0x0000000083e038e8> (a java.util.concurrent.locks.AbstractQueuedSynchronizer$ConditionObject)
+	at java.util.concurrent.locks.LockSupport.park(LockSupport.java:175)
+	at java.util.concurrent.locks.AbstractQueuedSynchronizer$ConditionObject.await(AbstractQueuedSynchronizer.java:2039)
+	at java.util.concurrent.LinkedBlockingQueue.take(LinkedBlockingQueue.java:442)
+	at java.util.concurrent.ThreadPoolExecutor.getTask(ThreadPoolExecutor.java:1074)
+	at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1134)
+	at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:624)
+	at java.lang.Thread.run(Thread.java:748)
+
+"pool-1-thread-6" #231 prio=5 os_prio=0 tid=0x00007fb24401e800 nid=0x1904b0 waiting on condition [0x00007fb0eb7f5000]
+   java.lang.Thread.State: WAITING (parking)
+	at sun.misc.Unsafe.park(Native Method)
+	- parking to wait for  <0x0000000083e038e8> (a java.util.concurrent.locks.AbstractQueuedSynchronizer$ConditionObject)
+	at java.util.concurrent.locks.LockSupport.park(LockSupport.java:175)
+	at java.util.concurrent.locks.AbstractQueuedSynchronizer$ConditionObject.await(AbstractQueuedSynchronizer.java:2039)
+	at java.util.concurrent.LinkedBlockingQueue.take(LinkedBlockingQueue.java:442)
+	at java.util.concurrent.ThreadPoolExecutor.getTask(ThreadPoolExecutor.java:1074)
+	at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1134)
+	at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:624)
+	at java.lang.Thread.run(Thread.java:748)
+
+"pool-1-thread-5" #230 prio=5 os_prio=0 tid=0x00007fb24401c800 nid=0x1904af waiting on condition [0x00007fb0eb8f6000]
+   java.lang.Thread.State: WAITING (parking)
+	at sun.misc.Unsafe.park(Native Method)
+	- parking to wait for  <0x0000000083e038e8> (a java.util.concurrent.locks.AbstractQueuedSynchronizer$ConditionObject)
+	at java.util.concurrent.locks.LockSupport.park(LockSupport.java:175)
+	at java.util.concurrent.locks.AbstractQueuedSynchronizer$ConditionObject.await(AbstractQueuedSynchronizer.java:2039)
+	at java.util.concurrent.LinkedBlockingQueue.take(LinkedBlockingQueue.java:442)
+	at java.util.concurrent.ThreadPoolExecutor.getTask(ThreadPoolExecutor.java:1074)
+	at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1134)
+	at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:624)
+	at java.lang.Thread.run(Thread.java:748)
+
+"pool-1-thread-4" #229 prio=5 os_prio=0 tid=0x00007fb24401a800 nid=0x1904ae waiting on condition [0x00007fb0eb9f7000]
+   java.lang.Thread.State: WAITING (parking)
+	at sun.misc.Unsafe.park(Native Method)
+	- parking to wait for  <0x0000000083e038e8> (a java.util.concurrent.locks.AbstractQueuedSynchronizer$ConditionObject)
+	at java.util.concurrent.locks.LockSupport.park(LockSupport.java:175)
+	at java.util.concurrent.locks.AbstractQueuedSynchronizer$ConditionObject.await(AbstractQueuedSynchronizer.java:2039)
+	at java.util.concurrent.LinkedBlockingQueue.take(LinkedBlockingQueue.java:442)
+	at java.util.concurrent.ThreadPoolExecutor.getTask(ThreadPoolExecutor.java:1074)
+	at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1134)
+	at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:624)
+	at java.lang.Thread.run(Thread.java:748)
+
+"pool-1-thread-3" #228 prio=5 os_prio=0 tid=0x00007fb244018800 nid=0x1904ad waiting on condition [0x00007fb0ebaf8000]
+   java.lang.Thread.State: WAITING (parking)
+	at sun.misc.Unsafe.park(Native Method)
+	- parking to wait for  <0x0000000083e038e8> (a java.util.concurrent.locks.AbstractQueuedSynchronizer$ConditionObject)
+	at java.util.concurrent.locks.LockSupport.park(LockSupport.java:175)
+	at java.util.concurrent.locks.AbstractQueuedSynchronizer$ConditionObject.await(AbstractQueuedSynchronizer.java:2039)
+	at java.util.concurrent.LinkedBlockingQueue.take(LinkedBlockingQueue.java:442)
+	at java.util.concurrent.ThreadPoolExecutor.getTask(ThreadPoolExecutor.java:1074)
+	at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1134)
+	at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:624)
+	at java.lang.Thread.run(Thread.java:748)
+
+"pool-1-thread-2" #227 prio=5 os_prio=0 tid=0x00007fb244017000 nid=0x1904ac waiting on condition [0x00007fb0ebbf9000]
+   java.lang.Thread.State: WAITING (parking)
+	at sun.misc.Unsafe.park(Native Method)
+	- parking to wait for  <0x0000000083e038e8> (a java.util.concurrent.locks.AbstractQueuedSynchronizer$ConditionObject)
+	at java.util.concurrent.locks.LockSupport.park(LockSupport.java:175)
+	at java.util.concurrent.locks.AbstractQueuedSynchronizer$ConditionObject.await(AbstractQueuedSynchronizer.java:2039)
+	at java.util.concurrent.LinkedBlockingQueue.take(LinkedBlockingQueue.java:442)
+	at java.util.concurrent.ThreadPoolExecutor.getTask(ThreadPoolExecutor.java:1074)
+	at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1134)
+	at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:624)
+	at java.lang.Thread.run(Thread.java:748)
+
+"pool-1-thread-1" #226 prio=5 os_prio=0 tid=0x00007fb244015800 nid=0x1904ab waiting on condition [0x00007fb0ebcfa000]
+   java.lang.Thread.State: WAITING (parking)
+	at sun.misc.Unsafe.park(Native Method)
+	- parking to wait for  <0x0000000083e038e8> (a java.util.concurrent.locks.AbstractQueuedSynchronizer$ConditionObject)
+	at java.util.concurrent.locks.LockSupport.park(LockSupport.java:175)
+	at java.util.concurrent.locks.AbstractQueuedSynchronizer$ConditionObject.await(AbstractQueuedSynchronizer.java:2039)
+	at java.util.concurrent.LinkedBlockingQueue.take(LinkedBlockingQueue.java:442)
+	at java.util.concurrent.ThreadPoolExecutor.getTask(ThreadPoolExecutor.java:1074)
+	at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1134)
+	at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:624)
+	at java.lang.Thread.run(Thread.java:748)
+
+"OrientDB (/192.168.0.14:2426) <- BinaryClient (/192.168.0.14:57916)" #218 daemon prio=5 os_prio=0 tid=0x00007fb2707c0800 nid=0x190469 runnable [0x00007fb1044c5000]
+   java.lang.Thread.State: RUNNABLE
+	at java.net.SocketInputStream.socketRead0(Native Method)
+	at java.net.SocketInputStream.socketRead(SocketInputStream.java:116)
+	at java.net.SocketInputStream.read(SocketInputStream.java:171)
+	at java.net.SocketInputStream.read(SocketInputStream.java:141)
+	at java.io.BufferedInputStream.fill(BufferedInputStream.java:246)
+	at java.io.BufferedInputStream.read(BufferedInputStream.java:265)
+	- locked <0x0000000086e2e8a0> (a java.io.BufferedInputStream)
+	at java.io.DataInputStream.readByte(DataInputStream.java:265)
+	at com.orientechnologies.orient.enterprise.channel.binary.OChannelBinary.readByte(OChannelBinary.java:77)
+	at com.orientechnologies.orient.server.network.protocol.binary.ONetworkProtocolBinary.execute(ONetworkProtocolBinary.java:204)
+	at com.orientechnologies.common.thread.OSoftThread.run(OSoftThread.java:67)
+
+"Timer-5" #217 prio=5 os_prio=0 tid=0x00007fb13c03b800 nid=0x190468 in Object.wait() [0x00007fb105ad9000]
+   java.lang.Thread.State: TIMED_WAITING (on object monitor)
+	at java.lang.Object.wait(Native Method)
+	at java.util.TimerThread.mainLoop(Timer.java:552)
+	- locked <0x0000000086e254d8> (a java.util.TaskQueue)
+	at java.util.TimerThread.run(Timer.java:505)
+
+"OrientDB DistributedWorker node=europe-2 db=distributed-freeze1node" #203 daemon prio=5 os_prio=0 tid=0x00007fb10c003000 nid=0x190450 waiting on condition [0x00007fb1054d2000]
+   java.lang.Thread.State: WAITING (parking)
+	at sun.misc.Unsafe.park(Native Method)
+	- parking to wait for  <0x000000008636d070> (a com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.operationsfreezer.OperationsFreezer)
+	at java.util.concurrent.locks.LockSupport.park(LockSupport.java:175)
+	at com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.operationsfreezer.OperationsFreezer.startOperation(OperationsFreezer.java:47)
+	at com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperationsManager.startAtomicOperation(OAtomicOperationsManager.java:111)
+	at com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperationsManager.executeInsideAtomicOperation(OAtomicOperationsManager.java:186)
+	at com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage.preallocateRids(OAbstractPaginatedStorage.java:2167)
+	at com.orientechnologies.orient.server.distributed.impl.ODatabaseDocumentDistributed.firstPhaseDataChecks(ODatabaseDocumentDistributed.java:774)
+	at com.orientechnologies.orient.server.distributed.impl.ODatabaseDocumentDistributed.internalBegin2pc(ODatabaseDocumentDistributed.java:766)
+	at com.orientechnologies.orient.server.distributed.impl.ODatabaseDocumentDistributed.beginDistributedTx(ODatabaseDocumentDistributed.java:507)
+	at com.orientechnologies.orient.server.distributed.impl.task.OTransactionPhase1Task.executeTransaction(OTransactionPhase1Task.java:231)
+	at com.orientechnologies.orient.server.distributed.impl.task.OTransactionPhase1Task.execute(OTransactionPhase1Task.java:156)
+	at com.orientechnologies.orient.server.distributed.impl.ODistributedAbstractPlugin$2.call(ODistributedAbstractPlugin.java:658)
+	at com.orientechnologies.orient.core.db.OScenarioThreadLocal.executeAsDistributed(OScenarioThreadLocal.java:91)
+	at com.orientechnologies.orient.server.distributed.impl.ODistributedAbstractPlugin.executeOnLocalNode(ODistributedAbstractPlugin.java:653)
+	at com.orientechnologies.orient.server.distributed.impl.ODistributedDatabaseImpl.execute(ODistributedDatabaseImpl.java:422)
+	at com.orientechnologies.orient.server.distributed.impl.ODistributedDatabaseImpl.lambda$null$1(ODistributedDatabaseImpl.java:381)
+	at com.orientechnologies.orient.server.distributed.impl.ODistributedDatabaseImpl$$Lambda$233/1072950292.run(Unknown Source)
+	at java.util.concurrent.Executors$RunnableAdapter.call(Executors.java:511)
+	at java.util.concurrent.FutureTask.run(FutureTask.java:266)
+	at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1149)
+	at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:624)
+	at java.lang.Thread.run(Thread.java:748)
+
+"OrientDB Write Cache Flush Task" #21 daemon prio=5 os_prio=0 tid=0x00007fb15851e800 nid=0x190386 waiting on condition [0x00007fb2801bd000]
+   java.lang.Thread.State: TIMED_WAITING (parking)
+	at sun.misc.Unsafe.park(Native Method)
+	- parking to wait for  <0x0000000084c346c8> (a java.util.concurrent.locks.AbstractQueuedSynchronizer$ConditionObject)
+	at java.util.concurrent.locks.LockSupport.parkNanos(LockSupport.java:215)
+	at java.util.concurrent.locks.AbstractQueuedSynchronizer$ConditionObject.awaitNanos(AbstractQueuedSynchronizer.java:2078)
+	at java.util.concurrent.ScheduledThreadPoolExecutor$DelayedWorkQueue.take(ScheduledThreadPoolExecutor.java:1093)
+	at java.util.concurrent.ScheduledThreadPoolExecutor$DelayedWorkQueue.take(ScheduledThreadPoolExecutor.java:809)
+	at java.util.concurrent.ThreadPoolExecutor.getTask(ThreadPoolExecutor.java:1074)
+	at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1134)
+	at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:624)
+	at java.lang.Thread.run(Thread.java:748)
+
+"OrientDB WAL Write Task Thread)" #20 daemon prio=5 os_prio=0 tid=0x00007fb13c004800 nid=0x190385 waiting on condition [0x00007fb2802be000]
+   java.lang.Thread.State: WAITING (parking)
+	at sun.misc.Unsafe.park(Native Method)
+	- parking to wait for  <0x0000000084c2be30> (a java.util.concurrent.locks.AbstractQueuedSynchronizer$ConditionObject)
+	at java.util.concurrent.locks.LockSupport.park(LockSupport.java:175)
+	at java.util.concurrent.locks.AbstractQueuedSynchronizer$ConditionObject.await(AbstractQueuedSynchronizer.java:2039)
+	at java.util.concurrent.LinkedBlockingQueue.take(LinkedBlockingQueue.java:442)
+	at java.util.concurrent.ThreadPoolExecutor.getTask(ThreadPoolExecutor.java:1074)
+	at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1134)
+	at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:624)
+	at java.lang.Thread.run(Thread.java:748)
+
+"OrientDB WAL Flush Task" #19 daemon prio=5 os_prio=0 tid=0x00007fb158511000 nid=0x190384 waiting on condition [0x00007fb2803bf000]
+   java.lang.Thread.State: TIMED_WAITING (parking)
+	at sun.misc.Unsafe.park(Native Method)
+	- parking to wait for  <0x0000000084c2d638> (a java.util.concurrent.locks.AbstractQueuedSynchronizer$ConditionObject)
+	at java.util.concurrent.locks.LockSupport.parkNanos(LockSupport.java:215)
+	at java.util.concurrent.locks.AbstractQueuedSynchronizer$ConditionObject.awaitNanos(AbstractQueuedSynchronizer.java:2078)
+	at java.util.concurrent.ScheduledThreadPoolExecutor$DelayedWorkQueue.take(ScheduledThreadPoolExecutor.java:1093)
+	at java.util.concurrent.ScheduledThreadPoolExecutor$DelayedWorkQueue.take(ScheduledThreadPoolExecutor.java:809)
+	at java.util.concurrent.ThreadPoolExecutor.getTask(ThreadPoolExecutor.java:1074)
+	at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1134)
+	at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:624)
+	at java.lang.Thread.run(Thread.java:748)
+
+"Thread-5" #18 daemon prio=5 os_prio=0 tid=0x00007fb1584de800 nid=0x190383 waiting on condition [0x00007fb2804c0000]
+   java.lang.Thread.State: TIMED_WAITING (parking)
+	at sun.misc.Unsafe.park(Native Method)
+	- parking to wait for  <0x00000000862c8798> (a com.orientechnologies.common.concur.lock.OReadersWriterSpinLock)
+	at java.util.concurrent.locks.LockSupport.parkNanos(LockSupport.java:215)
+	at com.orientechnologies.common.concur.lock.OReadersWriterSpinLock.tryAcquireReadLock(OReadersWriterSpinLock.java:88)
+	at com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage.makeFuzzyCheckpoint(OAbstractPaginatedStorage.java:4865)
+	at com.orientechnologies.orient.core.storage.disk.OLocalPaginatedStorage.access$200(OLocalPaginatedStorage.java:98)
+	at com.orientechnologies.orient.core.storage.disk.OLocalPaginatedStorage$PeriodicFuzzyCheckpoint.run(OLocalPaginatedStorage.java:887)
+	at java.util.concurrent.Executors$RunnableAdapter.call(Executors.java:511)
+	at java.util.concurrent.FutureTask.runAndReset(FutureTask.java:308)
+	at java.util.concurrent.ScheduledThreadPoolExecutor$ScheduledFutureTask.access$301(ScheduledThreadPoolExecutor.java:180)
+	at java.util.concurrent.ScheduledThreadPoolExecutor$ScheduledFutureTask.run(ScheduledThreadPoolExecutor.java:294)
+	at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1149)
+	at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:624)
+	at java.lang.Thread.run(Thread.java:748)
+
+"Timer-0" #14 daemon prio=5 os_prio=0 tid=0x00007fb2b8ab4000 nid=0x190374 in Object.wait() [0x00007fb2817db000]
+   java.lang.Thread.State: TIMED_WAITING (on object monitor)
+	at java.lang.Object.wait(Native Method)
+	at java.util.TimerThread.mainLoop(Timer.java:552)
+	- locked <0x0000000083dbb960> (a java.util.TaskQueue)
+	at java.util.TimerThread.run(Timer.java:505)
+
+"process reaper" #13 daemon prio=10 os_prio=0 tid=0x00007fb24c061000 nid=0x190372 waiting on condition [0x00007fb2816c8000]
+   java.lang.Thread.State: TIMED_WAITING (parking)
+	at sun.misc.Unsafe.park(Native Method)
+	- parking to wait for  <0x0000000083da3f08> (a java.util.concurrent.SynchronousQueue$TransferStack)
+	at java.util.concurrent.locks.LockSupport.parkNanos(LockSupport.java:215)
+	at java.util.concurrent.SynchronousQueue$TransferStack.awaitFulfill(SynchronousQueue.java:460)
+	at java.util.concurrent.SynchronousQueue$TransferStack.transfer(SynchronousQueue.java:362)
+	at java.util.concurrent.SynchronousQueue.poll(SynchronousQueue.java:941)
+	at java.util.concurrent.ThreadPoolExecutor.getTask(ThreadPoolExecutor.java:1073)
+	at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1134)
+	at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:624)
+	at java.lang.Thread.run(Thread.java:748)
+
+"surefire-forkedjvm-ping-30s" #12 daemon prio=5 os_prio=0 tid=0x00007fb2b87da800 nid=0x190370 waiting on condition [0x00007fb2818dc000]
+   java.lang.Thread.State: TIMED_WAITING (parking)
+	at sun.misc.Unsafe.park(Native Method)
+	- parking to wait for  <0x0000000083e01cf0> (a java.util.concurrent.locks.AbstractQueuedSynchronizer$ConditionObject)
+	at java.util.concurrent.locks.LockSupport.parkNanos(LockSupport.java:215)
+	at java.util.concurrent.locks.AbstractQueuedSynchronizer$ConditionObject.awaitNanos(AbstractQueuedSynchronizer.java:2078)
+	at java.util.concurrent.ScheduledThreadPoolExecutor$DelayedWorkQueue.take(ScheduledThreadPoolExecutor.java:1093)
+	at java.util.concurrent.ScheduledThreadPoolExecutor$DelayedWorkQueue.take(ScheduledThreadPoolExecutor.java:809)
+	at java.util.concurrent.ThreadPoolExecutor.getTask(ThreadPoolExecutor.java:1074)
+	at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1134)
+	at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:624)
+	at java.lang.Thread.run(Thread.java:748)
+
+"surefire-forkedjvm-command-thread" #11 daemon prio=5 os_prio=0 tid=0x00007fb2b8775800 nid=0x19036f runnable [0x00007fb2819e9000]
+   java.lang.Thread.State: RUNNABLE
+	at java.io.FileInputStream.readBytes(Native Method)
+	at java.io.FileInputStream.read(FileInputStream.java:255)
+	at java.io.BufferedInputStream.fill(BufferedInputStream.java:246)
+	at java.io.BufferedInputStream.read(BufferedInputStream.java:265)
+	- locked <0x0000000084576000> (a java.io.BufferedInputStream)
+	at java.io.DataInputStream.readInt(DataInputStream.java:387)
+	at org.apache.maven.surefire.booter.MasterProcessCommand.decode(MasterProcessCommand.java:115)
+	at org.apache.maven.surefire.booter.CommandReader$CommandRunnable.run(CommandReader.java:391)
+	at java.lang.Thread.run(Thread.java:748)
+
+"Service Thread" #10 daemon prio=9 os_prio=0 tid=0x00007fb2b8745000 nid=0x19036d runnable [0x0000000000000000]
+   java.lang.Thread.State: RUNNABLE
+
+"C1 CompilerThread3" #9 daemon prio=9 os_prio=0 tid=0x00007fb2b8748800 nid=0x19036c waiting on condition [0x0000000000000000]
+   java.lang.Thread.State: RUNNABLE
+
+"C2 CompilerThread2" #8 daemon prio=9 os_prio=0 tid=0x00007fb2b86c6800 nid=0x19036b waiting on condition [0x0000000000000000]
+   java.lang.Thread.State: RUNNABLE
+
+"C2 CompilerThread1" #7 daemon prio=9 os_prio=0 tid=0x00007fb2b86c5800 nid=0x19036a waiting on condition [0x0000000000000000]
+   java.lang.Thread.State: RUNNABLE
+
+"C2 CompilerThread0" #6 daemon prio=9 os_prio=0 tid=0x00007fb2b8744000 nid=0x190369 waiting on condition [0x0000000000000000]
+   java.lang.Thread.State: RUNNABLE
+
+"Signal Dispatcher" #4 daemon prio=9 os_prio=0 tid=0x00007fb2b8207000 nid=0x190368 runnable [0x0000000000000000]
+   java.lang.Thread.State: RUNNABLE
+
+"Finalizer" #3 daemon prio=8 os_prio=0 tid=0x00007fb2b81d9000 nid=0x190367 in Object.wait() [0x00007fb2829e8000]
+   java.lang.Thread.State: WAITING (on object monitor)
+	at java.lang.Object.wait(Native Method)
+	at java.lang.ref.ReferenceQueue.remove(ReferenceQueue.java:144)
+	- locked <0x00000000845894e0> (a java.lang.ref.ReferenceQueue$Lock)
+	at java.lang.ref.ReferenceQueue.remove(ReferenceQueue.java:165)
+	at java.lang.ref.Finalizer$FinalizerThread.run(Finalizer.java:216)
+
+"Reference Handler" #2 daemon prio=10 os_prio=0 tid=0x00007fb2b81d4800 nid=0x190366 in Object.wait() [0x00007fb282ae9000]
+   java.lang.Thread.State: WAITING (on object monitor)
+	at java.lang.Object.wait(Native Method)
+	at java.lang.Object.wait(Object.java:502)
+	at java.lang.ref.Reference.tryHandlePending(Reference.java:191)
+	- locked <0x00000000817daa28> (a java.lang.ref.Reference$Lock)
+	at java.lang.ref.Reference$ReferenceHandler.run(Reference.java:153)
+
+"main" #1 prio=5 os_prio=0 tid=0x00007fb2b800e000 nid=0x19035c runnable [0x00007fb2bdaf9000]
+   java.lang.Thread.State: RUNNABLE
+	at java.lang.Thread.yield(Native Method)
+	at com.orientechnologies.common.concur.lock.OReadersWriterSpinLock.acquireWriteLock(OReadersWriterSpinLock.java:192)
+	at com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage.doClose(OAbstractPaginatedStorage.java:5746)
+	at com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage.close(OAbstractPaginatedStorage.java:904)
+	at com.orientechnologies.orient.core.storage.OStorageAbstract.shutdown(OStorageAbstract.java:204)
+	at com.orientechnologies.orient.core.db.OrientDBEmbedded.internalClose(OrientDBEmbedded.java:913)
+	- locked <0x00000000862d7d18> (a com.orientechnologies.orient.core.db.OrientDBDistributed)
+	at com.orientechnologies.orient.core.db.OrientDBEmbedded.close(OrientDBEmbedded.java:897)
+	- locked <0x00000000862d7d18> (a com.orientechnologies.orient.core.db.OrientDBDistributed)
+	at com.orientechnologies.orient.server.OServer.deinit(OServer.java:626)
+	at com.orientechnologies.orient.server.OServer.shutdown(OServer.java:543)
+	at com.orientechnologies.orient.server.distributed.ServerRun.terminateServer(ServerRun.java:227)
+	at com.orientechnologies.orient.server.distributed.AbstractServerClusterTest.execute(AbstractServerClusterTest.java:96)
+	at com.orientechnologies.orient.server.distributed.OneNodeFrozenIT.test(OneNodeFrozenIT.java:52)
+	at sun.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
+	at sun.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:62)
+	at sun.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43)
+	at java.lang.reflect.Method.invoke(Method.java:498)
+	at org.junit.runners.model.FrameworkMethod$1.runReflectiveCall(FrameworkMethod.java:50)
+	at org.junit.internal.runners.model.ReflectiveCallable.run(ReflectiveCallable.java:12)
+	at org.junit.runners.model.FrameworkMethod.invokeExplosively(FrameworkMethod.java:47)
+	at org.junit.internal.runners.statements.InvokeMethod.evaluate(InvokeMethod.java:17)
+	at org.junit.runners.ParentRunner.runLeaf(ParentRunner.java:325)
+	at org.junit.runners.BlockJUnit4ClassRunner.runChild(BlockJUnit4ClassRunner.java:78)
+	at org.junit.runners.BlockJUnit4ClassRunner.runChild(BlockJUnit4ClassRunner.java:57)
+	at org.junit.runners.ParentRunner$3.run(ParentRunner.java:290)
+	at org.junit.runners.ParentRunner$1.schedule(ParentRunner.java:71)
+	at org.junit.runners.ParentRunner.runChildren(ParentRunner.java:288)
+	at org.junit.runners.ParentRunner.access$000(ParentRunner.java:58)
+	at org.junit.runners.ParentRunner$2.evaluate(ParentRunner.java:268)
+	at org.junit.runners.ParentRunner.run(ParentRunner.java:363)
+	at org.apache.maven.surefire.junit4.JUnit4Provider.execute(JUnit4Provider.java:365)
+	at org.apache.maven.surefire.junit4.JUnit4Provider.executeWithRerun(JUnit4Provider.java:273)
+	at org.apache.maven.surefire.junit4.JUnit4Provider.executeTestSet(JUnit4Provider.java:238)
+	at org.apache.maven.surefire.junit4.JUnit4Provider.invoke(JUnit4Provider.java:159)
+	at org.apache.maven.surefire.booter.ForkedBooter.invokeProviderInSameClassLoader(ForkedBooter.java:379)
+	at org.apache.maven.surefire.booter.ForkedBooter.runSuitesInProcess(ForkedBooter.java:340)
+	at org.apache.maven.surefire.booter.ForkedBooter.execute(ForkedBooter.java:125)
+	at org.apache.maven.surefire.booter.ForkedBooter.main(ForkedBooter.java:413)
+
+"VM Thread" os_prio=0 tid=0x00007fb2b81cb000 nid=0x190365 runnable 
+
+"GC task thread#0 (ParallelGC)" os_prio=0 tid=0x00007fb2b8023800 nid=0x19035d runnable 
+
+"GC task thread#1 (ParallelGC)" os_prio=0 tid=0x00007fb2b8025000 nid=0x19035e runnable 
+
+"GC task thread#2 (ParallelGC)" os_prio=0 tid=0x00007fb2b8026800 nid=0x19035f runnable 
+
+"GC task thread#3 (ParallelGC)" os_prio=0 tid=0x00007fb2b8028800 nid=0x190360 runnable 
+
+"GC task thread#4 (ParallelGC)" os_prio=0 tid=0x00007fb2b802a000 nid=0x190361 runnable 
+
+"GC task thread#5 (ParallelGC)" os_prio=0 tid=0x00007fb2b802c000 nid=0x190362 runnable 
+
+"GC task thread#6 (ParallelGC)" os_prio=0 tid=0x00007fb2b802d800 nid=0x190363 runnable 
+
+"GC task thread#7 (ParallelGC)" os_prio=0 tid=0x00007fb2b802f800 nid=0x190364 runnable 
+
+"VM Periodic Task Thread" os_prio=0 tid=0x00007fb2b86f0000 nid=0x19036e waiting on condition 
+
+JNI global references: 2030
+
