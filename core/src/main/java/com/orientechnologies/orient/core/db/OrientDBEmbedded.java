@@ -23,6 +23,7 @@ import static com.orientechnologies.orient.core.config.OGlobalConfiguration.FILE
 import static com.orientechnologies.orient.core.config.OGlobalConfiguration.FILE_DELETE_RETRY;
 import static com.orientechnologies.orient.core.config.OGlobalConfiguration.WARNING_DEFAULT_USERS;
 
+import com.orientechnologies.common.concur.lock.OModificationOperationProhibitedException;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.io.OIOUtils;
 import com.orientechnologies.common.log.OLogManager;
@@ -658,6 +659,8 @@ public class OrientDBEmbedded implements OrientDBInternal {
         storages.put(name, storage);
       }
       storage.restore(in, null, callable, null);
+    } catch (OModificationOperationProhibitedException e) {
+      throw e;
     } catch (Exception e) {
       OContextConfiguration configs = getConfigurations().getConfigurations();
       OLocalPaginatedStorage.deleteFilesFromDisc(
