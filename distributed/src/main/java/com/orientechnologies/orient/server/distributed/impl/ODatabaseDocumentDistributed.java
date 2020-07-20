@@ -4,6 +4,7 @@ import com.hazelcast.core.HazelcastException;
 import com.hazelcast.core.HazelcastInstanceNotActiveException;
 import com.orientechnologies.common.concur.OOfflineNodeException;
 import com.orientechnologies.common.concur.lock.OInterruptedException;
+import com.orientechnologies.common.concur.lock.OModificationOperationProhibitedException;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.Orient;
@@ -450,6 +451,10 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
       getStorageDistributed().getDistributedManager()
           .setDatabaseStatus(getLocalNodeName(), getName(), ODistributedServerManager.DB_STATUS.OFFLINE);
       throw ex;
+    } catch (OModificationOperationProhibitedException e) {
+      txContext.setStatus(FAILED);
+      getStorageDistributed().getLocalDistributedDatabase().registerTxContext(requestId, txContext);
+      throw e;
     }
     return true;
   }

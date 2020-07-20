@@ -1,5 +1,6 @@
 package com.orientechnologies.orient.core.db;
 
+import com.orientechnologies.common.concur.lock.OModificationOperationProhibitedException;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.cache.OCommandCacheSoftRefs;
@@ -42,7 +43,6 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
   }
 
   public OStorage fullSync(String dbName, InputStream backupStream, OrientDBConfig config) {
-    final ODatabaseDocumentEmbedded embedded;
     OAbstractPaginatedStorage storage = null;
     synchronized (this) {
 
@@ -57,8 +57,10 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
         }
         final int storageId = generateStorageId();
         storage = (OAbstractPaginatedStorage) disk.createStorage(buildName(dbName), new HashMap<>(), maxWALSegmentSize, storageId);
-        embedded = internalCreate(config, storage);
+        internalCreate(config, storage);
         storages.put(dbName, storage);
+      } catch (OModificationOperationProhibitedException e) {
+        throw e;
       } catch (Exception e) {
         if (storage != null) {
           storage.delete();
