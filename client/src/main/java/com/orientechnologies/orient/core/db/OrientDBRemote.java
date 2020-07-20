@@ -362,6 +362,8 @@ public class OrientDBRemote implements OrientDBInternal {
   public void internalClose() {
     if (!open) return;
 
+    timer.cancel();
+
     final List<OStorageRemote> storagesCopy;
     synchronized (this) {
       // SHUTDOWN ENGINES AVOID OTHER OPENS

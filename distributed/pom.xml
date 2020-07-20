@@ -101,6 +101,31 @@
                 </plugins>
             </build>
         </profile>
+        <profile>
+            <id>it-k8s</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-surefire-plugin</artifactId>
+                        <configuration>
+                            <systemPropertyVariables>
+                                <kubeConfig></kubeConfig>
+                                <orientdbLabel>orientdb</orientdbLabel>
+                                <orientdbHttpPort>2480</orientdbHttpPort>
+                                <orientdbBinaryPort>2424</orientdbBinaryPort>
+                                <orientdbHazelcastPort>2434</orientdbHazelcastPort>
+                                <orientdbDockerImage></orientdbDockerImage>
+                                <orientdbVolumeSize>2</orientdbVolumeSize>
+                                <databaseVolumeStorageClass></databaseVolumeStorageClass>
+                                <configVolumeStorageClass></configVolumeStorageClass>
+                                <kubernetesNamespace>default</kubernetesNamespace>
+                            </systemPropertyVariables>
+                        </configuration>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
     </profiles>
 
     <dependencies>
@@ -141,6 +166,25 @@
             <version>1.5.3</version>
             <scope>runtime</scope>
         </dependency>
+        <dependency>
+            <groupId>io.kubernetes</groupId>
+            <artifactId>client-java</artifactId>
+            <version>8.0.2</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.commons</groupId>
+            <artifactId>commons-text</artifactId>
+            <version>1.8</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.google.guava</groupId>
+            <artifactId>guava</artifactId>
+            <version>29.0-jre</version>
+            <scope>test</scope>
+        </dependency>
+
     </dependencies>
 
     <build>
