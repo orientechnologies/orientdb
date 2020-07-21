@@ -51,18 +51,14 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
   }
 
   protected OSharedContext createSharedContext(OAbstractPaginatedStorage storage) {
-    if (OSystemDatabase.SYSTEM_DB_NAME.equals(storage.getName())
-        || getPlugin() == null
-        || !getPlugin().isRunning()) {
+    if (OSystemDatabase.SYSTEM_DB_NAME.equals(storage.getName())) {
       return new OSharedContextEmbedded(storage, this);
     }
     return new OSharedContextDistributed(storage, this);
   }
 
   protected ODatabaseDocumentEmbedded newSessionInstance(OAbstractPaginatedStorage storage) {
-    if (OSystemDatabase.SYSTEM_DB_NAME.equals(storage.getName())
-        || getPlugin() == null
-        || !getPlugin().isRunning()) {
+    if (OSystemDatabase.SYSTEM_DB_NAME.equals(storage.getName())) {
       return new ODatabaseDocumentEmbedded(storage);
     }
     plugin.registerNewDatabaseIfNeeded(storage.getName());
@@ -71,9 +67,7 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
 
   protected ODatabaseDocumentEmbedded newPooledSessionInstance(
       ODatabasePoolInternal pool, OAbstractPaginatedStorage storage) {
-    if (OSystemDatabase.SYSTEM_DB_NAME.equals(storage.getName())
-        || getPlugin() == null
-        || !getPlugin().isRunning()) {
+    if (OSystemDatabase.SYSTEM_DB_NAME.equals(storage.getName())) {
       return new ODatabaseDocumentEmbeddedPooled(pool, storage);
     }
     plugin.registerNewDatabaseIfNeeded(storage.getName());
