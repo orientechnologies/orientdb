@@ -1863,7 +1863,7 @@ public final class OWOWCache extends OAbstractWriteCache
 
   private OFile createFileInstance(final String fileName, final int fileId) {
     final String internalFileName = createInternalFileName(fileName, fileId);
-    return new AsyncFile(storagePath.resolve(internalFileName), useNativeOsAPI);
+    return new AsyncFile(storagePath.resolve(internalFileName), pageSize, useNativeOsAPI);
   }
 
   private static String createInternalFileName(final String fileName, final int fileId) {
@@ -1938,7 +1938,7 @@ public final class OWOWCache extends OAbstractWriteCache
 
         if (files.get(externalId) == null) {
           final Path path = storagePath.resolve(idFileNameMap.get((nameIdEntry.getValue())));
-          final AsyncFile file = new AsyncFile(path, useNativeOsAPI);
+          final AsyncFile file = new AsyncFile(path, pageSize, useNativeOsAPI);
 
           if (file.exists()) {
             file.open();
@@ -2012,7 +2012,7 @@ public final class OWOWCache extends OAbstractWriteCache
 
         if (files.get(externalId) == null) {
           final OFile fileClassic =
-              new AsyncFile(storagePath.resolve(nameIdEntry.getKey()), useNativeOsAPI);
+              new AsyncFile(storagePath.resolve(nameIdEntry.getKey()), pageSize, useNativeOsAPI);
 
           if (fileClassic.exists()) {
             fileClassic.open();
