@@ -43,9 +43,12 @@ public final class AsyncFile implements OFile {
   private AsynchronousFileChannel fileChannel;
   private int fd = -1;
 
-  public AsyncFile(final Path osFile, final boolean useNativeOsAPI) {
+  private final int pageSize;
+
+  public AsyncFile(final Path osFile, final int pageSize, final boolean useNativeOsAPI) {
     this.osFile = osFile;
     this.useNativeOsAPI = useNativeOsAPI;
+    this.pageSize = pageSize;
   }
 
   @Override
@@ -83,7 +86,23 @@ public final class AsyncFile implements OFile {
       dirtyCounter.incrementAndGet();
     }
 
-    final long currentSize = fileChannel.size() - HEADER_SIZE;
+    long currentSize = fileChannel.size() - HEADER_SIZE;
+
+    if (currentSize % pageSize != 0) {
+      final long initialSize = currentSize;
+
+      currentSize = (currentSize / pageSize) * pageSize;
+      fileChannel.truncate(currentSize + HEADER_SIZE);
+
+      OLogManager.instance()
+          .warnNoDb(
+              this,
+              "Data page in file {} was partially written and will be truncated, "
+                  + "initial size {}, truncated size {}",
+              osFile,
+              initialSize,
+              currentSize);
+    }
 
     size.set(currentSize);
     this.committedSize.set(currentSize);
