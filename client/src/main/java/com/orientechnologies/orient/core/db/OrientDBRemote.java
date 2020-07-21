@@ -21,6 +21,7 @@
 package com.orientechnologies.orient.core.db;
 
 import static com.orientechnologies.orient.client.remote.OStorageRemote.ADDRESS_SEPARATOR;
+import static com.orientechnologies.orient.core.config.OGlobalConfiguration.CLIENT_CHANNEL_IDLE_CLOSE;
 import static com.orientechnologies.orient.core.config.OGlobalConfiguration.NETWORK_SOCKET_RETRY;
 
 import com.orientechnologies.common.exception.OException;
@@ -65,10 +66,13 @@ public class OrientDBRemote implements OrientDBInternal {
 
   public OrientDBRemote(String[] hosts, OrientDBConfig configurations, Orient orient) {
     super();
-    timer = new Timer();
+
     this.hosts = hosts;
     this.orient = orient;
     this.configurations = configurations != null ? configurations : OrientDBConfig.defaultConfig();
+    if (this.configurations.getConfigurations().getValueAsBoolean(CLIENT_CHANNEL_IDLE_CLOSE)) {
+      timer = new Timer("Client autoclose timer", true);
+    }
     connectionManager =
         new ORemoteConnectionManager(this.configurations.getConfigurations(), timer);
     orient.addOrientDB(this);
@@ -363,7 +367,9 @@ public class OrientDBRemote implements OrientDBInternal {
   public void internalClose() {
     if (!open) return;
 
-    timer.cancel();
+    if (timer != null) {
+      timer.cancel();
+    }
 
     final List<OStorageRemote> storagesCopy;
     synchronized (this) {
