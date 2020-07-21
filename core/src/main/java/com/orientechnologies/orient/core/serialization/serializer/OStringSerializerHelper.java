@@ -91,44 +91,102 @@ public abstract class OStringSerializerHelper {
         }
         return iValue.toString();
 
-      case INTEGER:
-        if (iValue instanceof Integer) return iValue;
-        return new Integer(OIOUtils.getStringContent(iValue));
+      case INTEGER: {
+        if (iValue instanceof Integer) {
+          return iValue;
+        }
+        final String valueString = OIOUtils.getStringContent(iValue);
+        if (valueString.isEmpty()) {
+          return null;
+        }
+        return Integer.parseInt(valueString);
+      }
 
-      case BOOLEAN:
-        if (iValue instanceof Boolean) return iValue;
-        return new Boolean(OIOUtils.getStringContent(iValue));
+      case BOOLEAN: {
+        if (iValue instanceof Boolean) {
+          return iValue;
+        }
+        final String valueString = OIOUtils.getStringContent(iValue);
+        if (valueString.isEmpty()) {
+          return null;
+        }
+        return Boolean.parseBoolean(valueString);
+      }
 
-      case DECIMAL:
-        if (iValue instanceof BigDecimal) return iValue;
-        return new BigDecimal(OIOUtils.getStringContent(iValue));
+      case DECIMAL: {
+        if (iValue instanceof BigDecimal) {
+          return iValue;
+        }
+        final String valueString = OIOUtils.getStringContent(iValue);
+        if (valueString.isEmpty()) {
+          return null;
+        }
+        return new BigDecimal(valueString);
+      }
 
-      case FLOAT:
-        if (iValue instanceof Float) return iValue;
-        return new Float(OIOUtils.getStringContent(iValue));
+      case FLOAT: {
+        if (iValue instanceof Float) {
+          return iValue;
+        }
+        final String valueString = OIOUtils.getStringContent(iValue);
+        if (valueString.isEmpty()) {
+          return null;
+        }
+        return Float.parseFloat(valueString);
+      }
 
-      case LONG:
-        if (iValue instanceof Long) return iValue;
-        return new Long(OIOUtils.getStringContent(iValue));
+      case LONG: {
+        if (iValue instanceof Long) {
+          return iValue;
+        }
+        final String valueString = OIOUtils.getStringContent(iValue);
+        if (valueString.isEmpty()) {
+          return null;
+        }
+        return Long.parseLong(valueString);
+      }
 
-      case DOUBLE:
-        if (iValue instanceof Double) return iValue;
-        return new Double(OIOUtils.getStringContent(iValue));
+      case DOUBLE: {
+        if (iValue instanceof Double) {
+          return iValue;
+        }
+        final String valueString = OIOUtils.getStringContent(iValue);
+        if (valueString.isEmpty()) {
+          return null;
+        }
+        return Double.parseDouble(valueString);
+      }
 
-      case SHORT:
-        if (iValue instanceof Short) return iValue;
-        return new Short(OIOUtils.getStringContent(iValue));
+      case SHORT: {
+        if (iValue instanceof Short) {
+          return iValue;
+        }
+        final String valueString = OIOUtils.getStringContent(iValue);
+        if (valueString.isEmpty()) {
+          return null;
+        }
+        return Short.parseShort(valueString);
+      }
 
-      case BYTE:
-        if (iValue instanceof Byte) return iValue;
-        return new Byte(OIOUtils.getStringContent(iValue));
+      case BYTE: {
+        if (iValue instanceof Byte) {
+          return iValue;
+        }
+        final String valueString = OIOUtils.getStringContent(iValue);
+        if (valueString.isEmpty()) {
+          return null;
+        }
+        return Byte.parseByte(valueString);
+      }
 
       case BINARY:
         return getBinaryContent(iValue);
 
       case DATE:
       case DATETIME:
-        if (iValue instanceof Date) return iValue;
+        if (iValue instanceof Date) {
+          return iValue;
+        }
         return new Date(Long.parseLong(OIOUtils.getStringContent(iValue)));
 
       case LINK:
