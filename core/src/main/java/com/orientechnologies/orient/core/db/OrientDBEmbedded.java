@@ -19,6 +19,10 @@
  */
 package com.orientechnologies.orient.core.db;
 
+import static com.orientechnologies.orient.core.config.OGlobalConfiguration.FILE_DELETE_DELAY;
+import static com.orientechnologies.orient.core.config.OGlobalConfiguration.FILE_DELETE_RETRY;
+
+
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.io.OIOUtils;
 import com.orientechnologies.common.log.OLogManager;
@@ -37,18 +41,26 @@ import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.config.OClusterBasedStorageConfiguration;
 import com.orientechnologies.orient.core.storage.disk.OLocalPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
-
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
-import java.nio.file.*;
-import java.util.*;
+import java.nio.file.DirectoryStream;
+import java.nio.file.FileStore;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.TimerTask;
 import java.util.concurrent.Callable;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
-
-import static com.orientechnologies.orient.core.config.OGlobalConfiguration.FILE_DELETE_DELAY;
-import static com.orientechnologies.orient.core.config.OGlobalConfiguration.FILE_DELETE_RETRY;
 
 /**
  * Created by tglman on 08/04/16.
@@ -430,18 +442,34 @@ public class OrientDBEmbedded implements OrientDBInternal {
     } catch (Exception e) {
       OContextConfiguration configs = getConfigurations().getConfigurations();
       OLocalPaginatedStorage
-          .deleteFilesFromDisc(name, configs.getValueAsInteger(FILE_DELETE_RETRY), configs.getValueAsInteger(FILE_DELETE_DELAY),
+          .deleteFilesFromDisc(name, configs.getValueAsInteger(FILE_DELETE_RETRY),
+              configs.getValueAsInteger(FILE_DELETE_DELAY),
               buildName(name));
-      throw OException.wrapException(new ODatabaseException("Cannot create database '" + name + "'"), e);
+      throw OException
+          .wrapException(new ODatabaseException("Cannot create database '" + name + "'"), e);
     }
   }
 
-  protected ODatabaseDocumentEmbedded internalCreate(OrientDBConfig config, OAbstractPaginatedStorage storage) {
+  @Override
+  public void rollbackOperationsFromThread(Thread thread) {
+    synchronized (this) {
+      final Thread currentThread = Thread.currentThread();
+
+      for (final OAbstractPaginatedStorage storage : storages.values()) {
+        storage.rollbackOperationsFromThread(thread);
+      }
+    }
+  }
+
+  protected ODatabaseDocumentEmbedded internalCreate(OrientDBConfig config,
+      OAbstractPaginatedStorage storage) {
     storage.create(config.getConfigurations());
 
     ORecordSerializer serializer = ORecordSerializerFactory.instance().getDefaultRecordSerializer();
-    if (serializer.toString().equals("ORecordDocument2csv"))
-      throw new ODatabaseException("Impossible to create the database with ORecordDocument2csv serializer");
+    if (serializer.toString().equals("ORecordDocument2csv")) {
+      throw new ODatabaseException(
+          "Impossible to create the database with ORecordDocument2csv serializer");
+    }
     storage.setRecordSerializer(serializer.toString(), serializer.getCurrentVersion());
     // since 2.1 newly created databases use strict SQL validation by default
     storage.setProperty(OStatement.CUSTOM_STRICT_SQL, "true");

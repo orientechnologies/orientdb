@@ -25,7 +25,6 @@ import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.storage.OStorage;
-
 import java.io.InputStream;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
@@ -283,6 +282,10 @@ public interface OrientDBInternal extends AutoCloseable {
   void replaceFactory(OEmbeddedDatabaseInstanceFactory instanceFactory);
 
   OEmbeddedDatabaseInstanceFactory getFactory();
+
+  default void rollbackOperationsFromThread(final Thread thread) {
+    throw new UnsupportedOperationException();
+  }
 
   default OStorage fullSync(String dbName, InputStream backupStream, OrientDBConfig config) {
     throw new UnsupportedOperationException();

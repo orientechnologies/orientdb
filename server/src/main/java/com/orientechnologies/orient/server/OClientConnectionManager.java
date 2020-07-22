@@ -36,8 +36,6 @@ import com.orientechnologies.orient.enterprise.channel.binary.OTokenSecurityExce
 import com.orientechnologies.orient.server.network.protocol.ONetworkProtocol;
 import com.orientechnologies.orient.server.network.protocol.binary.ONetworkProtocolBinary;
 import com.orientechnologies.orient.server.plugin.OServerPluginHelper;
-
-import javax.net.ssl.SSLSocket;
 import java.io.IOException;
 import java.net.Socket;
 import java.util.ArrayList;
@@ -52,6 +50,7 @@ import java.util.TimerTask;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicInteger;
+import javax.net.ssl.SSLSocket;
 
 public class OClientConnectionManager {
   private static final long TIMEOUT_PUSH = 3000;
@@ -253,8 +252,8 @@ public class OClientConnectionManager {
       final ONetworkProtocol protocol = connection.getProtocol();
 
       try {
-        // INTERRUPT THE NEWTORK MANAGER TOO
-        protocol.interrupt();
+        //noinspection resource
+        protocol.getServer().getDatabases().rollbackOperationsFromThread(protocol);
       } catch (Exception e) {
         OLogManager.instance().error(this, "Error during interruption of binary protocol", e);
       }
