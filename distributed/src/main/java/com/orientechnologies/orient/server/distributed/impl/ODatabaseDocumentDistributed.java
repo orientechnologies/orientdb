@@ -982,25 +982,25 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
 
   @Override
   protected boolean dropClusterInternal(String clusterName) {
-    if (isLocalEnv()) {
+    if (!isLocalEnv()) {
       final String cmd = "drop cluster `" + clusterName + "`";
       sendDDLCommand(cmd, false);
       return true;
     } else {
       ((ODistributedDatabaseImpl) getDistributedShared()).resetLastValidBackup();
-      return super.dropCluster(clusterName);
+      return super.dropClusterInternal(clusterName);
     }
   }
 
   @Override
   public boolean dropClusterInternal(int clusterId) {
-    if (isLocalEnv()) {
+    if (!isLocalEnv()) {
       final String cmd = "drop cluster " + clusterId + "";
       sendDDLCommand(cmd, false);
       return true;
     } else {
       ((ODistributedDatabaseImpl) getDistributedShared()).resetLastValidBackup();
-      return super.dropCluster(clusterId);
+      return super.dropClusterInternal(clusterId);
     }
   }
 
