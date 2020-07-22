@@ -840,7 +840,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
   private void checkIfThreadIsBlocked() {
     final Thread thread = Thread.currentThread();
-    if (blockedThreads.contains(thread)) {
+    if (!blockedThreads.isEmpty() && blockedThreads.contains(thread)) {
       thread.interrupt();
 
       throw new OStorageException(
