@@ -64,12 +64,9 @@ public class OBackupServiceTest {
           + File.separator
           + DB_NAME;
 
-  private final String BACKUP_CONF =
-      System.getProperty("buildDirectory", "target")
-          + File.separator
-          + "config"
-          + File.separator
-          + "backups.json";
+  private final String BACKUP_CONF_DIR =
+      System.getProperty("buildDirectory", "target") + File.separator + "config" + File.separator;
+  private final String BACKUP_CONF = BACKUP_CONF_DIR + "backups.json";
 
   private OBackupService manager;
   private OrientDB orientDB;
@@ -78,6 +75,7 @@ public class OBackupServiceTest {
   public void bootOrientDB() throws Exception {
     OFileUtils.deleteRecursively(new File(BACKUP_PATH));
     OFileUtils.delete(new File(BACKUP_CONF));
+    new File(BACKUP_CONF_DIR).mkdirs();
 
     ODocument cfg = new ODocument();
     cfg.field("backups", new ArrayList<ODocument>());

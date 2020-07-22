@@ -416,18 +416,24 @@ public class OServerCommandDistributedManager extends OServerCommandDistributedS
   }
 
   private void addConfiguration(final String path, final ODocument member, final ODocument cfg) {
-    final Map<String, Object> eval = (Map) cfg.eval(path);
 
-    ODocument configuration = member.field("configuration");
+    if (member != null) {
+      ODocument configuration = member.field("configuration");
 
-    if (configuration == null) {
-      configuration = new ODocument();
-      member.field("configuration", configuration);
-    }
-    if (eval != null) {
-      for (String key : eval.keySet()) {
-        if (key.startsWith("system.config.")) {
-          configuration.field(key.replace("system.config.", "").replace(".", "_"), eval.get(key));
+      if (configuration == null) {
+        configuration = new ODocument();
+        member.field("configuration", configuration);
+      }
+
+      if (cfg != null) {
+        final Map<String, Object> eval = (Map) cfg.eval(path);
+        if (eval != null) {
+          for (String key : eval.keySet()) {
+            if (key.startsWith("system.config.")) {
+              configuration.field(
+                  key.replace("system.config.", "").replace(".", "_"), eval.get(key));
+            }
+          }
         }
       }
     }
