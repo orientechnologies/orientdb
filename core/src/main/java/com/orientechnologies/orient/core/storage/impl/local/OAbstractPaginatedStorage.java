@@ -841,12 +841,13 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
   private void checkIfThreadIsBlocked() {
     final Thread thread = Thread.currentThread();
     if (blockedThreads.contains(thread)) {
+      thread.interrupt();
+
       throw new OStorageException(
           "Operations on thread '"
               + thread
               + "' are blocked and can not be performed. Thread will be interrupted.");
     }
-    thread.interrupt();
   }
 
   @Override
