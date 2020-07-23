@@ -316,11 +316,12 @@ public final class OCASDiskWriteAheadLog implements OWriteAheadLog {
     writeBufferPointerTwo = allocator.allocate(bufferSize1, blockSize);
     writeBufferTwo = writeBufferPointerTwo.getNativeByteBuffer().order(ByteOrder.nativeOrder());
 
-    log(new OEmptyWALRecord());
-
     this.recordsWriterFuture = commitExecutor
         .scheduleWithFixedDelay(new RecordsWriter(false, false),
             commitDelay, commitDelay, TimeUnit.MILLISECONDS);
+
+    log(new OEmptyWALRecord());
+
     flush();
   }
 
