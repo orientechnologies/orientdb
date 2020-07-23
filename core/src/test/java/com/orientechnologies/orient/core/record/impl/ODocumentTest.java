@@ -1,5 +1,13 @@
 package com.orientechnologies.orient.core.record.impl;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
+
+
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
 import com.orientechnologies.orient.core.id.ORecordId;
@@ -9,15 +17,12 @@ import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializer;
-import org.assertj.core.api.Assertions;
-import org.junit.Test;
-
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-
-import static org.junit.Assert.*;
+import org.assertj.core.api.Assertions;
+import org.junit.Test;
 
 /**
  * @author Artem Orobets (enisher-at-gmail.com)
@@ -27,10 +32,13 @@ public class ODocumentTest {
   public void testCopyToCopiesEmptyFieldsTypesAndOwners() throws Exception {
     ODocument doc1 = new ODocument();
 
-    ODocument doc2 = new ODocument().field("integer2", 123).field("string", "OrientDB").field("a", 123.3)
+    ODocument doc2 =
+        new ODocument().field("integer2", 123).field("string", "OrientDB").field("a", 123.3)
 
-        .setFieldType("integer", OType.INTEGER).setFieldType("string", OType.STRING).setFieldType("binary", OType.BINARY);
-    ODocumentInternal.addOwner(doc2, new ODocument());
+            .setFieldType("integer", OType.INTEGER).setFieldType("string", OType.STRING)
+            .setFieldType("binary", OType.BINARY);
+    final ODocument owner = new ODocument();
+    ODocumentInternal.addOwner(doc2, owner);
 
     assertEquals(doc2.<Object>field("integer2"), 123);
     assertEquals(doc2.field("string"), "OrientDB");
