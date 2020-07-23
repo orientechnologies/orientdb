@@ -1196,11 +1196,11 @@ public class ReadWriteDiskCacheTest {
   private static OCacheEntry generateEntry(long fileId, long pageIndex, OPointer pointer,
       OByteBufferPool bufferPool) {
     return new OCacheEntryImpl(fileId, pageIndex,
-        new OCachePointer(pointer, bufferPool, fileId, pageIndex));
+        new OCachePointer(pointer, bufferPool, fileId, pageIndex), false);
   }
 
   private static OCacheEntry generateRemovedEntry(long fileId, long pageIndex) {
-    return new OCacheEntryImpl(fileId, pageIndex, null);
+    return new OCacheEntryImpl(fileId, pageIndex, null, false);
   }
 
   private static void setLsn(ByteBuffer buffer, OLogSequenceNumber lsn) {

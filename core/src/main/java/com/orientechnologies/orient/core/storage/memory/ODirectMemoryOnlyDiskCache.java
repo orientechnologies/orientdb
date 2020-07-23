@@ -39,7 +39,6 @@ import com.orientechnologies.orient.core.storage.impl.local.OPageIsBrokenListene
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
 import com.orientechnologies.orient.core.storage.impl.local.statistic.OPerformanceStatisticManager;
 import com.orientechnologies.orient.core.storage.impl.local.statistic.OSessionStoragePerformanceStatistic;
-
 import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.Map;
@@ -545,7 +544,8 @@ public final class ODirectMemoryOnlyDiskCache extends OAbstractWriteCache implem
           final OCachePointer cachePointer = new OCachePointer(pointer, bufferPool, id, index);
           cachePointer.incrementReferrer();
 
-          cacheEntry = new OCacheEntryImpl(composeFileId(storageId, id), index, cachePointer);
+          cacheEntry = new OCacheEntryImpl(composeFileId(storageId, id), index, cachePointer,
+              true);
 
           final OCacheEntry oldCacheEntry = content.putIfAbsent(index, cacheEntry);
 

@@ -34,11 +34,15 @@ public class OCacheEntryImpl implements OCacheEntry {
 
   private LRUList container;
 
-  public OCacheEntryImpl(final long fileId, final long pageIndex, final OCachePointer dataPointer) {
+  private final boolean insideCache;
+
+  public OCacheEntryImpl(final long fileId, final long pageIndex, final OCachePointer dataPointer,
+      boolean insideCache) {
     this.fileId = fileId;
     this.pageIndex = pageIndex;
 
     this.dataPointer = dataPointer;
+    this.insideCache = insideCache;
   }
 
   @Override
@@ -124,6 +128,11 @@ public class OCacheEntryImpl implements OCacheEntry {
   @Override
   public void setEndLSN(final OLogSequenceNumber endLSN) {
     dataPointer.setEndLSN(endLSN);
+  }
+
+  @Override
+  public boolean insideCache() {
+    return insideCache;
   }
 
   @Override

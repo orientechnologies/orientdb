@@ -26,7 +26,6 @@ public class OCacheEntryChanges implements OCacheEntry {
     delegate = entry;
   }
 
-  @SuppressWarnings("WeakerAccess")
   public OCacheEntryChanges(final boolean verifyCheckSum) {
     this.verifyCheckSum = verifyCheckSum;
   }
@@ -84,6 +83,11 @@ public class OCacheEntryChanges implements OCacheEntry {
   @Override
   public void incrementUsages() {
     delegate.incrementUsages();
+  }
+
+  @Override
+  public boolean insideCache() {
+    return delegate.insideCache();
   }
 
   @Override

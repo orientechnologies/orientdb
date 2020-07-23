@@ -38,7 +38,6 @@ import com.orientechnologies.orient.core.storage.cache.OCachePointer;
 import com.orientechnologies.orient.core.storage.cache.OReadCache;
 import com.orientechnologies.orient.core.storage.cache.OWriteCache;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
-
 import java.io.BufferedOutputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
@@ -902,7 +901,7 @@ public final class O2QCache implements OReadCache {
 
   private UpdateCacheResult entryIsAbsentInQueues(final long fileId, final long pageIndex, final OCachePointer dataPointer) {
     final OCacheEntry cacheEntry;
-    cacheEntry = new OCacheEntryImpl(fileId, pageIndex, dataPointer);
+    cacheEntry = new OCacheEntryImpl(fileId, pageIndex, dataPointer, true);
     a1in.putToMRU(cacheEntry);
     return new UpdateCacheResult(true, cacheEntry);
   }
@@ -1067,11 +1066,13 @@ public final class O2QCache implements OReadCache {
         } else {
           OCacheEntry removedEntry = am.getLRU();
           if (removedEntry == null) {
-            throw new OAllCacheEntriesAreUsedException("All records in aIn queue in 2q cache are used!");
+            throw new OAllCacheEntriesAreUsedException(
+                "All records in aIn queue in 2q cache are used!");
           }
 
           final Lock lock = pageLockManager
-              .acquireExclusiveLock(new PageKey(removedEntry.getFileId(), removedEntry.getPageIndex()));
+              .acquireExclusiveLock(
+                  new PageKey(removedEntry.getFileId(), removedEntry.getPageIndex()));
           try {
             removedEntry = am.get(removedEntry.getFileId(), removedEntry.getPageIndex());
             if (removedEntry != null && removedEntry.getUsagesCount() == 0) {
@@ -1134,6 +1135,7 @@ public final class O2QCache implements OReadCache {
   }
 
   private static final class PinnedPage implements Comparable<PinnedPage> {
+
     private final long fileId;
     private final long pageIndex;
 
@@ -1186,6 +1188,7 @@ public final class O2QCache implements OReadCache {
   }
 
   private static final class PageKey implements Comparable<PageKey> {
+
     private final long fileId;
     private final long pageIndex;
 
@@ -1233,7 +1236,8 @@ public final class O2QCache implements OReadCache {
   }
 
   private final static class UpdateCacheResult {
-    private final boolean     removeColdPages;
+
+    private final boolean removeColdPages;
     private final OCacheEntry cacheEntry;
 
     private UpdateCacheResult(final boolean removeColdPages, final OCacheEntry cacheEntry) {
@@ -1244,9 +1248,11 @@ public final class O2QCache implements OReadCache {
 
   /**
    * That is immutable class which contains information about current memory limits for 2Q cache.
-   * This class is needed to change all parameters atomically when cache memory limits are changed outside of 2Q cache.
+   * This class is needed to change all parameters atomically when cache memory limits are changed
+   * outside of 2Q cache.
    */
   private static final class MemoryData {
+
     /**
      * Max size for {@link O2QCache#a1in} queue in amount of pages
      */

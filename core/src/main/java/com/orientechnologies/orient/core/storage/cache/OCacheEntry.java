@@ -93,4 +93,6 @@ public interface OCacheEntry {
   void setContainer(LRUList lruList);
 
   LRUList getContainer();
+
+  boolean insideCache();
 }
