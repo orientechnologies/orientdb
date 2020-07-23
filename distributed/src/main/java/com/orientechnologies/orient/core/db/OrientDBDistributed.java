@@ -1,9 +1,9 @@
 package com.orientechnologies.orient.core.db;
 
+import com.orientechnologies.common.concur.lock.OModificationOperationProhibitedException;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.cache.OCommandCacheSoftRefs;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentEmbedded;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
@@ -11,7 +11,6 @@ import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.OServerAware;
 import com.orientechnologies.orient.server.distributed.impl.ODistributedStorage;
 import com.orientechnologies.orient.server.hazelcast.OHazelcastPlugin;
-
 import java.io.InputStream;
 import java.util.HashMap;
 
@@ -42,7 +41,6 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
   }
 
   public OStorage fullSync(String dbName, InputStream backupStream, OrientDBConfig config) {
-    final ODatabaseDocumentEmbedded embedded;
     OAbstractPaginatedStorage storage = null;
     synchronized (this) {
 
@@ -56,15 +54,19 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
           storages.remove(dbName);
         }
         final int storageId = generateStorageId();
-        storage = (OAbstractPaginatedStorage) disk.createStorage(buildName(dbName), new HashMap<>(), maxWALSegmentSize, storageId);
-        embedded = internalCreate(config, storage);
+        storage = (OAbstractPaginatedStorage) disk
+            .createStorage(buildName(dbName), new HashMap<>(), maxWALSegmentSize, storageId);
+        internalCreate(config, storage);
         storages.put(dbName, storage);
+      } catch (OModificationOperationProhibitedException e) {
+        throw e;
       } catch (Exception e) {
         if (storage != null) {
           storage.delete();
         }
 
-        throw OException.wrapException(new ODatabaseException("Cannot restore database '" + dbName + "'"), e);
+        throw OException
+            .wrapException(new ODatabaseException("Cannot restore database '" + dbName + "'"), e);
       }
     }
     try {

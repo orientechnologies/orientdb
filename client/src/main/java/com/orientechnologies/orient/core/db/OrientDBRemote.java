@@ -20,6 +20,11 @@
 
 package com.orientechnologies.orient.core.db;
 
+import static com.orientechnologies.orient.client.remote.OStorageRemote.ADDRESS_SEPARATOR;
+import static com.orientechnologies.orient.core.config.OGlobalConfiguration.CLIENT_CHANNEL_IDLE_CLOSE;
+import static com.orientechnologies.orient.core.config.OGlobalConfiguration.NETWORK_SOCKET_RETRY;
+
+
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.client.remote.ORemoteConnectionManager;
@@ -32,15 +37,17 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocumentRemote;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.OStorage;
-
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.Timer;
 import java.util.concurrent.Callable;
-
-import static com.orientechnologies.orient.client.remote.OStorageRemote.ADDRESS_SEPARATOR;
-import static com.orientechnologies.orient.core.config.OGlobalConfiguration.NETWORK_LOCK_TIMEOUT;
-import static com.orientechnologies.orient.core.config.OGlobalConfiguration.NETWORK_SOCKET_RETRY;
 
 /**
  * Created by tglman on 08/04/16.
@@ -57,11 +64,15 @@ public class OrientDBRemote implements OrientDBInternal {
 
   public OrientDBRemote(String[] hosts, OrientDBConfig configurations, Orient orient) {
     super();
-    timer = new Timer();
+
     this.hosts = hosts;
     this.orient = orient;
     this.configurations = configurations != null ? configurations : OrientDBConfig.defaultConfig();
-    connectionManager = new ORemoteConnectionManager(this.configurations.getConfigurations(), timer);
+    if (this.configurations.getConfigurations().getValueAsBoolean(CLIENT_CHANNEL_IDLE_CLOSE)) {
+      timer = new Timer("Client autoclose timer", true);
+    }
+    connectionManager =
+        new ORemoteConnectionManager(this.configurations.getConfigurations(), timer);
     orient.addOrientDB(this);
   }
 
@@ -254,9 +265,12 @@ public class OrientDBRemote implements OrientDBInternal {
   }
 
   public void internalClose() {
-    if (!open)
+    if (!open) {
       return;
-    timer.cancel();
+    }
+    if (timer != null) {
+      timer.cancel();
+    }
     final List<OStorageRemote> storagesCopy;
     synchronized (this) {
       // SHUTDOWN ENGINES AVOID OTHER OPENS
