@@ -451,11 +451,15 @@ public final class OCellBTreeMultiValueIndexEngine
     }
 
     assert svTree != null;
-    final OCompositeKey firstKey = convertToCompositeKey(rangeFrom);
-    final OCompositeKey lastKey = convertToCompositeKey(rangeTo);
+    final OCompositeKey fromKey = convertToCompositeKey(rangeFrom);
+    final OCompositeKey toKey = convertToCompositeKey(rangeTo);
 
-    return mapSVStream(
-        svTree.iterateEntriesBetween(firstKey, fromInclusive, lastKey, toInclusive, ascSortOrder));
+    if (toKey.getKeys().size() == 1 && toKey.getKeys().get(0) == null) {
+      return mapSVStream(svTree.iterateEntriesMajor(fromKey, fromInclusive, ascSortOrder));
+    } else {
+      return mapSVStream(
+          svTree.iterateEntriesBetween(fromKey, fromInclusive, toKey, toInclusive, ascSortOrder));
+    }
   }
 
   private static OCompositeKey convertToCompositeKey(Object rangeFrom) {
