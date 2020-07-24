@@ -872,7 +872,7 @@ public class CellBTreeSingleValueV3TestIT {
       final NavigableMap<String, ORID> keyValues,
       final boolean fromInclusive,
       final boolean toInclusive,
-      final boolean ascSortOrder) 
+      final boolean ascSortOrder,
       final int startFrom) {
     String[] keys = new String[keyValues.size()];
     int index = 0;
