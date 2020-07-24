@@ -4193,6 +4193,7 @@ public class OSelectStatementExecutionTest {
     result.close();
   }
 
+  @Ignore
   @Test
   public void testSimpleRangeQueryWithOutIndex() {
     final String className = "testSimpleRangeQueryWithIndex";
