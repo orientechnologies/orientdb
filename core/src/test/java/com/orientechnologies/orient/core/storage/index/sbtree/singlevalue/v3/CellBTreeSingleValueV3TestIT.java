@@ -688,7 +688,7 @@ public class CellBTreeSingleValueV3TestIT {
     } catch (final RollbackException ignore) {
       Assert.fail();
     }
-    assertIterateBetweenEntriesNonRandom("name5", keyValues, true, true, true);
+    assertIterateBetweenEntriesNonRandom("name5", keyValues, true, true, true, 5);
 
     Assert.assertEquals(singleValueTree.firstKey(), keyValues.firstKey());
     Assert.assertEquals(singleValueTree.lastKey(), keyValues.lastKey());
@@ -872,7 +872,8 @@ public class CellBTreeSingleValueV3TestIT {
       final NavigableMap<String, ORID> keyValues,
       final boolean fromInclusive,
       final boolean toInclusive,
-      final boolean ascSortOrder) {
+      final boolean ascSortOrder) 
+      final int startFrom) {
     String[] keys = new String[keyValues.size()];
     int index = 0;
 
@@ -881,7 +882,7 @@ public class CellBTreeSingleValueV3TestIT {
       index++;
     }
 
-    for (int i = 0; i < keyValues.size(); i++) {
+    for (int i = startFrom; i < keyValues.size(); i++) {
       final String toKey = keys[i];
       final Iterator<ORawPair<String, ORID>> indexIterator;
       try (final Stream<ORawPair<String, ORID>> stream =
