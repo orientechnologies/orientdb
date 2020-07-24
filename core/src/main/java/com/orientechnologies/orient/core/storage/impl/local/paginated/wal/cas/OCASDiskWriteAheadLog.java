@@ -2095,7 +2095,7 @@ public final class OCASDiskWriteAheadLog implements OWriteAheadLog {
                   }
                 }
 
-                if (callFsync) {
+                if (walFile != null && callFsync) {
                   walFile.force(true);
                 }
 
