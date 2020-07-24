@@ -1489,7 +1489,7 @@ public final class OCASDiskWriteAheadLog implements OWriteAheadLog {
 
     fileCloseQueueSize.set(0);
 
-    if (callFsync) {
+    if (callFsync && walFile != null) {
       walFile.force(true);
     }
 
@@ -2029,7 +2029,7 @@ public final class OCASDiskWriteAheadLog implements OWriteAheadLog {
               }
             }
 
-            if ((makeFSync || fullWrite) && writeBufferPointer != null) {
+            if (walFile != null && (makeFSync || fullWrite) && writeBufferPointer != null) {
               writeBuffer(walFile, writeBuffer, lastLSN, checkPointLSN);
 
               writeBufferPointer = null;
@@ -2060,7 +2060,7 @@ public final class OCASDiskWriteAheadLog implements OWriteAheadLog {
               OLogManager.instance().errorNoDb(this, "WAL write was interrupted", e);
             }
 
-            assert walFile.position() == currentPosition;
+            assert walFile == null || walFile.position() == currentPosition;
 
             writeFuture = writeExecutor.submit((Callable<?>) () -> {
               try {
