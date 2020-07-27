@@ -387,7 +387,6 @@ public final class OCellBTreeMultiValueIndexEngine
       if (lastKey == null) {
         return emptyStream();
       }
-
       return mapSVStream(svTree.iterateEntriesMinor(lastKey, true, false));
     }
   }
@@ -449,12 +448,11 @@ public final class OCellBTreeMultiValueIndexEngine
       return mvTree.iterateEntriesBetween(
           rangeFrom, fromInclusive, rangeTo, toInclusive, ascSortOrder);
     }
-
     assert svTree != null;
     final OCompositeKey fromKey = convertToCompositeKey(rangeFrom);
     final OCompositeKey toKey = convertToCompositeKey(rangeTo);
 
-    if (toKey.getKeys().size() == 1 && toKey.getKeys().get(0) == null) {
+    if (toKey == null || (toKey.getKeys().size() == 1 && toKey.getKeys().get(0) == null)) {
       return mapSVStream(svTree.iterateEntriesMajor(fromKey, fromInclusive, ascSortOrder));
     } else {
       return mapSVStream(
