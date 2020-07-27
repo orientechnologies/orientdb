@@ -449,15 +449,14 @@ public final class OCellBTreeMultiValueIndexEngine
           rangeFrom, fromInclusive, rangeTo, toInclusive, ascSortOrder);
     }
     assert svTree != null;
+    
     final OCompositeKey fromKey = convertToCompositeKey(rangeFrom);
-    final OCompositeKey toKey = convertToCompositeKey(rangeTo);
-
-    if (toKey == null || (toKey.getKeys().size() == 1 && toKey.getKeys().get(0) == null)) {
+    if (rangeTo == null) {
       return mapSVStream(svTree.iterateEntriesMajor(fromKey, fromInclusive, ascSortOrder));
-    } else {
-      return mapSVStream(
-          svTree.iterateEntriesBetween(fromKey, fromInclusive, toKey, toInclusive, ascSortOrder));
     }
+    final OCompositeKey toKey = convertToCompositeKey(rangeTo);
+    return mapSVStream(
+        svTree.iterateEntriesBetween(fromKey, fromInclusive, toKey, toInclusive, ascSortOrder));
   }
 
   private static OCompositeKey convertToCompositeKey(Object rangeFrom) {
