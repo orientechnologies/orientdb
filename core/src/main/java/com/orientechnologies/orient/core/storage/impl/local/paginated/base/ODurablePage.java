@@ -194,11 +194,9 @@ public class ODurablePage {
     final ByteBuffer buffer = pointer.getBufferDuplicate();
     if (changes == null) {
       assert buffer.order() == ByteOrder.nativeOrder();
-
       buffer.position(offset);
       return binarySerializer.deserializeFromByteBufferObject(buffer);
     }
-
     return binarySerializer.deserializeFromByteBufferObject(buffer, changes, offset);
   }
 
@@ -206,10 +204,8 @@ public class ODurablePage {
     if (changes == null) {
       final ByteBuffer buffer = pointer.getBuffer();
       assert buffer.order() == ByteOrder.nativeOrder();
-
       return buffer.get(pageOffset);
     }
-
     return changes.getByteValue(pointer.getBufferDuplicate(), pageOffset);
   }
 
