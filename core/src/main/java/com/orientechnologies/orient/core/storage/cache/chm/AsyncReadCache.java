@@ -115,48 +115,65 @@ public final class AsyncReadCache implements OReadCache {
   }
 
   @Override
-  public OCacheEntry silentLoadForRead(final long extFileId,final int pageIndex,
-      final OWriteCache writeCache,final boolean verifyChecksums) {
+  public OCacheEntry silentLoadForRead(
+      final long extFileId,
+      final int pageIndex,
+      final OWriteCache writeCache,
+      final boolean verifyChecksums) {
     final long fileId = OAbstractWriteCache.checkFileIdCompatibility(writeCache.getId(), extFileId);
     final PageKey pageKey = new PageKey(fileId, pageIndex);
 
-    for(;;) {
-     OCacheEntry cacheEntry = data.get(pageKey);
+    for (; ; ) {
+      OCacheEntry cacheEntry = data.get(pageKey);
 
-     if (cacheEntry != null) {
+      if (cacheEntry != null) {
         if (cacheEntry.acquireEntry()) {
           return cacheEntry;
-       }
-     }  else {
-       cacheEntry = data.compute(pageKey, (page, entry) -> {
-         if (entry == null) {
-           try {
-             final OCachePointer[] pointers =
-                 writeCache.load(fileId, pageIndex, 1, new OModifiableBoolean(), verifyChecksums);
-             if (pointers.length == 0) {
-               return null;
-             }
-             return new OCacheEntryImpl(page.getFileId(), page.getPageIndex(), pointers[0],
-                 false);
-           } catch (final IOException e) {
-             throw OException
-                 .wrapException(new OStorageException("Error during loading of page " + pageIndex + " for file " + fileId), e);
-           }
+        }
+      } else {
+        final OCacheEntry[] updatedEntry = new OCacheEntry[1];
 
+        cacheEntry =
+            data.compute(
+                pageKey,
+                (page, entry) -> {
+                  if (entry == null) {
+                    try {
+                      final OCachePointer[] pointers =
+                          writeCache.load(
+                              fileId, pageIndex, 1, new OModifiableBoolean(), verifyChecksums);
+                      if (pointers.length == 0) {
+                        return null;
+                      }
 
-         } else {
-           return entry;
-         }
-       });
+                      updatedEntry[0] =
+                          new OCacheEntryImpl(
+                              page.getFileId(), page.getPageIndex(), pointers[0], false);
+                      return null;
+                    } catch (final IOException e) {
+                      throw OException.wrapException(
+                          new OStorageException(
+                              "Error during loading of page " + pageIndex + " for file " + fileId),
+                          e);
+                    }
 
-       if (cacheEntry == null) {
-         return null;
-       }
+                  } else {
+                    return entry;
+                  }
+                });
 
-       if (cacheEntry.acquireEntry()) {
-         return cacheEntry;
-       }
-     }
+        if (cacheEntry == null) {
+          cacheEntry = updatedEntry[0];
+        }
+
+        if (cacheEntry == null) {
+          return null;
+        }
+
+        if (cacheEntry.acquireEntry()) {
+          return cacheEntry;
+        }
+      }
     }
   }
 
