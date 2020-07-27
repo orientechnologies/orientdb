@@ -378,7 +378,6 @@ public final class OCellBTreeMultiValueIndexEngine
       if (lastKey == null) {
         return emptyStream();
       }
-
       return mvTree.iterateEntriesMinor(lastKey, true, false);
     } else {
       assert svTree != null;
@@ -449,12 +448,22 @@ public final class OCellBTreeMultiValueIndexEngine
           rangeFrom, fromInclusive, rangeTo, toInclusive, ascSortOrder);
     }
     assert svTree != null;
-    
+
+    // "from", "to" are null, then scan whole tree as for infinite range or return empty stream
+    if (rangeFrom == null && rangeTo == null) {
+      return emptyStream();
+    }
+
+    // "from" could be null, then "to" is not (minor)
+    final OCompositeKey toKey = convertToCompositeKey(rangeTo);
+    if (rangeFrom == null) {
+      return mapSVStream(svTree.iterateEntriesMinor(toKey, toInclusive, ascSortOrder));
+    }
     final OCompositeKey fromKey = convertToCompositeKey(rangeFrom);
+    // "to" could be null, then "from" is not (major)
     if (rangeTo == null) {
       return mapSVStream(svTree.iterateEntriesMajor(fromKey, fromInclusive, ascSortOrder));
     }
-    final OCompositeKey toKey = convertToCompositeKey(rangeTo);
     return mapSVStream(
         svTree.iterateEntriesBetween(fromKey, fromInclusive, toKey, toInclusive, ascSortOrder));
   }
@@ -487,7 +496,6 @@ public final class OCellBTreeMultiValueIndexEngine
     if (mvTree != null) {
       return mvTree.iterateEntriesMinor(toKey, isInclusive, ascSortOrder);
     }
-
     assert svTree != null;
 
     final OCompositeKey lastKey = convertToCompositeKey(toKey);
@@ -506,7 +514,7 @@ public final class OCellBTreeMultiValueIndexEngine
     return svTreeEntries();
   }
 
-  private long mvTreeSize(ValuesTransformer transformer) {
+  private long mvTreeSize(final ValuesTransformer transformer) {
     assert mvTree != null;
 
     // calculate amount of keys
@@ -537,10 +545,8 @@ public final class OCellBTreeMultiValueIndexEngine
                   .count();
         }
       }
-
       return counter;
     }
-
     // calculate amount of entries
     return mvTree.size();
   }
@@ -548,7 +554,6 @@ public final class OCellBTreeMultiValueIndexEngine
   private long svTreeEntries() {
     assert svTree != null;
     assert nullTree != null;
-
     return svTree.size() + nullTree.size();
   }
 
@@ -562,13 +567,11 @@ public final class OCellBTreeMultiValueIndexEngine
     if (mvTree != null) {
       mvTree.acquireAtomicExclusiveLock();
     }
-
     assert svTree != null;
     assert nullTree != null;
 
     svTree.acquireAtomicExclusiveLock();
     nullTree.acquireAtomicExclusiveLock();
-
     return true;
   }
 
@@ -577,7 +580,7 @@ public final class OCellBTreeMultiValueIndexEngine
     return name;
   }
 
-  private static OType[] calculateTypes(OType[] keyTypes) {
+  private static OType[] calculateTypes(final OType[] keyTypes) {
     final OType[] sbTypes;
     if (keyTypes != null) {
       sbTypes = new OType[keyTypes.length + 1];
@@ -589,7 +592,7 @@ public final class OCellBTreeMultiValueIndexEngine
     return sbTypes;
   }
 
-  private static OCompositeKey createCompositeKey(Object key, ORID value) {
+  private static OCompositeKey createCompositeKey(final Object key, final ORID value) {
     final OCompositeKey compositeKey = new OCompositeKey(key);
     compositeKey.addKey(value);
     return compositeKey;
@@ -599,7 +602,6 @@ public final class OCellBTreeMultiValueIndexEngine
     if (compositeKey == null) {
       return null;
     }
-
     final List<Object> keys = compositeKey.getKeys();
 
     final Object key;
