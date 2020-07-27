@@ -85,14 +85,7 @@ import com.orientechnologies.orient.core.exception.OStorageException;
 import com.orientechnologies.orient.core.exception.OStorageExistsException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
-import com.orientechnologies.orient.core.index.OIndexAbstract;
-import com.orientechnologies.orient.core.index.OIndexDefinition;
-import com.orientechnologies.orient.core.index.OIndexException;
-import com.orientechnologies.orient.core.index.OIndexInternal;
-import com.orientechnologies.orient.core.index.OIndexKeyUpdater;
-import com.orientechnologies.orient.core.index.OIndexManagerAbstract;
-import com.orientechnologies.orient.core.index.OIndexes;
-import com.orientechnologies.orient.core.index.ORuntimeKeyIndexDefinition;
+import com.orientechnologies.orient.core.index.*;
 import com.orientechnologies.orient.core.index.engine.OBaseIndexEngine;
 import com.orientechnologies.orient.core.index.engine.OIndexEngine;
 import com.orientechnologies.orient.core.index.engine.OMultiValueIndexEngine;
@@ -101,6 +94,7 @@ import com.orientechnologies.orient.core.index.engine.OV1IndexEngine;
 import com.orientechnologies.orient.core.index.engine.v1.OCellBTreeMultiValueIndexEngine;
 import com.orientechnologies.orient.core.index.engine.v1.OCellBTreeSingleValueIndexEngine;
 import com.orientechnologies.orient.core.metadata.OMetadataDefault;
+import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OImmutableClass;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.metadata.security.OSecurityUser;
@@ -211,6 +205,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.Lock;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import java.util.zip.ZipOutputStream;
 
@@ -305,6 +300,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
   private final AtomicLong lastCloseTime = new AtomicLong(System.currentTimeMillis());
 
   protected AtomicOperationsTable atomicOperationsTable;
+
+  private final Map<String, Map<String, Long>> indexToVersionMap = new HashMap<>();
 
   public OAbstractPaginatedStorage(
       final String name, final String filePath, final String mode, final int id) {
@@ -559,7 +556,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     if (cf == null) {
       throw new OStorageException("Storage '" + name + "' is not properly initialized");
     }
-
     final Set<String> indexNames = configuration.indexEngines();
     int counter = 0;
 
@@ -623,12 +619,11 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
                 cf.binarySerializerFactory.getObjectSerializer(engineData.getKeySerializedId()),
                 encryption);
       }
-
       indexEngineNameMap.put(engineData.getName(), engine);
+      addToUniqueKeyLifeCycleHandler(engineData, engine);
       while (engineData.getIndexId() >= indexEngines.size()) {
         indexEngines.add(null);
       }
-
       indexEngines.set(engineData.getIndexId(), engine);
       counter++;
     }
@@ -1603,7 +1598,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
               return Optional.of(new OBackgroundNewDelta(finished));
             }
           }
-
           records = writeAheadLog.next(records.get(records.size() - 1).getLsn(), 1_000);
         }
       } finally {
@@ -2417,9 +2411,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
                 transaction.updateIdentityAfterCommit(oldRID, rid);
               }
             }
-
             lockRidBags(clustersToLock, indexOperations, indexManager, database);
-
             checkReadOnlyConditions();
 
             for (final ORecordOperation recordOperation : recordOperations) {
@@ -2430,9 +2422,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
                   database.getSerializer());
               result.add(recordOperation);
             }
-
             lockIndexes(indexOperations);
-
             checkReadOnlyConditions();
 
             commitIndexes(indexOperations);
@@ -2518,7 +2508,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
           if (changes.cleared) {
             clearIndex(indexId);
           }
-
           for (final OTransactionIndexChangesPerKey changesPerKey :
               changes.changesPerKey.values()) {
             applyTxChanges(changesPerKey, index);
@@ -2533,7 +2522,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
   private void applyTxChanges(OTransactionIndexChangesPerKey changes, OIndexInternal index)
       throws OInvalidIndexEngineIdException {
-
     for (OTransactionIndexChangesPerKey.OTransactionIndexEntry op :
         index.interpretTxKeyChanges(changes)) {
       switch (op.operation) {
@@ -2554,19 +2542,15 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
   public int loadIndexEngine(final String name) {
     try {
       checkOpenness();
-
       stateLock.acquireReadLock();
       try {
         checkOpenness();
-
         final OBaseIndexEngine engine = indexEngineNameMap.get(name);
         if (engine == null) {
           return -1;
         }
-
         final int indexId = indexEngines.indexOf(engine);
         assert indexId == engine.getId();
-
         return generateIndexId(indexId, engine);
       } finally {
         stateLock.releaseReadLock();
@@ -2595,34 +2579,26 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       final ODocument metadata) {
     try {
       checkOpenness();
-
       stateLock.acquireWriteLock();
       try {
         checkOpenness();
-
         checkLowDiskSpaceRequestsAndReadOnlyConditions();
-
         // this method introduced for binary compatibility only
         if (configuration.getBinaryFormatVersion() > 15) {
           return -1;
         }
-
         if (indexEngineNameMap.containsKey(engineName)) {
           throw new OIndexException("Index with name " + engineName + " already exists");
         }
-
         makeStorageDirty();
-
         final OBinarySerializer keySerializer = determineKeySerializer(indexDefinition, metadata);
         if (keySerializer == null) {
           throw new OIndexException("Can not determine key serializer");
         }
-
         final int keySize = determineKeySize(indexDefinition);
         final OType[] keyTypes =
             Optional.of(indexDefinition).map(OIndexDefinition::getTypes).orElse(null);
         final boolean nullValuesSupport = !indexDefinition.isNullValuesIgnored();
-
         final OBaseIndexEngine engine =
             OIndexes.createIndexEngine(
                 indexEngines.size(),
@@ -2635,7 +2611,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
                 apiVersion,
                 multivalue,
                 engineProperties);
-
         final OStorageConfiguration.IndexEngineData engineData =
             new OStorageConfigurationImpl.IndexEngineData(
                 engine.getId(),
@@ -2671,7 +2646,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
         } else {
           ((OV1IndexEngine) engine).load(engineName, keySize, keyTypes, keySerializer, null);
         }
-
         atomicOperationsManager.executeInsideAtomicOperation(
             null,
             atomicOperation -> {
@@ -2679,8 +2653,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
               indexEngines.add(engine);
               ((OClusterBasedStorageConfiguration) configuration)
                   .addIndexEngine(atomicOperation, engineName, engineData);
+              addToUniqueKeyLifeCycleHandler(engineData, engine);
             });
-
         return generateIndexId(indexEngines.size() - 1, engine);
       } catch (final IOException e) {
         throw OException.wrapException(
@@ -2740,6 +2714,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
                         "Index with name '%s' already exists, removing it and re-create the index",
                         engineName);
                 final OBaseIndexEngine engine = indexEngineNameMap.remove(engineName);
+                removeFromUniqueKeyLifeCycleHandler(engineName, engine);
                 if (engine != null) {
                   indexEngines.set(engine.getId(), null);
 
@@ -2878,7 +2853,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
             apiVersion,
             multivalue,
             engineProperties);
-
     final OContextConfiguration ctxCfg = configuration.getContextConfiguration();
     @SuppressWarnings("deprecation")
     final String cfgEncryption =
@@ -2892,7 +2866,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     } else {
       encryption = OEncryptionFactory.INSTANCE.getEncryption(cfgEncryption, cfgEncryptionKey);
     }
-
     engine.create(
         atomicOperation,
         valueSerializer,
@@ -2903,10 +2876,9 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
         keySize,
         engineProperties,
         encryption);
-
     indexEngineNameMap.put(engineName, engine);
+    // FIXME addToUniqueKeyLifeCycleHandler(engineData, engine);
     indexEngines.add(engine);
-
     return engine;
   }
 
@@ -3042,7 +3014,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
     final String engineName = engine.getName();
     indexEngineNameMap.remove(engineName);
-
+    removeFromUniqueKeyLifeCycleHandler(engineName, engine);
     return engine;
   }
 
@@ -3191,6 +3163,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     }
   }
 
+  // TODO:
   private Object doGetIndexValue(final int indexId, final Object key)
       throws OInvalidIndexEngineIdException {
     final int engineAPIVersion = extractEngineAPIVersion(indexId);
@@ -5859,7 +5832,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
         cluster.close(!onDelete);
       }
     }
-
     clusters.clear();
     clusterMap.clear();
   }
@@ -5925,10 +5897,10 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
           iDatabaseVersion.incrementAndGet();
         }
     }
-
     return null;
   }
 
+  // TODO:
   private void commitEntry(
       final OAtomicOperation atomicOperation,
       final ORecordOperation txEntry,
@@ -7361,5 +7333,72 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       this.lastTxId = lastTxId;
       this.txMetadata = txMetadata;
     }
+  }
+
+  public long getVersionForKey(
+      final String indexName, final Object key) {
+    final OStorageConfiguration.IndexEngineData engineData =
+        configuration.getIndexEngine(indexName, 0);
+    assert isIndexUnique(engineData); // issue, if index entry is not there -> lifecycle broken
+    assert transaction != null;
+
+    // or check transaction.getMetadata() == null or empty: only zeros as entries
+    if (!isDistributedMode(lastMetadata)) {
+      return 0;
+    }
+
+    // TODO: build hash map for each unique index, where to get the transactions from??
+    // map<transaction, version>; increment version for each operation within a transaction
+    if (this.transaction.get() != null) {
+      if (indexToVersionMap.containsKey(indexName)) {
+        final Map<String, Long> uniqeIndexTransactions = indexToVersionMap.get(indexName);
+        return 0; // uniqeIndexTransactions.get(key.hashCode());
+      } else {
+        // lifecycle breach, create entry and return version = 0
+        return 0;
+      }
+    } else {
+      throw new IllegalStateException("[panic] Thread local transaction is null.");
+    }
+  }
+
+  private boolean isDistributedMode(final byte[] metadata) {
+    return metadata != null ? true : false;
+  }
+
+  private boolean isIndexUnique(final OStorageConfiguration.IndexEngineData engineData) {
+    return (engineData.getIndexType().equals(OClass.INDEX_TYPE.UNIQUE.name())
+            || engineData.getIndexType().equals(OClass.INDEX_TYPE.UNIQUE_HASH_INDEX.name()))
+        ? true
+        : false;
+  }
+
+  private List<String> getUniqueIndexes() {
+    return configuration.indexEngines().stream()
+        .filter(
+            indexName -> {
+              final OStorageConfiguration.IndexEngineData engineData =
+                  configuration.getIndexEngine(indexName, 0);
+              return (engineData.getIndexType().equals(OClass.INDEX_TYPE.UNIQUE.name())
+                      || engineData
+                          .getIndexType()
+                          .equals(OClass.INDEX_TYPE.UNIQUE_HASH_INDEX.name()))
+                  ? true
+                  : false;
+            })
+        .collect(Collectors.toList());
+  }
+
+  private void addToUniqueKeyLifeCycleHandler(
+      final OStorageConfiguration.IndexEngineData engineData, final OBaseIndexEngine engine) {
+    if (!isIndexUnique(engineData)) {
+      return;
+    }
+    // TODO
+  }
+
+  private void removeFromUniqueKeyLifeCycleHandler(
+      final String engineName, final OBaseIndexEngine engine) {
+    // TODO
   }
 }

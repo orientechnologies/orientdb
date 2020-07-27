@@ -231,6 +231,7 @@ public interface OStorage extends OBackupable, OSharedContainer, OStorageInfo {
 
   boolean isRemote();
 
+  @Deprecated
   boolean isDistributed();
 
   boolean isAssigningClusterIds();

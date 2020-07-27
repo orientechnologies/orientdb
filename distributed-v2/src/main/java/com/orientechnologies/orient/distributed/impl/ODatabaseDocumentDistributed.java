@@ -282,12 +282,14 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
     return null;
   }
 
-  private void firstPhaseDataChecks(OTransactionInternal transaction) {
+  private void firstPhaseDataChecks(final OTransactionInternal transaction) {
+    // TODO: fix cast -> interface
     ((OAbstractPaginatedStorage) getStorage().getUnderlying()).preallocateRids(transaction);
 
     for (Map.Entry<String, OTransactionIndexChanges> change :
         transaction.getIndexOperations().entrySet()) {
-      OIndex index = getSharedContext().getIndexManager().getRawIndex(change.getKey());
+      final String indexName = change.getKey();
+      OIndex index = getSharedContext().getIndexManager().getRawIndex(indexName);
       if (OClass.INDEX_TYPE.UNIQUE.name().equals(index.getType())
           || OClass.INDEX_TYPE.UNIQUE_HASH_INDEX.name().equals(index.getType())) {
         if (!change.getValue().nullKeyChanges.entries.isEmpty()) {
@@ -316,6 +318,10 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
         for (OTransactionIndexChangesPerKey changesPerKey :
             change.getValue().changesPerKey.values()) {
           OIdentifiable old;
+          // TODO: add new version check logic, check int or long?
+          final long version =
+              ((OAbstractPaginatedStorage) getStorage().getUnderlying())
+                  .getVersionForKey(indexName, changesPerKey.key);
           try (Stream<ORID> rids = index.getInternal().getRids(changesPerKey.key)) {
             old = rids.findFirst().orElse(null);
           }
@@ -438,15 +444,14 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
   }
 
   protected boolean isRunLocal() {
-    return isDistributeVersionTwo()
-        && !isLocalEnv();
+    return isDistributeVersionTwo() && !isLocalEnv();
   }
 
   public boolean isLocalEnv() {
     return getStorage() instanceof OAutoshardedStorage
-    && ((OAutoshardedStorage) getStorage()).isLocalEnv();
+        && ((OAutoshardedStorage) getStorage()).isLocalEnv();
   }
-  
+
   public void sendDDLCommand(String command) {
     ODistributedContext distributed =
         ((OSharedContextDistributed) getSharedContext()).getDistributedContext();
