@@ -1,12 +1,10 @@
 package com.orientechnologies.common.comparator;
 
-import com.orientechnologies.orient.core.index.OAlwaysLessKey;
 import com.orientechnologies.orient.core.index.OCompositeKey;
 import com.orientechnologies.orient.core.metadata.schema.OType;
+import java.util.Comparator;
 import org.junit.Assert;
 import org.junit.Test;
-
-import java.util.Comparator;
 
 /**
  * @author Andrey Lomakin (a.lomakin-at-orientdb.com)
