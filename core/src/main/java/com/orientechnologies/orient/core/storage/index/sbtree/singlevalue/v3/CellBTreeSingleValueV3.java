@@ -698,6 +698,21 @@ public final class CellBTreeSingleValueV3<K> extends ODurableComponent
     }
   }
 
+  public Stream<ORawPair<K, ORID>> allEntries() {
+    atomicOperationsManager.acquireReadLock(this);
+    try {
+      acquireSharedLock();
+      try {
+        //noinspection resource
+        return StreamSupport.stream(new SpliteratorForward(null, null, false, false), false);
+      } finally {
+        releaseSharedLock();
+      }
+    } finally {
+      atomicOperationsManager.releaseReadLock(this);
+    }
+  }
+
   public Stream<ORawPair<K, ORID>> iterateEntriesBetween(
       final K keyFrom,
       final boolean fromInclusive,
