@@ -318,7 +318,7 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
         for (OTransactionIndexChangesPerKey changesPerKey :
             change.getValue().changesPerKey.values()) {
           OIdentifiable old;
-          // TODO: add new version check logic, check int or long?
+          // TODO: add new version check logic, API proposal
           final long version =
               ((OAbstractPaginatedStorage) getStorage().getUnderlying())
                   .getVersionForKey(indexName, changesPerKey.key);
