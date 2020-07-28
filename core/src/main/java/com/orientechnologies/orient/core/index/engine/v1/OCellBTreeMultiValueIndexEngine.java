@@ -449,9 +449,9 @@ public final class OCellBTreeMultiValueIndexEngine
     }
     assert svTree != null;
 
-    // "from", "to" are null, then scan whole tree as for infinite range or return empty stream
+    // "from", "to" are null, then scan whole tree as for infinite range
     if (rangeFrom == null && rangeTo == null) {
-      return emptyStream();
+      return mapSVStream(svTree.allEntries());
     }
 
     // "from" could be null, then "to" is not (minor)
