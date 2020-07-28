@@ -302,6 +302,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
   protected AtomicOperationsTable atomicOperationsTable;
 
   private final Map<String, Map<String, Long>> indexToVersionMap = new HashMap<>();
+  private static final int DEFAULT_VERSION = 0;
 
   public OAbstractPaginatedStorage(
       final String name, final String filePath, final String mode, final int id) {
@@ -7210,7 +7211,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
   @Override
   public final void clearProperties() {
     checkOpenness();
-
     stateLock.acquireWriteLock();
     try {
       checkOpenness();
@@ -7344,7 +7344,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
     // or check transaction.getMetadata() == null or empty: only zeros as entries
     if (!isDistributedMode(lastMetadata)) {
-      return 0;
+      return DEFAULT_VERSION;
     }
 
     // TODO: build hash map for each unique index, where to get the transactions from??
@@ -7352,10 +7352,10 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     if (this.transaction.get() != null) {
       if (indexToVersionMap.containsKey(indexName)) {
         final Map<String, Long> uniqeIndexTransactions = indexToVersionMap.get(indexName);
-        return 0; // uniqeIndexTransactions.get(key.hashCode());
+        return uniqeIndexTransactions.get(key.hashCode());
       } else {
         // lifecycle breach, create entry and return version = 0
-        return 0;
+        return DEFAULT_VERSION;
       }
     } else {
       throw new IllegalStateException("[panic] Thread local transaction is null.");
