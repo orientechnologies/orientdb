@@ -45,6 +45,8 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoper
 import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperationsManager;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurableComponent;
 import com.orientechnologies.orient.core.storage.index.sbtree.singlevalue.OCellBTreeSingleValue;
+import com.orientechnologies.orient.core.storage.index.sbtree.singlevalue.v3.CellBTreeSingleValueV3;
+
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -728,6 +730,22 @@ public final class CellBTreeSingleValueV1<K> extends ODurableComponent
           new OCellBTreeSingleValueV1Exception(
               "Error during finding first key in sbtree [" + getName() + "]", this),
           e);
+    } finally {
+      atomicOperationsManager.releaseReadLock(this);
+    }
+  }
+
+  public Stream<ORawPair<K, ORID>> allEntries() {
+    atomicOperationsManager.acquireReadLock(this);
+    try {
+      acquireSharedLock();
+      try {
+        //noinspection resource
+        return StreamSupport.stream(
+            new CellBTreeSpliteratorForward(null, null, false, false), false);
+      } finally {
+        releaseSharedLock();
+      }
     } finally {
       atomicOperationsManager.releaseReadLock(this);
     }

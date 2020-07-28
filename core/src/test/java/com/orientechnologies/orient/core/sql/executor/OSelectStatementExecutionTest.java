@@ -38,6 +38,7 @@ import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
+import org.junit.Ignore;
 
 /** @author Luigi Dell'Aquila (l.dellaquila-(at)-orientdb.com) */
 public class OSelectStatementExecutionTest {
@@ -4047,6 +4048,7 @@ public class OSelectStatementExecutionTest {
     }
   }
 
+  @Test
   public void testCountGroupBy() {
     // issue #9288
     String className = "testCountGroupBy";
@@ -4167,5 +4169,75 @@ public class OSelectStatementExecutionTest {
     } catch (OTimeoutException ex) {
       Assert.fail();
     }
+  }
+
+  @Test
+  public void testSimpleRangeQueryWithIndexGTE() {
+    final String className = "testSimpleRangeQueryWithIndexGTE";
+    final OClass clazz = db.getMetadata().getSchema().getOrCreateClass(className);
+    final OProperty prop = clazz.createProperty("name", OType.STRING);
+    prop.createIndex(OClass.INDEX_TYPE.NOTUNIQUE);
+
+    for (int i = 0; i < 10; i++) {
+      final ODocument doc = db.newInstance(className);
+      doc.setProperty("name", "name" + i);
+      doc.save();
+    }
+    final OResultSet result = db.query("select from " + className + " WHERE name >= 'name5'");
+    printExecutionPlan(result);
+
+    for (int i = 0; i < 5; i++) {
+      Assert.assertTrue(result.hasNext());
+      System.out.println(result.next());
+    }
+    Assert.assertFalse(result.hasNext());
+    result.close();
+  }
+
+  @Test
+  public void testSimpleRangeQueryWithIndexLTE() {
+    final String className = "testSimpleRangeQueryWithIndexLTE";
+    final OClass clazz = db.getMetadata().getSchema().getOrCreateClass(className);
+    final OProperty prop = clazz.createProperty("name", OType.STRING);
+    prop.createIndex(OClass.INDEX_TYPE.NOTUNIQUE);
+
+    for (int i = 0; i < 10; i++) {
+      final ODocument doc = db.newInstance(className);
+      doc.setProperty("name", "name" + i);
+      doc.save();
+    }
+    final OResultSet result = db.query("select from " + className + " WHERE name <= 'name5'");
+    printExecutionPlan(result);
+
+    for (int i = 0; i < 6; i++) {
+      Assert.assertTrue(result.hasNext());
+      System.out.println(result.next());
+    }
+    Assert.assertFalse(result.hasNext());
+    result.close();
+  }
+
+  @Test
+  public void testSimpleRangeQueryWithOutIndex() {
+    final String className = "testSimpleRangeQueryWithOutIndex";
+    final OClass clazz = db.getMetadata().getSchema().getOrCreateClass(className);
+    final OProperty prop = clazz.createProperty("name", OType.STRING);
+    // Hash Index skipped for range query
+    prop.createIndex(OClass.INDEX_TYPE.NOTUNIQUE_HASH_INDEX);
+
+    for (int i = 0; i < 10; i++) {
+      final ODocument doc = db.newInstance(className);
+      doc.setProperty("name", "name" + i);
+      doc.save();
+    }
+    final OResultSet result = db.query("select from " + className + " WHERE name >= 'name5'");
+    printExecutionPlan(result);
+
+    for (int i = 0; i < 5; i++) {
+      Assert.assertTrue(result.hasNext());
+      System.out.println(result.next());
+    }
+    Assert.assertFalse(result.hasNext());
+    result.close();
   }
 }
