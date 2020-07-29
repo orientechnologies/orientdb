@@ -301,7 +301,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
   protected AtomicOperationsTable atomicOperationsTable;
 
-  private final Map<String, Map<String, Long>> indexToVersionMap = new HashMap<>();
+  private final Map<String, Map<Integer, Long>> indexToVersionMap = new HashMap<>();
   private static final int DEFAULT_VERSION = 0;
 
   public OAbstractPaginatedStorage(
@@ -2349,16 +2349,13 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
         }
         try {
           checkOpenness();
-
           makeStorageDirty();
 
           boolean rollback = false;
           startStorageTx(transaction);
           try {
             final OAtomicOperation atomicOperation = OAtomicOperationsManager.getCurrentOperation();
-
             lockClusters(clustersToLock);
-
             checkReadOnlyConditions();
 
             final Map<ORecordOperation, OPhysicalPosition> positions = new IdentityHashMap<>(8);
@@ -2406,9 +2403,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
                   }
                 }
                 positions.put(recordOperation, physicalPosition);
-
                 rid.setClusterPosition(physicalPosition.clusterPosition);
-
                 transaction.updateIdentityAfterCommit(oldRID, rid);
               }
             }
@@ -2503,6 +2498,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
         final OIndexAbstract.IndexTxSnapshot snapshot = new OIndexAbstract.IndexTxSnapshot();
         index.addTxOperation(snapshot, changes);
         index.commit(snapshot);
+        applyUniqueIndexChanges(index.getName(), changes);
       } else {
         try {
           final int indexId = index.getIndexId();
@@ -2512,8 +2508,10 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
           for (final OTransactionIndexChangesPerKey changesPerKey :
               changes.changesPerKey.values()) {
             applyTxChanges(changesPerKey, index);
+            applyUniqueIndexChange(index.getName(), changesPerKey.key);
           }
           applyTxChanges(changes.nullKeyChanges, index);
+          // TODO:
         } catch (OInvalidIndexEngineIdException e) {
           throw OException.wrapException(new OStorageException("Error during index commit"), e);
         }
@@ -7345,7 +7343,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     // TODO: build hash map for each unique index, where to get the transactions from??
     // map<transaction, version>; increment version for each operation within a transaction
     if (indexToVersionMap.containsKey(indexName)) {
-      final Map<String, Long> uniqeIndexVersions = indexToVersionMap.get(indexName);
+      final Map<Integer, Long> uniqeIndexVersions = indexToVersionMap.get(indexName);
       final int keyHash = key.hashCode();
       if (uniqeIndexVersions.containsKey(keyHash)) {
         return uniqeIndexVersions.get(keyHash);
@@ -7406,6 +7404,31 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
   private void removeFromUniqueKeyLifeCycleHandler(final String indexName) {
     if (indexToVersionMap.containsKey(indexName)) {
       indexToVersionMap.remove(indexName);
+    }
+  }
+
+  private void applyUniqueIndexChanges(
+      final String indexName, final OTransactionIndexChanges changes) {
+    for (final OTransactionIndexChangesPerKey entry : changes.changesPerKey.values()) {
+      applyUniqueIndexChange(indexName, entry.key);
+    }
+  }
+
+  private void applyUniqueIndexChange(final String indexName, final Object key) {
+    if (!isIndexUniqueByName(indexName)) {
+      return;
+    }
+    if (indexToVersionMap.containsKey(indexName)) {
+      final Map<Integer, Long> uniqeIndexVersions = indexToVersionMap.get(indexName);
+      final int keyHash = key.hashCode();
+      long version = DEFAULT_VERSION;
+      if (uniqeIndexVersions.containsKey(keyHash)) {
+        version = uniqeIndexVersions.get(keyHash);
+        version++;
+      }
+      uniqeIndexVersions.put(keyHash, version);
+    } else {
+      throw new IllegalStateException("Index " + indexName + " was not properly registered.");
     }
   }
 }
