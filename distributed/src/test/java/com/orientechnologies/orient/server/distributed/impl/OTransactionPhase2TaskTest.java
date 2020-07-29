@@ -2,7 +2,6 @@ package com.orientechnologies.orient.server.distributed.impl;
 
 import static org.junit.Assert.assertEquals;
 
-import com.orientechnologies.common.util.OPair;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseSession;
 import com.orientechnologies.orient.core.db.ODatabaseType;
@@ -17,6 +16,7 @@ import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.distributed.ODistributedRequestId;
 import com.orientechnologies.orient.server.distributed.impl.task.OTransactionPhase1Task;
 import com.orientechnologies.orient.server.distributed.impl.task.OTransactionPhase2Task;
+import com.orientechnologies.orient.server.distributed.impl.task.transaction.OTransactionUniqueKey;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
@@ -46,8 +46,8 @@ public class OTransactionPhase2TaskTest {
     server.startup(getClass().getClassLoader().getResourceAsStream("orientdb-server-config.xml"));
     server.activate();
     OrientDB orientDB = server.getContext();
-    orientDB.create(OTransactionPhase1TaskTest.class.getSimpleName(), ODatabaseType.PLOCAL);
-    session = orientDB.open(OTransactionPhase1TaskTest.class.getSimpleName(), "admin", "admin");
+    orientDB.create(OTransactionPhase2TaskTest.class.getSimpleName(), ODatabaseType.PLOCAL);
+    session = orientDB.open(OTransactionPhase2TaskTest.class.getSimpleName(), "admin", "admin");
     session.createClass("TestClass");
   }
 
@@ -62,7 +62,7 @@ public class OTransactionPhase2TaskTest {
     TreeSet<ORID> ids = new TreeSet<ORID>();
     ids.add(rec1.getIdentity());
     operations.add(new ORecordOperation(rec1, ORecordOperation.UPDATED));
-    SortedSet<OPair<String, Object>> uniqueIndexKeys = new TreeSet<>();
+    SortedSet<OTransactionUniqueKey> uniqueIndexKeys = new TreeSet<>();
     OTransactionId transactionId = new OTransactionId(Optional.empty(), 0, 1);
     OTransactionPhase1Task task = new OTransactionPhase1Task(operations, transactionId);
     task.execute(
@@ -84,7 +84,7 @@ public class OTransactionPhase2TaskTest {
   @After
   public void after() {
     session.close();
-    server.getContext().drop(OTransactionPhase1TaskTest.class.getSimpleName());
+    server.getContext().drop(OTransactionPhase2TaskTest.class.getSimpleName());
     server.shutdown();
   }
 }

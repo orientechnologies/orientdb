@@ -1,10 +1,10 @@
 package com.orientechnologies.orient.server.distributed.impl;
 
-import com.orientechnologies.common.util.OPair;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.tx.OTransactionId;
 import com.orientechnologies.orient.core.tx.OTransactionInternal;
 import com.orientechnologies.orient.server.distributed.impl.task.OLockKeySource;
+import com.orientechnologies.orient.server.distributed.impl.task.transaction.OTransactionUniqueKey;
 import java.util.SortedSet;
 import java.util.TreeSet;
 import java.util.stream.Collectors;
@@ -22,8 +22,8 @@ public final class OLocalKeySource implements OLockKeySource {
   }
 
   @Override
-  public SortedSet<OPair<String, Object>> getUniqueKeys() {
-    TreeSet<OPair<String, Object>> uniqueIndexKeys = new TreeSet<>();
+  public SortedSet<OTransactionUniqueKey> getUniqueKeys() {
+    TreeSet<OTransactionUniqueKey> uniqueIndexKeys = new TreeSet<>();
     iTx.getIndexOperations()
         .forEach(
             (index, changes) -> {
@@ -32,10 +32,10 @@ public final class OLocalKeySource implements OLockKeySource {
                       index, database.getMetadata().getIndexManagerInternal(), database)
                   .isUnique()) {
                 for (Object keyWithChange : changes.changesPerKey.keySet()) {
-                  uniqueIndexKeys.add(new OPair<>(index, keyWithChange));
+                  uniqueIndexKeys.add(new OTransactionUniqueKey(index, keyWithChange, 0));
                 }
                 if (!changes.nullKeyChanges.entries.isEmpty()) {
-                  uniqueIndexKeys.add(new OPair<>(index, null));
+                  uniqueIndexKeys.add(new OTransactionUniqueKey(index, null, 0));
                 }
               }
             });
