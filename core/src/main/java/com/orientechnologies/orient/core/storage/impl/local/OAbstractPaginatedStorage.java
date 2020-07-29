@@ -621,7 +621,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
                 encryption);
       }
       indexEngineNameMap.put(engineData.getName(), engine);
-      addToUniqueKeyLifeCycleHandler(engineData, engine);
+      addToUniqueKeyLifeCycleHandler(engineData.getName(), engineData.getIndexType());
       while (engineData.getIndexId() >= indexEngines.size()) {
         indexEngines.add(null);
       }
@@ -2654,7 +2654,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
               indexEngines.add(engine);
               ((OClusterBasedStorageConfiguration) configuration)
                   .addIndexEngine(atomicOperation, engineName, engineData);
-              addToUniqueKeyLifeCycleHandler(engineData, engine);
+              addToUniqueKeyLifeCycleHandler(engineName, engineData.getIndexType());
             });
         return generateIndexId(indexEngines.size() - 1, engine);
       } catch (final IOException e) {
@@ -2715,7 +2715,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
                         "Index with name '%s' already exists, removing it and re-create the index",
                         engineName);
                 final OBaseIndexEngine engine = indexEngineNameMap.remove(engineName);
-                removeFromUniqueKeyLifeCycleHandler(engineName, engine);
+                removeFromUniqueKeyLifeCycleHandler(engineName);
                 if (engine != null) {
                   indexEngines.set(engine.getId(), null);
 
@@ -2878,7 +2878,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
         engineProperties,
         encryption);
     indexEngineNameMap.put(engineName, engine);
-    // FIXME addToUniqueKeyLifeCycleHandler(engineData, engine);
+    addToUniqueKeyLifeCycleHandler(engineName, indexType);
     indexEngines.add(engine);
     return engine;
   }
@@ -3008,14 +3008,12 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       final OAtomicOperation atomicOperation, final int indexId) throws IOException {
     final OBaseIndexEngine engine = indexEngines.get(indexId);
     assert indexId == engine.getId();
-
     indexEngines.set(indexId, null);
-
     engine.delete(atomicOperation);
 
     final String engineName = engine.getName();
     indexEngineNameMap.remove(engineName);
-    removeFromUniqueKeyLifeCycleHandler(engineName, engine);
+    removeFromUniqueKeyLifeCycleHandler(engineName);
     return engine;
   }
 
@@ -7335,11 +7333,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     }
   }
 
-  public long getVersionForKey(
-      final String indexName, final Object key) {
-    final OStorageConfiguration.IndexEngineData engineData =
-        configuration.getIndexEngine(indexName, 0);
-    assert isIndexUnique(engineData); // issue, if index entry is not there -> lifecycle broken
+  public long getVersionForKey(final String indexName, final Object key) {
+    assert isIndexUniqueByName(indexName); // issue, if index entry is not there -> lifecycle broken
     assert transaction != null;
 
     // or check transaction.getMetadata() == null or empty: only zeros as entries
@@ -7349,26 +7344,33 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
     // TODO: build hash map for each unique index, where to get the transactions from??
     // map<transaction, version>; increment version for each operation within a transaction
-    if (this.transaction.get() != null) {
-      if (indexToVersionMap.containsKey(indexName)) {
-        final Map<String, Long> uniqeIndexTransactions = indexToVersionMap.get(indexName);
-        return uniqeIndexTransactions.get(key.hashCode());
-      } else {
-        // lifecycle breach, create entry and return version = 0
-        return DEFAULT_VERSION;
+    if (indexToVersionMap.containsKey(indexName)) {
+      final Map<String, Long> uniqeIndexVersions = indexToVersionMap.get(indexName);
+      final int keyHash = key.hashCode();
+      if (uniqeIndexVersions.containsKey(keyHash)) {
+        return uniqeIndexVersions.get(keyHash);
       }
+      // FIXME: what to do?
+      return DEFAULT_VERSION;
     } else {
-      throw new IllegalStateException("[panic] Thread local transaction is null.");
+      // lifecycle breach, create entry and return version = 0
+      return DEFAULT_VERSION;
     }
   }
 
   private boolean isDistributedMode(final byte[] metadata) {
-    return metadata != null ? true : false;
+    return metadata == null ? true : false;
   }
 
-  private boolean isIndexUnique(final OStorageConfiguration.IndexEngineData engineData) {
-    return (engineData.getIndexType().equals(OClass.INDEX_TYPE.UNIQUE.name())
-            || engineData.getIndexType().equals(OClass.INDEX_TYPE.UNIQUE_HASH_INDEX.name()))
+  private boolean isIndexUniqueByName(final String indexName) {
+    final OStorageConfiguration.IndexEngineData engineData =
+        configuration.getIndexEngine(indexName, 0);
+    return isIndexUniqueByType(engineData.getIndexType());
+  }
+
+  private boolean isIndexUniqueByType(final String indexType) {
+    return (indexType.equals(OClass.INDEX_TYPE.UNIQUE.name())
+            || indexType.equals(OClass.INDEX_TYPE.UNIQUE_HASH_INDEX.name()))
         ? true
         : false;
   }
@@ -7389,16 +7391,21 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
         .collect(Collectors.toList());
   }
 
-  private void addToUniqueKeyLifeCycleHandler(
-      final OStorageConfiguration.IndexEngineData engineData, final OBaseIndexEngine engine) {
-    if (!isIndexUnique(engineData)) {
+  private void addToUniqueKeyLifeCycleHandler(final String indexName, final String indexType) {
+    if (indexName == null || indexType == null) {
       return;
     }
-    // TODO
+    if (!isIndexUniqueByType(indexType)) {
+      return;
+    }
+    if (!indexToVersionMap.containsKey(indexName)) {
+      indexToVersionMap.put(indexName, new HashMap<>());
+    }
   }
 
-  private void removeFromUniqueKeyLifeCycleHandler(
-      final String engineName, final OBaseIndexEngine engine) {
-    // TODO
+  private void removeFromUniqueKeyLifeCycleHandler(final String indexName) {
+    if (indexToVersionMap.containsKey(indexName)) {
+      indexToVersionMap.remove(indexName);
+    }
   }
 }

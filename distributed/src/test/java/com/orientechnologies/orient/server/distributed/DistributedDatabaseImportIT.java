@@ -31,11 +31,11 @@ public class DistributedDatabaseImportIT {
 
   @Test
   public void test() throws IOException {
-    OrientDB ctx1 = server0.getContext();
+    final OrientDB ctx1 = server0.getContext();
     ctx1.create("import-test", ODatabaseType.PLOCAL);
-    ODatabaseSession session = ctx1.open("import-test", "admin", "admin");
+    final ODatabaseSession session = ctx1.open("import-test", "admin", "admin");
     session.createClass("testa");
-    ODatabaseExport export =
+    final ODatabaseExport export =
         new ODatabaseExport(
             (ODatabaseDocumentInternal) session, "target/export.tar.gz", iText -> {});
     export.exportDatabase();
@@ -43,16 +43,16 @@ public class DistributedDatabaseImportIT {
     session.close();
 
     ctx1.create("imported-test", ODatabaseType.PLOCAL);
-    ODatabaseSession session1 = ctx1.open("imported-test", "admin", "admin");
-    ODatabaseImport imp =
+    final ODatabaseSession session1 = ctx1.open("imported-test", "admin", "admin");
+    final ODatabaseImport imp =
         new ODatabaseImport(
             (ODatabaseDocumentInternal) session1, "target/export.tar.gz", iText -> {});
     imp.importDatabase();
     imp.close();
     session1.close();
 
-    OrientDB ctx2 = server1.getContext();
-    ODatabaseSession session2 = ctx2.open("imported-test", "admin", "admin");
+    final OrientDB ctx2 = server1.getContext();
+    final ODatabaseSession session2 = ctx2.open("imported-test", "admin", "admin");
     assertTrue(session2.getMetadata().getSchema().existsClass("testa"));
     session2.close();
   }
