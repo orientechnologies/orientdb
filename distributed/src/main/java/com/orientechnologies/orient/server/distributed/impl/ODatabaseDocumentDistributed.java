@@ -851,7 +851,6 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
         }
       }
     }
-
     getDistributedShared().getManager().messageAfterOp("indexCheck", txContext.getReqId());
 
     getDistributedShared().getManager().messageBeforeOp("mvccCheck", txContext.getReqId());
