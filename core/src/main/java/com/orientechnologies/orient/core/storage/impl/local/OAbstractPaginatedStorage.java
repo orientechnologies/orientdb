@@ -169,6 +169,7 @@ import com.orientechnologies.orient.core.tx.OTransactionIndexChangesPerKey;
 import com.orientechnologies.orient.core.tx.OTransactionInternal;
 import com.orientechnologies.orient.core.tx.OTxMetadataHolder;
 import com.orientechnologies.orient.core.tx.OTxMetadataHolderImpl;
+
 import java.io.DataOutputStream;
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -205,7 +206,6 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.Lock;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import java.util.zip.ZipOutputStream;
 
@@ -301,7 +301,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
   protected AtomicOperationsTable atomicOperationsTable;
 
-  private final Map<String, Map<Integer, Long>> indexToVersionMap = new HashMap<>();
+  private final Map<String, Map<Integer, Integer>> indexToVersionMap = new HashMap<>();
   private static final int DEFAULT_VERSION = 0;
 
   public OAbstractPaginatedStorage(
@@ -2436,7 +2436,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
             } else {
               endStorageTx(transaction, recordOperations);
             }
-
             this.transaction.set(null);
           }
         } finally {
@@ -2458,7 +2457,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
             if (locked != null) {
               recordLocks.removeAll(locked);
             }
-
             for (final ORID rid : recordLocks) {
               releaseWriteLock(rid);
             }
@@ -2478,7 +2476,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
                 database.getName(),
                 result);
       }
-
       return result;
     } catch (final RuntimeException ee) {
       throw logAndPrepareForRethrow(ee);
@@ -2508,11 +2505,9 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
           for (final OTransactionIndexChangesPerKey changesPerKey :
               changes.changesPerKey.values()) {
             applyTxChanges(changesPerKey, index);
-            applyUniqueIndexChange(index.getName(), changesPerKey.key);
           }
           applyTxChanges(changes.nullKeyChanges, index);
-          // TODO:
-        } catch (OInvalidIndexEngineIdException e) {
+        } catch (final OInvalidIndexEngineIdException e) {
           throw OException.wrapException(new OStorageException("Error during index commit"), e);
         }
       }
@@ -2535,6 +2530,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
           // SHOULD NEVER BE THE CASE HANDLE BY cleared FLAG
           break;
       }
+      applyUniqueIndexChange(index.getName(), changes.key);
     }
   }
 
@@ -7335,15 +7331,12 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     assert isIndexUniqueByName(indexName); // issue, if index entry is not there -> lifecycle broken
     assert transaction != null;
 
-    // or check transaction.getMetadata() == null or empty: only zeros as entries
     if (!isDistributedMode(lastMetadata)) {
       return DEFAULT_VERSION;
     }
 
-    // TODO: build hash map for each unique index, where to get the transactions from??
-    // map<transaction, version>; increment version for each operation within a transaction
     if (indexToVersionMap.containsKey(indexName)) {
-      final Map<Integer, Long> uniqeIndexVersions = indexToVersionMap.get(indexName);
+      final Map<Integer, Integer> uniqeIndexVersions = indexToVersionMap.get(indexName);
       final int keyHash = key.hashCode();
       if (uniqeIndexVersions.containsKey(keyHash)) {
         return uniqeIndexVersions.get(keyHash);
@@ -7351,7 +7344,13 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       // FIXME: what to do?
       return DEFAULT_VERSION;
     } else {
-      // lifecycle breach, create entry and return version = 0
+      OLogManager.instance()
+          .error(
+              this,
+              "Unique index '"
+                  + indexName
+                  + "' is unknown, could be a lifecycle issue. Return default version 0.",
+              new IllegalStateException());
       return DEFAULT_VERSION;
     }
   }
@@ -7371,22 +7370,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
             || indexType.equals(OClass.INDEX_TYPE.UNIQUE_HASH_INDEX.name()))
         ? true
         : false;
-  }
-
-  private List<String> getUniqueIndexes() {
-    return configuration.indexEngines().stream()
-        .filter(
-            indexName -> {
-              final OStorageConfiguration.IndexEngineData engineData =
-                  configuration.getIndexEngine(indexName, 0);
-              return (engineData.getIndexType().equals(OClass.INDEX_TYPE.UNIQUE.name())
-                      || engineData
-                          .getIndexType()
-                          .equals(OClass.INDEX_TYPE.UNIQUE_HASH_INDEX.name()))
-                  ? true
-                  : false;
-            })
-        .collect(Collectors.toList());
   }
 
   private void addToUniqueKeyLifeCycleHandler(final String indexName, final String indexType) {
@@ -7419,9 +7402,9 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       return;
     }
     if (indexToVersionMap.containsKey(indexName)) {
-      final Map<Integer, Long> uniqeIndexVersions = indexToVersionMap.get(indexName);
+      final Map<Integer, Integer> uniqeIndexVersions = indexToVersionMap.get(indexName);
       final int keyHash = key.hashCode();
-      long version = DEFAULT_VERSION;
+      int version = DEFAULT_VERSION;
       if (uniqeIndexVersions.containsKey(keyHash)) {
         version = uniqeIndexVersions.get(keyHash);
         version++;

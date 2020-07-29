@@ -120,7 +120,6 @@ public final class OClusterPositionMapV2 extends OClusterPositionMap {
         } else {
           cacheEntry = loadPageForWrite(atomicOperation, fileId, lastPage + 1, false, false);
         }
-
         mapEntryPoint.setFileSize(lastPage + 1);
         clear = true;
       } else {
