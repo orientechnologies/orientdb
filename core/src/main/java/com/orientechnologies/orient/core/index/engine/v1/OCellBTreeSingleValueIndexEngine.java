@@ -27,7 +27,7 @@ public final class OCellBTreeSingleValueIndexEngine
   private static final String NULL_BUCKET_FILE_EXTENSION = ".nbt";
 
   private final OCellBTreeSingleValue<Object> sbTree;
-  private final OVersionPositionMap versionPositionMap;
+  // TODO: [DR] private final OVersionPositionMap versionPositionMap;
   private final String name;
   private final int id;
 
@@ -47,8 +47,8 @@ public final class OCellBTreeSingleValueIndexEngine
     } else {
       throw new IllegalStateException("Invalid tree version " + version);
     }
-    // TODO: check input
-    versionPositionMap = new OVersionPositionMapV0(storage, null, null, DATA_FILE_EXTENSION);
+    // TODO: [DR] activate and check input
+    // versionPositionMap = new OVersionPositionMapV0(storage, null, null, DATA_FILE_EXTENSION);
   }
 
   @Override
