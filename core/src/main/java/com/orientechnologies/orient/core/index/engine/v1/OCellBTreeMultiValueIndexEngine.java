@@ -576,6 +576,17 @@ public final class OCellBTreeMultiValueIndexEngine
     return name;
   }
 
+  @Override
+  public void updateUniqueIndexVersion(Object key) {
+    // TODO: [DR] implement
+  }
+
+  @Override
+  public int getUniqueIndexVersion(Object key) {
+    // TODO: [DR] implement
+    return 0;
+  }
+
   private static OType[] calculateTypes(OType[] keyTypes) {
     final OType[] sbTypes;
     if (keyTypes != null) {

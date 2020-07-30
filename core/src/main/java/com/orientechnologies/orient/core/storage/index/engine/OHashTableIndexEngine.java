@@ -159,6 +159,17 @@ public final class OHashTableIndexEngine implements OIndexEngine {
   }
 
   @Override
+  public void updateUniqueIndexVersion(Object key) {
+    // TODO: [DR] implement
+  }
+
+  @Override
+  public int getUniqueIndexVersion(Object key) {
+    // TODO: [DR] implement
+    return 0;
+  }
+
+  @Override
   public void delete(OAtomicOperation atomicOperation) throws IOException {
     doClearTable(atomicOperation);
 

@@ -15,6 +15,8 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoper
 import com.orientechnologies.orient.core.storage.index.sbtree.singlevalue.OCellBTreeSingleValue;
 import com.orientechnologies.orient.core.storage.index.sbtree.singlevalue.v1.CellBTreeSingleValueV1;
 import com.orientechnologies.orient.core.storage.index.sbtree.singlevalue.v3.CellBTreeSingleValueV3;
+import com.orientechnologies.orient.core.storage.index.versionmap.OVersionPositionMap;
+import com.orientechnologies.orient.core.storage.index.versionmap.OVersionPositionMapV0;
 import java.io.IOException;
 import java.util.Map;
 import java.util.stream.Stream;
@@ -25,6 +27,7 @@ public final class OCellBTreeSingleValueIndexEngine
   private static final String NULL_BUCKET_FILE_EXTENSION = ".nbt";
 
   private final OCellBTreeSingleValue<Object> sbTree;
+  private final OVersionPositionMap versionPositionMap;
   private final String name;
   private final int id;
 
@@ -44,6 +47,8 @@ public final class OCellBTreeSingleValueIndexEngine
     } else {
       throw new IllegalStateException("Invalid tree version " + version);
     }
+    // TODO: check input
+    versionPositionMap = new OVersionPositionMapV0(storage, null, null, DATA_FILE_EXTENSION);
   }
 
   @Override
@@ -81,6 +86,8 @@ public final class OCellBTreeSingleValueIndexEngine
     try {
       //noinspection unchecked
       sbTree.create(atomicOperation, keySerializer, keyTypes, keySize, encryption);
+
+      // TODO: create version position map, lock on key level - lock manager
     } catch (IOException e) {
       throw OException.wrapException(new OIndexException("Error of creation of index " + name), e);
     }
@@ -247,5 +254,16 @@ public final class OCellBTreeSingleValueIndexEngine
   @Override
   public String getIndexNameByKey(Object key) {
     return name;
+  }
+
+  @Override
+  public void updateUniqueIndexVersion(Object key) {
+    // TODO: [DR] implement
+  }
+
+  @Override
+  public int getUniqueIndexVersion(Object key) {
+    // TODO: [DR] implement
+    return 0;
   }
 }
