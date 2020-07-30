@@ -485,7 +485,7 @@ public final class OCellBTreeMultiValueIndexEngine
       return mvTree.iterateEntriesMajor(fromKey, isInclusive, ascSortOrder);
     }
     assert svTree != null;
-
+    
     final OCompositeKey firstKey = convertToCompositeKey(fromKey);
     return mapSVStream(svTree.iterateEntriesMajor(firstKey, isInclusive, ascSortOrder));
   }
