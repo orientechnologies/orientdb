@@ -169,7 +169,6 @@ import com.orientechnologies.orient.core.tx.OTransactionIndexChangesPerKey;
 import com.orientechnologies.orient.core.tx.OTransactionInternal;
 import com.orientechnologies.orient.core.tx.OTxMetadataHolder;
 import com.orientechnologies.orient.core.tx.OTxMetadataHolderImpl;
-
 import java.io.DataOutputStream;
 import java.io.File;
 import java.io.FileNotFoundException;

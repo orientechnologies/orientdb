@@ -138,14 +138,12 @@ public final class CellBTreeSingleValueV3<K> extends ODurableComponent
         operation -> {
           acquireExclusiveLock();
           try {
-
             this.keySize = keySize;
             if (keyTypes != null) {
               this.keyTypes = Arrays.copyOf(keyTypes, keyTypes.length);
             } else {
               this.keyTypes = null;
             }
-
             this.keySerializer = keySerializer;
 
             fileId = addFile(atomicOperation, getFullName());
@@ -179,7 +177,6 @@ public final class CellBTreeSingleValueV3<K> extends ODurableComponent
             } finally {
               releasePageFromWrite(atomicOperation, nullCacheEntry);
             }
-
           } finally {
             releaseExclusiveLock();
           }
