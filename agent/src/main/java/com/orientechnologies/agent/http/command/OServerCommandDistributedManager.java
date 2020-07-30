@@ -29,11 +29,9 @@ import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
-import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.OSystemDatabase;
 import com.orientechnologies.orient.server.distributed.*;
-import com.orientechnologies.orient.server.distributed.impl.ODistributedStorage;
 import com.orientechnologies.orient.server.distributed.impl.task.OEnterpriseStatsTask;
 import com.orientechnologies.orient.server.hazelcast.OHazelcastPlugin;
 import com.orientechnologies.orient.server.network.OServerNetworkListener;
@@ -173,32 +171,20 @@ public class OServerCommandDistributedManager extends OServerCommandDistributedS
 
     final String database = parts[2];
 
-    ODatabaseDocumentInternal db = server.openDatabase(database, "", "", null, true);
-    try {
-      final OStorage stg = db.getStorage();
-      if (!(stg instanceof ODistributedStorage))
-        throw new ODistributedException(
-            "SYNC DATABASE command cannot be executed against a non distributed server");
+    final OHazelcastPlugin dManager = ((OHazelcastPlugin) server.getDistributedManager());
+    if (dManager == null || !dManager.isEnabled())
+      throw new OCommandExecutionException("OrientDB is not started in distributed mode");
 
-      final ODistributedStorage dStg = (ODistributedStorage) stg;
+    boolean installDatabase =
+        dManager.installDatabase(
+            true,
+            database,
+            false,
+            OGlobalConfiguration.DISTRIBUTED_BACKUP_TRY_INCREMENTAL_FIRST.getValueAsBoolean());
 
-      final OHazelcastPlugin dManager = (OHazelcastPlugin) dStg.getDistributedManager();
-      if (dManager == null || !dManager.isEnabled())
-        throw new OCommandExecutionException("OrientDB is not started in distributed mode");
-
-      boolean installDatabase =
-          dManager.installDatabase(
-              true,
-              database,
-              false,
-              OGlobalConfiguration.DISTRIBUTED_BACKUP_TRY_INCREMENTAL_FIRST.getValueAsBoolean());
-
-      ODocument document = new ODocument().field("result", installDatabase);
-      iResponse.send(
-          OHttpUtils.STATUS_OK_CODE, "OK", OHttpUtils.CONTENT_JSON, document.toJSON(""), null);
-    } finally {
-      db.close();
-    }
+    ODocument document = new ODocument().field("result", installDatabase);
+    iResponse.send(
+        OHttpUtils.STATUS_OK_CODE, "OK", OHttpUtils.CONTENT_JSON, document.toJSON(""), null);
   }
 
   public void changeConfig(final OServer server, final String database, final String jsonContent) {
