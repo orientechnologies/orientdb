@@ -7403,7 +7403,10 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     }
     if (indexToVersionMap.containsKey(indexName)) {
       final Map<Integer, Integer> uniqeIndexVersions = indexToVersionMap.get(indexName);
-      final int keyHash = key.hashCode();
+      int keyHash = 0; // as for null values in hash map
+      if (key != null) {
+        keyHash = key.hashCode();
+      }
       int version = DEFAULT_VERSION;
       if (uniqeIndexVersions.containsKey(keyHash)) {
         version = uniqeIndexVersions.get(keyHash);
