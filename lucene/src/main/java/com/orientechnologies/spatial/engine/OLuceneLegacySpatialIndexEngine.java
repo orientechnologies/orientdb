@@ -236,4 +236,15 @@ public class OLuceneLegacySpatialIndexEngine extends OLuceneSpatialIndexEngineAb
   public boolean isLegacy() {
     return true;
   }
+
+  @Override
+  public void updateUniqueIndexVersion(Object key) {
+    // TODO: [DR] implement
+  }
+
+  @Override
+  public int getUniqueIndexVersion(Object key) {
+    // TODO: [DR] implement
+    return 0;
+  }
 }

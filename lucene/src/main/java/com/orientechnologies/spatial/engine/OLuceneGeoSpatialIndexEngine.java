@@ -153,4 +153,15 @@ public class OLuceneGeoSpatialIndexEngine extends OLuceneSpatialIndexEngineAbstr
   public boolean isLegacy() {
     return false;
   }
+
+  @Override
+  public void updateUniqueIndexVersion(Object key) {
+    // TODO: [DR] implement
+  }
+
+  @Override
+  public int getUniqueIndexVersion(Object key) {
+    // TODO: [DR] implement
+    return 0;
+  }
 }
