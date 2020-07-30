@@ -843,6 +843,9 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     if (!blockedThreads.isEmpty() && blockedThreads.contains(thread)) {
       thread.interrupt();
 
+      OLogManager.instance().warnNoDb(this,
+          "Execution  of thread '%s' is interrupted", thread);
+
       throw new OStorageException(
           "Operations on thread '"
               + thread
