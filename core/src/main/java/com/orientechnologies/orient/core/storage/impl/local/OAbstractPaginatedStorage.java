@@ -301,8 +301,12 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
   protected AtomicOperationsTable atomicOperationsTable;
 
-  private final Map<String, Map<Integer, Integer>> indexToVersionMap = new HashMap<>();
+  private final Map<String, int[]> indexToVersionMap = new HashMap<>();
   private static final int DEFAULT_VERSION = 0;
+  private static final int CONCURRENT_DISTRIBUTED_TRANSACTIONS = 1000;
+  private static final int SAFETY_FILL_FACTOR = 1000;
+  private static final int DEFAULT_VERSION_ARRAY_SIZE =
+      CONCURRENT_DISTRIBUTED_TRANSACTIONS * SAFETY_FILL_FACTOR;
 
   public OAbstractPaginatedStorage(
       final String name, final String filePath, final String mode, final int id) {
@@ -7327,22 +7331,20 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     }
   }
 
-  public long getVersionForKey(final String indexName, final Object key) {
+  public int getVersionForKey(final String indexName, final Object key) {
     assert isIndexUniqueByName(indexName); // issue, if index entry is not there -> lifecycle broken
-    assert transaction != null;
 
     if (!isDistributedMode(lastMetadata)) {
       return DEFAULT_VERSION;
     }
 
     if (indexToVersionMap.containsKey(indexName)) {
-      final Map<Integer, Integer> uniqeIndexVersions = indexToVersionMap.get(indexName);
-      final int keyHash = key.hashCode();
-      if (uniqeIndexVersions.containsKey(keyHash)) {
-        return uniqeIndexVersions.get(keyHash);
+      final int[] uniqeIndexVersions = indexToVersionMap.get(indexName);
+      int keyHash = 0; // as for null values in hash map
+      if (key != null) {
+        keyHash = Math.abs(key.hashCode()) % DEFAULT_VERSION_ARRAY_SIZE;
       }
-      // FIXME: what to do?
-      return DEFAULT_VERSION;
+      return uniqeIndexVersions[keyHash];
     } else {
       OLogManager.instance()
           .error(
@@ -7380,7 +7382,11 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       return;
     }
     if (!indexToVersionMap.containsKey(indexName)) {
-      indexToVersionMap.put(indexName, new HashMap<>());
+      final int[] versions = new int[DEFAULT_VERSION_ARRAY_SIZE];
+      for (int i = 0; i < DEFAULT_VERSION_ARRAY_SIZE; i++) {
+        versions[i] = DEFAULT_VERSION;
+      }
+      indexToVersionMap.put(indexName, versions);
     }
   }
 
@@ -7402,17 +7408,13 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       return;
     }
     if (indexToVersionMap.containsKey(indexName)) {
-      final Map<Integer, Integer> uniqeIndexVersions = indexToVersionMap.get(indexName);
+      final int[] uniqeIndexVersions = indexToVersionMap.get(indexName);
       int keyHash = 0; // as for null values in hash map
       if (key != null) {
-        keyHash = key.hashCode();
+        keyHash = Math.abs(key.hashCode()) % DEFAULT_VERSION_ARRAY_SIZE;
       }
-      int version = DEFAULT_VERSION;
-      if (uniqeIndexVersions.containsKey(keyHash)) {
-        version = uniqeIndexVersions.get(keyHash);
-        version++;
-      }
-      uniqeIndexVersions.put(keyHash, version);
+      int version = uniqeIndexVersions[keyHash]++;
+      uniqeIndexVersions[keyHash] = version;
     } else {
       throw new IllegalStateException("Index " + indexName + " was not properly registered.");
     }
