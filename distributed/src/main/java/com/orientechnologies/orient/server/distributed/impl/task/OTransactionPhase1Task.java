@@ -2,7 +2,6 @@ package com.orientechnologies.orient.server.distributed.impl.task;
 
 import static com.orientechnologies.orient.server.distributed.impl.ONewDistributedTxContextImpl.Status.TIMEDOUT;
 
-import com.orientechnologies.common.util.OPair;
 import com.orientechnologies.orient.client.remote.message.OMessageHelper;
 import com.orientechnologies.orient.client.remote.message.tx.ORecordOperationRequest;
 import com.orientechnologies.orient.core.Orient;
@@ -20,6 +19,7 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
 import com.orientechnologies.orient.core.serialization.serializer.record.binary.ODocumentSerializerDeltaDistributed;
 import com.orientechnologies.orient.core.serialization.serializer.record.binary.ORecordSerializerNetworkDistributed;
+import com.orientechnologies.orient.core.serialization.serializer.record.binary.ORecordSerializerNetworkV37;
 import com.orientechnologies.orient.core.storage.ORecordDuplicatedException;
 import com.orientechnologies.orient.core.tx.OTransactionId;
 import com.orientechnologies.orient.core.tx.OTransactionInternal;
@@ -35,6 +35,7 @@ import com.orientechnologies.orient.server.distributed.impl.ODistributedDatabase
 import com.orientechnologies.orient.server.distributed.impl.ONewDistributedTxContextImpl;
 import com.orientechnologies.orient.server.distributed.impl.OTransactionOptimisticDistributed;
 import com.orientechnologies.orient.server.distributed.impl.task.transaction.OTransactionResultPayload;
+import com.orientechnologies.orient.server.distributed.impl.task.transaction.OTransactionUniqueKey;
 import com.orientechnologies.orient.server.distributed.impl.task.transaction.OTxConcurrentCreation;
 import com.orientechnologies.orient.server.distributed.impl.task.transaction.OTxConcurrentModification;
 import com.orientechnologies.orient.server.distributed.impl.task.transaction.OTxException;
@@ -67,7 +68,7 @@ public class OTransactionPhase1Task extends OAbstractReplicatedTask implements O
   // Contains the set of <index-name, index-key> for keys (belonging to a unique index) that are
   // changed with this tx.
   // If a null key is allowed by the index, index-key could be null.
-  private SortedSet<OPair<String, Object>> uniqueIndexKeys;
+  private SortedSet<OTransactionUniqueKey> uniqueIndexKeys;
   private OCommandDistributedReplicateRequest.QUORUM_TYPE quorumType =
       OCommandDistributedReplicateRequest.QUORUM_TYPE.WRITE;
   private transient int retryCount = 0;
@@ -260,7 +261,19 @@ public class OTransactionPhase1Task extends OAbstractReplicatedTask implements O
     }
 
     ORecordSerializerNetworkDistributed serializer = ORecordSerializerNetworkDistributed.INSTANCE;
-    OMessageHelper.readTxUniqueIndexKeys(uniqueIndexKeys, serializer, in);
+    readTxUniqueIndexKeys(uniqueIndexKeys, serializer, in);
+  }
+
+  public static void readTxUniqueIndexKeys(
+      SortedSet<OTransactionUniqueKey> uniqueIndexKeys,
+      ORecordSerializerNetworkV37 serializer,
+      DataInput in)
+      throws IOException {
+    int size = in.readInt();
+    for (int i = 0; i < size; i++) {
+      OTransactionUniqueKey entry = OTransactionUniqueKey.read(in, serializer);
+      uniqueIndexKeys.add(entry);
+    }
   }
 
   private void convert(ODatabaseDocumentInternal database) {
@@ -332,7 +345,18 @@ public class OTransactionPhase1Task extends OAbstractReplicatedTask implements O
     }
 
     ORecordSerializerNetworkDistributed serializer = ORecordSerializerNetworkDistributed.INSTANCE;
-    OMessageHelper.writeTxUniqueIndexKeys(uniqueIndexKeys, serializer, out);
+    writeTxUniqueIndexKeys(uniqueIndexKeys, serializer, out);
+  }
+
+  public static void writeTxUniqueIndexKeys(
+      SortedSet<OTransactionUniqueKey> uniqueIndexKeys,
+      ORecordSerializerNetworkV37 serializer,
+      DataOutput out)
+      throws IOException {
+    out.writeInt(uniqueIndexKeys.size());
+    for (OTransactionUniqueKey pair : uniqueIndexKeys) {
+      pair.write(serializer, out);
+    }
   }
 
   @Override
@@ -353,10 +377,10 @@ public class OTransactionPhase1Task extends OAbstractReplicatedTask implements O
                   .isUnique()) {
                 quorumType = OCommandDistributedReplicateRequest.QUORUM_TYPE.WRITE_ALL_MASTERS;
                 for (Object keyWithChange : changes.changesPerKey.keySet()) {
-                  uniqueIndexKeys.add(new OPair<>(index, keyWithChange));
+                  uniqueIndexKeys.add(new OTransactionUniqueKey(index, keyWithChange, 0));
                 }
                 if (!changes.nullKeyChanges.entries.isEmpty()) {
-                  uniqueIndexKeys.add(new OPair<>(index, null));
+                  uniqueIndexKeys.add(new OTransactionUniqueKey(index, null, 0));
                 }
               }
             });
@@ -450,7 +474,7 @@ public class OTransactionPhase1Task extends OAbstractReplicatedTask implements O
   }
 
   @Override
-  public SortedSet<OPair<String, Object>> getUniqueKeys() {
+  public SortedSet<OTransactionUniqueKey> getUniqueKeys() {
     return uniqueIndexKeys;
   }
 }
