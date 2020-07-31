@@ -21,7 +21,7 @@ public class PaginatedClusterStateV1SetSizePOTest {
     try {
       final OPointer pointer = byteBufferPool.acquireDirect(false);
       final OCachePointer cachePointer = new OCachePointer(pointer, byteBufferPool, 0, 0);
-      final OCacheEntry entry = new OCacheEntryImpl(0, 0, cachePointer);
+      final OCacheEntry entry = new OCacheEntryImpl(0, 0, cachePointer, false);
 
       OPaginatedClusterStateV1 clusterState = new OPaginatedClusterStateV1(entry);
       clusterState.setSize(12);
@@ -31,7 +31,7 @@ public class PaginatedClusterStateV1SetSizePOTest {
       final OPointer restoredPointer = byteBufferPool.acquireDirect(false);
       final OCachePointer restoredCachePointer =
           new OCachePointer(restoredPointer, byteBufferPool, 0, 0);
-      final OCacheEntry restoredCacheEntry = new OCacheEntryImpl(0, 0, restoredCachePointer);
+      final OCacheEntry restoredCacheEntry = new OCacheEntryImpl(0, 0, restoredCachePointer, false);
 
       final ByteBuffer originalBuffer = cachePointer.getBufferDuplicate();
       final ByteBuffer restoredBuffer = restoredCachePointer.getBufferDuplicate();
@@ -72,7 +72,7 @@ public class PaginatedClusterStateV1SetSizePOTest {
     try {
       final OPointer pointer = byteBufferPool.acquireDirect(false);
       final OCachePointer cachePointer = new OCachePointer(pointer, byteBufferPool, 0, 0);
-      final OCacheEntry entry = new OCacheEntryImpl(0, 0, cachePointer);
+      final OCacheEntry entry = new OCacheEntryImpl(0, 0, cachePointer, false);
 
       OPaginatedClusterStateV1 clusterState = new OPaginatedClusterStateV1(entry);
       clusterState.setSize(12);

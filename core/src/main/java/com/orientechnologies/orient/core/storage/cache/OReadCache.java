@@ -63,6 +63,12 @@ public interface OReadCache {
       boolean verifyChecksums)
       throws IOException;
 
+  OCacheEntry silentLoadForRead(
+      final long extFileId,
+      final int pageIndex,
+      final OWriteCache writeCache,
+      final boolean verifyChecksums);
+
   void releaseFromRead(OCacheEntry cacheEntry, OWriteCache writeCache);
 
   void releaseFromWrite(OCacheEntry cacheEntry, OWriteCache writeCache, boolean changed);

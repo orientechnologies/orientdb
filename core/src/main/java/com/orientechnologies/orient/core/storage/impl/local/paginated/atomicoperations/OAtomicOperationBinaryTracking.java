@@ -258,7 +258,9 @@ final class OAtomicOperationBinaryTracking implements OAtomicOperation {
     changesContainer.maxNewPageIndex = filledUpTo;
     pageChangesContainer.delegate =
         new OCacheEntryImpl(
-            fileId, (int) filledUpTo, new OCachePointer(null, null, fileId, (int) filledUpTo));
+            fileId, (int) filledUpTo, new OCachePointer(null, null, fileId,
+            (int) filledUpTo), false);
+
     return pageChangesContainer;
   }
 

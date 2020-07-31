@@ -34,15 +34,24 @@ public final class OCacheEntryImpl implements OCacheEntry {
 
   private LRUList container;
 
-  /** Protected by page lock inside disk cache */
+  /**
+   * Protected by page lock inside disk cache
+   */
   private boolean allocatedPage;
 
-  /** Protected by page lock inside disk cache */
+  /**
+   * Protected by page lock inside disk cache
+   */
   private List<PageOperationRecord> pageOperationRecords;
 
   private int hash;
+  private final boolean insideCache;
 
-  public OCacheEntryImpl(final long fileId, final int pageIndex, final OCachePointer dataPointer) {
+  public OCacheEntryImpl(
+      final long fileId,
+      final int pageIndex,
+      final OCachePointer dataPointer,
+      final boolean insideCache) {
     if (fileId < 0) {
       throw new IllegalStateException("File id has invalid value " + fileId);
     }
@@ -55,6 +64,7 @@ public final class OCacheEntryImpl implements OCacheEntry {
     this.pageIndex = pageIndex;
 
     this.dataPointer = dataPointer;
+    this.insideCache = insideCache;
   }
 
   @Override
@@ -291,13 +301,24 @@ public final class OCacheEntryImpl implements OCacheEntry {
   }
 
   @Override
+  public boolean insideCache() {
+    return insideCache;
+  }
+
+  @Override
   public boolean equals(Object o) {
-    if (this == o) return true;
-    if (o == null || getClass() != o.getClass()) return false;
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
 
     OCacheEntryImpl that = (OCacheEntryImpl) o;
 
-    if (fileId != that.fileId) return false;
+    if (fileId != that.fileId) {
+      return false;
+    }
     return pageIndex == that.pageIndex;
   }
 

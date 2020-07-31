@@ -3,6 +3,7 @@ package com.orientechnologies.orient.core.storage.cache.chm;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+
 import com.orientechnologies.common.directmemory.OByteBufferPool;
 import com.orientechnologies.common.directmemory.ODirectMemoryAllocator;
 import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
@@ -677,7 +678,7 @@ public class WTinyLFUPolicyTest {
       OCacheEntry[] cacheEntries, OCachePointer[] cachePointers, OByteBufferPool pool) {
     for (int i = 0; i < cacheEntries.length; i++) {
       final OCachePointer cachePointer = new OCachePointer(pool.acquireDirect(true), pool, 1, i);
-      final OCacheEntry cacheEntry = new OCacheEntryImpl(1, i, cachePointer);
+      final OCacheEntry cacheEntry = new OCacheEntryImpl(1, i, cachePointer, false);
 
       cachePointer.incrementReadersReferrer();
       cacheEntries[i] = cacheEntry;
