@@ -1582,11 +1582,14 @@ public final class CASDiskWriteAheadLog implements OWriteAheadLog {
 
     fileCloseQueueSize.set(0);
 
-    if (callFsync) {
-      walFile.force(true);
+    if (walFile != null) {
+      if (callFsync) {
+        walFile.force(true);
+      }
+
+      walFile.close();
     }
 
-    walFile.close();
     masterRecordLSNHolder.close();
     segments.clear();
     fileCloseQueue.clear();
@@ -2217,7 +2220,7 @@ public final class CASDiskWriteAheadLog implements OWriteAheadLog {
               OLogManager.instance().errorNoDb(this, "WAL write was interrupted", e);
             }
 
-            assert walFile.position() == currentPosition;
+            assert walFile == null || walFile.position() == currentPosition;
 
             writeFuture =
                 writeExecutor.submit(
@@ -2255,7 +2258,7 @@ public final class CASDiskWriteAheadLog implements OWriteAheadLog {
                               }
                             }
 
-                            if (callFsync) {
+                            if (callFsync && walFile != null) {
                               walFile.force(true);
                             }
 
