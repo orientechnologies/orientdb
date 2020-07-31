@@ -398,11 +398,11 @@ public final class CASDiskWriteAheadLog implements OWriteAheadLog {
     writeBufferTwo = writeBufferPointerTwo.getNativeByteBuffer().order(ByteOrder.nativeOrder());
     assert writeBufferTwo.position() == 0;
 
-    log(new EmptyWALRecord());
-
     this.recordsWriterFuture =
         commitExecutor.scheduleWithFixedDelay(
             new RecordsWriter(false, false), commitDelay, commitDelay, TimeUnit.MILLISECONDS);
+
+    log(new EmptyWALRecord());
 
     flush();
   }
@@ -1188,6 +1188,25 @@ public final class CASDiskWriteAheadLog implements OWriteAheadLog {
   }
 
   public OLogSequenceNumber log(final WriteableWALRecord writeableRecord) {
+    if (recordsWriterFuture.isDone()) {
+      try {
+        recordsWriterFuture.get();
+      } catch (final InterruptedException interruptedException) {
+        throw OException.wrapException(
+            new OStorageException(
+                "WAL records write task for storage '" + storageName + "'  was interrupted"),
+            interruptedException);
+      } catch (ExecutionException executionException) {
+        throw OException.wrapException(
+            new OStorageException(
+                "WAL records write task for storage '" + storageName + "' was finished with error"),
+            executionException);
+      }
+
+      throw new OStorageException(
+          "WAL records write task for storage '" + storageName + "' was unexpectedly finished");
+    }
+
     final long segSize;
     final long size;
     final OLogSequenceNumber recordLSN;
@@ -1563,11 +1582,14 @@ public final class CASDiskWriteAheadLog implements OWriteAheadLog {
 
     fileCloseQueueSize.set(0);
 
-    if (callFsync) {
-      walFile.force(true);
+    if (walFile != null) {
+      if (callFsync) {
+        walFile.force(true);
+      }
+
+      walFile.close();
     }
 
-    walFile.close();
     masterRecordLSNHolder.close();
     segments.clear();
     fileCloseQueue.clear();
@@ -2198,7 +2220,7 @@ public final class CASDiskWriteAheadLog implements OWriteAheadLog {
               OLogManager.instance().errorNoDb(this, "WAL write was interrupted", e);
             }
 
-            assert walFile.position() == currentPosition;
+            assert walFile == null || walFile.position() == currentPosition;
 
             writeFuture =
                 writeExecutor.submit(
@@ -2236,7 +2258,7 @@ public final class CASDiskWriteAheadLog implements OWriteAheadLog {
                               }
                             }
 
-                            if (callFsync) {
+                            if (callFsync && walFile != null) {
                               walFile.force(true);
                             }
 
