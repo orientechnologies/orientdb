@@ -32,7 +32,6 @@ import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.profiler.OAbstractProfiler;
 import com.orientechnologies.common.profiler.OProfiler;
 import com.orientechnologies.common.util.OCallable;
-import com.orientechnologies.common.util.OPair;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
@@ -67,6 +66,7 @@ import com.orientechnologies.orient.server.distributed.impl.lock.OLockManager;
 import com.orientechnologies.orient.server.distributed.impl.lock.OLockManagerImpl;
 import com.orientechnologies.orient.server.distributed.impl.task.OLockKeySource;
 import com.orientechnologies.orient.server.distributed.impl.task.OUnreachableServerLocalTask;
+import com.orientechnologies.orient.server.distributed.impl.task.transaction.OTransactionUniqueKey;
 import com.orientechnologies.orient.server.distributed.task.OAbstractRemoteTask;
 import com.orientechnologies.orient.server.distributed.task.ORemoteTask;
 import com.orientechnologies.orient.server.hazelcast.OHazelcastPlugin;
@@ -366,7 +366,7 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
       totalReceivedRequests.incrementAndGet();
       if (task instanceof OLockKeySource) {
         SortedSet<ORID> rids = ((OLockKeySource) task).getRids();
-        SortedSet<OPair<String, Object>> uniqueKeys = ((OLockKeySource) task).getUniqueKeys();
+        SortedSet<OTransactionUniqueKey> uniqueKeys = ((OLockKeySource) task).getUniqueKeys();
         OTransactionId txId = ((OLockKeySource) task).getTransactionId();
         this.lockManager.lock(
             rids,
@@ -1363,7 +1363,7 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
 
   public List<OLockGuard> localLock(OLockKeySource keySource) {
     SortedSet<ORID> rids = keySource.getRids();
-    SortedSet<OPair<String, Object>> uniqueKeys = keySource.getUniqueKeys();
+    SortedSet<OTransactionUniqueKey> uniqueKeys = keySource.getUniqueKeys();
     OTransactionId txId = keySource.getTransactionId();
     LinkedBlockingQueue<List<OLockGuard>> latch = new LinkedBlockingQueue<List<OLockGuard>>(1);
     this.lockManager.lock(

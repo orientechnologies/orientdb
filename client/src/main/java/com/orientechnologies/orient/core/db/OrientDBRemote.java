@@ -65,10 +65,11 @@ public class OrientDBRemote implements OrientDBInternal {
 
   public OrientDBRemote(String[] hosts, OrientDBConfig configurations, Orient orient) {
     super();
-    timer = new Timer();
+
     this.hosts = hosts;
     this.orient = orient;
     this.configurations = configurations != null ? configurations : OrientDBConfig.defaultConfig();
+    timer = new Timer("Remote background operations timer", true);
     connectionManager =
         new ORemoteConnectionManager(this.configurations.getConfigurations(), timer);
     orient.addOrientDB(this);
@@ -363,7 +364,9 @@ public class OrientDBRemote implements OrientDBInternal {
   public void internalClose() {
     if (!open) return;
 
-    timer.cancel();
+    if (timer != null) {
+      timer.cancel();
+    }
 
     final List<OStorageRemote> storagesCopy;
     synchronized (this) {

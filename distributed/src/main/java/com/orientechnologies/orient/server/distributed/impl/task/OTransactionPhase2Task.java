@@ -3,8 +3,6 @@ package com.orientechnologies.orient.server.distributed.impl.task;
 import static com.orientechnologies.orient.core.config.OGlobalConfiguration.DISTRIBUTED_CONCURRENT_TX_MAX_AUTORETRY;
 
 import com.orientechnologies.common.log.OLogManager;
-import com.orientechnologies.common.util.OPair;
-import com.orientechnologies.orient.client.remote.message.OMessageHelper;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
@@ -12,6 +10,7 @@ import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.serialization.serializer.record.binary.ORecordSerializerNetworkDistributed;
+import com.orientechnologies.orient.core.serialization.serializer.record.binary.ORecordSerializerNetworkV37;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
 import com.orientechnologies.orient.core.tx.OTransactionId;
 import com.orientechnologies.orient.server.OServer;
@@ -19,6 +18,7 @@ import com.orientechnologies.orient.server.distributed.ODistributedRequestId;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
 import com.orientechnologies.orient.server.distributed.ORemoteTaskFactory;
 import com.orientechnologies.orient.server.distributed.impl.ODatabaseDocumentDistributed;
+import com.orientechnologies.orient.server.distributed.impl.task.transaction.OTransactionUniqueKey;
 import com.orientechnologies.orient.server.distributed.task.OAbstractReplicatedTask;
 import java.io.DataInput;
 import java.io.DataOutput;
@@ -34,7 +34,7 @@ public class OTransactionPhase2Task extends OAbstractReplicatedTask implements O
   private ODistributedRequestId firstPhaseId;
   private boolean success;
   private SortedSet<ORID> involvedRids;
-  private SortedSet<OPair<String, Object>> uniqueIndexKeys = new TreeSet<>();
+  private SortedSet<OTransactionUniqueKey> uniqueIndexKeys = new TreeSet<>();
   private boolean hasResponse = false;
   private volatile int retryCount = 0;
 
@@ -42,7 +42,7 @@ public class OTransactionPhase2Task extends OAbstractReplicatedTask implements O
       ODistributedRequestId firstPhaseId,
       boolean success,
       SortedSet<ORID> rids,
-      SortedSet<OPair<String, Object>> uniqueIndexKeys,
+      SortedSet<OTransactionUniqueKey> uniqueIndexKeys,
       OLogSequenceNumber lsn,
       OTransactionId transactionId) {
     this.firstPhaseId = firstPhaseId;
@@ -83,7 +83,19 @@ public class OTransactionPhase2Task extends OAbstractReplicatedTask implements O
       lastLSN = null;
     }
     ORecordSerializerNetworkDistributed serializer = ORecordSerializerNetworkDistributed.INSTANCE;
-    OMessageHelper.readTxUniqueIndexKeys(uniqueIndexKeys, serializer, in);
+    readTxUniqueIndexKeys(uniqueIndexKeys, serializer, in);
+  }
+
+  public static void readTxUniqueIndexKeys(
+      SortedSet<OTransactionUniqueKey> uniqueIndexKeys,
+      ORecordSerializerNetworkV37 serializer,
+      DataInput in)
+      throws IOException {
+    int size = in.readInt();
+    for (int i = 0; i < size; i++) {
+      OTransactionUniqueKey entry = OTransactionUniqueKey.read(in, serializer);
+      uniqueIndexKeys.add(entry);
+    }
   }
 
   @Override
@@ -102,7 +114,18 @@ public class OTransactionPhase2Task extends OAbstractReplicatedTask implements O
       lastLSN.toStream(out);
     }
     ORecordSerializerNetworkDistributed serializer = ORecordSerializerNetworkDistributed.INSTANCE;
-    OMessageHelper.writeTxUniqueIndexKeys(uniqueIndexKeys, serializer, out);
+    writeTxUniqueIndexKeys(uniqueIndexKeys, serializer, out);
+  }
+
+  public static void writeTxUniqueIndexKeys(
+      SortedSet<OTransactionUniqueKey> uniqueIndexKeys,
+      ORecordSerializerNetworkV37 serializer,
+      DataOutput out)
+      throws IOException {
+    out.writeInt(uniqueIndexKeys.size());
+    for (OTransactionUniqueKey pair : uniqueIndexKeys) {
+      pair.write(serializer, out);
+    }
   }
 
   @Override
@@ -229,7 +252,7 @@ public class OTransactionPhase2Task extends OAbstractReplicatedTask implements O
   }
 
   @Override
-  public SortedSet<OPair<String, Object>> getUniqueKeys() {
+  public SortedSet<OTransactionUniqueKey> getUniqueKeys() {
     return uniqueIndexKeys;
   }
 

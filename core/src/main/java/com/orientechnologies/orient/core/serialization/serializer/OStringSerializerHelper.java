@@ -91,93 +91,101 @@ public abstract class OStringSerializerHelper {
         }
         return iValue.toString();
 
-      case INTEGER: {
-        if (iValue instanceof Integer) {
-          return iValue;
+      case INTEGER:
+        {
+          if (iValue instanceof Integer) {
+            return iValue;
+          }
+          final String valueString = OIOUtils.getStringContent(iValue);
+          if (valueString.isEmpty()) {
+            return null;
+          }
+          return Integer.parseInt(valueString);
         }
-        final String valueString = OIOUtils.getStringContent(iValue);
-        if (valueString.isEmpty()) {
-          return null;
-        }
-        return Integer.parseInt(valueString);
-      }
 
-      case BOOLEAN: {
-        if (iValue instanceof Boolean) {
-          return iValue;
+      case BOOLEAN:
+        {
+          if (iValue instanceof Boolean) {
+            return iValue;
+          }
+          final String valueString = OIOUtils.getStringContent(iValue);
+          if (valueString.isEmpty()) {
+            return null;
+          }
+          return Boolean.parseBoolean(valueString);
         }
-        final String valueString = OIOUtils.getStringContent(iValue);
-        if (valueString.isEmpty()) {
-          return null;
-        }
-        return Boolean.parseBoolean(valueString);
-      }
 
-      case DECIMAL: {
-        if (iValue instanceof BigDecimal) {
-          return iValue;
+      case DECIMAL:
+        {
+          if (iValue instanceof BigDecimal) {
+            return iValue;
+          }
+          final String valueString = OIOUtils.getStringContent(iValue);
+          if (valueString.isEmpty()) {
+            return null;
+          }
+          return new BigDecimal(valueString);
         }
-        final String valueString = OIOUtils.getStringContent(iValue);
-        if (valueString.isEmpty()) {
-          return null;
-        }
-        return new BigDecimal(valueString);
-      }
 
-      case FLOAT: {
-        if (iValue instanceof Float) {
-          return iValue;
+      case FLOAT:
+        {
+          if (iValue instanceof Float) {
+            return iValue;
+          }
+          final String valueString = OIOUtils.getStringContent(iValue);
+          if (valueString.isEmpty()) {
+            return null;
+          }
+          return Float.parseFloat(valueString);
         }
-        final String valueString = OIOUtils.getStringContent(iValue);
-        if (valueString.isEmpty()) {
-          return null;
-        }
-        return Float.parseFloat(valueString);
-      }
 
-      case LONG: {
-        if (iValue instanceof Long) {
-          return iValue;
+      case LONG:
+        {
+          if (iValue instanceof Long) {
+            return iValue;
+          }
+          final String valueString = OIOUtils.getStringContent(iValue);
+          if (valueString.isEmpty()) {
+            return null;
+          }
+          return Long.parseLong(valueString);
         }
-        final String valueString = OIOUtils.getStringContent(iValue);
-        if (valueString.isEmpty()) {
-          return null;
-        }
-        return Long.parseLong(valueString);
-      }
 
-      case DOUBLE: {
-        if (iValue instanceof Double) {
-          return iValue;
+      case DOUBLE:
+        {
+          if (iValue instanceof Double) {
+            return iValue;
+          }
+          final String valueString = OIOUtils.getStringContent(iValue);
+          if (valueString.isEmpty()) {
+            return null;
+          }
+          return Double.parseDouble(valueString);
         }
-        final String valueString = OIOUtils.getStringContent(iValue);
-        if (valueString.isEmpty()) {
-          return null;
-        }
-        return Double.parseDouble(valueString);
-      }
 
-      case SHORT: {
-        if (iValue instanceof Short) {
-          return iValue;
+      case SHORT:
+        {
+          if (iValue instanceof Short) {
+            return iValue;
+          }
+          final String valueString = OIOUtils.getStringContent(iValue);
+          if (valueString.isEmpty()) {
+            return null;
+          }
+          return Short.parseShort(valueString);
         }
-        final String valueString = OIOUtils.getStringContent(iValue);
-        if (valueString.isEmpty()) {
-          return null;
-        }
-        return Short.parseShort(valueString);
-      }
 
-      case BYTE: {
-        if (iValue instanceof Byte) {
-          return iValue;
+      case BYTE:
+        {
+          if (iValue instanceof Byte) {
+            return iValue;
+          }
+          final String valueString = OIOUtils.getStringContent(iValue);
+          if (valueString.isEmpty()) {
+            return null;
+          }
+          return Byte.parseByte(valueString);
         }
-        final String valueString = OIOUtils.getStringContent(iValue);
-        if (valueString.isEmpty()) {
-          return null;
-        }
-        return Byte.parseByte(valueString);
-      }
 
       case BINARY:
         return getBinaryContent(iValue);
