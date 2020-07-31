@@ -107,4 +107,6 @@ public interface OCacheEntry {
   void clearPageOperations();
 
   void addPageOperationRecord(PageOperationRecord pageOperationRecord);
+
+  boolean insideCache();
 }

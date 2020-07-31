@@ -189,6 +189,11 @@ public class OCacheEntryChanges implements OCacheEntry {
   }
 
   @Override
+  public boolean insideCache() {
+    return delegate.insideCache();
+  }
+
+  @Override
   public OCacheEntry getNext() {
     throw new UnsupportedOperationException();
   }
