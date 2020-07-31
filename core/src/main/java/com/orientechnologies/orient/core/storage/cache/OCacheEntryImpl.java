@@ -34,14 +34,10 @@ public final class OCacheEntryImpl implements OCacheEntry {
 
   private LRUList container;
 
-  /**
-   * Protected by page lock inside disk cache
-   */
+  /** Protected by page lock inside disk cache */
   private boolean allocatedPage;
 
-  /**
-   * Protected by page lock inside disk cache
-   */
+  /** Protected by page lock inside disk cache */
   private List<PageOperationRecord> pageOperationRecords;
 
   private int hash;

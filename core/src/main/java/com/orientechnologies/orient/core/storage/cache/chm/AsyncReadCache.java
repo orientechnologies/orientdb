@@ -236,8 +236,8 @@ public final class AsyncReadCache implements OReadCache {
                       }
 
                       cacheSize.incrementAndGet();
-                      return new OCacheEntryImpl(page.getFileId(), page.getPageIndex(), pointer,
-                          true);
+                      return new OCacheEntryImpl(
+                          page.getFileId(), page.getPageIndex(), pointer, true);
                     } catch (final IOException e) {
                       throw OException.wrapException(
                           new OStorageException(
@@ -285,8 +285,7 @@ public final class AsyncReadCache implements OReadCache {
     final OCachePointer cachePointer = new OCachePointer(pointer, bufferPool, fileId, pageIndex);
     cachePointer.incrementReadersReferrer();
 
-    final OCacheEntry cacheEntry = new OCacheEntryImpl(fileId, pageIndex, cachePointer,
-        true);
+    final OCacheEntry cacheEntry = new OCacheEntryImpl(fileId, pageIndex, cachePointer, true);
     cacheEntry.acquireEntry();
 
     final OCacheEntry oldCacheEntry = data.putIfAbsent(pageKey, cacheEntry);
