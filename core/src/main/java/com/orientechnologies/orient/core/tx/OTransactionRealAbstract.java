@@ -266,7 +266,7 @@ public abstract class OTransactionRealAbstract extends OTransactionAbstract
   }
 
   public OTransactionIndexChanges getIndexChangesInternal(final String indexName) {
-    if (getDatabase().getStorage().isRemote()) return null;
+    if (getDatabase().isRemote()) return null;
     return getIndexChanges(indexName);
   }
 

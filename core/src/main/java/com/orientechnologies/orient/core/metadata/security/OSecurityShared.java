@@ -1045,7 +1045,7 @@ public class OSecurityShared implements OSecurityInternal {
 
     setupPredicateSecurity(session);
 
-    if (!((ODatabaseDocumentInternal) session).getStorage().isRemote()) {
+    if (!((ODatabaseDocumentInternal) session).isRemote()) {
       initPredicateSecurityOptimizations(session);
     }
   }
