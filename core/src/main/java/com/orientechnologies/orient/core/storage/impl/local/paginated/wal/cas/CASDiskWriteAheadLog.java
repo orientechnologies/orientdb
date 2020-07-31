@@ -398,11 +398,11 @@ public final class CASDiskWriteAheadLog implements OWriteAheadLog {
     writeBufferTwo = writeBufferPointerTwo.getNativeByteBuffer().order(ByteOrder.nativeOrder());
     assert writeBufferTwo.position() == 0;
 
-    log(new EmptyWALRecord());
-
     this.recordsWriterFuture =
         commitExecutor.scheduleWithFixedDelay(
             new RecordsWriter(false, false), commitDelay, commitDelay, TimeUnit.MILLISECONDS);
+
+    log(new EmptyWALRecord());
 
     flush();
   }
