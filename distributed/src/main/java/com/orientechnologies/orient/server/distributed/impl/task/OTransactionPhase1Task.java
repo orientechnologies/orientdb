@@ -148,7 +148,8 @@ public class OTransactionPhase1Task extends OAbstractReplicatedTask implements O
       iManager.messageAfterOp("prepare1Phase", requestId);
     }
 
-    OTransactionOptimisticDistributed tx = new OTransactionOptimisticDistributed(database, ops);
+    OTransactionOptimisticDistributed tx =
+        new OTransactionOptimisticDistributed(database, ops, uniqueIndexKeys);
     // No need to increase the lock timeout here with the retry because this retries are not
     // deadlock retries
     OTransactionResultPayload res1;
@@ -375,12 +376,14 @@ public class OTransactionPhase1Task extends OAbstractReplicatedTask implements O
                   .resolveAssociatedIndex(
                       index, database.getMetadata().getIndexManagerInternal(), database)
                   .isUnique()) {
+                // TODO: resolve version
+                int version = 0;
                 quorumType = OCommandDistributedReplicateRequest.QUORUM_TYPE.WRITE_ALL_MASTERS;
                 for (Object keyWithChange : changes.changesPerKey.keySet()) {
-                  uniqueIndexKeys.add(new OTransactionUniqueKey(index, keyWithChange, 0));
+                  uniqueIndexKeys.add(new OTransactionUniqueKey(index, keyWithChange, version));
                 }
                 if (!changes.nullKeyChanges.entries.isEmpty()) {
-                  uniqueIndexKeys.add(new OTransactionUniqueKey(index, null, 0));
+                  uniqueIndexKeys.add(new OTransactionUniqueKey(index, null, version));
                 }
               }
             });
