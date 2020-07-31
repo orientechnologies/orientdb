@@ -117,5 +117,4 @@ public class OTransactionUniqueKey implements Comparable<OTransactionUniqueKey> 
     if (version != other.version) return false;
     return true;
   }
-  
 }
