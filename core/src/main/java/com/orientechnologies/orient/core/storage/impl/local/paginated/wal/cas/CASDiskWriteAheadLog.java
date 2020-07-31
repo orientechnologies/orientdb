@@ -1188,6 +1188,25 @@ public final class CASDiskWriteAheadLog implements OWriteAheadLog {
   }
 
   public OLogSequenceNumber log(final WriteableWALRecord writeableRecord) {
+    if (recordsWriterFuture.isDone()) {
+      try {
+        recordsWriterFuture.get();
+      } catch (final InterruptedException interruptedException) {
+        throw OException.wrapException(
+            new OStorageException(
+                "WAL records write task for storage '" + storageName + "'  was interrupted"),
+            interruptedException);
+      } catch (ExecutionException executionException) {
+        throw OException.wrapException(
+            new OStorageException(
+                "WAL records write task for storage '" + storageName + "' was finished with error"),
+            executionException);
+      }
+
+      throw new OStorageException(
+          "WAL records write task for storage '" + storageName + "' was unexpectedly finished");
+    }
+
     final long segSize;
     final long size;
     final OLogSequenceNumber recordLSN;
