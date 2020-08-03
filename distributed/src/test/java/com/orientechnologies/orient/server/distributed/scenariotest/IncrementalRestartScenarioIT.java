@@ -28,7 +28,7 @@ import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.orientechnologies.orient.server.distributed.OModifiableDistributedConfiguration;
-import com.orientechnologies.orient.server.distributed.ServerRun;
+import com.orientechnologies.orient.test.ServerRun;
 import com.orientechnologies.orient.server.hazelcast.OHazelcastPlugin;
 import java.util.LinkedList;
 import java.util.List;

@@ -17,6 +17,7 @@ package com.orientechnologies.orient.server.distributed;
 
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
+import com.orientechnologies.orient.test.ServerRun;
 import junit.framework.Assert;
 import org.junit.Test;
 

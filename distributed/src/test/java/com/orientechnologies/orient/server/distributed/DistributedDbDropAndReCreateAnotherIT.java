@@ -18,6 +18,7 @@ package com.orientechnologies.orient.server.distributed;
 import com.orientechnologies.orient.core.db.ODatabaseType;
 import com.orientechnologies.orient.core.db.OrientDBConfig;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
+import com.orientechnologies.orient.test.ServerRun;
 import org.junit.Test;
 
 /** Distributed test on drop + recreate database with a different name. */

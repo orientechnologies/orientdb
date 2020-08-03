@@ -2,6 +2,7 @@ package com.orientechnologies.orient.server.distributed;
 
 import com.orientechnologies.orient.core.db.ODatabasePool;
 import com.orientechnologies.orient.core.db.OrientDBConfig;
+import com.orientechnologies.orient.test.ServerRun;
 
 /**
  * Test case to check the right management of distributed exception while a server is starting.

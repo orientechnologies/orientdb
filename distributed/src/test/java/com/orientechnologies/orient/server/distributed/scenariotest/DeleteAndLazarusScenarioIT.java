@@ -27,7 +27,7 @@ import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.server.distributed.ODistributedConfiguration;
-import com.orientechnologies.orient.server.distributed.ServerRun;
+import com.orientechnologies.orient.test.ServerRun;
 import com.orientechnologies.orient.server.hazelcast.OHazelcastPlugin;
 import org.junit.Ignore;
 import org.junit.Test;

@@ -20,6 +20,7 @@
 package com.orientechnologies.orient.server.distributed;
 
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
+import com.orientechnologies.orient.test.ServerRun;
 import org.junit.Ignore;
 import org.junit.Test;
 

@@ -33,7 +33,7 @@ import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
-import com.orientechnologies.orient.server.distributed.ServerRun;
+import com.orientechnologies.orient.test.ServerRun;
 import java.io.IOException;
 import java.util.Date;
 import java.util.LinkedList;

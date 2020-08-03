@@ -21,6 +21,8 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.concurrent.Callable;
 import java.util.concurrent.atomic.AtomicInteger;
+
+import com.orientechnologies.orient.test.ServerRun;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -59,7 +61,7 @@ public class OneNodeFrozenIT extends AbstractServerClusterTxTest {
     if (serverStarted == 0) {
       // INSTALL ON FIRST SERVER ONLY THE SERVER MONITOR TO CHECK IF HAS BEEN RESTARTED
       server
-          .server
+          .getServerInstance()
           .getDistributedManager()
           .registerLifecycleListener(
               new ODistributedLifecycleListener() {

@@ -5,7 +5,7 @@ import static org.junit.Assert.assertEquals;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.server.distributed.AbstractServerClusterTest;
-import com.orientechnologies.orient.server.distributed.ServerRun;
+import com.orientechnologies.orient.test.ServerRun;
 import org.junit.Test;
 
 public class AlterClassTest extends AbstractServerClusterTest {

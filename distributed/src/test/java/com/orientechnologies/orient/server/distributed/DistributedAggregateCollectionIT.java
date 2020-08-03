@@ -32,7 +32,7 @@ public class DistributedAggregateCollectionIT extends AbstractServerClusterTest 
 
   @Override
   protected void executeTest() throws Exception {
-    OrientDB orientDB = serverInstance.get(0).server.getContext();
+    OrientDB orientDB = serverInstance.get(0).getServerInstance().getContext();
     ODatabaseDocument db = orientDB.open(getDatabaseName(), "admin", "admin");
 
     try {

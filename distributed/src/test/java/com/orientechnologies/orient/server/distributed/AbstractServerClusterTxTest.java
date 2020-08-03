@@ -22,6 +22,8 @@ import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
 import com.orientechnologies.orient.core.exception.OTransactionException;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.ORecordDuplicatedException;
+import com.orientechnologies.orient.test.ServerRun;
+
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.Set;

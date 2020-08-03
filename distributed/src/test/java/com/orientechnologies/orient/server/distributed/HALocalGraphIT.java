@@ -40,6 +40,8 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
+
+import com.orientechnologies.orient.test.ServerRun;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -108,12 +110,12 @@ public class HALocalGraphIT extends AbstractServerClusterTxTest {
 
                           if (serverInstance
                                   .get(SERVERS - 1)
-                                  .server
+                                  .getServerInstance()
                                   .getPluginByClass(OHazelcastPlugin.class)
                               != null)
                             serverInstance
                                 .get(SERVERS - 1)
-                                .server
+                                .getServerInstance()
                                 .getPluginByClass(OHazelcastPlugin.class)
                                 .waitUntilNodeOnline();
 

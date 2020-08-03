@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.orientechnologies.orient.server.distributed;
+package com.orientechnologies.orient.test;
 
 import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.instance.HazelcastInstanceImpl;
@@ -38,9 +38,9 @@ import java.io.IOException;
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
  */
 public class ServerRun {
-  protected final String serverId;
-  protected String rootPath;
-  protected OServer server;
+  private final String serverId;
+  private String rootPath;
+  private OServer server;
 
   public ServerRun(final String iRootPath, final String serverId) {
     this.rootPath = iRootPath;
@@ -62,6 +62,10 @@ public class ServerRun {
 
   public String getServerId() {
     return serverId;
+  }
+
+  public String getRootPath() {
+    return rootPath;
   }
 
   public String getBinaryProtocolAddress() {
@@ -145,20 +149,6 @@ public class ServerRun {
     return server.openDatabase(iName, "admin", "admin");
   }
 
-  /*
-    protected ODatabaseDocument getEmbeddedDatabase(final String dbName) {
-      String databasesPath = getServerHome() + "/databases";
-
-    	 orientDB = new OrientDB("embedded:" + databasesPath, OrientDBConfig.defaultConfig());
-
-  System.out.println("----- dbPath = " + databasesPath + ", dbName = " + dbName);
-  System.out.println("----- dbPath exists() = " + new File(databasesPath + "/fred/" + dbName).exists());
-
-  System.out.println("----- db exists = " + orientDB.exists(dbName));
-
-    	 return orientDB.open(dbName, "admin", "admin");
-    }*/
-
   public void copyDatabase(final String iDatabaseName, final String iDestinationDirectory)
       throws IOException {
     // COPY THE DATABASE TO OTHER DIRECTORIES
@@ -237,17 +227,6 @@ public class ServerRun {
     server.getDatabases().close();
   }
 
-  /*
-    public void deleteStorages() {
-      for (OStorage s : Orient.instance().getStorages()) {
-        if (s instanceof OLocalPaginatedStorage && new File(((OLocalPaginatedStorage) s).getStoragePath()).getAbsolutePath()
-            .startsWith(getDatabasePath(""))) {
-          s.close(true, true);
-          Orient.instance().unregisterStorage(s);
-        }
-      }
-    }
-  */
   public String getServerHome() {
     return getServerHome(serverId);
   }

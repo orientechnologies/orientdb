@@ -1,6 +1,6 @@
 package com.orientechnologies.orient.server.distributed.sequence;
 
-import com.orientechnologies.orient.server.distributed.ServerRun;
+import com.orientechnologies.orient.test.ServerRun;
 import org.junit.Test;
 
 /**

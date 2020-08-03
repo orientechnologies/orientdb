@@ -16,6 +16,7 @@
 package com.orientechnologies.orient.server.distributed;
 
 import com.orientechnologies.orient.core.exception.ODatabaseException;
+import com.orientechnologies.orient.test.ServerRun;
 import org.junit.Assert;
 import org.junit.Test;
 

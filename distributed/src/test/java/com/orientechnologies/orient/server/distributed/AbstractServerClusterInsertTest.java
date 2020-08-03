@@ -47,6 +47,8 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+
+import com.orientechnologies.orient.test.ServerRun;
 import org.junit.Assert;
 
 /** Insert records concurrently against the cluster */
@@ -58,9 +60,9 @@ public abstract class AbstractServerClusterInsertTest extends AbstractDistribute
   protected long expected;
   protected OIndex idx;
   protected int maxRetries = 5;
-  protected boolean useTransactions = false;
+  protected boolean         useTransactions       = false;
   protected List<ServerRun> executeTestsOnServers = null;
-  protected String className = "Person";
+  protected String          className             = "Person";
   protected String indexName = "Person.name";
 
   protected class BaseWriter implements Callable<Void> {
@@ -571,7 +573,7 @@ public abstract class AbstractServerClusterInsertTest extends AbstractDistribute
                   .getInternal()
                   .size();
 
-          result.put(server.serverId, indexSize);
+          result.put(server.getServerId(), indexSize);
 
           final OIndex index =
               (database).getMetadata().getIndexManagerInternal().getIndex(database, indexName);
@@ -632,7 +634,7 @@ public abstract class AbstractServerClusterInsertTest extends AbstractDistribute
     int missingKeys = 0;
     for (int s = 0; s < executeTestsOnServers.size(); ++s) {
       ServerRun srv = executeTestsOnServers.get(s);
-      final int srvId = Integer.parseInt(srv.serverId);
+      final int srvId = Integer.parseInt(srv.getServerId());
 
       for (int threadId = srvId * writerCount; threadId < (srvId + 1) * writerCount; ++threadId) {
 

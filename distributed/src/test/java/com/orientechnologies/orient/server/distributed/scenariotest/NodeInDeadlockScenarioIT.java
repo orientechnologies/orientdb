@@ -21,7 +21,7 @@ import static org.junit.Assert.fail;
 import com.orientechnologies.common.util.OCallable;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.server.distributed.ServerRun;
+import com.orientechnologies.orient.test.ServerRun;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
