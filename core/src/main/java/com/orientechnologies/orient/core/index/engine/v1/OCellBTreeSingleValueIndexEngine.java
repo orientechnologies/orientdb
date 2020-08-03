@@ -48,8 +48,8 @@ public final class OCellBTreeSingleValueIndexEngine
     } else {
       throw new IllegalStateException("Invalid tree version " + version);
     }
-    versionPositionMap =
-        new OVersionPositionMapV0(storage, name, name + DATA_FILE_EXTENSION, OVersionPositionMap.DEF_EXTENSION);
+    // versionPositionMap =
+    //    new OVersionPositionMapV0(storage, name, name + DATA_FILE_EXTENSION, OVersionPositionMap.DEF_EXTENSION);
   }
 
   @Override
