@@ -317,4 +317,8 @@ public interface OrientDBInternal extends AutoCloseable, OSchedulerInternal {
   default void networkRestore(String databaseName, InputStream in, Callable<Object> callback) {
     throw new UnsupportedOperationException();
   }
+
+  default void rollbackOperationsFromThread(final Thread thread) {
+    throw new UnsupportedOperationException();
+  }
 }
