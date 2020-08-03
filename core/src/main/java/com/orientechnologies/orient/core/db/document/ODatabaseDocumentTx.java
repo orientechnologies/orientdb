@@ -1643,11 +1643,19 @@ public class ODatabaseDocumentTx implements ODatabaseDocumentInternal {
 
   @Override
   public boolean isRemote() {
+    if (internal == null) {
+      return false;
+    }
     return internal.isRemote();
   }
 
   @Override
   public OStorageInfo getStorageInfo() {
     return getStorage();
+  }
+
+  @Override
+  public boolean dropClusterInternal(int clusterId) {
+    return internal.dropClusterInternal(clusterId);
   }
 }

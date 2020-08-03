@@ -59,7 +59,7 @@ public class OLiveQuery<T> extends OSQLSynchQuery<T> {
   @Override
   public <RET> RET execute(Object... iArgs) {
     ODatabaseDocumentInternal database = ODatabaseRecordThreadLocal.instance().get();
-    if (database.getStorage().isRemote()) {
+    if (database.isRemote()) {
       BackwardOLiveQueryResultListener listener = new BackwardOLiveQueryResultListener();
       OLiveQueryMonitor monitor = database.live(getText(), listener, iArgs);
       listener.token = (int) monitor.getMonitorId();

@@ -62,7 +62,6 @@ import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.storage.OAutoshardedStorage;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.OSystemDatabase;
 import com.orientechnologies.orient.server.config.OServerParameterConfiguration;
@@ -83,7 +82,6 @@ import com.orientechnologies.orient.server.distributed.impl.ODistributedAbstract
 import com.orientechnologies.orient.server.distributed.impl.ODistributedDatabaseImpl;
 import com.orientechnologies.orient.server.distributed.impl.ODistributedMessageServiceImpl;
 import com.orientechnologies.orient.server.distributed.impl.ODistributedOutput;
-import com.orientechnologies.orient.server.distributed.impl.ODistributedStorage;
 import com.orientechnologies.orient.server.distributed.impl.task.OAbstractSyncDatabaseTask;
 import com.orientechnologies.orient.server.distributed.impl.task.ODropDatabaseTask;
 import com.orientechnologies.orient.server.distributed.impl.task.OUpdateDatabaseConfigurationTask;
@@ -848,7 +846,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
             this, nodeName, null, DIRECTION.NONE, "Opening database '%s'...", databaseName);
 
         // INIT THE STORAGE
-        final ODistributedStorage stg = getStorage(databaseName);
+        final ODistributedDatabaseImpl ddb = messageService.registerDatabase(databaseName);
 
         executeInDistributedDatabaseLock(
             databaseName,
@@ -866,8 +864,6 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
                     cfg.getServerRole(nodeName),
                     databaseName);
 
-                final ODistributedDatabaseImpl ddb =
-                    messageService.registerDatabase(databaseName, cfg);
                 ddb.resume();
 
                 // 1ST NODE TO HAVE THE DATABASE
@@ -1155,11 +1151,6 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
 
       } else if (key.startsWith(CONFIG_DATABASE_PREFIX)) {
         final String dbName = key.substring(CONFIG_DATABASE_PREFIX.length());
-        final ODistributedStorage stg = storages.remove(dbName);
-        if (stg != null) {
-          stg.close(true, false);
-        }
-
         updateLastClusterChange();
 
       } else if (key.startsWith(CONFIG_DBSTATUS_PREFIX)) {
@@ -1389,9 +1380,6 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
       // in distributed configuration");
       //      }
 
-      // INIT THE STORAGE
-      getStorage(dbName);
-
       final ODistributedConfiguration cfg = getDatabaseConfiguration(dbName);
 
       // TODO: TEMPORARY PATCH TO WAIT FOR DB PROPAGATION IN CFG TO ALL THE OTHER SERVERS
@@ -1459,8 +1447,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
     ODistributedServerLog.info(
         this, getLocalNodeName(), null, DIRECTION.NONE, "Dropping database %s...", dbName);
 
-    if (iDatabase.getStorage() instanceof OAutoshardedStorage
-        && !((OAutoshardedStorage) iDatabase.getStorage()).isLocalEnv()) {
+    if (!((ODatabaseDocumentInternal) iDatabase).isLocalEnv()) {
       executeInDistributedDatabaseLock(
           dbName,
           20000,

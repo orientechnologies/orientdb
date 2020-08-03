@@ -2,7 +2,6 @@ package com.orientechnologies.orient.client.remote.message;
 
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.util.OCommonConst;
-import com.orientechnologies.common.util.OPair;
 import com.orientechnologies.common.util.ORawPair;
 import com.orientechnologies.orient.client.remote.OCollectionNetworkSerializer;
 import com.orientechnologies.orient.client.remote.message.tx.IndexChange;
@@ -15,7 +14,6 @@ import com.orientechnologies.orient.core.db.record.ORecordOperation;
 import com.orientechnologies.orient.core.exception.OSerializationException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
-import com.orientechnologies.orient.core.index.OCompositeKey;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
@@ -43,7 +41,6 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.NavigableMap;
-import java.util.SortedSet;
 import java.util.TreeMap;
 import java.util.UUID;
 
@@ -528,61 +525,5 @@ public class OMessageHelper {
   private static OResultInternal readProjection(OChannelDataInput channel) throws IOException {
     OResultSerializerNetwork ser = new OResultSerializerNetwork();
     return ser.fromStream(channel);
-  }
-
-  public static void writeTxUniqueIndexKeys(
-      SortedSet<OPair<String, Object>> uniqueIndexKeys,
-      ORecordSerializerNetworkV37 serializer,
-      DataOutput out)
-      throws IOException {
-    out.writeInt(uniqueIndexKeys.size());
-    for (OPair<String, Object> pair : uniqueIndexKeys) {
-      out.writeUTF(pair.getKey());
-      if (pair.getValue() == null) {
-        out.writeByte((byte) -1);
-      } else if (pair.getValue() instanceof OCompositeKey) {
-        // Avoid the default serializer of OCompositeKey which converts the key to a document.
-        out.writeByte((byte) -2);
-        ((OCompositeKey) pair.getValue()).toStream(serializer, out);
-      } else {
-        OType type = OType.getTypeByValue(pair.getValue());
-        byte[] bytes = serializer.serializeValue(pair.getValue(), type);
-        out.writeByte((byte) type.getId());
-        out.writeInt(bytes.length);
-        out.write(bytes);
-      }
-      // Placeholder for future use for version
-      out.writeInt(0);
-    }
-  }
-
-  public static void readTxUniqueIndexKeys(
-      SortedSet<OPair<String, Object>> uniqueIndexKeys,
-      ORecordSerializerNetworkV37 serializer,
-      DataInput in)
-      throws IOException {
-    int size = in.readInt();
-    for (int i = 0; i < size; i++) {
-      String k = in.readUTF();
-      Object v;
-      byte b = in.readByte();
-      if (b == -1) {
-        v = null;
-      } else if (b == -2) {
-        OCompositeKey compositeKey = new OCompositeKey();
-        compositeKey.fromStream(serializer, in);
-        v = compositeKey;
-      } else {
-        OType type = OType.getById(b);
-        int len = in.readInt();
-        byte[] bytes = new byte[len];
-        in.readFully(bytes);
-        v = serializer.deserializeValue(bytes, type);
-      }
-      // Placeholder for future use for version
-      in.readInt();
-
-      uniqueIndexKeys.add(new OPair<>(k, v));
-    }
   }
 }

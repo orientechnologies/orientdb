@@ -93,7 +93,7 @@ public interface ODistributedDatabase {
 
   long getProcessedRequests();
 
-  void checkNodeInConfiguration(ODistributedConfiguration cfg, String serverName);
+  void checkNodeInConfiguration(String serverName);
 
   Optional<OTransactionId> nextId();
 
@@ -102,4 +102,9 @@ public interface ODistributedDatabase {
   void validateStatus(OTransactionSequenceStatus status);
 
   void checkReverseSync(OTransactionSequenceStatus lastState);
+
+  public ODistributedConfiguration getDistributedConfiguration();
+
+  public void setDistributedConfiguration(
+      final OModifiableDistributedConfiguration distributedConfiguration);
 }

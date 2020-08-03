@@ -18,11 +18,9 @@ package com.orientechnologies.orient.server.distributed.scenariotest;
 
 import static org.junit.Assert.assertEquals;
 
-import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.server.distributed.OModifiableDistributedConfiguration;
-import com.orientechnologies.orient.server.distributed.impl.ODistributedStorage;
 import com.orientechnologies.orient.server.hazelcast.OHazelcastPlugin;
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -95,10 +93,6 @@ public class TwoClientsRecordUpdateTxOnTwoServersWithQuorum2ScenarioIT
 
       // gets the actual version of record from server0
       int actualVersion = recordServer0.getVersion();
-
-      // sets a delay for operations on distributed storage of server0
-      ((ODistributedStorage) ((ODatabaseDocumentInternal) dbServer0).getStorage())
-          .setEventListener(new AfterRecordLockDelayer("server0", DOCUMENT_WRITE_TIMEOUT / 4));
 
       // updates the same record from two different clients, each calling a different node
       List<Callable<Void>> clients = new LinkedList<Callable<Void>>();

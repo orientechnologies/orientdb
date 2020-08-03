@@ -786,7 +786,7 @@ public class OClassEmbedded extends OClassImpl {
     if (name.toLowerCase(Locale.ENGLISH).equals(getDatabase().getClusterNameById(clusterId))) {
       // DROP THE DEFAULT CLUSTER CALLED WITH THE SAME NAME ONLY IF EMPTY
       if (getDatabase().countClusterElements(clusterId) == 0) {
-        getDatabase().getStorage().dropCluster(clusterId);
+        getDatabase().dropClusterInternal(clusterId);
       }
     }
   }

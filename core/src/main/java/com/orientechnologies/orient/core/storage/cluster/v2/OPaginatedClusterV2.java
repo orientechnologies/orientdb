@@ -122,7 +122,6 @@ public final class OPaginatedClusterV2 extends OPaginatedCluster {
     super(storage, name, dataExtension, name + dataExtension);
 
     systemCluster = OMetadataInternal.SYSTEM_CLUSTER.contains(name);
-
     clusterPositionMap = new OClusterPositionMapV2(storage, getName(), getFullName(), cpmExtension);
   }
 

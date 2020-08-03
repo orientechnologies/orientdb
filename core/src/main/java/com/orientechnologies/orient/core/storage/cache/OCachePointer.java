@@ -236,11 +236,9 @@ public final class OCachePointer {
     if (pointer == null) {
       return null;
     }
-
     final ByteBuffer duplicate =
         pointer.getNativeByteBuffer().duplicate().order(ByteOrder.nativeOrder());
     duplicate.rewind();
-
     return duplicate;
   }
 

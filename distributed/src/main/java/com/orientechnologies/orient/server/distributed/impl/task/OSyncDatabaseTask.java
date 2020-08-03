@@ -28,7 +28,6 @@ import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.storage.impl.local.OSyncSource;
 import com.orientechnologies.orient.server.OServer;
-import com.orientechnologies.orient.server.distributed.ODistributedDatabase;
 import com.orientechnologies.orient.server.distributed.ODistributedException;
 import com.orientechnologies.orient.server.distributed.ODistributedRequestId;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog;
@@ -36,7 +35,7 @@ import com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIR
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
 import com.orientechnologies.orient.server.distributed.ORemoteTaskFactory;
 import com.orientechnologies.orient.server.distributed.impl.ODistributedDatabaseChunk;
-import com.orientechnologies.orient.server.distributed.impl.ODistributedStorage;
+import com.orientechnologies.orient.server.distributed.impl.ODistributedDatabaseImpl;
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.File;
@@ -65,7 +64,8 @@ public class OSyncDatabaseTask extends OAbstractSyncDatabaseTask {
       if (database == null) throw new ODistributedException("Database instance is null");
 
       final String databaseName = database.getName();
-      final ODistributedDatabase dDatabase = iManager.getMessageService().getDatabase(databaseName);
+      final ODistributedDatabaseImpl dDatabase =
+          (ODistributedDatabaseImpl) iManager.getMessageService().getDatabase(databaseName);
 
       try {
         final Long lastDeployment =
@@ -96,7 +96,7 @@ public class OSyncDatabaseTask extends OAbstractSyncDatabaseTask {
             databaseName);
 
         OBackgroundBackup backup = null;
-        OSyncSource last = ((ODistributedStorage) database.getStorage()).getLastValidBackup();
+        OSyncSource last = dDatabase.getLastValidBackup();
         if (last instanceof OBackgroundBackup) {
           backup = (OBackgroundBackup) last;
         }
@@ -150,7 +150,7 @@ public class OSyncDatabaseTask extends OAbstractSyncDatabaseTask {
 
           // RECORD LAST BACKUP TO BE REUSED IN CASE ANOTHER NODE ASK FOR THE SAME IN SHORT TIME
           // WHILE THE DB IS NOT UPDATED
-          ((ODistributedStorage) database.getStorage()).setLastValidBackup(backup);
+          dDatabase.setLastValidBackup(backup);
         } else {
           backup.makeStreamFromFile();
           ODistributedServerLog.info(

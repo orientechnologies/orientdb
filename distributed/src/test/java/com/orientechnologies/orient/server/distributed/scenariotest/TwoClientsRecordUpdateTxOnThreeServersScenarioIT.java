@@ -20,10 +20,8 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
 import com.orientechnologies.common.log.OLogManager;
-import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.server.distributed.impl.ODistributedStorage;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
@@ -105,10 +103,6 @@ public class TwoClientsRecordUpdateTxOnThreeServersScenarioIT extends AbstractSc
       OLogManager.instance().error(this, "Actual version: " + actualVersion, null);
 
       // sets a delay for operations on distributed storage of server0 and server1
-      ((ODistributedStorage) ((ODatabaseDocumentInternal) dbServer0).getStorage())
-          .setEventListener(new AfterRecordLockDelayer("server0", DOCUMENT_WRITE_TIMEOUT / 4));
-      ((ODistributedStorage) ((ODatabaseDocumentInternal) dbServer1).getStorage())
-          .setEventListener(new AfterRecordLockDelayer("server1", DOCUMENT_WRITE_TIMEOUT / 2));
 
       // updates the same record from two different clients, each calling a different server
       // (server2 is idle)

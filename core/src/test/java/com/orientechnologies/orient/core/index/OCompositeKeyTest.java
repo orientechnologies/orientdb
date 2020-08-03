@@ -163,6 +163,15 @@ public class OCompositeKeyTest {
   }
 
   @Test
+  public void testCompareStringsToLT() {
+    final OCompositeKey compositeKey = new OCompositeKey();
+    compositeKey.addKey("name4");
+    final OCompositeKey anotherCompositeKey = new OCompositeKey();
+    anotherCompositeKey.addKey("name5");
+    assertEquals(compositeKey.compareTo(anotherCompositeKey), -1);
+  }
+
+  @Test
   public void testCompareToSymmetryOne() {
     final OCompositeKey compositeKeyOne = new OCompositeKey();
     compositeKeyOne.addKey(1);

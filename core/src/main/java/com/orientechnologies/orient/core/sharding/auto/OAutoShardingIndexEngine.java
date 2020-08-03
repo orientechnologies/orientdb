@@ -493,6 +493,17 @@ public final class OAutoShardingIndexEngine implements OIndexEngine {
     return getPartition(key).getName();
   }
 
+  @Override
+  public void updateUniqueIndexVersion(Object key) {
+    // TODO: [DR] implement
+  }
+
+  @Override
+  public int getUniqueIndexVersion(Object key) {
+    // TODO: [DR] implement
+    return 0;
+  }
+
   private OHashTable<Object, Object> getPartition(final Object iKey) {
     final int partitionId =
         Optional.ofNullable(iKey)

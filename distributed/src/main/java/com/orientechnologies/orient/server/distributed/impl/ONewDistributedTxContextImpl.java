@@ -104,9 +104,7 @@ public class ONewDistributedTxContextImpl implements ODistributedTxContext {
   @Override
   public synchronized void commit(ODatabaseDocumentInternal database) {
     ODistributedDatabase localDistributedDatabase =
-        ((ODatabaseDocumentDistributed) database)
-            .getStorageDistributed()
-            .getLocalDistributedDatabase();
+        ((ODatabaseDocumentDistributed) database).getDistributedShared();
     OTxMetadataHolder metadataHolder = localDistributedDatabase.commit(getTransactionId());
     try {
       tx.setMetadataHolder(Optional.of(metadataHolder));

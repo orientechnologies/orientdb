@@ -1,5 +1,6 @@
 package com.orientechnologies.orient.core.db;
 
+import com.orientechnologies.common.concur.lock.OModificationOperationProhibitedException;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.cache.OCommandCacheSoftRefs;
@@ -13,11 +14,13 @@ import com.orientechnologies.orient.server.OClientConnection;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.OServerAware;
 import com.orientechnologies.orient.server.OSystemDatabase;
+import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
 import com.orientechnologies.orient.server.distributed.impl.ODatabaseDocumentDistributed;
 import com.orientechnologies.orient.server.distributed.impl.ODatabaseDocumentDistributedPooled;
-import com.orientechnologies.orient.server.distributed.impl.ODistributedStorage;
+import com.orientechnologies.orient.server.distributed.impl.ODistributedDatabaseImpl;
 import com.orientechnologies.orient.server.distributed.impl.metadata.OSharedContextDistributed;
 import com.orientechnologies.orient.server.hazelcast.OHazelcastPlugin;
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.HashMap;
@@ -49,8 +52,8 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
 
   protected OSharedContext createSharedContext(OAbstractPaginatedStorage storage) {
     if (OSystemDatabase.SYSTEM_DB_NAME.equals(storage.getName())
-        || getPlugin() == null
-        || !getPlugin().isRunning()) {
+        || plugin == null
+        || !plugin.isEnabled()) {
       return new OSharedContextEmbedded(storage, this);
     }
     return new OSharedContextDistributed(storage, this);
@@ -58,26 +61,23 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
 
   protected ODatabaseDocumentEmbedded newSessionInstance(OAbstractPaginatedStorage storage) {
     if (OSystemDatabase.SYSTEM_DB_NAME.equals(storage.getName())
-        || getPlugin() == null
-        || !getPlugin().isRunning()) {
+        || plugin == null
+        || !plugin.isEnabled()) {
       return new ODatabaseDocumentEmbedded(storage);
     }
-    plugin.registerNewDatabaseIfNeeded(
-        storage.getName(), plugin.getDatabaseConfiguration(storage.getName()));
-    return new ODatabaseDocumentDistributed(plugin.getStorage(storage.getName(), storage), plugin);
+    plugin.registerNewDatabaseIfNeeded(storage.getName());
+    return new ODatabaseDocumentDistributed(storage, plugin);
   }
 
   protected ODatabaseDocumentEmbedded newPooledSessionInstance(
       ODatabasePoolInternal pool, OAbstractPaginatedStorage storage) {
     if (OSystemDatabase.SYSTEM_DB_NAME.equals(storage.getName())
-        || getPlugin() == null
-        || !getPlugin().isRunning()) {
+        || plugin == null
+        || !plugin.isEnabled()) {
       return new ODatabaseDocumentEmbeddedPooled(pool, storage);
     }
-    plugin.registerNewDatabaseIfNeeded(
-        storage.getName(), plugin.getDatabaseConfiguration(storage.getName()));
-    return new ODatabaseDocumentDistributedPooled(
-        pool, plugin.getStorage(storage.getName(), storage), plugin);
+    plugin.registerNewDatabaseIfNeeded(storage.getName());
+    return new ODatabaseDocumentDistributedPooled(pool, storage, plugin);
   }
 
   public void setPlugin(OHazelcastPlugin plugin) {
@@ -85,7 +85,6 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
   }
 
   public OStorage fullSync(String dbName, InputStream backupStream, OrientDBConfig config) {
-    final ODatabaseDocumentEmbedded embedded;
     OAbstractPaginatedStorage storage = null;
     synchronized (this) {
       try {
@@ -93,7 +92,7 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
 
         if (storage != null) {
           OCommandCacheSoftRefs.clearFiles(storage);
-          ODistributedStorage.dropStorageFiles((OLocalPaginatedStorage) storage);
+          dropStorageFiles((OLocalPaginatedStorage) storage);
           OSharedContext context = sharedContexts.remove(dbName);
           context.close();
           storage.delete();
@@ -107,8 +106,10 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
                     maxWALSegmentSize,
                     doubleWriteLogMaxSegSize,
                     generateStorageId());
-        embedded = internalCreate(config, storage);
+        internalCreate(config, storage);
         storages.put(dbName, storage);
+      } catch (OModificationOperationProhibitedException e) {
+        throw e;
       } catch (Exception e) {
         if (storage != null) {
           storage.delete();
@@ -168,7 +169,12 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
       if (exists(name, user, password)) {
         OAbstractPaginatedStorage storage = getOrInitStorage(name);
         OSharedContext sharedContext = sharedContexts.get(name);
-        if (sharedContext != null) sharedContext.close();
+        if (sharedContext != null) {
+          sharedContext.close();
+        }
+        if (storage instanceof OLocalPaginatedStorage) {
+          dropStorageFiles((OLocalPaginatedStorage) storage);
+        }
         storage.delete();
         storages.remove(name);
         sharedContexts.remove(name);
@@ -181,5 +187,35 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
       OClientConnection connection, int requestType, int clientTxId, OChannelBinary channel)
       throws IOException {
     throw new UnsupportedOperationException("old implementation do not support new flow");
+  }
+
+  public static void dropStorageFiles(OLocalPaginatedStorage storage) {
+    // REMOVE distributed-config.json and distributed-sync.json files to allow removal of directory
+    final File dCfg =
+        new File(
+            storage.getStoragePath() + "/" + ODistributedServerManager.FILE_DISTRIBUTED_DB_CONFIG);
+
+    try {
+      if (dCfg.exists()) {
+        for (int i = 0; i < 10; ++i) {
+          if (dCfg.delete()) break;
+          Thread.sleep(100);
+        }
+      }
+
+      final File dCfg2 =
+          new File(
+              storage.getStoragePath()
+                  + "/"
+                  + ODistributedDatabaseImpl.DISTRIBUTED_SYNC_JSON_FILENAME);
+      if (dCfg2.exists()) {
+        for (int i = 0; i < 10; ++i) {
+          if (dCfg2.delete()) break;
+          Thread.sleep(100);
+        }
+      }
+    } catch (InterruptedException e) {
+      // IGNORE IT
+    }
   }
 }

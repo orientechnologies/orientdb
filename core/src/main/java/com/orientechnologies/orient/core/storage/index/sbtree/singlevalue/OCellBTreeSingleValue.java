@@ -55,6 +55,8 @@ public interface OCellBTreeSingleValue<K> {
 
   Stream<K> keyStream();
 
+  Stream<ORawPair<K, ORID>> allEntries();
+
   Stream<ORawPair<K, ORID>> iterateEntriesBetween(
       K keyFrom, boolean fromInclusive, K keyTo, boolean toInclusive, boolean ascSortOrder);
 

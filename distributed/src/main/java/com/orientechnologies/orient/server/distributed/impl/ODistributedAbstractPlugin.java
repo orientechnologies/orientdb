@@ -57,7 +57,6 @@ import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.metadata.schema.OView;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.storage.OAutoshardedStorage;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.cluster.OClusterPositionMap;
 import com.orientechnologies.orient.core.storage.cluster.OPaginatedCluster;
@@ -144,8 +143,6 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
   protected String nodeName = null;
   protected int nodeId = -1;
   protected File defaultDatabaseConfigFile;
-  protected final ConcurrentMap<String, ODistributedStorage> storages =
-      new ConcurrentHashMap<String, ODistributedStorage>();
   protected volatile NODE_STATUS status = NODE_STATUS.OFFLINE;
   protected long lastClusterChangeOn;
   protected List<ODistributedLifecycleListener> listeners =
@@ -313,14 +310,6 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
     setNodeStatus(NODE_STATUS.OFFLINE);
 
     Orient.instance().removeDbLifecycleListener(this);
-
-    // CLOSE AND FREE ALL THE STORAGES
-    for (ODistributedStorage s : storages.values())
-      try {
-        s.close();
-      } catch (Exception e) {
-      }
-    storages.clear();
   }
 
   /** Auto register myself as hook. */
@@ -351,12 +340,12 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
     }
   }
 
-  public void registerNewDatabaseIfNeeded(String dbName, ODistributedConfiguration cfg) {
+  public void registerNewDatabaseIfNeeded(String dbName) {
     ODistributedDatabaseImpl distribDatabase = getMessageService().getDatabase(dbName);
     if (distribDatabase == null) {
       // CHECK TO PUBLISH IT TO THE CLUSTER
-      distribDatabase = messageService.registerDatabase(dbName, cfg);
-      distribDatabase.checkNodeInConfiguration(cfg, getLocalNodeName());
+      distribDatabase = messageService.registerDatabase(dbName);
+      distribDatabase.checkNodeInConfiguration(getLocalNodeName());
       distribDatabase.resume();
       distribDatabase.setOnline();
     }
@@ -371,16 +360,6 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
     final ODistributedMessageService msgService = getMessageService();
     if (msgService != null) {
       msgService.unregisterDatabase(iDatabase.getName());
-    }
-    removeStorage(iDatabase.getName());
-  }
-
-  public void removeStorage(final String name) {
-    synchronized (storages) {
-      final ODistributedStorage storage = storages.remove(name);
-      if (storage != null) {
-        storage.closeOnDrop();
-      }
     }
   }
 
@@ -419,10 +398,10 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
 
   public boolean updateCachedDatabaseConfiguration(
       final String iDatabaseName, final OModifiableDistributedConfiguration cfg) {
-    final ODistributedStorage stg = storages.get(iDatabaseName);
-    if (stg == null) return false;
+    ODistributedDatabaseImpl local = getMessageService().getDatabase(iDatabaseName);
+    if (local == null) return false;
 
-    final ODistributedConfiguration dCfg = stg.getDistributedConfiguration();
+    final ODistributedConfiguration dCfg = local.getDistributedConfiguration();
 
     ODocument oldCfg = dCfg != null ? dCfg.getDocument() : null;
     Integer oldVersion = oldCfg != null ? (Integer) oldCfg.field("version") : null;
@@ -444,7 +423,7 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
     }
 
     // SAVE IN NODE'S LOCAL RAM
-    stg.setDistributedConfiguration(cfg);
+    local.setDistributedConfiguration(cfg);
 
     ODistributedServerLog.info(
         this,
@@ -464,12 +443,12 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
 
   public ODistributedConfiguration getDatabaseConfiguration(
       final String iDatabaseName, final boolean createIfNotPresent) {
-    final ODistributedStorage stg =
-        createIfNotPresent ? getStorage(iDatabaseName) : getStorageIfExists(iDatabaseName);
+    ODistributedDatabaseImpl local = getMessageService().getDatabase(iDatabaseName);
+    if (local == null) {
+      return null;
+    }
 
-    if (stg == null) return null;
-
-    return stg.getDistributedConfiguration();
+    return local.getDistributedConfiguration();
   }
 
   public OServer getServerInstance() {
@@ -668,12 +647,6 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
       final ODistributedRequestId reqId,
       final ORemoteTask task,
       final ODatabaseDocumentInternal database) {
-    if (database != null && !(database.getStorage() instanceof ODistributedStorage))
-      throw new ODistributedException(
-          "Distributed storage was not installed for database '"
-              + database.getName()
-              + "'. Implementation found: "
-              + database.getStorage().getClass().getName());
 
     final ODistributedAbstractPlugin manager = this;
 
@@ -747,8 +720,7 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
 
   @Override
   public void onCreateClass(final ODatabaseInternal iDatabase, final OClass iClass) {
-    if (iDatabase.getStorage() instanceof OAutoshardedStorage
-        && ((OAutoshardedStorage) iDatabase.getStorage()).isLocalEnv()) return;
+    if (((ODatabaseDocumentInternal) iDatabase).isLocalEnv()) return;
 
     if (isOffline() && status != NODE_STATUS.STARTING) return;
 
@@ -968,8 +940,7 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
       return false;
     }
 
-    final ODistributedDatabaseImpl distrDatabase =
-        messageService.registerDatabase(databaseName, null);
+    final ODistributedDatabaseImpl distrDatabase = messageService.registerDatabase(databaseName);
 
     try {
       installingDatabases.add(databaseName);
@@ -981,7 +952,7 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
             @Override
             public Boolean call(OModifiableDistributedConfiguration cfg) {
 
-              distrDatabase.checkNodeInConfiguration(cfg, nodeName);
+              distrDatabase.checkNodeInConfiguration(nodeName, cfg);
 
               // GET ALL THE OTHER SERVERS
               final Collection<String> nodes = cfg.getServers(null, nodeName);
@@ -1011,8 +982,7 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
                 return false;
 
               // INIT STORAGE + UPDATE LOCAL FILE ONLY
-              final ODistributedStorage stg = getStorage(databaseName);
-              stg.setDistributedConfiguration(cfg);
+              distrDatabase.setDistributedConfiguration(cfg);
 
               // DISCARD MESSAGES DURING THE REQUEST OF DATABASE INSTALLATION
               distrDatabase.suspend();
@@ -1445,8 +1415,6 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
             return false;
           }
 
-          OStorage storage = storages.get(databaseName);
-          replaceStorageInSessions(storage);
           distrDatabase.resume();
 
           return true;
@@ -1714,7 +1682,7 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
     if (iClass.isAbstract()) return false;
 
     // INIT THE DATABASE IF NEEDED
-    getMessageService().registerDatabase(databaseName, cfg);
+    getMessageService().registerDatabase(databaseName);
 
     return executeInDistributedDatabaseLock(
         databaseName,
@@ -2085,9 +2053,8 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
                             databaseName,
                             receiver.getInputStream(),
                             OrientDBConfig.defaultConfig());
-                ODistributedStorage distributedStorage = getStorage(databaseName);
-                distributedStorage.replaceIfNeeded((OAbstractPaginatedStorage) storage);
-                distributedStorage.saveDatabaseConfiguration();
+                ODistributedDatabaseImpl distrDatabase = messageService.getDatabase(databaseName);
+                distrDatabase.saveDatabaseConfiguration();
                 if (uniqueClustersBackupDirectory != null
                     && uniqueClustersBackupDirectory.exists()) {
                   // RESTORE UNIQUE FILES FROM THE BACKUP FOLDERS. THOSE FILES ARE THE CLUSTERS
@@ -2108,7 +2075,6 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
 
                   uniqueClustersBackupDirectory.delete();
                 }
-                ODistributedDatabaseImpl distrDatabase = messageService.getDatabase(databaseName);
 
                 try (ODatabaseDocumentInternal inst = distrDatabase.getDatabaseInstance()) {
                   Optional<byte[]> read =
@@ -2289,38 +2255,6 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
           getLockManagerServer(),
           ODistributedOutput.formatServerStatus(this, cfg));
     }
-  }
-
-  public ODistributedStorage getStorageIfExists(final String dbName) {
-    return storages.get(dbName);
-  }
-
-  public ODistributedStorage getStorage(final String dbName) {
-    ODistributedStorage storage = storages.get(dbName);
-    if (storage == null) {
-      storage = new ODistributedStorage(serverInstance, dbName);
-
-      final ODistributedStorage oldStorage = storages.putIfAbsent(dbName, storage);
-      if (oldStorage != null) storage = oldStorage;
-    }
-    return storage;
-  }
-
-  public ODistributedStorage getStorage(final String dbName, OAbstractPaginatedStorage wrapped) {
-    ODistributedStorage storage = storages.get(dbName);
-    if (storage == null) {
-      storage = new ODistributedStorage(serverInstance, dbName);
-
-      final ODistributedStorage oldStorage = storages.putIfAbsent(dbName, storage);
-      if (oldStorage != null) storage = oldStorage;
-    }
-    if (storage.getUnderlying() == null) {
-      storage.wrap(wrapped);
-    }
-    if (storage.getUnderlying() != wrapped) {
-      storage.replaceIfNeeded(wrapped);
-    }
-    return storage;
   }
 
   @Override

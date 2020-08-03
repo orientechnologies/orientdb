@@ -31,7 +31,7 @@ import com.orientechnologies.orient.server.distributed.ODistributedServerLog;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
 import com.orientechnologies.orient.server.distributed.ORemoteTaskFactory;
 import com.orientechnologies.orient.server.distributed.impl.ODistributedDatabaseChunk;
-import com.orientechnologies.orient.server.distributed.impl.ODistributedStorage;
+import com.orientechnologies.orient.server.distributed.impl.ODistributedDatabaseImpl;
 import com.orientechnologies.orient.server.distributed.task.OAbstractReplicatedTask;
 import java.io.DataInput;
 import java.io.DataOutput;
@@ -72,11 +72,11 @@ public class OCopyDatabaseChunkTask extends OAbstractReplicatedTask {
     if (database == null) {
       throw new ODistributedException("database not available anymore during sync");
     }
-    ODistributedStorage storage = (ODistributedStorage) database.getStorage();
-    if (storage == null) {
-      throw new ODistributedException("database not available anymore during sync");
-    }
-    OSyncSource b = storage.getLastValidBackup();
+
+    ODistributedDatabaseImpl local =
+        (ODistributedDatabaseImpl) iManager.getMessageService().getDatabase(database.getName());
+
+    OSyncSource b = local.getLastValidBackup();
 
     final ODistributedDatabaseChunk result =
         new ODistributedDatabaseChunk(b, OSyncDatabaseTask.CHUNK_MAX_SIZE);

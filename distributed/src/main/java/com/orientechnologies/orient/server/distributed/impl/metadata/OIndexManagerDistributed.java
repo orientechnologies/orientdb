@@ -12,7 +12,6 @@ import com.orientechnologies.orient.core.index.OSimpleKeyIndexDefinition;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandExecutorSQLCreateIndex;
-import com.orientechnologies.orient.core.storage.OAutoshardedStorage;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.server.distributed.impl.ODatabaseDocumentDistributed;
 
@@ -126,8 +125,7 @@ public class OIndexManagerDistributed extends OIndexManagerShared {
   }
 
   private boolean isDistributedCommand(ODatabaseDocumentInternal database) {
-    return database.getStorage().isDistributed()
-        && !((OAutoshardedStorage) database.getStorage()).isLocalEnv();
+    return !database.isLocalEnv();
   }
 
   public void dropIndex(ODatabaseDocumentInternal database, final String iIndexName) {

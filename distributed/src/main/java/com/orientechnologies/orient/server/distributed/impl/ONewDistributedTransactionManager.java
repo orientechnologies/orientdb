@@ -32,6 +32,7 @@ import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.storage.ORecordDuplicatedException;
+import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.tx.OTransaction;
 import com.orientechnologies.orient.core.tx.OTransactionId;
 import com.orientechnologies.orient.core.tx.OTransactionInternal;
@@ -71,14 +72,14 @@ import java.util.Set;
  */
 public class ONewDistributedTransactionManager {
   private final ODistributedServerManager dManager;
-  private final ODistributedStorage storage;
+  private final OStorage storage;
   private final ODistributedDatabase localDistributedDatabase;
 
   private static final boolean SYNC_TX_COMPLETED = false;
   private ONewDistributedResponseManager responseManager;
 
   public ONewDistributedTransactionManager(
-      final ODistributedStorage storage,
+      final OStorage storage,
       final ODistributedServerManager manager,
       final ODistributedDatabase iDDatabase) {
     this.dManager = manager;
@@ -534,7 +535,7 @@ public class ONewDistributedTransactionManager {
     final Set<String> involvedClusters = new HashSet<String>();
     for (ORecordOperation op : uResult) {
       final ORecord record = op.getRecord();
-      involvedClusters.add(storage.getClusterNameByRID((ORecordId) record.getIdentity()));
+      involvedClusters.add(storage.getClusterNameById(record.getIdentity().getClusterId()));
     }
     return involvedClusters;
   }

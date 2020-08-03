@@ -12,7 +12,6 @@ import com.orientechnologies.orient.core.metadata.schema.OSchemaEmbedded;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.metadata.schema.OViewConfig;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.storage.OAutoshardedStorage;
 import com.orientechnologies.orient.server.distributed.impl.ODatabaseDocumentDistributed;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -38,7 +37,7 @@ public class OSchemaDistributed extends OSchemaEmbedded {
       return;
     }
     if (executeThroughDistributedStorage(database)) {
-      ((OAutoshardedStorage) database.getStorage()).acquireDistributedExclusiveLock(0);
+      ((ODatabaseDocumentDistributed) database).acquireDistributedExclusiveLock(0);
     }
     super.acquireSchemaWriteLock(database);
   }
@@ -52,7 +51,7 @@ public class OSchemaDistributed extends OSchemaEmbedded {
       super.releaseSchemaWriteLock(database, iSave);
     } finally {
       if (executeThroughDistributedStorage(database)) {
-        ((OAutoshardedStorage) database.getStorage()).releaseDistributedExclusiveLock();
+        ((ODatabaseDocumentDistributed) database).releaseDistributedExclusiveLock();
       }
     }
   }

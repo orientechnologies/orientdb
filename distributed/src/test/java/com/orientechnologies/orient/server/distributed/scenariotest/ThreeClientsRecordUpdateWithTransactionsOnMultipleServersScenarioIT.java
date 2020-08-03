@@ -18,10 +18,8 @@ package com.orientechnologies.orient.server.distributed.scenariotest;
 
 import static org.junit.Assert.assertEquals;
 
-import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.server.distributed.impl.ODistributedStorage;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
@@ -117,14 +115,6 @@ public class ThreeClientsRecordUpdateWithTransactionsOnMultipleServersScenarioIT
       // gets the actual version of the record1
       int actualVersion = record1Server1.getVersion();
       System.out.println("Actual version: " + actualVersion);
-
-      // sets a delay for operations on distributed storage of all servers
-      ((ODistributedStorage) ((ODatabaseDocumentInternal) dbServer1).getStorage())
-          .setEventListener(new AfterRecordLockDelayer("server1", DOCUMENT_WRITE_TIMEOUT));
-      ((ODistributedStorage) ((ODatabaseDocumentInternal) dbServer2).getStorage())
-          .setEventListener(new AfterRecordLockDelayer("server2", DOCUMENT_WRITE_TIMEOUT / 4));
-      ((ODistributedStorage) ((ODatabaseDocumentInternal) dbServer3).getStorage())
-          .setEventListener(new AfterRecordLockDelayer("server3", DOCUMENT_WRITE_TIMEOUT / 2));
 
       // updates the same record from three different clients, each calling a different server
       List<Callable<Void>> clients = new LinkedList<Callable<Void>>();

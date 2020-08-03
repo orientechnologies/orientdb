@@ -35,7 +35,6 @@ import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.metadata.security.ORule;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OSQLEngine;
-import com.orientechnologies.orient.core.storage.OAutoshardedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import java.text.ParseException;
 import java.util.ArrayList;
@@ -769,8 +768,7 @@ public abstract class OPropertyImpl implements OProperty {
   }
 
   protected boolean isDistributedCommand() {
-    return getDatabase().getStorage() instanceof OAutoshardedStorage
-        && !((OAutoshardedStorage) getDatabase().getStorage()).isLocalEnv();
+    return !((ODatabaseDocumentInternal) getDatabase()).isLocalEnv();
   }
 
   @Override

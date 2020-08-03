@@ -387,9 +387,7 @@ public abstract class OIdentifiableIterator<REC extends OIdentifiable>
 
   protected static void checkForSystemClusters(
       final ODatabaseDocumentInternal iDatabase, final int[] iClusterIds) {
-    final OStorage storage = iDatabase.getStorage();
-    // we have similar check on server's side
-    if (storage.isRemote()) {
+    if (iDatabase.isRemote()) {
       return;
     }
 

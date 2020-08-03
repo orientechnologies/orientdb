@@ -25,7 +25,6 @@ import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.server.OSystemDatabase;
-import com.orientechnologies.orient.server.distributed.ODistributedConfiguration;
 import com.orientechnologies.orient.server.distributed.ODistributedMessageService;
 import com.orientechnologies.orient.server.distributed.ODistributedRequestId;
 import com.orientechnologies.orient.server.distributed.ODistributedResponse;
@@ -151,13 +150,11 @@ public class ODistributedMessageServiceImpl implements ODistributedMessageServic
   }
 
   /** Creates a distributed database instance if not defined yet. */
-  public ODistributedDatabaseImpl registerDatabase(
-      final String iDatabaseName, ODistributedConfiguration cfg) {
+  public ODistributedDatabaseImpl registerDatabase(final String iDatabaseName) {
     final ODistributedDatabaseImpl ddb = databases.get(iDatabaseName);
     if (ddb != null) return ddb;
 
-    return new ODistributedDatabaseImpl(
-        manager, this, iDatabaseName, cfg, manager.getServerInstance());
+    return new ODistributedDatabaseImpl(manager, this, iDatabaseName, manager.getServerInstance());
   }
 
   public ODistributedDatabaseImpl unregisterDatabase(final String iDatabaseName) {

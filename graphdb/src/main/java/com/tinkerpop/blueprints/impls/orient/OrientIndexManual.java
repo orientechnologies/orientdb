@@ -206,7 +206,7 @@ public class OrientIndexManual<T extends OrientElement> implements OrientIndex<T
                 null,
                 null);
 
-    if (!db.getStorage().isRemote()) {
+    if (!db.isRemote()) {
       this.recordKeyValueIndex =
           new OIndexTxAwareOneValue(db, this.recordKeyValueIndex.getInternal());
     }
@@ -221,7 +221,7 @@ public class OrientIndexManual<T extends OrientElement> implements OrientIndex<T
     metadata.field(CONFIG_RECORD_MAP_NAME, recordKeyValueIndex.getName());
 
     // CREATE THE MAP
-    if (!db.getStorage().isRemote()) {
+    if (!db.isRemote()) {
       this.underlying =
           new OIndexTxAwareMultiValue(
               db,

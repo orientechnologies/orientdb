@@ -30,6 +30,7 @@ import com.orientechnologies.orient.core.cache.OLocalRecordCache;
 import com.orientechnologies.orient.core.command.OBasicCommandContext;
 import com.orientechnologies.orient.core.command.OScriptExecutor;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
+import com.orientechnologies.orient.core.conflict.ORecordConflictStrategy;
 import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseLifecycleListener;
@@ -58,11 +59,13 @@ import com.orientechnologies.orient.core.hook.ORecordHook;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.index.OClassIndexManager;
+import com.orientechnologies.orient.core.iterator.ORecordIteratorCluster;
 import com.orientechnologies.orient.core.metadata.OMetadataDefault;
 import com.orientechnologies.orient.core.metadata.function.OFunctionLibraryImpl;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OImmutableClass;
 import com.orientechnologies.orient.core.metadata.schema.OImmutableSchema;
+import com.orientechnologies.orient.core.metadata.schema.OSchemaProxy;
 import com.orientechnologies.orient.core.metadata.schema.OView;
 import com.orientechnologies.orient.core.metadata.security.OImmutableUser;
 import com.orientechnologies.orient.core.metadata.security.OPropertyAccess;
@@ -1591,5 +1594,158 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract
           this.commit();
           return null;
         });
+  }
+
+  @Override
+  public int addCluster(final String iClusterName, final Object... iParameters) {
+    checkIfActive();
+    return getStorage().addCluster(iClusterName, iParameters);
+  }
+
+  @Override
+  public int addCluster(final String iClusterName, final int iRequestedId) {
+    checkIfActive();
+    return getStorage().addCluster(iClusterName, iRequestedId);
+  }
+
+  public ORecordConflictStrategy getConflictStrategy() {
+    checkIfActive();
+    return getStorageInfo().getRecordConflictStrategy();
+  }
+
+  public ODatabaseDocumentEmbedded setConflictStrategy(final String iStrategyName) {
+    checkIfActive();
+    getStorage()
+        .setConflictStrategy(
+            Orient.instance().getRecordConflictStrategy().getStrategy(iStrategyName));
+    return this;
+  }
+
+  public ODatabaseDocumentEmbedded setConflictStrategy(final ORecordConflictStrategy iResolver) {
+    checkIfActive();
+    getStorage().setConflictStrategy(iResolver);
+    return this;
+  }
+
+  @Override
+  public long getClusterRecordSizeByName(final String clusterName) {
+    checkIfActive();
+    try {
+      return getStorage().getClusterRecordsSizeByName(clusterName);
+    } catch (Exception e) {
+      throw OException.wrapException(
+          new ODatabaseException("Error on reading records size for cluster '" + clusterName + "'"),
+          e);
+    }
+  }
+
+  @Override
+  public long getClusterRecordSizeById(final int clusterId) {
+    checkIfActive();
+    try {
+      return getStorage().getClusterRecordsSizeById(clusterId);
+    } catch (Exception e) {
+      throw OException.wrapException(
+          new ODatabaseException(
+              "Error on reading records size for cluster with id '" + clusterId + "'"),
+          e);
+    }
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public long countClusterElements(int iClusterId, boolean countTombstones) {
+    final String name = getClusterNameById(iClusterId);
+    if (name == null) {
+      return 0;
+    }
+    checkSecurity(ORule.ResourceGeneric.CLUSTER, ORole.PERMISSION_READ, name);
+    checkIfActive();
+    return getStorage().count(iClusterId, countTombstones);
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public long countClusterElements(int[] iClusterIds, boolean countTombstones) {
+    checkIfActive();
+    String name;
+    for (int iClusterId : iClusterIds) {
+      name = getClusterNameById(iClusterId);
+      checkSecurity(ORule.ResourceGeneric.CLUSTER, ORole.PERMISSION_READ, name);
+    }
+    return getStorage().count(iClusterIds, countTombstones);
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public long countClusterElements(final String iClusterName) {
+    checkSecurity(ORule.ResourceGeneric.CLUSTER, ORole.PERMISSION_READ, iClusterName);
+    checkIfActive();
+
+    final int clusterId = getClusterIdByName(iClusterName);
+    if (clusterId < 0)
+      throw new IllegalArgumentException("Cluster '" + iClusterName + "' was not found");
+    return getStorage().count(clusterId);
+  }
+
+  @Override
+  public boolean dropCluster(final String iClusterName) {
+    checkIfActive();
+    final int clusterId = getClusterIdByName(iClusterName);
+    OSchemaProxy schema = metadata.getSchema();
+    OClass clazz = schema.getClassByClusterId(clusterId);
+    if (clazz != null) clazz.removeClusterId(clusterId);
+    if (schema.getBlobClusters().contains(clusterId)) schema.removeBlobCluster(iClusterName);
+    getLocalCache().freeCluster(clusterId);
+    checkForClusterPermissions(iClusterName);
+    return dropClusterInternal(iClusterName);
+  }
+
+  protected boolean dropClusterInternal(final String iClusterName) {
+    return getStorage().dropCluster(iClusterName);
+  }
+
+  @Override
+  public boolean dropCluster(final int clusterId) {
+    checkIfActive();
+
+    checkSecurity(
+        ORule.ResourceGeneric.CLUSTER, ORole.PERMISSION_DELETE, getClusterNameById(clusterId));
+
+    OSchemaProxy schema = metadata.getSchema();
+    final OClass clazz = schema.getClassByClusterId(clusterId);
+    if (clazz != null) clazz.removeClusterId(clusterId);
+    getLocalCache().freeCluster(clusterId);
+    if (schema.getBlobClusters().contains(clusterId))
+      schema.removeBlobCluster(getClusterNameById(clusterId));
+
+    checkForClusterPermissions(getClusterNameById(clusterId));
+
+    final String clusterName = getClusterNameById(clusterId);
+    if (clusterName == null) {
+      return false;
+    }
+
+    final ORecordIteratorCluster<ODocument> iteratorCluster = browseCluster(clusterName);
+    if (iteratorCluster == null) {
+      return false;
+    }
+
+    while (iteratorCluster.hasNext()) {
+      final ODocument document = iteratorCluster.next();
+      document.delete();
+    }
+
+    return dropClusterInternal(clusterId);
+  }
+
+  public boolean dropClusterInternal(int clusterId) {
+    return getStorage().dropCluster(clusterId);
+  }
+
+  @Override
+  public long getSize() {
+    checkIfActive();
+    return getStorage().getSize();
   }
 }

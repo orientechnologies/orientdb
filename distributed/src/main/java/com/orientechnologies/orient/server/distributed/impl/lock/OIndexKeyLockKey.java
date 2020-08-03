@@ -1,15 +1,14 @@
 package com.orientechnologies.orient.server.distributed.impl.lock;
 
-import com.orientechnologies.common.util.OPair;
 import java.util.Objects;
 
-class OIndexKeyLockKey implements OLockKey {
+public class OIndexKeyLockKey implements OLockKey {
   private String index;
   private Object key;
 
-  public OIndexKeyLockKey(OPair<String, Object> indexKey) {
-    this.index = indexKey.getKey();
-    this.key = indexKey.getValue();
+  public OIndexKeyLockKey(String index, Object key) {
+    this.index = index;
+    this.key = key;
   }
 
   @Override

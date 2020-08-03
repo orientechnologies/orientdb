@@ -217,7 +217,6 @@ public class FetchFromIndexStep extends AbstractExecutionStep {
           break;
         }
       }
-
       if (indexIterator != null) {
         nextEntry = indexIterator.next();
       }
@@ -226,7 +225,6 @@ public class FetchFromIndexStep extends AbstractExecutionStep {
       final Map.Entry<Object, OIdentifiable> entry = customIterator.next();
       nextEntry = new ORawPair<>(entry.getKey(), entry.getValue().getIdentity());
     }
-
     if (nextEntry == null && nullKeyIterator != null && nullKeyIterator.hasNext()) {
       OIdentifiable nextValue = (OIdentifiable) nullKeyIterator.next();
       nextEntry = new ORawPair<>(null, nextValue.getIdentity());

@@ -554,7 +554,7 @@ public class OConsoleDatabaseApp extends OrientConsole
       return;
     }
 
-    if (currentDatabase.getStorage().isRemote()) {
+    if (currentDatabase.isRemote()) {
       message(
           "\nWARNING - Transactions are not supported from console in remote, please use an sql script: \neg.\n\nscript sql\nbegin;\n<your commands here>\ncommit;\nend\n\n");
       return;
@@ -573,11 +573,6 @@ public class OConsoleDatabaseApp extends OrientConsole
       return;
     }
 
-    if (currentDatabase.getStorage().isRemote()) {
-      message(
-          "\nWARNING - Transactions are not supported from console in remote, please use an sql script: \neg.\n\nscript sql\nbegin;\n<your commands here>\ncommit;\nend\n\n");
-      return;
-    }
     final long begin = System.currentTimeMillis();
 
     final int txId = currentDatabase.getTransaction().getId();
@@ -597,12 +592,6 @@ public class OConsoleDatabaseApp extends OrientConsole
 
     if (!currentDatabase.getTransaction().isActive()) {
       message("\nError: no active transaction is running right now.");
-      return;
-    }
-
-    if (currentDatabase.getStorage().isRemote()) {
-      message(
-          "\nWARNING - Transactions are not supported from console in remote, please use an sql script: \neg.\n\nscript sql\nbegin;\n<your commands here>\ncommit;\nend\n\n");
       return;
     }
 
@@ -2090,7 +2079,7 @@ public class OConsoleDatabaseApp extends OrientConsole
         }
       }
 
-      final boolean isRemote = currentDatabase.getStorage().isRemote();
+      final boolean isRemote = currentDatabase.isRemote();
 
       for (String clusterName : clusters) {
         try {
@@ -2113,7 +2102,7 @@ public class OConsoleDatabaseApp extends OrientConsole
           row.field("NAME", clusterName);
           row.field("ID", clusterId);
           row.field("CLASS", className);
-          if (!currentDatabase.getStorage().isRemote()) {
+          if (!currentDatabase.isRemote()) {
             row.field("CONFLICT-STRATEGY", conflictStrategy);
           }
           row.field("COUNT", count);
@@ -2533,7 +2522,7 @@ public class OConsoleDatabaseApp extends OrientConsole
             : text;
 
     try {
-      if (currentDatabase.getStorage().isRemote()) {
+      if (currentDatabase.isRemote()) {
         ODatabaseImportRemote databaseImport =
             new ODatabaseImportRemote(currentDatabase, fileName, this);
 

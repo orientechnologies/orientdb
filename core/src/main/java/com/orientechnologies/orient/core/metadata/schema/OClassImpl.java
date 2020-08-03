@@ -1242,7 +1242,7 @@ public abstract class OClassImpl implements OClass {
   public void onPostIndexManagement() {
     final OIndex autoShardingIndex = getAutoShardingIndex();
     if (autoShardingIndex != null) {
-      if (!getDatabase().getStorage().isRemote()) {
+      if (!getDatabase().isRemote()) {
         // OVERRIDE CLUSTER SELECTION
         acquireSchemaWriteLock();
         try {
