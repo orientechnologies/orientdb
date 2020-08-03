@@ -184,6 +184,7 @@ public abstract class OStorageAbstract implements OStorage, OSharedContainer {
     return status;
   }
 
+  @Deprecated
   @Override
   public boolean isDistributed() {
     return false;

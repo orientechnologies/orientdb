@@ -139,7 +139,6 @@ public class OCompositeKey
         return result;
       }
     }
-
     return 0;
   }
 

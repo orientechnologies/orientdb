@@ -25,6 +25,7 @@ public final class OCellBTreeSingleValueIndexEngine
   private static final String NULL_BUCKET_FILE_EXTENSION = ".nbt";
 
   private final OCellBTreeSingleValue<Object> sbTree;
+  // private final OVersionPositionMap versionPositionMap;
   private final String name;
   private final int id;
 
@@ -44,6 +45,9 @@ public final class OCellBTreeSingleValueIndexEngine
     } else {
       throw new IllegalStateException("Invalid tree version " + version);
     }
+    // versionPositionMap =
+    //    new OVersionPositionMapV0(storage, name, name + DATA_FILE_EXTENSION,
+    // OVersionPositionMap.DEF_EXTENSION);
   }
 
   @Override
@@ -81,6 +85,8 @@ public final class OCellBTreeSingleValueIndexEngine
     try {
       //noinspection unchecked
       sbTree.create(atomicOperation, keySerializer, keyTypes, keySize, encryption);
+
+      // TODO: create version position map, lock on key level - lock manager
     } catch (IOException e) {
       throw OException.wrapException(new OIndexException("Error of creation of index " + name), e);
     }
@@ -247,5 +253,16 @@ public final class OCellBTreeSingleValueIndexEngine
   @Override
   public String getIndexNameByKey(Object key) {
     return name;
+  }
+
+  @Override
+  public void updateUniqueIndexVersion(Object key) {
+    // TODO: [DR] implement
+  }
+
+  @Override
+  public int getUniqueIndexVersion(Object key) {
+    // TODO: [DR] implement
+    return 0;
   }
 }

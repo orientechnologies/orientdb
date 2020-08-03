@@ -498,8 +498,8 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
       OTransactionInternal tx,
       boolean local,
       int retryCount) {
-    ODistributedDatabase localDistributedDatabase = getDistributedShared();
-    ONewDistributedTxContextImpl txContext =
+    final ODistributedDatabase localDistributedDatabase = getDistributedShared();
+    final ONewDistributedTxContextImpl txContext =
         new ONewDistributedTxContextImpl(
             (ODistributedDatabaseImpl) localDistributedDatabase, requestId, tx, id);
     try {
@@ -751,8 +751,7 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
   }
 
   public void internalBegin2pc(ONewDistributedTxContextImpl txContext, boolean local) {
-
-    ODistributedDatabaseImpl localDb = (ODistributedDatabaseImpl) getDistributedShared();
+    final ODistributedDatabaseImpl localDb = (ODistributedDatabaseImpl) getDistributedShared();
 
     localDb.resetLastValidBackup();
     OTransactionInternal transaction = txContext.getTransaction();
@@ -761,7 +760,6 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
       ((OTransactionOptimisticDistributed) transaction).setDatabase(this);
       ((OTransactionOptimistic) transaction).begin();
     }
-
     localDb.getManager().messageBeforeOp("locks", txContext.getReqId());
 
     acquireLocksForTx(transaction, txContext);
@@ -770,7 +768,9 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
   }
 
   private void firstPhaseDataChecks(
-      boolean local, OTransactionInternal transaction, ONewDistributedTxContextImpl txContext) {
+      final boolean local,
+      final OTransactionInternal transaction,
+      final ONewDistributedTxContextImpl txContext) {
     getDistributedShared().getManager().messageAfterOp("locks", txContext.getReqId());
 
     getDistributedShared().getManager().messageBeforeOp("allocate", txContext.getReqId());
@@ -780,7 +780,8 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
     getDistributedShared().getManager().messageBeforeOp("indexCheck", txContext.getReqId());
     for (Map.Entry<String, OTransactionIndexChanges> change :
         transaction.getIndexOperations().entrySet()) {
-      OIndex index = getSharedContext().getIndexManager().getRawIndex(change.getKey());
+      final String indexName = change.getKey();
+      final OIndex index = getSharedContext().getIndexManager().getRawIndex(indexName);
       if (OClass.INDEX_TYPE.UNIQUE.name().equals(index.getType())
           || OClass.INDEX_TYPE.UNIQUE_HASH_INDEX.name().equals(index.getType())) {
         OTransactionIndexChangesPerKey nullKeyChanges = change.getValue().nullKeyChanges;
@@ -813,10 +814,14 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
           }
         }
 
-        for (OTransactionIndexChangesPerKey changesPerKey :
+        for (final OTransactionIndexChangesPerKey changesPerKey :
             change.getValue().changesPerKey.values()) {
           OIdentifiable old;
-          try (Stream<ORID> rids = index.getInternal().getRids(changesPerKey.key)) {
+          // TODO: add new version check logic, API proposal
+          final long version =
+              ((OAbstractPaginatedStorage) getStorage().getUnderlying())
+                  .getVersionForKey(indexName, changesPerKey.key);
+          try (final Stream<ORID> rids = index.getInternal().getRids(changesPerKey.key)) {
             old = rids.findFirst().orElse(null);
           }
           if (!changesPerKey.entries.isEmpty()) {
@@ -846,7 +851,6 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
         }
       }
     }
-
     getDistributedShared().getManager().messageAfterOp("indexCheck", txContext.getReqId());
 
     getDistributedShared().getManager().messageBeforeOp("mvccCheck", txContext.getReqId());

@@ -149,7 +149,6 @@ public final class OClusterBasedStorageConfiguration implements OStorageConfigur
     btree =
         new CellBTreeSingleValueV1<>(
             COMPONENT_NAME, TREE_DATA_FILE_EXTENSION, TREE_NULL_FILE_EXTENSION, storage);
-
     this.storage = storage;
   }
 

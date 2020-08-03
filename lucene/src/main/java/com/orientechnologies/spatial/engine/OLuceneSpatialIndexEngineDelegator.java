@@ -351,6 +351,17 @@ public class OLuceneSpatialIndexEngineDelegator
     return delegate.getIndexNameByKey(key);
   }
 
+  @Override
+  public void updateUniqueIndexVersion(Object key) {
+    // TODO: [DR] implement
+  }
+
+  @Override
+  public int getUniqueIndexVersion(Object key) {
+    // TODO: [DR] implement
+    return 0;
+  }
+
   public OLuceneIndexEngine getDelegate() {
     return delegate;
   }

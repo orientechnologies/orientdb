@@ -91,6 +91,10 @@ public interface OBaseIndexEngine {
 
   String getIndexNameByKey(Object key);
 
+  void updateUniqueIndexVersion(Object key);
+
+  int getUniqueIndexVersion(Object key);
+
   interface ValuesTransformer {
     Collection<ORID> transformFromValue(Object value);
   }

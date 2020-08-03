@@ -1,6 +1,7 @@
 package com.orientechnologies.orient.distributed.impl.coordinator.transaction;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import com.orientechnologies.orient.client.remote.message.tx.ORecordOperationRequest;
@@ -85,31 +86,29 @@ public class TransactionMessagesReadWriteTests {
 
   @Test
   public void testSecondPhase() {
-    OTransactionSecondPhaseOperation operation =
+    final OTransactionSecondPhaseOperation operation =
         new OTransactionSecondPhaseOperation(
             new OSessionOperationId(), new ArrayList<>(), new ArrayList<>(), true);
-    OTransactionSecondPhaseOperation readOperation = new OTransactionSecondPhaseOperation();
+    final OTransactionSecondPhaseOperation readOperation = new OTransactionSecondPhaseOperation();
     writeRead(operation, readOperation);
-
     // assertEquals(operation.getOperationId(), readOperation.getOperationId());
     assertEquals(operation.isSuccess(), readOperation.isSuccess());
   }
 
   @Test
   public void testSecondPhaseResult() {
-    OTransactionSecondPhaseResponse operation =
+    final OTransactionSecondPhaseResponse operation =
         new OTransactionSecondPhaseResponse(
             true, new ArrayList<>(), new ArrayList<>(), new ArrayList<>());
-    OTransactionSecondPhaseResponse readOperation = new OTransactionSecondPhaseResponse();
+    final OTransactionSecondPhaseResponse readOperation = new OTransactionSecondPhaseResponse();
     writeRead(operation, readOperation);
-
     assertEquals(operation.isSuccess(), readOperation.isSuccess());
   }
 
   @Test
   public void testFirstPhase() {
-    List<ORecordOperationRequest> records = new ArrayList<>();
-    ORecordOperationRequest recordOperation =
+    final List<ORecordOperationRequest> records = new ArrayList<>();
+    final ORecordOperationRequest recordOperation =
         new ORecordOperationRequest(
             ORecordOperation.CREATED,
             (byte) 'a',
@@ -120,28 +119,28 @@ public class TransactionMessagesReadWriteTests {
             true);
     records.add(recordOperation);
 
-    OIndexKeyOperation indexOp =
+    final OIndexKeyOperation indexOp =
         new OIndexKeyOperation(OIndexKeyOperation.PUT, new ORecordId(20, 30));
-
-    List<OIndexKeyOperation> keyOps = new ArrayList<>();
+    final List<OIndexKeyOperation> keyOps = new ArrayList<>();
     keyOps.add(indexOp);
 
-    OIndexKeyChange keyChange = new OIndexKeyChange("string", keyOps);
-    List<OIndexKeyChange> indexChanges = new ArrayList<>();
+    final OIndexKeyChange keyChange = new OIndexKeyChange("string", keyOps);
+    final List<OIndexKeyChange> indexChanges = new ArrayList<>();
     indexChanges.add(keyChange);
-    OIndexOperationRequest indexOperation = new OIndexOperationRequest("one", true, indexChanges);
+    final OIndexOperationRequest indexOperation =
+        new OIndexOperationRequest("one", true, indexChanges);
 
-    List<OIndexOperationRequest> indexes = new ArrayList<>();
+    final List<OIndexOperationRequest> indexes = new ArrayList<>();
     indexes.add(indexOperation);
 
-    OTransactionFirstPhaseOperation operation =
+    final OTransactionFirstPhaseOperation operation =
         new OTransactionFirstPhaseOperation(new OSessionOperationId(), records, indexes);
-    OTransactionFirstPhaseOperation readOperation = new OTransactionFirstPhaseOperation();
+    final OTransactionFirstPhaseOperation readOperation = new OTransactionFirstPhaseOperation();
 
     writeRead(operation, readOperation);
 
     assertEquals(readOperation.getOperations().size(), 1);
-    ORecordOperationRequest readRec = readOperation.getOperations().get(0);
+    final ORecordOperationRequest readRec = readOperation.getOperations().get(0);
     assertEquals(readRec.getType(), ORecordOperation.CREATED);
     assertEquals(readRec.getRecordType(), 'a');
     assertEquals(readRec.getId(), new ORecordId(10, 10));
@@ -149,14 +148,14 @@ public class TransactionMessagesReadWriteTests {
     assertEquals(readRec.getVersion(), 10);
 
     assertEquals(readOperation.getIndexes().size(), 1);
-    OIndexOperationRequest readIndex = readOperation.getIndexes().get(0);
+    final OIndexOperationRequest readIndex = readOperation.getIndexes().get(0);
     assertEquals(readIndex.getIndexName(), "one");
-    assertEquals(readIndex.isCleanIndexValues(), true);
+    assertTrue(readIndex.isCleanIndexValues());
     assertEquals(readIndex.getIndexKeyChanges().size(), 1);
-    OIndexKeyChange readChange = readIndex.getIndexKeyChanges().get(0);
+    final OIndexKeyChange readChange = readIndex.getIndexKeyChanges().get(0);
     assertEquals(readChange.getKey(), "string");
     assertEquals(readChange.getOperations().size(), 1);
-    OIndexKeyOperation readKeyOp = readChange.getOperations().get(0);
+    final OIndexKeyOperation readKeyOp = readChange.getOperations().get(0);
     assertEquals(readKeyOp.getType(), OIndexKeyOperation.PUT);
     assertEquals(readKeyOp.getValue(), new ORecordId(20, 30));
   }
