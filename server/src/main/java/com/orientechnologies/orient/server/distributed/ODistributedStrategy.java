@@ -36,6 +36,5 @@ public interface ODistributedStrategy {
       ODistributedConfiguration cfg,
       ODistributedRequest request,
       Collection<String> iNodes,
-      String databaseName,
       Object localResult);
 }

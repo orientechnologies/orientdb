@@ -55,7 +55,6 @@ public class ODefaultDistributedStrategy implements ODistributedStrategy {
       final ODistributedConfiguration cfg,
       final ODistributedRequest request,
       final Collection<String> iNodes,
-      final String databaseName,
       final Object localResult) {
 
     final Set<String> nodesConcurToTheQuorum = new HashSet<String>();
