@@ -21,7 +21,7 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.server.hazelcast.OHazelcastPlugin;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import com.orientechnologies.orient.test.ServerRun;
+import com.orientechnologies.orient.setup.ServerRun;
 import org.junit.Assert;
 import org.junit.Test;
 

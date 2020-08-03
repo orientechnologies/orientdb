@@ -8,7 +8,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import com.orientechnologies.orient.test.ServerRun;
+import com.orientechnologies.orient.setup.ServerRun;
 import org.junit.Ignore;
 import org.junit.Test;
 

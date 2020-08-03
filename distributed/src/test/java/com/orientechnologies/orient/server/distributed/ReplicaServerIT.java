@@ -25,7 +25,7 @@ import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.record.OVertex;
 import java.util.Set;
 
-import com.orientechnologies.orient.test.ServerRun;
+import com.orientechnologies.orient.setup.ServerRun;
 import org.junit.Assert;
 import org.junit.Test;
 

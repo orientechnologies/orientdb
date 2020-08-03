@@ -1,4 +1,4 @@
-package com.orientechnologies.orient.test;
+package com.orientechnologies.orient.setup;
 
 import com.orientechnologies.orient.core.db.ODatabaseSession;
 import com.orientechnologies.orient.core.db.OrientDB;

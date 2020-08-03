@@ -38,7 +38,7 @@ import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.atomic.AtomicLong;
 
-import com.orientechnologies.orient.test.ServerRun;
+import com.orientechnologies.orient.setup.ServerRun;
 import org.junit.Assert;
 
 // import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;

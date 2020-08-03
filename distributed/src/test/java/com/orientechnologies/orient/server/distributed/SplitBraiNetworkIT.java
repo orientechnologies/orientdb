@@ -18,7 +18,7 @@ package com.orientechnologies.orient.server.distributed;
 import com.orientechnologies.common.log.OLogManager;
 import java.util.Map;
 
-import com.orientechnologies.orient.test.ServerRun;
+import com.orientechnologies.orient.setup.ServerRun;
 import org.junit.Assert;
 import org.junit.Test;
 

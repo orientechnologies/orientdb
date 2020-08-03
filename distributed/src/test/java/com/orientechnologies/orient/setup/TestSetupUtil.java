@@ -1,4 +1,4 @@
-package com.orientechnologies.orient.test;
+package com.orientechnologies.orient.setup;
 
 import io.kubernetes.client.openapi.StringUtil;
 import java.io.IOException;

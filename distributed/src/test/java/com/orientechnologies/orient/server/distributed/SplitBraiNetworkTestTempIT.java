@@ -24,7 +24,7 @@ import com.orientechnologies.orient.server.distributed.impl.proxy.OProxyServer;
 import java.util.List;
 import java.util.Map;
 
-import com.orientechnologies.orient.test.ServerRun;
+import com.orientechnologies.orient.setup.ServerRun;
 import org.junit.Assert;
 import org.junit.Ignore;
 import org.junit.Test;

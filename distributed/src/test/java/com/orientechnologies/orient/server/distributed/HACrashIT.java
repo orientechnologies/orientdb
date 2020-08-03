@@ -17,7 +17,7 @@ package com.orientechnologies.orient.server.distributed;
 
 import com.orientechnologies.common.util.OCallable;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
-import com.orientechnologies.orient.test.ServerRun;
+import com.orientechnologies.orient.setup.ServerRun;
 import org.junit.Assert;
 import org.junit.Ignore;
 import org.junit.Test;

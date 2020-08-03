@@ -15,7 +15,7 @@
  */
 package com.orientechnologies.orient.server.distributed;
 
-import com.orientechnologies.orient.test.ServerRun;
+import com.orientechnologies.orient.setup.ServerRun;
 import org.junit.Test;
 
 /** Distributed TX test against "plocal" protocol. */

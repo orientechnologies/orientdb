@@ -1,8 +1,9 @@
-package com.orientechnologies.orient.test.configs;
+package com.orientechnologies.orient.setup.configs;
 
-import com.orientechnologies.orient.test.K8sServerConfig;
-import com.orientechnologies.orient.test.TestConfig;
-import com.orientechnologies.orient.test.TestSetupUtil;
+import com.orientechnologies.orient.setup.K8sServerConfig;
+import com.orientechnologies.orient.setup.TestConfig;
+import com.orientechnologies.orient.setup.TestSetupUtil;
+
 import java.util.*;
 
 public class SimpleDServerConfig implements TestConfig {
@@ -11,7 +12,7 @@ public class SimpleDServerConfig implements TestConfig {
   public static final String SERVER2 = "server2";
 
   // Server config files used for each instance when using a local setup.
-  private static Map<String, String> localServerConfigFiles =
+  private static Map<String, String>   localServerConfigFiles =
       new HashMap<String, String>() {
         {
           put(SERVER0, "orientdb-simple-dserver-config-0.xml");
@@ -20,7 +21,7 @@ public class SimpleDServerConfig implements TestConfig {
         }
       };
   // Configurations used for the deployment of each instance on Kubernetes
-  private Map<String, K8sServerConfig> serverK8sConfigs = new HashMap<>();
+  private Map<String, K8sServerConfig> serverK8sConfigs       = new HashMap<>();
 
   @Override
   public Set<String> getServerIds() {

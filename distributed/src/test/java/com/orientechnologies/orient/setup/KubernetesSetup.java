@@ -1,4 +1,4 @@
-package com.orientechnologies.orient.test;
+package com.orientechnologies.orient.setup;
 
 import com.google.gson.JsonSyntaxException;
 import com.google.gson.reflect.TypeToken;

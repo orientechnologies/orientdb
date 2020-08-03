@@ -9,7 +9,7 @@ import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.record.OElement;
 import com.orientechnologies.orient.core.record.OVertex;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
-import com.orientechnologies.orient.test.ServerRun;
+import com.orientechnologies.orient.setup.ServerRun;
 import com.orientechnologies.orient.server.distributed.task.ODistributedRecordLockedException;
 import java.util.concurrent.Callable;
 import org.junit.Assert;

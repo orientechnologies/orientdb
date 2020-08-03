@@ -34,7 +34,7 @@ import java.util.Date;
 import java.util.UUID;
 import java.util.concurrent.Callable;
 
-import com.orientechnologies.orient.test.ServerRun;
+import com.orientechnologies.orient.setup.ServerRun;
 import junit.framework.Assert;
 
 /** Test distributed TX */
