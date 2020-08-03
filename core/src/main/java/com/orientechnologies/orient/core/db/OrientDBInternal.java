@@ -328,4 +328,8 @@ public interface OrientDBInternal extends AutoCloseable, OSchedulerInternal {
       String script, String user, String pw, Object... params) {
     throw new UnsupportedOperationException();
   }
+
+  default void rollbackOperationsFromThread(final Thread thread) {
+    throw new UnsupportedOperationException();
+  }
 }
