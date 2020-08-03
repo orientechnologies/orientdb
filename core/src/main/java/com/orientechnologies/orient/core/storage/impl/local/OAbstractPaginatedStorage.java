@@ -303,7 +303,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
   private final Map<String, int[]> indexToVersionMap = new HashMap<>();
   private static final int DEFAULT_VERSION = 0;
   private static final int CONCURRENT_DISTRIBUTED_TRANSACTIONS = 1000;
-  private static final int SAFETY_FILL_FACTOR = 1000;
+  private static final int SAFETY_FILL_FACTOR = 10;
   private static final int DEFAULT_VERSION_ARRAY_SIZE =
       CONCURRENT_DISTRIBUTED_TRANSACTIONS * SAFETY_FILL_FACTOR;
 
