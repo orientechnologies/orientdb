@@ -342,8 +342,8 @@ public final class OClusterPositionMapV2 extends OClusterPositionMap {
         index = 0;
       } else {
         int entriesCount = 0;
-        final long startIndex =
-            cacheEntry.getPageIndex() * OClusterPositionMapBucket.MAX_ENTRIES + index;
+        // final long startIndex =
+        //     cacheEntry.getPageIndex() * OClusterPositionMapBucket.MAX_ENTRIES + index;
 
         result = new OClusterPositionEntry[resultSize];
         for (int i = 0; i < resultSize; i++) {
@@ -590,9 +590,9 @@ public final class OClusterPositionMapV2 extends OClusterPositionMap {
     return fileId;
   }
 
-  void replaceFileId(final long newFileId) {
+  /* void replaceFileId(final long newFileId) {
     this.fileId = newFileId;
-  }
+  }*/
 
   public static final class OClusterPositionEntry {
     private final long position;

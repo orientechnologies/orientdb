@@ -29,10 +29,6 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODura
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.po.cluster.clusterpositionmapbucket.*;
 import java.util.Objects;
 
-/**
- * @author Andrey Lomakin (a.lomakin-at-orientdb.com)
- * @since 10/7/13
- */
 public final class OVersionPositionMapBucket extends ODurablePage {
   private static final int NEXT_PAGE_OFFSET = NEXT_FREE_POSITION;
   private static final int SIZE_OFFSET = NEXT_PAGE_OFFSET + OLongSerializer.LONG_SIZE;
@@ -44,10 +40,10 @@ public final class OVersionPositionMapBucket extends ODurablePage {
   public static final byte FILLED = 2;
   public static final byte ALLOCATED = 4;
 
-  // TODO: [DR] use just with int for version and refactor class
-  private static final int ENTRY_SIZE = OIntegerSerializer.INT_SIZE;
+  // use int for version
+  private static final int VERSION_ENTRY_SIZE = OIntegerSerializer.INT_SIZE;
 
-  public static final int MAX_ENTRIES = (MAX_PAGE_SIZE_BYTES - POSITIONS_OFFSET) / ENTRY_SIZE;
+  public static final int MAX_ENTRIES = (MAX_PAGE_SIZE_BYTES - POSITIONS_OFFSET) / VERSION_ENTRY_SIZE;
 
   public OVersionPositionMapBucket(OCacheEntry cacheEntry) {
     super(cacheEntry);
@@ -64,33 +60,23 @@ public final class OVersionPositionMapBucket extends ODurablePage {
 
   public int add(int pageIndex, int recordPosition, byte status) {
     int size = getIntValue(SIZE_OFFSET);
-
     int position = entryPosition(size);
-
     position += setByteValue(position, status);
     position += setLongValue(position, pageIndex);
     setIntValue(position, recordPosition);
-
     setIntValue(SIZE_OFFSET, size + 1);
-
     addPageOperation(new ClusterPositionMapBucketAddPO(pageIndex, recordPosition, status));
-
     return size;
   }
 
   public int allocate() {
     int size = getIntValue(SIZE_OFFSET);
-
     int position = entryPosition(size);
-
     position += setByteValue(position, ALLOCATED);
     position += setLongValue(position, -1);
     setIntValue(position, -1);
-
     setIntValue(SIZE_OFFSET, size + 1);
-
     addPageOperation(new ClusterPositionMapBucketAllocatePO());
-
     return size;
   }
 
@@ -133,7 +119,6 @@ public final class OVersionPositionMapBucket extends ODurablePage {
     if (index >= size) {
       throw new OStorageException("Provided index " + index + " is out of range");
     }
-
     final int position = entryPosition(index);
 
     byte flag = getByteValue(position);
@@ -165,7 +150,7 @@ public final class OVersionPositionMapBucket extends ODurablePage {
   }
 
   private static int entryPosition(int index) {
-    return index * ENTRY_SIZE + POSITIONS_OFFSET;
+    return index * VERSION_ENTRY_SIZE + POSITIONS_OFFSET;
   }
 
   public boolean isFull() {

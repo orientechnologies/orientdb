@@ -226,13 +226,11 @@ public final class OVersionPositionMapV0 extends OVersionPositionMap {
           } else {
             cacheEntry = loadPageForWrite(atomicOperation, fileId, lastPage + 1, false, false);
           }
-
           mapEntryPoint.setFileSize(lastPage + 1);
 
           bucket = new OVersionPositionMapBucket(cacheEntry);
           bucket.init();
         }
-
         final long index = bucket.add(pageIndex, recordPosition);
         return index + (cacheEntry.getPageIndex() - 1) * OVersionPositionMapBucket.MAX_ENTRIES;
       } finally {
@@ -263,9 +261,7 @@ public final class OVersionPositionMapV0 extends OVersionPositionMap {
     try {
       final MapEntryPoint mapEntryPoint = new MapEntryPoint(entryPointEntry);
       final int lastPage = mapEntryPoint.getFileSize();
-
       long filledUpTo = getFilledUpTo(atomicOperation, fileId);
-
       assert lastPage <= filledUpTo - 1;
 
       if (lastPage == 0) {
@@ -276,7 +272,6 @@ public final class OVersionPositionMapV0 extends OVersionPositionMap {
           cacheEntry = loadPageForWrite(atomicOperation, fileId, lastPage + 1, false, false);
         }
         mapEntryPoint.setFileSize(lastPage + 1);
-
         clear = true;
       } else {
         cacheEntry = loadPageForWrite(atomicOperation, fileId, lastPage, false, true);
@@ -290,7 +285,6 @@ public final class OVersionPositionMapV0 extends OVersionPositionMap {
 
         if (bucket.isFull()) {
           releasePageFromWrite(atomicOperation, cacheEntry);
-
           assert lastPage <= filledUpTo - 1;
 
           if (lastPage == filledUpTo - 1) {
@@ -298,13 +292,11 @@ public final class OVersionPositionMapV0 extends OVersionPositionMap {
           } else {
             cacheEntry = loadPageForWrite(atomicOperation, fileId, lastPage + 1, false, false);
           }
-
           mapEntryPoint.setFileSize(lastPage + 1);
 
           bucket = new OVersionPositionMapBucket(cacheEntry);
           bucket.init();
         }
-
         final long index = bucket.allocate();
         return index + (cacheEntry.getPageIndex() - 1) * OVersionPositionMapBucket.MAX_ENTRIES;
       } finally {
@@ -348,13 +340,11 @@ public final class OVersionPositionMapV0 extends OVersionPositionMap {
       throws IOException {
     final long pageIndex = clusterPosition / OVersionPositionMapBucket.MAX_ENTRIES + 1;
     final int index = (int) (clusterPosition % OVersionPositionMapBucket.MAX_ENTRIES);
-
     final long lastPage = getLastPage(atomicOperation);
 
     if (pageIndex > lastPage) {
       return null;
     }
-
     pageCount = (int) Math.min(lastPage - pageIndex + 1, pageCount);
 
     final OCacheEntry cacheEntry =
@@ -376,7 +366,6 @@ public final class OVersionPositionMapV0 extends OVersionPositionMap {
         loadPageForWrite(atomicOperation, fileId, pageIndex, false, true);
     try {
       final OVersionPositionMapBucket bucket = new OVersionPositionMapBucket(cacheEntry);
-
       bucket.remove(index);
     } finally {
       releasePageFromWrite(atomicOperation, cacheEntry);
@@ -388,7 +377,6 @@ public final class OVersionPositionMapV0 extends OVersionPositionMap {
     if (clusterPosition == Long.MAX_VALUE) {
       return OCommonConst.EMPTY_LONG_ARRAY;
     }
-
     return ceilingPositions(clusterPosition + 1, atomicOperation);
   }
 
@@ -404,7 +392,6 @@ public final class OVersionPositionMapV0 extends OVersionPositionMap {
     } else {
       realPosition = clusterPosition + 1;
     }
-
     long pageIndex = realPosition / OVersionPositionMapBucket.MAX_ENTRIES + 1;
     int index = (int) (realPosition % OVersionPositionMapBucket.MAX_ENTRIES);
 
@@ -427,8 +414,8 @@ public final class OVersionPositionMapV0 extends OVersionPositionMap {
         index = 0;
       } else {
         int entriesCount = 0;
-        final long startIndex =
-            cacheEntry.getPageIndex() * OVersionPositionMapBucket.MAX_ENTRIES + index;
+        // final long startIndex =
+        //     cacheEntry.getPageIndex() * OVersionPositionMapBucket.MAX_ENTRIES + index;
 
         result = new OClusterPositionEntry[resultSize];
         for (int i = 0; i < resultSize; i++) {
@@ -448,7 +435,6 @@ public final class OVersionPositionMapV0 extends OVersionPositionMap {
         } else {
           result = Arrays.copyOf(result, entriesCount);
         }
-
         releasePageFromRead(atomicOperation, cacheEntry);
       }
     } while (result == null && pageIndex <= lastPage);
@@ -456,7 +442,6 @@ public final class OVersionPositionMapV0 extends OVersionPositionMap {
     if (result == null) {
       result = new OClusterPositionEntry[] {};
     }
-
     return result;
   }
 
@@ -465,7 +450,6 @@ public final class OVersionPositionMapV0 extends OVersionPositionMap {
     if (clusterPosition < 0) {
       clusterPosition = 0;
     }
-
     long pageIndex = clusterPosition / OVersionPositionMapBucket.MAX_ENTRIES + 1;
     int index = (int) (clusterPosition % OVersionPositionMapBucket.MAX_ENTRIES);
 
@@ -474,7 +458,6 @@ public final class OVersionPositionMapV0 extends OVersionPositionMap {
     if (pageIndex > lastPage) {
       return OCommonConst.EMPTY_LONG_ARRAY;
     }
-
     long[] result = null;
     do {
       final OCacheEntry cacheEntry = loadPageForRead(atomicOperation, fileId, pageIndex, false, 1);
@@ -506,7 +489,6 @@ public final class OVersionPositionMapV0 extends OVersionPositionMap {
         } else {
           result = Arrays.copyOf(result, entriesCount);
         }
-
         releasePageFromRead(atomicOperation, cacheEntry);
       }
     } while (result == null && pageIndex <= lastPage);
@@ -514,7 +496,6 @@ public final class OVersionPositionMapV0 extends OVersionPositionMap {
     if (result == null) {
       result = OCommonConst.EMPTY_LONG_ARRAY;
     }
-
     return result;
   }
 
@@ -523,7 +504,6 @@ public final class OVersionPositionMapV0 extends OVersionPositionMap {
     if (clusterPosition == 0) {
       return OCommonConst.EMPTY_LONG_ARRAY;
     }
-
     return floorPositions(clusterPosition - 1, atomicOperation);
   }
 
@@ -532,7 +512,6 @@ public final class OVersionPositionMapV0 extends OVersionPositionMap {
     if (clusterPosition < 0) {
       return OCommonConst.EMPTY_LONG_ARRAY;
     }
-
     long pageIndex = clusterPosition / OVersionPositionMapBucket.MAX_ENTRIES + 1;
     int index = (int) (clusterPosition % OVersionPositionMapBucket.MAX_ENTRIES);
 
@@ -583,7 +562,6 @@ public final class OVersionPositionMapV0 extends OVersionPositionMap {
     if (result == null) {
       result = OCommonConst.EMPTY_LONG_ARRAY;
     }
-
     return result;
   }
 
@@ -607,7 +585,6 @@ public final class OVersionPositionMapV0 extends OVersionPositionMap {
         releasePageFromRead(atomicOperation, cacheEntry);
       }
     }
-
     return ORID.CLUSTER_POS_INVALID;
   }
 
@@ -626,9 +603,7 @@ public final class OVersionPositionMapV0 extends OVersionPositionMap {
     final OCacheEntry cacheEntry = loadPageForRead(atomicOperation, fileId, pageIndex, false, 1);
     try {
       final OVersionPositionMapBucket bucket = new OVersionPositionMapBucket(cacheEntry);
-
       return bucket.getStatus(index);
-
     } finally {
       releasePageFromRead(atomicOperation, cacheEntry);
     }
@@ -642,7 +617,6 @@ public final class OVersionPositionMapV0 extends OVersionPositionMap {
       try {
         final OVersionPositionMapBucket bucket = new OVersionPositionMapBucket(cacheEntry);
         final int bucketSize = bucket.getSize();
-
         for (int index = bucketSize - 1; index >= 0; index--) {
           if (bucket.exists(index)) {
             return pageIndex * OVersionPositionMapBucket.MAX_ENTRIES
@@ -654,7 +628,6 @@ public final class OVersionPositionMapV0 extends OVersionPositionMap {
         releasePageFromRead(atomicOperation, cacheEntry);
       }
     }
-
     return ORID.CLUSTER_POS_INVALID;
   }
 
@@ -675,9 +648,9 @@ public final class OVersionPositionMapV0 extends OVersionPositionMap {
     return fileId;
   }
 
-  void replaceFileId(final long newFileId) {
+  /* void replaceFileId(final long newFileId) {
     this.fileId = newFileId;
-  }
+  }*/
 
   public static final class OClusterPositionEntry {
     private final long position;

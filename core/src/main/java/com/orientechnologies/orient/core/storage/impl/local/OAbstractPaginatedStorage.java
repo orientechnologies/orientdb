@@ -22,7 +22,6 @@ package com.orientechnologies.orient.core.storage.impl.local;
 
 import static com.orientechnologies.orient.core.config.OGlobalConfiguration.RID_BAG_SBTREEBONSAI_DELETE_DELAY;
 
-
 import com.orientechnologies.common.concur.ONeedRetryException;
 import com.orientechnologies.common.concur.lock.OLockManager;
 import com.orientechnologies.common.concur.lock.OModificationOperationProhibitedException;
@@ -4900,9 +4899,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       byte[] iv)
       throws IOException;
 
-  /**
-   * Checks if the storage is open. If it's closed an exception is raised.
-   */
+  /** Checks if the storage is open. If it's closed an exception is raised. */
   protected final void checkOpenness() {
     if (status != STATUS.OPEN) {
       throw new OStorageException("Storage " + name + " is not opened.");
@@ -5137,8 +5134,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
   protected void initConfiguration(
       OAtomicOperation atomicOperation, final OContextConfiguration contextConfiguration)
-      throws IOException {
-  }
+      throws IOException {}
 
   @SuppressWarnings({"EmptyMethod"})
   protected final void postCreateSteps() {}
@@ -7487,8 +7483,10 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
   }
 
   private boolean isIndexUniqueByType(final String indexType) {
-    return indexType.equals(OClass.INDEX_TYPE.UNIQUE.name())
+    return (indexType.equals(OClass.INDEX_TYPE.UNIQUE.name())
             || indexType.equals(OClass.INDEX_TYPE.UNIQUE_HASH_INDEX.name())
+            || indexType.equals(OClass.INDEX_TYPE.DICTIONARY.name())
+            || indexType.equals(OClass.INDEX_TYPE.DICTIONARY_HASH_INDEX.name()))
         ? true
         : false;
   }
