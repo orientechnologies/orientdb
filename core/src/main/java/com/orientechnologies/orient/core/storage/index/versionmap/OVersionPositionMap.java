@@ -3,7 +3,6 @@ package com.orientechnologies.orient.core.storage.index.versionmap;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperation;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurableComponent;
-
 import java.io.IOException;
 
 public abstract class OVersionPositionMap extends ODurableComponent {

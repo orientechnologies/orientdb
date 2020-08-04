@@ -257,9 +257,7 @@ public final class OPaginatedClusterV2 extends OPaginatedCluster {
                       + entries
                       + " records");
             }
-
             deleteFile(atomicOperation, fileId);
-
             clusterPositionMap.delete(atomicOperation);
           } finally {
             releaseExclusiveLock();

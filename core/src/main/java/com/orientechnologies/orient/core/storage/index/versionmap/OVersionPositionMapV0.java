@@ -27,7 +27,6 @@ import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperation;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperationsManager;
-
 import java.io.IOException;
 import java.util.Arrays;
 
@@ -53,9 +52,32 @@ public final class OVersionPositionMapV0 extends OVersionPositionMap {
         operation -> {
           acquireExclusiveLock();
           try {
-            fileId = addFile(atomicOperation, getFullName());
+            // fileId = addFile(atomicOperation, getFullName());
             // TODO: [DR] initCusterState(atomicOperation);
             this.createVPM(atomicOperation);
+          } finally {
+            releaseExclusiveLock();
+          }
+        });
+  }
+
+  @Override
+  public void delete(OAtomicOperation atomicOperation) {
+    executeInsideComponentOperation(
+        atomicOperation,
+        operation -> {
+          acquireExclusiveLock();
+          try {
+            // TODO: [DR] final long entries = getEntries();
+            // if (entries > 0) {
+            //  throw new NotEmptyComponentCanNotBeRemovedException(
+            //      getName()
+            //          + " : Not empty cluster can not be deleted. Cluster has "
+            //          + entries
+            //          + " records");
+            // }
+            deleteFile(atomicOperation, fileId);
+            this.deleteVPM(atomicOperation);
           } finally {
             releaseExclusiveLock();
           }
@@ -152,7 +174,7 @@ public final class OVersionPositionMapV0 extends OVersionPositionMap {
     }
   }
 
-  public void delete(final OAtomicOperation atomicOperation) throws IOException {
+  public void deleteVPM(final OAtomicOperation atomicOperation) throws IOException {
     deleteFile(atomicOperation, fileId);
   }
 
