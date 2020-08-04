@@ -23,21 +23,17 @@ import static com.orientechnologies.orient.core.config.OGlobalConfiguration.DIST
 import static com.orientechnologies.orient.core.config.OGlobalConfiguration.DISTRIBUTED_TRANSACTION_SEQUENCE_SET_SIZE;
 import static com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIRECTION.OUT;
 
-import com.orientechnologies.common.concur.OOfflineNodeException;
 import com.orientechnologies.common.concur.lock.OInterruptedException;
 import com.orientechnologies.common.concur.lock.OSimpleLockManager;
 import com.orientechnologies.common.concur.lock.OSimpleLockManagerImpl;
-import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.profiler.OAbstractProfiler;
 import com.orientechnologies.common.profiler.OProfiler;
 import com.orientechnologies.common.util.OCallable;
 import com.orientechnologies.orient.core.Orient;
-import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.OrientDBDistributed;
-import com.orientechnologies.orient.core.exception.OSecurityAccessException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.OSyncSource;
@@ -54,8 +50,6 @@ import com.orientechnologies.orient.server.distributed.ODistributedException;
 import com.orientechnologies.orient.server.distributed.ODistributedRequest;
 import com.orientechnologies.orient.server.distributed.ODistributedRequestId;
 import com.orientechnologies.orient.server.distributed.ODistributedResponse;
-import com.orientechnologies.orient.server.distributed.ODistributedResponseManager;
-import com.orientechnologies.orient.server.distributed.ODistributedResponseManagerImpl;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIRECTION;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
@@ -69,12 +63,8 @@ import com.orientechnologies.orient.server.distributed.impl.lock.OLockManagerImp
 import com.orientechnologies.orient.server.distributed.impl.task.OLockKeySource;
 import com.orientechnologies.orient.server.distributed.impl.task.OUnreachableServerLocalTask;
 import com.orientechnologies.orient.server.distributed.impl.task.transaction.OTransactionUniqueKey;
-import com.orientechnologies.orient.server.distributed.task.OAbstractRemoteTask;
 import com.orientechnologies.orient.server.distributed.task.ORemoteTask;
 import com.orientechnologies.orient.server.hazelcast.OHazelcastPlugin;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -93,7 +83,6 @@ import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
-import java.util.stream.Collectors;
 
 /**
  * Distributed database implementation. There is one instance per database. Each node creates own
@@ -453,264 +442,6 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
   }
 
   @Override
-  public ODistributedResponse send2Nodes(
-      final ODistributedRequest iRequest,
-      final Collection<String> iClusterNames,
-      Collection<String> iNodes,
-      final ODistributedRequest.EXECUTION_MODE iExecutionMode,
-      final Object localResult) {
-    return send2Nodes(
-        iRequest,
-        iClusterNames,
-        iNodes,
-        iExecutionMode,
-        localResult,
-        (iRequest1,
-            iNodes1,
-            task,
-            nodesConcurToTheQuorum,
-            availableNodes,
-            expectedResponses,
-            quorum,
-            groupByResponse,
-            waitLocalNode) -> {
-          return new ODistributedResponseManagerImpl(
-              manager,
-              iRequest,
-              iNodes,
-              nodesConcurToTheQuorum,
-              expectedResponses,
-              quorum,
-              waitLocalNode,
-              adjustTimeoutWithLatency(
-                  iNodes, task.getSynchronousTimeout(expectedResponses), iRequest.getId()),
-              adjustTimeoutWithLatency(
-                  iNodes, task.getTotalTimeout(availableNodes), iRequest.getId()),
-              groupByResponse);
-        });
-  }
-
-  public ODistributedResponse send2Nodes(
-      final ODistributedRequest iRequest,
-      final Collection<String> iClusterNames,
-      Collection<String> iNodes,
-      final ODistributedRequest.EXECUTION_MODE iExecutionMode,
-      final Object localResult,
-      ODistributedResponseManagerFactory responseManagerFactory) {
-    try {
-      checkForServerOnline(iRequest);
-
-      final String databaseName = iRequest.getDatabaseName();
-
-      if (iNodes.isEmpty()) {
-        ODistributedServerLog.error(
-            this,
-            localNodeName,
-            null,
-            OUT,
-            "No nodes configured for database '%s' request: %s",
-            databaseName,
-            iRequest);
-        throw new ODistributedException(
-            "No nodes configured for partition '" + databaseName + "' request: " + iRequest);
-      }
-
-      final ODistributedConfiguration cfg = manager.getDatabaseConfiguration(databaseName);
-
-      final ORemoteTask task = iRequest.getTask();
-
-      final boolean checkNodesAreOnline = task.isNodeOnlineRequired();
-
-      final Set<String> nodesConcurToTheQuorum =
-          manager
-              .getDistributedStrategy()
-              .getNodesConcurInQuorum(manager, cfg, iRequest, iNodes, databaseName, localResult);
-
-      // AFTER COMPUTED THE QUORUM, REMOVE THE OFFLINE NODES TO HAVE THE LIST OF REAL AVAILABLE
-      // NODES
-      final int availableNodes;
-      if (checkNodesAreOnline) {
-        availableNodes =
-            manager.getNodesWithStatus(
-                iNodes,
-                databaseName,
-                ODistributedServerManager.DB_STATUS.ONLINE,
-                ODistributedServerManager.DB_STATUS.BACKUP,
-                ODistributedServerManager.DB_STATUS.SYNCHRONIZING);
-      } else {
-        availableNodes = iNodes.size();
-      }
-
-      final int expectedResponses = localResult != null ? availableNodes + 1 : availableNodes;
-
-      // all online masters
-      int onlineMasters =
-          manager.getOnlineNodes(databaseName).stream()
-              .filter(f -> cfg.getServerRole(f) == ODistributedConfiguration.ROLES.MASTER)
-              .collect(Collectors.toSet())
-              .size();
-
-      final int quorum =
-          calculateQuorum(
-              task.getQuorumType(),
-              iClusterNames,
-              cfg,
-              expectedResponses,
-              nodesConcurToTheQuorum.size(),
-              onlineMasters,
-              checkNodesAreOnline,
-              localNodeName);
-
-      final boolean groupByResponse =
-          task.getResultStrategy() != OAbstractRemoteTask.RESULT_STRATEGY.UNION;
-
-      final boolean waitLocalNode = waitForLocalNode(cfg, iClusterNames, iNodes);
-
-      // CREATE THE RESPONSE MANAGER
-      final ODistributedResponseManager currentResponseMgr =
-          responseManagerFactory.newResponseManager(
-              iRequest,
-              iNodes,
-              task,
-              nodesConcurToTheQuorum,
-              availableNodes,
-              expectedResponses,
-              quorum,
-              groupByResponse,
-              waitLocalNode);
-
-      if (localResult != null && currentResponseMgr.setLocalResult(localNodeName, localResult)) {
-        // COLLECT LOCAL RESULT ONLY
-        return currentResponseMgr.getFinalResponse();
-      }
-
-      // SORT THE NODE TO GUARANTEE THE SAME ORDER OF DELIVERY
-      if (!(iNodes instanceof List)) iNodes = new ArrayList<String>(iNodes);
-      if (iNodes.size() > 1) Collections.sort((List<String>) iNodes);
-
-      msgService.registerRequest(iRequest.getId().getMessageId(), currentResponseMgr);
-
-      if (ODistributedServerLog.isDebugEnabled())
-        ODistributedServerLog.debug(
-            this, localNodeName, iNodes.toString(), OUT, "Sending request %s...", iRequest);
-
-      for (String node : iNodes) {
-        // CATCH ANY EXCEPTION LOG IT AND IGNORE TO CONTINUE SENDING REQUESTS TO OTHER NODES
-        try {
-          final ORemoteServerController remoteServer = manager.getRemoteServer(node);
-
-          remoteServer.sendRequest(iRequest);
-
-        } catch (Exception e) {
-          currentResponseMgr.removeServerBecauseUnreachable(node);
-
-          String reason = e.getMessage();
-          if (e instanceof ODistributedException && e.getCause() instanceof IOException) {
-            // CONNECTION ERROR: REMOVE THE CONNECTION
-            reason = e.getCause().getMessage();
-            manager.closeRemoteServer(node);
-
-          } else if (e instanceof OSecurityAccessException) {
-            // THE CONNECTION COULD BE STALE, CREATE A NEW ONE AND RETRY
-            manager.closeRemoteServer(node);
-            try {
-              final ORemoteServerController remoteServer = manager.getRemoteServer(node);
-              remoteServer.sendRequest(iRequest);
-              continue;
-
-            } catch (Exception ex) {
-              // IGNORE IT BECAUSE MANAGED BELOW
-            }
-          }
-
-          if (!manager.isNodeAvailable(node))
-            // NODE IS NOT AVAILABLE
-            ODistributedServerLog.debug(
-                this,
-                localNodeName,
-                node,
-                OUT,
-                "Error on sending distributed request %s. The target node is not available. Active nodes: %s",
-                e,
-                iRequest,
-                manager.getAvailableNodeNames(databaseName));
-          else
-            ODistributedServerLog.error(
-                this,
-                localNodeName,
-                node,
-                OUT,
-                "Error on sending distributed request %s (err=%s). Active nodes: %s",
-                iRequest,
-                reason,
-                manager.getAvailableNodeNames(databaseName));
-        }
-      }
-
-      if (currentResponseMgr.getExpectedNodes().isEmpty())
-        // NO SERVER TO SEND A MESSAGE
-        throw new ODistributedException(
-            "No server active for distributed request ("
-                + iRequest
-                + ") against database '"
-                + databaseName
-                + (iClusterNames != null ? "." + iClusterNames : "")
-                + "' to nodes "
-                + iNodes);
-
-      if (ODistributedServerLog.isDebugEnabled())
-        ODistributedServerLog.debug(
-            this, localNodeName, iNodes.toString(), OUT, "Sent request %s", iRequest);
-
-      totalSentRequests.incrementAndGet();
-
-      if (iExecutionMode == ODistributedRequest.EXECUTION_MODE.RESPONSE)
-        return waitForResponse(iRequest, currentResponseMgr);
-
-      return null;
-
-    } catch (RuntimeException e) {
-      throw e;
-    } catch (Exception e) {
-      String names = iClusterNames != null ? "." + iClusterNames : "";
-      throw OException.wrapException(
-          new ODistributedException(
-              "Error on executing distributed request ("
-                  + iRequest
-                  + ") against database '"
-                  + databaseName
-                  + names
-                  + "' to nodes "
-                  + iNodes),
-          e);
-    }
-  }
-
-  private long adjustTimeoutWithLatency(
-      final Collection<String> iNodes, final long timeout, final ODistributedRequestId requestId) {
-    long delta = 0;
-    if (iNodes != null)
-      for (String n : iNodes) {
-        // UPDATE THE TIMEOUT WITH THE CURRENT SERVER LATENCY
-        final long l = msgService.getCurrentLatency(n);
-        delta = Math.max(delta, l);
-      }
-
-    if (delta > 500)
-      ODistributedServerLog.debug(
-          this,
-          localNodeName,
-          iNodes.toString(),
-          OUT,
-          "Adjusted timeouts by adding +%dms because this is the maximum latency recorded against servers %s (reqId=%s)",
-          delta,
-          iNodes,
-          requestId);
-
-    return timeout + delta;
-  }
-
-  @Override
   public void setOnline() {
     OAbstractPaginatedStorage storage =
         (OAbstractPaginatedStorage)
@@ -957,135 +688,6 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
         return;
       }
     }
-  }
-
-  protected void checkForServerOnline(final ODistributedRequest iRequest)
-      throws ODistributedException {
-    final ODistributedServerManager.NODE_STATUS srvStatus = manager.getNodeStatus();
-    if (srvStatus == ODistributedServerManager.NODE_STATUS.OFFLINE
-        || srvStatus == ODistributedServerManager.NODE_STATUS.SHUTTINGDOWN) {
-      ODistributedServerLog.error(
-          this,
-          localNodeName,
-          null,
-          OUT,
-          "Local server is not online (status='%s'). Request %s will be ignored",
-          srvStatus,
-          iRequest);
-      throw new OOfflineNodeException(
-          "Local server is not online (status='"
-              + srvStatus
-              + "'). Request "
-              + iRequest
-              + " will be ignored");
-    }
-  }
-
-  protected boolean waitForLocalNode(
-      final ODistributedConfiguration cfg,
-      final Collection<String> iClusterNames,
-      final Collection<String> iNodes) {
-    boolean waitLocalNode = false;
-    if (iNodes.contains(localNodeName))
-      if (iClusterNames == null || iClusterNames.isEmpty()) {
-        // DEFAULT CLUSTER (*)
-        if (cfg.isReadYourWrites(null)) waitLocalNode = true;
-      } else
-        // BROWSE FOR ALL CLUSTER TO GET THE FIRST 'waitLocalNode'
-        for (String clName : iClusterNames) {
-          if (cfg.isReadYourWrites(clName)) {
-            waitLocalNode = true;
-            break;
-          }
-        }
-    return waitLocalNode;
-  }
-
-  protected int calculateQuorum(
-      final OCommandDistributedReplicateRequest.QUORUM_TYPE quorumType,
-      Collection<String> clusterNames,
-      final ODistributedConfiguration cfg,
-      final int totalServers,
-      final int totalMasterServers,
-      int onlineMasters,
-      final boolean checkNodesAreOnline,
-      final String localNodeName) {
-
-    int quorum = 1;
-
-    if (clusterNames == null || clusterNames.isEmpty()) {
-      clusterNames = new ArrayList<String>(1);
-      clusterNames.add(null);
-    }
-
-    int totalServerInQuorum = totalServers;
-    for (String cluster : clusterNames) {
-      int clusterQuorum = 0;
-      switch (quorumType) {
-        case NONE:
-          // IGNORE IT
-          break;
-        case READ:
-          clusterQuorum = cfg.getReadQuorum(cluster, totalServers, localNodeName);
-          break;
-        case WRITE:
-          clusterQuorum = cfg.getWriteQuorum(cluster, totalMasterServers, localNodeName);
-          totalServerInQuorum = totalMasterServers;
-          break;
-        case WRITE_ALL_MASTERS:
-          int cfgQuorum = cfg.getWriteQuorum(cluster, totalMasterServers, localNodeName);
-          clusterQuorum = Math.max(cfgQuorum, onlineMasters);
-          break;
-        case ALL:
-          clusterQuorum = totalServers;
-          break;
-      }
-
-      quorum = Math.max(quorum, clusterQuorum);
-    }
-
-    if (quorum < 0) quorum = 0;
-
-    if (checkNodesAreOnline && quorum > totalServerInQuorum)
-      throw new ODistributedException(
-          "Quorum ("
-              + quorum
-              + ") cannot be reached on server '"
-              + localNodeName
-              + "' database '"
-              + databaseName
-              + "' because it is major than available nodes ("
-              + totalServerInQuorum
-              + ")");
-
-    return quorum;
-  }
-
-  protected ODistributedResponse waitForResponse(
-      final ODistributedRequest iRequest, final ODistributedResponseManager currentResponseMgr)
-      throws InterruptedException {
-    final long beginTime = System.currentTimeMillis();
-
-    // WAIT FOR THE MINIMUM SYNCHRONOUS RESPONSES (QUORUM)
-    if (!currentResponseMgr.waitForSynchronousResponses()) {
-      final long elapsed = System.currentTimeMillis() - beginTime;
-
-      if (elapsed > currentResponseMgr.getSynchTimeout()) {
-
-        ODistributedServerLog.warn(
-            this,
-            localNodeName,
-            null,
-            DIRECTION.IN,
-            "Timeout (%dms) on waiting for synchronous responses from nodes=%s responsesSoFar=%s request=(%s)",
-            elapsed,
-            currentResponseMgr.getExpectedNodes(),
-            currentResponseMgr.getRespondingNodes(),
-            iRequest);
-      }
-    }
-
-    return currentResponseMgr.getFinalResponse();
   }
 
   public void checkNodeInConfiguration(final String serverName, ODistributedConfiguration cfg) {
@@ -1399,5 +1001,9 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
       final String localNode = manager.getLocalNodeName();
       manager.setDatabaseStatus(localNode, databaseName, freezePrevStatus);
     }
+  }
+
+  public void incSentRequest() {
+    this.totalSentRequests.incrementAndGet();
   }
 }
