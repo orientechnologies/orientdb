@@ -63,7 +63,8 @@ public class OTransactionPhase2TaskTest {
     operations.add(new ORecordOperation(rec1, ORecordOperation.UPDATED));
     SortedSet<OTransactionUniqueKey> uniqueIndexKeys = new TreeSet<>();
     OTransactionId transactionId = new OTransactionId(Optional.empty(), 0, 1);
-    OTransactionPhase1Task task = new OTransactionPhase1Task(operations, transactionId);
+    OTransactionPhase1Task task =
+        new OTransactionPhase1Task(operations, transactionId, new TreeSet<>());
     task.execute(
         new ODistributedRequestId(10, 20), server, null, (ODatabaseDocumentInternal) session);
     OTransactionPhase2Task task2 =

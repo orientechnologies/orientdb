@@ -553,7 +553,9 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
       txContext.setStatus(FAILED);
       register(requestId, localDistributedDatabase, txContext);
       throw e;
-    } catch (ODistributedRecordLockedException | ODistributedKeyLockedException ex) {
+    } catch (ODistributedRecordLockedException
+        | ODistributedKeyLockedException
+        | OInvalidSequentialException ex) {
       /// ?? do i've to save this state as well ?
       txContext.setStatus(TIMEDOUT);
       register(requestId, localDistributedDatabase, txContext);
@@ -817,10 +819,20 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
         for (final OTransactionIndexChangesPerKey changesPerKey :
             change.getValue().changesPerKey.values()) {
           OIdentifiable old;
-          // TODO: add new version check logic, API proposal
-          final long version =
-              ((OAbstractPaginatedStorage) getStorage().getUnderlying())
-                  .getVersionForKey(indexName, changesPerKey.key);
+          if (!local) {
+            // Version check need to be done only from the nodes that are not coordinating the
+            // transaction.
+            final long version =
+                ((OAbstractPaginatedStorage) getStorage().getUnderlying())
+                    .getVersionForKey(indexName, changesPerKey.key);
+            int sourceVersion =
+                ((OTransactionOptimisticDistributed) transaction)
+                    .getVersionForKey(indexName, changesPerKey.key);
+            if (version != sourceVersion) {
+              // TODO: Uncomment this to enable retry for invalid version of keys
+              // throw new OInvalidSequentialException();
+            }
+          }
           try (final Stream<ORID> rids = index.getInternal().getRids(changesPerKey.key)) {
             old = rids.findFirst().orElse(null);
           }
