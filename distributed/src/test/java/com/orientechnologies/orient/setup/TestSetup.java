@@ -12,7 +12,7 @@ public interface TestSetup {
 
   void startServer(String serverId) throws TestSetupException;
 
-  void start() throws TestSetupException;
+  void startServers() throws TestSetupException;
 
   void shutdownServer(String serverId) throws TestSetupException;
 

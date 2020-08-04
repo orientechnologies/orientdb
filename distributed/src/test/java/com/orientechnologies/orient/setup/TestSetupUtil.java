@@ -26,10 +26,10 @@ public class TestSetupUtil {
     String kubeConfigFile = System.getProperty("kubeConfig");
     if (kubeConfigFile == null) {
       System.out.println("Running with local JVMs");
-      return new LocalSetup(TestConfig);
+      return new LocalTestSetup(TestConfig);
     }
     System.out.println("Running with Kube Config file " + kubeConfigFile);
-    return new KubernetesSetup(kubeConfigFile, TestConfig);
+    return new KubernetesTestSetup(kubeConfigFile, TestConfig);
   }
 
   public static K8sServerConfig newK8sConfigs() {

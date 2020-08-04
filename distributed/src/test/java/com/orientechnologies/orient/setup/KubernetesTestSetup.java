@@ -23,7 +23,7 @@ import java.util.*;
 import java.util.concurrent.TimeUnit;
 import okhttp3.OkHttpClient;
 
-public class KubernetesSetup implements TestSetup {
+public class KubernetesTestSetup implements TestSetup {
   // Used for listing OrientDB stateful sets.
   private static final String statefulSetLabelSelector =
       String.format("app=%s", TestSetupUtil.getOrientDBKubernetesLabel());
@@ -35,7 +35,7 @@ public class KubernetesSetup implements TestSetup {
   private String namespace = TestSetupUtil.getKubernetesNamespace();
   private Set<String> PVCsToDelete = new HashSet<>();
 
-  public KubernetesSetup(String kubeConfigFile, TestConfig config) throws TestSetupException {
+  public KubernetesTestSetup(String kubeConfigFile, TestConfig config) throws TestSetupException {
     try {
       this.testConfig = config;
       KubeConfig kubeConfig = KubeConfig.loadKubeConfig(new FileReader(kubeConfigFile));
@@ -80,7 +80,7 @@ public class KubernetesSetup implements TestSetup {
   }
 
   @Override
-  public void start() throws TestSetupException {
+  public void startServers() throws TestSetupException {
     for (String serverId : testConfig.getServerIds()) {
       K8sServerConfig serverConfig = testConfig.getK8sConfigs(serverId);
       serverConfig.validate();

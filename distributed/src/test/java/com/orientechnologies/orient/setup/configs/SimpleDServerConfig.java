@@ -24,8 +24,8 @@ public class SimpleDServerConfig implements TestConfig {
   private Map<String, K8sServerConfig> serverK8sConfigs       = new HashMap<>();
 
   @Override
-  public Set<String> getServerIds() {
-    return new HashSet<>(Arrays.asList(SERVER0, SERVER1, SERVER2));
+  public List<String> getServerIds() {
+    return Arrays.asList(SERVER0, SERVER1, SERVER2);
   }
 
   @Override

@@ -30,7 +30,7 @@ public class BasicSyncIT {
     server1 = SimpleDServerConfig.SERVER1;
     server2 = SimpleDServerConfig.SERVER2;
     setup = TestSetupUtil.create(config);
-    setup.start();
+    setup.startServers();
 
     OrientDB remote = setup.createRemote(server0, "root", "test", OrientDBConfig.defaultConfig());
     remote.create("test", ODatabaseType.PLOCAL);
