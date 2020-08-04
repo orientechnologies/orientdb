@@ -17,9 +17,6 @@ import com.orientechnologies.orient.core.storage.index.sbtree.singlevalue.v1.Cel
 import com.orientechnologies.orient.core.storage.index.sbtree.singlevalue.v3.CellBTreeSingleValueV3;
 import com.orientechnologies.orient.core.storage.index.versionmap.OVersionPositionMap;
 import com.orientechnologies.orient.core.storage.index.versionmap.OVersionPositionMapV0;
-import com.orientechnologies.orient.core.tx.OTransactionIndexChanges;
-import com.orientechnologies.orient.core.tx.OTransactionIndexChangesPerKey;
-
 import java.io.IOException;
 import java.util.Map;
 import java.util.stream.Stream;
@@ -270,25 +267,27 @@ public final class OCellBTreeSingleValueIndexEngine
   private final int[] keyVersions;
   private static final int DEFAULT_VERSION = 0;
   private static final int CONCURRENT_DISTRIBUTED_TRANSACTIONS = 1000;
-  private static final int SAFETY_FILL_FACTOR = 1000;
+  private static final int SAFETY_FILL_FACTOR = 10;
   private static final int DEFAULT_VERSION_ARRAY_SIZE =
       CONCURRENT_DISTRIBUTED_TRANSACTIONS * SAFETY_FILL_FACTOR;
 
   @Override
   public int getUniqueIndexVersion(final Object key) {
-    int keyHash = 0; // as for null values in hash map
-    if (key != null) {
-      keyHash = Math.abs(key.hashCode()) % DEFAULT_VERSION_ARRAY_SIZE;
-    }
+    final int keyHash = getKeyHash(key);
     return keyVersions[keyHash];
   }
 
   private void applyUniqueIndexChange(final Object key) {
+    final int keyHash = getKeyHash(key);
+    final int version = ++keyVersions[keyHash];
+    keyVersions[keyHash] = version;
+  }
+
+  private int getKeyHash(final Object key) {
     int keyHash = 0; // as for null values in hash map
     if (key != null) {
       keyHash = Math.abs(key.hashCode()) % DEFAULT_VERSION_ARRAY_SIZE;
     }
-    int version = ++keyVersions[keyHash];
-    keyVersions[keyHash] = version;
+    return keyHash;
   }
 }

@@ -225,8 +225,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       Comparator.comparing(o -> o.getRecord().getIdentity());
 
   protected static final OScheduledThreadPoolExecutorWithLogging fuzzyCheckpointExecutor;
-
-  public static final int STORAGE_CONFIGURATION_INDEX_ID = -1;
+  // public static final int STORAGE_CONFIGURATION_INDEX_ID = -1;
 
   static {
     fuzzyCheckpointExecutor =
@@ -537,9 +536,9 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
    * This method is called by distributed storage during initialization to indicate that database is
    * used in distributed cluster configuration
    */
-  public void underDistributedStorage() {
+  /* public void underDistributedStorage() {
     sbTreeCollectionManager.prohibitAccess();
-  }
+  } */
 
   /** @inheritDoc */
   @Override
@@ -1614,7 +1613,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     }
   }
 
-  protected void serializeDeltaContent(
+  void serializeDeltaContent(
       OutputStream stream,
       OCommandOutputListener outputListener,
       SortedSet<ORID> sortedRids,
@@ -2017,9 +2016,9 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     }
   }
 
-  public OStorageTransaction getStorageTransaction() {
+  /* public OStorageTransaction getStorageTransaction() {
     return transaction.get();
-  }
+  } */
 
   public final OAtomicOperationsManager getAtomicOperationsManager() {
     return atomicOperationsManager;
@@ -3081,8 +3080,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
   }
 
   public void clearIndex(final int indexId) throws OInvalidIndexEngineIdException {
-    final int internalIndexId = extractInternalId(indexId);
-
+    // final int internalIndexId = extractInternalId(indexId);
     try {
       if (transaction.get() != null) {
         final OAtomicOperation atomicOperation = OAtomicOperationsManager.getCurrentOperation();
@@ -5009,9 +5007,9 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     fullCheckpointCount++;
   }
 
-  public long getFullCheckpointCount() {
+  /* public long getFullCheckpointCount() {
     return fullCheckpointCount;
-  }
+  } */
 
   protected StartupMetadata checkIfStorageDirty() throws IOException {
     return new StartupMetadata(-1, null);
@@ -5906,7 +5904,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     {
       return;
     }
-
     final ORecordId rid = (ORecordId) rec.getIdentity();
 
     if (txEntry.type == ORecordOperation.UPDATED && rid.isNew())
@@ -7341,8 +7338,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
   }
 
   private boolean isIndexUniqueByType(final String indexType) {
-    return (indexType.equals(OClass.INDEX_TYPE.UNIQUE.name())
-            || indexType.equals(OClass.INDEX_TYPE.UNIQUE_HASH_INDEX.name()))
+    return indexType.equals(OClass.INDEX_TYPE.UNIQUE.name())
+            || indexType.equals(OClass.INDEX_TYPE.UNIQUE_HASH_INDEX.name())
         ? true
         : false;
   }
