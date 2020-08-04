@@ -19,7 +19,7 @@ public abstract class OVersionPositionMap extends ODurableComponent {
 
   public abstract void open() throws IOException;
 
-  public abstract void close() throws IOException;
+  public abstract void close();
 
   public abstract void close(boolean flush) throws IOException;
 

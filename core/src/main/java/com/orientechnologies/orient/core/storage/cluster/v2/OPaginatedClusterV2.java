@@ -235,7 +235,6 @@ public final class OPaginatedClusterV2 extends OPaginatedCluster {
       if (flush) {
         synch();
       }
-
       readCache.closeFile(fileId, flush, writeCache);
       clusterPositionMap.close(flush);
     } finally {

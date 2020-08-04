@@ -92,8 +92,8 @@ public final class OCellBTreeSingleValueIndexEngine
     try {
       //noinspection unchecked
       sbTree.create(atomicOperation, keySerializer, keyTypes, keySize, encryption);
-
       // TODO: [DR] create version position map OR better in constructor, lock on key level - lock
+      versionPositionMap.create(atomicOperation);
       // manager
     } catch (IOException e) {
       throw OException.wrapException(new OIndexException("Error of creation of index " + name), e);
@@ -104,8 +104,8 @@ public final class OCellBTreeSingleValueIndexEngine
   public void delete(OAtomicOperation atomicOperation) {
     try {
       doClearTree(atomicOperation);
-
       sbTree.delete(atomicOperation);
+      versionPositionMap.delete(atomicOperation);
     } catch (IOException e) {
       throw OException.wrapException(
           new OIndexException("Error during deletion of index " + name), e);
@@ -135,6 +135,7 @@ public final class OCellBTreeSingleValueIndexEngine
       final OEncryption encryption) {
     //noinspection unchecked
     sbTree.load(indexName, keySize, keyTypes, keySerializer, encryption);
+    // TODO: [DR] VPM
   }
 
   @Override
@@ -159,6 +160,7 @@ public final class OCellBTreeSingleValueIndexEngine
   @Override
   public void close() {
     sbTree.close();
+    versionPositionMap.close();
   }
 
   @Override
