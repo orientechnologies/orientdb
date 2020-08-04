@@ -7513,7 +7513,9 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
   private boolean isIndexUniqueByType(final String indexType) {
     return (indexType.equals(OClass.INDEX_TYPE.UNIQUE.name())
-            || indexType.equals(OClass.INDEX_TYPE.UNIQUE_HASH_INDEX.name()))
+            || indexType.equals(OClass.INDEX_TYPE.UNIQUE_HASH_INDEX.name())
+            || indexType.equals(OClass.INDEX_TYPE.DICTIONARY.name())
+            || indexType.equals(OClass.INDEX_TYPE.DICTIONARY_HASH_INDEX.name()))
         ? true
         : false;
   }
