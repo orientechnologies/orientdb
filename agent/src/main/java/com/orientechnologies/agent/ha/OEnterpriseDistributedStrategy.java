@@ -25,7 +25,6 @@ public class OEnterpriseDistributedStrategy extends ODefaultDistributedStrategy 
       final ODistributedConfiguration cfg,
       final ODistributedRequest request,
       final Collection<String> iNodes,
-      final String databaseName,
       final Object localResult) {
 
     final String localNode = manager.getLocalNodeName();
@@ -39,7 +38,7 @@ public class OEnterpriseDistributedStrategy extends ODefaultDistributedStrategy 
         || !localDataCenterWriteQuorum
         || quorum == OCommandDistributedReplicateRequest.QUORUM_TYPE.ALL)
       // NO DC: DEFAULT CFG
-      return super.getNodesConcurInQuorum(manager, cfg, request, iNodes, databaseName, localResult);
+      return super.getNodesConcurInQuorum(manager, cfg, request, iNodes, localResult);
 
     // DC CONFIGURATION
     final List<String> dcServers = cfg.getDataCenterServers(dc);

@@ -30,7 +30,6 @@ import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.server.OServer;
-import com.orientechnologies.orient.server.OSystemDatabase;
 import com.orientechnologies.orient.server.distributed.*;
 import com.orientechnologies.orient.server.distributed.impl.task.OEnterpriseStatsTask;
 import com.orientechnologies.orient.server.hazelcast.OHazelcastPlugin;
@@ -245,7 +244,7 @@ public class OServerCommandDistributedManager extends OServerCommandDistributedS
     if (manager != null) {
       final ODistributedResponse dResponse =
           manager.sendRequest(
-              OSystemDatabase.SYSTEM_DB_NAME,
+              null,
               null,
               OMultiValue.getSingletonList(id),
               new OEnterpriseStatsTask(),
@@ -346,7 +345,7 @@ public class OServerCommandDistributedManager extends OServerCommandDistributedS
 
       final ODistributedResponse dResponse =
           manager.sendRequest(
-              OSystemDatabase.SYSTEM_DB_NAME,
+              null,
               null,
               servers,
               new OEnterpriseStatsTask(),
