@@ -25,7 +25,6 @@ import com.orientechnologies.orient.core.tx.OTransactionSequenceStatus;
 import com.orientechnologies.orient.core.tx.OTxMetadataHolder;
 import com.orientechnologies.orient.core.tx.ValidationResult;
 import com.orientechnologies.orient.server.distributed.task.ORemoteTask;
-import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 
@@ -37,13 +36,6 @@ import java.util.Optional;
 public interface ODistributedDatabase {
 
   String getDatabaseName();
-
-  ODistributedResponse send2Nodes(
-      ODistributedRequest iRequest,
-      Collection<String> iClusterNames,
-      Collection<String> iNodes,
-      ODistributedRequest.EXECUTION_MODE iExecutionMode,
-      Object localResult);
 
   void setOnline();
 
