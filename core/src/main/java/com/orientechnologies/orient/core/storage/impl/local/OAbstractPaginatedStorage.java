@@ -301,6 +301,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
   protected AtomicOperationsTable atomicOperationsTable;
 
+  private final Set<Thread> blockedThreads = Collections.newSetFromMap(new WeakHashMap<>());
+
   public OAbstractPaginatedStorage(
       final String name, final String filePath, final String mode, final int id) {
     super(name, filePath, mode);
