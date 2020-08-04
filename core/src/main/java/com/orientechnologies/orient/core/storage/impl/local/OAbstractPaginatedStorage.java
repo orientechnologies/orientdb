@@ -6485,7 +6485,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
    *
    * <ol>
    *   <li>Low disk space
-   *   <li>Exception during data flush in background threads
+   *   <li>Exception during data flushVPM in background threads
    *   <li>Broken files
    * </ol>
    *
@@ -6546,7 +6546,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     if (dataFlushException != null) {
       throw OException.wrapException(
           new OStorageException(
-              "Error in data flush background thread, please restart database and send full stack trace inside of bug report"),
+              "Error in data flushVPM background thread, please restart database and send full stack trace inside of bug report"),
           dataFlushException);
     }
 

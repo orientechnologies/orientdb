@@ -26,6 +26,8 @@ import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperation;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperationsManager;
+
 import java.io.IOException;
 import java.util.Arrays;
 
@@ -44,15 +46,75 @@ public final class OVersionPositionMapV0 extends OVersionPositionMap {
     super(storage, name, extension, lockName);
   }
 
-  // TODO: [DR] add logic from OPaginatedClusterV2, implement methods from OPaginatedCluster
-  // TODO: [DR] move logic from PaginagedStorage
-  public void open(final OAtomicOperation atomicOperation) throws IOException {
+  @Override
+  public void create(final OAtomicOperation atomicOperation) {
+    executeInsideComponentOperation(
+        atomicOperation,
+        operation -> {
+          acquireExclusiveLock();
+          try {
+            fileId = addFile(atomicOperation, getFullName());
+            // TODO: [DR] initCusterState(atomicOperation);
+            this.createVPM(atomicOperation);
+          } finally {
+            releaseExclusiveLock();
+          }
+        });
+  }
+
+  @Override
+  public void open() throws IOException {
+    acquireExclusiveLock();
+    try {
+      final OAtomicOperation atomicOperation = OAtomicOperationsManager.getCurrentOperation();
+      fileId = openFile(atomicOperation, getFullName());
+      this.openVPM(atomicOperation);
+    } finally {
+      releaseExclusiveLock();
+    }
+  }
+
+  @Override
+  public void close() {
+    close(true);
+  }
+
+  @Override
+  public void close(final boolean flush) {
+    acquireExclusiveLock();
+    try {
+      if (flush) {
+        synch();
+      }
+      readCache.closeFile(fileId, flush, writeCache);
+      this.closeVPM(flush);
+    } finally {
+      releaseExclusiveLock();
+    }
+  }
+
+  @Override
+  public void synch() {
+    atomicOperationsManager.acquireReadLock(this);
+    try {
+      acquireSharedLock();
+      try {
+        writeCache.flush(fileId);
+        this.flushVPM();
+      } finally {
+        releaseSharedLock();
+      }
+    } finally {
+      atomicOperationsManager.releaseReadLock(this);
+    }
+  }
+
+  public void openVPM(final OAtomicOperation atomicOperation) throws IOException {
     fileId = openFile(atomicOperation, getFullName());
   }
 
-  public void create(final OAtomicOperation atomicOperation) throws IOException {
+  public void createVPM(final OAtomicOperation atomicOperation) throws IOException {
     fileId = addFile(atomicOperation, getFullName());
-
     if (getFilledUpTo(atomicOperation, fileId) == 0) {
       final OCacheEntry cacheEntry = addPage(atomicOperation, fileId);
       try {
@@ -72,11 +134,11 @@ public final class OVersionPositionMapV0 extends OVersionPositionMap {
     }
   }
 
-  public void flush() {
+  public void flushVPM() {
     writeCache.flush(fileId);
   }
 
-  public void close(final boolean flush) {
+  public void closeVPM(final boolean flush) {
     readCache.closeFile(fileId, flush, writeCache);
   }
 
@@ -249,7 +311,6 @@ public final class OVersionPositionMapV0 extends OVersionPositionMap {
               + " is outside of range of cluster-position map",
           this);
     }
-
     final OCacheEntry cacheEntry =
         loadPageForWrite(atomicOperation, fileId, pageIndex, false, true);
     try {

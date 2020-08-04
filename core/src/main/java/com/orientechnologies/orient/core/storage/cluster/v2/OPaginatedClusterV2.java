@@ -203,9 +203,7 @@ public final class OPaginatedClusterV2 extends OPaginatedCluster {
           acquireExclusiveLock();
           try {
             fileId = addFile(atomicOperation, getFullName());
-
             initCusterState(atomicOperation);
-
             clusterPositionMap.create(atomicOperation);
           } finally {
             releaseExclusiveLock();
