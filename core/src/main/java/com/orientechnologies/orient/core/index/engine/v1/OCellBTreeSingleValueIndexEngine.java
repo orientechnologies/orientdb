@@ -160,7 +160,7 @@ public final class OCellBTreeSingleValueIndexEngine
   @Override
   public void close() {
     sbTree.close();
-    versionPositionMap.close();
+    // versionPositionMap.close();
   }
 
   @Override
