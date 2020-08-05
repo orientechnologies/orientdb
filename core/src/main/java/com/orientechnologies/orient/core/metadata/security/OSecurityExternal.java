@@ -23,7 +23,6 @@ import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseSession;
 import com.orientechnologies.orient.core.exception.OSecurityAccessException;
-import com.orientechnologies.orient.core.storage.OStorageProxy;
 
 /**
  * OSecurity implementation that extends OSecurityShared but uses an external security plugin.
