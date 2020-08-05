@@ -35,7 +35,6 @@ public class BasicSyncIT {
     OrientDB remote = setup.createRemote(server0, "root", "test", OrientDBConfig.defaultConfig());
     remote.create("test", ODatabaseType.PLOCAL);
     remote.close();
-    System.out.println("Created database 'test'.");
   }
 
   @Test
@@ -45,25 +44,15 @@ public class BasicSyncIT {
         session.createClass("One");
         session.save(session.newElement("One"));
         session.save(session.newElement("One"));
-        System.out.println("created class and elements.");
-      }
-      System.out.println("shutting down server2");
-      try {
-        Thread.sleep(10000);
-      } catch (InterruptedException e) {
-        e.printStackTrace();
       }
       setup.shutdownServer(server2);
       try (ODatabaseSession session = remote.open("test", "admin", "admin")) {
         session.save(session.newElement("One"));
-        System.out.println("created another element.");
       }
     }
-
-    System.out.println("shutting down server0 and server1");
     setup.shutdownServer(server0);
     setup.shutdownServer(server1);
-    System.out.println("starting servers again");
+
     setup.startServer(server0);
     setup.startServer(server1);
     setup.startServer(server2);
@@ -94,11 +83,6 @@ public class BasicSyncIT {
         session.createClass("One");
         session.save(session.newElement("One"));
         session.save(session.newElement("One"));
-      }
-      try {
-        Thread.sleep(10000);
-      } catch (InterruptedException e) {
-        e.printStackTrace();
       }
       setup.shutdownServer(server2);
       try (ODatabaseSession session = remote.open("test", "admin", "admin")) {
@@ -137,7 +121,6 @@ public class BasicSyncIT {
       OrientDB remote = setup.createRemote(server0, "root", "test", OrientDBConfig.defaultConfig());
       remote.drop("test");
       remote.close();
-      System.out.println("dropped and closed!");
     } finally {
       setup.teardown();
       ODatabaseDocumentTx.closeAll();

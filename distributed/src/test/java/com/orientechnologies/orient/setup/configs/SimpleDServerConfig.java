@@ -24,8 +24,8 @@ public class SimpleDServerConfig implements SetupConfig {
   private Map<String, K8sServerConfig> serverK8sConfigs       = new HashMap<>();
 
   @Override
-  public List<String> getServerIds() {
-    return Arrays.asList(SERVER0, SERVER1, SERVER2);
+  public Set<String> getServerIds() {
+    return new HashSet<>(Arrays.asList(SERVER0, SERVER1, SERVER2));
   }
 
   @Override
