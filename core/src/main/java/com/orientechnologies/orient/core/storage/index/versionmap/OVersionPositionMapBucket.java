@@ -43,7 +43,8 @@ public final class OVersionPositionMapBucket extends ODurablePage {
   // use int for version
   private static final int VERSION_ENTRY_SIZE = OIntegerSerializer.INT_SIZE;
 
-  public static final int MAX_ENTRIES = (MAX_PAGE_SIZE_BYTES - POSITIONS_OFFSET) / VERSION_ENTRY_SIZE;
+  public static final int MAX_ENTRIES =
+      (MAX_PAGE_SIZE_BYTES - POSITIONS_OFFSET) / VERSION_ENTRY_SIZE;
 
   public OVersionPositionMapBucket(OCacheEntry cacheEntry) {
     super(cacheEntry);
