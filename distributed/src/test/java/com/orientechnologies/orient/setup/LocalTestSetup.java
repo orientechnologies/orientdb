@@ -2,23 +2,21 @@ package com.orientechnologies.orient.setup;
 
 import com.orientechnologies.orient.core.db.OrientDB;
 import com.orientechnologies.orient.core.db.OrientDBConfig;
-import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.network.protocol.binary.ONetworkProtocolBinary;
 import com.orientechnologies.orient.server.network.protocol.http.ONetworkProtocolHttpDb;
-import java.io.IOException;
+
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Set;
 
 public class LocalTestSetup implements TestSetup {
   private final Map<String, ServerRun> servers = new HashMap<>();
   private final Map<String, String> httpRemotes = new HashMap<>();
   private final Map<String, String> binaryRemotes = new HashMap<>();
-  private String rootDirectory = "target/servers/";
-  private final TestConfig config;
+  private       String      rootDirectory = "target/servers/";
+  private final SetupConfig config;
 
-  public LocalTestSetup(TestConfig config) {
+  public LocalTestSetup(SetupConfig config) {
     this.config = config;
     for (String serverId : config.getServerIds()) {
       servers.put(serverId, new ServerRun(rootDirectory, serverId));

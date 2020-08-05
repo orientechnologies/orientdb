@@ -22,14 +22,14 @@ public class TestSetupUtil {
     kubernetesNamespace = System.getProperty("kubernetesNamespace", "default");
   }
 
-  public static TestSetup create(TestConfig TestConfig) throws IOException {
+  public static TestSetup create(SetupConfig SetupConfig) throws IOException {
     String kubeConfigFile = System.getProperty("kubeConfig");
     if (kubeConfigFile == null) {
       System.out.println("Running with local JVMs");
-      return new LocalTestSetup(TestConfig);
+      return new LocalTestSetup(SetupConfig);
     }
     System.out.println("Running with Kube Config file " + kubeConfigFile);
-    return new KubernetesTestSetup(kubeConfigFile, TestConfig);
+    return new KubernetesTestSetup(kubeConfigFile, SetupConfig);
   }
 
   public static K8sServerConfig newK8sConfigs() {

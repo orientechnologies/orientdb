@@ -6,22 +6,22 @@ import com.orientechnologies.orient.setup.TestSetupUtil;
 
 import java.util.*;
 
-public class SimpleDServerConfig implements SetupConfig {
-  public static final String SERVER0 = "server0";
-  public static final String SERVER1 = "server1";
-  public static final String SERVER2 = "server2";
+public class DServerConfig implements SetupConfig {
+  public static final String SERVER0 = "0";
+  public static final String SERVER1 = "1";
+  public static final String SERVER2 = "2";
 
   // Server config files used for each instance when using a local setup.
-  private static Map<String, String>   localServerConfigFiles =
+  private static Map<String, String> localServerConfigFiles =
       new HashMap<String, String>() {
         {
-          put(SERVER0, "orientdb-simple-dserver-config-0.xml");
-          put(SERVER1, "orientdb-simple-dserver-config-1.xml");
-          put(SERVER2, "orientdb-simple-dserver-config-2.xml");
+          put(SERVER0, "orientdb-dserver-config-0.xml");
+          put(SERVER1, "orientdb-dserver-config-1.xml");
+          put(SERVER2, "orientdb-dserver-config-2.xml");
         }
       };
   // Configurations used for the deployment of each instance on Kubernetes
-  private Map<String, K8sServerConfig> serverK8sConfigs       = new HashMap<>();
+  private Map<String, K8sServerConfig> serverK8sConfigs = new HashMap<>();
 
   @Override
   public List<String> getServerIds() {

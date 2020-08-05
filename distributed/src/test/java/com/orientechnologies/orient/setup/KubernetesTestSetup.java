@@ -29,15 +29,15 @@ public class KubernetesTestSetup implements TestSetup {
       String.format("app=%s", TestSetupUtil.getOrientDBKubernetesLabel());
   private static final int readyReplicaTimeoutSeconds = 90;
 
-  private String nodeAddress;
-  private TestConfig testConfig;
+  private String      nodeAddress;
+  private SetupConfig setupConfig;
   // The namespace to setup the cluster and run tests. It must already exist.
-  private String namespace = TestSetupUtil.getKubernetesNamespace();
+  private String      namespace = TestSetupUtil.getKubernetesNamespace();
   private Set<String> PVCsToDelete = new HashSet<>();
 
-  public KubernetesTestSetup(String kubeConfigFile, TestConfig config) throws TestSetupException {
+  public KubernetesTestSetup(String kubeConfigFile, SetupConfig config) throws TestSetupException {
     try {
-      this.testConfig = config;
+      this.setupConfig = config;
       KubeConfig kubeConfig = KubeConfig.loadKubeConfig(new FileReader(kubeConfigFile));
       String serverAddress = kubeConfig.getServer();
       nodeAddress = new URL(serverAddress).getHost();
@@ -55,7 +55,7 @@ public class KubernetesTestSetup implements TestSetup {
 
   @Override
   public void startServer(String serverId) throws TestSetupException {
-    K8sServerConfig serverConfig = testConfig.getK8sConfigs(serverId);
+    K8sServerConfig serverConfig = setupConfig.getK8sConfigs(serverId);
     serverConfig.validate();
     AppsV1Api appsV1Api = new AppsV1Api();
     try {
@@ -81,8 +81,8 @@ public class KubernetesTestSetup implements TestSetup {
 
   @Override
   public void startServers() throws TestSetupException {
-    for (String serverId : testConfig.getServerIds()) {
-      K8sServerConfig serverConfig = testConfig.getK8sConfigs(serverId);
+    for (String serverId : setupConfig.getServerIds()) {
+      K8sServerConfig serverConfig = setupConfig.getK8sConfigs(serverId);
       serverConfig.validate();
       try {
         doStartServer(serverId, serverConfig);
@@ -97,7 +97,7 @@ public class KubernetesTestSetup implements TestSetup {
 
     try {
       waitForInstances(
-          readyReplicaTimeoutSeconds, testConfig.getServerIds(), statefulSetLabelSelector);
+          readyReplicaTimeoutSeconds, setupConfig.getServerIds(), statefulSetLabelSelector);
     } catch (IOException e) {
       throw new TestSetupException("Error waiting for server to start", e);
     } catch (ApiException e) {
@@ -170,7 +170,7 @@ public class KubernetesTestSetup implements TestSetup {
 
   @Override
   public void shutdownServer(String serverId) throws TestSetupException {
-    K8sServerConfig config = testConfig.getK8sConfigs(serverId);
+    K8sServerConfig config = setupConfig.getK8sConfigs(serverId);
     String name = config.getNodeName();
     try {
       scaleStatefulSet(name, 0);
@@ -195,9 +195,9 @@ public class KubernetesTestSetup implements TestSetup {
     CoreV1Api coreV1Api = new CoreV1Api();
     AppsV1Api appsV1Api = new AppsV1Api();
 
-    for (String serverId : testConfig.getServerIds()) {
+    for (String serverId : setupConfig.getServerIds()) {
       System.out.printf("Tearing down node %s.\n", serverId);
-      K8sServerConfig config = testConfig.getK8sConfigs(serverId);
+      K8sServerConfig config = setupConfig.getK8sConfigs(serverId);
       String configMapName = config.getConfigMapName();
       String statefulSetName = config.getNodeName();
       try {
@@ -257,9 +257,9 @@ public class KubernetesTestSetup implements TestSetup {
   public String getAddress(String serverId, PortType port) {
     switch (port) {
       case HTTP:
-        return testConfig.getK8sConfigs(serverId).getHttpAddress();
+        return setupConfig.getK8sConfigs(serverId).getHttpAddress();
       case BINARY:
-        return testConfig.getK8sConfigs(serverId).getBinaryAddress();
+        return setupConfig.getK8sConfigs(serverId).getBinaryAddress();
     }
     return null;
   }

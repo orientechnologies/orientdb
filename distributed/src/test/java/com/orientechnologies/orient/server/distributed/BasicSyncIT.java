@@ -6,7 +6,7 @@ import com.orientechnologies.orient.core.db.OrientDB;
 import com.orientechnologies.orient.core.db.OrientDBConfig;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.setup.configs.SimpleDServerConfig;
-import com.orientechnologies.orient.setup.TestConfig;
+import com.orientechnologies.orient.setup.SetupConfig;
 import com.orientechnologies.orient.setup.TestSetup;
 import com.orientechnologies.orient.setup.TestSetupUtil;
 import org.junit.After;
@@ -17,9 +17,9 @@ import static org.junit.Assert.assertEquals;
 
 public class BasicSyncIT {
 
-  private TestSetup setup;
-  private TestConfig config;
-  private String server0, server1, server2;
+  private TestSetup   setup;
+  private SetupConfig config;
+  private String      server0, server1, server2;
 
   // todo: Do not tear down after each test. wait for tear down to remove everything, or use random names!
 
