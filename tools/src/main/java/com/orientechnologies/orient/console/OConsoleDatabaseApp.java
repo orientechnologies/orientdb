@@ -54,7 +54,6 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.SimpleRecordReader;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.tool.OBonsaiTreeRepair;
-import com.orientechnologies.orient.core.db.tool.OCheckIndexTool;
 import com.orientechnologies.orient.core.db.tool.ODatabaseCompare;
 import com.orientechnologies.orient.core.db.tool.ODatabaseExport;
 import com.orientechnologies.orient.core.db.tool.ODatabaseExportException;
@@ -2398,13 +2397,6 @@ public class OConsoleDatabaseApp extends OrientConsole
     } catch (ODatabaseImportException e) {
       printError(e);
     }
-
-    message("\nChecking indexes.\n");
-    OCheckIndexTool indexTool = new OCheckIndexTool();
-    indexTool.setDatabase(currentDatabase);
-    indexTool.setOutputListener(this);
-    indexTool.setVerbose(true);
-    indexTool.run();
   }
 
   @ConsoleCommand(description = "Repair database structure", splitInWords = false)

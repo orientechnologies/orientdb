@@ -37,7 +37,7 @@ public class OSecurityExternal extends OSecurityShared {
     OUser user = null;
     final String dbName = session.getName();
 
-    if (!(((ODatabaseDocumentInternal) session).getStorage() instanceof OStorageProxy)) {
+    if (!((ODatabaseDocumentInternal) session).isRemote()) {
       if (Orient.instance().getSecurity() == null)
         throw new OSecurityAccessException(dbName, "External Security System is null!");
 

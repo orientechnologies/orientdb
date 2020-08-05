@@ -677,7 +677,7 @@ public class WTinyLFUPolicyTest {
       OCacheEntry[] cacheEntries, OCachePointer[] cachePointers, OByteBufferPool pool) {
     for (int i = 0; i < cacheEntries.length; i++) {
       final OCachePointer cachePointer = new OCachePointer(pool.acquireDirect(true), pool, 1, i);
-      final OCacheEntry cacheEntry = new OCacheEntryImpl(1, i, cachePointer);
+      final OCacheEntry cacheEntry = new OCacheEntryImpl(1, i, cachePointer, false);
 
       cachePointer.incrementReadersReferrer();
       cacheEntries[i] = cacheEntry;

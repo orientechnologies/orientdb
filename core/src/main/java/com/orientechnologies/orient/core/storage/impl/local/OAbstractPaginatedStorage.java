@@ -196,6 +196,7 @@ import java.util.TimeZone;
 import java.util.TreeMap;
 import java.util.TreeSet;
 import java.util.UUID;
+import java.util.WeakHashMap;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -301,9 +302,11 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
   protected AtomicOperationsTable atomicOperationsTable;
 
   private final Map<String, int[]> indexToVersionMap = new HashMap<>();
+  private final Set<Thread> blockedThreads = Collections.newSetFromMap(new WeakHashMap<>());
+
   private static final int DEFAULT_VERSION = 0;
   private static final int CONCURRENT_DISTRIBUTED_TRANSACTIONS = 1000;
-  private static final int SAFETY_FILL_FACTOR = 1000;
+  private static final int SAFETY_FILL_FACTOR = 10;
   private static final int DEFAULT_VERSION_ARRAY_SIZE =
       CONCURRENT_DISTRIBUTED_TRANSACTIONS * SAFETY_FILL_FACTOR;
 
@@ -554,7 +557,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     return configuration.getCreatedAtVersion();
   }
 
-  @SuppressWarnings("WeakerAccess")
   protected final void openIndexes() {
     final OCurrentStorageComponentsFactory cf = componentsFactory;
     if (cf == null) {
@@ -633,7 +635,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     }
   }
 
-  @SuppressWarnings("WeakerAccess")
   protected final void openClusters() throws IOException {
     // OPEN BASIC SEGMENTS
     int pos;
@@ -945,6 +946,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
         final long lockId = atomicOperationsManager.freezeAtomicOperations(null, null);
         try {
           checkOpenness();
+          checkIfThreadIsBlocked();
+
           final long start = System.currentTimeMillis();
 
           final OPageDataVerificationError[] pageErrors =
@@ -983,6 +986,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       stateLock.acquireWriteLock();
       try {
         checkOpenness();
+        checkIfThreadIsBlocked();
 
         makeStorageDirty();
         return atomicOperationsManager.calculateInsideAtomicOperation(
@@ -1011,6 +1015,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       stateLock.acquireWriteLock();
       try {
         checkOpenness();
+        checkIfThreadIsBlocked();
 
         if (requestedId < 0) {
           throw new OConfigurationException("Cluster id must be positive!");
@@ -1053,6 +1058,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       try {
 
         checkOpenness();
+        checkIfThreadIsBlocked();
+
         if (clusterId < 0 || clusterId >= clusters.size()) {
           throw new IllegalArgumentException(
               "Cluster id '"
@@ -1115,6 +1122,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       stateLock.acquireReadLock();
       try {
         checkOpenness();
+        checkIfThreadIsBlocked();
 
         checkClusterId(clusterId);
         final OCluster cluster = clusters.get(clusterId);
@@ -1145,6 +1153,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       stateLock.acquireReadLock();
       try {
         checkOpenness();
+        checkIfThreadIsBlocked();
 
         checkClusterId(clusterId);
         final OCluster cluster = clusters.get(clusterId);
@@ -1176,6 +1185,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       stateLock.acquireReadLock();
       try {
         checkOpenness();
+        checkIfThreadIsBlocked();
 
         final OCluster cluster =
             clusterMap.get(clusterName.toLowerCase(configuration.getLocaleInstance()));
@@ -1205,6 +1215,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       stateLock.acquireReadLock();
       try {
         checkOpenness();
+        checkIfThreadIsBlocked();
 
         checkClusterId(clusterId);
         final OCluster cluster = clusters.get(clusterId);
@@ -1236,6 +1247,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       stateLock.acquireReadLock();
       try {
         checkOpenness();
+        checkIfThreadIsBlocked();
 
         checkClusterId(clusterId);
         final OCluster cluster = clusters.get(clusterId);
@@ -1263,6 +1275,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       stateLock.acquireReadLock();
       try {
         checkOpenness();
+        checkIfThreadIsBlocked();
 
         checkClusterId(clusterId);
         final OCluster cluster = clusters.get(clusterId);
@@ -1292,6 +1305,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       stateLock.acquireReadLock();
       try {
         checkOpenness();
+        checkIfThreadIsBlocked();
 
         checkClusterId(clusterId);
         final OCluster cluster = clusters.get(clusterId);
@@ -1321,6 +1335,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       stateLock.acquireReadLock();
       try {
         checkOpenness();
+        checkIfThreadIsBlocked();
 
         checkClusterId(clusterId);
         final OCluster cluster = clusters.get(clusterId);
@@ -1350,6 +1365,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       stateLock.acquireReadLock();
       try {
         checkOpenness();
+        checkIfThreadIsBlocked();
 
         final int clusterId = rid.getClusterId();
         checkClusterId(clusterId);
@@ -1467,6 +1483,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       stateLock.acquireReadLock();
       try {
         checkOpenness();
+        checkIfThreadIsBlocked();
 
         final OCluster cluster = clusters.get(clusterId);
         if (cluster == null) {
@@ -1501,6 +1518,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       stateLock.acquireReadLock();
       try {
         checkOpenness();
+        checkIfThreadIsBlocked();
 
         if (clusters.get(iClusterId) != null) {
           return new long[] {
@@ -1700,6 +1718,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       stateLock.acquireReadLock();
       try {
         checkOpenness();
+        checkIfThreadIsBlocked();
 
         for (final int iClusterId : iClusterIds) {
           if (iClusterId >= clusters.size()) {
@@ -1736,6 +1755,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       final ORecordCallback<Long> callback) {
     try {
       checkOpenness();
+      checkIfThreadIsBlocked();
+
       checkLowDiskSpaceRequestsAndReadOnlyConditions();
 
       final OCluster cluster = doGetAndCheckCluster(rid.getClusterId());
@@ -1786,6 +1807,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       try {
         final OCluster cluster = doGetAndCheckCluster(rid.getClusterId());
         checkOpenness();
+        checkIfThreadIsBlocked();
 
         final OPhysicalPosition ppos =
             cluster.getPhysicalPosition(new OPhysicalPosition(rid.getClusterPosition()));
@@ -1824,6 +1846,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       try {
         final OCluster cluster = doGetAndCheckCluster(rid.getClusterId());
         checkOpenness();
+        checkIfThreadIsBlocked();
 
         return cluster.isDeleted(new OPhysicalPosition(rid.getClusterPosition()));
 
@@ -1850,6 +1873,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       stateLock.acquireReadLock();
       try {
         checkOpenness();
+        checkIfThreadIsBlocked();
 
         final int finalClusterId;
 
@@ -1929,21 +1953,13 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
   @Override
   public OStorageOperationResult<ORawBuffer> readRecord(
-      final ORecordId iRid,
+      final ORecordId rid,
       final String iFetchPlan,
       final boolean iIgnoreCache,
       final boolean prefetchRecords,
       final ORecordCallback<ORawBuffer> iCallback) {
     try {
-      checkOpenness();
-      final OCluster cluster;
-      try {
-        cluster = doGetAndCheckCluster(iRid.getClusterId());
-      } catch (final IllegalArgumentException e) {
-        throw OException.wrapException(new ORecordNotFoundException(iRid), e);
-      }
-
-      return new OStorageOperationResult<>(readRecord(cluster, iRid, prefetchRecords));
+      return new OStorageOperationResult<>(readRecord(rid, prefetchRecords));
     } catch (final RuntimeException ee) {
       throw logAndPrepareForRethrow(ee);
     } catch (final Error ee) {
@@ -1961,9 +1977,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       final int recordVersion)
       throws ORecordNotFoundException {
     try {
-      checkOpenness();
-      return new OStorageOperationResult<>(
-          readRecordIfNotLatest(doGetAndCheckCluster(rid.getClusterId()), rid, recordVersion));
+      return new OStorageOperationResult<>(readRecordIfNotLatest(rid, recordVersion));
     } catch (final RuntimeException ee) {
       throw logAndPrepareForRethrow(ee);
     } catch (final Error ee) {
@@ -1983,10 +1997,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       final ORecordCallback<Integer> callback) {
     try {
       checkOpenness();
-      checkLowDiskSpaceRequestsAndReadOnlyConditions();
-
-      final OCluster cluster = doGetAndCheckCluster(rid.getClusterId());
-
       assert transaction.get() == null;
 
       stateLock.acquireReadLock();
@@ -1995,7 +2005,11 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
         final Lock lock = recordVersionManager.acquireExclusiveLock(rid);
         try {
           checkOpenness();
+          checkIfThreadIsBlocked();
 
+          checkLowDiskSpaceRequestsAndReadOnlyConditions();
+
+          final OCluster cluster = doGetAndCheckCluster(rid.getClusterId());
           return atomicOperationsManager.calculateInsideAtomicOperation(
               null,
               atomicOperation ->
@@ -2047,15 +2061,17 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       final ORecordCallback<Boolean> callback) {
     try {
       checkOpenness();
-      checkLowDiskSpaceRequestsAndReadOnlyConditions();
-
-      final OCluster cluster = doGetAndCheckCluster(rid.getClusterId());
-
       assert transaction.get() == null;
 
       stateLock.acquireReadLock();
       try {
         checkOpenness();
+        checkIfThreadIsBlocked();
+
+        checkLowDiskSpaceRequestsAndReadOnlyConditions();
+
+        final OCluster cluster = doGetAndCheckCluster(rid.getClusterId());
+
         return atomicOperationsManager.calculateInsideAtomicOperation(
             null, atomicOperation -> doDeleteRecord(atomicOperation, rid, version, cluster));
       } finally {
@@ -2077,6 +2093,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       stateLock.acquireReadLock();
       try {
         checkOpenness();
+        checkIfThreadIsBlocked();
 
         return new HashSet<>(clusterMap.keySet());
       } finally {
@@ -2104,12 +2121,10 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
         throw new IllegalArgumentException("Cluster name is empty");
       }
 
-      // if (Character.isDigit(clusterName.charAt(0)))
-      // return Integer.parseInt(clusterName);
-
       stateLock.acquireReadLock();
       try {
         checkOpenness();
+        checkIfThreadIsBlocked();
 
         // SEARCH IT BETWEEN PHYSICAL CLUSTERS
 
@@ -2160,6 +2175,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       try {
 
         checkOpenness();
+        checkIfThreadIsBlocked();
 
         makeStorageDirty();
         atomicOperationsManager.executeInsideAtomicOperation(
@@ -2276,8 +2292,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
     try {
       checkOpenness();
-      checkLowDiskSpaceRequestsAndReadOnlyConditions();
-
       txBegun.increment();
 
       final ODatabaseDocumentInternal database = transaction.getDatabase();
@@ -2352,6 +2366,10 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
         }
         try {
           checkOpenness();
+          checkLowDiskSpaceRequestsAndReadOnlyConditions();
+
+          checkIfThreadIsBlocked();
+
           makeStorageDirty();
 
           boolean rollback = false;
@@ -2543,6 +2561,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       stateLock.acquireReadLock();
       try {
         checkOpenness();
+        checkIfThreadIsBlocked();
+
         final OBaseIndexEngine engine = indexEngineNameMap.get(name);
         if (engine == null) {
           return -1;
@@ -2580,6 +2600,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       stateLock.acquireWriteLock();
       try {
         checkOpenness();
+        checkIfThreadIsBlocked();
+
         checkLowDiskSpaceRequestsAndReadOnlyConditions();
         // this method introduced for binary compatibility only
         if (configuration.getBinaryFormatVersion() > 15) {
@@ -2697,6 +2719,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       stateLock.acquireWriteLock();
       try {
         checkOpenness();
+        checkIfThreadIsBlocked();
 
         checkLowDiskSpaceRequestsAndReadOnlyConditions();
 
@@ -2955,6 +2978,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       stateLock.acquireWriteLock();
       try {
         checkOpenness();
+        checkIfThreadIsBlocked();
 
         checkLowDiskSpaceRequestsAndReadOnlyConditions();
 
@@ -3036,6 +3060,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       stateLock.acquireReadLock();
       try {
         checkOpenness();
+        checkIfThreadIsBlocked();
 
         checkLowDiskSpaceRequestsAndReadOnlyConditions();
 
@@ -3097,6 +3122,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       stateLock.acquireReadLock();
       try {
         checkOpenness();
+        checkIfThreadIsBlocked();
 
         checkLowDiskSpaceRequestsAndReadOnlyConditions();
 
@@ -3144,6 +3170,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       stateLock.acquireReadLock();
       try {
         checkOpenness();
+        checkIfThreadIsBlocked();
+
         return doGetIndexValue(indexId, key);
       } finally {
         stateLock.releaseReadLock();
@@ -3193,6 +3221,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       stateLock.acquireReadLock();
       try {
         checkOpenness();
+        checkIfThreadIsBlocked();
+
         return doGetIndexValues(indexId, key);
       } finally {
         stateLock.releaseReadLock();
@@ -3224,9 +3254,19 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     try {
       checkIndexId(indexId);
 
-      final OBaseIndexEngine engine = indexEngines.get(indexId);
-      assert indexId == engine.getId();
-      return engine;
+      checkOpenness();
+
+      stateLock.acquireReadLock();
+      try {
+        checkOpenness();
+        checkIfThreadIsBlocked();
+
+        final OBaseIndexEngine engine = indexEngines.get(indexId);
+        assert indexId == engine.getId();
+        return engine;
+      } finally {
+        stateLock.releaseReadLock();
+      }
     } catch (final OInvalidIndexEngineIdException ie) {
       throw logAndPrepareForRethrow(ie);
     } catch (final RuntimeException ee) {
@@ -3262,6 +3302,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       stateLock.acquireReadLock();
       try {
         checkOpenness();
+        checkIfThreadIsBlocked();
+
         checkLowDiskSpaceRequestsAndReadOnlyConditions();
         atomicOperationsManager.executeInsideAtomicOperation(
             null,
@@ -3291,6 +3333,9 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
       stateLock.acquireReadLock();
       try {
+        checkOpenness();
+        checkIfThreadIsBlocked();
+
         return doCallIndexEngine(readOperation, indexId, callback);
       } finally {
         stateLock.releaseReadLock();
@@ -3359,6 +3404,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       stateLock.acquireReadLock();
       try {
         checkOpenness();
+        checkIfThreadIsBlocked();
 
         checkLowDiskSpaceRequestsAndReadOnlyConditions();
 
@@ -3422,6 +3468,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       stateLock.acquireReadLock();
       try {
         checkOpenness();
+        checkIfThreadIsBlocked();
 
         checkLowDiskSpaceRequestsAndReadOnlyConditions();
 
@@ -3486,6 +3533,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       stateLock.acquireReadLock();
       try {
         checkOpenness();
+        checkIfThreadIsBlocked();
 
         checkLowDiskSpaceRequestsAndReadOnlyConditions();
 
@@ -3558,6 +3606,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       stateLock.acquireReadLock();
       try {
         checkOpenness();
+        checkIfThreadIsBlocked();
 
         checkLowDiskSpaceRequestsAndReadOnlyConditions();
 
@@ -3635,6 +3684,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       stateLock.acquireReadLock();
       try {
         checkOpenness();
+        checkIfThreadIsBlocked();
+
         return doIterateIndexEntriesBetween(
             indexId, rangeFrom, fromInclusive, rangeTo, toInclusive, ascSortOrder, transformer);
       } finally {
@@ -3688,6 +3739,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       stateLock.acquireReadLock();
       try {
         checkOpenness();
+        checkIfThreadIsBlocked();
+
         return doIterateIndexEntriesMajor(indexId, fromKey, isInclusive, ascSortOrder, transformer);
       } finally {
         stateLock.releaseReadLock();
@@ -3737,6 +3790,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       stateLock.acquireReadLock();
       try {
         checkOpenness();
+        checkIfThreadIsBlocked();
+
         return doIterateIndexEntriesMinor(indexId, toKey, isInclusive, ascSortOrder, transformer);
       } finally {
         stateLock.releaseReadLock();
@@ -3782,6 +3837,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       stateLock.acquireReadLock();
       try {
         checkOpenness();
+        checkIfThreadIsBlocked();
+
         return doGetIndexStream(indexId, valuesTransformer);
       } finally {
         stateLock.releaseReadLock();
@@ -3823,6 +3880,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       stateLock.acquireReadLock();
       try {
         checkOpenness();
+        checkIfThreadIsBlocked();
+
         return doGetIndexDescStream(indexId, valuesTransformer);
       } finally {
         stateLock.releaseReadLock();
@@ -3862,6 +3921,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       stateLock.acquireReadLock();
       try {
         checkOpenness();
+        checkIfThreadIsBlocked();
+
         return doGetIndexKeyStream(indexId);
       } finally {
         stateLock.releaseReadLock();
@@ -3901,6 +3962,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       stateLock.acquireReadLock();
       try {
         checkOpenness();
+        checkIfThreadIsBlocked();
+
         return doGetIndexSize(indexId, transformer);
       } finally {
         stateLock.releaseReadLock();
@@ -3940,6 +4003,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       stateLock.acquireReadLock();
       try {
         checkOpenness();
+        checkIfThreadIsBlocked();
+
         return doHasRangeQuerySupport(indexId);
       } finally {
         stateLock.releaseReadLock();
@@ -4032,6 +4097,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
         final long lockId = atomicOperationsManager.freezeAtomicOperations(null, null);
         try {
           checkOpenness();
+          checkIfThreadIsBlocked();
+
           if (jvmError.get() == null) {
             for (final OBaseIndexEngine indexEngine : indexEngines) {
               try {
@@ -4081,6 +4148,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       stateLock.acquireReadLock();
       try {
         checkOpenness();
+        checkIfThreadIsBlocked();
 
         if (iClusterId < 0 || iClusterId >= clusters.size()) {
           return null;
@@ -4114,6 +4182,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     stateLock.acquireReadLock();
     try {
       checkOpenness();
+      checkIfThreadIsBlocked();
 
       if (clusterId == ORID.CLUSTER_ID_INVALID) {
         clusterId = defaultClusterId;
@@ -4152,6 +4221,9 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
         stateLock.acquireReadLock();
         try {
+          checkOpenness();
+          checkIfThreadIsBlocked();
+
           for (final OCluster c : clusters) {
             if (c != null) {
               size += c.getRecordsSize();
@@ -4181,6 +4253,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       stateLock.acquireReadLock();
       try {
         checkOpenness();
+        checkIfThreadIsBlocked();
+
         return clusterMap.size();
       } finally {
         stateLock.releaseReadLock();
@@ -4201,6 +4275,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       stateLock.acquireReadLock();
       try {
         checkOpenness();
+        checkIfThreadIsBlocked();
+
         final Set<OCluster> result = new HashSet<>(1024);
 
         // ADD ALL THE CLUSTERS
@@ -4240,6 +4316,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       stateLock.acquireReadLock();
       try {
         checkOpenness();
+        checkIfThreadIsBlocked();
 
         if (throwException) {
           atomicOperationsManager.freezeAtomicOperations(
@@ -4391,7 +4468,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     }
   }
 
-  @SuppressWarnings("WeakerAccess")
   public final Object executeCommand(
       final OCommandRequestText iCommand, final OCommandExecutor executor) {
     try {
@@ -4516,6 +4592,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       stateLock.acquireReadLock();
       try {
         checkOpenness();
+        checkIfThreadIsBlocked();
 
         final OCluster cluster = doGetAndCheckCluster(currentClusterId);
         return cluster.higherPositions(physicalPosition);
@@ -4549,6 +4626,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       stateLock.acquireReadLock();
       try {
         checkOpenness();
+        checkIfThreadIsBlocked();
 
         final OCluster cluster = doGetAndCheckCluster(clusterId);
         return cluster.ceilingPositions(physicalPosition);
@@ -4582,6 +4660,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       stateLock.acquireReadLock();
       try {
         checkOpenness();
+        checkIfThreadIsBlocked();
 
         final OCluster cluster = doGetAndCheckCluster(currentClusterId);
 
@@ -4616,6 +4695,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       stateLock.acquireReadLock();
       try {
         checkOpenness();
+        checkIfThreadIsBlocked();
 
         final OCluster cluster = doGetAndCheckCluster(clusterId);
 
@@ -4749,6 +4829,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     stateLock.acquireWriteLock();
     try {
       checkOpenness();
+      checkIfThreadIsBlocked();
 
       atomicOperationsManager.executeInsideAtomicOperation(
           null, atomicOperation -> doSetConflictStrategy(conflictResolver, atomicOperation));
@@ -4826,6 +4907,41 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
   protected final void checkOpenness() {
     if (status != STATUS.OPEN) {
       throw new OStorageException("Storage " + name + " is not opened.");
+    }
+  }
+
+  public void rollbackOperationsFromThread(final Thread thread) {
+    try {
+      checkOpenness();
+      checkLowDiskSpaceRequestsAndReadOnlyConditions();
+      stateLock.acquireWriteLock();
+      try {
+        checkOpenness();
+
+        blockedThreads.add(thread);
+      } finally {
+        stateLock.releaseWriteLock();
+      }
+    } catch (final RuntimeException ee) {
+      throw logAndPrepareForRethrow(ee);
+    } catch (final Error ee) {
+      throw logAndPrepareForRethrow(ee);
+    } catch (final Throwable t) {
+      throw logAndPrepareForRethrow(t);
+    }
+  }
+
+  private void checkIfThreadIsBlocked() {
+    final Thread thread = Thread.currentThread();
+    if (!blockedThreads.isEmpty() && blockedThreads.contains(thread)) {
+      thread.interrupt();
+
+      OLogManager.instance().warnNoDb(this, "Execution  of thread '%s' is interrupted", thread);
+
+      throw new OStorageException(
+          "Operations on thread '"
+              + thread
+              + "' are blocked and can not be performed. Thread will be interrupted.");
     }
   }
 
@@ -4910,6 +5026,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
         stateLock.acquireWriteLock();
         try {
           checkOpenness();
+          checkIfThreadIsBlocked();
 
           doTryToDeleteTreeRidBag(ridBag);
         } finally {
@@ -5023,7 +5140,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       OAtomicOperation atomicOperation, final OContextConfiguration contextConfiguration)
       throws IOException {}
 
-  @SuppressWarnings({"WeakerAccess", "EmptyMethod"})
+  @SuppressWarnings({"EmptyMethod"})
   protected final void postCreateSteps() {}
 
   protected void preCreateSteps() throws IOException {}
@@ -5053,8 +5170,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     return false;
   }
 
-  private ORawBuffer readRecordIfNotLatest(
-      final OCluster cluster, final ORecordId rid, final int recordVersion)
+  private ORawBuffer readRecordIfNotLatest(final ORecordId rid, final int recordVersion)
       throws ORecordNotFoundException {
     checkOpenness();
 
@@ -5069,6 +5185,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     }
 
     if (transaction.get() != null) {
+      final OCluster cluster = doGetAndCheckCluster(rid.getClusterId());
       return doReadRecordIfNotLatest(cluster, rid, recordVersion);
     }
 
@@ -5084,7 +5201,9 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
       final ORawBuffer buff;
       checkOpenness();
+      checkIfThreadIsBlocked();
 
+      final OCluster cluster = doGetAndCheckCluster(rid.getClusterId());
       buff = doReadRecordIfNotLatest(cluster, rid, recordVersion);
       return buff;
     } finally {
@@ -5102,8 +5221,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     }
   }
 
-  private ORawBuffer readRecord(
-      final OCluster clusterSegment, final ORecordId rid, final boolean prefetchRecords) {
+  private ORawBuffer readRecord(final ORecordId rid, final boolean prefetchRecords) {
     checkOpenness();
 
     if (!rid.isPersistent()) {
@@ -5117,9 +5235,10 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     }
 
     if (transaction.get() != null) {
+      final OCluster cluster = doGetAndCheckCluster(rid.getClusterId());
       // Disabled this assert have no meaning anymore
       // assert iLockingStrategy.equals(LOCKING_STRATEGY.DEFAULT);
-      return doReadRecord(clusterSegment, rid, prefetchRecords);
+      return doReadRecord(cluster, rid, prefetchRecords);
     }
 
     stateLock.acquireReadLock();
@@ -5132,7 +5251,10 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
         }
       }
       checkOpenness();
-      return doReadRecord(clusterSegment, rid, prefetchRecords);
+      checkIfThreadIsBlocked();
+
+      final OCluster cluster = doGetAndCheckCluster(rid.getClusterId());
+      return doReadRecord(cluster, rid, prefetchRecords);
     } finally {
       try {
         if (readLock) {
@@ -5572,6 +5694,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     stateLock.acquireWriteLock();
     try {
       checkOpenness();
+      checkIfThreadIsBlocked();
 
       if (id >= clusters.size()) {
         return false;
@@ -5604,6 +5727,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
     try {
       checkOpenness();
+      checkIfThreadIsBlocked();
+
       checkLowDiskSpaceRequestsAndReadOnlyConditions();
 
       stateLock.acquireWriteLock();
@@ -6400,7 +6525,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     }
   }
 
-  @SuppressWarnings("WeakerAccess")
   protected final void restoreAtomicUnit(
       final List<OWALRecord> atomicUnit, final OModifiableBoolean atLeastOnePageUpdate)
       throws IOException {
@@ -6619,6 +6743,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     stateLock.acquireWriteLock();
     try {
       checkOpenness();
+      checkIfThreadIsBlocked();
+
       ((OClusterBasedStorageConfiguration) configuration)
           .setConfigurationUpdateListener(storageConfigurationUpdateListener);
     } finally {
@@ -6630,6 +6756,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     stateLock.acquireReadLock();
     try {
       checkOpenness();
+      checkIfThreadIsBlocked();
+
       ((OClusterBasedStorageConfiguration) configuration).pauseUpdateNotifications();
     } finally {
       stateLock.releaseReadLock();
@@ -6640,6 +6768,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     stateLock.acquireReadLock();
     try {
       checkOpenness();
+      checkIfThreadIsBlocked();
+
       ((OClusterBasedStorageConfiguration) configuration).fireUpdateNotifications();
     } finally {
       stateLock.releaseReadLock();
@@ -6885,6 +7015,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     stateLock.acquireWriteLock();
     try {
       checkOpenness();
+      checkIfThreadIsBlocked();
 
       final OClusterBasedStorageConfiguration storageConfiguration =
           (OClusterBasedStorageConfiguration) configuration;
@@ -6909,6 +7040,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     stateLock.acquireWriteLock();
     try {
       checkOpenness();
+      checkIfThreadIsBlocked();
 
       final OClusterBasedStorageConfiguration storageConfiguration =
           (OClusterBasedStorageConfiguration) configuration;
@@ -6931,6 +7063,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     stateLock.acquireWriteLock();
     try {
       checkOpenness();
+      checkIfThreadIsBlocked();
 
       final OClusterBasedStorageConfiguration storageConfiguration =
           (OClusterBasedStorageConfiguration) configuration;
@@ -6954,6 +7087,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     stateLock.acquireWriteLock();
     try {
       checkOpenness();
+      checkIfThreadIsBlocked();
 
       final OClusterBasedStorageConfiguration storageConfiguration =
           (OClusterBasedStorageConfiguration) configuration;
@@ -6976,6 +7110,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     stateLock.acquireWriteLock();
     try {
       checkOpenness();
+      checkIfThreadIsBlocked();
 
       final OClusterBasedStorageConfiguration storageConfiguration =
           (OClusterBasedStorageConfiguration) configuration;
@@ -6998,6 +7133,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     stateLock.acquireWriteLock();
     try {
       checkOpenness();
+      checkIfThreadIsBlocked();
 
       final OClusterBasedStorageConfiguration storageConfiguration =
           (OClusterBasedStorageConfiguration) configuration;
@@ -7022,6 +7158,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     stateLock.acquireWriteLock();
     try {
       checkOpenness();
+      checkIfThreadIsBlocked();
 
       final OClusterBasedStorageConfiguration storageConfiguration =
           (OClusterBasedStorageConfiguration) configuration;
@@ -7046,6 +7183,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     stateLock.acquireWriteLock();
     try {
       checkOpenness();
+      checkIfThreadIsBlocked();
 
       final OClusterBasedStorageConfiguration storageConfiguration =
           (OClusterBasedStorageConfiguration) configuration;
@@ -7069,6 +7207,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     stateLock.acquireWriteLock();
     try {
       checkOpenness();
+      checkIfThreadIsBlocked();
 
       final OClusterBasedStorageConfiguration storageConfiguration =
           (OClusterBasedStorageConfiguration) configuration;
@@ -7093,6 +7232,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     stateLock.acquireWriteLock();
     try {
       checkOpenness();
+      checkIfThreadIsBlocked();
 
       final OClusterBasedStorageConfiguration storageConfiguration =
           (OClusterBasedStorageConfiguration) configuration;
@@ -7114,6 +7254,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     stateLock.acquireWriteLock();
     try {
       checkOpenness();
+      checkIfThreadIsBlocked();
 
       final OClusterBasedStorageConfiguration storageConfiguration =
           (OClusterBasedStorageConfiguration) configuration;
@@ -7136,6 +7277,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     stateLock.acquireWriteLock();
     try {
       checkOpenness();
+      checkIfThreadIsBlocked();
 
       final OClusterBasedStorageConfiguration storageConfiguration =
           (OClusterBasedStorageConfiguration) configuration;
@@ -7159,6 +7301,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     stateLock.acquireWriteLock();
     try {
       checkOpenness();
+      checkIfThreadIsBlocked();
 
       final OClusterBasedStorageConfiguration storageConfiguration =
           (OClusterBasedStorageConfiguration) configuration;
@@ -7183,6 +7326,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     stateLock.acquireWriteLock();
     try {
       checkOpenness();
+      checkIfThreadIsBlocked();
 
       final OClusterBasedStorageConfiguration storageConfiguration =
           (OClusterBasedStorageConfiguration) configuration;
@@ -7209,6 +7353,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     stateLock.acquireWriteLock();
     try {
       checkOpenness();
+      checkIfThreadIsBlocked();
 
       final OClusterBasedStorageConfiguration storageConfiguration =
           (OClusterBasedStorageConfiguration) configuration;
@@ -7368,7 +7513,9 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
   private boolean isIndexUniqueByType(final String indexType) {
     return (indexType.equals(OClass.INDEX_TYPE.UNIQUE.name())
-            || indexType.equals(OClass.INDEX_TYPE.UNIQUE_HASH_INDEX.name()))
+            || indexType.equals(OClass.INDEX_TYPE.UNIQUE_HASH_INDEX.name())
+            || indexType.equals(OClass.INDEX_TYPE.DICTIONARY.name())
+            || indexType.equals(OClass.INDEX_TYPE.DICTIONARY_HASH_INDEX.name()))
         ? true
         : false;
   }

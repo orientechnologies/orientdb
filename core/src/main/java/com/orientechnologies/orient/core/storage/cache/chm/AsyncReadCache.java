@@ -40,8 +40,9 @@ import java.util.concurrent.locks.ReentrantLock;
  * heap memory.
  */
 public final class AsyncReadCache implements OReadCache {
-  private static final int NCPU = Runtime.getRuntime().availableProcessors();
-  private static final int WRITE_BUFFER_MAX_BATCH = 128 * ceilingPowerOfTwo(NCPU);
+
+  private static final int N_CPU = Runtime.getRuntime().availableProcessors();
+  private static final int WRITE_BUFFER_MAX_BATCH = 128 * ceilingPowerOfTwo(N_CPU);
 
   private final ConcurrentHashMap<PageKey, OCacheEntry> data;
   private final Lock evictionLock = new ReentrantLock();
@@ -126,6 +127,69 @@ public final class AsyncReadCache implements OReadCache {
     return doLoad(fileId, (int) pageIndex, writeCache, verifyChecksums);
   }
 
+  @Override
+  public final OCacheEntry silentLoadForRead(
+      final long extFileId,
+      final int pageIndex,
+      final OWriteCache writeCache,
+      final boolean verifyChecksums) {
+    final long fileId = OAbstractWriteCache.checkFileIdCompatibility(writeCache.getId(), extFileId);
+    final PageKey pageKey = new PageKey(fileId, pageIndex);
+
+    for (; ; ) {
+      OCacheEntry cacheEntry = data.get(pageKey);
+
+      if (cacheEntry != null) {
+        if (cacheEntry.acquireEntry()) {
+          return cacheEntry;
+        }
+      } else {
+        final OCacheEntry[] updatedEntry = new OCacheEntry[1];
+
+        cacheEntry =
+            data.compute(
+                pageKey,
+                (page, entry) -> {
+                  if (entry == null) {
+                    try {
+                      final OCachePointer pointer =
+                          writeCache.load(
+                              fileId, pageIndex, new OModifiableBoolean(), verifyChecksums);
+                      if (pointer == null) {
+                        return null;
+                      }
+
+                      updatedEntry[0] =
+                          new OCacheEntryImpl(
+                              page.getFileId(), page.getPageIndex(), pointer, false);
+                      return null;
+                    } catch (final IOException e) {
+                      throw OException.wrapException(
+                          new OStorageException(
+                              "Error during loading of page " + pageIndex + " for file " + fileId),
+                          e);
+                    }
+
+                  } else {
+                    return entry;
+                  }
+                });
+
+        if (cacheEntry == null) {
+          cacheEntry = updatedEntry[0];
+        }
+
+        if (cacheEntry == null) {
+          return null;
+        }
+
+        if (cacheEntry.acquireEntry()) {
+          return cacheEntry;
+        }
+      }
+    }
+  }
+
   private OCacheEntry doLoad(
       final long extFileId,
       final int pageIndex,
@@ -172,7 +236,8 @@ public final class AsyncReadCache implements OReadCache {
                       }
 
                       cacheSize.incrementAndGet();
-                      return new OCacheEntryImpl(page.getFileId(), page.getPageIndex(), pointer);
+                      return new OCacheEntryImpl(
+                          page.getFileId(), page.getPageIndex(), pointer, true);
                     } catch (final IOException e) {
                       throw OException.wrapException(
                           new OStorageException(
@@ -220,7 +285,7 @@ public final class AsyncReadCache implements OReadCache {
     final OCachePointer cachePointer = new OCachePointer(pointer, bufferPool, fileId, pageIndex);
     cachePointer.incrementReadersReferrer();
 
-    final OCacheEntry cacheEntry = new OCacheEntryImpl(fileId, pageIndex, cachePointer);
+    final OCacheEntry cacheEntry = new OCacheEntryImpl(fileId, pageIndex, cachePointer, true);
     cacheEntry.acquireEntry();
 
     final OCacheEntry oldCacheEntry = data.putIfAbsent(pageKey, cacheEntry);
@@ -247,6 +312,10 @@ public final class AsyncReadCache implements OReadCache {
   @Override
   public final void releaseFromRead(final OCacheEntry cacheEntry, final OWriteCache writeCache) {
     cacheEntry.releaseEntry();
+
+    if (!cacheEntry.insideCache()) {
+      cacheEntry.getCachePointer().decrementReadersReferrer();
+    }
   }
 
   @Override
@@ -255,7 +324,7 @@ public final class AsyncReadCache implements OReadCache {
     final OCachePointer cachePointer = cacheEntry.getCachePointer();
     assert cachePointer != null;
 
-    final PageKey pageKey = new PageKey(cacheEntry.getFileId(), (int) cacheEntry.getPageIndex());
+    final PageKey pageKey = new PageKey(cacheEntry.getFileId(), cacheEntry.getPageIndex());
     if (cacheEntry.isNewlyAllocatedPage() || changed) {
       if (cacheEntry.isNewlyAllocatedPage()) {
         cacheEntry.clearAllocationFlag();

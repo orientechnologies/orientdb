@@ -20,7 +20,7 @@ public class LocalHashTableV2NullBucketInitPOTest {
     try {
       final OPointer pointer = byteBufferPool.acquireDirect(false);
       final OCachePointer cachePointer = new OCachePointer(pointer, byteBufferPool, 0, 0);
-      final OCacheEntry entry = new OCacheEntryImpl(0, 0, cachePointer);
+      final OCacheEntry entry = new OCacheEntryImpl(0, 0, cachePointer, false);
 
       HashIndexNullBucketV2<Byte> bucket = new HashIndexNullBucketV2<>(entry);
       bucket.init();
@@ -36,7 +36,7 @@ public class LocalHashTableV2NullBucketInitPOTest {
       final OPointer restoredPointer = byteBufferPool.acquireDirect(false);
       final OCachePointer restoredCachePointer =
           new OCachePointer(restoredPointer, byteBufferPool, 0, 0);
-      final OCacheEntry restoredCacheEntry = new OCacheEntryImpl(0, 0, restoredCachePointer);
+      final OCacheEntry restoredCacheEntry = new OCacheEntryImpl(0, 0, restoredCachePointer, false);
 
       pageOperation.redo(restoredCacheEntry);
 

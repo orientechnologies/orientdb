@@ -213,6 +213,12 @@ public final class ODirectMemoryOnlyDiskCache extends OAbstractWriteCache
     return cacheEntry;
   }
 
+  @Override
+  public OCacheEntry silentLoadForRead(
+      long extFileId, int pageIndex, OWriteCache writeCache, boolean verifyChecksums) {
+    return loadForRead(extFileId, pageIndex, false, writeCache, verifyChecksums);
+  }
+
   private OCacheEntry doLoad(final long fileId, final long pageIndex) {
     final int intId = extractFileId(fileId);
 
@@ -497,7 +503,8 @@ public final class ODirectMemoryOnlyDiskCache extends OAbstractWriteCache
               new OCachePointer(pointer, bufferPool, id, (int) index);
           cachePointer.incrementReferrer();
 
-          cacheEntry = new OCacheEntryImpl(composeFileId(storageId, id), (int) index, cachePointer);
+          cacheEntry =
+              new OCacheEntryImpl(composeFileId(storageId, id), (int) index, cachePointer, true);
 
           final OCacheEntry oldCacheEntry = content.putIfAbsent(index, cacheEntry);
 

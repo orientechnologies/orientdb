@@ -21,6 +21,7 @@ import com.orientechnologies.orient.core.serialization.serializer.record.binary.
 import com.orientechnologies.orient.core.serialization.serializer.record.binary.ORecordSerializerNetworkDistributed;
 import com.orientechnologies.orient.core.serialization.serializer.record.binary.ORecordSerializerNetworkV37;
 import com.orientechnologies.orient.core.storage.ORecordDuplicatedException;
+import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.tx.OTransactionId;
 import com.orientechnologies.orient.core.tx.OTransactionInternal;
 import com.orientechnologies.orient.core.tx.ValidationResult;
@@ -32,6 +33,7 @@ import com.orientechnologies.orient.server.distributed.ODistributedServerManager
 import com.orientechnologies.orient.server.distributed.ORemoteTaskFactory;
 import com.orientechnologies.orient.server.distributed.impl.ODatabaseDocumentDistributed;
 import com.orientechnologies.orient.server.distributed.impl.ODistributedDatabaseImpl;
+import com.orientechnologies.orient.server.distributed.impl.OInvalidSequentialException;
 import com.orientechnologies.orient.server.distributed.impl.ONewDistributedTxContextImpl;
 import com.orientechnologies.orient.server.distributed.impl.OTransactionOptimisticDistributed;
 import com.orientechnologies.orient.server.distributed.impl.task.transaction.OTransactionResultPayload;
@@ -82,10 +84,13 @@ public class OTransactionPhase1Task extends OAbstractReplicatedTask implements O
     uniqueIndexKeys = new TreeSet<>();
   }
 
-  public OTransactionPhase1Task(List<ORecordOperation> ops, OTransactionId transactionId) {
+  public OTransactionPhase1Task(
+      List<ORecordOperation> ops,
+      OTransactionId transactionId,
+      SortedSet<OTransactionUniqueKey> uniqueIndexKeys) {
     this.ops = ops;
     operations = new ArrayList<>();
-    uniqueIndexKeys = new TreeSet<>();
+    this.uniqueIndexKeys = uniqueIndexKeys;
     this.transactionId = transactionId;
     genOps(ops);
   }
@@ -246,6 +251,8 @@ public class OTransactionPhase1Task extends OAbstractReplicatedTask implements O
       payload = new OTxUniqueIndex((ORecordId) ex.getRid(), ex.getIndexName(), ex.getKey());
     } catch (OConcurrentCreateException ex) {
       payload = new OTxConcurrentCreation(ex.getActualRid(), ex.getExpectedRid());
+    } catch (OInvalidSequentialException ex) {
+      payload = new OTxInvalidSequential();
     } catch (RuntimeException ex) {
       payload = new OTxException(ex);
     }
@@ -368,6 +375,7 @@ public class OTransactionPhase1Task extends OAbstractReplicatedTask implements O
   public void init(OTransactionId transactionId, OTransactionInternal operations) {
     this.transactionId = transactionId;
     final ODatabaseDocumentInternal database = operations.getDatabase();
+    OAbstractPaginatedStorage storage = (OAbstractPaginatedStorage) database.getStorage();
     operations
         .getIndexOperations()
         .forEach(
@@ -376,13 +384,14 @@ public class OTransactionPhase1Task extends OAbstractReplicatedTask implements O
                   .resolveAssociatedIndex(
                       index, database.getMetadata().getIndexManagerInternal(), database)
                   .isUnique()) {
-                // TODO: resolve version
-                int version = 0;
+
                 quorumType = OCommandDistributedReplicateRequest.QUORUM_TYPE.WRITE_ALL_MASTERS;
                 for (Object keyWithChange : changes.changesPerKey.keySet()) {
+                  int version = storage.getVersionForKey(index, keyWithChange);
                   uniqueIndexKeys.add(new OTransactionUniqueKey(index, keyWithChange, version));
                 }
                 if (!changes.nullKeyChanges.entries.isEmpty()) {
+                  int version = storage.getVersionForKey(index, null);
                   uniqueIndexKeys.add(new OTransactionUniqueKey(index, null, version));
                 }
               }

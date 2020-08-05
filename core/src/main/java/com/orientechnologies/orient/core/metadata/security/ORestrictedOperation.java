@@ -24,6 +24,7 @@ package com.orientechnologies.orient.core.metadata.security;
  *
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
  */
+@Deprecated
 public enum ORestrictedOperation {
   /** Allows all RUD rights. */
   ALLOW_ALL("_allow"),
