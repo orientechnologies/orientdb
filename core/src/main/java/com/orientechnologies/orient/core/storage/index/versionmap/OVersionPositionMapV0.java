@@ -76,7 +76,6 @@ public final class OVersionPositionMapV0 extends OVersionPositionMap {
             //          + entries
             //          + " records");
             // }
-            deleteFile(atomicOperation, fileId);
             this.deleteVPM(atomicOperation);
           } finally {
             releaseExclusiveLock();
@@ -89,14 +88,13 @@ public final class OVersionPositionMapV0 extends OVersionPositionMap {
     acquireExclusiveLock();
     try {
       final OAtomicOperation atomicOperation = OAtomicOperationsManager.getCurrentOperation();
-      fileId = openFile(atomicOperation, getFullName());
       this.openVPM(atomicOperation);
     } finally {
       releaseExclusiveLock();
     }
   }
 
-  @Override
+  /*@Override
   public void close() {
     close(true);
   }
@@ -129,6 +127,17 @@ public final class OVersionPositionMapV0 extends OVersionPositionMap {
     } finally {
       atomicOperationsManager.releaseReadLock(this);
     }
+  }*/
+
+  @Override
+  public void updateVersion(final int hash, final int version) {
+    // TODO: [DR]
+  }
+
+  @Override
+  public int getVersion(final int hash) {
+    // TODO: [DR]
+    return 0;
   }
 
   public void openVPM(final OAtomicOperation atomicOperation) throws IOException {

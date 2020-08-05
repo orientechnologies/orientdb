@@ -18,11 +18,16 @@ public abstract class OVersionPositionMap extends ODurableComponent {
 
   public abstract void open() throws IOException;
 
-  public abstract void close();
-
-  public abstract void close(boolean flush) throws IOException;
-
   public abstract void delete(OAtomicOperation atomicOperation) throws IOException;
 
-  public abstract void synch();
+  // VPM only stores an array of int for versions
+  public abstract void updateVersion(int hash, int version);
+
+  public abstract int getVersion(int hash);
+
+  // public abstract void close();
+
+  // public abstract void close(boolean flush) throws IOException;
+
+  // public abstract void synch();
 }

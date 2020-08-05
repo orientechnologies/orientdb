@@ -219,7 +219,6 @@ public final class OClusterPositionMapV2 extends OClusterPositionMap {
           bucket = new OClusterPositionMapBucket(cacheEntry);
           bucket.init();
         }
-
         final long index = bucket.allocate();
         return index + (cacheEntry.getPageIndex() - 1) * OClusterPositionMapBucket.MAX_ENTRIES;
       } finally {
