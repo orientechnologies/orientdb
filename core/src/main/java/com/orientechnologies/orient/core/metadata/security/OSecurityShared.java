@@ -572,208 +572,31 @@ public class OSecurityShared implements OSecurityInternal {
     if (!session.getMetadata().getSchema().getClasses().isEmpty()) return null;
 
     skipRoleHasPredicateSecurityForClassUpdate = true;
-    final OUser adminUser;
+    OUser adminUser = null;
     try {
-      adminUser = createMetadata(session);
+      OClass identityClass =
+          session.getMetadata().getSchema().getClass(OIdentity.CLASS_NAME); // SINCE 1.2.0
+      if (identityClass == null)
+        identityClass = session.getMetadata().getSchema().createAbstractClass(OIdentity.CLASS_NAME);
 
-      final ORole readerRole = createRole(session, "reader", ORole.ALLOW_MODES.DENY_ALL_BUT);
-      setSecurityPolicyWithBitmask(session, readerRole, "database.class.*.*", ORole.PERMISSION_ALL);
+      createOrUpdateOSecurityPolicyClass(session);
 
-      readerRole.addRule(ORule.ResourceGeneric.DATABASE, null, ORole.PERMISSION_READ);
-      readerRole.addRule(ORule.ResourceGeneric.SCHEMA, null, ORole.PERMISSION_READ);
-      readerRole.addRule(
-          ORule.ResourceGeneric.CLUSTER,
-          OMetadataDefault.CLUSTER_INTERNAL_NAME,
-          ORole.PERMISSION_READ);
-      readerRole.addRule(ORule.ResourceGeneric.CLUSTER, "orole", ORole.PERMISSION_NONE);
-      readerRole.addRule(ORule.ResourceGeneric.CLUSTER, "ouser", ORole.PERMISSION_NONE);
-      readerRole.addRule(ORule.ResourceGeneric.CLASS, null, ORole.PERMISSION_READ);
-      readerRole.addRule(ORule.ResourceGeneric.CLASS, "OUser", ORole.PERMISSION_NONE);
-      readerRole.addRule(ORule.ResourceGeneric.CLUSTER, null, ORole.PERMISSION_READ);
-      readerRole.addRule(ORule.ResourceGeneric.COMMAND, null, ORole.PERMISSION_READ);
-      readerRole.addRule(ORule.ResourceGeneric.RECORD_HOOK, null, ORole.PERMISSION_READ);
-      readerRole.addRule(ORule.ResourceGeneric.FUNCTION, null, ORole.PERMISSION_READ);
-      readerRole.addRule(ORule.ResourceGeneric.SYSTEM_CLUSTERS, null, ORole.PERMISSION_NONE);
+      OClass roleClass = createOrUpdateORoleClass(session, identityClass);
 
-      readerRole.save();
+      createOrUpdateOUserClass(session, identityClass, roleClass);
 
-      setSecurityPolicyWithBitmask(
-          session,
-          readerRole,
-          ORule.ResourceGeneric.DATABASE.getLegacyName(),
-          ORole.PERMISSION_READ);
-      setSecurityPolicyWithBitmask(
-          session, readerRole, ORule.ResourceGeneric.SCHEMA.getLegacyName(), ORole.PERMISSION_READ);
-      setSecurityPolicyWithBitmask(
-          session,
-          readerRole,
-          ORule.ResourceGeneric.CLUSTER.getLegacyName()
-              + "."
-              + OMetadataDefault.CLUSTER_INTERNAL_NAME,
-          ORole.PERMISSION_READ);
-      setSecurityPolicyWithBitmask(
-          session,
-          readerRole,
-          ORule.ResourceGeneric.CLUSTER.getLegacyName() + ".orole",
-          ORole.PERMISSION_READ);
-      setSecurityPolicyWithBitmask(
-          session,
-          readerRole,
-          ORule.ResourceGeneric.CLUSTER.getLegacyName() + ".ouser",
-          ORole.PERMISSION_READ);
-      setSecurityPolicyWithBitmask(
-          session,
-          readerRole,
-          ORule.ResourceGeneric.CLASS.getLegacyName() + ".*",
-          ORole.PERMISSION_READ);
-      setSecurityPolicyWithBitmask(
-          session,
-          readerRole,
-          ORule.ResourceGeneric.CLASS.getLegacyName() + ".OUser",
-          ORole.PERMISSION_READ);
-      setSecurityPolicyWithBitmask(
-          session,
-          readerRole,
-          ORule.ResourceGeneric.CLUSTER.getLegacyName() + ".*",
-          ORole.PERMISSION_READ);
-      setSecurityPolicyWithBitmask(
-          session,
-          readerRole,
-          ORule.ResourceGeneric.COMMAND.getLegacyName(),
-          ORole.PERMISSION_READ);
-      setSecurityPolicyWithBitmask(
-          session,
-          readerRole,
-          ORule.ResourceGeneric.RECORD_HOOK.getLegacyName(),
-          ORole.PERMISSION_READ);
-      setSecurityPolicyWithBitmask(
-          session,
-          readerRole,
-          ORule.ResourceGeneric.FUNCTION.getLegacyName() + ".*",
-          ORole.PERMISSION_READ);
-      setSecurityPolicyWithBitmask(
-          session,
-          readerRole,
-          ORule.ResourceGeneric.SYSTEM_CLUSTERS.getLegacyName(),
-          ORole.PERMISSION_NONE);
+      // CREATE ROLES AND USERS
+      ORole adminRole = getRole(session, ORole.ADMIN);
+      if (adminRole == null) {
+        adminRole = createDefaultAdminRole(session);
+      }
+      final ORole readerRole = createDefaultReaderRole(session);
+      final ORole writerRole = createDefaultWriterRole(session);
 
-      // This will return the global value if a local storage context configuration value does not
-      // exist.
-      boolean createDefUsers =
-          ((ODatabaseDocumentInternal) session)
-              .getStorage()
-              .getConfiguration()
-              .getContextConfiguration()
-              .getValueAsBoolean(OGlobalConfiguration.CREATE_DEFAULT_USERS);
+      // SINCE 1.2.0
+      createOrUpdateORestrictedClass(session);
 
-      if (createDefUsers)
-        createUser(session, "reader", "reader", new String[] {readerRole.getName()});
-
-      final ORole writerRole = createRole(session, "writer", ORole.ALLOW_MODES.DENY_ALL_BUT);
-      setSecurityPolicyWithBitmask(session, writerRole, "database.class.*.*", ORole.PERMISSION_ALL);
-
-      writerRole.addRule(ORule.ResourceGeneric.DATABASE, null, ORole.PERMISSION_READ);
-      writerRole.addRule(
-          ORule.ResourceGeneric.SCHEMA,
-          null,
-          ORole.PERMISSION_READ + ORole.PERMISSION_CREATE + ORole.PERMISSION_UPDATE);
-      writerRole.addRule(
-          ORule.ResourceGeneric.CLUSTER,
-          OMetadataDefault.CLUSTER_INTERNAL_NAME,
-          ORole.PERMISSION_READ);
-      writerRole.addRule(ORule.ResourceGeneric.CLASS, null, ORole.PERMISSION_ALL);
-      writerRole.addRule(ORule.ResourceGeneric.CLASS, "OUser", ORole.PERMISSION_READ);
-      writerRole.addRule(ORule.ResourceGeneric.CLUSTER, null, ORole.PERMISSION_ALL);
-      writerRole.addRule(ORule.ResourceGeneric.COMMAND, null, ORole.PERMISSION_ALL);
-      writerRole.addRule(ORule.ResourceGeneric.RECORD_HOOK, null, ORole.PERMISSION_ALL);
-      writerRole.addRule(ORule.ResourceGeneric.FUNCTION, null, ORole.PERMISSION_READ);
-      writerRole.addRule(ORule.ResourceGeneric.CLASS, OSequence.CLASS_NAME, ORole.PERMISSION_READ);
-      writerRole.addRule(ORule.ResourceGeneric.CLASS, "OTriggered", ORole.PERMISSION_READ);
-      writerRole.addRule(ORule.ResourceGeneric.CLASS, "OSchedule", ORole.PERMISSION_READ);
-      writerRole.addRule(
-          ORule.ResourceGeneric.CLASS,
-          OSecurityResource.class.getSimpleName(),
-          ORole.PERMISSION_READ);
-      writerRole.addRule(ORule.ResourceGeneric.SYSTEM_CLUSTERS, null, ORole.PERMISSION_NONE);
-      writerRole.save();
-
-      setSecurityPolicyWithBitmask(
-          session,
-          writerRole,
-          ORule.ResourceGeneric.DATABASE.getLegacyName(),
-          ORole.PERMISSION_READ);
-      setSecurityPolicyWithBitmask(
-          session,
-          writerRole,
-          ORule.ResourceGeneric.SCHEMA.getLegacyName(),
-          ORole.PERMISSION_READ + ORole.PERMISSION_CREATE + ORole.PERMISSION_UPDATE);
-      setSecurityPolicyWithBitmask(
-          session,
-          writerRole,
-          ORule.ResourceGeneric.CLUSTER.getLegacyName()
-              + "."
-              + OMetadataDefault.CLUSTER_INTERNAL_NAME,
-          ORole.PERMISSION_READ);
-      setSecurityPolicyWithBitmask(
-          session,
-          writerRole,
-          ORule.ResourceGeneric.CLUSTER.getLegacyName() + ".orole",
-          ORole.PERMISSION_READ);
-      setSecurityPolicyWithBitmask(
-          session,
-          writerRole,
-          ORule.ResourceGeneric.CLUSTER.getLegacyName() + ".ouser",
-          ORole.PERMISSION_READ);
-      setSecurityPolicyWithBitmask(
-          session,
-          writerRole,
-          ORule.ResourceGeneric.CLASS.getLegacyName() + ".*",
-          ORole.PERMISSION_ALL);
-      setSecurityPolicyWithBitmask(
-          session,
-          writerRole,
-          ORule.ResourceGeneric.CLASS.getLegacyName() + ".OUser",
-          ORole.PERMISSION_READ);
-      setSecurityPolicyWithBitmask(
-          session,
-          writerRole,
-          ORule.ResourceGeneric.CLUSTER.getLegacyName() + ".*",
-          ORole.PERMISSION_ALL);
-      setSecurityPolicyWithBitmask(
-          session, writerRole, ORule.ResourceGeneric.COMMAND.getLegacyName(), ORole.PERMISSION_ALL);
-      setSecurityPolicyWithBitmask(
-          session,
-          writerRole,
-          ORule.ResourceGeneric.RECORD_HOOK.getLegacyName(),
-          ORole.PERMISSION_ALL);
-      setSecurityPolicyWithBitmask(
-          session,
-          writerRole,
-          ORule.ResourceGeneric.FUNCTION.getLegacyName() + ".*",
-          ORole.PERMISSION_READ);
-      setSecurityPolicyWithBitmask(
-          session,
-          writerRole,
-          ORule.ResourceGeneric.CLASS.getLegacyName() + "." + OSequence.CLASS_NAME,
-          ORole.PERMISSION_READ);
-      setSecurityPolicyWithBitmask(
-          session,
-          writerRole,
-          ORule.ResourceGeneric.SYSTEM_CLUSTERS.getLegacyName() + ".OTriggered",
-          ORole.PERMISSION_READ);
-      setSecurityPolicyWithBitmask(
-          session,
-          writerRole,
-          ORule.ResourceGeneric.SYSTEM_CLUSTERS.getLegacyName() + ".OSchedule",
-          ORole.PERMISSION_READ);
-      setSecurityPolicyWithBitmask(
-          session,
-          writerRole,
-          ORule.ResourceGeneric.SYSTEM_CLUSTERS.getLegacyName(),
-          ORole.PERMISSION_NONE);
-
-      if (createDefUsers)
-        createUser(session, "writer", "writer", new String[] {writerRole.getName()});
+      adminUser = createDefaultUser(session, adminRole, readerRole, writerRole);
 
     } finally {
       skipRoleHasPredicateSecurityForClassUpdate = false;
@@ -783,67 +606,239 @@ public class OSecurityShared implements OSecurityInternal {
     return adminUser;
   }
 
-  /**
-   * Repairs the security structure if broken by creating the ADMIN role and user with default
-   * password.
-   *
-   * @return
-   */
-  public OUser createMetadata(final ODatabaseSession session) {
+  private OUser createDefaultUser(
+      final ODatabaseSession session,
+      final ORole adminRole,
+      final ORole readerRole,
+      final ORole writerRole) {
+    boolean createDefUsers =
+        session.getConfiguration().getValueAsBoolean(OGlobalConfiguration.CREATE_DEFAULT_USERS);
 
-    OClass identityClass =
-        session.getMetadata().getSchema().getClass(OIdentity.CLASS_NAME); // SINCE 1.2.0
-    if (identityClass == null)
-      identityClass = session.getMetadata().getSchema().createAbstractClass(OIdentity.CLASS_NAME);
-
-    createOrUpdateOSecurityPolicyClass(session);
-
-    OClass roleClass = createOrUpdateORoleClass(session, identityClass);
-
-    createOrUpdateOUserClass(session, identityClass, roleClass);
-
-    // CREATE ROLES AND USERS
-    ORole adminRole = getRole(session, ORole.ADMIN);
-    if (adminRole == null) {
-      adminRole = createRole(session, ORole.ADMIN, ORole.ALLOW_MODES.DENY_ALL_BUT);
-      setSecurityPolicyWithBitmask(session, adminRole, "*", ORole.PERMISSION_ALL);
-      adminRole.addRule(ORule.ResourceGeneric.BYPASS_RESTRICTED, null, ORole.PERMISSION_ALL).save();
-      adminRole.addRule(ORule.ResourceGeneric.ALL, null, ORole.PERMISSION_ALL).save();
-      //      adminRole.addRule(ORule.ResourceGeneric.ALL_CLASSES, null,
-      // ORole.PERMISSION_ALL).save();
-      adminRole.addRule(ORule.ResourceGeneric.CLASS, null, ORole.PERMISSION_ALL).save();
-      //      adminRole.addRule(ORule.ResourceGeneric.ALL_CLUSTERS, null,
-      // ORole.PERMISSION_ALL).save();
-      adminRole.addRule(ORule.ResourceGeneric.CLUSTER, null, ORole.PERMISSION_ALL).save();
-      adminRole.addRule(ORule.ResourceGeneric.SYSTEM_CLUSTERS, null, ORole.PERMISSION_ALL).save();
-      adminRole.addRule(ORule.ResourceGeneric.DATABASE, null, ORole.PERMISSION_ALL).save();
-      adminRole.addRule(ORule.ResourceGeneric.SCHEMA, null, ORole.PERMISSION_ALL).save();
-      adminRole.addRule(ORule.ResourceGeneric.COMMAND, null, ORole.PERMISSION_ALL).save();
-      adminRole.addRule(ORule.ResourceGeneric.COMMAND_GREMLIN, null, ORole.PERMISSION_ALL).save();
-      adminRole.addRule(ORule.ResourceGeneric.FUNCTION, null, ORole.PERMISSION_ALL).save();
+    OUser adminUser = null;
+    // This will return the global value if a local storage context configuration value does not
+    // exist.
+    if (createDefUsers) {
+      adminUser = createUser(session, OUser.ADMIN, OUser.ADMIN, adminRole);
+      createUser(session, "reader", "reader", new String[] {readerRole.getName()});
+      createUser(session, "writer", "writer", new String[] {writerRole.getName()});
     }
-
-    OUser adminUser = getUser(session, OUser.ADMIN);
-
-    if (adminUser == null) {
-      // This will return the global value if a local storage context configuration value does not
-      // exist.
-      boolean createDefUsers =
-          ((ODatabaseDocumentInternal) session)
-              .getStorage()
-              .getConfiguration()
-              .getContextConfiguration()
-              .getValueAsBoolean(OGlobalConfiguration.CREATE_DEFAULT_USERS);
-
-      if (createDefUsers) {
-        adminUser = createUser(session, OUser.ADMIN, OUser.ADMIN, adminRole);
-      }
-    }
-
-    // SINCE 1.2.0
-    createOrUpdateORestrictedClass(session);
-
     return adminUser;
+  }
+
+  private ORole createDefaultWriterRole(final ODatabaseSession session) {
+    final ORole writerRole = createRole(session, "writer", ORole.ALLOW_MODES.DENY_ALL_BUT);
+    sedDefaultWriterPermissions(session, writerRole);
+    return writerRole;
+  }
+
+  private void sedDefaultWriterPermissions(final ODatabaseSession session, final ORole writerRole) {
+    setSecurityPolicyWithBitmask(session, writerRole, "database.class.*.*", ORole.PERMISSION_ALL);
+
+    writerRole.addRule(ORule.ResourceGeneric.DATABASE, null, ORole.PERMISSION_READ);
+    writerRole.addRule(
+        ORule.ResourceGeneric.SCHEMA,
+        null,
+        ORole.PERMISSION_READ + ORole.PERMISSION_CREATE + ORole.PERMISSION_UPDATE);
+    writerRole.addRule(
+        ORule.ResourceGeneric.CLUSTER,
+        OMetadataDefault.CLUSTER_INTERNAL_NAME,
+        ORole.PERMISSION_READ);
+    writerRole.addRule(ORule.ResourceGeneric.CLASS, null, ORole.PERMISSION_ALL);
+    writerRole.addRule(ORule.ResourceGeneric.CLASS, "OUser", ORole.PERMISSION_READ);
+    writerRole.addRule(ORule.ResourceGeneric.CLUSTER, null, ORole.PERMISSION_ALL);
+    writerRole.addRule(ORule.ResourceGeneric.COMMAND, null, ORole.PERMISSION_ALL);
+    writerRole.addRule(ORule.ResourceGeneric.RECORD_HOOK, null, ORole.PERMISSION_ALL);
+    writerRole.addRule(ORule.ResourceGeneric.FUNCTION, null, ORole.PERMISSION_READ);
+    writerRole.addRule(ORule.ResourceGeneric.CLASS, OSequence.CLASS_NAME, ORole.PERMISSION_READ);
+    writerRole.addRule(ORule.ResourceGeneric.CLASS, "OTriggered", ORole.PERMISSION_READ);
+    writerRole.addRule(ORule.ResourceGeneric.CLASS, "OSchedule", ORole.PERMISSION_READ);
+    writerRole.addRule(
+        ORule.ResourceGeneric.CLASS,
+        OSecurityResource.class.getSimpleName(),
+        ORole.PERMISSION_READ);
+    writerRole.addRule(ORule.ResourceGeneric.SYSTEM_CLUSTERS, null, ORole.PERMISSION_NONE);
+    writerRole.save();
+
+    setSecurityPolicyWithBitmask(
+        session, writerRole, ORule.ResourceGeneric.DATABASE.getLegacyName(), ORole.PERMISSION_READ);
+    setSecurityPolicyWithBitmask(
+        session,
+        writerRole,
+        ORule.ResourceGeneric.SCHEMA.getLegacyName(),
+        ORole.PERMISSION_READ + ORole.PERMISSION_CREATE + ORole.PERMISSION_UPDATE);
+    setSecurityPolicyWithBitmask(
+        session,
+        writerRole,
+        ORule.ResourceGeneric.CLUSTER.getLegacyName()
+            + "."
+            + OMetadataDefault.CLUSTER_INTERNAL_NAME,
+        ORole.PERMISSION_READ);
+    setSecurityPolicyWithBitmask(
+        session,
+        writerRole,
+        ORule.ResourceGeneric.CLUSTER.getLegacyName() + ".orole",
+        ORole.PERMISSION_READ);
+    setSecurityPolicyWithBitmask(
+        session,
+        writerRole,
+        ORule.ResourceGeneric.CLUSTER.getLegacyName() + ".ouser",
+        ORole.PERMISSION_READ);
+    setSecurityPolicyWithBitmask(
+        session,
+        writerRole,
+        ORule.ResourceGeneric.CLASS.getLegacyName() + ".*",
+        ORole.PERMISSION_ALL);
+    setSecurityPolicyWithBitmask(
+        session,
+        writerRole,
+        ORule.ResourceGeneric.CLASS.getLegacyName() + ".OUser",
+        ORole.PERMISSION_READ);
+    setSecurityPolicyWithBitmask(
+        session,
+        writerRole,
+        ORule.ResourceGeneric.CLUSTER.getLegacyName() + ".*",
+        ORole.PERMISSION_ALL);
+    setSecurityPolicyWithBitmask(
+        session, writerRole, ORule.ResourceGeneric.COMMAND.getLegacyName(), ORole.PERMISSION_ALL);
+    setSecurityPolicyWithBitmask(
+        session,
+        writerRole,
+        ORule.ResourceGeneric.RECORD_HOOK.getLegacyName(),
+        ORole.PERMISSION_ALL);
+    setSecurityPolicyWithBitmask(
+        session,
+        writerRole,
+        ORule.ResourceGeneric.FUNCTION.getLegacyName() + ".*",
+        ORole.PERMISSION_READ);
+    setSecurityPolicyWithBitmask(
+        session,
+        writerRole,
+        ORule.ResourceGeneric.CLASS.getLegacyName() + "." + OSequence.CLASS_NAME,
+        ORole.PERMISSION_READ);
+    setSecurityPolicyWithBitmask(
+        session,
+        writerRole,
+        ORule.ResourceGeneric.SYSTEM_CLUSTERS.getLegacyName() + ".OTriggered",
+        ORole.PERMISSION_READ);
+    setSecurityPolicyWithBitmask(
+        session,
+        writerRole,
+        ORule.ResourceGeneric.SYSTEM_CLUSTERS.getLegacyName() + ".OSchedule",
+        ORole.PERMISSION_READ);
+    setSecurityPolicyWithBitmask(
+        session,
+        writerRole,
+        ORule.ResourceGeneric.SYSTEM_CLUSTERS.getLegacyName(),
+        ORole.PERMISSION_NONE);
+  }
+
+  private ORole createDefaultReaderRole(final ODatabaseSession session) {
+    final ORole readerRole = createRole(session, "reader", ORole.ALLOW_MODES.DENY_ALL_BUT);
+    setDefaultReaderPermissions(session, readerRole);
+    return readerRole;
+  }
+
+  private void setDefaultReaderPermissions(final ODatabaseSession session, final ORole readerRole) {
+    setSecurityPolicyWithBitmask(session, readerRole, "database.class.*.*", ORole.PERMISSION_ALL);
+
+    readerRole.addRule(ORule.ResourceGeneric.DATABASE, null, ORole.PERMISSION_READ);
+    readerRole.addRule(ORule.ResourceGeneric.SCHEMA, null, ORole.PERMISSION_READ);
+    readerRole.addRule(
+        ORule.ResourceGeneric.CLUSTER,
+        OMetadataDefault.CLUSTER_INTERNAL_NAME,
+        ORole.PERMISSION_READ);
+    readerRole.addRule(ORule.ResourceGeneric.CLUSTER, "orole", ORole.PERMISSION_NONE);
+    readerRole.addRule(ORule.ResourceGeneric.CLUSTER, "ouser", ORole.PERMISSION_NONE);
+    readerRole.addRule(ORule.ResourceGeneric.CLASS, null, ORole.PERMISSION_READ);
+    readerRole.addRule(ORule.ResourceGeneric.CLASS, "OUser", ORole.PERMISSION_NONE);
+    readerRole.addRule(ORule.ResourceGeneric.CLUSTER, null, ORole.PERMISSION_READ);
+    readerRole.addRule(ORule.ResourceGeneric.COMMAND, null, ORole.PERMISSION_READ);
+    readerRole.addRule(ORule.ResourceGeneric.RECORD_HOOK, null, ORole.PERMISSION_READ);
+    readerRole.addRule(ORule.ResourceGeneric.FUNCTION, null, ORole.PERMISSION_READ);
+    readerRole.addRule(ORule.ResourceGeneric.SYSTEM_CLUSTERS, null, ORole.PERMISSION_NONE);
+
+    readerRole.save();
+
+    setSecurityPolicyWithBitmask(
+        session, readerRole, ORule.ResourceGeneric.DATABASE.getLegacyName(), ORole.PERMISSION_READ);
+    setSecurityPolicyWithBitmask(
+        session, readerRole, ORule.ResourceGeneric.SCHEMA.getLegacyName(), ORole.PERMISSION_READ);
+    setSecurityPolicyWithBitmask(
+        session,
+        readerRole,
+        ORule.ResourceGeneric.CLUSTER.getLegacyName()
+            + "."
+            + OMetadataDefault.CLUSTER_INTERNAL_NAME,
+        ORole.PERMISSION_READ);
+    setSecurityPolicyWithBitmask(
+        session,
+        readerRole,
+        ORule.ResourceGeneric.CLUSTER.getLegacyName() + ".orole",
+        ORole.PERMISSION_READ);
+    setSecurityPolicyWithBitmask(
+        session,
+        readerRole,
+        ORule.ResourceGeneric.CLUSTER.getLegacyName() + ".ouser",
+        ORole.PERMISSION_READ);
+    setSecurityPolicyWithBitmask(
+        session,
+        readerRole,
+        ORule.ResourceGeneric.CLASS.getLegacyName() + ".*",
+        ORole.PERMISSION_READ);
+    setSecurityPolicyWithBitmask(
+        session,
+        readerRole,
+        ORule.ResourceGeneric.CLASS.getLegacyName() + ".OUser",
+        ORole.PERMISSION_READ);
+    setSecurityPolicyWithBitmask(
+        session,
+        readerRole,
+        ORule.ResourceGeneric.CLUSTER.getLegacyName() + ".*",
+        ORole.PERMISSION_READ);
+    setSecurityPolicyWithBitmask(
+        session, readerRole, ORule.ResourceGeneric.COMMAND.getLegacyName(), ORole.PERMISSION_READ);
+    setSecurityPolicyWithBitmask(
+        session,
+        readerRole,
+        ORule.ResourceGeneric.RECORD_HOOK.getLegacyName(),
+        ORole.PERMISSION_READ);
+    setSecurityPolicyWithBitmask(
+        session,
+        readerRole,
+        ORule.ResourceGeneric.FUNCTION.getLegacyName() + ".*",
+        ORole.PERMISSION_READ);
+    setSecurityPolicyWithBitmask(
+        session,
+        readerRole,
+        ORule.ResourceGeneric.SYSTEM_CLUSTERS.getLegacyName(),
+        ORole.PERMISSION_NONE);
+  }
+
+  private ORole createDefaultAdminRole(final ODatabaseSession session) {
+    ORole adminRole;
+    adminRole = createRole(session, ORole.ADMIN, ORole.ALLOW_MODES.DENY_ALL_BUT);
+    setDefaultAdminPermissions(session, adminRole);
+    return adminRole;
+  }
+
+  private void setDefaultAdminPermissions(final ODatabaseSession session, ORole adminRole) {
+    setSecurityPolicyWithBitmask(session, adminRole, "*", ORole.PERMISSION_ALL);
+    adminRole.addRule(ORule.ResourceGeneric.BYPASS_RESTRICTED, null, ORole.PERMISSION_ALL).save();
+    adminRole.addRule(ORule.ResourceGeneric.ALL, null, ORole.PERMISSION_ALL).save();
+    //      adminRole.addRule(ORule.ResourceGeneric.ALL_CLASSES, null,
+    // ORole.PERMISSION_ALL).save();
+    adminRole.addRule(ORule.ResourceGeneric.CLASS, null, ORole.PERMISSION_ALL).save();
+    //      adminRole.addRule(ORule.ResourceGeneric.ALL_CLUSTERS, null,
+    // ORole.PERMISSION_ALL).save();
+    adminRole.addRule(ORule.ResourceGeneric.CLUSTER, null, ORole.PERMISSION_ALL).save();
+    adminRole.addRule(ORule.ResourceGeneric.SYSTEM_CLUSTERS, null, ORole.PERMISSION_ALL).save();
+    adminRole.addRule(ORule.ResourceGeneric.DATABASE, null, ORole.PERMISSION_ALL).save();
+    adminRole.addRule(ORule.ResourceGeneric.SCHEMA, null, ORole.PERMISSION_ALL).save();
+    adminRole.addRule(ORule.ResourceGeneric.COMMAND, null, ORole.PERMISSION_ALL).save();
+    adminRole.addRule(ORule.ResourceGeneric.COMMAND_GREMLIN, null, ORole.PERMISSION_ALL).save();
+    adminRole.addRule(ORule.ResourceGeneric.FUNCTION, null, ORole.PERMISSION_ALL).save();
+
+    adminRole.save();
   }
 
   private void createOrUpdateORestrictedClass(final ODatabaseDocument database) {
@@ -1054,219 +1049,17 @@ public class OSecurityShared implements OSecurityInternal {
       createOrUpdateOSecurityPolicyClass(session);
       ORole adminRole = getRole(session, "admin");
       if (adminRole != null) {
-        setSecurityPolicyWithBitmask(session, adminRole, "*", ORole.PERMISSION_ALL);
-        adminRole.addRule(ORule.ResourceGeneric.ALL, null, ORole.PERMISSION_ALL).save();
-        //      adminRole.addRule(ORule.ResourceGeneric.ALL_CLASSES, null,
-        // ORole.PERMISSION_ALL).save();
-        adminRole.addRule(ORule.ResourceGeneric.CLASS, null, ORole.PERMISSION_ALL).save();
-        //      adminRole.addRule(ORule.ResourceGeneric.ALL_CLUSTERS, null,
-        // ORole.PERMISSION_ALL).save();
-        adminRole.addRule(ORule.ResourceGeneric.CLUSTER, null, ORole.PERMISSION_ALL).save();
-        adminRole.addRule(ORule.ResourceGeneric.SYSTEM_CLUSTERS, null, ORole.PERMISSION_ALL).save();
-        adminRole.addRule(ORule.ResourceGeneric.DATABASE, null, ORole.PERMISSION_ALL).save();
-        adminRole.addRule(ORule.ResourceGeneric.SCHEMA, null, ORole.PERMISSION_ALL).save();
-        adminRole.addRule(ORule.ResourceGeneric.COMMAND, null, ORole.PERMISSION_ALL).save();
-        adminRole.addRule(ORule.ResourceGeneric.COMMAND_GREMLIN, null, ORole.PERMISSION_ALL).save();
-        adminRole.addRule(ORule.ResourceGeneric.FUNCTION, null, ORole.PERMISSION_ALL).save();
-
-        adminRole.save();
+        setDefaultAdminPermissions(session, adminRole);
       }
 
       ORole readerRole = getRole(session, "reader");
       if (readerRole != null) {
-
-        readerRole.addRule(ORule.ResourceGeneric.DATABASE, null, ORole.PERMISSION_READ);
-        readerRole.addRule(ORule.ResourceGeneric.SCHEMA, null, ORole.PERMISSION_READ);
-        readerRole.addRule(
-            ORule.ResourceGeneric.CLUSTER,
-            OMetadataDefault.CLUSTER_INTERNAL_NAME,
-            ORole.PERMISSION_READ);
-        readerRole.addRule(ORule.ResourceGeneric.CLUSTER, "orole", ORole.PERMISSION_NONE);
-        readerRole.addRule(ORule.ResourceGeneric.CLUSTER, "ouser", ORole.PERMISSION_NONE);
-        readerRole.addRule(ORule.ResourceGeneric.CLASS, null, ORole.PERMISSION_READ);
-        readerRole.addRule(ORule.ResourceGeneric.CLASS, "OUser", ORole.PERMISSION_NONE);
-        readerRole.addRule(ORule.ResourceGeneric.CLUSTER, null, ORole.PERMISSION_READ);
-        readerRole.addRule(ORule.ResourceGeneric.COMMAND, null, ORole.PERMISSION_READ);
-        readerRole.addRule(ORule.ResourceGeneric.RECORD_HOOK, null, ORole.PERMISSION_READ);
-        readerRole.addRule(ORule.ResourceGeneric.FUNCTION, null, ORole.PERMISSION_READ);
-        readerRole.addRule(ORule.ResourceGeneric.SYSTEM_CLUSTERS, null, ORole.PERMISSION_NONE);
-
-        readerRole.save();
-
-        setSecurityPolicyWithBitmask(
-            session,
-            readerRole,
-            ORule.ResourceGeneric.DATABASE.getLegacyName(),
-            ORole.PERMISSION_READ);
-        setSecurityPolicyWithBitmask(
-            session,
-            readerRole,
-            ORule.ResourceGeneric.SCHEMA.getLegacyName(),
-            ORole.PERMISSION_READ);
-        setSecurityPolicyWithBitmask(
-            session,
-            readerRole,
-            ORule.ResourceGeneric.CLUSTER.getLegacyName()
-                + "."
-                + OMetadataDefault.CLUSTER_INTERNAL_NAME,
-            ORole.PERMISSION_READ);
-        setSecurityPolicyWithBitmask(
-            session,
-            readerRole,
-            ORule.ResourceGeneric.CLUSTER.getLegacyName() + ".orole",
-            ORole.PERMISSION_READ);
-        setSecurityPolicyWithBitmask(
-            session,
-            readerRole,
-            ORule.ResourceGeneric.CLUSTER.getLegacyName() + ".ouser",
-            ORole.PERMISSION_READ);
-        setSecurityPolicyWithBitmask(
-            session,
-            readerRole,
-            ORule.ResourceGeneric.CLASS.getLegacyName() + ".*",
-            ORole.PERMISSION_READ);
-        setSecurityPolicyWithBitmask(
-            session,
-            readerRole,
-            ORule.ResourceGeneric.CLASS.getLegacyName() + ".OUser",
-            ORole.PERMISSION_READ);
-        setSecurityPolicyWithBitmask(
-            session,
-            readerRole,
-            ORule.ResourceGeneric.CLUSTER.getLegacyName() + ".*",
-            ORole.PERMISSION_READ);
-        setSecurityPolicyWithBitmask(
-            session,
-            readerRole,
-            ORule.ResourceGeneric.COMMAND.getLegacyName(),
-            ORole.PERMISSION_READ);
-        setSecurityPolicyWithBitmask(
-            session,
-            readerRole,
-            ORule.ResourceGeneric.RECORD_HOOK.getLegacyName(),
-            ORole.PERMISSION_READ);
-        setSecurityPolicyWithBitmask(
-            session,
-            readerRole,
-            ORule.ResourceGeneric.FUNCTION.getLegacyName() + ".*",
-            ORole.PERMISSION_READ);
-        setSecurityPolicyWithBitmask(
-            session,
-            readerRole,
-            ORule.ResourceGeneric.SYSTEM_CLUSTERS.getLegacyName(),
-            ORole.PERMISSION_NONE);
+        setDefaultReaderPermissions(session, readerRole);
       }
 
       ORole writerRole = getRole(session, "writer");
       if (writerRole != null) {
-
-        setSecurityPolicyWithBitmask(
-            session, writerRole, "database.class.*.*", ORole.PERMISSION_ALL);
-
-        writerRole.addRule(ORule.ResourceGeneric.DATABASE, null, ORole.PERMISSION_READ);
-        writerRole.addRule(
-            ORule.ResourceGeneric.SCHEMA,
-            null,
-            ORole.PERMISSION_READ + ORole.PERMISSION_CREATE + ORole.PERMISSION_UPDATE);
-        writerRole.addRule(
-            ORule.ResourceGeneric.CLUSTER,
-            OMetadataDefault.CLUSTER_INTERNAL_NAME,
-            ORole.PERMISSION_READ);
-        writerRole.addRule(ORule.ResourceGeneric.CLASS, null, ORole.PERMISSION_ALL);
-        writerRole.addRule(ORule.ResourceGeneric.CLASS, "OUser", ORole.PERMISSION_READ);
-        writerRole.addRule(ORule.ResourceGeneric.CLUSTER, null, ORole.PERMISSION_ALL);
-        writerRole.addRule(ORule.ResourceGeneric.COMMAND, null, ORole.PERMISSION_ALL);
-        writerRole.addRule(ORule.ResourceGeneric.RECORD_HOOK, null, ORole.PERMISSION_ALL);
-        writerRole.addRule(ORule.ResourceGeneric.FUNCTION, null, ORole.PERMISSION_READ);
-        writerRole.addRule(
-            ORule.ResourceGeneric.CLASS, OSequence.CLASS_NAME, ORole.PERMISSION_READ);
-        writerRole.addRule(ORule.ResourceGeneric.CLASS, "OTriggered", ORole.PERMISSION_READ);
-        writerRole.addRule(ORule.ResourceGeneric.CLASS, "OSchedule", ORole.PERMISSION_READ);
-        writerRole.addRule(
-            ORule.ResourceGeneric.CLASS,
-            OSecurityResource.class.getSimpleName(),
-            ORole.PERMISSION_READ);
-        writerRole.addRule(ORule.ResourceGeneric.SYSTEM_CLUSTERS, null, ORole.PERMISSION_NONE);
-
-        writerRole.save();
-
-        setSecurityPolicyWithBitmask(
-            session,
-            writerRole,
-            ORule.ResourceGeneric.DATABASE.getLegacyName(),
-            ORole.PERMISSION_READ);
-        setSecurityPolicyWithBitmask(
-            session,
-            writerRole,
-            ORule.ResourceGeneric.SCHEMA.getLegacyName(),
-            ORole.PERMISSION_READ + ORole.PERMISSION_CREATE + ORole.PERMISSION_UPDATE);
-        setSecurityPolicyWithBitmask(
-            session,
-            writerRole,
-            ORule.ResourceGeneric.CLUSTER.getLegacyName()
-                + "."
-                + OMetadataDefault.CLUSTER_INTERNAL_NAME,
-            ORole.PERMISSION_READ);
-        setSecurityPolicyWithBitmask(
-            session,
-            writerRole,
-            ORule.ResourceGeneric.CLUSTER.getLegacyName() + ".orole",
-            ORole.PERMISSION_READ);
-        setSecurityPolicyWithBitmask(
-            session,
-            writerRole,
-            ORule.ResourceGeneric.CLUSTER.getLegacyName() + ".ouser",
-            ORole.PERMISSION_READ);
-        setSecurityPolicyWithBitmask(
-            session,
-            writerRole,
-            ORule.ResourceGeneric.CLASS.getLegacyName() + ".*",
-            ORole.PERMISSION_ALL);
-        setSecurityPolicyWithBitmask(
-            session,
-            writerRole,
-            ORule.ResourceGeneric.CLASS.getLegacyName() + ".OUser",
-            ORole.PERMISSION_READ);
-        setSecurityPolicyWithBitmask(
-            session,
-            writerRole,
-            ORule.ResourceGeneric.CLUSTER.getLegacyName() + ".*",
-            ORole.PERMISSION_ALL);
-        setSecurityPolicyWithBitmask(
-            session,
-            writerRole,
-            ORule.ResourceGeneric.COMMAND.getLegacyName(),
-            ORole.PERMISSION_ALL);
-        setSecurityPolicyWithBitmask(
-            session,
-            writerRole,
-            ORule.ResourceGeneric.RECORD_HOOK.getLegacyName(),
-            ORole.PERMISSION_ALL);
-        setSecurityPolicyWithBitmask(
-            session,
-            writerRole,
-            ORule.ResourceGeneric.FUNCTION.getLegacyName() + ".*",
-            ORole.PERMISSION_READ);
-        setSecurityPolicyWithBitmask(
-            session,
-            writerRole,
-            ORule.ResourceGeneric.CLASS.getLegacyName() + "." + OSequence.CLASS_NAME,
-            ORole.PERMISSION_READ);
-        setSecurityPolicyWithBitmask(
-            session,
-            writerRole,
-            ORule.ResourceGeneric.SYSTEM_CLUSTERS.getLegacyName() + ".OTriggered",
-            ORole.PERMISSION_READ);
-        setSecurityPolicyWithBitmask(
-            session,
-            writerRole,
-            ORule.ResourceGeneric.SYSTEM_CLUSTERS.getLegacyName() + ".OSchedule",
-            ORole.PERMISSION_READ);
-        setSecurityPolicyWithBitmask(
-            session,
-            writerRole,
-            ORule.ResourceGeneric.SYSTEM_CLUSTERS.getLegacyName(),
-            ORole.PERMISSION_NONE);
+        sedDefaultWriterPermissions(session, writerRole);
       }
 
       incrementVersion(session);
