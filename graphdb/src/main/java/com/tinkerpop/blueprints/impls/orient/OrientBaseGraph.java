@@ -843,7 +843,9 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph
   public Iterable<Vertex> getVertices(final String iKey, Object iValue) {
     makeActive();
 
-    if (iKey.equals("@class")) return getVerticesOfClass(iValue.toString());
+    if (iKey.equals("@class")) {
+      return getVerticesOfClass(iValue.toString());
+    }
 
     int pos = iKey.indexOf('.');
     final String className = pos > -1 ? iKey.substring(0, pos) : OrientVertexType.CLASS_NAME;
@@ -854,31 +856,10 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph
     if (clazz == null) {
       throw new IllegalArgumentException("OClass not found in the schema: " + className);
     }
-    OIndex idx = null;
-    final Collection<? extends OIndex> indexes = clazz.getIndexes();
-    for (OIndex index : indexes) {
-      OIndexDefinition indexDef = index.getDefinition();
-      if ("lucene".equalsIgnoreCase(index.getAlgorithm())) {
-        continue;
-      }
-      List<String> indexedFields = indexDef.getFields();
-      if (indexedFields != null && indexedFields.size() > 0 && indexedFields.get(0).equals(key)) {
-        idx = index;
-        break;
-      }
-    }
 
-    if (idx != null) {
-      iValue = convertKey(idx, iValue);
-      try (Stream<ORID> indexValue = idx.getInternal().getRids(iValue)) {
-        return new OrientElementIterable<Vertex>(this, indexValue.collect(Collectors.toList()));
-      }
-    } else {
-      // NO INDEX: EXECUTE A QUERY
-      OrientGraphQuery query = (OrientGraphQuery) query();
-      query.labels(clazz.getName());
-      return query.has(key, iValue).vertices();
-    }
+    OrientGraphQuery query = (OrientGraphQuery) query();
+    query.labels(clazz.getName());
+    return query.has(key, iValue).vertices();
   }
 
   /**
@@ -927,35 +908,7 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph
       throw new IllegalArgumentException("key names and values must be arrays of the same size");
     }
     makeActive();
-    final OClass clazz = getDatabase().getMetadata().getImmutableSchemaSnapshot().getClass(label);
-    if (clazz != null) {
-      Set<OIndex> indexes = clazz.getInvolvedIndexes(Arrays.asList(iKey));
-      Iterator<OIndex> iterator = indexes.iterator();
-      while (iterator.hasNext()) {
-        final OIndex idx = iterator.next();
-        if (idx != null) {
-          if ("lucene".equalsIgnoreCase(idx.getAlgorithm())) {
-            continue;
-          }
-          Object[] sortedParams = new Object[iValue.length];
-          List<String> indexFields = idx.getDefinition().getFields();
-          for (int i = 0; i < iKey.length; i++) {
-            sortedParams[indexFields.indexOf(iKey[i])] = iValue[i];
-          }
-          List<Object> keys = Arrays.asList(convertKeys(idx, sortedParams));
-          Object key;
-          if (indexFields.size() == 1) {
-            key = keys.get(0);
-          } else {
-            key = new OCompositeKey(keys);
-          }
-          try (final Stream<ORID> stream = idx.getInternal().getRids(key)) {
-            return new OrientClassVertexIterable(this, stream.collect(Collectors.toList()), label);
-          }
-        }
-      }
-    }
-    // NO INDEX: EXECUTE A QUERY
+
     OrientGraphQuery query = (OrientGraphQuery) query();
     query.labels(label);
     for (int i = 0; i < iKey.length; i++) {
