@@ -173,7 +173,9 @@ public class OAtomicOperationsManager implements OAtomicOperationsMangerMXBean {
       consumer.accept(atomicOperation);
     } catch (Exception e) {
       throw OException.wrapException(
-          new OStorageException("Exception during execution of component operation inside of storage " + storage.getName()), e);
+          new OStorageException(
+              "Exception during execution of component operation inside of component " + lockName +
+                  " in storage " + storage.getName()), e);
     } finally {
       endComponentOperation();
     }
