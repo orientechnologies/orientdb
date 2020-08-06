@@ -48,6 +48,7 @@ import java.util.Objects;
  * @since 12/3/13
  */
 public class OAtomicOperationsManager {
+
   private static volatile ThreadLocal<OAtomicOperation> currentOperation = new ThreadLocal<>();
 
   static {
@@ -214,7 +215,8 @@ public class OAtomicOperationsManager {
     } catch (Exception e) {
       throw OException.wrapException(
           new OStorageException(
-              "Exception during execution of component operation inside of storage "
+              "Exception during execution of component operation inside component " + lockName +
+                  " in storage "
                   + storage.getName()),
           e);
     } finally {
@@ -428,7 +430,7 @@ public class OAtomicOperationsManager {
    * Acquires exclusive lock with the given lock name in the given atomic operation.
    *
    * @param operation the atomic operation to acquire the lock in.
-   * @param lockName the lock name to acquire.
+   * @param lockName  the lock name to acquire.
    */
   public void acquireExclusiveLockTillOperationComplete(
       OAtomicOperation operation, String lockName) {
