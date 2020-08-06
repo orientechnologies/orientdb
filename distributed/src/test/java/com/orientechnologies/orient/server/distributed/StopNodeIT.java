@@ -24,6 +24,8 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.atomic.AtomicInteger;
+
+import com.orientechnologies.orient.setup.ServerRun;
 import org.junit.Assert;
 import org.junit.Ignore;
 import org.junit.Test;
@@ -69,7 +71,7 @@ public class StopNodeIT extends AbstractServerClusterTxTest {
     if (serverStarted == 0) {
       // INSTALL ON FIRST SERVER ONLY THE SERVER MONITOR TO CHECK IF HAS BEEN RESTARTED
       server
-          .server
+          .getServerInstance()
           .getDistributedManager()
           .registerLifecycleListener(
               new ODistributedLifecycleListener() {
@@ -134,7 +136,7 @@ public class StopNodeIT extends AbstractServerClusterTxTest {
                                         .get(0)
                                         .getServerInstance()
                                         .getDistributedManager())
-                                .stopNode(server.server.getDistributedManager().getLocalNodeName());
+                                .stopNode(server.getServerInstance().getDistributedManager().getLocalNodeName());
 
                             return null;
                           }

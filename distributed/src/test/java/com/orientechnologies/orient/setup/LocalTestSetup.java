@@ -1,37 +1,41 @@
-package com.orientechnologies.orient.test;
+package com.orientechnologies.orient.setup;
 
 import com.orientechnologies.orient.core.db.OrientDB;
 import com.orientechnologies.orient.core.db.OrientDBConfig;
-import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.network.protocol.binary.ONetworkProtocolBinary;
 import com.orientechnologies.orient.server.network.protocol.http.ONetworkProtocolHttpDb;
-import java.io.IOException;
+
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
-public class LocalSetup implements TestSetup {
-  private final Map<String, OServer> servers = new HashMap<>();
+public class LocalTestSetup implements TestSetup {
+  private final Map<String, ServerRun> servers = new HashMap<>();
   private final Map<String, String> httpRemotes = new HashMap<>();
   private final Map<String, String> binaryRemotes = new HashMap<>();
-  private final TestConfig config;
+  private       String      rootDirectory = "target/servers/";
+  private final SetupConfig config;
 
-  public LocalSetup(TestConfig config) {
+  public LocalTestSetup(SetupConfig config) {
     this.config = config;
+    for (String serverId : config.getServerIds()) {
+      servers.put(serverId, new ServerRun(rootDirectory, serverId));
+    }
   }
 
   @Override
   public void startServer(String serverId) throws TestSetupException {
-    OServer server;
+    ServerRun server = servers.get(serverId);
+    if (server == null) {
+      throw new TestSetupException("server '" + serverId + "' not found.");
+    }
     try {
-      server = OServer.startFromClasspathConfig(config.getLocalConfigFile(serverId));
-    } catch (ClassNotFoundException
-        | InstantiationException
-        | IOException
-        | IllegalAccessException e) {
+      server.startServer(config.getLocalConfigFile(serverId));
+    } catch (Exception e) {
       throw new TestSetupException(e);
     }
-    servers.put(serverId, server);
     server
+        .getServerInstance()
         .getNetworkListeners()
         .forEach(
             listener -> {
@@ -45,7 +49,7 @@ public class LocalSetup implements TestSetup {
   }
 
   @Override
-  public void start() {
+  public void startServers() {
     for (String serverId : config.getServerIds()) {
       startServer(serverId);
     }
@@ -53,15 +57,15 @@ public class LocalSetup implements TestSetup {
 
   @Override
   public void shutdownServer(String serverId) {
-    OServer server = servers.get(serverId);
+    ServerRun server = servers.get(serverId);
     if (server != null) {
-      server.shutdown();
+      server.getServerInstance().shutdown();
     }
   }
 
   @Override
   public void teardown() {
-    for (OServer server : servers.values()) server.shutdown();
+    for (ServerRun server : servers.values()) server.getServerInstance().shutdown();
   }
 
   @Override
@@ -85,5 +89,13 @@ public class LocalSetup implements TestSetup {
       String serverId, String serverUser, String serverPassword, OrientDBConfig config) {
     return new OrientDB(
         "remote:" + getAddress(serverId, PortType.BINARY), serverUser, serverPassword, config);
+  }
+
+  public Collection<ServerRun> getServers() {
+    return servers.values();
+  }
+
+  public ServerRun getServer(String serverId) {
+    return servers.get(serverId);
   }
 }

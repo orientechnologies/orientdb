@@ -23,7 +23,7 @@ import static org.junit.Assert.fail;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.server.distributed.OModifiableDistributedConfiguration;
-import com.orientechnologies.orient.server.distributed.ServerRun;
+import com.orientechnologies.orient.setup.ServerRun;
 import com.orientechnologies.orient.server.hazelcast.OHazelcastPlugin;
 import java.io.File;
 import java.io.FileOutputStream;

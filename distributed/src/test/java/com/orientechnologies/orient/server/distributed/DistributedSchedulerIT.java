@@ -29,6 +29,8 @@ import com.orientechnologies.orient.core.schedule.OScheduledEventBuilder;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import java.util.ArrayList;
 import java.util.List;
+
+import com.orientechnologies.orient.setup.ServerRun;
 import org.junit.Assert;
 import org.junit.Ignore;
 import org.junit.Test;

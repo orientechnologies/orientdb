@@ -1,4 +1,4 @@
-package com.orientechnologies.orient.test;
+package com.orientechnologies.orient.setup;
 
 import com.orientechnologies.orient.core.db.OrientDB;
 import com.orientechnologies.orient.core.db.OrientDBConfig;
@@ -12,7 +12,7 @@ public interface TestSetup {
 
   void startServer(String serverId) throws TestSetupException;
 
-  void start() throws TestSetupException;
+  void startServers() throws TestSetupException;
 
   void shutdownServer(String serverId) throws TestSetupException;
 

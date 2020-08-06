@@ -37,6 +37,8 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+
+import com.orientechnologies.orient.setup.ServerRun;
 import org.junit.Assert;
 
 /** Insert records concurrently against the cluster */

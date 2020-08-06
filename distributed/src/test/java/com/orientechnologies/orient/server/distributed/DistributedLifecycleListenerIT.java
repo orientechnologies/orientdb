@@ -31,6 +31,8 @@ import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
+
+import com.orientechnologies.orient.setup.ServerRun;
 import org.junit.Assert;
 import org.junit.Test;
 

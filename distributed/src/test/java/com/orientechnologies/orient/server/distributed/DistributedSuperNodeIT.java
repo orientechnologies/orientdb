@@ -27,6 +27,7 @@ import com.orientechnologies.orient.core.record.ODirection;
 import com.orientechnologies.orient.core.record.OVertex;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.server.OServer;
+import com.orientechnologies.orient.setup.ServerRun;
 import org.junit.Assert;
 import org.junit.Test;
 

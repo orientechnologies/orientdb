@@ -16,6 +16,7 @@
 package com.orientechnologies.orient.server.distributed;
 
 import com.orientechnologies.orient.server.hazelcast.OHazelcastPlugin;
+import com.orientechnologies.orient.setup.ServerRun;
 import org.junit.Ignore;
 import org.junit.Test;
 
@@ -49,10 +50,10 @@ public class HAIT extends AbstractHARemoveNode {
     serverInstance
         .get(SERVERS - 1)
         .startServer(getDistributedServerConfiguration(serverInstance.get(SERVERS - 1)));
-    if (serverInstance.get(SERVERS - 1).server.getPluginByClass(OHazelcastPlugin.class) != null)
+    if (serverInstance.get(SERVERS - 1).getServerInstance().getPluginByClass(OHazelcastPlugin.class) != null)
       serverInstance
           .get(SERVERS - 1)
-          .server
+          .getServerInstance()
           .getPluginByClass(OHazelcastPlugin.class)
           .waitUntilNodeOnline();
 
