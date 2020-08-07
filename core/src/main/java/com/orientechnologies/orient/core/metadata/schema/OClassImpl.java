@@ -33,14 +33,17 @@ import com.orientechnologies.orient.core.db.record.ORecordElement;
 import com.orientechnologies.orient.core.exception.OSchemaException;
 import com.orientechnologies.orient.core.exception.OSecurityAccessException;
 import com.orientechnologies.orient.core.exception.OSecurityException;
+import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.index.*;
 import com.orientechnologies.orient.core.metadata.schema.clusterselection.OClusterSelectionStrategy;
 import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.metadata.security.ORule;
 import com.orientechnologies.orient.core.metadata.security.OSecurityShared;
+import com.orientechnologies.orient.core.record.OElement;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sharding.auto.OAutoShardingClusterSelectionStrategy;
+import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import com.orientechnologies.orient.core.sql.query.OSQLAsynchQuery;
 import com.orientechnologies.orient.core.storage.OCluster;
@@ -59,24 +62,24 @@ import java.util.*;
  */
 @SuppressWarnings("unchecked")
 public abstract class OClassImpl extends ODocumentWrapperNoClass implements OClass {
-  private static final   long                      serialVersionUID        = 1L;
-  protected static final int                       NOT_EXISTENT_CLUSTER_ID = -1;
-  protected final        OSchemaShared             owner;
-  protected final        Map<String, OProperty>    properties              = new HashMap<String, OProperty>();
-  protected              int                       defaultClusterId        = NOT_EXISTENT_CLUSTER_ID;
-  protected              String                    name;
-  protected              String                    description;
-  protected              int[]                     clusterIds;
-  protected              List<OClassImpl>          superClasses            = new ArrayList<OClassImpl>();
-  protected              int[]                     polymorphicClusterIds;
-  protected              List<OClass>              subclasses;
-  protected              float                     overSize                = 0f;
-  protected              String                    shortName;
-  protected              boolean                   strictMode              = false;                           // @SINCE v1.0rc8
-  protected              boolean                   abstractClass           = false;                           // @SINCE v1.2.0
-  protected              Map<String, String>       customFields;
-  protected volatile     OClusterSelectionStrategy clusterSelection;                                          // @SINCE 1.7
-  protected volatile     int                       hashCode;
+  private static final long serialVersionUID = 1L;
+  protected static final int NOT_EXISTENT_CLUSTER_ID = -1;
+  protected final OSchemaShared owner;
+  protected final Map<String, OProperty> properties = new HashMap<String, OProperty>();
+  protected int defaultClusterId = NOT_EXISTENT_CLUSTER_ID;
+  protected String name;
+  protected String description;
+  protected int[] clusterIds;
+  protected List<OClassImpl> superClasses = new ArrayList<OClassImpl>();
+  protected int[] polymorphicClusterIds;
+  protected List<OClass> subclasses;
+  protected float overSize = 0f;
+  protected String shortName;
+  protected boolean strictMode = false;                           // @SINCE v1.0rc8
+  protected boolean abstractClass = false;                           // @SINCE v1.2.0
+  protected Map<String, String> customFields;
+  protected volatile OClusterSelectionStrategy clusterSelection;                                          // @SINCE 1.7
+  protected volatile int hashCode;
 
   private static Set<String> reserved = new HashSet<String>();
 
@@ -845,8 +848,8 @@ public abstract class OClassImpl extends ODocumentWrapperNoClass implements OCla
 
     if (isSubClassOf(OSecurityShared.RESTRICTED_CLASSNAME)) {
       throw new OSecurityException(
-          "Class '" + getName() + "' cannot be truncated because has record level security enabled (extends '"
-              + OSecurityShared.RESTRICTED_CLASSNAME + "')");
+              "Class '" + getName() + "' cannot be truncated because has record level security enabled (extends '"
+                      + OSecurityShared.RESTRICTED_CLASSNAME + "')");
     }
 
     final OStorage storage = db.getStorage();
@@ -876,9 +879,7 @@ public abstract class OClassImpl extends ODocumentWrapperNoClass implements OCla
    * Check if the current instance extends specified schema class.
    *
    * @param iClassName of class that should be checked
-   *
    * @return Returns true if the current instance extends the passed schema class (iClass)
-   *
    * @see #isSuperClassOf(OClass)
    */
   public boolean isSubClassOf(final String iClassName) {
@@ -903,9 +904,7 @@ public abstract class OClassImpl extends ODocumentWrapperNoClass implements OCla
    * Check if the current instance extends specified schema class.
    *
    * @param clazz to check
-   *
    * @return true if the current instance extends the passed schema class (iClass)
-   *
    * @see #isSuperClassOf(OClass)
    */
   public boolean isSubClassOf(final OClass clazz) {
@@ -929,9 +928,7 @@ public abstract class OClassImpl extends ODocumentWrapperNoClass implements OCla
    * Returns true if the passed schema class (iClass) extends the current instance.
    *
    * @param clazz to check
-   *
    * @return Returns true if the passed schema class extends the current instance
-   *
    * @see #isSubClassOf(OClass)
    */
   public boolean isSuperClassOf(final OClass clazz) {
@@ -1082,17 +1079,17 @@ public abstract class OClassImpl extends ODocumentWrapperNoClass implements OCla
   }
 
   public OIndex<?> createIndex(final String iName, final INDEX_TYPE iType, final OProgressListener iProgressListener,
-      final String... fields) {
+                               final String... fields) {
     return createIndex(iName, iType.name(), iProgressListener, null, fields);
   }
 
   public OIndex<?> createIndex(String iName, String iType, OProgressListener iProgressListener, ODocument metadata,
-      String... fields) {
+                               String... fields) {
     return createIndex(iName, iType, iProgressListener, metadata, null, fields);
   }
 
   public OIndex<?> createIndex(final String name, String type, final OProgressListener progressListener, ODocument metadata,
-      String algorithm, final String... fields) {
+                               String algorithm, final String... fields) {
     if (type == null)
       throw new IllegalArgumentException("Index type is null");
 
@@ -1110,15 +1107,15 @@ public abstract class OClassImpl extends ODocumentWrapperNoClass implements OCla
 
       if (!fieldName.equals("@rid") && !existsProperty(fieldName))
         throw new OIndexException(
-            "Index with name '" + name + "' cannot be created on class '" + localName + "' because the field '" + fieldName
-                + "' is absent in class definition");
+                "Index with name '" + name + "' cannot be created on class '" + localName + "' because the field '" + fieldName
+                        + "' is absent in class definition");
     }
 
     final OIndexDefinition indexDefinition = OIndexDefinitionFactory
-        .createIndexDefinition(this, Arrays.asList(fields), extractFieldTypes(fields), null, type, algorithm);
+            .createIndexDefinition(this, Arrays.asList(fields), extractFieldTypes(fields), null, type, algorithm);
 
     return getDatabase().getMetadata().getIndexManager()
-        .createIndex(name, type, indexDefinition, localPolymorphicClusterIds, progressListener, metadata, algorithm);
+            .createIndex(name, type, indexDefinition, localPolymorphicClusterIds, progressListener, metadata, algorithm);
   }
 
   public boolean areIndexed(final String... fields) {
@@ -1314,8 +1311,8 @@ public abstract class OClassImpl extends ODocumentWrapperNoClass implements OCla
     final boolean strictSQL = ((ODatabaseInternal) database).getStorage().getConfiguration().isStrictSql();
 
     database.query(new OSQLAsynchQuery<Object>(
-        "select from " + getEscapedName(name, strictSQL) + " where " + getEscapedName(propertyName, strictSQL) + ".type() <> \""
-            + type.name() + "\"", new OCommandResultListener() {
+            "select from " + getEscapedName(name, strictSQL) + " where " + getEscapedName(propertyName, strictSQL) + ".type() <> \""
+                    + type.name() + "\"", new OCommandResultListener() {
 
       @Override
       public boolean result(Object iRecord) {
@@ -1337,31 +1334,31 @@ public abstract class OClassImpl extends ODocumentWrapperNoClass implements OCla
   }
 
   public void firePropertyNameMigration(final ODatabaseDocument database, final String propertyName, final String newPropertyName,
-      final OType type) {
+                                        final OType type) {
     final boolean strictSQL = ((ODatabaseInternal) database).getStorage().getConfiguration().isStrictSql();
 
     database.query(new OSQLAsynchQuery<Object>(
-        "select from " + getEscapedName(name, strictSQL) + " where " + getEscapedName(propertyName, strictSQL) + " is not null ",
-        new OCommandResultListener() {
+            "select from " + getEscapedName(name, strictSQL) + " where " + getEscapedName(propertyName, strictSQL) + " is not null ",
+            new OCommandResultListener() {
 
-          @Override
-          public boolean result(Object iRecord) {
-            final ODocument record = ((OIdentifiable) iRecord).getRecord();
-            record.setFieldType(propertyName, type);
-            record.field(newPropertyName, record.field(propertyName), type);
-            database.save(record);
-            return true;
-          }
+              @Override
+              public boolean result(Object iRecord) {
+                final ODocument record = ((OIdentifiable) iRecord).getRecord();
+                record.setFieldType(propertyName, type);
+                record.field(newPropertyName, record.field(propertyName), type);
+                database.save(record);
+                return true;
+              }
 
-          @Override
-          public void end() {
-          }
+              @Override
+              public void end() {
+              }
 
-          @Override
-          public Object getResult() {
-            return null;
-          }
-        }));
+              @Override
+              public Object getResult() {
+                return null;
+              }
+            }));
 
   }
 
@@ -1393,6 +1390,72 @@ public abstract class OClassImpl extends ODocumentWrapperNoClass implements OCla
         throw new OSchemaException("The database contains some schema-less data in the property '" + name + "." + propertyName
                 + "' that is not compatible with the type " + type + ". Fix those records and change the schema again");
     }
+
+    if (linkedClass != null) {
+      checkAllLikedObjects(database, propertyName, type, linkedClass);
+    }
+
+  }
+
+  protected void checkAllLikedObjects(ODatabaseInternal<ORecord> database, String propertyName, OType type, OClass linkedClass) {
+    final StringBuilder builder = new StringBuilder(256);
+    builder.append("select from ");
+    builder.append(getEscapedName(name, true));
+    builder.append(" where ");
+    builder.append(getEscapedName(propertyName, true)).append(" is not null ");
+    if (type.isMultiValue())
+      builder.append(" and ").append(getEscapedName(propertyName, true)).append(".size() > 0");
+
+
+    try (final OResultSet res = database.command(builder.toString())) {
+      while (res.hasNext()) {
+        OResult item = res.next();
+        switch (type) {
+        case EMBEDDEDLIST:
+        case LINKLIST:
+        case EMBEDDEDSET:
+        case LINKSET:
+          try {
+            Collection emb = item.getElement().get().getProperty(propertyName);
+            emb.stream().filter(x -> !matchesType(x, linkedClass)).findFirst().ifPresent(x -> {
+              throw new OSchemaException("The database contains some schema-less data in the property '" + name + "." + propertyName
+                      + "' that is not compatible with the type " + type + " " + linkedClass.getName() + ". Fix those records and change the schema again. " + x);
+            });
+          } catch (OSchemaException e1) {
+            throw e1;
+          } catch (Exception e) {
+          }
+          break;
+        case EMBEDDED:
+        case LINK:
+          Object elem = item.getProperty(propertyName);
+          if (!matchesType(elem, linkedClass)) {
+            throw new OSchemaException("The database contains some schema-less data in the property '" + name + "." + propertyName
+                    + "' that is not compatible with the type " + type + " " + linkedClass.getName() + ". Fix those records and change the schema again!");
+          }
+          break;
+        }
+      }
+    }
+  }
+
+  protected boolean matchesType(Object x, OClass linkedClass) {
+    if (x instanceof OResult) {
+      x = ((OResult) x).toElement();
+    }
+    if (x instanceof ORID) {
+      x = ((ORID) x).getRecord();
+    }
+    if (x == null) {
+      return true;
+    }
+    if (!(x instanceof OElement)) {
+      return false;
+    }
+    if (x instanceof ODocument && !linkedClass.getName().equalsIgnoreCase(((ODocument) x).getClassName())) {
+      return false;
+    }
+    return true;
   }
 
   protected String getEscapedName(final String iName, final boolean iStrictSQL) {
@@ -1448,7 +1511,7 @@ public abstract class OClassImpl extends ODocumentWrapperNoClass implements OCla
   }
 
   protected abstract OProperty addProperty(final String propertyName, final OType type, final OType linkedType,
-      final OClass linkedClass, final boolean unsafe);
+                                           final OClass linkedClass, final boolean unsafe);
 
   protected void validatePropertyName(final String propertyName) {
   }
@@ -1507,8 +1570,8 @@ public abstract class OClassImpl extends ODocumentWrapperNoClass implements OCla
       OProperty thisProperty = getProperty(property.getName());
       if (thisProperty != null && !thisProperty.getType().equals(property.getType())) {
         throw new OSchemaException(
-            "Cannot add base class '" + baseClass.getName() + "', because of property conflict: '" + thisProperty + "' vs '"
-                + property + "'");
+                "Cannot add base class '" + baseClass.getName() + "', because of property conflict: '" + thisProperty + "' vs '"
+                        + property + "'");
       }
     }
   }
