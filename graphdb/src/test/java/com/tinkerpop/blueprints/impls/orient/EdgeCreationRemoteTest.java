@@ -19,96 +19,21 @@ import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.Test;
 
-import javax.management.InstanceAlreadyExistsException;
-import javax.management.MBeanRegistrationException;
-import javax.management.MalformedObjectNameException;
-import javax.management.NotCompliantMBeanException;
 import java.io.IOException;
-import java.lang.reflect.InvocationTargetException;
-import java.util.Iterator;
 import java.util.UUID;
-
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
 
 public class EdgeCreationRemoteTest {
   private OServer server;
-
-  /*@Before
-  public void before()
-      throws ClassNotFoundException, MalformedObjectNameException, InstanceAlreadyExistsException,
-          NotCompliantMBeanException, MBeanRegistrationException, InvocationTargetException,
-          NoSuchMethodException, InstantiationException, IOException, IllegalAccessException {
-    server = new OServer(false);
-    server.startup(
-        OrientGraphRemoteTest.class.getResourceAsStream("/embedded-server-config-single-run.xml"));
-    server.activate();
-    OServerAdmin admin = new OServerAdmin("remote:localhost:3064");
-    admin.connect("root", "root");
-    admin.createDatabase(EdgeCreationRemoteTest.class.getSimpleName(), "graph", "memory");
-    admin.close();
-  }
-
-  @After
-  public void after() {
-    server.shutdown();
-  }
-
-  @AfterClass
-  public static void afterClass() {
-    Orient.instance().shutdown();
-    Orient.instance().startup();
-  }
-
-  @Test
-  public void test() {
-    OrientGraph graph =
-        new OrientGraph(
-            "remote:localhost:3064/" + EdgeCreationRemoteTest.class.getSimpleName());
-    try {
-      graph.createVertexType("VertA");
-      graph.createVertexType("VertB");
-      graph.createEdgeType("AtoB");
-      OrientVertex root = graph.addVertex("class:VertA");
-      graph.commit();
-
-      for (int i = 0; i < 2; i++) {
-        OrientVertex v = graph.addVertex("class:VertB");
-        root.addEdge("AtoB", v);
-      }
-      graph.commit();
-
-      String query =
-          "SELECT $res as val LET $res = (SELECT @rid AS refId, out('AtoB') AS vertices FROM VertA) FETCHPLAN val:2";
-
-      Iterable<OrientVertex> results = graph.command(new OCommandSQL(query)).execute();
-      final Iterator<OrientVertex> iterator = results.iterator();
-      assertTrue(iterator.hasNext());
-      OrientVertex result = iterator.next();
-
-      Iterable<OrientVertex> vertices = result.getProperty("val");
-      for (OrientVertex vertex : vertices) {
-        assertEquals(
-            ((OIdentifiable) vertex.getProperty("refId")).getIdentity(), root.getIdentity());
-      }
-    } finally {
-      graph.shutdown();
-    }
-  }*/
-
   private final String dbName = "MAPP";
   private ORID app1Id;
 
   @Before
-  public void setup() throws IOException, InstantiationException, IllegalAccessException, ClassNotFoundException {
+  public void setup()
+      throws IOException, InstantiationException, IllegalAccessException, ClassNotFoundException {
     server = new OServer(false);
     server.startup(
         OrientGraphRemoteTest.class.getResourceAsStream("/embedded-server-config-single-run.xml"));
     server.activate();
-    //OServerAdmin admin = new OServerAdmin("remote:localhost:3064");
-    //admin.connect("root", "root");
-    //admin.createDatabase(EdgeCreationRemoteTest.class.getSimpleName(), "graph", "memory");
-    //admin.close();
     connect("remote:localhost:3064", dbName, "root", "root", true);
     addPrerequisites();
   }

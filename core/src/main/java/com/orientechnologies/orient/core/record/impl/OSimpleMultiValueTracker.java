@@ -95,13 +95,11 @@ public final class OSimpleMultiValueTracker<K, V> {
     if (timeLine == null) {
       timeLine = new OMultiValueChangeTimeLine<Object, Object>();
     }
-
     timeLine.addCollectionChangeEvent((OMultiValueChangeEvent<Object, Object>) event);
 
     if (transactionTimeLine == null) {
       transactionTimeLine = new OMultiValueChangeTimeLine<K, V>();
     }
-
     transactionTimeLine.addCollectionChangeEvent(event);
   }
 

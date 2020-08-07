@@ -654,7 +654,7 @@ public class ODocumentSerializerDelta {
     int uuidPos = bytes.alloc(OUUIDSerializer.UUID_SIZE);
     OUUIDSerializer.INSTANCE.serialize(uuid, bytes.bytes, uuidPos);
 
-    OMultiValueChangeTimeLine<OIdentifiable, OIdentifiable> timeline =
+    final OMultiValueChangeTimeLine<OIdentifiable, OIdentifiable> timeline =
         value.getTransactionTimeLine();
     assert timeline != null : "Cx ollection timeline required for link types serialization";
     OVarIntSerializer.write(bytes, timeline.getMultiValueChangeEvents().size());
