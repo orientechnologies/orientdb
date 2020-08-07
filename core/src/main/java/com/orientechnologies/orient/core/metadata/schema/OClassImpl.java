@@ -1365,14 +1365,14 @@ public abstract class OClassImpl extends ODocumentWrapperNoClass implements OCla
 
   }
 
-  public void checkPersistentPropertyType(final ODatabaseInternal<ORecord> database, final String propertyName, final OType type) {
+  public void checkPersistentPropertyType(final ODatabaseInternal<ORecord> database, final String propertyName, final OType type, OClass linkedClass) {
     if (OType.ANY.equals(type)) {
       return;
     }
     final boolean strictSQL = database.getStorage().getConfiguration().isStrictSql();
 
     final StringBuilder builder = new StringBuilder(256);
-    builder.append("select count(*) as count from ");
+    builder.append("select from ");
     builder.append(getEscapedName(name, strictSQL));
     builder.append(" where ");
     builder.append(getEscapedName(propertyName, strictSQL));
@@ -1389,9 +1389,9 @@ public abstract class OClassImpl extends ODocumentWrapperNoClass implements OCla
       builder.append(" and ").append(getEscapedName(propertyName, strictSQL)).append(".size() <> 0 limit 1");
 
     try (final OResultSet res = database.command(builder.toString())) {
-      if (((Long) res.next().getProperty("count")) > 0)
+      if (res.hasNext())
         throw new OSchemaException("The database contains some schema-less data in the property '" + name + "." + propertyName
-            + "' that is not compatible with the type " + type + ". Fix those records and change the schema again");
+                + "' that is not compatible with the type " + type + ". Fix those records and change the schema again");
     }
   }
 
