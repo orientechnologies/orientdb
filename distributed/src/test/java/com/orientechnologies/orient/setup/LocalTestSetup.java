@@ -4,7 +4,6 @@ import com.orientechnologies.orient.core.db.OrientDB;
 import com.orientechnologies.orient.core.db.OrientDBConfig;
 import com.orientechnologies.orient.server.network.protocol.binary.ONetworkProtocolBinary;
 import com.orientechnologies.orient.server.network.protocol.http.ONetworkProtocolHttpDb;
-
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
@@ -13,7 +12,7 @@ public class LocalTestSetup implements TestSetup {
   private final Map<String, ServerRun> servers = new HashMap<>();
   private final Map<String, String> httpRemotes = new HashMap<>();
   private final Map<String, String> binaryRemotes = new HashMap<>();
-  private       String      rootDirectory = "target/servers/";
+  private String rootDirectory = "target/servers/";
   private final SetupConfig config;
 
   public LocalTestSetup(SetupConfig config) {

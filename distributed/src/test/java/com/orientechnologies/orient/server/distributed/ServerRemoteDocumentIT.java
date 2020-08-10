@@ -24,10 +24,9 @@ import com.orientechnologies.orient.core.db.OrientDB;
 import com.orientechnologies.orient.core.db.OrientDBConfig;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.setup.ServerRun;
 import java.util.ArrayList;
 import java.util.List;
-
-import com.orientechnologies.orient.setup.ServerRun;
 import org.junit.Test;
 
 /** Start 3 servers and wait for external commands. */

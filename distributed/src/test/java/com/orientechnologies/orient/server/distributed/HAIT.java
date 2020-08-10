@@ -50,7 +50,8 @@ public class HAIT extends AbstractHARemoveNode {
     serverInstance
         .get(SERVERS - 1)
         .startServer(getDistributedServerConfiguration(serverInstance.get(SERVERS - 1)));
-    if (serverInstance.get(SERVERS - 1).getServerInstance().getPluginByClass(OHazelcastPlugin.class) != null)
+    if (serverInstance.get(SERVERS - 1).getServerInstance().getPluginByClass(OHazelcastPlugin.class)
+        != null)
       serverInstance
           .get(SERVERS - 1)
           .getServerInstance()

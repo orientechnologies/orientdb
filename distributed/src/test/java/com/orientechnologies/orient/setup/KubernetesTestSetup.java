@@ -29,10 +29,10 @@ public class KubernetesTestSetup implements TestSetup {
       String.format("app=%s", TestSetupUtil.getOrientDBKubernetesLabel());
   private static final int readyReplicaTimeoutSeconds = 90;
 
-  private String      nodeAddress;
+  private String nodeAddress;
   private SetupConfig setupConfig;
   // The namespace to setup the cluster and run tests. It must already exist.
-  private String      namespace = TestSetupUtil.getKubernetesNamespace();
+  private String namespace = TestSetupUtil.getKubernetesNamespace();
   private Set<String> PVCsToDelete = new HashSet<>();
 
   public KubernetesTestSetup(String kubeConfigFile, SetupConfig config) throws TestSetupException {

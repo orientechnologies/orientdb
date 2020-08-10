@@ -19,13 +19,12 @@ import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.util.OCallable;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.server.hazelcast.OHazelcastPlugin;
+import com.orientechnologies.orient.setup.ServerRun;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.atomic.AtomicInteger;
-
-import com.orientechnologies.orient.setup.ServerRun;
 import org.junit.Assert;
 import org.junit.Ignore;
 import org.junit.Test;
@@ -136,7 +135,11 @@ public class StopNodeIT extends AbstractServerClusterTxTest {
                                         .get(0)
                                         .getServerInstance()
                                         .getDistributedManager())
-                                .stopNode(server.getServerInstance().getDistributedManager().getLocalNodeName());
+                                .stopNode(
+                                    server
+                                        .getServerInstance()
+                                        .getDistributedManager()
+                                        .getLocalNodeName());
 
                             return null;
                           }

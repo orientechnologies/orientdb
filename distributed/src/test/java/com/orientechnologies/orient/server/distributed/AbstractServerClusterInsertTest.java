@@ -32,6 +32,7 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.orientechnologies.orient.core.storage.ORecordDuplicatedException;
 import com.orientechnologies.orient.server.distributed.impl.metadata.OClassDistributed;
+import com.orientechnologies.orient.setup.ServerRun;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
@@ -47,8 +48,6 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-
-import com.orientechnologies.orient.setup.ServerRun;
 import org.junit.Assert;
 
 /** Insert records concurrently against the cluster */
@@ -60,9 +59,9 @@ public abstract class AbstractServerClusterInsertTest extends AbstractDistribute
   protected long expected;
   protected OIndex idx;
   protected int maxRetries = 5;
-  protected boolean         useTransactions       = false;
+  protected boolean useTransactions = false;
   protected List<ServerRun> executeTestsOnServers = null;
-  protected String          className             = "Person";
+  protected String className = "Person";
   protected String indexName = "Person.name";
 
   protected class BaseWriter implements Callable<Void> {
