@@ -424,7 +424,7 @@ public class OClassEmbedded extends OClassImpl {
       final boolean unsafe) {
     if (name == null || name.length() == 0) throw new OSchemaException("Found property name null");
 
-    if (!unsafe) checkPersistentPropertyType(getDatabase(), name, type);
+    if (!unsafe) checkPersistentPropertyType(getDatabase(), name, type, linkedClass);
 
     final OPropertyEmbedded prop;
 

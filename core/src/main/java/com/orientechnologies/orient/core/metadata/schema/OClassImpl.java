@@ -33,6 +33,7 @@ import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.exception.OSchemaException;
 import com.orientechnologies.orient.core.exception.OSecurityAccessException;
 import com.orientechnologies.orient.core.exception.OSecurityException;
+import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.index.OIndexDefinition;
 import com.orientechnologies.orient.core.index.OIndexDefinitionFactory;
@@ -43,9 +44,11 @@ import com.orientechnologies.orient.core.metadata.schema.clusterselection.OClust
 import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.metadata.security.ORule;
 import com.orientechnologies.orient.core.metadata.security.OSecurityShared;
+import com.orientechnologies.orient.core.record.OElement;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sharding.auto.OAutoShardingClusterSelectionStrategy;
+import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import com.orientechnologies.orient.core.sql.query.OSQLAsynchQuery;
 import com.orientechnologies.orient.core.storage.OCluster;
@@ -1391,14 +1394,17 @@ public abstract class OClassImpl implements OClass {
   }
 
   public void checkPersistentPropertyType(
-      final ODatabaseInternal<ORecord> database, final String propertyName, final OType type) {
+      final ODatabaseInternal<ORecord> database,
+      final String propertyName,
+      final OType type,
+      OClass linkedClass) {
     if (OType.ANY.equals(type)) {
       return;
     }
     final boolean strictSQL = database.getStorage().getConfiguration().isStrictSql();
 
     final StringBuilder builder = new StringBuilder(256);
-    builder.append("select count(*) as count from ");
+    builder.append("select from ");
     builder.append(getEscapedName(name, strictSQL));
     builder.append(" where ");
     builder.append(getEscapedName(propertyName, strictSQL));
@@ -1420,7 +1426,7 @@ public abstract class OClassImpl implements OClass {
           .append(".size() <> 0 limit 1");
 
     try (final OResultSet res = database.command(builder.toString())) {
-      if (((Long) res.next().getProperty("count")) > 0)
+      if (res.hasNext())
         throw new OSchemaException(
             "The database contains some schema-less data in the property '"
                 + name
@@ -1430,6 +1436,93 @@ public abstract class OClassImpl implements OClass {
                 + type
                 + ". Fix those records and change the schema again");
     }
+
+    if (linkedClass != null) {
+      checkAllLikedObjects(database, propertyName, type, linkedClass);
+    }
+  }
+
+  protected void checkAllLikedObjects(
+      ODatabaseInternal<ORecord> database, String propertyName, OType type, OClass linkedClass) {
+    final StringBuilder builder = new StringBuilder(256);
+    builder.append("select from ");
+    builder.append(getEscapedName(name, true));
+    builder.append(" where ");
+    builder.append(getEscapedName(propertyName, true)).append(" is not null ");
+    if (type.isMultiValue())
+      builder.append(" and ").append(getEscapedName(propertyName, true)).append(".size() > 0");
+
+    try (final OResultSet res = database.command(builder.toString())) {
+      while (res.hasNext()) {
+        OResult item = res.next();
+        switch (type) {
+          case EMBEDDEDLIST:
+          case LINKLIST:
+          case EMBEDDEDSET:
+          case LINKSET:
+            try {
+              Collection emb = item.getElement().get().getProperty(propertyName);
+              emb.stream()
+                  .filter(x -> !matchesType(x, linkedClass))
+                  .findFirst()
+                  .ifPresent(
+                      x -> {
+                        throw new OSchemaException(
+                            "The database contains some schema-less data in the property '"
+                                + name
+                                + "."
+                                + propertyName
+                                + "' that is not compatible with the type "
+                                + type
+                                + " "
+                                + linkedClass.getName()
+                                + ". Fix those records and change the schema again. "
+                                + x);
+                      });
+            } catch (OSchemaException e1) {
+              throw e1;
+            } catch (Exception e) {
+            }
+            break;
+          case EMBEDDED:
+          case LINK:
+            Object elem = item.getProperty(propertyName);
+            if (!matchesType(elem, linkedClass)) {
+              throw new OSchemaException(
+                  "The database contains some schema-less data in the property '"
+                      + name
+                      + "."
+                      + propertyName
+                      + "' that is not compatible with the type "
+                      + type
+                      + " "
+                      + linkedClass.getName()
+                      + ". Fix those records and change the schema again!");
+            }
+            break;
+        }
+      }
+    }
+  }
+
+  protected boolean matchesType(Object x, OClass linkedClass) {
+    if (x instanceof OResult) {
+      x = ((OResult) x).toElement();
+    }
+    if (x instanceof ORID) {
+      x = ((ORID) x).getRecord();
+    }
+    if (x == null) {
+      return true;
+    }
+    if (!(x instanceof OElement)) {
+      return false;
+    }
+    if (x instanceof ODocument
+        && !linkedClass.getName().equalsIgnoreCase(((ODocument) x).getClassName())) {
+      return false;
+    }
+    return true;
   }
 
   protected String getEscapedName(final String iName, final boolean iStrictSQL) {
