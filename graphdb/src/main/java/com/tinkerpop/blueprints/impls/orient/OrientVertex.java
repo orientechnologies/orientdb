@@ -78,6 +78,7 @@ public class OrientVertex extends OrientElement implements OrientExtendedVertex 
     if (className != null)
       className = checkForClassInSchema(OrientBaseGraph.encodeClassName(className));
 
+    // TODO: should it rather be an OVertexDocument?
     rawElement = new ODocument(className == null ? OrientVertexType.CLASS_NAME : className);
     setPropertiesInternal(fields);
   }

@@ -589,6 +589,7 @@ public class ODocumentSerializerDelta {
         serializeFullEntry(bytes, oClass, entry.getKey(), docEntry);
       } else if (docEntry.isTxTrackedModified()) {
         serializeByte(bytes, CHANGED);
+        // TODO: Timeline must not be NULL here
         serializeDeltaEntry(bytes, oClass, entry.getKey(), docEntry);
       } else {
         continue;

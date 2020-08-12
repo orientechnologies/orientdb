@@ -1,26 +1,19 @@
 package com.tinkerpop.blueprints.impls.orient;
 
-import com.orientechnologies.orient.client.remote.OServerAdmin;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.*;
-import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.OEdge;
 import com.orientechnologies.orient.core.record.OVertex;
-import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.server.OServer;
 import com.tinkerpop.blueprints.Edge;
 import com.tinkerpop.blueprints.Vertex;
-import org.junit.After;
-import org.junit.AfterClass;
-import org.junit.Before;
-import org.junit.Test;
-
 import java.io.IOException;
 import java.util.UUID;
+import org.junit.*;
 
 public class EdgeCreationRemoteTest {
   private OServer server;
@@ -139,8 +132,56 @@ public class EdgeCreationRemoteTest {
     orient.close();
   }
 
+  @Ignore
   @Test
-  public void createEdgeFromANewVertexTpAnExistingOne() {
+  public void test() {
+    try (final ODatabaseSession session = pool.acquire()) {
+      final OrientGraph g = new OrientGraph(session.getURL());
+
+      // APP1 and aAPP2 will fail. APP3 will be successfully committed.
+      final String targetAppId = "APP1";
+      final Vertex target = g.getVertices("LID", targetAppId).iterator().next();
+      System.out.println(target.getProperty("ID").toString());
+
+      long currentTime = System.currentTimeMillis();
+      final OrientVertex v1 = g.addVertex("class:KEYDOK");
+      v1.setProperty("ID", UUID.randomUUID().toString());
+      v1.setProperty("LID", UUID.randomUUID().toString());
+      v1.setProperty("current", true);
+      v1.setProperty("insertedOn", currentTime);
+      v1.setProperty("version", 1);
+
+      final Edge e1 = v1.addEdge("HAS_AS_FAVORITE", target);
+      e1.setProperty("insertedOn", currentTime);
+      e1.setProperty("isActive", true);
+      e1.setProperty("isCurrent", true);
+      e1.setProperty("versioning", 1);
+      e1.setProperty("since", currentTime);
+
+      g.commit();
+      g.shutdown();
+    }
+  }
+
+  @Test
+  public void createEdgeFromANewVertexToAnExistingOne() {
+    final OrientGraph g = new OrientGraph("remote:localhost:3064/MAPP");
+
+    // APP1 and aAPP2 will fail. APP3 will be successfully committed.
+    final String targetAppId = "APP1";
+    final Vertex target = g.getVertices("LID", targetAppId).iterator().next();
+    System.out.println(target.getProperty("ID").toString());
+
+    final OrientVertex v1 = g.addVertex("class:KEYDOK");
+    v1.setProperty("ID", UUID.randomUUID().toString());
+    v1.addEdge("HAS_AS_FAVORITE", target);
+
+    g.commit();
+    g.shutdown();
+  }
+
+  @Test
+  public void createEdgeFromANewVertexToAnExistingOneWithFactory() {
     final OrientGraphFactory factory =
         new OrientGraphFactory("remote:localhost:3064/MAPP", "admin", "admin").setupPool(5, 10);
     final OrientGraph g = factory.getTx();
@@ -150,20 +191,10 @@ public class EdgeCreationRemoteTest {
     final Vertex target = g.getVertices("LID", targetAppId).iterator().next();
     System.out.println(target.getProperty("ID").toString());
 
-    long currentTime = System.currentTimeMillis();
     final OrientVertex v1 = g.addVertex("class:KEYDOK");
     v1.setProperty("ID", UUID.randomUUID().toString());
-    v1.setProperty("LID", UUID.randomUUID().toString());
-    v1.setProperty("current", true);
-    v1.setProperty("insertedOn", currentTime);
-    v1.setProperty("version", 1);
 
-    final Edge e1 = v1.addEdge("HAS_AS_FAVORITE", target);
-    e1.setProperty("insertedOn", currentTime);
-    e1.setProperty("isActive", true);
-    e1.setProperty("isCurrent", true);
-    e1.setProperty("versioning", 1);
-    e1.setProperty("since", currentTime);
+    v1.addEdge("HAS_AS_FAVORITE", target);
 
     g.commit();
     g.shutdown();
