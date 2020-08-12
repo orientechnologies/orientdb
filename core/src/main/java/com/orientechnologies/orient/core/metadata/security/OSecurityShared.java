@@ -71,6 +71,10 @@ import java.util.stream.Collectors;
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
  */
 public class OSecurityShared implements OSecurityInternal {
+  private static final String DEFAULT_WRITER_ROLE_NAME = "writer";
+
+  private static final String DEFAULT_READER_ROLE_NAME = "reader";
+
   private final AtomicLong version = new AtomicLong();
 
   public static final String RESTRICTED_CLASSNAME = "ORestricted";
@@ -583,19 +587,12 @@ public class OSecurityShared implements OSecurityInternal {
       OClass roleClass = createOrUpdateORoleClass(session, identityClass);
 
       createOrUpdateOUserClass(session, identityClass, roleClass);
-
-      // CREATE ROLES AND USERS
-      ORole adminRole = getRole(session, ORole.ADMIN);
-      if (adminRole == null) {
-        adminRole = createDefaultAdminRole(session);
-      }
-      final ORole readerRole = createDefaultReaderRole(session);
-      final ORole writerRole = createDefaultWriterRole(session);
-
-      // SINCE 1.2.0
       createOrUpdateORestrictedClass(session);
 
-      adminUser = createDefaultUser(session, adminRole, readerRole, writerRole);
+      // CREATE ROLES AND USERS
+      createDefaultRoles(session);
+
+      adminUser = createDefaultUsers(session);
 
     } finally {
       skipRoleHasPredicateSecurityForClassUpdate = false;
@@ -605,11 +602,13 @@ public class OSecurityShared implements OSecurityInternal {
     return adminUser;
   }
 
-  private OUser createDefaultUser(
-      final ODatabaseSession session,
-      final ORole adminRole,
-      final ORole readerRole,
-      final ORole writerRole) {
+  private void createDefaultRoles(final ODatabaseSession session) {
+    createDefaultAdminRole(session);
+    createDefaultReaderRole(session);
+    createDefaultWriterRole(session);
+  }
+
+  private OUser createDefaultUsers(final ODatabaseSession session) {
     boolean createDefUsers =
         session.getConfiguration().getValueAsBoolean(OGlobalConfiguration.CREATE_DEFAULT_USERS);
 
@@ -617,15 +616,16 @@ public class OSecurityShared implements OSecurityInternal {
     // This will return the global value if a local storage context configuration value does not
     // exist.
     if (createDefUsers) {
-      adminUser = createUser(session, OUser.ADMIN, OUser.ADMIN, adminRole);
-      createUser(session, "reader", "reader", new String[] {readerRole.getName()});
-      createUser(session, "writer", "writer", new String[] {writerRole.getName()});
+      adminUser = createUser(session, OUser.ADMIN, OUser.ADMIN, new String[] {ORole.ADMIN});
+      createUser(session, "reader", "reader", new String[] {DEFAULT_READER_ROLE_NAME});
+      createUser(session, "writer", "writer", new String[] {DEFAULT_WRITER_ROLE_NAME});
     }
     return adminUser;
   }
 
   private ORole createDefaultWriterRole(final ODatabaseSession session) {
-    final ORole writerRole = createRole(session, "writer", ORole.ALLOW_MODES.DENY_ALL_BUT);
+    final ORole writerRole =
+        createRole(session, DEFAULT_WRITER_ROLE_NAME, ORole.ALLOW_MODES.DENY_ALL_BUT);
     sedDefaultWriterPermissions(session, writerRole);
     return writerRole;
   }
@@ -732,7 +732,8 @@ public class OSecurityShared implements OSecurityInternal {
   }
 
   private ORole createDefaultReaderRole(final ODatabaseSession session) {
-    final ORole readerRole = createRole(session, "reader", ORole.ALLOW_MODES.DENY_ALL_BUT);
+    final ORole readerRole =
+        createRole(session, DEFAULT_READER_ROLE_NAME, ORole.ALLOW_MODES.DENY_ALL_BUT);
     setDefaultReaderPermissions(session, readerRole);
     return readerRole;
   }
@@ -1051,12 +1052,12 @@ public class OSecurityShared implements OSecurityInternal {
         setDefaultAdminPermissions(session, adminRole);
       }
 
-      ORole readerRole = getRole(session, "reader");
+      ORole readerRole = getRole(session, DEFAULT_READER_ROLE_NAME);
       if (readerRole != null) {
         setDefaultReaderPermissions(session, readerRole);
       }
 
-      ORole writerRole = getRole(session, "writer");
+      ORole writerRole = getRole(session, DEFAULT_WRITER_ROLE_NAME);
       if (writerRole != null) {
         sedDefaultWriterPermissions(session, writerRole);
       }
