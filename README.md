@@ -19,6 +19,7 @@ Note: if you do not have permissions to create the request, ask NAAS (Tobias Sch
 Put JAR file into folder: \\\\mediaserver.wdf.sap.corp\UPLINBOX\ORIENTDB_30_EE and inform NAAS (Tobias Schreck).
 
 Note for 3.0: https://launchpad.support.sap.com/#/notes/2875730
+
 Note for 3.1: https://launchpad.support.sap.com/#/notes/2915917
 
 ### CWB process
