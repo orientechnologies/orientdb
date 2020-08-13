@@ -84,7 +84,7 @@ public class OShapeFactory extends OComplexShapeBuilder {
     if (obj instanceof String) {
       try {
         return fromText((String) obj);
-      } catch (ParseException e) {
+      } catch (Exception e) {
         e.printStackTrace();
       }
     }

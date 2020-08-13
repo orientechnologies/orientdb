@@ -18,13 +18,18 @@ package com.orientechnologies.spatial.shape;
 import com.orientechnologies.orient.core.db.ODatabaseInternal;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+
 import java.io.IOException;
 import java.text.ParseException;
 import java.util.HashMap;
+import java.util.Locale;
 import java.util.Map;
+
 import org.locationtech.jts.geom.Geometry;
 import org.locationtech.jts.geom.GeometryFactory;
+import org.locationtech.jts.geom.Point;
 import org.locationtech.jts.io.WKBWriter;
+import org.locationtech.jts.io.WKTReader;
 import org.locationtech.jts.operation.buffer.BufferOp;
 import org.locationtech.jts.operation.buffer.BufferParameters;
 import org.locationtech.spatial4j.context.SpatialContext;
@@ -34,6 +39,7 @@ import org.locationtech.spatial4j.context.jts.ValidationRule;
 import org.locationtech.spatial4j.shape.Rectangle;
 import org.locationtech.spatial4j.shape.Shape;
 import org.locationtech.spatial4j.shape.jts.JtsGeometry;
+import org.locationtech.spatial4j.shape.jts.JtsPoint;
 import org.locationtech.spatial4j.shape.jts.JtsShapeFactory;
 
 public abstract class OShapeBuilder<T extends Shape> {
@@ -43,6 +49,7 @@ public abstract class OShapeBuilder<T extends Shape> {
   protected static final JtsSpatialContext SPATIAL_CONTEXT;
   protected static final GeometryFactory GEOMETRY_FACTORY;
   protected static final JtsShapeFactory SHAPE_FACTORY;
+  protected static final WKTReader wktReader = new WKTReader();
   private static final Map<String, Integer> capStyles = new HashMap<String, Integer>();
   private static final Map<String, Integer> join = new HashMap<String, Integer>();
 
@@ -118,7 +125,8 @@ public abstract class OShapeBuilder<T extends Shape> {
     return toDoc((T) shape);
   }
 
-  public void validate(ODocument doc) {}
+  public void validate(ODocument doc) {
+  }
 
   Geometry toGeometry(Shape shape) {
     return SHAPE_FACTORY.getGeometryFrom(shape);
@@ -132,19 +140,27 @@ public abstract class OShapeBuilder<T extends Shape> {
     return db.getMetadata().getSchema().getClass(BASE_CLASS);
   }
 
-  public T fromText(String wkt) throws ParseException {
-    T entity = (T) SPATIAL_CONTEXT.getWktShapeParser().parse(wkt);
+  public T fromText(String wkt) throws ParseException, org.locationtech.jts.io.ParseException {
+    Object entity;
+    if (wkt.toLowerCase(Locale.ENGLISH).contains("z")) {
+      entity = wktReader.read(wkt);
+      if(entity instanceof Point){
+        entity = new JtsPoint((Point) entity, SPATIAL_CONTEXT);
+      }
+    } else {
+      entity = (T) SPATIAL_CONTEXT.getWktShapeParser().parse(wkt);
+    }
 
     if (entity instanceof Rectangle) {
-      Geometry geometryFrom = SHAPE_FACTORY.getGeometryFrom(entity);
+      Geometry geometryFrom = SHAPE_FACTORY.getGeometryFrom((Shape) entity);
       entity = (T) SHAPE_FACTORY.makeShape(geometryFrom);
     }
-    return entity;
+    return (T) entity;
   }
 
   public abstract ODocument toDoc(T shape);
 
-  public ODocument toDoc(String wkt) throws ParseException {
+  public ODocument toDoc(String wkt) throws ParseException, org.locationtech.jts.io.ParseException {
     T parsed = fromText(wkt);
     return toDoc(parsed);
   }
