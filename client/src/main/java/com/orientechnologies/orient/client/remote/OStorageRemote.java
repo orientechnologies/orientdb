@@ -19,6 +19,8 @@
  */
 package com.orientechnologies.orient.client.remote;
 
+import static com.orientechnologies.orient.client.remote.OStorageRemote.ADDRESS_SEPARATOR;
+
 import com.orientechnologies.common.concur.OOfflineNodeException;
 import com.orientechnologies.common.concur.lock.OInterruptedException;
 import com.orientechnologies.common.concur.lock.OModificationOperationProhibitedException;
