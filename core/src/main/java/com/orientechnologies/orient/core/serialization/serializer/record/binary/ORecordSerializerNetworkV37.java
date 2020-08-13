@@ -392,12 +392,16 @@ public class ORecordSerializerNetworkV37 implements ORecordSerializer {
     bytes.skip(1);
     if (b == 1) {
       ORidBag bag = new ORidBag(uuid);
+      // enable tracking due to timeline issue, which must not be NULL (i.e. tracker.isEnabled()).
+      bag.enableTracking(null);
       int size = OVarIntSerializer.readAsInteger(bytes);
       for (int i = 0; i < size; i++) {
         OIdentifiable id = readOptimizedLink(bytes);
         if (id.equals(NULL_RECORD_ID)) bag.add(null);
         else bag.add(id);
       }
+      bag.disableTracking(null);
+      bag.transactionClear();
       return bag;
     } else {
       long fileId = OVarIntSerializer.readAsLong(bytes);
@@ -442,7 +446,6 @@ public class ORecordSerializerNetworkV37 implements ORecordSerializer {
       if (value.equals(NULL_RECORD_ID)) result.putInternal(key, null);
       else result.putInternal(key, value);
     }
-
     return result;
   }
 
