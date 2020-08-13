@@ -103,7 +103,7 @@ public class OrientDBRemote implements OrientDBInternal {
       OStorageRemote storage;
       storage = storages.get(name);
       if (storage == null) {
-        storage = new OStorageRemote(buildUrl(name), this, "rw", connectionManager, resolvedConfig);
+        storage = new OStorageRemote(hosts, name, this, "rw", connectionManager, resolvedConfig);
         storages.put(name, storage);
       }
       ODatabaseDocumentRemote db = new ODatabaseDocumentRemote(storage);
@@ -150,7 +150,7 @@ public class OrientDBRemote implements OrientDBInternal {
       try {
         storage =
             new OStorageRemote(
-                buildUrl(name), this, "rw", connectionManager, solveConfig(pool.getConfig()));
+                hosts, name, this, "rw", connectionManager, solveConfig(pool.getConfig()));
         storages.put(name, storage);
       } catch (Exception e) {
         throw OException.wrapException(

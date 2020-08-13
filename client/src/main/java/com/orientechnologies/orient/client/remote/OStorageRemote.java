@@ -208,7 +208,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
 
   private final OSBTreeCollectionManagerRemote sbTreeCollectionManager =
       new OSBTreeCollectionManagerRemote(this);
-  private ORemoteURLs serverURLs = new ORemoteURLs();
+  private final ORemoteURLs serverURLs;
   private final Map<String, OCluster> clusterMap = new ConcurrentHashMap<String, OCluster>();
   private final ExecutorService asynchExecutor;
   private final ODocument clusterConfiguration = new ODocument();
@@ -229,25 +229,31 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
 
   public static final String ADDRESS_SEPARATOR = ";";
 
+  private static String buildUrl(String[] hosts, String name) {
+    return String.join(ADDRESS_SEPARATOR, hosts) + "/" + name;
+  }
+
   public OStorageRemote(
-      final String iURL,
+      final String[] hosts,
+      String name,
       OrientDBRemote context,
       final String iMode,
       ORemoteConnectionManager connectionManager,
       OrientDBConfig config)
       throws IOException {
-    this(iURL, context, iMode, connectionManager, null, config);
+    this(hosts, name, context, iMode, connectionManager, null, config);
   }
 
   public OStorageRemote(
-      final String iURL,
+      final String[] hosts,
+      String name,
       OrientDBRemote context,
       final String iMode,
       ORemoteConnectionManager connectionManager,
       final STATUS status,
       OrientDBConfig config)
       throws IOException {
-    super(iURL, iURL, iMode); // NO TIMEOUT @SINCE 1.5
+    super(name, buildUrl(hosts, name), iMode); // NO TIMEOUT @SINCE 1.5
     if (status != null) this.status = status;
 
     configuration = null;
@@ -261,7 +267,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
         clientConfiguration.getValueAsInteger(OGlobalConfiguration.NETWORK_SOCKET_RETRY);
     connectionRetryDelay =
         clientConfiguration.getValueAsInteger(OGlobalConfiguration.NETWORK_SOCKET_RETRY_DELAY);
-    parseServerURLs();
+    serverURLs = new ORemoteURLs(hosts, clientConfiguration);
 
     asynchExecutor = new OScheduledThreadPoolExecutorWithLogging(1);
 

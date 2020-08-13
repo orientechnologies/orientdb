@@ -27,8 +27,15 @@ public class ORemoteURLs {
   private static final String LOCALHOST = "localhost";
 
   private final List<String> serverURLs = new ArrayList<String>();
-  private List<String> initialServerURLs = new ArrayList<String>();
+  private List<String> initialServerURLs;
   private int nextServerToConnect;
+
+  public ORemoteURLs(String[] hosts, OContextConfiguration config) {
+    for (String host : hosts) {
+      addHost(host, config);
+    }
+    this.initialServerURLs = new ArrayList<String>(serverURLs);
+  }
 
   public synchronized void remove(String serverUrl) {
     serverURLs.remove(serverUrl);

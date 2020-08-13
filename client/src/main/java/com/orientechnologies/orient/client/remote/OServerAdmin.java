@@ -73,7 +73,7 @@ public class OServerAdmin {
   protected OStorageRemoteSession session = new OStorageRemoteSession(-1);
   protected String clientType = OStorageRemote.DRIVER_NAME;
   protected boolean collectStats = true;
-  private ORemoteURLs urls = new ORemoteURLs();
+  private final ORemoteURLs urls;
   private final OrientDBRemote remote;
   private ORemoteConnectionManager connectionManager;
 
@@ -94,9 +94,17 @@ public class OServerAdmin {
     remote =
         (OrientDBRemote) ODatabaseDocumentTxInternal.getOrCreateRemoteFactory(connection.getPath());
     connectionManager = remote.getConnectionManager();
-    urls.parseServerUrls(url, remote.getContextConfiguration());
+    urls = new ORemoteURLs(new String[] {}, remote.getContextConfiguration());
+    String name = urls.parseServerUrls(url, remote.getContextConfiguration());
     storage =
-        new OStorageRemote(url, null, "", connectionManager, OStorage.STATUS.OPEN, null) {
+        new OStorageRemote(
+            urls.getUrls().toArray(new String[] {}),
+            name,
+            null,
+            "",
+            connectionManager,
+            OStorage.STATUS.OPEN,
+            null) {
           @Override
           protected OStorageRemoteSession getCurrentSession() {
             return session;
@@ -107,9 +115,17 @@ public class OServerAdmin {
   public OServerAdmin(OrientDBRemote remote, String url) throws IOException {
     this.remote = remote;
     connectionManager = remote.getConnectionManager();
-    urls.parseServerUrls(url, remote.getContextConfiguration());
+    urls = new ORemoteURLs(new String[] {}, remote.getContextConfiguration());
+    String name = urls.parseServerUrls(url, remote.getContextConfiguration());
     storage =
-        new OStorageRemote(url, null, "", connectionManager, OStorage.STATUS.OPEN, null) {
+        new OStorageRemote(
+            urls.getUrls().toArray(new String[] {}),
+            name,
+            null,
+            "",
+            connectionManager,
+            OStorage.STATUS.OPEN,
+            null) {
           @Override
           protected OStorageRemoteSession getCurrentSession() {
             return session;
@@ -126,6 +142,7 @@ public class OServerAdmin {
   public OServerAdmin(final OStorageRemote iStorage) {
     storage = iStorage;
     this.remote = iStorage.context;
+    urls = new ORemoteURLs(new String[] {}, remote.getContextConfiguration());
     urls.parseServerUrls(iStorage.getURL(), remote.getContextConfiguration());
   }
 
