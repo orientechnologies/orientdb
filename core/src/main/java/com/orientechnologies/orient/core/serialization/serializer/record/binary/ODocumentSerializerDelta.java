@@ -657,7 +657,7 @@ public class ODocumentSerializerDelta {
 
     final OMultiValueChangeTimeLine<OIdentifiable, OIdentifiable> timeline =
         value.getTransactionTimeLine();
-    assert timeline != null : "Collection timeline required for link types serialization";
+    assert timeline != null : "Collection timeline required for serialization of link types";
     OVarIntSerializer.write(bytes, timeline.getMultiValueChangeEvents().size());
     for (OMultiValueChangeEvent<OIdentifiable, OIdentifiable> event :
         timeline.getMultiValueChangeEvents()) {
