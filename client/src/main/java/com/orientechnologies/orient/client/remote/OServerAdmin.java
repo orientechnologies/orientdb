@@ -22,6 +22,7 @@ package com.orientechnologies.orient.client.remote;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.client.binary.OChannelBinaryAsynchClient;
+import com.orientechnologies.orient.client.remote.OStorageRemote.CONNECTION_STRATEGY;
 import com.orientechnologies.orient.client.remote.message.OConnect37Request;
 import com.orientechnologies.orient.client.remote.message.OConnectResponse;
 import com.orientechnologies.orient.client.remote.message.OCreateDatabaseRequest;
@@ -42,8 +43,11 @@ import com.orientechnologies.orient.client.remote.message.OListGlobalConfigurati
 import com.orientechnologies.orient.client.remote.message.OListGlobalConfigurationsResponse;
 import com.orientechnologies.orient.client.remote.message.OReleaseDatabaseRequest;
 import com.orientechnologies.orient.client.remote.message.OReleaseDatabaseResponse;
+import com.orientechnologies.orient.client.remote.message.ORemoteResultSet;
 import com.orientechnologies.orient.client.remote.message.OServerInfoRequest;
 import com.orientechnologies.orient.client.remote.message.OServerInfoResponse;
+import com.orientechnologies.orient.client.remote.message.OServerQueryRequest;
+import com.orientechnologies.orient.client.remote.message.OServerQueryResponse;
 import com.orientechnologies.orient.client.remote.message.OSetGlobalConfigurationRequest;
 import com.orientechnologies.orient.client.remote.message.OSetGlobalConfigurationResponse;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
@@ -54,6 +58,7 @@ import com.orientechnologies.orient.core.exception.OStorageException;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.security.OCredentialInterceptor;
 import com.orientechnologies.orient.core.security.OSecurityManager;
+import com.orientechnologies.orient.core.serialization.serializer.record.binary.ORecordSerializerNetworkV37;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.util.OURLConnection;
@@ -68,6 +73,9 @@ public class OServerAdmin {
   protected OStorageRemoteSession session = new OStorageRemoteSession(-1);
   protected String clientType = OStorageRemote.DRIVER_NAME;
   protected boolean collectStats = true;
+  private ORemoteURLs urls = new ORemoteURLs();
+  private final OrientDBRemote remote;
+  private ORemoteConnectionManager connectionManager;
 
   /**
    * Creates the object passing a remote URL to connect. sessionToken
@@ -83,12 +91,12 @@ public class OServerAdmin {
     if (!url.contains("/")) url += "/";
 
     OURLConnection connection = OURLHelper.parse(iURL);
-    OrientDBRemote remote =
+    remote =
         (OrientDBRemote) ODatabaseDocumentTxInternal.getOrCreateRemoteFactory(connection.getPath());
-
+    connectionManager = remote.getConnectionManager();
+    urls.parseServerUrls(url, remote.getContextConfiguration());
     storage =
-        new OStorageRemote(
-            url, null, "", remote.getConnectionManager(), OStorage.STATUS.OPEN, null) {
+        new OStorageRemote(url, null, "", connectionManager, OStorage.STATUS.OPEN, null) {
           @Override
           protected OStorageRemoteSession getCurrentSession() {
             return session;
@@ -97,8 +105,9 @@ public class OServerAdmin {
   }
 
   public OServerAdmin(OrientDBRemote remote, String url) throws IOException {
-    ORemoteConnectionManager connectionManager = remote.getConnectionManager();
-
+    this.remote = remote;
+    connectionManager = remote.getConnectionManager();
+    urls.parseServerUrls(url, remote.getContextConfiguration());
     storage =
         new OStorageRemote(url, null, "", connectionManager, OStorage.STATUS.OPEN, null) {
           @Override
@@ -116,6 +125,8 @@ public class OServerAdmin {
   @Deprecated
   public OServerAdmin(final OStorageRemote iStorage) {
     storage = iStorage;
+    this.remote = iStorage.context;
+    urls.parseServerUrls(iStorage.getURL(), remote.getContextConfiguration());
   }
 
   /**
@@ -159,7 +170,7 @@ public class OServerAdmin {
             network.beginResponse(nodeSession.getSessionId(), true);
             response.read(network, session);
           } finally {
-            storage.endResponse(network);
+            network.endResponse();
           }
           return null;
         },
@@ -259,7 +270,7 @@ public class OServerAdmin {
       OCreateDatabaseRequest request =
           new OCreateDatabaseRequest(iDatabaseName, iDatabaseName, storageMode, backupPath);
       OCreateDatabaseResponse response =
-          networkAdminOperation(request, "Cannot create the remote storage: " + storage.getName());
+          networkAdminOperation(request, "Cannot create the remote storage: " + iDatabaseName);
     }
 
     return this;
@@ -287,7 +298,7 @@ public class OServerAdmin {
     OExistsDatabaseRequest request = new OExistsDatabaseRequest(iDatabaseName, storageType);
     OExistsDatabaseResponse response =
         networkAdminOperation(
-            request, "Error on checking existence of the remote storage: " + storage.getName());
+            request, "Error on checking existence of the remote storage: " + iDatabaseName);
     return response.isExists();
   }
 
@@ -328,7 +339,7 @@ public class OServerAdmin {
 
     ODropDatabaseRequest request = new ODropDatabaseRequest(iDatabaseName, storageType);
     ODropDatabaseResponse response =
-        networkAdminOperation(request, "Cannot delete the remote storage: " + storage.getName());
+        networkAdminOperation(request, "Cannot delete the remote storage: " + iDatabaseName);
 
     OURLConnection connection = OURLHelper.parse(getURL());
     OrientDBRemote remote =
@@ -395,7 +406,7 @@ public class OServerAdmin {
     ODistributedStatusRequest request = new ODistributedStatusRequest();
 
     ODistributedStatusResponse response =
-        storage.networkOperation(request, "Error on executing Cluster status ");
+        networkAdminOperation(request, "Error on executing Cluster status ");
 
     OLogManager.instance()
         .debug(this, "Cluster status %s", response.getClusterConfig().toJSON("prettyPrint"));
@@ -466,10 +477,10 @@ public class OServerAdmin {
             }
             T response = request.createResponse();
             try {
-              storage.beginResponse(network, session);
+              OStorageRemote.beginResponse(network, session);
               response.read(network, session);
             } finally {
-              storage.endResponse(network);
+              network.endResponse();
             }
             return response;
           }
@@ -482,32 +493,88 @@ public class OServerAdmin {
 
     OChannelBinaryAsynchClient network = null;
     try {
-      // TODO:replace this api with one that get connection for only the specified url.
-      String serverUrl = storage.getNextAvailableServerURL(false, session);
+      String serverUrl =
+          urls.getNextAvailableServerURL(
+              false, session, remote.getContextConfiguration(), null, CONNECTION_STRATEGY.STICKY);
       do {
         try {
-          network = storage.getNetwork(serverUrl);
+          network =
+              OStorageRemote.getNetwork(
+                  serverUrl, connectionManager, remote.getContextConfiguration());
         } catch (OException e) {
-          serverUrl = storage.useNewServerURL(serverUrl);
+          serverUrl = urls.removeAndGet(serverUrl);
           if (serverUrl == null) throw e;
         }
       } while (network == null);
 
-      T res = operation.execute(network, storage.getCurrentSession());
-      storage.connectionManager.release(network);
+      T res = operation.execute(network, session);
+      connectionManager.release(network);
       return res;
     } catch (Exception e) {
-      if (network != null) storage.connectionManager.release(network);
-      storage.close(true, false);
+      if (network != null) connectionManager.release(network);
+      session.closeAllSessions(connectionManager, remote.getContextConfiguration());
       throw OException.wrapException(new OStorageException(errorMessage), e);
     }
   }
 
   public OResultSet executeServerStatement(String statement, Object... params) {
-    return storage.serverCommand(statement, params).getResult();
+    int recordsPerPage =
+        remote
+            .getContextConfiguration()
+            .getValueAsInteger(OGlobalConfiguration.QUERY_REMOTE_RESULTSET_PAGE_SIZE);
+    if (recordsPerPage <= 0) {
+      recordsPerPage = 100;
+    }
+    OServerQueryRequest request =
+        new OServerQueryRequest(
+            "sql",
+            statement,
+            params,
+            OServerQueryRequest.COMMAND,
+            ORecordSerializerNetworkV37.INSTANCE,
+            recordsPerPage);
+    OServerQueryResponse response =
+        networkAdminOperation(request, "Error on executing command: " + statement);
+    ORemoteResultSet rs =
+        new ORemoteResultSet(
+            null,
+            response.getQueryId(),
+            response.getResult(),
+            response.getExecutionPlan(),
+            response.getQueryStats(),
+            response.isHasNextPage());
+
+    return new ORemoteQueryResult(rs, response.isTxChanges(), response.isReloadMetadata())
+        .getResult();
   }
 
   public OResultSet executeServerStatement(String statement, Map<String, Object> params) {
-    return storage.serverCommand(statement, params).getResult();
+    int recordsPerPage =
+        remote
+            .getContextConfiguration()
+            .getValueAsInteger(OGlobalConfiguration.QUERY_REMOTE_RESULTSET_PAGE_SIZE);
+    if (recordsPerPage <= 0) {
+      recordsPerPage = 100;
+    }
+    OServerQueryRequest request =
+        new OServerQueryRequest(
+            "sql",
+            statement,
+            params,
+            OServerQueryRequest.COMMAND,
+            ORecordSerializerNetworkV37.INSTANCE,
+            recordsPerPage);
+    OServerQueryResponse response =
+        networkAdminOperation(request, "Error on executing command: " + statement);
+    ORemoteResultSet rs =
+        new ORemoteResultSet(
+            null,
+            response.getQueryId(),
+            response.getResult(),
+            response.getExecutionPlan(),
+            response.getQueryStats(),
+            response.isHasNextPage());
+    return new ORemoteQueryResult(rs, response.isTxChanges(), response.isReloadMetadata())
+        .getResult();
   }
 }

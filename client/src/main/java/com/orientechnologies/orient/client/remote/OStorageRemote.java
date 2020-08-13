@@ -41,7 +41,6 @@ import com.orientechnologies.orient.client.remote.message.OCeilingPhysicalPositi
 import com.orientechnologies.orient.client.remote.message.OCleanOutRecordRequest;
 import com.orientechnologies.orient.client.remote.message.OCleanOutRecordResponse;
 import com.orientechnologies.orient.client.remote.message.OCloseQueryRequest;
-import com.orientechnologies.orient.client.remote.message.OCloseRequest;
 import com.orientechnologies.orient.client.remote.message.OCommandRequest;
 import com.orientechnologies.orient.client.remote.message.OCommandResponse;
 import com.orientechnologies.orient.client.remote.message.OCommit37Response;
@@ -226,7 +225,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
   private final Map<Integer, OLiveQueryClientListener> liveQueryListener =
       new ConcurrentHashMap<>();
   private volatile OStorageRemotePushThread pushThread;
-  private final OrientDBRemote context;
+  protected final OrientDBRemote context;
 
   public static final String ADDRESS_SEPARATOR = ";";
 
@@ -611,33 +610,16 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
     if (session != null) {
       final Collection<OStorageRemoteNodeSession> nodes = session.getAllServerSessions();
       if (!nodes.isEmpty()) {
-        for (OStorageRemoteNodeSession nodeSession : nodes) {
-          OChannelBinaryAsynchClient network = null;
-          try {
-            network = getNetwork(nodeSession.getServerURL());
-            OCloseRequest request = new OCloseRequest();
-            network.beginRequest(request.getCommand(), session);
-            request.write(network, session);
-            endRequest(network);
-            connectionManager.release(network);
-          } catch (OIOException ex) {
-            // IGNORING IF THE SERVER IS DOWN OR NOT REACHABLE THE SESSION IS AUTOMATICALLY CLOSED.
-            OLogManager.instance()
-                .debug(this, "Impossible to comunicate to the server for close: %s", ex);
-            connectionManager.remove(network);
-          } catch (IOException ex) {
-            // IGNORING IF THE SERVER IS DOWN OR NOT REACHABLE THE SESSION IS AUTOMATICALLY CLOSED.
-            OLogManager.instance()
-                .debug(this, "Impossible to comunicate to the server for close: %s", ex);
-            connectionManager.remove(network);
-          }
+        OContextConfiguration config = null;
+        if (configuration != null) {
+          config = configuration.getContextConfiguration();
         }
-        session.close();
-        sessions.remove(session);
+        session.closeAllSessions(connectionManager, config);
         if (!checkForClose(iForce)) return;
       } else {
         if (!iForce) return;
       }
+      sessions.remove(session);
       if (!checkForClose(iForce)) return;
     }
 
@@ -2004,8 +1986,8 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
     return network;
   }
 
-  public void beginResponse(OChannelBinaryAsynchClient iNetwork, OStorageRemoteSession session)
-      throws IOException {
+  public static void beginResponse(
+      OChannelBinaryAsynchClient iNetwork, OStorageRemoteSession session) throws IOException {
     OStorageRemoteNodeSession nodeSession = session.getServerSession(iNetwork.getServerURL());
     byte[] newToken = iNetwork.beginResponse(nodeSession.getSessionId(), true);
     if (newToken != null && newToken.length > 0) {

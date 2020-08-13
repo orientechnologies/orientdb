@@ -28,6 +28,7 @@ import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.client.remote.*;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
+import com.orientechnologies.orient.core.config.OContextConfiguration;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentRemote;
 import com.orientechnologies.orient.core.db.document.OSharedContextRemote;
@@ -514,5 +515,9 @@ public class OrientDBRemote implements OrientDBInternal {
       String statement, String user, String pw, Map<String, Object> params) {
     return connectEndExecute(
         "", user, pw, admin -> admin.executeServerStatement(statement, params));
+  }
+
+  public OContextConfiguration getContextConfiguration() {
+    return configurations.getConfigurations();
   }
 }

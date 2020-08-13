@@ -19,7 +19,13 @@
  */
 package com.orientechnologies.orient.client.remote;
 
+import com.orientechnologies.common.io.OIOException;
+import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.orient.client.binary.OChannelBinaryAsynchClient;
+import com.orientechnologies.orient.client.remote.message.OCloseRequest;
+import com.orientechnologies.orient.core.config.OContextConfiguration;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinary;
+import java.io.IOException;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -118,5 +124,33 @@ public class OStorageRemoteSession {
 
   public boolean isStickToSession() {
     return stickToSession > 0;
+  }
+
+  public void closeAllSessions(
+      ORemoteConnectionManager connectionManager, OContextConfiguration clientConfiguration) {
+    for (OStorageRemoteNodeSession nodeSession : getAllServerSessions()) {
+      OChannelBinaryAsynchClient network = null;
+      try {
+        network =
+            OStorageRemote.getNetwork(
+                nodeSession.getServerURL(), connectionManager, clientConfiguration);
+        OCloseRequest request = new OCloseRequest();
+        network.beginRequest(request.getCommand(), this);
+        request.write(network, this);
+        network.endRequest();
+        connectionManager.release(network);
+      } catch (OIOException ex) {
+        // IGNORING IF THE SERVER IS DOWN OR NOT REACHABLE THE SESSION IS AUTOMATICALLY CLOSED.
+        OLogManager.instance()
+            .debug(this, "Impossible to comunicate to the server for close: %s", ex);
+        connectionManager.remove(network);
+      } catch (IOException ex) {
+        // IGNORING IF THE SERVER IS DOWN OR NOT REACHABLE THE SESSION IS AUTOMATICALLY CLOSED.
+        OLogManager.instance()
+            .debug(this, "Impossible to comunicate to the server for close: %s", ex);
+        connectionManager.remove(network);
+      }
+    }
+    close();
   }
 }
