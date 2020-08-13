@@ -25,7 +25,32 @@ import static com.orientechnologies.orient.core.config.OGlobalConfiguration.NETW
 
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.orient.client.binary.OChannelBinaryAsynchClient;
 import com.orientechnologies.orient.client.remote.*;
+import com.orientechnologies.orient.client.remote.OStorageRemote.CONNECTION_STRATEGY;
+import com.orientechnologies.orient.client.remote.message.OConnect37Request;
+import com.orientechnologies.orient.client.remote.message.OConnectResponse;
+import com.orientechnologies.orient.client.remote.message.OCreateDatabaseRequest;
+import com.orientechnologies.orient.client.remote.message.OCreateDatabaseResponse;
+import com.orientechnologies.orient.client.remote.message.ODistributedStatusRequest;
+import com.orientechnologies.orient.client.remote.message.ODistributedStatusResponse;
+import com.orientechnologies.orient.client.remote.message.ODropDatabaseRequest;
+import com.orientechnologies.orient.client.remote.message.ODropDatabaseResponse;
+import com.orientechnologies.orient.client.remote.message.OExistsDatabaseRequest;
+import com.orientechnologies.orient.client.remote.message.OExistsDatabaseResponse;
+import com.orientechnologies.orient.client.remote.message.OGetGlobalConfigurationRequest;
+import com.orientechnologies.orient.client.remote.message.OGetGlobalConfigurationResponse;
+import com.orientechnologies.orient.client.remote.message.OListDatabasesRequest;
+import com.orientechnologies.orient.client.remote.message.OListDatabasesResponse;
+import com.orientechnologies.orient.client.remote.message.OListGlobalConfigurationsRequest;
+import com.orientechnologies.orient.client.remote.message.OListGlobalConfigurationsResponse;
+import com.orientechnologies.orient.client.remote.message.ORemoteResultSet;
+import com.orientechnologies.orient.client.remote.message.OServerInfoRequest;
+import com.orientechnologies.orient.client.remote.message.OServerInfoResponse;
+import com.orientechnologies.orient.client.remote.message.OServerQueryRequest;
+import com.orientechnologies.orient.client.remote.message.OServerQueryResponse;
+import com.orientechnologies.orient.client.remote.message.OSetGlobalConfigurationRequest;
+import com.orientechnologies.orient.client.remote.message.OSetGlobalConfigurationResponse;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.config.OContextConfiguration;
@@ -33,7 +58,11 @@ import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentRemote;
 import com.orientechnologies.orient.core.db.document.OSharedContextRemote;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
+import com.orientechnologies.orient.core.exception.OStorageException;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.security.OCredentialInterceptor;
+import com.orientechnologies.orient.core.security.OSecurityManager;
+import com.orientechnologies.orient.core.serialization.serializer.record.binary.ORecordSerializerNetworkV37;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import com.orientechnologies.orient.core.storage.OStorage;
 import java.io.IOException;
@@ -62,6 +91,7 @@ public class OrientDBRemote implements OrientDBInternal {
   protected volatile ORemoteConnectionManager connectionManager;
   private volatile boolean open = true;
   private Timer timer;
+  private final ORemoteURLs urls;
 
   public OrientDBRemote(String[] hosts, OrientDBConfig configurations, Orient orient) {
     super();
@@ -74,6 +104,7 @@ public class OrientDBRemote implements OrientDBInternal {
         new ORemoteConnectionManager(this.configurations.getConfigurations(), timer);
     orient.addOrientDB(this);
     cachedPoolFactory = createCachedDatabasePoolFactory(this.configurations);
+    urls = new ORemoteURLs(hosts, configurations.getConfigurations());
   }
 
   protected OCachedDatabasePoolFactory createCachedDatabasePoolFactory(OrientDBConfig config) {
@@ -127,18 +158,31 @@ public class OrientDBRemote implements OrientDBInternal {
       String password,
       ODatabaseType databaseType,
       OrientDBConfig config) {
-    connectEndExecute(
+
+    if (name == null || name.length() <= 0) {
+      final String message = "Cannot create unnamed remote storage. Check your syntax";
+      OLogManager.instance().error(this, message, null);
+      throw new OStorageException(message);
+    }
+
+    newConnectEndExecute(
         name,
         user,
         password,
-        admin -> {
-          String sendType = null;
+        session -> {
+          String sendType;
           if (databaseType == ODatabaseType.MEMORY) {
             sendType = "memory";
           } else if (databaseType == ODatabaseType.PLOCAL) {
             sendType = "plocal";
+          } else {
+            sendType = "plocal";
           }
-          admin.createDatabase(name, null, sendType);
+          OCreateDatabaseRequest request = new OCreateDatabaseRequest(name, name, sendType, null);
+
+          OCreateDatabaseResponse response =
+              networkAdminOperation(request, session, "Cannot create the remote storage: " + name);
+
           return null;
         });
   }
@@ -174,55 +218,84 @@ public class OrientDBRemote implements OrientDBInternal {
   }
 
   public ODocument getServerInfo(String username, String password) {
-    return connectEndExecute(
+    return newConnectEndExecute(
         null,
         username,
         password,
-        (admin) -> {
-          return admin.getServerInfo();
+        (session) -> {
+          OServerInfoRequest request = new OServerInfoRequest();
+          OServerInfoResponse response =
+              networkAdminOperation(request, session, "Cannot retrieve server information");
+          ODocument res = new ODocument();
+          res.fromJSON(response.getResult());
+
+          return res;
         });
   }
 
   public ODocument getClusterStatus(String username, String password) {
-    return connectEndExecute(
+    return newConnectEndExecute(
         null,
         username,
         password,
-        (admin) -> {
-          return admin.clusterStatus();
+        (session) -> {
+          ODistributedStatusRequest request = new ODistributedStatusRequest();
+
+          ODistributedStatusResponse response =
+              networkAdminOperation(request, session, "Error on executing Cluster status ");
+
+          OLogManager.instance()
+              .debug(this, "Cluster status %s", response.getClusterConfig().toJSON("prettyPrint"));
+          return response.getClusterConfig();
         });
   }
 
   public String getGlobalConfiguration(
       String username, String password, OGlobalConfiguration config) {
-    return connectEndExecute(
+    return newConnectEndExecute(
         null,
         username,
         password,
-        (admin) -> {
-          return admin.getGlobalConfiguration(config);
+        (session) -> {
+          OGetGlobalConfigurationRequest request =
+              new OGetGlobalConfigurationRequest(config.getKey());
+
+          OGetGlobalConfigurationResponse response =
+              networkAdminOperation(
+                  request, session, "Cannot retrieve the configuration value: " + config.getKey());
+
+          return response.getValue();
         });
   }
 
   public void setGlobalConfiguration(
       String username, String password, OGlobalConfiguration config, String iConfigValue) {
-    connectEndExecute(
+    newConnectEndExecute(
         null,
         username,
         password,
-        (admin) -> {
-          admin.setGlobalConfiguration(config, iConfigValue);
+        (session) -> {
+          OSetGlobalConfigurationRequest request =
+              new OSetGlobalConfigurationRequest(
+                  config.getKey(), iConfigValue != null ? iConfigValue.toString() : "");
+          OSetGlobalConfigurationResponse response =
+              networkAdminOperation(
+                  request, session, "Cannot set the configuration value: " + config.getKey());
           return null;
         });
   }
 
   public Map<String, String> getGlobalConfigurations(String username, String password) {
-    return connectEndExecute(
+    return newConnectEndExecute(
         null,
         username,
         password,
-        (admin) -> {
-          return admin.getGlobalConfigurations();
+        (session) -> {
+          OListGlobalConfigurationsRequest request = new OListGlobalConfigurationsRequest();
+
+          OListGlobalConfigurationsResponse response =
+              networkAdminOperation(request, session, "Cannot retrieve the configuration list");
+          return response.getConfigs();
         });
   }
 
@@ -230,20 +303,56 @@ public class OrientDBRemote implements OrientDBInternal {
     return connectionManager;
   }
 
-  private interface Operation<T> {
-    T execute(OServerAdmin admin) throws IOException;
+  private interface SessionOperation<T> {
+    T execute(OStorageRemoteSession session) throws IOException;
   }
 
-  private <T> T connectEndExecute(
-      String name, String user, String password, Operation<T> operation) {
+  private <T> T newConnectEndExecute(
+      String name, String user, String password, SessionOperation<T> operation) {
     checkOpen();
-    OServerAdmin admin = null;
+    OStorageRemoteSession newSession = new OStorageRemoteSession(-1);
     int retry = configurations.getConfigurations().getValueAsInteger(NETWORK_SOCKET_RETRY);
     while (retry > 0) {
       try {
-        admin = new OServerAdmin(this, buildUrl(name));
-        admin.connect(user, password);
-        return operation.execute(admin);
+        OCredentialInterceptor ci = OSecurityManager.instance().newCredentialInterceptor();
+
+        String username;
+        String foundPassword;
+        String url = buildUrl(name);
+        if (ci != null) {
+          ci.intercept(url, user, password);
+          username = ci.getUsername();
+          foundPassword = ci.getPassword();
+        } else {
+          username = user;
+          foundPassword = password;
+        }
+        OConnect37Request request = new OConnect37Request(username, foundPassword);
+
+        networkAdminOperation(
+            (network, session) -> {
+              OStorageRemoteNodeSession nodeSession =
+                  session.getOrCreateServerSession(network.getServerURL());
+              try {
+                network.beginRequest(request.getCommand(), session);
+                request.write(network, session);
+              } finally {
+                network.endRequest();
+              }
+              OConnectResponse response = request.createResponse();
+              try {
+                network.beginResponse(nodeSession.getSessionId(), true);
+                response.read(network, session);
+              } finally {
+                network.endResponse();
+              }
+              return null;
+            },
+            "Cannot connect to the remote server/database '" + url + "'",
+            newSession);
+
+        T result = operation.execute(newSession);
+        return result;
       } catch (IOException e) {
         retry--;
         if (retry == 0)
@@ -252,7 +361,7 @@ public class OrientDBRemote implements OrientDBInternal {
                   "Reached maximum retry limit on admin operations, the server may be offline"),
               e);
       } finally {
-        if (admin != null) admin.close();
+        newSession.closeAllSessions(connectionManager, configurations.getConfigurations());
       }
     }
     // SHOULD NEVER REACH THIS POINT
@@ -262,25 +371,31 @@ public class OrientDBRemote implements OrientDBInternal {
 
   @Override
   public synchronized boolean exists(String name, String user, String password) {
-    return connectEndExecute(
+    return newConnectEndExecute(
         name,
         user,
         password,
-        admin -> {
-          // TODO: check for memory cases
-          return admin.existsDatabase(name, null);
+        session -> {
+          OExistsDatabaseRequest request = new OExistsDatabaseRequest(name, null);
+          OExistsDatabaseResponse response =
+              networkAdminOperation(
+                  request, session, "Error on checking existence of the remote storage: " + name);
+          return response.isExists();
         });
   }
 
   @Override
   public synchronized void drop(String name, String user, String password) {
-    connectEndExecute(
+    newConnectEndExecute(
         name,
         user,
         password,
-        admin -> {
+        session -> {
           // TODO: check for memory cases
-          return admin.dropDatabase(name, null);
+          ODropDatabaseRequest request = new ODropDatabaseRequest(name, null);
+          ODropDatabaseResponse response =
+              networkAdminOperation(request, session, "Cannot delete the remote storage: " + name);
+          return null;
         });
 
     OSharedContext ctx = sharedContexts.get(name);
@@ -293,13 +408,15 @@ public class OrientDBRemote implements OrientDBInternal {
 
   @Override
   public Set<String> listDatabases(String user, String password) {
-    return connectEndExecute(
+    return newConnectEndExecute(
         "",
         user,
         password,
-        admin -> {
-          // TODO: check for memory cases
-          return admin.listDatabases().keySet();
+        session -> {
+          OListDatabasesRequest request = new OListDatabasesRequest();
+          OListDatabasesResponse response =
+              networkAdminOperation(request, session, "Cannot retrieve the configuration list");
+          return response.getDatabases().keySet();
         });
   }
 
@@ -311,12 +428,22 @@ public class OrientDBRemote implements OrientDBInternal {
       ODatabaseType type,
       String path,
       OrientDBConfig config) {
-    connectEndExecute(
+    if (name == null || name.length() <= 0) {
+      final String message = "Cannot create unnamed remote storage. Check your syntax";
+      OLogManager.instance().error(this, message, null);
+      throw new OStorageException(message);
+    }
+
+    newConnectEndExecute(
         name,
         user,
         password,
-        admin -> {
-          admin.createDatabase(name, "", type.name().toLowerCase(), path).close();
+        session -> {
+          OCreateDatabaseRequest request =
+              new OCreateDatabaseRequest(name, type.name().toLowerCase(), null, path);
+          OCreateDatabaseResponse response =
+              networkAdminOperation(request, session, "Cannot create the remote storage: " + name);
+
           return null;
         });
   }
@@ -506,18 +633,135 @@ public class OrientDBRemote implements OrientDBInternal {
   @Override
   public OResultSet executeServerStatement(
       String statement, String user, String pw, Object... params) {
-    return connectEndExecute(
-        "", user, pw, admin -> admin.executeServerStatement(statement, params));
+    return newConnectEndExecute(
+        "",
+        user,
+        pw,
+        session -> {
+          int recordsPerPage =
+              getContextConfiguration()
+                  .getValueAsInteger(OGlobalConfiguration.QUERY_REMOTE_RESULTSET_PAGE_SIZE);
+          if (recordsPerPage <= 0) {
+            recordsPerPage = 100;
+          }
+          OServerQueryRequest request =
+              new OServerQueryRequest(
+                  "sql",
+                  statement,
+                  params,
+                  OServerQueryRequest.COMMAND,
+                  ORecordSerializerNetworkV37.INSTANCE,
+                  recordsPerPage);
+          OServerQueryResponse response =
+              networkAdminOperation(request, session, "Error on executing command: " + statement);
+          ORemoteResultSet rs =
+              new ORemoteResultSet(
+                  null,
+                  response.getQueryId(),
+                  response.getResult(),
+                  response.getExecutionPlan(),
+                  response.getQueryStats(),
+                  response.isHasNextPage());
+          return new ORemoteQueryResult(rs, response.isTxChanges(), response.isReloadMetadata())
+              .getResult();
+        });
   }
 
   @Override
   public OResultSet executeServerStatement(
       String statement, String user, String pw, Map<String, Object> params) {
-    return connectEndExecute(
-        "", user, pw, admin -> admin.executeServerStatement(statement, params));
+    return newConnectEndExecute(
+        "",
+        user,
+        pw,
+        session -> {
+          int recordsPerPage =
+              getContextConfiguration()
+                  .getValueAsInteger(OGlobalConfiguration.QUERY_REMOTE_RESULTSET_PAGE_SIZE);
+          if (recordsPerPage <= 0) {
+            recordsPerPage = 100;
+          }
+          OServerQueryRequest request =
+              new OServerQueryRequest(
+                  "sql",
+                  statement,
+                  params,
+                  OServerQueryRequest.COMMAND,
+                  ORecordSerializerNetworkV37.INSTANCE,
+                  recordsPerPage);
+          OServerQueryResponse response =
+              networkAdminOperation(request, session, "Error on executing command: " + statement);
+          ORemoteResultSet rs =
+              new ORemoteResultSet(
+                  null,
+                  response.getQueryId(),
+                  response.getResult(),
+                  response.getExecutionPlan(),
+                  response.getQueryStats(),
+                  response.isHasNextPage());
+
+          return new ORemoteQueryResult(rs, response.isTxChanges(), response.isReloadMetadata())
+              .getResult();
+        });
   }
 
   public OContextConfiguration getContextConfiguration() {
     return configurations.getConfigurations();
+  }
+
+  public <T extends OBinaryResponse> T networkAdminOperation(
+      final OBinaryRequest<T> request, OStorageRemoteSession session, final String errorMessage) {
+    return networkAdminOperation(
+        new OStorageRemoteOperation<T>() {
+          @Override
+          public T execute(OChannelBinaryAsynchClient network, OStorageRemoteSession session)
+              throws IOException {
+            try {
+              network.beginRequest(request.getCommand(), session);
+              request.write(network, session);
+            } finally {
+              network.endRequest();
+            }
+            T response = request.createResponse();
+            try {
+              OStorageRemote.beginResponse(network, session);
+              response.read(network, session);
+            } finally {
+              network.endResponse();
+            }
+            return response;
+          }
+        },
+        errorMessage,
+        session);
+  }
+
+  public <T> T networkAdminOperation(
+      final OStorageRemoteOperation<T> operation,
+      final String errorMessage,
+      OStorageRemoteSession session) {
+
+    OChannelBinaryAsynchClient network = null;
+    OContextConfiguration config = getContextConfiguration();
+    try {
+      String serverUrl =
+          urls.getNextAvailableServerURL(false, session, config, null, CONNECTION_STRATEGY.STICKY);
+      do {
+        try {
+          network = OStorageRemote.getNetwork(serverUrl, connectionManager, config);
+        } catch (OException e) {
+          serverUrl = urls.removeAndGet(serverUrl);
+          if (serverUrl == null) throw e;
+        }
+      } while (network == null);
+
+      T res = operation.execute(network, session);
+      connectionManager.release(network);
+      return res;
+    } catch (Exception e) {
+      if (network != null) connectionManager.release(network);
+      session.closeAllSessions(connectionManager, config);
+      throw OException.wrapException(new OStorageException(errorMessage), e);
+    }
   }
 }
