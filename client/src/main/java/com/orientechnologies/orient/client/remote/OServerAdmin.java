@@ -53,8 +53,6 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.security.OCredentialInterceptor;
 import com.orientechnologies.orient.core.security.OSecurityManager;
 import com.orientechnologies.orient.core.storage.OStorage;
-import com.orientechnologies.orient.core.util.OURLConnection;
-import com.orientechnologies.orient.core.util.OURLHelper;
 import java.io.IOException;
 import java.util.Map;
 
@@ -82,9 +80,7 @@ public class OServerAdmin {
 
     if (!url.contains("/")) url += "/";
 
-    OURLConnection connection = OURLHelper.parse(iURL);
-    remote =
-        (OrientDBRemote) ODatabaseDocumentTxInternal.getOrCreateRemoteFactory(connection.getPath());
+    remote = (OrientDBRemote) ODatabaseDocumentTxInternal.getOrCreateRemoteFactory(url);
     connectionManager = remote.getConnectionManager();
     urls = new ORemoteURLs(new String[] {}, remote.getContextConfiguration());
     String name = urls.parseServerUrls(url, remote.getContextConfiguration());
@@ -351,9 +347,6 @@ public class OServerAdmin {
     ODropDatabaseResponse response =
         networkAdminOperation(request, "Cannot delete the remote storage: " + iDatabaseName);
 
-    OURLConnection connection = OURLHelper.parse(getURL());
-    OrientDBRemote remote =
-        (OrientDBRemote) ODatabaseDocumentTxInternal.getOrCreateRemoteFactory(connection.getPath());
     remote.forceDatabaseClose(iDatabaseName);
 
     ODatabaseRecordThreadLocal.instance().remove();
