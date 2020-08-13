@@ -75,12 +75,11 @@ public final class OSimpleMultiValueTracker<K, V> {
   }
 
   public void onAfterRecordChanged(final OMultiValueChangeEvent<K, V> event, boolean changeOwner) {
-
     if (!enabled) {
       return;
     }
 
-    ORecordElement document = this.element.get();
+    final ORecordElement document = this.element.get();
     if (document == null) {
       // doc not alive anymore, do nothing.
       return;

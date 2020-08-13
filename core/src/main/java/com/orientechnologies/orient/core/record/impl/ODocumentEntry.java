@@ -133,8 +133,6 @@ public class ODocumentEntry {
   public boolean isTxTrackedModified() {
     if (value instanceof OTrackedMultiValue) {
       return ((OTrackedMultiValue) value).isTransactionModified();
-      // TODO: dirty fix for timeline issue: && ((OTrackedMultiValue)
-      // value).getTransactionTimeLine() != null;
     }
     if (value instanceof ODocument && ((ODocument) value).isEmbedded()) {
       return ((ODocument) value).isDirty();
