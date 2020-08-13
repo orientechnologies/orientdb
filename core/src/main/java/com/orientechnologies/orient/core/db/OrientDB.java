@@ -185,7 +185,7 @@ public class OrientDB implements AutoCloseable {
       internal = OrientDBInternal.embedded(url.substring(url.indexOf(':') + 1), configuration);
     else if ("remote".equals(what))
       internal =
-          OrientDBInternal.remote(url.substring(url.indexOf(':') + 1).split(","), configuration);
+          OrientDBInternal.remote(url.substring(url.indexOf(':') + 1).split("[,;]"), configuration);
     else throw new IllegalArgumentException("Wrong url:`" + url + "`");
 
     this.serverUser = serverUser;
