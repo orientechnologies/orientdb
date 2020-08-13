@@ -575,7 +575,7 @@ public class OEmbeddedRidBag implements ORidBagDelegate {
     }
   }
 
-  public void disableTracking(ORecordElement document) {
+  public void disableTracking(final ORecordElement document) {
     if (tracker.isEnabled()) {
       tracker.disable();
       this.dirty = false;

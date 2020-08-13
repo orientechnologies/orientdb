@@ -576,8 +576,8 @@ public class ODocumentSerializerDelta {
     Set<Map.Entry<String, ODocumentEntry>> entries = ODocumentInternal.rawEntries(document);
 
     OVarIntSerializer.write(bytes, count);
-    for (Map.Entry<String, ODocumentEntry> entry : entries) {
-      ODocumentEntry docEntry = entry.getValue();
+    for (final Map.Entry<String, ODocumentEntry> entry : entries) {
+      final ODocumentEntry docEntry = entry.getValue();
       if (!docEntry.isTxExists()) {
         serializeByte(bytes, REMOVED);
         writeString(bytes, entry.getKey());
@@ -589,7 +589,7 @@ public class ODocumentSerializerDelta {
         serializeFullEntry(bytes, oClass, entry.getKey(), docEntry);
       } else if (docEntry.isTxTrackedModified()) {
         serializeByte(bytes, CHANGED);
-        // TODO: Timeline must not be NULL here
+        // timeline must not be NULL here. Else check that tracker is enabled
         serializeDeltaEntry(bytes, oClass, entry.getKey(), docEntry);
       } else {
         continue;

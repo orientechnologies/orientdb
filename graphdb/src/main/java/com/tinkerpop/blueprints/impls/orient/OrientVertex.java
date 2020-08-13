@@ -680,12 +680,13 @@ public class OrientVertex extends OrientElement implements OrientExtendedVertex 
       final String iClassName,
       final String iClusterName,
       final Object... fields) {
-
-    if (inVertex == null) throw new IllegalArgumentException("destination vertex is null");
-
+    if (inVertex == null) {
+      throw new IllegalArgumentException("destination vertex is null");
+    }
     final OrientBaseGraph graph = getGraph();
-    if (graph != null)
+    if (graph != null) {
       return graph.addEdgeInternal(this, label, inVertex, iClassName, iClusterName, fields);
+    }
 
     // IN MEMORY CHANGES ONLY: USE NOTX CLASS
     return OrientGraphNoTx.addEdgeInternal(

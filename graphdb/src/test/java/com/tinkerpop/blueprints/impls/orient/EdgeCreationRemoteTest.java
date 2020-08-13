@@ -9,7 +9,6 @@ import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.OEdge;
 import com.orientechnologies.orient.core.record.OVertex;
 import com.orientechnologies.orient.server.OServer;
-import com.tinkerpop.blueprints.Edge;
 import com.tinkerpop.blueprints.Vertex;
 import java.io.IOException;
 import java.util.UUID;
@@ -29,6 +28,93 @@ public class EdgeCreationRemoteTest {
     server.activate();
     connect("remote:localhost:3064", dbName, "root", "root", true);
     addPrerequisites();
+  }
+
+  @After
+  public void tearDown() {
+    disconnect(dbName, true);
+    server.shutdown();
+  }
+
+  @AfterClass
+  public static void afterClass() {
+    Orient.instance().shutdown();
+    Orient.instance().startup();
+  }
+
+  private OrientDB orient;
+  private ODatabasePool pool;
+
+  public void disconnect(final String dbName, boolean cleanup) {
+    pool.close();
+    if (cleanup) {
+      orient.drop(dbName);
+    }
+    orient.close();
+  }
+
+  @Test
+  public void createEdgeFromANewVertexToAnExistingOne() {
+    final OrientGraph g = new OrientGraph("remote:localhost:3064/MAPP");
+
+    // timeline issue: APP1 and aAPP2 will fail. APP3 will be successfully committed.
+    final String targetAppId = "APP1";
+    final Vertex target = g.getVertices("LID", targetAppId).iterator().next();
+    System.out.println(target.getProperty("ID").toString());
+
+    final OrientVertex v1 = g.addVertex("class:KEYDOK");
+    v1.setProperty("ID", UUID.randomUUID().toString());
+    v1.addEdge("HAS_AS_FAVORITE", target);
+
+    g.commit();
+    g.shutdown();
+  }
+
+  @Test
+  public void createEdgeFromANewVertexToAnExistingOneWithFactory() {
+    final OrientGraphFactory factory =
+        new OrientGraphFactory("remote:localhost:3064/MAPP", "admin", "admin").setupPool(5, 10);
+    final OrientGraph g = factory.getTx();
+
+    // APP1 and aAPP2 will fail. APP3 will be successfully committed.
+    final String targetAppId = "APP1";
+    final Vertex target = g.getVertices("LID", targetAppId).iterator().next();
+    System.out.println(target.getProperty("ID").toString());
+
+    final OrientVertex v1 = g.addVertex("class:KEYDOK");
+    v1.setProperty("ID", UUID.randomUUID().toString());
+
+    v1.addEdge("HAS_AS_FAVORITE", target);
+
+    g.commit();
+    g.shutdown();
+    factory.close();
+  }
+
+  private void connect(
+      final String serverName,
+      final String dbName,
+      final String userName,
+      final String password,
+      final boolean createDB) {
+    final OrientDBConfigBuilder poolCfg = OrientDBConfig.builder();
+    poolCfg.addConfig(OGlobalConfiguration.DB_POOL_MIN, 5);
+    poolCfg.addConfig(OGlobalConfiguration.DB_POOL_MAX, 10);
+    final OrientDBConfig oriendDBconfig = poolCfg.build();
+    if (serverName.startsWith("remote:")) {
+      // remote:<host> can be called like that
+      orient = new OrientDB(serverName, userName, password, oriendDBconfig);
+    } else if (serverName.startsWith("embedded:")) {
+      // embedded:/<path>/directory + server can be called like that
+      orient = new OrientDB(serverName, OrientDBConfig.defaultConfig());
+    } else {
+      throw new UnsupportedOperationException(
+          "Currently only 'embedded' and 'remote' are supported.");
+    }
+    if (createDB) {
+      orient.create(dbName, ODatabaseType.PLOCAL);
+    }
+    pool = new ODatabasePool(orient, dbName, "admin", "admin", oriendDBconfig);
   }
 
   private void addPrerequisites() {
@@ -81,123 +167,5 @@ public class EdgeCreationRemoteTest {
       edge.setProperty("since", System.currentTimeMillis());
       edge.save();
     }
-  }
-
-  @After
-  public void tearDown() {
-    disconnect(dbName, true);
-    server.shutdown();
-  }
-
-  @AfterClass
-  public static void afterClass() {
-    Orient.instance().shutdown();
-    Orient.instance().startup();
-  }
-
-  private OrientDB orient;
-  private ODatabasePool pool;
-
-  public void connect(
-      final String serverName,
-      final String dbName,
-      final String userName,
-      final String password,
-      final boolean createDB) {
-    final OrientDBConfigBuilder poolCfg = OrientDBConfig.builder();
-    poolCfg.addConfig(OGlobalConfiguration.DB_POOL_MIN, 5);
-    poolCfg.addConfig(OGlobalConfiguration.DB_POOL_MAX, 10);
-    final OrientDBConfig oriendDBconfig = poolCfg.build();
-    if (serverName.startsWith("remote:")) {
-      // remote:<host> can be called like that
-      orient = new OrientDB(serverName, userName, password, oriendDBconfig);
-    } else if (serverName.startsWith("embedded:")) {
-      // embedded:/<path>/directory + server can be called like that
-      orient = new OrientDB(serverName, OrientDBConfig.defaultConfig());
-    } else {
-      throw new UnsupportedOperationException(
-          "Currently only 'embedded' and 'remote' are supported.");
-    }
-    if (createDB) {
-      orient.create(dbName, ODatabaseType.PLOCAL);
-    }
-    pool = new ODatabasePool(orient, dbName, "admin", "admin", oriendDBconfig);
-  }
-
-  public void disconnect(final String dbName, boolean cleanup) {
-    pool.close();
-    if (cleanup) {
-      orient.drop(dbName);
-    }
-    orient.close();
-  }
-
-  @Ignore
-  @Test
-  public void test() {
-    try (final ODatabaseSession session = pool.acquire()) {
-      final OrientGraph g = new OrientGraph(session.getURL());
-
-      // APP1 and aAPP2 will fail. APP3 will be successfully committed.
-      final String targetAppId = "APP1";
-      final Vertex target = g.getVertices("LID", targetAppId).iterator().next();
-      System.out.println(target.getProperty("ID").toString());
-
-      long currentTime = System.currentTimeMillis();
-      final OrientVertex v1 = g.addVertex("class:KEYDOK");
-      v1.setProperty("ID", UUID.randomUUID().toString());
-      v1.setProperty("LID", UUID.randomUUID().toString());
-      v1.setProperty("current", true);
-      v1.setProperty("insertedOn", currentTime);
-      v1.setProperty("version", 1);
-
-      final Edge e1 = v1.addEdge("HAS_AS_FAVORITE", target);
-      e1.setProperty("insertedOn", currentTime);
-      e1.setProperty("isActive", true);
-      e1.setProperty("isCurrent", true);
-      e1.setProperty("versioning", 1);
-      e1.setProperty("since", currentTime);
-
-      g.commit();
-      g.shutdown();
-    }
-  }
-
-  @Test
-  public void createEdgeFromANewVertexToAnExistingOne() {
-    final OrientGraph g = new OrientGraph("remote:localhost:3064/MAPP");
-
-    // APP1 and aAPP2 will fail. APP3 will be successfully committed.
-    final String targetAppId = "APP1";
-    final Vertex target = g.getVertices("LID", targetAppId).iterator().next();
-    System.out.println(target.getProperty("ID").toString());
-
-    final OrientVertex v1 = g.addVertex("class:KEYDOK");
-    v1.setProperty("ID", UUID.randomUUID().toString());
-    v1.addEdge("HAS_AS_FAVORITE", target);
-
-    g.commit();
-    g.shutdown();
-  }
-
-  @Test
-  public void createEdgeFromANewVertexToAnExistingOneWithFactory() {
-    final OrientGraphFactory factory =
-        new OrientGraphFactory("remote:localhost:3064/MAPP", "admin", "admin").setupPool(5, 10);
-    final OrientGraph g = factory.getTx();
-
-    // APP1 and aAPP2 will fail. APP3 will be successfully committed.
-    final String targetAppId = "APP1";
-    final Vertex target = g.getVertices("LID", targetAppId).iterator().next();
-    System.out.println(target.getProperty("ID").toString());
-
-    final OrientVertex v1 = g.addVertex("class:KEYDOK");
-    v1.setProperty("ID", UUID.randomUUID().toString());
-
-    v1.addEdge("HAS_AS_FAVORITE", target);
-
-    g.commit();
-    g.shutdown();
-    factory.close();
   }
 }
