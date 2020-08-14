@@ -280,10 +280,10 @@ public class OrientGraph extends OrientTransactionalGraph {
           currentVertex.getIdentity(),
           "The vertex " + currentVertex.getIdentity() + " has been deleted");
 
-    if (inVertex.checkDeletedInTx())
+    if (inVertex.checkDeletedInTx()) {
       throw new ORecordNotFoundException(
           inVertex.getIdentity(), "The vertex " + inVertex.getIdentity() + " has been deleted");
-
+    }
     autoStartTransaction();
 
     // TEMPORARY STATIC LOCK TO AVOID MT PROBLEMS AGAINST OMVRBTreeRID

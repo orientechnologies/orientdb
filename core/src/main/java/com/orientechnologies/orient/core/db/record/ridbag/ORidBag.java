@@ -580,7 +580,7 @@ public class ORidBag
     return true;
   }
 
-  //  @Override
+  @Override
   public void enableTracking(ORecordElement parent) {
     delegate.enableTracking(parent);
   }
