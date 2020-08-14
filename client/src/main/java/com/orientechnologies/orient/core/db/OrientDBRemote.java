@@ -159,22 +159,27 @@ public class OrientDBRemote implements OrientDBInternal {
       ODatabaseType databaseType,
       OrientDBConfig config) {
 
-    if (name == null || name.length() <= 0) {
+    config = solveConfig(config);
+
+    if (name == null || name.length() <= 0 || name.contains("`")) {
       final String message = "Cannot create unnamed remote storage. Check your syntax";
       OLogManager.instance().error(this, message, null);
       throw new OStorageException(message);
     }
-    String sendType;
-    if (databaseType == ODatabaseType.MEMORY) {
-      sendType = "memory";
-    } else if (databaseType == ODatabaseType.PLOCAL) {
-      sendType = "plocal";
-    } else {
-      sendType = "plocal";
+    String create = String.format("CREATE DATABASE `%s` %s ", name, databaseType.name());
+    Map<String, Object> parameters = new HashMap<String, Object>();
+    Set<String> keys = config.getConfigurations().getContextKeys();
+    if (!keys.isEmpty()) {
+      List<String> entries = new ArrayList<String>();
+      for (String key : keys) {
+        OGlobalConfiguration globalKey = OGlobalConfiguration.findByKey(key);
+        entries.add(String.format("\"%s\": $%s", key, globalKey.name()));
+        parameters.put(globalKey.name(), config.getConfigurations().getValue(globalKey));
+      }
+      create += String.format("{\"config\":{%s}}", String.join(",", entries));
     }
-    OCreateDatabaseRequest request = new OCreateDatabaseRequest(name, name, sendType, null);
 
-    OCreateDatabaseResponse response = connectAndSend(name, user, password, request);
+    executeServerStatement(create, user, password, parameters);
   }
 
   public synchronized ODatabaseDocumentRemotePooled poolOpen(
