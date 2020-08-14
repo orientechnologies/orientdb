@@ -44,7 +44,11 @@ public class ManifestTemplate {
   }
 
   public static String generateRBAC() throws IOException, URISyntaxException {
-    return TestSetupUtil.readAllLines(ORIENTDB_RBAC_TEMPLATE);
+    StringSubstitutor substitutor = new StringSubstitutor(new HashMap<String, String>() {{
+      put(KUBERNETES_NAMESPACE, TestSetupUtil.getKubernetesNamespace());
+    }});
+    String template = TestSetupUtil.readAllLines(ORIENTDB_RBAC_TEMPLATE);
+    return substitutor.replace(template);
   }
 
   public static String generateManifest(K8sServerConfig configs, String templateFile)
