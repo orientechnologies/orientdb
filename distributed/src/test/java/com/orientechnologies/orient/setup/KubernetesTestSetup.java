@@ -32,18 +32,17 @@ public class KubernetesTestSetup implements TestSetup {
   private static final int readyReplicaTimeoutSeconds = 5 * 60;
   private int portforwardLocalPort = 30100; // Next local port to use for port forwarding
 
-  private String nodeAddress;
   private SetupConfig setupConfig;
   // The namespace to setup the cluster and run tests. It must already exist.
   private String namespace = TestSetupUtil.getKubernetesNamespace();
   private Set<String> PVCsToDelete = new HashSet<>();
+  // Port forwarders per server
+  private Map<String, List<PortForwarder>> portforwarders = new HashMap<>();
 
   public KubernetesTestSetup(String kubeConfigFile, SetupConfig config) throws TestSetupException {
     try {
       this.setupConfig = config;
       KubeConfig kubeConfig = KubeConfig.loadKubeConfig(new FileReader(kubeConfigFile));
-      String serverAddress = kubeConfig.getServer();
-      nodeAddress = new URL(serverAddress).getHost();
       ApiClient client = ClientBuilder.kubeconfig(kubeConfig).build();
       Configuration.setDefaultApiClient(client);
       createRBAC();
@@ -381,24 +380,7 @@ public class KubernetesTestSetup implements TestSetup {
           String.format(
               "%s-%s-0", pvc.getMetadata().getName(), statefulSet.getMetadata().getName()));
     }
-    V1Service nodePort = createNodePortService(serverId, config);
-    System.out.printf(
-        "  Created NodePort Service %s for %s.\n", nodePort.getMetadata().getName(), serverId);
-    nodePort
-        .getSpec()
-        .getPorts()
-        .forEach(
-            port -> {
-              if (port.getName().equalsIgnoreCase("http")) {
-                String httpAddress = String.format("%s:%d", nodeAddress, port.getNodePort());
-                config.setHttpAddress(httpAddress);
-                System.out.printf("  HTTP address for %s: %s\n", serverId, httpAddress);
-              } else if (port.getName().equalsIgnoreCase("binary")) {
-                String binaryAddress = String.format("%s:%d", nodeAddress, port.getNodePort());
-                config.setBinaryAddress(binaryAddress);
-                System.out.printf("  Binary address for %s: %s\n", serverId, binaryAddress);
-              }
-            });
+
     int localBinaryPort = portforwardLocalPort++;
     PortForwarder binaryPortforward =
         new PortForwarder(
@@ -424,5 +406,6 @@ public class KubernetesTestSetup implements TestSetup {
     config.setHttpAddress(httpAddress);
     System.out.printf("  HTTP address for %s: %s\n", serverId, httpAddress);
 
+    portforwarders.put(serverId, Arrays.asList(binaryPortforward, httpPortforward));
   }
 }
