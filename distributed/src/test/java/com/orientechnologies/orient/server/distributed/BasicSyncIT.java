@@ -4,7 +4,6 @@ import com.orientechnologies.orient.core.db.ODatabaseSession;
 import com.orientechnologies.orient.core.db.ODatabaseType;
 import com.orientechnologies.orient.core.db.OrientDB;
 import com.orientechnologies.orient.core.db.OrientDBConfig;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.setup.configs.SimpleDServerConfig;
 import com.orientechnologies.orient.setup.SetupConfig;
 import com.orientechnologies.orient.setup.TestSetup;
@@ -28,7 +27,7 @@ public class BasicSyncIT {
     server1 = SimpleDServerConfig.SERVER1;
     server2 = SimpleDServerConfig.SERVER2;
     setup = TestSetupUtil.create(config);
-    setup.startServers();
+    setup.setup();
 
     OrientDB remote = setup.createRemote(server0, "root", "test", OrientDBConfig.defaultConfig());
     remote.create("test", ODatabaseType.PLOCAL);

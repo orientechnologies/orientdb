@@ -48,7 +48,7 @@ public class LocalTestSetup implements TestSetup {
   }
 
   @Override
-  public void startServers() {
+  public void setup() {
     for (String serverId : config.getServerIds()) {
       startServer(serverId);
     }

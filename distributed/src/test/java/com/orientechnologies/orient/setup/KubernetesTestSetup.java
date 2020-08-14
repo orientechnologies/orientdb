@@ -88,7 +88,7 @@ public class KubernetesTestSetup implements TestSetup {
   }
 
   @Override
-  public void startServers() throws TestSetupException {
+  public void setup() throws TestSetupException {
     System.out.println("Starting servers...");
     for (String serverId : setupConfig.getServerIds()) {
       K8sServerConfig serverConfig = setupConfig.getK8sConfigs(serverId);
@@ -379,6 +379,8 @@ public class KubernetesTestSetup implements TestSetup {
 
   private void setupPortForward(String serverId, K8sServerConfig config)
       throws IOException, ApiException {
+    // Each server has its own StatefulSet with its name and has one replica. Therefore, pod name is
+    // always the same.
     String serverPod = String.format("%s-0", serverId);
     PortForwarder binaryPortforward =
         new PortForwarder(namespace, serverPod, Integer.parseInt(config.getBinaryPort()));
