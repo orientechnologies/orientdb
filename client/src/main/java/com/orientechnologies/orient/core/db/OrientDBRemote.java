@@ -173,7 +173,7 @@ public class OrientDBRemote implements OrientDBInternal {
       List<String> entries = new ArrayList<String>();
       for (String key : keys) {
         OGlobalConfiguration globalKey = OGlobalConfiguration.findByKey(key);
-        entries.add(String.format("\"%s\": $%s", key, globalKey.name()));
+        entries.add(String.format("\"%s\": :%s", key, globalKey.name()));
         parameters.put(globalKey.name(), config.getConfigurations().getValue(globalKey));
       }
       create += String.format("{\"config\":{%s}}", String.join(",", entries));
