@@ -41,8 +41,13 @@ public class PortForwarder {
     return localPort;
   }
 
-  public void stop() throws IOException {
-    server.stop();
+  public void stop() {
+    try {
+      server.stop();
+    } catch (IOException e) {
+      System.err.println("Exception while stopping port forwarder: " + e.getMessage());
+      e.printStackTrace();
+    }
   }
 
   private class Server {

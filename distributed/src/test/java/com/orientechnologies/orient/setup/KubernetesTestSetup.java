@@ -74,10 +74,12 @@ public class KubernetesTestSetup implements TestSetup {
       } else {
         doStartServer(serverId, serverConfig);
       }
+
       waitForInstances(
           readyReplicaTimeoutSeconds,
           Collections.singletonList(serverId),
           statefulSetLabelSelector);
+      setupPortForward(serverId, serverConfig);
     } catch (ApiException e) {
       throw new TestSetupException(e.getResponseBody(), e);
     } catch (IOException | URISyntaxException e) {
@@ -180,6 +182,7 @@ public class KubernetesTestSetup implements TestSetup {
     K8sServerConfig config = setupConfig.getK8sConfigs(serverId);
     String name = config.getNodeName();
     try {
+      stopPortForward(serverId);
       scaleStatefulSet(name, 0);
     } catch (ApiException e) {
       throw new TestSetupException(e.getResponseBody(), e);
@@ -203,6 +206,8 @@ public class KubernetesTestSetup implements TestSetup {
     AppsV1Api appsV1Api = new AppsV1Api();
 
     for (String serverId : setupConfig.getServerIds()) {
+      System.out.printf("Stop port-forward for node %s.\n", serverId);
+      stopPortForward(serverId);
       System.out.printf("Tearing down node %s.\n", serverId);
       K8sServerConfig config = setupConfig.getK8sConfigs(serverId);
       String configMapName = config.getConfigMapName();
@@ -326,14 +331,6 @@ public class KubernetesTestSetup implements TestSetup {
     return coreV1Api.createNamespacedService(namespace, service, null, null, null);
   }
 
-  private V1Service createNodePortService(String serverId, K8sServerConfig config)
-      throws IOException, URISyntaxException, ApiException {
-    CoreV1Api coreV1Api = new CoreV1Api();
-    String manifest = ManifestTemplate.generateNodePortService(config);
-    V1Service service = (V1Service) Yaml.load(manifest);
-    return coreV1Api.createNamespacedService(namespace, service, null, null, null);
-  }
-
   private V1StatefulSet createStatefulSet(String serverId, K8sServerConfig config)
       throws IOException, URISyntaxException, ApiException {
     AppsV1Api appsV1Api = new AppsV1Api();
@@ -378,7 +375,10 @@ public class KubernetesTestSetup implements TestSetup {
           String.format(
               "%s-%s-0", pvc.getMetadata().getName(), statefulSet.getMetadata().getName()));
     }
+  }
 
+  private void setupPortForward(String serverId, K8sServerConfig config)
+      throws IOException, ApiException {
     String serverPod = String.format("%s-0", serverId);
     PortForwarder binaryPortforward =
         new PortForwarder(namespace, serverPod, Integer.parseInt(config.getBinaryPort()));
@@ -396,5 +396,14 @@ public class KubernetesTestSetup implements TestSetup {
     System.out.printf("  HTTP address for %s: %s\n", serverId, httpAddress);
 
     portforwarders.put(serverId, Arrays.asList(binaryPortforward, httpPortforward));
+  }
+
+  private void stopPortForward(String serverId) {
+    List<PortForwarder> pfs = portforwarders.get(serverId);
+    if (pfs == null) return;
+    for (PortForwarder pf : pfs) {
+      pf.stop();
+    }
+    pfs.clear();
   }
 }
