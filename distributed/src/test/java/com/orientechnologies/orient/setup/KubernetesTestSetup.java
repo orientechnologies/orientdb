@@ -2,6 +2,7 @@ package com.orientechnologies.orient.setup;
 
 import com.google.gson.JsonSyntaxException;
 import com.google.gson.reflect.TypeToken;
+import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.OrientDB;
 import com.orientechnologies.orient.core.db.OrientDBConfig;
 import io.kubernetes.client.openapi.ApiClient;
@@ -15,19 +16,21 @@ import io.kubernetes.client.util.ClientBuilder;
 import io.kubernetes.client.util.KubeConfig;
 import io.kubernetes.client.util.Watch;
 import io.kubernetes.client.util.Yaml;
+import okhttp3.OkHttpClient;
+
 import java.io.FileReader;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
-import okhttp3.OkHttpClient;
 
 public class KubernetesTestSetup implements TestSetup {
   // Used for listing OrientDB stateful sets.
   private static final String statefulSetLabelSelector =
       String.format("app=%s", TestSetupUtil.getOrientDBKubernetesLabel());
-  private static final int readyReplicaTimeoutSeconds = 90;
+  private static final int readyReplicaTimeoutSeconds = 5 * 60;
+  private int portforwardLocalPort = 30100; // Next local port to use for port forwarding
 
   private String nodeAddress;
   private SetupConfig setupConfig;
@@ -51,6 +54,12 @@ public class KubernetesTestSetup implements TestSetup {
       e.printStackTrace();
       throw new TestSetupException(e.getResponseBody(), e);
     }
+  }
+
+  public static String getEscapedFileContent(String fileName)
+      throws URISyntaxException, IOException {
+    String content = TestSetupUtil.readAllLines(fileName);
+    return content.replaceAll("\"", "\\\"");
   }
 
   @Override
@@ -81,6 +90,7 @@ public class KubernetesTestSetup implements TestSetup {
 
   @Override
   public void startServers() throws TestSetupException {
+    System.out.println("Starting servers...");
     for (String serverId : setupConfig.getServerIds()) {
       K8sServerConfig serverConfig = setupConfig.getK8sConfigs(serverId);
       serverConfig.validate();
@@ -272,6 +282,8 @@ public class KubernetesTestSetup implements TestSetup {
   @Override
   public OrientDB createRemote(
       String serverId, String serverUser, String serverPassword, OrientDBConfig config) {
+    System.out.printf("Creating remote connection to server '%s'.\n", serverId);
+    config.getConfigurations().setValue(OGlobalConfiguration.NETWORK_SOCKET_TIMEOUT, 60 * 1000);
     return new OrientDBIT(
         "remote:" + getAddress(serverId, PortType.BINARY), serverUser, serverPassword, config);
   }
@@ -387,11 +399,30 @@ public class KubernetesTestSetup implements TestSetup {
                 System.out.printf("  Binary address for %s: %s\n", serverId, binaryAddress);
               }
             });
-  }
+    int localBinaryPort = portforwardLocalPort++;
+    PortForwarder binaryPortforward =
+        new PortForwarder(
+            namespace,
+            String.format("%s-0", serverId),
+            localBinaryPort,
+            Integer.parseInt(config.getBinaryPort()));
+    int localHttpPort = portforwardLocalPort++;
+    PortForwarder httpPortforward =
+        new PortForwarder(
+            namespace,
+            String.format("%s-0", serverId),
+            localHttpPort,
+            Integer.parseInt(config.getHttpPort()));
 
-  public static String getEscapedFileContent(String fileName)
-      throws URISyntaxException, IOException {
-    String content = TestSetupUtil.readAllLines(fileName);
-    return content.replaceAll("\"", "\\\"");
+    binaryPortforward.start();
+    String binaryAddress = String.format("localhost:%d", localBinaryPort);
+    config.setBinaryAddress(binaryAddress);
+    System.out.printf("  Binary address for %s: %s\n", serverId, binaryAddress);
+
+    httpPortforward.start();
+    String httpAddress = String.format("localhost:%d", localHttpPort);
+    config.setHttpAddress(httpAddress);
+    System.out.printf("  HTTP address for %s: %s\n", serverId, httpAddress);
+
   }
 }

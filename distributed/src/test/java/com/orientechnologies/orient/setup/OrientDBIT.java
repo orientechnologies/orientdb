@@ -1,6 +1,7 @@
 package com.orientechnologies.orient.setup;
 
 import com.orientechnologies.orient.core.db.ODatabaseSession;
+import com.orientechnologies.orient.core.db.ODatabaseType;
 import com.orientechnologies.orient.core.db.OrientDB;
 import com.orientechnologies.orient.core.db.OrientDBConfig;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
@@ -36,6 +37,12 @@ public class OrientDBIT extends OrientDB {
         }
       }
     }
+  }
+
+  @Override
+  public void create(String database, ODatabaseType type) {
+    System.out.printf("Creating database %s.\n", database);
+    super.create(database, type);
   }
 
   @Override
