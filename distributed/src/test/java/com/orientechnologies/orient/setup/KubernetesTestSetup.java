@@ -21,7 +21,6 @@ import okhttp3.OkHttpClient;
 import java.io.FileReader;
 import java.io.IOException;
 import java.net.URISyntaxException;
-import java.net.URL;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 
@@ -30,7 +29,6 @@ public class KubernetesTestSetup implements TestSetup {
   private static final String statefulSetLabelSelector =
       String.format("app=%s", TestSetupUtil.getOrientDBKubernetesLabel());
   private static final int readyReplicaTimeoutSeconds = 5 * 60;
-  private int portforwardLocalPort = 30100; // Next local port to use for port forwarding
 
   private SetupConfig setupConfig;
   // The namespace to setup the cluster and run tests. It must already exist.
@@ -381,27 +379,18 @@ public class KubernetesTestSetup implements TestSetup {
               "%s-%s-0", pvc.getMetadata().getName(), statefulSet.getMetadata().getName()));
     }
 
-    int localBinaryPort = portforwardLocalPort++;
+    String serverPod = String.format("%s-0", serverId);
     PortForwarder binaryPortforward =
-        new PortForwarder(
-            namespace,
-            String.format("%s-0", serverId),
-            localBinaryPort,
-            Integer.parseInt(config.getBinaryPort()));
-    int localHttpPort = portforwardLocalPort++;
+        new PortForwarder(namespace, serverPod, Integer.parseInt(config.getBinaryPort()));
     PortForwarder httpPortforward =
-        new PortForwarder(
-            namespace,
-            String.format("%s-0", serverId),
-            localHttpPort,
-            Integer.parseInt(config.getHttpPort()));
+        new PortForwarder(namespace, serverPod, Integer.parseInt(config.getHttpPort()));
 
-    binaryPortforward.start();
+    int localBinaryPort = binaryPortforward.start();
     String binaryAddress = String.format("localhost:%d", localBinaryPort);
     config.setBinaryAddress(binaryAddress);
     System.out.printf("  Binary address for %s: %s\n", serverId, binaryAddress);
 
-    httpPortforward.start();
+    int localHttpPort = httpPortforward.start();
     String httpAddress = String.format("localhost:%d", localHttpPort);
     config.setHttpAddress(httpAddress);
     System.out.printf("  HTTP address for %s: %s\n", serverId, httpAddress);

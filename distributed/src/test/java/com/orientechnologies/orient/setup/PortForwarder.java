@@ -17,22 +17,28 @@ import java.util.List;
 
 public class PortForwarder {
   private Server server;
+  private String namespace, podName;
+  private int targetPort;
 
-  public PortForwarder(String namespace, String podName, int localPort, int targetPort)
+  public PortForwarder(String namespace, String podName, int targetPort)
       throws IOException, ApiException {
+    this.namespace = namespace;
+    this.podName = podName;
+    this.targetPort = targetPort;
     ApiClient client = Config.defaultClient();
     Configuration.setDefaultApiClient(client);
     PortForward forward = new PortForward();
     List<Integer> ports = new ArrayList<>();
     ports.add(targetPort);
     final PortForward.PortForwardResult result = forward.forward(namespace, podName, ports);
-    System.out.printf(
-        "Forwarding port %s/%s:%d -> localhost:%d...\n", namespace, podName, targetPort, localPort);
-    server = new Server(localPort, result.getInputStream(targetPort), result.getOutboundStream(targetPort));
+    server = new Server( result.getInputStream(targetPort), result.getOutboundStream(targetPort));
   }
 
-  public void start() {
-    server.start();
+  public int start() {
+    int localPort = server.start();
+    System.out.printf(
+        "Forwarding port %s/%s:%d -> localhost:%d...\n", namespace, podName, targetPort, localPort);
+    return localPort;
   }
 
   public void stop() throws IOException {
@@ -47,14 +53,14 @@ public class PortForwarder {
     private InputStream targetInputStream;
     private OutputStream targetOutputStream;
 
-    public Server(int localPort, InputStream targetInputStream, OutputStream targetOutputStream)
+    public Server(InputStream targetInputStream, OutputStream targetOutputStream)
         throws IOException {
-      ss = new ServerSocket(localPort);
+      ss = new ServerSocket(0);
       this.targetInputStream = targetInputStream;
       this.targetOutputStream = targetOutputStream;
     }
 
-    public void start() {
+    public int start() {
       server =
           new Thread(
               () -> {
@@ -65,6 +71,7 @@ public class PortForwarder {
                 }
               });
       server.start();
+      return ss.getLocalPort();
     }
 
     private void runCopiers() throws IOException {
