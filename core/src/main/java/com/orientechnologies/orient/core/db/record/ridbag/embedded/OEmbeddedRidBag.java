@@ -242,9 +242,9 @@ public class OEmbeddedRidBag implements ORidBagDelegate {
 
   @Override
   public void add(final OIdentifiable identifiable) {
-    if (identifiable == null)
+    if (identifiable == null) {
       throw new IllegalArgumentException("Impossible to add a null identifiable in a ridbag");
-
+    }
     addEntry(identifiable);
 
     size++;
@@ -539,7 +539,7 @@ public class OEmbeddedRidBag implements ORidBagDelegate {
     // do nothing not needed
   }
 
-  private void addEvent(OIdentifiable key, OIdentifiable identifiable) {
+  private void addEvent(final OIdentifiable key, final OIdentifiable identifiable) {
     if (this.owner != null) ORecordInternal.track(this.owner, identifiable);
 
     if (tracker.isEnabled()) {
@@ -569,13 +569,13 @@ public class OEmbeddedRidBag implements ORidBagDelegate {
     }
   }
 
-  public void enableTracking(ORecordElement parent) {
+  public void enableTracking(final ORecordElement parent) {
     if (!tracker.isEnabled()) {
       tracker.enable();
     }
   }
 
-  public void disableTracking(ORecordElement document) {
+  public void disableTracking(final ORecordElement document) {
     if (tracker.isEnabled()) {
       tracker.disable();
       this.dirty = false;

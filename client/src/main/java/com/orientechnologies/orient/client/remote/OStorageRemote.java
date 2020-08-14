@@ -1331,7 +1331,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
 
   public List<ORecordOperation> commit(final OTransactionInternal iTx) {
     unstickToSession();
-    OCommit38Request request =
+    final OCommit38Request request =
         new OCommit38Request(
             iTx.getId(),
             true,
@@ -1339,7 +1339,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
             iTx.getRecordOperations(),
             iTx.getIndexOperations());
 
-    OCommit37Response response = networkOperationNoRetry(request, "Error on commit");
+    final OCommit37Response response = networkOperationNoRetry(request, "Error on commit");
     for (OCommit37Response.OCreatedRecordResponse created : response.getCreated()) {
       iTx.updateIdentityAfterCommit(created.getCurrentRid(), created.getCreatedRid());
       ORecordOperation rop = iTx.getRecordEntry(created.getCurrentRid());
